@@ -1,4 +1,4 @@
-module github.com/percona/percona-everest-backend/tools
+module github.com/percona/everest/tools
 
 go 1.21
 

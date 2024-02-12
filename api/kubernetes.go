@@ -1,4 +1,4 @@
-// percona-everest-backend
+// everest
 // Copyright (C) 2023 Percona LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ import (
 	"github.com/labstack/echo/v4"
 	corev1 "k8s.io/api/core/v1"
 
-	"github.com/percona/percona-everest-backend/pkg/kubernetes"
+	"github.com/percona/everest/pkg/kubernetes"
 )
 
 // GetKubernetesClusterResources returns all and available resources of a Kubernetes cluster.

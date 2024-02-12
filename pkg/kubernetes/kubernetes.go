@@ -1,4 +1,4 @@
-// percona-everest-backend
+// everest
 // Copyright (C) 2023 Percona LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/client-go/rest"
 
-	"github.com/percona/percona-everest-backend/pkg/kubernetes/client"
+	"github.com/percona/everest/pkg/kubernetes/client"
 )
 
 type (

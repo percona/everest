@@ -12,7 +12,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/percona/percona-everest-backend/cmd/config"
+	"github.com/percona/everest/cmd/config"
 )
 
 const (

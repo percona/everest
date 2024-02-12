@@ -83,12 +83,12 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: percona-everest-backend
+      app.kubernetes.io/name: everest
       app.kubernetes.io/component: everest
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: percona-everest-backend
+        app.kubernetes.io/name: everest
         app.kubernetes.io/component: everest
     spec:
       serviceAccountName: everest-admin
@@ -99,7 +99,7 @@ spec:
           - labelSelector:
               matchLabels:
                 app.kubernetes.io/component: everest
-                app.kubernetes.io/name: percona-everest-backend
+                app.kubernetes.io/name: everest
             topologyKey: "kubernetes.io/hostname"
       containers:
         - name: everest
@@ -131,12 +131,12 @@ kind: Service
 metadata:
   name: everest
   labels:
-    app.kubernetes.io/name: percona-everest-backend
+    app.kubernetes.io/name: everest
     app.kubernetes.io/component: everest
 spec:
   selector:
     app.kubernetes.io/component: everest
-    app.kubernetes.io/name: percona-everest-backend
+    app.kubernetes.io/name: everest
   type: ClusterIP
   ports:
     - protocol: TCP

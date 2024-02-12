@@ -9,16 +9,16 @@ The API server basic code is generated using [oapi-codegen](https://github.com/d
 The proxy methods align with Everest operator methods but don't support all original parameters, because these are not required.
 You can find the definition of the custom resources in the [Everest operator repo](https://github.com/percona/everest-operator/tree/main/config/crd/bases).
 
-### Run percona-everest-backend locally
+### Run everest locally
 0. Prerequisites:
     - Golang 1.20.x
     - Make 3.x
     - Docker 20.x
     - Git 2.x
 1. Check out the repo:
-`git clone https://github.com/percona/percona-everest-backend`
+`git clone https://github.com/percona/everest`
 2. Navigate to the repo folder:
-`cd percona-everest-backend`
+`cd everest`
 3. Check out a particular branch if needed:
 `git checkout <branch_name>`
 4. Install the project dependencies:

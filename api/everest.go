@@ -1,4 +1,4 @@
-// percona-everest-backend
+// everest
 // Copyright (C) 2023 Percona LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,10 +31,10 @@ import (
 	middleware "github.com/oapi-codegen/echo-middleware"
 	"go.uber.org/zap"
 
-	"github.com/percona/percona-everest-backend/cmd/config"
-	"github.com/percona/percona-everest-backend/pkg/auth"
-	"github.com/percona/percona-everest-backend/pkg/kubernetes"
-	"github.com/percona/percona-everest-backend/public"
+	"github.com/percona/everest/cmd/config"
+	"github.com/percona/everest/pkg/auth"
+	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/public"
 )
 
 // EverestServer represents the server struct.

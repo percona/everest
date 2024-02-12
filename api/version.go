@@ -5,7 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/percona/percona-everest-backend/pkg/version"
+	"github.com/percona/everest/pkg/version"
 )
 
 // VersionInfo returns the current version information.

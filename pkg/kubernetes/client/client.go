@@ -1,4 +1,4 @@
-// percona-everest-backend
+// everest
 // Copyright (C) 2023 Percona LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 
-	"github.com/percona/percona-everest-backend/pkg/kubernetes/client/customresources"
+	"github.com/percona/everest/pkg/kubernetes/client/customresources"
 )
 
 const (

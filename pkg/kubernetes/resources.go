@@ -8,7 +8,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
-	"github.com/percona/percona-everest-backend/pkg/convertors"
+	"github.com/percona/everest/pkg/convertors"
 )
 
 const (

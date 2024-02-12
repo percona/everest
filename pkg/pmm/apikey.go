@@ -1,4 +1,4 @@
-// percona-everest-backend
+// everest
 // Copyright (C) 2023 Percona LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/percona/percona-everest-backend/cmd/config"
+	"github.com/percona/everest/cmd/config"
 )
 
 // CreatePMMApiKey creates a new API key in PMM by using the provided username and password.

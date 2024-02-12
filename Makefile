@@ -3,9 +3,9 @@ FILES = $(shell find . -type f -name '*.go')
 RELEASE_VERSION ?= v0.0.0-$(shell git rev-parse --short HEAD)
 RELEASE_FULLCOMMIT ?= $(shell git rev-parse HEAD)
 
-FLAGS = -X 'github.com/percona/percona-everest-backend/pkg/version.ProjectName=Everest Backend' \
-	-X 'github.com/percona/percona-everest-backend/pkg/version.Version=$(RELEASE_VERSION)' \
-	-X 'github.com/percona/percona-everest-backend/pkg/version.FullCommit=$(RELEASE_FULLCOMMIT)' \
+FLAGS = -X 'github.com/percona/everest/pkg/version.ProjectName=Everest Backend' \
+	-X 'github.com/percona/everest/pkg/version.Version=$(RELEASE_VERSION)' \
+	-X 'github.com/percona/everest/pkg/version.FullCommit=$(RELEASE_FULLCOMMIT)' \
 
 LD_FLAGS = -ldflags " $(FLAGS) "
 
@@ -20,15 +20,15 @@ init:                   ## Install development tools
 	cd tools && go generate -x -tags=tools
 
 build:                ## Build binaries
-	go build -v $(LD_FLAGS) -o bin/percona-everest-backend ./cmd
+	go build -v $(LD_FLAGS) -o bin/everest ./cmd
 
-release: FLAGS += -X 'github.com/percona/percona-everest-backend/cmd/config.TelemetryURL=https://check.percona.com' -X 'github.com/percona/percona-everest-backend/cmd/config.TelemetryInterval=24h'
+release: FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check.percona.com' -X 'github.com/percona/everest/cmd/config.TelemetryInterval=24h'
 
 release: build  ## Build release version
 
 
 build-debug:                ## Build binaries
-	go build -tags debug -v $(LD_FLAGS) -o bin/percona-everest-backend ./cmd
+	go build -tags debug -v $(LD_FLAGS) -o bin/everest ./cmd
 
 gen:                    ## Generate code
 	go generate ./...
@@ -36,8 +36,8 @@ gen:                    ## Generate code
 
 format:                 ## Format source code
 	bin/gofumpt -l -w $(FILES)
-	bin/goimports -local github.com/percona/percona-everest-backend -l -w $(FILES)
-	bin/gci write --section Standard --section Default --section "Prefix(github.com/percona/percona-everest-backend)" $(FILES)
+	bin/goimports -local github.com/percona/everest -l -w $(FILES)
+	bin/gci write --section Standard --section Default --section "Prefix(github.com/percona/everest)" $(FILES)
 
 check:                  ## Run checks/linters for the whole project
 	bin/go-consistent -pedantic ./...
@@ -53,16 +53,16 @@ test-crosscover:        ## Run tests and collect cross-package coverage informat
 	go test -race -timeout=10m -count=1 -coverprofile=crosscover.out -covermode=atomic -p=1 -coverpkg=./... ./...
 
 run: build            ## Run binary
-	bin/percona-everest-backend
+	bin/everest
 
 run-debug: build-debug    ## Run binary
 	TELEMETRY_URL=https://check-dev.percona.com \
 	TELEMETRY_INTERVAL=30m \
-	bin/percona-everest-backend
+	bin/everest
 
 cert:                   ## Install dev TLS certificates
 	mkcert -install
-	mkcert -cert-file=dev-cert.pem -key-file=dev-key.pem percona-everest-backend percona-everest-backend.localhost 127.0.0.1
+	mkcert -cert-file=dev-cert.pem -key-file=dev-key.pem everest everest.localhost 127.0.0.1
 
 k8s: 					## Create a local minikube cluster
 	minikube start --nodes=3 --cpus=4 --memory=4g --apiserver-names host.docker.internal

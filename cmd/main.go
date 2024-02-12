@@ -1,4 +1,4 @@
-// percona-everest-backend
+// everest
 // Copyright (C) 2023 Percona LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,9 +27,9 @@ import (
 	"go.uber.org/zap"
 	ctrlruntimelog "sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/percona/percona-everest-backend/api"
-	"github.com/percona/percona-everest-backend/cmd/config"
-	"github.com/percona/percona-everest-backend/pkg/logger"
+	"github.com/percona/everest/api"
+	"github.com/percona/everest/cmd/config"
+	"github.com/percona/everest/pkg/logger"
 )
 
 func main() {

@@ -18,7 +18,7 @@ linters-settings:
             desc: use "github.com/golang/protobuf/proto" instead
 
   goimports:
-    local-prefixes: github.com/percona/percona-everest-backend
+    local-prefixes: github.com/percona/everest
 
   unused:
     check-exported: true
@@ -30,7 +30,7 @@ linters-settings:
     sections:
       - standard # Captures all standard packages if they do not match another section.
       - default # Contains all imports that could not be matched to another section type.
-      - prefix(github.com/percona/percona-everest-backend) # Groups all local imports.
+      - prefix(github.com/percona/everest) # Groups all local imports.
 
 
 linters:
