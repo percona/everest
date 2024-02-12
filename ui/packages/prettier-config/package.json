@@ -1,0 +1,8 @@
+{
+  "name": "@percona/prettier-config",
+  "version": "0.0.1",
+  "main": "./prettier-config.json",    
+  "peerDependencies": {
+    "prettier": "^3.0.3"
+  }
+}

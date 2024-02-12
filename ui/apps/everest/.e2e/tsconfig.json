@@ -1,0 +1,24 @@
+{
+  "include": ["./**/*.ts"],
+  "exclude": ["./tests-out"],
+  "compilerOptions": {
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "types": ["@testing-library/jest-dom", "vitest/globals"],
+    "paths": {
+      "@percona/ui-lib": ["../../../packages/ui-lib/src"],
+      "@percona/design": ["../../../packages/design/src"],
+      "@percona/types": ["../../../packages/types/src"],
+      "@percona/utils": ["../../../packages/utils/src"]
+    },
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "target": "ES2020",
+    "module": "ESNext",
+    "esModuleInterop": true,
+    "moduleResolution": "Node",
+    "sourceMap": true,
+    "outDir": "./tests-out"
+  }
+}

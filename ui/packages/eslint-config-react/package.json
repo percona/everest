@@ -1,0 +1,12 @@
+{
+  "name": "@percona/eslint-config-react",
+  "version": "0.0.1",
+  "main": "./eslint-config.js",    
+  "peerDependencies": {
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.45.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.3"
+  }
+}

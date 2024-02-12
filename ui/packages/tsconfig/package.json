@@ -1,0 +1,5 @@
+{
+  "name": "@percona/tsconfig",
+  "version": "0.0.1",
+  "main": "./react-library.json"
+}

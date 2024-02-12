@@ -1,0 +1,11 @@
+{
+  "extends": "@percona/tsconfig/react-library.json",
+  "include": ["./src/**/*.*"],
+  "exclude": ["dist", "build", "node_modules"],
+  "compilerOptions": {
+    "outDir": "dist",
+    "declaration": true,
+    "declarationDir": "typings",
+    "types": ["@testing-library/jest-dom", "vitest/globals"]
+  }
+}

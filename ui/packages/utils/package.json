@@ -1,0 +1,34 @@
+{
+  "name": "@percona/utils",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/esm/index.js",
+  "module": "dist/esm/index.js",
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --fix",
+    "format": "prettier .  --write",
+    "rm-build-dir": "rm -rf dist",
+    "build": "rollup -c"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "prettier": "@percona/prettier-config",
+  "devDependencies": {
+    "@percona/prettier-config": "workspace:*",
+    "@percona/tsconfig": "workspace:*",
+    "@percona/eslint-config-react": "workspace:*",
+    "@percona/types": "workspace:*",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.5",
+    "rollup": "^4.1.5",
+    "rollup-plugin-dts": "^6.1.0",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-terser": "^7.0.2",
+    "typescript": "^5.2.2"
+  }
+}

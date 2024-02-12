@@ -1,0 +1,7 @@
+.turbo
+dist
+node_modules
+.rollup.cache
+tsconfig.tsbuildinfo
+/playwright-report/
+/playwright/.cache/
