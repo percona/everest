@@ -33,7 +33,7 @@ import (
 )
 
 func main() {
-	logger := logger.MustInitLogger()
+	logger := logger.MustInitLogger(true)
 	defer logger.Sync() //nolint:errcheck
 	l := logger.Sugar()
 

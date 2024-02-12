@@ -7,6 +7,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// ListSecrets returns secrets.
+func (c *Client) ListSecrets(ctx context.Context, namespace string) (*corev1.SecretList, error) {
+	return c.clientset.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{})
+}
+
 // GetSecret returns secret by name.
 func (c *Client) GetSecret(ctx context.Context, namespace, name string) (*corev1.Secret, error) {
 	return c.clientset.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})

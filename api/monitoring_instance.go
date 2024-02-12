@@ -23,11 +23,11 @@ import (
 	"github.com/AlekSi/pointer"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/pmm"
 )
 

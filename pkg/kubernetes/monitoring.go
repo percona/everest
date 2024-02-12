@@ -13,7 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package client
+// Package kubernetes ...
+package kubernetes
 
-//go:generate ../../../bin/ifacemaker -f backup_storage.go -f client.go -f ctl.go -f database_cluster.go -f database_cluster_backup.go -f database_cluster_restore.go -f database_engine.go -f monitoring.go -f monitoring_config.go -f namespace.go -f node.go -f pod.go -f secret.go -f storage.go -f writer -s Client -i KubeClientConnector -p client -o kubeclient_interface.go
-//go:generate ../../../bin/mockery --name=KubeClientConnector --case=snake --inpackage
+import "context"
+
+// DeleteAllMonitoringResources deletes all resources related to monitoring from k8s cluster.
+// If namespace is empty, a default namespace is used.
+func (k *Kubernetes) DeleteAllMonitoringResources(ctx context.Context, namespace string) error {
+	return k.client.DeleteAllMonitoringResources(ctx, namespace)
+}

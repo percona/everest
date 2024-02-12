@@ -19,11 +19,11 @@ package customresources
 import (
 	"sync"
 
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
 //nolint:gochecknoglobals
@@ -32,11 +32,10 @@ var addToScheme sync.Once
 // Client contains a rest client.
 type Client struct {
 	restClient rest.Interface
-	restMapper meta.RESTMapper
 }
 
 // NewForConfig creates a new database cluster client based on config.
-func NewForConfig(c *rest.Config, restMapper meta.RESTMapper) (*Client, error) {
+func NewForConfig(c *rest.Config) (*Client, error) {
 	config := *c
 	config.ContentConfig.GroupVersion = &everestv1alpha1.GroupVersion
 	config.APIPath = "/apis"
@@ -60,6 +59,5 @@ func NewForConfig(c *rest.Config, restMapper meta.RESTMapper) (*Client, error) {
 
 	return &Client{
 		restClient: client,
-		restMapper: restMapper,
 	}, nil
 }

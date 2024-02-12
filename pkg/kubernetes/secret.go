@@ -6,6 +6,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+// ListSecrets returns secret by name.
+func (k *Kubernetes) ListSecrets(ctx context.Context, namespace string) (*corev1.SecretList, error) {
+	return k.client.ListSecrets(ctx, namespace)
+}
+
 // GetSecret returns a secret by name.
 func (k *Kubernetes) GetSecret(ctx context.Context, namespace, name string) (*corev1.Secret, error) {
 	return k.client.GetSecret(ctx, namespace, name)
@@ -14,6 +19,11 @@ func (k *Kubernetes) GetSecret(ctx context.Context, namespace, name string) (*co
 // CreateSecret creates a secret.
 func (k *Kubernetes) CreateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error) {
 	return k.client.CreateSecret(ctx, secret)
+}
+
+// SetSecret creates or updates an existing secret.
+func (k *Kubernetes) SetSecret(secret *corev1.Secret) error {
+	return k.client.ApplyObject(secret)
 }
 
 // UpdateSecret updates a secret.
