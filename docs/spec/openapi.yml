@@ -1,0 +1,2327 @@
+openapi: 3.0.2
+servers:
+  - url: /v1
+info:
+  version: 1.0.0
+  title: Percona Everest schema
+  description: |
+    # Authentication
+    All requests to Everest API require `Authorization: Bearer <token>` header with a valid token in plain-text.
+    
+    The token can be obtained by using `everestctl token reset` which resets the token and prints it to the screen.
+tags:
+  - name: k8s
+    description: Everything related to the Kubernetes Clusters
+  - name: databaseCluster
+    description: Everything related to the Database Clusters
+  - name: databaseEngine
+    description: Everything related to the Database Engines
+  - name: databaseClusterRestore
+    description: Everything related to the Database Cluster Restores
+  - name: databaseClusterBackup
+    description: Everything related to the Database Cluster Backups
+  - name: backupStorage
+    description: Everything related to the Backup storage
+
+paths:
+  '/namespaces':
+    get:
+      summary: Get all namespaces managed by Everest
+      description: Get all namespaces managed by Everest
+      operationId: listNamespaces
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NamespaceList'
+  '/version':
+    get:
+      summary: Get Everest Backend version info
+      description: Get Everest Backend version info
+      operationId: versionInfo
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Version'
+  '/resources':
+    get:
+      tags:
+        - k8s
+      summary: Get the capacity and available resources of a kubernetes cluster
+      description: Get the capacity and available resources of a kubernetes cluster
+      operationId: getKubernetesClusterResources
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KubernetesClusterResources'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/cluster-info':
+    get:
+      tags:
+        - k8s
+      summary: Get the cluster type and storage classes of a kubernetes cluster
+      description: Get the cluster type and storage classes of a kubernetes cluster
+      operationId: getKubernetesClusterInfo
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KubernetesClusterInfo'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-clusters':
+    post:
+      tags:
+        - databaseCluster
+      summary: Create a database cluster
+      description: Create a database cluster
+      operationId: createDatabaseCluster
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseCluster'
+        '201':
+          description: Created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseCluster'
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseCluster'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The database cluster object to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatabaseCluster'
+    get:
+      tags:
+        - databaseCluster
+      summary: List of the created database clusters
+      description: List of the created database clusters
+      operationId: listDatabaseClusters
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterList'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-clusters/{name}':
+    get:
+      tags:
+        - databaseCluster
+      summary: Get the specified database cluster
+      description: Get the specified database cluster
+      operationId: getDatabaseCluster
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseCluster'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - databaseCluster
+      summary: Replace the specified database cluster
+      description: Replace the specified database cluster
+      operationId: updateDatabaseCluster
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseCluster'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The database cluster object to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatabaseCluster'
+    delete:
+      tags:
+        - databaseCluster
+      summary: Delete the specified database cluster
+      description: Delete the specified database cluster
+      operationId: deleteDatabaseCluster
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status_v2'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-clusters/{name}/backups':
+    get:
+      tags:
+        - databaseClusterBackup
+      summary: List of the created database cluster backups
+      description: List of the created database cluster backups
+      operationId: listDatabaseClusterBackups
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterBackupList'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-clusters/{name}/restores':
+    get:
+      tags:
+        - databaseClusterRestore
+      summary: List of the created database cluster restores
+      description: List of the created database cluster restores
+      operationId: listDatabaseClusterRestores
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterRestoreList'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-clusters/{name}/credentials':
+    get:
+      tags:
+        - databaseCluster
+      summary: Get the specified database cluster credentials
+      description: Get the specified database cluster credentials
+      operationId: getDatabaseClusterCredentials
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterCredential'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-clusters/{name}/pitr':
+    get:
+      tags:
+        - databaseCluster
+      summary: Get the Point-in-Time related data for the specified database cluster
+      description: Get the Point-in-Time related data for the specified database cluster
+      operationId: getDatabaseClusterPitr
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterPitr'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-engines':
+    get:
+      tags:
+        - databaseEngine
+      summary: List of the available database engines
+      description: List of available database engines
+      operationId: listDatabaseEngines
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseEngineList'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-engines/{name}':
+    get:
+      tags:
+        - databaseEngine
+      summary: Get the specified database engine
+      description: Get the specified database engine
+      operationId: getDatabaseEngine
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database engine
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseEngine'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - databaseEngine
+      summary: Update the specified database engine
+      description: Update the specified database engine
+      operationId: updateDatabaseEngine
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database engine
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The database cluster object to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatabaseEngine'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseEngine'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-cluster-restores':
+    post:
+      tags:
+        - databaseClusterRestore
+      summary: Create a database cluster restore
+      description: Create a database cluster restore
+      operationId: createDatabaseClusterRestore
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterRestore'
+        '201':
+          description: Created success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterRestore'
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterRestore'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The database cluster restore object to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatabaseClusterRestore'
+  '/namespaces/{namespace}/database-cluster-restores/{name}':
+    get:
+      tags:
+        - databaseClusterRestore
+      summary: Returns the specified cluster restore
+      description: Returns the specified cluster restore
+      operationId: getDatabaseClusterRestore
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database cluster restore. Can be found under Metadata["name"] of the DatabaseClusterRestore object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterRestore'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - databaseClusterRestore
+      summary: Replace the specified cluster restore
+      description: Replace the specified cluster restore
+      operationId: updateDatabaseClusterRestore
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database cluster restore. Can be found under Metadata["name"] of the DatabaseClusterRestore object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterRestore'
+        '201':
+          description: Created successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterRestore'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The database cluster restore object to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatabaseClusterRestore'
+    delete:
+      tags:
+        - databaseClusterRestore
+      summary: Delete the specified cluster restore
+      description: Delete the specified cluster restore
+      operationId: deleteDatabaseClusterRestore
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database cluster restore. Can be found under Metadata["name"] of the DatabaseClusterRestore object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status_v2'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-cluster-backups':
+    post:
+      tags:
+        - databaseClusterBackup
+      summary: Create a database cluster backup
+      description: Create a database cluster backup
+      operationId: createDatabaseClusterBackup
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterBackup'
+        '201':
+          description: Created success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterBackup'
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterBackup'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The database cluster backup object to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatabaseClusterBackup'
+  '/namespaces/{namespace}/database-cluster-backups/{name}':
+    get:
+      tags:
+        - databaseClusterBackup
+      summary: Returns the specified cluster backup
+      description: Returns the specified cluster backup
+      operationId: getDatabaseClusterBackup
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+
+          in: path
+          description: Name of the database cluster backup. Can be found under Metadata["name"] of the DatabaseClusterBackup object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterBackup'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - databaseClusterBackup
+      summary: Delete the specified cluster backup
+      description: Delete the specified cluster backup
+      operationId: deleteDatabaseClusterBackup
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database cluster backup. Can be found under Metadata["name"] of the DatabaseClusterBackup object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status_v2'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/backup-storages':
+    post:
+      tags:
+        - backupStorage
+      summary: Create a new backup storage object
+      description: |
+        Create a new backup storage object.
+
+        **Examples**:
+          ```
+          {
+            "name": "s3-storage",
+            "type": "s3",
+            "bucketName": "bucket1",
+            "accessKey": "access_key",
+            "secretKey": "secret_key",
+            "region": "eu-central-1"
+          }
+          ```
+
+          ```
+          {
+            "name": "azure-storage",
+            "type": "azure",
+            "bucketName": "container1",
+            "accessKey": "storage_account_name",
+            "secretKey": "storage_account_key",
+          }
+          ```
+      operationId: createBackupStorage
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackupStorage'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The backup storage object to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBackupStorageParams'
+    get:
+      tags:
+        - backupStorage
+      summary: List of the created backup storages
+      description: List of the created backup storages
+      operationId: listBackupStorages
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackupStoragesList'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/backup-storages/{name}':
+    get:
+      tags:
+        - backupStorage
+      summary: Get the specified backup storage
+      description: Get the specified backup storage
+      operationId: getBackupStorage
+      parameters:
+        - name: name
+          in: path
+          description: Name of the backup storage
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackupStorage'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      tags:
+        - backupStorage
+      summary: Partial update of the specified backup storage
+      description: Partial update of the specified backup storage. Updates only the specified fields.
+      operationId: updateBackupStorage
+      parameters:
+        - name: name
+          in: path
+          description: Name of the backup storage
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackupStorage'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The backup storage params. Only the specified fields will be updated.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBackupStorageParams'
+    delete:
+      tags:
+        - backupStorage
+      summary: Delete the specified backup storage
+      description: Delete the specified backup storage
+      operationId: deleteBackupStorage
+      parameters:
+        - name: name
+          in: path
+          description: Name of the backup storage
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successful operation
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/monitoring-instances':
+    post:
+      tags:
+        - monitoringInstances
+      summary: Create a new monitoring instance object
+      description: |
+        A monitoring instance object requires `type` to be set.
+        Based on the `type` the respective key with configuration needs to be set.
+        Such as, if `type: pmm`, then `pmm` key needs to be provided with a configuration.
+      operationId: createMonitoringInstance
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringInstance'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The Monitoring instance object to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonitoringInstanceCreateParams'
+    get:
+      tags:
+        - monitoringInstances
+      summary: List of the created monitoring instances
+      description: List of the created monitoring instances
+      operationId: listMonitoringInstances
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringInstancesList'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/monitoring-instances/{name}':
+    get:
+      tags:
+        - monitoringInstances
+      summary: Get the specified monitoring instance
+      description: Get the specified monitoring instance
+      operationId: getMonitoringInstance
+      parameters:
+        - name: name
+          in: path
+          description: Name of the Monitoring instance
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringInstance'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Monitoring instance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      tags:
+        - monitoringInstances
+      summary: Update the specified Monitoring instance
+      description: Update the specified Monitoring instance
+      operationId: updateMonitoringInstance
+      parameters:
+        - name: name
+          in: path
+          description: Name of the monitoring instance
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringInstance'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Monitoring instance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The monitoring instance object to be updated.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonitoringInstanceUpdateParams'
+    delete:
+      tags:
+        - monitoringInstances
+      summary: Delete the specified Monitoring instance
+      description: Delete the specified Monitoring instance
+      operationId: deleteMonitoringInstance
+      parameters:
+        - name: name
+          in: path
+          description: Name of the monitoring instance
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successful operation
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Monitoring instance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Error:
+      type: object
+      description: Error response
+      properties:
+        message:
+          type: string
+    NamespaceList:
+      type: array
+      items:
+        type: string
+    CreateBackupStorageParams:
+      type: object
+      description: Backup storage parameters
+      properties:
+        name:
+          description: A user defined string name of the storage in the DNS name format https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names
+          type: string
+          example: aws-dev
+        description:
+          type: string
+        type:
+          type: string
+          enum:
+            - s3
+            - azure
+        bucketName:
+          type: string
+          description: The cloud storage bucket/container name
+        accessKey:
+          type: string
+        secretKey:
+          type: string
+        url:
+          type: string
+        region:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        targetNamespaces:
+          type: array
+          description: List of namespaces allowed to use this backup storage
+          items:
+            type: string
+      required:
+        - name
+        - bucketName
+        - accessKey
+        - secretKey
+        - type
+        - targetNamespaces
+      additionalProperties: false
+    UpdateBackupStorageParams:
+      type: object
+      description: Backup storage parameters
+      properties:
+        description:
+          type: string
+        bucketName:
+          type: string
+          description: The cloud storage bucket/container name
+        accessKey:
+          type: string
+        secretKey:
+          type: string
+        url:
+          type: string
+        region:
+          type: string
+        targetNamespaces:
+          type: array
+          description: List of namespaces allowed to use this backup storage
+          items:
+            type: string
+      additionalProperties: false
+    BackupStorage:
+      type: object
+      description: Backup storage information
+      properties:
+        type:
+          type: string
+          enum:
+            - s3
+            - azure
+        name:
+          type: string
+        description:
+          type: string
+        bucketName:
+          type: string
+        url:
+          type: string
+        region:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        targetNamespaces:
+          type: array
+          description: List of namespaces allowed to use this backup storage
+          items:
+            type: string
+      additionalProperties: false
+      required:
+        - name
+        - bucketName
+        - type
+        - targetNamespaces
+    BackupStoragesList:
+      type: array
+      items:
+        type: object
+        $ref: '#/components/schemas/BackupStorage'
+    MonitoringInstanceBase:
+      type: object
+      description: Monitoring instance information
+      properties:
+        type:
+          type: string
+          enum:
+          - pmm
+          x-go-type-skip-optional-pointer: true
+        url:
+          type: string
+          minLength: 1
+          x-go-type-skip-optional-pointer: true
+        targetNamespaces:
+          type: array
+          description: List of namespaces allowed to use this monitoring instance
+          items:
+            type: string
+    MonitoringInstanceBaseWithName:
+      type: object
+      description: Monitoring instance information
+      allOf:
+        - $ref: '#/components/schemas/MonitoringInstanceBase'
+        - type: object
+          properties:
+            name:
+              type: string
+              minLength: 1
+              description: A user defined string name of the storage in the DNS name format https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names
+              x-go-type-skip-optional-pointer: true
+    MonitoringInstancePMM:
+      type: object
+      properties:
+        pmm:
+          type: object
+          x-go-type-name: PMMMonitoringInstanceSpec
+          properties:
+            user:
+              type: string
+              x-go-type-skip-optional-pointer: true
+            password:
+              type: string
+              x-go-type-skip-optional-pointer: true
+            apiKey:
+              type: string
+              minLength: 1
+              x-go-type-skip-optional-pointer: true
+    MonitoringInstanceCreateParams:
+      description: Monitoring instance create information
+      allOf:
+        - $ref: '#/components/schemas/MonitoringInstanceBaseWithName'
+        - $ref: '#/components/schemas/MonitoringInstancePMM'
+      required:
+        - type
+        - url
+        - targetNamespaces
+        - name
+    MonitoringInstanceUpdateParams:
+      description: Monitoring instance update information
+      allOf:
+        - $ref: '#/components/schemas/MonitoringInstanceBase'
+        - $ref: '#/components/schemas/MonitoringInstancePMM'
+    MonitoringInstance:
+      description: Monitoring instance information
+      allOf:
+        - $ref: '#/components/schemas/MonitoringInstanceBaseWithName'
+      required:
+        - type
+        - url
+        - targetNamespaces
+        - name
+    MonitoringInstancesList:
+      type: array
+      items:
+        type: object
+        $ref: '#/components/schemas/MonitoringInstance'
+    DatabaseClusterCredential:
+      type: object
+      description: kubernetes object
+      properties:
+        username:
+          type: string
+          example: root
+        password:
+          type: string
+          example: root
+    DatabaseClusterPitr:
+      type: object
+      description: point-in-time recovery related data
+      properties:
+        earliestDate:
+          type: string
+          format: date-time
+          example: "2023-12-31T23:59:59Z"
+        latestDate:
+          type: string
+          format: date-time
+          example: "2023-12-31T23:59:59Z"
+        latestBackupName:
+          type: string
+        gaps:
+          description: indicates if there are pitr logs gaps detected after this backup was taken
+          type: boolean
+    KubernetesClusterResources:
+      type: object
+      description: kubernetes cluster resources
+      properties:
+        capacity:
+          type: object
+          x-go-type-name: ResourcesCapacity
+          properties:
+            cpuMillis:
+              type: number
+              x-go-type: uint64
+            memoryBytes:
+              x-go-type: uint64
+              type: number
+            diskSize:
+              type: number
+              x-go-type: uint64
+        available:
+          type: object
+          x-go-type-name: ResourcesAvailable
+          properties:
+            cpuMillis:
+              type: number
+              x-go-type: uint64
+            memoryBytes:
+              type: number
+              x-go-type: uint64
+            diskSize:
+              type: number
+              x-go-type: uint64
+      required:
+        - capacity
+        - available
+    KubernetesClusterInfo:
+      type: object
+      description: kubernetes cluster info
+      properties:
+        clusterType:
+          type: string
+        storageClassNames:
+          type: array
+          items:
+            type: string
+          example: ["gp2", "gp3"]
+      required:
+        - clusterType
+        - storageClassNames
+    Version:
+      type: object
+      description: Everest version info
+      properties:
+        projectName:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        version:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        fullCommit:
+          type: string
+          x-go-type-skip-optional-pointer: true
+      required:
+        - projectName
+        - version
+        - fullCommit
+    DatabaseClusterList:
+      description: DatabaseClusterList is an object that contains the list of the existing database clusters.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+                  of an object. Servers should convert recognized schemas to the latest
+                  internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+                  object represents. Servers may infer this from the endpoint the client
+                  submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DatabaseCluster'
+        metadata:
+          type: object
+      type: object
+    DatabaseEngineList:
+      description: DatabaseEngineList is an object that contains the list of the existing database engines.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+                  of an object. Servers should convert recognized schemas to the latest
+                  internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+                  object represents. Servers may infer this from the endpoint the client
+                  submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DatabaseEngine'
+        metadata:
+          type: object
+      type: object
+    DatabaseClusterRestoreList:
+      description: DatabaseClusterRestoreList is an object that contains the list of the existing database cluster restores.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+                  of an object. Servers should convert recognized schemas to the latest
+                  internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+                  object represents. Servers may infer this from the endpoint the client
+                  submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DatabaseClusterRestore'
+        metadata:
+          type: object
+      type: object
+    DatabaseClusterBackupList:
+      description: DatabaseClusterBackupList is an object that contains the list of the existing database cluster backups.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+                  of an object. Servers should convert recognized schemas to the latest
+                  internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+                  object represents. Servers may infer this from the endpoint the client
+                  submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DatabaseClusterBackup'
+        metadata:
+          type: object
+      type: object
+    SizeLimit:
+      anyOf:
+        - $ref: '#/components/schemas/Integer'
+        - $ref: '#/components/schemas/String'
+      description: 'sizeLimit is the total amount of local storage required for this EmptyDir volume. The size limit is also applicable for memory medium. The maximum usage on memory medium EmptyDir would be the minimum value between the SizeLimit specified here and the sum of memory limits of all containers in a pod. The default is nil which means that the limit is undefined. More info: http://kubernetes.io/docs/user-guide/volumes#emptydir'
+      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+      x-kubernetes-int-or-string: true
+    Integer:
+      type: integer
+    String:
+      type: string
+
+    # -------------------------
+    # DatabaseEngine spec is imported from the everest operator,
+    # please do not edit the definition below manually
+    # -------------------------
+    DatabaseEngine:
+      description: DatabaseEngine is the Schema for the databaseengines API.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: DatabaseEngineSpec is a spec for a database engine.
+          properties:
+            allowedVersions:
+              items:
+                type: string
+              type: array
+            type:
+              description: EngineType stands for the supported database engines.
+                Right now it's only pxc and psmdb. However, it can be ps, pg and
+                any other source.
+              type: string
+          required:
+          - type
+          type: object
+        status:
+          description: DatabaseEngineStatus defines the observed state of DatabaseEngine.
+          properties:
+            availableVersions:
+              description: Versions struct represents available versions of database
+                engine components.
+              properties:
+                backup:
+                  additionalProperties:
+                    description: Component contains information of the database
+                      engine component. Database Engine component can be database
+                      engine, database proxy or tools image path.
+                    properties:
+                      critical:
+                        type: boolean
+                      imageHash:
+                        type: string
+                      imagePath:
+                        type: string
+                      status:
+                        type: string
+                    type: object
+                  type: object
+                engine:
+                  additionalProperties:
+                    description: Component contains information of the database
+                      engine component. Database Engine component can be database
+                      engine, database proxy or tools image path.
+                    properties:
+                      critical:
+                        type: boolean
+                      imageHash:
+                        type: string
+                      imagePath:
+                        type: string
+                      status:
+                        type: string
+                    type: object
+                  type: object
+                proxy:
+                  additionalProperties:
+                    additionalProperties:
+                      description: Component contains information of the database
+                        engine component. Database Engine component can be database
+                        engine, database proxy or tools image path.
+                      properties:
+                        critical:
+                          type: boolean
+                        imageHash:
+                          type: string
+                        imagePath:
+                          type: string
+                        status:
+                          type: string
+                      type: object
+                    type: object
+                  type: object
+                tools:
+                  additionalProperties:
+                    additionalProperties:
+                      description: Component contains information of the database
+                        engine component. Database Engine component can be database
+                        engine, database proxy or tools image path.
+                      properties:
+                        critical:
+                          type: boolean
+                        imageHash:
+                          type: string
+                        imagePath:
+                          type: string
+                        status:
+                          type: string
+                      type: object
+                    type: object
+                  type: object
+              type: object
+            operatorVersion:
+              type: string
+            status:
+              description: EngineState represents state of engine in a k8s cluster.
+              type: string
+          type: object
+      type: object
+
+
+    # -------------------------
+    # DatabaseCluster spec is imported from the everest operator,
+    # please do not edit the definition below manually
+    # -------------------------
+    DatabaseCluster:
+      description: DatabaseCluster is the Schema for the databaseclusters API.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: DatabaseClusterSpec defines the desired state of DatabaseCluster.
+          properties:
+            allowUnsafeConfiguration:
+              description: AllowUnsafeConfiguration field used to ensure that the user can create configurations unfit for production use.
+              type: boolean
+            backup:
+              description: Backup is the backup specification
+              properties:
+                enabled:
+                  description: Enabled is a flag to enable backups
+                  type: boolean
+                pitr:
+                  description: PITR is the configuration of the point in time recovery
+                  properties:
+                    backupStorageName:
+                      description: BackupStorageName is the name of the BackupStorage where the PITR is enabled
+                      type: string
+                    enabled:
+                      description: Enabled is a flag to enable PITR
+                      type: boolean
+                    uploadIntervalSec:
+                      description: UploadIntervalSec number of seconds between the binlogs uploads
+                      type: integer
+                  required:
+                    - enabled
+                  type: object
+                schedules:
+                  description: Schedules is a list of backup schedules
+                  items:
+                    description: BackupSchedule is the backup schedule configuration.
+                    properties:
+                      backupStorageName:
+                        description: BackupStorageName is the name of the BackupStorage CR that defines the storage location
+                        type: string
+                      enabled:
+                        description: Enabled is a flag to enable the schedule
+                        type: boolean
+                      name:
+                        description: Name is the name of the schedule
+                        type: string
+                      retentionCopies:
+                        description: RetentionCopies is the number of backup copies to retain
+                        format: int32
+                        type: integer
+                      schedule:
+                        description: Schedule is the cron schedule
+                        type: string
+                    required:
+                      - backupStorageName
+                      - enabled
+                      - name
+                      - schedule
+                    type: object
+                  type: array
+              required:
+                - enabled
+              type: object
+            dataSource:
+              description: DataSource defines a data source for bootstraping a new cluster
+              properties:
+                backupSource:
+                  description: BackupSource is the backup source to restore from
+                  properties:
+                    backupStorageName:
+                      description: BackupStorageName is the name of the BackupStorage used for backups.
+                      type: string
+                    path:
+                      description: Path is the path to the backup file/directory.
+                      type: string
+                  required:
+                    - backupStorageName
+                    - path
+                  type: object
+                dbClusterBackupName:
+                  description: DBClusterBackupName is the name of the DB cluster backup to restore from
+                  type: string
+                pitr:
+                  description: PITR is the point-in-time recovery configuration
+                  properties:
+                    date:
+                      description: 'Date is the UTC date to recover to. The accepted format: "2006-01-02T15:04:05Z".'
+                      type: string
+                    type:
+                      default: date
+                      description: Type is the type of recovery.
+                      enum:
+                        - date
+                        - latest
+                      type: string
+                  type: object
+              type: object
+            engine:
+              description: Engine is the database engine specification
+              properties:
+                config:
+                  description: Config is the engine configuration
+                  type: string
+                replicas:
+                  description: Replicas is the number of engine replicas
+                  format: int32
+                  minimum: 1
+                  type: integer
+                resources:
+                  description: Resources are the resource limits for each engine replica. If not set, resource limits are not imposed
+                  properties:
+                    cpu:
+                      anyOf:
+                        - type: integer
+                        - type: string
+                      description: CPU is the CPU resource requirements
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    memory:
+                      anyOf:
+                        - type: integer
+                        - type: string
+                      description: Memory is the memory resource requirements
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                  type: object
+                storage:
+                  description: Storage is the engine storage configuration
+                  properties:
+                    class:
+                      description: Class is the storage class to use for the persistent volume claim
+                      type: string
+                    size:
+                      anyOf:
+                        - type: integer
+                        - type: string
+                      description: Size is the size of the persistent volume claim
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                  required:
+                    - size
+                  type: object
+                type:
+                  description: Type is the engine type
+                  enum:
+                    - pxc
+                    - postgresql
+                    - psmdb
+                  type: string
+                userSecretsName:
+                  description: UserSecretsName is the name of the secret containing the user secrets
+                  type: string
+                version:
+                  description: Version is the engine version
+                  type: string
+              required:
+                - storage
+                - type
+              type: object
+            monitoring:
+              description: Monitoring is the monitoring configuration
+              properties:
+                monitoringConfigName:
+                  description: MonitoringConfigName is the name of a monitoringConfig CR.
+                  type: string
+                resources:
+                  description: Resources defines resource limitations for the monitoring.
+                  properties:
+                    claims:
+                      description: "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. \n This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. \n This field is immutable. It can only be set for containers."
+                      items:
+                        description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                        properties:
+                          name:
+                            description: Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.
+                            type: string
+                        required:
+                          - name
+                        type: object
+                      type: array
+                      x-kubernetes-list-map-keys:
+                        - name
+                      x-kubernetes-list-type: map
+                    limits:
+                      additionalProperties:
+                        anyOf:
+                          - type: integer
+                          - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                      description: 'Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                      type: object
+                    requests:
+                      additionalProperties:
+                        anyOf:
+                          - type: integer
+                          - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                      description: 'Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                      type: object
+                  type: object
+              type: object
+            paused:
+              description: Paused is a flag to stop the cluster
+              type: boolean
+            proxy:
+              description: Proxy is the proxy specification. If not set, an appropriate proxy specification will be applied for the given engine. A common use case for setting this field is to control the external access to the database cluster.
+              properties:
+                config:
+                  description: Config is the proxy configuration
+                  type: string
+                expose:
+                  description: Expose is the proxy expose configuration
+                  properties:
+                    ipSourceRanges:
+                      description: IPSourceRanges is the list of IP source ranges (CIDR notation) to allow access from. If not set, there is no limitations
+                      items:
+                        description: IPSourceRange represents IP addresses in CIDR notation or without a netmask.
+                        type: string
+                      type: array
+                    type:
+                      default: internal
+                      description: Type is the expose type, can be internal or external
+                      enum:
+                        - internal
+                        - external
+                      type: string
+                  type: object
+                replicas:
+                  description: Replicas is the number of proxy replicas
+                  format: int32
+                  minimum: 1
+                  type: integer
+                resources:
+                  description: Resources are the resource limits for each proxy replica. If not set, resource limits are not imposed
+                  properties:
+                    cpu:
+                      anyOf:
+                        - type: integer
+                        - type: string
+                      description: CPU is the CPU resource requirements
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    memory:
+                      anyOf:
+                        - type: integer
+                        - type: string
+                      description: Memory is the memory resource requirements
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                  type: object
+                type:
+                  description: Type is the proxy type
+                  enum:
+                    - mongos
+                    - haproxy
+                    - proxysql
+                    - pgbouncer
+                  type: string
+              type: object
+          required:
+            - engine
+          type: object
+        status:
+          description: DatabaseClusterStatus defines the observed state of DatabaseCluster.
+          properties:
+            activeStorage:
+              description: ActiveStorage is the storage used in cluster (psmdb only)
+              type: string
+            hostname:
+              description: Hostname is the hostname where the cluster can be reached
+              type: string
+            message:
+              description: Message is extra information about the cluster
+              type: string
+            port:
+              description: Port is the port where the cluster can be reached
+              format: int32
+              type: integer
+            ready:
+              description: Ready is the number of ready pods
+              format: int32
+              type: integer
+            size:
+              description: Size is the total number of pods
+              format: int32
+              type: integer
+            status:
+              description: Status is the status of the cluster
+              type: string
+          type: object
+      type: object
+    # -------------------------
+    # DatabaseClusterBackup spec is imported from the everest operator,
+    # please do not edit the definition below manually
+    # -------------------------
+    DatabaseClusterBackup:
+      description: DatabaseClusterBackup is the Schema for the databaseclusterbackups API.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: DatabaseClusterBackupSpec defines the desired state of DatabaseClusterBackup.
+          properties:
+            backupStorageName:
+              description: BackupStorageName is the name of the BackupStorage used for backups.
+              type: string
+            dbClusterName:
+              description: DBClusterName is the original database cluster name.
+              type: string
+          required:
+            - backupStorageName
+            - dbClusterName
+          type: object
+        status:
+          description: DatabaseClusterBackupStatus defines the observed state of DatabaseClusterBackup.
+          properties:
+            completed:
+              description: Completed is the time when the job was completed.
+              format: date-time
+              type: string
+            created:
+              description: Created is the timestamp of the upstream backup's creation.
+              format: date-time
+              type: string
+            destination:
+              description: Destination is the full path to the backup.
+              type: string
+            gaps:
+              description: Gaps identifies if there are gaps detected in the PITR logs
+              type: boolean
+            state:
+              description: State is the DatabaseBackup state.
+              type: string
+          required:
+            - gaps
+          type: object
+      type: object
+    # -------------------------
+    # DatabaseClusterRestore spec is imported from the everest operator,
+    # please do not edit the definition below manually
+    # -------------------------
+    DatabaseClusterRestore:
+      description: DatabaseClusterRestore is the Schema for the databaseclusterrestores API.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: DatabaseClusterRestoreSpec defines the desired state of DatabaseClusterRestore.
+          properties:
+            dataSource:
+              description: DataSource defines a data source for restoration.
+              properties:
+                backupSource:
+                  description: BackupSource is the backup source to restore from
+                  properties:
+                    backupStorageName:
+                      description: BackupStorageName is the name of the BackupStorage used for backups.
+                      type: string
+                    path:
+                      description: Path is the path to the backup file/directory.
+                      type: string
+                  required:
+                    - backupStorageName
+                    - path
+                  type: object
+                dbClusterBackupName:
+                  description: DBClusterBackupName is the name of the DB cluster backup to restore from
+                  type: string
+                pitr:
+                  description: PITR is the point-in-time recovery configuration
+                  properties:
+                    date:
+                      description: 'Date is the UTC date to recover to. The accepted format: "2006-01-02T15:04:05Z".'
+                      type: string
+                    type:
+                      default: date
+                      description: Type is the type of recovery.
+                      enum:
+                        - date
+                        - latest
+                      type: string
+                  type: object
+              type: object
+            dbClusterName:
+              description: DBClusterName defines the cluster name to restore.
+              type: string
+          required:
+            - dataSource
+            - dbClusterName
+          type: object
+        status:
+          description: DatabaseClusterRestoreStatus defines the observed state of DatabaseClusterRestore.
+          properties:
+            completed:
+              format: date-time
+              type: string
+            message:
+              type: string
+            state:
+              description: RestoreState represents state of restoration.
+              type: string
+          type: object
+      type: object
+
+    # -------------------------
+    # io.k8s.apimachinery.pkg.apis.meta.v1.Status_v2 spec is imported from k8s API,
+    # please do not edit the definition below manually
+    # -------------------------
+    io.k8s.apimachinery.pkg.apis.meta.v1.Status_v2:
+      description: Status is a return value for calls that don't return other objects.
+      type: object
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest internal
+            value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        code:
+          description: Suggested HTTP return code for this status, 0 if not set.
+          type: integer
+          format: int32
+        details:
+          description: Extended data associated with the reason.  Each reason may define
+            its own extended details. This field is optional and the data returned is
+            not guaranteed to conform to any schema except that defined by the reason
+            type.
+          "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails_v2"
+        kind:
+          description: 'Kind is a string value representing the REST resource this object
+            represents. Servers may infer this from the endpoint the client submits requests
+            to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        message:
+          description: A human-readable description of the status of this operation.
+          type: string
+        metadata:
+          description: 'Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+        reason:
+          description: A machine-readable description of why this operation is in the
+            "Failure" status. If this value is empty there is no information available.
+            A Reason clarifies an HTTP status code but does not override it.
+          type: string
+        status:
+          description: 'Status of the operation. One of: "Success" or "Failure". More
+            info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status'
+          type: string
+
+    # -------------------------
+    # io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta spec is imported from k8s API,
+    # please do not edit the definition below manually
+    # -------------------------
+    io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta:
+      description: ListMeta describes metadata that synthetic resources must have, including
+        lists and various status objects. A resource may have only one of {ObjectMeta,
+        ListMeta}.
+      type: object
+      properties:
+        continue:
+          description: continue may be set if the user set a limit on the number of items
+            returned, and indicates that the server has more data available. The value
+            is opaque and may be used to issue another request to the endpoint that served
+            this list to retrieve the next set of available objects. Continuing a consistent
+            list may not be possible if the server configuration has changed or more than
+            a few minutes have passed. The resourceVersion field returned when using this
+            continue value will be identical to the value in the first response, unless
+            you have received this token from an error message.
+          type: string
+        remainingItemCount:
+          description: remainingItemCount is the number of subsequent items in the list
+            which are not included in this list response. If the list request contained
+            label or field selectors, then the number of remaining items is unknown and
+            the field will be left unset and omitted during serialization. If the list
+            is complete (either because it is not chunking or because this is the last
+            chunk), then there are no more remaining items and this field will be left
+            unset and omitted during serialization. Servers older than v1.15 do not set
+            this field. The intended use of the remainingItemCount is *estimating* the
+            size of a collection. Clients should not rely on the remainingItemCount to
+            be set or to be exact.
+          type: integer
+          format: int64
+        resourceVersion:
+          description: 'String that identifies the server''s internal version of this
+            object that can be used by clients to determine when objects have changed.
+            Value must be treated as opaque by clients and passed unmodified back to the
+            server. Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+          type: string
+        selfLink:
+          description: |-
+            selfLink is a URL representing this object. Populated by the system. Read-only.
+
+            DEPRECATED Kubernetes will stop propagating this field in 1.20 release and the field is planned to be removed in 1.21 release.
+          type: string
+
+    # -------------------------
+    # io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails_v2 spec is imported from k8s API,
+    # please do not edit the definition below manually
+    # -------------------------
+    io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails_v2:
+      description: StatusDetails is a set of additional properties that MAY be set by
+        the server to provide additional information about a response. The Reason field
+        of a Status object defines what attributes will be set. Clients must ignore fields
+        that do not match the defined type of each attribute, and should assume that any
+        attribute may be empty, invalid, or under defined.
+      type: object
+      properties:
+        causes:
+          description: The Causes array includes more details associated with the StatusReason
+            failure. Not all StatusReasons may provide detailed causes.
+          type: array
+          items:
+            "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause"
+        group:
+          description: The group attribute of the resource associated with the status
+            StatusReason.
+          type: string
+        kind:
+          description: 'The kind attribute of the resource associated with the status
+            StatusReason. On some operations may differ from the requested resource Kind.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        name:
+          description: The name attribute of the resource associated with the status StatusReason
+            (when there is a single name which can be described).
+          type: string
+        retryAfterSeconds:
+          description: If specified, the time in seconds before the operation should be
+            retried. Some errors may indicate the client must take an alternate action
+            - for those errors this field may indicate how long to wait before taking
+            the alternate action.
+          type: integer
+          format: int32
+        uid:
+          description: 'UID of the resource. (when there is a single resource which can
+            be described). More info: http://kubernetes.io/docs/user-guide/identifiers#uids'
+          type: string
+
+    # -------------------------
+    # io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause spec is imported from k8s API,
+    # please do not edit the definition below manually
+    # -------------------------
+    io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause:
+      description: StatusCause provides more information about an api.Status failure,
+        including cases when multiple errors are encountered.
+      type: object
+      properties:
+        field:
+          description: |-
+            The field of the resource that has caused this error, as named by its JSON serialization. May include dot and postfix notation for nested attributes. Arrays are zero-indexed.  Fields may appear more than once in an array of causes due to fields having multiple errors. Optional.
+
+            Examples:
+              "name" - the field "name" on the current resource
+              "items[0].name" - the field "name" on the first array entry in "items"
+          type: string
+        message:
+          description: A human-readable description of the cause of the error.  This field
+            may be presented as-is to a reader.
+          type: string
+        reason:
+          description: A machine-readable description of the cause of the error. If this
+            value is empty there is no information available.
+          type: string

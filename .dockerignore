@@ -1,0 +1,13 @@
+**
+!bin/percona-everest-backend
+!cmd
+!migrations
+!model
+!service
+!static
+!go.*
+!vendor
+!api
+!model
+!public
+!pkg
