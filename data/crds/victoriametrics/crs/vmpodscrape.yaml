@@ -1,0 +1,15 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: pmm-vm-pod-scrape
+  namespace: default
+  labels:
+    app.kubernetes.io/managed-by: everest
+    everest.percona.com/type: monitoring
+spec:
+  podMetricsEndpoints:
+    - port: metrics
+      scheme: http
+  selector:
+    matchLabels:
+      monitored-by: vm-operator

@@ -1,0 +1,585 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: customresource-config-ksm
+  #namespace: default
+data:
+  config: |
+    kind: CustomResourceStateMetrics
+    spec:
+      resources:
+        - groupVersionKind:
+            group: pxc.percona.com
+            version: v1
+            kind: PerconaXtraDBCluster
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_pxc
+          metrics:
+            - name: info
+              help: "Information of PXC cluster on k8s"
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    version:
+                    - spec
+                    - crVersion
+            - name: pitr_enabled
+              help: "PITR enabled"
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                  - spec
+                  - backup
+                  - pitr
+                  - enabled
+            - name: status_state
+              help: "PXC state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - unknown
+                  - ready
+                  - initializing
+                  - error
+                  - paused
+            - name: status_pxc_replicas
+              help: "PXC Replica Status"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - pxc
+                  - size
+            - name: status_pxc_replicas_ready
+              help: "Number of ready PXC replicas"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - pxc
+                  - ready
+            - name: status_haproxy_replicas
+              help: "HAProxy Replica Status"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - haproxy
+                  - size
+            - name: status_haproxy_replicas_ready
+              help: "Number of ready HAProxy replicas"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - haproxy
+                  - ready
+            - name: status_proxysql_replicas
+              help: "ProxySQL Replica Status"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - proxysql
+                  - size
+            - name: status_proxysql_replicas_ready
+              help: "Number of ready ProxySQL replicas"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - proxysql
+                  - ready
+
+        - groupVersionKind:
+            group: pxc.percona.com
+            version: v1
+            kind: PerconaXtraDBClusterBackup
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_pxc_backup
+          metrics:
+            - name: info
+              help: "Information of PXC cluster on k8s"
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    cluster:
+                    - spec
+                    - pxcCluster
+                    storage:
+                    - spec
+                    - storageName
+            - name: status_state
+              help: "PXC Backup state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - Starting
+                  - Running
+                  - Failed
+                  - Succeeded
+            - name: status_completed
+              help: "Time when PXC Backup was completed"
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                  - status
+                  - completed
+
+        - groupVersionKind:
+            group: pxc.percona.com
+            version: v1
+            kind: PerconaXtraDBClusterRestore
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_pxc_restore
+          metrics:
+            - name: info
+              help: "Information of PXC cluster on k8s"
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    cluster:
+                    - spec
+                    - pxcCluster
+                    backup:
+                    - spec
+                    - backupName
+            - name: status_state
+              help: "PXC Restore state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - Starting
+                  - "Stopping Cluster"
+                  - Restoring
+                  - "Starting Cluster"
+                  - "Point-in-time recovering"
+                  - Failed
+                  - Succeeded
+            - name: status_completed
+              help: "Time when PXC Restore was completed"
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                  - status
+                  - completed
+        - groupVersionKind:         
+            group: psmdb.percona.com
+            version: v1
+            kind: PerconaServerMongoDB 
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_psmdb
+          metrics:
+            - name: info
+              help: "Information of PSMDB cluster"
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    version:
+                    - spec
+                    - crVersion
+            - name: pitr_enabled
+              help: "PITR enabled"
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                  - spec
+                  - backup
+                  - pitr
+                  - enabled
+            - name: sharding_enabled
+              help: "Sharding enabled"
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                  - spec
+                  - sharding
+                  - enabled
+            - name: status_state
+              help: "PSMDB state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - stopping
+                  - ready
+                  - initializing
+                  - error
+                  - paused
+            - name: status_mongos
+              help: "Mongos state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - mongos
+                  - status
+                  list:
+                  - stopping
+                  - ready
+                  - initializing
+                  - error
+                  - paused
+            - name: status_mongos_replicas
+              help: "Mongos Replica Status"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - mongos
+                  - size
+            - name: status_mongos_replicas_ready
+              help: "Mongos Replica Ready"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - mongos
+                  - ready
+        - groupVersionKind:
+            group: psmdb.percona.com
+            version: v1
+            kind: PerconaServerMongoDBBackup
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_psmdb_backup
+          metrics:
+            - name: info
+              help: "Information of PSMDB Backup"
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    cluster:
+                    - spec
+                    - clusterName
+                    storage:
+                    - spec
+                    - storageName
+            - name: status_state
+              help: "PSMDB Backup state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - waiting
+                  - requested
+                  - rejected
+                  - running
+                  - error
+                  - ready
+            - name: type
+              help: "PSMDB Backup Type Physical/Logical/Incremental"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: type
+                  path:
+                  - status
+                  - type
+                  list:
+                  - physical
+                  - incremental
+                  - logical
+            - name: status_start
+              help: "PSMDB Backup Start Time"
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                  - status
+                  - start
+            - name: status_completed
+              help: "PSMDB Backup Completed Time"
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                  - status
+                  - completed
+        - groupVersionKind:
+            group: psmdb.percona.com
+            version: v1
+            kind: PerconaServerMongoDBRestore
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_psmdb_restore
+          metrics:
+            - name: info
+              help: "Information of PSMDB Restore"
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    cluster:
+                    - spec
+                    - clusterName
+                    storage:
+                    - spec
+                    - backupName
+            - name: status_state
+              help: "PSMDB Restore state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - waiting
+                  - requested
+                  - rejected
+                  - running
+                  - error
+                  - ready
+            - name: status_completed
+              help: "PSMDB Restore Completed Time"
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                  - status
+                  - completed
+        - groupVersionKind:
+            group: pgv2.percona.com
+            version: v2
+            kind: PerconaPGCluster
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_pg
+          metrics:
+            - name: info
+              help: "Information of PG cluster"
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    version:
+                    - spec
+                    - crVersion
+                    postgresVersion:
+                    - spec
+                    - postgresVersion
+            - name: status_state
+              help: "PG state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - stopping
+                  - ready
+                  - initializing
+                  - error
+                  - paused
+            - name: status_pgbouncer_replicas
+              help: "PG Bouncer Replica Status"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - pgbouncer
+                  - size
+            - name: status_pgbouncer_replicas_ready
+              help: "PG Bouncer Replica in Ready State"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - pgbouncer
+                  - ready
+            - name: status_postgres_replicas
+              help: "Postgres Replica Status"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - postgres
+                  - size
+            - name: status_postgres_replicas_ready
+              help: "Postgres Replica in Ready State"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - postgres
+                  - ready
+        - groupVersionKind:
+            group: pgv2.percona.com
+            version: v2
+            kind: PerconaPGBackup
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_pg_backup
+          metrics:
+            - name: info
+              help: "Information of PG backup "
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    cluster:
+                    - spec
+                    - pgCluster
+                    repo:
+                    - spec
+                    - repoName
+            - name: status_state
+              help: "PG Backup state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - Starting
+                  - Running
+                  - Failed
+                  - Succeeded
+        - groupVersionKind:
+            group: pgv2.percona.com
+            version: v2
+            kind: PerconaPGRestore
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_pg_restore
+          metrics:
+            - name: info
+              help: "Information of PG restore"
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    cluster:
+                    - spec
+                    - pgCluster
+                    repo:
+                    - spec
+                    - repoName
+            - name: status_state
+              help: "PG Restore state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - Starting
+                  - Running
+                  - Failed
+                  - Succeeded                  

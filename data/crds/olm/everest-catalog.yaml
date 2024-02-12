@@ -1,0 +1,14 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: everest-catalog
+  namespace: olm
+spec:
+  displayName: Everest Catalog
+  publisher: Percona
+  sourceType: grpc
+  grpcPodConfig:
+    securityContextConfig: restricted
+  updateStrategy:
+    registryPoll:
+      interval: 45m
