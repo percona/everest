@@ -1,0 +1,12 @@
+Source: everestctl
+Maintainer: Percona Development Team <info@percona.com>
+Section: misc
+Priority: optional
+Standards-Version: 4.6.2.0
+
+
+Package: everestctl
+Architecture: any
+Depends: everestctl
+Description: This tool is a CLI client for Everest.
+ It is released under the Apache 2.0 license.
