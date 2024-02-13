@@ -70,7 +70,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	"github.com/percona/everest/pkg/kubernetes/client/customresources"
-	"github.com/percona/everest/pkg/kubernetes/client/database"
 )
 
 const (
@@ -103,7 +102,6 @@ type Client struct {
 	customClientSet  *customresources.Client
 	apiextClientset  apiextv1clientset.Interface
 	dynamicClientset dynamic.Interface
-	dbClusterClient  *database.DBClusterClient
 	rcLock           *sync.Mutex
 	restConfig       *rest.Config
 	namespace        string
@@ -599,7 +597,7 @@ func (c *Client) GetEvents(ctx context.Context, name string) (string, error) {
 				return newList, nil
 			})
 
-		if err2 == nil && len(events.Items) != 0 {
+		if err2 == nil && len(events.Items) > 0 {
 			return tabbedString(func(out io.Writer) error {
 				w := NewPrefixWriter(out)
 				w.Writef(0, "Pod '%v': error '%v', but found events.\n", name, err)

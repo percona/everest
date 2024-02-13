@@ -85,7 +85,6 @@ const (
 	everestOperatorContainerName = "manager"
 	databaseClusterKind          = "DatabaseCluster"
 	databaseClusterAPIVersion    = "everest.percona.com/v1alpha1"
-	restartAnnotationKey         = "everest.percona.com/restart"
 	managedByKey                 = "everest.percona.com/managed-by"
 
 	olmNamespace = "olm"
@@ -99,8 +98,8 @@ const (
 
 var (
 	// ErrEmptyVersionTag Got an empty version tag from GitHub API.
-	ErrEmptyVersionTag       error = errors.New("got an empty version tag from Github")
-	errNoEverestOperatorPods       = errors.New("no instances of everest-operator are running")
+	ErrEmptyVersionTag       = errors.New("got an empty version tag from Github")
+	errNoEverestOperatorPods = errors.New("no instances of everest-operator are running")
 )
 
 // Kubernetes is a client for Kubernetes.
@@ -199,7 +198,7 @@ func (k *Kubernetes) GetDefaultStorageClassName(ctx context.Context) (string, er
 	if err != nil {
 		return "", err
 	}
-	if len(storageClasses.Items) != 0 {
+	if len(storageClasses.Items) > 0 {
 		return storageClasses.Items[0].Name, nil
 	}
 	return "", errors.New("no storage classes available")
@@ -284,6 +283,7 @@ func (k *Kubernetes) CreateRestore(restore *everestv1alpha1.DatabaseClusterResto
 	return k.client.ApplyObject(restore)
 }
 
+// GetLogs returns logs.
 func (k *Kubernetes) GetLogs(
 	ctx context.Context,
 	containerStatuses []corev1.ContainerStatus,
@@ -318,6 +318,7 @@ func (k *Kubernetes) GetEvents(ctx context.Context, pod string) ([]string, error
 	return lines, nil
 }
 
+// InstallOLMOperator installs OLM operator.
 func (k *Kubernetes) InstallOLMOperator(ctx context.Context, upgrade bool) error {
 	deployment, err := k.client.GetDeployment(ctx, "olm-operator", "olm")
 	if err == nil && deployment != nil && deployment.ObjectMeta.Name != "" && !upgrade {
@@ -505,7 +506,7 @@ type InstallOperatorRequest struct {
 func mergeNamespacesEnvVar(str1, str2 string) string {
 	ns1 := strings.Split(str1, ",")
 	ns2 := strings.Split(str2, ",")
-	nsMap := map[string]struct{}{}
+	nsMap := make(map[string]struct{})
 
 	for _, ns := range ns1 {
 		if ns == "" {
