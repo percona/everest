@@ -16,7 +16,7 @@ jobs:
   check:
     name: Check
     timeout-minutes: 10
-    if: github.event_name == 'pull_request'
+#    if: github.event_name == 'pull_request'
 
     strategy:
       fail-fast: false
