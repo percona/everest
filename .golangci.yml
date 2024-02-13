@@ -48,6 +48,7 @@ linters:
     - varnamelen       # it's useful sometime to have a one-letter name
     - wrapcheck        # forces to wrap errors everywhere
     - wsl              # too many empty lines makes methods too long
+    - interfacer       # panics
 
 issues:
   exclude-use-default: false
