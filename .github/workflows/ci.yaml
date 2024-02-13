@@ -118,14 +118,9 @@ jobs:
 #          fi
 
       - name: Run linters
-        uses: reviewdog/action-golangci-lint@v2
-        with:
-          github_token: ${{ secrets.ROBOT_TOKEN || secrets.GITHUB_TOKEN }}
-          go_version: ${{ matrix.go-version }}
-          reporter: github-pr-review
-          fail_on_error: true
-          cache: false
-          golangci_lint_flags: "-c=.golangci.yml --timeout=5m"
+        run: |
+          bin/golangci-lint run --out-format=line-number | env REVIEWDOG_GITHUB_API_TOKEN=${{ secrets.GITHUB_TOKEN }} bin/reviewdog -f=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=true
+      
 
       - name: Check that there are no source code changes
         run: |
