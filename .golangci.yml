@@ -49,6 +49,7 @@ linters:
     - wrapcheck        # forces to wrap errors everywhere
     - wsl              # too many empty lines makes methods too long
     - interfacer       # panics
+    - perfsprint       # keep the format for consistency
 
 issues:
   exclude-use-default: false

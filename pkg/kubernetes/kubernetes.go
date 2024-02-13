@@ -416,7 +416,7 @@ func (k *Kubernetes) applyResources(ctx context.Context) ([]unstructured.Unstruc
 			return nil, errors.Join(err, fmt.Errorf("failed to read %q file", f))
 		}
 
-		applyFile := func(ctx context.Context) (bool, error) {
+		applyFile := func(context.Context) (bool, error) {
 			k.l.Debugf("Applying %q file", f)
 			if err := k.client.ApplyFile(data); err != nil {
 				k.l.Debug(errors.Join(err, fmt.Errorf("cannot apply %q file", f)))

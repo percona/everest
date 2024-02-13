@@ -149,7 +149,7 @@ func everestErrorHandler(logger *zap.SugaredLogger) func(http.ResponseWriter, *h
 	if err != nil {
 		logger.Error(err.Error())
 	}
-	return func(res http.ResponseWriter, req *http.Request, err error) {
+	return func(res http.ResponseWriter, _ *http.Request, _ error) {
 		res.WriteHeader(http.StatusInternalServerError)
 		if _, err := res.Write(b); err != nil {
 			logger.Error(err.Error())

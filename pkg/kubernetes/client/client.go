@@ -987,7 +987,7 @@ func (c Client) GetSubscriptionCSV(ctx context.Context, subKey types.NamespacedN
 	return csvKey, wait.PollUntilContextCancel(ctx, time.Second, true, subscriptionInstalledCSV)
 }
 
-func (c *Client) getKubeclient() (client.Client, error) { //nolint:ireturn
+func (c *Client) getKubeclient() (client.Client, error) { //nolint:ireturn,nolintlint
 	rcl, err := rest.HTTPClientFor(c.restConfig)
 	if err != nil {
 		return nil, err

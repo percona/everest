@@ -32,7 +32,7 @@ import (
 func NewResetCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "reset",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initResetViperFlags(cmd)
 
 			c, err := parseResetConfig()
