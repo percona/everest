@@ -70,7 +70,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	"github.com/percona/everest/pkg/kubernetes/client/customresources"
-	"github.com/percona/everest/pkg/kubernetes/client/database"
 )
 
 const (
