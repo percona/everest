@@ -605,7 +605,7 @@ func validateBackupStoragesFor( //nolint:cyclop
 }
 
 func (e *EverestServer) validateBackupStoragesAccess(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error) {
-	bs, err := e.kubeClient.GetBackupStorage(ctx, name)
+	bs, err := e.kubeClient.GetBackupStorage(ctx, e.kubeClient.Namespace(), name)
 	if k8serrors.IsNotFound(err) {
 		return nil, fmt.Errorf("backup storage %s does not exist", name)
 	}
@@ -996,7 +996,7 @@ func validateDatabaseClusterRestore(ctx context.Context, namespace string, resto
 		}
 		return err
 	}
-	_, err = kubeClient.GetBackupStorage(ctx, b.Spec.BackupStorageName)
+	_, err = kubeClient.GetBackupStorage(ctx, kubeClient.Namespace(), b.Spec.BackupStorageName)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return fmt.Errorf("backup storage %s does not exist", r.Spec.DataSource.BackupSource.BackupStorageName)

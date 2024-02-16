@@ -37,16 +37,16 @@ func (c *Client) UpdateBackupStorage(ctx context.Context, storage *everestv1alph
 }
 
 // GetBackupStorage returns the backupStorage.
-func (c *Client) GetBackupStorage(ctx context.Context, name string) (*everestv1alpha1.BackupStorage, error) {
-	return c.customClientSet.BackupStorage(c.namespace).Get(ctx, name, metav1.GetOptions{})
+func (c *Client) GetBackupStorage(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error) {
+	return c.customClientSet.BackupStorage(namespace).Get(ctx, name, metav1.GetOptions{})
 }
 
 // ListBackupStorages returns the backupStorage.
-func (c *Client) ListBackupStorages(ctx context.Context, options metav1.ListOptions) (*everestv1alpha1.BackupStorageList, error) {
-	return c.customClientSet.BackupStorage(c.namespace).List(ctx, options)
+func (c *Client) ListBackupStorages(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.BackupStorageList, error) {
+	return c.customClientSet.BackupStorage(namespace).List(ctx, options)
 }
 
 // DeleteBackupStorage deletes the backupStorage.
-func (c *Client) DeleteBackupStorage(ctx context.Context, name string) error {
-	return c.customClientSet.BackupStorage(c.namespace).Delete(ctx, name, metav1.DeleteOptions{})
+func (c *Client) DeleteBackupStorage(ctx context.Context, namespace, name string) error {
+	return c.customClientSet.BackupStorage(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 }

@@ -2,21 +2,9 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: olm
+  name: everest-olm
   labels:
     pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/enforce-version: latest
-    pod-security.kubernetes.io/audit: restricted
-    pod-security.kubernetes.io/audit-version: latest
-    pod-security.kubernetes.io/warn: restricted
-    pod-security.kubernetes.io/warn-version: latest
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: operators
-  labels:
-    pod-security.kubernetes.io/enforce: baseline
     pod-security.kubernetes.io/enforce-version: latest
     pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/audit-version: latest
@@ -27,7 +15,7 @@ kind: ServiceAccount
 apiVersion: v1
 metadata:
   name: olm-operator-serviceaccount
-  namespace: olm
+  namespace: everest-olm
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -51,7 +39,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: olm-operator-serviceaccount
-  namespace: olm
+  namespace: everest-olm
 ---
 apiVersion: operators.coreos.com/v1
 kind: OLMConfig
@@ -62,7 +50,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: olm-operator
-  namespace: olm
+  namespace: everest-olm
   labels:
     app: olm-operator
 spec:
@@ -129,7 +117,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: catalog-operator
-  namespace: olm
+  namespace: everest-olm
   labels:
     app: catalog-operator
 spec:
@@ -159,7 +147,7 @@ spec:
           - /bin/catalog
           args:
           - '--namespace'
-          - olm
+          - everest-olm
           - --configmapServerImage=quay.io/operator-framework/configmap-operator-registry:latest
           - --util-image
           -  quay.io/operator-framework/olm@sha256:163bacd69001fea0c666ecf8681e9485351210cde774ee345c06f80d5a651473
@@ -221,23 +209,17 @@ rules:
 apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
-  name: global-operators
-  namespace: operators
----
-apiVersion: operators.coreos.com/v1
-kind: OperatorGroup
-metadata:
   name: olm-operators
-  namespace: olm
+  namespace: everest-olm
 spec:
   targetNamespaces:
-    - olm
+    - everest-olm
 ---
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
   name: packageserver
-  namespace: olm
+  namespace: everest-olm
   labels:
     olm.version: v0.25.0
 spec:
@@ -334,7 +316,7 @@ spec:
                 - --secure-port
                 - "5443"
                 - --global-namespace
-                - olm
+                - everest-olm
                 image: quay.io/operator-framework/olm@sha256:163bacd69001fea0c666ecf8681e9485351210cde774ee345c06f80d5a651473
                 imagePullPolicy: Always
                 ports:

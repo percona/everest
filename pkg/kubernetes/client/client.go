@@ -1321,9 +1321,9 @@ func (c *Client) GetInstallPlan(ctx context.Context, namespace string, name stri
 }
 
 // DoPackageWait for the package to be available in OLM.
-func (c *Client) DoPackageWait(ctx context.Context, name string) error {
+func (c *Client) DoPackageWait(ctx context.Context, namespace, name string) error {
 	packageInstalled := func(ctx context.Context) (bool, error) {
-		_, err := c.GetPackageManifest(ctx, name)
+		_, err := c.GetPackageManifest(ctx, namespace, name)
 		if err != nil {
 			if apierrors.ReasonForError(err) == metav1.StatusReasonUnknown {
 				return false, err
@@ -1336,8 +1336,7 @@ func (c *Client) DoPackageWait(ctx context.Context, name string) error {
 }
 
 // GetPackageManifest returns a package manifest by given name.
-func (c *Client) GetPackageManifest(ctx context.Context, name string) (*packagev1.PackageManifest, error) {
-	namespace := "olm"
+func (c *Client) GetPackageManifest(ctx context.Context, namespace, name string) (*packagev1.PackageManifest, error) {
 	operatorClient, err := packageServerClient.NewForConfig(c.restConfig)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("cannot create an operator client instance"))
@@ -1417,6 +1416,19 @@ func (c *Client) ListClusterServiceVersion(
 	return operatorClient.OperatorsV1alpha1().ClusterServiceVersions(namespace).List(ctx, metav1.ListOptions{})
 }
 
+// DeleteClusterServiceVersion deletes a CSV by namespaced name.
+func (c *Client) DeleteClusterServiceVersion(
+	ctx context.Context,
+	key types.NamespacedName,
+) error {
+	operatorClient, err := versioned.NewForConfig(c.restConfig)
+	if err != nil {
+		return errors.Join(err, errors.New("cannot create an operator client instance"))
+	}
+
+	return operatorClient.OperatorsV1alpha1().ClusterServiceVersions(key.Namespace).Delete(ctx, key.Name, metav1.DeleteOptions{})
+}
+
 // DeleteFile accepts manifest file contents parses into []runtime.Object
 // and deletes them from the cluster.
 func (c *Client) DeleteFile(fileBytes []byte) error {
@@ -1441,9 +1453,4 @@ func (c *Client) GetService(ctx context.Context, namespace, name string) (*corev
 // GetClusterRoleBinding returns cluster role binding by given name.
 func (c *Client) GetClusterRoleBinding(ctx context.Context, name string) (*rbacv1.ClusterRoleBinding, error) {
 	return c.clientset.RbacV1().ClusterRoleBindings().Get(ctx, name, metav1.GetOptions{})
-}
-
-// GetConfigMap fetches the config map in the provided namespace.
-func (c *Client) GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error) {
-	return c.clientset.CoreV1().ConfigMaps(namespace).Get(ctx, name, metav1.GetOptions{})
 }

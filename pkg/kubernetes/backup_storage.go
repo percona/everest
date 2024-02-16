@@ -31,13 +31,13 @@ const (
 )
 
 // ListBackupStorages returns list of managed backup storages.
-func (k *Kubernetes) ListBackupStorages(ctx context.Context) (*everestv1alpha1.BackupStorageList, error) {
-	return k.client.ListBackupStorages(ctx, metav1.ListOptions{})
+func (k *Kubernetes) ListBackupStorages(ctx context.Context, namespace string) (*everestv1alpha1.BackupStorageList, error) {
+	return k.client.ListBackupStorages(ctx, namespace, metav1.ListOptions{})
 }
 
 // GetBackupStorage returns backup storages by provided name.
-func (k *Kubernetes) GetBackupStorage(ctx context.Context, name string) (*everestv1alpha1.BackupStorage, error) {
-	return k.client.GetBackupStorage(ctx, name)
+func (k *Kubernetes) GetBackupStorage(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error) {
+	return k.client.GetBackupStorage(ctx, namespace, name)
 }
 
 // CreateBackupStorage returns backup storages by provided name.
@@ -51,18 +51,18 @@ func (k *Kubernetes) UpdateBackupStorage(ctx context.Context, storage *everestv1
 }
 
 // DeleteBackupStorage returns backup storages by provided name.
-func (k *Kubernetes) DeleteBackupStorage(ctx context.Context, name string) error {
-	return k.client.DeleteBackupStorage(ctx, name)
+func (k *Kubernetes) DeleteBackupStorage(ctx context.Context, namespace, name string) error {
+	return k.client.DeleteBackupStorage(ctx, namespace, name)
 }
 
 // IsBackupStorageUsed checks that a backup storage by provided name is used across k8s cluster.
-func (k *Kubernetes) IsBackupStorageUsed(ctx context.Context, backupStorageName string) (bool, error) {
-	_, err := k.client.GetBackupStorage(ctx, backupStorageName)
+func (k *Kubernetes) IsBackupStorageUsed(ctx context.Context, namespace, backupStorageName string) (bool, error) {
+	_, err := k.client.GetBackupStorage(ctx, namespace, backupStorageName)
 	if err != nil {
 		return false, err
 	}
 
-	namespaces, err := k.GetDBNamespaces(ctx, k.Namespace())
+	namespaces, err := k.GetDBNamespaces(ctx, namespace)
 	if err != nil {
 		return false, err
 	}

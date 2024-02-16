@@ -50,7 +50,7 @@ func TestInstallOlmOperator(t *testing.T) {
 		k8sclient.On(
 			"CreateSubscription", mock.Anything, mock.Anything, mock.Anything,
 		).Return(&v1alpha1.Subscription{}, nil)
-		k8sclient.On("GetDeployment", ctx, mock.Anything, "olm").Return(&appsv1.Deployment{}, nil)
+		k8sclient.On("GetDeployment", ctx, mock.Anything, "everest-olm").Return(&appsv1.Deployment{}, nil)
 		k8sclient.On("ApplyFile", mock.Anything).Return(nil)
 		k8sclient.On("DoRolloutWait", ctx, mock.Anything).Return(nil)
 		k8sclient.On("GetSubscriptionCSV", ctx, mock.Anything).Return(types.NamespacedName{}, nil)
@@ -65,7 +65,7 @@ func TestInstallOlmOperator(t *testing.T) {
 		subscriptionNamespace := "default"
 		operatorGroup := "percona-operators-group"
 		catalogSource := "operatorhubio-catalog"
-		catalogSourceNamespace := "olm"
+		catalogSourceNamespace := "everest-olm"
 		operatorName := "percona-server-mongodb-operator"
 		params := InstallOperatorRequest{
 			Namespace:              subscriptionNamespace,

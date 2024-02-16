@@ -11,3 +11,8 @@ import (
 func (c *Client) GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error) {
 	return c.clientset.CoreV1().Namespaces().Get(ctx, name, metav1.GetOptions{})
 }
+
+// DeleteNamespace deletes a namespace.
+func (c *Client) DeleteNamespace(ctx context.Context, name string) error {
+	return c.clientset.CoreV1().Namespaces().Delete(ctx, name, metav1.DeleteOptions{})
+}

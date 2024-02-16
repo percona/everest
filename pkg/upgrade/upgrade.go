@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	goversion "github.com/hashicorp/go-version"
@@ -36,8 +37,10 @@ import (
 type (
 	// Config defines configuration required for upgrade command.
 	Config struct {
-		// Namespaces defines namespaces that everest can operate in.
-		Namespaces []string `mapstructure:"namespace"`
+		// Namespaces is a user-defined string represents raw non-validated comma-separated list of namespaces for everest to operate in.
+		Namespaces string `mapstructure:"namespaces"`
+		// NamespacesList validated list of namespaces that everest can operate in.
+		NamespacesList []string `mapstructure:"namespaces-map"`
 		// KubeconfigPath is a path to a kubeconfig
 		KubeconfigPath string `mapstructure:"kubeconfig"`
 		// UpgradeOLM defines do we need to upgrade OLM or not.
@@ -79,9 +82,11 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	if err := u.runEverestWizard(ctx); err != nil {
 		return err
 	}
-	if len(u.config.Namespaces) == 0 {
-		return errors.New("namespace list is empty. Specify at least one namespace")
+	l, err := install.ValidateNamespaces(u.config.Namespaces)
+	if err != nil {
+		return err
 	}
+	u.config.NamespacesList = l
 	if err := u.upgradeOLM(ctx); err != nil {
 		return err
 	}
@@ -113,20 +118,23 @@ func (u *Upgrade) runEverestWizard(ctx context.Context) error {
 			Message: "Please select namespaces",
 			Options: namespaces,
 		}
+
+		var input []string
 		if err := survey.AskOne(
 			pNamespace,
-			&u.config.Namespaces,
+			&input,
 			survey.WithValidator(survey.MinItems(1)),
 		); err != nil {
 			return err
 		}
+		u.config.Namespaces = strings.Join(input, ",")
 	}
 
 	return nil
 }
 
 func (u *Upgrade) patchSubscriptions(ctx context.Context) error {
-	for _, namespace := range u.config.Namespaces {
+	for _, namespace := range u.config.NamespacesList {
 		namespace := namespace
 		subList, err := u.kubeClient.ListSubscriptions(ctx, namespace)
 		if err != nil {
@@ -162,7 +170,7 @@ func (u *Upgrade) patchSubscriptions(ctx context.Context) error {
 func (u *Upgrade) upgradeOLM(ctx context.Context) error {
 	csv, err := u.kubeClient.GetClusterServiceVersion(ctx, types.NamespacedName{
 		Name:      "packageserver",
-		Namespace: "olm",
+		Namespace: kubernetes.OLMNamespace,
 	})
 	if err != nil {
 		return err
