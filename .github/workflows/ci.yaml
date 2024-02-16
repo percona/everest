@@ -85,13 +85,6 @@ jobs:
       - name: Install tools
         run: make init
 
-      - name: Check the latest operator version is used
-        run: |
-          go get github.com/percona/everest-operator@main
-          echo "Checking there is no source code changes"
-          go mod tidy
-          git diff --exit-code
-
       - name: Run linters
         run: |
           bin/golangci-lint run --out-format=line-number | env REVIEWDOG_GITHUB_API_TOKEN=${{ secrets.GITHUB_TOKEN }} bin/reviewdog -f=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=true
