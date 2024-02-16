@@ -1,0 +1,29 @@
+{
+  "name": "api-tests",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "lint": "npm run lint:ts && npm run typecheck && echo 'Lint OK'",
+    "lint:ts": "eslint .",
+    "lint:ts:fix": "eslint --fix .",
+    "typecheck": "tsc --noEmit",
+    "report": "playwright show-report",
+    "test:api-pxc": "playwright test --config=playwright.config.ts -g '@pxc'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@typescript-eslint/parser": "^6.20.0",
+    "dotenv": "^16.4.1",
+    "eslint": "^8.56.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^17.1.0",
+    "eslint-plugin-playwright": "^0.22.2"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.41.2",
+    "shelljs": "^0.8.5"
+  }
+}

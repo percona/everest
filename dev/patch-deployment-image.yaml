@@ -1,0 +1,13 @@
+spec:
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    spec:
+      affinity:
+        podAntiAffinity: {}
+      containers:
+        - name: everest
+          image: localhost:5000/perconalab/everest:0.0.0

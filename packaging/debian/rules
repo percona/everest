@@ -1,0 +1,32 @@
+#!/usr/bin/make -f
+export DH_VERBOSE=1
+
+TMP := $(CURDIR)/debian/everest/
+ARCH := $(shell dpkg-architecture -qDEB_BUILD_ARCH)
+
+%:
+	dh $@
+
+override_dh_auto_test override_dh_compress override_dh_fixperms override_dh_strip override_dh_usrlocal:
+
+override_dh_auto_build:
+	@echo "RULES.$@"
+	make init && make release
+	@if [ "$(ARCH)" = "amd64" ]; then \
+		cp dist/everestctl-linux-amd64 bin/everestctl; \
+	else \
+		cp dist/everestctl-linux-arm64 bin/everestctl; \
+	fi
+	touch $@
+
+override_dh_builddeb:
+	dh_builddeb -- -Zgzip
+
+override_dh_auto_install:
+	@echo "RULES.$@"
+	mkdir -p $(TMP)usr/bin
+	install -m 0755 bin/everestctl $(TMP)usr/bin/everestctl
+	mkdir -p $(TMP)usr/share/doc/everest
+	cp -p LICENSE $(TMP)usr/share/doc/everest
+
+override_dh_systemd_start:

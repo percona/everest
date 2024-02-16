@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vmagent
+  namespace: default
+  labels:
+    app.kubernetes.io/managed-by: everest
+    everest.percona.com/type: monitoring
+
