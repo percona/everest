@@ -27,8 +27,7 @@ import (
 	"github.com/percona/everest/cmd/config"
 )
 
-// FIXME Test this
-// MustInitLogger initializes logger and panics in case of an error.
+// MustInitLogger initializes logger and panics in case of an error. // FIXME Test this.
 func MustInitLogger(json bool) *zap.Logger {
 	var loggerCfg zap.Config
 	if config.Debug {

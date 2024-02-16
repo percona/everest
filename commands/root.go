@@ -27,7 +27,7 @@ import (
 func NewRootCmd(l *zap.SugaredLogger) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use: "everestctl",
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		PersistentPreRun: func(cmd *cobra.Command, args []string) { //nolint:revive
 			logger.InitLoggerInRootCmd(cmd, l)
 			l.Debug("Debug logging enabled")
 		},

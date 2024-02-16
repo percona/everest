@@ -12,7 +12,7 @@ import (
 func newVersionCmd(l *zap.SugaredLogger) *cobra.Command {
 	return &cobra.Command{
 		Use: "version",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			outputJSON, err := cmd.Flags().GetBool("json")
 			if err != nil {
 				l.Errorf("could not parse json global flag. Error: %s", err)

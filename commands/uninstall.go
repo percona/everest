@@ -31,7 +31,7 @@ import (
 func newUninstallCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "uninstall",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initUninstallViperFlags(cmd)
 			c, err := parseClusterConfig()
 			if err != nil {

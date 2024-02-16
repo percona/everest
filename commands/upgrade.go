@@ -31,7 +31,7 @@ import (
 func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "upgrade",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initUpgradeViperFlags(cmd)
 
 			c, err := parseConfig()

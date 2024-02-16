@@ -31,7 +31,7 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "install",
 		Example: "everestctl install --namespace dev --namespace staging --namespace prod --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initInstallViperFlags(cmd)
 			c := &install.Config{}
 			err := viper.Unmarshal(c)
