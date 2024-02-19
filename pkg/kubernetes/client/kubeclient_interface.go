@@ -32,11 +32,11 @@ type KubeClientConnector interface {
 	// UpdateBackupStorage updates an backupStorage.
 	UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
 	// GetBackupStorage returns the backupStorage.
-	GetBackupStorage(ctx context.Context, name string) (*everestv1alpha1.BackupStorage, error)
+	GetBackupStorage(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error)
 	// ListBackupStorages returns the backupStorage.
-	ListBackupStorages(ctx context.Context, options metav1.ListOptions) (*everestv1alpha1.BackupStorageList, error)
+	ListBackupStorages(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.BackupStorageList, error)
 	// DeleteBackupStorage deletes the backupStorage.
-	DeleteBackupStorage(ctx context.Context, name string) error
+	DeleteBackupStorage(ctx context.Context, namespace, name string) error
 	// Config returns restConfig to the pkg/kubernetes.Kubernetes client.
 	Config() *rest.Config
 	// ClusterName returns the name of the k8s cluster.
@@ -53,10 +53,8 @@ type KubeClientConnector interface {
 	GetDeployment(ctx context.Context, name string, namespace string) (*appsv1.Deployment, error)
 	// ListDeployments returns deployment by name.
 	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
-	// FIXME: careful merging needed
 	// ApplyObject applies object.
 	ApplyObject(obj runtime.Object) error
-	// FIXME: careful merging needed
 	// DeleteObject deletes object from the k8s cluster.
 	DeleteObject(obj runtime.Object) error
 	// ListObjects lists objects by provided group, version, kind.
@@ -101,9 +99,9 @@ type KubeClientConnector interface {
 	// GetInstallPlan retrieves an OLM install plan by namespace and name.
 	GetInstallPlan(ctx context.Context, namespace string, name string) (*v1alpha1.InstallPlan, error)
 	// DoPackageWait for the package to be available in OLM.
-	DoPackageWait(ctx context.Context, name string) error
+	DoPackageWait(ctx context.Context, namespace, name string) error
 	// GetPackageManifest returns a package manifest by given name.
-	GetPackageManifest(ctx context.Context, name string) (*packagev1.PackageManifest, error)
+	GetPackageManifest(ctx context.Context, namespace, name string) (*packagev1.PackageManifest, error)
 	// UpdateInstallPlan updates the existing install plan in the specified namespace.
 	UpdateInstallPlan(ctx context.Context, namespace string, installPlan *v1alpha1.InstallPlan) (*v1alpha1.InstallPlan, error)
 	// ListCRDs returns a list of CRDs.
@@ -114,6 +112,8 @@ type KubeClientConnector interface {
 	GetClusterServiceVersion(ctx context.Context, key types.NamespacedName) (*v1alpha1.ClusterServiceVersion, error)
 	// ListClusterServiceVersion list all CSVs for the given namespace.
 	ListClusterServiceVersion(ctx context.Context, namespace string) (*v1alpha1.ClusterServiceVersionList, error)
+	// DeleteClusterServiceVersion deletes a CSV by namespaced name.
+	DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error
 	// DeleteFile accepts manifest file contents parses into []runtime.Object
 	// and deletes them from the cluster.
 	DeleteFile(fileBytes []byte) error
@@ -121,8 +121,6 @@ type KubeClientConnector interface {
 	GetService(ctx context.Context, namespace, name string) (*corev1.Service, error)
 	// GetClusterRoleBinding returns cluster role binding by given name.
 	GetClusterRoleBinding(ctx context.Context, name string) (*rbacv1.ClusterRoleBinding, error)
-	// GetConfigMap fetches the config map in the provided namespace.
-	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
 	// ListDatabaseClusters returns list of managed database clusters.
 	ListDatabaseClusters(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterList, error)
 	// GetDatabaseCluster returns database clusters by provided name.
@@ -153,6 +151,8 @@ type KubeClientConnector interface {
 	DeleteMonitoringConfig(ctx context.Context, namespace, name string) error
 	// GetNamespace returns a namespace.
 	GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error)
+	// DeleteNamespace deletes a namespace.
+	DeleteNamespace(ctx context.Context, name string) error
 	// GetNodes returns list of nodes.
 	GetNodes(ctx context.Context) (*corev1.NodeList, error)
 	// GetPods returns list of pods.

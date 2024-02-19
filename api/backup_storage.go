@@ -30,7 +30,7 @@ import (
 
 // ListBackupStorages lists backup storages.
 func (e *EverestServer) ListBackupStorages(ctx echo.Context) error {
-	backupList, err := e.kubeClient.ListBackupStorages(ctx.Request().Context())
+	backupList, err := e.kubeClient.ListBackupStorages(ctx.Request().Context(), e.kubeClient.Namespace())
 	if err != nil {
 		e.l.Error(err)
 		return ctx.JSON(http.StatusInternalServerError, Error{
@@ -70,7 +70,7 @@ func (e *EverestServer) CreateBackupStorage(ctx echo.Context) error { //nolint:f
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
 	c := ctx.Request().Context()
-	s, err := e.kubeClient.GetBackupStorage(c, params.Name)
+	s, err := e.kubeClient.GetBackupStorage(c, e.kubeClient.Namespace(), params.Name)
 	if err != nil && !k8serrors.IsNotFound(err) {
 		e.l.Error(err)
 		return ctx.JSON(http.StatusInternalServerError, Error{
@@ -159,7 +159,7 @@ func (e *EverestServer) CreateBackupStorage(ctx echo.Context) error { //nolint:f
 
 // DeleteBackupStorage deletes the specified backup storage.
 func (e *EverestServer) DeleteBackupStorage(ctx echo.Context, backupStorageName string) error {
-	used, err := e.kubeClient.IsBackupStorageUsed(ctx.Request().Context(), backupStorageName)
+	used, err := e.kubeClient.IsBackupStorageUsed(ctx.Request().Context(), e.kubeClient.Namespace(), backupStorageName)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return ctx.JSON(http.StatusNotFound, Error{
@@ -176,7 +176,7 @@ func (e *EverestServer) DeleteBackupStorage(ctx echo.Context, backupStorageName 
 			Message: pointer.ToString(fmt.Sprintf("Backup storage %s is in use", backupStorageName)),
 		})
 	}
-	if err := e.kubeClient.DeleteBackupStorage(ctx.Request().Context(), backupStorageName); err != nil {
+	if err := e.kubeClient.DeleteBackupStorage(ctx.Request().Context(), e.kubeClient.Namespace(), backupStorageName); err != nil {
 		if k8serrors.IsNotFound(err) {
 			return ctx.NoContent(http.StatusNoContent)
 		}
@@ -207,7 +207,7 @@ func (e *EverestServer) backupSecretData(secretKey, accessKey string) map[string
 
 // GetBackupStorage retrieves the specified backup storage.
 func (e *EverestServer) GetBackupStorage(ctx echo.Context, backupStorageName string) error {
-	s, err := e.kubeClient.GetBackupStorage(ctx.Request().Context(), backupStorageName)
+	s, err := e.kubeClient.GetBackupStorage(ctx.Request().Context(), e.kubeClient.Namespace(), backupStorageName)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return ctx.JSON(http.StatusNotFound, Error{
@@ -233,7 +233,7 @@ func (e *EverestServer) GetBackupStorage(ctx echo.Context, backupStorageName str
 // UpdateBackupStorage updates of the specified backup storage.
 func (e *EverestServer) UpdateBackupStorage(ctx echo.Context, backupStorageName string) error { //nolint:funlen,cyclop
 	c := ctx.Request().Context()
-	bs, err := e.kubeClient.GetBackupStorage(c, backupStorageName)
+	bs, err := e.kubeClient.GetBackupStorage(c, e.kubeClient.Namespace(), backupStorageName)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return ctx.JSON(http.StatusNotFound, Error{
