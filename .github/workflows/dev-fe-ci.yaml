@@ -25,7 +25,15 @@ jobs:
     name: Cache PNPM
     runs-on: ubuntu-20.04
 
+    env:
+      GOPRIVATE: github.com/percona,github.com/percona/everest-operator
+
     steps:
+      - name: Configure git for private modules
+        env:
+          ROBOT_TOKEN: ${{ secrets.ROBOT_TOKEN }}
+        run: git config --global url."https://percona-platform-robot:${ROBOT_TOKEN}@github.com".insteadOf "https://github.com"
+
       - uses: actions/checkout@v3
         with:
           token: ${{ secrets.ROBOT_TOKEN }}
