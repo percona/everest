@@ -70,23 +70,23 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: 'ui/pnpm-lock.yaml'
 
-      - run: cd ui && make init
+      - run: make init
 
       - name: lint
         if: matrix.action == 'lint'
-        run: cd ui && make lint
+        run: make lint
 
       - name: format
         if: matrix.action == 'format'
-        run: cd ui && make format
+        run: make format
 
       - name: test
         if: matrix.action == 'test'
-        run: cd ui && make test
+        run: make test
 
       - name: build
         if: matrix.action == 'build'
-        run: cd ui && make build
+        run: make build
 
       - name: Check for changes
         id: check_changes
