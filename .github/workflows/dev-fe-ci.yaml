@@ -24,17 +24,17 @@ jobs:
   cache_pnpm:
     name: Cache PNPM
     runs-on: ubuntu-20.04
-    defaults:
-      run:
-        working-directory: ui
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.ROBOT_TOKEN }}
+          lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
+
       - uses: pnpm/action-setup@v2
         with:
           version: 8
+
 
       - name: Use Node
         uses: actions/setup-node@v3
@@ -44,7 +44,7 @@ jobs:
           cache-dependency-path: 'ui/pnpm-lock.yaml'
 
       - name: Install dependencies
-        run: make init
+        run: cd ui && make init
 
   CI_checks:
     runs-on: ubuntu-latest
@@ -56,9 +56,10 @@ jobs:
       run:
         working-directory: ui
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.ROBOT_TOKEN }}
+          lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: pnpm/action-setup@v2
         with:
           version: 8
