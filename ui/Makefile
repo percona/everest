@@ -18,5 +18,3 @@ format:
 # This might change in the future if we have more apps, but for now keep it simple
 dev:
 	pnpm --filter "@percona/everest" dev
-
-# change
