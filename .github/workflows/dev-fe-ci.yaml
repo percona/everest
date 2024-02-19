@@ -56,9 +56,10 @@ jobs:
       run:
         working-directory: ui
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.ROBOT_TOKEN }}
+          lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: pnpm/action-setup@v2
         with:
           version: 8
@@ -69,23 +70,23 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: 'ui/pnpm-lock.yaml'
 
-      - run: make init
+      - run: cd ui && make init
 
       - name: lint
         if: matrix.action == 'lint'
-        run: make lint
+        run: cd ui && make lint
 
       - name: format
         if: matrix.action == 'format'
-        run: make format
+        run: cd ui && make format
 
       - name: test
         if: matrix.action == 'test'
-        run: make test
+        run: cd ui && make test
 
       - name: build
         if: matrix.action == 'build'
-        run: make build
+        run: cd ui && make build
 
       - name: Check for changes
         id: check_changes
