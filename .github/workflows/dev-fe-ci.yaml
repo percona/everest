@@ -24,17 +24,16 @@ jobs:
   cache_pnpm:
     name: Cache PNPM
     runs-on: ubuntu-20.04
-    defaults:
-      run:
-        working-directory: ui
 
     steps:
       - uses: actions/checkout@v3
         with:
           token: ${{ secrets.ROBOT_TOKEN }}
+          path: ui
       - uses: pnpm/action-setup@v2
         with:
           version: 8
+
 
       - name: Use Node
         uses: actions/setup-node@v3

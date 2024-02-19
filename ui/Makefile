@@ -20,4 +20,4 @@ dev:
 	pnpm --filter "@percona/everest" dev
 
 
-# some change in ui folder
+# some change in ui folder 2
