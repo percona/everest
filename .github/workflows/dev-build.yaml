@@ -69,13 +69,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-  # WIP: do not push for now
-  #      - name: Build and Push everest dev image
-  #        uses: docker/build-push-action@v5
-  #        with:
-  #          context: backend
-  #          push: true
-  #          tags: ${{ steps.meta.outputs.tags }}
+      - name: Build and Push everest dev image
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: 0.0.0-test
   scan:
     runs-on: ubuntu-latest
     needs: [build]
