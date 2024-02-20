@@ -86,4 +86,4 @@ jobs:
           image-ref: 'docker.io/perconalab/everest:0.0.0'
           format: 'table'
           exit-code: '1'
-          severity: 'CRITICAL,HIG
+          severity: 'CRITICAL,HIGH'
