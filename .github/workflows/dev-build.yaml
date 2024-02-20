@@ -18,11 +18,11 @@ jobs:
           ROBOT_TOKEN: ${{ secrets.ROBOT_TOKEN }}
         run: git config --global url."https://percona-platform-robot:${ROBOT_TOKEN}@github.com".insteadOf "https://github.com"
 
-      - name: Check out frontend repo
+      - name: Check out code into the Go module directory
         uses: actions/checkout@v4
         with:
+          lfs: true
           ref: 'main'
-          token: ${{ secrets.ROBOT_TOKEN }}
 
       - uses: pnpm/action-setup@v2
         with:
