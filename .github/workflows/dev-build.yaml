@@ -67,6 +67,9 @@ jobs:
           ls
           echo "------"
           pwd
+          echo "------"
+          cd bin 
+          ls
 
 
       - name: Login to GitHub Container Registry
