@@ -35,6 +35,14 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: ui/pnpm-lock.yaml
 
+      - name: Debug
+        run: |
+          echo "------"
+          echo "${GITHUB_WORKSPACE}"
+          echo "------"
+          cd ${GITHUB_WORKSPACE}
+          ls
+
       - name: Build Everest Frontend app
         run: |
           cd ui
