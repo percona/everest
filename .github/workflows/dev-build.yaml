@@ -63,7 +63,7 @@ jobs:
           tags: 0.0.0-test
 
       - name: Debug
-        run:
+        run: |
           ls
           echo "------"
           pwd
