@@ -60,7 +60,7 @@ jobs:
         id: meta
         with:
           images: perconalab/everest
-          tags: 0.0.0
+          tags: 0.0.0-test
 
 
       - name: Login to GitHub Container Registry
