@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - EVEREST-655-dev-builds
+      - main
 
 env:
   NODE_OPTIONS: "--max_old_space_size=4096"
@@ -60,7 +60,7 @@ jobs:
         id: meta
         with:
           images: perconalab/everest
-          tags: 0.0.0-test
+          tags: 0.0.0
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -72,7 +72,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true
+          # TODO: change to true once switched to monorepo
+          push: false
           tags: ${{ steps.meta.outputs.tags }}
   scan:
     runs-on: ubuntu-latest
