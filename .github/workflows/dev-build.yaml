@@ -89,7 +89,7 @@ jobs:
       - name: Build and Push everest dev image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: everest
           push: true
           tags: 0.0.0-test
   scan:
