@@ -35,14 +35,6 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: ui/pnpm-lock.yaml
 
-      - name: Debug
-        run: |
-          echo "------"
-          echo "${GITHUB_WORKSPACE}"
-          echo "------"
-          cd ${GITHUB_WORKSPACE}
-          ls
-
       - name: Build Everest Frontend app
         run: |
           cd ui
@@ -70,16 +62,6 @@ jobs:
           images: perconalab/everest
           tags: 0.0.0-test
 
-      - name: Debug
-        run: |
-          ls
-          echo "------"
-          pwd
-          echo "------"
-          cd bin 
-          ls
-
-
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -91,7 +73,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: perconalab/everest:0.0.0-test
+          tags: ${{ steps.meta.outputs.tags }}
   scan:
     runs-on: ubuntu-latest
     needs: [build]
