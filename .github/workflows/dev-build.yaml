@@ -91,7 +91,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: 0.0.0-test
+          tags: everest:0.0.0-test
   scan:
     runs-on: ubuntu-latest
     needs: [build]
