@@ -2,8 +2,7 @@ import {
   useMutation,
   UseMutationOptions,
   useQuery,
-  UseQueryOptions,
-} from 'react-query';
+} from '@tanstack/react-query';
 import {
   createBackupOnDemand,
   deleteBackupFn,
@@ -16,46 +15,48 @@ import {
   DatabaseClusterPitr,
   DatabaseClusterPitrPayload,
   GetBackupsPayload,
+  SingleBackupPayload,
 } from 'shared-types/backups.types';
 import { mapBackupState } from 'utils/backups';
 import { BackupFormData } from 'pages/db-cluster-details/backups/backups-list/on-demand-backup-modal/on-demand-backup-modal.types.ts';
+import { PerconaQueryOptions } from 'shared-types/query.types';
 
 export const BACKUPS_QUERY_KEY = 'backups';
 
 export const useDbBackups = (
   dbClusterName: string,
   namespace: string,
-  options?: UseQueryOptions<GetBackupsPayload, unknown, Backup[]>
-) => {
-  return useQuery<GetBackupsPayload, unknown, Backup[]>(
-    [BACKUPS_QUERY_KEY, dbClusterName],
-    () => getBackupsFn(dbClusterName, namespace),
-    {
-      select: ({ items = [] }) =>
-        items.map(
-          ({ metadata: { name }, status, spec: { backupStorageName } }) => ({
-            name,
-            created: status?.created ? new Date(status.created) : null,
-            completed: status?.completed ? new Date(status.completed) : null,
-            state: status
-              ? mapBackupState(status?.state)
-              : BackupStatus.UNKNOWN,
-            dbClusterName,
-            backupStorageName,
-          })
-        ),
-      ...options,
-    }
-  );
-};
+  options?: PerconaQueryOptions<GetBackupsPayload, unknown, Backup[]>
+) =>
+  useQuery<GetBackupsPayload, unknown, Backup[]>({
+    queryKey: [BACKUPS_QUERY_KEY, dbClusterName],
+    queryFn: () => getBackupsFn(dbClusterName, namespace),
+    select: ({ items = [] }) =>
+      items.map(
+        ({ metadata: { name }, status, spec: { backupStorageName } }) => ({
+          name,
+          created: status?.created ? new Date(status.created) : null,
+          completed: status?.completed ? new Date(status.completed) : null,
+          state: status ? mapBackupState(status?.state) : BackupStatus.UNKNOWN,
+          dbClusterName,
+          backupStorageName,
+        })
+      ),
+    ...options,
+  });
 
 export const useCreateBackupOnDemand = (
   dbClusterName: string,
   namespace: string,
-  options?: UseMutationOptions<unknown, unknown, BackupFormData, unknown>
-) => {
-  return useMutation(
-    (formData: BackupFormData) =>
+  options?: UseMutationOptions<
+    SingleBackupPayload,
+    unknown,
+    BackupFormData,
+    unknown
+  >
+) =>
+  useMutation({
+    mutationFn: (formData: BackupFormData) =>
       createBackupOnDemand(
         {
           apiVersion: 'everest.percona.com/v1alpha1',
@@ -73,36 +74,34 @@ export const useCreateBackupOnDemand = (
         },
         namespace
       ),
-    { ...options }
-  );
-};
+    ...options,
+  });
 
 export const useDeleteBackup = (
   namespace: string,
   options?: UseMutationOptions<unknown, unknown, string, unknown>
-) => {
-  return useMutation(
-    (backupName: string) => deleteBackupFn(backupName, namespace),
-    {
-      ...options,
-    }
-  );
-};
+) =>
+  useMutation({
+    mutationFn: (backupName: string) => deleteBackupFn(backupName, namespace),
+    ...options,
+  });
 
 export const useDbClusterPitr = (
   dbClusterName: string,
   namespace: string,
-  options?: UseQueryOptions<
+  options?: PerconaQueryOptions<
     DatabaseClusterPitrPayload,
     unknown,
     DatabaseClusterPitr | undefined
   >
-) => {
-  return useQuery<
+) =>
+  useQuery<
     DatabaseClusterPitrPayload,
     unknown,
     DatabaseClusterPitr | undefined
-  >(`${dbClusterName}-pitr`, () => getPitrFn(dbClusterName, namespace), {
+  >({
+    queryKey: [`${dbClusterName}-pitr`],
+    queryFn: () => getPitrFn(dbClusterName, namespace),
     select: (pitrData) => {
       const { earliestDate, latestDate, latestBackupName, gaps } = pitrData;
       if (
@@ -123,4 +122,3 @@ export const useDbClusterPitr = (
     },
     ...options,
   });
-};

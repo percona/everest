@@ -6,7 +6,6 @@ const AuthContext = createContext<AuthContextProps>({
   logout: () => {},
   setRedirectRoute: () => {},
   authStatus: 'unknown',
-  setAuthStatus: () => {},
   redirectRoute: null,
 });
 

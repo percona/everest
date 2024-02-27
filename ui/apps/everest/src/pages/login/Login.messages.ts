@@ -1,8 +1,8 @@
 export const Messages = {
   welcome:
-    'Welcome to Percona Everest, your ultimate solution for Private DBaaS!',
-  intro1: `Looking for the ultimate tool to take your database management to the next level? Look no further than Percona Everest! With its powerful features and easy deployment, you can expertly manage your databases like never before.`,
-  intro2: 'Get ready to unleash your full potential with Percona Everest!',
+    'Welcome to Percona Everest, an open source cloud-native database platform!',
+  intro: `Percona Everest accelerates code deployment and scaling, and reduces database administration overhead.
+    With the help of Percona Everest, you can regain control over data access, database configuration, and cloud database costs. Provision your first database cluster with Percona Everest today!`,
   login: 'Log in',
   insertToken:
     'Enter the authorization token that you received during the installation process.',

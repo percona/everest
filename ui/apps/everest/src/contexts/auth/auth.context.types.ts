@@ -10,6 +10,5 @@ export interface AuthContextProps {
   logout: () => void;
   setRedirectRoute: (route: string) => void;
   authStatus: UserAuthStatus;
-  setAuthStatus: (status: UserAuthStatus) => void;
   redirectRoute: string | null;
 }

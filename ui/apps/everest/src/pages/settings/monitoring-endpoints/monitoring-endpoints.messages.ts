@@ -9,7 +9,7 @@ export const Messages = {
     `Are you sure you want to permanently delete endpoint "${endpoint}"?`,
   fieldLabels: {
     name: 'Name',
-    namespaces: 'Select namespaces',
+    namespaces: 'Namespaces',
     endpoint: 'Endpoint',
     user: 'User',
     password: 'Password',

@@ -5,7 +5,6 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material';
-import { DbEngineType } from '@percona/types';
 import {
   DateTimePickerInput,
   LoadableChildren,
@@ -54,11 +53,11 @@ const RestoreDbModal = <T extends FieldValues>({
     namespace
   );
 
-  const { mutate: restoreBackupFromBackup, isLoading: restoringFromBackup } =
+  const { mutate: restoreBackupFromBackup, isPending: restoringFromBackup } =
     useDbClusterRestoreFromBackup(dbCluster.metadata.name);
   const {
     mutate: restoreBackupFromPointInTime,
-    isLoading: restoringFromPointInTime,
+    isPending: restoringFromPointInTime,
   } = useDbClusterRestoreFromPointInTime(dbCluster.metadata.name);
 
   return (
@@ -153,9 +152,7 @@ const RestoreDbModal = <T extends FieldValues>({
               {
                 label: Messages.fromPitr,
                 value: BackuptypeValues.fromPitr,
-                disabled:
-                  dbCluster.spec.engine.type === DbEngineType.POSTGRESQL ||
-                  isNewClusterMode,
+                disabled: isNewClusterMode,
               },
             ]}
           />

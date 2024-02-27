@@ -33,7 +33,7 @@ test.describe('Backup storage', () => {
     await page.getByTestId('text-input-name').fill('test-storage-name');
     await page.getByTestId('text-input-description').fill('test-description');
 
-    const namespaces = page.getByTestId('text-input-target-namespaces');
+    const namespaces = page.getByTestId('text-input-allowed-namespaces');
     await namespaces.click();
     await page.getByRole('option', { name: 'Select All' }).click();
     expect(page.getByTestId('select-input-type')).toHaveValue('s3');

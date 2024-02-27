@@ -27,16 +27,16 @@ import {
 import { dbEngineToDbType, dbTypeToDbEngine } from '@percona/utils';
 import { useDbEngines } from 'hooks/api/db-engines/useDbEngines';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
+import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { useFormContext } from 'react-hook-form';
 import { DbEngineToolStatus } from 'shared-types/dbEngines.types';
+import { DB_WIZARD_DEFAULTS } from '../../database-form.constants';
 import { DbWizardFormFields, StepProps } from '../../database-form.types';
-import { NODES_DB_TYPE_MAP } from '../../database-form.constants';
 import { useDatabasePageMode } from '../../useDatabasePageMode';
 import { StepHeader } from '../step-header/step-header.tsx';
-import { Messages } from './first-step.messages';
 import { DEFAULT_NODES } from './first-step.constants';
+import { Messages } from './first-step.messages';
 import { generateShortUID } from './utils';
-import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 
 // TODO change to api request's result
 // const dbEnvironmentOptions = [
@@ -57,7 +57,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     useFormContext();
 
   const { data: clusterInfo, isFetching: clusterInfoFetching } =
-    useKubernetesClusterInfo('wizard-k8-info');
+    useKubernetesClusterInfo(['wizard-k8-info']);
   const { data: namespaces = [], isFetching: namespacesFetching } =
     useNamespaces();
   const dbType: DbType = watch(DbWizardFormFields.dbType);
@@ -103,9 +103,11 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       ((mode === 'edit' || mode === 'restoreFromBackup') && !dbVersion) ||
       mode === 'new'
     ) {
-      const recommendedVersion = dbVersions.availableVersions.engine.find(
-        (version) => version.status === DbEngineToolStatus.RECOMMENDED
-      );
+      const recommendedVersion = dbVersions.availableVersions.engine
+        .slice()
+        .reverse()
+        .find((version) => version.status === DbEngineToolStatus.RECOMMENDED);
+
       setValue(
         DbWizardFormFields.dbVersion,
         recommendedVersion
@@ -122,12 +124,23 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     setValue,
   ]);
 
+  const onDbNamespaceChange = () => {
+    setValue(
+      DbWizardFormFields.monitoringInstance,
+      DB_WIZARD_DEFAULTS.monitoringInstance
+    );
+    setValue(DbWizardFormFields.monitoring, DB_WIZARD_DEFAULTS.monitoring);
+    setValue(DbWizardFormFields.storageLocation, null);
+  };
+
+  const setDefaultsForDbType = useCallback((dbType: DbType) => {
+    setValue(DbWizardFormFields.dbType, dbType);
+    setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[dbType]);
+  }, []);
+
   const onDbTypeChange = useCallback(
     (newDbType: DbType) => {
       const { isDirty: isNameDirty } = getFieldState(DbWizardFormFields.dbName);
-      const { isTouched: nodesTouched } = getFieldState(
-        DbWizardFormFields.numberOfNodes
-      );
 
       resetField(DbWizardFormFields.dbVersion);
 
@@ -135,26 +148,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         setRandomDbName(newDbType);
       }
 
-      if (mode === 'new') {
-        if (nodesTouched) {
-          const numberOfNodes: string = getValues(
-            DbWizardFormFields.numberOfNodes
-          );
-          if (
-            !NODES_DB_TYPE_MAP[newDbType].find(
-              (nodes) => nodes === numberOfNodes
-            )
-          ) {
-            setValue(
-              DbWizardFormFields.numberOfNodes,
-              DEFAULT_NODES[newDbType]
-            );
-          }
-        } else {
-          setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[newDbType]);
-        }
-      }
-
+      setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[newDbType]);
       updateDbVersions();
     },
     [
@@ -172,19 +166,28 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     if (mode !== 'new' || dbEngines.length <= 0) {
       return;
     }
+    const { isDirty: isNameDirty } = getFieldState(DbWizardFormFields.dbName);
+    const defaultDbType = dbEngineToDbType(dbEngines[0].type);
 
-    if (!dbType) {
-      const defaultDbType = dbEngineToDbType(dbEngines[0].type);
-      if (defaultDbType) {
-        setValue(
-          DbWizardFormFields.dbType,
-          dbEngineToDbType(dbEngines[0].type)
-        );
+    if (defaultDbType) {
+      if (!dbType) {
+        setDefaultsForDbType(defaultDbType);
         setRandomDbName(defaultDbType);
+      } else if (!dbEngines.find((engine) => engine.type === dbEngine)) {
+        setDefaultsForDbType(defaultDbType);
+        if (!isNameDirty) {
+          setRandomDbName(defaultDbType);
+        }
       }
     }
     updateDbVersions();
-  }, [dbEngines, dbType, setRandomDbName, updateDbVersions]);
+  }, [
+    dbEngines,
+    dbType,
+    setRandomDbName,
+    updateDbVersions,
+    setDefaultsForDbType,
+  ]);
 
   useEffect(() => {
     const { isTouched: storageClassTouched } = getFieldState(
@@ -239,6 +242,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             mode === 'restoreFromBackup' ||
             loadingDefaultsForEdition
           }
+          onChange={onDbNamespaceChange}
           autoCompleteProps={{
             disableClearable: true,
             isOptionEqualToValue: (option, value) => option === value,

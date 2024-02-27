@@ -6,7 +6,7 @@ import {
 } from 'hooks/api/backup-storages/useBackupStorages';
 import { CreateEditModalStorage } from 'pages/settings/storage-locations/createEditModal/create-edit-modal';
 import { useState } from 'react';
-import { useQueryClient } from 'react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { BackupStorage } from 'shared-types/backupStorages.types';
 import { updateDataAfterCreate } from 'utils/generalOptimisticDataUpdate';
 import { Messages } from '../backups.messages';
@@ -14,7 +14,7 @@ import { Messages } from '../backups.messages';
 export const NoStoragesMessage = () => {
   const queryClient = useQueryClient();
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
-  const { mutate: createBackupStorage, isLoading: creatingBackupStorage } =
+  const { mutate: createBackupStorage, isPending: creatingBackupStorage } =
     useCreateBackupStorage();
 
   const handleSubmit = (_: boolean, data: BackupStorage) => {

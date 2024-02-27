@@ -10,7 +10,7 @@ export enum StorageLocationsFields {
   url = 'url',
   accessKey = 'accessKey',
   secretKey = 'secretKey',
-  namespaces = 'targetNamespaces',
+  namespaces = 'allowedNamespaces',
 }
 
 export const storageLocationDefaultValues = {
@@ -39,7 +39,7 @@ export const storageLocationEditValues = (
   [StorageLocationsFields.bucketName]:
     selectedStorageLocationForEdit.bucketName,
   [StorageLocationsFields.namespaces]:
-    selectedStorageLocationForEdit.targetNamespaces || [],
+    selectedStorageLocationForEdit.allowedNamespaces || [],
 });
 
 export const storageLocationsSchema = z.object({

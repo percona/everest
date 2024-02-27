@@ -1,5 +1,5 @@
-import { Grid } from '@mui/material';
-import { Card } from '@percona/ui-lib';
+import { Box, Grid } from '@mui/material';
+import { Card, CopyToClipboardButton } from '@percona/ui-lib';
 import { HiddenPasswordToggle } from 'components/hidden-row';
 import { Messages } from '../cluster-overview.messages';
 import {
@@ -24,7 +24,13 @@ export const ConnectionDetails = ({
         <OverviewSection title={Messages.titles.host} loading={loading}>
           <OverviewSectionText>
             {hostname.split(',').map((host) => (
-              <div key={host}>{host}</div>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <div key={host}>{host}</div>
+                <CopyToClipboardButton
+                  buttonProps={{ sx: { mt: -1, mb: -1.5 } }}
+                  textToCopy={host}
+                />
+              </Box>
             ))}
           </OverviewSectionText>
         </OverviewSection>

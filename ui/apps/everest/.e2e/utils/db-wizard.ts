@@ -14,3 +14,9 @@ export const storageLocationAutocompleteEmptyValidationCheck = async (
     )
   ).toBeVisible();
 };
+
+export const moveForward = (page: Page) =>
+  page.getByTestId('db-wizard-continue-button').click();
+
+export const moveBack = (page: Page) =>
+  page.getByTestId('db-wizard-previous-button').click();

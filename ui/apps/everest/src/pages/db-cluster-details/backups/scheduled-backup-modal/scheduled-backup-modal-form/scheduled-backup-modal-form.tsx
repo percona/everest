@@ -15,7 +15,7 @@
 
 import { ScheduleForm } from 'components/schedule-form/schedule-form.tsx';
 import { ScheduleFormFields } from 'components/schedule-form/schedule-form.types.ts';
-import { useBackupStorages } from 'hooks/api/backup-storages/useBackupStorages.ts';
+import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
 import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster.ts';
 import { useContext, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -28,10 +28,12 @@ export const ScheduledBackupModalForm = () => {
   const { mode = 'new', setSelectedScheduleName } =
     useContext(ScheduleModalContext);
 
-  const { data: backupStorages = [], isFetching } = useBackupStorages();
+  const { data: backupStorages = [], isFetching } =
+    useBackupStoragesByNamespace(namespace);
   const { data: dbCluster } = useDbCluster(dbClusterName!, namespace, {
     enabled: !!dbClusterName && mode === 'edit',
   });
+
   const dbClusterActiveStorage = dbCluster?.status?.activeStorage;
   const schedules = (dbCluster && dbCluster?.spec?.backup?.schedules) || [];
   const scheduleName = watch(ScheduleFormFields.scheduleName);

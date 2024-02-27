@@ -12,9 +12,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { expect } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
+import { STORAGE_NAMES } from '../../../../constants';
 
-export const backupsStepCheck = async (page) => {
+export const backupsStepCheck = async (page: Page) => {
   await expect(
     page.getByText(
       'Specify how often you want to run backup jobs for your database.'
@@ -32,9 +33,10 @@ export const backupsStepCheck = async (page) => {
   await storageLocationField.click();
 
   const storageOptions = page.getByRole('option');
+  const testStorage = storageOptions.filter({ hasText: STORAGE_NAMES[1] });
   // TODO should be checked using github pipelines when all the tests will work
   // expect(storageOptions.filter({ hasText: 'ui-dev' })).toBeVisible();
-  await storageOptions.first().click();
+  await testStorage.click();
 
   await page.getByTestId('select-selected-time-button').click();
   await page.getByTestId('month-option').click();

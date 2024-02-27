@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useMutation, UseMutationOptions } from 'react-query';
+import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { deleteDbClusterFn } from 'api/dbClusterApi';
 
 type DeleteDbClusterArgType = {
@@ -27,12 +27,9 @@ export const useDeleteDbCluster = (
     DeleteDbClusterArgType,
     unknown
   >
-) => {
-  return useMutation(
-    ({ dbClusterName, namespace }: DeleteDbClusterArgType) =>
+) =>
+  useMutation({
+    mutationFn: ({ dbClusterName, namespace }: DeleteDbClusterArgType) =>
       deleteDbClusterFn(dbClusterName, namespace),
-    {
-      ...options,
-    }
-  );
-};
+    ...options,
+  });

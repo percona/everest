@@ -20,10 +20,9 @@ import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import { generateShortUID } from 'pages/database-form/steps/first/utils.ts';
 import {
   UseMutationOptions,
-  UseQueryOptions,
   useMutation,
   useQuery,
-} from 'react-query';
+} from '@tanstack/react-query';
 import {
   ClusterCredentials,
   DataSource,
@@ -31,6 +30,7 @@ import {
   GetDbClusterCredentialsPayload,
   ProxyExposeType,
 } from 'shared-types/dbCluster.types';
+import { PerconaQueryOptions } from 'shared-types/query.types';
 
 type CreateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -138,25 +138,23 @@ export const useCreateDbCluster = (
     CreateDbClusterArgType,
     unknown
   >
-) => {
-  return useMutation(
-    ({ dbPayload, backupDataSource }: CreateDbClusterArgType) =>
+) =>
+  useMutation({
+    mutationFn: ({ dbPayload, backupDataSource }: CreateDbClusterArgType) =>
       createDbClusterFn(
         formValuesToPayloadMapping(dbPayload, backupDataSource),
         dbPayload.k8sNamespace || ''
       ),
-    { ...options }
-  );
-};
+    ...options,
+  });
 
 export const useDbClusterCredentials = (
   dbClusterName: string,
   namespace: string,
-  options?: UseQueryOptions<ClusterCredentials>
-) => {
-  return useQuery<GetDbClusterCredentialsPayload, unknown, ClusterCredentials>(
-    `cluster-credentials-${dbClusterName}`,
-    () => getDbClusterCredentialsFn(dbClusterName, namespace),
-    { ...options }
-  );
-};
+  options?: PerconaQueryOptions<ClusterCredentials, unknown, ClusterCredentials>
+) =>
+  useQuery<GetDbClusterCredentialsPayload, unknown, ClusterCredentials>({
+    queryKey: [`cluster-credentials-${dbClusterName}`],
+    queryFn: () => getDbClusterCredentialsFn(dbClusterName, namespace),
+    ...options,
+  });

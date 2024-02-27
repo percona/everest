@@ -1,12 +1,14 @@
 import { Box, FormGroup } from '@mui/material';
-import { ToggleButtonGroupInput, ToggleCard } from '@percona/ui-lib';
 import { DbType } from '@percona/types';
-import { useEffect } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { ToggleButtonGroupInput, ToggleCard } from '@percona/ui-lib';
 import { useKubernetesClusterResourcesInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterResourcesInfo';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
+import { useEffect } from 'react';
+import { useFormContext } from 'react-hook-form';
+import { NODES_DB_TYPE_MAP } from '../../database-form.constants';
 import { DbWizardFormFields } from '../../database-form.types';
 import { useDatabasePageMode } from '../../useDatabasePageMode';
+import { StepHeader } from '../step-header/step-header.tsx';
 import { ResourceInput } from './resource-input/resource-input';
 import { DEFAULT_SIZES } from './resources-step.const';
 import { Messages } from './resources-step.messages.ts';
@@ -15,8 +17,6 @@ import {
   checkResourceText,
   humanizeResourceSizeMap,
 } from './resources-step.utils.ts';
-import { NODES_DB_TYPE_MAP } from '../../database-form.constants';
-import { StepHeader } from '../step-header/step-header.tsx';
 
 export const ResourcesStep = () => {
   const { watch, setValue, setError, clearErrors } = useFormContext();
@@ -74,7 +74,7 @@ export const ResourcesStep = () => {
     ) {
       setValue(DbWizardFormFields.resourceSizePerNode, ResourceSize.custom);
     }
-  }, [cpu, resourceSizePerNode, setValue]);
+  }, [cpu]);
 
   useEffect(() => {
     if (
@@ -83,7 +83,7 @@ export const ResourcesStep = () => {
     ) {
       setValue(DbWizardFormFields.resourceSizePerNode, ResourceSize.custom);
     }
-  }, [disk, resourceSizePerNode, setValue]);
+  }, [disk]);
 
   useEffect(() => {
     if (
@@ -92,7 +92,7 @@ export const ResourcesStep = () => {
     ) {
       setValue(DbWizardFormFields.resourceSizePerNode, ResourceSize.custom);
     }
-  }, [memory, resourceSizePerNode, setValue]);
+  }, [memory]);
 
   return (
     <>

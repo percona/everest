@@ -13,16 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useMutation, UseMutationOptions } from 'react-query';
+import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { createDbClusterRestore } from 'api/restores';
 import { generateShortUID } from 'pages/database-form/steps/first/utils';
 
 export const useDbClusterRestoreFromBackup = (
   dbClusterName: string,
   options?: UseMutationOptions<unknown, unknown, unknown, unknown>
-) => {
-  return useMutation(
-    ({ backupName, namespace }: { backupName: string; namespace: string }) =>
+) =>
+  useMutation({
+    mutationFn: ({
+      backupName,
+      namespace,
+    }: {
+      backupName: string;
+      namespace: string;
+    }) =>
       createDbClusterRestore(
         {
           apiVersion: 'everest.percona.com/v1alpha1',
@@ -39,16 +45,15 @@ export const useDbClusterRestoreFromBackup = (
         },
         namespace
       ),
-    { ...options }
-  );
-};
+    ...options,
+  });
 
 export const useDbClusterRestoreFromPointInTime = (
   dbClusterName: string,
   options?: UseMutationOptions<unknown, unknown, unknown, unknown>
-) => {
-  return useMutation(
-    ({
+) =>
+  useMutation({
+    mutationFn: ({
       pointInTimeDate,
       backupName,
       namespace,
@@ -76,6 +81,5 @@ export const useDbClusterRestoreFromPointInTime = (
         },
         namespace
       ),
-    { ...options }
-  );
-};
+    ...options,
+  });

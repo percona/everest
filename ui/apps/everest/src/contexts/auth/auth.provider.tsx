@@ -9,29 +9,31 @@ const setApiBearerToken = (token: string) =>
   (api.defaults.headers.common['Authorization'] = `Bearer ${token}`);
 
 const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [authStatus, _setAuthStatus] = useState<UserAuthStatus>('unknown');
-  const [apiCallEnabled, setApiCallEnabled] = useState(false);
+  const [authStatus, setAuthStatus] = useState<UserAuthStatus>('unknown');
   const [token, setToken] = useState('');
   const [redirect, setRedirect] = useState<string | null>(null);
 
+  // We use the "/version" API call just to make sure the token works
+  // At this point, there's not really a login flow, per se
+  const { status: queryStatus, refetch } = useVersion({
+    enabled: false,
+    retry: false,
+  });
+
   const login = (token: string) => {
-    _setAuthStatus('loggingIn');
+    setAuthStatus('loggingIn');
     setApiBearerToken(token);
     setToken(token);
-    // This will trigger the API call to "/version"
-    setApiCallEnabled(true);
+    refetch();
   };
 
   const logout = () => {
-    localStorage.removeItem('pwd');
+    setAuthStatus('loggedOut');
     setApiBearerToken('');
+    localStorage.removeItem('pwd');
     setRedirect(null);
-    _setAuthStatus('loggedOut');
     removeApiInterceptors();
   };
-
-  const setAuthStatus = (newStatus: UserAuthStatus) =>
-    _setAuthStatus(newStatus);
 
   const setRedirectRoute = (route: string) => {
     setRedirect(route);
@@ -43,26 +45,17 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (savedToken) {
       login(savedToken);
     } else {
-      _setAuthStatus('loggedOut');
+      setAuthStatus('loggedOut');
     }
   }, []);
 
-  // We use the "/version" API call just to make sure the token works
-  // At this point, there's not really a login flow, per se
-  useVersion({
-    enabled: apiCallEnabled,
-    retry: false,
-    onSuccess: () => {
-      setApiCallEnabled(false);
-      _setAuthStatus('loggedIn');
-      setApiBearerToken(token);
+  useEffect(() => {
+    if (queryStatus === 'success') {
+      setAuthStatus('loggedIn');
       localStorage.setItem('pwd', token);
       addApiInterceptors();
-    },
-    onError: () => {
-      _setAuthStatus('loggedOut');
-      setApiCallEnabled(false);
-
+    } else if (queryStatus === 'error') {
+      setAuthStatus('loggedOut');
       // This means the request was triggered by clicking the button, not an auto login
       if (!localStorage.getItem('pwd')) {
         enqueueSnackbar('Invalid authorization token', {
@@ -70,8 +63,8 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       }
       localStorage.removeItem('pwd');
-    },
-  });
+    }
+  }, [queryStatus, token]);
 
   return (
     <AuthContext.Provider
@@ -79,7 +72,6 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         logout,
         authStatus,
-        setAuthStatus,
         redirectRoute: redirect,
         setRedirectRoute,
       }}

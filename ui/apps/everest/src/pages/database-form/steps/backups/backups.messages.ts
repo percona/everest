@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 export const Messages = {
-  backups: 'Backups',
+  backups: 'Scheduled Backups',
   captionBackups:
     'Specify how often you want to run backup jobs for your database.',
-  enableBackups: 'Enable backups',
+  enableBackups: 'Enable scheduled backups',
   storageLocation: 'Storage location',
   repeatsEvery: 'Repeats',
   youCanAddMoreSchedules:
@@ -28,7 +28,4 @@ export const Messages = {
     'Scheduled backups are currently unavailable for PostgreSQL databases. You can still enable on-demand backups from the Backups page in the database cluster view.',
   pitrAlert:
     'Point-in-time-recovery (PITR) relies on an active backup schedule. If you don’t configure a backup schedule now, PITR will be disabled in the next step of the wizard.',
-  addStorage: 'Add storage',
-  noStoragesMessage:
-    'To continue with enabled backups, you need to add a backup storage first. Disable backups to proceed without them.',
 };

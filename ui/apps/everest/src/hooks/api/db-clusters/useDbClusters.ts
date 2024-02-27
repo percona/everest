@@ -18,7 +18,7 @@ import {
   useQuery,
   UseQueryOptions,
   UseQueryResult,
-} from 'react-query';
+} from '@tanstack/react-query';
 import { getDbClustersFn } from 'api/dbClusterApi';
 import { DbCluster, GetDbClusterPayload } from 'shared-types/dbCluster.types';
 import { useNamespaces } from '../namespaces/useNamespaces';
@@ -37,16 +37,13 @@ export const dbClustersQuerySelect = ({
     ...props,
   }));
 
-export const useDbClusters = (namespace: string) => {
-  return useQuery<GetDbClusterPayload, unknown, DbCluster[]>(
-    DB_CLUSTERS_QUERY_KEY,
-    () => getDbClustersFn(namespace),
-    {
-      refetchInterval: 5 * 1000,
-      select: dbClustersQuerySelect,
-    }
-  );
-};
+export const useDbClusters = (namespace: string) =>
+  useQuery({
+    queryKey: [DB_CLUSTERS_QUERY_KEY],
+    queryFn: () => getDbClustersFn(namespace),
+    refetchInterval: 5 * 1000,
+    select: dbClustersQuerySelect,
+  });
 
 export const useDBClustersForNamespaces = () => {
   const { data: namespaces = [] } = useNamespaces();
@@ -54,14 +51,14 @@ export const useDBClustersForNamespaces = () => {
   const queries = namespaces.map<
     UseQueryOptions<GetDbClusterPayload, unknown, DbCluster[]>
   >((namespace) => ({
-    queryKey: `${DB_CLUSTERS_QUERY_KEY}_${namespace}`,
+    queryKey: [`${DB_CLUSTERS_QUERY_KEY}_${namespace}`],
     retry: false,
     queryFn: () => getDbClustersFn(namespace),
     refetchInterval: 5 * 1000,
     select: dbClustersQuerySelect,
   }));
 
-  const queryResults = useQueries(queries);
+  const queryResults = useQueries({ queries });
   const results: DbClusterForNamespaceResult[] = queryResults.map(
     (item, i) => ({
       namespace: namespaces[i],

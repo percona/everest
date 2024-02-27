@@ -5,7 +5,7 @@ import { DB_CLUSTERS_QUERY_KEY } from 'hooks/api/db-clusters/useDbClusters';
 import { enqueueSnackbar } from 'notistack';
 import { Messages } from 'pages/databases/dbClusterView.messages';
 import { useState } from 'react';
-import { useQueryClient } from 'react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { DbCluster, GetDbClusterPayload } from 'shared-types/dbCluster.types';
 
@@ -30,7 +30,7 @@ export const useDbActions = () => {
       {
         onSuccess: (updatedObject: DbCluster) => {
           queryClient.setQueryData<GetDbClusterPayload | undefined>(
-            DB_CLUSTERS_QUERY_KEY,
+            [DB_CLUSTERS_QUERY_KEY],
             (oldData) => {
               if (!oldData) {
                 return undefined;
@@ -66,7 +66,7 @@ export const useDbActions = () => {
       {
         onSuccess: (updatedObject: DbCluster) => {
           queryClient.setQueryData<GetDbClusterPayload | undefined>(
-            DB_CLUSTERS_QUERY_KEY,
+            [DB_CLUSTERS_QUERY_KEY],
             (oldData) => {
               if (!oldData) {
                 return undefined;
@@ -112,7 +112,7 @@ export const useDbActions = () => {
       {
         onSuccess: (_, variables) => {
           queryClient.setQueryData<GetDbClusterPayload | undefined>(
-            DB_CLUSTERS_QUERY_KEY,
+            [DB_CLUSTERS_QUERY_KEY],
             (oldData) => {
               if (!oldData) {
                 return undefined;

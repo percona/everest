@@ -47,8 +47,7 @@ const Login = () => {
         <Typography variant="h4" mb={3}>
           {Messages.welcome}
         </Typography>
-        <Typography>{Messages.intro1}</Typography>
-        <Typography>{Messages.intro2}</Typography>
+        <Typography>{Messages.intro}</Typography>
       </Stack>
       <Box
         width="65%"

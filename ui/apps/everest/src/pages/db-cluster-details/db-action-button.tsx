@@ -34,7 +34,7 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
     handleCloseDeleteDialog,
     isPaused,
   } = useDbActions();
-  const { isLoading: deletingCluster } = useDeleteDbCluster();
+  const { isPending: deletingCluster } = useDeleteDbCluster();
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };

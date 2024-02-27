@@ -13,7 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useMutation, UseMutationOptions, useQuery } from 'react-query';
+import {
+  useMutation,
+  UseMutationOptions,
+  useQuery,
+} from '@tanstack/react-query';
 import {
   createBackupStorageFn,
   deleteBackupStorageFn,
@@ -27,34 +31,40 @@ import {
 
 export const BACKUP_STORAGES_QUERY_KEY = 'backupStorages';
 
-export const useBackupStorages = () => {
-  return useQuery<GetBackupStoragesPayload, unknown, BackupStorage[]>(
-    BACKUP_STORAGES_QUERY_KEY,
-    () => getBackupStoragesFn()
-  );
-};
+export const useBackupStorages = () =>
+  useQuery<GetBackupStoragesPayload, unknown, BackupStorage[]>({
+    queryKey: [BACKUP_STORAGES_QUERY_KEY],
+    queryFn: getBackupStoragesFn,
+  });
+
+export const useBackupStoragesByNamespace = (namespace: string) =>
+  useQuery<GetBackupStoragesPayload, unknown, BackupStorage[]>({
+    queryKey: [BACKUP_STORAGES_QUERY_KEY],
+    queryFn: getBackupStoragesFn,
+    select: (data) =>
+      data.filter((item) => item.allowedNamespaces?.includes(namespace)),
+  });
 
 export const useCreateBackupStorage = (
   options?: UseMutationOptions<unknown, unknown, BackupStorage, unknown>
-) => {
-  return useMutation(
-    (payload: BackupStorage) => createBackupStorageFn(payload),
-    { ...options }
-  );
-};
+) =>
+  useMutation({
+    mutationFn: createBackupStorageFn,
+    ...options,
+  });
 
 export const useEditBackupStorage = (
   options?: UseMutationOptions<unknown, unknown, BackupStorage, unknown>
-) => {
-  return useMutation((payload: BackupStorage) => editBackupStorageFn(payload), {
+) =>
+  useMutation({
+    mutationFn: editBackupStorageFn,
     ...options,
   });
-};
 
 export const useDeleteBackupStorage = (
   options?: UseMutationOptions<unknown, unknown, string, unknown>
-) => {
-  return useMutation((payload: string) => deleteBackupStorageFn(payload), {
+) =>
+  useMutation({
+    mutationFn: deleteBackupStorageFn,
     ...options,
   });
-};
