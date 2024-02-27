@@ -30,17 +30,7 @@ jobs:
     continue-on-error: ${{ matrix.may-fail }}
     runs-on: ubuntu-20.04
 
-    env:
-      # no `-mod=readonly` to test PRs made by @dependabot;
-      # `git diff --exit-code` step below still checks what we need
-      GOPRIVATE: github.com/percona,github.com/percona/everest-operator
-
     steps:
-      - name: Configure git for private modules
-        env:
-          ROBOT_TOKEN: ${{ secrets.ROBOT_TOKEN }}
-        run: git config --global url."https://percona-platform-robot:${ROBOT_TOKEN}@github.com".insteadOf "https://github.com"
-
       - name: Set up Go release
         uses: percona-platform/setup-go@v4
         with:
@@ -123,15 +113,7 @@ jobs:
     continue-on-error: ${{ matrix.may-fail }}
     runs-on: ubuntu-latest
 
-    env:
-      GOPRIVATE: github.com/percona,github.com/percona/percona-everest-backend,github.com/percona/everest-operator
-
     steps:
-      - name: Configure git for private modules
-        env:
-          ROBOT_TOKEN: ${{ secrets.ROBOT_TOKEN }}
-        run: git config --global url."https://percona-platform-robot:${ROBOT_TOKEN}@github.com".insteadOf "https://github.com"
-
       - name: Set up Go release
         if: matrix.go-version != 'tip'
         uses: actions/setup-go@v5
@@ -213,9 +195,6 @@ jobs:
     name: API Integration Tests
     runs-on: ubuntu-20.04
     env:
-      # no `-mod=readonly` to test PRs made by @dependabot;
-      # `git diff --exit-code` step below still checks what we need
-      GOPRIVATE: github.com/percona,github.com/percona/everest-operator
       PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
     steps:
 
@@ -284,12 +263,6 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-
-
-      - name: Configure git for private modules
-        env:
-          ROBOT_TOKEN: ${{ secrets.ROBOT_TOKEN }}
-        run: git config --global url."https://percona-platform-robot:${ROBOT_TOKEN}@github.com".insteadOf "https://github.com"
 
       # We need to have Everest CRDs available before running provisioning and everest backend
       # to have an ability to create monitoring configs and use them during the provisioning as
