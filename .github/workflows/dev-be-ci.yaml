@@ -30,17 +30,7 @@ jobs:
     continue-on-error: ${{ matrix.may-fail }}
     runs-on: ubuntu-20.04
 
-    env:
-      # no `-mod=readonly` to test PRs made by @dependabot;
-      # `git diff --exit-code` step below still checks what we need
-      GOPRIVATE: github.com/percona,github.com/percona/everest-operator
-
     steps:
-      - name: Configure git for private modules
-        env:
-          ROBOT_TOKEN: ${{ secrets.ROBOT_TOKEN }}
-        run: git config --global url."https://percona-platform-robot:${ROBOT_TOKEN}@github.com".insteadOf "https://github.com"
-
       - name: Set up Go release
         uses: percona-platform/setup-go@v4
         with:
@@ -123,15 +113,7 @@ jobs:
     continue-on-error: ${{ matrix.may-fail }}
     runs-on: ubuntu-latest
 
-    env:
-      GOPRIVATE: github.com/percona,github.com/percona/percona-everest-backend,github.com/percona/everest-operator
-
     steps:
-      - name: Configure git for private modules
-        env:
-          ROBOT_TOKEN: ${{ secrets.ROBOT_TOKEN }}
-        run: git config --global url."https://percona-platform-robot:${ROBOT_TOKEN}@github.com".insteadOf "https://github.com"
-
       - name: Set up Go release
         if: matrix.go-version != 'tip'
         uses: actions/setup-go@v5
@@ -202,3 +184,159 @@ jobs:
           go env
           pwd
           git status
+
+  integration_tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: [ 1.21.x ]
+        may-fail: [ false ]
+
+    name: API Integration Tests
+    runs-on: ubuntu-20.04
+    env:
+      PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
+    steps:
+
+      - name: Set up Go release
+        uses: percona-platform/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Set GO_VERSION environment variable
+        run: |
+          go version
+          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Enable Go modules cache
+        uses: percona-platform/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
+
+      - name: Enable Go build cache
+        uses: percona-platform/cache@v3
+        with:
+          path: ~/.cache/go-build
+          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
+          restore-keys: |
+            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
+            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
+
+      - name: Start local Kubernetes cluster with the local registry
+        uses: medyagh/setup-minikube@latest
+        id: minikube
+        with:
+          cpus: 2
+          memory: 2000m
+          addons: registry
+          insecure-registry: 'localhost:5000'
+
+      - name: Expose local registry
+        run: |
+          kubectl port-forward --namespace kube-system service/registry 5000:80 &
+
+      - name: Build Everest backend
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build-debug
+
+      - name: Build Everest docker container
+        uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: localhost:5000/perconalab/everest
+          tags:
+            0.0.0
+
+      - name: Build and Push everest dev image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+      # We need to have Everest CRDs available before running provisioning and everest backend
+      # to have an ability to create monitoring configs and use them during the provisioning as
+      # a mock pmm server without running a real PMM.
+      - name: Install everest operator without Everest
+        run: |
+          kubectl create ns everest-system
+          kubectl create ns everest-monitoring
+          curl https://raw.githubusercontent.com/percona/everest-operator/main/deploy/bundle.yaml -o bundle.yaml
+          sed -i  "s/namespace: everest-operator-system/namespace: everest-system/g" bundle.yaml
+          kubectl -n everest-system apply -f bundle.yaml
+
+      # We create a dummy monitoring instance so we can enable monitoring during provisioning
+      # without having to install PMM.
+      - name: Create a monitoring instance
+        run: |
+          cat <<EOF | kubectl apply -f -
+          kind: Secret
+          apiVersion: v1
+          metadata:
+            name: pmm-local
+            namespace: everest-monitoring
+          type: Opaque
+          stringData:
+            "apiKey": "dummy-key"
+          EOF
+          cat <<EOF | kubectl apply -f -
+          kind: MonitoringConfig
+          apiVersion: everest.percona.com/v1alpha1
+          metadata:
+            name: pmm-local
+            namespace: everest-monitoring
+          spec:
+            type: pmm
+            credentialsSecretName: pmm-local
+            pmm:
+              url: http://localhost
+              image: percona/pmm-client:2
+          EOF
+
+      - name: Provision Everest using CLI
+        shell: bash
+        run: |
+          make build-cli
+          ./bin/everestctl install \
+            --operator.mongodb \
+            --operator.postgresql \
+            --operator.xtradb-cluster \
+            --skip-wizard \
+            --namespaces everest
+
+          # API_TOKEN is used later by "make test"
+          echo "API_TOKEN=$(./bin/everestctl token reset --json | jq .token -r)" >> $GITHUB_ENV
+
+
+      - name: Patch Everest Deployment to use the PR image
+        run: |
+          kubectl -n everest-system patch deployment percona-everest --type strategic --patch-file dev/patch-deployment-image.yaml
+          kubectl -n everest-system rollout status deploy/percona-everest --timeout=120s
+
+      - name: Expose Everest backend
+        run: |
+          kubectl port-forward --namespace everest-system deployment/percona-everest 8080:8080 &
+
+      - name: Run integration tests
+        run: |
+          cd api-tests
+          make init
+          make test
+
+      - name: Run debug commands on failure
+        if: ${{ failure() }}
+        run: |
+          kubectl -n everest-system describe pods
+          kubectl -n everest-monitoring describe pods
+          kubectl -n everest describe pods
+          kubectl -n everest-system logs deploy/percona-everest

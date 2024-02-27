@@ -22,6 +22,9 @@ init:                   ## Install development tools
 build:                ## Build binaries
 	go build -v $(LD_FLAGS) -o bin/everest ./cmd
 
+build-cli:                ## Build binaries
+	go build -v $(LD_FLAGS) -o bin/everestctl ./cmd/everest
+
 release: FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check.percona.com' -X 'github.com/percona/everest/cmd/config.TelemetryInterval=24h'
 
 release: build  ## Build release version
