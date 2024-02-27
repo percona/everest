@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - test
 
 env:
   NODE_OPTIONS: "--max_old_space_size=4096"
@@ -39,7 +39,6 @@ jobs:
         run: |
           cd ui
           pnpm install
-          mkdir ${GITHUB_WORKSPACE}/public/dist/
           EVEREST_OUT_DIR=${GITHUB_WORKSPACE}/public/dist/ pnpm build
 
       - uses: actions/setup-go@v5
