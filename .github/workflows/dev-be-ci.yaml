@@ -285,14 +285,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
 
-      - name: Checkout CLI repo
-        uses: actions/checkout@v4
-        with:
-          repository: percona/percona-everest-cli
-          ref: 'main'
-          path: percona-everest-cli
-          ssh-key: ${{ secrets.CLI_SSH_KEY }}
-
 
       - name: Configure git for private modules
         env:
@@ -341,10 +333,8 @@ jobs:
       - name: Provision Everest using CLI
         shell: bash
         run: |
-          cd percona-everest-cli
-          echo $(git describe --always)
-          make build
-          ./bin/everest install \
+          make build-cli
+          ./bin/everestctl install \
             --operator.mongodb \
             --operator.postgresql \
             --operator.xtradb-cluster \
@@ -352,7 +342,7 @@ jobs:
             --namespaces everest
 
           # API_TOKEN is used later by "make test"
-          echo "API_TOKEN=$(./bin/everest token reset --json | jq .token -r)" >> $GITHUB_ENV
+          echo "API_TOKEN=$(./bin/everestctl token reset --json | jq .token -r)" >> $GITHUB_ENV
 
 
       - name: Patch Everest Deployment to use the PR image
