@@ -1,0 +1,83 @@
+name: DEV Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+env:
+  NODE_OPTIONS: "--max_old_space_size=4096"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure git for private modules
+        env:
+          ROBOT_TOKEN: ${{ secrets.ROBOT_TOKEN }}
+        run: git config --global url."https://percona-platform-robot:${ROBOT_TOKEN}@github.com".insteadOf "https://github.com"
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          ref: 'main'
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Run with Node 16
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Build Everest Frontend app
+        run: |
+          cd ui
+          pnpm install
+          mkdir ${GITHUB_WORKSPACE}/public/dist/
+          EVEREST_OUT_DIR=${GITHUB_WORKSPACE}/public/dist/ pnpm build
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: './go.mod'
+
+      - name: Build Everest
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build
+
+      - name: Setup docker build metadata
+        uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: perconalab/everest
+          tags: 0.0.0
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push everest dev image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          # TODO: change to true once switched to monorepo
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+  scan:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.16.1
+        with:
+          image-ref: 'docker.io/perconalab/everest:0.0.0'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
