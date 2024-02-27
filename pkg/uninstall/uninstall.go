@@ -216,6 +216,20 @@ func (u *Uninstall) deleteDBs(ctx context.Context) error {
 
 	// Wait for all database clusters to be deleted, or timeout after 5 minutes.
 	u.l.Info("Waiting for database clusters to be deleted")
+	// XXX: When deleting a DBC CR, the everest operator doesn't wait for the
+	// DB operator's CRs to be deleted. Thus, as soon as we delete the DBC CRs,
+	// these cease to exist in the cluster and the polling below will return
+	// immediately. If we don't wait for the DB operators to process the
+	// deletion of the CRs, we may end up deleting the namespaces before the DB
+	// operators have a chance to delete the resources they manage, leaving the
+	// namespaces in an endless Terminating state waiting for finalizers to be
+	// removed.
+	// The everest operator should have a Deleting status that waits for the DB
+	// operators to delete their DB CRs before removing the corresponting DBC
+	// CR. Until this is implemented, we work around this by sleeping for two
+	// minutes to give the DB operators a chance to delete the resources they
+	// manage before we delete the namespaces.
+	time.Sleep(2 * time.Minute)
 	return wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
 		allDBs, err := u.getDBs(ctx)
 		if err != nil {
