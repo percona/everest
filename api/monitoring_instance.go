@@ -73,10 +73,10 @@ func (e *EverestServer) CreateMonitoringInstance(ctx echo.Context) error {
 	}
 
 	result := MonitoringInstance{
-		Type:             MonitoringInstanceBaseWithNameType(params.Type),
-		Name:             params.Name,
-		Url:              params.Url,
-		TargetNamespaces: params.TargetNamespaces,
+		Type:              MonitoringInstanceBaseWithNameType(params.Type),
+		Name:              params.Name,
+		Url:               params.Url,
+		AllowedNamespaces: params.AllowedNamespaces,
 	}
 
 	return ctx.JSON(http.StatusOK, result)
@@ -128,7 +128,7 @@ func (e *EverestServer) createMonitoringK8sResources(
 				URL: params.Url,
 			},
 			CredentialsSecretName: params.Name,
-			TargetNamespaces:      *params.TargetNamespaces,
+			AllowedNamespaces:     *params.AllowedNamespaces,
 		},
 	})
 	if err != nil {
@@ -154,10 +154,10 @@ func (e *EverestServer) ListMonitoringInstances(ctx echo.Context) error {
 	for _, mc := range mcList.Items {
 		mc := mc
 		result = append(result, &MonitoringInstance{
-			Type:             MonitoringInstanceBaseWithNameType(mc.Spec.Type),
-			Name:             mc.Name,
-			Url:              mc.Spec.PMM.URL,
-			TargetNamespaces: &mc.Spec.TargetNamespaces,
+			Type:              MonitoringInstanceBaseWithNameType(mc.Spec.Type),
+			Name:              mc.Name,
+			Url:               mc.Spec.PMM.URL,
+			AllowedNamespaces: &mc.Spec.AllowedNamespaces,
 		})
 	}
 	return ctx.JSON(http.StatusOK, result)
@@ -177,10 +177,10 @@ func (e *EverestServer) GetMonitoringInstance(ctx echo.Context, name string) err
 	}
 
 	return ctx.JSON(http.StatusOK, &MonitoringInstance{
-		Type:             MonitoringInstanceBaseWithNameType(m.Spec.Type),
-		Name:             m.Name,
-		Url:              m.Spec.PMM.URL,
-		TargetNamespaces: &m.Spec.TargetNamespaces,
+		Type:              MonitoringInstanceBaseWithNameType(m.Spec.Type),
+		Name:              m.Name,
+		Url:               m.Spec.PMM.URL,
+		AllowedNamespaces: &m.Spec.AllowedNamespaces,
 	})
 }
 
@@ -237,8 +237,8 @@ func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, name string) 
 	if params.Url != "" {
 		m.Spec.PMM.URL = params.Url
 	}
-	if params.TargetNamespaces != nil {
-		m.Spec.TargetNamespaces = *params.TargetNamespaces
+	if params.AllowedNamespaces != nil {
+		m.Spec.AllowedNamespaces = *params.AllowedNamespaces
 	}
 	err = e.kubeClient.UpdateMonitoringConfig(c, m)
 	if err != nil {
@@ -249,10 +249,10 @@ func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, name string) 
 	}
 
 	return ctx.JSON(http.StatusOK, &MonitoringInstance{
-		Type:             MonitoringInstanceBaseWithNameType(m.Spec.Type),
-		Name:             m.Name,
-		Url:              m.Spec.PMM.URL,
-		TargetNamespaces: &m.Spec.TargetNamespaces,
+		Type:              MonitoringInstanceBaseWithNameType(m.Spec.Type),
+		Name:              m.Name,
+		Url:               m.Spec.PMM.URL,
+		AllowedNamespaces: &m.Spec.AllowedNamespaces,
 	})
 }
 
