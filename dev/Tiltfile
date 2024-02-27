@@ -1,8 +1,9 @@
+# Config
+config_yaml=read_yaml('config.yaml')
+
 # Vars
 everest_namespace = 'everest-system'
 everest_monitoring_namespace = 'everest-monitoring'
-namespaces_string = os.getenv('NAMESPACES', 'my-special-place,the-dark-side')
-print('Using namespaces: %s' % namespaces_string)
 pxc_operator_version = os.getenv('PXC_OPERATOR_VERSION', '1.13.0')
 print('Using PXC operator version: %s' % pxc_operator_version)
 psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.15.0')
@@ -64,7 +65,7 @@ k8s_resource(
   ],
   new_name='everest-namespace',
 )
-namespaces = namespaces_string.split(',')
+namespaces = [namespace['name'] for namespace in config_yaml['namespaces']]
 for namespace in namespaces:
   namespace_create(namespace)
 k8s_resource(
@@ -81,6 +82,7 @@ k8s_resource(
 
 # PXC
 pxc_operator_bundle_yaml = local(['curl', '-s', 'https://raw.githubusercontent.com/percona/percona-xtradb-cluster-operator/v%s/deploy/bundle.yaml' % pxc_operator_version], quiet=True)
+pxc_namespaces = [namespace['name'] for namespace in config_yaml['namespaces'] if 'pxc' in namespace['operators']]
 # We keep track of the CRD objects separately from the operator deployment so
 # that we can make the deployment depend on the CRDs to avoid tilt thinking
 # that there are conflicts with multiple CRDs.
@@ -89,7 +91,7 @@ k8s_resource(
     # The CRDs don't really get installed in a namespace, but since each
     # operator install is tied to a namespace, tilt uses a namespace to track
     # the install so we need to include one object per CRD per namespace.
-    '%s:%s' % (crd, namespace) for namespace in namespaces for crd in [
+    '%s:%s' % (crd, namespace) for namespace in pxc_namespaces for crd in [
             'perconaxtradbclusterbackups.pxc.percona.com:customresourcedefinition',
             'perconaxtradbclusterrestores.pxc.percona.com:customresourcedefinition',
             'perconaxtradbclusters.pxc.percona.com:customresourcedefinition'
@@ -101,10 +103,10 @@ k8s_resource(
   new_name='pxc-crds',
   labels=["db-operators"]
 )
-for namespace in namespaces:
+for namespace in pxc_namespaces:
   k8s_yaml(namespace_inject(pxc_operator_bundle_yaml, namespace))
   k8s_resource(
-    workload='percona-xtradb-cluster-operator:deployment:%s' % namespace,
+    workload='percona-xtradb-cluster-operator%s' % (':deployment:' + namespace if len(pxc_namespaces) > 1 else ''),
     objects=[
       'percona-xtradb-cluster-operator:serviceaccount:%s' % namespace,
       'percona-xtradb-cluster-operator:role:%s' % namespace,
@@ -120,6 +122,7 @@ for namespace in namespaces:
 
 # PSMDB
 psmdb_operator_bundle_yaml = local(['curl', '-s', 'https://raw.githubusercontent.com/percona/percona-server-mongodb-operator/v%s/deploy/bundle.yaml' % psmdb_operator_version], quiet=True)
+psmdb_namespaces = [namespace['name'] for namespace in config_yaml['namespaces'] if 'psmdb' in namespace['operators']]
 # We keep track of the CRD objects separately from the operator deployment so
 # that we can make the deployment depend on the CRDs to avoid tilt thinking
 # that there are conflicts with multiple CRDs.
@@ -128,7 +131,7 @@ k8s_resource(
     # The CRDs don't really get installed in a namespace, but since each
     # operator install is tied to a namespace, tilt uses a namespace to track
     # the install so we need to include one object per CRD per namespace.
-    '%s:%s' % (crd, namespace) for namespace in namespaces for crd in [
+    '%s:%s' % (crd, namespace) for namespace in psmdb_namespaces for crd in [
       'perconaservermongodbbackups.psmdb.percona.com:customresourcedefinition',
       'perconaservermongodbrestores.psmdb.percona.com:customresourcedefinition',
       'perconaservermongodbs.psmdb.percona.com:customresourcedefinition',
@@ -140,10 +143,10 @@ k8s_resource(
   new_name='psmdb-crds',
   labels=["db-operators"]
 )
-for namespace in namespaces:
+for namespace in psmdb_namespaces:
   k8s_yaml(namespace_inject(psmdb_operator_bundle_yaml, namespace))
   k8s_resource(
-    workload='percona-server-mongodb-operator:deployment:%s' % namespace,
+    workload='percona-server-mongodb-operator%s' % (':deployment:' + namespace if len(psmdb_namespaces) > 1 else ''),
     objects=[
       'percona-server-mongodb-operator:serviceaccount:%s' % namespace,
       'percona-server-mongodb-operator:role:%s' % namespace,
@@ -159,6 +162,7 @@ for namespace in namespaces:
 
 # PG
 pg_operator_bundle_yaml = local(['curl', '-s', 'https://raw.githubusercontent.com/percona/percona-postgresql-operator/v%s/deploy/bundle.yaml' % pg_operator_version], quiet=True)
+pg_namespaces = [namespace['name'] for namespace in config_yaml['namespaces'] if 'pg' in namespace['operators']]
 # We keep track of the CRD objects separately from the operator deployment so
 # that we can make the deployment depend on the CRDs to avoid tilt thinking
 # that there are conflicts with multiple CRDs.
@@ -167,7 +171,7 @@ k8s_resource(
     # The CRDs don't really get installed in a namespace, but since each
     # operator install is tied to a namespace, tilt uses a namespace to track
     # the install so we need to include one object per CRD per namespace.
-    '%s:%s' % (crd, namespace) for namespace in namespaces for crd in [
+    '%s:%s' % (crd, namespace) for namespace in pg_namespaces for crd in [
       'perconapgbackups.pgv2.percona.com:customresourcedefinition',
       'perconapgclusters.pgv2.percona.com:customresourcedefinition',
       'perconapgrestores.pgv2.percona.com:customresourcedefinition',
@@ -180,10 +184,10 @@ k8s_resource(
   new_name='pg-crds',
   labels=["db-operators"]
 )
-for namespace in namespaces:
+for namespace in pg_namespaces:
   k8s_yaml(namespace_inject(pg_operator_bundle_yaml, namespace))
   k8s_resource(
-    workload='percona-postgresql-operator:deployment:%s' % namespace,
+    workload='percona-postgresql-operator%s' % (':deployment:' + namespace if len(pg_namespaces) > 1 else ''),
     objects=[
       'percona-postgresql-operator:serviceaccount:%s' % namespace,
       'percona-postgresql-operator:role:%s' % namespace,
@@ -329,7 +333,7 @@ for object in objects:
       if container.get('name') == 'manager':
         container['env'].append({'name': 'SYSTEM_NAMESPACE', 'value': everest_namespace})
         container['env'].append({'name': 'MONITORING_NAMESPACE', 'value': everest_monitoring_namespace})
-        container['env'].append({'name': 'DB_NAMESPACES', 'value': namespaces_string})
+        container['env'].append({'name': 'DB_NAMESPACES', 'value': ','.join(namespaces)})
 everest_operator_yaml = encode_yaml_stream(objects)
 k8s_yaml(everest_operator_yaml)
 k8s_resource(
@@ -353,11 +357,7 @@ k8s_resource(
     'everest-operator-proxy-rolebinding:clusterrolebinding',
   ],
   resource_deps = [
-    '%s:%s' % (operator, namespace) for namespace in namespaces for operator in [
-      'pxc',
-      'psmdb',
-      'pg',
-    ]
+    '%s:%s' % (operator, namespace['name']) for namespace in config_yaml['namespaces'] for operator in namespace['operators']
   ],
   new_name='everest-operator',
   labels=["everest-operator"]
