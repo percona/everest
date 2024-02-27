@@ -1289,7 +1289,7 @@ components:
         region:
           type: string
           x-go-type-skip-optional-pointer: true
-        targetNamespaces:
+        allowedNamespaces:
           type: array
           description: List of namespaces allowed to use this backup storage
           items:
@@ -1300,7 +1300,7 @@ components:
         - accessKey
         - secretKey
         - type
-        - targetNamespaces
+        - allowedNamespaces
       additionalProperties: false
     UpdateBackupStorageParams:
       type: object
@@ -1319,7 +1319,7 @@ components:
           type: string
         region:
           type: string
-        targetNamespaces:
+        allowedNamespaces:
           type: array
           description: List of namespaces allowed to use this backup storage
           items:
@@ -1345,7 +1345,7 @@ components:
         region:
           type: string
           x-go-type-skip-optional-pointer: true
-        targetNamespaces:
+        allowedNamespaces:
           type: array
           description: List of namespaces allowed to use this backup storage
           items:
@@ -1355,7 +1355,7 @@ components:
         - name
         - bucketName
         - type
-        - targetNamespaces
+        - allowedNamespaces
     BackupStoragesList:
       type: array
       items:
@@ -1374,7 +1374,7 @@ components:
           type: string
           minLength: 1
           x-go-type-skip-optional-pointer: true
-        targetNamespaces:
+        allowedNamespaces:
           type: array
           description: List of namespaces allowed to use this monitoring instance
           items:
@@ -1416,7 +1416,7 @@ components:
       required:
         - type
         - url
-        - targetNamespaces
+        - allowedNamespaces
         - name
     MonitoringInstanceUpdateParams:
       description: Monitoring instance update information
@@ -1430,7 +1430,7 @@ components:
       required:
         - type
         - url
-        - targetNamespaces
+        - allowedNamespaces
         - name
     MonitoringInstancesList:
       type: array
