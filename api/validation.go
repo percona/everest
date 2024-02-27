@@ -261,17 +261,17 @@ func azureAccess(ctx context.Context, l *zap.SugaredLogger, accountName, account
 	return nil
 }
 
-func validateTargetNamespaces(targetNamespaces, namespaces []string) error {
-	for _, targetNamespace := range targetNamespaces {
+func validateAllowedNamespaces(allowedNamespaces, namespaces []string) error {
+	for _, allowedNamespace := range allowedNamespaces {
 		found := false
 		for _, namespace := range namespaces {
-			if targetNamespace == namespace {
+			if allowedNamespace == namespace {
 				found = true
 				break
 			}
 		}
 		if !found {
-			return fmt.Errorf("unknown namespace '%s'", targetNamespace)
+			return fmt.Errorf("unknown namespace '%s'", allowedNamespace)
 		}
 	}
 
@@ -313,8 +313,8 @@ func validateUpdateBackupStorageRequest(ctx echo.Context, bs *everestv1alpha1.Ba
 		url = params.Url
 	}
 
-	if params.TargetNamespaces != nil {
-		if err := validateTargetNamespaces(*params.TargetNamespaces, namespaces); err != nil {
+	if params.AllowedNamespaces != nil {
+		if err := validateAllowedNamespaces(*params.AllowedNamespaces, namespaces); err != nil {
 			return nil, err
 		}
 	}
@@ -369,7 +369,7 @@ func validateCreateBackupStorageRequest(ctx echo.Context, namespaces []string, l
 		}
 	}
 
-	if err := validateTargetNamespaces(params.TargetNamespaces, namespaces); err != nil {
+	if err := validateAllowedNamespaces(params.AllowedNamespaces, namespaces); err != nil {
 		return nil, err
 	}
 
@@ -396,8 +396,8 @@ func validateCreateMonitoringInstanceRequest(ctx echo.Context) (*CreateMonitorin
 		return nil, ErrInvalidURL("url")
 	}
 
-	if params.TargetNamespaces == nil || len(*params.TargetNamespaces) == 0 {
-		return nil, errors.New("targetNamespaces is required")
+	if params.AllowedNamespaces == nil || len(*params.AllowedNamespaces) == 0 {
+		return nil, errors.New("allowedNamespaces is required")
 	}
 
 	switch params.Type {
@@ -429,8 +429,8 @@ func validateUpdateMonitoringInstanceRequest(ctx echo.Context) (*UpdateMonitorin
 		}
 	}
 
-	if params.TargetNamespaces != nil && len(*params.TargetNamespaces) == 0 {
-		return nil, errors.New("targetNamespaces cannot be empty")
+	if params.AllowedNamespaces != nil && len(*params.AllowedNamespaces) == 0 {
+		return nil, errors.New("allowedNamespaces cannot be empty")
 	}
 
 	if err := validateUpdateMonitoringInstanceType(params); err != nil {
@@ -613,7 +613,7 @@ func (e *EverestServer) validateBackupStoragesAccess(ctx context.Context, namesp
 		return nil, fmt.Errorf("could not validate backup storage %s", name)
 	}
 
-	for _, ns := range bs.Spec.TargetNamespaces {
+	for _, ns := range bs.Spec.AllowedNamespaces {
 		if ns == namespace {
 			return bs, nil
 		}
@@ -630,7 +630,7 @@ func (e *EverestServer) validateMonitoringConfigAccess(ctx context.Context, name
 		return nil, fmt.Errorf("failed getting monitoring config %s", name)
 	}
 
-	for _, ns := range mc.Spec.TargetNamespaces {
+	for _, ns := range mc.Spec.AllowedNamespaces {
 		if ns == namespace {
 			return mc, nil
 		}
