@@ -27,7 +27,7 @@ test.beforeAll(async ({ request }) => {
     type: 'pmm',
     name: monitoringConfigName1,
     url: 'http://monitoring',
-    allowedNamespaces: [testsNs],
+    targetNamespaces: [testsNs],
     pmm: {
       apiKey: '123',
     },

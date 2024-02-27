@@ -68,7 +68,7 @@ export const createBackupStorage = async (request, name) => {
     region: 'us-east-2',
     accessKey: 'sdfs',
     secretKey: 'sdfsdfsd',
-    allowedNamespaces: [testsNs],
+    targetNamespaces: [testsNs],
   }
 
   const response = await request.post(`/v1/backup-storages`, { data: storagePayload })
