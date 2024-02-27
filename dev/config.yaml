@@ -1,0 +1,11 @@
+namespaces:
+  - name: my-special-place
+    operators:
+      - pxc
+      - psmdb
+      - pg
+  - name: the-dark-side
+    operators:
+      - pxc
+      - psmdb
+      - pg
