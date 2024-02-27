@@ -39,13 +39,8 @@ jobs:
         run: |
           cd ui
           pnpm install
-          EVEREST_OUT_DIR=build pnpm build
-          mkdir ${GITHUB_WORKSPACE}/front
-          cp -rvf ./build/* ${GITHUB_WORKSPACE}/front/
-
-      - name: Embed Everest Frontend app into backend
-        run: |
-          cp -rf ${GITHUB_WORKSPACE}/front/* ${GITHUB_WORKSPACE}/public/dist/
+          mkdir ${GITHUB_WORKSPACE}/public/dist/
+          EVEREST_OUT_DIR=${GITHUB_WORKSPACE}/public/dist/ pnpm build
 
       - uses: actions/setup-go@v5
         with:
