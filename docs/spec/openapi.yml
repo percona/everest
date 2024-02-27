@@ -1289,7 +1289,7 @@ components:
         region:
           type: string
           x-go-type-skip-optional-pointer: true
-        allowedNamespaces:
+        targetNamespaces:
           type: array
           description: List of namespaces allowed to use this backup storage
           items:
@@ -1300,7 +1300,7 @@ components:
         - accessKey
         - secretKey
         - type
-        - allowedNamespaces
+        - targetNamespaces
       additionalProperties: false
     UpdateBackupStorageParams:
       type: object
@@ -1319,7 +1319,7 @@ components:
           type: string
         region:
           type: string
-        allowedNamespaces:
+        targetNamespaces:
           type: array
           description: List of namespaces allowed to use this backup storage
           items:
@@ -1345,7 +1345,7 @@ components:
         region:
           type: string
           x-go-type-skip-optional-pointer: true
-        allowedNamespaces:
+        targetNamespaces:
           type: array
           description: List of namespaces allowed to use this backup storage
           items:
@@ -1355,7 +1355,7 @@ components:
         - name
         - bucketName
         - type
-        - allowedNamespaces
+        - targetNamespaces
     BackupStoragesList:
       type: array
       items:
@@ -1368,13 +1368,13 @@ components:
         type:
           type: string
           enum:
-            - pmm
+          - pmm
           x-go-type-skip-optional-pointer: true
         url:
           type: string
           minLength: 1
           x-go-type-skip-optional-pointer: true
-        allowedNamespaces:
+        targetNamespaces:
           type: array
           description: List of namespaces allowed to use this monitoring instance
           items:
@@ -1416,7 +1416,7 @@ components:
       required:
         - type
         - url
-        - allowedNamespaces
+        - targetNamespaces
         - name
     MonitoringInstanceUpdateParams:
       description: Monitoring instance update information
@@ -1430,7 +1430,7 @@ components:
       required:
         - type
         - url
-        - allowedNamespaces
+        - targetNamespaces
         - name
     MonitoringInstancesList:
       type: array
@@ -1652,7 +1652,7 @@ components:
                 any other source.
               type: string
           required:
-            - type
+          - type
           type: object
         status:
           description: DatabaseEngineStatus defines the observed state of DatabaseEngine.
