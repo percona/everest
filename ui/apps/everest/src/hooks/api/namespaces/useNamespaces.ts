@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useQueries, useQuery, UseQueryOptions } from 'react-query';
+import { useQueries, useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { GetNamespacesPayload } from 'shared-types/namespaces.types';
 import { getNamespacesFn } from 'api/namespaces';
 import { dbEnginesQuerySelect } from '../db-engines/useDbEngines';
@@ -22,26 +22,26 @@ import { DbEngine, GetDbEnginesPayload } from 'shared-types/dbEngines.types';
 
 export const NAMESPACES_QUERY_KEY = 'namespace';
 
-export const useNamespaces = () => {
-  return useQuery<GetNamespacesPayload, unknown, string[]>(
-    NAMESPACES_QUERY_KEY,
-    () => getNamespacesFn()
-  );
-};
-
+export const useNamespaces = () =>
+  useQuery<GetNamespacesPayload, unknown, string[]>({
+    queryKey: [NAMESPACES_QUERY_KEY],
+    queryFn: getNamespacesFn,
+  });
 export const useDBEnginesForNamespaces = () => {
   const { data: namespaces = [] } = useNamespaces();
 
   const queries = namespaces.map<
     UseQueryOptions<GetDbEnginesPayload, unknown, DbEngine[]>
   >((namespace) => ({
-    queryKey: `dbEngines_${namespace}`,
+    queryKey: [`dbEngines_${namespace}`],
     retry: false,
     queryFn: () => getDbEnginesFn(namespace),
     select: dbEnginesQuerySelect,
   }));
 
-  const queryResults = useQueries(queries);
+  const queryResults = useQueries({
+    queries,
+  });
   const results = queryResults.map((item, i) => ({
     namespace: namespaces[i],
     ...item,

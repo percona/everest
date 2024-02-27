@@ -26,7 +26,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
-import { useQueryClient } from 'react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { DotsMenu } from 'components/dots-menu/dots-menu';
 import { Option } from 'components/dots-menu/dots-menu.types';
 import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils';
@@ -55,7 +55,7 @@ export const ScheduledBackupsList = () => {
     enabled: !!dbClusterName,
     refetchInterval: 10 * 1000,
   });
-  const { mutate: deleteSchedule, isLoading: deletingSchedule } =
+  const { mutate: deleteSchedule, isPending: deletingSchedule } =
     useDeleteSchedule(dbClusterName!, namespace);
   const schedules = data && data?.spec?.backup?.schedules;
   const handleDelete = (scheduleName: string) => () => {

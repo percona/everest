@@ -17,16 +17,24 @@ export function AutoCompleteAutoFill<T>({
   fillFirstField = 'name',
   disabled,
 }: AutoCompleteAutoFillProps<T>) {
-  const { setValue, trigger } = useFormContext();
+  const { setValue, getValues, trigger } = useFormContext();
 
   useEffect(() => {
-    if (enableFillFirst && options?.length > 0) {
-      setValue(name, {
-        // @ts-ignore
-        [fillFirstField]: options[0][fillFirstField],
-      });
-      trigger(name);
+    const currentValues = getValues(name);
+
+    if (
+      !options?.length ||
+      !enableFillFirst ||
+      (currentValues !== undefined && currentValues !== null)
+    ) {
+      return;
     }
+
+    setValue(name, {
+      // @ts-ignore
+      [fillFirstField]: options[0][fillFirstField],
+    });
+    trigger(name);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options]);
 

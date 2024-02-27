@@ -12,7 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   DbEngine,
   DbEngineStatus,
@@ -84,14 +84,11 @@ export const dbEnginesQuerySelect = ({
         DB_TYPE_ORDER_MAP[dbTypeA] - DB_TYPE_ORDER_MAP[dbTypeB]
     );
 
-export const useDbEngines = (namespace: string) => {
-  return useQuery<GetDbEnginesPayload, unknown, DbEngine[]>(
-    `dbEngines_${namespace}`,
-    () => getDbEnginesFn(namespace),
-    {
-      select: dbEnginesQuerySelect,
-      enabled: !!namespace,
-      retry: 2,
-    }
-  );
-};
+export const useDbEngines = (namespace: string) =>
+  useQuery<GetDbEnginesPayload, unknown, DbEngine[]>({
+    queryKey: [`dbEngines_${namespace}`],
+    queryFn: () => getDbEnginesFn(namespace),
+    select: dbEnginesQuerySelect,
+    enabled: !!namespace,
+    retry: 2,
+  });

@@ -12,17 +12,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getKubernetesClusterResourcesInfo } from 'api/kubernetesClusterApi';
 import {
   GetKubernetesClusterResourcesInfoPayload,
   KubernetesClusterResourcesInfo,
 } from 'shared-types/kubernetes.types';
 
-export const useKubernetesClusterResourcesInfo = () => {
-  return useQuery<
+export const useKubernetesClusterResourcesInfo = () =>
+  useQuery<
     GetKubernetesClusterResourcesInfoPayload,
     unknown,
     KubernetesClusterResourcesInfo
-  >(`cluster-resources-info`, () => getKubernetesClusterResourcesInfo());
-};
+  >({
+    queryKey: ['cluster-resources-info'],
+    queryFn: getKubernetesClusterResourcesInfo,
+  });

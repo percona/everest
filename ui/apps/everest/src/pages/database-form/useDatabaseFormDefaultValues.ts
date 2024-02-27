@@ -29,7 +29,7 @@ export const useDatabasePageDefaultValues = (
 ): {
   defaultValues: DbWizardType;
   dbClusterData: DbCluster | undefined;
-  dbClusterRequestStatus: 'error' | 'idle' | 'loading' | 'success';
+  dbClusterRequestStatus: 'error' | 'idle' | 'pending' | 'success';
   isFetching: boolean;
 } => {
   const { state } = useLocation();
@@ -57,10 +57,11 @@ export const useDatabasePageDefaultValues = (
   useEffect(() => {
     // dbClusterRequestStatus === 'success' when the request is enabled, which only happens if shouldRetrieveDbClusterData === true
     // hence, no need to re-check mode and so on here
-    if (dbClusterRequestStatus === 'success' && dbCluster)
+    if (dbClusterRequestStatus === 'success' && dbCluster) {
       setDefaultValues(
         DbClusterPayloadToFormValues(dbCluster, mode, namespace)
       );
+    }
   }, [dbCluster, dbClusterRequestStatus, mode, namespace]);
 
   return {

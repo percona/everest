@@ -12,7 +12,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { UseMutationOptions, useMutation, useQuery } from 'react-query';
+import {
+  UseMutationOptions,
+  useMutation,
+  useQuery,
+} from '@tanstack/react-query';
 import {
   getMonitoringInstancesFn,
   createMonitoringInstanceFn,
@@ -34,13 +38,11 @@ type HookUpdateParam = {
 export const MONITORING_INSTANCES_QUERY_KEY = 'monitoringInstances';
 
 export const useMonitoringInstancesList = (enabled?: boolean) =>
-  useQuery<MonitoringInstanceList>(
-    MONITORING_INSTANCES_QUERY_KEY,
-    () => getMonitoringInstancesFn(),
-    {
-      enabled,
-    }
-  );
+  useQuery<MonitoringInstanceList>({
+    queryKey: [MONITORING_INSTANCES_QUERY_KEY],
+    queryFn: getMonitoringInstancesFn,
+    enabled,
+  });
 
 export const useCreateMonitoringInstance = (
   options?: UseMutationOptions<
@@ -50,16 +52,16 @@ export const useCreateMonitoringInstance = (
     unknown
   >
 ) =>
-  useMutation(
-    (payload: CreateMonitoringInstancePayload) =>
-      createMonitoringInstanceFn(payload),
-    options
-  );
+  useMutation({
+    mutationFn: createMonitoringInstanceFn,
+    ...options,
+  });
 
 export const useDeleteMonitoringInstance = () =>
-  useMutation((instanceName: string) =>
-    deleteMonitoringInstanceFn(instanceName)
-  );
+  useMutation({
+    mutationFn: (instanceName: string) =>
+      deleteMonitoringInstanceFn(instanceName),
+  });
 
 export const useUpdateMonitoringInstance = (
   options?: UseMutationOptions<
@@ -69,8 +71,8 @@ export const useUpdateMonitoringInstance = (
     unknown
   >
 ) =>
-  useMutation(
-    ({ instanceName, payload }: HookUpdateParam) =>
+  useMutation({
+    mutationFn: ({ instanceName, payload }: HookUpdateParam) =>
       updateMonitoringInstanceFn(instanceName, payload),
-    options
-  );
+    ...options,
+  });

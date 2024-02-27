@@ -56,7 +56,7 @@ export const DbClusterView = () => {
     [dbClustersResults]
   );
 
-  const { isLoading: deletingCluster } = useDeleteDbCluster();
+  const { isPending: deletingCluster } = useDeleteDbCluster();
   const {
     openDeleteDialog,
     openRestoreDialog,

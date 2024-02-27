@@ -13,23 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useQuery, UseQueryOptions } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { DbCluster } from 'shared-types/dbCluster.types';
 
 import { getDbClusterFn } from 'api/dbClusterApi';
+import { PerconaQueryOptions } from 'shared-types/query.types';
 
 export const DB_CLUSTER_QUERY = 'dbCluster';
 
 export const useDbCluster = (
   dbClusterName: string,
   namespace: string,
-  options?: UseQueryOptions<DbCluster>
-) => {
-  return useQuery<DbCluster, unknown, DbCluster>(
-    [DB_CLUSTER_QUERY, dbClusterName],
-    () => getDbClusterFn(dbClusterName, namespace),
-    {
-      ...options,
-    }
-  );
-};
+  options?: PerconaQueryOptions<DbCluster, unknown, DbCluster>
+) =>
+  useQuery<DbCluster, unknown, DbCluster>({
+    queryKey: [DB_CLUSTER_QUERY, dbClusterName],
+    queryFn: () => getDbClusterFn(dbClusterName, namespace),
+    ...options,
+  });

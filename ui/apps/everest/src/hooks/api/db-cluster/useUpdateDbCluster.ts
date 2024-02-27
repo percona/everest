@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { UseMutationOptions, useMutation } from 'react-query';
+import { UseMutationOptions, useMutation } from '@tanstack/react-query';
 import { updateDbClusterFn } from 'api/dbClusterApi';
 import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
@@ -138,9 +138,9 @@ export const useUpdateDbCluster = (
     UpdateDbClusterArgType,
     unknown
   >
-) => {
-  return useMutation(
-    ({ dbPayload, dbCluster }: UpdateDbClusterArgType) => {
+) =>
+  useMutation({
+    mutationFn: ({ dbPayload, dbCluster }: UpdateDbClusterArgType) => {
       const dbClusterName = dbCluster?.metadata?.name;
       const payload = formValuesToPayloadOverrides(dbPayload, dbCluster);
       return updateDbClusterFn(
@@ -149,6 +149,5 @@ export const useUpdateDbCluster = (
         payload
       );
     },
-    { ...options }
-  );
-};
+    ...options,
+  });

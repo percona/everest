@@ -21,6 +21,7 @@ const storageDataObject = {
   type: StorageType.S3,
   bucketName: 'bucket-001',
   region: 'Us',
+  allowedNamespaces: ['the-dark-side'],
 };
 
 // was moved as separate object to avoid recreation since the original use of useQuery caches the data
@@ -31,3 +32,11 @@ const backupStorageMockData = {
 export const useBackupStorages = () => backupStorageMockData;
 
 export const useCreateBackupStorage = () => storageDataObject;
+
+export const useBackupStoragesByNamespace = (namespace: string) => {
+  return {
+    data: backupStorageMockData.data.filter((item) =>
+      item.allowedNamespaces.includes(namespace)
+    ),
+  };
+};

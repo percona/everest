@@ -4,7 +4,7 @@ import {
   useCreateBackupOnDemand,
 } from 'hooks/api/backups/useBackups';
 import { useMemo } from 'react';
-import { useQueryClient } from 'react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import {
   GetBackupsPayload,
@@ -25,7 +25,7 @@ export const OnDemandBackupModal = ({
 }: OnDemandBackupModalProps) => {
   const queryClient = useQueryClient();
   const { dbClusterName, namespace = '' } = useParams();
-  const { mutate: createBackupOnDemand, isLoading: creatingBackup } =
+  const { mutate: createBackupOnDemand, isPending: creatingBackup } =
     useCreateBackupOnDemand(dbClusterName!, namespace);
 
   const handleSubmit = (data: BackupFormData) => {

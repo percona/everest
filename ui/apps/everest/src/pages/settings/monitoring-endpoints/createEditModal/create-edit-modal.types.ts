@@ -4,7 +4,7 @@ import { rfc_123_schema } from 'utils/common-validation';
 
 export enum EndpointFormFields {
   name = 'name',
-  namespaces = 'targetNamespaces',
+  namespaces = 'allowedNamespaces',
   url = 'url',
   user = 'user',
   password = 'password',

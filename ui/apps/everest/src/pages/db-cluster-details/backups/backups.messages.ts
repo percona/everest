@@ -16,7 +16,7 @@
 export const Messages = {
   // TODO Temporary message. Should be deleted after active/inactive status for each schedule
   backupsDisabled:
-    'Backups are currently disabled for this database. To set up backup schedules, first re-enable backups in the database configuration.',
+    'Scheduled backups are currently disabled for this database. To enable scheduled backups, edit the database cluster settings.',
   noStoragesMessage:
     'To start using Backups, you need to add a backups storage first.',
   addStorage: 'Add Storage',

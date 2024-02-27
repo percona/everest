@@ -12,7 +12,7 @@ import {
 import { type MRT_ColumnDef } from 'material-react-table';
 import { LabelValue } from 'pages/databases/expandedRow/LabelValue';
 import { useMemo, useState } from 'react';
-import { useQueryClient } from 'react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { BackupStorage, StorageType } from 'shared-types/backupStorages.types';
 import {
   updateDataAfterCreate,
@@ -27,11 +27,11 @@ export const StorageLocations = () => {
   const queryClient = useQueryClient();
 
   const { data: backupStorages = [], isFetching } = useBackupStorages();
-  const { mutate: createBackupStorage, isLoading: creatingBackupStorage } =
+  const { mutate: createBackupStorage, isPending: creatingBackupStorage } =
     useCreateBackupStorage();
-  const { mutate: editBackupStorage, isLoading: editingBackupStorage } =
+  const { mutate: editBackupStorage, isPending: editingBackupStorage } =
     useEditBackupStorage();
-  const { mutate: deleteBackupStorage, isLoading: deletingBackupStorage } =
+  const { mutate: deleteBackupStorage, isPending: deletingBackupStorage } =
     useDeleteBackupStorage();
 
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);

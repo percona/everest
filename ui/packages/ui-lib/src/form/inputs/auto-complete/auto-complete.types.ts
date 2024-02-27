@@ -36,4 +36,5 @@ export type AutoCompleteInputProps<T> = {
   loading?: boolean;
   isRequired?: boolean;
   disabled?: boolean;
+  onChange?: () => void;
 };

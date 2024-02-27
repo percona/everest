@@ -30,6 +30,7 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
         label={Messages.namespaces}
         loading={isNamespacesFetching}
         options={namespaces}
+        isRequired
         textFieldProps={{
           helperText: Messages.createEditModal.helperText.namespaces,
         }}

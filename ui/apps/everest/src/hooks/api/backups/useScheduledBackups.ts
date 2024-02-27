@@ -1,7 +1,7 @@
 import { updateDbClusterFn } from 'api/dbClusterApi';
 import { ScheduleFormData } from 'components/schedule-form/schedule-form-schema.ts';
 import { getCronExpressionFromFormValues } from 'components/time-selection/time-selection.utils';
-import { useMutation, UseMutationOptions } from 'react-query';
+import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { Schedule } from 'shared-types/dbCluster.types';
 import { useDbCluster } from '../db-cluster/useDbCluster';
 import { DbCluster } from 'shared-types/dbCluster.types';
@@ -105,8 +105,8 @@ export const useUpdateSchedules = (
 ) => {
   const { data: dbCluster } = useDbCluster(dbClusterName, namespace);
 
-  return useMutation(
-    (dbPayload: ScheduleFormData) => {
+  return useMutation({
+    mutationFn: (dbPayload: ScheduleFormData) => {
       const payload = backupScheduleFormValuesToDbClusterPayload(
         dbPayload,
         dbCluster!,
@@ -114,8 +114,8 @@ export const useUpdateSchedules = (
       );
       return updateDbClusterFn(dbClusterName, namespace, payload);
     },
-    { ...options }
-  );
+    ...options,
+  });
 };
 
 export const useDeleteSchedule = (
@@ -125,14 +125,14 @@ export const useDeleteSchedule = (
 ) => {
   const { data: dbCluster } = useDbCluster(dbClusterName, namespace);
 
-  return useMutation(
-    (scheduleName) => {
+  return useMutation({
+    mutationFn: (scheduleName: string) => {
       const payload = deletedScheduleToDbClusterPayload(
         scheduleName,
         dbCluster!
       );
       return updateDbClusterFn(dbClusterName, namespace, payload);
     },
-    { ...options }
-  );
+    ...options,
+  });
 };

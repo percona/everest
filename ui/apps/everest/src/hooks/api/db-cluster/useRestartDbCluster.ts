@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { UseMutationOptions, useMutation } from 'react-query';
+import { UseMutationOptions, useMutation } from '@tanstack/react-query';
 import { updateDbClusterFn } from 'api/dbClusterApi';
 import { DbCluster } from 'shared-types/dbCluster.types';
 
@@ -28,9 +28,9 @@ export const useRestartDbCluster = (
     PausedDBClusterArgType,
     unknown
   >
-) => {
-  return useMutation(
-    ({ dbCluster }: PausedDBClusterArgType) => {
+) =>
+  useMutation({
+    mutationFn: ({ dbCluster }: PausedDBClusterArgType) => {
       const payload: DbCluster = {
         ...dbCluster,
         metadata: {
@@ -46,6 +46,5 @@ export const useRestartDbCluster = (
         payload
       );
     },
-    { ...options }
-  );
-};
+    ...options,
+  });

@@ -1,7 +1,7 @@
 import { TextInput } from '@percona/ui-lib';
 import { AutoCompleteAutoFill } from 'components/auto-complete-auto-fill/auto-complete-auto-fill';
 import { ScheduleFormFields } from 'components/schedule-form/schedule-form.types';
-import { useBackupStorages } from 'hooks/api/backup-storages/useBackupStorages.ts';
+import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
 import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster.ts';
 import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -15,7 +15,8 @@ export const OnDemandBackupFieldsWrapper = () => {
   const { data: dbCluster } = useDbCluster(dbClusterName!, namespace, {
     enabled: !!dbClusterName,
   });
-  const { data: backupStorages = [], isFetching } = useBackupStorages();
+  const { data: backupStorages = [], isFetching } =
+    useBackupStoragesByNamespace(namespace);
   const dbClusterActiveStorage = dbCluster?.status?.activeStorage;
 
   useEffect(() => {

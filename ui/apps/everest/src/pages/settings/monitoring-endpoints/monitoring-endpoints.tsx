@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Button, MenuItem } from '@mui/material';
 import { Add, Delete, Edit } from '@mui/icons-material';
-import { useQueryClient } from 'react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Table } from '@percona/ui-lib';
 import {
   useMonitoringInstancesList,
@@ -29,11 +29,11 @@ export const MonitoringEndpoints = () => {
   const [selectedInstance, setSelectedInstance] =
     useState<MonitoringInstance>();
   const { data: monitoringInstances = [] } = useMonitoringInstancesList();
-  const { mutate: createMonitoringInstance, isLoading: creatingInstance } =
+  const { mutate: createMonitoringInstance, isPending: creatingInstance } =
     useCreateMonitoringInstance();
-  const { mutate: deleteMonitoringInstance, isLoading: removingInstance } =
+  const { mutate: deleteMonitoringInstance, isPending: removingInstance } =
     useDeleteMonitoringInstance();
-  const { mutate: updateMonitoringInstance, isLoading: updatingInstance } =
+  const { mutate: updateMonitoringInstance, isPending: updatingInstance } =
     useUpdateMonitoringInstance();
   const queryClient = useQueryClient();
   const columns = useMemo<MRT_ColumnDef<MonitoringInstance>[]>(
@@ -88,13 +88,13 @@ export const MonitoringEndpoints = () => {
 
   const handleSubmitModal = (
     isEditMode: boolean,
-    { name, url, targetNamespaces, ...pmmData }: EndpointFormType
+    { name, url, allowedNamespaces, ...pmmData }: EndpointFormType
   ) => {
     if (isEditMode) {
       updateMonitoringInstance(
         {
           instanceName: name,
-          payload: { url, type: 'pmm', targetNamespaces, pmm: { ...pmmData } },
+          payload: { url, type: 'pmm', allowedNamespaces, pmm: { ...pmmData } },
         },
         {
           onSuccess: (updatedInstance) => {
@@ -109,7 +109,7 @@ export const MonitoringEndpoints = () => {
       );
     } else {
       createMonitoringInstance(
-        { name, url, type: 'pmm', targetNamespaces, pmm: { ...pmmData } },
+        { name, url, type: 'pmm', allowedNamespaces, pmm: { ...pmmData } },
         {
           onSuccess: (newInstance) => {
             updateDataAfterCreate(

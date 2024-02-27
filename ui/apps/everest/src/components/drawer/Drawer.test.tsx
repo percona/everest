@@ -1,5 +1,5 @@
 import { screen, render, fireEvent, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TestWrapper, resizeScreenSize } from 'utils/test';
 import { AppBar } from '../app-bar/AppBar';
 import { Drawer } from './Drawer';

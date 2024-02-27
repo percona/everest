@@ -16,6 +16,7 @@ function AutoCompleteInput<T>({
   loading = false,
   isRequired = false,
   disabled = false,
+  onChange,
 }: AutoCompleteInputProps<T>) {
   const { control: contextControl } = useFormContext();
   const content = (
@@ -30,6 +31,9 @@ function AutoCompleteInput<T>({
           disabled={disabled}
           onChange={(_, newValue) => {
             field.onChange(newValue);
+            if (onChange) {
+              onChange();
+            }
           }}
           data-testid={`${kebabize(name)}-autocomplete`}
           // We might generalize this in the future, if we think renderInput should be defined from the outside

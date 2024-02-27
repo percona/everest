@@ -19,7 +19,7 @@ import {
   useDbCluster,
 } from 'hooks/api/db-cluster/useDbCluster';
 import { useContext, useMemo } from 'react';
-import { useQueryClient } from 'react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { Messages } from './scheduled-backup-modal.messages';
 
@@ -46,7 +46,7 @@ export const ScheduledBackupModal = () => {
     enabled: !!dbClusterName && mode === 'edit',
   });
 
-  const { mutate: updateScheduledBackup, isLoading } = useUpdateSchedules(
+  const { mutate: updateScheduledBackup, isPending } = useUpdateSchedules(
     dbClusterName!,
     namespace,
     mode
@@ -75,7 +75,9 @@ export const ScheduledBackupModal = () => {
   const handleSubmit = (data: ScheduleFormData) => {
     updateScheduledBackup(data, {
       onSuccess() {
-        queryClient.invalidateQueries([DB_CLUSTER_QUERY, dbClusterName]);
+        queryClient.invalidateQueries({
+          queryKey: [DB_CLUSTER_QUERY, dbClusterName],
+        });
         handleCloseScheduledBackupModal();
       },
     });
@@ -96,7 +98,7 @@ export const ScheduledBackupModal = () => {
           : Messages.editSchedule.headerMessage
       }
       onSubmit={handleSubmit}
-      submitting={isLoading}
+      submitting={isPending}
       submitMessage={
         mode === 'new'
           ? Messages.createSchedule.submitMessage

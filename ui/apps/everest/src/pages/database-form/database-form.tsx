@@ -55,8 +55,8 @@ export const DatabasePage = () => {
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [closeModalIsOpen, setModalIsOpen] = useState(false);
 
-  const { mutate: addDbCluster, isLoading: isCreating } = useCreateDbCluster();
-  const { mutate: editDbCluster, isLoading: isUpdating } = useUpdateDbCluster();
+  const { mutate: addDbCluster, isPending: isCreating } = useCreateDbCluster();
+  const { mutate: editDbCluster, isPending: isUpdating } = useUpdateDbCluster();
   const { isDesktop } = useActiveBreakpoint();
   const navigate = useNavigate();
   const { state } = useLocation();

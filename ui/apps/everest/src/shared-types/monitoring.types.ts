@@ -2,7 +2,7 @@ export interface MonitoringInstance {
   type: string;
   url: string;
   name: string;
-  targetNamespaces: string[];
+  allowedNamespaces: string[];
 }
 
 export type MonitoringInstanceList = MonitoringInstance[];

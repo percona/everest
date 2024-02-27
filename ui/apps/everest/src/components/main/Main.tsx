@@ -25,8 +25,9 @@ export const Main = () => {
     true
   );
   const { activeBreakpoint } = useContext(DrawerContext);
-  const { isFetching, isError, refetch } =
-    useKubernetesClusterInfo('initial-k8-info');
+  const { isFetching, isError, refetch } = useKubernetesClusterInfo([
+    'initial-k8-info',
+  ]);
 
   const handleCloseWelcomeDialog = () => {
     setOpenWelcomeDialogLS(false);

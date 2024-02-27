@@ -12,8 +12,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { DbType } from '@percona/types';
-import { humanizeDbType } from '@percona/ui-lib';
 
 export const Messages = {
   header: 'Point-in-time Recovery (PITR)',
@@ -22,11 +20,6 @@ export const Messages = {
   enablePitr: 'Enable PITR',
   toEnablePitr:
     'To enable PITR, first set up a backup schedule for this database',
-  // temporary message
-  unavailableForDb: (dbType: DbType) =>
-    `This feature is currently unavailable for ${humanizeDbType(
-      dbType
-    )} databases.`,
   captionPitr:
     'Point-in-time recovery provides continuous backups on your database to protect against accidental writes or deletes.',
   pitrCreateHeader: 'Create PitrStep backup every',
