@@ -5,7 +5,7 @@ on:
     paths:
       - 'ui/**'
     branches:
-      - EVEREST-665-ui-tests
+      - main
   pull_request:
     paths:
       - 'ui/**'
