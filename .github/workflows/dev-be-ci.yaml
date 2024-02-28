@@ -5,7 +5,7 @@ on:
     paths-ignore:
       - 'ui/**'
     branches:
-      - EVEREST-665-cli-tests
+      - main
   pull_request:
     paths-ignore:
       - 'ui/**'
