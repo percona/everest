@@ -53,8 +53,11 @@ setup('Backup storages', async ({ request }) => {
   });
 
   await (
-    await Promise.all(promises)
-  ).map((response) => expect(response.ok()).toBeTruthy());
+      await Promise.all(promises)
+  ).map(async (response) => {
+    const resp = await response.json()
+    expect(resp).toBe("aaa")
+  });
 });
 
 setup('Close modal permanently', async ({ page }) => {
