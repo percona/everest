@@ -345,6 +345,12 @@ jobs:
 
   integration_tests_cli:
     name: CLI Integration Tests
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: [ 1.21.x ]
+        may-fail: [ false ]
+
     runs-on: ubuntu-20.04
     env:
       PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
