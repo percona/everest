@@ -3,7 +3,7 @@ init:               ## Install dependencies
 	npx playwright install
 
 install-operators:  ## Install operators to k8s
-	../bin/everest install \
+	../bin/everestctl install \
 		--namespaces percona-everest-operators \
 		--skip-wizard \
 

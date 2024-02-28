@@ -17,7 +17,7 @@ import Output from '@support/output';
 import shell from 'shelljs';
 
 export class CliHelper {
-  constructor(private pathToBinary = '../bin/everest') {}
+  constructor(private pathToBinary = '../bin/everestctl') {}
 
   /**
    * Shell(sh) exec() wrapper to use outside {@link test}
