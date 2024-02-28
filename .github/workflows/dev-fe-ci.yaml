@@ -101,7 +101,6 @@ jobs:
           commit_message: 'chore: lint/format'
           token: ${{ secrets.ROBOT_TOKEN }}
 
-
   E2E:
     name: E2E Tests
     needs: cache_pnpm
@@ -213,4 +212,4 @@ jobs:
         if: ${{ failure() }}
         run: |
           kubectl -n everest-system logs deployment/percona-everest
-
+          

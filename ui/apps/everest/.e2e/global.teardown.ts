@@ -34,7 +34,10 @@ setup.describe.serial('Teardown', () => {
 
     await (
       await Promise.all(promises)
-    ).map((response) => expect(response.ok()).toBeTruthy());
+    ).map(async (response) => {
+      const resp = await response.json()
+      expect(resp).toBe("aaa")
+    });
   });
 
   // setup('Delete monitoring instances', async ({ request }) => {
