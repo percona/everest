@@ -5,7 +5,7 @@ on:
     paths-ignore:
       - 'ui/**'
     branches:
-      - main
+      - EVEREST-665-cli-tests
   pull_request:
     paths-ignore:
       - 'ui/**'
@@ -185,7 +185,7 @@ jobs:
           pwd
           git status
 
-  integration_tests:
+  integration_tests_api:
     strategy:
       fail-fast: false
       matrix:
@@ -340,3 +340,83 @@ jobs:
           kubectl -n everest-monitoring describe pods
           kubectl -n everest describe pods
           kubectl -n everest-system logs deploy/percona-everest
+
+
+
+  integration_tests_cli:
+    name: CLI Integration Tests
+    runs-on: ubuntu-20.04
+    env:
+      PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
+    steps:
+      - name: Set up Go release
+        uses: percona-platform/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Set GO_VERSION environment variable
+        run: |
+          go version
+          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Enable Go modules cache
+        uses: percona-platform/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
+      - name: Enable Go build cache
+        uses: percona-platform/cache@v3
+        with:
+          path: ~/.cache/go-build
+          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
+          restore-keys: |
+            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
+            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
+      - name: Set up Go release for CLI
+        uses: percona-platform/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Build CLI binary
+        run: |
+          make init
+          make build-cli
+      - name: Create KIND cluster
+        uses: helm/kind-action@v1.8.0
+
+      - name: Run integration tests
+        working-directory: cli-tests
+        id: cli-tests
+        run: |
+          make init
+          make install-operators
+          make test-cli
+      - name: Attach the report
+        if: ${{ always() && steps.cli-tests.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: cli-tests-report
+          path: cli-tests/test-report
+
+    integration_tests_flows:
+      strategy:
+        fail-fast: false
+        matrix:
+          make_target: [
+            'test-all-operators',
+            'test-mongo-operator',
+            'test-pg-operator',
+            'test-pxc-operator'
+          ]
+      name: CLI tests
+      uses: ./.github/workflows/cli-tests.yml
+      secrets: inherit
+      with:
+        make_target: ${{ matrix.make_target }}
