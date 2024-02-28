@@ -1,0 +1,21 @@
+version: "3"
+services:
+  pg:
+    image: postgres
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=pwd
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  everest:
+    image: perconalab/everest:dev-latest
+    depends_on:
+      pg:
+        condition: service_healthy
+    environment:
+      - DSN=postgres://admin:pwd@pg:5432/postgres?sslmode=disable
+    ports:
+      - 8080:8080
