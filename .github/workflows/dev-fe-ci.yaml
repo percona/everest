@@ -107,9 +107,12 @@ jobs:
     needs: cache_pnpm
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
         with:
-          token: ${{ secrets.ROBOT_TOKEN }}
+          lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
+
       - uses: pnpm/action-setup@v2
         with:
           version: 8
