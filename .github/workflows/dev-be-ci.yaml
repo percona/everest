@@ -405,18 +405,18 @@ jobs:
           name: cli-tests-report
           path: cli-tests/test-report
 
-    integration_tests_flows:
-      strategy:
-        fail-fast: false
-        matrix:
-          make_target: [
-            'test-all-operators',
-            'test-mongo-operator',
-            'test-pg-operator',
-            'test-pxc-operator'
-          ]
-      name: CLI tests
-      uses: ./.github/workflows/cli-tests.yml
-      secrets: inherit
-      with:
-        make_target: ${{ matrix.make_target }}
+  integration_tests_flows:
+    strategy:
+      fail-fast: false
+      matrix:
+        make_target: [
+          'test-all-operators',
+          'test-mongo-operator',
+          'test-pg-operator',
+          'test-pxc-operator'
+        ]
+    name: CLI tests
+    uses: ./.github/workflows/cli-tests.yml
+    secrets: inherit
+    with:
+      make_target: ${{ matrix.make_target }}
