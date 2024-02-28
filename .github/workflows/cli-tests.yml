@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
-          ref: ${{ github.event.pull_request.head.sha }}
+#          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Enable Go modules cache
         uses: percona-platform/cache@v3
