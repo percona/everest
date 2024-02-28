@@ -3,11 +3,11 @@ FILES = $(shell find . -type f -name '*.go')
 RELEASE_VERSION ?= v0.0.0-$(shell git rev-parse --short HEAD)
 RELEASE_FULLCOMMIT ?= $(shell git rev-parse HEAD)
 
-FLAGS = -X 'github.com/percona/everest/pkg/version.ProjectName=Everest Backend' \
-	-X 'github.com/percona/everest/pkg/version.Version=$(RELEASE_VERSION)' \
+FLAGS = -X 'github.com/percona/everest/pkg/version.Version=$(RELEASE_VERSION)' \
 	-X 'github.com/percona/everest/pkg/version.FullCommit=$(RELEASE_FULLCOMMIT)' \
 
-LD_FLAGS = -ldflags " $(FLAGS) "
+LD_FLAGS_BE = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=Everest Backend'"
+LD_FLAGS_CLI = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl'"
 
 default: help
 
@@ -20,10 +20,10 @@ init:                   ## Install development tools
 	cd tools && go generate -x -tags=tools
 
 build:                ## Build binaries
-	go build -v $(LD_FLAGS) -o bin/everest ./cmd
+	go build -v $(LD_FLAGS_BE) -o bin/everest ./cmd
 
 build-cli:                ## Build binaries
-	go build -v $(LD_FLAGS) -o bin/everestctl ./cmd/everest
+	go build -v $(LD_FLAGS_CLI) -o bin/everestctl ./cmd/everest
 
 release: FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check.percona.com' -X 'github.com/percona/everest/cmd/config.TelemetryInterval=24h'
 
@@ -31,7 +31,7 @@ release: build  ## Build release version
 
 
 build-debug:                ## Build binaries
-	go build -tags debug -v $(LD_FLAGS) -o bin/everest ./cmd
+	go build -tags debug -v $(LD_FLAGS_BE) -o bin/everest ./cmd
 
 gen:                    ## Generate code
 	go generate ./...
