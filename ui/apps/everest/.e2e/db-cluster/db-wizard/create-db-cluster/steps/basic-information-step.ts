@@ -25,6 +25,7 @@ export const basicInformationStepCheck = async (
   const dbEnginesButtons = page
     .getByTestId('toggle-button-group-input-db-type')
     .getByRole('button');
+
   const nrButtons = await dbEnginesButtons.count();
 
   expect(nrButtons).toBe(3);

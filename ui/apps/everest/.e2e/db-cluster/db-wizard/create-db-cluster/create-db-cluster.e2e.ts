@@ -20,7 +20,6 @@ import {
 } from '../../../utils/database-engines';
 import { deleteDbClusterFn } from '../../../utils/db-cluster';
 import { getTokenFromLocalStorage } from '../../../utils/localStorage';
-import { getNamespacesFn } from '../../../utils/namespaces';
 import { getClusterDetailedInfo } from '../../../utils/storage-class';
 import { advancedConfigurationStepCheck } from './steps/advanced-configuration-step';
 import { backupsStepCheck } from './steps/backups-step';
@@ -36,6 +35,7 @@ import {
   submitWizard,
 } from '../../../utils/db-wizard';
 import { findDbAndClickActions } from '../../../utils/db-clusters-list';
+import { EVEREST_CI_NAMESPACES } from '../../../constants';
 
 test.describe('DB Cluster creation', () => {
   let engineVersions = {
@@ -45,12 +45,10 @@ test.describe('DB Cluster creation', () => {
   };
   let storageClasses = [];
   // let monitoringInstancesList = [];
-  let namespace = '';
+  let namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
 
   test.beforeAll(async ({ request }) => {
     const token = await getTokenFromLocalStorage();
-    const namespaces = await getNamespacesFn(token, request);
-    namespace = namespaces[0];
     engineVersions = await getEnginesVersions(token, namespace, request);
 
     const { storageClassNames = [] } = await getClusterDetailedInfo(
@@ -75,7 +73,9 @@ test.describe('DB Cluster creation', () => {
     // 3) check that the default parameters for MySQL are changed with parameters for the first available dbEngine
   });
 
-  test('Cluster defaults', async ({ page }) => {
+  test('Cluster defaults for namespaces with all operators', async ({
+    page,
+  }) => {
     const expectedNodesOrder = [3, 3, 2];
     const dbEnginesButtons = page
       .getByTestId('toggle-button-group-input-db-type')
@@ -115,9 +115,9 @@ test.describe('DB Cluster creation', () => {
       namespace,
       request
     );
-    let dbName = '';
-    let scheduleName = '';
-    let storageName = '';
+    let dbName: string;
+    let scheduleName: string;
+    let storageName: string;
 
     expect(storageClasses.length).toBeGreaterThan(0);
 
@@ -131,11 +131,11 @@ test.describe('DB Cluster creation', () => {
 
     dbName = await page.getByTestId('text-input-db-name').inputValue();
 
-    await page.getByTestId('db-wizard-continue-button').click();
+    await moveForward(page);
     await expect(page.getByText('Number of nodes: 3')).toBeVisible();
 
     await resourcesStepCheck(page);
-    await page.getByTestId('db-wizard-continue-button').click();
+    await moveForward(page);
 
     await backupsStepCheck(page);
     scheduleName = await page
@@ -144,13 +144,13 @@ test.describe('DB Cluster creation', () => {
     storageName = await page
       .getByTestId('text-input-storage-location')
       .inputValue();
-    await page.getByTestId('db-wizard-continue-button').click();
+    await moveForward(page);
 
     await pitrStepCheck(page);
-    await page.getByTestId('db-wizard-continue-button').click();
+    await moveForward(page);
 
     await advancedConfigurationStepCheck(page);
-    await page.getByTestId('db-wizard-continue-button').click();
+    await moveForward(page);
 
     // Test the mechanism for default number of nodes
     await page.getByTestId('button-edit-preview-basic-information').click();
@@ -239,14 +239,14 @@ test.describe('DB Cluster creation', () => {
     const mySQLButton = page.getByTestId('mysql-toggle-button');
     await mySQLButton.click();
 
-    await page.getByTestId('db-wizard-continue-button').click();
-    await page.getByTestId('db-wizard-continue-button').click();
+    await moveForward(page);
+    await moveForward(page);
     const enabledBackupsCheckbox = page
       .getByTestId('switch-input-backups-enabled')
       .getByRole('checkbox');
 
     await expect(enabledBackupsCheckbox).toBeChecked();
-    await page.getByTestId('db-wizard-continue-button').click();
+    await moveForward(page);
 
     const enabledPitrCheckbox = page
       .getByTestId('switch-input-pitr-enabled-label')
@@ -260,11 +260,11 @@ test.describe('DB Cluster creation', () => {
       page.getByTestId('text-input-pitr-storage-location')
     ).toBeVisible();
 
-    await page.getByTestId('db-wizard-previous-button').click();
+    await moveBack(page);
 
     await enabledBackupsCheckbox.setChecked(false);
     await expect(page.getByTestId('pitr-no-backup-alert')).toBeVisible();
-    await page.getByTestId('db-wizard-continue-button').click();
+    await moveForward(page);
 
     await expect(enabledPitrCheckbox).not.toBeChecked();
     await expect(enabledPitrCheckbox).toBeDisabled();
@@ -275,7 +275,7 @@ test.describe('DB Cluster creation', () => {
     await page.getByTestId('text-input-db-name').fill('new-cluster');
     await page.getByTestId('text-input-storage-class').click();
     await page.getByRole('option').first().click();
-    await page.getByTestId('db-wizard-continue-button').click();
+    await moveForward(page);
 
     await expect(
       page.getByRole('heading', {
@@ -286,7 +286,7 @@ test.describe('DB Cluster creation', () => {
     await page.getByTestId('toggle-button-nodes-3').click();
     await page.getByTestId('toggle-button-large').click();
     await page.getByTestId('text-input-disk').fill('150');
-    await page.getByTestId('db-wizard-continue-button').click();
+    await moveForward(page);
 
     // await expect(
     //   page.getByRole('heading', {
@@ -301,7 +301,7 @@ test.describe('DB Cluster creation', () => {
     // expect(storageOptions.filter({ hasText: 'ui-dev' })).toBeVisible();
     // await storageOptions.first().click();
     //
-    // await page.getByTestId('db-wizard-continue-button').click();
+    // await await moveForward(page);
 
     await expect(
       page.getByRole('heading', { name: 'Advanced Configurations' })
@@ -317,13 +317,12 @@ test.describe('DB Cluster creation', () => {
   test('Multiple Mongo schedules', async ({ page, request }) => {
     const clusterName = 'multi-schedule-test';
     const token = await getTokenFromLocalStorage();
-    const namespaces = await getNamespacesFn(token, request);
     const recommendedEngineVersions = await getEnginesLatestRecommendedVersions(
       token,
-      namespaces[0],
+      namespace,
       request
     );
-    let storageName = '';
+    let storageName: string;
 
     await basicInformationStepCheck(
       page,
@@ -353,7 +352,7 @@ test.describe('DB Cluster creation', () => {
     await submitWizard(page);
     await expect(page.getByTestId('db-wizard-goto-db-clusters')).toBeVisible();
 
-    await page.goto(`/databases/${namespaces[0]}/${clusterName}/backups`);
+    await page.goto(`/databases/${namespace}/${clusterName}/backups`);
     await page.getByTestId('menu-button').click();
     await page.getByTestId('schedule-menu-item').click();
     await page.getByTestId('form-dialog-create').click();

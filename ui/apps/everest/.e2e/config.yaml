@@ -1,0 +1,15 @@
+namespaces:
+  - name: everest-ui
+    operators:
+      - pxc
+      - psmdb
+      - pg
+  - name: psmdb-only
+    operators:
+      - psmdb
+  - name: pxc-only
+    operators:
+      - pxc
+  - name: pg-only
+    operators:
+      - pg

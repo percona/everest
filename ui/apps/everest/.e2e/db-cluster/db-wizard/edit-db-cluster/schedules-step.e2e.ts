@@ -29,6 +29,7 @@ import {
   checkSuccessOfUpdateAndGoToDbClustersList,
 } from './edit-db-cluster.utils';
 import { getNamespacesFn } from '../../../utils/namespaces';
+import { moveForward } from '../../../utils/db-wizard';
 
 test.describe.serial('DB Cluster Editing Backups Step', async () => {
   let scheduleName = 'db-wizard-schedule';
@@ -57,11 +58,10 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     await page.goto('/databases');
     await findDbAndClickActions(page, mySQLName, 'Edit');
 
-    const nextStep = page.getByTestId('db-wizard-continue-button');
     // Go to Resources step
-    await nextStep.click();
+    await moveForward(page);
     // Go to Backups step
-    await nextStep.click();
+    await moveForward(page);
 
     const enabledBackupsCheckbox = page
       .getByTestId('switch-input-backups-enabled')
@@ -84,11 +84,11 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     ).toBeVisible();
 
     // Go to Point-in-time Recovery (PITR)
-    await nextStep.click();
+    await moveForward(page);
     // Go to Advanced Configuration step
-    await nextStep.click();
+    await moveForward(page);
     // Go to Monitoring step
-    await nextStep.click();
+    await moveForward(page);
 
     await checkDbWizardEditSubmitIsAvailableAndClick(page);
     await checkSuccessOfUpdateAndGoToDbClustersList(page);
@@ -113,11 +113,10 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     await page.goto('/databases');
     await findDbAndClickActions(page, mySQLName, 'Edit');
 
-    const nextStep = page.getByTestId('db-wizard-continue-button');
     // Go to Resources step
-    await nextStep.click();
+    await moveForward(page);
     // Go to Backups step
-    await nextStep.click();
+    await moveForward(page);
 
     // disabling backups
     const enabledBackupsCheckbox = page
@@ -135,11 +134,11 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     ).toBeTruthy();
 
     // Go to Point-in-time Recovery (PITR)
-    await nextStep.click();
+    await moveForward(page);
     // Go to Advanced Configuration step
-    await nextStep.click();
+    await moveForward(page);
     // Go to Monitoring step
-    await nextStep.click();
+    await moveForward(page);
 
     await checkDbWizardEditSubmitIsAvailableAndClick(page);
     await checkSuccessOfUpdateAndGoToDbClustersList(page);
@@ -147,9 +146,9 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     await findDbAndClickActions(page, mySQLName, 'Edit');
 
     // Go to Resources step
-    await nextStep.click();
+    await moveForward(page);
     // Go to Backups step
-    await nextStep.click();
+    await moveForward(page);
 
     // check that schedule hasn't been reset
     await expect(enabledBackupsCheckbox).not.toBeChecked();

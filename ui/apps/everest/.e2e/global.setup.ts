@@ -15,9 +15,9 @@
 
 import { test as setup, expect } from '@playwright/test';
 import 'dotenv/config';
+import { STORAGE_NAMES } from './constants';
 import { getTokenFromLocalStorage } from './utils/localStorage';
 import { getNamespacesFn } from './utils/namespaces';
-import { STORAGE_NAMES } from './constants';
 const {
   EVEREST_LOCATION_BUCKET_NAME,
   EVEREST_LOCATION_ACCESS_KEY,

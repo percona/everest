@@ -14,6 +14,7 @@
 // limitations under the License.
 
 import { APIRequestContext, expect, Page } from '@playwright/test';
+import { findRowAndClickActions } from './table';
 
 export const getDBClustersList = async (
   token: string,
@@ -42,15 +43,5 @@ export const findDbAndClickActions = async (
   nameOfAction?: string
 ) => {
   page.getByTestId(`${dbName}-status`).filter({ hasText: 'Initializing' });
-
-  // cluster actions menu click
-  await page
-    .locator('.MuiTableRow-root')
-    .filter({ hasText: dbName })
-    .getByTestId('MoreHorizIcon')
-    .click();
-
-  if (nameOfAction) {
-    await page.getByRole('menuitem', { name: nameOfAction }).click();
-  }
+  await findRowAndClickActions(page, dbName, nameOfAction);
 };

@@ -149,6 +149,7 @@ export const MonitoringEndpoints = () => {
           <Button
             size="small"
             startIcon={<Add />}
+            data-testid="add-monitoring-endpoint"
             variant="outlined"
             onClick={handleOpenCreateModal}
           >
