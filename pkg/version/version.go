@@ -42,9 +42,6 @@ var (
 )
 
 // CatalogImage returns a catalog image needed for the build of everestctl
-//
-// for dev builds it returns https://raw.githubusercontent.com/percona/percona-everest-backend/main/deploy/quickstart-k8s.yaml
-// for the release builds it returns https://raw.githubusercontent.com/percona/percona-everest-backend/vX.Y.Z/deploy/quickstart-k8s.yaml
 func CatalogImage() string {
 	catalogImage = devCatalogImage
 	v, err := goversion.NewSemver(Version)
