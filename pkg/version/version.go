@@ -33,7 +33,7 @@ const (
 )
 
 var (
-	// ProjectName is a component name, e.g. everest backend, everestctl.
+	// ProjectName is a component name, e.g. everest API Server, everestctl.
 	ProjectName string //nolint:gochecknoglobals
 	// Version is a component version e.g. v0.3.0-1-a93bef.
 	Version string //nolint:gochecknoglobals

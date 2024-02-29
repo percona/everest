@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@fixtures": [
+        "./fixtures.ts"
+      ],
+      "@tests/*": [
+        "./*"
+      ],
+      "@support/*": [
+        "support/*"
+      ],
+      "@root/*": [
+        "../*"
+      ],
+      "@helpers/*": [
+        "helpers/*"
+      ]
+    }
+  }
+}

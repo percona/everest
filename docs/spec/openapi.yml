@@ -38,8 +38,8 @@ paths:
                 $ref: '#/components/schemas/NamespaceList'
   '/version':
     get:
-      summary: Get Everest Backend version info
-      description: Get Everest Backend version info
+      summary: Get Everest API Server version info
+      description: Get Everest API Server version info
       operationId: versionInfo
       responses:
         '200':

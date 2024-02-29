@@ -1,5 +1,5 @@
 ---
-name: DEV FE CI
+name: FE CI
 on:
   push:
     paths:
@@ -166,7 +166,7 @@ jobs:
         run: |
           echo "EVEREST_K8_TOKEN=$(go run cmd/everest/main.go token reset --json | jq .token -r)" >> $GITHUB_ENV
 
-      - name: Expose Everest backend
+      - name: Expose Everest API Server
         run: |
           kubectl port-forward -n everest-system deployment/percona-everest 8080:8080 &
 

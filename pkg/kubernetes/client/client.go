@@ -827,7 +827,7 @@ func (c *Client) applyTemplateCustomization(u *unstructured.Unstructured, namesp
 		}
 	}
 	if ok && kind == "Service" {
-		// During installation or upgrading of the everest backend
+		// During installation or upgrading of the everest API Server
 		// CLI should keep spec.type untouched to prevent overriding of it.
 		if err := c.setEverestServiceType(u, namespace); err != nil {
 			return err

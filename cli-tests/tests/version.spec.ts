@@ -1,4 +1,4 @@
-// everest
+// percona-everest-cli
 // Copyright (C) 2023 Percona LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { expect, test } from '@fixtures'
-import {checkError} from "@tests/tests/helpers";
+import { test } from '@fixtures';
 
-test('version endpoint', async ({ request, cli }) => {
-  const version = await request.get('/v1/version')
+test.describe('Everest CLI "version" validation', async () => {
+  test('version validation', async ({ cli }) => {
+    const out = await cli.everestExecSilent('version');
+    const hash = await cli.exec('git rev-parse --short HEAD');
 
-  await checkError(version)
+    await hash.assertSuccess();
+    const version = `v0.0.0-${hash.getStdOutLines()[0]}`;
 
-  const versionJSON = await version.json()
-
-  const gitVersion = await cli.exec('git rev-parse --short HEAD')
-
-  await gitVersion.assertSuccess()
-
-  expect(versionJSON.projectName).toEqual('Everest API Server')
-  expect(versionJSON.version).toEqual('v0.0.0-' + gitVersion.getStdOutLines()[0])
-})
+    await out.assertSuccess();
+    await out.outContainsNormalizedMany([
+      'ProjectName: everestctl',
+      `Version: ${version}`,
+    ]);
+  });
+});

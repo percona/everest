@@ -1,6 +1,6 @@
-# Contributing to Percona Everest backend
+# Contributing to Percona Everest API Server
 
-Percona Everest backend uses two types of methods:
+Percona Everest API Server uses two types of methods:
 
 - "own" methods, such as registering a Kubernetes cluster in Everest and listing the clusters.
 -  proxy methods for the Kubernetes API, including all resource-related methods like database-cluster, database-cluster-restore, and database-engine.
@@ -11,7 +11,7 @@ You can find the definition of the custom resources in the [Everest operator rep
 
 ### Run everest locally
 0. Prerequisites:
-    - Golang 1.20.x
+    - Golang 1.21.x
     - Make 3.x
     - Docker 20.x
     - Git 2.x
@@ -52,7 +52,7 @@ To run integration tests, see [Percona Everest API integration tests](api-tests/
 
 ### Working with local Kubernetes instances like Minikube or Kind
 
-When working with local Kubernetes clusters, Everest backend cannot connect to them because they often use `127.0.0.1` or `localhost` addresses. However, it is possible to connect to the host machine using `host.docker.internal` hostname since Everest backend runs inside a Docker container.
+When working with local Kubernetes clusters, Everest API server cannot connect to them because they often use `127.0.0.1` or `localhost` addresses. However, it is possible to connect to the host machine using `host.docker.internal` hostname since Everest API Server runs inside a Docker container.
 
 To do this, add the following host to the `/etc/hosts` file on your local machine:
 
