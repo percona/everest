@@ -29,11 +29,19 @@ export const ResourcesStep = () => {
   const resourceSizePerNode: ResourceSize = watch(
     DbWizardFormFields.resourceSizePerNode
   );
-  const cpu: number = watch(DbWizardFormFields.cpu);
-  const memory: number = watch(DbWizardFormFields.memory);
-  const disk: number = watch(DbWizardFormFields.disk);
-  const dbType: DbType = watch(DbWizardFormFields.dbType);
-  const numberOfNodes = watch(DbWizardFormFields.numberOfNodes);
+  const [cpu, memory, disk, dbType, numberOfNodes]: [
+    number,
+    number,
+    number,
+    DbType,
+    number,
+  ] = watch([
+    DbWizardFormFields.cpu,
+    DbWizardFormFields.memory,
+    DbWizardFormFields.disk,
+    DbWizardFormFields.dbType,
+    DbWizardFormFields.numberOfNodes,
+  ]);
 
   const cpuCapacityExceeded = resourcesInfo
     ? cpu * 1000 > resourcesInfo?.available.cpuMillis
