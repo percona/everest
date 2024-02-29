@@ -24,8 +24,8 @@ export const ConnectionDetails = ({
         <OverviewSection title={Messages.titles.host} loading={loading}>
           <OverviewSectionText>
             {hostname.split(',').map((host) => (
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <div key={host}>{host}</div>
+              <Box key={host} sx={{ display: 'flex', gap: 1 }}>
+                <div>{host}</div>
                 <CopyToClipboardButton
                   buttonProps={{ sx: { mt: -1, mb: -1.5 } }}
                   textToCopy={host}

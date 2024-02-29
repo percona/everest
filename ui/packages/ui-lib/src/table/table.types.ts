@@ -20,4 +20,5 @@ export interface TableProps<T extends Record<string, any>>
   noDataMessage: string;
   emptyFilterResultsMessage?: string;
   hideExpandAllIcon?: boolean;
+  tableName: string;
 }

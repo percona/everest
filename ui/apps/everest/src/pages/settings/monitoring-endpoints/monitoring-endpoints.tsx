@@ -1,27 +1,27 @@
-import { useMemo, useState } from 'react';
-import { Button, MenuItem } from '@mui/material';
 import { Add, Delete, Edit } from '@mui/icons-material';
-import { useQueryClient } from '@tanstack/react-query';
+import { Button, MenuItem } from '@mui/material';
 import { Table } from '@percona/ui-lib';
+import { useQueryClient } from '@tanstack/react-query';
+import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import {
-  useMonitoringInstancesList,
-  useCreateMonitoringInstance,
   MONITORING_INSTANCES_QUERY_KEY,
+  useCreateMonitoringInstance,
   useDeleteMonitoringInstance,
+  useMonitoringInstancesList,
   useUpdateMonitoringInstance,
 } from 'hooks/api/monitoring/useMonitoringInstancesList';
 import { MRT_ColumnDef } from 'material-react-table';
+import { useMemo, useState } from 'react';
 import { MonitoringInstance } from 'shared-types/monitoring.types';
-import { CreateEditEndpointModal } from './createEditModal/create-edit-modal';
-import { EndpointFormType } from './createEditModal/create-edit-modal.types';
 import {
   updateDataAfterCreate,
   updateDataAfterDelete,
   updateDataAfterEdit,
 } from 'utils/generalOptimisticDataUpdate';
-import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
-import { Messages } from './monitoring-endpoints.messages';
 import { StorageLocationsFields } from '../storage-locations/storage-locations.types';
+import { CreateEditEndpointModal } from './createEditModal/create-edit-modal';
+import { EndpointFormType } from './createEditModal/create-edit-modal.types';
+import { Messages } from './monitoring-endpoints.messages';
 
 export const MonitoringEndpoints = () => {
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
@@ -139,6 +139,7 @@ export const MonitoringEndpoints = () => {
   return (
     <>
       <Table
+        tableName="monitoringEndpoints"
         hideExpandAllIcon
         data={monitoringInstances}
         columns={columns}
