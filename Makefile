@@ -23,7 +23,7 @@ build:                ## Build binaries
 	go build -v $(LD_FLAGS_API) -o bin/everest ./cmd
 
 build-cli:                ## Build binaries
-	go build -v $(LD_FLAGS_CLI) -o bin/everestctl ./cmd/everest
+	go build -v $(LD_FLAGS_CLI) -o bin/everestctl ./cmd/cli
 
 release: FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check.percona.com' -X 'github.com/percona/everest/cmd/config.TelemetryInterval=24h'
 
@@ -62,6 +62,9 @@ run-debug: build-debug    ## Run binary
 	TELEMETRY_URL=https://check-dev.percona.com \
 	TELEMETRY_INTERVAL=30m \
 	bin/everest
+
+run-cli: build-cli
+	bin/everestctl
 
 cert:                   ## Install dev TLS certificates
 	mkcert -install
