@@ -16,11 +16,7 @@ Build and runtime logs can be easily accessed using tilt's web UI.
 
 2. Install [tilt.dev](https://docs.tilt.dev/install.html)
 
-3. Clone [everest-operator](https://github.com/percona/everest-operator),
-   [percona-everest-backend](https://github.com/percona/percona-everest-backend)
-   and
-   [percona-everest-frontend](https://github.com/percona/percona-everest-frontend)
-   git repos.
+3. Clone [everest-operator](https://github.com/percona/everest-operator).
 
 ## Set up the environment
 
@@ -51,7 +47,7 @@ gcloud auth configure-docker <REGISTRY_REGION>-docker.pkg.dev
 
 
 ### 2. Run tilt
-1. Set the paths to the local git repos for [everest-operator](https://github.com/percona/everest-operator), [percona-everest-backend](https://github.com/percona/percona-everest-backend) and [percona-everest-frontend](https://github.com/percona/percona-everest-frontend)
+1. Set the path to the local git repo for [everest-operator](https://github.com/percona/everest-operator)
 ```sh
 export EVEREST_OPERATOR_DIR=<Path to operator repo>
 ```
@@ -89,4 +85,4 @@ for frontend development. Therefore, we recommend frontend developers to run
 tilt as described in [Set up the environment](#set-up-the-environment) section
 but then run a local dev instance of the frontend by running `make dev` from
 the frontend repo. This dev instance will be available at http://localhost:3000
-while still connecting to the everest backend backend running inside k8s.
+while still connecting to the everest API server running inside k8s.
