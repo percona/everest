@@ -63,8 +63,8 @@ run-debug: build-debug    ## Run binary
 	TELEMETRY_INTERVAL=30m \
 	bin/everest
 
-run-cli: build-cli
-	bin/everestctl
+run-cli-install: build-cli
+	bin/everestctl install --skip-wizard --namespaces=everest
 
 cert:                   ## Install dev TLS certificates
 	mkcert -install
