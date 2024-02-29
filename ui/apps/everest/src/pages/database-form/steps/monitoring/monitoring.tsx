@@ -20,8 +20,8 @@ import ActionableAlert from 'components/actionable-alert';
 export const Monitoring = () => {
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
   const queryClient = useQueryClient();
-  const { watch, getValues } = useFormContext();
-  const monitoring = watch(DbWizardFormFields.monitoring);
+  const { watch, getValues, trigger } = useFormContext();
+  const monitoring: boolean = watch(DbWizardFormFields.monitoring);
   const selectedNamespace = watch(DbWizardFormFields.k8sNamespace);
 
   const mode = useDatabasePageMode();
@@ -95,7 +95,8 @@ export const Monitoring = () => {
         availableMonitoringInstances[0].name
       );
     }
-  }, [monitoring]);
+    trigger();
+  }, [monitoring, availableMonitoringInstances]);
 
   return (
     <>

@@ -119,7 +119,16 @@ const stepFiveSchema = z
     monitoring: z.boolean(),
     monitoringInstance: z.string().nullable(),
   })
-  .passthrough();
+  .passthrough()
+  .superRefine(({ monitoring, monitoringInstance }, ctx) => {
+    if (monitoring && !monitoringInstance) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [DbWizardFormFields.monitoringInstance],
+        message: Messages.errors.monitoringEndpoint.invalidOption,
+      });
+    }
+  });
 
 // Each position of the array is the validation schema for a given step
 export const getDBWizardSchema = (

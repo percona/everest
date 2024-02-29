@@ -66,6 +66,8 @@ export const DatabasePage = () => {
     handleSubmit,
   } = methods;
 
+  const formHasErrors = Object.values(errors).length > 0;
+
   const onSubmit: SubmitHandler<DbWizardType> = (data) => {
     if (mode === 'new' || mode === 'restoreFromBackup') {
       addDbCluster(
@@ -165,8 +167,8 @@ export const DatabasePage = () => {
           <DatabaseFormBody
             activeStep={activeStep}
             longestAchievedStep={longestAchievedStep}
-            disableNext={Object.values(errors).length > 0}
-            disableSubmit={isCreating || isUpdating}
+            disableNext={formHasErrors}
+            disableSubmit={formHasErrors || isCreating || isUpdating}
             onSubmit={handleSubmit(onSubmit)}
             onCancel={() => setCancelModalOpen(true)}
             handleNextStep={handleNext}
