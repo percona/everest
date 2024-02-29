@@ -25,6 +25,8 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -905,9 +907,9 @@ func (k *Kubernetes) ApplyObject(obj runtime.Object) error {
 
 // InstallEverest downloads the manifest file and applies it against provisioned k8s cluster.
 func (k *Kubernetes) InstallEverest(ctx context.Context, namespace string) error {
-	data, err := k.getManifestData(ctx)
+	data, err := k.getManifestData()
 	if err != nil {
-		return errors.Join(err, errors.New("failed downloading everest monitoring file"))
+		return errors.Join(err, errors.New("failed reading everest manifest file"))
 	}
 
 	err = k.client.ApplyManifestFile(data, namespace)
@@ -920,24 +922,26 @@ func (k *Kubernetes) InstallEverest(ctx context.Context, namespace string) error
 	return nil
 }
 
-func (k *Kubernetes) getManifestData(ctx context.Context) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, everestVersion.ManifestURL(), nil)
+func (k *Kubernetes) getManifestData() ([]byte, error) {
+	//take the absolute path to the running binary, like smth/everest/bin/everestctl
+	executablePath, err := os.Executable()
 	if err != nil {
 		return nil, err
 	}
-	resp, err := http.DefaultClient.Do(req)
+	// figuring out the root of the project, like smth/everest
+	root := filepath.Dir(filepath.Dir(executablePath))
+	data, err := os.ReadFile(filepath.Join(root, "/deploy/quickstart-k8s.yaml"))
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close() //nolint:errcheck
-	return io.ReadAll(resp.Body)
+	return data, nil
 }
 
 // DeleteEverest downloads the manifest file and deletes it from provisioned k8s cluster.
-func (k *Kubernetes) DeleteEverest(ctx context.Context, namespace string) error {
-	data, err := k.getManifestData(ctx)
+func (k *Kubernetes) DeleteEverest(_ context.Context, namespace string) error {
+	data, err := k.getManifestData()
 	if err != nil {
-		return errors.Join(err, errors.New("failed downloading everest monitoring file"))
+		return errors.Join(err, errors.New("failed reading everest manifest file"))
 	}
 
 	err = k.client.DeleteManifestFile(data, namespace)
