@@ -78,6 +78,12 @@ interface Proxy {
 
 export interface DataSource {
   dbClusterBackupName: string;
+  pitr?: DataSourcePitr;
+}
+
+export interface DataSourcePitr {
+  date: string;
+  type: 'date';
 }
 
 export interface Monitoring {

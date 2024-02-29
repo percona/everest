@@ -27,7 +27,14 @@ import { backupsStepCheck } from './steps/backups-step';
 import { basicInformationStepCheck } from './steps/basic-information-step';
 import { pitrStepCheck } from './steps/pitr-step';
 import { resourcesStepCheck } from './steps/resources-step';
-import { moveBack, moveForward } from '../../../utils/db-wizard';
+import {
+  goToLastAndSubmit,
+  goToStep,
+  moveBack,
+  moveForward,
+  setPitrEnabledStatus,
+  submitWizard,
+} from '../../../utils/db-wizard';
 import { findDbAndClickActions } from '../../../utils/db-clusters-list';
 
 test.describe('DB Cluster creation', () => {
@@ -343,7 +350,7 @@ test.describe('DB Cluster creation', () => {
     await moveForward(page);
     await advancedConfigurationStepCheck(page);
     await moveForward(page);
-    await page.getByTestId('db-wizard-submit-button').click();
+    await submitWizard(page);
     await expect(page.getByTestId('db-wizard-goto-db-clusters')).toBeVisible();
 
     await page.goto(`/databases/${namespaces[0]}/${clusterName}/backups`);
@@ -352,15 +359,18 @@ test.describe('DB Cluster creation', () => {
     await page.getByTestId('form-dialog-create').click();
     await expect(page.getByText('2 schedules')).toBeVisible();
 
+    // We disable PITR
     await page.goto('/databases');
     await findDbAndClickActions(page, clusterName, 'Edit');
+    await goToStep(page, 'point-in-time-recovery');
+    await setPitrEnabledStatus(page, false);
+    await goToLastAndSubmit(page);
 
-    const pitrEditIcon = page.getByTestId(
-      'button-edit-preview-point-in-time-recovery'
-    );
-    expect(pitrEditIcon).toBeVisible();
-
-    await pitrEditIcon.click();
+    // We turn it back on to make sure nothing breaks
+    await page.goto('/databases');
+    await findDbAndClickActions(page, clusterName, 'Edit');
+    await goToStep(page, 'point-in-time-recovery');
+    await setPitrEnabledStatus(page, true);
 
     await expect(
       page.getByText(`Backups storage: ${storageName}`)

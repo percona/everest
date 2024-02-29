@@ -40,7 +40,7 @@ const getScheduleInfo = (mode: DbWizardMode, backup?: Backup) => {
     const schedules = backup?.schedules;
     const firstSchedule = schedules && schedules[0];
 
-    if (firstSchedule?.schedule && !!schedules && schedules?.length <= 1) {
+    if (firstSchedule?.schedule) {
       return {
         ...getFormValuesFromCronExpression(firstSchedule.schedule),
         [DbWizardFormFields.storageLocation]:

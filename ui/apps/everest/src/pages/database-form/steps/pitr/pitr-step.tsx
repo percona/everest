@@ -20,8 +20,8 @@ import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { DbWizardFormFields } from '../../database-form.types';
 import { StepHeader } from '../step-header/step-header';
-import { Messages } from './pitr.messages';
 import PitrStorage from './pitr-storage';
+import { Messages } from './pitr.messages';
 
 const PITRStep = () => {
   const { control, watch, setValue } = useFormContext();
