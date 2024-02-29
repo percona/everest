@@ -26,6 +26,6 @@ test('version endpoint', async ({ request, cli }) => {
 
   await gitVersion.assertSuccess()
 
-  expect(versionJSON.projectName).toEqual('Everest Backend')
+  expect(versionJSON.projectName).toEqual('Everest API Server')
   expect(versionJSON.version).toEqual('v0.0.0-' + gitVersion.getStdOutLines()[0])
 })

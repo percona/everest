@@ -68,7 +68,7 @@ const (
 	// ClusterTypeGeneric is a generic type.
 	ClusterTypeGeneric ClusterType = "generic"
 
-	// PerconaEverestDeploymentName stores the name of everest backend deployment.
+	// PerconaEverestDeploymentName stores the name of everest API Server deployment.
 	PerconaEverestDeploymentName = "percona-everest"
 	// EverestOperatorDeploymentName is the name of the deployment for everest operator.
 	EverestOperatorDeploymentName = "everest-operator-controller-manager"

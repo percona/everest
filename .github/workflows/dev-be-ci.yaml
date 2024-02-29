@@ -1,5 +1,5 @@
 ---
-name: DEV BE CI
+name: API CI
 on:
   push:
     paths-ignore:
@@ -245,7 +245,7 @@ jobs:
         run: |
           kubectl port-forward --namespace kube-system service/registry 5000:80 &
 
-      - name: Build Everest backend
+      - name: Build Everest API Server
         run: |
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build-debug
 
@@ -264,7 +264,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
 
-      # We need to have Everest CRDs available before running provisioning and everest backend
+      # We need to have Everest CRDs available before running provisioning and everest API Server
       # to have an ability to create monitoring configs and use them during the provisioning as
       # a mock pmm server without running a real PMM.
       - name: Install everest operator without Everest
@@ -323,7 +323,7 @@ jobs:
           kubectl -n everest-system patch deployment percona-everest --type strategic --patch-file dev/patch-deployment-image.yaml
           kubectl -n everest-system rollout status deploy/percona-everest --timeout=120s
 
-      - name: Expose Everest backend
+      - name: Expose Everest API Server
         run: |
           kubectl port-forward --namespace everest-system deployment/percona-everest 8080:8080 &
 

@@ -2,9 +2,9 @@
 
 ## Before running tests
 
-Before running tests one needs to have provisioned kubernetes cluster, Everest backend
+Before running tests one needs to have provisioned kubernetes cluster, Everest API Server
 
-Running Percona Everest backend. Run these commands in the root of the project
+Running Percona Everest API Server. Run these commands in the root of the project
 
 ```
    make local-env-up
