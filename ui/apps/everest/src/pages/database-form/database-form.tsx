@@ -13,61 +13,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  Divider,
-  Drawer,
-  Stack,
-  Step,
-  StepLabel,
-  Toolbar,
-  Typography,
-  useTheme,
-} from '@mui/material';
-import { DialogTitle, Stepper } from '@percona/ui-lib';
-import React, { useEffect, useMemo, useState } from 'react';
+import { Stack, Step, StepLabel } from '@mui/material';
+import { Stepper } from '@percona/ui-lib';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Messages } from './database-form.messages';
-import { DbWizardFormFields } from './database-form.types';
-import { steps } from './steps';
-
 import { useCreateDbCluster } from 'hooks/api/db-cluster/useCreateDbCluster';
 import { useUpdateDbCluster } from 'hooks/api/db-cluster/useUpdateDbCluster';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
-import { DbWizardType } from './database-form-schema.ts';
-import { DatabasePreview } from './database-preview/database-preview';
-import { SixthStep } from './steps/sixth/sixth-step';
+import { steps } from './database-form-body/steps';
+import { DbWizardType } from './database-form-schema';
+import ConfirmationScreen from './database-form-body/steps/confirmation-screen';
 import { useDatabasePageDefaultValues } from './useDatabaseFormDefaultValues';
 import { useDatabasePageMode } from './useDatabasePageMode';
-import { useDbValidationSchema } from './useDbValidationSchema.ts';
+import { useDbValidationSchema } from './useDbValidationSchema';
+import DatabaseFormCancelDialog from './database-form-cancel-dialog/index';
+import DatabaseFormBody from './database-form-body';
+import { DbWizardFormFields } from './database-form.types';
+import DatabaseFormSideDrawer from './database-form-side-drawer';
 
 export const DatabasePage = () => {
-  const theme = useTheme();
   const [activeStep, setActiveStep] = useState(0);
   const [longestAchievedStep, setLongestAchievedStep] = useState(0);
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const [closeModalIsOpen, setModalIsOpen] = useState(false);
-
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const { mutate: addDbCluster, isPending: isCreating } = useCreateDbCluster();
   const { mutate: editDbCluster, isPending: isUpdating } = useUpdateDbCluster();
-  const { isDesktop } = useActiveBreakpoint();
-  const navigate = useNavigate();
   const { state } = useLocation();
-
+  const { isDesktop } = useActiveBreakpoint();
   const mode = useDatabasePageMode();
-  const {
-    defaultValues,
-    dbClusterData,
-    dbClusterRequestStatus,
-    isFetching: loadingDefaultsForEdition,
-  } = useDatabasePageDefaultValues(mode);
+  const { defaultValues, dbClusterData } = useDatabasePageDefaultValues(mode);
 
   const validationSchema = useDbValidationSchema(
     activeStep,
@@ -84,27 +60,11 @@ export const DatabasePage = () => {
 
   const {
     reset,
+    formState: { isDirty, errors },
+    clearErrors,
     trigger,
     handleSubmit,
-    formState: { errors, isDirty },
-    clearErrors,
   } = methods;
-
-  useEffect(() => {
-    // We disable the inputs on first step to make sure user doesn't change anything before all data is loaded
-    // When users change the inputs, it means all data was loaded and we should't change the defaults anymore at this point
-    // Because this effect relies on defaultValues, which comes from a hook that has dependencies that might be triggered somewhere else
-    // E.g. If defaults depend on monitoringInstances query, step four will cause this to re-rerender, because that step calls that query again
-    if (isDirty) {
-      return;
-    }
-
-    if (mode === 'edit' || mode === 'restoreFromBackup') {
-      reset(defaultValues);
-    }
-  }, [defaultValues, isDirty, reset, mode]);
-
-  const firstStep = activeStep === 0;
 
   const onSubmit: SubmitHandler<DbWizardType> = (data) => {
     if (mode === 'new' || mode === 'restoreFromBackup') {
@@ -140,7 +100,7 @@ export const DatabasePage = () => {
     }
   };
 
-  const handleNext: React.MouseEventHandler<HTMLButtonElement> = async () => {
+  const handleNext = async () => {
     if (activeStep < steps.length - 1) {
       let isStepValid;
 
@@ -175,51 +135,24 @@ export const DatabasePage = () => {
     setActiveStep(order - 1);
   };
 
-  const handleCancel = () => {
-    navigate('/databases');
-  };
+  useEffect(() => {
+    // We disable the inputs on first step to make sure user doesn't change anything before all data is loaded
+    // When users change the inputs, it means all data was loaded and we should't change the defaults anymore at this point
+    // Because this effect relies on defaultValues, which comes from a hook that has dependencies that might be triggered somewhere else
+    // E.g. If defaults depend on monitoringInstances query, step four will cause this to re-rerender, because that step calls that query again
+    if (isDirty) {
+      return;
+    }
 
-  const PreviewContent = useMemo(
-    () => (
-      <DatabasePreview
-        activeStep={activeStep}
-        longestAchievedStep={longestAchievedStep}
-        onSectionEdit={handleSectionEdit}
-        sx={{
-          mt: 2,
-          ...(!isDesktop && {
-            padding: 0,
-          }),
-        }}
-      />
-    ),
-    [activeStep, longestAchievedStep, isDesktop]
-  );
+    if (mode === 'edit' || mode === 'restoreFromBackup') {
+      reset(defaultValues);
+    }
+  }, [defaultValues, isDirty, reset, mode]);
 
   return formSubmitted ? (
-    <SixthStep />
+    <ConfirmationScreen />
   ) : (
     <>
-      <Dialog open={closeModalIsOpen}>
-        <DialogTitle onClose={() => setModalIsOpen(false)}>
-          {Messages.dialog.title}
-        </DialogTitle>
-        <DialogContent>
-          <Typography>{Messages.dialog.content}</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            autoFocus
-            variant="text"
-            onClick={() => setModalIsOpen(false)}
-          >
-            {Messages.dialog.reject}
-          </Button>
-          <Button variant="contained" onClick={handleCancel}>
-            {Messages.dialog.accept}
-          </Button>
-        </DialogActions>
-      </Dialog>
       <Stepper noConnector activeStep={activeStep} sx={{ marginBottom: 4 }}>
         {steps.map((_, idx) => (
           <Step key={`step-${idx + 1}`}>
@@ -227,105 +160,29 @@ export const DatabasePage = () => {
           </Step>
         ))}
       </Stepper>
-      <FormProvider {...methods}>
-        <Stack direction={isDesktop ? 'row' : 'column'}>
-          <form style={{ flexGrow: 1 }} onSubmit={handleSubmit(onSubmit)}>
-            <Box>
-              {(mode === 'new' ||
-                ((mode === 'edit' || mode === 'restoreFromBackup') &&
-                  dbClusterRequestStatus === 'success')) &&
-                React.createElement(steps[activeStep], {
-                  loadingDefaultsForEdition,
-                  alreadyVisited:
-                    longestAchievedStep > activeStep ||
-                    activeStep === steps.length - 1,
-                })}
-            </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'row', pt: 4 }}>
-              <Button
-                type="button"
-                startIcon={<ArrowBackIcon />}
-                variant="text"
-                disabled={firstStep}
-                onClick={handleBack}
-                sx={{ mr: 1 }}
-                data-testid="db-wizard-previous-button"
-              >
-                {Messages.previous}
-              </Button>
-              <Box sx={{ flex: '1 1 auto' }} />
-              <Button
-                variant="outlined"
-                disabled={isCreating || isUpdating}
-                data-testid="db-wizard-cancel-button"
-                sx={{ mr: 1 }}
-                onClick={() => setModalIsOpen(true)}
-              >
-                {Messages.cancel}
-              </Button>
-              {activeStep === steps.length - 1 ? (
-                <Button
-                  onClick={handleSubmit(onSubmit)}
-                  variant="contained"
-                  disabled={isCreating || isUpdating}
-                  data-testid="db-wizard-submit-button"
-                >
-                  {mode === 'edit'
-                    ? Messages.editDatabase
-                    : Messages.createDatabase}
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleNext}
-                  variant="contained"
-                  data-testid="db-wizard-continue-button"
-                  disabled={Object.values(errors).length > 0}
-                >
-                  {Messages.continue}
-                </Button>
-              )}
-            </Box>
-          </form>
-          {isDesktop ? (
-            <Drawer
-              variant="permanent"
-              anchor="right"
-              sx={{
-                // MuiDrawer-paper will take 25% of the whole screen because it has a "fixed" positioning
-                // Hence, we must use vw here to have the same calculation
-                // We subtract the padding
-                width: (theme) => `calc(25vw - ${theme.spacing(4)})`,
-                flexShrink: 0,
-                ml: 3,
-                [`& .MuiDrawer-paper`]: {
-                  width: '25%',
-                  boxSizing: 'border-box',
-                },
-              }}
-            >
-              <Toolbar />
-              {PreviewContent}
-            </Drawer>
-          ) : (
-            <>
-              <Divider
-                orientation="horizontal"
-                flexItem
-                sx={{
-                  // This is a little tweak
-                  // We make the divider longer, adding the main padding value
-                  // Then, to make it begin before the main padding, we add a negative margin
-                  // This way, the divider will cross the whole section
-                  width: `calc(100% + ${theme.spacing(4 * 2)})`,
-                  ml: -4,
-                  mt: 6,
-                }}
-              />
-              {PreviewContent}
-            </>
-          )}
-        </Stack>
-      </FormProvider>
+      <Stack direction={isDesktop ? 'row' : 'column'}>
+        <FormProvider {...methods}>
+          <DatabaseFormBody
+            activeStep={activeStep}
+            longestAchievedStep={longestAchievedStep}
+            disableNext={Object.values(errors).length > 0}
+            disableSubmit={isCreating || isUpdating}
+            onSubmit={handleSubmit(onSubmit)}
+            onCancel={() => setCancelModalOpen(true)}
+            handleNextStep={handleNext}
+            handlePreviousStep={handleBack}
+          />
+          <DatabaseFormSideDrawer
+            activeStep={activeStep}
+            longestAchievedStep={longestAchievedStep}
+            handleSectionEdit={handleSectionEdit}
+          />
+        </FormProvider>
+      </Stack>
+      <DatabaseFormCancelDialog
+        open={cancelModalOpen}
+        onClose={() => setCancelModalOpen(false)}
+      />
     </>
   );
 };
