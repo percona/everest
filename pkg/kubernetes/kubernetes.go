@@ -26,7 +26,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -923,14 +922,7 @@ func (k *Kubernetes) InstallEverest(ctx context.Context, namespace string) error
 }
 
 func (k *Kubernetes) getManifestData() ([]byte, error) {
-	//take the absolute path to the running binary, like smth/everest/bin/everestctl
-	executablePath, err := os.Executable()
-	if err != nil {
-		return nil, err
-	}
-	// figuring out the root of the project, like smth/everest
-	root := filepath.Dir(filepath.Dir(executablePath))
-	data, err := os.ReadFile(filepath.Join(root, "/deploy/quickstart-k8s.yaml"))
+	data, err := os.ReadFile("deploy/quickstart-k8s.yaml")
 	if err != nil {
 		return nil, err
 	}
