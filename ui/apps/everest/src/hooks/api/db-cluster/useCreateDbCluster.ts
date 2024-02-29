@@ -1,4 +1,4 @@
-// everest
+// percona-everest-frontend
 // Copyright (C) 2023 Percona LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,15 +14,15 @@
 // limitations under the License.
 
 import { dbTypeToDbEngine } from '@percona/utils';
-import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
-import { getCronExpressionFromFormValues } from 'components/time-selection/time-selection.utils.ts';
-import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
-import { generateShortUID } from 'pages/database-form/steps/first/utils.ts';
 import {
   UseMutationOptions,
   useMutation,
   useQuery,
 } from '@tanstack/react-query';
+import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
+import { getCronExpressionFromFormValues } from 'components/time-selection/time-selection.utils.ts';
+import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
+import { generateShortUID } from 'pages/database-form/steps/first/utils.ts';
 import {
   ClusterCredentials,
   DataSource,
@@ -123,6 +123,12 @@ const formValuesToPayloadMapping = (
       ...(backupDataSource?.dbClusterBackupName && {
         dataSource: {
           dbClusterBackupName: backupDataSource.dbClusterBackupName,
+          ...(backupDataSource?.pitr && {
+            pitr: {
+              date: backupDataSource.pitr.date,
+              type: 'date',
+            },
+          }),
         },
       }),
     },

@@ -1,4 +1,4 @@
-// everest
+// percona-everest-frontend
 // Copyright (C) 2023 Percona LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,8 @@ import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { DbWizardFormFields } from '../../database-form.types';
 import { StepHeader } from '../step-header/step-header';
-import { Messages } from './pitr.messages';
 import PitrStorage from './pitr-storage';
+import { Messages } from './pitr.messages';
 
 const PITRStep = () => {
   const { control, watch, setValue } = useFormContext();

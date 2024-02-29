@@ -1,4 +1,4 @@
-// everest
+// percona-everest-frontend
 // Copyright (C) 2023 Percona LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbEngineType } from 'shared-types/dbEngines.types';
+import { useDBClustersForNamespaces } from '../../hooks/api/db-clusters/useDbClusters';
 import { DB_CLUSTER_STATUS_TO_BASE_STATUS } from './DbClusterView.constants';
 import {
   beautifyDbClusterStatus,
@@ -42,7 +43,6 @@ import { Messages } from './dbClusterView.messages';
 import { DbClusterTableElement } from './dbClusterView.types';
 import { DbTypeIconProvider } from './dbTypeIconProvider/DbTypeIconProvider';
 import { ExpandedRow } from './expandedRow/ExpandedRow';
-import { useDBClustersForNamespaces } from '../../hooks/api/db-clusters/useDbClusters';
 
 export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
