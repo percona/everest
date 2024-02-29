@@ -38,18 +38,6 @@ import { DEFAULT_NODES } from './first-step.constants';
 import { Messages } from './first-step.messages';
 import { generateShortUID } from './utils';
 
-// TODO change to api request's result
-// const dbEnvironmentOptions = [
-//   {
-//     value: 'dbEnvironmentOne',
-//     label: 'dbEnvironmentOneLabel',
-//   },
-//   {
-//     value: 'dbEnvironmentTwo',
-//     label: 'dbEnvironmentTwoLabel',
-//   },
-// ];
-
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
 
@@ -282,29 +270,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             disabled: mode === 'edit' || loadingDefaultsForEdition,
           }}
         />
-        {/*<Typography variant="sectionHeading" sx={{ mt: 4, mb: 0.5 }}>*/}
-        {/*  {Messages.labels.dbEnvironment}*/}
-        {/*</Typography>*/}
-        {/*<Controller
-          control={control}
-          name={DbWizardFormFields.dbEnvironment}
-          render={({ field, fieldState: { error } }) => (
-            <Select
-              {...field}
-              variant="outlined"
-              error={error !== undefined}
-              inputProps={{
-                'data-testid': 'text-dbEnvironment',
-              }}
-            >
-              {dbEnvironmentOptions.map((item) => (
-                <MenuItem value={item.value} key={item.value}>
-                  {item.label}
-                </MenuItem>
-              ))}
-            </Select>
-          )}
-        /> */}
         <SelectInput
           name={DbWizardFormFields.dbVersion}
           label={Messages.labels.dbVersion}
