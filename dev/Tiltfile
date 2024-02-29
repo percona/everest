@@ -65,7 +65,7 @@ k8s_resource(
   ],
   new_name='everest-namespace',
 )
-namespaces = [namespace['name'] for namespace in config_yaml['namespaces']]
+namespaces = sorted([namespace['name'] for namespace in config_yaml['namespaces']])
 for namespace in namespaces:
   namespace_create(namespace)
 k8s_resource(
