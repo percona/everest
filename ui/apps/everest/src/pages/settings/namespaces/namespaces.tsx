@@ -1,9 +1,9 @@
-import { useMemo } from 'react';
 import { Table } from '@percona/ui-lib';
 import { MRT_ColumnDef } from 'material-react-table';
-import { Messages } from './namespaces.messages';
+import { useMemo } from 'react';
 import { NamespaceInstance } from 'shared-types/namespaces.types';
 import { useDBEnginesForNamespaces } from '../../../hooks/api/namespaces/useNamespaces';
+import { Messages } from './namespaces.messages';
 
 export const Namespaces = () => {
   const dbEngines = useDBEnginesForNamespaces();
@@ -43,6 +43,7 @@ export const Namespaces = () => {
   return (
     <>
       <Table
+        tableName="namespaces"
         noDataMessage={Messages.noDataMessage}
         hideExpandAllIcon
         state={{

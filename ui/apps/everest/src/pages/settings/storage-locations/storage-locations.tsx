@@ -1,6 +1,7 @@
 import { Add, Delete, Edit } from '@mui/icons-material';
 import { Box, Button, MenuItem } from '@mui/material';
 import { Table } from '@percona/ui-lib';
+import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import {
   BACKUP_STORAGES_QUERY_KEY,
@@ -12,7 +13,6 @@ import {
 import { type MRT_ColumnDef } from 'material-react-table';
 import { LabelValue } from 'pages/databases/expandedRow/LabelValue';
 import { useMemo, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { BackupStorage, StorageType } from 'shared-types/backupStorages.types';
 import {
   updateDataAfterCreate,
@@ -152,6 +152,7 @@ export const StorageLocations = () => {
   return (
     <>
       <Table
+        tableName="storageLocations"
         noDataMessage={Messages.noData}
         hideExpandAllIcon
         state={{

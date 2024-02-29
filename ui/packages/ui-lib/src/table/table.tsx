@@ -4,11 +4,11 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import { Alert } from '@mui/material';
-import { MaterialReactTable } from 'material-react-table';
+import { MaterialReactTable, MRT_VisibilityState } from 'material-react-table';
 import { useEffect } from 'react';
 import { ICONS_OPACITY } from './table.constants';
 import { TableProps } from './table.types';
-
+import usePersistentColumnVisibility from './usePersistentColumnVisibility';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function Table<T extends Record<string, any>>(props: TableProps<T>) {
   const {
@@ -20,7 +20,21 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
     noDataMessage,
     emptyFilterResultsMessage = 'No data found',
     hideExpandAllIcon,
+    tableName,
+    state,
+    initialState,
   } = props;
+  const [columnVisibility, setColumnVisibility] =
+    usePersistentColumnVisibility(tableName);
+
+  let columnVisibilityState: MRT_VisibilityState | undefined = {};
+  let restOfState = {};
+
+  if (state) {
+    const { columnVisibility: cv, ...rest } = state;
+    columnVisibilityState = cv;
+    restOfState = rest;
+  }
 
   const stopPropagation = (e: Event) => {
     e.stopPropagation();
@@ -92,6 +106,7 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
       enableFullScreenToggle={false}
       enableSorting={!!data.length}
       autoResetAll={false}
+      onColumnVisibilityChange={setColumnVisibility}
       icons={{
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         KeyboardDoubleArrowDownIcon: (propsIcon: any) =>
@@ -206,6 +221,14 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
       {...props}
       columns={customColumns}
       data={data}
+      state={{
+        columnVisibility: { ...columnVisibility, ...columnVisibilityState },
+        ...restOfState,
+      }}
+      initialState={{
+        columnVisibility,
+        ...initialState,
+      }}
     />
   );
 }

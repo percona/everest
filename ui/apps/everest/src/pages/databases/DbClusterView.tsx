@@ -143,6 +143,7 @@ export const DbClusterView = () => {
     <Stack direction="column" alignItems="center">
       <Box sx={{ width: '100%' }}>
         <Table
+          tableName="dbClusterView"
           noDataMessage={Messages.dbCluster.noData}
           state={{ isLoading: dbClustersLoading }}
           columns={columns}

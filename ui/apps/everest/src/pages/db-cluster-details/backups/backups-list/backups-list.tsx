@@ -18,6 +18,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { MenuItem } from '@mui/material';
 import { MenuButton, Table } from '@percona/ui-lib';
+import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import { StatusField } from 'components/status-field/status-field';
 import { DATE_FORMAT } from 'consts';
@@ -31,7 +32,6 @@ import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
 import { useDbClusterRestoreFromBackup } from 'hooks/api/restores/useDbClusterRestore';
 import { MRT_ColumnDef } from 'material-react-table';
 import { useContext, useMemo, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Backup, BackupStatus } from 'shared-types/backups.types';
 import { DbClusterStatus } from 'shared-types/dbCluster.types.ts';
@@ -197,6 +197,7 @@ export const BackupsList = () => {
   return (
     <>
       <Table
+        tableName="backupList"
         noDataMessage={Messages.noData}
         data={backups}
         columns={columns}
