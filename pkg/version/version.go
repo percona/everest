@@ -41,7 +41,7 @@ var (
 	catalogImage string //nolint:gochecknoglobals
 )
 
-// CatalogImage returns a catalog image needed for the build of everestctl
+// CatalogImage returns a catalog image needed for the build of everestctl.
 func CatalogImage() string {
 	catalogImage = devCatalogImage
 	v, err := goversion.NewSemver(Version)
