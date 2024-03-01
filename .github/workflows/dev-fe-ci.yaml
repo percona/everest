@@ -164,7 +164,7 @@ jobs:
 
       - name: Adding psmdb namespace
         run: |
-          go run cmd/everest/main.go install \
+          go run cmd/cli/main.go install \
           --operator.mongodb \
           --operator.postgresql=false \
           --operator.xtradb-cluster=false \
@@ -173,7 +173,7 @@ jobs:
 
       - name: Adding pxc namespace
         run: |
-          go run cmd/everest/main.go install \
+          go run cmd/cli/main.go install \
           --operator.mongodb=false \
           --operator.postgresql=false \
           --operator.xtradb-cluster \
@@ -182,7 +182,7 @@ jobs:
 
       - name: Adding pg namespace
         run: |
-          go run cmd/everest/main.go install \
+          go run cmd/cli/main.go install \
           --operator.mongodb=false \
           --operator.postgresql \
           --operator.xtradb-cluster=false \
