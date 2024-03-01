@@ -1,4 +1,4 @@
-name: Create RC branches
+name: RC/Release
 
 on:
   push:
