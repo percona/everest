@@ -1,5 +1,5 @@
+---
 name: RC/Release
-
 on:
   push:
     branches:
