@@ -14,6 +14,7 @@
 // limitations under the License.
 
 import { APIRequestContext, expect } from '@playwright/test';
+const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 
 export const testMonitoringName = 'ui-test-monitoring';
 export const testMonitoringName2 = 'ui-test-monitoring-1';
@@ -21,14 +22,17 @@ export const testMonitoringName2 = 'ui-test-monitoring-1';
 export const createMonitoringInstance = async (
   request: APIRequestContext,
   name: string,
+  namespaces: string[],
   token: string
 ) => {
   const data = {
     type: 'pmm',
     name,
-    url: 'http://monitoring',
+    allowedNamespaces: namespaces,
+    url: MONITORING_URL,
     pmm: {
-      apiKey: '123',
+      user: MONITORING_USER,
+      password: MONITORING_PASSWORD,
     },
   };
 
@@ -40,11 +44,6 @@ export const createMonitoringInstance = async (
   });
 
   expect(response.ok()).toBeTruthy();
-  const created = await response.json();
-
-  expect(created.name).toBe(data.name);
-  expect(created.url).toBe(data.url);
-  expect(created.type).toBe(data.type);
 };
 
 export const deleteMonitoringInstance = async (

@@ -22,6 +22,7 @@ import { findDbAndClickActions } from '../../../utils/db-clusters-list';
 import { DbType } from '@percona/types';
 import { getTokenFromLocalStorage } from '../../../utils/localStorage';
 import { getNamespacesFn } from '../../../utils/namespaces';
+import { moveForward } from '../../../utils/db-wizard';
 
 test.describe('DB Cluster Editing Resources Step (Mongo)', () => {
   const mongoDBName = 'mongo-db';
@@ -47,9 +48,8 @@ test.describe('DB Cluster Editing Resources Step (Mongo)', () => {
     await page.goto('/databases');
     await findDbAndClickActions(page, mongoDBName, 'Edit');
 
-    const nextStep = page.getByTestId('db-wizard-continue-button');
     // Go to Resources step
-    await nextStep.click();
+    await moveForward(page);
 
     expect(page.getByTestId('toggle-button-nodes-5')).toBeVisible();
     const a = page
