@@ -37,4 +37,13 @@ test.describe('DB Cluster Editing Basic step', () => {
       await page.getByTestId('select-input-db-version').inputValue
     ).toBeDefined();
   });
+
+  test('Namespaces dropdown should be disabled in edit mode', async ({
+    page,
+  }) => {
+    await page.goto('/databases');
+    await findDbAndClickActions(page, mySQLName, 'Edit');
+
+    await expect(page.getByTestId('text-input-k8s-namespace')).toBeDisabled();
+  });
 });

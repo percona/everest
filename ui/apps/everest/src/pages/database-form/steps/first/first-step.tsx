@@ -118,7 +118,14 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       DB_WIZARD_DEFAULTS.monitoringInstance
     );
     setValue(DbWizardFormFields.monitoring, DB_WIZARD_DEFAULTS.monitoring);
-    setValue(DbWizardFormFields.storageLocation, null);
+    setValue(
+      DbWizardFormFields.storageLocation,
+      DB_WIZARD_DEFAULTS.storageLocation
+    );
+    setValue(
+      DbWizardFormFields.pitrStorageLocation,
+      DB_WIZARD_DEFAULTS.pitrStorageLocation
+    );
   };
 
   const setDefaultsForDbType = useCallback((dbType: DbType) => {
