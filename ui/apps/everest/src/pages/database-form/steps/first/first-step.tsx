@@ -136,25 +136,32 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const onDbTypeChange = useCallback(
     (newDbType: DbType) => {
       const { isDirty: isNameDirty } = getFieldState(DbWizardFormFields.dbName);
+      const { isTouched: isBackupToggleTouched } = getFieldState(
+        DbWizardFormFields.backupsEnabled
+      );
+      const backupsEnabled = getValues(DbWizardFormFields.backupsEnabled);
 
-      resetField(DbWizardFormFields.dbVersion);
+      setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[newDbType]);
 
       if (!isNameDirty) {
         setRandomDbName(newDbType);
       }
 
-      setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[newDbType]);
+      if (
+        !isBackupToggleTouched &&
+        (mode === 'new' || mode === 'restoreFromBackup')
+      ) {
+        setValue(DbWizardFormFields.backupsEnabled, true);
+      }
+
+      if (dbType === DbType.Postresql && backupsEnabled) {
+        setValue(DbWizardFormFields.pitrEnabled, true);
+      }
+
+      resetField(DbWizardFormFields.dbVersion);
       updateDbVersions();
     },
-    [
-      getFieldState,
-      resetField,
-      setRandomDbName,
-      mode,
-      updateDbVersions,
-      getValues,
-      setValue,
-    ]
+    [setRandomDbName, updateDbVersions, getValues]
   );
 
   useEffect(() => {

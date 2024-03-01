@@ -56,8 +56,7 @@ export const Monitoring = () => {
   };
 
   const handleSubmitModal = (
-    // @ts-ignore
-    _,
+    _: unknown,
     { name, url, allowedNamespaces, ...pmmData }: EndpointFormType
   ) => {
     createMonitoringInstance(
@@ -77,25 +76,25 @@ export const Monitoring = () => {
   useEffect(() => {
     const selectedInstance = getValues(DbWizardFormFields.monitoringInstance);
 
+    trigger();
+
+    if (!availableMonitoringInstances?.length) {
+      return;
+    }
+
     if (mode === 'new') {
-      if (monitoring && availableMonitoringInstances?.length) {
+      if (monitoring) {
         setValue(
           DbWizardFormFields.monitoringInstance,
           availableMonitoringInstances[0].name
         );
       }
-    }
-    if (
-      (mode === 'edit' || mode === 'restoreFromBackup') &&
-      availableMonitoringInstances?.length &&
-      !selectedInstance
-    ) {
+    } else if (!selectedInstance) {
       setValue(
         DbWizardFormFields.monitoringInstance,
         availableMonitoringInstances[0].name
       );
     }
-    trigger();
   }, [monitoring, availableMonitoringInstances]);
 
   return (
