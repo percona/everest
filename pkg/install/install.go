@@ -47,7 +47,7 @@ type Install struct {
 }
 
 const (
-	everestBackendServiceName = "percona-everest-backend"
+	everestBackendServiceName = "everest"
 	everestOperatorName       = "everest-operator"
 	pxcOperatorName           = "percona-xtradb-cluster-operator"
 	psmdbOperatorName         = "percona-server-mongodb-operator"
