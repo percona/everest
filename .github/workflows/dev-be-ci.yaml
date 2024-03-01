@@ -1,428 +1,95 @@
 ---
-name: API CI
+name: Release
 on:
   push:
-    paths-ignore:
-      - 'ui/**'
     branches:
-      - main
-  pull_request:
-    paths-ignore:
-      - 'ui/**'
-
-permissions:
-  contents: read
-  packages: write
-  checks: write
-  pull-requests: write
+      - EVEREST-726-release-workflow
+#  workflow_dispatch:
+#    inputs:
+#      version:
+#        description: "The RC/Release version, format: X.Y.Z-rcN for RC, X.Y.Z for releases"
+#        required: true
 
 jobs:
-  test:
-    name: Test
-    timeout-minutes: 10
-
-    strategy:
-      fail-fast: false
-      matrix:
-        go-version: [ 1.21.x ]
-        may-fail: [ false ]
-
-    continue-on-error: ${{ matrix.may-fail }}
-    runs-on: ubuntu-20.04
-
-    steps:
-      - name: Set up Go release
-        uses: percona-platform/setup-go@v4
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Set GO_VERSION environment variable
-        run: |
-          go version
-          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
-
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Enable Go modules cache
-        uses: percona-platform/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
-
-      - name: Enable Go build cache
-        uses: percona-platform/cache@v3
-        with:
-          path: ~/.cache/go-build
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
-
-      - name: Download Go modules
-        run: go mod download
-
-      - name: Install development tools
-        run: make init
-
-      - name: Generate code
-        run: make gen
-
-      - name: Install binaries
-        run: make build
-
-      - name: Run tests
-        run: |
-          go clean -testcache
-          make test-crosscover
-
-      - name: Check that there are no source code changes
-        run: |
-          # Break job if any files were changed during its run (code generation, etc), except go.sum.
-          # `go mod tidy` could remove old checksums from that file, and that's okay on CI,
-          # and actually expected for PRs made by @dependabot.
-          # Checksums of actually used modules are checked by previous `go` subcommands.
-          pushd tools && go mod tidy -v && git checkout go.sum
-          popd        && go mod tidy -v && git checkout go.sum
-          git diff --exit-code
-
-      - name: Run debug commands on failure
-        if: ${{ failure() }}
-        run: |
-          env
-          go version
-          go env
-          pwd
-          git status
-  check:
-    name: Check
-    timeout-minutes: 10
-    if: github.event_name == 'pull_request'
-
-    strategy:
-      fail-fast: false
-      matrix:
-        go-version: [1.21.x]
-        may-fail: [false]
-
-    continue-on-error: ${{ matrix.may-fail }}
+  build:
     runs-on: ubuntu-latest
-
-    steps:
-      - name: Set up Go release
-        if: matrix.go-version != 'tip'
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Set up Go tip
-        if: matrix.go-version == 'tip'
-        run: |
-          git clone --depth=1 https://go.googlesource.com/go $HOME/gotip
-          cd $HOME/gotip/src
-          ./make.bash
-          echo "GOROOT=$HOME/gotip" >> $GITHUB_ENV
-          echo "$HOME/gotip/bin" >> $GITHUB_PATH
-
-      - name: Set GO_VERSION environment variable
-        run: |
-          go version
-          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
-
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Enable Go modules cache
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
-
-      - name: Enable Go build cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/go-build
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
-
-      - name: Download Go modules
-        run: go mod download
-
-      - name: Install tools
-        run: make init
-
-      - name: Run linters
-        run: |
-          bin/golangci-lint run --out-format=line-number | env REVIEWDOG_GITHUB_API_TOKEN=${{ secrets.GITHUB_TOKEN }} bin/reviewdog -f=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=true
-      
-
-      - name: Check that there are no source code changes
-        run: |
-          make format
-          pushd tools && go mod tidy -v
-          popd        && go mod tidy -v
-          git status
-          git diff --exit-code
-
-      - name: Run debug commands on failure
-        if: ${{ failure() }}
-        run: |
-          env
-          go version
-          go env
-          pwd
-          git status
-
-  integration_tests_api:
-    strategy:
-      fail-fast: false
-      matrix:
-        go-version: [ 1.21.x ]
-        may-fail: [ false ]
-
-    name: API Integration Tests
-    runs-on: ubuntu-20.04
     env:
-      PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
+      #VERSION: ${{ github.event.inputs.version }}
+      VERSION: 0.0.1-rc1
+      RC_BRANCH: ''
     steps:
-
-      - name: Set up Go release
-        uses: percona-platform/setup-go@v4
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Set GO_VERSION environment variable
+      - name: Validate input
         run: |
-          go version
-          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
+          echo $RC_BRANCH
+          if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(?:-rc[1-9][0-9]*)?$ ]]; then
+            echo "Wrong version format provided, please use "X.Y.Z-rcN" format for an RC and "X.Y.Z" format for a release" 
+            exit 1
+          fi
+      - name: Define release branch name in the format "release-X.Y"
+        run: |
+          major_minor=$(echo "$VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*$/\1/')
+          echo "RC_BRANCH=release-${major_minor}" >> $GITHUB_ENV
 
-      - name: Check out code into the Go module directory
+
+      - name: Check out Everest catalog
         uses: actions/checkout@v4
         with:
-          lfs: true
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
+          repository: percona/everest-catalog
+          path: everest-catalog
 
-      - name: Enable Go modules cache
-        uses: percona-platform/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
-
-      - name: Enable Go build cache
-        uses: percona-platform/cache@v3
-        with:
-          path: ~/.cache/go-build
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
-
-      - name: Start local Kubernetes cluster with the local registry
-        uses: medyagh/setup-minikube@latest
-        id: minikube
-        with:
-          cpus: 2
-          memory: 2000m
-          addons: registry
-          insecure-registry: 'localhost:5000'
-
-      - name: Expose local registry
+      - name: Create Everest catalog RC-branch
         run: |
-          kubectl port-forward --namespace kube-system service/registry 5000:80 &
+          cd everest-catalog
+          # Check if the branch already exists
+          git fetch
+          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
+          
+          if [[ -z ${check_branch} ]]; then
+            git checkout -b $RC_BRANCH
+            git push origin $RC_BRANCH    
+          fi
 
-      - name: Build Everest API Server
-        run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build-debug
-
-      - name: Build Everest docker container
-        uses: docker/metadata-action@v5
-        id: meta
-        with:
-          images: localhost:5000/perconalab/everest
-          tags:
-            0.0.0
-
-      - name: Build and Push everest dev image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-
-      # We need to have Everest CRDs available before running provisioning and everest API Server
-      # to have an ability to create monitoring configs and use them during the provisioning as
-      # a mock pmm server without running a real PMM.
-      - name: Install everest operator without Everest
-        run: |
-          kubectl create ns everest-system
-          kubectl create ns everest-monitoring
-          curl https://raw.githubusercontent.com/percona/everest-operator/main/deploy/bundle.yaml -o bundle.yaml
-          sed -i  "s/namespace: everest-operator-system/namespace: everest-system/g" bundle.yaml
-          kubectl -n everest-system apply -f bundle.yaml
-
-      # We create a dummy monitoring instance so we can enable monitoring during provisioning
-      # without having to install PMM.
-      - name: Create a monitoring instance
-        run: |
-          cat <<EOF | kubectl apply -f -
-          kind: Secret
-          apiVersion: v1
-          metadata:
-            name: pmm-local
-            namespace: everest-monitoring
-          type: Opaque
-          stringData:
-            "apiKey": "dummy-key"
-          EOF
-          cat <<EOF | kubectl apply -f -
-          kind: MonitoringConfig
-          apiVersion: everest.percona.com/v1alpha1
-          metadata:
-            name: pmm-local
-            namespace: everest-monitoring
-          spec:
-            type: pmm
-            credentialsSecretName: pmm-local
-            pmm:
-              url: http://localhost
-              image: percona/pmm-client:2
-          EOF
-
-      - name: Provision Everest using CLI
-        shell: bash
-        run: |
-          make build-cli
-          ./bin/everestctl install \
-            --operator.mongodb \
-            --operator.postgresql \
-            --operator.xtradb-cluster \
-            --skip-wizard \
-            --namespaces everest
-
-          # API_TOKEN is used later by "make test"
-          echo "API_TOKEN=$(./bin/everestctl token reset --json | jq .token -r)" >> $GITHUB_ENV
-
-
-      - name: Patch Everest Deployment to use the PR image
-        run: |
-          kubectl -n everest-system patch deployment percona-everest --type strategic --patch-file dev/patch-deployment-image.yaml
-          kubectl -n everest-system rollout status deploy/percona-everest --timeout=120s
-
-      - name: Expose Everest API Server
-        run: |
-          kubectl port-forward --namespace everest-system deployment/percona-everest 8080:8080 &
-
-      - name: Run integration tests
-        run: |
-          cd api-tests
-          make init
-          make test
-
-      - name: Run debug commands on failure
-        if: ${{ failure() }}
-        run: |
-          kubectl -n everest-system describe pods
-          kubectl -n everest-monitoring describe pods
-          kubectl -n everest describe pods
-          kubectl -n everest-system logs deploy/percona-everest
-
-
-
-  integration_tests_cli:
-    name: CLI Integration Tests
-    strategy:
-      fail-fast: false
-      matrix:
-        go-version: [ 1.21.x ]
-        may-fail: [ false ]
-
-    runs-on: ubuntu-20.04
-    env:
-      PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
-    steps:
-      - name: Set up Go release
-        uses: percona-platform/setup-go@v4
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Set GO_VERSION environment variable
-        run: |
-          go version
-          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
-      - name: Check out code into the Go module directory
+      - name: Check out Everest operator
         uses: actions/checkout@v4
         with:
-          lfs: true
-          ref: ${{ github.event.pull_request.head.sha }}
+          repository: percona/everest-operator
+          path: everest-operator
 
-      - name: Enable Go modules cache
-        uses: percona-platform/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
-      - name: Enable Go build cache
-        uses: percona-platform/cache@v3
-        with:
-          path: ~/.cache/go-build
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
-      - name: Set up Go release for CLI
-        uses: percona-platform/setup-go@v4
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Build CLI binary
+      - name: Create Everest operator RC-branch
         run: |
-          make init
-          make build-cli
-      - name: Create KIND cluster
-        uses: helm/kind-action@v1.8.0
+          cd everest-catalog
+          # Check if the branch already exists
+          git fetch
+          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
 
-      - name: Run integration tests
-        working-directory: cli-tests
-        id: cli-tests
+          if [[ -z ${check_branch} ]]; then
+            git checkout -b $RC_BRANCH
+            git push origin $RC_BRANCH    
+          fi
+
+
+      - name: Check out Everest
+        uses: actions/checkout@v4
+
+      - name: Create and update Everest Backend RC-branch
         run: |
-          make init
-          make install-operators
-          make test-cli
-      - name: Attach the report
-        if: ${{ always() && steps.cli-tests.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: cli-tests-report
-          path: cli-tests/test-report
-
-  integration_tests_flows:
-    strategy:
-      fail-fast: false
-      matrix:
-        make_target: [
-          'test-all-operators',
-          'test-mongo-operator',
-          'test-pg-operator',
-          'test-pxc-operator'
-        ]
-    name: CLI tests
-    uses: ./.github/workflows/cli-tests.yml
-    secrets: inherit
-    with:
-      make_target: ${{ matrix.make_target }}
+          cd backend
+          # Check if the branch already exists
+          git fetch
+          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
+          
+          if [[ -z ${check_branch} ]]; then
+            git checkout -b $RC_BRANCH
+            git push origin $RC_BRANCH  
+          
+            # update tag refs in scripts
+            sed -i "s/0.0.0/$VERSION/g" deploy/quickstart-k8s.yaml
+          
+            # configure userdata for commits
+            git config --global user.email "everest-ci@percona.com"
+            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+          
+            # commit and push the updated files
+            git commit -a -m "update version tag"
+            git push origin $RC_BRANCH  
+          fi
