@@ -28,8 +28,6 @@ import (
 const (
 	devCatalogImage     = "docker.io/perconalab/everest-catalog:latest"
 	releaseCatalogImage = "docker.io/percona/everest-catalog:%s"
-	devManifestURL      = "https://raw.githubusercontent.com/percona/percona-everest-backend/main/deploy/quickstart-k8s.yaml"
-	releaseManifestURL  = "https://raw.githubusercontent.com/percona/percona-everest-backend/v%s/deploy/quickstart-k8s.yaml"
 )
 
 var (
@@ -43,10 +41,7 @@ var (
 	catalogImage string //nolint:gochecknoglobals
 )
 
-// CatalogImage returns a catalog image needed for the build of everestctl
-//
-// for dev builds it returns https://raw.githubusercontent.com/percona/percona-everest-backend/main/deploy/quickstart-k8s.yaml
-// for the release builds it returns https://raw.githubusercontent.com/percona/percona-everest-backend/vX.Y.Z/deploy/quickstart-k8s.yaml
+// CatalogImage returns a catalog image needed for the build of everestctl.
 func CatalogImage() string {
 	catalogImage = devCatalogImage
 	v, err := goversion.NewSemver(Version)
@@ -54,19 +49,6 @@ func CatalogImage() string {
 		catalogImage = fmt.Sprintf(releaseCatalogImage, Version)
 	}
 	return catalogImage
-}
-
-// ManifestURL returns a manifest URL to install everest
-//
-// for dev builds it returns everest-catalog:latest
-// for the release it returns everest-catalog:X.Y.Z.
-func ManifestURL() string {
-	url := devManifestURL
-	v, err := goversion.NewSemver(Version)
-	if Version != "" && err == nil && v.Prerelease() == "" {
-		url = fmt.Sprintf(releaseManifestURL, Version)
-	}
-	return url
 }
 
 // FullVersionInfo returns full version report.
