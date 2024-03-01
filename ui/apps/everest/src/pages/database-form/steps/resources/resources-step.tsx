@@ -59,17 +59,18 @@ export const ResourcesStep = () => {
     }
 
     setValue(DbWizardFormFields.cpu, DEFAULT_SIZES[resourceSizePerNode].cpu);
+    setValue(
+      DbWizardFormFields.memory,
+      DEFAULT_SIZES[resourceSizePerNode].memory
+    );
+
     if (mode !== 'edit') {
       setValue(
         DbWizardFormFields.disk,
         DEFAULT_SIZES[resourceSizePerNode].disk
       );
     }
-    setValue(
-      DbWizardFormFields.memory,
-      DEFAULT_SIZES[resourceSizePerNode].memory
-    );
-  }, [resourceSizePerNode, mode, setValue]);
+  }, [resourceSizePerNode]);
 
   useEffect(() => {
     if (diskCapacityExceeded) {
