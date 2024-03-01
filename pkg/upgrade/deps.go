@@ -13,12 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package data provides access to embedded data.
-package data
+package upgrade
 
-import "embed"
+import (
+	"context"
 
-// OLMCRDs stores CRDs in an embedded filesystem.
-//
-//go:embed crds/*
-var OLMCRDs embed.FS
+	"github.com/percona/percona-everest-backend/client"
+)
+
+//go:generate ../../bin/mockery --name=everestClientConnector --case=snake --inpackage
+type everestClientConnector interface {
+	Version(ctx context.Context) (*client.Version, error)
+}

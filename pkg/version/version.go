@@ -39,34 +39,39 @@ var (
 	Version string //nolint:gochecknoglobals
 	// FullCommit is a git commit hash.
 	FullCommit string //nolint:gochecknoglobals
-	// CatalogImage is a image path for OLM catalog.
-	catalogImage string //nolint:gochecknoglobals
 )
 
-// CatalogImage returns a catalog image needed for the build of everestctl
-//
-// for dev builds it returns https://raw.githubusercontent.com/percona/percona-everest-backend/main/deploy/quickstart-k8s.yaml
-// for the release builds it returns https://raw.githubusercontent.com/percona/percona-everest-backend/vX.Y.Z/deploy/quickstart-k8s.yaml
-func CatalogImage() string {
-	catalogImage = devCatalogImage
-	v, err := goversion.NewSemver(Version)
-	if Version != "" && err == nil && v.Prerelease() == "" {
-		catalogImage = fmt.Sprintf(releaseCatalogImage, Version)
+// CatalogImage returns a catalog image name.
+func CatalogImage(v *goversion.Version) string {
+	if isDevVersion() {
+		return devCatalogImage
 	}
-	return catalogImage
+	return fmt.Sprintf(releaseCatalogImage, v)
 }
 
-// ManifestURL returns a manifest URL to install everest
-//
-// for dev builds it returns everest-catalog:latest
-// for the release it returns everest-catalog:X.Y.Z.
-func ManifestURL() string {
-	url := devManifestURL
-	v, err := goversion.NewSemver(Version)
-	if Version != "" && err == nil && v.Prerelease() == "" {
-		url = fmt.Sprintf(releaseManifestURL, Version)
+// ManifestURL returns a manifest URL to install Everest.
+func ManifestURL(v *goversion.Version) string {
+	if isDevVersion() {
+		return devManifestURL
 	}
-	return url
+	return fmt.Sprintf(releaseManifestURL, v)
+}
+
+func isDevVersion() bool {
+	if Version == "" {
+		return true
+	}
+
+	v, err := goversion.NewSemver(Version)
+	if err != nil {
+		panic(err)
+	}
+
+	if v.Prerelease() != "" && !strings.HasSuffix(v.Prerelease(), "-upgrade-test") {
+		return true
+	}
+
+	return false
 }
 
 // FullVersionInfo returns full version report.

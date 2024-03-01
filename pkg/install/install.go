@@ -27,6 +27,7 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	goversion "github.com/hashicorp/go-version"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -34,8 +35,10 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
+	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/token"
+	"github.com/percona/everest/pkg/version"
 )
 
 // Install implements the main logic for commands.
@@ -113,6 +116,8 @@ type (
 		SkipWizard bool `mapstructure:"skip-wizard"`
 		// KubeconfigPath is a path to a kubeconfig
 		KubeconfigPath string `mapstructure:"kubeconfig"`
+		// VersionMetadataURL stores hostname to retrieve version metadata information from.
+		VersionMetadataURL string `mapstructure:"version-metadata-url"`
 
 		Operator OperatorConfig
 	}
@@ -150,11 +155,25 @@ func NewInstall(c Config, l *zap.SugaredLogger) (*Install, error) {
 
 // Run runs the operators installation process.
 func (o *Install) Run(ctx context.Context) error {
+	// TODO: we shall probably split this into "install" and "add namespaces"
+	// Otherwise the logic is hard to maintain - we need to make sure not to,
+	// for example, install a different version of operators per namespace, if
+	// we are always installing the "latest" version.
 	if err := o.populateConfig(); err != nil {
 		return err
 	}
 
-	if err := o.provisionOLM(ctx); err != nil {
+	meta, err := version.Metadata(ctx, o.config.VersionMetadataURL)
+	if err != nil {
+		return err
+	}
+
+	latest, latestMeta, err := o.latestVersion(meta)
+	if err != nil {
+		return err
+	}
+
+	if err := o.provisionOLM(ctx, latest); err != nil {
 		return err
 	}
 
@@ -162,18 +181,23 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	if err := o.provisionDBNamespaces(ctx); err != nil {
+	recVer, err := version.RecommendedVersions(latestMeta)
+	if err != nil {
 		return err
 	}
 
-	if err := o.provisionEverestOperator(ctx); err != nil {
+	if err := o.provisionDBNamespaces(ctx, recVer); err != nil {
 		return err
 	}
 
-	if err := o.provisionEverest(ctx); err != nil {
+	if err := o.provisionEverestOperator(ctx, recVer); err != nil {
 		return err
 	}
-	_, err := o.kubeClient.GetSecret(ctx, SystemNamespace, token.SecretName)
+
+	if err := o.provisionEverest(ctx, latest); err != nil {
+		return err
+	}
+	_, err = o.kubeClient.GetSecret(ctx, SystemNamespace, token.SecretName)
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return errors.Join(err, errors.New("could not get the everest token secret"))
 	}
@@ -202,6 +226,33 @@ func (o *Install) populateConfig() error {
 	o.config.NamespacesList = l
 
 	return nil
+}
+
+func (o *Install) latestVersion(meta *versionpb.MetadataResponse) (*goversion.Version, *versionpb.MetadataVersion, error) {
+	var (
+		latest     *goversion.Version
+		latestMeta *versionpb.MetadataVersion
+	)
+
+	for _, v := range meta.Versions {
+		ver, err := goversion.NewSemver(v.Version)
+		if err != nil {
+			o.l.Debugf("Could not parse version %s. Error: %s", v.Version, err)
+			continue
+		}
+
+		if latest == nil || latest.GreaterThan(ver) {
+			latest = ver
+			latestMeta = v
+			continue
+		}
+	}
+
+	if latest == nil {
+		return nil, nil, errors.New("could not determine the latest Everest version")
+	}
+
+	return latest, latestMeta, nil
 }
 
 func (o *Install) installVMOperator(ctx context.Context) error {
@@ -236,6 +287,7 @@ func (o *Install) provisionMonitoringStack(ctx context.Context) error {
 	}
 
 	l.Info("Preparing k8s cluster for monitoring")
+	// TODO: shall we grab VM operator version from metadata?
 	if err := o.installVMOperator(ctx); err != nil {
 		return err
 	}
@@ -247,7 +299,7 @@ func (o *Install) provisionMonitoringStack(ctx context.Context) error {
 	return nil
 }
 
-func (o *Install) provisionEverestOperator(ctx context.Context) error {
+func (o *Install) provisionEverestOperator(ctx context.Context, recVer *version.RecommendedVersion) error {
 	if err := o.createNamespace(SystemNamespace); err != nil {
 		return err
 	}
@@ -257,14 +309,19 @@ func (o *Install) provisionEverestOperator(ctx context.Context) error {
 		return err
 	}
 
-	if err := o.installOperator(ctx, everestOperatorChannel, everestOperatorName, SystemNamespace)(); err != nil {
+	v := ""
+	if recVer.EverestOperator != nil {
+		v = recVer.EverestOperator.String()
+	}
+
+	if err := o.installOperator(ctx, everestOperatorChannel, everestOperatorName, SystemNamespace, v)(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (o *Install) provisionEverest(ctx context.Context) error {
+func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) error {
 	d, err := o.kubeClient.GetDeployment(ctx, kubernetes.PerconaEverestDeploymentName, SystemNamespace)
 	var everestExists bool
 	if err != nil && !k8serrors.IsNotFound(err) {
@@ -276,8 +333,7 @@ func (o *Install) provisionEverest(ctx context.Context) error {
 
 	if !everestExists {
 		o.l.Info(fmt.Sprintf("Deploying Everest to %s", SystemNamespace))
-		err = o.kubeClient.InstallEverest(ctx, SystemNamespace)
-		if err != nil {
+		if err = o.kubeClient.InstallEverest(ctx, SystemNamespace, v); err != nil {
 			return err
 		}
 	} else {
@@ -298,7 +354,7 @@ func (o *Install) provisionEverest(ctx context.Context) error {
 	return nil
 }
 
-func (o *Install) provisionDBNamespaces(ctx context.Context) error {
+func (o *Install) provisionDBNamespaces(ctx context.Context, recVer *version.RecommendedVersion) error {
 	for _, namespace := range o.config.NamespacesList {
 		namespace := namespace
 		if err := o.createNamespace(namespace); err != nil {
@@ -309,10 +365,11 @@ func (o *Install) provisionDBNamespaces(ctx context.Context) error {
 		}
 
 		o.l.Infof("Installing operators into %s namespace", namespace)
-		if err := o.provisionOperators(ctx, namespace); err != nil {
+		if err := o.provisionOperators(ctx, namespace, recVer); err != nil {
 			return err
 		}
 		o.l.Info("Creating role for the Everest service account")
+		// TODO: this shall come from Everest, not cli.
 		err := o.kubeClient.CreateRole(namespace, everestServiceAccountRole, o.serviceAccountRolePolicyRules())
 		if err != nil {
 			return errors.Join(err, errors.New("could not create role"))
@@ -426,15 +483,17 @@ func (o *Install) createNamespace(namespace string) error {
 	return nil
 }
 
-func (o *Install) provisionOLM(ctx context.Context) error {
+func (o *Install) provisionOLM(ctx context.Context, v *goversion.Version) error {
 	o.l.Info("Installing Operator Lifecycle Manager")
+	// TODO: do we upgrade OLM if the version is too old?
 	if err := o.kubeClient.InstallOLMOperator(ctx, false); err != nil {
 		o.l.Error("failed installing OLM")
 		return err
 	}
 	o.l.Info("OLM has been installed")
 	o.l.Info("Installing Percona OLM Catalog")
-	if err := o.kubeClient.InstallPerconaCatalog(ctx); err != nil {
+
+	if err := o.kubeClient.InstallPerconaCatalog(ctx, v); err != nil {
 		o.l.Errorf("failed installing OLM catalog: %v", err)
 		return err
 	}
@@ -443,7 +502,7 @@ func (o *Install) provisionOLM(ctx context.Context) error {
 	return nil
 }
 
-func (o *Install) provisionOperators(ctx context.Context, namespace string) error {
+func (o *Install) provisionOperators(ctx context.Context, namespace string, recVer *version.RecommendedVersion) error {
 	g, gCtx := errgroup.WithContext(ctx)
 	// We set the limit to 1 since operator installation
 	// requires an update to the same installation plan which
@@ -452,13 +511,25 @@ func (o *Install) provisionOperators(ctx context.Context, namespace string) erro
 	g.SetLimit(operatorInstallThreads)
 
 	if o.config.Operator.PXC {
-		g.Go(o.installOperator(gCtx, pxcOperatorChannel, pxcOperatorName, namespace))
+		v := ""
+		if recVer.PXC != nil {
+			v = recVer.PXC.String()
+		}
+		g.Go(o.installOperator(gCtx, pxcOperatorChannel, pxcOperatorName, namespace, v))
 	}
 	if o.config.Operator.PSMDB {
-		g.Go(o.installOperator(gCtx, psmdbOperatorChannel, psmdbOperatorName, namespace))
+		v := ""
+		if recVer.PSMDB != nil {
+			v = recVer.PSMDB.String()
+		}
+		g.Go(o.installOperator(gCtx, psmdbOperatorChannel, psmdbOperatorName, namespace, v))
 	}
 	if o.config.Operator.PG {
-		g.Go(o.installOperator(gCtx, pgOperatorChannel, pgOperatorName, namespace))
+		v := ""
+		if recVer.PG != nil {
+			v = recVer.PG.String()
+		}
+		g.Go(o.installOperator(gCtx, pgOperatorChannel, pgOperatorName, namespace, v))
 	}
 	if err := g.Wait(); err != nil {
 		return err
@@ -467,7 +538,7 @@ func (o *Install) provisionOperators(ctx context.Context, namespace string) erro
 	return nil
 }
 
-func (o *Install) installOperator(ctx context.Context, channel, operatorName, namespace string) func() error {
+func (o *Install) installOperator(ctx context.Context, channel, operatorName, namespace string, version string) func() error {
 	return func() error {
 		// We check if the context has not been cancelled yet to return early
 		if err := ctx.Err(); err != nil {
@@ -490,6 +561,7 @@ func (o *Install) installOperator(ctx context.Context, channel, operatorName, na
 			CatalogSourceNamespace: kubernetes.OLMNamespace,
 			Channel:                channel,
 			InstallPlanApproval:    v1alpha1.ApprovalManual,
+			StartingCSV:            version,
 			SubscriptionConfig: &v1alpha1.SubscriptionConfig{
 				Env: []corev1.EnvVar{
 					{

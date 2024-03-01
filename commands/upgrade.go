@@ -23,11 +23,11 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
+	everestClient "github.com/percona/everest/pkg/everest/client"
 	"github.com/percona/everest/pkg/output"
 	"github.com/percona/everest/pkg/upgrade"
 )
 
-// newUpgradeCmd returns a new operators command.
 func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "upgrade",
@@ -40,12 +40,17 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initUpgradeViperFlags(cmd)
 
-			c, err := parseConfig()
+			c, err := parseUpgradeConfig()
 			if err != nil {
 				os.Exit(1)
 			}
 
-			op, err := upgrade.NewUpgrade(*c, l)
+			everestClConnector, err := everestClient.NewEverestFromURL(c.Everest.Endpoint, c.Everest.Token)
+			if err != nil {
+				l.Error(err)
+				os.Exit(1)
+			}
+			op, err := upgrade.NewUpgrade(c, everestClConnector, l)
 			if err != nil {
 				l.Error(err)
 				os.Exit(1)
@@ -64,22 +69,22 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initUpgradeFlags(cmd *cobra.Command) {
+	cmd.Flags().String("everest.endpoint", "http://127.0.0.1:8080", "Everest endpoint URL")
+	cmd.Flags().String("everest.token", "", "Everest token to authenticate against Everest")
 	cmd.Flags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
-	cmd.Flags().String("namespaces", "", "Comma-separated namespaces list Percona Everest can manage")
-	cmd.Flags().Bool("upgrade-olm", false, "Upgrade OLM distribution")
-	cmd.Flags().Bool("skip-wizard", false, "Skip installation wizard")
+	cmd.Flags().String("version-metadata-url", "https://check.percona.com", "URL to retrieve version metadata information from")
 }
 
 func initUpgradeViperFlags(cmd *cobra.Command) {
-	viper.BindEnv("kubeconfig")                                       //nolint:errcheck,gosec
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))   //nolint:errcheck,gosec
-	viper.BindPFlag("namespaces", cmd.Flags().Lookup("namespaces"))   //nolint:errcheck,gosec
-	viper.BindPFlag("upgrade-olm", cmd.Flags().Lookup("upgrade-olm")) //nolint:errcheck,gosec
-	viper.BindPFlag("skip-wizard", cmd.Flags().Lookup("skip-wizard")) //nolint:errcheck,gosec
+	viper.BindPFlag("everest.endpoint", cmd.Flags().Lookup("everest.endpoint"))         //nolint:errcheck,gosec
+	viper.BindPFlag("everest.token", cmd.Flags().Lookup("everest.token"))               //nolint:errcheck,gosec
+	viper.BindEnv("kubeconfig")                                                         //nolint:errcheck,gosec
+	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))                     //nolint:errcheck,gosec
+	viper.BindPFlag("version-metadata-url", cmd.Flags().Lookup("version-metadata-url")) //nolint:errcheck,gosec
 }
 
-func parseConfig() (*upgrade.Config, error) {
-	c := &upgrade.Config{}
+func parseUpgradeConfig() (*upgrade.UpgradeConfig, error) {
+	c := &upgrade.UpgradeConfig{}
 	err := viper.Unmarshal(c)
 	return c, err
 }

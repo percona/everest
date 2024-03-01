@@ -4,17 +4,24 @@ import (
 	"fmt"
 	"testing"
 
-	"gotest.tools/assert"
+	goversion "github.com/hashicorp/go-version"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCatalogImage(t *testing.T) {
 	t.Parallel()
 	Version = "v0.3.0"
-	assert.Equal(t, CatalogImage(), fmt.Sprintf(releaseCatalogImage, Version))
+	v, err := goversion.NewVersion(Version)
+	assert.NoError(t, err)
+	assert.Equal(t, fmt.Sprintf(releaseCatalogImage, v.String()), CatalogImage(v))
+
 	Version = "v0.3.0-1-asd-dirty"
-	assert.Equal(t, CatalogImage(), devCatalogImage)
-	Version = "c09550"
-	assert.Equal(t, CatalogImage(), devCatalogImage)
+	v, err = goversion.NewVersion(Version)
+	assert.NoError(t, err)
+	assert.Equal(t, devCatalogImage, CatalogImage(v))
+
 	Version = "0.3.0-37-gf1f07f6"
-	assert.Equal(t, CatalogImage(), devCatalogImage)
+	v, err = goversion.NewVersion(Version)
+	assert.NoError(t, err)
+	assert.Equal(t, devCatalogImage, CatalogImage(v))
 }

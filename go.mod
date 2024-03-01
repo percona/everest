@@ -2,10 +2,13 @@ module github.com/percona/everest
 
 go 1.21
 
+replace github.com/Percona-Lab/percona-version-service => ../percona-version-service
+
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/AlekSi/pointer v1.2.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.2.1
+	github.com/Percona-Lab/percona-version-service v0.0.0-20230404081016-ea25e30cdcbc
 	github.com/aws/aws-sdk-go v1.50.9
 	github.com/dchest/uniuri v1.2.0
 	github.com/getkin/kin-openapi v0.123.0
@@ -19,6 +22,7 @@ require (
 	github.com/operator-framework/api v0.22.0
 	github.com/operator-framework/operator-lifecycle-manager v0.26.0
 	github.com/percona/everest-operator v0.6.0-dev1.0.20240220114053-fae6111d9818
+	github.com/percona/percona-everest-backend v0.8.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
@@ -26,7 +30,6 @@ require (
 	golang.org/x/crypto v0.19.0
 	golang.org/x/sync v0.6.0
 	gopkg.in/yaml.v3 v3.0.1
-	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.29.1
 	k8s.io/apiextensions-apiserver v0.29.1
 	k8s.io/apimachinery v0.29.1
@@ -56,7 +59,6 @@ require (
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/swag v0.22.8 // indirect
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
-	github.com/go-test/deep v1.1.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -64,11 +66,11 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/cel-go v0.17.7 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0 // indirect
 	github.com/h2non/filetype v1.1.1 // indirect
 	github.com/h2non/go-is-svg v0.0.0-20160927212452-35e8c4b0612c // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -143,6 +145,7 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
+	google.golang.org/genproto v0.0.0-20231127180814-3a041ad873d4 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20231120223509-83a465c0220f // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231120223509-83a465c0220f // indirect
 	google.golang.org/grpc v1.59.0 // indirect
