@@ -155,7 +155,7 @@ jobs:
 
       - name: Run Provisioning
         run: |
-          go run cmd/everest/main.go install \
+          go run cmd/cli/main.go install \
           --operator.mongodb \
           --operator.postgresql \
           --operator.xtradb-cluster \
@@ -191,7 +191,7 @@ jobs:
 
       - name: Change token
         run: |
-          echo "EVEREST_K8_TOKEN=$(go run cmd/everest/main.go token reset --json | jq .token -r)" >> $GITHUB_ENV
+          echo "EVEREST_K8_TOKEN=$(go run cmd/cli/main.go token reset --json | jq .token -r)" >> $GITHUB_ENV
 
       - name: Expose Everest API Server
         run: |
