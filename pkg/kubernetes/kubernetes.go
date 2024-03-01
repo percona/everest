@@ -25,7 +25,6 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -48,6 +47,7 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
 
+	scripts "github.com/percona/everest"
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/data"
 	"github.com/percona/everest/pkg/kubernetes/client"
@@ -906,7 +906,7 @@ func (k *Kubernetes) ApplyObject(obj runtime.Object) error {
 
 // InstallEverest downloads the manifest file and applies it against provisioned k8s cluster.
 func (k *Kubernetes) InstallEverest(ctx context.Context, namespace string) error {
-	data, err := k.getManifestData()
+	data, err := scripts.Manifest()
 	if err != nil {
 		return errors.Join(err, errors.New("failed reading everest manifest file"))
 	}
@@ -921,17 +921,9 @@ func (k *Kubernetes) InstallEverest(ctx context.Context, namespace string) error
 	return nil
 }
 
-func (k *Kubernetes) getManifestData() ([]byte, error) {
-	data, err := os.ReadFile("deploy/quickstart-k8s.yaml")
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
 // DeleteEverest downloads the manifest file and deletes it from provisioned k8s cluster.
 func (k *Kubernetes) DeleteEverest(_ context.Context, namespace string) error {
-	data, err := k.getManifestData()
+	data, err := scripts.Manifest()
 	if err != nil {
 		return errors.Join(err, errors.New("failed reading everest manifest file"))
 	}
