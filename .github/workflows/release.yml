@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - EVEREST-726-release-workflow
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "The RC/Release version, format: X.Y.Z-rcN for RC, X.Y.Z for releases"
-        required: true
+#  workflow_dispatch:
+#    inputs:
+#      version:
+#        description: "The RC/Release version, format: X.Y.Z-rcN for RC, X.Y.Z for releases"
+#        required: true
 
 jobs:
   build:
