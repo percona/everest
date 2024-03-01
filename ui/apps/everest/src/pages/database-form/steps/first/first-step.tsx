@@ -193,7 +193,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       !storageClassTouched &&
       mode === 'new' &&
       clusterInfo?.storageClassNames &&
-      clusterInfo.storageClassNames.length > 0
+      clusterInfo.storageClassNames?.length > 0
     ) {
       setValue(
         DbWizardFormFields.storageClass,
@@ -215,7 +215,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       trigger(DbWizardFormFields.k8sNamespace);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [namespaces, mode]);
+  }, [namespaces]);
 
   return (
     <>
