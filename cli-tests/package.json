@@ -8,7 +8,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@faker-js/faker": "^8.2.0",
+    "@faker-js/faker": "^8.4.0",
     "@playwright/test": "^1.39.0",
     "playwright": "^1.39.0",
     "semver": "^7.5.4",
