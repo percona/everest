@@ -10,7 +10,7 @@
   "dependencies": {
     "@faker-js/faker": "^8.2.0",
     "@playwright/test": "^1.39.0",
-    "playwright": "^1.39.0",
+    "playwright": "^1.41.2",
     "semver": "^7.5.4",
     "shelljs": "^0.8.5"
   },
