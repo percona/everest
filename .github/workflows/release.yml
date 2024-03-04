@@ -22,7 +22,7 @@ jobs:
         run: |
           echo $RC_BRANCH
           if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(?:-rc[1-9][0-9]*)?$ ]]; then
-            echo "Wrong version format provided, please use "X.Y.Z-rcN" format for an RC and "X.Y.Z" format for a release" 
+            echo "Wrong version format provided, please use "X.Y.Z-rcN" format for an RC or "X.Y.Z" format for a release" 
             exit 1
           fi
       - name: Define release branch name in the format "release-X.Y"
@@ -31,65 +31,65 @@ jobs:
           echo "RC_BRANCH=release-${major_minor}" >> $GITHUB_ENV
 
 
-      - name: Check out Everest catalog
-        uses: actions/checkout@v4
-        with:
-          repository: percona/everest-catalog
-          path: everest-catalog
-
-      - name: Create Everest catalog RC-branch
-        run: |
-          cd everest-catalog
-          # Check if the branch already exists
-          git fetch
-          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
-          
-          if [[ -z ${check_branch} ]]; then
-            git checkout -b $RC_BRANCH
-            git push origin $RC_BRANCH    
-          fi
-
-      - name: Check out Everest operator
-        uses: actions/checkout@v4
-        with:
-          repository: percona/everest-operator
-          path: everest-operator
-
-      - name: Create Everest operator RC-branch
-        run: |
-          cd everest-catalog
-          # Check if the branch already exists
-          git fetch
-          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
-
-          if [[ -z ${check_branch} ]]; then
-            git checkout -b $RC_BRANCH
-            git push origin $RC_BRANCH    
-          fi
-
-
-      - name: Check out Everest
-        uses: actions/checkout@v4
-
-      - name: Create and update Everest Backend RC-branch
-        run: |
-          cd backend
-          # Check if the branch already exists
-          git fetch
-          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
-          
-          if [[ -z ${check_branch} ]]; then
-            git checkout -b $RC_BRANCH
-            git push origin $RC_BRANCH  
-          
-            # update tag refs in scripts
-            sed -i "s/0.0.0/$VERSION/g" deploy/quickstart-k8s.yaml
-          
-            # configure userdata for commits
-            git config --global user.email "everest-ci@percona.com"
-            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
-          
-            # commit and push the updated files
-            git commit -a -m "update version tag"
-            git push origin $RC_BRANCH  
-          fi
+#      - name: Check out Everest catalog
+#        uses: actions/checkout@v4
+#        with:
+#          repository: percona/everest-catalog
+#          path: everest-catalog
+#
+#      - name: Create Everest catalog RC-branch
+#        run: |
+#          cd everest-catalog
+#          # Check if the branch already exists
+#          git fetch
+#          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
+#
+#          if [[ -z ${check_branch} ]]; then
+#            git checkout -b $RC_BRANCH
+#            git push origin $RC_BRANCH
+#          fi
+#
+#      - name: Check out Everest operator
+#        uses: actions/checkout@v4
+#        with:
+#          repository: percona/everest-operator
+#          path: everest-operator
+#
+#      - name: Create Everest operator RC-branch
+#        run: |
+#          cd everest-catalog
+#          # Check if the branch already exists
+#          git fetch
+#          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
+#
+#          if [[ -z ${check_branch} ]]; then
+#            git checkout -b $RC_BRANCH
+#            git push origin $RC_BRANCH
+#          fi
+#
+#
+#      - name: Check out Everest
+#        uses: actions/checkout@v4
+#
+#      - name: Create and update Everest Backend RC-branch
+#        run: |
+#          cd backend
+#          # Check if the branch already exists
+#          git fetch
+#          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
+#
+#          if [[ -z ${check_branch} ]]; then
+#            git checkout -b $RC_BRANCH
+#            git push origin $RC_BRANCH
+#
+#            # update tag refs in scripts
+#            sed -i "s/0.0.0/$VERSION/g" deploy/quickstart-k8s.yaml
+#
+#            # configure userdata for commits
+#            git config --global user.email "everest-ci@percona.com"
+#            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+#
+#            # commit and push the updated files
+#            git commit -a -m "update version tag"
+#            git push origin $RC_BRANCH
+#          fi
