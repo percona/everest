@@ -449,7 +449,7 @@ jobs:
       make_target: ${{ matrix.make_target }}
 
   merge-gatekeeper:
-    needs: [ test, check, integration_tests_api, integration_tests_flows]
+    needs: [ test, check, integration_tests_api, integration_tests_flows, integration_tests_cli]
     name: Merge Gatekeeper
     if: ${{ always() }}
     runs-on: ubuntu-22.04
