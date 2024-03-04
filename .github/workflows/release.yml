@@ -41,6 +41,11 @@ jobs:
           repository: percona/everest-catalog
           path: everest-catalog
 
+      - name: Fail
+        run: |
+          exit 1
+          
+
 
   merge-gatekeeper:
     needs: [ build ]
