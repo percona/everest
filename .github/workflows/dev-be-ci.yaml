@@ -176,6 +176,27 @@ jobs:
           git status
           git diff --exit-code
 
+      - name: Check the latest operator version is used
+        run: |
+          go get github.com/percona/everest-operator@main
+          echo "Checking there is no source code changes"
+          go mod tidy
+          git diff --exit-code
+
+      - name: Check the Makefile references dev version
+        run: |
+          if ! grep -q "RELEASE_VERSION ?= v0.0.0" Makefile; then 
+            echo "default RELEASE_VERSION in Makefile should be 0.0.0" 
+            exit 1 
+          fi 
+
+      - name: Check the quickstart script references dev version
+        run: |
+          if ! grep -q "perconalab/everest:0.0.0" deploy/quickstart-k8s.yaml; then 
+            echo "deploy/quickstart-k8s.yaml should reference 0.0.0 version" 
+            exit 1 
+          fi 
+
       - name: Run debug commands on failure
         if: ${{ failure() }}
         run: |
