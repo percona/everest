@@ -55,7 +55,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           interval: 45
           timeout: 15000
-          required_checks: [build]
+          required_checks: build
 
 #
 #      - name: Create Everest catalog release branch
