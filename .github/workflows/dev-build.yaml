@@ -61,8 +61,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          # TODO: change to true once switched to monorepo
-          push: false
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
   scan:
     runs-on: ubuntu-latest
