@@ -239,20 +239,3 @@ jobs:
         if: ${{ failure() }}
         run: |
           kubectl -n everest-system logs deployment/percona-everest
-
-
-  merge-gatekeeper:
-    needs: [ CI_checks, E2E ]
-    name: Merge Gatekeeper
-    if: ${{ always() }}
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Run Merge Gatekeeper
-        uses: upsidr/merge-gatekeeper@v1.2.1
-        with:
-          self: Merge Gatekeeper
-          token: ${{ secrets.GITHUB_TOKEN }}
-          interval: 45
-          timeout: 300
-          ignored: "license/snyk (Percona Github Org), security/snyk (Percona Github Org)"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}

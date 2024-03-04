@@ -447,19 +447,3 @@ jobs:
     secrets: inherit
     with:
       make_target: ${{ matrix.make_target }}
-
-  merge-gatekeeper:
-    needs: [ test, check, integration_tests_api, integration_tests_flows, integration_tests]
-    name: Merge Gatekeeper
-    if: ${{ always() }}
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Run Merge Gatekeeper
-        uses: upsidr/merge-gatekeeper@v1.2.1
-        with:
-          self: Merge Gatekeeper
-          token: ${{ secrets.GITHUB_TOKEN }}
-          interval: 45
-          timeout: 300
-          ignored: "license/snyk (Percona Github Org), security/snyk (Percona Github Org)"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
