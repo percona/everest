@@ -55,7 +55,7 @@ jobs:
 
       - name: Create Everest operator release branch
         run: |
-          cd everest-catalog
+          cd everest-operator
           # Check if the branch already exists
           git fetch
           check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
