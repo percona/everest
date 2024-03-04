@@ -138,7 +138,7 @@ jobs:
           echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
 
       - name: Create KIND cluster
-        uses: helm/kind-action@v1.8.0
+        uses: helm/kind-action@v1.9.0
 
       - name: Add Helm Percona repository
         run: |
