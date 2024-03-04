@@ -29,43 +29,43 @@ jobs:
           major_minor=$(echo "$VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*$/\1/')
           echo "RC_BRANCH=release-$major_minor" >> $GITHUB_ENV
 
-#      - name: Check out Everest catalog
-#        uses: actions/checkout@v4
-#        with:
-#          repository: percona/everest-catalog
-#          path: everest-catalog
-#
-#      - name: Create Everest catalog release branch
-#        run: |
-#          cd everest-catalog
-#          # Check if the branch already exists
-#          git fetch
-#          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
-#
-#          if [[ -z ${check_branch} ]]; then
-#            git checkout -b $RC_BRANCH
-#            git push origin $RC_BRANCH
-#          fi
-#
-#      - name: Check out Everest operator
-#        uses: actions/checkout@v4
-#        with:
-#          repository: percona/everest-operator
-#          path: everest-operator
-#
-#      - name: Create Everest operator release branch
-#        run: |
-#          cd everest-operator
-#          # Check if the branch already exists
-#          git fetch
-#          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
-#
-#          if [[ -z ${check_branch} ]]; then
-#            git checkout -b $RC_BRANCH
-#            git push origin $RC_BRANCH
-#          fi
-#
-#
+      - name: Check out Everest catalog
+        uses: actions/checkout@v4
+        with:
+          repository: percona/everest-catalog
+          path: everest-catalog
+
+      - name: Create Everest catalog release branch
+        run: |
+          cd everest-catalog
+          # Check if the branch already exists
+          git fetch
+          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
+
+          if [[ -z ${check_branch} ]]; then
+            git checkout -b $RC_BRANCH
+            git push origin $RC_BRANCH
+          fi
+
+      - name: Check out Everest operator
+        uses: actions/checkout@v4
+        with:
+          repository: percona/everest-operator
+          path: everest-operator
+
+      - name: Create Everest operator release branch
+        run: |
+          cd everest-operator
+          # Check if the branch already exists
+          git fetch
+          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
+
+          if [[ -z ${check_branch} ]]; then
+            git checkout -b $RC_BRANCH
+            git push origin $RC_BRANCH
+          fi
+
+
       - name: Check out Everest
         uses: actions/checkout@v4
 
