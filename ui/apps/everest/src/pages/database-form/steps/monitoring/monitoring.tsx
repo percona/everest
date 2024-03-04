@@ -1,10 +1,10 @@
 import { FormGroup } from '@mui/material';
 import { AutoCompleteInput, SwitchInput } from '@percona/ui-lib';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import {
   MONITORING_INSTANCES_QUERY_KEY,
   useCreateMonitoringInstance,
-  useMonitoringInstancesList,
+  useMonitoringInstancesListByNamespace,
 } from 'hooks/api/monitoring/useMonitoringInstancesList';
 import { CreateEditEndpointModal } from 'pages/settings/monitoring-endpoints/createEditModal/create-edit-modal.tsx';
 import { EndpointFormType } from 'pages/settings/monitoring-endpoints/createEditModal/create-edit-modal.types.ts';
@@ -22,29 +22,23 @@ export const Monitoring = () => {
   const queryClient = useQueryClient();
   const { watch, getValues, trigger } = useFormContext();
   const monitoring: boolean = watch(DbWizardFormFields.monitoring);
-  const selectedNamespace = watch(DbWizardFormFields.k8sNamespace);
+  const selectedNamespace = getValues(DbWizardFormFields.k8sNamespace);
 
   const mode = useDatabasePageMode();
   const { mutate: createMonitoringInstance, isPending: creatingInstance } =
     useCreateMonitoringInstance();
   const { setValue } = useFormContext();
 
-  const { data: monitoringInstances, isFetching: monitoringInstancesLoading } =
-    useMonitoringInstancesList();
+  const {
+    data: monitoringInstances = [],
+    isFetching: monitoringInstancesLoading,
+  } = useMonitoringInstancesListByNamespace(selectedNamespace);
 
-  const availableMonitoringInstances = useMemo(
-    () =>
-      (monitoringInstances || []).filter((item) =>
-        item.allowedNamespaces.includes(selectedNamespace)
-      ),
-    [monitoringInstances, selectedNamespace]
-  );
-
-  const monitoringInstancesOptions = availableMonitoringInstances.map(
+  const monitoringInstancesOptions = monitoringInstances.map(
     (item) => item.name
   );
   const getInstanceOptionLabel = (instanceName: string) => {
-    const instance = availableMonitoringInstances?.find(
+    const instance = monitoringInstances?.find(
       (inst) => inst.name === instanceName
     );
 
@@ -78,7 +72,7 @@ export const Monitoring = () => {
 
     trigger();
 
-    if (!availableMonitoringInstances?.length) {
+    if (!monitoringInstances?.length) {
       return;
     }
 
@@ -86,16 +80,16 @@ export const Monitoring = () => {
       if (monitoring) {
         setValue(
           DbWizardFormFields.monitoringInstance,
-          availableMonitoringInstances[0].name
+          monitoringInstances[0].name
         );
       }
     } else if (!selectedInstance) {
       setValue(
         DbWizardFormFields.monitoringInstance,
-        availableMonitoringInstances[0].name
+        monitoringInstances[0].name
       );
     }
-  }, [monitoring, availableMonitoringInstances]);
+  }, [monitoring, monitoringInstances]);
 
   return (
     <>
@@ -103,7 +97,7 @@ export const Monitoring = () => {
         pageTitle={Messages.monitoring}
         pageDescription={Messages.caption}
       />
-      {!availableMonitoringInstances?.length && (
+      {!monitoringInstances?.length && (
         <ActionableAlert
           message={Messages.alertText(selectedNamespace)}
           buttonMessage={Messages.addMonitoringEndpoint}
@@ -116,10 +110,10 @@ export const Monitoring = () => {
           label={Messages.monitoringEnabled}
           name={DbWizardFormFields.monitoring}
           switchFieldProps={{
-            disabled: !availableMonitoringInstances?.length,
+            disabled: !monitoringInstances?.length,
           }}
         />
-        {monitoring && !!availableMonitoringInstances?.length && (
+        {monitoring && !!monitoringInstances?.length && (
           <AutoCompleteInput
             name={DbWizardFormFields.monitoringInstance}
             label={Messages.monitoringInstanceLabel}
