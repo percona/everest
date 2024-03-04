@@ -15,16 +15,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       #VERSION: ${{ github.event.inputs.version }}
-      VERSION: v0.0.1
+      VERSION: 0.0.1-rc10
       RC_BRANCH: ''
     steps:
       - name: Validate input
         run: |
-          echo $VERSION
-          echo "----"
-          echo $RC_BRANCH
           if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc[1-9][0-9]*)?$ ]]; then
-            echo "Wrong version format provided, please use "X.Y.Z-rcN" format for an RC or "X.Y.Z" format for a release" >&2
+            echo "Wrong version format provided, please use "X.Y.Z-rcN" format for an RC or "X.Y.Z" format for a release"
             exit 1
           fi
       - name: Define release branch name in the format "release-X.Y"
