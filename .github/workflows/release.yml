@@ -28,6 +28,7 @@ jobs:
         run: |
           major_minor=$(echo "$VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*$/\1/')
           echo "RC_BRANCH=release-${major_minor}" >> $GITHUB_ENV
+          echo $RC_BRANCH
 
 
 #      - name: Check out Everest catalog
