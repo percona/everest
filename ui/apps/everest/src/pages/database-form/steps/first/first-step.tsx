@@ -154,14 +154,14 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         setValue(DbWizardFormFields.backupsEnabled, true);
       }
 
-      if (dbType === DbType.Postresql && backupsEnabled) {
+      if (newDbType === DbType.Postresql && backupsEnabled) {
         setValue(DbWizardFormFields.pitrEnabled, true);
       }
 
       resetField(DbWizardFormFields.dbVersion);
       updateDbVersions();
     },
-    [setRandomDbName, updateDbVersions, getValues]
+    [setRandomDbName, updateDbVersions]
   );
 
   useEffect(() => {
