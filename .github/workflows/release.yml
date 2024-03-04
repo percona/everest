@@ -27,7 +27,10 @@ jobs:
       - name: Define release branch name in the format "release-X.Y"
         run: |
           major_minor=$(echo "$VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*$/\1/')
+          echo "----"
+          echo $major_minor
           echo "RC_BRANCH=release-${major_minor}" >> $GITHUB_ENV
+          echo "----"
           echo $RC_BRANCH
 
 
