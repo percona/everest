@@ -41,58 +41,75 @@ jobs:
           repository: percona/everest-catalog
           path: everest-catalog
 
-      - name: Create Everest catalog release branch
-        run: |
-          cd everest-catalog
-          # Check if the branch already exists
-          git fetch
-          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
 
-          if [[ -z ${check_branch} ]]; then
-            git checkout -b $RC_BRANCH
-            git push origin $RC_BRANCH
-          fi
-
-      - name: Check out Everest operator
-        uses: actions/checkout@v4
+  merge-gatekeeper:
+    needs: [ build ]
+    name: Merge Gatekeeper
+    if: ${{ always() }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Run Merge Gatekeeper
+        uses: upsidr/merge-gatekeeper@v1.2.1
         with:
-          repository: percona/everest-operator
-          path: everest-operator
+          self: Merge Gatekeeper
+          token: ${{ secrets.GITHUB_TOKEN }}
+          interval: 45
+          timeout: 15000
+          required_checks: [build]
 
-      - name: Create Everest operator release branch
-        run: |
-          cd everest-operator
-          # Check if the branch already exists
-          git fetch
-          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
-
-          if [[ -z ${check_branch} ]]; then
-            git checkout -b $RC_BRANCH
-            git push origin $RC_BRANCH
-          fi
-
-
-      - name: Check out Everest
-        uses: actions/checkout@v4
-
-      - name: Create and update Everest Backend RC-branch
-        run: |
-          # Check if the branch already exists
-          git fetch
-          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
-
-          if [[ -z ${check_branch} ]]; then
-            git checkout -b $RC_BRANCH
-            git push origin $RC_BRANCH
-
-            # update tag refs in scripts
-            sed -i "s/0.0.0/$VERSION/g" deploy/quickstart-k8s.yaml
-
-            # configure userdata for commits
-            git config --global user.email "everest-ci@percona.com"
-            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
-
-            # commit and push the updated files
-            git commit -a -m "update version tag"
-            git push origin $RC_BRANCH
-          fi
+#
+#      - name: Create Everest catalog release branch
+#        run: |
+#          cd everest-catalog
+#          # Check if the branch already exists
+#          git fetch
+#          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
+#
+#          if [[ -z ${check_branch} ]]; then
+#            git checkout -b $RC_BRANCH
+#            git push origin $RC_BRANCH
+#          fi
+#
+#      - name: Check out Everest operator
+#        uses: actions/checkout@v4
+#        with:
+#          repository: percona/everest-operator
+#          path: everest-operator
+#
+#      - name: Create Everest operator release branch
+#        run: |
+#          cd everest-operator
+#          # Check if the branch already exists
+#          git fetch
+#          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
+#
+#          if [[ -z ${check_branch} ]]; then
+#            git checkout -b $RC_BRANCH
+#            git push origin $RC_BRANCH
+#          fi
+#
+#
+#      - name: Check out Everest
+#        uses: actions/checkout@v4
+#
+#      - name: Create and update Everest Backend RC-branch
+#        run: |
+#          # Check if the branch already exists
+#          git fetch
+#          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
+#
+#          if [[ -z ${check_branch} ]]; then
+#            git checkout -b $RC_BRANCH
+#            git push origin $RC_BRANCH
+#
+#            # update tag refs in scripts
+#            sed -i "s/0.0.0/$VERSION/g" deploy/quickstart-k8s.yaml
+#
+#            # configure userdata for commits
+#            git config --global user.email "everest-ci@percona.com"
+#            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+#
+#            # commit and push the updated files
+#            git commit -a -m "update version tag"
+#            git push origin $RC_BRANCH
+#          fi
