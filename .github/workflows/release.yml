@@ -71,7 +71,6 @@ jobs:
 
       - name: Create and update Everest Backend RC-branch
         run: |
-          cd backend
           # Check if the branch already exists
           git fetch
           check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
