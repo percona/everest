@@ -10,12 +10,6 @@ on:
 #        description: "The RC/Release version, format: X.Y.Z-rcN for RC, X.Y.Z for releases"
 #        required: true
 
-permissions:
-  contents: read
-  packages: write
-  checks: write
-  pull-requests: write
-
 jobs:
   build:
     runs-on: ubuntu-latest

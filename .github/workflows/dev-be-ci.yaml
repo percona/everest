@@ -2,19 +2,13 @@
 name: API CI
 on:
   push:
-    paths-ignore:
-      - 'ui/**'
     branches:
       - EVEREST-726-release-workflow
-  pull_request:
-    paths-ignore:
-      - 'ui/**'
-
-permissions:
-  contents: read
-  packages: write
-  checks: write
-  pull-requests: write
+#  workflow_dispatch:
+#    inputs:
+#      version:
+#        description: "The RC/Release version, format: X.Y.Z-rcN for RC, X.Y.Z for releases"
+#        required: true
 
 jobs:
   build:
