@@ -55,7 +55,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           interval: 45
           timeout: 15000
-          required_checks: build
+          ignored: "license/snyk (Percona Github Org), security/snyk (Percona Github Org)"
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
 #
 #      - name: Create Everest catalog release branch
