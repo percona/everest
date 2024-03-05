@@ -53,7 +53,7 @@ export const Messages = {
   deleteModal: {
     header: 'Delete database',
     content: (dbName: string) =>
-      `Are you sure you want to permanently delete "${dbName}" and any datasets it contains?`,
+      `Are you sure you want to permanently delete ${dbName}? To confirm this action, type the name of your database.`,
   },
   responseMessages: {
     restart: 'The database is being restarted',
