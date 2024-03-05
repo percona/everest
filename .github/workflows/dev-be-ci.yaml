@@ -433,6 +433,7 @@ jobs:
         with:
           name: cli-tests-report
           path: cli-tests/test-report
+          overwrite: true
 
   integration_tests_flows:
     strategy:

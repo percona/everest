@@ -93,3 +93,4 @@ jobs:
         with:
           name: test-delete-cluster-tests-report
           path: cli-tests/test-report
+          overwrite: true

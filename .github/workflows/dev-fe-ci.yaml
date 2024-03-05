@@ -230,6 +230,7 @@ jobs:
         with:
           name: test-results
           path: ui/apps/everest/.e2e/test-results/
+          overwrite: true
 
       - name: Archive report
         if: always()
@@ -237,6 +238,7 @@ jobs:
         with:
           name: playwright-report
           path: ui/apps/everest/.e2e/playwright-report/
+          overwrite: true
 
       - name: Run debug commands on failure
         if: ${{ failure() }}
