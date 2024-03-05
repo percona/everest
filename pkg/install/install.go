@@ -27,6 +27,7 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
@@ -35,7 +36,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
-	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/token"
 	"github.com/percona/everest/pkg/version"
@@ -52,9 +53,6 @@ type Install struct {
 const (
 	everestBackendServiceName = "percona-everest-backend"
 	everestOperatorName       = "everest-operator"
-	pxcOperatorName           = "percona-xtradb-cluster-operator"
-	psmdbOperatorName         = "percona-server-mongodb-operator"
-	pgOperatorName            = "percona-postgresql-operator"
 	vmOperatorName            = "victoriametrics-operator"
 	operatorInstallThreads    = 1
 
@@ -515,21 +513,21 @@ func (o *Install) provisionOperators(ctx context.Context, namespace string, recV
 		if recVer.PXC != nil {
 			v = recVer.PXC.String()
 		}
-		g.Go(o.installOperator(gCtx, pxcOperatorChannel, pxcOperatorName, namespace, v))
+		g.Go(o.installOperator(gCtx, pxcOperatorChannel, common.PXCOperatorName, namespace, v))
 	}
 	if o.config.Operator.PSMDB {
 		v := ""
 		if recVer.PSMDB != nil {
 			v = recVer.PSMDB.String()
 		}
-		g.Go(o.installOperator(gCtx, psmdbOperatorChannel, psmdbOperatorName, namespace, v))
+		g.Go(o.installOperator(gCtx, psmdbOperatorChannel, common.PSMDBOperatorName, namespace, v))
 	}
 	if o.config.Operator.PG {
 		v := ""
 		if recVer.PG != nil {
 			v = recVer.PG.String()
 		}
-		g.Go(o.installOperator(gCtx, pgOperatorChannel, pgOperatorName, namespace, v))
+		g.Go(o.installOperator(gCtx, pgOperatorChannel, common.PGOperatorName, namespace, v))
 	}
 	if err := g.Wait(); err != nil {
 		return err

@@ -7,6 +7,7 @@ import (
 
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	versioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	operatorsv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	mock "github.com/stretchr/testify/mock"
 	appsv1 "k8s.io/api/apps/v1"
@@ -1743,6 +1744,26 @@ func (_m *MockKubeClientConnector) Namespace() string {
 		r0 = rf()
 	} else {
 		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// OLM provides a mock function with given fields:
+func (_m *MockKubeClientConnector) OLM() versioned.Interface {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for OLM")
+	}
+
+	var r0 versioned.Interface
+	if rf, ok := ret.Get(0).(func() versioned.Interface); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(versioned.Interface)
+		}
 	}
 
 	return r0

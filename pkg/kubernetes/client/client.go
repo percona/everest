@@ -33,7 +33,7 @@ import (
 
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
+	olmVersioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	packagev1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	packageServerClient "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/client/clientset/versioned"
 	"go.uber.org/zap"
@@ -102,8 +102,10 @@ type Client struct {
 	customClientSet  *customresources.Client
 	apiextClientset  apiextv1clientset.Interface
 	dynamicClientset dynamic.Interface
+	olmClientset     olmVersioned.Interface
 	rcLock           *sync.Mutex
 	restConfig       *rest.Config
+	restMapper       meta.RESTMapper
 	namespace        string
 	clusterName      string
 }
@@ -191,11 +193,17 @@ func NewFromKubeConfig(kubeconfig string, l *zap.SugaredLogger) (*Client, error)
 	if err != nil {
 		return nil, err
 	}
+	olmClientset, err := olmVersioned.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
 	c := &Client{
 		l:                l,
 		clientset:        clientset,
 		apiextClientset:  apiextClientset,
 		dynamicClientset: dynamicClientset,
+		olmClientset:     olmClientset,
 		restConfig:       config,
 		rcLock:           &sync.Mutex{},
 		clusterName:      clientConfig.Contexts[clientConfig.CurrentContext].Cluster,
@@ -230,10 +238,17 @@ func NewInCluster() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	olmClientset, err := olmVersioned.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
 	c := &Client{
-		clientset:  clientset,
-		restConfig: config,
-		namespace:  string(namespace),
+		clientset:    clientset,
+		olmClientset: olmClientset,
+		restConfig:   config,
+		namespace:    string(namespace),
 	}
 
 	err = c.initOperatorClients()
@@ -263,6 +278,12 @@ func (c *Client) kubeClient() (client.Client, error) { //nolint:ireturn,nolintli
 
 // Initializes clients for operators.
 func (c *Client) initOperatorClients() error {
+	groupResources, err := restmapper.GetAPIGroupResources(c.clientset.Discovery())
+	if err != nil {
+		return err
+	}
+	c.restMapper = restmapper.NewDiscoveryRESTMapper(groupResources)
+
 	customClient, err := customresources.NewForConfig(c.restConfig)
 	if err != nil {
 		return err
@@ -370,15 +391,9 @@ func (c *Client) ListDeployments(ctx context.Context, namespace string) (*appsv1
 
 // ApplyObject applies object.
 func (c *Client) ApplyObject(obj runtime.Object) error {
-	groupResources, err := restmapper.GetAPIGroupResources(c.clientset.Discovery())
-	if err != nil {
-		return err
-	}
-	mapper := restmapper.NewDiscoveryRESTMapper(groupResources)
-
 	gvk := obj.GetObjectKind().GroupVersionKind()
 	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
-	mapping, err := mapper.RESTMapping(gk, gvk.Version)
+	mapping, err := c.restMapper.RESTMapping(gk, gvk.Version)
 	if err != nil {
 		return err
 	}
@@ -1166,7 +1181,7 @@ func (c *Client) CreateNamespace(name string) error {
 
 // GetOperatorGroup retrieves an operator group details by namespace and name.
 func (c *Client) GetOperatorGroup(ctx context.Context, namespace, name string) (*v1.OperatorGroup, error) {
-	operatorClient, err := versioned.NewForConfig(c.restConfig)
+	operatorClient, err := olmVersioned.NewForConfig(c.restConfig)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("cannot create an operator client instance"))
 	}
@@ -1180,11 +1195,6 @@ func (c *Client) GetOperatorGroup(ctx context.Context, namespace, name string) (
 
 // CreateOperatorGroup creates an operator group to be used as part of a subscription.
 func (c *Client) CreateOperatorGroup(ctx context.Context, namespace, name string, targetNamespaces []string) (*v1.OperatorGroup, error) {
-	operatorClient, err := versioned.NewForConfig(c.restConfig)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("cannot create an operator client instance"))
-	}
-
 	if namespace == "" {
 		namespace = c.namespace
 	}
@@ -1203,16 +1213,12 @@ func (c *Client) CreateOperatorGroup(ctx context.Context, namespace, name string
 		},
 	}
 
-	return operatorClient.OperatorsV1().OperatorGroups(namespace).Create(ctx, og, metav1.CreateOptions{})
+	return c.olmClientset.OperatorsV1().OperatorGroups(namespace).Create(ctx, og, metav1.CreateOptions{})
 }
 
 // CreateSubscription creates an OLM subscription.
 func (c *Client) CreateSubscription(ctx context.Context, namespace string, subscription *v1alpha1.Subscription) (*v1alpha1.Subscription, error) {
-	operatorClient, err := versioned.NewForConfig(c.restConfig)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("cannot create an operator client instance"))
-	}
-	sub, err := operatorClient.
+	sub, err := c.olmClientset.
 		OperatorsV1alpha1().
 		Subscriptions(namespace).
 		Create(ctx, subscription, metav1.CreateOptions{})
@@ -1227,11 +1233,7 @@ func (c *Client) CreateSubscription(ctx context.Context, namespace string, subsc
 
 // UpdateSubscription updates an OLM subscription.
 func (c *Client) UpdateSubscription(ctx context.Context, namespace string, subscription *v1alpha1.Subscription) (*v1alpha1.Subscription, error) {
-	operatorClient, err := versioned.NewForConfig(c.restConfig)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("cannot create an operator client instance"))
-	}
-	sub, err := operatorClient.
+	sub, err := c.olmClientset.
 		OperatorsV1alpha1().
 		Subscriptions(namespace).
 		Update(ctx, subscription, metav1.UpdateOptions{})
@@ -1245,11 +1247,6 @@ func (c *Client) UpdateSubscription(ctx context.Context, namespace string, subsc
 func (c *Client) CreateSubscriptionForCatalog(ctx context.Context, namespace, name, catalogNamespace, catalog,
 	packageName, channel, startingCSV string, approval v1alpha1.Approval,
 ) (*v1alpha1.Subscription, error) {
-	operatorClient, err := versioned.NewForConfig(c.restConfig)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("cannot create an operator client instance"))
-	}
-
 	subscription := &v1alpha1.Subscription{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       v1alpha1.SubscriptionKind,
@@ -1268,7 +1265,7 @@ func (c *Client) CreateSubscriptionForCatalog(ctx context.Context, namespace, na
 			InstallPlanApproval:    approval,
 		},
 	}
-	sub, err := operatorClient.
+	sub, err := c.olmClientset.
 		OperatorsV1alpha1().
 		Subscriptions(namespace).
 		Create(ctx, subscription, metav1.CreateOptions{})
@@ -1286,12 +1283,7 @@ func (c *Client) GetSubscription(ctx context.Context, namespace, name string) (*
 	c.rcLock.Lock()
 	defer c.rcLock.Unlock()
 
-	operatorClient, err := versioned.NewForConfig(c.restConfig)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("cannot create an operator client instance"))
-	}
-
-	return operatorClient.OperatorsV1alpha1().Subscriptions(namespace).Get(ctx, name, metav1.GetOptions{})
+	return c.olmClientset.OperatorsV1alpha1().Subscriptions(namespace).Get(ctx, name, metav1.GetOptions{})
 }
 
 // ListSubscriptions all the subscriptions in the namespace.
@@ -1299,12 +1291,7 @@ func (c *Client) ListSubscriptions(ctx context.Context, namespace string) (*v1al
 	c.rcLock.Lock()
 	defer c.rcLock.Unlock()
 
-	operatorClient, err := versioned.NewForConfig(c.restConfig)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("cannot create an operator client instance"))
-	}
-
-	return operatorClient.OperatorsV1alpha1().Subscriptions(namespace).List(ctx, metav1.ListOptions{})
+	return c.olmClientset.OperatorsV1alpha1().Subscriptions(namespace).List(ctx, metav1.ListOptions{})
 }
 
 // GetInstallPlan retrieves an OLM install plan by namespace and name.
@@ -1312,12 +1299,7 @@ func (c *Client) GetInstallPlan(ctx context.Context, namespace string, name stri
 	c.rcLock.Lock()
 	defer c.rcLock.Unlock()
 
-	operatorClient, err := versioned.NewForConfig(c.restConfig)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("cannot create an operator client instance"))
-	}
-
-	return operatorClient.OperatorsV1alpha1().InstallPlans(namespace).Get(ctx, name, metav1.GetOptions{})
+	return c.olmClientset.OperatorsV1alpha1().InstallPlans(namespace).Get(ctx, name, metav1.GetOptions{})
 }
 
 // DoPackageWait for the package to be available in OLM.
@@ -1354,12 +1336,7 @@ func (c *Client) UpdateInstallPlan(
 	c.rcLock.Lock()
 	defer c.rcLock.Unlock()
 
-	operatorClient, err := versioned.NewForConfig(c.restConfig)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("cannot create an operator client instance"))
-	}
-
-	return operatorClient.OperatorsV1alpha1().InstallPlans(namespace).Update(ctx, installPlan, metav1.UpdateOptions{})
+	return c.olmClientset.OperatorsV1alpha1().InstallPlans(namespace).Update(ctx, installPlan, metav1.UpdateOptions{})
 }
 
 // ListCRDs returns a list of CRDs.
@@ -1395,12 +1372,7 @@ func (c *Client) GetClusterServiceVersion(
 	ctx context.Context,
 	key types.NamespacedName,
 ) (*v1alpha1.ClusterServiceVersion, error) {
-	operatorClient, err := versioned.NewForConfig(c.restConfig)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("cannot create an operator client instance"))
-	}
-
-	return operatorClient.OperatorsV1alpha1().ClusterServiceVersions(key.Namespace).Get(ctx, key.Name, metav1.GetOptions{})
+	return c.olmClientset.OperatorsV1alpha1().ClusterServiceVersions(key.Namespace).Get(ctx, key.Name, metav1.GetOptions{})
 }
 
 // ListClusterServiceVersion list all CSVs for the given namespace.
@@ -1408,12 +1380,7 @@ func (c *Client) ListClusterServiceVersion(
 	ctx context.Context,
 	namespace string,
 ) (*v1alpha1.ClusterServiceVersionList, error) {
-	operatorClient, err := versioned.NewForConfig(c.restConfig)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("cannot create an operator client instance"))
-	}
-
-	return operatorClient.OperatorsV1alpha1().ClusterServiceVersions(namespace).List(ctx, metav1.ListOptions{})
+	return c.olmClientset.OperatorsV1alpha1().ClusterServiceVersions(namespace).List(ctx, metav1.ListOptions{})
 }
 
 // DeleteClusterServiceVersion deletes a CSV by namespaced name.
@@ -1421,12 +1388,7 @@ func (c *Client) DeleteClusterServiceVersion(
 	ctx context.Context,
 	key types.NamespacedName,
 ) error {
-	operatorClient, err := versioned.NewForConfig(c.restConfig)
-	if err != nil {
-		return errors.Join(err, errors.New("cannot create an operator client instance"))
-	}
-
-	return operatorClient.OperatorsV1alpha1().ClusterServiceVersions(key.Namespace).Delete(ctx, key.Name, metav1.DeleteOptions{})
+	return c.olmClientset.OperatorsV1alpha1().ClusterServiceVersions(key.Namespace).Delete(ctx, key.Name, metav1.DeleteOptions{})
 }
 
 // DeleteFile accepts manifest file contents parses into []runtime.Object

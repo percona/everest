@@ -27,6 +27,7 @@ import (
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/install"
 	"github.com/percona/everest/pkg/kubernetes"
 	cliVersion "github.com/percona/everest/pkg/version"
@@ -58,9 +59,17 @@ type (
 	}
 
 	supportedVersion struct {
-		catalog goversion.Constraints
-		cli     goversion.Constraints
-		olm     goversion.Constraints
+		catalog       goversion.Constraints
+		cli           goversion.Constraints
+		olm           goversion.Constraints
+		pgOperator    goversion.Constraints
+		pxcOperator   goversion.Constraints
+		psmdbOperator goversion.Constraints
+	}
+
+	requirementsCheck struct {
+		operatorName string
+		constraints  goversion.Constraints
 	}
 )
 
@@ -142,7 +151,10 @@ func (u *Upgrade) canUpgrade(ctx context.Context) (*goversion.Version, *cliVersi
 		return nil, nil, err
 	}
 
+	u.l.Infof("Found available upgrade to Everest version %s", upgradeEverestTo)
+
 	// Check requirements.
+	u.l.Infof("Checking requirements for upgrade to Everest %s", upgradeEverestTo)
 	if err := u.verifyRequirements(ctx, meta); err != nil {
 		return nil, nil, err
 	}
@@ -214,7 +226,7 @@ func (u *Upgrade) verifyRequirements(ctx context.Context, meta *version.Metadata
 		return err
 	}
 
-	if err := u.checkRequirements(supVer); err != nil {
+	if err := u.checkRequirements(ctx, supVer); err != nil {
 		return err
 	}
 
@@ -224,39 +236,78 @@ func (u *Upgrade) verifyRequirements(ctx context.Context, meta *version.Metadata
 func (u *Upgrade) supportedVersion(meta *version.MetadataVersion) (*supportedVersion, error) {
 	supVer := &supportedVersion{}
 
-	if cli, ok := meta.Supported["cli"]; ok {
-		c, err := goversion.NewConstraint(cli)
-		if err != nil {
-			return nil, errors.Join(err, fmt.Errorf("invalid cli constraint %s", cli))
-		}
-		supVer.cli = c
+	// Parse MetadataVersion into supportedVersion struct.
+	config := map[string]*goversion.Constraints{
+		"cli":           &supVer.cli,
+		"olm":           &supVer.olm,
+		"catalog":       &supVer.catalog,
+		"pgOperator":    &supVer.pgOperator,
+		"pxcOperator":   &supVer.pxcOperator,
+		"psmdbOperator": &supVer.psmdbOperator,
 	}
-
-	if olm, ok := meta.Supported["olm"]; ok {
-		c, err := goversion.NewConstraint(olm)
-		if err != nil {
-			return nil, errors.Join(err, fmt.Errorf("invalid OLM constraint %s", olm))
+	for key, ref := range config {
+		if s, ok := meta.Supported[key]; ok {
+			c, err := goversion.NewConstraint(s)
+			if err != nil {
+				return nil, errors.Join(err, fmt.Errorf("invalid %s constraint %s", key, s))
+			}
+			*ref = c
 		}
-		supVer.olm = c
-	}
-
-	if catalog, ok := meta.Supported["catalog"]; ok {
-		c, err := goversion.NewConstraint(catalog)
-		if err != nil {
-			return nil, errors.Join(err, fmt.Errorf("invalid catalog constraint %s", catalog))
-		}
-		supVer.catalog = c
 	}
 
 	return supVer, nil
 }
 
-func (u *Upgrade) checkRequirements(minVer *supportedVersion) error {
-	// TODO: to be implemented.
+func (u *Upgrade) checkRequirements(ctx context.Context, supVer *supportedVersion) error {
+	// TODO: cli, olm, catalog to be implemented.
+
+	nss, err := u.kubeClient.GetDBNamespaces(ctx, install.SystemNamespace)
+	if err != nil {
+		return err
+	}
+
+	cfg := []requirementsCheck{
+		{common.PXCOperatorName, supVer.pxcOperator},
+		{common.PGOperatorName, supVer.pgOperator},
+		{common.PSMDBOperatorName, supVer.psmdbOperator},
+	}
+
+	for _, ns := range nss {
+		u.l.Infof("Checking operator requirements in namespace %s", ns)
+
+		// Operator versions.
+		for _, c := range cfg {
+			v, err := u.kubeClient.OperatorInstalledVersion(ctx, ns, c.operatorName)
+			if err != nil && !errors.Is(err, kubernetes.ErrOperatorNotInstalled) {
+				return err
+			}
+
+			if v == nil {
+				u.l.Debugf("Operator %s not found", c.operatorName)
+				continue
+			}
+
+			u.l.Debugf("Found operator %s version %s. Checking contraints %q", c.operatorName, v, c.constraints.String())
+			if !c.constraints.Check(v) {
+				return fmt.Errorf(
+					"%s version %q does not meet minimum requirements of %q",
+					c.operatorName, v, supVer.pxcOperator.String(),
+				)
+			}
+			u.l.Debugf("Finished requirements check for operator %s", c.operatorName)
+		}
+	}
+
 	return nil
 }
 
-func (u *Upgrade) upgradeOLM(ctx context.Context, minimumVersion *goversion.Version) error {
+func (u *Upgrade) upgradeOLM(ctx context.Context, recommendedVersion *goversion.Version) error {
+	if recommendedVersion == nil {
+		// No need to check for OLM version and upgrade.
+		u.l.Debug("No version provided to upgradeOLM")
+		return nil
+	}
+
 	u.l.Info("Checking OLM version")
 	csv, err := u.kubeClient.GetClusterServiceVersion(ctx, types.NamespacedName{
 		Name:      "packageserver",
@@ -265,16 +316,16 @@ func (u *Upgrade) upgradeOLM(ctx context.Context, minimumVersion *goversion.Vers
 	if err != nil {
 		return errors.Join(err, errors.New("could not retrieve Cluster Service Version"))
 	}
-	foundVersion, err := goversion.NewSemver(csv.Spec.Version.String())
+	foundVersion, err := goversion.NewVersion(csv.Spec.Version.String())
 	if err != nil {
 		return err
 	}
-	u.l.Infof("OLM version is %s. Minimum version is %s", foundVersion, minimumVersion)
-	if !foundVersion.LessThan(minimumVersion) {
+	u.l.Infof("OLM version is %s. Recommended version is %s", foundVersion, recommendedVersion)
+	if !foundVersion.LessThan(recommendedVersion) {
 		u.l.Info("OLM version is supported. No action is required.")
 		return nil
 	}
-	u.l.Info("Upgrading OLM to version %s", minimumVersion)
+	u.l.Info("Upgrading OLM to version %s", recommendedVersion)
 	// TODO: shall we actually upgrade OLM operator instead of installation/skip?
 	if err := u.kubeClient.InstallOLMOperator(ctx, true); err != nil {
 		return errors.Join(err, errors.New("could not upgrade OLM"))

@@ -29,6 +29,7 @@ import (
 	"strings"
 	"time"
 
+	goversion "github.com/hashicorp/go-version"
 	olmv1 "github.com/operator-framework/api/pkg/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
@@ -47,7 +48,6 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
 
-	goversion "github.com/hashicorp/go-version"
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/data"
 	"github.com/percona/everest/pkg/kubernetes/client"
@@ -376,6 +376,12 @@ func (k *Kubernetes) applyCSVs(ctx context.Context, resources []unstructured.Uns
 
 // InstallPerconaCatalog installs percona catalog and ensures that packages are available.
 func (k *Kubernetes) InstallPerconaCatalog(ctx context.Context, version *goversion.Version) error {
+	if version == nil {
+		// No need to check the version if not provided.
+		k.l.Debug("No version provided to InstallPerconaCatalog")
+		return nil
+	}
+
 	data, err := fs.ReadFile(data.OLMCRDs, "crds/olm/everest-catalog.yaml")
 	if err != nil {
 		return errors.Join(err, errors.New("failed to read percona catalog file"))
@@ -906,6 +912,12 @@ func (k *Kubernetes) ApplyObject(obj runtime.Object) error {
 
 // InstallEverest downloads the manifest file and applies it against provisioned k8s cluster.
 func (k *Kubernetes) InstallEverest(ctx context.Context, namespace string, version *goversion.Version) error {
+	if version == nil {
+		// No need to check the version if not provided.
+		k.l.Debug("No version provided to InstallEverest")
+		return nil
+	}
+
 	data, err := k.getManifestData(ctx, version)
 	if err != nil {
 		return errors.Join(err, errors.New("failed downloading everest monitoring file"))

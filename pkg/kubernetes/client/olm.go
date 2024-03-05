@@ -15,5 +15,8 @@
 
 package client
 
-//go:generate ../../../bin/ifacemaker -f backup_storage.go -f client.go -f ctl.go -f database_cluster.go -f database_cluster_backup.go -f database_cluster_restore.go -f database_engine.go -f monitoring.go -f monitoring_config.go -f namespace.go -f olm.go -f node.go -f pod.go -f secret.go -f storage.go -f writer -s Client -i KubeClientConnector -p client -o kubeclient_interface.go
-//go:generate ../../../bin/mockery --name=KubeClientConnector --case=snake --inpackage
+import versioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
+
+func (c *Client) OLM() versioned.Interface {
+	return c.olmClientset
+}

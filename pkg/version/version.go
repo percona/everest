@@ -62,7 +62,7 @@ func isDevVersion() bool {
 		return true
 	}
 
-	v, err := goversion.NewSemver(Version)
+	v, err := goversion.NewVersion(Version)
 	if err != nil {
 		panic(err)
 	}
