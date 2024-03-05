@@ -66,10 +66,10 @@ export const ConfirmFormDialog = ({
     <TextInput
       name={ConfirmFormDialogFields.confirmInput}
       label={inputLabel ?? inputLabel}
+      labelProps={{ sx: { mt: 0 } }}
       textFieldProps={{
         placeholder: inputPlaceholder ?? inputPlaceholder,
       }}
-      isRequired
     />
   </FormDialog>
 );

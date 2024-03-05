@@ -310,6 +310,8 @@ export const DbClusterView = () => {
       )}
       {openDeleteDialog && (
         <ConfirmFormDialog
+          inputLabel={Messages.deleteModal.databaseName}
+          inputPlaceholder={Messages.deleteModal.databaseName}
           isOpen={openDeleteDialog}
           closeModal={handleCloseDeleteDialog}
           headerMessage={Messages.deleteModal.header}
