@@ -1,6 +1,6 @@
 module github.com/percona/everest
 
-go 1.21
+go 1.22
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
