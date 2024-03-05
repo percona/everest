@@ -34,7 +34,7 @@ jobs:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v3
         with:
           version: 8
 
@@ -62,7 +62,7 @@ jobs:
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v3
         with:
           version: 8
       - name: Use Node
@@ -114,7 +114,7 @@ jobs:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v3
         with:
           version: 8
 
