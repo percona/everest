@@ -10,6 +10,10 @@ on:
 
 jobs:
   integration_tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: [ 1.22.x ]
     name: CLI ${{inputs.make_target}}
     runs-on: ubuntu-latest
     timeout-minutes: 60

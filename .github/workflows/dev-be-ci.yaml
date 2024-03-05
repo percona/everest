@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ 1.21.x ]
+        go-version: [ 1.22.x ]
         may-fail: [ false ]
 
     continue-on-error: ${{ matrix.may-fail }}
@@ -109,7 +109,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [1.21.x]
+        go-version: [1.22.x]
         may-fail: [false]
 
     continue-on-error: ${{ matrix.may-fail }}
@@ -212,7 +212,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ 1.21.x ]
+        go-version: [ 1.22.x ]
         may-fail: [ false ]
 
     name: API Integration Tests
@@ -371,7 +371,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ 1.21.x ]
+        go-version: [ 1.22.x ]
         may-fail: [ false ]
 
     runs-on: ubuntu-20.04
