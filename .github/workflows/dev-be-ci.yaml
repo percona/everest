@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ 1.21.x ]
+        go-version: [ 1.22.x ]
         may-fail: [ false ]
 
     continue-on-error: ${{ matrix.may-fail }}
@@ -109,7 +109,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [1.21.x]
+        go-version: [1.22.x]
         may-fail: [false]
 
     continue-on-error: ${{ matrix.may-fail }}
@@ -212,7 +212,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ 1.21.x ]
+        go-version: [ 1.22.x ]
         may-fail: [ false ]
 
     name: API Integration Tests
@@ -371,7 +371,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ 1.21.x ]
+        go-version: [ 1.22.x ]
         may-fail: [ false ]
 
     runs-on: ubuntu-20.04
@@ -429,10 +429,11 @@ jobs:
           make test-cli
       - name: Attach the report
         if: ${{ always() && steps.cli-tests.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cli-tests-report
           path: cli-tests/test-report
+          overwrite: true
 
   integration_tests_flows:
     strategy:
