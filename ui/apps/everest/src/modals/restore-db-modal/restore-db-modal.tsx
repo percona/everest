@@ -20,14 +20,9 @@ import {
   useDbClusterRestoreFromBackup,
   useDbClusterRestoreFromPointInTime,
 } from 'hooks/api/restores/useDbClusterRestore';
-import { useEffect } from 'react';
-import { FieldValues, useFormContext } from 'react-hook-form';
+import { FieldValues } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import {
-  Backup,
-  BackupStatus,
-  DatabaseClusterPitr,
-} from 'shared-types/backups.types';
+import { BackupStatus } from 'shared-types/backups.types';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import {
   BackuptypeValues,
@@ -66,6 +61,7 @@ const RestoreDbModal = <T extends FieldValues>({
     mutate: restoreBackupFromPointInTime,
     isPending: restoringFromPointInTime,
   } = useDbClusterRestoreFromPointInTime(dbCluster.metadata.name);
+
   return (
     <FormDialog
       size="XXXL"
@@ -154,147 +150,120 @@ const RestoreDbModal = <T extends FieldValues>({
       }}
       submitMessage={isNewClusterMode ? Messages.create : Messages.restore}
     >
-      <RestoreDbModalWrapper
-        isLoading={isLoading}
-        isNewClusterMode={isNewClusterMode}
-        backups={backups}
-        pitrData={pitrData}
-        backupName={backupName}
-      />
-    </FormDialog>
-  );
-};
-
-interface RestoreDbModalWrapperProps {
-  isLoading: boolean;
-  isNewClusterMode: boolean;
-  backups: Backup[];
-  pitrData?: DatabaseClusterPitr;
-  backupName?: string;
-}
-
-export const RestoreDbModalWrapper = ({
-  isLoading,
-  isNewClusterMode,
-  backups,
-  pitrData,
-  backupName,
-}: RestoreDbModalWrapperProps) => {
-  const { watch, setValue } = useFormContext();
-  console.log('backupName', backupName);
-  useEffect(() => {
-    if (backupName) {
-      console.log('firstTime', backupName);
-      setValue(RestoreDbFields.backupName, backupName);
-    }
-
-    return () => {
-      console.log('finish', backupName);
-    };
-  }, [backupName, setValue]);
-
-  const backupName2 = watch(RestoreDbFields.backupName);
-  console.log('backupName2', backupName2);
-
-  return (
-    <LoadableChildren loading={isLoading}>
-      <Typography variant="body1">
-        {isNewClusterMode ? Messages.subHeadCreate : Messages.subHead}
-      </Typography>
-      <RadioGroup
-        name={RestoreDbFields.backupType}
-        radioGroupFieldProps={{
-          sx: {
-            ml: 1,
-            display: 'flex',
-            gap: 3,
-            '& label': {
-              display: 'flex',
-              gap: '10px',
-              alignItems: 'center',
-              padding: 1,
-              '& span': {
-                padding: '0px !important',
+      {({ watch }) => (
+        <LoadableChildren loading={isLoading}>
+          <Typography variant="body1">
+            {isNewClusterMode ? Messages.subHeadCreate : Messages.subHead}
+          </Typography>
+          <RadioGroup
+            name={RestoreDbFields.backupType}
+            radioGroupFieldProps={{
+              sx: {
+                ml: 1,
+                display: 'flex',
+                gap: 3,
+                '& label': {
+                  display: 'flex',
+                  gap: '10px',
+                  alignItems: 'center',
+                  padding: 1,
+                  '& span': {
+                    padding: '0px !important',
+                  },
+                },
               },
-            },
-          },
-        }}
-        options={[
-          {
-            label: Messages.fromBackup,
-            value: BackuptypeValues.fromBackup,
-          },
-          {
-            label: Messages.fromPitr,
-            value: BackuptypeValues.fromPitr,
-          },
-        ]}
-      />
-      {watch(RestoreDbFields.backupType) === BackuptypeValues.fromBackup ? (
-        <FormControl sx={{ mt: 1.5 }}>
-          <InputLabel id="restore-backup">{Messages.selectBackup}</InputLabel>
-          <SelectInput
-            name={RestoreDbFields.backupName}
-            selectFieldProps={{
-              labelId: 'restore-backup',
-              label: Messages.selectBackup,
             }}
-          >
-            {backups
-              .filter((value) => value.state === BackupStatus.OK)
-              .sort((a, b) => {
-                if (a.created && b.created) {
-                  return b.created.valueOf() - a.created.valueOf();
-                }
-                return -1;
-              })
-              .map((value) => {
-                const valueWithTime = `${
-                  value.name
-                } - ${value.created?.toLocaleString('en-US')}`;
-                return (
-                  <MenuItem key={value.name} value={value.name}>
-                    {valueWithTime}
-                  </MenuItem>
-                );
-              })}
-          </SelectInput>
-        </FormControl>
-      ) : (
-        <>
-          {pitrData && (
-            <Alert
-              sx={{ mt: 1.5, mb: 1.5 }}
-              severity={pitrData?.gaps ? 'error' : 'info'}
-            >
-              {pitrData?.gaps
-                ? Messages.gapDisclaimer
-                : Messages.pitrDisclaimer(
-                    format(
-                      pitrData?.earliestDate || new Date(),
-                      PITR_DATE_FORMAT
-                    ),
-                    format(pitrData?.latestDate || new Date(), PITR_DATE_FORMAT)
-                  )}
-            </Alert>
+            options={[
+              {
+                label: Messages.fromBackup,
+                value: BackuptypeValues.fromBackup,
+              },
+              {
+                label: Messages.fromPitr,
+                value: BackuptypeValues.fromPitr,
+                disabled: pitrData?.latestBackupName !== backupName,
+              },
+            ]}
+          />
+          {watch(RestoreDbFields.backupType) === BackuptypeValues.fromBackup ? (
+            <FormControl sx={{ mt: 1.5 }}>
+              <InputLabel id="restore-backup">
+                {Messages.selectBackup}
+              </InputLabel>
+              <SelectInput
+                name={RestoreDbFields.backupName}
+                selectFieldProps={{
+                  labelId: 'restore-backup',
+                  label: Messages.selectBackup,
+                }}
+              >
+                {backups
+                  .filter((value) => value.state === BackupStatus.OK)
+                  .sort((a, b) => {
+                    if (a.created && b.created) {
+                      return b.created.valueOf() - a.created.valueOf();
+                    }
+                    return -1;
+                  })
+                  .map((value) => {
+                    const valueWithTime = `${
+                      value.name
+                    } - ${value.created?.toLocaleString('en-US')}`;
+                    return (
+                      <MenuItem key={value.name} value={value.name}>
+                        {valueWithTime}
+                      </MenuItem>
+                    );
+                  })}
+              </SelectInput>
+            </FormControl>
+          ) : (
+            <>
+              {pitrData && (
+                <Alert
+                  sx={{ mt: 1.5, mb: 1.5 }}
+                  severity={pitrData?.gaps ? 'error' : 'info'}
+                >
+                  {pitrData?.gaps
+                    ? Messages.gapDisclaimer
+                    : Messages.pitrDisclaimer(
+                        format(
+                          pitrData?.earliestDate || new Date(),
+                          PITR_DATE_FORMAT
+                        ),
+                        format(
+                          pitrData?.latestDate || new Date(),
+                          PITR_DATE_FORMAT
+                        )
+                      )}
+                </Alert>
+              )}
+              {!pitrData?.gaps && (
+                <DateTimePickerInput
+                  views={[
+                    'year',
+                    'month',
+                    'day',
+                    'hours',
+                    'minutes',
+                    'seconds',
+                  ]}
+                  timeSteps={{ hours: 1, minutes: 1, seconds: 1 }}
+                  disableFuture
+                  disabled={!pitrData}
+                  minDate={new Date(pitrData?.earliestDate || new Date())}
+                  maxDate={new Date(pitrData?.latestDate || new Date())}
+                  format={PITR_DATE_FORMAT}
+                  name={RestoreDbFields.pitrBackup}
+                  label={pitrData ? 'Select point in time' : 'No options'}
+                  sx={{ mt: 1.5 }}
+                />
+              )}
+            </>
           )}
-          {!pitrData?.gaps && (
-            <DateTimePickerInput
-              views={['year', 'month', 'day', 'hours', 'minutes', 'seconds']}
-              timeSteps={{ hours: 1, minutes: 1, seconds: 1 }}
-              disableFuture
-              disabled={!pitrData}
-              minDate={new Date(pitrData?.earliestDate || new Date())}
-              maxDate={new Date(pitrData?.latestDate || new Date())}
-              format={PITR_DATE_FORMAT}
-              name={RestoreDbFields.pitrBackup}
-              label={pitrData ? 'Select point in time' : 'No options'}
-              sx={{ mt: 1.5 }}
-            />
-          )}
-        </>
+        </LoadableChildren>
       )}
-    </LoadableChildren>
+    </FormDialog>
   );
 };
 
