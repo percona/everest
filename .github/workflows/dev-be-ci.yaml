@@ -4,11 +4,13 @@ on:
   push:
     paths-ignore:
       - 'ui/**'
+      - '.github/workflows/dev-fe-ci.yaml'
     branches:
       - main
   pull_request:
     paths-ignore:
       - 'ui/**'
+      - '.github/workflows/dev-fe-ci.yaml'
 
 permissions:
   contents: read
@@ -24,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ 1.21.x ]
+        go-version: [ 1.22.x ]
         may-fail: [ false ]
 
     continue-on-error: ${{ matrix.may-fail }}
@@ -107,7 +109,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [1.21.x]
+        go-version: [1.22.x]
         may-fail: [false]
 
     continue-on-error: ${{ matrix.may-fail }}
@@ -176,6 +178,27 @@ jobs:
           git status
           git diff --exit-code
 
+      - name: Check the latest operator version is used
+        run: |
+          go get github.com/percona/everest-operator@main
+          echo "Checking there is no source code changes"
+          go mod tidy
+          git diff --exit-code
+
+      - name: Check the Makefile references dev version
+        run: |
+          if ! grep -q "RELEASE_VERSION ?= v0.0.0" Makefile; then 
+            echo "default RELEASE_VERSION in Makefile should be 0.0.0" 
+            exit 1 
+          fi 
+
+      - name: Check the quickstart script references dev version
+        run: |
+          if ! grep -q "perconalab/everest:0.0.0" deploy/quickstart-k8s.yaml; then 
+            echo "deploy/quickstart-k8s.yaml should reference 0.0.0 version" 
+            exit 1 
+          fi 
+
       - name: Run debug commands on failure
         if: ${{ failure() }}
         run: |
@@ -189,7 +212,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ 1.21.x ]
+        go-version: [ 1.22.x ]
         may-fail: [ false ]
 
     name: API Integration Tests
@@ -348,7 +371,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ 1.21.x ]
+        go-version: [ 1.22.x ]
         may-fail: [ false ]
 
     runs-on: ubuntu-20.04
@@ -395,7 +418,7 @@ jobs:
           make init
           make build-cli
       - name: Create KIND cluster
-        uses: helm/kind-action@v1.8.0
+        uses: helm/kind-action@v1.9.0
 
       - name: Run integration tests
         working-directory: cli-tests
@@ -426,3 +449,19 @@ jobs:
     secrets: inherit
     with:
       make_target: ${{ matrix.make_target }}
+
+  merge-gatekeeper:
+    needs: [ test, check, integration_tests_api, integration_tests_flows, integration_tests_cli]
+    name: Merge Gatekeeper
+    if: ${{ always() }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Run Merge Gatekeeper
+        uses: upsidr/merge-gatekeeper@v1.2.1
+        with:
+          self: Merge Gatekeeper
+          token: ${{ secrets.GITHUB_TOKEN }}
+          interval: 45
+          timeout: 300
+          ignored: "license/snyk (Percona Github Org), security/snyk (Percona Github Org)"
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}

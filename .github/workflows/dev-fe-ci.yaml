@@ -4,11 +4,14 @@ on:
   push:
     paths:
       - 'ui/**'
+      - '.github/workflows/dev-fe-ci.yaml'
     branches:
       - main
   pull_request:
     paths:
       - 'ui/**'
+      - '.github/workflows/dev-fe-ci.yaml'
+
 
 permissions:
   contents: read
@@ -130,7 +133,7 @@ jobs:
       - name: Set up Go release
         uses: percona-platform/setup-go@v4
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
 
       - name: Set GO_VERSION environment variable
         run: |
@@ -138,7 +141,7 @@ jobs:
           echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
 
       - name: Create KIND cluster
-        uses: helm/kind-action@v1.8.0
+        uses: helm/kind-action@v1.9.0
 
       - name: Add Helm Percona repository
         run: |
@@ -164,7 +167,7 @@ jobs:
 
       - name: Adding psmdb namespace
         run: |
-          go run cmd/everest/main.go install \
+          go run cmd/cli/main.go install \
           --operator.mongodb \
           --operator.postgresql=false \
           --operator.xtradb-cluster=false \
@@ -173,7 +176,7 @@ jobs:
 
       - name: Adding pxc namespace
         run: |
-          go run cmd/everest/main.go install \
+          go run cmd/cli/main.go install \
           --operator.mongodb=false \
           --operator.postgresql=false \
           --operator.xtradb-cluster \
@@ -182,7 +185,7 @@ jobs:
 
       - name: Adding pg namespace
         run: |
-          go run cmd/everest/main.go install \
+          go run cmd/cli/main.go install \
           --operator.mongodb=false \
           --operator.postgresql \
           --operator.xtradb-cluster=false \
@@ -239,3 +242,20 @@ jobs:
         if: ${{ failure() }}
         run: |
           kubectl -n everest-system logs deployment/percona-everest
+
+
+  merge-gatekeeper:
+    needs: [ CI_checks, E2E ]
+    name: Merge Gatekeeper
+    if: ${{ always() }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Run Merge Gatekeeper
+        uses: upsidr/merge-gatekeeper@v1.2.1
+        with:
+          self: Merge Gatekeeper
+          token: ${{ secrets.GITHUB_TOKEN }}
+          interval: 45
+          timeout: 300
+          ignored: "license/snyk (Percona Github Org), security/snyk (Percona Github Org)"
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
