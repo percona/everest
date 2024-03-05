@@ -4,11 +4,13 @@ on:
   push:
     paths-ignore:
       - 'ui/**'
+      - '.github/workflows/dev-fe-ci.yaml'
     branches:
       - main
   pull_request:
     paths-ignore:
       - 'ui/**'
+      - '.github/workflows/dev-fe-ci.yaml'
 
 permissions:
   contents: read
