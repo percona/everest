@@ -43,27 +43,9 @@ jobs:
           token: ${{ secrets.ROBOT_TOKEN }}
 
 
-      - name: Create Everest catalog release branch
-        run: |
-          cd everest-catalog
-          # Check if the branch already exists
-          git fetch
-          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
-
-          if [[ -z ${check_branch} ]]; then
-            git checkout -b $RC_BRANCH
-            git push origin $RC_BRANCH
-          fi
-#
-#      - name: Check out Everest operator
-#        uses: actions/checkout@v4
-#        with:
-#          repository: percona/everest-operator
-#          path: everest-operator
-#
-#      - name: Create Everest operator release branch
+#      - name: Create Everest catalog release branch
 #        run: |
-#          cd everest-operator
+#          cd everest-catalog
 #          # Check if the branch already exists
 #          git fetch
 #          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
@@ -72,7 +54,25 @@ jobs:
 #            git checkout -b $RC_BRANCH
 #            git push origin $RC_BRANCH
 #          fi
-#
+
+      - name: Check out Everest operator
+        uses: actions/checkout@v4
+        with:
+          repository: percona/everest-operator
+          path: everest-operator
+
+      - name: Create Everest operator release branch
+        run: |
+          cd everest-operator
+          # Check if the branch already exists
+          git fetch
+          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
+
+          if [[ -z ${check_branch} ]]; then
+            git checkout -b $RC_BRANCH
+            git push origin $RC_BRANCH
+          fi
+
 #
 #      - name: Check out Everest
 #        uses: actions/checkout@v4
