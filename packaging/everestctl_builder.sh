@@ -81,11 +81,11 @@ install_go() {
     ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
     rm -rf /usr/local/go
     if [ x"$ARCH" = "xx86_64" ]; then
-        wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
-        tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz
+        wget https://go.dev/dl/go1.22.0.linux-amd64.tar.gz
+        tar -C /usr/local -xzf go1.22.0.linux-amd64.tar.gz
     else
-        wget https://go.dev/dl/go1.21.0.linux-arm64.tar.gz
-        tar -C /usr/local -xzf go1.21.0.linux-arm64.tar.gz
+        wget https://go.dev/dl/go1.22.0.linux-arm64.tar.gz
+        tar -C /usr/local -xzf go1.22.0.linux-arm64.tar.gz
     fi
     update-alternatives --install /usr/bin/go go /usr/local/go/bin/go 1
     update-alternatives --set go /usr/local/go/bin/go
