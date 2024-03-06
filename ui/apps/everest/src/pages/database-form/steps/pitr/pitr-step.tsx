@@ -58,6 +58,11 @@ const PITRStep = () => {
           {Messages.toEnablePitr}
         </Alert>
       )}
+      {backupsEnabled && dbType === DbType.Postresql && (
+        <Alert severity="info" sx={{ mt: 1 }}>
+          {Messages.pitrPgEnabledByDefault}
+        </Alert>
+      )}
       <SwitchInput
         control={control}
         label={Messages.enablePitr}
