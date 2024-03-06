@@ -19,7 +19,7 @@ jobs:
           lfs: true
           ref: 'main'
 
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v3
         with:
           version: 8
 
