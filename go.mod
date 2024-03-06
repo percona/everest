@@ -1,6 +1,6 @@
 module github.com/percona/everest
 
-go 1.21
+go 1.22
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -18,7 +18,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.22.0
 	github.com/operator-framework/operator-lifecycle-manager v0.26.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20240301091820-e737ace46718
+	github.com/percona/everest-operator v0.6.0-dev1.0.20240305082249-1efd180fde4b
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
