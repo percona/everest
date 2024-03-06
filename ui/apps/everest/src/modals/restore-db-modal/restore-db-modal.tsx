@@ -86,7 +86,6 @@ const RestoreDbModal = <T extends FieldValues>({
       onSubmit={({ backupName, backupType, pitrBackup }) => {
         let pointInTimeDate = '';
         let pitrBackupName = '';
-
         if (pitrData) {
           pitrBackupName = pitrData.latestBackupName;
         }
@@ -94,7 +93,6 @@ const RestoreDbModal = <T extends FieldValues>({
         if (pitrBackup && pitrBackup instanceof Date) {
           pointInTimeDate = pitrBackup.toISOString().split('.')[0] + 'Z';
         }
-
         if (isNewClusterMode) {
           closeModal();
           const selectedBackup = backups?.find(
@@ -181,7 +179,10 @@ const RestoreDbModal = <T extends FieldValues>({
               {
                 label: Messages.fromPitr,
                 value: BackuptypeValues.fromPitr,
-                disabled: pitrData?.latestBackupName !== backupName,
+                disabled:
+                  !!backupName &&
+                  pitrData?.latestBackupName !==
+                    watch(RestoreDbFields.backupName),
               },
             ]}
           />
