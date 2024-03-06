@@ -23,7 +23,7 @@ jobs:
         with:
           version: 8
 
-      - name: Run with Node 16
+      - name: Run with Node 20
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
