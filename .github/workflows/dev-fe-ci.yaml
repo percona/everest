@@ -133,7 +133,7 @@ jobs:
       - name: Set up Go release
         uses: percona-platform/setup-go@v4
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
 
       - name: Set GO_VERSION environment variable
         run: |
@@ -226,17 +226,19 @@ jobs:
 
       - name: Archive test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: ui/apps/everest/.e2e/test-results/
+          overwrite: true
 
       - name: Archive report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: ui/apps/everest/.e2e/playwright-report/
+          overwrite: true
 
       - name: Run debug commands on failure
         if: ${{ failure() }}
