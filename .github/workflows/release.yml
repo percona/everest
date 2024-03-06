@@ -85,7 +85,7 @@ jobs:
             git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
 
             echo "----"
-            echo $(git diff)
+            echo $(git status)
             echo "----"
             # commit and push the updated files
             git commit -a -m "update version"
