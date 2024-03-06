@@ -66,11 +66,13 @@ jobs:
           cd everest-operator
           # Check if the branch already exists
           git fetch
+          echo "--1--"
           check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
-
+          echo "--2--"
           if [[ -z ${check_branch} ]]; then
+            echo "--3--"
             git checkout -b $RC_BRANCH
-            git push origin $RC_BRANCH
+#            git push origin $RC_BRANCH
           
             # update version in the Makefile
             sed -i "s/0.0.0/$VERSION/g" Makefile
