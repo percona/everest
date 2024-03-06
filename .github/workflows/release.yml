@@ -35,25 +35,25 @@ jobs:
           major_minor=$(echo "$VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*$/\1/')
           echo "RC_BRANCH=release-$major_minor" >> $GITHUB_ENV
 
-      - name: Check out Everest catalog
-        uses: actions/checkout@v4
-        with:
-          repository: percona/everest-catalog
-          path: everest-catalog
-          token: ${{ secrets.ROBOT_TOKEN }}
-
-
-      - name: Create Everest catalog release branch
-        run: |
-          cd everest-catalog
-          # Check if the branch already exists
-          git fetch
-          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
-
-          if [[ -z ${check_branch} ]]; then
-            git checkout -b $RC_BRANCH
-            git push origin $RC_BRANCH
-          fi
+#      - name: Check out Everest catalog
+#        uses: actions/checkout@v4
+#        with:
+#          repository: percona/everest-catalog
+#          path: everest-catalog
+#          token: ${{ secrets.ROBOT_TOKEN }}
+#
+#
+#      - name: Create Everest catalog release branch
+#        run: |
+#          cd everest-catalog
+#          # Check if the branch already exists
+#          git fetch
+#          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
+#
+#          if [[ -z ${check_branch} ]]; then
+#            git checkout -b $RC_BRANCH
+#            git push origin $RC_BRANCH
+#          fi
 
       - name: Check out Everest operator
         uses: actions/checkout@v4
@@ -72,9 +72,26 @@ jobs:
           if [[ -z ${check_branch} ]]; then
             git checkout -b $RC_BRANCH
             git push origin $RC_BRANCH
+          
+            # update version in the Makefile
+            sed -i "s/0.0.0/$VERSION/g" Makefile
+          
+            make release
+          
+            # configure userdata for commits
+            git config --global user.email "everest-ci@percona.com"
+            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+
+            echo "----"
+            echo $(git diff)
+            echo "----"
+            # commit and push the updated files
+            git commit -a -m "update version"
+          
+            git push origin $RC_BRANCH
           fi
 
-#
+
 #      - name: Check out Everest
 #        uses: actions/checkout@v4
 #
