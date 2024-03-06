@@ -45,7 +45,7 @@ export const CreateEditEndpointModal = ({
       defaultValues={defaultValues}
       headerMessage={Messages.addEditDialogHeader(isEditMode)}
       schema={endpointSchema}
-      submitMessage="Add"
+      submitMessage={Messages.addEditDialogSubmitButton(isEditMode)}
     >
       <TextInput
         name={EndpointFormFields.name}
