@@ -12,7 +12,6 @@ on:
       - 'ui/**'
       - '.github/workflows/dev-fe-ci.yaml'
 
-
 permissions:
   contents: read
   packages: write
@@ -34,14 +33,14 @@ jobs:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v3
         with:
           version: 8
 
       - name: Use Node
         uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 20.x
           cache: 'pnpm'
           cache-dependency-path: 'ui/pnpm-lock.yaml'
 
@@ -62,13 +61,13 @@ jobs:
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v3
         with:
           version: 8
       - name: Use Node
         uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 20.x
           cache: 'pnpm'
           cache-dependency-path: 'ui/pnpm-lock.yaml'
 
@@ -114,21 +113,19 @@ jobs:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v3
         with:
           version: 8
 
       - name: Use Node
         uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 20.x
           cache: 'pnpm'
           cache-dependency-path: ui/pnpm-lock.yaml
 
       - name: Set up Helm
-        uses: azure/setup-helm@v2
-        with:
-          version: 'v3.0.0'
+        uses: azure/setup-helm@v3
 
       - name: Set up Go release
         uses: percona-platform/setup-go@v4
@@ -245,9 +242,8 @@ jobs:
         run: |
           kubectl -n everest-system logs deployment/percona-everest
 
-
   merge-gatekeeper:
-    needs: [ CI_checks, E2E ]
+    needs: [CI_checks, E2E]
     name: Merge Gatekeeper
     if: ${{ always() }}
     runs-on: ubuntu-22.04
@@ -259,5 +255,5 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           interval: 45
           timeout: 300
-          ignored: "license/snyk (Percona Github Org), security/snyk (Percona Github Org)"
+          ignored: 'license/snyk (Percona Github Org), security/snyk (Percona Github Org)'
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
