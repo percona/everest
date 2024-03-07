@@ -17,6 +17,10 @@ arch=$(uname -m | tr '[:upper:]' '[:lower:]')
 if [[ ($os == "linux" || $os == "darwin") && $arch == "x86_64" ]]
 then
 	arch="amd64"
+elif [[ $os == "linux" && $arch == "aarch64" ]]
+# linux on ARM (tested on Ubuntu 22.10 for ARM64)
+then
+	arch="arm64"
 fi
 
 

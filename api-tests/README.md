@@ -23,9 +23,7 @@ Running minikube cluster:
 Provisioning kubernetes cluster
 
 ```
-   git clone git@github.com:percona/percona-everest-cli
-   cd percona-everest-cli
-   go run cmd/everest/main.go install --namespace everest --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard
+   go run cmd/cli/main.go install --namespaces everest --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard
 ```
 Using these commands you'll have installed the following operators
 

@@ -919,7 +919,7 @@ func (k *Kubernetes) InstallEverest(ctx context.Context, namespace string, versi
 
 	data, err := k.getManifestData(ctx, version)
 	if err != nil {
-		return errors.Join(err, errors.New("failed downloading everest monitoring file"))
+		return errors.Join(err, errors.New("failed reading everest manifest file"))
 	}
 
 	k.l.Debug("Applying manifest file")

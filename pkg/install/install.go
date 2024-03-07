@@ -51,7 +51,7 @@ type Install struct {
 }
 
 const (
-	everestBackendServiceName = "percona-everest-backend"
+	everestBackendServiceName = "everest"
 	everestOperatorName       = "everest-operator"
 	vmOperatorName            = "victoriametrics-operator"
 	operatorInstallThreads    = 1
