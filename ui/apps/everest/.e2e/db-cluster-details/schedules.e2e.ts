@@ -56,10 +56,6 @@ test.describe.serial('Schedules List', async () => {
     await clickCreateSchedule(page);
 
     const createDialog = await page.getByRole('dialog');
-    const createScheduleText = createDialog.filter({
-      hasText: 'Create Schedule',
-    });
-    await expect(createScheduleText).toBeVisible();
 
     const scheduleNameField = await page.getByTestId(
       'text-input-schedule-name'

@@ -3,6 +3,7 @@ export const clickCreateSchedule = async (page) => {
   createBackupButton.click();
   const scheduleMenuItem = await page.getByTestId('schedule-menu-item');
   await scheduleMenuItem.click();
+  await expect(page.getByText('Create Schedule')).toBeVisible();
 };
 
 export const clickOnDemandBackup = async (page) => {
@@ -10,4 +11,5 @@ export const clickOnDemandBackup = async (page) => {
   createBackupButton.click();
   const onDemandMenuItem = await page.getByTestId('now-menu-item');
   await onDemandMenuItem.click();
+  await expect(page.getByText('Create Backup')).toBeVisible();
 };

@@ -21,7 +21,6 @@ test.describe('On-demand backup', async () => {
   test('Non-empty storage location', async ({ page }) => {
     await gotoDbClusterBackups(page, mySQLName);
     await clickOnDemandBackup(page);
-    await expect(page.getByTitle('Create Backup')).toBeVisible();
     await expect(page.getByTestId('text-input-name')).not.toBeEmpty();
     await expect(
       page.getByTestId('text-input-storage-location')
