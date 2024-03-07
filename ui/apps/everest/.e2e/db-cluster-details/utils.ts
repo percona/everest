@@ -1,3 +1,5 @@
+import { expect } from '@playwright/test';
+
 export const clickCreateSchedule = async (page) => {
   const createBackupButton = await page.getByTestId('menu-button');
   createBackupButton.click();
