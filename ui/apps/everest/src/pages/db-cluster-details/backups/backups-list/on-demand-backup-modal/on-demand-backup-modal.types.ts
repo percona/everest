@@ -13,7 +13,7 @@ export enum BackupFields {
 
 export const defaultValuesFc = () => ({
   [BackupFields.name]: `backup-${generateShortUID()}`,
-  [BackupFields.storageLocation]: '',
+  [BackupFields.storageLocation]: null,
 });
 
 export const schema = z.object({
