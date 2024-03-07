@@ -124,6 +124,10 @@ export const DbClusterView = () => {
         id: 'namespace',
         header: 'Namespaces',
       },
+      {
+        accessorKey: 'monitoringConfigName',
+        header: 'Monitoring instance name',
+      },
       // {
       //   accessorKey: 'backupsEnabled',
       //   header: 'Backups',
