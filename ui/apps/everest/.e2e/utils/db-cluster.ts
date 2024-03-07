@@ -23,15 +23,12 @@ import { getNamespacesFn } from './namespaces';
 export const createDbClusterFn = async (
   request: APIRequestContext,
   customOptions?,
-  namespace?: string
+  desiredNamespace?: string
 ) => {
   const token = await getTokenFromLocalStorage();
   const namespaces = await getNamespacesFn(token, request);
-  const dbEngines = await getEnginesVersions(
-    token,
-    namespace ?? namespaces[0],
-    request
-  );
+  const namespace = desiredNamespace ?? namespaces[0];
+  const dbEngines = await getEnginesVersions(token, namespace, request);
   const dbType = customOptions?.dbType || 'mysql';
   const dbEngineType = dbTypeToDbEngine(dbType);
   const dbTypeVersions = dbEngines[dbEngineType];
@@ -132,14 +129,13 @@ export const createDbClusterFn = async (
 export const deleteDbClusterFn = async (
   request: APIRequestContext,
   clusterName: string,
-  namespace?: string
+  desiredNamespace?: string
 ) => {
   const token = await getTokenFromLocalStorage();
   const namespaces = await getNamespacesFn(token, request);
+  const namespace = desiredNamespace ?? namespaces[0];
   const deleteResponse = await request.delete(
-    `/v1/namespaces/${
-      namespace ?? namespaces[0]
-    }/database-clusters/${clusterName}`,
+    `/v1/namespaces/${namespace}/database-clusters/${clusterName}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
