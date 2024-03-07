@@ -16,7 +16,7 @@
 import { expect, test } from '@playwright/test';
 import { createDbClusterFn, deleteDbClusterFn } from '../utils/db-cluster';
 import { DBClusterDetailsTabs } from '../../src/pages/db-cluster-details/db-cluster-details.types';
-import { clickCreateSchedule } from './schedules.utils';
+import { clickCreateSchedule } from './utils';
 import {
   findDbAndClickRow,
   gotoDbClusterBackups,
@@ -57,7 +57,7 @@ test.describe.serial('Schedules List', async () => {
 
     const createDialog = await page.getByRole('dialog');
     const createScheduleText = createDialog.filter({
-      hasText: 'Create schedule',
+      hasText: 'Create Schedule',
     });
     await expect(createScheduleText).toBeVisible();
 
