@@ -17,21 +17,18 @@ import { expect, test } from '@playwright/test';
 import { createDbClusterFn, deleteDbClusterFn } from '../utils/db-cluster';
 import { DBClusterDetailsTabs } from '../../src/pages/db-cluster-details/db-cluster-details.types';
 import { clickCreateSchedule } from './schedules.utils';
-import { findDbAndClickRow } from '../utils/db-clusters-list';
-import { getTokenFromLocalStorage } from '../utils/localStorage';
+import {
+  findDbAndClickRow,
+  gotoDbClusterBackups,
+} from '../utils/db-clusters-list';
 import { storageLocationAutocompleteEmptyValidationCheck } from '../utils/db-wizard';
-import { getNamespacesFn } from '../utils/namespaces';
 
 test.describe.serial('Schedules List', async () => {
   let scheduleName = 'test-name';
   const mySQLName = 'schedule-mysql';
-  let namespace = '';
 
   test.beforeAll(async ({ request }) => {
-    const token = await getTokenFromLocalStorage();
-    const namespaces = await getNamespacesFn(token, request);
-    namespace = namespaces[0];
-    await createDbClusterFn(token, request, namespaces[0], {
+    await createDbClusterFn(request, {
       dbName: mySQLName,
       dbType: 'mysql',
       numberOfNodes: '1',
@@ -43,8 +40,7 @@ test.describe.serial('Schedules List', async () => {
   });
 
   test.afterAll(async ({ request }) => {
-    const token = await getTokenFromLocalStorage();
-    await deleteDbClusterFn(token, request, mySQLName, namespace);
+    await deleteDbClusterFn(request, mySQLName);
   });
 
   test('Create schedule', async ({ page }) => {
@@ -96,7 +92,7 @@ test.describe.serial('Schedules List', async () => {
   test('Creating schedule with duplicate name shows validation error', async ({
     page,
   }) => {
-    await page.goto(`/databases/${namespace}/${mySQLName}/backups`);
+    await gotoDbClusterBackups(page, mySQLName);
     await clickCreateSchedule(page);
 
     const createDialog = await page.getByRole('dialog');
@@ -131,7 +127,7 @@ test.describe.serial('Schedules List', async () => {
   });
 
   test('Delete Schedule', async ({ page }) => {
-    await page.goto(`/databases/${namespace}/${mySQLName}/backups`);
+    await gotoDbClusterBackups(page, mySQLName);
     const scheduledBackupsAccordion =
       await page.getByTestId('scheduled-backups');
     await scheduledBackupsAccordion.click();
@@ -146,7 +142,7 @@ test.describe.serial('Schedules List', async () => {
   });
 
   test('Edit Schedule', async ({ page }) => {
-    await page.goto(`/databases/${namespace}/${mySQLName}/backups`);
+    await gotoDbClusterBackups(page, mySQLName);
     const scheduledBackupsAccordion =
       await page.getByTestId('scheduled-backups');
     await scheduledBackupsAccordion.click();
