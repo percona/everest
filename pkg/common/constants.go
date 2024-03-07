@@ -17,7 +17,17 @@
 package common
 
 const (
-	PXCOperatorName   = "percona-xtradb-cluster-operator"
+	// PXCOperatorName holds operator name in k8s.
+	PXCOperatorName = "percona-xtradb-cluster-operator"
+	// PSMDBOperatorName holds operator name in k8s.
 	PSMDBOperatorName = "percona-server-mongodb-operator"
-	PGOperatorName    = "percona-postgresql-operator"
+	// PGOperatorName holds operator name in k8s.
+	PGOperatorName = "percona-postgresql-operator"
+
+	// SystemNamespace is the namespace where everest is installed.
+	SystemNamespace = "everest-system"
+	// PerconaEverestDeploymentName stores the name of everest API Server deployment.
+	PerconaEverestDeploymentName = "percona-everest"
+	// EverestContainerNameInDeployment is the name of the Everest container in the deployment.
+	EverestContainerNameInDeployment = "everest"
 )

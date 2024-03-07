@@ -12,9 +12,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// Package install holds the main logic for installation commands.
 
-// Package version implements version reporting command to the end user.
+// Package version provides methods to determine the correct version of components.
 package version
 
 import (

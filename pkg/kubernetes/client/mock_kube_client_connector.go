@@ -477,6 +477,36 @@ func (_m *MockKubeClientConnector) DeleteSecret(ctx context.Context, namespace s
 	return r0
 }
 
+// Deployment provides a mock function with given fields: ctx, name, namespace
+func (_m *MockKubeClientConnector) Deployment(ctx context.Context, name string, namespace string) (*appsv1.Deployment, error) {
+	ret := _m.Called(ctx, name, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Deployment")
+	}
+
+	var r0 *appsv1.Deployment
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*appsv1.Deployment, error)); ok {
+		return rf(ctx, name, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *appsv1.Deployment); ok {
+		r0 = rf(ctx, name, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*appsv1.Deployment)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, name, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DoCSVWait provides a mock function with given fields: ctx, key
 func (_m *MockKubeClientConnector) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 	ret := _m.Called(ctx, key)

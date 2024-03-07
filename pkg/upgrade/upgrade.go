@@ -28,21 +28,13 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/install"
 	"github.com/percona/everest/pkg/kubernetes"
 	cliVersion "github.com/percona/everest/pkg/version"
 )
 
 type (
-	// UpgradeConfig defines configuration required for upgrade command.
-	UpgradeConfig struct {
-		Everest struct {
-			// Endpoint stores URL to Everest.
-			Endpoint string
-			// Token stores Everest token.
-			Token string
-		}
-
+	// Config defines configuration required for upgrade command.
+	Config struct {
 		// KubeconfigPath is a path to a kubeconfig
 		KubeconfigPath string `mapstructure:"kubeconfig"`
 		// VersionMetadataURL stores hostname to retrieve version metadata information from.
@@ -53,9 +45,8 @@ type (
 	Upgrade struct {
 		l *zap.SugaredLogger
 
-		config        *UpgradeConfig
-		everestClient everestClientConnector
-		kubeClient    *kubernetes.Kubernetes
+		config     *Config
+		kubeClient *kubernetes.Kubernetes
 	}
 
 	supportedVersion struct {
@@ -73,14 +64,14 @@ type (
 	}
 )
 
+// ErrNoUpdateAvailable is returned when no update is available.
 var ErrNoUpdateAvailable = errors.New("no update available")
 
 // NewUpgrade returns a new Upgrade struct.
-func NewUpgrade(cfg *UpgradeConfig, everestClient everestClientConnector, l *zap.SugaredLogger) (*Upgrade, error) {
+func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 	cli := &Upgrade{
-		config:        cfg,
-		everestClient: everestClient,
-		l:             l.With("component", "upgrade"),
+		config: cfg,
+		l:      l.With("component", "upgrade"),
 	}
 
 	k, err := kubernetes.New(cfg.KubeconfigPath, cli.l)
@@ -120,8 +111,8 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return err
 	}
 
-	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, install.SystemNamespace)
-	if err := u.kubeClient.InstallEverest(ctx, install.SystemNamespace, upgradeEverestTo); err != nil {
+	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
+	if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo); err != nil {
 		return err
 	}
 
@@ -134,13 +125,9 @@ func (u *Upgrade) Run(ctx context.Context) error {
 // based on minimum requirements.
 func (u *Upgrade) canUpgrade(ctx context.Context) (*goversion.Version, *cliVersion.RecommendedVersion, error) {
 	// Get Everest version.
-	eVer, err := u.everestClient.Version(ctx)
+	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
 	if err != nil {
 		return nil, nil, errors.Join(err, errors.New("could not retrieve Everest version"))
-	}
-	everestVersion, err := goversion.NewSemver(eVer.Version)
-	if err != nil {
-		return nil, nil, errors.Join(err, fmt.Errorf("invalid Everest version %s", eVer.Version))
 	}
 
 	u.l.Infof("Current Everest version is %s", everestVersion)
@@ -180,10 +167,10 @@ func (u *Upgrade) versionToUpgradeTo(
 		upgradeTo *goversion.Version
 		meta      *version.MetadataVersion
 	)
-	for _, v := range req.Versions {
-		ver, err := goversion.NewVersion(v.Version)
+	for _, v := range req.GetVersions() {
+		ver, err := goversion.NewVersion(v.GetVersion())
 		if err != nil {
-			u.l.Debugf("Could not parse version %s. Error: %s", v.Version, err)
+			u.l.Debugf("Could not parse version %s. Error: %s", v.GetVersion(), err)
 			continue
 		}
 
@@ -246,7 +233,7 @@ func (u *Upgrade) supportedVersion(meta *version.MetadataVersion) (*supportedVer
 		"psmdbOperator": &supVer.psmdbOperator,
 	}
 	for key, ref := range config {
-		if s, ok := meta.Supported[key]; ok {
+		if s, ok := meta.GetSupported()[key]; ok {
 			c, err := goversion.NewConstraint(s)
 			if err != nil {
 				return nil, errors.Join(err, fmt.Errorf("invalid %s constraint %s", key, s))
@@ -259,23 +246,41 @@ func (u *Upgrade) supportedVersion(meta *version.MetadataVersion) (*supportedVer
 }
 
 func (u *Upgrade) checkRequirements(ctx context.Context, supVer *supportedVersion) error {
-	// TODO: cli, olm, catalog to be implemented.
+	// TODO: olm, catalog to be implemented.
 
-	nss, err := u.kubeClient.GetDBNamespaces(ctx, install.SystemNamespace)
+	// cli version check.
+	if cliVersion.Version != "" {
+		u.l.Infof("Checking cli version requirements")
+		cli, err := goversion.NewVersion(cliVersion.Version)
+		if err != nil {
+			return errors.Join(err, fmt.Errorf("invalid cli version %s", cliVersion.Version))
+		}
+
+		if !supVer.cli.Check(cli.Core()) {
+			return fmt.Errorf(
+				"cli version %q does not meet minimum requirements of %q",
+				cli, supVer.cli.String(),
+			)
+		}
+		u.l.Debugf("cli version %q meets requirements %q", cli, supVer.cli.String())
+	} else {
+		u.l.Debug("cli version is empty")
+	}
+
+	nss, err := u.kubeClient.GetDBNamespaces(ctx, common.SystemNamespace)
 	if err != nil {
 		return err
 	}
 
+	// Operator version check.
 	cfg := []requirementsCheck{
 		{common.PXCOperatorName, supVer.pxcOperator},
 		{common.PGOperatorName, supVer.pgOperator},
 		{common.PSMDBOperatorName, supVer.psmdbOperator},
 	}
-
 	for _, ns := range nss {
 		u.l.Infof("Checking operator requirements in namespace %s", ns)
 
-		// Operator versions.
 		for _, c := range cfg {
 			v, err := u.kubeClient.OperatorInstalledVersion(ctx, ns, c.operatorName)
 			if err != nil && !errors.Is(err, kubernetes.ErrOperatorNotInstalled) {

@@ -23,7 +23,6 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
-	everestClient "github.com/percona/everest/pkg/everest/client"
 	"github.com/percona/everest/pkg/output"
 	"github.com/percona/everest/pkg/upgrade"
 )
@@ -45,12 +44,7 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
-			everestClConnector, err := everestClient.NewEverestFromURL(c.Everest.Endpoint, c.Everest.Token)
-			if err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
-			op, err := upgrade.NewUpgrade(c, everestClConnector, l)
+			op, err := upgrade.NewUpgrade(c, l)
 			if err != nil {
 				l.Error(err)
 				os.Exit(1)
@@ -69,22 +63,18 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initUpgradeFlags(cmd *cobra.Command) {
-	cmd.Flags().String("everest.endpoint", "http://127.0.0.1:8080", "Everest endpoint URL")
-	cmd.Flags().String("everest.token", "", "Everest token to authenticate against Everest")
 	cmd.Flags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
 	cmd.Flags().String("version-metadata-url", "https://check.percona.com", "URL to retrieve version metadata information from")
 }
 
 func initUpgradeViperFlags(cmd *cobra.Command) {
-	viper.BindPFlag("everest.endpoint", cmd.Flags().Lookup("everest.endpoint"))         //nolint:errcheck,gosec
-	viper.BindPFlag("everest.token", cmd.Flags().Lookup("everest.token"))               //nolint:errcheck,gosec
 	viper.BindEnv("kubeconfig")                                                         //nolint:errcheck,gosec
 	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))                     //nolint:errcheck,gosec
 	viper.BindPFlag("version-metadata-url", cmd.Flags().Lookup("version-metadata-url")) //nolint:errcheck,gosec
 }
 
-func parseUpgradeConfig() (*upgrade.UpgradeConfig, error) {
-	c := &upgrade.UpgradeConfig{}
+func parseUpgradeConfig() (*upgrade.Config, error) {
+	c := &upgrade.Config{}
 	err := viper.Unmarshal(c)
 	return c, err
 }

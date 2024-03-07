@@ -138,6 +138,8 @@ type KubeClientConnector interface {
 	ListDatabaseEngines(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseEngineList, error)
 	// GetDatabaseEngine returns database clusters by provided name.
 	GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error)
+	// Deployment returns a deployment.
+	Deployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
 	// DeleteAllMonitoringResources deletes all resources related to monitoring from k8s cluster.
 	DeleteAllMonitoringResources(ctx context.Context, namespace string) error
 	// CreateMonitoringConfig creates an monitoringConfig.

@@ -12,7 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// Package install holds the main logic for installation commands.
+
 package version
 
 import (
@@ -51,7 +51,7 @@ func Metadata(ctx context.Context, versionMetadataURL string) (*version.Metadata
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not retrieve Everest metadata"))
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("invalid response from Everest metadata endpoint http %d", res.StatusCode)
@@ -68,7 +68,7 @@ func Metadata(ctx context.Context, versionMetadataURL string) (*version.Metadata
 func RecommendedVersions(meta *version.MetadataVersion) (*RecommendedVersion, error) {
 	recVer := &RecommendedVersion{}
 
-	if olm, ok := meta.Recommended["olm"]; ok {
+	if olm, ok := meta.GetRecommended()["olm"]; ok {
 		v, err := goversion.NewSemver(olm)
 		if err != nil {
 			return nil, errors.Join(err, fmt.Errorf("invalid OLM version %s", olm))
@@ -76,7 +76,7 @@ func RecommendedVersions(meta *version.MetadataVersion) (*RecommendedVersion, er
 		recVer.OLM = v
 	}
 
-	if catalog, ok := meta.Recommended["catalog"]; ok {
+	if catalog, ok := meta.GetRecommended()["catalog"]; ok {
 		v, err := goversion.NewSemver(catalog)
 		if err != nil {
 			return nil, errors.Join(err, fmt.Errorf("invalid catalog version %s", catalog))

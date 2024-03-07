@@ -17,6 +17,9 @@ package client
 
 import versioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 
+// OLM returns OLM client set.
+//
+//nolint:ireturn
 func (c *Client) OLM() versioned.Interface {
 	return c.olmClientset
 }

@@ -24,9 +24,8 @@ import (
 	"testing"
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
-	"github.com/percona/percona-everest-backend/client"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
@@ -124,7 +123,7 @@ func TestUpgrade_canUpgrade(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				b, err := json.Marshal(tt.versionMeta)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
@@ -132,19 +131,16 @@ func TestUpgrade_canUpgrade(t *testing.T) {
 				}
 
 				w.Header().Add("content-type", "application/json")
-				w.Write(b)
+				_, err = w.Write(b)
+				require.NoError(t, err)
 			}))
 			defer ts.Close()
 
-			ecl := newMockEverestClientConnector(t)
-			ecl.On("Version", mock.Anything).Return(&client.Version{Version: tt.everestVersion}, nil)
-
 			u := &Upgrade{
 				l: zap.L().Sugar(),
-				config: &UpgradeConfig{
+				config: &Config{
 					VersionMetadataURL: ts.URL,
 				},
-				everestClient: ecl,
 			}
 			upgradeTo, _, err := u.canUpgrade(context.Background())
 			if err != nil && !errors.Is(err, tt.wantErrIs) {

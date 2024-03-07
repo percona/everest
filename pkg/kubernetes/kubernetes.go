@@ -50,6 +50,7 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/data"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes/client"
 	everestVersion "github.com/percona/everest/pkg/version"
 )
@@ -69,8 +70,6 @@ const (
 	// ClusterTypeGeneric is a generic type.
 	ClusterTypeGeneric ClusterType = "generic"
 
-	// PerconaEverestDeploymentName stores the name of everest API Server deployment.
-	PerconaEverestDeploymentName = "percona-everest"
 	// EverestOperatorDeploymentName is the name of the deployment for everest operator.
 	EverestOperatorDeploymentName = "everest-operator-controller-manager"
 
@@ -930,7 +929,7 @@ func (k *Kubernetes) InstallEverest(ctx context.Context, namespace string, versi
 	}
 
 	k.l.Debug("Waiting for manifest rollout")
-	if err := k.client.DoRolloutWait(ctx, types.NamespacedName{Name: PerconaEverestDeploymentName, Namespace: namespace}); err != nil {
+	if err := k.client.DoRolloutWait(ctx, types.NamespacedName{Name: common.PerconaEverestDeploymentName, Namespace: namespace}); err != nil {
 		return errors.Join(err, errors.New("failed waiting for the Everest deployment to be ready"))
 	}
 	return nil

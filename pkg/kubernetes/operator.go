@@ -25,6 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// ErrOperatorNotInstalled is returned when an operator is not installed.
 var ErrOperatorNotInstalled = fmt.Errorf("operatorNotInstalled")
 
 // OperatorInstalledVersion returns the installed version of operator by name.
