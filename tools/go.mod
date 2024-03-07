@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/daixiang0/gci v0.13.0
-	github.com/deepmap/oapi-codegen v1.16.2
+	github.com/deepmap/oapi-codegen/v2 v2.1.0
 	github.com/golangci/golangci-lint v1.56.2
 	github.com/quasilyte/go-consistent v0.6.0
 	github.com/reviewdog/reviewdog v0.17.1
@@ -64,7 +64,7 @@ require (
 	github.com/firefart/nonamedreturns v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fzipp/gocyclo v0.6.0 // indirect
-	github.com/getkin/kin-openapi v0.118.0 // indirect
+	github.com/getkin/kin-openapi v0.122.0 // indirect
 	github.com/ghostiam/protogetter v0.3.4 // indirect
 	github.com/go-critic/go-critic v0.11.1 // indirect
 	github.com/go-fed/httpsig v1.1.0 // indirect
