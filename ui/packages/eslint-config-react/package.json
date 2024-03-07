@@ -1,6 +1,6 @@
 {
   "name": "@percona/eslint-config-react",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "main": "./eslint-config.js",
   "publishConfig": {
     "access": "public",

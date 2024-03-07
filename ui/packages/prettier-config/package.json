@@ -1,6 +1,6 @@
 {
   "name": "@percona/prettier-config",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "main": "./prettier-config.json",
   "publishConfig": {
     "access": "public",

@@ -1,6 +1,6 @@
 {
   "name": "@percona/tsconfig",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "main": "./react-library.json",
   "publishConfig": {
     "access": "public",
