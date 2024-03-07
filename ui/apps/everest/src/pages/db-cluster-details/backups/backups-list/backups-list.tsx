@@ -29,10 +29,10 @@ import {
   useDeleteBackup,
 } from 'hooks/api/backups/useBackups';
 import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
-import { useDbClusterRestoreFromBackup } from 'hooks/api/restores/useDbClusterRestore';
 import { MRT_ColumnDef } from 'material-react-table';
+import { RestoreDbModal } from 'modals/index.ts';
 import { useContext, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Backup, BackupStatus } from 'shared-types/backups.types';
 import { DbClusterStatus } from 'shared-types/dbCluster.types.ts';
 import { ScheduleModalContext } from '../backups.context.ts';
@@ -41,16 +41,12 @@ import { Messages } from './backups-list.messages';
 import { OnDemandBackupModal } from './on-demand-backup-modal/on-demand-backup-modal';
 
 export const BackupsList = () => {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { dbClusterName, namespace = '' } = useParams();
-
+  const [openRestoreDbModal, setOpenRestoreDbModal] = useState(false);
+  const [isNewClusterMode, setIsNewClusterMode] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [openRestoreDialog, setOpenRestoreDialog] = useState(false);
-  const [openRestoreToNewDbDialog, setOpenRestoreToNewDbDialog] =
-    useState(false);
   const [selectedBackup, setSelectedBackup] = useState('');
-  const [selectedBackupStorage, setSelectedBackupStorage] = useState('');
   const [openCreateBackupModal, setOpenCreateBackupModal] = useState(false);
 
   const { data: backups = [] } = useDbBackups(dbClusterName!, namespace, {
@@ -59,8 +55,6 @@ export const BackupsList = () => {
   });
   const { mutate: deleteBackup, isPending: deletingBackup } =
     useDeleteBackup(namespace);
-  const { mutate: restoreBackup, isPending: restoringBackup } =
-    useDbClusterRestoreFromBackup(dbClusterName!);
   const { data: dbCluster } = useDbCluster(dbClusterName || '', namespace, {
     enabled: !!dbClusterName,
   });
@@ -150,48 +144,14 @@ export const BackupsList = () => {
 
   const handleRestoreBackup = (backupName: string) => {
     setSelectedBackup(backupName);
-    setOpenRestoreDialog(true);
+    setIsNewClusterMode(false);
+    setOpenRestoreDbModal(true);
   };
 
-  const handleCloseRestoreDialog = () => {
-    setOpenRestoreDialog(false);
-  };
-
-  const handleConfirmRestore = (backupName: string) => {
-    restoreBackup(
-      { backupName, namespace },
-      {
-        onSuccess() {
-          // In principle, not needed
-          handleCloseRestoreDialog();
-          navigate('/databases');
-        },
-      }
-    );
-  };
-
-  const handleRestoreToNewDbBackup = (
-    backupName: string,
-    backupStorageName: string
-  ) => {
+  const handleRestoreToNewDbBackup = (backupName: string) => {
     setSelectedBackup(backupName);
-    setSelectedBackupStorage(backupStorageName);
-    setOpenRestoreToNewDbDialog(true);
-  };
-
-  const handleCloseRestoreToNewDbDialog = () => {
-    setOpenRestoreToNewDbDialog(false);
-  };
-
-  const handleConfirmRestoreToNewDb = (backupName: string) => {
-    navigate('/databases/new', {
-      state: {
-        selectedDbCluster: dbClusterName!,
-        backupName,
-        namespace,
-        backupStorageName: selectedBackupStorage,
-      },
-    });
+    setOpenRestoreDbModal(true);
+    setIsNewClusterMode(true);
   };
 
   return (
@@ -238,7 +198,7 @@ export const BackupsList = () => {
         renderRowActionMenuItems={({ row, closeMenu }) => [
           <MenuItem
             key={0}
-            disabled={row.original.state !== BackupStatus.OK}
+            disabled={row.original.state !== BackupStatus.OK || restoring}
             onClick={() => {
               handleRestoreBackup(row.original.name);
               closeMenu();
@@ -250,12 +210,9 @@ export const BackupsList = () => {
           </MenuItem>,
           <MenuItem
             key={1}
-            disabled={row.original.state !== BackupStatus.OK}
+            disabled={row.original.state !== BackupStatus.OK || restoring}
             onClick={() => {
-              handleRestoreToNewDbBackup(
-                row.original.name,
-                row.original.backupStorageName
-              );
+              handleRestoreToNewDbBackup(row.original.name);
               closeMenu();
             }}
             sx={{ m: 0, display: 'flex', gap: 1, px: 2, py: '10px' }}
@@ -292,30 +249,15 @@ export const BackupsList = () => {
           {Messages.deleteDialog.content(selectedBackup)}
         </ConfirmDialog>
       )}
-      {openRestoreDialog && (
-        <ConfirmDialog
-          isOpen={openRestoreDialog}
-          selectedId={selectedBackup}
-          closeModal={handleCloseRestoreDialog}
-          headerMessage={Messages.restoreDialog.header}
-          handleConfirm={handleConfirmRestore}
-          submitMessage={Messages.restoreDialog.submitButton}
-          disabledButtons={restoringBackup}
-        >
-          {Messages.restoreDialog.content}
-        </ConfirmDialog>
-      )}
-      {openRestoreToNewDbDialog && (
-        <ConfirmDialog
-          isOpen={openRestoreToNewDbDialog}
-          selectedId={selectedBackup}
-          closeModal={handleCloseRestoreToNewDbDialog}
-          headerMessage={Messages.restoreDialogToNewDb.header}
-          handleConfirm={handleConfirmRestoreToNewDb}
-          submitMessage={Messages.restoreDialogToNewDb.submitButton}
-        >
-          {Messages.restoreDialogToNewDb.content}
-        </ConfirmDialog>
+      {openRestoreDbModal && dbCluster && (
+        <RestoreDbModal
+          dbCluster={dbCluster}
+          namespace={namespace}
+          isNewClusterMode={isNewClusterMode}
+          isOpen={openRestoreDbModal}
+          closeModal={() => setOpenRestoreDbModal(false)}
+          backupName={selectedBackup}
+        />
       )}
     </>
   );
