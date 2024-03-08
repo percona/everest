@@ -8,6 +8,10 @@
     "rm-build-dir": "rm -rf dist",
     "build": "rollup -c"
   },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
