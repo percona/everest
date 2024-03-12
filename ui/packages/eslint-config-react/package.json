@@ -1,7 +1,11 @@
 {
   "name": "@percona/eslint-config-react",
-  "version": "0.0.1",
-  "main": "./eslint-config.js",    
+  "version": "1.0.0",
+  "main": "./eslint-config.js",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "peerDependencies": {
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.45.0",

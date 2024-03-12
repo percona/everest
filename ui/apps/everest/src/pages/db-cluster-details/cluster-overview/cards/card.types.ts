@@ -15,7 +15,7 @@ export type DatabaseDetailsOverviewCardProps = {
   memory: number | string;
   disk: number | string;
   externalAccess: boolean;
-  monitoring: boolean;
+  monitoring?: string;
   backup?: Backup;
 } & OverviewCardProps;
 
