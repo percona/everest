@@ -74,22 +74,26 @@ export const CreateEditEndpointModal = ({
         name={EndpointFormFields.user}
         label={Messages.fieldLabels.user}
         isRequired={!isEditMode}
-        controllerProps={{
-          rules: {
-            deps: [EndpointFormFields.password],
+        {...(isEditMode && {
+          controllerProps: {
+            rules: {
+              deps: [EndpointFormFields.password],
+            },
           },
-        }}
+        })}
       />
       <TextInput
         name={EndpointFormFields.password}
         label={Messages.fieldLabels.password}
         isRequired={!isEditMode}
         textFieldProps={{ type: 'password' }}
-        controllerProps={{
-          rules: {
-            deps: [EndpointFormFields.user],
+        {...(isEditMode && {
+          controllerProps: {
+            rules: {
+              deps: [EndpointFormFields.user],
+            },
           },
-        }}
+        })}
       />
     </FormDialog>
   );
