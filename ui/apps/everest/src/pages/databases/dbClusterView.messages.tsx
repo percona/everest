@@ -52,8 +52,13 @@ export const Messages = {
   },
   deleteModal: {
     header: 'Delete database',
-    content: (dbName: string) =>
-      `Are you sure you want to permanently delete "${dbName}" and any datasets it contains?`,
+    content: (dbName: string) => (
+      <>
+        Are you sure you want to permanently delete <b>{dbName}</b>? To confirm
+        this action, type the name of your database.
+      </>
+    ),
+    databaseName: 'Database name',
   },
   responseMessages: {
     restart: 'The database is being restarted',
