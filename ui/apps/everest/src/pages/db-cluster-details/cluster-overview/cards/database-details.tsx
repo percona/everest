@@ -40,6 +40,7 @@ export const DatabaseDetails = ({
   monitoring,
 }: DatabaseDetailsOverviewCardProps) => {
   const schedules = backup?.schedules;
+
   return (
     <Card
       title={Messages.titles.dbDetails}
@@ -115,6 +116,11 @@ export const DatabaseDetails = ({
             <OverviewSectionText>
               {monitoring ? Messages.fields.enabled : Messages.fields.disabled}
             </OverviewSectionText>
+            {monitoring && (
+              <OverviewSectionText>
+                {Messages.fields.monitoring(monitoring)}
+              </OverviewSectionText>
+            )}
           </OverviewSection>
         </Grid>
       }
