@@ -10,6 +10,10 @@ on:
 
 jobs:
   integration_tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: [ 1.22.x ]
     name: CLI ${{inputs.make_target}}
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -85,7 +89,8 @@ jobs:
 
       - name: Attach the report
         if: ${{ always() && steps.cli-tests.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-delete-cluster-tests-report
           path: cli-tests/test-report
+          overwrite: true
