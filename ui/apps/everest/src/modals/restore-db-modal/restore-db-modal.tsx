@@ -38,10 +38,12 @@ const RestoreDbModal = <T extends FieldValues>({
   dbCluster,
   namespace,
   isNewClusterMode,
+  backupName,
 }: Pick<FormDialogProps<T>, 'closeModal' | 'isOpen'> & {
   dbCluster: DbCluster;
   namespace: string;
   isNewClusterMode: boolean;
+  backupName?: string;
 }) => {
   const navigate = useNavigate();
   const { data: backups = [], isLoading } = useDbBackups(
@@ -76,11 +78,14 @@ const RestoreDbModal = <T extends FieldValues>({
       )}
       submitting={restoringFromBackup || restoringFromPointInTime}
       defaultValues={defaultValues}
-      values={{ ...defaultValues, pitrBackup: pitrData?.latestDate }}
+      values={{
+        ...defaultValues,
+        backupName: backupName ?? '',
+        pitrBackup: pitrData?.latestDate,
+      }}
       onSubmit={({ backupName, backupType, pitrBackup }) => {
         let pointInTimeDate = '';
         let pitrBackupName = '';
-
         if (pitrData) {
           pitrBackupName = pitrData.latestBackupName;
         }
@@ -88,7 +93,6 @@ const RestoreDbModal = <T extends FieldValues>({
         if (pitrBackup && pitrBackup instanceof Date) {
           pointInTimeDate = pitrBackup.toISOString().split('.')[0] + 'Z';
         }
-
         if (isNewClusterMode) {
           closeModal();
           const selectedBackup = backups?.find(
@@ -175,6 +179,10 @@ const RestoreDbModal = <T extends FieldValues>({
               {
                 label: Messages.fromPitr,
                 value: BackuptypeValues.fromPitr,
+                disabled:
+                  !!backupName &&
+                  pitrData?.latestBackupName !==
+                    watch(RestoreDbFields.backupName),
               },
             ]}
           />
