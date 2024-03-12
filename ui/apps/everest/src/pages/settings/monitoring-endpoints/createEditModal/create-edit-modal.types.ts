@@ -27,8 +27,8 @@ export const getEndpointSchema = (isEditMode: boolean) =>
       [EndpointFormFields.url]: z.string().min(1).url(),
       ...(isEditMode
         ? {
-            [EndpointFormFields.user]: z.string().nullable(),
-            [EndpointFormFields.password]: z.string().nullable(),
+            [EndpointFormFields.user]: z.string(),
+            [EndpointFormFields.password]: z.string(),
           }
         : {
             [EndpointFormFields.user]: z.string().min(1),
