@@ -1,5 +1,9 @@
 {
   "name": "@percona/tsconfig",
-  "version": "0.0.1",
-  "main": "./react-library.json"
+  "version": "1.0.0",
+  "main": "./react-library.json",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
 }
