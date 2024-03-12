@@ -14,5 +14,8 @@
     "format": "turbo run format",
     "build": "turbo run build && turbo run move-build",
     "build-storybook": "turbo run build-storybook"
+  },
+  "dependencies": {
+    "@changesets/cli": "^2.27.1"
   }
 }
