@@ -26,6 +26,7 @@ export const Messages = {
     disk: (disk: string | number) => `Disk: ${disk}`,
     enabled: `Enabled`,
     disabled: `Disabled`,
+    monitoring: (name: string) => `Name: ${name}`,
     pitr: (isEnabled: string) =>
       `${Messages.titles.pitr} ${isEnabled.toLocaleLowerCase()}`,
   },

@@ -1,10 +1,10 @@
 import { Stack } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { dbEngineToDbType } from '@percona/utils';
 import { useDbClusterCredentials } from 'hooks/api/db-cluster/useCreateDbCluster';
 import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
 import { useDbClusters } from 'hooks/api/db-clusters/useDbClusters';
+import { useParams } from 'react-router-dom';
 import { ProxyExposeType } from 'shared-types/dbCluster.types';
-import { dbEngineToDbType } from '@percona/utils';
 import { ConnectionDetails, DatabaseDetails } from './cards';
 
 export const ClusterOverview = () => {
@@ -52,7 +52,7 @@ export const ClusterOverview = () => {
         externalAccess={
           dbCluster?.spec.proxy.expose.type === ProxyExposeType.external
         }
-        monitoring={!!dbCluster?.spec.monitoring.monitoringConfigName}
+        monitoring={dbCluster?.spec.monitoring.monitoringConfigName}
       />
       <ConnectionDetails
         loading={fetchingCluster}
