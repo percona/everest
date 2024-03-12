@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { MonitoringInstance } from 'shared-types/monitoring.types';
 import { rfc_123_schema } from 'utils/common-validation';
+import { Messages } from '../monitoring-endpoints.messages';
 
 export enum EndpointFormFields {
   name = 'name',
@@ -18,13 +19,33 @@ export interface CreateEditEndpointModalProps {
   isLoading?: boolean;
 }
 
-export const endpointSchema = z.object({
-  [EndpointFormFields.name]: rfc_123_schema('endpoint name'),
-  [EndpointFormFields.namespaces]: z.array(z.string()).nonempty(),
-  [EndpointFormFields.url]: z.string().min(1).url(),
-  [EndpointFormFields.user]: z.string().min(1),
-  [EndpointFormFields.password]: z.string().min(1),
-});
+export const getEndpointSchema = (isEditMode: boolean) =>
+  z
+    .object({
+      [EndpointFormFields.name]: rfc_123_schema('endpoint name'),
+      [EndpointFormFields.namespaces]: z.array(z.string()).nonempty(),
+      [EndpointFormFields.url]: z.string().min(1).url(),
+      ...(isEditMode
+        ? {
+            [EndpointFormFields.user]: z.string().nullable(),
+            [EndpointFormFields.password]: z.string().nullable(),
+          }
+        : {
+            [EndpointFormFields.user]: z.string().min(1),
+            [EndpointFormFields.password]: z.string().min(1),
+          }),
+    })
+    .superRefine((arg, ctx) => {
+      if (!((arg.user && arg.password) || (!arg.user && !arg.password))) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [
+            arg.user ? EndpointFormFields.password : EndpointFormFields.user,
+          ],
+          message: Messages.helperText.credentials,
+        });
+      }
+    });
 
 export const endpointDefaultValues = {
   [EndpointFormFields.name]: '',
@@ -34,4 +55,4 @@ export const endpointDefaultValues = {
   [EndpointFormFields.password]: '',
 };
 
-export type EndpointFormType = z.infer<typeof endpointSchema>;
+export type EndpointFormType = z.infer<ReturnType<typeof getEndpointSchema>>;
