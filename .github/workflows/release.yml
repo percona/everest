@@ -24,7 +24,7 @@ jobs:
       VERSION: 100.100.100
       BRANCH_NAME: ''
       GH_TAG: v$VERSION
-      IS_RC: false
+      IS_RC: 0
     steps:
 #      - name: Validate input
 #        run: |
@@ -40,7 +40,7 @@ jobs:
       - name: Set IS_RC environment variable based on VERSION
         run: |
           if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "IS_RC=true" >> $GITHUB_ENV
+            echo "IS_RC=1" >> $GITHUB_ENV
           fi
 
       - name: Display environment variables
@@ -48,11 +48,10 @@ jobs:
           echo "VERSION: $VERSION"
           echo "IS_RC: $IS_RC"
           echo "GH_TAG: $GH_TAG"
-          if [[ ! $IS_RC ]]; then
-            echo "Not RC"
-          fi
-          if [[ $IS_RC ]]; then
+          if [[ $IS_RC -eq 1 ]]; then
             echo "Is RC"
+          else
+            echo "Is not RC"
           fi
       
 
