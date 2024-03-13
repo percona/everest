@@ -58,6 +58,7 @@ jobs:
           repository: percona/everest-operator
           path: everest-operator
           token: ${{ secrets.ROBOT_TOKEN }}
+
       - name: Operator - create release branch
         run: |
           cd everest-operator
