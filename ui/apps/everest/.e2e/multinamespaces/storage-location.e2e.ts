@@ -21,7 +21,6 @@ import {
 import { moveForward } from '../utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '../constants';
 import { createDbClusterFn, deleteDbClusterFn } from '../utils/db-cluster';
-import { getTokenFromLocalStorage } from '../utils/localStorage';
 import { findDbAndClickRow } from '../utils/db-clusters-list';
 import { DBClusterDetailsTabs } from '../../src/pages/db-cluster-details/db-cluster-details.types';
 
@@ -30,10 +29,8 @@ test.describe.serial('Namespaces: Storage Location availability', () => {
   const pgStorageLocationName = 'storage-location-pg';
   const pgDbName = 'pg-db';
   const pxcDbName = 'pxc-db';
-  let token = '';
 
   test.beforeAll(async ({ request }) => {
-    token = await getTokenFromLocalStorage();
     await createBackupStorageFn(request, pxcStorageLocationName, [
       EVEREST_CI_NAMESPACES.PXC_ONLY,
     ]);
@@ -41,38 +38,36 @@ test.describe.serial('Namespaces: Storage Location availability', () => {
       EVEREST_CI_NAMESPACES.PG_ONLY,
     ]);
 
-    await createDbClusterFn(token, request, EVEREST_CI_NAMESPACES.PG_ONLY, {
-      dbName: pgDbName,
-      dbType: 'postgresql',
-      numberOfNodes: '1',
-    });
-
-    await createDbClusterFn(token, request, EVEREST_CI_NAMESPACES.PXC_ONLY, {
-      dbName: pxcDbName,
-      dbType: 'mysql',
-      numberOfNodes: '1',
-      backup: {
-        enabled: true,
-        schedules: [],
+    await createDbClusterFn(
+      request,
+      {
+        dbName: pgDbName,
+        dbType: 'postgresql',
+        numberOfNodes: '1',
       },
-    });
+      EVEREST_CI_NAMESPACES.PG_ONLY
+    );
+
+    await createDbClusterFn(
+      request,
+      {
+        dbName: pxcDbName,
+        dbType: 'mysql',
+        numberOfNodes: '1',
+        backup: {
+          enabled: true,
+          schedules: [],
+        },
+      },
+      EVEREST_CI_NAMESPACES.PXC_ONLY
+    );
   });
 
   test.afterAll(async ({ request }) => {
     await deleteStorageLocationFn(request, pxcStorageLocationName);
     await deleteStorageLocationFn(request, pgStorageLocationName);
-    await deleteDbClusterFn(
-      token,
-      request,
-      pgDbName,
-      EVEREST_CI_NAMESPACES.PG_ONLY
-    );
-    await deleteDbClusterFn(
-      token,
-      request,
-      pxcDbName,
-      EVEREST_CI_NAMESPACES.PXC_ONLY
-    );
+    await deleteDbClusterFn(request, pgDbName, EVEREST_CI_NAMESPACES.PG_ONLY);
+    await deleteDbClusterFn(request, pxcDbName, EVEREST_CI_NAMESPACES.PXC_ONLY);
   });
 
   test('Storage Location autocomplete in DB Wizard has only storage locations in selected namespace', async ({
