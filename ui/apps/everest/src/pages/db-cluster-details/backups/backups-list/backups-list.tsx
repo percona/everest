@@ -232,10 +232,12 @@ export const BackupsList = () => {
           </MenuItem>,
         ]}
       />
-      <OnDemandBackupModal
-        open={openCreateBackupModal}
-        handleClose={handleCloseBackupModal}
-      />
+      {openCreateBackupModal && (
+        <OnDemandBackupModal
+          open={openCreateBackupModal}
+          handleClose={handleCloseBackupModal}
+        />
+      )}
       {openDeleteDialog && (
         <ConfirmDialog
           isOpen={openDeleteDialog}

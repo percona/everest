@@ -29,7 +29,7 @@ import {
   checkSuccessOfUpdateAndGoToDbClustersList,
 } from './edit-db-cluster.utils';
 import { getNamespacesFn } from '../../../utils/namespaces';
-import { moveForward } from '../../../utils/db-wizard';
+import { goToStep, moveForward } from '../../../utils/db-wizard';
 
 test.describe.serial('DB Cluster Editing Backups Step', async () => {
   let scheduleName = 'db-wizard-schedule';
@@ -58,10 +58,7 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     await page.goto('/databases');
     await findDbAndClickActions(page, mySQLName, 'Edit');
 
-    // Go to Resources step
-    await moveForward(page);
-    // Go to Backups step
-    await moveForward(page);
+    await goToStep(page, 'backups');
 
     const enabledBackupsCheckbox = page
       .getByTestId('switch-input-backups-enabled')
