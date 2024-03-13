@@ -21,27 +21,26 @@ jobs:
     runs-on: ubuntu-latest
     env:
       #VERSION: ${{ github.event.inputs.version }}
-      VERSION: 100.100.100-rc1
+      VERSION: 100.100.100
+      # branch name in format "release-X.Y"
       BRANCH_NAME: ''
+      # GitHub tag name to use for the RC/Release
       GH_TAG: ''
+      # Shows if this workflow is triggered for RC or Release
       IS_RC: 0
     steps:
-#      - name: Validate input
-#        run: |
-#          if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc[1-9][0-9]*)?$ ]]; then
-#            echo "Wrong version format provided, please use "X.Y.Z-rcN" format for an RC or "X.Y.Z" format for a release"
-#            exit 1
-#          fi
-#      - name: Define release branch name in the format "release-X.Y"
-#        run: |
-#          major_minor=$(echo "$VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*$/\1/')
-#          echo "BRANCH_NAME=release-$major_minor" >> $GITHUB_ENV
-      - name: Set GH_TAG environment variable based on VERSION
+      - name: Validate input
         run: |
-          echo "GH_TAG=v$VERSION" >> $GITHUB_ENV
+          if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc[1-9][0-9]*)?$ ]]; then
+            echo "Wrong version format provided, please use "X.Y.Z-rcN" format for an RC or "X.Y.Z" format for a release"
+            exit 1
+          fi
 
-      - name: Set IS_RC environment variable based on VERSION
+      - name: Set environment variables based on VERSION
         run: |
+          major_minor=$(echo "$VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*$/\1/')
+          echo "BRANCH_NAME=release-$major_minor" >> $GITHUB_ENV
+          echo "GH_TAG=v$VERSION" >> $GITHUB_ENV
           if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "IS_RC=1" >> $GITHUB_ENV
           fi
