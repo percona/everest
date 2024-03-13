@@ -109,9 +109,7 @@ test.describe('DB Cluster creation', () => {
 
   test('Cluster creation', async ({ page, request }) => {
     const clusterName = 'db-cluster-ui-test';
-    const token = await getTokenFromLocalStorage();
     const recommendedEngineVersions = await getEnginesLatestRecommendedVersions(
-      token,
       namespace,
       request
     );
@@ -194,7 +192,9 @@ test.describe('DB Cluster creation', () => {
     const response = await request.get(
       `/v1/namespaces/${namespace}/database-clusters`,
       {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${await getTokenFromLocalStorage()}`,
+        },
       }
     );
 
@@ -206,12 +206,7 @@ test.describe('DB Cluster creation', () => {
       (cluster) => cluster.metadata.name === clusterName
     );
 
-    await deleteDbClusterFn(
-      token,
-      request,
-      addedCluster?.metadata.name,
-      namespace
-    );
+    await deleteDbClusterFn(request, addedCluster?.metadata.name, namespace);
     //TODO: Add check for PITR ones backend is ready
 
     expect(addedCluster).not.toBeUndefined();
@@ -316,9 +311,7 @@ test.describe('DB Cluster creation', () => {
 
   test('Multiple Mongo schedules', async ({ page, request }) => {
     const clusterName = 'multi-schedule-test';
-    const token = await getTokenFromLocalStorage();
     const recommendedEngineVersions = await getEnginesLatestRecommendedVersions(
-      token,
       namespace,
       request
     );
@@ -375,6 +368,6 @@ test.describe('DB Cluster creation', () => {
       page.getByText(`Backups storage: ${storageName}`)
     ).toBeVisible();
 
-    await deleteDbClusterFn(token, request, clusterName, namespace);
+    await deleteDbClusterFn(request, clusterName, namespace);
   });
 });

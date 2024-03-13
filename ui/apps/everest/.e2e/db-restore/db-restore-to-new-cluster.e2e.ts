@@ -21,18 +21,13 @@ import {
   findDbAndClickRow,
 } from '../utils/db-clusters-list';
 import { getTokenFromLocalStorage } from '../utils/localStorage';
-import { getNamespacesFn } from '../utils/namespaces';
 
 test.describe('DB Cluster Restore to the new cluster', () => {
   const dbClusterName = 'mysql-restore-to-new';
-  let namespace = '';
 
   test.beforeEach(async ({ request, page }) => {
     await page.goto('/databases');
-    const token = await getTokenFromLocalStorage();
-    const namespaces = await getNamespacesFn(token, request);
-    namespace = namespaces[0];
-    await createDbClusterFn(token, request, namespaces[0], {
+    await createDbClusterFn(request, {
       dbName: dbClusterName,
       dbType: 'mysql',
       numberOfNodes: '1',
@@ -45,7 +40,7 @@ test.describe('DB Cluster Restore to the new cluster', () => {
 
   test.afterEach(async ({ request }) => {
     const token = await getTokenFromLocalStorage();
-    await deleteDbClusterFn(token, request, dbClusterName, namespace);
+    await deleteDbClusterFn(request, dbClusterName);
   });
 
   test('DB cluster list restore action', async ({ page }) => {
