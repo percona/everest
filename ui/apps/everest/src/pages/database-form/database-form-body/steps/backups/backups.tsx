@@ -52,8 +52,6 @@ export const Backups = ({ alreadyVisited }: StepProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dbType]);
 
-  // const pitrEnabled: boolean = watch(DbWizardFormFields.pitrEnabled);
-
   const schedules =
     mode === 'new' ? [] : dbClusterData?.spec?.backup?.schedules || [];
   const multiSchedules =

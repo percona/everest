@@ -19,7 +19,6 @@ import { AdvancedConfigurations } from './advanced-configurations/advanced-confi
 import { Monitoring } from './monitoring/monitoring.tsx';
 import PITRStep from './pitr/index.ts';
 
-// TODO re-add steps after API is ready
 export const steps = [
   FirstStep,
   ResourcesStep,
