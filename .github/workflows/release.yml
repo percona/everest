@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       #VERSION: ${{ github.event.inputs.version }}
-      VERSION: 100.100.100
+      VERSION: 100.100.100-rc1
       BRANCH_NAME: ''
       GH_TAG: v$VERSION
       IS_RC: 0
