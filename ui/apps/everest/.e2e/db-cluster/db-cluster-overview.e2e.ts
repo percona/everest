@@ -65,4 +65,40 @@ test.describe('DB Cluster Overview', async () => {
         .getByText('Enabled')
     ).toBeVisible();
   });
+
+  test('Delete Action', async ({ page, request }) => {
+    const token = await getTokenFromLocalStorage();
+    const dbName = 'delete-test';
+
+    await createDbClusterFn(token, request, namespace, {
+      dbName: dbName,
+      dbType: 'mysql',
+      numberOfNodes: '1',
+    });
+
+    const row = await page.getByText(dbName);
+    await row.click();
+
+    await expect(
+      page.getByRole('heading', {
+        name: dbName,
+      })
+    ).toBeVisible();
+
+    const actionButton = page.getByTestId('actions-button');
+    await actionButton.click();
+
+    const deleteButton = page.getByTestId(`${dbName}-delete`);
+    await deleteButton.click();
+
+    await page.getByTestId(`${dbName}-form-dialog`).waitFor();
+    await expect(page.getByTestId('irreversible-action-alert')).toBeVisible();
+    const deleteConfirmationButton = page
+      .getByRole('button')
+      .filter({ hasText: 'Delete' });
+    await expect(deleteConfirmationButton).toBeDisabled();
+    await page.getByTestId('text-input-confirm-input').fill(dbName);
+    await expect(deleteConfirmationButton).toBeEnabled();
+    await deleteConfirmationButton.click();
+  });
 });
