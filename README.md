@@ -1,61 +1,137 @@
-## Welcome to Percona Everest
+# Percona Everest
 
-Percona Everest is an open source Database-as-a-Service solution that automates day-one and day-two operations for Postgres, MySQL, and MongoDB databases within Kubernetes clusters.
+[Percona Everest](https://docs.percona.com/everest/index.html) is an open source cloud-native database platform that helps developers deploy code faster, scale deployments rapidly, and reduce database administration overhead while regaining control over their data, database configuration, and DBaaS costs.
+
+Here’s why you should try Percona Everest:
+
+- Launch database instance with just a few clicks
+- Enable your team to develop faster and reduce time to market
+- Scale seamlessly
+- Simplify maintenance
+- Monitor and optimize
+- Automate backups
+- Ensure data security
+
+
+## Documentation
+
+For comprehensive information about Percona Everest, see the [documentation](https://docs.percona.com/everest/index.html).
+
+# Installation
+
+Ready to try out Percona Everest? Check the [Quickstart install](https://docs.percona.com/everest/quickstart-guide/quick-install.html) section for easy-to-follow steps. 
 
 ## Prerequisites
 
-A Kubernetes cluster is available for public use, but we do not offer support for creating one.
+Before getting started with Percona Everest, do the following:
 
-## Creating Kubernetes cluster
+1. Download the latest version of Everest CLI by visiting the latest release page in [this repository](https://github.com/percona/percona-everest-cli/releases/latest).
 
-You must have a publicly accessible Kubernetes cluster to use Everest. EKS or GKE is recommended, as it may be difficult to make it work with local installations of Kubernetes such as minikube, kind, k3d, or similar products. Everest does not help with spinning up a Kubernetes cluster but assists with installing all the necessary components for Everest to run.
+    **Linux and WSL**
+        
+    ```sh
+    curl -sSL -o everestctl-linux-amd64 https://github.com/percona/percona-everest-cli/releases/latest/download/everestctl-linux-amd64
+    sudo install -m 555 everestctl-linux-amd64 /usr/local/bin/everestctl
+    rm everestctl-linux-amd64
+    ```
+
+    **macOS (Apple Silicon)**
+
+    ```sh
+    curl -sSL -o everestctl-darwin-arm64 https://github.com/percona/percona-everest-cli/releases/latest/download/everestctl-darwin-arm64
+    sudo install -m 555 everestctl-darwin-arm64 /usr/local/bin/everestctl
+    rm everestctl-darwin-arm64
+    ```
+
+    **macOS (Intel CPU)**
+
+    ```sh
+    curl -sSL -o everestctl-darwin-amd64 https://github.com/percona/percona-everest-cli/releases/latest/download/everestctl-darwin-amd64
+    sudo install -m 555 everestctl-darwin-amd64 /usr/local/bin/everestctl
+    rm everestctl-darwin-amd64
+    ```
+
+2. Set up a Kubernetes cluster. 
+
+    Percona Everest assists with installing all the necessary operators and required packages, but does not deploy a Kubernetes cluster.
+
+    We recommend setting up Percona Everest on the [Amazon Elastic Kubernetes Service (EKS)](https://docs.percona.com/everest/quickstart-guide/eks.html) or [Google Kubernetes Engine (GKE)](https://docs.percona.com/everest/quickstart-guide/gke.html).
+
+3. Verify that you have access to the Kubernetes cluster that you want to use with Everest. By default, Everest uses the kubeconfig file available under `~/.kube/config`. 
+
+    To verify access to the Kubernetes cluster, run the following command:
+   
+    ```sh 
+    kubectl get nodes
+    ```
+
+## Install Percona Everest
+
+To install and provision Percona Everest to Kubernetes:
+
+1. Download the latest release of [everestctl](https://github.com/percona/percona-everest-cli/releases/latest) to provision Percona Everest.
+
+2. Install Everest and provision the Kubernetes cluster using one of the following commands:
+
+    ```sh
+    everestctl install
+    ```
+
+    Enter the specific names for the namespaces you want Everest to manage, separating each name with a comma.
+
+    **Note:** Make sure that you enter at least one namespace.
+
+    Alternatively, you can set multiple namepaces in the headless mode:
+
+      ```sh
+      everestctl install --namespaces <namespace-name1>,<namespace-name2> --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard
+      ```
+    
+    Replace `<namespace-name>` with the desired name for your namespace.
+
+    **Note**: Ensure that you copy the authorization token displayed on the terminal in this step. You will need this token to log in to the Percona Everest UI.    
+
+3. Access the Everest UI/API using one of the following options for exposing it, as Everest is not exposed with an external IP by default:
+
+    * Run the following command to use `Kubectl port-forwarding` for connecting to Everest without exposing the service.
+
+        ```sh
+        kubectl port-forward svc/everest 8080:8080 -n everest-system
+        ``` 
+
+    * Use the following command to change the Everest service type to `LoadBalancer`:
+                    
+      ```sh
+      kubectl patch svc/everest -n everest-system -p '{"spec": {"type": "LoadBalancer"}}'
+      ```
+
+4. Retrieve the external IP address for the Everest service. This is the address where you can then launch Everest at the end of the installation procedure. In this example, the external IP address used is the default `127.0.0.1`:  
+                
+    ```sh 
+    kubectl get svc/everest -n everest-system
+    ```
+                  
+5. The Percona Everest app will be available at http://127.0.0.1:8080.
+
+    Now, you can open your browser and create databases in Percona Everest.
+
+# Contributing
+
+We believe that community is the backbone of Percona Everest. That's why we always welcome and encourage you to actively contribute and help us enhance Percona Everest.
+
+See the [Contribution Guide](https://github.com/percona/everest/blob/main/CONTRIBUTING.md) for more information on how you can contribute.
+
+## Communication
+
+We value your thoughts and opinions and we would be thrilled to hear from you! Join us on [Forum](https://forums.percona.com/c/percona-everest) to ask questions, share your feedback, and spark creative ideas with our community.
 
 
-## Getting started
+# Submitting Bug Reports
 
-The Percona Everest has [CLI](https://github.com/percona/percona-everest-cli), which installs Everest's required components.
+If you find a bug in Percona Everest, submit a report to that project's [JIRA](https://perconadev.atlassian.net/jira/software/c/projects/EVEREST/boards/65) issue tracker or [create a GitHub issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/creating-an-issue#creating-an-issue-from-a-repository) in this repository. 
 
+Learn more about submitting bugs, new features ideas and improvements in the [documentation](https://docs.percona.com/everest/contribute.html).
 
-### Everest provisioning
-
-1. Download the latest release of [everestctl](https://github.com/percona/percona-everest-cli/releases) command for your operating system
-
-2. Modify the permissions of the file:
-
-  ```sh
-  chmod +x everestctl-darwin-amd64
-  ```
-
-3. Run the following command to install all the required operators in headless mode:
-
-  ```sh
-   ./everestctl-darwin-amd64 install --monitoring.enable=false --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard
-  ```
-
-Alternatively, use the wizard to run it:
-
-✗ ./everestctl install operators
-? Do you want to enable monitoring? No
-? What operators do you want to install? MySQL, MongoDB, PostgreSQL
-```
-
-Once provisioning is complete, you can expose your everest installation using the following command
-
-```
-  kubectl port-forward -n everest-system deployment/percona-everest 8080:8080
-```
-
-You can visit http://127.0.0.1:8080 to create your first database cluster!
+   
 
 
-## Known limitations
-
-- There are no authentication or access control features, but you can integrate Everest with your existing solution.
-    * [Ambassador](https://github.com/datawire/ambassador) via
-  [auth service](https://www.getambassador.io/reference/services/auth-service)
-    * [Envoy](https://www.envoyproxy.io) via the
-  [External Authorization HTTP Filter](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/security/ext_authz_filter.html)
-    * AWS API Gateway via
-  [Custom Authorizers](https://aws.amazon.com/de/blogs/compute/introducing-custom-authorizers-in-amazon-api-gateway/)
-    * [Nginx](https://www.nginx.com) via
-  [Authentication Based on Subrequest Result](https://docs.nginx.com/nginx/admin-guide/security-controls/configuring-subrequest-authentication/)
