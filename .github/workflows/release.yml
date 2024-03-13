@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       #VERSION: ${{ github.event.inputs.version }}
-      VERSION: 100.100.100
+      VERSION: 100.100.100-rc100
       # branch name in format "release-X.Y"
       BRANCH_NAME: ''
       # GitHub tag name to use for the RC/Release
