@@ -77,9 +77,9 @@ jobs:
 
             git push origin $RC_BRANCH
 
-# comment tags to not trigger the existing workflow in the operator repo
-#            git tag $GH_TAG
-#            git push origin $GH_TAG
+            # comment tags to not trigger the existing workflow in the operator repo
+            # git tag $GH_TAG
+            # git push origin $GH_TAG
           fi
 
 
