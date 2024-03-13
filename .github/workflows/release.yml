@@ -48,11 +48,6 @@ jobs:
           echo "VERSION: $VERSION"
           echo "IS_RC: $IS_RC"
           echo "GH_TAG: $GH_TAG"
-          if [[ $IS_RC -eq 1 ]]; then
-            echo "Is RC"
-          else
-            echo "Is not RC"
-          fi
       
 
 #      - name: Catalog - checkout
