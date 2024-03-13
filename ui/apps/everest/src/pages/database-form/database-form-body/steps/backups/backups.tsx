@@ -39,7 +39,6 @@ export const Backups = ({ alreadyVisited }: StepProps) => {
   const { data: backupStorages = [] } =
     useBackupStoragesByNamespace(selectedNamespace);
 
-  // TODO should be removed after https://jira.percona.com/browse/EVEREST-509 + DEFAULT_VALUES should be changed from false to true for all databases
   useEffect(() => {
     const { isTouched } = getFieldState(DbWizardFormFields.backupsEnabled);
 
