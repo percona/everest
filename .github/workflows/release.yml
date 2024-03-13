@@ -108,6 +108,7 @@ jobs:
 
       - name: Operator - build and bundle
         run: |
+          cd everest-operator
           make build manifests bundle
 
       - name: Operator - setup Docker meta for everest-operator
@@ -144,7 +145,7 @@ jobs:
       - name: Operator - build and push operator everest-operator image
         uses: docker/build-push-action@v3
         with:
-          context: .
+          context: everest-operator
           push: true
           tags: ${{ steps.meta.outputs.tags }}
 
