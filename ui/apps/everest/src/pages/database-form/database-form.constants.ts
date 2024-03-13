@@ -24,7 +24,6 @@ import { DEFAULT_SIZES } from './database-form-body/steps/resources/resources-st
 import { ResourceSize } from './database-form-body/steps/resources/resources-step.types.ts';
 import { DbWizardType } from './database-form-schema.ts';
 
-// TODO re-add steps after API is ready
 export const TIME_SELECTION_DEFAULTS = {
   [DbWizardFormFields.selectedTime]: TimeValue.hours,
   [DbWizardFormFields.minute]: 0,
