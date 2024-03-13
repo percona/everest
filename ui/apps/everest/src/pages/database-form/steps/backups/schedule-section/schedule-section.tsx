@@ -55,7 +55,9 @@ export const ScheduleBackupSection = ({
       schedules={schedules}
       storageLocationFetching={isFetching}
       storageLocationOptions={backupStorages}
-      disableStorageSelection={mode === 'edit' && dbType === DbType.Mongo}
+      disableStorageSelection={
+        mode === 'edit' && schedules.length === 1 && dbType === DbType.Mongo
+      }
     />
   );
 };
