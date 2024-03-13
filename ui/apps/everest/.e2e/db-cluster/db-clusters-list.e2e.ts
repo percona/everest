@@ -13,10 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { createDbClusterFn } from '../utils/db-cluster';
 import { getTokenFromLocalStorage } from '../utils/localStorage';
 import { getNamespacesFn } from '../utils/namespaces';
+import { findDbAndClickActions } from '../utils/db-clusters-list';
 
 test.describe('DB Cluster List', () => {
   const mySQLName = 'mysql-test-ui';
@@ -35,23 +36,17 @@ test.describe('DB Cluster List', () => {
       numberOfNodes: '1',
     });
 
-    await page
-      .getByTestId(`${mySQLName}-status`)
-      .filter({ hasText: 'Initializing' });
-
-    const button = await page
-      .getByRole('row')
-      .filter({ hasText: mySQLName })
-      .getByLabel('Row Actions');
-    await button.click();
+    await findDbAndClickActions(page, mySQLName, 'Delete');
 
     // Delete action
-    const deleteButton = page.getByTestId(`${mySQLName}-delete`);
-    await deleteButton.click();
-    await page.getByTestId(`${mySQLName}-confirm-dialog`).waitFor();
-    const deleteConfirmationButton = await page
+    await page.getByTestId(`${mySQLName}-form-dialog`).waitFor();
+    await expect(page.getByTestId('irreversible-action-alert')).toBeVisible();
+    const deleteConfirmationButton = page
       .getByRole('button')
       .filter({ hasText: 'Delete' });
+    await expect(deleteConfirmationButton).toBeDisabled();
+    await page.getByTestId('text-input-confirm-input').fill(mySQLName);
+    await expect(deleteConfirmationButton).toBeEnabled();
     await deleteConfirmationButton.click();
   });
 
