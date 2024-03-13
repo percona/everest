@@ -115,10 +115,10 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            perconalab/everest-operator,enable=${{ env.IS_RC -eq 0 }}
+            perconalab/everest-operator,enable=${{ env.IS_RC == 0 }}
           tags: |
-            type=raw,value=100.100.100,enable=${{ env.IS_RC -eq 0 }}
-            type=raw,value=100.100.101,enable=${{ env.IS_RC -eq 1 }}
+            type=raw,value=100.100.100,enable=${{ env.IS_RC == 0 }}
+            type=raw,value=100.100.101,enable=${{ env.IS_RC == 1 }}
 
 
 #      - name: Operator - setup Docker meta for everest-operator-bundle
