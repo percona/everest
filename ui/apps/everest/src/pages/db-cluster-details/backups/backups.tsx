@@ -13,15 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Alert } from '@mui/material';
 import { useBackupStorages } from 'hooks/api/backup-storages/useBackupStorages.ts';
-import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
 import { useDbClusters } from 'hooks/api/db-clusters/useDbClusters';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { BackupsList } from './backups-list/backups-list';
 import { ScheduleModalContext } from './backups.context.ts';
-import { Messages } from './backups.messages.ts';
 import { NoStoragesMessage } from './no-storages-message/no-storages-message.tsx';
 import { ScheduledBackupModal } from './scheduled-backup-modal/scheduled-backup-modal';
 import { ScheduledBackupsList } from './scheduled-backups-list/scheduled-backups-list';
@@ -33,9 +30,6 @@ export const Backups = () => {
   const dbNameExists = data.find(
     (cluster) => cluster.metadata.name === dbClusterName
   );
-  const { data: dbCluster } = useDbCluster(dbClusterName || '', namespace, {
-    enabled: !!dbClusterName && !!dbNameExists,
-  });
 
   const [mode, setMode] = useState<'new' | 'edit'>('new');
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
@@ -57,9 +51,6 @@ export const Backups = () => {
       ) : (
         dbNameExists && (
           <>
-            {!dbCluster?.spec?.backup?.enabled && (
-              <Alert severity="info">{Messages.backupsDisabled}</Alert>
-            )}
             <ScheduledBackupsList />
             <BackupsList />
             {openScheduleModal && <ScheduledBackupModal />}

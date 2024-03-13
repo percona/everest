@@ -38,18 +38,6 @@ import { DEFAULT_NODES } from './first-step.constants';
 import { Messages } from './first-step.messages';
 import { generateShortUID } from './utils';
 
-// TODO change to api request's result
-// const dbEnvironmentOptions = [
-//   {
-//     value: 'dbEnvironmentOne',
-//     label: 'dbEnvironmentOneLabel',
-//   },
-//   {
-//     value: 'dbEnvironmentTwo',
-//     label: 'dbEnvironmentTwoLabel',
-//   },
-// ];
-
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
 
@@ -148,25 +136,32 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const onDbTypeChange = useCallback(
     (newDbType: DbType) => {
       const { isDirty: isNameDirty } = getFieldState(DbWizardFormFields.dbName);
+      const { isTouched: isBackupToggleTouched } = getFieldState(
+        DbWizardFormFields.backupsEnabled
+      );
+      const backupsEnabled = getValues(DbWizardFormFields.backupsEnabled);
 
-      resetField(DbWizardFormFields.dbVersion);
+      setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[newDbType]);
 
       if (!isNameDirty) {
         setRandomDbName(newDbType);
       }
 
-      setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[newDbType]);
+      if (
+        !isBackupToggleTouched &&
+        (mode === 'new' || mode === 'restoreFromBackup')
+      ) {
+        setValue(DbWizardFormFields.backupsEnabled, true);
+      }
+
+      if (newDbType === DbType.Postresql && backupsEnabled) {
+        setValue(DbWizardFormFields.pitrEnabled, true);
+      }
+
+      resetField(DbWizardFormFields.dbVersion);
       updateDbVersions();
     },
-    [
-      getFieldState,
-      resetField,
-      setRandomDbName,
-      mode,
-      updateDbVersions,
-      getValues,
-      setValue,
-    ]
+    [setRandomDbName, updateDbVersions]
   );
 
   useEffect(() => {
@@ -205,7 +200,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       !storageClassTouched &&
       mode === 'new' &&
       clusterInfo?.storageClassNames &&
-      clusterInfo.storageClassNames.length > 0
+      clusterInfo.storageClassNames?.length > 0
     ) {
       setValue(
         DbWizardFormFields.storageClass,
@@ -227,7 +222,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       trigger(DbWizardFormFields.k8sNamespace);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [namespaces, mode]);
+  }, [namespaces]);
 
   return (
     <>
@@ -289,29 +284,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             disabled: mode === 'edit' || loadingDefaultsForEdition,
           }}
         />
-        {/*<Typography variant="sectionHeading" sx={{ mt: 4, mb: 0.5 }}>*/}
-        {/*  {Messages.labels.dbEnvironment}*/}
-        {/*</Typography>*/}
-        {/*<Controller
-          control={control}
-          name={DbWizardFormFields.dbEnvironment}
-          render={({ field, fieldState: { error } }) => (
-            <Select
-              {...field}
-              variant="outlined"
-              error={error !== undefined}
-              inputProps={{
-                'data-testid': 'text-dbEnvironment',
-              }}
-            >
-              {dbEnvironmentOptions.map((item) => (
-                <MenuItem value={item.value} key={item.value}>
-                  {item.label}
-                </MenuItem>
-              ))}
-            </Select>
-          )}
-        /> */}
         <SelectInput
           name={DbWizardFormFields.dbVersion}
           label={Messages.labels.dbVersion}

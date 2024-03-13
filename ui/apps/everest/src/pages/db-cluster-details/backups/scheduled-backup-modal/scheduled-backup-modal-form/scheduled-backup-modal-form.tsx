@@ -23,7 +23,7 @@ import { useParams } from 'react-router-dom';
 import { ScheduleModalContext } from '../../backups.context.ts';
 
 export const ScheduledBackupModalForm = () => {
-  const { watch, setValue } = useFormContext();
+  const { watch, setValue, trigger } = useFormContext();
   const { dbClusterName, namespace = '' } = useParams();
   const { mode = 'new', setSelectedScheduleName } =
     useContext(ScheduleModalContext);
@@ -48,6 +48,7 @@ export const ScheduledBackupModalForm = () => {
       setValue(ScheduleFormFields.storageLocation, {
         name: dbClusterActiveStorage,
       });
+      trigger(ScheduleFormFields.storageLocation);
     }
   }, [dbClusterActiveStorage]);
 
