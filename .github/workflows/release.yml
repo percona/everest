@@ -23,7 +23,7 @@ jobs:
       #VERSION: ${{ github.event.inputs.version }}
       VERSION: 100.100.100-rc1
       BRANCH_NAME: ''
-      GH_TAG: v${{ env.VERSION }}
+      GH_TAG: v${{ VERSION }}
       IS_RC: 0
     steps:
 #      - name: Validate input
