@@ -1,7 +1,11 @@
 {
   "name": "@percona/prettier-config",
-  "version": "0.0.1",
-  "main": "./prettier-config.json",    
+  "version": "1.0.0",
+  "main": "./prettier-config.json",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "peerDependencies": {
     "prettier": "^3.0.3"
   }
