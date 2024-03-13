@@ -20,6 +20,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
+      TOOLS_PATH: "/opt/tools/bin"
       #VERSION: ${{ github.event.inputs.version }}
       VERSION: 100.100.100-rc100
       # branch name in format "release-X.Y"
@@ -58,10 +59,9 @@ jobs:
           cd everest-operator
           # Check if the branch already exists
           git fetch
-          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
+          check_branch=$(git ls-remote --heads origin ${BRANCH_NAME})
           if [[ -z ${check_branch} ]]; then
-            git checkout -b $RC_BRANCH
-            # git push origin $RC_BRANCH
+            git checkout -b $BRANCH_NAME
 
             # update version in the Makefile
             sed -i "s/0.0.0/$VERSION/g" Makefile
@@ -76,7 +76,7 @@ jobs:
             # commit and push the updated files
             git commit -a -m "update version"
 
-            git push origin $RC_BRANCH
+            git push origin $BRANCH_NAME
 
             # comment tags to not trigger the existing workflow in the operator repo
             # git tag $GH_TAG
@@ -170,26 +170,26 @@ jobs:
 #          cd everest-catalog
 #          # Check if the branch already exists
 #          git fetch
-#          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
+#          check_branch=$(git ls-remote --heads origin ${BRANCH_NAME})
 #
 #          if [[ -z ${check_branch} ]]; then
-#            git checkout -b $RC_BRANCH
-#            git push origin $RC_BRANCH
+#            git checkout -b $BRANCH_NAME
+#            git push origin $BRANCH_NAME
 #          fi
 
 
 #      - name: Everest - check out
 #        uses: actions/checkout@v4
 #
-#      - name: Create and update Everest Backend RC-branch
+#      - name: Create and update Everest Backend release branch
 #        run: |
 #          # Check if the branch already exists
 #          git fetch
-#          check_branch=$(git ls-remote --heads origin ${RC_BRANCH})
+#          check_branch=$(git ls-remote --heads origin ${BRANCH_NAME})
 #
 #          if [[ -z ${check_branch} ]]; then
-#            git checkout -b $RC_BRANCH
-#            git push origin $RC_BRANCH
+#            git checkout -b $BRANCH_NAME
+#            git push origin $BRANCH_NAME
 #
 #            # update tag refs in scripts
 #            sed -i "s/0.0.0/$VERSION/g" deploy/quickstart-k8s.yaml
@@ -200,5 +200,5 @@ jobs:
 #
 #            # commit and push the updated files
 #            git commit -a -m "update version tag"
-#            git push origin $RC_BRANCH
+#            git push origin $BRANCH_NAME
 #          fi
