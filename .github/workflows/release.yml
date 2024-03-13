@@ -45,13 +45,6 @@ jobs:
             echo "IS_RC=1" >> $GITHUB_ENV
           fi
 
-      - name: Display environment variables
-        run: |
-          echo "VERSION: $VERSION"
-          echo "IS_RC: $IS_RC"
-          echo "GH_TAG: $GH_TAG"
-      
-
       - name: Operator - check out
         uses: actions/checkout@v4
         with:
