@@ -50,6 +50,7 @@ jobs:
         with:
           repository: percona/everest-operator
           path: everest-operator
+          token: ${{ secrets.ROBOT_TOKEN }}
 
 
       - name: Operator - create release branch
@@ -114,13 +115,8 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-#            percona/everest-operator,enable=${{ IS_RC -eq 0 }}
-#            perconalab/everest-operator
             perconalab/everest-operator,enable=${{ IS_RC -eq 0 }}
           tags: |
-#            type=match,pattern=v(.*),group=1
-#            type=match,pattern=v(\d.\d),group=1,enable=${{ !contains(github.ref_name, 'main') }}
-#            type=raw,value=latest,enable=${{ !contains(github.ref_name, 'rc') }}
             type=raw,value=100.100.100,enable=${{ IS_RC -eq 0 }}
             type=raw,value=100.100.101,enable=${{ IS_RC -eq 1 }}
 
