@@ -1,5 +1,5 @@
 import z from 'zod';
-import { generateShortUID } from '../../../../database-form/steps/first/utils.ts';
+import { generateShortUID } from '../../../../database-form/database-form-body/steps/first/utils.ts';
 
 export type OnDemandBackupModalProps = {
   open: boolean;
@@ -13,7 +13,7 @@ export enum BackupFields {
 
 export const defaultValuesFc = () => ({
   [BackupFields.name]: `backup-${generateShortUID()}`,
-  [BackupFields.storageLocation]: '',
+  [BackupFields.storageLocation]: null,
 });
 
 export const schema = z.object({
