@@ -16,7 +16,6 @@
 import { Alert, Box } from '@mui/material';
 import { DbType } from '@percona/types';
 import { SwitchInput } from '@percona/ui-lib';
-import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { DbWizardFormFields } from '../../database-form.types';
 import { StepHeader } from '../step-header/step-header';
@@ -24,7 +23,7 @@ import PitrStorage from './pitr-storage';
 import { Messages } from './pitr.messages';
 
 const PITRStep = () => {
-  const { control, watch, setValue } = useFormContext();
+  const { control, watch } = useFormContext();
 
   const [backupsEnabled, dbType] = watch([
     DbWizardFormFields.backupsEnabled,
@@ -32,20 +31,6 @@ const PITRStep = () => {
   ]);
 
   const pitrDisabled = !backupsEnabled || dbType === DbType.Postresql;
-
-  useEffect(() => {
-    if (dbType === DbType.Postresql && backupsEnabled) {
-      setValue(DbWizardFormFields.pitrEnabled, true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dbType]);
-
-  useEffect(() => {
-    if (!backupsEnabled) {
-      setValue(DbWizardFormFields.pitrEnabled, false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [backupsEnabled]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>

@@ -26,16 +26,16 @@ export const ScheduleBackupSection = ({
     mode === 'new' ? [] : dbClusterData?.spec?.backup?.schedules || [];
 
   useEffect(() => {
-    const { isDirty: nameDirty } = getFieldState(
-      DbWizardFormFields.scheduleName
-    );
-
     if (!enableNameGeneration) {
       return;
     }
 
+    const { isDirty: nameDirty } = getFieldState(
+      DbWizardFormFields.scheduleName
+    );
+
     if (
-      (!nameDirty && mode === 'new') ||
+      (mode === 'new' && !nameDirty) ||
       (mode === 'edit' && schedules?.length === 0)
     ) {
       setValue(
@@ -55,7 +55,9 @@ export const ScheduleBackupSection = ({
       schedules={schedules}
       storageLocationFetching={isFetching}
       storageLocationOptions={backupStorages}
-      disableStorageSelection={mode === 'edit' && dbType === DbType.Mongo}
+      disableStorageSelection={
+        mode === 'edit' && schedules.length === 1 && dbType === DbType.Mongo
+      }
     />
   );
 };

@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test';
 import { getTokenFromLocalStorage } from '../../../utils/localStorage';
-import { getNamespacesFn } from '../../../utils/namespaces';
 import {
   createDbClusterFn,
   deleteDbClusterFn,
@@ -9,13 +8,9 @@ import { findDbAndClickActions } from '../../../utils/db-clusters-list';
 
 test.describe('DB Cluster Editing Basic step', () => {
   const mySQLName = 'db-backup-mysql-basic';
-  let namespace = '';
 
   test.beforeAll(async ({ request }) => {
-    const token = await getTokenFromLocalStorage();
-    const namespaces = await getNamespacesFn(token, request);
-    namespace = namespaces[0];
-    await createDbClusterFn(token, request, namespaces[0], {
+    await createDbClusterFn(request, {
       dbName: mySQLName,
       dbType: 'mysql',
       numberOfNodes: '1',
@@ -24,7 +19,7 @@ test.describe('DB Cluster Editing Basic step', () => {
 
   test.afterAll(async ({ request }) => {
     const token = await getTokenFromLocalStorage();
-    await deleteDbClusterFn(token, request, mySQLName, namespace);
+    await deleteDbClusterFn(request, mySQLName);
   });
 
   test('DB versions dropdown correctly filled when editing', async ({

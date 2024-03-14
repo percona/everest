@@ -8,7 +8,6 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { Box, Button, Menu, MenuItem } from '@mui/material';
-import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import { useDbActions } from 'hooks/api/db-cluster/useDbActions';
 import { useDeleteDbCluster } from 'hooks/api/db-cluster/useDeleteDbCluster';
 import { RestoreDbModal } from 'modals';
@@ -17,6 +16,7 @@ import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Messages as ClusterDetailsMessages } from './db-cluster-details.messages';
 import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
+import { ConfirmFormDialog } from '../../components/confirm-form-dialog';
 
 export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -188,16 +188,17 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
         />
       )}
       {openDeleteDialog && (
-        <ConfirmDialog
+        <ConfirmFormDialog
+          inputLabel={Messages.deleteModal.databaseName}
+          inputPlaceholder={Messages.deleteModal.databaseName}
           isOpen={openDeleteDialog}
-          selectedId={dbCluster.metadata.name}
           closeModal={handleCloseDeleteDialog}
           headerMessage={Messages.deleteModal.header}
+          submitting={deletingCluster}
+          selectedId={dbCluster.metadata.name || ''}
           handleConfirm={handleDelete}
-          disabledButtons={deletingCluster}
-        >
-          {Messages.deleteModal.content(dbCluster.metadata.name)}
-        </ConfirmDialog>
+          dialogContent={Messages.deleteModal.content(dbCluster.metadata.name)}
+        />
       )}
     </Box>
   );

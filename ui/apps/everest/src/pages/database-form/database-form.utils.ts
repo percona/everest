@@ -20,9 +20,9 @@ import {
 } from 'shared-types/dbCluster.types';
 import { DbWizardFormFields, DbWizardMode } from './database-form.types';
 import { dbEngineToDbType } from '@percona/utils';
-import { matchFieldsValueToResourceSize } from './steps/resources/resources-step.utils.ts';
+import { matchFieldsValueToResourceSize } from './database-form-body/steps/resources/resources-step.utils.ts';
 import { cpuParser, memoryParser } from 'utils/k8ResourceParser';
-import { generateShortUID } from './steps/first/utils';
+import { generateShortUID } from './database-form-body/steps/first/utils.ts';
 import { MAX_DB_CLUSTER_NAME_LENGTH } from 'consts';
 import { DbWizardType } from './database-form-schema.ts';
 import { getFormValuesFromCronExpression } from '../../components/time-selection/time-selection.utils.ts';
