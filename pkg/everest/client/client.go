@@ -28,6 +28,8 @@ import (
 	"github.com/percona/percona-everest-backend/client"
 )
 
+const apiVersion = "v1"
+
 // Everest is a connector to the Everest API.
 type Everest struct {
 	cl *client.Client
@@ -50,7 +52,7 @@ func NewEverestFromURL(rawURL, everestPwd string) (*Everest, error) {
 		return nil, errors.Join(err, errors.New("could not parse Everest URL"))
 	}
 	everestCl, err := client.NewClient(
-		u.JoinPath("v1").String(),
+		u.JoinPath(apiVersion).String(),
 		client.WithRequestEditorFn(func(_ context.Context, req *http.Request) error {
 			req.Header.Set("Cookie", fmt.Sprintf("everest_token=%s", everestPwd))
 			return nil
