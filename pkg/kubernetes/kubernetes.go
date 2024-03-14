@@ -376,9 +376,7 @@ func (k *Kubernetes) applyCSVs(ctx context.Context, resources []unstructured.Uns
 // InstallPerconaCatalog installs percona catalog and ensures that packages are available.
 func (k *Kubernetes) InstallPerconaCatalog(ctx context.Context, version *goversion.Version) error {
 	if version == nil {
-		// No need to check the version if not provided.
-		k.l.Debug("No version provided to InstallPerconaCatalog")
-		return nil
+		return errors.New("no version provided for Perconal catalog installation")
 	}
 
 	data, err := fs.ReadFile(data.OLMCRDs, "crds/olm/everest-catalog.yaml")
