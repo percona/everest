@@ -25,11 +25,12 @@ import (
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
 	goversion "github.com/hashicorp/go-version"
-	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+
+	"github.com/percona/everest/pkg/kubernetes"
 )
 
 func TestUpgrade_canUpgrade(t *testing.T) {

@@ -7,7 +7,6 @@ import (
 
 	goversion "github.com/hashicorp/go-version"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	appv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -15,6 +14,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
+
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
 // KubernetesConnector ...
