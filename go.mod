@@ -21,7 +21,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.22.0
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20240308145441-1bdcc0077fab
+	github.com/percona/everest-operator v0.6.0-dev1.0.20240314110837-201f8cf45925
 	github.com/percona/percona-everest-backend v0.8.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
