@@ -45,3 +45,10 @@ export const findDbAndClickActions = async (
   page.getByTestId(`${dbName}-status`).filter({ hasText: 'Initializing' });
   await findRowAndClickActions(page, dbName, nameOfAction);
 };
+
+export const gotoDbClusterBackups = async (page: Page, clusterName: string) => {
+  await page.goto('databases');
+  await page.getByRole('row').filter({ hasText: clusterName }).click();
+  await expect(page.getByText('Overview')).toBeVisible();
+  await page.getByTestId('backups').click();
+};
