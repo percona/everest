@@ -9,19 +9,15 @@ import { useFormContext } from 'react-hook-form';
 import { useEffect } from 'react';
 
 const PitrStorage = () => {
-  const { watch, setValue } = useFormContext();
-  const [
-    pitrEnabled,
-    storageLocation,
-    pitrStorageLocation,
-    dbType,
-    selectedNamespace,
-  ] = watch([
-    DbWizardFormFields.pitrEnabled,
-    DbWizardFormFields.storageLocation,
-    DbWizardFormFields.pitrStorageLocation,
+  const { watch, setValue, getValues } = useFormContext();
+  const [dbType, selectedNamespace, storageLocation] = getValues([
     DbWizardFormFields.dbType,
     DbWizardFormFields.k8sNamespace,
+    DbWizardFormFields.storageLocation,
+  ]);
+  const [pitrEnabled, pitrStorageLocation] = watch([
+    DbWizardFormFields.pitrEnabled,
+    DbWizardFormFields.pitrStorageLocation,
   ]);
 
   const { data: backupStorages = [], isFetching: loadingBackupStorages } =
@@ -31,7 +27,7 @@ const PitrStorage = () => {
     if (!pitrStorageLocation) {
       setValue(DbWizardFormFields.pitrStorageLocation, storageLocation);
     }
-  }, [pitrStorageLocation, storageLocation]);
+  }, [pitrStorageLocation]);
 
   if (!pitrEnabled) {
     return null;

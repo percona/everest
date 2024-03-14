@@ -44,6 +44,14 @@ export const useMonitoringInstancesList = (enabled?: boolean) =>
     enabled,
   });
 
+export const useMonitoringInstancesListByNamespace = (namespace: string) =>
+  useQuery<MonitoringInstanceList>({
+    queryKey: [MONITORING_INSTANCES_QUERY_KEY, namespace],
+    queryFn: getMonitoringInstancesFn,
+    select: (data) =>
+      data.filter((item) => item.allowedNamespaces?.includes(namespace)),
+  });
+
 export const useCreateMonitoringInstance = (
   options?: UseMutationOptions<
     MonitoringInstance,

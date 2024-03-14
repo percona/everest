@@ -15,7 +15,7 @@
 
 import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { createDbClusterRestore } from 'api/restores';
-import { generateShortUID } from 'pages/database-form/steps/first/utils';
+import { generateShortUID } from 'pages/database-form/database-form-body/steps/first/utils';
 
 export const useDbClusterRestoreFromBackup = (
   dbClusterName: string,

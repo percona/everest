@@ -20,19 +20,13 @@ import {
 } from '../../../utils/db-cluster';
 import { findDbAndClickActions } from '../../../utils/db-clusters-list';
 import { DbType } from '@percona/types';
-import { getTokenFromLocalStorage } from '../../../utils/localStorage';
-import { getNamespacesFn } from '../../../utils/namespaces';
 import { moveForward } from '../../../utils/db-wizard';
 
 test.describe('DB Cluster Editing Resources Step (Mongo)', () => {
   const mongoDBName = 'mongo-db';
-  let namespace = '';
 
   test.beforeEach(async ({ request }) => {
-    const token = await getTokenFromLocalStorage();
-    const namespaces = await getNamespacesFn(token, request);
-    namespace = namespaces[0];
-    await createDbClusterFn(token, request, namespaces[0], {
+    await createDbClusterFn(request, {
       dbName: mongoDBName,
       dbType: DbType.Mongo,
       numberOfNodes: '5',
@@ -40,8 +34,7 @@ test.describe('DB Cluster Editing Resources Step (Mongo)', () => {
   });
 
   test.afterEach(async ({ request }) => {
-    const token = await getTokenFromLocalStorage();
-    await deleteDbClusterFn(token, request, mongoDBName, namespace);
+    await deleteDbClusterFn(request, mongoDBName);
   });
 
   test('Show the correct number of nodes during editing', async ({ page }) => {

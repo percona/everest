@@ -29,11 +29,19 @@ export const ResourcesStep = () => {
   const resourceSizePerNode: ResourceSize = watch(
     DbWizardFormFields.resourceSizePerNode
   );
-  const cpu: number = watch(DbWizardFormFields.cpu);
-  const memory: number = watch(DbWizardFormFields.memory);
-  const disk: number = watch(DbWizardFormFields.disk);
-  const dbType: DbType = watch(DbWizardFormFields.dbType);
-  const numberOfNodes = watch(DbWizardFormFields.numberOfNodes);
+  const [cpu, memory, disk, dbType, numberOfNodes]: [
+    number,
+    number,
+    number,
+    DbType,
+    number,
+  ] = watch([
+    DbWizardFormFields.cpu,
+    DbWizardFormFields.memory,
+    DbWizardFormFields.disk,
+    DbWizardFormFields.dbType,
+    DbWizardFormFields.numberOfNodes,
+  ]);
 
   const cpuCapacityExceeded = resourcesInfo
     ? cpu * 1000 > resourcesInfo?.available.cpuMillis
@@ -46,53 +54,48 @@ export const ResourcesStep = () => {
     : false;
 
   useEffect(() => {
-    if (resourceSizePerNode && resourceSizePerNode !== ResourceSize.custom) {
-      setValue(DbWizardFormFields.cpu, DEFAULT_SIZES[resourceSizePerNode].cpu);
-      if (mode !== 'edit') {
-        setValue(
-          DbWizardFormFields.disk,
-          DEFAULT_SIZES[resourceSizePerNode].disk
-        );
-      }
+    if (resourceSizePerNode === ResourceSize.custom) {
+      return;
+    }
+
+    setValue(DbWizardFormFields.cpu, DEFAULT_SIZES[resourceSizePerNode].cpu);
+    setValue(
+      DbWizardFormFields.memory,
+      DEFAULT_SIZES[resourceSizePerNode].memory
+    );
+
+    if (mode !== 'edit') {
       setValue(
-        DbWizardFormFields.memory,
-        DEFAULT_SIZES[resourceSizePerNode].memory
+        DbWizardFormFields.disk,
+        DEFAULT_SIZES[resourceSizePerNode].disk
       );
     }
-  }, [resourceSizePerNode, mode, setValue]);
+  }, [resourceSizePerNode]);
 
   useEffect(() => {
     if (diskCapacityExceeded) {
       setError(DbWizardFormFields.disk, { type: 'custom' });
-    } else clearErrors(DbWizardFormFields.disk);
-  }, [diskCapacityExceeded, clearErrors, setError]);
+    } else {
+      clearErrors(DbWizardFormFields.disk);
+    }
+  }, [diskCapacityExceeded]);
 
   useEffect(() => {
-    if (
-      resourceSizePerNode !== ResourceSize.custom &&
-      cpu !== DEFAULT_SIZES[resourceSizePerNode].cpu
-    ) {
-      setValue(DbWizardFormFields.resourceSizePerNode, ResourceSize.custom);
+    if (resourceSizePerNode === ResourceSize.custom) {
+      return;
     }
-  }, [cpu]);
 
-  useEffect(() => {
-    if (
-      resourceSizePerNode !== ResourceSize.custom &&
-      disk !== DEFAULT_SIZES[resourceSizePerNode].disk
-    ) {
-      setValue(DbWizardFormFields.resourceSizePerNode, ResourceSize.custom);
-    }
-  }, [disk]);
-
-  useEffect(() => {
-    if (
-      resourceSizePerNode !== ResourceSize.custom &&
-      memory !== DEFAULT_SIZES[resourceSizePerNode].memory
-    ) {
-      setValue(DbWizardFormFields.resourceSizePerNode, ResourceSize.custom);
-    }
-  }, [memory]);
+    [
+      [cpu, 'cpu'],
+      [disk, 'disk'],
+      [memory, 'memory'],
+    ].forEach((resource) => {
+      const [value, name] = resource as [number, 'cpu' | 'disk' | 'memory'];
+      if (value !== DEFAULT_SIZES[resourceSizePerNode][name]) {
+        setValue(DbWizardFormFields.resourceSizePerNode, ResourceSize.custom);
+      }
+    });
+  }, [cpu, disk, memory]);
 
   return (
     <>
@@ -119,30 +122,16 @@ export const ResourcesStep = () => {
           name={DbWizardFormFields.resourceSizePerNode}
           label={Messages.labels.resourceSizePerNode}
         >
-          <ToggleCard
-            value={ResourceSize.small}
-            data-testid="toggle-button-small"
-          >
-            {humanizeResourceSizeMap(ResourceSize.small)}
-          </ToggleCard>
-          <ToggleCard
-            value={ResourceSize.medium}
-            data-testid="toggle-button-medium"
-          >
-            {humanizeResourceSizeMap(ResourceSize.medium)}
-          </ToggleCard>
-          <ToggleCard
-            value={ResourceSize.large}
-            data-testid="toggle-button-large"
-          >
-            {humanizeResourceSizeMap(ResourceSize.large)}
-          </ToggleCard>
-          <ToggleCard
-            value={ResourceSize.custom}
-            data-testid="toggle-button-custom"
-          >
-            {humanizeResourceSizeMap(ResourceSize.custom)}
-          </ToggleCard>
+          {(Object.keys(ResourceSize) as Array<keyof typeof ResourceSize>).map(
+            (value) => (
+              <ToggleCard
+                value={ResourceSize[value]}
+                data-testid={`toggle-button-${value}`}
+              >
+                {humanizeResourceSizeMap(ResourceSize[value])}
+              </ToggleCard>
+            )
+          )}
         </ToggleButtonGroupInput>
         <Box
           sx={{
