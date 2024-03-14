@@ -14,9 +14,9 @@
 // limitations under the License.
 
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
+import { DbClusterForNamespaceResult } from '../../hooks/api/db-clusters/useDbClusters';
 import { Messages } from './dbClusterView.messages';
 import { DbClusterTableElement } from './dbClusterView.types';
-import { DbClusterForNamespaceResult } from '../../hooks/api/db-clusters/useDbClusters';
 
 const DB_CLUSTER_STATUS_HUMANIFIED: Record<DbClusterStatus, string> = {
   [DbClusterStatus.ready]: Messages.statusProvider.up,
@@ -55,6 +55,8 @@ export const convertDbClusterPayloadToTableFormat = (
           hostName: cluster.status ? cluster.status.hostname : '',
           exposetype: cluster.spec.proxy.expose.type,
           port: cluster.status?.port,
+          monitoringConfigName:
+            cluster.spec.monitoring?.monitoringConfigName ?? '',
           raw: cluster,
         }))
       : [];
