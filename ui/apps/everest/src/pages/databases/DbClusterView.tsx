@@ -23,7 +23,6 @@ import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { Box, Button, MenuItem, Stack } from '@mui/material';
 import { Table } from '@percona/ui-lib';
-import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import { StatusField } from 'components/status-field/status-field';
 import { useDbActions } from 'hooks/api/db-cluster/useDbActions';
 import { useDeleteDbCluster } from 'hooks/api/db-cluster/useDeleteDbCluster';
@@ -43,6 +42,7 @@ import { Messages } from './dbClusterView.messages';
 import { DbClusterTableElement } from './dbClusterView.types';
 import { DbTypeIconProvider } from './dbTypeIconProvider/DbTypeIconProvider';
 import { ExpandedRow } from './expandedRow/ExpandedRow';
+import { ConfirmFormDialog } from '../../components/confirm-form-dialog';
 
 export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
@@ -313,16 +313,19 @@ export const DbClusterView = () => {
         />
       )}
       {openDeleteDialog && (
-        <ConfirmDialog
+        <ConfirmFormDialog
+          inputLabel={Messages.deleteModal.databaseName}
+          inputPlaceholder={Messages.deleteModal.databaseName}
           isOpen={openDeleteDialog}
-          selectedId={selectedDbCluster?.metadata.name || ''}
           closeModal={handleCloseDeleteDialog}
           headerMessage={Messages.deleteModal.header}
+          submitting={deletingCluster}
+          selectedId={selectedDbCluster?.metadata.name || ''}
           handleConfirm={() => handleConfirmDelete()}
-          disabledButtons={deletingCluster}
-        >
-          {Messages.deleteModal.content(selectedDbCluster!.metadata.name)}
-        </ConfirmDialog>
+          dialogContent={Messages.deleteModal.content(
+            selectedDbCluster!.metadata.name
+          )}
+        />
       )}
     </Stack>
   );
