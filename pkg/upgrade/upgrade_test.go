@@ -24,7 +24,10 @@ import (
 	"testing"
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
+	goversion "github.com/hashicorp/go-version"
+	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -84,8 +87,8 @@ func TestUpgrade_canUpgrade(t *testing.T) {
 					{Version: "0.5.0"},
 					{Version: "0.6.0"},
 					{Version: "0.7.0"},
-					{Version: "0.7.1"},
 					{Version: "0.7.2"},
+					{Version: "0.7.1"},
 					{Version: "0.8.0"},
 				},
 			},
@@ -136,13 +139,20 @@ func TestUpgrade_canUpgrade(t *testing.T) {
 			}))
 			defer ts.Close()
 
+			k := &kubernetes.MockKubernetesConnector{}
+			k.On("GetDBNamespaces", mock.Anything, mock.Anything).Return([]string{}, nil)
+
 			u := &Upgrade{
 				l: zap.L().Sugar(),
 				config: &Config{
 					VersionMetadataURL: ts.URL,
 				},
+				kubeClient: k,
 			}
-			upgradeTo, _, err := u.canUpgrade(context.Background())
+			everestVersion, err := goversion.NewVersion(tt.everestVersion)
+			require.NoError(t, err)
+
+			upgradeTo, _, err := u.canUpgrade(context.Background(), everestVersion)
 			if err != nil && !errors.Is(err, tt.wantErrIs) {
 				t.Errorf("error = %v, wantErrIs %v", err, tt.wantErrIs)
 				return

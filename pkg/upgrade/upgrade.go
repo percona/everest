@@ -46,7 +46,7 @@ type (
 		l *zap.SugaredLogger
 
 		config     *Config
-		kubeClient *kubernetes.Kubernetes
+		kubeClient kubernetes.KubernetesConnector
 	}
 
 	supportedVersion struct {
@@ -89,8 +89,14 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 
 // Run runs the operators installation process.
 func (u *Upgrade) Run(ctx context.Context) error {
+	// Get Everest version.
+	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
+	if err != nil {
+		return errors.Join(err, errors.New("could not retrieve Everest version"))
+	}
+
 	// Check prerequisites
-	upgradeEverestTo, recVer, err := u.canUpgrade(ctx)
+	upgradeEverestTo, recVer, err := u.canUpgrade(ctx, everestVersion)
 	if err != nil {
 		if errors.Is(err, ErrNoUpdateAvailable) {
 			u.l.Info("You're running the latest version of Everest")
@@ -123,13 +129,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 // canUpgrade checks if there's a new Everest version available and if we can upgrade to it
 // based on minimum requirements.
-func (u *Upgrade) canUpgrade(ctx context.Context) (*goversion.Version, *cliVersion.RecommendedVersion, error) {
-	// Get Everest version.
-	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
-	if err != nil {
-		return nil, nil, errors.Join(err, errors.New("could not retrieve Everest version"))
-	}
-
+func (u *Upgrade) canUpgrade(ctx context.Context, everestVersion *goversion.Version) (*goversion.Version, *cliVersion.RecommendedVersion, error) {
 	u.l.Infof("Current Everest version is %s", everestVersion)
 
 	// Determine version to upgrade to.
@@ -187,7 +187,10 @@ func (u *Upgrade) versionToUpgradeTo(
 		// Select the latest patch version for the same major and minor version.
 		verSeg := ver.Segments()
 		uSeg := upgradeTo.Segments()
-		if len(verSeg) >= 3 && len(uSeg) >= 3 && verSeg[0] == uSeg[0] && verSeg[1] == uSeg[1] && verSeg[2] > uSeg[2] {
+		if len(verSeg) >= 3 && len(uSeg) >= 3 && verSeg[0] == uSeg[0] && verSeg[1] == uSeg[1] {
+			if verSeg[2] <= uSeg[2] {
+				continue
+			}
 			upgradeTo = ver
 			meta = v
 			continue

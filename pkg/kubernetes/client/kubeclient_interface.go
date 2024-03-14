@@ -9,6 +9,7 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	versioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	packagev1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -22,8 +23,6 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
-
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
 // KubeClientConnector ...
@@ -156,6 +155,9 @@ type KubeClientConnector interface {
 	GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error)
 	// DeleteNamespace deletes a namespace.
 	DeleteNamespace(ctx context.Context, name string) error
+	// OLM returns OLM client set.
+	//
+	//nolint:ireturn
 	OLM() versioned.Interface
 	// GetNodes returns list of nodes.
 	GetNodes(ctx context.Context) (*corev1.NodeList, error)
