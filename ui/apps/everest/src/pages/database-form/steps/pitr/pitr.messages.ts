@@ -20,6 +20,8 @@ export const Messages = {
   enablePitr: 'Enable PITR',
   toEnablePitr:
     'To enable PITR, first set up a backup schedule for this database',
+  pitrPgEnabledByDefault:
+    'Point-in-time recovery is enabled by default for the PostgreSQL operator and cannot be turned off.',
   captionPitr:
     'Point-in-time recovery provides continuous backups on your database to protect against accidental writes or deletes.',
   pitrCreateHeader: 'Create PitrStep backup every',
