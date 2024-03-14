@@ -912,9 +912,7 @@ func (k *Kubernetes) ApplyObject(obj runtime.Object) error {
 // InstallEverest downloads the manifest file and applies it against provisioned k8s cluster.
 func (k *Kubernetes) InstallEverest(ctx context.Context, namespace string, version *goversion.Version) error {
 	if version == nil {
-		// No need to check the version if not provided.
-		k.l.Debug("No version provided to InstallEverest")
-		return nil
+		return errors.New("no version provided for Everest installation")
 	}
 
 	data, err := k.getManifestData(ctx, version)
