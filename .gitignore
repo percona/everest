@@ -10,3 +10,5 @@
 .DS_Store
 api_tests/node_modules/*
 cmd/cmd
+
+public/
