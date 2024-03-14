@@ -13,6 +13,7 @@ import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubern
 import useLocalStorage from 'hooks/utils/useLocalStorage';
 import { useContext } from 'react';
 import { Outlet } from 'react-router-dom';
+import { ErrorBoundary } from 'utils/ErrorBoundary';
 import { AppBar } from '../app-bar/AppBar';
 import { Drawer } from '../drawer/Drawer';
 import { WelcomeDialog } from '../welcome-dialog/welcome-dialog';
@@ -80,7 +81,9 @@ export const Main = () => {
             </Button>
           </Stack>
         ) : (
-          <Outlet />
+          <ErrorBoundary fallback={<div>Error</div>}>
+            <Outlet />
+          </ErrorBoundary>
         )}
         {openWelcomeDialogLS && (
           <WelcomeDialog
