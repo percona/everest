@@ -60,16 +60,15 @@ test.describe('DB Cluster Overview', async () => {
   });
 
   test('Delete Action', async ({ page, request }) => {
-    const token = await getTokenFromLocalStorage();
     const dbName = 'delete-test';
 
-    await createDbClusterFn(token, request, namespace, {
+    await createDbClusterFn(request, {
       dbName: dbName,
       dbType: 'mysql',
       numberOfNodes: '1',
     });
 
-    const row = await page.getByText(dbName);
+    const row = page.getByText(dbName);
     await row.click();
 
     await expect(
