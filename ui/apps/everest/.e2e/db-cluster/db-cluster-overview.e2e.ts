@@ -1,17 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { createDbClusterFn, deleteDbClusterFn } from '../utils/db-cluster';
-import { getTokenFromLocalStorage } from '../utils/localStorage';
-import { getNamespacesFn } from '../utils/namespaces';
 
 test.describe('DB Cluster Overview', async () => {
   const dbClusterName = 'cluster-overview-test';
-  let namespace = '';
 
   test.beforeAll(async ({ request }) => {
-    const token = await getTokenFromLocalStorage();
-    const namespaces = await getNamespacesFn(token, request);
-    namespace = namespaces[0];
-    await createDbClusterFn(token, request, namespaces[0], {
+    await createDbClusterFn(request, {
       dbName: dbClusterName,
       dbType: 'mysql',
       numberOfNodes: '1',
@@ -32,8 +26,7 @@ test.describe('DB Cluster Overview', async () => {
   });
 
   test.afterAll(async ({ request }) => {
-    const token = await getTokenFromLocalStorage();
-    await deleteDbClusterFn(token, request, dbClusterName, namespace);
+    await deleteDbClusterFn(request, dbClusterName);
   });
 
   test('Overview information', async ({ page }) => {
@@ -64,5 +57,40 @@ test.describe('DB Cluster Overview', async () => {
         })
         .getByText('Enabled')
     ).toBeVisible();
+  });
+
+  test('Delete Action', async ({ page, request }) => {
+    const dbName = 'delete-test';
+
+    await createDbClusterFn(request, {
+      dbName: dbName,
+      dbType: 'mysql',
+      numberOfNodes: '1',
+    });
+
+    const row = page.getByText(dbName);
+    await row.click();
+
+    await expect(
+      page.getByRole('heading', {
+        name: dbName,
+      })
+    ).toBeVisible();
+
+    const actionButton = page.getByTestId('actions-button');
+    await actionButton.click();
+
+    const deleteButton = page.getByTestId(`${dbName}-delete`);
+    await deleteButton.click();
+
+    await page.getByTestId(`${dbName}-form-dialog`).waitFor();
+    await expect(page.getByTestId('irreversible-action-alert')).toBeVisible();
+    const deleteConfirmationButton = page
+      .getByRole('button')
+      .filter({ hasText: 'Delete' });
+    await expect(deleteConfirmationButton).toBeDisabled();
+    await page.getByTestId('text-input-confirm-input').fill(dbName);
+    await expect(deleteConfirmationButton).toBeEnabled();
+    await deleteConfirmationButton.click();
   });
 });

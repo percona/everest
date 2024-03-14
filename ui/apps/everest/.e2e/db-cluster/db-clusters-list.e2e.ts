@@ -15,8 +15,6 @@
 
 import { expect, test } from '@playwright/test';
 import { createDbClusterFn } from '../utils/db-cluster';
-import { getTokenFromLocalStorage } from '../utils/localStorage';
-import { getNamespacesFn } from '../utils/namespaces';
 import { findDbAndClickActions } from '../utils/db-clusters-list';
 
 test.describe('DB Cluster List', () => {
@@ -27,10 +25,7 @@ test.describe('DB Cluster List', () => {
   });
 
   test('DB clusters Delete Action', async ({ page, request }) => {
-    const token = await getTokenFromLocalStorage();
-    const namespaces = await getNamespacesFn(token, request);
-
-    await createDbClusterFn(token, request, namespaces[0], {
+    await createDbClusterFn(request, {
       dbName: mySQLName,
       dbType: 'mysql',
       numberOfNodes: '1',

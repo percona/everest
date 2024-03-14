@@ -36,7 +36,7 @@ export const OnDemandBackupFieldsWrapper = () => {
       />
       <AutoCompleteAutoFill
         name={BackupFields.storageLocation}
-        label={Messages.onDemandBackupModal.backupStorage}
+        label={Messages.onDemandBackupModal.storageLocation}
         loading={isFetching}
         options={backupStorages}
         enableFillFirst

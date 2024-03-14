@@ -28,32 +28,15 @@ import { ScheduleBackupSection } from './schedule-section/schedule-section.tsx';
 
 export const Backups = ({ alreadyVisited }: StepProps) => {
   const mode = useDatabasePageMode();
-  const { control, watch, setValue, getFieldState, trigger } = useFormContext();
+  const { control, watch, trigger, setValue } = useFormContext();
   const { dbClusterData } = useDatabasePageDefaultValues(mode);
 
-  const [backupsEnabled, dbType, selectedNamespace] = watch([
+  const [backupsEnabled, selectedNamespace] = watch([
     DbWizardFormFields.backupsEnabled,
-    DbWizardFormFields.dbType,
     DbWizardFormFields.k8sNamespace,
   ]);
   const { data: backupStorages = [] } =
     useBackupStoragesByNamespace(selectedNamespace);
-
-  // TODO should be removed after https://jira.percona.com/browse/EVEREST-509 + DEFAULT_VALUES should be changed from false to true for all databases
-  useEffect(() => {
-    const { isTouched } = getFieldState(DbWizardFormFields.backupsEnabled);
-
-    if (isTouched) {
-      return;
-    }
-
-    if (mode === 'new' || mode === 'restoreFromBackup') {
-      setValue(DbWizardFormFields.backupsEnabled, true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dbType]);
-
-  // const pitrEnabled: boolean = watch(DbWizardFormFields.pitrEnabled);
 
   const schedules =
     mode === 'new' ? [] : dbClusterData?.spec?.backup?.schedules || [];
@@ -62,6 +45,10 @@ export const Backups = ({ alreadyVisited }: StepProps) => {
   const scheduleDisabled = multiSchedules;
 
   useEffect(() => {
+    if (!backupsEnabled) {
+      setValue(DbWizardFormFields.pitrEnabled, false);
+    }
+
     trigger();
   }, [backupsEnabled]);
 

@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const mocks = vi.hoisted(() => {
   return {
-    useMonitoringInstancesList: vi.fn().mockReturnValue({
+    useMonitoringInstancesListByNamespace: vi.fn().mockReturnValue({
       data: [
         {
           type: 'type1',
@@ -35,7 +35,8 @@ const queryClient = new QueryClient({
 });
 
 vi.mock('hooks/api/monitoring/useMonitoringInstancesList', () => ({
-  useMonitoringInstancesList: mocks.useMonitoringInstancesList,
+  useMonitoringInstancesListByNamespace:
+    mocks.useMonitoringInstancesListByNamespace,
   useCreateMonitoringInstance: mocks.useCreateMonitoringInstance,
 }));
 
@@ -95,7 +96,7 @@ describe('Monitoring Step', () => {
   });
 
   it('should disable toggle when no monitoring instances defined', async () => {
-    mocks.useMonitoringInstancesList.mockReturnValue({
+    mocks.useMonitoringInstancesListByNamespace.mockReturnValue({
       data: [],
     });
 

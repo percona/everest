@@ -12,13 +12,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-export const Messages = {
-  monitoring: 'Monitoring',
-  caption:
-    'Monitor the health of your database to detect issues quickly and improve its performance.',
-  monitoringEnabled: 'Enable monitoring',
-  monitoringInstanceLabel: 'Monitoring endpoint URL',
-  alertText:
-    'Database monitoring is currently disabled because monitoring endpoints were not configured during installation. To enable database monitoring, run the following command:',
-  command: 'everestctl monitoring enable',
-};
+import { SxProps, Theme } from '@mui/material';
+
+export interface ColoredLabelProps {
+  sxBox?: SxProps<Theme>;
+  sxTypography?: SxProps<Theme>;
+  label: string;
+  bordered?: boolean;
+}
