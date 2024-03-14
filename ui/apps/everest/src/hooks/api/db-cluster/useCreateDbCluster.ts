@@ -22,7 +22,7 @@ import {
 import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
 import { getCronExpressionFromFormValues } from 'components/time-selection/time-selection.utils.ts';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
-import { generateShortUID } from 'pages/database-form/steps/first/utils.ts';
+import { generateShortUID } from 'pages/database-form/database-form-body/steps/first/utils';
 import {
   ClusterCredentials,
   DataSource,

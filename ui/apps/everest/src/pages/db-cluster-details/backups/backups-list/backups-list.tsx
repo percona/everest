@@ -187,7 +187,6 @@ export const BackupsList = () => {
                 onClick={() => handleScheduledBackup(handleClose)}
                 key="schedule"
                 data-testid="schedule-menu-item"
-                disabled={!dbCluster?.spec?.backup?.enabled}
               >
                 {Messages.schedule}
               </MenuItem>,
@@ -233,10 +232,12 @@ export const BackupsList = () => {
           </MenuItem>,
         ]}
       />
-      <OnDemandBackupModal
-        open={openCreateBackupModal}
-        handleClose={handleCloseBackupModal}
-      />
+      {openCreateBackupModal && (
+        <OnDemandBackupModal
+          open={openCreateBackupModal}
+          handleClose={handleCloseBackupModal}
+        />
+      )}
       {openDeleteDialog && (
         <ConfirmDialog
           isOpen={openDeleteDialog}

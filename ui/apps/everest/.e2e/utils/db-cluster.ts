@@ -17,13 +17,17 @@ import { APIRequestContext, expect } from '@playwright/test';
 import { dbTypeToDbEngine } from '@percona/utils';
 import { getEnginesVersions } from './database-engines';
 import { getClusterDetailedInfo } from './storage-class';
+import { getTokenFromLocalStorage } from './localStorage';
+import { getNamespacesFn } from './namespaces';
 
 export const createDbClusterFn = async (
-  token: string,
   request: APIRequestContext,
-  namespace: string,
-  customOptions?
+  customOptions?,
+  desiredNamespace?: string
 ) => {
+  const token = await getTokenFromLocalStorage();
+  const namespaces = await getNamespacesFn(token, request);
+  const namespace = desiredNamespace ?? namespaces[0];
   const dbEngines = await getEnginesVersions(token, namespace, request);
   const dbType = customOptions?.dbType || 'mysql';
   const dbEngineType = dbTypeToDbEngine(dbType);
@@ -123,11 +127,13 @@ export const createDbClusterFn = async (
 };
 
 export const deleteDbClusterFn = async (
-  token: string,
   request: APIRequestContext,
   clusterName: string,
-  namespace: string
+  desiredNamespace?: string
 ) => {
+  const token = await getTokenFromLocalStorage();
+  const namespaces = await getNamespacesFn(token, request);
+  const namespace = desiredNamespace ?? namespaces[0];
   const deleteResponse = await request.delete(
     `/v1/namespaces/${namespace}/database-clusters/${clusterName}`,
     {

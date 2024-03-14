@@ -13,12 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 export const Messages = {
-  monitoring: 'Monitoring',
-  caption:
-    'Monitor the health of your database to detect issues quickly and improve its performance.',
-  monitoringEnabled: 'Enable monitoring',
-  monitoringInstanceLabel: 'Monitoring endpoint URL',
-  alertText:
-    'Database monitoring is currently disabled because monitoring endpoints were not configured during installation. To enable database monitoring, run the following command:',
-  command: 'everestctl monitoring enable',
+  title: 'Irreversible action',
+  message:
+    'This action is irreversible and will permanently delete your database, rendering it unrecoverable.',
 };
