@@ -16,9 +16,9 @@ export const updateDataAfterEdit =
   };
 
 export const updateDataAfterCreate =
-  (queryClient: QueryClient, queryKey: string) =>
+  (queryClient: QueryClient, queryKey: string[]) =>
   <T extends object>(createdObject: T) => {
-    queryClient.setQueryData([queryKey], (oldData?: T[]) => {
+    queryClient.setQueryData(queryKey, (oldData?: T[]) => {
       return [createdObject, ...(oldData || [])];
     });
   };
