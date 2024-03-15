@@ -194,6 +194,10 @@ jobs:
             chmod +x /tmp/opm
             /tmp/opm alpha render-template semver -o yaml < ./catalog/everest-operator/veneer.yaml > ./catalog/everest-operator/catalog.yaml
                
+            # configure userdata for commits
+            git config --global user.email "everest-ci@percona.com"
+            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+          
             git commit -a -m "update version"
             git push origin $BRANCH_NAME
             # comment tags to not trigger the existing workflow in the catalog repo
@@ -201,7 +205,7 @@ jobs:
             # git push origin $GH_TAG
           fi
 
-      # TODO: push catalog images
+      
 
 
 #      - name: Everest - check out
