@@ -12,6 +12,7 @@ Here’s why you should try Percona Everest:
 - Automate backups
 - Ensure data security
 
+If you'd like to get a complete understanding of the features offered by Percona Everest, click on this [link](https://percona.community/projects/everest/).
 
 ## Documentation
 
