@@ -34,6 +34,10 @@ jobs:
       ARCH: ''
       OS: ''
     steps:
+      - name: Tmp break to prevent any changes
+        run: |
+          exit 1
+
       - name: Validate input
         run: |
           if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc[1-9][0-9]*)?$ ]]; then
@@ -41,7 +45,7 @@ jobs:
             exit 1
           fi
 
-      - name: Set environment variables based on VERSION
+      - name: Set environment variables
         run: |
           floating_tag=${VERSION%.*}
           echo "FLOATING_TAG=$floating_tag" >> $GITHUB_ENV
@@ -53,6 +57,7 @@ jobs:
           echo "ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" >> $GITHUB_ENV
           echo "OS=$(uname | awk '{print tolower($0)}')" >> $GITHUB_ENV
 
+
       - name: Operator - check out
         uses: actions/checkout@v4
         with:
@@ -60,65 +65,65 @@ jobs:
           path: everest-operator
           token: ${{ secrets.ROBOT_TOKEN }}
 
+      - name: Operator - create release branch
+        run: |
+          cd everest-operator
+          # Check if the branch already exists
+          git fetch
+          check_branch=$(git ls-remote --heads origin ${BRANCH_NAME})
+          if [[ -z ${check_branch} ]]; then
+            git checkout -b $BRANCH_NAME
 
-#      - name: Operator - create release branch
-#        run: |
-#          cd everest-operator
-#          # Check if the branch already exists
-#          git fetch
-#          check_branch=$(git ls-remote --heads origin ${BRANCH_NAME})
-#          if [[ -z ${check_branch} ]]; then
-#            git checkout -b $BRANCH_NAME
-#
-#            # update version in the Makefile
-#            sed -i "s/0.0.0/$VERSION/g" Makefile
-#
-#            make init
-#            make release
-#
-#            # configure userdata for commits
-#            git config --global user.email "everest-ci@percona.com"
-#            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
-#
-#            # commit and push the updated files
-#            git commit -a -m "update version"
-#
-#            git push origin $BRANCH_NAME
-#
-#            # comment tags to not trigger the existing workflow in the operator repo
-#            # git tag $GH_TAG
-#            # git push origin $GH_TAG
-#          else
-#            git checkout $BRANCH_NAME
-#          fi
+            # update version in the Makefile
+            sed -i "s/0.0.0/$VERSION/g" Makefile
+
+            make init
+            make release
+
+            # configure userdata for commits
+            git config --global user.email "everest-ci@percona.com"
+            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+
+            # commit and push the updated files
+            git commit -a -m "update version"
+
+            git push origin $BRANCH_NAME
+
+            # comment tags to not trigger the existing workflow in the operator repo
+            # git tag $GH_TAG
+            # git push origin $GH_TAG
+          else
+            git checkout $BRANCH_NAME
+          fi
 
 
-#      - name: Operator - install operator-sdk
-#        run: |
-#          mkdir -p $TOOLS_PATH
-#          echo $TOOLS_PATH >> $GITHUB_PATH
-#
-#          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.25.2
-#          curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
-#
-#          gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E
-#
-#          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt
-#          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt.asc
-#          gpg -u "Operator SDK (release) <cncf-operator-sdk@cncf.io>" --verify checksums.txt.asc
-#
-#          grep operator-sdk_${OS}_${ARCH} checksums.txt | sha256sum -c -
-#
-#          chmod +x operator-sdk_${OS}_${ARCH}
-#          mv operator-sdk_${OS}_${ARCH} $TOOLS_PATH/operator-sdk
-#
-#      - name: Operator - build and bundle
-#        run: |
-#          cd everest-operator
-#          make build manifests bundle
+      - name: Operator - install operator-sdk
+        run: |
+          mkdir -p $TOOLS_PATH
+          echo $TOOLS_PATH >> $GITHUB_PATH
+
+          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.25.2
+          curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
+
+          gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E
+
+          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt
+          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt.asc
+          gpg -u "Operator SDK (release) <cncf-operator-sdk@cncf.io>" --verify checksums.txt.asc
+
+          grep operator-sdk_${OS}_${ARCH} checksums.txt | sha256sum -c -
+
+          chmod +x operator-sdk_${OS}_${ARCH}
+          mv operator-sdk_${OS}_${ARCH} $TOOLS_PATH/operator-sdk
+
+      - name: Operator - build and bundle
+        run: |
+          cd everest-operator
+          make build manifests bundle
+
 
       - name: Operator - setup Docker meta for everest-operator
-        id: meta
+        id: operator_meta
         uses: docker/metadata-action@v4
         # docker/metadata-action action looks more elegant when being triggered by a GH tag,
         # however this workflow can't be triggered by a GH tag since there are some changes need to be done
@@ -152,23 +157,22 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-#      - name: Operator - build and push operator everest-operator image
-#        uses: docker/build-push-action@v3
-#        with:
-#          context: everest-operator
-#          # push: false
-#          push: true
-#          tags: ${{ steps.meta.outputs.tags }}
-#
+      - name: Operator - build and push operator everest-operator image
+        uses: docker/build-push-action@v3
+        with:
+          context: everest-operator
+          push: false
+          # push: true
+          tags: ${{ steps.operator_meta.outputs.tags }}
+
       - name: Operator - build and push everest-operator-bundle image
         uses: docker/build-push-action@v3
         with:
           context: everest-operator
-          # push: false
-          push: true
+          push: false
+          # push: true
           tags: ${{ steps.bundle_meta.outputs.tags }}
           file: everest-operator/bundle.Dockerfile
-
 
       - name: Catalog - checkout
         uses: actions/checkout@v4
@@ -205,30 +209,100 @@ jobs:
             # git push origin $GH_TAG
           fi
 
-      
+      - name: Catalog - docker meta
+        id: catalog_meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            percona/everest-catalog,enable=${{ env.IS_RC == 0 }}
+            perconalab/everest-catalog
+          tags: |
+            type=raw,value=${{ env.VERSION }}
+            type=raw,value=latest
+            type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
+            
 
+      - name: Catalog - build and push image
+        uses: docker/build-push-action@v3
+        with:
+          context: everest-catalog
+          push: false
+          # push: true
+          tags: ${{ steps.catalog_meta.outputs.tags }}
+          file: everest-catalog/everest-catalog.Dockerfile
 
-#      - name: Everest - check out
-#        uses: actions/checkout@v4
-#
-#      - name: Create and update Everest Backend release branch
-#        run: |
-#          # Check if the branch already exists
-#          git fetch
-#          check_branch=$(git ls-remote --heads origin ${BRANCH_NAME})
-#
-#          if [[ -z ${check_branch} ]]; then
-#            git checkout -b $BRANCH_NAME
-#            git push origin $BRANCH_NAME
-#
-#            # update tag refs in scripts
-#            sed -i "s/0.0.0/$VERSION/g" deploy/quickstart-k8s.yaml
-#
-#            # configure userdata for commits
-#            git config --global user.email "everest-ci@percona.com"
-#            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
-#
-#            # commit and push the updated files
-#            git commit -a -m "update version tag"
-#            git push origin $BRANCH_NAME
-#          fi
+      - name: Everest - check out
+        uses: actions/checkout@v4
+        token: ${{ secrets.ROBOT_TOKEN }}
+
+      - name: Everest - create and update release branch
+        run: |
+          # Check if the branch already exists
+          git fetch
+          check_branch=$(git ls-remote --heads origin ${BRANCH_NAME})
+
+          if [[ -z ${check_branch} ]]; then
+            git checkout -b $BRANCH_NAME
+            git push origin $BRANCH_NAME
+
+            # update tag refs in scripts
+            sed -i "s/0.0.0/$VERSION/g" deploy/quickstart-k8s.yaml
+
+            # configure userdata for commits
+            git config --global user.email "everest-ci@percona.com"
+            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+
+            # commit and push the updated files
+            git commit -a -m "update version tag"
+            git push origin $BRANCH_NAME
+          
+            # git tag $GH_TAG
+            # git push origin $GH_TAG
+          fi
+
+      - name: Everest UI - setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Everest UI - run with Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'pnpm'
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Everest UI - build
+        run: |
+          cd ui
+          pnpm install
+          EVEREST_OUT_DIR=${GITHUB_WORKSPACE}/public/dist/ pnpm build
+
+      - name: Everest - setup golang
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: './go.mod'
+
+      - name: Everest - build binary
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build
+
+      - name: Everest - setup docker build metadata
+        uses: docker/metadata-action@v5
+        id: everest_meta
+        with:
+          images: |
+            percona/percona-everest,enable=${{ env.IS_RC == 0 }}
+            perconalab/everest
+          tags: |
+            type=raw,value=${{ env.VERSION }}
+            type=raw,value=latest
+            type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
+
+      - name: Everest - build and push Everest image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          # push: true
+          tags: ${{ steps.everest_meta.outputs.tags }}
