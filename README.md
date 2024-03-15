@@ -1,7 +1,6 @@
 # Percona Everest
 
-!!! caution alert alert-warning "Important"
-    Percona Everest is now in **Beta**, and we need your [feedback](https://forums.percona.com/c/percona-everest/81)! We want you to be a part of this journey and help us shape our product.
+**Note**: Percona Everest is now in **Beta**, and we need your [feedback](https://forums.percona.com/c/percona-everest/81)! We want you to be a part of this journey and help us shape our product.
     
 
 [Percona Everest](https://docs.percona.com/everest/index.html) is an open source cloud-native database platform that helps developers deploy code faster, scale deployments rapidly, and reduce database administration overhead while regaining control over their data, database configuration, and DBaaS costs.
@@ -83,8 +82,7 @@ To install and provision Percona Everest to Kubernetes:
 
     Enter the specific names for the namespaces you want Everest to manage, separating each name with a comma.
 
-    !!! note 
-        Make sure that you enter at least one namespace.
+    **Note**: Make sure that you enter at least one namespace.
 
     Alternatively, you can set multiple namepaces in the headless mode:
 
@@ -94,8 +92,7 @@ To install and provision Percona Everest to Kubernetes:
     
     Replace `<namespace-name>` with the desired name for your namespace.
 
-    !!! note
-        Ensure that you copy the authorization token displayed on the terminal in this step. You will need this token to log in to the Percona Everest UI.    
+    **Note**: Ensure that you copy the authorization token displayed on the terminal in this step. You will need this token to log in to the Percona Everest UI.    
 
 3. Access the Everest UI/API using one of the following options for exposing it, as Everest is not exposed with an external IP by default:
 
