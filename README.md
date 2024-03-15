@@ -25,6 +25,25 @@ Ready to try out Percona Everest? Check the [Quickstart install](https://docs.pe
 
 Before getting started with Percona Everest, do the following:
 
+1. Set up a Kubernetes cluster. 
+
+    Percona Everest assists with installing all the necessary operators and required packages, but does not deploy a Kubernetes cluster.
+
+    We recommend setting up Percona Everest on the [Amazon Elastic Kubernetes Service (EKS)](https://docs.percona.com/everest/quickstart-guide/eks.html) or [Google Kubernetes Engine (GKE)](https://docs.percona.com/everest/quickstart-guide/gke.html).
+
+2. Verify that you have access to the Kubernetes cluster that you want to use with Everest. By default, Everest uses the kubeconfig file available under `~/.kube/config`. 
+
+    To verify access to the Kubernetes cluster, run the following command:
+   
+    ```sh 
+    kubectl get nodes
+    ```
+
+## Install Percona Everest
+
+To install and provision Percona Everest to Kubernetes:
+
+
 1. Download the latest version of Everest CLI by visiting the latest release page in [this repository](https://github.com/percona/percona-everest-cli/releases/latest).
 
     **Linux and WSL**
@@ -50,26 +69,6 @@ Before getting started with Percona Everest, do the following:
     sudo install -m 555 everestctl-darwin-amd64 /usr/local/bin/everestctl
     rm everestctl-darwin-amd64
     ```
-
-2. Set up a Kubernetes cluster. 
-
-    Percona Everest assists with installing all the necessary operators and required packages, but does not deploy a Kubernetes cluster.
-
-    We recommend setting up Percona Everest on the [Amazon Elastic Kubernetes Service (EKS)](https://docs.percona.com/everest/quickstart-guide/eks.html) or [Google Kubernetes Engine (GKE)](https://docs.percona.com/everest/quickstart-guide/gke.html).
-
-3. Verify that you have access to the Kubernetes cluster that you want to use with Everest. By default, Everest uses the kubeconfig file available under `~/.kube/config`. 
-
-    To verify access to the Kubernetes cluster, run the following command:
-   
-    ```sh 
-    kubectl get nodes
-    ```
-
-## Install Percona Everest
-
-To install and provision Percona Everest to Kubernetes:
-
-1. Download the latest release of [everestctl](https://github.com/percona/percona-everest-cli/releases/latest) to provision Percona Everest.
 
 2. Install Everest and provision the Kubernetes cluster using one of the following commands:
 
