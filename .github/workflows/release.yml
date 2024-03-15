@@ -167,7 +167,7 @@ jobs:
           # push: false
           push: true
           tags: ${{ steps.bundle_meta.outputs.tags }}
-          file: bundle.Dockerfile
+          file: everest-operator/bundle.Dockerfile
 
 
       - name: Catalog - checkout
