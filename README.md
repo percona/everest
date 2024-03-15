@@ -93,7 +93,8 @@ To install and provision Percona Everest to Kubernetes:
     
     Replace `<namespace-name>` with the desired name for your namespace.
 
-    **Note**: Ensure that you copy the authorization token displayed on the terminal in this step. You will need this token to log in to the Percona Everest UI.    
+    !!! note
+        Ensure that you copy the authorization token displayed on the terminal in this step. You will need this token to log in to the Percona Everest UI.    
 
 3. Access the Everest UI/API using one of the following options for exposing it, as Everest is not exposed with an external IP by default:
 
