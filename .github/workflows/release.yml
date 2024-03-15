@@ -23,6 +23,8 @@ jobs:
       TOOLS_PATH: "/opt/tools/bin"
       #VERSION: ${{ github.event.inputs.version }}
       VERSION: 100.100.100-rc100
+      # version in format "X.Y" which is going to be updated with each patch release
+      FLOATING_TAG: ''
       # branch name in format "release-X.Y"
       BRANCH_NAME: ''
       # GitHub tag name to use for the RC/Release
@@ -39,8 +41,8 @@ jobs:
 
       - name: Set environment variables based on VERSION
         run: |
-          major_minor=$(echo "$VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*$/\1/')
-          echo "BRANCH_NAME=release-$major_minor" >> $GITHUB_ENV
+          echo "FLOATING_TAG=$(echo "$VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*$/\1/')" >> $GITHUB_ENV
+          echo "BRANCH_NAME=release-$FLOATING_TAG" >> $GITHUB_ENV
           echo "GH_TAG=v$VERSION" >> $GITHUB_ENV
           if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "IS_RC=1" >> $GITHUB_ENV
@@ -81,45 +83,52 @@ jobs:
             # comment tags to not trigger the existing workflow in the operator repo
             # git tag $GH_TAG
             # git push origin $GH_TAG
+          else 
+            git checkout $BRANCH_NAME
           fi
 
 
-      - name: Operator - install operator-sdk
-        run: |
-          mkdir -p $TOOLS_PATH
-          echo $TOOLS_PATH >> $GITHUB_PATH
-
-          export ARCH=$(case $(uname -m) in x86_64) echo -n amd64 ;; aarch64) echo -n arm64 ;; *) echo -n $(uname -m) ;; esac)
-          export OS=$(uname | awk '{print tolower($0)}')
-
-          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.25.2
-          curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
-
-          gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E
-
-          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt
-          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt.asc
-          gpg -u "Operator SDK (release) <cncf-operator-sdk@cncf.io>" --verify checksums.txt.asc
-
-          grep operator-sdk_${OS}_${ARCH} checksums.txt | sha256sum -c -
-
-          chmod +x operator-sdk_${OS}_${ARCH}
-          mv operator-sdk_${OS}_${ARCH} $TOOLS_PATH/operator-sdk
-
-      - name: Operator - build and bundle
-        run: |
-          cd everest-operator
-          make build manifests bundle
+#      - name: Operator - install operator-sdk
+#        run: |
+#          mkdir -p $TOOLS_PATH
+#          echo $TOOLS_PATH >> $GITHUB_PATH
+#
+#          export ARCH=$(case $(uname -m) in x86_64) echo -n amd64 ;; aarch64) echo -n arm64 ;; *) echo -n $(uname -m) ;; esac)
+#          export OS=$(uname | awk '{print tolower($0)}')
+#
+#          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.25.2
+#          curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
+#
+#          gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E
+#
+#          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt
+#          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt.asc
+#          gpg -u "Operator SDK (release) <cncf-operator-sdk@cncf.io>" --verify checksums.txt.asc
+#
+#          grep operator-sdk_${OS}_${ARCH} checksums.txt | sha256sum -c -
+#
+#          chmod +x operator-sdk_${OS}_${ARCH}
+#          mv operator-sdk_${OS}_${ARCH} $TOOLS_PATH/operator-sdk
+#
+#      - name: Operator - build and bundle
+#        run: |
+#          cd everest-operator
+#          make build manifests bundle
 
       - name: Operator - setup Docker meta for everest-operator
         id: meta
         uses: docker/metadata-action@v4
+        # this action looks more elegant when being triggered by a GH tag,
+        # however this workflow can't be triggered by a GH tag since there are some changes need to be done
+        # in the codebase prior putting the tag, so the action uses the raw tags
         with:
           images: |
-            perconalab/everest-operator,enable=${{ env.IS_RC == 1 }}
+            percona/everest-operator,enable=${{ env.IS_RC == 0 }}
+            perconalab/everest-operator
           tags: |
-            type=raw,value=100.100.100,enable=${{ env.IS_RC == 1 }}
-            type=raw,value=100.100.101,enable=${{ env.IS_RC == 0 }}
+            type=raw,value=$VERSION
+            type=raw,value=$FLOATING_TAG,enable=${{ env.IS_RC == 0 }}
+            type=raw,value=latest,enable=${{ env.IS_RC == 0 }}
 
 
 #      - name: Operator - setup Docker meta for everest-operator-bundle
@@ -142,11 +151,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Test print tags
+        run: |
+          echo "${{ steps.meta.outputs.tags }}" 
+
       - name: Operator - build and push operator everest-operator image
         uses: docker/build-push-action@v3
         with:
           context: everest-operator
-          push: true
+          push: false
+          # push: true
           tags: ${{ steps.meta.outputs.tags }}
 
 #      - name: Operator - build and push everest-operator-bundle image
