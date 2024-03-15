@@ -31,6 +31,8 @@ jobs:
       GH_TAG: ''
       # Shows if this workflow is triggered for RC or Release
       IS_RC: 0
+      ARCH: ''
+      OS: ''
     steps:
       - name: Validate input
         run: |
@@ -41,13 +43,19 @@ jobs:
 
       - name: Set environment variables based on VERSION
         run: |
-          floating_tag=$(echo "$VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*$/\1/')
+          floating_tag=${VERSION%.*}
           echo "FLOATING_TAG=$floating_tag" >> $GITHUB_ENV
           echo "BRANCH_NAME=release-$floating_tag" >> $GITHUB_ENV
           echo "GH_TAG=v$VERSION" >> $GITHUB_ENV
           if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "IS_RC=1" >> $GITHUB_ENV
           fi
+          echo "ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" >> $GITHUB_ENV
+          echo "OS=$(uname | awk '{print tolower($0)}')" >> $GITHUB_ENV
+
+      - name: Test break;
+        run: |
+          exit 1;
 
       - name: Operator - check out
         uses: actions/checkout@v4
@@ -119,7 +127,7 @@ jobs:
       - name: Operator - setup Docker meta for everest-operator
         id: meta
         uses: docker/metadata-action@v4
-        # this action looks more elegant when being triggered by a GH tag,
+        # docker/metadata-action action looks more elegant when being triggered by a GH tag,
         # however this workflow can't be triggered by a GH tag since there are some changes need to be done
         # in the codebase prior putting the tag, so the action uses the raw tags
         with:
@@ -132,18 +140,17 @@ jobs:
             type=raw,value=latest,enable=${{ env.IS_RC == 0 }}
 
 
-#      - name: Operator - setup Docker meta for everest-operator-bundle
-#        id: bundle_meta
-#        uses: docker/metadata-action@v4
-#        with:
-#          images: |
-#            percona/everest-operator-bundle,enable=${{ github.ref_type == 'tag' && !contains(github.ref_name, 'rc') }}
-#            perconalab/everest-operator-bundle
-#          tags: |
-#            type=match,pattern=v(.*),group=1
-#            type=match,pattern=v(\d.\d),group=1,enable=${{ !contains(github.ref_name, 'main') }}
-#            type=raw,value=latest,enable=${{ !contains(github.ref_name, 'rc') }}
-#            type=raw,value=0.0.0,enable=${{ contains(github.ref_name, 'main') }}
+      - name: Operator - setup Docker meta for everest-operator-bundle
+        id: bundle_meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            percona/everest-operator-bundle,enable=${{ env.IS_RC == 0 }}
+            perconalab/everest-operator-bundle
+          tags: |
+            type=raw,value=${{ env.VERSION }}
+            type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
+            type=raw,value=latest,enable=${{ env.IS_RC == 0 }}
 
 
       - name: Login to GitHub Container Registry
@@ -152,46 +159,52 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Test print tags
-        run: |
-          echo "${{ steps.meta.outputs.tags }}" 
-
       - name: Operator - build and push operator everest-operator image
         uses: docker/build-push-action@v3
         with:
           context: everest-operator
-          push: false
-          # push: true
+          # push: false
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
 
-#      - name: Operator - build and push everest-operator-bundle image
-#        uses: docker/build-push-action@v3
-#        with:
-#          context: .
-#          push: true
-#          tags: ${{ steps.bundle_meta.outputs.tags }}
-#          file: bundle.Dockerfile
+      - name: Operator - build and push everest-operator-bundle image
+        uses: docker/build-push-action@v3
+        with:
+          context: everest-operator
+          # push: false
+          push: true
+          tags: ${{ steps.bundle_meta.outputs.tags }}
+          file: bundle.Dockerfile
 
 
-#      - name: Catalog - checkout
-#        uses: actions/checkout@v4
-#        with:
-#          repository: percona/everest-catalog
-#          path: everest-catalog
-#          token: ${{ secrets.ROBOT_TOKEN }}
-#
-#
-#      - name: Catalog - create release branch
-#        run: |
-#          cd everest-catalog
-#          # Check if the branch already exists
-#          git fetch
-#          check_branch=$(git ls-remote --heads origin ${BRANCH_NAME})
-#
-#          if [[ -z ${check_branch} ]]; then
-#            git checkout -b $BRANCH_NAME
-#            git push origin $BRANCH_NAME
-#          fi
+      - name: Catalog - checkout
+        uses: actions/checkout@v4
+        with:
+          repository: percona/everest-catalog
+          path: everest-catalog
+          token: ${{ secrets.ROBOT_TOKEN }}
+
+
+      - name: Catalog - create release branch
+        run: |
+          cd everest-catalog
+          # Check if the branch already exists
+          git fetch
+          check_branch=$(git ls-remote --heads origin ${BRANCH_NAME})
+
+          if [[ -z ${check_branch} ]]; then
+            git checkout -b $BRANCH_NAME
+            git push origin $BRANCH_NAME
+          else
+            git checkout $BRANCH_NAME
+          fi
+
+      - name: Check default main state - generated files
+        run: |
+          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/latest/download/linux-amd64-opm
+          chmod +x /tmp/opm
+          /tmp/opm alpha render-template semver -o yaml < ./catalog/everest-operator/veneer.yaml > ./catalog/everest-operator/catalog.yaml
+
 
 
 #      - name: Everest - check out
