@@ -83,7 +83,8 @@ To install and provision Percona Everest to Kubernetes:
 
     Enter the specific names for the namespaces you want Everest to manage, separating each name with a comma.
 
-    **Note:** Make sure that you enter at least one namespace.
+    !!! note 
+        Make sure that you enter at least one namespace.
 
     Alternatively, you can set multiple namepaces in the headless mode:
 
