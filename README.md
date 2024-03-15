@@ -1,6 +1,6 @@
 # Percona Everest
 
-!!! warning "Important"
+!!! caution alert alert-warning "Important"
     Percona Everest is now in **Beta**, and we need your [feedback](https://forums.percona.com/c/percona-everest/81)! We want you to be a part of this journey and help us shape our product.
     
 
