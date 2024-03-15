@@ -36,8 +36,8 @@ export const getEndpointSchema = (isEditMode: boolean) =>
           }),
     })
     .superRefine((arg, ctx) => {
-        const hasUser = !!arg.user;
-        const hasPassword = !!arg.password;
+      const hasUser = !!arg.user;
+      const hasPassword = !!arg.password;
 
       if (hasUser !== hasPassword) {
         ctx.addIssue({
