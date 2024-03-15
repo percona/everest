@@ -44,7 +44,7 @@ Before getting started with Percona Everest, do the following:
 To install and provision Percona Everest to Kubernetes:
 
 
-1. Download the latest version of Everest CLI by visiting the latest release page in [this repository](https://github.com/percona/percona-everest-cli/releases/latest).
+1. Install the latest version of the Everest CLI by running the following commands:
 
     **Linux and WSL**
         
