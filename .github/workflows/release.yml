@@ -49,10 +49,6 @@ jobs:
             echo "IS_RC=1" >> $GITHUB_ENV
           fi
 
-      - name: Test break;
-        run: |
-          exit 1
-
       - name: Operator - check out
         uses: actions/checkout@v4
         with:
@@ -61,36 +57,36 @@ jobs:
           token: ${{ secrets.ROBOT_TOKEN }}
 
 
-      - name: Operator - create release branch
-        run: |
-          cd everest-operator
-          # Check if the branch already exists
-          git fetch
-          check_branch=$(git ls-remote --heads origin ${BRANCH_NAME})
-          if [[ -z ${check_branch} ]]; then
-            git checkout -b $BRANCH_NAME
-
-            # update version in the Makefile
-            sed -i "s/0.0.0/$VERSION/g" Makefile
-
-            make init
-            make release
-
-            # configure userdata for commits
-            git config --global user.email "everest-ci@percona.com"
-            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
-
-            # commit and push the updated files
-            git commit -a -m "update version"
-
-            git push origin $BRANCH_NAME
-
-            # comment tags to not trigger the existing workflow in the operator repo
-            # git tag $GH_TAG
-            # git push origin $GH_TAG
-          else 
-            git checkout $BRANCH_NAME
-          fi
+#      - name: Operator - create release branch
+#        run: |
+#          cd everest-operator
+#          # Check if the branch already exists
+#          git fetch
+#          check_branch=$(git ls-remote --heads origin ${BRANCH_NAME})
+#          if [[ -z ${check_branch} ]]; then
+#            git checkout -b $BRANCH_NAME
+#
+#            # update version in the Makefile
+#            sed -i "s/0.0.0/$VERSION/g" Makefile
+#
+#            make init
+#            make release
+#
+#            # configure userdata for commits
+#            git config --global user.email "everest-ci@percona.com"
+#            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+#
+#            # commit and push the updated files
+#            git commit -a -m "update version"
+#
+#            git push origin $BRANCH_NAME
+#
+#            # comment tags to not trigger the existing workflow in the operator repo
+#            # git tag $GH_TAG
+#            # git push origin $GH_TAG
+#          else
+#            git checkout $BRANCH_NAME
+#          fi
 
 
 #      - name: Operator - install operator-sdk
