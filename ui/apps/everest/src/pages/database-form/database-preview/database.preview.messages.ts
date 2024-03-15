@@ -20,7 +20,6 @@ import {
 } from 'components/time-selection/time-selection.types';
 import { addZeroToSingleDigit } from 'components/time-selection/time-selection.utils';
 
-// TODO re-add steps after API is ready
 export const Messages = {
   title: 'Database Summary',
   preview: [
