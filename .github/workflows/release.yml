@@ -245,8 +245,9 @@ jobs:
             git checkout -b $BRANCH_NAME
             git push origin $BRANCH_NAME
 
-            # update tag refs in scripts
-            sed -i "s/0.0.0/$VERSION/g" deploy/quickstart-k8s.yaml
+            # TODO !!!! Update deploy manifest 
+            # TODO !!!! Update the operator go module to reference the version tag
+            # TODO !!!! Change version in Makefile
 
             # configure userdata for commits
             git config --global user.email "everest-ci@percona.com"
@@ -306,3 +307,16 @@ jobs:
           push: false
           # push: true
           tags: ${{ steps.everest_meta.outputs.tags }}
+
+      - name: CLI - build binaries
+        run: |
+          make release-cli
+
+      - name: CLI - create release with binaries
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: |
+            dist/*
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
