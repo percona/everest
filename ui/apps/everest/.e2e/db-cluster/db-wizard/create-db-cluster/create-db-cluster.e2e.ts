@@ -137,9 +137,7 @@ test.describe('DB Cluster creation', () => {
 
     await backupsStepCheck(page);
     // TODO will change when we support physical backups
-    await expect(
-      page.getByRole('radio', { name: 'radio-group-logicalPhysical' })
-    ).toHaveValue('logical');
+    await expect(page.getByTestId('radio-option-logical')).toBeChecked();
     scheduleName = await page
       .getByTestId('text-input-schedule-name')
       .inputValue();
@@ -175,8 +173,7 @@ test.describe('DB Cluster creation', () => {
     await expect(page.getByText('Number of nodes: 3')).toBeVisible();
     await page.getByTestId('button-edit-preview-backups').click();
 
-    expect(page.getByRole('radio', { name: 'radio-group-logicalPhysical' })).not
-      .toBeVisible;
+    expect(page.getByTestId('radio-option-logical')).not.toBeVisible;
     // Now we make sure schedule name and location haven't changed
     expect(
       await page.getByTestId('text-input-schedule-name').inputValue()
