@@ -268,6 +268,11 @@ jobs:
         with:
           token: ${{ secrets.ROBOT_TOKEN }}
 
+      - name: Everest - setup golang
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: './go.mod'
+
       - name: Everest - create and update release branch
         run: |
           # Check if the branch already exists
@@ -290,8 +295,8 @@ jobs:
           fi 
           
           # Update the operator go module to reference the version tag
-          # go get github.com/percona/everest-operator@$GH_TAG
-          # go mod tidy
+          go get github.com/percona/everest-operator@$GH_TAG
+          go mod tidy
           
           # Change version in Makefile
           sed -i "s/RELEASE_VERSION ?=.*/RELEASE_VERSION ?= v$VERSION/g" Makefile
@@ -335,11 +340,6 @@ jobs:
           cd ui
           pnpm install
           EVEREST_OUT_DIR=${GITHUB_WORKSPACE}/public/dist/ pnpm build
-
-      - name: Everest - setup golang
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: './go.mod'
 
       - name: Everest - build binary
         run: |
