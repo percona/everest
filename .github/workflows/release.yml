@@ -206,7 +206,7 @@ jobs:
           git checkout $BRANCH_NAME
                
           # update tag refs in scripts
-          if [[ ${ env.IS_RC }]]; then 
+          if [[ ${ env.IS_RC } ]]; then 
             sed -i "s/perconalab\/everest-operator-bundle.*/perconalab\/everest-operator-bundle:$VERSION/g" catalog/everest-operator/veneer.yaml
             sed -i "s/percona\/everest-operator-bundle.*/perconalab\/everest-operator-bundle:$VERSION/g" catalog/everest-operator/veneer.yaml
           else
@@ -283,7 +283,7 @@ jobs:
           git checkout $BRANCH_NAME
           
           # Update deploy manifest 
-          if [[ ${ env.IS_RC }]]; then 
+          if [[ ${ env.IS_RC } ]]; then 
             sed -i "s/perconalab\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
             sed -i "s/percona\/percona-everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
           else
