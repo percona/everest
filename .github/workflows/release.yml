@@ -276,7 +276,7 @@ jobs:
 
           if [[ -z ${check_branch} ]]; then
             git checkout -b $BRANCH_NAME
-            git push origin $BRANCH_NAME
+            # git push origin $BRANCH_NAME
           fi
           git checkout $BRANCH_NAME
           
