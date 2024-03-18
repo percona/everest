@@ -1,10 +1,15 @@
 import { Box, Button, Typography } from '@mui/material';
 import { NoMatchIcon } from '@percona/ui-lib';
-import { Link } from 'react-router-dom';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
+import { Link } from 'react-router-dom';
 import { Messages } from './NoMatch.messages';
+import { NoMatchProps } from './NoMatch.type';
 
-export const NoMatch = () => {
+export const NoMatch = ({
+  header = Messages.header,
+  subHeader = Messages.subHeader,
+  redirectButtonText = Messages.redirectButton,
+}: NoMatchProps) => {
   const { isMobile, isTablet, isDesktop } = useActiveBreakpoint();
 
   return (
@@ -37,7 +42,7 @@ export const NoMatch = () => {
               '"Poppins", "Roboto", "Helvetica", "Arial", "sans-serif"',
           }}
         >
-          {Messages.header}
+          {header}
         </Typography>
         <Typography
           sx={{
@@ -49,7 +54,7 @@ export const NoMatch = () => {
               '"Poppins", "Roboto", "Helvetica", "Arial", "sans-serif"',
           }}
         >
-          {Messages.subHeader}
+          {subHeader}
         </Typography>
         <Button
           component={Link}
@@ -58,7 +63,7 @@ export const NoMatch = () => {
           variant="contained"
           data-testid="no-match-button"
         >
-          {Messages.redirectButton}
+          {redirectButtonText}
         </Button>
       </Box>
     </Box>

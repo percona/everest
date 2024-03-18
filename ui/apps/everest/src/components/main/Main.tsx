@@ -11,6 +11,7 @@ import {
 import { DrawerContext } from 'contexts/drawer/drawer.context';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
 import useLocalStorage from 'hooks/utils/useLocalStorage';
+import { GenericError } from 'pages/generic-error/GenericError';
 import { useContext } from 'react';
 import { Outlet } from 'react-router-dom';
 import { ErrorBoundary } from 'utils/ErrorBoundary';
@@ -81,7 +82,7 @@ export const Main = () => {
             </Button>
           </Stack>
         ) : (
-          <ErrorBoundary fallback={<div>Error</div>}>
+          <ErrorBoundary fallback={<GenericError />}>
             <Outlet />
           </ErrorBoundary>
         )}
