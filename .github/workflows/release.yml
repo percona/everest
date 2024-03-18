@@ -26,7 +26,7 @@ jobs:
       # TODO: uncomment once ready to merge
       #VERSION: ${{ github.event.inputs.version }}
       # TODO: delete this line once ready to merge
-      VERSION: 100.100.100-rc100
+      VERSION: 100.100.101-rc100
       # version in format "X.Y" which is going to be updated with each patch release
       FLOATING_TAG: ''
       # branch name in format "release-X.Y"
@@ -38,9 +38,6 @@ jobs:
       ARCH: ''
       OS: ''
     steps:
-      - name: Tmp break to prevent any changes
-        run: |
-          exit 1
 
       - name: Validate input
         run: |
@@ -99,6 +96,10 @@ jobs:
             git config --global user.email "everest-ci@percona.com"
             git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
 
+            echo "---"
+            git diff
+            echo "---"
+          
             # commit and push the updated files
             git commit -a -m "update version tag"
             git push origin $BRANCH_NAME
@@ -227,6 +228,10 @@ jobs:
             # configure userdata for commits
             git config --global user.email "everest-ci@percona.com"
             git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+          
+            echo "---"
+            git diff
+            echo "---"
 
             # commit and push the updated files
             git commit -a -m "update version tag"
@@ -301,6 +306,10 @@ jobs:
             # configure userdata for commits
             git config --global user.email "everest-ci@percona.com"
             git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+
+            echo "---"
+            git diff
+            echo "---"
 
             # commit and push the updated files
             git commit -a -m "update version tag"
