@@ -1,4 +1,7 @@
+import { DbCluster } from 'shared-types/dbCluster.types';
+
 export type ScheduleModalContextType = {
+  dbCluster: DbCluster;
   mode?: 'new' | 'edit';
   setMode?: React.Dispatch<React.SetStateAction<'new' | 'edit'>>;
   selectedScheduleName?: string;

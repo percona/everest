@@ -27,7 +27,7 @@ export const Backups = () => {
   const { dbClusterName, namespace = '' } = useParams();
   const { data = [] } = useDbClusters(namespace);
   const { data: backupStorages = [] } = useBackupStorages();
-  const dbNameExists = data.find(
+  const dbCluster = data.find(
     (cluster) => cluster.metadata.name === dbClusterName
   );
 
@@ -35,9 +35,14 @@ export const Backups = () => {
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');
 
+  if (!dbCluster) {
+    return null;
+  }
+
   return (
     <ScheduleModalContext.Provider
       value={{
+        dbCluster,
         mode,
         setMode,
         openScheduleModal,
@@ -49,7 +54,7 @@ export const Backups = () => {
       {backupStorages.length === 0 ? (
         <NoStoragesMessage />
       ) : (
-        dbNameExists && (
+        dbCluster && (
           <>
             <ScheduledBackupsList />
             <BackupsList />

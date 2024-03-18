@@ -16,27 +16,30 @@
 import { ScheduleForm } from 'components/schedule-form/schedule-form.tsx';
 import { ScheduleFormFields } from 'components/schedule-form/schedule-form.types.ts';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
-import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster.ts';
 import { useContext, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
 import { ScheduleModalContext } from '../../backups.context.ts';
+import { DbEngineType } from 'shared-types/dbEngines.types.ts';
 
 export const ScheduledBackupModalForm = () => {
   const { watch, setValue, trigger } = useFormContext();
-  const { dbClusterName, namespace = '' } = useParams();
-  const { mode = 'new', setSelectedScheduleName } =
-    useContext(ScheduleModalContext);
+  const {
+    mode = 'new',
+    setSelectedScheduleName,
+    dbCluster,
+  } = useContext(ScheduleModalContext);
+
+  const {
+    metadata: { namespace },
+  } = dbCluster;
 
   const { data: backupStorages = [], isFetching } =
     useBackupStoragesByNamespace(namespace);
-  const { data: dbCluster } = useDbCluster(dbClusterName!, namespace, {
-    enabled: !!dbClusterName && mode === 'edit',
-  });
 
   const dbClusterActiveStorage = dbCluster?.status?.activeStorage;
   const schedules = (dbCluster && dbCluster?.spec?.backup?.schedules) || [];
   const scheduleName = watch(ScheduleFormFields.scheduleName);
+
   useEffect(() => {
     if (mode === 'edit' && setSelectedScheduleName) {
       setSelectedScheduleName(scheduleName);
@@ -54,6 +57,7 @@ export const ScheduledBackupModalForm = () => {
 
   return (
     <ScheduleForm
+      showTypeRadio={dbCluster.spec.engine.type === DbEngineType.PSMDB}
       allowScheduleSelection={mode === 'edit'}
       disableStorageSelection={!!dbClusterActiveStorage}
       autoFillLocation={mode === 'new'}

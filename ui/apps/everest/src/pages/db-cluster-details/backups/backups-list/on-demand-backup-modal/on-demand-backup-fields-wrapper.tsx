@@ -1,6 +1,7 @@
 import { TextInput } from '@percona/ui-lib';
 import { AutoCompleteAutoFill } from 'components/auto-complete-auto-fill/auto-complete-auto-fill';
 import { ScheduleFormFields } from 'components/schedule-form/schedule-form.types';
+import LogicalPhysicalRadioGroup from 'components/logical-physical-radio-group';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
 import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster.ts';
 import { useEffect } from 'react';
@@ -8,6 +9,7 @@ import { useFormContext } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import { Messages } from '../../../db-cluster-details.messages.ts';
 import { BackupFields } from './on-demand-backup-modal.types.ts';
+import { DbEngineType } from '@percona/types';
 
 export const OnDemandBackupFieldsWrapper = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -29,6 +31,9 @@ export const OnDemandBackupFieldsWrapper = () => {
 
   return (
     <>
+      {dbCluster?.spec.engine.type === DbEngineType.PSMDB && (
+        <LogicalPhysicalRadioGroup />
+      )}
       <TextInput
         name={BackupFields.name}
         label={Messages.onDemandBackupModal.backupName}
