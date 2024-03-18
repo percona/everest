@@ -137,7 +137,7 @@ test.describe('DB Cluster creation', () => {
 
     await backupsStepCheck(page);
     // TODO will change when we support physical backups
-    expect(
+    await expect(
       page.getByRole('radio', { name: 'radio-group-logicalPhysical' })
     ).toHaveValue('logical');
     scheduleName = await page
