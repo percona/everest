@@ -290,8 +290,8 @@ jobs:
           fi 
           
           # Update the operator go module to reference the version tag
-#          go get github.com/percona/everest-operator@$GH_TAG
-#          go mod tidy
+          # go get github.com/percona/everest-operator@$GH_TAG
+          # go mod tidy
           
           # Change version in Makefile
           sed -i "s/RELEASE_VERSION ?=.*/RELEASE_VERSION ?= v$VERSION/g" Makefile
