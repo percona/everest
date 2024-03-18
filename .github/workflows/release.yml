@@ -147,8 +147,6 @@ jobs:
           tags: |
             type=raw,value=${{ env.VERSION }}
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
-            type=raw,value=latest,enable=${{ env.IS_RC == 0 }}
-
 
       - name: Operator - setup Docker meta for everest-operator-bundle
         id: bundle_meta
@@ -206,7 +204,7 @@ jobs:
           git checkout $BRANCH_NAME
                
           # update tag refs in scripts
-          if [[ ${ env.IS_RC } ]]; then 
+          if [[ $env.IS_RC ]]; then 
             sed -i "s/perconalab\/everest-operator-bundle.*/perconalab\/everest-operator-bundle:$VERSION/g" catalog/everest-operator/veneer.yaml
             sed -i "s/percona\/everest-operator-bundle.*/perconalab\/everest-operator-bundle:$VERSION/g" catalog/everest-operator/veneer.yaml
           else
@@ -283,7 +281,7 @@ jobs:
           git checkout $BRANCH_NAME
           
           # Update deploy manifest 
-          if [[ ${ env.IS_RC } ]]; then 
+          if [[ $env.IS_RC ]]; then 
             sed -i "s/perconalab\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
             sed -i "s/percona\/percona-everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
           else
