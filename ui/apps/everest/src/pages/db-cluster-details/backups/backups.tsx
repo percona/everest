@@ -19,9 +19,10 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { BackupsList } from './backups-list/backups-list';
 import { ScheduleModalContext } from './backups.context.ts';
-import { NoStoragesMessage } from './no-storages-message/no-storages-message.tsx';
+import { NoStoragesMessage } from './no-storages-message/no-storages-message';
 import { ScheduledBackupModal } from './scheduled-backup-modal/scheduled-backup-modal';
 import { ScheduledBackupsList } from './scheduled-backups-list/scheduled-backups-list';
+import { OnDemandBackupModal } from './on-demand-backup-modal/on-demand-backup-modal';
 
 export const Backups = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -33,6 +34,7 @@ export const Backups = () => {
 
   const [mode, setMode] = useState<'new' | 'edit'>('new');
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
+  const [openOnDemandModal, setOpenOnDemandModal] = useState(false);
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');
 
   if (!dbCluster) {
@@ -49,6 +51,8 @@ export const Backups = () => {
         setOpenScheduleModal,
         selectedScheduleName,
         setSelectedScheduleName,
+        openOnDemandModal,
+        setOpenOnDemandModal,
       }}
     >
       {backupStorages.length === 0 ? (
@@ -58,6 +62,7 @@ export const Backups = () => {
           <>
             <ScheduledBackupsList />
             <BackupsList />
+            {openOnDemandModal && <OnDemandBackupModal />}
             {openScheduleModal && <ScheduledBackupModal />}
           </>
         )
