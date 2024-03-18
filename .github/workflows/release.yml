@@ -2,8 +2,10 @@
 name: Release
 on:
   push:
+    # TODO: delete once ready to merge
     branches:
       - EVEREST-726-release-workflow
+# TODO: uncomment once ready to merge
 #  workflow_dispatch:
 #    inputs:
 #      version:
@@ -21,7 +23,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TOOLS_PATH: "/opt/tools/bin"
+      # TODO: uncomment once ready to merge
       #VERSION: ${{ github.event.inputs.version }}
+      # TODO: delete this line once ready to merge
       VERSION: 100.100.100-rc100
       # version in format "X.Y" which is going to be updated with each patch release
       FLOATING_TAG: ''
@@ -73,27 +77,34 @@ jobs:
           check_branch=$(git ls-remote --heads origin ${BRANCH_NAME})
           if [[ -z ${check_branch} ]]; then
             git checkout -b $BRANCH_NAME
+            git push origin $BRANCH_NAME
+          fi
+          
+          git checkout $BRANCH_NAME
+          
+          # update version in the Makefile
+          sed -i "s/VERSION ?=.*/VERSION ?= $VERSION/g" Makefile
 
-            # update version in the Makefile
-            sed -i "s/0.0.0/$VERSION/g" Makefile
-
-            make init
-            make release
-
+          make init
+          make release
+          
+          # if there is something to commit, commit it and add the tag 
+          if [[ -n $(git status --porcelain) ]]; then
+            if git tag --list | grep -q "^$GH_TAG$"; then
+              echo "The tag is already present in github. Please create a different RC/Release"
+              exit 1
+            fi
+          
             # configure userdata for commits
             git config --global user.email "everest-ci@percona.com"
             git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
 
             # commit and push the updated files
-            git commit -a -m "update version"
-
+            git commit -a -m "update version tag"
             git push origin $BRANCH_NAME
-
-            # comment tags to not trigger the existing workflow in the operator repo
+            # TODO: uncomment once ready to merge
             # git tag $GH_TAG
             # git push origin $GH_TAG
-          else
-            git checkout $BRANCH_NAME
           fi
 
 
@@ -148,8 +159,6 @@ jobs:
           tags: |
             type=raw,value=${{ env.VERSION }}
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
-            type=raw,value=latest,enable=${{ env.IS_RC == 0 }}
-
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -161,6 +170,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: everest-operator
+          # TODO: uncomment once ready to merge
           push: false
           # push: true
           tags: ${{ steps.operator_meta.outputs.tags }}
@@ -190,24 +200,42 @@ jobs:
 
           if [[ -z ${check_branch} ]]; then
             git checkout -b $BRANCH_NAME
+            git push origin $BRANCH_NAME
+          fi
+          git checkout $BRANCH_NAME
                
-            # update tag refs in scripts
-            sed -i "s/0.0.0/$VERSION/g" catalog/everest-operator/veneer.yaml
+          # update tag refs in scripts
+          if [[ ${ env.IS_RC }]]; then 
+            sed -i "s/perconalab\/everest-operator-bundle.*/perconalab\/everest-operator-bundle:$VERSION/g" catalog/everest-operator/veneer.yaml
+            sed -i "s/percona\/everest-operator-bundle.*/perconalab\/everest-operator-bundle:$VERSION/g" catalog/everest-operator/veneer.yaml
+          else
+            sed -i "s/perconalab\/everest-operator-bundle.*/percona\/everest-operator-bundle:$VERSION/g" catalog/everest-operator/veneer.yaml
+            sed -i "s/percona\/everest-operator-bundle.*/percona\/everest-operator-bundle:$VERSION/g" catalog/everest-operator/veneer.yaml
+          fi 
+        
+          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/latest/download/${OS}-${ARCH}-opm
+          chmod +x /tmp/opm
+          /tmp/opm alpha render-template semver -o yaml < ./catalog/everest-operator/veneer.yaml > ./catalog/everest-operator/catalog.yaml
+                       
+          # if there is something to commit, commit it and add the tag 
+          if [[ -n $(git status --porcelain) ]]; then
+            if git tag --list | grep -q "^$GH_TAG$"; then
+              echo "The tag is already present in github. Please create a different RC/Release"
+              exit 1
+            fi
           
-            curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/latest/download/linux-amd64-opm
-            chmod +x /tmp/opm
-            /tmp/opm alpha render-template semver -o yaml < ./catalog/everest-operator/veneer.yaml > ./catalog/everest-operator/catalog.yaml
-               
             # configure userdata for commits
             git config --global user.email "everest-ci@percona.com"
             git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
-          
-            git commit -a -m "update version"
+
+            # commit and push the updated files
+            git commit -a -m "update version tag"
             git push origin $BRANCH_NAME
-            # comment tags to not trigger the existing workflow in the catalog repo
+            # TODO: uncomment once ready to merge
             # git tag $GH_TAG
             # git push origin $GH_TAG
           fi
+          
 
       - name: Catalog - docker meta
         id: catalog_meta
@@ -226,6 +254,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: everest-catalog
+          # TODO: uncomment once ready to merge
           push: false
           # push: true
           tags: ${{ steps.catalog_meta.outputs.tags }}
@@ -265,6 +294,10 @@ jobs:
           
           # if there is something to commit, commit it and add the tag 
           if [[ -n $(git status --porcelain) ]]; then
+            if git tag --list | grep -q "^$GH_TAG$"; then
+              echo "The tag is already present in github. Please create a different RC/Release"
+              exit 1
+            fi
             # configure userdata for commits
             git config --global user.email "everest-ci@percona.com"
             git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
@@ -272,14 +305,9 @@ jobs:
             # commit and push the updated files
             git commit -a -m "update version tag"
             git push origin $BRANCH_NAME
-          
-            if git tag --list | grep -q "^$GH_TAG$"; then
-              echo "The tag is already present in github. Please create a different RC/Release"
-              exit 1
-            else 
-              # git tag $GH_TAG
-              # git push origin $GH_TAG
-            fi
+            # TODO: uncomment once ready to merge
+            # git tag $GH_TAG
+            # git push origin $GH_TAG
           fi
 
       - name: Everest UI - setup pnpm
@@ -325,6 +353,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          # TODO: uncomment once ready to merge
           push: false
           # push: true
           tags: ${{ steps.everest_meta.outputs.tags }}
