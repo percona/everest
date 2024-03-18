@@ -244,11 +244,27 @@ jobs:
           if [[ -z ${check_branch} ]]; then
             git checkout -b $BRANCH_NAME
             git push origin $BRANCH_NAME
-
-            # TODO !!!! Update deploy manifest 
-            # TODO !!!! Update the operator go module to reference the version tag
-            # TODO !!!! Change version in Makefile
-
+          fi
+          git checkout $BRANCH_NAME
+          
+          # Update deploy manifest 
+          if [[ ${ env.IS_RC }]]; then 
+            sed -i "s/perconalab\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
+            sed -i "s/percona\/percona-everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
+          else
+            sed -i "s/perconalab\/everest.*/percona\/percona-everest:$VERSION/g" deploy/quickstart-k8s.yaml
+            sed -i "s/percona\/percona-everest.*/percona\/percona-everest:$VERSION/g" deploy/quickstart-k8s.yaml
+          fi 
+          
+          # Update the operator go module to reference the version tag
+          go get github.com/percona/everest-operator@$GH_TAG
+          go mod tidy
+          
+          # Change version in Makefile
+          sed -i "s/RELEASE_VERSION ?=.*/RELEASE_VERSION ?= v$VERSION/g" Makefile
+          
+          # if there is something to commit, commit it and add the tag 
+          if [[ -n $(git status --porcelain) ]]; then
             # configure userdata for commits
             git config --global user.email "everest-ci@percona.com"
             git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
@@ -257,8 +273,13 @@ jobs:
             git commit -a -m "update version tag"
             git push origin $BRANCH_NAME
           
-            # git tag $GH_TAG
-            # git push origin $GH_TAG
+            if git tag --list | grep -q "^$GH_TAG$"; then
+              echo "The tag is already present in github. Please create a different RC/Release"
+              exit 1
+            else 
+              # git tag $GH_TAG
+              # git push origin $GH_TAG
+            fi
           fi
 
       - name: Everest UI - setup pnpm
