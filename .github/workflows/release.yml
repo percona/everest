@@ -26,7 +26,7 @@ jobs:
       # TODO: uncomment once ready to merge
       #VERSION: ${{ github.event.inputs.version }}
       # TODO: delete this line once ready to merge
-      VERSION: 100.100.101-rc100
+      VERSION: 100.100.100-rc100
       # version in format "X.Y" which is going to be updated with each patch release
       FLOATING_TAG: ''
       # branch name in format "release-X.Y"
