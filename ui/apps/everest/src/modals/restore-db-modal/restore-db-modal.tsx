@@ -223,6 +223,21 @@ const RestoreDbModal = <T extends FieldValues>({
             </FormControl>
           ) : (
             <>
+              {pitrData &&
+                DbType.Postresql ===
+                  dbEngineToDbType(dbCluster.spec.engine.type) && (
+                  <ActionableAlert
+                    sx={{ mt: 1.5 }}
+                    message={Messages.pitrLimitationAlert}
+                    buttonMessage={Messages.seeDocs}
+                    buttonProps={{
+                      href: 'https://docs.percona.com/everest/use/createBackups/EnablePITR.html#limitation',
+                      sx: {
+                        whiteSpace: 'nowrap',
+                      },
+                    }}
+                  />
+                )}
               {pitrData && (
                 <Alert
                   sx={{ mt: 1.5, mb: 1.5 }}
@@ -242,21 +257,7 @@ const RestoreDbModal = <T extends FieldValues>({
                       )}
                 </Alert>
               )}
-              {pitrData &&
-                DbType.Postresql ===
-                  dbEngineToDbType(dbCluster.spec.engine.type) && (
-                  <ActionableAlert
-                    sx={{ mb: 1.5 }}
-                    message={Messages.pitrLimitationAlert}
-                    buttonMessage={Messages.seeDocs}
-                    buttonProps={{
-                      href: 'https://docs.percona.com/everest/use/createBackups/EnablePITR.html#limitation',
-                      sx: {
-                        whiteSpace: 'nowrap',
-                      },
-                    }}
-                  />
-                )}
+
               {!pitrData?.gaps && (
                 <DateTimePickerInput
                   views={[
