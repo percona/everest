@@ -31,7 +31,7 @@ export const schema = z.object({
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message:
-            'Invalid option. Please make sure you added a storage location and select it from the dropdown.',
+            'Invalid option. Please make sure you added a backup storage and select it from the dropdown.',
         });
       }
     }),

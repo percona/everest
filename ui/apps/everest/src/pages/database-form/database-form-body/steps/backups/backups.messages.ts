@@ -17,7 +17,7 @@ export const Messages = {
   captionBackups:
     'Specify how often you want to run backup jobs for your database.',
   enableBackups: 'Enable scheduled backups',
-  storageLocation: 'Storage location',
+  storageLocation: 'Backup storage',
   repeatsEvery: 'Repeats',
   youCanAddMoreSchedules:
     'After creating the database, you can add more schedules from the Backups section in the DB cluster details view.',
