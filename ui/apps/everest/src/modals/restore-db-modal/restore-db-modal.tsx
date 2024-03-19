@@ -5,12 +5,15 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material';
+import { DbType } from '@percona/types';
 import {
   DateTimePickerInput,
   LoadableChildren,
   RadioGroup,
   SelectInput,
 } from '@percona/ui-lib';
+import { dbEngineToDbType } from '@percona/utils';
+import ActionableAlert from 'components/actionable-alert';
 import { FormDialog } from 'components/form-dialog';
 import { FormDialogProps } from 'components/form-dialog/form-dialog.types';
 import { PITR_DATE_FORMAT } from 'consts';
@@ -239,6 +242,21 @@ const RestoreDbModal = <T extends FieldValues>({
                       )}
                 </Alert>
               )}
+              {pitrData &&
+                DbType.Postresql ===
+                  dbEngineToDbType(dbCluster.spec.engine.type) && (
+                  <ActionableAlert
+                    sx={{ mb: 1.5 }}
+                    message={Messages.pitrLimitationAlert}
+                    buttonMessage={Messages.seeDocs}
+                    buttonProps={{
+                      href: 'https://docs.percona.com/everest/use/createBackups/EnablePITR.html#limitation',
+                      sx: {
+                        whiteSpace: 'nowrap',
+                      },
+                    }}
+                  />
+                )}
               {!pitrData?.gaps && (
                 <DateTimePickerInput
                   views={[
