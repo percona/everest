@@ -19,7 +19,7 @@ import { Control, UseControllerProps } from 'react-hook-form';
 
 export type TextInputProps = {
   control?: Control;
-  controllerProps?: UseControllerProps;
+  controllerProps?: Omit<UseControllerProps, 'name'>;
   name: string;
   label?: string;
   labelProps?: LabeledContentProps;
