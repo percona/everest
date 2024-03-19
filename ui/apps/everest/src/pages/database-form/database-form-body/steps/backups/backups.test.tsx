@@ -35,7 +35,7 @@ const FormProviderWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 describe('BackupsStep', () => {
-  it('should render nothing when backups are disabled by non-existent storage location', () => {
+  it('should render nothing when backups are disabled by non-existent backup storage', () => {
     render(
       <QueryClientProvider client={queryClient}>
         <TestWrapper>

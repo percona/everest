@@ -24,7 +24,7 @@ import { createDbClusterFn, deleteDbClusterFn } from '../utils/db-cluster';
 import { findDbAndClickRow } from '../utils/db-clusters-list';
 import { DBClusterDetailsTabs } from '../../src/pages/db-cluster-details/db-cluster-details.types';
 
-test.describe.serial('Namespaces: Storage Location availability', () => {
+test.describe.serial('Namespaces: Backup Storage availability', () => {
   const pxcStorageLocationName = 'storage-location-pxc';
   const pgStorageLocationName = 'storage-location-pg';
   const pgDbName = 'pg-db';
@@ -70,7 +70,7 @@ test.describe.serial('Namespaces: Storage Location availability', () => {
     await deleteDbClusterFn(request, pxcDbName, EVEREST_CI_NAMESPACES.PXC_ONLY);
   });
 
-  test('Storage Location autocomplete in DB Wizard has only storage locations in selected namespace', async ({
+  test('Backup Storage autocomplete in DB Wizard has only backup storages in selected namespace', async ({
     page,
   }) => {
     await page.goto('/databases');
@@ -95,7 +95,7 @@ test.describe.serial('Namespaces: Storage Location availability', () => {
     );
     await storageLocationAutocomplete.click();
 
-    // common ui-dev storage location from global-setup with all operators + pxc storage location with only pxc operator
+    // common ui-dev backup storage from global-setup with all operators + pxc backup storage with only pxc operator
     expect(await page.getByRole('option').count()).toBe(1);
     await page.getByRole('option', { name: pxcStorageLocationName }).click();
 
@@ -111,11 +111,11 @@ test.describe.serial('Namespaces: Storage Location availability', () => {
       'pitr-storage-location-autocomplete'
     );
     await pitrLocationAutocomplete.click();
-    // common ui-dev storage location from global-setup with all operators + pxc storage location with only pxc operator
+    // common ui-dev backup storage from global-setup with all operators + pxc backup storage with only pxc operator
     expect(await page.getByRole('option').count()).toBe(1);
   });
 
-  test('Backups step is disabled when selected namespace has no storage location', async ({
+  test('Backups step is disabled when selected namespace has no backup storage', async ({
     page,
   }) => {
     await page.goto('/databases');
@@ -126,7 +126,7 @@ test.describe.serial('Namespaces: Storage Location availability', () => {
       'k8s-namespace-autocomplete'
     );
     await namespacesAutocomplete.click();
-    // setting namespace with no storage location for it
+    // setting namespace with no backup storage for it
     await page
       .getByRole('option', { name: EVEREST_CI_NAMESPACES.PSMDB_ONLY })
       .click();
@@ -139,7 +139,7 @@ test.describe.serial('Namespaces: Storage Location availability', () => {
     await expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
   });
 
-  test('Storage Location autocomplete in create new backup modal has only available storages for namespace', async ({
+  test('Backup storage autocomplete in create new backup modal has only available storages for namespace', async ({
     page,
   }) => {
     await page.goto('/databases');
@@ -149,14 +149,14 @@ test.describe.serial('Namespaces: Storage Location availability', () => {
     const backupsTab = page.getByTestId(DBClusterDetailsTabs.backups);
     await backupsTab.click();
 
-    // check storage location dropdown in new backup modal
+    // check backup storage dropdown in new backup modal
     await page.getByTestId('menu-button').click();
     await page.getByTestId('now-menu-item').click();
     await page.getByTestId('storage-location-autocomplete').click();
     expect(await page.getByRole('option').count()).toBe(1);
   });
 
-  test('Storage Location autocomplete in create schedule modal has only available storages for namespace', async ({
+  test('Backup storage autocomplete in create schedule modal has only available storages for namespace', async ({
     page,
   }) => {
     await page.goto('/databases');
@@ -166,7 +166,7 @@ test.describe.serial('Namespaces: Storage Location availability', () => {
     const backupsTab = page.getByTestId(DBClusterDetailsTabs.backups);
     await backupsTab.click();
 
-    // check storage location dropdown in create schedule modal
+    // check backup storage dropdown in create schedule modal
     await page.getByTestId('menu-button').click();
     await page.getByTestId('schedule-menu-item').click();
     await page.getByTestId('storage-location-autocomplete').click();
