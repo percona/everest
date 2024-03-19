@@ -20,5 +20,7 @@ export const Messages = {
   namespaces: 'Namespaces',
   helperText: {
     namespaces: 'Select in which namespaces this endpoint should be available.',
+    credentials:
+      'Percona Everest does not store PMM credentials, so fill in both the User and Password fields.',
   },
 };
