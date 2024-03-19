@@ -1,6 +1,5 @@
 import { TextInput } from '@percona/ui-lib';
 import { AutoCompleteAutoFill } from 'components/auto-complete-auto-fill/auto-complete-auto-fill';
-import { ScheduleFormFields } from 'components/schedule-form/schedule-form.types';
 import LogicalPhysicalRadioGroup from 'components/logical-physical-radio-group';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
 import { useContext, useEffect } from 'react';
@@ -19,16 +18,17 @@ export const OnDemandBackupFieldsWrapper = () => {
       engine: { type },
     },
   } = dbCluster;
-  const { setValue } = useFormContext();
+  const { setValue, trigger } = useFormContext();
   const { data: backupStorages = [], isFetching } =
     useBackupStoragesByNamespace(namespace);
   const dbClusterActiveStorage = status?.activeStorage;
 
   useEffect(() => {
     if (dbClusterActiveStorage) {
-      setValue(ScheduleFormFields.storageLocation, {
+      setValue(BackupFields.storageLocation, {
         name: dbClusterActiveStorage,
       });
+      trigger(BackupFields.storageLocation);
     }
   }, [dbClusterActiveStorage]);
 
