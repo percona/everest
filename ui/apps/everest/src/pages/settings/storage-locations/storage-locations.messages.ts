@@ -18,7 +18,7 @@ export const Messages = {
     header: 'Delete storage',
     content: (
       storageName: string
-    ) => `Are you sure you want to permanently delete this storage location "${storageName}"? Any
+    ) => `Are you sure you want to permanently delete this backup storage "${storageName}"? Any
 database clusters using this storage will no longer be able to execute
 their scheduled backup jobs.`,
   },
@@ -37,5 +37,5 @@ their scheduled backup jobs.`,
   edit: 'Edit',
   delete: 'Delete',
   addStorageLocationButton: 'Add backup storage',
-  noData: "No storage location set up yet. Let's get started!",
+  noData: "No backup storage set up yet. Let's get started!",
 };
