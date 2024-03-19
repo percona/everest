@@ -134,6 +134,7 @@ jobs:
             perconalab/everest-operator
           tags: |
             type=raw,value=${{ env.VERSION }}
+            type=raw,value=latest
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
 
       - name: Operator - setup Docker meta for everest-operator-bundle
