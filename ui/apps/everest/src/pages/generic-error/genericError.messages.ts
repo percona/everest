@@ -1,4 +1,5 @@
 export const Messages = {
-  header: 'Opss something went wrong',
-  subHeader: 'Some unxpected error happen',
+  header: "Uh-oh! It looks like we've hit a bit of a snag.",
+  subHeader:
+    "We're not quite sure what's gone wrong, but we're definitely seeing some unexpected behavior.",
 };

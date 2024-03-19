@@ -9,6 +9,7 @@ export const NoMatch = ({
   header = Messages.header,
   subHeader = Messages.subHeader,
   redirectButtonText = Messages.redirectButton,
+  CustomIcon,
 }: NoMatchProps) => {
   const { isMobile, isTablet, isDesktop } = useActiveBreakpoint();
 
@@ -26,10 +27,17 @@ export const NoMatch = ({
       }}
     >
       <Box>
-        <NoMatchIcon
-          w={isMobile ? '300px' : '435px'}
-          h={isMobile ? '300px' : '435px'}
-        />
+        {CustomIcon ? (
+          <CustomIcon
+            w={isMobile ? '300px' : '435px'}
+            h={isMobile ? '300px' : '435px'}
+          />
+        ) : (
+          <NoMatchIcon
+            w={isMobile ? '300px' : '435px'}
+            h={isMobile ? '300px' : '435px'}
+          />
+        )}
       </Box>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <Typography

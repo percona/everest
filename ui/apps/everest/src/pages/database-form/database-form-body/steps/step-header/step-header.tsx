@@ -5,6 +5,8 @@ type StepHeaderProps = {
   pageDescription?: string;
 };
 export const StepHeader = ({ pageTitle, pageDescription }: StepHeaderProps) => {
+  const array: string[] = [];
+  console.log(array[0].substring(0, 1));
   return (
     <>
       {pageTitle && (
