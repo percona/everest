@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { findRowAndClickActions } from '../utils/table';
 const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 
@@ -36,16 +36,17 @@ test.describe.serial('Monitoring List', () => {
 
     await page.getByTestId('form-dialog-add').click();
 
-    // checking that monitoring has been added
-    // await findRowAndClickActions(page, monitoringEndpointName);
-
-    // delete, REMOVE when next test will be allowed
-
-    await findRowAndClickActions(page, monitoringEndpointName, 'Delete');
-    await page.getByTestId('confirm-dialog-delete').click();
+    await expect(
+      page
+        .locator('.MuiTableRow-root')
+        .filter({ hasText: monitoringEndpointName })
+    ).toBeVisible();
   });
-  // TODO functionality is broken
-  test.skip('Edit Monitoring Endpoint', async ({ page }) => {
+
+  test('Edit Monitoring Endpoint', async ({ page }) => {
+    await page.goto('/settings/monitoring-endpoints');
+    await page.getByTestId('add-monitoring-endpoint').waitFor();
+
     await page
       .locator('.MuiTableRow-root')
       .filter({ hasText: monitoringEndpointName })
@@ -53,21 +54,44 @@ test.describe.serial('Monitoring List', () => {
       .click();
 
     await page.getByRole('menuitem', { name: 'Edit' }).click();
-    await page.getByTestId('confirm-dialog-delete').click();
 
-    // filling out the form
-    await page.getByTestId('text-input-name').fill(monitoringEndpointName);
+    await expect(page.getByTestId('text-input-name')).toBeDisabled();
     const namespaces = page.getByTestId('text-input-allowed-namespaces');
     await namespaces.click();
-    await page.getByRole('option').last().click();
+    await page.getByRole('option').first().click();
     await page.getByTestId('text-input-url').fill(MONITORING_URL);
+
+    // user can leave the credentials empty
+    await expect(page.getByTestId('form-dialog-edit')).toBeEnabled();
+
+    // user should fill both of credentials
     await page.getByTestId('text-input-user').fill(MONITORING_USER);
+    await expect(page.getByTestId('form-dialog-edit')).toBeDisabled();
+    await expect(
+      page.getByText(
+        'Percona Everest does not store PMM credentials, so fill in both the User and Password fields.'
+      )
+    ).toBeVisible();
     await page.getByTestId('text-input-password').fill(MONITORING_PASSWORD);
+    await expect(page.getByTestId('form-dialog-edit')).toBeEnabled();
+    await expect(
+      page.getByText(
+        'Percona Everest does not store PMM credentials, so fill in both the User and Password fields.'
+      )
+    ).not.toBeVisible();
+    await page.getByTestId('text-input-user').fill('');
+    await expect(page.getByTestId('form-dialog-edit')).toBeDisabled();
+    await expect(
+      page.getByText(
+        'Percona Everest does not store PMM credentials, so fill in both the User and Password fields.'
+      )
+    ).toBeVisible();
+    await page.getByTestId('text-input-user').fill(MONITORING_USER);
+    await expect(page.getByTestId('form-dialog-edit')).toBeEnabled();
 
-    await page.getByTestId('form-dialog-add').click();
+    await page.getByTestId('form-dialog-edit').click();
 
-    // checking that monitoring has been added
-
+    // deleting the monitoring endpoint
     await findRowAndClickActions(page, monitoringEndpointName, 'Delete');
     await page.getByTestId('confirm-dialog-delete').click();
   });
