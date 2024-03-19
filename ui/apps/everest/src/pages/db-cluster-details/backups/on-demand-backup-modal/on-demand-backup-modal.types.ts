@@ -1,10 +1,5 @@
 import z from 'zod';
-import { generateShortUID } from '../../../../database-form/database-form-body/steps/first/utils.ts';
-
-export type OnDemandBackupModalProps = {
-  open: boolean;
-  handleClose: () => void;
-};
+import { generateShortUID } from '../../../database-form/database-form-body/steps/first/utils.ts';
 
 export enum BackupFields {
   name = 'name',
