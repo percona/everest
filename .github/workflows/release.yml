@@ -66,135 +66,135 @@ jobs:
           path: everest-operator
           token: ${{ secrets.ROBOT_TOKEN }}
 
-      - name: Operator - create release branch
-        run: |
-          cd everest-operator
-          # Check if the branch already exists
-          git fetch
-          check_branch=$(git ls-remote --heads origin ${BRANCH_NAME})
-          if [[ -z ${check_branch} ]]; then
-            git checkout -b $BRANCH_NAME
-            git push origin $BRANCH_NAME
-          fi
-
-          git checkout $BRANCH_NAME
-
-          # update version in the Makefile
-          sed -i "s/^VERSION ?=.*/VERSION ?= $VERSION/g" Makefile
-
-          make init
-          make release
-
-          # if there is something to commit, commit it and add the tag
-          if [[ -n $(git status --porcelain) ]]; then
-            if git tag --list | grep -q "^$GH_TAG$"; then
-              echo "The tag is already present in github. Please create a different RC/Release"
-              exit 1
-            fi
-
-            # configure userdata for commits
-            git config --global user.email "everest-ci@percona.com"
-            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
-
-            echo "---"
-            git diff
-            echo "---"
-
-            # commit and push the updated files
-            git commit -a -m "update version tag"
-            git push origin $BRANCH_NAME
-            # TODO: uncomment once ready to merge
-            # git tag $GH_TAG
-            # git push origin $GH_TAG
-          fi
-
-
-      - name: Operator - install operator-sdk
-        run: |
-          mkdir -p $TOOLS_PATH
-          echo $TOOLS_PATH >> $GITHUB_PATH
-
-          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.25.2
-          curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
-
-          gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E
-
-          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt
-          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt.asc
-          gpg -u "Operator SDK (release) <cncf-operator-sdk@cncf.io>" --verify checksums.txt.asc
-
-          grep operator-sdk_${OS}_${ARCH} checksums.txt | sha256sum -c -
-
-          chmod +x operator-sdk_${OS}_${ARCH}
-          mv operator-sdk_${OS}_${ARCH} $TOOLS_PATH/operator-sdk
-
-      - name: Operator - build and bundle
-        run: |
-          cd everest-operator
-          make build manifests bundle
-
-
-      - name: Operator - setup Docker meta for everest-operator
-        id: operator_meta
-        uses: docker/metadata-action@v4
-        # docker/metadata-action action looks more elegant when being triggered by a GH tag,
-        # however this workflow can't be triggered by a GH tag since there are some changes need to be done
-        # in the codebase prior putting the tag, so the action uses the raw tags
-        with:
-          images: |
-            percona/everest-operator,enable=${{ env.IS_RC == 0 }}
-            perconalab/everest-operator
-          tags: |
-            type=raw,value=${{ env.VERSION }}
-            type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
-
-      - name: Operator - setup Docker meta for everest-operator-bundle
-        id: bundle_meta
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            percona/everest-operator-bundle,enable=${{ env.IS_RC == 0 }}
-            perconalab/everest-operator-bundle
-          tags: |
-            type=raw,value=${{ env.VERSION }}
-            type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Operator - build and push operator everest-operator image
-        uses: docker/build-push-action@v3
-        with:
-          context: everest-operator
-          # TODO: uncomment once ready to merge
-          push: false
-          # push: true
-          tags: ${{ steps.operator_meta.outputs.tags }}
+#      - name: Operator - create release branch
+#        run: |
+#          cd everest-operator
+#          # Check if the branch already exists
+#          git fetch
+#          check_branch=$(git ls-remote --heads origin ${BRANCH_NAME})
+#          if [[ -z ${check_branch} ]]; then
+#            git checkout -b $BRANCH_NAME
+#            git push origin $BRANCH_NAME
+#          fi
+#
+#          git checkout $BRANCH_NAME
+#
+#          # update version in the Makefile
+#          sed -i "s/^VERSION ?=.*/VERSION ?= $VERSION/g" Makefile
+#
+#          make init
+#          make release
+#
+#          # if there is something to commit, commit it and add the tag
+#          if [[ -n $(git status --porcelain) ]]; then
+#            if git tag --list | grep -q "^$GH_TAG$"; then
+#              echo "The tag is already present in github. Please create a different RC/Release"
+#              exit 1
+#            fi
+#
+#            # configure userdata for commits
+#            git config --global user.email "everest-ci@percona.com"
+#            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+#
+#            echo "---"
+#            git diff
+#            echo "---"
+#
+#            # commit and push the updated files
+#            git commit -a -m "update version tag"
+#            git push origin $BRANCH_NAME
+#            # TODO: uncomment once ready to merge
+#            # git tag $GH_TAG
+#            # git push origin $GH_TAG
+#          fi
+#
+#
+#      - name: Operator - install operator-sdk
+#        run: |
+#          mkdir -p $TOOLS_PATH
+#          echo $TOOLS_PATH >> $GITHUB_PATH
+#
+#          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.25.2
+#          curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
+#
+#          gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E
+#
+#          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt
+#          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt.asc
+#          gpg -u "Operator SDK (release) <cncf-operator-sdk@cncf.io>" --verify checksums.txt.asc
+#
+#          grep operator-sdk_${OS}_${ARCH} checksums.txt | sha256sum -c -
+#
+#          chmod +x operator-sdk_${OS}_${ARCH}
+#          mv operator-sdk_${OS}_${ARCH} $TOOLS_PATH/operator-sdk
+#
+#      - name: Operator - build and bundle
+#        run: |
+#          cd everest-operator
+#          make build manifests bundle
+#
+#
+#      - name: Operator - setup Docker meta for everest-operator
+#        id: operator_meta
+#        uses: docker/metadata-action@v4
+#        # docker/metadata-action action looks more elegant when being triggered by a GH tag,
+#        # however this workflow can't be triggered by a GH tag since there are some changes need to be done
+#        # in the codebase prior putting the tag, so the action uses the raw tags
+#        with:
+#          images: |
+#            percona/everest-operator,enable=${{ env.IS_RC == 0 }}
+#            perconalab/everest-operator
+#          tags: |
+#            type=raw,value=${{ env.VERSION }}
+#            type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
+#
+#      - name: Operator - setup Docker meta for everest-operator-bundle
+#        id: bundle_meta
+#        uses: docker/metadata-action@v4
+#        with:
+#          images: |
+#            percona/everest-operator-bundle,enable=${{ env.IS_RC == 0 }}
+#            perconalab/everest-operator-bundle
+#          tags: |
+#            type=raw,value=${{ env.VERSION }}
+#            type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
+#
+#      - name: Login to GitHub Container Registry
+#        uses: docker/login-action@v2
+#        with:
+#          username: ${{ secrets.DOCKERHUB_USERNAME }}
+#          password: ${{ secrets.DOCKERHUB_TOKEN }}
+#
+#      - name: Operator - build and push operator everest-operator image
+#        uses: docker/build-push-action@v3
+#        with:
+#          context: everest-operator
+#          # TODO: uncomment once ready to merge
+#          push: false
+#          # push: true
+#          tags: ${{ steps.operator_meta.outputs.tags }}
 
 #      - name: Run Trivy vulnerability scanner
 #        uses: aquasecurity/trivy-action@0.12.0
 #        with:
-#          image-ref: ${{ steps.operator_meta.outputs.images }}
+#          image-ref: ${{ steps.operator_meta.outputs.tags }}
 #          format: 'table'
 #          exit-code: '1'
 #          severity: 'CRITICAL,HIGH'
 
-      - name: Operator - build and push everest-operator-bundle image
-        uses: docker/build-push-action@v3
-        with:
-          context: everest-operator
-          push: false
-          # push: true
-          tags: ${{ steps.bundle_meta.outputs.tags }}
-          file: everest-operator/bundle.Dockerfile
+#      - name: Operator - build and push everest-operator-bundle image
+#        uses: docker/build-push-action@v3
+#        with:
+#          context: everest-operator
+#          push: false
+#          # push: true
+#          tags: ${{ steps.bundle_meta.outputs.tags }}
+#          file: everest-operator/bundle.Dockerfile
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.12.0
         with:
-          image-ref: ${{ steps.bundle_meta.outputs.images }}
+          image-ref: ${{ steps.bundle_meta.outputs.tags }}
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
@@ -282,7 +282,7 @@ jobs:
 #      - name: Run Trivy vulnerability scanner
 #        uses: aquasecurity/trivy-action@0.12.0
 #        with:
-#          image-ref: ${{ steps.catalog_meta.outputs.images }}
+#          image-ref: ${{ steps.catalog_meta.outputs.tags }}
 #          format: 'table'
 #          exit-code: '1'
 #          severity: 'CRITICAL,HIGH'
@@ -393,7 +393,7 @@ jobs:
 #      - name: Run Trivy vulnerability scanner
 #        uses: aquasecurity/trivy-action@0.12.0
 #        with:
-#          image-ref: ${{ steps.everest_meta.outputs.images }}
+#          image-ref: ${{ steps.everest_meta.outputs.tags }}
 #          format: 'table'
 #          exit-code: '1'
 #          severity: 'CRITICAL,HIGH'
