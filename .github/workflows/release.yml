@@ -347,48 +347,48 @@ jobs:
             # git push origin $GH_TAG
           fi
 
-      - name: Everest UI - setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-
-      - name: Everest UI - run with Node 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
-          cache: 'pnpm'
-          cache-dependency-path: ui/pnpm-lock.yaml
-
-      - name: Everest UI - build
-        run: |
-          cd ui
-          pnpm install
-          EVEREST_OUT_DIR=${GITHUB_WORKSPACE}/public/dist/ pnpm build
-
-      - name: Everest - build binary
-        run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build
-
-      - name: Everest - setup docker build metadata
-        uses: docker/metadata-action@v5
-        id: everest_meta
-        with:
-          images: |
-            percona/percona-everest,enable=${{ env.IS_RC == 0 }}
-            perconalab/everest
-          tags: |
-            type=raw,value=${{ env.VERSION }}
-            type=raw,value=latest
-            type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
-
-      - name: Everest - build and push Everest image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          # TODO: uncomment once ready to merge
-          push: false
-          # push: true
-          tags: ${{ steps.everest_meta.outputs.tags }}
+#      - name: Everest UI - setup pnpm
+#        uses: pnpm/action-setup@v3
+#        with:
+#          version: 8
+#
+#      - name: Everest UI - run with Node 20
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: 20.x
+#          cache: 'pnpm'
+#          cache-dependency-path: ui/pnpm-lock.yaml
+#
+#      - name: Everest UI - build
+#        run: |
+#          cd ui
+#          pnpm install
+#          EVEREST_OUT_DIR=${GITHUB_WORKSPACE}/public/dist/ pnpm build
+#
+#      - name: Everest - build binary
+#        run: |
+#          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build
+#
+#      - name: Everest - setup docker build metadata
+#        uses: docker/metadata-action@v5
+#        id: everest_meta
+#        with:
+#          images: |
+#            percona/percona-everest,enable=${{ env.IS_RC == 0 }}
+#            perconalab/everest
+#          tags: |
+#            type=raw,value=${{ env.VERSION }}
+#            type=raw,value=latest
+#            type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
+#
+#      - name: Everest - build and push Everest image
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: .
+#          # TODO: uncomment once ready to merge
+#          push: false
+#          # push: true
+#          tags: ${{ steps.everest_meta.outputs.tags }}
 
 #      - name: Run Trivy vulnerability scanner
 #        uses: aquasecurity/trivy-action@0.12.0
