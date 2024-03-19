@@ -174,6 +174,14 @@ jobs:
           # push: true
           tags: ${{ steps.operator_meta.outputs.tags }}
 
+#      - name: Run Trivy vulnerability scanner
+#        uses: aquasecurity/trivy-action@0.12.0
+#        with:
+#          image-ref: ${{ steps.operator_meta.outputs.images }}
+#          format: 'table'
+#          exit-code: '1'
+#          severity: 'CRITICAL,HIGH'
+
       - name: Operator - build and push everest-operator-bundle image
         uses: docker/build-push-action@v3
         with:
@@ -182,6 +190,14 @@ jobs:
           # push: true
           tags: ${{ steps.bundle_meta.outputs.tags }}
           file: everest-operator/bundle.Dockerfile
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.12.0
+        with:
+          image-ref: ${{ steps.bundle_meta.outputs.images }}
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
 
       - name: Catalog - checkout
         uses: actions/checkout@v4
@@ -263,6 +279,14 @@ jobs:
           tags: ${{ steps.catalog_meta.outputs.tags }}
           file: everest-catalog/everest-catalog.Dockerfile
 
+#      - name: Run Trivy vulnerability scanner
+#        uses: aquasecurity/trivy-action@0.12.0
+#        with:
+#          image-ref: ${{ steps.catalog_meta.outputs.images }}
+#          format: 'table'
+#          exit-code: '1'
+#          severity: 'CRITICAL,HIGH'
+
       - name: Everest - check out
         uses: actions/checkout@v4
         with:
@@ -295,8 +319,8 @@ jobs:
           fi 
           
           # Update the operator go module to reference the version tag
-          go get github.com/percona/everest-operator@$GH_TAG
-          go mod tidy
+          # go get github.com/percona/everest-operator@$GH_TAG
+          # go mod tidy
           
           # Change version in Makefile
           sed -i "s/RELEASE_VERSION ?=.*/RELEASE_VERSION ?= v$VERSION/g" Makefile
@@ -366,6 +390,14 @@ jobs:
           # push: true
           tags: ${{ steps.everest_meta.outputs.tags }}
 
+#      - name: Run Trivy vulnerability scanner
+#        uses: aquasecurity/trivy-action@0.12.0
+#        with:
+#          image-ref: ${{ steps.everest_meta.outputs.images }}
+#          format: 'table'
+#          exit-code: '1'
+#          severity: 'CRITICAL,HIGH'
+
       - name: CLI - build binaries
         run: |
           make release-cli
@@ -378,3 +410,5 @@ jobs:
             dist/*
         env:
           GITHUB_TOKEN: ${{ github.token }}
+
+
