@@ -6,7 +6,7 @@ import {
   EndpointFormFields,
   EndpointFormType,
   endpointDefaultValues,
-  endpointSchema,
+  getEndpointSchema,
 } from './create-edit-modal.types';
 import { Messages } from '../monitoring-endpoints.messages';
 import { AutoCompleteSelectAll } from '../../../../components/auto-complete-select-all/auto-complete-select-all';
@@ -22,6 +22,8 @@ export const CreateEditEndpointModal = ({
   const isEditMode = !!selectedEndpoint;
   const { data: namespaces = [], isFetching: isNamespacesFetching } =
     useNamespaces();
+
+  const endpointSchema = getEndpointSchema(isEditMode);
 
   const defaultValues = useMemo(
     () =>
@@ -71,13 +73,27 @@ export const CreateEditEndpointModal = ({
       <TextInput
         name={EndpointFormFields.user}
         label={Messages.fieldLabels.user}
-        isRequired
+        isRequired={!isEditMode}
+        {...(isEditMode && {
+          controllerProps: {
+            rules: {
+              deps: [EndpointFormFields.password],
+            },
+          },
+        })}
       />
       <TextInput
         name={EndpointFormFields.password}
         label={Messages.fieldLabels.password}
-        isRequired
+        isRequired={!isEditMode}
         textFieldProps={{ type: 'password' }}
+        {...(isEditMode && {
+          controllerProps: {
+            rules: {
+              deps: [EndpointFormFields.user],
+            },
+          },
+        })}
       />
     </FormDialog>
   );
