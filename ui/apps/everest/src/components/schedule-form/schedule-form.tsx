@@ -16,6 +16,7 @@
 import { AutoCompleteInput, LabeledContent, TextInput } from '@percona/ui-lib';
 import { BackupStorage } from 'shared-types/backupStorages.types.ts';
 import { Schedule } from 'shared-types/dbCluster.types.ts';
+import LogicalPhysicalRadioGroup from 'components/logical-physical-radio-group';
 import { AutoCompleteAutoFill } from '../auto-complete-auto-fill/auto-complete-auto-fill.tsx';
 import { TimeSelection } from '../time-selection/time-selection';
 import { Messages } from './schedule-form.messages.ts';
@@ -29,6 +30,7 @@ type ScheduleFormProps = {
   schedules: Schedule[];
   storageLocationFetching: boolean;
   storageLocationOptions: BackupStorage[];
+  showTypeRadio: boolean;
 };
 export const ScheduleForm = ({
   allowScheduleSelection,
@@ -38,11 +40,13 @@ export const ScheduleForm = ({
   schedules,
   storageLocationFetching,
   storageLocationOptions,
+  showTypeRadio,
 }: ScheduleFormProps) => {
   const schedulesNamesList =
     (schedules && schedules.map((item) => item?.name)) || [];
   return (
     <>
+      {showTypeRadio && <LogicalPhysicalRadioGroup />}
       {allowScheduleSelection ? (
         <AutoCompleteInput
           name={ScheduleFormFields.scheduleName}

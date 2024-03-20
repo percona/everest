@@ -3,30 +3,30 @@ import {
   BACKUPS_QUERY_KEY,
   useCreateBackupOnDemand,
 } from 'hooks/api/backups/useBackups';
-import { useMemo } from 'react';
+import { useContext, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import {
   GetBackupsPayload,
   SingleBackupPayload,
 } from 'shared-types/backups.types';
-import { Messages } from '../../../db-cluster-details.messages.ts';
+import { Messages } from '../../db-cluster-details.messages.ts';
 import { OnDemandBackupFieldsWrapper } from './on-demand-backup-fields-wrapper.tsx';
 import {
   BackupFormData,
-  OnDemandBackupModalProps,
   defaultValuesFc,
   schema,
-} from './on-demand-backup-modal.types';
+} from './on-demand-backup-modal.types.ts';
+import { ScheduleModalContext } from '../backups.context.ts';
 
-export const OnDemandBackupModal = ({
-  open,
-  handleClose,
-}: OnDemandBackupModalProps) => {
+export const OnDemandBackupModal = () => {
   const queryClient = useQueryClient();
   const { dbClusterName, namespace = '' } = useParams();
   const { mutate: createBackupOnDemand, isPending: creatingBackup } =
     useCreateBackupOnDemand(dbClusterName!, namespace);
+
+  const { openOnDemandModal, setOpenOnDemandModal } =
+    useContext(ScheduleModalContext);
 
   const handleSubmit = (data: BackupFormData) => {
     createBackupOnDemand(data, {
@@ -43,7 +43,7 @@ export const OnDemandBackupModal = ({
             };
           }
         );
-        handleClose();
+        setOpenOnDemandModal(false);
       },
     });
   };
@@ -52,8 +52,8 @@ export const OnDemandBackupModal = ({
 
   return (
     <FormDialog
-      isOpen={open}
-      closeModal={handleClose}
+      isOpen={openOnDemandModal}
+      closeModal={() => setOpenOnDemandModal(false)}
       headerMessage={Messages.onDemandBackupModal.headerMessage}
       onSubmit={handleSubmit}
       submitting={creatingBackup}

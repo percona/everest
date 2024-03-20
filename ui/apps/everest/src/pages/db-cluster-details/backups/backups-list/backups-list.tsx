@@ -38,7 +38,6 @@ import { DbClusterStatus } from 'shared-types/dbCluster.types.ts';
 import { ScheduleModalContext } from '../backups.context.ts';
 import { BACKUP_STATUS_TO_BASE_STATUS } from './backups-list.constants';
 import { Messages } from './backups-list.messages';
-import { OnDemandBackupModal } from './on-demand-backup-modal/on-demand-backup-modal';
 
 export const BackupsList = () => {
   const queryClient = useQueryClient();
@@ -47,7 +46,6 @@ export const BackupsList = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState('');
-  const [openCreateBackupModal, setOpenCreateBackupModal] = useState(false);
 
   const { data: backups = [] } = useDbBackups(dbClusterName!, namespace, {
     enabled: !!dbClusterName,
@@ -59,8 +57,11 @@ export const BackupsList = () => {
     enabled: !!dbClusterName,
   });
 
-  const { setMode: setScheduleModalMode, setOpenScheduleModal } =
-    useContext(ScheduleModalContext);
+  const {
+    setMode: setScheduleModalMode,
+    setOpenScheduleModal,
+    setOpenOnDemandModal,
+  } = useContext(ScheduleModalContext);
 
   const restoring = dbCluster?.status?.status === DbClusterStatus.restoring;
 
@@ -115,18 +116,16 @@ export const BackupsList = () => {
   };
 
   const handleManualBackup = (handleClose: () => void) => {
-    setOpenCreateBackupModal(true);
-    handleClose();
-  };
-  const handleScheduledBackup = (handleClose: () => void) => {
-    setScheduleModalMode && setScheduleModalMode('new');
-    setOpenScheduleModal && setOpenScheduleModal(true);
+    setOpenOnDemandModal(true);
     handleClose();
   };
 
-  const handleCloseBackupModal = () => {
-    setOpenCreateBackupModal(false);
+  const handleScheduledBackup = (handleClose: () => void) => {
+    setScheduleModalMode('new');
+    setOpenScheduleModal(true);
+    handleClose();
   };
+
   const handleCloseDeleteDialog = () => {
     setOpenDeleteDialog(false);
   };
@@ -232,12 +231,6 @@ export const BackupsList = () => {
           </MenuItem>,
         ]}
       />
-      {openCreateBackupModal && (
-        <OnDemandBackupModal
-          open={openCreateBackupModal}
-          handleClose={handleCloseBackupModal}
-        />
-      )}
       {openDeleteDialog && (
         <ConfirmDialog
           isOpen={openDeleteDialog}
