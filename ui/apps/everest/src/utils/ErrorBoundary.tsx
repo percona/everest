@@ -1,4 +1,5 @@
 import { Component, ErrorInfo } from 'react';
+import { ErrorContext } from './ErrorBoundaryProvider';
 
 type ErrorBoundaryState =
   | {
@@ -23,21 +24,21 @@ export class ErrorBoundary extends Component<
   ErrorBoundaryProps,
   ErrorBoundaryState
 > {
+  static contextType = ErrorContext;
+  declare context: React.ContextType<typeof ErrorContext>;
+
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = initialState;
   }
 
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error: error };
-  }
-
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.log('error boundary', error, errorInfo);
+    this.context.updateError(true);
+    console.log(error, errorInfo);
   }
 
   render() {
-    if (this.state.hasError) {
+    if (this.context.hasError) {
       return this.props.fallback;
     }
 

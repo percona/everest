@@ -10,6 +10,7 @@ export const NoMatch = ({
   subHeader = Messages.subHeader,
   redirectButtonText = Messages.redirectButton,
   CustomIcon,
+  onButtonClick,
 }: NoMatchProps) => {
   const { isMobile, isTablet, isDesktop } = useActiveBreakpoint();
 
@@ -70,6 +71,7 @@ export const NoMatch = ({
           sx={{ alignSelf: 'start', mt: 2 }}
           variant="contained"
           data-testid="no-match-button"
+          onClick={onButtonClick}
         >
           {redirectButtonText}
         </Button>

@@ -15,6 +15,7 @@ import { GenericError } from 'pages/generic-error/GenericError';
 import { useContext } from 'react';
 import { Outlet } from 'react-router-dom';
 import { ErrorBoundary } from 'utils/ErrorBoundary';
+import { ErrorContextProvider } from 'utils/ErrorBoundaryProvider';
 import { AppBar } from '../app-bar/AppBar';
 import { Drawer } from '../drawer/Drawer';
 import { WelcomeDialog } from '../welcome-dialog/welcome-dialog';
@@ -82,9 +83,11 @@ export const Main = () => {
             </Button>
           </Stack>
         ) : (
-          <ErrorBoundary fallback={<GenericError />}>
-            <Outlet />
-          </ErrorBoundary>
+          <ErrorContextProvider>
+            <ErrorBoundary fallback={<GenericError />}>
+              <Outlet />
+            </ErrorBoundary>
+          </ErrorContextProvider>
         )}
         {openWelcomeDialogLS && (
           <WelcomeDialog

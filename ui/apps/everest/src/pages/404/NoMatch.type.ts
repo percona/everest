@@ -5,4 +5,5 @@ export type NoMatchProps = {
   subHeader?: string;
   redirectButtonText?: string;
   CustomIcon?: FC<{ w: string; h: string }>;
+  onButtonClick?: () => void;
 };
