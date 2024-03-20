@@ -157,6 +157,7 @@ func validateStorageAccessByCreate(ctx context.Context, params CreateBackupStora
 	}
 }
 
+//nolint:funlen
 func s3Access(
 	l *zap.SugaredLogger,
 	endpoint *string,
@@ -173,7 +174,7 @@ func s3Access(
 
 	c := http.DefaultClient
 	c.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: !verifyTLS},
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: !verifyTLS}, //nolint:gosec
 	}
 	// Create a new session with the provided credentials
 	sess, err := session.NewSession(&aws.Config{
@@ -297,7 +298,8 @@ func validateBackupStorageAccess(
 	url *string,
 	bucketName, region, accessKey, secretKey string,
 	verifyTLS bool,
-	l *zap.SugaredLogger) error {
+	l *zap.SugaredLogger,
+) error {
 	switch sType {
 	case string(BackupStorageTypeS3):
 		if region == "" {
