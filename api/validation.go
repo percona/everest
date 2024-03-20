@@ -18,9 +18,11 @@ package api
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"regexp"
 	"time"
@@ -159,7 +161,8 @@ func s3Access(
 	l *zap.SugaredLogger,
 	endpoint *string,
 	accessKey, secretKey, bucketName, region string,
-	verifyTLS bool) error {
+	verifyTLS bool,
+) error {
 	if config.Debug {
 		return nil
 	}
@@ -168,11 +171,16 @@ func s3Access(
 		endpoint = nil
 	}
 
+	c := http.DefaultClient
+	c.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: !verifyTLS},
+	}
 	// Create a new session with the provided credentials
 	sess, err := session.NewSession(&aws.Config{
 		Endpoint:    endpoint,
 		Region:      aws.String(region),
 		Credentials: credentials.NewStaticCredentials(accessKey, secretKey, ""),
+		HTTPClient:  c,
 	})
 	if err != nil {
 		l.Error(err)

@@ -15,7 +15,7 @@ print('Using PG operator version: %s' % pg_operator_version)
 # uncomment the settings below and insert your k8s context & registry names
 # to get your current context name run `kubectl config view`
 allow_k8s_contexts("gke_percona-everest_europe-west1-c_mayank-everest")
-default_registry("europe-west2.pkg.dev/percona-everest/mayank-test")
+default_registry("europe-west2-docker.pkg.dev/percona-everest/mayank-test")
 
 # Check for required env vars
 backend_dir = os.getenv('EVEREST_BACKEND_DIR')
