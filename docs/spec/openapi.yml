@@ -1294,6 +1294,9 @@ components:
           description: List of namespaces allowed to use this backup storage
           items:
             type: string
+        verifyTLS:
+          default: true
+          type: boolean
       required:
         - name
         - bucketName
@@ -1319,6 +1322,8 @@ components:
           type: string
         region:
           type: string
+        verifyTLS:
+          type: boolean
         allowedNamespaces:
           type: array
           description: List of namespaces allowed to use this backup storage
@@ -1345,6 +1350,9 @@ components:
         region:
           type: string
           x-go-type-skip-optional-pointer: true
+        verifyTLS:
+          default: true
+          type: boolean
         allowedNamespaces:
           type: array
           description: List of namespaces allowed to use this backup storage
