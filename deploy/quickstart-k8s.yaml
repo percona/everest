@@ -93,14 +93,6 @@ spec:
     spec:
       serviceAccountName: everest-admin
       automountServiceAccountToken: true
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchLabels:
-                app.kubernetes.io/component: everest
-                app.kubernetes.io/name: everest
-            topologyKey: "kubernetes.io/hostname"
       containers:
         - name: everest
           image: perconalab/everest:0.0.0
