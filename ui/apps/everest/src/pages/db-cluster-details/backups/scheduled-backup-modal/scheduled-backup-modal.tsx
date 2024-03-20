@@ -14,13 +14,9 @@
 // limitations under the License.
 
 import { FormDialog } from 'components/form-dialog';
-import {
-  DB_CLUSTER_QUERY,
-  useDbCluster,
-} from 'hooks/api/db-cluster/useDbCluster';
+import { DB_CLUSTER_QUERY } from 'hooks/api/db-cluster/useDbCluster';
 import { useContext, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useParams } from 'react-router-dom';
 import { Messages } from './scheduled-backup-modal.messages';
 
 import {
@@ -34,20 +30,20 @@ import { scheduleModalDefaultValues } from './scheduled-backup-modal-utils';
 
 export const ScheduledBackupModal = () => {
   const queryClient = useQueryClient();
-  const { dbClusterName, namespace = '' } = useParams();
   const {
     mode = 'new',
     selectedScheduleName,
     openScheduleModal,
     setOpenScheduleModal,
+    dbCluster,
   } = useContext(ScheduleModalContext);
 
-  const { data: dbCluster } = useDbCluster(dbClusterName!, namespace, {
-    enabled: !!dbClusterName && mode === 'edit',
-  });
+  const {
+    metadata: { name: dbClusterName, namespace },
+  } = dbCluster;
 
   const { mutate: updateScheduledBackup, isPending } = useUpdateSchedules(
-    dbClusterName!,
+    dbClusterName,
     namespace,
     mode
   );

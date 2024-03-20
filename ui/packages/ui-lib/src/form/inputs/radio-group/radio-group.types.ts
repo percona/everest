@@ -25,7 +25,7 @@ export type RadioGroupOptions = {
 
 export type RadioGroupProps = {
   control?: Control;
-  controllerProps?: UseControllerProps;
+  controllerProps?: Omit<UseControllerProps, 'name'>;
   name: string;
   label?: string;
   labelProps?: LabeledContentProps;

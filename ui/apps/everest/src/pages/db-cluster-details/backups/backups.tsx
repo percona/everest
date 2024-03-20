@@ -19,40 +19,50 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { BackupsList } from './backups-list/backups-list';
 import { ScheduleModalContext } from './backups.context.ts';
-import { NoStoragesMessage } from './no-storages-message/no-storages-message.tsx';
+import { NoStoragesMessage } from './no-storages-message/no-storages-message';
 import { ScheduledBackupModal } from './scheduled-backup-modal/scheduled-backup-modal';
 import { ScheduledBackupsList } from './scheduled-backups-list/scheduled-backups-list';
+import { OnDemandBackupModal } from './on-demand-backup-modal/on-demand-backup-modal';
 
 export const Backups = () => {
   const { dbClusterName, namespace = '' } = useParams();
   const { data = [] } = useDbClusters(namespace);
   const { data: backupStorages = [] } = useBackupStorages();
-  const dbNameExists = data.find(
+  const dbCluster = data.find(
     (cluster) => cluster.metadata.name === dbClusterName
   );
 
   const [mode, setMode] = useState<'new' | 'edit'>('new');
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
+  const [openOnDemandModal, setOpenOnDemandModal] = useState(false);
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');
+
+  if (!dbCluster) {
+    return null;
+  }
 
   return (
     <ScheduleModalContext.Provider
       value={{
+        dbCluster,
         mode,
         setMode,
         openScheduleModal,
         setOpenScheduleModal,
         selectedScheduleName,
         setSelectedScheduleName,
+        openOnDemandModal,
+        setOpenOnDemandModal,
       }}
     >
       {backupStorages.length === 0 ? (
         <NoStoragesMessage />
       ) : (
-        dbNameExists && (
+        dbCluster && (
           <>
             <ScheduledBackupsList />
             <BackupsList />
+            {openOnDemandModal && <OnDemandBackupModal />}
             {openScheduleModal && <ScheduledBackupModal />}
           </>
         )

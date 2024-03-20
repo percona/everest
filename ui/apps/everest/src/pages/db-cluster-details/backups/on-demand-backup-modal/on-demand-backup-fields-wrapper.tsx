@@ -1,34 +1,40 @@
 import { TextInput } from '@percona/ui-lib';
 import { AutoCompleteAutoFill } from 'components/auto-complete-auto-fill/auto-complete-auto-fill';
-import { ScheduleFormFields } from 'components/schedule-form/schedule-form.types';
+import LogicalPhysicalRadioGroup from 'components/logical-physical-radio-group';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
-import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster.ts';
-import { useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
-import { Messages } from '../../../db-cluster-details.messages.ts';
+import { Messages } from '../../db-cluster-details.messages.ts';
 import { BackupFields } from './on-demand-backup-modal.types.ts';
+import { DbEngineType } from '@percona/types';
+import { ScheduleModalContext } from '../backups.context.ts';
 
 export const OnDemandBackupFieldsWrapper = () => {
-  const { dbClusterName, namespace = '' } = useParams();
-  const { setValue } = useFormContext();
-  const { data: dbCluster } = useDbCluster(dbClusterName!, namespace, {
-    enabled: !!dbClusterName,
-  });
+  const { dbCluster } = useContext(ScheduleModalContext);
+  const {
+    metadata: { namespace },
+    status,
+    spec: {
+      engine: { type },
+    },
+  } = dbCluster;
+  const { setValue, trigger } = useFormContext();
   const { data: backupStorages = [], isFetching } =
     useBackupStoragesByNamespace(namespace);
-  const dbClusterActiveStorage = dbCluster?.status?.activeStorage;
+  const dbClusterActiveStorage = status?.activeStorage;
 
   useEffect(() => {
     if (dbClusterActiveStorage) {
-      setValue(ScheduleFormFields.storageLocation, {
+      setValue(BackupFields.storageLocation, {
         name: dbClusterActiveStorage,
       });
+      trigger(BackupFields.storageLocation);
     }
   }, [dbClusterActiveStorage]);
 
   return (
     <>
+      {type === DbEngineType.PSMDB && <LogicalPhysicalRadioGroup />}
       <TextInput
         name={BackupFields.name}
         label={Messages.onDemandBackupModal.backupName}

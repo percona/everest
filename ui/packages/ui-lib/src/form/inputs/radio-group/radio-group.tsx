@@ -33,7 +33,12 @@ const RadioGroup = ({
             <FormControlLabel
               key={option.label}
               value={option.value}
-              control={<Radio />}
+              control={
+                <Radio
+                  // @ts-expect-error
+                  inputProps={{ 'data-testid': `radio-option-${option.value}` }}
+                />
+              }
               label={option.label}
               disabled={option.disabled}
             />
