@@ -136,8 +136,7 @@ jobs:
           images: |
             perconalab/everest-operator
           tags: |
-            type=raw,value=0.0.0
-            type=raw,value=latest
+            type=raw,value=100.100.200
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -155,7 +154,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.12.0
         with:
-          image-ref: 'perconalab/everest-operator:latest'
+          image-ref: 'perconalab/everest-operator:100.100.200'
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
