@@ -314,8 +314,8 @@ jobs:
 
       - name: Everest - check out
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.ROBOT_TOKEN }}
+#        with:
+#          token: ${{ secrets.ROBOT_TOKEN }}
 
       - name: Everest - setup golang
         uses: actions/setup-go@v5
