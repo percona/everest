@@ -438,7 +438,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           draft: true
-          tag_name:	$GH_TAG
+          tag_name:	${{ GH_TAG }}
           files: |
             dist/*
         env:
