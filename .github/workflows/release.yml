@@ -33,6 +33,7 @@ jobs:
       IS_RC: 0
       ARCH: ''
       OS: ''
+      IMAGE_TO_CHECK: ''
     steps:
 
       - name: Validate input
@@ -55,12 +56,12 @@ jobs:
           echo "OS=$(uname | awk '{print tolower($0)}')" >> $GITHUB_ENV
 
 
-      - name: Operator - check out
-        uses: actions/checkout@v4
-        with:
-          repository: percona/everest-operator
-          path: everest-operator
-          token: ${{ secrets.ROBOT_TOKEN }}
+#      - name: Operator - check out
+#        uses: actions/checkout@v4
+#        with:
+#          repository: percona/everest-operator
+#          path: everest-operator
+#          token: ${{ secrets.ROBOT_TOKEN }}
 
 #      - name: Operator - create release branch
 #        run: |
@@ -158,16 +159,20 @@ jobs:
 #          echo $(echo )
 #          echo "---"
 
-      - name: Run Trivy vulnerability scanner
+      - name: Operator - set image to scan
         run: |
-          export FIRST_IMAGE=$(echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1)
-          aquasecurity/trivy-action@0.12.0
-            with:
-              image-ref: ${{ FIRST_IMAGE }}
-              format: 'table'
-              exit-code: '1'
-              severity: 'CRITICAL,HIGH'
+          image_to_check = echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1
+          echo "IMAGE_TO_CHECK=$image_to_check" >> $GITHUB_ENV
 
+      - name: Operator - Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.12.0
+        env:
+          FIRST_IMAGE:
+        with:
+          image-ref: echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
 
 #      - name: Operator - build and push everest-operator-bundle image
 #        uses: docker/build-push-action@v3
