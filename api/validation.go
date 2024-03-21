@@ -18,13 +18,16 @@ package api
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"regexp"
 	"time"
 
+	"github.com/AlekSi/pointer"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -146,7 +149,7 @@ func validateURL(urlStr string) bool {
 func validateStorageAccessByCreate(ctx context.Context, params CreateBackupStorageParams, l *zap.SugaredLogger) error {
 	switch params.Type {
 	case CreateBackupStorageParamsTypeS3:
-		return s3Access(l, params.Url, params.AccessKey, params.SecretKey, params.BucketName, params.Region)
+		return s3Access(l, params.Url, params.AccessKey, params.SecretKey, params.BucketName, params.Region, pointer.Get(params.VerifyTLS))
 	case CreateBackupStorageParamsTypeAzure:
 		return azureAccess(ctx, l, params.AccessKey, params.SecretKey, params.BucketName)
 	default:
@@ -154,7 +157,13 @@ func validateStorageAccessByCreate(ctx context.Context, params CreateBackupStora
 	}
 }
 
-func s3Access(l *zap.SugaredLogger, endpoint *string, accessKey, secretKey, bucketName, region string) error {
+//nolint:funlen
+func s3Access(
+	l *zap.SugaredLogger,
+	endpoint *string,
+	accessKey, secretKey, bucketName, region string,
+	verifyTLS bool,
+) error {
 	if config.Debug {
 		return nil
 	}
@@ -163,11 +172,16 @@ func s3Access(l *zap.SugaredLogger, endpoint *string, accessKey, secretKey, buck
 		endpoint = nil
 	}
 
+	c := http.DefaultClient
+	c.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: !verifyTLS}, //nolint:gosec
+	}
 	// Create a new session with the provided credentials
 	sess, err := session.NewSession(&aws.Config{
 		Endpoint:    endpoint,
 		Region:      aws.String(region),
 		Credentials: credentials.NewStaticCredentials(accessKey, secretKey, ""),
+		HTTPClient:  c,
 	})
 	if err != nil {
 		l.Error(err)
@@ -278,13 +292,20 @@ func validateAllowedNamespaces(allowedNamespaces, namespaces []string) error {
 	return nil
 }
 
-func validateBackupStorageAccess(ctx echo.Context, sType string, url *string, bucketName, region, accessKey, secretKey string, l *zap.SugaredLogger) error {
+func validateBackupStorageAccess(
+	ctx echo.Context,
+	sType string,
+	url *string,
+	bucketName, region, accessKey, secretKey string,
+	verifyTLS bool,
+	l *zap.SugaredLogger,
+) error {
 	switch sType {
 	case string(BackupStorageTypeS3):
 		if region == "" {
 			return errors.New("region is required when using S3 storage type")
 		}
-		if err := s3Access(l, url, accessKey, secretKey, bucketName, region); err != nil {
+		if err := s3Access(l, url, accessKey, secretKey, bucketName, region, verifyTLS); err != nil {
 			return err
 		}
 	case string(BackupStorageTypeAzure):
@@ -338,7 +359,7 @@ func validateUpdateBackupStorageRequest(ctx echo.Context, bs *everestv1alpha1.Ba
 		region = *params.Region
 	}
 
-	err := validateBackupStorageAccess(ctx, string(bs.Spec.Type), url, bucketName, region, accessKey, secretKey, l)
+	err := validateBackupStorageAccess(ctx, string(bs.Spec.Type), url, bucketName, region, accessKey, secretKey, pointer.Get(params.VerifyTLS), l)
 	if err != nil {
 		return nil, err
 	}

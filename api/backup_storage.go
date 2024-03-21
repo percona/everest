@@ -122,6 +122,7 @@ func (e *EverestServer) CreateBackupStorage(ctx echo.Context) error { //nolint:f
 			Region:                params.Region,
 			CredentialsSecretName: params.Name,
 			AllowedNamespaces:     params.AllowedNamespaces,
+			VerifyTLS:             params.VerifyTLS,
 		},
 	}
 	if params.Url != nil {
@@ -301,6 +302,9 @@ func (e *EverestServer) UpdateBackupStorage(ctx echo.Context, backupStorageName 
 	}
 	if params.AllowedNamespaces != nil {
 		bs.Spec.AllowedNamespaces = *params.AllowedNamespaces
+	}
+	if params.VerifyTLS != nil {
+		bs.Spec.VerifyTLS = params.VerifyTLS
 	}
 
 	err = e.kubeClient.UpdateBackupStorage(c, bs)
