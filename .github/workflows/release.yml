@@ -161,14 +161,12 @@ jobs:
 
       - name: Operator - set image to scan
         run: |
-          image_to_check=$(echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1)
-          echo "IMAGE_TO_CHECK=$image_to_check" >> $GITHUB_ENV
-    
+          echo "::set-output name=image_to_check::$(echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1)"
 
       - name: Operator - Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.12.0
         with:
-          image-ref: ${{ env.IMAGE_TO_CHECK }}
+          image-ref: ${{ steps.set_image.outputs.image_to_check }}
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
