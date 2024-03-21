@@ -419,7 +419,7 @@ jobs:
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
 
-      - name: Everest - build Everest image
+      - name: Everest - push Everest image
         uses: docker/build-push-action@v5
         with:
           context: .
