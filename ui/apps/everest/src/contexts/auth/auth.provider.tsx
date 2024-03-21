@@ -54,7 +54,9 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (fetchStatus === 'fetching') return;
+    if (fetchStatus === 'fetching') {
+      return;
+    }
     if (queryStatus === 'success') {
       setAuthStatus('loggedIn');
       localStorage.setItem('pwd', token);
