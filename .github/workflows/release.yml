@@ -155,7 +155,7 @@ jobs:
       - name: test
         run: |
           echo "---"
-          echo ${{ steps.operator_meta.outputs.tags }}
+          echo "${{ steps.operator_meta.outputs.tags }}"
           echo "---"
 
       - name: Run Trivy vulnerability scanner
