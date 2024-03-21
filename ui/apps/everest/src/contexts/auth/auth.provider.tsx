@@ -50,7 +50,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (queryStatus === 'success') {
+    if (queryStatus === 'success' && authStatus === 'loggingIn') {
       setAuthStatus('loggedIn');
       localStorage.setItem('pwd', token);
       addApiInterceptors();
@@ -64,7 +64,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       localStorage.removeItem('pwd');
     }
-  }, [queryStatus, token]);
+  }, [queryStatus, token, authStatus]);
 
   return (
     <AuthContext.Provider
