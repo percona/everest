@@ -160,6 +160,7 @@ jobs:
 #          echo "---"
 
       - name: Operator - set image to scan
+        id: set_image
         run: |
           echo "::set-output name=image_to_check::$(echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1)"
 
