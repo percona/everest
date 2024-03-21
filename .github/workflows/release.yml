@@ -154,7 +154,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.12.0
         with:
-          image-ref: 'perconalab/everest-operator:0.0.0'
+          image-ref: 'perconalab/everest-operator:10.10.10'
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
