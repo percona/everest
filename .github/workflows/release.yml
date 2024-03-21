@@ -126,17 +126,18 @@ jobs:
 #          make build manifests bundle
 #
 #
-#      - name: Operator - setup Docker meta for everest-operator
-#        id: operator_meta
-#        uses: docker/metadata-action@v4
-#        # docker/metadata-action action looks more elegant when being triggered by a GH tag,
-#        # however this workflow can't be triggered by a GH tag since there are some changes need to be done
-#        # in the codebase prior putting the tag, so the action uses the raw tags
-#        with:
-#          images: |
-#            perconalab/everest-operator
-#          tags: |
-#            type=raw,value=100.100.200
+      - name: Operator - setup Docker meta for everest-operator
+        id: operator_meta
+        uses: docker/metadata-action@v4
+        # docker/metadata-action action looks more elegant when being triggered by a GH tag,
+        # however this workflow can't be triggered by a GH tag since there are some changes need to be done
+        # in the codebase prior putting the tag, so the action uses the raw tags
+        with:
+          images: |
+            perconalab/everest-operator
+          tags: |
+            type=raw,value=100.100.300
+            type=raw,value=100.100.600
 #
 #      - name: Login to GitHub Container Registry
 #        uses: docker/login-action@v2
@@ -154,7 +155,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.12.0
         with:
-          image-ref: 'perconalab/everest-operator:10.10.10'
+          image-ref: ${{ index(steps.operator_build_push.outputs.tags, 0)
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
