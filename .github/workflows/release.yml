@@ -160,8 +160,10 @@ jobs:
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.12.0
+        env:
+          FIRST_IMAGE: echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1
         with:
-          image-ref: echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1
+          image-ref: $FIRST_IMAGE
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
