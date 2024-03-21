@@ -432,13 +432,13 @@ jobs:
 
       - name: CLI - build binaries
         run: |
-          git checkout $GH_TAG
           make release-cli
 
       - name: CLI - create release with binaries
         uses: softprops/action-gh-release@v1
         with:
           draft: true
+          tag_name:	$GH_TAG
           files: |
             dist/*
         env:
