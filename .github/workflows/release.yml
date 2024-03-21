@@ -152,16 +152,16 @@ jobs:
 #          push: false
 #          tags: ${{ steps.operator_meta.outputs.tags }}
 
-      - name: test
-        run: |
-          echo "---"
-          echo $(echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1)
-          echo "---"
+#      - name: test
+#        run: |
+#          echo "---"
+#          echo $(echo )
+#          echo "---"
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.12.0
         with:
-          image-ref: ${{ steps.operator_meta.outputs.tags[0] }}
+          image-ref: $("${{ steps.operator_meta.outputs.tags }}" | head -n 1)
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
