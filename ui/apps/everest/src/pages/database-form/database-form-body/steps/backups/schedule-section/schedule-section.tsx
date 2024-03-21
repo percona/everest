@@ -13,9 +13,9 @@ export const ScheduleBackupSection = ({
   enableNameGeneration,
 }: ScheduleBackupSectionProps) => {
   const mode = useDatabasePageMode();
-  const { setValue, getFieldState, watch } = useFormContext();
+  const { setValue, getFieldState, getValues } = useFormContext();
   const { dbClusterData } = useDatabasePageDefaultValues(mode);
-  const [dbType, selectedNamespace] = watch([
+  const [dbType, selectedNamespace] = getValues([
     DbWizardFormFields.dbType,
     DbWizardFormFields.k8sNamespace,
   ]);
@@ -55,7 +55,10 @@ export const ScheduleBackupSection = ({
       schedules={schedules}
       storageLocationFetching={isFetching}
       storageLocationOptions={backupStorages}
-      disableStorageSelection={mode === 'edit' && dbType === DbType.Mongo}
+      disableStorageSelection={
+        mode === 'edit' && schedules.length === 1 && dbType === DbType.Mongo
+      }
+      showTypeRadio={dbType === DbType.Mongo}
     />
   );
 };

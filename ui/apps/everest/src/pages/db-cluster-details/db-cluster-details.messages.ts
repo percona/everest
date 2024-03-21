@@ -3,7 +3,7 @@ export const Messages = {
     subHead:
       'Create an immediate backup of this database, to store a snapshot of its current data.',
     backupName: 'Backup Name',
-    storageLocation: 'Storage Location',
+    storageLocation: 'Backup Storage',
     headerMessage: 'Create Backup',
     submitMessage: 'Create',
   },
@@ -13,7 +13,7 @@ export const Messages = {
   },
   noStorages: {
     alert:
-      'You don’t have any storage location set yet. Please set one before you proceed.',
+      'You don’t have any backup storage set yet. Please set one before you proceed.',
     submitButton: 'Go to settings',
     cancel: 'Cancel',
   },

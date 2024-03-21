@@ -18,7 +18,7 @@ test.describe('On-demand backup', async () => {
     });
   });
 
-  test('Non-empty storage location', async ({ page }) => {
+  test('Non-empty backup storage', async ({ page }) => {
     await gotoDbClusterBackups(page, mySQLName);
     await clickOnDemandBackup(page);
     await expect(page.getByTestId('text-input-name')).not.toBeEmpty();

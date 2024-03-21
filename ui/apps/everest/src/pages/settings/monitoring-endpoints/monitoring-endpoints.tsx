@@ -112,10 +112,9 @@ export const MonitoringEndpoints = () => {
         { name, url, type: 'pmm', allowedNamespaces, pmm: { ...pmmData } },
         {
           onSuccess: (newInstance) => {
-            updateDataAfterCreate(
-              queryClient,
-              MONITORING_INSTANCES_QUERY_KEY
-            )(newInstance);
+            updateDataAfterCreate(queryClient, [
+              MONITORING_INSTANCES_QUERY_KEY,
+            ])(newInstance);
             handleCloseModal();
           },
         }
