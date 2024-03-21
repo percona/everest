@@ -155,7 +155,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.12.0
         with:
-          image-ref: ${{ index(steps.operator_build_push.outputs.tags, 0)
+          image-ref: ${{ index(steps.operator_meta.outputs.tags, 0)
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
