@@ -432,7 +432,7 @@ func (k *Kubernetes) applyResources(ctx context.Context) ([]unstructured.Unstruc
 			return true, nil
 		}
 
-		if err := wait.PollUntilContextTimeout(ctx, time.Second, 30*time.Second, true, applyFile); err != nil {
+		if err := wait.PollUntilContextTimeout(ctx, time.Second, 10*time.Minute, true, applyFile); err != nil {
 			return nil, errors.Join(err, fmt.Errorf("cannot apply %q file", f))
 		}
 
