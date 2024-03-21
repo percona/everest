@@ -134,23 +134,10 @@ jobs:
         # in the codebase prior putting the tag, so the action uses the raw tags
         with:
           images: |
-            percona/everest-operator,enable=${{ env.IS_RC == 0 }}
             perconalab/everest-operator
           tags: |
-            type=raw,value=${{ env.VERSION }}
+            type=raw,value=0.0.0
             type=raw,value=latest
-            type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
-
-      - name: Operator - setup Docker meta for everest-operator-bundle
-        id: bundle_meta
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            percona/everest-operator-bundle,enable=${{ env.IS_RC == 0 }}
-            perconalab/everest-operator-bundle
-          tags: |
-            type=raw,value=${{ env.VERSION }}
-            type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
