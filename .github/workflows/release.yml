@@ -159,14 +159,15 @@ jobs:
 #          echo "---"
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.12.0
-        env:
-          FIRST_IMAGE: echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1
-        with:
-          image-ref: $FIRST_IMAGE
-          format: 'table'
-          exit-code: '1'
-          severity: 'CRITICAL,HIGH'
+        run: |
+          FIRST_IMAGE=$(echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1)
+          aquasecurity/trivy-action@0.12.0
+            with:
+              image-ref: ${{ FIRST_IMAGE }}
+              format: 'table'
+              exit-code: '1'
+              severity: 'CRITICAL,HIGH'
+
 
 #      - name: Operator - build and push everest-operator-bundle image
 #        uses: docker/build-push-action@v3
