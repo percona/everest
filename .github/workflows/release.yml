@@ -160,7 +160,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner
         run: |
-          FIRST_IMAGE=$(echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1)
+          export FIRST_IMAGE=$(echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1)
           aquasecurity/trivy-action@0.12.0
             with:
               image-ref: ${{ FIRST_IMAGE }}
