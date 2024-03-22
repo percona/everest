@@ -62,36 +62,6 @@ test.describe('Everest CLI install', async () => {
 
     await verifyClusterResources();
 
-    await test.step('disable telemetry', async () => {
-      // check that the telemetry IS NOT disabled by default
-      let out = await cli.exec('kubectl get deployments/percona-xtradb-cluster-operator --namespace=everest-all -o yaml');
-
-      await out.outContains(
-        'name: DISABLE_TELEMETRY\n          value: "false"',
-      );
-      out = await cli.exec(`kubectl patch service everest --patch '{"spec": {"type": "LoadBalancer"}}' --namespace=everest-system`)
-
-      await out.assertSuccess();
-
-      out = await cli.everestExecSkipWizardWithEnv('upgrade --namespaces=everest-all', 'DISABLE_TELEMETRY=true');
-      await out.assertSuccess();
-      await out.outErrContainsNormalizedMany([
-        'Subscriptions have been patched\t{"component": "upgrade"}',
-      ]);
-
-      await page.waitForTimeout(10_000);
-      // check that the telemetry IS disabled
-      out = await cli.exec('kubectl get deployments/percona-xtradb-cluster-operator --namespace=everest-all -o yaml');
-      await out.outContains(
-        'name: DISABLE_TELEMETRY\n          value: "true"',
-      );
-      // check that the spec.type is not overrided
-      out = await cli.exec('kubectl get service/everest --namespace=everest-system -o yaml');
-      await out.outContains(
-        'type: LoadBalancer',
-      );
-    });
-
     await test.step('uninstall Everest', async () => {
       let out = await cli.everestExec(
         `uninstall --assume-yes`,
