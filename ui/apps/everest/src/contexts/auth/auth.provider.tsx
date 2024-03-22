@@ -15,7 +15,11 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // We use the "/version" API call just to make sure the token works
   // At this point, there's not really a login flow, per se
-  const { status: queryStatus, refetch } = useVersion({
+  const {
+    status: queryStatus,
+    fetchStatus,
+    refetch,
+  } = useVersion({
     enabled: false,
     retry: false,
   });
@@ -50,6 +54,9 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
+    if (fetchStatus === 'fetching') {
+      return;
+    }
     if (queryStatus === 'success') {
       setAuthStatus('loggedIn');
       localStorage.setItem('pwd', token);
@@ -64,7 +71,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       localStorage.removeItem('pwd');
     }
-  }, [queryStatus, token]);
+  }, [fetchStatus, queryStatus, token]);
 
   return (
     <AuthContext.Provider
