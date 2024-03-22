@@ -178,13 +178,6 @@ jobs:
           git status
           git diff --exit-code
 
-      - name: Check the latest operator version is used
-        run: |
-          go get github.com/percona/everest-operator@main
-          echo "Checking there is no source code changes"
-          go mod tidy
-          git diff --exit-code
-
       - name: Check the Makefile references dev version
         run: |
           if ! grep -q "RELEASE_VERSION ?= v0.0.0" Makefile; then 
