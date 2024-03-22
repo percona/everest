@@ -105,7 +105,6 @@ type Client struct {
 	olmClientset     olmVersioned.Interface
 	rcLock           *sync.Mutex
 	restConfig       *rest.Config
-	restMapper       meta.RESTMapper
 	namespace        string
 	clusterName      string
 }
@@ -278,12 +277,6 @@ func (c *Client) kubeClient() (client.Client, error) { //nolint:ireturn,nolintli
 
 // Initializes clients for operators.
 func (c *Client) initOperatorClients() error {
-	groupResources, err := restmapper.GetAPIGroupResources(c.clientset.Discovery())
-	if err != nil {
-		return err
-	}
-	c.restMapper = restmapper.NewDiscoveryRESTMapper(groupResources)
-
 	customClient, err := customresources.NewForConfig(c.restConfig)
 	if err != nil {
 		return err
@@ -391,9 +384,16 @@ func (c *Client) ListDeployments(ctx context.Context, namespace string) (*appsv1
 
 // ApplyObject applies object.
 func (c *Client) ApplyObject(obj runtime.Object) error {
+	// Instantiate a new restmapper so we discover any new resources before applying object.
+	groupResources, err := restmapper.GetAPIGroupResources(c.clientset.Discovery())
+	if err != nil {
+		return err
+	}
+	mapper := restmapper.NewDiscoveryRESTMapper(groupResources)
+
 	gvk := obj.GetObjectKind().GroupVersionKind()
 	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
-	mapping, err := c.restMapper.RESTMapping(gk, gvk.Version)
+	mapping, err := mapper.RESTMapping(gk, gvk.Version)
 	if err != nil {
 		return err
 	}
