@@ -44,7 +44,7 @@ const AppBarHelpIcon = () => {
       >
         <MenuItem sx={{ cursor: 'text', userSelect: 'text' }}>
           <Typography variant="helperText" color="text.secondary">
-            {`Everest v${versionData?.version}`}
+            {`Everest ${versionData?.version}`}
           </Typography>
         </MenuItem>
         <Divider />
