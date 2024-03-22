@@ -77,6 +77,7 @@ func (e *EverestServer) CreateMonitoringInstance(ctx echo.Context) error {
 		Name:              params.Name,
 		Url:               params.Url,
 		AllowedNamespaces: params.AllowedNamespaces,
+		VerifyTLS:         params.VerifyTLS,
 	}
 
 	return ctx.JSON(http.StatusOK, result)
@@ -88,10 +89,11 @@ func (e *EverestServer) getPMMApiKey(ctx context.Context, params *CreateMonitori
 	}
 
 	e.l.Debug("Getting PMM API key by username and password")
+	skipVerifyTLS := !pointer.Get(params.VerifyTLS)
 	return pmm.CreatePMMApiKey(
 		ctx, params.Url, fmt.Sprintf("everest-%s-%s", params.Name, uuid.NewString()),
 		params.Pmm.User, params.Pmm.Password,
-		false,
+		skipVerifyTLS,
 	)
 }
 
@@ -130,6 +132,7 @@ func (e *EverestServer) createMonitoringK8sResources(
 			},
 			CredentialsSecretName: params.Name,
 			AllowedNamespaces:     *params.AllowedNamespaces,
+			VerifyTLS:             params.VerifyTLS,
 		},
 	})
 	if err != nil {
@@ -209,11 +212,12 @@ func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, name string) 
 	if params.Pmm != nil && params.Pmm.ApiKey != "" {
 		apiKey = params.Pmm.ApiKey
 	}
+	skipVerifyTLS := !pointer.Get(params.VerifyTLS)
 	if params.Pmm != nil && params.Pmm.User != "" && params.Pmm.Password != "" {
 		apiKey, err = pmm.CreatePMMApiKey(
 			c, params.Url, fmt.Sprintf("everest-%s-%s", name, uuid.NewString()),
 			params.Pmm.User, params.Pmm.Password,
-			false,
+			skipVerifyTLS,
 		)
 		if err != nil {
 			e.l.Error(err)
@@ -242,6 +246,9 @@ func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, name string) 
 	if params.AllowedNamespaces != nil {
 		m.Spec.AllowedNamespaces = *params.AllowedNamespaces
 	}
+	if params.VerifyTLS != nil {
+		m.Spec.VerifyTLS = params.VerifyTLS
+	}
 	err = e.kubeClient.UpdateMonitoringConfig(c, m)
 	if err != nil {
 		e.l.Error(err)
@@ -255,6 +262,7 @@ func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, name string) 
 		Name:              m.Name,
 		Url:               m.Spec.PMM.URL,
 		AllowedNamespaces: &m.Spec.AllowedNamespaces,
+		VerifyTLS:         m.Spec.VerifyTLS,
 	})
 }
 
