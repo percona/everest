@@ -42,7 +42,6 @@ test.describe('Everest CLI install', async () => {
         ]);
       });
     };
-    const clusterName = `test-${faker.number.int()}`;
 
     await test.step('run everest install command', async () => {
       const out = await cli.everestExecSkipWizard(
@@ -72,10 +71,10 @@ test.describe('Everest CLI install', async () => {
       out = await cli.exec('kubectl get ns everest-system everest-monitoring everest-olm everest-all');
 
       await out.outErrContainsNormalizedMany([
-		'Error from server (NotFound): namespaces "everest-system" not found',
-		'Error from server (NotFound): namespaces "everest-monitoring" not found',
-		'Error from server (NotFound): namespaces "everest-olm" not found',
-		'Error from server (NotFound): namespaces "everest-all" not found',
+        'Error from server (NotFound): namespaces "everest-system" not found',
+        'Error from server (NotFound): namespaces "everest-monitoring" not found',
+        'Error from server (NotFound): namespaces "everest-olm" not found',
+        'Error from server (NotFound): namespaces "everest-all" not found',
       ]);
 
     });

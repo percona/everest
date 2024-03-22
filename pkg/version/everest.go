@@ -29,12 +29,12 @@ import (
 )
 
 type deploymentGetter interface {
-	GetDeployment(ctx context.Context, namespace, name string) (*appsv1.Deployment, error)
+	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
 }
 
 // EverestVersionFromDeployment returns Everest version from the k8s deployment resource.
 func EverestVersionFromDeployment(ctx context.Context, dg deploymentGetter) (*goversion.Version, error) {
-	dep, err := dg.GetDeployment(ctx, common.SystemNamespace, common.PerconaEverestDeploymentName)
+	dep, err := dg.GetDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
 	if err != nil {
 		return nil, err
 	}
