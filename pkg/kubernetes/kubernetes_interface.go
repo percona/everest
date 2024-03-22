@@ -8,7 +8,6 @@ import (
 	goversion "github.com/hashicorp/go-version"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
-	appv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -20,8 +19,8 @@ import (
 
 // KubernetesConnector ...
 type KubernetesConnector interface {
-	// Deployment returns a deployment.
-	Deployment(ctx context.Context, namespace, name string) (*appv1.Deployment, error)
+	// GetDeployment returns k8s deployment by provided name and namespace.
+	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
 	// Config returns *rest.Config.
 	Config() *rest.Config
 	// Namespace returns the current namespace.
@@ -86,8 +85,6 @@ type KubernetesConnector interface {
 	DeleteEverest(ctx context.Context, namespace string, version *goversion.Version) error
 	// GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.
 	GetDBNamespaces(ctx context.Context, namespace string) ([]string, error)
-	// GetDeployment returns k8s deployment by provided name and namespace.
-	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
 	// WaitForRollout waits for rollout of a provided deployment in the provided namespace.
 	WaitForRollout(ctx context.Context, name, namespace string) error
 	// UpdateClusterRoleBinding updates namespaces list for the cluster role by provided name.

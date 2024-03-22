@@ -50,10 +50,6 @@ type KubeClientConnector interface {
 	GenerateKubeConfigWithToken(user string, secret *corev1.Secret) ([]byte, error)
 	// GetServerVersion returns server version.
 	GetServerVersion() (*version.Info, error)
-	// GetDeployment returns deployment by name.
-	GetDeployment(ctx context.Context, name string, namespace string) (*appsv1.Deployment, error)
-	// ListDeployments returns deployment by name.
-	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
 	// ApplyObject applies object.
 	ApplyObject(obj runtime.Object) error
 	// DeleteObject deletes object from the k8s cluster.
@@ -138,8 +134,10 @@ type KubeClientConnector interface {
 	ListDatabaseEngines(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseEngineList, error)
 	// GetDatabaseEngine returns database clusters by provided name.
 	GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error)
-	// Deployment returns a deployment.
-	Deployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
+	// GetDeployment returns deployment by name.
+	GetDeployment(ctx context.Context, name string, namespace string) (*appsv1.Deployment, error)
+	// ListDeployments returns deployment by name.
+	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
 	// DeleteAllMonitoringResources deletes all resources related to monitoring from k8s cluster.
 	DeleteAllMonitoringResources(ctx context.Context, namespace string) error
 	// CreateMonitoringConfig creates an monitoringConfig.

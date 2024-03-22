@@ -205,36 +205,6 @@ func (_m *MockKubernetesConnector) DeleteObject(obj runtime.Object) error {
 	return r0
 }
 
-// Deployment provides a mock function with given fields: ctx, namespace, name
-func (_m *MockKubernetesConnector) Deployment(ctx context.Context, namespace string, name string) (*v1.Deployment, error) {
-	ret := _m.Called(ctx, namespace, name)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Deployment")
-	}
-
-	var r0 *v1.Deployment
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v1.Deployment, error)); ok {
-		return rf(ctx, namespace, name)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v1.Deployment); ok {
-		r0 = rf(ctx, namespace, name)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v1.Deployment)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, namespace, name)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetClusterServiceVersion provides a mock function with given fields: ctx, key
 func (_m *MockKubernetesConnector) GetClusterServiceVersion(ctx context.Context, key types.NamespacedName) (*operatorsv1alpha1.ClusterServiceVersion, error) {
 	ret := _m.Called(ctx, key)

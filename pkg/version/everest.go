@@ -22,19 +22,19 @@ import (
 	"strings"
 
 	goversion "github.com/hashicorp/go-version"
-	appv1 "k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/percona/everest/pkg/common"
 )
 
 type deploymentGetter interface {
-	Deployment(ctx context.Context, namespace, name string) (*appv1.Deployment, error)
+	GetDeployment(ctx context.Context, namespace, name string) (*appsv1.Deployment, error)
 }
 
 // EverestVersionFromDeployment returns Everest version from the k8s deployment resource.
 func EverestVersionFromDeployment(ctx context.Context, dg deploymentGetter) (*goversion.Version, error) {
-	dep, err := dg.Deployment(ctx, common.SystemNamespace, common.PerconaEverestDeploymentName)
+	dep, err := dg.GetDeployment(ctx, common.SystemNamespace, common.PerconaEverestDeploymentName)
 	if err != nil {
 		return nil, err
 	}

@@ -34,7 +34,6 @@ import (
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
 	yamlv3 "gopkg.in/yaml.v3"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -981,11 +980,6 @@ func (k *Kubernetes) GetDBNamespaces(ctx context.Context, namespace string) ([]s
 	}
 
 	return nil, errors.New("failed to get watched namespaces")
-}
-
-// GetDeployment returns k8s deployment by provided name and namespace.
-func (k *Kubernetes) GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error) {
-	return k.client.GetDeployment(ctx, name, namespace)
 }
 
 // WaitForRollout waits for rollout of a provided deployment in the provided namespace.
