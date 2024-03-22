@@ -28,6 +28,16 @@ import (
 	"github.com/percona/everest/cmd/config"
 )
 
+func newHTTPClient(insecure bool) *http.Client {
+	client := http.DefaultClient
+	client.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: insecure, //nolint:gosec
+		},
+	}
+	return client
+}
+
 // CreatePMMApiKey creates a new API key in PMM by using the provided username and password.
 func CreatePMMApiKey(
 	ctx context.Context,
@@ -59,12 +69,7 @@ func CreatePMMApiKey(
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.SetBasicAuth(user, password)
 
-	httpClient := http.DefaultClient
-	httpClient.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-	}
+	httpClient := newHTTPClient(skipTLSVerify)
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return "", err
