@@ -8,6 +8,7 @@ import { Messages } from '../../db-cluster-details.messages.ts';
 import { BackupFields } from './on-demand-backup-modal.types.ts';
 import { DbEngineType } from '@percona/types';
 import { ScheduleModalContext } from '../backups.context.ts';
+import { Typography } from '@mui/material';
 
 export const OnDemandBackupFieldsWrapper = () => {
   const { dbCluster } = useContext(ScheduleModalContext);
@@ -35,14 +36,22 @@ export const OnDemandBackupFieldsWrapper = () => {
   return (
     <>
       {type === DbEngineType.PSMDB && <LogicalPhysicalRadioGroup />}
+      <Typography variant="sectionHeading" mt={3} mb={2}>
+        {Messages.onDemandBackupModal.backupDetails}
+      </Typography>
       <TextInput
         name={BackupFields.name}
-        label={Messages.onDemandBackupModal.backupName}
+        textFieldProps={{
+          sx: { mb: 3 },
+          label: Messages.onDemandBackupModal.backupName,
+        }}
         isRequired
       />
       <AutoCompleteAutoFill
         name={BackupFields.storageLocation}
-        label={Messages.onDemandBackupModal.storageLocation}
+        textFieldProps={{
+          label: Messages.onDemandBackupModal.storageLocation,
+        }}
         loading={isFetching}
         options={backupStorages}
         enableFillFirst
