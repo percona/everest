@@ -32,7 +32,8 @@ import (
 func CreatePMMApiKey(
 	ctx context.Context,
 	hostname, apiKeyName, user, password string,
-	skipTLSVerify bool) (string, error) {
+	skipTLSVerify bool,
+) (string, error) {
 	if config.Debug {
 		return "test-api-key", nil
 	}
