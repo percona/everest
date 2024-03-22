@@ -91,6 +91,7 @@ func (e *EverestServer) getPMMApiKey(ctx context.Context, params *CreateMonitori
 	return pmm.CreatePMMApiKey(
 		ctx, params.Url, fmt.Sprintf("everest-%s-%s", params.Name, uuid.NewString()),
 		params.Pmm.User, params.Pmm.Password,
+		false,
 	)
 }
 
@@ -212,6 +213,7 @@ func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, name string) 
 		apiKey, err = pmm.CreatePMMApiKey(
 			c, params.Url, fmt.Sprintf("everest-%s-%s", name, uuid.NewString()),
 			params.Pmm.User, params.Pmm.Password,
+			false,
 		)
 		if err != nil {
 			e.l.Error(err)
