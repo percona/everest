@@ -63,6 +63,14 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.12.0
+        with:
+          image-ref: "perconalab/everest:0.0.0"
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
   scan:
     runs-on: ubuntu-latest
     needs: [build]
