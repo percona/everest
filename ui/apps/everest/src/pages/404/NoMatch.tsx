@@ -11,6 +11,7 @@ export const NoMatch = ({
   redirectButtonText = Messages.redirectButton,
   CustomIcon,
   onButtonClick,
+  customButton,
 }: NoMatchProps) => {
   const { isMobile, isTablet, isDesktop } = useActiveBreakpoint();
 
@@ -65,16 +66,39 @@ export const NoMatch = ({
         >
           {subHeader}
         </Typography>
-        <Button
-          component={Link}
-          to="/"
-          sx={{ alignSelf: 'start', mt: 2 }}
-          variant="contained"
-          data-testid="no-match-button"
-          onClick={onButtonClick}
-        >
-          {redirectButtonText}
-        </Button>
+        {customButton ? (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 1,
+              mt: 2,
+            }}
+          >
+            <Button
+              component={Link}
+              to="/"
+              variant="contained"
+              data-testid="no-match-button"
+              onClick={onButtonClick}
+            >
+              {redirectButtonText}
+            </Button>
+            {customButton}
+          </Box>
+        ) : (
+          <Button
+            component={Link}
+            to="/"
+            sx={{ alignSelf: 'start', mt: 2 }}
+            variant="contained"
+            data-testid="no-match-button"
+            onClick={onButtonClick}
+          >
+            {redirectButtonText}
+          </Button>
+        )}
       </Box>
     </Box>
   );

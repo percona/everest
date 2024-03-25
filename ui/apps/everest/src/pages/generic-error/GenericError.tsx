@@ -1,14 +1,34 @@
+import { Button, Tooltip } from '@mui/material';
 import { GenericErrorIcon } from '@percona/ui-lib';
 import { NoMatch } from 'pages/404/NoMatch';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { ErrorContext } from 'utils/ErrorBoundaryProvider';
 import { Messages } from './genericError.messages';
 
 export const GenericError = () => {
-  const { updateError } = useContext(ErrorContext);
+  const [open, setOpen] = useState(false);
+  const { updateError, errorObject, hasError } = useContext(ErrorContext);
 
   const resetErrorState = () => {
     updateError(false);
+  };
+
+  const clipboardAvailable = !!navigator.clipboard;
+
+  const handleCopy = () => {
+    if (clipboardAvailable && hasError && errorObject) {
+      navigator.clipboard.writeText(
+        `Error name: ${errorObject.name}, Error message: ${errorObject.message}, Error stack: ${errorObject.stack}`
+      );
+      setOpen(true);
+
+      setTimeout(() => {
+        setOpen(false);
+        window
+          .open('https://github.com/percona/everest/issues', '_blank')
+          ?.focus();
+      }, 1500);
+    }
   };
   return (
     <NoMatch
@@ -16,6 +36,28 @@ export const GenericError = () => {
       subHeader={Messages.subHeader}
       CustomIcon={GenericErrorIcon}
       onButtonClick={resetErrorState}
+      customButton={
+        <Tooltip
+          {...(clipboardAvailable && {
+            disableHoverListener: true,
+            open,
+          })}
+          disableFocusListener
+          disableTouchListener
+          PopperProps={{
+            disablePortal: true,
+          }}
+          title={
+            clipboardAvailable
+              ? 'Copied to clipboard!'
+              : 'Clipboard access is restricted in unsecured contexts. Switch to HTTPS or localhost, or copy the content manually.'
+          }
+        >
+          <Button variant="text" onClick={handleCopy}>
+            Copy & Report issue
+          </Button>
+        </Tooltip>
+      }
     />
   );
 };

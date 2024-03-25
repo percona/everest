@@ -6,4 +6,5 @@ export type NoMatchProps = {
   redirectButtonText?: string;
   CustomIcon?: FC<{ w: string; h: string }>;
   onButtonClick?: () => void;
+  customButton?: React.ReactNode;
 };

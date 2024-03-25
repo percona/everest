@@ -1,4 +1,4 @@
-import { Component, ErrorInfo } from 'react';
+import { Component } from 'react';
 import { ErrorContext } from './ErrorBoundaryProvider';
 
 type ErrorBoundaryState =
@@ -32,9 +32,9 @@ export class ErrorBoundary extends Component<
     this.state = initialState;
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error) {
     this.context.updateError(true);
-    console.log(error, errorInfo);
+    this.context.updateErrorObject(error);
   }
 
   render() {
