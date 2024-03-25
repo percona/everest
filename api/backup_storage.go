@@ -153,6 +153,7 @@ func (e *EverestServer) CreateBackupStorage(ctx echo.Context) error { //nolint:f
 		Region:            params.Region,
 		Url:               params.Url,
 		AllowedNamespaces: params.AllowedNamespaces,
+		VerifyTLS:         params.VerifyTLS,
 	}
 
 	return ctx.JSON(http.StatusOK, result)
@@ -228,6 +229,7 @@ func (e *EverestServer) GetBackupStorage(ctx echo.Context, backupStorageName str
 		Region:            s.Spec.Region,
 		Url:               &s.Spec.EndpointURL,
 		AllowedNamespaces: s.Spec.AllowedNamespaces,
+		VerifyTLS:         s.Spec.VerifyTLS,
 	})
 }
 
@@ -322,6 +324,7 @@ func (e *EverestServer) UpdateBackupStorage(ctx echo.Context, backupStorageName 
 		Region:            bs.Spec.Region,
 		Url:               &bs.Spec.EndpointURL,
 		AllowedNamespaces: bs.Spec.AllowedNamespaces,
+		VerifyTLS:         bs.Spec.VerifyTLS,
 	}
 
 	return ctx.JSON(http.StatusOK, result)

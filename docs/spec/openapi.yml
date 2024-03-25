@@ -1387,6 +1387,9 @@ components:
           description: List of namespaces allowed to use this monitoring instance
           items:
             type: string
+        verifyTLS:
+          description: VerifyTLS is set to ensure TLS/SSL verification.
+          type: boolean
     MonitoringInstanceBaseWithName:
       type: object
       description: Monitoring instance information
