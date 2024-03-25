@@ -185,6 +185,7 @@ func (e *EverestServer) GetMonitoringInstance(ctx echo.Context, name string) err
 		Name:              m.Name,
 		Url:               m.Spec.PMM.URL,
 		AllowedNamespaces: &m.Spec.AllowedNamespaces,
+		VerifyTLS:         m.Spec.VerifyTLS,
 	})
 }
 
