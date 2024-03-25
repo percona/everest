@@ -155,7 +155,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Operator - build everest-operator image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: everest-operator
           push: false
@@ -176,14 +176,14 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Operator - push everest-operator image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: everest-operator
           push: true
           tags: ${{ steps.operator_meta.outputs.tags }}
 
       - name: Operator - build everest-operator-bundle image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: everest-operator
           push: false
@@ -205,7 +205,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Operator - push everest-operator-bundle image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: everest-operator
           push: true
@@ -279,7 +279,7 @@ jobs:
 
 
       - name: Catalog - build image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: everest-catalog
           push: false
@@ -302,7 +302,7 @@ jobs:
 #          severity: 'CRITICAL,HIGH'
 
       - name: Catalog - push image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: everest-catalog
           push: true
