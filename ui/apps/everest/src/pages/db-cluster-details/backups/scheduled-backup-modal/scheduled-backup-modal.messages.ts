@@ -15,13 +15,13 @@
 
 export const Messages = {
   createSchedule: {
-    headerMessage: 'Create Schedule',
+    headerMessage: 'Create backup schedule',
     subhead:
       'Create a task that takes regular backups of this database, according to the schedule that you specify.',
     submitMessage: 'Create',
   },
   editSchedule: {
-    headerMessage: 'Edit schedules',
+    headerMessage: 'Edit backup schedules',
     submitMessage: 'Save',
   },
 };
