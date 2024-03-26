@@ -1,5 +1,5 @@
 export const Messages = {
-  add: 'Add Endpoint',
+  add: 'Add endpoint',
   edit: 'Edit',
   delete: 'Delete',
   deleteDialogHeader: 'Delete monitoring endpoint',

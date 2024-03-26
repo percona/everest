@@ -17,7 +17,7 @@ import { errorMessages } from 'utils/common-validation';
 
 export const Messages = {
   scheduleName: {
-    label: 'Schedule name',
+    label: 'Backup name',
     tooLong: errorMessages.tooLong('schedule'),
     duplicate: 'You already have a schedule with the same name.',
   },
@@ -26,4 +26,6 @@ export const Messages = {
     invalidOption:
       'Invalid option. Please make sure you added a backup storage and select it from the dropdown',
   },
+  backupDetails: 'Backup Details',
+  repeats: 'Repeats',
 };

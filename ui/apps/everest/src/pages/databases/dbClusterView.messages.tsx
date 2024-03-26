@@ -14,7 +14,7 @@
 // limitations under the License.
 
 export const Messages = {
-  createDatabase: 'Create Database',
+  createDatabase: 'Create database',
   statusProvider: {
     up: 'Up',
     down: 'Down',
