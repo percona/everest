@@ -44,6 +44,7 @@ export const CreateEditModalStorage = ({
 
   return (
     <FormDialog
+      size="XL"
       isOpen={open}
       closeModal={handleCloseModal}
       submitting={isLoading}
