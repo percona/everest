@@ -48,13 +48,11 @@ export const GenericError = () => {
             disablePortal: true,
           }}
           title={
-            clipboardAvailable
-              ? 'Copied to clipboard!'
-              : 'Clipboard access is restricted in unsecured contexts. Switch to HTTPS or localhost, or copy the content manually.'
+            clipboardAvailable ? Messages.copyClipboard : Messages.copyError
           }
         >
           <Button variant="text" onClick={handleCopy}>
-            Copy & Report issue
+            {Messages.copyAndReport}
           </Button>
         </Tooltip>
       }

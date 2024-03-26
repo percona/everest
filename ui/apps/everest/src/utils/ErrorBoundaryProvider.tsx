@@ -7,7 +7,7 @@ type ErrorContextType = {
   updateErrorObject: (error: Error) => void;
 };
 
-const ErrorContext = createContext<ErrorContextType>({
+export const ErrorContext = createContext<ErrorContextType>({
   errorObject: null,
   hasError: false,
   updateError: () => {},
@@ -18,7 +18,7 @@ type ErrorContextProvider = {
   children: React.ReactNode;
 };
 
-const ErrorContextProvider = ({ children }: ErrorContextProvider) => {
+export const ErrorContextProvider = ({ children }: ErrorContextProvider) => {
   const [hasError, setHasError] = useState(false);
   const [errorObject, setErrorObject] = useState<Error | null>(null);
 
@@ -38,5 +38,3 @@ const ErrorContextProvider = ({ children }: ErrorContextProvider) => {
     </ErrorContext.Provider>
   );
 };
-
-export { ErrorContext, ErrorContextProvider };
