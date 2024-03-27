@@ -2,9 +2,10 @@ export const Messages = {
   onDemandBackupModal: {
     subHead:
       'Create an immediate backup of this database, to store a snapshot of its current data.',
-    backupName: 'Backup Name',
-    storageLocation: 'Backup Storage',
-    headerMessage: 'Create Backup',
+    backupName: 'Backup name',
+    storageLocation: 'Backup storage',
+    backupDetails: 'Backup details',
+    headerMessage: 'Create backup now',
     submitMessage: 'Create',
   },
   schedulesBackupModal: {
