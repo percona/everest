@@ -1,8 +1,4 @@
-import {
-  Alert,
-  MenuItem,
-  Typography,
-} from '@mui/material';
+import { Alert, MenuItem, Typography } from '@mui/material';
 import { DbType } from '@percona/types';
 import {
   DateTimePickerInput,
