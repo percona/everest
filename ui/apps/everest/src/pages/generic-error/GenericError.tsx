@@ -27,9 +27,10 @@ export const GenericError = () => {
         window
           .open('https://github.com/percona/everest/issues', '_blank')
           ?.focus();
-      }, 1500);
+      }, 0);
     }
   };
+
   return (
     <NoMatch
       header={Messages.header}
