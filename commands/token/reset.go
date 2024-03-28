@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
-	"github.com/percona/everest/pkg/install"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/output"
 	"github.com/percona/everest/pkg/token"
 )
@@ -40,7 +40,7 @@ func NewResetCmd(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
-			c.Namespace = install.SystemNamespace
+			c.Namespace = common.SystemNamespace
 			command, err := token.NewReset(*c, l)
 			if err != nil {
 				output.PrintError(err, l)

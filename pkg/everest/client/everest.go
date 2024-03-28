@@ -13,7 +13,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package client ...
 package client
 
-//go:generate ../../../bin/ifacemaker -f backup_storage.go -f client.go -f ctl.go -f database_cluster.go -f database_cluster_backup.go -f database_cluster_restore.go -f database_engine.go -f deployment.go -f monitoring.go -f monitoring_config.go -f namespace.go -f olm.go -f node.go -f pod.go -f secret.go -f storage.go -f writer -s Client -i KubeClientConnector -p client -o kubeclient_interface.go
-//go:generate ../../../bin/mockery --name=KubeClientConnector --case=snake --inpackage
+import (
+	"context"
+	"errors"
+	"net/http"
+
+	"github.com/percona/percona-everest-backend/client"
+)
+
+// Version retrieves Everest version informatoin.
+func (e *Everest) Version(ctx context.Context) (*client.Version, error) {
+	res := &client.Version{}
+	err := makeRequest(
+		ctx, func(
+			ctx context.Context,
+			_ struct{},
+			r ...client.RequestEditorFn,
+		) (*http.Response, error) {
+			return e.cl.VersionInfo(ctx, r...)
+		},
+		struct{}{}, &res, errors.New("cannot get version due to Everest error"),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}

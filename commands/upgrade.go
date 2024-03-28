@@ -27,7 +27,6 @@ import (
 	"github.com/percona/everest/pkg/upgrade"
 )
 
-// newUpgradeCmd returns a new operators command.
 func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "upgrade",
@@ -40,12 +39,12 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initUpgradeViperFlags(cmd)
 
-			c, err := parseConfig()
+			c, err := parseUpgradeConfig()
 			if err != nil {
 				os.Exit(1)
 			}
 
-			op, err := upgrade.NewUpgrade(*c, l)
+			op, err := upgrade.NewUpgrade(c, l)
 			if err != nil {
 				l.Error(err)
 				os.Exit(1)
@@ -65,20 +64,16 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 
 func initUpgradeFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
-	cmd.Flags().String("namespaces", "", "Comma-separated namespaces list Percona Everest can manage")
-	cmd.Flags().Bool("upgrade-olm", false, "Upgrade OLM distribution")
-	cmd.Flags().Bool("skip-wizard", false, "Skip installation wizard")
+	cmd.Flags().String("version-metadata-url", "https://check.percona.com", "URL to retrieve version metadata information from")
 }
 
 func initUpgradeViperFlags(cmd *cobra.Command) {
-	viper.BindEnv("kubeconfig")                                       //nolint:errcheck,gosec
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))   //nolint:errcheck,gosec
-	viper.BindPFlag("namespaces", cmd.Flags().Lookup("namespaces"))   //nolint:errcheck,gosec
-	viper.BindPFlag("upgrade-olm", cmd.Flags().Lookup("upgrade-olm")) //nolint:errcheck,gosec
-	viper.BindPFlag("skip-wizard", cmd.Flags().Lookup("skip-wizard")) //nolint:errcheck,gosec
+	viper.BindEnv("kubeconfig")                                                         //nolint:errcheck,gosec
+	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))                     //nolint:errcheck,gosec
+	viper.BindPFlag("version-metadata-url", cmd.Flags().Lookup("version-metadata-url")) //nolint:errcheck,gosec
 }
 
-func parseConfig() (*upgrade.Config, error) {
+func parseUpgradeConfig() (*upgrade.Config, error) {
 	c := &upgrade.Config{}
 	err := viper.Unmarshal(c)
 	return c, err

@@ -7,6 +7,7 @@ import (
 
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	versioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	packagev1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -49,10 +50,6 @@ type KubeClientConnector interface {
 	GenerateKubeConfigWithToken(user string, secret *corev1.Secret) ([]byte, error)
 	// GetServerVersion returns server version.
 	GetServerVersion() (*version.Info, error)
-	// GetDeployment returns deployment by name.
-	GetDeployment(ctx context.Context, name string, namespace string) (*appsv1.Deployment, error)
-	// ListDeployments returns deployment by name.
-	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
 	// ApplyObject applies object.
 	ApplyObject(obj runtime.Object) error
 	// DeleteObject deletes object from the k8s cluster.
@@ -137,6 +134,10 @@ type KubeClientConnector interface {
 	ListDatabaseEngines(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseEngineList, error)
 	// GetDatabaseEngine returns database clusters by provided name.
 	GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error)
+	// GetDeployment returns deployment by name.
+	GetDeployment(ctx context.Context, name string, namespace string) (*appsv1.Deployment, error)
+	// ListDeployments returns deployment by name.
+	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
 	// DeleteAllMonitoringResources deletes all resources related to monitoring from k8s cluster.
 	DeleteAllMonitoringResources(ctx context.Context, namespace string) error
 	// CreateMonitoringConfig creates an monitoringConfig.
@@ -153,6 +154,10 @@ type KubeClientConnector interface {
 	GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error)
 	// DeleteNamespace deletes a namespace.
 	DeleteNamespace(ctx context.Context, name string) error
+	// OLM returns OLM client set.
+	//
+	//nolint:ireturn
+	OLM() versioned.Interface
 	// GetNodes returns list of nodes.
 	GetNodes(ctx context.Context) (*corev1.NodeList, error)
 	// GetPods returns list of pods.

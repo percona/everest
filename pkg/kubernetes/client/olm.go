@@ -13,12 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package data provides access to embedded data.
-package data
+package client
 
-import "embed"
+import versioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 
-// OLMCRDs stores CRDs in an embedded filesystem.
+// OLM returns OLM client set.
 //
-//go:embed crds/*
-var OLMCRDs embed.FS
+//nolint:ireturn
+func (c *Client) OLM() versioned.Interface {
+	return c.olmClientset
+}

@@ -18,6 +18,7 @@ package uninstall
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -29,8 +30,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/install"
 	"github.com/percona/everest/pkg/kubernetes"
+	cliVersion "github.com/percona/everest/pkg/version"
 )
 
 // Uninstall implements logic for the cluster command.
@@ -67,22 +70,8 @@ func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
 
 // Run runs the cluster command.
 func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
-	if !u.config.AssumeYes {
-		msg := `You are about to uninstall Everest from the Kubernetes cluster.
-This will uninstall Everest and all its components from the cluster.`
-		fmt.Printf("\n%s\n\n", msg) //nolint:forbidigo
-		confirm := &survey.Confirm{
-			Message: "Are you sure you want to uninstall Everest?",
-		}
-		prompt := false
-		if err := survey.AskOne(confirm, &prompt); err != nil {
-			return err
-		}
-
-		if !prompt {
-			u.l.Info("Exiting")
-			return nil
-		}
+	if err := u.runWizard(); err != nil {
+		return err
 	}
 
 	dbsExist, err := u.dbsExist(ctx)
@@ -110,6 +99,15 @@ This will uninstall Everest and all its components from the cluster.`
 		return err
 	}
 
+	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
+	if err != nil {
+		return errors.Join(err, errors.New("could not retrieve Everest version"))
+	}
+
+	// TODO: How do we ensure we delete all resources based on the correct Everest version?
+	if err := u.kubeClient.DeleteEverest(ctx, common.SystemNamespace, everestVersion); err != nil {
+		return err
+	}
 	if err := u.deleteDBNamespaces(ctx); err != nil {
 		return err
 	}
@@ -128,7 +126,7 @@ This will uninstall Everest and all its components from the cluster.`
 	// All resources with finalizers in the system namespace (DBCs and
 	// BackupStorages) have already been deleted, so we can delete the
 	// namespace directly
-	if err := u.deleteNamespaces(ctx, []string{install.SystemNamespace}); err != nil {
+	if err := u.deleteNamespaces(ctx, []string{common.SystemNamespace}); err != nil {
 		return err
 	}
 
@@ -139,6 +137,28 @@ This will uninstall Everest and all its components from the cluster.`
 	}
 
 	u.l.Info("Everest has been uninstalled successfully")
+	return nil
+}
+
+func (u *Uninstall) runWizard() error {
+	if !u.config.AssumeYes {
+		msg := `You are about to uninstall Everest from the Kubernetes cluster.
+This will uninstall Everest and all its components from the cluster.`
+		fmt.Printf("\n%s\n\n", msg) //nolint:forbidigo
+		confirm := &survey.Confirm{
+			Message: "Are you sure you want to uninstall Everest?",
+		}
+		prompt := false
+		if err := survey.AskOne(confirm, &prompt); err != nil {
+			return err
+		}
+
+		if !prompt {
+			u.l.Info("Exiting")
+			return nil
+		}
+	}
+
 	return nil
 }
 
@@ -159,7 +179,7 @@ func (u *Uninstall) confirmForce() (bool, error) {
 }
 
 func (u *Uninstall) getDBs(ctx context.Context) (map[string]*everestv1alpha1.DatabaseClusterList, error) {
-	namespaces, err := u.kubeClient.GetDBNamespaces(ctx, install.SystemNamespace)
+	namespaces, err := u.kubeClient.GetDBNamespaces(ctx, common.SystemNamespace)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +296,7 @@ func (u *Uninstall) deleteNamespaces(ctx context.Context, namespaces []string) e
 }
 
 func (u *Uninstall) deleteDBNamespaces(ctx context.Context) error {
-	namespaces, err := u.kubeClient.GetDBNamespaces(ctx, install.SystemNamespace)
+	namespaces, err := u.kubeClient.GetDBNamespaces(ctx, common.SystemNamespace)
 	if err != nil {
 		return err
 	}
@@ -285,7 +305,7 @@ func (u *Uninstall) deleteDBNamespaces(ctx context.Context) error {
 }
 
 func (u *Uninstall) deleteBackupStorages(ctx context.Context) error { //nolint:dupl
-	storages, err := u.kubeClient.ListBackupStorages(ctx, install.SystemNamespace)
+	storages, err := u.kubeClient.ListBackupStorages(ctx, common.SystemNamespace)
 	if err != nil {
 		return err
 	}
@@ -296,7 +316,7 @@ func (u *Uninstall) deleteBackupStorages(ctx context.Context) error { //nolint:d
 
 	for _, storage := range storages.Items {
 		u.l.Infof("Deleting backup storage '%s'", storage.Name)
-		if err := u.kubeClient.DeleteBackupStorage(ctx, install.SystemNamespace, storage.Name); err != nil {
+		if err := u.kubeClient.DeleteBackupStorage(ctx, common.SystemNamespace, storage.Name); err != nil {
 			return err
 		}
 	}
@@ -304,7 +324,7 @@ func (u *Uninstall) deleteBackupStorages(ctx context.Context) error { //nolint:d
 	// Wait for all backup storages to be deleted, or timeout after 5 minutes.
 	u.l.Infof("Waiting for backup storages to be deleted")
 	return wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
-		storages, err := u.kubeClient.ListBackupStorages(ctx, install.SystemNamespace)
+		storages, err := u.kubeClient.ListBackupStorages(ctx, common.SystemNamespace)
 		if err != nil {
 			return false, err
 		}
