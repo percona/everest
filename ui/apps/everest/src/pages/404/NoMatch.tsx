@@ -1,10 +1,18 @@
 import { Box, Button, Typography } from '@mui/material';
 import { NoMatchIcon } from '@percona/ui-lib';
-import { Link } from 'react-router-dom';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
+import { Link } from 'react-router-dom';
 import { Messages } from './NoMatch.messages';
+import { NoMatchProps } from './NoMatch.type';
 
-export const NoMatch = () => {
+export const NoMatch = ({
+  header = Messages.header,
+  subHeader = Messages.subHeader,
+  redirectButtonText = Messages.redirectButton,
+  CustomIcon,
+  onButtonClick,
+  customButton,
+}: NoMatchProps) => {
   const { isMobile, isTablet, isDesktop } = useActiveBreakpoint();
 
   return (
@@ -21,10 +29,17 @@ export const NoMatch = () => {
       }}
     >
       <Box>
-        <NoMatchIcon
-          w={isMobile ? '300px' : '435px'}
-          h={isMobile ? '300px' : '435px'}
-        />
+        {CustomIcon ? (
+          <CustomIcon
+            w={isMobile ? '300px' : '435px'}
+            h={isMobile ? '300px' : '435px'}
+          />
+        ) : (
+          <NoMatchIcon
+            w={isMobile ? '300px' : '435px'}
+            h={isMobile ? '300px' : '435px'}
+          />
+        )}
       </Box>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <Typography
@@ -37,7 +52,7 @@ export const NoMatch = () => {
               '"Poppins", "Roboto", "Helvetica", "Arial", "sans-serif"',
           }}
         >
-          {Messages.header}
+          {header}
         </Typography>
         <Typography
           sx={{
@@ -49,17 +64,41 @@ export const NoMatch = () => {
               '"Poppins", "Roboto", "Helvetica", "Arial", "sans-serif"',
           }}
         >
-          {Messages.subHeader}
+          {subHeader}
         </Typography>
-        <Button
-          component={Link}
-          to="/"
-          sx={{ alignSelf: 'start', mt: 2 }}
-          variant="contained"
-          data-testid="no-match-button"
-        >
-          {Messages.redirectButton}
-        </Button>
+        {customButton ? (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 1,
+              mt: 2,
+            }}
+          >
+            <Button
+              component={Link}
+              to="/"
+              variant="contained"
+              data-testid="no-match-button"
+              onClick={onButtonClick}
+            >
+              {redirectButtonText}
+            </Button>
+            {customButton}
+          </Box>
+        ) : (
+          <Button
+            component={Link}
+            to="/"
+            sx={{ alignSelf: 'start', mt: 2 }}
+            variant="contained"
+            data-testid="no-match-button"
+            onClick={onButtonClick}
+          >
+            {redirectButtonText}
+          </Button>
+        )}
       </Box>
     </Box>
   );
