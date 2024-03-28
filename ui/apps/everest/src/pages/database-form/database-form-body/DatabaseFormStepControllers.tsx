@@ -44,7 +44,6 @@ const DatabaseFormStepControllers = ({
     <Box sx={{ flex: '1 1 auto' }} />
     <Button
       variant="outlined"
-      disabled={disableSubmit}
       data-testid="db-wizard-cancel-button"
       sx={{ mr: 1 }}
       onClick={onCancel}
