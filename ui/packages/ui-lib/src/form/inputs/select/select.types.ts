@@ -12,8 +12,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 import { LabeledContentProps } from '../../../labeled-content';
-import { SelectProps } from '@mui/material';
+import { FormControlProps, SelectProps } from '@mui/material';
 import { Control, UseControllerProps } from 'react-hook-form';
 
 export type SelectInputProps = {
@@ -23,6 +24,7 @@ export type SelectInputProps = {
   label?: string;
   labelProps?: LabeledContentProps;
   selectFieldProps?: SelectProps;
+  formControlProps?: FormControlProps;
   children?: React.ReactNode | React.ReactNode[];
   isRequired?: boolean;
 };

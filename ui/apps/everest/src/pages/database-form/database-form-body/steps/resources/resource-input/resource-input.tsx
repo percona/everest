@@ -31,9 +31,6 @@ export const ResourceInput = ({
               <InputAdornment position="end">{endSuffix}</InputAdornment>
             ),
           },
-          InputLabelProps: {
-            shrink: true,
-          },
         }}
       />
       {isDesktop && numberOfNodes && (

@@ -149,7 +149,7 @@ export const ResourcesStep = () => {
             display: 'flex',
             flexDirection: isMobile ? 'column' : 'row',
             justifyContent: 'center',
-            marginTop: 4,
+            marginTop: 2,
             gap: isDesktop ? 4 : 2,
             '& > *': {
               width: isMobile ? '100%' : '33%',
