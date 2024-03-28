@@ -79,7 +79,7 @@ export const getLastBackupTimeDiff = (lastBackup: Date): string => {
     return (
       days +
       Messages.lastBackup.days +
-      `${hours > 0 ? hours + Messages.lastBackup.hours : ''}` +
+      ` ${hours > 0 ? hours + Messages.lastBackup.hours : ''}` +
       ' ' +
       Messages.lastBackup.ago
     );
@@ -89,7 +89,7 @@ export const getLastBackupTimeDiff = (lastBackup: Date): string => {
     return (
       hours +
       Messages.lastBackup.hours +
-      `${minutes > 0 ? minutes + Messages.lastBackup.minutes : ''}` +
+      ` ${minutes > 0 ? minutes + ' ' + Messages.lastBackup.minutes : ''}` +
       ' ' +
       Messages.lastBackup.ago
     );
@@ -97,9 +97,15 @@ export const getLastBackupTimeDiff = (lastBackup: Date): string => {
 
   if (minutes > 0) {
     return (
-      minutes + Messages.lastBackup.minutes + ' ' + Messages.lastBackup.ago
+      minutes +
+      ' ' +
+      Messages.lastBackup.minutes +
+      ' ' +
+      Messages.lastBackup.ago
     );
   }
 
-  return seconds + Messages.lastBackup.seconds + ' ' + Messages.lastBackup.ago;
+  return (
+    seconds + ' ' + Messages.lastBackup.seconds + ' ' + Messages.lastBackup.ago
+  );
 };

@@ -28,8 +28,8 @@ export const Messages = {
   lastBackup: {
     warningTooltip: 'Check your backups page for more info',
     inactive: 'Inactive',
-    seconds: 's',
-    minutes: 'm',
+    seconds: 'sec',
+    minutes: 'min',
     hours: 'h',
     days: 'd',
     ago: 'ago',
