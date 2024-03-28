@@ -88,13 +88,19 @@ export const MonitoringEndpoints = () => {
 
   const handleSubmitModal = (
     isEditMode: boolean,
-    { name, url, allowedNamespaces, ...pmmData }: EndpointFormType
+    { name, url, allowedNamespaces, verifyTLS, ...pmmData }: EndpointFormType
   ) => {
     if (isEditMode) {
       updateMonitoringInstance(
         {
           instanceName: name,
-          payload: { url, type: 'pmm', allowedNamespaces, pmm: { ...pmmData } },
+          payload: {
+            url,
+            type: 'pmm',
+            allowedNamespaces,
+            verifyTLS,
+            pmm: { ...pmmData },
+          },
         },
         {
           onSuccess: (updatedInstance) => {
@@ -109,7 +115,14 @@ export const MonitoringEndpoints = () => {
       );
     } else {
       createMonitoringInstance(
-        { name, url, type: 'pmm', allowedNamespaces, pmm: { ...pmmData } },
+        {
+          name,
+          url,
+          type: 'pmm',
+          allowedNamespaces,
+          verifyTLS,
+          pmm: { ...pmmData },
+        },
         {
           onSuccess: (newInstance) => {
             updateDataAfterCreate(queryClient, [
