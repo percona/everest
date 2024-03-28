@@ -28,10 +28,11 @@ export const Messages = {
   lastBackup: {
     warningTooltip: 'Check your backups page for more info',
     inactive: 'Inactive',
-    secAgo: 'sec ago',
-    minAgo: 'min ago',
-    hoursAgo: 'hours ago',
-    daysAgo: 'days ago',
+    seconds: 's',
+    minutes: 'm',
+    hours: 'h',
+    days: 'd',
+    ago: 'ago',
   },
   expandedRow: {
     connection: 'Connection',

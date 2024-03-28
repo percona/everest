@@ -70,15 +70,36 @@ export const getLastBackupTimeDiff = (lastBackup: Date): string => {
     (new Date().getTime() - lastBackup.getTime()) / 1000
   );
 
-  if (diffInSeconds > 3600 * 24)
+  const days = Math.floor(diffInSeconds / 3600 / 24);
+  const hours = Math.floor((diffInSeconds - days * 3600 * 24) / 3600) % 24;
+  const minutes = Math.floor((diffInSeconds - hours * 3600) / 60) % 60;
+  const seconds = (diffInSeconds - minutes * 60) % 60;
+
+  if (days > 0) {
     return (
-      Math.round(diffInSeconds / 3600 / 24) + ' ' + Messages.lastBackup.daysAgo
+      days +
+      Messages.lastBackup.days +
+      `${hours > 0 ? hours + Messages.lastBackup.hours : ''}` +
+      ' ' +
+      Messages.lastBackup.ago
     );
-  if (diffInSeconds > 3600)
+  }
+
+  if (hours > 0) {
     return (
-      Math.round(diffInSeconds / 3600) + ' ' + Messages.lastBackup.hoursAgo
+      hours +
+      Messages.lastBackup.hours +
+      `${minutes > 0 ? minutes + Messages.lastBackup.minutes : ''}` +
+      ' ' +
+      Messages.lastBackup.ago
     );
-  if (diffInSeconds > 60)
-    return Math.round(diffInSeconds / 60) + ' ' + Messages.lastBackup.minAgo;
-  return diffInSeconds + ' ' + Messages.lastBackup.secAgo;
+  }
+
+  if (minutes > 0) {
+    return (
+      minutes + Messages.lastBackup.minutes + ' ' + Messages.lastBackup.ago
+    );
+  }
+
+  return seconds + Messages.lastBackup.seconds + ' ' + Messages.lastBackup.ago;
 };
