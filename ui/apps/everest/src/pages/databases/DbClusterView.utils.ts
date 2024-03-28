@@ -64,3 +64,21 @@ export const convertDbClusterPayloadToTableFormat = (
   });
   return result;
 };
+
+export const getLastBackupTimeDiff = (lastBackup: Date): string => {
+  const diffInSeconds = Math.round(
+    (new Date().getTime() - lastBackup.getTime()) / 1000
+  );
+
+  if (diffInSeconds > 3600 * 24)
+    return (
+      Math.round(diffInSeconds / 3600 / 24) + ' ' + Messages.lastBackup.daysAgo
+    );
+  if (diffInSeconds > 3600)
+    return (
+      Math.round(diffInSeconds / 3600) + ' ' + Messages.lastBackup.hoursAgo
+    );
+  if (diffInSeconds > 60)
+    return Math.round(diffInSeconds / 60) + ' ' + Messages.lastBackup.minAgo;
+  return diffInSeconds + ' ' + Messages.lastBackup.secAgo;
+};

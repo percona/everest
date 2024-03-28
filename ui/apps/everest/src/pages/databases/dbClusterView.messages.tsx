@@ -25,6 +25,14 @@ export const Messages = {
     unknown: 'Unknown',
     restoring: 'Restoring',
   },
+  lastBackup: {
+    warningTooltip: 'Check your backups page for more info',
+    inactive: 'Inactive',
+    secAgo: 'sec ago',
+    minAgo: 'min ago',
+    hoursAgo: 'hours ago',
+    daysAgo: 'days ago',
+  },
   expandedRow: {
     connection: 'Connection',
     dbClusterParams: 'DB Cluster parameters',
