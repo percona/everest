@@ -64,7 +64,7 @@ const AppBarHelpIcon = () => {
           color="inherit"
           target="_blank"
           rel="noopener"
-          href="https://github.com/percona/percona-everest-backend/issues"
+          href="https://github.com/percona/everest/issues"
         >
           <MenuItem onClick={handleClose}>
             <Typography variant="menuText">Report issue</Typography>
