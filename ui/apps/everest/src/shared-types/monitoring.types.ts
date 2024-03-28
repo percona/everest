@@ -3,6 +3,7 @@ export interface MonitoringInstance {
   url: string;
   name: string;
   allowedNamespaces: string[];
+  verifyTLS: boolean;
 }
 
 export type MonitoringInstanceList = MonitoringInstance[];

@@ -9,6 +9,7 @@ export enum EndpointFormFields {
   url = 'url',
   user = 'user',
   password = 'password',
+  verifyTLS = 'verifyTLS',
 }
 
 export interface CreateEditEndpointModalProps {
@@ -24,6 +25,7 @@ export const getEndpointSchema = (isEditMode: boolean) =>
     .object({
       [EndpointFormFields.name]: rfc_123_schema('endpoint name'),
       [EndpointFormFields.namespaces]: z.array(z.string()).nonempty(),
+      [EndpointFormFields.verifyTLS]: z.boolean(),
       [EndpointFormFields.url]: z.string().min(1).url(),
       ...(isEditMode
         ? {
@@ -56,6 +58,7 @@ export const endpointDefaultValues = {
   [EndpointFormFields.url]: '',
   [EndpointFormFields.user]: '',
   [EndpointFormFields.password]: '',
+  [EndpointFormFields.verifyTLS]: true,
 };
 
 export type EndpointFormType = z.infer<ReturnType<typeof getEndpointSchema>>;

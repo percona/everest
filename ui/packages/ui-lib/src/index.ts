@@ -42,6 +42,9 @@ export { default as ToggleButtonGroupInput } from './form/inputs/toggle-button-g
 export * from './form/inputs/date-time-picker';
 export { default as DateTimePickerInput } from './form/inputs/date-time-picker';
 
+export * from './form/inputs/checkbox';
+export { default as CheckboxInput } from './form/inputs/checkbox';
+
 export * from './loadable-children';
 export { default as LoadableChildren } from './loadable-children';
 
