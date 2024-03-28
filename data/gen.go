@@ -24,4 +24,4 @@ import "embed"
 var OLMCRDs embed.FS
 
 // OLMVersion indicates the OLM version shipped with the CLI.
-const OLMVersion = "0.25.0"
+const OLMVersion = "0.27.0"
