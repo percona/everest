@@ -16,6 +16,7 @@ export const Messages = {
     user: 'User',
     password: 'Password',
     apiKey: 'API Key',
+    verifyTLS: 'Verify TLS certificate',
   },
   namespaces: 'Namespaces',
   helperText: {
