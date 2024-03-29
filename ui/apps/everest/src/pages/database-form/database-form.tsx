@@ -170,7 +170,8 @@ export const DatabasePage = () => {
             activeStep={activeStep}
             longestAchievedStep={longestAchievedStep}
             disableNext={formHasErrors}
-            disableSubmit={formHasErrors || isCreating || isUpdating}
+            isSubmitting={isCreating || isUpdating}
+            hasErrors={formHasErrors}
             onSubmit={handleSubmit(onSubmit)}
             onCancel={() => setCancelModalOpen(true)}
             handleNextStep={handleNext}

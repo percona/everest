@@ -1,5 +1,5 @@
-import { Divider, MenuItem } from '@mui/material';
-import { TextInput, SelectInput } from '@percona/ui-lib';
+import { Divider, FormControlLabel, MenuItem } from '@mui/material';
+import { TextInput, SelectInput, CheckboxInput } from '@percona/ui-lib';
 import { StorageType } from 'shared-types/backupStorages.types';
 import { Messages } from '../storage-locations.messages';
 import { StorageLocationsFields } from '../storage-locations.types';
@@ -96,6 +96,11 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
         name={StorageLocationsFields.secretKey}
         label={Messages.secretKey}
         isRequired
+      />
+      <FormControlLabel
+        sx={{ mt: 2 }}
+        label={Messages.verifyTLS}
+        control={<CheckboxInput name={StorageLocationsFields.verifyTLS} />}
       />
     </>
   );

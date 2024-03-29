@@ -43,6 +43,7 @@ import { DbClusterTableElement } from './dbClusterView.types';
 import { DbTypeIconProvider } from './dbTypeIconProvider/DbTypeIconProvider';
 import { ExpandedRow } from './expandedRow/ExpandedRow';
 import { ConfirmFormDialog } from '../../components/confirm-form-dialog';
+import { LastBackup } from './lastBackup/LastBackup';
 
 export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
@@ -112,6 +113,16 @@ export const DbClusterView = () => {
             <DbTypeIconProvider dbType={row.original?.dbType} />
             {row.original?.dbVersion}
           </Stack>
+        ),
+      },
+      {
+        id: 'lastBackup',
+        header: 'Last backup',
+        Cell: ({ row }) => (
+          <LastBackup
+            dbName={row.original?.databaseName}
+            namespace={row.original?.namespace}
+          />
         ),
       },
       {

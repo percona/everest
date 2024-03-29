@@ -55,7 +55,7 @@ To install and provision Percona Everest to Kubernetes:
     **Linux and WSL**
         
     ```sh
-    curl -sSL -o everestctl-linux-amd64 https://github.com/percona/percona-everest-cli/releases/latest/download/everestctl-linux-amd64
+    curl -sSL -o everestctl-linux-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-linux-amd64
     sudo install -m 555 everestctl-linux-amd64 /usr/local/bin/everestctl
     rm everestctl-linux-amd64
     ```
@@ -63,7 +63,7 @@ To install and provision Percona Everest to Kubernetes:
     **macOS (Apple Silicon)**
 
     ```sh
-    curl -sSL -o everestctl-darwin-arm64 https://github.com/percona/percona-everest-cli/releases/latest/download/everestctl-darwin-arm64
+    curl -sSL -o everestctl-darwin-arm64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-arm64
     sudo install -m 555 everestctl-darwin-arm64 /usr/local/bin/everestctl
     rm everestctl-darwin-arm64
     ```
@@ -71,7 +71,7 @@ To install and provision Percona Everest to Kubernetes:
     **macOS (Intel CPU)**
 
     ```sh
-    curl -sSL -o everestctl-darwin-amd64 https://github.com/percona/percona-everest-cli/releases/latest/download/everestctl-darwin-amd64
+    curl -sSL -o everestctl-darwin-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-amd64
     sudo install -m 555 everestctl-darwin-amd64 /usr/local/bin/everestctl
     rm everestctl-darwin-amd64
     ```
