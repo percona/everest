@@ -104,7 +104,6 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
 		return errors.Join(err, errors.New("could not retrieve Everest version"))
 	}
 
-	// TODO: How do we ensure we delete all resources based on the correct Everest version?
 	if err := u.kubeClient.DeleteEverest(ctx, common.SystemNamespace, everestVersion); err != nil {
 		return err
 	}

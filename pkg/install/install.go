@@ -284,7 +284,6 @@ func (o *Install) provisionMonitoringStack(ctx context.Context) error {
 	}
 
 	l.Info("Preparing k8s cluster for monitoring")
-	// TODO: shall we grab VM operator version from metadata?
 	if err := o.installVMOperator(ctx); err != nil {
 		return err
 	}
@@ -366,7 +365,6 @@ func (o *Install) provisionDBNamespaces(ctx context.Context, recVer *version.Rec
 			return err
 		}
 		o.l.Info("Creating role for the Everest service account")
-		// TODO: this shall come from Everest, not cli.
 		err := o.kubeClient.CreateRole(namespace, everestServiceAccountRole, o.serviceAccountRolePolicyRules())
 		if err != nil {
 			return errors.Join(err, errors.New("could not create role"))
@@ -482,7 +480,6 @@ func (o *Install) createNamespace(namespace string) error {
 
 func (o *Install) provisionOLM(ctx context.Context, v *goversion.Version) error {
 	o.l.Info("Installing Operator Lifecycle Manager")
-	// TODO: do we upgrade OLM if the version is too old?
 	if err := o.kubeClient.InstallOLMOperator(ctx, false); err != nil {
 		o.l.Error("failed installing OLM")
 		return err

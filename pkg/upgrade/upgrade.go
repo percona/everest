@@ -357,7 +357,6 @@ func (u *Upgrade) upgradeOLM(ctx context.Context, recommendedVersion *goversion.
 		return nil
 	}
 	u.l.Info("Upgrading OLM to version %s", recommendedVersion)
-	// TODO: shall we actually upgrade OLM operator instead of installation/skip?
 	if err := u.kubeClient.InstallOLMOperator(ctx, true); err != nil {
 		return errors.Join(err, errors.New("could not upgrade OLM"))
 	}
