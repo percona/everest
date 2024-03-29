@@ -59,7 +59,7 @@ function AutoCompleteInput<T>({
                 ),
               }}
               InputLabelProps={{
-                  shrink: true,
+                shrink: true,
               }}
               size="small"
               required={isRequired}

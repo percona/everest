@@ -9,7 +9,7 @@ const TextInput = ({
   label,
   controllerProps,
   textFieldProps,
-    isRequired,
+  isRequired,
 }: TextInputProps) => {
   const { control: contextControl } = useFormContext();
   return (
@@ -20,14 +20,14 @@ const TextInput = ({
         <TextField
           label={label}
           {...field}
-          size={textFieldProps?.size|| "small"}
+          size={textFieldProps?.size || 'small'}
           sx={{ mt: 2 }}
           {...textFieldProps}
           variant="outlined"
           required={isRequired}
           error={!!error}
           InputLabelProps={{
-              shrink: true,
+            shrink: true,
           }}
           inputProps={{
             'data-testid': `text-input-${kebabize(name)}`,
