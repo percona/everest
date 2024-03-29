@@ -1278,14 +1278,6 @@ func (c *Client) ListSubscriptions(ctx context.Context, namespace string) (*v1al
 	return c.olmClientset.OperatorsV1alpha1().Subscriptions(namespace).List(ctx, metav1.ListOptions{})
 }
 
-// GetInstallPlan retrieves an OLM install plan by namespace and name.
-func (c *Client) GetInstallPlan(ctx context.Context, namespace string, name string) (*v1alpha1.InstallPlan, error) {
-	c.rcLock.Lock()
-	defer c.rcLock.Unlock()
-
-	return c.olmClientset.OperatorsV1alpha1().InstallPlans(namespace).Get(ctx, name, metav1.GetOptions{})
-}
-
 // DoPackageWait for the package to be available in OLM.
 func (c *Client) DoPackageWait(ctx context.Context, namespace, name string) error {
 	packageInstalled := func(ctx context.Context) (bool, error) {
@@ -1309,18 +1301,6 @@ func (c *Client) GetPackageManifest(ctx context.Context, namespace, name string)
 	}
 
 	return operatorClient.OperatorsV1().PackageManifests(namespace).Get(ctx, name, metav1.GetOptions{})
-}
-
-// UpdateInstallPlan updates the existing install plan in the specified namespace.
-func (c *Client) UpdateInstallPlan(
-	ctx context.Context,
-	namespace string,
-	installPlan *v1alpha1.InstallPlan,
-) (*v1alpha1.InstallPlan, error) {
-	c.rcLock.Lock()
-	defer c.rcLock.Unlock()
-
-	return c.olmClientset.OperatorsV1alpha1().InstallPlans(namespace).Update(ctx, installPlan, metav1.UpdateOptions{})
 }
 
 // ListCRDs returns a list of CRDs.

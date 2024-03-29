@@ -1593,6 +1593,36 @@ func (_m *MockKubeClientConnector) ListDeployments(ctx context.Context, namespac
 	return r0, r1
 }
 
+// ListInstallPlans provides a mock function with given fields: ctx, namespace
+func (_m *MockKubeClientConnector) ListInstallPlans(ctx context.Context, namespace string) (*operatorsv1alpha1.InstallPlanList, error) {
+	ret := _m.Called(ctx, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListInstallPlans")
+	}
+
+	var r0 *operatorsv1alpha1.InstallPlanList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*operatorsv1alpha1.InstallPlanList, error)); ok {
+		return rf(ctx, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *operatorsv1alpha1.InstallPlanList); ok {
+		r0 = rf(ctx, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*operatorsv1alpha1.InstallPlanList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListMonitoringConfigs provides a mock function with given fields: ctx, namespace
 func (_m *MockKubeClientConnector) ListMonitoringConfigs(ctx context.Context, namespace string) (*v1alpha1.MonitoringConfigList, error) {
 	ret := _m.Called(ctx, namespace)

@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"time"
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
 	goversion "github.com/hashicorp/go-version"
@@ -112,14 +113,43 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 	// We cannot use the latest version of catalog yet since
 	// at the time of writing, each catalog version supports only one Everest version.
+	catalogVersion := recVer.Catalog
+	if catalogVersion == nil {
+		u.l.Debugf("Percona catalog version was nil. Changing to %s", upgradeEverestTo)
+		catalogVersion = upgradeEverestTo
+	}
 	u.l.Infof("Upgrading Percona Catalog to %s", recVer.Catalog)
-	if err := u.kubeClient.InstallPerconaCatalog(ctx, recVer.Catalog); err != nil {
+	if err := u.kubeClient.InstallPerconaCatalog(ctx, catalogVersion); err != nil {
 		return err
+	}
+
+	// Locate the correct install plan.
+	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+
+	u.l.Info("Waiting for install plan for Everest operator")
+	ip, err := u.kubeClient.WaitForInstallPlan(
+		ctxTimeout, common.SystemNamespace,
+		common.EverestOperatorName, upgradeEverestTo,
+	)
+	if err != nil {
+		return errors.Join(err, errors.New("could not find install plan"))
 	}
 
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
 	if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo); err != nil {
 		return err
+	}
+
+	u.l.Infof("Approving install plan %s for Everest operator", ip.Name)
+	done, err := u.kubeClient.ApproveInstallPlan(ctx, common.SystemNamespace, ip.Name)
+	if err != nil || !done {
+		return errors.Join(err, fmt.Errorf("could not approve install plan %s", ip.Name))
+	}
+
+	u.l.Infof("Waiting for install plan installation of Everest operator to finish")
+	if err := u.kubeClient.WaitForInstallPlanCompleted(ctx, common.SystemNamespace, ip.Name); err != nil {
+		return errors.Join(err, fmt.Errorf("install plan %s is not in phase completed", ip.Name))
 	}
 
 	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)

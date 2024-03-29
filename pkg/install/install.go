@@ -52,7 +52,6 @@ type Install struct {
 
 const (
 	everestBackendServiceName = "everest"
-	everestOperatorName       = "everest-operator"
 	vmOperatorName            = "victoriametrics-operator"
 	operatorInstallThreads    = 1
 
@@ -169,6 +168,7 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
+	o.l.Debugf("Everest version information %#v", latestMeta)
 	if err := o.provisionOLM(ctx, latest); err != nil {
 		return err
 	}
@@ -310,7 +310,7 @@ func (o *Install) provisionEverestOperator(ctx context.Context, recVer *version.
 		v = recVer.EverestOperator.String()
 	}
 
-	if err := o.installOperator(ctx, everestOperatorChannel, everestOperatorName, common.SystemNamespace, v)(); err != nil {
+	if err := o.installOperator(ctx, everestOperatorChannel, common.EverestOperatorName, common.SystemNamespace, v)(); err != nil {
 		return err
 	}
 
@@ -334,7 +334,7 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		}
 	} else {
 		o.l.Info("Restarting Everest")
-		if err := o.kubeClient.RestartEverest(ctx, everestOperatorName, common.SystemNamespace); err != nil {
+		if err := o.kubeClient.RestartEverest(ctx, common.EverestOperatorName, common.SystemNamespace); err != nil {
 			return err
 		}
 		if err := o.kubeClient.RestartEverest(ctx, everestBackendServiceName, common.SystemNamespace); err != nil {
@@ -567,7 +567,7 @@ func (o *Install) installOperator(ctx context.Context, channel, operatorName, na
 				},
 			},
 		}
-		if operatorName == everestOperatorName {
+		if operatorName == common.EverestOperatorName {
 			params.TargetNamespaces = o.config.NamespacesList
 			params.SubscriptionConfig.Env = append(params.SubscriptionConfig.Env, []corev1.EnvVar{
 				{

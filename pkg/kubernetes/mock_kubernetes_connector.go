@@ -41,6 +41,34 @@ func (_m *MockKubernetesConnector) ApplyObject(obj runtime.Object) error {
 	return r0
 }
 
+// ApproveInstallPlan provides a mock function with given fields: ctx, namespace, installPlanName
+func (_m *MockKubernetesConnector) ApproveInstallPlan(ctx context.Context, namespace string, installPlanName string) (bool, error) {
+	ret := _m.Called(ctx, namespace, installPlanName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ApproveInstallPlan")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (bool, error)); ok {
+		return rf(ctx, namespace, installPlanName)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
+		r0 = rf(ctx, namespace, installPlanName)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, installPlanName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ClusterName provides a mock function with given fields:
 func (_m *MockKubernetesConnector) ClusterName() string {
 	ret := _m.Called()
@@ -823,6 +851,54 @@ func (_m *MockKubernetesConnector) UpgradeOperator(ctx context.Context, namespac
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpgradeOperator")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, namespace, name)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// WaitForInstallPlan provides a mock function with given fields: ctx, namespace, operatorName, _a3
+func (_m *MockKubernetesConnector) WaitForInstallPlan(ctx context.Context, namespace string, operatorName string, _a3 *version.Version) (*operatorsv1alpha1.InstallPlan, error) {
+	ret := _m.Called(ctx, namespace, operatorName, _a3)
+
+	if len(ret) == 0 {
+		panic("no return value specified for WaitForInstallPlan")
+	}
+
+	var r0 *operatorsv1alpha1.InstallPlan
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *version.Version) (*operatorsv1alpha1.InstallPlan, error)); ok {
+		return rf(ctx, namespace, operatorName, _a3)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *version.Version) *operatorsv1alpha1.InstallPlan); ok {
+		r0 = rf(ctx, namespace, operatorName, _a3)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*operatorsv1alpha1.InstallPlan)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, *version.Version) error); ok {
+		r1 = rf(ctx, namespace, operatorName, _a3)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// WaitForInstallPlanCompleted provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubernetesConnector) WaitForInstallPlanCompleted(ctx context.Context, namespace string, name string) error {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for WaitForInstallPlanCompleted")
 	}
 
 	var r0 error

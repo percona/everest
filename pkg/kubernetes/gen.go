@@ -15,5 +15,5 @@
 
 package kubernetes
 
-//go:generate ../../bin/ifacemaker -f deployment.go -f kubernetes.go -f operator.go -s Kubernetes -i KubernetesConnector -p kubernetes -o kubernetes_interface.go
+//go:generate ../../bin/ifacemaker -f deployment.go -f install_plan.go -f kubernetes.go -f operator.go -s Kubernetes -i KubernetesConnector -p kubernetes -o kubernetes_interface.go
 //go:generate ../../bin/mockery --name=KubernetesConnector --case=snake --inpackage

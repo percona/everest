@@ -30,4 +30,7 @@ const (
 	PerconaEverestDeploymentName = "percona-everest"
 	// EverestContainerNameInDeployment is the name of the Everest container in the deployment.
 	EverestContainerNameInDeployment = "everest"
+
+	// EverestOperatorName holds the name for Everest operator.
+	EverestOperatorName = "everest-operator"
 )

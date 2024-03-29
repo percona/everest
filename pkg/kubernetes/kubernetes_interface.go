@@ -21,6 +21,12 @@ import (
 type KubernetesConnector interface {
 	// GetDeployment returns k8s deployment by provided name and namespace.
 	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
+	// WaitForInstallPlan waits until an install plan for the given operator and version is available.
+	WaitForInstallPlan(ctx context.Context, namespace, operatorName string, version *goversion.Version) (*olmv1alpha1.InstallPlan, error)
+	// ApproveInstallPlan approves an install plan.
+	ApproveInstallPlan(ctx context.Context, namespace, installPlanName string) (bool, error)
+	// WaitForInstallPlanCompleted waits until install plan phase is "complete".
+	WaitForInstallPlanCompleted(ctx context.Context, namespace, name string) error
 	// Config returns *rest.Config.
 	Config() *rest.Config
 	// Namespace returns the current namespace.
