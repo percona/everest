@@ -17,7 +17,7 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.1
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.22.0
-	github.com/operator-framework/operator-lifecycle-manager v0.26.0
+	github.com/operator-framework/operator-lifecycle-manager v0.27.0
 	github.com/percona/everest-operator v0.6.0-dev1.0.20240322111754-0a077df71aa7
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
@@ -42,7 +42,9 @@ require (
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
+	github.com/bshuster-repo/logrus-logstash-hook v1.0.0 // indirect
 	github.com/cert-manager/cert-manager v1.12.4 // indirect
+	github.com/creack/pty v1.1.18 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
@@ -67,9 +69,10 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
+	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
-	github.com/h2non/filetype v1.1.1 // indirect
+	github.com/h2non/filetype v1.1.3 // indirect
 	github.com/h2non/go-is-svg v0.0.0-20160927212452-35e8c4b0612c // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
@@ -101,13 +104,14 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/onsi/gomega v1.32.0 // indirect
-	github.com/operator-framework/operator-registry v1.30.1 // indirect
+	github.com/operator-framework/operator-registry v1.35.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/percona/percona-backup-mongodb v1.8.1-0.20230920143330-3b1c2e263901 // indirect
 	github.com/percona/percona-postgresql-operator v0.0.0-20231220140959-ad5eef722609 // indirect
 	github.com/percona/percona-server-mongodb-operator v1.15.0 // indirect
 	github.com/percona/percona-xtradb-cluster-operator v1.13.0 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
+	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
@@ -144,8 +148,8 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20231120223509-83a465c0220f // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231120223509-83a465c0220f // indirect
-	google.golang.org/grpc v1.59.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20231212172506-995d672761c0 // indirect
+	google.golang.org/grpc v1.60.1 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
