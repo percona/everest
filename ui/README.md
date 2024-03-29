@@ -65,8 +65,3 @@ pnpm --filter <workspace> <command>
 ```
 
 More about PNPM filtering: https://pnpm.io/filtering
-
-## Relevant repos:
-
-- https://github.com/percona/percona-everest-backend
-- https://github.com/percona/percona-everest-cli

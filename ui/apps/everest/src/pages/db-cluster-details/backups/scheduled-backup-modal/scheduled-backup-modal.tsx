@@ -27,6 +27,7 @@ import { useUpdateSchedules } from 'hooks/api/backups/useScheduledBackups';
 import { ScheduleModalContext } from '../backups.context.ts';
 import { ScheduledBackupModalForm } from './scheduled-backup-modal-form/scheduled-backup-modal-form';
 import { scheduleModalDefaultValues } from './scheduled-backup-modal-utils';
+import { Typography } from '@mui/material';
 
 export const ScheduledBackupModal = () => {
   const queryClient = useQueryClient();
@@ -103,10 +104,14 @@ export const ScheduledBackupModal = () => {
       schema={scheduledBackupSchema}
       {...(mode === 'edit' && { values })}
       defaultValues={values}
-      {...(mode === 'new' && { subHead2: Messages.createSchedule.subhead })}
       size="XXL"
       dataTestId={`${mode}-scheduled-backup`}
     >
+      {mode === 'new' && (
+        <Typography variant="body1" mb={3}>
+          {Messages.createSchedule.subhead}
+        </Typography>
+      )}
       <ScheduledBackupModalForm />
     </FormDialog>
   );

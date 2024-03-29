@@ -14,7 +14,7 @@
 // limitations under the License.
 
 export const Messages = {
-  createDatabase: 'Create Database',
+  createDatabase: 'Create database',
   statusProvider: {
     up: 'Up',
     down: 'Down',
@@ -24,6 +24,15 @@ export const Messages = {
     paused: 'Paused',
     unknown: 'Unknown',
     restoring: 'Restoring',
+  },
+  lastBackup: {
+    warningTooltip: 'Check your backups page for more info',
+    inactive: 'Inactive',
+    seconds: 'sec',
+    minutes: 'min',
+    hours: 'h',
+    days: 'd',
+    ago: 'ago',
   },
   expandedRow: {
     connection: 'Connection',

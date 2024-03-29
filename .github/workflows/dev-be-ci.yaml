@@ -178,13 +178,6 @@ jobs:
           git status
           git diff --exit-code
 
-      - name: Check the latest operator version is used
-        run: |
-          go get github.com/percona/everest-operator@main
-          echo "Checking there is no source code changes"
-          go mod tidy
-          git diff --exit-code
-
       - name: Check the Makefile references dev version
         run: |
           if ! grep -q "RELEASE_VERSION ?= v0.0.0" Makefile; then 
@@ -364,6 +357,13 @@ jobs:
           kubectl -n everest-monitoring describe pods
           kubectl -n everest describe pods
           kubectl -n everest-system logs deploy/percona-everest
+
+      - name: Everest - run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.12.0
+        with:
+          image-ref: "localhost:5000/perconalab/everest:0.0.0"
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
 
 
 

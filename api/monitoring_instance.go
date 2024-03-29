@@ -162,6 +162,7 @@ func (e *EverestServer) ListMonitoringInstances(ctx echo.Context) error {
 			Name:              mc.Name,
 			Url:               mc.Spec.PMM.URL,
 			AllowedNamespaces: &mc.Spec.AllowedNamespaces,
+			VerifyTLS:         mc.Spec.VerifyTLS,
 		})
 	}
 	return ctx.JSON(http.StatusOK, result)
@@ -185,6 +186,7 @@ func (e *EverestServer) GetMonitoringInstance(ctx echo.Context, name string) err
 		Name:              m.Name,
 		Url:               m.Spec.PMM.URL,
 		AllowedNamespaces: &m.Spec.AllowedNamespaces,
+		VerifyTLS:         m.Spec.VerifyTLS,
 	})
 }
 

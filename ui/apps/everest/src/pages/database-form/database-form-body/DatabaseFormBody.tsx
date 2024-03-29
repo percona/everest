@@ -25,7 +25,8 @@ const DatabaseFormBody = ({
   activeStep,
   longestAchievedStep,
   disableNext,
-  disableSubmit,
+  isSubmitting,
+  hasErrors,
   onCancel,
   onSubmit,
   handleNextStep,
@@ -53,7 +54,8 @@ const DatabaseFormBody = ({
       <DatabaseFormStepControllers
         disableBack={isFirstStep}
         disableNext={disableNext}
-        disableSubmit={disableSubmit}
+        disableSubmit={isSubmitting || hasErrors}
+        disableCancel={isSubmitting}
         showSubmit={activeStep === steps.length - 1}
         editMode={mode === 'edit'}
         onPreviousClick={handlePreviousStep}

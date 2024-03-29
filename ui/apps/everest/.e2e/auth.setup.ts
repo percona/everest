@@ -21,7 +21,7 @@ setup('Login', async ({ page }) => {
   page.goto('/login');
   await page.getByTestId('text-input-token').fill(EVEREST_K8_TOKEN);
   await page.getByTestId('login-button').click();
-  await expect(page.getByText('Create Database')).toBeVisible();
+  await expect(page.getByText('Create database')).toBeVisible();
 
   const origins = (await page.context().storageState()).origins;
   expect(origins.length).toBeGreaterThan(0);

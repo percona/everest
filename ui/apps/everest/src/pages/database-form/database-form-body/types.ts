@@ -2,7 +2,8 @@ export type DatabaseFormBodyProps = {
   activeStep: number;
   longestAchievedStep: number;
   disableNext: boolean;
-  disableSubmit: boolean;
+  isSubmitting: boolean;
+  hasErrors: boolean;
   onCancel: () => void;
   onSubmit: () => void;
   handleNextStep: () => void;
@@ -13,6 +14,7 @@ export type DatabaseFormStepControllersProps = {
   disableBack: boolean;
   disableNext: boolean;
   disableSubmit: boolean;
+  disableCancel: boolean;
   showSubmit: boolean;
   editMode: boolean;
   onPreviousClick: () => void;
