@@ -141,15 +141,8 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return err
 	}
 
-	u.l.Infof("Approving install plan %s for Everest operator", ip.Name)
-	done, err := u.kubeClient.ApproveInstallPlan(ctx, common.SystemNamespace, ip.Name)
-	if err != nil || !done {
-		return errors.Join(err, fmt.Errorf("could not approve install plan %s", ip.Name))
-	}
-
-	u.l.Infof("Waiting for install plan installation of Everest operator to finish")
-	if err := u.kubeClient.WaitForInstallPlanCompleted(ctx, common.SystemNamespace, ip.Name); err != nil {
-		return errors.Join(err, fmt.Errorf("install plan %s is not in phase completed", ip.Name))
+	if err := u.upgradeEverestOperator(ctx, ip.Name); err != nil {
+		return err
 	}
 
 	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)
@@ -369,6 +362,21 @@ func (u *Upgrade) upgradeOLM(ctx context.Context, recommendedVersion *goversion.
 		return errors.Join(err, errors.New("could not upgrade OLM"))
 	}
 	u.l.Info("OLM has been upgraded")
+
+	return nil
+}
+
+func (u *Upgrade) upgradeEverestOperator(ctx context.Context, installPlanName string) error {
+	u.l.Infof("Approving install plan %s for Everest operator", installPlanName)
+	done, err := u.kubeClient.ApproveInstallPlan(ctx, common.SystemNamespace, installPlanName)
+	if err != nil || !done {
+		return errors.Join(err, fmt.Errorf("could not approve install plan %s", installPlanName))
+	}
+
+	u.l.Infof("Waiting for install plan installation of Everest operator to finish")
+	if err := u.kubeClient.WaitForInstallPlanCompleted(ctx, common.SystemNamespace, installPlanName); err != nil {
+		return errors.Join(err, fmt.Errorf("install plan %s is not in phase completed", installPlanName))
+	}
 
 	return nil
 }

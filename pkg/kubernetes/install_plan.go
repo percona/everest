@@ -7,7 +7,6 @@ import (
 	"time"
 
 	goversion "github.com/hashicorp/go-version"
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,7 +48,7 @@ func (k *Kubernetes) getInstallPlanFromSubscription(ctx context.Context, namespa
 func (k *Kubernetes) WaitForInstallPlan(ctx context.Context, namespace, operatorName string, version *goversion.Version) (*olmv1alpha1.InstallPlan, error) {
 	var ip *olmv1alpha1.InstallPlan
 	csvName := fmt.Sprintf("%s.v%s", operatorName, version)
-	err := wait.PollUntilContextCancel(ctx, time.Second, true, func(ctx context.Context) (done bool, err error) {
+	err := wait.PollUntilContextCancel(ctx, time.Second, true, func(ctx context.Context) (bool, error) {
 		k.l.Debug("Looking for install plan")
 		ips, err := k.client.ListInstallPlans(ctx, namespace)
 		if err != nil {
@@ -108,14 +107,14 @@ func (k *Kubernetes) ApproveInstallPlan(ctx context.Context, namespace, installP
 
 // WaitForInstallPlanCompleted waits until install plan phase is "complete".
 func (k *Kubernetes) WaitForInstallPlanCompleted(ctx context.Context, namespace, name string) error {
-	return wait.PollUntilContextTimeout(ctx, time.Second, 5*time.Minute, true, func(ctx context.Context) (done bool, err error) {
+	return wait.PollUntilContextTimeout(ctx, time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
 		ip, err := k.client.GetInstallPlan(ctx, namespace, name)
 		if err != nil {
 			k.l.Debugf("Could not retrieve install plan: %s", err)
 			return false, nil
 		}
 
-		if ip.Status.Phase != v1alpha1.InstallPlanPhaseComplete {
+		if ip.Status.Phase != olmv1alpha1.InstallPlanPhaseComplete {
 			k.l.Debugf("Install plan is not completed. Phase: %s", ip.Status.Phase)
 			return false, nil
 		}
