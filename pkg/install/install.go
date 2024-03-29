@@ -168,6 +168,7 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
+	o.l.Debugf("Everest latest version available: %s", latest)
 	o.l.Debugf("Everest version information %#v", latestMeta)
 	if err := o.provisionOLM(ctx, latest); err != nil {
 		return err
@@ -237,7 +238,7 @@ func (o *Install) latestVersion(meta *versionpb.MetadataResponse) (*goversion.Ve
 			continue
 		}
 
-		if latest == nil || latest.GreaterThan(ver) {
+		if latest == nil || ver.GreaterThan(latest) {
 			latest = ver
 			latestMeta = v
 			continue
