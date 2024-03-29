@@ -1,7 +1,6 @@
 import { Autocomplete, CircularProgress, TextField } from '@mui/material';
 import { kebabize } from '@percona/utils';
 import { Controller, useFormContext } from 'react-hook-form';
-import LabeledContent from '../../../labeled-content';
 import { AutoCompleteInputProps } from './auto-complete.types';
 
 function AutoCompleteInput<T>({
@@ -9,7 +8,6 @@ function AutoCompleteInput<T>({
   control,
   controllerProps,
   label,
-  labelProps,
   autoCompleteProps,
   textFieldProps,
   options,
@@ -19,13 +17,14 @@ function AutoCompleteInput<T>({
   onChange,
 }: AutoCompleteInputProps<T>) {
   const { control: contextControl } = useFormContext();
-  const content = (
+  return (
     <Controller
       name={name}
       control={control ?? contextControl}
       render={({ field, fieldState: { error } }) => (
         <Autocomplete
           {...field}
+          sx={{ mt: 2 }}
           options={options}
           forcePopupIcon
           disabled={disabled}
@@ -41,6 +40,7 @@ function AutoCompleteInput<T>({
             <TextField
               {...params}
               error={!!error}
+              label={label}
               helperText={error ? error.message : textFieldProps?.helperText}
               inputProps={{
                 'data-testid': `text-input-${kebabize(name)}`,
@@ -58,6 +58,11 @@ function AutoCompleteInput<T>({
                   </>
                 ),
               }}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              size="small"
+              required={isRequired}
               {...textFieldProps}
             />
           )}
@@ -66,14 +71,6 @@ function AutoCompleteInput<T>({
       )}
       {...controllerProps}
     />
-  );
-
-  return label ? (
-    <LabeledContent label={label} isRequired={isRequired} {...labelProps}>
-      {content}
-    </LabeledContent>
-  ) : (
-    content
   );
 }
 
