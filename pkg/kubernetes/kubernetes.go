@@ -37,6 +37,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -939,6 +940,10 @@ func (k *Kubernetes) DeleteEverest(_ context.Context, namespace string) error {
 func (k *Kubernetes) GetDBNamespaces(ctx context.Context, namespace string) ([]string, error) {
 	deployment, err := k.GetDeployment(ctx, EverestOperatorDeploymentName, namespace)
 	if err != nil {
+		// If the operator is not found, we assume that no namespaces are being watched.
+		if k8serrors.IsNotFound(err) {
+			return []string{}, nil
+		}
 		return nil, err
 	}
 

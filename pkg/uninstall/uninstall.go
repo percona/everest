@@ -27,6 +27,7 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/install"
@@ -159,12 +160,16 @@ func (u *Uninstall) confirmForce() (bool, error) {
 }
 
 func (u *Uninstall) getDBs(ctx context.Context) (map[string]*everestv1alpha1.DatabaseClusterList, error) {
+	allDBs := make(map[string]*everestv1alpha1.DatabaseClusterList)
 	namespaces, err := u.kubeClient.GetDBNamespaces(ctx, install.SystemNamespace)
 	if err != nil {
+		// If the system namespace doesn't exist, we assume there are no DBs.
+		if k8serrors.IsNotFound(err) {
+			return allDBs, nil
+		}
 		return nil, err
 	}
 
-	allDBs := make(map[string]*everestv1alpha1.DatabaseClusterList)
 	for _, ns := range namespaces {
 		dbs, err := u.kubeClient.ListDatabaseClusters(ctx, ns)
 		if err != nil {
@@ -251,7 +256,7 @@ func (u *Uninstall) deleteDBs(ctx context.Context) error {
 func (u *Uninstall) deleteNamespaces(ctx context.Context, namespaces []string) error {
 	for _, ns := range namespaces {
 		u.l.Infof("Deleting namespace '%s'", ns)
-		if err := u.kubeClient.DeleteNamespace(ctx, ns); err != nil {
+		if err := u.kubeClient.DeleteNamespace(ctx, ns); client.IgnoreNotFound(err) != nil {
 			return err
 		}
 	}
@@ -280,8 +285,10 @@ func (u *Uninstall) deleteDBNamespaces(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
-	return u.deleteNamespaces(ctx, namespaces)
+	if len(namespaces) > 0 {
+		return u.deleteNamespaces(ctx, namespaces)
+	}
+	return nil
 }
 
 func (u *Uninstall) deleteBackupStorages(ctx context.Context) error { //nolint:dupl
@@ -356,7 +363,7 @@ func (u *Uninstall) deleteMonitoringConfigs(ctx context.Context) error { //nolin
 
 func (u *Uninstall) deleteOLM(ctx context.Context) error {
 	packageServerName := types.NamespacedName{Name: "packageserver", Namespace: kubernetes.OLMNamespace}
-	if err := u.kubeClient.DeleteClusterServiceVersion(ctx, packageServerName); err != nil {
+	if err := u.kubeClient.DeleteClusterServiceVersion(ctx, packageServerName); client.IgnoreNotFound(err) != nil {
 		return err
 	}
 
