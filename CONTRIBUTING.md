@@ -98,3 +98,7 @@ kubectl -n namespace logs <podname>  # Check logs for a pod
 ```
 kubectl -n namespace get pvc  # PVCs should be Bound
 ```
+
+
+
+            change to revert
