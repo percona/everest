@@ -19,7 +19,6 @@ package version
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	goversion "github.com/hashicorp/go-version"
@@ -27,7 +26,7 @@ import (
 
 const (
 	devCatalogImage     = "docker.io/perconalab/everest-catalog:latest"
-	releaseCatalogImage = "docker.io/percona/everest-catalog:%s"
+	releaseCatalogImage = "docker.io/percona/everest-catalog:0.9.0"
 )
 
 var (
@@ -46,7 +45,7 @@ func CatalogImage() string {
 	catalogImage = devCatalogImage
 	v, err := goversion.NewSemver(Version)
 	if Version != "" && err == nil && v.Prerelease() == "" {
-		catalogImage = fmt.Sprintf(releaseCatalogImage, Version)
+		catalogImage = releaseCatalogImage
 	}
 	return catalogImage
 }
