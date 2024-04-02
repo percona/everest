@@ -25,8 +25,8 @@ fi
 
 
 echo "Downloading the latest release of Everest CLI"
-echo "https://github.com/percona/everest/releases/download/latest/everestctl-$os-$arch"
-curl -sL  https://github.com/percona/everest/releases/download/latest/everestctl-$os-$arch -o everestctl
+echo "https://github.com/percona/everest/releases/download/v0.9.1/everestctl-$os-$arch"
+curl -sL  https://github.com/percona/everest/releases/download/v0.9.1/everestctl-$os-$arch -o everestctl
 chmod +x everestctl
 
 # If KUBECONFIG is set let the user know we are using it

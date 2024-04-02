@@ -26,7 +26,7 @@ import (
 
 const (
 	devCatalogImage     = "docker.io/perconalab/everest-catalog:latest"
-	releaseCatalogImage = "docker.io/percona/everest-catalog:0.9.0"
+	releaseCatalogImage = "docker.io/percona/everest-catalog:0.9.1"
 )
 
 var (
