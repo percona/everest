@@ -11,7 +11,12 @@ const ActionableAlert = ({
   <Alert
     severity="warning"
     action={
-      <Button color="inherit" size="small" onClick={onClick} {...buttonProps}>
+      <Button
+        sx={{ color: 'warning.contrastText', fontWeight: 600 }}
+        size="small"
+        onClick={onClick}
+        {...buttonProps}
+      >
         {buttonMessage || 'Add'}
       </Button>
     }
