@@ -399,7 +399,7 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
           fontWeight: 400,
           maxWidth: '100%',
         }),
-      }
+      },
     },
     MuiButtonBase: {
       defaultProps: {
