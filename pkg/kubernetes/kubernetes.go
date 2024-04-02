@@ -939,6 +939,10 @@ func (k *Kubernetes) DeleteEverest(_ context.Context, namespace string) error {
 func (k *Kubernetes) GetDBNamespaces(ctx context.Context, namespace string) ([]string, error) {
 	deployment, err := k.GetDeployment(ctx, EverestOperatorDeploymentName, namespace)
 	if err != nil {
+		// If the operator is not found, we assume that no namespaces are being watched.
+		if apierrors.IsNotFound(err) {
+			return []string{}, nil
+		}
 		return nil, err
 	}
 
