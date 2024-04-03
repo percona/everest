@@ -9,7 +9,7 @@
   "license": "ISC",
   "dependencies": {
     "@faker-js/faker": "^8.4.0",
-    "@playwright/test": "^1.42.0",
+    "@playwright/test": "^1.42.1",
     "playwright": "^1.42.1",
     "semver": "^7.6.0",
     "shelljs": "^0.8.5"
