@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/AlekSi/pointer"
@@ -88,6 +89,8 @@ var (
 	errUnsupportedPitrType           = errors.New("the given point-in-time recovery type is not supported")
 	errTooManyPGSchedules            = fmt.Errorf("only %d schedules are allowed in a PostgreSQL cluster", pgReposLimit)
 	errTooManyPGStorages             = fmt.Errorf("only %d different storages are allowed in a PostgreSQL cluster", pgReposLimit)
+	errNoMetadata                    = fmt.Errorf("no metadata provided")
+	errInvalidResourceVersion        = fmt.Errorf("invalid 'resourceVersion' value")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -1082,5 +1085,16 @@ func validatePGReposForAPIDB(ctx context.Context, dbc *DatabaseCluster, getBacku
 		return errTooManyPGStorages
 	}
 
+	return nil
+}
+
+func validateMetadata(metadata *map[string]interface{}) error {
+	if metadata == nil {
+		return errNoMetadata
+	}
+	m := *metadata
+	if _, err := strconv.ParseUint(fmt.Sprint(m["resourceVersion"]), 10, 64); err != nil {
+		return errInvalidResourceVersion
+	}
 	return nil
 }

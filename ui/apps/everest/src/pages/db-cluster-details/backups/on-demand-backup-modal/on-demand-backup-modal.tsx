@@ -18,6 +18,7 @@ import {
   schema,
 } from './on-demand-backup-modal.types.ts';
 import { ScheduleModalContext } from '../backups.context.ts';
+import { Typography } from '@mui/material';
 
 export const OnDemandBackupModal = () => {
   const queryClient = useQueryClient();
@@ -61,8 +62,10 @@ export const OnDemandBackupModal = () => {
       schema={schema}
       values={values}
       size="XL"
-      subHead2={Messages.onDemandBackupModal.subHead}
     >
+      <Typography variant="body1">
+        {Messages.onDemandBackupModal.subHead}
+      </Typography>
       <OnDemandBackupFieldsWrapper />
     </FormDialog>
   );

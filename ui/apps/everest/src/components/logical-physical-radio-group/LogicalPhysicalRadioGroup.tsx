@@ -4,7 +4,7 @@ import { Messages } from './LogicalPhysicalRadioGroup.messages';
 const LogicalPhysicalRadioGroup = () => (
   <RadioGroup
     name="logicalPhysical"
-    label="Type"
+    label="Backup type"
     // TODO remove when physical is allowed
     controllerProps={{ defaultValue: 'logical' }}
     options={[

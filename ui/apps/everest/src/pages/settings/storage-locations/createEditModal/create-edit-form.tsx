@@ -1,5 +1,5 @@
-import { Divider, MenuItem } from '@mui/material';
-import { TextInput, SelectInput } from '@percona/ui-lib';
+import { Divider, FormControlLabel, MenuItem } from '@mui/material';
+import { TextInput, SelectInput, CheckboxInput } from '@percona/ui-lib';
 import { StorageType } from 'shared-types/backupStorages.types';
 import { Messages } from '../storage-locations.messages';
 import { StorageLocationsFields } from '../storage-locations.types';
@@ -16,12 +16,18 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
   return (
     <>
       <TextInput
+        textFieldProps={{
+          placeholder: Messages.createEditModal.placeholders.name,
+        }}
         name={StorageLocationsFields.name}
         label={Messages.name}
         isRequired
         labelProps={{ sx: { mt: 0 } }}
       />
       <TextInput
+        textFieldProps={{
+          placeholder: Messages.createEditModal.placeholders.description,
+        }}
         name={StorageLocationsFields.description}
         label={Messages.description}
       />
@@ -33,9 +39,10 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
         isRequired
         textFieldProps={{
           helperText: Messages.createEditModal.helperText.namespaces,
+          placeholder: Messages.createEditModal.placeholders.namespaces,
         }}
       />
-      <Divider sx={{ mt: 4 }} />
+      <Divider sx={{ mt: 4, mb: 2 }} />
       <SelectInput
         name={StorageLocationsFields.type}
         label={Messages.type}
@@ -50,20 +57,31 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
         name={StorageLocationsFields.bucketName}
         label={Messages.bucketName}
         isRequired
+        textFieldProps={{
+          placeholder: Messages.createEditModal.placeholders.type,
+        }}
       />
       <TextInput
         name={StorageLocationsFields.region}
         label={Messages.region}
         isRequired
+        textFieldProps={{
+          placeholder: Messages.createEditModal.placeholders.region,
+        }}
       />
       <TextInput
         name={StorageLocationsFields.url}
         label={Messages.url}
         isRequired
+        textFieldProps={{
+          placeholder: Messages.createEditModal.placeholders.url,
+        }}
       />
       <TextInput
         textFieldProps={{
-          placeholder: isEditMode ? '************' : undefined,
+          placeholder: isEditMode
+            ? '************'
+            : Messages.createEditModal.placeholders.accessKey,
         }}
         name={StorageLocationsFields.accessKey}
         label={Messages.accessKey}
@@ -71,11 +89,18 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
       />
       <TextInput
         textFieldProps={{
-          placeholder: isEditMode ? '************' : undefined,
+          placeholder: isEditMode
+            ? '************'
+            : Messages.createEditModal.placeholders.secretKey,
         }}
         name={StorageLocationsFields.secretKey}
         label={Messages.secretKey}
         isRequired
+      />
+      <FormControlLabel
+        sx={{ mt: 2 }}
+        label={Messages.verifyTLS}
+        control={<CheckboxInput name={StorageLocationsFields.verifyTLS} />}
       />
     </>
   );

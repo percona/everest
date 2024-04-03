@@ -21,6 +21,7 @@ import { AutoCompleteAutoFill } from '../auto-complete-auto-fill/auto-complete-a
 import { TimeSelection } from '../time-selection/time-selection';
 import { Messages } from './schedule-form.messages.ts';
 import { ScheduleFormFields } from './schedule-form.types.ts';
+import { Typography } from '@mui/material';
 
 type ScheduleFormProps = {
   allowScheduleSelection?: boolean;
@@ -47,30 +48,34 @@ export const ScheduleForm = ({
   return (
     <>
       {showTypeRadio && <LogicalPhysicalRadioGroup />}
+      <Typography variant="sectionHeading" mb={2}>
+        {Messages.backupDetails}
+      </Typography>
       {allowScheduleSelection ? (
         <AutoCompleteInput
           name={ScheduleFormFields.scheduleName}
-          label={Messages.scheduleName.label}
+          textFieldProps={{
+            sx: { mb: 3 },
+            label: Messages.scheduleName.label,
+          }}
           options={schedulesNamesList}
           isRequired
         />
       ) : (
         <TextInput
           name={ScheduleFormFields.scheduleName}
-          label={Messages.scheduleName.label}
           textFieldProps={{
+            sx: { mb: 3 },
+            label: Messages.scheduleName.label,
             disabled: disableNameInput,
           }}
           isRequired
         />
       )}
-      <LabeledContent label="Repeats">
-        <TimeSelection showInfoAlert />
-      </LabeledContent>
 
       <AutoCompleteAutoFill
         name={ScheduleFormFields.storageLocation}
-        label={Messages.storageLocation.label}
+        textFieldProps={{ label: Messages.storageLocation.label }}
         loading={storageLocationFetching}
         options={storageLocationOptions}
         autoCompleteProps={{
@@ -82,6 +87,10 @@ export const ScheduleForm = ({
         enableFillFirst={autoFillLocation}
         disabled={disableStorageSelection}
       />
+
+      <LabeledContent label={Messages.repeats}>
+        <TimeSelection showInfoAlert />
+      </LabeledContent>
     </>
   );
 };

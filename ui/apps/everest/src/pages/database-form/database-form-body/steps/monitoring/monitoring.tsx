@@ -58,10 +58,17 @@ export const Monitoring = () => {
   const handleSubmitModal = (
     // @ts-ignore
     _,
-    { name, url, allowedNamespaces, ...pmmData }: EndpointFormType
+    { name, url, allowedNamespaces, verifyTLS, ...pmmData }: EndpointFormType
   ) => {
     createMonitoringInstance(
-      { name, url, type: 'pmm', allowedNamespaces, pmm: { ...pmmData } },
+      {
+        name,
+        url,
+        type: 'pmm',
+        allowedNamespaces,
+        verifyTLS,
+        pmm: { ...pmmData },
+      },
       {
         onSuccess: (newInstance) => {
           updateDataAfterCreate(queryClient, [MONITORING_INSTANCES_QUERY_KEY])(
