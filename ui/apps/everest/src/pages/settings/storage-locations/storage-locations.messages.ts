@@ -6,8 +6,13 @@ export const Messages = {
     cancel: 'Cancel',
     placeholders: {
       name: 'Insert storage display name',
-      descriptions: 'Insert an optional description',
+      description: 'Insert an optional description',
       namespaces: 'Select namespaces',
+      type: 'Insert bucket name',
+      region: 'Insert regions',
+      url: 'Insert URL',
+      accessKey: 'Insert Access key',
+      secretKey: 'Insert Secret key',
     },
     helperText: {
       namespaces:
@@ -34,6 +39,7 @@ their scheduled backup jobs.`,
   url: 'Endpoint',
   accessKey: 'Access Key',
   secretKey: 'Secret Key',
+  verifyTLS: 'Verify TLS certificate',
   edit: 'Edit',
   delete: 'Delete',
   addStorageLocationButton: 'Add backup storage',

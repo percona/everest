@@ -102,6 +102,9 @@ func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, namespace
 			Message: pointer.ToString("Could not get DatabaseClusterRestore from the request body"),
 		})
 	}
+	if err := validateMetadata(restore.Metadata); err != nil {
+		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
+	}
 	if err := validateDatabaseClusterRestore(ctx.Request().Context(), namespace, restore, e.kubeClient); err != nil {
 		e.l.Error(err)
 		return ctx.JSON(http.StatusBadRequest, Error{

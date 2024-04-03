@@ -49,6 +49,7 @@ func (e *EverestServer) ListBackupStorages(ctx echo.Context) error {
 			Region:            s.Spec.Region,
 			Url:               &s.Spec.EndpointURL,
 			AllowedNamespaces: s.Spec.AllowedNamespaces,
+			VerifyTLS:         s.Spec.VerifyTLS,
 		})
 	}
 
@@ -229,6 +230,7 @@ func (e *EverestServer) GetBackupStorage(ctx echo.Context, backupStorageName str
 		Region:            s.Spec.Region,
 		Url:               &s.Spec.EndpointURL,
 		AllowedNamespaces: s.Spec.AllowedNamespaces,
+		VerifyTLS:         s.Spec.VerifyTLS,
 	})
 }
 

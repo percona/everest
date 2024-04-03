@@ -891,3 +891,46 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateMetadata(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name     string
+		metadata *map[string]interface{}
+		err      error
+	}{
+		{
+			name:     "empty metadata",
+			metadata: nil,
+			err:      errNoMetadata,
+		},
+		{
+			name:     "too big resourceVersion",
+			metadata: &map[string]interface{}{"resourceVersion": "99999999999999999999"},
+			err:      errInvalidResourceVersion,
+		},
+		{
+			name:     "invalid characters in resourceVersion",
+			metadata: &map[string]interface{}{"resourceVersion": "34s3s@#$s"},
+			err:      errInvalidResourceVersion,
+		},
+		{
+			name:     "valid resourceVersion",
+			metadata: &map[string]interface{}{"resourceVersion": "2342352242"},
+			err:      nil,
+		},
+	}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := validateMetadata(tc.metadata)
+			if tc.err == nil {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.Equal(t, err.Error(), tc.err.Error())
+		})
+	}
+}

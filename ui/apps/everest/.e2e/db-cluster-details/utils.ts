@@ -6,7 +6,7 @@ export const clickCreateSchedule = async (page: Page) => {
   const scheduleMenuItem = await page.getByTestId('schedule-menu-item');
   await scheduleMenuItem.click();
   await expect(
-    page.getByRole('heading').filter({ hasText: 'Create Schedule' })
+    page.getByRole('heading').filter({ hasText: 'Create backup schedule' })
   ).toBeVisible();
 };
 

@@ -1,10 +1,4 @@
-import {
-  Alert,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Typography,
-} from '@mui/material';
+import { Alert, MenuItem, Typography } from '@mui/material';
 import { DbType } from '@percona/types';
 import {
   DateTimePickerInput,
@@ -190,37 +184,33 @@ const RestoreDbModal = <T extends FieldValues>({
             ]}
           />
           {watch(RestoreDbFields.backupType) === BackuptypeValues.fromBackup ? (
-            <FormControl sx={{ mt: 1.5 }}>
-              <InputLabel id="restore-backup">
-                {Messages.selectBackup}
-              </InputLabel>
-              <SelectInput
-                name={RestoreDbFields.backupName}
-                selectFieldProps={{
-                  labelId: 'restore-backup',
-                  label: Messages.selectBackup,
-                }}
-              >
-                {backups
-                  .filter((value) => value.state === BackupStatus.OK)
-                  .sort((a, b) => {
-                    if (a.created && b.created) {
-                      return b.created.valueOf() - a.created.valueOf();
-                    }
-                    return -1;
-                  })
-                  .map((value) => {
-                    const valueWithTime = `${
-                      value.name
-                    } - ${value.created?.toLocaleString('en-US')}`;
-                    return (
-                      <MenuItem key={value.name} value={value.name}>
-                        {valueWithTime}
-                      </MenuItem>
-                    );
-                  })}
-              </SelectInput>
-            </FormControl>
+            <SelectInput
+              label={Messages.selectBackup}
+              name={RestoreDbFields.backupName}
+              selectFieldProps={{
+                labelId: 'restore-backup',
+                label: Messages.selectBackup,
+              }}
+            >
+              {backups
+                .filter((value) => value.state === BackupStatus.OK)
+                .sort((a, b) => {
+                  if (a.created && b.created) {
+                    return b.created.valueOf() - a.created.valueOf();
+                  }
+                  return -1;
+                })
+                .map((value) => {
+                  const valueWithTime = `${
+                    value.name
+                  } - ${value.created?.toLocaleString('en-US')}`;
+                  return (
+                    <MenuItem key={value.name} value={value.name}>
+                      {valueWithTime}
+                    </MenuItem>
+                  );
+                })}
+            </SelectInput>
           ) : (
             <>
               {pitrData &&

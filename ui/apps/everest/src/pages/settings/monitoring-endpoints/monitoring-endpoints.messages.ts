@@ -1,5 +1,5 @@
 export const Messages = {
-  add: 'Add Endpoint',
+  add: 'Add endpoint',
   edit: 'Edit',
   delete: 'Delete',
   deleteDialogHeader: 'Delete monitoring endpoint',
@@ -16,11 +16,19 @@ export const Messages = {
     user: 'User',
     password: 'Password',
     apiKey: 'API Key',
+    verifyTLS: 'Verify TLS certificate',
   },
   namespaces: 'Namespaces',
   helperText: {
     namespaces: 'Select in which namespaces this endpoint should be available.',
     credentials:
       'Percona Everest does not store PMM credentials, so fill in both the User and Password fields.',
+  },
+  fieldPlaceholders: {
+    name: 'Insert storage display name',
+    namespaces: 'Select namespaces',
+    endpoint: 'Insert endpoint',
+    user: 'Insert username',
+    password: 'Insert password',
   },
 };
