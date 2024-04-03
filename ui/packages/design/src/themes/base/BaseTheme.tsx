@@ -616,16 +616,6 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
         }),
       },
     },
-    MuiFormControlLabel: {
-      styleOverrides: {
-        root: {
-          alignItems: 'flex-start',
-          '.MuiFormControlLabel-label': {
-            paddingTop: '7px',
-          },
-        },
-      },
-    },
     MuiAccordion: {
       styleOverrides: {
         root: ({ theme }) => ({

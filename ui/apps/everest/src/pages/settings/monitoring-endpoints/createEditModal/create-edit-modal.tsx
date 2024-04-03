@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { CheckboxInput, TextInput } from '@percona/ui-lib';
-import { FormControlLabel } from '@mui/material';
+import { TextInput } from '@percona/ui-lib';
 import { FormDialog } from 'components/form-dialog';
+import TlsCheckbox from 'components/tls-checkbox';
 import {
   CreateEditEndpointModalProps,
   EndpointFormFields,
@@ -109,11 +109,7 @@ export const CreateEditEndpointModal = ({
           },
         })}
       />
-      <FormControlLabel
-        sx={{ mt: 2 }}
-        label={Messages.fieldLabels.verifyTLS}
-        control={<CheckboxInput name={EndpointFormFields.verifyTLS} />}
-      />
+      <TlsCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />
     </FormDialog>
   );
 };
