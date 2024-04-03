@@ -16,7 +16,12 @@
 // Package api ...
 package api
 
-import "github.com/labstack/echo/v4"
+import (
+	"net/http"
+
+	"github.com/AlekSi/pointer"
+	"github.com/labstack/echo/v4"
+)
 
 const (
 	databaseEngineKind = "databaseengines"
@@ -34,5 +39,16 @@ func (e *EverestServer) GetDatabaseEngine(ctx echo.Context, namespace, name stri
 
 // UpdateDatabaseEngine Update the specified database engine on the specified namespace.
 func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name string) error {
+	dbe := &DatabaseEngine{}
+	if err := e.getBodyFromContext(ctx, dbe); err != nil {
+		e.l.Error(err)
+		return ctx.JSON(http.StatusBadRequest, Error{
+			Message: pointer.ToString("Could not get DatabaseEngine from the request body"),
+		})
+	}
+
+	if err := validateMetadata(dbe.Metadata); err != nil {
+		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
+	}
 	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, name)
 }
