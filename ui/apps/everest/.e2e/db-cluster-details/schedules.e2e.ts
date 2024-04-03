@@ -119,7 +119,7 @@ test.describe.serial('Schedules List', async () => {
     await scheduledBackupsAccordion.click();
 
     expect(page.getByText('Monthly on day 1 at 12:00 AM')).toBeTruthy();
-    expect(page.getByText('2 schedules')).toBeTruthy();
+    expect(page.getByText('2 active schedules')).toBeTruthy();
   });
 
   test('Delete Schedule', async ({ page }) => {
