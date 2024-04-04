@@ -17,7 +17,7 @@ import { Delete } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { MenuItem } from '@mui/material';
-import { MenuButton, Table } from '@percona/ui-lib';
+import { Table } from '@percona/ui-lib';
 import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import { StatusField } from 'components/status-field/status-field';
@@ -28,42 +28,39 @@ import {
   useDbBackups,
   useDeleteBackup,
 } from 'hooks/api/backups/useBackups';
-import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
 import { MRT_ColumnDef } from 'material-react-table';
 import { RestoreDbModal } from 'modals/index.ts';
 import { useContext, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { Backup, BackupStatus } from 'shared-types/backups.types';
 import { DbClusterStatus } from 'shared-types/dbCluster.types.ts';
 import { ScheduleModalContext } from '../backups.context.ts';
 import { BACKUP_STATUS_TO_BASE_STATUS } from './backups-list.constants';
 import { Messages } from './backups-list.messages';
+import BackupListTableHeader from './table-header';
 
 export const BackupsList = () => {
   const queryClient = useQueryClient();
-  const { dbClusterName, namespace = '' } = useParams();
   const [openRestoreDbModal, setOpenRestoreDbModal] = useState(false);
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState('');
-
-  const { data: backups = [] } = useDbBackups(dbClusterName!, namespace, {
-    enabled: !!dbClusterName,
-    refetchInterval: 10 * 1000,
-  });
-  const { mutate: deleteBackup, isPending: deletingBackup } =
-    useDeleteBackup(namespace);
-  const { data: dbCluster } = useDbCluster(dbClusterName || '', namespace, {
-    enabled: !!dbClusterName,
-  });
-
   const {
+    dbCluster,
     setMode: setScheduleModalMode,
     setOpenScheduleModal,
     setOpenOnDemandModal,
   } = useContext(ScheduleModalContext);
 
-  const restoring = dbCluster?.status?.status === DbClusterStatus.restoring;
+  const { mutate: deleteBackup, isPending: deletingBackup } = useDeleteBackup(
+    dbCluster?.metadata.namespace
+  );
+  const { data: backups = [] } = useDbBackups(
+    dbCluster.metadata.name,
+    dbCluster.metadata.namespace,
+    {
+      refetchInterval: 10 * 1000,
+    }
+  );
 
   const columns = useMemo<MRT_ColumnDef<Backup>[]>(
     () => [
@@ -110,20 +107,24 @@ export const BackupsList = () => {
     []
   );
 
+  if (!dbCluster) {
+    return null;
+  }
+
+  const restoring = dbCluster.status?.status === DbClusterStatus.restoring;
+
   const handleDeleteBackup = (backupName: string) => {
     setSelectedBackup(backupName);
     setOpenDeleteDialog(true);
   };
 
-  const handleManualBackup = (handleClose: () => void) => {
+  const handleManualBackup = () => {
     setOpenOnDemandModal(true);
-    handleClose();
   };
 
-  const handleScheduledBackup = (handleClose: () => void) => {
+  const handleScheduledBackup = () => {
     setScheduleModalMode('new');
     setOpenScheduleModal(true);
-    handleClose();
   };
 
   const handleCloseDeleteDialog = () => {
@@ -134,7 +135,7 @@ export const BackupsList = () => {
     deleteBackup(backupName, {
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: [BACKUPS_QUERY_KEY, dbClusterName],
+          queryKey: [BACKUPS_QUERY_KEY, dbCluster.metadata.name],
         });
         handleCloseDeleteDialog();
       },
@@ -168,29 +169,18 @@ export const BackupsList = () => {
             },
           ],
         }}
+        muiTopToolbarProps={{
+          sx: {
+            '& > .MuiBox-root': {
+              flexWrap: 'wrap',
+            },
+          },
+        }}
         renderTopToolbarCustomActions={() => (
-          <MenuButton
-            buttonText={Messages.createBackup}
-            buttonProps={{ disabled: restoring }}
-          >
-            {/* MUI Menu does not like fragments and asks for arrays instead */}
-            {(handleClose) => [
-              <MenuItem
-                key="now"
-                onClick={() => handleManualBackup(handleClose)}
-                data-testid="now-menu-item"
-              >
-                {Messages.now}
-              </MenuItem>,
-              <MenuItem
-                onClick={() => handleScheduledBackup(handleClose)}
-                key="schedule"
-                data-testid="schedule-menu-item"
-              >
-                {Messages.schedule}
-              </MenuItem>,
-            ]}
-          </MenuButton>
+          <BackupListTableHeader
+            onNowClick={handleManualBackup}
+            onScheduleClick={handleScheduledBackup}
+          />
         )}
         enableRowActions
         renderRowActionMenuItems={({ row, closeMenu }) => [
@@ -246,7 +236,7 @@ export const BackupsList = () => {
       {openRestoreDbModal && dbCluster && (
         <RestoreDbModal
           dbCluster={dbCluster}
-          namespace={namespace}
+          namespace={dbCluster.metadata.namespace}
           isNewClusterMode={isNewClusterMode}
           isOpen={openRestoreDbModal}
           closeModal={() => setOpenRestoreDbModal(false)}
