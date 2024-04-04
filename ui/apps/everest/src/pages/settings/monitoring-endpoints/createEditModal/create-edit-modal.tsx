@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { TextInput } from '@percona/ui-lib';
 import { FormDialog } from 'components/form-dialog';
 import TlsCheckbox from 'components/tls-checkbox';
+import TlsAlert from 'components/tls-alert';
 import {
   CreateEditEndpointModalProps,
   EndpointFormFields,
@@ -50,66 +51,73 @@ export const CreateEditEndpointModal = ({
       schema={endpointSchema}
       submitMessage={Messages.addEditDialogSubmitButton(isEditMode)}
     >
-      <TextInput
-        name={EndpointFormFields.name}
-        label={Messages.fieldLabels.name}
-        isRequired
-        textFieldProps={{
-          disabled: isEditMode,
-          placeholder: Messages.fieldPlaceholders.name,
-        }}
-      />
-      <AutoCompleteSelectAll
-        name={EndpointFormFields.namespaces}
-        label={Messages.fieldLabels.namespaces}
-        loading={isNamespacesFetching}
-        options={namespaces}
-        isRequired
-        textFieldProps={{
-          helperText: Messages.helperText.namespaces,
-          placeholder: Messages.fieldPlaceholders.namespaces,
-        }}
-      />
-      <TextInput
-        name={EndpointFormFields.url}
-        label={Messages.fieldLabels.endpoint}
-        isRequired
-        textFieldProps={{
-          placeholder: Messages.fieldPlaceholders.endpoint,
-        }}
-      />
-      <TextInput
-        name={EndpointFormFields.user}
-        label={Messages.fieldLabels.user}
-        isRequired={!isEditMode}
-        {...(isEditMode && {
-          controllerProps: {
-            rules: {
-              deps: [EndpointFormFields.password],
-            },
-          },
-        })}
-        textFieldProps={{
-          placeholder: Messages.fieldPlaceholders.user,
-        }}
-      />
-      <TextInput
-        name={EndpointFormFields.password}
-        label={Messages.fieldLabels.password}
-        isRequired={!isEditMode}
-        textFieldProps={{
-          type: 'password',
-          placeholder: Messages.fieldPlaceholders.password,
-        }}
-        {...(isEditMode && {
-          controllerProps: {
-            rules: {
-              deps: [EndpointFormFields.user],
-            },
-          },
-        })}
-      />
-      <TlsCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />
+      {({ getValues }) => (
+        <>
+          <TextInput
+            name={EndpointFormFields.name}
+            label={Messages.fieldLabels.name}
+            isRequired
+            textFieldProps={{
+              disabled: isEditMode,
+              placeholder: Messages.fieldPlaceholders.name,
+            }}
+          />
+          <AutoCompleteSelectAll
+            name={EndpointFormFields.namespaces}
+            label={Messages.fieldLabels.namespaces}
+            loading={isNamespacesFetching}
+            options={namespaces}
+            isRequired
+            textFieldProps={{
+              helperText: Messages.helperText.namespaces,
+              placeholder: Messages.fieldPlaceholders.namespaces,
+            }}
+          />
+          <TextInput
+            name={EndpointFormFields.url}
+            label={Messages.fieldLabels.endpoint}
+            isRequired
+            textFieldProps={{
+              placeholder: Messages.fieldPlaceholders.endpoint,
+            }}
+          />
+          <TextInput
+            name={EndpointFormFields.user}
+            label={Messages.fieldLabels.user}
+            isRequired={!isEditMode}
+            {...(isEditMode && {
+              controllerProps: {
+                rules: {
+                  deps: [EndpointFormFields.password],
+                },
+              },
+            })}
+            textFieldProps={{
+              placeholder: Messages.fieldPlaceholders.user,
+            }}
+          />
+          <TextInput
+            name={EndpointFormFields.password}
+            label={Messages.fieldLabels.password}
+            isRequired={!isEditMode}
+            textFieldProps={{
+              type: 'password',
+              placeholder: Messages.fieldPlaceholders.password,
+            }}
+            {...(isEditMode && {
+              controllerProps: {
+                rules: {
+                  deps: [EndpointFormFields.user],
+                },
+              },
+            })}
+          />
+          <TlsCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />
+          {!getValues(EndpointFormFields.verifyTLS) && (
+            <TlsAlert sx={{ mt: 2 }} />
+          )}
+        </>
+      )}
     </FormDialog>
   );
 };
