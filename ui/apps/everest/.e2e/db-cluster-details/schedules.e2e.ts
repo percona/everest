@@ -122,6 +122,47 @@ test.describe.serial('Schedules List', async () => {
     expect(page.getByText('2 active schedules')).toBeTruthy();
   });
 
+  test('PostgreSQL db cannot have more than 3 active backup schedules', async ({
+    page,
+    request,
+  }) => {
+    await createDbClusterFn(request, {
+      dbName: 'schedule-postgresql',
+      dbType: 'postgresql',
+      numberOfNodes: '1',
+      backup: {
+        enabled: true,
+        schedules: [
+          {
+            backupStorageName: 'test-storage-1',
+            enabled: true,
+            name: 'backup-1',
+            schedule: '0 * * * *',
+          },
+          {
+            backupStorageName: 'test-storage-1',
+            enabled: true,
+            name: 'backup-2',
+            schedule: '0 * * * *',
+          },
+          {
+            backupStorageName: 'test-storage-1',
+            enabled: true,
+            name: 'backup-3',
+            schedule: '0 * * * *',
+          },
+        ],
+      },
+    });
+
+    await gotoDbClusterBackups(page, 'schedule-postgresql');
+    expect(
+      page.getByText('3 active schedules (maximum 3 schedules for PostgreSQL)')
+    ).toBeTruthy();
+    await page.getByTestId('menu-button').click();
+    expect(page.getByTestId('schedule-menu-item')).toBeDisabled();
+  });
+
   test('Delete Schedule', async ({ page }) => {
     await gotoDbClusterBackups(page, mySQLName);
     const scheduledBackupsAccordion =
