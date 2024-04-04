@@ -26,7 +26,8 @@ import (
 )
 
 const (
-	devCatalogImage     = "docker.io/perconalab/everest-catalog:latest"
+	devCatalogImage     = "docker.io/perconalab/everest-catalog:0.0.0"
+	rcCatalogImage      = "docker.io/perconalab/everest-catalog:%s"
 	releaseCatalogImage = "docker.io/percona/everest-catalog:%s"
 )
 
@@ -43,12 +44,17 @@ var (
 
 // CatalogImage returns a catalog image needed for the build of everestctl.
 func CatalogImage() string {
-	catalogImage = devCatalogImage
 	v, err := goversion.NewSemver(Version)
-	if Version != "" && err == nil && v.Prerelease() == "" {
-		catalogImage = fmt.Sprintf(releaseCatalogImage, Version)
+	if Version != "" && err == nil {
+		if strings.Index(v.String(), "0.0.0") == 0 {
+			return devCatalogImage
+		}
+		if v.Prerelease() == "" {
+			return fmt.Sprintf(releaseCatalogImage, v.String())
+		}
+		return fmt.Sprintf(rcCatalogImage, v.String())
 	}
-	return catalogImage
+	return devCatalogImage
 }
 
 // FullVersionInfo returns full version report.
