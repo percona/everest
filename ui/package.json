@@ -17,5 +17,10 @@
   },
   "dependencies": {
     "@changesets/cli": "^2.27.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "react-is": "^18.2.0"
+    }
   }
 }
