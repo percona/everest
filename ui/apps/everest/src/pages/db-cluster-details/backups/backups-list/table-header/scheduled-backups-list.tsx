@@ -81,7 +81,7 @@ const ScheduledBackupsList = () => {
           >
             <Box sx={{ width: '65%' }}>
               {' '}
-              <Typography variant="subHead2">
+              <Typography variant="body1">
                 {getTimeSelectionPreviewMessage(
                   getFormValuesFromCronExpression(item.schedule)
                 )}
