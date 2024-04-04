@@ -446,6 +446,19 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
             borderColor: theme.palette.primary.main,
           }),
 
+          ...(ownerState.variant === 'text' && {
+            ...(ownerState.size === 'large' && {
+              padding: '13px 22px',
+            }),
+            ...(ownerState.size === 'medium' && {
+              padding: '11px 14px',
+            }),
+            ...(ownerState.size === 'small' && {
+              padding: '8px 10px',
+            }),
+            borderColor: theme.palette.primary.main,
+          }),
+
           ...(ownerState.size === 'large' && {
             fontSize: 16,
           }),

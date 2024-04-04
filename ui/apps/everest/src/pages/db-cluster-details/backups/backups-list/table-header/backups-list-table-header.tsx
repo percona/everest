@@ -1,5 +1,7 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { Button, MenuItem } from '@mui/material';
+import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
+import KeyboardArrowUpOutlined from '@mui/icons-material/KeyboardArrowUpOutlined';
 import { MenuButton } from '@percona/ui-lib';
 import { ScheduleModalContext } from '../../backups.context';
 import ScheduledBackupsList from './scheduled-backups-list';
@@ -10,6 +12,7 @@ const BackupListTableHeader = ({
   onNowClick,
   onScheduleClick,
 }: BackupListTableHeaderProps) => {
+  const [showSchedules, setShowSchedules] = useState(false);
   const { dbCluster } = useContext(ScheduleModalContext);
   const schedulesNumber = dbCluster.spec.backup?.schedules?.length || 0;
 
@@ -23,11 +26,26 @@ const BackupListTableHeader = ({
     handleClose();
   };
 
+  const handleShowSchedules = () => {
+    setShowSchedules((prev) => !prev);
+  };
+
   return (
     <>
       {/* Order is necessary to keep filters on the left side (i.e. filters have order=0) */}
       {schedulesNumber > 0 && (
-        <Button size="large" sx={{ ml: 'auto', order: 1 }}>
+        <Button
+          size="small"
+          sx={{ ml: 'auto', mr: 2, order: 1 }}
+          onClick={handleShowSchedules}
+          endIcon={
+            showSchedules ? (
+              <KeyboardArrowUpOutlined />
+            ) : (
+              <KeyboardArrowDownOutlinedIcon />
+            )
+          }
+        >
           {Messages.activeSchedules(schedulesNumber)}
         </Button>
       )}
@@ -49,7 +67,7 @@ const BackupListTableHeader = ({
           </MenuItem>,
         ]}
       </MenuButton>
-      {schedulesNumber > 0 && <ScheduledBackupsList />}
+      {schedulesNumber > 0 && showSchedules && <ScheduledBackupsList />}
     </>
   );
 };
