@@ -91,6 +91,7 @@ var (
 	errTooManyPGStorages             = fmt.Errorf("only %d different storages are allowed in a PostgreSQL cluster", pgReposLimit)
 	errNoMetadata                    = fmt.Errorf("no metadata provided")
 	errInvalidResourceVersion        = fmt.Errorf("invalid 'resourceVersion' value")
+	errInvalidBucketName             = fmt.Errorf("invalid bucketName")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -337,6 +338,12 @@ func validateUpdateBackupStorageRequest(ctx echo.Context, bs *everestv1alpha1.Ba
 		url = params.Url
 	}
 
+	if params.BucketName != nil {
+		if err := validateBucketName(*params.BucketName); err != nil {
+			return nil, err
+		}
+	}
+
 	if params.AllowedNamespaces != nil {
 		if err := validateAllowedNamespaces(*params.AllowedNamespaces, namespaces); err != nil {
 			return nil, err
@@ -377,6 +384,10 @@ func validateCreateBackupStorageRequest(ctx echo.Context, namespaces []string, l
 	}
 
 	if err := validateRFC1035(params.Name, "name"); err != nil {
+		return nil, err
+	}
+
+	if err := validateBucketName(params.BucketName); err != nil {
 		return nil, err
 	}
 
@@ -1096,5 +1107,17 @@ func validateMetadata(metadata *map[string]interface{}) error {
 	if _, err := strconv.ParseUint(fmt.Sprint(m["resourceVersion"]), 10, 64); err != nil {
 		return errInvalidResourceVersion
 	}
+	return nil
+}
+
+func validateBucketName(s string) error {
+	// sanitize: accept only lovercase letters, numbers, dots and hyphens.
+	// can be applied to both s3 bucket name and azure container name.
+	bucketRegex := `^[a-z0-9\.\-]{3,63}$`
+	re := regexp.MustCompile(bucketRegex)
+	if !re.MatchString(s) {
+		return errInvalidBucketName
+	}
+
 	return nil
 }
