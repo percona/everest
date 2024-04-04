@@ -7,6 +7,7 @@ import { ScheduleModalContext } from '../../backups.context';
 import ScheduledBackupsList from './scheduled-backups-list';
 import { BackupListTableHeaderProps } from './backups-list-table-header.types';
 import { Messages } from './backups-list-table-header.messages';
+import styles from './backups-list-table-header.module.css';
 
 const BackupListTableHeader = ({
   onNowClick,
@@ -36,7 +37,13 @@ const BackupListTableHeader = ({
       {schedulesNumber > 0 && (
         <Button
           size="small"
-          sx={{ ml: 'auto', mr: 2, order: 1 }}
+          sx={{
+            ml: 'auto',
+            mr: [0, 2, 2, 2, 2],
+            order: [2, 1, 1, 1, 1],
+            position: 'relative',
+          }}
+          className={showSchedules ? styles.scheduleToggleButton : ''}
           onClick={handleShowSchedules}
           endIcon={
             showSchedules ? (
@@ -49,7 +56,10 @@ const BackupListTableHeader = ({
           {Messages.activeSchedules(schedulesNumber)}
         </Button>
       )}
-      <MenuButton buttonProps={{ sx: { order: 2 } }} buttonText="Create backup">
+      <MenuButton
+        buttonProps={{ sx: { order: [1, 2, 2, 2, 2] } }}
+        buttonText="Create backup"
+      >
         {(handleClose) => [
           <MenuItem
             key="now"

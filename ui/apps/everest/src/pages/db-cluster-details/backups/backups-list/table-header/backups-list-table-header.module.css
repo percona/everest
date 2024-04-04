@@ -1,0 +1,13 @@
+.scheduleToggleButton {
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -29px;
+    width: 0px;
+    height: 0px;
+    border-style: solid;
+    border-width: 0 14.5px 29px 14.5px;
+    border-color: transparent transparent #f4f4f4 transparent;
+    transform: rotate(0deg);
+  }
+}
