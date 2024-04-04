@@ -54,7 +54,10 @@ export const CreateEditEndpointModal = ({
         name={EndpointFormFields.name}
         label={Messages.fieldLabels.name}
         isRequired
-        textFieldProps={{ disabled: isEditMode }}
+        textFieldProps={{
+          disabled: isEditMode,
+          placeholder: Messages.fieldPlaceholders.name,
+        }}
       />
       <AutoCompleteSelectAll
         name={EndpointFormFields.namespaces}
@@ -64,12 +67,16 @@ export const CreateEditEndpointModal = ({
         isRequired
         textFieldProps={{
           helperText: Messages.helperText.namespaces,
+          placeholder: Messages.fieldPlaceholders.namespaces,
         }}
       />
       <TextInput
         name={EndpointFormFields.url}
         label={Messages.fieldLabels.endpoint}
         isRequired
+        textFieldProps={{
+          placeholder: Messages.fieldPlaceholders.endpoint,
+        }}
       />
       <TextInput
         name={EndpointFormFields.user}
@@ -82,12 +89,18 @@ export const CreateEditEndpointModal = ({
             },
           },
         })}
+        textFieldProps={{
+          placeholder: Messages.fieldPlaceholders.user,
+        }}
       />
       <TextInput
         name={EndpointFormFields.password}
         label={Messages.fieldLabels.password}
         isRequired={!isEditMode}
-        textFieldProps={{ type: 'password' }}
+        textFieldProps={{
+          type: 'password',
+          placeholder: Messages.fieldPlaceholders.password,
+        }}
         {...(isEditMode && {
           controllerProps: {
             rules: {

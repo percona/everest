@@ -75,6 +75,10 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 		})
 	}
 
+	if err := validateMetadata(dbc.Metadata); err != nil {
+		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
+	}
+
 	if err := e.validateDatabaseClusterCR(ctx, namespace, dbc); err != nil {
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}

@@ -3,7 +3,7 @@ module github.com/percona/everest/tools
 go 1.22
 
 require (
-	github.com/daixiang0/gci v0.13.1
+	github.com/daixiang0/gci v0.13.4
 	github.com/deepmap/oapi-codegen/v2 v2.1.0
 	github.com/golangci/golangci-lint v1.56.2
 	github.com/quasilyte/go-consistent v0.6.0

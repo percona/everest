@@ -12,7 +12,7 @@ const LabeledContent = ({
     <Typography
       // @ts-ignore
       variant="sectionHeading"
-      sx={{ mt: 4, mb: 0.5, ...sx }}
+      sx={{ mt: 2, mb: 0.5, ...sx }}
       {...typographyProps}
     >
       {label}
