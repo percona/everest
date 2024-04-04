@@ -6,7 +6,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/AlekSi/pointer v1.2.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.3.1
-	github.com/aws/aws-sdk-go v1.51.4
+	github.com/aws/aws-sdk-go v1.51.14
 	github.com/dchest/uniuri v1.2.0
 	github.com/getkin/kin-openapi v0.123.0
 	github.com/go-logr/zapr v1.3.0
@@ -30,9 +30,9 @@ require (
 	k8s.io/api v0.29.3
 	k8s.io/apiextensions-apiserver v0.29.3
 	k8s.io/apimachinery v0.29.3
-	k8s.io/cli-runtime v0.29.2
+	k8s.io/cli-runtime v0.29.3
 	k8s.io/client-go v0.29.3
-	k8s.io/kubectl v0.29.2
+	k8s.io/kubectl v0.29.3
 	sigs.k8s.io/controller-runtime v0.17.2
 )
 
