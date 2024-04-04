@@ -161,6 +161,7 @@ test.describe.serial('Schedules List', async () => {
     ).toBeTruthy();
     await page.getByTestId('menu-button').click();
     expect(page.getByTestId('schedule-menu-item')).toBeDisabled();
+    await deleteDbClusterFn(request, 'schedule-postgresql');
   });
 
   test('Delete Schedule', async ({ page }) => {
