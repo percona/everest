@@ -16,7 +16,7 @@
 import { Delete } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import { MenuItem } from '@mui/material';
+import { Box, MenuItem, Tooltip } from '@mui/material';
 import { MenuButton, Table } from '@percona/ui-lib';
 import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
@@ -38,6 +38,7 @@ import { DbClusterStatus } from 'shared-types/dbCluster.types.ts';
 import { ScheduleModalContext } from '../backups.context.ts';
 import { BACKUP_STATUS_TO_BASE_STATUS } from './backups-list.constants';
 import { Messages } from './backups-list.messages';
+import { DbEngineType } from '@percona/types';
 
 export const BackupsList = () => {
   const queryClient = useQueryClient();
@@ -56,6 +57,11 @@ export const BackupsList = () => {
   const { data: dbCluster } = useDbCluster(dbClusterName || '', namespace, {
     enabled: !!dbClusterName,
   });
+
+  const disableScheduleBackups =
+    dbCluster?.spec.engine.type === DbEngineType.POSTGRESQL &&
+    dbCluster?.spec.backup?.schedules &&
+    dbCluster?.spec.backup?.schedules.length >= 3;
 
   const {
     setMode: setScheduleModalMode,
@@ -182,13 +188,28 @@ export const BackupsList = () => {
               >
                 {Messages.now}
               </MenuItem>,
-              <MenuItem
-                onClick={() => handleScheduledBackup(handleClose)}
-                key="schedule"
-                data-testid="schedule-menu-item"
-              >
-                {Messages.schedule}
-              </MenuItem>,
+              <Box key="schedule">
+                {disableScheduleBackups ? (
+                  <Tooltip
+                    title={Messages.exceededScheduleBackupsNumber}
+                    placement="right"
+                    arrow
+                  >
+                    <div>
+                      <MenuItem data-testid="schedule-menu-item" disabled>
+                        {Messages.schedule}
+                      </MenuItem>
+                    </div>
+                  </Tooltip>
+                ) : (
+                  <MenuItem
+                    onClick={() => handleScheduledBackup(handleClose)}
+                    data-testid="schedule-menu-item"
+                  >
+                    {Messages.schedule}
+                  </MenuItem>
+                )}
+              </Box>,
             ]}
           </MenuButton>
         )}
