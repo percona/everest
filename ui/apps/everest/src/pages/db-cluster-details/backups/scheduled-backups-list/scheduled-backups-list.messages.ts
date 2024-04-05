@@ -15,7 +15,9 @@
 
 export const Messages = {
   sectionHeader: (schedulesNumber: number) =>
-    `${schedulesNumber} ${schedulesNumber > 1 ? 'schedules' : 'schedule'}`,
+    `${schedulesNumber} ${
+      schedulesNumber > 1 ? 'active schedules' : 'active schedule'
+    }`,
   noSchedules: 'No schedules',
   menuItems: {
     edit: 'Edit',
@@ -26,4 +28,5 @@ export const Messages = {
     content: (scheduleName: string) =>
       `Are you sure you want to permanently delete schedule "${scheduleName}"?`,
   },
+  maxThreeSchedulesPG: '(maximum 3 schedules for PostgreSQL)',
 };

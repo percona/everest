@@ -39,6 +39,7 @@ import { Messages } from './scheduled-backups-list.messages';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import { useDeleteSchedule } from 'hooks/api/backups/useScheduledBackups';
 import { ScheduleModalContext } from '../backups.context.ts';
+import { DbEngineType } from '@percona/types';
 
 export const ScheduledBackupsList = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -58,6 +59,7 @@ export const ScheduledBackupsList = () => {
   const { mutate: deleteSchedule, isPending: deletingSchedule } =
     useDeleteSchedule(dbClusterName!, namespace);
   const schedules = data && data?.spec?.backup?.schedules;
+  const dbType = data?.spec.engine.type;
   const handleDelete = (scheduleName: string) => () => {
     setSelectedSchedule(scheduleName);
     setOpenDeleteDialog(true);
@@ -114,11 +116,22 @@ export const ScheduledBackupsList = () => {
             aria-controls="scheduled-backups-content"
             data-testid="scheduled-backups"
           >
-            <Typography variant="body1">
-              {schedules
-                ? Messages.sectionHeader(schedules?.length)
-                : Messages.noSchedules}
-            </Typography>
+            <Box>
+              {schedules ? (
+                <>
+                  <Typography variant="subtitle2" display="inline">
+                    {Messages.sectionHeader(schedules?.length)}
+                  </Typography>
+                  {dbType === DbEngineType.POSTGRESQL && (
+                    <Typography variant="body1" display="inline">
+                      {' ' + Messages.maxThreeSchedulesPG}
+                    </Typography>
+                  )}
+                </>
+              ) : (
+                Messages.noSchedules
+              )}
+            </Box>
           </AccordionSummary>
           <AccordionDetails>
             <Stack useFlexGap spacing={1}>
