@@ -48,14 +48,13 @@ export const ScheduleForm = ({
   return (
     <>
       {showTypeRadio && <LogicalPhysicalRadioGroup />}
-      <Typography variant="sectionHeading" mb={2}>
+      <Typography variant="sectionHeading" mb={1}>
         {Messages.backupDetails}
       </Typography>
       {allowScheduleSelection ? (
         <AutoCompleteInput
           name={ScheduleFormFields.scheduleName}
           textFieldProps={{
-            sx: { mb: 3 },
             label: Messages.scheduleName.label,
           }}
           options={schedulesNamesList}
