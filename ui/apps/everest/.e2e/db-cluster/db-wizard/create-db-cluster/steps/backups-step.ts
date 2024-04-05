@@ -26,11 +26,16 @@ export const backupsStepCheck = async (page: Page) => {
   const storageLocationField = await page.getByTestId(
     'text-input-storage-location'
   );
+  const retentionCopiesField = await page.getByTestId(
+    'text-input-retention-copies'
+  );
 
   expect(scheduleNameField).not.toBeEmpty();
+  expect(retentionCopiesField).not.toBeEmpty();
 
   expect(storageLocationField).not.toBeEmpty();
   await storageLocationField.click();
+  await retentionCopiesField.fill('1');
 
   const storageOptions = page.getByRole('option');
   const testStorage = storageOptions.filter({ hasText: STORAGE_NAMES[1] });
