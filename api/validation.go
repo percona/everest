@@ -1111,7 +1111,7 @@ func validateMetadata(metadata *map[string]interface{}) error {
 }
 
 func validateBucketName(s string) error {
-	// sanitize: accept only lovercase letters, numbers, dots and hyphens.
+	// sanitize: accept only lowercase letters, numbers, dots and hyphens.
 	// can be applied to both s3 bucket name and azure container name.
 	bucketRegex := `^[a-z0-9\.\-]{3,63}$`
 	re := regexp.MustCompile(bucketRegex)
