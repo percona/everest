@@ -353,7 +353,7 @@ test.describe('DB Cluster creation', () => {
     await page.getByTestId('menu-button').click();
     await page.getByTestId('schedule-menu-item').click();
     await page.getByTestId('form-dialog-create').click();
-    await expect(page.getByText('2 schedules')).toBeVisible();
+    await expect(page.getByText('2 active schedules')).toBeVisible();
 
     // We disable PITR
     await page.goto('/databases');
