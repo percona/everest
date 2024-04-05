@@ -64,7 +64,7 @@ func NewEverestServer(c *config.EverestConfig, l *zap.SugaredLogger) (*EverestSe
 	}
 
 	echoServer := echo.New()
-	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(20)))
+	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(40)))
 
 	e := &EverestServer{
 		config:     c,
