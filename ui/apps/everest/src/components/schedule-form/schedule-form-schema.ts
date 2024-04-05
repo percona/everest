@@ -70,6 +70,19 @@ export const schema = (schedulesNamesList: string[], mode?: 'edit' | 'new') =>
           });
         }
       }),
+    [ScheduleFormFields.retentionCopies]: z
+      .string()
+      .min(1)
+      .superRefine((nrCopies) => {
+        const nrCopiesInt = parseInt(nrCopies, 10);
+        if (isNaN(nrCopiesInt)) {
+          return Messages.retentionCopies.invalidNumber;
+        }
+
+        if (nrCopiesInt < 0) {
+          return Messages.retentionCopies.invalidNumber;
+        }
+      }),
     ...timeSelectionSchemaObject,
     ...storageLocationScheduleFormSchema('scheduledBackups'),
   });

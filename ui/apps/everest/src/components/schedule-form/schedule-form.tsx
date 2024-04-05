@@ -65,7 +65,6 @@ export const ScheduleForm = ({
         <TextInput
           name={ScheduleFormFields.scheduleName}
           textFieldProps={{
-            sx: { mb: 3 },
             label: Messages.scheduleName.label,
             disabled: disableNameInput,
           }}
@@ -75,7 +74,9 @@ export const ScheduleForm = ({
 
       <AutoCompleteAutoFill
         name={ScheduleFormFields.storageLocation}
-        textFieldProps={{ label: Messages.storageLocation.label }}
+        textFieldProps={{
+          label: Messages.storageLocation.label,
+        }}
         loading={storageLocationFetching}
         options={storageLocationOptions}
         autoCompleteProps={{
@@ -87,7 +88,14 @@ export const ScheduleForm = ({
         enableFillFirst={autoFillLocation}
         disabled={disableStorageSelection}
       />
-
+      <TextInput
+        name={ScheduleFormFields.retentionCopies}
+        textFieldProps={{
+          type: 'number',
+          label: Messages.retentionCopies.label,
+        }}
+        isRequired
+      />
       <LabeledContent label={Messages.repeats}>
         <TimeSelection showInfoAlert />
       </LabeledContent>

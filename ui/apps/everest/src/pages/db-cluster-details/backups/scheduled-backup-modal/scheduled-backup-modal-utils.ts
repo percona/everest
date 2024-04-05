@@ -25,17 +25,20 @@ export const scheduleModalDefaultValues = (
   selectedSchedule?: Schedule
 ): ScheduleFormData => {
   if (mode === 'edit' && selectedSchedule) {
-    const { name, backupStorageName, schedule } = selectedSchedule;
+    const { name, backupStorageName, schedule, retentionCopies } =
+      selectedSchedule;
     const formValues = getFormValuesFromCronExpression(schedule);
     return {
       [ScheduleFormFields.scheduleName]: name || '',
       [ScheduleFormFields.storageLocation]: { name: backupStorageName } || null,
+      [ScheduleFormFields.retentionCopies]: retentionCopies?.toString() || '0',
       ...formValues,
     };
   }
   return {
     [ScheduleFormFields.scheduleName]: `backup-${generateShortUID()}`,
     [ScheduleFormFields.storageLocation]: null,
+    [ScheduleFormFields.retentionCopies]: '0',
     ...TIME_SELECTION_DEFAULTS,
   };
 };
