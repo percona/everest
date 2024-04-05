@@ -63,10 +63,13 @@ func NewEverestServer(c *config.EverestConfig, l *zap.SugaredLogger) (*EverestSe
 		return nil, errors.New("could not get namespace from Kubernetes")
 	}
 
+	echoServer := echo.New()
+	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(20)))
+
 	e := &EverestServer{
 		config:     c,
 		l:          l,
-		echo:       echo.New(),
+		echo:       echoServer,
 		kubeClient: kubeClient,
 		auth:       auth.NewToken(kubeClient, l, []byte(ns.UID)),
 	}
