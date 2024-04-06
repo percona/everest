@@ -6,7 +6,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/AlekSi/pointer v1.2.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.3.1
-	github.com/aws/aws-sdk-go v1.51.4
+	github.com/aws/aws-sdk-go v1.51.14
 	github.com/dchest/uniuri v1.2.0
 	github.com/getkin/kin-openapi v0.123.0
 	github.com/go-logr/zapr v1.3.0

@@ -29,6 +29,10 @@ declare module '@mui/material/styles' {
       dividerStronger?: string;
       contour?: string;
     };
+    tooltips?: {
+      color?: string;
+      background?: string;
+    };
   }
 
   interface Palette extends PaletteOptions {}
@@ -158,6 +162,10 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
             dividerStronger: '#2C323E',
             contour: 'rgba(0, 0, 0, 0.06)',
           },
+          tooltips: {
+            background: '#3A4151',
+            color: '#FFFFFF',
+          },
         }
       : {
           default: {
@@ -222,6 +230,10 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
             dividerStrong: 'rgba(209, 213, 222, 0.5)',
             dividerStronger: '#FFFFFF',
             contour: 'rgba(255, 255, 255, 0.08)',
+          },
+          tooltips: {
+            background: '#F0F1F4',
+            color: '#2C323E',
           },
         }),
   },
@@ -603,15 +615,14 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
         tooltip: ({ theme }) => ({
           ...theme.typography.helperText,
           boxShadow: theme.shadows[8],
-          color: theme.palette.text.primary,
-          ...(theme.palette.surfaces && {
-            backgroundColor:
-              theme.palette.surfaces[mode == 'light' ? 'low' : 'high'],
+          ...(theme.palette.tooltips && {
+            color: theme.palette.tooltips?.color,
+            backgroundColor: theme.palette.tooltips?.background,
           }),
         }),
         arrow: ({ theme }) => ({
-          ...(theme.palette.surfaces && {
-            color: theme.palette.surfaces[mode == 'light' ? 'low' : 'high'],
+          ...(theme.palette.tooltips && {
+            color: theme.palette.tooltips?.background,
           }),
         }),
       },
