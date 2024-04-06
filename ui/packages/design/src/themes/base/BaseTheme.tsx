@@ -13,6 +13,7 @@ import {
   ThemeOptions,
 } from '@mui/material';
 import { DatePickerToolbarClassKey } from '@mui/x-date-pickers/DatePicker';
+import { outlinedInputClasses } from '@mui/material/OutlinedInput';
 
 declare module '@mui/material/styles' {
   interface PaletteOptions {
@@ -21,6 +22,16 @@ declare module '@mui/material/styles' {
       backdrop?: string;
       high?: string;
       low?: string;
+    };
+    dividers?: {
+      divider?: string;
+      dividerStrong?: string;
+      dividerStronger?: string;
+      contour?: string;
+    };
+    tooltips?: {
+      color?: string;
+      background?: string;
     };
   }
 
@@ -124,9 +135,9 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
             surface: '#E7F6F1',
           },
           text: {
-            primary: '#303642',
-            secondary: 'rgba(48, 54, 66, 0.75)',
-            disabled: 'rgba(48, 54, 66, 0.5)',
+            primary: 'rgba(44, 50, 62, 1)',
+            secondary: 'rgba(44, 50, 62, 0.72)',
+            disabled: 'rgba(44, 50, 62, 0.4)',
           },
           action: {
             hover: 'rgba(44, 50, 62, 0.04)',
@@ -144,6 +155,16 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
             default: '#2C323E',
             backdrop: 'rgba(44, 50, 62, 0.75)',
             low: '#F0F1F4',
+          },
+          dividers: {
+            divider: 'rgba(44, 50, 62, 0.25)',
+            dividerStrong: 'rgba(44, 50, 62, 0.5)',
+            dividerStronger: '#2C323E',
+            contour: 'rgba(0, 0, 0, 0.06)',
+          },
+          tooltips: {
+            background: '#3A4151',
+            color: '#FFFFFF',
           },
         }
       : {
@@ -183,9 +204,9 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
             surface: '#008C71',
           },
           text: {
-            primary: '#FFFFFF',
-            secondary: 'rgba(255, 255, 255, 0.7)',
-            disabled: 'rgba(255, 255, 255, 0.4)',
+            primary: '#FBFBFB',
+            secondary: 'rgba(251, 251, 251, 0.72)',
+            disabled: 'rgba(251, 251, 251, 0.4)',
           },
           action: {
             hover: 'rgba(240, 241, 244, 0.06)',
@@ -203,6 +224,16 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
             backdrop: '#2C323E',
             default: '#2C323E',
             high: '#3A4151',
+          },
+          dividers: {
+            divider: 'rgba(209, 213, 222, 0.25)',
+            dividerStrong: 'rgba(209, 213, 222, 0.5)',
+            dividerStronger: '#FFFFFF',
+            contour: 'rgba(255, 255, 255, 0.08)',
+          },
+          tooltips: {
+            background: '#F0F1F4',
+            color: '#2C323E',
           },
         }),
   },
@@ -375,11 +406,11 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
   components: {
     MuiInputBase: {
       styleOverrides: {
-        root: {
+        root: () => ({
           fontSize: '16px',
           fontWeight: 400,
           maxWidth: '100%',
-        },
+        }),
       },
     },
     MuiButtonBase: {
@@ -488,10 +519,41 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
         }),
       },
     },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          ...theme.typography.inputText,
+          '& fieldset': {
+            borderColor: theme.palette.dividers?.divider,
+          },
+          [`&:hover .${outlinedInputClasses.notchedOutline}`]: {
+            borderColor: theme.palette.dividers?.dividerStrong,
+          },
+          [`&.Mui-focused .${outlinedInputClasses.notchedOutline}`]: {
+            borderColor: theme.palette.dividers?.dividerStronger,
+          },
+          [`&:disabled .${outlinedInputClasses.notchedOutline}`]: {
+            borderColor: theme.palette.dividers?.contour,
+          },
+        }),
+      },
+    },
     MuiInputLabel: {
       styleOverrides: {
         root: ({ theme }) => ({
           ...theme.typography.inputText,
+        }),
+      },
+    },
+    MuiFormControl: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          '.MuiInputLabel-root': {
+            color: theme.palette.text.secondary,
+            '&.Mui-focused': {
+              color: theme.palette.text.primary,
+            },
+          },
         }),
       },
     },
@@ -553,15 +615,14 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
         tooltip: ({ theme }) => ({
           ...theme.typography.helperText,
           boxShadow: theme.shadows[8],
-          color: theme.palette.text.primary,
-          ...(theme.palette.surfaces && {
-            backgroundColor:
-              theme.palette.surfaces[mode == 'light' ? 'low' : 'high'],
+          ...(theme.palette.tooltips && {
+            color: theme.palette.tooltips?.color,
+            backgroundColor: theme.palette.tooltips?.background,
           }),
         }),
         arrow: ({ theme }) => ({
-          ...(theme.palette.surfaces && {
-            color: theme.palette.surfaces[mode == 'light' ? 'low' : 'high'],
+          ...(theme.palette.tooltips && {
+            color: theme.palette.tooltips?.background,
           }),
         }),
       },

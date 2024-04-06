@@ -236,14 +236,19 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             isOptionEqualToValue: (option, value) => option === value,
           }}
         />
-        <Typography variant="sectionHeading" sx={{ mt: 4, mb: 0.5 }}>
+        <Typography variant="sectionHeading" sx={{ mt: 2, mb: 0.5 }}>
           {Messages.labels.dbType}
         </Typography>
         {dbEnginesFetching || !dbEngines.length ? (
           // This is roughly the height of the buttons
           <Skeleton height={57} variant="rectangular" />
         ) : (
-          <ToggleButtonGroupInput name={DbWizardFormFields.dbType}>
+          <ToggleButtonGroupInput
+            name={DbWizardFormFields.dbType}
+            toggleButtonGroupProps={{
+              sx: { mb: 2 },
+            }}
+          >
             {dbEngines.map(({ type }) => (
               <DbToggleCard
                 key={type}
