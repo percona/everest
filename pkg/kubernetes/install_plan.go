@@ -57,7 +57,6 @@ func (k *Kubernetes) WaitForInstallPlan(ctx context.Context, namespace, operator
 		}
 
 		for _, i := range ips.Items {
-			i := i
 			for _, csv := range i.Spec.ClusterServiceVersionNames {
 				if csv == csvName {
 					ip = &i
