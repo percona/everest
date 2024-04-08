@@ -3,7 +3,7 @@ init:               ## Install dependencies
 	PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npx playwright install
 
 test:               ## Run all tests
-	npx playwright test tests/pg-clusters.spec.ts --config=playwright.config.ts
+	npx playwright test
 
 test-api-pxc:       ## Run tests with @pxc tag
 	npx playwright test --config=playwright.config.ts -g '@pxc'
