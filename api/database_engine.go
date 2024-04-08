@@ -53,6 +53,7 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, name)
 }
 
+// UpgradeDatabaseEngineOperatorVersion upgrades the database engine operator to the specified version.
 func (e *EverestServer) UpgradeDatabaseEngineOperatorVersion(ctx echo.Context, namespace string, name string, targetVersion string) error {
 	dbEngine, err := e.kubeClient.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
 	if err != nil {
