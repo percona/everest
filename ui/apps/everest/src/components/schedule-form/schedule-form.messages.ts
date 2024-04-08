@@ -27,7 +27,8 @@ export const Messages = {
       'Invalid option. Please make sure you added a backup storage and select it from the dropdown',
   },
   retentionCopies: {
-    label: 'Retention copies (0 means infinite)',
+    label: 'Retention copies',
+    helperText: '0 = infinite retention copies',
     invalidNumber: 'Invalid number',
   },
   backupDetails: 'Backup Details',

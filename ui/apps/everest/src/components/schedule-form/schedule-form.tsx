@@ -92,6 +92,7 @@ export const ScheduleForm = ({
         textFieldProps={{
           type: 'number',
           label: Messages.retentionCopies.label,
+          helperText: Messages.retentionCopies.helperText,
         }}
         isRequired
       />
