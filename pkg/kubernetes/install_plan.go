@@ -59,6 +59,7 @@ func (k *Kubernetes) WaitForInstallPlan(ctx context.Context, namespace, operator
 		for _, i := range ips.Items {
 			for _, csv := range i.Spec.ClusterServiceVersionNames {
 				if csv == csvName {
+					//nolint:gosec,exportloopref
 					ip = &i
 					k.l.Debugf("Found install plan %s", i.Name)
 					return true, nil

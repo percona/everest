@@ -413,10 +413,6 @@ func (k *Kubernetes) applyResources(ctx context.Context) ([]unstructured.Unstruc
 
 	resources := []unstructured.Unstructured{}
 	for _, f := range files {
-		// The scopelint linter warns about using the f variable in a function.
-		// While it's safe, we assign f := f to silent the warning.
-		f := f
-
 		data, err := fs.ReadFile(data.OLMCRDs, f)
 		if err != nil {
 			return nil, errors.Join(err, fmt.Errorf("failed to read %q file", f))
@@ -658,7 +654,6 @@ func (k *Kubernetes) CreateOperatorGroup(ctx context.Context, name, namespace st
 	og.APIVersion = "operators.coreos.com/v1"
 	var update bool
 	for _, namespace := range targetNamespaces {
-		namespace := namespace
 		if !arrayContains(og.Spec.TargetNamespaces, namespace) {
 			update = true
 		}
@@ -735,7 +730,7 @@ func (k *Kubernetes) ProvisionMonitoring(namespace string) error {
 			return err
 		}
 		// retry 3 times because applying vmagent spec might take some time.
-		for i := 0; i < 3; i++ {
+		for range 3 {
 			k.l.Debugf("Applying file %s", path)
 
 			err = k.client.ApplyManifestFile(file, namespace)
@@ -800,7 +795,6 @@ func (k *Kubernetes) RestartEverest(ctx context.Context, name, namespace string)
 		}
 		podsStatuses := make(map[string]struct{})
 		for _, pod := range pods {
-			pod := pod
 			for _, restartedPod := range podsToRestart {
 				if restartedPod.UID == pod.UID {
 					return false, nil
@@ -948,7 +942,6 @@ func (k *Kubernetes) UpdateClusterRoleBinding(ctx context.Context, name string, 
 	}
 	var needsUpdate bool
 	for _, namespace := range namespaces {
-		namespace := namespace
 		if !subjectsContains(binding.Subjects, namespace) {
 			subject := binding.Subjects[0]
 			subject.Namespace = namespace
@@ -967,7 +960,6 @@ func (k *Kubernetes) UpdateClusterRoleBinding(ctx context.Context, name string, 
 
 func arrayContains(s []string, e string) bool {
 	for _, a := range s {
-		a := a
 		if a == e {
 			return true
 		}
@@ -977,7 +969,6 @@ func arrayContains(s []string, e string) bool {
 
 func subjectsContains(s []rbacv1.Subject, n string) bool {
 	for _, a := range s {
-		a := a
 		if a.Namespace == n {
 			return true
 		}

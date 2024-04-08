@@ -352,7 +352,6 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 
 func (o *Install) provisionDBNamespaces(ctx context.Context, recVer *version.RecommendedVersion) error {
 	for _, namespace := range o.config.NamespacesList {
-		namespace := namespace
 		if err := o.createNamespace(namespace); err != nil {
 			return err
 		}

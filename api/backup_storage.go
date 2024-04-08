@@ -39,14 +39,15 @@ func (e *EverestServer) ListBackupStorages(ctx echo.Context) error {
 	}
 
 	result := make([]BackupStorage, 0, len(backupList.Items))
-	for _, bs := range backupList.Items {
-		s := bs
+	for _, s := range backupList.Items {
 		result = append(result, BackupStorage{
-			Type:              BackupStorageType(bs.Spec.Type),
-			Name:              s.Name,
-			Description:       &s.Spec.Description,
-			BucketName:        s.Spec.Bucket,
-			Region:            s.Spec.Region,
+			Type: BackupStorageType(s.Spec.Type),
+			Name: s.Name,
+			//nolint:gosec,exportloopref
+			Description: &s.Spec.Description,
+			BucketName:  s.Spec.Bucket,
+			Region:      s.Spec.Region,
+			//nolint:gosec,exportloopref
 			Url:               &s.Spec.EndpointURL,
 			AllowedNamespaces: s.Spec.AllowedNamespaces,
 			VerifyTLS:         s.Spec.VerifyTLS,
