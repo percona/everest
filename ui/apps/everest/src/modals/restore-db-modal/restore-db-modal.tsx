@@ -220,11 +220,15 @@ const RestoreDbModal = <T extends FieldValues>({
                     sx={{ mt: 1.5 }}
                     message={Messages.pitrLimitationAlert}
                     buttonMessage={Messages.seeDocs}
+                    onClick={() =>
+                      window.open(
+                        'https://docs.percona.com/everest/use/createBackups/EnablePITR.html#limitation',
+                        '_blank',
+                        'noopener'
+                      )
+                    }
                     buttonProps={{
-                      href: 'https://docs.percona.com/everest/use/createBackups/EnablePITR.html#limitation',
-                      sx: {
-                        whiteSpace: 'nowrap',
-                      },
+                      sx: { whiteSpace: 'nowrap' },
                     }}
                   />
                 )}
