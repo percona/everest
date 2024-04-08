@@ -243,7 +243,8 @@ const RestoreDbModal = <T extends FieldValues>({
                         format(
                           pitrData?.latestDate || new Date(),
                           PITR_DATE_FORMAT
-                        )
+                        ),
+                        dbCluster.spec.backup?.pitr?.backupStorageName || ''
                       )}
                 </Alert>
               )}
