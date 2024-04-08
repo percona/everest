@@ -256,5 +256,3 @@ jobs:
           timeout: 300
           ignored: 'license/snyk (Percona Github Org), security/snyk (Percona Github Org)'
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-
-# a change to revert
