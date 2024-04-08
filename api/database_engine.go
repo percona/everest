@@ -52,3 +52,18 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 	}
 	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, name)
 }
+
+func (e *EverestServer) UpgradeDatabaseEngineOperatorVersion(ctx echo.Context, namespace string, name string, targetVersion string) error {
+	dbEngine, err := e.kubeClient.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
+	if err != nil {
+		return err
+	}
+	annotations := dbEngine.GetAnnotations()
+	annotations["everest.percona.com/upgrade-operator-to"] = targetVersion // TODO: fix this
+	dbEngine.SetAnnotations(annotations)
+	_, err = e.kubeClient.UpdateDatabaseEngine(ctx.Request().Context(), namespace, dbEngine)
+	if err != nil {
+		return err
+	}
+	return nil
+}
