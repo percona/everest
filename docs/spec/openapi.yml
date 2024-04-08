@@ -579,6 +579,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-engines/{name}/operator-upgrade/{targetVersion}':
+    put:
+      tags:
+        - upgradeDatabaseEngineOperatorVersion
+      summary: Update the specified database engine
+      description: Update the specified database engine
+      operationId: upgradeDatabaseEngineOperatorVersion
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database engine
+          required: true
+          schema:
+            type: string
+        - name: targetVersion
+          in: path
+          description: Target version of the database operator
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-cluster-restores':
     post:
       tags:
