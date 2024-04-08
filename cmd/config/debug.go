@@ -17,3 +17,4 @@
 package config
 
 const Debug = true
+const APIServerRequestsRateLimit = 100
