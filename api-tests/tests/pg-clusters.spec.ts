@@ -186,7 +186,8 @@ test('expose pg cluster after creation', async ({ request, page }) => {
 
   expect((await updatedPGCluster.json()).spec.proxy.expose.type).toBe('external')
 
-  await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+  let deleteResponse = await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+  await checkError(deleteResponse)
 
   pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
   expect(pgCluster.status()).toBe(404)
