@@ -111,6 +111,7 @@ test('create/edit/delete single node pg cluster', async ({ request, page }) => {
   await checkError(deleteResult)
 
   pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+  console.log("!!! " + await pgCluster.json())
   expect(pgCluster.status()).toBe(404)
 })
 
