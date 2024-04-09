@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { test, expect } from '@fixtures'
-import {checkError, testsNs} from "@tests/tests/helpers";
+import {checkClusterDeletion, checkError, testsNs} from "@tests/tests/helpers";
 
 let recommendedVersion
 
@@ -107,10 +107,12 @@ test('create/edit/delete single node pg cluster', async ({ request, page }) => {
 
   expect((await updatedPGCluster.json()).spec.clusterSize).toBe(pgPayload.spec.clusterSize)
 
-  await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+  let deleteResult = await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+  await checkError(deleteResult)
 
   pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-  expect(pgCluster.status()).toBe(404)
+  await checkClusterDeletion(pgCluster)
+
 })
 
 test('expose pg cluster after creation', async ({ request, page }) => {
@@ -186,10 +188,11 @@ test('expose pg cluster after creation', async ({ request, page }) => {
 
   expect((await updatedPGCluster.json()).spec.proxy.expose.type).toBe('external')
 
-  await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+  let deleteResponse = await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+  await checkError(deleteResponse)
 
   pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-  expect(pgCluster.status()).toBe(404)
+  await checkClusterDeletion(pgCluster)
 })
 
 test('expose pg cluster on EKS to the public internet and scale up', async ({ request, page }) => {
@@ -263,6 +266,5 @@ test('expose pg cluster on EKS to the public internet and scale up', async ({ re
   await page.waitForTimeout(1000)
 
   const pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-
-  expect(pgCluster.status()).toBe(404)
+  await checkClusterDeletion(pgCluster)
 })
