@@ -51,6 +51,7 @@ const BackupListTableHeader = ({
         {schedulesNumber > 0 && (
           <Button
             size="small"
+            data-testid="scheduled-backups"
             sx={{
               ml: 'auto',
               mr: 2,
