@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import {expect, request, test} from '@playwright/test'
 
 // testPrefix is used to differentiate between several workers
 // running this test to avoid conflicts in instance names
@@ -112,4 +112,12 @@ export const deleteRestore = async (request, restoreName) => {
   const res = await request.delete(`/v1/namespaces/${testsNs}/database-cluster-restores/${restoreName}`)
 
   await checkError(res)
+}
+
+export const checkClusterDeletion = async (custer) => {
+  if (custer.status() == 200) {
+    expect((await custer.json()["deletionTimestamp"]).metadata).not.toBe('');
+  } else {
+    expect(custer.status()).toBe(404)
+  }
 }
