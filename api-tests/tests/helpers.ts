@@ -114,34 +114,20 @@ export const deleteRestore = async (request, restoreName) => {
   await checkError(res)
 }
 
-export const checkClusterDeletion = async (custer) => {
-  if (custer.status() == 200) {
-    expect((await custer.json()).metadata["deletionTimestamp"]).not.toBe('');
+export const checkClusterDeletion = async (cluster) => {
+  if (cluster.status() == 200) {
+    expect((await cluster.json()).metadata["deletionTimestamp"]).not.toBe('');
   } else {
-    expect(custer.status()).toBe(404)
+    expect(cluster.status()).toBe(404)
   }
 }
 
-
-export const createMonitoringConfig = async (request, name) => {
-  const miData = {
-    type: 'pmm',
-    name: name,
-    url: 'http://monitoring',
-    allowedNamespaces: [testsNs],
-    pmm: {
-      apiKey: '123',
-    },
+export const waitClusterDeletion = async (request, page, clusterName) => {
+  for (let i = 0; i < 15; i++) {
+    const cluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+    if (cluster.status() == 404) {
+      break;
+    }
+    await page.waitForTimeout(1000)
   }
-
-  let res = await request.post('/v1/monitoring-instances', { data: miData })
-
-  await checkError(res)
-
-}
-
-export const deleteMonitoringConfig = async (request, name) => {
-  const res = await request.delete(`/v1/monitoring-instances/${name}`)
-
-  await checkError(res)
 }

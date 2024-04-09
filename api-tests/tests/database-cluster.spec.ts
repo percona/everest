@@ -13,19 +13,47 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { expect, test } from '@fixtures'
-import {
-  checkError,
-  testsNs,
-  suffixedName,
-  createMonitoringConfig,
-  deleteMonitoringConfig
-} from "@tests/tests/helpers";
+import {checkError, testsNs, testPrefix, waitClusterDeletion} from "@tests/tests/helpers";
+
+// testPrefix is used to differentiate between several workers
+// running this test to avoid conflicts in instance names
+const monitoringConfigName1 = `a${testPrefix}-1`
+const monitoringConfigName2 = `b${testPrefix}-2`
 
 test.setTimeout(360 * 1000)
 
-test('create db cluster with monitoring config', async ({ request }) => {
+test.beforeAll(async ({ request }) => {
+  const miData = {
+    type: 'pmm',
+    name: monitoringConfigName1,
+    url: 'http://monitoring',
+    allowedNamespaces: [testsNs],
+    pmm: {
+      apiKey: '123',
+    },
+  }
+
+  // Monitoring configs
+  let res = await request.post('/v1/monitoring-instances', { data: miData })
+
+  await checkError(res)
+
+  miData.name = monitoringConfigName2
+  res = await request.post('/v1/monitoring-instances', { data: miData })
+  await checkError(res)
+})
+
+test.afterAll(async ({ request }) => {
+  let res = await request.delete(`/v1/monitoring-instances/${monitoringConfigName1}`)
+
+  await checkError(res)
+
+  res = await request.delete(`/v1/monitoring-instances/${monitoringConfigName2}`)
+  await checkError(res)
+})
+
+test('create db cluster with monitoring config', async ({ request, page }) => {
   const clusterName = 'db-monitoring-create'
-  const name1 = suffixedName("m1")
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
@@ -35,7 +63,7 @@ test('create db cluster with monitoring config', async ({ request }) => {
     },
     spec: {
       monitoring: {
-        monitoringConfigName: name1,
+        monitoringConfigName: monitoringConfigName1,
       },
       engine: {
         type: 'psmdb',
@@ -57,7 +85,7 @@ test('create db cluster with monitoring config', async ({ request }) => {
       },
     },
   }
-  await createMonitoringConfig(request, name1)
+
   const postReq = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, { data })
 
   await checkError(postReq)
@@ -76,16 +104,12 @@ test('create db cluster with monitoring config', async ({ request }) => {
     })
   } finally {
     await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-    await deleteMonitoringConfig(request, name1)
+    await waitClusterDeletion(request, page, clusterName)
   }
 })
 
-test('update db cluster with a new monitoring config', async ({ request }) => {
+test('update db cluster with a new monitoring config', async ({ request, page }) => {
   const clusterName = 'dbc-monitoring-put'
-  const name1 = suffixedName("m1")
-  const name2 = suffixedName("m2")
-  await createMonitoringConfig(request, name1)
-  await createMonitoringConfig(request, name2)
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
@@ -95,7 +119,7 @@ test('update db cluster with a new monitoring config', async ({ request }) => {
     },
     spec: {
       monitoring: {
-        monitoringConfigName: name1,
+        monitoringConfigName: monitoringConfigName1,
       },
       engine: {
         type: 'psmdb',
@@ -136,25 +160,25 @@ test('update db cluster with a new monitoring config', async ({ request }) => {
       timeout: 60 * 1000,
     })
 
-    expect(res?.spec?.monitoring?.monitoringConfigName).toBe(name1)
+    expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName1)
 
     const putData = data
 
     putData.metadata = res.metadata
-    putData.spec.monitoring.monitoringConfigName = name2
+    putData.spec.monitoring.monitoringConfigName = monitoringConfigName2
+
     const putReq = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, { data: putData })
 
     await checkError(putReq)
     res = (await putReq.json())
-    expect(res?.spec?.monitoring?.monitoringConfigName).toBe(name2)
+    expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
   } finally {
     await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-    await deleteMonitoringConfig(request, name1)
-    await deleteMonitoringConfig(request, name2)
+    await waitClusterDeletion(request, page, clusterName)
   }
 })
 
-test('update db cluster without monitoring config with a new monitoring config', async ({ request }) => {
+test('update db cluster without monitoring config with a new monitoring config', async ({ request, page }) => {
   const clusterName = 'monitoring-put-empty'
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -184,8 +208,7 @@ test('update db cluster without monitoring config with a new monitoring config',
       },
     },
   }
-  const name2 = suffixedName("m2")
-  await createMonitoringConfig(request, name2)
+
   const postReq = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, { data })
 
   await checkError(postReq)
@@ -209,22 +232,21 @@ test('update db cluster without monitoring config with a new monitoring config',
     const putData = data
 
     putData.metadata = res.metadata;
-    (putData.spec as any).monitoring = { monitoringConfigName: name2 }
+    (putData.spec as any).monitoring = { monitoringConfigName: monitoringConfigName2 }
 
     const putReq = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, { data: putData })
 
     await checkError(putReq)
     res = (await putReq.json())
-    expect(res?.spec?.monitoring?.monitoringConfigName).toBe(name2)
+    expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
   } finally {
     await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-    await deleteMonitoringConfig(request, name2)
+    await waitClusterDeletion(request, page, clusterName)
   }
 })
 
-test('update db cluster monitoring config with an empty monitoring config', async ({ request }) => {
+test('update db cluster monitoring config with an empty monitoring config', async ({ request, page }) => {
   const clusterName = 'monit-put-to-empty'
-  const name1 = suffixedName("m1")
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
@@ -234,7 +256,7 @@ test('update db cluster monitoring config with an empty monitoring config', asyn
     },
     spec: {
       monitoring: {
-        monitoringConfigName: name1,
+        monitoringConfigName: monitoringConfigName1,
       },
       engine: {
         type: 'psmdb',
@@ -256,7 +278,7 @@ test('update db cluster monitoring config with an empty monitoring config', asyn
       },
     },
   }
-  await createMonitoringConfig(request, name1)
+
   const postReq = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, { data })
 
   await checkError(postReq)
@@ -287,6 +309,6 @@ test('update db cluster monitoring config with an empty monitoring config', asyn
     expect(res?.spec?.monitoring?.monitoringConfigName).toBeFalsy()
   } finally {
     await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-    await deleteMonitoringConfig(request, name1)
+    await waitClusterDeletion(request, page, clusterName)
   }
 })
