@@ -138,7 +138,7 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
       muiTablePaperProps={{ elevation: 0, ...muiTablePaperProps }}
       muiTopToolbarProps={{
         sx: {
-          // backgroundColor: 'transparent',
+          backgroundColor: 'transparent',
           '& > .MuiBox-root': {
             flexDirection: 'row-reverse',
             flexWrap: 'wrap',
@@ -226,14 +226,14 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
       muiTableHeadProps={{
         sx: {
           '& tr': {
-            // backgroundColor: 'transparent',
+            backgroundColor: 'transparent',
           },
         },
       }}
       muiTableBodyProps={{
         sx: {
           '& tr': {
-            // backgroundColor: 'transparent',
+            backgroundColor: 'transparent',
           },
         },
       }}

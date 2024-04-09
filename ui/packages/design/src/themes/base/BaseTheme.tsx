@@ -216,8 +216,8 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
             focusOpacity: 0.14,
           },
           background: {
-            default: '#2C323E',
-            paper: '#2C323E',
+            default: '#3A4151',
+            paper: '#3A4151',
           },
           surfaces: {
             backdrop: 'rgba(44, 50, 62, 0.72)',
