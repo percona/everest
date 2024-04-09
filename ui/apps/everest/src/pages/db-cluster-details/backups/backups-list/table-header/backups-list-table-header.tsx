@@ -40,65 +40,75 @@ const BackupListTableHeader = ({
 
   return (
     <>
-      {/* Order is necessary to keep filters on the left side (i.e. filters have order=0) */}
-      {schedulesNumber > 0 && (
-        <Button
-          size="small"
-          sx={{
-            ml: 'auto',
-            mr: [0, 2, 2, 2, 2],
-            order: [2, 1, 1, 1, 1],
-            position: 'relative',
-          }}
-          className={showSchedules ? styles.scheduleToggleButton : ''}
-          onClick={handleShowSchedules}
-          endIcon={
-            showSchedules ? (
-              <KeyboardArrowUpOutlined />
-            ) : (
-              <KeyboardArrowDownOutlinedIcon />
-            )
-          }
-        >
-          {Messages.activeSchedules(schedulesNumber)}
-        </Button>
-      )}
-      <MenuButton
-        buttonProps={{ disabled: restoring, sx: { order: [1, 2, 2, 2, 2] } }}
-        buttonText="Create backup"
+      <Box
+        sx={(theme) => ({
+          [theme.breakpoints.down('md')]: {
+            width: '100%',
+            order: 1,
+          },
+        })}
       >
-        {(handleClose) => [
-          <MenuItem
-            key="now"
-            data-testid="now-menu-item"
-            onClick={() => handleNowClick(handleClose)}
+        {/* Order is necessary to keep filters on the left side (i.e. filters have order=0) */}
+        {schedulesNumber > 0 && (
+          <Button
+            size="small"
+            sx={{
+              ml: 'auto',
+              mr: 2,
+              position: 'relative',
+            }}
+            className={showSchedules ? styles.scheduleToggleButton : ''}
+            onClick={handleShowSchedules}
+            endIcon={
+              showSchedules ? (
+                <KeyboardArrowUpOutlined />
+              ) : (
+                <KeyboardArrowDownOutlinedIcon />
+              )
+            }
           >
-            {Messages.now}
-          </MenuItem>,
-          <Box key="schedule">
-            {disableScheduleBackups ? (
-              <Tooltip
-                title={Messages.exceededScheduleBackupsNumber}
-                placement="right"
-                arrow
-              >
-                <div>
-                  <MenuItem data-testid="schedule-menu-item" disabled>
-                    {Messages.schedule}
-                  </MenuItem>
-                </div>
-              </Tooltip>
-            ) : (
-              <MenuItem
-                onClick={() => handleScheduleClick(handleClose)}
-                data-testid="schedule-menu-item"
-              >
-                {Messages.schedule}
-              </MenuItem>
-            )}
-          </Box>,
-        ]}
-      </MenuButton>
+            {Messages.activeSchedules(schedulesNumber)}
+          </Button>
+        )}
+        <MenuButton
+          buttonProps={{
+            disabled: restoring,
+          }}
+          buttonText="Create backup"
+        >
+          {(handleClose) => [
+            <MenuItem
+              key="now"
+              data-testid="now-menu-item"
+              onClick={() => handleNowClick(handleClose)}
+            >
+              {Messages.now}
+            </MenuItem>,
+            <Box key="schedule">
+              {disableScheduleBackups ? (
+                <Tooltip
+                  title={Messages.exceededScheduleBackupsNumber}
+                  placement="right"
+                  arrow
+                >
+                  <div>
+                    <MenuItem data-testid="schedule-menu-item" disabled>
+                      {Messages.schedule}
+                    </MenuItem>
+                  </div>
+                </Tooltip>
+              ) : (
+                <MenuItem
+                  onClick={() => handleScheduleClick(handleClose)}
+                  data-testid="schedule-menu-item"
+                >
+                  {Messages.schedule}
+                </MenuItem>
+              )}
+            </Box>,
+          ]}
+        </MenuButton>
+      </Box>
       {schedulesNumber > 0 && showSchedules && <ScheduledBackupsList />}
     </>
   );

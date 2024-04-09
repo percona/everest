@@ -59,7 +59,7 @@ const ScheduledBackupsList = () => {
       spacing={1}
       width="100%"
       order={3}
-      bgcolor={'#F4F4F4'}
+      bgcolor={(theme) => theme.palette.surfaces?.elevation0}
       p={2}
       mt={2}
     >

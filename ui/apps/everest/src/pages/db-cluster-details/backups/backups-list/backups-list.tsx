@@ -169,13 +169,6 @@ export const BackupsList = () => {
             },
           ],
         }}
-        muiTopToolbarProps={{
-          sx: {
-            '& > .MuiBox-root': {
-              flexWrap: 'wrap',
-            },
-          },
-        }}
         renderTopToolbarCustomActions={() => (
           <BackupListTableHeader
             onNowClick={handleManualBackup}

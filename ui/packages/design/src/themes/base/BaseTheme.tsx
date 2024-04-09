@@ -18,10 +18,9 @@ import { outlinedInputClasses } from '@mui/material/OutlinedInput';
 declare module '@mui/material/styles' {
   interface PaletteOptions {
     surfaces?: {
-      default?: string;
       backdrop?: string;
-      high?: string;
-      low?: string;
+      elevation0?: string;
+      elevation1?: string;
     };
     dividers?: {
       divider?: string;
@@ -152,9 +151,9 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
             paper: '#FFFFFF',
           },
           surfaces: {
-            default: '#2C323E',
-            backdrop: 'rgba(44, 50, 62, 0.75)',
-            low: '#F0F1F4',
+            backdrop: 'rgba(44, 50, 62, 0.72)',
+            elevation0: 'rgba(240, 241, 244, 1)',
+            elevation1: 'rgba(255, 255, 255, 1)',
           },
           dividers: {
             divider: 'rgba(44, 50, 62, 0.25)',
@@ -221,9 +220,9 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
             paper: '#2C323E',
           },
           surfaces: {
-            backdrop: '#2C323E',
-            default: '#2C323E',
-            high: '#3A4151',
+            backdrop: 'rgba(44, 50, 62, 0.72)',
+            elevation0: 'rgba(44, 50, 62, 1)',
+            elevation1: 'rgba(58, 65, 81, 1)',
           },
           dividers: {
             divider: 'rgba(209, 213, 222, 0.25)',
