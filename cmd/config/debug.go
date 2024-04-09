@@ -16,7 +16,4 @@
 
 package config
 
-const (
-	Debug                      = true
-	APIServerRequestsRateLimit = 100
-)
+const Debug = true

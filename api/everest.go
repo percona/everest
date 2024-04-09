@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/time/rate"
 	"io/fs"
 	"net/http"
 
@@ -64,7 +65,7 @@ func NewEverestServer(c *config.EverestConfig, l *zap.SugaredLogger) (*EverestSe
 	}
 
 	echoServer := echo.New()
-	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(config.APIServerRequestsRateLimit)))
+	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 
 	e := &EverestServer{
 		config:     c,
@@ -74,6 +75,7 @@ func NewEverestServer(c *config.EverestConfig, l *zap.SugaredLogger) (*EverestSe
 		auth:       auth.NewToken(kubeClient, l, []byte(ns.UID)),
 	}
 
+	e.l.Info("!!! Rate limit is ", c.APIRequestsRateLimit)
 	if err := e.initHTTPServer(); err != nil {
 		return e, err
 	}

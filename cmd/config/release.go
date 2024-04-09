@@ -18,7 +18,4 @@
 package config
 
 // Debug indicates if the current build is a debug build.
-const (
-	Debug                      = false
-	APIServerRequestsRateLimit = 20
-)
+const Debug = false
