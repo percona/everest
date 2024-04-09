@@ -21,6 +21,8 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
+
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
 const (
@@ -60,7 +62,7 @@ func (e *EverestServer) UpgradeDatabaseEngineOperatorVersion(ctx echo.Context, n
 		return err
 	}
 	annotations := dbEngine.GetAnnotations()
-	annotations["everest.percona.com/upgrade-operator-to"] = targetVersion // TODO: fix this
+	annotations[everestv1alpha1.DatabaseOperatorUpgradeAnnotation] = targetVersion
 	dbEngine.SetAnnotations(annotations)
 	_, err = e.kubeClient.UpdateDatabaseEngine(ctx.Request().Context(), namespace, dbEngine)
 	if err != nil {
