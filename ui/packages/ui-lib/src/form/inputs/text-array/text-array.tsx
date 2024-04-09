@@ -19,7 +19,7 @@ import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined
 
 import { TextArrayProps } from './text-array.types';
 import TextInput from '../text';
-import LabeledContent from "../../../labeled-content";
+import LabeledContent from '../../../labeled-content';
 
 const TextArray = ({
   fieldName,

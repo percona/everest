@@ -25,8 +25,7 @@ const LabeledContent = ({
   actionButtonProps,
   ...typographyProps
 }: LabeledContentProps) => {
-  const { dataTestId, buttonText } = actionButtonProps || {};
-
+  const { dataTestId, buttonText, ...buttonProps } = actionButtonProps || {};
   return (
     <>
       <Stack direction="row">
@@ -50,7 +49,7 @@ const LabeledContent = ({
               ml: 'auto',
             }}
             data-testid={dataTestId || 'labeled-content-action-button'}
-            {...actionButtonProps}
+            {...buttonProps}
           >
             {buttonText || 'Add new'}
           </Button>
