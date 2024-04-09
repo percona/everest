@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import {expect, test} from '@playwright/test'
 
 // testPrefix is used to differentiate between several workers
 // running this test to avoid conflicts in instance names
@@ -112,4 +112,22 @@ export const deleteRestore = async (request, restoreName) => {
   const res = await request.delete(`/v1/namespaces/${testsNs}/database-cluster-restores/${restoreName}`)
 
   await checkError(res)
+}
+
+export const checkClusterDeletion = async (cluster) => {
+  if (cluster.status() == 200) {
+    expect((await cluster.json()).metadata["deletionTimestamp"]).not.toBe('');
+  } else {
+    expect(cluster.status()).toBe(404)
+  }
+}
+
+export const waitClusterDeletion = async (request, page, clusterName) => {
+  for (let i = 0; i < 15; i++) {
+    const cluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+    if (cluster.status() == 404) {
+      break;
+    }
+    await page.waitForTimeout(1000)
+  }
 }
