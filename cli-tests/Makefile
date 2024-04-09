@@ -4,6 +4,7 @@ init:               ## Install dependencies
 
 install-operators:  ## Install operators to k8s
 	../bin/everestctl install -v \
+		--version 0.0.0 \
 		--version-metadata-url https://check-dev.percona.com \
 		--namespaces percona-everest-operators \
 		--skip-wizard \
