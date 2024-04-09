@@ -1,4 +1,4 @@
-import {expect, request, test} from '@playwright/test'
+import {expect, test} from '@playwright/test'
 
 // testPrefix is used to differentiate between several workers
 // running this test to avoid conflicts in instance names
