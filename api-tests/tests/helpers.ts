@@ -116,7 +116,7 @@ export const deleteRestore = async (request, restoreName) => {
 
 export const checkClusterDeletion = async (custer) => {
   if (custer.status() == 200) {
-    expect((await custer.json()["deletionTimestamp"]).metadata).not.toBe('');
+    expect((await custer.json().metadata["deletionTimestamp"])).not.toBe('');
   } else {
     expect(custer.status()).toBe(404)
   }
