@@ -9,7 +9,6 @@ import { ScheduleModalContext } from '../../backups.context';
 import ScheduledBackupsList from './scheduled-backups-list';
 import { BackupListTableHeaderProps } from './backups-list-table-header.types';
 import { Messages } from './backups-list-table-header.messages';
-import styles from './backups-list-table-header.module.css';
 
 const BackupListTableHeader = ({
   onNowClick,
@@ -56,8 +55,21 @@ const BackupListTableHeader = ({
               ml: 'auto',
               mr: 2,
               position: 'relative',
+              ...(showSchedules && {
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  bottom: '-29px',
+                  width: '0px',
+                  height: '0px',
+                  borderStyle: 'solid',
+                  borderWidth: '0 14.5px 29px 14.5px',
+                  borderColor: (theme) =>
+                    `transparent transparent ${theme.palette.surfaces?.elevation0} transparent`,
+                  transform: 'rotate(0deg)',
+                },
+              }),
             }}
-            className={showSchedules ? styles.scheduleToggleButton : ''}
             onClick={handleShowSchedules}
             endIcon={
               showSchedules ? (
