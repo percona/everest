@@ -121,3 +121,27 @@ export const checkClusterDeletion = async (custer) => {
     expect(custer.status()).toBe(404)
   }
 }
+
+
+export const createMonitoringConfig = async (request, name) => {
+  const miData = {
+    type: 'pmm',
+    name: name,
+    url: 'http://monitoring',
+    allowedNamespaces: [testsNs],
+    pmm: {
+      apiKey: '123',
+    },
+  }
+
+  let res = await request.post('/v1/monitoring-instances', { data: miData })
+
+  await checkError(res)
+
+}
+
+export const deleteMonitoringConfig = async (request, name) => {
+  const res = await request.delete(`/v1/monitoring-instances/${name}`)
+
+  await checkError(res)
+}
