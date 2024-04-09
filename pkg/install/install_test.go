@@ -181,7 +181,7 @@ func TestInstall_latestVersion(t *testing.T) {
 
 			v, _, err := i.latestVersion(tc.meta)
 			if tc.expectError {
-				require.NotNil(t, err)
+				require.Error(t, err)
 				return
 			}
 
