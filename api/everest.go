@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"golang.org/x/time/rate"
 	"io/fs"
 	"net/http"
 
@@ -31,6 +30,7 @@ import (
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 	middleware "github.com/oapi-codegen/echo-middleware"
 	"go.uber.org/zap"
+	"golang.org/x/time/rate"
 
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/auth"
@@ -75,7 +75,6 @@ func NewEverestServer(c *config.EverestConfig, l *zap.SugaredLogger) (*EverestSe
 		auth:       auth.NewToken(kubeClient, l, []byte(ns.UID)),
 	}
 
-	e.l.Info("!!! Rate limit is ", c.APIRequestsRateLimit)
 	if err := e.initHTTPServer(); err != nil {
 		return e, err
 	}
