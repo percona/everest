@@ -584,7 +584,7 @@ paths:
       tags:
         - upgradeDatabaseEngineOperator
       summary: Update the specified database engine
-      description: Update the specified database engine
+      description: Upgrade the specified database engine to a desired version
       operationId: upgradeDatabaseEngineOperator
       parameters:
         - name: namespace
