@@ -55,14 +55,25 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, name)
 }
 
-// UpgradeDatabaseEngineOperatorVersion upgrades the database engine operator to the specified version.
-func (e *EverestServer) UpgradeDatabaseEngineOperatorVersion(ctx echo.Context, namespace string, name string, targetVersion string) error {
+// UpgradeDatabaseEngineOperator upgrades the database engine operator to the specified version.
+func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespace string, name string) error {
+	// Parse request body.
+	req := &DatabaseEngineOperatorUpgradeParams{}
+	if err := e.getBodyFromContext(ctx, req); err != nil {
+		e.l.Error(err)
+		return ctx.JSON(http.StatusBadRequest, Error{
+			Message: pointer.ToString(
+				"Could not get DatabaseEngineOperatorUpgradeParams from the request body"),
+		})
+	}
+	// Get existing database engine.
 	dbEngine, err := e.kubeClient.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
 	if err != nil {
 		return err
 	}
+	// Update annotation to start upgrade.
 	annotations := dbEngine.GetAnnotations()
-	annotations[everestv1alpha1.DatabaseOperatorUpgradeAnnotation] = targetVersion
+	annotations[everestv1alpha1.DatabaseOperatorUpgradeAnnotation] = req.TargetVersion
 	dbEngine.SetAnnotations(annotations)
 	_, err = e.kubeClient.UpdateDatabaseEngine(ctx.Request().Context(), namespace, dbEngine)
 	if err != nil {
