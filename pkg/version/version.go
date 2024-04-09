@@ -47,6 +47,10 @@ func CatalogImage(v *goversion.Version) string {
 	if isDevVersion() {
 		return devCatalogImage
 	}
+	if EverestChannelOverride != "" {
+		// Other channels than stable are only in dev catalog.
+		return devCatalogImage
+	}
 	return fmt.Sprintf(releaseCatalogImage, v)
 }
 
