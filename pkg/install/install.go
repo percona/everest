@@ -328,7 +328,7 @@ func (o *Install) provisionEverestOperator(ctx context.Context, recVer *version.
 		v = recVer.EverestOperator.String()
 	}
 
-	ch := everestBackendServiceName
+	ch := everestOperatorChannel
 	if version.EverestChannelOverride != "" {
 		ch = version.EverestChannelOverride
 	}
