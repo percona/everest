@@ -113,6 +113,8 @@ type (
 		KubeconfigPath string `mapstructure:"kubeconfig"`
 		// VersionMetadataURL stores hostname to retrieve version metadata information from.
 		VersionMetadataURL string `mapstructure:"version-metadata-url"`
+		// Version defines the version to be installed. If empty, the latest version is installed.
+		Version string `mapstructure:"version"`
 
 		Operator OperatorConfig
 	}
@@ -229,7 +231,17 @@ func (o *Install) latestVersion(meta *versionpb.MetadataResponse) (*goversion.Ve
 	var (
 		latest     *goversion.Version
 		latestMeta *versionpb.MetadataVersion
+
+		targetVersion *goversion.Version
+		err           error
 	)
+
+	if o.config.Version != "" {
+		targetVersion, err = goversion.NewSemver(o.config.Version)
+		if err != nil {
+			return nil, nil, errors.Join(err, fmt.Errorf("could not parse target version %q", o.config.Version))
+		}
+	}
 
 	for _, v := range meta.GetVersions() {
 		ver, err := goversion.NewSemver(v.GetVersion())
@@ -238,10 +250,16 @@ func (o *Install) latestVersion(meta *versionpb.MetadataResponse) (*goversion.Ve
 			continue
 		}
 
-		if latest == nil || ver.GreaterThan(latest) {
-			latest = ver
-			latestMeta = v
-			continue
+		if targetVersion != nil {
+			if ver.Equal(targetVersion) {
+				return ver, v, nil
+			}
+		} else {
+			if latest == nil || ver.GreaterThan(latest) {
+				latest = ver
+				latestMeta = v
+				continue
+			}
 		}
 	}
 
@@ -310,7 +328,11 @@ func (o *Install) provisionEverestOperator(ctx context.Context, recVer *version.
 		v = recVer.EverestOperator.String()
 	}
 
-	if err := o.installOperator(ctx, everestOperatorChannel, common.EverestOperatorName, common.SystemNamespace, v)(); err != nil {
+	ch := everestBackendServiceName
+	if version.EverestChannelOverride != "" {
+		ch = version.EverestChannelOverride
+	}
+	if err := o.installOperator(ctx, ch, common.EverestOperatorName, common.SystemNamespace, v)(); err != nil {
 		return err
 	}
 

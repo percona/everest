@@ -38,6 +38,8 @@ var (
 	Version string //nolint:gochecknoglobals
 	// FullCommit is a git commit hash.
 	FullCommit string //nolint:gochecknoglobals
+	// EverestChannelOverride overrides the default olm channel for Everest operator.
+	EverestChannelOverride string //nolint:gochecknoglobals
 )
 
 // CatalogImage returns a catalog image name.
