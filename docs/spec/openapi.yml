@@ -579,13 +579,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-engines/{name}/operator-upgrade/{targetVersion}':
+  '/namespaces/{namespace}/database-engines/{name}/upgrade-operator':
     put:
       tags:
-        - upgradeDatabaseEngineOperatorVersion
+        - upgradeDatabaseEngineOperator
       summary: Update the specified database engine
       description: Update the specified database engine
-      operationId: upgradeDatabaseEngineOperatorVersion
+      operationId: upgradeDatabaseEngineOperator
       parameters:
         - name: namespace
           in: path
@@ -599,12 +599,13 @@ paths:
           required: true
           schema:
             type: string
-        - name: targetVersion
-          in: path
-          description: Target version of the database operator
-          required: true
-          schema:
-            type: string
+      requestBody:
+        description: Request for upgrading the database engine operator
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatabaseEngineOperatorUpgradeParams'
       responses:
         '200':
           description: Successful operation
@@ -1628,6 +1629,17 @@ components:
         metadata:
           type: object
       type: object
+    DatabaseEngineOperatorUpgradeParams:
+      type: object
+      description: Database engine operator upgrade parameters
+      properties:
+        targetVersion:
+          type: string
+          description: The version to which the operator should be upgraded
+          example: 0.12.0
+      required:
+        - targetVersion
+      additionalProperties: false
     DatabaseClusterRestoreList:
       description: DatabaseClusterRestoreList is an object that contains the list of the existing database cluster restores.
       properties:
