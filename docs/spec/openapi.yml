@@ -875,7 +875,7 @@ paths:
           required: true
           schema:
             type: string
-        - name: cleanupStorage
+        - name: cleanupBackupStorage
           in: query
           description: If set, remove the backed up data from storage
           schema:

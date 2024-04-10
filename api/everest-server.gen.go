@@ -835,8 +835,8 @@ type IoK8sApimachineryPkgApisMetaV1StatusV2 struct {
 
 // DeleteDatabaseClusterBackupParams defines parameters for DeleteDatabaseClusterBackup.
 type DeleteDatabaseClusterBackupParams struct {
-	// CleanupStorage If set, remove the backed up data from storage
-	CleanupStorage *bool `form:"cleanupStorage,omitempty" json:"cleanupStorage,omitempty"`
+	// CleanupBackupStorage If set, remove the backed up data from storage
+	CleanupBackupStorage *bool `form:"cleanupBackupStorage,omitempty" json:"cleanupBackupStorage,omitempty"`
 }
 
 // DeleteDatabaseClusterParams defines parameters for DeleteDatabaseCluster.
@@ -1604,11 +1604,11 @@ func (w *ServerInterfaceWrapper) DeleteDatabaseClusterBackup(ctx echo.Context) e
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params DeleteDatabaseClusterBackupParams
-	// ------------- Optional query parameter "cleanupStorage" -------------
+	// ------------- Optional query parameter "cleanupBackupStorage" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "cleanupStorage", ctx.QueryParams(), &params.CleanupStorage)
+	err = runtime.BindQueryParameter("form", true, false, "cleanupBackupStorage", ctx.QueryParams(), &params.CleanupBackupStorage)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter cleanupStorage: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter cleanupBackupStorage: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -2203,21 +2203,21 @@ var swaggerSpec = []string{
 	"rolObYyTpJpyIsUMz0xokY358SIatUQyD0bb9QQgvcm6JXjXj7ExY8aWh78/77l0nWMHXNqriyAZzuo4",
 	"lI6bcTt8Y//1rBsI4qLT3eLXvf7iMrjjLlq/6O2Yxy/vmvceRZcAfrV/8PidcZd6W7Fs+vHq8ftxZO+P",
 	"GmAKD0zRLTuc7I+98/xhG1m2LXixRq6Zb56mXButarFj8iHoXssasB3sacIzG37+3gXXfShuevMN3EUi",
-	"7shEHvkOVhE1sifWi61oEqM8M2lj4KhBY1/695yIZdmNKCGYVbe9Wx0oEy49pAu84VGiARbdDeKzscjp",
-	"gHsu4PyP3Exo/EDUIDEeUGJ8eMr20MCWhi17cs4uTQF3D+E2fo39tp9jc1EU/ho8m+LawJ6ujbsJ9qn5",
-	"NivG8QWcmxW9eVzvZkVHBvdmE/emFCEdQs3N9HZS7b4eTpeE87o4T0XCbWaxuCuL72WyXNTE13OwWQYf",
-	"44v6GBvw/VZeRhfjtt2MgWufr6exhXUycGcfV2Mj9sxyL3tmCY421atmL2zg0Efg0OfhAtnd9cEF2twF",
-	"mubJIPCqAq+fQNqlH7LZyYImR/iPFTToQT4NQOVxWHE40LC7Aw0+auug/T7JN5rV9QMFvxI0sLcOfGrw",
-	"3xNRev20XbJ8YNRvgPvuCfetFDGb6NVtcb21UsoL7D0vz+N+HsdzClRontIfwhW+JihxI+HS+2TKWgnR",
-	"RhAH8fAcsMKB73ZxfmVDptsAGlzLeF5scOC9J44Cbuf6PAHYb5AXu8LYHtoL2KsczdgabEOukh6Y25ui",
-	"6CB7nkk04oAcPhxyWGGdHUYmFtwdCQIXUuBErk0c1S10ULWa9Tb9ca30wOZPns3LBRvY/CEM/Qb/7FaB",
-	"Z1SJtbx9zilTY8rGVzQlSJCkEEb2lpF7uvHnuhMDrz8DXoeVGrh8ay6/LyftlvmrJxC2N9+LWnrY7xdl",
-	"2YHbn0uQ32DBP6AFX+GencS/EDajrAdLFzcalV1yn67i45OizH9+6IsZ60D996f+lcTWJHsz7ZuRe2VX",
-	"elMv1dSwyko9cSWeg8oqhvNcdI2d3YHDduk6FlTQyVwdO0TelEjreKW+P/SVs8vD7et0c8rT3tYZOHyn",
-	"Cco2YHKtQctbZdfm/scZjqhaQqb3UmUXFdwr9/9F5XLbx7sAoGx1oL7tbwHYni7atwAsyluhO4mxeten",
-	"ub7XXQ4N95m26M3eJv3Q10u4C623T4y3bmBQs1kRozNzkQSHwd7iINDKxc5mc8p0rUs1p2xWIEr2itGS",
-	"H1Dl0IJVb3pN2lqyuzInzj1VNeGoraotXctGrU5/3KOvqAI8+ftcnO65Tyvl9rS/EZefZYM23jSverE1",
-	"1296+fzh8/8GAAD//59uWy1O/gAA",
+	"7shEHvkOVhE1sifWi61oEqM8M2lj4KhBY1/695yIZdmNKCGY5Vlz87vVjTLt0kM6whseKBrA0d3gPhsL",
+	"ng7Q5wJOAcnNRMcPRA1y4wHlxoenbBUNbGnYsifn7NIgcLcRbuPd2G/7uTcXReGvwb8pLg/s6eC4+2Cf",
+	"moezYhxfwMVZ0ZvH9XFWdGRwcjZxckoR0iHU3ExvJ9Xu6+d0STivo/NUJNxmFou7uPheJstFTXw9B5tl",
+	"8DG+qI+xAd9v5WV0MW7bzRi49vl6GltYJwN39nE1NmLPLPeyZ5bgaFO9anbEBg59BA59Hi6Q3WMfXKDN",
+	"XaBpngwCryrw+gmkXfohm50vaHKE/3BBgx7k0wBUHocVh2MNuzvW4KO2Dtrvk4KjWV0/UPArQQN768Cn",
+	"Bv89EaXXT9slywdG/Qa4755w30oRs4le3RbXWyulvMDe8/I87udxDOEKA5T4PKDEjYRL7/MpayVEG0Ec",
+	"xMNzwAoHvtvFKZYNmW4DaHAt43mxwYH3njgKuJ3r8wRgv0Fe7Apje2gvYK9yQGNrsA25Snpgbm+KooPs",
+	"eSbRiANy+HDIYYV1dhiZWHB3JAhcS4ETuTZ9VLfQQdVq1tv0x7XSA5s/eTYvF2xg84cw9Bv8s1sFnlEl",
+	"1vL2OadMjSkbX9GUIEGSQhjZu0bu6caf604MvP4MeB1WauDyrbn8vpy0W+avnkDY3nwvaulhv1+UZQdu",
+	"fy5BfoMF/4AWfIV7dhL/QtiMsh4sXdxrVHbJfbqKj0+KMv/5oS9mrAP135/6VxJbk+zNtG9G7pVd6U29",
+	"VFPDKiv1xJV4DiqrGM5z0TV2dgcO26XrWFBBJ3N17BB5EyOt45X6/tBXzi4Pt6/TzSlPe1tn4PCdpinb",
+	"gMm1Bi3vll17AwDOcETVEvK9lyq7qOBeNwBcVK64fbxrAMpWB+rb/i6A7emifRfAorwbupMYqzd+mkt8",
+	"3RXRcKtpi97sndIPfcmEu9Z6+/R46wYGNZsVMTozF0lwGOwtDgKtXOxsNqdM17pUc8pmBaJkLxot+QFV",
+	"Di1Y9abXpK0luytz4txTVROO2qra0rVs1Or0xz36iirAk7/Pxeme+7RSbk/7G3H5WTZo403zwhdbc/2+",
+	"l88fPv9vAAAA//8HYvCcVP4AAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
