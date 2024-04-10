@@ -69,7 +69,12 @@ const ScheduledBackupsList = () => {
       {schedules.map((item) => (
         <Paper
           key={`schedule-${item?.name}`}
-          sx={{ py: 1, px: 2, borderRadius: 0 }}
+          sx={{
+            py: 1,
+            px: 2,
+            borderRadius: 1,
+            boxShadow: 'none',
+          }}
           data-testid={`schedule-${item?.schedule}`}
         >
           <Box
@@ -88,9 +93,11 @@ const ScheduledBackupsList = () => {
               </Typography>
             </Box>
             <Box sx={{ width: '30%' }}>
-              {item?.retentionCopies
-                ? `Retention copies: ${item.retentionCopies}`
-                : '-'}
+              <Typography variant="body2">
+                {item?.retentionCopies
+                  ? `Retention copies: ${item.retentionCopies}`
+                  : '-'}
+              </Typography>
             </Box>
             <Box display="flex">
               <IconButton
