@@ -20,7 +20,9 @@ export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
     <>
       {backups.length ? (
         <>
-          <Typography>{getLastBackupTimeDiff(lastBackupDate)}</Typography>
+          <Typography variant="body2">
+            {getLastBackupTimeDiff(lastBackupDate)}
+          </Typography>
           {pitrData?.gaps && (
             <Tooltip
               title={Messages.lastBackup.warningTooltip}
