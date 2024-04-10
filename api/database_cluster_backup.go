@@ -17,6 +17,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -24,6 +25,9 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
 const (
@@ -72,20 +76,14 @@ func (e *EverestServer) DeleteDatabaseClusterBackup(
 	namespace, name string,
 	params DeleteDatabaseClusterBackupParams,
 ) error {
-	cleanupStorage := pointer.Get(params.CleanupStorage)
+	cleanupStorage := pointer.Get(params.CleanupBackupStorage)
 	// If cleanup is required, we add a finalizer to the backup object.
 	if cleanupStorage {
 		backup, err := e.kubeClient.GetDatabaseClusterBackup(ctx.Request().Context(), namespace, name)
 		if err != nil {
 			return err
 		}
-		finalizers := backup.GetFinalizers()
-		if len(finalizers) == 0 {
-			finalizers = []string{}
-		}
-		finalizers = append(finalizers, "everest.percona.com/backup") // TODO
-		backup.SetFinalizers(finalizers)
-		if _, err := e.kubeClient.UpdateDatabaseClusterBackup(ctx.Request().Context(), namespace, backup); err != nil {
+		if err := e.cleanupBackupStorage(ctx.Request().Context(), backup); err != nil {
 			return err
 		}
 	}
@@ -95,4 +93,12 @@ func (e *EverestServer) DeleteDatabaseClusterBackup(
 // GetDatabaseClusterBackup returns the specified cluster backup on the specified kubernetes cluster.
 func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, namespace, name string) error {
 	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, name)
+}
+
+func (e *EverestServer) cleanupBackupStorage(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
+	if controllerutil.AddFinalizer(backup, "todo") {
+		_, err := e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup.GetNamespace(), backup)
+		return err
+	}
+	return nil
 }

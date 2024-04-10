@@ -25,7 +25,6 @@ import (
 	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
@@ -64,23 +63,19 @@ func (e *EverestServer) DeleteDatabaseCluster(
 ) error {
 	cleanup := pointer.Get(params.CleanupBackupStorage)
 	if cleanup {
+		reqCtx := ctx.Request().Context()
 		// List backups for this database.
 		listOptions := metav1.ListOptions{
 			FieldSelector: "spec.dbClusterName=" + name,
 		}
-		backups, err := e.kubeClient.ListDatabaseClusterBackups(
-			ctx.Request().Context(),
-			namespace, listOptions)
+		backups, err := e.kubeClient.ListDatabaseClusterBackups(reqCtx, namespace, listOptions)
 		if err != nil {
 			return err
 		}
-		// Add a finalizer to all backups.
+		// Cleanup storage.
 		for _, backup := range backups.Items {
-			if controllerutil.AddFinalizer(&backup, "todo") {
-				if _, err := e.kubeClient.UpdateDatabaseClusterBackup(
-					ctx.Request().Context(), backup.GetNamespace(), &backup); err != nil {
-					return err
-				}
+			if err := e.cleanupBackupStorage(reqCtx, &backup); err != nil {
+				return err
 			}
 		}
 	}
