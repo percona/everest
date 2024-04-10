@@ -46,6 +46,8 @@ const getScheduleInfo = (mode: DbWizardMode, backup?: Backup) => {
         [DbWizardFormFields.storageLocation]:
           { name: firstSchedule.backupStorageName } || null,
         [DbWizardFormFields.scheduleName]: firstSchedule.name,
+        [DbWizardFormFields.retentionCopies]:
+          firstSchedule.retentionCopies?.toString() || '0',
       };
     }
   }
@@ -53,6 +55,8 @@ const getScheduleInfo = (mode: DbWizardMode, backup?: Backup) => {
     ...TIME_SELECTION_DEFAULTS,
     [DbWizardFormFields.storageLocation]:
       DB_WIZARD_DEFAULTS[DbWizardFormFields.storageLocation],
+    [DbWizardFormFields.retentionCopies]:
+      DB_WIZARD_DEFAULTS[DbWizardFormFields.retentionCopies],
   };
 };
 
