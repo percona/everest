@@ -155,6 +155,8 @@ jobs:
       - name: Run Provisioning
         run: |
           go run cmd/cli/main.go install \
+          --version 0.0.0 \
+          --version-metadata-url https://check-dev.percona.com \
           --operator.mongodb \
           --operator.postgresql \
           --operator.xtradb-cluster \
@@ -164,6 +166,8 @@ jobs:
       - name: Adding psmdb namespace
         run: |
           go run cmd/cli/main.go install \
+          --version 0.0.0 \
+          --version-metadata-url https://check-dev.percona.com \
           --operator.mongodb \
           --operator.postgresql=false \
           --operator.xtradb-cluster=false \
@@ -173,6 +177,8 @@ jobs:
       - name: Adding pxc namespace
         run: |
           go run cmd/cli/main.go install \
+          --version 0.0.0 \
+          --version-metadata-url https://check-dev.percona.com \
           --operator.mongodb=false \
           --operator.postgresql=false \
           --operator.xtradb-cluster \
@@ -182,6 +188,8 @@ jobs:
       - name: Adding pg namespace
         run: |
           go run cmd/cli/main.go install \
+          --version 0.0.0 \
+          --version-metadata-url https://check-dev.percona.com \
           --operator.mongodb=false \
           --operator.postgresql \
           --operator.xtradb-cluster=false \

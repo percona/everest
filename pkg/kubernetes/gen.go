@@ -13,12 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package data provides access to embedded data.
-package data
+package kubernetes
 
-import "embed"
-
-// OLMCRDs stores CRDs in an embedded filesystem.
-//
-//go:embed crds/*
-var OLMCRDs embed.FS
+//go:generate ../../bin/ifacemaker -f deployment.go -f install_plan.go -f kubernetes.go -f operator.go -s Kubernetes -i KubernetesConnector -p kubernetes -o kubernetes_interface.go
+//go:generate ../../bin/mockery --name=KubernetesConnector --case=snake --inpackage

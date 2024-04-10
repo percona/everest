@@ -73,14 +73,14 @@ export class CliHelper {
   async everestExecSkipWizard(command: string) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return test.step(`Run "${command}" command with --skip-wizard`, async () => {
-      return this.execute(`${this.pathToBinary} ${command} --skip-wizard`);
+      return this.execute(`${this.pathToBinary} ${command} --skip-wizard --version 0.0.0 --version-metadata-url https://check-dev.percona.com`);
     });
   }
 
   async everestExecSkipWizardWithEnv(command, env: string) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return test.step(`Run "${command}" command with env variables`, async () => {
-      return this.execute(`${env} ${this.pathToBinary} ${command} --skip-wizard`);
+      return this.execute(`${env} ${this.pathToBinary} ${command} --skip-wizard --version 0.0.0 --version-metadata-url https://check-dev.percona.com`);
     });
   }
 

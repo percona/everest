@@ -30,6 +30,7 @@ import (
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 	middleware "github.com/oapi-codegen/echo-middleware"
 	"go.uber.org/zap"
+	"golang.org/x/time/rate"
 
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/auth"
@@ -63,10 +64,13 @@ func NewEverestServer(c *config.EverestConfig, l *zap.SugaredLogger) (*EverestSe
 		return nil, errors.New("could not get namespace from Kubernetes")
 	}
 
+	echoServer := echo.New()
+	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
+
 	e := &EverestServer{
 		config:     c,
 		l:          l,
-		echo:       echo.New(),
+		echo:       echoServer,
 		kubeClient: kubeClient,
 		auth:       auth.NewToken(kubeClient, l, []byte(ns.UID)),
 	}
