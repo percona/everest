@@ -36,7 +36,7 @@ export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
           )}
         </>
       ) : (
-        <Typography>{Messages.lastBackup.inactive}</Typography>
+        <Typography variant="body2">{Messages.lastBackup.inactive}</Typography>
       )}
     </>
   );
