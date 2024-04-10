@@ -870,6 +870,11 @@ paths:
           required: true
           schema:
             type: string
+        - name: cleanupStorage
+          in: query
+          description: If set, remove the backed up data from storage
+          schema:
+            type: boolean
       responses:
         '200':
           description: Successful operation
