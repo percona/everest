@@ -17,8 +17,8 @@ import { ScheduleFormFields } from 'components/schedule-form/schedule-form.types
 import { Schedule } from 'shared-types/dbCluster.types.ts';
 import { ScheduleFormData } from 'components/schedule-form/schedule-form-schema.ts';
 import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils.ts';
-import { generateShortUID } from '../../../database-form/database-form-body/steps/first/utils.ts';
-import { TIME_SELECTION_DEFAULTS } from '../../../database-form/database-form.constants.ts';
+import { generateShortUID } from '../../pages/database-form/database-form-body/steps/first/utils';
+import { TIME_SELECTION_DEFAULTS } from '../time-selection/time-selection.constants';
 
 export const scheduleModalDefaultValues = (
   mode: 'new' | 'edit',
