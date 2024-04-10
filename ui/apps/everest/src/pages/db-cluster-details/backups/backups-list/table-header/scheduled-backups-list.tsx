@@ -97,6 +97,7 @@ const ScheduledBackupsList = () => {
                 color="primary"
                 disabled={!dbCluster.spec.backup?.enabled}
                 onClick={() => handleEdit(item.name)}
+                data-testid="edit-schedule-button"
               >
                 <EditOutlinedIcon />
               </IconButton>
@@ -104,6 +105,7 @@ const ScheduledBackupsList = () => {
                 color="primary"
                 disabled={!dbCluster.spec.backup?.enabled}
                 onClick={() => handleDelete(item.name)}
+                data-testid="delete-schedule-button"
               >
                 <DeleteOutlineOutlinedIcon />
               </IconButton>
