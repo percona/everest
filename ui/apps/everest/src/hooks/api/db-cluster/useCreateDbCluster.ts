@@ -81,6 +81,7 @@ const formValuesToPayloadMapping = (
                   ? dbPayload.storageLocation
                   : dbPayload.storageLocation!.name,
               schedule: backupSchedule,
+              retentionCopies: parseInt(dbPayload.retentionCopies, 10),
             },
           ],
         }),
