@@ -19,6 +19,7 @@ package version
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	goversion "github.com/hashicorp/go-version"
@@ -40,15 +41,17 @@ var (
 	FullCommit string //nolint:gochecknoglobals
 	// EverestChannelOverride overrides the default olm channel for Everest operator.
 	EverestChannelOverride string //nolint:gochecknoglobals
+
+	rcSuffix = regexp.MustCompile(`rc\d+$`)
 )
 
 // CatalogImage returns a catalog image name.
 func CatalogImage(v *goversion.Version) string {
-	if isDevVersion() {
+	if isDevVersion(Version) {
 		return devCatalogImage
 	}
 	if EverestChannelOverride != "" {
-		// Other channels than stable are only in dev catalog.
+		// Channels other than stable are only in dev catalog.
 		return devCatalogImage
 	}
 	return fmt.Sprintf(releaseCatalogImage, v)
@@ -56,23 +59,31 @@ func CatalogImage(v *goversion.Version) string {
 
 // ManifestURL returns a manifest URL to install Everest.
 func ManifestURL(v *goversion.Version) string {
-	if isDevVersion() {
+	if isDevVersion(Version) {
 		return devManifestURL
 	}
 	return fmt.Sprintf(releaseManifestURL, v)
 }
 
-func isDevVersion() bool {
-	if Version == "" {
+func isDevVersion(ver string) bool {
+	if ver == "" {
 		return true
 	}
 
-	v, err := goversion.NewVersion(Version)
+	v, err := goversion.NewVersion(ver)
 	if err != nil {
 		panic(err)
 	}
 
-	if v.Prerelease() != "" && !strings.HasSuffix(v.Prerelease(), "-upgrade-test") {
+	if v.Prerelease() == "" {
+		return false
+	}
+
+	if rcSuffix.MatchString(v.Prerelease()) {
+		return false
+	}
+
+	if !strings.HasSuffix(v.Prerelease(), "-upgrade-test") {
 		return true
 	}
 
