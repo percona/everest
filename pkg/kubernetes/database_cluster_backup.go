@@ -32,3 +32,8 @@ func (k *Kubernetes) GetDatabaseClusterBackup(ctx context.Context, namespace, na
 func (k *Kubernetes) ListDatabaseClusterBackups(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error) {
 	return k.client.ListDatabaseClusterBackups(ctx, namespace, options)
 }
+
+// UpdateDatabaseClusterBackup updates database cluster backup.
+func (k *Kubernetes) UpdateDatabaseClusterBackup(ctx context.Context, namespace string, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
+	return k.client.UpdateDatabaseClusterBackup(ctx, namespace, backup)
+}

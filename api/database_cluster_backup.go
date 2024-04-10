@@ -67,7 +67,28 @@ func (e *EverestServer) CreateDatabaseClusterBackup(ctx echo.Context, namespace 
 }
 
 // DeleteDatabaseClusterBackup deletes the specified cluster backup on the specified kubernetes cluster.
-func (e *EverestServer) DeleteDatabaseClusterBackup(ctx echo.Context, namespace, name string) error {
+func (e *EverestServer) DeleteDatabaseClusterBackup(
+	ctx echo.Context,
+	namespace, name string,
+	params DeleteDatabaseClusterBackupParams,
+) error {
+	cleanupStorage := pointer.Get(params.CleanupStorage)
+	// If cleanup is required, we add a finalizer to the backup object.
+	if cleanupStorage {
+		backup, err := e.kubeClient.GetDatabaseClusterBackup(ctx.Request().Context(), namespace, name)
+		if err != nil {
+			return err
+		}
+		finalizers := backup.GetFinalizers()
+		if len(finalizers) == 0 {
+			finalizers = []string{}
+		}
+		finalizers = append(finalizers, "everest.percona.com/backup") // TODO
+		backup.SetFinalizers(finalizers)
+		if _, err := e.kubeClient.UpdateDatabaseClusterBackup(ctx.Request().Context(), namespace, backup); err != nil {
+			return err
+		}
+	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, name)
 }
 
