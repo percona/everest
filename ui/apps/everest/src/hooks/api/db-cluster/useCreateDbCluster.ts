@@ -20,9 +20,7 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
-import { getCronExpressionFromFormValues } from 'components/time-selection/time-selection.utils.ts';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
-import { generateShortUID } from 'pages/database-form/database-form-body/steps/first/utils';
 import {
   ClusterCredentials,
   DataSource,
@@ -41,17 +39,6 @@ const formValuesToPayloadMapping = (
   dbPayload: DbWizardType,
   backupDataSource?: DataSource
 ): DbCluster => {
-  const { selectedTime, minute, hour, amPm, onDay, weekDay } = dbPayload;
-  const backupSchedule = getCronExpressionFromFormValues({
-    selectedTime,
-    minute,
-    hour,
-    amPm,
-    onDay,
-    weekDay,
-  });
-
-  // TODO re-add payload after API is ready
   const dbClusterPayload: DbCluster = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
@@ -72,17 +59,7 @@ const formValuesToPayloadMapping = (
           },
         }),
         ...(dbPayload.backupsEnabled && {
-          schedules: [
-            {
-              enabled: true,
-              name: dbPayload?.scheduleName || `backup-${generateShortUID()}`,
-              backupStorageName:
-                typeof dbPayload.storageLocation === 'string'
-                  ? dbPayload.storageLocation
-                  : dbPayload.storageLocation!.name,
-              schedule: backupSchedule,
-            },
-          ],
+          schedules: dbPayload.schedules,
         }),
       },
       engine: {

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AutoCompleteInput, LabeledContent, TextInput } from '@percona/ui-lib';
+import { AutoCompleteInput, TextInput } from '@percona/ui-lib';
 import { BackupStorage } from 'shared-types/backupStorages.types.ts';
 import { Schedule } from 'shared-types/dbCluster.types.ts';
 import LogicalPhysicalRadioGroup from 'components/logical-physical-radio-group';
@@ -48,14 +48,14 @@ export const ScheduleForm = ({
   return (
     <>
       {showTypeRadio && <LogicalPhysicalRadioGroup />}
-      <Typography variant="sectionHeading" mb={2}>
+      <Typography variant="sectionHeading">
         {Messages.backupDetails}
       </Typography>
+        {/* TODO change Typography to Labeled content*/}
       {allowScheduleSelection ? (
         <AutoCompleteInput
           name={ScheduleFormFields.scheduleName}
           textFieldProps={{
-            sx: { mb: 3 },
             label: Messages.scheduleName.label,
           }}
           options={schedulesNamesList}
@@ -65,7 +65,6 @@ export const ScheduleForm = ({
         <TextInput
           name={ScheduleFormFields.scheduleName}
           textFieldProps={{
-            sx: { mb: 3 },
             label: Messages.scheduleName.label,
             disabled: disableNameInput,
           }}
@@ -87,10 +86,10 @@ export const ScheduleForm = ({
         enableFillFirst={autoFillLocation}
         disabled={disableStorageSelection}
       />
-
-      <LabeledContent label={Messages.repeats}>
+        <Typography variant="sectionHeading" sx={{mt: 2, mb: -1}}>
+           {Messages.repeats}
+        </Typography>
         <TimeSelection showInfoAlert />
-      </LabeledContent>
     </>
   );
 };

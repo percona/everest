@@ -48,7 +48,7 @@ const ScheduleContent = ({
         }}
         variant="body2"
       >
-        {storageName}
+        Storage: {storageName}
       </Typography>
     </Stack>
   );

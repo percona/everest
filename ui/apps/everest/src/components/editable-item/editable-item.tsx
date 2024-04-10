@@ -48,7 +48,7 @@ const EditableItem = ({
             data-testid={`delete-editable-item-button-${dataTestId}`}
             onClick={() => onEdit()}
           >
-            <EditOutlinedIcon />
+            <EditOutlinedIcon color="primary" />
           </IconButton>
         )}
         {onDelete && (
@@ -57,7 +57,7 @@ const EditableItem = ({
             data-testid={`delete-editable-item-button-${dataTestId}`}
             onClick={() => onDelete()}
           >
-            <DeleteOutlineOutlinedIcon />
+            <DeleteOutlineOutlinedIcon color="primary" />
           </IconButton>
         )}
       </Box>

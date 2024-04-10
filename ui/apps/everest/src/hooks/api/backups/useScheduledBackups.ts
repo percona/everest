@@ -6,7 +6,7 @@ import { Schedule } from 'shared-types/dbCluster.types';
 import { useDbCluster } from '../db-cluster/useDbCluster';
 import { DbCluster } from 'shared-types/dbCluster.types';
 
-const backupScheduleFormValuesToDbClusterPayload = (
+export const backupScheduleFormValuesToDbClusterPayload = (
   dbPayload: ScheduleFormData,
   dbCluster: DbCluster,
   mode: 'edit' | 'new'

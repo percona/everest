@@ -13,13 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FormGroup, MenuItem, Skeleton, Typography } from '@mui/material';
+import { FormGroup, MenuItem, Skeleton } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 
 import { DbType } from '@percona/types';
 import {
   AutoCompleteInput,
-  DbToggleCard,
+  DbToggleCard, LabeledContent,
   SelectInput,
   TextInput,
   ToggleButtonGroupInput,
@@ -64,7 +64,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     setValue(DbWizardFormFields.dbName, `${type}-${generateShortUID()}`, {
       shouldValidate: true,
     });
-  }, []);
+  }, [setValue]);
 
   const setDbVersionsForEngine = useCallback(() => {
     const newVersions = dbEngines.find((engine) => engine.type === dbEngine);
@@ -236,9 +236,8 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             isOptionEqualToValue: (option, value) => option === value,
           }}
         />
-        <Typography variant="sectionHeading" sx={{ mt: 2, mb: 0.5 }}>
-          {Messages.labels.dbType}
-        </Typography>
+
+        <LabeledContent label= {Messages.labels.dbType}>
         {dbEnginesFetching || !dbEngines.length ? (
           // This is roughly the height of the buttons
           <Skeleton height={57} variant="rectangular" />
@@ -266,6 +265,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             ))}
           </ToggleButtonGroupInput>
         )}
+        </LabeledContent>
         <TextInput
           name={DbWizardFormFields.dbName}
           label={Messages.labels.dbName}
