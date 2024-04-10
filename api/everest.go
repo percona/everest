@@ -27,6 +27,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo-jwt/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 	middleware "github.com/oapi-codegen/echo-middleware"
 	"go.uber.org/zap"
@@ -35,6 +36,7 @@ import (
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/auth"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/session"
 	"github.com/percona/everest/public"
 )
 
@@ -45,6 +47,7 @@ type EverestServer struct {
 	l          *zap.SugaredLogger
 	echo       *echo.Echo
 	kubeClient *kubernetes.Kubernetes
+	sessionMgr *session.SessionManager
 }
 
 type authValidator interface {
@@ -73,6 +76,7 @@ func NewEverestServer(c *config.EverestConfig, l *zap.SugaredLogger) (*EverestSe
 		echo:       echoServer,
 		kubeClient: kubeClient,
 		auth:       auth.NewToken(kubeClient, l, []byte(ns.UID)),
+		sessionMgr: session.NewSessionManager(kubeClient, []byte(ns.UID), []byte(c.SessionSecret)),
 	}
 
 	if err := e.initHTTPServer(); err != nil {
@@ -120,7 +124,16 @@ func (e *EverestServer) initHTTPServer() error {
 
 	// Use our validation middleware to check all requests against the OpenAPI schema.
 	apiGroup := e.echo.Group(basePath)
-	apiGroup.Use(e.authenticate)
+	apiGroup.Use(echojwt.WithConfig(echojwt.Config{
+		Skipper: func(c echo.Context) bool {
+			// Skip middleware if path is equal 'session'
+			if c.Request().URL.Path == basePath + "/session" {
+				return true
+			}
+			return false
+		},
+		SigningKey: []byte(e.config.SessionSecret),
+	}))
 	apiGroup.Use(middleware.OapiRequestValidatorWithOptions(swagger, &middleware.Options{
 		SilenceServersWarning: true,
 	}))
