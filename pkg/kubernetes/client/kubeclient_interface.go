@@ -7,6 +7,7 @@ import (
 
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	versioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	packagev1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -49,10 +50,6 @@ type KubeClientConnector interface {
 	GenerateKubeConfigWithToken(user string, secret *corev1.Secret) ([]byte, error)
 	// GetServerVersion returns server version.
 	GetServerVersion() (*version.Info, error)
-	// GetDeployment returns deployment by name.
-	GetDeployment(ctx context.Context, name string, namespace string) (*appsv1.Deployment, error)
-	// ListDeployments returns deployment by name.
-	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
 	// ApplyObject applies object.
 	ApplyObject(obj runtime.Object) error
 	// DeleteObject deletes object from the k8s cluster.
@@ -96,14 +93,10 @@ type KubeClientConnector interface {
 	GetSubscription(ctx context.Context, namespace, name string) (*v1alpha1.Subscription, error)
 	// ListSubscriptions all the subscriptions in the namespace.
 	ListSubscriptions(ctx context.Context, namespace string) (*v1alpha1.SubscriptionList, error)
-	// GetInstallPlan retrieves an OLM install plan by namespace and name.
-	GetInstallPlan(ctx context.Context, namespace string, name string) (*v1alpha1.InstallPlan, error)
 	// DoPackageWait for the package to be available in OLM.
 	DoPackageWait(ctx context.Context, namespace, name string) error
 	// GetPackageManifest returns a package manifest by given name.
 	GetPackageManifest(ctx context.Context, namespace, name string) (*packagev1.PackageManifest, error)
-	// UpdateInstallPlan updates the existing install plan in the specified namespace.
-	UpdateInstallPlan(ctx context.Context, namespace string, installPlan *v1alpha1.InstallPlan) (*v1alpha1.InstallPlan, error)
 	// ListCRDs returns a list of CRDs.
 	ListCRDs(ctx context.Context, labelSelector *metav1.LabelSelector) (*apiextv1.CustomResourceDefinitionList, error)
 	// ListCRs returns a list of CRs.
@@ -137,6 +130,16 @@ type KubeClientConnector interface {
 	ListDatabaseEngines(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseEngineList, error)
 	// GetDatabaseEngine returns database clusters by provided name.
 	GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error)
+	// GetDeployment returns deployment by name.
+	GetDeployment(ctx context.Context, name string, namespace string) (*appsv1.Deployment, error)
+	// ListDeployments returns deployment by name.
+	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
+	// GetInstallPlan retrieves an OLM install plan by namespace and name.
+	GetInstallPlan(ctx context.Context, namespace string, name string) (*v1alpha1.InstallPlan, error)
+	// ListInstallPlans lists install plans.
+	ListInstallPlans(ctx context.Context, namespace string) (*v1alpha1.InstallPlanList, error)
+	// UpdateInstallPlan updates the existing install plan in the specified namespace.
+	UpdateInstallPlan(ctx context.Context, namespace string, installPlan *v1alpha1.InstallPlan) (*v1alpha1.InstallPlan, error)
 	// DeleteAllMonitoringResources deletes all resources related to monitoring from k8s cluster.
 	DeleteAllMonitoringResources(ctx context.Context, namespace string) error
 	// CreateMonitoringConfig creates an monitoringConfig.
@@ -153,6 +156,10 @@ type KubeClientConnector interface {
 	GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error)
 	// DeleteNamespace deletes a namespace.
 	DeleteNamespace(ctx context.Context, name string) error
+	// OLM returns OLM client set.
+	//
+	//nolint:ireturn
+	OLM() versioned.Interface
 	// GetNodes returns list of nodes.
 	GetNodes(ctx context.Context) (*corev1.NodeList, error)
 	// GetPods returns list of pods.

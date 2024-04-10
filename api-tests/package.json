@@ -15,12 +15,12 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@typescript-eslint/parser": "^7.3.1",
+    "@typescript-eslint/parser": "^7.5.0",
     "dotenv": "^16.4.5",
     "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^18.0.0",
-    "eslint-plugin-playwright": "^1.5.2"
+    "eslint-plugin-playwright": "^1.5.4"
   },
   "dependencies": {
     "@playwright/test": "^1.42.1",

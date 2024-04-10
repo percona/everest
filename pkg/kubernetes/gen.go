@@ -13,20 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export const Messages = {
-  sectionHeader: (schedulesNumber: number) =>
-    `${schedulesNumber} ${
-      schedulesNumber > 1 ? 'active schedules' : 'active schedule'
-    }`,
-  noSchedules: 'No schedules',
-  menuItems: {
-    edit: 'Edit',
-    delete: 'Delete',
-  },
-  deleteModal: {
-    header: 'Delete schedule',
-    content: (scheduleName: string) =>
-      `Are you sure you want to permanently delete schedule "${scheduleName}"?`,
-  },
-  maxThreeSchedulesPG: '(maximum 3 schedules for PostgreSQL)',
-};
+package kubernetes
+
+//go:generate ../../bin/ifacemaker -f deployment.go -f install_plan.go -f kubernetes.go -f operator.go -s Kubernetes -i KubernetesConnector -p kubernetes -o kubernetes_interface.go
+//go:generate ../../bin/mockery --name=KubernetesConnector --case=snake --inpackage

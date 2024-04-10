@@ -25,6 +25,7 @@ export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
             <Tooltip
               title={Messages.lastBackup.warningTooltip}
               placement="right"
+              arrow
             >
               <IconButton>
                 <WarningIcon />

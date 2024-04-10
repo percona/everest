@@ -22,6 +22,3 @@ import "embed"
 //
 //go:embed crds/*
 var OLMCRDs embed.FS
-
-// OLMVersion indicates the OLM version shipped with the CLI.
-const OLMVersion = "0.27.0"
