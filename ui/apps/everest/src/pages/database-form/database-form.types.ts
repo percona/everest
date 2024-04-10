@@ -28,6 +28,7 @@ export enum DbWizardForm {
   numberOfNodes = 'numberOfNodes',
   resourceSizePerNode = 'resourceSizePerNode',
   backupsEnabled = 'backupsEnabled',
+  schedules = 'schedules',
   pitrEnabled = 'pitrEnabled',
   pitrStorageLocation = 'pitrStorageLocation',
   externalAccess = 'externalAccess',

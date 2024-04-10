@@ -18,18 +18,16 @@ import { SwitchInput } from '@percona/ui-lib';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages';
 import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { DbWizardFormFields, StepProps } from '../../../database-form.types.ts';
+import { DbWizardFormFields } from '../../../database-form.types.ts';
 import BackupsActionableAlert from 'components/actionable-alert/backups-actionable-alert';
-import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
 import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './backups.messages.ts';
-import { ScheduleBackupSection } from './schedule-section/schedule-section.tsx';
+import Schedules from './schedules';
 
-export const Backups = ({ alreadyVisited }: StepProps) => {
+export const Backups = () => {
   const mode = useDatabasePageMode();
   const { control, watch, setValue, getFieldState, trigger } = useFormContext();
-  const { dbClusterData } = useDatabasePageDefaultValues(mode);
 
   const [backupsEnabled, dbType, selectedNamespace] = watch([
     DbWizardFormFields.backupsEnabled,
@@ -52,12 +50,6 @@ export const Backups = ({ alreadyVisited }: StepProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dbType]);
 
-  const schedules =
-    mode === 'new' ? [] : dbClusterData?.spec?.backup?.schedules || [];
-  const multiSchedules =
-    mode === 'edit' && !!schedules && schedules?.length > 1;
-  const scheduleDisabled = multiSchedules;
-
   useEffect(() => {
     trigger();
   }, [backupsEnabled]);
@@ -78,21 +70,7 @@ export const Backups = ({ alreadyVisited }: StepProps) => {
       />
       {backupsEnabled &&
         (backupStorages.length > 0 ? (
-          <>
-            {(mode === 'new' || mode === 'restoreFromBackup') && (
-              <Alert sx={{ mt: 1 }} severity="info">
-                {Messages.youCanAddMoreSchedules}
-              </Alert>
-            )}
-            {multiSchedules && (
-              <Alert sx={{ mt: 1 }} severity="info">
-                {Messages.youHaveMultipleSchedules}
-              </Alert>
-            )}
-            {!scheduleDisabled && (
-              <ScheduleBackupSection enableNameGeneration={!alreadyVisited} />
-            )}
-          </>
+          <Schedules />
         ) : (
           <BackupsActionableAlert namespace={selectedNamespace} />
         ))}

@@ -5,14 +5,7 @@ import { Messages } from './database-form.messages.ts';
 import { ResourceSize } from './database-form-body/steps/resources/resources-step.types.ts';
 import { DbWizardFormFields } from './database-form.types.ts';
 import { rfc_123_schema } from 'utils/common-validation.ts';
-import {
-  backupsValidationSchema,
-  BackupsValidationSchemaType,
-  backupsWithScheduleValidationSchema,
-  BackupsWithScheduleValidationSchemaType,
-} from './database-form-body/steps/backups/backups-schema.ts';
 import { Messages as ScheduleFormMessages } from 'components/schedule-form/schedule-form.messages.ts';
-import { storageLocationZodObject } from 'components/schedule-form/schedule-form-schema';
 
 const resourceToNumber = (minimum = 0) =>
   z.union([z.string().nonempty(), z.number()]).pipe(
@@ -29,7 +22,6 @@ const basicInfoSchema = z
     [DbWizardFormFields.dbName]: rfc_123_schema('database name')
       .max(MAX_DB_CLUSTER_NAME_LENGTH, Messages.errors.dbName.tooLong)
       .nonempty(),
-    // TODO 676 check validation
     [DbWizardFormFields.k8sNamespace]: z.string().nullable(),
     [DbWizardFormFields.dbVersion]: z.string().nonempty(),
     [DbWizardFormFields.storageClass]: z
@@ -60,35 +52,34 @@ const stepTwoSchema = z
   })
   .passthrough();
 
-const backupsStepSchema = (hideScheduleValidation: boolean) => {
-  return !hideScheduleValidation
-    ? backupsWithScheduleValidationSchema
-    : backupsValidationSchema;
-};
+const backupsStepSchema = z
+  .object({
+    [DbWizardFormFields.backupsEnabled]: z.boolean(),
+    [DbWizardFormFields.schedules]: z.array(
+      z.object({
+        backupStorageName: z.string(),
+        enabled: z.boolean(),
+        name: z.string(),
+        schedule: z.string(),
+      })
+    ),
+  })
+  .passthrough();
 
 const pitrStepSchema = z
   .object({
     [DbWizardFormFields.pitrEnabled]: z.boolean(),
-    [DbWizardFormFields.pitrStorageLocation]: storageLocationZodObject,
   })
   .passthrough()
-  .superRefine(
-    (
-      {
-        pitrEnabled,
-        [DbWizardFormFields.pitrStorageLocation]: pitrStorageLocation,
-      },
-      ctx
-    ) => {
-      if (pitrEnabled && !pitrStorageLocation) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: [DbWizardFormFields.pitrStorageLocation],
-          message: ScheduleFormMessages.storageLocation.invalidOption,
-        });
-      }
+  .superRefine(({ pitrEnabled, pitrStorageLocation }, ctx) => {
+    if (pitrEnabled && !pitrStorageLocation) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [DbWizardFormFields.pitrStorageLocation],
+        message: ScheduleFormMessages.storageLocation.invalidOption,
+      });
     }
-  );
+  });
 
 const advancedConfigurationsSchema = z
   .object({
@@ -131,14 +122,11 @@ const stepFiveSchema = z
   });
 
 // Each position of the array is the validation schema for a given step
-export const getDBWizardSchema = (
-  activeStep: number,
-  hideBackupValidation: boolean
-) => {
+export const getDBWizardSchema = (activeStep: number) => {
   const schema = [
     basicInfoSchema,
     stepTwoSchema,
-    backupsStepSchema(hideBackupValidation),
+    backupsStepSchema,
     pitrStepSchema,
     advancedConfigurationsSchema,
     stepFiveSchema,
@@ -151,8 +139,7 @@ export type StepTwoType = z.infer<typeof stepTwoSchema>;
 export type AdvancedConfigurationType = z.infer<
   typeof advancedConfigurationsSchema
 >;
-export type BackupStepType = BackupsValidationSchemaType &
-  BackupsWithScheduleValidationSchemaType;
+export type BackupStepType = z.infer<typeof backupsStepSchema>;
 export type PITRStepType = z.infer<typeof pitrStepSchema>;
 export type StepFiveType = z.infer<typeof stepFiveSchema>;
 
