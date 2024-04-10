@@ -73,6 +73,11 @@ func TestVersion_devVersion(t *testing.T) {
 
 			dev := isDevVersion(tt.version)
 			assert.Equal(t, tt.expectDev, dev)
+
+			if tt.version != "" {
+				dev := isDevVersion("v" + tt.version)
+				assert.Equal(t, tt.expectDev, dev)
+			}
 		})
 	}
 }
