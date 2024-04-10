@@ -14,6 +14,7 @@ import { MonitoringEndpoints } from 'pages/settings/monitoring-endpoints/monitor
 import { NoMatch } from 'pages/404/NoMatch';
 import { Backups } from 'pages/db-cluster-details/backups/backups';
 import { Namespaces } from './pages/settings/namespaces/namespaces';
+import NamespaceDetails from 'pages/settings/namespaces/namespace-details';
 
 const router = createBrowserRouter([
   {
@@ -84,6 +85,10 @@ const router = createBrowserRouter([
           //   element: <K8sClusters />,
           // },
         ],
+      },
+      {
+        path: '/settings/namespaces/:namespace',
+        element: <NamespaceDetails />,
       },
       {
         path: '*',
