@@ -36,13 +36,12 @@ export const OnDemandBackupFieldsWrapper = () => {
   return (
     <>
       {type === DbEngineType.PSMDB && <LogicalPhysicalRadioGroup />}
-      <Typography variant="sectionHeading" mt={3} mb={2}>
+      <Typography variant="sectionHeading" mt={3} mb={1}>
         {Messages.onDemandBackupModal.backupDetails}
       </Typography>
       <TextInput
         name={BackupFields.name}
         textFieldProps={{
-          sx: { mb: 3 },
           label: Messages.onDemandBackupModal.backupName,
         }}
         isRequired

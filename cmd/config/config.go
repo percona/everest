@@ -49,7 +49,7 @@ type EverestConfig struct {
 	// DisableTelemetry disable Everest and the upstream operators telemetry
 	DisableTelemetry bool `default:"false" envconfig:"DISABLE_TELEMETRY"`
 	// APIRequestsRateLimit allowed amount of API requests per second
-	APIRequestsRateLimit int `default:"20" envconfig:"API_REQUESTS_RATE_LIMIT"`
+	APIRequestsRateLimit int `default:"100" envconfig:"API_REQUESTS_RATE_LIMIT"`
 }
 
 // ParseConfig parses env vars and fills EverestConfig.
