@@ -20,7 +20,7 @@ const backupsWithScheduleValidationObject = {
   )
     .max(MAX_SCHEDULE_NAME_LENGTH, ScheduleFormMessages.scheduleName.tooLong)
     .optional(),
-  [ScheduleFormFields.retentionCopies]: z.string().min(1),
+  [ScheduleFormFields.retentionCopies]: z.string(),
   ...timeSelectionSchemaObject,
   ...storageLocationScheduleFormSchema('dbWizard'),
 };
