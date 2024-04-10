@@ -12,14 +12,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// Package install holds the main logic for installation commands.
 
-// Package version implements version reporting command to the end user.
+// Package version provides methods to determine the correct version of components.
 package version
 
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	goversion "github.com/hashicorp/go-version"
@@ -28,6 +28,8 @@ import (
 const (
 	devCatalogImage     = "docker.io/perconalab/everest-catalog:latest"
 	releaseCatalogImage = "docker.io/percona/everest-catalog:%s"
+	devManifestURL      = "https://raw.githubusercontent.com/percona/everest/main/deploy/quickstart-k8s.yaml"
+	releaseManifestURL  = "https://raw.githubusercontent.com/percona/everest/v%s/deploy/quickstart-k8s.yaml"
 )
 
 var (
@@ -37,18 +39,55 @@ var (
 	Version string //nolint:gochecknoglobals
 	// FullCommit is a git commit hash.
 	FullCommit string //nolint:gochecknoglobals
-	// CatalogImage is a image path for OLM catalog.
-	catalogImage string //nolint:gochecknoglobals
+	// EverestChannelOverride overrides the default olm channel for Everest operator.
+	EverestChannelOverride string //nolint:gochecknoglobals
+
+	rcSuffix = regexp.MustCompile(`rc\d+$`)
 )
 
-// CatalogImage returns a catalog image needed for the build of everestctl.
-func CatalogImage() string {
-	catalogImage = devCatalogImage
-	v, err := goversion.NewSemver(Version)
-	if Version != "" && err == nil && v.Prerelease() == "" {
-		catalogImage = fmt.Sprintf(releaseCatalogImage, Version)
+// CatalogImage returns a catalog image name.
+func CatalogImage(v *goversion.Version) string {
+	if isDevVersion(Version) {
+		return devCatalogImage
 	}
-	return catalogImage
+	if EverestChannelOverride != "" {
+		// Channels other than stable are only in dev catalog.
+		return devCatalogImage
+	}
+	return fmt.Sprintf(releaseCatalogImage, v)
+}
+
+// ManifestURL returns a manifest URL to install Everest.
+func ManifestURL(v *goversion.Version) string {
+	if isDevVersion(Version) {
+		return devManifestURL
+	}
+	return fmt.Sprintf(releaseManifestURL, v)
+}
+
+func isDevVersion(ver string) bool {
+	if ver == "" {
+		return true
+	}
+
+	v, err := goversion.NewVersion(ver)
+	if err != nil {
+		panic(err)
+	}
+
+	if v.Prerelease() == "" {
+		return false
+	}
+
+	if rcSuffix.MatchString(v.Prerelease()) {
+		return false
+	}
+
+	if !strings.HasSuffix(v.Prerelease(), "-upgrade-test") {
+		return true
+	}
+
+	return false
 }
 
 // FullVersionInfo returns full version report.

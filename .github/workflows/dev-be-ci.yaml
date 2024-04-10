@@ -323,7 +323,9 @@ jobs:
         shell: bash
         run: |
           make build-cli
-          ./bin/everestctl install \
+          ./bin/everestctl install -v \
+            --version 0.0.0 \
+            --version-metadata-url https://check-dev.percona.com \
             --operator.mongodb \
             --operator.postgresql \
             --operator.xtradb-cluster \

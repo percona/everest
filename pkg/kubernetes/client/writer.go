@@ -45,7 +45,7 @@ func NewPrefixWriter(out io.Writer) PrefixWriter { //nolint:ireturn,nolintlint
 func (pw *prefixWriter) Writef(level int, format string, a ...interface{}) {
 	levelSpace := "  "
 	prefix := ""
-	for i := 0; i < level; i++ {
+	for range level {
 		prefix += levelSpace
 	}
 

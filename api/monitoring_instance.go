@@ -156,11 +156,11 @@ func (e *EverestServer) ListMonitoringInstances(ctx echo.Context) error {
 
 	result := make([]*MonitoringInstance, 0, len(mcList.Items))
 	for _, mc := range mcList.Items {
-		mc := mc
 		result = append(result, &MonitoringInstance{
-			Type:              MonitoringInstanceBaseWithNameType(mc.Spec.Type),
-			Name:              mc.Name,
-			Url:               mc.Spec.PMM.URL,
+			Type: MonitoringInstanceBaseWithNameType(mc.Spec.Type),
+			Name: mc.Name,
+			Url:  mc.Spec.PMM.URL,
+			//nolint:gosec,exportloopref
 			AllowedNamespaces: &mc.Spec.AllowedNamespaces,
 			VerifyTLS:         mc.Spec.VerifyTLS,
 		})
