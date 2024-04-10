@@ -73,6 +73,9 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 	}
 	// Update annotation to start upgrade.
 	annotations := dbEngine.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
 	annotations[everestv1alpha1.DatabaseOperatorUpgradeAnnotation] = req.TargetVersion
 	dbEngine.SetAnnotations(annotations)
 	_, err = e.kubeClient.UpdateDatabaseEngine(ctx.Request().Context(), namespace, dbEngine)
