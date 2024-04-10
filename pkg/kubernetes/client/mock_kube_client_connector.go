@@ -651,6 +651,36 @@ func (_m *MockKubeClientConnector) GetClusterServiceVersion(ctx context.Context,
 	return r0, r1
 }
 
+// GetConfigMap provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubeClientConnector) GetConfigMap(ctx context.Context, namespace string, name string) (*corev1.ConfigMap, error) {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetConfigMap")
+	}
+
+	var r0 *corev1.ConfigMap
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*corev1.ConfigMap, error)); ok {
+		return rf(ctx, namespace, name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *corev1.ConfigMap); ok {
+		r0 = rf(ctx, namespace, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*corev1.ConfigMap)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetDatabaseCluster provides a mock function with given fields: ctx, namespace, name
 func (_m *MockKubeClientConnector) GetDatabaseCluster(ctx context.Context, namespace string, name string) (*v1alpha1.DatabaseCluster, error) {
 	ret := _m.Called(ctx, namespace, name)
