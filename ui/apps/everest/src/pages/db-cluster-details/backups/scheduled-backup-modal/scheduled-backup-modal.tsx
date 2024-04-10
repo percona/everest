@@ -13,21 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FormDialog } from 'components/form-dialog';
 import { DB_CLUSTER_QUERY } from 'hooks/api/db-cluster/useDbCluster';
-import { useContext, useMemo } from 'react';
+import { useContext } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Messages } from './scheduled-backup-modal.messages';
 
-import {
-  ScheduleFormData,
-  schema,
-} from 'components/schedule-form/schedule-form-schema.ts';
+import { ScheduleFormData } from 'components/schedule-form/schedule-form-schema.ts';
 import { useUpdateSchedules } from 'hooks/api/backups/useScheduledBackups';
 import { ScheduleModalContext } from '../backups.context.ts';
-import { ScheduledBackupModalForm } from './scheduled-backup-modal-form/scheduled-backup-modal-form';
-import { scheduleModalDefaultValues } from './scheduled-backup-modal-utils';
-import { Typography } from '@mui/material';
+import { ScheduledModalDialog } from '../../../../components/schedules-modal-dialog/schedule-modal-dialog';
 
 export const ScheduledBackupModal = () => {
   const queryClient = useQueryClient();
@@ -36,11 +29,14 @@ export const ScheduledBackupModal = () => {
     selectedScheduleName,
     openScheduleModal,
     setOpenScheduleModal,
+    setSelectedScheduleName,
     dbCluster,
   } = useContext(ScheduleModalContext);
 
   const {
     metadata: { name: dbClusterName, namespace },
+    status,
+    spec,
   } = dbCluster;
 
   const { mutate: updateScheduledBackup, isPending } = useUpdateSchedules(
@@ -50,18 +46,6 @@ export const ScheduledBackupModal = () => {
   );
 
   const schedules = (dbCluster && dbCluster?.spec?.backup?.schedules) || [];
-  const schedulesNamesList = schedules.map((item) => item?.name);
-
-  const scheduledBackupSchema = useMemo(
-    () => schema(schedulesNamesList, mode),
-    [schedulesNamesList, mode]
-  );
-
-  const selectedSchedule = useMemo(() => {
-    if (mode === 'edit') {
-      return schedules.find((item) => item?.name === selectedScheduleName);
-    }
-  }, [mode, schedules, selectedScheduleName]);
 
   const handleCloseScheduledBackupModal = () => {
     if (setOpenScheduleModal) {
@@ -80,39 +64,19 @@ export const ScheduledBackupModal = () => {
     });
   };
 
-  const values = useMemo(
-    () => scheduleModalDefaultValues(mode, selectedSchedule),
-    [mode, selectedSchedule]
-  );
-
   return (
-    <FormDialog
-      isOpen={!!openScheduleModal}
-      closeModal={handleCloseScheduledBackupModal}
-      headerMessage={
-        mode === 'new'
-          ? Messages.createSchedule.headerMessage
-          : Messages.editSchedule.headerMessage
-      }
-      onSubmit={handleSubmit}
-      submitting={isPending}
-      submitMessage={
-        mode === 'new'
-          ? Messages.createSchedule.submitMessage
-          : Messages.editSchedule.submitMessage
-      }
-      schema={scheduledBackupSchema}
-      {...(mode === 'edit' && { values })}
-      defaultValues={values}
-      size="XXL"
-      dataTestId={`${mode}-scheduled-backup`}
-    >
-      {mode === 'new' && (
-        <Typography variant="body1" mb={3}>
-          {Messages.createSchedule.subhead}
-        </Typography>
-      )}
-      <ScheduledBackupModalForm />
-    </FormDialog>
+    <ScheduledModalDialog
+      openScheduleModal={openScheduleModal}
+      handleCloseScheduledBackupModal={handleCloseScheduledBackupModal}
+      mode={mode}
+      handleSubmit={handleSubmit}
+      isPending={isPending}
+      schedules={schedules}
+      selectedScheduleName={selectedScheduleName}
+      namespace={namespace}
+      setSelectedScheduleName={setSelectedScheduleName}
+      dbEngineType={spec?.engine?.type}
+      activeStorage={status?.activeStorage || ''}
+    />
   );
 };

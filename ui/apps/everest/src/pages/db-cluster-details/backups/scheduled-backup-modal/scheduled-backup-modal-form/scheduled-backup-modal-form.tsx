@@ -16,28 +16,33 @@
 import { ScheduleForm } from 'components/schedule-form/schedule-form.tsx';
 import { ScheduleFormFields } from 'components/schedule-form/schedule-form.types.ts';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { ScheduleModalContext } from '../../backups.context.ts';
 import { DbEngineType } from 'shared-types/dbEngines.types.ts';
+import { Schedule } from '../../../../../shared-types/dbCluster.types';
 
-export const ScheduledBackupModalForm = () => {
+interface ScheduledBackupModalFormProps {
+  namespace: string;
+  activeStorage?: string;
+  schedules: Schedule[];
+  mode: 'new' | 'edit';
+  setSelectedScheduleName: (name: string) => void;
+  dbEngineType: DbEngineType;
+}
+
+export const ScheduledBackupModalForm = ({
+  namespace,
+  activeStorage,
+  schedules,
+  mode,
+  setSelectedScheduleName,
+  dbEngineType,
+}: ScheduledBackupModalFormProps) => {
   const { watch, setValue, trigger } = useFormContext();
-  const {
-    mode = 'new',
-    setSelectedScheduleName,
-    dbCluster,
-  } = useContext(ScheduleModalContext);
-
-  const {
-    metadata: { namespace },
-  } = dbCluster;
 
   const { data: backupStorages = [], isFetching } =
     useBackupStoragesByNamespace(namespace);
 
-  const dbClusterActiveStorage = dbCluster?.status?.activeStorage;
-  const schedules = (dbCluster && dbCluster?.spec?.backup?.schedules) || [];
   const scheduleName = watch(ScheduleFormFields.scheduleName);
 
   useEffect(() => {
@@ -47,19 +52,19 @@ export const ScheduledBackupModalForm = () => {
   }, [scheduleName, mode, setSelectedScheduleName]);
 
   useEffect(() => {
-    if (dbClusterActiveStorage) {
+    if (activeStorage) {
       setValue(ScheduleFormFields.storageLocation, {
-        name: dbClusterActiveStorage,
+        name: activeStorage,
       });
       trigger(ScheduleFormFields.storageLocation);
     }
-  }, [dbClusterActiveStorage]);
+  }, [activeStorage]);
 
   return (
     <ScheduleForm
-      showTypeRadio={dbCluster.spec.engine.type === DbEngineType.PSMDB}
+      showTypeRadio={dbEngineType === DbEngineType.PSMDB}
       allowScheduleSelection={mode === 'edit'}
-      disableStorageSelection={!!dbClusterActiveStorage}
+      disableStorageSelection={!!activeStorage}
       autoFillLocation={mode === 'new'}
       schedules={schedules}
       storageLocationFetching={isFetching}
