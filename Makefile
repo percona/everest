@@ -8,6 +8,8 @@ FLAGS = -X 'github.com/percona/everest/pkg/version.Version=$(RELEASE_VERSION)' \
 
 LD_FLAGS_API = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=Everest API Server'"
 LD_FLAGS_CLI = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl'"
+LD_FLAGS_CLI_TEST = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl' \
+										-X 'github.com/percona/everest/pkg/version.EverestChannelOverride=fast-v0'"
 
 default: help
 
@@ -23,7 +25,7 @@ build:                ## Build binaries
 	go build -v $(LD_FLAGS_API) -o bin/everest ./cmd
 
 build-cli:                ## Build binaries
-	go build -v $(LD_FLAGS_CLI) -o bin/everestctl ./cmd/cli
+	go build -v $(LD_FLAGS_CLI_TEST) -o bin/everestctl ./cmd/cli
 
 release: FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check.percona.com' -X 'github.com/percona/everest/cmd/config.TelemetryInterval=24h'
 
