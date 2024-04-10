@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { test, expect } from '@fixtures'
-import {checkError, testsNs} from "@tests/tests/helpers";
+import {checkClusterDeletion, checkError, testsNs} from "@tests/tests/helpers";
 
 
 test.beforeAll(async ({ request }) => {
@@ -101,7 +101,8 @@ test('create/edit/delete single node psmdb cluster', async ({ request, page }) =
   await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
 
   psmdbCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-  expect(psmdbCluster.status()).toBe(404)
+  await checkClusterDeletion(psmdbCluster)
+
 })
 
 test('expose psmdb cluster after creation', async ({ request, page }) => {
@@ -186,7 +187,7 @@ test('expose psmdb cluster after creation', async ({ request, page }) => {
   await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
 
   psmdbCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-  expect(psmdbCluster.status()).toBe(404)
+  await checkClusterDeletion(psmdbCluster)
 })
 
 test('expose psmdb cluster on EKS to the public internet and scale up', async ({ request, page }) => {
@@ -267,5 +268,5 @@ test('expose psmdb cluster on EKS to the public internet and scale up', async ({
   await page.waitForTimeout(1000)
 
   psmdbCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-  expect(psmdbCluster.status()).toBe(404)
+  await checkClusterDeletion(psmdbCluster)
 })

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { test, expect } from '@fixtures'
-import {checkError, testsNs} from "@tests/tests/helpers";
+import {checkClusterDeletion, checkError, testsNs} from "@tests/tests/helpers";
 
 let recommendedVersion
 
@@ -122,7 +122,7 @@ test('create/edit/delete pxc single node cluster', async ({ request, page }) => 
   await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
 
   pxcCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-  expect(pxcCluster.status()).toBe(404)
+  await checkClusterDeletion(pxcCluster)
 })
 
 test('expose pxc cluster after creation', async ({ request, page }) => {
@@ -201,7 +201,7 @@ test('expose pxc cluster after creation', async ({ request, page }) => {
   await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
 
   pxcCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-  expect(pxcCluster.status()).toBe(404)
+  await checkClusterDeletion(pxcCluster)
 })
 
 test('expose pxc cluster on EKS to the public internet and scale up', async ({ request, page }) => {
@@ -277,5 +277,5 @@ test('expose pxc cluster on EKS to the public internet and scale up', async ({ r
 
   const pxcCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
 
-  expect(pxcCluster.status()).toBe(404)
+  await checkClusterDeletion(pxcCluster)
 })
