@@ -33,7 +33,8 @@ import (
 const (
 	databaseClusterBackupKind = "databaseclusterbackups"
 
-	storageCleanupFinalizer = "everest.percona.com/dbb-storage-cleanup"
+	storageCleanupFinalizer     = "everest.percona.com/dbb-storage-cleanup"
+	foregroundDeletionFinalizer = "foregroundDeletion"
 )
 
 // ListDatabaseClusterBackups returns list of the created database cluster backups on the specified kubernetes cluster.
@@ -81,17 +82,14 @@ func (e *EverestServer) DeleteDatabaseClusterBackup(
 	cleanupStorage := pointer.Get(params.CleanupBackupStorage)
 	// If cleanup is required, we add a finalizer to the backup object.
 	if cleanupStorage {
-		backup, err := e.kubeClient.GetDatabaseClusterBackup(ctx.Request().Context(), namespace, name)
+		reqCtx := ctx.Request().Context()
+		backup, err := e.kubeClient.GetDatabaseClusterBackup(reqCtx, namespace, name)
 		if err != nil {
 			return err
 		}
-		if err := e.cleanupBackupStorage(ctx.Request().Context(), backup); err != nil {
+		if err := e.cleanupBackupStorage(reqCtx, backup); err != nil {
 			return err
 		}
-		// We delete in foreground, so that the dbbackup is GC-ed only
-		// after the underlying backup data is deleted.
-		queryParams := ctx.QueryParams()
-		queryParams.Add("propagationPolicy", "Foreground")
 	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, name)
 }
@@ -102,9 +100,8 @@ func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, namespace, na
 }
 
 func (e *EverestServer) cleanupBackupStorage(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
-	if controllerutil.AddFinalizer(backup, storageCleanupFinalizer) {
-		_, err := e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
-		return err
-	}
-	return nil
+	controllerutil.AddFinalizer(backup, storageCleanupFinalizer)
+	controllerutil.AddFinalizer(backup, foregroundDeletionFinalizer)
+	_, err := e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
+	return err
 }
