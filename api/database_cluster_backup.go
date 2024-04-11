@@ -88,6 +88,10 @@ func (e *EverestServer) DeleteDatabaseClusterBackup(
 		if err := e.cleanupBackupStorage(ctx.Request().Context(), backup); err != nil {
 			return err
 		}
+		// We delete in foreground, so that the dbbackup is GC-ed only
+		// after the underlying backup data is deleted.
+		queryParams := ctx.QueryParams()
+		queryParams.Add("propagationPolicy", "Foreground")
 	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, name)
 }
