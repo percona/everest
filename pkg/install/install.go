@@ -185,6 +185,11 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
+	if recVer.EverestOperator == nil {
+		// If there's no recommended version of the operator, install the same version as Everest.
+		recVer.EverestOperator = latest
+	}
+
 	if err := o.provisionDBNamespaces(ctx, recVer); err != nil {
 		return err
 	}
@@ -568,6 +573,10 @@ func (o *Install) installOperator(ctx context.Context, channel, operatorName, na
 			disableTelemetry = "false"
 		}
 
+		startingCSV := ""
+		if version != "" {
+			startingCSV = fmt.Sprintf("%s.v%s", operatorName, version)
+		}
 		params := kubernetes.InstallOperatorRequest{
 			Namespace:              namespace,
 			Name:                   operatorName,
@@ -576,7 +585,7 @@ func (o *Install) installOperator(ctx context.Context, channel, operatorName, na
 			CatalogSourceNamespace: kubernetes.OLMNamespace,
 			Channel:                channel,
 			InstallPlanApproval:    v1alpha1.ApprovalManual,
-			StartingCSV:            version,
+			StartingCSV:            startingCSV,
 			SubscriptionConfig: &v1alpha1.SubscriptionConfig{
 				Env: []corev1.EnvVar{
 					{
