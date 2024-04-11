@@ -4,6 +4,7 @@ import { IconButton, Tooltip, Typography } from '@mui/material';
 import { Messages } from '../dbClusterView.messages';
 import { getLastBackupTimeDiff } from '../DbClusterView.utils';
 import { WarningIcon } from '@percona/ui-lib';
+import { BackupStatus } from 'shared-types/backups.types';
 
 export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
   const { data: backups = [] } = useDbBackups(dbName!, namespace, {
@@ -13,7 +14,9 @@ export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
 
   const { data: pitrData } = useDbClusterPitr(dbName, namespace);
 
-  const finishedBackups = backups.filter((backup) => backup.completed);
+  const finishedBackups = backups.filter(
+    (backup) => backup.completed && backup.state === BackupStatus.OK
+  );
   const lastBackup = finishedBackups[finishedBackups.length - 1];
   const lastBackupDate = lastBackup?.completed || new Date();
 
