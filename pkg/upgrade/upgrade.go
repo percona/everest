@@ -186,41 +186,7 @@ func (u *Upgrade) versionToUpgradeTo(
 		return nil, nil, err
 	}
 
-	var (
-		upgradeTo *goversion.Version
-		meta      *version.MetadataVersion
-	)
-	// Find the next minor version.
-	for _, v := range req.GetVersions() {
-		ver, err := goversion.NewVersion(v.GetVersion())
-		if err != nil {
-			u.l.Debugf("Could not parse version %s. Error: %s", v.GetVersion(), err)
-			continue
-		}
-
-		if currentEverestVersion.GreaterThanOrEqual(ver) {
-			continue
-		}
-
-		verSeg := ver.Segments()
-		evSeg := currentEverestVersion.Segments()
-		if len(verSeg) >= 3 && len(evSeg) >= 3 && verSeg[0] == evSeg[0] && verSeg[1] == evSeg[1] {
-			continue
-		}
-
-		if upgradeTo == nil {
-			upgradeTo = ver
-			meta = v
-			continue
-		}
-
-		if upgradeTo.GreaterThan(ver) {
-			upgradeTo = ver
-			meta = v
-			continue
-		}
-	}
-
+	upgradeTo, meta := u.findNextMinorVersion(req, currentEverestVersion)
 	if upgradeTo == nil {
 		upgradeTo = currentEverestVersion
 	}
@@ -255,6 +221,47 @@ func (u *Upgrade) versionToUpgradeTo(
 	}
 
 	return upgradeTo, meta, nil
+}
+
+func (u *Upgrade) findNextMinorVersion(
+	req *version.MetadataResponse, currentEverestVersion *goversion.Version,
+) (*goversion.Version, *version.MetadataVersion) {
+	var (
+		upgradeTo *goversion.Version
+		meta      *version.MetadataVersion
+	)
+
+	for _, v := range req.GetVersions() {
+		ver, err := goversion.NewVersion(v.GetVersion())
+		if err != nil {
+			u.l.Debugf("Could not parse version %s. Error: %s", v.GetVersion(), err)
+			continue
+		}
+
+		if currentEverestVersion.GreaterThanOrEqual(ver) {
+			continue
+		}
+
+		verSeg := ver.Segments()
+		evSeg := currentEverestVersion.Segments()
+		if len(verSeg) >= 3 && len(evSeg) >= 3 && verSeg[0] == evSeg[0] && verSeg[1] == evSeg[1] {
+			continue
+		}
+
+		if upgradeTo == nil {
+			upgradeTo = ver
+			meta = v
+			continue
+		}
+
+		if upgradeTo.GreaterThan(ver) {
+			upgradeTo = ver
+			meta = v
+			continue
+		}
+	}
+
+	return upgradeTo, meta
 }
 
 func (u *Upgrade) verifyRequirements(ctx context.Context, meta *version.MetadataVersion) error {
