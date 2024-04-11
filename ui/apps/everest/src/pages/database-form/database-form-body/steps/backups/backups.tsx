@@ -80,7 +80,7 @@ export const Backups = ({ alreadyVisited }: StepProps) => {
         (backupStorages.length > 0 ? (
           <>
             {(mode === 'new' || mode === 'restoreFromBackup') && (
-              <Alert sx={{ mt: 1 }} severity="info">
+              <Alert sx={{ mt: 1, mb: 3 }} severity="info">
                 {Messages.youCanAddMoreSchedules}
               </Alert>
             )}
