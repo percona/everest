@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { expect, test } from '@fixtures'
-import {checkError, testsNs, testPrefix} from "@tests/tests/helpers";
+import {checkError, testsNs, testPrefix, waitClusterDeletion} from "@tests/tests/helpers";
 
 // testPrefix is used to differentiate between several workers
 // running this test to avoid conflicts in instance names
@@ -52,7 +52,7 @@ test.afterAll(async ({ request }) => {
   await checkError(res)
 })
 
-test('create db cluster with monitoring config', async ({ request }) => {
+test('create db cluster with monitoring config', async ({ request, page }) => {
   const clusterName = 'db-monitoring-create'
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -104,10 +104,11 @@ test('create db cluster with monitoring config', async ({ request }) => {
     })
   } finally {
     await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+    await waitClusterDeletion(request, page, clusterName)
   }
 })
 
-test('update db cluster with a new monitoring config', async ({ request }) => {
+test('update db cluster with a new monitoring config', async ({ request, page }) => {
   const clusterName = 'dbc-monitoring-put'
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -173,10 +174,11 @@ test('update db cluster with a new monitoring config', async ({ request }) => {
     expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
   } finally {
     await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+    await waitClusterDeletion(request, page, clusterName)
   }
 })
 
-test('update db cluster without monitoring config with a new monitoring config', async ({ request }) => {
+test('update db cluster without monitoring config with a new monitoring config', async ({ request, page }) => {
   const clusterName = 'monitoring-put-empty'
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -239,10 +241,11 @@ test('update db cluster without monitoring config with a new monitoring config',
     expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
   } finally {
     await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+    await waitClusterDeletion(request, page, clusterName)
   }
 })
 
-test('update db cluster monitoring config with an empty monitoring config', async ({ request }) => {
+test('update db cluster monitoring config with an empty monitoring config', async ({ request, page }) => {
   const clusterName = 'monit-put-to-empty'
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -306,5 +309,6 @@ test('update db cluster monitoring config with an empty monitoring config', asyn
     expect(res?.spec?.monitoring?.monitoringConfigName).toBeFalsy()
   } finally {
     await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+    await waitClusterDeletion(request, page, clusterName)
   }
 })

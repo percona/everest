@@ -227,6 +227,7 @@ test.describe('DB Cluster creation', () => {
     //   '192.168.1.0',
     // ]);
     expect(addedCluster?.spec.engine.storage.class).toBe(storageClasses[0]);
+    expect(addedCluster?.spec.backup.schedules[0].retentionCopies).toBe(1);
   });
 
   test('PITR should be disabled when backups toggle was not checked', async ({
@@ -352,7 +353,7 @@ test.describe('DB Cluster creation', () => {
     await page.getByTestId('menu-button').click();
     await page.getByTestId('schedule-menu-item').click();
     await page.getByTestId('form-dialog-create').click();
-    await expect(page.getByText('2 schedules')).toBeVisible();
+    await expect(page.getByText('2 active schedules')).toBeVisible();
 
     // We disable PITR
     await page.goto('/databases');

@@ -83,6 +83,7 @@ export const DbClusterView = () => {
           text: beautifyDbClusterStatus(status),
           value: status,
         })),
+        maxSize: 120,
         Cell: ({ cell }) => (
           <StatusField
             dataTestId={cell?.row?.original?.databaseName}

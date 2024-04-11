@@ -11,3 +11,7 @@ spec:
       containers:
         - name: everest
           image: localhost:5000/perconalab/everest:0.0.0
+          env:
+            - name: API_REQUESTS_RATE_LIMIT
+              value: "200"
+

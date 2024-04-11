@@ -26,8 +26,12 @@ export const backupsStepCheck = async (page: Page) => {
   const storageLocationField = await page.getByTestId(
     'text-input-storage-location'
   );
+  const retentionCopiesField = await page.getByTestId(
+    'text-input-retention-copies'
+  );
 
   expect(scheduleNameField).not.toBeEmpty();
+  expect(retentionCopiesField).not.toBeEmpty();
 
   expect(storageLocationField).not.toBeEmpty();
   await storageLocationField.click();
@@ -38,6 +42,7 @@ export const backupsStepCheck = async (page: Page) => {
   // expect(storageOptions.filter({ hasText: 'ui-dev' })).toBeVisible();
   await testStorage.click();
 
+  await retentionCopiesField.fill('1');
   await page.getByTestId('select-selected-time-button').click();
   await page.getByTestId('month-option').click();
   await page.getByTestId('select-on-day-button').click();

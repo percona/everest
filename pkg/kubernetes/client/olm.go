@@ -13,20 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export const Messages = {
-  sectionHeader: (schedulesNumber: number) =>
-    `${schedulesNumber} ${
-      schedulesNumber > 1 ? 'active schedules' : 'active schedule'
-    }`,
-  noSchedules: 'No schedules',
-  menuItems: {
-    edit: 'Edit',
-    delete: 'Delete',
-  },
-  deleteModal: {
-    header: 'Delete schedule',
-    content: (scheduleName: string) =>
-      `Are you sure you want to permanently delete schedule "${scheduleName}"?`,
-  },
-  maxThreeSchedulesPG: '(maximum 3 schedules for PostgreSQL)',
-};
+package client
+
+import versioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
+
+// OLM returns OLM client set.
+//
+//nolint:ireturn
+func (c *Client) OLM() versioned.Interface {
+	return c.olmClientset
+}
