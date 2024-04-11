@@ -106,7 +106,7 @@ func (c *dbClusterBackupClient) Update(
 	err := c.restClient.
 		Put().Name(backup.GetName()).
 		Namespace(c.namespace).
-		Resource(backupStorageAPIKind).Body(backup).
+		Resource(dbClusterBackupsAPIKind).Body(backup).
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Do(ctx).Into(result)
 	return result, err
