@@ -1,5 +1,8 @@
-import { Divider, FormControlLabel, MenuItem } from '@mui/material';
+import { useState } from 'react';
+import { Divider, FormControlLabel, IconButton, MenuItem } from '@mui/material';
 import { TextInput, SelectInput, CheckboxInput } from '@percona/ui-lib';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import { StorageType } from 'shared-types/backupStorages.types';
 import { Messages } from '../storage-locations.messages';
 import { StorageLocationsFields } from '../storage-locations.types';
@@ -12,6 +15,9 @@ interface CreateEditFormProps {
 export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
   const { data: namespaces = [], isFetching: isNamespacesFetching } =
     useNamespaces();
+
+  const [showAccessKey, setShowAccessKey] = useState(false);
+  const [showSecretKey, setShowSecretKey] = useState(false);
 
   return (
     <>
@@ -79,9 +85,19 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
       />
       <TextInput
         textFieldProps={{
-          placeholder: isEditMode
-            ? '************'
-            : Messages.createEditModal.placeholders.accessKey,
+          type: showAccessKey ? 'text' : 'password',
+          placeholder: Messages.createEditModal.placeholders.accessKey,
+          InputProps: {
+            endAdornment: (
+              <IconButton onClick={() => setShowAccessKey(!showAccessKey)}>
+                {showAccessKey ? (
+                  <VisibilityOutlinedIcon />
+                ) : (
+                  <VisibilityOffOutlinedIcon />
+                )}
+              </IconButton>
+            ),
+          },
         }}
         name={StorageLocationsFields.accessKey}
         label={Messages.accessKey}
@@ -89,9 +105,19 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
       />
       <TextInput
         textFieldProps={{
-          placeholder: isEditMode
-            ? '************'
-            : Messages.createEditModal.placeholders.secretKey,
+          type: showSecretKey ? 'text' : 'password',
+          placeholder: Messages.createEditModal.placeholders.secretKey,
+          InputProps: {
+            endAdornment: (
+              <IconButton onClick={() => setShowSecretKey(!showSecretKey)}>
+                {showSecretKey ? (
+                  <VisibilityOutlinedIcon />
+                ) : (
+                  <VisibilityOffOutlinedIcon />
+                )}
+              </IconButton>
+            ),
+          },
         }}
         name={StorageLocationsFields.secretKey}
         label={Messages.secretKey}
