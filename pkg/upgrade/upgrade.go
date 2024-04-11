@@ -190,6 +190,7 @@ func (u *Upgrade) versionToUpgradeTo(
 		upgradeTo *goversion.Version
 		meta      *version.MetadataVersion
 	)
+	// Find the next minor version.
 	for _, v := range req.GetVersions() {
 		ver, err := goversion.NewVersion(v.GetVersion())
 		if err != nil {
@@ -201,9 +202,38 @@ func (u *Upgrade) versionToUpgradeTo(
 			continue
 		}
 
+		verSeg := ver.Segments()
+		evSeg := currentEverestVersion.Segments()
+		if len(verSeg) >= 3 && len(evSeg) >= 3 && verSeg[0] == evSeg[0] && verSeg[1] == evSeg[1] {
+			continue
+		}
+
 		if upgradeTo == nil {
 			upgradeTo = ver
 			meta = v
+			continue
+		}
+
+		if upgradeTo.GreaterThan(ver) {
+			upgradeTo = ver
+			meta = v
+			continue
+		}
+	}
+
+	if upgradeTo == nil {
+		upgradeTo = currentEverestVersion
+	}
+
+	// Find the latest patch version for the given minor version.
+	for _, v := range req.GetVersions() {
+		ver, err := goversion.NewVersion(v.GetVersion())
+		if err != nil {
+			u.l.Debugf("Could not parse version %s. Error: %s", v.GetVersion(), err)
+			continue
+		}
+
+		if currentEverestVersion.GreaterThanOrEqual(ver) {
 			continue
 		}
 
@@ -218,15 +248,9 @@ func (u *Upgrade) versionToUpgradeTo(
 			meta = v
 			continue
 		}
-
-		if upgradeTo.GreaterThan(ver) {
-			upgradeTo = ver
-			meta = v
-			continue
-		}
 	}
 
-	if upgradeTo == nil {
+	if upgradeTo == nil || meta == nil {
 		return nil, nil, ErrNoUpdateAvailable
 	}
 
