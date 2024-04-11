@@ -74,7 +74,7 @@ func (e *EverestServer) DeleteDatabaseCluster(
 		}
 		// Cleanup storage.
 		for _, backup := range backups.Items {
-			if err := e.cleanupBackupStorage(reqCtx, &backup); err != nil {
+			if err := e.cleanupBackupStorage(reqCtx, &backup); err != nil { //nolint:gosec // We use Go 1.21+
 				return err
 			}
 		}
