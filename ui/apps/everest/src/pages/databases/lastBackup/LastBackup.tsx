@@ -13,12 +13,13 @@ export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
 
   const { data: pitrData } = useDbClusterPitr(dbName, namespace);
 
-  const lastBackup = backups[backups.length - 1];
-  const lastBackupDate = lastBackup?.created || new Date();
+  const finishedBackups = backups.filter((backup) => backup.completed);
+  const lastBackup = finishedBackups[finishedBackups.length - 1];
+  const lastBackupDate = lastBackup?.completed || new Date();
 
   return (
     <>
-      {backups.length ? (
+      {finishedBackups.length ? (
         <>
           <Typography variant="body2">
             {getLastBackupTimeDiff(lastBackupDate)}
