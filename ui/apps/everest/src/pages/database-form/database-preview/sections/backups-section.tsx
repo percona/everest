@@ -1,7 +1,7 @@
 import { PreviewContentText } from '../preview-section';
 import { getTimeSelectionPreviewMessage } from '../database.preview.messages';
 import { BackupStepType } from '../../database-form-schema.ts';
-import { getFormValuesFromCronExpression } from '../../../../components/time-selection/time-selection.utils.ts';
+import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils.ts';
 
 export const BackupsPreviewSection = (backupsSection: BackupStepType) => {
   const { backupsEnabled, schedules } = backupsSection;

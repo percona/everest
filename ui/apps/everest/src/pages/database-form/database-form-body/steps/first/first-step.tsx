@@ -19,7 +19,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { DbType } from '@percona/types';
 import {
   AutoCompleteInput,
-  DbToggleCard, LabeledContent,
+  DbToggleCard,
+  LabeledContent,
   SelectInput,
   TextInput,
   ToggleButtonGroupInput,
@@ -60,11 +61,14 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     dbEngines.find((engine) => engine.type === dbEngine)
   );
 
-  const setRandomDbName = useCallback((type: DbType) => {
-    setValue(DbWizardFormFields.dbName, `${type}-${generateShortUID()}`, {
-      shouldValidate: true,
-    });
-  }, [setValue]);
+  const setRandomDbName = useCallback(
+    (type: DbType) => {
+      setValue(DbWizardFormFields.dbName, `${type}-${generateShortUID()}`, {
+        shouldValidate: true,
+      });
+    },
+    [setValue]
+  );
 
   const setDbVersionsForEngine = useCallback(() => {
     const newVersions = dbEngines.find((engine) => engine.type === dbEngine);
@@ -237,34 +241,34 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           }}
         />
 
-        <LabeledContent label= {Messages.labels.dbType}>
-        {dbEnginesFetching || !dbEngines.length ? (
-          // This is roughly the height of the buttons
-          <Skeleton height={57} variant="rectangular" />
-        ) : (
-          <ToggleButtonGroupInput
-            name={DbWizardFormFields.dbType}
-            toggleButtonGroupProps={{
-              sx: { mb: 2 },
-            }}
-          >
-            {dbEngines.map(({ type }) => (
-              <DbToggleCard
-                key={type}
-                value={dbEngineToDbType(type)}
-                disabled={
-                  (mode === 'edit' || mode === 'restoreFromBackup') &&
-                  dbType !== dbEngineToDbType(type)
-                }
-                onClick={() => {
-                  if (dbEngineToDbType(type) !== dbType) {
-                    onDbTypeChange(dbEngineToDbType(type));
+        <LabeledContent label={Messages.labels.dbType}>
+          {dbEnginesFetching || !dbEngines.length ? (
+            // This is roughly the height of the buttons
+            <Skeleton height={57} variant="rectangular" />
+          ) : (
+            <ToggleButtonGroupInput
+              name={DbWizardFormFields.dbType}
+              toggleButtonGroupProps={{
+                sx: { mb: 2 },
+              }}
+            >
+              {dbEngines.map(({ type }) => (
+                <DbToggleCard
+                  key={type}
+                  value={dbEngineToDbType(type)}
+                  disabled={
+                    (mode === 'edit' || mode === 'restoreFromBackup') &&
+                    dbType !== dbEngineToDbType(type)
                   }
-                }}
-              />
-            ))}
-          </ToggleButtonGroupInput>
-        )}
+                  onClick={() => {
+                    if (dbEngineToDbType(type) !== dbType) {
+                      onDbTypeChange(dbEngineToDbType(type));
+                    }
+                  }}
+                />
+              ))}
+            </ToggleButtonGroupInput>
+          )}
         </LabeledContent>
         <TextInput
           name={DbWizardFormFields.dbName}

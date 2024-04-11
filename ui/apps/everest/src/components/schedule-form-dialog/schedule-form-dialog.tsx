@@ -14,27 +14,27 @@
 // limitations under the License.
 
 import { FormDialog } from 'components/form-dialog';
-import { useMemo } from 'react';
-import { Messages } from './schedule-modal-dialog.messages';
-
-import { schema } from 'components/schedule-form/schedule-form-schema.ts';
-import { scheduleModalDefaultValues } from './schedule-modal-dialog.utils';
+import { useContext, useMemo } from 'react';
 import { Typography } from '@mui/material';
-import { ScheduledBackupModalForm } from '../../pages/db-cluster-details/backups/scheduled-backup-modal/scheduled-backup-modal-form/scheduled-backup-modal-form';
-import { ScheduledModalDialogProps } from './schedule-modal-dialog.types';
 
-export const ScheduledModalDialog = ({
-  mode,
-  namespace,
-  openScheduleModal,
-  handleCloseScheduledBackupModal,
-  handleSubmit,
-  isPending,
-  schedules,
-  selectedScheduleName,
-  setSelectedScheduleName,
-  dbEngineType,
-}: ScheduledModalDialogProps) => {
+import { ScheduleFormDialogContext } from './schedule-form-dialog-context/schedule-form-dialog.context';
+import { Messages } from './schedule-form-dialog.messages';
+import { schema } from 'components/schedule-form/schedule-form-schema';
+import { scheduleModalDefaultValues } from './schedule-form-dialog.utils';
+import { ScheduledBackupModalForm } from './scheduled-backup-modal-form';
+
+export const ScheduleFormDialog = () => {
+  const {
+    mode = 'new',
+    selectedScheduleName,
+    openScheduleModal,
+    dbClusterInfo,
+    handleClose,
+    isPending,
+    handleSubmit,
+  } = useContext(ScheduleFormDialogContext);
+
+  const { schedules = [] } = dbClusterInfo;
   const schedulesNamesList = schedules.map((item) => item?.name);
 
   const scheduledBackupSchema = useMemo(
@@ -55,7 +55,7 @@ export const ScheduledModalDialog = ({
   return (
     <FormDialog
       isOpen={!!openScheduleModal}
-      closeModal={handleCloseScheduledBackupModal}
+      closeModal={handleClose}
       headerMessage={
         mode === 'new'
           ? Messages.createSchedule.headerMessage
@@ -79,13 +79,7 @@ export const ScheduledModalDialog = ({
           {Messages.createSchedule.subhead}
         </Typography>
       )}
-      <ScheduledBackupModalForm
-        namespace={namespace}
-        schedules={schedules}
-        mode={mode}
-        setSelectedScheduleName={setSelectedScheduleName}
-        dbEngineType={dbEngineType}
-      />
+      <ScheduledBackupModalForm />
     </FormDialog>
   );
 };

@@ -48,10 +48,8 @@ export const ScheduleForm = ({
   return (
     <>
       {showTypeRadio && <LogicalPhysicalRadioGroup />}
-      <Typography variant="sectionHeading">
-        {Messages.backupDetails}
-      </Typography>
-        {/* TODO change Typography to Labeled content*/}
+      <Typography variant="sectionHeading">{Messages.backupDetails}</Typography>
+      {/* TODO change Typography to Labeled content*/}
       {allowScheduleSelection ? (
         <AutoCompleteInput
           name={ScheduleFormFields.scheduleName}
@@ -86,10 +84,10 @@ export const ScheduleForm = ({
         enableFillFirst={autoFillLocation}
         disabled={disableStorageSelection}
       />
-        <Typography variant="sectionHeading" sx={{mt: 2, mb: -1}}>
-           {Messages.repeats}
-        </Typography>
-        <TimeSelection showInfoAlert />
+      <Typography variant="sectionHeading" sx={{ mt: 2, mb: -1 }}>
+        {Messages.repeats}
+      </Typography>
+      <TimeSelection showInfoAlert />
     </>
   );
 };

@@ -1,6 +1,6 @@
 import { storageLocationScheduleFormSchema } from 'components/schedule-form/schedule-form-schema.ts';
 import { Messages as ScheduleFormMessages } from 'components/schedule-form/schedule-form.messages.ts';
-import { ScheduleFormFields } from 'components/schedule-form/schedule-form.types.ts';
+import { ScheduleFormFields } from 'components/schedule-form/schedule-form.types';
 import { timeSelectionSchemaObject } from 'components/time-selection/time-selection-schema.ts';
 import { rfc_123_schema } from 'utils/common-validation.ts';
 import { z } from 'zod';

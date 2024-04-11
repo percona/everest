@@ -27,7 +27,6 @@ const formValuesToPayloadOverrides = (
   dbPayload: DbWizardType,
   dbCluster: DbCluster
 ): DbCluster => {
-
   let pitrBackupStorageName = '';
 
   if (dbPayload.pitrEnabled) {

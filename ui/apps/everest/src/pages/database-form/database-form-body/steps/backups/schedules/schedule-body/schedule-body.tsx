@@ -16,7 +16,7 @@
 import { Stack, Typography } from '@mui/material';
 import { Schedule } from 'shared-types/dbCluster.types';
 import { getTimeSelectionPreviewMessage } from '../../../../../database-preview/database.preview.messages';
-import { getFormValuesFromCronExpression } from '../../../../../../../components/time-selection/time-selection.utils';
+import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils';
 
 const ScheduleContent = ({
   schedule,

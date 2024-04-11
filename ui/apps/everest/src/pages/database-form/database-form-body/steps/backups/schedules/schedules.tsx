@@ -18,14 +18,17 @@ import EditableItem from 'components/editable-item/editable-item';
 import { LabeledContent } from '@percona/ui-lib';
 import { Messages } from './schedules.messages';
 import { useState } from 'react';
-import { ScheduledModalDialog } from 'components/schedules-modal-dialog/schedule-modal-dialog';
 import { DbWizardFormFields } from '../../../../database-form.types';
 import { useFormContext } from 'react-hook-form';
-import { ScheduleFormData } from 'components/schedule-form/schedule-form-schema';
-import { getSchedulesPayload } from 'components/schedule-form/schedule-form.utils';
-import { Schedule } from '../../../../../../shared-types/dbCluster.types';
-import { removeScheduleFromArray } from '../../../../../../components/schedule-form/schedule-form.utils';
+import { Schedule } from 'shared-types/dbCluster.types';
+import {
+  getSchedulesPayload,
+  removeScheduleFromArray,
+} from 'components/schedule-form/schedule-form.utils';
 import ScheduleContent from './schedule-body';
+import { ScheduleFormDialog } from 'components/schedule-form-dialog';
+import { ScheduleFormDialogContext } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog.context';
+import { ScheduleFormData } from 'components/schedule-form/schedule-form-schema';
 
 const Schedules = () => {
   const { watch, setValue } = useFormContext();
@@ -66,7 +69,7 @@ const Schedules = () => {
     setOpenScheduleModal(false);
   };
 
-  const handleCloseScheduledBackupModal = () => {
+  const handleClose = () => {
     setOpenScheduleModal(false);
   };
 
@@ -109,19 +112,27 @@ const Schedules = () => {
         </Stack>
       </LabeledContent>
       {openScheduleModal && (
-        <ScheduledModalDialog
-          openScheduleModal={openScheduleModal}
-          handleCloseScheduledBackupModal={handleCloseScheduledBackupModal}
-          mode={mode}
-          handleSubmit={handleSubmit}
-          isPending={false}
-          schedules={schedules}
-          setSelectedScheduleName={setSelectedScheduleName}
-          dbEngineType={dbType}
-          activeStorage={activeStorage}
-          selectedScheduleName={selectedScheduleName}
-          namespace={k8sNamespace}
-        />
+        <ScheduleFormDialogContext.Provider
+          value={{
+            mode,
+            handleSubmit,
+            handleClose,
+            isPending: false,
+            setMode,
+            selectedScheduleName,
+            setSelectedScheduleName,
+            openScheduleModal,
+            setOpenScheduleModal,
+            dbClusterInfo: {
+              schedules,
+              activeStorage,
+              namespace: k8sNamespace,
+              dbType,
+            },
+          }}
+        >
+          <ScheduleFormDialog />
+        </ScheduleFormDialogContext.Provider>
       )}
     </>
   );

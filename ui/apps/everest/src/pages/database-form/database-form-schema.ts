@@ -70,12 +70,15 @@ const pitrStepSchema = z
   .object({
     [DbWizardFormFields.pitrEnabled]: z.boolean(),
     [DbWizardFormFields.pitrStorageLocation]: z
-        .string()
-        .or(
-            z.object({
-                name: z.string(),
-            })
-        ).nullable().optional()})
+      .string()
+      .or(
+        z.object({
+          name: z.string(),
+        })
+      )
+      .nullable()
+      .optional(),
+  })
   .passthrough()
   .superRefine(({ pitrEnabled, pitrStorageLocation }, ctx) => {
     if (pitrEnabled && !pitrStorageLocation) {

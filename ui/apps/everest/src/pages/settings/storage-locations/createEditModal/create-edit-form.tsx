@@ -3,8 +3,8 @@ import { TextInput, SelectInput, CheckboxInput } from '@percona/ui-lib';
 import { StorageType } from 'shared-types/backupStorages.types';
 import { Messages } from '../storage-locations.messages';
 import { StorageLocationsFields } from '../storage-locations.types';
-import { useNamespaces } from '../../../../hooks/api/namespaces/useNamespaces';
-import { AutoCompleteSelectAll } from '../../../../components/auto-complete-select-all/auto-complete-select-all';
+import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
+import { AutoCompleteSelectAll } from 'components/auto-complete-select-all/auto-complete-select-all';
 
 interface CreateEditFormProps {
   isEditMode: boolean;

@@ -17,15 +17,17 @@ import { DB_CLUSTER_QUERY } from 'hooks/api/db-cluster/useDbCluster';
 import { useContext } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { ScheduleFormData } from 'components/schedule-form/schedule-form-schema.ts';
 import { useUpdateSchedules } from 'hooks/api/backups/useScheduledBackups';
 import { ScheduleModalContext } from '../backups.context.ts';
-import { ScheduledModalDialog } from '../../../../components/schedules-modal-dialog/schedule-modal-dialog';
+import { ScheduleFormData } from 'components/schedule-form/schedule-form-schema';
+import { ScheduleFormDialogContext } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog.context';
+import { ScheduleFormDialog } from 'components/schedule-form-dialog';
 
 export const ScheduledBackupModal = () => {
   const queryClient = useQueryClient();
   const {
     mode = 'new',
+    setMode,
     selectedScheduleName,
     openScheduleModal,
     setOpenScheduleModal,
@@ -47,7 +49,7 @@ export const ScheduledBackupModal = () => {
 
   const schedules = (dbCluster && dbCluster?.spec?.backup?.schedules) || [];
 
-  const handleCloseScheduledBackupModal = () => {
+  const handleClose = () => {
     if (setOpenScheduleModal) {
       setOpenScheduleModal(false);
     }
@@ -59,24 +61,32 @@ export const ScheduledBackupModal = () => {
         queryClient.invalidateQueries({
           queryKey: [DB_CLUSTER_QUERY, dbClusterName],
         });
-        handleCloseScheduledBackupModal();
+        handleClose();
       },
     });
   };
 
   return (
-    <ScheduledModalDialog
-      openScheduleModal={openScheduleModal}
-      handleCloseScheduledBackupModal={handleCloseScheduledBackupModal}
-      mode={mode}
-      handleSubmit={handleSubmit}
-      isPending={isPending}
-      schedules={schedules}
-      selectedScheduleName={selectedScheduleName}
-      namespace={namespace}
-      setSelectedScheduleName={setSelectedScheduleName}
-      dbEngineType={spec?.engine?.type}
-      activeStorage={status?.activeStorage || ''}
-    />
+    <ScheduleFormDialogContext.Provider
+      value={{
+        mode,
+        handleSubmit,
+        handleClose,
+        isPending,
+        setMode,
+        selectedScheduleName,
+        setSelectedScheduleName,
+        openScheduleModal,
+        setOpenScheduleModal,
+        dbClusterInfo: {
+          schedules,
+          activeStorage: status?.activeStorage,
+          namespace,
+          dbType: spec?.engine?.type,
+        },
+      }}
+    >
+      <ScheduleFormDialog />
+    </ScheduleFormDialogContext.Provider>
   );
 };
