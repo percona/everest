@@ -32,6 +32,8 @@ import (
 
 const (
 	databaseClusterBackupKind = "databaseclusterbackups"
+
+	storageCleanupFinalizer = "everest.percona.com/dbb-storage-cleanup"
 )
 
 // ListDatabaseClusterBackups returns list of the created database cluster backups on the specified kubernetes cluster.
@@ -96,7 +98,7 @@ func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, namespace, na
 }
 
 func (e *EverestServer) cleanupBackupStorage(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
-	if controllerutil.AddFinalizer(backup, "todo") {
+	if controllerutil.AddFinalizer(backup, storageCleanupFinalizer) {
 		_, err := e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
 		return err
 	}
