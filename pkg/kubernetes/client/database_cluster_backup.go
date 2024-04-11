@@ -19,6 +19,6 @@ func (c *Client) GetDatabaseClusterBackup(ctx context.Context, namespace, name s
 }
 
 // UpdateDatabaseClusterBackup updates the provided database cluster backup.
-func (c *Client) UpdateDatabaseClusterBackup(ctx context.Context, namespace string, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
-	return c.customClientSet.DBClusterBackups(namespace).Update(ctx, backup, metav1.UpdateOptions{})
+func (c *Client) UpdateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
+	return c.customClientSet.DBClusterBackups(backup.GetNamespace()).Update(ctx, backup, metav1.UpdateOptions{})
 }

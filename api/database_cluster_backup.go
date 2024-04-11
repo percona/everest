@@ -97,7 +97,7 @@ func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, namespace, na
 
 func (e *EverestServer) cleanupBackupStorage(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
 	if controllerutil.AddFinalizer(backup, "todo") {
-		_, err := e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup.GetNamespace(), backup)
+		_, err := e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
 		return err
 	}
 	return nil

@@ -123,7 +123,7 @@ type KubeClientConnector interface {
 	// GetDatabaseClusterBackup returns database cluster backups by provided name.
 	GetDatabaseClusterBackup(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error)
 	// UpdateDatabaseClusterBackup updates the provided database cluster backup.
-	UpdateDatabaseClusterBackup(ctx context.Context, namespace string, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error)
+	UpdateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error)
 	// ListDatabaseClusterRestores returns list of managed database clusters.
 	ListDatabaseClusterRestores(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterRestoreList, error)
 	// GetDatabaseClusterRestore returns database clusters by provided name.

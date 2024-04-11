@@ -34,6 +34,6 @@ func (k *Kubernetes) ListDatabaseClusterBackups(ctx context.Context, namespace s
 }
 
 // UpdateDatabaseClusterBackup updates database cluster backup.
-func (k *Kubernetes) UpdateDatabaseClusterBackup(ctx context.Context, namespace string, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
-	return k.client.UpdateDatabaseClusterBackup(ctx, namespace, backup)
+func (k *Kubernetes) UpdateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
+	return k.client.UpdateDatabaseClusterBackup(ctx, backup)
 }
