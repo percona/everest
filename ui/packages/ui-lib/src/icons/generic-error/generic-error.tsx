@@ -12,7 +12,7 @@ const GenericErrorIcon = ({ w, h }: GenericErrorProps) => {
       <path
         d="M132.876 263.377C204.949 263.377 263.377 204.949 263.377 132.876C263.377 60.8022 204.949 2.375 132.876 2.375C60.8022 2.375 2.375 60.8022 2.375 132.876C2.375 204.949 60.8022 263.377 132.876 263.377Z"
         stroke="#0E5FB5"
-        stroke-width="3"
+        strokeWidth="3"
         stroke-miterlimit="10"
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -20,7 +20,7 @@ const GenericErrorIcon = ({ w, h }: GenericErrorProps) => {
       <path
         d="M132.876 247.064C195.94 247.064 247.064 195.94 247.064 132.876C247.064 69.8114 195.94 18.6876 132.876 18.6876C69.8114 18.6876 18.6876 69.8114 18.6876 132.876C18.6876 195.94 69.8114 247.064 132.876 247.064Z"
         stroke="#0E5FB5"
-        stroke-width="2"
+        strokeWidth="2"
         stroke-miterlimit="10"
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -28,7 +28,7 @@ const GenericErrorIcon = ({ w, h }: GenericErrorProps) => {
       <path
         d="M219.67 230.639L241.58 252.548"
         stroke="#0E5FB5"
-        stroke-width="3"
+        strokeWidth="3"
         stroke-miterlimit="10"
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -36,7 +36,7 @@ const GenericErrorIcon = ({ w, h }: GenericErrorProps) => {
       <path
         d="M230.555 219.726L252.464 241.636"
         stroke="#0E5FB5"
-        stroke-width="3"
+        strokeWidth="3"
         stroke-miterlimit="10"
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -44,7 +44,7 @@ const GenericErrorIcon = ({ w, h }: GenericErrorProps) => {
       <path
         d="M263.377 230.751L321.877 289.252C326.198 293.581 328.625 299.448 328.625 305.564C328.625 311.681 326.198 317.548 321.877 321.877C317.548 326.198 311.681 328.625 305.564 328.625C299.448 328.625 293.581 326.198 289.252 321.877L230.751 263.292L263.377 230.751Z"
         stroke="#0E5FB5"
-        stroke-width="3"
+        strokeWidth="3"
         stroke-miterlimit="10"
         stroke-linecap="round"
         stroke-linejoin="round"
