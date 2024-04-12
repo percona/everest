@@ -45,7 +45,8 @@ export const storageLocationEditValues = (
   [StorageLocationsFields.namespaces]:
     selectedStorageLocationForEdit.allowedNamespaces || [],
   [StorageLocationsFields.verifyTLS]: selectedStorageLocationForEdit.verifyTLS,
-  [StorageLocationsFields.forcePathStyle]: selectedStorageLocationForEdit.forcePathStyle,
+  [StorageLocationsFields.forcePathStyle]:
+    selectedStorageLocationForEdit.forcePathStyle,
 });
 
 export const storageLocationsSchema = z.object({

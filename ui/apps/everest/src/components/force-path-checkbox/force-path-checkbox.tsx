@@ -4,7 +4,9 @@ import { CheckboxInput } from '@percona/ui-lib';
 import { ForcePathCheckboxProps } from './force-path-checkbox.types';
 import { Messages } from './force-path-checkbox.messages';
 
-const ForcePathCheckbox = ({ formControlLabelProps }: ForcePathCheckboxProps) => (
+const ForcePathCheckbox = ({
+  formControlLabelProps,
+}: ForcePathCheckboxProps) => (
   <FormControlLabel
     {...formControlLabelProps}
     label={
