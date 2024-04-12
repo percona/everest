@@ -61,8 +61,9 @@ func (e *EverestServer) DeleteDatabaseCluster(
 	namespace, name string,
 	params DeleteDatabaseClusterParams,
 ) error {
-	cleanup := pointer.Get(params.CleanupBackupStorage)
-	if cleanup {
+	cleanupStorage := pointer.Get(params.CleanupBackupStorage)
+	// If cleanup is required, we add a finalizer to all backup object for this cluster.
+	if cleanupStorage {
 		reqCtx := ctx.Request().Context()
 		backups, err := e.kubeClient.ListDatabaseClusterBackups(reqCtx, namespace, metav1.ListOptions{})
 		if err != nil {
