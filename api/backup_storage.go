@@ -51,6 +51,7 @@ func (e *EverestServer) ListBackupStorages(ctx echo.Context) error {
 			Url:               &s.Spec.EndpointURL,
 			AllowedNamespaces: s.Spec.AllowedNamespaces,
 			VerifyTLS:         s.Spec.VerifyTLS,
+			ForcePathStyle:    s.Spec.ForcePathStyle,
 		})
 	}
 
@@ -125,6 +126,7 @@ func (e *EverestServer) CreateBackupStorage(ctx echo.Context) error { //nolint:f
 			CredentialsSecretName: params.Name,
 			AllowedNamespaces:     params.AllowedNamespaces,
 			VerifyTLS:             params.VerifyTLS,
+			ForcePathStyle:        params.ForcePathStyle,
 		},
 	}
 	if params.Url != nil {
@@ -156,6 +158,7 @@ func (e *EverestServer) CreateBackupStorage(ctx echo.Context) error { //nolint:f
 		Url:               params.Url,
 		AllowedNamespaces: params.AllowedNamespaces,
 		VerifyTLS:         params.VerifyTLS,
+		ForcePathStyle:    params.ForcePathStyle,
 	}
 
 	return ctx.JSON(http.StatusOK, result)
@@ -232,6 +235,7 @@ func (e *EverestServer) GetBackupStorage(ctx echo.Context, backupStorageName str
 		Url:               &s.Spec.EndpointURL,
 		AllowedNamespaces: s.Spec.AllowedNamespaces,
 		VerifyTLS:         s.Spec.VerifyTLS,
+		ForcePathStyle:    s.Spec.ForcePathStyle,
 	})
 }
 
@@ -310,6 +314,9 @@ func (e *EverestServer) UpdateBackupStorage(ctx echo.Context, backupStorageName 
 	if params.VerifyTLS != nil {
 		bs.Spec.VerifyTLS = params.VerifyTLS
 	}
+	if params.ForcePathStyle != nil {
+		bs.Spec.ForcePathStyle = params.ForcePathStyle
+	}
 
 	err = e.kubeClient.UpdateBackupStorage(c, bs)
 	if err != nil {
@@ -327,6 +334,7 @@ func (e *EverestServer) UpdateBackupStorage(ctx echo.Context, backupStorageName 
 		Url:               &bs.Spec.EndpointURL,
 		AllowedNamespaces: bs.Spec.AllowedNamespaces,
 		VerifyTLS:         bs.Spec.VerifyTLS,
+		ForcePathStyle:    bs.Spec.ForcePathStyle,
 	}
 
 	return ctx.JSON(http.StatusOK, result)
