@@ -185,17 +185,15 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	if err := o.provisionDBNamespaces(ctx, recVer); err != nil {
+	if recVer.EverestOperator == nil {
+		// If there's no recommended version of the operator, install the same version as Everest.
+		recVer.EverestOperator = latest
+	}
+
+	if err := o.provisionEverestComponents(ctx, latest, recVer); err != nil {
 		return err
 	}
 
-	if err := o.provisionEverestOperator(ctx, recVer); err != nil {
-		return err
-	}
-
-	if err := o.provisionEverest(ctx, latest); err != nil {
-		return err
-	}
 	_, err = o.kubeClient.GetSecret(ctx, common.SystemNamespace, token.SecretName)
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return errors.Join(err, errors.New("could not get the everest token secret"))
@@ -268,6 +266,22 @@ func (o *Install) latestVersion(meta *versionpb.MetadataResponse) (*goversion.Ve
 	}
 
 	return latest, latestMeta, nil
+}
+
+func (o *Install) provisionEverestComponents(ctx context.Context, latest *goversion.Version, recVer *version.RecommendedVersion) error {
+	if err := o.provisionDBNamespaces(ctx, recVer); err != nil {
+		return err
+	}
+
+	if err := o.provisionEverestOperator(ctx, recVer); err != nil {
+		return err
+	}
+
+	if err := o.provisionEverest(ctx, latest); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (o *Install) installVMOperator(ctx context.Context) error {
@@ -568,6 +582,10 @@ func (o *Install) installOperator(ctx context.Context, channel, operatorName, na
 			disableTelemetry = "false"
 		}
 
+		startingCSV := ""
+		if version != "" {
+			startingCSV = fmt.Sprintf("%s.v%s", operatorName, version)
+		}
 		params := kubernetes.InstallOperatorRequest{
 			Namespace:              namespace,
 			Name:                   operatorName,
@@ -576,7 +594,7 @@ func (o *Install) installOperator(ctx context.Context, channel, operatorName, na
 			CatalogSourceNamespace: kubernetes.OLMNamespace,
 			Channel:                channel,
 			InstallPlanApproval:    v1alpha1.ApprovalManual,
-			StartingCSV:            version,
+			StartingCSV:            startingCSV,
 			SubscriptionConfig: &v1alpha1.SubscriptionConfig{
 				Env: []corev1.EnvVar{
 					{
