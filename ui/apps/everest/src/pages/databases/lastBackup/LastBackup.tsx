@@ -4,6 +4,7 @@ import { IconButton, Tooltip, Typography } from '@mui/material';
 import { Messages } from '../dbClusterView.messages';
 import { getLastBackupTimeDiff } from '../DbClusterView.utils';
 import { WarningIcon } from '@percona/ui-lib';
+import { BackupStatus } from 'shared-types/backups.types';
 
 export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
   const { data: backups = [] } = useDbBackups(dbName!, namespace, {
@@ -13,14 +14,19 @@ export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
 
   const { data: pitrData } = useDbClusterPitr(dbName, namespace);
 
-  const lastBackup = backups[backups.length - 1];
-  const lastBackupDate = lastBackup?.created || new Date();
+  const finishedBackups = backups.filter(
+    (backup) => backup.completed && backup.state === BackupStatus.OK
+  );
+  const lastBackup = finishedBackups[finishedBackups.length - 1];
+  const lastBackupDate = lastBackup?.completed || new Date();
 
   return (
     <>
-      {backups.length ? (
+      {finishedBackups.length ? (
         <>
-          <Typography>{getLastBackupTimeDiff(lastBackupDate)}</Typography>
+          <Typography variant="body2">
+            {getLastBackupTimeDiff(lastBackupDate)}
+          </Typography>
           {pitrData?.gaps && (
             <Tooltip
               title={Messages.lastBackup.warningTooltip}
@@ -34,7 +40,7 @@ export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
           )}
         </>
       ) : (
-        <Typography>{Messages.lastBackup.inactive}</Typography>
+        <Typography variant="body2">{Messages.lastBackup.inactive}</Typography>
       )}
     </>
   );
