@@ -7,9 +7,9 @@ import { useDbEngines } from 'hooks/api/db-engines';
 import { NoMatch } from 'pages/404/NoMatch';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Typography } from '@mui/material';
+import { useEffect } from 'react';
 
 const NamespaceDetails = () => {
-  const methods = useForm();
   const navigate = useNavigate();
   const { namespace: namespaceName = '' } = useParams();
   const { data: namespace, isLoading: loadingNamespace } = useNamespace(
@@ -21,6 +21,18 @@ const NamespaceDetails = () => {
   const { data: dbEngines = [] } = useDbEngines(namespaceName, {
     enabled: !!namespace,
   });
+
+  const methods = useForm({
+    defaultValues: {
+      dbType: dbEngineToDbType(dbEngines[0]?.type),
+    },
+  });
+
+  useEffect(() => {
+    if (dbEngines.length) {
+      methods.setValue('dbType', dbEngineToDbType(dbEngines[0]?.type));
+    }
+  }, [dbEngines, methods]);
 
   if (loadingNamespace) {
     return null;
