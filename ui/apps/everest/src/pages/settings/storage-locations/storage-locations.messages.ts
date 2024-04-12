@@ -27,7 +27,7 @@ export const Messages = {
 database clusters using this storage will no longer be able to execute
 their scheduled backup jobs.`,
   },
-  s3: 'Amazon S3',
+  s3: 'S3 Compatible',
   gcs: 'Google Cloud Storage',
   azure: 'Azure Cloud Storage',
   name: 'Name',
