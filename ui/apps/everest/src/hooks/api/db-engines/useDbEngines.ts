@@ -21,6 +21,7 @@ import {
   GetDbEnginesPayload,
 } from 'shared-types/dbEngines.types';
 import { getDbEnginesFn } from 'api/dbEngineApi';
+import { PerconaQueryOptions } from 'shared-types/query.types';
 
 const DB_TYPE_ORDER_MAP: Record<DbEngineType, number> = {
   // Lower is more important
@@ -84,11 +85,15 @@ export const dbEnginesQuerySelect = ({
         DB_TYPE_ORDER_MAP[dbTypeA] - DB_TYPE_ORDER_MAP[dbTypeB]
     );
 
-export const useDbEngines = (namespace: string) =>
+export const useDbEngines = (
+  namespace: string,
+  options?: PerconaQueryOptions<GetDbEnginesPayload, unknown, DbEngine[]>
+) =>
   useQuery<GetDbEnginesPayload, unknown, DbEngine[]>({
     queryKey: [`dbEngines_${namespace}`],
     queryFn: () => getDbEnginesFn(namespace),
     select: dbEnginesQuerySelect,
     enabled: !!namespace,
     retry: 2,
+    ...options,
   });

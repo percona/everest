@@ -10,10 +10,12 @@ const ToggleButtonGroupInput = ({
   label,
   controllerProps,
   labelProps,
-  toggleButtonGroupProps,
+  toggleButtonGroupProps = {},
   children,
 }: ToggleButtonGroupInputProps) => {
   const { control: contextControl } = useFormContext();
+  const { sx: toggleButtonGroupSxProp, ...toggleButtonGroupRestProps } =
+    toggleButtonGroupProps;
   const content = (
     <Controller
       name={name}
@@ -24,6 +26,12 @@ const ToggleButtonGroupInput = ({
           fullWidth
           exclusive
           data-testid={`toggle-button-group-input-${kebabize(name)}`}
+          sx={{
+            '& > button': {
+              flex: '1 1 0px',
+            },
+            ...toggleButtonGroupSxProp,
+          }}
           onChange={(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             event: React.MouseEvent<HTMLElement> | any,
@@ -35,7 +43,7 @@ const ToggleButtonGroupInput = ({
               field.onChange(event);
             }
           }}
-          {...toggleButtonGroupProps}
+          {...toggleButtonGroupRestProps}
         >
           {children}
         </ToggleButtonGroup>

@@ -19,6 +19,7 @@ import { getNamespacesFn } from 'api/namespaces';
 import { dbEnginesQuerySelect } from '../db-engines/useDbEngines';
 import { getDbEnginesFn } from 'api/dbEngineApi';
 import { DbEngine, GetDbEnginesPayload } from 'shared-types/dbEngines.types';
+import { PerconaQueryOptions } from 'shared-types/query.types';
 
 export const NAMESPACES_QUERY_KEY = 'namespace';
 
@@ -51,9 +52,10 @@ export const useDBEnginesForNamespaces = () => {
 
 export const useNamespace = (
   namespace: string,
-  options?: Omit<
-    UseQueryOptions<GetNamespacesPayload, unknown, string | undefined>,
-    'queryKey'
+  options?: PerconaQueryOptions<
+    GetNamespacesPayload,
+    unknown,
+    string | undefined
   >
 ) =>
   useQuery<GetNamespacesPayload, unknown, string | undefined>({
