@@ -48,3 +48,17 @@ export const useDBEnginesForNamespaces = () => {
   }));
   return results;
 };
+
+export const useNamespace = (
+  namespace: string,
+  options?: Omit<
+    UseQueryOptions<GetNamespacesPayload, unknown, string | undefined>,
+    'queryKey'
+  >
+) =>
+  useQuery<GetNamespacesPayload, unknown, string | undefined>({
+    queryKey: [NAMESPACES_QUERY_KEY],
+    queryFn: getNamespacesFn,
+    select: (data) => data.find((item) => item === namespace),
+    ...options,
+  });
