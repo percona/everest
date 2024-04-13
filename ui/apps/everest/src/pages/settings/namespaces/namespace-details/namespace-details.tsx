@@ -8,6 +8,7 @@ import { NoMatch } from 'pages/404/NoMatch';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Typography } from '@mui/material';
 import { useEffect } from 'react';
+import UpgradeHeader from './upgrade-header';
 
 const NamespaceDetails = () => {
   const navigate = useNavigate();
@@ -69,6 +70,7 @@ const NamespaceDetails = () => {
           ))}
         </ToggleButtonGroupInput>
       </FormProvider>
+      <UpgradeHeader status="upgrade-available" mt={2} />
     </>
   );
 };
