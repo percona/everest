@@ -9,6 +9,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { Typography } from '@mui/material';
 import { useEffect } from 'react';
 import UpgradeHeader from './upgrade-header';
+import ClusterStatusTable from './cluster-status-table';
 
 const NamespaceDetails = () => {
   const navigate = useNavigate();
@@ -71,6 +72,10 @@ const NamespaceDetails = () => {
         </ToggleButtonGroupInput>
       </FormProvider>
       <UpgradeHeader status="upgrade-available" mt={2} />
+      <ClusterStatusTable
+        namespace={namespaceName}
+        dbType={methods.getValues('dbType')}
+      />
     </>
   );
 };

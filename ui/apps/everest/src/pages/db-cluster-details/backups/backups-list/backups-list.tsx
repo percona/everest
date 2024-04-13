@@ -20,7 +20,7 @@ import { Box, MenuItem, Tooltip } from '@mui/material';
 import { MenuButton, Table } from '@percona/ui-lib';
 import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
-import { StatusField } from 'components/status-field/status-field';
+import StatusField from 'components/status-field';
 import { DATE_FORMAT } from 'consts';
 import { format } from 'date-fns';
 import {
