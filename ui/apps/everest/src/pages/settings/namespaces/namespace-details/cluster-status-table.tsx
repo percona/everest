@@ -6,7 +6,7 @@ import { DB_CLUSTER_STATUS_TO_BASE_STATUS } from 'pages/databases/DbClusterView.
 import { beautifyDbClusterStatus } from 'pages/databases/DbClusterView.utils';
 import { ClusterStatusTableProps } from './types';
 
-const ClusterStatusTable = ({ namespace, dbType }: ClusterStatusTableProps) => {
+const ClusterStatusTable = ({ namespace }: ClusterStatusTableProps) => {
   const columns = useMemo(
     () => [
       {
@@ -51,12 +51,14 @@ const ClusterStatusTable = ({ namespace, dbType }: ClusterStatusTableProps) => {
   );
 
   return (
-    <Table
-      tableName={`${namespace}-upgrade-pending-actions`}
-      noDataMessage="No pending actions"
-      columns={columns}
-      data={data}
-    />
+    <>
+      <Table
+        tableName={`${namespace}-upgrade-pending-actions`}
+        noDataMessage="No pending actions"
+        columns={columns}
+        data={data}
+      />
+    </>
   );
 };
 

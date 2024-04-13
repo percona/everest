@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { DbToggleCard, ToggleButtonGroupInput } from '@percona/ui-lib';
 import { dbEngineToDbType } from '@percona/utils';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -7,12 +8,13 @@ import { useDbEngines } from 'hooks/api/db-engines';
 import { NoMatch } from 'pages/404/NoMatch';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Typography } from '@mui/material';
-import { useEffect } from 'react';
 import UpgradeHeader from './upgrade-header';
 import ClusterStatusTable from './cluster-status-table';
+import UpgradeModal from './upgrade-modal';
 
 const NamespaceDetails = () => {
   const navigate = useNavigate();
+  const [modalOpen, setModalOpen] = useState(false);
   const { namespace: namespaceName = '' } = useParams();
   const { data: namespace, isLoading: loadingNamespace } = useNamespace(
     namespaceName,
@@ -71,10 +73,21 @@ const NamespaceDetails = () => {
           ))}
         </ToggleButtonGroupInput>
       </FormProvider>
-      <UpgradeHeader status="upgrade-available" mt={2} />
-      <ClusterStatusTable
-        namespace={namespaceName}
+      <UpgradeHeader
+        status="upgrade-available"
+        mt={2}
+        onUpgrade={() => setModalOpen(true)}
+      />
+      <ClusterStatusTable namespace={namespaceName} />
+      <UpgradeModal
+        // TODO get values from API
+        newVersion="5.0.0"
+        supportedVersions={['1.0.0', '2.0.0']}
+        namespace={namespace}
         dbType={methods.getValues('dbType')}
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onConfirm={() => {}}
       />
     </>
   );
