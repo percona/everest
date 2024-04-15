@@ -1297,6 +1297,9 @@ components:
         verifyTLS:
           default: true
           type: boolean
+        forcePathStyle:
+          default: false
+          type: boolean
       required:
         - name
         - bucketName
@@ -1323,6 +1326,8 @@ components:
         region:
           type: string
         verifyTLS:
+          type: boolean
+        forcePathStyle:
           type: boolean
         allowedNamespaces:
           type: array
@@ -1352,6 +1357,9 @@ components:
           x-go-type-skip-optional-pointer: true
         verifyTLS:
           default: true
+          type: boolean
+        forcePathStyle:
+          default: false
           type: boolean
         allowedNamespaces:
           type: array

@@ -153,7 +153,7 @@ func validateURL(urlStr string) bool {
 func validateStorageAccessByCreate(ctx context.Context, params CreateBackupStorageParams, l *zap.SugaredLogger) error {
 	switch params.Type {
 	case CreateBackupStorageParamsTypeS3:
-		return s3Access(l, params.Url, params.AccessKey, params.SecretKey, params.BucketName, params.Region, pointer.Get(params.VerifyTLS))
+		return s3Access(l, params.Url, params.AccessKey, params.SecretKey, params.BucketName, params.Region, pointer.Get(params.VerifyTLS), pointer.Get(params.ForcePathStyle))
 	case CreateBackupStorageParamsTypeAzure:
 		return azureAccess(ctx, l, params.AccessKey, params.SecretKey, params.BucketName)
 	default:
@@ -167,6 +167,7 @@ func s3Access(
 	endpoint *string,
 	accessKey, secretKey, bucketName, region string,
 	verifyTLS bool,
+	forcePathStyle bool,
 ) error {
 	if config.Debug {
 		return nil
@@ -182,10 +183,11 @@ func s3Access(
 	}
 	// Create a new session with the provided credentials
 	sess, err := session.NewSession(&aws.Config{
-		Endpoint:    endpoint,
-		Region:      aws.String(region),
-		Credentials: credentials.NewStaticCredentials(accessKey, secretKey, ""),
-		HTTPClient:  c,
+		Endpoint:         endpoint,
+		Region:           aws.String(region),
+		Credentials:      credentials.NewStaticCredentials(accessKey, secretKey, ""),
+		HTTPClient:       c,
+		S3ForcePathStyle: aws.Bool(forcePathStyle),
 	})
 	if err != nil {
 		l.Error(err)
@@ -302,6 +304,7 @@ func validateBackupStorageAccess(
 	url *string,
 	bucketName, region, accessKey, secretKey string,
 	verifyTLS bool,
+	forcePathStyle bool,
 	l *zap.SugaredLogger,
 ) error {
 	switch sType {
@@ -309,7 +312,7 @@ func validateBackupStorageAccess(
 		if region == "" {
 			return errors.New("region is required when using S3 storage type")
 		}
-		if err := s3Access(l, url, accessKey, secretKey, bucketName, region, verifyTLS); err != nil {
+		if err := s3Access(l, url, accessKey, secretKey, bucketName, region, verifyTLS, forcePathStyle); err != nil {
 			return err
 		}
 	case string(BackupStorageTypeAzure):
@@ -369,7 +372,7 @@ func validateUpdateBackupStorageRequest(ctx echo.Context, bs *everestv1alpha1.Ba
 		region = *params.Region
 	}
 
-	err := validateBackupStorageAccess(ctx, string(bs.Spec.Type), url, bucketName, region, accessKey, secretKey, pointer.Get(params.VerifyTLS), l)
+	err := validateBackupStorageAccess(ctx, string(bs.Spec.Type), url, bucketName, region, accessKey, secretKey, pointer.Get(params.VerifyTLS), pointer.Get(params.ForcePathStyle), l)
 	if err != nil {
 		return nil, err
 	}

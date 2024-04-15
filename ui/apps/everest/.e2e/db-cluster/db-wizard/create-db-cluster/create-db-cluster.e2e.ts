@@ -227,6 +227,7 @@ test.describe('DB Cluster creation', () => {
     //   '192.168.1.0',
     // ]);
     expect(addedCluster?.spec.engine.storage.class).toBe(storageClasses[0]);
+    expect(addedCluster?.spec.backup.schedules[0].retentionCopies).toBe(1);
   });
 
   test('PITR should be disabled when backups toggle was not checked', async ({
