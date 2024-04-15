@@ -24,7 +24,7 @@ Provisioning kubernetes cluster
 
 ```
     make build-cli
-    ./bin/everestctl install --namespaces everest --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard
+    ./bin/everestctl install --version 0.0.0 --version-metadata-url https://check-dev.percona.com --namespaces everest --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard
 ```
 Using these commands you'll build the latest dev version of Everest and will have installed the following operators
 
