@@ -11,8 +11,16 @@ export const backupScheduleFormValuesToDbClusterPayload = (
   dbCluster: DbCluster,
   mode: 'edit' | 'new'
 ): DbCluster => {
-  const { selectedTime, minute, hour, amPm, onDay, weekDay, scheduleName } =
-    dbPayload;
+  const {
+    selectedTime,
+    minute,
+    hour,
+    amPm,
+    onDay,
+    weekDay,
+    scheduleName,
+    retentionCopies,
+  } = dbPayload;
   const backupSchedule = getCronExpressionFromFormValues({
     selectedTime,
     minute,
@@ -27,6 +35,7 @@ export const backupScheduleFormValuesToDbClusterPayload = (
       ...(dbCluster.spec.backup?.schedules ?? []),
       {
         enabled: true,
+        retentionCopies: parseInt(retentionCopies, 10),
         name: scheduleName,
         backupStorageName:
           typeof dbPayload.storageLocation === 'string'
@@ -48,6 +57,7 @@ export const backupScheduleFormValuesToDbClusterPayload = (
       newSchedulesArray[editedScheduleIndex] = {
         enabled: true,
         name: scheduleName,
+        retentionCopies: parseInt(retentionCopies, 10),
         backupStorageName:
           typeof dbPayload.storageLocation === 'string'
             ? dbPayload.storageLocation

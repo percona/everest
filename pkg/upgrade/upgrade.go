@@ -186,10 +186,12 @@ func (u *Upgrade) versionToUpgradeTo(
 		return nil, nil, err
 	}
 
-	var (
-		upgradeTo *goversion.Version
-		meta      *version.MetadataVersion
-	)
+	upgradeTo, meta := u.findNextMinorVersion(req, currentEverestVersion)
+	if upgradeTo == nil {
+		upgradeTo = currentEverestVersion
+	}
+
+	// Find the latest patch version for the given minor version.
 	for _, v := range req.GetVersions() {
 		ver, err := goversion.NewVersion(v.GetVersion())
 		if err != nil {
@@ -198,12 +200,6 @@ func (u *Upgrade) versionToUpgradeTo(
 		}
 
 		if currentEverestVersion.GreaterThanOrEqual(ver) {
-			continue
-		}
-
-		if upgradeTo == nil {
-			upgradeTo = ver
-			meta = v
 			continue
 		}
 
@@ -218,6 +214,45 @@ func (u *Upgrade) versionToUpgradeTo(
 			meta = v
 			continue
 		}
+	}
+
+	if upgradeTo == nil || meta == nil {
+		return nil, nil, ErrNoUpdateAvailable
+	}
+
+	return upgradeTo, meta, nil
+}
+
+func (u *Upgrade) findNextMinorVersion(
+	req *version.MetadataResponse, currentEverestVersion *goversion.Version,
+) (*goversion.Version, *version.MetadataVersion) {
+	var (
+		upgradeTo *goversion.Version
+		meta      *version.MetadataVersion
+	)
+
+	for _, v := range req.GetVersions() {
+		ver, err := goversion.NewVersion(v.GetVersion())
+		if err != nil {
+			u.l.Debugf("Could not parse version %s. Error: %s", v.GetVersion(), err)
+			continue
+		}
+
+		if currentEverestVersion.GreaterThanOrEqual(ver) {
+			continue
+		}
+
+		verSeg := ver.Segments()
+		evSeg := currentEverestVersion.Segments()
+		if len(verSeg) >= 3 && len(evSeg) >= 3 && verSeg[0] == evSeg[0] && verSeg[1] == evSeg[1] {
+			continue
+		}
+
+		if upgradeTo == nil {
+			upgradeTo = ver
+			meta = v
+			continue
+		}
 
 		if upgradeTo.GreaterThan(ver) {
 			upgradeTo = ver
@@ -226,11 +261,7 @@ func (u *Upgrade) versionToUpgradeTo(
 		}
 	}
 
-	if upgradeTo == nil {
-		return nil, nil, ErrNoUpdateAvailable
-	}
-
-	return upgradeTo, meta, nil
+	return upgradeTo, meta
 }
 
 func (u *Upgrade) verifyRequirements(ctx context.Context, meta *version.MetadataVersion) error {

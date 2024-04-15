@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AutoCompleteInput, TextInput } from '@percona/ui-lib';
+import { AutoCompleteInput, LabeledContent, TextInput } from '@percona/ui-lib';
 import { BackupStorage } from 'shared-types/backupStorages.types.ts';
 import { Schedule } from 'shared-types/dbCluster.types.ts';
 import LogicalPhysicalRadioGroup from 'components/logical-physical-radio-group';
@@ -48,8 +48,9 @@ export const ScheduleForm = ({
   return (
     <>
       {showTypeRadio && <LogicalPhysicalRadioGroup />}
-      <Typography variant="sectionHeading">{Messages.backupDetails}</Typography>
-      {/* TODO change Typography to Labeled content*/}
+      <Typography variant="sectionHeading" mb={1}>
+        {Messages.backupDetails}
+      </Typography>
       {allowScheduleSelection ? (
         <AutoCompleteInput
           name={ScheduleFormFields.scheduleName}
@@ -72,7 +73,9 @@ export const ScheduleForm = ({
 
       <AutoCompleteAutoFill
         name={ScheduleFormFields.storageLocation}
-        textFieldProps={{ label: Messages.storageLocation.label }}
+        textFieldProps={{
+          label: Messages.storageLocation.label,
+        }}
         loading={storageLocationFetching}
         options={storageLocationOptions}
         autoCompleteProps={{
@@ -84,10 +87,18 @@ export const ScheduleForm = ({
         enableFillFirst={autoFillLocation}
         disabled={disableStorageSelection}
       />
-      <Typography variant="sectionHeading" sx={{ mt: 2, mb: -1 }}>
-        {Messages.repeats}
-      </Typography>
-      <TimeSelection showInfoAlert />
+      <TextInput
+        name={ScheduleFormFields.retentionCopies}
+        textFieldProps={{
+          type: 'number',
+          label: Messages.retentionCopies.label,
+          helperText: Messages.retentionCopies.helperText,
+        }}
+        isRequired
+      />
+      <LabeledContent label={Messages.repeats}>
+        <TimeSelection showInfoAlert />
+      </LabeledContent>
     </>
   );
 };

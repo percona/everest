@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import { SubmitHandler } from 'react-hook-form';
 import { FormDialog } from 'components/form-dialog/form-dialog';
+import TlsAlert from 'components/tls-alert';
 import { BackupStorage } from 'shared-types/backupStorages.types';
 import { Messages } from '../storage-locations.messages';
 import {
+  StorageLocationsFields,
   storageLocationDefaultValues,
   storageLocationEditValues,
   storageLocationsSchema,
@@ -54,7 +56,14 @@ export const CreateEditModalStorage = ({
       schema={schema}
       defaultValues={defaultValues}
     >
-      <CreateEditStorageForm isEditMode={isEditMode} />
+      {({ getValues }) => (
+        <>
+          <CreateEditStorageForm isEditMode={isEditMode} />
+          {!getValues(StorageLocationsFields.verifyTLS) && (
+            <TlsAlert sx={{ mt: 2 }} />
+          )}
+        </>
+      )}
     </FormDialog>
   );
 };
