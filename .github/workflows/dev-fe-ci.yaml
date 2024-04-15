@@ -166,6 +166,7 @@ jobs:
 
       - name: Adding psmdb namespace
         run: |
+          make build-cli
           ./bin/everestctl install -v \
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
@@ -175,19 +176,9 @@ jobs:
           --skip-wizard \
           --namespaces psmdb-only
 
-      - name: Adding pg namespace
-        run: |
-          ./bin/everestctl install -v \
-          --version 0.0.0 \
-          --version-metadata-url https://check-dev.percona.com \
-          --operator.mongodb=false \
-          --operator.postgresql \
-          --operator.xtradb-cluster=false \
-          --skip-wizard \
-          --namespaces pg-only
-
       - name: Adding pxc namespace
         run: |
+          make build-cli
           ./bin/everestctl install -v \
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
@@ -196,6 +187,18 @@ jobs:
           --operator.xtradb-cluster \
           --skip-wizard \
           --namespaces pxc-only
+
+      - name: Adding pg namespace
+        run: |
+          make build-cli
+          ./bin/everestctl install -v \
+          --version 0.0.0 \
+          --version-metadata-url https://check-dev.percona.com \
+          --operator.mongodb=false \
+          --operator.postgresql \
+          --operator.xtradb-cluster=false \
+          --skip-wizard \
+          --namespaces pg-only
 
       - name: Change token
         run: |
