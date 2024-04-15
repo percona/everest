@@ -175,17 +175,6 @@ jobs:
           --skip-wizard \
           --namespaces psmdb-only
 
-      - name: Adding pxc namespace
-        run: |
-          ./bin/everestctl install \
-          --version 0.0.0 \
-          --version-metadata-url https://check-dev.percona.com \
-          --operator.mongodb=false \
-          --operator.postgresql=false \
-          --operator.xtradb-cluster \
-          --skip-wizard \
-          --namespaces pxc-only
-
       - name: Adding pg namespace
         run: |
           ./bin/everestctl install \
@@ -196,6 +185,17 @@ jobs:
           --operator.xtradb-cluster=false \
           --skip-wizard \
           --namespaces pg-only
+
+      - name: Adding pxc namespace
+        run: |
+          ./bin/everestctl install \
+          --version 0.0.0 \
+          --version-metadata-url https://check-dev.percona.com \
+          --operator.mongodb=false \
+          --operator.postgresql=false \
+          --operator.xtradb-cluster \
+          --skip-wizard \
+          --namespaces pxc-only
 
       - name: Change token
         run: |
