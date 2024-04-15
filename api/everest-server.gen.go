@@ -1434,7 +1434,7 @@ type ServerInterface interface {
 	// (PUT /namespaces/{namespace}/database-engines/{name})
 	UpdateDatabaseEngine(ctx echo.Context, namespace string, name string) error
 	// Update the specified database engine
-	// (PUT /namespaces/{namespace}/database-engines/{name}/upgrade-operator)
+	// (PUT /namespaces/{namespace}/database-engines/{name}/operator/version)
 	UpgradeDatabaseEngineOperator(ctx echo.Context, namespace string, name string) error
 	// Get the capacity and available resources of a kubernetes cluster
 	// (GET /resources)
@@ -2115,7 +2115,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/namespaces/:namespace/database-engines", wrapper.ListDatabaseEngines)
 	router.GET(baseURL+"/namespaces/:namespace/database-engines/:name", wrapper.GetDatabaseEngine)
 	router.PUT(baseURL+"/namespaces/:namespace/database-engines/:name", wrapper.UpdateDatabaseEngine)
-	router.PUT(baseURL+"/namespaces/:namespace/database-engines/:name/upgrade-operator", wrapper.UpgradeDatabaseEngineOperator)
+	router.PUT(baseURL+"/namespaces/:namespace/database-engines/:name/operator/version", wrapper.UpgradeDatabaseEngineOperator)
 	router.GET(baseURL+"/resources", wrapper.GetKubernetesClusterResources)
 	router.GET(baseURL+"/version", wrapper.VersionInfo)
 }
@@ -2257,11 +2257,11 @@ var swaggerSpec = []string{
 	"Q352a8BzqsRa2T7jlKkJZZNLmhEkSOqVkb1b445h/JnuxCDrj0DWYaYGKd9ayu8qSbsV/mrm//buu6+l",
 	"h/9+XpYdpP2xJNcNHvw9evAV6dlJ3glhc8p6iHR5b77vkvt0lRy/8mX+81NOzFgH7r87969ktibbG7Jv",
 	"xu6V1eBNo1RTwyov9ZUr8RhMlh/OY7E1lrqDhO0ydPRc0ClcHStEwYOA1slKfX3oKxeX+1vX6ZaUh72s",
-	"M0j4To/l2kDIN7ege0U+FzghE0MQDuBQh6aAgqs7p7kPo4RIzXHuXtuA/oCq6vzy2nVgUCT3I5COwJb6",
-	"3UcQnpuuAEJh2MPdO9ucbV7OWS81M2iDe9QGxUqpMsqhvGh57XUYOMcxVUu4/KD0530Fd7oO47xy3/Pn",
-	"uxOjbHUwTdtfjLE9X7QvxrgpL0rvZMbq9bfmRmtnV+CK3xa/2QvW7/vGFXfH+/ZnRa4bGNRsZsTYwUKk",
-	"o8PR3s3BSBsMS80myXStS7XQGtvBzfbW3VIeUGUnkTVZek7alq+7MqdlAlU1seqtqi1xp0atzrm8Q19R",
-	"BZUO99lvubtLK2XuSrgRd2jSBm28aN5+ZGuuX3706d2n/w0AAP//xNCSet0IAQA=",
+	"M0j4To/l2kDIN7ege4YQXOzdlJfWdmiKucDJms5p7sMoIVJznLvXNqA/oKo6v7y2HRkUyT0JpCOwpX73",
+	"EYTnpiuAUBRQ2N0725xtXs5ZLzUzaIN71AbFSqkyyqG8aHntdRg4xzFVS7j8oPTnfQV3ug7jvHLf8+e7",
+	"E6NsdTBN21+MsT1ftC/GqNicTmasXn9rbrR2dgWu+G3xm71g/b5vXHF3vG9/VuS6gUHNZkaMHSxEOjoc",
+	"7d0cjLTBsNRskkzXulQLrbEd3Gxv3S3lAVV2ElmTpeekbfm6K3NaJlBVE6veqtoSd2rU6pzLO/QVVVDp",
+	"cJ/9lru7tFLmroQbcYcmbdDGi+btR7bm+uVHn959+t8AAAD//wAgi5PdCAEA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

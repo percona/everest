@@ -579,7 +579,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-engines/{name}/upgrade-operator':
+  '/namespaces/{namespace}/database-engines/{name}/operator/version':
     put:
       tags:
         - upgradeDatabaseEngineOperator
