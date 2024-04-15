@@ -18,6 +18,6 @@ export const ScheduleFormDialogContext =
       namespace: '',
       schedules: [],
       activeStorage: '',
-      dbType: '' as DbEngineType,
+      dbEngine: '' as DbEngineType,
     },
   });

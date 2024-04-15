@@ -37,7 +37,7 @@ export const getSchedulesPayload = ({
     weekDay,
     scheduleName,
     storageLocation,
-      retentionCopies,
+    retentionCopies,
   } = formData;
   const backupSchedule = getCronExpressionFromFormValues({
     selectedTime,

@@ -20,9 +20,7 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
-import { getCronExpressionFromFormValues } from 'components/time-selection/time-selection.utils.ts';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
-import { generateShortUID } from 'pages/database-form/database-form-body/steps/first/utils';
 import {
   ClusterCredentials,
   DataSource,
@@ -41,7 +39,6 @@ const formValuesToPayloadMapping = (
   dbPayload: DbWizardType,
   backupDataSource?: DataSource
 ): DbCluster => {
-
   const dbClusterPayload: DbCluster = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',

@@ -18,31 +18,38 @@ import { STORAGE_NAMES } from '../../../../constants';
 export const backupsStepCheck = async (page: Page) => {
   await expect(
     page.getByText(
-      'Specify how often you want to run backup jobs for your database.'
+      'Create a task that takes regular backups of this database, according to the schedule that you specify.'
     )
   ).toBeVisible();
 
-  const scheduleNameField = await page.getByTestId('text-input-schedule-name');
-  const storageLocationField = await page.getByTestId(
-    'text-input-storage-location'
-  );
-  const retentionCopiesField = await page.getByTestId(
-    'text-input-retention-copies'
-  );
+  const enabledBackupsCheckbox = page
+    .getByTestId('switch-input-backups-enabled')
+    .getByRole('checkbox');
+  await expect(enabledBackupsCheckbox).toBeChecked();
 
-  expect(scheduleNameField).not.toBeEmpty();
-  expect(retentionCopiesField).not.toBeEmpty();
+  await expect(
+    page.getByText('You don’t have any backup schedules yet.')
+  ).toBeVisible();
+  await page.getByTestId('create-schedule').click();
 
-  expect(storageLocationField).not.toBeEmpty();
+  await expect(
+    page.getByTestId('new-scheduled-backup-form-dialog')
+  ).toBeVisible();
+  await expect(page.getByTestId('radio-option-logical')).toBeChecked();
+
+  await expect(page.getByTestId('text-input-schedule-name')).not.toBeEmpty();
+  const storageLocationField = page.getByTestId('text-input-storage-location');
+  await expect(storageLocationField).not.toBeEmpty();
   await storageLocationField.click();
 
   const storageOptions = page.getByRole('option');
   const testStorage = storageOptions.filter({ hasText: STORAGE_NAMES[1] });
-  // TODO should be checked using github pipelines when all the tests will work
-  // expect(storageOptions.filter({ hasText: 'ui-dev' })).toBeVisible();
   await testStorage.click();
 
+  const retentionCopiesField = page.getByTestId('text-input-retention-copies');
+  await expect(retentionCopiesField).not.toBeEmpty();
   await retentionCopiesField.fill('1');
+
   await page.getByTestId('select-selected-time-button').click();
   await page.getByTestId('month-option').click();
   await page.getByTestId('select-on-day-button').click();
@@ -53,4 +60,11 @@ export const backupsStepCheck = async (page: Page) => {
   await page.getByRole('option', { name: '05' }).click();
   await page.getByTestId('select-am-pm-button').click();
   await page.getByRole('option', { name: 'PM' }).click();
+
+  await page.getByTestId('form-dialog-create').click();
+
+  await expect(
+    page.getByTestId('editable-item').getByText('Monthly on day 10 at 5:05 PM')
+  ).toBeVisible();
+  await expect(page.getByText(STORAGE_NAMES[1])).toBeVisible();
 };

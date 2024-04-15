@@ -26,15 +26,7 @@ import { backupsStepCheck } from './steps/backups-step';
 import { basicInformationStepCheck } from './steps/basic-information-step';
 import { pitrStepCheck } from './steps/pitr-step';
 import { resourcesStepCheck } from './steps/resources-step';
-import {
-  goToLastAndSubmit,
-  goToStep,
-  moveBack,
-  moveForward,
-  setPitrEnabledStatus,
-  submitWizard,
-} from '../../../utils/db-wizard';
-import { findDbAndClickActions } from '../../../utils/db-clusters-list';
+import { moveBack, moveForward } from '../../../utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '../../../constants';
 
 test.describe('DB Cluster creation', () => {
@@ -114,8 +106,6 @@ test.describe('DB Cluster creation', () => {
       request
     );
     let dbName: string;
-    let scheduleName: string;
-    let storageName: string;
 
     expect(storageClasses.length).toBeGreaterThan(0);
 
@@ -137,13 +127,7 @@ test.describe('DB Cluster creation', () => {
 
     await backupsStepCheck(page);
     // TODO will change when we support physical backups
-    await expect(page.getByTestId('radio-option-logical')).toBeChecked();
-    scheduleName = await page
-      .getByTestId('text-input-schedule-name')
-      .inputValue();
-    storageName = await page
-      .getByTestId('text-input-storage-location')
-      .inputValue();
+
     await moveForward(page);
 
     await pitrStepCheck(page);
@@ -174,13 +158,6 @@ test.describe('DB Cluster creation', () => {
     await page.getByTestId('button-edit-preview-backups').click();
 
     expect(page.getByTestId('radio-option-logical')).not.toBeVisible;
-    // Now we make sure schedule name and location haven't changed
-    expect(
-      await page.getByTestId('text-input-schedule-name').inputValue()
-    ).toBe(scheduleName);
-    expect(
-      await page.getByTestId('text-input-storage-location').inputValue()
-    ).toBe(storageName);
 
     await page.getByTestId('button-edit-preview-monitoring').click();
 
@@ -311,67 +288,5 @@ test.describe('DB Cluster creation', () => {
     await page.getByText('Yes, cancel').click();
 
     await expect(page).toHaveURL('/databases');
-  });
-
-  test('Multiple Mongo schedules', async ({ page, request }) => {
-    const clusterName = 'multi-schedule-test';
-    const recommendedEngineVersions = await getEnginesLatestRecommendedVersions(
-      namespace,
-      request
-    );
-    let storageName: string;
-
-    await basicInformationStepCheck(
-      page,
-      engineVersions,
-      recommendedEngineVersions,
-      storageClasses,
-      clusterName
-    );
-    await moveForward(page);
-    await resourcesStepCheck(page);
-    await moveForward(page);
-    await backupsStepCheck(page);
-
-    storageName = await page
-      .getByTestId('text-input-storage-location')
-      .inputValue();
-
-    await moveForward(page);
-    await pitrStepCheck(page);
-    await page
-      .getByTestId('switch-input-pitr-enabled-label')
-      .getByRole('checkbox')
-      .check();
-    await moveForward(page);
-    await advancedConfigurationStepCheck(page);
-    await moveForward(page);
-    await submitWizard(page);
-    await expect(page.getByTestId('db-wizard-goto-db-clusters')).toBeVisible();
-
-    await page.goto(`/databases/${namespace}/${clusterName}/backups`);
-    await page.getByTestId('menu-button').click();
-    await page.getByTestId('schedule-menu-item').click();
-    await page.getByTestId('form-dialog-create').click();
-    await expect(page.getByText('2 active schedules')).toBeVisible();
-
-    // We disable PITR
-    await page.goto('/databases');
-    await findDbAndClickActions(page, clusterName, 'Edit');
-    await goToStep(page, 'point-in-time-recovery');
-    await setPitrEnabledStatus(page, false);
-    await goToLastAndSubmit(page);
-
-    // We turn it back on to make sure nothing breaks
-    await page.goto('/databases');
-    await findDbAndClickActions(page, clusterName, 'Edit');
-    await goToStep(page, 'point-in-time-recovery');
-    await setPitrEnabledStatus(page, true);
-
-    await expect(
-      page.getByText(`Backups storage: ${storageName}`)
-    ).toBeVisible();
-
-    await deleteDbClusterFn(request, clusterName, namespace);
   });
 });

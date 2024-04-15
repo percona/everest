@@ -29,6 +29,7 @@ import ScheduleContent from './schedule-body';
 import { ScheduleFormDialog } from 'components/schedule-form-dialog';
 import { ScheduleFormDialogContext } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog.context';
 import { ScheduleFormData } from 'components/schedule-form/schedule-form-schema';
+import { dbTypeToDbEngine } from '@percona/utils';
 
 const Schedules = () => {
   const { watch, setValue } = useFormContext();
@@ -127,7 +128,7 @@ const Schedules = () => {
               schedules,
               activeStorage,
               namespace: k8sNamespace,
-              dbType,
+              dbEngine: dbTypeToDbEngine(dbType),
             },
           }}
         >
