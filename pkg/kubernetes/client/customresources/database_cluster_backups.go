@@ -13,8 +13,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-//nolint:dupl
 package customresources
 
 import (
@@ -50,6 +48,7 @@ type DBClusterBackupInterface interface {
 	List(ctx context.Context, opts metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error)
 	Get(ctx context.Context, name string, options metav1.GetOptions) (*everestv1alpha1.DatabaseClusterBackup, error)
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Update(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup, opts metav1.UpdateOptions) (*everestv1alpha1.DatabaseClusterBackup, error)
 }
 
 // List lists database cluster backups based on opts.
@@ -95,4 +94,20 @@ func (c *dbClusterBackupClient) Watch( //nolint:ireturn
 		Resource(dbClusterBackupsAPIKind).
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Watch(ctx)
+}
+
+// Update creates a resource.
+func (c *dbClusterBackupClient) Update(
+	ctx context.Context,
+	backup *everestv1alpha1.DatabaseClusterBackup,
+	opts metav1.UpdateOptions,
+) (*everestv1alpha1.DatabaseClusterBackup, error) {
+	result := &everestv1alpha1.DatabaseClusterBackup{}
+	err := c.restClient.
+		Put().Name(backup.GetName()).
+		Namespace(c.namespace).
+		Resource(dbClusterBackupsAPIKind).Body(backup).
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Do(ctx).Into(result)
+	return result, err
 }
