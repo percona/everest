@@ -287,6 +287,11 @@ paths:
           required: true
           schema:
             type: string
+        - name: cleanupBackupStorage
+          in: query
+          description: If set, remove the backed up data from storage
+          schema:
+            type: boolean
       responses:
         '200':
           description: Successful operation
@@ -870,6 +875,11 @@ paths:
           required: true
           schema:
             type: string
+        - name: cleanupBackupStorage
+          in: query
+          description: If set, remove the backed up data from storage
+          schema:
+            type: boolean
       responses:
         '200':
           description: Successful operation
