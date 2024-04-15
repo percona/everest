@@ -23,14 +23,15 @@ Running minikube cluster:
 Provisioning kubernetes cluster
 
 ```
-   go run cmd/cli/main.go install --namespaces everest --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard
+    make build-cli
+    ./bin/everestctl install --namespaces everest --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard
 ```
-Using these commands you'll have installed the following operators
+Using these commands you'll build the latest dev version of Everest and will have installed the following operators
 
 1. Postgres operator
 2. PXC operator
 3. PSMDB operator
-4. DBaaS operator
+4. Everesst operator
 
 Make sure all the operators are running:
 ```
