@@ -235,7 +235,6 @@ jobs:
           # update veneer file
           yq -i '.Fast.Bundles += [{"Image": "docker.io/perconalab/everest-operator-bundle:" + strenv(VERSION) }]' catalog/everest-operator/veneer.yaml
           if [[ ! $env.IS_RC ]]; then
-            yq -i 'del(.Stable.Bundles | select(.[] | .Image == "docker.io/perconalab/everest-operator-bundle:0.0.0"))' catalog/everest-operator/veneer.yaml
             yq -i '.Stable.Bundles += [{"Image": "docker.io/percona/everest-operator-bundle:" + strenv(VERSION) }]' catalog/everest-operator/veneer.yaml
           fi
 
