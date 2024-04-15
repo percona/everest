@@ -37,6 +37,7 @@ export const getSchedulesPayload = ({
     weekDay,
     scheduleName,
     storageLocation,
+      retentionCopies,
   } = formData;
   const backupSchedule = getCronExpressionFromFormValues({
     selectedTime,
@@ -59,6 +60,7 @@ export const getSchedulesPayload = ({
             ? storageLocation
             : storageLocation!.name,
         schedule: backupSchedule,
+        retentionCopies: parseInt(retentionCopies, 10),
       },
     ];
   }
@@ -77,6 +79,7 @@ export const getSchedulesPayload = ({
             ? storageLocation
             : storageLocation!.name,
         schedule: backupSchedule,
+        retentionCopies: parseInt(retentionCopies, 10),
       };
       schedulesPayload = newSchedulesArray;
     }
