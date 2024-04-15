@@ -17,10 +17,13 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/mod/semver"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
@@ -66,6 +69,11 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 				"Could not get DatabaseEngineOperatorUpgradeParams from the request body"),
 		})
 	}
+	if err := validateDatabaseEngineOperatorUpgradeParams(req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, Error{
+			Message: pointer.ToString(err.Error()),
+		})
+	}
 	// Get existing database engine.
 	dbEngine, err := e.kubeClient.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
 	if err != nil {
@@ -81,6 +89,17 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 	_, err = e.kubeClient.UpdateDatabaseEngine(ctx.Request().Context(), namespace, dbEngine)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func validateDatabaseEngineOperatorUpgradeParams(req *DatabaseEngineOperatorUpgradeParams) error {
+	targetVersion := req.TargetVersion
+	if !strings.HasPrefix(targetVersion, "v") {
+		targetVersion = "v" + targetVersion
+	}
+	if !semver.IsValid(targetVersion) {
+		return fmt.Errorf("invalid target version '%s'", req.TargetVersion)
 	}
 	return nil
 }
