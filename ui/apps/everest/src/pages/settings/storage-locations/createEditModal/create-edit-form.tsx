@@ -1,14 +1,12 @@
-import { useState } from 'react';
-import { Divider, IconButton, MenuItem } from '@mui/material';
+import { Divider, MenuItem } from '@mui/material';
 import { TextInput, SelectInput } from '@percona/ui-lib';
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import TlsCheckbox from 'components/tls-checkbox';
 import { StorageType } from 'shared-types/backupStorages.types';
 import { Messages } from '../storage-locations.messages';
 import { StorageLocationsFields } from '../storage-locations.types';
 import { useNamespaces } from '../../../../hooks/api/namespaces/useNamespaces';
 import { AutoCompleteSelectAll } from '../../../../components/auto-complete-select-all/auto-complete-select-all';
+import { HiddenInput } from 'components/hidden-input';
 
 interface CreateEditFormProps {
   isEditMode: boolean;
@@ -16,9 +14,6 @@ interface CreateEditFormProps {
 export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
   const { data: namespaces = [], isFetching: isNamespacesFetching } =
     useNamespaces();
-
-  const [showAccessKey, setShowAccessKey] = useState(false);
-  const [showSecretKey, setShowSecretKey] = useState(false);
 
   return (
     <>
@@ -84,45 +79,15 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
           placeholder: Messages.createEditModal.placeholders.url,
         }}
       />
-      <TextInput
-        textFieldProps={{
-          type: showAccessKey ? 'text' : 'password',
-          placeholder: Messages.createEditModal.placeholders.accessKey,
-          InputProps: {
-            endAdornment: (
-              <IconButton onClick={() => setShowAccessKey(!showAccessKey)}>
-                {showAccessKey ? (
-                  <VisibilityOutlinedIcon />
-                ) : (
-                  <VisibilityOffOutlinedIcon />
-                )}
-              </IconButton>
-            ),
-          },
-        }}
+      <HiddenInput
+        placeholder={Messages.createEditModal.placeholders.accessKey}
         name={StorageLocationsFields.accessKey}
         label={Messages.accessKey}
-        isRequired
       />
-      <TextInput
-        textFieldProps={{
-          type: showSecretKey ? 'text' : 'password',
-          placeholder: Messages.createEditModal.placeholders.secretKey,
-          InputProps: {
-            endAdornment: (
-              <IconButton onClick={() => setShowSecretKey(!showSecretKey)}>
-                {showSecretKey ? (
-                  <VisibilityOutlinedIcon />
-                ) : (
-                  <VisibilityOffOutlinedIcon />
-                )}
-              </IconButton>
-            ),
-          },
-        }}
+      <HiddenInput
         name={StorageLocationsFields.secretKey}
         label={Messages.secretKey}
-        isRequired
+        placeholder={Messages.createEditModal.placeholders.secretKey}
       />
       <TlsCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />
     </>
