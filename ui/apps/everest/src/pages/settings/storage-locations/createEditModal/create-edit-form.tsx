@@ -1,6 +1,7 @@
 import { Divider, MenuItem } from '@mui/material';
 import { TextInput, SelectInput } from '@percona/ui-lib';
 import TlsCheckbox from 'components/tls-checkbox';
+import ForcePathCheckbox from 'components/force-path-checkbox';
 import { StorageType } from 'shared-types/backupStorages.types';
 import { Messages } from '../storage-locations.messages';
 import { StorageLocationsFields } from '../storage-locations.types';
@@ -99,6 +100,7 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
         isRequired
       />
       <TlsCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />
+      <ForcePathCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />
     </>
   );
 };
