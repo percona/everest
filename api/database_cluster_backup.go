@@ -18,6 +18,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -85,10 +86,10 @@ func (e *EverestServer) DeleteDatabaseClusterBackup(
 		reqCtx := ctx.Request().Context()
 		backup, err := e.kubeClient.GetDatabaseClusterBackup(reqCtx, namespace, name)
 		if err != nil {
-			return err
+			return errors.Join(err, errors.New("could not get Database Cluster"))
 		}
 		if err := e.cleanupBackupStorage(reqCtx, backup); err != nil {
-			return err
+			return errors.Join(err, errors.New("could not cleanup backup storage"))
 		}
 	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, name)

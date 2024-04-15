@@ -67,7 +67,7 @@ func (e *EverestServer) DeleteDatabaseCluster(
 		reqCtx := ctx.Request().Context()
 		backups, err := e.kubeClient.ListDatabaseClusterBackups(reqCtx, namespace, metav1.ListOptions{})
 		if err != nil {
-			return err
+			return errors.Join(err, errors.New("could not list database backups"))
 		}
 		// Cleanup storage.
 		for _, backup := range backups.Items {
@@ -76,7 +76,7 @@ func (e *EverestServer) DeleteDatabaseCluster(
 				continue
 			}
 			if err := e.cleanupBackupStorage(reqCtx, &backup); err != nil { //nolint:gosec // We use Go 1.21+
-				return err
+				return errors.Join(err, errors.New("could not cleanup backup storage"))
 			}
 		}
 	}
