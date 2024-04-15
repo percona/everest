@@ -3351,7 +3351,7 @@ func NewUpgradeDatabaseEngineOperatorRequestWithBody(server string, namespace st
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/namespaces/%s/database-engines/%s/operator/version", pathParam0, pathParam1)
+	operationPath := fmt.Sprintf("/namespaces/%s/database-engines/%s/operator-version", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -6322,11 +6322,11 @@ var swaggerSpec = []string{
 	"+/THtdKDmD96MS8nbBDz+3D0G/KzWwOeUyXWyvYZp0xNKJtc0owgQVKvjOzdGncM4890JwZZ/wJkHWZq",
 	"kPKtpfyukrRb4a9m/m/vvvtaevjv52XZQdq/lOS6wYO/Rw++Ij07yTshbE5ZD5Eu7833XXKfrpLjV77M",
 	"f37KiRnrwP135/6VzNZke0P2zdi9shq8aZRqaljlpb5yJb4Ek+WH86XYGkvdQcJ2GTp6LugUro4VouBB",
-	"QOtkpb4+9JWLy/2t63RLyuNe1hkkfKfHcm0g5Jtb0D1DCC72bspLazs0xVzgZE3nzE37CZGa49y9tgH9",
-	"AVXV+eW17cigSO5JIB2BLfW7jyA8N10BhKKAwu7e2eZs83LOeqmZQRvcozYoVkqVUQ7lRctrr8PAOY6p",
-	"WsLlB6U/7yu403UY55X7nh/uToyy1cE0bX8xxvZ80b4Yo2JzOpmxev2tudHa2RW44rfFb/aC9fu+ccXd",
-	"8b79WZHrBgY1mxkxdrAQ6ehwtHdzMNIGw1KzSTJd61IttMZ2cLO9dbeUB1TZSWRNlp6TtuXrrsxpmUBV",
-	"Tax6q2pL3KlRq3Mu79BXVEGlw332W+7u0kqZuxJuxB2atEEbL5q3H9ma65cffXr36X8DAAD//6OIek1p",
+	"QOtkpb4+9JWLy/2t63RLyuNe1hkkfKfHcm0g5Jtb0D1DCC4mN+WltR2aYi5wsqZz5qb9hEjNce5e24D+",
+	"gKrq/PLadmRQJPckkI7AlvrdRxCem64AQlFAYXfvbHO2eTlnvdTMoA3uURsUK6XKKIfyouW112HgHMdU",
+	"LeHyg9Kf9xXc6TqM88p9zw93J0bZ6mCatr8YY3u+aF+MUbE5ncxYvf7W3Gjt7Apc8dviN3vB+n3fuOLu",
+	"eN/+rMh1A4OazYwYO1iIdHQ42rs5GGmDYanZJJmudakWWmM7uNneulvKA6rsJLImS89J2/J1V+a0TKCq",
+	"Jla9VbUl7tSo1TmXd+grqqDS4T77LXd3aaXMXQk34g5N2qCNF83bj2zN9cuPPr379L8BAAD//3DlIMxp",
 	"CQEA",
 }
 
