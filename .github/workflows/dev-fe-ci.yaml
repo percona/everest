@@ -188,7 +188,7 @@ jobs:
 
       - name: Adding pg namespace
         run: |
-          ./bin/everestctl -v \
+          ./bin/everestctl install -v \
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
           --operator.mongodb=false \
