@@ -1817,6 +1817,36 @@ func (_m *MockKubeClientConnector) UpdateBackupStorage(ctx context.Context, stor
 	return r0
 }
 
+// UpdateDatabaseClusterBackup provides a mock function with given fields: ctx, backup
+func (_m *MockKubeClientConnector) UpdateDatabaseClusterBackup(ctx context.Context, backup *v1alpha1.DatabaseClusterBackup) (*v1alpha1.DatabaseClusterBackup, error) {
+	ret := _m.Called(ctx, backup)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateDatabaseClusterBackup")
+	}
+
+	var r0 *v1alpha1.DatabaseClusterBackup
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.DatabaseClusterBackup) (*v1alpha1.DatabaseClusterBackup, error)); ok {
+		return rf(ctx, backup)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.DatabaseClusterBackup) *v1alpha1.DatabaseClusterBackup); ok {
+		r0 = rf(ctx, backup)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.DatabaseClusterBackup)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *v1alpha1.DatabaseClusterBackup) error); ok {
+		r1 = rf(ctx, backup)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateDatabaseEngine provides a mock function with given fields: ctx, namespace, engine
 func (_m *MockKubeClientConnector) UpdateDatabaseEngine(ctx context.Context, namespace string, engine *v1alpha1.DatabaseEngine) (*v1alpha1.DatabaseEngine, error) {
 	ret := _m.Called(ctx, namespace, engine)

@@ -872,6 +872,18 @@ type IoK8sApimachineryPkgApisMetaV1StatusV2 struct {
 	Status *string `json:"status,omitempty"`
 }
 
+// DeleteDatabaseClusterBackupParams defines parameters for DeleteDatabaseClusterBackup.
+type DeleteDatabaseClusterBackupParams struct {
+	// CleanupBackupStorage If set, remove the backed up data from storage
+	CleanupBackupStorage *bool `form:"cleanupBackupStorage,omitempty" json:"cleanupBackupStorage,omitempty"`
+}
+
+// DeleteDatabaseClusterParams defines parameters for DeleteDatabaseCluster.
+type DeleteDatabaseClusterParams struct {
+	// CleanupBackupStorage If set, remove the backed up data from storage
+	CleanupBackupStorage *bool `form:"cleanupBackupStorage,omitempty" json:"cleanupBackupStorage,omitempty"`
+}
+
 // CreateBackupStorageJSONRequestBody defines body for CreateBackupStorage for application/json ContentType.
 type CreateBackupStorageJSONRequestBody = CreateBackupStorageParams
 
@@ -1462,7 +1474,7 @@ type ClientInterface interface {
 	CreateDatabaseClusterBackup(ctx context.Context, namespace string, body CreateDatabaseClusterBackupJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteDatabaseClusterBackup request
-	DeleteDatabaseClusterBackup(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteDatabaseClusterBackup(ctx context.Context, namespace string, name string, params *DeleteDatabaseClusterBackupParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetDatabaseClusterBackup request
 	GetDatabaseClusterBackup(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1492,7 +1504,7 @@ type ClientInterface interface {
 	CreateDatabaseCluster(ctx context.Context, namespace string, body CreateDatabaseClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteDatabaseCluster request
-	DeleteDatabaseCluster(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteDatabaseCluster(ctx context.Context, namespace string, name string, params *DeleteDatabaseClusterParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetDatabaseCluster request
 	GetDatabaseCluster(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1753,8 +1765,8 @@ func (c *Client) CreateDatabaseClusterBackup(ctx context.Context, namespace stri
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteDatabaseClusterBackup(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteDatabaseClusterBackupRequest(c.Server, namespace, name)
+func (c *Client) DeleteDatabaseClusterBackup(ctx context.Context, namespace string, name string, params *DeleteDatabaseClusterBackupParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteDatabaseClusterBackupRequest(c.Server, namespace, name, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1885,8 +1897,8 @@ func (c *Client) CreateDatabaseCluster(ctx context.Context, namespace string, bo
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteDatabaseCluster(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteDatabaseClusterRequest(c.Server, namespace, name)
+func (c *Client) DeleteDatabaseCluster(ctx context.Context, namespace string, name string, params *DeleteDatabaseClusterParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteDatabaseClusterRequest(c.Server, namespace, name, params)
 	if err != nil {
 		return nil, err
 	}
@@ -2543,7 +2555,7 @@ func NewCreateDatabaseClusterBackupRequestWithBody(server string, namespace stri
 }
 
 // NewDeleteDatabaseClusterBackupRequest generates requests for DeleteDatabaseClusterBackup
-func NewDeleteDatabaseClusterBackupRequest(server string, namespace string, name string) (*http.Request, error) {
+func NewDeleteDatabaseClusterBackupRequest(server string, namespace string, name string, params *DeleteDatabaseClusterBackupParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -2573,6 +2585,26 @@ func NewDeleteDatabaseClusterBackupRequest(server string, namespace string, name
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.CleanupBackupStorage != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "cleanupBackupStorage", runtime.ParamLocationQuery, *params.CleanupBackupStorage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
@@ -2889,7 +2921,7 @@ func NewCreateDatabaseClusterRequestWithBody(server string, namespace string, co
 }
 
 // NewDeleteDatabaseClusterRequest generates requests for DeleteDatabaseCluster
-func NewDeleteDatabaseClusterRequest(server string, namespace string, name string) (*http.Request, error) {
+func NewDeleteDatabaseClusterRequest(server string, namespace string, name string, params *DeleteDatabaseClusterParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -2919,6 +2951,26 @@ func NewDeleteDatabaseClusterRequest(server string, namespace string, name strin
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.CleanupBackupStorage != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "cleanupBackupStorage", runtime.ParamLocationQuery, *params.CleanupBackupStorage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
@@ -3518,7 +3570,7 @@ type ClientWithResponsesInterface interface {
 	CreateDatabaseClusterBackupWithResponse(ctx context.Context, namespace string, body CreateDatabaseClusterBackupJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDatabaseClusterBackupResponse, error)
 
 	// DeleteDatabaseClusterBackupWithResponse request
-	DeleteDatabaseClusterBackupWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*DeleteDatabaseClusterBackupResponse, error)
+	DeleteDatabaseClusterBackupWithResponse(ctx context.Context, namespace string, name string, params *DeleteDatabaseClusterBackupParams, reqEditors ...RequestEditorFn) (*DeleteDatabaseClusterBackupResponse, error)
 
 	// GetDatabaseClusterBackupWithResponse request
 	GetDatabaseClusterBackupWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*GetDatabaseClusterBackupResponse, error)
@@ -3548,7 +3600,7 @@ type ClientWithResponsesInterface interface {
 	CreateDatabaseClusterWithResponse(ctx context.Context, namespace string, body CreateDatabaseClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDatabaseClusterResponse, error)
 
 	// DeleteDatabaseClusterWithResponse request
-	DeleteDatabaseClusterWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*DeleteDatabaseClusterResponse, error)
+	DeleteDatabaseClusterWithResponse(ctx context.Context, namespace string, name string, params *DeleteDatabaseClusterParams, reqEditors ...RequestEditorFn) (*DeleteDatabaseClusterResponse, error)
 
 	// GetDatabaseClusterWithResponse request
 	GetDatabaseClusterWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*GetDatabaseClusterResponse, error)
@@ -4570,8 +4622,8 @@ func (c *ClientWithResponses) CreateDatabaseClusterBackupWithResponse(ctx contex
 }
 
 // DeleteDatabaseClusterBackupWithResponse request returning *DeleteDatabaseClusterBackupResponse
-func (c *ClientWithResponses) DeleteDatabaseClusterBackupWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*DeleteDatabaseClusterBackupResponse, error) {
-	rsp, err := c.DeleteDatabaseClusterBackup(ctx, namespace, name, reqEditors...)
+func (c *ClientWithResponses) DeleteDatabaseClusterBackupWithResponse(ctx context.Context, namespace string, name string, params *DeleteDatabaseClusterBackupParams, reqEditors ...RequestEditorFn) (*DeleteDatabaseClusterBackupResponse, error) {
+	rsp, err := c.DeleteDatabaseClusterBackup(ctx, namespace, name, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -4666,8 +4718,8 @@ func (c *ClientWithResponses) CreateDatabaseClusterWithResponse(ctx context.Cont
 }
 
 // DeleteDatabaseClusterWithResponse request returning *DeleteDatabaseClusterResponse
-func (c *ClientWithResponses) DeleteDatabaseClusterWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*DeleteDatabaseClusterResponse, error) {
-	rsp, err := c.DeleteDatabaseCluster(ctx, namespace, name, reqEditors...)
+func (c *ClientWithResponses) DeleteDatabaseClusterWithResponse(ctx context.Context, namespace string, name string, params *DeleteDatabaseClusterParams, reqEditors ...RequestEditorFn) (*DeleteDatabaseClusterResponse, error) {
+	rsp, err := c.DeleteDatabaseCluster(ctx, namespace, name, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -6312,22 +6364,22 @@ var swaggerSpec = []string{
 	"C7Y1KIn/HCWxgRSv91FZ7TyKTmuM07R6LEWGGZ6b1CKb8xNENGqHzdwbb9cPCenN1i3Fu36MDYoZXx7+",
 	"/rTnTkKdOODSXi0IB+aszkPpuLm+IzYOX5++gSL2ne5Wv+71Z9fBHXfFh1VvBx0/f2jeexRdCvjZ/sHD",
 	"d+bYIllWLZt+PHv4fhzZ+x0HmCIAU3TrDqf7kyCd322jy7YFL9boNfPN49Rr41UtdhAfku61rgHfwe4m",
-	"PLXp529dct07fxNraOAuE/ELCEA33MgzgJK7wVs2FvgOsOUcdt/IzUT2J6IGef1C5fXO3sgglkYse0rO",
-	"Lg2xu6V3m6jCftsvrDj3hb+GuMJfqtszsHD3pD+2yGLFOD5DaLGiNw8bW6zoyBBcbBJclCqkQ6k5Sm+n",
-	"1e4aX3RpuGCA8Vg03GYei7vQ/04uy3lNfQ0xxiD0vQVrrdxvFWV0CW47zBik9suNNLbwTgbp7BNqbCSe",
-	"eREUzzzF8aZ21axEDRL6ABL6ZYRAdm17CIE2D4FmRToovKrC66eQdhmHbJbX35SIcFJ/gx/k4wBUHkYU",
-	"h+0Eu9tOEOK2Dt7vc/RFs7p+oOBXggb2toGPDf57JEavn7VLl/eM+g1w3x3hvpUqZhO7ui2ut1ZLBYG9",
-	"LyvyuFvEMUB4gyCvhvA2Eure+zHWSmYbuRvE8kvA6Aa528WujQ2FbgNIbq3gBTG5QfYeOfq2XcjxCOC2",
-	"QV/sCtu6b+97r7IhYWuQC7lKemBdL3zRQfd8IVmAA2J3f4hdRXR2mBHopTsWBK5hwKlce1xSt9JB1WrW",
-	"+/THtdKDmD96MS8nbBDz+3D0G/KzWwOeUyXWyvYZp0xNKJtc0owgQVKvjOzdGncM4890JwZZ/wJkHWZq",
-	"kPKtpfyukrRb4a9m/m/vvvtaevjv52XZQdq/lOS6wYO/Rw++Ij07yTshbE5ZD5Eu7833XXKfrpLjV77M",
-	"f37KiRnrwP135/6VzNZke0P2zdi9shq8aZRqaljlpb5yJb4Ek+WH86XYGkvdQcJ2GTp6LugUro4VouBB",
-	"QOtkpb4+9JWLy/2t63RLyuNe1hkkfKfHcm0g5Jtb0D1DCC4mN+WltR2aYi5wsqZz5qb9hEjNce5e24D+",
-	"gKrq/PLadmRQJPckkI7AlvrdRxCem64AQlFAYXfvbHO2eTlnvdTMoA3uURsUK6XKKIfyouW112HgHMdU",
-	"LeHyg9Kf9xXc6TqM88p9zw93J0bZ6mCatr8YY3u+aF+MUbE5ncxYvf7W3Gjt7Apc8dviN3vB+n3fuOLu",
-	"eN/+rMh1A4OazYwYO1iIdHQ42rs5GGmDYanZJJmudakWWmM7uNneulvKA6rsJLImS89J2/J1V+a0TKCq",
-	"Jla9VbUl7tSo1TmXd+grqqDS4T77LXd3aaXMXQk34g5N2qCNF83bj2zN9cuPPr379L8BAAD//3DlIMxp",
-	"CQEA",
+	"PLXp529dct07fxNraOAuE3FHLvI4tLGKqLHdse6XokmCitwcGwNbDRrr0n8URCzLbsQpwazIm4vfrW6U",
+	"xy7dZyC84YaiARzdDe6zseLpAH3OYReQ3Ex1/ETUoDfuUW+8e8xe0SCWRix7Ss4uHQJ3W/A20Y39tl94",
+	"c+4Lfw3xjb/ct2eA4+5rf2wRzopxfIYQZ0VvHjbGWdGRIcjZJMgpVUiHUnOU3k6r3TXO6dJwwUDnsWi4",
+	"zTwWO8S7uSznNfX1JfgsQ4zxWWOMDeR+qyijS3DbYcYgtV9upLGFdzJIZ59QYyPxzIugeOYpjje1q2ZF",
+	"bJDQB5DQLyMEsmvsQwi0eQg0K9JB4VUVXj+FtMs4ZLP9BU2JCG8uaPCDfByAysOI4rCtYXfbGkLc1sH7",
+	"fY7gaFbXDxT8StDA3jbwscF/j8To9bN26fKeUb8B7rsj3LdSxWxiV7fF9dZqqSCw92VFHneLOIZ0hQFK",
+	"/DKgxI2US+/9KWs1RBtBHNTDl4AVDnK3i10sGwrdBtDgWsELYoOD7D1yFHC70OcRwH6DvtgVxnbfUcBe",
+	"ZYPG1mAbcpX0wNxe+KKD7vlCshEH5PD+kMOK6OwwM9FLdywIXEuBU7n2+KhupYOq1az36Y9rpQcxf/Ri",
+	"Xk7YIOb34eg35Ge3BjynSqyV7TNOmZpQNrmkGUGCpF4Z2btG7hjGn+lODLL+Bcg6zNQg5VtL+V0labfC",
+	"X92BsL377mvp4b+fl2UHaf9SkvwGD/4ePfiK9Owk/4WwOWU9RNrfa1R2yX26So5f+TL/+akvZqwD99+d",
+	"+1cyW5PtDdk3Y/fKqvSmUaqpYZWX+sqV+BJMlh/Ol2JrLHUHCdtl6Oi5oFO4OlaIggcjrZOV+vrQVy4u",
+	"97eu0y0pj3tZZ5DwnR5TtoGQb25B9wwhuJjclJf4dmiKucDJms5p7sMoIVJznLvnN6A/oKo6v7y2HRkU",
+	"yT0JpCOwpX73kYznpiuAUBRQ2N3D25xtXs5ZLzUzaIN71AbFSqkyyqG8eHrt9SA4xzFVS7gMovTnfQV3",
+	"uh7kvHL/9cPdEVK2Opim7S8K2Z4v2heFVGxOJzNWrwM2N3w7uwJXHrf4zV44f9830Lg777c/O3PdwKBm",
+	"MyPGDhYiHR2O9m4ORtpgWGo2SaZrXaqF1tgObra3EJfygCo7mqzJ0nPStnzdlTktE6iqiVVvVW2JOzVq",
+	"dc7lHfqKKqh0uM9+699dWilzV8KNuMObNmjjRfM2KFtz/TKoT+8+/W8AAAD//9hOY2J5CgEA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
