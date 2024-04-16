@@ -43,7 +43,6 @@ export const addFirstScheduleInDBWizard = async (page: Page) => {
     page.getByTestId('editable-item').getByText('Monthly on day 10 at 5:05 PM')
   ).toBeVisible();
   await expect(page.getByText(STORAGE_NAMES[1])).toBeVisible();
-  // TODO check in preview
 };
 
 export const addScheduleInDbWizard = async (page: Page) => {

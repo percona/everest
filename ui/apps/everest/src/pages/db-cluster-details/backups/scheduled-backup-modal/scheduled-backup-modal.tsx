@@ -82,7 +82,7 @@ export const ScheduledBackupModal = () => {
           schedules,
           activeStorage: status?.activeStorage,
           namespace,
-          dbType: spec?.engine?.type,
+          dbEngine: spec?.engine?.type,
         },
       }}
     >
