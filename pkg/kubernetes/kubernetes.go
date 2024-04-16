@@ -633,8 +633,12 @@ func (k *Kubernetes) InstallOperator(ctx context.Context, req InstallOperatorReq
 			return false, nil
 		}
 		installPlanName := subs.Status.InstallPlanRef.Name
-		if req.StartingCSV != "" {
-			ip, err := k.getInstallPlanForCSV(ctx, req.StartingCSV, req.Namespace)
+		targetCSV := req.StartingCSV
+		if subs.Status.CurrentCSV != "" {
+			targetCSV = subs.Status.CurrentCSV
+		}
+		if targetCSV != "" {
+			ip, err := k.getInstallPlanForCSV(ctx, targetCSV, req.Namespace)
 			if err != nil {
 				return false, errors.Join(err, fmt.Errorf("cannot get install plan for CSV: %q", req.StartingCSV))
 			}
