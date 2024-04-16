@@ -908,6 +908,11 @@ func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
 		return fmt.Errorf("invalid version %s", newVersion)
 	}
 	// We will not allow major upgrades.
+	// Major upgrades are handled differently for different operators, so for now we simply won't allow it.
+	// For example:
+	// - PXC operator allows major upgrades.
+	// - PSMDB operator allows major upgrades, but we need to handle FCV.
+	// - PG operator does not allow major upgrades.
 	if semver.Major(oldVersion) != semver.Major(newVersion) {
 		return fmt.Errorf("cannot upgrade from %s to %s", oldVersion, newVersion)
 	}
