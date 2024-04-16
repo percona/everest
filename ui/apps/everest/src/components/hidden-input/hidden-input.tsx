@@ -14,7 +14,7 @@ export const HiddenInput = ({
   const [showKey, setShowKey] = useState(false);
   return (
     <TextInput
-      data-testid="hidden-input"
+      data-testid={`hidden-input-${name}`}
       textFieldProps={{
         type: showKey ? 'text' : 'password',
         placeholder: placeholder,
