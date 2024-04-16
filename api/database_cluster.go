@@ -98,6 +98,16 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 		})
 	}
 
+	// Check if operator is upgrading?
+	engineType := string(dbc.Spec.Engine.Type)
+	if upgrading, err := e.kubeClient.IsOperatorUpgrading(ctx.Request().Context(), namespace, engineType); err != nil {
+		return errors.Join(err, errors.New("could not check if operator is upgrading"))
+	} else if upgrading {
+		return ctx.JSON(http.StatusPreconditionFailed, Error{
+			Message: pointer.ToString("cannot modify resources while operator is upgrading"),
+		})
+	}
+
 	if err := validateMetadata(dbc.Metadata); err != nil {
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}

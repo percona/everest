@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	goversion "github.com/hashicorp/go-version"
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -49,4 +50,10 @@ func (k *Kubernetes) OperatorInstalledVersion(ctx context.Context, namespace, na
 	}
 
 	return goversion.NewVersion(csv.Spec.Version.FinalizeVersion())
+}
+
+// IsOperatorUpgrading returns true if the operator for the given dbEngineType is upgrading
+// in the given namespace.
+func (k *Kubernetes) IsOperatorUpgrading(ctx context.Context, namespace, dbEngineType string) (bool, error) {
+	return k.client.IsOperatorUpgrading(ctx, namespace, everestv1alpha1.EngineType(dbEngineType))
 }
