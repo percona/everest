@@ -154,8 +154,7 @@ jobs:
 
       - name: Run Provisioning
         run: |
-          make build-cli
-          ./bin/everestctl install \
+          go run cmd/cli/main.go install -v \
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
           --operator.mongodb \
@@ -166,7 +165,7 @@ jobs:
 
       - name: Adding psmdb namespace
         run: |
-          ./bin/everestctl install -v \
+          go run cmd/cli/main.go install -v \
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
           --operator.mongodb \
@@ -177,7 +176,7 @@ jobs:
 
       - name: Adding pxc namespace
         run: |
-          ./bin/everestctl install -v \
+          go run cmd/cli/main.go install -v \
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
           --operator.mongodb=false \
@@ -188,7 +187,7 @@ jobs:
 
       - name: Adding pg namespace
         run: |
-          ./bin/everestctl install -v \
+          go run cmd/cli/main.go install -v \
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
           --operator.mongodb=false \
@@ -199,7 +198,7 @@ jobs:
 
       - name: Change token
         run: |
-          echo "EVEREST_K8_TOKEN=$(./bin/everestctl token reset --json | jq .token -r)" >> $GITHUB_ENV
+          echo "EVEREST_K8_TOKEN=$(go run cmd/cli/main.go token reset --json | jq .token -r)" >> $GITHUB_ENV
 
       - name: Expose Everest API Server
         run: |
