@@ -23,7 +23,7 @@ import {
   OverviewSectionText,
 } from '../overview-section/overview-section';
 import { DatabaseDetailsOverviewCardProps } from './card.types';
-import { getFormValuesFromCronExpression } from '../../../../components/time-selection/time-selection.utils';
+import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils';
 
 export const DatabaseDetails = ({
   loading,

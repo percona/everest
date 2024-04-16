@@ -213,64 +213,6 @@ test.describe('DB Cluster creation', () => {
     expect(addedCluster?.spec.backup.schedules[0].retentionCopies).toBe(1);
   });
 
-  test('Multiple MongoDB schedules ', async ({ page, request }) => {
-    const clusterName = 'multi-schedule-test';
-    const recommendedEngineVersions = await getEnginesLatestRecommendedVersions(
-      namespace,
-      request
-    );
-
-    await basicInformationStepCheck(
-      page,
-      engineVersions,
-      recommendedEngineVersions,
-      storageClasses,
-      clusterName
-    );
-    await moveForward(page);
-    await resourcesStepCheck(page);
-    await moveForward(page);
-    await backupsStepCheck(page);
-
-    await moveForward(page);
-    await pitrStepCheck(page);
-    await page
-      .getByTestId('switch-input-pitr-enabled-label')
-      .getByRole('checkbox')
-      .check();
-    await page.pause();
-    await moveForward(page);
-    await advancedConfigurationStepCheck(page);
-    await moveForward(page);
-    await submitWizard(page);
-    await expect(page.getByTestId('db-wizard-goto-db-clusters')).toBeVisible();
-
-    await page.goto(`/databases/${namespace}/${clusterName}/backups`);
-    await page.getByTestId('menu-button').click();
-    await page.getByTestId('schedule-menu-item').click();
-    await page.getByTestId('form-dialog-create').click();
-    await expect(page.getByText('2 active schedules')).toBeVisible();
-
-    // We disable PITR
-    await page.goto('/databases');
-    await findDbAndClickActions(page, clusterName, 'Edit');
-    await goToStep(page, 'point-in-time-recovery');
-    await setPitrEnabledStatus(page, false);
-    await goToLastAndSubmit(page);
-
-    // We turn it back on to make sure nothing breaks
-    await page.goto('/databases');
-    await findDbAndClickActions(page, clusterName, 'Edit');
-    await goToStep(page, 'point-in-time-recovery');
-    await setPitrEnabledStatus(page, true);
-
-    // await expect(
-    //   page.getByText(`Backups storage: ${storageName}`)
-    // ).toBeVisible();
-
-    await deleteDbClusterFn(request, clusterName, namespace);
-  });
-
   test('PITR should be disabled when backups toggle was not checked', async ({
     page,
   }) => {
@@ -352,5 +294,63 @@ test.describe('DB Cluster creation', () => {
     await page.getByText('Yes, cancel').click();
 
     await expect(page).toHaveURL('/databases');
+  });
+
+  test('Multiple MongoDB schedules ', async ({ page, request }) => {
+    const clusterName = 'multi-schedule-test';
+    const recommendedEngineVersions = await getEnginesLatestRecommendedVersions(
+        namespace,
+        request
+    );
+
+    await basicInformationStepCheck(
+        page,
+        engineVersions,
+        recommendedEngineVersions,
+        storageClasses,
+        clusterName
+    );
+    await moveForward(page);
+    await resourcesStepCheck(page);
+    await moveForward(page);
+    await backupsStepCheck(page);
+
+    await moveForward(page);
+    await pitrStepCheck(page);
+    await page
+        .getByTestId('switch-input-pitr-enabled-label')
+        .getByRole('checkbox')
+        .check();
+    await page.pause();
+    await moveForward(page);
+    await advancedConfigurationStepCheck(page);
+    await moveForward(page);
+    await submitWizard(page);
+    await expect(page.getByTestId('db-wizard-goto-db-clusters')).toBeVisible();
+
+    await page.goto(`/databases/${namespace}/${clusterName}/backups`);
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('schedule-menu-item').click();
+    await page.getByTestId('form-dialog-create').click();
+    await expect(page.getByText('2 active schedules')).toBeVisible();
+
+    // We disable PITR
+    await page.goto('/databases');
+    await findDbAndClickActions(page, clusterName, 'Edit');
+    await goToStep(page, 'point-in-time-recovery');
+    await setPitrEnabledStatus(page, false);
+    await goToLastAndSubmit(page);
+
+    // We turn it back on to make sure nothing breaks
+    await page.goto('/databases');
+    await findDbAndClickActions(page, clusterName, 'Edit');
+    await goToStep(page, 'point-in-time-recovery');
+    await setPitrEnabledStatus(page, true);
+
+    // await expect(
+    //   page.getByText(`Backups storage: ${storageName}`)
+    // ).toBeVisible();
+
+    await deleteDbClusterFn(request, clusterName, namespace);
   });
 });
