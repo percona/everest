@@ -69,6 +69,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/kubernetes/client/customresources"
 )
 
@@ -1383,7 +1384,6 @@ func (c *Client) GetClusterRoleBinding(ctx context.Context, name string) (*rbacv
 
 // IsOperatorUpgrading returns true if the operator for the given dbEngineType is upgrading
 // in the given namespace.
-func (c *Client) IsOperatorUpgrading(ctx context.Context, namespace, dbEngineType string) (bool, error) {
-	// TODO
+func (c *Client) IsOperatorUpgrading(ctx context.Context, namespace string, dbEngineType everestv1alpha1.EngineType) (bool, error) {
 	return false, nil
 }

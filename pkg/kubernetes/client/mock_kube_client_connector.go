@@ -1324,7 +1324,7 @@ func (_m *MockKubeClientConnector) GetSubscriptionCSV(ctx context.Context, subKe
 }
 
 // IsOperatorUpgrading provides a mock function with given fields: ctx, namespace, dbEngineType
-func (_m *MockKubeClientConnector) IsOperatorUpgrading(ctx context.Context, namespace string, dbEngineType string) (bool, error) {
+func (_m *MockKubeClientConnector) IsOperatorUpgrading(ctx context.Context, namespace string, dbEngineType v1alpha1.EngineType) (bool, error) {
 	ret := _m.Called(ctx, namespace, dbEngineType)
 
 	if len(ret) == 0 {
@@ -1333,16 +1333,16 @@ func (_m *MockKubeClientConnector) IsOperatorUpgrading(ctx context.Context, name
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (bool, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, v1alpha1.EngineType) (bool, error)); ok {
 		return rf(ctx, namespace, dbEngineType)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, v1alpha1.EngineType) bool); ok {
 		r0 = rf(ctx, namespace, dbEngineType)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, v1alpha1.EngineType) error); ok {
 		r1 = rf(ctx, namespace, dbEngineType)
 	} else {
 		r1 = ret.Error(1)

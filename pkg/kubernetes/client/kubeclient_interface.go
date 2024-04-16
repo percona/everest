@@ -116,7 +116,7 @@ type KubeClientConnector interface {
 	GetClusterRoleBinding(ctx context.Context, name string) (*rbacv1.ClusterRoleBinding, error)
 	// IsOperatorUpgrading returns true if the operator for the given dbEngineType is upgrading
 	// in the given namespace.
-	IsOperatorUpgrading(ctx context.Context, namespace, dbEngineType string) (bool, error)
+	IsOperatorUpgrading(ctx context.Context, namespace string, dbEngineType everestv1alpha1.EngineType) (bool, error)
 	// ListDatabaseClusters returns list of managed database clusters.
 	ListDatabaseClusters(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterList, error)
 	// GetDatabaseCluster returns database clusters by provided name.
