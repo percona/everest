@@ -653,6 +653,34 @@ func (_m *MockKubernetesConnector) InstallPerconaCatalog(ctx context.Context, _a
 	return r0
 }
 
+// IsOperatorUpgrading provides a mock function with given fields: ctx, namespace, dbEngineType
+func (_m *MockKubernetesConnector) IsOperatorUpgrading(ctx context.Context, namespace string, dbEngineType string) (bool, error) {
+	ret := _m.Called(ctx, namespace, dbEngineType)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsOperatorUpgrading")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (bool, error)); ok {
+		return rf(ctx, namespace, dbEngineType)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
+		r0 = rf(ctx, namespace, dbEngineType)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, dbEngineType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListClusterServiceVersion provides a mock function with given fields: ctx, namespace
 func (_m *MockKubernetesConnector) ListClusterServiceVersion(ctx context.Context, namespace string) (*operatorsv1alpha1.ClusterServiceVersionList, error) {
 	ret := _m.Called(ctx, namespace)
