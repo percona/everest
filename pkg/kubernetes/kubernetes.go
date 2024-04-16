@@ -568,6 +568,21 @@ func mergeSubscriptionConfig(sub *olmv1alpha1.SubscriptionConfig, cfg *olmv1alph
 	return sub
 }
 
+func (k *Kubernetes) getInstallPlanForCSV(ctx context.Context, csvName, namespace string) (*olmv1alpha1.InstallPlan, error) {
+	installPlanList, err := k.client.ListInstallPlans(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+	for _, ip := range installPlanList.Items {
+		for _, csv := range ip.Spec.ClusterServiceVersionNames {
+			if csv == csvName {
+				return &ip, nil
+			}
+		}
+	}
+	return nil, nil //nolint:nilnil
+}
+
 // InstallOperator installs an operator via OLM.
 func (k *Kubernetes) InstallOperator(ctx context.Context, req InstallOperatorRequest) error { //nolint:funlen
 	subscription, err := k.client.GetSubscription(ctx, req.Namespace, req.Name)
@@ -617,8 +632,15 @@ func (k *Kubernetes) InstallOperator(ctx context.Context, req InstallOperatorReq
 		if subs == nil || (subs != nil && subs.Status.InstallPlanRef == nil) {
 			return false, nil
 		}
-
-		return k.ApproveInstallPlan(ctx, req.Namespace, subs.Status.InstallPlanRef.Name)
+		installPlanName := subs.Status.InstallPlanRef.Name
+		if req.StartingCSV != "" {
+			ip, err := k.getInstallPlanForCSV(ctx, req.StartingCSV, req.Namespace)
+			if err != nil {
+				return false, errors.Join(err, fmt.Errorf("cannot get install plan for CSV: %q", req.StartingCSV))
+			}
+			installPlanName = ip.Name
+		}
+		return k.ApproveInstallPlan(ctx, req.Namespace, installPlanName)
 	})
 	if err != nil {
 		return err
