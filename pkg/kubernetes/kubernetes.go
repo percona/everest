@@ -574,7 +574,7 @@ func (k *Kubernetes) getTargetInstallPlanName(ctx context.Context, subscription 
 		targetCSV = subscription.Status.CurrentCSV
 	}
 	if targetCSV == "" {
-		// We don't have a targetCSV, so we use the InstallPlan that points to the starting CSV.
+		// We don't know yet which CSV we want, so we will use the one specified in the subscription.
 		return subscription.Status.InstallPlanRef.Name, nil
 	}
 	ipList, err := k.client.ListInstallPlans(ctx, req.Namespace)
