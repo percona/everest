@@ -1,13 +1,27 @@
-import { RestorePayload } from 'shared-types/restores.types';
+import {
+  CreateRestorePayload,
+  GetRestorePayload,
+} from 'shared-types/restores.types';
 import { api } from './api';
 
 export const createDbClusterRestore = async (
-  data: RestorePayload,
+  data: CreateRestorePayload,
   namespace: string
 ) => {
   const response = await api.post(
     `namespaces/${namespace}/database-cluster-restores`,
     data
+  );
+
+  return response.data;
+};
+
+export const getDbClusterRestores = async (
+  namespace: string,
+  dbClusterName: string
+) => {
+  const response = await api.get<GetRestorePayload>(
+    `namespaces/${namespace}/database-clusters/${dbClusterName}/restores`
   );
 
   return response.data;

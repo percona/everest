@@ -13,7 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type RestorePayload = {
+export type GetRestorePayload = {
+  items: Array<{
+    metadata: {
+      creationTimestamp: string;
+      name: string;
+    };
+    spec: {
+      dataSource: {
+        pitr?: object;
+      };
+    };
+    status: {
+      state: string;
+      completed?: string;
+    };
+  }>;
+};
+
+export type CreateRestorePayload = {
   apiVersion: 'everest.percona.com/v1alpha1';
   kind: 'DatabaseClusterRestore';
   metadata: {
@@ -28,4 +46,12 @@ export type RestorePayload = {
       };
     };
   };
+};
+
+export type Restore = {
+  name: string;
+  startTime: string;
+  endTime?: string;
+  type: 'full' | 'pitr';
+  state: string;
 };
