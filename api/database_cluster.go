@@ -56,7 +56,30 @@ func (e *EverestServer) ListDatabaseClusters(ctx echo.Context, namespace string)
 }
 
 // DeleteDatabaseCluster deletes a database cluster on the specified kubernetes cluster.
-func (e *EverestServer) DeleteDatabaseCluster(ctx echo.Context, namespace, name string) error {
+func (e *EverestServer) DeleteDatabaseCluster(
+	ctx echo.Context,
+	namespace, name string,
+	params DeleteDatabaseClusterParams,
+) error {
+	cleanupStorage := pointer.Get(params.CleanupBackupStorage)
+	// If cleanup is required, we add a finalizer to all backup object for this cluster.
+	if cleanupStorage {
+		reqCtx := ctx.Request().Context()
+		backups, err := e.kubeClient.ListDatabaseClusterBackups(reqCtx, namespace, metav1.ListOptions{})
+		if err != nil {
+			return errors.Join(err, errors.New("could not list database backups"))
+		}
+		// Cleanup storage.
+		for _, backup := range backups.Items {
+			// Doesn't belong to this cluster, skip.
+			if backup.Spec.DBClusterName != name {
+				continue
+			}
+			if err := e.cleanupBackupStorage(reqCtx, &backup); err != nil { //nolint:gosec // We use Go 1.21+
+				return errors.Join(err, errors.New("could not cleanup backup storage"))
+			}
+		}
+	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, name)
 }
 
