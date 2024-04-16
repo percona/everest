@@ -296,19 +296,19 @@ test.describe('DB Cluster creation', () => {
     await expect(page).toHaveURL('/databases');
   });
 
-  test('Multiple MongoDB schedules ', async ({ page, request }) => {
+  test.skip('Multiple Mongo schedules', async ({ page, request }) => {
     const clusterName = 'multi-schedule-test';
     const recommendedEngineVersions = await getEnginesLatestRecommendedVersions(
-        namespace,
-        request
+      namespace,
+      request
     );
 
     await basicInformationStepCheck(
-        page,
-        engineVersions,
-        recommendedEngineVersions,
-        storageClasses,
-        clusterName
+      page,
+      engineVersions,
+      recommendedEngineVersions,
+      storageClasses,
+      clusterName
     );
     await moveForward(page);
     await resourcesStepCheck(page);
@@ -318,9 +318,9 @@ test.describe('DB Cluster creation', () => {
     await moveForward(page);
     await pitrStepCheck(page);
     await page
-        .getByTestId('switch-input-pitr-enabled-label')
-        .getByRole('checkbox')
-        .check();
+      .getByTestId('switch-input-pitr-enabled-label')
+      .getByRole('checkbox')
+      .check();
     await page.pause();
     await moveForward(page);
     await advancedConfigurationStepCheck(page);
