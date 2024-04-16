@@ -570,8 +570,8 @@ func mergeSubscriptionConfig(sub *olmv1alpha1.SubscriptionConfig, cfg *olmv1alph
 
 func (k *Kubernetes) getTargetInstallPlanName(ctx context.Context, subscription *olmv1alpha1.Subscription, req InstallOperatorRequest) (string, error) {
 	targetCSV := req.StartingCSV
-	if subscription.Status.CurrentCSV != "" {
-		targetCSV = subscription.Status.CurrentCSV
+	if subscription.Status.InstalledCSV != "" {
+		targetCSV = subscription.Status.InstalledCSV
 	}
 	if targetCSV == "" {
 		// We don't know yet which CSV we want, so we will use the one specified in the subscription.
