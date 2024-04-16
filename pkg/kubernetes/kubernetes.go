@@ -588,7 +588,7 @@ func (k *Kubernetes) getTargetInstallPlanName(ctx context.Context, subscription 
 			}
 		}
 	}
-	return "", fmt.Errorf("cannot find InstallPlan for CSV: %q", targetCSV)
+	return "", fmt.Errorf("cannot find InstallPlan for CSV: %s", targetCSV)
 }
 
 // InstallOperator installs an operator via OLM.
