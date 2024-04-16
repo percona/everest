@@ -629,7 +629,7 @@ func (k *Kubernetes) InstallOperator(ctx context.Context, req InstallOperatorReq
 		if err != nil {
 			return false, errors.Join(err, fmt.Errorf("cannot get an install plan for the operator subscription: %q", req.Name))
 		}
-		if subs == nil || (subs != nil && subs.Status.InstallPlanRef == nil) {
+		if subs == nil || subs.Status.InstallPlanRef == nil {
 			return false, nil
 		}
 		installPlanName := subs.Status.InstallPlanRef.Name
