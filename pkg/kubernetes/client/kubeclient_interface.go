@@ -114,6 +114,9 @@ type KubeClientConnector interface {
 	GetService(ctx context.Context, namespace, name string) (*corev1.Service, error)
 	// GetClusterRoleBinding returns cluster role binding by given name.
 	GetClusterRoleBinding(ctx context.Context, name string) (*rbacv1.ClusterRoleBinding, error)
+	// IsOperatorUpgrading returns true if the operator for the given dbEngineType is upgrading
+	// in the given namespace.
+	IsOperatorUpgrading(ctx context.Context, namespace, dbEngineType string) (bool, error)
 	// ListDatabaseClusters returns list of managed database clusters.
 	ListDatabaseClusters(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterList, error)
 	// GetDatabaseCluster returns database clusters by provided name.

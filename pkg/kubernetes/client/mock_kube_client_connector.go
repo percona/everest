@@ -1323,6 +1323,34 @@ func (_m *MockKubeClientConnector) GetSubscriptionCSV(ctx context.Context, subKe
 	return r0, r1
 }
 
+// IsOperatorUpgrading provides a mock function with given fields: ctx, namespace, dbEngineType
+func (_m *MockKubeClientConnector) IsOperatorUpgrading(ctx context.Context, namespace string, dbEngineType string) (bool, error) {
+	ret := _m.Called(ctx, namespace, dbEngineType)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsOperatorUpgrading")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (bool, error)); ok {
+		return rf(ctx, namespace, dbEngineType)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
+		r0 = rf(ctx, namespace, dbEngineType)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, dbEngineType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListBackupStorages provides a mock function with given fields: ctx, namespace, options
 func (_m *MockKubeClientConnector) ListBackupStorages(ctx context.Context, namespace string, options metav1.ListOptions) (*v1alpha1.BackupStorageList, error) {
 	ret := _m.Called(ctx, namespace, options)

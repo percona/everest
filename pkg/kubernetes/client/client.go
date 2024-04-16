@@ -1380,3 +1380,10 @@ func (c *Client) GetService(ctx context.Context, namespace, name string) (*corev
 func (c *Client) GetClusterRoleBinding(ctx context.Context, name string) (*rbacv1.ClusterRoleBinding, error) {
 	return c.clientset.RbacV1().ClusterRoleBindings().Get(ctx, name, metav1.GetOptions{})
 }
+
+// IsOperatorUpgrading returns true if the operator for the given dbEngineType is upgrading
+// in the given namespace.
+func (c *Client) IsOperatorUpgrading(ctx context.Context, namespace, dbEngineType string) (bool, error) {
+	// TODO
+	return false, nil
+}
