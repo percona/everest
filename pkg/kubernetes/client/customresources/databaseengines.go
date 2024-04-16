@@ -13,8 +13,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-//nolint:dupl
 package customresources
 
 import (
@@ -49,7 +47,27 @@ type dbEngineClient struct {
 type DBEngineInterface interface {
 	List(ctx context.Context, opts metav1.ListOptions) (*everestv1alpha1.DatabaseEngineList, error)
 	Get(ctx context.Context, name string, options metav1.GetOptions) (*everestv1alpha1.DatabaseEngine, error)
+	Update(ctx context.Context, engine *everestv1alpha1.DatabaseEngine, opts metav1.UpdateOptions) (*everestv1alpha1.DatabaseEngine, error)
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+}
+
+// Update the database engine.
+func (c *dbEngineClient) Update(
+	ctx context.Context,
+	engine *everestv1alpha1.DatabaseEngine,
+	opts metav1.UpdateOptions,
+) (*everestv1alpha1.DatabaseEngine, error) {
+	result := &everestv1alpha1.DatabaseEngine{}
+	err := c.restClient.
+		Put().
+		Namespace(c.namespace).
+		Resource(dbEnginesAPIKind).
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Name(engine.Name).
+		Body(engine).
+		Do(ctx).
+		Into(result)
+	return result, err
 }
 
 // List lists database clusters based on opts.
