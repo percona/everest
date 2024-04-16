@@ -31,7 +31,7 @@ Using these commands you'll build the latest dev version of Everest and will hav
 1. Postgres operator
 2. PXC operator
 3. PSMDB operator
-4. Everesst operator
+4. Everest operator
 
 Make sure all the operators are running:
 ```
