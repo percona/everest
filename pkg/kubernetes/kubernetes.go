@@ -568,19 +568,27 @@ func mergeSubscriptionConfig(sub *olmv1alpha1.SubscriptionConfig, cfg *olmv1alph
 	return sub
 }
 
-func (k *Kubernetes) getInstallPlanForCSV(ctx context.Context, csvName, namespace string) (*olmv1alpha1.InstallPlan, error) {
-	installPlanList, err := k.client.ListInstallPlans(ctx, namespace)
-	if err != nil {
-		return nil, err
+func (k *Kubernetes) getTargetInstallPlanName(ctx context.Context, subscription *olmv1alpha1.Subscription, req InstallOperatorRequest) (string, error) {
+	targetCSV := req.StartingCSV
+	if subscription.Status.CurrentCSV != "" {
+		targetCSV = subscription.Status.CurrentCSV
 	}
-	for _, ip := range installPlanList.Items {
+	if targetCSV == "" {
+		// We don't have a targetCSV, so we use the InstallPlan that points to the starting CSV.
+		return subscription.Status.InstallPlanRef.Name, nil
+	}
+	ipList, err := k.client.ListInstallPlans(ctx, req.Namespace)
+	if err != nil {
+		return "", err
+	}
+	for _, ip := range ipList.Items {
 		for _, csv := range ip.Spec.ClusterServiceVersionNames {
-			if csv == csvName {
-				return &ip, nil
+			if csv == targetCSV {
+				return ip.GetName(), nil
 			}
 		}
 	}
-	return nil, nil //nolint:nilnil
+	return "", fmt.Errorf("cannot find InstallPlan for CSV: %q", targetCSV)
 }
 
 // InstallOperator installs an operator via OLM.
@@ -633,20 +641,9 @@ func (k *Kubernetes) InstallOperator(ctx context.Context, req InstallOperatorReq
 			return false, nil
 		}
 
-		installPlanName := subs.Status.InstallPlanRef.Name
-
-		// We use the current CSV if available, otherwise we use the starting CSV.
-		targetCSV := req.StartingCSV
-		if subs.Status.CurrentCSV != "" {
-			targetCSV = subs.Status.CurrentCSV
-		}
-		if targetCSV != "" {
-			// If we have a targetCSV, we use the InstallPlan that points to it.
-			ip, err := k.getInstallPlanForCSV(ctx, targetCSV, req.Namespace)
-			if err != nil {
-				return false, errors.Join(err, fmt.Errorf("cannot get install plan for CSV: %q", req.StartingCSV))
-			}
-			installPlanName = ip.Name
+		installPlanName, err := k.getTargetInstallPlanName(ctx, subs, req)
+		if err != nil {
+			return false, err
 		}
 		return k.ApproveInstallPlan(ctx, req.Namespace, installPlanName)
 	})
