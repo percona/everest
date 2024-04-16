@@ -166,7 +166,6 @@ jobs:
 
       - name: Adding psmdb namespace
         run: |
-          make build-cli
           ./bin/everestctl install -v \
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
@@ -178,7 +177,6 @@ jobs:
 
       - name: Adding pxc namespace
         run: |
-          make build-cli
           ./bin/everestctl install -v \
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
@@ -190,7 +188,6 @@ jobs:
 
       - name: Adding pg namespace
         run: |
-          make build-cli
           ./bin/everestctl install -v \
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
