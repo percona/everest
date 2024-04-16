@@ -17,7 +17,6 @@ import { Page, expect } from '@playwright/test';
 // import {SOURCE_RANGE_PLACEHOLDER} from "../../../../../constants";
 
 export const advancedConfigurationStepCheck = async (page: Page) => {
-  await page.pause();
   await expect(
     page.getByRole('heading', { name: 'Advanced Configurations' })
   ).toBeVisible();

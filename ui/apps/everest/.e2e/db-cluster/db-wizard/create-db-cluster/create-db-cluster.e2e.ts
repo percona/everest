@@ -321,7 +321,6 @@ test.describe('DB Cluster creation', () => {
       .getByTestId('switch-input-pitr-enabled-label')
       .getByRole('checkbox')
       .check();
-    await page.pause();
     await moveForward(page);
     await advancedConfigurationStepCheck(page);
     await moveForward(page);
