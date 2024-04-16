@@ -70,6 +70,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest-operator/controllers/common"
 	"github.com/percona/everest/pkg/kubernetes/client/customresources"
 )
 
@@ -94,6 +95,12 @@ const (
 	LEVEL3
 	LEVEL4
 )
+
+var dbEngineNames = map[everestv1alpha1.EngineType]string{
+	everestv1alpha1.DatabaseEnginePXC:        common.PXCDeploymentName,
+	everestv1alpha1.DatabaseEnginePSMDB:      common.PSMDBDeploymentName,
+	everestv1alpha1.DatabaseEnginePostgresql: common.PGDeploymentName,
+}
 
 // Client is the internal client for Kubernetes.
 type Client struct {
@@ -1385,5 +1392,13 @@ func (c *Client) GetClusterRoleBinding(ctx context.Context, name string) (*rbacv
 // IsOperatorUpgrading returns true if the operator for the given dbEngineType is upgrading
 // in the given namespace.
 func (c *Client) IsOperatorUpgrading(ctx context.Context, namespace string, dbEngineType everestv1alpha1.EngineType) (bool, error) {
-	return false, nil
+	engineName, ok := dbEngineNames[dbEngineType]
+	if !ok {
+		return false, fmt.Errorf("unknown engine type '%s'", dbEngineType)
+	}
+	engine, err := c.GetDatabaseEngine(ctx, namespace, engineName)
+	if err != nil {
+		return false, errors.Join(err, errors.New("failed to get database engine"))
+	}
+	return engine.Status.State == everestv1alpha1.DBEngineStateUpgrading, nil
 }
