@@ -96,6 +96,7 @@ const (
 	LEVEL4
 )
 
+//nolint:gochecknoglobals
 var dbEngineNames = map[everestv1alpha1.EngineType]string{
 	everestv1alpha1.DatabaseEnginePXC:        common.PXCDeploymentName,
 	everestv1alpha1.DatabaseEnginePSMDB:      common.PSMDBDeploymentName,
