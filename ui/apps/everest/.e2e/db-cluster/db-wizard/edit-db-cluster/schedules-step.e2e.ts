@@ -29,9 +29,13 @@ import {
   checkSuccessOfUpdateAndGoToDbClustersList,
 } from './edit-db-cluster.utils';
 import { goToStep, moveForward } from '../../../utils/db-wizard';
+import {
+  addFirstScheduleInDBWizard,
+  addScheduleInDbWizard,
+} from '../db-wizard-utils';
 
 test.describe.serial('DB Cluster Editing Backups Step', async () => {
-  let scheduleName = 'db-wizard-schedule';
+  // let scheduleName = 'db-wizard-schedule';
   const mySQLName = 'db-backup-mysql';
 
   test.beforeAll(async ({ request }) => {
@@ -43,7 +47,7 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
   });
 
   test.afterAll(async ({ request }) => {
-    const token = await getTokenFromLocalStorage();
+    // const token = await getTokenFromLocalStorage();
     await deleteDbClusterFn(request, mySQLName);
   });
 
@@ -54,7 +58,6 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     await findDbAndClickActions(page, mySQLName, 'Edit');
 
     await goToStep(page, 'backups');
-
     const enabledBackupsCheckbox = page
       .getByTestId('switch-input-backups-enabled')
       .getByRole('checkbox');
@@ -62,18 +65,7 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     await expect(enabledBackupsCheckbox).not.toBeChecked();
     await enabledBackupsCheckbox.setChecked(true);
 
-    const scheduleNameField = page.getByTestId('text-input-schedule-name');
-    await expect(scheduleNameField).not.toBeEmpty();
-    await scheduleNameField.fill(scheduleName);
-
-    await expect(
-      page.getByTestId('text-input-storage-location')
-    ).not.toBeEmpty();
-    await expect(
-      page.getByText(
-        'Everest will create a backup of your database every hour, starting at minute 0.'
-      )
-    ).toBeVisible();
+    await addFirstScheduleInDBWizard(page);
 
     // Go to Point-in-time Recovery (PITR)
     await moveForward(page);
@@ -99,31 +91,14 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     expect(page.getByText('Every hour at minute 0')).toBeTruthy();
   });
 
-  test('Disabling/Enabling backups for single scheduled db', async ({
-    page,
-  }) => {
+  test('Adding multi schedules during dbWizard editing', async ({ page }) => {
     await page.goto('/databases');
     await findDbAndClickActions(page, mySQLName, 'Edit');
 
-    // Go to Resources step
-    await moveForward(page);
-    // Go to Backups step
-    await moveForward(page);
+    await goToStep(page, 'backups');
 
-    // disabling backups
-    const enabledBackupsCheckbox = page
-      .getByTestId('switch-input-backups-enabled')
-      .getByRole('checkbox');
-    await expect(enabledBackupsCheckbox).toBeChecked();
-    await enabledBackupsCheckbox.setChecked(false);
-    await expect(enabledBackupsCheckbox).not.toBeChecked();
-
-    // checking the preview empty value
-    expect(
-      page
-        .getByTestId('section-Backups')
-        .getByTestId('empty-backups-preview-content')
-    ).toBeTruthy();
+    await addScheduleInDbWizard(page);
+    await addScheduleInDbWizard(page);
 
     // Go to Point-in-time Recovery (PITR)
     await moveForward(page);
@@ -135,23 +110,19 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     await checkDbWizardEditSubmitIsAvailableAndClick(page);
     await checkSuccessOfUpdateAndGoToDbClustersList(page);
 
-    await findDbAndClickActions(page, mySQLName, 'Edit');
+    await findDbAndClickRow(page, mySQLName);
 
-    // Go to Resources step
-    await moveForward(page);
-    // Go to Backups step
-    await moveForward(page);
+    // go to backups tab in db-cluster details
+    const backupsTab = page.getByTestId(DBClusterDetailsTabs.backups);
+    await backupsTab.click();
 
-    // check that schedule hasn't been reset
-    await expect(enabledBackupsCheckbox).not.toBeChecked();
-    await enabledBackupsCheckbox.setChecked(true);
-    await expect(page.getByTestId('text-input-schedule-name')).toHaveValue(
-      scheduleName
-    );
+    // check the schedule in the list of schedules
+    const scheduledBackupsAccordion = page.getByTestId('scheduled-backups');
+    await expect(scheduledBackupsAccordion).toBeVisible();
+    await scheduledBackupsAccordion.click();
 
-    // checking the preview actual value
-    await expect(
-      page.getByTestId('section-Backups').getByTestId('preview-content')
-    ).toHaveText('Every hour at minute 0');
+    expect(
+      await page.getByText('Monthly on day 10 at 5:05 PM').allInnerTexts()
+    ).toHaveLength(3);
   });
 });
