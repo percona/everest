@@ -927,10 +927,10 @@ func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
 }
 
 func validateDatabaseClusterOnUpdate(dbc *DatabaseCluster, oldDB *everestv1alpha1.DatabaseCluster) error {
-	newVersion := "v" + pointer.Get(dbc.Spec.Engine.Version)
-	oldVersion := "v" + oldDB.Spec.Engine.Version
+	newVersion := pointer.Get(dbc.Spec.Engine.Version)
+	oldVersion := oldDB.Spec.Engine.Version
 	if newVersion != "" && newVersion != oldVersion {
-		if err := validateDBEngineVersionUpgrade(newVersion, oldVersion); err != nil {
+		if err := validateDBEngineVersionUpgrade("v"+newVersion, "v"+oldVersion); err != nil {
 			return err
 		}
 	}
