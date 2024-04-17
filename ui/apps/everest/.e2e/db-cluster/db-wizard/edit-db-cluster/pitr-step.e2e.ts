@@ -42,6 +42,13 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
       dbName: mySQLName,
       dbType: 'mysql',
       numberOfNodes: '1',
+      cpu: 1,
+      disk: 1,
+      memory: 1,
+      backup: {
+        enabled: false,
+        schedules: [],
+      },
     });
   });
 
