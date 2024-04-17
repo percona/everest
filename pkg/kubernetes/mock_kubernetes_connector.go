@@ -465,6 +465,34 @@ func (_m *MockKubernetesConnector) GetEverestID(ctx context.Context) (string, er
 	return r0, r1
 }
 
+// GetIsDBUpdateLocked provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubernetesConnector) GetIsDBUpdateLocked(ctx context.Context, namespace string, name string) (bool, error) {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetIsDBUpdateLocked")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (bool, error)); ok {
+		return rf(ctx, namespace, name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
+		r0 = rf(ctx, namespace, name)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetLogs provides a mock function with given fields: ctx, containerStatuses, pod, container
 func (_m *MockKubernetesConnector) GetLogs(ctx context.Context, containerStatuses []corev1.ContainerStatus, pod string, container string) ([]string, error) {
 	ret := _m.Called(ctx, containerStatuses, pod, container)
@@ -651,34 +679,6 @@ func (_m *MockKubernetesConnector) InstallPerconaCatalog(ctx context.Context, _a
 	}
 
 	return r0
-}
-
-// IsOperatorUpgrading provides a mock function with given fields: ctx, namespace, dbEngineType
-func (_m *MockKubernetesConnector) IsOperatorUpgrading(ctx context.Context, namespace string, dbEngineType string) (bool, error) {
-	ret := _m.Called(ctx, namespace, dbEngineType)
-
-	if len(ret) == 0 {
-		panic("no return value specified for IsOperatorUpgrading")
-	}
-
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (bool, error)); ok {
-		return rf(ctx, namespace, dbEngineType)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
-		r0 = rf(ctx, namespace, dbEngineType)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, namespace, dbEngineType)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // ListClusterServiceVersion provides a mock function with given fields: ctx, namespace

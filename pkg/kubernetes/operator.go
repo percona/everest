@@ -23,8 +23,6 @@ import (
 	goversion "github.com/hashicorp/go-version"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
 // ErrOperatorNotInstalled is returned when an operator is not installed.
@@ -53,8 +51,11 @@ func (k *Kubernetes) OperatorInstalledVersion(ctx context.Context, namespace, na
 	return goversion.NewVersion(csv.Spec.Version.FinalizeVersion())
 }
 
-// IsOperatorUpgrading returns true if the operator for the given dbEngineType is upgrading
-// in the given namespace.
-func (k *Kubernetes) IsOperatorUpgrading(ctx context.Context, namespace, dbEngineType string) (bool, error) {
-	return k.client.IsOperatorUpgrading(ctx, namespace, everestv1alpha1.EngineType(dbEngineType))
+// GetIsDBUpdateLocked returns true if updating the DB is locked.
+func (k *Kubernetes) GetIsDBUpdateLocked(ctx context.Context, namespace, name string) (bool, error) {
+	dbc, err := k.client.GetDatabaseCluster(ctx, namespace, name)
+	if err != nil {
+		return false, err
+	}
+	return k.client.IsOperatorUpgrading(ctx, namespace, dbc.Spec.Engine.Type)
 }

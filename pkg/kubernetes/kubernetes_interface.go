@@ -97,7 +97,6 @@ type KubernetesConnector interface {
 	UpdateClusterRoleBinding(ctx context.Context, name string, namespaces []string) error
 	// OperatorInstalledVersion returns the installed version of operator by name.
 	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
-	// IsOperatorUpgrading returns true if the operator for the given dbEngineType is upgrading
-	// in the given namespace.
-	IsOperatorUpgrading(ctx context.Context, namespace, dbEngineType string) (bool, error)
+	// GetIsDBUpdateLocked returns true if updating the DB is locked.
+	GetIsDBUpdateLocked(ctx context.Context, namespace, name string) (bool, error)
 }
