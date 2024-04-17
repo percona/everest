@@ -30,6 +30,9 @@ const (
 	releaseCatalogImage = "docker.io/percona/everest-catalog:%s"
 	devManifestURL      = "https://raw.githubusercontent.com/percona/everest/main/deploy/quickstart-k8s.yaml"
 	releaseManifestURL  = "https://raw.githubusercontent.com/percona/everest/v%s/deploy/quickstart-k8s.yaml"
+
+	everestOperatorChannelStable = "stable-v0"
+	everestOperatorChannelFast   = "fast-v0"
 )
 
 var (
@@ -54,6 +57,9 @@ func CatalogImage(v *goversion.Version) string {
 		// Channels other than stable are only in dev catalog.
 		return devCatalogImage
 	}
+	if isRC(v) {
+		return devCatalogImage
+	}
 	return fmt.Sprintf(releaseCatalogImage, v)
 }
 
@@ -63,6 +69,18 @@ func ManifestURL(v *goversion.Version) string {
 		return devManifestURL
 	}
 	return fmt.Sprintf(releaseManifestURL, v)
+}
+
+// CatalogChannel returns a channel for Everest catalog.
+func CatalogChannel() string {
+	if EverestChannelOverride != "" {
+		return EverestChannelOverride
+	}
+	v, err := goversion.NewVersion(Version)
+	if err == nil && isRC(v) {
+		return everestOperatorChannelFast
+	}
+	return everestOperatorChannelStable
 }
 
 func isDevVersion(ver string) bool {
@@ -79,7 +97,7 @@ func isDevVersion(ver string) bool {
 		return false
 	}
 
-	if rcSuffix.MatchString(v.Prerelease()) {
+	if isRC(v) {
 		return false
 	}
 
@@ -88,6 +106,10 @@ func isDevVersion(ver string) bool {
 	}
 
 	return false
+}
+
+func isRC(v *goversion.Version) bool {
+	return rcSuffix.MatchString(v.Prerelease())
 }
 
 // FullVersionInfo returns full version report.
