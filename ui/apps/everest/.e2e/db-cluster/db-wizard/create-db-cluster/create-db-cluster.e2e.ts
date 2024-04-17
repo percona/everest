@@ -36,9 +36,7 @@ import {
 } from '../../../utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '../../../constants';
 import { findDbAndClickActions } from '../../../utils/db-clusters-list';
-import {
-  addFirstScheduleInDBWizard,
-} from '../db-wizard-utils';
+import { addFirstScheduleInDBWizard } from '../db-wizard-utils';
 
 test.describe('DB Cluster creation', () => {
   let engineVersions = {
@@ -244,7 +242,6 @@ test.describe('DB Cluster creation', () => {
     await expect(enabledPitrCheckbox).not.toBeDisabled();
     await enabledPitrCheckbox.setChecked(true);
 
-    await page.pause();
     await expect(
       page.getByTestId('text-input-pitr-storage-location')
     ).toBeVisible();
@@ -295,7 +292,6 @@ test.describe('DB Cluster creation', () => {
   });
 
   test('Multiple Mongo schedules', async ({ page, request }) => {
-    await page.pause();
     const clusterName = 'multi-schedule-test';
     const recommendedEngineVersions = await getEnginesLatestRecommendedVersions(
       namespace,

@@ -32,6 +32,7 @@ import {
   checkSuccessOfUpdateAndGoToDbClustersList,
 } from './edit-db-cluster.utils';
 import { STORAGE_NAMES } from '../../../constants';
+import { addFirstScheduleInDBWizard } from '../db-wizard-utils';
 
 test.describe.serial('DB Cluster Editing PITR Step', async () => {
   const mySQLName = 'db-pitr-mysql';
@@ -59,15 +60,9 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
     await moveForward(page);
     // Go to Backups step
     await moveForward(page);
-
     // Check and fill in backups step
     expect(page.getByTestId('pitr-no-backup-alert'));
-
-    const backupsCheckbox = page
-      .getByTestId('switch-input-backups-enabled')
-      .getByRole('checkbox');
-    await backupsCheckbox.setChecked(true);
-
+    await addFirstScheduleInDBWizard(page);
     // Go to PITR step
     await moveForward(page);
 
@@ -115,7 +110,6 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
     await moveForward(page);
     // Go to Backups step
     await moveForward(page);
-    await expect(backupsCheckbox).toBeChecked();
 
     // Go to PITR step
     await moveForward(page);
