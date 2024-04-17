@@ -963,3 +963,45 @@ func TestValidateBucketName(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateDBEngineUpgrade(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		name       string
+		oldVersion string
+		newVersion string
+		err        error
+	}{
+		{
+			name:       "invalid version",
+			oldVersion: "v1.0.0",
+			newVersion: "1!00;",
+			err:        errInvalidVersion,
+		},
+		{
+			name:       "major upgrade",
+			oldVersion: "v8.0.22",
+			newVersion: "v9.0.0",
+			err:        errDBEngineMajorVersionUpgrade,
+		},
+		{
+			name:       "downgrade",
+			oldVersion: "v8.0.22",
+			newVersion: "v8.0.21",
+			err:        errDBEngineDowngrade,
+		},
+		{
+			name:       "valid upgrade",
+			oldVersion: "v8.0.22",
+			newVersion: "v8.0.23",
+			err:        nil,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := validateDBEngineVersionUpgrade(tc.newVersion, tc.oldVersion)
+			assert.ErrorIs(t, err, tc.err)
+		})
+	}
+}

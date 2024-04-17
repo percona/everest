@@ -93,6 +93,9 @@ var (
 	errNoMetadata                    = fmt.Errorf("no metadata provided")
 	errInvalidResourceVersion        = fmt.Errorf("invalid 'resourceVersion' value")
 	errInvalidBucketName             = fmt.Errorf("invalid bucketName")
+	errInvalidVersion                = errors.New("invalid version")
+	errDBEngineMajorVersionUpgrade   = errors.New("cannot perform major version upgrades")
+	errDBEngineDowngrade             = errors.New("cannot perform downgrades")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -905,7 +908,7 @@ func validateStorageSize(cluster *DatabaseCluster) error {
 // validateDBEngineVersionUpgrade validates if upgrade of DBEngine from `oldVersion` to `newVersion` is allowed.
 func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
 	if !semver.IsValid(newVersion) {
-		return fmt.Errorf("invalid version %s", newVersion)
+		return errInvalidVersion
 	}
 	// We will not allow major upgrades.
 	// Major upgrades are handled differently for different operators, so for now we simply won't allow it.
@@ -914,11 +917,11 @@ func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
 	// - PSMDB operator allows major upgrades, but we need to handle FCV.
 	// - PG operator does not allow major upgrades.
 	if semver.Major(oldVersion) != semver.Major(newVersion) {
-		return fmt.Errorf("cannot upgrade from %s to %s", oldVersion, newVersion)
+		return errDBEngineMajorVersionUpgrade
 	}
 	// We will not allow downgrades.
 	if semver.Compare(newVersion, oldVersion) < 0 {
-		return fmt.Errorf("cannot downgrade from %s to %s", oldVersion, newVersion)
+		return errDBEngineDowngrade
 	}
 	return nil
 }
