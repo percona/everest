@@ -23,7 +23,6 @@ import {
   findDbAndClickActions,
   findDbAndClickRow,
 } from '../../../utils/db-clusters-list';
-import { getTokenFromLocalStorage } from '../../../utils/localStorage';
 import {
   checkDbWizardEditSubmitIsAvailableAndClick,
   checkSuccessOfUpdateAndGoToDbClustersList,
@@ -58,13 +57,6 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     await findDbAndClickActions(page, mySQLName, 'Edit');
 
     await goToStep(page, 'backups');
-    const enabledBackupsCheckbox = page
-      .getByTestId('switch-input-backups-enabled')
-      .getByRole('checkbox');
-
-    await expect(enabledBackupsCheckbox).not.toBeChecked();
-    await enabledBackupsCheckbox.setChecked(true);
-
     await addFirstScheduleInDBWizard(page);
 
     // Go to Point-in-time Recovery (PITR)

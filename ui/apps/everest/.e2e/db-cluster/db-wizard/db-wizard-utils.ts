@@ -19,26 +19,17 @@ import { beautifyDbTypeName } from '@percona/utils';
 import { DbType } from '@percona/types';
 
 export const addFirstScheduleInDBWizard = async (page: Page) => {
-  await backupOptionIsOn(page);
-
   // checking that we haven't schedules
   await expect(
     page.getByText('You don’t have any backup schedules yet.')
   ).toBeVisible();
 
-  await page.getByTestId('create-schedule').click();
-  await expect(
-    page.getByTestId('new-scheduled-backup-form-dialog')
-  ).toBeVisible();
-
-  if (await checkDbTypeisVisibleInPreview(page, DbType.Mongo)) {
-    await expect(page.getByTestId('radio-option-logical')).toBeChecked();
-  }
-
+  // creating schedule with schedule modal form dialog
+  await openCreateScheduleDialogFromDBWizard(page);
   await fillScheduleModalForm(page);
   await page.getByTestId('form-dialog-create').click();
 
-  // checking created schedule in dbWiard schedules list and preview
+  // checking created schedule in dbWiard schedules list
   await expect(
     page.getByTestId('editable-item').getByText('Monthly on day 10 at 5:05 PM')
   ).toBeVisible();
@@ -46,13 +37,7 @@ export const addFirstScheduleInDBWizard = async (page: Page) => {
 };
 
 export const addScheduleInDbWizard = async (page: Page) => {
-  await backupOptionIsOn(page);
-
-  await page.getByTestId('create-schedule').click();
-  await expect(
-    page.getByTestId('new-scheduled-backup-form-dialog')
-  ).toBeVisible();
-
+  await openCreateScheduleDialogFromDBWizard(page);
   await fillScheduleModalForm(page);
   await page.getByTestId('form-dialog-create').click();
 };
@@ -63,15 +48,11 @@ const checkDbTypeisVisibleInPreview = async (page: Page, dbType: DbType) => {
   return isVisible;
 };
 
-const backupOptionIsOn = async (page: Page) => {
-  const enabledBackupsCheckbox = page
-    .getByTestId('switch-input-backups-enabled')
-    .getByRole('checkbox');
-  await expect(enabledBackupsCheckbox).toBeChecked();
-};
-
 const fillScheduleModalForm = async (page: Page) => {
   //TODO can be customizable
+  if (await checkDbTypeisVisibleInPreview(page, DbType.Mongo)) {
+    await expect(page.getByTestId('radio-option-logical')).toBeChecked();
+  }
   await expect(page.getByTestId('text-input-schedule-name')).not.toBeEmpty();
 
   const storageLocationField = page.getByTestId('text-input-storage-location');
@@ -99,4 +80,11 @@ const fillScheduleModalForm = async (page: Page) => {
   await page.getByRole('option', { name: '05' }).click();
   await page.getByTestId('select-am-pm-button').click();
   await page.getByRole('option', { name: 'PM' }).click();
+};
+
+export const openCreateScheduleDialogFromDBWizard = async (page: Page) => {
+  await page.getByTestId('create-schedule').click();
+  await expect(
+    page.getByTestId('new-scheduled-backup-form-dialog')
+  ).toBeVisible();
 };

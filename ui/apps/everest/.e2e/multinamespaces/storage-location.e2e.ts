@@ -23,6 +23,7 @@ import { EVEREST_CI_NAMESPACES } from '../constants';
 import { createDbClusterFn, deleteDbClusterFn } from '../utils/db-cluster';
 import { findDbAndClickRow } from '../utils/db-clusters-list';
 import { DBClusterDetailsTabs } from '../../src/pages/db-cluster-details/db-cluster-details.types';
+import { openCreateScheduleDialogFromDBWizard } from '../db-cluster/db-wizard/db-wizard-utils';
 
 test.describe.serial('Namespaces: Backup Storage availability', () => {
   const pxcStorageLocationName = 'storage-location-pxc';
@@ -90,14 +91,17 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
     await moveForward(page);
     // Backups step
     await moveForward(page);
+
+    await openCreateScheduleDialogFromDBWizard(page);
     const storageLocationAutocomplete = page.getByTestId(
-      'storage-location-autocomplete'
+      'text-input-storage-location'
     );
     await storageLocationAutocomplete.click();
 
     // common ui-dev backup storage from global-setup with all operators + pxc backup storage with only pxc operator
     expect(await page.getByRole('option').count()).toBe(1);
     await page.getByRole('option', { name: pxcStorageLocationName }).click();
+    await page.getByTestId('form-dialog-create').click();
 
     // PITR step
     await moveForward(page);
