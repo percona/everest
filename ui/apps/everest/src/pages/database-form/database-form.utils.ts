@@ -30,13 +30,6 @@ export const DbClusterPayloadToFormValues = (
 ): DbWizardType => {
   const backup = dbCluster?.spec?.backup;
 
-  // [DbWizardFormFields.retentionCopies]:
-  // firstSchedule.retentionCopies?.toString() || '0',
-  //     или
-  //
-  //         [DbWizardFormFields.retentionCopies]:
-  // DB_WIZARD_DEFAULTS[DbWizardFormFields.retentionCopies],
-
   return {
     [DbWizardFormFields.backupsEnabled]: !!backup?.enabled,
     [DbWizardFormFields.pitrEnabled]: backup?.pitr?.enabled || false,
