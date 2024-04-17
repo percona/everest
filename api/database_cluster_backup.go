@@ -67,6 +67,12 @@ func (e *EverestServer) CreateDatabaseClusterBackup(ctx echo.Context, namespace 
 		})
 	}
 
+	// TODO: Improve returns status code in EVEREST-616
+	if err := e.validateDatabaseClusterBackup(ctx.Request().Context(), namespace, dbb); err != nil {
+		e.l.Error(err)
+		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
+	}
+
 	// Check if DB update is locked?
 	if locked, err := e.kubeClient.GetIsDBUpdateLocked(ctx.Request().Context(), namespace, dbb.Spec.DbClusterName); err != nil {
 		return errors.Join(err, errors.New("cannot check DB update lock"))
@@ -74,12 +80,6 @@ func (e *EverestServer) CreateDatabaseClusterBackup(ctx echo.Context, namespace 
 		return ctx.JSON(http.StatusPreconditionFailed, Error{
 			Message: pointer.ToString("modifying this resource is temporarily disabled"),
 		})
-	}
-
-	// TODO: Improve returns status code in EVEREST-616
-	if err := e.validateDatabaseClusterBackup(ctx.Request().Context(), namespace, dbb); err != nil {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, "")
 }

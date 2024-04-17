@@ -104,15 +104,6 @@ func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, namespace
 		})
 	}
 
-	// Check if DB updates are locked?
-	if locked, err := e.kubeClient.GetIsDBUpdateLocked(ctx.Request().Context(), namespace, restore.Spec.DbClusterName); err != nil {
-		return errors.Join(err, errors.New("cannot check DB update lock"))
-	} else if locked {
-		return ctx.JSON(http.StatusPreconditionFailed, Error{
-			Message: pointer.ToString("modifying this resource is temporarily disabled"),
-		})
-	}
-
 	if err := validateMetadata(restore.Metadata); err != nil {
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
@@ -120,6 +111,15 @@ func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, namespace
 		e.l.Error(err)
 		return ctx.JSON(http.StatusBadRequest, Error{
 			Message: pointer.ToString(err.Error()),
+		})
+	}
+
+	// Check if DB updates are locked?
+	if locked, err := e.kubeClient.GetIsDBUpdateLocked(ctx.Request().Context(), namespace, restore.Spec.DbClusterName); err != nil {
+		return errors.Join(err, errors.New("cannot check DB update lock"))
+	} else if locked {
+		return ctx.JSON(http.StatusPreconditionFailed, Error{
+			Message: pointer.ToString("modifying this resource is temporarily disabled"),
 		})
 	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterRestoreKind, name)
