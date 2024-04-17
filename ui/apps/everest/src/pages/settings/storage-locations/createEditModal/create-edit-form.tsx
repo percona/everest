@@ -7,6 +7,7 @@ import { Messages } from '../storage-locations.messages';
 import { StorageLocationsFields } from '../storage-locations.types';
 import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { AutoCompleteSelectAll } from 'components/auto-complete-select-all/auto-complete-select-all';
+import { HiddenInput } from 'components/hidden-input';
 
 interface CreateEditFormProps {
   isEditMode: boolean;
@@ -79,25 +80,16 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
           placeholder: Messages.createEditModal.placeholders.url,
         }}
       />
-      <TextInput
-        textFieldProps={{
-          placeholder: isEditMode
-            ? '************'
-            : Messages.createEditModal.placeholders.accessKey,
-        }}
+      <HiddenInput
+        placeholder={Messages.createEditModal.placeholders.accessKey}
         name={StorageLocationsFields.accessKey}
         label={Messages.accessKey}
         isRequired
       />
-      <TextInput
-        textFieldProps={{
-          placeholder: isEditMode
-            ? '************'
-            : Messages.createEditModal.placeholders.secretKey,
-        }}
+      <HiddenInput
         name={StorageLocationsFields.secretKey}
         label={Messages.secretKey}
-        isRequired
+        placeholder={Messages.createEditModal.placeholders.secretKey}
       />
       <TlsCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />
       <ForcePathCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />
