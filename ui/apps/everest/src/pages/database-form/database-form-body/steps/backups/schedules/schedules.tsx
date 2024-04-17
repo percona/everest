@@ -36,9 +36,9 @@ const Schedules = () => {
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
   const [mode, setMode] = useState<'new' | 'edit'>('new');
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');
-  const [dbType, activeStorage, k8sNamespace, schedules] = watch([
+
+  const [dbType, k8sNamespace, schedules] = watch([
     DbWizardFormFields.dbType,
-    DbWizardFormFields.storageLocation,
     DbWizardFormFields.k8sNamespace,
     DbWizardFormFields.schedules,
   ]);
@@ -126,7 +126,6 @@ const Schedules = () => {
             setOpenScheduleModal,
             dbClusterInfo: {
               schedules,
-              activeStorage,
               namespace: k8sNamespace,
               dbEngine: dbTypeToDbEngine(dbType),
             },

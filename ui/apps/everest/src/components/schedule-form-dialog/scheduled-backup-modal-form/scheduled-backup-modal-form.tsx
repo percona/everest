@@ -31,7 +31,6 @@ export const ScheduledBackupModalForm = () => {
   const { namespace, schedules = [], activeStorage, dbEngine } = dbClusterInfo;
   const { data: backupStorages = [], isFetching } =
     useBackupStoragesByNamespace(namespace);
-  console.log(backupStorages);
 
   const scheduleName = watch(ScheduleFormFields.scheduleName);
 
@@ -47,6 +46,10 @@ export const ScheduledBackupModalForm = () => {
         name: activeStorage,
       });
       trigger(ScheduleFormFields.storageLocation);
+    } else {
+      setValue(ScheduleFormFields.storageLocation, {
+        name: backupStorages[0].name,
+      });
     }
   }, [activeStorage]);
 

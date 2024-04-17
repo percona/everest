@@ -44,13 +44,13 @@ const formValuesToPayloadOverrides = (
       ...dbCluster?.spec,
       backup: {
         ...dbCluster?.spec?.backup,
-        enabled: dbPayload.backupsEnabled,
+        enabled: dbPayload.schedules?.length > 0,
         pitr: {
           ...dbCluster?.spec?.backup?.pitr,
           enabled: dbPayload.pitrEnabled,
           backupStorageName: pitrBackupStorageName,
         },
-        ...(dbPayload.backupsEnabled && {
+        ...(dbPayload.schedules?.length > 0 && {
           schedules: dbPayload.schedules,
         }),
       },

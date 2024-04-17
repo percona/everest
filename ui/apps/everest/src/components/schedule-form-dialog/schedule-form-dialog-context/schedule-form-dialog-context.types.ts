@@ -15,7 +15,7 @@ export type ScheduleFormDialogContextType = {
     dbClusterName?: DbCluster['metadata']['name'];
     namespace: DbCluster['metadata']['namespace'];
     schedules: NonNullable<DbCluster['spec']['backup']>['schedules'];
-    activeStorage: NonNullable<DbCluster['status']>['activeStorage'];
+    activeStorage?: NonNullable<DbCluster['status']>['activeStorage'];
     dbEngine: DbCluster['spec']['engine']['type'];
   };
 };

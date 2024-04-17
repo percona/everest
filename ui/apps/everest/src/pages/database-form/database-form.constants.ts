@@ -21,7 +21,6 @@ import { DbWizardType } from './database-form-schema.ts';
 
 export const DB_WIZARD_DEFAULTS: DbWizardType = {
   // TODO should be changed to true after  https://jira.percona.com/browse/EVEREST-509
-  [DbWizardFormFields.backupsEnabled]: false,
   [DbWizardFormFields.schedules]: [],
   [DbWizardFormFields.pitrEnabled]: false,
   [DbWizardFormFields.pitrStorageLocation]: null,
@@ -44,7 +43,6 @@ export const DB_WIZARD_DEFAULTS: DbWizardType = {
   [DbWizardFormFields.cpu]: DEFAULT_SIZES.small.cpu,
   [DbWizardFormFields.disk]: DEFAULT_SIZES.small.disk,
   [DbWizardFormFields.memory]: DEFAULT_SIZES.small.memory,
-  [DbWizardFormFields.retentionCopies]: '0',
 };
 
 export const NODES_DB_TYPE_MAP: Record<DbType, string[]> = {

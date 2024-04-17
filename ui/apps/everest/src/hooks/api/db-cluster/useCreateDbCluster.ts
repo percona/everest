@@ -48,7 +48,7 @@ const formValuesToPayloadMapping = (
     },
     spec: {
       backup: {
-        enabled: dbPayload.backupsEnabled,
+        enabled: dbPayload.schedules?.length > 0,
         ...(dbPayload.pitrEnabled && {
           pitr: {
             enabled: dbPayload.pitrEnabled,
@@ -58,7 +58,7 @@ const formValuesToPayloadMapping = (
                 : dbPayload.pitrStorageLocation!.name,
           },
         }),
-        ...(dbPayload.backupsEnabled && {
+        ...(dbPayload.schedules?.length > 0 && {
           schedules: dbPayload.schedules,
         }),
       },

@@ -116,13 +116,13 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     setValue,
   ]);
 
-  const onDbNamespaceChange = () => {
+  const onNamespaceChange = () => {
     setValue(
       DbWizardFormFields.monitoringInstance,
       DB_WIZARD_DEFAULTS.monitoringInstance
     );
     setValue(DbWizardFormFields.monitoring, DB_WIZARD_DEFAULTS.monitoring);
-    setValue(DbWizardFormFields.storageLocation, null);
+    setValue(DbWizardFormFields.schedules, []);
   };
 
   const setDefaultsForDbType = useCallback((dbType: DbType) => {
@@ -234,7 +234,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             mode === 'restoreFromBackup' ||
             loadingDefaultsForEdition
           }
-          onChange={onDbNamespaceChange}
+          onChange={onNamespaceChange}
           autoCompleteProps={{
             disableClearable: true,
             isOptionEqualToValue: (option, value) => option === value,

@@ -4,7 +4,7 @@ import { BackupStepType } from '../../database-form-schema.ts';
 import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils.ts';
 
 export const BackupsPreviewSection = (backupsSection: BackupStepType) => {
-  const { backupsEnabled, schedules } = backupsSection;
+  const { schedules } = backupsSection;
   const schedulesPreviewList = schedules.map((item) =>
     getTimeSelectionPreviewMessage(
       getFormValuesFromCronExpression(item.schedule)
@@ -13,11 +13,11 @@ export const BackupsPreviewSection = (backupsSection: BackupStepType) => {
 
   return (
     <>
-      {backupsEnabled &&
+      {schedulesPreviewList.length > 0 ? (
         schedulesPreviewList.map((item) => (
           <PreviewContentText key={`${item}`} text={item} />
-        ))}
-      {!backupsEnabled && (
+        ))
+      ) : (
         <PreviewContentText text="Disabled" dataTestId="empty-backups" />
       )}
     </>

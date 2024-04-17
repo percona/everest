@@ -14,45 +14,23 @@
 // limitations under the License.
 
 import { Alert, Box } from '@mui/material';
-import { SwitchInput } from '@percona/ui-lib';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages';
-import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { DbWizardFormFields } from '../../../database-form.types.ts';
 import BackupsActionableAlert from 'components/actionable-alert/backups-actionable-alert';
-import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './backups.messages.ts';
 import Schedules from './schedules';
 
 export const Backups = () => {
-  const mode = useDatabasePageMode();
-  const { control, watch, setValue, getFieldState, trigger } = useFormContext();
+  const { watch } = useFormContext();
 
-  const [backupsEnabled, dbType, selectedNamespace] = watch([
-    DbWizardFormFields.backupsEnabled,
-    DbWizardFormFields.dbType,
+  const [selectedNamespace, schedules] = watch([
     DbWizardFormFields.k8sNamespace,
+    DbWizardFormFields.schedules,
   ]);
   const { data: backupStorages = [] } =
     useBackupStoragesByNamespace(selectedNamespace);
-
-  useEffect(() => {
-    const { isTouched } = getFieldState(DbWizardFormFields.backupsEnabled);
-
-    if (isTouched) {
-      return;
-    }
-
-    if (mode === 'new' || mode === 'restoreFromBackup') {
-      setValue(DbWizardFormFields.backupsEnabled, true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dbType]);
-
-  useEffect(() => {
-    trigger();
-  }, [backupsEnabled]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -60,21 +38,12 @@ export const Backups = () => {
         pageTitle={Messages.backups}
         pageDescription={Messages.captionBackups}
       />
-      <SwitchInput
-        control={control}
-        label={Messages.enableBackups}
-        name={DbWizardFormFields.backupsEnabled}
-        formControlLabelProps={{
-          sx: { mt: 1 },
-        }}
-      />
-      {backupsEnabled &&
-        (backupStorages.length > 0 ? (
-          <Schedules />
-        ) : (
-          <BackupsActionableAlert namespace={selectedNamespace} />
-        ))}
-      {!backupsEnabled && (
+      {backupStorages.length > 0 ? (
+        <Schedules />
+      ) : (
+        <BackupsActionableAlert namespace={selectedNamespace} />
+      )}
+      {schedules?.length === 0 && (
         <Alert
           sx={{ mt: 1 }}
           severity="info"

@@ -36,6 +36,9 @@ import {
 } from '../../../utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '../../../constants';
 import { findDbAndClickActions } from '../../../utils/db-clusters-list';
+import {
+  addFirstScheduleInDBWizard,
+} from '../db-wizard-utils';
 
 test.describe('DB Cluster creation', () => {
   let engineVersions = {
@@ -213,7 +216,7 @@ test.describe('DB Cluster creation', () => {
     expect(addedCluster?.spec.backup.schedules[0].retentionCopies).toBe(1);
   });
 
-  test('PITR should be disabled when backups toggle was not checked', async ({
+  test('PITR should be disabled when backups has no schedules checked', async ({
     page,
   }) => {
     expect(storageClasses.length).toBeGreaterThan(0);
@@ -223,33 +226,28 @@ test.describe('DB Cluster creation', () => {
 
     await moveForward(page);
     await moveForward(page);
-    const enabledBackupsCheckbox = page
-      .getByTestId('switch-input-backups-enabled')
-      .getByRole('checkbox');
+    await expect(
+      page.getByText('You don’t have any backup schedules yet.')
+    ).toBeVisible();
+    await expect(page.getByTestId('pitr-no-backup-alert')).toBeVisible();
 
-    await expect(enabledBackupsCheckbox).toBeChecked();
     await moveForward(page);
-
     const enabledPitrCheckbox = page
       .getByTestId('switch-input-pitr-enabled-label')
       .getByRole('checkbox');
-
+    await expect(enabledPitrCheckbox).not.toBeChecked();
+    await expect(enabledPitrCheckbox).toBeDisabled();
+    await moveBack(page);
+    await addFirstScheduleInDBWizard(page);
+    await moveForward(page);
     await expect(enabledPitrCheckbox).not.toBeChecked();
     await expect(enabledPitrCheckbox).not.toBeDisabled();
     await enabledPitrCheckbox.setChecked(true);
-    await expect(enabledPitrCheckbox).toBeChecked();
+
+    await page.pause();
     await expect(
       page.getByTestId('text-input-pitr-storage-location')
     ).toBeVisible();
-
-    await moveBack(page);
-
-    await enabledBackupsCheckbox.setChecked(false);
-    await expect(page.getByTestId('pitr-no-backup-alert')).toBeVisible();
-    await moveForward(page);
-
-    await expect(enabledPitrCheckbox).not.toBeChecked();
-    await expect(enabledPitrCheckbox).toBeDisabled();
   });
 
   test.skip('Cancel wizard', async ({ page }) => {
@@ -296,7 +294,8 @@ test.describe('DB Cluster creation', () => {
     await expect(page).toHaveURL('/databases');
   });
 
-  test.skip('Multiple Mongo schedules', async ({ page, request }) => {
+  test('Multiple Mongo schedules', async ({ page, request }) => {
+    await page.pause();
     const clusterName = 'multi-schedule-test';
     const recommendedEngineVersions = await getEnginesLatestRecommendedVersions(
       namespace,

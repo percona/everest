@@ -54,7 +54,6 @@ const stepTwoSchema = z
 
 const backupsStepSchema = z
   .object({
-    [DbWizardFormFields.backupsEnabled]: z.boolean(),
     [DbWizardFormFields.schedules]: z.array(
       z.object({
         backupStorageName: z.string(),
