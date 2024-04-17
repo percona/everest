@@ -35,7 +35,7 @@ const FormProviderWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 describe('BackupsStep', () => {
-  it('should render nothing when backups are disabled by non-existent backup storage', () => {
+  it('should render nothing when no backup storage', () => {
     render(
       <QueryClientProvider client={queryClient}>
         <TestWrapper>
@@ -46,16 +46,8 @@ describe('BackupsStep', () => {
       </QueryClientProvider>
     );
 
-    expect(
-      screen.getByTestId('switch-input-backups-enabled').querySelector('input')
-    ).toBeChecked();
     expect(screen.getByTestId('no-storage-message')).toBeInTheDocument();
-    expect(
-      screen.queryByTestId('text-input-storage-location')
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByTestId('select-input-selected-time')
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('editable-item')).not.toBeInTheDocument();
   });
 
   // it('should render everything when backups are enabled', () => {
