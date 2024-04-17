@@ -60,11 +60,10 @@ const (
 	everestServiceAccountRoleBinding        = "everest-admin-role-binding"
 	everestServiceAccountClusterRoleBinding = "everest-admin-cluster-role-binding"
 
-	everestOperatorChannel = "stable-v0"
-	pxcOperatorChannel     = "stable-v1"
-	psmdbOperatorChannel   = "stable-v1"
-	pgOperatorChannel      = "stable-v2"
-	vmOperatorChannel      = "stable-v0"
+	pxcOperatorChannel   = "stable-v1"
+	psmdbOperatorChannel = "stable-v1"
+	pgOperatorChannel    = "stable-v2"
+	vmOperatorChannel    = "stable-v0"
 
 	// catalogSource is the name of the catalog source.
 	catalogSource = "everest-catalog"
@@ -342,10 +341,7 @@ func (o *Install) provisionEverestOperator(ctx context.Context, recVer *version.
 		v = recVer.EverestOperator.String()
 	}
 
-	ch := everestOperatorChannel
-	if version.EverestChannelOverride != "" {
-		ch = version.EverestChannelOverride
-	}
+	ch := version.CatalogChannel()
 	if err := o.installOperator(ctx, ch, common.EverestOperatorName, common.SystemNamespace, v)(); err != nil {
 		return err
 	}
