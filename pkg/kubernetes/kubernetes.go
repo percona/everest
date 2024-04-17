@@ -568,6 +568,29 @@ func mergeSubscriptionConfig(sub *olmv1alpha1.SubscriptionConfig, cfg *olmv1alph
 	return sub
 }
 
+func (k *Kubernetes) getTargetInstallPlanName(ctx context.Context, subscription *olmv1alpha1.Subscription, req InstallOperatorRequest) (string, error) {
+	targetCSV := req.StartingCSV
+	if subscription.Status.InstalledCSV != "" {
+		targetCSV = subscription.Status.InstalledCSV
+	}
+	if targetCSV == "" {
+		// We don't know yet which CSV we want, so we will use the one specified in the subscription.
+		return subscription.Status.InstallPlanRef.Name, nil
+	}
+	ipList, err := k.client.ListInstallPlans(ctx, req.Namespace)
+	if err != nil {
+		return "", err
+	}
+	for _, ip := range ipList.Items {
+		for _, csv := range ip.Spec.ClusterServiceVersionNames {
+			if csv == targetCSV {
+				return ip.GetName(), nil
+			}
+		}
+	}
+	return "", fmt.Errorf("cannot find InstallPlan for CSV: %s", targetCSV)
+}
+
 // InstallOperator installs an operator via OLM.
 func (k *Kubernetes) InstallOperator(ctx context.Context, req InstallOperatorRequest) error { //nolint:funlen
 	subscription, err := k.client.GetSubscription(ctx, req.Namespace, req.Name)
@@ -614,11 +637,15 @@ func (k *Kubernetes) InstallOperator(ctx context.Context, req InstallOperatorReq
 		if err != nil {
 			return false, errors.Join(err, fmt.Errorf("cannot get an install plan for the operator subscription: %q", req.Name))
 		}
-		if subs == nil || (subs != nil && subs.Status.InstallPlanRef == nil) {
+		if subs == nil || subs.Status.InstallPlanRef == nil {
 			return false, nil
 		}
 
-		return k.ApproveInstallPlan(ctx, req.Namespace, subs.Status.InstallPlanRef.Name)
+		installPlanName, err := k.getTargetInstallPlanName(ctx, subs, req)
+		if err != nil {
+			return false, err
+		}
+		return k.ApproveInstallPlan(ctx, req.Namespace, installPlanName)
 	})
 	if err != nil {
 		return err
