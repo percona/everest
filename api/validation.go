@@ -26,6 +26,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/AlekSi/pointer"
@@ -36,6 +37,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+	"golang.org/x/mod/semver"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -92,6 +94,9 @@ var (
 	errNoMetadata                    = fmt.Errorf("no metadata provided")
 	errInvalidResourceVersion        = fmt.Errorf("invalid 'resourceVersion' value")
 	errInvalidBucketName             = fmt.Errorf("invalid bucketName")
+	errInvalidVersion                = errors.New("invalid version")
+	errDBEngineMajorVersionUpgrade   = errors.New("cannot perform major version upgrades")
+	errDBEngineDowngrade             = errors.New("cannot perform downgrades")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -901,13 +906,43 @@ func validateStorageSize(cluster *DatabaseCluster) error {
 	return nil
 }
 
+// validateDBEngineVersionUpgrade validates if upgrade of DBEngine from `oldVersion` to `newVersion` is allowed.
+func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
+	// Ensure a "v" prefix so that it is a valid semver.
+	if !strings.HasPrefix(newVersion, "v") {
+		newVersion = "v" + newVersion
+	}
+	if !strings.HasPrefix(oldVersion, "v") {
+		oldVersion = "v" + oldVersion
+	}
+
+	// Check semver validity.
+	if !semver.IsValid(newVersion) {
+		return errInvalidVersion
+	}
+
+	// We will not allow major upgrades.
+	// Major upgrades are handled differently for different operators, so for now we simply won't allow it.
+	// For example:
+	// - PXC operator allows major upgrades.
+	// - PSMDB operator allows major upgrades, but we need to handle FCV.
+	// - PG operator does not allow major upgrades.
+	if semver.Major(oldVersion) != semver.Major(newVersion) {
+		return errDBEngineMajorVersionUpgrade
+	}
+	// We will not allow downgrades.
+	if semver.Compare(newVersion, oldVersion) < 0 {
+		return errDBEngineDowngrade
+	}
+	return nil
+}
+
 func validateDatabaseClusterOnUpdate(dbc *DatabaseCluster, oldDB *everestv1alpha1.DatabaseCluster) error {
-	if dbc.Spec.Engine.Version != nil {
-		// XXX: Right now we do not support upgrading of versions
-		// because it varies across different engines. Also, we should
-		// prohibit downgrades. Hence, if versions are not equal we just return an error
-		if oldDB.Spec.Engine.Version != *dbc.Spec.Engine.Version {
-			return errors.New("changing version is not allowed")
+	newVersion := pointer.Get(dbc.Spec.Engine.Version)
+	oldVersion := oldDB.Spec.Engine.Version
+	if newVersion != "" && newVersion != oldVersion {
+		if err := validateDBEngineVersionUpgrade(newVersion, oldVersion); err != nil {
+			return err
 		}
 	}
 	if *dbc.Spec.Engine.Replicas < oldDB.Spec.Engine.Replicas && *dbc.Spec.Engine.Replicas == 1 {

@@ -17,3 +17,8 @@ func (c *Client) ListDatabaseEngines(ctx context.Context, namespace string) (*ev
 func (c *Client) GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error) {
 	return c.customClientSet.DBEngines(namespace).Get(ctx, name, metav1.GetOptions{})
 }
+
+// UpdateDatabaseEngine updates a database engine and returns the updated object.
+func (c *Client) UpdateDatabaseEngine(ctx context.Context, namespace string, engine *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
+	return c.customClientSet.DBEngines(namespace).Update(ctx, engine, metav1.UpdateOptions{})
+}
