@@ -26,6 +26,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/AlekSi/pointer"
@@ -907,9 +908,19 @@ func validateStorageSize(cluster *DatabaseCluster) error {
 
 // validateDBEngineVersionUpgrade validates if upgrade of DBEngine from `oldVersion` to `newVersion` is allowed.
 func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
+	// Ensure a "v" prefix so that it is a valid semver.
+	if !strings.HasPrefix(newVersion, "v") {
+		newVersion = "v" + newVersion
+	}
+	if !strings.HasPrefix(oldVersion, "v") {
+		oldVersion = "v" + oldVersion
+	}
+
+	// Check semver validity.
 	if !semver.IsValid(newVersion) {
 		return errInvalidVersion
 	}
+
 	// We will not allow major upgrades.
 	// Major upgrades are handled differently for different operators, so for now we simply won't allow it.
 	// For example:
@@ -930,7 +941,7 @@ func validateDatabaseClusterOnUpdate(dbc *DatabaseCluster, oldDB *everestv1alpha
 	newVersion := pointer.Get(dbc.Spec.Engine.Version)
 	oldVersion := oldDB.Spec.Engine.Version
 	if newVersion != "" && newVersion != oldVersion {
-		if err := validateDBEngineVersionUpgrade("v"+newVersion, "v"+oldVersion); err != nil {
+		if err := validateDBEngineVersionUpgrade(newVersion, oldVersion); err != nil {
 			return err
 		}
 	}

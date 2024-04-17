@@ -974,24 +974,30 @@ func TestValidateDBEngineUpgrade(t *testing.T) {
 	}{
 		{
 			name:       "invalid version",
-			oldVersion: "v1.0.0",
+			oldVersion: "1.0.0",
 			newVersion: "1!00;",
 			err:        errInvalidVersion,
 		},
 		{
 			name:       "major upgrade",
-			oldVersion: "v8.0.22",
-			newVersion: "v9.0.0",
+			oldVersion: "8.0.22",
+			newVersion: "9.0.0",
 			err:        errDBEngineMajorVersionUpgrade,
 		},
 		{
 			name:       "downgrade",
-			oldVersion: "v8.0.22",
-			newVersion: "v8.0.21",
+			oldVersion: "8.0.22",
+			newVersion: "8.0.21",
 			err:        errDBEngineDowngrade,
 		},
 		{
 			name:       "valid upgrade",
+			oldVersion: "8.0.22",
+			newVersion: "8.0.23",
+			err:        nil,
+		},
+		{
+			name:       "valid upgrade (with 'v' prefix)",
 			oldVersion: "v8.0.22",
 			newVersion: "v8.0.23",
 			err:        nil,
