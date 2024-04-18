@@ -28,7 +28,7 @@ import (
 	"golang.org/x/mod/semver"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	"github.com/percona/everest/pkg/version"
+	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
 const (
@@ -121,7 +121,11 @@ func (e *EverestServer) GetOperatorUpgradePreflight(
 		databases = append(databases, db)
 	}
 
-	result, err := e.operatorUpgradePreflight(ctx.Request().Context(), params.TargetVersion, engine, databases)
+	// Initialize a client for version service.
+	vs := versionservice.New(e.config.VersionServiceURL)
+
+	result, err := e.operatorUpgradePreflight(
+		ctx.Request().Context(), params.TargetVersion, engine, databases, vs)
 	if err != nil {
 		return err
 	}
@@ -145,11 +149,12 @@ func (e *EverestServer) operatorUpgradePreflight(
 	targetVersion string,
 	engine *everestv1alpha1.DatabaseEngine,
 	dbs []everestv1alpha1.DatabaseCluster,
+	versionService versionservice.Interface,
 ) (*OperatorUpgradePreflight, error) {
 	dbResults := make([]OperatorUpgradePreflightForDatabase, 0, len(dbs))
 	for _, db := range dbs {
 		// Check that the database engine is at the desired version.
-		engineVersionValid, reqEngineVersion, err := e.validateDatabaseEngineVersionForOperatorUpgrade(ctx, db, targetVersion, engine.Spec.Type)
+		engineVersionValid, reqEngineVersion, err := e.validateDatabaseEngineVersionForOperatorUpgrade(ctx, db, targetVersion, engine.Spec.Type, versionService)
 		if err != nil {
 			return nil, errors.Join(err, errors.New("failed to validate database engine version for operator upgrade"))
 		}
@@ -184,16 +189,21 @@ func (e *EverestServer) validateDatabaseEngineVersionForOperatorUpgrade(
 	database everestv1alpha1.DatabaseCluster,
 	targetVersion string,
 	engineType everestv1alpha1.EngineType,
+	versionService versionservice.Interface,
 ) (bool, string, error) {
-	operator, found := version.EngineTypeToOperatorName[engineType]
+	operator, found := versionservice.EngineTypeToOperatorName[engineType]
 	if !found {
 		return false, "", fmt.Errorf("unsupported engine type %s", engineType)
 	}
 
-	minVersion, err := version.MinimumSupportedEngineVersion(ctx, operator, targetVersion, e.config.VersionServiceURL)
+	supportedVersions, err := versionService.GetSupportedEngineVersions(ctx, operator, targetVersion)
 	if err != nil {
 		return false, "", err
 	}
+
+	// GetSupportedEngineVersions always returns a non-zero length result.
+	minVersion := supportedVersions[0]
+
 	if !strings.HasPrefix(minVersion, "v") {
 		minVersion = "v" + minVersion
 	}

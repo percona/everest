@@ -12,6 +12,8 @@ import (
 
 	perconavs "github.com/Percona-Lab/percona-version-service/versionpb"
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
+
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
 const (
@@ -22,6 +24,15 @@ const (
 	// PGOperatorName is the name of the PG operator in the version service.
 	PGOperatorName = "pg-operator"
 )
+
+// EngineTypeToOperatorName maps an engine type to the operator name in the version service.
+//
+//nolint:gochecknoglobals
+var EngineTypeToOperatorName = map[everestv1alpha1.EngineType]string{
+	everestv1alpha1.DatabaseEnginePXC:        PXCOperatorName,
+	everestv1alpha1.DatabaseEnginePSMDB:      PSMDBOperatorName,
+	everestv1alpha1.DatabaseEnginePostgresql: PGOperatorName,
+}
 
 type Interface interface {
 	GetSupportedEngineVersions(ctx context.Context, operator, version string) ([]string, error)
