@@ -18,9 +18,15 @@ import {
   UseMutationOptions,
   useQuery,
 } from '@tanstack/react-query';
-import { createDbClusterRestore, getDbClusterRestores } from 'api/restores';
+import {
+  createDbClusterRestore,
+  deleteRestore,
+  getDbClusterRestores,
+} from 'api/restores';
 import { generateShortUID } from 'pages/database-form/database-form-body/steps/first/utils';
 import { GetRestorePayload, Restore } from 'shared-types/restores.types';
+
+export const RESTORES_QUERY_KEY = 'restores';
 
 export const useDbClusterRestoreFromBackup = (
   dbClusterName: string,
@@ -94,7 +100,7 @@ export const useDbClusterRestores = (
   dbClusterName: string
 ) =>
   useQuery<GetRestorePayload, unknown, Restore[]>({
-    queryKey: ['restores', namespace, dbClusterName],
+    queryKey: [RESTORES_QUERY_KEY, namespace, dbClusterName],
     queryFn: () => getDbClusterRestores(namespace, dbClusterName),
     select: (data) =>
       data.items.map((item) => ({
@@ -104,4 +110,13 @@ export const useDbClusterRestores = (
         state: item.status.state,
         type: item.spec.dataSource.pitr ? 'pitr' : 'full',
       })),
+  });
+
+export const useDeleteRestore = (
+  namespace: string,
+  options?: UseMutationOptions<unknown, unknown, string, unknown>
+) =>
+  useMutation({
+    mutationFn: (restoreName: string) => deleteRestore(namespace, restoreName),
+    ...options,
   });
