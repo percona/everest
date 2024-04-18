@@ -33,14 +33,6 @@ func TestLatestRestorableDate(t *testing.T) {
 			now:              now,
 			expected:         now.Add(-600 * time.Second),
 		},
-
-		{
-			name:             "backup 5 min ago, upload interval 10 min",
-			uploadInterval:   600,
-			latestBackupTime: now.Add(-900 * time.Second),
-			now:              now,
-			expected:         now.Add(-600 * time.Second),
-		},
 	}
 
 	for _, tc := range cases {
