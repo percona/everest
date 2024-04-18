@@ -221,7 +221,6 @@ func (e *EverestServer) validateDatabaseEngineVersionForOperatorUpgrade(
 	if !strings.HasPrefix(minVersion, "v") {
 		minVersion = "v" + minVersion
 	}
-
 	currentVersion := database.Spec.Engine.Version
 	if !strings.HasPrefix(currentVersion, "v") {
 		currentVersion = "v" + currentVersion
@@ -229,5 +228,5 @@ func (e *EverestServer) validateDatabaseEngineVersionForOperatorUpgrade(
 
 	// Current engine version should be greater than or equal to the minimum supported version.
 	versionValid := semver.Compare(currentVersion, minVersion) >= 0
-	return versionValid, minVersion, nil
+	return versionValid, strings.TrimPrefix(minVersion, "v"), nil
 }
