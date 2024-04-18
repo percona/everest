@@ -22,7 +22,6 @@ import {
   findDbAndClickActions,
   findDbAndClickRow,
 } from '../../../utils/db-clusters-list';
-import { getTokenFromLocalStorage } from '../../../utils/localStorage';
 import {
   moveForward,
   storageLocationAutocompleteEmptyValidationCheck,
@@ -32,7 +31,6 @@ import {
   checkSuccessOfUpdateAndGoToDbClustersList,
 } from './edit-db-cluster.utils';
 import { STORAGE_NAMES } from '../../../constants';
-import { addFirstScheduleInDBWizard } from '../db-wizard-utils';
 
 test.describe.serial('DB Cluster Editing PITR Step', async () => {
   const mySQLName = 'db-pitr-mysql';
@@ -46,30 +44,34 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
       disk: 1,
       memory: 1,
       backup: {
-        enabled: false,
-        schedules: [],
+        enabled: true,
+        schedules: [
+          {
+            backupStorageName: 'test-storage-1',
+            enabled: true,
+            name: 'backup-1',
+            schedule: '0 * * * *',
+          }
+          ]
       },
     });
   });
 
   test.afterAll(async ({ request }) => {
-    const token = await getTokenFromLocalStorage();
     await deleteDbClusterFn(request, mySQLName);
   });
 
   test('Enable PITR to database during editing in dbWizard', async ({
     page,
   }) => {
+    await page.pause();
     await page.goto('/databases');
-    await findDbAndClickActions(page, mySQLName, 'Edit');
+    await findDbAndClickActions(page, mySQLName, 'Edit', 'UP');
 
     // Go to Resources step
     await moveForward(page);
     // Go to Backups step
     await moveForward(page);
-    // Check and fill in backups step
-    expect(page.getByTestId('pitr-no-backup-alert'));
-    await addFirstScheduleInDBWizard(page);
     // Go to PITR step
     await moveForward(page);
 
@@ -92,7 +94,7 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
     );
     const storageOptions = page.getByRole('option');
     await expect(
-      storageOptions.filter({ hasText: STORAGE_NAMES[0] })
+      storageOptions.filter({ hasText: STORAGE_NAMES[1] })
     ).toBeVisible();
     await storageOptions.first().click();
 

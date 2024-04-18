@@ -135,7 +135,6 @@ test.describe('DB Cluster creation', () => {
     await moveForward(page);
 
     await backupsStepCheck(page);
-    // TODO will change when we support physical backups
 
     await moveForward(page);
 
