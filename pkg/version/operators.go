@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	perconavs "github.com/Percona-Lab/percona-version-service/versionpb"
+
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 

@@ -144,7 +144,8 @@ func (e *EverestServer) operatorUpgradePreflight(
 	ctx context.Context,
 	targetVersion string,
 	engine *everestv1alpha1.DatabaseEngine,
-	dbs []everestv1alpha1.DatabaseCluster) (*OperatorUpgradePreflight, error) {
+	dbs []everestv1alpha1.DatabaseCluster,
+) (*OperatorUpgradePreflight, error) {
 	dbResults := make([]OperatorUpgradePreflightForDatabase, 0)
 	for _, db := range dbs {
 
