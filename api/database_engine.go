@@ -168,7 +168,16 @@ func (e *EverestServer) operatorUpgradePreflight(
 			continue
 		}
 
-		// TODO: check CRVersion on the database.
+		// Check that DB is at recommended CRVersion.
+		if recCRVersion := db.Status.RecommendedCRVersion; recCRVersion != nil {
+			dbResults = append(dbResults, OperatorUpgradePreflightForDatabase{
+				Name:        pointer.To(db.GetName()),
+				PendingTask: pointer.To(Restart),
+				Message: pointer.ToString(
+					fmt.Sprintf("Update CRVersion to %s", *recCRVersion)),
+			})
+			continue
+		}
 
 		// Database is in desired state for performing operator upgrade.
 		dbResults = append(dbResults, OperatorUpgradePreflightForDatabase{
