@@ -1432,6 +1432,23 @@ components:
           items:
             type: string
       additionalProperties: false
+    OperatorUpgradePreflightForDatabase:
+      type: object
+      description: Operator upgrade preflight check results for a database
+      properties:
+        name:
+          type: string
+          description: Name of the database cluster
+        message:
+          type: string
+        pendingTask:
+          type: string
+          description: Pending task for the database cluster
+          enum:
+            - ready
+            - restart
+            - upgradeEngine
+      additionalProperties: false
     OperatorUpgradePreflight:
       type: object
       description: Operator upgrade preflight check results
@@ -1443,18 +1460,7 @@ components:
           type: array
           items:
             type: object
-            properties:
-              name:
-                type: string
-                description: Name of the database cluster
-              status:
-                type: string
-                description: Status of the database cluster with respect to operator upgrade
-                enum:
-                  - ready
-                  - notReady
-                  - pendingRestart
-                  - pendingEngineUpgrade
+            $ref: '#/components/schemas/OperatorUpgradePreflightForDatabase'
       additionalProperties: false
     BackupStorage:
       type: object

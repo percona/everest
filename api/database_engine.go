@@ -17,6 +17,8 @@
 package api
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -93,6 +95,40 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 	return nil
 }
 
+// Get the preflight check results for upgrading the specified database engine operator.
+func (e *EverestServer) GetOperatorUpgradePreflight(
+	ctx echo.Context,
+	namespace, name string,
+	params GetOperatorUpgradePreflightParams,
+) error {
+	// Get existing database engine.
+	engine, err := e.kubeClient.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
+	if err != nil {
+		return err
+	}
+	// Get all database clusters in the namespace.
+	allDatabases, err := e.kubeClient.ListDatabaseClusters(ctx.Request().Context(), namespace)
+	if err != nil {
+		return err
+	}
+	// Filter out databases of the provided engine type.
+	databases := make([]everestv1alpha1.DatabaseCluster, 0)
+	for _, db := range allDatabases.Items {
+		if db.Spec.Engine.Type != engine.Spec.Type {
+			continue
+		}
+		databases = append(databases, db)
+	}
+
+	result, err := e.operatorUpgradePreflight(ctx.Request().Context(), params.TargetVersion, databases)
+	if err != nil {
+		return err
+	}
+	result.CurrentVersion = pointer.To(engine.Status.OperatorVersion)
+
+	return ctx.JSON(http.StatusOK, result)
+}
+
 func validateDatabaseEngineOperatorUpgradeParams(req *DatabaseEngineOperatorUpgradeParams) error {
 	targetVersion := req.TargetVersion
 	if !strings.HasPrefix(targetVersion, "v") {
@@ -102,4 +138,40 @@ func validateDatabaseEngineOperatorUpgradeParams(req *DatabaseEngineOperatorUpgr
 		return fmt.Errorf("invalid target version '%s'", req.TargetVersion)
 	}
 	return nil
+}
+
+func (e *EverestServer) operatorUpgradePreflight(
+	ctx context.Context,
+	targetVersion string,
+	dbs []everestv1alpha1.DatabaseCluster) (*OperatorUpgradePreflight, error) {
+	dbResults := make([]OperatorUpgradePreflightForDatabase, 0)
+	for _, db := range dbs {
+
+		if valid, minVer, err := e.validateDatabaseEngineVersionForOperatorUpgrade(); err != nil {
+			return nil, errors.Join(err, errors.New("failed to validate database engine version for operator upgrade"))
+		} else if !valid {
+			dbResults = append(dbResults, OperatorUpgradePreflightForDatabase{
+				Name:        pointer.To(db.GetName()),
+				PendingTask: pointer.To(UpgradeEngine),
+				Message: pointer.ToString(
+					fmt.Sprintf("Database engine version %s is below the minimum required version %s", db.Spec.Engine.Version, minVer)),
+			})
+			continue
+		}
+
+		// TODO: check that CRVersion is updated.
+
+		// Database is in desired state for performing operator upgrade.
+		dbResults = append(dbResults, OperatorUpgradePreflightForDatabase{
+			Name:        pointer.To(db.GetName()),
+			PendingTask: pointer.To(Ready),
+		})
+	}
+	return &OperatorUpgradePreflight{
+		Databases: &dbResults,
+	}, nil
+}
+
+func (e *EverestServer) validateDatabaseEngineVersionForOperatorUpgrade() (bool, string, error) {
+	return true, nil
 }
