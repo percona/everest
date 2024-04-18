@@ -7,13 +7,16 @@ import (
 	"github.com/AlekSi/pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
+//nolint:tparallel,paralleltest
 func TestOperatorUpgradePreflight(t *testing.T) {
+	t.Parallel()
 	versionService := versionservice.MockInterface{}
 	crVersion := "1.1.1"
 	operatorVersion := "1.2.1"
@@ -61,7 +64,7 @@ func TestOperatorUpgradePreflight(t *testing.T) {
 		dbs := []everestv1alpha1.DatabaseCluster{db}
 
 		result, err := e.runOperatorUpgradePreflightChecks(ctx, dbs, args)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, operatorVersion, pointer.Get(result.CurrentVersion))
 		assert.Len(t, *result.Databases, 1)
@@ -85,7 +88,7 @@ func TestOperatorUpgradePreflight(t *testing.T) {
 		dbs := []everestv1alpha1.DatabaseCluster{db}
 
 		result, err := e.runOperatorUpgradePreflightChecks(ctx, dbs, args)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, operatorVersion, pointer.Get(result.CurrentVersion))
 		assert.Len(t, *result.Databases, 1)
@@ -108,7 +111,7 @@ func TestOperatorUpgradePreflight(t *testing.T) {
 		dbs := []everestv1alpha1.DatabaseCluster{db}
 
 		result, err := e.runOperatorUpgradePreflightChecks(ctx, dbs, args)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, operatorVersion, pointer.Get(result.CurrentVersion))
 		assert.Len(t, *result.Databases, 1)
