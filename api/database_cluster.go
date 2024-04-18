@@ -179,18 +179,26 @@ func (e *EverestServer) GetDatabaseClusterPitr(ctx echo.Context, namespace, name
 	latestBackup := latestSuccessfulBackup(backups.Items, databaseCluster.Spec.Engine.Type)
 
 	uploadInterval := getDefaultUploadInterval(databaseCluster.Spec.Engine.Type)
-	now := time.Now()
-	// delete nanoseconds since they're not accepted by restoration
-	now = now.Truncate(time.Duration(now.Nanosecond()) * time.Nanosecond)
-	// heuristic: latest restorable date is now minus uploadInterval
-	latest := now.Truncate(time.Duration(uploadInterval) * time.Second).UTC()
+	backupTime := latestBackup.Status.CreatedAt.UTC()
+	latest := latestRestorableDate(time.Now(), backupTime, uploadInterval)
+
 	response.LatestDate = &latest
-	earliest := latestBackup.Status.CreatedAt.UTC()
-	response.EarliestDate = &earliest
+	response.EarliestDate = &backupTime
 	response.LatestBackupName = &latestBackup.Name
 	response.Gaps = &latestBackup.Status.Gaps
 
 	return ctx.JSON(http.StatusOK, response)
+}
+
+func latestRestorableDate(now, latestBackupTime time.Time, uploadInterval int) time.Time {
+	// delete nanoseconds since they're not accepted by restoration
+	now = now.Truncate(time.Duration(now.Nanosecond()) * time.Nanosecond)
+	// heuristic: latest restorable date is now minus uploadInterval
+	earliest := now.Add(-time.Duration(uploadInterval) * time.Second).UTC()
+	if latestBackupTime.After(earliest) {
+		return latestBackupTime
+	}
+	return earliest
 }
 
 func latestSuccessfulBackup(backups []everestv1alpha1.DatabaseClusterBackup, engineType everestv1alpha1.EngineType) *everestv1alpha1.DatabaseClusterBackup {
