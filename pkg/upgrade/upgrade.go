@@ -118,7 +118,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		u.l.Debugf("Percona catalog version was nil. Changing to %s", upgradeEverestTo)
 		catalogVersion = upgradeEverestTo
 	}
-	u.l.Infof("Upgrading Percona Catalog to %s", recVer.Catalog)
+	u.l.Infof("Upgrading Percona Catalog to %s", catalogVersion)
 	if err := u.kubeClient.InstallPerconaCatalog(ctx, catalogVersion); err != nil {
 		return err
 	}
