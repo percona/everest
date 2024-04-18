@@ -122,6 +122,8 @@ type KubeClientConnector interface {
 	ListDatabaseClusterBackups(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error)
 	// GetDatabaseClusterBackup returns database cluster backups by provided name.
 	GetDatabaseClusterBackup(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error)
+	// UpdateDatabaseClusterBackup updates the provided database cluster backup.
+	UpdateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error)
 	// ListDatabaseClusterRestores returns list of managed database clusters.
 	ListDatabaseClusterRestores(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterRestoreList, error)
 	// GetDatabaseClusterRestore returns database clusters by provided name.
@@ -130,6 +132,8 @@ type KubeClientConnector interface {
 	ListDatabaseEngines(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseEngineList, error)
 	// GetDatabaseEngine returns database clusters by provided name.
 	GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error)
+	// UpdateDatabaseEngine updates a database engine and returns the updated object.
+	UpdateDatabaseEngine(ctx context.Context, namespace string, engine *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error)
 	// GetDeployment returns deployment by name.
 	GetDeployment(ctx context.Context, name string, namespace string) (*appsv1.Deployment, error)
 	// ListDeployments returns deployment by name.

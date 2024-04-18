@@ -20,6 +20,7 @@ const backupsWithScheduleValidationObject = {
   )
     .max(MAX_SCHEDULE_NAME_LENGTH, ScheduleFormMessages.scheduleName.tooLong)
     .optional(),
+  [ScheduleFormFields.retentionCopies]: z.string(),
   ...timeSelectionSchemaObject,
   ...storageLocationScheduleFormSchema('dbWizard'),
 };
@@ -31,12 +32,21 @@ export const backupsValidationSchema = z
 export const backupsWithScheduleValidationSchema = z
   .object(backupsWithScheduleValidationObject)
   .passthrough()
-  .superRefine(({ backupsEnabled, storageLocation }, ctx) => {
+  .superRefine(({ backupsEnabled, storageLocation, retentionCopies }, ctx) => {
+    const retentionCopiesNumber = parseInt(retentionCopies, 10);
     if (backupsEnabled && !storageLocation) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: [DbWizardFormFields.storageLocation],
         message: ScheduleFormMessages.storageLocation.invalidOption,
+      });
+    }
+
+    if (isNaN(retentionCopiesNumber) || retentionCopiesNumber < 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [DbWizardFormFields.retentionCopies],
+        message: ScheduleFormMessages.retentionCopies.invalidNumber,
       });
     }
   });

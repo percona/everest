@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ScheduleFormFields } from 'components/schedule-form/schedule-form.types.ts';
+import { ScheduleFormFields } from 'components/schedule-form/schedule-form.types';
 
 export enum DbWizardForm {
   dbName = 'dbName',

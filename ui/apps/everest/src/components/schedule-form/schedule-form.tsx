@@ -48,14 +48,13 @@ export const ScheduleForm = ({
   return (
     <>
       {showTypeRadio && <LogicalPhysicalRadioGroup />}
-      <Typography variant="sectionHeading" mb={2}>
+      <Typography variant="sectionHeading" mb={1}>
         {Messages.backupDetails}
       </Typography>
       {allowScheduleSelection ? (
         <AutoCompleteInput
           name={ScheduleFormFields.scheduleName}
           textFieldProps={{
-            sx: { mb: 3 },
             label: Messages.scheduleName.label,
           }}
           options={schedulesNamesList}
@@ -65,7 +64,6 @@ export const ScheduleForm = ({
         <TextInput
           name={ScheduleFormFields.scheduleName}
           textFieldProps={{
-            sx: { mb: 3 },
             label: Messages.scheduleName.label,
             disabled: disableNameInput,
           }}
@@ -75,7 +73,9 @@ export const ScheduleForm = ({
 
       <AutoCompleteAutoFill
         name={ScheduleFormFields.storageLocation}
-        textFieldProps={{ label: Messages.storageLocation.label }}
+        textFieldProps={{
+          label: Messages.storageLocation.label,
+        }}
         loading={storageLocationFetching}
         options={storageLocationOptions}
         autoCompleteProps={{
@@ -87,7 +87,15 @@ export const ScheduleForm = ({
         enableFillFirst={autoFillLocation}
         disabled={disableStorageSelection}
       />
-
+      <TextInput
+        name={ScheduleFormFields.retentionCopies}
+        textFieldProps={{
+          type: 'number',
+          label: Messages.retentionCopies.label,
+          helperText: Messages.retentionCopies.helperText,
+        }}
+        isRequired
+      />
       <LabeledContent label={Messages.repeats}>
         <TimeSelection showInfoAlert />
       </LabeledContent>

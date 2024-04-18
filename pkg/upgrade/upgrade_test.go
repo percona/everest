@@ -121,6 +121,54 @@ func TestUpgrade_canUpgrade(t *testing.T) {
 			},
 			wantUpgradeTo: "0.7.0",
 		},
+		{
+			name:           "upgrade to the next patch version if minor upgrade is not available",
+			everestVersion: "0.8.0",
+			versionMeta: &version.MetadataResponse{
+				Versions: []*version.MetadataVersion{
+					{Version: "0.8.1"},
+					{Version: "0.8.0"},
+					{Version: "0.7.0"},
+					{Version: "0.6.0"},
+					{Version: "0.5.0"},
+				},
+			},
+			wantUpgradeTo: "0.8.1",
+		},
+		{
+			name:           "upgrade to the next minor version even if a patch version is available",
+			everestVersion: "0.8.0",
+			versionMeta: &version.MetadataResponse{
+				Versions: []*version.MetadataVersion{
+					{Version: "0.9.2"},
+					{Version: "0.9.0"},
+					{Version: "0.8.1"},
+					{Version: "0.8.0"},
+					{Version: "0.7.0"},
+					{Version: "0.6.0"},
+					{Version: "0.5.0"},
+				},
+			},
+			wantUpgradeTo: "0.9.2",
+		},
+		{
+			name:           "upgrade to the next minor version even if a patch version is available - mixed order",
+			everestVersion: "0.8.0",
+			versionMeta: &version.MetadataResponse{
+				Versions: []*version.MetadataVersion{
+					{Version: "0.9.0"},
+					{Version: "0.8.1"},
+					{Version: "0.8.0"},
+					{Version: "0.8.2"},
+					{Version: "0.9.2"},
+					{Version: "0.9.1"},
+					{Version: "0.7.0"},
+					{Version: "0.6.0"},
+					{Version: "0.5.0"},
+				},
+			},
+			wantUpgradeTo: "0.9.2",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
