@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { gotoDbClusterBackups } from '../utils/db-clusters-list';
-import { createDbClusterFn } from '../utils/db-cluster';
+import { createDbClusterFn, deleteDbClusterFn } from '../utils/db-cluster';
 import { clickOnDemandBackup } from './utils';
 
 test.describe('On-demand backup', async () => {
@@ -23,6 +23,10 @@ test.describe('On-demand backup', async () => {
         ],
       },
     });
+  });
+
+  test.afterAll(async ({ request }) => {
+    await deleteDbClusterFn(request, mySQLName);
   });
 
   test('Non-empty backup storage', async ({ page }) => {
