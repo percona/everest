@@ -2,15 +2,17 @@ import { useParams } from 'react-router-dom';
 import { Alert, MenuItem } from '@mui/material';
 import { Delete } from '@mui/icons-material';
 import { MRT_ColumnDef } from 'material-react-table';
-import { format, isValid } from 'date-fns';
+import { format } from 'date-fns';
+import { Table } from '@percona/ui-lib';
+import { DATE_FORMAT } from 'consts';
+import { StatusField } from 'components/status-field/status-field';
 import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
 import { useDbClusterPitr } from 'hooks/api/backups/useBackups';
-import { DATE_FORMAT } from 'consts';
-import { Restore } from 'shared-types/restores.types';
+import { Restore, RestoreStatus } from 'shared-types/restores.types';
 import { Messages } from './restores.messages';
 import { useDbClusterRestores } from 'hooks/api/restores/useDbClusterRestore';
 import { useMemo } from 'react';
-import { Table } from '@percona/ui-lib';
+import { RESTORE_STATUS_TO_BASE_STATUS } from './restores.constants';
 
 const Restores = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -30,6 +32,14 @@ const Restores = () => {
       {
         header: 'Status',
         accessorKey: 'state',
+        Cell: ({ cell }) => (
+          <StatusField
+            status={cell.getValue<RestoreStatus>()}
+            statusMap={RESTORE_STATUS_TO_BASE_STATUS}
+          >
+            {cell.getValue<RestoreStatus>()}
+          </StatusField>
+        ),
       },
       {
         header: 'Name',

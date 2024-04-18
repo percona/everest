@@ -55,3 +55,19 @@ export type Restore = {
   type: 'full' | 'pitr';
   state: string;
 };
+
+export enum RestoreStatus {
+  STARTING = 'Starting',
+  STOPPING = 'Stopping Cluster',
+  RESTORING = 'Restoring',
+  STARTING_CLUSTER = 'Starting Cluster',
+  PITR_RECOVERING = 'Point-in-time recovering',
+  FAILED = 'Failed',
+  SUCCEEDED = 'Succeeded',
+  WAITING = 'waiting',
+  REQUESTED = 'requested',
+  REJECTED = 'rejected',
+  RUNNING = 'running',
+  ERROR = 'error',
+  READY = 'ready',
+}
