@@ -13,7 +13,14 @@ test.describe('On-demand backup', async () => {
       numberOfNodes: '1',
       backup: {
         enabled: true,
-        schedules: [],
+        schedules: [
+          {
+            backupStorageName: 'test-storage-1',
+            enabled: true,
+            name: 'backup-1',
+            schedule: '0 * * * *',
+          },
+        ],
       },
     });
   });
