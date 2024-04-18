@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	perconavs "github.com/Percona-Lab/percona-version-service/versionpb"
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
 const (
@@ -37,7 +38,15 @@ const (
 	PGOperatorName = "pg-operator"
 )
 
+// EngineTypeToOperatorName maps an engine type to the operator name in the version service.
+var EngineTypeToOperatorName = map[everestv1alpha1.EngineType]string{
+	everestv1alpha1.DatabaseEnginePXC:        PXCOperatorName,
+	everestv1alpha1.DatabaseEnginePSMDB:      PSMDBOperatorName,
+	everestv1alpha1.DatabaseEnginePostgresql: PGOperatorName,
+}
+
 // SupportedEngineVersions returns a list of supported versions for a given operator.
+// The result is sorted in ascending order, i.e, smallest version first.
 func SupportedEngineVersions(
 	ctx context.Context,
 	operator string,
