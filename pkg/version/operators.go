@@ -40,6 +40,8 @@ const (
 )
 
 // EngineTypeToOperatorName maps an engine type to the operator name in the version service.
+//
+//nolint:gochecknoglobals
 var EngineTypeToOperatorName = map[everestv1alpha1.EngineType]string{
 	everestv1alpha1.DatabaseEnginePXC:        PXCOperatorName,
 	everestv1alpha1.DatabaseEnginePSMDB:      PSMDBOperatorName,

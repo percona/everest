@@ -96,7 +96,7 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 	return nil
 }
 
-// Get the preflight check results for upgrading the specified database engine operator.
+// GetOperatorUpgradePreflight gets the preflight check results for upgrading the specified database engine operator.
 func (e *EverestServer) GetOperatorUpgradePreflight(
 	ctx echo.Context,
 	namespace, name string,
@@ -113,7 +113,7 @@ func (e *EverestServer) GetOperatorUpgradePreflight(
 		return err
 	}
 	// Filter out databases of the provided engine type.
-	databases := make([]everestv1alpha1.DatabaseCluster, 0)
+	databases := []everestv1alpha1.DatabaseCluster{}
 	for _, db := range allDatabases.Items {
 		if db.Spec.Engine.Type != engine.Spec.Type {
 			continue
@@ -146,9 +146,8 @@ func (e *EverestServer) operatorUpgradePreflight(
 	engine *everestv1alpha1.DatabaseEngine,
 	dbs []everestv1alpha1.DatabaseCluster,
 ) (*OperatorUpgradePreflight, error) {
-	dbResults := make([]OperatorUpgradePreflightForDatabase, 0)
+	dbResults := make([]OperatorUpgradePreflightForDatabase, 0, len(dbs))
 	for _, db := range dbs {
-
 		// Check that the database engine is at the desired version.
 		engineVersionValid, reqEngineVersion, err := e.validateDatabaseEngineVersionForOperatorUpgrade(ctx, db, targetVersion, engine.Spec.Type)
 		if err != nil {
