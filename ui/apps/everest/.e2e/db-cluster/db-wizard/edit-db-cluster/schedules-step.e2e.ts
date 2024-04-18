@@ -34,7 +34,6 @@ import {
 } from '../db-wizard-utils';
 
 test.describe.serial('DB Cluster Editing Backups Step', async () => {
-  // let scheduleName = 'db-wizard-schedule';
   const mySQLName = 'db-backup-mysql';
 
   test.beforeAll(async ({ request }) => {
@@ -46,7 +45,6 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
   });
 
   test.afterAll(async ({ request }) => {
-    // const token = await getTokenFromLocalStorage();
     await deleteDbClusterFn(request, mySQLName);
   });
 

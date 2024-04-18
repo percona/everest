@@ -19,9 +19,9 @@ import { Typography } from '@mui/material';
 
 import { ScheduleFormDialogContext } from './schedule-form-dialog-context/schedule-form-dialog.context';
 import { Messages } from './schedule-form-dialog.messages';
-import { schema } from 'components/schedule-form/schedule-form-schema';
+import { schema } from 'components/schedule-form-dialog/schedule-form/schedule-form-schema';
 import { scheduleModalDefaultValues } from './schedule-form-dialog.utils';
-import { ScheduledBackupModalForm } from './scheduled-backup-modal-form';
+import { ScheduleFormWrapper } from './schedule-form-wrapper';
 
 export const ScheduleFormDialog = () => {
   const {
@@ -79,7 +79,7 @@ export const ScheduleFormDialog = () => {
           {Messages.createSchedule.subhead}
         </Typography>
       )}
-      <ScheduledBackupModalForm />
+      <ScheduleFormWrapper />
     </FormDialog>
   );
 };

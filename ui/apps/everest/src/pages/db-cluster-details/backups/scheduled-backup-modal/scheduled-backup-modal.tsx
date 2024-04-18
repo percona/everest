@@ -19,7 +19,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { useUpdateSchedules } from 'hooks/api/backups/useScheduledBackups';
 import { ScheduleModalContext } from '../backups.context.ts';
-import { ScheduleFormData } from 'components/schedule-form/schedule-form-schema';
+import { ScheduleFormData } from 'components/schedule-form-dialog/schedule-form/schedule-form-schema';
 import { ScheduleFormDialogContext } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog.context';
 import { ScheduleFormDialog } from 'components/schedule-form-dialog';
 

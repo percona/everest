@@ -340,10 +340,6 @@ test.describe('DB Cluster creation', () => {
     await goToStep(page, 'point-in-time-recovery');
     await setPitrEnabledStatus(page, true);
 
-    // await expect(
-    //   page.getByText(`Backups storage: ${storageName}`)
-    // ).toBeVisible();
-
     await deleteDbClusterFn(request, clusterName, namespace);
   });
 });

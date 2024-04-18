@@ -44,12 +44,11 @@ export const addScheduleInDbWizard = async (page: Page) => {
 
 const checkDbTypeisVisibleInPreview = async (page: Page, dbType: DbType) => {
   const dbTypeLocator = page.getByText(beautifyDbTypeName(dbType));
-  const isVisible = (await dbTypeLocator.allInnerTexts())?.length > 0;
-  return isVisible;
+  return (await dbTypeLocator.allInnerTexts())?.length > 0;
 };
 
 const fillScheduleModalForm = async (page: Page) => {
-  //TODO can be customizable
+  // TODO can be customizable
   if (await checkDbTypeisVisibleInPreview(page, DbType.Mongo)) {
     await expect(page.getByTestId('radio-option-logical')).toBeChecked();
   }

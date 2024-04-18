@@ -15,7 +15,7 @@
 
 import { ScheduleFormData } from './schedule-form-schema';
 import { Schedule } from 'shared-types/dbCluster.types';
-import { getCronExpressionFromFormValues } from '../time-selection/time-selection.utils';
+import { getCronExpressionFromFormValues } from '../../time-selection/time-selection.utils';
 
 type UpdateScheduleArrayProps = {
   formData: ScheduleFormData;

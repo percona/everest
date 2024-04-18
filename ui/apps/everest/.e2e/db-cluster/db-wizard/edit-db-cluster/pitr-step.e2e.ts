@@ -64,7 +64,6 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
   test('Enable PITR to database during editing in dbWizard', async ({
     page,
   }) => {
-    await page.pause();
     await page.goto('/databases');
     await findDbAndClickActions(page, mySQLName, 'Edit', 'UP');
 

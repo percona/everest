@@ -13,15 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ScheduleForm } from 'components/schedule-form/schedule-form.tsx';
-import { ScheduleFormFields } from 'components/schedule-form/schedule-form.types.ts';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
 import { useContext, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { DbEngineType } from 'shared-types/dbEngines.types.ts';
 import { ScheduleFormDialogContext } from '../schedule-form-dialog-context/schedule-form-dialog.context';
+import { ScheduleFormFields } from '../schedule-form/schedule-form.types';
+import { ScheduleForm } from '../schedule-form/schedule-form';
 
-export const ScheduledBackupModalForm = () => {
+export const ScheduleFormWrapper = () => {
   const { watch, setValue, trigger } = useFormContext();
   const {
     mode = 'new',

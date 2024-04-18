@@ -1,5 +1,5 @@
 import { DbCluster } from 'shared-types/dbCluster.types';
-import { ScheduleFormData } from '../../schedule-form/schedule-form-schema';
+import { ScheduleFormData } from '../schedule-form/schedule-form-schema';
 
 export type ScheduleFormDialogContextType = {
   mode: 'new' | 'edit';

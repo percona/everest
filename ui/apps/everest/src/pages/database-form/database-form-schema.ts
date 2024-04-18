@@ -5,7 +5,7 @@ import { Messages } from './database-form.messages.ts';
 import { ResourceSize } from './database-form-body/steps/resources/resources-step.types.ts';
 import { DbWizardFormFields } from './database-form.types.ts';
 import { rfc_123_schema } from 'utils/common-validation.ts';
-import { Messages as ScheduleFormMessages } from 'components/schedule-form/schedule-form.messages.ts';
+import { Messages as ScheduleFormMessages } from 'components/schedule-form-dialog/schedule-form/schedule-form.messages.ts';
 
 const resourceToNumber = (minimum = 0) =>
   z.union([z.string().nonempty(), z.number()]).pipe(
