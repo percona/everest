@@ -51,8 +51,8 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
             enabled: true,
             name: 'backup-1',
             schedule: '0 * * * *',
-          }
-          ]
+          },
+        ],
       },
     });
   });

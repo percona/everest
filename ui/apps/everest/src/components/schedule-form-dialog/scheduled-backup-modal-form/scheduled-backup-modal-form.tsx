@@ -48,10 +48,10 @@ export const ScheduledBackupModalForm = () => {
       trigger(ScheduleFormFields.storageLocation);
     } else {
       setValue(ScheduleFormFields.storageLocation, {
-        name: backupStorages[0].name,
+        name: backupStorages[0]?.name || null,
       });
     }
-  }, [activeStorage]);
+  }, [activeStorage, backupStorages]);
 
   return (
     <ScheduleForm
