@@ -97,3 +97,19 @@ func SupportedEngineVersions(
 	slices.Sort(result)
 	return result, nil
 }
+
+// MinimumSupportedEngineVersion returns the minimum supported version for a given operator.
+func MinimumSupportedEngineVersion(
+	ctx context.Context,
+	operator string,
+	version string,
+	versionServiceURL string,
+) (string, error) {
+	supportedVersions, err := SupportedEngineVersions(ctx, operator, version, versionServiceURL)
+	if err != nil {
+		return "", err
+	}
+	slices.Sort(supportedVersions)
+	// supportedVersions will always contain at least one element.
+	return supportedVersions[0], nil
+}

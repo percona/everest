@@ -125,7 +125,6 @@ func (e *EverestServer) GetOperatorUpgradePreflight(
 	if err != nil {
 		return err
 	}
-	result.CurrentVersion = pointer.To(engine.Status.OperatorVersion)
 
 	return ctx.JSON(http.StatusOK, result)
 }
@@ -150,19 +149,21 @@ func (e *EverestServer) operatorUpgradePreflight(
 	for _, db := range dbs {
 
 		// Check that the database engine is at the desired version.
-		if valid, minVer, err := e.validateDatabaseEngineVersionForOperatorUpgrade(ctx, db, targetVersion, engine.Spec.Type); err != nil {
+		engineVersionValid, reqEngineVersion, err := e.validateDatabaseEngineVersionForOperatorUpgrade(ctx, db, targetVersion, engine.Spec.Type)
+		if err != nil {
 			return nil, errors.Join(err, errors.New("failed to validate database engine version for operator upgrade"))
-		} else if !valid {
+		}
+		if !engineVersionValid {
 			dbResults = append(dbResults, OperatorUpgradePreflightForDatabase{
 				Name:        pointer.To(db.GetName()),
 				PendingTask: pointer.To(UpgradeEngine),
 				Message: pointer.ToString(
-					fmt.Sprintf("Database engine version %s is below the minimum required version %s", db.Spec.Engine.Version, minVer)),
+					fmt.Sprintf("Upgrade DB version to %s", reqEngineVersion)),
 			})
 			continue
 		}
 
-		// TODO: check that CRVersion is updated.
+		// TODO: check CRVersion on the database.
 
 		// Database is in desired state for performing operator upgrade.
 		dbResults = append(dbResults, OperatorUpgradePreflightForDatabase{
@@ -171,7 +172,8 @@ func (e *EverestServer) operatorUpgradePreflight(
 		})
 	}
 	return &OperatorUpgradePreflight{
-		Databases: &dbResults,
+		Databases:      &dbResults,
+		CurrentVersion: pointer.To(engine.Status.OperatorVersion),
 	}, nil
 }
 
@@ -188,14 +190,10 @@ func (e *EverestServer) validateDatabaseEngineVersionForOperatorUpgrade(
 		return false, "", fmt.Errorf("unsupported engine type %s", engineType)
 	}
 
-	supportedVersions, err := version.SupportedEngineVersions(ctx, operator, targetVersion, e.config.VersionServiceURL)
+	minVersion, err := version.MinimumSupportedEngineVersion(ctx, operator, targetVersion, e.config.VersionServiceURL)
 	if err != nil {
-		return false, "", errors.Join(err, errors.New("failed to get supported engine versions"))
+		return false, "", err
 	}
-
-	// The result will contain more than 0 elements, and the 0th element
-	// will always be the smallest version.
-	minVersion := supportedVersions[0]
 	if !strings.HasPrefix(minVersion, "v") {
 		minVersion = "v" + minVersion
 	}
