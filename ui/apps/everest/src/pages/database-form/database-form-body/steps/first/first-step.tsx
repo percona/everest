@@ -282,7 +282,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           name={DbWizardFormFields.dbVersion}
           label={Messages.labels.dbVersion}
           selectFieldProps={{
-            disabled: mode === 'restoreFromBackup' || mode === 'edit',
+            disabled: mode === 'restoreFromBackup',
           }}
         >
           {dbVersions?.availableVersions.engine.map((version) => (
