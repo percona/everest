@@ -584,6 +584,51 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-engines/{name}/operator-version/preflight':
+    get:
+      tags:
+        - getOperatorUpgradePreflight
+      summary: Get the preflight check results for upgrading the specified database engine operator
+      description: Get the preflight check results for upgrading the specified database engine operator
+      operationId: getOperatorUpgradePreflight
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database engine
+          required: true
+          schema:
+            type: string
+        - name: targetVersion
+          in: query
+          description: The target version to upgrade the operator to
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperatorUpgradePreflight'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines/{name}/operator-version':
     put:
       tags:
@@ -1386,6 +1431,30 @@ components:
           description: List of namespaces allowed to use this backup storage
           items:
             type: string
+      additionalProperties: false
+    OperatorUpgradePreflight:
+      type: object
+      description: Operator upgrade preflight check results
+      properties:
+        currentVersion:
+          type: string
+          description: The current operator version
+        databases:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Name of the database cluster
+              status:
+                type: string
+                description: Status of the database cluster with respect to operator upgrade
+                enum:
+                  - ready
+                  - notReady
+                  - pendingRestart
+                  - pendingEngineUpgrade
       additionalProperties: false
     BackupStorage:
       type: object
