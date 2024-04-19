@@ -19,10 +19,10 @@ const PitrStorage = () => {
     useBackupStoragesByNamespace(selectedNamespace);
 
   useEffect(() => {
-    if (!pitrStorageLocation && backupStorages[1]) {
-      setValue(DbWizardFormFields.pitrStorageLocation, backupStorages[1]);
+    if (!pitrStorageLocation && backupStorages[0]) {
+      setValue(DbWizardFormFields.pitrStorageLocation, backupStorages[0]);
     }
-  }, [pitrStorageLocation, backupStorages[1]]);
+  }, [pitrStorageLocation, backupStorages[0]]);
 
   if (!pitrEnabled) {
     return null;
