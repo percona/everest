@@ -1,10 +1,10 @@
 import { TextInput } from '@percona/ui-lib';
+import { AutoCompleteSelectAll } from 'components/auto-complete-select-all/auto-complete-select-all';
 import { FormDialog } from 'components/form-dialog';
 import TlsAlert from 'components/tls-alert';
 import TlsCheckbox from 'components/tls-checkbox';
+import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { useMemo } from 'react';
-import { AutoCompleteSelectAll } from '../../../../components/auto-complete-select-all/auto-complete-select-all';
-import { useNamespaces } from '../../../../hooks/api/namespaces/useNamespaces';
 import { Messages } from '../monitoring-endpoints.messages';
 import {
   CreateEditEndpointModalProps,
