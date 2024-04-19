@@ -14,7 +14,7 @@ import (
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
-func TestOperatorUpgradePreflight(t *testing.T) {
+func TestGetUpgradePreflightChecks(t *testing.T) {
 	t.Parallel()
 	crVersion := "1.1.1"
 	operatorVersion := "1.2.1"
@@ -31,8 +31,6 @@ func TestOperatorUpgradePreflight(t *testing.T) {
 	).Return(mockDBVersions, nil)
 
 	ctx := context.Background()
-	e := EverestServer{}
-
 	t.Run("upgrade unavailable", func(t *testing.T) {
 		t.Parallel()
 		dbs := []everestv1alpha1.DatabaseCluster{{
@@ -59,7 +57,7 @@ func TestOperatorUpgradePreflight(t *testing.T) {
 			},
 		}
 
-		_, err := e.runOperatorUpgradePreflightChecks(ctx, dbs, upgradePreflightCheckArgs{
+		_, err := getUpgradePreflightChecksResult(ctx, dbs, upgradePreflightCheckArgs{
 			targetVersion:  targetVersion,
 			versionService: &versionService,
 			engine:         &engine,
@@ -97,7 +95,7 @@ func TestOperatorUpgradePreflight(t *testing.T) {
 			},
 		}
 
-		result, err := e.runOperatorUpgradePreflightChecks(ctx, dbs, upgradePreflightCheckArgs{
+		result, err := getUpgradePreflightChecksResult(ctx, dbs, upgradePreflightCheckArgs{
 			targetVersion:  targetVersion,
 			versionService: &versionService,
 			engine:         &engine,
@@ -146,7 +144,7 @@ func TestOperatorUpgradePreflight(t *testing.T) {
 			},
 		}
 
-		result, err := e.runOperatorUpgradePreflightChecks(ctx, dbs, upgradePreflightCheckArgs{
+		result, err := getUpgradePreflightChecksResult(ctx, dbs, upgradePreflightCheckArgs{
 			targetVersion:  targetVersion,
 			versionService: &versionService,
 			engine:         &engine,
@@ -195,7 +193,7 @@ func TestOperatorUpgradePreflight(t *testing.T) {
 			},
 		}
 
-		result, err := e.runOperatorUpgradePreflightChecks(ctx, dbs, upgradePreflightCheckArgs{
+		result, err := getUpgradePreflightChecksResult(ctx, dbs, upgradePreflightCheckArgs{
 			targetVersion:  targetVersion,
 			versionService: &versionService,
 			engine:         &engine,
@@ -244,7 +242,7 @@ func TestOperatorUpgradePreflight(t *testing.T) {
 			},
 		}
 
-		result, err := e.runOperatorUpgradePreflightChecks(ctx, dbs, upgradePreflightCheckArgs{
+		result, err := getUpgradePreflightChecksResult(ctx, dbs, upgradePreflightCheckArgs{
 			targetVersion:  targetVersion,
 			versionService: &versionService,
 			engine:         &engine,

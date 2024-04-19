@@ -130,7 +130,7 @@ func (e *EverestServer) GetOperatorUpgradePreflight(
 		versionService: versionservice.New(e.config.VersionServiceURL),
 	}
 	reqCtx := ctx.Request().Context()
-	result, err := e.runOperatorUpgradePreflightChecks(reqCtx, databases.Items, args)
+	result, err := getUpgradePreflightChecksResult(reqCtx, databases.Items, args)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, Error{
 			Message: pointer.ToString("Failed to run preflight checks" + err.Error()),
