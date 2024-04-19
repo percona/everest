@@ -21,7 +21,6 @@ import { BackupsList } from './backups-list/backups-list';
 import { ScheduleModalContext } from './backups.context.ts';
 import { NoStoragesMessage } from './no-storages-message/no-storages-message';
 import { ScheduledBackupModal } from './scheduled-backup-modal/scheduled-backup-modal';
-import { ScheduledBackupsList } from './scheduled-backups-list/scheduled-backups-list';
 import { OnDemandBackupModal } from './on-demand-backup-modal/on-demand-backup-modal';
 
 export const Backups = () => {
@@ -58,14 +57,11 @@ export const Backups = () => {
       {backupStorages.length === 0 ? (
         <NoStoragesMessage />
       ) : (
-        dbCluster && (
-          <>
-            <ScheduledBackupsList />
-            <BackupsList />
-            {openOnDemandModal && <OnDemandBackupModal />}
-            {openScheduleModal && <ScheduledBackupModal />}
-          </>
-        )
+        <>
+          <BackupsList />
+          {openOnDemandModal && <OnDemandBackupModal />}
+          {openScheduleModal && <ScheduledBackupModal />}
+        </>
       )}
     </ScheduleModalContext.Provider>
   );
