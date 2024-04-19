@@ -1446,6 +1446,7 @@ components:
           description: Pending task for the database cluster
           enum:
             - ready
+            - notReady
             - restart
             - upgradeEngine
       additionalProperties: false

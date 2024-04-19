@@ -17,13 +17,13 @@
 package api
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
-	"strings"
+	"slices"
 
 	"github.com/AlekSi/pointer"
+	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
-	"golang.org/x/mod/semver"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	versionservice "github.com/percona/everest/pkg/version_service"
@@ -70,16 +70,19 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 				"Could not get DatabaseEngineOperatorUpgradeParams from the request body"),
 		})
 	}
-	if err := validateDatabaseEngineOperatorUpgradeParams(req); err != nil {
-		return ctx.JSON(http.StatusBadRequest, Error{
-			Message: pointer.ToString(err.Error()),
-		})
-	}
+
 	// Get existing database engine.
 	dbEngine, err := e.kubeClient.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
 	if err != nil {
 		return err
 	}
+
+	if err := validateOperatorUpgradeVersion(dbEngine.Status.OperatorVersion, req.TargetVersion); err != nil {
+		return ctx.JSON(http.StatusBadRequest, Error{
+			Message: pointer.ToString("Failed to validate operator upgrade version: " + err.Error()),
+		})
+	}
+
 	// Update annotation to start upgrade.
 	annotations := dbEngine.GetAnnotations()
 	if annotations == nil {
@@ -106,17 +109,19 @@ func (e *EverestServer) GetOperatorUpgradePreflight(
 		return err
 	}
 	// Get all database clusters in the namespace.
-	allDatabases, err := e.kubeClient.ListDatabaseClusters(ctx.Request().Context(), namespace)
+	databases, err := e.kubeClient.ListDatabaseClusters(ctx.Request().Context(), namespace)
 	if err != nil {
 		return err
 	}
-	// Filter out databases of the provided engine type.
-	databases := []everestv1alpha1.DatabaseCluster{}
-	for _, db := range allDatabases.Items {
-		if db.Spec.Engine.Type != engine.Spec.Type {
-			continue
-		}
-		databases = append(databases, db)
+	// Filter out databases not using this engine type.
+	databases.Items = slices.DeleteFunc(databases.Items, func(db everestv1alpha1.DatabaseCluster) bool {
+		return db.Spec.Engine.Type != engine.Spec.Type
+	})
+
+	if err := validateOperatorUpgradeVersion(engine.Status.OperatorVersion, params.TargetVersion); err != nil {
+		return ctx.JSON(http.StatusBadRequest, Error{
+			Message: pointer.ToString("Failed to validate operator upgrade version: " + err.Error()),
+		})
 	}
 
 	args := upgradePreflightCheckArgs{
@@ -125,21 +130,27 @@ func (e *EverestServer) GetOperatorUpgradePreflight(
 		versionService: versionservice.New(e.config.VersionServiceURL),
 	}
 	reqCtx := ctx.Request().Context()
-	result, err := e.runOperatorUpgradePreflightChecks(reqCtx, databases, args)
+	result, err := e.runOperatorUpgradePreflightChecks(reqCtx, databases.Items, args)
 	if err != nil {
-		return err
+		return ctx.JSON(http.StatusBadRequest, Error{
+			Message: pointer.ToString("Failed to run preflight checks" + err.Error()),
+		})
 	}
 
 	return ctx.JSON(http.StatusOK, result)
 }
 
-func validateDatabaseEngineOperatorUpgradeParams(req *DatabaseEngineOperatorUpgradeParams) error {
-	targetVersion := req.TargetVersion
-	if !strings.HasPrefix(targetVersion, "v") {
-		targetVersion = "v" + targetVersion
+func validateOperatorUpgradeVersion(currentVersion, targetVersion string) error {
+	tSemver, err := goversion.NewSemver(targetVersion)
+	if err != nil {
+		return err
 	}
-	if !semver.IsValid(targetVersion) {
-		return fmt.Errorf("invalid target version '%s'", req.TargetVersion)
+	cSemver, err := goversion.NewSemver(currentVersion)
+	if err != nil {
+		return err
+	}
+	if tSemver.Compare(cSemver) < 1 {
+		return errors.New("target version is not greater than the current version")
 	}
 	return nil
 }

@@ -27,6 +27,8 @@ import (
 	"strings"
 
 	perconavs "github.com/Percona-Lab/percona-version-service/versionpb"
+	goversion "github.com/hashicorp/go-version"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
@@ -85,7 +87,11 @@ func (c *versionServiceClient) GetSupportedEngineVersions(ctx context.Context, o
 		return nil, fmt.Errorf("invalid response from version service endpoint http %d", res.StatusCode)
 	}
 	response := &perconavs.VersionResponse{}
-	if err = json.NewDecoder(res.Body).Decode(response); err != nil {
+	b := []byte{}
+	if _, err := res.Body.Read(b); err != nil {
+		return nil, errors.Join(err, errors.New("could not read version response"))
+	}
+	if err := protojson.Unmarshal(b, response); err != nil {
 		return nil, errors.Join(err, errors.New("could not decode version response"))
 	}
 
@@ -105,7 +111,18 @@ func (c *versionServiceClient) GetSupportedEngineVersions(ctx context.Context, o
 
 	result := make([]string, 0, len(versions))
 	for ver := range versions {
+		if _, err := goversion.NewVersion(ver); err != nil {
+			return nil, err
+		}
 		result = append(result, ver)
+	}
+
+	// For PXC, we need to remove the 5.x versions from the list
+	if operator == PXCOperatorName {
+		result = slices.DeleteFunc(result, func(v string) bool {
+			semver, _ := goversion.NewVersion(v)
+			return semver.Segments()[0] == 5
+		})
 	}
 	slices.Sort(result)
 	return result, nil

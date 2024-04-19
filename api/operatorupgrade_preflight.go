@@ -68,6 +68,16 @@ func (e *EverestServer) runOperatorUpgradePreflightChecks(
 			continue
 		}
 
+		// Check that DB is running.
+		if db.Status.Status != everestv1alpha1.AppStateReady {
+			dbResults = append(dbResults, OperatorUpgradePreflightForDatabase{
+				Name:        pointer.To(db.GetName()),
+				PendingTask: pointer.To(NotReady),
+				Message:     pointer.ToString("Database is not ready"),
+			})
+			continue
+		}
+
 		// Database is in desired state for performing operator upgrade.
 		dbResults = append(dbResults, OperatorUpgradePreflightForDatabase{
 			Name:        pointer.To(db.GetName()),
@@ -95,7 +105,7 @@ func (e *EverestServer) validateDatabaseEngineVersionForOperatorUpgrade(
 
 	supportedVersions, err := args.versionService.GetSupportedEngineVersions(ctx, operator, args.targetVersion)
 	if err != nil {
-		return false, "", err
+		return false, "", errors.Join(err, errors.New("failed to get supported engine versions"))
 	}
 
 	// GetSupportedEngineVersions always returns a non-zero length result.
