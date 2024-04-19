@@ -30,8 +30,6 @@ import (
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
-var errDBEngineUpgradeUnavailable = errors.New("provided target version is not available for upgrade")
-
 type upgradePreflightCheckArgs struct {
 	targetVersion  string
 	engine         *everestv1alpha1.DatabaseEngine

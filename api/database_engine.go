@@ -33,6 +33,8 @@ const (
 	databaseEngineKind = "databaseengines"
 )
 
+var errDBEngineUpgradeUnavailable = errors.New("provided target version is not available for upgrade")
+
 // ListDatabaseEngines List of the available database engines on the specified namespace.
 func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, namespace string) error {
 	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, "")
@@ -81,6 +83,11 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 		return ctx.JSON(http.StatusBadRequest, Error{
 			Message: pointer.ToString("Failed to validate operator upgrade version: " + err.Error()),
 		})
+	}
+
+	// Check that this version is available for upgrade.
+	if u := dbEngine.Status.GetPendingUpgrade(req.TargetVersion); u == nil {
+		return err
 	}
 
 	// Update annotation to start upgrade.
