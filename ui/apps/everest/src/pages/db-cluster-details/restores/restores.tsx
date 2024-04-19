@@ -7,9 +7,13 @@ import { Table } from '@percona/ui-lib';
 import { DATE_FORMAT } from 'consts';
 import { StatusField } from 'components/status-field/status-field';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
-import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
 import { useDbClusterPitr } from 'hooks/api/backups/useBackups';
-import { Restore, RestoreStatus } from 'shared-types/restores.types';
+import {
+  PG_STATUS,
+  PSMDB_STATUS,
+  PXC_STATUS,
+  Restore,
+} from 'shared-types/restores.types';
 import { Messages } from './restores.messages';
 import {
   RESTORES_QUERY_KEY,
@@ -25,11 +29,6 @@ const Restores = () => {
   const [selectedRestore, setSelectedRestore] = useState('');
   const { dbClusterName, namespace = '' } = useParams();
   const queryClient = useQueryClient();
-  const { data: dbCluster, isLoading: loadingCluster } = useDbCluster(
-    dbClusterName!,
-    namespace,
-    { enabled: !!dbClusterName && !!namespace }
-  );
   const { data: pitrData } = useDbClusterPitr(dbClusterName!, namespace, {
     enabled: !!dbClusterName && !!namespace,
   });
@@ -45,10 +44,10 @@ const Restores = () => {
         accessorKey: 'state',
         Cell: ({ cell }) => (
           <StatusField
-            status={cell.getValue<RestoreStatus>()}
+            status={cell.getValue<PXC_STATUS | PSMDB_STATUS | PG_STATUS>()}
             statusMap={RESTORE_STATUS_TO_BASE_STATUS}
           >
-            {cell.getValue<RestoreStatus>()}
+            {cell.getValue<PXC_STATUS | PSMDB_STATUS | PG_STATUS>()}
           </StatusField>
         ),
       },
@@ -96,17 +95,9 @@ const Restores = () => {
     });
   };
 
-  if (loadingCluster) {
-    return null;
-  }
-
   return (
     <>
-      {pitrData?.gaps && (
-        <Alert severity="error" title="">
-          {Messages.pitrError}
-        </Alert>
-      )}
+      {pitrData?.gaps && <Alert severity="error">{Messages.pitrError}</Alert>}
       <Table
         state={{ isLoading: loadingRestores }}
         tableName={`${dbClusterName}-restore`}

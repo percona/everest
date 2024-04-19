@@ -81,5 +81,3 @@ export enum PG_STATUS {
   FAILED = 'Failed',
   SUCCEEDED = 'Succeeded',
 }
-
-// export enum RestoreStatus = PCX_STATUS | PSMDB_STATUS | PG_STATUS;
