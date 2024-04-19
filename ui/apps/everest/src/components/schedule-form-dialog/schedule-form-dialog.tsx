@@ -75,7 +75,7 @@ export const ScheduleFormDialog = () => {
       dataTestId={`${mode}-scheduled-backup`}
     >
       {mode === 'new' && (
-        <Typography variant="body1" mb={3}>
+        <Typography variant="body1">
           {Messages.createSchedule.subhead}
         </Typography>
       )}

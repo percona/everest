@@ -557,16 +557,6 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
         }),
       },
     },
-    MuiFormControlLabel: {
-      styleOverrides: {
-        root: ({ theme }) => ({
-          alignItems: 'flex-start',
-          '.MuiTypography-root': {
-            paddingTop: theme.spacing(0.5),
-          },
-        }),
-      },
-    },
     MuiFormHelperText: {
       styleOverrides: {
         root: {

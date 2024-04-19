@@ -42,7 +42,7 @@ export const TimeSelection = ({
         display: 'flex',
         flexDirection: 'column',
         gap: 2,
-        mt: 3,
+        mt: 1,
         '& .MuiFormControl-root': {
           mt: 0,
         },

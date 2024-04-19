@@ -27,12 +27,25 @@ const LabeledContent = ({
 }: LabeledContentProps) => {
   const { dataTestId, buttonText, ...buttonProps } = actionButtonProps || {};
   return (
-    <>
+    <Stack
+      sx={{
+        '.MuiTextField-root': {
+          mt: 1.5,
+        },
+        '.MuiAutocomplete-root': {
+          mt: 1.5,
+        },
+      }}
+    >
       <Stack direction="row">
         <Typography
           // @ts-ignore
           variant="sectionHeading"
-          sx={{ mt: 3, mb: 0.5, ...sx }}
+          sx={{
+            mt: 3,
+            mb: 0.5,
+            ...sx,
+          }}
           {...typographyProps}
         >
           {label}
@@ -56,7 +69,7 @@ const LabeledContent = ({
         )}
       </Stack>
       {children}
-    </>
+    </Stack>
   );
 };
 
