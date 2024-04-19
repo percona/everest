@@ -141,16 +141,16 @@ func (e *EverestServer) GetOperatorUpgradePreflight(
 }
 
 func validateOperatorUpgradeVersion(currentVersion, targetVersion string) error {
-	tSemver, err := goversion.NewSemver(targetVersion)
+	targetsv, err := goversion.NewSemver(targetVersion)
 	if err != nil {
 		return err
 	}
-	cSemver, err := goversion.NewSemver(currentVersion)
+	currentsv, err := goversion.NewSemver(currentVersion)
 	if err != nil {
 		return err
 	}
-	if tSemver.Compare(cSemver) < 1 {
-		return errors.New("target version is not greater than the current version")
+	if targetsv.LessThanOrEqual(currentsv) {
+		return errors.New("target version must be greater than the current version")
 	}
 	return nil
 }
