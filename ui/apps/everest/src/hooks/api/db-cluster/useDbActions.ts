@@ -103,11 +103,15 @@ export const useDbActions = () => {
     }
   };
 
-  const handleConfirmDelete = (redirect?: string) => {
+  const handleConfirmDelete = (
+    cleanupBackupStorage: boolean,
+    redirect?: string
+  ) => {
     deleteDbCluster(
       {
         dbClusterName: selectedDbCluster!.metadata.name,
         namespace: selectedDbCluster!.metadata.namespace,
+        cleanupBackupStorage: cleanupBackupStorage,
       },
       {
         onSuccess: (_, variables) => {

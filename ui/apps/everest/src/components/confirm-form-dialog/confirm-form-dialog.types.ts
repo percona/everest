@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export enum ConfirmFormDialogFields {
   confirmInput = 'confirmInput',
+  cleanupBackupStorage = 'cleanupBackupStorage',
 }
 
 export const confirmFormDialogSchema = (value: string) =>
@@ -9,4 +10,9 @@ export const confirmFormDialogSchema = (value: string) =>
     [ConfirmFormDialogFields.confirmInput]: z.literal(value, {
       errorMap: () => ({ message: '' }),
     }),
+    [ConfirmFormDialogFields.cleanupBackupStorage]: z.boolean(),
   });
+
+export type ConfirmDialogType = z.infer<
+  ReturnType<typeof confirmFormDialogSchema>
+>;

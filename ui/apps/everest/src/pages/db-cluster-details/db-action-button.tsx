@@ -42,8 +42,8 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
     setAnchorEl(null);
   };
 
-  const handleDelete = () => {
-    handleConfirmDelete('/databases');
+  const handleDelete = (cleanupBackupStorage: boolean) => {
+    handleConfirmDelete(cleanupBackupStorage, '/databases');
   };
 
   return (
@@ -196,7 +196,9 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
           headerMessage={Messages.deleteModal.header}
           submitting={deletingCluster}
           selectedId={dbCluster.metadata.name || ''}
-          handleConfirm={handleDelete}
+          handleConfirm={({ cleanupBackupStorage }) =>
+            handleDelete(cleanupBackupStorage)
+          }
           dialogContent={Messages.deleteModal.content(dbCluster.metadata.name)}
         />
       )}

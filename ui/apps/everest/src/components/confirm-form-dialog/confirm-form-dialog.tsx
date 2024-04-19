@@ -16,25 +16,27 @@
 import { FormDialog } from '../form-dialog';
 import { FormDialogProps } from '../form-dialog/form-dialog.types';
 import {
+  ConfirmDialogType,
   ConfirmFormDialogFields,
   confirmFormDialogSchema,
 } from './confirm-form-dialog.types';
-import { FieldValues } from 'react-hook-form';
+import { SubmitHandler } from 'react-hook-form';
 import { TextInput } from '@percona/ui-lib';
 import { kebabize } from '@percona/utils';
 import { confirmDialogDefaultValues } from './confirm-dialog-consts';
 import { IrreversibleAction } from './irreversible-action';
 import { DialogContent } from '@mui/material';
 import { ReactNode } from 'react';
+import DeleteDataCheckbox from 'components/delete-data-checkbox/delete-data-checkbox';
 
-interface ConfirmFormDialogProps<T extends FieldValues>
+interface ConfirmFormDialogProps<T extends ConfirmDialogType>
   extends Omit<
     FormDialogProps<T>,
     'schema' | 'onSubmit' | 'submitMessage' | 'cancelMessage' | 'children'
   > {
   inputLabel?: string;
   inputPlaceholder?: string;
-  handleConfirm: (data: FieldValues) => void;
+  handleConfirm: (data: ConfirmDialogType) => void;
   selectedId: string;
   cancelMessage?: string;
   submitMessage?: string;
@@ -50,26 +52,32 @@ export const ConfirmFormDialog = ({
   dialogContent,
   submitting,
   ...props
-}: ConfirmFormDialogProps<FieldValues>) => (
-  <FormDialog
-    onSubmit={handleConfirm}
-    schema={confirmFormDialogSchema(selectedId)}
-    defaultValues={confirmDialogDefaultValues}
-    dataTestId={selectedId && kebabize(selectedId)}
-    submitMessage={submitMessage}
-    cancelMessage={cancelMessage}
-    submitting={submitting}
-    {...props}
-  >
-    <IrreversibleAction />
-    <DialogContent sx={{ px: 1 }}>{dialogContent}</DialogContent>
-    <TextInput
-      name={ConfirmFormDialogFields.confirmInput}
-      label={inputLabel}
-      labelProps={{ sx: { mt: 0 } }}
-      textFieldProps={{
-        placeholder: inputPlaceholder,
-      }}
-    />
-  </FormDialog>
-);
+}: ConfirmFormDialogProps<ConfirmDialogType>) => {
+  const onSubmit: SubmitHandler<ConfirmDialogType> = (data) => {
+    handleConfirm(data);
+  };
+  return (
+    <FormDialog
+      onSubmit={onSubmit}
+      schema={confirmFormDialogSchema(selectedId)}
+      defaultValues={confirmDialogDefaultValues}
+      dataTestId={selectedId && kebabize(selectedId)}
+      submitMessage={submitMessage}
+      cancelMessage={cancelMessage}
+      submitting={submitting}
+      {...props}
+    >
+      <IrreversibleAction />
+      <DialogContent sx={{ px: 1 }}>{dialogContent}</DialogContent>
+      <TextInput
+        name={ConfirmFormDialogFields.confirmInput}
+        label={inputLabel}
+        labelProps={{ sx: { mt: 0 } }}
+        textFieldProps={{
+          placeholder: inputPlaceholder,
+        }}
+      />
+      <DeleteDataCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />
+    </FormDialog>
+  );
+};
