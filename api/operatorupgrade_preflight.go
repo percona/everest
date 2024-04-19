@@ -29,6 +29,8 @@ import (
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
+var errDBEngineUpgradeUnavailable = errors.New("provided target version is not available for upgrade")
+
 type upgradePreflightCheckArgs struct {
 	targetVersion  string
 	engine         *everestv1alpha1.DatabaseEngine
@@ -40,6 +42,12 @@ func (e *EverestServer) runOperatorUpgradePreflightChecks(
 	dbs []everestv1alpha1.DatabaseCluster,
 	args upgradePreflightCheckArgs,
 ) (*OperatorUpgradePreflight, error) {
+	// Check that this version is available for upgrade.
+	if u := args.engine.Status.GetPendingUpgrade(args.targetVersion); u == nil {
+		return nil, errDBEngineUpgradeUnavailable
+	}
+
+	// Perform checks for each given DB.
 	dbResults := make([]OperatorUpgradePreflightForDatabase, 0, len(dbs))
 	for _, db := range dbs {
 		// Check that the database engine is at the desired version.
