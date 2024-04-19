@@ -56,7 +56,7 @@ export type Restore = {
   state: string;
 };
 
-export enum RestoreStatus {
+export enum PXC_STATUS {
   STARTING = 'Starting',
   STOPPING = 'Stopping Cluster',
   RESTORING = 'Restoring',
@@ -64,6 +64,9 @@ export enum RestoreStatus {
   PITR_RECOVERING = 'Point-in-time recovering',
   FAILED = 'Failed',
   SUCCEEDED = 'Succeeded',
+}
+
+export enum PSMDB_STATUS {
   WAITING = 'waiting',
   REQUESTED = 'requested',
   REJECTED = 'rejected',
@@ -71,3 +74,12 @@ export enum RestoreStatus {
   ERROR = 'error',
   READY = 'ready',
 }
+
+export enum PG_STATUS {
+  STARTING = 'Starting',
+  RUNNING = 'Running',
+  FAILED = 'Failed',
+  SUCCEEDED = 'Succeeded',
+}
+
+// export enum RestoreStatus = PCX_STATUS | PSMDB_STATUS | PG_STATUS;
