@@ -20,10 +20,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/AlekSi/pointer"
-	"golang.org/x/mod/semver"
+	goversion "github.com/hashicorp/go-version"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	versionservice "github.com/percona/everest/pkg/version_service"
@@ -51,16 +50,14 @@ func (e *EverestServer) runOperatorUpgradePreflightChecks(
 	dbResults := make([]OperatorUpgradePreflightForDatabase, 0, len(dbs))
 	for _, db := range dbs {
 		// Check that the database engine is at the desired version.
-		engineVersionValid, reqEngineVersion, err := e.validateDatabaseEngineVersionForOperatorUpgrade(ctx, db, args)
-		if err != nil {
+		if valid, minReqVer, err := preflightCheckDBEngineVersion(ctx, db, args); err != nil {
 			return nil, errors.Join(err, errors.New("failed to validate database engine version for operator upgrade"))
-		}
-		if !engineVersionValid {
+		} else if !valid {
 			dbResults = append(dbResults, OperatorUpgradePreflightForDatabase{
 				Name:        pointer.To(db.GetName()),
 				PendingTask: pointer.To(UpgradeEngine),
 				Message: pointer.ToString(
-					fmt.Sprintf("Upgrade DB version to %s", reqEngineVersion)),
+					fmt.Sprintf("Upgrade DB version to %s", minReqVer)),
 			})
 			continue
 		}
@@ -98,9 +95,9 @@ func (e *EverestServer) runOperatorUpgradePreflightChecks(
 	}, nil
 }
 
-// validateDatabaseEngineVersionForOperatorUpgrade validates that the provided database cluster
-// is at the desired version to upgrade the operator to the targetVersion.
-func (e *EverestServer) validateDatabaseEngineVersionForOperatorUpgrade(
+// preflightCheckDBEngineVersion checks that the current database engine version is
+// greater than or equal to the minimum supported version for the target operator version.
+func preflightCheckDBEngineVersion(
 	ctx context.Context,
 	database everestv1alpha1.DatabaseCluster,
 	args upgradePreflightCheckArgs,
@@ -116,18 +113,14 @@ func (e *EverestServer) validateDatabaseEngineVersionForOperatorUpgrade(
 		return false, "", errors.Join(err, errors.New("failed to get supported engine versions"))
 	}
 
-	// GetSupportedEngineVersions always returns a non-zero length result.
-	minVersion := supportedVersions[0]
-
-	if !strings.HasPrefix(minVersion, "v") {
-		minVersion = "v" + minVersion
-	}
-	currentVersion := database.Spec.Engine.Version
-	if !strings.HasPrefix(currentVersion, "v") {
-		currentVersion = "v" + currentVersion
+	minVersion, err := goversion.NewVersion(supportedVersions[0]) // supported version will always return a non-zero length result.
+	if err != nil {
+		return false, "", err
 	}
 
-	// Current engine version should be greater than or equal to the minimum supported version.
-	versionValid := semver.Compare(currentVersion, minVersion) >= 0
-	return versionValid, strings.TrimPrefix(minVersion, "v"), nil
+	currentVersion, err := goversion.NewVersion(database.Spec.Engine.Version)
+	if err != nil {
+		return false, "", err
+	}
+	return currentVersion.GreaterThanOrEqual(minVersion), minVersion.String(), nil
 }
