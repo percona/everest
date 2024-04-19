@@ -20,6 +20,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/AlekSi/pointer"
 	goversion "github.com/hashicorp/go-version"
@@ -89,6 +91,15 @@ func (e *EverestServer) runOperatorUpgradePreflightChecks(
 			PendingTask: pointer.To(Ready),
 		})
 	}
+
+	// Sort by name.
+	sort.Slice(dbResults, func(i, j int) bool {
+		return strings.Compare(
+			pointer.Get(dbResults[i].Name),
+			pointer.Get(dbResults[j].Name),
+		) < 0
+	})
+
 	return &OperatorUpgradePreflight{
 		Databases:      &dbResults,
 		CurrentVersion: pointer.To(args.engine.Status.OperatorVersion),
