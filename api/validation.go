@@ -94,9 +94,9 @@ var (
 	errNoMetadata                    = fmt.Errorf("no metadata provided")
 	errInvalidResourceVersion        = fmt.Errorf("invalid 'resourceVersion' value")
 	errInvalidBucketName             = fmt.Errorf("invalid bucketName")
-	errInvalidVersion                = errors.New("invalid version")
-	errDBEngineMajorVersionUpgrade   = errors.New("cannot perform major version upgrades")
-	errDBEngineDowngrade             = errors.New("cannot perform downgrades")
+	errInvalidVersion                = errors.New("invalid database engine version provided")
+	errDBEngineMajorVersionUpgrade   = errors.New("database engine cannot be upgraded to a major version")
+	errDBEngineDowngrade             = errors.New("database engine version cannot be downgraded")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
