@@ -11,7 +11,7 @@ import { ConnectionDetailsOverviewCardProps } from './card.types';
 export const ConnectionDetails = ({
   loading,
   loadingClusterDetails,
-  hostname,
+  hostname = '',
   port,
   username,
   password,
