@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"slices"
@@ -87,8 +88,8 @@ func (c *versionServiceClient) GetSupportedEngineVersions(ctx context.Context, o
 		return nil, fmt.Errorf("invalid response from version service endpoint http %d", res.StatusCode)
 	}
 	response := &perconavs.VersionResponse{}
-	b := []byte{}
-	if _, err := res.Body.Read(b); err != nil {
+	b, err := io.ReadAll(res.Body)
+	if err != nil {
 		return nil, errors.Join(err, errors.New("could not read version response"))
 	}
 	if err := protojson.Unmarshal(b, response); err != nil {

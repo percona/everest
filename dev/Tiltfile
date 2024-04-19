@@ -17,6 +17,7 @@ print('Using PG operator version: %s' % pg_operator_version)
 #allow_k8s_contexts("gke_percona-everest_europe-west1-c_everest-dev")
 #default_registry("us-central1-docker.pkg.dev/percona-everest/quickstart-docker-repo")
 
+
 # Check for required env vars
 backend_dir = os.getenv('EVEREST_BACKEND_DIR')
 if not backend_dir:
