@@ -84,6 +84,7 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
         placeholder={Messages.createEditModal.placeholders.accessKey}
         name={StorageLocationsFields.accessKey}
         label={Messages.accessKey}
+        isRequired
       />
       <HiddenInput
         name={StorageLocationsFields.secretKey}

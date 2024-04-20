@@ -12,21 +12,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 export const Messages = {
-  sectionHeader: (schedulesNumber: number) =>
-    `${schedulesNumber} ${
-      schedulesNumber > 1 ? 'active schedules' : 'active schedule'
-    }`,
-  noSchedules: 'No schedules',
-  menuItems: {
-    edit: 'Edit',
-    delete: 'Delete',
-  },
-  deleteModal: {
-    header: 'Delete schedule',
-    content: (scheduleName: string) =>
-      `Are you sure you want to permanently delete schedule "${scheduleName}"?`,
-  },
-  maxThreeSchedulesPG: '(maximum 3 schedules for PostgreSQL)',
+  label: 'Backup schedules',
+  create: 'Create backup schedule',
+  noSchedules: 'You don’t have any backup schedules yet.',
 };
