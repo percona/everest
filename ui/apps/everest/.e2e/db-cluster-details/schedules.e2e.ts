@@ -33,7 +33,7 @@ test.describe.serial('Schedules List', async () => {
       dbType: 'mysql',
       numberOfNodes: '1',
       backup: {
-        enabled: true,
+        enabled: false,
         schedules: [],
       },
     });

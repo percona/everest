@@ -12,16 +12,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-import { ButtonProps, TypographyProps } from '@mui/material';
-
-export type LabeledContentProps = {
-  label?: string;
-  children?: React.ReactNode;
-  isRequired?: boolean;
-  actionButtonProps?: {
-    dataTestId?: string;
-    onClick: () => void;
-    buttonText?: string;
-  } & ButtonProps;
-} & TypographyProps;
+export const Messages = {
+  label: 'Backup schedules',
+  create: 'Create backup schedule',
+  noSchedules: 'You don’t have any backup schedules yet.',
+};

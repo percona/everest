@@ -1,5 +1,5 @@
 import { DbType } from '@percona/types';
-import { Backup } from '../../../../shared-types/dbCluster.types';
+import { Backup } from 'shared-types/dbCluster.types';
 
 export type OverviewCardProps = {
   loading?: boolean;

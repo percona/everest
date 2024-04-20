@@ -17,7 +17,7 @@ const SelectInput = ({
 
   return (
     <FormControl
-      sx={{ mt: 2 }}
+      sx={{ mt: 3 }}
       size={formControlProps?.size || 'small'}
       {...formControlProps}
     >

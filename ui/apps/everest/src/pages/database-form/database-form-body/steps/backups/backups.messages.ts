@@ -14,8 +14,9 @@
 // limitations under the License.
 export const Messages = {
   backups: 'Scheduled Backups',
+  backupSchedules: 'Backup schedules',
   captionBackups:
-    'Specify how often you want to run backup jobs for your database.',
+    'Create a task that takes regular backups of this database, according to the schedule that you specify.',
   enableBackups: 'Enable scheduled backups',
   storageLocation: 'Backup storage',
   repeatsEvery: 'Repeats',

@@ -24,7 +24,7 @@ function AutoCompleteInput<T>({
       render={({ field, fieldState: { error } }) => (
         <Autocomplete
           {...field}
-          sx={{ mt: 2 }}
+          sx={{ mt: 3 }}
           options={options}
           forcePopupIcon
           disabled={disabled}
