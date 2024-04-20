@@ -1,7 +1,7 @@
-import { MenuItem } from '@mui/material';
-import type { Meta, StoryObj } from '@storybook/react';
-import { FormProvider, useForm } from 'react-hook-form';
-import SelectInput from './select';
+import { MenuItem } from '@mui/material'
+import type { Meta, StoryObj } from '@storybook/react'
+import { FormProvider, useForm } from 'react-hook-form'
+import SelectInput from './select'
 
 type CustomArgs = React.ComponentProps<typeof SelectInput> & {
   disabled?: boolean;
@@ -21,16 +21,13 @@ const meta = {
 
   argTypes: {
     disabled: {
-      options: [false, true],
-      control: { type: 'inline-radio' },
+      type: 'boolean'
     },
     error: {
-      options: [false, true],
-      control: { type: 'inline-radio' },
+      type: 'boolean'
     },
     required: {
-      options: [false, true],
-      control: { type: 'inline-radio' },
+      type: 'boolean'
     },
     size: {
       options: ['small', 'medium'],
