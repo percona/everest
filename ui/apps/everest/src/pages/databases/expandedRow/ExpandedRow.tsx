@@ -36,7 +36,7 @@ export const ExpandedRow = ({
     exposetype,
     namespace,
     databaseName,
-    hostName,
+    hostName = '',
     port,
     raw,
   } = row.original;
@@ -73,7 +73,7 @@ export const ExpandedRow = ({
         </Typography>
         <LabelValue
           label="Host"
-          value={hostName?.split(',').map((host) => (
+          value={hostName.split(',').map((host) => (
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Box sx={{ whiteSpace: 'nowrap' }} key={host}>
                 {host}
