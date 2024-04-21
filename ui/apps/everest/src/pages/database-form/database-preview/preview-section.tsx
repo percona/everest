@@ -14,11 +14,12 @@ export const PreviewSection = ({
   children,
   hasBeenReached = false,
   active = false,
+  disabled = false,
   sx,
   ...stackProps
 }: PreviewSectionProps) => {
   const theme = useTheme();
-  const showEdit = !active && hasBeenReached;
+  const showEdit = !active && hasBeenReached && !disabled;
   const { isDesktop } = useActiveBreakpoint();
 
   return (
