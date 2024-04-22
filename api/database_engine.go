@@ -17,20 +17,23 @@
 package api
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
-	"strings"
+	"slices"
 
 	"github.com/AlekSi/pointer"
+	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
-	"golang.org/x/mod/semver"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
 const (
 	databaseEngineKind = "databaseengines"
 )
+
+var errDBEngineUpgradeUnavailable = errors.New("provided target version is not available for upgrade")
 
 // ListDatabaseEngines List of the available database engines on the specified namespace.
 func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, namespace string) error {
@@ -69,16 +72,24 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 				"Could not get DatabaseEngineOperatorUpgradeParams from the request body"),
 		})
 	}
-	if err := validateDatabaseEngineOperatorUpgradeParams(req); err != nil {
-		return ctx.JSON(http.StatusBadRequest, Error{
-			Message: pointer.ToString(err.Error()),
-		})
-	}
+
 	// Get existing database engine.
 	dbEngine, err := e.kubeClient.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
 	if err != nil {
 		return err
 	}
+
+	if err := validateOperatorUpgradeVersion(dbEngine.Status.OperatorVersion, req.TargetVersion); err != nil {
+		return ctx.JSON(http.StatusBadRequest, Error{
+			Message: pointer.ToString("Failed to validate operator upgrade version: " + err.Error()),
+		})
+	}
+
+	// Check that this version is available for upgrade.
+	if u := dbEngine.Status.GetPendingUpgrade(req.TargetVersion); u == nil {
+		return err
+	}
+
 	// Update annotation to start upgrade.
 	annotations := dbEngine.GetAnnotations()
 	if annotations == nil {
@@ -93,13 +104,60 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 	return nil
 }
 
-func validateDatabaseEngineOperatorUpgradeParams(req *DatabaseEngineOperatorUpgradeParams) error {
-	targetVersion := req.TargetVersion
-	if !strings.HasPrefix(targetVersion, "v") {
-		targetVersion = "v" + targetVersion
+// GetOperatorUpgradePreflight gets the preflight check results for upgrading the specified database engine operator.
+func (e *EverestServer) GetOperatorUpgradePreflight(
+	ctx echo.Context,
+	namespace, name string,
+	params GetOperatorUpgradePreflightParams,
+) error {
+	// Get existing database engine.
+	engine, err := e.kubeClient.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
+	if err != nil {
+		return err
 	}
-	if !semver.IsValid(targetVersion) {
-		return fmt.Errorf("invalid target version '%s'", req.TargetVersion)
+	// Get all database clusters in the namespace.
+	databases, err := e.kubeClient.ListDatabaseClusters(ctx.Request().Context(), namespace)
+	if err != nil {
+		return err
+	}
+	// Filter out databases not using this engine type.
+	databases.Items = slices.DeleteFunc(databases.Items, func(db everestv1alpha1.DatabaseCluster) bool {
+		return db.Spec.Engine.Type != engine.Spec.Type
+	})
+
+	if err := validateOperatorUpgradeVersion(engine.Status.OperatorVersion, params.TargetVersion); err != nil {
+		return ctx.JSON(http.StatusBadRequest, Error{
+			Message: pointer.ToString("Failed to validate operator upgrade version: " + err.Error()),
+		})
+	}
+
+	args := upgradePreflightCheckArgs{
+		targetVersion:  params.TargetVersion,
+		engine:         engine,
+		versionService: versionservice.New(e.config.VersionServiceURL),
+	}
+	reqCtx := ctx.Request().Context()
+	result, err := getUpgradePreflightChecksResult(reqCtx, databases.Items, args)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, Error{
+			Message: pointer.ToString("Failed to run preflight checks" + err.Error()),
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, result)
+}
+
+func validateOperatorUpgradeVersion(currentVersion, targetVersion string) error {
+	targetsv, err := goversion.NewSemver(targetVersion)
+	if err != nil {
+		return err
+	}
+	currentsv, err := goversion.NewSemver(currentVersion)
+	if err != nil {
+		return err
+	}
+	if targetsv.LessThanOrEqual(currentsv) {
+		return errors.New("target version must be greater than the current version")
 	}
 	return nil
 }

@@ -232,34 +232,25 @@ jobs:
           fi
           git checkout $BRANCH_NAME
 
-          # update veneer file
-          yq -i '.Fast.Bundles += [{"Image": "docker.io/perconalab/everest-operator-bundle:" + strenv(VERSION) }]' catalog/everest-operator/veneer.yaml
-          if [[ ! $env.IS_RC ]]; then
-            yq -i '.Stable.Bundles += [{"Image": "docker.io/percona/everest-operator-bundle:" + strenv(VERSION) }]' catalog/everest-operator/veneer.yaml
+          # if the tag doesn't exist yet, create it
+          if git tag --list | grep -q "^$GH_TAG$"; then
+            echo "The tag is already present in github. Please create a different RC/Release"
+            exit 1
           fi
 
-          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/latest/download/${OS}-${ARCH}-opm
-          chmod +x /tmp/opm
-          /tmp/opm alpha render-template semver -o yaml < ./catalog/everest-operator/veneer.yaml > ./catalog/everest-operator/catalog.yaml
+          # configure userdata for commits
+          git config --global user.email "everest-ci@percona.com"
+          git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
 
-          # if there is something to commit, commit it and add the tag
-          if [[ -n $(git status --porcelain) ]]; then
-            if git tag --list | grep -q "^$GH_TAG$"; then
-              echo "The tag is already present in github. Please create a different RC/Release"
-              exit 1
-            fi
-
-            # configure userdata for commits
-            git config --global user.email "everest-ci@percona.com"
-            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
-
-            # commit and push the updated files
-            git commit -a -m "update version tag"
-            git push origin $BRANCH_NAME
-          
-            git tag $GH_TAG
-            git push origin $GH_TAG
+          # Check if veneer has the new version listed
+          if grep -q "$VERSION" catalog/everest-operator/catalog.yaml; then
+            echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
+            echo "Update the file manually before running the workflow"
+            exit 1
           fi
+
+          git tag $GH_TAG
+          git push origin $GH_TAG
 
 
       - name: Catalog - docker meta
