@@ -23,6 +23,11 @@ import { PerconaQueryOptions } from 'shared-types/query.types';
 
 export const BACKUPS_QUERY_KEY = 'backups';
 
+type DeleteBackupArgType = {
+  backupName: string;
+  cleanupBackupStorage: boolean;
+};
+
 export const useDbBackups = (
   dbClusterName: string,
   namespace: string,
@@ -79,10 +84,11 @@ export const useCreateBackupOnDemand = (
 
 export const useDeleteBackup = (
   namespace: string,
-  options?: UseMutationOptions<unknown, unknown, string, unknown>
+  options?: UseMutationOptions<unknown, unknown, DeleteBackupArgType, unknown>
 ) =>
   useMutation({
-    mutationFn: (backupName: string) => deleteBackupFn(backupName, namespace),
+    mutationFn: ({ backupName, cleanupBackupStorage }: DeleteBackupArgType) =>
+      deleteBackupFn(backupName, namespace, cleanupBackupStorage),
     ...options,
   });
 

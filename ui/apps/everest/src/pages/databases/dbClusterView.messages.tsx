@@ -68,6 +68,8 @@ export const Messages = {
       </>
     ),
     databaseName: 'Database name',
+    alertMessage:
+      'This action will permanently destroy your database and you will not be able to recover it.',
   },
   responseMessages: {
     restart: 'The database is being restarted',

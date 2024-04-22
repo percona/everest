@@ -5,11 +5,16 @@ export enum ConfirmFormDialogFields {
   cleanupBackupStorage = 'cleanupBackupStorage',
 }
 
-export const confirmFormDialogSchema = (value: string) =>
+export const confirmFormDialogSchema = (
+  value: string,
+  confirmationInput: boolean
+) =>
   z.object({
-    [ConfirmFormDialogFields.confirmInput]: z.literal(value, {
-      errorMap: () => ({ message: '' }),
-    }),
+    [ConfirmFormDialogFields.confirmInput]: z
+      .literal(confirmationInput ? value : '', {
+        errorMap: () => ({ message: '' }),
+      })
+      .optional(),
     [ConfirmFormDialogFields.cleanupBackupStorage]: z.boolean(),
   });
 

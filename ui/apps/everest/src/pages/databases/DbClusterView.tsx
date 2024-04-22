@@ -336,6 +336,7 @@ export const DbClusterView = () => {
           handleConfirm={({ cleanupBackupStorage }) =>
             handleConfirmDelete(cleanupBackupStorage)
           }
+          alertMessage={Messages.deleteModal.alertMessage}
           dialogContent={Messages.deleteModal.content(
             selectedDbCluster!.metadata.name
           )}
