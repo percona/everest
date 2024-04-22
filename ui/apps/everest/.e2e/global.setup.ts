@@ -44,6 +44,8 @@ setup('Backup storages', async ({ request }) => {
           allowedNamespaces: [namespaces[0]],
           url: EVEREST_LOCATION_URL,
           region: EVEREST_LOCATION_REGION,
+          verifyTLS: false,
+          forcePathStyle: false,
         },
         headers: {
           Authorization: `Bearer ${token}`,
