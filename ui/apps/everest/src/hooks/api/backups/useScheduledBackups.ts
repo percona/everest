@@ -1,10 +1,10 @@
 import { updateDbClusterFn } from 'api/dbClusterApi';
-import { ScheduleFormData } from 'components/schedule-form/schedule-form-schema.ts';
 import { getCronExpressionFromFormValues } from 'components/time-selection/time-selection.utils';
 import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { Schedule } from 'shared-types/dbCluster.types';
 import { useDbCluster } from '../db-cluster/useDbCluster';
 import { DbCluster } from 'shared-types/dbCluster.types';
+import { ScheduleFormData } from 'components/schedule-form-dialog/schedule-form/schedule-form-schema';
 
 const backupScheduleFormValuesToDbClusterPayload = (
   dbPayload: ScheduleFormData,

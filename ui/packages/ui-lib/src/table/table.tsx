@@ -23,6 +23,7 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
     tableName,
     state,
     initialState,
+    ...rest
   } = props;
   const [columnVisibility, setColumnVisibility] =
     usePersistentColumnVisibility(tableName);
@@ -39,6 +40,10 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
   const stopPropagation = (e: Event) => {
     e.stopPropagation();
   };
+
+  // @ts-expect-error
+  const { sx: muiTopToolbarPropsSx = {}, ...muiTopToolbarRestProps } =
+    muiTopToolbarProps || {};
 
   useEffect(() => {
     const hideColumnsIcon = document.querySelector(
@@ -133,14 +138,14 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
       muiTablePaperProps={{ elevation: 0, ...muiTablePaperProps }}
       muiTopToolbarProps={{
         sx: {
-          '& .MuiBox-root': {
+          backgroundColor: 'transparent',
+          '& > .MuiBox-root': {
             flexDirection: 'row-reverse',
-            // prettier-ignore
-            // @ts-ignore
-            ...muiTopToolbarProps?.sx,
+            flexWrap: 'wrap',
           },
+          ...muiTopToolbarPropsSx,
         },
-        ...muiTopToolbarProps,
+        ...muiTopToolbarRestProps,
       }}
       displayColumnDefOptions={{
         'mrt-row-actions': {
@@ -218,7 +223,21 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
         },
         ...displayColumnDefOptions,
       }}
-      {...props}
+      muiTableHeadProps={{
+        sx: {
+          '& tr': {
+            backgroundColor: 'transparent',
+          },
+        },
+      }}
+      muiTableBodyProps={{
+        sx: {
+          '& tr': {
+            backgroundColor: 'transparent',
+          },
+        },
+      }}
+      {...rest}
       columns={customColumns}
       data={data}
       state={{
