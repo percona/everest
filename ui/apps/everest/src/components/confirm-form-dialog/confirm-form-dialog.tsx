@@ -77,7 +77,7 @@ export const ConfirmFormDialog = ({
           placeholder: inputPlaceholder,
         }}
       />
-      <DeleteDataCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />
+      <DeleteDataCheckbox formControlLabelProps={{ sx: { mt: 2, pl: 1 } }} />
     </FormDialog>
   );
 };

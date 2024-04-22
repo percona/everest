@@ -1,4 +1,3 @@
 export const Messages = {
-  deleteData: 'Also delete backups storage data',
-  tooltip: '',
+  deleteData: 'Delete backups storage data',
 };
