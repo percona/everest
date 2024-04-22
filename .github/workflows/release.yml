@@ -232,7 +232,7 @@ jobs:
           fi
           git checkout $BRANCH_NAME
 
-          # if there is something to commit, commit it and add the tag
+          # if the tag doesn't exist yet, create it
           if git tag --list | grep -q "^$GH_TAG$"; then
             echo "The tag is already present in github. Please create a different RC/Release"
             exit 1
