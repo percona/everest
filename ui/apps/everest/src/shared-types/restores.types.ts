@@ -13,7 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type RestorePayload = {
+export type GetRestorePayload = {
+  items: Array<{
+    metadata: {
+      creationTimestamp: string;
+      name: string;
+    };
+    spec: {
+      dataSource: {
+        pitr?: object;
+      };
+    };
+    status: {
+      state: string;
+      completed?: string;
+    };
+  }>;
+};
+
+export type CreateRestorePayload = {
   apiVersion: 'everest.percona.com/v1alpha1';
   kind: 'DatabaseClusterRestore';
   metadata: {
@@ -29,3 +47,37 @@ export type RestorePayload = {
     };
   };
 };
+
+export type Restore = {
+  name: string;
+  startTime: string;
+  endTime?: string;
+  type: 'full' | 'pitr';
+  state: string;
+};
+
+export enum PXC_STATUS {
+  STARTING = 'Starting',
+  STOPPING = 'Stopping Cluster',
+  RESTORING = 'Restoring',
+  STARTING_CLUSTER = 'Starting Cluster',
+  PITR_RECOVERING = 'Point-in-time recovering',
+  FAILED = 'Failed',
+  SUCCEEDED = 'Succeeded',
+}
+
+export enum PSMDB_STATUS {
+  WAITING = 'waiting',
+  REQUESTED = 'requested',
+  REJECTED = 'rejected',
+  RUNNING = 'running',
+  ERROR = 'error',
+  READY = 'ready',
+}
+
+export enum PG_STATUS {
+  STARTING = 'Starting',
+  RUNNING = 'Running',
+  FAILED = 'Failed',
+  SUCCEEDED = 'Succeeded',
+}
