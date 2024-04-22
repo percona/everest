@@ -22,7 +22,7 @@ metadata:
 rules:
   - apiGroups: ["everest.percona.com"]
     resources: ["databaseengines"]
-    verbs: ["get", "list"]
+    verbs: ["get", "list", "update"]
   - apiGroups: ["everest.percona.com"]
     resources: ["databaseclusters", "databaseclusterbackups", "databaseclusterrestores", "backupstorages", "monitoringconfigs"]
     verbs: ["*"]

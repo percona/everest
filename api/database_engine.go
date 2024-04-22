@@ -17,10 +17,15 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/mod/semver"
+
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
 const (
@@ -51,4 +56,50 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
 	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, name)
+}
+
+// UpgradeDatabaseEngineOperator upgrades the database engine operator to the specified version.
+func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespace string, name string) error {
+	// Parse request body.
+	req := &DatabaseEngineOperatorUpgradeParams{}
+	if err := e.getBodyFromContext(ctx, req); err != nil {
+		e.l.Error(err)
+		return ctx.JSON(http.StatusBadRequest, Error{
+			Message: pointer.ToString(
+				"Could not get DatabaseEngineOperatorUpgradeParams from the request body"),
+		})
+	}
+	if err := validateDatabaseEngineOperatorUpgradeParams(req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, Error{
+			Message: pointer.ToString(err.Error()),
+		})
+	}
+	// Get existing database engine.
+	dbEngine, err := e.kubeClient.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
+	if err != nil {
+		return err
+	}
+	// Update annotation to start upgrade.
+	annotations := dbEngine.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	annotations[everestv1alpha1.DatabaseOperatorUpgradeAnnotation] = req.TargetVersion
+	dbEngine.SetAnnotations(annotations)
+	_, err = e.kubeClient.UpdateDatabaseEngine(ctx.Request().Context(), namespace, dbEngine)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateDatabaseEngineOperatorUpgradeParams(req *DatabaseEngineOperatorUpgradeParams) error {
+	targetVersion := req.TargetVersion
+	if !strings.HasPrefix(targetVersion, "v") {
+		targetVersion = "v" + targetVersion
+	}
+	if !semver.IsValid(targetVersion) {
+		return fmt.Errorf("invalid target version '%s'", req.TargetVersion)
+	}
+	return nil
 }

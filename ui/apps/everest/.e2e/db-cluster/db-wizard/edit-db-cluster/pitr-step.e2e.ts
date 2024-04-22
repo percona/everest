@@ -22,7 +22,6 @@ import {
   findDbAndClickActions,
   findDbAndClickRow,
 } from '../../../utils/db-clusters-list';
-import { getTokenFromLocalStorage } from '../../../utils/localStorage';
 import {
   moveForward,
   storageLocationAutocompleteEmptyValidationCheck,
@@ -41,11 +40,24 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
       dbName: mySQLName,
       dbType: 'mysql',
       numberOfNodes: '1',
+      cpu: 1,
+      disk: 1,
+      memory: 1,
+      backup: {
+        enabled: true,
+        schedules: [
+          {
+            backupStorageName: 'test-storage-1',
+            enabled: true,
+            name: 'backup-1',
+            schedule: '0 * * * *',
+          },
+        ],
+      },
     });
   });
 
   test.afterAll(async ({ request }) => {
-    const token = await getTokenFromLocalStorage();
     await deleteDbClusterFn(request, mySQLName);
   });
 
@@ -53,21 +65,12 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
     page,
   }) => {
     await page.goto('/databases');
-    await findDbAndClickActions(page, mySQLName, 'Edit');
+    await findDbAndClickActions(page, mySQLName, 'Edit', 'UP');
 
     // Go to Resources step
     await moveForward(page);
     // Go to Backups step
     await moveForward(page);
-
-    // Check and fill in backups step
-    expect(page.getByTestId('pitr-no-backup-alert'));
-
-    const backupsCheckbox = page
-      .getByTestId('switch-input-backups-enabled')
-      .getByRole('checkbox');
-    await backupsCheckbox.setChecked(true);
-
     // Go to PITR step
     await moveForward(page);
 
@@ -90,7 +93,7 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
     );
     const storageOptions = page.getByRole('option');
     await expect(
-      storageOptions.filter({ hasText: STORAGE_NAMES[0] })
+      storageOptions.filter({ hasText: STORAGE_NAMES[1] })
     ).toBeVisible();
     await storageOptions.first().click();
 
@@ -115,7 +118,6 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
     await moveForward(page);
     // Go to Backups step
     await moveForward(page);
-    await expect(backupsCheckbox).toBeChecked();
 
     // Go to PITR step
     await moveForward(page);

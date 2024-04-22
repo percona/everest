@@ -40,9 +40,12 @@ export const findDbAndClickRow = async (page: Page, dbName: string) => {
 export const findDbAndClickActions = async (
   page: Page,
   dbName: string,
-  nameOfAction?: string
+  nameOfAction?: string,
+  status?: string
 ) => {
-  page.getByTestId(`${dbName}-status`).filter({ hasText: 'Initializing' });
+  page
+    .getByTestId(`${dbName}-status`)
+    .filter({ hasText: status || 'Initializing' });
   await findRowAndClickActions(page, dbName, nameOfAction);
 };
 

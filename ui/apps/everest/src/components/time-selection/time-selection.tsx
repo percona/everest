@@ -37,7 +37,17 @@ export const TimeSelection = ({
   );
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        mt: 1,
+        '& .MuiFormControl-root': {
+          mt: 0,
+        },
+      }}
+    >
       <Box
         sx={{
           display: 'flex',
