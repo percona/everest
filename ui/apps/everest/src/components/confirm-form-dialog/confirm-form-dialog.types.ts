@@ -6,7 +6,12 @@ export enum ConfirmFormDialogFields {
 
 export const confirmFormDialogSchema = (value: string) =>
   z.object({
-    [ConfirmFormDialogFields.confirmInput]: z.literal(value, {
-      errorMap: () => ({ message: '' }),
-    }),
+    [ConfirmFormDialogFields.confirmInput]: z
+      .string()
+      .trim()
+      .pipe(
+        z.literal(value, {
+          errorMap: () => ({ message: '' }),
+        })
+      ),
   });

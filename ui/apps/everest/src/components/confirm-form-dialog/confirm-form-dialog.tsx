@@ -61,26 +61,15 @@ export const ConfirmFormDialog = ({
     submitting={submitting}
     {...props}
   >
-    {({ setValue, trigger }) => (
-      <>
-        <IrreversibleAction />
-        <DialogContent sx={{ px: 1 }}>{dialogContent}</DialogContent>
-        <TextInput
-          name={ConfirmFormDialogFields.confirmInput}
-          label={inputLabel}
-          labelProps={{ sx: { mt: 0 } }}
-          textFieldProps={{
-            onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
-              setValue(
-                ConfirmFormDialogFields.confirmInput,
-                event.target.value.replace(/\s/g, '') // Trim spaces
-              );
-              trigger(ConfirmFormDialogFields.confirmInput);
-            },
-            placeholder: inputPlaceholder,
-          }}
-        />
-      </>
-    )}
+    <IrreversibleAction />
+    <DialogContent sx={{ px: 1 }}>{dialogContent}</DialogContent>
+    <TextInput
+      name={ConfirmFormDialogFields.confirmInput}
+      label={inputLabel}
+      labelProps={{ sx: { mt: 0 } }}
+      textFieldProps={{
+        placeholder: inputPlaceholder,
+      }}
+    />
   </FormDialog>
 );
