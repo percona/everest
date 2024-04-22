@@ -17,11 +17,10 @@ import { AutoCompleteInput, LabeledContent, TextInput } from '@percona/ui-lib';
 import { BackupStorage } from 'shared-types/backupStorages.types.ts';
 import { Schedule } from 'shared-types/dbCluster.types.ts';
 import LogicalPhysicalRadioGroup from 'components/logical-physical-radio-group';
-import { AutoCompleteAutoFill } from '../auto-complete-auto-fill/auto-complete-auto-fill.tsx';
-import { TimeSelection } from '../time-selection/time-selection';
+import { AutoCompleteAutoFill } from '../../auto-complete-auto-fill/auto-complete-auto-fill.tsx';
+import { TimeSelection } from '../../time-selection/time-selection';
 import { Messages } from './schedule-form.messages.ts';
 import { ScheduleFormFields } from './schedule-form.types.ts';
-import { Typography } from '@mui/material';
 
 type ScheduleFormProps = {
   allowScheduleSelection?: boolean;
@@ -48,28 +47,27 @@ export const ScheduleForm = ({
   return (
     <>
       {showTypeRadio && <LogicalPhysicalRadioGroup />}
-      <Typography variant="sectionHeading" mb={1}>
-        {Messages.backupDetails}
-      </Typography>
-      {allowScheduleSelection ? (
-        <AutoCompleteInput
-          name={ScheduleFormFields.scheduleName}
-          textFieldProps={{
-            label: Messages.scheduleName.label,
-          }}
-          options={schedulesNamesList}
-          isRequired
-        />
-      ) : (
-        <TextInput
-          name={ScheduleFormFields.scheduleName}
-          textFieldProps={{
-            label: Messages.scheduleName.label,
-            disabled: disableNameInput,
-          }}
-          isRequired
-        />
-      )}
+      <LabeledContent label={Messages.backupDetails}>
+        {allowScheduleSelection ? (
+          <AutoCompleteInput
+            name={ScheduleFormFields.scheduleName}
+            textFieldProps={{
+              label: Messages.scheduleName.label,
+            }}
+            options={schedulesNamesList}
+            isRequired
+          />
+        ) : (
+          <TextInput
+            name={ScheduleFormFields.scheduleName}
+            textFieldProps={{
+              label: Messages.scheduleName.label,
+              disabled: disableNameInput,
+            }}
+            isRequired
+          />
+        )}
+      </LabeledContent>
 
       <AutoCompleteAutoFill
         name={ScheduleFormFields.storageLocation}

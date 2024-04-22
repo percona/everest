@@ -31,6 +31,12 @@ const SwitchInput = ({
           render={({ field }) => (
             <Switch
               {...field}
+              sx={{
+                ...(labelCaption && {
+                  alignSelf: 'flex-start',
+                  mt: -1,
+                }),
+              }}
               checked={field.value}
               data-testid={`switch-input-${kebabize(name)}`}
               {...switchFieldProps}

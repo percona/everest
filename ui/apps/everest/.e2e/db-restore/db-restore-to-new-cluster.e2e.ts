@@ -33,13 +33,19 @@ test.describe('DB Cluster Restore to the new cluster', () => {
       numberOfNodes: '1',
       backup: {
         enabled: true,
-        schedules: [],
+        schedules: [
+          {
+            backupStorageName: 'test-storage-1',
+            enabled: true,
+            name: 'backup-1',
+            schedule: '0 * * * *',
+          },
+        ],
       },
     });
   });
 
   test.afterEach(async ({ request }) => {
-    const token = await getTokenFromLocalStorage();
     await deleteDbClusterFn(request, dbClusterName);
   });
 
