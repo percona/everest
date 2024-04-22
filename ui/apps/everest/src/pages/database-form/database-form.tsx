@@ -45,11 +45,7 @@ export const DatabasePage = () => {
   const mode = useDatabasePageMode();
   const { defaultValues, dbClusterData } = useDatabasePageDefaultValues(mode);
 
-  const validationSchema = useDbValidationSchema(
-    activeStep,
-    mode,
-    dbClusterData
-  );
+  const validationSchema = useDbValidationSchema(activeStep);
 
   const methods = useForm<DbWizardType>({
     mode: 'onChange',

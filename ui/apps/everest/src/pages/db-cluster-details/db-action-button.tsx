@@ -16,7 +16,7 @@ import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Messages as ClusterDetailsMessages } from './db-cluster-details.messages';
 import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
-import { ConfirmFormDialog } from '../../components/confirm-form-dialog';
+import { ConfirmFormDialog } from 'components/confirm-form-dialog';
 
 export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
   const { dbClusterName, namespace = '' } = useParams();

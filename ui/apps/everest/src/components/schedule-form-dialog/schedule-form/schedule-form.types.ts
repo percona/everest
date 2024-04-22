@@ -1,4 +1,4 @@
-import { TimeSelectionFields } from '../time-selection/time-selection.types';
+import { TimeSelectionFields } from '../../time-selection/time-selection.types';
 
 enum ScheduleForm {
   scheduleName = 'scheduleName',

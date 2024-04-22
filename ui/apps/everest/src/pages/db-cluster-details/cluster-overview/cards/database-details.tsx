@@ -16,7 +16,6 @@
 import { Grid } from '@mui/material';
 import { Card } from '@percona/ui-lib';
 import { beautifyDbTypeName } from '@percona/utils';
-import { getFormValuesFromCronExpression } from '../../../../components/time-selection/time-selection.utils';
 import { getTimeSelectionPreviewMessage } from '../../../database-form/database-preview/database.preview.messages';
 import { Messages } from '../cluster-overview.messages';
 import {
@@ -24,6 +23,7 @@ import {
   OverviewSectionText,
 } from '../overview-section/overview-section';
 import { DatabaseDetailsOverviewCardProps } from './card.types';
+import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils';
 
 export const DatabaseDetails = ({
   loading,
