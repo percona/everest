@@ -14,53 +14,23 @@
 // limitations under the License.
 
 import { Alert, Box } from '@mui/material';
-import { SwitchInput } from '@percona/ui-lib';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages';
-import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { DbWizardFormFields, StepProps } from '../../../database-form.types.ts';
+import { DbWizardFormFields } from '../../../database-form.types.ts';
 import BackupsActionableAlert from 'components/actionable-alert/backups-actionable-alert';
-import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
-import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './backups.messages.ts';
-import { ScheduleBackupSection } from './schedule-section/schedule-section.tsx';
+import Schedules from './schedules';
 
-export const Backups = ({ alreadyVisited }: StepProps) => {
-  const mode = useDatabasePageMode();
-  const { control, watch, setValue, getFieldState, trigger } = useFormContext();
-  const { dbClusterData } = useDatabasePageDefaultValues(mode);
+export const Backups = () => {
+  const { watch } = useFormContext();
 
-  const [backupsEnabled, dbType, selectedNamespace] = watch([
-    DbWizardFormFields.backupsEnabled,
-    DbWizardFormFields.dbType,
+  const [selectedNamespace, schedules] = watch([
     DbWizardFormFields.k8sNamespace,
+    DbWizardFormFields.schedules,
   ]);
   const { data: backupStorages = [] } =
     useBackupStoragesByNamespace(selectedNamespace);
-
-  useEffect(() => {
-    const { isTouched } = getFieldState(DbWizardFormFields.backupsEnabled);
-
-    if (isTouched) {
-      return;
-    }
-
-    if (mode === 'new' || mode === 'restoreFromBackup') {
-      setValue(DbWizardFormFields.backupsEnabled, true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dbType]);
-
-  const schedules =
-    mode === 'new' ? [] : dbClusterData?.spec?.backup?.schedules || [];
-  const multiSchedules =
-    mode === 'edit' && !!schedules && schedules?.length > 1;
-  const scheduleDisabled = multiSchedules;
-
-  useEffect(() => {
-    trigger();
-  }, [backupsEnabled]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -68,35 +38,12 @@ export const Backups = ({ alreadyVisited }: StepProps) => {
         pageTitle={Messages.backups}
         pageDescription={Messages.captionBackups}
       />
-      <SwitchInput
-        control={control}
-        label={Messages.enableBackups}
-        name={DbWizardFormFields.backupsEnabled}
-        formControlLabelProps={{
-          sx: { mt: 1 },
-        }}
-      />
-      {backupsEnabled &&
-        (backupStorages.length > 0 ? (
-          <>
-            {(mode === 'new' || mode === 'restoreFromBackup') && (
-              <Alert sx={{ mt: 1, mb: 3 }} severity="info">
-                {Messages.youCanAddMoreSchedules}
-              </Alert>
-            )}
-            {multiSchedules && (
-              <Alert sx={{ mt: 1 }} severity="info">
-                {Messages.youHaveMultipleSchedules}
-              </Alert>
-            )}
-            {!scheduleDisabled && (
-              <ScheduleBackupSection enableNameGeneration={!alreadyVisited} />
-            )}
-          </>
-        ) : (
-          <BackupsActionableAlert namespace={selectedNamespace} />
-        ))}
-      {!backupsEnabled && (
+      {backupStorages.length > 0 ? (
+        <Schedules />
+      ) : (
+        <BackupsActionableAlert namespace={selectedNamespace} />
+      )}
+      {schedules?.length === 0 && (
         <Alert
           sx={{ mt: 1 }}
           severity="info"

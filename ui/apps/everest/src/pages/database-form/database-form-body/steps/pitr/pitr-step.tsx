@@ -26,11 +26,12 @@ import { Messages } from './pitr.messages';
 const PITRStep = () => {
   const { control, watch, setValue } = useFormContext();
 
-  const [backupsEnabled, dbType] = watch([
-    DbWizardFormFields.backupsEnabled,
+  const [dbType, schedules] = watch([
     DbWizardFormFields.dbType,
+    DbWizardFormFields.schedules,
   ]);
 
+  const backupsEnabled = schedules?.length > 0;
   const pitrDisabled = !backupsEnabled || dbType === DbType.Postresql;
 
   useEffect(() => {
@@ -38,7 +39,7 @@ const PITRStep = () => {
       setValue(DbWizardFormFields.pitrEnabled, true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dbType]);
+  }, [dbType, backupsEnabled]);
 
   useEffect(() => {
     if (!backupsEnabled) {
@@ -58,14 +59,12 @@ const PITRStep = () => {
           {Messages.toEnablePitr}
         </Alert>
       )}
-      {backupsEnabled && dbType === DbType.Postresql && (
-        <Alert severity="info" sx={{ mt: 1 }}>
-          {Messages.pitrPgEnabledByDefault}
-        </Alert>
-      )}
       <SwitchInput
         control={control}
         label={Messages.enablePitr}
+        labelCaption={
+          dbType === DbType.Postresql ? Messages.enablePitrCaption : undefined
+        }
         name={DbWizardFormFields.pitrEnabled}
         switchFieldProps={{
           disabled: pitrDisabled,
