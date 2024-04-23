@@ -70,6 +70,8 @@ export const Messages = {
     databaseName: 'Database name',
     alertMessage:
       'This action will permanently destroy your database and you will not be able to recover it.',
+    checkboxMessage: 'Delete backups storage data',
+    confirmButtom: 'Delete',
   },
   responseMessages: {
     restart: 'The database is being restarted',

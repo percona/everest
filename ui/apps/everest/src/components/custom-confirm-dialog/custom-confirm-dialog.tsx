@@ -15,59 +15,61 @@
 
 import { FormDialog } from '../form-dialog';
 import { FormDialogProps } from '../form-dialog/form-dialog.types';
-import {
-  ConfirmDialogType,
-  ConfirmFormDialogFields,
-  confirmFormDialogSchema,
-} from './confirm-form-dialog.types';
 import { SubmitHandler } from 'react-hook-form';
 import { TextInput } from '@percona/ui-lib';
 import { kebabize } from '@percona/utils';
-import { confirmDialogDefaultValues } from './confirm-dialog-consts';
+import { customConfirmDialogDefaultValues } from './custom-confirm-dialog-consts';
 import { IrreversibleAction } from '../irreversible-action';
 import { DialogContent } from '@mui/material';
 import { ReactNode } from 'react';
-import DeleteDataCheckbox from 'components/delete-data-checkbox/delete-data-checkbox';
+import { CustomCheckbox } from 'components/custom-confirm-dialog/custom-checkbox/custom-checkbox';
+import {
+  CustomConfirmDialogFields,
+  CustomConfirmDialogType,
+  customConfirmDialogSchema,
+} from './custom-confirm-dialog.types';
 
-interface ConfirmFormDialogProps<T extends ConfirmDialogType>
+interface CustomConfirmDialogProps<T extends CustomConfirmDialogType>
   extends Omit<
     FormDialogProps<T>,
     'schema' | 'onSubmit' | 'submitMessage' | 'cancelMessage' | 'children'
   > {
   inputLabel?: string;
   inputPlaceholder?: string;
-  handleConfirm: (data: ConfirmDialogType) => void;
+  handleConfirm: (data: CustomConfirmDialogType) => void;
   selectedId: string;
   cancelMessage?: string;
-  submitMessage?: string;
+  submitMessage: string;
   dialogContent?: ReactNode;
   confirmationInput?: boolean;
   alertTitle?: string;
   alertMessage: string;
+  checkboxMessage: string;
 }
-export const ConfirmFormDialog = ({
+export const CustomConfirmDialog = ({
   inputLabel,
   inputPlaceholder,
   handleConfirm,
   cancelMessage = 'Cancel',
-  submitMessage = 'Delete',
+  submitMessage,
   confirmationInput = true,
   selectedId,
   dialogContent,
   submitting,
   alertTitle = 'Irreversible action',
-  alertMessage = '',
+  alertMessage,
+  checkboxMessage,
   ...props
-}: ConfirmFormDialogProps<ConfirmDialogType>) => {
-  const onSubmit: SubmitHandler<ConfirmDialogType> = (data) => {
+}: CustomConfirmDialogProps<CustomConfirmDialogType>) => {
+  const onSubmit: SubmitHandler<CustomConfirmDialogType> = (data) => {
     handleConfirm(data);
   };
 
   return (
     <FormDialog
       onSubmit={onSubmit}
-      schema={confirmFormDialogSchema(selectedId, confirmationInput)}
-      defaultValues={confirmDialogDefaultValues}
+      schema={customConfirmDialogSchema(selectedId, confirmationInput)}
+      defaultValues={customConfirmDialogDefaultValues}
       dataTestId={selectedId && kebabize(selectedId)}
       submitMessage={submitMessage}
       cancelMessage={cancelMessage}
@@ -78,7 +80,7 @@ export const ConfirmFormDialog = ({
       <DialogContent sx={{ px: 1 }}>{dialogContent}</DialogContent>
       {confirmationInput && (
         <TextInput
-          name={ConfirmFormDialogFields.confirmInput}
+          name={CustomConfirmDialogFields.confirmInput}
           label={inputLabel}
           labelProps={{ sx: { mt: 0 } }}
           textFieldProps={{
@@ -86,7 +88,10 @@ export const ConfirmFormDialog = ({
           }}
         />
       )}
-      <DeleteDataCheckbox formControlLabelProps={{ sx: { mt: 2, pl: 1 } }} />
+      <CustomCheckbox
+        checkboxMessage={checkboxMessage}
+        formControlLabelProps={{ sx: { mt: 2, pl: 1 } }}
+      />
     </FormDialog>
   );
 };

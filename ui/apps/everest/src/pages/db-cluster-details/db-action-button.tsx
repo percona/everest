@@ -16,7 +16,7 @@ import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Messages as ClusterDetailsMessages } from './db-cluster-details.messages';
 import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
-import { ConfirmFormDialog } from 'components/confirm-form-dialog';
+import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
 
 export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -188,7 +188,7 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
         />
       )}
       {openDeleteDialog && (
-        <ConfirmFormDialog
+        <CustomConfirmDialog
           inputLabel={Messages.deleteModal.databaseName}
           inputPlaceholder={Messages.deleteModal.databaseName}
           isOpen={openDeleteDialog}
@@ -196,11 +196,13 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
           headerMessage={Messages.deleteModal.header}
           submitting={deletingCluster}
           selectedId={dbCluster.metadata.name || ''}
-          handleConfirm={({ cleanupBackupStorage }) =>
+          handleConfirm={({ dataCheckbox: cleanupBackupStorage }) =>
             handleDelete(cleanupBackupStorage)
           }
           alertMessage={Messages.deleteModal.alertMessage}
           dialogContent={Messages.deleteModal.content(dbCluster.metadata.name)}
+          submitMessage={Messages.deleteModal.confirmButtom}
+          checkboxMessage={Messages.deleteModal.checkboxMessage}
         />
       )}
     </Box>

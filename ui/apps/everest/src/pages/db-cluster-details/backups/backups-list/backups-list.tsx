@@ -36,7 +36,7 @@ import { ScheduleModalContext } from '../backups.context.ts';
 import { BACKUP_STATUS_TO_BASE_STATUS } from './backups-list.constants';
 import { Messages } from './backups-list.messages';
 import BackupListTableHeader from './table-header';
-import { ConfirmFormDialog } from 'components/confirm-form-dialog/confirm-form-dialog.tsx';
+import { CustomConfirmDialog } from 'components/custom-confirm-dialog/custom-confirm-dialog.tsx';
 
 export const BackupsList = () => {
   const queryClient = useQueryClient();
@@ -221,18 +221,20 @@ export const BackupsList = () => {
         ]}
       />
       {openDeleteDialog && (
-        <ConfirmFormDialog
+        <CustomConfirmDialog
           isOpen={openDeleteDialog}
           selectedId={selectedBackup}
           closeModal={handleCloseDeleteDialog}
           headerMessage={Messages.deleteDialog.header}
-          handleConfirm={({ cleanupBackupStorage }) =>
+          handleConfirm={({ dataCheckbox: cleanupBackupStorage }) =>
             handleConfirmDelete(selectedBackup, cleanupBackupStorage)
           }
           submitting={deletingBackup}
           confirmationInput={false}
           dialogContent={Messages.deleteDialog.content(selectedBackup)}
-          alertMessage={Messages.deleteAlertMessage}
+          alertMessage={Messages.deleteDialog.alertMessage}
+          submitMessage={Messages.deleteDialog.confirmButton}
+          checkboxMessage={Messages.deleteDialog.checkboxMessage}
         />
       )}
       {openRestoreDbModal && dbCluster && (

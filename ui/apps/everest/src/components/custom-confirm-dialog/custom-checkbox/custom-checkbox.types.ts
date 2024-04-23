@@ -1,5 +1,6 @@
 import { FormControlLabelProps } from '@mui/material';
 
-export type DeleteDataCheckboxProps = {
+export type CustomCheckboxProps = {
   formControlLabelProps?: Omit<FormControlLabelProps, 'label' | 'control'>;
+  checkboxMessage: string;
 };

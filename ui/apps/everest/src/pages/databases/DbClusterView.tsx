@@ -42,7 +42,7 @@ import { Messages } from './dbClusterView.messages';
 import { DbClusterTableElement } from './dbClusterView.types';
 import { DbTypeIconProvider } from './dbTypeIconProvider/DbTypeIconProvider';
 import { ExpandedRow } from './expandedRow/ExpandedRow';
-import { ConfirmFormDialog } from 'components/confirm-form-dialog';
+import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
 import { LastBackup } from './lastBackup/LastBackup';
 
 export const DbClusterView = () => {
@@ -325,7 +325,7 @@ export const DbClusterView = () => {
         />
       )}
       {openDeleteDialog && (
-        <ConfirmFormDialog
+        <CustomConfirmDialog
           inputLabel={Messages.deleteModal.databaseName}
           inputPlaceholder={Messages.deleteModal.databaseName}
           isOpen={openDeleteDialog}
@@ -333,13 +333,15 @@ export const DbClusterView = () => {
           headerMessage={Messages.deleteModal.header}
           submitting={deletingCluster}
           selectedId={selectedDbCluster?.metadata.name || ''}
-          handleConfirm={({ cleanupBackupStorage }) =>
+          handleConfirm={({ dataCheckbox: cleanupBackupStorage }) =>
             handleConfirmDelete(cleanupBackupStorage)
           }
           alertMessage={Messages.deleteModal.alertMessage}
           dialogContent={Messages.deleteModal.content(
             selectedDbCluster!.metadata.name
           )}
+          submitMessage={Messages.deleteModal.confirmButtom}
+          checkboxMessage={Messages.deleteModal.checkboxMessage}
         />
       )}
     </Stack>
