@@ -242,6 +242,13 @@ jobs:
           git config --global user.email "everest-ci@percona.com"
           git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
 
+          # Check if veneer has the new version listed
+          if grep -q "$VERSION" catalog/everest-operator/catalog.yaml; then
+            echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
+            echo "Update the file manually before running the workflow"
+            exit 1
+          fi
+
           git tag $GH_TAG
           git push origin $GH_TAG
 
