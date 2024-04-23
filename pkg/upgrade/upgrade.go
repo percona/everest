@@ -31,6 +31,7 @@ import (
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	cliVersion "github.com/percona/everest/pkg/version"
+	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
 type (
@@ -46,8 +47,9 @@ type (
 	Upgrade struct {
 		l *zap.SugaredLogger
 
-		config     *Config
-		kubeClient kubernetes.KubernetesConnector
+		config         *Config
+		kubeClient     kubernetes.KubernetesConnector
+		versionService versionservice.Interface
 	}
 
 	supportedVersion struct {
@@ -85,6 +87,7 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 		return nil, err
 	}
 	cli.kubeClient = k
+	cli.versionService = versionservice.New(cfg.VersionMetadataURL)
 	return cli, nil
 }
 
@@ -118,7 +121,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		u.l.Debugf("Percona catalog version was nil. Changing to %s", upgradeEverestTo)
 		catalogVersion = upgradeEverestTo
 	}
-	u.l.Infof("Upgrading Percona Catalog to %s", recVer.Catalog)
+	u.l.Infof("Upgrading Percona Catalog to %s", catalogVersion)
 	if err := u.kubeClient.InstallPerconaCatalog(ctx, catalogVersion); err != nil {
 		return err
 	}
@@ -181,7 +184,7 @@ func (u *Upgrade) canUpgrade(ctx context.Context, everestVersion *goversion.Vers
 func (u *Upgrade) versionToUpgradeTo(
 	ctx context.Context, currentEverestVersion *goversion.Version,
 ) (*goversion.Version, *version.MetadataVersion, error) {
-	req, err := cliVersion.Metadata(ctx, u.config.VersionMetadataURL)
+	req, err := u.versionService.GetEverestMetadata(ctx)
 	if err != nil {
 		return nil, nil, err
 	}

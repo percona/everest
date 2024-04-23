@@ -31,3 +31,8 @@ func (k *Kubernetes) ListDatabaseEngines(ctx context.Context, namespace string) 
 func (k *Kubernetes) GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error) {
 	return k.client.GetDatabaseEngine(ctx, namespace, name)
 }
+
+// UpdateDatabaseEngine updates the provided database engine.
+func (k *Kubernetes) UpdateDatabaseEngine(ctx context.Context, namespace string, engine *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
+	return k.client.UpdateDatabaseEngine(ctx, namespace, engine)
+}

@@ -18,13 +18,11 @@ export const Messages = {
   description:
     'PITR provides continuous backups of your database, enabling you to restore it to a specific point in time, in case of accidental writes or deletes.',
   enablePitr: 'Enable PITR',
+  enablePitrCaption:
+    'You cannot disable PITR as it is a core feature of the PostgreSQL operator. All backup storage options are compatible with PITR.',
   toEnablePitr:
     'To enable PITR, first set up a backup schedule for this database',
-  pitrPgEnabledByDefault:
-    'Point-in-time recovery is enabled by default for the PostgreSQL operator and cannot be turned off.',
   captionPitr:
     'Point-in-time recovery provides continuous backups on your database to protect against accidental writes or deletes.',
   pitrCreateHeader: 'Create PitrStep backup every',
-  matchedStorageType: (storagetype: string) =>
-    `Backups storage: ${storagetype} (storage type is automatically matched to your selection on the Backups page)`,
 };

@@ -15,6 +15,7 @@ import { NoMatch } from 'pages/404/NoMatch';
 import { Backups } from 'pages/db-cluster-details/backups/backups';
 import { Namespaces } from './pages/settings/namespaces/namespaces';
 import NamespaceDetails from 'pages/settings/namespaces/namespace-details';
+import Restores from 'pages/db-cluster-details/restores';
 
 const router = createBrowserRouter([
   {
@@ -53,6 +54,10 @@ const router = createBrowserRouter([
           {
             path: DBClusterDetailsTabs.overview,
             element: <ClusterOverview />,
+          },
+          {
+            path: DBClusterDetailsTabs.restores,
+            element: <Restores />,
           },
         ],
       },

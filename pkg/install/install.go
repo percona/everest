@@ -40,14 +40,16 @@ import (
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/token"
 	"github.com/percona/everest/pkg/version"
+	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
 // Install implements the main logic for commands.
 type Install struct {
 	l *zap.SugaredLogger
 
-	config     Config
-	kubeClient *kubernetes.Kubernetes
+	config         Config
+	kubeClient     *kubernetes.Kubernetes
+	versionService versionservice.Interface
 }
 
 const (
@@ -60,11 +62,10 @@ const (
 	everestServiceAccountRoleBinding        = "everest-admin-role-binding"
 	everestServiceAccountClusterRoleBinding = "everest-admin-cluster-role-binding"
 
-	everestOperatorChannel = "stable-v0"
-	pxcOperatorChannel     = "stable-v1"
-	psmdbOperatorChannel   = "stable-v1"
-	pgOperatorChannel      = "stable-v2"
-	vmOperatorChannel      = "stable-v0"
+	pxcOperatorChannel   = "stable-v1"
+	psmdbOperatorChannel = "stable-v1"
+	pgOperatorChannel    = "stable-v2"
+	vmOperatorChannel    = "stable-v0"
 
 	// catalogSource is the name of the catalog source.
 	catalogSource = "everest-catalog"
@@ -147,6 +148,7 @@ func NewInstall(c Config, l *zap.SugaredLogger) (*Install, error) {
 		return nil, err
 	}
 	cli.kubeClient = k
+	cli.versionService = versionservice.New(c.VersionMetadataURL)
 	return cli, nil
 }
 
@@ -160,7 +162,7 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	meta, err := version.Metadata(ctx, o.config.VersionMetadataURL)
+	meta, err := o.versionService.GetEverestMetadata(ctx)
 	if err != nil {
 		return err
 	}
@@ -342,10 +344,7 @@ func (o *Install) provisionEverestOperator(ctx context.Context, recVer *version.
 		v = recVer.EverestOperator.String()
 	}
 
-	ch := everestOperatorChannel
-	if version.EverestChannelOverride != "" {
-		ch = version.EverestChannelOverride
-	}
+	ch := version.CatalogChannel()
 	if err := o.installOperator(ctx, ch, common.EverestOperatorName, common.SystemNamespace, v)(); err != nil {
 		return err
 	}

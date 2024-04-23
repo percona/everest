@@ -50,6 +50,8 @@ type EverestConfig struct {
 	DisableTelemetry bool `default:"false" envconfig:"DISABLE_TELEMETRY"`
 	// APIRequestsRateLimit allowed amount of API requests per second
 	APIRequestsRateLimit int `default:"100" envconfig:"API_REQUESTS_RATE_LIMIT"`
+	// VersionServiceURL contains the URL of the version service.
+	VersionServiceURL string `default:"https://check.percona.com" envconfig:"VERSION_SERVICE_URL"`
 }
 
 // ParseConfig parses env vars and fills EverestConfig.

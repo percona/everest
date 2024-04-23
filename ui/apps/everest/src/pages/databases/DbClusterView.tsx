@@ -42,7 +42,7 @@ import { Messages } from './dbClusterView.messages';
 import { DbClusterTableElement } from './dbClusterView.types';
 import { DbTypeIconProvider } from './dbTypeIconProvider/DbTypeIconProvider';
 import { ExpandedRow } from './expandedRow/ExpandedRow';
-import { ConfirmFormDialog } from '../../components/confirm-form-dialog';
+import { ConfirmFormDialog } from 'components/confirm-form-dialog';
 import { LastBackup } from './lastBackup/LastBackup';
 
 export const DbClusterView = () => {

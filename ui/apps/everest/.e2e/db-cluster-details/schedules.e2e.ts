@@ -33,7 +33,7 @@ test.describe.serial('Schedules List', async () => {
       dbType: 'mysql',
       numberOfNodes: '1',
       backup: {
-        enabled: true,
+        enabled: false,
         schedules: [],
       },
     });
@@ -172,9 +172,8 @@ test.describe.serial('Schedules List', async () => {
 
     const scheduleForDeleteBtn = await page
       .getByText('Every hour at minute 0-')
-      .getByRole('button');
+      .getByTestId('delete-schedule-button');
     await scheduleForDeleteBtn.click();
-    await (await page.getByRole('menuitem', { name: 'Delete' })).click();
     await (await page.getByTestId('confirm-dialog-delete')).click();
     expect(page.getByText('1 schedule')).toBeTruthy();
   });
@@ -187,10 +186,9 @@ test.describe.serial('Schedules List', async () => {
 
     const scheduleForEditBtn = await page
       .getByTestId('schedule-0 0 1 * *')
-      .getByRole('button');
+      .getByTestId('edit-schedule-button');
 
     await scheduleForEditBtn.click();
-    await (await page.getByRole('menuitem', { name: 'Edit' })).click();
 
     expect(page.getByTestId('text-input-schedule-name')).not.toBeEmpty();
     expect(page.getByTestId('text-input-schedule-name')).toHaveValue(
