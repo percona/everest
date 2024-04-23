@@ -9,7 +9,7 @@ import { BackupStatus } from 'shared-types/backups.types';
 export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
   const { data: backups = [] } = useDbBackups(dbName!, namespace, {
     enabled: !!dbName,
-    refetchInterval: 5 * 1000,
+    refetchInterval: 10 * 1000,
   });
 
   const { data: pitrData } = useDbClusterPitr(dbName, namespace);
