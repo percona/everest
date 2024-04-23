@@ -5,7 +5,7 @@ import { MRT_ColumnDef } from 'material-react-table';
 import { format } from 'date-fns';
 import { Table } from '@percona/ui-lib';
 import { DATE_FORMAT } from 'consts';
-import { StatusField } from 'components/status-field/status-field';
+import StatusField from 'components/status-field/status-field';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import { useDbClusterPitr } from 'hooks/api/backups/useBackups';
 import {
