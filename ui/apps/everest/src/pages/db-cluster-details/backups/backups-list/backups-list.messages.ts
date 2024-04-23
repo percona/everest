@@ -25,4 +25,6 @@ export const Messages = {
   restoreToNewDb: 'Create new DB',
   exceededScheduleBackupsNumber:
     'Maximum limit of schedules for PostgreSQL reached.',
+  deleteAlertMessage:
+    'This action will permanently destroy your backup and you will not be able to recover it.',
 };

@@ -24,7 +24,7 @@ import { SubmitHandler } from 'react-hook-form';
 import { TextInput } from '@percona/ui-lib';
 import { kebabize } from '@percona/utils';
 import { confirmDialogDefaultValues } from './confirm-dialog-consts';
-import { IrreversibleAction } from './irreversible-action';
+import { IrreversibleAction } from '../irreversible-action';
 import { DialogContent } from '@mui/material';
 import { ReactNode } from 'react';
 import DeleteDataCheckbox from 'components/delete-data-checkbox/delete-data-checkbox';
@@ -41,6 +41,9 @@ interface ConfirmFormDialogProps<T extends ConfirmDialogType>
   cancelMessage?: string;
   submitMessage?: string;
   dialogContent?: ReactNode;
+  confirmationInput?: boolean;
+  alertTitle?: string;
+  alertMessage: string;
 }
 export const ConfirmFormDialog = ({
   inputLabel,
@@ -48,18 +51,22 @@ export const ConfirmFormDialog = ({
   handleConfirm,
   cancelMessage = 'Cancel',
   submitMessage = 'Delete',
+  confirmationInput = true,
   selectedId,
   dialogContent,
   submitting,
+  alertTitle = 'Irreversible action',
+  alertMessage = '',
   ...props
 }: ConfirmFormDialogProps<ConfirmDialogType>) => {
   const onSubmit: SubmitHandler<ConfirmDialogType> = (data) => {
     handleConfirm(data);
   };
+
   return (
     <FormDialog
       onSubmit={onSubmit}
-      schema={confirmFormDialogSchema(selectedId)}
+      schema={confirmFormDialogSchema(selectedId, confirmationInput)}
       defaultValues={confirmDialogDefaultValues}
       dataTestId={selectedId && kebabize(selectedId)}
       submitMessage={submitMessage}
@@ -67,16 +74,18 @@ export const ConfirmFormDialog = ({
       submitting={submitting}
       {...props}
     >
-      <IrreversibleAction />
+      <IrreversibleAction alertTitle={alertTitle} alertMessage={alertMessage} />
       <DialogContent sx={{ px: 1 }}>{dialogContent}</DialogContent>
-      <TextInput
-        name={ConfirmFormDialogFields.confirmInput}
-        label={inputLabel}
-        labelProps={{ sx: { mt: 0 } }}
-        textFieldProps={{
-          placeholder: inputPlaceholder,
-        }}
-      />
+      {confirmationInput && (
+        <TextInput
+          name={ConfirmFormDialogFields.confirmInput}
+          label={inputLabel}
+          labelProps={{ sx: { mt: 0 } }}
+          textFieldProps={{
+            placeholder: inputPlaceholder,
+          }}
+        />
+      )}
       <DeleteDataCheckbox formControlLabelProps={{ sx: { mt: 2, pl: 1 } }} />
     </FormDialog>
   );

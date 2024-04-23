@@ -199,6 +199,7 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
           handleConfirm={({ cleanupBackupStorage }) =>
             handleDelete(cleanupBackupStorage)
           }
+          alertMessage={Messages.deleteModal.alertMessage}
           dialogContent={Messages.deleteModal.content(dbCluster.metadata.name)}
         />
       )}
