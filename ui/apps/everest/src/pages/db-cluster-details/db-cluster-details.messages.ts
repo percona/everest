@@ -19,6 +19,7 @@ export const Messages = {
     cancel: 'Cancel',
   },
   backups: 'Backups',
+  restores: 'Restores',
   overview: 'Overview',
   dbActions: 'Actions',
   restoringDb:
