@@ -55,7 +55,6 @@ export const Namespaces = () => {
         data={namespacesData}
         muiTableBodyRowProps={({ row }) => ({
           onClick: () => {
-            console.log(row.original.name);
             navigate(`/settings/namespaces/${row.original.name}`);
           },
           sx: {
