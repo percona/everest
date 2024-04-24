@@ -54,12 +54,12 @@ func (e *EverestServer) shouldAllowRequestDuringEngineUpgrade(c echo.Context) (b
 		return true, nil
 	}
 
+	// Check if there's an engine in this namespace that is upgrading the operator?
 	engines, err := e.kubeClient.ListDatabaseEngines(c.Request().Context(), namespace)
 	if err != nil {
 		e.l.Error(err)
 		return false, err
 	}
-
 	upgrading := slices.ContainsFunc(engines.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
 		return engine.Status.State == everestv1alpha1.DBEngineStateUpgrading
 	})

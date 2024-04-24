@@ -102,7 +102,6 @@ func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, namespace
 			Message: pointer.ToString("Could not get DatabaseClusterRestore from the request body"),
 		})
 	}
-
 	if err := validateMetadata(restore.Metadata); err != nil {
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}

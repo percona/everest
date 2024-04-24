@@ -113,6 +113,7 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 	if err := validateDatabaseClusterOnUpdate(dbc, oldDB); err != nil {
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
+
 	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, name)
 }
 

@@ -66,7 +66,6 @@ func (e *EverestServer) CreateDatabaseClusterBackup(ctx echo.Context, namespace 
 			Message: pointer.ToString("Could not get DatabaseClusterBackup from the request body"),
 		})
 	}
-
 	// TODO: Improve returns status code in EVEREST-616
 	if err := e.validateDatabaseClusterBackup(ctx.Request().Context(), namespace, dbb); err != nil {
 		e.l.Error(err)
