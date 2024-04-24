@@ -32,25 +32,25 @@ func (e *EverestServer) shouldAllowRequestDuringEngineUpgrade(c echo.Context) (b
 		return true, nil
 	}
 
-	// List of subpaths that should be blocked when upgrading an operator.
-	targetPaths := []string{
+	// List of resources that should not be modified during an upgrade.
+	targetResources := []string{
 		"database-clusters",
 		"database-engines",
 		"database-cluster-restores",
 		"database-cluster-backups",
 	}
 
-	// Check if the path matches any of the target paths.
-	pathMatches := slices.ContainsFunc(targetPaths, func(targetPath string) bool {
-		return strings.Contains(c.Request().URL.Path, targetPath)
+	// Check the request path for the target resources.
+	resourceMatch := slices.ContainsFunc(targetResources, func(targetResource string) bool {
+		return strings.Contains(c.Request().URL.Path, targetResource)
 	})
-	if !pathMatches {
+	if !resourceMatch {
 		return true, nil
 	}
 
 	namespace := c.Param("namespace")
 	if namespace == "" {
-		// We cannot infer the namespace, so we will return.
+		// We cannot infer the namespace, so we will allow.
 		return true, nil
 	}
 
