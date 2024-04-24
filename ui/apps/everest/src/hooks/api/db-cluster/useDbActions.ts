@@ -30,7 +30,7 @@ export const useDbActions = () => {
       {
         onSuccess: (updatedObject: DbCluster) => {
           queryClient.setQueryData<GetDbClusterPayload | undefined>(
-            [DB_CLUSTERS_QUERY_KEY],
+            [DB_CLUSTERS_QUERY_KEY, updatedObject.metadata.namespace],
             (oldData) => {
               if (!oldData) {
                 return undefined;
@@ -66,7 +66,7 @@ export const useDbActions = () => {
       {
         onSuccess: (updatedObject: DbCluster) => {
           queryClient.setQueryData<GetDbClusterPayload | undefined>(
-            [DB_CLUSTERS_QUERY_KEY],
+            [DB_CLUSTERS_QUERY_KEY, updatedObject.metadata.namespace],
             (oldData) => {
               if (!oldData) {
                 return undefined;
@@ -112,7 +112,7 @@ export const useDbActions = () => {
       {
         onSuccess: (_, variables) => {
           queryClient.setQueryData<GetDbClusterPayload | undefined>(
-            [DB_CLUSTERS_QUERY_KEY],
+            [DB_CLUSTERS_QUERY_KEY, variables.namespace],
             (oldData) => {
               if (!oldData) {
                 return undefined;
