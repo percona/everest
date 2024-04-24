@@ -25,6 +25,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"go.uber.org/zap"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -101,12 +102,14 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
 	}
 
 	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
-	if err != nil {
+	if client.IgnoreNotFound(err) != nil {
 		return errors.Join(err, errors.New("could not retrieve Everest version"))
 	}
 
-	if err := u.kubeClient.DeleteEverest(ctx, common.SystemNamespace, everestVersion); err != nil {
-		return err
+	if everestVersion != nil {
+		if err := u.kubeClient.DeleteEverest(ctx, common.SystemNamespace, everestVersion); client.IgnoreNotFound(err) != nil {
+			return err
+		}
 	}
 	if err := u.deleteDBNamespaces(ctx); err != nil {
 		return err
