@@ -30,6 +30,7 @@ type KubernetesConnector interface {
 	WaitForInstallPlanCompleted(ctx context.Context, namespace, name string) error
 	// Config returns *rest.Config.
 	Config() *rest.Config
+	// WithClient sets the client connector.
 	WithClient(c client.KubeClientConnector) *Kubernetes
 	// Namespace returns the current namespace.
 	Namespace() string

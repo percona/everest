@@ -183,6 +183,7 @@ func NewEmpty(l *zap.SugaredLogger) *Kubernetes {
 	}
 }
 
+// WithClient sets the client connector.
 func (k *Kubernetes) WithClient(c client.KubeClientConnector) *Kubernetes {
 	k.client = c
 	return k

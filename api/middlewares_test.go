@@ -37,7 +37,8 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 			ctxFn: func() echo.Context {
 				return echo.New().NewContext(&http.Request{
 					Method: http.MethodGet,
-				}, nil)
+				}, nil,
+				)
 			},
 			allow: true,
 		},
@@ -49,7 +50,8 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 					URL: &url.URL{
 						Path: "/api/v1/namespaces/default/monitoring-instances",
 					},
-				}, nil)
+				}, nil,
+				)
 			},
 			allow: true,
 		},
@@ -61,7 +63,8 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 					URL: &url.URL{
 						Path: "/api/v1/database-clusters",
 					},
-				}, nil)
+				}, nil,
+				)
 			},
 			allow: true,
 		},
@@ -73,14 +76,17 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 					URL: &url.URL{
 						Path: "/api/v1/namespaces/default/database-clusters/1234",
 					},
-				}, nil)
+				}, nil,
+				)
 				ctx.SetParamNames("namespace")
 				ctx.SetParamValues("default")
 				return ctx
 			},
 			mockFn: func(m *client.MockKubeClientConnector) {
 				m.On("ListDatabaseEngines",
-					mock.Anything, "default").
+					mock.Anything,
+					"default",
+				).
 					Return(&everestv1alpha1.DatabaseEngineList{
 						Items: []everestv1alpha1.DatabaseEngine{
 							{
@@ -94,7 +100,8 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 								},
 							},
 						},
-					}, nil)
+					}, nil,
+					)
 			},
 			allow: true,
 		},
@@ -106,14 +113,16 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 					URL: &url.URL{
 						Path: "/api/v1/namespaces/default/database-clusters/1234",
 					},
-				}, nil)
+				}, nil,
+				)
 				ctx.SetParamNames("namespace")
 				ctx.SetParamValues("default")
 				return ctx
 			},
 			mockFn: func(m *client.MockKubeClientConnector) {
 				m.On("ListDatabaseEngines",
-					mock.Anything, "default").
+					mock.Anything, "default",
+				).
 					Return(&everestv1alpha1.DatabaseEngineList{
 						Items: []everestv1alpha1.DatabaseEngine{
 							{
@@ -127,7 +136,8 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 								},
 							},
 						},
-					}, nil)
+					}, nil,
+					)
 			},
 			allow: false,
 		},
