@@ -183,6 +183,11 @@ func NewEmpty(l *zap.SugaredLogger) *Kubernetes {
 	}
 }
 
+func (k *Kubernetes) WithClient(c client.KubeClientConnector) *Kubernetes {
+	k.client = c
+	return k
+}
+
 // Namespace returns the current namespace.
 func (k *Kubernetes) Namespace() string {
 	return k.namespace

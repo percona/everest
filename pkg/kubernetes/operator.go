@@ -50,12 +50,3 @@ func (k *Kubernetes) OperatorInstalledVersion(ctx context.Context, namespace, na
 
 	return goversion.NewVersion(csv.Spec.Version.FinalizeVersion())
 }
-
-// GetIsDBUpdateLocked returns true if updating the DB is locked.
-func (k *Kubernetes) GetIsDBUpdateLocked(ctx context.Context, namespace, name string) (bool, error) {
-	dbc, err := k.client.GetDatabaseCluster(ctx, namespace, name)
-	if err != nil {
-		return false, err
-	}
-	return k.client.IsOperatorUpgrading(ctx, namespace, dbc.Spec.Engine.Type)
-}

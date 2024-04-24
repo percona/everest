@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/kubernetes/client"
 )
 
 // KubernetesConnector ...
@@ -29,6 +30,7 @@ type KubernetesConnector interface {
 	WaitForInstallPlanCompleted(ctx context.Context, namespace, name string) error
 	// Config returns *rest.Config.
 	Config() *rest.Config
+	WithClient(c client.KubeClientConnector) *Kubernetes
 	// Namespace returns the current namespace.
 	Namespace() string
 	// ClusterName returns the name of the k8s cluster.
@@ -97,6 +99,4 @@ type KubernetesConnector interface {
 	UpdateClusterRoleBinding(ctx context.Context, name string, namespaces []string) error
 	// OperatorInstalledVersion returns the installed version of operator by name.
 	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
-	// GetIsDBUpdateLocked returns true if updating the DB is locked.
-	GetIsDBUpdateLocked(ctx context.Context, namespace, name string) (bool, error)
 }

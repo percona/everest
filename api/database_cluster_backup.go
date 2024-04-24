@@ -72,15 +72,6 @@ func (e *EverestServer) CreateDatabaseClusterBackup(ctx echo.Context, namespace 
 		e.l.Error(err)
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
-
-	// Check if DB update is locked?
-	if locked, err := e.kubeClient.GetIsDBUpdateLocked(ctx.Request().Context(), namespace, dbb.Spec.DbClusterName); err != nil {
-		return errors.Join(err, errors.New("cannot check DB update lock"))
-	} else if locked {
-		return ctx.JSON(http.StatusPreconditionFailed, Error{
-			Message: pointer.ToString("modifying this resource is temporarily disabled"),
-		})
-	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, "")
 }
 
