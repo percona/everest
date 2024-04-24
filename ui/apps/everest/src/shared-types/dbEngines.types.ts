@@ -66,3 +66,12 @@ export type DbEngine = {
     proxy: DbEngineTool[];
   };
 };
+
+export type OperatorUpgradePreflightPayload = {
+  currentVersion: string;
+  databases: Array<{
+    name: string;
+    message: string;
+    pendingTask: 'ready' | 'notReady' | 'restart' | 'upgradeEngine';
+  }>;
+};

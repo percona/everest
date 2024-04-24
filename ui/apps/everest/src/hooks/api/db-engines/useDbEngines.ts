@@ -13,15 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { useQuery } from '@tanstack/react-query';
+import { PerconaQueryOptions } from 'shared-types/query.types';
 import {
   DbEngine,
   DbEngineStatus,
   DbEngineType,
   EngineToolPayload,
   GetDbEnginesPayload,
+  OperatorUpgradePreflightPayload,
 } from 'shared-types/dbEngines.types';
-import { getDbEnginesFn } from 'api/dbEngineApi';
-import { PerconaQueryOptions } from 'shared-types/query.types';
+import { getDbEnginesFn, getOperatorUpgradePreflight } from 'api/dbEngineApi';
 
 const DB_TYPE_ORDER_MAP: Record<DbEngineType, number> = {
   // Lower is more important
@@ -95,5 +96,18 @@ export const useDbEngines = (
     select: dbEnginesQuerySelect,
     enabled: !!namespace,
     retry: 2,
+    ...options,
+  });
+
+export const useDbEngineUpgradePreflight = (
+  namespace: string,
+  dbEngine: DbEngineType,
+  targetVersion: string,
+  options?: PerconaQueryOptions<OperatorUpgradePreflightPayload>
+) =>
+  useQuery<OperatorUpgradePreflightPayload>({
+    queryKey: ['dbEngineUpgradePreflight', namespace, dbEngine, targetVersion],
+    queryFn: () =>
+      getOperatorUpgradePreflight(namespace, dbEngine, targetVersion),
     ...options,
   });
