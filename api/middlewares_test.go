@@ -69,7 +69,7 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 			allow: true,
 		},
 		{
-			description: "allow target path with no ongoing upgrades",
+			description: "allow target path with no lock annotation",
 			ctxFn: func() echo.Context {
 				ctx := echo.New().NewContext(&http.Request{
 					Method: http.MethodDelete,
@@ -94,10 +94,6 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 									Name:      "test-engine",
 									Namespace: "default",
 								},
-								Spec: everestv1alpha1.DatabaseEngineSpec{},
-								Status: everestv1alpha1.DatabaseEngineStatus{
-									State: everestv1alpha1.DBEngineStateInstalled,
-								},
 							},
 						},
 					}, nil,
@@ -106,7 +102,7 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 			allow: true,
 		},
 		{
-			description: "deny request on target path with ongoing upgrades",
+			description: "deny request on target path with lock annotation",
 			ctxFn: func() echo.Context {
 				ctx := echo.New().NewContext(&http.Request{
 					Method: http.MethodDelete,
@@ -129,10 +125,9 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 								ObjectMeta: metav1.ObjectMeta{
 									Name:      "test-engine",
 									Namespace: "default",
-								},
-								Spec: everestv1alpha1.DatabaseEngineSpec{},
-								Status: everestv1alpha1.DatabaseEngineStatus{
-									State: everestv1alpha1.DBEngineStateUpgrading,
+									Annotations: map[string]string{
+										everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation: "true",
+									},
 								},
 							},
 						},

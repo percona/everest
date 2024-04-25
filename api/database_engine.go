@@ -94,12 +94,21 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 		return errDBEngineUpgradeUnavailable
 	}
 
+	// Set a lock on the namespace.
+	if err := e.kubeClient.SetDatabaseEngineLock(ctx.Request().Context(), namespace, name, true); err != nil {
+		return errors.Join(errors.New("failed to lock namespace"), err)
+	}
+
 	// Validate preflight checks.
 	preflight, err := e.getOperatorUpgradePreflight(ctx.Request().Context(), req.TargetVersion, name, namespace)
 	if err != nil {
 		return err
 	}
 	if !canUpgrade(pointer.Get(preflight.Databases)) {
+		// Release the lock.
+		if err := e.kubeClient.SetDatabaseEngineLock(ctx.Request().Context(), namespace, name, false); err != nil {
+			return errors.Join(err, errors.New("failed to release upgrade lock"))
+		}
 		return ctx.JSON(http.StatusPreconditionFailed, Error{
 			Message: pointer.ToString("One or more database clusters are not ready for upgrade"),
 		})
@@ -114,6 +123,10 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 	dbEngine.SetAnnotations(annotations)
 	_, err = e.kubeClient.UpdateDatabaseEngine(ctx.Request().Context(), namespace, dbEngine)
 	if err != nil {
+		// Release the lock.
+		if lockErr := e.kubeClient.SetDatabaseEngineLock(ctx.Request().Context(), namespace, name, false); lockErr != nil {
+			err = errors.Join(err, errors.Join(lockErr, errors.New("failed to release upgrade lock")))
+		}
 		return err
 	}
 	return nil

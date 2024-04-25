@@ -36,3 +36,22 @@ func (k *Kubernetes) GetDatabaseEngine(ctx context.Context, namespace, name stri
 func (k *Kubernetes) UpdateDatabaseEngine(ctx context.Context, namespace string, engine *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
 	return k.client.UpdateDatabaseEngine(ctx, namespace, engine)
 }
+
+// SetDatabaseEngineLock sets the lock on the database engine.
+// The lock is automatically set to false once everest-operator completes its upgrade.
+func (k *Kubernetes) SetDatabaseEngineLock(ctx context.Context, namespace, name string, locked bool) error {
+	engine, err := k.client.GetDatabaseEngine(ctx, namespace, name)
+	if err != nil {
+		return err
+	}
+	annotations := engine.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	annotations[everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation] = "true"
+	if !locked {
+		delete(annotations, everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation)
+	}
+	_, err = k.client.UpdateDatabaseEngine(ctx, namespace, engine)
+	return err
+}

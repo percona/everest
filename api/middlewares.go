@@ -60,10 +60,12 @@ func (e *EverestServer) shouldAllowRequestDuringEngineUpgrade(c echo.Context) (b
 		e.l.Error(err)
 		return false, err
 	}
-	upgrading := slices.ContainsFunc(engines.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
-		return engine.Status.State == everestv1alpha1.DBEngineStateUpgrading
+	locked := slices.ContainsFunc(engines.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
+		annotations := engine.GetAnnotations()
+		_, found := annotations[everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation]
+		return found
 	})
-	return !upgrading, nil
+	return !locked, nil
 }
 
 // checkOperatorUpgradeState is a middleware that checks if the operator is upgrading,
