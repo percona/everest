@@ -51,7 +51,7 @@ export const useDBClustersForNamespaces = () => {
   const queries = namespaces.map<
     UseQueryOptions<GetDbClusterPayload, unknown, DbCluster[]>
   >((namespace) => ({
-    queryKey: [`${DB_CLUSTERS_QUERY_KEY}_${namespace}`],
+    queryKey: [DB_CLUSTERS_QUERY_KEY, namespace],
     retry: false,
     queryFn: () => getDbClustersFn(namespace),
     refetchInterval: 5 * 1000,
