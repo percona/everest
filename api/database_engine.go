@@ -91,7 +91,7 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 
 	// Check that this version is available for upgrade.
 	if u := dbEngine.Status.GetPendingUpgrade(req.TargetVersion); u == nil {
-		return err
+		return errDBEngineUpgradeUnavailable
 	}
 
 	// Validate preflight checks.
