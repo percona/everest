@@ -95,6 +95,7 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 	}
 
 	// Set a lock on the namespace.
+	// Note that this lock is released automatically by everest-operator upon the completion of the upgrade.
 	if err := e.kubeClient.SetDatabaseEngineLock(ctx.Request().Context(), namespace, name, true); err != nil {
 		return errors.Join(errors.New("failed to lock namespace"), err)
 	}
