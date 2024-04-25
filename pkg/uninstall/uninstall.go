@@ -100,14 +100,10 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
 		return err
 	}
 
-	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
-	if err != nil {
-		return errors.Join(err, errors.New("could not retrieve Everest version"))
-	}
-
-	if err := u.kubeClient.DeleteEverest(ctx, common.SystemNamespace, everestVersion); err != nil {
+	if err := u.uninstallEverest(ctx); err != nil {
 		return err
 	}
+
 	if err := u.deleteDBNamespaces(ctx); err != nil {
 		return err
 	}
@@ -407,4 +403,19 @@ func (u *Uninstall) deleteOLM(ctx context.Context) error {
 	}
 
 	return u.deleteNamespaces(ctx, []string{kubernetes.OLMNamespace})
+}
+
+func (u *Uninstall) uninstallEverest(ctx context.Context) error {
+	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return nil
+		}
+		return errors.Join(err, errors.New("could not retrieve Everest version"))
+	}
+
+	if err := u.kubeClient.DeleteEverest(ctx, common.SystemNamespace, everestVersion); client.IgnoreNotFound(err) != nil {
+		return err
+	}
+	return nil
 }
