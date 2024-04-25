@@ -126,7 +126,7 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 									Name:      "test-engine",
 									Namespace: "default",
 									Annotations: map[string]string{
-										everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation: "true",
+										everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation: everestv1alpha1.DatabaseOperatorUpgradeLockAnnotationValueTrue,
 									},
 								},
 							},

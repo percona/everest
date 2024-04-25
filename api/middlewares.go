@@ -62,8 +62,8 @@ func (e *EverestServer) shouldAllowRequestDuringEngineUpgrade(c echo.Context) (b
 	}
 	locked := slices.ContainsFunc(engines.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
 		annotations := engine.GetAnnotations()
-		_, found := annotations[everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation]
-		return found
+		val, found := annotations[everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation]
+		return found && val == everestv1alpha1.DatabaseOperatorUpgradeLockAnnotationValueTrue
 	})
 	return !locked, nil
 }
