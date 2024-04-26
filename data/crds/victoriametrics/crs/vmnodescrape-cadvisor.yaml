@@ -26,6 +26,8 @@ spec:
       targetLabel: __metrics_path__
       replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
   metricRelabelConfigs:
+  - action: labeldrop
+    regex: cloud_google_com.*
   - source_labels:
     - namespace
     - pod
