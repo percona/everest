@@ -117,7 +117,14 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 		})
 	}
 	// Start the operator upgrade process.
-	return e.startOperatorUpgradeWithRetry(ctx.Request().Context(), req.TargetVersion, namespace, name)
+	if err := e.startOperatorUpgradeWithRetry(ctx.Request().Context(), req.TargetVersion, namespace, name); err != nil {
+		// Could not start the upgrade process, unlock the engine and return.
+		if lockErr := e.kubeClient.SetDatabaseEngineLock(ctx.Request().Context(), namespace, name, false); lockErr != nil {
+			err = errors.Join(err, errors.Join(lockErr, errors.New("failed to release upgrade lock")))
+		}
+		return err
+	}
+	return nil
 }
 
 // startOperatorUpgradeWithRetry wraps the startOperatorUpgrade function with a retry mechanism.
