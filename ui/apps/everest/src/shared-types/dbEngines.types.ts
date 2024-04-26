@@ -35,6 +35,10 @@ export type EngineToolPayload = {
   status: DbEngineToolStatus;
 };
 
+export type PendingOperatorUpgrade = {
+  targetVersion: string;
+};
+
 export type GetDbEnginesPayload = {
   items: Array<{
     spec: {
@@ -48,6 +52,7 @@ export type GetDbEnginesPayload = {
         proxy: Record<string, EngineToolPayload>;
       };
       operatorVersion: string;
+      pendingOperatorUpgrades: PendingOperatorUpgrade[];
     };
   }>;
 };
@@ -65,6 +70,7 @@ export type DbEngine = {
     engine: DbEngineTool[];
     proxy: DbEngineTool[];
   };
+  pendingOperatorUpgrades: PendingOperatorUpgrade[];
 };
 
 export type OperatorUpgradePreflightPayload = {
