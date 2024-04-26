@@ -178,7 +178,7 @@ func (e *EverestServer) GetDatabaseClusterPitr(ctx echo.Context, namespace, name
 
 	latestBackup := latestSuccessfulBackup(backups.Items, databaseCluster.Spec.Engine.Type)
 
-	uploadInterval := getDefaultUploadInterval(databaseCluster.Spec.Engine.Type)
+	uploadInterval := getDefaultUploadInterval(databaseCluster.Spec.Engine.Type, databaseCluster.Spec.Backup.PITR.UploadIntervalSec)
 	backupTime := latestBackup.Status.CreatedAt.UTC()
 	latest := latestRestorableDate(time.Now(), backupTime, uploadInterval)
 
@@ -241,7 +241,10 @@ func successStatus(state everestv1alpha1.BackupState, engineType everestv1alpha1
 	return string(state) == successState
 }
 
-func getDefaultUploadInterval(engineType everestv1alpha1.EngineType) int {
+func getDefaultUploadInterval(engineType everestv1alpha1.EngineType, uploadInterval *int) int {
+	if uploadInterval != nil {
+		return *uploadInterval
+	}
 	switch engineType {
 	case everestv1alpha1.DatabaseEnginePXC:
 		// PXC default upload interval
