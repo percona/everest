@@ -63,5 +63,7 @@ func (k *Kubernetes) SetDatabaseEngineLock(ctx context.Context, namespace, name 
 		}
 		_, err = k.client.UpdateDatabaseEngine(ctx, namespace, engine)
 		return err
-	}, b)
+	},
+		b,
+	)
 }

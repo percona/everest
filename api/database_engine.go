@@ -129,7 +129,9 @@ func (e *EverestServer) startOperatorUpgradeWithRetry(ctx context.Context, targe
 	b = backoff.WithContext(b, ctx)
 	return backoff.Retry(func() error {
 		return e.startOperatorUpgrade(ctx, targetVersion, namespace, name)
-	}, b)
+	},
+		b,
+	)
 }
 
 // startOperatorUpgrade starts the operator upgrade process by adding the upgrade annotation to the database engine.
