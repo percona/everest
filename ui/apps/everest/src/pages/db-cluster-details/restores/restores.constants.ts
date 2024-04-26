@@ -21,6 +21,6 @@ export const RESTORE_STATUS_TO_BASE_STATUS: Record<
   [PSMDB_STATUS.REJECTED]: 'error',
   [PSMDB_STATUS.RUNNING]: 'pending',
   [PSMDB_STATUS.ERROR]: 'error',
-  [PSMDB_STATUS.READY]: 'pending',
+  [PSMDB_STATUS.READY]: 'success',
   [PG_STATUS.RUNNING]: 'pending',
 };
