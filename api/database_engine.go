@@ -99,10 +99,7 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 	if err != nil {
 		return err
 	}
-	notReady := slices.ContainsFunc(pointer.Get(preflight.Databases), func(db OperatorUpgradePreflightForDatabase) bool {
-		return pointer.Get(db.PendingTask) != Ready
-	})
-	if notReady {
+	if !canUpgrade(pointer.Get(preflight.Databases)) {
 		return ctx.JSON(http.StatusPreconditionFailed, Error{
 			Message: pointer.ToString("One or more database clusters are not ready for upgrade"),
 		})
@@ -186,4 +183,12 @@ func validateOperatorUpgradeVersion(currentVersion, targetVersion string) error 
 		return errors.Join(errDBEngineInvalidTargetVersion, errors.New("target version must be greater than the current version"))
 	}
 	return nil
+}
+
+func canUpgrade(dbs []OperatorUpgradePreflightForDatabase) bool {
+	// Check if there is any database that is not ready.
+	notReadyExists := slices.ContainsFunc(dbs, func(db OperatorUpgradePreflightForDatabase) bool {
+		return pointer.Get(db.PendingTask) != Ready
+	})
+	return !notReadyExists
 }
