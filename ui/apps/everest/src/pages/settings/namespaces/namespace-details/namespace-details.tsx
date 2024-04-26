@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { DbToggleCard, ToggleButtonGroupInput } from '@percona/ui-lib';
-import { dbEngineToDbType } from '@percona/utils';
+import { dbEngineToDbType, dbTypeToDbEngine } from '@percona/utils';
+import { DbType } from '@percona/types';
 import { useNavigate, useParams } from 'react-router-dom';
 import BackNavigationText from 'components/back-navigation-text';
 import { useNamespace } from 'hooks/api/namespaces';
@@ -28,13 +29,33 @@ const NamespaceDetails = () => {
   const { data: dbEngines = [] } = useDbEngines(namespaceName, {
     enabled: !!namespace,
   });
-  // const { data } = useDbEngineUpgradePreflight(namespaceName, dbEngines[0]);
 
   const methods = useForm({
     defaultValues: {
       dbType: dbEngineToDbType(dbEngines[0]?.type),
     },
   });
+
+  const selectedEngine = dbEngines.find(
+    (engine) =>
+      engine.type === dbTypeToDbEngine(methods.watch('dbType') as DbType)
+  );
+
+  console.log(selectedEngine);
+
+  const { data: preflight } = useDbEngineUpgradePreflight(
+    namespaceName,
+    selectedEngine?.name || '',
+    !!selectedEngine && selectedEngine.pendingOperatorUpgrades?.length
+      ? selectedEngine?.pendingOperatorUpgrades[0].targetVersion
+      : '',
+    {
+      enabled:
+        !!selectedEngine && !!selectedEngine.pendingOperatorUpgrades?.length,
+    }
+  );
+
+  console.log(preflight);
 
   useEffect(() => {
     if (dbEngines.length) {

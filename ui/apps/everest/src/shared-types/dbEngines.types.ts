@@ -54,6 +54,9 @@ export type GetDbEnginesPayload = {
       operatorVersion: string;
       pendingOperatorUpgrades?: PendingOperatorUpgrade[];
     };
+    metadata: {
+      name: string;
+    };
   }>;
 };
 
@@ -63,6 +66,7 @@ type DbEngineTool = {
 
 export type DbEngine = {
   type: DbEngineType;
+  name: string;
   status: DbEngineStatus;
   operatorVersion: string;
   availableVersions: {

@@ -38,7 +38,7 @@ export const dbEnginesQuerySelect = ({
     .filter(
       (item) => item.status && item.status.status === DbEngineStatus.INSTALLED
     )
-    .map(({ spec: { type }, status }) => {
+    .map(({ spec: { type }, status, metadata: { name } }) => {
       const {
         status: engineStatus,
         availableVersions,
@@ -47,6 +47,7 @@ export const dbEnginesQuerySelect = ({
       } = status!;
       const result: DbEngine = {
         type,
+        name,
         operatorVersion,
         status: engineStatus,
         availableVersions: {
@@ -103,13 +104,18 @@ export const useDbEngines = (
 
 export const useDbEngineUpgradePreflight = (
   namespace: string,
-  dbEngine: DbEngineType,
+  dbEngineName: string,
   targetVersion: string,
   options?: PerconaQueryOptions<OperatorUpgradePreflightPayload>
 ) =>
   useQuery<OperatorUpgradePreflightPayload>({
-    queryKey: ['dbEngineUpgradePreflight', namespace, dbEngine, targetVersion],
+    queryKey: [
+      'dbEngineUpgradePreflight',
+      namespace,
+      dbEngineName,
+      targetVersion,
+    ],
     queryFn: () =>
-      getOperatorUpgradePreflight(namespace, dbEngine, targetVersion),
+      getOperatorUpgradePreflight(namespace, dbEngineName, targetVersion),
     ...options,
   });

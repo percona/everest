@@ -12,7 +12,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { DbEngineType } from '@percona/types';
 import {
   GetDbEnginesPayload,
   OperatorUpgradePreflightPayload,
@@ -29,11 +28,11 @@ export const getDbEnginesFn = async (namespace: string) => {
 
 export const getOperatorUpgradePreflight = async (
   namespace: string,
-  dbEngine: DbEngineType,
+  dbEngineName: string,
   targetVersion: string
 ) => {
   const response = await api.get<OperatorUpgradePreflightPayload>(
-    `/namespaces/${namespace}/database-engines/${dbEngine}/operator-version/preflight?targetVersion=${targetVersion}`
+    `/namespaces/${namespace}/database-engines/${dbEngineName}/operator-version/preflight?targetVersion=${targetVersion}`
   );
 
   return response.data;
