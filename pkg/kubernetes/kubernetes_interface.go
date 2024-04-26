@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/kubernetes/client"
 )
 
 // KubernetesConnector ...
@@ -29,6 +30,8 @@ type KubernetesConnector interface {
 	WaitForInstallPlanCompleted(ctx context.Context, namespace, name string) error
 	// Config returns *rest.Config.
 	Config() *rest.Config
+	// WithClient sets the client connector.
+	WithClient(c client.KubeClientConnector) *Kubernetes
 	// Namespace returns the current namespace.
 	Namespace() string
 	// ClusterName returns the name of the k8s cluster.
