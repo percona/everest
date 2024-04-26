@@ -1,10 +1,10 @@
 package api
 
 import (
-	"github.com/AlekSi/pointer"
 	"testing"
 	"time"
 
+	"github.com/AlekSi/pointer"
 	"github.com/stretchr/testify/require"
 )
 
