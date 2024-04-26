@@ -82,8 +82,8 @@ github.com/bugsnag/bugsnag-go v1.5.3 h1:yeRUT3mUE13jL1tGwvoQsKdVbAsQx9AJ+fqahKve
 github.com/bugsnag/bugsnag-go v1.5.3/go.mod h1:2oa8nejYd4cQ/b0hMIopN0lCRxU0bueqREvZLWFrtK8=
 github.com/bugsnag/panicwrap v1.2.0 h1:OzrKrRvXis8qEvOkfcxNcYbOd2O7xXS2nnKMEMABFQA=
 github.com/bugsnag/panicwrap v1.2.0/go.mod h1:D/8v3kj0zr8ZAKg1AQ6crr+5VwKN5eIywRkfhyM/+dE=
-github.com/cenkalti/backoff/v4 v4.2.1 h1:y4OZtCnogmCPw98Zjyt5a6+QwPLGkiQsYW5oUqylYbM=
-github.com/cenkalti/backoff/v4 v4.2.1/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
+github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
+github.com/cenkalti/backoff/v4 v4.3.0/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cert-manager/cert-manager v1.12.4 h1:HI38vtBYTG8b2JHDF65+Dbbd09kZps6bglIAlijoj1g=
 github.com/cert-manager/cert-manager v1.12.4/go.mod h1:/RYHUvK9cxuU5dbRyhb7g6am9jCcZc8huF3AnADE+nA=
@@ -555,8 +555,8 @@ github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/9
 github.com/pelletier/go-toml v1.7.0/go.mod h1:vwGMzjaWMwyfHwgIBhI2YUM4fB6nL6lVAvS1LBMMhTE=
 github.com/pelletier/go-toml/v2 v2.1.0 h1:FnwAJ4oYMvbT/34k9zzHuZNrhlz48GB3/s6at6/MHO4=
 github.com/pelletier/go-toml/v2 v2.1.0/go.mod h1:tJU2Z3ZkXwnxa4DPO899bsyIoywizdUvyaeZurnPPDc=
-github.com/percona/everest-operator v0.6.0-dev1.0.20240418100644-f63ae410b0ff h1:5TUCG/VHZdMef9TH6M6GrXPmupQ7iDMZk+eo1qxkDyg=
-github.com/percona/everest-operator v0.6.0-dev1.0.20240418100644-f63ae410b0ff/go.mod h1:TOvVDtoaChBQBZRMRQwcWs89fA6UuR9huFxxV11Ww3I=
+github.com/percona/everest-operator v0.6.0-dev1.0.20240426070203-91f4233b9320 h1:xvYCCmA450nEm0o5eYAgkYaRwN0hat8XGkgtUCHzXwI=
+github.com/percona/everest-operator v0.6.0-dev1.0.20240426070203-91f4233b9320/go.mod h1:TOvVDtoaChBQBZRMRQwcWs89fA6UuR9huFxxV11Ww3I=
 github.com/percona/percona-backup-mongodb v1.8.1-0.20230920143330-3b1c2e263901 h1:BDgsZRCjEuxl2/z4yWBqB0s8d20shuIDks7/RVdZiLs=
 github.com/percona/percona-backup-mongodb v1.8.1-0.20230920143330-3b1c2e263901/go.mod h1:fZRCMpUqkWlLVdRKqqaj001LoVP2eo6F0ZhoMPeXDng=
 github.com/percona/percona-postgresql-operator v0.0.0-20231220140959-ad5eef722609 h1:+UOK4gcHrRgqjo4smgfwT7/0apF6PhAJdQIdAV4ub/M=
