@@ -437,7 +437,7 @@ func (o *Install) runEverestWizard() error {
 	var namespaces string
 	pNamespace := &survey.Input{
 		Message: "Namespaces managed by Everest [comma separated]",
-		Default: DefaultEverestNamespace,
+		Default: o.Config.Namespaces,
 	}
 	if err := survey.AskOne(pNamespace, &namespaces); err != nil {
 		return err
