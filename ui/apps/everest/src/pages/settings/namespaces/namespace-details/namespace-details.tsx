@@ -4,10 +4,13 @@ import { dbEngineToDbType } from '@percona/utils';
 import { useNavigate, useParams } from 'react-router-dom';
 import BackNavigationText from 'components/back-navigation-text';
 import { useNamespace } from 'hooks/api/namespaces';
-import { useDbEngines } from 'hooks/api/db-engines';
+import {
+  useDbEngineUpgradePreflight,
+  useDbEngines,
+} from 'hooks/api/db-engines';
 import { NoMatch } from 'pages/404/NoMatch';
 import { FormProvider, useForm } from 'react-hook-form';
-import { Typography } from '@mui/material';
+import { Chip, Typography } from '@mui/material';
 import UpgradeHeader from './upgrade-header';
 import ClusterStatusTable from './cluster-status-table';
 import UpgradeModal from './upgrade-modal';
@@ -25,6 +28,7 @@ const NamespaceDetails = () => {
   const { data: dbEngines = [] } = useDbEngines(namespaceName, {
     enabled: !!namespace,
   });
+  // const { data } = useDbEngineUpgradePreflight(namespaceName, dbEngines[0]);
 
   const methods = useForm({
     defaultValues: {
@@ -60,17 +64,23 @@ const NamespaceDetails = () => {
             sx: { mb: 2, mt: 2, width: '40%' },
           }}
         >
-          {dbEngines.map(({ type, operatorVersion }) => (
-            <DbToggleCard
-              key={type}
-              value={dbEngineToDbType(type)}
-              lowerContent={
-                <Typography variant="body2" mt={1}>
-                  version {operatorVersion}
-                </Typography>
-              }
-            />
-          ))}
+          {dbEngines.map(
+            ({ type, operatorVersion, pendingOperatorUpgrades }) => (
+              <DbToggleCard
+                key={type}
+                value={dbEngineToDbType(type)}
+                lowerContent={
+                  pendingOperatorUpgrades?.length ? (
+                    <Chip color="error" label="Upgrade available" />
+                  ) : (
+                    <Typography variant="body2">
+                      version {operatorVersion}
+                    </Typography>
+                  )
+                }
+              />
+            )
+          )}
         </ToggleButtonGroupInput>
       </FormProvider>
       <UpgradeHeader

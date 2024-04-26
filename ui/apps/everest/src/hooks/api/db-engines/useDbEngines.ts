@@ -43,7 +43,7 @@ export const dbEnginesQuerySelect = ({
         status: engineStatus,
         availableVersions,
         operatorVersion,
-        pendingOperatorUpgrades,
+        pendingOperatorUpgrades = [],
       } = status!;
       const result: DbEngine = {
         type,

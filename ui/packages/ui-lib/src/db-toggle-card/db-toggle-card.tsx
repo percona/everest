@@ -33,7 +33,7 @@ const DbToggleCard = (props: DbToggleCardProps) => {
           <DbIcon type={value} />
           <Typography variant="body1">{humanizeDbType(value)}</Typography>
         </Box>
-        {lowerContent && <Box>{lowerContent}</Box>}
+        {lowerContent && <Box mt={1}>{lowerContent}</Box>}
       </Stack>
     </ToggleCard>
   );
