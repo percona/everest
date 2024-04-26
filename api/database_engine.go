@@ -25,6 +25,7 @@ import (
 	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/net/context"
+	"go.uber.org/zap"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	versionservice "github.com/percona/everest/pkg/version_service"
@@ -95,7 +96,7 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 	}
 
 	// Set a lock on the namespace.
-	// Note that this lock is released automatically by everest-operator upon the completion of the upgrade.
+	// This lock is released automatically by everest-operator upon the completion of the upgrade.
 	if err := e.kubeClient.SetDatabaseEngineLock(ctx.Request().Context(), namespace, name, true); err != nil {
 		return errors.Join(errors.New("failed to lock namespace"), err)
 	}
@@ -126,7 +127,12 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 	if err != nil {
 		// Release the lock.
 		if lockErr := e.kubeClient.SetDatabaseEngineLock(ctx.Request().Context(), namespace, name, false); lockErr != nil {
+<<<<<<< HEAD
 			err = errors.Join(err, errors.Join(lockErr, errors.New("failed to release upgrade lock")))
+=======
+			e.l.Warn("Failed to release lock, please release it manually", zap.Error(lockErr))
+			err = errors.Join(err, lockErr)
+>>>>>>> 43fd694 (add log message)
 		}
 		return err
 	}
