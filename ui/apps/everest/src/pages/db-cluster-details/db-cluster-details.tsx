@@ -92,7 +92,7 @@ export const DbClusterDetails = () => {
           borderBottom: 1,
           borderColor: 'divider',
           mb: 1,
-          width: 'fit-content',
+          width: 'inherit',
         }}
       >
         <Tabs
