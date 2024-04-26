@@ -1,11 +1,12 @@
-import type { Meta, StoryObj } from '@storybook/react'
-import { FormProvider, useForm } from 'react-hook-form'
-import AutoCompleteInput from './auto-complete'
+import type { Meta, StoryObj } from '@storybook/react';
+import { FormProvider, useForm } from 'react-hook-form';
+import AutoCompleteInput from './auto-complete';
 
 type CustomArgs = React.ComponentProps<typeof AutoCompleteInput> & {
   error?: boolean;
   size?: 'small' | 'medium';
   width?: string;
+  helperText?: string;
 };
 
 const meta = {
@@ -40,7 +41,11 @@ const meta = {
     return (
       <FormProvider {...methods}>
         <AutoCompleteInput
-          textFieldProps={{ error: args.error, size: args.size }}
+          textFieldProps={{
+            error: args.error,
+            size: args.size,
+            helperText: args.helperText,
+          }}
           autoCompleteProps={{ sx: { width: args.width } }}
           name={'autocomplete'}
           label={args.label}
@@ -67,5 +72,6 @@ export const Basic: Story = {
     size: 'small',
     options: ['First', 'Second', 'Third'],
     width: '200px',
+    helperText: 'Select one of the options',
   },
 };
