@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { Alert, MenuItem } from '@mui/material';
+import { Alert, MenuItem, capitalize } from '@mui/material';
 import { Delete } from '@mui/icons-material';
 import { MRT_ColumnDef } from 'material-react-table';
 import { format } from 'date-fns';
@@ -47,7 +47,7 @@ const Restores = () => {
             status={cell.getValue<PXC_STATUS | PSMDB_STATUS | PG_STATUS>()}
             statusMap={RESTORE_STATUS_TO_BASE_STATUS}
           >
-            {cell.getValue<PXC_STATUS | PSMDB_STATUS | PG_STATUS>()}
+            {capitalize(cell.getValue<PXC_STATUS | PSMDB_STATUS | PG_STATUS>())}
           </StatusField>
         ),
       },
