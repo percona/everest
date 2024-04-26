@@ -21,6 +21,7 @@ import (
 	"time"
 
 	backoff "github.com/cenkalti/backoff/v4"
+
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
