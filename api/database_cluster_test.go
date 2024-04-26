@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AlekSi/pointer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,7 +14,7 @@ func TestLatestRestorableDate(t *testing.T) {
 		uploadInterval   int
 		latestBackupTime time.Time
 		now              time.Time
-		expected         time.Time
+		expected         *time.Time
 		name             string
 	}
 
@@ -24,14 +25,14 @@ func TestLatestRestorableDate(t *testing.T) {
 			uploadInterval:   600,
 			latestBackupTime: now.Add(-300 * time.Second),
 			now:              now,
-			expected:         now.Add(-300 * time.Second),
+			expected:         nil,
 		},
 		{
 			name:             "backup 15 min ago, upload interval 10 min",
 			uploadInterval:   600,
 			latestBackupTime: now.Add(-900 * time.Second),
 			now:              now,
-			expected:         now.Add(-600 * time.Second),
+			expected:         pointer.ToTime(now.Add(-600 * time.Second)),
 		},
 	}
 
