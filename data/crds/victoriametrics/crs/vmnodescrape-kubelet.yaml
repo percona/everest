@@ -19,6 +19,8 @@ spec:
     regex: (rest_client_request_duration_seconds_bucket|rest_client_request_duration_seconds_sum|rest_client_request_duration_seconds_count)
     source_labels:
     - __name__
+  - action: labeldrop
+    regex: cloud_google_com.*
   relabelConfigs:
   - action: labelmap
     regex: __meta_kubernetes_node_label_(.+)
