@@ -20,12 +20,13 @@ import (
 	"errors"
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/AlekSi/pointer"
+	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/net/context"
-	"go.uber.org/zap"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	versionservice "github.com/percona/everest/pkg/version_service"
@@ -116,27 +117,38 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 		})
 	}
 
-	// Update annotation to start upgrade.
-	annotations := dbEngine.GetAnnotations()
-	if annotations == nil {
-		annotations = make(map[string]string)
-	}
-	annotations[everestv1alpha1.DatabaseOperatorUpgradeAnnotation] = req.TargetVersion
-	dbEngine.SetAnnotations(annotations)
-	_, err = e.kubeClient.UpdateDatabaseEngine(ctx.Request().Context(), namespace, dbEngine)
-	if err != nil {
-		// Release the lock.
+	// Update annotation and start upgrade.
+	// We wrap this logic in a retry block to reduce the chances of failures due to resource conflicts.
+	var b backoff.BackOff
+	b = backoff.NewConstantBackOff(3 * time.Second)
+	b = backoff.WithMaxRetries(b, 5)
+	b = backoff.WithContext(b, ctx.Request().Context())
+	if err := backoff.Retry(func() error {
+		return e.startOperatorUpgrade(ctx.Request().Context(), req.TargetVersion, namespace, name)
+	}, b); err != nil {
+		// Failed to start upgrade, release the lock and return error.
 		if lockErr := e.kubeClient.SetDatabaseEngineLock(ctx.Request().Context(), namespace, name, false); lockErr != nil {
-<<<<<<< HEAD
 			err = errors.Join(err, errors.Join(lockErr, errors.New("failed to release upgrade lock")))
-=======
-			e.l.Warn("Failed to release lock, please release it manually", zap.Error(lockErr))
-			err = errors.Join(err, lockErr)
->>>>>>> 43fd694 (add log message)
 		}
 		return err
 	}
 	return nil
+}
+
+func (e *EverestServer) startOperatorUpgrade(ctx context.Context, targetVersion, namespace, name string) error {
+	engine, err := e.kubeClient.GetDatabaseEngine(ctx, namespace, name)
+	if err != nil {
+		return err
+	}
+	// Update annotation to start upgrade.
+	annotations := engine.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	annotations[everestv1alpha1.DatabaseOperatorUpgradeAnnotation] = targetVersion
+	engine.SetAnnotations(annotations)
+	_, err = e.kubeClient.UpdateDatabaseEngine(ctx, namespace, engine)
+	return err
 }
 
 func (e *EverestServer) getOperatorUpgradePreflight(ctx context.Context, targetVersion, name, namespace string) (*OperatorUpgradePreflight, error) {
