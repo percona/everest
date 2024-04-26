@@ -18,6 +18,9 @@ package kubernetes
 
 import (
 	"context"
+	"time"
+
+	backoff "github.com/cenkalti/backoff/v4"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
@@ -35,4 +38,32 @@ func (k *Kubernetes) GetDatabaseEngine(ctx context.Context, namespace, name stri
 // UpdateDatabaseEngine updates the provided database engine.
 func (k *Kubernetes) UpdateDatabaseEngine(ctx context.Context, namespace string, engine *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
 	return k.client.UpdateDatabaseEngine(ctx, namespace, engine)
+}
+
+// SetDatabaseEngineLock sets the lock on the database engine.
+// The lock is automatically set to false once everest-operator completes its upgrade.
+func (k *Kubernetes) SetDatabaseEngineLock(ctx context.Context, namespace, name string, locked bool) error {
+	// We wrap this logic into a retry block to reduce the chances of conflicts.
+	var b backoff.BackOff
+	b = backoff.NewConstantBackOff(5 * time.Second)
+	b = backoff.WithMaxRetries(b, 5)
+	b = backoff.WithContext(b, ctx)
+	return backoff.Retry(func() error {
+		engine, err := k.client.GetDatabaseEngine(ctx, namespace, name)
+		if err != nil {
+			return err
+		}
+		annotations := engine.GetAnnotations()
+		if annotations == nil {
+			annotations = make(map[string]string)
+		}
+		annotations[everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation] = "true"
+		if !locked {
+			delete(annotations, everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation)
+		}
+		_, err = k.client.UpdateDatabaseEngine(ctx, namespace, engine)
+		return err
+	},
+		b,
+	)
 }
