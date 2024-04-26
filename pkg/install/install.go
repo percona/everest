@@ -43,6 +43,11 @@ import (
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
+const (
+	// DefaultEverestNamespace is the default namespace managed by everest Everest.
+	DefaultEverestNamespace = "everest"
+)
+
 // Install implements the main logic for commands.
 type Install struct {
 	l *zap.SugaredLogger
@@ -431,8 +436,8 @@ func (o *Install) runWizard() error {
 func (o *Install) runEverestWizard() error {
 	var namespaces string
 	pNamespace := &survey.Input{
-		Message: "Namespaces managed by Everest (comma separated)",
-		Default: namespaces,
+		Message: "Namespaces managed by Everest [comma separated]",
+		Default: DefaultEverestNamespace,
 	}
 	if err := survey.AskOne(pNamespace, &namespaces); err != nil {
 		return err
