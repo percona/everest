@@ -23,6 +23,7 @@ import (
 )
 
 func TestCanUpgrade(t *testing.T) {
+	t.Parallel()
 	testcases := []struct {
 		input      []OperatorUpgradePreflightForDatabase
 		canUpgrade bool
