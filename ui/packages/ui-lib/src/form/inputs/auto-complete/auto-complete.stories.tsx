@@ -46,7 +46,10 @@ const meta = {
             size: args.size,
             helperText: args.helperText,
           }}
-          autoCompleteProps={{ sx: { width: args.width } }}
+          autoCompleteProps={{
+            sx: { width: args.width },
+            defaultValue: args.options[0],
+          }}
           name={'autocomplete'}
           label={args.label}
           options={args.options}
