@@ -41,8 +41,6 @@ const NamespaceDetails = () => {
       engine.type === dbTypeToDbEngine(methods.watch('dbType') as DbType)
   );
 
-  console.log(selectedEngine);
-
   const { data: preflight } = useDbEngineUpgradePreflight(
     namespaceName,
     selectedEngine?.name || '',
@@ -54,6 +52,10 @@ const NamespaceDetails = () => {
         !!selectedEngine && !!selectedEngine.pendingOperatorUpgrades?.length,
     }
   );
+
+  const totalTasks =
+    preflight?.databases.filter((db) => db.pendingTask !== 'ready').length || 0;
+  const pendingTasks = (preflight?.databases.length || 0) - totalTasks;
 
   console.log(preflight);
 
@@ -92,7 +94,19 @@ const NamespaceDetails = () => {
                 value={dbEngineToDbType(type)}
                 lowerContent={
                   pendingOperatorUpgrades?.length ? (
-                    <Chip color="error" label="Upgrade available" />
+                    pendingTasks ? (
+                      <Chip
+                        label={`${pendingTasks}/${totalTasks} tasks pending`}
+                        color="warning"
+                        size="small"
+                      />
+                    ) : (
+                      <Chip
+                        label="Upgrade available"
+                        color="warning"
+                        size="small"
+                      />
+                    )
                   ) : (
                     <Typography variant="body2">
                       version {operatorVersion}

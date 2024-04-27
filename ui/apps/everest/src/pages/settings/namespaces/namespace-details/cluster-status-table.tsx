@@ -31,7 +31,7 @@ const ClusterStatusTable = ({
       // },
       {
         accessorKey: 'pendingTask',
-        header: 'Pending tasks',
+        header: 'Pending task',
       },
     ],
     []
