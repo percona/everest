@@ -56,6 +56,11 @@ const NamespaceDetails = () => {
   const totalTasks =
     preflight?.databases.filter((db) => db.pendingTask !== 'ready').length || 0;
   const pendingTasks = (preflight?.databases.length || 0) - totalTasks;
+  const lastTargetVersion = selectedEngine?.pendingOperatorUpgrades?.length
+    ? selectedEngine?.pendingOperatorUpgrades[
+        selectedEngine?.pendingOperatorUpgrades?.length - 1
+      ].targetVersion
+    : '';
 
   console.log(preflight);
 
@@ -133,7 +138,7 @@ const NamespaceDetails = () => {
       />
       <UpgradeModal
         // TODO get values from API
-        newVersion="5.0.0"
+        newVersion={lastTargetVersion}
         supportedVersions={['1.0.0', '2.0.0']}
         namespace={namespace}
         dbType={methods.getValues('dbType')}

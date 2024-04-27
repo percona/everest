@@ -22,13 +22,14 @@ const UpgradeModal = ({
       selectedId=""
       closeModal={onClose}
       headerMessage="Operator upgrade"
+      submitMessage="OK"
       handleConfirm={onConfirm}
     >
       <Typography variant="body1">
         Are you sure you want to upgrade {dbType} operator in namespace{' '}
         {namespace} to version {newVersion}?
       </Typography>
-      <Button
+      {/* <Button
         size="small"
         endIcon={
           showVersions ? (
@@ -41,7 +42,7 @@ const UpgradeModal = ({
       >
         See supported database versions
       </Button>
-      {showVersions && <Typography>{supportedVersions.join(';')}</Typography>}
+      {showVersions && <Typography>{supportedVersions.join(';')}</Typography>} */}
     </ConfirmDialog>
   );
 };
