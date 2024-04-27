@@ -13,44 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { Page, expect } from '@playwright/test';
-import { STORAGE_NAMES } from '../../../../constants';
+import { addFirstScheduleInDBWizard } from '../../db-wizard-utils';
 
 export const backupsStepCheck = async (page: Page) => {
   await expect(
     page.getByText(
-      'Specify how often you want to run backup jobs for your database.'
+      'Create a task that takes regular backups of this database, according to the schedule that you specify.'
     )
   ).toBeVisible();
 
-  const scheduleNameField = await page.getByTestId('text-input-schedule-name');
-  const storageLocationField = await page.getByTestId(
-    'text-input-storage-location'
-  );
-  const retentionCopiesField = await page.getByTestId(
-    'text-input-retention-copies'
-  );
-
-  expect(scheduleNameField).not.toBeEmpty();
-  expect(retentionCopiesField).not.toBeEmpty();
-
-  expect(storageLocationField).not.toBeEmpty();
-  await storageLocationField.click();
-
-  const storageOptions = page.getByRole('option');
-  const testStorage = storageOptions.filter({ hasText: STORAGE_NAMES[1] });
-  // TODO should be checked using github pipelines when all the tests will work
-  // expect(storageOptions.filter({ hasText: 'ui-dev' })).toBeVisible();
-  await testStorage.click();
-
-  await retentionCopiesField.fill('1');
-  await page.getByTestId('select-selected-time-button').click();
-  await page.getByTestId('month-option').click();
-  await page.getByTestId('select-on-day-button').click();
-  await page.getByTestId('10').click();
-  await page.getByTestId('select-hour-button').click();
-  await page.getByRole('option', { name: '5' }).click();
-  await page.getByTestId('select-minute-button').click();
-  await page.getByRole('option', { name: '05' }).click();
-  await page.getByTestId('select-am-pm-button').click();
-  await page.getByRole('option', { name: 'PM' }).click();
+  await addFirstScheduleInDBWizard(page);
 };

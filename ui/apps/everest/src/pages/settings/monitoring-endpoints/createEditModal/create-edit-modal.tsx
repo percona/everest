@@ -11,8 +11,8 @@ import {
   getEndpointSchema,
 } from './create-edit-modal.types';
 import { Messages } from '../monitoring-endpoints.messages';
-import { AutoCompleteSelectAll } from '../../../../components/auto-complete-select-all/auto-complete-select-all';
-import { useNamespaces } from '../../../../hooks/api/namespaces/useNamespaces';
+import { AutoCompleteSelectAll } from 'components/auto-complete-select-all/auto-complete-select-all';
+import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 
 export const CreateEditEndpointModal = ({
   open,

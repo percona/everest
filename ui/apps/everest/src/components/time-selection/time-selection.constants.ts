@@ -12,6 +12,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+import {
+  AmPM,
+  TimeSelectionFields,
+  TimeValue,
+  WeekDays,
+} from './time-selection.types';
+
 export const MINUTES = Array.from({ length: 60 }, (_, i) => i);
 export const DAYS_MONTH = Array.from({ length: 31 }, (_, i) => i + 1);
 export const HOURS_AM_PM = Array.from({ length: 12 }, (_, i) => i + 1);
+
+export const TIME_SELECTION_DEFAULTS = {
+  [TimeSelectionFields.selectedTime]: TimeValue.hours,
+  [TimeSelectionFields.minute]: 0,
+  [TimeSelectionFields.hour]: 12,
+  [TimeSelectionFields.amPm]: AmPM.AM,
+  [TimeSelectionFields.weekDay]: WeekDays.Mo,
+  [TimeSelectionFields.onDay]: 1,
+};

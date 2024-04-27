@@ -31,6 +31,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/percona/everest/pkg/kubernetes"
+	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
 func TestUpgrade_canUpgrade(t *testing.T) {
@@ -195,7 +196,8 @@ func TestUpgrade_canUpgrade(t *testing.T) {
 				config: &Config{
 					VersionMetadataURL: ts.URL,
 				},
-				kubeClient: k,
+				kubeClient:     k,
+				versionService: versionservice.New(ts.URL),
 			}
 			everestVersion, err := goversion.NewVersion(tt.everestVersion)
 			require.NoError(t, err)

@@ -40,14 +40,21 @@ import (
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/token"
 	"github.com/percona/everest/pkg/version"
+	versionservice "github.com/percona/everest/pkg/version_service"
+)
+
+const (
+	// DefaultEverestNamespace is the default namespace managed by everest Everest.
+	DefaultEverestNamespace = "everest"
 )
 
 // Install implements the main logic for commands.
 type Install struct {
 	l *zap.SugaredLogger
 
-	config     Config
-	kubeClient *kubernetes.Kubernetes
+	config         Config
+	kubeClient     *kubernetes.Kubernetes
+	versionService versionservice.Interface
 }
 
 const (
@@ -146,6 +153,7 @@ func NewInstall(c Config, l *zap.SugaredLogger) (*Install, error) {
 		return nil, err
 	}
 	cli.kubeClient = k
+	cli.versionService = versionservice.New(c.VersionMetadataURL)
 	return cli, nil
 }
 
@@ -159,7 +167,7 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	meta, err := version.Metadata(ctx, o.config.VersionMetadataURL)
+	meta, err := o.versionService.GetEverestMetadata(ctx)
 	if err != nil {
 		return err
 	}
@@ -428,8 +436,8 @@ func (o *Install) runWizard() error {
 func (o *Install) runEverestWizard() error {
 	var namespaces string
 	pNamespace := &survey.Input{
-		Message: "Namespaces managed by Everest (comma separated)",
-		Default: namespaces,
+		Message: "Namespaces managed by Everest [comma separated]",
+		Default: o.config.Namespaces,
 	}
 	if err := survey.AskOne(pNamespace, &namespaces); err != nil {
 		return err
