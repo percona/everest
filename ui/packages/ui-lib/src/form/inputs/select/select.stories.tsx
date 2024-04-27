@@ -21,13 +21,16 @@ const meta = {
 
   argTypes: {
     disabled: {
-      type: 'boolean',
+      options: [false, true],
+      control: { type: 'inline-radio' },
     },
     error: {
-      type: 'boolean',
+      options: [false, true],
+      control: { type: 'inline-radio' },
     },
     required: {
-      type: 'boolean',
+      options: [false, true],
+      control: { type: 'inline-radio' },
     },
     size: {
       options: ['small', 'medium'],
