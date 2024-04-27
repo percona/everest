@@ -1,7 +1,6 @@
 import { DbType } from '@percona/types';
 import type { Meta, StoryObj } from '@storybook/react';
-import DbToggleCard from "./db-toggle-card";
-
+import DbToggleCard from './db-toggle-card';
 
 const meta = {
   title: 'DbToggleCard',
