@@ -37,3 +37,18 @@ export const getOperatorUpgradePreflight = async (
 
   return response.data;
 };
+
+export const upgradeOperator = async (
+  namespace: string,
+  dbEngineName: string,
+  targetVersion: string
+) => {
+  const response = await api.put(
+    `/namespaces/${namespace}/database-engines/${dbEngineName}/operator-version/`,
+    {
+      targetVersion,
+    }
+  );
+
+  return response.data;
+};

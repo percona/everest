@@ -1,7 +1,6 @@
-import { useState } from 'react';
-import { Button, Typography } from '@mui/material';
-import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
-import KeyboardArrowUpOutlined from '@mui/icons-material/KeyboardArrowUpOutlined';
+import { Typography } from '@mui/material';
+// import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
+// import KeyboardArrowUpOutlined from '@mui/icons-material/KeyboardArrowUpOutlined';
 import { UpgradeModalProps } from './types';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 
@@ -12,9 +11,9 @@ const UpgradeModal = ({
   namespace,
   dbType,
   newVersion,
-  supportedVersions,
-}: UpgradeModalProps) => {
-  const [showVersions, setShowVersions] = useState(false);
+} // supportedVersions,
+: UpgradeModalProps) => {
+  // const [showVersions, setShowVersions] = useState(false);
 
   return (
     <ConfirmDialog

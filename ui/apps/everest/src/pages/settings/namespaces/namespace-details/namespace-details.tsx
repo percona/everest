@@ -8,6 +8,7 @@ import { useNamespace } from 'hooks/api/namespaces';
 import {
   useDbEngineUpgradePreflight,
   useDbEngines,
+  useOperatorUpgrade,
 } from 'hooks/api/db-engines';
 import { NoMatch } from 'pages/404/NoMatch';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -41,16 +42,25 @@ const NamespaceDetails = () => {
       engine.type === dbTypeToDbEngine(methods.watch('dbType') as DbType)
   );
 
+  const targetVersion =
+    !!selectedEngine && selectedEngine.pendingOperatorUpgrades?.length
+      ? selectedEngine?.pendingOperatorUpgrades[0].targetVersion
+      : '';
+
   const { data: preflight } = useDbEngineUpgradePreflight(
     namespaceName,
     selectedEngine?.name || '',
-    !!selectedEngine && selectedEngine.pendingOperatorUpgrades?.length
-      ? selectedEngine?.pendingOperatorUpgrades[0].targetVersion
-      : '',
+    targetVersion,
     {
       enabled:
         !!selectedEngine && !!selectedEngine.pendingOperatorUpgrades?.length,
     }
+  );
+
+  const { mutate: upgradeOperator } = useOperatorUpgrade(
+    namespaceName,
+    selectedEngine?.name || '',
+    targetVersion
   );
 
   const totalTasks =
@@ -62,7 +72,10 @@ const NamespaceDetails = () => {
       ].targetVersion
     : '';
 
-  console.log(preflight);
+  const performUpgrade = () => {
+    upgradeOperator();
+    setModalOpen(false);
+  };
 
   useEffect(() => {
     if (dbEngines.length) {
@@ -144,7 +157,7 @@ const NamespaceDetails = () => {
         dbType={methods.getValues('dbType')}
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onConfirm={() => {}}
+        onConfirm={performUpgrade}
       />
     </>
   );

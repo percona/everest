@@ -12,7 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import {
   DbEngine,
@@ -22,7 +22,11 @@ import {
   GetDbEnginesPayload,
   OperatorUpgradePreflightPayload,
 } from 'shared-types/dbEngines.types';
-import { getDbEnginesFn, getOperatorUpgradePreflight } from 'api/dbEngineApi';
+import {
+  getDbEnginesFn,
+  getOperatorUpgradePreflight,
+  upgradeOperator,
+} from 'api/dbEngineApi';
 
 const DB_TYPE_ORDER_MAP: Record<DbEngineType, number> = {
   // Lower is more important
@@ -118,4 +122,14 @@ export const useDbEngineUpgradePreflight = (
     queryFn: () =>
       getOperatorUpgradePreflight(namespace, dbEngineName, targetVersion),
     ...options,
+  });
+
+export const useOperatorUpgrade = (
+  namespace: string,
+  dbEngineName: string,
+  targetVersion: string
+) =>
+  useMutation({
+    mutationKey: ['operatorUpgrade', namespace, dbEngineName, targetVersion],
+    mutationFn: () => upgradeOperator(namespace, dbEngineName, targetVersion),
   });
