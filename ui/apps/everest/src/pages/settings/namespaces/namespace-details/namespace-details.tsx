@@ -82,7 +82,7 @@ const NamespaceDetails = () => {
           name={'dbType'}
           toggleButtonGroupProps={{
             fullWidth: false,
-            sx: { mb: 2, mt: 2, width: '40%' },
+            sx: { mb: 2, mt: 2, width: '50%' },
           }}
         >
           {dbEngines.map(
