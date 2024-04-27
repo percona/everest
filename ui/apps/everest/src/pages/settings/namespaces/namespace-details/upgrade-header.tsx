@@ -26,7 +26,12 @@ const UpgradeHeader = ({
       <Typography variant="body1">
         {upgradeMessage(pendingTasks, dbType)}
       </Typography>
-      <Button size="medium" variant="contained" onClick={onUpgrade}>
+      <Button
+        size="medium"
+        variant="contained"
+        onClick={onUpgrade}
+        disabled={pendingTasks}
+      >
         Upgrade Operator
       </Button>
     </Box>
