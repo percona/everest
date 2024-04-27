@@ -15,7 +15,10 @@ export const DatabasePreview = ({
   sx,
   ...stackProps
 }: DatabasePreviewProps) => {
-  const { getValues, formState: {errors} } = useFormContext<DbWizardType>();
+  const {
+    getValues,
+    formState: { errors },
+  } = useFormContext<DbWizardType>();
   const mode = useDatabasePageMode();
 
   // Under normal circumstances, useWatch should return the right values
