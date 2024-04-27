@@ -1,13 +1,17 @@
 import { BoxProps } from '@mui/material';
 import { DbType } from '@percona/types';
+import { OperatorUpgradeDb } from 'shared-types/dbEngines.types';
 
 export type UpgradeHeaderProps = {
-  status: 'no-upgrade' | 'pending-tasks' | 'upgrade-available';
+  upgradeAvailable: boolean;
+  pendingTasks: boolean;
+  dbType: DbType;
   onUpgrade: () => void;
 } & BoxProps;
 
 export type ClusterStatusTableProps = {
   namespace: string;
+  databases: OperatorUpgradeDb[];
 };
 
 export type UpgradeModalProps = {

@@ -77,11 +77,19 @@ export type DbEngine = {
   pendingOperatorUpgrades?: PendingOperatorUpgrade[];
 };
 
+export type DbUpgradePendingTask =
+  | 'ready'
+  | 'notReady'
+  | 'restart'
+  | 'upgradeEngine';
+
+export type OperatorUpgradeDb = {
+  name: string;
+  message: string;
+  pendingTask: DbUpgradePendingTask;
+};
+
 export type OperatorUpgradePreflightPayload = {
   currentVersion: string;
-  databases: Array<{
-    name: string;
-    message: string;
-    pendingTask: 'ready' | 'notReady' | 'restart' | 'upgradeEngine';
-  }>;
+  databases: OperatorUpgradeDb[];
 };

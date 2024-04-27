@@ -105,11 +105,18 @@ const NamespaceDetails = () => {
         </ToggleButtonGroupInput>
       </FormProvider>
       <UpgradeHeader
-        status="upgrade-available"
-        mt={2}
+        upgradeAvailable={!!preflight}
+        pendingTasks={
+          !!preflight?.databases.filter((db) => db.pendingTask).length
+        }
         onUpgrade={() => setModalOpen(true)}
+        dbType={methods.getValues('dbType')}
+        mt={2}
       />
-      <ClusterStatusTable namespace={namespaceName} />
+      <ClusterStatusTable
+        namespace={namespaceName}
+        databases={preflight?.databases || []}
+      />
       <UpgradeModal
         // TODO get values from API
         newVersion="5.0.0"
