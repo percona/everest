@@ -150,7 +150,9 @@ const NamespaceDetails = () => {
       <UpgradeHeader
         upgradeAvailable={!!preflight}
         pendingTasks={
-          !!preflight?.databases.filter((db) => db.pendingTask).length
+          !!preflight?.databases.filter(
+            (db) => db.pendingTask && db.pendingTask !== 'notReady'
+          ).length
         }
         onUpgrade={() => setModalOpen(true)}
         dbType={methods.getValues('dbType')}
