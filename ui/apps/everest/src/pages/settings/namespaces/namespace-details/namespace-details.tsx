@@ -151,7 +151,7 @@ const NamespaceDetails = () => {
         upgradeAvailable={!!preflight}
         pendingTasks={
           !!preflight?.databases.filter(
-            (db) => db.pendingTask && db.pendingTask !== 'notReady'
+            (db) => db.pendingTask && db.pendingTask !== 'ready'
           ).length
         }
         onUpgrade={() => setModalOpen(true)}
