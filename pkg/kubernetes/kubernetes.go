@@ -854,7 +854,7 @@ func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string
 		if !found {
 			return false, nil
 		}
-		observedRestartTs, err := time.Parse(time.RFC3339, val)
+		observedRestartTS, err := time.Parse(time.RFC3339, val)
 		if err != nil {
 			return false, err
 		}
@@ -863,7 +863,7 @@ func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string
 			deployment.Status.UnavailableReplicas == 0 &&
 			deployment.GetGeneration() == deployment.Status.ObservedGeneration &&
 			// The last restart cannot be older than now.
-			(observedRestartTs.After(now) || observedRestartTs.Equal(now))
+			(observedRestartTS.After(now) || observedRestartTS.Equal(now))
 
 		return ready, nil
 	})
