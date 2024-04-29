@@ -56,7 +56,7 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
         aria-expanded={isOpen ? 'true' : undefined}
         onClick={handleClick}
         variant="text"
-        size="large"
+        size="small"
         endIcon={<ArrowDropDownIcon />}
       >
         {ClusterDetailsMessages.dbActions}
