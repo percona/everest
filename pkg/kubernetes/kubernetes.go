@@ -98,14 +98,10 @@ const (
 	pollDuration = 300 * time.Second
 
 	deploymentRestartAnnotation = "kubectl.kubernetes.io/restartedAt"
-	csvOperatorNameKeyTmpl      = "operators.coreos.com/%s.%s"
 )
 
-var (
-	// ErrEmptyVersionTag Got an empty version tag from GitHub API.
-	ErrEmptyVersionTag       = errors.New("got an empty version tag from Github")
-	errNoEverestOperatorPods = errors.New("no instances of everest-operator are running")
-)
+// ErrEmptyVersionTag Got an empty version tag from GitHub API.
+var ErrEmptyVersionTag = errors.New("got an empty version tag from Github")
 
 // Kubernetes is a client for Kubernetes.
 type Kubernetes struct {
