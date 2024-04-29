@@ -46,6 +46,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/data"
@@ -816,7 +817,7 @@ func (k *Kubernetes) RestartEverest(ctx context.Context, name, namespace string)
 	}
 	for _, pod := range podsToRestart {
 		err = k.client.DeletePod(ctx, namespace, pod.Name)
-		if err != nil {
+		if ctrlclient.IgnoreNotFound(err) != nil {
 			return err
 		}
 	}
