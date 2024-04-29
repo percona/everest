@@ -1817,6 +1817,36 @@ func (_m *MockKubeClientConnector) UpdateBackupStorage(ctx context.Context, stor
 	return r0
 }
 
+// UpdateClusterServiceVersion provides a mock function with given fields: ctx, csv
+func (_m *MockKubeClientConnector) UpdateClusterServiceVersion(ctx context.Context, csv *operatorsv1alpha1.ClusterServiceVersion) (*operatorsv1alpha1.ClusterServiceVersion, error) {
+	ret := _m.Called(ctx, csv)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateClusterServiceVersion")
+	}
+
+	var r0 *operatorsv1alpha1.ClusterServiceVersion
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *operatorsv1alpha1.ClusterServiceVersion) (*operatorsv1alpha1.ClusterServiceVersion, error)); ok {
+		return rf(ctx, csv)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *operatorsv1alpha1.ClusterServiceVersion) *operatorsv1alpha1.ClusterServiceVersion); ok {
+		r0 = rf(ctx, csv)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*operatorsv1alpha1.ClusterServiceVersion)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *operatorsv1alpha1.ClusterServiceVersion) error); ok {
+		r1 = rf(ctx, csv)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateDatabaseClusterBackup provides a mock function with given fields: ctx, backup
 func (_m *MockKubeClientConnector) UpdateDatabaseClusterBackup(ctx context.Context, backup *v1alpha1.DatabaseClusterBackup) (*v1alpha1.DatabaseClusterBackup, error) {
 	ret := _m.Called(ctx, backup)
@@ -1870,6 +1900,36 @@ func (_m *MockKubeClientConnector) UpdateDatabaseEngine(ctx context.Context, nam
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, *v1alpha1.DatabaseEngine) error); ok {
 		r1 = rf(ctx, namespace, engine)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateDeployment provides a mock function with given fields: ctx, deployment
+func (_m *MockKubeClientConnector) UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error) {
+	ret := _m.Called(ctx, deployment)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateDeployment")
+	}
+
+	var r0 *appsv1.Deployment
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *appsv1.Deployment) (*appsv1.Deployment, error)); ok {
+		return rf(ctx, deployment)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *appsv1.Deployment) *appsv1.Deployment); ok {
+		r0 = rf(ctx, deployment)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*appsv1.Deployment)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *appsv1.Deployment) error); ok {
+		r1 = rf(ctx, deployment)
 	} else {
 		r1 = ret.Error(1)
 	}

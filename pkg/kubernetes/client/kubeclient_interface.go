@@ -105,6 +105,8 @@ type KubeClientConnector interface {
 	GetClusterServiceVersion(ctx context.Context, key types.NamespacedName) (*v1alpha1.ClusterServiceVersion, error)
 	// ListClusterServiceVersion list all CSVs for the given namespace.
 	ListClusterServiceVersion(ctx context.Context, namespace string) (*v1alpha1.ClusterServiceVersionList, error)
+	// UpdateClusterServiceVersion updates a CSV and returns the updated CSV.
+	UpdateClusterServiceVersion(ctx context.Context, csv *v1alpha1.ClusterServiceVersion) (*v1alpha1.ClusterServiceVersion, error)
 	// DeleteClusterServiceVersion deletes a CSV by namespaced name.
 	DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error
 	// DeleteFile accepts manifest file contents parses into []runtime.Object
@@ -138,6 +140,8 @@ type KubeClientConnector interface {
 	GetDeployment(ctx context.Context, name string, namespace string) (*appsv1.Deployment, error)
 	// ListDeployments returns deployment by name.
 	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
+	// UpdateDeployment updates a deployment and returns the updated object.
+	UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error)
 	// GetInstallPlan retrieves an OLM install plan by namespace and name.
 	GetInstallPlan(ctx context.Context, namespace string, name string) (*v1alpha1.InstallPlan, error)
 	// ListInstallPlans lists install plans.
