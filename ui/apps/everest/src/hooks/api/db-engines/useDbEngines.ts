@@ -12,7 +12,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  UseMutationOptions,
+  useMutation,
+  useQuery,
+} from '@tanstack/react-query';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import {
   DbEngine,
@@ -127,9 +131,11 @@ export const useDbEngineUpgradePreflight = (
 export const useOperatorUpgrade = (
   namespace: string,
   dbEngineName: string,
-  targetVersion: string
+  targetVersion: string,
+  options?: UseMutationOptions<unknown, unknown, null, unknown>
 ) =>
   useMutation({
     mutationKey: ['operatorUpgrade', namespace, dbEngineName, targetVersion],
     mutationFn: () => upgradeOperator(namespace, dbEngineName, targetVersion),
+    ...options,
   });

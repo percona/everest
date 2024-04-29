@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { DbToggleCard, ToggleButtonGroupInput } from '@percona/ui-lib';
 import { dbEngineToDbType, dbTypeToDbEngine } from '@percona/utils';
 import { DbType } from '@percona/types';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import BackNavigationText from 'components/back-navigation-text';
 import { useNamespace } from 'hooks/api/namespaces';
@@ -19,6 +20,7 @@ import UpgradeModal from './upgrade-modal';
 
 const NamespaceDetails = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const { namespace: namespaceName = '' } = useParams();
   const { data: namespace, isLoading: loadingNamespace } = useNamespace(
@@ -27,9 +29,12 @@ const NamespaceDetails = () => {
       enabled: !!namespaceName,
     }
   );
-  const { data: dbEngines = [] } = useDbEngines(namespaceName, {
-    enabled: !!namespace,
-  });
+  const { data: dbEngines = [], refetch: refetchDbEngines } = useDbEngines(
+    namespaceName,
+    {
+      enabled: !!namespace,
+    }
+  );
 
   const methods = useForm({
     defaultValues: {
@@ -47,9 +52,11 @@ const NamespaceDetails = () => {
       ? selectedEngine?.pendingOperatorUpgrades[0].targetVersion
       : '';
 
+  const dbEngineName = selectedEngine?.name || '';
+
   const { data: preflight } = useDbEngineUpgradePreflight(
     namespaceName,
-    selectedEngine?.name || '',
+    dbEngineName,
     targetVersion,
     {
       enabled:
@@ -73,8 +80,12 @@ const NamespaceDetails = () => {
     : '';
 
   const performUpgrade = () => {
-    upgradeOperator();
-    setModalOpen(false);
+    upgradeOperator(null, {
+      onSuccess: () => {
+        refetchDbEngines();
+        setModalOpen(false);
+      },
+    });
   };
 
   useEffect(() => {
