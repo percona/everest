@@ -4,17 +4,17 @@ import { FormProvider } from 'react-hook-form';
 
 import TextInput from './text';
 import { TextInputProps } from './text.types';
+import { Box } from '@mui/material';
 
 type ExpandedTextInputProps = TextInputProps & {
   readOnly?: boolean,
   type?: string, 
   maxLength?: number, 
-  value?: string,
   placeholder?: string,
   error?: boolean,
-  disabled?: boolean,
   minRows?: number,
   size?: "small" | "medium", 
+  multiline: boolean
 }
 
 const meta = {
@@ -32,13 +32,24 @@ const meta = {
       options: ['email', 'password', 'number', 'text', 'tel', 'url'],
       control: 'select'
     },
+    multiline: {
+      table: {
+        disable: true
+      }
+    },
+    error: {
+      table: {
+        disable: true
+      }
+    },
   },
   render: function Render({
+    label,
     readOnly,
     size,
-    disabled,
     placeholder,
     minRows,
+    multiline,
     type,
     maxLength,
     error,
@@ -46,41 +57,72 @@ const meta = {
   }) {
     const methods = useForm();
     if(error) {
-      methods.setError('TextField', {message: 'Please insert a valid value'});
+      methods.setError('error', {message: 'Please insert a valid value'});
     } else {
-      methods.clearErrors('TextField');
+      methods.clearErrors('error');
     }
 
     return (
       <FormProvider {...methods}>
-        <TextInput
-          {...args}
-          textFieldProps={{
-            placeholder,
-            disabled,
-            size,
-            multiline: true,
-            minRows,
-            inputProps: {
-              readOnly, 
-              maxLength
-            }
+        <Box
+          sx={{
+            '& .MuiTextField-root': { 
+              display: 'flex', 
+              m: 5
+            },
           }}
-        />
+          
+        >
+          <TextInput
+            {...args}
+            name='TextInput'
+            label={type ? 'TextInput.' + ' Type: ' + type : 'TextInput'}
+            textFieldProps={{
+              placeholder,
+              size,
+              multiline,
+              minRows,
+              type,
+              inputProps: {
+                readOnly, 
+                maxLength
+              }
+            }}
+          />
 
-        <TextInput
-          {...args}
-          textFieldProps={{
-            type,
-            placeholder,
-            disabled,
-            size,
-            inputProps: {
-              readOnly, 
-              maxLength,
-            }
-          }}
-        />
+          <TextInput
+            {...args}
+            name='disabled'
+            label={label + '. Disabled'}
+            textFieldProps={{
+              placeholder,
+              disabled: true,
+              size,
+              multiline,
+              minRows,
+              inputProps: {
+                readOnly, 
+                maxLength
+              },
+            }}
+          />
+
+          <TextInput
+            {...args}
+            name='error'
+            label={label + '. Error'}
+            textFieldProps={{
+              placeholder,
+              size,
+              multiline,
+              minRows,
+              inputProps: {
+                readOnly, 
+                maxLength
+              }
+            }}
+          />
+        </Box>
       </FormProvider>
     );
   },
@@ -89,18 +131,39 @@ const meta = {
 export default meta;
 type Story = StoryObj<Meta>;
 
-export const Basic: Story = {
+export const TextField: Story = {
+  argTypes: {
+  },
   args: {
-    name: 'TextField',
-    label: 'Label',
+    label: 'TextInput',
     placeholder: 'Placeholder',
     maxLength: 8,
     size: 'small',
-    disabled: false,
     type: 'password',
-    error: false,
+    error: true,
     readOnly: false,
     isRequired: false,
-    minRows: 3,
+    multiline: false,
+  },
+}
+
+export const TextArea: Story = {
+  argTypes: {
+    type: {
+      table: {
+        disable: true
+      }
+    },
+  },
+  args: {
+    label: 'TextArea',
+    placeholder: 'Placeholder',
+    maxLength: 8,
+    size: 'small',
+    error: true,
+    readOnly: false,
+    isRequired: false,
+    multiline: true,
+    minRows: 3
   },
 }
