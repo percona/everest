@@ -77,15 +77,18 @@ type KubernetesConnector interface {
 	GetClusterServiceVersion(ctx context.Context, key types.NamespacedName) (*olmv1alpha1.ClusterServiceVersion, error)
 	// ListClusterServiceVersion list all CSVs for the given namespace.
 	ListClusterServiceVersion(ctx context.Context, namespace string) (*olmv1alpha1.ClusterServiceVersionList, error)
+	// UpdateClusterServiceVersion updates a ClusterServiceVersion and returns the updated object.
+	UpdateClusterServiceVersion(ctx context.Context, csv *olmv1alpha1.ClusterServiceVersion) (*olmv1alpha1.ClusterServiceVersion, error)
 	// DeleteClusterServiceVersion deletes a ClusterServiceVersion.
 	DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error
 	// DeleteObject deletes an object.
 	DeleteObject(obj runtime.Object) error
 	// ProvisionMonitoring provisions PMM monitoring.
 	ProvisionMonitoring(namespace string) error
+	// RestartOperator restarts the deployment of an operator managed by OLM.
+	RestartOperator(ctx context.Context, name, namespace string) error
+	// RestartDeployment restarts the given deployment.
 	RestartDeployment(ctx context.Context, name, namespace string) error
-	// RestartEverest restarts everest pod.
-	RestartEverest(ctx context.Context, name, namespace string) error
 	// ListEngineDeploymentNames returns a string array containing found engine deployments for the Everest.
 	ListEngineDeploymentNames(ctx context.Context, namespace string) ([]string, error)
 	// ApplyObject applies object.

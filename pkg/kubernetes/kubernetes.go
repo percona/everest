@@ -25,6 +25,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -97,6 +98,7 @@ const (
 	pollDuration = 300 * time.Second
 
 	deploymentRestartAnnotation = "kubectl.kubernetes.io/restartedAt"
+	csvOperatorNameKeyTmpl      = "operators.coreos.com/%s.%s"
 )
 
 var (
@@ -744,6 +746,14 @@ func (k *Kubernetes) ListClusterServiceVersion(
 	return k.client.ListClusterServiceVersion(ctx, namespace)
 }
 
+// UpdateClusterServiceVersion updates a ClusterServiceVersion and returns the updated object.
+func (k *Kubernetes) UpdateClusterServiceVersion(
+	ctx context.Context,
+	csv *olmv1alpha1.ClusterServiceVersion,
+) (*olmv1alpha1.ClusterServiceVersion, error) {
+	return k.client.UpdateClusterServiceVersion(ctx, csv)
+}
+
 // DeleteClusterServiceVersion deletes a ClusterServiceVersion.
 func (k *Kubernetes) DeleteClusterServiceVersion(
 	ctx context.Context,
@@ -802,15 +812,77 @@ func (k *Kubernetes) victoriaMetricsCRDFiles() []string {
 	}
 }
 
-func (k *Kubernetes) RestartDeployment(ctx context.Context, name, namespace string) error {
+// RestartOperator restarts the deployment of an operator managed by OLM.
+func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string) error {
+	// Get the deployment.
 	deployment, err := k.GetDeployment(ctx, name, namespace)
 	if err != nil {
 		return err
 	}
-	deployment.Spec.Template.Annotations[deploymentRestartAnnotation] = time.Now().Format(time.RFC3339)
+	// Find the CSV which owns the deployment.
+	ownerCsvIdx := slices.IndexFunc(deployment.GetOwnerReferences(), func(owner metav1.OwnerReference) bool {
+		return owner.Kind == olmv1alpha1.ClusterServiceVersionKind
+	})
+	if ownerCsvIdx < 0 {
+		return fmt.Errorf("cannot find ClusterServiceVersion owner for deployment %s in namespace %s", name, namespace)
+	}
+	csv, err := k.client.GetClusterServiceVersion(ctx, types.NamespacedName{
+		Name:      deployment.GetOwnerReferences()[ownerCsvIdx].Name,
+		Namespace: namespace,
+	})
+	if err != nil {
+		return err
+	}
+	// Update restart annotation.
+	annotations := csv.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	now := time.Now().Format(time.RFC3339)
+	annotations[deploymentRestartAnnotation] = now
+	csv.SetAnnotations(annotations)
+	if _, err = k.client.UpdateClusterServiceVersion(ctx, csv); err != nil {
+		return err
+	}
+	// Wait for pods to be ready.
+	err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+		deployment, err := k.GetDeployment(ctx, name, namespace)
+		if err != nil {
+			return false, err
+		}
+		val, found := deployment.Spec.Template.GetAnnotations()[deploymentRestartAnnotation]
+		if !found || val != now {
+			return false, nil
+		}
+		ready := deployment.Status.ReadyReplicas == deployment.Status.Replicas &&
+			deployment.Status.Replicas == deployment.Status.UpdatedReplicas &&
+			deployment.Status.UnavailableReplicas == 0 &&
+			deployment.GetGeneration() == deployment.Status.ObservedGeneration
+
+		return ready, nil
+	})
+	return err
+}
+
+// RestartDeployment restarts the given deployment.
+func (k *Kubernetes) RestartDeployment(ctx context.Context, name, namespace string) error {
+	// Get the deployment.
+	deployment, err := k.GetDeployment(ctx, name, namespace)
+	if err != nil {
+		return err
+	}
+	// Set restart annotation.
+	annotations := deployment.Spec.Template.Annotations
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	annotations[deploymentRestartAnnotation] = time.Now().Format(time.RFC3339)
+	deployment.Spec.Template.SetAnnotations(annotations)
+	// Update deployment.
 	if _, err := k.client.UpdateDeployment(ctx, deployment); err != nil {
 		return err
 	}
+	// Wait for pods to be ready.
 	err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
 		deployment, err := k.GetDeployment(ctx, name, namespace)
 		if err != nil {
@@ -824,64 +896,6 @@ func (k *Kubernetes) RestartDeployment(ctx context.Context, name, namespace stri
 		return ready, nil
 	})
 	return err
-}
-
-// RestartEverest restarts everest pod.
-func (k *Kubernetes) RestartEverest(ctx context.Context, name, namespace string) error {
-	var podsToRestart []corev1.Pod
-	err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
-		p, err := k.getEverestPods(ctx, name, namespace)
-		if err != nil {
-			return false, err
-		}
-		podsToRestart = p
-		return true, nil
-	})
-	if err != nil {
-		return err
-	}
-	for _, pod := range podsToRestart {
-		err = k.client.DeletePod(ctx, namespace, pod.Name)
-		if err != nil {
-			return err
-		}
-	}
-
-	return wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
-		pods, err := k.getEverestPods(ctx, name, namespace)
-		if err != nil {
-			return false, err
-		}
-		podsStatuses := make(map[string]struct{})
-		for _, pod := range pods {
-			for _, restartedPod := range podsToRestart {
-				if restartedPod.UID == pod.UID {
-					return false, nil
-				}
-			}
-			if pod.Status.Phase == corev1.PodRunning && pod.Status.ContainerStatuses[0].Ready {
-				podsStatuses[string(pod.UID)] = struct{}{}
-			}
-		}
-		return len(podsStatuses) == len(pods), nil
-	})
-}
-
-func (k *Kubernetes) getEverestPods(ctx context.Context, name, namespace string) ([]corev1.Pod, error) {
-	podList, err := k.client.ListPods(ctx, namespace, metav1.ListOptions{
-		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
-			MatchLabels: map[string]string{
-				"app.kubernetes.io/name": name,
-			},
-		}),
-	})
-	if err != nil {
-		return []corev1.Pod{}, err
-	}
-	if len(podList.Items) == 0 {
-		return []corev1.Pod{}, errNoEverestOperatorPods
-	}
-	return podList.Items, nil
 }
 
 // ListEngineDeploymentNames returns a string array containing found engine deployments for the Everest.

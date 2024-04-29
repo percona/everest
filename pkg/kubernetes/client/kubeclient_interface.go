@@ -105,6 +105,8 @@ type KubeClientConnector interface {
 	GetClusterServiceVersion(ctx context.Context, key types.NamespacedName) (*v1alpha1.ClusterServiceVersion, error)
 	// ListClusterServiceVersion list all CSVs for the given namespace.
 	ListClusterServiceVersion(ctx context.Context, namespace string) (*v1alpha1.ClusterServiceVersionList, error)
+	// UpdateClusterServiceVersion updates a CSV and returns the updated CSV.
+	UpdateClusterServiceVersion(ctx context.Context, csv *v1alpha1.ClusterServiceVersion) (*v1alpha1.ClusterServiceVersion, error)
 	// DeleteClusterServiceVersion deletes a CSV by namespaced name.
 	DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error
 	// DeleteFile accepts manifest file contents parses into []runtime.Object

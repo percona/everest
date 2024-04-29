@@ -58,9 +58,8 @@ type Install struct {
 }
 
 const (
-	everestBackendServiceName = "everest"
-	vmOperatorName            = "victoriametrics-operator"
-	operatorInstallThreads    = 1
+	vmOperatorName         = "victoriametrics-operator"
+	operatorInstallThreads = 1
 
 	everestServiceAccount                   = "everest-admin"
 	everestServiceAccountRole               = "everest-admin-role"
@@ -374,10 +373,10 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		}
 	} else {
 		o.l.Info("Restarting Everest")
-		if err := o.kubeClient.RestartDeployment(ctx, common.EverestOperatorName, common.SystemNamespace); err != nil {
+		if err := o.kubeClient.RestartOperator(ctx, common.PerconaEverestOperatorDeploymentName, common.SystemNamespace); err != nil {
 			return err
 		}
-		if err := o.kubeClient.RestartDeployment(ctx, everestBackendServiceName, common.SystemNamespace); err != nil {
+		if err := o.kubeClient.RestartDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace); err != nil {
 			return err
 		}
 	}

@@ -1817,6 +1817,36 @@ func (_m *MockKubeClientConnector) UpdateBackupStorage(ctx context.Context, stor
 	return r0
 }
 
+// UpdateClusterServiceVersion provides a mock function with given fields: ctx, csv
+func (_m *MockKubeClientConnector) UpdateClusterServiceVersion(ctx context.Context, csv *operatorsv1alpha1.ClusterServiceVersion) (*operatorsv1alpha1.ClusterServiceVersion, error) {
+	ret := _m.Called(ctx, csv)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateClusterServiceVersion")
+	}
+
+	var r0 *operatorsv1alpha1.ClusterServiceVersion
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *operatorsv1alpha1.ClusterServiceVersion) (*operatorsv1alpha1.ClusterServiceVersion, error)); ok {
+		return rf(ctx, csv)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *operatorsv1alpha1.ClusterServiceVersion) *operatorsv1alpha1.ClusterServiceVersion); ok {
+		r0 = rf(ctx, csv)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*operatorsv1alpha1.ClusterServiceVersion)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *operatorsv1alpha1.ClusterServiceVersion) error); ok {
+		r1 = rf(ctx, csv)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateDatabaseClusterBackup provides a mock function with given fields: ctx, backup
 func (_m *MockKubeClientConnector) UpdateDatabaseClusterBackup(ctx context.Context, backup *v1alpha1.DatabaseClusterBackup) (*v1alpha1.DatabaseClusterBackup, error) {
 	ret := _m.Called(ctx, backup)

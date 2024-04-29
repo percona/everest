@@ -828,12 +828,12 @@ func (_m *MockKubernetesConnector) RestartDeployment(ctx context.Context, name s
 	return r0
 }
 
-// RestartEverest provides a mock function with given fields: ctx, name, namespace
-func (_m *MockKubernetesConnector) RestartEverest(ctx context.Context, name string, namespace string) error {
+// RestartOperator provides a mock function with given fields: ctx, name, namespace
+func (_m *MockKubernetesConnector) RestartOperator(ctx context.Context, name string, namespace string) error {
 	ret := _m.Called(ctx, name, namespace)
 
 	if len(ret) == 0 {
-		panic("no return value specified for RestartEverest")
+		panic("no return value specified for RestartOperator")
 	}
 
 	var r0 error
@@ -862,6 +862,36 @@ func (_m *MockKubernetesConnector) UpdateClusterRoleBinding(ctx context.Context,
 	}
 
 	return r0
+}
+
+// UpdateClusterServiceVersion provides a mock function with given fields: ctx, csv
+func (_m *MockKubernetesConnector) UpdateClusterServiceVersion(ctx context.Context, csv *operatorsv1alpha1.ClusterServiceVersion) (*operatorsv1alpha1.ClusterServiceVersion, error) {
+	ret := _m.Called(ctx, csv)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateClusterServiceVersion")
+	}
+
+	var r0 *operatorsv1alpha1.ClusterServiceVersion
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *operatorsv1alpha1.ClusterServiceVersion) (*operatorsv1alpha1.ClusterServiceVersion, error)); ok {
+		return rf(ctx, csv)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *operatorsv1alpha1.ClusterServiceVersion) *operatorsv1alpha1.ClusterServiceVersion); ok {
+		r0 = rf(ctx, csv)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*operatorsv1alpha1.ClusterServiceVersion)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *operatorsv1alpha1.ClusterServiceVersion) error); ok {
+		r1 = rf(ctx, csv)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // UpdateDeployment provides a mock function with given fields: ctx, deployment
