@@ -1,53 +1,42 @@
 import { useMemo } from 'react';
+import { MRT_ColumnDef } from 'material-react-table';
 import { Table } from '@percona/ui-lib';
+import {
+  DbUpgradePendingTask,
+  OperatorUpgradeDb,
+} from 'shared-types/dbEngines.types';
 import { ClusterStatusTableProps } from './types';
+
+const TASK_STATUS_MAP: Record<DbUpgradePendingTask, string> = {
+  notReady: 'Not ready',
+  ready: 'Ready',
+  restart: 'Restart',
+  upgradeEngine: 'Upgrade engine',
+};
 
 const ClusterStatusTable = ({
   namespace,
   databases,
 }: ClusterStatusTableProps) => {
-  const columns = useMemo(
+  const columns = useMemo<MRT_ColumnDef<OperatorUpgradeDb>[]>(
     () => [
-      // {
-      //   accessorKey: 'status',
-      //   header: 'Status',
-      //   Cell: ({ cell }) => (
-      //     <StatusField
-      //       dataTestId={cell?.row?.original?.databaseName}
-      //       status={cell.getValue()}
-      //       statusMap={DB_CLUSTER_STATUS_TO_BASE_STATUS}
-      //     >
-      //       {beautifyDbClusterStatus(cell.getValue())}
-      //     </StatusField>
-      //   ),
-      // },
       {
         accessorKey: 'name',
         header: 'Database name',
       },
-      // {
-      //   accessorKey: 'crdVersion',
-      //   header: 'CRD version',
-      // },
       {
         accessorKey: 'pendingTask',
         header: 'Pending task',
+        Cell: ({ cell }) =>
+          TASK_STATUS_MAP[cell.getValue<DbUpgradePendingTask>()],
+      },
+      {
+        accessorKey: 'message',
+        header: 'Message',
       },
     ],
     []
   );
-
-  // const data = useMemo(
-  //   () => [
-  //     {
-  //       status: 'ready',
-  //       name: 'Cluster A-87',
-  //       crdVersion: '4.5.0',
-  //       tasks: 'Restart Database',
-  //     },
-  //   ],
-  //   []
-  // );
 
   return (
     <>
