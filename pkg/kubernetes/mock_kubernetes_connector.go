@@ -810,6 +810,24 @@ func (_m *MockKubernetesConnector) ProvisionMonitoring(namespace string) error {
 	return r0
 }
 
+// RestartDeployment provides a mock function with given fields: ctx, name, namespace
+func (_m *MockKubernetesConnector) RestartDeployment(ctx context.Context, name string, namespace string) error {
+	ret := _m.Called(ctx, name, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RestartDeployment")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, name, namespace)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // RestartEverest provides a mock function with given fields: ctx, name, namespace
 func (_m *MockKubernetesConnector) RestartEverest(ctx context.Context, name string, namespace string) error {
 	ret := _m.Called(ctx, name, namespace)
@@ -844,6 +862,36 @@ func (_m *MockKubernetesConnector) UpdateClusterRoleBinding(ctx context.Context,
 	}
 
 	return r0
+}
+
+// UpdateDeployment provides a mock function with given fields: ctx, deployment
+func (_m *MockKubernetesConnector) UpdateDeployment(ctx context.Context, deployment *v1.Deployment) (*v1.Deployment, error) {
+	ret := _m.Called(ctx, deployment)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateDeployment")
+	}
+
+	var r0 *v1.Deployment
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Deployment) (*v1.Deployment, error)); ok {
+		return rf(ctx, deployment)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Deployment) *v1.Deployment); ok {
+		r0 = rf(ctx, deployment)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.Deployment)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *v1.Deployment) error); ok {
+		r1 = rf(ctx, deployment)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // UpgradeOperator provides a mock function with given fields: ctx, namespace, name

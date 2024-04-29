@@ -95,6 +95,8 @@ const (
 
 	pollInterval = 1 * time.Second
 	pollDuration = 300 * time.Second
+
+	deploymentRestartAnnotation = "kubectl.kubernetes.io/restartedAt"
 )
 
 var (
@@ -798,6 +800,30 @@ func (k *Kubernetes) victoriaMetricsCRDFiles() []string {
 		"crds/victoriametrics/kube-state-metrics/service.yaml",
 		"crds/victoriametrics/kube-state-metrics.yaml",
 	}
+}
+
+func (k *Kubernetes) RestartDeployment(ctx context.Context, name, namespace string) error {
+	deployment, err := k.GetDeployment(ctx, name, namespace)
+	if err != nil {
+		return err
+	}
+	deployment.Spec.Template.Annotations[deploymentRestartAnnotation] = time.Now().Format(time.RFC3339)
+	if _, err := k.client.UpdateDeployment(ctx, deployment); err != nil {
+		return err
+	}
+	err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+		deployment, err := k.GetDeployment(ctx, name, namespace)
+		if err != nil {
+			return false, err
+		}
+		ready := deployment.Status.ReadyReplicas == deployment.Status.Replicas &&
+			deployment.Status.Replicas == deployment.Status.UpdatedReplicas &&
+			deployment.Status.UnavailableReplicas == 0 &&
+			deployment.GetGeneration() == deployment.Status.ObservedGeneration
+
+		return ready, nil
+	})
+	return err
 }
 
 // RestartEverest restarts everest pod.

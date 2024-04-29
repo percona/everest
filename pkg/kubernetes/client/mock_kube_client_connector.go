@@ -1877,6 +1877,36 @@ func (_m *MockKubeClientConnector) UpdateDatabaseEngine(ctx context.Context, nam
 	return r0, r1
 }
 
+// UpdateDeployment provides a mock function with given fields: ctx, deployment
+func (_m *MockKubeClientConnector) UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error) {
+	ret := _m.Called(ctx, deployment)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateDeployment")
+	}
+
+	var r0 *appsv1.Deployment
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *appsv1.Deployment) (*appsv1.Deployment, error)); ok {
+		return rf(ctx, deployment)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *appsv1.Deployment) *appsv1.Deployment); ok {
+		r0 = rf(ctx, deployment)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*appsv1.Deployment)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *appsv1.Deployment) error); ok {
+		r1 = rf(ctx, deployment)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateInstallPlan provides a mock function with given fields: ctx, namespace, installPlan
 func (_m *MockKubeClientConnector) UpdateInstallPlan(ctx context.Context, namespace string, installPlan *operatorsv1alpha1.InstallPlan) (*operatorsv1alpha1.InstallPlan, error) {
 	ret := _m.Called(ctx, namespace, installPlan)

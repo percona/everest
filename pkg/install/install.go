@@ -374,10 +374,10 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		}
 	} else {
 		o.l.Info("Restarting Everest")
-		if err := o.kubeClient.RestartEverest(ctx, common.EverestOperatorName, common.SystemNamespace); err != nil {
+		if err := o.kubeClient.RestartDeployment(ctx, common.EverestOperatorName, common.SystemNamespace); err != nil {
 			return err
 		}
-		if err := o.kubeClient.RestartEverest(ctx, everestBackendServiceName, common.SystemNamespace); err != nil {
+		if err := o.kubeClient.RestartDeployment(ctx, everestBackendServiceName, common.SystemNamespace); err != nil {
 			return err
 		}
 	}
