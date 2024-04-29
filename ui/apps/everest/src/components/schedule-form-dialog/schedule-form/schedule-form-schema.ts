@@ -75,7 +75,11 @@ export const schema = (schedulesNamesList: string[], mode?: 'edit' | 'new') =>
       .superRefine((nrCopies, ctx) => {
         const nrCopiesInt = parseInt(nrCopies, 10);
 
-        if (isNaN(nrCopiesInt) || nrCopiesInt < 0) {
+        if (
+          isNaN(nrCopiesInt) ||
+          nrCopiesInt < 0 ||
+          nrCopiesInt > Math.pow(2, 31) - 1
+        ) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: Messages.retentionCopies.invalidNumber,
