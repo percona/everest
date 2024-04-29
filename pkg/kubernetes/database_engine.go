@@ -61,6 +61,7 @@ func (k *Kubernetes) SetDatabaseEngineLock(ctx context.Context, namespace, name 
 		if !locked {
 			delete(annotations, everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation)
 		}
+		engine.SetAnnotations(annotations)
 		_, err = k.client.UpdateDatabaseEngine(ctx, namespace, engine)
 		return err
 	},
