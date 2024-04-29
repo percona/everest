@@ -39,6 +39,11 @@ export type PendingOperatorUpgrade = {
   targetVersion: string;
 };
 
+export type OperatorUpgrade = {
+  startedAt: string;
+  targetVersion: string;
+};
+
 export type GetDbEnginesPayload = {
   items: Array<{
     spec: {
@@ -53,6 +58,7 @@ export type GetDbEnginesPayload = {
       };
       operatorVersion: string;
       pendingOperatorUpgrades?: PendingOperatorUpgrade[];
+      operatorUpgrade?: OperatorUpgrade;
     };
     metadata: {
       name: string;
@@ -75,6 +81,7 @@ export type DbEngine = {
     proxy: DbEngineTool[];
   };
   pendingOperatorUpgrades?: PendingOperatorUpgrade[];
+  operatorUpgrade?: OperatorUpgrade;
 };
 
 export type DbUpgradePendingTask =

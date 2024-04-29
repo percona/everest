@@ -3,7 +3,15 @@ import { UpgradeHeaderProps } from './types';
 import { DbType } from '@percona/types';
 import { beautifyDbTypeName } from '@percona/utils';
 
-const upgradeMessage = (pendingTasks: boolean, dbType: DbType) => {
+const upgradeMessage = (
+  pendingTasks: boolean,
+  upgrading: boolean,
+  dbType: DbType
+) => {
+  if (upgrading) {
+    return 'Upgrading the Operator...';
+  }
+
   return `A new version of the ${beautifyDbTypeName(
     dbType
   )} Operator is available. ${
@@ -14,6 +22,7 @@ const upgradeMessage = (pendingTasks: boolean, dbType: DbType) => {
 const UpgradeHeader = ({
   upgradeAvailable,
   pendingTasks,
+  upgrading,
   onUpgrade,
   dbType,
 }: UpgradeHeaderProps) => {
@@ -24,13 +33,13 @@ const UpgradeHeader = ({
   return (
     <Box display="flex" justifyContent="space-between" alignItems="center">
       <Typography variant="body1">
-        {upgradeMessage(pendingTasks, dbType)}
+        {upgradeMessage(pendingTasks, upgrading, dbType)}
       </Typography>
       <Button
         size="medium"
         variant="contained"
         onClick={onUpgrade}
-        disabled={pendingTasks}
+        disabled={pendingTasks || upgrading}
       >
         Upgrade Operator
       </Button>

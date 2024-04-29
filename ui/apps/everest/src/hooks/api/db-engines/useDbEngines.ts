@@ -52,6 +52,7 @@ export const dbEnginesQuerySelect = ({
         availableVersions,
         operatorVersion,
         pendingOperatorUpgrades = [],
+        operatorUpgrade,
       } = status!;
       const result: DbEngine = {
         type,
@@ -64,6 +65,7 @@ export const dbEnginesQuerySelect = ({
           proxy: [],
         },
         pendingOperatorUpgrades,
+        operatorUpgrade,
       };
 
       ['backup', 'engine', 'proxy'].forEach(
