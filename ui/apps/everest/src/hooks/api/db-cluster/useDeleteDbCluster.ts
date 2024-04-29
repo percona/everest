@@ -19,6 +19,7 @@ import { deleteDbClusterFn } from 'api/dbClusterApi';
 type DeleteDbClusterArgType = {
   dbClusterName: string;
   namespace: string;
+  cleanupBackupStorage: boolean;
 };
 export const useDeleteDbCluster = (
   options?: UseMutationOptions<
@@ -29,7 +30,11 @@ export const useDeleteDbCluster = (
   >
 ) =>
   useMutation({
-    mutationFn: ({ dbClusterName, namespace }: DeleteDbClusterArgType) =>
-      deleteDbClusterFn(dbClusterName, namespace),
+    mutationFn: ({
+      dbClusterName,
+      namespace,
+      cleanupBackupStorage,
+    }: DeleteDbClusterArgType) =>
+      deleteDbClusterFn(dbClusterName, namespace, cleanupBackupStorage),
     ...options,
   });
