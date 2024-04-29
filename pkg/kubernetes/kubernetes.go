@@ -838,8 +838,8 @@ func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
-	now := time.Now().Format(time.RFC3339)
-	annotations[deploymentRestartAnnotation] = now
+	now := time.Now().Truncate(time.Second)
+	annotations[deploymentRestartAnnotation] = now.Format(time.RFC3339)
 	csv.SetAnnotations(annotations)
 	if _, err = k.client.UpdateClusterServiceVersion(ctx, csv); err != nil {
 		return err
@@ -851,13 +851,19 @@ func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string
 			return false, err
 		}
 		val, found := deployment.Spec.Template.GetAnnotations()[deploymentRestartAnnotation]
-		if !found || val != now {
+		if !found {
 			return false, nil
+		}
+		observedRestartTs, err := time.Parse(time.RFC3339, val)
+		if err != nil {
+			return false, err
 		}
 		ready := deployment.Status.ReadyReplicas == deployment.Status.Replicas &&
 			deployment.Status.Replicas == deployment.Status.UpdatedReplicas &&
 			deployment.Status.UnavailableReplicas == 0 &&
-			deployment.GetGeneration() == deployment.Status.ObservedGeneration
+			deployment.GetGeneration() == deployment.Status.ObservedGeneration &&
+			// The last restart cannot be older than now.
+			(observedRestartTs.After(now) || observedRestartTs.Equal(now))
 
 		return ready, nil
 	})
