@@ -38,6 +38,12 @@ type KubeClientConnector interface {
 	ListBackupStorages(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.BackupStorageList, error)
 	// DeleteBackupStorage deletes the backupStorage.
 	DeleteBackupStorage(ctx context.Context, namespace, name string) error
+	// GetConfigMap returns config map by name and namespace.
+	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
+	// CreateConfigMap creates the provided ConfigMap.
+	CreateConfigMap(ctx context.Context, configMap *corev1.ConfigMap) (*corev1.ConfigMap, error)
+	// UpdateConfigMap updates the provided ConfigMap.
+	UpdateConfigMap(ctx context.Context, configMap *corev1.ConfigMap) (*corev1.ConfigMap, error)
 	// Config returns restConfig to the pkg/kubernetes.Kubernetes client.
 	Config() *rest.Config
 	// ClusterName returns the name of the k8s cluster.
