@@ -109,6 +109,8 @@ export const useDbClusterRestores = (
         endTime: item.status.completed,
         state: item.status.state,
         type: item.spec.dataSource.pitr ? 'pitr' : 'full',
+        backupSource:
+          item.spec.dataSource.backupSource?.backupStorageName || '',
       })),
   });
 
