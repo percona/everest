@@ -22,6 +22,8 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo/v4"
 	"k8s.io/apimachinery/pkg/types"
 
 	configmapadapter "github.com/percona/everest/api/rbac/configmap-adapter"
@@ -45,4 +47,24 @@ func NewEnforcer(kubeClient *kubernetes.Kubernetes) (*casbin.Enforcer, error) {
 	adapter := configmapadapter.NewAdapter(kubeClient, types.NamespacedName{Namespace: kubeClient.Namespace(), Name: "everest-rbac"})
 
 	return casbin.NewEnforcer(model, adapter, true)
+}
+
+// UserGetter is a function that extracts the user from the JWT token.
+func UserGetter(c echo.Context) (string, error) {
+	token, ok := c.Get("user").(*jwt.Token) // by default token is stored under `user` key
+	if !ok {
+		return "", errors.New("failed to get token from context")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims) // by default claims is of type `jwt.MapClaims`
+	if !ok {
+		return "", errors.New("failed to get claims from token")
+	}
+
+	subject, err := claims.GetSubject()
+	if err != nil {
+		return "", errors.Join(err, errors.New("failed to get subject from claims"))
+	}
+
+	return strings.Split(subject, ":")[0], nil
 }
