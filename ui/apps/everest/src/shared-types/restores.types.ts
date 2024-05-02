@@ -22,9 +22,7 @@ export type GetRestorePayload = {
     spec: {
       dataSource: {
         pitr?: object;
-        backupSource?: {
-          backupStorageName: string;
-        };
+        dbClusterBackupName?: string;
       };
     };
     status: {

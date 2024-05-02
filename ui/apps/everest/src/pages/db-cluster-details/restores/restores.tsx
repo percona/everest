@@ -36,7 +36,7 @@ const Restores = () => {
     useDbClusterRestores(namespace, dbClusterName!);
   const { mutate: deleteRestore, isPending: deletingRestore } =
     useDeleteRestore(namespace);
-  console.log('restores', restores);
+
   const columns = useMemo<MRT_ColumnDef<Restore>[]>(() => {
     return [
       {
