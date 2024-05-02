@@ -10,13 +10,16 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.3.2
 	github.com/Percona-Lab/percona-version-service v0.0.0-20240311164804-ffbc02387a1b
 	github.com/aws/aws-sdk-go v1.53.10
+	github.com/casbin/casbin/v2 v2.85.0
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/getkin/kin-openapi v0.124.0
 	github.com/go-logr/zapr v1.3.0
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-version v1.6.0
 	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/labstack/echo-contrib v0.16.0
 	github.com/labstack/echo-jwt/v4 v4.2.0
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/lestrrat-go/jwx/v2 v2.0.21
@@ -55,6 +58,7 @@ require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/bshuster-repo/logrus-logstash-hook v1.0.0 // indirect
+	github.com/casbin/govaluate v1.1.1 // indirect
 	github.com/cert-manager/cert-manager v1.12.4 // indirect
 	github.com/creack/pty v1.1.18 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -166,7 +170,7 @@ require (
 	google.golang.org/genproto v0.0.0-20240221002015-b0ce06bbee7c // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240213162025-012b6fc9bca9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240221002015-b0ce06bbee7c // indirect
-	google.golang.org/grpc v1.61.1 // indirect
+	google.golang.org/grpc v1.62.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	k8s.io/klog/v2 v2.120.1 // indirect

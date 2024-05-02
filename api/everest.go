@@ -32,10 +32,12 @@ import (
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 	middleware "github.com/oapi-codegen/echo-middleware"
+	casbinmiddleware "github.com/labstack/echo-contrib/casbin"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/percona/everest/api/rbac"
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
@@ -123,6 +125,94 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 
 	// Use our validation middleware to check all requests against the OpenAPI schema.
 	apiGroup := e.echo.Group(basePath)
+<<<<<<< HEAD
+=======
+	apiGroup.Use(echojwt.WithConfig(echojwt.Config{
+		Skipper: func(c echo.Context) bool {
+			// Skip middleware if path is equal 'session'
+			if c.Request().URL.Path == basePath + "/session" {
+				return true
+			}
+			return false
+		},
+		SigningKey: []byte(e.config.SessionSecret),
+	}))
+
+	enforcer, err := rbac.NewEnforcer(e.kubeClient)
+	if err != nil {
+		return errors.Join(err, errors.New("could not create casbin enforcer"))
+	}
+
+	apiGroup.Use(casbinmiddleware.MiddlewareWithConfig(casbinmiddleware.Config{
+		Skipper: func(c echo.Context) bool {
+			// Skip middleware if path is equal 'session'
+			if c.Request().URL.Path == basePath + "/session" ||
+				c.Request().URL.Path == basePath + "/version" ||
+				c.Request().URL.Path == basePath + "/cluster-info" ||
+				c.Request().URL.Path == basePath + "/resources" ||
+				c.Request().URL.Path == basePath + "/namespaces" {
+				return true
+			}
+			return false
+		},
+		UserGetter: rbac.UserGetter,
+		EnforceHandler: func(c echo.Context, user string) (bool, error) {
+			fmt.Println()
+			fmt.Println(c.Path())
+			fmt.Println(c.Request().URL.Path)
+			fmt.Println(user)
+			pathResourceMap := map[string]string{
+				basePath + "/backup-storages": "backup-storages",
+				basePath + "/backup-storages/:name": "backup-storages",
+				basePath + "/monitoring-instances": "monitoring-instances",
+				basePath + "/monitoring-instance/:names": "monitoring-instances",
+				basePath + "/namespaces/:namespace/database-engines": "database-engines",
+				basePath + "/namespaces/:namespace/database-engines/:name": "database-engines",
+				basePath + "/namespaces/:namespace/database-clusters": "database-clusters",
+				basePath + "/namespaces/:namespace/database-clusters/:name": "database-clusters",
+				basePath + "/namespaces/:namespace/database-clusters/:name/backups": "database-clusters",
+				basePath + "/namespaces/:namespace/database-clusters/:name/credentials": "database-clusters",
+				basePath + "/namespaces/:namespace/database-clusters/:name/pitr": "database-clusters",
+				basePath + "/namespaces/:namespace/database-clusters/:name/restores": "database-clusters",
+				basePath + "/namespaces/:namespace/database-cluster-backups": "database-cluster-backups",
+				basePath + "/namespaces/:namespace/database-cluster-backups/:name": "database-cluster-backups",
+				basePath + "/namespaces/:namespace/database-cluster-restores": "database-cluster-restores",
+				basePath + "/namespaces/:namespace/database-cluster-restores/:name": "database-cluster-restores",
+			}
+			actionMethodMap := map[string]string{
+				"GET":    "read",
+				"POST":   "create",
+				"PUT":    "update",
+				"PATCH":  "update",
+				"DELETE": "delete",
+			}
+			var resource string
+			var object string
+			resource, ok := pathResourceMap[c.Path()]
+			if !ok {
+				return false, errors.New("invalid URL")
+			}
+			switch resource {
+			case "backup-storages", "monitoring-instances":
+				object = "*"
+			case "database-clusters", "database-engines":
+				namespace := c.Param("namespace")
+				name := c.Param("name")
+				object = namespace + "/" + name
+			}
+
+			action, ok := actionMethodMap[c.Request().Method]
+			if !ok {
+				return false, errors.New("invalid method")
+			}
+
+			fmt.Println(resource)
+			fmt.Println(c.Request().Method)
+			fmt.Println(object)
+			return enforcer.Enforce(user, resource, action, object)
+		},
+	}))
+>>>>>>> 0a60d48 (Enforce RBAC for certain endpoints)
 	apiGroup.Use(middleware.OapiRequestValidatorWithOptions(swagger, &middleware.Options{
 		SilenceServersWarning: true,
 	}))
