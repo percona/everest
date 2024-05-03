@@ -57,10 +57,6 @@ type ListOptions struct {
 
 // List all user accounts in the system.
 func (c *CLI) List(ctx context.Context, opts *ListOptions) error {
-	accounts, err := c.kubeClient.Accounts().List(ctx)
-	if err != nil {
-		return err
-	}
 	if opts == nil {
 		opts = &ListOptions{}
 	}
@@ -78,6 +74,10 @@ func (c *CLI) List(ctx context.Context, opts *ListOptions) error {
 		}
 		return strings.ToUpper(fmt.Sprintf(format, vals...))
 	})
+	accounts, err := c.kubeClient.Accounts().List(ctx)
+	if err != nil {
+		return err
+	}
 	for _, account := range accounts {
 		row := []any{}
 		for _, heading := range headings {
