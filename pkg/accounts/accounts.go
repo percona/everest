@@ -7,11 +7,11 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/rodaine/table"
 	"go.uber.org/zap"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/rodaine/table"
 )
 
 type CLI struct {
