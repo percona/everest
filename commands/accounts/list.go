@@ -27,49 +27,43 @@ import (
 	"github.com/percona/everest/pkg/accounts"
 )
 
-type AccountConfig struct {
-	Username       string `mapstructure:"username"`
-	Password       string `mapstructure:"password"`
-	KubeconfigPath string `mapstructure:"kubeconfig"`
-}
-
-// NewCreateCmd returns a new create command.
-func NewCreateCmd(l *zap.SugaredLogger) *cobra.Command {
+// NewListCmd returns a new list command.
+func NewListCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "create",
-		Example: "everestctl accounts create --username user1 --password $USER_PASS",
+		Use:     "list",
+		Example: "everestctl accounts list",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
-			initAccountViperFlags(cmd)
-			c := &AccountConfig{}
-			err := viper.Unmarshal(c)
+			initListViperFlags(cmd)
+			o := &accounts.ListOptions{}
+			err := viper.Unmarshal(o)
 			if err != nil {
 				os.Exit(1)
 			}
 
-			cli, err := accounts.NewCLI(c.KubeconfigPath, l)
+			cli, err := accounts.NewCLI(o.KubeconfigPath, l)
 			if err != nil {
 				l.Error(err)
 				os.Exit(1)
 			}
 
-			if err := cli.Create(context.Background(), c.Username, c.Password); err != nil {
+			if err := cli.List(context.Background(), o); err != nil {
 				l.Error(err)
 				os.Exit(1)
 			}
 		},
 	}
-	initAccountFlags(cmd)
+	initListFlags(cmd)
 	return cmd
 }
 
-func initAccountFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("username", "u", "", "Username of the account")
-	cmd.Flags().StringP("password", "p", "", "Password of the account")
+func initListFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
+	cmd.Flags().Bool("no-headers", false, "If set, hide table headers")
+	cmd.Flags().StringSlice("columns", nil, "Comma-separated list of column names to display")
 }
 
-func initAccountViperFlags(cmd *cobra.Command) {
-	viper.BindPFlag("username", cmd.Flags().Lookup("username"))
-	viper.BindPFlag("password", cmd.Flags().Lookup("password"))
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
+func initListViperFlags(cmd *cobra.Command) {
+	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))
+	viper.BindPFlag("no-headers", cmd.Flags().Lookup("no-headers"))
+	viper.BindPFlag("columns", cmd.Flags().Lookup("columns"))
 }

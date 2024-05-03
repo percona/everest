@@ -3,11 +3,14 @@ package accounts
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
+	"strings"
 
 	"go.uber.org/zap"
 
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/rodaine/table"
 )
 
 type CLI struct {
@@ -35,5 +38,60 @@ func NewCLI(kubeConfigPath string, l *zap.SugaredLogger) (*CLI, error) {
 
 // Create a new user account.
 func (c *CLI) Create(ctx context.Context, username, password string) error {
-	return c.kubeClient.Accounts().Create(ctx, username, password)
+	if err := c.kubeClient.Accounts().Create(ctx, username, password); err != nil {
+		return err
+	}
+	c.l.Infof("User '%s' has been added", username)
+	return nil
+}
+
+type ListOptions struct {
+	KubeconfigPath string   `mapstructure:"kubeconfig"`
+	NoHeaders      bool     `mapstructure:"no-headers"`
+	Columns        []string `mapstructure:"columns"`
+}
+
+//	tbl.WithHeaderFormatter(func(format string, vals ...interface{}) string {
+//	  return strings.ToUpper(fmt.Sprintf(format, vals...))
+//	})
+
+// List all user accounts in the system.
+func (c *CLI) List(ctx context.Context, opts *ListOptions) error {
+	accounts, err := c.kubeClient.Accounts().List(ctx)
+	if err != nil {
+		return err
+	}
+	if opts == nil {
+		opts = &ListOptions{}
+	}
+	headings := []interface{}{"user", "capabilities"}
+	if len(opts.Columns) > 0 {
+		headings = []interface{}{}
+		for _, col := range opts.Columns {
+			headings = append(headings, col)
+		}
+	}
+	tbl := table.New(headings...)
+	tbl.WithHeaderFormatter(func(format string, vals ...interface{}) string {
+		if opts.NoHeaders {
+			return ""
+		}
+		return strings.ToUpper(fmt.Sprintf(format, vals...))
+	})
+	for _, account := range accounts {
+		row := []any{}
+		for _, heading := range headings {
+			switch heading {
+			case "user":
+				row = append(row, account.ID)
+			case "capabilities":
+				row = append(row, account.Capabilities)
+			case "enabled":
+				row = append(row, account.Enabled)
+			}
+		}
+		tbl.AddRow(row...)
+	}
+	tbl.Print()
+	return nil
 }

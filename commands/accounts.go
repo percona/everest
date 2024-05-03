@@ -29,6 +29,7 @@ func newAccountsCmd(l *zap.SugaredLogger) *cobra.Command {
 	}
 
 	cmd.AddCommand(accounts.NewCreateCmd(l))
+	cmd.AddCommand(accounts.NewListCmd(l))
 
 	return cmd
 }
