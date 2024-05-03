@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/percona/everest/pkg/kubernetes"
+	accountsapi "github.com/percona/everest/pkg/kubernetes/client/accounts"
 )
 
 type CLI struct {
@@ -101,30 +102,41 @@ type ListOptions struct {
 	Columns        []string `mapstructure:"columns"`
 }
 
+const (
+	columnUser         = "user"
+	columnCapabilities = "capabilities"
+	columnEnabled      = "enabled"
+)
+
 // List all user accounts in the system.
 func (c *CLI) List(ctx context.Context, opts *ListOptions) error {
 	if opts == nil {
 		opts = &ListOptions{}
 	}
-	headings := []interface{}{"user", "capabilities"}
+	// Prepare table headings.
+	headings := []interface{}{columnUser, columnCapabilities, columnEnabled}
 	if len(opts.Columns) > 0 {
 		headings = []interface{}{}
 		for _, col := range opts.Columns {
 			headings = append(headings, col)
 		}
 	}
+	// Prepare table header.
 	tbl := table.New(headings...)
 	tbl.WithHeaderFormatter(func(format string, vals ...interface{}) string {
-		if opts.NoHeaders {
+		if opts.NoHeaders { // Skip printing headers.
 			return ""
 		}
+		// Otherwise print in all caps.
 		return strings.ToUpper(fmt.Sprintf(format, vals...))
 	})
 	accounts, err := c.kubeClient.Accounts().List(ctx)
 	if err != nil {
 		return err
 	}
-	for _, account := range accounts {
+
+	// Return a table row for the given account.
+	row := func(account *accountsapi.Account) []any {
 		row := []any{}
 		for _, heading := range headings {
 			switch heading {
@@ -136,7 +148,10 @@ func (c *CLI) List(ctx context.Context, opts *ListOptions) error {
 				row = append(row, account.Enabled)
 			}
 		}
-		tbl.AddRow(row...)
+		return row
+	}
+	for _, account := range accounts {
+		tbl.AddRow(row(&account)...)
 	}
 	tbl.Print()
 	return nil
