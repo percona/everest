@@ -52,6 +52,7 @@ export const ScheduleFormWrapper = () => {
   return (
     <ScheduleForm
       showTypeRadio={dbEngine === DbEngineType.PSMDB}
+      hideRetentionCopies={dbEngine === DbEngineType.POSTGRESQL}
       allowScheduleSelection={mode === 'edit'}
       disableStorageSelection={!!activeStorage}
       autoFillLocation={mode === 'new'}
