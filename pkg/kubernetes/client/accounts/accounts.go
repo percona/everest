@@ -20,6 +20,8 @@ import (
 	"context"
 	"crypto/sha256"
 	"errors"
+	"slices"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/pbkdf2"
@@ -141,7 +143,7 @@ func (a *accounts) Create(ctx context.Context, username, password string) error 
 			PasswordMTime: time.Now().Format(time.RFC3339),
 		},
 	}
-	return a.setAccounts(ctx, []Account{acc})
+	return a.setAccounts(ctx, []Account{acc}, true)
 }
 
 func (a *accounts) salt() ([]byte, error) {
@@ -160,7 +162,7 @@ func (a *accounts) Delete(ctx context.Context, username string) error {
 		return err
 	}
 	if _, found := users[username]; !found {
-		return errors.New("user does not exist")
+		return ErrAccountNotFound
 	}
 	// Remove user from the list.
 	delete(users, username)
@@ -170,7 +172,7 @@ func (a *accounts) Delete(ctx context.Context, username string) error {
 	}
 	delete(passwords, username)
 	acc := mergeUserPassToAccounts(users, passwords)
-	return a.setAccounts(ctx, acc)
+	return a.setAccounts(ctx, acc, false)
 }
 
 // Update an existing user account specified by username.
@@ -197,7 +199,7 @@ func (a *accounts) Update(ctx context.Context, username, password string) error 
 		PasswordHash:  string(hash),
 		PasswordMTime: time.Now().Format(time.RFC3339),
 	}
-	return nil
+	return a.setAccounts(ctx, mergeUserPassToAccounts(users, passwords), true)
 }
 
 func mergeUserPassToAccounts(users map[string]User, passwords map[string]Password) []Account {
@@ -213,26 +215,45 @@ func mergeUserPassToAccounts(users map[string]User, passwords map[string]Passwor
 			Password: pass,
 		})
 	}
+	slices.SortFunc(accounts, func(a, b Account) int {
+		return strings.Compare(a.ID, b.ID)
+	})
 	return accounts
 }
 
+// Given a list of accounts, update the ConfigMap and Secret.
+// If patch is true, existing all existing accounts are preserved.
+// If patch is false, accounts are replaced with the new list.
 func (a *accounts) setAccounts(
 	ctx context.Context,
 	accounts []Account,
+	patch bool,
 ) error {
-	// Get existing users and passwords.
-	users, err := a.listAllUsers(ctx)
-	if err != nil {
-		return err
-	}
-	passwords, err := a.listAllPasswords(ctx)
-	if err != nil {
-		return err
-	}
-	// Modify accounts.
-	for _, acc := range accounts {
-		users[acc.ID] = acc.User
-		passwords[acc.ID] = acc.Password
+	var (
+		err       error
+		users     map[string]User     = make(map[string]User)
+		passwords map[string]Password = make(map[string]Password)
+	)
+	if patch {
+		// Get existing users and passwords.
+		users, err = a.listAllUsers(ctx)
+		if err != nil {
+			return err
+		}
+		passwords, err = a.listAllPasswords(ctx)
+		if err != nil {
+			return err
+		}
+		// Modify accounts.
+		for _, acc := range accounts {
+			users[acc.ID] = acc.User
+			passwords[acc.ID] = acc.Password
+		}
+	} else {
+		for _, acc := range accounts {
+			users[acc.ID] = acc.User
+			passwords[acc.ID] = acc.Password
+		}
 	}
 	// Update accounts ConfigMap.
 	userB, err := yaml.Marshal(users)
@@ -278,7 +299,7 @@ func (a *accounts) listAllUsers(ctx context.Context) (map[string]User, error) {
 	}
 	usersYaml, found := cm.BinaryData[usersFile]
 	if !found {
-		return nil, ErrAccountNotFound
+		return make(map[string]User), nil
 	}
 	var users map[string]User
 	if err := yaml.Unmarshal(usersYaml, &users); err != nil {
@@ -294,7 +315,7 @@ func (a *accounts) listAllPasswords(ctx context.Context) (map[string]Password, e
 	}
 	passwordsYaml, found := secret.Data[passwordFile]
 	if !found {
-		return nil, ErrAccountNotFound
+		return make(map[string]Password), nil
 	}
 	var passwords map[string]Password
 	if err := yaml.Unmarshal(passwordsYaml, &passwords); err != nil {
