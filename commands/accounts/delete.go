@@ -27,13 +27,13 @@ import (
 	"github.com/percona/everest/pkg/accounts"
 )
 
-// NewCreateCmd returns a new create command.
-func NewCreateCmd(l *zap.SugaredLogger) *cobra.Command {
+// NewDeleteCmd returns a new delete command.
+func NewDeleteCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "create",
-		Example: "everestctl accounts create --username user1 --password $USER_PASS",
+		Use:     "delete",
+		Example: "everestctl accounts delete --username user1 --password $USER_PASS",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
-			initDeleteViperFlags(cmd)
+			initCreateViperFlags(cmd)
 
 			kubeconfigPath := viper.GetString("kubeconfig")
 			username := viper.GetString("username")
@@ -45,23 +45,23 @@ func NewCreateCmd(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
-			if err := cli.Create(context.Background(), username, password); err != nil {
+			if err := cli.Delete(context.Background(), username, password); err != nil {
 				l.Error(err)
 				os.Exit(1)
 			}
 		},
 	}
-	initDeleteFlags(cmd)
+	initCreateFlags(cmd)
 	return cmd
 }
 
-func initDeleteFlags(cmd *cobra.Command) {
+func initCreateFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("username", "u", "", "Username of the account")
 	cmd.Flags().StringP("password", "p", "", "Password of the account")
 	cmd.Flags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
 }
 
-func initDeleteViperFlags(cmd *cobra.Command) {
+func initCreateViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag("username", cmd.Flags().Lookup("username"))
 	viper.BindPFlag("password", cmd.Flags().Lookup("password"))
 	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec

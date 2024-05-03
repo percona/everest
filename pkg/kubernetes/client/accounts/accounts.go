@@ -124,11 +124,10 @@ func (a *accounts) Create(ctx context.Context, username, password string) error 
 	if _, found := users[username]; found {
 		return errors.New("user already exists")
 	}
-	salt, err := a.salt()
+	hash, err := a.computePasswordHash(password)
 	if err != nil {
-		return errors.Join(err, errors.New("failed to get salt"))
+		return err
 	}
-	hash := pbkdf2.Key([]byte(password), salt, 4096, 32, sha256.New)
 	acc := Account{
 		ID: username,
 		User: User{
@@ -187,16 +186,28 @@ func (a *accounts) Update(ctx context.Context, username, password string) error 
 	if err != nil {
 		return err
 	}
-	salt, err := a.salt()
+	hash, err := a.computePasswordHash(password)
 	if err != nil {
-		return errors.Join(err, errors.New("failed to get salt"))
+		return err
 	}
-	hash := pbkdf2.Key([]byte(password), salt, 4096, 32, sha256.New)
 	passwords[username] = Password{
-		PasswordHash:  string(hash),
+		PasswordHash:  hash,
 		PasswordMTime: time.Now().Format(time.RFC3339),
 	}
 	return a.setAccounts(ctx, mergeUserPassToAccounts(users, passwords), true)
+}
+
+func (a *accounts) ComputePasswordHash(password string) (string, error) {
+	return a.computePasswordHash(password)
+}
+
+func (a *accounts) computePasswordHash(password string) (string, error) {
+	salt, err := a.salt()
+	if err != nil {
+		return "", errors.Join(err, errors.New("failed to get salt"))
+	}
+	hash := pbkdf2.Key([]byte(password), salt, 4096, 32, sha256.New)
+	return string(hash), nil
 }
 
 func mergeUserPassToAccounts(users map[string]User, passwords map[string]Password) []Account {

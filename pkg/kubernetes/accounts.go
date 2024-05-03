@@ -29,6 +29,7 @@ type Accounts interface {
 	List(ctx context.Context) ([]accounts.Account, error)
 	Delete(ctx context.Context, username string) error
 	Update(ctx context.Context, username, password string) error
+	ComputePasswordHash(password string) (string, error)
 }
 
 // Accounts returns a new client for managing everest user accounts.

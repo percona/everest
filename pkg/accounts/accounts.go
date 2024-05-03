@@ -9,6 +9,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/rodaine/table"
 )
@@ -21,7 +22,7 @@ type CLI struct {
 // NewCLI creates a new CLI for running accounts commands.
 func NewCLI(kubeConfigPath string, l *zap.SugaredLogger) (*CLI, error) {
 	cli := &CLI{
-		l: l.With("comoent", "accounts"),
+		l: l.With("component", "accounts"),
 	}
 	k, err := kubernetes.New(kubeConfigPath, l)
 	if err != nil {
@@ -36,13 +37,62 @@ func NewCLI(kubeConfigPath string, l *zap.SugaredLogger) (*CLI, error) {
 	return cli, nil
 }
 
+func (c *CLI) runCredentialsWizard(username, password *string) error {
+	if *username == "" {
+		pUsername := survey.Input{
+			Message: "Enter username",
+		}
+		if err := survey.AskOne(&pUsername, username); err != nil {
+			return err
+		}
+	}
+	if *password == "" {
+		pPassword := survey.Password{
+			Message: "Enter password",
+		}
+		if err := survey.AskOne(&pPassword, password); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Create a new user account.
 func (c *CLI) Create(ctx context.Context, username, password string) error {
+	if err := c.runCredentialsWizard(&username, &password); err != nil {
+		return err
+	}
+	if username == "" {
+		return errors.New("username is required")
+	}
 	if err := c.kubeClient.Accounts().Create(ctx, username, password); err != nil {
 		return err
 	}
-	c.l.Infof("User '%s' has been added", username)
+	c.l.Infof("User '%s' has been created", username)
 	return nil
+}
+
+// Delete an existing user account.
+func (c *CLI) Delete(ctx context.Context, username, password string) error {
+	if err := c.runCredentialsWizard(&username, &password); err != nil {
+		return err
+	}
+	if username == "" {
+		return errors.New("username is required")
+	}
+	user, err := c.kubeClient.Accounts().Get(ctx, username)
+	if err != nil {
+		return err
+	}
+	computedHash, err := c.kubeClient.Accounts().ComputePasswordHash(password)
+	if err != nil {
+		return err
+	}
+	if computedHash != user.PasswordHash {
+		return errors.New("incorrect password entered")
+	}
+	c.l.Infof("User '%s' has been deleted", username)
+	return c.kubeClient.Accounts().Delete(ctx, username)
 }
 
 type ListOptions struct {
@@ -50,10 +100,6 @@ type ListOptions struct {
 	NoHeaders      bool     `mapstructure:"no-headers"`
 	Columns        []string `mapstructure:"columns"`
 }
-
-//	tbl.WithHeaderFormatter(func(format string, vals ...interface{}) string {
-//	  return strings.ToUpper(fmt.Sprintf(format, vals...))
-//	})
 
 // List all user accounts in the system.
 func (c *CLI) List(ctx context.Context, opts *ListOptions) error {
