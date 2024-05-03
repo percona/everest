@@ -71,10 +71,18 @@ export const getDbClusterFn = async (
 
 export const deleteDbClusterFn = async (
   dbClusterName: string,
-  namespace: string
+  namespace: string,
+  cleanupBackupStorage: boolean
 ) => {
+  const config = {
+    data: {
+      cleanupBackupStorage: cleanupBackupStorage,
+    },
+  };
+
   const response = await api.delete<DbCluster>(
-    `namespaces/${namespace}/database-clusters/${dbClusterName}`
+    `namespaces/${namespace}/database-clusters/${dbClusterName}`,
+    config
   );
   return response.data;
 };

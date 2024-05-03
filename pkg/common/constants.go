@@ -28,6 +28,8 @@ const (
 	SystemNamespace = "everest-system"
 	// PerconaEverestDeploymentName stores the name of everest API Server deployment.
 	PerconaEverestDeploymentName = "percona-everest"
+	// PerconaEverestOperatorDeploymentName stores the name of everest operator deployment.
+	PerconaEverestOperatorDeploymentName = "everest-operator-controller-manager"
 	// EverestContainerNameInDeployment is the name of the Everest container in the deployment.
 	EverestContainerNameInDeployment = "everest"
 
