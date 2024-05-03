@@ -76,6 +76,10 @@ const Restores = () => {
         accessorKey: 'type',
         Cell: ({ cell }) => (cell.getValue() === 'pitr' ? 'PITR' : 'Full'),
       },
+      {
+        header: 'Backup Source',
+        accessorKey: 'backupSource',
+      },
     ];
   }, []);
 
