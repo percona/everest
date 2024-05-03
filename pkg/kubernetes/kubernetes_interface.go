@@ -15,12 +15,15 @@ import (
 	"k8s.io/client-go/rest"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/kubernetes/client"
 )
 
 // KubernetesConnector ...
 type KubernetesConnector interface {
 	// GetDeployment returns k8s deployment by provided name and namespace.
 	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
+	// UpdateDeployment updates a deployment and returns the updated object.
+	UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error)
 	// WaitForInstallPlan waits until an install plan for the given operator and version is available.
 	WaitForInstallPlan(ctx context.Context, namespace, operatorName string, version *goversion.Version) (*olmv1alpha1.InstallPlan, error)
 	// ApproveInstallPlan approves an install plan.
@@ -29,6 +32,8 @@ type KubernetesConnector interface {
 	WaitForInstallPlanCompleted(ctx context.Context, namespace, name string) error
 	// Config returns *rest.Config.
 	Config() *rest.Config
+	// WithClient sets the client connector.
+	WithClient(c client.KubeClientConnector) *Kubernetes
 	// Namespace returns the current namespace.
 	Namespace() string
 	// ClusterName returns the name of the k8s cluster.
@@ -73,14 +78,18 @@ type KubernetesConnector interface {
 	GetClusterServiceVersion(ctx context.Context, key types.NamespacedName) (*olmv1alpha1.ClusterServiceVersion, error)
 	// ListClusterServiceVersion list all CSVs for the given namespace.
 	ListClusterServiceVersion(ctx context.Context, namespace string) (*olmv1alpha1.ClusterServiceVersionList, error)
+	// UpdateClusterServiceVersion updates a ClusterServiceVersion and returns the updated object.
+	UpdateClusterServiceVersion(ctx context.Context, csv *olmv1alpha1.ClusterServiceVersion) (*olmv1alpha1.ClusterServiceVersion, error)
 	// DeleteClusterServiceVersion deletes a ClusterServiceVersion.
 	DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error
 	// DeleteObject deletes an object.
 	DeleteObject(obj runtime.Object) error
 	// ProvisionMonitoring provisions PMM monitoring.
 	ProvisionMonitoring(namespace string) error
-	// RestartEverest restarts everest pod.
-	RestartEverest(ctx context.Context, name, namespace string) error
+	// RestartOperator restarts the deployment of an operator managed by OLM.
+	RestartOperator(ctx context.Context, name, namespace string) error
+	// RestartDeployment restarts the given deployment.
+	RestartDeployment(ctx context.Context, name, namespace string) error
 	// ListEngineDeploymentNames returns a string array containing found engine deployments for the Everest.
 	ListEngineDeploymentNames(ctx context.Context, namespace string) ([]string, error)
 	// ApplyObject applies object.

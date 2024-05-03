@@ -31,6 +31,7 @@ type ScheduleFormProps = {
   storageLocationFetching: boolean;
   storageLocationOptions: BackupStorage[];
   showTypeRadio: boolean;
+  hideRetentionCopies?: boolean;
 };
 export const ScheduleForm = ({
   allowScheduleSelection,
@@ -41,6 +42,7 @@ export const ScheduleForm = ({
   storageLocationFetching,
   storageLocationOptions,
   showTypeRadio,
+  hideRetentionCopies,
 }: ScheduleFormProps) => {
   const schedulesNamesList =
     (schedules && schedules.map((item) => item?.name)) || [];
@@ -85,15 +87,17 @@ export const ScheduleForm = ({
         enableFillFirst={autoFillLocation}
         disabled={disableStorageSelection}
       />
-      <TextInput
-        name={ScheduleFormFields.retentionCopies}
-        textFieldProps={{
-          type: 'number',
-          label: Messages.retentionCopies.label,
-          helperText: Messages.retentionCopies.helperText,
-        }}
-        isRequired
-      />
+      {!hideRetentionCopies && (
+        <TextInput
+          name={ScheduleFormFields.retentionCopies}
+          textFieldProps={{
+            type: 'number',
+            label: Messages.retentionCopies.label,
+            helperText: Messages.retentionCopies.helperText,
+          }}
+          isRequired
+        />
+      )}
       <LabeledContent label={Messages.repeats}>
         <TimeSelection showInfoAlert />
       </LabeledContent>
