@@ -59,6 +59,7 @@ export const ScheduleBackupSection = ({
         mode === 'edit' && schedules.length === 1 && dbType === DbType.Mongo
       }
       showTypeRadio={dbType === DbType.Mongo}
+      hideRetentionCopies={dbType === DbType.Postresql}
     />
   );
 };

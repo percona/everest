@@ -54,10 +54,13 @@ export const ScheduledBackupModalForm = () => {
       trigger(ScheduleFormFields.storageLocation);
     }
   }, [dbClusterActiveStorage]);
-
+  console.log(dbCluster.spec.engine.type);
   return (
     <ScheduleForm
       showTypeRadio={dbCluster.spec.engine.type === DbEngineType.PSMDB}
+      hideRetentionCopies={
+        dbCluster.spec.engine.type === DbEngineType.POSTGRESQL
+      }
       allowScheduleSelection={mode === 'edit'}
       disableStorageSelection={!!dbClusterActiveStorage}
       autoFillLocation={mode === 'new'}

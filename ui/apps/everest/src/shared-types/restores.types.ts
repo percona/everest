@@ -22,6 +22,7 @@ export type GetRestorePayload = {
     spec: {
       dataSource: {
         pitr?: object;
+        dbClusterBackupName?: string;
       };
     };
     status: {
@@ -54,6 +55,7 @@ export type Restore = {
   endTime?: string;
   type: 'full' | 'pitr';
   state: string;
+  backupSource: string;
 };
 
 export enum PXC_STATUS {
