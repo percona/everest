@@ -12,8 +12,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-export const Messages = {
-  title: 'Irreversible action',
-  message:
-    'This action is irreversible and will permanently delete your database, rendering it unrecoverable.',
-};
+
+import { Alert, AlertTitle } from '@mui/material';
+import { IrreversibleActionProps } from './irreversible-action.types';
+
+export const IrreversibleAction = ({
+  alertTitle,
+  alertMessage,
+}: IrreversibleActionProps) => (
+  <Alert data-testid="irreversible-action-alert" severity="error">
+    <AlertTitle>{alertTitle}</AlertTitle>
+    {alertMessage}
+  </Alert>
+);
