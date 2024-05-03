@@ -84,6 +84,7 @@ export const DatabasePage = () => {
         {
           onSuccess: () => {
             setFormSubmitted(true);
+            console.log('CHANGE');
           },
         }
       );
