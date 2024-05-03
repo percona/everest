@@ -14,6 +14,8 @@
 // limitations under the License.
 
 // Package accounts holds commands for accounts command.
+//
+//nolint:dupl
 package accounts
 
 import (
@@ -62,7 +64,7 @@ func initDeleteFlags(cmd *cobra.Command) {
 }
 
 func initDeleteViperFlags(cmd *cobra.Command) {
-	viper.BindPFlag("username", cmd.Flags().Lookup("username"))
-	viper.BindPFlag("password", cmd.Flags().Lookup("password"))
+	viper.BindPFlag("username", cmd.Flags().Lookup("username"))     //nolint:errcheck,gosec
+	viper.BindPFlag("password", cmd.Flags().Lookup("password"))     //nolint:errcheck,gosec
 	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
 }

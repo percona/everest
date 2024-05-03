@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package client ...
+// Package kubernetes ...
 package kubernetes
 
 import (
@@ -29,10 +29,12 @@ type Accounts interface {
 	List(ctx context.Context) ([]accounts.Account, error)
 	Delete(ctx context.Context, username string) error
 	Update(ctx context.Context, username, password string) error
-	ComputePasswordHash(password string) (string, error)
+	ComputePasswordHash(ctx context.Context, password string) (string, error)
 }
 
 // Accounts returns a new client for managing everest user accounts.
+//
+//nolint:ireturn,stylecheck
 func (c *Kubernetes) Accounts() Accounts {
 	return accounts.New(c.client)
 }

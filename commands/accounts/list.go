@@ -63,7 +63,7 @@ func initListFlags(cmd *cobra.Command) {
 }
 
 func initListViperFlags(cmd *cobra.Command) {
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))
-	viper.BindPFlag("no-headers", cmd.Flags().Lookup("no-headers"))
-	viper.BindPFlag("columns", cmd.Flags().Lookup("columns"))
+	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
+	viper.BindPFlag("no-headers", cmd.Flags().Lookup("no-headers")) //nolint:errcheck,gosec
+	viper.BindPFlag("columns", cmd.Flags().Lookup("columns"))       //nolint:errcheck,gosec
 }

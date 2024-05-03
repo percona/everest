@@ -1,3 +1,19 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package accounts holds commands for accounts command.
 package accounts
 
 import (
@@ -15,6 +31,7 @@ import (
 	accountsapi "github.com/percona/everest/pkg/kubernetes/client/accounts"
 )
 
+// CLI provides functionality for managing user accounts via the CLI.
 type CLI struct {
 	kubeClient *kubernetes.Kubernetes
 	l          *zap.SugaredLogger
@@ -85,7 +102,7 @@ func (c *CLI) Delete(ctx context.Context, username, password string) error {
 	if err != nil {
 		return err
 	}
-	computedHash, err := c.kubeClient.Accounts().ComputePasswordHash(password)
+	computedHash, err := c.kubeClient.Accounts().ComputePasswordHash(ctx, password)
 	if err != nil {
 		return err
 	}
@@ -96,6 +113,7 @@ func (c *CLI) Delete(ctx context.Context, username, password string) error {
 	return c.kubeClient.Accounts().Delete(ctx, username)
 }
 
+// ListOptions holds options for listing user accounts.
 type ListOptions struct {
 	KubeconfigPath string   `mapstructure:"kubeconfig"`
 	NoHeaders      bool     `mapstructure:"no-headers"`
@@ -136,7 +154,7 @@ func (c *CLI) List(ctx context.Context, opts *ListOptions) error {
 	}
 
 	// Return a table row for the given account.
-	row := func(account *accountsapi.Account) []any {
+	row := func(account accountsapi.Account) []any {
 		row := []any{}
 		for _, heading := range headings {
 			switch heading {
@@ -151,7 +169,7 @@ func (c *CLI) List(ctx context.Context, opts *ListOptions) error {
 		return row
 	}
 	for _, account := range accounts {
-		tbl.AddRow(row(&account)...)
+		tbl.AddRow(row(account)...)
 	}
 	tbl.Print()
 	return nil

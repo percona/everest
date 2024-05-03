@@ -24,7 +24,8 @@ func TestAccounts(t *testing.T) {
 		Namespaces().
 		Create(ctx, &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{Name: common.SystemNamespace},
-		}, metav1.CreateOptions{})
+		}, metav1.CreateOptions{},
+		)
 	require.NoError(t, err)
 	// Prepare configmap.
 	_, err = c.Clientset().
@@ -35,7 +36,9 @@ func TestAccounts(t *testing.T) {
 				Name:      common.EverestAccountsConfigName,
 				Namespace: common.SystemNamespace,
 			},
-		}, metav1.CreateOptions{})
+		}, metav1.CreateOptions{},
+		)
+	require.NoError(t, err)
 	// Prepare secret.
 	_, err = c.Clientset().
 		CoreV1().
@@ -45,14 +48,16 @@ func TestAccounts(t *testing.T) {
 				Name:      common.EverestAccountsConfigName,
 				Namespace: common.SystemNamespace,
 			},
-		}, metav1.CreateOptions{})
+		}, metav1.CreateOptions{},
+		)
+	require.NoError(t, err)
 
 	mgr := New(c)
 
 	// Assert that initially there are no accounts.
 	accounts, err := mgr.List(ctx)
 	require.NoError(t, err)
-	assert.Len(t, accounts, 0)
+	assert.Empty(t, accounts)
 
 	// Create user1
 	err = mgr.Create(ctx, "user1", "password")
@@ -85,7 +90,7 @@ func TestAccounts(t *testing.T) {
 	// Delete non-existing user.
 	err = mgr.Delete(ctx, "not-existing")
 	require.Error(t, err)
-	assert.ErrorIs(t, err, ErrAccountNotFound)
+	require.ErrorIs(t, err, ErrAccountNotFound)
 
 	// Delete user1.
 	err = mgr.Delete(ctx, "user1")
@@ -94,5 +99,5 @@ func TestAccounts(t *testing.T) {
 	// Check that no users exists.
 	accounts, err = mgr.List(ctx)
 	require.NoError(t, err)
-	assert.Len(t, accounts, 0)
+	assert.Empty(t, accounts)
 }

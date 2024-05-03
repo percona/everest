@@ -33,13 +33,14 @@ import (
 	"github.com/percona/everest/pkg/kubernetes/client"
 )
 
+// AccountCapability represents a capability of an account.
 type AccountCapability string
 
 const (
 	// AccountCapabilityLogin represents capability to create UI session tokens.
 	AccountCapabilityLogin AccountCapability = "login"
-	// AccountCapabilityLogin represents capability to generate API auth tokens.
-	AccountCapabilityApiKey AccountCapability = "apiKey"
+	// AccountCapabilityAPIKey represents capability to generate API auth tokens.
+	AccountCapabilityAPIKey AccountCapability = "apiKey"
 
 	usersFile    = "users.yaml"
 	passwordFile = "passwords.yaml"
@@ -67,17 +68,18 @@ type Account struct {
 	Password
 }
 
-type accounts struct {
+// Client provides functionality for managing user accounts on Kubernetes.
+type Client struct {
 	k client.KubeClientConnector
 }
 
 // New returns a new Kubernetes based account manager for Everest.
-func New(k client.KubeClientConnector) *accounts {
-	return &accounts{k: k}
+func New(k client.KubeClientConnector) *Client {
+	return &Client{k: k}
 }
 
 // Get returns an account by username.
-func (a *accounts) Get(ctx context.Context, username string) (*Account, error) {
+func (a *Client) Get(ctx context.Context, username string) (*Account, error) {
 	users, err := a.listAllUsers(ctx)
 	if err != nil {
 		return nil, err
@@ -102,7 +104,7 @@ func (a *accounts) Get(ctx context.Context, username string) (*Account, error) {
 }
 
 // List returns a list of all accounts.
-func (a *accounts) List(ctx context.Context) ([]Account, error) {
+func (a *Client) List(ctx context.Context) ([]Account, error) {
 	users, err := a.listAllUsers(ctx)
 	if err != nil {
 		return nil, err
@@ -115,7 +117,7 @@ func (a *accounts) List(ctx context.Context) ([]Account, error) {
 }
 
 // Create a new user account.
-func (a *accounts) Create(ctx context.Context, username, password string) error {
+func (a *Client) Create(ctx context.Context, username, password string) error {
 	// Check if this user exists?
 	users, err := a.listAllUsers(ctx)
 	if err != nil {
@@ -124,7 +126,7 @@ func (a *accounts) Create(ctx context.Context, username, password string) error 
 	if _, found := users[username]; found {
 		return errors.New("user already exists")
 	}
-	hash, err := a.computePasswordHash(password)
+	hash, err := a.computePasswordHash(ctx, password)
 	if err != nil {
 		return err
 	}
@@ -135,15 +137,15 @@ func (a *accounts) Create(ctx context.Context, username, password string) error 
 			Capabilities: []AccountCapability{AccountCapabilityLogin}, // XX: for now we only support login
 		},
 		Password: Password{
-			PasswordHash:  string(hash),
+			PasswordHash:  hash,
 			PasswordMTime: time.Now().Format(time.RFC3339),
 		},
 	}
 	return a.setAccounts(ctx, []Account{acc}, true)
 }
 
-func (a *accounts) salt() ([]byte, error) {
-	ns, err := a.k.GetNamespace(context.Background(), common.SystemNamespace)
+func (a *Client) salt(ctx context.Context) ([]byte, error) {
+	ns, err := a.k.GetNamespace(ctx, common.SystemNamespace)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +153,7 @@ func (a *accounts) salt() ([]byte, error) {
 }
 
 // Delete an existing user account specified by username.
-func (a *accounts) Delete(ctx context.Context, username string) error {
+func (a *Client) Delete(ctx context.Context, username string) error {
 	// Check if this user exists?
 	users, err := a.listAllUsers(ctx)
 	if err != nil {
@@ -172,7 +174,7 @@ func (a *accounts) Delete(ctx context.Context, username string) error {
 }
 
 // Update an existing user account specified by username.
-func (a *accounts) Update(ctx context.Context, username, password string) error {
+func (a *Client) Update(ctx context.Context, username, password string) error {
 	// Check if this user exists?
 	users, err := a.listAllUsers(ctx)
 	if err != nil {
@@ -186,7 +188,7 @@ func (a *accounts) Update(ctx context.Context, username, password string) error 
 	if err != nil {
 		return err
 	}
-	hash, err := a.computePasswordHash(password)
+	hash, err := a.computePasswordHash(ctx, password)
 	if err != nil {
 		return err
 	}
@@ -197,12 +199,13 @@ func (a *accounts) Update(ctx context.Context, username, password string) error 
 	return a.setAccounts(ctx, mergeUserPassToAccounts(users, passwords), true)
 }
 
-func (a *accounts) ComputePasswordHash(password string) (string, error) {
-	return a.computePasswordHash(password)
+// ComputePasswordHash computes the password hash for a given password.
+func (a *Client) ComputePasswordHash(ctx context.Context, password string) (string, error) {
+	return a.computePasswordHash(ctx, password)
 }
 
-func (a *accounts) computePasswordHash(password string) (string, error) {
-	salt, err := a.salt()
+func (a *Client) computePasswordHash(ctx context.Context, password string) (string, error) {
+	salt, err := a.salt(ctx)
 	if err != nil {
 		return "", errors.Join(err, errors.New("failed to get salt"))
 	}
@@ -211,7 +214,7 @@ func (a *accounts) computePasswordHash(password string) (string, error) {
 }
 
 func mergeUserPassToAccounts(users map[string]User, passwords map[string]Password) []Account {
-	var accounts []Account
+	accounts := make([]Account, 0, len(users))
 	for name, user := range users {
 		pass, found := passwords[name]
 		if !found {
@@ -232,15 +235,15 @@ func mergeUserPassToAccounts(users map[string]User, passwords map[string]Passwor
 // Given a list of accounts, update the ConfigMap and Secret.
 // If patch is true, existing all existing accounts are preserved.
 // If patch is false, accounts are replaced with the new list.
-func (a *accounts) setAccounts(
+func (a *Client) setAccounts(
 	ctx context.Context,
 	accounts []Account,
 	patch bool,
 ) error {
 	var (
 		err       error
-		users     map[string]User     = make(map[string]User)
-		passwords map[string]Password = make(map[string]Password)
+		users     = make(map[string]User)
+		passwords = make(map[string]Password)
 	)
 	if patch {
 		// Get existing users and passwords.
@@ -263,7 +266,16 @@ func (a *accounts) setAccounts(
 			passwords[acc.ID] = acc.Password
 		}
 	}
-	// Update accounts ConfigMap.
+	if err := a.updateConfigMap(ctx, users); err != nil {
+		return err
+	}
+	if err := a.updateSecret(ctx, passwords); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *Client) updateConfigMap(ctx context.Context, users map[string]User) error {
 	userB, err := yaml.Marshal(users)
 	if err != nil {
 		return err
@@ -280,7 +292,10 @@ func (a *accounts) setAccounts(
 	if _, err := a.k.UpdateConfigMap(ctx, cm); err != nil {
 		return err
 	}
-	// Update Accounts Secret.
+	return nil
+}
+
+func (a *Client) updateSecret(ctx context.Context, passwords map[string]Password) error {
 	passB, err := yaml.Marshal(passwords)
 	if err != nil {
 		return err
@@ -300,7 +315,7 @@ func (a *accounts) setAccounts(
 	return nil
 }
 
-func (a *accounts) listAllUsers(ctx context.Context) (map[string]User, error) {
+func (a *Client) listAllUsers(ctx context.Context) (map[string]User, error) {
 	cm, err := a.k.GetConfigMap(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
 	if err != nil {
 		return nil, err
@@ -316,7 +331,7 @@ func (a *accounts) listAllUsers(ctx context.Context) (map[string]User, error) {
 	return users, nil
 }
 
-func (a *accounts) listAllPasswords(ctx context.Context) (map[string]Password, error) {
+func (a *Client) listAllPasswords(ctx context.Context) (map[string]Password, error) {
 	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
 	if err != nil {
 		return nil, err
