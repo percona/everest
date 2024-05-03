@@ -31,7 +31,7 @@ func TestAccounts(t *testing.T) {
 		ConfigMaps(common.SystemNamespace).
 		Create(ctx, &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      AccountsConfigMapName,
+				Name:      common.EverestAccountsConfigName,
 				Namespace: common.SystemNamespace,
 			},
 		}, metav1.CreateOptions{})
@@ -41,7 +41,7 @@ func TestAccounts(t *testing.T) {
 		Secrets(common.SystemNamespace).
 		Create(ctx, &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      AccountsConfigMapName,
+				Name:      common.EverestAccountsConfigName,
 				Namespace: common.SystemNamespace,
 			},
 		}, metav1.CreateOptions{})

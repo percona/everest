@@ -35,4 +35,7 @@ const (
 
 	// EverestOperatorName holds the name for Everest operator.
 	EverestOperatorName = "everest-operator"
+
+	// EverestAccountsConfigName is the name of the ConfigMap that holds account data.
+	EverestAccountsConfigName = "everest-accounts"
 )

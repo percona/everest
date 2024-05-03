@@ -36,9 +36,6 @@ import (
 type AccountCapability string
 
 const (
-	// AccountsConfigMapName is the name of the ConfigMap that holds account information.
-	AccountsConfigMapName = "everest-accounts"
-
 	// AccountCapabilityLogin represents capability to create UI session tokens.
 	AccountCapabilityLogin AccountCapability = "login"
 	// AccountCapabilityLogin represents capability to generate API auth tokens.
@@ -262,7 +259,7 @@ func (a *accounts) setAccounts(
 	}
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      AccountsConfigMapName,
+			Name:      common.EverestAccountsConfigName,
 			Namespace: common.SystemNamespace,
 		},
 		BinaryData: map[string][]byte{
@@ -279,7 +276,7 @@ func (a *accounts) setAccounts(
 	}
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      AccountsConfigMapName,
+			Name:      common.EverestAccountsConfigName,
 			Namespace: common.SystemNamespace,
 		},
 		Data: map[string][]byte{
@@ -293,7 +290,7 @@ func (a *accounts) setAccounts(
 }
 
 func (a *accounts) listAllUsers(ctx context.Context) (map[string]User, error) {
-	cm, err := a.k.GetConfigMap(ctx, common.SystemNamespace, AccountsConfigMapName)
+	cm, err := a.k.GetConfigMap(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +306,7 @@ func (a *accounts) listAllUsers(ctx context.Context) (map[string]User, error) {
 }
 
 func (a *accounts) listAllPasswords(ctx context.Context) (map[string]Password, error) {
-	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, AccountsConfigMapName)
+	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
 	if err != nil {
 		return nil, err
 	}
