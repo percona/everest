@@ -133,3 +133,16 @@ spec:
   ports:
     - protocol: TCP
       port: 8080
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: everest-accounts
+  namespace: everest-system
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: everest-accounts
+  namespace: everest-system
+---
