@@ -4,12 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/kubernetes/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/kubernetes/client"
 )
 
 func TestAccounts(t *testing.T) {

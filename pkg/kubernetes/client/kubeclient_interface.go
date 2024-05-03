@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
+	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
 
@@ -46,6 +47,8 @@ type KubeClientConnector interface {
 	UpdateConfigMap(ctx context.Context, configMap *corev1.ConfigMap) (*corev1.ConfigMap, error)
 	// Config returns restConfig to the pkg/kubernetes.Kubernetes client.
 	Config() *rest.Config
+	// Clientset returns the k8s clientset.
+	Clientset() kubernetes.Interface
 	// ClusterName returns the name of the k8s cluster.
 	ClusterName() string
 	// Namespace returns the namespace of the k8s cluster.

@@ -24,17 +24,17 @@ type MockKubernetesConnector struct {
 	mock.Mock
 }
 
-// Accounts provides a mock function with given fields: ctx
-func (_m *MockKubernetesConnector) Accounts(ctx context.Context) Accounts {
-	ret := _m.Called(ctx)
+// Accounts provides a mock function with given fields:
+func (_m *MockKubernetesConnector) Accounts() Accounts {
+	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Accounts")
 	}
 
 	var r0 Accounts
-	if rf, ok := ret.Get(0).(func(context.Context) Accounts); ok {
-		r0 = rf(ctx)
+	if rf, ok := ret.Get(0).(func() Accounts); ok {
+		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(Accounts)

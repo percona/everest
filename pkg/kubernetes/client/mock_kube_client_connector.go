@@ -21,6 +21,7 @@ import (
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	version "k8s.io/apimachinery/pkg/version"
+	kubernetes "k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
 
 	v1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
@@ -80,6 +81,26 @@ func (_m *MockKubeClientConnector) ApplyObject(obj runtime.Object) error {
 		r0 = rf(obj)
 	} else {
 		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Clientset provides a mock function with given fields:
+func (_m *MockKubeClientConnector) Clientset() kubernetes.Interface {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Clientset")
+	}
+
+	var r0 kubernetes.Interface
+	if rf, ok := ret.Get(0).(func() kubernetes.Interface); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(kubernetes.Interface)
+		}
 	}
 
 	return r0

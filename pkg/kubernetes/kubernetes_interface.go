@@ -21,7 +21,7 @@ import (
 // KubernetesConnector ...
 type KubernetesConnector interface {
 	// Accounts returns a new client for managing everest user accounts.
-	Accounts(ctx context.Context) Accounts
+	Accounts() Accounts
 	// GetDeployment returns k8s deployment by provided name and namespace.
 	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
 	// UpdateDeployment updates a deployment and returns the updated object.

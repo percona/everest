@@ -32,6 +32,6 @@ type Accounts interface {
 }
 
 // Accounts returns a new client for managing everest user accounts.
-func (c *Kubernetes) Accounts(ctx context.Context) Accounts {
+func (c *Kubernetes) Accounts() Accounts {
 	return accounts.New(c.client)
 }
