@@ -107,21 +107,6 @@ jobs:
     needs: cache_pnpm
     runs-on: ubuntu-20.04
     steps:
-      - name: Get User Permission
-        id: checkAccess
-        uses: actions-cool/check-user-permission@v2
-        with:
-          require: write
-          username: ${{ github.triggering_actor }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check User Permission
-        if: steps.checkAccess.outputs.require-result == 'false'
-        run: |
-          echo "${{ github.triggering_actor }} does not have permissions on this repo."
-          exit 1
-
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
         with:
