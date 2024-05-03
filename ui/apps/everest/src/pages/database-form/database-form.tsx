@@ -136,6 +136,7 @@ export const DatabasePage = () => {
   };
 
   useEffect(() => {
+    console.log('FOO');
     // We disable the inputs on first step to make sure user doesn't change anything before all data is loaded
     // When users change the inputs, it means all data was loaded and we should't change the defaults anymore at this point
     // Because this effect relies on defaultValues, which comes from a hook that has dependencies that might be triggered somewhere else
