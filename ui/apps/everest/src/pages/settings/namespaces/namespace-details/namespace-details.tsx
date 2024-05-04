@@ -159,16 +159,6 @@ const NamespaceDetails = () => {
                   engine={engine}
                   preflightPayload={preflightQueriesResults[idx].data}
                 />
-                // engine.pendingOperatorUpgrades?.length ? (
-                //   <EngineLowerContent
-                //     preflightPayload={preflightQueriesResults[idx].data}
-                //     upgrading={engine.status === DbEngineStatus.UPGRADING}
-                //   />
-                // ) : (
-                //   <Typography variant="body2">
-                //     version {engine.operatorVersion}
-                //   </Typography>
-                // )
               }
               onClick={() => {
                 setSelectedEngineIdx(idx);
