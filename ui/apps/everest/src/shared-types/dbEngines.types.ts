@@ -99,5 +99,5 @@ export type OperatorUpgradeDb = {
 
 export type OperatorUpgradePreflightPayload = {
   currentVersion: string;
-  databases: OperatorUpgradeDb[];
+  databases?: OperatorUpgradeDb[];
 };

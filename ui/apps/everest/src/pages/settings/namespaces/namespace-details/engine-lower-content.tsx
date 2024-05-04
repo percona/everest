@@ -10,7 +10,7 @@ const EngineLowerContent = ({
     return <Chip label="Upgrading" color="warning" size="small" />;
   }
 
-  if (!preflightPayload?.databases.length) {
+  if (!preflightPayload?.databases) {
     return (
       <Typography variant="body2">version {engine.operatorVersion}</Typography>
     );

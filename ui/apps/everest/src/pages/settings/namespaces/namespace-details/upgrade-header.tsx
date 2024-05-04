@@ -18,7 +18,7 @@ const UpgradeHeader = ({
     return <Typography variant="body1">Upgrading the Operator...</Typography>;
   }
 
-  if (!preflightPayload?.databases.length) {
+  if (!preflightPayload?.databases) {
     return null;
   }
 

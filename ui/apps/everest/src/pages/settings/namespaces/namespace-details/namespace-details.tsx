@@ -68,7 +68,7 @@ const NamespaceDetails = () => {
             )
           : Promise.resolve<OperatorUpgradePreflightPayload>({
               currentVersion: engine.operatorVersion,
-              databases: [],
+              databases: undefined,
             }),
       enabled: !!namespace && !!dbEngines.length,
     })),
