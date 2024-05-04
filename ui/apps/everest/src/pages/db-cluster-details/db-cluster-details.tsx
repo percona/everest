@@ -68,7 +68,7 @@ export const DbClusterDetails = () => {
           display: 'flex',
           gap: 1,
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-start',
           mb: 1,
         }}
       >
@@ -77,6 +77,7 @@ export const DbClusterDetails = () => {
             display: 'flex',
             gap: 1,
             alignItems: 'center',
+            mr: 1,
           }}
         >
           <IconButton onClick={() => navigate('/databases')}>

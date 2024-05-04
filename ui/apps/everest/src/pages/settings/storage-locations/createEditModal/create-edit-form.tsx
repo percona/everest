@@ -1,13 +1,13 @@
 import { Divider, MenuItem } from '@mui/material';
-import { TextInput, SelectInput } from '@percona/ui-lib';
-import TlsCheckbox from 'components/tls-checkbox';
+import { SelectInput, TextInput } from '@percona/ui-lib';
+import { AutoCompleteSelectAll } from 'components/auto-complete-select-all/auto-complete-select-all';
 import ForcePathCheckbox from 'components/force-path-checkbox';
+import { HiddenInput } from 'components/hidden-input';
+import TlsCheckbox from 'components/tls-checkbox';
+import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { StorageType } from 'shared-types/backupStorages.types';
 import { Messages } from '../storage-locations.messages';
 import { StorageLocationsFields } from '../storage-locations.types';
-import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
-import { AutoCompleteSelectAll } from 'components/auto-complete-select-all/auto-complete-select-all';
-import { HiddenInput } from 'components/hidden-input';
 
 interface CreateEditFormProps {
   isEditMode: boolean;
