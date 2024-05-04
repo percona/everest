@@ -5,8 +5,8 @@ import { CheckboxProps } from './checkbox.types';
 
 type CustomArgs = CheckboxProps & {
   disabled?: boolean;
-	size?: 'small' | 'medium',
-	required?: boolean
+  size?: 'small' | 'medium';
+  required?: boolean;
 };
 
 const meta = {
@@ -16,21 +16,21 @@ const meta = {
     layout: 'centered',
   },
 
-	argTypes: {
-		label: {
-			type: 'string'
-		},
+  argTypes: {
+    label: {
+      type: 'string',
+    },
     disabled: {
-			type: 'boolean'
-		},
-		size: {
-			options: ['small', 'medium'],
+      type: 'boolean',
+    },
+    size: {
+      options: ['small', 'medium'],
       control: { type: 'inline-radio' },
     },
-		required: {
-			type: 'boolean'
-		},
-	},
+    required: {
+      type: 'boolean',
+    },
+  },
 
   render: function Render({ label, disabled, size, required }) {
     const methods = useForm();
@@ -40,8 +40,8 @@ const meta = {
         <Checkbox
           name="checkbox"
           label={label}
-          checkboxProps={{ disabled, size}}
-					labelProps={{isRequired: required}}
+          checkboxProps={{ disabled, size }}
+          labelProps={{ isRequired: required }}
         />
       </FormProvider>
     );
@@ -56,7 +56,7 @@ export const Basic: Story = {
   args: {
     label: 'Label',
     disabled: false,
-		size: 'medium',
-		required: false
+    size: 'medium',
+    required: false,
   },
 };
