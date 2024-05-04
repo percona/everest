@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
-import { ConfirmFormDialog } from './confirm-form-dialog';
 import { TestWrapper } from 'utils/test';
 import { FormProvider, useForm } from 'react-hook-form';
 import { ReactNode } from 'react';
-import { ConfirmFormDialogFields } from './confirm-form-dialog.types';
-import { confirmDialogDefaultValues } from './confirm-dialog-consts';
+import { customConfirmDialogDefaultValues } from './custom-confirm-dialog-consts'
+import { CustomConfirmDialog } from './custom-confirm-dialog'
+import { CustomConfirmDialogFields } from './custom-confirm-dialog.types'
 
 interface FormProviderWrapperProps {
   children: ReactNode;
@@ -12,7 +12,7 @@ interface FormProviderWrapperProps {
 
 const FormProviderWrapper = ({ children }: FormProviderWrapperProps) => {
   const methods = useForm({
-    defaultValues: confirmDialogDefaultValues,
+    defaultValues: customConfirmDialogDefaultValues,
   });
   return (
     <FormProvider {...methods}>
@@ -31,7 +31,10 @@ describe('ConfirmFormDialog', () => {
     render(
       <TestWrapper>
         <FormProviderWrapper>
-          <ConfirmFormDialog
+          <CustomConfirmDialog
+						submitMessage='submit'
+						alertMessage='alert'
+						checkboxMessage='checkbox'
             closeModal={vi.fn}
             handleConfirm={vi.fn}
             selectedId={selectedId}
@@ -43,7 +46,7 @@ describe('ConfirmFormDialog', () => {
     );
 
     input = screen.getByTestId('text-input-confirm-input');
-    button = screen.getByTestId('form-dialog-delete');
+    button = screen.getByTestId('form-dialog-submit');
 
     expect(input).toBeInTheDocument();
     expect(input.value).toBe('');
@@ -56,21 +59,26 @@ describe('ConfirmFormDialog', () => {
     render(
       <TestWrapper>
         <FormProviderWrapper>
-          <ConfirmFormDialog
+          <CustomConfirmDialog
+					submitMessage='submit'
+					alertMessage='alert'
+					checkboxMessage='checkbox'
             closeModal={vi.fn}
             handleConfirm={vi.fn}
             selectedId={selectedId}
             validationMode="onTouched"
             isOpen
             headerMessage="Delete database"
-            values={{ [ConfirmFormDialogFields.confirmInput]: selectedId }}
+            values={{ [CustomConfirmDialogFields.confirmInput]: selectedId, 
+							[CustomConfirmDialogFields.dataCheckbox]: false
+						}}
           />
         </FormProviderWrapper>
       </TestWrapper>
     );
 
     input = screen.getByTestId('text-input-confirm-input');
-    button = screen.getByTestId('form-dialog-delete');
+    button = screen.getByTestId('form-dialog-submit');
 
     expect(input.value).toBe(selectedId);
   });

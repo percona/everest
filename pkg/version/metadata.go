@@ -16,12 +16,8 @@
 package version
 
 import (
-	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
-	"net/url"
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
 	goversion "github.com/hashicorp/go-version"
@@ -35,33 +31,6 @@ type RecommendedVersion struct {
 	PG              *goversion.Version
 	PSMDB           *goversion.Version
 	PXC             *goversion.Version
-}
-
-// Metadata returns metadata from a given metadata URL.
-func Metadata(ctx context.Context, versionMetadataURL string) (*version.MetadataResponse, error) {
-	p, err := url.Parse(versionMetadataURL)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("could not parse version Everest metadata URL"))
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, p.JoinPath("metadata/v1/everest").String(), nil)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("could not create Everest metadata request"))
-	}
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("could not retrieve Everest metadata"))
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("invalid response from Everest metadata endpoint http %d", res.StatusCode)
-	}
-	requirements := &version.MetadataResponse{}
-	if err = json.NewDecoder(res.Body).Decode(requirements); err != nil {
-		return nil, errors.Join(err, errors.New("could not decode requirements from Everest metadata"))
-	}
-
-	return requirements, nil
 }
 
 // RecommendedVersions returns recommended version information based on metadata.

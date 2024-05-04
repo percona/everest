@@ -1347,6 +1347,14 @@ func (c *Client) ListClusterServiceVersion(
 	return c.olmClientset.OperatorsV1alpha1().ClusterServiceVersions(namespace).List(ctx, metav1.ListOptions{})
 }
 
+// UpdateClusterServiceVersion updates a CSV and returns the updated CSV.
+func (c *Client) UpdateClusterServiceVersion(
+	ctx context.Context,
+	csv *v1alpha1.ClusterServiceVersion,
+) (*v1alpha1.ClusterServiceVersion, error) {
+	return c.olmClientset.OperatorsV1alpha1().ClusterServiceVersions(csv.Namespace).Update(ctx, csv, metav1.UpdateOptions{})
+}
+
 // DeleteClusterServiceVersion deletes a CSV by namespaced name.
 func (c *Client) DeleteClusterServiceVersion(
 	ctx context.Context,

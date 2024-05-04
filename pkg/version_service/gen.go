@@ -12,8 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-export const Messages = {
-  title: 'Irreversible action',
-  message:
-    'This action is irreversible and will permanently delete your database, rendering it unrecoverable.',
-};
+
+package versionservice
+
+//go:generate ../../bin/mockery --name=Interface --case=snake --inpackage

@@ -14,10 +14,14 @@
 // limitations under the License.
 
 import { Alert, AlertTitle } from '@mui/material';
-import { Messages } from './irreversible-action.messages';
-export const IrreversibleAction = () => (
+import { IrreversibleActionProps } from './irreversible-action.types';
+
+export const IrreversibleAction = ({
+  alertTitle,
+  alertMessage,
+}: IrreversibleActionProps) => (
   <Alert data-testid="irreversible-action-alert" severity="error">
-    <AlertTitle>{Messages.title}</AlertTitle>
-    {Messages.message}
+    <AlertTitle>{alertTitle}</AlertTitle>
+    {alertMessage}
   </Alert>
 );

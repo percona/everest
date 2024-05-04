@@ -40,20 +40,26 @@ import (
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/token"
 	"github.com/percona/everest/pkg/version"
+	versionservice "github.com/percona/everest/pkg/version_service"
+)
+
+const (
+	// DefaultEverestNamespace is the default namespace managed by everest Everest.
+	DefaultEverestNamespace = "everest"
 )
 
 // Install implements the main logic for commands.
 type Install struct {
 	l *zap.SugaredLogger
 
-	config     Config
-	kubeClient *kubernetes.Kubernetes
+	config         Config
+	kubeClient     *kubernetes.Kubernetes
+	versionService versionservice.Interface
 }
 
 const (
-	everestBackendServiceName = "everest"
-	vmOperatorName            = "victoriametrics-operator"
-	operatorInstallThreads    = 1
+	vmOperatorName         = "victoriametrics-operator"
+	operatorInstallThreads = 1
 
 	everestServiceAccount                   = "everest-admin"
 	everestServiceAccountRole               = "everest-admin-role"
@@ -146,6 +152,7 @@ func NewInstall(c Config, l *zap.SugaredLogger) (*Install, error) {
 		return nil, err
 	}
 	cli.kubeClient = k
+	cli.versionService = versionservice.New(c.VersionMetadataURL)
 	return cli, nil
 }
 
@@ -159,7 +166,7 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	meta, err := version.Metadata(ctx, o.config.VersionMetadataURL)
+	meta, err := o.versionService.GetEverestMetadata(ctx)
 	if err != nil {
 		return err
 	}
@@ -366,10 +373,10 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		}
 	} else {
 		o.l.Info("Restarting Everest")
-		if err := o.kubeClient.RestartEverest(ctx, common.EverestOperatorName, common.SystemNamespace); err != nil {
+		if err := o.kubeClient.RestartOperator(ctx, common.PerconaEverestOperatorDeploymentName, common.SystemNamespace); err != nil {
 			return err
 		}
-		if err := o.kubeClient.RestartEverest(ctx, everestBackendServiceName, common.SystemNamespace); err != nil {
+		if err := o.kubeClient.RestartDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace); err != nil {
 			return err
 		}
 	}
@@ -428,8 +435,8 @@ func (o *Install) runWizard() error {
 func (o *Install) runEverestWizard() error {
 	var namespaces string
 	pNamespace := &survey.Input{
-		Message: "Namespaces managed by Everest (comma separated)",
-		Default: namespaces,
+		Message: "Namespaces managed by Everest [comma separated]",
+		Default: o.config.Namespaces,
 	}
 	if err := survey.AskOne(pNamespace, &namespaces); err != nil {
 		return err
