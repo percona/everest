@@ -25,7 +25,6 @@ const NamespaceDetails = () => {
   const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const { namespace: namespaceName = '' } = useParams();
-  // We keep track of the selected engine and its index in the dbEngines array, so we can use it to match against the preflight data
   const [selectedEngineIdx, setSelectedEngineIdx] = useState<number>();
   const { data: namespace, isLoading: loadingNamespace } = useNamespace(
     namespaceName,
@@ -96,21 +95,6 @@ const NamespaceDetails = () => {
               return oldData;
             }
 
-            // const updatedDbEngine: DbEngine = {
-            //   ...selectedEngine!.engine,
-            //   pendingOperatorUpgrades: undefined,
-            //   status: DbEngineStatus.UPGRADING,
-            //   operatorUpgrade: {
-            //     startedAt: new Date().toISOString(),
-            //     targetVersion,
-            //   },
-            // };
-
-            // setSelectedEngine((prev) => ({
-            //   index: prev!.index,
-            //   engine: updatedDbEngine,
-            // }));
-
             return {
               items: oldData.items.map((engine) => {
                 if (engine.metadata.name === engineName && !!engine.status) {
@@ -132,17 +116,6 @@ const NamespaceDetails = () => {
             };
           }
         );
-        // queryClient.setQueryData<OperatorUpgradePreflightPayload>(
-        //   ['dbEngineUpgradePreflight', namespaceName, engineName],
-        //   () => undefined
-        // );
-        // preflightQueriesResults[selectedEngine!.index].refetch();
-        // dbEngines.forEach((engine) => {
-        //   queryClient.invalidateQueries({
-        //     queryKey: ['dbEngineUpgradePreflight', namespaceName, engine.name],
-        //   });
-        // });
-
         setModalOpen(false);
       },
     });
