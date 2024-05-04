@@ -7,10 +7,6 @@ import {
 } from 'shared-types/dbEngines.types';
 
 export type UpgradeHeaderProps = {
-  // upgradeAvailable: boolean;
-  // pendingTasks: boolean;
-  // upgrading: boolean;
-  // dbType: DbType;
   engine: DbEngine;
   preflightPayload?: OperatorUpgradePreflightPayload;
   onUpgrade: () => void;
