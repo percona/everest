@@ -1,41 +1,45 @@
 import { useEffect, useState } from 'react';
 import { DbToggleCard, ToggleButtonGroupInput } from '@percona/ui-lib';
 import { dbEngineToDbType } from '@percona/utils';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import BackNavigationText from 'components/back-navigation-text';
-import { DbEngine } from 'shared-types/dbEngines.types';
+import {
+  DbEngine,
+  DbEngineStatus,
+  GetDbEnginesPayload,
+  OperatorUpgradePreflightPayload,
+} from 'shared-types/dbEngines.types';
 import { useNamespace } from 'hooks/api/namespaces';
 import { useDbEngines, useOperatorUpgrade } from 'hooks/api/db-engines';
 import { NoMatch } from 'pages/404/NoMatch';
 import { FormProvider, useForm } from 'react-hook-form';
-import { Typography } from '@mui/material';
 import UpgradeHeader from './upgrade-header';
 import ClusterStatusTable from './cluster-status-table';
 import UpgradeModal from './upgrade-modal';
-import { useQueries } from '@tanstack/react-query';
 import { getOperatorUpgradePreflight } from 'api/dbEngineApi';
-import EngineChip from './engine-chip';
+import EngineLowerContent from './engine-lower-content';
 
 const NamespaceDetails = () => {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const { namespace: namespaceName = '' } = useParams();
   // We keep track of the selected engine and its index in the dbEngines array, so we can use it to match against the preflight data
-  const [selectedEngine, setSelectedEngine] = useState<{
-    engine: DbEngine;
-    index: number;
-  }>();
+  const [selectedEngineIdx, setSelectedEngineIdx] = useState<number>();
   const { data: namespace, isLoading: loadingNamespace } = useNamespace(
     namespaceName,
     {
       enabled: !!namespaceName,
     }
   );
-  const { data: dbEngines = [], refetch: refetchDbEngines } = useDbEngines(
+  const { data: dbEngines = [] } = useDbEngines(
     namespaceName,
     {
       enabled: !!namespace,
-    }
+      refetchInterval: 2 * 1000,
+    },
+    true
   );
 
   const methods = useForm({
@@ -44,55 +48,112 @@ const NamespaceDetails = () => {
     },
   });
 
+  const selectedEngine: DbEngine | null =
+    selectedEngineIdx !== undefined ? dbEngines[selectedEngineIdx] : null;
+
   const targetVersion =
-    !!selectedEngine && selectedEngine.engine.pendingOperatorUpgrades?.length
-      ? selectedEngine?.engine.pendingOperatorUpgrades[0].targetVersion
+    !!selectedEngine && selectedEngine.pendingOperatorUpgrades?.length
+      ? selectedEngine?.pendingOperatorUpgrades[0].targetVersion
       : '';
 
   const preflightQueriesResults = useQueries({
     queries: dbEngines.map((engine) => ({
       queryKey: ['dbEngineUpgradePreflight', namespaceName, engine.name],
+      refetchInterval: 2 * 1000,
       queryFn: () =>
-        getOperatorUpgradePreflight(
-          namespaceName,
-          engine.name,
-          engine.pendingOperatorUpgrades![0].targetVersion
-        ),
-      enabled:
-        !!namespace &&
-        !!dbEngines.length &&
-        !!engine.pendingOperatorUpgrades?.length,
+        engine.pendingOperatorUpgrades?.length
+          ? getOperatorUpgradePreflight(
+              namespaceName,
+              engine.name,
+              engine.pendingOperatorUpgrades[0].targetVersion
+            )
+          : Promise.resolve<OperatorUpgradePreflightPayload>({
+              currentVersion: engine.operatorVersion,
+              databases: [],
+            }),
+      enabled: !!namespace && !!dbEngines.length,
     })),
   });
 
   const { mutate: upgradeOperator } = useOperatorUpgrade(
     namespaceName,
-    selectedEngine?.engine.name || '',
+    selectedEngine?.name || '',
     targetVersion
   );
-  const lastTargetVersion = selectedEngine?.engine.pendingOperatorUpgrades
-    ?.length
-    ? selectedEngine?.engine.pendingOperatorUpgrades[
-        selectedEngine?.engine.pendingOperatorUpgrades?.length - 1
+  const lastTargetVersion = selectedEngine?.pendingOperatorUpgrades?.length
+    ? selectedEngine?.pendingOperatorUpgrades[
+        selectedEngine?.pendingOperatorUpgrades?.length - 1
       ].targetVersion
     : '';
-  const operatorIsUpgrading = !!selectedEngine?.engine.operatorUpgrade;
 
-  const performUpgrade = () => {
+  const performUpgrade = (engineName: string) => {
     upgradeOperator(null, {
       onSuccess: () => {
-        refetchDbEngines();
+        queryClient.setQueryData<GetDbEnginesPayload>(
+          [`dbEngines_${namespace}`],
+          (oldData) => {
+            if (!oldData) {
+              return oldData;
+            }
+
+            // const updatedDbEngine: DbEngine = {
+            //   ...selectedEngine!.engine,
+            //   pendingOperatorUpgrades: undefined,
+            //   status: DbEngineStatus.UPGRADING,
+            //   operatorUpgrade: {
+            //     startedAt: new Date().toISOString(),
+            //     targetVersion,
+            //   },
+            // };
+
+            // setSelectedEngine((prev) => ({
+            //   index: prev!.index,
+            //   engine: updatedDbEngine,
+            // }));
+
+            return {
+              items: oldData.items.map((engine) => {
+                if (engine.metadata.name === engineName && !!engine.status) {
+                  return {
+                    ...engine,
+                    status: {
+                      ...engine.status,
+                      pendingOperatorUpgrades: undefined,
+                      status: DbEngineStatus.UPGRADING,
+                      operatorUpgrade: {
+                        startedAt: new Date().toISOString(),
+                        targetVersion,
+                      },
+                    },
+                  };
+                }
+                return engine;
+              }),
+            };
+          }
+        );
+        // queryClient.setQueryData<OperatorUpgradePreflightPayload>(
+        //   ['dbEngineUpgradePreflight', namespaceName, engineName],
+        //   () => undefined
+        // );
+        // preflightQueriesResults[selectedEngine!.index].refetch();
+        // dbEngines.forEach((engine) => {
+        //   queryClient.invalidateQueries({
+        //     queryKey: ['dbEngineUpgradePreflight', namespaceName, engine.name],
+        //   });
+        // });
+
         setModalOpen(false);
       },
     });
   };
 
   useEffect(() => {
-    if (dbEngines.length) {
+    if (dbEngines.length && !selectedEngine) {
       methods.setValue('dbType', dbEngineToDbType(dbEngines[0]?.type));
-      setSelectedEngine({ engine: dbEngines[0], index: 0 });
+      setSelectedEngineIdx(0);
     }
-  }, [dbEngines, methods]);
+  }, [dbEngines, methods, selectedEngine]);
 
   if (loadingNamespace) {
     return null;
@@ -121,46 +182,41 @@ const NamespaceDetails = () => {
               key={engine.type}
               value={dbEngineToDbType(engine.type)}
               lowerContent={
-                engine.pendingOperatorUpgrades?.length ? (
-                  <EngineChip
-                    preflightPayload={preflightQueriesResults[idx].data}
-                  />
-                ) : (
-                  <Typography variant="body2">
-                    version {engine.operatorVersion}
-                  </Typography>
-                )
+                <EngineLowerContent
+                  engine={engine}
+                  preflightPayload={preflightQueriesResults[idx].data}
+                />
+                // engine.pendingOperatorUpgrades?.length ? (
+                //   <EngineLowerContent
+                //     preflightPayload={preflightQueriesResults[idx].data}
+                //     upgrading={engine.status === DbEngineStatus.UPGRADING}
+                //   />
+                // ) : (
+                //   <Typography variant="body2">
+                //     version {engine.operatorVersion}
+                //   </Typography>
+                // )
               }
               onClick={() => {
-                setSelectedEngine({ engine, index: idx });
+                setSelectedEngineIdx(idx);
               }}
             />
           ))}
         </ToggleButtonGroupInput>
       </FormProvider>
-      {selectedEngine && (
+
+      {selectedEngineIdx !== undefined && selectedEngine && (
         <>
           <UpgradeHeader
-            upgradeAvailable={
-              !!preflightQueriesResults[selectedEngine.index].data
-            }
-            upgrading={operatorIsUpgrading}
-            pendingTasks={
-              !!preflightQueriesResults[
-                selectedEngine.index
-              ].data?.databases.filter(
-                (db) => db.pendingTask && db.pendingTask !== 'ready'
-              ).length
-            }
+            engine={selectedEngine}
+            preflightPayload={preflightQueriesResults[selectedEngineIdx].data}
             onUpgrade={() => setModalOpen(true)}
-            dbType={methods.getValues('dbType')}
             mt={2}
           />
           <ClusterStatusTable
             namespace={namespaceName}
             databases={
-              preflightQueriesResults[selectedEngine.index].data?.databases ||
-              []
+              preflightQueriesResults[selectedEngineIdx].data?.databases || []
             }
           />
         </>
@@ -173,7 +229,7 @@ const NamespaceDetails = () => {
         dbType={methods.getValues('dbType')}
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onConfirm={performUpgrade}
+        onConfirm={() => performUpgrade(selectedEngine!.name)}
       />
     </>
   );

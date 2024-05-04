@@ -21,6 +21,7 @@ export enum DbEngineType {
 export enum DbEngineStatus {
   INSTALLED = 'installed',
   NOT_INSTALLED = 'not installed',
+  UPGRADING = 'upgrading',
 }
 
 export enum DbEngineToolStatus {

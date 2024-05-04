@@ -39,12 +39,17 @@ const DB_TYPE_ORDER_MAP: Record<DbEngineType, number> = {
   [DbEngineType.POSTGRESQL]: 3,
 };
 
-export const dbEnginesQuerySelect = ({
-  items = [],
-}: GetDbEnginesPayload): DbEngine[] =>
+export const dbEnginesQuerySelect = (
+  { items = [] }: GetDbEnginesPayload,
+  retrieveUpgradingEngines = false
+): DbEngine[] =>
   items
     .filter(
-      (item) => item.status && item.status.status === DbEngineStatus.INSTALLED
+      (item) =>
+        item.status &&
+        (item.status.status === DbEngineStatus.INSTALLED ||
+          (retrieveUpgradingEngines &&
+            item.status.status === DbEngineStatus.UPGRADING))
     )
     .map(({ spec: { type }, status, metadata: { name } }) => {
       const {
@@ -101,12 +106,13 @@ export const dbEnginesQuerySelect = ({
 
 export const useDbEngines = (
   namespace: string,
-  options?: PerconaQueryOptions<GetDbEnginesPayload, unknown, DbEngine[]>
+  options?: PerconaQueryOptions<GetDbEnginesPayload, unknown, DbEngine[]>,
+  retrieveUpgradingEngines = false
 ) =>
   useQuery<GetDbEnginesPayload, unknown, DbEngine[]>({
     queryKey: [`dbEngines_${namespace}`],
     queryFn: () => getDbEnginesFn(namespace),
-    select: dbEnginesQuerySelect,
+    select: (data) => dbEnginesQuerySelect(data, retrieveUpgradingEngines),
     enabled: !!namespace,
     retry: 2,
     ...options,

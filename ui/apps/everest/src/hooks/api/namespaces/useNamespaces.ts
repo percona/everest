@@ -28,7 +28,8 @@ export const useNamespaces = () =>
     queryKey: [NAMESPACES_QUERY_KEY],
     queryFn: getNamespacesFn,
   });
-export const useDBEnginesForNamespaces = () => {
+
+export const useDBEnginesForNamespaces = (retrieveUpgradingEngines = false) => {
   const { data: namespaces = [] } = useNamespaces();
 
   const queries = namespaces.map<
@@ -37,7 +38,7 @@ export const useDBEnginesForNamespaces = () => {
     queryKey: [`dbEngines_${namespace}`],
     retry: false,
     queryFn: () => getDbEnginesFn(namespace),
-    select: dbEnginesQuerySelect,
+    select: (data) => dbEnginesQuerySelect(data, retrieveUpgradingEngines),
   }));
 
   const queryResults = useQueries({

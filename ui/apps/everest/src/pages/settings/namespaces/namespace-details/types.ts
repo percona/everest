@@ -1,15 +1,18 @@
 import { BoxProps } from '@mui/material';
 import { DbType } from '@percona/types';
 import {
+  DbEngine,
   OperatorUpgradeDb,
   OperatorUpgradePreflightPayload,
 } from 'shared-types/dbEngines.types';
 
 export type UpgradeHeaderProps = {
-  upgradeAvailable: boolean;
-  pendingTasks: boolean;
-  upgrading: boolean;
-  dbType: DbType;
+  // upgradeAvailable: boolean;
+  // pendingTasks: boolean;
+  // upgrading: boolean;
+  // dbType: DbType;
+  engine: DbEngine;
+  preflightPayload?: OperatorUpgradePreflightPayload;
   onUpgrade: () => void;
 } & BoxProps;
 
@@ -28,6 +31,7 @@ export type UpgradeModalProps = {
   supportedVersions: string[];
 };
 
-export type EngineChipProps = {
+export type EngineLowerContentProps = {
+  engine: DbEngine;
   preflightPayload?: OperatorUpgradePreflightPayload;
 };
