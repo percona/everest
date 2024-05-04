@@ -55,6 +55,10 @@ const NamespaceDetails = () => {
       ? selectedEngine?.pendingOperatorUpgrades[0].targetVersion
       : '';
 
+  const someEngineIsUpgrading = dbEngines.some(
+    (engine) => engine.status === DbEngineStatus.UPGRADING
+  );
+
   const preflightQueriesResults = useQueries({
     queries: dbEngines.map((engine) => ({
       queryKey: ['dbEngineUpgradePreflight', namespaceName, engine.name],
@@ -70,7 +74,7 @@ const NamespaceDetails = () => {
               currentVersion: engine.operatorVersion,
               databases: undefined,
             }),
-      enabled: !!namespace && !!dbEngines.length,
+      enabled: !!namespace && !!dbEngines.length && !someEngineIsUpgrading,
     })),
   });
 
@@ -152,6 +156,7 @@ const NamespaceDetails = () => {
         >
           {dbEngines.map((engine, idx) => (
             <DbToggleCard
+              disabled={someEngineIsUpgrading}
               key={engine.type}
               value={dbEngineToDbType(engine.type)}
               lowerContent={
