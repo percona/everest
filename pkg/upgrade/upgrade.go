@@ -114,6 +114,10 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return err
 	}
 
+	if err := u.kubeClient.CreateJWTSecret(ctx, false); err != nil {
+		return err
+	}
+
 	// We cannot use the latest version of catalog yet since
 	// at the time of writing, each catalog version supports only one Everest version.
 	catalogVersion := recVer.Catalog
