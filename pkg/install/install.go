@@ -47,12 +47,13 @@ const (
 	DefaultEverestNamespace = "everest"
 )
 
+// XXX: once `everestctl accounts update` is added, update this message to include instructions on how to reset password.
 const postInstallMessage = `
 Everest has been successfully installed!
 
 To view the password for the 'admin' user, run the following command:
 
-kubectl get secret -n everest-system everest-accounts -o jsonpath='{.data.passwords\.yaml}' | base64 --decode | yq .admin.passwordHash
+kubectl get secret -n everest-system everest-accounts -o jsonpath='{.data.passwords\.yaml}' | base64 --decode | awk '/admin:/ {getline; print $2}'
 
 
 To create a new user, run the following command:
