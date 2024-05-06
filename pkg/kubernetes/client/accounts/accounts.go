@@ -18,7 +18,9 @@ package accounts
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"slices"
 	"strings"
@@ -106,6 +108,24 @@ func (a *Client) Get(ctx context.Context, username string) (*Account, error) {
 		User:     user,
 		Password: pass,
 	}, nil
+}
+
+// ResetAdminPassword sets a new password for the admin account.
+// This password will not be hashed, so that the user can view, login and reset it.
+func (a *Client) ResetAdminPassword(ctx context.Context) error {
+	admin, err := a.Get(ctx, common.EverestAdminUser)
+	if err != nil {
+		return err
+	}
+	b := make([]byte, 64)
+	if _, err := rand.Read(b); err != nil {
+		return errors.Join(err, errors.New("failed to generate random password"))
+	}
+	admin.Password = Password{
+		PasswordHash:  hex.EncodeToString(b),
+		PasswordMTime: time.Now().Format(time.RFC3339),
+	}
+	return a.setAccounts(ctx, []Account{*admin}, true)
 }
 
 // List returns a list of all accounts.
