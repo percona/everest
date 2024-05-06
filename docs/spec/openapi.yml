@@ -24,6 +24,40 @@ tags:
     description: Everything related to the Backup storage
 
 paths:
+ '/session':
+    post:
+      summary: Create a new session
+      description: Create a new session
+      operationId: createSession
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The user credentials
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCredentials'
   '/namespaces':
     get:
       summary: Get all namespaces managed by Everest
@@ -1359,6 +1393,13 @@ components:
       type: array
       items:
         type: string
+    UserCredentials:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
     CreateBackupStorageParams:
       type: object
       description: Backup storage parameters
