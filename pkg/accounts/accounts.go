@@ -115,9 +115,8 @@ func (c *CLI) Delete(ctx context.Context, username, password string) error {
 
 // ListOptions holds options for listing user accounts.
 type ListOptions struct {
-	KubeconfigPath string   `mapstructure:"kubeconfig"`
-	NoHeaders      bool     `mapstructure:"no-headers"`
-	Columns        []string `mapstructure:"columns"`
+	NoHeaders bool     `mapstructure:"no-headers"`
+	Columns   []string `mapstructure:"columns"`
 }
 
 const (

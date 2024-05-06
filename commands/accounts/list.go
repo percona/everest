@@ -39,8 +39,9 @@ func NewListCmd(l *zap.SugaredLogger) *cobra.Command {
 			if err != nil {
 				os.Exit(1)
 			}
+			kubeconfigPath := viper.GetString("kubeconfig")
 
-			cli, err := accounts.NewCLI(o.KubeconfigPath, l)
+			cli, err := accounts.NewCLI(kubeconfigPath, l)
 			if err != nil {
 				l.Error(err)
 				os.Exit(1)
