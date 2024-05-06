@@ -31,6 +31,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/AlekSi/pointer"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes/client"
 )
@@ -61,6 +62,10 @@ type User struct {
 type Password struct {
 	PasswordHash  string `yaml:"passwordHash"`
 	PasswordMTime string `yaml:"passwordMTime"`
+
+	// Insecure is set to true if the password is not hashed.
+	// Generally this is set for the admin password after calling ResetAdminPassword.
+	Insecure *bool `yaml:"insecure,omitempty"`
 }
 
 // Account contains user and password data.
@@ -124,6 +129,7 @@ func (a *Client) ResetAdminPassword(ctx context.Context) error {
 	admin.Password = Password{
 		PasswordHash:  hex.EncodeToString(b),
 		PasswordMTime: time.Now().Format(time.RFC3339),
+		Insecure:      pointer.To(true),
 	}
 	return a.setAccounts(ctx, []Account{*admin}, true)
 }

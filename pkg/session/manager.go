@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/AlekSi/pointer"
 	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/percona/everest/pkg/kubernetes"
@@ -108,7 +109,15 @@ func (mgr *Manager) Authenticate(ctx context.Context, username string, password 
 		return errors.Join(err, errors.New("failed to compute password hash"))
 	}
 
-	if computedHash != account.PasswordHash {
+	// For secure accounts, compare the computed hash with the stored hash.
+	if !pointer.GetBool(account.Insecure) &&
+		computedHash != account.PasswordHash {
+		return errors.New("invalid password")
+	}
+
+	// For insecure accounts, compare the password with the stored hash.
+	if pointer.GetBool(account.Insecure) &&
+		password != account.PasswordHash {
 		return errors.New("invalid password")
 	}
 
