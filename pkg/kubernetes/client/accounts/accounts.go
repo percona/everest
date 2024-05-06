@@ -68,6 +68,11 @@ type Account struct {
 	Password
 }
 
+// HasCapability returns true if the given account has the specified capability.
+func (a Account) HasCapability(cap AccountCapability) bool {
+	return slices.Contains(a.Capabilities, cap)
+}
+
 // Client provides functionality for managing user accounts on Kubernetes.
 type Client struct {
 	k client.KubeClientConnector

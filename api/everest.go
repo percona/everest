@@ -25,7 +25,9 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"strings"
 
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 	middleware "github.com/oapi-codegen/echo-middleware"
@@ -120,7 +122,12 @@ func (e *EverestServer) initHTTPServer() error {
 
 	// Use our validation middleware to check all requests against the OpenAPI schema.
 	apiGroup := e.echo.Group(basePath)
-	apiGroup.Use(e.authenticate)
+	apiGroup.Use(echojwt.WithConfig(echojwt.Config{
+		Skipper: func(c echo.Context) bool {
+			return strings.Contains(c.Request().URL.Path, "session")
+		},
+		SigningKey: []byte(e.config.JWTSigningKey),
+	}))
 	apiGroup.Use(middleware.OapiRequestValidatorWithOptions(swagger, &middleware.Options{
 		SilenceServersWarning: true,
 	}))
