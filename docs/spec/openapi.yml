@@ -24,7 +24,7 @@ tags:
     description: Everything related to the Backup storage
 
 paths:
- '/session':
+  '/session':
     post:
       summary: Create a new session
       description: Create a new session
