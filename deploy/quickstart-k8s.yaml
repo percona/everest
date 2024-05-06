@@ -96,6 +96,12 @@ spec:
       containers:
         - name: everest
           image: perconalab/everest:0.0.0
+          env:
+            - name: JWT_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: everest-jwt
+                  key: signing_key
           ports:
             - containerPort: 8080
           readinessProbe:
