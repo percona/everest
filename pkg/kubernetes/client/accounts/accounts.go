@@ -69,8 +69,8 @@ type Account struct {
 }
 
 // HasCapability returns true if the given account has the specified capability.
-func (a Account) HasCapability(cap AccountCapability) bool {
-	return slices.Contains(a.Capabilities, cap)
+func (a Account) HasCapability(c AccountCapability) bool {
+	return slices.Contains(a.Capabilities, c)
 }
 
 // Client provides functionality for managing user accounts on Kubernetes.
