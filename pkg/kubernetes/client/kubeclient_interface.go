@@ -48,6 +48,8 @@ type KubeClientConnector interface {
 	// Config returns restConfig to the pkg/kubernetes.Kubernetes client.
 	Config() *rest.Config
 	// Clientset returns the k8s clientset.
+	//
+	//nolint:ireturn
 	Clientset() kubernetes.Interface
 	// ClusterName returns the name of the k8s cluster.
 	ClusterName() string

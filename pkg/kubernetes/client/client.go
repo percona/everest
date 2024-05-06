@@ -305,6 +305,8 @@ func (c *Client) Config() *rest.Config {
 }
 
 // Clientset returns the k8s clientset.
+//
+//nolint:ireturn
 func (c *Client) Clientset() kubernetes.Interface {
 	return c.clientset
 }
