@@ -57,12 +57,12 @@ func NewListCmd(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initListFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
 	cmd.Flags().Bool("no-headers", false, "If set, hide table headers")
 	cmd.Flags().StringSlice("columns", nil, "Comma-separated list of column names to display")
 }
 
 func initListViperFlags(cmd *cobra.Command) {
+	viper.BindEnv("kubeconfig")                                     //nolint:errcheck,gosec
 	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
 	viper.BindPFlag("no-headers", cmd.Flags().Lookup("no-headers")) //nolint:errcheck,gosec
 	viper.BindPFlag("columns", cmd.Flags().Lookup("columns"))       //nolint:errcheck,gosec

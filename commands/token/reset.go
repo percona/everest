@@ -57,13 +57,7 @@ func NewResetCmd(l *zap.SugaredLogger) *cobra.Command {
 		},
 	}
 
-	initResetFlags(cmd)
-
 	return cmd
-}
-
-func initResetFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
 }
 
 func initResetViperFlags(cmd *cobra.Command) {

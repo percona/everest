@@ -181,7 +181,7 @@ func (a *Client) Update(ctx context.Context, username, password string) error {
 		return err
 	}
 	if _, found := users[username]; !found {
-		return errors.New("user does not exist")
+		return ErrAccountNotFound
 	}
 	// Update the password.
 	passwords, err := a.listAllPasswords(ctx)

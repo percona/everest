@@ -60,11 +60,11 @@ func NewDeleteCmd(l *zap.SugaredLogger) *cobra.Command {
 func initCreateFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("username", "u", "", "Username of the account")
 	cmd.Flags().StringP("password", "p", "", "Password of the account")
-	cmd.Flags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
 }
 
 func initCreateViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag("username", cmd.Flags().Lookup("username"))     //nolint:errcheck,gosec
 	viper.BindPFlag("password", cmd.Flags().Lookup("password"))     //nolint:errcheck,gosec
+	viper.BindEnv("kubeconfig")                                     //nolint:errcheck,gosec
 	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
 }
