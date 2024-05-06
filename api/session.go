@@ -27,6 +27,11 @@ import (
 	"github.com/percona/everest/pkg/kubernetes/client/accounts"
 )
 
+const (
+	jwtSubjectTml    = "%s:%s" // username:capability
+	jwtDefaultExpiry = time.Hour * 24
+)
+
 // CreateSession creates a new session.
 func (e *EverestServer) CreateSession(ctx echo.Context) error {
 	var params UserCredentials
@@ -40,14 +45,15 @@ func (e *EverestServer) CreateSession(ctx echo.Context) error {
 		return err
 	}
 
-	uniqueId, err := uuid.NewRandom()
+	uniqueID, err := uuid.NewRandom()
 	if err != nil {
 		return err
 	}
 	jwtToken, err := e.sessionMgr.Create(
-		fmt.Sprintf("%s:%s", *params.Username, accounts.AccountCapabilityLogin),
-		int64((time.Hour * 24).Seconds()),
-		uniqueId.String())
+		fmt.Sprintf(jwtSubjectTml, *params.Username, accounts.AccountCapabilityLogin),
+		int64(jwtDefaultExpiry.Seconds()),
+		uniqueID.String(),
+	)
 	if err != nil {
 		return err
 	}
