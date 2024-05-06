@@ -37,6 +37,7 @@ import (
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/auth"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/session"
 	"github.com/percona/everest/public"
 )
 
@@ -47,6 +48,7 @@ type EverestServer struct {
 	l          *zap.SugaredLogger
 	echo       *echo.Echo
 	kubeClient *kubernetes.Kubernetes
+	sessionMgr *session.Manager
 }
 
 type authValidator interface {
@@ -69,12 +71,18 @@ func NewEverestServer(c *config.EverestConfig, l *zap.SugaredLogger) (*EverestSe
 	echoServer := echo.New()
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 
+	sessMgr := session.New(
+		session.WithAccountManager(kubeClient.Accounts()),
+		session.WithSigningKey([]byte(c.JWTSigningKey)),
+	)
+
 	e := &EverestServer{
 		config:     c,
 		l:          l,
 		echo:       echoServer,
 		kubeClient: kubeClient,
 		auth:       auth.NewToken(kubeClient, l, []byte(ns.UID)),
+		sessionMgr: sessMgr,
 	}
 
 	if err := e.initHTTPServer(); err != nil {

@@ -33,18 +33,18 @@ const (
 	SessionManagerClaimsIssuer = "everest"
 )
 
-// SessionManager provides functionality for creating and managing JWT tokens.
-type SessionManager struct {
+// Manager provides functionality for creating and managing JWT tokens.
+type Manager struct {
 	accountManager kubernetes.Accounts
 	signingKey     []byte
 }
 
 // Option is a function that modifies a SessionManager.
-type Option func(*SessionManager)
+type Option func(*Manager)
 
 // New creates a new session manager with the given options.
-func New(options ...Option) *SessionManager {
-	m := &SessionManager{}
+func New(options ...Option) *Manager {
+	m := &Manager{}
 	for _, opt := range options {
 		opt(m)
 	}
@@ -53,14 +53,14 @@ func New(options ...Option) *SessionManager {
 
 // WithAccountManager sets the account manager to use for verifying user credentials.
 func WithAccountManager(am kubernetes.Accounts) Option {
-	return func(m *SessionManager) {
+	return func(m *Manager) {
 		m.accountManager = am
 	}
 }
 
 // WithSigningKey sets the signing key to use for managing JWT tokens.
 func WithSigningKey(key []byte) Option {
-	return func(m *SessionManager) {
+	return func(m *Manager) {
 		m.signingKey = key
 	}
 }
@@ -68,7 +68,7 @@ func WithSigningKey(key []byte) Option {
 // Create creates a new token for a given subject (user) and returns it as a string.
 // Passing a value of `0` for secondsBeforeExpiry creates a token that never expires.
 // The id parameter holds an optional unique JWT token identifier and stored as a standard claim "jti" in the JWT token.
-func (mgr *SessionManager) Create(subject string, secondsBeforeExpiry int64, id string) (string, error) {
+func (mgr *Manager) Create(subject string, secondsBeforeExpiry int64, id string) (string, error) {
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
 	now := time.Now().UTC()
@@ -87,13 +87,13 @@ func (mgr *SessionManager) Create(subject string, secondsBeforeExpiry int64, id 
 	return mgr.signClaims(claims)
 }
 
-func (mgr *SessionManager) signClaims(claims jwt.Claims) (string, error) {
+func (mgr *Manager) signClaims(claims jwt.Claims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(mgr.signingKey)
 }
 
 // Authenticate verifies the given username and password.
-func (mgr *SessionManager) Authenticate(ctx context.Context, username string, password string) error {
+func (mgr *Manager) Authenticate(ctx context.Context, username string, password string) error {
 	if password == "" {
 		return fmt.Errorf("blank passwords are not allowed")
 	}
