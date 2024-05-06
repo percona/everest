@@ -27,10 +27,7 @@ rules:
     resources: ["databaseclusters", "databaseclusterbackups", "databaseclusterrestores", "backupstorages", "monitoringconfigs"]
     verbs: ["*"]
   - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["*"]
-  - apiGroups: [""]
-    resources: ["secrets"]
+    resources: ["secrets", "configmaps"]
     verbs: ["*"]
   - apiGroups: [""]
     resources: ["nodes", "pods", "persistentvolumes"]
@@ -41,9 +38,6 @@ rules:
   - apiGroups: ["everest.percona.com"]
     resources: ["*"]
     verbs: ["*"]
-  - apiGroups: [""]
-    resources: ["configmaps", "secrets"]
-    verbs: ["create", "upgrade", "get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
