@@ -38,4 +38,7 @@ const (
 
 	// EverestAccountsConfigName is the name of the ConfigMap that holds account data.
 	EverestAccountsConfigName = "everest-accounts"
+
+	// EverestJWTSecretName is the name of the secret that holds JWT secret.
+	EverestJWTSecretName = "everest-jwt"
 )

@@ -366,6 +366,11 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		everestExists = true
 	}
 
+	o.l.Info("Creating JWT Secret")
+	if err := o.kubeClient.CreateJWTSecret(ctx, !everestExists); err != nil {
+		return err
+	}
+
 	if !everestExists {
 		o.l.Info(fmt.Sprintf("Deploying Everest to %s", common.SystemNamespace))
 		if err = o.kubeClient.InstallEverest(ctx, common.SystemNamespace, v); err != nil {

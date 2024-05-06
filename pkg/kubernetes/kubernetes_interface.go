@@ -21,6 +21,8 @@ import (
 // KubernetesConnector ...
 type KubernetesConnector interface {
 	// Accounts returns a new client for managing everest user accounts.
+	//
+	//nolint:ireturn,stylecheck
 	Accounts() Accounts
 	// GetDeployment returns k8s deployment by provided name and namespace.
 	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
@@ -108,4 +110,7 @@ type KubernetesConnector interface {
 	UpdateClusterRoleBinding(ctx context.Context, name string, namespaces []string) error
 	// OperatorInstalledVersion returns the installed version of operator by name.
 	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
+	// CreateJWTSecret creates a new secret with the JWT singing key.
+	// If `force` is set to true, the secret will be re-created with a new key.
+	CreateJWTSecret(ctx context.Context, force bool) error
 }
