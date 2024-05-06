@@ -128,6 +128,24 @@ func (_m *MockKubernetesConnector) Config() *rest.Config {
 	return r0
 }
 
+// CreateJWTSecret provides a mock function with given fields: ctx, force
+func (_m *MockKubernetesConnector) CreateJWTSecret(ctx context.Context, force bool) error {
+	ret := _m.Called(ctx, force)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateJWTSecret")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, bool) error); ok {
+		r0 = rf(ctx, force)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CreateNamespace provides a mock function with given fields: name
 func (_m *MockKubernetesConnector) CreateNamespace(name string) error {
 	ret := _m.Called(name)
