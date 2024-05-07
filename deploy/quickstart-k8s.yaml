@@ -72,6 +72,15 @@ metadata:
     kubernetes.io/service-account.name: everest-admin
 type: kubernetes.io/service-account-token
 ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: everest-accounts
+  namespace: everest-jwt
+data:
+  # use your own signing key here.
+  signing_key: eW91ci1ldmVyZXN0LWp3dC1zaWduaW5nLWtleQo=
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:

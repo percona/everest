@@ -371,7 +371,7 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 	}
 
 	o.l.Info("Creating JWT Secret")
-	if err := o.kubeClient.CreateJWTSecret(ctx, !everestExists); err != nil {
+	if err := o.kubeClient.CreateJWTSecret(ctx, true); err != nil {
 		return err
 	}
 

@@ -16,12 +16,6 @@ import (
 // CreateJWTSecret creates a new secret with the JWT singing key.
 // If `force` is set to true, the secret will be re-created with a new key.
 func (k *Kubernetes) CreateJWTSecret(ctx context.Context, force bool) error {
-	if _, err := k.client.GetSecret(ctx, common.SystemNamespace, common.EverestJWTSecretName); ctrlclient.IgnoreNotFound(err) != nil {
-		return err
-	} else if !force {
-		// Secret already exists, and we don't want to overwrite it.
-		return nil
-	}
 	token, err := genJWTToken()
 	if err != nil {
 		return errors.Join(err, errors.New("failed to generate JWT token"))
@@ -35,7 +29,26 @@ func (k *Kubernetes) CreateJWTSecret(ctx context.Context, force bool) error {
 			"signing_key": []byte(token),
 		},
 	}
-	if _, err := k.client.CreateSecret(ctx, secret); err != nil {
+
+	exists := false
+	if _, err := k.client.GetSecret(ctx,
+		common.SystemNamespace,
+		common.EverestJWTSecretName,
+	); err == nil {
+		exists = true
+	} else if ctrlclient.IgnoreNotFound(err) != nil {
+		return err
+	}
+
+	if !exists {
+		if _, err := k.client.CreateSecret(ctx, secret); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if force {
+		_, err = k.client.UpdateSecret(ctx, secret)
 		return err
 	}
 	return nil
