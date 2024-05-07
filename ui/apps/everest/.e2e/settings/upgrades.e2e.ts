@@ -69,7 +69,7 @@ const generateMockPreflightData = (
   databases,
 });
 
-test.describe.only('Operator upgrades', () => {
+test.describe('Operator upgrades', () => {
   let namespaces = [];
 
   test.beforeAll(async ({ request }) => {
