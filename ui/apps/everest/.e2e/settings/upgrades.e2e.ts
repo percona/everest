@@ -145,9 +145,14 @@ test.describe('Operator upgrades', () => {
       page.getByText('A new version of the psmdb operator is available.')
     ).toBeVisible();
     await expect(await page.locator('tbody tr').count()).toBe(1);
+    await expect(
+      page.getByRole('button', { name: 'Upgrade Operator' })
+    ).not.toBeDisabled();
     await page.getByRole('button', { name: 'Upgrade Operator' }).click();
     expect(
-      page.getByText(`Are you sure you want to upgrade psmdb operator`)
+      page.getByText(
+        `Are you sure you want to upgrade psmdb operator in namespace ${namespaces[0]} to version 1.16.0?`
+      )
     ).toBeVisible();
   });
 
