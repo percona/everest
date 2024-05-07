@@ -4,8 +4,8 @@ import { UpgradeHeaderProps } from './types';
 import { DbEngineStatus } from 'shared-types/dbEngines.types';
 
 const upgradeMessage = (pendingTasks: boolean, dbType: DbEngineType) => {
-  return `A new version of the ${dbType} Operator is available. ${
-    pendingTasks ? 'Start upgrading by performing all the pending tasks' : ''
+  return `A new version of the ${dbType} operator is available. ${
+    pendingTasks ? 'Start upgrading by performing all the pending tasks.' : ''
   }`;
 };
 
@@ -15,7 +15,7 @@ const UpgradeHeader = ({
   preflightPayload,
 }: UpgradeHeaderProps) => {
   if (engine.status === DbEngineStatus.UPGRADING) {
-    return <Typography variant="body1">Upgrading the Operator...</Typography>;
+    return <Typography variant="body1">Upgrading the operator...</Typography>;
   }
 
   if (!preflightPayload?.databases) {

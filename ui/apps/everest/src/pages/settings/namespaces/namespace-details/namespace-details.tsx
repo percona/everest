@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DbToggleCard, ToggleButtonGroupInput } from '@percona/ui-lib';
-import { dbEngineToDbType } from '@percona/utils';
+import { dbEngineToDbType, dbTypeToDbEngine } from '@percona/utils';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import BackNavigationText from 'components/back-navigation-text';
@@ -194,7 +194,7 @@ const NamespaceDetails = () => {
         newVersion={lastTargetVersion}
         supportedVersions={['1.0.0', '2.0.0']}
         namespace={namespace}
-        dbType={methods.getValues('dbType')}
+        dbType={dbTypeToDbEngine(methods.getValues('dbType'))}
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onConfirm={() => performUpgrade(selectedEngine!.name)}

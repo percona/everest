@@ -1,5 +1,5 @@
 import { BoxProps } from '@mui/material';
-import { DbType } from '@percona/types';
+import { DbEngineType } from '@percona/types';
 import {
   DbEngine,
   OperatorUpgradeDb,
@@ -22,7 +22,7 @@ export type UpgradeModalProps = {
   onClose: () => void;
   onConfirm: () => void;
   namespace: string;
-  dbType: DbType;
+  dbType: DbEngineType;
   newVersion: string;
   supportedVersions: string[];
 };
