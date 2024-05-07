@@ -25,8 +25,12 @@ import (
 // AccountCapability represents a capability of an account.
 type AccountCapability string
 
-// ErrAccountNotFound is returned when an account is not found.
-var ErrAccountNotFound = errors.New("account not found")
+var (
+	// ErrAccountNotFound is returned when an account is not found.
+	ErrAccountNotFound = errors.New("account not found")
+	// ErrIncorrectPassword is returned when the password is invalid.
+	ErrIncorrectPassword = errors.New("invalid password")
+)
 
 const (
 	// AccountCapabilityLogin represents capability to create UI session tokens.

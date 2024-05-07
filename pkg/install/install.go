@@ -54,7 +54,7 @@ Everest has been successfully installed!
 
 To view the password for the 'admin' user, run the following command:
 
-kubectl get secret -n everest-system everest-accounts -o jsonpath='{.data.admin}' | base64 --decode
+kubectl get secret -n everest-system everest-admin-temp -o jsonpath='{.data.password}' | base64 --decode
 
 
 To create a new user, run the following command:

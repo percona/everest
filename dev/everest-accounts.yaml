@@ -6,6 +6,8 @@ data:
   users.yaml : |
     admin:
       enabled: true
+      capabilities:
+        - login
 ---
 apiVersion: v1
 kind: Secret
@@ -17,5 +19,5 @@ kind: Secret
 metadata:
   name: everest-admin-temp
 data:
-  password: ZXZlcmVzdGFkbWluCg== # everestadmin
+  password: ZXZlcmVzdGFkbWlu # everestadmin
 ---

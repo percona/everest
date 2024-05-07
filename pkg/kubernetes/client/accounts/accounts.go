@@ -27,6 +27,7 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/percona/everest/pkg/accounts"
@@ -35,8 +36,7 @@ import (
 )
 
 const (
-	usersFile = "users.yaml"
-
+	usersFile               = "users.yaml"
 	tempAdminPasswordSecret = "everest-admin-temp"
 )
 
@@ -116,6 +116,7 @@ func (a *configMapsClient) createAdminWithTempPassword(ctx context.Context) erro
 			"password": []byte(password),
 		},
 	}
+	// This temporary secret is deleted once the admin password is reset.
 	if _, err := a.k.CreateSecret(ctx, tempAdminSecret); err != nil {
 		return err
 	}
@@ -221,8 +222,8 @@ func (a *configMapsClient) Delete(ctx context.Context, username string) error {
 
 func (a *configMapsClient) Verify(ctx context.Context, username, password string) error {
 	if username == common.EverestAdminUser {
-		if err := a.tryVerifyTempAdminPassword(ctx, password); err == nil {
-			return nil
+		if shouldSkip, err := a.tryVerifyTempAdminPassword(ctx, password); !shouldSkip {
+			return err
 		}
 	}
 	users, err := a.listAllAccounts(ctx)
@@ -246,20 +247,25 @@ func (a *configMapsClient) Verify(ctx context.Context, username, password string
 		return accounts.ErrAccountNotFound
 	}
 	if string(storedhash) != computedHash {
-		return errors.New("incorrect password provided")
+		return accounts.ErrIncorrectPassword
 	}
 	return nil
 }
 
-func (a *configMapsClient) tryVerifyTempAdminPassword(ctx context.Context, password string) error {
+// try to check with the temporary password.
+// Returns: [skip(bool), error]
+func (a *configMapsClient) tryVerifyTempAdminPassword(ctx context.Context, password string) (bool, error) {
 	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, tempAdminPasswordSecret)
 	if err != nil {
-		return err
+		if k8serrors.IsNotFound(err) {
+			return true, nil
+		}
+		return false, err
 	}
 	if string(secret.Data["password"]) != password {
-		return errors.New("incorrect password provided")
+		return false, accounts.ErrIncorrectPassword
 	}
-	return nil
+	return false, nil
 }
 
 func (a *configMapsClient) computePasswordHash(ctx context.Context, password string) (string, error) {
