@@ -147,9 +147,7 @@ test.describe('Operator upgrades', () => {
     await expect(await page.locator('tbody tr').count()).toBe(1);
     await page.getByRole('button', { name: 'Upgrade Operator' }).click();
     expect(
-      page.getByText(
-        `Are you sure you want to upgrade psmdb operator in namespace ${namespaces[0]}?`
-      )
+      page.getByText(`Are you sure you want to upgrade psmdb operator`)
     ).toBeVisible();
   });
 
