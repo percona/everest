@@ -397,6 +397,7 @@ docker_build_with_restart('perconalab/everest',
 )
 
 k8s_yaml(namespace_inject('jwt-secret.yaml', everest_namespace))
+k8s_yaml(namespace_inject('everest-accounts.yaml', everest_namespace))
 k8s_yaml(namespace_inject('%s/deploy/quickstart-k8s.yaml' % backend_dir, everest_namespace))
 k8s_resource(
   workload='percona-everest',

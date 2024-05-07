@@ -11,6 +11,11 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: everest-accounts
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: everest-admin-temp
 data:
-  passwords.yaml: YWRtaW46CiAgaW5zZWN1cmU6IHRydWUKICBwYXNzd29yZEhhc2g6IGFkbWluCg==
+  password: ZXZlcmVzdGFkbWluCg== # everestadmin
 ---
