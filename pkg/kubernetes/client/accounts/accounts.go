@@ -253,7 +253,7 @@ func (a *configMapsClient) Verify(ctx context.Context, username, password string
 }
 
 // try to check with the temporary password.
-// Returns: [skip(bool), error]
+// Returns: [skip(bool), error].
 func (a *configMapsClient) tryVerifyTempAdminPassword(ctx context.Context, password string) (bool, error) {
 	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, tempAdminPasswordSecret)
 	if err != nil {
