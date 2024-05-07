@@ -25,6 +25,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/percona/everest/pkg/accounts"
+	"github.com/percona/everest/pkg/common"
 )
 
 const (
@@ -58,5 +59,9 @@ func (e *EverestServer) CreateSession(ctx echo.Context) error {
 		return err
 	}
 
+	ctx.SetCookie(&http.Cookie{
+		Name:  common.EverestTokenCookie,
+		Value: jwtToken,
+	})
 	return ctx.JSON(http.StatusOK, map[string]string{"token": jwtToken})
 }

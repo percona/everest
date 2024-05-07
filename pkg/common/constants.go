@@ -44,4 +44,7 @@ const (
 
 	// EverestAdminUser is the name of the admin user.
 	EverestAdminUser = "admin"
+
+	// EverestTokenCookie is the name of the cookie that holds the token.
+	EverestTokenCookie = "everest_token"
 )

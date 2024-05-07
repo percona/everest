@@ -38,7 +38,6 @@ func NewRootCmd(l *zap.SugaredLogger) *cobra.Command {
 	rootCmd.PersistentFlags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
 
 	rootCmd.AddCommand(newInstallCmd(l))
-	rootCmd.AddCommand(newTokenCmd(l))
 	rootCmd.AddCommand(newVersionCmd(l))
 	rootCmd.AddCommand(newUpgradeCmd(l))
 	rootCmd.AddCommand(newUninstallCmd(l))

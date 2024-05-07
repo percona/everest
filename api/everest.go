@@ -36,6 +36,7 @@ import (
 
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/auth"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/session"
 	"github.com/percona/everest/public"
@@ -130,19 +131,26 @@ func (e *EverestServer) initHTTPServer() error {
 
 	// Use our validation middleware to check all requests against the OpenAPI schema.
 	apiGroup := e.echo.Group(basePath)
-	apiGroup.Use(echojwt.WithConfig(echojwt.Config{
-		Skipper: func(c echo.Context) bool {
-			return strings.Contains(c.Request().URL.Path, "session")
-		},
-		SigningKey: []byte(e.config.JWTSigningKey),
-	}))
 	apiGroup.Use(middleware.OapiRequestValidatorWithOptions(swagger, &middleware.Options{
 		SilenceServersWarning: true,
 	}))
+	apiGroup.Use(e.jwtMiddleWare())
 	apiGroup.Use(e.checkOperatorUpgradeState)
 	RegisterHandlers(apiGroup, e)
 
 	return nil
+}
+
+func (e *EverestServer) jwtMiddleWare() echo.MiddlewareFunc {
+	tokenLookup := "header:Authorization:Bearer "
+	tokenLookup = tokenLookup + ",cookie:" + common.EverestTokenCookie
+	return echojwt.WithConfig(echojwt.Config{
+		Skipper: func(c echo.Context) bool {
+			return strings.Contains(c.Request().URL.Path, "session")
+		},
+		SigningKey:  []byte(e.config.JWTSigningKey),
+		TokenLookup: tokenLookup,
+	})
 }
 
 // Start starts everest server.
