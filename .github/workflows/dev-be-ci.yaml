@@ -332,10 +332,6 @@ jobs:
             --skip-wizard \
             --namespaces everest
 
-          # API_TOKEN is used later by "make test"
-          echo "API_TOKEN=$(./bin/everestctl token reset --json | jq .token -r)" >> $GITHUB_ENV
-
-
       - name: Patch Everest Deployment to use the PR image
         run: |
           kubectl -n everest-system patch deployment percona-everest --type strategic --patch-file dev/patch-deployment-image.yaml
@@ -344,6 +340,12 @@ jobs:
       - name: Expose Everest API Server
         run: |
           kubectl port-forward --namespace everest-system deployment/percona-everest 8080:8080 &
+
+      - name: Log into Everest as admin
+        run: |
+          EVEREST_PASS=$(kubectl get secret -n everest-system everest-admin-temp -o jsonpath='{.data.password}' | base64 --decode)
+          echo "API_TOKEN=$(curl --location -s 'localhost:8080/v1/session' --header 'Content-Type: application/json' --data '{\"username\": \"admin\",\"password\": \"'\"$EVEREST_PASS\"'\"}' | jq -r .token)" >> $GITHUB_ENV
+          echo $GITHUB_ENV # todo: remove
 
       - name: Run integration tests
         run: |
