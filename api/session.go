@@ -24,7 +24,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
-	"github.com/percona/everest/pkg/kubernetes/client/accounts"
+	"github.com/percona/everest/pkg/accounts"
 )
 
 const (

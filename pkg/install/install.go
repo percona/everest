@@ -36,6 +36,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/percona/everest/pkg/accounts"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/version"
@@ -53,7 +54,7 @@ Everest has been successfully installed!
 
 To view the password for the 'admin' user, run the following command:
 
-kubectl get secret -n everest-system everest-accounts -o jsonpath='{.data.passwords\.yaml}' | base64 --decode | awk '/admin:/ {getline; print $2}'
+kubectl get secret -n everest-system everest-accounts -o jsonpath='{.data.admin}' | base64 --decode
 
 
 To create a new user, run the following command:
@@ -379,18 +380,6 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		if err = o.kubeClient.InstallEverest(ctx, common.SystemNamespace, v); err != nil {
 			return err
 		}
-
-		// Create admin user for Everest.
-		// We set the password to "password" here, however we reset it in the next step.
-		// The reason is that `Create` hashes the password, but during the initial installation,
-		// we want the user to be able to view a plain text password which they will reset later.
-		if err := o.kubeClient.Accounts().Create(ctx, common.EverestAdminUser, "password"); err != nil {
-			return err
-		}
-		// Reset the password and store it in plain text for the user to view it.
-		if err := o.kubeClient.Accounts().ResetAdminPassword(ctx); err != nil {
-			return err
-		}
 	} else {
 		o.l.Info("Restarting Everest")
 		if err := o.kubeClient.RestartOperator(ctx, common.PerconaEverestOperatorDeploymentName, common.SystemNamespace); err != nil {
@@ -399,6 +388,10 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		if err := o.kubeClient.RestartDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace); err != nil {
 			return err
 		}
+	}
+
+	if err := o.createEverestAdminAccount(ctx); err != nil {
+		return err
 	}
 
 	o.l.Info("Updating cluster role bindings for everest-admin")
@@ -741,5 +734,20 @@ func validateRFC1035(s string) error {
 		return ErrNameNotRFC1035Compatible(s)
 	}
 
+	return nil
+}
+
+func (o *Install) createEverestAdminAccount(ctx context.Context) error {
+	o.l.Info("Creating Everest admin account")
+	// Check if admin already exists?
+	if _, err := o.kubeClient.Accounts().Get(ctx, common.EverestAdminUser); err == nil {
+		return nil
+	} else if !errors.Is(err, accounts.ErrAccountNotFound) {
+		return err
+	}
+
+	if err := o.kubeClient.Accounts().Create(ctx, common.EverestAdminUser, ""); err != nil {
+		return err
+	}
 	return nil
 }

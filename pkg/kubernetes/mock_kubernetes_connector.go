@@ -16,6 +16,7 @@ import (
 	rest "k8s.io/client-go/rest"
 
 	v1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	accounts "github.com/percona/everest/pkg/accounts"
 	client "github.com/percona/everest/pkg/kubernetes/client"
 )
 
@@ -25,19 +26,19 @@ type MockKubernetesConnector struct {
 }
 
 // Accounts provides a mock function with given fields:
-func (_m *MockKubernetesConnector) Accounts() Accounts {
+func (_m *MockKubernetesConnector) Accounts() accounts.Interface {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Accounts")
 	}
 
-	var r0 Accounts
-	if rf, ok := ret.Get(0).(func() Accounts); ok {
+	var r0 accounts.Interface
+	if rf, ok := ret.Get(0).(func() accounts.Interface); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(Accounts)
+			r0 = ret.Get(0).(accounts.Interface)
 		}
 	}
 

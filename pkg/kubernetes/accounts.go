@@ -17,25 +17,13 @@
 package kubernetes
 
 import (
-	"context"
-
-	"github.com/percona/everest/pkg/kubernetes/client/accounts"
+	"github.com/percona/everest/pkg/accounts"
+	k8sAccounts "github.com/percona/everest/pkg/kubernetes/client/accounts"
 )
-
-// Accounts provides an interface for managing Everest user accounts.
-type Accounts interface {
-	Create(ctx context.Context, username, password string) error
-	Get(ctx context.Context, username string) (*accounts.Account, error)
-	List(ctx context.Context) ([]accounts.Account, error)
-	Delete(ctx context.Context, username string) error
-	Update(ctx context.Context, username, password string) error
-	ComputePasswordHash(ctx context.Context, password string) (string, error)
-	ResetAdminPassword(ctx context.Context) error
-}
 
 // Accounts returns a new client for managing everest user accounts.
 //
 //nolint:ireturn,stylecheck
-func (c *Kubernetes) Accounts() Accounts {
-	return accounts.New(c.client)
+func (c *Kubernetes) Accounts() accounts.Interface {
+	return k8sAccounts.New(c.client)
 }

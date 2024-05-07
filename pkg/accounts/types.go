@@ -1,0 +1,57 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package accounts ...
+package accounts
+
+import (
+	"context"
+	"errors"
+	"slices"
+)
+
+// AccountCapability represents a capability of an account.
+type AccountCapability string
+
+// ErrAccountNotFound is returned when an account is not found.
+var ErrAccountNotFound = errors.New("account not found")
+
+const (
+	// AccountCapabilityLogin represents capability to create UI session tokens.
+	AccountCapabilityLogin AccountCapability = "login"
+	// AccountCapabilityAPIKey represents capability to generate API auth tokens.
+	AccountCapabilityAPIKey AccountCapability = "apiKey"
+)
+
+// Account is an internal representation of an Everest user account.
+type Account struct {
+	Enabled       bool                `yaml:"enabled"`
+	Capabilities  []AccountCapability `yaml:"capabilities"`
+	PasswordMtime string              `yaml:"passwordMtime"`
+}
+
+// HasCapability returns true if the given account has the specified capability.
+func (a Account) HasCapability(c AccountCapability) bool {
+	return slices.Contains(a.Capabilities, c)
+}
+
+// Interface provides the methods for managing Everest user accounts.
+type Interface interface {
+	Create(ctx context.Context, username, password string) error
+	Get(ctx context.Context, username string) (*Account, error)
+	List(ctx context.Context) (map[string]*Account, error)
+	Delete(ctx context.Context, username string) error
+	Verify(ctx context.Context, username, password string) error
+}

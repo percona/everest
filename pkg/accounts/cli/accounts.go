@@ -13,46 +13,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package accounts holds commands for accounts command.
-package accounts
+// Package cli holds commands for accounts command.
+package cli
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/rodaine/table"
 	"go.uber.org/zap"
 
-	"github.com/percona/everest/pkg/kubernetes"
-	accountsapi "github.com/percona/everest/pkg/kubernetes/client/accounts"
+	"github.com/percona/everest/pkg/accounts"
 )
 
 // CLI provides functionality for managing user accounts via the CLI.
 type CLI struct {
-	kubeClient *kubernetes.Kubernetes
-	l          *zap.SugaredLogger
+	accountManager accounts.Interface
+	l              *zap.SugaredLogger
 }
 
-// NewCLI creates a new CLI for running accounts commands.
-func NewCLI(kubeConfigPath string, l *zap.SugaredLogger) (*CLI, error) {
-	cli := &CLI{
+// New creates a new CLI for running accounts commands.
+func New(l *zap.SugaredLogger) *CLI {
+	return &CLI{
 		l: l.With("component", "accounts"),
 	}
-	k, err := kubernetes.New(kubeConfigPath, l)
-	if err != nil {
-		var u *url.Error
-		if errors.As(err, &u) {
-			cli.l.Error("Could not connect to Kubernetes. " +
-				"Make sure Kubernetes is running and is accessible from this computer/server.")
-		}
-		return nil, err
-	}
-	cli.kubeClient = k
-	return cli, nil
+}
+
+// WithAccountManager sets the account manager for the CLI.
+func (c *CLI) WithAccountManager(m accounts.Interface) {
+	c.accountManager = m
 }
 
 func (c *CLI) runCredentialsWizard(username, password *string) error {
@@ -83,7 +75,7 @@ func (c *CLI) Create(ctx context.Context, username, password string) error {
 	if username == "" {
 		return errors.New("username is required")
 	}
-	if err := c.kubeClient.Accounts().Create(ctx, username, password); err != nil {
+	if err := c.accountManager.Create(ctx, username, password); err != nil {
 		return err
 	}
 	c.l.Infof("User '%s' has been created", username)
@@ -98,19 +90,10 @@ func (c *CLI) Delete(ctx context.Context, username, password string) error {
 	if username == "" {
 		return errors.New("username is required")
 	}
-	user, err := c.kubeClient.Accounts().Get(ctx, username)
-	if err != nil {
+	if err := c.accountManager.Verify(ctx, username, password); err != nil {
 		return err
 	}
-	computedHash, err := c.kubeClient.Accounts().ComputePasswordHash(ctx, password)
-	if err != nil {
-		return err
-	}
-	if computedHash != user.PasswordHash {
-		return errors.New("incorrect password entered")
-	}
-	c.l.Infof("User '%s' has been deleted", username)
-	return c.kubeClient.Accounts().Delete(ctx, username)
+	return c.accountManager.Delete(ctx, username)
 }
 
 // ListOptions holds options for listing user accounts.
@@ -147,18 +130,18 @@ func (c *CLI) List(ctx context.Context, opts *ListOptions) error {
 		// Otherwise print in all caps.
 		return strings.ToUpper(fmt.Sprintf(format, vals...))
 	})
-	accounts, err := c.kubeClient.Accounts().List(ctx)
+	accountsList, err := c.accountManager.List(ctx)
 	if err != nil {
 		return err
 	}
 
 	// Return a table row for the given account.
-	row := func(account accountsapi.Account) []any {
+	row := func(user string, account *accounts.Account) []any {
 		row := []any{}
 		for _, heading := range headings {
 			switch heading {
 			case "user":
-				row = append(row, account.ID)
+				row = append(row, user)
 			case "capabilities":
 				row = append(row, account.Capabilities)
 			case "enabled":
@@ -167,8 +150,8 @@ func (c *CLI) List(ctx context.Context, opts *ListOptions) error {
 		}
 		return row
 	}
-	for _, account := range accounts {
-		tbl.AddRow(row(account)...)
+	for user, a := range accountsList {
+		tbl.AddRow(row(user, a)...)
 	}
 	tbl.Print()
 	return nil

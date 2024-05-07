@@ -18,13 +18,16 @@ package accounts
 
 import (
 	"context"
+	"errors"
+	"net/url"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
-	"github.com/percona/everest/pkg/accounts"
+	accountscli "github.com/percona/everest/pkg/accounts/cli"
+	"github.com/percona/everest/pkg/kubernetes"
 )
 
 // NewListCmd returns a new list command.
@@ -34,18 +37,25 @@ func NewListCmd(l *zap.SugaredLogger) *cobra.Command {
 		Example: "everestctl accounts list",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initListViperFlags(cmd)
-			o := &accounts.ListOptions{}
+			o := &accountscli.ListOptions{}
 			err := viper.Unmarshal(o)
 			if err != nil {
 				os.Exit(1)
 			}
 			kubeconfigPath := viper.GetString("kubeconfig")
 
-			cli, err := accounts.NewCLI(kubeconfigPath, l)
+			k, err := kubernetes.New(kubeconfigPath, l)
 			if err != nil {
-				l.Error(err)
-				os.Exit(1)
+				var u *url.Error
+				if errors.As(err, &u) {
+					l.Error("Could not connect to Kubernetes. " +
+						"Make sure Kubernetes is running and is accessible from this computer/server.")
+				}
+				os.Exit(0)
 			}
+
+			cli := accountscli.New(l)
+			cli.WithAccountManager(k.Accounts())
 
 			if err := cli.List(context.Background(), o); err != nil {
 				l.Error(err)

@@ -22,160 +22,157 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"slices"
-	"strings"
 	"time"
 
 	"golang.org/x/crypto/pbkdf2"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/AlekSi/pointer"
+	"github.com/percona/everest/pkg/accounts"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes/client"
 )
 
-// AccountCapability represents a capability of an account.
-type AccountCapability string
-
 const (
-	// AccountCapabilityLogin represents capability to create UI session tokens.
-	AccountCapabilityLogin AccountCapability = "login"
-	// AccountCapabilityAPIKey represents capability to generate API auth tokens.
-	AccountCapabilityAPIKey AccountCapability = "apiKey"
+	usersFile = "users.yaml"
 
-	usersFile    = "users.yaml"
-	passwordFile = "passwords.yaml"
+	tempAdminPasswordSecret = "everest-admin-temp"
 )
 
-// ErrAccountNotFound is returned when an account is not found.
-var ErrAccountNotFound = errors.New("account not found")
-
-// User contains user data.
-type User struct {
-	Enabled      bool                `yaml:"enabled"`
-	Capabilities []AccountCapability `yaml:"capabilities"`
-}
-
-// Password contains password data.
-type Password struct {
-	PasswordHash  string `yaml:"passwordHash"`
-	PasswordMTime string `yaml:"passwordMTime"`
-
-	// Insecure is set to true if the password is not hashed.
-	// Generally this is set for the admin password after calling ResetAdminPassword.
-	Insecure *bool `yaml:"insecure,omitempty"`
-}
-
-// Account contains user and password data.
-type Account struct {
-	ID string
-	User
-	Password
-}
-
-// HasCapability returns true if the given account has the specified capability.
-func (a Account) HasCapability(c AccountCapability) bool {
-	return slices.Contains(a.Capabilities, c)
-}
-
-// Client provides functionality for managing user accounts on Kubernetes.
-type Client struct {
+type configMapsClient struct {
 	k client.KubeClientConnector
 }
 
-// New returns a new Kubernetes based account manager for Everest.
-func New(k client.KubeClientConnector) *Client {
-	return &Client{k: k}
+// New returns an implementation of the accounts interface that
+// manages everest accounts directly via ConfigMaps.
+//
+//nolint:ireturn
+func New(k client.KubeClientConnector) accounts.Interface {
+	return &configMapsClient{k: k}
 }
 
 // Get returns an account by username.
-func (a *Client) Get(ctx context.Context, username string) (*Account, error) {
-	users, err := a.listAllUsers(ctx)
+func (a *configMapsClient) Get(ctx context.Context, username string) (*accounts.Account, error) {
+	users, err := a.listAllAccounts(ctx)
 	if err != nil {
 		return nil, err
 	}
 	user, found := users[username]
 	if !found {
-		return nil, ErrAccountNotFound
+		return nil, accounts.ErrAccountNotFound
 	}
-	passwords, err := a.listAllPasswords(ctx)
-	if err != nil {
-		return nil, err
-	}
-	pass, found := passwords[username]
-	if !found {
-		return nil, ErrAccountNotFound
-	}
-	return &Account{
-		ID:       username,
-		User:     user,
-		Password: pass,
-	}, nil
-}
-
-// ResetAdminPassword sets a new password for the admin account.
-// This password will not be hashed, so that the user can view, login and reset it.
-func (a *Client) ResetAdminPassword(ctx context.Context) error {
-	admin, err := a.Get(ctx, common.EverestAdminUser)
-	if err != nil {
-		return err
-	}
-	b := make([]byte, 64)
-	if _, err := rand.Read(b); err != nil {
-		return errors.Join(err, errors.New("failed to generate random password"))
-	}
-	admin.Password = Password{
-		PasswordHash:  hex.EncodeToString(b),
-		PasswordMTime: time.Now().Format(time.RFC3339),
-		Insecure:      pointer.To(true),
-	}
-	return a.setAccounts(ctx, []Account{*admin}, true)
+	return user, nil
 }
 
 // List returns a list of all accounts.
-func (a *Client) List(ctx context.Context) ([]Account, error) {
-	users, err := a.listAllUsers(ctx)
+func (a *configMapsClient) List(ctx context.Context) (map[string]*accounts.Account, error) {
+	return a.listAllAccounts(ctx)
+}
+
+func (a *configMapsClient) listAllAccounts(ctx context.Context) (map[string]*accounts.Account, error) {
+	result := make(map[string]*accounts.Account)
+	cm, err := a.k.GetConfigMap(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
 	if err != nil {
 		return nil, err
 	}
-	passwords, err := a.listAllPasswords(ctx)
-	if err != nil {
+	if err := yaml.Unmarshal([]byte(cm.Data[usersFile]), result); err != nil {
 		return nil, err
 	}
-	return mergeUserPassToAccounts(users, passwords), nil
+	return result, nil
 }
 
 // Create a new user account.
-func (a *Client) Create(ctx context.Context, username, password string) error {
-	// Check if this user exists?
-	users, err := a.listAllUsers(ctx)
-	if err != nil {
+func (a *configMapsClient) Create(ctx context.Context, username, password string) error {
+	if username == common.EverestAdminUser && password == "" {
+		return a.createAdminWithTempPassword(ctx)
+	}
+	account := &accounts.Account{
+		Enabled:       true,
+		Capabilities:  []accounts.AccountCapability{accounts.AccountCapabilityLogin},
+		PasswordMtime: time.Now().Format(time.RFC3339),
+	}
+	if err := a.setAccount(ctx, username, account); err != nil {
 		return err
 	}
-	if _, found := users[username]; found {
-		return errors.New("user already exists")
+	if err := a.setPassword(ctx, username, password); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *configMapsClient) createAdminWithTempPassword(ctx context.Context) error {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return err
+	}
+	password := hex.EncodeToString(b)
+	tempAdminSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      tempAdminPasswordSecret,
+			Namespace: common.SystemNamespace,
+		},
+		Data: map[string][]byte{
+			"password": []byte(password),
+		},
+	}
+	if _, err := a.k.CreateSecret(ctx, tempAdminSecret); err != nil {
+		return err
+	}
+	if err := a.setAccount(ctx, common.EverestAdminUser, &accounts.Account{
+		Enabled:       true,
+		Capabilities:  []accounts.AccountCapability{accounts.AccountCapabilityLogin},
+		PasswordMtime: time.Now().Format(time.RFC3339),
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *configMapsClient) setPassword(ctx context.Context, username, password string) error {
+	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
+	if err != nil {
+		return err
 	}
 	hash, err := a.computePasswordHash(ctx, password)
 	if err != nil {
+		return errors.Join(err, errors.New("failed to compute hash"))
+	}
+	if secret.Data == nil {
+		secret.Data = make(map[string][]byte)
+	}
+	secret.Data[username] = []byte(hash)
+	if _, err := a.k.UpdateSecret(ctx, secret); err != nil {
 		return err
 	}
-	acc := Account{
-		ID: username,
-		User: User{
-			Enabled:      true,
-			Capabilities: []AccountCapability{AccountCapabilityLogin}, // XX: for now we only support login
-		},
-		Password: Password{
-			PasswordHash:  hash,
-			PasswordMTime: time.Now().Format(time.RFC3339),
-		},
-	}
-	return a.setAccounts(ctx, []Account{acc}, true)
+	return nil
 }
 
-func (a *Client) salt(ctx context.Context) ([]byte, error) {
+func (a *configMapsClient) setAccount(ctx context.Context, username string, account *accounts.Account) error {
+	cm, err := a.k.GetConfigMap(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
+	if err != nil {
+		return err
+	}
+	accounts := make(map[string]*accounts.Account)
+	if err := yaml.Unmarshal([]byte(cm.Data[usersFile]), &accounts); err != nil {
+		return err
+	}
+	accounts[username] = account
+	data, err := yaml.Marshal(accounts)
+	if err != nil {
+		return err
+	}
+	if cm.Data == nil {
+		cm.Data = make(map[string]string)
+	}
+	cm.Data[usersFile] = string(data)
+	if _, err := a.k.UpdateConfigMap(ctx, cm); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *configMapsClient) salt(ctx context.Context) ([]byte, error) {
 	ns, err := a.k.GetNamespace(ctx, common.SystemNamespace)
 	if err != nil {
 		return nil, err
@@ -184,196 +181,92 @@ func (a *Client) salt(ctx context.Context) ([]byte, error) {
 }
 
 // Delete an existing user account specified by username.
-func (a *Client) Delete(ctx context.Context, username string) error {
-	// Check if this user exists?
-	users, err := a.listAllUsers(ctx)
+func (a *configMapsClient) Delete(ctx context.Context, username string) error {
+	users, err := a.listAllAccounts(ctx)
 	if err != nil {
 		return err
 	}
-	if _, found := users[username]; !found {
-		return ErrAccountNotFound
-	}
-	// Remove user from the list.
+	// Update ConfigMap.
 	delete(users, username)
-	passwords, err := a.listAllPasswords(ctx)
+	b, err := yaml.Marshal(users)
 	if err != nil {
 		return err
 	}
-	delete(passwords, username)
-	acc := mergeUserPassToAccounts(users, passwords)
-	return a.setAccounts(ctx, acc, false)
-}
-
-// Update an existing user account specified by username.
-func (a *Client) Update(ctx context.Context, username, password string) error {
-	// Check if this user exists?
-	users, err := a.listAllUsers(ctx)
-	if err != nil {
-		return err
-	}
-	if _, found := users[username]; !found {
-		return ErrAccountNotFound
-	}
-	// Update the password.
-	passwords, err := a.listAllPasswords(ctx)
-	if err != nil {
-		return err
-	}
-	hash, err := a.computePasswordHash(ctx, password)
-	if err != nil {
-		return err
-	}
-	passwords[username] = Password{
-		PasswordHash:  hash,
-		PasswordMTime: time.Now().Format(time.RFC3339),
-	}
-	return a.setAccounts(ctx, mergeUserPassToAccounts(users, passwords), true)
-}
-
-// ComputePasswordHash computes the password hash for a given password.
-func (a *Client) ComputePasswordHash(ctx context.Context, password string) (string, error) {
-	return a.computePasswordHash(ctx, password)
-}
-
-func (a *Client) computePasswordHash(ctx context.Context, password string) (string, error) {
-	salt, err := a.salt(ctx)
-	if err != nil {
-		return "", errors.Join(err, errors.New("failed to get salt"))
-	}
-	hash := pbkdf2.Key([]byte(password), salt, 4096, 32, sha256.New)
-	return string(hash), nil
-}
-
-func mergeUserPassToAccounts(users map[string]User, passwords map[string]Password) []Account {
-	accounts := make([]Account, 0, len(users))
-	for name, user := range users {
-		pass, found := passwords[name]
-		if !found {
-			continue
-		}
-		accounts = append(accounts, Account{
-			ID:       name,
-			User:     user,
-			Password: pass,
-		})
-	}
-	slices.SortFunc(accounts, func(a, b Account) int {
-		return strings.Compare(a.ID, b.ID)
-	})
-	return accounts
-}
-
-// Given a list of accounts, update the ConfigMap and Secret.
-// If patch is true, existing all existing accounts are preserved.
-// If patch is false, accounts are replaced with the new list.
-func (a *Client) setAccounts(
-	ctx context.Context,
-	accounts []Account,
-	patch bool,
-) error {
-	var (
-		err       error
-		users     = make(map[string]User)
-		passwords = make(map[string]Password)
-	)
-	if patch {
-		// Get existing users and passwords.
-		users, err = a.listAllUsers(ctx)
-		if err != nil {
-			return err
-		}
-		passwords, err = a.listAllPasswords(ctx)
-		if err != nil {
-			return err
-		}
-		// Modify accounts.
-		for _, acc := range accounts {
-			users[acc.ID] = acc.User
-			passwords[acc.ID] = acc.Password
-		}
-	} else {
-		for _, acc := range accounts {
-			users[acc.ID] = acc.User
-			passwords[acc.ID] = acc.Password
-		}
-	}
-	if err := a.updateConfigMap(ctx, users); err != nil {
-		return err
-	}
-	if err := a.updateSecret(ctx, passwords); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (a *Client) updateConfigMap(ctx context.Context, users map[string]User) error {
-	userB, err := yaml.Marshal(users)
-	if err != nil {
-		return err
+	cmData := map[string]string{
+		usersFile: string(b),
 	}
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      common.EverestAccountsConfigName,
 			Namespace: common.SystemNamespace,
 		},
-		BinaryData: map[string][]byte{
-			usersFile: userB,
-		},
+		Data: cmData,
 	}
 	if _, err := a.k.UpdateConfigMap(ctx, cm); err != nil {
 		return err
 	}
-	return nil
-}
-
-func (a *Client) updateSecret(ctx context.Context, passwords map[string]Password) error {
-	passB, err := yaml.Marshal(passwords)
+	// Update Secret.
+	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
 	if err != nil {
 		return err
 	}
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      common.EverestAccountsConfigName,
-			Namespace: common.SystemNamespace,
-		},
-		Data: map[string][]byte{
-			passwordFile: passB,
-		},
-	}
+	secretData := secret.Data
+	delete(secretData, username)
+	secret.Data = secretData
 	if _, err := a.k.UpdateSecret(ctx, secret); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (a *Client) listAllUsers(ctx context.Context) (map[string]User, error) {
-	cm, err := a.k.GetConfigMap(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
+func (a *configMapsClient) Verify(ctx context.Context, username, password string) error {
+	if username == common.EverestAdminUser {
+		if err := a.tryVerifyTempAdminPassword(ctx, password); err == nil {
+			return nil
+		}
+	}
+	users, err := a.listAllAccounts(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	usersYaml, found := cm.BinaryData[usersFile]
+	_, found := users[username]
 	if !found {
-		return make(map[string]User), nil
+		return accounts.ErrAccountNotFound
 	}
-	var users map[string]User
-	if err := yaml.Unmarshal(usersYaml, &users); err != nil {
-		return nil, err
-	}
-	return users, nil
-}
-
-func (a *Client) listAllPasswords(ctx context.Context) (map[string]Password, error) {
 	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	passwordsYaml, found := secret.Data[passwordFile]
+	computedHash, err := a.computePasswordHash(ctx, password)
+	if err != nil {
+		return err
+	}
+	storedhash, found := secret.Data[username]
 	if !found {
-		return make(map[string]Password), nil
+		return accounts.ErrAccountNotFound
 	}
-	var passwords map[string]Password
-	if err := yaml.Unmarshal(passwordsYaml, &passwords); err != nil {
-		return nil, err
+	if string(storedhash) != computedHash {
+		return errors.New("incorrect password provided")
 	}
-	return passwords, nil
+	return nil
+}
+
+func (a *configMapsClient) tryVerifyTempAdminPassword(ctx context.Context, password string) error {
+	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, tempAdminPasswordSecret)
+	if err != nil {
+		return err
+	}
+	if string(secret.Data["password"]) != password {
+		return errors.New("incorrect password provided")
+	}
+	return nil
+}
+
+func (a *configMapsClient) computePasswordHash(ctx context.Context, password string) (string, error) {
+	salt, err := a.salt(ctx)
+	if err != nil {
+		return "", errors.Join(err, errors.New("failed to get salt"))
+	}
+	hash := pbkdf2.Key([]byte(password), salt, 4096, 32, sha256.New)
+	return string(hash), nil
 }

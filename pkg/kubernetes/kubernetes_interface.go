@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/accounts"
 	"github.com/percona/everest/pkg/kubernetes/client"
 )
 
@@ -23,7 +24,7 @@ type KubernetesConnector interface {
 	// Accounts returns a new client for managing everest user accounts.
 	//
 	//nolint:ireturn,stylecheck
-	Accounts() Accounts
+	Accounts() accounts.Interface
 	// GetDeployment returns k8s deployment by provided name and namespace.
 	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
 	// UpdateDeployment updates a deployment and returns the updated object.

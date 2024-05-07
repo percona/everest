@@ -14,19 +14,20 @@
 // limitations under the License.
 
 // Package accounts holds commands for accounts command.
-//
-//nolint:dupl
 package accounts
 
 import (
 	"context"
+	"errors"
+	"net/url"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
-	"github.com/percona/everest/pkg/accounts"
+	accountscli "github.com/percona/everest/pkg/accounts/cli"
+	"github.com/percona/everest/pkg/kubernetes"
 )
 
 // NewCreateCmd returns a new create command.
@@ -41,7 +42,18 @@ func NewCreateCmd(l *zap.SugaredLogger) *cobra.Command {
 			username := viper.GetString("username")
 			password := viper.GetString("password")
 
-			cli, err := accounts.NewCLI(kubeconfigPath, l)
+			k, err := kubernetes.New(kubeconfigPath, l)
+			if err != nil {
+				var u *url.Error
+				if errors.As(err, &u) {
+					l.Error("Could not connect to Kubernetes. " +
+						"Make sure Kubernetes is running and is accessible from this computer/server.")
+				}
+				os.Exit(0)
+			}
+
+			cli := accountscli.New(l)
+			cli.WithAccountManager(k.Accounts())
 			if err != nil {
 				l.Error(err)
 				os.Exit(1)

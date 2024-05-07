@@ -18,15 +18,12 @@ package session
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/AlekSi/pointer"
 	"github.com/golang-jwt/jwt/v4"
 
-	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/kubernetes/client/accounts"
+	"github.com/percona/everest/pkg/accounts"
 )
 
 const (
@@ -36,7 +33,7 @@ const (
 
 // Manager provides functionality for creating and managing JWT tokens.
 type Manager struct {
-	accountManager kubernetes.Accounts
+	accountManager accounts.Interface
 	signingKey     []byte
 }
 
@@ -53,9 +50,9 @@ func New(options ...Option) *Manager {
 }
 
 // WithAccountManager sets the account manager to use for verifying user credentials.
-func WithAccountManager(am kubernetes.Accounts) Option {
+func WithAccountManager(i accounts.Interface) Option {
 	return func(m *Manager) {
-		m.accountManager = am
+		m.accountManager = i
 	}
 }
 
@@ -99,26 +96,13 @@ func (mgr *Manager) Authenticate(ctx context.Context, username string, password 
 		return fmt.Errorf("blank passwords are not allowed")
 	}
 
-	account, err := mgr.accountManager.Get(ctx, username)
-	if err != nil {
+	if err := mgr.accountManager.Verify(ctx, username, password); err != nil {
 		return err
 	}
 
-	computedHash, err := mgr.accountManager.ComputePasswordHash(ctx, password)
+	account, err := mgr.accountManager.Get(ctx, username)
 	if err != nil {
-		return errors.Join(err, errors.New("failed to compute password hash"))
-	}
-
-	// For secure accounts, compare the computed hash with the stored hash.
-	if !pointer.GetBool(account.Insecure) &&
-		computedHash != account.PasswordHash {
-		return errors.New("invalid password")
-	}
-
-	// For insecure accounts, compare the password with the stored hash.
-	if pointer.GetBool(account.Insecure) &&
-		password != account.PasswordHash {
-		return errors.New("invalid password")
+		return err
 	}
 
 	if !account.Enabled {
