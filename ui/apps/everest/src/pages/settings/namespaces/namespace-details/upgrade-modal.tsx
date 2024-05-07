@@ -1,8 +1,7 @@
 import { Typography } from '@mui/material';
-// import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
-// import KeyboardArrowUpOutlined from '@mui/icons-material/KeyboardArrowUpOutlined';
 import { UpgradeModalProps } from './types';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
+import { Messages } from './messages';
 
 const UpgradeModal = ({
   open,
@@ -10,8 +9,8 @@ const UpgradeModal = ({
   onConfirm,
   namespace,
   dbType,
-  newVersion,
-} // supportedVersions,
+  newVersion, // supportedVersions,
+} // TODO add supported versions
 : UpgradeModalProps) => {
   // const [showVersions, setShowVersions] = useState(false);
 
@@ -25,8 +24,7 @@ const UpgradeModal = ({
       handleConfirm={onConfirm}
     >
       <Typography variant="body1">
-        Are you sure you want to upgrade {dbType} operator in namespace{' '}
-        {namespace} to version {newVersion}?
+        {Messages.upgradeConfirmation(dbType, namespace, newVersion)}
       </Typography>
       {/* <Button
         size="small"

@@ -2,6 +2,7 @@ import { Box, Button, Typography } from '@mui/material';
 import { DbEngineType } from '@percona/types';
 import { UpgradeHeaderProps } from './types';
 import { DbEngineStatus } from 'shared-types/dbEngines.types';
+import { Messages } from './messages';
 
 const upgradeMessage = (pendingTasks: boolean, dbType: DbEngineType) => {
   return `A new version of the ${dbType} operator is available. ${
@@ -15,7 +16,9 @@ const UpgradeHeader = ({
   preflightPayload,
 }: UpgradeHeaderProps) => {
   if (engine.status === DbEngineStatus.UPGRADING) {
-    return <Typography variant="body1">Upgrading the operator...</Typography>;
+    return (
+      <Typography variant="body1">{Messages.upgradingOperator}</Typography>
+    );
   }
 
   if (!preflightPayload?.databases) {
@@ -37,7 +40,7 @@ const UpgradeHeader = ({
         onClick={onUpgrade}
         disabled={pendingTasks}
       >
-        Upgrade Operator
+        {Messages.upgradeOperator}
       </Button>
     </Box>
   );
