@@ -17,7 +17,7 @@ const UpgradeModal = ({
   return (
     <ConfirmDialog
       isOpen={open}
-      selectedId=""
+      selectedId={dbType}
       closeModal={onClose}
       headerMessage="Operator upgrade"
       submitMessage="OK"

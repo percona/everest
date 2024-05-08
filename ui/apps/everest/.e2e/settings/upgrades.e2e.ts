@@ -149,6 +149,7 @@ test.describe('Operator upgrades', () => {
       page.getByRole('button', { name: 'Upgrade Operator' })
     ).not.toBeDisabled();
     await page.getByRole('button', { name: 'Upgrade Operator' }).click();
+    console.log(await page.getByTestId('psmdb-confirm-dialog').textContent());
     expect(
       page.getByText(
         `Are you sure you want to upgrade psmdb operator in namespace ${namespaces[0]} to version 1.16.0?`
