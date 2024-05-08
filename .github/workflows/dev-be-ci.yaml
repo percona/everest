@@ -343,9 +343,8 @@ jobs:
 
       - name: Log into Everest as admin
         run: |
-          EVEREST_PASS=$(kubectl get secret -n everest-system everest-admin-temp -o jsonpath='{.data.password}' | base64 --decode)
+          echo "EVEREST_PASS=$(kubectl get secret -n everest-system everest-admin-temp -o jsonpath='{.data.password}' | base64 --decode)" >> $GITHUB_ENV
           echo "API_TOKEN=$(curl --location -s 'localhost:8080/v1/session' --header 'Content-Type: application/json' --data '{\"username\": \"admin\",\"password\": \"'\"$EVEREST_PASS\"'\"}' | jq -r .token)" >> $GITHUB_ENV
-          echo $GITHUB_ENV
 
       - name: Run integration tests
         run: |
