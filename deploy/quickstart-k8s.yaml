@@ -67,14 +67,6 @@ subjects:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: everest-admin-token
-  annotations:
-    kubernetes.io/service-account.name: everest-admin
-type: kubernetes.io/service-account-token
----
-apiVersion: v1
-kind: Secret
-metadata:
   name: everest-accounts
   namespace: everest-jwt
 data:
