@@ -36,7 +36,7 @@ func (k *Kubernetes) SetJWTToken(ctx context.Context, token string) error {
 			return err
 		}
 		// Restart the deployment to pick up the new secret.
-		return k.RestartDeployment(ctx, common.SystemNamespace, common.PerconaEverestDeploymentName)
+		return k.RestartDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
 	}
 
 	// Otherwise, update the secret.
@@ -45,7 +45,7 @@ func (k *Kubernetes) SetJWTToken(ctx context.Context, token string) error {
 		return err
 	}
 	// Restart the deployment to pick up the new secret.
-	return k.RestartDeployment(ctx, common.SystemNamespace, common.PerconaEverestDeploymentName)
+	return k.RestartDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
 }
 
 // GetJWTToken returns the JWT token from the everest-jwt secret.
