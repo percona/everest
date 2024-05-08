@@ -42,7 +42,7 @@ const (
 	// EverestJWTSecretName is the name of the secret that holds JWT secret.
 	EverestJWTSecretName = "everest-jwt"
 	// EverestJWTSecretKey is the key in the secret that holds JWT secret.
-	EverestJWTSecretKey = "signing_secret"
+	EverestJWTSecretKey = "signing_key"
 
 	// EverestAdminUser is the name of the admin user.
 	EverestAdminUser = "admin"
