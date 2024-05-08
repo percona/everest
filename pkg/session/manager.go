@@ -18,6 +18,7 @@ package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -106,11 +107,11 @@ func (mgr *Manager) Authenticate(ctx context.Context, username string, password 
 	}
 
 	if !account.Enabled {
-		return fmt.Errorf("account disabled")
+		return accounts.ErrAccountDisabled
 	}
 
 	if !account.HasCapability(accounts.AccountCapabilityLogin) {
-		return fmt.Errorf("user does not have capability to login")
+		return errors.Join(accounts.ErrInsufficientCapabilities, errors.New("user does not have capability to login"))
 	}
 	return nil
 }

@@ -17,10 +17,12 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/AlekSi/pointer"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
@@ -43,6 +45,23 @@ func (e *EverestServer) CreateSession(ctx echo.Context) error {
 	c := ctx.Request().Context()
 	err := e.sessionMgr.Authenticate(c, *params.Username, *params.Password)
 	if err != nil {
+		// Return appropriate error messages based on the error type.
+		if errors.Is(err, accounts.ErrAccountNotFound) ||
+			errors.Is(err, accounts.ErrIncorrectPassword) {
+			return ctx.JSON(http.StatusUnauthorized, Error{
+				Message: pointer.To("Incorrect username or password provided"),
+			})
+		}
+		if errors.Is(err, accounts.ErrAccountDisabled) {
+			return ctx.JSON(http.StatusForbidden, Error{
+				Message: pointer.To("User account is disabled"),
+			})
+		}
+		if errors.Is(err, accounts.ErrInsufficientCapabilities) {
+			return ctx.JSON(http.StatusForbidden, Error{
+				Message: pointer.To("User account lacks required capabilities"),
+			})
+		}
 		return err
 	}
 
