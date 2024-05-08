@@ -322,7 +322,7 @@ jobs:
       - name: Provision Everest using CLI
         shell: bash
         run: |
-          make build-cli
+          USE_LOCAL_MANIFEST=true make build-cli
           ./bin/everestctl install -v \
             --version 0.0.0 \
             --version-metadata-url https://check-dev.percona.com \
@@ -419,7 +419,7 @@ jobs:
       - name: Build CLI binary
         run: |
           make init
-          make build-cli
+          USE_LOCAL_MANIFEST=true make build-cli
       - name: Create KIND cluster
         uses: helm/kind-action@v1.9.0
 

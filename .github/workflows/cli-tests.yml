@@ -73,7 +73,7 @@ jobs:
       - name: Build CLI binary
         run: |
           make init
-          make build-cli
+          USE_LOCAL_MANIFEST=true make build-cli
 
       - name: Run ${{ env.MAKE_TARGET }} integration tests
         working-directory: cli-tests
