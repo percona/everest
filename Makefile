@@ -10,6 +10,7 @@ LD_FLAGS_API = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.Pr
 LD_FLAGS_CLI = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl'"
 LD_FLAGS_CLI_TEST = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl' \
 										-X 'github.com/percona/everest/pkg/version.EverestChannelOverride=fast-v0'"
+										-X 'github.com/percona/everest/pkg/version.Debug=true'"
 
 default: help
 

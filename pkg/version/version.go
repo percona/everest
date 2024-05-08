@@ -47,6 +47,8 @@ var (
 	FullCommit string //nolint:gochecknoglobals
 	// EverestChannelOverride overrides the default olm channel for Everest operator.
 	EverestChannelOverride string //nolint:gochecknoglobals
+	// Debug is set to true if this is a debug build.
+	Debug bool //nolint:gochecknoglobals
 
 	rcSuffix = regexp.MustCompile(`rc\d+$`)
 )
