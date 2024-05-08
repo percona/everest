@@ -16,4 +16,6 @@ export const Messages = {
   label: 'Backup schedules',
   create: 'Create backup schedule',
   noSchedules: 'You don’t have any backup schedules yet.',
+  mongoDb:
+    'The backup storage you select for your first backup schedule will be used for all subsequent schedules and PITR.',
 };

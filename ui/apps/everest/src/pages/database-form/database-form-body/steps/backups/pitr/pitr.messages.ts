@@ -13,8 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { DbType } from '@percona/types';
+
 export const Messages = {
-  header: 'Point-in-time Recovery (PITR)',
+  sectionHeader: 'Point-in-time Recovery',
   description:
     'PITR provides continuous backups of your database, enabling you to restore it to a specific point in time, in case of accidental writes or deletes.',
   enablePitr: 'Enable PITR',
@@ -25,4 +27,16 @@ export const Messages = {
   captionPitr:
     'Point-in-time recovery provides continuous backups on your database to protect against accidental writes or deletes.',
   pitrCreateHeader: 'Create PitrStep backup every',
+  pitrSwitchLabelCaption: (dbType: DbType, storageName: string) => {
+    switch (dbType) {
+      case DbType.Mongo: {
+        return storageName ? `Storage: ${storageName}` : '';
+      }
+      case DbType.Postresql: {
+        return Messages.enablePitrCaption;
+      }
+      default:
+        return undefined;
+    }
+  },
 };
