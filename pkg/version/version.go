@@ -32,7 +32,7 @@ const (
 	releaseCatalogImage = "docker.io/percona/everest-catalog:%s"
 	devManifestURL      = "https://raw.githubusercontent.com/percona/everest/main/deploy/quickstart-k8s.yaml"
 	releaseManifestURL  = "https://raw.githubusercontent.com/percona/everest/v%s/deploy/quickstart-k8s.yaml"
-	debugManifestURL    = "https://raw.githubusercontent.com/percona/everest/%s/deploy/quickstart-k8s.yaml"
+	localManifestURL    = "https://raw.githubusercontent.com/percona/everest/%s/deploy/quickstart-k8s.yaml"
 
 	everestOperatorChannelStable = "stable-v0"
 	everestOperatorChannelFast   = "fast-v0"
@@ -47,8 +47,8 @@ var (
 	FullCommit string //nolint:gochecknoglobals
 	// EverestChannelOverride overrides the default olm channel for Everest operator.
 	EverestChannelOverride string //nolint:gochecknoglobals
-	// Debug is set to true if this is a debug build.
-	Debug bool //nolint:gochecknoglobals
+	// UseLocalManifest is set to "true" if the local manifest should be used.
+	UseLocalManifest string //nolint:gochecknoglobals
 
 	rcSuffix = regexp.MustCompile(`rc\d+$`)
 )
