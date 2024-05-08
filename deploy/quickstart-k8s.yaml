@@ -67,8 +67,8 @@ subjects:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: everest-accounts
-  namespace: everest-jwt
+  name: everest-jwt
+  namespace: everest-system
 data:
   # use your own signing key here.
   signing_key: eW91ci1ldmVyZXN0LWp3dC1zaWduaW5nLWtleQo=
