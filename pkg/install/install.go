@@ -19,6 +19,8 @@ package install
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/url"
@@ -370,11 +372,6 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		everestExists = true
 	}
 
-	o.l.Info("Creating JWT Secret")
-	if err := o.kubeClient.CreateJWTSecret(ctx, true); err != nil {
-		return err
-	}
-
 	if !everestExists {
 		o.l.Info(fmt.Sprintf("Deploying Everest to %s", common.SystemNamespace))
 		if err = o.kubeClient.InstallEverest(ctx, common.SystemNamespace, v); err != nil {
@@ -388,6 +385,10 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		if err := o.kubeClient.RestartDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace); err != nil {
 			return err
 		}
+	}
+
+	if err := o.createEverestJWTToken(ctx); err != nil {
+		return err
 	}
 
 	if err := o.createEverestAdminAccount(ctx); err != nil {
@@ -747,6 +748,20 @@ func (o *Install) createEverestAdminAccount(ctx context.Context) error {
 	}
 
 	if err := o.kubeClient.Accounts().Create(ctx, common.EverestAdminUser, ""); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o *Install) createEverestJWTToken(ctx context.Context) error {
+	o.l.Info("Creating JWT token for Everest")
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return err
+	}
+	token := hex.EncodeToString(b)
+
+	if err := o.kubeClient.SetJWTToken(ctx, token); err != nil {
 		return err
 	}
 	return nil

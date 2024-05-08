@@ -111,7 +111,6 @@ type KubernetesConnector interface {
 	UpdateClusterRoleBinding(ctx context.Context, name string, namespaces []string) error
 	// OperatorInstalledVersion returns the installed version of operator by name.
 	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
-	// CreateJWTSecret creates a new secret with the JWT singing key.
-	// If `force` is set to true, the secret will be re-created with a new key.
-	CreateJWTSecret(ctx context.Context, force bool) error
+	// SetJWTToken sets the provided JWT token in the everest-jwt secret.
+	SetJWTToken(ctx context.Context, token string) error
 }
