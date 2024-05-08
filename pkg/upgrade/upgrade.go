@@ -94,8 +94,6 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 }
 
 // Run runs the operators installation process.
-//
-//nolint:funlen
 func (u *Upgrade) Run(ctx context.Context) error {
 	// Get Everest version.
 	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
