@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
-import { SubmitHandler } from 'react-hook-form';
 import { FormDialog } from 'components/form-dialog/form-dialog';
 import TlsAlert from 'components/tls-alert';
+import { useMemo } from 'react';
+import { SubmitHandler } from 'react-hook-form';
 import { BackupStorage } from 'shared-types/backupStorages.types';
 import { Messages } from '../storage-locations.messages';
 import {
@@ -10,8 +10,8 @@ import {
   storageLocationEditValues,
   storageLocationsSchema,
 } from '../storage-locations.types';
-import { CreateEditModalStorageProps } from './create-edit-modal.types';
 import { CreateEditStorageForm } from './create-edit-form';
+import { CreateEditModalStorageProps } from './create-edit-modal.types';
 
 export const CreateEditModalStorage = ({
   open,
@@ -56,10 +56,10 @@ export const CreateEditModalStorage = ({
       schema={schema}
       defaultValues={defaultValues}
     >
-      {({ getValues }) => (
+      {({ watch }) => (
         <>
           <CreateEditStorageForm isEditMode={isEditMode} />
-          {!getValues(StorageLocationsFields.verifyTLS) && (
+          {!watch(StorageLocationsFields.verifyTLS) && (
             <TlsAlert sx={{ mt: 2 }} />
           )}
         </>
