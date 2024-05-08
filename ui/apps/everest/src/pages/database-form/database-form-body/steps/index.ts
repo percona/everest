@@ -12,18 +12,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 import { FirstStep } from './first/first-step.tsx';
 import { ResourcesStep } from './resources/resources-step.tsx';
 import { Backups } from './backups/backups.tsx';
 import { AdvancedConfigurations } from './advanced-configurations/advanced-configurations.tsx';
 import { Monitoring } from './monitoring/monitoring.tsx';
-import PITRStep from './pitr/index.ts';
 
 export const steps = [
   FirstStep,
   ResourcesStep,
   Backups,
-  PITRStep,
   AdvancedConfigurations,
   Monitoring,
 ];

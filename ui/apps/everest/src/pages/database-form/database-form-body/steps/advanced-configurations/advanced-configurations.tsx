@@ -33,7 +33,7 @@ export const AdvancedConfigurations = () => {
   return (
     <>
       <StepHeader pageTitle={Messages.advanced} />
-      <FormGroup sx={{ mt: 2 }}>
+      <FormGroup sx={{ mt: 3 }}>
         <SwitchInput
           label={Messages.enableExternalAccess.title}
           labelCaption={Messages.enableExternalAccess.caption}
