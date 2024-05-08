@@ -45,3 +45,12 @@ func (k *Kubernetes) SetJWTToken(ctx context.Context, token string) error {
 	}
 	return nil
 }
+
+// GetJWTToken returns the JWT token from the everest-jwt secret.
+func (k *Kubernetes) GetJWTToken(ctx context.Context) (string, error) {
+	secret, err := k.GetSecret(ctx, common.SystemNamespace, common.EverestJWTSecretName)
+	if err != nil {
+		return "", err
+	}
+	return string(secret.Data[common.EverestJWTSecretKey]), nil
+}

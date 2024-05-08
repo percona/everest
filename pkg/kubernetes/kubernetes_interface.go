@@ -113,4 +113,6 @@ type KubernetesConnector interface {
 	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
 	// SetJWTToken sets the provided JWT token in the everest-jwt secret.
 	SetJWTToken(ctx context.Context, token string) error
+	// GetJWTToken returns the JWT token from the everest-jwt secret.
+	GetJWTToken(ctx context.Context) (string, error)
 }
