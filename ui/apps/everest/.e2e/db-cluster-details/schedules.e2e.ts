@@ -171,7 +171,7 @@ test.describe.serial('Schedules List', async () => {
     await scheduledBackupsAccordion.click();
 
     const scheduleForDeleteBtn = await page
-      .getByText('Every hour at minute 0-')
+      .getByText('Every hour at minute 0')
       .getByTestId('delete-schedule-button');
     await scheduleForDeleteBtn.click();
     await (await page.getByTestId('confirm-dialog-delete')).click();
