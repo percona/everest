@@ -62,22 +62,34 @@ func (e *EverestServer) DeleteDatabaseCluster(
 	params DeleteDatabaseClusterParams,
 ) error {
 	cleanupStorage := pointer.Get(params.CleanupBackupStorage)
-	// If cleanup is required, we add a finalizer to all backup object for this cluster.
-	if cleanupStorage {
-		reqCtx := ctx.Request().Context()
-		backups, err := e.kubeClient.ListDatabaseClusterBackups(reqCtx, namespace, metav1.ListOptions{})
-		if err != nil {
-			return errors.Join(err, errors.New("could not list database backups"))
-		}
-		// Cleanup storage.
+	reqCtx := ctx.Request().Context()
+
+	backups, err := e.kubeClient.ListDatabaseClusterBackups(reqCtx, namespace, metav1.ListOptions{})
+	if err != nil {
+		return errors.Join(err, errors.New("could not list database backups"))
+	}
+
+	if !cleanupStorage {
 		for _, backup := range backups.Items {
 			// Doesn't belong to this cluster, skip.
 			if backup.Spec.DBClusterName != name {
 				continue
 			}
-			if err := e.cleanupBackupStorage(reqCtx, &backup); err != nil { //nolint:gosec // We use Go 1.21+
-				return errors.Join(err, errors.New("could not cleanup backup storage"))
+			if err := e.ensureBackupStorageProtection(reqCtx, &backup); err != nil {
+				return errors.Join(err, errors.New("could not ensure backup storage protection"))
 			}
+		}
+	}
+
+	// Ensure foreground deletion on the Backups,
+	// so that they're visible on the UI while getting deleted.
+	for _, backup := range backups.Items {
+		// Doesn't belong to this cluster, skip.
+		if backup.Spec.DBClusterName != name {
+			continue
+		}
+		if err := e.ensureBackupForegroundDeletion(reqCtx, &backup); err != nil {
+			return errors.Join(err, errors.New("could not ensure foreground deletion"))
 		}
 	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, name)

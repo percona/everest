@@ -34,7 +34,7 @@ import (
 const (
 	databaseClusterBackupKind = "databaseclusterbackups"
 
-	storageCleanupFinalizer     = "everest.percona.com/dbb-storage-cleanup"
+	storageProtectionFinalizer  = "everest.percona.com/dbb-storage-protection"
 	foregroundDeletionFinalizer = "foregroundDeletion"
 )
 
@@ -81,16 +81,21 @@ func (e *EverestServer) DeleteDatabaseClusterBackup(
 	params DeleteDatabaseClusterBackupParams,
 ) error {
 	cleanupStorage := pointer.Get(params.CleanupBackupStorage)
-	// If cleanup is required, we add a finalizer to the backup object.
-	if cleanupStorage {
-		reqCtx := ctx.Request().Context()
-		backup, err := e.kubeClient.GetDatabaseClusterBackup(reqCtx, namespace, name)
-		if err != nil {
-			return errors.Join(err, errors.New("could not get Database Cluster"))
+
+	reqCtx := ctx.Request().Context()
+	backup, err := e.kubeClient.GetDatabaseClusterBackup(reqCtx, namespace, name)
+	if err != nil {
+		return errors.Join(err, errors.New("could not get Database Cluster"))
+	}
+
+	if !cleanupStorage {
+		if err := e.ensureBackupStorageProtection(reqCtx, backup); err != nil {
+			return errors.Join(err, errors.New("could not ensure backup storage protection"))
 		}
-		if err := e.cleanupBackupStorage(reqCtx, backup); err != nil {
-			return errors.Join(err, errors.New("could not cleanup backup storage"))
-		}
+	}
+
+	if err := e.ensureBackupForegroundDeletion(ctx.Request().Context(), backup); err != nil {
+		return errors.Join(err, errors.New("could not ensure backup foreground deletion"))
 	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, name)
 }
@@ -100,9 +105,17 @@ func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, namespace, na
 	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, name)
 }
 
-func (e *EverestServer) cleanupBackupStorage(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
-	controllerutil.AddFinalizer(backup, storageCleanupFinalizer)
+func (e *EverestServer) ensureBackupStorageProtection(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
+	controllerutil.AddFinalizer(backup, storageProtectionFinalizer)
 	controllerutil.AddFinalizer(backup, foregroundDeletionFinalizer)
 	_, err := e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
 	return err
+}
+
+func (e *EverestServer) ensureBackupForegroundDeletion(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
+	if controllerutil.AddFinalizer(backup, foregroundDeletionFinalizer) {
+		_, err := e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
+		return err
+	}
+	return nil
 }
