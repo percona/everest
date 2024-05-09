@@ -260,6 +260,7 @@ k8s_resource(
     'vmauths.operator.victoriametrics.com:customresourcedefinition:%s' % everest_monitoring_namespace,
     'vmclusters.operator.victoriametrics.com:customresourcedefinition:%s' % everest_monitoring_namespace,
     'vmnodescrapes.operator.victoriametrics.com:customresourcedefinition:%s' % everest_monitoring_namespace,
+    'vmscrapeconfigs.operator.victoriametrics.com:customresourcedefinition:%s' % everest_monitoring_namespace,
     'vmpodscrapes.operator.victoriametrics.com:customresourcedefinition:%s' % everest_monitoring_namespace,
     'vmprobes.operator.victoriametrics.com:customresourcedefinition:%s' % everest_monitoring_namespace,
     'vmrules.operator.victoriametrics.com:customresourcedefinition:%s' % everest_monitoring_namespace,
@@ -397,7 +398,6 @@ docker_build_with_restart('perconalab/everest',
 )
 
 k8s_yaml(namespace_inject('%s/deploy/quickstart-k8s.yaml' % backend_dir, everest_namespace))
-k8s_yaml(namespace_inject('everest-accounts.yaml', everest_namespace),allow_duplicates=True)
 k8s_resource(
   workload='percona-everest',
   objects=[
@@ -406,6 +406,9 @@ k8s_resource(
     'everest-admin-role-binding:rolebinding',
     'everest-admin-cluster-role:clusterrole',
     'everest-admin-cluster-role-binding:clusterrolebinding',
+    'everest-jwt:secret',
+    'everest-accounts:secret',
+    'everest-accounts:configmap',
   ],
   new_name='everest',
   port_forwards=8080,

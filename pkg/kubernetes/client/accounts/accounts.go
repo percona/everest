@@ -92,13 +92,15 @@ func (a *configMapsClient) Create(ctx context.Context, username, password string
 		Capabilities:  []accounts.AccountCapability{accounts.AccountCapabilityLogin},
 		PasswordMtime: time.Now().Format(time.RFC3339),
 	}
+
+	// XX: once we allow updating password, Create should fail if the user already exists.
 	if err := a.setAccount(ctx, username, account); err != nil {
 		return err
 	}
 
-	storeHashed := true
 	// If an admin account is created without a password, we will generate a random password
 	// and store it in plain text.
+	storeHashed := true
 	if username == common.EverestAdminUser && password == "" {
 		storeHashed = false
 		randPassword, err := a.generateRandomPassword()

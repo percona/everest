@@ -141,9 +141,17 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: everest-accounts
+data:
+  admin: YWRtaW4= #admin
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: everest-accounts
+data:
+  users.yaml : |
+    admin:
+      enabled: true
+      capabilities:
+        - login
 ---
