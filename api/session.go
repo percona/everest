@@ -45,7 +45,7 @@ func (e *EverestServer) CreateSession(ctx echo.Context) error {
 	c := ctx.Request().Context()
 	err := e.sessionMgr.Authenticate(c, *params.Username, *params.Password)
 	if err != nil {
-		return sessionErrToHttpResp(ctx, err)
+		return sessionErrToHTTPRes(ctx, err)
 	}
 
 	uniqueID, err := uuid.NewRandom()
@@ -67,7 +67,7 @@ func (e *EverestServer) CreateSession(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, map[string]string{"token": jwtToken})
 }
 
-func sessionErrToHttpResp(ctx echo.Context, err error) error {
+func sessionErrToHTTPRes(ctx echo.Context, err error) error {
 	if errors.Is(err, accounts.ErrAccountNotFound) ||
 		errors.Is(err, accounts.ErrIncorrectPassword) {
 		return ctx.JSON(http.StatusUnauthorized, Error{

@@ -370,7 +370,7 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		everestExists = true
 	}
 
-	if !everestExists {
+	if !everestExists { //nolint:nestif
 		o.l.Info(fmt.Sprintf("Deploying Everest to %s", common.SystemNamespace))
 		if err = o.kubeClient.InstallEverest(ctx, common.SystemNamespace, v); err != nil {
 			return err
