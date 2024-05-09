@@ -216,8 +216,7 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	o.l.Info("\n" + postInstallMessage + "\n")
-
+	fmt.Fprint(os.Stdout, postInstallMessage)
 	return nil
 }
 
