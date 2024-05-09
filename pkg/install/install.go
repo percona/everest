@@ -38,7 +38,6 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/percona/everest/pkg/accounts"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/version"
@@ -376,6 +375,12 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		if err = o.kubeClient.InstallEverest(ctx, common.SystemNamespace, v); err != nil {
 			return err
 		}
+		if err := o.createEverestJWTToken(ctx); err != nil {
+			return err
+		}
+		if err := o.resetEverestAdminPassword(ctx); err != nil {
+			return err
+		}
 	} else {
 		o.l.Info("Restarting Everest")
 		if err := o.kubeClient.RestartOperator(ctx, common.PerconaEverestOperatorDeploymentName, common.SystemNamespace); err != nil {
@@ -384,14 +389,6 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		if err := o.kubeClient.RestartDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace); err != nil {
 			return err
 		}
-	}
-
-	if err := o.createEverestJWTToken(ctx); err != nil {
-		return err
-	}
-
-	if err := o.createEverestAdminAccount(ctx); err != nil {
-		return err
 	}
 
 	o.l.Info("Updating cluster role bindings for everest-admin")
@@ -737,15 +734,8 @@ func validateRFC1035(s string) error {
 	return nil
 }
 
-func (o *Install) createEverestAdminAccount(ctx context.Context) error {
-	o.l.Info("Creating Everest admin account")
-	// Check if admin already exists?
-	if _, err := o.kubeClient.Accounts().Get(ctx, common.EverestAdminUser); err == nil {
-		return nil
-	} else if !errors.Is(err, accounts.ErrAccountNotFound) {
-		return err
-	}
-
+func (o *Install) resetEverestAdminPassword(ctx context.Context) error {
+	o.l.Info("Resetting admin password")
 	if err := o.kubeClient.Accounts().Create(ctx, common.EverestAdminUser, ""); err != nil {
 		return err
 	}
