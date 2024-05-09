@@ -169,9 +169,8 @@ jobs:
           echo -n "MONITORING_URL=http://$url" >> $GITHUB_ENV
 
       - name: Run Provisioning
-        shell: bash
         run: |
-          USE_LOCAL_MANIFEST=true make build-cli
+          make build-cli
           ./bin/everestctl install -v \
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \

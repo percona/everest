@@ -10,8 +10,7 @@ USE_LOCAL_MANIFEST ?=false
 LD_FLAGS_API = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=Everest API Server'"
 LD_FLAGS_CLI = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl'"
 LD_FLAGS_CLI_TEST = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl' \
-										-X 'github.com/percona/everest/pkg/version.EverestChannelOverride=fast-v0' \
-										-X 'github.com/percona/everest/pkg/version.UseLocalManifest=$(USE_LOCAL_MANIFEST)'"
+										-X 'github.com/percona/everest/pkg/version.EverestChannelOverride=fast-v0'"
 
 default: help
 
