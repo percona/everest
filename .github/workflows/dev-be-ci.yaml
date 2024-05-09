@@ -419,7 +419,7 @@ jobs:
       - name: Build CLI binary
         run: |
           make init
-          USE_LOCAL_MANIFEST=true make build-cli
+          make build-cli
       - name: Create KIND cluster
         uses: helm/kind-action@v1.9.0
 
