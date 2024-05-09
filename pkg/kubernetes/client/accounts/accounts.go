@@ -22,12 +22,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"time"
 
 	"golang.org/x/crypto/pbkdf2"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/percona/everest/pkg/accounts"
@@ -38,6 +38,9 @@ import (
 const (
 	usersFile               = "users.yaml"
 	tempAdminPasswordSecret = "everest-admin-temp"
+
+	// We set this annotation on the secret to indicate which passwords are stored in plain text.
+	insecurePasswordAnnotation = "insecure-password/%s"
 )
 
 type configMapsClient struct {
@@ -84,9 +87,6 @@ func (a *configMapsClient) listAllAccounts(ctx context.Context) (map[string]*acc
 
 // Create a new user account.
 func (a *configMapsClient) Create(ctx context.Context, username, password string) error {
-	if username == common.EverestAdminUser && password == "" {
-		return a.createAdminWithTempPassword(ctx)
-	}
 	account := &accounts.Account{
 		Enabled:       true,
 		Capabilities:  []accounts.AccountCapability{accounts.AccountCapabilityLogin},
@@ -95,50 +95,63 @@ func (a *configMapsClient) Create(ctx context.Context, username, password string
 	if err := a.setAccount(ctx, username, account); err != nil {
 		return err
 	}
-	if err := a.setPassword(ctx, username, password); err != nil {
+
+	storeHashed := true
+	// If an admin account is created without a password, we will generate a random password
+	// and store it in plain text.
+	if username == common.EverestAdminUser && password == "" {
+		storeHashed = false
+		randPassword, err := a.generateRandomPassword()
+		if err != nil {
+			return err
+		}
+		password = randPassword
+	}
+
+	if err := a.setPassword(ctx, username, password, storeHashed); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (a *configMapsClient) createAdminWithTempPassword(ctx context.Context) error {
+func (a *configMapsClient) generateRandomPassword() (string, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
-		return err
+		return "", err
 	}
-	password := hex.EncodeToString(b)
-	tempAdminSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      tempAdminPasswordSecret,
-			Namespace: common.SystemNamespace,
-		},
-		Data: map[string][]byte{
-			"password": []byte(password),
-		},
-	}
-	// This temporary secret is deleted once the admin password is reset.
-	if _, err := a.k.CreateSecret(ctx, tempAdminSecret); err != nil {
-		return err
-	}
-	if err := a.setAccount(ctx, common.EverestAdminUser, &accounts.Account{
-		Enabled:       true,
-		Capabilities:  []accounts.AccountCapability{accounts.AccountCapabilityLogin},
-		PasswordMtime: time.Now().Format(time.RFC3339),
-	}); err != nil {
-		return err
-	}
-	return nil
+	return hex.EncodeToString(b), nil
 }
 
-func (a *configMapsClient) setPassword(ctx context.Context, username, password string) error {
+func (a *configMapsClient) setPassword(
+	ctx context.Context,
+	username, password string,
+	ensureHash bool,
+) error {
 	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
 	if err != nil {
 		return err
 	}
-	hash, err := a.computePasswordHash(ctx, password)
-	if err != nil {
-		return errors.Join(err, errors.New("failed to compute hash"))
+
+	hash := password
+	if !ensureHash {
+		// Add an annotation so that we know which passwords are stored as plain text.
+		annotations := secret.GetAnnotations()
+		if annotations == nil {
+			annotations = make(map[string]string)
+		}
+		annotations[fmt.Sprintf(insecurePasswordAnnotation, username)] = "true"
+		secret.SetAnnotations(annotations)
+	} else {
+		hash, err = a.computePasswordHash(ctx, password)
+		if err != nil {
+			return errors.Join(err, errors.New("failed to compute hash"))
+		}
+		// Remove the annotation as the password is hashed.
+		annotations := secret.GetAnnotations()
+		delete(annotations, fmt.Sprintf(insecurePasswordAnnotation, username))
+		secret.SetAnnotations(annotations)
 	}
+
 	if secret.Data == nil {
 		secret.Data = make(map[string][]byte)
 	}
@@ -221,11 +234,6 @@ func (a *configMapsClient) Delete(ctx context.Context, username string) error {
 }
 
 func (a *configMapsClient) Verify(ctx context.Context, username, password string) error {
-	if username == common.EverestAdminUser {
-		if shouldSkip, err := a.tryVerifyTempAdminPassword(ctx, password); !shouldSkip {
-			return err
-		}
-	}
 	users, err := a.listAllAccounts(ctx)
 	if err != nil {
 		return err
@@ -234,38 +242,38 @@ func (a *configMapsClient) Verify(ctx context.Context, username, password string
 	if !found {
 		return accounts.ErrAccountNotFound
 	}
+
 	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
 	if err != nil {
 		return err
 	}
-	computedHash, err := a.computePasswordHash(ctx, password)
-	if err != nil {
-		return err
+
+	// helper to check if a password should be compared as a hash.
+	shouldCompareAsHash := func() bool {
+		annotations := secret.GetAnnotations()
+		_, found := annotations[fmt.Sprintf(insecurePasswordAnnotation, username)]
+		return !found
 	}
-	storedhash, found := secret.Data[username]
+
+	storedB, found := secret.Data[username]
 	if !found {
 		return accounts.ErrAccountNotFound
 	}
-	if string(storedhash) != computedHash {
+	stored := string(storedB)
+
+	provided := password
+	if shouldCompareAsHash() {
+		computedHash, err := a.computePasswordHash(ctx, password)
+		if err != nil {
+			return err
+		}
+		provided = computedHash
+	}
+
+	if stored != provided {
 		return accounts.ErrIncorrectPassword
 	}
 	return nil
-}
-
-// try to check with the temporary password.
-// Returns: [skip(bool), error].
-func (a *configMapsClient) tryVerifyTempAdminPassword(ctx context.Context, password string) (bool, error) {
-	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, tempAdminPasswordSecret)
-	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return true, nil
-		}
-		return false, err
-	}
-	if string(secret.Data["password"]) != password {
-		return false, accounts.ErrIncorrectPassword
-	}
-	return false, nil
 }
 
 func (a *configMapsClient) computePasswordHash(ctx context.Context, password string) (string, error) {

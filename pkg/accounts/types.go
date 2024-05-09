@@ -29,7 +29,7 @@ var (
 	// ErrAccountNotFound is returned when an account is not found.
 	ErrAccountNotFound = errors.New("account not found")
 	// ErrIncorrectPassword is returned when the password is invalid.
-	ErrIncorrectPassword = errors.New("invalid password")
+	ErrIncorrectPassword = errors.New("incorrect password")
 	// ErrInsufficientCapabilities is returned when the account does not have the required capabilities.
 	ErrInsufficientCapabilities = errors.New("insufficient capabilities")
 	// ErrAccountDisabled is returned when the account is disabled.
