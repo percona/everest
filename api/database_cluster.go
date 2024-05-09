@@ -75,7 +75,7 @@ func (e *EverestServer) DeleteDatabaseCluster(
 			if backup.Spec.DBClusterName != name {
 				continue
 			}
-			if err := e.ensureBackupStorageProtection(reqCtx, &backup); err != nil {
+			if err := e.ensureBackupStorageProtection(reqCtx, &backup); err != nil { //nolint:gosec
 				return errors.Join(err, errors.New("could not ensure backup storage protection"))
 			}
 		}
@@ -88,7 +88,7 @@ func (e *EverestServer) DeleteDatabaseCluster(
 		if backup.Spec.DBClusterName != name {
 			continue
 		}
-		if err := e.ensureBackupForegroundDeletion(reqCtx, &backup); err != nil {
+		if err := e.ensureBackupForegroundDeletion(reqCtx, &backup); err != nil { //nolint:gosec
 			return errors.Join(err, errors.New("could not ensure foreground deletion"))
 		}
 	}
