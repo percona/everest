@@ -1,7 +1,14 @@
+import { TypographyPropsVariantOverrides } from '@mui/material';
+import { Variant } from '@mui/material/styles/createTypography';
+import { OverridableStringUnion } from '@mui/types';
+
 interface Typography {
   [key: string]: Array<{
     title: string;
-    variant: string;
+    variant: OverridableStringUnion<
+      Variant | 'inherit',
+      TypographyPropsVariantOverrides
+    >;
     text: string;
     style?: {
       fontFamily?: string;
@@ -156,7 +163,7 @@ export const TYPOGRAPHY: Typography = {
   Actions: [
     {
       title: 'Button Large',
-      variant: 'buttonLarge',
+      variant: 'button',
       text: 'Whereas recognition',
       style: {
         fontFamily: 'Poppins',
@@ -168,7 +175,7 @@ export const TYPOGRAPHY: Typography = {
     },
     {
       title: 'Button Medium',
-      variant: 'buttonMedium',
+      variant: 'button',
       text: 'Whereas recognition',
       style: {
         fontFamily: 'Poppins',
@@ -180,7 +187,7 @@ export const TYPOGRAPHY: Typography = {
     },
     {
       title: 'Button small',
-      variant: 'buttonSmall',
+      variant: 'button',
       text: 'Whereas recognition',
       style: {
         fontFamily: 'Poppins',
