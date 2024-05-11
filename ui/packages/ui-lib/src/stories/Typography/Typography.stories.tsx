@@ -58,15 +58,14 @@ const meta = {
             <Typography sx={mainTitleStyles}>{key}</Typography>
             <Box sx={mainBoxStyles}>
               <Stack divider={<Divider orientation="horizontal" flexItem />}>
-                {TYPOGRAPHY[key].map((item) => (
-                  <Box sx={boxItemStyles} key={`${item.variant}_${key}`}>
+                {TYPOGRAPHY[key].map((item, i) => (
+                  <Box sx={boxItemStyles} key={i}>
                     <Box sx={textBoxStyles}>
                       <Typography sx={itemTitleStyles}>
                         {item.title.toUpperCase()}
                       </Typography>
                     </Box>
                     <Typography
-                      // @ts-ignore
                       variant={item.variant}
                       style={{ ...item.style }}
                     >
