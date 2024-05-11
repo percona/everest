@@ -26,15 +26,16 @@ import {
   WarningIcon,
 } from './status';
 import { Stack, Typography } from '@mui/material';
-import * as DocBlock from '@storybook/blocks'
+import * as DocBlock from '@storybook/blocks';
 
 const meta = {
   title: 'Icons',
+  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
     docs: {
       source: {
-        code: null, // Полное отключение отображения исходного кода
+        code: null,
       },
       page: () => (
         <>
@@ -46,8 +47,6 @@ const meta = {
       ),
     },
   },
-  tags: ['autodocs'],
-  
 } satisfies Meta;
 
 export default meta;
@@ -91,9 +90,9 @@ export const Database: StoryObj<typeof MySqlIcon> = {
       description: {
         story: `\`\`\`ts
         <MySqlIcon fontSize='medium' />
-        \`\`\``
-      }
-    }
+        \`\`\``,
+      },
+    },
   },
   args: {
     fontSize: 'medium',
@@ -112,7 +111,7 @@ export const Database: StoryObj<typeof MySqlIcon> = {
           {icons.db.map((Icon) => (
             <Stack direction={'row'} alignItems={'center'} columnGap={'2rem'}>
               <Icon fontSize={fontSize} />
-              <Typography variant='body1'>{Icon.name}</Typography>
+              <Typography variant="body1">{Icon.name}</Typography>
             </Stack>
           ))}
         </Stack>
@@ -127,9 +126,9 @@ export const Everest: StoryObj<typeof EverestMainIcon> = {
       description: {
         story: `\`\`\`ts
         <EverestMainIcon fontSize='medium' />
-        \`\`\``
-      }
-    }
+        \`\`\``,
+      },
+    },
   },
   args: {
     fontSize: 'medium',
@@ -141,13 +140,13 @@ export const Everest: StoryObj<typeof EverestMainIcon> = {
     },
   },
 
-  render: function Render({fontSize}) {
+  render: function Render({ fontSize }) {
     return (
       <Stack direction={'column'} rowGap={'2rem'}>
         {icons.everest.map((Icon) => (
           <Stack direction={'row'} alignItems={'center'} columnGap={'2rem'}>
             <Icon fontSize={fontSize} />
-						<Typography variant='body1'>{Icon.name}</Typography>
+            <Typography variant="body1">{Icon.name}</Typography>
           </Stack>
         ))}
       </Stack>
@@ -161,9 +160,9 @@ export const GenericError: StoryObj<typeof GenericErrorIcon> = {
       description: {
         story: `\`\`\`ts
         <GenericErrorIcon h="128px" w="128px"  />
-        \`\`\``
-      }
-    }
+        \`\`\``,
+      },
+    },
   },
 
   render: function Render() {
@@ -172,7 +171,7 @@ export const GenericError: StoryObj<typeof GenericErrorIcon> = {
         {icons.genericError.map((Icon) => (
           <Stack direction={'row'} alignItems={'center'} columnGap={'2rem'}>
             <Icon h="128px" w="128px" />
-						<Typography variant='body1'>{Icon.name}</Typography>
+            <Typography variant="body1">{Icon.name}</Typography>
           </Stack>
         ))}
       </Stack>
@@ -186,9 +185,9 @@ export const NoMatch: StoryObj<typeof NoMatchIcon> = {
       description: {
         story: `\`\`\`ts
         <NoMatchIcon h="128px" w="128px"  />
-        \`\`\``
-      }
-    }
+        \`\`\``,
+      },
+    },
   },
 
   render: function Render() {
@@ -197,7 +196,7 @@ export const NoMatch: StoryObj<typeof NoMatchIcon> = {
         {icons.noMatch.map((Icon) => (
           <Stack direction={'row'} alignItems={'center'} columnGap={'2rem'}>
             <Icon h="128px" w="128px" />
-						<Typography variant='body1'>{Icon.name}</Typography>
+            <Typography variant="body1">{Icon.name}</Typography>
           </Stack>
         ))}
       </Stack>
@@ -211,9 +210,9 @@ export const Status: StoryObj<typeof ErrorIcon> = {
       description: {
         story: `\`\`\`ts
         <ErrorIcon />
-        \`\`\``
-      }
-    }
+        \`\`\``,
+      },
+    },
   },
 
   render: function Render() {
@@ -222,7 +221,7 @@ export const Status: StoryObj<typeof ErrorIcon> = {
         {icons.status.map((Icon) => (
           <Stack direction={'row'} alignItems={'center'} columnGap={'2rem'}>
             <Icon />
-						<Typography variant='body1'>{Icon.name}</Typography>
+            <Typography variant="body1">{Icon.name}</Typography>
           </Stack>
         ))}
       </Stack>
