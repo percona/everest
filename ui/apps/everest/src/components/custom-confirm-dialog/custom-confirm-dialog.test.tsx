@@ -2,9 +2,9 @@ import { render, screen } from '@testing-library/react';
 import { TestWrapper } from 'utils/test';
 import { FormProvider, useForm } from 'react-hook-form';
 import { ReactNode } from 'react';
-import { customConfirmDialogDefaultValues } from './custom-confirm-dialog-consts'
-import { CustomConfirmDialog } from './custom-confirm-dialog'
-import { CustomConfirmDialogFields } from './custom-confirm-dialog.types'
+import { customConfirmDialogDefaultValues } from './custom-confirm-dialog-consts';
+import { CustomConfirmDialog } from './custom-confirm-dialog';
+import { CustomConfirmDialogFields } from './custom-confirm-dialog.types';
 
 interface FormProviderWrapperProps {
   children: ReactNode;
@@ -32,9 +32,9 @@ describe('ConfirmFormDialog', () => {
       <TestWrapper>
         <FormProviderWrapper>
           <CustomConfirmDialog
-						submitMessage='submit'
-						alertMessage='alert'
-						checkboxMessage='checkbox'
+            submitMessage="submit"
+            alertMessage="alert"
+            checkboxMessage="checkbox"
             closeModal={vi.fn}
             handleConfirm={vi.fn}
             selectedId={selectedId}
@@ -60,18 +60,19 @@ describe('ConfirmFormDialog', () => {
       <TestWrapper>
         <FormProviderWrapper>
           <CustomConfirmDialog
-					submitMessage='submit'
-					alertMessage='alert'
-					checkboxMessage='checkbox'
+            submitMessage="submit"
+            alertMessage="alert"
+            checkboxMessage="checkbox"
             closeModal={vi.fn}
             handleConfirm={vi.fn}
             selectedId={selectedId}
             validationMode="onTouched"
             isOpen
             headerMessage="Delete database"
-            values={{ [CustomConfirmDialogFields.confirmInput]: selectedId, 
-							[CustomConfirmDialogFields.dataCheckbox]: false
-						}}
+            values={{
+              [CustomConfirmDialogFields.confirmInput]: selectedId,
+              [CustomConfirmDialogFields.dataCheckbox]: false,
+            }}
           />
         </FormProviderWrapper>
       </TestWrapper>
