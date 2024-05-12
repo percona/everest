@@ -8,7 +8,7 @@ type CustomArgs = CheckboxProps & {
   disabled?: boolean;
   size?: 'small' | 'medium';
   required?: boolean;
-  indeterminate?: boolean
+  indeterminate?: boolean;
 };
 
 const meta = {
@@ -109,6 +109,6 @@ export const Basic: Story = {
     disabled: false,
     size: 'medium',
     required: false,
-    indeterminate: false
+    indeterminate: false,
   },
 };
