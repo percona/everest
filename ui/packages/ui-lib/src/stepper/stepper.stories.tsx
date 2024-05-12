@@ -46,14 +46,12 @@ const meta = {
     };
 
     const handleNext = (stepper: 'vertical' | 'horizontal') => {
-
       let newActiveStep: number;
-      if(isLastStep(stepper) && !allStepsCompleted()) {
-        newActiveStep = steps.findIndex((step, i) => !(i in completed))
+      if (isLastStep(stepper) && !allStepsCompleted()) {
+        newActiveStep = steps.findIndex((step, i) => !(i in completed));
       } else {
-        newActiveStep = stepper === 'horizontal' ?
-        activeStep + 1 :
-        verticalActiveStep + 1
+        newActiveStep =
+          stepper === 'horizontal' ? activeStep + 1 : verticalActiveStep + 1;
       }
       stepper === 'horizontal'
         ? setActiveStep(newActiveStep)
