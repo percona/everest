@@ -34,7 +34,14 @@ test.describe.serial('Schedules List', async () => {
       numberOfNodes: '1',
       backup: {
         enabled: true,
-        schedules: [],
+        schedules: [
+          {
+            backupStorageName: 'test-storage-1',
+            enabled: true,
+            name: 'backup-1',
+            schedule: '0 * * * *',
+          },
+        ],
       },
     });
   });
@@ -82,7 +89,7 @@ test.describe.serial('Schedules List', async () => {
 
     expect(page.getByText('Every hour at minute 0')).toBeTruthy();
 
-    expect(page.getByText('1 schedule')).toBeTruthy();
+    expect(page.getByText('2 active schedules')).toBeTruthy();
   });
 
   test('Creating schedule with duplicate name shows validation error', async ({
@@ -171,12 +178,11 @@ test.describe.serial('Schedules List', async () => {
     await scheduledBackupsAccordion.click();
 
     const scheduleForDeleteBtn = await page
-      .getByText('Every hour at minute 0-')
-      .getByRole('button');
+      .getByTestId('delete-schedule-button')
+      .first();
     await scheduleForDeleteBtn.click();
-    await (await page.getByRole('menuitem', { name: 'Delete' })).click();
     await (await page.getByTestId('confirm-dialog-delete')).click();
-    expect(page.getByText('1 schedule')).toBeTruthy();
+    expect(page.getByText('1 active schedule')).toBeTruthy();
   });
 
   test('Edit Schedule', async ({ page }) => {
@@ -187,10 +193,9 @@ test.describe.serial('Schedules List', async () => {
 
     const scheduleForEditBtn = await page
       .getByTestId('schedule-0 0 1 * *')
-      .getByRole('button');
+      .getByTestId('edit-schedule-button');
 
     await scheduleForEditBtn.click();
-    await (await page.getByRole('menuitem', { name: 'Edit' })).click();
 
     expect(page.getByTestId('text-input-schedule-name')).not.toBeEmpty();
     expect(page.getByTestId('text-input-schedule-name')).toHaveValue(

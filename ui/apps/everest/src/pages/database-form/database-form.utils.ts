@@ -13,11 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  Backup,
-  DbCluster,
-  ProxyExposeType,
-} from 'shared-types/dbCluster.types';
+import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
 import { DbWizardFormFields, DbWizardMode } from './database-form.types';
 import { dbEngineToDbType } from '@percona/utils';
 import { matchFieldsValueToResourceSize } from './database-form-body/steps/resources/resources-step.utils.ts';
@@ -25,36 +21,7 @@ import { cpuParser, memoryParser } from 'utils/k8ResourceParser';
 import { generateShortUID } from './database-form-body/steps/first/utils.ts';
 import { MAX_DB_CLUSTER_NAME_LENGTH } from 'consts';
 import { DbWizardType } from './database-form-schema.ts';
-import { getFormValuesFromCronExpression } from '../../components/time-selection/time-selection.utils.ts';
-import {
-  DB_WIZARD_DEFAULTS,
-  TIME_SELECTION_DEFAULTS,
-} from './database-form.constants.ts';
-
-const getScheduleInfo = (mode: DbWizardMode, backup?: Backup) => {
-  if (
-    (backup?.enabled && mode === 'new') ||
-    mode === 'edit' ||
-    mode === 'restoreFromBackup'
-  ) {
-    const schedules = backup?.schedules;
-    const firstSchedule = schedules && schedules[0];
-
-    if (firstSchedule?.schedule) {
-      return {
-        ...getFormValuesFromCronExpression(firstSchedule.schedule),
-        [DbWizardFormFields.storageLocation]:
-          { name: firstSchedule.backupStorageName } || null,
-        [DbWizardFormFields.scheduleName]: firstSchedule.name,
-      };
-    }
-  }
-  return {
-    ...TIME_SELECTION_DEFAULTS,
-    [DbWizardFormFields.storageLocation]:
-      DB_WIZARD_DEFAULTS[DbWizardFormFields.storageLocation],
-  };
-};
+import { DB_WIZARD_DEFAULTS } from './database-form.constants.ts';
 
 export const DbClusterPayloadToFormValues = (
   dbCluster: DbCluster,
@@ -65,13 +32,12 @@ export const DbClusterPayloadToFormValues = (
 
   return {
     [DbWizardFormFields.backupsEnabled]: !!backup?.enabled,
-    [DbWizardFormFields.scheduleName]: `backup-${generateShortUID()}`,
     [DbWizardFormFields.pitrEnabled]: backup?.pitr?.enabled || false,
     [DbWizardFormFields.pitrStorageLocation]:
       (backup?.pitr?.enabled && mode === 'new') || mode === 'edit'
         ? backup?.pitr?.backupStorageName || null
         : DB_WIZARD_DEFAULTS[DbWizardFormFields.pitrStorageLocation],
-    ...getScheduleInfo(mode, backup),
+    [DbWizardFormFields.schedules]: backup?.schedules || [],
     [DbWizardFormFields.k8sNamespace]:
       namespace || DB_WIZARD_DEFAULTS[DbWizardFormFields.k8sNamespace],
     [DbWizardFormFields.dbType]: dbEngineToDbType(

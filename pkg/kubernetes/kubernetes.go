@@ -25,15 +25,16 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"slices"
 	"sort"
 	"strings"
 	"time"
 
+	goversion "github.com/hashicorp/go-version"
 	olmv1 "github.com/operator-framework/api/pkg/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
 	yamlv3 "gopkg.in/yaml.v3"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -47,9 +48,9 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
 
-	scripts "github.com/percona/everest"
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/data"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes/client"
 	everestVersion "github.com/percona/everest/pkg/version"
 )
@@ -69,8 +70,6 @@ const (
 	// ClusterTypeGeneric is a generic type.
 	ClusterTypeGeneric ClusterType = "generic"
 
-	// PerconaEverestDeploymentName stores the name of everest API Server deployment.
-	PerconaEverestDeploymentName = "percona-everest"
 	// EverestOperatorDeploymentName is the name of the deployment for everest operator.
 	EverestOperatorDeploymentName = "everest-operator-controller-manager"
 
@@ -97,13 +96,12 @@ const (
 
 	pollInterval = 1 * time.Second
 	pollDuration = 300 * time.Second
+
+	deploymentRestartAnnotation = "kubectl.kubernetes.io/restartedAt"
 )
 
-var (
-	// ErrEmptyVersionTag Got an empty version tag from GitHub API.
-	ErrEmptyVersionTag       = errors.New("got an empty version tag from Github")
-	errNoEverestOperatorPods = errors.New("no instances of everest-operator are running")
-)
+// ErrEmptyVersionTag Got an empty version tag from GitHub API.
+var ErrEmptyVersionTag = errors.New("got an empty version tag from Github")
 
 // Kubernetes is a client for Kubernetes.
 type Kubernetes struct {
@@ -183,6 +181,12 @@ func NewEmpty(l *zap.SugaredLogger) *Kubernetes {
 			},
 		},
 	}
+}
+
+// WithClient sets the client connector.
+func (k *Kubernetes) WithClient(c client.KubeClientConnector) *Kubernetes {
+	k.client = c
+	return k
 }
 
 // Namespace returns the current namespace.
@@ -375,7 +379,11 @@ func (k *Kubernetes) applyCSVs(ctx context.Context, resources []unstructured.Uns
 }
 
 // InstallPerconaCatalog installs percona catalog and ensures that packages are available.
-func (k *Kubernetes) InstallPerconaCatalog(ctx context.Context) error {
+func (k *Kubernetes) InstallPerconaCatalog(ctx context.Context, version *goversion.Version) error {
+	if version == nil {
+		return errors.New("no version provided for Percona catalog installation")
+	}
+
 	data, err := fs.ReadFile(data.OLMCRDs, "crds/olm/everest-catalog.yaml")
 	if err != nil {
 		return errors.Join(err, errors.New("failed to read percona catalog file"))
@@ -385,7 +393,8 @@ func (k *Kubernetes) InstallPerconaCatalog(ctx context.Context) error {
 		return err
 	}
 
-	if err := unstructured.SetNestedField(o, everestVersion.CatalogImage(), "spec", "image"); err != nil {
+	k.l.Debugf("Using catalog image %s", everestVersion.CatalogImage(version))
+	if err := unstructured.SetNestedField(o, everestVersion.CatalogImage(version), "spec", "image"); err != nil {
 		return err
 	}
 	data, err = yamlv3.Marshal(o)
@@ -410,10 +419,6 @@ func (k *Kubernetes) applyResources(ctx context.Context) ([]unstructured.Unstruc
 
 	resources := []unstructured.Unstructured{}
 	for _, f := range files {
-		// The scopelint linter warns about using the f variable in a function.
-		// While it's safe, we assign f := f to silent the warning.
-		f := f
-
 		data, err := fs.ReadFile(data.OLMCRDs, f)
 		if err != nil {
 			return nil, errors.Join(err, fmt.Errorf("failed to read %q file", f))
@@ -429,7 +434,7 @@ func (k *Kubernetes) applyResources(ctx context.Context) ([]unstructured.Unstruc
 			return true, nil
 		}
 
-		if err := wait.PollUntilContextTimeout(ctx, time.Second, 30*time.Second, true, applyFile); err != nil {
+		if err := wait.PollUntilContextTimeout(ctx, time.Second, 10*time.Minute, true, applyFile); err != nil {
 			return nil, errors.Join(err, fmt.Errorf("cannot apply %q file", f))
 		}
 
@@ -569,6 +574,29 @@ func mergeSubscriptionConfig(sub *olmv1alpha1.SubscriptionConfig, cfg *olmv1alph
 	return sub
 }
 
+func (k *Kubernetes) getTargetInstallPlanName(ctx context.Context, subscription *olmv1alpha1.Subscription, req InstallOperatorRequest) (string, error) {
+	targetCSV := req.StartingCSV
+	if subscription.Status.InstalledCSV != "" {
+		targetCSV = subscription.Status.InstalledCSV
+	}
+	if targetCSV == "" {
+		// We don't know yet which CSV we want, so we will use the one specified in the subscription.
+		return subscription.Status.InstallPlanRef.Name, nil
+	}
+	ipList, err := k.client.ListInstallPlans(ctx, req.Namespace)
+	if err != nil {
+		return "", err
+	}
+	for _, ip := range ipList.Items {
+		for _, csv := range ip.Spec.ClusterServiceVersionNames {
+			if csv == targetCSV {
+				return ip.GetName(), nil
+			}
+		}
+	}
+	return "", fmt.Errorf("cannot find InstallPlan for CSV: %s", targetCSV)
+}
+
 // InstallOperator installs an operator via OLM.
 func (k *Kubernetes) InstallOperator(ctx context.Context, req InstallOperatorRequest) error { //nolint:funlen
 	subscription, err := k.client.GetSubscription(ctx, req.Namespace, req.Name)
@@ -615,11 +643,15 @@ func (k *Kubernetes) InstallOperator(ctx context.Context, req InstallOperatorReq
 		if err != nil {
 			return false, errors.Join(err, fmt.Errorf("cannot get an install plan for the operator subscription: %q", req.Name))
 		}
-		if subs == nil || (subs != nil && subs.Status.InstallPlanRef == nil) {
+		if subs == nil || subs.Status.InstallPlanRef == nil {
 			return false, nil
 		}
 
-		return k.approveInstallPlan(ctx, req.Namespace, subs.Status.InstallPlanRef.Name)
+		installPlanName, err := k.getTargetInstallPlanName(ctx, subs, req)
+		if err != nil {
+			return false, err
+		}
+		return k.ApproveInstallPlan(ctx, req.Namespace, installPlanName)
 	})
 	if err != nil {
 		return err
@@ -635,30 +667,6 @@ func (k *Kubernetes) InstallOperator(ctx context.Context, req InstallOperatorReq
 	k.l.Debugf("Waiting for deployment rollout %s/%s", req.Namespace, deploymentName)
 
 	return k.client.DoRolloutWait(ctx, types.NamespacedName{Namespace: req.Namespace, Name: deploymentName})
-}
-
-func (k *Kubernetes) approveInstallPlan(ctx context.Context, namespace, installPlanName string) (bool, error) {
-	ip, err := k.client.GetInstallPlan(ctx, namespace, installPlanName)
-	if err != nil {
-		return false, err
-	}
-
-	k.l.Debugf("Approving install plan %s/%s", namespace, installPlanName)
-
-	ip.Spec.Approved = true
-	_, err = k.client.UpdateInstallPlan(ctx, namespace, ip)
-	if err != nil {
-		var sErr *apierrors.StatusError
-		if ok := errors.As(err, &sErr); ok && sErr.Status().Reason == metav1.StatusReasonConflict {
-			// The install plan has changed. We retry to get an updated install plan.
-			k.l.Debugf("Retrying install plan update due to a version conflict. Error: %s", err)
-			return false, nil
-		}
-
-		return false, err
-	}
-
-	return true, nil
 }
 
 // CreateOperatorGroup creates operator group in the given namespace.
@@ -679,7 +687,6 @@ func (k *Kubernetes) CreateOperatorGroup(ctx context.Context, name, namespace st
 	og.APIVersion = "operators.coreos.com/v1"
 	var update bool
 	for _, namespace := range targetNamespaces {
-		namespace := namespace
 		if !arrayContains(og.Spec.TargetNamespaces, namespace) {
 			update = true
 		}
@@ -698,7 +705,7 @@ func (k *Kubernetes) ListSubscriptions(ctx context.Context, namespace string) (*
 
 // UpgradeOperator upgrades an operator to the next available version.
 func (k *Kubernetes) UpgradeOperator(ctx context.Context, namespace, name string) error {
-	ip, err := k.getInstallPlan(ctx, namespace, name)
+	ip, err := k.getInstallPlanFromSubscription(ctx, namespace, name)
 	if err != nil {
 		return err
 	}
@@ -712,37 +719,6 @@ func (k *Kubernetes) UpgradeOperator(ctx context.Context, namespace, name string
 	_, err = k.client.UpdateInstallPlan(ctx, namespace, ip)
 
 	return err
-}
-
-func (k *Kubernetes) getInstallPlan(ctx context.Context, namespace, name string) (*olmv1alpha1.InstallPlan, error) {
-	var subs *olmv1alpha1.Subscription
-
-	// If the subscription was recently created, the install plan might not be ready yet.
-	err := wait.PollUntilContextTimeout(ctx, pollInterval, pollDuration, false, func(ctx context.Context) (bool, error) {
-		var err error
-		subs, err = k.client.GetSubscription(ctx, namespace, name)
-		if err != nil {
-			return false, err
-		}
-		if subs == nil || subs.Status.Install == nil || subs.Status.Install.Name == "" {
-			return false, nil
-		}
-
-		return true, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	if subs == nil || subs.Status.Install == nil || subs.Status.Install.Name == "" {
-		return nil, fmt.Errorf("cannot get subscription for %q operator", name)
-	}
-
-	ip, err := k.client.GetInstallPlan(ctx, namespace, subs.Status.Install.Name)
-	if err != nil {
-		return nil, errors.Join(err, fmt.Errorf("cannot get install plan to upgrade %q", name))
-	}
-
-	return ip, err
 }
 
 // GetServerVersion returns server version.
@@ -766,6 +742,14 @@ func (k *Kubernetes) ListClusterServiceVersion(
 	return k.client.ListClusterServiceVersion(ctx, namespace)
 }
 
+// UpdateClusterServiceVersion updates a ClusterServiceVersion and returns the updated object.
+func (k *Kubernetes) UpdateClusterServiceVersion(
+	ctx context.Context,
+	csv *olmv1alpha1.ClusterServiceVersion,
+) (*olmv1alpha1.ClusterServiceVersion, error) {
+	return k.client.UpdateClusterServiceVersion(ctx, csv)
+}
+
 // DeleteClusterServiceVersion deletes a ClusterServiceVersion.
 func (k *Kubernetes) DeleteClusterServiceVersion(
 	ctx context.Context,
@@ -787,7 +771,7 @@ func (k *Kubernetes) ProvisionMonitoring(namespace string) error {
 			return err
 		}
 		// retry 3 times because applying vmagent spec might take some time.
-		for i := 0; i < 3; i++ {
+		for range 3 {
 			k.l.Debugf("Applying file %s", path)
 
 			err = k.client.ApplyManifestFile(file, namespace)
@@ -824,63 +808,96 @@ func (k *Kubernetes) victoriaMetricsCRDFiles() []string {
 	}
 }
 
-// RestartEverest restarts everest pod.
-func (k *Kubernetes) RestartEverest(ctx context.Context, name, namespace string) error {
-	var podsToRestart []corev1.Pod
-	err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
-		p, err := k.getEverestPods(ctx, name, namespace)
-		if err != nil {
-			return false, err
-		}
-		podsToRestart = p
-		return true, nil
+// RestartOperator restarts the deployment of an operator managed by OLM.
+func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string) error {
+	// Get the deployment.
+	deployment, err := k.GetDeployment(ctx, name, namespace)
+	if err != nil {
+		return err
+	}
+	// Find the CSV which owns the deployment.
+	ownerCsvIdx := slices.IndexFunc(deployment.GetOwnerReferences(), func(owner metav1.OwnerReference) bool {
+		return owner.Kind == olmv1alpha1.ClusterServiceVersionKind
+	})
+	if ownerCsvIdx < 0 {
+		return fmt.Errorf("cannot find ClusterServiceVersion owner for deployment %s in namespace %s", name, namespace)
+	}
+	csv, err := k.client.GetClusterServiceVersion(ctx, types.NamespacedName{
+		Name:      deployment.GetOwnerReferences()[ownerCsvIdx].Name,
+		Namespace: namespace,
 	})
 	if err != nil {
 		return err
 	}
-	for _, pod := range podsToRestart {
-		err = k.client.DeletePod(ctx, namespace, pod.Name)
-		if err != nil {
-			return err
-		}
+	// Update restart annotation.
+	annotations := csv.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
 	}
-
-	return wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
-		pods, err := k.getEverestPods(ctx, name, namespace)
+	now := time.Now().Truncate(time.Second)
+	annotations[deploymentRestartAnnotation] = now.Format(time.RFC3339)
+	csv.SetAnnotations(annotations)
+	if _, err = k.client.UpdateClusterServiceVersion(ctx, csv); err != nil {
+		return err
+	}
+	// Wait for pods to be ready.
+	err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+		deployment, err := k.GetDeployment(ctx, name, namespace)
 		if err != nil {
 			return false, err
 		}
-		podsStatuses := make(map[string]struct{})
-		for _, pod := range pods {
-			pod := pod
-			for _, restartedPod := range podsToRestart {
-				if restartedPod.UID == pod.UID {
-					return false, nil
-				}
-			}
-			if pod.Status.Phase == corev1.PodRunning && pod.Status.ContainerStatuses[0].Ready {
-				podsStatuses[string(pod.UID)] = struct{}{}
-			}
+		val, found := deployment.Spec.Template.GetAnnotations()[deploymentRestartAnnotation]
+		if !found {
+			return false, nil
 		}
-		return len(podsStatuses) == len(pods), nil
+		observedRestartTS, err := time.Parse(time.RFC3339, val)
+		if err != nil {
+			return false, err
+		}
+		ready := deployment.Status.ReadyReplicas == deployment.Status.Replicas &&
+			deployment.Status.Replicas == deployment.Status.UpdatedReplicas &&
+			deployment.Status.UnavailableReplicas == 0 &&
+			deployment.GetGeneration() == deployment.Status.ObservedGeneration &&
+			// The last restart cannot be older than now.
+			(observedRestartTS.After(now) || observedRestartTS.Equal(now))
+
+		return ready, nil
 	})
+	return err
 }
 
-func (k *Kubernetes) getEverestPods(ctx context.Context, name, namespace string) ([]corev1.Pod, error) {
-	podList, err := k.client.ListPods(ctx, namespace, metav1.ListOptions{
-		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
-			MatchLabels: map[string]string{
-				"app.kubernetes.io/name": name,
-			},
-		}),
-	})
+// RestartDeployment restarts the given deployment.
+func (k *Kubernetes) RestartDeployment(ctx context.Context, name, namespace string) error {
+	// Get the deployment.
+	deployment, err := k.GetDeployment(ctx, name, namespace)
 	if err != nil {
-		return []corev1.Pod{}, err
+		return err
 	}
-	if len(podList.Items) == 0 {
-		return []corev1.Pod{}, errNoEverestOperatorPods
+	// Set restart annotation.
+	annotations := deployment.Spec.Template.Annotations
+	if annotations == nil {
+		annotations = make(map[string]string)
 	}
-	return podList.Items, nil
+	annotations[deploymentRestartAnnotation] = time.Now().Format(time.RFC3339)
+	deployment.Spec.Template.SetAnnotations(annotations)
+	// Update deployment.
+	if _, err := k.client.UpdateDeployment(ctx, deployment); err != nil {
+		return err
+	}
+	// Wait for pods to be ready.
+	err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+		deployment, err := k.GetDeployment(ctx, name, namespace)
+		if err != nil {
+			return false, err
+		}
+		ready := deployment.Status.ReadyReplicas == deployment.Status.Replicas &&
+			deployment.Status.Replicas == deployment.Status.UpdatedReplicas &&
+			deployment.Status.UnavailableReplicas == 0 &&
+			deployment.GetGeneration() == deployment.Status.ObservedGeneration
+
+		return ready, nil
+	})
+	return err
 }
 
 // ListEngineDeploymentNames returns a string array containing found engine deployments for the Everest.
@@ -905,32 +922,55 @@ func (k *Kubernetes) ApplyObject(obj runtime.Object) error {
 }
 
 // InstallEverest downloads the manifest file and applies it against provisioned k8s cluster.
-func (k *Kubernetes) InstallEverest(ctx context.Context, namespace string) error {
-	data, err := scripts.Manifest()
+func (k *Kubernetes) InstallEverest(ctx context.Context, namespace string, version *goversion.Version) error {
+	if version == nil {
+		return errors.New("no version provided for Everest installation")
+	}
+
+	data, err := k.getManifestData(ctx, version)
 	if err != nil {
 		return errors.Join(err, errors.New("failed reading everest manifest file"))
 	}
 
+	k.l.Debug("Applying manifest file")
 	err = k.client.ApplyManifestFile(data, namespace)
 	if err != nil {
 		return errors.Join(err, errors.New("failed applying manifest file"))
 	}
-	if err := k.client.DoRolloutWait(ctx, types.NamespacedName{Name: PerconaEverestDeploymentName, Namespace: namespace}); err != nil {
+
+	k.l.Debug("Waiting for manifest rollout")
+	if err := k.client.DoRolloutWait(ctx, types.NamespacedName{Name: common.PerconaEverestDeploymentName, Namespace: namespace}); err != nil {
 		return errors.Join(err, errors.New("failed waiting for the Everest deployment to be ready"))
 	}
 	return nil
 }
 
-// DeleteEverest downloads the manifest file and deletes it from provisioned k8s cluster.
-func (k *Kubernetes) DeleteEverest(_ context.Context, namespace string) error {
-	data, err := scripts.Manifest()
+func (k *Kubernetes) getManifestData(ctx context.Context, version *goversion.Version) ([]byte, error) {
+	m := everestVersion.ManifestURL(version)
+	k.l.Debugf("Downloading manifest file %s", m)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, m, nil)
 	if err != nil {
-		return errors.Join(err, errors.New("failed reading everest manifest file"))
+		return nil, err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close() //nolint:errcheck
+	return io.ReadAll(resp.Body)
+}
+
+// DeleteEverest downloads the manifest file and deletes it from provisioned k8s cluster.
+func (k *Kubernetes) DeleteEverest(ctx context.Context, namespace string, version *goversion.Version) error {
+	data, err := k.getManifestData(ctx, version)
+	if err != nil {
+		return errors.Join(err, errors.New("failed downloading Everest manifest file"))
 	}
 
 	err = k.client.DeleteManifestFile(data, namespace)
 	if err != nil {
-		return errors.Join(err, errors.New("failed deleting manifest file"))
+		return errors.Join(err, errors.New("failed deleting Everest based on a manifest file"))
 	}
 	return nil
 }
@@ -961,11 +1001,6 @@ func (k *Kubernetes) GetDBNamespaces(ctx context.Context, namespace string) ([]s
 	return nil, errors.New("failed to get watched namespaces")
 }
 
-// GetDeployment returns k8s deployment by provided name and namespace.
-func (k *Kubernetes) GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error) {
-	return k.client.GetDeployment(ctx, name, namespace)
-}
-
 // WaitForRollout waits for rollout of a provided deployment in the provided namespace.
 func (k *Kubernetes) WaitForRollout(ctx context.Context, name, namespace string) error {
 	return k.client.DoRolloutWait(ctx, types.NamespacedName{Name: name, Namespace: namespace})
@@ -982,7 +1017,6 @@ func (k *Kubernetes) UpdateClusterRoleBinding(ctx context.Context, name string, 
 	}
 	var needsUpdate bool
 	for _, namespace := range namespaces {
-		namespace := namespace
 		if !subjectsContains(binding.Subjects, namespace) {
 			subject := binding.Subjects[0]
 			subject.Namespace = namespace
@@ -1001,7 +1035,6 @@ func (k *Kubernetes) UpdateClusterRoleBinding(ctx context.Context, name string, 
 
 func arrayContains(s []string, e string) bool {
 	for _, a := range s {
-		a := a
 		if a == e {
 			return true
 		}
@@ -1011,7 +1044,6 @@ func arrayContains(s []string, e string) bool {
 
 func subjectsContains(s []rbacv1.Subject, n string) bool {
 	for _, a := range s {
-		a := a
 		if a.Namespace == n {
 			return true
 		}

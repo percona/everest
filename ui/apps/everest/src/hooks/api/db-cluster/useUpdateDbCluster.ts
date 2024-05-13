@@ -17,50 +17,16 @@ import { UseMutationOptions, useMutation } from '@tanstack/react-query';
 import { updateDbClusterFn } from 'api/dbClusterApi';
 import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
-import { getCronExpressionFromFormValues } from 'components/time-selection/time-selection.utils.ts';
-import { generateShortUID } from 'pages/database-form/database-form-body/steps/first/utils';
 
 type UpdateDbClusterArgType = {
   dbPayload: DbWizardType;
   dbCluster: DbCluster;
 };
 
-const getSchedules = (
-  dbCluster: DbCluster,
-  dbPayload: DbWizardType,
-  backupSchedule: string
-) => {
-  const schedules = dbCluster?.spec?.backup?.schedules;
-  if (!!schedules && schedules.length > 1) {
-    return schedules;
-  } else
-    return [
-      {
-        enabled: true,
-        name: dbPayload?.scheduleName || `backup-${generateShortUID()}`,
-        backupStorageName:
-          typeof dbPayload.storageLocation === 'string'
-            ? dbPayload.storageLocation
-            : dbPayload.storageLocation!.name,
-        schedule: backupSchedule,
-      },
-    ];
-};
-
 const formValuesToPayloadOverrides = (
   dbPayload: DbWizardType,
   dbCluster: DbCluster
 ): DbCluster => {
-  const { selectedTime, minute, hour, amPm, onDay, weekDay } = dbPayload;
-  const backupSchedule = getCronExpressionFromFormValues({
-    selectedTime,
-    minute,
-    hour,
-    amPm,
-    onDay,
-    weekDay,
-  });
-
   let pitrBackupStorageName = '';
 
   if (dbPayload.pitrEnabled) {
@@ -78,14 +44,14 @@ const formValuesToPayloadOverrides = (
       ...dbCluster?.spec,
       backup: {
         ...dbCluster?.spec?.backup,
-        enabled: dbPayload.backupsEnabled,
+        enabled: dbPayload.schedules?.length > 0,
         pitr: {
           ...dbCluster?.spec?.backup?.pitr,
           enabled: dbPayload.pitrEnabled,
           backupStorageName: pitrBackupStorageName,
         },
-        ...(dbPayload.backupsEnabled && {
-          schedules: getSchedules(dbCluster, dbPayload, backupSchedule),
+        ...(dbPayload.schedules?.length > 0 && {
+          schedules: dbPayload.schedules,
         }),
       },
       engine: {

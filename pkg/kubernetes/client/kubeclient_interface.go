@@ -7,6 +7,7 @@ import (
 
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	versioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	packagev1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -49,10 +50,6 @@ type KubeClientConnector interface {
 	GenerateKubeConfigWithToken(user string, secret *corev1.Secret) ([]byte, error)
 	// GetServerVersion returns server version.
 	GetServerVersion() (*version.Info, error)
-	// GetDeployment returns deployment by name.
-	GetDeployment(ctx context.Context, name string, namespace string) (*appsv1.Deployment, error)
-	// ListDeployments returns deployment by name.
-	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
 	// ApplyObject applies object.
 	ApplyObject(obj runtime.Object) error
 	// DeleteObject deletes object from the k8s cluster.
@@ -96,14 +93,10 @@ type KubeClientConnector interface {
 	GetSubscription(ctx context.Context, namespace, name string) (*v1alpha1.Subscription, error)
 	// ListSubscriptions all the subscriptions in the namespace.
 	ListSubscriptions(ctx context.Context, namespace string) (*v1alpha1.SubscriptionList, error)
-	// GetInstallPlan retrieves an OLM install plan by namespace and name.
-	GetInstallPlan(ctx context.Context, namespace string, name string) (*v1alpha1.InstallPlan, error)
 	// DoPackageWait for the package to be available in OLM.
 	DoPackageWait(ctx context.Context, namespace, name string) error
 	// GetPackageManifest returns a package manifest by given name.
 	GetPackageManifest(ctx context.Context, namespace, name string) (*packagev1.PackageManifest, error)
-	// UpdateInstallPlan updates the existing install plan in the specified namespace.
-	UpdateInstallPlan(ctx context.Context, namespace string, installPlan *v1alpha1.InstallPlan) (*v1alpha1.InstallPlan, error)
 	// ListCRDs returns a list of CRDs.
 	ListCRDs(ctx context.Context, labelSelector *metav1.LabelSelector) (*apiextv1.CustomResourceDefinitionList, error)
 	// ListCRs returns a list of CRs.
@@ -112,6 +105,8 @@ type KubeClientConnector interface {
 	GetClusterServiceVersion(ctx context.Context, key types.NamespacedName) (*v1alpha1.ClusterServiceVersion, error)
 	// ListClusterServiceVersion list all CSVs for the given namespace.
 	ListClusterServiceVersion(ctx context.Context, namespace string) (*v1alpha1.ClusterServiceVersionList, error)
+	// UpdateClusterServiceVersion updates a CSV and returns the updated CSV.
+	UpdateClusterServiceVersion(ctx context.Context, csv *v1alpha1.ClusterServiceVersion) (*v1alpha1.ClusterServiceVersion, error)
 	// DeleteClusterServiceVersion deletes a CSV by namespaced name.
 	DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error
 	// DeleteFile accepts manifest file contents parses into []runtime.Object
@@ -129,6 +124,8 @@ type KubeClientConnector interface {
 	ListDatabaseClusterBackups(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error)
 	// GetDatabaseClusterBackup returns database cluster backups by provided name.
 	GetDatabaseClusterBackup(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error)
+	// UpdateDatabaseClusterBackup updates the provided database cluster backup.
+	UpdateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error)
 	// ListDatabaseClusterRestores returns list of managed database clusters.
 	ListDatabaseClusterRestores(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterRestoreList, error)
 	// GetDatabaseClusterRestore returns database clusters by provided name.
@@ -137,6 +134,20 @@ type KubeClientConnector interface {
 	ListDatabaseEngines(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseEngineList, error)
 	// GetDatabaseEngine returns database clusters by provided name.
 	GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error)
+	// UpdateDatabaseEngine updates a database engine and returns the updated object.
+	UpdateDatabaseEngine(ctx context.Context, namespace string, engine *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error)
+	// GetDeployment returns deployment by name.
+	GetDeployment(ctx context.Context, name string, namespace string) (*appsv1.Deployment, error)
+	// ListDeployments returns deployment by name.
+	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
+	// UpdateDeployment updates a deployment and returns the updated object.
+	UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error)
+	// GetInstallPlan retrieves an OLM install plan by namespace and name.
+	GetInstallPlan(ctx context.Context, namespace string, name string) (*v1alpha1.InstallPlan, error)
+	// ListInstallPlans lists install plans.
+	ListInstallPlans(ctx context.Context, namespace string) (*v1alpha1.InstallPlanList, error)
+	// UpdateInstallPlan updates the existing install plan in the specified namespace.
+	UpdateInstallPlan(ctx context.Context, namespace string, installPlan *v1alpha1.InstallPlan) (*v1alpha1.InstallPlan, error)
 	// DeleteAllMonitoringResources deletes all resources related to monitoring from k8s cluster.
 	DeleteAllMonitoringResources(ctx context.Context, namespace string) error
 	// CreateMonitoringConfig creates an monitoringConfig.
@@ -153,6 +164,10 @@ type KubeClientConnector interface {
 	GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error)
 	// DeleteNamespace deletes a namespace.
 	DeleteNamespace(ctx context.Context, name string) error
+	// OLM returns OLM client set.
+	//
+	//nolint:ireturn
+	OLM() versioned.Interface
 	// GetNodes returns list of nodes.
 	GetNodes(ctx context.Context) (*corev1.NodeList, error)
 	// GetPods returns list of pods.

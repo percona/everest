@@ -18,10 +18,9 @@ import { outlinedInputClasses } from '@mui/material/OutlinedInput';
 declare module '@mui/material/styles' {
   interface PaletteOptions {
     surfaces?: {
-      default?: string;
       backdrop?: string;
-      high?: string;
-      low?: string;
+      elevation0?: string;
+      elevation1?: string;
     };
     dividers?: {
       divider?: string;
@@ -152,9 +151,9 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
             paper: '#FFFFFF',
           },
           surfaces: {
-            default: '#2C323E',
-            backdrop: 'rgba(44, 50, 62, 0.75)',
-            low: '#F0F1F4',
+            backdrop: 'rgba(44, 50, 62, 0.72)',
+            elevation0: 'rgba(240, 241, 244, 1)',
+            elevation1: 'rgba(255, 255, 255, 1)',
           },
           dividers: {
             divider: 'rgba(44, 50, 62, 0.25)',
@@ -217,13 +216,13 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
             focusOpacity: 0.14,
           },
           background: {
-            default: '#2C323E',
-            paper: '#2C323E',
+            default: '#3A4151',
+            paper: '#3A4151',
           },
           surfaces: {
-            backdrop: '#2C323E',
-            default: '#2C323E',
-            high: '#3A4151',
+            backdrop: 'rgba(44, 50, 62, 0.72)',
+            elevation0: 'rgba(44, 50, 62, 1)',
+            elevation1: 'rgba(58, 65, 81, 1)',
           },
           dividers: {
             divider: 'rgba(209, 213, 222, 0.25)',
@@ -458,6 +457,19 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
             borderColor: theme.palette.primary.main,
           }),
 
+          ...(ownerState.variant === 'text' && {
+            ...(ownerState.size === 'large' && {
+              padding: '13px 22px',
+            }),
+            ...(ownerState.size === 'medium' && {
+              padding: '11px 14px',
+            }),
+            ...(ownerState.size === 'small' && {
+              padding: '8px 10px',
+            }),
+            borderColor: theme.palette.primary.main,
+          }),
+
           ...(ownerState.size === 'large' && {
             fontSize: 16,
           }),
@@ -625,16 +637,6 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
             color: theme.palette.tooltips?.background,
           }),
         }),
-      },
-    },
-    MuiFormControlLabel: {
-      styleOverrides: {
-        root: {
-          alignItems: 'flex-start',
-          '.MuiFormControlLabel-label': {
-            paddingTop: '7px',
-          },
-        },
       },
     },
     MuiAccordion: {

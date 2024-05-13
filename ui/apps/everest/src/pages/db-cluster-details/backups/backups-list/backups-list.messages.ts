@@ -3,6 +3,10 @@ export const Messages = {
     header: 'Delete backup',
     content: (backupName: string) =>
       `Are you sure you want to permanently delete "${backupName}" and any datasets it contains?`,
+    alertMessage:
+      'This action will permanently destroy your backup and you will not be able to recover it.',
+    confirmButton: 'Delete',
+    checkboxMessage: 'Delete backups storage data',
   },
   restoreDialog: {
     header: 'Restore to this database',
@@ -24,5 +28,5 @@ export const Messages = {
   restore: 'Restore to this DB',
   restoreToNewDb: 'Create new DB',
   exceededScheduleBackupsNumber:
-    'You have exceeded the limit of schedules allowed for PostgreSQL.',
+    'Maximum limit of schedules for PostgreSQL reached.',
 };

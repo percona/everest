@@ -1,18 +1,26 @@
 import { updateDbClusterFn } from 'api/dbClusterApi';
-import { ScheduleFormData } from 'components/schedule-form/schedule-form-schema.ts';
 import { getCronExpressionFromFormValues } from 'components/time-selection/time-selection.utils';
 import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { Schedule } from 'shared-types/dbCluster.types';
 import { useDbCluster } from '../db-cluster/useDbCluster';
 import { DbCluster } from 'shared-types/dbCluster.types';
+import { ScheduleFormData } from 'components/schedule-form-dialog/schedule-form/schedule-form-schema';
 
 const backupScheduleFormValuesToDbClusterPayload = (
   dbPayload: ScheduleFormData,
   dbCluster: DbCluster,
   mode: 'edit' | 'new'
 ): DbCluster => {
-  const { selectedTime, minute, hour, amPm, onDay, weekDay, scheduleName } =
-    dbPayload;
+  const {
+    selectedTime,
+    minute,
+    hour,
+    amPm,
+    onDay,
+    weekDay,
+    scheduleName,
+    retentionCopies,
+  } = dbPayload;
   const backupSchedule = getCronExpressionFromFormValues({
     selectedTime,
     minute,
@@ -27,6 +35,7 @@ const backupScheduleFormValuesToDbClusterPayload = (
       ...(dbCluster.spec.backup?.schedules ?? []),
       {
         enabled: true,
+        retentionCopies: parseInt(retentionCopies, 10),
         name: scheduleName,
         backupStorageName:
           typeof dbPayload.storageLocation === 'string'
@@ -48,6 +57,7 @@ const backupScheduleFormValuesToDbClusterPayload = (
       newSchedulesArray[editedScheduleIndex] = {
         enabled: true,
         name: scheduleName,
+        retentionCopies: parseInt(retentionCopies, 10),
         backupStorageName:
           typeof dbPayload.storageLocation === 'string'
             ? dbPayload.storageLocation

@@ -56,7 +56,30 @@ func (e *EverestServer) ListDatabaseClusters(ctx echo.Context, namespace string)
 }
 
 // DeleteDatabaseCluster deletes a database cluster on the specified kubernetes cluster.
-func (e *EverestServer) DeleteDatabaseCluster(ctx echo.Context, namespace, name string) error {
+func (e *EverestServer) DeleteDatabaseCluster(
+	ctx echo.Context,
+	namespace, name string,
+	params DeleteDatabaseClusterParams,
+) error {
+	cleanupStorage := pointer.Get(params.CleanupBackupStorage)
+	// If cleanup is required, we add a finalizer to all backup object for this cluster.
+	if cleanupStorage {
+		reqCtx := ctx.Request().Context()
+		backups, err := e.kubeClient.ListDatabaseClusterBackups(reqCtx, namespace, metav1.ListOptions{})
+		if err != nil {
+			return errors.Join(err, errors.New("could not list database backups"))
+		}
+		// Cleanup storage.
+		for _, backup := range backups.Items {
+			// Doesn't belong to this cluster, skip.
+			if backup.Spec.DBClusterName != name {
+				continue
+			}
+			if err := e.cleanupBackupStorage(reqCtx, &backup); err != nil { //nolint:gosec // We use Go 1.21+
+				return errors.Join(err, errors.New("could not cleanup backup storage"))
+			}
+		}
+	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, name)
 }
 
@@ -155,19 +178,31 @@ func (e *EverestServer) GetDatabaseClusterPitr(ctx echo.Context, namespace, name
 
 	latestBackup := latestSuccessfulBackup(backups.Items, databaseCluster.Spec.Engine.Type)
 
-	uploadInterval := getDefaultUploadInterval(databaseCluster.Spec.Engine.Type)
-	now := time.Now()
-	// delete nanoseconds since they're not accepted by restoration
-	now = now.Truncate(time.Duration(now.Nanosecond()) * time.Nanosecond)
-	// heuristic: latest restorable date is now minus uploadInterval
-	latest := now.Truncate(time.Duration(uploadInterval) * time.Second).UTC()
-	response.LatestDate = &latest
-	earliest := latestBackup.Status.CreatedAt.UTC()
-	response.EarliestDate = &earliest
+	uploadInterval := getDefaultUploadInterval(databaseCluster.Spec.Engine.Type, databaseCluster.Spec.Backup.PITR.UploadIntervalSec)
+	backupTime := latestBackup.Status.CreatedAt.UTC()
+	latest := latestRestorableDate(time.Now(), backupTime, uploadInterval)
+
+	response.LatestDate = latest
+	if response.LatestDate != nil {
+		response.EarliestDate = &backupTime
+	}
 	response.LatestBackupName = &latestBackup.Name
 	response.Gaps = &latestBackup.Status.Gaps
 
 	return ctx.JSON(http.StatusOK, response)
+}
+
+func latestRestorableDate(now, latestBackupTime time.Time, uploadInterval int) *time.Time {
+	// delete nanoseconds since they're not accepted by restoration
+	now = now.Truncate(time.Duration(now.Nanosecond()) * time.Nanosecond)
+	// heuristic: latest restorable date is now minus uploadInterval
+	date := now.Add(-time.Duration(uploadInterval) * time.Second).UTC()
+	// not able to restore if after the latest backup passed less than uploadInterval time,
+	// so in that case return nil
+	if latestBackupTime.After(date) {
+		return nil
+	}
+	return &date
 }
 
 func latestSuccessfulBackup(backups []everestv1alpha1.DatabaseClusterBackup, engineType everestv1alpha1.EngineType) *everestv1alpha1.DatabaseClusterBackup {
@@ -206,7 +241,10 @@ func successStatus(state everestv1alpha1.BackupState, engineType everestv1alpha1
 	return string(state) == successState
 }
 
-func getDefaultUploadInterval(engineType everestv1alpha1.EngineType) int {
+func getDefaultUploadInterval(engineType everestv1alpha1.EngineType, uploadInterval *int) int {
+	if uploadInterval != nil {
+		return *uploadInterval
+	}
 	switch engineType {
 	case everestv1alpha1.DatabaseEnginePXC:
 		// PXC default upload interval

@@ -74,15 +74,15 @@ jobs:
           # update version in the Makefile
           sed -i "s/^VERSION ?=.*/VERSION ?= $VERSION/g" Makefile
 
-          make init
-          make release
-
           # if there is something to commit, commit it and add the tag
           if [[ -n $(git status --porcelain) ]]; then
             if git tag --list | grep -q "^$GH_TAG$"; then
               echo "The tag is already present in github. Please create a different RC/Release"
               exit 1
             fi
+          
+            make init
+            make release
 
             # configure userdata for commits
             git config --global user.email "everest-ci@percona.com"
@@ -94,6 +94,8 @@ jobs:
 
             git tag $GH_TAG
             git push origin $GH_TAG
+          else
+            echo "No need for a new build"
           fi
 
 
@@ -168,7 +170,7 @@ jobs:
           echo "::set-output name=image_to_check::$(echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1)"
 
       - name: Operator - run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.12.0
+        uses: aquasecurity/trivy-action@0.19.0
         with:
           image-ref: ${{ steps.set_operator_image.outputs.image_to_check }}
           format: 'table'
@@ -197,7 +199,7 @@ jobs:
           echo "::set-output name=image_to_check::$(echo "${{ steps.bundle_meta.outputs.tags }}" | head -n 1)"
 
       - name: Operator - Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.12.0
+        uses: aquasecurity/trivy-action@0.19.0
         with:
           image-ref: ${{ steps.set_operator_bundle_image.outputs.image_to_check }}
           format: 'table'
@@ -232,37 +234,25 @@ jobs:
           fi
           git checkout $BRANCH_NAME
 
-          # update tag refs in scripts
-          if [[ $env.IS_RC ]]; then
-            sed -i "s/perconalab\/everest-operator-bundle.*/perconalab\/everest-operator-bundle:$VERSION/g" catalog/everest-operator/veneer.yaml
-            sed -i "s/percona\/everest-operator-bundle.*/perconalab\/everest-operator-bundle:$VERSION/g" catalog/everest-operator/veneer.yaml
-          else
-            sed -i "s/perconalab\/everest-operator-bundle.*/percona\/everest-operator-bundle:$VERSION/g" catalog/everest-operator/veneer.yaml
-            sed -i "s/percona\/everest-operator-bundle.*/percona\/everest-operator-bundle:$VERSION/g" catalog/everest-operator/veneer.yaml
+          # if the tag doesn't exist yet, create it
+          if git tag --list | grep -q "^$GH_TAG$"; then
+            echo "The tag is already present in github. Please create a different RC/Release"
+            exit 1
           fi
 
-          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/latest/download/${OS}-${ARCH}-opm
-          chmod +x /tmp/opm
-          /tmp/opm alpha render-template semver -o yaml < ./catalog/everest-operator/veneer.yaml > ./catalog/everest-operator/catalog.yaml
+          # configure userdata for commits
+          git config --global user.email "everest-ci@percona.com"
+          git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
 
-          # if there is something to commit, commit it and add the tag
-          if [[ -n $(git status --porcelain) ]]; then
-            if git tag --list | grep -q "^$GH_TAG$"; then
-              echo "The tag is already present in github. Please create a different RC/Release"
-              exit 1
-            fi
-
-            # configure userdata for commits
-            git config --global user.email "everest-ci@percona.com"
-            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
-
-            # commit and push the updated files
-            git commit -a -m "update version tag"
-            git push origin $BRANCH_NAME
-          
-            git tag $GH_TAG
-            git push origin $GH_TAG
+          # Check if veneer has the new version listed
+          if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
+            echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
+            echo "Update the file manually before running the workflow"
+            exit 1
           fi
+
+          git tag $GH_TAG
+          git push origin $GH_TAG
 
 
       - name: Catalog - docker meta
@@ -294,7 +284,7 @@ jobs:
 
 # TODO: fix the vulnerabilities in main and enable this check
 #      - name: Catalog - run Trivy vulnerability scanner
-#        uses: aquasecurity/trivy-action@0.12.0
+#        uses: aquasecurity/trivy-action@0.19.0
 #        with:
 #          image-ref: ${{ steps.set_catalog_image.outputs.image_to_check }}
 #          format: 'table'
@@ -415,7 +405,7 @@ jobs:
 
 # TODO: fix the vulnerabilities in main and enable this check
 #      - name: Everest - run Trivy vulnerability scanner
-#        uses: aquasecurity/trivy-action@0.12.0
+#        uses: aquasecurity/trivy-action@0.19.0
 #        with:
 #          image-ref: ${{ steps.set_everest_image.outputs.image_to_check }}
 #          format: 'table'

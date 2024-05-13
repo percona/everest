@@ -7,10 +7,11 @@ on:
       - '.github/workflows/dev-fe-ci.yaml'
     branches:
       - main
-  pull_request:
+  pull_request_target:
     paths:
       - 'ui/**'
       - '.github/workflows/dev-fe-ci.yaml'
+    types: [opened, synchronize]
 
 permissions:
   contents: read
@@ -106,6 +107,21 @@ jobs:
     needs: cache_pnpm
     runs-on: ubuntu-20.04
     steps:
+      - name: Get User Permission
+        id: checkAccess
+        uses: actions-cool/check-user-permission@v2
+        with:
+          require: write
+          username: ${{ github.triggering_actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check User Permission
+        if: steps.checkAccess.outputs.require-result == 'false'
+        run: |
+          echo "${{ github.triggering_actor }} does not have permissions on this repo."
+          exit 1
+
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
         with:
@@ -154,7 +170,10 @@ jobs:
 
       - name: Run Provisioning
         run: |
-          go run cmd/cli/main.go install \
+          make build-cli
+          ./bin/everestctl install -v \
+          --version 0.0.0 \
+          --version-metadata-url https://check-dev.percona.com \
           --operator.mongodb \
           --operator.postgresql \
           --operator.xtradb-cluster \
@@ -163,7 +182,9 @@ jobs:
 
       - name: Adding psmdb namespace
         run: |
-          go run cmd/cli/main.go install \
+          ./bin/everestctl install -v \
+          --version 0.0.0 \
+          --version-metadata-url https://check-dev.percona.com \
           --operator.mongodb \
           --operator.postgresql=false \
           --operator.xtradb-cluster=false \
@@ -172,7 +193,9 @@ jobs:
 
       - name: Adding pxc namespace
         run: |
-          go run cmd/cli/main.go install \
+          ./bin/everestctl install -v \
+          --version 0.0.0 \
+          --version-metadata-url https://check-dev.percona.com \
           --operator.mongodb=false \
           --operator.postgresql=false \
           --operator.xtradb-cluster \
@@ -181,7 +204,9 @@ jobs:
 
       - name: Adding pg namespace
         run: |
-          go run cmd/cli/main.go install \
+          ./bin/everestctl install -v \
+          --version 0.0.0 \
+          --version-metadata-url https://check-dev.percona.com \
           --operator.mongodb=false \
           --operator.postgresql \
           --operator.xtradb-cluster=false \
@@ -190,7 +215,7 @@ jobs:
 
       - name: Change token
         run: |
-          echo "EVEREST_K8_TOKEN=$(go run cmd/cli/main.go token reset --json | jq .token -r)" >> $GITHUB_ENV
+          echo "EVEREST_K8_TOKEN=$(./bin/everestctl token reset --json | jq .token -r)" >> $GITHUB_ENV
 
       - name: Expose Everest API Server
         run: |
@@ -209,37 +234,16 @@ jobs:
 
       - name: Run integration tests
         env:
-          EVEREST_LOCATION_BUCKET_NAME: '${{ secrets.EVEREST_LOCATION_BUCKET_NAME }}'
-          EVEREST_LOCATION_ACCESS_KEY: '${{ secrets.EVEREST_LOCATION_ACCESS_KEY }}'
-          EVEREST_LOCATION_SECRET_KEY: '${{ secrets.EVEREST_LOCATION_SECRET_KEY }}'
-          EVEREST_LOCATION_REGION: '${{ secrets.EVEREST_LOCATION_REGION }}'
-          EVEREST_LOCATION_URL: '${{ secrets.EVEREST_LOCATION_URL }}'
+          EVEREST_LOCATION_BUCKET_NAME: '${{ secrets.BACKUP_LOCATION_BUCKET_NAME }}'
+          EVEREST_LOCATION_ACCESS_KEY: '${{ secrets.BACKUP_LOCATION_ACCESS_KEY }}'
+          EVEREST_LOCATION_SECRET_KEY: '${{ secrets.BACKUP_LOCATION_SECRET_KEY }}'
+          EVEREST_LOCATION_REGION: '${{ secrets.BACKUP_LOCATION_REGION }}'
+          EVEREST_LOCATION_URL: '${{ secrets.BACKUP_LOCATION_URL }}'
           MONITORING_USER: 'admin'
           MONITORING_PASSWORD: 'admin'
         run: |
           cd ui
           pnpm --filter "@percona/everest" e2e
-
-      - name: Archive test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: ui/apps/everest/.e2e/test-results/
-          overwrite: true
-
-      - name: Archive report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: ui/apps/everest/.e2e/playwright-report/
-          overwrite: true
-
-      - name: Run debug commands on failure
-        if: ${{ failure() }}
-        run: |
-          kubectl -n everest-system logs deployment/percona-everest
 
   merge-gatekeeper:
     needs: [CI_checks, E2E]

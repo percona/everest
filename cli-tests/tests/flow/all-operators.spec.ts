@@ -42,7 +42,6 @@ test.describe('Everest CLI install', async () => {
         ]);
       });
     };
-    const clusterName = `test-${faker.number.int()}`;
 
     await test.step('run everest install command', async () => {
       const out = await cli.everestExecSkipWizard(
@@ -62,36 +61,6 @@ test.describe('Everest CLI install', async () => {
 
     await verifyClusterResources();
 
-    await test.step('disable telemetry', async () => {
-      // check that the telemetry IS NOT disabled by default
-      let out = await cli.exec('kubectl get deployments/percona-xtradb-cluster-operator --namespace=everest-all -o yaml');
-
-      await out.outContains(
-        'name: DISABLE_TELEMETRY\n          value: "false"',
-      );
-      out = await cli.exec(`kubectl patch service everest --patch '{"spec": {"type": "LoadBalancer"}}' --namespace=everest-system`)
-
-      await out.assertSuccess();
-
-      out = await cli.everestExecSkipWizardWithEnv('upgrade --namespaces=everest-all', 'DISABLE_TELEMETRY=true');
-      await out.assertSuccess();
-      await out.outErrContainsNormalizedMany([
-        'Subscriptions have been patched\t{"component": "upgrade"}',
-      ]);
-
-      await page.waitForTimeout(10_000);
-      // check that the telemetry IS disabled
-      out = await cli.exec('kubectl get deployments/percona-xtradb-cluster-operator --namespace=everest-all -o yaml');
-      await out.outContains(
-        'name: DISABLE_TELEMETRY\n          value: "true"',
-      );
-      // check that the spec.type is not overrided
-      out = await cli.exec('kubectl get service/everest --namespace=everest-system -o yaml');
-      await out.outContains(
-        'type: LoadBalancer',
-      );
-    });
-
     await test.step('uninstall Everest', async () => {
       let out = await cli.everestExec(
         `uninstall --assume-yes`,
@@ -102,10 +71,10 @@ test.describe('Everest CLI install', async () => {
       out = await cli.exec('kubectl get ns everest-system everest-monitoring everest-olm everest-all');
 
       await out.outErrContainsNormalizedMany([
-		'Error from server (NotFound): namespaces "everest-system" not found',
-		'Error from server (NotFound): namespaces "everest-monitoring" not found',
-		'Error from server (NotFound): namespaces "everest-olm" not found',
-		'Error from server (NotFound): namespaces "everest-all" not found',
+        'Error from server (NotFound): namespaces "everest-system" not found',
+        'Error from server (NotFound): namespaces "everest-monitoring" not found',
+        'Error from server (NotFound): namespaces "everest-olm" not found',
+        'Error from server (NotFound): namespaces "everest-all" not found',
       ]);
 
     });

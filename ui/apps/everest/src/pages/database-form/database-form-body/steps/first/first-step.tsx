@@ -13,13 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FormGroup, MenuItem, Skeleton, Typography } from '@mui/material';
+import { FormGroup, MenuItem, Skeleton } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 
 import { DbType } from '@percona/types';
 import {
   AutoCompleteInput,
   DbToggleCard,
+  LabeledContent,
   SelectInput,
   TextInput,
   ToggleButtonGroupInput,
@@ -60,11 +61,14 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     dbEngines.find((engine) => engine.type === dbEngine)
   );
 
-  const setRandomDbName = useCallback((type: DbType) => {
-    setValue(DbWizardFormFields.dbName, `${type}-${generateShortUID()}`, {
-      shouldValidate: true,
-    });
-  }, []);
+  const setRandomDbName = useCallback(
+    (type: DbType) => {
+      setValue(DbWizardFormFields.dbName, `${type}-${generateShortUID()}`, {
+        shouldValidate: true,
+      });
+    },
+    [setValue]
+  );
 
   const setDbVersionsForEngine = useCallback(() => {
     const newVersions = dbEngines.find((engine) => engine.type === dbEngine);
@@ -112,13 +116,13 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     setValue,
   ]);
 
-  const onDbNamespaceChange = () => {
+  const onNamespaceChange = () => {
     setValue(
       DbWizardFormFields.monitoringInstance,
       DB_WIZARD_DEFAULTS.monitoringInstance
     );
     setValue(DbWizardFormFields.monitoring, DB_WIZARD_DEFAULTS.monitoring);
-    setValue(DbWizardFormFields.storageLocation, null);
+    setValue(DbWizardFormFields.schedules, []);
   };
 
   const setDefaultsForDbType = useCallback((dbType: DbType) => {
@@ -230,42 +234,42 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             mode === 'restoreFromBackup' ||
             loadingDefaultsForEdition
           }
-          onChange={onDbNamespaceChange}
+          onChange={onNamespaceChange}
           autoCompleteProps={{
             disableClearable: true,
             isOptionEqualToValue: (option, value) => option === value,
           }}
         />
-        <Typography variant="sectionHeading" sx={{ mt: 2, mb: 0.5 }}>
-          {Messages.labels.dbType}
-        </Typography>
-        {dbEnginesFetching || !dbEngines.length ? (
-          // This is roughly the height of the buttons
-          <Skeleton height={57} variant="rectangular" />
-        ) : (
-          <ToggleButtonGroupInput
-            name={DbWizardFormFields.dbType}
-            toggleButtonGroupProps={{
-              sx: { mb: 2 },
-            }}
-          >
-            {dbEngines.map(({ type }) => (
-              <DbToggleCard
-                key={type}
-                value={dbEngineToDbType(type)}
-                disabled={
-                  (mode === 'edit' || mode === 'restoreFromBackup') &&
-                  dbType !== dbEngineToDbType(type)
-                }
-                onClick={() => {
-                  if (dbEngineToDbType(type) !== dbType) {
-                    onDbTypeChange(dbEngineToDbType(type));
+
+        <LabeledContent label={Messages.labels.dbType}>
+          {dbEnginesFetching || !dbEngines.length ? (
+            // This is roughly the height of the buttons
+            <Skeleton height={57} variant="rectangular" />
+          ) : (
+            <ToggleButtonGroupInput
+              name={DbWizardFormFields.dbType}
+              toggleButtonGroupProps={{
+                sx: { mb: 2 },
+              }}
+            >
+              {dbEngines.map(({ type }) => (
+                <DbToggleCard
+                  key={type}
+                  value={dbEngineToDbType(type)}
+                  disabled={
+                    (mode === 'edit' || mode === 'restoreFromBackup') &&
+                    dbType !== dbEngineToDbType(type)
                   }
-                }}
-              />
-            ))}
-          </ToggleButtonGroupInput>
-        )}
+                  onClick={() => {
+                    if (dbEngineToDbType(type) !== dbType) {
+                      onDbTypeChange(dbEngineToDbType(type));
+                    }
+                  }}
+                />
+              ))}
+            </ToggleButtonGroupInput>
+          )}
+        </LabeledContent>
         <TextInput
           name={DbWizardFormFields.dbName}
           label={Messages.labels.dbName}
@@ -278,7 +282,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           name={DbWizardFormFields.dbVersion}
           label={Messages.labels.dbVersion}
           selectFieldProps={{
-            disabled: mode === 'restoreFromBackup' || mode === 'edit',
+            disabled: mode === 'restoreFromBackup',
           }}
         >
           {dbVersions?.availableVersions.engine.map((version) => (

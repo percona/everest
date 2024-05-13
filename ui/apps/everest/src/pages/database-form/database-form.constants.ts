@@ -14,33 +14,18 @@
 // limitations under the License.
 
 import { DbType } from '@percona/types';
-import {
-  AmPM,
-  TimeValue,
-  WeekDays,
-} from 'components/time-selection/time-selection.types';
 import { DbWizardFormFields } from './database-form.types';
 import { DEFAULT_SIZES } from './database-form-body/steps/resources/resources-step.const.ts';
 import { ResourceSize } from './database-form-body/steps/resources/resources-step.types.ts';
 import { DbWizardType } from './database-form-schema.ts';
 
-export const TIME_SELECTION_DEFAULTS = {
-  [DbWizardFormFields.selectedTime]: TimeValue.hours,
-  [DbWizardFormFields.minute]: 0,
-  [DbWizardFormFields.hour]: 12,
-  [DbWizardFormFields.amPm]: AmPM.AM,
-  [DbWizardFormFields.weekDay]: WeekDays.Mo,
-  [DbWizardFormFields.onDay]: 1,
-};
-
 export const DB_WIZARD_DEFAULTS: DbWizardType = {
   // TODO should be changed to true after  https://jira.percona.com/browse/EVEREST-509
-  [DbWizardFormFields.backupsEnabled]: false,
+  [DbWizardFormFields.schedules]: [],
   [DbWizardFormFields.pitrEnabled]: false,
   [DbWizardFormFields.pitrStorageLocation]: null,
   // @ts-ignore
   [DbWizardFormFields.storageLocation]: null,
-  ...TIME_SELECTION_DEFAULTS,
   [DbWizardFormFields.dbType]: '' as DbType,
   [DbWizardFormFields.dbName]: '',
   [DbWizardFormFields.dbVersion]: '',

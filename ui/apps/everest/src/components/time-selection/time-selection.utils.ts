@@ -12,11 +12,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 import CronTime from 'cron-time-generator';
-import { TIME_SELECTION_DEFAULTS } from 'pages/database-form/database-form.constants';
-import { DbWizardFormFields } from 'pages/database-form/database-form.types';
 import { Messages } from './time-selection.messages';
-import { AmPM, TimeProps, TimeValue, WeekDays } from './time-selection.types';
+import {
+  AmPM,
+  TimeProps,
+  TimeSelectionFields,
+  TimeValue,
+  WeekDays,
+} from './time-selection.types';
+import { TIME_SELECTION_DEFAULTS } from './time-selection.constants';
 
 export const addZeroToSingleDigit = (value: number | undefined) => {
   return value?.toString().padStart(2, '0');
@@ -111,22 +117,22 @@ export const getFormValuesFromCronExpression = (cron: string) => {
   // TODO during working on EVEREST-485 move DbWizardFormField and ScheduledFormField to "TimeFields" to avoid duplicating
 
   return {
-    [DbWizardFormFields.minute]: !Number.isNaN(cronObj.minute)
+    [TimeSelectionFields.minute]: !Number.isNaN(cronObj.minute)
       ? cronObj.minute
       : 0,
-    [DbWizardFormFields.hour]: !Number.isNaN(cronObj.hour)
+    [TimeSelectionFields.hour]: !Number.isNaN(cronObj.hour)
       ? getHour12(cronObj.hour)
       : 12,
-    [DbWizardFormFields.amPm]: !Number.isNaN(cronObj.hour)
+    [TimeSelectionFields.amPm]: !Number.isNaN(cronObj.hour)
       ? getAmPm(cronObj.hour)
       : AmPM.AM,
-    [DbWizardFormFields.onDay]: !Number.isNaN(cronObj.dayOfMonth)
+    [TimeSelectionFields.onDay]: !Number.isNaN(cronObj.dayOfMonth)
       ? cronObj.dayOfMonth
       : 1,
-    [DbWizardFormFields.weekDay]: !Number.isNaN(cronObj.dayOfWeek)
+    [TimeSelectionFields.weekDay]: !Number.isNaN(cronObj.dayOfWeek)
       ? getWeekDayByNumber(cronObj.dayOfWeek)
       : WeekDays.Mo,
-    [DbWizardFormFields.selectedTime]: getSelectedTime(
+    [TimeSelectionFields.selectedTime]: getSelectedTime(
       cronObj.hour,
       cronObj.dayOfMonth,
       cronObj.dayOfWeek

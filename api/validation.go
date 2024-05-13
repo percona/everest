@@ -26,6 +26,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/AlekSi/pointer"
@@ -36,6 +37,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+	"golang.org/x/mod/semver"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -91,6 +93,10 @@ var (
 	errTooManyPGStorages             = fmt.Errorf("only %d different storages are allowed in a PostgreSQL cluster", pgReposLimit)
 	errNoMetadata                    = fmt.Errorf("no metadata provided")
 	errInvalidResourceVersion        = fmt.Errorf("invalid 'resourceVersion' value")
+	errInvalidBucketName             = fmt.Errorf("invalid bucketName")
+	errInvalidVersion                = errors.New("invalid database engine version provided")
+	errDBEngineMajorVersionUpgrade   = errors.New("database engine cannot be upgraded to a major version")
+	errDBEngineDowngrade             = errors.New("database engine version cannot be downgraded")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -152,7 +158,7 @@ func validateURL(urlStr string) bool {
 func validateStorageAccessByCreate(ctx context.Context, params CreateBackupStorageParams, l *zap.SugaredLogger) error {
 	switch params.Type {
 	case CreateBackupStorageParamsTypeS3:
-		return s3Access(l, params.Url, params.AccessKey, params.SecretKey, params.BucketName, params.Region, pointer.Get(params.VerifyTLS))
+		return s3Access(l, params.Url, params.AccessKey, params.SecretKey, params.BucketName, params.Region, pointer.Get(params.VerifyTLS), pointer.Get(params.ForcePathStyle))
 	case CreateBackupStorageParamsTypeAzure:
 		return azureAccess(ctx, l, params.AccessKey, params.SecretKey, params.BucketName)
 	default:
@@ -166,6 +172,7 @@ func s3Access(
 	endpoint *string,
 	accessKey, secretKey, bucketName, region string,
 	verifyTLS bool,
+	forcePathStyle bool,
 ) error {
 	if config.Debug {
 		return nil
@@ -181,10 +188,11 @@ func s3Access(
 	}
 	// Create a new session with the provided credentials
 	sess, err := session.NewSession(&aws.Config{
-		Endpoint:    endpoint,
-		Region:      aws.String(region),
-		Credentials: credentials.NewStaticCredentials(accessKey, secretKey, ""),
-		HTTPClient:  c,
+		Endpoint:         endpoint,
+		Region:           aws.String(region),
+		Credentials:      credentials.NewStaticCredentials(accessKey, secretKey, ""),
+		HTTPClient:       c,
+		S3ForcePathStyle: aws.Bool(forcePathStyle),
 	})
 	if err != nil {
 		l.Error(err)
@@ -301,6 +309,7 @@ func validateBackupStorageAccess(
 	url *string,
 	bucketName, region, accessKey, secretKey string,
 	verifyTLS bool,
+	forcePathStyle bool,
 	l *zap.SugaredLogger,
 ) error {
 	switch sType {
@@ -308,7 +317,7 @@ func validateBackupStorageAccess(
 		if region == "" {
 			return errors.New("region is required when using S3 storage type")
 		}
-		if err := s3Access(l, url, accessKey, secretKey, bucketName, region, verifyTLS); err != nil {
+		if err := s3Access(l, url, accessKey, secretKey, bucketName, region, verifyTLS, forcePathStyle); err != nil {
 			return err
 		}
 	case string(BackupStorageTypeAzure):
@@ -337,6 +346,12 @@ func validateUpdateBackupStorageRequest(ctx echo.Context, bs *everestv1alpha1.Ba
 		url = params.Url
 	}
 
+	if params.BucketName != nil {
+		if err := validateBucketName(*params.BucketName); err != nil {
+			return nil, err
+		}
+	}
+
 	if params.AllowedNamespaces != nil {
 		if err := validateAllowedNamespaces(*params.AllowedNamespaces, namespaces); err != nil {
 			return nil, err
@@ -362,7 +377,7 @@ func validateUpdateBackupStorageRequest(ctx echo.Context, bs *everestv1alpha1.Ba
 		region = *params.Region
 	}
 
-	err := validateBackupStorageAccess(ctx, string(bs.Spec.Type), url, bucketName, region, accessKey, secretKey, pointer.Get(params.VerifyTLS), l)
+	err := validateBackupStorageAccess(ctx, string(bs.Spec.Type), url, bucketName, region, accessKey, secretKey, pointer.Get(params.VerifyTLS), pointer.Get(params.ForcePathStyle), l)
 	if err != nil {
 		return nil, err
 	}
@@ -377,6 +392,10 @@ func validateCreateBackupStorageRequest(ctx echo.Context, namespaces []string, l
 	}
 
 	if err := validateRFC1035(params.Name, "name"); err != nil {
+		return nil, err
+	}
+
+	if err := validateBucketName(params.BucketName); err != nil {
 		return nil, err
 	}
 
@@ -887,13 +906,43 @@ func validateStorageSize(cluster *DatabaseCluster) error {
 	return nil
 }
 
+// validateDBEngineVersionUpgrade validates if upgrade of DBEngine from `oldVersion` to `newVersion` is allowed.
+func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
+	// Ensure a "v" prefix so that it is a valid semver.
+	if !strings.HasPrefix(newVersion, "v") {
+		newVersion = "v" + newVersion
+	}
+	if !strings.HasPrefix(oldVersion, "v") {
+		oldVersion = "v" + oldVersion
+	}
+
+	// Check semver validity.
+	if !semver.IsValid(newVersion) {
+		return errInvalidVersion
+	}
+
+	// We will not allow major upgrades.
+	// Major upgrades are handled differently for different operators, so for now we simply won't allow it.
+	// For example:
+	// - PXC operator allows major upgrades.
+	// - PSMDB operator allows major upgrades, but we need to handle FCV.
+	// - PG operator does not allow major upgrades.
+	if semver.Major(oldVersion) != semver.Major(newVersion) {
+		return errDBEngineMajorVersionUpgrade
+	}
+	// We will not allow downgrades.
+	if semver.Compare(newVersion, oldVersion) < 0 {
+		return errDBEngineDowngrade
+	}
+	return nil
+}
+
 func validateDatabaseClusterOnUpdate(dbc *DatabaseCluster, oldDB *everestv1alpha1.DatabaseCluster) error {
-	if dbc.Spec.Engine.Version != nil {
-		// XXX: Right now we do not support upgrading of versions
-		// because it varies across different engines. Also, we should
-		// prohibit downgrades. Hence, if versions are not equal we just return an error
-		if oldDB.Spec.Engine.Version != *dbc.Spec.Engine.Version {
-			return errors.New("changing version is not allowed")
+	newVersion := pointer.Get(dbc.Spec.Engine.Version)
+	oldVersion := oldDB.Spec.Engine.Version
+	if newVersion != "" && newVersion != oldVersion {
+		if err := validateDBEngineVersionUpgrade(newVersion, oldVersion); err != nil {
+			return err
 		}
 	}
 	if *dbc.Spec.Engine.Replicas < oldDB.Spec.Engine.Replicas && *dbc.Spec.Engine.Replicas == 1 {
@@ -1096,5 +1145,17 @@ func validateMetadata(metadata *map[string]interface{}) error {
 	if _, err := strconv.ParseUint(fmt.Sprint(m["resourceVersion"]), 10, 64); err != nil {
 		return errInvalidResourceVersion
 	}
+	return nil
+}
+
+func validateBucketName(s string) error {
+	// sanitize: accept only lowercase letters, numbers, dots and hyphens.
+	// can be applied to both s3 bucket name and azure container name.
+	bucketRegex := `^[a-z0-9\.\-]{3,63}$`
+	re := regexp.MustCompile(bucketRegex)
+	if !re.MatchString(s) {
+		return errInvalidBucketName
+	}
+
 	return nil
 }

@@ -30,7 +30,7 @@ export const useDbActions = () => {
       {
         onSuccess: (updatedObject: DbCluster) => {
           queryClient.setQueryData<GetDbClusterPayload | undefined>(
-            [DB_CLUSTERS_QUERY_KEY],
+            [DB_CLUSTERS_QUERY_KEY, updatedObject.metadata.namespace],
             (oldData) => {
               if (!oldData) {
                 return undefined;
@@ -66,7 +66,7 @@ export const useDbActions = () => {
       {
         onSuccess: (updatedObject: DbCluster) => {
           queryClient.setQueryData<GetDbClusterPayload | undefined>(
-            [DB_CLUSTERS_QUERY_KEY],
+            [DB_CLUSTERS_QUERY_KEY, updatedObject.metadata.namespace],
             (oldData) => {
               if (!oldData) {
                 return undefined;
@@ -103,16 +103,20 @@ export const useDbActions = () => {
     }
   };
 
-  const handleConfirmDelete = (redirect?: string) => {
+  const handleConfirmDelete = (
+    cleanupBackupStorage: boolean,
+    redirect?: string
+  ) => {
     deleteDbCluster(
       {
         dbClusterName: selectedDbCluster!.metadata.name,
         namespace: selectedDbCluster!.metadata.namespace,
+        cleanupBackupStorage: cleanupBackupStorage,
       },
       {
         onSuccess: (_, variables) => {
           queryClient.setQueryData<GetDbClusterPayload | undefined>(
-            [DB_CLUSTERS_QUERY_KEY],
+            [DB_CLUSTERS_QUERY_KEY, variables.namespace],
             (oldData) => {
               if (!oldData) {
                 return undefined;

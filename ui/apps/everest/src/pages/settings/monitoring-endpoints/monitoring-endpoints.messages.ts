@@ -16,7 +16,6 @@ export const Messages = {
     user: 'User',
     password: 'Password',
     apiKey: 'API Key',
-    verifyTLS: 'Verify TLS certificate',
   },
   namespaces: 'Namespaces',
   helperText: {
@@ -25,9 +24,9 @@ export const Messages = {
       'Percona Everest does not store PMM credentials, so fill in both the User and Password fields.',
   },
   fieldPlaceholders: {
-    name: 'Insert storage display name',
+    name: 'Insert Monitoring Endpoint name',
     namespaces: 'Select namespaces',
-    endpoint: 'Insert endpoint',
+    endpoint: 'Insert endpoint URL',
     user: 'Insert username',
     password: 'Insert password',
   },

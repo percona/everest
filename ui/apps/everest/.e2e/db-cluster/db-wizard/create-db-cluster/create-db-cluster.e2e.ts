@@ -34,8 +34,9 @@ import {
   setPitrEnabledStatus,
   submitWizard,
 } from '../../../utils/db-wizard';
-import { findDbAndClickActions } from '../../../utils/db-clusters-list';
 import { EVEREST_CI_NAMESPACES } from '../../../constants';
+import { findDbAndClickActions } from '../../../utils/db-clusters-list';
+import { addFirstScheduleInDBWizard } from '../db-wizard-utils';
 
 test.describe('DB Cluster creation', () => {
   let engineVersions = {
@@ -114,8 +115,6 @@ test.describe('DB Cluster creation', () => {
       request
     );
     let dbName: string;
-    let scheduleName: string;
-    let storageName: string;
 
     expect(storageClasses.length).toBeGreaterThan(0);
 
@@ -136,14 +135,7 @@ test.describe('DB Cluster creation', () => {
     await moveForward(page);
 
     await backupsStepCheck(page);
-    // TODO will change when we support physical backups
-    await expect(page.getByTestId('radio-option-logical')).toBeChecked();
-    scheduleName = await page
-      .getByTestId('text-input-schedule-name')
-      .inputValue();
-    storageName = await page
-      .getByTestId('text-input-storage-location')
-      .inputValue();
+
     await moveForward(page);
 
     await pitrStepCheck(page);
@@ -174,20 +166,11 @@ test.describe('DB Cluster creation', () => {
     await page.getByTestId('button-edit-preview-backups').click();
 
     expect(page.getByTestId('radio-option-logical')).not.toBeVisible;
-    // Now we make sure schedule name and location haven't changed
-    expect(
-      await page.getByTestId('text-input-schedule-name').inputValue()
-    ).toBe(scheduleName);
-    expect(
-      await page.getByTestId('text-input-storage-location').inputValue()
-    ).toBe(storageName);
 
     await page.getByTestId('button-edit-preview-monitoring').click();
 
     // await monitoringStepCheck(page, monitoringInstancesList);
-    await page.getByTestId('db-wizard-submit-button').click();
-
-    await expect(page.getByTestId('db-wizard-goto-db-clusters')).toBeVisible();
+    await submitWizard(page);
     await expect(
       page.getByText('Awesome! Your database is being created!')
     ).toBeVisible();
@@ -227,9 +210,10 @@ test.describe('DB Cluster creation', () => {
     //   '192.168.1.0',
     // ]);
     expect(addedCluster?.spec.engine.storage.class).toBe(storageClasses[0]);
+    expect(addedCluster?.spec.backup.schedules[0].retentionCopies).toBe(1);
   });
 
-  test('PITR should be disabled when backups toggle was not checked', async ({
+  test('PITR should be disabled when backups has no schedules checked', async ({
     page,
   }) => {
     expect(storageClasses.length).toBeGreaterThan(0);
@@ -239,33 +223,27 @@ test.describe('DB Cluster creation', () => {
 
     await moveForward(page);
     await moveForward(page);
-    const enabledBackupsCheckbox = page
-      .getByTestId('switch-input-backups-enabled')
-      .getByRole('checkbox');
+    await expect(
+      page.getByText('You don’t have any backup schedules yet.')
+    ).toBeVisible();
+    await expect(page.getByTestId('pitr-no-backup-alert')).toBeVisible();
 
-    await expect(enabledBackupsCheckbox).toBeChecked();
     await moveForward(page);
-
     const enabledPitrCheckbox = page
       .getByTestId('switch-input-pitr-enabled-label')
       .getByRole('checkbox');
-
+    await expect(enabledPitrCheckbox).not.toBeChecked();
+    await expect(enabledPitrCheckbox).toBeDisabled();
+    await moveBack(page);
+    await addFirstScheduleInDBWizard(page);
+    await moveForward(page);
     await expect(enabledPitrCheckbox).not.toBeChecked();
     await expect(enabledPitrCheckbox).not.toBeDisabled();
     await enabledPitrCheckbox.setChecked(true);
-    await expect(enabledPitrCheckbox).toBeChecked();
+
     await expect(
       page.getByTestId('text-input-pitr-storage-location')
     ).toBeVisible();
-
-    await moveBack(page);
-
-    await enabledBackupsCheckbox.setChecked(false);
-    await expect(page.getByTestId('pitr-no-backup-alert')).toBeVisible();
-    await moveForward(page);
-
-    await expect(enabledPitrCheckbox).not.toBeChecked();
-    await expect(enabledPitrCheckbox).toBeDisabled();
   });
 
   test.skip('Cancel wizard', async ({ page }) => {
@@ -318,7 +296,6 @@ test.describe('DB Cluster creation', () => {
       namespace,
       request
     );
-    let storageName: string;
 
     await basicInformationStepCheck(
       page,
@@ -331,10 +308,6 @@ test.describe('DB Cluster creation', () => {
     await resourcesStepCheck(page);
     await moveForward(page);
     await backupsStepCheck(page);
-
-    storageName = await page
-      .getByTestId('text-input-storage-location')
-      .inputValue();
 
     await moveForward(page);
     await pitrStepCheck(page);
@@ -366,10 +339,6 @@ test.describe('DB Cluster creation', () => {
     await findDbAndClickActions(page, clusterName, 'Edit');
     await goToStep(page, 'point-in-time-recovery');
     await setPitrEnabledStatus(page, true);
-
-    await expect(
-      page.getByText(`Backups storage: ${storageName}`)
-    ).toBeVisible();
 
     await deleteDbClusterFn(request, clusterName, namespace);
   });
