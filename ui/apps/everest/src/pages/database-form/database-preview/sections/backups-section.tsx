@@ -24,7 +24,7 @@ export const BackupsPreviewSection = (backupsSection: BackupStepType) => {
         />
       )}
       <PreviewContentText
-        text={pitrEnabled ? 'PITR Enabled' : 'PITR disabled'}
+        text={pitrEnabled ? 'PITR Enabled' : 'PITR Disabled'}
       />
     </>
   );
