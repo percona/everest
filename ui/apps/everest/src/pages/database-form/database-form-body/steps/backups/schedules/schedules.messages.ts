@@ -18,4 +18,5 @@ export const Messages = {
   noSchedules: 'You don’t have any backup schedules yet.',
   mongoDb:
     'The backup storage you select for your first backup schedule will be used for all subsequent schedules and PITR.',
+  pg: 'Note: Maximum 3 schedules for PostgreSQL',
 };

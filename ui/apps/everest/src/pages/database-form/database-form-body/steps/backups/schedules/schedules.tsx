@@ -44,6 +44,9 @@ const Schedules = () => {
     DbWizardFormFields.schedules,
   ]);
 
+  const createButtonDisabled =
+    openScheduleModal ||
+    (dbType === DbType.Postresql && schedules?.length >= 3);
   const [activeStorage, setActiveStorage] = useState(undefined);
 
   useEffect(() => {
@@ -92,13 +95,16 @@ const Schedules = () => {
         actionButtonProps={{
           dataTestId: 'create-schedule',
           buttonText: 'Create backup schedule',
-          disabled: openScheduleModal,
+          disabled: createButtonDisabled,
           onClick: () => handleCreate(),
         }}
       >
         <Stack>
           {dbType === DbType.Mongo && (
             <Typography variant="caption">{Messages.mongoDb}</Typography>
+          )}
+          {dbType === DbType.Postresql && (
+            <Typography variant="caption">{Messages.pg}</Typography>
           )}
           {schedules.map((item: Schedule) => (
             <EditableItem
