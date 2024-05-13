@@ -21,6 +21,7 @@ import {
 } from '@tanstack/react-query';
 import { getDbClustersFn } from 'api/dbClusterApi';
 import { DbCluster, GetDbClusterPayload } from 'shared-types/dbCluster.types';
+import { PerconaQueryOptions } from 'shared-types/query.types';
 
 export interface DbClusterForNamespaceResult {
   namespace: string;
@@ -36,12 +37,16 @@ export const dbClustersQuerySelect = ({
     ...props,
   }));
 
-export const useDbClusters = (namespace: string) =>
+export const useDbClusters = (
+  namespace: string,
+  options?: PerconaQueryOptions<GetDbClusterPayload, unknown, DbCluster[]>
+) =>
   useQuery({
     queryKey: [DB_CLUSTERS_QUERY_KEY],
     queryFn: () => getDbClustersFn(namespace),
     refetchInterval: 5 * 1000,
     select: dbClustersQuerySelect,
+    ...options,
   });
 
 export const useDBClustersForNamespaces = (namespaces: string[]) => {
