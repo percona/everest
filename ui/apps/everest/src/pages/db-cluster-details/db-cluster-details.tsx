@@ -34,8 +34,7 @@ export const DbClusterDetails = () => {
     (cluster) => cluster.metadata.name === dbClusterName
   );
 
-  // Either loading or we're still searching through the array
-  if (isLoading || dbCluster === undefined) {
+  if (isLoading) {
     return (
       <>
         <Skeleton variant="rectangular" />
@@ -49,7 +48,7 @@ export const DbClusterDetails = () => {
   }
 
   // We went through the array and know the cluster is not there. Safe to show 404
-  if (dbCluster === null) {
+  if (!dbCluster) {
     return <NoMatch />;
   }
 
