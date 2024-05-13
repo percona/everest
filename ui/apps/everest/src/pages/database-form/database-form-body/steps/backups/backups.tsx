@@ -29,7 +29,7 @@ export const Backups = () => {
     DbWizardFormFields.k8sNamespace,
     DbWizardFormFields.schedules,
   ]);
-  const { data: backupStorages = [], isFetching } =
+  const { data: backupStorages = [], isLoading } =
     useBackupStoragesByNamespace(selectedNamespace);
 
   return (
@@ -38,7 +38,7 @@ export const Backups = () => {
         pageTitle={Messages.backups}
         pageDescription={Messages.captionBackups}
       />
-      {isFetching ? (
+      {isLoading ? (
         <>
           <Skeleton height="200px" />
           <Skeleton />
