@@ -9,10 +9,14 @@ const ToggleCard = ({ children, sx, ...props }: ToggleCardProps) => {
       disableRipple
       sx={{
         backgroundColor: 'background.default',
-        boxShadow: 4,
         color: theme.palette.text.primary,
         textTransform: 'none',
         border: 'none',
+        outlineStyle: 'solid',
+        outlineWidth: '1px',
+        outlineColor: theme.palette.dividers?.divider,
+        padding: '16px',
+
         ':hover, &.Mui-selected:hover': {
           backgroundColor: 'action.hover',
         },
@@ -31,7 +35,7 @@ const ToggleCard = ({ children, sx, ...props }: ToggleCardProps) => {
               mb: 1,
             },
             [theme.breakpoints.up('sm')]: {
-              mr: 0.5,
+              mr: 1.6,
             },
           },
           '&:not(:first-of-type)': {
