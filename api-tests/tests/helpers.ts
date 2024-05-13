@@ -2,10 +2,10 @@ import {expect, test} from '@playwright/test'
 
 // testPrefix is used to differentiate between several workers
 // running this test to avoid conflicts in instance names
-export const testPrefix = `t${(Math.random() + 1).toString(36).substring(10)}`
+export const testPrefix = ()=> `t${(Math.random() + 1).toString(36).substring(10)}`
 
 export const suffixedName = (name) => {
-  return `${name}-${testPrefix}`
+  return `${name}-${testPrefix()}`
 }
 
 export const checkError = async response => {
@@ -132,4 +132,25 @@ export const waitClusterDeletion = async (request, page, clusterName) => {
   }
   const cluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
   expect(cluster.status()).toBe(404)
+}
+
+export const createMonitoringConfig = async (request, name) => {
+  const miData = {
+    type: 'pmm',
+    name: name,
+    url: 'http://monitoring',
+    allowedNamespaces: [testsNs],
+    pmm: {
+      apiKey: '123',
+    },
+  }
+  let res = await request.post('/v1/monitoring-instances', { data: miData })
+
+  await checkError(res)
+}
+
+export const deleteMonitoringConfig = async (request, name) => {
+  let res = await request.delete(`/v1/monitoring-instances/${name}`)
+
+  await checkError(res)
 }

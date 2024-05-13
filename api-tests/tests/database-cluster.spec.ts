@@ -13,46 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { expect, test } from '@fixtures'
-import {checkError, testsNs, testPrefix, waitClusterDeletion} from "@tests/tests/helpers";
-
-// testPrefix is used to differentiate between several workers
-// running this test to avoid conflicts in instance names
-const monitoringConfigName1 = `a${testPrefix}-1`
-const monitoringConfigName2 = `b${testPrefix}-2`
+import {
+  checkError,
+  testsNs,
+  testPrefix,
+  waitClusterDeletion,
+  createMonitoringConfig,
+  suffixedName, deleteMonitoringConfig
+} from "@tests/tests/helpers";
 
 test.setTimeout(360 * 1000)
 
-test.beforeAll(async ({ request }) => {
-  const miData = {
-    type: 'pmm',
-    name: monitoringConfigName1,
-    url: 'http://monitoring',
-    allowedNamespaces: [testsNs],
-    pmm: {
-      apiKey: '123',
-    },
-  }
-
-  // Monitoring configs
-  let res = await request.post('/v1/monitoring-instances', { data: miData })
-
-  await checkError(res)
-
-  miData.name = monitoringConfigName2
-  res = await request.post('/v1/monitoring-instances', { data: miData })
-  await checkError(res)
-})
-
-test.afterAll(async ({ request }) => {
-  let res = await request.delete(`/v1/monitoring-instances/${monitoringConfigName1}`)
-
-  await checkError(res)
-
-  res = await request.delete(`/v1/monitoring-instances/${monitoringConfigName2}`)
-  await checkError(res)
-})
-
 test('create db cluster with monitoring config', async ({ request, page }) => {
+  const monitoringConfigName1 = suffixedName("m1")
+  await createMonitoringConfig(request, monitoringConfigName1)
   const clusterName = 'db-monitoring-create'
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -105,10 +79,15 @@ test('create db cluster with monitoring config', async ({ request, page }) => {
   } finally {
     await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
     await waitClusterDeletion(request, page, clusterName)
+    await deleteMonitoringConfig(request, monitoringConfigName1)
   }
 })
 
 test('update db cluster with a new monitoring config', async ({ request, page }) => {
+  const monitoringConfigName1 = suffixedName("m1")
+  const monitoringConfigName2 = suffixedName("m2")
+  await createMonitoringConfig(request, monitoringConfigName1)
+  await createMonitoringConfig(request, monitoringConfigName2)
   const clusterName = 'dbc-monitoring-put'
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -175,11 +154,15 @@ test('update db cluster with a new monitoring config', async ({ request, page })
   } finally {
     await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
     await waitClusterDeletion(request, page, clusterName)
+    await deleteMonitoringConfig(request, monitoringConfigName1)
+    await deleteMonitoringConfig(request, monitoringConfigName2)
   }
 })
 
 test('update db cluster without monitoring config with a new monitoring config', async ({ request, page }) => {
   const clusterName = 'monitoring-put-empty'
+  const monitoringConfigName2 = suffixedName("m2")
+  await createMonitoringConfig(request, monitoringConfigName2)
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
@@ -242,10 +225,13 @@ test('update db cluster without monitoring config with a new monitoring config',
   } finally {
     await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
     await waitClusterDeletion(request, page, clusterName)
+    await deleteMonitoringConfig(request, monitoringConfigName2)
   }
 })
 
 test('update db cluster monitoring config with an empty monitoring config', async ({ request, page }) => {
+  const monitoringConfigName1 = suffixedName("m1")
+  await createMonitoringConfig(request, monitoringConfigName1)
   const clusterName = 'monit-put-to-empty'
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -310,5 +296,6 @@ test('update db cluster monitoring config with an empty monitoring config', asyn
   } finally {
     await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
     await waitClusterDeletion(request, page, clusterName)
+    await deleteMonitoringConfig(request, monitoringConfigName1)
   }
 })
