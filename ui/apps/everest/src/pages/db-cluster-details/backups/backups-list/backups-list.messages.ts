@@ -3,6 +3,10 @@ export const Messages = {
     header: 'Delete backup',
     content: (backupName: string) =>
       `Are you sure you want to permanently delete "${backupName}" and any datasets it contains?`,
+    alertMessage:
+      'This action will permanently destroy your backup and you will not be able to recover it.',
+    confirmButton: 'Delete',
+    checkboxMessage: 'Delete backups storage data',
   },
   restoreDialog: {
     header: 'Restore to this database',

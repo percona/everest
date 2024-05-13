@@ -28,9 +28,19 @@ export const createBackupOnDemand = async (
   return response.data;
 };
 
-export const deleteBackupFn = async (backupName: string, namespace: string) => {
+export const deleteBackupFn = async (
+  backupName: string,
+  namespace: string,
+  cleanupBackupStorage: boolean
+) => {
+  const config = {
+    data: {
+      cleanupBackupStorage: cleanupBackupStorage,
+    },
+  };
   const response = await api.delete(
-    `namespaces/${namespace}/database-cluster-backups/${backupName}`
+    `namespaces/${namespace}/database-cluster-backups/${backupName}`,
+    config
   );
 
   return response.data;

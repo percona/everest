@@ -28,6 +28,9 @@ export const Messages = {
   lastBackup: {
     warningTooltip: 'Check your backups page for more info',
     inactive: 'Inactive',
+    scheduled: 'Scheduled',
+    pending: 'Pending',
+    notStarted: 'Not Started',
     seconds: 'sec',
     minutes: 'min',
     hours: 'h',
@@ -68,6 +71,10 @@ export const Messages = {
       </>
     ),
     databaseName: 'Database name',
+    alertMessage:
+      'This action will permanently destroy your database and you will not be able to recover it.',
+    checkboxMessage: 'Delete backups storage data',
+    confirmButtom: 'Delete',
   },
   responseMessages: {
     restart: 'The database is being restarted',
