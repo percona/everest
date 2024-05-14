@@ -47,7 +47,7 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
         enabled: true,
         schedules: [
           {
-            backupStorageName: 'test-storage-1',
+            backupStorageName: STORAGE_NAMES[0],
             enabled: true,
             name: 'backup-1',
             schedule: '0 * * * *',

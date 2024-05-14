@@ -22,6 +22,7 @@ import {
   gotoDbClusterBackups,
 } from '../utils/db-clusters-list';
 import { storageLocationAutocompleteEmptyValidationCheck } from '../utils/db-wizard';
+import { STORAGE_NAMES } from '../constants';
 
 test.describe.serial('Schedules List', async () => {
   let scheduleName = 'test-name';
@@ -36,7 +37,7 @@ test.describe.serial('Schedules List', async () => {
         enabled: true,
         schedules: [
           {
-            backupStorageName: 'test-storage-1',
+            backupStorageName: STORAGE_NAMES[0],
             enabled: true,
             name: 'backup-1',
             schedule: '0 * * * *',
@@ -141,19 +142,19 @@ test.describe.serial('Schedules List', async () => {
         enabled: true,
         schedules: [
           {
-            backupStorageName: 'test-storage-1',
+            backupStorageName: STORAGE_NAMES[0],
             enabled: true,
             name: 'backup-1',
             schedule: '0 * * * *',
           },
           {
-            backupStorageName: 'test-storage-1',
+            backupStorageName: STORAGE_NAMES[0],
             enabled: true,
             name: 'backup-2',
             schedule: '0 * * * *',
           },
           {
-            backupStorageName: 'test-storage-1',
+            backupStorageName: STORAGE_NAMES[0],
             enabled: true,
             name: 'backup-3',
             schedule: '0 * * * *',

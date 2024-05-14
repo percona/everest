@@ -165,7 +165,7 @@ test.describe('DB Cluster creation', () => {
     await expect(page.getByText('Number of nodes: 3')).toBeVisible();
     await page.getByTestId('button-edit-preview-backups').click();
 
-    expect(page.getByTestId('radio-option-logical')).not.toBeVisible;
+    await expect(page.getByTestId('radio-option-logical')).not.toBeVisible();
 
     await page.getByTestId('button-edit-preview-monitoring').click();
 
