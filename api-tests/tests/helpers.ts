@@ -53,8 +53,16 @@ export const createDBCluster = async (request, name) => {
 }
 
 export const deleteDBCluster = async (request, name) => {
-  const res = await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${name}`)
+  let res = await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${name}`)
 
+  const cluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${name}`)
+  if (cluster.status() == 404) {
+    return;
+  }
+  let data = await cluster.json()
+  data.metadata.finalizers = null
+
+  res = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${name}`, { data })
   await checkError(res)
 }
 
