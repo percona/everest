@@ -33,8 +33,15 @@ test.describe.serial('Schedules List', async () => {
       dbType: 'mysql',
       numberOfNodes: '1',
       backup: {
-        enabled: false,
-        schedules: [],
+        enabled: true,
+        schedules: [
+          {
+            backupStorageName: 'test-storage-1',
+            enabled: true,
+            name: 'backup-1',
+            schedule: '0 * * * *',
+          },
+        ],
       },
     });
   });
@@ -82,7 +89,7 @@ test.describe.serial('Schedules List', async () => {
 
     expect(page.getByText('Every hour at minute 0')).toBeTruthy();
 
-    expect(page.getByText('1 schedule')).toBeTruthy();
+    expect(page.getByText('2 active schedules')).toBeTruthy();
   });
 
   test('Creating schedule with duplicate name shows validation error', async ({
@@ -171,11 +178,11 @@ test.describe.serial('Schedules List', async () => {
     await scheduledBackupsAccordion.click();
 
     const scheduleForDeleteBtn = await page
-      .getByText('Every hour at minute 0-')
-      .getByTestId('delete-schedule-button');
+      .getByTestId('delete-schedule-button')
+      .first();
     await scheduleForDeleteBtn.click();
     await (await page.getByTestId('confirm-dialog-delete')).click();
-    expect(page.getByText('1 schedule')).toBeTruthy();
+    expect(page.getByText('1 active schedule')).toBeTruthy();
   });
 
   test('Edit Schedule', async ({ page }) => {

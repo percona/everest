@@ -1,8 +1,11 @@
-import { useMemo } from 'react';
 import { TextInput } from '@percona/ui-lib';
+import { AutoCompleteSelectAll } from 'components/auto-complete-select-all/auto-complete-select-all';
 import { FormDialog } from 'components/form-dialog';
-import TlsCheckbox from 'components/tls-checkbox';
 import TlsAlert from 'components/tls-alert';
+import TlsCheckbox from 'components/tls-checkbox';
+import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
+import { useMemo } from 'react';
+import { Messages } from '../monitoring-endpoints.messages';
 import {
   CreateEditEndpointModalProps,
   EndpointFormFields,
@@ -10,9 +13,6 @@ import {
   endpointDefaultValues,
   getEndpointSchema,
 } from './create-edit-modal.types';
-import { Messages } from '../monitoring-endpoints.messages';
-import { AutoCompleteSelectAll } from 'components/auto-complete-select-all/auto-complete-select-all';
-import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 
 export const CreateEditEndpointModal = ({
   open,
@@ -51,7 +51,7 @@ export const CreateEditEndpointModal = ({
       schema={endpointSchema}
       submitMessage={Messages.addEditDialogSubmitButton(isEditMode)}
     >
-      {({ getValues }) => (
+      {({ watch }) => (
         <>
           <TextInput
             name={EndpointFormFields.name}
@@ -113,9 +113,7 @@ export const CreateEditEndpointModal = ({
             })}
           />
           <TlsCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />
-          {!getValues(EndpointFormFields.verifyTLS) && (
-            <TlsAlert sx={{ mt: 2 }} />
-          )}
+          {!watch(EndpointFormFields.verifyTLS) && <TlsAlert sx={{ mt: 2 }} />}
         </>
       )}
     </FormDialog>
