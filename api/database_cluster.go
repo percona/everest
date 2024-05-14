@@ -72,7 +72,7 @@ func (e *EverestServer) DeleteDatabaseCluster(
 	if !cleanupStorage {
 		for _, backup := range backups.Items {
 			// Doesn't belong to this cluster, skip.
-			if backup.Spec.DBClusterName != name {
+			if backup.Spec.DBClusterName != name || !backup.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 			if err := e.ensureBackupStorageProtection(reqCtx, &backup); err != nil { //nolint:gosec
@@ -85,7 +85,7 @@ func (e *EverestServer) DeleteDatabaseCluster(
 	// so that they're visible on the UI while getting deleted.
 	for _, backup := range backups.Items {
 		// Doesn't belong to this cluster, skip.
-		if backup.Spec.DBClusterName != name {
+		if backup.Spec.DBClusterName != name || !backup.GetDeletionTimestamp().IsZero() {
 			continue
 		}
 		if err := e.ensureBackupForegroundDeletion(reqCtx, &backup); err != nil { //nolint:gosec
