@@ -33,6 +33,7 @@ test.describe('Namespaces List', () => {
     page,
   }) => {
     await page.goto('/settings/namespaces');
+    await expect(page.getByText('No namespaces added')).not.toBeVisible();
     const rows = page.locator('.MuiTableRow-root');
     await expect(rows.first()).toBeVisible();
     expect(await rows.count()).toBe(5);
