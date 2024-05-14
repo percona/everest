@@ -42,17 +42,17 @@ test.describe('DB Cluster Restore', () => {
         ],
       },
     });
-
-    test.beforeEach(async ({ page }) => {
-      await page.goto('/databases');
-    });
-
-    test.afterAll(async ({ request }) => {
-      await deleteDbClusterFn(request, dbClusterName);
-    });
   });
 
-  test('DB cluster list restore action', async ({ page, request }, {}) => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/databases');
+  });
+
+  test.afterAll(async ({ request }) => {
+    await deleteDbClusterFn(request, dbClusterName);
+  });
+
+  test('DB cluster list restore action', async ({ page }, {}) => {
     await findDbAndClickActions(page, dbClusterName, 'Restore from a backup');
     await expect(
       page
@@ -61,7 +61,7 @@ test.describe('DB Cluster Restore', () => {
     ).toBeVisible();
   });
 
-  test('DB cluster detail restore action', async ({ page, request }, {}) => {
+  test('DB cluster detail restore action', async ({ page }, {}) => {
     await findDbAndClickRow(page, dbClusterName);
     const actionButton = page.getByTestId('actions-button');
     await actionButton.click();

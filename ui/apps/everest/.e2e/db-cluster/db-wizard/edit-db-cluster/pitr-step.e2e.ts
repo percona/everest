@@ -23,6 +23,7 @@ import {
   findDbAndClickRow,
 } from '../../../utils/db-clusters-list';
 import {
+  goToStep,
   moveForward,
   storageLocationAutocompleteEmptyValidationCheck,
 } from '../../../utils/db-wizard';
@@ -66,13 +67,7 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
   }) => {
     await page.goto('/databases');
     await findDbAndClickActions(page, mySQLName, 'Edit', 'UP');
-
-    // Go to Resources step
-    await moveForward(page);
-    // Go to Backups step
-    await moveForward(page);
-    // Go to PITR step
-    await moveForward(page);
+    await goToStep(page, 'point-in-time-recovery');
 
     // Check PITR form
     const pitrCheckbox = page
