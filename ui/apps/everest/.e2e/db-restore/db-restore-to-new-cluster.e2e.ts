@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { APIRequestContext, Page, expect, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { Messages } from '../../src/modals/restore-db-modal/restore-db-modal.messages';
 import { createDbClusterFn, deleteDbClusterFn } from '../utils/db-cluster';
 import {
@@ -22,36 +22,38 @@ import {
 } from '../utils/db-clusters-list';
 import { STORAGE_NAMES } from '../constants';
 
-const setup = async (
-  request: APIRequestContext,
-  page: Page,
-  dbClusterName: string
-) => {
-  await page.goto('/databases');
-  await createDbClusterFn(request, {
-    dbName: dbClusterName,
-    dbType: 'mysql',
-    numberOfNodes: '1',
-    backup: {
-      enabled: true,
-      schedules: [
-        {
-          backupStorageName: STORAGE_NAMES[0],
-          enabled: true,
-          name: 'backup-1',
-          schedule: '0 * * * *',
-        },
-      ],
-    },
-  });
-};
+const dbClusterName = 'restore-to-new-cluster';
 
 test.describe('DB Cluster Restore to the new cluster', () => {
+  test.beforeAll(async ({ page, request }) => {
+    await createDbClusterFn(request, {
+      dbName: dbClusterName,
+      dbType: 'mysql',
+      numberOfNodes: '1',
+      backup: {
+        enabled: true,
+        schedules: [
+          {
+            backupStorageName: STORAGE_NAMES[0],
+            enabled: true,
+            name: 'backup-1',
+            schedule: '0 * * * *',
+          },
+        ],
+      },
+    });
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/databases');
+  });
+
+  test.afterAll(async ({ request }) => {
+    await deleteDbClusterFn(request, dbClusterName);
+  });
   test('DB cluster list restore action', async ({ page, request }, {
     testId,
   }) => {
-    const dbClusterName = `restore-to-new-${testId.substring(0, 3)}`;
-    await setup(request, page, dbClusterName);
     await findDbAndClickActions(page, dbClusterName, 'Create DB from a backup');
 
     await expect(
@@ -59,14 +61,11 @@ test.describe('DB Cluster Restore to the new cluster', () => {
         .getByTestId('select-backup-name-button')
         .getByText(Messages.selectBackup)
     ).toBeVisible();
-    await deleteDbClusterFn(request, dbClusterName);
   });
 
   test('DB cluster detail restore action', async ({ page, request }, {
     testId,
   }) => {
-    const dbClusterName = `restore-to-new-${testId}`;
-    await setup(request, page, dbClusterName);
     await findDbAndClickRow(page, dbClusterName);
     const actionButton = page.getByTestId('actions-button');
     await actionButton.click();
@@ -81,6 +80,5 @@ test.describe('DB Cluster Restore to the new cluster', () => {
         .getByTestId('select-backup-name-button')
         .getByText(Messages.selectBackup)
     ).toBeVisible();
-    await deleteDbClusterFn(request, dbClusterName);
   });
 });
