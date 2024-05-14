@@ -13,10 +13,14 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/percona/everest/cmd/config"
+	"github.com/percona/everest/pkg/version"
 )
 
 const (
 	telemetryProductFamily = "PRODUCT_FAMILY_EVEREST"
+	telemetryVersionKey    = "version"
+	// telemetryBackupSchedulesKeyTemplate format: <db_engine>_<db_uid>_backup_schedules_count.
+	telemetryBackupSchedulesKeyTemplate = "%s_%s_backup_schedules_count"
 
 	// delay the initial metrics to prevent flooding in case of many restarts.
 	initialMetricsDelay = 5 * time.Minute
@@ -110,6 +114,13 @@ func (e *EverestServer) collectMetrics(ctx context.Context, url string) error {
 	}
 
 	types := make(map[string]int, 3)
+	metrics := make([]Metric, 0, 100) // 100 is an arbitrary number as it's not clear what the length will be
+	// Everest version.
+	metrics = append(metrics, Metric{
+		Key:   telemetryVersionKey,
+		Value: version.Version,
+	})
+
 	for _, ns := range namespaces {
 		clusters, err := e.kubeClient.ListDatabaseClusters(ctx, ns)
 		if err != nil {
@@ -119,12 +130,17 @@ func (e *EverestServer) collectMetrics(ctx context.Context, url string) error {
 
 		for _, cl := range clusters.Items {
 			types[string(cl.Spec.Engine.Type)]++
+
+			// Number of backup schedules per DB cluster.
+			metrics = append(metrics, Metric{
+				Key:   fmt.Sprintf(telemetryBackupSchedulesKeyTemplate, string(cl.Spec.Engine.Type), cl.UID),
+				Value: strconv.Itoa(len(cl.Spec.Backup.Schedules)),
+			})
 		}
 	}
 
-	// key - the engine type, value - the amount of db clusters of that type
-	metrics := make([]Metric, 0, 3)
 	for key, val := range types {
+		// Number of DBs per DB engine.
 		metrics = append(metrics, Metric{key, strconv.Itoa(val)})
 	}
 
