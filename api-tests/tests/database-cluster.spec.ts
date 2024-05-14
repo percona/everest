@@ -19,7 +19,8 @@ import {
   testPrefix,
   waitClusterDeletion,
   createMonitoringConfig,
-  suffixedName, deleteMonitoringConfig
+  suffixedName, deleteMonitoringConfig,
+  deleteDBCluster,
 } from "@tests/tests/helpers";
 
 test.setTimeout(360 * 1000)
@@ -77,7 +78,7 @@ test('create db cluster with monitoring config', async ({ request, page }) => {
       timeout: 60 * 1000,
     })
   } finally {
-    await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+    await deleteDBCluster(request, clusterName)
     await waitClusterDeletion(request, page, clusterName)
     await deleteMonitoringConfig(request, monitoringConfigName1)
   }
@@ -152,7 +153,7 @@ test('update db cluster with a new monitoring config', async ({ request, page })
     res = (await putReq.json())
     expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
   } finally {
-    await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+    await deleteDBCluster(request, clusterName)
     await waitClusterDeletion(request, page, clusterName)
     await deleteMonitoringConfig(request, monitoringConfigName1)
     await deleteMonitoringConfig(request, monitoringConfigName2)
@@ -223,7 +224,7 @@ test('update db cluster without monitoring config with a new monitoring config',
     res = (await putReq.json())
     expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
   } finally {
-    await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+    await deleteDBCluster(request, clusterName)
     await waitClusterDeletion(request, page, clusterName)
     await deleteMonitoringConfig(request, monitoringConfigName2)
   }
@@ -294,7 +295,7 @@ test('update db cluster monitoring config with an empty monitoring config', asyn
     res = (await putReq.json())
     expect(res?.spec?.monitoring?.monitoringConfigName).toBeFalsy()
   } finally {
-    await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+    await deleteDBCluster(request, clusterName)
     await waitClusterDeletion(request, page, clusterName)
     await deleteMonitoringConfig(request, monitoringConfigName1)
   }
