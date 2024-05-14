@@ -110,8 +110,12 @@ func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, namespace, na
 }
 
 func (e *EverestServer) ensureBackupStorageProtection(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
+	// We wrap this logic in a retry loop to reduce the chances of resource conflicts.
 	return backoff.Retry(func() error {
 		backup, err := e.kubeClient.GetDatabaseClusterBackup(ctx, backup.GetNamespace(), backup.GetName())
+		if err != nil {
+			return err
+		}
 		controllerutil.AddFinalizer(backup, storageProtectionFinalizer)
 		controllerutil.AddFinalizer(backup, foregroundDeletionFinalizer)
 		_, err = e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
@@ -122,8 +126,12 @@ func (e *EverestServer) ensureBackupStorageProtection(ctx context.Context, backu
 }
 
 func (e *EverestServer) ensureBackupForegroundDeletion(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
+	// We wrap this logic in a retry loop to reduce the chances of resource conflicts.
 	return backoff.Retry(func() error {
 		backup, err := e.kubeClient.GetDatabaseClusterBackup(ctx, backup.GetNamespace(), backup.GetName())
+		if err != nil {
+			return err
+		}
 		controllerutil.AddFinalizer(backup, foregroundDeletionFinalizer)
 		_, err = e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
 		return err

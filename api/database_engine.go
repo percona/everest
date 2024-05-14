@@ -20,7 +20,6 @@ import (
 	"errors"
 	"net/http"
 	"slices"
-	"time"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cenkalti/backoff/v4"
@@ -130,14 +129,10 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 // startOperatorUpgradeWithRetry wraps the startOperatorUpgrade function with a retry mechanism.
 // This is done to reduce the chances of failures due to resource conflicts.
 func (e *EverestServer) startOperatorUpgradeWithRetry(ctx context.Context, targetVersion, namespace, name string) error {
-	var b backoff.BackOff
-	b = backoff.NewConstantBackOff(3 * time.Second)
-	b = backoff.WithMaxRetries(b, 5)
-	b = backoff.WithContext(b, ctx)
 	return backoff.Retry(func() error {
 		return e.startOperatorUpgrade(ctx, targetVersion, namespace, name)
 	},
-		b,
+		backoff.WithContext(everestAPIConstantBackoff, ctx),
 	)
 }
 
