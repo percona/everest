@@ -40,6 +40,7 @@ const (
 	foregroundDeletionFinalizer = "foregroundDeletion"
 )
 
+//nolint:gochecknoglobals
 var everestAPIConstantBackoff = backoff.WithMaxRetries(backoff.NewConstantBackOff(3*time.Second), 5)
 
 // ListDatabaseClusterBackups returns list of the created database cluster backups on the specified kubernetes cluster.
