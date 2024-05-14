@@ -25,7 +25,7 @@ import { STORAGE_NAMES } from '../constants';
 const dbClusterName = 'restore-to-new-cluster';
 
 test.describe('DB Cluster Restore to the new cluster', () => {
-  test.beforeAll(async ({ page, request }) => {
+  test.beforeAll(async ({ request }) => {
     await createDbClusterFn(request, {
       dbName: dbClusterName,
       dbType: 'mysql',
@@ -51,9 +51,7 @@ test.describe('DB Cluster Restore to the new cluster', () => {
   test.afterAll(async ({ request }) => {
     await deleteDbClusterFn(request, dbClusterName);
   });
-  test('DB cluster list restore action', async ({ page, request }, {
-    testId,
-  }) => {
+  test('DB cluster list restore action', async ({ page }, {}) => {
     await findDbAndClickActions(page, dbClusterName, 'Create DB from a backup');
 
     await expect(
@@ -63,9 +61,7 @@ test.describe('DB Cluster Restore to the new cluster', () => {
     ).toBeVisible();
   });
 
-  test('DB cluster detail restore action', async ({ page, request }, {
-    testId,
-  }) => {
+  test('DB cluster detail restore action', async ({ page }, { testId }) => {
     await findDbAndClickRow(page, dbClusterName);
     const actionButton = page.getByTestId('actions-button');
     await actionButton.click();
