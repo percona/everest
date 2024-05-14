@@ -123,11 +123,13 @@ export const checkClusterDeletion = async (cluster) => {
 }
 
 export const waitClusterDeletion = async (request, page, clusterName) => {
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 100; i++) {
     const cluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
     if (cluster.status() == 404) {
       break;
     }
     await page.waitForTimeout(1000)
   }
+  const cluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+  expect(cluster.status()).toBe(404)
 }
