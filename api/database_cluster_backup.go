@@ -23,8 +23,10 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/AlekSi/pointer"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/labstack/echo/v4"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -37,6 +39,8 @@ const (
 	storageProtectionFinalizer  = "everest.percona.com/dbb-storage-protection"
 	foregroundDeletionFinalizer = "foregroundDeletion"
 )
+
+var everestAPIConstantBackoff = backoff.WithMaxRetries(backoff.NewConstantBackOff(3*time.Second), 5)
 
 // ListDatabaseClusterBackups returns list of the created database cluster backups on the specified kubernetes cluster.
 func (e *EverestServer) ListDatabaseClusterBackups(ctx echo.Context, namespace, name string) error {
@@ -106,16 +110,24 @@ func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, namespace, na
 }
 
 func (e *EverestServer) ensureBackupStorageProtection(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
-	controllerutil.AddFinalizer(backup, storageProtectionFinalizer)
-	controllerutil.AddFinalizer(backup, foregroundDeletionFinalizer)
-	_, err := e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
-	return err
+	return backoff.Retry(func() error {
+		backup, err := e.kubeClient.GetDatabaseClusterBackup(ctx, backup.GetNamespace(), backup.GetName())
+		controllerutil.AddFinalizer(backup, storageProtectionFinalizer)
+		controllerutil.AddFinalizer(backup, foregroundDeletionFinalizer)
+		_, err = e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
+		return err
+	},
+		backoff.WithContext(everestAPIConstantBackoff, ctx),
+	)
 }
 
 func (e *EverestServer) ensureBackupForegroundDeletion(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
-	if controllerutil.AddFinalizer(backup, foregroundDeletionFinalizer) {
-		_, err := e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
+	return backoff.Retry(func() error {
+		backup, err := e.kubeClient.GetDatabaseClusterBackup(ctx, backup.GetNamespace(), backup.GetName())
+		controllerutil.AddFinalizer(backup, foregroundDeletionFinalizer)
+		_, err = e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
 		return err
-	}
-	return nil
+	},
+		backoff.WithContext(everestAPIConstantBackoff, ctx),
+	)
 }
