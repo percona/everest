@@ -36,7 +36,6 @@ import (
 const (
 	databaseClusterBackupKind = "databaseclusterbackups"
 
-	storageProtectionFinalizer  = "everest.percona.com/dbb-storage-protection"
 	foregroundDeletionFinalizer = "foregroundDeletion"
 )
 
@@ -117,7 +116,7 @@ func (e *EverestServer) ensureBackupStorageProtection(ctx context.Context, backu
 		if err != nil {
 			return err
 		}
-		controllerutil.AddFinalizer(backup, storageProtectionFinalizer)
+		controllerutil.AddFinalizer(backup, everestv1alpha1.DBBackupStorageProtectionFinalizer)
 		controllerutil.AddFinalizer(backup, foregroundDeletionFinalizer)
 		_, err = e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
 		return err
