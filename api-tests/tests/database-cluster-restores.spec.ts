@@ -17,7 +17,7 @@ import * as th from './helpers'
 import {checkError, testsNs} from "./helpers";
 
 
-test('create/update/delete database cluster restore', async ({ request }) => {
+test('create/update/delete database cluster restore', async ({ request, page }) => {
   const bsName = th.suffixedName('storage')
   const clName = th.suffixedName('cluster')
   const clName2 = th.suffixedName('cluster2')
@@ -78,9 +78,11 @@ test('create/update/delete database cluster restore', async ({ request }) => {
   expect(response.status()).toBe(404)
 
   await th.deleteBackup(request, backupName)
-  await th.deleteBackupStorage(request, bsName)
   await th.deleteDBCluster(request, clName)
   await th.deleteDBCluster(request, clName2)
+  await th.waitClusterDeletion(request, page, clName)
+  await th.waitClusterDeletion(request, page, clName2)
+  await th.deleteBackupStorage(request, bsName)
 })
 
 test('list restores', async ({ request, page }) => {
@@ -155,9 +157,11 @@ test('list restores', async ({ request, page }) => {
   }
 
   await th.deleteBackup(request, backupName)
-  await th.deleteBackupStorage(request, bsName)
   await th.deleteDBCluster(request, clName1)
   await th.deleteDBCluster(request, clName2)
+  await th.waitClusterDeletion(request, page, clName1)
+  await th.waitClusterDeletion(request, page, clName2)
+  await th.deleteBackupStorage(request, bsName)
 })
 
 test('create restore: validation errors', async ({ request, page }) => {
@@ -208,6 +212,7 @@ test('create restore: validation errors', async ({ request, page }) => {
   expect(await response.text()).toContain('{"message":".spec cannot be empty"}')
 
   await th.deleteBackup(request, backupName)
-  await th.deleteBackupStorage(request, bsName)
   await th.deleteDBCluster(request, clName)
+  await th.waitClusterDeletion(request, page, clName)
+  await th.deleteBackupStorage(request, bsName)
 })
