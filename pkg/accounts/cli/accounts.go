@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -27,6 +28,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/percona/everest/pkg/accounts"
+	"github.com/percona/everest/pkg/common"
 )
 
 // CLI provides functionality for managing user accounts via the CLI.
@@ -75,6 +77,17 @@ func (c *CLI) Create(ctx context.Context, username, password string) error {
 	if username == "" {
 		return errors.New("username is required")
 	}
+
+	if username == common.EverestAdminUser && password == "" {
+		// fallthrough, this is allowed.
+	} else if !validateUsername(username) {
+		c.l.Error("Username must contain only letters, numbers, and underscores, and must be at least 3 characters long")
+		return errors.New("username is invalid")
+	} else if !validatePassword(password) {
+		c.l.Error("Password must contain only letters, numbers and specific special characters (@#$%^&+=!_), and must be at least 6 characters long")
+		return errors.New("password is invalid")
+	}
+
 	if err := c.accountManager.Create(ctx, username, password); err != nil {
 		return err
 	}
@@ -155,4 +168,26 @@ func (c *CLI) List(ctx context.Context, opts *ListOptions) error {
 	}
 	tbl.Print()
 	return nil
+}
+
+func validateUsername(username string) bool {
+	// Regular expression to validate username.
+	// [a-zA-Z0-9_] - Allowed characters (letters, digits, underscore)
+	// {3,} - Length of the username (minimum 3 characters)
+	pattern := "^[a-zA-Z0-9_]{3,}$"
+	regex := regexp.MustCompile(pattern)
+	return regex.MatchString(username)
+}
+
+func validatePassword(password string) bool {
+	if strings.Contains(password, " ") {
+		return false
+	}
+	// Regular expression to validate password.
+	// [a-zA-Z0-9@#$%^&+=!] - Allowed characters (letters, numbers, and specified special characters)
+	// {6,} - Minimum six characters
+	// $ - End of the string
+	pattern := `^[a-zA-Z0-9@#$%^&+=!_]{6,}$`
+	regex := regexp.MustCompile(pattern)
+	return regex.MatchString(password)
 }
