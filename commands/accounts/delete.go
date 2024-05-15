@@ -36,7 +36,7 @@ func NewDeleteCmd(l *zap.SugaredLogger) *cobra.Command {
 		Use:     "delete",
 		Example: "everestctl accounts delete --username user1 --password $USER_PASS",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
-			initCreateViperFlags(cmd)
+			initDeleteViperFlags(cmd)
 
 			kubeconfigPath := viper.GetString("kubeconfig")
 			username := viper.GetString("username")
@@ -61,16 +61,16 @@ func NewDeleteCmd(l *zap.SugaredLogger) *cobra.Command {
 			}
 		},
 	}
-	initCreateFlags(cmd)
+	initDeleteFlags(cmd)
 	return cmd
 }
 
-func initCreateFlags(cmd *cobra.Command) {
+func initDeleteFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("username", "u", "", "Username of the account")
 	cmd.Flags().StringP("password", "p", "", "Password of the account")
 }
 
-func initCreateViperFlags(cmd *cobra.Command) {
+func initDeleteViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag("username", cmd.Flags().Lookup("username"))     //nolint:errcheck,gosec
 	viper.BindPFlag("password", cmd.Flags().Lookup("password"))     //nolint:errcheck,gosec
 	viper.BindEnv("kubeconfig")                                     //nolint:errcheck,gosec
