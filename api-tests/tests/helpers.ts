@@ -111,7 +111,7 @@ export const createBackup = async (request,  clusterName, backupName, storageNam
 }
 
 export const deleteBackup = async (request, backupName) => {
-  const res = await request.delete(`/v1/namespaces/${testsNs}/database-cluster-backups/${backupName}`)
+  const res = await request.delete(`/v1/namespaces/${testsNs}/database-cluster-backups/${backupName}?cleanupBackupStorage=true`)
 
   await checkError(res)
 }
