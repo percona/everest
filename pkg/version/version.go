@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	goversion "github.com/hashicorp/go-version"
+
 	"github.com/percona/everest/cmd/config"
 )
 
