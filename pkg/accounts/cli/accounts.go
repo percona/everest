@@ -79,7 +79,7 @@ func (c *CLI) Create(ctx context.Context, username, password string) error {
 	}
 
 	if ok, msg := validateCredentials(username, password); !ok {
-		c.l.Error("Invalid credentials", "msg", msg)
+		c.l.Error(msg)
 		return errors.New("invalid credentials")
 	}
 
