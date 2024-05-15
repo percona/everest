@@ -28,7 +28,7 @@ export type PreviewSectionProps = {
   children: React.ReactNode;
   active?: boolean;
   hasBeenReached?: boolean;
-  disabled: boolean;
+  disabled?: boolean;
   onEditClick?: () => void;
 } & StackProps;
 
