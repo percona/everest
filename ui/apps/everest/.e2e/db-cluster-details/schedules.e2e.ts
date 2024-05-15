@@ -23,6 +23,7 @@ import {
 } from '../utils/db-clusters-list';
 import { storageLocationAutocompleteEmptyValidationCheck } from '../utils/db-wizard';
 import { STORAGE_NAMES } from '../constants';
+import { waitForInitializingState } from '../utils/table';
 
 test.describe.serial('Schedules List', async () => {
   let scheduleName = 'test-name';
@@ -45,6 +46,10 @@ test.describe.serial('Schedules List', async () => {
         ],
       },
     });
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await waitForInitializingState(page, mySQLName);
   });
 
   test.afterAll(async ({ request }) => {

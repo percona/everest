@@ -32,6 +32,7 @@ import {
   checkSuccessOfUpdateAndGoToDbClustersList,
 } from './edit-db-cluster.utils';
 import { STORAGE_NAMES } from '../../../constants';
+import { waitForInitializingState } from '../../../utils/table';
 
 test.describe.serial('DB Cluster Editing PITR Step', async () => {
   const mySQLName = 'db-pitr-mysql';
@@ -56,6 +57,10 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
         ],
       },
     });
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await waitForInitializingState(page, mySQLName);
   });
 
   test.afterAll(async ({ request }) => {
