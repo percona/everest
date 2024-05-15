@@ -130,6 +130,7 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
     page,
   }) => {
     await findDbAndClickActions(page, mySQLName, 'Edit');
+    await expect(page.getByTestId('mysql-toggle-button')).toBeVisible();
 
     // Go to Resources step
     await moveForward(page);
