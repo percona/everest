@@ -49,6 +49,7 @@ test.describe.serial('Schedules List', async () => {
   });
 
   test.beforeEach(async ({ page }) => {
+    await page.goto('/databases');
     await waitForInitializingState(page, mySQLName);
   });
 
@@ -57,7 +58,6 @@ test.describe.serial('Schedules List', async () => {
   });
 
   test('Create schedule', async ({ page }) => {
-    await page.goto('/databases');
     await findDbAndClickRow(page, mySQLName);
 
     const backupsTab = await page.getByTestId(DBClusterDetailsTabs.backups);

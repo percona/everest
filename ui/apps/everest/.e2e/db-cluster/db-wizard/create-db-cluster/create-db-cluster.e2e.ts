@@ -292,6 +292,7 @@ test.describe('DB Cluster creation', () => {
   });
 
   test('Multiple Mongo schedules', async ({ page, request }) => {
+    test.slow();
     const clusterName = 'multi-schedule-test';
     const recommendedEngineVersions = await getEnginesLatestRecommendedVersions(
       namespace,

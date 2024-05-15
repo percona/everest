@@ -16,6 +16,7 @@
 import { test, expect } from '@playwright/test';
 import { getTokenFromLocalStorage } from '../utils/localStorage';
 import { getNamespacesFn } from '../utils/namespaces';
+import { EVEREST_CI_NAMESPACES } from '../constants';
 
 test.describe('Namespaces List', () => {
   let namespaces = [];
@@ -36,7 +37,9 @@ test.describe('Namespaces List', () => {
     await expect(page.getByText('Operator')).toBeVisible();
     await expect(page.getByText('No namespaces added')).not.toBeVisible();
     const rows = page.locator('.MuiTableRow-root');
-    await expect(rows.first()).toBeVisible();
+    await expect(
+      page.getByText(EVEREST_CI_NAMESPACES.EVEREST_UI)
+    ).toBeVisible();
     expect(await rows.count()).toBe(5);
     expect(await page.getByRole('row', { name: 'pxc' }).count()).toBe(2);
     expect(await page.getByRole('row', { name: 'psmdb' }).count()).toBe(2);

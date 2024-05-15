@@ -20,5 +20,6 @@ export const findRowAndClickActions = async (
 // TODO remove after DB Cluster's PATCH method is implemented
 export const waitForInitializingState = async (page: Page, name: string) => {
   const dbRow = page.getByRole('row').filter({ hasText: name });
+  await expect(dbRow).toBeVisible();
   await expect(dbRow.getByText('Unknown')).not.toBeVisible({ timeout: 10000 });
 };
