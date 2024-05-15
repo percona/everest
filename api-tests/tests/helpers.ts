@@ -52,18 +52,20 @@ export const createDBCluster = async (request, name) => {
   await checkError(postReq)
 }
 
-export const deleteDBCluster = async (request, name) => {
+export const deleteDBCluster = async (request, page, name) => {
   let res = await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${name}`)
 
-  const cluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${name}`)
-  if (cluster.status() == 404) {
-    return;
-  }
-  let data = await cluster.json()
-  data.metadata.finalizers = null
+  for (let i = 0; i < 100; i++) {
+    const cluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${name}`)
+    if (cluster.status() == 404) {
+      return;
+    }
+    let data = await cluster.json()
+    data.metadata.finalizers = null
 
-  res = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${name}`, { data })
-  await checkError(res)
+    await request.put(`/v1/namespaces/${testsNs}/database-clusters/${name}`, { data })
+    await page.waitForTimeout(1000)
+  }
 }
 
 export const createBackupStorage = async (request, name) => {

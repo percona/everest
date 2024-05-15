@@ -77,8 +77,7 @@ test('create db cluster with monitoring config', async ({ request, page }) => {
       timeout: 60 * 1000,
     })
   } finally {
-    await deleteDBCluster(request, clusterName)
-    await waitClusterDeletion(request, page, clusterName)
+    await deleteDBCluster(request, page, clusterName)
     await deleteMonitoringConfig(request, monitoringConfigName1)
   }
 })
@@ -158,8 +157,7 @@ test('update db cluster with a new monitoring config', async ({ request, page })
     })
 
   } finally {
-    await deleteDBCluster(request, clusterName)
-    await waitClusterDeletion(request, page, clusterName)
+    await deleteDBCluster(request, page, clusterName)
     await deleteMonitoringConfig(request, monitoringConfigName1)
     await deleteMonitoringConfig(request, monitoringConfigName2)
   }
@@ -235,7 +233,7 @@ test('update db cluster without monitoring config with a new monitoring config',
     })
 
   } finally {
-    await deleteDBCluster(request, clusterName)
+    await deleteDBCluster(request, page, clusterName)
     await waitClusterDeletion(request, page, clusterName)
     await deleteMonitoringConfig(request, monitoringConfigName2)
   }
@@ -312,7 +310,7 @@ test('update db cluster monitoring config with an empty monitoring config', asyn
     })
 
   } finally {
-    await deleteDBCluster(request, clusterName)
+    await deleteDBCluster(request, page, clusterName)
     await waitClusterDeletion(request, page, clusterName)
     await deleteMonitoringConfig(request, monitoringConfigName1)
   }

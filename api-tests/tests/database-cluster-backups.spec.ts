@@ -16,7 +16,7 @@ import { expect, test } from '@playwright/test'
 import * as th from './helpers'
 import {checkError, testsNs, checkObjectDeletion} from "./helpers";
 
-test('create/delete database cluster backups', async ({ request }) => {
+test('create/delete database cluster backups', async ({ request, page }) => {
   const bsName = th.suffixedName('storage')
   const clName = th.suffixedName('cluster')
 
@@ -49,7 +49,7 @@ test('create/delete database cluster backups', async ({ request }) => {
   expect(result.spec).toMatchObject(payload.spec)
 
   await th.deleteBackup(request, backupName)
-  await th.deleteDBCluster(request, clName)
+  await th.deleteDBCluster(request, page, clName)
   await th.deleteBackupStorage(request, bsName)
 })
 
@@ -167,7 +167,7 @@ test('list backups', async ({ request, page }) => {
     checkObjectDeletion(response)
   }
 
-  await th.deleteDBCluster(request, clusterName1)
-  await th.deleteDBCluster(request, clusterName2)
+  await th.deleteDBCluster(request, page, clusterName1)
+  await th.deleteDBCluster(request, page, clusterName2)
   await th.deleteBackupStorage(request, bsName)
 })

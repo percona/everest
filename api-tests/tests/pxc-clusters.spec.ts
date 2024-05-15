@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { test, expect } from '@fixtures'
-import {checkClusterDeletion, checkError, testsNs, deleteDBCluster, waitClusterDeletion} from "@tests/tests/helpers";
+import {checkError, testsNs, deleteDBCluster} from "@tests/tests/helpers";
 
 let recommendedVersion
 
@@ -119,8 +119,7 @@ test('create/edit/delete pxc single node cluster', async ({ request, page }) => 
 
   expect((await updatedPXCCluster.json()).spec.databaseConfig).toBe(pxcPayload.spec.databaseConfig)
 
-  await deleteDBCluster(request, clusterName)
-  await waitClusterDeletion(request, page, clusterName)
+  await deleteDBCluster(request, page, clusterName)
 })
 
 test('expose pxc cluster after creation', async ({ request, page }) => {
@@ -196,8 +195,7 @@ test('expose pxc cluster after creation', async ({ request, page }) => {
 
   expect((await updatedPXCCluster.json()).spec.proxy.expose.type).toBe('external')
 
-  await deleteDBCluster(request, clusterName)
-  await waitClusterDeletion(request, page, clusterName)
+  await deleteDBCluster(request, page, clusterName)
 })
 
 test('expose pxc cluster on EKS to the public internet and scale up', async ({ request, page }) => {
@@ -268,6 +266,5 @@ test('expose pxc cluster on EKS to the public internet and scale up', async ({ r
 
   await checkError(updatedPXCCluster)
 
-  await deleteDBCluster(request, clusterName)
-  await waitClusterDeletion(request, page, clusterName)
+  await deleteDBCluster(request, page, clusterName)
 })
