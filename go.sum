@@ -555,8 +555,8 @@ github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/9
 github.com/pelletier/go-toml v1.7.0/go.mod h1:vwGMzjaWMwyfHwgIBhI2YUM4fB6nL6lVAvS1LBMMhTE=
 github.com/pelletier/go-toml/v2 v2.1.0 h1:FnwAJ4oYMvbT/34k9zzHuZNrhlz48GB3/s6at6/MHO4=
 github.com/pelletier/go-toml/v2 v2.1.0/go.mod h1:tJU2Z3ZkXwnxa4DPO899bsyIoywizdUvyaeZurnPPDc=
-github.com/percona/everest-operator v0.10.0 h1:vq1CbxXoYxhVIJwHDeamQJe3igy61A0h0ml8vArTjpU=
-github.com/percona/everest-operator v0.10.0/go.mod h1:TOvVDtoaChBQBZRMRQwcWs89fA6UuR9huFxxV11Ww3I=
+github.com/percona/everest-operator v0.6.0-dev1.0.20240514121858-9c270ed11e06 h1:oVCfexKFqKnRyDRWVyAEfMj6s6adUpF7Zgq28KSBcfs=
+github.com/percona/everest-operator v0.6.0-dev1.0.20240514121858-9c270ed11e06/go.mod h1:TOvVDtoaChBQBZRMRQwcWs89fA6UuR9huFxxV11Ww3I=
 github.com/percona/percona-backup-mongodb v1.8.1-0.20230920143330-3b1c2e263901 h1:BDgsZRCjEuxl2/z4yWBqB0s8d20shuIDks7/RVdZiLs=
 github.com/percona/percona-backup-mongodb v1.8.1-0.20230920143330-3b1c2e263901/go.mod h1:fZRCMpUqkWlLVdRKqqaj001LoVP2eo6F0ZhoMPeXDng=
 github.com/percona/percona-postgresql-operator v0.0.0-20231220140959-ad5eef722609 h1:+UOK4gcHrRgqjo4smgfwT7/0apF6PhAJdQIdAV4ub/M=
