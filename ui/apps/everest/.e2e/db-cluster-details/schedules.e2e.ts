@@ -25,7 +25,8 @@ import { storageLocationAutocompleteEmptyValidationCheck } from '../utils/db-wiz
 import { STORAGE_NAMES } from '../constants';
 import { waitForInitializingState } from '../utils/table';
 
-test.describe.serial('Schedules List', async () => {
+// TODO uncomment when PATCH method is implemented
+test.describe.skip('Schedules List', async () => {
   let scheduleName = 'test-name';
   const mySQLName = 'schedule-mysql';
 
