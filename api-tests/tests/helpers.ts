@@ -122,6 +122,14 @@ export const deleteRestore = async (request, restoreName) => {
   await checkError(res)
 }
 
+export const checkObjectDeletion = async (obj) => {
+  if (obj.status() == 200) {
+    expect((await obj.json()).metadata["deletionTimestamp"]).not.toBe('');
+  } else {
+    expect(obj.status()).toBe(404)
+  }
+}
+
 export const checkClusterDeletion = async (cluster) => {
   if (cluster.status() == 200) {
     expect((await cluster.json()).metadata["deletionTimestamp"]).not.toBe('');

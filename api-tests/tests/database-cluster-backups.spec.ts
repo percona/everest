@@ -14,7 +14,7 @@
 // limitations under the License.
 import { expect, test } from '@playwright/test'
 import * as th from './helpers'
-import {checkError, testsNs} from "./helpers";
+import {checkError, testsNs, checkObjectDeletion} from "./helpers";
 
 test('create/delete database cluster backups', async ({ request }) => {
   const bsName = th.suffixedName('storage')
@@ -164,7 +164,7 @@ test('list backups', async ({ request, page }) => {
   for (const payload of payloads) {
     await request.delete(`/v1/namespaces/${testsNs}/database-cluster-backups/${payload.metadata.name}`)
     response = await request.get(`/v1/namespaces/${testsNs}/database-cluster-backups/${payload.metadata.name}`)
-    expect(response.status()).toBe(404)
+    checkObjectDeletion(response)
   }
 
   await th.deleteDBCluster(request, clusterName1)
