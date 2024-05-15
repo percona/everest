@@ -16,10 +16,10 @@ import { expect, test } from '@fixtures'
 import {
   checkError,
   testsNs,
-  testPrefix,
   waitClusterDeletion,
   createMonitoringConfig,
-  suffixedName, deleteMonitoringConfig
+  suffixedName, deleteMonitoringConfig,
+  deleteDBCluster,
 } from "@tests/tests/helpers";
 
 test.setTimeout(360 * 1000)
@@ -77,8 +77,7 @@ test('create db cluster with monitoring config', async ({ request, page }) => {
       timeout: 60 * 1000,
     })
   } finally {
-    await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-    await waitClusterDeletion(request, page, clusterName)
+    await deleteDBCluster(request, page, clusterName)
     await deleteMonitoringConfig(request, monitoringConfigName1)
   }
 })
@@ -141,19 +140,24 @@ test('update db cluster with a new monitoring config', async ({ request, page })
 
     expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName1)
 
-    const putData = data
+    await expect(async () => {
+      const req = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+      res = (await req.json())
+      const putData = data
+      putData.metadata = res.metadata
+      putData.spec.monitoring.monitoringConfigName = monitoringConfigName2
 
-    putData.metadata = res.metadata
-    putData.spec.monitoring.monitoringConfigName = monitoringConfigName2
+      const putReq = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, { data: putData })
+      expect(putReq.status()).toBe(200)
+      res = (await putReq.json())
+      expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
+    }).toPass({
+      intervals: [1000],
+      timeout: 60 * 1000,
+    })
 
-    const putReq = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, { data: putData })
-
-    await checkError(putReq)
-    res = (await putReq.json())
-    expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
   } finally {
-    await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-    await waitClusterDeletion(request, page, clusterName)
+    await deleteDBCluster(request, page, clusterName)
     await deleteMonitoringConfig(request, monitoringConfigName1)
     await deleteMonitoringConfig(request, monitoringConfigName2)
   }
@@ -212,18 +216,24 @@ test('update db cluster without monitoring config with a new monitoring config',
 
     expect(res?.spec?.monitoring?.monitoringConfigName).toBeFalsy()
 
-    const putData = data
+    await expect(async () => {
+      const req = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+      res = (await req.json())
+      const putData = data
+      putData.metadata = res.metadata;
+      (putData.spec as any).monitoring = { monitoringConfigName: monitoringConfigName2 }
 
-    putData.metadata = res.metadata;
-    (putData.spec as any).monitoring = { monitoringConfigName: monitoringConfigName2 }
+      const putReq = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, { data: putData })
+      expect(putReq.status()).toBe(200)
+      res = (await putReq.json())
+      expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
+    }).toPass({
+      intervals: [1000],
+      timeout: 60 * 1000,
+    })
 
-    const putReq = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, { data: putData })
-
-    await checkError(putReq)
-    res = (await putReq.json())
-    expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
   } finally {
-    await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+    await deleteDBCluster(request, page, clusterName)
     await waitClusterDeletion(request, page, clusterName)
     await deleteMonitoringConfig(request, monitoringConfigName2)
   }
@@ -283,18 +293,24 @@ test('update db cluster monitoring config with an empty monitoring config', asyn
       timeout: 60 * 1000,
     })
 
-    const putData = data
+    await expect(async () => {
+      const req = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+      res = (await req.json())
+      const putData = data
+      putData.metadata = res.metadata;
+      (putData.spec.monitoring as any) = {}
 
-    putData.metadata = res.metadata;
-    (putData.spec.monitoring as any) = {}
+      const putReq = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, { data: putData })
+      expect(putReq.status()).toBe(200)
+      res = (await putReq.json())
+      expect(res?.spec?.monitoring?.monitoringConfigName).toBeFalsy()
+    }).toPass({
+      intervals: [1000],
+      timeout: 60 * 1000,
+    })
 
-    const putReq = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, { data: putData })
-
-    await checkError(putReq)
-    res = (await putReq.json())
-    expect(res?.spec?.monitoring?.monitoringConfigName).toBeFalsy()
   } finally {
-    await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+    await deleteDBCluster(request, page, clusterName)
     await waitClusterDeletion(request, page, clusterName)
     await deleteMonitoringConfig(request, monitoringConfigName1)
   }
