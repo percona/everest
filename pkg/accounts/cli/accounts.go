@@ -193,11 +193,8 @@ func validatePassword(password string) bool {
 	if strings.Contains(password, " ") {
 		return false
 	}
-	// Regular expression to validate password.
-	// [a-zA-Z0-9@#$%^&+=!] - Allowed characters (letters, numbers, and specified special characters)
-	// {6,} - Minimum six characters
-	// $ - End of the string
-	pattern := `^[a-zA-Z0-9@#$%^&+=!_]{6,}$`
-	regex := regexp.MustCompile(pattern)
-	return regex.MatchString(password)
+	if len(password) < 6 {
+		return false
+	}
+	return true
 }

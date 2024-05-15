@@ -31,11 +31,9 @@ func TestUsernamePasswordSanitation(t *testing.T) {
 			password string
 			allowed  bool
 		}{
-			{"select *;", false},
-			{"DROP TABLE IF EXISTS", false},
 			{"pass", false},
-			{"verysecurepassword123!!", true},
-			{"d@rtH_vad3r_88", true},
+			{"password with spaces", false},
+			{"verysecurepassword!", true},
 		}
 		for _, tc := range testCases {
 			result := validatePassword(tc.password)
