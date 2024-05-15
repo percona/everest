@@ -78,14 +78,9 @@ func (c *CLI) Create(ctx context.Context, username, password string) error {
 		return errors.New("username is required")
 	}
 
-	if username == common.EverestAdminUser && password == "" {
-		// fallthrough, this is allowed.
-	} else if !validateUsername(username) {
-		c.l.Error("Username must contain only letters, numbers, and underscores, and must be at least 3 characters long")
-		return errors.New("username is invalid")
-	} else if !validatePassword(password) {
-		c.l.Error("Password must contain only letters, numbers and specific special characters (@#$%^&+=!_), and must be at least 6 characters long")
-		return errors.New("password is invalid")
+	if ok, msg := validateCredentials(username, password); !ok {
+		c.l.Error("Invalid credentials", "msg", msg)
+		return errors.New("invalid credentials")
 	}
 
 	if err := c.accountManager.Create(ctx, username, password); err != nil {
@@ -168,6 +163,21 @@ func (c *CLI) List(ctx context.Context, opts *ListOptions) error {
 	}
 	tbl.Print()
 	return nil
+}
+
+func validateCredentials(username, password string) (bool, string) {
+	if username == common.EverestAdminUser && password == "" {
+		return true, ""
+	}
+	if !validateUsername(username) {
+		return false,
+			"Username must contain only letters, numbers, and underscores, and must be at least 3 characters long"
+	}
+	if !validatePassword(password) {
+		return false,
+			"Password must contain only letters, numbers and specific special characters (@#$%^&+=!_), and must be at least 6 characters long"
+	}
+	return true, ""
 }
 
 func validateUsername(username string) bool {
