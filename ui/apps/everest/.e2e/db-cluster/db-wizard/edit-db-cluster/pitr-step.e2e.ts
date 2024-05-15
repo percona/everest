@@ -60,6 +60,7 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
   });
 
   test.beforeEach(async ({ page }) => {
+    await page.goto('/databases');
     await waitForInitializingState(page, mySQLName);
   });
 
@@ -70,7 +71,6 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
   test('Enable PITR to database during editing in dbWizard', async ({
     page,
   }) => {
-    await page.goto('/databases');
     await findDbAndClickActions(page, mySQLName, 'Edit', 'UP');
     await goToStep(page, 'point-in-time-recovery');
 
@@ -129,7 +129,6 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
   test('Disable PITR for database during editing pitr step in dbWizard', async ({
     page,
   }) => {
-    await page.goto('/databases');
     await findDbAndClickActions(page, mySQLName, 'Edit');
 
     // Go to Resources step
