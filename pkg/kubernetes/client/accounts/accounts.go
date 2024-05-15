@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -272,7 +273,7 @@ func (a *configMapsClient) Verify(ctx context.Context, username, password string
 		provided = computedHash
 	}
 
-	if stored != provided {
+	if subtle.ConstantTimeCompare([]byte(stored), []byte(provided)) == 0 {
 		return accounts.ErrIncorrectPassword
 	}
 	return nil
