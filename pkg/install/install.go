@@ -53,9 +53,14 @@ const (
 const postInstallMessage = `
 Everest has been successfully installed!
 
+
 To view the password for the 'admin' user, run the following command:
 
-kubectl get secret everest-accounts -n everest-system -o jsonpath='{.data.admin}' | base64 --decode && echo
+kubectl get secret everest-accounts -n everest-system -o jsonpath='{.data.users\.yaml}' \
+    | base64 --decode \
+    | grep -A 5 '^admin:' \
+    | grep 'passwordHash:' \
+    | awk '{print $2}'
 
 
 To create a new user, run the following command:
