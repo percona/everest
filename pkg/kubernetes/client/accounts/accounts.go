@@ -131,7 +131,7 @@ func (a *configMapsClient) insertOrUpdateAccount(
 	}
 
 	accounts := make(map[string]*accounts.Account)
-	if err := yaml.Unmarshal([]byte(secret.Data[usersFile]), &accounts); err != nil {
+	if err := yaml.Unmarshal(secret.Data[usersFile], &accounts); err != nil {
 		return err
 	}
 
