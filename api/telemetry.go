@@ -114,7 +114,7 @@ func (e *EverestServer) collectMetrics(ctx context.Context, url string) error {
 	}
 
 	types := make(map[string]int, 3)
-	metrics := make([]Metric, 0, 100) // 100 is an arbitrary number as it's not clear what the length will be
+	metrics := make([]Metric, 0, 4)
 	// Everest version.
 	metrics = append(metrics, Metric{
 		Key:   telemetryVersionKey,
@@ -130,12 +130,6 @@ func (e *EverestServer) collectMetrics(ctx context.Context, url string) error {
 
 		for _, cl := range clusters.Items {
 			types[string(cl.Spec.Engine.Type)]++
-
-			// Number of backup schedules per DB cluster.
-			metrics = append(metrics, Metric{
-				Key:   fmt.Sprintf(telemetryBackupSchedulesKeyTemplate, string(cl.Spec.Engine.Type), cl.UID),
-				Value: strconv.Itoa(len(cl.Spec.Backup.Schedules)),
-			})
 		}
 	}
 
