@@ -20,4 +20,5 @@ jobs:
         run: |
           git fetch origin EVEREST-1023
           git checkout FETCH_HEAD
+          github.actions.getWorkflowAccess()
           ./.github/workflows/dev-fe-ci.yaml
