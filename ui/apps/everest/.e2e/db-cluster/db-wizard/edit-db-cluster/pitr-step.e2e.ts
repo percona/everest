@@ -23,6 +23,7 @@ import {
   findDbAndClickRow,
 } from '../../../utils/db-clusters-list';
 import {
+  goToStep,
   moveForward,
   storageLocationAutocompleteEmptyValidationCheck,
 } from '../../../utils/db-wizard';
@@ -31,6 +32,7 @@ import {
   checkSuccessOfUpdateAndGoToDbClustersList,
 } from './edit-db-cluster.utils';
 import { STORAGE_NAMES } from '../../../constants';
+import { waitForInitializingState } from '../../../utils/table';
 
 test.describe.serial('DB Cluster Editing PITR Step', async () => {
   const mySQLName = 'db-pitr-mysql';
@@ -47,7 +49,7 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
         enabled: true,
         schedules: [
           {
-            backupStorageName: 'test-storage-1',
+            backupStorageName: STORAGE_NAMES[0],
             enabled: true,
             name: 'backup-1',
             schedule: '0 * * * *',
@@ -57,6 +59,11 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
     });
   });
 
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/databases');
+    await waitForInitializingState(page, mySQLName);
+  });
+
   test.afterAll(async ({ request }) => {
     await deleteDbClusterFn(request, mySQLName);
   });
@@ -64,15 +71,8 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
   test('Enable PITR to database during editing in dbWizard', async ({
     page,
   }) => {
-    await page.goto('/databases');
     await findDbAndClickActions(page, mySQLName, 'Edit', 'UP');
-
-    // Go to Resources step
-    await moveForward(page);
-    // Go to Backups step
-    await moveForward(page);
-    // Go to PITR step
-    await moveForward(page);
+    await goToStep(page, 'point-in-time-recovery');
 
     // Check PITR form
     const pitrCheckbox = page
@@ -129,8 +129,8 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
   test('Disable PITR for database during editing pitr step in dbWizard', async ({
     page,
   }) => {
-    await page.goto('/databases');
     await findDbAndClickActions(page, mySQLName, 'Edit');
+    await expect(page.getByTestId('mysql-toggle-button')).toBeVisible();
 
     // Go to Resources step
     await moveForward(page);
