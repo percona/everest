@@ -12,4 +12,4 @@ jobs:
         run: |
           git fetch origin EVEREST-1023
           git checkout FETCH_HEAD
-          ./.github/workflows/dev-fe-ci.YAML
+          ./.github/workflows/dev-fe-ci.yaml
