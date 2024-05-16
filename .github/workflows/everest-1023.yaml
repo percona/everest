@@ -1,0 +1,23 @@
+---
+name: EVEREST-1023-test-flow
+on:
+  push:
+    branches: [EVEREST-1023]
+
+permissions:
+  contents: read
+  packages: write
+  checks: write
+  pull-requests: write
+  repository-projects: read
+
+jobs:
+  test_run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Dispatch workflow
+        uses: shivammathur/workflow-dispatch@v1
+        with:
+          workflow: dev-fe-ci
+          ref: ${{ github.sha }}
