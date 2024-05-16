@@ -213,16 +213,16 @@ jobs:
           --skip-wizard \
           --namespaces pg-only
 
+      - name: Expose Everest API Server
+        run: |
+          kubectl port-forward -n everest-system deployment/percona-everest 8080:8080 &
+
       - name: Create Everest test user
         env:
           CI_USER: '${{ secrets.CI_USER }}'
           CI_PASSWORD: '${{ secrets.CI_PASSWORD }}'
         run: |
           ./bin/everestctl accounts create -u ${CI_USER} -p ${CI_PASSWORD}
-
-      - name: Expose Everest API Server
-        run: |
-          kubectl port-forward -n everest-system deployment/percona-everest 8080:8080 &
 
       - name: Run Everest
         run: |
