@@ -28,6 +28,7 @@ const DB_CLUSTER_STATUS_HUMANIFIED: Record<DbClusterStatus, string> = {
   [DbClusterStatus.stopping]: Messages.statusProvider.stopping,
   [DbClusterStatus.unknown]: Messages.statusProvider.unknown,
   [DbClusterStatus.restoring]: Messages.statusProvider.restoring,
+  [DbClusterStatus.deleting]: Messages.statusProvider.deleting,
 };
 
 export const beautifyDbClusterStatus = (status: DbClusterStatus): string =>
