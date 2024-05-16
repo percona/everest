@@ -28,8 +28,6 @@ import (
 
 	"golang.org/x/crypto/pbkdf2"
 	"gopkg.in/yaml.v2"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/percona/everest/pkg/accounts"
 	"github.com/percona/everest/pkg/common"
@@ -37,9 +35,7 @@ import (
 )
 
 const (
-	usersFile               = "users.yaml"
-	tempAdminPasswordSecret = "everest-admin-temp"
-
+	usersFile = "users.yaml"
 	// We set this annotation on the secret to indicate which passwords are stored in plain text.
 	insecurePasswordAnnotation = "insecure-password/%s"
 )
@@ -76,11 +72,11 @@ func (a *configMapsClient) List(ctx context.Context) (map[string]*accounts.Accou
 
 func (a *configMapsClient) listAllAccounts(ctx context.Context) (map[string]*accounts.Account, error) {
 	result := make(map[string]*accounts.Account)
-	cm, err := a.k.GetConfigMap(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
+	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsSecretName)
 	if err != nil {
 		return nil, err
 	}
-	if err := yaml.Unmarshal([]byte(cm.Data[usersFile]), result); err != nil {
+	if err := yaml.Unmarshal(secret.Data[usersFile], result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -88,33 +84,31 @@ func (a *configMapsClient) listAllAccounts(ctx context.Context) (map[string]*acc
 
 // Create a new user account.
 func (a *configMapsClient) Create(ctx context.Context, username, password string) error {
+	// Compute a hash for the password.
+	hash, err := a.computePasswordHash(ctx, password)
+	if err != nil {
+		return errors.Join(err, errors.New("failed to compute hash"))
+	}
+	secure := true
+
+	// Initial admin account is stored in plain text.
+	if username == common.EverestAdminUser && password == "" {
+		randomPass, err := a.generateRandomPassword()
+		if err != nil {
+			return errors.Join(err, errors.New("failed to generate random password"))
+		}
+		hash = randomPass
+		secure = false
+	}
+
 	account := &accounts.Account{
 		Enabled:       true,
 		Capabilities:  []accounts.AccountCapability{accounts.AccountCapabilityLogin},
 		PasswordMtime: time.Now().Format(time.RFC3339),
+		PasswordHash:  hash,
 	}
 
-	// XX: once we allow updating password, Create should fail if the user already exists.
-	if err := a.setAccount(ctx, username, account); err != nil {
-		return err
-	}
-
-	// If an admin account is created without a password, we will generate a random password
-	// and store it in plain text.
-	storeHashed := true
-	if username == common.EverestAdminUser && password == "" {
-		storeHashed = false
-		randPassword, err := a.generateRandomPassword()
-		if err != nil {
-			return err
-		}
-		password = randPassword
-	}
-
-	if err := a.setPassword(ctx, username, password, storeHashed); err != nil {
-		return err
-	}
-	return nil
+	return a.insertOrUpdateAccount(ctx, username, account, secure)
 }
 
 func (a *configMapsClient) generateRandomPassword() (string, error) {
@@ -125,65 +119,43 @@ func (a *configMapsClient) generateRandomPassword() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-func (a *configMapsClient) setPassword(
+func (a *configMapsClient) insertOrUpdateAccount(
 	ctx context.Context,
-	username, password string,
-	ensureHash bool,
+	username string,
+	account *accounts.Account,
+	secure bool,
 ) error {
-	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
+	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsSecretName)
 	if err != nil {
 		return err
 	}
 
-	hash := password
-	if !ensureHash {
-		// Add an annotation so that we know which passwords are stored as plain text.
-		annotations := secret.GetAnnotations()
-		if annotations == nil {
-			annotations = make(map[string]string)
-		}
-		annotations[fmt.Sprintf(insecurePasswordAnnotation, username)] = "true"
-		secret.SetAnnotations(annotations)
-	} else {
-		hash, err = a.computePasswordHash(ctx, password)
-		if err != nil {
-			return errors.Join(err, errors.New("failed to compute hash"))
-		}
-		// Remove the annotation as the password is hashed.
-		annotations := secret.GetAnnotations()
-		delete(annotations, fmt.Sprintf(insecurePasswordAnnotation, username))
-		secret.SetAnnotations(annotations)
-	}
-
-	if secret.Data == nil {
-		secret.Data = make(map[string][]byte)
-	}
-	secret.Data[username] = []byte(hash)
-	if _, err := a.k.UpdateSecret(ctx, secret); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (a *configMapsClient) setAccount(ctx context.Context, username string, account *accounts.Account) error {
-	cm, err := a.k.GetConfigMap(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
-	if err != nil {
-		return err
-	}
 	accounts := make(map[string]*accounts.Account)
-	if err := yaml.Unmarshal([]byte(cm.Data[usersFile]), &accounts); err != nil {
+	if err := yaml.Unmarshal([]byte(secret.Data[usersFile]), &accounts); err != nil {
 		return err
 	}
+
 	accounts[username] = account
 	data, err := yaml.Marshal(accounts)
 	if err != nil {
 		return err
 	}
-	if cm.Data == nil {
-		cm.Data = make(map[string]string)
+
+	if secret.Data == nil {
+		secret.Data = make(map[string][]byte)
 	}
-	cm.Data[usersFile] = string(data)
-	if _, err := a.k.UpdateConfigMap(ctx, cm); err != nil {
+	secret.Data[usersFile] = data
+
+	annotations := secret.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	delete(annotations, fmt.Sprintf(insecurePasswordAnnotation, username))
+	if !secure {
+		annotations[fmt.Sprintf(insecurePasswordAnnotation, username)] = "true"
+	}
+
+	if _, err := a.k.UpdateSecret(ctx, secret); err != nil {
 		return err
 	}
 	return nil
@@ -203,33 +175,21 @@ func (a *configMapsClient) Delete(ctx context.Context, username string) error {
 	if err != nil {
 		return err
 	}
-	// Update ConfigMap.
+
+	if _, found := users[username]; !found {
+		return accounts.ErrAccountNotFound
+	}
+
 	delete(users, username)
-	b, err := yaml.Marshal(users)
+	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsSecretName)
 	if err != nil {
 		return err
 	}
-	cmData := map[string]string{
-		usersFile: string(b),
-	}
-	cm := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      common.EverestAccountsConfigName,
-			Namespace: common.SystemNamespace,
-		},
-		Data: cmData,
-	}
-	if _, err := a.k.UpdateConfigMap(ctx, cm); err != nil {
-		return err
-	}
-	// Update Secret.
-	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
+	data, err := yaml.Marshal(users)
 	if err != nil {
 		return err
 	}
-	secretData := secret.Data
-	delete(secretData, username)
-	secret.Data = secretData
+	secret.Data[usersFile] = data
 	if _, err := a.k.UpdateSecret(ctx, secret); err != nil {
 		return err
 	}
@@ -237,18 +197,18 @@ func (a *configMapsClient) Delete(ctx context.Context, username string) error {
 }
 
 func (a *configMapsClient) Verify(ctx context.Context, username, password string) error {
-	users, err := a.listAllAccounts(ctx)
+	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsSecretName)
 	if err != nil {
 		return err
-	}
-	_, found := users[username]
-	if !found {
-		return accounts.ErrAccountNotFound
 	}
 
-	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsConfigName)
-	if err != nil {
+	users := make(map[string]*accounts.Account)
+	if err := yaml.Unmarshal(secret.Data[usersFile], users); err != nil {
 		return err
+	}
+	user, found := users[username]
+	if !found {
+		return accounts.ErrAccountNotFound
 	}
 
 	// helper to check if a password should be compared as a hash.
@@ -258,13 +218,9 @@ func (a *configMapsClient) Verify(ctx context.Context, username, password string
 		return !found
 	}
 
-	storedB, found := secret.Data[username]
-	if !found {
-		return accounts.ErrAccountNotFound
-	}
-	stored := string(storedB)
-
+	actual := user.PasswordHash
 	provided := password
+
 	if shouldCompareAsHash() {
 		computedHash, err := a.computePasswordHash(ctx, password)
 		if err != nil {
@@ -273,7 +229,7 @@ func (a *configMapsClient) Verify(ctx context.Context, username, password string
 		provided = computedHash
 	}
 
-	if subtle.ConstantTimeCompare([]byte(stored), []byte(provided)) == 0 {
+	if subtle.ConstantTimeCompare([]byte(actual), []byte(provided)) == 0 {
 		return accounts.ErrIncorrectPassword
 	}
 	return nil

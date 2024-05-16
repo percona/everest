@@ -29,26 +29,13 @@ func TestAccounts(t *testing.T) {
 		)
 	require.NoError(t, err)
 
-	// Prepare configmap.
-	_, err = c.Clientset().
-		CoreV1().
-		ConfigMaps(common.SystemNamespace).
-		Create(ctx, &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      common.EverestAccountsConfigName,
-				Namespace: common.SystemNamespace,
-			},
-		}, metav1.CreateOptions{},
-		)
-	require.NoError(t, err)
-
 	// Prepare secret.
 	_, err = c.Clientset().
 		CoreV1().
 		Secrets(common.SystemNamespace).
 		Create(ctx, &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      common.EverestAccountsConfigName,
+				Name:      common.EverestAccountsSecretName,
 				Namespace: common.SystemNamespace,
 			},
 		}, metav1.CreateOptions{},

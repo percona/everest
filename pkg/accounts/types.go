@@ -48,6 +48,7 @@ type Account struct {
 	Enabled       bool                `yaml:"enabled"`
 	Capabilities  []AccountCapability `yaml:"capabilities"`
 	PasswordMtime string              `yaml:"passwordMtime"`
+	PasswordHash  string              `yaml:"passwordHash"`
 }
 
 // HasCapability returns true if the given account has the specified capability.
