@@ -28,10 +28,11 @@ export const monitoringStepCheck = async (
   await page.getByTestId('text-input-monitoring-instance').click();
   const monitoringOptions = page.getByRole('option');
 
-  monitoringInstancesList.forEach((option) =>
-    expect(
-      monitoringOptions.filter({ hasText: `${option.name} (${option.url})` })
-    ).toBeVisible()
+  monitoringInstancesList.forEach(
+    async (option) =>
+      await expect(
+        monitoringOptions.filter({ hasText: `${option.name} (${option.url})` })
+      ).toBeVisible()
   );
 
   await monitoringOptions

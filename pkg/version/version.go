@@ -23,6 +23,8 @@ import (
 	"strings"
 
 	goversion "github.com/hashicorp/go-version"
+
+	"github.com/percona/everest/cmd/config"
 )
 
 const (
@@ -30,6 +32,7 @@ const (
 	releaseCatalogImage = "docker.io/percona/everest-catalog:%s"
 	devManifestURL      = "https://raw.githubusercontent.com/percona/everest/main/deploy/quickstart-k8s.yaml"
 	releaseManifestURL  = "https://raw.githubusercontent.com/percona/everest/v%s/deploy/quickstart-k8s.yaml"
+	debugManifestURL    = "https://raw.githubusercontent.com/percona/everest/%s/deploy/quickstart-k8s.yaml"
 
 	everestOperatorChannelStable = "stable-v0"
 	everestOperatorChannelFast   = "fast-v0"
@@ -65,6 +68,9 @@ func CatalogImage(v *goversion.Version) string {
 
 // ManifestURL returns a manifest URL to install Everest.
 func ManifestURL(v *goversion.Version) string {
+	if config.Debug {
+		return fmt.Sprintf(debugManifestURL, FullCommit)
+	}
 	if isDevVersion(Version) {
 		return devManifestURL
 	}

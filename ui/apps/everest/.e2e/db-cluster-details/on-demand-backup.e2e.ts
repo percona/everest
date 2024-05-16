@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { gotoDbClusterBackups } from '../utils/db-clusters-list';
 import { createDbClusterFn, deleteDbClusterFn } from '../utils/db-cluster';
 import { clickOnDemandBackup } from './utils';
+import { STORAGE_NAMES } from '../constants';
 
 test.describe('On-demand backup', async () => {
   const mySQLName = 'on-demand-mysql';
@@ -15,7 +16,7 @@ test.describe('On-demand backup', async () => {
         enabled: true,
         schedules: [
           {
-            backupStorageName: 'test-storage-1',
+            backupStorageName: STORAGE_NAMES[0],
             enabled: true,
             name: 'backup-1',
             schedule: '0 * * * *',
