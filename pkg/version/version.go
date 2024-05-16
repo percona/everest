@@ -32,6 +32,7 @@ const (
 	releaseCatalogImage = "docker.io/percona/everest-catalog:%s"
 	devManifestURL      = "https://raw.githubusercontent.com/percona/everest/main/deploy/quickstart-k8s.yaml"
 	releaseManifestURL  = "https://raw.githubusercontent.com/percona/everest/v%s/deploy/quickstart-k8s.yaml"
+	debugManifestURL    = "https://raw.githubusercontent.com/percona/everest/%s/deploy/quickstart-k8s.yaml"
 
 	everestOperatorChannelStable = "stable-v0"
 	everestOperatorChannelFast   = "fast-v0"
