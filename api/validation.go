@@ -764,7 +764,7 @@ func checkDuplicateSchedules(schedules apiSchedule) error {
 	if l == 0 {
 		return nil
 	}
-	for i := 0; i < l; i++ {
+	for i := range l {
 		for j := i + 1; j < l; j++ {
 			if schedules[i].Schedule == schedules[j].Schedule && schedules[i].BackupStorageName == schedules[j].BackupStorageName {
 				return errDuplicatedSchedules
