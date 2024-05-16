@@ -234,11 +234,11 @@ jobs:
 
       - name: Run integration tests
         env:
-          EVEREST_LOCATION_BUCKET_NAME: '${{ secrets.EVEREST_LOCATION_BUCKET_NAME }}'
-          EVEREST_LOCATION_ACCESS_KEY: '${{ secrets.EVEREST_LOCATION_ACCESS_KEY }}'
-          EVEREST_LOCATION_SECRET_KEY: '${{ secrets.EVEREST_LOCATION_SECRET_KEY }}'
-          EVEREST_LOCATION_REGION: '${{ secrets.EVEREST_LOCATION_REGION }}'
-          EVEREST_LOCATION_URL: '${{ secrets.EVEREST_LOCATION_URL }}'
+          EVEREST_LOCATION_BUCKET_NAME: '${{ secrets.BACKUP_LOCATION_BUCKET_NAME }}'
+          EVEREST_LOCATION_ACCESS_KEY: '${{ secrets.BACKUP_LOCATION_ACCESS_KEY }}'
+          EVEREST_LOCATION_SECRET_KEY: '${{ secrets.BACKUP_LOCATION_SECRET_KEY }}'
+          EVEREST_LOCATION_REGION: '${{ secrets.BACKUP_LOCATION_REGION }}'
+          EVEREST_LOCATION_URL: '${{ secrets.BACKUP_LOCATION_URL }}'
           MONITORING_USER: 'admin'
           MONITORING_PASSWORD: 'admin'
         run: |
