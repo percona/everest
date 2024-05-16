@@ -214,9 +214,11 @@ jobs:
           --namespaces pg-only
 
       - name: Create Everest test user
+        env:
+          CI_USER: '${{ secrets.CI_USER }}'
+          CI_PASSWORD: '${{ secrets.CI_PASSWORD }}'
         run: |
-          ./bin/everestctl accounts create -u everest_ci -p password
-          echo "EVEREST_K8_TOKEN=$(curl --location -s 'localhost:8080/v1/session' --header 'Content-Type: application/json' --data '{"username": "everest_ci","password": "password"}' | jq -r .token)" >> $GITHUB_ENV
+          ./bin/everestctl accounts create -u ${CI_USER} -p ${CI_PASSWORD}
 
       - name: Expose Everest API Server
         run: |
@@ -235,6 +237,8 @@ jobs:
 
       - name: Run integration tests
         env:
+          CI_USER: '${{ secrets.CI_USER }}'
+          CI_PASSWORD: '${{ secrets.CI_PASSWORD }}'
           EVEREST_LOCATION_BUCKET_NAME: '${{ secrets.BACKUP_LOCATION_BUCKET_NAME }}'
           EVEREST_LOCATION_ACCESS_KEY: '${{ secrets.BACKUP_LOCATION_ACCESS_KEY }}'
           EVEREST_LOCATION_SECRET_KEY: '${{ secrets.BACKUP_LOCATION_SECRET_KEY }}'
