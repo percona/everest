@@ -32,6 +32,7 @@ import {
   addFirstScheduleInDBWizard,
   addScheduleInDbWizard,
 } from '../db-wizard-utils';
+import { waitForInitializingState } from '../../../utils/table';
 
 test.describe.serial('DB Cluster Editing Backups Step', async () => {
   const mySQLName = 'db-backup-mysql';
@@ -44,6 +45,11 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     });
   });
 
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/databases');
+    await waitForInitializingState(page, mySQLName);
+  });
+
   test.afterAll(async ({ request }) => {
     await deleteDbClusterFn(request, mySQLName);
   });
@@ -51,7 +57,6 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
   test('Add schedule to database with no schedule during editing in dbWizard', async ({
     page,
   }) => {
-    await page.goto('/databases');
     await findDbAndClickActions(page, mySQLName, 'Edit');
 
     await goToStep(page, 'backups');
@@ -79,7 +84,6 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
   });
 
   test('Adding multi schedules during dbWizard editing', async ({ page }) => {
-    await page.goto('/databases');
     await findDbAndClickActions(page, mySQLName, 'Edit');
 
     await goToStep(page, 'backups');

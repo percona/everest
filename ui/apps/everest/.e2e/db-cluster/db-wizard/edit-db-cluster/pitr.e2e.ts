@@ -33,6 +33,7 @@ import {
 } from './edit-db-cluster.utils';
 import { STORAGE_NAMES } from '../../../constants';
 import { addFirstScheduleInDBWizard } from '../db-wizard-utils';
+import { waitForInitializingState } from '../../../utils/table';
 
 test.describe.serial('MySQL PITR editing', async () => {
   const mySQLName = 'db-pitr-mysql';
@@ -49,7 +50,7 @@ test.describe.serial('MySQL PITR editing', async () => {
         enabled: true,
         schedules: [
           {
-            backupStorageName: 'test-storage-1',
+            backupStorageName: STORAGE_NAMES[0],
             enabled: true,
             name: 'backup-1',
             schedule: '0 * * * *',
@@ -59,6 +60,11 @@ test.describe.serial('MySQL PITR editing', async () => {
     });
   });
 
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/databases');
+    await waitForInitializingState(page, mySQLName);
+  });
+
   test.afterAll(async ({ request }) => {
     await deleteDbClusterFn(request, mySQLName);
   });
@@ -66,7 +72,6 @@ test.describe.serial('MySQL PITR editing', async () => {
   test('Enable PITR to database during editing in dbWizard', async ({
     page,
   }) => {
-    await page.goto('/databases');
     await findDbAndClickActions(page, mySQLName, 'Edit', 'UP');
 
     await goToStep(page, 'backups');
@@ -122,8 +127,8 @@ test.describe.serial('MySQL PITR editing', async () => {
   test('Disable PITR for database during editing in dbWizard', async ({
     page,
   }) => {
-    await page.goto('/databases');
     await findDbAndClickActions(page, mySQLName, 'Edit');
+    await expect(page.getByTestId('mysql-toggle-button')).toBeVisible();
 
     // Check PITR step
     await goToStep(page, 'backups');
