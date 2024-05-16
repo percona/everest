@@ -19,6 +19,7 @@ export type DatabasePreviewProps = {
   activeStep: number;
   longestAchievedStep: number;
   onSectionEdit?: (order: number) => void;
+  disabled?: boolean;
 } & StackProps;
 
 export type PreviewSectionProps = {
@@ -27,6 +28,7 @@ export type PreviewSectionProps = {
   children: React.ReactNode;
   active?: boolean;
   hasBeenReached?: boolean;
+  disabled?: boolean;
   onEditClick?: () => void;
 } & StackProps;
 

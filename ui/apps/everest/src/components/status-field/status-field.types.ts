@@ -1,4 +1,10 @@
-export type BaseStatus = 'error' | 'paused' | 'pending' | 'success' | 'unknown';
+export type BaseStatus =
+  | 'error'
+  | 'paused'
+  | 'pending'
+  | 'success'
+  | 'deleting'
+  | 'unknown';
 
 export type StatusFieldProps<T extends string | number | symbol> = {
   status: T;

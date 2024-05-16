@@ -16,6 +16,12 @@ export const HiddenInput = ({
     <TextInput
       data-testid={`hidden-input-${name}`}
       textFieldProps={{
+        sx: {
+          marginTop: 3,
+          'input::-ms-reveal': {
+            display: 'none',
+          },
+        },
         type: showKey ? 'text' : 'password',
         placeholder: placeholder,
         InputProps: {
