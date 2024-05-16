@@ -38,10 +38,11 @@ export const basicInformationStepCheck = async (
 
   const dbVersionOptions = page.getByRole('option');
 
-  engineVersions.psmdb.forEach((version) =>
-    expect(
-      dbVersionOptions.filter({ hasText: new RegExp(`^${version}$`) })
-    ).toBeVisible()
+  engineVersions.psmdb.forEach(
+    async (version) =>
+      await expect(
+        dbVersionOptions.filter({ hasText: new RegExp(`^${version}$`) })
+      ).toBeVisible()
   );
 
   const defaultOption = await page.getByRole('option', { selected: true });
@@ -55,10 +56,11 @@ export const basicInformationStepCheck = async (
 
   const storageClassOptions = page.getByRole('option');
 
-  storageClasses.forEach((className) =>
-    expect(
-      storageClassOptions.filter({ hasText: new RegExp(`^${className}$`) })
-    ).toBeVisible()
+  storageClasses.forEach(
+    async (className) =>
+      await expect(
+        storageClassOptions.filter({ hasText: new RegExp(`^${className}$`) })
+      ).toBeVisible()
   );
 
   await page.getByRole('option').first().click();

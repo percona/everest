@@ -18,7 +18,7 @@ import {checkError, testsNs, testPrefix} from './helpers'
 test('add/list/get/delete s3 backup storage success', async ({request}) => {
     const payload = {
         type: 's3',
-        name: `${testPrefix}-backup-storage`,
+        name: `${testPrefix()}-backup-storage`,
         url: 'http://custom-url',
         description: 'Dev storage',
         bucketName: 'percona-test-backup-storage',
