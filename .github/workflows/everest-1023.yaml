@@ -3,6 +3,14 @@ name: EVEREST-1023-test-flow
 on:
   push:
     branches: [EVEREST-1023]
+
+permissions:
+  contents: read
+  packages: write
+  checks: write
+  pull-requests: write
+  repository-projects: read
+
 jobs:
   test_run:
     runs-on: ubuntu-latest
