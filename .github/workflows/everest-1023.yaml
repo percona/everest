@@ -16,8 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Dispatch workflow
-        uses: shivammathur/workflow-dispatch@v1
-        with:
-          workflow: dev-fe-ci
-          ref: ${{ github.sha }}
+      - name: Run the main workflow from PR branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch origin EVEREST-1023
+          git checkout FETCH_HEAD
+          ./.github/workflows/dev-fe-ci.yaml
