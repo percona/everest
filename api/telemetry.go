@@ -19,8 +19,6 @@ import (
 const (
 	telemetryProductFamily = "PRODUCT_FAMILY_EVEREST"
 	telemetryVersionKey    = "version"
-	// telemetryBackupSchedulesKeyTemplate format: <db_engine>_<db_uid>_backup_schedules_count.
-	telemetryBackupSchedulesKeyTemplate = "%s_%s_backup_schedules_count"
 
 	// delay the initial metrics to prevent flooding in case of many restarts.
 	initialMetricsDelay = 5 * time.Minute
