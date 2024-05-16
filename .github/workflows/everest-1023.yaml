@@ -1,0 +1,15 @@
+---
+name: EVEREST-1023-test-flow
+on:
+  push:
+    branches: [EVEREST-1023]
+jobs:
+  test_run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run the main workflow from PR branch
+        run: |
+          git fetch origin EVEREST-1023
+          git checkout FETCH_HEAD
+          ./.github/workflows/dev-fe-ci.yaml
