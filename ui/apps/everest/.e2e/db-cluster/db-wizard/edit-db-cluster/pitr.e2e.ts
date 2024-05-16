@@ -73,7 +73,6 @@ test.describe.serial('MySQL PITR editing', async () => {
     page,
   }) => {
     await findDbAndClickActions(page, mySQLName, 'Edit', 'UP');
-
     await goToStep(page, 'backups');
 
     const pitrCheckbox = page

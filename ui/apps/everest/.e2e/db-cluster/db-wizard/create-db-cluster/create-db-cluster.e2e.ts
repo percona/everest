@@ -161,6 +161,9 @@ test.describe('DB Cluster creation', () => {
     await page.getByTestId('mongodb-toggle-button').click();
     await expect(page.getByText('Number of nodes: 3')).toBeVisible();
     await page.getByTestId('button-edit-preview-backups').click();
+
+    await expect(page.getByTestId('radio-option-logical')).not.toBeVisible();
+
     await page.getByTestId('button-edit-preview-monitoring').click();
 
     // await monitoringStepCheck(page, monitoringInstancesList);
@@ -315,7 +318,6 @@ test.describe('DB Cluster creation', () => {
     await page.getByTestId('form-dialog-create').click();
     await expect(page.getByText('2 active schedules')).toBeVisible();
 
-    // Move to edit
     // We disable PITR
     await page.goto('/databases');
     await waitForInitializingState(page, clusterName);
