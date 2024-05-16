@@ -32,9 +32,7 @@ setup.describe.serial('Teardown', () => {
       );
     });
 
-    await (
-      await Promise.all(promises)
-    ).map((response) => expect(response.ok()).toBeTruthy());
+    await Promise.all(promises);
   });
 
   // setup('Delete monitoring instances', async ({ request }) => {

@@ -45,5 +45,5 @@ export const advancedConfigurationStepCheck = async (page: Page) => {
 
   await page
     .getByTestId('text-input-engine-parameters')
-    .fill('max_alllowed_packet=128M');
+    .fill('max_allowed_packet: 128M');
 };
