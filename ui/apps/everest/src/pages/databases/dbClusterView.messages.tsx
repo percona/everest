@@ -24,6 +24,7 @@ export const Messages = {
     paused: 'Paused',
     unknown: 'Unknown',
     restoring: 'Restoring',
+    deleting: 'Deleting',
   },
   lastBackup: {
     warningTooltip: 'Check your backups page for more info',
