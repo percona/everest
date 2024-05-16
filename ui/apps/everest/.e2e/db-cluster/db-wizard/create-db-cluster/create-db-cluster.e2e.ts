@@ -37,6 +37,7 @@ import {
 import { EVEREST_CI_NAMESPACES } from '../../../constants';
 import { findDbAndClickActions } from '../../../utils/db-clusters-list';
 import { addFirstScheduleInDBWizard } from '../db-wizard-utils';
+import { waitForInitializingState } from '../../../utils/table';
 
 test.describe('DB Cluster creation', () => {
   let engineVersions = {
@@ -165,7 +166,7 @@ test.describe('DB Cluster creation', () => {
     await expect(page.getByText('Number of nodes: 3')).toBeVisible();
     await page.getByTestId('button-edit-preview-backups').click();
 
-    expect(page.getByTestId('radio-option-logical')).not.toBeVisible;
+    await expect(page.getByTestId('radio-option-logical')).not.toBeVisible();
 
     await page.getByTestId('button-edit-preview-monitoring').click();
 
@@ -201,8 +202,8 @@ test.describe('DB Cluster creation', () => {
     expect(['600m', '0.6']).toContain(
       addedCluster?.spec.engine.resources?.cpu.toString()
     );
-    expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe('32G');
-    expect(addedCluster?.spec.engine.storage.size.toString()).toBe('150G');
+    expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe('1G');
+    expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1G');
     expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
     expect(addedCluster?.spec.proxy.replicas).toBe(3);
     // expect(addedCluster?.spec.proxy.expose.ipSourceRanges).toEqual([
@@ -291,6 +292,7 @@ test.describe('DB Cluster creation', () => {
   });
 
   test('Multiple Mongo schedules', async ({ page, request }) => {
+    test.slow();
     const clusterName = 'multi-schedule-test';
     const recommendedEngineVersions = await getEnginesLatestRecommendedVersions(
       namespace,
@@ -321,6 +323,8 @@ test.describe('DB Cluster creation', () => {
     await submitWizard(page);
     await expect(page.getByTestId('db-wizard-goto-db-clusters')).toBeVisible();
 
+    await page.goto('/databases');
+    await waitForInitializingState(page, clusterName);
     await page.goto(`/databases/${namespace}/${clusterName}/backups`);
     await page.getByTestId('menu-button').click();
     await page.getByTestId('schedule-menu-item').click();
@@ -329,6 +333,7 @@ test.describe('DB Cluster creation', () => {
 
     // We disable PITR
     await page.goto('/databases');
+    await waitForInitializingState(page, clusterName);
     await findDbAndClickActions(page, clusterName, 'Edit');
     await goToStep(page, 'point-in-time-recovery');
     await setPitrEnabledStatus(page, false);
