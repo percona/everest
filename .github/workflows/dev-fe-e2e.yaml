@@ -1,6 +1,20 @@
 ---
 name: FE E2E Tests
 
+on:
+  workflow_call:
+    inputs:
+      BACKUP_LOCATION_BUCKET_NAME:
+        type: string
+      BACKUP_LOCATION_ACCESS_KEY:
+        type: string
+      BACKUP_LOCATION_SECRET_KEY:
+        type: string
+      BACKUP_LOCATION_REGION:
+        type: string
+      BACKUP_LOCATION_URL:
+        type: string
+
 jobs:
   E2E:
     runs-on: ubuntu-20.04

@@ -14,11 +14,11 @@ on:
     types: [opened, synchronize]
 
 permissions:
-contents: read
-packages: write
-checks: write
-pull-requests: write
-repository-projects: read
+  contents: read
+  packages: write
+  checks: write
+  pull-requests: write
+  repository-projects: read
 
 env:
   NODE_OPTIONS: '—-max_old_space_size=4096'
@@ -121,15 +121,16 @@ jobs:
           echo "${{ github.triggering_actor }} does not have permissions on this repo."
           exit 1
 
-      - name: Execute E2E tests
-        steps:
-          - uses: ./dev-fe-e2e.yaml@v1
-            with:
-              BACKUP_LOCATION_BUCKET_NAME: ${{ secrets.BACKUP_LOCATION_BUCKET_NAME }}
-              BACKUP_LOCATION_ACCESS_KEY: ${{ secrets.BACKUP_LOCATION_ACCESS_KEY }}
-              BACKUP_LOCATION_SECRET_KEY: ${{ secrets.BACKUP_LOCATION_SECRET_KEY }}
-              BACKUP_LOCATION_REGION: ${{ secrets.BACKUP_LOCATION_REGION }}
-              BACKUP_LOCATION_URL: ${{ secrets.BACKUP_LOCATION_URL }}
+  e2e_execution:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: ./dev-fe-e2e.yaml@v1
+        with:
+          BACKUP_LOCATION_BUCKET_NAME: ${{ secrets.BACKUP_LOCATION_BUCKET_NAME }}
+          BACKUP_LOCATION_ACCESS_KEY: ${{ secrets.BACKUP_LOCATION_ACCESS_KEY }}
+          BACKUP_LOCATION_SECRET_KEY: ${{ secrets.BACKUP_LOCATION_SECRET_KEY }}
+          BACKUP_LOCATION_REGION: ${{ secrets.BACKUP_LOCATION_REGION }}
+          BACKUP_LOCATION_URL: ${{ secrets.BACKUP_LOCATION_URL }}
 
   merge-gatekeeper:
     needs: [CI_checks, permission_checks]
