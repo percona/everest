@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - 'ui/**'
-      - '.github/workflows/dev-fe-ci.yaml'
+      - '.github/workflows/dev-fe-gatekeeper.yaml'
     branches:
       - main
   pull_request:
