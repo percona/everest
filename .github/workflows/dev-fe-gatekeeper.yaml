@@ -103,7 +103,6 @@ jobs:
           commit_message: 'chore: lint/format'
 
   permission_checks:
-    needs: cache_pnpm
     runs-on: ubuntu-20.04
     steps:
       - name: Get User Permission
@@ -125,7 +124,7 @@ jobs:
     needs: permission_checks
     runs-on: ubuntu-20.04
     steps:
-      - uses: ./.github/actions/dev-fe-e2e
+      - uses: ../.github/actions/dev-fe-e2e
         with:
           BACKUP_LOCATION_BUCKET_NAME: ${{ secrets.BACKUP_LOCATION_BUCKET_NAME }}
           BACKUP_LOCATION_ACCESS_KEY: ${{ secrets.BACKUP_LOCATION_ACCESS_KEY }}
