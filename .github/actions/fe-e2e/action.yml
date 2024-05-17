@@ -19,6 +19,10 @@ jobs:
   E2E:
     runs-on: ubuntu-20.04
     steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: pnpm/action-setup@v3
         with:
           version: 8
