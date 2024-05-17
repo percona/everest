@@ -96,7 +96,7 @@ export const DbClusterView = () => {
       },
       {
         accessorKey: 'databaseName',
-        header: 'Database name',
+        header: 'Database namess',
       },
       {
         accessorFn: ({ dbType }) => dbType,
