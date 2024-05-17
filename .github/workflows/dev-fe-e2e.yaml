@@ -1,19 +1,23 @@
 name: FE E2E Workflow
 
 on:
-  workflow_run:
-    workflows: ["FE CI Gatekeeper"]
-    types:
-      - completed
+  workflow_call:
+    secrets:
+      BACKUP_LOCATION_BUCKET_NAME:
+        required: true
+      BACKUP_LOCATION_ACCESS_KEY:
+        required: true
+      BACKUP_LOCATION_SECRET_KEY:
+        required: true
+      BACKUP_LOCATION_REGION:
+        required: true
+      BACKUP_LOCATION_URL:
+        required: true
 
 jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - name: check previous workflow result was bad
-        if: ${{ github.event.workflow_run.conclusion != 'success' }}
-        run: exit 1
-
       - uses: actions/checkout@v4
         with:
           lfs: true
