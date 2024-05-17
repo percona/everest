@@ -1,10 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Box,
-  Button,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Box, Button, Stack, Typography } from '@mui/material';
 import { Card, EverestMainIcon, TextInput } from '@percona/ui-lib';
 import { AuthContext } from 'contexts/auth';
 import { useContext } from 'react';
@@ -21,7 +16,10 @@ const Login = () => {
   });
   const { login, authStatus, redirectRoute } = useContext(AuthContext);
 
-  const handleLogin: SubmitHandler<LoginFormType> = ({ username, password }) => {
+  const handleLogin: SubmitHandler<LoginFormType> = ({
+    username,
+    password,
+  }) => {
     login(username, password);
   };
 
