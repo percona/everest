@@ -114,21 +114,25 @@ runs:
         echo "EVEREST_K8_TOKEN=$(./bin/everestctl token reset --json | jq .token -r)" >> $GITHUB_ENV
 
     - name: Expose Everest API Server
+      shell: bash
       run: |
         kubectl port-forward -n everest-system deployment/percona-everest 8080:8080 &
 
     - name: Run Everest
+      shell: bash
       run: |
         cd ui
         make init
         pnpm --filter "@percona/everest" dev &
 
     - name: Install Chromium for Playwright
+      shell: bash
       run: |
         cd ui/apps/everest
         npx playwright install chromium
 
     - name: Run integration tests
+      shell: bash
       env:
         EVEREST_LOCATION_BUCKET_NAME: '${{ inputs.BACKUP_LOCATION_BUCKET_NAME }}'
         EVEREST_LOCATION_ACCESS_KEY: '${{ inputs.BACKUP_LOCATION_ACCESS_KEY }}'
