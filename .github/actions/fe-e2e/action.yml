@@ -125,8 +125,8 @@ runs:
     - name: Create Everest test user
       shell: bash
       env:
-        CI_USER: '${{ secrets.CI_USER }}'
-        CI_PASSWORD: '${{ secrets.CI_PASSWORD }}'
+        CI_USER: '${{ inputs.CI_USER }}'
+        CI_PASSWORD: '${{ inputs.CI_PASSWORD }}'
       run: |
         ./bin/everestctl accounts create -u ${CI_USER} -p ${CI_PASSWORD}
 
