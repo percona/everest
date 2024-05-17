@@ -124,7 +124,7 @@ jobs:
           echo "${{ github.triggering_actor }} does not have permissions on this repo."
           exit 1
           
-  E2E tests:
+  E2E_tests_workflow:
     runs-on: ubuntu-20.04
     steps:
       - uses: ./.github/workflows/dev-fe-e2e.yaml
