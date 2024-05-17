@@ -126,9 +126,9 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
-          with:
-            lfs: true
-            ref: ${{ github.event.pull_request.head.sha }}
+        with:
+          lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: ./dev-fe-e2e.yaml@v1
         with:
           BACKUP_LOCATION_BUCKET_NAME: ${{ secrets.BACKUP_LOCATION_BUCKET_NAME }}
