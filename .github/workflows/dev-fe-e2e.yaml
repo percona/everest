@@ -13,6 +13,10 @@ on:
         required: true
       BACKUP_LOCATION_URL:
         required: true
+      CI_USER:
+        required: true
+      CI_PASSWORD:
+        required: true
 
 jobs:
   e2e:
@@ -146,6 +150,8 @@ jobs:
           EVEREST_LOCATION_SECRET_KEY: '${{ secrets.BACKUP_LOCATION_SECRET_KEY }}'
           EVEREST_LOCATION_REGION: '${{ secrets.BACKUP_LOCATION_REGION }}'
           EVEREST_LOCATION_URL: '${{ secrets.BACKUP_LOCATION_URL }}'
+          CI_USER: '${{ secrets.CI_USER }}'
+          CI_PASSWORD: '${{ secrets.CI_PASSWORD }}'
           MONITORING_USER: 'admin'
           MONITORING_PASSWORD: 'admin'
         run: |

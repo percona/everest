@@ -123,7 +123,7 @@ jobs:
         run: |
           echo "${{ github.triggering_actor }} does not have permissions on this repo."
           exit 1
-          
+
   E2E_tests_workflow:
     uses: ./.github/workflows/dev-fe-e2e.yaml
     secrets:
@@ -132,7 +132,8 @@ jobs:
       BACKUP_LOCATION_SECRET_KEY: ${{ secrets.BACKUP_LOCATION_SECRET_KEY }}
       BACKUP_LOCATION_REGION: ${{ secrets.BACKUP_LOCATION_REGION }}
       BACKUP_LOCATION_URL: ${{ secrets.BACKUP_LOCATION_URL }}
-
+      CI_USER: ${{ secrets.CI_USER }}
+      CI_PASSWORD: ${{ secrets.CI_PASSWORD }}
 
   # e2e_execution:
   #   needs: permission_checks
