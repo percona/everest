@@ -139,7 +139,7 @@ jobs:
           BACKUP_LOCATION_URL: ${{ secrets.BACKUP_LOCATION_URL }}
 
   merge-gatekeeper:
-    needs: [CI_checks, permission_checks]
+    needs: [CI_checks, e2e_execution]
     name: Merge Gatekeeper
     if: ${{ always() }}
     runs-on: ubuntu-22.04
