@@ -5,14 +5,14 @@ on:
     paths:
       - 'ui/**'
       - '.github/workflows/dev-fe-gatekeeper.yaml'
-      - '.github/actions/fe-e2e/action.yaml'
+      - '.github/actions/fe-e2e/action.yml'
     branches:
       - main
   pull_request:
     paths:
       - 'ui/**'
       - '.github/workflows/dev-fe-gatekeeper.yaml'
-      - '.github/actions/fe-e2e/action.yaml'
+      - '.github/actions/fe-e2e/action.yml'
     types: [opened, synchronize]
 
 permissions:
