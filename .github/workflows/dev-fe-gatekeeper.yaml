@@ -122,6 +122,7 @@ jobs:
           exit 1
 
   e2e_execution:
+    needs: permission_checks
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
