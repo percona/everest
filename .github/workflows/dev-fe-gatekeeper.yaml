@@ -124,7 +124,11 @@ jobs:
     needs: permission_checks
     runs-on: ubuntu-20.04
     steps:
-      - uses: ./actions/fe-e2e
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: .github/actions/fe-e2e
         with:
           BACKUP_LOCATION_BUCKET_NAME: ${{ secrets.BACKUP_LOCATION_BUCKET_NAME }}
           BACKUP_LOCATION_ACCESS_KEY: ${{ secrets.BACKUP_LOCATION_ACCESS_KEY }}
