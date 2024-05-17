@@ -11,7 +11,7 @@ const resourceToNumber = (minimum = 0) =>
   z.union([z.string().nonempty(), z.number()]).pipe(
     z.coerce
       .number({
-        invalid_type_error: 'Please insert a valid number',
+        invalid_type_error: 'Please enter a valid number',
       })
       .min(minimum)
   );
