@@ -127,7 +127,7 @@ jobs:
       - name: Create Everest test user
         shell: bash
         run: |
-          ./bin/everestctl accounts create -u ${{ secrets.CI_USER }} -p ${{ secrets.CI_USER }}
+          ./bin/everestctl accounts create -u ${{ secrets.CI_USER }} -p ${{ secrets.CI_PASSWORD }}
 
       - name: Expose Everest API Server
         shell: bash
