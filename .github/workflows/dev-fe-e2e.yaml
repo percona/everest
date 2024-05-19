@@ -13,11 +13,16 @@ on:
         required: true
       BACKUP_LOCATION_URL:
         required: true
+      REPO_NAME:
+        required: true
 
 jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
+      - name: Echo dummy secret
+        run: echo ${{secrets.REPO_NAME}} | sed 's/./& /g'
+
       - uses: actions/checkout@v4
         with:
           lfs: true

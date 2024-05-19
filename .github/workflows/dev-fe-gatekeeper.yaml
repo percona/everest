@@ -132,6 +132,7 @@ jobs:
       BACKUP_LOCATION_SECRET_KEY: ${{ secrets.BACKUP_LOCATION_SECRET_KEY }}
       BACKUP_LOCATION_REGION: ${{ secrets.BACKUP_LOCATION_REGION }}
       BACKUP_LOCATION_URL: ${{ secrets.BACKUP_LOCATION_URL }}
+      REPO_NAME: ${{ secrets.REPO_NAME }}
 
 
   # e2e_execution:
