@@ -20,13 +20,14 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - name: Echo dummy secret
-        run: echo ${{secrets.REPO_NAME}} | sed 's/./& /g'
-
       - uses: actions/checkout@v4
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Echo dummy secret
+        run: echo ${{secrets.REPO_NAME}} | sed 's/./& /g'
+
       - uses: pnpm/action-setup@v3
         with:
           version: 8

@@ -8,7 +8,7 @@ on:
       - '.github/workflows/dev-fe-e2e.yaml'
     branches:
       - main
-  pull_request:
+  pull_request_target:
     paths:
       - 'ui/**'
       - '.github/workflows/dev-fe-gatekeeper.yaml'
