@@ -291,7 +291,8 @@ test.describe('DB Cluster creation', () => {
     await expect(page).toHaveURL('/databases');
   });
 
-  test('Multiple Mongo schedules', async ({ page, request }) => {
+  // TODO uncomment when DB Cluster PATCH is available
+  test.skip('Multiple Mongo schedules', async ({ page, request }) => {
     test.slow();
     const clusterName = 'multi-schedule-test';
     const recommendedEngineVersions = await getEnginesLatestRecommendedVersions(
