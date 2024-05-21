@@ -81,6 +81,9 @@ importers:
       notistack:
         specifier: ^3.0.1
         version: 3.0.1(csstype@3.1.2)(react-dom@18.2.0)(react@18.2.0)
+      oidc-react:
+        specifier: ^3.2.2
+        version: 3.2.2(react-dom@18.2.0)(react@18.2.0)
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -6080,6 +6083,10 @@ packages:
       shebang-command: 2.0.0
       which: 2.0.2
 
+  /crypto-js@4.2.0:
+    resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
+    dev: false
+
   /crypto-random-string@2.0.0:
     resolution: {integrity: sha512-v1plID3y9r/lPhviJ1wrXpLeyUIGAZ2SHNYTEapm7/8A9nLPoyvVp3RK/EPFqn5kEznyWgYZNsRtYYIWbuG8KA==}
     engines: {node: '>=8'}
@@ -8280,6 +8287,10 @@ packages:
       graceful-fs: 4.2.11
     dev: true
 
+  /jwt-decode@3.1.2:
+    resolution: {integrity: sha512-UfpWE/VZn0iP50d8cz9NrZLM9lSWhcJ+0Gt/nm4by88UL+J1SiKN8/5dkjMmbEzwL2CAe+67GsegCbIKtbp75A==}
+    dev: false
+
   /keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
     dependencies:
@@ -8871,6 +8882,25 @@ packages:
       define-properties: 1.2.1
       has-symbols: 1.0.3
       object-keys: 1.1.1
+    dev: false
+
+  /oidc-client-ts@2.2.4:
+    resolution: {integrity: sha512-nOZwIomju+AmXObl5Oq5PjrES/qTt8bLsENJCIydVgi9TEWk7SCkOU6X3RNkY7yfySRM1OJJvDKdREZdmnDT2g==}
+    engines: {node: '>=12.13.0'}
+    dependencies:
+      crypto-js: 4.2.0
+      jwt-decode: 3.1.2
+    dev: false
+
+  /oidc-react@3.2.2(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-xt5DtgiI6yxS+7ff2nBUZR49YfovfAApgpYhmsMoAutlqb41uZUcmquiIWRtbEXLe7UF5Zs8i1eQ1jFpr/+4JQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || || ^17.0.0 ||  ^18.0.0
+    dependencies:
+      oidc-client-ts: 2.2.4
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
     dev: false
 
   /on-finished@2.4.1:
