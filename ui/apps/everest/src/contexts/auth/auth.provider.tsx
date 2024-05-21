@@ -1,13 +1,29 @@
+import { useEffect, useState } from 'react';
+import {
+  AuthProvider as OidcAuthProvider,
+  AuthProviderProps as OidcAuthProviderProps,
+} from 'oidc-react';
 import { api, addApiInterceptors, removeApiInterceptors } from 'api/api';
-import { ReactNode, useEffect, useState } from 'react';
 import { enqueueSnackbar } from 'notistack';
 import AuthContext from './auth.context';
-import { UserAuthStatus } from './auth.context.types';
+import { AuthProviderProps, UserAuthStatus } from './auth.context.types';
 
 const setApiBearerToken = (token: string) =>
   (api.defaults.headers.common['Authorization'] = `Bearer ${token}`);
 
-const AuthProvider = ({ children }: { children: ReactNode }) => {
+const Provider = ({
+  oidcConfig,
+  children,
+}: {
+  oidcConfig: OidcAuthProviderProps;
+  children: React.ReactNode;
+}) => (
+  <OidcAuthProvider {...oidcConfig}>
+    <AuthProvider isSsoEnabled={!!oidcConfig}>{children}</AuthProvider>
+  </OidcAuthProvider>
+);
+
+const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   const [authStatus, setAuthStatus] = useState<UserAuthStatus>('unknown');
   const [redirect, setRedirect] = useState<string | null>(null);
 
@@ -58,11 +74,12 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
         authStatus,
         redirectRoute: redirect,
         setRedirectRoute,
+        isSsoEnabled,
       }}
     >
-      {children}
+      <OidcAuthProvider>{children}</OidcAuthProvider>
     </AuthContext.Provider>
   );
 };
 
-export default AuthProvider;
+export default Provider;

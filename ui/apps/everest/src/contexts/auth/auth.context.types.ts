@@ -11,4 +11,10 @@ export interface AuthContextProps {
   setRedirectRoute: (route: string) => void;
   authStatus: UserAuthStatus;
   redirectRoute: string | null;
+  isSsoEnabled: boolean;
+}
+
+export interface AuthProviderProps {
+  children: React.ReactNode;
+  isSsoEnabled: boolean;
 }
