@@ -18,7 +18,7 @@ import {
   createBackupStorageFn,
   deleteStorageLocationFn,
 } from '../utils/backup-storage';
-import { goToStep } from '../utils/db-wizard';
+import { moveForward } from '../utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '../constants';
 import { getTokenFromLocalStorage } from '../utils/localStorage';
 import { deleteMonitoringInstance } from '../utils/monitoring-instance';
@@ -53,7 +53,14 @@ test.describe('Namespaces: Monitoring availability', () => {
     // setting everest-pxc namespace
     await setNamespace(page, EVEREST_CI_NAMESPACES.PXC_ONLY);
 
-    await goToStep(page, 'monitoring');
+    // Resources Step
+    await moveForward(page);
+    // Backups step
+    await moveForward(page);
+    // Advanced Configuration step
+    await moveForward(page);
+    // Monitoring Step
+    await moveForward(page);
 
     // check monitoring is not available
     await expect(page.getByTestId('monitoring-warning')).toBeVisible();
