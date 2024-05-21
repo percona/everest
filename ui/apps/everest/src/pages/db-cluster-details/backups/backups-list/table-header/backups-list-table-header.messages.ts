@@ -10,5 +10,5 @@ export const Messages = {
   activeSchedules: (schedulesNumber: number) =>
     `${schedulesNumber} active schedule${schedulesNumber > 1 ? 's' : ''}`,
   exceededScheduleBackupsNumber:
-    'You have exceeded the limit of schedules allowed for PostgreSQL.',
+    'Maximum limit of schedules for PostgreSQL reached.',
 };

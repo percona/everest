@@ -28,6 +28,7 @@ export enum DbClusterStatus {
   ready = 'ready',
   error = 'error',
   restoring = 'restoring',
+  deleting = 'deleting',
 }
 
 export interface Schedule {
