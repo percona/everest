@@ -40,7 +40,6 @@ func NewDeleteCmd(l *zap.SugaredLogger) *cobra.Command {
 
 			kubeconfigPath := viper.GetString("kubeconfig")
 			username := viper.GetString("username")
-			password := viper.GetString("password")
 
 			k, err := kubernetes.New(kubeconfigPath, l)
 			if err != nil {
@@ -55,7 +54,7 @@ func NewDeleteCmd(l *zap.SugaredLogger) *cobra.Command {
 			cli := accountscli.New(l)
 			cli.WithAccountManager(k.Accounts())
 
-			if err := cli.Delete(context.Background(), username, password); err != nil {
+			if err := cli.Delete(context.Background(), username); err != nil {
 				l.Error(err)
 				os.Exit(1)
 			}
@@ -67,12 +66,10 @@ func NewDeleteCmd(l *zap.SugaredLogger) *cobra.Command {
 
 func initDeleteFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("username", "u", "", "Username of the account")
-	cmd.Flags().StringP("password", "p", "", "Password of the account")
 }
 
 func initDeleteViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag("username", cmd.Flags().Lookup("username"))     //nolint:errcheck,gosec
-	viper.BindPFlag("password", cmd.Flags().Lookup("password"))     //nolint:errcheck,gosec
 	viper.BindEnv("kubeconfig")                                     //nolint:errcheck,gosec
 	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
 }
