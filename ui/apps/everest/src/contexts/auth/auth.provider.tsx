@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   AuthProvider as OidcAuthProvider,
   AuthProviderProps as OidcAuthProviderProps,
+  useAuth as useOidcAuth,
 } from 'oidc-react';
 import { api, addApiInterceptors, removeApiInterceptors } from 'api/api';
 import { enqueueSnackbar } from 'notistack';
@@ -15,7 +16,7 @@ const Provider = ({
   oidcConfig,
   children,
 }: {
-  oidcConfig: OidcAuthProviderProps;
+  oidcConfig?: OidcAuthProviderProps;
   children: React.ReactNode;
 }) => (
   <OidcAuthProvider {...oidcConfig}>
@@ -26,6 +27,7 @@ const Provider = ({
 const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   const [authStatus, setAuthStatus] = useState<UserAuthStatus>('unknown');
   const [redirect, setRedirect] = useState<string | null>(null);
+  const { signOut } = useOidcAuth();
 
   const login = async (username: string, password: string) => {
     try {
@@ -43,7 +45,11 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    if (isSsoEnabled) {
+      await signOut();
+    }
+
     setAuthStatus('loggedOut');
     setApiBearerToken('');
     localStorage.removeItem('pwd');
