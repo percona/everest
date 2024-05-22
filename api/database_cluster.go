@@ -50,7 +50,7 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 
 	err := e.proxyKubernetes(ctx, namespace, databaseClusterKind, "")
 	if err == nil {
-		// Collect metrics immediatelly after a DB cluster has been created.
+		// Collect metrics immediately after a DB cluster has been created.
 		go func() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 			defer cancel()
