@@ -91,15 +91,16 @@ func (c *CLI) Create(ctx context.Context, username, password string) error {
 }
 
 // Delete an existing user account.
-func (c *CLI) Delete(ctx context.Context, username, password string) error {
-	if err := c.runCredentialsWizard(&username, &password); err != nil {
-		return err
+func (c *CLI) Delete(ctx context.Context, username string) error {
+	if username == "" {
+		if err := survey.AskOne(&survey.Input{
+			Message: "Enter username",
+		}, username); err != nil {
+			return err
+		}
 	}
 	if username == "" {
 		return errors.New("username is required")
-	}
-	if err := c.accountManager.Verify(ctx, username, password); err != nil {
-		return err
 	}
 	return c.accountManager.Delete(ctx, username)
 }
