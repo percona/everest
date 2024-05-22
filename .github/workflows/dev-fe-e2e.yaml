@@ -55,7 +55,7 @@ jobs:
         uses: helm/kind-action@v1.9.0
 
       - name: Set MinIO
-        run: kubectl apply -f ./.github/workflows/minio.conf.yaml
+        run: kubectl apply -f ./.github/minio.conf.yaml
 
       - name: Add Helm Percona repository
         shell: bash
