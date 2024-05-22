@@ -11,9 +11,13 @@ inputs:
     type: string
   BACKUP_LOCATION_URL:
     type: string
+  CI_USER:
+    type: string
+  CI_PASSWORD:
+    type: string
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - uses: pnpm/action-setup@v3
       with:
@@ -118,6 +122,14 @@ runs:
       run: |
         kubectl port-forward -n everest-system deployment/percona-everest 8080:8080 &
 
+    - name: Create Everest test user
+      shell: bash
+      env:
+        CI_USER: '${{ inputs.CI_USER }}'
+        CI_PASSWORD: '${{ inputs.CI_PASSWORD }}'
+      run: |
+        ./bin/everestctl accounts create -u ${CI_USER} -p ${CI_PASSWORD}
+
     - name: Run Everest
       shell: bash
       run: |
@@ -134,6 +146,8 @@ runs:
     - name: Run integration tests
       shell: bash
       env:
+        CI_USER: '${{ inputs.CI_USER }}'
+        CI_PASSWORD: '${{ inputs.CI_PASSWORD }}'
         EVEREST_LOCATION_BUCKET_NAME: '${{ inputs.BACKUP_LOCATION_BUCKET_NAME }}'
         EVEREST_LOCATION_ACCESS_KEY: '${{ inputs.BACKUP_LOCATION_ACCESS_KEY }}'
         EVEREST_LOCATION_SECRET_KEY: '${{ inputs.BACKUP_LOCATION_SECRET_KEY }}'

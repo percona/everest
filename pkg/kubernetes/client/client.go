@@ -58,6 +58,7 @@ import (
 	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth" // load all auth plugins
@@ -254,6 +255,14 @@ func NewInCluster() (*Client, error) {
 	return c, err
 }
 
+// NewFromFakeClient returns a Client with a fake (in-memory) clientset.
+// This is used only for unit testing.
+func NewFromFakeClient() *Client {
+	return &Client{
+		clientset: fake.NewSimpleClientset(),
+	}
+}
+
 func (c *Client) kubeClient() (client.Client, error) { //nolint:ireturn,nolintlint
 	rcl, err := rest.HTTPClientFor(c.restConfig)
 	if err != nil {
@@ -293,6 +302,13 @@ func (c *Client) initOperatorClients() error {
 // Config returns restConfig to the pkg/kubernetes.Kubernetes client.
 func (c *Client) Config() *rest.Config {
 	return c.restConfig
+}
+
+// Clientset returns the k8s clientset.
+//
+//nolint:ireturn
+func (c *Client) Clientset() kubernetes.Interface {
+	return c.clientset
 }
 
 // ClusterName returns the name of the k8s cluster.
