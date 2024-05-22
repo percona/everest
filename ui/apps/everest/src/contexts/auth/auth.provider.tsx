@@ -8,6 +8,7 @@ import {
   api,
   addApiErrorInterceptor,
   removeApiErrorInterceptor,
+  addApiAuthInterceptor,
 } from 'api/api';
 import { enqueueSnackbar } from 'notistack';
 import AuthContext from './auth.context';
@@ -33,7 +34,12 @@ const Provider = ({
 const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   const [authStatus, setAuthStatus] = useState<UserAuthStatus>('unknown');
   const [redirect, setRedirect] = useState<string | null>(null);
-  const { signOut, signIn } = useOidcAuth();
+  const {
+    signOut,
+    signIn,
+    userData,
+    isLoading: loadingOidcAuth,
+  } = useOidcAuth();
 
   const login = async (mode: AuthMode, manualAuthArgs?: ManualAuthArgs) => {
     if (mode === 'sso') {
@@ -72,14 +78,22 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   };
 
   useEffect(() => {
+    if (loadingOidcAuth) {
+      setAuthStatus('loggingIn');
+      return;
+    }
+    if (userData) {
+      localStorage.setItem('everestToken', userData.access_token);
+    }
     const savedToken = localStorage.getItem('everestToken');
     if (savedToken) {
       setAuthStatus('loggedIn');
       addApiErrorInterceptor();
+      addApiAuthInterceptor();
     } else {
       setAuthStatus('loggedOut');
     }
-  }, []);
+  }, [loadingOidcAuth, userData]);
 
   return (
     <AuthContext.Provider

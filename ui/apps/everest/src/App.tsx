@@ -44,7 +44,7 @@ const App = () => (
               clientId: '0oaes7mtfpYjxn2d81d7',
               scope: 'openid profile email',
               responseType: 'code',
-              redirectUri: 'http://localhost:3000/login/callback',
+              redirectUri: 'http://localhost:3000/',
               onSignIn: (user) => {
                 localStorage.setItem('everestToken', user?.access_token || '');
                 addApiAuthInterceptor();

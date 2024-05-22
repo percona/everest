@@ -38,8 +38,8 @@ export const addApiErrorInterceptor = () => {
           let message = DEFAULT_ERROR_MESSAGE;
 
           if (error.response.status === 401) {
-            localStorage.removeItem('everestToken');
-            location.replace('/login');
+            // localStorage.removeItem('everestToken');
+            // location.replace('/login');
           }
 
           if (error.response.data && error.response.data.message) {
@@ -70,14 +70,16 @@ export const removeApiErrorInterceptor = () => {
 };
 
 export const addApiAuthInterceptor = () => {
-  authInterceptor = api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('everestToken');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
+  if (authInterceptor === null) {
+    authInterceptor = api.interceptors.request.use((config) => {
+      const token = localStorage.getItem('everestToken');
+      if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
 
-    return config;
-  });
+      return config;
+    });
+  }
 };
 
 export const removeApiAuthInterceptor = () => {
