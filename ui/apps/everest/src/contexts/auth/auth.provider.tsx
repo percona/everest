@@ -34,12 +34,8 @@ const Provider = ({
 const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   const [authStatus, setAuthStatus] = useState<UserAuthStatus>('unknown');
   const [redirect, setRedirect] = useState<string | null>(null);
-  const {
-    signOut,
-    signIn,
-    userData,
-    isLoading: loadingOidcAuth,
-  } = useOidcAuth();
+  const { signOut, signIn, userData, isLoading } = useOidcAuth();
+  const loadingOidcAuth = isSsoEnabled && isLoading;
 
   const login = async (mode: AuthMode, manualAuthArgs?: ManualAuthArgs) => {
     if (mode === 'sso') {

@@ -10,6 +10,9 @@ import { AuthProvider } from 'contexts/auth';
 import { DrawerContextProvider } from 'contexts/drawer/drawer.context';
 import router from 'router';
 import { addApiAuthInterceptor, removeApiAuthInterceptor } from 'api/api';
+import { useEffect, useState } from 'react';
+import { EverestConfig } from 'shared-types/configs.types';
+import { getEverestConfigs } from 'api/everestConfigs';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,50 +22,83 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
-  <ThemeContextProvider
-    themeOptions={everestThemeOptions}
-    saveColorModeOnLocalStorage
-  >
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <SnackbarProvider
-        maxSnack={3}
-        preventDuplicate
-        // NOTE: using custom components disables notistack's custom actions, as per docs: https://notistack.com/features/basic#actions
-        // If we need actions, we can add them to our custom component via useSnackbar(): https://notistack.com/features/customization#custom-component
-        Components={{
-          success: NotistackMuiSnackbar,
-          error: NotistackMuiSnackbar,
-          info: NotistackMuiSnackbar,
-          warning: NotistackMuiSnackbar,
-        }}
-      >
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider
-            oidcConfig={{
-              authority: 'https://id-dev.percona.com/oauth2/default',
-              clientId: '0oaes7mtfpYjxn2d81d7',
-              scope: 'openid profile email',
-              responseType: 'code',
-              redirectUri: 'http://localhost:3000/',
-              onSignIn: (user) => {
-                localStorage.setItem('everestToken', user?.access_token || '');
-                addApiAuthInterceptor();
-              },
-              onSignOut: () => {
-                removeApiAuthInterceptor();
-              },
-            }}
-          >
-            <DrawerContextProvider>
-              <RouterProvider router={router} />
-            </DrawerContextProvider>
-            <ReactQueryDevtools initialIsOpen={false} />
-          </AuthProvider>
-        </QueryClientProvider>
-      </SnackbarProvider>
-    </LocalizationProvider>
-  </ThemeContextProvider>
-);
+const App = () => {
+  const [configs, setConfigs] = useState<EverestConfig | undefined | null>();
+
+  useEffect(() => {
+    const loadConfigs = async () => {
+      try {
+        const { oidc = { client_id: '', authority: '' } } =
+          await getEverestConfigs();
+        setConfigs({
+          oidc: {
+            authority: oidc.authority,
+            clientId: oidc.client_id,
+            redirectUri: `${window.location.protocol}//${window.location.host}/`,
+          },
+        });
+      } catch (error) {
+        setConfigs(null);
+      }
+    };
+
+    loadConfigs();
+  }, []);
+
+  if (configs === undefined) {
+    return null;
+  }
+
+  return (
+    <ThemeContextProvider
+      themeOptions={everestThemeOptions}
+      saveColorModeOnLocalStorage
+    >
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <SnackbarProvider
+          maxSnack={3}
+          preventDuplicate
+          // NOTE: using custom components disables notistack's custom actions, as per docs: https://notistack.com/features/basic#actions
+          // If we need actions, we can add them to our custom component via useSnackbar(): https://notistack.com/features/customization#custom-component
+          Components={{
+            success: NotistackMuiSnackbar,
+            error: NotistackMuiSnackbar,
+            info: NotistackMuiSnackbar,
+            warning: NotistackMuiSnackbar,
+          }}
+        >
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider
+              oidcConfig={
+                configs?.oidc
+                  ? {
+                      ...configs?.oidc,
+                      scope: 'openid profile email',
+                      responseType: 'code',
+                      onSignIn: (user) => {
+                        localStorage.setItem(
+                          'everestToken',
+                          user?.access_token || ''
+                        );
+                        addApiAuthInterceptor();
+                      },
+                      onSignOut: () => {
+                        removeApiAuthInterceptor();
+                      },
+                    }
+                  : undefined
+              }
+            >
+              <DrawerContextProvider>
+                <RouterProvider router={router} />
+              </DrawerContextProvider>
+              <ReactQueryDevtools initialIsOpen={false} />
+            </AuthProvider>
+          </QueryClientProvider>
+        </SnackbarProvider>
+      </LocalizationProvider>
+    </ThemeContextProvider>
+  );
+};
 
 export default App;
