@@ -9,6 +9,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AuthProvider } from 'contexts/auth';
 import { DrawerContextProvider } from 'contexts/drawer/drawer.context';
 import router from 'router';
+import { addApiAuthInterceptor, removeApiAuthInterceptor } from 'api/api';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,7 +38,22 @@ const App = () => (
         }}
       >
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>
+          <AuthProvider
+            oidcConfig={{
+              authority: 'https://id-dev.percona.com/oauth2/default',
+              clientId: '0oaes7mtfpYjxn2d81d7',
+              scope: 'openid profile email',
+              responseType: 'code',
+              redirectUri: 'http://localhost:3000/login/callback',
+              onSignIn: (user) => {
+                localStorage.setItem('everestToken', user?.access_token || '');
+                addApiAuthInterceptor();
+              },
+              onSignOut: () => {
+                removeApiAuthInterceptor();
+              },
+            }}
+          >
             <DrawerContextProvider>
               <RouterProvider router={router} />
             </DrawerContextProvider>

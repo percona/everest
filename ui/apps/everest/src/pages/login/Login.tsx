@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Button, Divider, Stack, Typography } from '@mui/material';
 import { Card, EverestMainIcon, TextInput } from '@percona/ui-lib';
-import { useAuth as useOidcAuth } from 'oidc-react';
 import { AuthContext } from 'contexts/auth';
 import { useContext } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
@@ -17,17 +16,16 @@ const Login = () => {
   });
   const { login, authStatus, redirectRoute, isSsoEnabled } =
     useContext(AuthContext);
-  const { signIn } = useOidcAuth();
 
   const handleLogin: SubmitHandler<LoginFormType> = ({
     username,
     password,
   }) => {
-    login(username, password);
+    login('manual', { username, password });
   };
 
   const handleSsoLogin = () => {
-    signIn();
+    login('sso');
   };
 
   if (authStatus === 'unknown') {

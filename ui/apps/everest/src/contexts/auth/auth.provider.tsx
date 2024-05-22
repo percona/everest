@@ -4,13 +4,19 @@ import {
   AuthProviderProps as OidcAuthProviderProps,
   useAuth as useOidcAuth,
 } from 'oidc-react';
-import { api, addApiInterceptors, removeApiInterceptors } from 'api/api';
+import {
+  api,
+  addApiErrorInterceptor,
+  removeApiErrorInterceptor,
+} from 'api/api';
 import { enqueueSnackbar } from 'notistack';
 import AuthContext from './auth.context';
-import { AuthProviderProps, UserAuthStatus } from './auth.context.types';
-
-const setApiBearerToken = (token: string) =>
-  (api.defaults.headers.common['Authorization'] = `Bearer ${token}`);
+import {
+  AuthMode,
+  AuthProviderProps,
+  ManualAuthArgs,
+  UserAuthStatus,
+} from './auth.context.types';
 
 const Provider = ({
   oidcConfig,
@@ -27,21 +33,26 @@ const Provider = ({
 const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   const [authStatus, setAuthStatus] = useState<UserAuthStatus>('unknown');
   const [redirect, setRedirect] = useState<string | null>(null);
-  const { signOut } = useOidcAuth();
+  const { signOut, signIn } = useOidcAuth();
 
-  const login = async (username: string, password: string) => {
-    try {
-      const response = await api.post('/session', { username, password });
-      const token = response.data.token; // Assuming the response structure has a token field
-      setAuthStatus('loggedIn');
-      setApiBearerToken(token);
-      localStorage.setItem('pwd', token);
-      addApiInterceptors();
-    } catch (error) {
-      setAuthStatus('loggedOut');
-      enqueueSnackbar('Invalid credentials', {
-        variant: 'error',
-      });
+  const login = async (mode: AuthMode, manualAuthArgs?: ManualAuthArgs) => {
+    if (mode === 'sso') {
+      await signIn();
+    } else {
+      const { username, password } = manualAuthArgs!;
+      try {
+        const response = await api.post('/session', { username, password });
+        const token = response.data.token; // Assuming the response structure has a token field
+        setAuthStatus('loggedIn');
+        localStorage.setItem('everestToken', token);
+        addApiErrorInterceptor();
+      } catch (error) {
+        setAuthStatus('loggedOut');
+        enqueueSnackbar('Invalid credentials', {
+          variant: 'error',
+        });
+        return;
+      }
     }
   };
 
@@ -51,10 +62,9 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     }
 
     setAuthStatus('loggedOut');
-    setApiBearerToken('');
-    localStorage.removeItem('pwd');
+    localStorage.removeItem('everestToken');
     setRedirect(null);
-    removeApiInterceptors();
+    removeApiErrorInterceptor();
   };
 
   const setRedirectRoute = (route: string) => {
@@ -62,11 +72,10 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   };
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('pwd');
+    const savedToken = localStorage.getItem('everestToken');
     if (savedToken) {
       setAuthStatus('loggedIn');
-      setApiBearerToken(savedToken);
-      addApiInterceptors();
+      addApiErrorInterceptor();
     } else {
       setAuthStatus('loggedOut');
     }
@@ -83,7 +92,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
         isSsoEnabled,
       }}
     >
-      <OidcAuthProvider>{children}</OidcAuthProvider>
+      {children}
     </AuthContext.Provider>
   );
 };
