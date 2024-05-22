@@ -132,8 +132,8 @@ jobs:
       BACKUP_LOCATION_SECRET_KEY: ${{ secrets.BACKUP_LOCATION_SECRET_KEY }}
       BACKUP_LOCATION_REGION: ${{ secrets.BACKUP_LOCATION_REGION }}
       BACKUP_LOCATION_URL: ${{ secrets.BACKUP_LOCATION_URL }}
-      CI_USER: ${{ secrets.CI_USER }}
-      CI_PASSWORD: ${{ secrets.CI_PASSWORD }}
+      CI_USER: admin
+      CI_PASSWORD: admin
 
   merge-gatekeeper:
     needs: [CI_checks, permission_checks, E2E_tests_workflow]

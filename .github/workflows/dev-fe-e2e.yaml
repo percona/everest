@@ -54,6 +54,9 @@ jobs:
       - name: Create KIND cluster
         uses: helm/kind-action@v1.9.0
 
+      - name: Set MinIO
+        run: kubectl apply -f ./.github/workflows/minio.yaml
+
       - name: Add Helm Percona repository
         shell: bash
         run: |
@@ -150,11 +153,11 @@ jobs:
       - name: Run integration tests
         shell: bash
         env:
-          EVEREST_LOCATION_BUCKET_NAME: '${{ secrets.BACKUP_LOCATION_BUCKET_NAME }}'
-          EVEREST_LOCATION_ACCESS_KEY: '${{ secrets.BACKUP_LOCATION_ACCESS_KEY }}'
-          EVEREST_LOCATION_SECRET_KEY: '${{ secrets.BACKUP_LOCATION_SECRET_KEY }}'
-          EVEREST_LOCATION_REGION: '${{ secrets.BACKUP_LOCATION_REGION }}'
-          EVEREST_LOCATION_URL: '${{ secrets.BACKUP_LOCATION_URL }}'
+          EVEREST_LOCATION_BUCKET_NAME: 'bucket-1'
+          EVEREST_LOCATION_ACCESS_KEY: 'minioadmin'
+          EVEREST_LOCATION_SECRET_KEY: 'minioadmin'
+          EVEREST_LOCATION_REGION: 'us-east-1'
+          EVEREST_LOCATION_URL: 'https://minio.minio.svc.cluster.local'
           CI_USER: '${{ secrets.CI_USER }}'
           CI_PASSWORD: '${{ secrets.CI_PASSWORD }}'
           MONITORING_USER: 'admin'
