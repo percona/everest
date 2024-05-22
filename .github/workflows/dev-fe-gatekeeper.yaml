@@ -133,7 +133,7 @@ jobs:
       BACKUP_LOCATION_REGION: ${{ secrets.BACKUP_LOCATION_REGION }}
       BACKUP_LOCATION_URL: ${{ secrets.BACKUP_LOCATION_URL }}
       CI_USER: admin
-      CI_PASSWORD: admin
+      CI_PASSWORD: everestadmin
 
   merge-gatekeeper:
     needs: [CI_checks, permission_checks, E2E_tests_workflow]
