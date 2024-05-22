@@ -27,9 +27,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
+	"github.com/lestrrat-go/jwx/jwk"
 	middleware "github.com/oapi-codegen/echo-middleware"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
@@ -38,6 +40,7 @@ import (
 	"github.com/percona/everest/pkg/auth"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/oidc"
 	"github.com/percona/everest/pkg/session"
 	"github.com/percona/everest/public"
 )
@@ -50,6 +53,7 @@ type EverestServer struct {
 	echo       *echo.Echo
 	kubeClient *kubernetes.Kubernetes
 	sessionMgr *session.Manager
+	jwkGetter  jwt.Keyfunc
 }
 
 type authValidator interface {
@@ -77,6 +81,11 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		session.WithSigningKey([]byte(c.JWTSigningKey)),
 	)
 
+	jwkGetter, err := newJWKGetterOrIgnore(ctx)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not create JWK getter"))
+	}
+
 	e := &EverestServer{
 		config:     c,
 		l:          l,
@@ -84,12 +93,65 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		kubeClient: kubeClient,
 		auth:       auth.NewToken(kubeClient, l, []byte(ns.UID)),
 		sessionMgr: sessMgr,
+		jwkGetter:  jwkGetter,
 	}
 
 	if err := e.initHTTPServer(); err != nil {
 		return e, err
 	}
 	return e, err
+}
+
+func getOIDCIssuerURL() (string, error) {
+	return "https://id-dev.percona.com/oauth2/default", nil //todo
+}
+
+// newJWKGetterOrIgnore returns a function for getting JWK public keys from an external IDP.
+// If Everest is not configured to use an external IDP, it returns nil.
+func newJWKGetterOrIgnore(ctx context.Context) (jwt.Keyfunc, error) {
+	issuer, err := getOIDCIssuerURL()
+	if err != nil {
+		return nil, err
+	}
+	// Everest not configured to use OIDC, return early.
+	if issuer == "" {
+		return nil, nil //nolint:nilnil
+	}
+
+	oidcCfg, err := oidc.GetConfig(ctx, issuer)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to get OIDC config"))
+	}
+
+	if oidcCfg.JWKSURL == "" {
+		return nil, errors.New("did not find jwks_uri in oidc config")
+	}
+
+	refresher := jwk.NewAutoRefresh(ctx)
+	refresher.Configure(oidcCfg.JWKSURL)
+
+	return func(token *jwt.Token) (interface{}, error) {
+		keySet, err := refresher.Fetch(ctx, oidcCfg.JWKSURL)
+		if err != nil {
+			return nil, err
+		}
+
+		keyID, ok := token.Header["kid"].(string)
+		if !ok {
+			return nil, errors.New("expecting JWT header to have a key ID in the kid field")
+		}
+
+		key, found := keySet.LookupKeyID(keyID)
+		if !found {
+			return nil, fmt.Errorf("unable to find key %q", keyID)
+		}
+
+		var pubkey interface{}
+		if err := key.Raw(&pubkey); err != nil {
+			return nil, fmt.Errorf("Unable to get the public key. Error: %s", err.Error())
+		}
+		return pubkey, nil
+	}, nil
 }
 
 // initHTTPServer configures http server for the current EverestServer instance.
@@ -150,6 +212,7 @@ func (e *EverestServer) jwtMiddleWare() echo.MiddlewareFunc {
 		},
 		SigningKey:  []byte(e.config.JWTSigningKey),
 		TokenLookup: tokenLookup,
+		KeyFunc:     e.jwkGetter,
 	})
 }
 
