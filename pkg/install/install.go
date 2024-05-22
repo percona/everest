@@ -19,6 +19,8 @@ package install
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/url"
@@ -38,7 +40,6 @@ import (
 
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/token"
 	"github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
@@ -47,6 +48,25 @@ const (
 	// DefaultEverestNamespace is the default namespace managed by everest Everest.
 	DefaultEverestNamespace = "everest"
 )
+
+// XXX: once `everestctl accounts update` is added, update this message to include instructions on how to reset password.
+const postInstallMessage = `
+Everest has been successfully installed!
+
+
+To view the password for the 'admin' user, run the following command:
+
+kubectl get secret everest-accounts -n everest-system -o jsonpath='{.data.users\.yaml}' \
+    | base64 --decode \
+    | grep -A 5 '^admin:' \
+    | grep 'passwordHash:' \
+    | awk '{print $2}'
+
+
+To create a new user, run the following command:
+
+everestctl accounts create
+`
 
 // Install implements the main logic for commands.
 type Install struct {
@@ -200,18 +220,7 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	_, err = o.kubeClient.GetSecret(ctx, common.SystemNamespace, token.SecretName)
-	if err != nil && !k8serrors.IsNotFound(err) {
-		return errors.Join(err, errors.New("could not get the everest token secret"))
-	}
-	if err != nil && k8serrors.IsNotFound(err) {
-		pwd, err := o.generateToken(ctx)
-		if err != nil {
-			return err
-		}
-		o.l.Info("\n" + pwd.String() + "\n\n")
-	}
-
+	fmt.Fprint(os.Stdout, postInstallMessage)
 	return nil
 }
 
@@ -366,9 +375,15 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		everestExists = true
 	}
 
-	if !everestExists {
+	if !everestExists { //nolint:nestif
 		o.l.Info(fmt.Sprintf("Deploying Everest to %s", common.SystemNamespace))
 		if err = o.kubeClient.InstallEverest(ctx, common.SystemNamespace, v); err != nil {
+			return err
+		}
+		if err := o.createEverestJWTToken(ctx); err != nil {
+			return err
+		}
+		if err := o.resetEverestAdminPassword(ctx); err != nil {
 			return err
 		}
 	} else {
@@ -681,28 +696,6 @@ func (o *Install) serviceAccountRolePolicyRules() []rbacv1.PolicyRule {
 	}
 }
 
-func (o *Install) generateToken(ctx context.Context) (*token.ResetResponse, error) {
-	o.l.Info("Creating token for Everest")
-
-	r, err := token.NewReset(
-		token.ResetConfig{
-			KubeconfigPath: o.config.KubeconfigPath,
-			Namespace:      common.SystemNamespace,
-		},
-		o.l,
-	)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("could not initialize reset token"))
-	}
-
-	res, err := r.Run(ctx)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("could not create token"))
-	}
-
-	return res, nil
-}
-
 // ValidateNamespaces validates a comma-separated namespaces string.
 func ValidateNamespaces(str string) ([]string, error) {
 	nsList := strings.Split(str, ",")
@@ -743,5 +736,27 @@ func validateRFC1035(s string) error {
 		return ErrNameNotRFC1035Compatible(s)
 	}
 
+	return nil
+}
+
+func (o *Install) resetEverestAdminPassword(ctx context.Context) error {
+	o.l.Info("Resetting admin password")
+	if err := o.kubeClient.Accounts().Create(ctx, common.EverestAdminUser, ""); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o *Install) createEverestJWTToken(ctx context.Context) error {
+	o.l.Info("Creating JWT token for Everest")
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return err
+	}
+	token := hex.EncodeToString(b)
+
+	if err := o.kubeClient.SetJWTToken(ctx, token); err != nil {
+		return err
+	}
 	return nil
 }

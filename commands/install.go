@@ -63,7 +63,6 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initInstallFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
 	cmd.Flags().String("namespaces", install.DefaultEverestNamespace, "Comma-separated namespaces list Percona Everest can manage")
 	cmd.Flags().Bool("skip-wizard", false, "Skip installation wizard")
 	cmd.Flags().String("version-metadata-url", "https://check.percona.com", "URL to retrieve version metadata information from")
