@@ -57,13 +57,13 @@ type authValidator interface {
 }
 
 // NewEverestServer creates and configures everest API.
-func NewEverestServer(c *config.EverestConfig, l *zap.SugaredLogger) (*EverestServer, error) {
+func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.SugaredLogger) (*EverestServer, error) {
 	kubeClient, err := kubernetes.NewInCluster(l)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed creating Kubernetes client"))
 	}
 
-	ns, err := kubeClient.GetNamespace(context.Background(), kubeClient.Namespace())
+	ns, err := kubeClient.GetNamespace(ctx, kubeClient.Namespace())
 	if err != nil {
 		l.Error(err)
 		return nil, errors.New("could not get namespace from Kubernetes")
