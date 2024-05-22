@@ -5,14 +5,14 @@ export const Messages = {
     addEditButton: (isEditMode: boolean) => (isEditMode ? 'Edit' : 'Add'),
     cancel: 'Cancel',
     placeholders: {
-      name: 'Insert storage display name',
-      description: 'Insert an optional description',
+      name: 'Enter storage display name',
+      description: 'Enter an optional description',
       namespaces: 'Select namespaces',
-      type: 'Insert bucket name',
-      region: 'Insert regions',
-      url: 'Insert URL',
-      accessKey: 'Insert Access key',
-      secretKey: 'Insert Secret key',
+      type: 'Enter bucket name',
+      region: 'Enter regions',
+      url: 'Enter URL',
+      accessKey: 'Enter Access key',
+      secretKey: 'Enter Secret key',
     },
     helperText: {
       namespaces:

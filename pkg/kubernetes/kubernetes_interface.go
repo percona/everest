@@ -15,11 +15,16 @@ import (
 	"k8s.io/client-go/rest"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/accounts"
 	"github.com/percona/everest/pkg/kubernetes/client"
 )
 
 // KubernetesConnector ...
 type KubernetesConnector interface {
+	// Accounts returns a new client for managing everest user accounts.
+	//
+	//nolint:ireturn,stylecheck
+	Accounts() accounts.Interface
 	// GetDeployment returns k8s deployment by provided name and namespace.
 	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
 	// UpdateDeployment updates a deployment and returns the updated object.
@@ -106,4 +111,8 @@ type KubernetesConnector interface {
 	UpdateClusterRoleBinding(ctx context.Context, name string, namespaces []string) error
 	// OperatorInstalledVersion returns the installed version of operator by name.
 	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
+	// SetJWTToken sets the provided JWT token in the everest-jwt secret.
+	SetJWTToken(ctx context.Context, token string) error
+	// GetJWTToken returns the JWT token from the everest-jwt secret.
+	GetJWTToken(ctx context.Context) (string, error)
 }
