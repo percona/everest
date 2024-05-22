@@ -183,6 +183,11 @@ test.describe.serial('MongoDb PITR editing', async () => {
     await deleteDbClusterFn(request, psmdbName);
   });
 
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/databases');
+    await waitForInitializingState(page, psmdbName);
+  });
+
   test('Enable PITR to database during editing in dbWizard', async ({
     page,
   }) => {
