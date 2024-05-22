@@ -1,5 +1,4 @@
-import { addApiInterceptors, api, removeApiInterceptors } from 'api/api';
-import { useVersion } from 'hooks/api/version/useVersion';
+import { api, addApiInterceptors, removeApiInterceptors } from 'api/api';
 import { ReactNode, useEffect, useState } from 'react';
 import { enqueueSnackbar } from 'notistack';
 import AuthContext from './auth.context';
@@ -10,25 +9,22 @@ const setApiBearerToken = (token: string) =>
 
 const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authStatus, setAuthStatus] = useState<UserAuthStatus>('unknown');
-  const [token, setToken] = useState('');
   const [redirect, setRedirect] = useState<string | null>(null);
 
-  // We use the "/version" API call just to make sure the token works
-  // At this point, there's not really a login flow, per se
-  const {
-    status: queryStatus,
-    fetchStatus,
-    refetch,
-  } = useVersion({
-    enabled: false,
-    retry: false,
-  });
-
-  const login = (token: string) => {
-    setAuthStatus('loggingIn');
-    setApiBearerToken(token);
-    setToken(token);
-    refetch();
+  const login = async (username: string, password: string) => {
+    try {
+      const response = await api.post('/session', { username, password });
+      const token = response.data.token; // Assuming the response structure has a token field
+      setAuthStatus('loggedIn');
+      setApiBearerToken(token);
+      localStorage.setItem('pwd', token);
+      addApiInterceptors();
+    } catch (error) {
+      setAuthStatus('loggedOut');
+      enqueueSnackbar('Invalid credentials', {
+        variant: 'error',
+      });
+    }
   };
 
   const logout = () => {
@@ -45,33 +41,14 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const savedToken = localStorage.getItem('pwd');
-
     if (savedToken) {
-      login(savedToken);
+      setAuthStatus('loggedIn');
+      setApiBearerToken(savedToken);
+      addApiInterceptors();
     } else {
       setAuthStatus('loggedOut');
     }
   }, []);
-
-  useEffect(() => {
-    if (fetchStatus === 'fetching') {
-      return;
-    }
-    if (queryStatus === 'success') {
-      setAuthStatus('loggedIn');
-      localStorage.setItem('pwd', token);
-      addApiInterceptors();
-    } else if (queryStatus === 'error') {
-      setAuthStatus('loggedOut');
-      // This means the request was triggered by clicking the button, not an auto login
-      if (!localStorage.getItem('pwd')) {
-        enqueueSnackbar('Invalid authorization token', {
-          variant: 'error',
-        });
-      }
-      localStorage.removeItem('pwd');
-    }
-  }, [fetchStatus, queryStatus, token]);
 
   return (
     <AuthContext.Provider
