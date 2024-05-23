@@ -32,8 +32,8 @@ func encodeRSAPrivateKey(key *rsa.PrivateKey) []byte {
 	return pem.EncodeToMemory(&block)
 }
 
-func encodeRSAPublicKey(key rsa.PublicKey) []byte {
-	der := x509.MarshalPKCS1PublicKey(&key)
+func encodeRSAPublicKey(key *rsa.PublicKey) []byte {
+	der := x509.MarshalPKCS1PublicKey(key)
 	block := pem.Block{
 		Type:    "RSA PUBLIC KEY",
 		Headers: nil,
@@ -60,7 +60,7 @@ func newRSAKeyPair() ([]byte, []byte, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	publicKey := privateKey.Public().(rsa.PublicKey)
+	publicKey := privateKey.Public().(*rsa.PublicKey)
 	return encodeRSAPublicKey(publicKey), encodeRSAPrivateKey(privateKey), nil
 }
 
