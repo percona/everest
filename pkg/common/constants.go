@@ -48,9 +48,8 @@ const (
 	// EverestAdminUser is the name of the admin user.
 	EverestAdminUser = "admin"
 
-	// EverestTokenCookie is the name of the cookie that holds the token.
-	EverestTokenCookie = "everest_token"
-
 	// EverestSettingsConfigMapName is the name of the Everest settings ConfigMap.
 	EverestSettingsConfigMapName = "everest-settings"
+	// EverestTokenCookie is the name of the cookie that holds the token.
+	EverestTokenCookie = "everest_token"
 )
