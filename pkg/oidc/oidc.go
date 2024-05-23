@@ -1,3 +1,19 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package oidc provides functionality related OIDC based IDPs.
 package oidc
 
 import (
@@ -14,6 +30,8 @@ import (
 )
 
 // Config contains the OIDC config.
+//
+//nolint:tagliatelle
 type Config struct {
 	Issuer        string   `json:"issuer"`
 	AuthURL       string   `json:"authorization_endpoint"`
@@ -25,9 +43,9 @@ type Config struct {
 }
 
 // getConfig returns the OIDC config of a provider at the given issuer URL.
-func getConfig(issuer string) (Config, error) {
+func getConfig(ctx context.Context, issuer string) (Config, error) {
 	wellKnown := strings.TrimSuffix(issuer, "/") + "/.well-known/openid-configuration"
-	req, err := http.NewRequest("GET", wellKnown, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", wellKnown, nil)
 	if err != nil {
 		return Config{}, err
 	}
@@ -35,7 +53,7 @@ func getConfig(issuer string) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -62,7 +80,7 @@ func NewKeyFunc(ctx context.Context, issuer string) (jwt.Keyfunc, error) {
 		}, nil
 	}
 
-	cfg, err := getConfig(issuer)
+	cfg, err := getConfig(ctx, issuer)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to get OIDC config"))
 	}
@@ -92,7 +110,7 @@ func NewKeyFunc(ctx context.Context, issuer string) (jwt.Keyfunc, error) {
 
 		var pubkey interface{}
 		if err := key.Raw(&pubkey); err != nil {
-			return nil, fmt.Errorf("Unable to get the public key. Error: %s", err.Error())
+			return nil, errors.Join(err, errors.New("failed to get the public key"))
 		}
 		return pubkey, nil
 	}, nil

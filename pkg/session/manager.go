@@ -64,6 +64,7 @@ func WithAccountManager(i accounts.Interface) Option {
 	}
 }
 
+// WithSigningKey sets the signing key to use for managing JWT tokens.
 func WithSigningKey(signingKey *rsa.PrivateKey) Option {
 	return func(m *Manager) {
 		m.signingKey = signingKey
@@ -125,8 +126,8 @@ func (mgr *Manager) Authenticate(ctx context.Context, username string, password 
 
 // NewKeyFunc retruns a function for getting the public RSA keys used
 // for verifying the JWT tokens signed by everest.
-func NewKeyFunc(ctx context.Context) jwt.Keyfunc {
-	return func(t *jwt.Token) (interface{}, error) {
+func NewKeyFunc() jwt.Keyfunc {
+	return func(_ *jwt.Token) (interface{}, error) {
 		pemString, err := os.ReadFile(common.EverestJWTPublicKeyFile)
 		if err != nil {
 			return nil, errors.Join(err, errors.New("failed to read JWT public key"))

@@ -54,13 +54,13 @@ func generatePrivateKey() (*rsa.PrivateKey, error) {
 }
 
 // newRSAKeyPair generates a new RSA key pair.
-// Returns: [publicKey, privateKey, error]
+// Returns: [publicKey, privateKey, error].
 func newRSAKeyPair() ([]byte, []byte, error) {
 	privateKey, err := generatePrivateKey()
 	if err != nil {
 		return nil, nil, err
 	}
-	publicKey := privateKey.Public().(*rsa.PublicKey)
+	publicKey := privateKey.Public().(*rsa.PublicKey) //nolint:forcetypeassert
 	return encodeRSAPublicKey(publicKey), encodeRSAPrivateKey(privateKey), nil
 }
 

@@ -60,14 +60,11 @@ type EverestServer struct {
 	echo       *echo.Echo
 	kubeClient *kubernetes.Kubernetes
 	sessionMgr *session.Manager
-	jwkGetter  jwt.Keyfunc
 }
 
 type authValidator interface {
 	Valid(ctx context.Context, token string) (bool, error)
 }
-
-type jwtPublicKeyGetterFunc func(ctx context.Context) (*rsa.PublicKey, error)
 
 // NewEverestServer creates and configures everest API.
 func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.SugaredLogger) (*EverestServer, error) {
@@ -119,7 +116,7 @@ func getJWTSigningKey() (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode(pemString)
 	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(err, errors.New("cannot parse private key"))
 	}
 	return key, nil
 }
@@ -180,7 +177,7 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 }
 
 func newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) {
-	everestKeyFunc := session.NewKeyFunc(ctx)
+	everestKeyFunc := session.NewKeyFunc()
 	oidcKeyFunc, err := oidc.NewKeyFunc(ctx, oidcIssuer)
 	if err != nil {
 		return nil, err
