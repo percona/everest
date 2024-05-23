@@ -20,18 +20,21 @@ package api
 
 import (
 	"context"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io/fs"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
-	"github.com/lestrrat-go/jwx/jwk"
 	middleware "github.com/oapi-codegen/echo-middleware"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
@@ -43,6 +46,10 @@ import (
 	"github.com/percona/everest/pkg/oidc"
 	"github.com/percona/everest/pkg/session"
 	"github.com/percona/everest/public"
+)
+
+const (
+	oidcIssuer = "https://id-dev.percona.com/oauth2/default"
 )
 
 // EverestServer represents the server struct.
@@ -60,6 +67,8 @@ type authValidator interface {
 	Valid(ctx context.Context, token string) (bool, error)
 }
 
+type jwtPublicKeyGetterFunc func(ctx context.Context) (*rsa.PublicKey, error)
+
 // NewEverestServer creates and configures everest API.
 func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.SugaredLogger) (*EverestServer, error) {
 	kubeClient, err := kubernetes.NewInCluster(l)
@@ -76,15 +85,16 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	echoServer := echo.New()
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 
+	// Get the signing key required for managing Everest users.
+	jwtSigningKey, err := getJWTSigningKey()
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to get JWT signing key"))
+	}
+
 	sessMgr := session.New(
 		session.WithAccountManager(kubeClient.Accounts()),
-		session.WithSigningKey([]byte(c.JWTSigningKey)),
+		session.WithSigningKey(jwtSigningKey),
 	)
-
-	jwkGetter, err := newJWKGetterOrIgnore(ctx)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("could not create JWK getter"))
-	}
 
 	e := &EverestServer{
 		config:     c,
@@ -93,69 +103,29 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		kubeClient: kubeClient,
 		auth:       auth.NewToken(kubeClient, l, []byte(ns.UID)),
 		sessionMgr: sessMgr,
-		jwkGetter:  jwkGetter,
 	}
 
-	if err := e.initHTTPServer(); err != nil {
+	if err := e.initHTTPServer(ctx); err != nil {
 		return e, err
 	}
 	return e, err
 }
 
-func getOIDCIssuerURL() (string, error) {
-	return "https://id-dev.percona.com/oauth2/default", nil //todo
-}
-
-// newJWKGetterOrIgnore returns a function for getting JWK public keys from an external IDP.
-// If Everest is not configured to use an external IDP, it returns nil.
-func newJWKGetterOrIgnore(ctx context.Context) (jwt.Keyfunc, error) {
-	issuer, err := getOIDCIssuerURL()
+func getJWTSigningKey() (*rsa.PrivateKey, error) {
+	pemString, err := os.ReadFile(common.EverestJWTPrivateKeyFile)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("cannot read private key file"))
+	}
+	block, _ := pem.Decode(pemString)
+	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
 	}
-	// Everest not configured to use OIDC, return early.
-	if issuer == "" {
-		return nil, nil //nolint:nilnil
-	}
-
-	oidcCfg, err := oidc.GetConfig(ctx, issuer)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("failed to get OIDC config"))
-	}
-
-	if oidcCfg.JWKSURL == "" {
-		return nil, errors.New("did not find jwks_uri in oidc config")
-	}
-
-	refresher := jwk.NewAutoRefresh(ctx)
-	refresher.Configure(oidcCfg.JWKSURL)
-
-	return func(token *jwt.Token) (interface{}, error) {
-		keySet, err := refresher.Fetch(ctx, oidcCfg.JWKSURL)
-		if err != nil {
-			return nil, err
-		}
-
-		keyID, ok := token.Header["kid"].(string)
-		if !ok {
-			return nil, errors.New("expecting JWT header to have a key ID in the kid field")
-		}
-
-		key, found := keySet.LookupKeyID(keyID)
-		if !found {
-			return nil, fmt.Errorf("unable to find key %q", keyID)
-		}
-
-		var pubkey interface{}
-		if err := key.Raw(&pubkey); err != nil {
-			return nil, fmt.Errorf("Unable to get the public key. Error: %s", err.Error())
-		}
-		return pubkey, nil
-	}, nil
+	return key, nil
 }
 
 // initHTTPServer configures http server for the current EverestServer instance.
-func (e *EverestServer) initHTTPServer() error {
+func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	swagger, err := GetSwagger()
 	if err != nil {
 		return err
@@ -196,24 +166,44 @@ func (e *EverestServer) initHTTPServer() error {
 	apiGroup.Use(middleware.OapiRequestValidatorWithOptions(swagger, &middleware.Options{
 		SilenceServersWarning: true,
 	}))
-	apiGroup.Use(e.jwtMiddleWare())
+
+	jwtMW, err := e.jwtMiddleWare(ctx)
+	if err != nil {
+		return err
+	}
+	apiGroup.Use(jwtMW)
+
 	apiGroup.Use(e.checkOperatorUpgradeState)
 	RegisterHandlers(apiGroup, e)
 
 	return nil
 }
 
-func (e *EverestServer) jwtMiddleWare() echo.MiddlewareFunc {
-	tokenLookup := "header:Authorization:Bearer "
-	tokenLookup = tokenLookup + ",cookie:" + common.EverestTokenCookie
+func newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) {
+	everestKeyFunc := session.NewKeyFunc(ctx)
+	oidcKeyFunc, err := oidc.NewKeyFunc(ctx, oidcIssuer)
+	if err != nil {
+		return nil, err
+	}
+	return func(token *jwt.Token) (interface{}, error) {
+		if token.Header["kid"] == session.KeyID {
+			return everestKeyFunc(token)
+		}
+		return oidcKeyFunc(token)
+	}, nil
+}
+
+func (e *EverestServer) jwtMiddleWare(ctx context.Context) (echo.MiddlewareFunc, error) {
+	keyFunc, err := newJWTKeyFunc(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return echojwt.WithConfig(echojwt.Config{
 		Skipper: func(c echo.Context) bool {
 			return strings.Contains(c.Request().URL.Path, "session")
 		},
-		SigningKey:  []byte(e.config.JWTSigningKey),
-		TokenLookup: tokenLookup,
-		KeyFunc:     e.jwkGetter,
-	})
+		KeyFunc: keyFunc,
+	}), nil
 }
 
 // Start starts everest server.
