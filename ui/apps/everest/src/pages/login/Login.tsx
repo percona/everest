@@ -113,9 +113,9 @@ const Login = () => {
                       OR
                     </Divider>
                     <Button
-                      variant="contained"
+                      variant="outlined"
                       fullWidth
-                      sx={{ bgcolor: 'black', fontSize: '13px' }}
+                      sx={{ fontSize: '13px' }}
                       onClick={handleSsoLogin}
                     >
                       Log in with SSO
