@@ -25,7 +25,9 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"strings"
 
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 	middleware "github.com/oapi-codegen/echo-middleware"
@@ -34,7 +36,9 @@ import (
 
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/auth"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/session"
 	"github.com/percona/everest/public"
 )
 
@@ -45,6 +49,7 @@ type EverestServer struct {
 	l          *zap.SugaredLogger
 	echo       *echo.Echo
 	kubeClient *kubernetes.Kubernetes
+	sessionMgr *session.Manager
 }
 
 type authValidator interface {
@@ -67,12 +72,18 @@ func NewEverestServer(c *config.EverestConfig, l *zap.SugaredLogger) (*EverestSe
 	echoServer := echo.New()
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 
+	sessMgr := session.New(
+		session.WithAccountManager(kubeClient.Accounts()),
+		session.WithSigningKey([]byte(c.JWTSigningKey)),
+	)
+
 	e := &EverestServer{
 		config:     c,
 		l:          l,
 		echo:       echoServer,
 		kubeClient: kubeClient,
 		auth:       auth.NewToken(kubeClient, l, []byte(ns.UID)),
+		sessionMgr: sessMgr,
 	}
 
 	if err := e.initHTTPServer(); err != nil {
@@ -120,14 +131,26 @@ func (e *EverestServer) initHTTPServer() error {
 
 	// Use our validation middleware to check all requests against the OpenAPI schema.
 	apiGroup := e.echo.Group(basePath)
-	apiGroup.Use(e.authenticate)
 	apiGroup.Use(middleware.OapiRequestValidatorWithOptions(swagger, &middleware.Options{
 		SilenceServersWarning: true,
 	}))
+	apiGroup.Use(e.jwtMiddleWare())
 	apiGroup.Use(e.checkOperatorUpgradeState)
 	RegisterHandlers(apiGroup, e)
 
 	return nil
+}
+
+func (e *EverestServer) jwtMiddleWare() echo.MiddlewareFunc {
+	tokenLookup := "header:Authorization:Bearer "
+	tokenLookup = tokenLookup + ",cookie:" + common.EverestTokenCookie
+	return echojwt.WithConfig(echojwt.Config{
+		Skipper: func(c echo.Context) bool {
+			return strings.Contains(c.Request().URL.Path, "session")
+		},
+		SigningKey:  []byte(e.config.JWTSigningKey),
+		TokenLookup: tokenLookup,
+	})
 }
 
 // Start starts everest server.

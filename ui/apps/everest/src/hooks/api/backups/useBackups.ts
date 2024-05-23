@@ -34,7 +34,7 @@ export const useDbBackups = (
   options?: PerconaQueryOptions<GetBackupsPayload, unknown, Backup[]>
 ) =>
   useQuery<GetBackupsPayload, unknown, Backup[]>({
-    queryKey: [BACKUPS_QUERY_KEY, dbClusterName],
+    queryKey: [BACKUPS_QUERY_KEY, namespace, dbClusterName],
     queryFn: () => getBackupsFn(dbClusterName, namespace),
     select: ({ items = [] }) =>
       items.map(

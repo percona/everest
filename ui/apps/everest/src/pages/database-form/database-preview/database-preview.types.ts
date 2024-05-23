@@ -19,6 +19,7 @@ export type DatabasePreviewProps = {
   activeStep: number;
   longestAchievedStep: number;
   onSectionEdit?: (order: number) => void;
+  disabled?: boolean;
 } & StackProps;
 
 export type PreviewSectionProps = {

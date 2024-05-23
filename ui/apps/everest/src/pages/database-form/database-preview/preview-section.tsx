@@ -60,6 +60,8 @@ export const PreviewSection = ({
               position: 'absolute',
               top: theme.spacing(-1),
             }}
+            color="primary"
+            disabled={disabled}
             onClick={onEditClick}
             data-testid={`button-edit-preview-${kebabize(
               title.replace(/\s/g, '')
@@ -67,7 +69,6 @@ export const PreviewSection = ({
           >
             <EditOutlinedIcon
               fontSize="small"
-              color="primary"
               sx={{
                 verticalAlign: 'text-bottom',
               }}

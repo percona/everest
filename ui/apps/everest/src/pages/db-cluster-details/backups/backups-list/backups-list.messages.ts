@@ -27,6 +27,4 @@ export const Messages = {
   delete: 'Delete',
   restore: 'Restore to this DB',
   restoreToNewDb: 'Create new DB',
-  exceededScheduleBackupsNumber:
-    'Maximum limit of schedules for PostgreSQL reached.',
 };

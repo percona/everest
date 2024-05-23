@@ -43,7 +43,11 @@ export const DatabasePage = () => {
   const { state } = useLocation();
   const { isDesktop } = useActiveBreakpoint();
   const mode = useDatabasePageMode();
-  const { defaultValues, dbClusterData } = useDatabasePageDefaultValues(mode);
+  const {
+    defaultValues,
+    dbClusterData,
+    isFetching: loadingClusterValues,
+  } = useDatabasePageDefaultValues(mode);
 
   const validationSchema = useDbValidationSchema(activeStep);
 
@@ -174,6 +178,7 @@ export const DatabasePage = () => {
             handlePreviousStep={handleBack}
           />
           <DatabaseFormSideDrawer
+            disabled={loadingClusterValues}
             activeStep={activeStep}
             longestAchievedStep={longestAchievedStep}
             handleSectionEdit={handleSectionEdit}
