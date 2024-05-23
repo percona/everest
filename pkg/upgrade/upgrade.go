@@ -26,6 +26,8 @@ import (
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
 	goversion "github.com/hashicorp/go-version"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/percona/everest/pkg/common"
@@ -92,6 +94,8 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 }
 
 // Run runs the operators installation process.
+//
+//nolint:funlen
 func (u *Upgrade) Run(ctx context.Context) error {
 	// Get Everest version.
 	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
@@ -140,7 +144,15 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	}
 
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
-	if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo); err != nil {
+
+	// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
+	skipObjects := []metav1.Object{
+		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestJWTSecretName,
+			Namespace: common.SystemNamespace,
+		}},
+	}
+	if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo, skipObjects...); err != nil {
 		return err
 	}
 
