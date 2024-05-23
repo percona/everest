@@ -9,6 +9,7 @@ import (
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
@@ -101,7 +102,7 @@ type KubernetesConnector interface {
 	// ApplyObject applies object.
 	ApplyObject(obj runtime.Object) error
 	// InstallEverest downloads the manifest file and applies it against provisioned k8s cluster.
-	InstallEverest(ctx context.Context, namespace string, version *goversion.Version) error
+	InstallEverest(ctx context.Context, namespace string, version *goversion.Version, skipObjs ...metav1.Object) error
 	// DeleteEverest downloads the manifest file and deletes it from provisioned k8s cluster.
 	DeleteEverest(ctx context.Context, namespace string, version *goversion.Version) error
 	// GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.

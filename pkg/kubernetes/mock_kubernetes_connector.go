@@ -10,6 +10,7 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	types "k8s.io/apimachinery/pkg/types"
 	pkgversion "k8s.io/apimachinery/pkg/version"
@@ -678,17 +679,24 @@ func (_m *MockKubernetesConnector) GetServerVersion() (*pkgversion.Info, error) 
 	return r0, r1
 }
 
-// InstallEverest provides a mock function with given fields: ctx, namespace, _a2
-func (_m *MockKubernetesConnector) InstallEverest(ctx context.Context, namespace string, _a2 *version.Version) error {
-	ret := _m.Called(ctx, namespace, _a2)
+// InstallEverest provides a mock function with given fields: ctx, namespace, _a2, skipObjs
+func (_m *MockKubernetesConnector) InstallEverest(ctx context.Context, namespace string, _a2 *version.Version, skipObjs ...metav1.Object) error {
+	_va := make([]interface{}, len(skipObjs))
+	for _i := range skipObjs {
+		_va[_i] = skipObjs[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, namespace, _a2)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for InstallEverest")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, *version.Version) error); ok {
-		r0 = rf(ctx, namespace, _a2)
+	if rf, ok := ret.Get(0).(func(context.Context, string, *version.Version, ...metav1.Object) error); ok {
+		r0 = rf(ctx, namespace, _a2, skipObjs...)
 	} else {
 		r0 = ret.Error(0)
 	}

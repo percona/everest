@@ -922,7 +922,12 @@ func (k *Kubernetes) ApplyObject(obj runtime.Object) error {
 }
 
 // InstallEverest downloads the manifest file and applies it against provisioned k8s cluster.
-func (k *Kubernetes) InstallEverest(ctx context.Context, namespace string, version *goversion.Version) error {
+func (k *Kubernetes) InstallEverest(
+	ctx context.Context,
+	namespace string,
+	version *goversion.Version,
+	skipObjs ...metav1.Object,
+) error {
 	if version == nil {
 		return errors.New("no version provided for Everest installation")
 	}
@@ -933,7 +938,7 @@ func (k *Kubernetes) InstallEverest(ctx context.Context, namespace string, versi
 	}
 
 	k.l.Debug("Applying manifest file")
-	err = k.client.ApplyManifestFile(data, namespace)
+	err = k.client.ApplyManifestFile(data, namespace, skipObjs...)
 	if err != nil {
 		return errors.Join(err, errors.New("failed applying manifest file"))
 	}
