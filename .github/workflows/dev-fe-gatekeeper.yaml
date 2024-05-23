@@ -127,11 +127,6 @@ jobs:
   E2E_tests_workflow:
     uses: ./.github/workflows/dev-fe-e2e.yaml
     secrets:
-      BACKUP_LOCATION_BUCKET_NAME: ${{ secrets.BACKUP_LOCATION_BUCKET_NAME }}
-      BACKUP_LOCATION_ACCESS_KEY: ${{ secrets.BACKUP_LOCATION_ACCESS_KEY }}
-      BACKUP_LOCATION_SECRET_KEY: ${{ secrets.BACKUP_LOCATION_SECRET_KEY }}
-      BACKUP_LOCATION_REGION: ${{ secrets.BACKUP_LOCATION_REGION }}
-      BACKUP_LOCATION_URL: ${{ secrets.BACKUP_LOCATION_URL }}
       CI_USER: admin
       CI_PASSWORD: everestadmin
 

@@ -3,16 +3,6 @@ name: FE E2E Workflow
 on:
   workflow_call:
     secrets:
-      BACKUP_LOCATION_BUCKET_NAME:
-        required: true
-      BACKUP_LOCATION_ACCESS_KEY:
-        required: true
-      BACKUP_LOCATION_SECRET_KEY:
-        required: true
-      BACKUP_LOCATION_REGION:
-        required: true
-      BACKUP_LOCATION_URL:
-        required: true
       CI_USER:
         required: true
       CI_PASSWORD:
