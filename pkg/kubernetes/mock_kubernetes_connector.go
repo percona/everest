@@ -184,6 +184,24 @@ func (_m *MockKubernetesConnector) CreatePMMSecret(namespace string, secretName 
 	return r0
 }
 
+// CreateRSAKeyPair provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) CreateRSAKeyPair(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateRSAKeyPair")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CreateRestore provides a mock function with given fields: restore
 func (_m *MockKubernetesConnector) CreateRestore(restore *v1alpha1.DatabaseClusterRestore) error {
 	ret := _m.Called(restore)
@@ -917,24 +935,6 @@ func (_m *MockKubernetesConnector) RestartOperator(ctx context.Context, name str
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
 		r0 = rf(ctx, name, namespace)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// SetJWTToken provides a mock function with given fields: ctx, token
-func (_m *MockKubernetesConnector) SetJWTToken(ctx context.Context, token string) error {
-	ret := _m.Called(ctx, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SetJWTToken")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, token)
 	} else {
 		r0 = ret.Error(0)
 	}

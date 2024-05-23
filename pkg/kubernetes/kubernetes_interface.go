@@ -120,4 +120,6 @@ type KubernetesConnector interface {
 	UpdateEverestSettings(ctx context.Context, settings common.EverestSettings) error
 	// GetEverestSettings returns Everest settings.
 	GetEverestSettings(ctx context.Context) (common.EverestSettings, error)
+	// CreateRSAKeyPair creates a new RSA key pair and stores it in a secret.
+	CreateRSAKeyPair(ctx context.Context) error
 }
