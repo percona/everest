@@ -45,7 +45,7 @@ type Config struct {
 // getConfig returns the OIDC config of a provider at the given issuer URL.
 func getConfig(ctx context.Context, issuer string) (Config, error) {
 	wellKnown := strings.TrimSuffix(issuer, "/") + "/.well-known/openid-configuration"
-	req, err := http.NewRequestWithContext(ctx, "GET", wellKnown, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, wellKnown, nil)
 	if err != nil {
 		return Config{}, err
 	}
@@ -57,7 +57,7 @@ func getConfig(ctx context.Context, issuer string) (Config, error) {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return Config{}, fmt.Errorf("unable to read response body: %v", err)
+		return Config{}, fmt.Errorf("unable to read response body: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
