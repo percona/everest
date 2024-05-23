@@ -69,8 +69,8 @@ kind: Secret
 metadata:
   name: everest-jwt
 data:
-  # use your own signing key here.
-  signing_key: eW91ci1ldmVyZXN0LWp3dC1zaWduaW5nLWtleQo=
+  id_rsa: LS0tLS1CRUdJTiBSU0EgUFVCTElDIEtFWS0tLS0tCk1JR0pBb0dCQUw2ZnFNYlhkK0w5T0JScHNyMjJSNThUaHVlcWtySkNlYXM2MkZQUUViZm5TOUJySTRob2ZyelMKY0xwK2tHeDdjRVNMTnB1YXRkVGJmQ0lhSnpkZlN4dnJTUHBJcFdzb2JFQzdwMUlVMWlQUHYyOUtOZmlPaXJwWApWdllNNHczWFoyRGl0SmFYaHBnQXoyY0I4OGxwUFlEZ2tMdG81QmZjV2w2dXhTeVpKNDRSQWdNQkFBRT0KLS0tLS1FTkQgUlNBIFBVQkxJQyBLRVktLS0tLQ==
+  id_rsa.pub: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlDWEFJQkFBS0JnUUMyVWVCTTZxR0VBTko4a3hlOHNaMjRXSVRCeGEzZE14WW8rb252dlJid3VaWkgzYXFrCk92Slh3czBCeGtFTG5WTjcyNjhOQWEvTVlkOTUybXc1cXE4UkhyYjRuVVllOTJzK0dmNTk5QmExdGljSnNIREsKTytSMk4veUFXQllZamRlYjFaZUVyY3lPMml5bVZ2dDJWNjlGWThiSFN4U1R4dkRGay9IMHhEcXhQUUlEQVFBQgpBb0dBUFc1RkIyV2ZXbHowanlqNHZJbVVQUU1HYUV2MUV5MGRjRjFLa003RHBnVENVQ0N1V0h2TUlDbnc3WUloCmRJcGtFTDJxczlVM3FNUHBpcU5BQ0FZc3lpUTM0akZyVVlQSkZqQTcwVEZ3MGY5dSt0QmtWeXRKVzd4MXYxWHgKVmVoY0hvWTdyaFhYdzQzcHh0VnJjdG1LdUl3RHRpYy9xSnphbitIUnE2S29MN2tDUVFEaGxuOEVPOHYxSmJQZQo1aUtKbmM5VGVkaTBleEVsdnRTZWFhK0U4TVE5VkhuM1A5YTNoWUpUQUFOMDdXcXdiQWRRTHpnOG5kWHpkVno1ClRySk9sZGdMQWtFQXp1WWNQQkdqNnBGNXRQWlpkQ1FMYVRvWGRxQU4vOFFlK0dsV2VXZ3pUUHpUdEJKTmEzWisKdjF6UENnQm9xbFFIUVcyb3dreUxSaVd1S0dkc0RVN0Exd0pBWnVjbW80Qy9aZUUvN3BLZCtKYURCM29TYnltZwpSYzZKNElVbktvWkZqaEJsM25KQmVNK3ZCanVBV0NzZ3VyOWNpcWd2aC84YnBJWEoxbk9laEpoM3h3SkJBTExGCkszSlB2N1ZubTZUY0UzRUIwQVpORm9iK1J2cFBTSDlWN1UwYjF1L1hxVWozWTRQT01EaERCZlhiWXBTQjVIOEoKTkg4bVNsVURLOWRuZlhxR0tLTUNRQ2Vyb05FTm44bjB5cjJQeURBaDk2UUQ0U0x1azcwS3V1M0RWVWtKK3RTWApKOGNQdlVVMUNqelhMVmppck1Rczk3c2NnZzR2eVlPRVdxdUNvYUlmbnRrPQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQ==
 ---
 apiVersion: v1
 kind: Secret
@@ -102,15 +102,13 @@ spec:
     spec:
       serviceAccountName: everest-admin
       automountServiceAccountToken: true
+      volumes:
+      - name: jwt-secret
+        secret:
+          secretName: everest-jwt
       containers:
         - name: everest
           image: perconalab/everest:0.0.0
-          env:
-            - name: JWT_SIGNING_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: everest-jwt
-                  key: signing_key
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -132,6 +130,9 @@ spec:
             requests:
               cpu: 100m
               memory: 20Mi
+          volumeMounts:
+          - name: jwt-secret
+            mountPath: /etc/jwt
 ---
 apiVersion: v1
 kind: Service
