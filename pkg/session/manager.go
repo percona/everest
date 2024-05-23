@@ -18,24 +18,31 @@ package session
 
 import (
 	"context"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/percona/everest/pkg/accounts"
+	"github.com/percona/everest/pkg/common"
 )
 
 const (
 	// SessionManagerClaimsIssuer fills the "iss" field of the token.
 	SessionManagerClaimsIssuer = "everest"
+	// KeyID contains the key ID for the JWT token.
+	KeyID = "everest"
 )
 
 // Manager provides functionality for creating and managing JWT tokens.
 type Manager struct {
 	accountManager accounts.Interface
-	signingKey     []byte
+	signingKey     *rsa.PrivateKey
 }
 
 // Option is a function that modifies a SessionManager.
@@ -57,10 +64,9 @@ func WithAccountManager(i accounts.Interface) Option {
 	}
 }
 
-// WithSigningKey sets the signing key to use for managing JWT tokens.
-func WithSigningKey(key []byte) Option {
+func WithSigningKey(signingKey *rsa.PrivateKey) Option {
 	return func(m *Manager) {
-		m.signingKey = key
+		m.signingKey = signingKey
 	}
 }
 
@@ -87,7 +93,8 @@ func (mgr *Manager) Create(subject string, secondsBeforeExpiry int64, id string)
 }
 
 func (mgr *Manager) signClaims(claims jwt.Claims) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	token.Header["kid"] = KeyID
 	return token.SignedString(mgr.signingKey)
 }
 
@@ -114,4 +121,17 @@ func (mgr *Manager) Authenticate(ctx context.Context, username string, password 
 		return errors.Join(accounts.ErrInsufficientCapabilities, errors.New("user does not have capability to login"))
 	}
 	return nil
+}
+
+// NewKeyFunc retruns a function for getting the public RSA keys used
+// for verifying the JWT tokens signed by everest.
+func NewKeyFunc(ctx context.Context) jwt.Keyfunc {
+	return func(t *jwt.Token) (interface{}, error) {
+		pemString, err := os.ReadFile(common.EverestJWTPublicKeyFile)
+		if err != nil {
+			return nil, errors.Join(err, errors.New("failed to read JWT public key"))
+		}
+		block, _ := pem.Decode(pemString)
+		return x509.ParsePKCS1PublicKey(block.Bytes)
+	}
 }
