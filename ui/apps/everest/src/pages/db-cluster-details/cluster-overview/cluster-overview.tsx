@@ -2,27 +2,22 @@ import { Stack } from '@mui/material';
 import { dbEngineToDbType } from '@percona/utils';
 import { useDbClusterCredentials } from 'hooks/api/db-cluster/useCreateDbCluster';
 import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
-import { useDbClusters } from 'hooks/api/db-clusters/useDbClusters';
 import { useParams } from 'react-router-dom';
 import { ProxyExposeType } from 'shared-types/dbCluster.types';
 import { ConnectionDetails, DatabaseDetails } from './cards';
 
 export const ClusterOverview = () => {
   const { dbClusterName, namespace = '' } = useParams();
-  const { data = [], isLoading } = useDbClusters(namespace);
-  const dbNameExists = data.find(
-    (cluster) => cluster.metadata.name === dbClusterName
-  );
   const { data: dbCluster, isFetching: fetchingCluster } = useDbCluster(
     dbClusterName || '',
     namespace,
     {
-      enabled: !!dbClusterName && !!dbNameExists,
+      enabled: !!dbClusterName,
     }
   );
   const { data: dbClusterDetails, isFetching: fetchingClusterDetails } =
     useDbClusterCredentials(dbClusterName || '', namespace, {
-      enabled: !!dbClusterName && !!dbNameExists,
+      enabled: !!dbClusterName,
     });
 
   return (
@@ -39,7 +34,7 @@ export const ClusterOverview = () => {
     >
       {/* We force ! because while loading no info is shown */}
       <DatabaseDetails
-        loading={fetchingCluster || isLoading}
+        loading={fetchingCluster}
         type={dbEngineToDbType(dbCluster?.spec.engine.type!)}
         name={dbCluster?.metadata.name!}
         namespace={dbCluster?.metadata.namespace!}
@@ -56,7 +51,7 @@ export const ClusterOverview = () => {
       />
       <ConnectionDetails
         loading={fetchingCluster}
-        loadingClusterDetails={fetchingClusterDetails || isLoading}
+        loadingClusterDetails={fetchingClusterDetails}
         hostname={dbCluster?.status?.hostname!}
         port={dbCluster?.status?.port!}
         username={dbClusterDetails?.username!}
