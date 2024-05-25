@@ -15,6 +15,7 @@
 
 import { expect, test } from '@playwright/test';
 import { findRowAndClickActions } from '../utils/table';
+import { EVEREST_CI_NAMESPACES } from '../constants';
 const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 
 test.describe.serial('Monitoring List', () => {
@@ -29,6 +30,9 @@ test.describe.serial('Monitoring List', () => {
     await page.getByTestId('text-input-name').fill(monitoringEndpointName);
     const namespaces = page.getByTestId('text-input-allowed-namespaces');
     await namespaces.click();
+    await expect(
+      page.getByText(EVEREST_CI_NAMESPACES.EVEREST_UI)
+    ).toBeVisible();
     await page.getByRole('option').last().click();
     await page.getByTestId('text-input-url').fill(MONITORING_URL);
     await page.getByTestId('text-input-user').fill(MONITORING_USER);
