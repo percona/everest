@@ -86,6 +86,7 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
     await page
       .getByRole('option', { name: EVEREST_CI_NAMESPACES.PXC_ONLY })
       .click();
+    await expect(page.getByTestId('mysql-toggle-button')).toBeVisible();
 
     // Resources Step
     await moveForward(page);

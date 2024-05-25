@@ -18,6 +18,8 @@ package upgrade
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/url"
@@ -92,6 +94,8 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 }
 
 // Run runs the operators installation process.
+//
+//nolint:funlen
 func (u *Upgrade) Run(ctx context.Context) error {
 	// Get Everest version.
 	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
@@ -139,8 +143,27 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return errors.Join(err, errors.New("could not find install plan"))
 	}
 
+	// We get the JWT token so that we can preserve it, since InstallEverest()
+	// will overwrite it.
+	jwtToken, err := u.kubeClient.GetJWTToken(ctx)
+	if err != nil {
+		return err
+	}
+
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
 	if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo); err != nil {
+		return err
+	}
+
+	// Restore the JWT token.
+	if jwtToken == "" {
+		b := make([]byte, 32)
+		if _, err := rand.Read(b); err != nil {
+			return err
+		}
+		jwtToken = hex.EncodeToString(b)
+	}
+	if err := u.kubeClient.SetJWTToken(ctx, jwtToken); err != nil {
 		return err
 	}
 

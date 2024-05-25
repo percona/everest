@@ -28,7 +28,11 @@ export const MonitoringEndpoints = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedInstance, setSelectedInstance] =
     useState<MonitoringInstance>();
-  const { data: monitoringInstances = [] } = useMonitoringInstancesList();
+  const {
+    data: monitoringInstances = [],
+    isFetching: loadingMonitoringEndpoint,
+  } = useMonitoringInstancesList();
+
   const { mutate: createMonitoringInstance, isPending: creatingInstance } =
     useCreateMonitoringInstance();
   const { mutate: deleteMonitoringInstance, isPending: removingInstance } =
@@ -155,6 +159,9 @@ export const MonitoringEndpoints = () => {
         hideExpandAllIcon
         data={monitoringInstances}
         columns={columns}
+        state={{
+          isLoading: loadingMonitoringEndpoint,
+        }}
         enableRowActions
         noDataMessage="No monitoring endpoint added"
         renderTopToolbarCustomActions={() => (

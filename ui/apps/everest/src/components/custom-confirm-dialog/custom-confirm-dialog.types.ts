@@ -11,9 +11,13 @@ export const customConfirmDialogSchema = (
 ) =>
   z.object({
     [CustomConfirmDialogFields.confirmInput]: z
-      .literal(confirmationInput ? value : '', {
-        errorMap: () => ({ message: '' }),
-      })
+      .string()
+      .trim()
+      .pipe(
+        z.literal(confirmationInput ? value : '', {
+          errorMap: () => ({ message: '' }),
+        })
+      )
       .optional(),
     [CustomConfirmDialogFields.dataCheckbox]: z.boolean(),
   });
