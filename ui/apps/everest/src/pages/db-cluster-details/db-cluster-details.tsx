@@ -56,19 +56,6 @@ export const DbClusterDetails = () => {
           mb: 1,
         }}
       >
-        {/* <Box
-          sx={{
-            display: 'flex',
-            gap: 1,
-            alignItems: 'center',
-            mr: 1,
-          }}
-        >
-          <IconButton onClick={() => navigate('/databases')}>
-            <ArrowBackIosIcon sx={{ pl: '10px' }} fontSize="large" />
-          </IconButton>
-          <Typography variant="h4">{dbClusterName}</Typography>
-        </Box> */}
         <BackNavigationText
           text={dbClusterName!}
           onBackClick={() => navigate('/databases')}
