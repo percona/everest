@@ -112,11 +112,6 @@ jobs:
           --skip-wizard \
           --namespaces pg-only
 
-      - name: Change token
-        shell: bash
-        run: |
-          echo "EVEREST_K8_TOKEN=$(./bin/everestctl token reset --json | jq .token -r)" >> $GITHUB_ENV
-
       - name: Create Everest test user
         shell: bash
         run: |
