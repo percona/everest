@@ -33,16 +33,9 @@ export const deleteBackupFn = async (
   namespace: string,
   cleanupBackupStorage: boolean
 ) => {
-  const config = {
-    data: {
-      cleanupBackupStorage: cleanupBackupStorage,
-    },
-  };
   const response = await api.delete(
-    `namespaces/${namespace}/database-cluster-backups/${backupName}`,
-    config
+    `namespaces/${namespace}/database-cluster-backups/${backupName}?cleanupBackupStorage=${cleanupBackupStorage}`
   );
-
   return response.data;
 };
 

@@ -25,6 +25,7 @@ import { Box, Button, MenuItem, Stack } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import StatusField from 'components/status-field';
 import { useDbActions } from 'hooks/api/db-cluster/useDbActions';
+import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { useDeleteDbCluster } from 'hooks/api/db-cluster/useDeleteDbCluster';
 import { type MRT_ColumnDef } from 'material-react-table';
 import { RestoreDbModal } from 'modals';
@@ -47,7 +48,9 @@ import { LastBackup } from './lastBackup/LastBackup';
 
 export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
-  const dbClustersResults = useDBClustersForNamespaces();
+  const { data: namespaces = [], isLoading: loadingNamespaces } =
+    useNamespaces();
+  const dbClustersResults = useDBClustersForNamespaces(namespaces);
   const dbClustersLoading = dbClustersResults.some(
     (result) => result.queryResult.isLoading
   );
@@ -161,7 +164,7 @@ export const DbClusterView = () => {
         <Table
           tableName="dbClusterView"
           noDataMessage={Messages.dbCluster.noData}
-          state={{ isLoading: dbClustersLoading }}
+          state={{ isLoading: dbClustersLoading || loadingNamespaces }}
           columns={columns}
           data={tableData}
           enableRowActions

@@ -140,7 +140,11 @@ export const BackupsList = () => {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({
-            queryKey: [BACKUPS_QUERY_KEY, dbCluster.metadata.name],
+            queryKey: [
+              BACKUPS_QUERY_KEY,
+              dbCluster.metadata.namespace,
+              dbCluster.metadata.name,
+            ],
           });
           handleCloseDeleteDialog();
         },

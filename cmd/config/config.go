@@ -52,6 +52,8 @@ type EverestConfig struct {
 	APIRequestsRateLimit int `default:"100" envconfig:"API_REQUESTS_RATE_LIMIT"`
 	// VersionServiceURL contains the URL of the version service.
 	VersionServiceURL string `default:"https://check.percona.com" envconfig:"VERSION_SERVICE_URL"`
+	// JWTSigningKey is the key used to sign JWT tokens.
+	JWTSigningKey string `envconfig:"JWT_SIGNING_KEY"`
 }
 
 // ParseConfig parses env vars and fills EverestConfig.
