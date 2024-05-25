@@ -73,6 +73,7 @@ const App = () => {
                 configs?.oidc
                   ? {
                       ...configs?.oidc,
+                      redirectUri: `${window.location.protocol}//${window.location.host}/`,
                       scope: 'openid profile email',
                       responseType: 'code',
                       onSignIn: (user) => {
