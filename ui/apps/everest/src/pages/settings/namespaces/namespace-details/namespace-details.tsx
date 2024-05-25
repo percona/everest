@@ -93,7 +93,7 @@ const NamespaceDetails = () => {
     upgradeOperator(null, {
       onSuccess: () => {
         queryClient.setQueryData<GetDbEnginesPayload>(
-          [`dbEngines_${namespace}`],
+          ['dbEngines', namespaceName],
           (oldData) => {
             if (!oldData) {
               return oldData;
