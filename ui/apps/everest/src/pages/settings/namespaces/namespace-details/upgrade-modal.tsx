@@ -10,8 +10,8 @@ const UpgradeModal = ({
   namespace,
   dbType,
   newVersion, // supportedVersions,
-} // TODO add supported versions
-: UpgradeModalProps) => {
+  // TODO add supported versions
+}: UpgradeModalProps) => {
   // const [showVersions, setShowVersions] = useState(false);
 
   return (
