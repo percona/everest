@@ -123,45 +123,25 @@ jobs:
         run: |
           echo "${{ github.triggering_actor }} does not have permissions on this repo."
           exit 1
-          
+
   E2E_tests_workflow:
     uses: ./.github/workflows/dev-fe-e2e.yaml
     secrets:
-      BACKUP_LOCATION_BUCKET_NAME: ${{ secrets.BACKUP_LOCATION_BUCKET_NAME }}
-      BACKUP_LOCATION_ACCESS_KEY: ${{ secrets.BACKUP_LOCATION_ACCESS_KEY }}
-      BACKUP_LOCATION_SECRET_KEY: ${{ secrets.BACKUP_LOCATION_SECRET_KEY }}
-      BACKUP_LOCATION_REGION: ${{ secrets.BACKUP_LOCATION_REGION }}
-      BACKUP_LOCATION_URL: ${{ secrets.BACKUP_LOCATION_URL }}
+      CI_USER: admin
+      CI_PASSWORD: everestadmin
 
-
-  # e2e_execution:
-  #   needs: permission_checks
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         lfs: true
-  #         ref: ${{ github.event.pull_request.head.sha }}
-  #     - uses: ./.github/actions/fe-e2e
-  #       with:
-  #         BACKUP_LOCATION_BUCKET_NAME: ${{ secrets.BACKUP_LOCATION_BUCKET_NAME }}
-  #         BACKUP_LOCATION_ACCESS_KEY: ${{ secrets.BACKUP_LOCATION_ACCESS_KEY }}
-  #         BACKUP_LOCATION_SECRET_KEY: ${{ secrets.BACKUP_LOCATION_SECRET_KEY }}
-  #         BACKUP_LOCATION_REGION: ${{ secrets.BACKUP_LOCATION_REGION }}
-  #         BACKUP_LOCATION_URL: ${{ secrets.BACKUP_LOCATION_URL }}
-
-  # merge-gatekeeper:
-  #   needs: [CI_checks, permission_checks]
-  #   name: Merge Gatekeeper
-  #   if: ${{ always() }}
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #     - name: Run Merge Gatekeeper
-  #       uses: upsidr/merge-gatekeeper@v1.2.1
-  #       with:
-  #         self: Merge Gatekeeper
-  #         token: ${{ secrets.GITHUB_TOKEN }}
-  #         interval: 45
-  #         timeout: 300
-  #         ignored: 'license/snyk (Percona Github Org), security/snyk (Percona Github Org)'
-  #         ref: ${{ github.event.pull_request.head.sha || github.sha }}
+  merge-gatekeeper:
+    needs: [CI_checks, permission_checks, E2E_tests_workflow]
+    name: Merge Gatekeeper
+    if: ${{ always() }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Run Merge Gatekeeper
+        uses: upsidr/merge-gatekeeper@v1.2.1
+        with:
+          self: Merge Gatekeeper
+          token: ${{ secrets.GITHUB_TOKEN }}
+          interval: 45
+          timeout: 300
+          ignored: 'license/snyk (Percona Github Org), security/snyk (Percona Github Org)'
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}

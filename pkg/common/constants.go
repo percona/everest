@@ -35,4 +35,17 @@ const (
 
 	// EverestOperatorName holds the name for Everest operator.
 	EverestOperatorName = "everest-operator"
+
+	// EverestAccountsSecretName is the name of the secret that holds accounts.
+	EverestAccountsSecretName = "everest-accounts"
+	// EverestJWTSecretName is the name of the secret that holds JWT secret.
+	EverestJWTSecretName = "everest-jwt"
+	// EverestJWTSecretKey is the key in the secret that holds JWT secret.
+	EverestJWTSecretKey = "signing_key"
+
+	// EverestAdminUser is the name of the admin user.
+	EverestAdminUser = "admin"
+
+	// EverestTokenCookie is the name of the cookie that holds the token.
+	EverestTokenCookie = "everest_token"
 )

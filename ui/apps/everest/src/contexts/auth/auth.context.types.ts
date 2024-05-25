@@ -6,7 +6,7 @@ export type UserAuthStatus =
   | 'unknown';
 
 export interface AuthContextProps {
-  login: (token: string) => void;
+  login: (username: string, password: string) => void;
   logout: () => void;
   setRedirectRoute: (route: string) => void;
   authStatus: UserAuthStatus;

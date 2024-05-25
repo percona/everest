@@ -27,10 +27,7 @@ rules:
     resources: ["databaseclusters", "databaseclusterbackups", "databaseclusterrestores", "backupstorages", "monitoringconfigs"]
     verbs: ["*"]
   - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["*"]
-  - apiGroups: [""]
-    resources: ["secrets"]
+    resources: ["secrets", "configmaps"]
     verbs: ["*"]
   - apiGroups: [""]
     resources: ["nodes", "pods", "persistentvolumes"]
@@ -70,10 +67,20 @@ subjects:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: everest-admin-token
+  name: everest-jwt
+data:
+  # use your own signing key here.
+  signing_key: eW91ci1ldmVyZXN0LWp3dC1zaWduaW5nLWtleQo=
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: everest-accounts
   annotations:
-    kubernetes.io/service-account.name: everest-admin
-type: kubernetes.io/service-account-token
+    insecure-password/admin: "true"
+data:
+  # username: admin | password: admin
+  users.yaml: YWRtaW46CiAgcGFzc3dvcmRIYXNoOiBhZG1pbgogIGVuYWJsZWQ6IHRydWUKICBjYXBhYmlsaXRpZXM6CiAgICAtIGxvZ2lu
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -96,6 +103,12 @@ spec:
       containers:
         - name: everest
           image: perconalab/everest:0.0.0
+          env:
+            - name: JWT_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: everest-jwt
+                  key: signing_key
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -133,3 +146,4 @@ spec:
   ports:
     - protocol: TCP
       port: 8080
+---
