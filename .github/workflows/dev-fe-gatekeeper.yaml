@@ -5,18 +5,18 @@ on:
     paths:
       - 'ui/**'
       - '.github/workflows/dev-fe-gatekeeper.yaml'
-      - '.github/actions/fe-e2e/action.yml'
+      - '.github/workflows/dev-fe-e2e.yaml'
     branches:
       - main
   pull_request:
     paths:
       - 'ui/**'
       - '.github/workflows/dev-fe-gatekeeper.yaml'
-      - '.github/actions/fe-e2e/action.yml'
+      - '.github/workflows/dev-fe-e2e.yaml'
     types: [opened, synchronize]
 
 permissions:
-  contents: read
+  contents: write
   packages: write
   checks: write
   pull-requests: write
@@ -59,6 +59,8 @@ jobs:
     defaults:
       run:
         working-directory: ui
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -122,24 +124,14 @@ jobs:
           echo "${{ github.triggering_actor }} does not have permissions on this repo."
           exit 1
 
-  e2e_execution:
-    needs: permission_checks
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          lfs: true
-          ref: ${{ github.event.pull_request.head.sha }}
-      - uses: ./.github/actions/fe-e2e
-        with:
-          BACKUP_LOCATION_BUCKET_NAME: ${{ secrets.BACKUP_LOCATION_BUCKET_NAME }}
-          BACKUP_LOCATION_ACCESS_KEY: ${{ secrets.BACKUP_LOCATION_ACCESS_KEY }}
-          BACKUP_LOCATION_SECRET_KEY: ${{ secrets.BACKUP_LOCATION_SECRET_KEY }}
-          BACKUP_LOCATION_REGION: ${{ secrets.BACKUP_LOCATION_REGION }}
-          BACKUP_LOCATION_URL: ${{ secrets.BACKUP_LOCATION_URL }}
+  E2E_tests_workflow:
+    uses: ./.github/workflows/dev-fe-e2e.yaml
+    secrets:
+      CI_USER: admin
+      CI_PASSWORD: everestadmin
 
   merge-gatekeeper:
-    needs: [CI_checks, e2e_execution]
+    needs: [CI_checks, permission_checks, E2E_tests_workflow]
     name: Merge Gatekeeper
     if: ${{ always() }}
     runs-on: ubuntu-22.04
