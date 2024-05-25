@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Alert, Box } from '@mui/material';
+import { Alert, Box, Skeleton } from '@mui/material';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages';
 import { useFormContext } from 'react-hook-form';
 import { DbWizardFormFields } from '../../../database-form.types.ts';
@@ -29,7 +29,7 @@ export const Backups = () => {
     DbWizardFormFields.k8sNamespace,
     DbWizardFormFields.schedules,
   ]);
-  const { data: backupStorages = [] } =
+  const { data: backupStorages = [], isLoading } =
     useBackupStoragesByNamespace(selectedNamespace);
 
   return (
@@ -38,19 +38,29 @@ export const Backups = () => {
         pageTitle={Messages.backups}
         pageDescription={Messages.captionBackups}
       />
-      {backupStorages.length > 0 ? (
-        <Schedules />
+      {isLoading ? (
+        <>
+          <Skeleton height="200px" />
+          <Skeleton />
+          <Skeleton />
+        </>
       ) : (
-        <BackupsActionableAlert namespace={selectedNamespace} />
-      )}
-      {schedules?.length === 0 && (
-        <Alert
-          sx={{ mt: 1 }}
-          severity="info"
-          data-testid="pitr-no-backup-alert"
-        >
-          {Messages.pitrAlert}
-        </Alert>
+        <>
+          {backupStorages.length > 0 ? (
+            <Schedules />
+          ) : (
+            <BackupsActionableAlert namespace={selectedNamespace} />
+          )}
+          {schedules?.length === 0 && (
+            <Alert
+              sx={{ mt: 1 }}
+              severity="info"
+              data-testid="pitr-no-backup-alert"
+            >
+              {Messages.pitrAlert}
+            </Alert>
+          )}
+        </>
       )}
     </Box>
   );

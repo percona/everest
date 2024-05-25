@@ -9,7 +9,6 @@ import {
   Typography,
 } from '@mui/material';
 import { useDbClusters } from 'hooks/api/db-clusters/useDbClusters';
-import { useEffect, useState } from 'react';
 import {
   Link,
   Outlet,
@@ -21,28 +20,21 @@ import { NoMatch } from '../404/NoMatch';
 import { DbActionButton } from './db-action-button';
 import { Messages } from './db-cluster-details.messages';
 import { DBClusterDetailsTabs } from './db-cluster-details.types';
-import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
+import { DbClusterStatus } from 'shared-types/dbCluster.types';
 
 export const DbClusterDetails = () => {
   const { dbClusterName, namespace = '' } = useParams();
-  const [dbCluster, setDbCluster] = useState<DbCluster | null>();
-  const { data = [], isLoading } = useDbClusters(namespace);
+  const { data = [], isLoading } = useDbClusters(namespace, {
+    enabled: !!namespace,
+  });
   const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
   const navigate = useNavigate();
   const currentTab = routeMatch?.params?.tabs;
+  const dbCluster = data.find(
+    (cluster) => cluster.metadata.name === dbClusterName
+  );
 
-  useEffect(() => {
-    if (!isLoading) {
-      const cluster = data.find(
-        (cluster) => cluster.metadata.name === dbClusterName
-      );
-
-      setDbCluster(cluster ? cluster : null);
-    }
-  }, [isLoading, data, dbClusterName]);
-
-  // Either loading or we're still searching through the array
-  if (isLoading || dbCluster === undefined) {
+  if (isLoading) {
     return (
       <>
         <Skeleton variant="rectangular" />
@@ -56,7 +48,7 @@ export const DbClusterDetails = () => {
   }
 
   // We went through the array and know the cluster is not there. Safe to show 404
-  if (dbCluster === null) {
+  if (!dbCluster) {
     return <NoMatch />;
   }
 
