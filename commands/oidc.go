@@ -28,7 +28,7 @@ func newOIDCCmd(l *zap.SugaredLogger) *cobra.Command {
 		Use: "oidc",
 	}
 
-	cmd.AddCommand(oidc.NewConigureCommand(l))
+	cmd.AddCommand(oidc.NewConfigureCommand(l))
 
 	return cmd
 }
