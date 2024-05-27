@@ -34,6 +34,8 @@ var (
 	ErrInsufficientCapabilities = errors.New("insufficient capabilities")
 	// ErrAccountDisabled is returned when the account is disabled.
 	ErrAccountDisabled = errors.New("account disabled")
+	// ErrUserAlreadyExists is returned when we try to create a user that already exists.
+	ErrUserAlreadyExists = errors.New("user already exists")
 )
 
 const (

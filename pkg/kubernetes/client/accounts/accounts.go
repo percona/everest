@@ -84,6 +84,14 @@ func (a *configMapsClient) listAllAccounts(ctx context.Context) (map[string]*acc
 
 // Create a new user account.
 func (a *configMapsClient) Create(ctx context.Context, username, password string) error {
+	// Ensure that the user does not already exist.
+	_, err := a.Get(ctx, username)
+	if err != nil && !errors.Is(err, accounts.ErrAccountNotFound) {
+		return errors.Join(err, errors.New("failed to check if account already exists"))
+	} else if err == nil {
+		return accounts.ErrUserAlreadyExists
+	}
+
 	// Compute a hash for the password.
 	hash, err := a.computePasswordHash(ctx, password)
 	if err != nil {
