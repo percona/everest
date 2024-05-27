@@ -105,6 +105,7 @@ func (c *CLI) SetPassword(ctx context.Context, username, password string) error 
 		if resp.Password != resp.ConfPassword {
 			return errors.New("passwords do not match")
 		}
+		password = resp.Password
 	}
 
 	if ok, msg := validateCredentials(username, password); !ok {
