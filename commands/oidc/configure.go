@@ -27,7 +27,7 @@ import (
 	"github.com/percona/everest/pkg/output"
 )
 
-// NewConigureCommand returns the command to configure OIDC
+// NewConigureCommand returns the command to configure OIDC.
 func NewConigureCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "configure",

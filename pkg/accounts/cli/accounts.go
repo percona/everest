@@ -95,7 +95,8 @@ func (c *CLI) Delete(ctx context.Context, username string) error {
 	if username == "" {
 		if err := survey.AskOne(&survey.Input{
 			Message: "Enter username",
-		}, username); err != nil {
+		}, username,
+		); err != nil {
 			return err
 		}
 	}

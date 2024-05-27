@@ -17,12 +17,12 @@ func (k *Kubernetes) UpdateEverestSettings(ctx context.Context, settings common.
 		return err
 	}
 
-	c, getErr := k.client.GetConfigMap(ctx, common.SystemNamespace, common.EverestSettingsConfigMapName)
+	_, getErr := k.client.GetConfigMap(ctx, common.SystemNamespace, common.EverestSettingsConfigMapName)
 	if getErr != nil && !errors.IsNotFound(getErr) {
 		return getErr
 	}
 
-	c = &v1.ConfigMap{
+	c := &v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      common.EverestSettingsConfigMapName,
