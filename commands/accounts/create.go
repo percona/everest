@@ -14,6 +14,8 @@
 // limitations under the License.
 
 // Package accounts holds commands for accounts command.
+//
+//nolint:dupl
 package accounts
 
 import (
