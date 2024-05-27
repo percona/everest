@@ -21,7 +21,7 @@ import (
 func NewSetPwCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "set-password",
-		Example: "everestctl accounts set-password --username user1 --password $USER_PASS",
+		Example: "everestctl accounts set-password --username user1 --new-password $USER_PASS",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initSetPwViperFlags(cmd)
 
