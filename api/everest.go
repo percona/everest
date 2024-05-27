@@ -20,15 +20,11 @@ package api
 
 import (
 	"context"
-	"crypto/rsa"
-	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"io/fs"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -82,16 +78,12 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	echoServer := echo.New()
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 
-	// Get the signing key required for managing Everest users.
-	jwtSigningKey, err := getJWTSigningKey()
-	if err != nil {
-		return nil, errors.Join(err, errors.New("failed to get JWT signing key"))
-	}
-
-	sessMgr := session.New(
+	sessMgr, err := session.New(
 		session.WithAccountManager(kubeClient.Accounts()),
-		session.WithSigningKey(jwtSigningKey),
 	)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to create session manager"))
+	}
 
 	e := &EverestServer{
 		config:     c,
@@ -106,19 +98,6 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		return e, err
 	}
 	return e, err
-}
-
-func getJWTSigningKey() (*rsa.PrivateKey, error) {
-	pemString, err := os.ReadFile(common.EverestJWTPrivateKeyFile)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("cannot read private key file"))
-	}
-	block, _ := pem.Decode(pemString)
-	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("cannot parse private key"))
-	}
-	return key, nil
 }
 
 // initHTTPServer configures http server for the current EverestServer instance.
@@ -176,8 +155,8 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	return nil
 }
 
-func newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) {
-	everestKeyFunc := session.NewKeyFunc()
+func (e *EverestServer) newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) {
+	everestKeyFunc := e.sessionMgr.KeyFunc()
 	oidcKeyFunc, err := oidc.NewKeyFunc(ctx, oidcIssuer)
 	if err != nil {
 		return nil, err
@@ -191,7 +170,7 @@ func newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) {
 }
 
 func (e *EverestServer) jwtMiddleWare(ctx context.Context) (echo.MiddlewareFunc, error) {
-	keyFunc, err := newJWTKeyFunc(ctx)
+	keyFunc, err := e.newJWTKeyFunc(ctx)
 	if err != nil {
 		return nil, err
 	}

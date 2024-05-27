@@ -75,6 +75,9 @@ func getConfig(ctx context.Context, issuer string) (Config, error) {
 // from the OIDC provider at the given issuer URL.
 func NewKeyFunc(ctx context.Context, issuer string) (jwt.Keyfunc, error) {
 	if issuer == "" {
+		// We do not return an error, instead we return a KeyFunc that returns an error.
+		// This is because it should be possible to use the KeyFunc without the issuer URL,
+		// otherwise the server would not start when the user has not configured an OIDC provider.
 		return func(_ *jwt.Token) (interface{}, error) {
 			return nil, errors.New("issuer url needs to be configured to use this keyFunc")
 		}, nil
@@ -103,7 +106,6 @@ func NewKeyFunc(ctx context.Context, issuer string) (jwt.Keyfunc, error) {
 		}
 
 		key, found := keySet.LookupKeyID(keyID)
-
 		if !found {
 			return nil, fmt.Errorf("unable to find key %q", keyID)
 		}

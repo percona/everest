@@ -49,25 +49,23 @@ type Manager struct {
 type Option func(*Manager)
 
 // New creates a new session manager with the given options.
-func New(options ...Option) *Manager {
+func New(options ...Option) (*Manager, error) {
 	m := &Manager{}
 	for _, opt := range options {
 		opt(m)
 	}
-	return m
+	privKey, err := getPrivateKey()
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to get private key"))
+	}
+	m.signingKey = privKey
+	return m, nil
 }
 
 // WithAccountManager sets the account manager to use for verifying user credentials.
 func WithAccountManager(i accounts.Interface) Option {
 	return func(m *Manager) {
 		m.accountManager = i
-	}
-}
-
-// WithSigningKey sets the signing key to use for managing JWT tokens.
-func WithSigningKey(signingKey *rsa.PrivateKey) Option {
-	return func(m *Manager) {
-		m.signingKey = signingKey
 	}
 }
 
@@ -124,15 +122,19 @@ func (mgr *Manager) Authenticate(ctx context.Context, username string, password 
 	return nil
 }
 
-// NewKeyFunc retruns a function for getting the public RSA keys used
+func getPrivateKey() (*rsa.PrivateKey, error) {
+	pemString, err := os.ReadFile(common.EverestJWTPrivateKeyFile)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to read JWT private key"))
+	}
+	block, _ := pem.Decode(pemString)
+	return x509.ParsePKCS1PrivateKey(block.Bytes)
+}
+
+// KeyFunc retruns a function for getting the public RSA keys used
 // for verifying the JWT tokens signed by everest.
-func NewKeyFunc() jwt.Keyfunc {
+func (mgr *Manager) KeyFunc() jwt.Keyfunc {
 	return func(_ *jwt.Token) (interface{}, error) {
-		pemString, err := os.ReadFile(common.EverestJWTPublicKeyFile)
-		if err != nil {
-			return nil, errors.Join(err, errors.New("failed to read JWT public key"))
-		}
-		block, _ := pem.Decode(pemString)
-		return x509.ParsePKCS1PublicKey(block.Bytes)
+		return mgr.signingKey.Public(), nil
 	}
 }
