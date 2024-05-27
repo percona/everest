@@ -17,6 +17,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"slices"
@@ -47,7 +48,20 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
 
-	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, "")
+	err := e.proxyKubernetes(ctx, namespace, databaseClusterKind, "")
+	if err == nil {
+		// Collect metrics immediately after a DB cluster has been created.
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+
+			if err := e.collectMetrics(ctx, e.config.TelemetryURL); err != nil {
+				e.l.Errorf("Could not send metrics: %s", err)
+			}
+		}()
+	}
+
+	return err
 }
 
 // ListDatabaseClusters lists the created database clusters on the specified kubernetes cluster.
