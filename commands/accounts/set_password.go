@@ -41,10 +41,6 @@ func NewSetPwCommand(l *zap.SugaredLogger) *cobra.Command {
 
 			cli := accountscli.New(l)
 			cli.WithAccountManager(k.Accounts())
-			if err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
 
 			if err := cli.SetPassword(context.Background(), username, password); err != nil {
 				l.Error(err)
