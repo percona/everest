@@ -115,11 +115,14 @@ func (a *configMapsClient) SetPassword(ctx context.Context, username, newPasswor
 	if err != nil {
 		return err
 	}
-	pwHash, err := a.computePasswordHash(ctx, newPassword)
-	if err != nil {
-		return err
+	user.PasswordHash = newPassword
+	if !insecure {
+		pwHash, err := a.computePasswordHash(ctx, newPassword)
+		if err != nil {
+			return err
+		}
+		user.PasswordHash = pwHash
 	}
-	user.PasswordHash = pwHash
 	user.PasswordMtime = time.Now().Format(time.RFC3339)
 	return a.insertOrUpdateAccount(ctx, username, user, !insecure)
 }
