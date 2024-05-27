@@ -49,7 +49,6 @@ const (
 	DefaultEverestNamespace = "everest"
 )
 
-// XXX: once `everestctl accounts update` is added, update this message to include instructions on how to reset password.
 const postInstallMessage = `
 Everest has been successfully installed!
 
@@ -63,9 +62,9 @@ kubectl get secret everest-accounts -n everest-system -o jsonpath='{.data.users\
     | awk '{print $2}'
 
 
-To create a new user, run the following command:
+IMPORTANT: This password is NOT stored in a hashed format. To secure it, update the password using the following command:
 
-everestctl accounts create
+everestctl accounts set-password --user admin
 `
 
 // Install implements the main logic for commands.
