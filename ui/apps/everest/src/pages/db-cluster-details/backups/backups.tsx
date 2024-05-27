@@ -26,7 +26,7 @@ import { OnDemandBackupModal } from './on-demand-backup-modal/on-demand-backup-m
 export const Backups = () => {
   const { dbClusterName, namespace = '' } = useParams();
   const { data = [] } = useDbClusters(namespace);
-  const { data: backupStorages = [] } = useBackupStorages();
+  const { data: backupStorages = [], isFetching } = useBackupStorages();
   const dbCluster = data.find(
     (cluster) => cluster.metadata.name === dbClusterName
   );
@@ -36,7 +36,7 @@ export const Backups = () => {
   const [openOnDemandModal, setOpenOnDemandModal] = useState(false);
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');
 
-  if (!dbCluster) {
+  if (!dbCluster || isFetching) {
     return null;
   }
 
