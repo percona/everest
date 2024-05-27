@@ -28,6 +28,7 @@ import {
   BackupStorage,
   GetBackupStoragesPayload,
 } from 'shared-types/backupStorages.types';
+import { PerconaQueryOptions } from 'shared-types/query.types';
 
 export const BACKUP_STORAGES_QUERY_KEY = 'backupStorages';
 
@@ -37,12 +38,20 @@ export const useBackupStorages = () =>
     queryFn: getBackupStoragesFn,
   });
 
-export const useBackupStoragesByNamespace = (namespace: string) =>
+export const useBackupStoragesByNamespace = (
+  namespace: string,
+  options?: PerconaQueryOptions<
+    GetBackupStoragesPayload,
+    unknown,
+    BackupStorage[]
+  >
+) =>
   useQuery<GetBackupStoragesPayload, unknown, BackupStorage[]>({
     queryKey: [BACKUP_STORAGES_QUERY_KEY, namespace],
     queryFn: getBackupStoragesFn,
     select: (data) =>
       data.filter((item) => item.allowedNamespaces?.includes(namespace)),
+    ...options,
   });
 
 export const useCreateBackupStorage = (

@@ -28,6 +28,8 @@ export const createBackupStorageFn = async (
     allowedNamespaces: namespaces,
     url: EVEREST_LOCATION_URL,
     region: EVEREST_LOCATION_REGION,
+    verifyTLS: false,
+    forcePathStyle: true,
   };
 
   const response = await request.post('/v1/backup-storages/', {

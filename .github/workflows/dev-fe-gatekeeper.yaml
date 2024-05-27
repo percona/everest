@@ -123,32 +123,12 @@ jobs:
         run: |
           echo "${{ github.triggering_actor }} does not have permissions on this repo."
           exit 1
-          
+
   E2E_tests_workflow:
     uses: ./.github/workflows/dev-fe-e2e.yaml
     secrets:
-      BACKUP_LOCATION_BUCKET_NAME: ${{ secrets.BACKUP_LOCATION_BUCKET_NAME }}
-      BACKUP_LOCATION_ACCESS_KEY: ${{ secrets.BACKUP_LOCATION_ACCESS_KEY }}
-      BACKUP_LOCATION_SECRET_KEY: ${{ secrets.BACKUP_LOCATION_SECRET_KEY }}
-      BACKUP_LOCATION_REGION: ${{ secrets.BACKUP_LOCATION_REGION }}
-      BACKUP_LOCATION_URL: ${{ secrets.BACKUP_LOCATION_URL }}
-
-
-  # e2e_execution:
-  #   needs: permission_checks
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         lfs: true
-  #         ref: ${{ github.event.pull_request.head.sha }}
-  #     - uses: ./.github/actions/fe-e2e
-  #       with:
-  #         BACKUP_LOCATION_BUCKET_NAME: ${{ secrets.BACKUP_LOCATION_BUCKET_NAME }}
-  #         BACKUP_LOCATION_ACCESS_KEY: ${{ secrets.BACKUP_LOCATION_ACCESS_KEY }}
-  #         BACKUP_LOCATION_SECRET_KEY: ${{ secrets.BACKUP_LOCATION_SECRET_KEY }}
-  #         BACKUP_LOCATION_REGION: ${{ secrets.BACKUP_LOCATION_REGION }}
-  #         BACKUP_LOCATION_URL: ${{ secrets.BACKUP_LOCATION_URL }}
+      CI_USER: admin
+      CI_PASSWORD: everestadmin
 
   merge-gatekeeper:
     needs: [CI_checks, permission_checks, E2E_tests_workflow]

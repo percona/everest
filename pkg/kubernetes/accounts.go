@@ -13,22 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package commands ...
-package commands
+// Package kubernetes ...
+package kubernetes
 
 import (
-	"github.com/spf13/cobra"
-	"go.uber.org/zap"
-
-	"github.com/percona/everest/commands/token"
+	"github.com/percona/everest/pkg/accounts"
+	k8sAccounts "github.com/percona/everest/pkg/kubernetes/client/accounts"
 )
 
-func newTokenCmd(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use: "token",
-	}
-
-	cmd.AddCommand(token.NewResetCmd(l))
-
-	return cmd
+// Accounts returns a new client for managing everest user accounts.
+//
+//nolint:ireturn,stylecheck
+func (c *Kubernetes) Accounts() accounts.Interface {
+	return k8sAccounts.New(c.client)
 }

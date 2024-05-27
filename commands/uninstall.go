@@ -57,7 +57,6 @@ func newUninstallCmd(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initUninstallFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
 	cmd.Flags().BoolP("assume-yes", "y", false, "Assume yes to all questions")
 	cmd.Flags().BoolP("force", "f", false, "Force removal in case there are database clusters running")
 }
