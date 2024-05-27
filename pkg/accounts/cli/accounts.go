@@ -70,11 +70,41 @@ func (c *CLI) runCredentialsWizard(username, password *string) error {
 
 // SetPassword sets the password for an existing account.
 func (c *CLI) SetPassword(ctx context.Context, username, password string) error {
-	if err := c.runCredentialsWizard(&username, &password); err != nil {
-		return err
+	if username == "" {
+		pUsername := survey.Input{
+			Message: "Enter username",
+		}
+		if err := survey.AskOne(&pUsername, username); err != nil {
+			return err
+		}
 	}
+
 	if username == "" {
 		return errors.New("username is required")
+	}
+
+	if password == "" {
+		resp := struct {
+			Password     string
+			ConfPassword string
+		}{}
+		if err := survey.Ask([]*survey.Question{
+			{
+				Name:     "Password",
+				Prompt:   &survey.Password{Message: "Enter new password"},
+				Validate: survey.Required,
+			},
+			{
+				Name:     "ConfPassword",
+				Prompt:   &survey.Password{Message: "Re-enter new password"},
+				Validate: survey.Required,
+			},
+		}, &resp); err != nil {
+			return err
+		}
+		if resp.Password != resp.ConfPassword {
+			return errors.New("passwords do not match")
+		}
 	}
 
 	if ok, msg := validateCredentials(username, password); !ok {
