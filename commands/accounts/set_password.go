@@ -27,7 +27,7 @@ func NewSetPwCommand(l *zap.SugaredLogger) *cobra.Command {
 
 			kubeconfigPath := viper.GetString("kubeconfig")
 			username := viper.GetString("username")
-			password := viper.GetString("password")
+			password := viper.GetString("new-password")
 
 			k, err := kubernetes.New(kubeconfigPath, l)
 			if err != nil {
@@ -54,12 +54,12 @@ func NewSetPwCommand(l *zap.SugaredLogger) *cobra.Command {
 
 func initSetPwFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("username", "u", "", "Username of the account")
-	cmd.Flags().StringP("password", "p", "", "Password of the account")
+	cmd.Flags().StringP("new-password", "p", "", "New password for the account")
 }
 
 func initSetPwViperFlags(cmd *cobra.Command) {
-	viper.BindPFlag("username", cmd.Flags().Lookup("username"))     //nolint:errcheck,gosec
-	viper.BindPFlag("password", cmd.Flags().Lookup("password"))     //nolint:errcheck,gosec
-	viper.BindEnv("kubeconfig")                                     //nolint:errcheck,gosec
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
+	viper.BindPFlag("username", cmd.Flags().Lookup("username"))         //nolint:errcheck,gosec
+	viper.BindPFlag("new-password", cmd.Flags().Lookup("new-password")) //nolint:errcheck,gosec
+	viper.BindEnv("kubeconfig")                                         //nolint:errcheck,gosec
+	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))     //nolint:errcheck,gosec
 }
