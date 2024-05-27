@@ -46,16 +46,16 @@ export const Backups = () => {
           <Skeleton />
         </>
       ) : (
-              <>
-                  {backupStorages?.length > 0 ? (
-                      <FormGroup sx={{ mt: 3 }}>
-                          <Schedules />
-                          <PITR />
-                      </FormGroup>
-                  ) : (
-                      <BackupsActionableAlert namespace={selectedNamespace} />
-                  )}
-              </>
+        <>
+          {backupStorages?.length > 0 ? (
+            <FormGroup sx={{ mt: 3 }}>
+              <Schedules />
+              <PITR />
+            </FormGroup>
+          ) : (
+            <BackupsActionableAlert namespace={selectedNamespace} />
+          )}
+        </>
       )}
     </Box>
   );
