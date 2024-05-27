@@ -36,7 +36,6 @@ import (
 	"golang.org/x/time/rate"
 
 	"github.com/percona/everest/cmd/config"
-	"github.com/percona/everest/pkg/auth"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/oidc"
@@ -50,7 +49,6 @@ const (
 
 // EverestServer represents the server struct.
 type EverestServer struct {
-	auth       authValidator
 	config     *config.EverestConfig
 	l          *zap.SugaredLogger
 	echo       *echo.Echo
@@ -58,21 +56,11 @@ type EverestServer struct {
 	sessionMgr *session.Manager
 }
 
-type authValidator interface {
-	Valid(ctx context.Context, token string) (bool, error)
-}
-
 // NewEverestServer creates and configures everest API.
 func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.SugaredLogger) (*EverestServer, error) {
 	kubeClient, err := kubernetes.NewInCluster(l)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed creating Kubernetes client"))
-	}
-
-	ns, err := kubeClient.GetNamespace(ctx, kubeClient.Namespace())
-	if err != nil {
-		l.Error(err)
-		return nil, errors.New("could not get namespace from Kubernetes")
 	}
 
 	echoServer := echo.New()
@@ -90,7 +78,6 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		l:          l,
 		echo:       echoServer,
 		kubeClient: kubeClient,
-		auth:       auth.NewToken(kubeClient, l, []byte(ns.UID)),
 		sessionMgr: sessMgr,
 	}
 
