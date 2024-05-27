@@ -22,7 +22,7 @@ func TestToMap(t *testing.T) {
 				OIDCIssuerURL: "url",
 				OIDCClientID:  "id",
 			},
-			expected: map[string]string{"oidc_issuer_url": "url", "oidc_client_id": "id"},
+			expected: map[string]string{"oidcIssuerUrl": "url", "oidcClientId": "id"},
 		},
 		{
 			name: "empty oidc",
@@ -30,7 +30,7 @@ func TestToMap(t *testing.T) {
 				OIDCIssuerURL: "",
 				OIDCClientID:  "",
 			},
-			expected: map[string]string{"oidc_issuer_url": "", "oidc_client_id": ""},
+			expected: map[string]string{"oidcIssuerUrl": "", "oidcClientId": ""},
 		},
 	}
 
@@ -59,7 +59,7 @@ func TestFromMap(t *testing.T) {
 				OIDCIssuerURL: "url",
 				OIDCClientID:  "id",
 			},
-			input: map[string]string{"oidc_issuer_url": "url", "oidc_client_id": "id"},
+			input: map[string]string{"oidcIssuerUrl": "url", "oidcClientId": "id"},
 		},
 		{
 			name: "extra key",
@@ -67,7 +67,7 @@ func TestFromMap(t *testing.T) {
 				OIDCIssuerURL: "url",
 				OIDCClientID:  "id",
 			},
-			input: map[string]string{"oidc_issuer_url": "url", "oidc_client_id": "id", "extra-key": "key"},
+			input: map[string]string{"oidcIssuerUrl": "url", "oidcClientId": "id", "extraKey": "key"},
 		},
 		{
 			name: "missing key",
@@ -75,7 +75,7 @@ func TestFromMap(t *testing.T) {
 				OIDCIssuerURL: "url",
 				OIDCClientID:  "",
 			},
-			input: map[string]string{"oidc_issuer_url": "url"},
+			input: map[string]string{"oidcIssuerUrl": "url"},
 		},
 	}
 
