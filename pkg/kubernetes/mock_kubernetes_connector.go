@@ -17,6 +17,7 @@ import (
 
 	v1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	accounts "github.com/percona/everest/pkg/accounts"
+	common "github.com/percona/everest/pkg/common"
 	client "github.com/percona/everest/pkg/kubernetes/client"
 )
 
@@ -476,6 +477,34 @@ func (_m *MockKubernetesConnector) GetEverestID(ctx context.Context) (string, er
 		r0 = rf(ctx)
 	} else {
 		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetEverestSettings provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) GetEverestSettings(ctx context.Context) (common.EverestSettings, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetEverestSettings")
+	}
+
+	var r0 common.EverestSettings
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (common.EverestSettings, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) common.EverestSettings); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(common.EverestSettings)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -989,6 +1018,24 @@ func (_m *MockKubernetesConnector) UpdateDeployment(ctx context.Context, deploym
 	}
 
 	return r0, r1
+}
+
+// UpdateEverestSettings provides a mock function with given fields: ctx, settings
+func (_m *MockKubernetesConnector) UpdateEverestSettings(ctx context.Context, settings common.EverestSettings) error {
+	ret := _m.Called(ctx, settings)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateEverestSettings")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, common.EverestSettings) error); ok {
+		r0 = rf(ctx, settings)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // UpgradeOperator provides a mock function with given fields: ctx, namespace, name
