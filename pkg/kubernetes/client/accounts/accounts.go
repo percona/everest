@@ -18,10 +18,8 @@ package accounts
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"time"
@@ -124,14 +122,6 @@ func (a *configMapsClient) SetPassword(ctx context.Context, username, newPasswor
 	user.PasswordHash = pwHash
 	user.PasswordMtime = time.Now().Format(time.RFC3339)
 	return a.insertOrUpdateAccount(ctx, username, user, !insecure)
-}
-
-func (a *configMapsClient) generateRandomPassword() (string, error) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(b), nil
 }
 
 func (a *configMapsClient) insertOrUpdateAccount(

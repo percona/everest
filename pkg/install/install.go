@@ -741,7 +741,11 @@ func validateRFC1035(s string) error {
 
 func (o *Install) resetEverestAdminPassword(ctx context.Context) error {
 	o.l.Info("Resetting admin password")
-	if err := o.kubeClient.Accounts().Create(ctx, common.EverestAdminUser, ""); err != nil {
+	pass, err := generateRandomPassword()
+	if err != nil {
+		return errors.Join(err, errors.New("could not generate random password"))
+	}
+	if err := o.kubeClient.Accounts().SetPassword(ctx, common.EverestAdminUser, pass, true); err != nil {
 		return err
 	}
 	return nil
@@ -759,4 +763,12 @@ func (o *Install) createEverestJWTToken(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+func generateRandomPassword() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
 }
