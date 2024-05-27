@@ -17,7 +17,7 @@ import { Stack, Typography } from '@mui/material';
 import EditableItem from 'components/editable-item/editable-item';
 import { LabeledContent } from '@percona/ui-lib';
 import { Messages } from './schedules.messages';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DbWizardFormFields } from '../../../../database-form.types';
 import { useFormContext } from 'react-hook-form';
 import { Schedule } from 'shared-types/dbCluster.types';
@@ -30,6 +30,7 @@ import { ScheduleFormDialog } from 'components/schedule-form-dialog';
 import { ScheduleFormDialogContext } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog.context';
 import { ScheduleFormData } from 'components/schedule-form-dialog/schedule-form/schedule-form-schema';
 import { dbTypeToDbEngine } from '@percona/utils';
+import { DbType } from '@percona/types';
 
 const Schedules = () => {
   const { watch, setValue } = useFormContext();
@@ -42,6 +43,19 @@ const Schedules = () => {
     DbWizardFormFields.k8sNamespace,
     DbWizardFormFields.schedules,
   ]);
+
+  const createButtonDisabled =
+    openScheduleModal ||
+    (dbType === DbType.Postresql && schedules?.length >= 3);
+  const [activeStorage, setActiveStorage] = useState(undefined);
+
+  useEffect(() => {
+    if (schedules?.length > 0 && dbType === DbType.Mongo) {
+      setActiveStorage(schedules[0]?.backupStorageName);
+    } else {
+      setActiveStorage(undefined);
+    }
+  }, [schedules, dbType]);
 
   const handleDelete = (name: string) => {
     setValue(
@@ -81,11 +95,17 @@ const Schedules = () => {
         actionButtonProps={{
           dataTestId: 'create-schedule',
           buttonText: 'Create backup schedule',
-          disabled: openScheduleModal,
+          disabled: createButtonDisabled,
           onClick: () => handleCreate(),
         }}
       >
         <Stack>
+          {dbType === DbType.Mongo && (
+            <Typography variant="caption">{Messages.mongoDb}</Typography>
+          )}
+          {dbType === DbType.Postresql && (
+            <Typography variant="caption">{Messages.pg}</Typography>
+          )}
           {schedules.map((item: Schedule) => (
             <EditableItem
               key={item.name}
@@ -128,6 +148,7 @@ const Schedules = () => {
               schedules,
               namespace: k8sNamespace,
               dbEngine: dbTypeToDbEngine(dbType),
+              activeStorage,
             },
           }}
         >

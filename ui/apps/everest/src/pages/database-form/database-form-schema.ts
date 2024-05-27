@@ -62,11 +62,6 @@ const backupsStepSchema = z
         schedule: z.string(),
       })
     ),
-  })
-  .passthrough();
-
-const pitrStepSchema = z
-  .object({
     [DbWizardFormFields.pitrEnabled]: z.boolean(),
     [DbWizardFormFields.pitrStorageLocation]: z
       .string()
@@ -135,7 +130,6 @@ export const getDBWizardSchema = (activeStep: number) => {
     basicInfoSchema,
     stepTwoSchema,
     backupsStepSchema,
-    pitrStepSchema,
     advancedConfigurationsSchema,
     stepFiveSchema,
   ];
@@ -148,12 +142,10 @@ export type AdvancedConfigurationType = z.infer<
   typeof advancedConfigurationsSchema
 >;
 export type BackupStepType = z.infer<typeof backupsStepSchema>;
-export type PITRStepType = z.infer<typeof pitrStepSchema>;
 export type StepFiveType = z.infer<typeof stepFiveSchema>;
 
 export type DbWizardType = BasicInfoType &
   StepTwoType &
   StepFiveType &
   AdvancedConfigurationType &
-  BackupStepType &
-  PITRStepType;
+  BackupStepType;
