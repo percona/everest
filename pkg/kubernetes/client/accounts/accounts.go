@@ -92,21 +92,14 @@ func (a *configMapsClient) Create(ctx context.Context, username, password string
 		return accounts.ErrUserAlreadyExists
 	}
 
+	if password == "" {
+		return errors.New("password cannot be empty")
+	}
+
 	// Compute a hash for the password.
 	hash, err := a.computePasswordHash(ctx, password)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to compute hash"))
-	}
-	secure := true
-
-	// Initial admin account is stored in plain text.
-	if username == common.EverestAdminUser && password == "" {
-		randomPass, err := a.generateRandomPassword()
-		if err != nil {
-			return errors.Join(err, errors.New("failed to generate random password"))
-		}
-		hash = randomPass
-		secure = false
 	}
 
 	account := &accounts.Account{
@@ -115,8 +108,7 @@ func (a *configMapsClient) Create(ctx context.Context, username, password string
 		PasswordMtime: time.Now().Format(time.RFC3339),
 		PasswordHash:  hash,
 	}
-
-	return a.insertOrUpdateAccount(ctx, username, account, secure)
+	return a.insertOrUpdateAccount(ctx, username, account, true)
 }
 
 // SetPassword sets a new password for an existing user account.
