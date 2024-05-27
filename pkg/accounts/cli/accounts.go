@@ -113,7 +113,7 @@ func (c *CLI) SetPassword(ctx context.Context, username, password string) error 
 		return errors.New("invalid credentials")
 	}
 
-	if err := c.accountManager.SetPassword(ctx, username, password, false); err != nil {
+	if err := c.accountManager.SetPassword(ctx, username, password, true); err != nil {
 		return err
 	}
 	c.l.Infof("Password updated for user '%s'", username)

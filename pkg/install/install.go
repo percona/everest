@@ -745,7 +745,7 @@ func (o *Install) resetEverestAdminPassword(ctx context.Context) error {
 	if err != nil {
 		return errors.Join(err, errors.New("could not generate random password"))
 	}
-	if err := o.kubeClient.Accounts().SetPassword(ctx, common.EverestAdminUser, pass, true); err != nil {
+	if err := o.kubeClient.Accounts().SetPassword(ctx, common.EverestAdminUser, pass, false); err != nil {
 		return err
 	}
 	return nil
