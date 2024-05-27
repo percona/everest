@@ -51,7 +51,7 @@ func Tests(t *testing.T, p Interface) {
 	require.NoError(t, err)
 
 	// Update password for user1.
-	err = p.SetPassword(ctx, "user1", "updated-password1")
+	err = p.SetPassword(ctx, "user1", "updated-password1", false)
 	require.NoError(t, err)
 	// Verify updated password.
 	err = p.Verify(ctx, "user1", "updated-password1")

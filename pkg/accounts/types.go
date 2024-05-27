@@ -64,6 +64,6 @@ type Interface interface {
 	Get(ctx context.Context, username string) (*Account, error)
 	List(ctx context.Context) (map[string]*Account, error)
 	Delete(ctx context.Context, username string) error
-	SetPassword(ctx context.Context, username, newPassword string) error
+	SetPassword(ctx context.Context, username, newPassword string, insecure bool) error
 	Verify(ctx context.Context, username, password string) error
 }

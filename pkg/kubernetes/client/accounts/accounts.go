@@ -120,7 +120,7 @@ func (a *configMapsClient) Create(ctx context.Context, username, password string
 }
 
 // SetPassword sets a new password for an existing user account.
-func (a *configMapsClient) SetPassword(ctx context.Context, username, newPassword string) error {
+func (a *configMapsClient) SetPassword(ctx context.Context, username, newPassword string, insecure bool) error {
 	user, err := a.Get(ctx, username)
 	if err != nil {
 		return err
@@ -131,7 +131,7 @@ func (a *configMapsClient) SetPassword(ctx context.Context, username, newPasswor
 	}
 	user.PasswordHash = pwHash
 	user.PasswordMtime = time.Now().Format(time.RFC3339)
-	return a.insertOrUpdateAccount(ctx, username, user, true)
+	return a.insertOrUpdateAccount(ctx, username, user, !insecure)
 }
 
 func (a *configMapsClient) generateRandomPassword() (string, error) {
