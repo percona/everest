@@ -173,12 +173,18 @@ test.describe('Operator upgrades', () => {
       }
     );
     await page.goto(`/settings/namespaces/${namespaces[0]}`);
-    (await page.getByRole('button').all()).forEach((button) => {
+    await expect(
+      page
+        .getByTestId('toggle-button-group-input-db-type')
+        .getByText('Upgrading')
+    ).toBeVisible();
+    const dbButtons = await page
+      .getByTestId('toggle-button-group-input-db-type')
+      .getByRole('button')
+      .all();
+    dbButtons.forEach((button) => {
       expect(button).toBeDisabled();
     });
-    await expect(
-      page.getByTestId('mongodb-toggle-button').getByText('Upgrading')
-    ).toBeVisible();
   });
 
   test('Pending tasks', async ({ page }) => {
