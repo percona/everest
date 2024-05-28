@@ -60,8 +60,10 @@ func NewOIDC(c Config, l *zap.SugaredLogger) (*OIDC, error) {
 // Run runs the command.
 func (u *OIDC) Run(ctx context.Context) error {
 	err := u.kubeClient.UpdateEverestSettings(ctx, common.EverestSettings{
-		OIDCIssuerURL: u.config.IssuerURL,
-		OIDCClientID:  u.config.ClientID,
+		OIDC: common.OIDCConfig{
+			IssuerURL: u.config.IssuerURL,
+			ClientID:  u.config.ClientID,
+		},
 	})
 	if err != nil {
 		return err

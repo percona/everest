@@ -19,18 +19,22 @@ func TestToMap(t *testing.T) {
 		{
 			name: "correct",
 			input: EverestSettings{
-				OIDCIssuerURL: "url",
-				OIDCClientID:  "id",
+				OIDC: OIDCConfig{
+					IssuerURL: "url",
+					ClientID:  "id",
+				},
 			},
-			expected: map[string]string{"oidcIssuerUrl": "url", "oidcClientId": "id"},
+			expected: map[string]string{"oidc": "issuerUrl: url\nclientId: id\n"},
 		},
 		{
 			name: "empty oidc",
 			input: EverestSettings{
-				OIDCIssuerURL: "",
-				OIDCClientID:  "",
+				OIDC: OIDCConfig{
+					IssuerURL: "",
+					ClientID:  "",
+				},
 			},
-			expected: map[string]string{"oidcIssuerUrl": "", "oidcClientId": ""},
+			expected: map[string]string{"oidc": "issuerUrl: \"\"\nclientId: \"\"\n"},
 		},
 	}
 
@@ -56,26 +60,32 @@ func TestFromMap(t *testing.T) {
 		{
 			name: "correct",
 			expected: EverestSettings{
-				OIDCIssuerURL: "url",
-				OIDCClientID:  "id",
+				OIDC: OIDCConfig{
+					IssuerURL: "url",
+					ClientID:  "id",
+				},
 			},
-			input: map[string]string{"oidcIssuerUrl": "url", "oidcClientId": "id"},
+			input: map[string]string{"oidc": "issuerUrl: url\nclientId: id\n"},
 		},
 		{
 			name: "extra key",
 			expected: EverestSettings{
-				OIDCIssuerURL: "url",
-				OIDCClientID:  "id",
+				OIDC: OIDCConfig{
+					IssuerURL: "url",
+					ClientID:  "id",
+				},
 			},
-			input: map[string]string{"oidcIssuerUrl": "url", "oidcClientId": "id", "extraKey": "key"},
+			input: map[string]string{"oidc": "issuerUrl: url\nclientId: id\nextraKey: value\n"},
 		},
 		{
 			name: "missing key",
 			expected: EverestSettings{
-				OIDCIssuerURL: "url",
-				OIDCClientID:  "",
+				OIDC: OIDCConfig{
+					IssuerURL: "url",
+					ClientID:  "",
+				},
 			},
-			input: map[string]string{"oidcIssuerUrl": "url"},
+			input: map[string]string{"oidc": "issuerUrl: url\n"},
 		},
 	}
 
