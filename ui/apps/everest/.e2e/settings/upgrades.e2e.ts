@@ -182,8 +182,8 @@ test.describe('Operator upgrades', () => {
       .getByTestId('toggle-button-group-input-db-type')
       .getByRole('button')
       .all();
-    dbButtons.forEach((button) => {
-      expect(button).toBeDisabled();
+    dbButtons.forEach(async (button) => {
+      await expect(button).toBeDisabled();
     });
   });
 
