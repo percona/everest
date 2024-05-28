@@ -117,3 +117,28 @@ export const useUpdateDbCluster = (
     },
     ...options,
   });
+
+export const useUpdateDbClusterCrd = () =>
+  useMutation({
+    mutationFn: ({
+      clusterName,
+      namespace,
+      dbCluster,
+      newCrdVersion,
+    }: {
+      clusterName: string;
+      namespace: string;
+      dbCluster: DbCluster;
+      newCrdVersion: string;
+    }) =>
+      updateDbClusterFn(clusterName, namespace, {
+        ...dbCluster,
+        spec: {
+          ...dbCluster.spec,
+          engine: {
+            ...dbCluster.spec.engine,
+            crVersion: newCrdVersion,
+          },
+        },
+      }),
+  });

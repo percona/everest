@@ -6,6 +6,7 @@ import { OperatorUpgradeDb } from 'shared-types/dbEngines.types';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { ClusterStatusTableProps } from './types';
 import { useDbClusters } from 'hooks/api/db-clusters/useDbClusters';
+import { useUpdateDbClusterCrd } from 'hooks/api/db-cluster/useUpdateDbCluster';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import { Messages } from './messages';
 
@@ -21,6 +22,7 @@ const ClusterStatusTable = ({
       ),
     enabled: !!namespace && !!databases.length,
   });
+  const { mutate: updateDbClusterCrd } = useUpdateDbClusterCrd();
   const [openDialog, setOpenDialog] = useState(false);
   const selectedDbCluster = useRef<DbCluster>();
 
@@ -39,6 +41,27 @@ const ClusterStatusTable = ({
     },
     [dbClusters]
   );
+
+  const onCrdUpdate = async () => {
+    if (
+      !selectedDbCluster.current ||
+      !selectedDbCluster.current.status?.recommendedCRVersion
+    ) {
+      return;
+    }
+
+    const {
+      metadata: { name, namespace },
+    } = selectedDbCluster.current;
+    await updateDbClusterCrd({
+      clusterName: name,
+      namespace,
+      dbCluster: selectedDbCluster.current,
+      newCrdVersion:
+        selectedDbCluster.current.status?.recommendedCRVersion || '',
+    });
+    setOpenDialog(false);
+  };
 
   const columns = useMemo<MRT_ColumnDef<OperatorUpgradeDb>[]>(
     () => [
@@ -94,7 +117,7 @@ const ClusterStatusTable = ({
         isOpen={openDialog}
         selectedId={selectedDbCluster.current?.metadata.name || ''}
         closeModal={() => setOpenDialog(false)}
-        handleConfirm={() => null}
+        handleConfirm={onCrdUpdate}
         headerMessage="Upgrade CRD Version"
         submitMessage="Upgrade"
       >
