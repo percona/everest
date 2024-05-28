@@ -7,7 +7,11 @@ import { Messages } from 'pages/databases/dbClusterView.messages';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { DbCluster, GetDbClusterPayload } from 'shared-types/dbCluster.types';
+import {
+  DbCluster,
+  DbClusterStatus,
+  GetDbClusterPayload,
+} from 'shared-types/dbCluster.types';
 
 export const useDbActions = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -124,8 +128,18 @@ export const useDbActions = () => {
 
               return {
                 ...oldData,
-                items: oldData.items.filter(
-                  (value) => value.metadata.name !== variables.dbClusterName
+                items: oldData.items.map((item) =>
+                  item.metadata.name === variables.dbClusterName
+                    ? {
+                        ...item,
+                        status: {
+                          ...item.status,
+                          hostname: item.status?.hostname || '',
+                          port: item.status?.port || 0,
+                          status: DbClusterStatus.deleting,
+                        },
+                      }
+                    : item
                 ),
               };
             }
