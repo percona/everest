@@ -21,6 +21,7 @@ import { AutoCompleteAutoFill } from '../../auto-complete-auto-fill/auto-complet
 import { TimeSelection } from '../../time-selection/time-selection';
 import { Messages } from './schedule-form.messages.ts';
 import { ScheduleFormFields } from './schedule-form.types.ts';
+import { Alert } from '@mui/material';
 
 type ScheduleFormProps = {
   allowScheduleSelection?: boolean;
@@ -32,6 +33,7 @@ type ScheduleFormProps = {
   storageLocationOptions: BackupStorage[];
   showTypeRadio: boolean;
   hideRetentionCopies?: boolean;
+  hasDuplicatedSchedule?: boolean;
 };
 export const ScheduleForm = ({
   allowScheduleSelection,
@@ -43,6 +45,7 @@ export const ScheduleForm = ({
   storageLocationOptions,
   showTypeRadio,
   hideRetentionCopies,
+  hasDuplicatedSchedule,
 }: ScheduleFormProps) => {
   const schedulesNamesList =
     (schedules && schedules.map((item) => item?.name)) || [];
@@ -101,6 +104,15 @@ export const ScheduleForm = ({
       <LabeledContent label={Messages.repeats}>
         <TimeSelection showInfoAlert />
       </LabeledContent>
+      {hasDuplicatedSchedule && (
+        <Alert
+          data-testid="same-schedule-warning"
+          sx={{ mt: 2 }}
+          severity="warning"
+        >
+          {Messages.sameDateAndStorage}
+        </Alert>
+      )}
     </>
   );
 };

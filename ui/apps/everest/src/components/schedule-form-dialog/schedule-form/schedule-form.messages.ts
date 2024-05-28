@@ -33,4 +33,6 @@ export const Messages = {
   },
   backupDetails: 'Backup Details',
   repeats: 'Repeats',
+  sameDateAndStorage:
+    'You already have a schedule with the same date and storage.',
 };

@@ -34,7 +34,11 @@ import {
   submitWizard,
 } from '../../../utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '../../../constants';
-import { addFirstScheduleInDBWizard } from '../db-wizard-utils';
+import {
+  addFirstScheduleInDBWizard,
+  fillScheduleModalForm,
+  openCreateScheduleDialogFromDBWizard,
+} from '../db-wizard-utils';
 import { findDbAndClickActions } from '../../../utils/db-clusters-list';
 import { waitForInitializingState } from '../../../utils/table';
 
@@ -334,5 +338,22 @@ test.describe('DB Cluster creation', () => {
     await setPitrEnabledStatus(page, true);
 
     await deleteDbClusterFn(request, clusterName, namespace);
+  });
+
+  test('Warning should appears for schedule with the same date and storage', async ({
+    page,
+  }) => {
+    await page.goto('/databases');
+    await page.getByTestId('add-db-cluster-button').click();
+
+    // Resources Step
+    await moveForward(page);
+    // Backups step
+    await moveForward(page);
+    await addFirstScheduleInDBWizard(page);
+    await openCreateScheduleDialogFromDBWizard(page);
+    await expect(page.getByTestId('same-schedule-warning')).not.toBeVisible();
+    await fillScheduleModalForm(page);
+    await expect(page.getByTestId('same-schedule-warning')).toBeVisible();
   });
 });
