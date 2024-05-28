@@ -501,6 +501,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-clusters/{name}/components':
+    get:
+      tags:
+        - databaseCluster
+      summary: Get the components related data for the specified database cluster
+      description: Get the components related data for the specified database cluster
+      operationId: getDatabaseClusterComponents
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterComponents'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines':
     get:
       tags:
@@ -1635,6 +1674,38 @@ components:
         password:
           type: string
           example: root
+    DatabaseClusterComponents:
+      type: array
+      description: components related data
+      items:
+        type: object
+        x-go-type-name: DatabaseClusterComponent
+        properties:
+          status:
+            type: string
+          name:
+            type: string
+          type:
+            type: string
+          age:
+            type: string
+          restarts:
+            type: integer
+          ready:
+            type: string
+          containers:
+            type: array
+            items:
+              $ref: '#/components/schemas/DatabaseClusterComponentContainer'
+    DatabaseClusterComponentContainer:
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: string
+        restarts:
+          type: integer
     DatabaseClusterPitr:
       type: object
       description: point-in-time recovery related data

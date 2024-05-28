@@ -19,6 +19,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 	"time"
@@ -112,6 +113,51 @@ func (e *EverestServer) DeleteDatabaseCluster(
 // GetDatabaseCluster retrieves the specified database cluster on the specified kubernetes cluster.
 func (e *EverestServer) GetDatabaseCluster(ctx echo.Context, namespace, name string) error {
 	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, name)
+}
+
+// GetDatabaseClusterComponents returns database cluster components.
+func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace, name string) error {
+	pods, err := e.kubeClient.GetPods(ctx.Request().Context(), namespace, &metav1.LabelSelector{
+		MatchLabels: map[string]string{"app.kubernetes.io/instance": name},
+	})
+	if err != nil {
+		e.l.Error(err)
+		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString("Could not get pods")})
+	}
+
+	res := make([]DatabaseClusterComponent, 0, len(pods.Items))
+	for _, pod := range pods.Items {
+		restarts := 0
+		ready := 0
+		containers := make([]DatabaseClusterComponentContainer, 0, len(pod.Status.ContainerStatuses))
+		for _, c := range pod.Status.ContainerStatuses {
+			restarts += int(c.RestartCount)
+			if c.Ready {
+				ready++
+			}
+			age := ""
+			if c.State.Running != nil {
+				age = time.Since(c.State.Running.StartedAt.Time).Round(time.Second).String()
+			}
+			containers = append(containers, DatabaseClusterComponentContainer{
+				Name:     &c.Name,
+				Age:      &age,
+				Restarts: pointer.ToInt(int(c.RestartCount)),
+			})
+		}
+		component := pod.Labels["app.kubernetes.io/component"]
+		res = append(res, DatabaseClusterComponent{
+			Status:     pointer.ToString(string(pod.Status.Phase)),
+			Name:       &pod.Name,
+			Type:       &component,
+			Age:        pointer.ToString(time.Since(pod.Status.StartTime.Time).Round(time.Second).String()),
+			Restarts:   pointer.ToInt(restarts),
+			Ready:      pointer.ToString(fmt.Sprintf("%d/%d", ready, len(pod.Status.ContainerStatuses))),
+			Containers: &containers,
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, res)
 }
 
 // UpdateDatabaseCluster replaces the specified database cluster on the specified kubernetes cluster.
