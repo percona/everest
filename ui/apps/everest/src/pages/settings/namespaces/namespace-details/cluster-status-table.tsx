@@ -47,6 +47,22 @@ const ClusterStatusTable = ({
         header: 'Database name',
       },
       {
+        id: 'crd',
+        accessorFn: (row) => row.name,
+        header: 'CRD Version',
+        Cell: ({ cell }) => {
+          if (!dbClusters.length) {
+            return null;
+          }
+
+          const db = dbClusters.find(
+            (cluster) => cluster.metadata.name === cell.getValue()
+          );
+
+          return db?.status?.crVersion || 'N/A';
+        },
+      },
+      {
         accessorKey: 'message',
         header: 'Actions',
         Cell: ({ cell, row }) => {
