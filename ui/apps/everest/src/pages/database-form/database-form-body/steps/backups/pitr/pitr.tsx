@@ -13,19 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Alert, Box } from '@mui/material';
-import { DbType } from '@percona/types';
-import { SwitchInput } from '@percona/ui-lib';
-import { useEffect } from 'react';
-import { useFormContext } from 'react-hook-form';
-import { DbWizardFormFields } from '../../../database-form.types';
-import { StepHeader } from '../step-header/step-header';
-import PitrStorage from './pitr-storage';
+import { Stack, Typography } from '@mui/material';
 import { Messages } from './pitr.messages';
+import { LabeledContent, SwitchInput } from '@percona/ui-lib';
+import { DbType } from '@percona/types';
+import { DbWizardFormFields } from '../../../../database-form.types';
+import { useFormContext } from 'react-hook-form';
+import PitrStorage from './pitr-storage';
+import { useEffect } from 'react';
 
-const PITRStep = () => {
+const PITR = () => {
   const { control, watch, setValue } = useFormContext();
-
   const [dbType, schedules] = watch([
     DbWizardFormFields.dbType,
     DbWizardFormFields.schedules,
@@ -48,34 +46,39 @@ const PITRStep = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backupsEnabled]);
 
+  useEffect(() => {
+    if (dbType !== DbType.Mysql && schedules?.length > 0) {
+      setValue(
+        DbWizardFormFields.pitrStorageLocation,
+        schedules[0]?.backupStorageName
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schedules, dbType]);
+
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <StepHeader
-        pageTitle={Messages.header}
-        pageDescription={Messages.description}
-      />
-      {!backupsEnabled && (
-        <Alert severity="info" sx={{ mt: 1 }}>
-          {Messages.toEnablePitr}
-        </Alert>
-      )}
-      <SwitchInput
-        control={control}
-        label={Messages.enablePitr}
-        labelCaption={
-          dbType === DbType.Postresql ? Messages.enablePitrCaption : undefined
-        }
-        name={DbWizardFormFields.pitrEnabled}
-        switchFieldProps={{
-          disabled: pitrDisabled,
-        }}
-        formControlLabelProps={{
-          sx: { my: 1 },
-        }}
-      />
-      <PitrStorage />
-    </Box>
+    <Stack sx={{ mt: 7 }}>
+      <LabeledContent label={Messages.sectionHeader} sx={{ mt: 0 }}>
+        <Typography variant="body2">{Messages.description}</Typography>
+        <SwitchInput
+          control={control}
+          label={Messages.enablePitr}
+          labelCaption={Messages.pitrSwitchLabelCaption(
+            dbType,
+            schedules[0]?.backupStorageName || ''
+          )}
+          name={DbWizardFormFields.pitrEnabled}
+          switchFieldProps={{
+            disabled: pitrDisabled,
+          }}
+          formControlLabelProps={{
+            sx: { my: 1 },
+          }}
+        />
+        <PitrStorage />
+      </LabeledContent>
+    </Stack>
   );
 };
 
-export default PITRStep;
+export default PITR;

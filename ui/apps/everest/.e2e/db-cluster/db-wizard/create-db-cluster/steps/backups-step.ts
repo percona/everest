@@ -22,5 +22,20 @@ export const backupsStepCheck = async (page: Page) => {
     )
   ).toBeVisible();
 
+  const enabledPitrCheckbox = page
+    .getByTestId('switch-input-pitr-enabled-label')
+    .getByRole('checkbox');
+
+  await expect(enabledPitrCheckbox).not.toBeChecked();
+
   await addFirstScheduleInDBWizard(page);
+
+  await expect(
+    page.getByText('Point-in-time Recovery', { exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      'PITR provides continuous backups of your database, enabling you to restore it to'
+    )
+  ).toBeVisible();
 };

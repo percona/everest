@@ -24,7 +24,6 @@ import { getClusterDetailedInfo } from '../../../utils/storage-class';
 import { advancedConfigurationStepCheck } from './steps/advanced-configuration-step';
 import { backupsStepCheck } from './steps/backups-step';
 import { basicInformationStepCheck } from './steps/basic-information-step';
-import { pitrStepCheck } from './steps/pitr-step';
 import { resourcesStepCheck } from './steps/resources-step';
 import {
   goToLastAndSubmit,
@@ -35,8 +34,8 @@ import {
   submitWizard,
 } from '../../../utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '../../../constants';
-import { findDbAndClickActions } from '../../../utils/db-clusters-list';
 import { addFirstScheduleInDBWizard } from '../db-wizard-utils';
+import { findDbAndClickActions } from '../../../utils/db-clusters-list';
 import { waitForInitializingState } from '../../../utils/table';
 
 test.describe('DB Cluster creation', () => {
@@ -139,9 +138,6 @@ test.describe('DB Cluster creation', () => {
 
     await moveForward(page);
 
-    await pitrStepCheck(page);
-    await moveForward(page);
-
     await advancedConfigurationStepCheck(page);
     await moveForward(page);
 
@@ -227,21 +223,15 @@ test.describe('DB Cluster creation', () => {
     await expect(
       page.getByText('You don’t have any backup schedules yet.')
     ).toBeVisible();
-    await expect(page.getByTestId('pitr-no-backup-alert')).toBeVisible();
-
-    await moveForward(page);
     const enabledPitrCheckbox = page
       .getByTestId('switch-input-pitr-enabled-label')
       .getByRole('checkbox');
     await expect(enabledPitrCheckbox).not.toBeChecked();
     await expect(enabledPitrCheckbox).toBeDisabled();
-    await moveBack(page);
     await addFirstScheduleInDBWizard(page);
-    await moveForward(page);
     await expect(enabledPitrCheckbox).not.toBeChecked();
     await expect(enabledPitrCheckbox).not.toBeDisabled();
     await enabledPitrCheckbox.setChecked(true);
-
     await expect(
       page.getByTestId('text-input-pitr-storage-location')
     ).toBeVisible();
@@ -311,9 +301,6 @@ test.describe('DB Cluster creation', () => {
     await resourcesStepCheck(page);
     await moveForward(page);
     await backupsStepCheck(page);
-
-    await moveForward(page);
-    await pitrStepCheck(page);
     await page
       .getByTestId('switch-input-pitr-enabled-label')
       .getByRole('checkbox')
@@ -336,14 +323,14 @@ test.describe('DB Cluster creation', () => {
     await page.goto('/databases');
     await waitForInitializingState(page, clusterName);
     await findDbAndClickActions(page, clusterName, 'Edit');
-    await goToStep(page, 'point-in-time-recovery');
+    await goToStep(page, 'backups');
     await setPitrEnabledStatus(page, false);
     await goToLastAndSubmit(page);
 
     // We turn it back on to make sure nothing breaks
     await page.goto('/databases');
     await findDbAndClickActions(page, clusterName, 'Edit');
-    await goToStep(page, 'point-in-time-recovery');
+    await goToStep(page, 'backups');
     await setPitrEnabledStatus(page, true);
 
     await deleteDbClusterFn(request, clusterName, namespace);

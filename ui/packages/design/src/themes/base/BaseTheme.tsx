@@ -557,6 +557,15 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
         }),
       },
     },
+    MuiFormGroup: {
+      styleOverrides: {
+        root: () => ({
+          '> *:first-child': {
+            marginTop: 0,
+          },
+        }),
+      },
+    },
     MuiFormControl: {
       styleOverrides: {
         root: ({ theme }) => ({
