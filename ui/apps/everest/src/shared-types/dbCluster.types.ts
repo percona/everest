@@ -64,7 +64,7 @@ interface Engine {
   replicas: number;
   resources?: Resources;
   storage: Storage;
-  crVersion: string;
+  crVersion?: string;
   type: DbEngineType;
   version?: string;
   config?: string;
