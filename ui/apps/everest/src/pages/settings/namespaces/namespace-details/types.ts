@@ -24,7 +24,6 @@ export type UpgradeModalProps = {
   namespace: string;
   dbType: DbEngineType;
   newVersion: string;
-  supportedVersions: string[];
 };
 
 export type EngineLowerContentProps = {

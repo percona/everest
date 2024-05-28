@@ -192,7 +192,6 @@ const NamespaceDetails = () => {
       <UpgradeModal
         // TODO get values from API
         newVersion={lastTargetVersion}
-        supportedVersions={['1.0.0', '2.0.0']}
         namespace={namespace}
         dbType={dbTypeToDbEngine(methods.getValues('dbType'))}
         open={modalOpen}

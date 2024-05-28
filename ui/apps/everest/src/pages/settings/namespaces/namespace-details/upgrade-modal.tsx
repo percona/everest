@@ -9,8 +9,7 @@ const UpgradeModal = ({
   onConfirm,
   namespace,
   dbType,
-  newVersion, // supportedVersions,
-  // TODO add supported versions
+  newVersion,
 }: UpgradeModalProps) => {
   // const [showVersions, setShowVersions] = useState(false);
 
@@ -26,20 +25,6 @@ const UpgradeModal = ({
       <Typography variant="body1">
         {Messages.upgradeConfirmation(dbType, namespace, newVersion)}
       </Typography>
-      {/* <Button
-        size="small"
-        endIcon={
-          showVersions ? (
-            <KeyboardArrowUpOutlined />
-          ) : (
-            <KeyboardArrowDownOutlinedIcon />
-          )
-        }
-        onClick={() => setShowVersions((val) => !val)}
-      >
-        See supported database versions
-      </Button>
-      {showVersions && <Typography>{supportedVersions.join(';')}</Typography>} */}
     </ConfirmDialog>
   );
 };
