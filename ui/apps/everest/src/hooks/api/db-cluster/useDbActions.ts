@@ -134,6 +134,7 @@ export const useDbActions = () => {
                         ...item,
                         status: {
                           ...item.status,
+                          crVersion: item.status?.crVersion || '',
                           hostname: item.status?.hostname || '',
                           port: item.status?.port || 0,
                           status: DbClusterStatus.deleting,
