@@ -135,13 +135,13 @@ func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace
 			if c.Ready {
 				ready++
 			}
-			age := ""
+			var started time.Time
 			if c.State.Running != nil {
-				age = time.Since(c.State.Running.StartedAt.Time).Round(time.Second).String()
+				started = c.State.Running.StartedAt.Time
 			}
 			containers = append(containers, DatabaseClusterComponentContainer{
 				Name:     &c.Name,
-				Age:      &age,
+				Started:  pointer.ToString(started.Format(time.RFC3339)),
 				Restarts: pointer.ToInt(int(c.RestartCount)),
 			})
 		}
@@ -150,7 +150,7 @@ func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace
 			Status:     pointer.ToString(string(pod.Status.Phase)),
 			Name:       &pod.Name,
 			Type:       &component,
-			Age:        pointer.ToString(time.Since(pod.Status.StartTime.Time).Round(time.Second).String()),
+			Started:    pointer.ToString(pod.Status.StartTime.Time.Format(time.RFC3339)),
 			Restarts:   pointer.ToInt(restarts),
 			Ready:      pointer.ToString(fmt.Sprintf("%d/%d", ready, len(pod.Status.ContainerStatuses))),
 			Containers: &containers,

@@ -1687,7 +1687,7 @@ components:
             type: string
           type:
             type: string
-          age:
+          started:
             type: string
           restarts:
             type: integer
@@ -1702,7 +1702,7 @@ components:
       properties:
         name:
           type: string
-        age:
+        started:
           type: string
         restarts:
           type: integer
