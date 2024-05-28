@@ -1,14 +1,23 @@
 import { useMemo } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
+import { Button } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { OperatorUpgradeDb } from 'shared-types/dbEngines.types';
 import { ClusterStatusTableProps } from './types';
-import { Button } from '@mui/material';
+import { useDbClusters } from 'hooks/api/db-clusters/useDbClusters';
 
 const ClusterStatusTable = ({
   namespace,
   databases,
 }: ClusterStatusTableProps) => {
+  const dbNames = databases.map((db) => db.name);
+  const { data: dbClusters = [] } = useDbClusters(namespace, {
+    select: (clusters) =>
+      clusters.items.filter((cluster) =>
+        dbNames.includes(cluster.metadata.name)
+      ),
+    enabled: !!namespace && !!databases.length,
+  });
   const columns = useMemo<MRT_ColumnDef<OperatorUpgradeDb>[]>(
     () => [
       {
@@ -32,6 +41,7 @@ const ClusterStatusTable = ({
     ],
     []
   );
+  console.log(dbClusters);
 
   return (
     <>
