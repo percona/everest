@@ -11,4 +11,9 @@ export interface AuthContextProps {
   setRedirectRoute: (route: string) => void;
   authStatus: UserAuthStatus;
   redirectRoute: string | null;
+  authorize: (
+    action: string,
+    resource: string,
+    specificResource?: string
+  ) => Promise<boolean>;
 }
