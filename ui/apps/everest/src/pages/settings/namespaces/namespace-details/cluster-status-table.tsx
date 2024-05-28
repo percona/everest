@@ -1,10 +1,13 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
 import { Button } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { OperatorUpgradeDb } from 'shared-types/dbEngines.types';
+import { DbCluster } from 'shared-types/dbCluster.types';
 import { ClusterStatusTableProps } from './types';
 import { useDbClusters } from 'hooks/api/db-clusters/useDbClusters';
+import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
+import { Messages } from './messages';
 
 const ClusterStatusTable = ({
   namespace,
@@ -18,6 +21,25 @@ const ClusterStatusTable = ({
       ),
     enabled: !!namespace && !!databases.length,
   });
+  const [openDialog, setOpenDialog] = useState(false);
+  const selectedDbCluster = useRef<DbCluster>();
+
+  const onDbClick = useCallback(
+    (db: OperatorUpgradeDb) => {
+      selectedDbCluster.current = dbClusters.find(
+        (cluster) => cluster.metadata.name === db.name
+      );
+
+      if (
+        selectedDbCluster.current?.metadata.name &&
+        selectedDbCluster.current.status?.recommendedCRVersion
+      ) {
+        setOpenDialog(true);
+      }
+    },
+    [dbClusters]
+  );
+
   const columns = useMemo<MRT_ColumnDef<OperatorUpgradeDb>[]>(
     () => [
       {
@@ -32,16 +54,17 @@ const ClusterStatusTable = ({
           const message = cell.getValue<string>();
 
           if (task === 'restart') {
-            return <Button>{message}</Button>;
+            return (
+              <Button onClick={() => onDbClick(row.original)}>{message}</Button>
+            );
           }
 
           return message;
         },
       },
     ],
-    []
+    [onDbClick]
   );
-  console.log(dbClusters);
 
   return (
     <>
@@ -51,6 +74,19 @@ const ClusterStatusTable = ({
         columns={columns}
         data={databases}
       />
+      <ConfirmDialog
+        isOpen={openDialog}
+        selectedId={selectedDbCluster.current?.metadata.name || ''}
+        closeModal={() => setOpenDialog(false)}
+        handleConfirm={() => null}
+        headerMessage="Upgrade CRD Version"
+        submitMessage="Upgrade"
+      >
+        {Messages.upgradeCRVersion(
+          selectedDbCluster.current?.metadata.name || '',
+          selectedDbCluster.current?.status?.recommendedCRVersion || ''
+        )}
+      </ConfirmDialog>
     </>
   );
 };

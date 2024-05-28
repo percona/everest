@@ -106,6 +106,8 @@ export interface StatusSpec {
   hostname: string;
   port: number;
   activeStorage?: string;
+  crVersion: string;
+  recommendedCRVersion?: string;
 }
 
 export interface DbClusterMetadata {
