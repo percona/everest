@@ -140,7 +140,7 @@ func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace
 				started = c.State.Running.StartedAt.Time
 			}
 			containers = append(containers, DatabaseClusterComponentContainer{
-				Name:     &c.Name, //nolint:gosec
+				Name:     &c.Name, //nolint:gosec,exportloopref
 				Started:  pointer.ToString(started.Format(time.RFC3339)),
 				Restarts: pointer.ToInt(int(c.RestartCount)),
 			})
@@ -148,7 +148,7 @@ func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace
 		component := pod.Labels["app.kubernetes.io/component"]
 		res = append(res, DatabaseClusterComponent{
 			Status:     pointer.ToString(string(pod.Status.Phase)),
-			Name:       &pod.Name, //nolint:gosec
+			Name:       &pod.Name, //nolint:gosec,exportloopref
 			Type:       &component,
 			Started:    pointer.ToString(pod.Status.StartTime.Time.Format(time.RFC3339)),
 			Restarts:   pointer.ToInt(restarts),
