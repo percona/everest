@@ -76,6 +76,7 @@ const App = () => {
                       redirectUri: `${window.location.protocol}//${window.location.host}/`,
                       scope: 'openid profile email',
                       responseType: 'code',
+                      autoSignIn: false,
                       onSignIn: (user) => {
                         localStorage.setItem(
                           'everestToken',
