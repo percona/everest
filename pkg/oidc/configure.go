@@ -64,6 +64,9 @@ func (u *OIDC) Run(ctx context.Context) error {
 		ClientID:  u.config.ClientID,
 	}
 	oidcRaw, err := oidcCfg.Raw()
+	if err != nil {
+		return err
+	}
 
 	if err := u.kubeClient.UpdateEverestSettings(ctx, common.EverestSettings{
 		OIDCConfigRaw: oidcRaw,
