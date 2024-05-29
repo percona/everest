@@ -151,14 +151,6 @@ jobs:
           cd ui
           pnpm --filter "@percona/everest" e2e
 
-      - name: Archive test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: ui/apps/everest/.e2e/test-results/
-          overwrite: true
-
       - name: Archive report
         if: always()
         uses: actions/upload-artifact@v4
