@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Alert, Box } from '@mui/material';
+import { FormGroup, Box, Skeleton } from '@mui/material';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages';
 import { useFormContext } from 'react-hook-form';
 import { DbWizardFormFields } from '../../../database-form.types.ts';
@@ -21,15 +21,16 @@ import BackupsActionableAlert from 'components/actionable-alert/backups-actionab
 import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './backups.messages.ts';
 import Schedules from './schedules';
+import PITR from './pitr';
 
 export const Backups = () => {
   const { watch } = useFormContext();
 
-  const [selectedNamespace, schedules] = watch([
+  const [selectedNamespace] = watch([
     DbWizardFormFields.k8sNamespace,
     DbWizardFormFields.schedules,
   ]);
-  const { data: backupStorages = [] } =
+  const { data: backupStorages = [], isLoading } =
     useBackupStoragesByNamespace(selectedNamespace);
 
   return (
@@ -38,19 +39,23 @@ export const Backups = () => {
         pageTitle={Messages.backups}
         pageDescription={Messages.captionBackups}
       />
-      {backupStorages.length > 0 ? (
-        <Schedules />
+      {isLoading ? (
+        <>
+          <Skeleton height="200px" />
+          <Skeleton />
+          <Skeleton />
+        </>
       ) : (
-        <BackupsActionableAlert namespace={selectedNamespace} />
-      )}
-      {schedules?.length === 0 && (
-        <Alert
-          sx={{ mt: 1 }}
-          severity="info"
-          data-testid="pitr-no-backup-alert"
-        >
-          {Messages.pitrAlert}
-        </Alert>
+        <>
+          {backupStorages?.length > 0 ? (
+            <FormGroup sx={{ mt: 3 }}>
+              <Schedules />
+              <PITR />
+            </FormGroup>
+          ) : (
+            <BackupsActionableAlert namespace={selectedNamespace} />
+          )}
+        </>
       )}
     </Box>
   );

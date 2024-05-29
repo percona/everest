@@ -12,16 +12,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { expect, Page } from '@playwright/test';
 
-export const pitrStepCheck = async (page: Page) => {
-  await expect(page.getByTestId('step-header')).toHaveText(
-    'Point-in-time Recovery (PITR)'
-  );
+// Package commands ...
+package commands
 
-  const enabledPitrCheckbox = page
-    .getByTestId('switch-input-pitr-enabled-label')
-    .getByRole('checkbox');
+import (
+	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 
-  await expect(enabledPitrCheckbox).not.toBeChecked();
-};
+	"github.com/percona/everest/commands/oidc"
+)
+
+func newOIDCCmd(l *zap.SugaredLogger) *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "oidc",
+	}
+
+	cmd.AddCommand(oidc.NewConfigureCommand(l))
+
+	return cmd
+}

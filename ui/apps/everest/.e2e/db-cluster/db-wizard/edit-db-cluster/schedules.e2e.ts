@@ -61,9 +61,6 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
 
     await goToStep(page, 'backups');
     await addFirstScheduleInDBWizard(page);
-
-    // Go to Point-in-time Recovery (PITR)
-    await moveForward(page);
     // Go to Advanced Configuration step
     await moveForward(page);
     // Go to Monitoring step
@@ -94,8 +91,6 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     await addScheduleInDbWizard(page);
     await addScheduleInDbWizard(page);
 
-    // Go to Point-in-time Recovery (PITR)
-    await moveForward(page);
     // Go to Advanced Configuration step
     await moveForward(page);
     // Go to Monitoring step
