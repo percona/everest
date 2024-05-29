@@ -29,10 +29,10 @@ import (
 	"github.com/lestrrat-go/jwx/jwk"
 )
 
-// Config contains the OIDC config.
+// ProviderConfig contains the configuration of an OIDC provider.
 //
 //nolint:tagliatelle
-type Config struct {
+type ProviderConfig struct {
 	Issuer        string   `json:"issuer"`
 	AuthURL       string   `json:"authorization_endpoint"`
 	TokenURL      string   `json:"token_endpoint"`
@@ -42,31 +42,30 @@ type Config struct {
 	Algorithms    []string `json:"id_token_signing_alg_values_supported"`
 }
 
-// getConfig returns the OIDC config of a provider at the given issuer URL.
-func getConfig(ctx context.Context, issuer string) (Config, error) {
+func getProviderConfig(ctx context.Context, issuer string) (ProviderConfig, error) {
 	wellKnown := strings.TrimSuffix(issuer, "/") + "/.well-known/openid-configuration"
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, wellKnown, nil)
 	if err != nil {
-		return Config{}, err
+		return ProviderConfig{}, err
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return Config{}, err
+		return ProviderConfig{}, err
 	}
 	defer resp.Body.Close() //nolint:errcheck
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return Config{}, fmt.Errorf("unable to read response body: %w", err)
+		return ProviderConfig{}, fmt.Errorf("unable to read response body: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return Config{}, fmt.Errorf("%s: %s", resp.Status, body)
+		return ProviderConfig{}, fmt.Errorf("%s: %s", resp.Status, body)
 	}
 
-	var result Config
+	var result ProviderConfig
 	if err := json.Unmarshal(body, &result); err != nil {
-		return Config{}, fmt.Errorf("failed to unmarshal JSON response: %w", err)
+		return ProviderConfig{}, fmt.Errorf("failed to unmarshal JSON response: %w", err)
 	}
 	return result, nil
 }
@@ -83,7 +82,7 @@ func NewKeyFunc(ctx context.Context, issuer string) (jwt.Keyfunc, error) {
 		}, nil
 	}
 
-	cfg, err := getConfig(ctx, issuer)
+	cfg, err := getProviderConfig(ctx, issuer)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to get OIDC config"))
 	}
