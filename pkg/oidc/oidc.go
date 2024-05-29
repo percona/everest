@@ -73,6 +73,10 @@ func getProviderConfig(ctx context.Context, issuer string) (ProviderConfig, erro
 // NewKeyFunc returns a new function for getting the public JWK keys
 // from the OIDC provider at the given issuer URL.
 func NewKeyFunc(ctx context.Context, issuer string) (jwt.Keyfunc, error) {
+	if issuer == "" {
+		return nil, errors.New("issuer URL not provided")
+	}
+
 	cfg, err := getProviderConfig(ctx, issuer)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to get OIDC config"))
@@ -81,6 +85,7 @@ func NewKeyFunc(ctx context.Context, issuer string) (jwt.Keyfunc, error) {
 	if cfg.JWKSURL == "" {
 		return nil, errors.New("did not find jwks_uri in oidc config")
 	}
+
 	refresher := jwk.NewAutoRefresh(ctx)
 	refresher.Configure(cfg.JWKSURL)
 

@@ -151,14 +151,7 @@ func (e *EverestServer) oidcKeyFn(ctx context.Context) (jwt.Keyfunc, error) {
 	if err != nil {
 		return nil, errors.Join(err, errors.New("cannot parse OIDC raw config"))
 	}
-	if oidcConfig.IssuerURL == "" {
-		return nil, errors.New("OIDC issuer URL is not set")
-	}
-	fn, err := oidc.NewKeyFunc(ctx, oidcConfig.IssuerURL)
-	if err != nil {
-		return nil, err
-	}
-	return fn, nil
+	return oidc.NewKeyFunc(ctx, oidcConfig.IssuerURL)
 }
 
 func (e *EverestServer) newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) {
