@@ -92,7 +92,9 @@ func NewKeyFunc(ctx context.Context, issuer string) (jwt.Keyfunc, error) {
 	}
 
 	keyCache := jwk.NewCache(ctx)
-	keyCache.Register(cfg.JWKSURL, jwk.WithRefreshInterval(defaultJWKRefreshInterval))
+	if err := keyCache.Register(cfg.JWKSURL, jwk.WithRefreshInterval(defaultJWKRefreshInterval)); err != nil {
+		return nil, errors.Join(err, errors.New("failed to register jwk cache"))
+	}
 
 	return func(token *jwt.Token) (interface{}, error) {
 		keySet, err := keyCache.Get(ctx, cfg.JWKSURL)
