@@ -88,6 +88,8 @@ metadata:
   name: percona-everest
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
   selector:
     matchLabels:
       app.kubernetes.io/name: everest
