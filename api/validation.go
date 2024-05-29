@@ -762,7 +762,7 @@ type apiSchedule []struct {
 func checkDuplicateSchedules(schedules apiSchedule) error {
 	m := make(map[string]struct{})
 	for _, s := range schedules {
-		key := s.Schedule + s.BackupStorageName
+		key := s.Schedule
 		if _, ok := m[key]; ok {
 			return errDuplicatedSchedules
 		}
