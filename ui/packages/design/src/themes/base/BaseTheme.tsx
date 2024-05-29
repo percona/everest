@@ -471,13 +471,13 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
           }),
 
           ...(ownerState.size === 'large' && {
-            fontSize: 16,
+            fontSize: 15,
           }),
           ...(ownerState.size === 'medium' && {
-            fontSize: 16,
+            fontSize: 13,
           }),
           ...(ownerState.size === 'small' && {
-            fontSize: 14,
+            fontSize: 13,
           }),
 
           '&:hover': {

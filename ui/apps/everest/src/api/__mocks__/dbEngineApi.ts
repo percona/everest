@@ -34,6 +34,9 @@ export const getDbEnginesFn = async (): Promise<GetDbEnginesPayload> => {
           },
           operatorVersion: '1.0.0,',
         },
+        metadata: {
+          name: 'pxc-1',
+        },
       },
       {
         spec: {
@@ -47,6 +50,9 @@ export const getDbEnginesFn = async (): Promise<GetDbEnginesPayload> => {
             proxy: {},
           },
           operatorVersion: '1.0.0,',
+        },
+        metadata: {
+          name: 'psmdb-1',
         },
       },
     ],

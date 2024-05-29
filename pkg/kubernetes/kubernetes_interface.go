@@ -16,6 +16,7 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/accounts"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes/client"
 )
 
@@ -115,4 +116,8 @@ type KubernetesConnector interface {
 	SetJWTToken(ctx context.Context, token string) error
 	// GetJWTToken returns the JWT token from the everest-jwt secret.
 	GetJWTToken(ctx context.Context) (string, error)
+	// UpdateEverestSettings accepts the full list of Everest settings and updates the settings.
+	UpdateEverestSettings(ctx context.Context, settings common.EverestSettings) error
+	// GetEverestSettings returns Everest settings.
+	GetEverestSettings(ctx context.Context) (common.EverestSettings, error)
 }

@@ -1,13 +1,4 @@
-import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
-import {
-  Alert,
-  Box,
-  IconButton,
-  Skeleton,
-  Tab,
-  Tabs,
-  Typography,
-} from '@mui/material';
+import { Alert, Box, Skeleton, Tab, Tabs } from '@mui/material';
 import { useDbClusters } from 'hooks/api/db-clusters/useDbClusters';
 import {
   Link,
@@ -17,6 +8,7 @@ import {
   useParams,
 } from 'react-router-dom';
 import { NoMatch } from '../404/NoMatch';
+import BackNavigationText from 'components/back-navigation-text';
 import { DbActionButton } from './db-action-button';
 import { Messages } from './db-cluster-details.messages';
 import { DBClusterDetailsTabs } from './db-cluster-details.types';
@@ -64,19 +56,10 @@ export const DbClusterDetails = () => {
           mb: 1,
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 1,
-            alignItems: 'center',
-            mr: 1,
-          }}
-        >
-          <IconButton onClick={() => navigate('/databases')}>
-            <ArrowBackIosIcon sx={{ pl: '10px' }} fontSize="large" />
-          </IconButton>
-          <Typography variant="h4">{dbClusterName}</Typography>
-        </Box>
+        <BackNavigationText
+          text={dbClusterName!}
+          onBackClick={() => navigate('/databases')}
+        />
         {/* At this point, loading is done and we either have the cluster or not */}
         <DbActionButton dbCluster={dbCluster!} />
       </Box>
