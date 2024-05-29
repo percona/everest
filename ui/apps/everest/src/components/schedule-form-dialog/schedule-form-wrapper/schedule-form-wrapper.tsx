@@ -20,10 +20,13 @@ import { DbEngineType } from 'shared-types/dbEngines.types.ts';
 import { ScheduleFormDialogContext } from '../schedule-form-dialog-context/schedule-form-dialog.context';
 import { ScheduleFormFields } from '../schedule-form/schedule-form.types';
 import { ScheduleForm } from '../schedule-form/schedule-form';
-import { useSameSchedule } from './useSameSchedule';
 
 export const ScheduleFormWrapper = () => {
-  const { watch, setValue, trigger } = useFormContext();
+  const {
+    watch,
+    setValue,
+    trigger,
+  } = useFormContext();
   const {
     mode = 'new',
     setSelectedScheduleName,
@@ -32,9 +35,21 @@ export const ScheduleFormWrapper = () => {
   const { namespace, schedules = [], activeStorage, dbEngine } = dbClusterInfo;
   const { data: backupStorages = [], isFetching } =
     useBackupStoragesByNamespace(namespace);
-  const [isSameSchedule] = useSameSchedule(schedules);
 
   const [scheduleName] = watch([ScheduleFormFields.scheduleName]);
+  const [amPm, hour, minute, onDay, weekDay, selectedTime] = watch([
+    ScheduleFormFields.amPm,
+    ScheduleFormFields.hour,
+    ScheduleFormFields.minute,
+    ScheduleFormFields.onDay,
+    ScheduleFormFields.weekDay,
+    ScheduleFormFields.selectedTime,
+  ]);
+
+  useEffect(() => {
+    // This allowed us to get an error from zod .superRefine to avoid duplication of checking the schedule with the same time
+    trigger();
+  }, [amPm, hour, minute, onDay, weekDay, selectedTime]);
 
   useEffect(() => {
     if (mode === 'edit' && setSelectedScheduleName) {
@@ -61,7 +76,6 @@ export const ScheduleFormWrapper = () => {
       schedules={schedules}
       storageLocationFetching={isFetching}
       storageLocationOptions={backupStorages}
-      hasDuplicatedSchedule={isSameSchedule}
     />
   );
 };
