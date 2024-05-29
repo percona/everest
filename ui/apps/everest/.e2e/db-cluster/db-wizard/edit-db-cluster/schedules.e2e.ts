@@ -58,7 +58,9 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     page,
   }) => {
     await findDbAndClickActions(page, mySQLName, 'Edit');
-
+    await expect(
+      page.getByTestId('toggle-button-group-input-db-type')
+    ).toBeVisible();
     await goToStep(page, 'backups');
     await addFirstScheduleInDBWizard(page);
     // Go to Advanced Configuration step
@@ -85,7 +87,9 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
 
   test('Adding multi schedules during dbWizard editing', async ({ page }) => {
     await findDbAndClickActions(page, mySQLName, 'Edit');
-
+    await expect(
+      page.getByTestId('toggle-button-group-input-db-type')
+    ).toBeVisible();
     await goToStep(page, 'backups');
 
     await addScheduleInDbWizard(page);

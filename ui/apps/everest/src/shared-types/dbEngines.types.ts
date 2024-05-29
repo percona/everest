@@ -21,6 +21,7 @@ export enum DbEngineType {
 export enum DbEngineStatus {
   INSTALLED = 'installed',
   NOT_INSTALLED = 'not installed',
+  UPGRADING = 'upgrading',
 }
 
 export enum DbEngineToolStatus {
@@ -33,6 +34,15 @@ export type EngineToolPayload = {
   imagePath: string;
   imageHash: string;
   status: DbEngineToolStatus;
+};
+
+export type PendingOperatorUpgrade = {
+  targetVersion: string;
+};
+
+export type OperatorUpgrade = {
+  startedAt: string;
+  targetVersion: string;
 };
 
 export type GetDbEnginesPayload = {
@@ -48,6 +58,11 @@ export type GetDbEnginesPayload = {
         proxy: Record<string, EngineToolPayload>;
       };
       operatorVersion: string;
+      pendingOperatorUpgrades?: PendingOperatorUpgrade[];
+      operatorUpgrade?: OperatorUpgrade;
+    };
+    metadata: {
+      name: string;
     };
   }>;
 };
@@ -58,6 +73,7 @@ type DbEngineTool = {
 
 export type DbEngine = {
   type: DbEngineType;
+  name: string;
   status: DbEngineStatus;
   operatorVersion: string;
   availableVersions: {
@@ -65,4 +81,23 @@ export type DbEngine = {
     engine: DbEngineTool[];
     proxy: DbEngineTool[];
   };
+  pendingOperatorUpgrades?: PendingOperatorUpgrade[];
+  operatorUpgrade?: OperatorUpgrade;
+};
+
+export type DbUpgradePendingTask =
+  | 'ready'
+  | 'notReady'
+  | 'restart'
+  | 'upgradeEngine';
+
+export type OperatorUpgradeDb = {
+  name: string;
+  message: string;
+  pendingTask: DbUpgradePendingTask;
+};
+
+export type OperatorUpgradePreflightPayload = {
+  currentVersion: string;
+  databases?: OperatorUpgradeDb[];
 };
