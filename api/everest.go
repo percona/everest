@@ -34,6 +34,7 @@ import (
 	middleware "github.com/oapi-codegen/echo-middleware"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/common"
@@ -41,10 +42,6 @@ import (
 	"github.com/percona/everest/pkg/oidc"
 	"github.com/percona/everest/pkg/session"
 	"github.com/percona/everest/public"
-)
-
-const (
-	oidcIssuer = "https://id-dev.percona.com/oauth2/default"
 )
 
 // EverestServer represents the server struct.
@@ -142,12 +139,33 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	return nil
 }
 
+func (e *EverestServer) getOIDCIssuerURL(ctx context.Context) (string, error) {
+	settings, err := e.kubeClient.GetEverestSettings(ctx)
+	if err = client.IgnoreNotFound(err); err != nil {
+		return "", err
+	}
+	if settings.OIDCConfigRaw == "" {
+		return "", nil
+	}
+	oidcConfig, err := settings.OIDCConfig()
+	if err != nil {
+		return "", errors.Join(err, errors.New("cannot parse OIDC raw config"))
+	}
+	return oidcConfig.IssuerURL, nil
+}
+
 func (e *EverestServer) newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) {
-	everestKeyFunc := e.sessionMgr.KeyFunc()
-	oidcKeyFunc, err := oidc.NewKeyFunc(ctx, oidcIssuer)
+	// Prepare OIDC key function.
+	oidcIssuerURL, err := e.getOIDCIssuerURL(ctx)
 	if err != nil {
 		return nil, err
 	}
+	oidcKeyFunc, err := oidc.NewKeyFunc(ctx, oidcIssuerURL)
+	if err != nil {
+		return nil, err
+	}
+
+	everestKeyFunc := e.sessionMgr.KeyFunc()
 	return func(token *jwt.Token) (interface{}, error) {
 		if token.Header["kid"] == session.KeyID {
 			return everestKeyFunc(token)
