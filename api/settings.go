@@ -1,11 +1,11 @@
 package api
 
 import (
-	"k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
 
 	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
+	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 // GetSettings returns the Everest global settings.
