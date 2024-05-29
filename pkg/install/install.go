@@ -64,7 +64,7 @@ kubectl get secret everest-accounts -n everest-system -o jsonpath='{.data.users\
 
 IMPORTANT: This password is NOT stored in a hashed format. To secure it, update the password using the following command:
 
-everestctl accounts set-password --user admin
+everestctl accounts set-password --username admin
 `
 
 // Install implements the main logic for commands.
