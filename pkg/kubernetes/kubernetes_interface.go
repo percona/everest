@@ -113,14 +113,10 @@ type KubernetesConnector interface {
 	UpdateClusterRoleBinding(ctx context.Context, name string, namespaces []string) error
 	// OperatorInstalledVersion returns the installed version of operator by name.
 	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
-	// SetJWTToken sets the provided JWT token in the everest-jwt secret.
-	SetJWTToken(ctx context.Context, token string) error
-	// GetJWTToken returns the JWT token from the everest-jwt secret.
-	GetJWTToken(ctx context.Context) (string, error)
+	// CreateRSAKeyPair creates a new RSA key pair and stores it in a secret.
+	CreateRSAKeyPair(ctx context.Context) error
 	// UpdateEverestSettings accepts the full list of Everest settings and updates the settings.
 	UpdateEverestSettings(ctx context.Context, settings common.EverestSettings) error
 	// GetEverestSettings returns Everest settings.
 	GetEverestSettings(ctx context.Context) (common.EverestSettings, error)
-	// CreateRSAKeyPair creates a new RSA key pair and stores it in a secret.
-	CreateRSAKeyPair(ctx context.Context) error
 }

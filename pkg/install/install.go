@@ -19,6 +19,8 @@ package install
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/url"
@@ -747,21 +749,6 @@ func (o *Install) resetEverestAdminPassword(ctx context.Context) error {
 	}
 	return nil
 }
-<<<<<<< HEAD
-
-func (o *Install) createEverestJWTToken(ctx context.Context) error {
-	o.l.Info("Creating JWT token for Everest")
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return err
-	}
-	token := hex.EncodeToString(b)
-
-	if err := o.kubeClient.SetJWTToken(ctx, token); err != nil {
-		return err
-	}
-	return nil
-}
 
 func generateRandomPassword() (string, error) {
 	b := make([]byte, 32)
@@ -770,5 +757,3 @@ func generateRandomPassword() (string, error) {
 	}
 	return hex.EncodeToString(b), nil
 }
-=======
->>>>>>> f815ee8 (Add methods for creating RSA key-pair for Everest)
