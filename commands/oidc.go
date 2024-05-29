@@ -13,7 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kubernetes
+// Package commands ...
+package commands
 
-//go:generate ../../bin/ifacemaker -f accounts.go -f deployment.go -f install_plan.go -f kubernetes.go -f operator.go -f jwt.go -f oidc.go -s Kubernetes -i KubernetesConnector -p kubernetes -o kubernetes_interface.go
-//go:generate ../../bin/mockery --name=KubernetesConnector --case=snake --inpackage
+import (
+	"github.com/spf13/cobra"
+	"go.uber.org/zap"
+
+	"github.com/percona/everest/commands/oidc"
+)
+
+func newOIDCCmd(l *zap.SugaredLogger) *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "oidc",
+	}
+
+	cmd.AddCommand(oidc.NewConfigureCommand(l))
+
+	return cmd
+}
