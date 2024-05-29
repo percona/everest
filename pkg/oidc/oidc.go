@@ -24,9 +24,14 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lestrrat-go/jwx/v2/jwk"
+)
+
+const (
+	defaultJWKRefreshInterval = 5 * time.Minute
 )
 
 // ProviderConfig contains the configuration of an OIDC provider.
@@ -86,11 +91,11 @@ func NewKeyFunc(ctx context.Context, issuer string) (jwt.Keyfunc, error) {
 		return nil, errors.New("did not find jwks_uri in oidc config")
 	}
 
-	refresher := jwk.NewAutoRefresh(ctx)
-	refresher.Configure(cfg.JWKSURL)
+	keyCache := jwk.NewCache(ctx)
+	keyCache.Register(cfg.JWKSURL, jwk.WithRefreshInterval(defaultJWKRefreshInterval))
 
 	return func(token *jwt.Token) (interface{}, error) {
-		keySet, err := refresher.Fetch(ctx, cfg.JWKSURL)
+		keySet, err := keyCache.Get(ctx, cfg.JWKSURL)
 		if err != nil {
 			return nil, err
 		}
