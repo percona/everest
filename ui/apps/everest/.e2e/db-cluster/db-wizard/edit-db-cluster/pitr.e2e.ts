@@ -73,6 +73,9 @@ test.describe.serial('MySQL PITR editing', async () => {
     page,
   }) => {
     await findDbAndClickActions(page, mySQLName, 'Edit', 'UP');
+    await expect(
+      page.getByTestId('toggle-button-group-input-db-type')
+    ).toBeVisible();
     await goToStep(page, 'backups');
 
     const pitrCheckbox = page
@@ -193,7 +196,9 @@ test.describe.serial('MongoDb PITR editing', async () => {
   }) => {
     await page.goto('/databases');
     await findDbAndClickActions(page, psmdbName, 'Edit', 'UP');
-
+    await expect(
+      page.getByTestId('toggle-button-group-input-db-type')
+    ).toBeVisible();
     await goToStep(page, 'backups');
 
     const pitrCheckbox = page
