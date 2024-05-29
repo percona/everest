@@ -44,7 +44,7 @@ export const ScheduleForm = ({
 
   const errorInfoAlert = errors?.root ? (
     <Alert data-testid="same-schedule-warning" severity="error">
-      {Messages.sameTimeSchedule}
+      {errors?.root?.message}
     </Alert>
   ) : null;
 

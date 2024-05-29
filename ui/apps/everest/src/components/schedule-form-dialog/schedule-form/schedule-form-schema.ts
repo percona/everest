@@ -109,7 +109,7 @@ export const schema = (schedules: Schedule[], mode?: 'edit' | 'new') => {
         if (sameSchedule) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: 'Duplicate time error',
+            message: Messages.sameTimeSchedule,
             path: ['root'],
           });
         }
