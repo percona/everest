@@ -99,7 +99,8 @@ func (c *CLI) SetPassword(ctx context.Context, username, password string) error 
 				Prompt:   &survey.Password{Message: "Re-enter new password"},
 				Validate: survey.Required,
 			},
-		}, &resp); err != nil {
+		}, &resp,
+		); err != nil {
 			return err
 		}
 		if resp.Password != resp.ConfPassword {
