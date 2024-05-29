@@ -104,9 +104,6 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
     await page.getByRole('option', { name: pxcStorageLocationName }).click();
     await page.getByTestId('form-dialog-create').click();
 
-    // PITR step
-    await moveForward(page);
-
     const pitrCheckbox = page
       .getByTestId('switch-input-pitr-enabled')
       .getByRole('checkbox');

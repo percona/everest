@@ -34,6 +34,8 @@ var (
 	ErrInsufficientCapabilities = errors.New("insufficient capabilities")
 	// ErrAccountDisabled is returned when the account is disabled.
 	ErrAccountDisabled = errors.New("account disabled")
+	// ErrUserAlreadyExists is returned when we try to create a user that already exists.
+	ErrUserAlreadyExists = errors.New("user already exists")
 )
 
 const (
@@ -62,5 +64,6 @@ type Interface interface {
 	Get(ctx context.Context, username string) (*Account, error)
 	List(ctx context.Context) (map[string]*Account, error)
 	Delete(ctx context.Context, username string) error
+	SetPassword(ctx context.Context, username, newPassword string, secure bool) error
 	Verify(ctx context.Context, username, password string) error
 }

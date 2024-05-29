@@ -32,9 +32,10 @@ import {
   checkSuccessOfUpdateAndGoToDbClustersList,
 } from './edit-db-cluster.utils';
 import { STORAGE_NAMES } from '../../../constants';
+import { addFirstScheduleInDBWizard } from '../db-wizard-utils';
 import { waitForInitializingState } from '../../../utils/table';
 
-test.describe.serial('DB Cluster Editing PITR Step', async () => {
+test.describe.serial('MySQL PITR editing', async () => {
   const mySQLName = 'db-pitr-mysql';
 
   test.beforeAll(async ({ request }) => {
@@ -72,9 +73,8 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
     page,
   }) => {
     await findDbAndClickActions(page, mySQLName, 'Edit', 'UP');
-    await goToStep(page, 'point-in-time-recovery');
+    await goToStep(page, 'backups');
 
-    // Check PITR form
     const pitrCheckbox = page
       .getByTestId('switch-input-pitr-enabled')
       .getByRole('checkbox');
@@ -98,11 +98,13 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
     await storageOptions.first().click();
 
     // Check the preview actual value
-    await expect(
-      page
-        .getByTestId('section-Point-in-time Recovery')
+    const pitrPreviewText = (
+      await page
+        .getByTestId('section-Backups')
         .getByTestId('preview-content')
-    ).toHaveText('Enabled');
+        .allInnerTexts()
+    )[1];
+    expect(pitrPreviewText).toBe('PITR Enabled');
 
     // Go to Advanced Configuration step
     await moveForward(page);
@@ -114,32 +116,21 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
 
     await findDbAndClickActions(page, mySQLName, 'Edit');
 
-    // Go to Resources step
-    await moveForward(page);
-    // Go to Backups step
-    await moveForward(page);
-
-    // Go to PITR step
-    await moveForward(page);
+    // Go to PITR
+    await goToStep(page, 'backups');
     await expect(pitrCheckbox).toBeChecked();
     await expect(pitrStorageLocation).toBeVisible();
     await expect(pitrStorageLocation).not.toBeEmpty();
   });
 
-  test('Disable PITR for database during editing pitr step in dbWizard', async ({
+  test('Disable PITR for database during editing in dbWizard', async ({
     page,
   }) => {
     await findDbAndClickActions(page, mySQLName, 'Edit');
     await expect(page.getByTestId('mysql-toggle-button')).toBeVisible();
 
-    // Go to Resources step
-    await moveForward(page);
-    // Go to Backups step
-    await moveForward(page);
-    // Go to PITR step
-    await moveForward(page);
-
     // Check PITR step
+    await goToStep(page, 'backups');
     const pitrCheckbox = page
       .getByTestId('switch-input-pitr-enabled')
       .getByRole('checkbox');
@@ -153,16 +144,15 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
     // Disable PITR
     await pitrCheckbox.setChecked(false);
     // Check the preview actual value
-    await expect(
-      page
-        .getByTestId('section-Point-in-time Recovery')
+    const pitrPreviewText = (
+      await page
+        .getByTestId('section-Backups')
         .getByTestId('preview-content')
-    ).toHaveText('Disabled');
+        .allInnerTexts()
+    )[1];
+    expect(pitrPreviewText).toBe('PITR Disabled');
 
-    // Go to Advanced Configuration step
-    await moveForward(page);
-    // Go to Monitoring step
-    await moveForward(page);
+    await goToStep(page, 'monitoring');
 
     await checkDbWizardEditSubmitIsAvailableAndClick(page);
     await checkSuccessOfUpdateAndGoToDbClustersList(page);
@@ -172,5 +162,87 @@ test.describe.serial('DB Cluster Editing PITR Step', async () => {
     await expect(page.getByTestId('pitr-overview-section-text')).toHaveText(
       'Disabled'
     );
+  });
+});
+
+test.describe.serial('MongoDb PITR editing', async () => {
+  const psmdbName = 'db-pitr-psmdb';
+
+  test.beforeAll(async ({ request }) => {
+    await createDbClusterFn(request, {
+      dbName: psmdbName,
+      dbType: 'mongodb',
+      numberOfNodes: '3',
+      cpu: 1,
+      disk: 1,
+      memory: 1,
+    });
+  });
+
+  test.afterAll(async ({ request }) => {
+    await deleteDbClusterFn(request, psmdbName);
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/databases');
+    await waitForInitializingState(page, psmdbName);
+  });
+
+  test('Enable PITR to database during editing in dbWizard', async ({
+    page,
+  }) => {
+    await page.goto('/databases');
+    await findDbAndClickActions(page, psmdbName, 'Edit', 'UP');
+
+    await goToStep(page, 'backups');
+
+    const pitrCheckbox = page
+      .getByTestId('switch-input-pitr-enabled')
+      .getByRole('checkbox');
+    await expect(pitrCheckbox).not.toBeChecked();
+    await expect(pitrCheckbox).toBeDisabled();
+    await addFirstScheduleInDBWizard(page);
+    await expect(pitrCheckbox).not.toBeDisabled();
+    await expect(
+      page
+        .getByTestId('switch-input-pitr-enabled-label')
+        .getByText(`Storage: ${STORAGE_NAMES[1]}`)
+    ).toBeVisible();
+
+    // TODO move to schedules part
+    // MongoDB could create schedules only with the one of storages, so for not first schedules storage should be disabled
+    await expect(
+      page.getByText(
+        'The backup storage you select for your first backup schedule will be used for al'
+      )
+    ).toBeVisible();
+    await page.getByTestId('create-schedule').click();
+    const scheduleStorageLocation = page.getByTestId(
+      'text-input-storage-location'
+    );
+    await expect(scheduleStorageLocation).toBeDisabled();
+    await expect(scheduleStorageLocation).not.toBeEmpty();
+    await page.getByTestId('close-dialog-icon').click();
+
+    // Enable pitr
+    await pitrCheckbox.setChecked(true);
+    await expect(pitrCheckbox).toBeChecked();
+
+    // Check the preview actual value
+    const pitrPreviewText = (
+      await page
+        .getByTestId('section-Backups')
+        .getByTestId('preview-content')
+        .allInnerTexts()
+    )[1];
+    expect(pitrPreviewText).toBe('PITR Enabled');
+
+    await goToStep(page, 'monitoring');
+    await checkDbWizardEditSubmitIsAvailableAndClick(page);
+    await checkSuccessOfUpdateAndGoToDbClustersList(page);
+
+    await findDbAndClickActions(page, psmdbName, 'Edit');
+    await goToStep(page, 'backups');
+    await expect(pitrCheckbox).toBeChecked();
   });
 });

@@ -28,7 +28,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/percona/everest/pkg/accounts"
-	"github.com/percona/everest/pkg/common"
 )
 
 // CLI provides functionality for managing user accounts via the CLI.
@@ -66,6 +65,58 @@ func (c *CLI) runCredentialsWizard(username, password *string) error {
 			return err
 		}
 	}
+	return nil
+}
+
+// SetPassword sets the password for an existing account.
+func (c *CLI) SetPassword(ctx context.Context, username, password string) error {
+	if username == "" {
+		pUsername := survey.Input{
+			Message: "Enter username",
+		}
+		if err := survey.AskOne(&pUsername, username); err != nil {
+			return err
+		}
+	}
+
+	if username == "" {
+		return errors.New("username is required")
+	}
+
+	if password == "" {
+		resp := struct {
+			Password     string
+			ConfPassword string
+		}{}
+		if err := survey.Ask([]*survey.Question{
+			{
+				Name:     "Password",
+				Prompt:   &survey.Password{Message: "Enter new password"},
+				Validate: survey.Required,
+			},
+			{
+				Name:     "ConfPassword",
+				Prompt:   &survey.Password{Message: "Re-enter new password"},
+				Validate: survey.Required,
+			},
+		}, &resp); err != nil {
+			return err
+		}
+		if resp.Password != resp.ConfPassword {
+			return errors.New("passwords do not match")
+		}
+		password = resp.Password
+	}
+
+	if ok, msg := validateCredentials(username, password); !ok {
+		c.l.Error(msg)
+		return errors.New("invalid credentials")
+	}
+
+	if err := c.accountManager.SetPassword(ctx, username, password, true); err != nil {
+		return err
+	}
+	c.l.Infof("Password updated for user '%s'", username)
 	return nil
 }
 
@@ -168,9 +219,6 @@ func (c *CLI) List(ctx context.Context, opts *ListOptions) error {
 }
 
 func validateCredentials(username, password string) (bool, string) {
-	if username == common.EverestAdminUser && password == "" {
-		return true, ""
-	}
 	if !validateUsername(username) {
 		return false,
 			"Username must contain only letters, numbers, and underscores, and must be at least 3 characters long"
