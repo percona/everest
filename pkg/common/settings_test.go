@@ -19,22 +19,16 @@ func TestToMap(t *testing.T) {
 		{
 			name: "correct",
 			input: EverestSettings{
-				OIDC: OIDCConfig{
-					IssuerURL: "url",
-					ClientID:  "id",
-				},
+				OIDCConfigRaw: "issuerUrl: url\nclientId: id\n",
 			},
-			expected: map[string]string{"oidc": "issuerUrl: url\nclientId: id\n"},
+			expected: map[string]string{"oidc.config": "issuerUrl: url\nclientId: id\n"},
 		},
 		{
 			name: "empty oidc",
 			input: EverestSettings{
-				OIDC: OIDCConfig{
-					IssuerURL: "",
-					ClientID:  "",
-				},
+				OIDCConfigRaw: "issuerUrl: \"\"\nclientId: \"\"\n",
 			},
-			expected: map[string]string{"oidc": "issuerUrl: \"\"\nclientId: \"\"\n"},
+			expected: map[string]string{"oidc.config": "issuerUrl: \"\"\nclientId: \"\"\n"},
 		},
 	}
 
@@ -60,32 +54,23 @@ func TestFromMap(t *testing.T) {
 		{
 			name: "correct",
 			expected: EverestSettings{
-				OIDC: OIDCConfig{
-					IssuerURL: "url",
-					ClientID:  "id",
-				},
+				OIDCConfigRaw: "issuerUrl: url\nclientId: id\n",
 			},
-			input: map[string]string{"oidc": "issuerUrl: url\nclientId: id\n"},
+			input: map[string]string{"oidc.config": "issuerUrl: url\nclientId: id\n"},
 		},
 		{
 			name: "extra key",
 			expected: EverestSettings{
-				OIDC: OIDCConfig{
-					IssuerURL: "url",
-					ClientID:  "id",
-				},
+				OIDCConfigRaw: "issuerUrl: url\nclientId: id\nextraKey: value\n",
 			},
-			input: map[string]string{"oidc": "issuerUrl: url\nclientId: id\nextraKey: value\n"},
+			input: map[string]string{"oidc.config": "issuerUrl: url\nclientId: id\nextraKey: value\n"},
 		},
 		{
 			name: "missing key",
 			expected: EverestSettings{
-				OIDC: OIDCConfig{
-					IssuerURL: "url",
-					ClientID:  "",
-				},
+				OIDCConfigRaw: "issuerUrl: url\n",
 			},
-			input: map[string]string{"oidc": "issuerUrl: url\n"},
+			input: map[string]string{"oidc.config": "issuerUrl: url\n"},
 		},
 	}
 
@@ -96,6 +81,52 @@ func TestFromMap(t *testing.T) {
 			err := result.FromMap(tc.input)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestOIDCConfig(t *testing.T) {
+	t.Parallel()
+	type testCase struct {
+		name      string
+		rawConfig string
+		expected  OIDCConfig
+	}
+
+	testCases := []testCase{
+		{
+			name: "correct",
+			expected: OIDCConfig{
+				IssuerURL: "url",
+				ClientID:  "id",
+			},
+			rawConfig: "issuerUrl: url\nclientId: id\n",
+		},
+		{
+			name: "extra key",
+			expected: OIDCConfig{
+				IssuerURL: "url",
+				ClientID:  "id",
+			},
+			rawConfig: "issuerUrl: url\nclientId: id\nextraKey: value\n",
+		},
+		{
+			name: "missing key",
+			expected: OIDCConfig{
+				IssuerURL: "url",
+				ClientID:  "",
+			},
+			rawConfig: "issuerUrl: url\n",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			settings := EverestSettings{OIDCConfigRaw: tc.rawConfig}
+			config, err := settings.OIDCConfig()
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, config)
 		})
 	}
 }
