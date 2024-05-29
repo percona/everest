@@ -1,6 +1,7 @@
 package api
 
 import (
+	"k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
 
 	"github.com/AlekSi/pointer"
@@ -10,7 +11,7 @@ import (
 // GetSettings returns the Everest global settings.
 func (e *EverestServer) GetSettings(ctx echo.Context) error {
 	settings, err := e.kubeClient.GetEverestSettings(ctx.Request().Context())
-	if err != nil {
+	if err != nil && !errors.IsNotFound(err) {
 		return ctx.JSON(http.StatusInternalServerError, Error{
 			Message: pointer.To("Failed to get Everest settings"),
 		})
