@@ -139,38 +139,44 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	return nil
 }
 
-func (e *EverestServer) getOIDCIssuerURL(ctx context.Context) (string, error) {
+func (e *EverestServer) oidcKeyFn(ctx context.Context) (jwt.Keyfunc, error) {
 	settings, err := e.kubeClient.GetEverestSettings(ctx)
 	if err = client.IgnoreNotFound(err); err != nil {
-		return "", err
+		return nil, err
 	}
 	if settings.OIDCConfigRaw == "" {
-		return "", nil
+		return nil, nil //nolint:nilnil
 	}
 	oidcConfig, err := settings.OIDCConfig()
 	if err != nil {
-		return "", errors.Join(err, errors.New("cannot parse OIDC raw config"))
+		return nil, errors.Join(err, errors.New("cannot parse OIDC raw config"))
 	}
-	return oidcConfig.IssuerURL, nil
+	if oidcConfig.IssuerURL == "" {
+		return nil, errors.New("OIDC issuer URL is not set")
+	}
+	fn, err := oidc.NewKeyFunc(ctx, oidcConfig.IssuerURL)
+	if err != nil {
+		return nil, err
+	}
+	return fn, nil
 }
 
 func (e *EverestServer) newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) {
-	// Prepare OIDC key function.
-	oidcIssuerURL, err := e.getOIDCIssuerURL(ctx)
+	oidcKeyFn, err := e.oidcKeyFn(ctx)
 	if err != nil {
-		return nil, err
-	}
-	oidcKeyFunc, err := oidc.NewKeyFunc(ctx, oidcIssuerURL)
-	if err != nil {
-		return nil, err
+		return nil, errors.Join(err, errors.New("failed to get OIDC key function"))
 	}
 
-	everestKeyFunc := e.sessionMgr.KeyFunc()
 	return func(token *jwt.Token) (interface{}, error) {
 		if token.Header["kid"] == session.KeyID {
-			return everestKeyFunc(token)
+			return e.sessionMgr.KeyFunc()(token)
 		}
-		return oidcKeyFunc(token)
+		// XXX: currently we use OIDC only, but once we have multiple protocols supported,
+		// we should have a way to select which KeyFunc to use.
+		if oidcKeyFn != nil {
+			return oidcKeyFn(token)
+		}
+		return nil, errors.New("no key found for token")
 	}, nil
 }
 

@@ -73,15 +73,6 @@ func getProviderConfig(ctx context.Context, issuer string) (ProviderConfig, erro
 // NewKeyFunc returns a new function for getting the public JWK keys
 // from the OIDC provider at the given issuer URL.
 func NewKeyFunc(ctx context.Context, issuer string) (jwt.Keyfunc, error) {
-	if issuer == "" {
-		// We do not return an error, instead we return a KeyFunc that returns an error.
-		// This is because it should be possible to use the KeyFunc without the issuer URL,
-		// otherwise the server would not start when the user has not configured an OIDC provider.
-		return func(_ *jwt.Token) (interface{}, error) {
-			return nil, errors.New("issuer url needs to be configured to use this keyFunc")
-		}, nil
-	}
-
 	cfg, err := getProviderConfig(ctx, issuer)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to get OIDC config"))
