@@ -3,7 +3,7 @@ import { UknownIcon } from '@percona/ui-lib';
 import { BaseStatus, StatusFieldProps } from './status-field.types';
 import { STATUS_TO_ICON } from './status-field.utils';
 
-export function StatusField<T extends string | number | symbol>({
+function StatusField<T extends string | number | symbol>({
   status,
   statusMap,
   children,
@@ -23,3 +23,5 @@ export function StatusField<T extends string | number | symbol>({
     </Stack>
   );
 }
+
+export default StatusField;

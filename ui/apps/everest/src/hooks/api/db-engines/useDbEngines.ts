@@ -12,15 +12,25 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { useQuery } from '@tanstack/react-query';
+import {
+  UseMutationOptions,
+  useMutation,
+  useQuery,
+} from '@tanstack/react-query';
+import { PerconaQueryOptions } from 'shared-types/query.types';
 import {
   DbEngine,
   DbEngineStatus,
   DbEngineType,
   EngineToolPayload,
   GetDbEnginesPayload,
+  OperatorUpgradePreflightPayload,
 } from 'shared-types/dbEngines.types';
-import { getDbEnginesFn } from 'api/dbEngineApi';
+import {
+  getDbEnginesFn,
+  getOperatorUpgradePreflight,
+  upgradeOperator,
+} from 'api/dbEngineApi';
 
 const DB_TYPE_ORDER_MAP: Record<DbEngineType, number> = {
   // Lower is more important
@@ -29,21 +39,29 @@ const DB_TYPE_ORDER_MAP: Record<DbEngineType, number> = {
   [DbEngineType.POSTGRESQL]: 3,
 };
 
-export const dbEnginesQuerySelect = ({
-  items = [],
-}: GetDbEnginesPayload): DbEngine[] =>
+export const dbEnginesQuerySelect = (
+  { items = [] }: GetDbEnginesPayload,
+  retrieveUpgradingEngines = false
+): DbEngine[] =>
   items
     .filter(
-      (item) => item.status && item.status.status === DbEngineStatus.INSTALLED
+      (item) =>
+        item.status &&
+        (item.status.status === DbEngineStatus.INSTALLED ||
+          (retrieveUpgradingEngines &&
+            item.status.status === DbEngineStatus.UPGRADING))
     )
-    .map(({ spec: { type }, status }) => {
+    .map(({ spec: { type }, status, metadata: { name } }) => {
       const {
         status: engineStatus,
         availableVersions,
         operatorVersion,
+        pendingOperatorUpgrades = [],
+        operatorUpgrade,
       } = status!;
       const result: DbEngine = {
         type,
+        name,
         operatorVersion,
         status: engineStatus,
         availableVersions: {
@@ -51,6 +69,8 @@ export const dbEnginesQuerySelect = ({
           engine: [],
           proxy: [],
         },
+        pendingOperatorUpgrades,
+        operatorUpgrade,
       };
 
       ['backup', 'engine', 'proxy'].forEach(
@@ -84,11 +104,46 @@ export const dbEnginesQuerySelect = ({
         DB_TYPE_ORDER_MAP[dbTypeA] - DB_TYPE_ORDER_MAP[dbTypeB]
     );
 
-export const useDbEngines = (namespace: string) =>
+export const useDbEngines = (
+  namespace: string,
+  options?: PerconaQueryOptions<GetDbEnginesPayload, unknown, DbEngine[]>,
+  retrieveUpgradingEngines = false
+) =>
   useQuery<GetDbEnginesPayload, unknown, DbEngine[]>({
     queryKey: [`dbEngines_${namespace}`],
     queryFn: () => getDbEnginesFn(namespace),
-    select: dbEnginesQuerySelect,
+    select: (data) => dbEnginesQuerySelect(data, retrieveUpgradingEngines),
     enabled: !!namespace,
     retry: 2,
+    ...options,
+  });
+
+export const useDbEngineUpgradePreflight = (
+  namespace: string,
+  dbEngineName: string,
+  targetVersion: string,
+  options?: PerconaQueryOptions<OperatorUpgradePreflightPayload>
+) =>
+  useQuery<OperatorUpgradePreflightPayload>({
+    queryKey: [
+      'dbEngineUpgradePreflight',
+      namespace,
+      dbEngineName,
+      targetVersion,
+    ],
+    queryFn: () =>
+      getOperatorUpgradePreflight(namespace, dbEngineName, targetVersion),
+    ...options,
+  });
+
+export const useOperatorUpgrade = (
+  namespace: string,
+  dbEngineName: string,
+  targetVersion: string,
+  options?: UseMutationOptions<unknown, unknown, null, unknown>
+) =>
+  useMutation({
+    mutationKey: ['operatorUpgrade', namespace, dbEngineName, targetVersion],
+    mutationFn: () => upgradeOperator(namespace, dbEngineName, targetVersion),
+    ...options,
   });
