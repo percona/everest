@@ -19,8 +19,8 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/labstack/echo-jwt/v4 v4.2.0
 	github.com/labstack/echo/v4 v4.11.4
-	github.com/mitchellh/mapstructure v1.5.0
 	github.com/lestrrat-go/jwx v1.2.29
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oapi-codegen/echo-middleware v1.0.1
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.23.0
