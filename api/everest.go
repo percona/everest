@@ -145,7 +145,7 @@ func (e *EverestServer) oidcKeyFn(ctx context.Context) (jwt.Keyfunc, error) {
 		return nil, err
 	}
 	if settings.OIDCConfigRaw == "" {
-		return nil, nil //nolint:nilnil
+		return nil, nil
 	}
 	oidcConfig, err := settings.OIDCConfig()
 	if err != nil {
