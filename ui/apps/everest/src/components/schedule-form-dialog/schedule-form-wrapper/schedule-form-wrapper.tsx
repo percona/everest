@@ -22,11 +22,7 @@ import { ScheduleFormFields } from '../schedule-form/schedule-form.types';
 import { ScheduleForm } from '../schedule-form/schedule-form';
 
 export const ScheduleFormWrapper = () => {
-  const {
-    watch,
-    setValue,
-    trigger,
-  } = useFormContext();
+  const { watch, setValue, trigger } = useFormContext();
   const {
     mode = 'new',
     setSelectedScheduleName,
