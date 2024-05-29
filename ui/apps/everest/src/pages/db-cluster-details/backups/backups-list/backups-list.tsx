@@ -19,7 +19,7 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { MenuItem } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { useQueryClient } from '@tanstack/react-query';
-import { StatusField } from 'components/status-field/status-field';
+import StatusField from 'components/status-field';
 import { DATE_FORMAT } from 'consts';
 import { format } from 'date-fns';
 import {

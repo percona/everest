@@ -11,6 +11,7 @@ const ToggleCard = ({ children, sx, ...props }: ToggleCardProps) => {
         backgroundColor: 'background.default',
         boxShadow: 4,
         color: theme.palette.text.primary,
+        p: 2,
         textTransform: 'none',
         border: 'none',
         ':hover, &.Mui-selected:hover': {

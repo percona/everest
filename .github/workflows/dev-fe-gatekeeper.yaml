@@ -127,7 +127,7 @@ jobs:
   E2E_tests_workflow:
     uses: ./.github/workflows/dev-fe-e2e.yaml
     secrets:
-      CI_USER: admin
+      CI_USER: everestadmin
       CI_PASSWORD: everestadmin
 
   merge-gatekeeper:

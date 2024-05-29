@@ -1,4 +1,4 @@
-import { SvgIconProps, Typography } from '@mui/material';
+import { Box, Stack, SvgIconProps, Typography } from '@mui/material';
 import { DbType } from '@percona/types';
 import { humanizeDbType } from './db-toggle-card.utils';
 import type { DbToggleCardProps } from './db-toggle-card.types';
@@ -23,12 +23,18 @@ const DbIcon = ({ type }: { type: DbType }) => {
 };
 
 const DbToggleCard = (props: DbToggleCardProps) => {
-  const { value } = props;
+  const { lowerContent, ...rest } = props;
+  const { value } = rest;
 
   return (
-    <ToggleCard {...props} data-testid={`${value}-toggle-button`}>
-      <DbIcon type={value} />
-      <Typography variant="body1">{humanizeDbType(value)}</Typography>
+    <ToggleCard {...rest} data-testid={`${value}-toggle-button`}>
+      <Stack>
+        <Box display={'flex'}>
+          <DbIcon type={value} />
+          <Typography variant="body1">{humanizeDbType(value)}</Typography>
+        </Box>
+        {lowerContent && <Box mt={1}>{lowerContent}</Box>}
+      </Stack>
     </ToggleCard>
   );
 };

@@ -7,7 +7,7 @@
     "dev": "vite --port 3000",
     "test": "vitest run",
     "test:watch": "vitest",
-    "pre-e2e": "rm -rf tests-out && tsc --incremental --noImplicitAny false -p .e2e/tsconfig.json && tsc-alias -p .e2e/tsconfig.json",
+    "pre-e2e": "rm -rf tests-out test-results && tsc --incremental --noImplicitAny false -p .e2e/tsconfig.json && tsc-alias -p .e2e/tsconfig.json",
     "e2e": "pnpm pre-e2e && cd .e2e && playwright test",
     "build": "tsc --incremental && vite build --emptyOutDir",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --fix",
