@@ -25,6 +25,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -788,13 +789,21 @@ func (c *Client) ApplyFile(fileBytes []byte) error {
 
 // ApplyManifestFile accepts manifest file contents, parses into []runtime.Object
 // and applies them against the cluster.
-func (c *Client) ApplyManifestFile(fileBytes []byte, namespace string) error {
+func (c *Client) ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...metav1.Object) error {
 	objs, err := c.getObjects(fileBytes)
 	if err != nil {
 		return err
 	}
 	for i := range objs {
 		o := objs[i]
+
+		// Check if this object should be ignored?
+		if slices.ContainsFunc(ignoreObjects, func(ign metav1.Object) bool {
+			return o.GetName() == ign.GetName() && o.GetNamespace() == ign.GetNamespace()
+		}) {
+			continue
+		}
+
 		if err := c.applyTemplateCustomization(o, namespace); err != nil {
 			return err
 		}
