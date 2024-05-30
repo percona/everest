@@ -18,6 +18,7 @@ package rbac
 import (
 	"errors"
 	"io/fs"
+	"slices"
 	"strings"
 
 	"github.com/casbin/casbin/v2"
@@ -67,4 +68,70 @@ func UserGetter(c echo.Context) (string, error) {
 	}
 
 	return strings.Split(subject, ":")[0], nil
+}
+
+// NewEnforceHandler returns a function that checks if a user is allowed to access a resource.
+func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.Context, user string) (bool, error) {
+	return func(c echo.Context, user string) (bool, error) {
+		pathResourceMap := map[string]string{
+			basePath + "/backup-storages":                                           "backup-storages",
+			basePath + "/backup-storages/:name":                                     "backup-storages",
+			basePath + "/monitoring-instances":                                      "monitoring-instances",
+			basePath + "/monitoring-instance/:names":                                "monitoring-instances",
+			basePath + "/namespaces/:namespace/database-engines":                    "database-engines",
+			basePath + "/namespaces/:namespace/database-engines/:name":              "database-engines",
+			basePath + "/namespaces/:namespace/database-clusters":                   "database-clusters",
+			basePath + "/namespaces/:namespace/database-clusters/:name":             "database-clusters",
+			basePath + "/namespaces/:namespace/database-clusters/:name/backups":     "database-clusters",
+			basePath + "/namespaces/:namespace/database-clusters/:name/credentials": "database-clusters",
+			basePath + "/namespaces/:namespace/database-clusters/:name/pitr":        "database-clusters",
+			basePath + "/namespaces/:namespace/database-clusters/:name/restores":    "database-clusters",
+			basePath + "/namespaces/:namespace/database-cluster-backups":            "database-cluster-backups",
+			basePath + "/namespaces/:namespace/database-cluster-backups/:name":      "database-cluster-backups",
+			basePath + "/namespaces/:namespace/database-cluster-restores":           "database-cluster-restores",
+			basePath + "/namespaces/:namespace/database-cluster-restores/:name":     "database-cluster-restores",
+		}
+		actionMethodMap := map[string]string{
+			"GET":    "read",
+			"POST":   "create",
+			"PUT":    "update",
+			"PATCH":  "update",
+			"DELETE": "delete",
+		}
+		var resource string
+		var object string
+		resource, ok := pathResourceMap[c.Path()]
+		if !ok {
+			return false, errors.New("invalid URL")
+		}
+		switch resource {
+		case "backup-storages", "monitoring-instances":
+			object = "*"
+		case "database-clusters", "database-engines":
+			namespace := c.Param("namespace")
+			name := c.Param("name")
+			object = namespace + "/" + name
+		}
+
+		action, ok := actionMethodMap[c.Request().Method]
+		if !ok {
+			return false, errors.New("invalid method")
+		}
+		return enforcer.Enforce(user, resource, action, object)
+	}
+}
+
+// NewSkipper returns a function to check if a path should be skipped
+// from RBAC.
+func NewSkipper() func(c echo.Context) bool {
+	return func(c echo.Context) bool {
+		skipPaths := []string{
+			"/session",
+			"/version",
+			"/cluster-info",
+			"/resources",
+			"/namespaces",
+		}
+		return slices.Contains(skipPaths, c.Request().URL.Path)
+	}
 }
