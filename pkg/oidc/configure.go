@@ -85,6 +85,12 @@ func (u *OIDC) Run(ctx context.Context) error {
 		return errors.New("clientID and/or issuerURL are not provided")
 	}
 
+	// Check if we can connect to the provider.
+	_, err := getProviderConfig(ctx, issuerURL)
+	if err != nil {
+		return errors.Join(err, errors.New("failed to connect with OIDC provider"))
+	}
+
 	oidcCfg := common.OIDCConfig{
 		IssuerURL: issuerURL,
 		ClientID:  clientID,
