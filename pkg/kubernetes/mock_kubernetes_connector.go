@@ -8,8 +8,8 @@ import (
 	version "github.com/hashicorp/go-version"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	mock "github.com/stretchr/testify/mock"
-	v1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	types "k8s.io/apimachinery/pkg/types"
@@ -333,6 +333,36 @@ func (_m *MockKubernetesConnector) GetClusterType(ctx context.Context) (ClusterT
 	return r0, r1
 }
 
+// GetConfigMap provides a mock function with given fields: ctx, name, namespace
+func (_m *MockKubernetesConnector) GetConfigMap(ctx context.Context, name string, namespace string) (*v1.ConfigMap, error) {
+	ret := _m.Called(ctx, name, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetConfigMap")
+	}
+
+	var r0 *v1.ConfigMap
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v1.ConfigMap, error)); ok {
+		return rf(ctx, name, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v1.ConfigMap); ok {
+		r0 = rf(ctx, name, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.ConfigMap)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, name, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetDBNamespaces provides a mock function with given fields: ctx, namespace
 func (_m *MockKubernetesConnector) GetDBNamespaces(ctx context.Context, namespace string) ([]string, error) {
 	ret := _m.Called(ctx, namespace)
@@ -420,23 +450,23 @@ func (_m *MockKubernetesConnector) GetDefaultStorageClassName(ctx context.Contex
 }
 
 // GetDeployment provides a mock function with given fields: ctx, name, namespace
-func (_m *MockKubernetesConnector) GetDeployment(ctx context.Context, name string, namespace string) (*v1.Deployment, error) {
+func (_m *MockKubernetesConnector) GetDeployment(ctx context.Context, name string, namespace string) (*appsv1.Deployment, error) {
 	ret := _m.Called(ctx, name, namespace)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetDeployment")
 	}
 
-	var r0 *v1.Deployment
+	var r0 *appsv1.Deployment
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v1.Deployment, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*appsv1.Deployment, error)); ok {
 		return rf(ctx, name, namespace)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v1.Deployment); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *appsv1.Deployment); ok {
 		r0 = rf(ctx, name, namespace)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v1.Deployment)
+			r0 = ret.Get(0).(*appsv1.Deployment)
 		}
 	}
 
@@ -536,7 +566,7 @@ func (_m *MockKubernetesConnector) GetEverestSettings(ctx context.Context) (comm
 }
 
 // GetLogs provides a mock function with given fields: ctx, containerStatuses, pod, container
-func (_m *MockKubernetesConnector) GetLogs(ctx context.Context, containerStatuses []corev1.ContainerStatus, pod string, container string) ([]string, error) {
+func (_m *MockKubernetesConnector) GetLogs(ctx context.Context, containerStatuses []v1.ContainerStatus, pod string, container string) ([]string, error) {
 	ret := _m.Called(ctx, containerStatuses, pod, container)
 
 	if len(ret) == 0 {
@@ -545,10 +575,10 @@ func (_m *MockKubernetesConnector) GetLogs(ctx context.Context, containerStatuse
 
 	var r0 []string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []corev1.ContainerStatus, string, string) ([]string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []v1.ContainerStatus, string, string) ([]string, error)); ok {
 		return rf(ctx, containerStatuses, pod, container)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []corev1.ContainerStatus, string, string) []string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []v1.ContainerStatus, string, string) []string); ok {
 		r0 = rf(ctx, containerStatuses, pod, container)
 	} else {
 		if ret.Get(0) != nil {
@@ -556,7 +586,7 @@ func (_m *MockKubernetesConnector) GetLogs(ctx context.Context, containerStatuse
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []corev1.ContainerStatus, string, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, []v1.ContainerStatus, string, string) error); ok {
 		r1 = rf(ctx, containerStatuses, pod, container)
 	} else {
 		r1 = ret.Error(1)
@@ -971,27 +1001,27 @@ func (_m *MockKubernetesConnector) UpdateClusterServiceVersion(ctx context.Conte
 }
 
 // UpdateDeployment provides a mock function with given fields: ctx, deployment
-func (_m *MockKubernetesConnector) UpdateDeployment(ctx context.Context, deployment *v1.Deployment) (*v1.Deployment, error) {
+func (_m *MockKubernetesConnector) UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error) {
 	ret := _m.Called(ctx, deployment)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateDeployment")
 	}
 
-	var r0 *v1.Deployment
+	var r0 *appsv1.Deployment
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v1.Deployment) (*v1.Deployment, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *appsv1.Deployment) (*appsv1.Deployment, error)); ok {
 		return rf(ctx, deployment)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *v1.Deployment) *v1.Deployment); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *appsv1.Deployment) *appsv1.Deployment); ok {
 		r0 = rf(ctx, deployment)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v1.Deployment)
+			r0 = ret.Get(0).(*appsv1.Deployment)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *v1.Deployment) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *appsv1.Deployment) error); ok {
 		r1 = rf(ctx, deployment)
 	} else {
 		r1 = ret.Error(1)
