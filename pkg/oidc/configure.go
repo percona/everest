@@ -20,9 +20,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/AlecAivazis/survey/v2"
 	"go.uber.org/zap"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 )
@@ -67,14 +67,16 @@ func (u *OIDC) Run(ctx context.Context) error {
 	if issuerURL == "" {
 		if err := survey.AskOne(&survey.Input{
 			Message: "Enter issuer URL",
-		}, &issuerURL); err != nil {
+		}, &issuerURL,
+		); err != nil {
 			return err
 		}
 	}
 	if clientID == "" {
 		if err := survey.AskOne(&survey.Input{
 			Message: "Enter client ID",
-		}, &clientID); err != nil {
+		}, &clientID,
+		); err != nil {
 			return err
 		}
 	}
