@@ -129,13 +129,13 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	apiGroup.Use(middleware.OapiRequestValidatorWithOptions(swagger, &middleware.Options{
 		SilenceServersWarning: true,
 	}))
-
+	// Setup and use JWT middleware.
 	jwtMW, err := e.jwtMiddleWare(ctx)
 	if err != nil {
 		return err
 	}
-
 	apiGroup.Use(jwtMW)
+	// Setup and use RBAC (casbin) middleware.
 	rbacMW, err := e.rbacMiddleware(basePath)
 	if err != nil {
 		return err
