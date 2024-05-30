@@ -20,7 +20,7 @@ import { TextInput } from '@percona/ui-lib';
 import { kebabize } from '@percona/utils';
 import { customConfirmDialogDefaultValues } from './custom-confirm-dialog-consts';
 import { IrreversibleAction } from '../irreversible-action';
-import { DialogContent } from '@mui/material';
+import { Box, DialogContent, Tooltip } from '@mui/material';
 import { ReactNode } from 'react';
 import { CustomCheckbox } from 'components/custom-confirm-dialog/custom-checkbox/custom-checkbox';
 import {
@@ -28,6 +28,7 @@ import {
   CustomConfirmDialogType,
   customConfirmDialogSchema,
 } from './custom-confirm-dialog.types';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 interface CustomConfirmDialogProps<T extends CustomConfirmDialogType>
   extends Omit<
@@ -44,7 +45,10 @@ interface CustomConfirmDialogProps<T extends CustomConfirmDialogType>
   confirmationInput?: boolean;
   alertTitle?: string;
   alertMessage: string;
-  checkboxMessage: string;
+  checkboxMessage?: string;
+  disableCheckbox?: boolean;
+  hideCheckbox?: boolean;
+  tooltipText?: string;
 }
 export const CustomConfirmDialog = ({
   inputLabel,
@@ -59,6 +63,9 @@ export const CustomConfirmDialog = ({
   alertTitle = 'Irreversible action',
   alertMessage,
   checkboxMessage,
+  disableCheckbox = false,
+  hideCheckbox = false,
+  tooltipText = '',
   ...props
 }: CustomConfirmDialogProps<CustomConfirmDialogType>) => {
   const onSubmit: SubmitHandler<CustomConfirmDialogType> = (data) => {
@@ -69,7 +76,7 @@ export const CustomConfirmDialog = ({
     <FormDialog
       onSubmit={onSubmit}
       schema={customConfirmDialogSchema(selectedId, confirmationInput)}
-      defaultValues={customConfirmDialogDefaultValues}
+      defaultValues={customConfirmDialogDefaultValues(disableCheckbox)}
       dataTestId={selectedId && kebabize(selectedId)}
       submitMessage={submitMessage}
       cancelMessage={cancelMessage}
@@ -88,10 +95,29 @@ export const CustomConfirmDialog = ({
           }}
         />
       )}
-      <CustomCheckbox
-        checkboxMessage={checkboxMessage}
-        formControlLabelProps={{ sx: { mt: 2, pl: 1 } }}
-      />
+      {checkboxMessage && !hideCheckbox && (
+        <CustomCheckbox
+          checkboxMessage={
+            disableCheckbox ? (
+              <Box display="flex" mt={0}>
+                {checkboxMessage}
+                <Tooltip
+                  title={tooltipText}
+                  arrow
+                  placement="right"
+                  sx={{ ml: 1 }}
+                >
+                  <InfoOutlinedIcon />
+                </Tooltip>
+              </Box>
+            ) : (
+              <>{checkboxMessage}</>
+            )
+          }
+          formControlLabelProps={{ sx: { mt: 2, pl: 1 } }}
+          disabled={disableCheckbox}
+        />
+      )}
     </FormDialog>
   );
 };

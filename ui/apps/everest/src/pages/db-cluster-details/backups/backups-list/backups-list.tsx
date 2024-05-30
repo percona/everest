@@ -37,6 +37,7 @@ import { BACKUP_STATUS_TO_BASE_STATUS } from './backups-list.constants';
 import { Messages } from './backups-list.messages';
 import BackupListTableHeader from './table-header';
 import { CustomConfirmDialog } from 'components/custom-confirm-dialog/custom-confirm-dialog.tsx';
+import { DbEngineType } from '@percona/types';
 
 export const BackupsList = () => {
   const queryClient = useQueryClient();
@@ -230,15 +231,22 @@ export const BackupsList = () => {
           selectedId={selectedBackup}
           closeModal={handleCloseDeleteDialog}
           headerMessage={Messages.deleteDialog.header}
-          handleConfirm={({ dataCheckbox: cleanupBackupStorage }) =>
-            handleConfirmDelete(selectedBackup, cleanupBackupStorage)
+          handleConfirm={() =>
+            handleConfirmDelete(
+              selectedBackup,
+              dbCluster.spec.engine.type === DbEngineType.POSTGRESQL
+                ? false
+                : true
+            )
           }
           submitting={deletingBackup}
           confirmationInput={false}
-          dialogContent={Messages.deleteDialog.content(selectedBackup)}
+          dialogContent={Messages.deleteDialog.content(
+            selectedBackup,
+            dbCluster.spec.engine.type
+          )}
           alertMessage={Messages.deleteDialog.alertMessage}
           submitMessage={Messages.deleteDialog.confirmButton}
-          checkboxMessage={Messages.deleteDialog.checkboxMessage}
         />
       )}
       {openRestoreDbModal && dbCluster && (
