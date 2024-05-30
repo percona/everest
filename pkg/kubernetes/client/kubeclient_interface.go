@@ -78,7 +78,7 @@ type KubeClientConnector interface {
 	ApplyFile(fileBytes []byte) error
 	// ApplyManifestFile accepts manifest file contents, parses into []runtime.Object
 	// and applies them against the cluster.
-	ApplyManifestFile(fileBytes []byte, namespace string) error
+	ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...metav1.Object) error
 	// DeleteManifestFile accepts manifest file contents, parses into []runtime.Object
 	// and deletes them from the cluster.
 	DeleteManifestFile(fileBytes []byte, namespace string) error
