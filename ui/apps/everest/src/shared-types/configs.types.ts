@@ -1,7 +1,7 @@
 export type EverestConfigPayload = {
-  oidc?: {
-    authority: string;
-    client_id: string;
+  oidcConfigg?: {
+    issuerURL: string;
+    clientId: string;
   };
 };
 
