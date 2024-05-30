@@ -3,10 +3,30 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
+      releaseType:
+        description: "Type of release"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+      channel:
+        description: "Channel to which to publish the release"
+        required: true
+        type: choice
+        options:
+          - fast
+          - stable and fast
       version:
         description: "The RC/Release version, format: X.Y.Z-rcN for RC, X.Y.Z for releases"
         required: true
-
+      currentVersionFast:
+        description: "The current version this version replaces in the fast channel, format: X.Y.Z-rcN for RC, X.Y.Z for releases"
+        required: true
+      currentVersionStable:
+        description: "The current version this version replaces in the stable channel. Required for the 'stable' channel option, format: X.Y.Z-rcN for RC, X.Y.Z for releases"
+        required: false
+  
 permissions:
   contents: write
   packages: write
@@ -240,20 +260,60 @@ jobs:
             exit 1
           fi
 
+      - name: Catalog - update veneer file
+        run: |
           # configure userdata for commits
           git config --global user.email "everest-ci@percona.com"
           git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
 
+          if [[ "${{ github.event.inputs.releaseType }}" == "fast"]]; then
+            go run ./tools/ \
+              --veneer-file veneer/everest-operator.yaml \
+              --version-type ${{ github.event.inputs.releaseType }} \
+              --channel fast-v0 \
+              --new-version ${{ github.event.inputs.version }} \
+              --current-version ${{ github.event.inputs.currentVersionFast }} \
+              \
+              > veneer/everest-operator.yaml
+          fi
+
+          if [[ "${{ github.event.inputs.releaseType }}" == "stable and fast"]]; then
+            if [[ -z "${{ github.event.inputs.currentVersionStable }}" ]]; then
+              echo "currentVersionStable is required"
+              exit 1
+            fi
+
+            go run ./tools/ \
+              --veneer-file veneer/everest-operator.yaml \
+              --version-type ${{ github.event.inputs.releaseType }} \
+              --channel stable-v0 \
+              --new-version ${{ github.event.inputs.version }} \
+              --current-version ${{ github.event.inputs.currentVersionStable }} \
+              \
+              > veneer/everest-operator.yaml
+
+            go run ./tools/ \
+              --veneer-file veneer/everest-operator.yaml \
+              --version-type ${{ github.event.inputs.releaseType }} \
+              --channel fast-v0 \
+              --new-version ${{ github.event.inputs.version }} \
+              --current-version ${{ github.event.inputs.currentVersionFast }} \
+              \
+              > veneer/everest-operator.yaml
+          fi
+
           # Check if veneer has the new version listed
           if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
             echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
-            echo "Update the file manually before running the workflow"
+            echo "Something is broken"
             exit 1
           fi
 
+          git commit -am "CI: add version ${{ github.event.inputs.version }}"
+          git push origin $BRANCH_NAME
+
           git tag $GH_TAG
           git push origin $GH_TAG
-
 
       - name: Catalog - docker meta
         id: catalog_meta
