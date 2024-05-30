@@ -40,15 +40,16 @@ const (
 	EverestAccountsSecretName = "everest-accounts"
 	// EverestJWTSecretName is the name of the secret that holds JWT secret.
 	EverestJWTSecretName = "everest-jwt"
-	// EverestJWTSecretKey is the key in the secret that holds JWT secret.
-	EverestJWTSecretKey = "signing_key"
+	// EverestJWTPrivateKeyFile is the path to the JWT private key.
+	EverestJWTPrivateKeyFile = "/etc/jwt/id_rsa"
+	// EverestJWTPublicKeyFile is the path to the JWT public key.
+	EverestJWTPublicKeyFile = "/etc/jwt/id_rsa.pub"
 
 	// EverestAdminUser is the name of the admin user.
 	EverestAdminUser = "admin"
 
-	// EverestTokenCookie is the name of the cookie that holds the token.
-	EverestTokenCookie = "everest_token"
-
 	// EverestSettingsConfigMapName is the name of the Everest settings ConfigMap.
 	EverestSettingsConfigMapName = "everest-settings"
+	// EverestTokenCookie is the name of the cookie that holds the token.
+	EverestTokenCookie = "everest_token"
 )
