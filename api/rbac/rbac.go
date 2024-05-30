@@ -16,6 +16,7 @@
 package rbac
 
 import (
+	"context"
 	"errors"
 	"io/fs"
 	"slices"
@@ -25,16 +26,18 @@ import (
 	"github.com/casbin/casbin/v2/model"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/types"
 
 	configmapadapter "github.com/percona/everest/api/rbac/configmap-adapter"
+	"github.com/percona/everest/api/rbac/reloader"
 	"github.com/percona/everest/data"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
 // NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
-func NewEnforcer(kubeClient *kubernetes.Kubernetes) (*casbin.Enforcer, error) {
+func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
 	modelData, err := fs.ReadFile(data.RBAC, "rbac/model.conf")
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not read casbin model"))
@@ -44,15 +47,19 @@ func NewEnforcer(kubeClient *kubernetes.Kubernetes) (*casbin.Enforcer, error) {
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not create casbin model"))
 	}
+	cmReq := types.NamespacedName{
+		Namespace: kubeClient.Namespace(),
+		Name:      common.EverestRBACConfigMapName,
+	}
+	adapter := configmapadapter.NewAdapter(kubeClient, cmReq)
 
-	adapter := configmapadapter.NewAdapter(
-		kubeClient,
-		types.NamespacedName{
-			Namespace: kubeClient.Namespace(),
-			Name:      common.EverestRBACConfigMapName,
-		})
+	enforcer, err := casbin.NewEnforcer(model, adapter, true)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not create casbin enforcer"))
+	}
 
-	return casbin.NewEnforcer(model, adapter, true)
+	reloader, err := reloader.New(kubeClient.Config(), enforcer, cmReq, l)
+	return enforcer, reloader.Run(ctx)
 }
 
 // UserGetter is a function that extracts the user from the JWT token.

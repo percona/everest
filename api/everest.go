@@ -136,7 +136,7 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	}
 	apiGroup.Use(jwtMW)
 	// Setup and use RBAC (casbin) middleware.
-	rbacMW, err := e.rbacMiddleware(basePath)
+	rbacMW, err := e.rbacMiddleware(ctx, basePath)
 	if err != nil {
 		return err
 	}
@@ -182,8 +182,8 @@ func (e *EverestServer) newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) 
 	}, nil
 }
 
-func (e *EverestServer) rbacMiddleware(basePath string) (echo.MiddlewareFunc, error) {
-	enforcer, err := rbac.NewEnforcer(e.kubeClient)
+func (e *EverestServer) rbacMiddleware(ctx context.Context, basePath string) (echo.MiddlewareFunc, error) {
+	enforcer, err := rbac.NewEnforcer(ctx, e.kubeClient, e.l)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not create casbin enforcer"))
 	}
