@@ -130,17 +130,17 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 		SilenceServersWarning: true,
 	}))
 
+	jwtMW, err := e.jwtMiddleWare(ctx)
+	if err != nil {
+		return err
+	}
+
+	apiGroup.Use(jwtMW)
 	rbacMW, err := e.rbacMiddleware(basePath)
 	if err != nil {
 		return err
 	}
 	apiGroup.Use(rbacMW)
-
-	jwtMW, err := e.jwtMiddleWare(ctx)
-	if err != nil {
-		return err
-	}
-	apiGroup.Use(jwtMW)
 
 	apiGroup.Use(e.checkOperatorUpgradeState)
 	RegisterHandlers(apiGroup, e)
