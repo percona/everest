@@ -10,6 +10,7 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	types "k8s.io/apimachinery/pkg/types"
 	pkgversion "k8s.io/apimachinery/pkg/version"
@@ -177,6 +178,24 @@ func (_m *MockKubernetesConnector) CreatePMMSecret(namespace string, secretName 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string, string, map[string][]byte) error); ok {
 		r0 = rf(namespace, secretName, secrets)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CreateRSAKeyPair provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) CreateRSAKeyPair(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateRSAKeyPair")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -516,34 +535,6 @@ func (_m *MockKubernetesConnector) GetEverestSettings(ctx context.Context) (comm
 	return r0, r1
 }
 
-// GetJWTToken provides a mock function with given fields: ctx
-func (_m *MockKubernetesConnector) GetJWTToken(ctx context.Context) (string, error) {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetJWTToken")
-	}
-
-	var r0 string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (string, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetLogs provides a mock function with given fields: ctx, containerStatuses, pod, container
 func (_m *MockKubernetesConnector) GetLogs(ctx context.Context, containerStatuses []corev1.ContainerStatus, pod string, container string) ([]string, error) {
 	ret := _m.Called(ctx, containerStatuses, pod, container)
@@ -660,17 +651,24 @@ func (_m *MockKubernetesConnector) GetServerVersion() (*pkgversion.Info, error) 
 	return r0, r1
 }
 
-// InstallEverest provides a mock function with given fields: ctx, namespace, _a2
-func (_m *MockKubernetesConnector) InstallEverest(ctx context.Context, namespace string, _a2 *version.Version) error {
-	ret := _m.Called(ctx, namespace, _a2)
+// InstallEverest provides a mock function with given fields: ctx, namespace, _a2, skipObjs
+func (_m *MockKubernetesConnector) InstallEverest(ctx context.Context, namespace string, _a2 *version.Version, skipObjs ...metav1.Object) error {
+	_va := make([]interface{}, len(skipObjs))
+	for _i := range skipObjs {
+		_va[_i] = skipObjs[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, namespace, _a2)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for InstallEverest")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, *version.Version) error); ok {
-		r0 = rf(ctx, namespace, _a2)
+	if rf, ok := ret.Get(0).(func(context.Context, string, *version.Version, ...metav1.Object) error); ok {
+		r0 = rf(ctx, namespace, _a2, skipObjs...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -917,24 +915,6 @@ func (_m *MockKubernetesConnector) RestartOperator(ctx context.Context, name str
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
 		r0 = rf(ctx, name, namespace)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// SetJWTToken provides a mock function with given fields: ctx, token
-func (_m *MockKubernetesConnector) SetJWTToken(ctx context.Context, token string) error {
-	ret := _m.Called(ctx, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SetJWTToken")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, token)
 	} else {
 		r0 = ret.Error(0)
 	}
