@@ -52,4 +52,6 @@ const (
 	EverestSettingsConfigMapName = "everest-settings"
 	// EverestTokenCookie is the name of the cookie that holds the token.
 	EverestTokenCookie = "everest_token"
+	// EverestRBACConfigMapName is the name of the Everest RBAC ConfigMap.
+	EverestRBACConfigMapName = "everest-rbac"
 )

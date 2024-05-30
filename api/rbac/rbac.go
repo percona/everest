@@ -29,6 +29,7 @@ import (
 
 	configmapadapter "github.com/percona/everest/api/rbac/configmap-adapter"
 	"github.com/percona/everest/data"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -44,8 +45,12 @@ func NewEnforcer(kubeClient *kubernetes.Kubernetes) (*casbin.Enforcer, error) {
 		return nil, errors.Join(err, errors.New("could not create casbin model"))
 	}
 
-	// FIXME create const for "everest-rbac"
-	adapter := configmapadapter.NewAdapter(kubeClient, types.NamespacedName{Namespace: kubeClient.Namespace(), Name: "everest-rbac"})
+	adapter := configmapadapter.NewAdapter(
+		kubeClient,
+		types.NamespacedName{
+			Namespace: kubeClient.Namespace(),
+			Name:      common.EverestRBACConfigMapName,
+		})
 
 	return casbin.NewEnforcer(model, adapter, true)
 }
