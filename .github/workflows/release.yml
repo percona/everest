@@ -266,35 +266,39 @@ jobs:
             exit 1
           fi
 
+          cp veneer/everest-operator.yaml veneer/everest-operator-original.yaml
+          
           if [[ $env.IS_RC ]]; then
             go run ./tools/ \
-              --veneer-file veneer/everest-operator.yaml \
+              --veneer-file veneer/everest-operator-original.yaml \
               --version-type ${{ github.event.inputs.releaseType }} \
               --channel fast-v0 \
               --new-version ${{ github.event.inputs.version }} \
               --current-version "$CURRENT_FAST_VERSION" \
               \
-              > veneer/everest-operator.yaml
+              >| veneer/everest-operator.yaml
           else
             go run ./tools/ \
-              --veneer-file veneer/everest-operator.yaml \
+              --veneer-file veneer/everest-operator-original.yaml \
               --version-type ${{ github.event.inputs.releaseType }} \
               --channel stable-v0 \
               --new-version ${{ github.event.inputs.version }} \
               --current-version "$CURRENT_STABLE_VERSION" \
               \
-              > veneer/everest-operator.yaml
+              >| veneer/everest-operator.yaml
 
             go run ./tools/ \
-              --veneer-file veneer/everest-operator.yaml \
+              --veneer-file veneer/everest-operator-original.yaml \
               --version-type ${{ github.event.inputs.releaseType }} \
               --channel fast-v0 \
               --new-version ${{ github.event.inputs.version }} \
               --current-version "$CURRENT_FAST_VERSION" \
               \
-              > veneer/everest-operator.yaml
+              >| veneer/everest-operator.yaml
           fi
 
+          rm -f veneer/everest-operator-original.yaml
+          
           # Check if veneer has the new version listed
           if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
             echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
