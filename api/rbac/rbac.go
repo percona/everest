@@ -128,7 +128,7 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 			basePath + "/backup-storages":                                           "backup-storages",
 			basePath + "/backup-storages/:name":                                     "backup-storages",
 			basePath + "/monitoring-instances":                                      "monitoring-instances",
-			basePath + "/monitoring-instances/:names":                               "monitoring-instances",
+			basePath + "/monitoring-instances/:name":                                "monitoring-instances",
 			basePath + "/namespaces/:namespace/database-engines":                    "database-engines",
 			basePath + "/namespaces/:namespace/database-engines/:name":              "database-engines",
 			basePath + "/namespaces/:namespace/database-clusters":                   "database-clusters",
