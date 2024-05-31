@@ -173,19 +173,16 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 	}
 }
 
-// NewSkipper returns a function to check if a path should be skipped
-// from RBAC.
-func NewSkipper() func(c echo.Context) bool {
-	return func(c echo.Context) bool {
-		skipPaths := []string{
-			"/session",
-			"/version",
-			"/cluster-info",
-			"/resources",
-			"/namespaces",
-			"/settings",
-		}
-		path := strings.TrimPrefix(c.Request().URL.Path, "/v1")
-		return slices.Contains(skipPaths, path)
+// Skipper is called by the RBAC middleware to decide if a path must be skipped from RBAC.
+func Skipper(c echo.Context) bool {
+	skipPaths := []string{
+		"/session",
+		"/version",
+		"/cluster-info",
+		"/resources",
+		"/namespaces",
+		"/settings",
 	}
+	path := strings.TrimPrefix(c.Request().URL.Path, "/v1")
+	return slices.Contains(skipPaths, path)
 }
