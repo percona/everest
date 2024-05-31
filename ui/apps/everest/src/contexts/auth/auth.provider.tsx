@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AuthProvider as OidcAuthProvider,
   AuthProviderProps as OidcAuthProviderProps,
@@ -28,18 +28,18 @@ const Provider = ({
 }: {
   oidcConfig?: OidcAuthProviderProps;
   children: React.ReactNode;
-}) => (
-  <OidcAuthProvider {...oidcConfig}>
-    <AuthProvider isSsoEnabled={!!oidcConfig}>{children}</AuthProvider>
-  </OidcAuthProvider>
-);
+}) => {
+  const authProvider = useMemo(
+    () => <AuthProvider isSsoEnabled={!!oidcConfig}>{children}</AuthProvider>,
+    [children, oidcConfig]
+  );
+  return <OidcAuthProvider {...oidcConfig}>{authProvider}</OidcAuthProvider>;
+};
 
 const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   const [authStatus, setAuthStatus] = useState<UserAuthStatus>('unknown');
   const [redirect, setRedirect] = useState<string | null>(null);
-  const { signIn, userData, isLoading, userManager } = useOidcAuth();
-  const loadingOidcAuth = isSsoEnabled && isLoading;
-
+  const { signIn, userData, userManager, isLoading } = useOidcAuth();
   const checkAuth = useCallback(async (token: string) => {
     try {
       await api.get('/version', {
@@ -102,37 +102,42 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   }, [userManager]);
 
   useEffect(() => {
-    const authRoutine = async (savedToken: string) => {
-      const { iss, exp } = jwtDecode(savedToken);
+    userManager.events.addUserLoaded((user) => {
+      localStorage.setItem('everestToken', user.access_token || '');
+    });
+  }, []);
 
-      // We know that the token is not from Everest and it's expired, let's renew it
-      // This is just when we refresh the page and the token is expired
-      //
-      if (
-        iss !== EVEREST_JWT_ISSUER &&
-        isAfter(new Date(), new Date((exp || 0) * 1000))
-      ) {
-        await signIn();
-      }
+  useEffect(() => {
+    if (authStatus !== 'loggedIn' && userData && userData.access_token) {
+      localStorage.setItem('everestToken', userData.access_token);
+      setLoggedInStatus();
+    }
+  }, [userData, isLoading, authStatus]);
 
-      if (await checkAuth(savedToken)) {
-        // All good, move on
-        setLoggedInStatus();
-      } else {
-        setLogoutStatus();
-      }
-    };
-
-    if (loadingOidcAuth) {
-      console.log('loadingOidcAuth');
-      setAuthStatus('loggingIn');
+  useEffect(() => {
+    if (authStatus === 'loggedIn') {
       return;
     }
+    const authRoutine = async (token: string) => {
+      const { iss, exp } = jwtDecode(token);
+      if (iss === EVEREST_JWT_ISSUER) {
+        const isTokenValid = await checkAuth(token);
 
-    if (userData) {
-      localStorage.setItem('everestToken', userData.access_token || '');
-    }
+        if (isTokenValid) {
+          setLoggedInStatus();
+        } else {
+          setLogoutStatus();
+        }
+      } else if (isAfter(new Date(), new Date((exp || 0) * 1000))) {
+        const user = await userManager.signinSilent();
 
+        if (user && user.access_token) {
+          localStorage.setItem('everestToken', user.access_token);
+        } else {
+          setLogoutStatus();
+        }
+      }
+    };
     const savedToken = localStorage.getItem('everestToken');
 
     if (!savedToken) {
@@ -141,7 +146,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     }
 
     authRoutine(savedToken);
-  }, [checkAuth, loadingOidcAuth, setLogoutStatus, signIn, userData]);
+  }, [authStatus]);
 
   return (
     <AuthContext.Provider
