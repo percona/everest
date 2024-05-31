@@ -38,8 +38,9 @@ export const addApiErrorInterceptor = () => {
           let message = DEFAULT_ERROR_MESSAGE;
 
           if (error.response.status === 401) {
-            // localStorage.removeItem('everestToken');
-            // location.replace('/login');
+            localStorage.removeItem('everestToken');
+            sessionStorage.clear();
+            location.replace('/login');
           }
 
           if (error.response.data && error.response.data.message) {

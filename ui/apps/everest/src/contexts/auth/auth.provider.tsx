@@ -59,11 +59,11 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
       try {
         const response = await api.post('/session', { username, password });
         const token = response.data.token; // Assuming the response structure has a token field
-        setAuthStatus('loggedIn');
         localStorage.setItem('everestToken', token);
-        addApiErrorInterceptor();
+        console.log('ALL COOL');
+        setLoggedInStatus();
       } catch (error) {
-        setAuthStatus('loggedOut');
+        setLogoutStatus();
         enqueueSnackbar('Invalid credentials', {
           variant: 'error',
         });
