@@ -10,22 +10,9 @@ on:
         options:
           - patch
           - minor
-      channel:
-        description: "Channel to which to publish the release"
-        required: true
-        type: choice
-        options:
-          - fast
-          - stable and fast
       version:
         description: "The RC/Release version, format: X.Y.Z-rcN for RC, X.Y.Z for releases"
         required: true
-      currentVersionFast:
-        description: "The current version this version replaces in the fast channel, format: X.Y.Z-rcN for RC, X.Y.Z for releases"
-        required: true
-      currentVersionStable:
-        description: "The current version this version replaces in the stable channel. Required for the 'stable' channel option, format: X.Y.Z-rcN for RC, X.Y.Z for releases"
-        required: false
   
 permissions:
   contents: write
@@ -266,29 +253,35 @@ jobs:
           git config --global user.email "everest-ci@percona.com"
           git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
 
-          if [[ "${{ github.event.inputs.releaseType }}" == "fast"]]; then
+          CURRENT_STABLE_VERSION=$(yq 'select(.name == "stable-v0").entries[-1].name' veneer/everest-operator.yaml | sed 's/^everest-operator.v//')
+          CURRENT_FAST_VERSION=$(yq 'select(.name == "fast-v0").entries[-2].name' veneer/everest-operator.yaml | sed 's/^everest-operator.v//')
+
+          if [[ -z "$CURRENT_STABLE_VERSION" ]]; then
+            echo "CURRENT_STABLE_VERSION is required"
+            exit 1
+          fi
+
+          if [[ -z "$CURRENT_FAST_VERSION" ]]; then
+            echo "CURRENT_FAST_VERSION is required"
+            exit 1
+          fi
+
+          if [[ $env.IS_RC ]]; then
             go run ./tools/ \
               --veneer-file veneer/everest-operator.yaml \
               --version-type ${{ github.event.inputs.releaseType }} \
               --channel fast-v0 \
               --new-version ${{ github.event.inputs.version }} \
-              --current-version ${{ github.event.inputs.currentVersionFast }} \
+              --current-version "$CURRENT_FAST_VERSION" \
               \
               > veneer/everest-operator.yaml
-          fi
-
-          if [[ "${{ github.event.inputs.releaseType }}" == "stable and fast"]]; then
-            if [[ -z "${{ github.event.inputs.currentVersionStable }}" ]]; then
-              echo "currentVersionStable is required"
-              exit 1
-            fi
-
+          else
             go run ./tools/ \
               --veneer-file veneer/everest-operator.yaml \
               --version-type ${{ github.event.inputs.releaseType }} \
               --channel stable-v0 \
               --new-version ${{ github.event.inputs.version }} \
-              --current-version ${{ github.event.inputs.currentVersionStable }} \
+              --current-version "$CURRENT_STABLE_VERSION" \
               \
               > veneer/everest-operator.yaml
 
@@ -297,7 +290,7 @@ jobs:
               --version-type ${{ github.event.inputs.releaseType }} \
               --channel fast-v0 \
               --new-version ${{ github.event.inputs.version }} \
-              --current-version ${{ github.event.inputs.currentVersionFast }} \
+              --current-version "$CURRENT_FAST_VERSION" \
               \
               > veneer/everest-operator.yaml
           fi
@@ -305,7 +298,6 @@ jobs:
           # Check if veneer has the new version listed
           if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
             echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
-            echo "Something is broken"
             exit 1
           fi
 
