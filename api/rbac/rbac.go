@@ -27,14 +27,42 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	configmapadapter "github.com/percona/everest/api/rbac/configmap-adapter"
-	"github.com/percona/everest/api/rbac/reloader"
 	"github.com/percona/everest/data"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/kubernetes/informer"
 )
+
+// Setup a new informer that watches our RBAC ConfigMap.
+// This informer reloads the policy whenever the ConfigMap is updated.
+func refreshEnforcerInBackground(
+	ctx context.Context,
+	kubeClient *kubernetes.Kubernetes,
+	enforcer *casbin.Enforcer,
+	l *zap.SugaredLogger) error {
+	inf, err := informer.New(
+		informer.WithConfig(kubeClient.Config()),
+		informer.WithLogger(l),
+		informer.Watches(&corev1.ConfigMap{}, kubeClient.Namespace()),
+	)
+	inf.OnUpdate(func(oldObj, newObj interface{}) {
+		cm, ok := newObj.(*corev1.ConfigMap)
+		if !ok || cm.GetName() != common.EverestRBACConfigMapName {
+			return
+		}
+		if err := enforcer.LoadPolicy(); err != nil {
+			l.Error("failed to load policy", zap.Error(err))
+		}
+	})
+	if inf.Start(ctx, &corev1.ConfigMap{}) != nil {
+		return errors.Join(err, errors.New("failed to watch RBAC ConfigMap"))
+	}
+	return nil
+}
 
 // NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
 func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
@@ -47,6 +75,7 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not create casbin model"))
 	}
+
 	cmReq := types.NamespacedName{
 		Namespace: kubeClient.Namespace(),
 		Name:      common.EverestRBACConfigMapName,
@@ -58,8 +87,7 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 		return nil, errors.Join(err, errors.New("could not create casbin enforcer"))
 	}
 
-	reloader, err := reloader.New(kubeClient.Config(), enforcer, cmReq, l)
-	return enforcer, reloader.Run(ctx)
+	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
 }
 
 // UserGetter is a function that extracts the user from the JWT token.
