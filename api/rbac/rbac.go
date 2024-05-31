@@ -183,6 +183,7 @@ func NewSkipper() func(c echo.Context) bool {
 			"/cluster-info",
 			"/resources",
 			"/namespaces",
+			"/settings",
 		}
 		path := strings.TrimPrefix(c.Request().URL.Path, "/v1")
 		return slices.Contains(skipPaths, path)
