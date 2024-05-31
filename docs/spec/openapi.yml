@@ -82,6 +82,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Version'
+  '/settings':
+    get:
+      summary: Get Everest global settings
+      description: Get Everest global settings
+      operationId: getSettings
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
   '/resources':
     get:
       tags:
@@ -1787,6 +1799,27 @@ components:
         - projectName
         - version
         - fullCommit
+    Settings:
+      type: object
+      description: Everest global settings
+      properties:
+        oidcConfig:
+          $ref: '#/components/schemas/OIDCConfig'
+      required:
+        - oidcConfig
+    OIDCConfig:
+      type: object
+      description: Everest OIDC provider configuration
+      properties:
+        clientId:
+          type: string
+          description: OIDC application clientID
+        issuerURL:
+          type: string
+          description: OIDC provider url
+      required:
+        - clientId
+        - issuerURL
     DatabaseClusterList:
       description: DatabaseClusterList is an object that contains the list of the existing database clusters.
       properties:
