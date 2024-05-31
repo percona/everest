@@ -26,7 +26,7 @@ jobs:
     env:
       TOOLS_PATH: "/opt/tools/bin"
       VERSION: ${{ github.event.inputs.version }}
-      RELEASE_TYPE: ${{ github.event.inputs.version }}
+      RELEASE_TYPE: ${{ github.event.inputs.releaseType }}
       # version in format "X.Y" which is going to be updated with each patch release
       FLOATING_TAG: ''
       # branch name in format "release-X.Y"
