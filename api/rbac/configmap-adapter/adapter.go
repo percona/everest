@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package configmapadapter provides a Casbin adapter that uses a Kubernetes ConfigMap as the storage.
 package configmapadapter
 
 import (
@@ -44,7 +45,11 @@ func NewAdapter(kubeClient *kubernetes.Kubernetes, namespacedName types.Namespac
 
 // LoadPolicy loads all policy rules from the storage.
 func (a *Adapter) LoadPolicy(model model.Model) error {
-	cm, err := a.kubeClient.GetConfigMap(context.TODO(), a.namespacedName.Namespace, a.namespacedName.Name)
+	cm, err := a.kubeClient.GetConfigMap(
+		context.Background(),
+		a.namespacedName.Namespace,
+		a.namespacedName.Name,
+	)
 	if err != nil {
 		return err
 	}
@@ -70,21 +75,21 @@ func (a *Adapter) LoadPolicy(model model.Model) error {
 }
 
 // SavePolicy saves all policy rules to the storage.
-func (a *Adapter) SavePolicy(model model.Model) error {
+func (a *Adapter) SavePolicy(_ model.Model) error {
 	return errors.New("not implemented")
 }
 
 // AddPolicy adds a policy rule to the storage.
-func (a *Adapter) AddPolicy(sec string, ptype string, rule []string) error {
+func (a *Adapter) AddPolicy(_ string, _ string, _ []string) error {
 	return errors.New("not implemented")
 }
 
 // RemovePolicy removes a policy rule from the storage.
-func (a *Adapter) RemovePolicy(sec string, ptype string, rule []string) error {
+func (a *Adapter) RemovePolicy(_ string, _ string, _ []string) error {
 	return errors.New("not implemented")
 }
 
 // RemoveFilteredPolicy removes policy rules that match the filter from the storage.
-func (a *Adapter) RemoveFilteredPolicy(sec string, ptype string, fieldIndex int, fieldValues ...string) error {
+func (a *Adapter) RemoveFilteredPolicy(_ string, _ string, _ int, _ ...string) error {
 	return errors.New("not implemented")
 }

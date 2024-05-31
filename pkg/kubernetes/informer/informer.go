@@ -1,3 +1,19 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package informer provides generic utilities to work with Kubernetes informers.
 package informer
 
 import (
@@ -11,10 +27,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// informer is a generic wrapper around the controller-runtime cache.
+// Informer is a generic wrapper around the controller-runtime cache.
 // It provides a minimastic interface for watching Kubernetes objects
 // and triggering callbacks.
-type informer struct {
+type Informer struct {
 	cache cache.Cache
 
 	opts          cache.Options
@@ -23,27 +39,28 @@ type informer struct {
 	l             *zap.SugaredLogger
 }
 
-type optionsFunc func(*informer)
+// OptionsFunc is a function that sets options for the informer.
+type OptionsFunc func(*Informer)
 
-// WithConfig sets the rest.Config for the informer.
-func WithConfig(cfg *rest.Config) optionsFunc {
-	return func(i *informer) {
+// WithConfig sets the rest.Config for the Informer.
+func WithConfig(cfg *rest.Config) OptionsFunc {
+	return func(i *Informer) {
 		i.cfg = cfg
 	}
 }
 
-// WithLogger sets the logger for the informer.
-func WithLogger(l *zap.SugaredLogger) optionsFunc {
-	return func(i *informer) {
+// WithLogger sets the logger for the Informer.
+func WithLogger(l *zap.SugaredLogger) OptionsFunc {
+	return func(i *Informer) {
 		i.l = l
 	}
 }
 
-// Watches sets the informer to watch the given object.
-// If a namespace is provided, the informer will only watch the object only in
+// Watches sets the Informer to watch the given object.
+// If a namespace is provided, the Informer will only watch the object only in
 // that namespace.
-func Watches(obj client.Object, ns ...string) optionsFunc {
-	return func(i *informer) {
+func Watches(obj client.Object, ns ...string) OptionsFunc {
+	return func(i *Informer) {
 		if i.opts.ByObject == nil {
 			i.opts.ByObject = make(map[client.Object]cache.ByObject)
 		}
@@ -62,9 +79,9 @@ func Watches(obj client.Object, ns ...string) optionsFunc {
 	}
 }
 
-// New creates and returns a new informer.
-func New(opts ...optionsFunc) (*informer, error) {
-	i := &informer{}
+// New creates and returns a new Informer.
+func New(opts ...OptionsFunc) (*Informer, error) {
+	i := &Informer{}
 	for _, opt := range opts {
 		opt(i)
 	}
@@ -78,30 +95,30 @@ func New(opts ...optionsFunc) (*informer, error) {
 }
 
 // OnUpdate is triggered when an object is updated.
-func (i *informer) OnUpdate(cb func(oldObj, newObj interface{})) {
+func (i *Informer) OnUpdate(cb func(oldObj, newObj interface{})) {
 	i.eventHandlers.UpdateFunc = cb
 }
 
 // OnAdd is triggered when an object is added.
-func (i *informer) OnAdd(cb func(obj interface{})) {
+func (i *Informer) OnAdd(cb func(obj interface{})) {
 	i.eventHandlers.AddFunc = cb
 }
 
 // OnDelete is triggered when an object is deleted.
-func (i *informer) OnDelete(cb func(obj interface{})) {
+func (i *Informer) OnDelete(cb func(obj interface{})) {
 	i.eventHandlers.DeleteFunc = cb
 }
 
-// Start the informer.
-func (i *informer) Start(ctx context.Context, obj client.Object) error {
-	// Get the informer for the specified object.
+// Start the Informer.
+func (i *Informer) Start(ctx context.Context, obj client.Object) error {
+	// Get the Informer for the specified object.
 	inf, err := i.cache.GetInformer(ctx, obj)
 	if err != nil {
-		return errors.Join(err, errors.New("failed to get informer"))
+		return errors.Join(err, errors.New("failed to get Informer"))
 	}
 	// Register callbacks.
 	if _, err := inf.AddEventHandler(i.eventHandlers); err != nil {
-		return err
+		return errors.Join(err, errors.New("failed to add event handler"))
 	}
 	// Start the cache in a separate goroutine, since it is a blocking call.
 	go func() {

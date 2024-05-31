@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package rbac provides RBAC middleware utilies for the Everest API server.
 package rbac
 
 import (
@@ -43,13 +44,14 @@ func refreshEnforcerInBackground(
 	ctx context.Context,
 	kubeClient *kubernetes.Kubernetes,
 	enforcer *casbin.Enforcer,
-	l *zap.SugaredLogger) error {
+	l *zap.SugaredLogger,
+) error {
 	inf, err := informer.New(
 		informer.WithConfig(kubeClient.Config()),
 		informer.WithLogger(l),
 		informer.Watches(&corev1.ConfigMap{}, kubeClient.Namespace()),
 	)
-	inf.OnUpdate(func(oldObj, newObj interface{}) {
+	inf.OnUpdate(func(_, newObj interface{}) {
 		cm, ok := newObj.(*corev1.ConfigMap)
 		if !ok || cm.GetName() != common.EverestRBACConfigMapName {
 			return
