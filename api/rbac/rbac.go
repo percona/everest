@@ -159,7 +159,10 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 		switch resource {
 		case "backup-storages", "monitoring-instances":
 			object = "*"
-		case "database-clusters", "database-engines":
+		case "database-clusters",
+			"database-engines",
+			"database-cluster-backups",
+			"database-cluster-restores":
 			namespace := c.Param("namespace")
 			name := c.Param("name")
 			object = namespace + "/" + name
