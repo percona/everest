@@ -36,6 +36,7 @@ import (
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/kubernetes/informer"
+	"github.com/percona/everest/pkg/session"
 )
 
 // Setup a new informer that watches our RBAC ConfigMap.
@@ -109,7 +110,15 @@ func UserGetter(c echo.Context) (string, error) {
 		return "", errors.Join(err, errors.New("failed to get subject from claims"))
 	}
 
-	return strings.Split(subject, ":")[0], nil
+	issuer, err := claims.GetIssuer()
+	if err != nil {
+		return "", errors.Join(err, errors.New("failed to get issuer from claims"))
+	}
+
+	if issuer == session.SessionManagerClaimsIssuer {
+		return strings.Split(subject, ":")[0], nil
+	}
+	return subject, nil
 }
 
 // NewEnforceHandler returns a function that checks if a user is allowed to access a resource.

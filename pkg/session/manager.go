@@ -35,8 +35,6 @@ import (
 const (
 	// SessionManagerClaimsIssuer fills the "iss" field of the token.
 	SessionManagerClaimsIssuer = "everest"
-	// KeyID contains the key ID for the JWT token.
-	KeyID = "everest"
 )
 
 // Manager provides functionality for creating and managing JWT tokens.
@@ -93,7 +91,6 @@ func (mgr *Manager) Create(subject string, secondsBeforeExpiry int64, id string)
 
 func (mgr *Manager) signClaims(claims jwt.Claims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = KeyID
 	return token.SignedString(mgr.signingKey)
 }
 

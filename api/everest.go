@@ -170,7 +170,16 @@ func (e *EverestServer) newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) 
 	}
 
 	return func(token *jwt.Token) (interface{}, error) {
-		if token.Header["kid"] == session.KeyID {
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			return nil, errors.New("failed to get claims from token")
+		}
+		issuer, err := claims.GetIssuer()
+		if err != nil {
+			return "", errors.Join(err, errors.New("failed to get issuer from claims"))
+		}
+
+		if issuer == session.SessionManagerClaimsIssuer {
 			return e.sessionMgr.KeyFunc()(token)
 		}
 		// XXX: currently we use OIDC only, but once we have multiple protocols supported,
