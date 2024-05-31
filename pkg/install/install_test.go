@@ -63,6 +63,12 @@ func TestValidateNamespaces(t *testing.T) {
 			error:  ErrNSReserved("everest-monitoring"),
 		},
 		{
+			name:   "reserved olm ns",
+			input:  "everest-olm",
+			output: nil,
+			error:  ErrNSReserved("everest-olm"),
+		},
+		{
 			name:   "duplicated ns",
 			input:  "aaa,bbb,aaa",
 			output: []string{"aaa", "bbb"},
