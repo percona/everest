@@ -28,12 +28,12 @@ const App = () => {
   useEffect(() => {
     const loadConfigs = async () => {
       try {
-        const { oidc = { clientId: '', issuerURL: '' } } =
+        const { oidcConfigg = { clientId: '', issuerURL: '' } } =
           await getEverestConfigs();
         setConfigs({
           oidc: {
-            authority: oidc.issuerURL,
-            clientId: oidc.clientId,
+            authority: oidcConfigg.issuerURL,
+            clientId: oidcConfigg.clientId,
             redirectUri: `${window.location.protocol}//${window.location.host}/`,
           },
         });
