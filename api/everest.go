@@ -213,12 +213,23 @@ func (e *EverestServer) jwtMiddleWare(ctx context.Context) (echo.MiddlewareFunc,
 	tokenLookup := "header:Authorization:Bearer "
 	tokenLookup = tokenLookup + ",cookie:" + common.EverestTokenCookie
 	return echojwt.WithConfig(echojwt.Config{
-		Skipper: func(c echo.Context) bool {
-			return strings.Contains(c.Request().URL.Path, "session")
-		},
+		Skipper:     skipper,
 		TokenLookup: tokenLookup,
 		KeyFunc:     keyFunc,
 	}), nil
+}
+
+func skipper(c echo.Context) bool {
+	unauthorizedEndpoints := []string{
+		"/session",
+		"/settings",
+	}
+	for _, endpoint := range unauthorizedEndpoints {
+		if strings.Contains(c.Request().URL.Path, endpoint) {
+			return true
+		}
+	}
+	return false
 }
 
 // Start starts everest server.
