@@ -60,7 +60,6 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
         const response = await api.post('/session', { username, password });
         const token = response.data.token; // Assuming the response structure has a token field
         localStorage.setItem('everestToken', token);
-        console.log('ALL COOL');
         setLoggedInStatus();
       } catch (error) {
         setLogoutStatus();
