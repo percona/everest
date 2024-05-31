@@ -308,7 +308,7 @@ func (u *Uninstall) deleteDBNamespaces(ctx context.Context) error {
 
 func (u *Uninstall) deleteBackupStorages(ctx context.Context) error { //nolint:dupl
 	storages, err := u.kubeClient.ListBackupStorages(ctx, common.SystemNamespace)
-	if err != nil {
+	if client.IgnoreNotFound(err) != nil {
 		return err
 	}
 
@@ -343,7 +343,7 @@ func (u *Uninstall) deleteBackupStorages(ctx context.Context) error { //nolint:d
 
 func (u *Uninstall) deleteMonitoringConfigs(ctx context.Context) error { //nolint:dupl
 	monitoringConfigs, err := u.kubeClient.ListMonitoringConfigs(ctx, install.MonitoringNamespace)
-	if err != nil {
+	if client.IgnoreNotFound(err) != nil {
 		return err
 	}
 
