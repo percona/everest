@@ -137,6 +137,7 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 			basePath + "/namespaces/:namespace/database-clusters/:name/credentials": "database-clusters",
 			basePath + "/namespaces/:namespace/database-clusters/:name/pitr":        "database-clusters",
 			basePath + "/namespaces/:namespace/database-clusters/:name/restores":    "database-clusters",
+			basePath + "/namespaces/:namespace/database-clusters/:name/components":  "database-clusters",
 			basePath + "/namespaces/:namespace/database-cluster-backups":            "database-cluster-backups",
 			basePath + "/namespaces/:namespace/database-cluster-backups/:name":      "database-cluster-backups",
 			basePath + "/namespaces/:namespace/database-cluster-restores":           "database-cluster-restores",
