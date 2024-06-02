@@ -1,3 +1,4 @@
+import LoadingPageSkeleton from 'components/loading-page-skeleton/LoadingPageSkeleton';
 import { AuthContext } from 'contexts/auth';
 import { useAuth } from 'oidc-react';
 import { ReactNode, useContext, useEffect } from 'react';
@@ -24,7 +25,7 @@ const ProtectedRoute = ({ children }: { children?: ReactNode }) => {
     authStatus === 'loggingIn' ||
     (isSsoEnabled && isLoading)
   ) {
-    return <></>;
+    return <LoadingPageSkeleton />;
   }
 
   if (authStatus === 'loggedOut') {

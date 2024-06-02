@@ -73,7 +73,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
 
   const logout = async () => {
     if (isSsoEnabled) {
-      userManager.clearStaleState();
+      await userManager.clearStaleState();
       await setLogoutStatus();
     }
 

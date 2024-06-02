@@ -13,6 +13,7 @@ import { addApiAuthInterceptor, removeApiAuthInterceptor } from 'api/api';
 import { useEffect, useState } from 'react';
 import { EverestConfig } from 'shared-types/configs.types';
 import { getEverestConfigs } from 'api/everestConfigs';
+import LoadingPageSkeleton from 'components/loading-page-skeleton/LoadingPageSkeleton';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,7 +47,7 @@ const App = () => {
   }, []);
 
   if (configs === undefined) {
-    return null;
+    return <LoadingPageSkeleton />;
   }
 
   return (
