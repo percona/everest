@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { test as setup, APIResponse } from '@playwright/test';
+import { test as setup, expect, APIResponse } from '@playwright/test';
 import 'dotenv/config';
 import { STORAGE_NAMES } from './constants';
 import { getTokenFromLocalStorage } from './utils/localStorage';
