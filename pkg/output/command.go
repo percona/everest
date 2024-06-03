@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
@@ -52,6 +53,10 @@ func PrintOutput(cmd *cobra.Command, l *zap.SugaredLogger, output interface{}) {
 // PrintError formats and prints an error to logger.
 func PrintError(err error, l *zap.SugaredLogger) {
 	if errors.Is(err, common.ErrExitWithError) {
+		return
+	}
+	if errors.Is(err, terminal.InterruptErr) {
+		l.Info("The command execution is interrupted")
 		return
 	}
 
