@@ -39,7 +39,7 @@ const Provider = ({
 const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   const [authStatus, setAuthStatus] = useState<UserAuthStatus>('unknown');
   const [redirect, setRedirect] = useState<string | null>(null);
-  const { signIn, userData, userManager, isLoading } = useOidcAuth();
+  const { signIn, userData, userManager } = useOidcAuth();
   const checkAuth = useCallback(async (token: string) => {
     try {
       await api.get('/version', {
@@ -52,6 +52,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   }, []);
 
   const login = async (mode: AuthMode, manualAuthArgs?: ManualAuthArgs) => {
+    setAuthStatus('loggingIn');
     if (mode === 'sso') {
       await signIn();
     } else {
@@ -127,7 +128,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
       localStorage.setItem('everestToken', userData.access_token);
       setLoggedInStatus();
     }
-  }, [userData, isLoading, authStatus]);
+  }, [userData, authStatus]);
 
   useEffect(() => {
     if (authStatus === 'loggedIn') {
@@ -145,14 +146,20 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
           setLogoutStatus();
         }
       } else {
-        const user = await userManager.getUser();
-
-        if (!user) {
-          setLogoutStatus();
+        if (window.location !== window.parent.location) {
+          // This is running in the iframe, so we are renewing the token silently
+          return;
         }
 
         if (isAfter(new Date(), new Date((exp || 0) * 1000))) {
           silentlyRenewToken();
+          return;
+        }
+
+        const user = await userManager.getUser();
+
+        if (!user) {
+          setLogoutStatus();
         }
       }
     };
