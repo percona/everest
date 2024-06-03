@@ -71,7 +71,7 @@ const App = () => {
           <QueryClientProvider client={queryClient}>
             <AuthProvider
               oidcConfig={
-                configs?.oidc
+                configs?.oidc?.authority && configs?.oidc?.clientId
                   ? {
                       ...configs?.oidc,
                       redirectUri: `${window.location.protocol}//${window.location.host}/`,
