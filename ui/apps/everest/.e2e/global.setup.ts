@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { test as setup, APIResponse } from '@playwright/test';
+import { test as setup, expect, APIResponse } from '@playwright/test';
 import 'dotenv/config';
 import { STORAGE_NAMES } from './constants';
 import { getTokenFromLocalStorage } from './utils/localStorage';
@@ -90,6 +90,7 @@ setup('Backup storages', async ({ request }) => {
 
 setup('Close modal permanently', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('close-dialog-icon')).toBeVisible();
   await page.getByTestId('close-dialog-icon').click();
   await page.context().storageState({ path: 'user.json' });
 });

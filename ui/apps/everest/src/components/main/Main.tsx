@@ -2,7 +2,6 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import {
   Box,
   Button,
-  Skeleton,
   Stack,
   Toolbar,
   Typography,
@@ -20,6 +19,7 @@ import { AppBar } from '../app-bar/AppBar';
 import { Drawer } from '../drawer/Drawer';
 import { WelcomeDialog } from '../welcome-dialog/welcome-dialog';
 import { Messages } from './Main.messages';
+import LoadingPageSkeleton from 'components/loading-page-skeleton/LoadingPageSkeleton';
 
 export const Main = () => {
   const theme = useTheme();
@@ -62,14 +62,7 @@ export const Main = () => {
           >
             <Toolbar />
             {isFetching ? (
-              <>
-                <Skeleton variant="rectangular" />
-                <Skeleton variant="rectangular" />
-                <Skeleton />
-                <Skeleton />
-                <Skeleton />
-                <Skeleton variant="rectangular" />
-              </>
+              <LoadingPageSkeleton />
             ) : isError ? (
               <Stack alignItems="center">
                 <Typography variant="subtitle1">
