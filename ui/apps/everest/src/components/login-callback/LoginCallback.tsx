@@ -5,11 +5,15 @@ const LoginCallback = () => {
   const { userManager } = useAuth();
   useEffect(() => {
     const processLogin = async () => {
-      const user = await userManager.signinRedirectCallback('/');
+      try {
+        const user = await userManager.signinCallback();
 
-      if (user) {
-        localStorage.setItem('everestToken', user.access_token);
-        window.location.href = '/';
+        if (user) {
+          localStorage.setItem('everestToken', user.access_token);
+          window.location.href = '/';
+        }
+      } catch (error) {
+        return;
       }
     };
     processLogin();
