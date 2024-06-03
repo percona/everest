@@ -1,6 +1,6 @@
 export enum DBClusterDetailsTabs {
-  // TODO: uncomment when ready
   overview = 'overview',
+  components = 'components',
   backups = 'backups',
   restores = 'restores',
 }
