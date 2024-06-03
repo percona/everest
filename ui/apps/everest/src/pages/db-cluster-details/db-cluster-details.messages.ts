@@ -21,6 +21,7 @@ export const Messages = {
   backups: 'Backups',
   restores: 'Restores',
   overview: 'Overview',
+  components: 'Components',
   dbActions: 'Actions',
   restoringDb:
     'We are recovering your database. Do not perform any actions on the database until recovery is complete.',

@@ -8,6 +8,8 @@ function StatusField<T extends string | number | symbol>({
   statusMap,
   children,
   dataTestId,
+  iconProps,
+  stackProps,
 }: StatusFieldProps<T>) {
   const mappedStatus: BaseStatus = statusMap[status];
   const MappedIcon = STATUS_TO_ICON[mappedStatus] || UknownIcon;
@@ -17,8 +19,9 @@ function StatusField<T extends string | number | symbol>({
       direction="row"
       gap={1}
       data-testid={`${dataTestId ? `${dataTestId}-` : ''}status`}
+      {...stackProps}
     >
-      <MappedIcon />
+      <MappedIcon {...iconProps} />
       {children}
     </Stack>
   );
