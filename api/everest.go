@@ -211,10 +211,10 @@ func (e *EverestServer) newJWTSkipperFunc() (echomiddleware.Skipper, error) {
 		if !ok || !v {
 			continue
 		}
-		skip = append(skip, path)
+		for _, server := range swagger.Servers {
+			skip = append(skip, server.URL+path)
+		}
 	}
-
-	e.l.Infof("Skipping auth for paths: %v", skip)
 
 	return func(c echo.Context) bool {
 		return slices.Contains(skip, c.Request().URL.Path)
