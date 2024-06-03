@@ -326,7 +326,7 @@ func (o *Install) installVMOperator(ctx context.Context) error {
 
 func (o *Install) provisionMonitoringStack(ctx context.Context) error {
 	l := o.l.With("action", "monitoring")
-	if err := o.createNamespace(ctx, MonitoringNamespace); err != nil {
+	if err := o.createNamespace(ctx, MonitoringNamespace, false); err != nil {
 		return err
 	}
 
@@ -343,7 +343,7 @@ func (o *Install) provisionMonitoringStack(ctx context.Context) error {
 }
 
 func (o *Install) provisionEverestOperator(ctx context.Context, recVer *version.RecommendedVersion) error {
-	if err := o.createNamespace(ctx, common.SystemNamespace); err != nil {
+	if err := o.createNamespace(ctx, common.SystemNamespace, false); err != nil {
 		return err
 	}
 
@@ -406,7 +406,7 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 
 func (o *Install) provisionDBNamespaces(ctx context.Context, recVer *version.RecommendedVersion) error {
 	for _, namespace := range o.config.NamespacesList {
-		if err := o.createNamespace(ctx, namespace); err != nil {
+		if err := o.createNamespace(ctx, namespace, true); err != nil {
 			return err
 		}
 		if err := o.kubeClient.CreateOperatorGroup(ctx, dbsOperatorGroup, namespace, []string{}); err != nil {
@@ -520,15 +520,17 @@ func (o *Install) runInstallWizard() error {
 }
 
 // createNamespace provisions a namespace for Everest.
-func (o *Install) createNamespace(ctx context.Context, namespace string) error {
+func (o *Install) createNamespace(ctx context.Context, namespace string, managedByEverest bool) error {
 	o.l.Infof("Creating namespace %s", namespace)
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: namespace,
-			Labels: map[string]string{
-				common.KubernetesManagedByLabel: common.Everest,
-			},
 		},
+	}
+	if managedByEverest {
+		ns.SetLabels(map[string]string{
+			common.KubernetesManagedByLabel: common.Everest,
+		})
 	}
 	err := o.kubeClient.CreateNamespace(ctx, ns)
 	if err != nil {
