@@ -102,6 +102,7 @@ export const useDbClusterRestores = (
   useQuery<GetRestorePayload, unknown, Restore[]>({
     queryKey: [RESTORES_QUERY_KEY, namespace, dbClusterName],
     queryFn: () => getDbClusterRestores(namespace, dbClusterName),
+    refetchInterval: 5 * 1000,
     select: (data) =>
       data.items.map((item) => ({
         name: item.metadata.name,
