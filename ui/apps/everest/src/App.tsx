@@ -69,18 +69,14 @@ const App = () => {
         >
           <QueryClientProvider client={queryClient}>
             <AuthProvider
-              oidcConfig={
-                configs?.oidc?.authority && configs?.oidc?.clientId
-                  ? {
-                      ...configs?.oidc,
-                      redirectUri: `${window.location.protocol}//${window.location.host}/login-callback`,
-                      scope: 'openid profile email',
-                      responseType: 'code',
-                      autoSignIn: false,
-                      automaticSilentRenew: false,
-                    }
-                  : undefined
-              }
+              oidcConfig={{
+                ...configs?.oidc,
+                redirectUri: `${window.location.protocol}//${window.location.host}/login-callback`,
+                scope: 'openid profile email',
+                responseType: 'code',
+                autoSignIn: false,
+                automaticSilentRenew: false,
+              }}
             >
               <DrawerContextProvider>
                 <RouterProvider router={router} />

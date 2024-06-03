@@ -31,7 +31,13 @@ const Provider = ({
   children: React.ReactNode;
 }) => {
   const authProvider = useMemo(
-    () => <AuthProvider isSsoEnabled={!!oidcConfig}>{children}</AuthProvider>,
+    () => (
+      <AuthProvider
+        isSsoEnabled={!!oidcConfig?.authority && !!oidcConfig?.clientId}
+      >
+        {children}
+      </AuthProvider>
+    ),
     [children, oidcConfig]
   );
   return <OidcAuthProvider {...oidcConfig}>{authProvider}</OidcAuthProvider>;
@@ -99,8 +105,10 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   const setLogoutStatus = useCallback(async () => {
     setAuthStatus('loggedOut');
     localStorage.removeItem('everestToken');
-    await userManager.clearStaleState();
-    await userManager.removeUser();
+    if (isSsoEnabled) {
+      await userManager.clearStaleState();
+      await userManager.removeUser();
+    }
   }, [userManager]);
 
   const silentlyRenewToken = useCallback(async () => {
@@ -114,16 +122,18 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   }, [userManager]);
 
   useEffect(() => {
-    userManager.events.addUserLoaded((user) => {
-      localStorage.setItem('everestToken', user.access_token || '');
-      setLoggedInStatus();
-    });
+    if (isSsoEnabled) {
+      userManager.events.addUserLoaded((user) => {
+        localStorage.setItem('everestToken', user.access_token || '');
+        setLoggedInStatus();
+      });
 
-    userManager.events.addAccessTokenExpiring(() => {
-      silentlyRenewToken();
-    });
+      userManager.events.addAccessTokenExpiring(() => {
+        silentlyRenewToken();
+      });
 
-    userManager.signinSilentCallback();
+      userManager.signinSilentCallback();
+    }
   }, [isSsoEnabled, silentlyRenewToken, userManager]);
 
   useEffect(() => {
@@ -140,7 +150,6 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
       const { iss, exp } = jwtDecode(token);
       if (iss === EVEREST_JWT_ISSUER) {
         const isTokenValid = await checkAuth(token);
-
         if (isTokenValid) {
           setLoggedInStatus();
         } else {
