@@ -139,10 +139,22 @@ func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace
 			if c.State.Running != nil {
 				started = c.State.Running.StartedAt.Time
 			}
+
+			var status string
+			switch {
+			case c.State.Running != nil:
+				status = "Running"
+			case c.State.Waiting != nil:
+				status = "Waiting"
+			case c.State.Terminated != nil:
+				status = "Terminated"
+			}
+
 			containers = append(containers, DatabaseClusterComponentContainer{
 				Name:     &c.Name, //nolint:gosec,exportloopref
 				Started:  pointer.ToString(started.Format(time.RFC3339)),
 				Restarts: pointer.ToInt(int(c.RestartCount)),
+				Status:   &status,
 			})
 		}
 		component := pod.Labels["app.kubernetes.io/component"]
