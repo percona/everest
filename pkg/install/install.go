@@ -379,7 +379,7 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		if err = o.kubeClient.InstallEverest(ctx, common.SystemNamespace, v); err != nil {
 			return err
 		}
-		if err := o.createEverestJWTToken(ctx); err != nil {
+		if err := o.kubeClient.CreateRSAKeyPair(ctx); err != nil {
 			return err
 		}
 		if err := o.resetEverestAdminPassword(ctx); err != nil {
@@ -705,7 +705,7 @@ func ValidateNamespaces(str string) ([]string, error) {
 			continue
 		}
 
-		if ns == common.SystemNamespace || ns == MonitoringNamespace {
+		if ns == common.SystemNamespace || ns == MonitoringNamespace || ns == kubernetes.OLMNamespace {
 			return nil, ErrNSReserved(ns)
 		}
 
@@ -745,20 +745,6 @@ func (o *Install) resetEverestAdminPassword(ctx context.Context) error {
 		return errors.Join(err, errors.New("could not generate random password"))
 	}
 	if err := o.kubeClient.Accounts().SetPassword(ctx, common.EverestAdminUser, pass, false); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (o *Install) createEverestJWTToken(ctx context.Context) error {
-	o.l.Info("Creating JWT token for Everest")
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return err
-	}
-	token := hex.EncodeToString(b)
-
-	if err := o.kubeClient.SetJWTToken(ctx, token); err != nil {
 		return err
 	}
 	return nil

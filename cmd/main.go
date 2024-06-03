@@ -52,7 +52,9 @@ func main() {
 	}
 	l.Debug("Debug logging enabled")
 
-	server, err := api.NewEverestServer(c, l)
+	tCtx, tCancel := context.WithCancel(context.Background())
+
+	server, err := api.NewEverestServer(tCtx, c, l)
 	if err != nil {
 		l.Fatalf("Error creating Everest Server\n: %s", err)
 	}
@@ -64,7 +66,6 @@ func main() {
 		}
 	}()
 
-	tCtx, tCancel := context.WithCancel(context.Background())
 	if !c.DisableTelemetry {
 		// To prevent leaking test data to prod,
 		// the prod TelemetryURL is set for the release builds during the build time.

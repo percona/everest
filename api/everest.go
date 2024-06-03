@@ -27,24 +27,25 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 	middleware "github.com/oapi-codegen/echo-middleware"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/cmd/config"
-	"github.com/percona/everest/pkg/auth"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/oidc"
 	"github.com/percona/everest/pkg/session"
 	"github.com/percona/everest/public"
 )
 
 // EverestServer represents the server struct.
 type EverestServer struct {
-	auth       authValidator
 	config     *config.EverestConfig
 	l          *zap.SugaredLogger
 	echo       *echo.Echo
@@ -52,48 +53,39 @@ type EverestServer struct {
 	sessionMgr *session.Manager
 }
 
-type authValidator interface {
-	Valid(ctx context.Context, token string) (bool, error)
-}
-
 // NewEverestServer creates and configures everest API.
-func NewEverestServer(c *config.EverestConfig, l *zap.SugaredLogger) (*EverestServer, error) {
+func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.SugaredLogger) (*EverestServer, error) {
 	kubeClient, err := kubernetes.NewInCluster(l)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed creating Kubernetes client"))
 	}
 
-	ns, err := kubeClient.GetNamespace(context.Background(), kubeClient.Namespace())
-	if err != nil {
-		l.Error(err)
-		return nil, errors.New("could not get namespace from Kubernetes")
-	}
-
 	echoServer := echo.New()
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 
-	sessMgr := session.New(
+	sessMgr, err := session.New(
 		session.WithAccountManager(kubeClient.Accounts()),
-		session.WithSigningKey([]byte(c.JWTSigningKey)),
 	)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to create session manager"))
+	}
 
 	e := &EverestServer{
 		config:     c,
 		l:          l,
 		echo:       echoServer,
 		kubeClient: kubeClient,
-		auth:       auth.NewToken(kubeClient, l, []byte(ns.UID)),
 		sessionMgr: sessMgr,
 	}
 
-	if err := e.initHTTPServer(); err != nil {
+	if err := e.initHTTPServer(ctx); err != nil {
 		return e, err
 	}
 	return e, err
 }
 
 // initHTTPServer configures http server for the current EverestServer instance.
-func (e *EverestServer) initHTTPServer() error {
+func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	swagger, err := GetSwagger()
 	if err != nil {
 		return err
@@ -134,23 +126,78 @@ func (e *EverestServer) initHTTPServer() error {
 	apiGroup.Use(middleware.OapiRequestValidatorWithOptions(swagger, &middleware.Options{
 		SilenceServersWarning: true,
 	}))
-	apiGroup.Use(e.jwtMiddleWare())
+
+	jwtMW, err := e.jwtMiddleWare(ctx)
+	if err != nil {
+		return err
+	}
+	apiGroup.Use(jwtMW)
+
 	apiGroup.Use(e.checkOperatorUpgradeState)
 	RegisterHandlers(apiGroup, e)
 
 	return nil
 }
 
-func (e *EverestServer) jwtMiddleWare() echo.MiddlewareFunc {
+func (e *EverestServer) oidcKeyFn(ctx context.Context) (jwt.Keyfunc, error) {
+	settings, err := e.kubeClient.GetEverestSettings(ctx)
+	if err = client.IgnoreNotFound(err); err != nil {
+		return nil, err
+	}
+	if settings.OIDCConfigRaw == "" {
+		return nil, nil
+	}
+	oidcConfig, err := settings.OIDCConfig()
+	if err != nil {
+		return nil, errors.Join(err, errors.New("cannot parse OIDC raw config"))
+	}
+	return oidc.NewKeyFunc(ctx, oidcConfig.IssuerURL)
+}
+
+func (e *EverestServer) newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) {
+	oidcKeyFn, err := e.oidcKeyFn(ctx)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to get OIDC key function"))
+	}
+
+	return func(token *jwt.Token) (interface{}, error) {
+		if token.Header["kid"] == session.KeyID {
+			return e.sessionMgr.KeyFunc()(token)
+		}
+		// XXX: currently we use OIDC only, but once we have multiple protocols supported,
+		// we should have a way to select which KeyFunc to use.
+		if oidcKeyFn != nil {
+			return oidcKeyFn(token)
+		}
+		return nil, errors.New("no key found for token")
+	}, nil
+}
+
+func (e *EverestServer) jwtMiddleWare(ctx context.Context) (echo.MiddlewareFunc, error) {
+	keyFunc, err := e.newJWTKeyFunc(ctx)
+	if err != nil {
+		return nil, err
+	}
 	tokenLookup := "header:Authorization:Bearer "
 	tokenLookup = tokenLookup + ",cookie:" + common.EverestTokenCookie
 	return echojwt.WithConfig(echojwt.Config{
-		Skipper: func(c echo.Context) bool {
-			return strings.Contains(c.Request().URL.Path, "session")
-		},
-		SigningKey:  []byte(e.config.JWTSigningKey),
+		Skipper:     skipper,
 		TokenLookup: tokenLookup,
-	})
+		KeyFunc:     keyFunc,
+	}), nil
+}
+
+func skipper(c echo.Context) bool {
+	unauthorizedEndpoints := []string{
+		"/session",
+		"/settings",
+	}
+	for _, endpoint := range unauthorizedEndpoints {
+		if strings.Contains(c.Request().URL.Path, endpoint) {
+			return true
+		}
+	}
+	return false
 }
 
 // Start starts everest server.
