@@ -1718,6 +1718,8 @@ components:
           type: string
         restarts:
           type: integer
+        status:
+          type: string
     DatabaseClusterPitr:
       type: object
       description: point-in-time recovery related data
