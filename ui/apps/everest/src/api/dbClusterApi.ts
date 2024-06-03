@@ -18,6 +18,7 @@ import {
   GetDbClusterPayload,
 } from 'shared-types/dbCluster.types';
 import { api } from './api';
+import { DBClusterComponentsList } from 'shared-types/components.types';
 
 export const createDbClusterFn = async (data: DbCluster, namespace: string) => {
   const response = await api.post(
@@ -76,6 +77,16 @@ export const deleteDbClusterFn = async (
 ) => {
   const response = await api.delete<DbCluster>(
     `namespaces/${namespace}/database-clusters/${dbClusterName}?cleanupBackupStorage=${cleanupBackupStorage}`
+  );
+  return response.data;
+};
+
+export const getDBClusterComponentsListFn = async (
+  namespace: string,
+  dbClusterName: string
+) => {
+  const response = await api.get<DBClusterComponentsList>(
+    `namespaces/${namespace}/database-clusters/${dbClusterName}/components`
   );
   return response.data;
 };
