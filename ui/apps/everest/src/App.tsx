@@ -9,7 +9,6 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AuthProvider } from 'contexts/auth';
 import { DrawerContextProvider } from 'contexts/drawer/drawer.context';
 import router from 'router';
-import { addApiAuthInterceptor, removeApiAuthInterceptor } from 'api/api';
 import { useEffect, useState } from 'react';
 import { EverestConfig } from 'shared-types/configs.types';
 import { getEverestConfigs } from 'api/everestConfigs';
@@ -74,21 +73,11 @@ const App = () => {
                 configs?.oidc?.authority && configs?.oidc?.clientId
                   ? {
                       ...configs?.oidc,
-                      redirectUri: `${window.location.protocol}//${window.location.host}/`,
+                      redirectUri: `${window.location.protocol}//${window.location.host}/login-callback`,
                       scope: 'openid profile email',
                       responseType: 'code',
                       autoSignIn: false,
                       automaticSilentRenew: false,
-                      onSignIn: (user) => {
-                        localStorage.setItem(
-                          'everestToken',
-                          user?.access_token || ''
-                        );
-                        addApiAuthInterceptor();
-                      },
-                      onSignOut: () => {
-                        removeApiAuthInterceptor();
-                      },
                     }
                   : undefined
               }

@@ -115,6 +115,7 @@ const Login = () => {
                     <Button
                       variant="outlined"
                       fullWidth
+                      disabled={authStatus === 'loggingIn'}
                       sx={{ fontSize: '13px' }}
                       onClick={handleSsoLogin}
                     >

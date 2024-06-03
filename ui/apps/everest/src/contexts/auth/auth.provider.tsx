@@ -10,6 +10,7 @@ import {
   addApiErrorInterceptor,
   removeApiErrorInterceptor,
   addApiAuthInterceptor,
+  removeApiAuthInterceptor,
 } from 'api/api';
 import { enqueueSnackbar } from 'notistack';
 import AuthContext from './auth.context';
@@ -39,7 +40,7 @@ const Provider = ({
 const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   const [authStatus, setAuthStatus] = useState<UserAuthStatus>('unknown');
   const [redirect, setRedirect] = useState<string | null>(null);
-  const { signIn, userData, userManager } = useOidcAuth();
+  const { signIn, userManager } = useOidcAuth();
   const checkAuth = useCallback(async (token: string) => {
     try {
       await api.get('/version', {
@@ -82,6 +83,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     localStorage.removeItem('everestToken');
     setRedirect(null);
     removeApiErrorInterceptor();
+    removeApiAuthInterceptor();
   };
 
   const setRedirectRoute = (route: string) => {
@@ -124,14 +126,12 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   }, [isSsoEnabled, silentlyRenewToken, userManager]);
 
   useEffect(() => {
-    if (authStatus !== 'loggedIn' && userData && userData.access_token) {
-      localStorage.setItem('everestToken', userData.access_token);
-      setLoggedInStatus();
+    if (window.location !== window.parent.location) {
+      // This is running in the iframe, so we are renewing the token silently
+      return;
     }
-  }, [userData, authStatus]);
 
-  useEffect(() => {
-    if (authStatus === 'loggedIn') {
+    if (authStatus === 'loggedIn' || authStatus === 'loggingIn') {
       return;
     }
 
@@ -146,11 +146,6 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
           setLogoutStatus();
         }
       } else {
-        if (window.location !== window.parent.location) {
-          // This is running in the iframe, so we are renewing the token silently
-          return;
-        }
-
         if (isAfter(new Date(), new Date((exp || 0) * 1000))) {
           silentlyRenewToken();
           return;
@@ -160,6 +155,9 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
 
         if (!user) {
           setLogoutStatus();
+        } else {
+          setLoggedInStatus();
+          return;
         }
       }
     };
@@ -171,7 +169,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     }
 
     authRoutine(savedToken);
-  }, [authStatus, silentlyRenewToken]);
+  }, [authStatus, silentlyRenewToken, userManager]);
 
   return (
     <AuthContext.Provider
