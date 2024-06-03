@@ -39,7 +39,6 @@ const Provider = ({
 
 const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   const [authStatus, setAuthStatus] = useState<UserAuthStatus>('unknown');
-  console.log(authStatus);
   const [redirect, setRedirect] = useState<string | null>(null);
   const { signIn, userManager } = useOidcAuth();
   const checkAuth = useCallback(async (token: string) => {
