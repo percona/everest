@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
-	"strings"
+	"slices"
 
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -42,6 +42,10 @@ import (
 	"github.com/percona/everest/pkg/oidc"
 	"github.com/percona/everest/pkg/session"
 	"github.com/percona/everest/public"
+)
+
+const (
+	propertySkipEverestAuthnSwagger = "x-skip-everest-authn"
 )
 
 // EverestServer represents the server struct.
@@ -178,26 +182,43 @@ func (e *EverestServer) jwtMiddleWare(ctx context.Context) (echo.MiddlewareFunc,
 	if err != nil {
 		return nil, err
 	}
+
+	skipperFunc, err := e.newJWTSkipperFunc()
+	if err != nil {
+		return nil, err
+	}
 	tokenLookup := "header:Authorization:Bearer "
 	tokenLookup = tokenLookup + ",cookie:" + common.EverestTokenCookie
 	return echojwt.WithConfig(echojwt.Config{
-		Skipper:     skipper,
+		Skipper:     skipperFunc,
 		TokenLookup: tokenLookup,
 		KeyFunc:     keyFunc,
 	}), nil
 }
 
-func skipper(c echo.Context) bool {
-	unauthorizedEndpoints := []string{
-		"/session",
-		"/settings",
+func (e *EverestServer) newJWTSkipperFunc() (echomiddleware.Skipper, error) {
+	skip := []string{} // list of paths to skip
+	swagger, err := GetSwagger()
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not get swagger spec"))
 	}
-	for _, endpoint := range unauthorizedEndpoints {
-		if strings.Contains(c.Request().URL.Path, endpoint) {
-			return true
+	for path, pathItem := range swagger.Paths.Map() {
+		val, found := pathItem.Extensions[propertySkipEverestAuthnSwagger]
+		if !found {
+			continue
 		}
+		v, ok := val.(bool)
+		if !ok || !v {
+			continue
+		}
+		skip = append(skip, path)
 	}
-	return false
+
+	e.l.Infof("Skipping auth for paths: %v", skip)
+
+	return func(c echo.Context) bool {
+		return slices.Contains(skip, c.Request().URL.Path)
+	}, nil
 }
 
 // Start starts everest server.
