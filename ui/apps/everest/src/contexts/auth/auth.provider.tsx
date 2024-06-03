@@ -100,11 +100,27 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     await userManager.removeUser();
   }, [userManager]);
 
+  const silentlyRenewToken = useCallback(async () => {
+    const newLoggedUser = await userManager.signinSilent();
+
+    if (newLoggedUser && newLoggedUser.access_token) {
+      localStorage.setItem('everestToken', newLoggedUser.access_token);
+    } else {
+      setLogoutStatus();
+    }
+  }, [userManager]);
+
   useEffect(() => {
     userManager.events.addUserLoaded((user) => {
       localStorage.setItem('everestToken', user.access_token || '');
     });
-  }, []);
+
+    userManager.events.addAccessTokenExpiring(() => {
+      silentlyRenewToken();
+    });
+
+    userManager.signinSilentCallback();
+  }, [isSsoEnabled, silentlyRenewToken, userManager]);
 
   useEffect(() => {
     if (authStatus !== 'loggedIn' && userData && userData.access_token) {
@@ -117,6 +133,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     if (authStatus === 'loggedIn') {
       return;
     }
+
     const authRoutine = async (token: string) => {
       const { iss, exp } = jwtDecode(token);
       if (iss === EVEREST_JWT_ISSUER) {
@@ -127,13 +144,15 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
         } else {
           setLogoutStatus();
         }
-      } else if (isAfter(new Date(), new Date((exp || 0) * 1000))) {
-        const user = await userManager.signinSilent();
+      } else {
+        const user = await userManager.getUser();
 
-        if (user && user.access_token) {
-          localStorage.setItem('everestToken', user.access_token);
-        } else {
+        if (!user) {
           setLogoutStatus();
+        }
+
+        if (isAfter(new Date(), new Date((exp || 0) * 1000))) {
+          silentlyRenewToken();
         }
       }
     };
@@ -145,7 +164,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     }
 
     authRoutine(savedToken);
-  }, [authStatus]);
+  }, [authStatus, silentlyRenewToken]);
 
   return (
     <AuthContext.Provider

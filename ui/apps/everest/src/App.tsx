@@ -78,6 +78,7 @@ const App = () => {
                       scope: 'openid profile email',
                       responseType: 'code',
                       autoSignIn: false,
+                      automaticSilentRenew: false,
                       onSignIn: (user) => {
                         localStorage.setItem(
                           'everestToken',
