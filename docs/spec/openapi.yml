@@ -25,6 +25,7 @@ tags:
 
 paths:
   '/session':
+    x-everest-skip-authn: true
     post:
       summary: Create a new session
       description: Create a new session
@@ -83,6 +84,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Version'
   '/settings':
+    x-everest-skip-authn: true
     get:
       summary: Get Everest global settings
       description: Get Everest global settings

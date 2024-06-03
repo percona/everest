@@ -45,7 +45,7 @@ import (
 )
 
 const (
-	propertySkipEverestAuthnSwagger = "x-skip-everest-authn"
+	propertySkipEverestAuthnSwagger = "x-everest-skip-authn"
 )
 
 // EverestServer represents the server struct.
