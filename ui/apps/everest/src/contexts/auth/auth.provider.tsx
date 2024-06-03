@@ -39,6 +39,7 @@ const Provider = ({
 
 const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   const [authStatus, setAuthStatus] = useState<UserAuthStatus>('unknown');
+  console.log(authStatus);
   const [redirect, setRedirect] = useState<string | null>(null);
   const { signIn, userManager } = useOidcAuth();
   const checkAuth = useCallback(async (token: string) => {
@@ -116,6 +117,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   useEffect(() => {
     userManager.events.addUserLoaded((user) => {
       localStorage.setItem('everestToken', user.access_token || '');
+      setLoggedInStatus();
     });
 
     userManager.events.addAccessTokenExpiring(() => {
