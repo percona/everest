@@ -212,7 +212,7 @@ func newSkipperFunc() (echomiddleware.Skipper, error) {
 
 	for path, pathItem := range swagger.Paths.Map() {
 		for method, operation := range pathItem.Operations() {
-			// Check if we have explicity specified that we don't want any security here?
+			// Check if we have explicitly specified that we don't want any security here?
 			if operation.Security != nil && len(*operation.Security) == 0 {
 				for _, srv := range swagger.Servers {
 					excluded = append(excluded, fmt.Sprintf("%s %s", method, srv.URL+path))
