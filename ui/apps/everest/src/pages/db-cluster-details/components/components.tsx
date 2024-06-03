@@ -16,17 +16,18 @@
 import { useParams } from 'react-router-dom';
 import { useDbClusterComponents } from 'hooks/api/db-cluster/useDbClusterComponents';
 import { useMemo } from 'react';
-import { capitalize } from '@mui/material';
+import { capitalize, Tooltip } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { MRT_ColumnDef } from 'material-react-table';
 import { DBClusterComponent } from 'shared-types/components.types';
 import StatusField from 'components/status-field';
-import { formatDistanceToNowStrict } from 'date-fns';
+import { format, formatDistanceToNowStrict } from 'date-fns';
 import {
   COMPONENT_STATUS,
   COMPONENT_STATUS_TO_BASE_STATUS,
 } from './components.constants';
 import ExpandedRow from './expanded-row';
+import { DATE_FORMAT } from 'consts';
 
 const Components = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -63,7 +64,17 @@ const Components = () => {
         accessorKey: 'started',
         Cell: ({ cell }) => {
           const date = new Date(cell.getValue<string>());
-          return date ? formatDistanceToNowStrict(date) : '';
+          return date ? (
+            <Tooltip
+              title={`Started at ${format(date, DATE_FORMAT)}`}
+              placement="right"
+              arrow
+            >
+              <div>{formatDistanceToNowStrict(date)}</div>
+            </Tooltip>
+          ) : (
+            ''
+          );
         },
       },
       {
@@ -79,7 +90,7 @@ const Components = () => {
 
   return (
     <Table
-      state={{ isLoading: isFetching }}
+      state={{ isLoading: isFetching && components?.length === 0 }}
       tableName={`${dbClusterName}-components`}
       columns={columns}
       data={components}

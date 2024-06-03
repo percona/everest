@@ -27,4 +27,5 @@ export const useDbClusterComponents = (
   useQuery<DBClusterComponentsList, unknown, DBClusterComponent[]>({
     queryKey: [DB_CLUSTER_COMPONENTS_QUERY_KEY, namespace, dbClusterName],
     queryFn: () => getDBClusterComponentsListFn(namespace, dbClusterName),
+    refetchInterval: 5 * 1000,
   });

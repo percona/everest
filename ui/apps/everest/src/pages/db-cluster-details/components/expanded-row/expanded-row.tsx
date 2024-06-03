@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Box, Typography } from '@mui/material';
+import { Box, Tooltip, Typography, useTheme } from '@mui/material';
 import { MRT_ColumnDef, MRT_Row } from 'material-react-table';
 import { DBClusterComponent } from 'shared-types/components.types';
-import { formatDistanceToNowStrict } from 'date-fns';
+import { format, formatDistanceToNowStrict } from 'date-fns';
 import {
   CONTAINER_STATUS,
   CONTAINER_STATUS_TO_BASE_STATUS,
@@ -25,9 +25,11 @@ import StatusField from 'components/status-field';
 import { useMemo } from 'react';
 import { Container } from 'shared-types/components.types';
 import { Table } from '@percona/ui-lib';
+import { DATE_FORMAT } from 'consts';
 
 const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
   const { containers, name } = row.original;
+  const theme = useTheme();
 
   const columns = useMemo<MRT_ColumnDef<Container>[]>(() => {
     return [
@@ -52,13 +54,13 @@ const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
         ),
       },
       {
-        header: 'Fake column',
-        accessorKey: 'restarts',
+        header: 'Fake column name',
+        accessorKey: 'name',
         Cell: () => '',
       },
       {
-        header: 'Fake column',
-        accessorKey: 'restarts',
+        header: 'Fake column type',
+        accessorKey: 'type',
         Cell: () => '',
       },
       {
@@ -66,16 +68,38 @@ const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
         accessorKey: 'started',
         Cell: ({ cell }) => {
           const date = new Date(cell.getValue<string>());
-          return date ? formatDistanceToNowStrict(date) : '';
+          return date ? (
+            <Tooltip
+              title={`Started at ${format(date, DATE_FORMAT)}`}
+              placement="right"
+              arrow
+            >
+              <Typography
+                variant="caption"
+                color={theme.palette.text.secondary}
+              >
+                {formatDistanceToNowStrict(date)} ago{' '}
+              </Typography>
+            </Tooltip>
+          ) : (
+            ''
+          );
         },
       },
       {
         header: 'Restarts',
         accessorKey: 'restarts',
+        Cell: ({ cell }) => {
+          return (
+            <Typography variant="caption" color={theme.palette.text.secondary}>
+              {cell.getValue<string>()}
+            </Typography>
+          );
+        },
       },
       {
-        header: 'Fake column',
-        accessorKey: 'restarts',
+        header: 'Fake column ready',
+        accessorKey: 'ready',
         Cell: () => '',
       },
     ];
