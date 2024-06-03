@@ -1,8 +1,23 @@
+import { DbEngineType } from '@percona/types';
+
 export const Messages = {
   deleteDialog: {
     header: 'Delete backup',
-    content: (backupName: string) =>
-      `Are you sure you want to permanently delete "${backupName}" and any datasets it contains?`,
+    content: (backupName: string, dbType: DbEngineType) => (
+      <>
+        {dbType === DbEngineType.POSTGRESQL ? (
+          <>
+            Are you sure you want to permanently delete <b>{backupName}</b>{' '}
+            backup? The backup data will not be deleted from the backup storage.
+          </>
+        ) : (
+          <>
+            Are you sure you want to permanently delete <b>{backupName}</b>{' '}
+            backup?
+          </>
+        )}
+      </>
+    ),
     alertMessage:
       'This action will permanently destroy your backup and you will not be able to recover it.',
     confirmButton: 'Delete',
