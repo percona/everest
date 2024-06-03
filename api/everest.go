@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -42,10 +43,6 @@ import (
 	"github.com/percona/everest/pkg/oidc"
 	"github.com/percona/everest/pkg/session"
 	"github.com/percona/everest/public"
-)
-
-const (
-	propertySkipEverestAuthnSwagger = "x-everest-skip-authn"
 )
 
 // EverestServer represents the server struct.
@@ -129,6 +126,11 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	apiGroup := e.echo.Group(basePath)
 	apiGroup.Use(middleware.OapiRequestValidatorWithOptions(swagger, &middleware.Options{
 		SilenceServersWarning: true,
+		Options: openapi3filter.Options{
+			AuthenticationFunc: func(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+				return nil
+			},
+		},
 	}))
 
 	jwtMW, err := e.jwtMiddleWare(ctx)
@@ -183,41 +185,45 @@ func (e *EverestServer) jwtMiddleWare(ctx context.Context) (echo.MiddlewareFunc,
 		return nil, err
 	}
 
-	skipperFunc, err := newJWTSkipperFunc()
+	skipper, err := newSkipperFunc()
 	if err != nil {
 		return nil, err
 	}
+
 	tokenLookup := "header:Authorization:Bearer "
 	tokenLookup = tokenLookup + ",cookie:" + common.EverestTokenCookie
 	return echojwt.WithConfig(echojwt.Config{
-		Skipper:     skipperFunc,
+		Skipper:     skipper,
 		TokenLookup: tokenLookup,
 		KeyFunc:     keyFunc,
 	}), nil
 }
 
-func newJWTSkipperFunc() (echomiddleware.Skipper, error) {
-	skip := []string{} // list of paths to skip
+func newSkipperFunc() (echomiddleware.Skipper, error) {
 	swagger, err := GetSwagger()
 	if err != nil {
-		return nil, errors.Join(err, errors.New("could not get swagger spec"))
+		return nil, err
 	}
+
+	// list of API paths to exclude from security checks.
+	// Each item is a string in the format of "<method> <path>"
+	// For example: ["GET /v1/settings"]
+	excluded := []string{}
+
 	for path, pathItem := range swagger.Paths.Map() {
-		val, found := pathItem.Extensions[propertySkipEverestAuthnSwagger]
-		if !found {
-			continue
-		}
-		mustSkip, ok := val.(bool)
-		if !ok || !mustSkip {
-			continue
-		}
-		for _, server := range swagger.Servers {
-			skip = append(skip, server.URL+path)
+		for method, operation := range pathItem.Operations() {
+			// Check if we have explicity specified that we don't want any security here?
+			if operation.Security != nil && len(*operation.Security) == 0 {
+				for _, srv := range swagger.Servers {
+					excluded = append(excluded, fmt.Sprintf("%s %s", method, srv.URL+path))
+				}
+			}
 		}
 	}
 
 	return func(c echo.Context) bool {
-		return slices.Contains(skip, c.Request().URL.Path)
+		target := c.Request().Method + " " + c.Path()
+		return slices.Contains(excluded, target)
 	}, nil
 }
 

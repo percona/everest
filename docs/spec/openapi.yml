@@ -22,11 +22,12 @@ tags:
     description: Everything related to the Database Cluster Backups
   - name: backupStorage
     description: Everything related to the Backup storage
-
+security:
+  - BearerAuth: []
 paths:
   '/session':
-    x-everest-skip-authn: true
     post:
+      security: []
       summary: Create a new session
       description: Create a new session
       operationId: createSession
@@ -84,8 +85,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Version'
   '/settings':
-    x-everest-skip-authn: true
     get:
+      security: []
       summary: Get Everest global settings
       description: Get Everest global settings
       operationId: getSettings
@@ -1435,6 +1436,10 @@ paths:
                 $ref: '#/components/schemas/Error'
 
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
   schemas:
     Error:
       type: object
