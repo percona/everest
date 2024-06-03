@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react';
 import { TestWrapper } from 'utils/test';
 import { FormProvider, useForm } from 'react-hook-form';
 import { ReactNode } from 'react';
-import { customConfirmDialogDefaultValues } from './custom-confirm-dialog-consts';
 import { CustomConfirmDialog } from './custom-confirm-dialog';
 import { CustomConfirmDialogFields } from './custom-confirm-dialog.types';
 
@@ -12,7 +11,10 @@ interface FormProviderWrapperProps {
 
 const FormProviderWrapper = ({ children }: FormProviderWrapperProps) => {
   const methods = useForm({
-    defaultValues: customConfirmDialogDefaultValues,
+    defaultValues: {
+      [CustomConfirmDialogFields.confirmInput]: '',
+      [CustomConfirmDialogFields.dataCheckbox]: true,
+    },
   });
   return (
     <FormProvider {...methods}>

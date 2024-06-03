@@ -11,6 +11,7 @@ const Checkbox = ({
   control,
   controllerProps,
   checkboxProps,
+  disabled,
 }: CheckboxProps) => {
   const { control: contextControl } = useFormContext();
 
@@ -22,6 +23,7 @@ const Checkbox = ({
         <MUICheckbox
           {...field}
           checked={field.value}
+          disabled={disabled}
           {...checkboxProps}
           inputProps={{
             // @ts-expect-error
