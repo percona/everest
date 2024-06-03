@@ -183,7 +183,7 @@ func (e *EverestServer) jwtMiddleWare(ctx context.Context) (echo.MiddlewareFunc,
 		return nil, err
 	}
 
-	skipperFunc, err := e.newJWTSkipperFunc()
+	skipperFunc, err := newJWTSkipperFunc()
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +196,7 @@ func (e *EverestServer) jwtMiddleWare(ctx context.Context) (echo.MiddlewareFunc,
 	}), nil
 }
 
-func (e *EverestServer) newJWTSkipperFunc() (echomiddleware.Skipper, error) {
+func newJWTSkipperFunc() (echomiddleware.Skipper, error) {
 	skip := []string{} // list of paths to skip
 	swagger, err := GetSwagger()
 	if err != nil {
@@ -207,8 +207,8 @@ func (e *EverestServer) newJWTSkipperFunc() (echomiddleware.Skipper, error) {
 		if !found {
 			continue
 		}
-		v, ok := val.(bool)
-		if !ok || !v {
+		mustSkip, ok := val.(bool)
+		if !ok || !mustSkip {
 			continue
 		}
 		for _, server := range swagger.Servers {
