@@ -21,3 +21,8 @@ func (c *Client) GetNamespace(ctx context.Context, name string) (*corev1.Namespa
 func (c *Client) DeleteNamespace(ctx context.Context, name string) error {
 	return c.clientset.CoreV1().Namespaces().Delete(ctx, name, metav1.DeleteOptions{})
 }
+
+// ListNamespaces returns a list of namespaces.
+func (c *Client) ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*corev1.NamespaceList, error) {
+	return c.clientset.CoreV1().Namespaces().List(ctx, opts)
+}

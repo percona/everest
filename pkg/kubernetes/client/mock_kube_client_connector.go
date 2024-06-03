@@ -1753,6 +1753,36 @@ func (_m *MockKubeClientConnector) ListMonitoringConfigs(ctx context.Context, na
 	return r0, r1
 }
 
+// ListNamespaces provides a mock function with given fields: ctx, opts
+func (_m *MockKubeClientConnector) ListNamespaces(ctx context.Context, opts v1.ListOptions) (*corev1.NamespaceList, error) {
+	ret := _m.Called(ctx, opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListNamespaces")
+	}
+
+	var r0 *corev1.NamespaceList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, v1.ListOptions) (*corev1.NamespaceList, error)); ok {
+		return rf(ctx, opts)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, v1.ListOptions) *corev1.NamespaceList); ok {
+		r0 = rf(ctx, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*corev1.NamespaceList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, v1.ListOptions) error); ok {
+		r1 = rf(ctx, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListObjects provides a mock function with given fields: gvk, into
 func (_m *MockKubeClientConnector) ListObjects(gvk schema.GroupVersionKind, into runtime.Object) error {
 	ret := _m.Called(gvk, into)

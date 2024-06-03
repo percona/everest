@@ -838,6 +838,36 @@ func (_m *MockKubernetesConnector) ListEngineDeploymentNames(ctx context.Context
 	return r0, r1
 }
 
+// ListNamespaces provides a mock function with given fields: ctx, opts
+func (_m *MockKubernetesConnector) ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*v1.NamespaceList, error) {
+	ret := _m.Called(ctx, opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListNamespaces")
+	}
+
+	var r0 *v1.NamespaceList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, metav1.ListOptions) (*v1.NamespaceList, error)); ok {
+		return rf(ctx, opts)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, metav1.ListOptions) *v1.NamespaceList); ok {
+		r0 = rf(ctx, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.NamespaceList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, metav1.ListOptions) error); ok {
+		r1 = rf(ctx, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListSubscriptions provides a mock function with given fields: ctx, namespace
 func (_m *MockKubernetesConnector) ListSubscriptions(ctx context.Context, namespace string) (*operatorsv1alpha1.SubscriptionList, error) {
 	ret := _m.Called(ctx, namespace)

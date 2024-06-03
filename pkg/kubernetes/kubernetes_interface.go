@@ -115,6 +115,7 @@ type KubernetesConnector interface {
 	GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error)
 	// DeleteNamespace deletes a namespace.
 	DeleteNamespace(ctx context.Context, name string) error
+	ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*corev1.NamespaceList, error)
 	// OperatorInstalledVersion returns the installed version of operator by name.
 	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
 	// CreateRSAKeyPair creates a new RSA key pair and stores it in a secret.

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // CreateNamespace creates the given namespace.
@@ -22,4 +23,8 @@ func (k *Kubernetes) GetNamespace(ctx context.Context, name string) (*corev1.Nam
 // DeleteNamespace deletes a namespace.
 func (k *Kubernetes) DeleteNamespace(ctx context.Context, name string) error {
 	return k.client.DeleteNamespace(ctx, name)
+}
+
+func (k *Kubernetes) ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*corev1.NamespaceList, error) {
+	return k.client.ListNamespaces(ctx, opts)
 }
