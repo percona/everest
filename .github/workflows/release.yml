@@ -272,42 +272,42 @@ jobs:
           echo "CURRENT_STABLE_VERSION=$CURRENT_STABLE_VERSION"
           echo "CURRENT_FAST_VERSION=$CURRENT_FAST_VERSION"
 
-          cp veneer/everest-operator.yaml veneer/everest-operator-original.yaml
+#          cp veneer/everest-operator.yaml veneer/everest-operator-original.yaml
           
-          if [[ $env.IS_RC ]]; then
-            go run ./tools/ \
-              --veneer-file veneer/everest-operator-original.yaml \
-              --version-type ${{ env.RELEASE_TYPE }} \
-              --channel fast-v0 \
-              --new-version ${{ env.VERSION }} \
-              --current-version "$CURRENT_FAST_VERSION" \
-              \
-              >| veneer/everest-operator.yaml
-          else
-            go run ./tools/ \
-              --veneer-file veneer/everest-operator-original.yaml \
-              --version-type ${{ env.RELEASE_TYPE }} \
-              --channel stable-v0 \
-              --new-version ${{ env.VERSION }} \
-              --current-version "$CURRENT_STABLE_VERSION" \
-              \
-              >| veneer/everest-operator.yaml
-
-            go run ./tools/ \
-              --veneer-file veneer/everest-operator-original.yaml \
-              --version-type ${{ env.RELEASE_TYPE }} \
-              --channel fast-v0 \
-              --new-version ${{ env.VERSION }} \
-              --current-version "$CURRENT_FAST_VERSION" \
-              \
-              >| veneer/everest-operator.yaml
-          fi
-
-          rm -f veneer/everest-operator-original.yaml
-          
-          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/latest/download/${OS}-${ARCH}-opm
-          chmod +x /tmp/opm
-          /tmp/opm alpha render-template basic -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
+#          if [[ $env.IS_RC ]]; then
+#            go run ./tools/ \
+#              --veneer-file veneer/everest-operator-original.yaml \
+#              --version-type ${{ env.RELEASE_TYPE }} \
+#              --channel fast-v0 \
+#              --new-version ${{ env.VERSION }} \
+#              --current-version "$CURRENT_FAST_VERSION" \
+#              \
+#              >| veneer/everest-operator.yaml
+#          else
+#            go run ./tools/ \
+#              --veneer-file veneer/everest-operator-original.yaml \
+#              --version-type ${{ env.RELEASE_TYPE }} \
+#              --channel stable-v0 \
+#              --new-version ${{ env.VERSION }} \
+#              --current-version "$CURRENT_STABLE_VERSION" \
+#              \
+#              >| veneer/everest-operator.yaml
+#
+#            go run ./tools/ \
+#              --veneer-file veneer/everest-operator-original.yaml \
+#              --version-type ${{ env.RELEASE_TYPE }} \
+#              --channel fast-v0 \
+#              --new-version ${{ env.VERSION }} \
+#              --current-version "$CURRENT_FAST_VERSION" \
+#              \
+#              >| veneer/everest-operator.yaml
+#          fi
+#
+#          rm -f veneer/everest-operator-original.yaml
+#
+#          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/latest/download/${OS}-${ARCH}-opm
+#          chmod +x /tmp/opm
+#          /tmp/opm alpha render-template basic -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
           
           # Check if veneer has the new version listed
           if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
@@ -315,8 +315,8 @@ jobs:
             exit 1
           fi
 
-          git commit -am "CI: add version ${{ env.VERSION }}"
-          git push origin $BRANCH_NAME
+#          git commit -am "CI: add version ${{ env.VERSION }}"
+#          git push origin $BRANCH_NAME
 
           git tag $GH_TAG
           git push origin $GH_TAG
