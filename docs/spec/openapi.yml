@@ -22,10 +22,12 @@ tags:
     description: Everything related to the Database Cluster Backups
   - name: backupStorage
     description: Everything related to the Backup storage
-
+security:
+  - BearerAuth: []
 paths:
   '/session':
     post:
+      security: []
       summary: Create a new session
       description: Create a new session
       operationId: createSession
@@ -82,6 +84,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Version'
+  '/settings':
+    get:
+      security: []
+      summary: Get Everest global settings
+      description: Get Everest global settings
+      operationId: getSettings
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
   '/resources':
     get:
       tags:
@@ -1421,6 +1436,10 @@ paths:
                 $ref: '#/components/schemas/Error'
 
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
   schemas:
     Error:
       type: object
@@ -1706,6 +1725,8 @@ components:
           type: string
         restarts:
           type: integer
+        status:
+          type: string
     DatabaseClusterPitr:
       type: object
       description: point-in-time recovery related data
@@ -1787,6 +1808,27 @@ components:
         - projectName
         - version
         - fullCommit
+    Settings:
+      type: object
+      description: Everest global settings
+      properties:
+        oidcConfig:
+          $ref: '#/components/schemas/OIDCConfig'
+      required:
+        - oidcConfig
+    OIDCConfig:
+      type: object
+      description: Everest OIDC provider configuration
+      properties:
+        clientId:
+          type: string
+          description: OIDC application clientID
+        issuerURL:
+          type: string
+          description: OIDC provider url
+      required:
+        - clientId
+        - issuerURL
     DatabaseClusterList:
       description: DatabaseClusterList is an object that contains the list of the existing database clusters.
       properties:

@@ -18,8 +18,6 @@ package upgrade
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/url"
@@ -28,6 +26,8 @@ import (
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
 	goversion "github.com/hashicorp/go-version"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/percona/everest/pkg/common"
@@ -143,27 +143,16 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return errors.Join(err, errors.New("could not find install plan"))
 	}
 
-	// We get the JWT token so that we can preserve it, since InstallEverest()
-	// will overwrite it.
-	jwtToken, err := u.kubeClient.GetJWTToken(ctx)
-	if err != nil {
-		return err
-	}
-
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
-	if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo); err != nil {
-		return err
-	}
 
-	// Restore the JWT token.
-	if jwtToken == "" {
-		b := make([]byte, 32)
-		if _, err := rand.Read(b); err != nil {
-			return err
-		}
-		jwtToken = hex.EncodeToString(b)
+	// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
+	skipObjects := []metav1.Object{
+		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestJWTSecretName,
+			Namespace: common.SystemNamespace,
+		}},
 	}
-	if err := u.kubeClient.SetJWTToken(ctx, jwtToken); err != nil {
+	if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo, skipObjects...); err != nil {
 		return err
 	}
 

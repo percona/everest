@@ -45,6 +45,7 @@ import { DbTypeIconProvider } from './dbTypeIconProvider/DbTypeIconProvider';
 import { ExpandedRow } from './expandedRow/ExpandedRow';
 import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
 import { LastBackup } from './lastBackup/LastBackup';
+import { useDbBackups } from 'hooks/api/backups/useBackups';
 
 export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
@@ -75,6 +76,18 @@ export const DbClusterView = () => {
     selectedDbCluster,
   } = useDbActions();
   const navigate = useNavigate();
+
+  const { data: backups = [] } = useDbBackups(
+    selectedDbCluster?.metadata.name!,
+    selectedDbCluster?.metadata.namespace!,
+    {
+      enabled: !!selectedDbCluster?.metadata.name,
+      refetchInterval: 10 * 1000,
+    }
+  );
+  const disableKeepDataCheckbox =
+    selectedDbCluster?.spec.engine.type === DbEngineType.POSTGRESQL;
+  const hideCheckbox = !backups.length;
 
   const columns = useMemo<MRT_ColumnDef<DbClusterTableElement>[]>(
     () => [
@@ -336,8 +349,8 @@ export const DbClusterView = () => {
           headerMessage={Messages.deleteModal.header}
           submitting={deletingCluster}
           selectedId={selectedDbCluster?.metadata.name || ''}
-          handleConfirm={({ dataCheckbox: cleanupBackupStorage }) =>
-            handleConfirmDelete(cleanupBackupStorage)
+          handleConfirm={({ dataCheckbox: keepBackupStorageData }) =>
+            handleConfirmDelete(keepBackupStorageData)
           }
           alertMessage={Messages.deleteModal.alertMessage}
           dialogContent={Messages.deleteModal.content(
@@ -345,6 +358,9 @@ export const DbClusterView = () => {
           )}
           submitMessage={Messages.deleteModal.confirmButtom}
           checkboxMessage={Messages.deleteModal.checkboxMessage}
+          disableCheckbox={disableKeepDataCheckbox}
+          tooltipText={Messages.deleteModal.disabledCheckboxForPGTooltip}
+          hideCheckbox={hideCheckbox}
         />
       )}
     </Stack>

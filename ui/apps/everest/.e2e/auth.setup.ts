@@ -29,7 +29,7 @@ setup('Login', async ({ page }) => {
   expect(
     origins.find(
       (origin) =>
-        !!origin.localStorage.find((storage) => storage.name === 'pwd')
+        !!origin.localStorage.find((storage) => storage.name === 'everestToken')
     )
   ).not.toBeUndefined();
   await page.context().storageState({ path: STORAGE_STATE_FILE });
