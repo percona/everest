@@ -116,6 +116,8 @@ func (e *EverestServer) GetDatabaseCluster(ctx echo.Context, namespace, name str
 }
 
 // GetDatabaseClusterComponents returns database cluster components.
+//
+//nolint:funlen
 func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace, name string) error {
 	pods, err := e.kubeClient.GetPods(ctx.Request().Context(), namespace, &metav1.LabelSelector{
 		MatchLabels: map[string]string{"app.kubernetes.io/instance": name},
@@ -150,19 +152,27 @@ func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace
 				status = "Terminated"
 			}
 
+			var startedString *string
+			if !started.IsZero() {
+				startedString = pointer.ToString(started.Format(time.RFC3339))
+			}
 			containers = append(containers, DatabaseClusterComponentContainer{
 				Name:     &c.Name, //nolint:gosec,exportloopref
-				Started:  pointer.ToString(started.Format(time.RFC3339)),
+				Started:  startedString,
 				Restarts: pointer.ToInt(int(c.RestartCount)),
 				Status:   &status,
 			})
 		}
 		component := pod.Labels["app.kubernetes.io/component"]
+		var started *string
+		if !pod.Status.StartTime.Time.IsZero() {
+			started = pointer.ToString(pod.Status.StartTime.Time.Format(time.RFC3339))
+		}
 		res = append(res, DatabaseClusterComponent{
 			Status:     pointer.ToString(string(pod.Status.Phase)),
 			Name:       &pod.Name, //nolint:gosec,exportloopref
 			Type:       &component,
-			Started:    pointer.ToString(pod.Status.StartTime.Time.Format(time.RFC3339)),
+			Started:    started,
 			Restarts:   pointer.ToInt(restarts),
 			Ready:      pointer.ToString(fmt.Sprintf("%d/%d", ready, len(pod.Status.ContainerStatuses))),
 			Containers: &containers,
