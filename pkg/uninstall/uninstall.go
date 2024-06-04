@@ -105,10 +105,6 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
 		return err
 	}
 
-	if err := u.deleteDBNamespaces(ctx); err != nil {
-		return err
-	}
-
 	// VMAgent has finalizers, so we need to delete the monitoring configs first
 	if err := u.deleteMonitoringConfigs(ctx); err != nil {
 		return err
@@ -130,6 +126,10 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
 	// There are no resources with finalizers in the monitoring namespace, so
 	// we can delete it directly
 	if err := u.deleteOLM(ctx); err != nil {
+		return err
+	}
+
+	if err := u.deleteDBNamespaces(ctx); err != nil {
 		return err
 	}
 
