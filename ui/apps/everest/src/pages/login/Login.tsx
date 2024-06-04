@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Box, Button, Stack, Typography } from '@mui/material';
+import { Box, Button, Divider, Stack, Typography } from '@mui/material';
 import { Card, EverestMainIcon, TextInput } from '@percona/ui-lib';
 import { AuthContext } from 'contexts/auth';
 import { useContext } from 'react';
@@ -14,13 +14,18 @@ const Login = () => {
     defaultValues: { username: '', password: '' },
     resolver: zodResolver(loginSchema),
   });
-  const { login, authStatus, redirectRoute } = useContext(AuthContext);
+  const { login, authStatus, redirectRoute, isSsoEnabled } =
+    useContext(AuthContext);
 
   const handleLogin: SubmitHandler<LoginFormType> = ({
     username,
     password,
   }) => {
-    login(username, password);
+    login('manual', { username, password });
+  };
+
+  const handleSsoLogin = () => {
+    login('sso');
   };
 
   if (authStatus === 'unknown') {
@@ -96,13 +101,28 @@ const Login = () => {
                     fullWidth
                     sx={{
                       mb: 1,
-                      mt: 4,
                       fontSize: '13px',
                     }}
                   >
                     {Messages.login}
                   </Button>
                 </form>
+                {isSsoEnabled && (
+                  <>
+                    <Divider flexItem sx={{ mb: 1, fontSize: '12px' }}>
+                      OR
+                    </Divider>
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      disabled={authStatus === 'loggingIn'}
+                      sx={{ fontSize: '13px' }}
+                      onClick={handleSsoLogin}
+                    >
+                      Log in with SSO
+                    </Button>
+                  </>
+                )}
               </FormProvider>
             </Stack>
           }
