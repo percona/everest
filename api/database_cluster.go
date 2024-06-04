@@ -116,6 +116,8 @@ func (e *EverestServer) GetDatabaseCluster(ctx echo.Context, namespace, name str
 }
 
 // GetDatabaseClusterComponents returns database cluster components.
+//
+//nolint:funlen
 func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace, name string) error {
 	pods, err := e.kubeClient.GetPods(ctx.Request().Context(), namespace, &metav1.LabelSelector{
 		MatchLabels: map[string]string{"app.kubernetes.io/instance": name},
