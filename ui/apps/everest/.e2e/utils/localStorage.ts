@@ -8,5 +8,6 @@ export const getTokenFromLocalStorage = async () => {
   });
   const origins = (await storageStateContext.storageState()).origins;
   storageStateContext.close();
-  return origins[0].localStorage.find((item) => item.name === 'pwd').value;
+  return origins[0].localStorage.find((item) => item.name === 'everestToken')
+    .value;
 };

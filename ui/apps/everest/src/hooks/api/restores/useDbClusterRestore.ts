@@ -107,7 +107,7 @@ export const useDbClusterRestores = (
         name: item.metadata.name,
         startTime: item.metadata.creationTimestamp,
         endTime: item.status.completed,
-        state: item.status.state,
+        state: item.status.state || 'unknown',
         type: item.spec.dataSource.pitr ? 'pitr' : 'full',
         backupSource: item.spec.dataSource.dbClusterBackupName || '',
       })),

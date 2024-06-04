@@ -42,6 +42,7 @@ setup.describe.serial('Teardown', () => {
 
   setup('Logout', async ({ page }) => {
     await page.goto('/');
+    await expect(page.getByTestId('user-appbar-button')).toBeVisible();
     await page.getByTestId('user-appbar-button').click();
     await page.getByRole('menuitem').filter({ hasText: 'Log out' }).click();
 
