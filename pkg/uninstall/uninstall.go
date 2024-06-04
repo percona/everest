@@ -123,13 +123,13 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
 		return err
 	}
 
-	// There are no resources with finalizers in the monitoring namespace, so
-	// we can delete it directly
-	if err := u.deleteOLM(ctx); err != nil {
+	if err := u.deleteDBNamespaces(ctx); err != nil {
 		return err
 	}
 
-	if err := u.deleteDBNamespaces(ctx); err != nil {
+	// There are no resources with finalizers in the monitoring namespace, so
+	// we can delete it directly
+	if err := u.deleteOLM(ctx); err != nil {
 		return err
 	}
 
