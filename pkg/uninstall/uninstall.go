@@ -301,7 +301,7 @@ func (u *Uninstall) deleteDBNamespaces(ctx context.Context) error {
 	namespaceList, err := u.kubeClient.ListNamespaces(ctx, metav1.ListOptions{
 		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
 			MatchLabels: map[string]string{
-				common.KubernetesManagedByLabel: common.EverestOperatorName,
+				common.KubernetesManagedByLabel: common.Everest,
 			},
 		}),
 	})
