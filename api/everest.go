@@ -25,8 +25,9 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
-	"strings"
+	"slices"
 
+	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -125,6 +126,11 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	apiGroup := e.echo.Group(basePath)
 	apiGroup.Use(middleware.OapiRequestValidatorWithOptions(swagger, &middleware.Options{
 		SilenceServersWarning: true,
+		// This field is required if a security scheme is specified.
+		// However, the actual authentication is handled by the JWT middleware, so we can use a noop function here.
+		Options: openapi3filter.Options{
+			AuthenticationFunc: openapi3filter.NoopAuthenticationFunc,
+		},
 	}))
 
 	jwtMW, err := e.jwtMiddleWare(ctx)
@@ -178,6 +184,12 @@ func (e *EverestServer) jwtMiddleWare(ctx context.Context) (echo.MiddlewareFunc,
 	if err != nil {
 		return nil, err
 	}
+
+	skipper, err := newSkipperFunc()
+	if err != nil {
+		return nil, err
+	}
+
 	tokenLookup := "header:Authorization:Bearer "
 	tokenLookup = tokenLookup + ",cookie:" + common.EverestTokenCookie
 	return echojwt.WithConfig(echojwt.Config{
@@ -187,17 +199,32 @@ func (e *EverestServer) jwtMiddleWare(ctx context.Context) (echo.MiddlewareFunc,
 	}), nil
 }
 
-func skipper(c echo.Context) bool {
-	unauthorizedEndpoints := []string{
-		"/session",
-		"/settings",
+func newSkipperFunc() (echomiddleware.Skipper, error) {
+	swagger, err := GetSwagger()
+	if err != nil {
+		return nil, err
 	}
-	for _, endpoint := range unauthorizedEndpoints {
-		if strings.Contains(c.Request().URL.Path, endpoint) {
-			return true
+
+	// list of API paths to exclude from security checks.
+	// Each item is a string in the format of "<method> <path>"
+	// For example: ["GET /v1/settings"]
+	excluded := []string{}
+
+	for path, pathItem := range swagger.Paths.Map() {
+		for method, operation := range pathItem.Operations() {
+			// Check if we have explicitly specified that we don't want any security here?
+			if operation.Security != nil && len(*operation.Security) == 0 {
+				for _, srv := range swagger.Servers {
+					excluded = append(excluded, fmt.Sprintf("%s %s", method, srv.URL+path))
+				}
+			}
 		}
 	}
-	return false
+
+	return func(c echo.Context) bool {
+		target := c.Request().Method + " " + c.Path()
+		return slices.Contains(excluded, target)
+	}, nil
 }
 
 // Start starts everest server.
