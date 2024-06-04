@@ -25,6 +25,7 @@ func (k *Kubernetes) DeleteNamespace(ctx context.Context, name string) error {
 	return k.client.DeleteNamespace(ctx, name)
 }
 
+// ListNamespaces lists all namespaces.
 func (k *Kubernetes) ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*corev1.NamespaceList, error) {
 	return k.client.ListNamespaces(ctx, opts)
 }
