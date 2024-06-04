@@ -38,6 +38,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
@@ -531,7 +532,7 @@ func (o *Install) createNamespace(ctx context.Context, namespace string) error {
 		},
 	}
 	err := o.kubeClient.CreateNamespace(ctx, ns)
-	if err != nil {
+	if client.IgnoreAlreadyExists(err) != nil {
 		return errors.Join(err, errors.New("could not provision namespace"))
 	}
 
