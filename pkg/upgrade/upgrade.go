@@ -38,7 +38,7 @@ import (
 )
 
 // list of objects to skip during upgrade.
-var skipObjects = []client.Object{
+var skipObjects = []client.Object{ //nolint:gochecknoglobals
 	&corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Secret",
@@ -108,8 +108,6 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 }
 
 // Run runs the operators installation process.
-//
-//nolint:funlen
 func (u *Upgrade) Run(ctx context.Context) error {
 	// Get Everest version.
 	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
