@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/accounts"
@@ -100,7 +101,7 @@ type KubernetesConnector interface {
 	// ApplyObject applies object.
 	ApplyObject(obj runtime.Object) error
 	// InstallEverest downloads the manifest file and applies it against provisioned k8s cluster.
-	InstallEverest(ctx context.Context, namespace string, version *goversion.Version, skipObjs ...metav1.Object) error
+	InstallEverest(ctx context.Context, namespace string, version *goversion.Version, skipObjs ...ctrlclient.Object) error
 	// DeleteEverest downloads the manifest file and deletes it from provisioned k8s cluster.
 	DeleteEverest(ctx context.Context, namespace string, version *goversion.Version) error
 	// GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.

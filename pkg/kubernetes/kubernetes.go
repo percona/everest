@@ -47,6 +47,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/data"
@@ -921,7 +922,7 @@ func (k *Kubernetes) InstallEverest(
 	ctx context.Context,
 	namespace string,
 	version *goversion.Version,
-	skipObjs ...metav1.Object,
+	skipObjs ...ctrlclient.Object,
 ) error {
 	if version == nil {
 		return errors.New("no version provided for Everest installation")
