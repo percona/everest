@@ -29,6 +29,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
@@ -146,7 +147,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
 
 	// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
-	skipObjects := []metav1.Object{
+	skipObjects := []client.Object{
 		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{
 			Name:      common.EverestJWTSecretName,
 			Namespace: common.SystemNamespace,

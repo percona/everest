@@ -69,6 +69,7 @@ import (
 	"k8s.io/client-go/tools/reference"
 	deploymentutil "k8s.io/kubectl/pkg/util/deployment"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	"github.com/percona/everest/pkg/kubernetes/client/customresources"
@@ -789,7 +790,7 @@ func (c *Client) ApplyFile(fileBytes []byte) error {
 
 // ApplyManifestFile accepts manifest file contents, parses into []runtime.Object
 // and applies them against the cluster.
-func (c *Client) ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...metav1.Object) error {
+func (c *Client) ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...ctrlclient.Object) error {
 	objs, err := c.getObjects(fileBytes)
 	if err != nil {
 		return err
@@ -798,8 +799,10 @@ func (c *Client) ApplyManifestFile(fileBytes []byte, namespace string, ignoreObj
 		o := objs[i]
 
 		// Check if this object should be ignored?
-		if slices.ContainsFunc(ignoreObjects, func(ign metav1.Object) bool {
-			return o.GetName() == ign.GetName() && o.GetNamespace() == namespace
+		if slices.ContainsFunc(ignoreObjects, func(ign ctrlclient.Object) bool {
+			return o.GetKind() == ign.GetObjectKind().GroupVersionKind().Kind &&
+				o.GetName() == ign.GetName() &&
+				o.GetNamespace() == namespace
 		}) {
 			continue
 		}
