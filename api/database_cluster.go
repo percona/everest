@@ -129,6 +129,11 @@ func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace
 
 	res := make([]DatabaseClusterComponent, 0, len(pods.Items))
 	for _, pod := range pods.Items {
+		component := pod.Labels["app.kubernetes.io/component"]
+		if component == "" {
+			continue
+		}
+
 		restarts := 0
 		ready := 0
 		containers := make([]DatabaseClusterComponentContainer, 0, len(pod.Status.ContainerStatuses))
@@ -163,7 +168,7 @@ func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace
 				Status:   &status,
 			})
 		}
-		component := pod.Labels["app.kubernetes.io/component"]
+
 		var started *string
 		if !pod.Status.StartTime.Time.IsZero() {
 			started = pointer.ToString(pod.Status.StartTime.Time.Format(time.RFC3339))
