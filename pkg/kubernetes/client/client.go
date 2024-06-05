@@ -1173,21 +1173,6 @@ func (c Client) pollRolloutComplete(ctx context.Context, key types.NamespacedNam
 	return wait.PollUntilContextCancel(ctx, time.Second, true, rolloutComplete)
 }
 
-// CreateNamespace creates a new namespace.
-func (c *Client) CreateNamespace(name string) error {
-	n := &corev1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Namespace",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-	}
-
-	return c.ApplyObject(n)
-}
-
 // GetOperatorGroup retrieves an operator group details by namespace and name.
 func (c *Client) GetOperatorGroup(ctx context.Context, namespace, name string) (*v1.OperatorGroup, error) {
 	operatorClient, err := olmVersioned.NewForConfig(c.restConfig)
