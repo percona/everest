@@ -802,7 +802,7 @@ func (c *Client) ApplyManifestFile(fileBytes []byte, namespace string, ignoreObj
 		if slices.ContainsFunc(ignoreObjects, func(ign ctrlclient.Object) bool {
 			return o.GetKind() == ign.GetObjectKind().GroupVersionKind().Kind &&
 				o.GetName() == ign.GetName() &&
-				o.GetNamespace() == namespace
+				ign.GetNamespace() == namespace
 		}) {
 			continue
 		}
