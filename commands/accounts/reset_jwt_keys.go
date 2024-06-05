@@ -37,11 +37,14 @@ func NewResetJWTKeysCommand(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
-			// Create or update the everest-jwt secret with a new RSA key pair.
-			if err := k.CreateRSAKeyPair(context.Background()); err != nil {
+			ctx := context.Background()
+			l.Info("Creating/Updating JWT keys and restarting Everest..")
+			if err := k.CreateRSAKeyPair(ctx); err != nil {
 				l.Error(err)
 				os.Exit(1)
 			}
+
+			l.Info("JWT keys created/updated successfully!")
 		},
 	}
 	return cmd
