@@ -69,8 +69,6 @@ type KubernetesConnector interface {
 	InstallOLMOperator(ctx context.Context, upgrade bool) error
 	// InstallPerconaCatalog installs percona catalog and ensures that packages are available.
 	InstallPerconaCatalog(ctx context.Context, version *goversion.Version) error
-	// CreateNamespace creates a new namespace.
-	CreateNamespace(name string) error
 	// InstallOperator installs an operator via OLM.
 	InstallOperator(ctx context.Context, req InstallOperatorRequest) error
 	// CreateOperatorGroup creates operator group in the given namespace.
@@ -111,6 +109,14 @@ type KubernetesConnector interface {
 	WaitForRollout(ctx context.Context, name, namespace string) error
 	// UpdateClusterRoleBinding updates namespaces list for the cluster role by provided name.
 	UpdateClusterRoleBinding(ctx context.Context, name string, namespaces []string) error
+	// CreateNamespace creates the given namespace.
+	CreateNamespace(ctx context.Context, namespace *corev1.Namespace) error
+	// GetNamespace returns a namespace.
+	GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error)
+	// DeleteNamespace deletes a namespace.
+	DeleteNamespace(ctx context.Context, name string) error
+	// ListNamespaces lists all namespaces.
+	ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*corev1.NamespaceList, error)
 	// OperatorInstalledVersion returns the installed version of operator by name.
 	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
 	// CreateRSAKeyPair creates a new RSA key pair and stores it in a secret.
