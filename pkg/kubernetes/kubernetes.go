@@ -492,11 +492,6 @@ func filterResources(resources []unstructured.Unstructured, filter func(unstruct
 	return filtered
 }
 
-// CreateNamespace creates a new namespace.
-func (k *Kubernetes) CreateNamespace(name string) error {
-	return k.client.CreateNamespace(name)
-}
-
 // InstallOperatorRequest holds the fields to make an operator install request.
 type InstallOperatorRequest struct {
 	Namespace              string

@@ -66,9 +66,9 @@ const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
       {
         header: 'Age',
         accessorKey: 'started',
-        Cell: ({ cell }) => {
+        Cell: ({ cell, row }) => {
           const date = new Date(cell.getValue<string>());
-          return date ? (
+          return date && row?.original?.status === CONTAINER_STATUS.RUNNING ? (
             <Tooltip
               title={`Started at ${format(date, DATE_FORMAT)}`}
               placement="right"

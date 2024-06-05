@@ -217,22 +217,34 @@ func (_m *MockKubeClientConnector) CreateMonitoringConfig(ctx context.Context, c
 	return r0
 }
 
-// CreateNamespace provides a mock function with given fields: name
-func (_m *MockKubeClientConnector) CreateNamespace(name string) error {
-	ret := _m.Called(name)
+// CreateNamespace provides a mock function with given fields: ctx, namespace
+func (_m *MockKubeClientConnector) CreateNamespace(ctx context.Context, namespace *corev1.Namespace) (*corev1.Namespace, error) {
+	ret := _m.Called(ctx, namespace)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateNamespace")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
+	var r0 *corev1.Namespace
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *corev1.Namespace) (*corev1.Namespace, error)); ok {
+		return rf(ctx, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *corev1.Namespace) *corev1.Namespace); ok {
+		r0 = rf(ctx, namespace)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*corev1.Namespace)
+		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, *corev1.Namespace) error); ok {
+		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // CreateOperatorGroup provides a mock function with given fields: ctx, namespace, name, targetNamespaces
@@ -1734,6 +1746,36 @@ func (_m *MockKubeClientConnector) ListMonitoringConfigs(ctx context.Context, na
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListNamespaces provides a mock function with given fields: ctx, opts
+func (_m *MockKubeClientConnector) ListNamespaces(ctx context.Context, opts v1.ListOptions) (*corev1.NamespaceList, error) {
+	ret := _m.Called(ctx, opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListNamespaces")
+	}
+
+	var r0 *corev1.NamespaceList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, v1.ListOptions) (*corev1.NamespaceList, error)); ok {
+		return rf(ctx, opts)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, v1.ListOptions) *corev1.NamespaceList); ok {
+		r0 = rf(ctx, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*corev1.NamespaceList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, v1.ListOptions) error); ok {
+		r1 = rf(ctx, opts)
 	} else {
 		r1 = ret.Error(1)
 	}
