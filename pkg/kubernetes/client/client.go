@@ -799,7 +799,7 @@ func (c *Client) ApplyManifestFile(fileBytes []byte, namespace string, ignoreObj
 
 		// Check if this object should be ignored?
 		if slices.ContainsFunc(ignoreObjects, func(ign metav1.Object) bool {
-			return o.GetName() == ign.GetName() && o.GetNamespace() == ign.GetNamespace()
+			return o.GetName() == ign.GetName() && o.GetNamespace() == namespace
 		}) {
 			continue
 		}
