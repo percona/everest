@@ -32,6 +32,7 @@ func newAccountsCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd.AddCommand(accounts.NewListCmd(l))
 	cmd.AddCommand(accounts.NewDeleteCmd(l))
 	cmd.AddCommand(accounts.NewSetPwCommand(l))
+	cmd.AddCommand(accounts.NewResetJWTKeysCommand(l))
 
 	return cmd
 }
