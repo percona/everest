@@ -806,6 +806,8 @@ func (k *Kubernetes) victoriaMetricsCRDFiles() []string {
 }
 
 // RestartOperator restarts the deployment of an operator managed by OLM.
+//
+//nolint:funlen
 func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string) error {
 	// Get the deployment.
 	deployment, err := k.GetDeployment(ctx, name, namespace)
@@ -877,6 +879,8 @@ func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string
 }
 
 // RestartDeployment restarts the given deployment.
+//
+//nolint:funlen
 func (k *Kubernetes) RestartDeployment(ctx context.Context, name, namespace string) error {
 	// Get the Deployment and add restart annotation to pod template.
 	// We retry this operatation since there may be update conflicts.
