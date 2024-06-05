@@ -849,7 +849,8 @@ func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string
 			return err
 		}
 		return nil
-	}, b); err != nil {
+	}, b,
+	); err != nil {
 		return errors.Join(err, errors.New("cannot update ClusterServiceVersion with restart annotation"))
 	}
 
@@ -879,8 +880,6 @@ func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string
 }
 
 // RestartDeployment restarts the given deployment.
-//
-//nolint:funlen
 func (k *Kubernetes) RestartDeployment(ctx context.Context, name, namespace string) error {
 	// Get the Deployment and add restart annotation to pod template.
 	// We retry this operatation since there may be update conflicts.
@@ -906,7 +905,8 @@ func (k *Kubernetes) RestartDeployment(ctx context.Context, name, namespace stri
 			return err
 		}
 		return nil
-	}, b); err != nil {
+	}, b,
+	); err != nil {
 		return errors.Join(err, errors.New("cannot add restart annotation to deployment"))
 	}
 	// Wait for pods to be ready.
