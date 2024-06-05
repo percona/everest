@@ -800,8 +800,7 @@ func (c *Client) ApplyManifestFile(fileBytes []byte, namespace string, ignoreObj
 
 		// Check if this object should be ignored?
 		if slices.ContainsFunc(ignoreObjects, func(ign ctrlclient.Object) bool {
-			return o.GetKind() == ign.GetObjectKind().GroupVersionKind().Kind &&
-				o.GetName() == ign.GetName() &&
+			return o.GetName() == ign.GetName() &&
 				ign.GetNamespace() == namespace
 		}) {
 			continue
