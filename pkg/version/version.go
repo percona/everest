@@ -62,7 +62,7 @@ func CatalogImage(v *goversion.Version) string {
 		return devCatalogImage
 	}
 	if isRC(v) {
-		return rcCatalogImage
+		return fmt.Sprintf(rcCatalogImage, v)
 	}
 	return fmt.Sprintf(releaseCatalogImage, v)
 }
