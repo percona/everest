@@ -30,17 +30,17 @@ func TestCanUpgrade(t *testing.T) {
 	}{
 		{
 			input: []OperatorUpgradePreflightForDatabase{
-				{PendingTask: pointer.To(Ready)},
-				{PendingTask: pointer.To(NotReady)},
-				{PendingTask: pointer.To(Restart)},
+				{PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskReady)},
+				{PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskNotReady)},
+				{PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskRestart)},
 			},
 			canUpgrade: false,
 		},
 		{
 			input: []OperatorUpgradePreflightForDatabase{
-				{PendingTask: pointer.To(Ready)},
-				{PendingTask: pointer.To(Ready)},
-				{PendingTask: pointer.To(Ready)},
+				{PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskReady)},
+				{PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskReady)},
+				{PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskReady)},
 			},
 			canUpgrade: true,
 		},

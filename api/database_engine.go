@@ -66,6 +66,14 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, name)
 }
 
+func (e *EverestServer) GetOperatorVersion(ctx echo.Context, namespace, name string) error {
+	engine, err := e.kubeClient.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
+	if err != nil {
+		return err
+	}
+	return ctx.JSON(http.StatusOK, engine.Status.OperatorVersion)
+}
+
 // UpgradeDatabaseEngineOperator upgrades the database engine operator to the specified version.
 func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespace string, name string) error {
 	// Parse request body.
@@ -222,7 +230,7 @@ func validateOperatorUpgradeVersion(currentVersion, targetVersion string) error 
 func canUpgrade(dbs []OperatorUpgradePreflightForDatabase) bool {
 	// Check if there is any database that is not ready.
 	notReadyExists := slices.ContainsFunc(dbs, func(db OperatorUpgradePreflightForDatabase) bool {
-		return pointer.Get(db.PendingTask) != Ready
+		return pointer.Get(db.PendingTask) != OperatorUpgradePreflightForDatabasePendingTaskReady
 	})
 	return !notReadyExists
 }
