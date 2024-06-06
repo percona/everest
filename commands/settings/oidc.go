@@ -13,7 +13,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kubernetes
+// Package settings ...
+package settings
 
-//go:generate ../../bin/ifacemaker -f accounts.go -f deployment.go -f install_plan.go -f kubernetes.go -f namespace.go -f operator.go -f jwt.go -f oidc.go -s Kubernetes -i KubernetesConnector -p kubernetes -o kubernetes_interface.go
-//go:generate ../../bin/mockery --name=KubernetesConnector --case=snake --inpackage
+import (
+	"github.com/spf13/cobra"
+	"go.uber.org/zap"
+
+	"github.com/percona/everest/commands/settings/oidc"
+)
+
+// NewOIDCCmd returns an new OIDC sub-command.
+func NewOIDCCmd(l *zap.SugaredLogger) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:  "oidc",
+		Long: "Configure OIDC settings",
+	}
+
+	cmd.AddCommand(oidc.NewConfigureCommand(l))
+
+	return cmd
+}

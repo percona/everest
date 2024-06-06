@@ -37,6 +37,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
@@ -219,7 +221,13 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	fmt.Fprint(os.Stdout, postInstallMessage)
+	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
+	if err != nil {
+		return errors.Join(err, errors.New("could not check if the admin password is secure"))
+	}
+	if !isAdminSecure {
+		fmt.Fprint(os.Stdout, postInstallMessage)
+	}
 	return nil
 }
 
@@ -325,7 +333,7 @@ func (o *Install) installVMOperator(ctx context.Context) error {
 
 func (o *Install) provisionMonitoringStack(ctx context.Context) error {
 	l := o.l.With("action", "monitoring")
-	if err := o.createNamespace(MonitoringNamespace); err != nil {
+	if err := o.createNamespace(ctx, MonitoringNamespace); err != nil {
 		return err
 	}
 
@@ -342,7 +350,7 @@ func (o *Install) provisionMonitoringStack(ctx context.Context) error {
 }
 
 func (o *Install) provisionEverestOperator(ctx context.Context, recVer *version.RecommendedVersion) error {
-	if err := o.createNamespace(common.SystemNamespace); err != nil {
+	if err := o.createNamespace(ctx, common.SystemNamespace); err != nil {
 		return err
 	}
 
@@ -405,7 +413,7 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 
 func (o *Install) provisionDBNamespaces(ctx context.Context, recVer *version.RecommendedVersion) error {
 	for _, namespace := range o.config.NamespacesList {
-		if err := o.createNamespace(namespace); err != nil {
+		if err := o.createNamespace(ctx, namespace); err != nil {
 			return err
 		}
 		if err := o.kubeClient.CreateOperatorGroup(ctx, dbsOperatorGroup, namespace, []string{}); err != nil {
@@ -519,10 +527,18 @@ func (o *Install) runInstallWizard() error {
 }
 
 // createNamespace provisions a namespace for Everest.
-func (o *Install) createNamespace(namespace string) error {
+func (o *Install) createNamespace(ctx context.Context, namespace string) error {
 	o.l.Infof("Creating namespace %s", namespace)
-	err := o.kubeClient.CreateNamespace(namespace)
-	if err != nil {
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: namespace,
+			Labels: map[string]string{
+				common.KubernetesManagedByLabel: common.Everest,
+			},
+		},
+	}
+	err := o.kubeClient.CreateNamespace(ctx, ns)
+	if client.IgnoreAlreadyExists(err) != nil {
 		return errors.Join(err, errors.New("could not provision namespace"))
 	}
 
