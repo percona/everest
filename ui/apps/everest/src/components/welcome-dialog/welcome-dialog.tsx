@@ -34,7 +34,11 @@ export const WelcomeDialog = ({
       <DialogContent sx={{ display: 'flex', flexFlow: 'column' }}>
         <Typography variant="body1" sx={{ marginBottom: 2 }}>
           {Messages.subHead}
-          <Link href="https://github.com/percona/everest/issues">
+          <Link
+            href="https://github.com/percona/everest/issues"
+            target="_blank"
+            rel="noopener"
+          >
             {Messages.githubIssues}
           </Link>
           .
