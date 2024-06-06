@@ -29,6 +29,7 @@ import (
 
 const (
 	devCatalogImage     = "docker.io/perconalab/everest-catalog:latest"
+	rcCatalogImage      = "docker.io/perconalab/everest-catalog:%s"
 	releaseCatalogImage = "docker.io/percona/everest-catalog:%s"
 	devManifestURL      = "https://raw.githubusercontent.com/percona/everest/main/deploy/quickstart-k8s.yaml"
 	releaseManifestURL  = "https://raw.githubusercontent.com/percona/everest/v%s/deploy/quickstart-k8s.yaml"
@@ -61,7 +62,7 @@ func CatalogImage(v *goversion.Version) string {
 		return devCatalogImage
 	}
 	if isRC(v) {
-		return devCatalogImage
+		return rcCatalogImage
 	}
 	return fmt.Sprintf(releaseCatalogImage, v)
 }
