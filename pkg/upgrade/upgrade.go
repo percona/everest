@@ -109,6 +109,8 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 }
 
 // Run runs the operators installation process.
+//
+//nolint:funlen
 func (u *Upgrade) Run(ctx context.Context) error {
 	// Get Everest version.
 	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
@@ -212,7 +214,8 @@ func (u *Upgrade) ensureManagedByLabelOnDBNamespaces(ctx context.Context) error 
 				return errors.Join(err, fmt.Errorf("could not update namespace '%s'", nsName))
 			}
 			return nil
-		}, b); err != nil {
+		}, b,
+		); err != nil {
 			return err
 		}
 	}
