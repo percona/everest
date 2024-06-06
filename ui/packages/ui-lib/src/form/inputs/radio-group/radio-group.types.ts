@@ -12,7 +12,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { RadioGroupProps as MuiRadioGroupProps } from '@mui/material';
+import {
+  RadioGroupProps as MuiRadioGroupProps,
+  RadioProps,
+} from '@mui/material';
 import { Control, UseControllerProps } from 'react-hook-form';
 import { LabeledContentProps } from '../../../labeled-content';
 
@@ -21,6 +24,7 @@ export type RadioGroupOptions = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any;
   disabled?: boolean;
+  radioProps?: RadioProps;
 };
 
 export type RadioGroupProps = {
