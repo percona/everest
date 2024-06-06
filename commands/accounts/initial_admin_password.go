@@ -44,8 +44,8 @@ func NewInitialAdminPasswdCommand(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 			if secure {
-				l.Info("Cannot retrieve admin password after it has been updated.")
-				os.Exit(0)
+				l.Error("Cannot retrieve admin password after it has been updated.")
+				os.Exit(1)
 			}
 			admin, err := k.Accounts().Get(ctx, common.EverestAdminUser)
 			if err != nil {
