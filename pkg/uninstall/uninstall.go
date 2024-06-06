@@ -26,6 +26,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"go.uber.org/zap"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -104,10 +105,6 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
 		return err
 	}
 
-	if err := u.deleteDBNamespaces(ctx); err != nil {
-		return err
-	}
-
 	// VMAgent has finalizers, so we need to delete the monitoring configs first
 	if err := u.deleteMonitoringConfigs(ctx); err != nil {
 		return err
@@ -123,6 +120,10 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
 	// BackupStorages) have already been deleted, so we can delete the
 	// namespace directly
 	if err := u.deleteNamespaces(ctx, []string{common.SystemNamespace}); err != nil {
+		return err
+	}
+
+	if err := u.deleteDBNamespaces(ctx); err != nil {
 		return err
 	}
 
@@ -296,9 +297,20 @@ func (u *Uninstall) deleteNamespaces(ctx context.Context, namespaces []string) e
 }
 
 func (u *Uninstall) deleteDBNamespaces(ctx context.Context) error {
-	namespaces, err := u.kubeClient.GetDBNamespaces(ctx, common.SystemNamespace)
+	// List all namespaces managed by everest.
+	namespaceList, err := u.kubeClient.ListNamespaces(ctx, metav1.ListOptions{
+		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
+			MatchLabels: map[string]string{
+				common.KubernetesManagedByLabel: common.Everest,
+			},
+		}),
+	})
 	if err != nil {
 		return err
+	}
+	namespaces := make([]string, 0, len(namespaceList.Items))
+	for _, item := range namespaceList.Items {
+		namespaces = append(namespaces, item.Name)
 	}
 	if len(namespaces) > 0 {
 		return u.deleteNamespaces(ctx, namespaces)

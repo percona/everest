@@ -20,15 +20,16 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	"github.com/percona/everest/commands/oidc"
+	"github.com/percona/everest/commands/settings"
 )
 
-func newOIDCCmd(l *zap.SugaredLogger) *cobra.Command {
+func newSettingsCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "oidc",
+		Use:   "settings",
+		Long:  "Configure Everest settings",
+		Short: "Configure Everest settings",
 	}
-
-	cmd.AddCommand(oidc.NewConfigureCommand(l))
+	cmd.AddCommand(settings.NewOIDCCmd(l))
 
 	return cmd
 }

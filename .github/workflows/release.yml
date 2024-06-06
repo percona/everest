@@ -257,7 +257,7 @@ jobs:
           git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
 
           CURRENT_STABLE_VERSION=$(yq 'select(.name == "stable-v0").entries[-1].name' veneer/everest-operator.yaml | sed 's/^everest-operator.v//')
-          CURRENT_FAST_VERSION=$(yq 'select(.name == "fast-v0").entries[-2].name' veneer/everest-operator.yaml | sed 's/^everest-operator.v//')
+          CURRENT_FAST_VERSION=$(yq 'select(.name == "fast-v0").entries[-1].name' veneer/everest-operator.yaml | sed 's/^everest-operator.v//')
 
           if [[ -z "$CURRENT_STABLE_VERSION" ]]; then
             echo "CURRENT_STABLE_VERSION is required"
