@@ -155,6 +155,11 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return errors.Join(err, errors.New("could not find install plan"))
 	}
 
+	// TODO: Remove this afte 0.11.0 release.
+	if err := u.ensureEverestJWTIfNotExists(ctx); err != nil {
+		return err
+	}
+
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
 
 	// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
@@ -168,6 +173,19 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)
 
+	// TODO: Remove this after 0.11.0 release.
+	if err := u.ensureEverestAccountsIfNotExists(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *Upgrade) ensureEverestAccountsIfNotExists(ctx context.Context) error {
+	return nil
+}
+
+func (u *Upgrade) ensureEverestJWTIfNotExists(ctx context.Context) error {
 	return nil
 }
 
