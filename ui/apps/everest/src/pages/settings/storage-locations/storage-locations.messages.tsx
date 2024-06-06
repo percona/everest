@@ -21,11 +21,13 @@ export const Messages = {
   },
   deleteDialog: {
     header: 'Delete storage',
-    content: (
-      storageName: string
-    ) => `Are you sure you want to permanently delete this backup storage "${storageName}"? Any
-database clusters using this storage will no longer be able to execute
-their scheduled backup jobs.`,
+    content: (storageName: string) => (
+      <>
+        Are you sure you want to permanently delete this backup storage{' '}
+        <b>{storageName}</b>? Any database clusters using this storage will no
+        longer be able to execute their scheduled backup jobs.
+      </>
+    ),
   },
   s3: 'S3 Compatible',
   gcs: 'Google Cloud Storage',
