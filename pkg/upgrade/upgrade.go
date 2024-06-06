@@ -29,12 +29,26 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	cliVersion "github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
+
+// list of objects to skip during upgrade.
+var skipObjects = []client.Object{ //nolint:gochecknoglobals
+	&corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestJWTSecretName,
+			Namespace: common.SystemNamespace,
+		},
+	},
+}
 
 type (
 	// Config defines configuration required for upgrade command.
@@ -94,8 +108,6 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 }
 
 // Run runs the operators installation process.
-//
-//nolint:funlen
 func (u *Upgrade) Run(ctx context.Context) error {
 	// Get Everest version.
 	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
@@ -146,12 +158,6 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
 
 	// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
-	skipObjects := []metav1.Object{
-		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{
-			Name:      common.EverestJWTSecretName,
-			Namespace: common.SystemNamespace,
-		}},
-	}
 	if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo, skipObjects...); err != nil {
 		return err
 	}

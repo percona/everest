@@ -17,6 +17,8 @@
 package common
 
 const (
+	// Everest ...
+	Everest = "everest"
 	// PXCOperatorName holds operator name in k8s.
 	PXCOperatorName = "percona-xtradb-cluster-operator"
 	// PSMDBOperatorName holds operator name in k8s.
@@ -54,4 +56,6 @@ const (
 	EverestTokenCookie = "everest_token"
 	// EverestRBACConfigMapName is the name of the Everest RBAC ConfigMap.
 	EverestRBACConfigMapName = "everest-rbac"
+	// KubernetesManagedByLabel is the label used to identify resources managed by Everest.
+	KubernetesManagedByLabel = "app.kubernetes.io/managed-by"
 )

@@ -23,6 +23,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
@@ -78,7 +79,7 @@ type KubeClientConnector interface {
 	ApplyFile(fileBytes []byte) error
 	// ApplyManifestFile accepts manifest file contents, parses into []runtime.Object
 	// and applies them against the cluster.
-	ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...metav1.Object) error
+	ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...client.Object) error
 	// DeleteManifestFile accepts manifest file contents, parses into []runtime.Object
 	// and deletes them from the cluster.
 	DeleteManifestFile(fileBytes []byte, namespace string) error
@@ -88,8 +89,6 @@ type KubeClientConnector interface {
 	GetSubscriptionCSV(ctx context.Context, subKey types.NamespacedName) (types.NamespacedName, error)
 	// DoRolloutWait waits until a deployment has been rolled out susccessfully or there is an error.
 	DoRolloutWait(ctx context.Context, key types.NamespacedName) error
-	// CreateNamespace creates a new namespace.
-	CreateNamespace(name string) error
 	// GetOperatorGroup retrieves an operator group details by namespace and name.
 	GetOperatorGroup(ctx context.Context, namespace, name string) (*v1.OperatorGroup, error)
 	// CreateOperatorGroup creates an operator group to be used as part of a subscription.
@@ -171,10 +170,14 @@ type KubeClientConnector interface {
 	ListMonitoringConfigs(ctx context.Context, namespace string) (*everestv1alpha1.MonitoringConfigList, error)
 	// DeleteMonitoringConfig deletes the monitoringConfig.
 	DeleteMonitoringConfig(ctx context.Context, namespace, name string) error
+	// CreateNamespace creates the given namespace.
+	CreateNamespace(ctx context.Context, namespace *corev1.Namespace) (*corev1.Namespace, error)
 	// GetNamespace returns a namespace.
 	GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error)
 	// DeleteNamespace deletes a namespace.
 	DeleteNamespace(ctx context.Context, name string) error
+	// ListNamespaces returns a list of namespaces.
+	ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*corev1.NamespaceList, error)
 	// OLM returns OLM client set.
 	//
 	//nolint:ireturn

@@ -36,6 +36,7 @@ const (
 	usersFile = "users.yaml"
 	// We set this annotation on the secret to indicate which passwords are stored in plain text.
 	insecurePasswordAnnotation = "insecure-password/%s"
+	insecurePasswordValueTrue  = "true"
 )
 
 type configMapsClient struct {
@@ -160,7 +161,7 @@ func (a *configMapsClient) insertOrUpdateAccount(
 	}
 	delete(annotations, fmt.Sprintf(insecurePasswordAnnotation, username))
 	if !secure {
-		annotations[fmt.Sprintf(insecurePasswordAnnotation, username)] = "true"
+		annotations[fmt.Sprintf(insecurePasswordAnnotation, username)] = insecurePasswordValueTrue
 	}
 
 	if _, err := a.k.UpdateSecret(ctx, secret); err != nil {
@@ -241,6 +242,17 @@ func (a *configMapsClient) Verify(ctx context.Context, username, password string
 		return accounts.ErrIncorrectPassword
 	}
 	return nil
+}
+
+// IsSecure returns true if the password for the given user is stored as a hash.
+func (a *configMapsClient) IsSecure(ctx context.Context, username string) (bool, error) {
+	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsSecretName)
+	if err != nil {
+		return false, err
+	}
+	annotations := secret.GetAnnotations()
+	isSecure, found := annotations[fmt.Sprintf(insecurePasswordAnnotation, username)]
+	return !found || isSecure != insecurePasswordValueTrue, nil
 }
 
 func (a *configMapsClient) computePasswordHash(ctx context.Context, password string) (string, error) {
