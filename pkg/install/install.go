@@ -57,11 +57,7 @@ Everest has been successfully installed!
 
 To view the password for the 'admin' user, run the following command:
 
-kubectl get secret everest-accounts -n everest-system -o jsonpath='{.data.users\.yaml}' \
-    | base64 --decode \
-    | grep -A 5 '^admin:' \
-    | grep 'passwordHash:' \
-    | awk '{print $2}'
+everestctl accounts initial-admin-password
 
 
 IMPORTANT: This password is NOT stored in a hashed format. To secure it, update the password using the following command:
@@ -221,7 +217,13 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	fmt.Fprint(os.Stdout, postInstallMessage)
+	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
+	if err != nil {
+		return errors.Join(err, errors.New("could not check if the admin password is secure"))
+	}
+	if !isAdminSecure {
+		fmt.Fprint(os.Stdout, postInstallMessage)
+	}
 	return nil
 }
 
