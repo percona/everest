@@ -25,7 +25,9 @@ import (
 
 func newAccountsCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "accounts",
+		Use:   "accounts",
+		Long:  "Manage Everest accounts",
+		Short: "Manage Everest accounts",
 	}
 
 	cmd.AddCommand(accounts.NewCreateCmd(l))

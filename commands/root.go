@@ -26,7 +26,9 @@ import (
 // NewRootCmd creates a new root command for the cli.
 func NewRootCmd(l *zap.SugaredLogger) *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use: "everestctl",
+		Use:   "everestctl",
+		Long:  "CLI for managing Percona Everest",
+		Short: "CLI for managing Percona Everest",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) { //nolint:revive
 			logger.InitLoggerInRootCmd(cmd, l)
 			l.Debug("Debug logging enabled")

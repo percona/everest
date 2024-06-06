@@ -24,8 +24,9 @@ import (
 
 func newSettingsCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "settings",
-		Long: "Configure Everest settings",
+		Use:   "settings",
+		Long:  "Configure Everest settings",
+		Short: "Configure Everest settings",
 	}
 	cmd.AddCommand(settings.NewOIDCCmd(l))
 
