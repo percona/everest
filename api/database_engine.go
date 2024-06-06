@@ -98,7 +98,7 @@ func (e *EverestServer) checkDatabases(
 		return nil, err
 	}
 
-	// Check that every cluster is using the reccomended CRVersion.
+	// Check that every cluster is using the recommended CRVersion.
 	checks := []OperatorVersionCheckForDatabase{}
 	for _, cluster := range clusters.Items {
 		if cluster.Spec.Engine.Type != engine.Spec.Type {
