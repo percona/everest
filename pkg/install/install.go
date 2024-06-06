@@ -57,11 +57,7 @@ Everest has been successfully installed!
 
 To view the password for the 'admin' user, run the following command:
 
-kubectl get secret everest-accounts -n everest-system -o jsonpath='{.data.users\.yaml}' \
-    | base64 --decode \
-    | grep -A 5 '^admin:' \
-    | grep 'passwordHash:' \
-    | awk '{print $2}'
+everestctl accounts initial-admin-password
 
 
 IMPORTANT: This password is NOT stored in a hashed format. To secure it, update the password using the following command:

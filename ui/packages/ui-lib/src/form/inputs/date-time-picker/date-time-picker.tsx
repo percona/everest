@@ -15,11 +15,17 @@ const DateTimePickerInput = <T extends object>({
     <Controller
       name={name}
       control={control ?? contextControl}
-      render={({ field }) => (
+      render={({ field, fieldState: { error } }) => (
         <DateTimePicker
           {...field}
           inputRef={field.ref}
           data-testid={`date-time-picker-${kebabize(name)}`}
+          slotProps={{
+            textField: {
+              error: !!error,
+              helperText: error ? error.message : '',
+            },
+          }}
           {...dateTimePickerProps}
         />
       )}
