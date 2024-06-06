@@ -17,9 +17,10 @@
 package commands
 
 import (
-	"github.com/percona/everest/commands/settings"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+
+	"github.com/percona/everest/commands/settings"
 )
 
 func newSettingsCommand(l *zap.SugaredLogger) *cobra.Command {
