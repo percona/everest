@@ -191,7 +191,7 @@ func (u *Upgrade) ensureManagedByLabelOnDBNamespaces(ctx context.Context) error 
 		b = backoff.NewConstantBackOff(5 * time.Second)
 		b = backoff.WithMaxRetries(b, 5)
 		b = backoff.WithContext(b, ctx)
-		backoff.Retry(func() error {
+		if err := backoff.Retry(func() error {
 			// Get the namespace.
 			ns, err := u.kubeClient.GetNamespace(ctx, nsName)
 			if err != nil {
@@ -212,7 +212,9 @@ func (u *Upgrade) ensureManagedByLabelOnDBNamespaces(ctx context.Context) error 
 				return errors.Join(err, fmt.Errorf("could not update namespace '%s'", nsName))
 			}
 			return nil
-		}, b)
+		}, b); err != nil {
+			return err
+		}
 	}
 	return nil
 }
