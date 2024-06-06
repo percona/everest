@@ -66,4 +66,5 @@ type Interface interface {
 	Delete(ctx context.Context, username string) error
 	SetPassword(ctx context.Context, username, newPassword string, secure bool) error
 	Verify(ctx context.Context, username, password string) error
+	IsSecure(ctx context.Context, username string) (bool, error)
 }
