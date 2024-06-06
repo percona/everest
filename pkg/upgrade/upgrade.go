@@ -168,6 +168,25 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)
 
+	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx, common.SystemNamespace)
+	if err != nil {
+		u.l.Error(err)
+		return errors.Join(err, errors.New("could not retrieve database namespaces"))
+	}
+	for _, nsName := range dbNamespaces {
+		ns, err := u.kubeClient.GetNamespace(ctx, nsName)
+		if err != nil {
+			return errors.Join(err, fmt.Errorf("could not get namespace %s", nsName))
+		}
+		labels := ns.GetLabels()
+		if labels == nil {
+			labels = make(map[string]string)
+		}
+		labels[common.KubernetesManagedByLabel] = common.Everest
+		ns.SetLabels(labels)
+		// TODO: update namespace
+	}
+
 	return nil
 }
 
