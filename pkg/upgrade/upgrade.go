@@ -24,6 +24,7 @@ import (
 	"time"
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
+	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -168,25 +169,51 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)
 
+	// Ensure managed-by label is set on all database namespaces.
+	// This code can be removed after 0.11.0 release.
+	if err := u.ensureManagedByLabelOnDBNamespaces(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+// ensureManagedByLabelOnDBNamespaces ensures that all database namespaces have the managed-by label set.
+func (u *Upgrade) ensureManagedByLabelOnDBNamespaces(ctx context.Context) error {
 	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx, common.SystemNamespace)
 	if err != nil {
 		u.l.Error(err)
 		return errors.Join(err, errors.New("could not retrieve database namespaces"))
 	}
 	for _, nsName := range dbNamespaces {
-		ns, err := u.kubeClient.GetNamespace(ctx, nsName)
-		if err != nil {
-			return errors.Join(err, fmt.Errorf("could not get namespace %s", nsName))
-		}
-		labels := ns.GetLabels()
-		if labels == nil {
-			labels = make(map[string]string)
-		}
-		labels[common.KubernetesManagedByLabel] = common.Everest
-		ns.SetLabels(labels)
-		// TODO: update namespace
+		// Ensure we add the managed-by label to the namespace.
+		// We should retry this operation since there may be update conflicts.
+		var b backoff.BackOff
+		b = backoff.NewConstantBackOff(5 * time.Second)
+		b = backoff.WithMaxRetries(b, 5)
+		b = backoff.WithContext(b, ctx)
+		backoff.Retry(func() error {
+			// Get the namespace.
+			ns, err := u.kubeClient.GetNamespace(ctx, nsName)
+			if err != nil {
+				return errors.Join(err, fmt.Errorf("could not get namespace '%s'", nsName))
+			}
+			labels := ns.GetLabels()
+			_, found := labels[common.KubernetesManagedByLabel]
+			if found {
+				return nil // label already exists.
+			}
+			if labels == nil {
+				labels = make(map[string]string)
+			}
+			// Set the label.
+			labels[common.KubernetesManagedByLabel] = common.Everest
+			ns.SetLabels(labels)
+			if _, err := u.kubeClient.UpdateNamespace(ctx, ns, metav1.UpdateOptions{}); err != nil {
+				return errors.Join(err, fmt.Errorf("could not update namespace '%s'", nsName))
+			}
+			return nil
+		}, b)
 	}
-
 	return nil
 }
 
