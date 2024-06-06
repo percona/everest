@@ -345,6 +345,7 @@ test.describe('DB Cluster creation', () => {
   }) => {
     await page.goto('/databases');
     await page.getByTestId('add-db-cluster-button').click();
+    await expect(page.getByTestId('toggle-button-group-input-db-type')).toBeVisible();
 
     // Resources Step
     await moveForward(page);
