@@ -13,19 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package commands ...
-package commands
+// Package settings ...
+package settings
 
 import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	"github.com/percona/everest/commands/oidc"
+	"github.com/percona/everest/commands/settings/oidc"
 )
 
-func newOIDCCmd(l *zap.SugaredLogger) *cobra.Command {
+// NewOIDCCmd returns an new OIDC sub-command.
+func NewOIDCCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "oidc",
+		Use:  "oidc",
+		Long: "Configure OIDC settings",
 	}
 
 	cmd.AddCommand(oidc.NewConfigureCommand(l))
