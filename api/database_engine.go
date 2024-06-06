@@ -68,8 +68,9 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 }
 
 // GetOperatorVersion returns the current version of the operator and the status of the database clusters.
-func (e *EverestServer) GetOperatorVersion(ctx echo.Context, namespace, name string) error {
-	engine, err := e.kubeClient.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
+func (e *EverestServer) GetOperatorVersion(c echo.Context, namespace, name string) error {
+	ctx := c.Request().Context()
+	engine, err := e.kubeClient.GetDatabaseEngine(ctx, namespace, name)
 	if err != nil {
 		return err
 	}
@@ -78,13 +79,25 @@ func (e *EverestServer) GetOperatorVersion(ctx echo.Context, namespace, name str
 		CurrentVersion: pointer.To(engine.Status.OperatorVersion),
 	}
 
-	reqCtx := ctx.Request().Context()
-
-	clusters, err := e.kubeClient.ListDatabaseClusters(reqCtx, namespace)
+	checks, err := e.checkDatabases(ctx, namespace, engine)
 	if err != nil {
-		return err
+		return errors.Join(err, errors.New("failed to check databases"))
+	}
+	result.Databases = pointer.To(checks)
+	return c.JSON(http.StatusOK, result)
+}
+
+// check the databases in the namespace from the perspective of operator version.
+func (e *EverestServer) checkDatabases(
+	ctx context.Context,
+	namespace string, engine *everestv1alpha1.DatabaseEngine) ([]OperatorVersionCheckForDatabase, error) {
+	// List all clusters in this namespace.
+	clusters, err := e.kubeClient.ListDatabaseClusters(ctx, namespace)
+	if err != nil {
+		return nil, err
 	}
 
+	// Check that every cluster is using the reccomended CRVersion.
 	checks := []OperatorVersionCheckForDatabase{}
 	for _, cluster := range clusters.Items {
 		if cluster.Spec.Engine.Type != engine.Spec.Type {
@@ -95,11 +108,11 @@ func (e *EverestServer) GetOperatorVersion(ctx echo.Context, namespace, name str
 		}
 		if recVer := cluster.Status.RecommendedCRVersion; recVer != nil {
 			check.PendingTask = pointer.To(OperatorVersionCheckForDatabasePendingTaskRestart)
-			check.Message = pointer.To(fmt.Sprintf("Cluster needs restart to use CRVersion '%s'", *recVer))
+			check.Message = pointer.To(fmt.Sprintf("Database needs restart to use CRVersion '%s'", *recVer))
 		}
 		checks = append(checks, check)
 	}
-	return ctx.JSON(http.StatusOK, result)
+	return checks, nil
 }
 
 // UpgradeDatabaseEngineOperator upgrades the database engine operator to the specified version.
