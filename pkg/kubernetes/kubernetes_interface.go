@@ -93,6 +93,8 @@ type KubernetesConnector interface {
 	// ProvisionMonitoring provisions PMM monitoring.
 	ProvisionMonitoring(namespace string) error
 	// RestartOperator restarts the deployment of an operator managed by OLM.
+	//
+	//nolint:funlen
 	RestartOperator(ctx context.Context, name, namespace string) error
 	// RestartDeployment restarts the given deployment.
 	RestartDeployment(ctx context.Context, name, namespace string) error
