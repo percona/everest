@@ -35,7 +35,9 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 		//       ./everestctl upgrade --namespaces=aaa, a
 		// it will return
 		//        Error: unknown command "a" for "everestctl upgrade"
-		Args: cobra.NoArgs,
+		Args:  cobra.NoArgs,
+		Long:  "Upgrade Percona Everest",
+		Short: "Upgrade Percona Everest",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initUpgradeViperFlags(cmd)
 
