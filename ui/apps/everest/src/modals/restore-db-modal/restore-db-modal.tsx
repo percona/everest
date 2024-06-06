@@ -145,7 +145,7 @@ const RestoreDbModal = <T extends FieldValues>({
       }}
       submitMessage={isNewClusterMode ? Messages.create : Messages.restore}
     >
-      {({ watch }) => (
+      {({ watch, resetField }) => (
         <LoadableChildren loading={isLoading}>
           <Typography variant="body1">
             {isNewClusterMode ? Messages.subHeadCreate : Messages.subHead}
@@ -172,10 +172,24 @@ const RestoreDbModal = <T extends FieldValues>({
               {
                 label: Messages.fromBackup,
                 value: BackuptypeValues.fromBackup,
+                radioProps: {
+                  onClick: () => {
+                    resetField(RestoreDbFields.pitrBackup, {
+                      keepError: false,
+                    });
+                  },
+                },
               },
               {
                 label: Messages.fromPitr,
                 value: BackuptypeValues.fromPitr,
+                radioProps: {
+                  onClick: () => {
+                    resetField(RestoreDbFields.backupName, {
+                      keepError: false,
+                    });
+                  },
+                },
                 disabled:
                   !!backupName &&
                   pitrData?.latestBackupName !==
