@@ -18,6 +18,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 
@@ -66,12 +67,39 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, name)
 }
 
+// GetOperatorVersion returns the current version of the operator and the status of the database clusters.
 func (e *EverestServer) GetOperatorVersion(ctx echo.Context, namespace, name string) error {
 	engine, err := e.kubeClient.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
 	if err != nil {
 		return err
 	}
-	return ctx.JSON(http.StatusOK, engine.Status.OperatorVersion)
+
+	result := &OperatorVersion{
+		CurrentVersion: pointer.To(engine.Status.OperatorVersion),
+	}
+
+	reqCtx := ctx.Request().Context()
+
+	clusters, err := e.kubeClient.ListDatabaseClusters(reqCtx, namespace)
+	if err != nil {
+		return err
+	}
+
+	checks := []OperatorVersionCheckForDatabase{}
+	for _, cluster := range clusters.Items {
+		if cluster.Spec.Engine.Type != engine.Spec.Type {
+			continue
+		}
+		check := OperatorVersionCheckForDatabase{
+			Name: pointer.To(cluster.Name),
+		}
+		if recVer := cluster.Status.RecommendedCRVersion; recVer != nil {
+			check.PendingTask = pointer.To(OperatorVersionCheckForDatabasePendingTaskRestart)
+			check.Message = pointer.To(fmt.Sprintf("Cluster needs restart to use CRVersion '%s'", *recVer))
+		}
+		checks = append(checks, check)
+	}
+	return ctx.JSON(http.StatusOK, result)
 }
 
 // UpgradeDatabaseEngineOperator upgrades the database engine operator to the specified version.
