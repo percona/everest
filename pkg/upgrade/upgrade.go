@@ -155,7 +155,6 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return errors.Join(err, errors.New("could not find install plan"))
 	}
 
-	// TODO: Remove this afte 0.11.0 release.
 	if err := u.ensureEverestJWTIfNotExists(ctx); err != nil {
 		return err
 	}
@@ -173,7 +172,6 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)
 
-	// TODO: Remove this after 0.11.0 release.
 	if err := u.ensureEverestAccountsIfNotExists(ctx); err != nil {
 		return err
 	}
@@ -181,12 +179,37 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	return nil
 }
 
+// This is needed only for 0.10 to 0.11 upgrade.
+// TODO: Remove after 0.11.0 release.
 func (u *Upgrade) ensureEverestAccountsIfNotExists(ctx context.Context) error {
-	return nil
+	if _, err := u.kubeClient.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsSecretName); client.IgnoreNotFound(err) != nil {
+		return err
+	} else if err == nil {
+		return nil // Everest accounts already exists.
+	}
+
+	// Create Everest accounts secret.
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestAccountsSecretName,
+			Namespace: common.SystemNamespace,
+		},
+	}
+	if _, err := u.kubeClient.CreateSecret(ctx, secret); err != nil {
+		return err
+	}
+	return common.CreateInitialAdminAccount(ctx, u.kubeClient.Accounts())
 }
 
+// This is needed only for 0.10 to 0.11 upgrade.
+// TODO: Remove after 0.11.0 release.
 func (u *Upgrade) ensureEverestJWTIfNotExists(ctx context.Context) error {
-	return nil
+	if _, err := u.kubeClient.GetSecret(ctx, common.SystemNamespace, common.EverestJWTSecretName); client.IgnoreNotFound(err) != nil {
+		return err
+	} else if err == nil {
+		return nil // JWT keys already exist.
+	}
+	return u.kubeClient.CreateRSAKeyPair(ctx)
 }
 
 // canUpgrade checks if there's a new Everest version available and if we can upgrade to it
