@@ -3,8 +3,12 @@ export const Messages = {
   schedule: 'Schedule',
   deleteModal: {
     header: 'Delete schedule',
-    content: (scheduleName: string) =>
-      `Are you sure you want to permanently delete schedule "${scheduleName}"?`,
+    content: (scheduleName: string) => (
+      <>
+        Are you sure you want to permanently delete schedule{' '}
+        <b>{scheduleName}</b>?
+      </>
+    ),
   },
   maximumPgSchedules: 'Note: Maximum 3 schedules for PostgreSQL',
   activeSchedules: (schedulesNumber: number) =>
