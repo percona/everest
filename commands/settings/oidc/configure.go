@@ -58,7 +58,6 @@ func NewConfigureCommand(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initOIDCFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
 	cmd.Flags().String("issuer-url", "", "OIDC issuer url")
 	cmd.Flags().String("client-id", "", "ID of the client OIDC app")
 }
