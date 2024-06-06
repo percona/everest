@@ -221,7 +221,13 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	fmt.Fprint(os.Stdout, postInstallMessage)
+	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
+	if err != nil {
+		return errors.Join(err, errors.New("could not check if the admin password is secure"))
+	}
+	if !isAdminSecure {
+		fmt.Fprint(os.Stdout, postInstallMessage)
+	}
 	return nil
 }
 
