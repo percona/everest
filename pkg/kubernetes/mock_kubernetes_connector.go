@@ -222,6 +222,36 @@ func (_m *MockKubernetesConnector) CreateRestore(restore *v1alpha1.DatabaseClust
 	return r0
 }
 
+// CreateSecret provides a mock function with given fields: ctx, secret
+func (_m *MockKubernetesConnector) CreateSecret(ctx context.Context, secret *v1.Secret) (*v1.Secret, error) {
+	ret := _m.Called(ctx, secret)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateSecret")
+	}
+
+	var r0 *v1.Secret
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Secret) (*v1.Secret, error)); ok {
+		return rf(ctx, secret)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Secret) *v1.Secret); ok {
+		r0 = rf(ctx, secret)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.Secret)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *v1.Secret) error); ok {
+		r1 = rf(ctx, secret)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DeleteClusterServiceVersion provides a mock function with given fields: ctx, key
 func (_m *MockKubernetesConnector) DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error {
 	ret := _m.Called(ctx, key)
@@ -287,6 +317,24 @@ func (_m *MockKubernetesConnector) DeleteObject(obj runtime.Object) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(runtime.Object) error); ok {
 		r0 = rf(obj)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteSecret provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubernetesConnector) DeleteSecret(ctx context.Context, namespace string, name string) error {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteSecret")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, namespace, name)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -670,6 +718,36 @@ func (_m *MockKubernetesConnector) GetPXCOperatorVersion(ctx context.Context) (s
 	return r0, r1
 }
 
+// GetSecret provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubernetesConnector) GetSecret(ctx context.Context, namespace string, name string) (*v1.Secret, error) {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSecret")
+	}
+
+	var r0 *v1.Secret
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v1.Secret, error)); ok {
+		return rf(ctx, namespace, name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v1.Secret); ok {
+		r0 = rf(ctx, namespace, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.Secret)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetServerVersion provides a mock function with given fields:
 func (_m *MockKubernetesConnector) GetServerVersion() (*pkgversion.Info, error) {
 	ret := _m.Called()
@@ -869,6 +947,36 @@ func (_m *MockKubernetesConnector) ListNamespaces(ctx context.Context, opts meta
 	return r0, r1
 }
 
+// ListSecrets provides a mock function with given fields: ctx, namespace
+func (_m *MockKubernetesConnector) ListSecrets(ctx context.Context, namespace string) (*v1.SecretList, error) {
+	ret := _m.Called(ctx, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListSecrets")
+	}
+
+	var r0 *v1.SecretList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*v1.SecretList, error)); ok {
+		return rf(ctx, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *v1.SecretList); ok {
+		r0 = rf(ctx, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.SecretList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListSubscriptions provides a mock function with given fields: ctx, namespace
 func (_m *MockKubernetesConnector) ListSubscriptions(ctx context.Context, namespace string) (*operatorsv1alpha1.SubscriptionList, error) {
 	ret := _m.Called(ctx, namespace)
@@ -1001,6 +1109,24 @@ func (_m *MockKubernetesConnector) RestartOperator(ctx context.Context, name str
 	return r0
 }
 
+// SetSecret provides a mock function with given fields: secret
+func (_m *MockKubernetesConnector) SetSecret(secret *v1.Secret) error {
+	ret := _m.Called(secret)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetSecret")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*v1.Secret) error); ok {
+		r0 = rf(secret)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdateClusterRoleBinding provides a mock function with given fields: ctx, name, namespaces
 func (_m *MockKubernetesConnector) UpdateClusterRoleBinding(ctx context.Context, name string, namespaces []string) error {
 	ret := _m.Called(ctx, name, namespaces)
@@ -1095,6 +1221,36 @@ func (_m *MockKubernetesConnector) UpdateEverestSettings(ctx context.Context, se
 	}
 
 	return r0
+}
+
+// UpdateSecret provides a mock function with given fields: ctx, secret
+func (_m *MockKubernetesConnector) UpdateSecret(ctx context.Context, secret *v1.Secret) (*v1.Secret, error) {
+	ret := _m.Called(ctx, secret)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateSecret")
+	}
+
+	var r0 *v1.Secret
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Secret) (*v1.Secret, error)); ok {
+		return rf(ctx, secret)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Secret) *v1.Secret); ok {
+		r0 = rf(ctx, secret)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.Secret)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *v1.Secret) error); ok {
+		r1 = rf(ctx, secret)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // UpgradeOperator provides a mock function with given fields: ctx, namespace, name
