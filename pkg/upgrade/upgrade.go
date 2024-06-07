@@ -136,6 +136,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		}
 		return err
 	}
+	upgradeEverestToCore := upgradeEverestTo.Core()
 
 	// Start upgrade.
 	if err := u.upgradeOLM(ctx, recVer.OLM); err != nil {
@@ -167,8 +168,10 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return errors.Join(err, errors.New("could not find install plan"))
 	}
 
-	if err := u.ensureEverestJWTIfNotExists(ctx); err != nil {
-		return err
+	if constraint := goversion.MustConstraints(goversion.NewConstraint("~> 0.11.0")); constraint.Check(upgradeEverestToCore) {
+		if err := u.ensureEverestJWTIfNotExists(ctx); err != nil {
+			return err
+		}
 	}
 
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
@@ -184,15 +187,15 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)
 
-	if err := u.ensureEverestAccountsIfNotExists(ctx); err != nil {
-		return err
+	if constraint := goversion.MustConstraints(goversion.NewConstraint("~> 0.11.0")); constraint.Check(upgradeEverestToCore) {
+		if err := u.ensureEverestAccountsIfNotExists(ctx); err != nil {
+			return err
+		}
+		if err := u.ensureManagedByLabelOnDBNamespaces(ctx); err != nil {
+			return err
+		}
 	}
 
-	// Ensure managed-by label is set on all database namespaces.
-	// This code can be removed after 0.11.0 release.
-	if err := u.ensureManagedByLabelOnDBNamespaces(ctx); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -239,8 +242,6 @@ func (u *Upgrade) ensureManagedByLabelOnDBNamespaces(ctx context.Context) error 
 	return nil
 }
 
-// This is needed only for 0.10 to 0.11 upgrade.
-// TODO: Remove after 0.11.0 release.
 func (u *Upgrade) ensureEverestAccountsIfNotExists(ctx context.Context) error {
 	if _, err := u.kubeClient.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsSecretName); client.IgnoreNotFound(err) != nil {
 		return err
@@ -261,8 +262,6 @@ func (u *Upgrade) ensureEverestAccountsIfNotExists(ctx context.Context) error {
 	return common.CreateInitialAdminAccount(ctx, u.kubeClient.Accounts())
 }
 
-// This is needed only for 0.10 to 0.11 upgrade.
-// TODO: Remove after 0.11.0 release.
 func (u *Upgrade) ensureEverestJWTIfNotExists(ctx context.Context) error {
 	if _, err := u.kubeClient.GetSecret(ctx, common.SystemNamespace, common.EverestJWTSecretName); client.IgnoreNotFound(err) != nil {
 		return err
