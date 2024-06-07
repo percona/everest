@@ -27,8 +27,12 @@ func CreateInitialAdminAccount(
 	if err != nil {
 		return errors.Join(err, errors.New("could not generate random password"))
 	}
-	if err := c.SetPassword(ctx, EverestAdminUser, pass, false); err != nil {
-		return err
+	// Check if the admin account exists?
+	if _, err := c.Get(ctx, EverestAdminUser); errors.Is(err, accounts.ErrAccountNotFound) {
+		if createErr := c.Create(ctx, EverestAdminUser, pass); createErr != nil {
+			return errors.Join(createErr, errors.New("could not create admin account"))
+		}
 	}
-	return nil
+	// Create the admin account.
+	return c.SetPassword(ctx, EverestAdminUser, pass, false)
 }

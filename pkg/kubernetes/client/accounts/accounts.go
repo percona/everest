@@ -163,6 +163,7 @@ func (a *configMapsClient) insertOrUpdateAccount(
 	if !secure {
 		annotations[fmt.Sprintf(insecurePasswordAnnotation, username)] = insecurePasswordValueTrue
 	}
+	secret.SetAnnotations(annotations)
 
 	if _, err := a.k.UpdateSecret(ctx, secret); err != nil {
 		return err
