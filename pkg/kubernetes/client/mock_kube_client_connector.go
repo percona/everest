@@ -2146,6 +2146,36 @@ func (_m *MockKubeClientConnector) UpdateMonitoringConfig(ctx context.Context, c
 	return r0
 }
 
+// UpdateNamespace provides a mock function with given fields: ctx, namespace, opts
+func (_m *MockKubeClientConnector) UpdateNamespace(ctx context.Context, namespace *v1.Namespace, opts metav1.UpdateOptions) (*v1.Namespace, error) {
+	ret := _m.Called(ctx, namespace, opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateNamespace")
+	}
+
+	var r0 *v1.Namespace
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Namespace, metav1.UpdateOptions) (*v1.Namespace, error)); ok {
+		return rf(ctx, namespace, opts)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Namespace, metav1.UpdateOptions) *v1.Namespace); ok {
+		r0 = rf(ctx, namespace, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.Namespace)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *v1.Namespace, metav1.UpdateOptions) error); ok {
+		r1 = rf(ctx, namespace, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateSecret provides a mock function with given fields: ctx, secret
 func (_m *MockKubeClientConnector) UpdateSecret(ctx context.Context, secret *v1.Secret) (*v1.Secret, error) {
 	ret := _m.Called(ctx, secret)
