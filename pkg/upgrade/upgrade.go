@@ -194,6 +194,9 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		if err := u.ensureManagedByLabelOnDBNamespaces(ctx); err != nil {
 			return err
 		}
+		if err := u.kubeClient.DeleteSecret(ctx, common.SystemNamespace, "everest-token"); client.IgnoreNotFound(err) != nil {
+			return err
+		}
 	}
 
 	return nil
