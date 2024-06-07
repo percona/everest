@@ -82,7 +82,7 @@ func getUpgradePreflightCheckResultForDatabase(
 	} else if !valid {
 		return OperatorUpgradePreflightForDatabase{
 			Name:        pointer.To(database.GetName()),
-			PendingTask: pointer.To(UpgradeEngine),
+			PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskUpgradeEngine),
 			Message: pointer.ToString(
 				fmt.Sprintf("Upgrade DB version to %s", minReqVer)),
 		}, nil
@@ -92,7 +92,7 @@ func getUpgradePreflightCheckResultForDatabase(
 	if recCRVersion := database.Status.RecommendedCRVersion; recCRVersion != nil {
 		return OperatorUpgradePreflightForDatabase{
 			Name:        pointer.To(database.GetName()),
-			PendingTask: pointer.To(Restart),
+			PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskRestart),
 			Message: pointer.ToString(
 				fmt.Sprintf("Update CRVersion to %s", *recCRVersion)),
 		}, nil
@@ -102,7 +102,7 @@ func getUpgradePreflightCheckResultForDatabase(
 	if database.Status.Status != everestv1alpha1.AppStateReady {
 		return OperatorUpgradePreflightForDatabase{
 			Name:        pointer.To(database.GetName()),
-			PendingTask: pointer.To(NotReady),
+			PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskNotReady),
 			Message:     pointer.ToString("Database is not ready"),
 		}, nil
 	}
@@ -110,7 +110,7 @@ func getUpgradePreflightCheckResultForDatabase(
 	// Database is in desired state for performing operator upgrade.
 	return OperatorUpgradePreflightForDatabase{
 		Name:        pointer.To(database.GetName()),
-		PendingTask: pointer.To(Ready),
+		PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskReady),
 	}, nil
 }
 
