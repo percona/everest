@@ -35,11 +35,10 @@ export const ScheduleFormDialog = () => {
   } = useContext(ScheduleFormDialogContext);
 
   const { schedules = [] } = dbClusterInfo;
-  const schedulesNamesList = schedules.map((item) => item?.name);
 
   const scheduledBackupSchema = useMemo(
-    () => schema(schedulesNamesList, mode),
-    [schedulesNamesList, mode]
+    () => schema(schedules, mode),
+    [schedules, mode]
   );
 
   const selectedSchedule = useMemo(() => {

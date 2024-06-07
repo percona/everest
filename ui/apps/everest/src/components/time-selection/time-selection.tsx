@@ -16,6 +16,7 @@ import {
 import { getTimeText } from './time-selection.utils';
 
 export const TimeSelection = ({
+  errorInfoAlert,
   showInfoAlert,
   sx,
   sxTimeFields,
@@ -86,6 +87,7 @@ export const TimeSelection = ({
             selectedTime === TimeValue.months) && <TimeFields />}
         </Box>
       </Box>
+      {errorInfoAlert}
       {showInfoAlert && (
         <Alert severity="info">{Messages.infoText(timeInfoText)}</Alert>
       )}
