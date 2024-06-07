@@ -53,7 +53,7 @@ const checkDbTypeisVisibleInPreview = async (page: Page, dbType: DbType) => {
   return (await dbTypeLocator.allInnerTexts())?.length > 0;
 };
 
-const fillScheduleModalForm = async (page: Page) => {
+export const fillScheduleModalForm = async (page: Page) => {
   // TODO can be customizable
   if (await checkDbTypeisVisibleInPreview(page, DbType.Mongo)) {
     await expect(page.getByTestId('radio-option-logical')).toBeChecked();

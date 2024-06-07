@@ -99,6 +99,10 @@ test.describe.skip('Schedules List', async () => {
     expect(page.getByText('2 active schedules')).toBeTruthy();
   });
 
+  test.skip('Warning should appears for schedule with the same date and storage', async ({}) => {
+    //TODO a similar test is written in create.db.wizard, after solving patch problem it's better to duplicate the same for backups page
+  });
+
   test('Creating schedule with duplicate name shows validation error', async ({
     page,
   }) => {
