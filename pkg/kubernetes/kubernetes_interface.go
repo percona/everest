@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/accounts"
@@ -92,6 +93,8 @@ type KubernetesConnector interface {
 	// ProvisionMonitoring provisions PMM monitoring.
 	ProvisionMonitoring(namespace string) error
 	// RestartOperator restarts the deployment of an operator managed by OLM.
+	//
+	//nolint:funlen
 	RestartOperator(ctx context.Context, name, namespace string) error
 	// RestartDeployment restarts the given deployment.
 	RestartDeployment(ctx context.Context, name, namespace string) error
@@ -100,7 +103,7 @@ type KubernetesConnector interface {
 	// ApplyObject applies object.
 	ApplyObject(obj runtime.Object) error
 	// InstallEverest downloads the manifest file and applies it against provisioned k8s cluster.
-	InstallEverest(ctx context.Context, namespace string, version *goversion.Version, skipObjs ...metav1.Object) error
+	InstallEverest(ctx context.Context, namespace string, version *goversion.Version, skipObjs ...ctrlclient.Object) error
 	// DeleteEverest downloads the manifest file and deletes it from provisioned k8s cluster.
 	DeleteEverest(ctx context.Context, namespace string, version *goversion.Version) error
 	// GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.
@@ -117,6 +120,8 @@ type KubernetesConnector interface {
 	DeleteNamespace(ctx context.Context, name string) error
 	// ListNamespaces lists all namespaces.
 	ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*corev1.NamespaceList, error)
+	// UpdateNamespace updates the given namespace.
+	UpdateNamespace(ctx context.Context, namespace *corev1.Namespace, opts metav1.UpdateOptions) (*corev1.Namespace, error)
 	// OperatorInstalledVersion returns the installed version of operator by name.
 	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
 	// CreateRSAKeyPair creates a new RSA key pair and stores it in a secret.

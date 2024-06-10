@@ -62,7 +62,7 @@ const NamespaceDetails = () => {
   const preflightQueriesResults = useQueries({
     queries: dbEngines.map((engine) => ({
       queryKey: ['dbEngineUpgradePreflight', namespaceName, engine.name],
-      refetchInterval: 2 * 1000,
+      refetchInterval: 5 * 1000,
       queryFn: () =>
         engine.pendingOperatorUpgrades?.length
           ? getOperatorUpgradePreflight(

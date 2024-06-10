@@ -23,6 +23,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
@@ -78,7 +79,7 @@ type KubeClientConnector interface {
 	ApplyFile(fileBytes []byte) error
 	// ApplyManifestFile accepts manifest file contents, parses into []runtime.Object
 	// and applies them against the cluster.
-	ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...metav1.Object) error
+	ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...client.Object) error
 	// DeleteManifestFile accepts manifest file contents, parses into []runtime.Object
 	// and deletes them from the cluster.
 	DeleteManifestFile(fileBytes []byte, namespace string) error
@@ -177,6 +178,8 @@ type KubeClientConnector interface {
 	DeleteNamespace(ctx context.Context, name string) error
 	// ListNamespaces returns a list of namespaces.
 	ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*corev1.NamespaceList, error)
+	// UpdateNamespace updates the given namespace.
+	UpdateNamespace(ctx context.Context, namespace *corev1.Namespace, opts metav1.UpdateOptions) (*corev1.Namespace, error)
 	// OLM returns OLM client set.
 	//
 	//nolint:ireturn

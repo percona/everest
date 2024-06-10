@@ -30,6 +30,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
 	olmv1 "github.com/operator-framework/api/pkg/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -47,6 +48,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/data"
@@ -804,6 +806,8 @@ func (k *Kubernetes) victoriaMetricsCRDFiles() []string {
 }
 
 // RestartOperator restarts the deployment of an operator managed by OLM.
+//
+//nolint:funlen
 func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string) error {
 	// Get the deployment.
 	deployment, err := k.GetDeployment(ctx, name, namespace)
@@ -817,26 +821,41 @@ func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string
 	if ownerCsvIdx < 0 {
 		return fmt.Errorf("cannot find ClusterServiceVersion owner for deployment %s in namespace %s", name, namespace)
 	}
-	csv, err := k.client.GetClusterServiceVersion(ctx, types.NamespacedName{
-		Name:      deployment.GetOwnerReferences()[ownerCsvIdx].Name,
-		Namespace: namespace,
-	})
-	if err != nil {
-		return err
-	}
-	// Update restart annotation.
-	annotations := csv.GetAnnotations()
-	if annotations == nil {
-		annotations = make(map[string]string)
-	}
+
 	now := time.Now().Truncate(time.Second)
-	annotations[deploymentRestartAnnotation] = now.Format(time.RFC3339)
-	csv.SetAnnotations(annotations)
-	if _, err = k.client.UpdateClusterServiceVersion(ctx, csv); err != nil {
-		return err
+	// Find the operator CSV and add the restart annotation.
+	// We retry this operatation since there may be update conflicts.
+	var b backoff.BackOff
+	b = backoff.NewConstantBackOff(3 * time.Second)
+	b = backoff.WithMaxRetries(b, 5)
+	b = backoff.WithContext(b, ctx)
+	if err := backoff.Retry(func() error {
+		csv, err := k.client.GetClusterServiceVersion(ctx, types.NamespacedName{
+			Name:      deployment.GetOwnerReferences()[ownerCsvIdx].Name,
+			Namespace: namespace,
+		})
+		if err != nil {
+			return err
+		}
+		// Update restart annotation.
+		annotations := csv.GetAnnotations()
+		if annotations == nil {
+			annotations = make(map[string]string)
+		}
+		now = time.Now().Truncate(time.Second)
+		annotations[deploymentRestartAnnotation] = now.Format(time.RFC3339)
+		csv.SetAnnotations(annotations)
+		if _, err = k.client.UpdateClusterServiceVersion(ctx, csv); err != nil {
+			return err
+		}
+		return nil
+	}, b,
+	); err != nil {
+		return errors.Join(err, errors.New("cannot update ClusterServiceVersion with restart annotation"))
 	}
+
 	// Wait for pods to be ready.
-	err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
 		deployment, err := k.GetDeployment(ctx, name, namespace)
 		if err != nil {
 			return false, err
@@ -858,29 +877,40 @@ func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string
 
 		return ready, nil
 	})
-	return err
 }
 
 // RestartDeployment restarts the given deployment.
 func (k *Kubernetes) RestartDeployment(ctx context.Context, name, namespace string) error {
-	// Get the deployment.
-	deployment, err := k.GetDeployment(ctx, name, namespace)
-	if err != nil {
-		return err
-	}
-	// Set restart annotation.
-	annotations := deployment.Spec.Template.Annotations
-	if annotations == nil {
-		annotations = make(map[string]string)
-	}
-	annotations[deploymentRestartAnnotation] = time.Now().Format(time.RFC3339)
-	deployment.Spec.Template.SetAnnotations(annotations)
-	// Update deployment.
-	if _, err := k.client.UpdateDeployment(ctx, deployment); err != nil {
-		return err
+	// Get the Deployment and add restart annotation to pod template.
+	// We retry this operatation since there may be update conflicts.
+	var b backoff.BackOff
+	b = backoff.NewConstantBackOff(3 * time.Second)
+	b = backoff.WithMaxRetries(b, 5)
+	b = backoff.WithContext(b, ctx)
+	if err := backoff.Retry(func() error {
+		// Get the deployment.
+		deployment, err := k.GetDeployment(ctx, name, namespace)
+		if err != nil {
+			return err
+		}
+		// Set restart annotation.
+		annotations := deployment.Spec.Template.Annotations
+		if annotations == nil {
+			annotations = make(map[string]string)
+		}
+		annotations[deploymentRestartAnnotation] = time.Now().Format(time.RFC3339)
+		deployment.Spec.Template.SetAnnotations(annotations)
+		// Update deployment.
+		if _, err := k.client.UpdateDeployment(ctx, deployment); err != nil {
+			return err
+		}
+		return nil
+	}, b,
+	); err != nil {
+		return errors.Join(err, errors.New("cannot add restart annotation to deployment"))
 	}
 	// Wait for pods to be ready.
-	err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
 		deployment, err := k.GetDeployment(ctx, name, namespace)
 		if err != nil {
 			return false, err
@@ -892,7 +922,6 @@ func (k *Kubernetes) RestartDeployment(ctx context.Context, name, namespace stri
 
 		return ready, nil
 	})
-	return err
 }
 
 // ListEngineDeploymentNames returns a string array containing found engine deployments for the Everest.
@@ -921,7 +950,7 @@ func (k *Kubernetes) InstallEverest(
 	ctx context.Context,
 	namespace string,
 	version *goversion.Version,
-	skipObjs ...metav1.Object,
+	skipObjs ...ctrlclient.Object,
 ) error {
 	if version == nil {
 		return errors.New("no version provided for Everest installation")

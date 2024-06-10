@@ -43,19 +43,23 @@ export const addApiErrorInterceptor = () => {
             location.replace('/login');
           }
 
-          if (error.response.data && error.response.data.message) {
-            if (error.response.data.message.length > MAX_ERROR_MESSAGE_LENGTH) {
-              message = `${error.response.data.message
-                .trim()
-                .substring(0, MAX_ERROR_MESSAGE_LENGTH)}...`;
-            } else {
-              message = error.response.data.message.trim();
+          if (error.config?.disableNotifications !== true) {
+            if (error.response.data && error.response.data.message) {
+              if (
+                error.response.data.message.length > MAX_ERROR_MESSAGE_LENGTH
+              ) {
+                message = `${error.response.data.message
+                  .trim()
+                  .substring(0, MAX_ERROR_MESSAGE_LENGTH)}...`;
+              } else {
+                message = error.response.data.message.trim();
+              }
             }
-          }
 
-          enqueueSnackbar(message, {
-            variant: 'error',
-          });
+            enqueueSnackbar(message, {
+              variant: 'error',
+            });
+          }
         }
 
         return Promise.reject(error);

@@ -330,7 +330,6 @@ jobs:
             perconalab/everest-catalog
           tags: |
             type=raw,value=${{ env.VERSION }}
-            type=raw,value=latest
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
 
 

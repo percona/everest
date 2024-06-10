@@ -37,6 +37,8 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 		//        Error: unknown command "a" for "everestctl install"
 		Args:    cobra.NoArgs,
 		Example: "everestctl install --namespaces dev,staging,prod --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard",
+		Long:    "Install Percona Everest",
+		Short:   "Install Percona Everest",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initInstallViperFlags(cmd)
 			c := &install.Config{}

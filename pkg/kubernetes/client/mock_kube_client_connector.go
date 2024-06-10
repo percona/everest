@@ -11,11 +11,11 @@ import (
 	apisoperatorsv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	mock "github.com/stretchr/testify/mock"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -23,6 +23,7 @@ import (
 	version "k8s.io/apimachinery/pkg/version"
 	kubernetes "k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
+	pkgclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
@@ -51,7 +52,7 @@ func (_m *MockKubeClientConnector) ApplyFile(fileBytes []byte) error {
 }
 
 // ApplyManifestFile provides a mock function with given fields: fileBytes, namespace, ignoreObjects
-func (_m *MockKubeClientConnector) ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...v1.Object) error {
+func (_m *MockKubeClientConnector) ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...pkgclient.Object) error {
 	_va := make([]interface{}, len(ignoreObjects))
 	for _i := range ignoreObjects {
 		_va[_i] = ignoreObjects[_i]
@@ -66,7 +67,7 @@ func (_m *MockKubeClientConnector) ApplyManifestFile(fileBytes []byte, namespace
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]byte, string, ...v1.Object) error); ok {
+	if rf, ok := ret.Get(0).(func([]byte, string, ...pkgclient.Object) error); ok {
 		r0 = rf(fileBytes, namespace, ignoreObjects...)
 	} else {
 		r0 = ret.Error(0)
@@ -170,27 +171,27 @@ func (_m *MockKubeClientConnector) CreateBackupStorage(ctx context.Context, stor
 }
 
 // CreateConfigMap provides a mock function with given fields: ctx, configMap
-func (_m *MockKubeClientConnector) CreateConfigMap(ctx context.Context, configMap *corev1.ConfigMap) (*corev1.ConfigMap, error) {
+func (_m *MockKubeClientConnector) CreateConfigMap(ctx context.Context, configMap *v1.ConfigMap) (*v1.ConfigMap, error) {
 	ret := _m.Called(ctx, configMap)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateConfigMap")
 	}
 
-	var r0 *corev1.ConfigMap
+	var r0 *v1.ConfigMap
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *corev1.ConfigMap) (*corev1.ConfigMap, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.ConfigMap) (*v1.ConfigMap, error)); ok {
 		return rf(ctx, configMap)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *corev1.ConfigMap) *corev1.ConfigMap); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.ConfigMap) *v1.ConfigMap); ok {
 		r0 = rf(ctx, configMap)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*corev1.ConfigMap)
+			r0 = ret.Get(0).(*v1.ConfigMap)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *corev1.ConfigMap) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *v1.ConfigMap) error); ok {
 		r1 = rf(ctx, configMap)
 	} else {
 		r1 = ret.Error(1)
@@ -218,27 +219,27 @@ func (_m *MockKubeClientConnector) CreateMonitoringConfig(ctx context.Context, c
 }
 
 // CreateNamespace provides a mock function with given fields: ctx, namespace
-func (_m *MockKubeClientConnector) CreateNamespace(ctx context.Context, namespace *corev1.Namespace) (*corev1.Namespace, error) {
+func (_m *MockKubeClientConnector) CreateNamespace(ctx context.Context, namespace *v1.Namespace) (*v1.Namespace, error) {
 	ret := _m.Called(ctx, namespace)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateNamespace")
 	}
 
-	var r0 *corev1.Namespace
+	var r0 *v1.Namespace
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *corev1.Namespace) (*corev1.Namespace, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Namespace) (*v1.Namespace, error)); ok {
 		return rf(ctx, namespace)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *corev1.Namespace) *corev1.Namespace); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Namespace) *v1.Namespace); ok {
 		r0 = rf(ctx, namespace)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*corev1.Namespace)
+			r0 = ret.Get(0).(*v1.Namespace)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *corev1.Namespace) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *v1.Namespace) error); ok {
 		r1 = rf(ctx, namespace)
 	} else {
 		r1 = ret.Error(1)
@@ -278,27 +279,27 @@ func (_m *MockKubeClientConnector) CreateOperatorGroup(ctx context.Context, name
 }
 
 // CreateSecret provides a mock function with given fields: ctx, secret
-func (_m *MockKubeClientConnector) CreateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error) {
+func (_m *MockKubeClientConnector) CreateSecret(ctx context.Context, secret *v1.Secret) (*v1.Secret, error) {
 	ret := _m.Called(ctx, secret)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateSecret")
 	}
 
-	var r0 *corev1.Secret
+	var r0 *v1.Secret
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *corev1.Secret) (*corev1.Secret, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Secret) (*v1.Secret, error)); ok {
 		return rf(ctx, secret)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *corev1.Secret) *corev1.Secret); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Secret) *v1.Secret); ok {
 		r0 = rf(ctx, secret)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*corev1.Secret)
+			r0 = ret.Get(0).(*v1.Secret)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *corev1.Secret) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *v1.Secret) error); ok {
 		r1 = rf(ctx, secret)
 	} else {
 		r1 = ret.Error(1)
@@ -602,7 +603,7 @@ func (_m *MockKubeClientConnector) DoRolloutWait(ctx context.Context, key types.
 }
 
 // GenerateKubeConfigWithToken provides a mock function with given fields: user, secret
-func (_m *MockKubeClientConnector) GenerateKubeConfigWithToken(user string, secret *corev1.Secret) ([]byte, error) {
+func (_m *MockKubeClientConnector) GenerateKubeConfigWithToken(user string, secret *v1.Secret) ([]byte, error) {
 	ret := _m.Called(user, secret)
 
 	if len(ret) == 0 {
@@ -611,10 +612,10 @@ func (_m *MockKubeClientConnector) GenerateKubeConfigWithToken(user string, secr
 
 	var r0 []byte
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, *corev1.Secret) ([]byte, error)); ok {
+	if rf, ok := ret.Get(0).(func(string, *v1.Secret) ([]byte, error)); ok {
 		return rf(user, secret)
 	}
-	if rf, ok := ret.Get(0).(func(string, *corev1.Secret) []byte); ok {
+	if rf, ok := ret.Get(0).(func(string, *v1.Secret) []byte); ok {
 		r0 = rf(user, secret)
 	} else {
 		if ret.Get(0) != nil {
@@ -622,7 +623,7 @@ func (_m *MockKubeClientConnector) GenerateKubeConfigWithToken(user string, secr
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, *corev1.Secret) error); ok {
+	if rf, ok := ret.Get(1).(func(string, *v1.Secret) error); ok {
 		r1 = rf(user, secret)
 	} else {
 		r1 = ret.Error(1)
@@ -722,23 +723,23 @@ func (_m *MockKubeClientConnector) GetClusterServiceVersion(ctx context.Context,
 }
 
 // GetConfigMap provides a mock function with given fields: ctx, namespace, name
-func (_m *MockKubeClientConnector) GetConfigMap(ctx context.Context, namespace string, name string) (*corev1.ConfigMap, error) {
+func (_m *MockKubeClientConnector) GetConfigMap(ctx context.Context, namespace string, name string) (*v1.ConfigMap, error) {
 	ret := _m.Called(ctx, namespace, name)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetConfigMap")
 	}
 
-	var r0 *corev1.ConfigMap
+	var r0 *v1.ConfigMap
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*corev1.ConfigMap, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v1.ConfigMap, error)); ok {
 		return rf(ctx, namespace, name)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *corev1.ConfigMap); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v1.ConfigMap); ok {
 		r0 = rf(ctx, namespace, name)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*corev1.ConfigMap)
+			r0 = ret.Get(0).(*v1.ConfigMap)
 		}
 	}
 
@@ -1018,23 +1019,23 @@ func (_m *MockKubeClientConnector) GetMonitoringConfig(ctx context.Context, name
 }
 
 // GetNamespace provides a mock function with given fields: ctx, name
-func (_m *MockKubeClientConnector) GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error) {
+func (_m *MockKubeClientConnector) GetNamespace(ctx context.Context, name string) (*v1.Namespace, error) {
 	ret := _m.Called(ctx, name)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetNamespace")
 	}
 
-	var r0 *corev1.Namespace
+	var r0 *v1.Namespace
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*corev1.Namespace, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*v1.Namespace, error)); ok {
 		return rf(ctx, name)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *corev1.Namespace); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *v1.Namespace); ok {
 		r0 = rf(ctx, name)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*corev1.Namespace)
+			r0 = ret.Get(0).(*v1.Namespace)
 		}
 	}
 
@@ -1048,23 +1049,23 @@ func (_m *MockKubeClientConnector) GetNamespace(ctx context.Context, name string
 }
 
 // GetNodes provides a mock function with given fields: ctx
-func (_m *MockKubeClientConnector) GetNodes(ctx context.Context) (*corev1.NodeList, error) {
+func (_m *MockKubeClientConnector) GetNodes(ctx context.Context) (*v1.NodeList, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetNodes")
 	}
 
-	var r0 *corev1.NodeList
+	var r0 *v1.NodeList
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (*corev1.NodeList, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (*v1.NodeList, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) *corev1.NodeList); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) *v1.NodeList); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*corev1.NodeList)
+			r0 = ret.Get(0).(*v1.NodeList)
 		}
 	}
 
@@ -1156,23 +1157,23 @@ func (_m *MockKubeClientConnector) GetPackageManifest(ctx context.Context, names
 }
 
 // GetPersistentVolumes provides a mock function with given fields: ctx
-func (_m *MockKubeClientConnector) GetPersistentVolumes(ctx context.Context) (*corev1.PersistentVolumeList, error) {
+func (_m *MockKubeClientConnector) GetPersistentVolumes(ctx context.Context) (*v1.PersistentVolumeList, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPersistentVolumes")
 	}
 
-	var r0 *corev1.PersistentVolumeList
+	var r0 *v1.PersistentVolumeList
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (*corev1.PersistentVolumeList, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (*v1.PersistentVolumeList, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) *corev1.PersistentVolumeList); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) *v1.PersistentVolumeList); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*corev1.PersistentVolumeList)
+			r0 = ret.Get(0).(*v1.PersistentVolumeList)
 		}
 	}
 
@@ -1186,27 +1187,27 @@ func (_m *MockKubeClientConnector) GetPersistentVolumes(ctx context.Context) (*c
 }
 
 // GetPods provides a mock function with given fields: ctx, namespace, labelSelector
-func (_m *MockKubeClientConnector) GetPods(ctx context.Context, namespace string, labelSelector *v1.LabelSelector) (*corev1.PodList, error) {
+func (_m *MockKubeClientConnector) GetPods(ctx context.Context, namespace string, labelSelector *metav1.LabelSelector) (*v1.PodList, error) {
 	ret := _m.Called(ctx, namespace, labelSelector)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPods")
 	}
 
-	var r0 *corev1.PodList
+	var r0 *v1.PodList
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, *v1.LabelSelector) (*corev1.PodList, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, *metav1.LabelSelector) (*v1.PodList, error)); ok {
 		return rf(ctx, namespace, labelSelector)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, *v1.LabelSelector) *corev1.PodList); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, *metav1.LabelSelector) *v1.PodList); ok {
 		r0 = rf(ctx, namespace, labelSelector)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*corev1.PodList)
+			r0 = ret.Get(0).(*v1.PodList)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, *v1.LabelSelector) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, *metav1.LabelSelector) error); ok {
 		r1 = rf(ctx, namespace, labelSelector)
 	} else {
 		r1 = ret.Error(1)
@@ -1216,23 +1217,23 @@ func (_m *MockKubeClientConnector) GetPods(ctx context.Context, namespace string
 }
 
 // GetSecret provides a mock function with given fields: ctx, namespace, name
-func (_m *MockKubeClientConnector) GetSecret(ctx context.Context, namespace string, name string) (*corev1.Secret, error) {
+func (_m *MockKubeClientConnector) GetSecret(ctx context.Context, namespace string, name string) (*v1.Secret, error) {
 	ret := _m.Called(ctx, namespace, name)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSecret")
 	}
 
-	var r0 *corev1.Secret
+	var r0 *v1.Secret
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*corev1.Secret, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v1.Secret, error)); ok {
 		return rf(ctx, namespace, name)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *corev1.Secret); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v1.Secret); ok {
 		r0 = rf(ctx, namespace, name)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*corev1.Secret)
+			r0 = ret.Get(0).(*v1.Secret)
 		}
 	}
 
@@ -1246,23 +1247,23 @@ func (_m *MockKubeClientConnector) GetSecret(ctx context.Context, namespace stri
 }
 
 // GetSecretsForServiceAccount provides a mock function with given fields: ctx, accountName
-func (_m *MockKubeClientConnector) GetSecretsForServiceAccount(ctx context.Context, accountName string) (*corev1.Secret, error) {
+func (_m *MockKubeClientConnector) GetSecretsForServiceAccount(ctx context.Context, accountName string) (*v1.Secret, error) {
 	ret := _m.Called(ctx, accountName)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSecretsForServiceAccount")
 	}
 
-	var r0 *corev1.Secret
+	var r0 *v1.Secret
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*corev1.Secret, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*v1.Secret, error)); ok {
 		return rf(ctx, accountName)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *corev1.Secret); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *v1.Secret); ok {
 		r0 = rf(ctx, accountName)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*corev1.Secret)
+			r0 = ret.Get(0).(*v1.Secret)
 		}
 	}
 
@@ -1306,23 +1307,23 @@ func (_m *MockKubeClientConnector) GetServerVersion() (*version.Info, error) {
 }
 
 // GetService provides a mock function with given fields: ctx, namespace, name
-func (_m *MockKubeClientConnector) GetService(ctx context.Context, namespace string, name string) (*corev1.Service, error) {
+func (_m *MockKubeClientConnector) GetService(ctx context.Context, namespace string, name string) (*v1.Service, error) {
 	ret := _m.Called(ctx, namespace, name)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetService")
 	}
 
-	var r0 *corev1.Service
+	var r0 *v1.Service
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*corev1.Service, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v1.Service, error)); ok {
 		return rf(ctx, namespace, name)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *corev1.Service); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v1.Service); ok {
 		r0 = rf(ctx, namespace, name)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*corev1.Service)
+			r0 = ret.Get(0).(*v1.Service)
 		}
 	}
 
@@ -1424,7 +1425,7 @@ func (_m *MockKubeClientConnector) GetSubscriptionCSV(ctx context.Context, subKe
 }
 
 // ListBackupStorages provides a mock function with given fields: ctx, namespace, options
-func (_m *MockKubeClientConnector) ListBackupStorages(ctx context.Context, namespace string, options v1.ListOptions) (*v1alpha1.BackupStorageList, error) {
+func (_m *MockKubeClientConnector) ListBackupStorages(ctx context.Context, namespace string, options metav1.ListOptions) (*v1alpha1.BackupStorageList, error) {
 	ret := _m.Called(ctx, namespace, options)
 
 	if len(ret) == 0 {
@@ -1433,10 +1434,10 @@ func (_m *MockKubeClientConnector) ListBackupStorages(ctx context.Context, names
 
 	var r0 *v1alpha1.BackupStorageList
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, v1.ListOptions) (*v1alpha1.BackupStorageList, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, metav1.ListOptions) (*v1alpha1.BackupStorageList, error)); ok {
 		return rf(ctx, namespace, options)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, v1.ListOptions) *v1alpha1.BackupStorageList); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, metav1.ListOptions) *v1alpha1.BackupStorageList); ok {
 		r0 = rf(ctx, namespace, options)
 	} else {
 		if ret.Get(0) != nil {
@@ -1444,7 +1445,7 @@ func (_m *MockKubeClientConnector) ListBackupStorages(ctx context.Context, names
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, v1.ListOptions) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, metav1.ListOptions) error); ok {
 		r1 = rf(ctx, namespace, options)
 	} else {
 		r1 = ret.Error(1)
@@ -1454,7 +1455,7 @@ func (_m *MockKubeClientConnector) ListBackupStorages(ctx context.Context, names
 }
 
 // ListCRDs provides a mock function with given fields: ctx, labelSelector
-func (_m *MockKubeClientConnector) ListCRDs(ctx context.Context, labelSelector *v1.LabelSelector) (*apiextensionsv1.CustomResourceDefinitionList, error) {
+func (_m *MockKubeClientConnector) ListCRDs(ctx context.Context, labelSelector *metav1.LabelSelector) (*apiextensionsv1.CustomResourceDefinitionList, error) {
 	ret := _m.Called(ctx, labelSelector)
 
 	if len(ret) == 0 {
@@ -1463,10 +1464,10 @@ func (_m *MockKubeClientConnector) ListCRDs(ctx context.Context, labelSelector *
 
 	var r0 *apiextensionsv1.CustomResourceDefinitionList
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v1.LabelSelector) (*apiextensionsv1.CustomResourceDefinitionList, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *metav1.LabelSelector) (*apiextensionsv1.CustomResourceDefinitionList, error)); ok {
 		return rf(ctx, labelSelector)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *v1.LabelSelector) *apiextensionsv1.CustomResourceDefinitionList); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *metav1.LabelSelector) *apiextensionsv1.CustomResourceDefinitionList); ok {
 		r0 = rf(ctx, labelSelector)
 	} else {
 		if ret.Get(0) != nil {
@@ -1474,7 +1475,7 @@ func (_m *MockKubeClientConnector) ListCRDs(ctx context.Context, labelSelector *
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *v1.LabelSelector) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *metav1.LabelSelector) error); ok {
 		r1 = rf(ctx, labelSelector)
 	} else {
 		r1 = ret.Error(1)
@@ -1484,7 +1485,7 @@ func (_m *MockKubeClientConnector) ListCRDs(ctx context.Context, labelSelector *
 }
 
 // ListCRs provides a mock function with given fields: ctx, namespace, gvr, labelSelector
-func (_m *MockKubeClientConnector) ListCRs(ctx context.Context, namespace string, gvr schema.GroupVersionResource, labelSelector *v1.LabelSelector) (*unstructured.UnstructuredList, error) {
+func (_m *MockKubeClientConnector) ListCRs(ctx context.Context, namespace string, gvr schema.GroupVersionResource, labelSelector *metav1.LabelSelector) (*unstructured.UnstructuredList, error) {
 	ret := _m.Called(ctx, namespace, gvr, labelSelector)
 
 	if len(ret) == 0 {
@@ -1493,10 +1494,10 @@ func (_m *MockKubeClientConnector) ListCRs(ctx context.Context, namespace string
 
 	var r0 *unstructured.UnstructuredList
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, schema.GroupVersionResource, *v1.LabelSelector) (*unstructured.UnstructuredList, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, schema.GroupVersionResource, *metav1.LabelSelector) (*unstructured.UnstructuredList, error)); ok {
 		return rf(ctx, namespace, gvr, labelSelector)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, schema.GroupVersionResource, *v1.LabelSelector) *unstructured.UnstructuredList); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, schema.GroupVersionResource, *metav1.LabelSelector) *unstructured.UnstructuredList); ok {
 		r0 = rf(ctx, namespace, gvr, labelSelector)
 	} else {
 		if ret.Get(0) != nil {
@@ -1504,7 +1505,7 @@ func (_m *MockKubeClientConnector) ListCRs(ctx context.Context, namespace string
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, schema.GroupVersionResource, *v1.LabelSelector) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, schema.GroupVersionResource, *metav1.LabelSelector) error); ok {
 		r1 = rf(ctx, namespace, gvr, labelSelector)
 	} else {
 		r1 = ret.Error(1)
@@ -1544,7 +1545,7 @@ func (_m *MockKubeClientConnector) ListClusterServiceVersion(ctx context.Context
 }
 
 // ListDatabaseClusterBackups provides a mock function with given fields: ctx, namespace, options
-func (_m *MockKubeClientConnector) ListDatabaseClusterBackups(ctx context.Context, namespace string, options v1.ListOptions) (*v1alpha1.DatabaseClusterBackupList, error) {
+func (_m *MockKubeClientConnector) ListDatabaseClusterBackups(ctx context.Context, namespace string, options metav1.ListOptions) (*v1alpha1.DatabaseClusterBackupList, error) {
 	ret := _m.Called(ctx, namespace, options)
 
 	if len(ret) == 0 {
@@ -1553,10 +1554,10 @@ func (_m *MockKubeClientConnector) ListDatabaseClusterBackups(ctx context.Contex
 
 	var r0 *v1alpha1.DatabaseClusterBackupList
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, v1.ListOptions) (*v1alpha1.DatabaseClusterBackupList, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, metav1.ListOptions) (*v1alpha1.DatabaseClusterBackupList, error)); ok {
 		return rf(ctx, namespace, options)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, v1.ListOptions) *v1alpha1.DatabaseClusterBackupList); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, metav1.ListOptions) *v1alpha1.DatabaseClusterBackupList); ok {
 		r0 = rf(ctx, namespace, options)
 	} else {
 		if ret.Get(0) != nil {
@@ -1564,7 +1565,7 @@ func (_m *MockKubeClientConnector) ListDatabaseClusterBackups(ctx context.Contex
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, v1.ListOptions) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, metav1.ListOptions) error); ok {
 		r1 = rf(ctx, namespace, options)
 	} else {
 		r1 = ret.Error(1)
@@ -1574,7 +1575,7 @@ func (_m *MockKubeClientConnector) ListDatabaseClusterBackups(ctx context.Contex
 }
 
 // ListDatabaseClusterRestores provides a mock function with given fields: ctx, namespace, options
-func (_m *MockKubeClientConnector) ListDatabaseClusterRestores(ctx context.Context, namespace string, options v1.ListOptions) (*v1alpha1.DatabaseClusterRestoreList, error) {
+func (_m *MockKubeClientConnector) ListDatabaseClusterRestores(ctx context.Context, namespace string, options metav1.ListOptions) (*v1alpha1.DatabaseClusterRestoreList, error) {
 	ret := _m.Called(ctx, namespace, options)
 
 	if len(ret) == 0 {
@@ -1583,10 +1584,10 @@ func (_m *MockKubeClientConnector) ListDatabaseClusterRestores(ctx context.Conte
 
 	var r0 *v1alpha1.DatabaseClusterRestoreList
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, v1.ListOptions) (*v1alpha1.DatabaseClusterRestoreList, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, metav1.ListOptions) (*v1alpha1.DatabaseClusterRestoreList, error)); ok {
 		return rf(ctx, namespace, options)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, v1.ListOptions) *v1alpha1.DatabaseClusterRestoreList); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, metav1.ListOptions) *v1alpha1.DatabaseClusterRestoreList); ok {
 		r0 = rf(ctx, namespace, options)
 	} else {
 		if ret.Get(0) != nil {
@@ -1594,7 +1595,7 @@ func (_m *MockKubeClientConnector) ListDatabaseClusterRestores(ctx context.Conte
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, v1.ListOptions) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, metav1.ListOptions) error); ok {
 		r1 = rf(ctx, namespace, options)
 	} else {
 		r1 = ret.Error(1)
@@ -1604,7 +1605,7 @@ func (_m *MockKubeClientConnector) ListDatabaseClusterRestores(ctx context.Conte
 }
 
 // ListDatabaseClusters provides a mock function with given fields: ctx, namespace, options
-func (_m *MockKubeClientConnector) ListDatabaseClusters(ctx context.Context, namespace string, options v1.ListOptions) (*v1alpha1.DatabaseClusterList, error) {
+func (_m *MockKubeClientConnector) ListDatabaseClusters(ctx context.Context, namespace string, options metav1.ListOptions) (*v1alpha1.DatabaseClusterList, error) {
 	ret := _m.Called(ctx, namespace, options)
 
 	if len(ret) == 0 {
@@ -1613,10 +1614,10 @@ func (_m *MockKubeClientConnector) ListDatabaseClusters(ctx context.Context, nam
 
 	var r0 *v1alpha1.DatabaseClusterList
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, v1.ListOptions) (*v1alpha1.DatabaseClusterList, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, metav1.ListOptions) (*v1alpha1.DatabaseClusterList, error)); ok {
 		return rf(ctx, namespace, options)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, v1.ListOptions) *v1alpha1.DatabaseClusterList); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, metav1.ListOptions) *v1alpha1.DatabaseClusterList); ok {
 		r0 = rf(ctx, namespace, options)
 	} else {
 		if ret.Get(0) != nil {
@@ -1624,7 +1625,7 @@ func (_m *MockKubeClientConnector) ListDatabaseClusters(ctx context.Context, nam
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, v1.ListOptions) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, metav1.ListOptions) error); ok {
 		r1 = rf(ctx, namespace, options)
 	} else {
 		r1 = ret.Error(1)
@@ -1754,27 +1755,27 @@ func (_m *MockKubeClientConnector) ListMonitoringConfigs(ctx context.Context, na
 }
 
 // ListNamespaces provides a mock function with given fields: ctx, opts
-func (_m *MockKubeClientConnector) ListNamespaces(ctx context.Context, opts v1.ListOptions) (*corev1.NamespaceList, error) {
+func (_m *MockKubeClientConnector) ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*v1.NamespaceList, error) {
 	ret := _m.Called(ctx, opts)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListNamespaces")
 	}
 
-	var r0 *corev1.NamespaceList
+	var r0 *v1.NamespaceList
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, v1.ListOptions) (*corev1.NamespaceList, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, metav1.ListOptions) (*v1.NamespaceList, error)); ok {
 		return rf(ctx, opts)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, v1.ListOptions) *corev1.NamespaceList); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, metav1.ListOptions) *v1.NamespaceList); ok {
 		r0 = rf(ctx, opts)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*corev1.NamespaceList)
+			r0 = ret.Get(0).(*v1.NamespaceList)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, v1.ListOptions) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, metav1.ListOptions) error); ok {
 		r1 = rf(ctx, opts)
 	} else {
 		r1 = ret.Error(1)
@@ -1802,27 +1803,27 @@ func (_m *MockKubeClientConnector) ListObjects(gvk schema.GroupVersionKind, into
 }
 
 // ListPods provides a mock function with given fields: ctx, namespace, options
-func (_m *MockKubeClientConnector) ListPods(ctx context.Context, namespace string, options v1.ListOptions) (*corev1.PodList, error) {
+func (_m *MockKubeClientConnector) ListPods(ctx context.Context, namespace string, options metav1.ListOptions) (*v1.PodList, error) {
 	ret := _m.Called(ctx, namespace, options)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListPods")
 	}
 
-	var r0 *corev1.PodList
+	var r0 *v1.PodList
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, v1.ListOptions) (*corev1.PodList, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, metav1.ListOptions) (*v1.PodList, error)); ok {
 		return rf(ctx, namespace, options)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, v1.ListOptions) *corev1.PodList); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, metav1.ListOptions) *v1.PodList); ok {
 		r0 = rf(ctx, namespace, options)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*corev1.PodList)
+			r0 = ret.Get(0).(*v1.PodList)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, v1.ListOptions) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, metav1.ListOptions) error); ok {
 		r1 = rf(ctx, namespace, options)
 	} else {
 		r1 = ret.Error(1)
@@ -1832,23 +1833,23 @@ func (_m *MockKubeClientConnector) ListPods(ctx context.Context, namespace strin
 }
 
 // ListSecrets provides a mock function with given fields: ctx, namespace
-func (_m *MockKubeClientConnector) ListSecrets(ctx context.Context, namespace string) (*corev1.SecretList, error) {
+func (_m *MockKubeClientConnector) ListSecrets(ctx context.Context, namespace string) (*v1.SecretList, error) {
 	ret := _m.Called(ctx, namespace)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListSecrets")
 	}
 
-	var r0 *corev1.SecretList
+	var r0 *v1.SecretList
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*corev1.SecretList, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*v1.SecretList, error)); ok {
 		return rf(ctx, namespace)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *corev1.SecretList); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *v1.SecretList); ok {
 		r0 = rf(ctx, namespace)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*corev1.SecretList)
+			r0 = ret.Get(0).(*v1.SecretList)
 		}
 	}
 
@@ -1978,27 +1979,27 @@ func (_m *MockKubeClientConnector) UpdateClusterServiceVersion(ctx context.Conte
 }
 
 // UpdateConfigMap provides a mock function with given fields: ctx, configMap
-func (_m *MockKubeClientConnector) UpdateConfigMap(ctx context.Context, configMap *corev1.ConfigMap) (*corev1.ConfigMap, error) {
+func (_m *MockKubeClientConnector) UpdateConfigMap(ctx context.Context, configMap *v1.ConfigMap) (*v1.ConfigMap, error) {
 	ret := _m.Called(ctx, configMap)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateConfigMap")
 	}
 
-	var r0 *corev1.ConfigMap
+	var r0 *v1.ConfigMap
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *corev1.ConfigMap) (*corev1.ConfigMap, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.ConfigMap) (*v1.ConfigMap, error)); ok {
 		return rf(ctx, configMap)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *corev1.ConfigMap) *corev1.ConfigMap); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.ConfigMap) *v1.ConfigMap); ok {
 		r0 = rf(ctx, configMap)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*corev1.ConfigMap)
+			r0 = ret.Get(0).(*v1.ConfigMap)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *corev1.ConfigMap) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *v1.ConfigMap) error); ok {
 		r1 = rf(ctx, configMap)
 	} else {
 		r1 = ret.Error(1)
@@ -2145,28 +2146,58 @@ func (_m *MockKubeClientConnector) UpdateMonitoringConfig(ctx context.Context, c
 	return r0
 }
 
+// UpdateNamespace provides a mock function with given fields: ctx, namespace, opts
+func (_m *MockKubeClientConnector) UpdateNamespace(ctx context.Context, namespace *v1.Namespace, opts metav1.UpdateOptions) (*v1.Namespace, error) {
+	ret := _m.Called(ctx, namespace, opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateNamespace")
+	}
+
+	var r0 *v1.Namespace
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Namespace, metav1.UpdateOptions) (*v1.Namespace, error)); ok {
+		return rf(ctx, namespace, opts)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Namespace, metav1.UpdateOptions) *v1.Namespace); ok {
+		r0 = rf(ctx, namespace, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.Namespace)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *v1.Namespace, metav1.UpdateOptions) error); ok {
+		r1 = rf(ctx, namespace, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateSecret provides a mock function with given fields: ctx, secret
-func (_m *MockKubeClientConnector) UpdateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error) {
+func (_m *MockKubeClientConnector) UpdateSecret(ctx context.Context, secret *v1.Secret) (*v1.Secret, error) {
 	ret := _m.Called(ctx, secret)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateSecret")
 	}
 
-	var r0 *corev1.Secret
+	var r0 *v1.Secret
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *corev1.Secret) (*corev1.Secret, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Secret) (*v1.Secret, error)); ok {
 		return rf(ctx, secret)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *corev1.Secret) *corev1.Secret); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Secret) *v1.Secret); ok {
 		r0 = rf(ctx, secret)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*corev1.Secret)
+			r0 = ret.Get(0).(*v1.Secret)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *corev1.Secret) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *v1.Secret) error); ok {
 		r1 = rf(ctx, secret)
 	} else {
 		r1 = ret.Error(1)

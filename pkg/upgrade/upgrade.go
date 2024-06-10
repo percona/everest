@@ -24,17 +24,32 @@ import (
 	"time"
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
+	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	cliVersion "github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
+
+// list of objects to skip during upgrade.
+var skipObjects = []client.Object{ //nolint:gochecknoglobals
+	&corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestJWTSecretName,
+			Namespace: common.SystemNamespace,
+		},
+	},
+}
 
 type (
 	// Config defines configuration required for upgrade command.
@@ -146,12 +161,6 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
 
 	// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
-	skipObjects := []metav1.Object{
-		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{
-			Name:      common.EverestJWTSecretName,
-			Namespace: common.SystemNamespace,
-		}},
-	}
 	if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo, skipObjects...); err != nil {
 		return err
 	}
@@ -162,6 +171,54 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)
 
+	// Ensure managed-by label is set on all database namespaces.
+	// This code can be removed after 0.11.0 release.
+	if err := u.ensureManagedByLabelOnDBNamespaces(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+// ensureManagedByLabelOnDBNamespaces ensures that all database namespaces have the managed-by label set.
+func (u *Upgrade) ensureManagedByLabelOnDBNamespaces(ctx context.Context) error {
+	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx, common.SystemNamespace)
+	if err != nil {
+		u.l.Error(err)
+		return errors.Join(err, errors.New("could not retrieve database namespaces"))
+	}
+	for _, nsName := range dbNamespaces {
+		// Ensure we add the managed-by label to the namespace.
+		// We should retry this operation since there may be update conflicts.
+		var b backoff.BackOff
+		b = backoff.NewConstantBackOff(5 * time.Second)
+		b = backoff.WithMaxRetries(b, 5)
+		b = backoff.WithContext(b, ctx)
+		if err := backoff.Retry(func() error {
+			// Get the namespace.
+			ns, err := u.kubeClient.GetNamespace(ctx, nsName)
+			if err != nil {
+				return errors.Join(err, fmt.Errorf("could not get namespace '%s'", nsName))
+			}
+			labels := ns.GetLabels()
+			_, found := labels[common.KubernetesManagedByLabel]
+			if found {
+				return nil // label already exists.
+			}
+			if labels == nil {
+				labels = make(map[string]string)
+			}
+			// Set the label.
+			labels[common.KubernetesManagedByLabel] = common.Everest
+			ns.SetLabels(labels)
+			if _, err := u.kubeClient.UpdateNamespace(ctx, ns, metav1.UpdateOptions{}); err != nil {
+				return errors.Join(err, fmt.Errorf("could not update namespace '%s'", nsName))
+			}
+			return nil
+		}, b,
+		); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

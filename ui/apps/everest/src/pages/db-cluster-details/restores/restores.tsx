@@ -107,6 +107,15 @@ const Restores = () => {
         tableName={`${dbClusterName}-restore`}
         columns={columns}
         data={restores}
+        initialState={{
+          sorting: [
+            {
+              id: 'startTime',
+              desc: false,
+            },
+            { id: 'endTime', desc: false },
+          ],
+        }}
         noDataMessage="No restores"
         enableRowActions
         renderRowActionMenuItems={({ row, closeMenu }) => [
