@@ -8,6 +8,8 @@ import (
 )
 
 func TestCompareVersions(t *testing.T) {
+	t.Parallel()
+
 	assert.Equal(t, int(0), CompareVersions("1.0.0", "1.0.0"))
 	assert.Equal(t, int(0), CompareVersions("1.0.0", goversion.Must(goversion.NewVersion("1.0.0"))))
 	assert.Equal(t, int(1), CompareVersions("1.0.0", "0.9.0"))

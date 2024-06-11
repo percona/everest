@@ -1,10 +1,8 @@
 package common
 
-import (
-	goversion "github.com/hashicorp/go-version"
-)
+import goversion "github.com/hashicorp/go-version"
 
-// CompareVersion compares two version.
+// CompareVersions compares two versions.
 // Returns:
 // -1 if v1 < v2
 // 0 if v1 == v2
@@ -15,20 +13,20 @@ import (
 func CompareVersions(v1, v2 interface{}) int {
 	var ver1, ver2 *goversion.Version
 
-	switch v1.(type) {
+	switch val := v1.(type) {
 	case string:
-		ver1 = goversion.Must(goversion.NewVersion(v1.(string)))
+		ver1 = goversion.Must(goversion.NewVersion(val))
 	case *goversion.Version:
-		ver1 = v1.(*goversion.Version)
+		ver1 = val
 	default:
 		panic("v1 must be either string or *goversion.Version")
 	}
 
-	switch v2.(type) {
+	switch val := v2.(type) {
 	case string:
-		ver2 = goversion.Must(goversion.NewVersion(v2.(string)))
+		ver2 = goversion.Must(goversion.NewVersion(val))
 	case *goversion.Version:
-		ver2 = v2.(*goversion.Version)
+		ver2 = val
 	default:
 		panic("v2 must be either string or *goversion.Version")
 	}
