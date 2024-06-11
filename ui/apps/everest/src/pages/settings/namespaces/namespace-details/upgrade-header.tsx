@@ -11,13 +11,11 @@ const upgradeMessage = (
 ) => {
   if (hasPostUpgradeTasks) {
     return 'Complete the upgrade by completing the post-upgrade tasks.';
-  } else if (!pendingTasks) {
-    return `A new version of the ${dbType} operator is available. ${
-      pendingTasks ? 'Start upgrading by performing all the pending tasks.' : ''
-    }`;
   }
 
-  return '';
+  return `A new version of the ${dbType} operator is available. ${
+    pendingTasks ? 'Start upgrading by performing all the pending tasks.' : ''
+  }`;
 };
 
 const UpgradeHeader = ({
