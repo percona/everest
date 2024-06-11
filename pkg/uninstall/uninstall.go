@@ -72,8 +72,11 @@ func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
 
 // Run runs the cluster command.
 func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
-	if err := u.runWizard(); err != nil {
+	if abort, err := u.runWizard(); err != nil {
 		return err
+	} else if abort {
+		u.l.Info("Exiting")
+		return nil
 	}
 
 	dbsExist, err := u.dbsExist(ctx)
@@ -137,7 +140,9 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
 	return nil
 }
 
-func (u *Uninstall) runWizard() error {
+// Run the uninstall wizard.
+// Returns true if uninstall is aborted.
+func (u *Uninstall) runWizard() (bool, error) {
 	if !u.config.AssumeYes {
 		msg := `You are about to uninstall Everest from the Kubernetes cluster.
 This will uninstall Everest and all its components from the cluster.`
@@ -147,16 +152,15 @@ This will uninstall Everest and all its components from the cluster.`
 		}
 		prompt := false
 		if err := survey.AskOne(confirm, &prompt); err != nil {
-			return err
+			return false, err
 		}
 
 		if !prompt {
-			u.l.Info("Exiting")
-			return nil
+			return true, nil
 		}
 	}
 
-	return nil
+	return false, nil
 }
 
 func (u *Uninstall) confirmForce() (bool, error) {
