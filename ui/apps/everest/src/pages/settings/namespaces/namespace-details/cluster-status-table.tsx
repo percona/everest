@@ -98,11 +98,11 @@ const ClusterStatusTable = ({
             );
           }
 
-          return message;
+          return message || task;
         },
       },
     ],
-    [onDbClick]
+    [dbClusters, onDbClick]
   );
 
   return (
