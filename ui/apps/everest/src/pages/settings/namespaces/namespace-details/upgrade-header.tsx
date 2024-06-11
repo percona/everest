@@ -5,17 +5,20 @@ import { DbEngineStatus } from 'shared-types/dbEngines.types';
 import { Messages } from './messages';
 
 const upgradeMessage = (
-  pendingTasks: boolean,
   dbType: DbEngineType,
+  isUpToDate: boolean,
+  pendingTasks: boolean,
   hasPostUpgradeTasks: boolean
 ) => {
-  if (hasPostUpgradeTasks) {
-    return 'Complete the upgrade by completing the post-upgrade tasks.';
+  if (isUpToDate) {
+    if (hasPostUpgradeTasks) {
+      return 'Complete the upgrade by completing the post-upgrade tasks.';
+    }
+  } else {
+    return `A new version of the ${dbType} operator is available. ${
+      pendingTasks ? 'Start upgrading by performing all the pending tasks.' : ''
+    }`;
   }
-
-  return `A new version of the ${dbType} operator is available. ${
-    pendingTasks ? 'Start upgrading by performing all the pending tasks.' : ''
-  }`;
 };
 
 const UpgradeHeader = ({
@@ -35,24 +38,24 @@ const UpgradeHeader = ({
 
   const isUpToDate = engine.pendingOperatorUpgrades?.length === 0;
 
-  if (isUpToDate) {
-    return null;
-  }
-
   const pendingTasks = !!preflightPayload.databases.filter(
     (db) => db.pendingTask && db.pendingTask !== 'ready'
   ).length;
 
   // If there are no pending operator upgrades but there are "databases", this means post-upgrade tasks
-  const hasPostUpgradeTasks =
-    !engine.pendingOperatorUpgrades?.length && pendingTasks;
+  const hasPostUpgradeTasks = isUpToDate && pendingTasks;
 
   return (
     <Box display="flex" justifyContent="space-between" alignItems="center">
       <Typography variant="body1">
-        {upgradeMessage(pendingTasks, engine.type, hasPostUpgradeTasks)}
+        {upgradeMessage(
+          engine.type,
+          isUpToDate,
+          pendingTasks,
+          hasPostUpgradeTasks
+        )}
       </Typography>
-      {!hasPostUpgradeTasks && (
+      {!isUpToDate && (
         <Button
           size="medium"
           variant="contained"
