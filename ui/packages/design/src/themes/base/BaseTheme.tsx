@@ -13,6 +13,7 @@ import {
   ThemeOptions,
 } from '@mui/material';
 import { DatePickerToolbarClassKey } from '@mui/x-date-pickers/DatePicker';
+import { MultiSectionDigitalClockClassKey } from '@mui/x-date-pickers';
 import { outlinedInputClasses } from '@mui/material/OutlinedInput';
 
 declare module '@mui/material/styles' {
@@ -70,11 +71,15 @@ declare module '@mui/material/styles' {
 
   interface ComponentNameToClassKey {
     MuiDateCalendar: DatePickerToolbarClassKey;
+    MuiMultiSectionDigitalClock: MultiSectionDigitalClockClassKey;
   }
 
   interface Components<Theme = unknown> {
     MuiDateCalendar?: {
       styleOverrides?: ComponentsOverrides<Theme>['MuiDateCalendar'];
+    };
+    MuiMultiSectionDigitalClock?: {
+      styleOverrides?: ComponentsOverrides<Theme>['MuiMultiSectionDigitalClock'];
     };
   }
 }
@@ -695,6 +700,17 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
           '.MuiPickersDay-root': {
             fontSize: theme.typography.body2.fontSize,
             fontWeight: theme.typography.body2.fontWeight,
+          },
+        }),
+      },
+    },
+    MuiMultiSectionDigitalClock: {
+      styleOverrides: {
+        root: () => ({
+          '.MuiMultiSectionDigitalClockSection-root': {
+            '&::after': {
+              height: 'calc(100% - 40px - 2px)',
+            },
           },
         }),
       },
