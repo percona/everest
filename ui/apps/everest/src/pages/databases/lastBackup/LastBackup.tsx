@@ -24,7 +24,12 @@ export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
   const finishedBackups = backups.filter(
     (backup) => backup.completed && backup.state === BackupStatus.OK
   );
-  const lastFinishedBackup = finishedBackups[finishedBackups.length - 1];
+  const sortedBackups = finishedBackups.sort((b1, b2) => {
+    const date1 = b1?.completed || new Date();
+    const date2 = b2?.completed || new Date();
+    return date1.getTime() - date2.getTime();
+  });
+  const lastFinishedBackup = sortedBackups[sortedBackups.length - 1];
   const lastFinishedBackupDate = lastFinishedBackup?.completed || new Date();
 
   return (
@@ -48,7 +53,7 @@ export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
         </>
       ) : (
         <Typography variant="body2">
-          {getLastBackupStatus(backups, schedules)}
+          {getLastBackupStatus(sortedBackups, schedules)}
         </Typography>
       )}
     </>
