@@ -136,7 +136,6 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		}
 		return err
 	}
-	upgradeEverestToCore := upgradeEverestTo.Core()
 
 	// Start upgrade.
 	if err := u.upgradeOLM(ctx, recVer.OLM); err != nil {
@@ -168,7 +167,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return errors.Join(err, errors.New("could not find install plan"))
 	}
 
-	if constraint := goversion.MustConstraints(goversion.NewConstraint("~> 0.11.0")); constraint.Check(upgradeEverestToCore) {
+	if common.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
 		if err := u.ensureEverestJWTIfNotExists(ctx); err != nil {
 			return err
 		}
@@ -187,7 +186,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)
 
-	if constraint := goversion.MustConstraints(goversion.NewConstraint("~> 0.11.0")); constraint.Check(upgradeEverestToCore) {
+	if common.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
 		if err := u.ensureEverestAccountsIfNotExists(ctx); err != nil {
 			return err
 		}
