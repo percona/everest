@@ -83,10 +83,14 @@ const getFieldsCron = (expression: string) => {
 };
 
 const setFieldsCron = (fields: any) => {
-  const second = getSeconds({ ...fields });
-  return `${second} ${cronParser.fieldsToExpression(fields).stringify()}`;
+  // TODO only if we ever need seconds
+  // const second = getSeconds({ ...fields });
+  // return `${second} ${cronParser.fieldsToExpression(fields).stringify()}`;
+
+  return cronParser.fieldsToExpression(fields).stringify();
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getSeconds = (fields: any) => {
   fields.minute = fields.second;
   return cronParser.fieldsToExpression(fields).stringify().split(' ')[0];
