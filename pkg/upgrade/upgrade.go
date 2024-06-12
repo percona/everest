@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"time"
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
@@ -59,6 +60,20 @@ var skipObjects = []client.Object{ //nolint:gochecknoglobals
 		},
 	},
 }
+
+const postUpgradeMessage = `
+Everest has been successfully upgraded!
+
+
+To view the password for the 'admin' user, run the following command:
+
+everestctl accounts initial-admin-password
+
+
+IMPORTANT: This password is NOT stored in a hashed format. To secure it, update the password using the following command:
+
+everestctl accounts set-password --username admin
+`
 
 type (
 	// Config defines configuration required for upgrade command.
@@ -199,6 +214,12 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		if err := u.kubeClient.DeleteSecret(ctx, common.SystemNamespace, "everest-admin-token"); client.IgnoreNotFound(err) != nil {
 			return err
 		}
+	}
+
+	if isSecure, err := u.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser); err != nil {
+		return errors.Join(err, errors.New("could not check if the admin password is secure"))
+	} else if !isSecure {
+		fmt.Fprint(os.Stderr, postUpgradeMessage)
 	}
 
 	return nil
