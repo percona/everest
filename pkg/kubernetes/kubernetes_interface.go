@@ -95,6 +95,8 @@ type KubernetesConnector interface {
 	// ProvisionMonitoring provisions PMM monitoring.
 	ProvisionMonitoring(namespace string) error
 	// RestartOperator restarts the deployment of an operator managed by OLM.
+	//
+	//nolint:funlen
 	RestartOperator(ctx context.Context, name, namespace string) error
 	// RestartDeployment restarts the given deployment.
 	RestartDeployment(ctx context.Context, name, namespace string) error
@@ -120,6 +122,8 @@ type KubernetesConnector interface {
 	DeleteNamespace(ctx context.Context, name string) error
 	// ListNamespaces lists all namespaces.
 	ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*corev1.NamespaceList, error)
+	// UpdateNamespace updates the given namespace.
+	UpdateNamespace(ctx context.Context, namespace *corev1.Namespace, opts metav1.UpdateOptions) (*corev1.Namespace, error)
 	// OperatorInstalledVersion returns the installed version of operator by name.
 	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
 	// CreateRSAKeyPair creates a new RSA key pair and stores it in a secret.
@@ -128,4 +132,16 @@ type KubernetesConnector interface {
 	UpdateEverestSettings(ctx context.Context, settings common.EverestSettings) error
 	// GetEverestSettings returns Everest settings.
 	GetEverestSettings(ctx context.Context) (common.EverestSettings, error)
+	// ListSecrets returns secret by name.
+	ListSecrets(ctx context.Context, namespace string) (*corev1.SecretList, error)
+	// GetSecret returns a secret by name.
+	GetSecret(ctx context.Context, namespace, name string) (*corev1.Secret, error)
+	// CreateSecret creates a secret.
+	CreateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error)
+	// SetSecret creates or updates an existing secret.
+	SetSecret(secret *corev1.Secret) error
+	// UpdateSecret updates a secret.
+	UpdateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error)
+	// DeleteSecret deletes a secret.
+	DeleteSecret(ctx context.Context, namespace, name string) error
 }

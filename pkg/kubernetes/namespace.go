@@ -29,3 +29,8 @@ func (k *Kubernetes) DeleteNamespace(ctx context.Context, name string) error {
 func (k *Kubernetes) ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*corev1.NamespaceList, error) {
 	return k.client.ListNamespaces(ctx, opts)
 }
+
+// UpdateNamespace updates the given namespace.
+func (k *Kubernetes) UpdateNamespace(ctx context.Context, namespace *corev1.Namespace, opts metav1.UpdateOptions) (*corev1.Namespace, error) {
+	return k.client.UpdateNamespace(ctx, namespace, opts)
+}

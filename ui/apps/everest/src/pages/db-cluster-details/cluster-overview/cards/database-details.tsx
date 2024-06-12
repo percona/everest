@@ -83,7 +83,7 @@ export const DatabaseDetails = ({
             schedules?.length > 0 &&
             backup?.enabled ? (
               schedules?.map((item) => (
-                <OverviewSectionText>
+                <OverviewSectionText key={`${item.name}-${item.schedule}`}>
                   {getTimeSelectionPreviewMessage(
                     getFormValuesFromCronExpression(item.schedule)
                   )}

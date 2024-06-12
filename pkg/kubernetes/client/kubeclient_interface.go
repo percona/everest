@@ -178,6 +178,8 @@ type KubeClientConnector interface {
 	DeleteNamespace(ctx context.Context, name string) error
 	// ListNamespaces returns a list of namespaces.
 	ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*corev1.NamespaceList, error)
+	// UpdateNamespace updates the given namespace.
+	UpdateNamespace(ctx context.Context, namespace *corev1.Namespace, opts metav1.UpdateOptions) (*corev1.Namespace, error)
 	// OLM returns OLM client set.
 	//
 	//nolint:ireturn
