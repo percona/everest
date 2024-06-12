@@ -80,7 +80,7 @@ export const fillScheduleModalForm = async (page: Page) => {
   await page.getByTestId('select-on-day-button').click();
   await page.getByTestId('10').click();
   await page.getByTestId('select-hour-button').click();
-  await page.getByRole('option', { name: '1' }).click();
+  await page.getByRole('option', { name: '1', exact: true }).click();
   await page.getByTestId('select-minute-button').click();
   await page.getByRole('option', { name: '05' }).click();
   await page.getByTestId('select-am-pm-button').click();
