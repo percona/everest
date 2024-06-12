@@ -20,4 +20,5 @@ func TestCompareVersions(t *testing.T) {
 	assert.Equal(t, int(-1), CompareVersions("1.0.0", "1.1.0"))
 	assert.Equal(t, int(-1), CompareVersions("1.0.0", goversion.Must(goversion.NewVersion("1.1.0"))))
 	assert.Equal(t, int(-1), CompareVersions("1.0.0-rc1", goversion.Must(goversion.NewVersion("1.1.0"))))
+	assert.Equal(t, int(-1), CompareVersions("1.0.0-rc1", goversion.Must(goversion.NewVersion("1.1.0"))))
 }
