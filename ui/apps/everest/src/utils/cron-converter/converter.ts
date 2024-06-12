@@ -90,6 +90,7 @@ const setFieldsCron = (fields: any) => {
   return cronParser.fieldsToExpression(fields).stringify();
 };
 
+// @ts-expect-error
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getSeconds = (fields: any) => {
   fields.minute = fields.second;
