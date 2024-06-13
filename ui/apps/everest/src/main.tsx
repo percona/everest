@@ -5,10 +5,10 @@ import App from 'App';
 const consoleError = console.error;
 
 console.error = function filterErrors(msg, ...args) {
-    if (/server-side rendering/.test(msg)) {
-        return;
-    }
-    consoleError(msg, ...args);
+  if (/server-side rendering/.test(msg)) {
+    return;
+  }
+  consoleError(msg, ...args);
 };
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
