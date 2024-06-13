@@ -37,6 +37,8 @@ func NewCreateCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "create",
 		Example: "everestctl accounts create --username user1 --password $USER_PASS",
+		Short:   "Create a new Everest user account",
+		Long:    "Create a new Everest user account",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initCreateViperFlags(cmd)
 
