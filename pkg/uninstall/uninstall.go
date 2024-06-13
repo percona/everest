@@ -233,11 +233,14 @@ func (u *Uninstall) deleteDBs(ctx context.Context) error {
 	for ns, dbs := range allDBs {
 		for _, db := range dbs.Items {
 			u.l.Infof("Deleting database cluster '%s' in namespace '%s'", db.Name, ns)
-			finalizers := db.GetFinalizers()
-			finalizers = append(finalizers, common.ForegroundDeletionFinalizer)
-			db.SetFinalizers(finalizers)
-			if err := u.kubeClient.PatchDatabaseCluster(&db); err != nil {
-				return errors.Join(errors.New("failed to add foregroundDeletion finalizer"), err)
+			// Delete in foreground.
+			if !db.GetDeletionTimestamp().IsZero() {
+				finalizers := db.GetFinalizers()
+				finalizers = append(finalizers, common.ForegroundDeletionFinalizer)
+				db.SetFinalizers(finalizers)
+				if err := u.kubeClient.PatchDatabaseCluster(&db); err != nil {
+					return errors.Join(errors.New("failed to add foregroundDeletion finalizer"), err)
+				}
 			}
 			if err := u.kubeClient.DeleteDatabaseCluster(ctx, ns, db.Name); err != nil {
 				return err
