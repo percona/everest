@@ -130,4 +130,16 @@ type KubernetesConnector interface {
 	UpdateEverestSettings(ctx context.Context, settings common.EverestSettings) error
 	// GetEverestSettings returns Everest settings.
 	GetEverestSettings(ctx context.Context) (common.EverestSettings, error)
+	// ListSecrets returns secret by name.
+	ListSecrets(ctx context.Context, namespace string) (*corev1.SecretList, error)
+	// GetSecret returns a secret by name.
+	GetSecret(ctx context.Context, namespace, name string) (*corev1.Secret, error)
+	// CreateSecret creates a secret.
+	CreateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error)
+	// SetSecret creates or updates an existing secret.
+	SetSecret(secret *corev1.Secret) error
+	// UpdateSecret updates a secret.
+	UpdateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error)
+	// DeleteSecret deletes a secret.
+	DeleteSecret(ctx context.Context, namespace, name string) error
 }
