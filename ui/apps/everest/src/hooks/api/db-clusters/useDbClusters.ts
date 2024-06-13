@@ -22,6 +22,7 @@ import {
 import { getDbClustersFn } from 'api/dbClusterApi';
 import { DbCluster, GetDbClusterPayload } from 'shared-types/dbCluster.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
+import cronConverter from 'utils/cron-converter';
 
 export interface DbClusterForNamespaceResult {
   namespace: string;
@@ -35,6 +36,22 @@ export const dbClustersQuerySelect = ({
 }: GetDbClusterPayload): DbCluster[] =>
   items.map(({ ...props }) => ({
     ...props,
+    spec: {
+      ...props.spec,
+      ...(props.spec?.backup?.schedules && {
+        backup: {
+          ...props.spec.backup,
+          schedules: props.spec.backup.schedules.map((schedule) => ({
+            ...schedule,
+            schedule: cronConverter(
+              schedule.schedule,
+              'UTC',
+              Intl.DateTimeFormat().resolvedOptions().timeZone
+            ),
+          })),
+        },
+      }),
+    },
   }));
 
 export const useDbClusters = (
