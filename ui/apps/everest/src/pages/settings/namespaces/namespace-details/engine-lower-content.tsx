@@ -10,17 +10,13 @@ const EngineLowerContent = ({
     return <Chip label="Upgrading" color="warning" size="small" />;
   }
 
-  if (!preflightPayload?.databases) {
-    return (
-      <Typography variant="body2">version {engine.operatorVersion}</Typography>
-    );
-  }
+  const pendingTasks =
+    (preflightPayload?.databases || []).filter(
+      (db) => db.pendingTask && db.pendingTask !== 'ready'
+    ).length || 0;
 
   if (engine.pendingOperatorUpgrades?.length) {
-    const totalTasks = preflightPayload.databases.length || 0;
-    const pendingTasks =
-      preflightPayload.databases.filter((db) => db.pendingTask !== 'ready')
-        .length || 0;
+    const totalTasks = (preflightPayload?.databases || []).length || 0;
 
     if (pendingTasks > 0) {
       return (
@@ -35,7 +31,9 @@ const EngineLowerContent = ({
     return <Chip label="Upgrade available" color="warning" size="small" />;
   }
 
-  return null;
+  return (
+    <Typography variant="body2">version {engine.operatorVersion}</Typography>
+  );
 };
 
 export default EngineLowerContent;
