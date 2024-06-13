@@ -533,8 +533,8 @@ github.com/prometheus/procfs v0.6.0/go.mod h1:cz+aTbrPOrUb4q7XlbU9ygM+/jj0fzG6c1
 github.com/prometheus/procfs v0.7.3/go.mod h1:cz+aTbrPOrUb4q7XlbU9ygM+/jj0fzG6c1xBZuNvfVA=
 github.com/prometheus/procfs v0.10.0 h1:UkG7GPYkO4UZyLnyXjaWYcgOSONqwdBqFUT95ugmt6I=
 github.com/prometheus/procfs v0.10.0/go.mod h1:nwNm2aOCAYw8uTR/9bWRREkZFxAUcWzPHWJq+XBB/FM=
-github.com/quasilyte/go-consistent v0.6.0 h1:tY8DYfgM+7ADpOyr5X47i8hV/XbMNoucqnqZWVjI+rU=
-github.com/quasilyte/go-consistent v0.6.0/go.mod h1:dKYK1JZl3150J1+Jh4cDYPCIu2MqybUBi0YVW2b2E6c=
+github.com/quasilyte/go-consistent v0.6.1 h1:zfOZAzADcpxp9QXOmMspDTHEzoCJ5EpiTR+BZpes2tc=
+github.com/quasilyte/go-consistent v0.6.1/go.mod h1:zo8fhUCPO6L+/vP78haKSsCKGCnlICdhKVW9CiQ5KcU=
 github.com/quasilyte/go-ruleguard v0.4.2 h1:htXcXDK6/rO12kiTHKfHuqR4kr3Y4M0J0rOL6CH/BYs=
 github.com/quasilyte/go-ruleguard v0.4.2/go.mod h1:GJLgqsLeo4qgavUoL8JeGFNS7qcisx3awV/w9eWTmNI=
 github.com/quasilyte/gogrep v0.5.0 h1:eTKODPXbI8ffJMN+W2aE0+oL0z/nh8/5eNdiO34SOAo=
