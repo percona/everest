@@ -135,6 +135,8 @@ var (
 			fieldName,
 		)
 	}
+	// ErrNoOperatorsSelected appears when no operators are selected for installation.
+	ErrNoOperatorsSelected = errors.New("no operators selected for installation. Minimum one operator must be selected.")
 )
 
 type (
@@ -255,6 +257,10 @@ func (o *Install) populateConfig() error {
 		return err
 	}
 	o.config.NamespacesList = l
+
+	if !(o.config.Operator.PG || o.config.Operator.PSMDB || o.config.Operator.PXC) {
+		return ErrNoOperatorsSelected
+	}
 
 	return nil
 }
@@ -528,13 +534,12 @@ func (o *Install) runInstallWizard() error {
 	if err := survey.AskOne(
 		pOps,
 		&opIndexes,
-		survey.WithValidator(survey.MinItems(1)),
 	); err != nil {
 		return err
 	}
 
 	if len(opIndexes) == 0 {
-		return errors.New("at least one operator needs to be selected")
+		return ErrNoOperatorsSelected
 	}
 
 	// We reset all flags to false so we select only
