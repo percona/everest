@@ -1,36 +1,32 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  Stack,
-  Typography,
-} from '@mui/material';
-import { Card, DialogTitle, EverestMainIcon, TextInput } from '@percona/ui-lib';
-import { CodeCopyBlock } from 'components/code-copy-block/code-copy-block';
+import { Box, Button, Divider, Stack, Typography } from '@mui/material';
+import { Card, EverestMainIcon, TextInput } from '@percona/ui-lib';
 import { AuthContext } from 'contexts/auth';
-import { useContext, useState } from 'react';
+import { useContext } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { Navigate } from 'react-router-dom';
-import { LoginFields, LoginFormType, loginSchema } from './Login.constants';
+import { LoginFormType, loginSchema } from './Login.constants';
 import { Messages } from './Login.messages';
 
 const Login = () => {
   const methods = useForm<LoginFormType>({
     mode: 'onChange',
-    defaultValues: { token: '' },
+    defaultValues: { username: '', password: '' },
     resolver: zodResolver(loginSchema),
   });
-  const [modalOpen, setModalOpen] = useState(false);
-  const { login, authStatus, redirectRoute } = useContext(AuthContext);
+  const { login, authStatus, redirectRoute, isSsoEnabled } =
+    useContext(AuthContext);
 
-  const handleClick = () => setModalOpen(true);
-  const handleClose = () => setModalOpen(false);
+  const handleLogin: SubmitHandler<LoginFormType> = ({
+    username,
+    password,
+  }) => {
+    login('manual', { username, password });
+  };
 
-  const handleLogin: SubmitHandler<LoginFormType> = ({ token }) => login(token);
+  const handleSsoLogin = () => {
+    login('sso');
+  };
 
   if (authStatus === 'unknown') {
     return <></>;
@@ -73,19 +69,29 @@ const Login = () => {
                 {Messages.login}
               </Typography>
               <Typography variant="caption" mb={2}>
-                {Messages.insertToken}
+                {Messages.insertCredentials}
               </Typography>
               <FormProvider {...methods}>
                 <form onSubmit={methods.handleSubmit(handleLogin)}>
                   <TextInput
                     textFieldProps={{
-                      type: 'password',
-                      label: Messages.token,
+                      type: 'text',
+                      label: Messages.username,
                       fullWidth: true,
                       sx: { mb: 2 },
                       disabled: authStatus === 'loggingIn',
                     }}
-                    name={LoginFields.token}
+                    name="username"
+                  />
+                  <TextInput
+                    textFieldProps={{
+                      type: 'password',
+                      label: Messages.password,
+                      fullWidth: true,
+                      sx: { mb: 2 },
+                      disabled: authStatus === 'loggingIn',
+                    }}
+                    name="password"
                   />
                   <Button
                     onClick={methods.handleSubmit(handleLogin)}
@@ -95,40 +101,33 @@ const Login = () => {
                     fullWidth
                     sx={{
                       mb: 1,
-                      mt: 4,
                       fontSize: '13px',
                     }}
                   >
                     {Messages.login}
                   </Button>
                 </form>
+                {isSsoEnabled && (
+                  <>
+                    <Divider flexItem sx={{ mb: 1, fontSize: '12px' }}>
+                      OR
+                    </Divider>
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      disabled={authStatus === 'loggingIn'}
+                      sx={{ fontSize: '13px' }}
+                      onClick={handleSsoLogin}
+                    >
+                      Log in with SSO
+                    </Button>
+                  </>
+                )}
               </FormProvider>
-              <Button
-                onClick={handleClick}
-                variant="text"
-                sx={{ alignSelf: 'center', fontSize: '13px', mb: 3 }}
-                disabled={authStatus === 'loggingIn'}
-              >
-                {Messages.resetToken}
-              </Button>
             </Stack>
           }
         />
       </Box>
-      <Dialog open={modalOpen} onClose={handleClose}>
-        <DialogTitle onClose={handleClose}>{Messages.resetToken}</DialogTitle>
-        <DialogContent>
-          <DialogContentText variant="body1" color="text.primary">
-            {Messages.useTerminal}
-          </DialogContentText>
-          <CodeCopyBlock message="everestctl token reset" />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} variant="contained">
-            {Messages.ok}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Stack>
   );
 };

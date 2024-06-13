@@ -24,10 +24,14 @@ export const Messages = {
     paused: 'Paused',
     unknown: 'Unknown',
     restoring: 'Restoring',
+    deleting: 'Deleting',
   },
   lastBackup: {
     warningTooltip: 'Check your backups page for more info',
     inactive: 'Inactive',
+    scheduled: 'Scheduled',
+    pending: 'Pending',
+    notStarted: 'Not Started',
     seconds: 'sec',
     minutes: 'min',
     hours: 'h',
@@ -68,6 +72,12 @@ export const Messages = {
       </>
     ),
     databaseName: 'Database name',
+    alertMessage:
+      'This action will permanently destroy your database and you will not be able to recover it.',
+    checkboxMessage: 'Keep backups storage data',
+    disabledCheckboxForPGTooltip:
+      'Backups storage data is kept for PostgreSQL databases.',
+    confirmButtom: 'Delete',
   },
   responseMessages: {
     restart: 'The database is being restarted',

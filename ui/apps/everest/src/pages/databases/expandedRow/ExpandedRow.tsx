@@ -36,7 +36,7 @@ export const ExpandedRow = ({
     exposetype,
     namespace,
     databaseName,
-    hostName,
+    hostName = '',
     port,
     raw,
   } = row.original;

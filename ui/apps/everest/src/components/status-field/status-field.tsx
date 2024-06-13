@@ -3,11 +3,13 @@ import { UknownIcon } from '@percona/ui-lib';
 import { BaseStatus, StatusFieldProps } from './status-field.types';
 import { STATUS_TO_ICON } from './status-field.utils';
 
-export function StatusField<T extends string | number | symbol>({
+function StatusField<T extends string | number | symbol>({
   status,
   statusMap,
   children,
   dataTestId,
+  iconProps,
+  stackProps,
 }: StatusFieldProps<T>) {
   const mappedStatus: BaseStatus = statusMap[status];
   const MappedIcon = STATUS_TO_ICON[mappedStatus] || UknownIcon;
@@ -17,9 +19,12 @@ export function StatusField<T extends string | number | symbol>({
       direction="row"
       gap={1}
       data-testid={`${dataTestId ? `${dataTestId}-` : ''}status`}
+      {...stackProps}
     >
-      <MappedIcon />
+      <MappedIcon {...iconProps} />
       {children}
     </Stack>
   );
 }
+
+export default StatusField;

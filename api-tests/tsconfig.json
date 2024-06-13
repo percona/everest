@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "lib": ["ESNext"],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",

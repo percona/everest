@@ -100,7 +100,7 @@ export const ResourcesStep = () => {
         pageTitle={Messages.pageTitle}
         pageDescription={Messages.pageDescription}
       />
-      <FormGroup sx={{ mt: 2 }}>
+      <FormGroup sx={{ mt: 3 }}>
         <ToggleButtonGroupInput
           name={DbWizardFormFields.numberOfNodes}
           label={Messages.labels.numberOfNodes}

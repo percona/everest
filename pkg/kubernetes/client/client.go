@@ -25,6 +25,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -58,6 +59,7 @@ import (
 	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth" // load all auth plugins
@@ -254,6 +256,14 @@ func NewInCluster() (*Client, error) {
 	return c, err
 }
 
+// NewFromFakeClient returns a Client with a fake (in-memory) clientset.
+// This is used only for unit testing.
+func NewFromFakeClient() *Client {
+	return &Client{
+		clientset: fake.NewSimpleClientset(),
+	}
+}
+
 func (c *Client) kubeClient() (client.Client, error) { //nolint:ireturn,nolintlint
 	rcl, err := rest.HTTPClientFor(c.restConfig)
 	if err != nil {
@@ -293,6 +303,13 @@ func (c *Client) initOperatorClients() error {
 // Config returns restConfig to the pkg/kubernetes.Kubernetes client.
 func (c *Client) Config() *rest.Config {
 	return c.restConfig
+}
+
+// Clientset returns the k8s clientset.
+//
+//nolint:ireturn
+func (c *Client) Clientset() kubernetes.Interface {
+	return c.clientset
 }
 
 // ClusterName returns the name of the k8s cluster.
@@ -772,13 +789,23 @@ func (c *Client) ApplyFile(fileBytes []byte) error {
 
 // ApplyManifestFile accepts manifest file contents, parses into []runtime.Object
 // and applies them against the cluster.
-func (c *Client) ApplyManifestFile(fileBytes []byte, namespace string) error {
+func (c *Client) ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...client.Object) error {
 	objs, err := c.getObjects(fileBytes)
 	if err != nil {
 		return err
 	}
 	for i := range objs {
 		o := objs[i]
+
+		// Check if this object should be ignored?
+		if slices.ContainsFunc(ignoreObjects, func(ign client.Object) bool {
+			return o.GetKind() == ign.GetObjectKind().GroupVersionKind().Kind &&
+				o.GetName() == ign.GetName() &&
+				ign.GetNamespace() == namespace
+		}) {
+			continue
+		}
+
 		if err := c.applyTemplateCustomization(o, namespace); err != nil {
 			return err
 		}
@@ -1148,21 +1175,6 @@ func (c Client) pollRolloutComplete(ctx context.Context, key types.NamespacedNam
 	return wait.PollUntilContextCancel(ctx, time.Second, true, rolloutComplete)
 }
 
-// CreateNamespace creates a new namespace.
-func (c *Client) CreateNamespace(name string) error {
-	n := &corev1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Namespace",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-	}
-
-	return c.ApplyObject(n)
-}
-
 // GetOperatorGroup retrieves an operator group details by namespace and name.
 func (c *Client) GetOperatorGroup(ctx context.Context, namespace, name string) (*v1.OperatorGroup, error) {
 	operatorClient, err := olmVersioned.NewForConfig(c.restConfig)
@@ -1345,6 +1357,14 @@ func (c *Client) ListClusterServiceVersion(
 	namespace string,
 ) (*v1alpha1.ClusterServiceVersionList, error) {
 	return c.olmClientset.OperatorsV1alpha1().ClusterServiceVersions(namespace).List(ctx, metav1.ListOptions{})
+}
+
+// UpdateClusterServiceVersion updates a CSV and returns the updated CSV.
+func (c *Client) UpdateClusterServiceVersion(
+	ctx context.Context,
+	csv *v1alpha1.ClusterServiceVersion,
+) (*v1alpha1.ClusterServiceVersion, error) {
+	return c.olmClientset.OperatorsV1alpha1().ClusterServiceVersions(csv.Namespace).Update(ctx, csv, metav1.UpdateOptions{})
 }
 
 // DeleteClusterServiceVersion deletes a CSV by namespaced name.

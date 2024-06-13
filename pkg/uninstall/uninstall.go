@@ -26,6 +26,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"go.uber.org/zap"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -71,8 +72,11 @@ func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
 
 // Run runs the cluster command.
 func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
-	if err := u.runWizard(); err != nil {
+	if abort, err := u.runWizard(); err != nil {
 		return err
+	} else if abort {
+		u.l.Info("Exiting")
+		return nil
 	}
 
 	dbsExist, err := u.dbsExist(ctx)
@@ -104,10 +108,6 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
 		return err
 	}
 
-	if err := u.deleteDBNamespaces(ctx); err != nil {
-		return err
-	}
-
 	// VMAgent has finalizers, so we need to delete the monitoring configs first
 	if err := u.deleteMonitoringConfigs(ctx); err != nil {
 		return err
@@ -126,6 +126,10 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
 		return err
 	}
 
+	if err := u.deleteDBNamespaces(ctx); err != nil {
+		return err
+	}
+
 	// There are no resources with finalizers in the monitoring namespace, so
 	// we can delete it directly
 	if err := u.deleteOLM(ctx); err != nil {
@@ -136,7 +140,9 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
 	return nil
 }
 
-func (u *Uninstall) runWizard() error {
+// Run the uninstall wizard.
+// Returns true if uninstall is aborted.
+func (u *Uninstall) runWizard() (bool, error) {
 	if !u.config.AssumeYes {
 		msg := `You are about to uninstall Everest from the Kubernetes cluster.
 This will uninstall Everest and all its components from the cluster.`
@@ -146,16 +152,15 @@ This will uninstall Everest and all its components from the cluster.`
 		}
 		prompt := false
 		if err := survey.AskOne(confirm, &prompt); err != nil {
-			return err
+			return false, err
 		}
 
 		if !prompt {
-			u.l.Info("Exiting")
-			return nil
+			return true, nil
 		}
 	}
 
-	return nil
+	return false, nil
 }
 
 func (u *Uninstall) confirmForce() (bool, error) {
@@ -296,9 +301,20 @@ func (u *Uninstall) deleteNamespaces(ctx context.Context, namespaces []string) e
 }
 
 func (u *Uninstall) deleteDBNamespaces(ctx context.Context) error {
-	namespaces, err := u.kubeClient.GetDBNamespaces(ctx, common.SystemNamespace)
+	// List all namespaces managed by everest.
+	namespaceList, err := u.kubeClient.ListNamespaces(ctx, metav1.ListOptions{
+		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
+			MatchLabels: map[string]string{
+				common.KubernetesManagedByLabel: common.Everest,
+			},
+		}),
+	})
 	if err != nil {
 		return err
+	}
+	namespaces := make([]string, 0, len(namespaceList.Items))
+	for _, item := range namespaceList.Items {
+		namespaces = append(namespaces, item.Name)
 	}
 	if len(namespaces) > 0 {
 		return u.deleteNamespaces(ctx, namespaces)
@@ -308,7 +324,7 @@ func (u *Uninstall) deleteDBNamespaces(ctx context.Context) error {
 
 func (u *Uninstall) deleteBackupStorages(ctx context.Context) error { //nolint:dupl
 	storages, err := u.kubeClient.ListBackupStorages(ctx, common.SystemNamespace)
-	if err != nil {
+	if client.IgnoreNotFound(err) != nil {
 		return err
 	}
 
@@ -343,7 +359,7 @@ func (u *Uninstall) deleteBackupStorages(ctx context.Context) error { //nolint:d
 
 func (u *Uninstall) deleteMonitoringConfigs(ctx context.Context) error { //nolint:dupl
 	monitoringConfigs, err := u.kubeClient.ListMonitoringConfigs(ctx, install.MonitoringNamespace)
-	if err != nil {
+	if client.IgnoreNotFound(err) != nil {
 		return err
 	}
 

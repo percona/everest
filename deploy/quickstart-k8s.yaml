@@ -27,10 +27,7 @@ rules:
     resources: ["databaseclusters", "databaseclusterbackups", "databaseclusterrestores", "backupstorages", "monitoringconfigs"]
     verbs: ["*"]
   - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["*"]
-  - apiGroups: [""]
-    resources: ["secrets"]
+    resources: ["secrets", "configmaps"]
     verbs: ["*"]
   - apiGroups: [""]
     resources: ["nodes", "pods", "persistentvolumes"]
@@ -70,10 +67,20 @@ subjects:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: everest-admin-token
+  name: everest-jwt
+data:
+  id_rsa: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlDWFFJQkFBS0JnUUM5ZUwzVS9VbnR3SFhDMlBHbkRLNDVlODRtcXUxL2dwclYwS3FpSGEwTDNpd2RmYVViCm5TWkhlTUNtaE9hVWM0ODNWVmlJeTN6NlovdWRjZktNblgrUjgwK2FUWlZ4MVBLdnNFZzQ2TUd5MHpaaU16dy8KL285UVdUNU9POU1iVkp5VjdHOG9rNmdTWW1SY0w2RUQxOEtubjRtRlNuYkZYZDZHa0dZY2tldHo2d0lEQVFBQgpBb0dBZUt4SjJ6bG11SEgzanAyMWF2dDhpMGY2eUUzYzdYVTFRRENpUEpaQi9Ha0lGOUJLTkFnbXRTYUhMSWRBCmhCUUZodXhvY3RlSFJjU3NVRjZlYUVoM1VsaFgvMk1WYmY2WEFWSFdseC9kNVgrRE9hdjNxZmlDa09pUDB0WkwKWkJXRXlLY0hPQnJWRkpCNGxTUmc0TkV0OXpYUFEvSWlRQllqQXlZb1VpUnFDUUVDUVFET3l0M3AvK3Rzemx6UgorYm0xT3diaHNzc1lTNVJiS0w4Mi81MS8vVzR5VkdrQ2NqdkQ2SDRldUhPSjVENEp4T3NNZWdKV3JUVHpZWXRVCjNaaVhGWHBMQWtFQTZvNi9OMFhWOTNUZGttREszclczbk1YeHZBT3lMLzYxOW4rVlY1UjBGdXI4aVZSWFB6R1cKUGZMR01vc2NaSlRDSHNqTUUzaGxXOFlucDRGbU1VWG80UUpBWHJPZkR6T3BZQ25kYmplOEtWZi8zY3Fnb2Q2eQo4VkJteVV3a2wrRzYzb2V6azNBM0dJL1hla0FrZ1dpcVZKVCt3N2I0YlROalJYWk5kYThKMjE3MW93SkJBSlhwCi9INzRUS1FuZG9KYkNPN0ZHQURFWnhkekNVMHhyOTFIZUEwTTNoSFR5T3FCRkc1WVpCMWQ4SjFYV2lOVERLc2UKVFlqWU4zZ3JzeWFWUnRxUlF5RUNRUUNXdWdvUHdrT3B6QjVxMmdoR3F4Z1RiRjRBczRQd0VwNFF3YXYwTUwwMQpleVlFanN5ZVlkUzhPUW82Z0RyaFFqVDF0dlllcFJPNVNHYlUyalB2c0hmdwotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQ==
+  id_rsa.pub: LS0tLS1CRUdJTiBSU0EgUFVCTElDIEtFWS0tLS0tCk1JR0pBb0dCQUwxNHZkVDlTZTNBZGNMWThhY01yamw3emlhcTdYK0NtdFhRcXFJZHJRdmVMQjE5cFJ1ZEprZDQKd0thRTVwUnpqemRWV0lqTGZQcG4rNTF4OG95ZGY1SHpUNXBObFhIVThxK3dTRGpvd2JMVE5tSXpQRC8rajFCWgpQazQ3MHh0VW5KWHNieWlUcUJKaVpGd3ZvUVBYd3FlZmlZVktkc1ZkM29hUVpoeVI2M1ByQWdNQkFBRT0KLS0tLS1FTkQgUlNBIFBVQkxJQyBLRVktLS0tLQ==
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: everest-accounts
   annotations:
-    kubernetes.io/service-account.name: everest-admin
-type: kubernetes.io/service-account-token
+    insecure-password/admin: "true"
+data:
+  # username: admin | password: admin
+  users.yaml: YWRtaW46CiAgcGFzc3dvcmRIYXNoOiBhZG1pbgogIGVuYWJsZWQ6IHRydWUKICBjYXBhYmlsaXRpZXM6CiAgICAtIGxvZ2lu
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -81,6 +88,8 @@ metadata:
   name: percona-everest
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
   selector:
     matchLabels:
       app.kubernetes.io/name: everest
@@ -93,6 +102,10 @@ spec:
     spec:
       serviceAccountName: everest-admin
       automountServiceAccountToken: true
+      volumes:
+      - name: jwt-secret
+        secret:
+          secretName: everest-jwt
       containers:
         - name: everest
           image: perconalab/everest:0.0.0
@@ -117,6 +130,9 @@ spec:
             requests:
               cpu: 100m
               memory: 20Mi
+          volumeMounts:
+          - name: jwt-secret
+            mountPath: /etc/jwt
 ---
 apiVersion: v1
 kind: Service
@@ -133,3 +149,4 @@ spec:
   ports:
     - protocol: TCP
       port: 8080
+---
