@@ -21,7 +21,6 @@ export const DbClusterDetails = () => {
     namespace,
     {
       enabled: !!namespace && !!dbClusterName,
-      refetchInterval: 5 * 1000,
     }
   );
   const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
