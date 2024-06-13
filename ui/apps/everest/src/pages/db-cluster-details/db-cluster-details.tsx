@@ -13,10 +13,15 @@ import { DbActionButton } from './db-action-button';
 import { Messages } from './db-cluster-details.messages';
 import { DBClusterDetailsTabs } from './db-cluster-details.types';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
+import { useFirstRender } from 'hooks/utils/useFirstRender';
 
 export const DbClusterDetails = () => {
   const { dbClusterName, namespace = '' } = useParams();
-  const { data = [], isLoading } = useDbClusters(namespace, {
+  const {
+    data = [],
+    isLoading = true,
+    isFetching,
+  } = useDbClusters(namespace, {
     enabled: !!namespace,
   });
   const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
@@ -25,8 +30,9 @@ export const DbClusterDetails = () => {
   const dbCluster = data.find(
     (cluster) => cluster.metadata.name === dbClusterName
   );
+  const isFirstRender = useFirstRender();
 
-  if (isLoading) {
+  if (isLoading || (isFirstRender && isFetching)) {
     return (
       <>
         <Skeleton variant="rectangular" />
