@@ -1,5 +1,4 @@
 import { Alert, Box, Skeleton, Tab, Tabs } from '@mui/material';
-import { useDbClusters } from 'hooks/api/db-clusters/useDbClusters';
 import {
   Link,
   Outlet,
@@ -13,26 +12,23 @@ import { DbActionButton } from './db-action-button';
 import { Messages } from './db-cluster-details.messages';
 import { DBClusterDetailsTabs } from './db-cluster-details.types';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
-import { useFirstRender } from 'hooks/utils/useFirstRender';
+import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
 
 export const DbClusterDetails = () => {
-  const { dbClusterName, namespace = '' } = useParams();
-  const {
-    data = [],
-    isLoading,
-    isFetching,
-  } = useDbClusters(namespace, {
-    enabled: !!namespace,
-  });
+  const { dbClusterName = '', namespace = '' } = useParams();
+  const { data: dbCluster, isLoading } = useDbCluster(
+    dbClusterName,
+    namespace,
+    {
+      enabled: !!namespace && !!dbClusterName,
+      refetchInterval: 5 * 1000,
+    }
+  );
   const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
   const navigate = useNavigate();
   const currentTab = routeMatch?.params?.tabs;
-  const dbCluster = data.find(
-    (cluster) => cluster.metadata.name === dbClusterName
-  );
-  const isFirstRender = useFirstRender();
 
-  if (isLoading || (isFirstRender && isFetching)) {
+  if (isLoading) {
     return (
       <>
         <Skeleton variant="rectangular" />
