@@ -136,7 +136,7 @@ var (
 		)
 	}
 	// ErrNoOperatorsSelected appears when no operators are selected for installation.
-	ErrNoOperatorsSelected = errors.New("no operators selected for installation. Minimum one operator must be selected.")
+	ErrNoOperatorsSelected = errors.New("no operators selected for installation. Minimum one operator must be selected")
 )
 
 type (
