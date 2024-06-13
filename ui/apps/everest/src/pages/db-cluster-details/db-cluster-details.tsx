@@ -19,7 +19,7 @@ export const DbClusterDetails = () => {
   const { dbClusterName, namespace = '' } = useParams();
   const {
     data = [],
-    isLoading = true,
+    isLoading,
     isFetching,
   } = useDbClusters(namespace, {
     enabled: !!namespace,
