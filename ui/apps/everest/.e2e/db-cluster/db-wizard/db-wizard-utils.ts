@@ -21,7 +21,7 @@ import { DbType } from '@percona/types';
 export const addFirstScheduleInDBWizard = async (page: Page) => {
   // checking that we haven't schedules
   await expect(
-    page.getByText('You don’t have any backup schedules yet.')
+    page.getByText('You currently do not have any backup schedules set up.')
   ).toBeVisible();
 
   // creating schedule with schedule modal form dialog

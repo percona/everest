@@ -125,7 +125,7 @@ const Schedules = () => {
               dataTestId="empty"
               children={
                 <Typography variant="body1">
-                  You don’t have any backup schedules yet.
+                  {Messages.noSchedules}
                 </Typography>
               }
             />
