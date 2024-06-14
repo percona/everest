@@ -1,18 +1,9 @@
 ---
 name: Release
 on:
-  workflow_dispatch:
-    inputs:
-      releaseType:
-        description: "Type of release"
-        required: true
-        type: choice
-        options:
-          - patch
-          - minor
-      version:
-        description: "The RC/Release version, format: X.Y.Z-rcN for RC, X.Y.Z for releases"
-        required: true
+  push:
+    branches:
+      - release-workflow-major-release
   
 permissions:
   contents: write
@@ -25,8 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TOOLS_PATH: "/opt/tools/bin"
-      VERSION: ${{ github.event.inputs.version }}
-      RELEASE_TYPE: ${{ github.event.inputs.releaseType }}
+      VERSION: 1.0.0-rc
+      RELEASE_TYPE: major
       # version in format "X.Y" which is going to be updated with each patch release
       FLOATING_TAG: ''
       # branch name in format "release-X.Y"
@@ -255,68 +246,12 @@ jobs:
           # configure userdata for commits
           git config --global user.email "everest-ci@percona.com"
           git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
-
-          CURRENT_STABLE_VERSION=$(yq 'select(.name == "stable-v0").entries[-1].name' veneer/everest-operator.yaml | sed 's/^everest-operator.v//')
-          CURRENT_FAST_VERSION=$(yq 'select(.name == "fast-v0").entries[-1].name' veneer/everest-operator.yaml | sed 's/^everest-operator.v//')
-
-          if [[ -z "$CURRENT_STABLE_VERSION" ]]; then
-            echo "CURRENT_STABLE_VERSION is required"
-            exit 1
-          fi
-
-          if [[ -z "$CURRENT_FAST_VERSION" ]]; then
-            echo "CURRENT_FAST_VERSION is required"
-            exit 1
-          fi
-
-          echo "CURRENT_STABLE_VERSION=$CURRENT_STABLE_VERSION"
-          echo "CURRENT_FAST_VERSION=$CURRENT_FAST_VERSION"
-
-          cp veneer/everest-operator.yaml veneer/everest-operator-original.yaml
-          
-          if [[ $env.IS_RC ]]; then
-            go run ./tools/ \
-              --veneer-file veneer/everest-operator-original.yaml \
-              --version-type ${{ env.RELEASE_TYPE }} \
-              --channel fast-v0 \
-              --new-version ${{ env.VERSION }} \
-              --current-version "$CURRENT_FAST_VERSION" \
-              \
-              >| veneer/everest-operator.yaml
-          else
-            go run ./tools/ \
-              --veneer-file veneer/everest-operator-original.yaml \
-              --version-type ${{ env.RELEASE_TYPE }} \
-              --channel stable-v0 \
-              --new-version ${{ env.VERSION }} \
-              --current-version "$CURRENT_STABLE_VERSION" \
-              \
-              >| veneer/everest-operator.yaml
-
-            go run ./tools/ \
-              --veneer-file veneer/everest-operator-original.yaml \
-              --version-type ${{ env.RELEASE_TYPE }} \
-              --channel fast-v0 \
-              --new-version ${{ env.VERSION }} \
-              --current-version "$CURRENT_FAST_VERSION" \
-              \
-              >| veneer/everest-operator.yaml
-          fi
-
-          rm -f veneer/everest-operator-original.yaml
-          
-          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/latest/download/${OS}-${ARCH}-opm
-          chmod +x /tmp/opm
-          /tmp/opm alpha render-template basic -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
-          
+      
           # Check if veneer has the new version listed
           if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
             echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
             exit 1
           fi
-
-          git commit -am "CI: add version ${{ env.VERSION }}"
-          git push origin $BRANCH_NAME
 
           git tag $GH_TAG
           git push origin $GH_TAG
