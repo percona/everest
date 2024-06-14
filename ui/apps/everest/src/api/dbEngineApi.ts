@@ -55,3 +55,17 @@ export const upgradeOperator = async (
 
   return response.data;
 };
+
+export const getOperatorVersions = async (
+  namespace: string,
+  dbEngineName: string
+) => {
+  const response = await api.get<OperatorUpgradePreflightPayload>(
+    `/namespaces/${namespace}/database-engines/${dbEngineName}/operator-version`,
+    {
+      disableNotifications: true,
+    }
+  );
+
+  return response.data;
+};

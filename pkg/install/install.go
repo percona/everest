@@ -19,8 +19,6 @@ package install
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/url"
@@ -137,6 +135,8 @@ var (
 			fieldName,
 		)
 	}
+	// ErrNoOperatorsSelected appears when no operators are selected for installation.
+	ErrNoOperatorsSelected = errors.New("no operators selected for installation. Minimum one operator must be selected")
 )
 
 type (
@@ -257,6 +257,10 @@ func (o *Install) populateConfig() error {
 		return err
 	}
 	o.config.NamespacesList = l
+
+	if !(o.config.Operator.PG || o.config.Operator.PSMDB || o.config.Operator.PXC) {
+		return ErrNoOperatorsSelected
+	}
 
 	return nil
 }
@@ -404,7 +408,7 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		if err := o.kubeClient.CreateRSAKeyPair(ctx); err != nil {
 			return err
 		}
-		if err := o.resetEverestAdminPassword(ctx); err != nil {
+		if err := common.CreateInitialAdminAccount(ctx, o.kubeClient.Accounts()); err != nil {
 			return err
 		}
 	} else {
@@ -530,13 +534,12 @@ func (o *Install) runInstallWizard() error {
 	if err := survey.AskOne(
 		pOps,
 		&opIndexes,
-		survey.WithValidator(survey.MinItems(1)),
 	); err != nil {
 		return err
 	}
 
 	if len(opIndexes) == 0 {
-		return errors.New("at least one operator needs to be selected")
+		return ErrNoOperatorsSelected
 	}
 
 	// We reset all flags to false so we select only
@@ -779,24 +782,4 @@ func validateRFC1035(s string) error {
 	}
 
 	return nil
-}
-
-func (o *Install) resetEverestAdminPassword(ctx context.Context) error {
-	o.l.Info("Resetting admin password")
-	pass, err := generateRandomPassword()
-	if err != nil {
-		return errors.Join(err, errors.New("could not generate random password"))
-	}
-	if err := o.kubeClient.Accounts().SetPassword(ctx, common.EverestAdminUser, pass, false); err != nil {
-		return err
-	}
-	return nil
-}
-
-func generateRandomPassword() (string, error) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(b), nil
 }
