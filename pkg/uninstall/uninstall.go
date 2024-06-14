@@ -238,7 +238,11 @@ func (u *Uninstall) deleteDBs(ctx context.Context) error {
 				finalizers := db.GetFinalizers()
 				finalizers = append(finalizers, common.ForegroundDeletionFinalizer)
 				db.SetFinalizers(finalizers)
-				if err := u.kubeClient.PatchDatabaseCluster(&db); err != nil {
+				// With the move to go 1.22 it's safe to reuse the same variable, see
+				// https://go.dev/blog/loopvar-preview. However, gosec linter doesn't
+				// like it. Let's disable it for this line until they are updated to
+				// support go 1.22.
+				if err := u.kubeClient.PatchDatabaseCluster(&db); err != nil { //nolint:gosec
 					return errors.Join(errors.New("failed to add foregroundDeletion finalizer"), err)
 				}
 			}
