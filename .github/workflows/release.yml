@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TOOLS_PATH: "/opt/tools/bin"
-      VERSION: 1.0.0-rc
+      VERSION: 1.0.0-rc1
       RELEASE_TYPE: major
       # version in format "X.Y" which is going to be updated with each patch release
       FLOATING_TAG: ''
