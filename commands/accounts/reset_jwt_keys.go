@@ -20,6 +20,7 @@ func NewResetJWTKeysCommand(l *zap.SugaredLogger) *cobra.Command {
 		Use:     "reset-jwt-keys",
 		Example: "everestctl accounts reset-jwt-keys",
 		Long:    "Reset the JWT keys used for Everest user authentication",
+		Short:   "Reset the JWT keys used for Everest user authentication",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			viper.BindEnv("kubeconfig")                                     //nolint:errcheck,gosec
 			viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
