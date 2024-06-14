@@ -17,6 +17,7 @@ import { UseMutationOptions, useMutation } from '@tanstack/react-query';
 import { updateDbClusterFn } from 'api/dbClusterApi';
 import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
+import cronConverter from 'utils/cron-converter';
 
 type UpdateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -51,7 +52,14 @@ const formValuesToPayloadOverrides = (
           backupStorageName: pitrBackupStorageName,
         },
         ...(dbPayload.schedules?.length > 0 && {
-          schedules: dbPayload.schedules,
+          schedules: dbPayload.schedules.map((schedule) => ({
+            ...schedule,
+            schedule: cronConverter(
+              schedule.schedule,
+              Intl.DateTimeFormat().resolvedOptions().timeZone,
+              'UTC'
+            ),
+          })),
         }),
       },
       engine: {

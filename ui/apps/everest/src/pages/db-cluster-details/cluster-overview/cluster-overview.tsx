@@ -8,11 +8,12 @@ import { ConnectionDetails, DatabaseDetails } from './cards';
 
 export const ClusterOverview = () => {
   const { dbClusterName, namespace = '' } = useParams();
-  const { data: dbCluster, isFetching: fetchingCluster } = useDbCluster(
+  const { data: dbCluster, isLoading: loadingCluster } = useDbCluster(
     dbClusterName || '',
     namespace,
     {
       enabled: !!dbClusterName,
+      refetchInterval: 5 * 1000,
     }
   );
   const { data: dbClusterDetails, isFetching: fetchingClusterDetails } =
@@ -34,7 +35,7 @@ export const ClusterOverview = () => {
     >
       {/* We force ! because while loading no info is shown */}
       <DatabaseDetails
-        loading={fetchingCluster}
+        loading={loadingCluster}
         type={dbEngineToDbType(dbCluster?.spec.engine.type!)}
         name={dbCluster?.metadata.name!}
         namespace={dbCluster?.metadata.namespace!}
@@ -50,7 +51,7 @@ export const ClusterOverview = () => {
         monitoring={dbCluster?.spec.monitoring.monitoringConfigName}
       />
       <ConnectionDetails
-        loading={fetchingCluster}
+        loading={loadingCluster}
         loadingClusterDetails={fetchingClusterDetails}
         hostname={dbCluster?.status?.hostname!}
         port={dbCluster?.status?.port!}
