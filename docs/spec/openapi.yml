@@ -718,6 +718,44 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines/{name}/operator-version':
+    get:
+      tags:
+        - getOperatorVersion
+      summary: Get the operator version and check results for the specified database engine
+      description: Get the operator version and check results for the specified database engine
+      operationId: getOperatorVersion
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database engine
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperatorVersion'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     put:
       tags:
         - upgradeDatabaseEngineOperator
@@ -1530,6 +1568,34 @@ components:
           description: List of namespaces allowed to use this backup storage
           items:
             type: string
+      additionalProperties: false
+    OperatorVersionCheckForDatabase:
+      type: object
+      description: Operator version checks for a single database
+      properties:
+        name:
+          type: string
+          description: Name of the database cluster
+        message:
+          type: string
+        pendingTask:
+          type: string
+          description: Pending task for the database cluster
+          enum:
+            - restart
+      additionalProperties: false
+    OperatorVersion:
+      type: object
+      description: Operator version check results
+      properties:
+        currentVersion:
+          type: string
+          description: The current operator version
+        databases:
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/OperatorVersionCheckForDatabase'
       additionalProperties: false
     OperatorUpgradePreflightForDatabase:
       type: object

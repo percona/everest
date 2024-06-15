@@ -19,8 +19,6 @@ package install
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/url"
@@ -32,6 +30,7 @@ import (
 	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
@@ -49,6 +48,21 @@ import (
 const (
 	// DefaultEverestNamespace is the default namespace managed by everest Everest.
 	DefaultEverestNamespace = "everest"
+
+	// FlagOperatorPostgresql represents the pg operator flag.
+	FlagOperatorPostgresql = "operator.postgresql"
+	// FlagOperatorXtraDBCluster represents the pxc operator flag.
+	FlagOperatorXtraDBCluster = "operator.xtradb-cluster"
+	// FlagOperatorMongoDB represents the psmdb operator flag.
+	FlagOperatorMongoDB = "operator.mongodb"
+	// FlagNamespaces represents the namespaces flag.
+	FlagNamespaces = "namespaces"
+	// FlagVersionMetadataURL represents the version service url flag.
+	FlagVersionMetadataURL = "version-metadata-url"
+	// FlagVersion represents the version flag.
+	FlagVersion = "version"
+	// FlagSkipWizard represents the flag to skip the installation wizard.
+	FlagSkipWizard = "skip-wizard"
 )
 
 const postInstallMessage = `
@@ -70,6 +84,7 @@ type Install struct {
 	l *zap.SugaredLogger
 
 	config         Config
+	cmd            *cobra.Command
 	kubeClient     *kubernetes.Kubernetes
 	versionService versionservice.Interface
 }
@@ -120,6 +135,8 @@ var (
 			fieldName,
 		)
 	}
+	// ErrNoOperatorsSelected appears when no operators are selected for installation.
+	ErrNoOperatorsSelected = errors.New("no operators selected for installation. Minimum one operator must be selected")
 )
 
 type (
@@ -153,9 +170,10 @@ type (
 )
 
 // NewInstall returns a new Install struct.
-func NewInstall(c Config, l *zap.SugaredLogger) (*Install, error) {
+func NewInstall(c Config, l *zap.SugaredLogger, cmd *cobra.Command) (*Install, error) {
 	cli := &Install{
 		config: c,
+		cmd:    cmd,
 		l:      l.With("component", "install"),
 	}
 
@@ -239,6 +257,10 @@ func (o *Install) populateConfig() error {
 		return err
 	}
 	o.config.NamespacesList = l
+
+	if !(o.config.Operator.PG || o.config.Operator.PSMDB || o.config.Operator.PXC) {
+		return ErrNoOperatorsSelected
+	}
 
 	return nil
 }
@@ -386,7 +408,7 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		if err := o.kubeClient.CreateRSAKeyPair(ctx); err != nil {
 			return err
 		}
-		if err := o.resetEverestAdminPassword(ctx); err != nil {
+		if err := common.CreateInitialAdminAccount(ctx, o.kubeClient.Accounts()); err != nil {
 			return err
 		}
 	} else {
@@ -451,6 +473,10 @@ func (o *Install) runWizard() error {
 }
 
 func (o *Install) runEverestWizard() error {
+	// if the namespace flag was used, do not run the wizard
+	if o.cmd.Flags().Lookup(FlagNamespaces).Changed {
+		return nil
+	}
 	var namespaces string
 	pNamespace := &survey.Input{
 		Message: "Namespaces managed by Everest [comma separated]",
@@ -471,6 +497,15 @@ func (o *Install) runEverestWizard() error {
 }
 
 func (o *Install) runInstallWizard() error {
+	pgFlag := o.cmd.Flags().Lookup(FlagOperatorPostgresql).Changed
+	pxcFlag := o.cmd.Flags().Lookup(FlagOperatorXtraDBCluster).Changed
+	psmdbFlag := o.cmd.Flags().Lookup(FlagOperatorMongoDB).Changed
+
+	// if any operator flag was used, do not run the wizard
+	if pgFlag || pxcFlag || psmdbFlag {
+		return nil
+	}
+
 	operatorOpts := []struct {
 		label    string
 		boolFlag *bool
@@ -499,13 +534,12 @@ func (o *Install) runInstallWizard() error {
 	if err := survey.AskOne(
 		pOps,
 		&opIndexes,
-		survey.WithValidator(survey.MinItems(1)),
 	); err != nil {
 		return err
 	}
 
 	if len(opIndexes) == 0 {
-		return errors.New("at least one operator needs to be selected")
+		return ErrNoOperatorsSelected
 	}
 
 	// We reset all flags to false so we select only
@@ -748,24 +782,4 @@ func validateRFC1035(s string) error {
 	}
 
 	return nil
-}
-
-func (o *Install) resetEverestAdminPassword(ctx context.Context) error {
-	o.l.Info("Resetting admin password")
-	pass, err := generateRandomPassword()
-	if err != nil {
-		return errors.Join(err, errors.New("could not generate random password"))
-	}
-	if err := o.kubeClient.Accounts().SetPassword(ctx, common.EverestAdminUser, pass, false); err != nil {
-		return err
-	}
-	return nil
-}
-
-func generateRandomPassword() (string, error) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(b), nil
 }

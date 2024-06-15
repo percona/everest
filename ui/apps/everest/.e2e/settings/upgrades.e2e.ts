@@ -62,7 +62,7 @@ const generateMockEngineData = ({
   ],
 });
 
-const generateMockPreflightData = (
+const generateMockOperatorVersionData = (
   databases: Array<{ name: string; message: string; pendingTask: string }>
 ) => ({
   currentVersion: '',
@@ -122,7 +122,7 @@ test.describe('Operator upgrades', () => {
       `/v1/namespaces/${namespaces[0]}/database-engines/*/operator-version/preflight?targetVersion=1.16.0`,
       async (route) => {
         await route.fulfill({
-          json: generateMockPreflightData([
+          json: generateMockOperatorVersionData([
             {
               name: 'db1',
               message: 'some message',
@@ -208,7 +208,7 @@ test.describe('Operator upgrades', () => {
       `/v1/namespaces/${namespaces[0]}/database-engines/*/operator-version/preflight?targetVersion=1.16.0`,
       async (route) => {
         await route.fulfill({
-          json: generateMockPreflightData([
+          json: generateMockOperatorVersionData([
             {
               name: 'db1',
               message: 'some message',
@@ -233,6 +233,49 @@ test.describe('Operator upgrades', () => {
     await expect(
       page.getByText(
         'A new version of the psmdb operator is available. Start upgrading by performing all the pending tasks.'
+      )
+    ).toBeVisible();
+  });
+
+  test('Post-upgrade tasks', async ({ page }) => {
+    await page.route(
+      `/v1/namespaces/${namespaces[0]}/database-engines`,
+      async (route) => {
+        await route.fulfill({
+          json: generateMockEngineData({
+            pg: { status: 'installed', version: '2.3.1' },
+            mongo: { status: 'installed', version: '1.15.0' },
+            mysql: { status: 'installed', version: '1.13.0' },
+          }),
+        });
+      }
+    );
+
+    await page.route(
+      `/v1/namespaces/${namespaces[0]}/database-engines/*/operator-version`,
+      async (route) => {
+        await route.fulfill({
+          json: generateMockOperatorVersionData([
+            {
+              name: 'db1',
+              message: 'Restart required',
+              pendingTask: 'restart',
+            },
+            {
+              name: 'db2',
+              message: 'Ready',
+              pendingTask: 'ready',
+            },
+          ]),
+        });
+      }
+    );
+
+    await page.goto(`/settings/namespaces/${namespaces[0]}`);
+    await page.getByTestId('mongodb-toggle-button').click();
+    await expect(
+      page.getByText(
+        'Complete the upgrade by completing the post-upgrade tasks.'
       )
     ).toBeVisible();
   });
