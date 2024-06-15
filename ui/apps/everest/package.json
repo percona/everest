@@ -7,7 +7,7 @@
     "dev": "vite --port 3000",
     "test": "vitest run",
     "test:watch": "vitest",
-    "pre-e2e": "rm -rf tests-out && tsc --incremental --noImplicitAny false -p .e2e/tsconfig.json && tsc-alias -p .e2e/tsconfig.json",
+    "pre-e2e": "rm -rf tests-out test-results && tsc --incremental --noImplicitAny false -p .e2e/tsconfig.json && tsc-alias -p .e2e/tsconfig.json",
     "e2e": "pnpm pre-e2e && cd .e2e && playwright test",
     "build": "tsc --incremental && vite build --emptyOutDir",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --fix",
@@ -35,8 +35,10 @@
     "css-mediaquery": "^0.1.2",
     "date-fns": "^2.30.0",
     "dotenv": "^16.3.1",
+    "jwt-decode": "^4.0.0",
     "material-react-table": "^1.15.1",
     "notistack": "^3.0.1",
+    "oidc-react": "^3.2.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.47.0",
@@ -62,7 +64,7 @@
     "prettier": "^3.0.3",
     "tsc-alias": "^1.8.8",
     "typescript": "^5.2.2",
-    "vite": "^4.5.2",
+    "vite": "^4.5.3",
     "vite-tsconfig-paths": "^4.2.1",
     "vitest": "^0.34.6"
   }

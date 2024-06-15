@@ -421,6 +421,11 @@ func TestValidateBackupSpec(t *testing.T) {
 			err:     errScheduleNoBackupStorageName,
 		},
 		{
+			name:    "errDuplicatedSchedules",
+			cluster: []byte(`{"spec": {"backup": {"enabled": true, "schedules": [{"schedule": "0 0 * * *", "name": "name"}, {"schedule": "0 0 * * *", "name": "otherName"}]}}}`),
+			err:     errDuplicatedSchedules,
+		},
+		{
 			name:    "valid spec",
 			cluster: []byte(`{"spec": {"backup": {"enabled": true, "schedules": [{"enabled": true, "name": "name", "backupStorageName": "some"}]}}}`),
 			err:     nil,

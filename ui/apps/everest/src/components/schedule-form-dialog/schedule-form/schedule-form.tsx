@@ -14,25 +14,17 @@
 // limitations under the License.
 
 import { AutoCompleteInput, LabeledContent, TextInput } from '@percona/ui-lib';
-import { BackupStorage } from 'shared-types/backupStorages.types.ts';
-import { Schedule } from 'shared-types/dbCluster.types.ts';
 import LogicalPhysicalRadioGroup from 'components/logical-physical-radio-group';
 import { AutoCompleteAutoFill } from '../../auto-complete-auto-fill/auto-complete-auto-fill.tsx';
 import { TimeSelection } from '../../time-selection/time-selection';
 import { Messages } from './schedule-form.messages.ts';
-import { ScheduleFormFields } from './schedule-form.types.ts';
+import {
+  ScheduleFormFields,
+  ScheduleFormProps,
+} from './schedule-form.types.ts';
+import { Alert } from '@mui/material';
+import { useFormContext } from 'react-hook-form';
 
-type ScheduleFormProps = {
-  allowScheduleSelection?: boolean;
-  disableStorageSelection?: boolean;
-  disableNameInput?: boolean;
-  autoFillLocation?: boolean;
-  schedules: Schedule[];
-  storageLocationFetching: boolean;
-  storageLocationOptions: BackupStorage[];
-  showTypeRadio: boolean;
-  hideRetentionCopies?: boolean;
-};
 export const ScheduleForm = ({
   allowScheduleSelection,
   disableStorageSelection = false,
@@ -44,8 +36,18 @@ export const ScheduleForm = ({
   showTypeRadio,
   hideRetentionCopies,
 }: ScheduleFormProps) => {
+  const {
+    formState: { errors },
+  } = useFormContext();
   const schedulesNamesList =
     (schedules && schedules.map((item) => item?.name)) || [];
+
+  const errorInfoAlert = errors?.root ? (
+    <Alert data-testid="same-schedule-warning" severity="error">
+      {errors?.root?.message}
+    </Alert>
+  ) : null;
+
   return (
     <>
       {showTypeRadio && <LogicalPhysicalRadioGroup />}
@@ -99,7 +101,7 @@ export const ScheduleForm = ({
         />
       )}
       <LabeledContent label={Messages.repeats}>
-        <TimeSelection showInfoAlert />
+        <TimeSelection showInfoAlert errorInfoAlert={errorInfoAlert} />
       </LabeledContent>
     </>
   );

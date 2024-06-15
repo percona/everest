@@ -33,7 +33,7 @@ export const OnDemandBackupModal = () => {
     createBackupOnDemand(data, {
       onSuccess(newBackup: SingleBackupPayload) {
         queryClient.setQueryData<GetBackupsPayload | undefined>(
-          [BACKUPS_QUERY_KEY, dbClusterName],
+          [BACKUPS_QUERY_KEY, namespace, dbClusterName],
           (oldData) => {
             if (!oldData) {
               return undefined;

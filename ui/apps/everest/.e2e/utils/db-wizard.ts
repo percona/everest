@@ -1,5 +1,4 @@
 import { expect, Page } from '@playwright/test';
-import { startTransition } from 'react';
 
 export const storageLocationAutocompleteEmptyValidationCheck = async (
   page: Page,
@@ -28,7 +27,6 @@ export const goToStep = (
     | 'basic-information'
     | 'resources'
     | 'backups'
-    | 'point-in-time-recovery'
     | 'advanced-configurations'
     | 'monitoring'
 ) => page.getByTestId(`button-edit-preview-${step}`).click();

@@ -19,6 +19,8 @@ package install
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/url"
@@ -35,10 +37,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/token"
 	"github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
@@ -47,6 +50,20 @@ const (
 	// DefaultEverestNamespace is the default namespace managed by everest Everest.
 	DefaultEverestNamespace = "everest"
 )
+
+const postInstallMessage = `
+Everest has been successfully installed!
+
+
+To view the password for the 'admin' user, run the following command:
+
+everestctl accounts initial-admin-password
+
+
+IMPORTANT: This password is NOT stored in a hashed format. To secure it, update the password using the following command:
+
+everestctl accounts set-password --username admin
+`
 
 // Install implements the main logic for commands.
 type Install struct {
@@ -200,18 +217,13 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	_, err = o.kubeClient.GetSecret(ctx, common.SystemNamespace, token.SecretName)
-	if err != nil && !k8serrors.IsNotFound(err) {
-		return errors.Join(err, errors.New("could not get the everest token secret"))
+	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
+	if err != nil {
+		return errors.Join(err, errors.New("could not check if the admin password is secure"))
 	}
-	if err != nil && k8serrors.IsNotFound(err) {
-		pwd, err := o.generateToken(ctx)
-		if err != nil {
-			return err
-		}
-		o.l.Info("\n" + pwd.String() + "\n\n")
+	if !isAdminSecure {
+		fmt.Fprint(os.Stdout, postInstallMessage)
 	}
-
 	return nil
 }
 
@@ -317,7 +329,7 @@ func (o *Install) installVMOperator(ctx context.Context) error {
 
 func (o *Install) provisionMonitoringStack(ctx context.Context) error {
 	l := o.l.With("action", "monitoring")
-	if err := o.createNamespace(MonitoringNamespace); err != nil {
+	if err := o.createNamespace(ctx, MonitoringNamespace); err != nil {
 		return err
 	}
 
@@ -334,7 +346,7 @@ func (o *Install) provisionMonitoringStack(ctx context.Context) error {
 }
 
 func (o *Install) provisionEverestOperator(ctx context.Context, recVer *version.RecommendedVersion) error {
-	if err := o.createNamespace(common.SystemNamespace); err != nil {
+	if err := o.createNamespace(ctx, common.SystemNamespace); err != nil {
 		return err
 	}
 
@@ -366,9 +378,15 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		everestExists = true
 	}
 
-	if !everestExists {
+	if !everestExists { //nolint:nestif
 		o.l.Info(fmt.Sprintf("Deploying Everest to %s", common.SystemNamespace))
 		if err = o.kubeClient.InstallEverest(ctx, common.SystemNamespace, v); err != nil {
+			return err
+		}
+		if err := o.kubeClient.CreateRSAKeyPair(ctx); err != nil {
+			return err
+		}
+		if err := o.resetEverestAdminPassword(ctx); err != nil {
 			return err
 		}
 	} else {
@@ -391,7 +409,7 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 
 func (o *Install) provisionDBNamespaces(ctx context.Context, recVer *version.RecommendedVersion) error {
 	for _, namespace := range o.config.NamespacesList {
-		if err := o.createNamespace(namespace); err != nil {
+		if err := o.createNamespace(ctx, namespace); err != nil {
 			return err
 		}
 		if err := o.kubeClient.CreateOperatorGroup(ctx, dbsOperatorGroup, namespace, []string{}); err != nil {
@@ -505,10 +523,18 @@ func (o *Install) runInstallWizard() error {
 }
 
 // createNamespace provisions a namespace for Everest.
-func (o *Install) createNamespace(namespace string) error {
+func (o *Install) createNamespace(ctx context.Context, namespace string) error {
 	o.l.Infof("Creating namespace %s", namespace)
-	err := o.kubeClient.CreateNamespace(namespace)
-	if err != nil {
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: namespace,
+			Labels: map[string]string{
+				common.KubernetesManagedByLabel: common.Everest,
+			},
+		},
+	}
+	err := o.kubeClient.CreateNamespace(ctx, ns)
+	if client.IgnoreAlreadyExists(err) != nil {
 		return errors.Join(err, errors.New("could not provision namespace"))
 	}
 
@@ -681,28 +707,6 @@ func (o *Install) serviceAccountRolePolicyRules() []rbacv1.PolicyRule {
 	}
 }
 
-func (o *Install) generateToken(ctx context.Context) (*token.ResetResponse, error) {
-	o.l.Info("Creating token for Everest")
-
-	r, err := token.NewReset(
-		token.ResetConfig{
-			KubeconfigPath: o.config.KubeconfigPath,
-			Namespace:      common.SystemNamespace,
-		},
-		o.l,
-	)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("could not initialize reset token"))
-	}
-
-	res, err := r.Run(ctx)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("could not create token"))
-	}
-
-	return res, nil
-}
-
 // ValidateNamespaces validates a comma-separated namespaces string.
 func ValidateNamespaces(str string) ([]string, error) {
 	nsList := strings.Split(str, ",")
@@ -713,7 +717,7 @@ func ValidateNamespaces(str string) ([]string, error) {
 			continue
 		}
 
-		if ns == common.SystemNamespace || ns == MonitoringNamespace {
+		if ns == common.SystemNamespace || ns == MonitoringNamespace || ns == kubernetes.OLMNamespace {
 			return nil, ErrNSReserved(ns)
 		}
 
@@ -744,4 +748,24 @@ func validateRFC1035(s string) error {
 	}
 
 	return nil
+}
+
+func (o *Install) resetEverestAdminPassword(ctx context.Context) error {
+	o.l.Info("Resetting admin password")
+	pass, err := generateRandomPassword()
+	if err != nil {
+		return errors.Join(err, errors.New("could not generate random password"))
+	}
+	if err := o.kubeClient.Accounts().SetPassword(ctx, common.EverestAdminUser, pass, false); err != nil {
+		return err
+	}
+	return nil
+}
+
+func generateRandomPassword() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
 }

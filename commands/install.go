@@ -37,6 +37,8 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 		//        Error: unknown command "a" for "everestctl install"
 		Args:    cobra.NoArgs,
 		Example: "everestctl install --namespaces dev,staging,prod --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard",
+		Long:    "Install Percona Everest",
+		Short:   "Install Percona Everest",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initInstallViperFlags(cmd)
 			c := &install.Config{}
@@ -63,7 +65,6 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initInstallFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
 	cmd.Flags().String("namespaces", install.DefaultEverestNamespace, "Comma-separated namespaces list Percona Everest can manage")
 	cmd.Flags().Bool("skip-wizard", false, "Skip installation wizard")
 	cmd.Flags().String("version-metadata-url", "https://check.percona.com", "URL to retrieve version metadata information from")

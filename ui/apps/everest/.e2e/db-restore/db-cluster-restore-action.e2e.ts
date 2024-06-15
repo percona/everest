@@ -20,12 +20,12 @@ import {
   findDbAndClickActions,
   findDbAndClickRow,
 } from '../utils/db-clusters-list';
-import { getTokenFromLocalStorage } from '../utils/localStorage';
-test.describe('DB Cluster Restore', () => {
-  const dbClusterName = 'mysql-test-ui-restore';
+import { STORAGE_NAMES } from '../constants';
 
-  test.beforeEach(async ({ request, page }) => {
-    await page.goto('/databases');
+const dbClusterName = 'restore-db';
+
+test.describe('DB Cluster Restore', () => {
+  test.beforeAll(async ({ request }) => {
     await createDbClusterFn(request, {
       dbName: dbClusterName,
       dbType: 'mysql',
@@ -34,7 +34,7 @@ test.describe('DB Cluster Restore', () => {
         enabled: true,
         schedules: [
           {
-            backupStorageName: 'test-storage-1',
+            backupStorageName: STORAGE_NAMES[0],
             enabled: true,
             name: 'backup-1',
             schedule: '0 * * * *',
@@ -44,11 +44,15 @@ test.describe('DB Cluster Restore', () => {
     });
   });
 
-  test.afterEach(async ({ request }) => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/databases');
+  });
+
+  test.afterAll(async ({ request }) => {
     await deleteDbClusterFn(request, dbClusterName);
   });
 
-  test('DB cluster list restore action', async ({ page }) => {
+  test('DB cluster list restore action', async ({ page }, {}) => {
     await findDbAndClickActions(page, dbClusterName, 'Restore from a backup');
     await expect(
       page
@@ -57,7 +61,7 @@ test.describe('DB Cluster Restore', () => {
     ).toBeVisible();
   });
 
-  test('DB cluster detail restore action', async ({ page }) => {
+  test('DB cluster detail restore action', async ({ page }, {}) => {
     await findDbAndClickRow(page, dbClusterName);
     const actionButton = page.getByTestId('actions-button');
     await actionButton.click();
