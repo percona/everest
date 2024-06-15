@@ -55,9 +55,9 @@ test.describe('DB Cluster creation', () => {
     ).not.toBeDisabled();
     await expect(
       page.getByTestId('button-edit-preview-basic-information')
-    ).not.toBeVisible();
+    ).toBeDisabled();
     await expect(
       page.getByTestId('button-edit-preview-backups')
-    ).not.toBeVisible();
+    ).toBeDisabled();
   });
 });
