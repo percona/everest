@@ -233,6 +233,19 @@ func (u *Uninstall) deleteDBs(ctx context.Context) error {
 	for ns, dbs := range allDBs {
 		for _, db := range dbs.Items {
 			u.l.Infof("Deleting database cluster '%s' in namespace '%s'", db.Name, ns)
+			// Delete in foreground.
+			if !db.GetDeletionTimestamp().IsZero() {
+				finalizers := db.GetFinalizers()
+				finalizers = append(finalizers, common.ForegroundDeletionFinalizer)
+				db.SetFinalizers(finalizers)
+				// With the move to go 1.22 it's safe to reuse the same variable, see
+				// https://go.dev/blog/loopvar-preview. However, gosec linter doesn't
+				// like it. Let's disable it for this line until they are updated to
+				// support go 1.22.
+				if err := u.kubeClient.PatchDatabaseCluster(&db); err != nil { //nolint:gosec
+					return errors.Join(errors.New("failed to add foregroundDeletion finalizer"), err)
+				}
+			}
 			if err := u.kubeClient.DeleteDatabaseCluster(ctx, ns, db.Name); err != nil {
 				return err
 			}
@@ -241,20 +254,6 @@ func (u *Uninstall) deleteDBs(ctx context.Context) error {
 
 	// Wait for all database clusters to be deleted, or timeout after 5 minutes.
 	u.l.Info("Waiting for database clusters to be deleted")
-	// XXX: When deleting a DBC CR, the everest operator doesn't wait for the
-	// DB operator's CRs to be deleted. Thus, as soon as we delete the DBC CRs,
-	// these cease to exist in the cluster and the polling below will return
-	// immediately. If we don't wait for the DB operators to process the
-	// deletion of the CRs, we may end up deleting the namespaces before the DB
-	// operators have a chance to delete the resources they manage, leaving the
-	// namespaces in an endless Terminating state waiting for finalizers to be
-	// removed.
-	// The everest operator should have a Deleting status that waits for the DB
-	// operators to delete their DB CRs before removing the corresponting DBC
-	// CR. Until this is implemented, we work around this by sleeping for two
-	// minutes to give the DB operators a chance to delete the resources they
-	// manage before we delete the namespaces.
-	time.Sleep(2 * time.Minute)
 	return wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
 		allDBs, err := u.getDBs(ctx)
 		if err != nil {
