@@ -55,7 +55,7 @@ const UpgradeHeader = ({
           isUpToDate,
           pendingTasks,
           hasPostUpgradeTasks,
-          targetVersion,
+          targetVersion
         )}
       </Typography>
       {!isUpToDate && (

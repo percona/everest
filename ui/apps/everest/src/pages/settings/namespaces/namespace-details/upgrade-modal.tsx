@@ -11,7 +11,6 @@ const UpgradeModal = ({
   dbType,
   newVersion,
 }: UpgradeModalProps) => {
-
   return (
     <ConfirmDialog
       isOpen={open}
