@@ -142,7 +142,7 @@ test.describe('Operator upgrades', () => {
       page.getByRole('button', { name: 'Upgrade Operator' })
     ).toBeVisible();
     await expect(
-      page.getByText('A new version of the psmdb operator is available.')
+      page.getByText('Version 1.16.0 of the psmdb operator is available.')
     ).toBeVisible();
     await expect(await page.locator('tbody tr').count()).toBe(1);
     await expect(
@@ -265,7 +265,7 @@ test.describe('Operator upgrades', () => {
     await expect(page.getByText('1/2 tasks pending')).toBeVisible();
     await expect(
       page.getByText(
-        'A new version of the psmdb operator is available. Start upgrading by performing all the pending tasks.'
+        'Version 1.16.0 of the psmdb operator is available. Start upgrading by performing all the pending tasks.'
       )
     ).toBeVisible();
   });
