@@ -44,6 +44,7 @@ func MustInitLogger(json bool) *zap.Logger {
 	if !json {
 		loggerCfg.Encoding = "console"
 	}
+	loggerCfg.DisableStacktrace = true
 
 	logger, err := loggerCfg.Build()
 	if err != nil {
