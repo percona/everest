@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/fatih/color"
+	"github.com/percona/everest/pkg/output"
 )
 
 // Step is a helper type for organising the steps of long running
@@ -18,11 +18,6 @@ type Step struct {
 	// F is the function that will be called to execute the step.
 	F func(ctx context.Context) error
 }
-
-var (
-	okStatus   = color.New(color.FgGreen).SprintFunc()("\u2713")           // √
-	failStatus = color.New(color.FgRed, color.Bold).SprintFunc()("\u00D7") // ×
-)
 
 func RunStepsWithSpinner(
 	ctx context.Context,
@@ -39,12 +34,12 @@ func RunStepsWithSpinner(
 		s.Start()
 		if err := step.F(ctx); err != nil {
 			s.Stop()
-			fmt.Fprint(out, failStatus, " ", step.Desc, "\n")
+			fmt.Fprint(out, output.Failure(step.Desc))
 			fmt.Fprint(out, "\t", err, "\n")
 			return err
 		}
 		s.Stop()
-		fmt.Fprint(out, okStatus, " ", step.Desc, "\n")
+		fmt.Fprint(out, output.Success(step.Desc))
 	}
 	return nil
 }

@@ -23,6 +23,7 @@ import (
 	"os"
 
 	"github.com/AlecAivazis/survey/v2/terminal"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
@@ -61,4 +62,22 @@ func PrintError(err error, l *zap.SugaredLogger) {
 	}
 
 	l.Error(err)
+}
+
+var (
+	okStatus   = color.New(color.FgGreen).SprintFunc()("\u2713")           // ✓
+	failStatus = color.New(color.FgRed, color.Bold).SprintFunc()("\u00D7") // ×
+	infoStatus = color.New(color.FgYellow).SprintFunc()("\u2139")          // ℹ
+)
+
+func Success(msg string, args ...any) string {
+	return fmt.Sprintf("%s %s\n", okStatus, fmt.Sprintf(msg, args...))
+}
+
+func Failure(msg string, args ...any) string {
+	return fmt.Sprintf("%s %s\n", failStatus, fmt.Sprintf(msg, args...))
+}
+
+func Info(msg string, args ...any) string {
+	return fmt.Sprintf("%s %s\n", infoStatus, fmt.Sprintf(msg, args...))
 }

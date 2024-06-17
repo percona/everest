@@ -42,6 +42,7 @@ import (
 
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/output"
 	"github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
@@ -213,61 +214,34 @@ func (o *Install) Run(ctx context.Context) error {
 	var err error
 	installSteps := []common.Step{}
 
-	var (
-		meta       *versionpb.MetadataResponse
-		latest     *goversion.Version
-		latestMeta *versionpb.MetadataVersion
-		recVer     *version.RecommendedVersion
-	)
-	installSteps = append(installSteps, common.Step{
-		Desc: "Fetch version metadata",
-		F: func(ctx context.Context) error {
-			meta, err = o.versionService.GetEverestMetadata(ctx)
-			if err != nil {
-				return errors.Join(err, errors.New("could not fetch version metadata"))
-			}
-			latest, latestMeta, err = o.latestVersion(meta)
-			if err != nil {
-				return err
-			}
-			recVer, err = version.RecommendedVersions(latestMeta)
-			if err != nil {
-				return err
-			}
-			if recVer.EverestOperator == nil {
-				// If there's no recommended version of the operator, install the same version as Everest.
-				recVer.EverestOperator = latest
-			}
-			return nil
-		},
-	})
+	meta, err := o.versionService.GetEverestMetadata(ctx)
+	if err != nil {
+		return errors.Join(err, errors.New("could not fetch version metadata"))
+	}
+	latest, latestMeta, err := o.latestVersion(meta)
+	if err != nil {
+		return err
+	}
+	recVer, err := version.RecommendedVersions(latestMeta)
+	if err != nil {
+		return err
+	}
+	if recVer.EverestOperator == nil {
+		// If there's no recommended version of the operator, install the same version as Everest.
+		recVer.EverestOperator = latest
+	}
 
-	o.l.Debugf("Everest latest version available: %s", latest)
 	o.l.Debugf("Everest version information %#v", latestMeta)
 
-	installSteps = append(installSteps, common.Step{
-		Desc: "Provision Operator Lifecycle Manager",
-		F: func(ctx context.Context) error {
-			return o.provisionOLM(ctx, latest)
-		},
-	})
-
-	installSteps = append(installSteps, common.Step{
-		Desc: "Provision Monitoring Stack",
-		F:    o.provisionMonitoringStack,
-	})
-
-	installSteps = append(installSteps, common.Step{
-		Desc: "Provision Everest Components",
-		F: func(ctx context.Context) error {
-			return o.provisionEverestComponents(ctx, latest, recVer)
-		},
-	})
+	installSteps = append(installSteps, o.provisionOLM(latest)...)
+	installSteps = append(installSteps, o.provisionMonitoringStack()...)
+	installSteps = append(installSteps, o.provisionEverestComponents(latest, recVer)...)
 
 	var out io.Writer = os.Stdout
 	if o.config.EnableLogging {
 		out = io.Discard
 	}
+	fmt.Fprintln(out, output.Info("Installing Everest version %s", latest))
 	if err := common.RunStepsWithSpinner(ctx, installSteps, out); err != nil {
 		return err
 	}
@@ -347,20 +321,27 @@ func (o *Install) latestVersion(meta *versionpb.MetadataResponse) (*goversion.Ve
 	return latest, latestMeta, nil
 }
 
-func (o *Install) provisionEverestComponents(ctx context.Context, latest *goversion.Version, recVer *version.RecommendedVersion) error {
-	if err := o.provisionDBNamespaces(ctx, recVer); err != nil {
-		return err
-	}
+func (o *Install) provisionEverestComponents(
+	latest *goversion.Version, recVer *version.RecommendedVersion) []common.Step {
+	result := []common.Step{}
 
-	if err := o.provisionEverestOperator(ctx, recVer); err != nil {
-		return err
-	}
+	result = append(result, o.provisionDBNamespaces(recVer)...)
 
-	if err := o.provisionEverest(ctx, latest); err != nil {
-		return err
-	}
+	result = append(result, common.Step{
+		Desc: "Install Everest Operator",
+		F: func(ctx context.Context) error {
+			return o.provisionEverestOperator(ctx, recVer)
+		},
+	})
 
-	return nil
+	result = append(result, common.Step{
+		Desc: "Install Everest API server",
+		F: func(ctx context.Context) error {
+			return o.provisionEverest(ctx, latest)
+		},
+	})
+
+	return result
 }
 
 func (o *Install) installVMOperator(ctx context.Context) error {
@@ -388,22 +369,35 @@ func (o *Install) installVMOperator(ctx context.Context) error {
 	return nil
 }
 
-func (o *Install) provisionMonitoringStack(ctx context.Context) error {
+func (o *Install) provisionMonitoringStack() []common.Step {
+	result := []common.Step{}
 	l := o.l.With("action", "monitoring")
-	if err := o.createNamespace(ctx, MonitoringNamespace); err != nil {
-		return err
-	}
 
-	l.Info("Preparing k8s cluster for monitoring")
-	if err := o.installVMOperator(ctx); err != nil {
-		return err
-	}
-	if err := o.kubeClient.ProvisionMonitoring(MonitoringNamespace); err != nil {
-		return errors.Join(err, errors.New("could not provision monitoring configuration"))
-	}
+	result = append(result, common.Step{
+		Desc: fmt.Sprintf("Create namespace '%s'", MonitoringNamespace),
+		F: func(ctx context.Context) error {
+			return o.createNamespace(ctx, MonitoringNamespace)
+		},
+	})
 
-	l.Info("K8s cluster monitoring has been provisioned successfully")
-	return nil
+	result = append(result, common.Step{
+		Desc: "Install VictoriaMetrics Operator",
+		F: func(ctx context.Context) error {
+			return o.installVMOperator(ctx)
+		},
+	})
+
+	result = append(result, common.Step{
+		Desc: "Provision monitoring stack",
+		F: func(ctx context.Context) error {
+			if err := o.kubeClient.ProvisionMonitoring(MonitoringNamespace); err != nil {
+				return err
+			}
+			l.Info("K8s cluster monitoring has been provisioned successfully")
+			return nil
+		},
+	})
+	return result
 }
 
 func (o *Install) provisionEverestOperator(ctx context.Context, recVer *version.RecommendedVersion) error {
@@ -468,38 +462,55 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 	return nil
 }
 
-func (o *Install) provisionDBNamespaces(ctx context.Context, recVer *version.RecommendedVersion) error {
+func (o *Install) provisionDBNamespaces(recVer *version.RecommendedVersion) []common.Step {
+	result := []common.Step{}
 	for _, namespace := range o.config.NamespacesList {
-		if err := o.createNamespace(ctx, namespace); err != nil {
-			return err
-		}
-		if err := o.kubeClient.CreateOperatorGroup(ctx, dbsOperatorGroup, namespace, []string{}); err != nil {
-			return err
-		}
+		result = append(result, common.Step{
+			Desc: fmt.Sprintf("Create namespace '%s'", namespace),
+			F: func(ctx context.Context) error {
+				return o.createNamespace(ctx, namespace)
+			},
+		})
 
-		o.l.Infof("Installing operators into %s namespace", namespace)
-		if err := o.provisionOperators(ctx, namespace, recVer); err != nil {
-			return err
-		}
-		o.l.Info("Creating role for the Everest service account")
-		err := o.kubeClient.CreateRole(namespace, everestServiceAccountRole, o.serviceAccountRolePolicyRules())
-		if err != nil {
-			return errors.Join(err, errors.New("could not create role"))
-		}
+		result = append(result, common.Step{
+			Desc: fmt.Sprintf("Install operators in namespace '%s'", namespace),
+			F: func(ctx context.Context) error {
+				if err := o.kubeClient.CreateOperatorGroup(ctx, dbsOperatorGroup, namespace, []string{}); err != nil {
+					return err
+				}
 
-		o.l.Info("Binding role to the Everest Service account")
-		err = o.kubeClient.CreateRoleBinding(
-			namespace,
-			everestServiceAccountRoleBinding,
-			everestServiceAccountRole,
-			everestServiceAccount,
-		)
-		if err != nil {
-			return errors.Join(err, errors.New("could not create role binding"))
-		}
+				o.l.Infof("Installing operators into %s namespace", namespace)
+				if err := o.provisionOperators(ctx, namespace, recVer); err != nil {
+					return err
+				}
+				return nil
+			},
+		})
+
+		result = append(result, common.Step{
+			Desc: fmt.Sprintf("Configure RBAC in namespace '%s'", namespace),
+			F: func(ctx context.Context) error {
+				o.l.Info("Creating role for the Everest service account")
+				err := o.kubeClient.CreateRole(namespace, everestServiceAccountRole, o.serviceAccountRolePolicyRules())
+				if err != nil {
+					return errors.Join(err, errors.New("could not create role"))
+				}
+				o.l.Info("Binding role to the Everest Service account")
+				err = o.kubeClient.CreateRoleBinding(
+					namespace,
+					everestServiceAccountRoleBinding,
+					everestServiceAccountRole,
+					everestServiceAccount,
+				)
+				if err != nil {
+					return errors.Join(err, errors.New("could not create role binding"))
+				}
+				return nil
+			},
+		})
 	}
 
-	return nil
+	return result
 }
 
 // runWizard runs installation wizard.
@@ -615,22 +626,34 @@ func (o *Install) createNamespace(ctx context.Context, namespace string) error {
 	return nil
 }
 
-func (o *Install) provisionOLM(ctx context.Context, v *goversion.Version) error {
-	o.l.Info("Installing Operator Lifecycle Manager")
-	if err := o.kubeClient.InstallOLMOperator(ctx, false); err != nil {
-		o.l.Error("failed installing OLM")
-		return err
-	}
-	o.l.Info("OLM has been installed")
-	o.l.Info("Installing Percona OLM Catalog")
+func (o *Install) provisionOLM(v *goversion.Version) []common.Step {
+	result := []common.Step{}
+	result = append(result, common.Step{
+		Desc: "Install Operator Lifecycle Manager",
+		F: func(ctx context.Context) error {
+			o.l.Info("Installing Operator Lifecycle Manager")
+			if err := o.kubeClient.InstallOLMOperator(ctx, false); err != nil {
+				o.l.Error("failed installing OLM")
+				return err
+			}
+			o.l.Info("OLM has been installed")
+			o.l.Info("Installing Percona OLM Catalog")
+			return nil
+		},
+	})
 
-	if err := o.kubeClient.InstallPerconaCatalog(ctx, v); err != nil {
-		o.l.Errorf("failed installing OLM catalog: %v", err)
-		return err
-	}
-	o.l.Info("Percona OLM Catalog has been installed")
-
-	return nil
+	result = append(result, common.Step{
+		Desc: "Install Percona OLM Catalog",
+		F: func(ctx context.Context) error {
+			if err := o.kubeClient.InstallPerconaCatalog(ctx, v); err != nil {
+				o.l.Errorf("failed installing OLM catalog: %v", err)
+				return err
+			}
+			o.l.Info("Percona OLM Catalog has been installed")
+			return nil
+		},
+	})
+	return result
 }
 
 func (o *Install) provisionOperators(ctx context.Context, namespace string, recVer *version.RecommendedVersion) error {
