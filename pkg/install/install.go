@@ -68,8 +68,9 @@ const (
 
 const postInstallMessage = `
 Everest has been successfully installed!
+`
 
-
+const initialPasswordMessage = `
 To view the password for the 'admin' user, run the following command:
 
 everestctl accounts initial-admin-password
@@ -270,13 +271,15 @@ func (o *Install) Run(ctx context.Context) error {
 	if err := common.RunStepsWithSpinner(ctx, installSteps, out); err != nil {
 		return err
 	}
+	fmt.Fprint(os.Stdout, postInstallMessage)
+	fmt.Fprint(os.Stdout, "\n")
 
 	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
 	if err != nil {
 		return errors.Join(err, errors.New("could not check if the admin password is secure"))
 	}
 	if !isAdminSecure {
-		fmt.Fprint(os.Stdout, postInstallMessage)
+		fmt.Fprint(os.Stdout, initialPasswordMessage)
 	}
 	return nil
 }
