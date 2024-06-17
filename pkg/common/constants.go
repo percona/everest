@@ -56,4 +56,6 @@ const (
 	EverestTokenCookie = "everest_token"
 	// KubernetesManagedByLabel is the label used to identify resources managed by Everest.
 	KubernetesManagedByLabel = "app.kubernetes.io/managed-by"
+	// ForegroundDeletionFinalizer is the finalizer used to delete resources in foreground.
+	ForegroundDeletionFinalizer = "foregroundDeletion"
 )

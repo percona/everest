@@ -94,15 +94,20 @@ const ClusterStatusTable = ({
 
           if (task === 'restart') {
             return (
-              <Button onClick={() => onDbClick(row.original)}>{message}</Button>
+              <Button
+                data-testid="update-crd-button"
+                onClick={() => onDbClick(row.original)}
+              >
+                {message}
+              </Button>
             );
           }
 
-          return message;
+          return message || task;
         },
       },
     ],
-    [onDbClick]
+    [dbClusters, onDbClick]
   );
 
   return (

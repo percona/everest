@@ -35,6 +35,8 @@ func NewListCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
 		Example: "everestctl accounts list",
+		Long:    "List all Everest user accounts",
+		Short:   "List all Everest user accounts",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initListViperFlags(cmd)
 			o := &accountscli.ListOptions{}
