@@ -25,9 +25,12 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
+	"github.com/briandowns/spinner"
+	"github.com/fatih/color"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/spf13/cobra"
@@ -44,6 +47,11 @@ import (
 	"github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
+
+type installStep struct {
+	desc string
+	fn   func(context.Context) error
+}
 
 const (
 	// DefaultEverestNamespace is the default namespace managed by everest Everest.
@@ -169,6 +177,11 @@ type (
 	}
 )
 
+var (
+	okStatus   = color.New(color.FgGreen).SprintFunc()("\u2713")           // √
+	failStatus = color.New(color.FgRed, color.Bold).SprintFunc()("\u00D7") // ×
+)
+
 // NewInstall returns a new Install struct.
 func NewInstall(c Config, l *zap.SugaredLogger, cmd *cobra.Command) (*Install, error) {
 	cli := &Install{
@@ -213,35 +226,103 @@ func (o *Install) Run(ctx context.Context) error {
 
 	o.l.Debugf("Everest latest version available: %s", latest)
 	o.l.Debugf("Everest version information %#v", latestMeta)
-	if err := o.provisionOLM(ctx, latest); err != nil {
-		return err
+	// if err := o.provisionOLM(ctx, latest); err != nil {
+	// 	return err
+	// }
+
+	steps := []installStep{
+		{
+			desc: "Provisioning OLM",
+			fn: func(ctx context.Context) error {
+				time.Sleep(5 * time.Second)
+				return nil
+			},
+		},
+		{
+			desc: "Creating Monitoring namespace",
+			fn: func(ctx context.Context) error {
+				time.Sleep(5 * time.Second)
+				return nil
+			},
+		},
+		{
+			desc: "Installing VictoriaMetrics Operator",
+			fn: func(ctx context.Context) error {
+				time.Sleep(5 * time.Second)
+				return nil
+			},
+		},
+		{
+			desc: "Provisioning monitoring stack",
+			fn: func(ctx context.Context) error {
+				time.Sleep(5 * time.Second)
+				return nil
+			},
+		},
+		{
+			desc: "Creating DB Namespaces",
+			fn: func(ctx context.Context) error {
+				time.Sleep(5 * time.Second)
+				return nil
+			},
+		},
+		{
+			desc: "Provisioning Everest Operator",
+			fn: func(ctx context.Context) error {
+				time.Sleep(5 * time.Second)
+				return nil
+			},
+		},
+		{
+			desc: "Provisioning Everest",
+			fn: func(ctx context.Context) error {
+				time.Sleep(5 * time.Second)
+				return errors.New("cannot provision Everest because something failed")
+			},
+		},
 	}
 
-	if err := o.provisionMonitoringStack(ctx); err != nil {
-		return err
+	s := spinner.New(spinner.CharSets[9], 200*time.Millisecond)
+	for _, step := range steps {
+		s.Suffix = " " + step.desc + "..."
+		s.Start()
+		if err := step.fn(ctx); err != nil {
+			s.Stop()
+			fmt.Fprintf(os.Stdout, "%s %s\n", failStatus, step.desc)
+			fmt.Fprintf(os.Stdout, "\t %s\n", err.Error())
+			return nil
+		}
+		s.Stop()
+		fmt.Fprintf(os.Stdout, "%s %s\n", okStatus, step.desc)
 	}
 
-	recVer, err := version.RecommendedVersions(latestMeta)
-	if err != nil {
-		return err
-	}
+	fmt.Fprintf(os.Stdout, postInstallMessage)
 
-	if recVer.EverestOperator == nil {
-		// If there's no recommended version of the operator, install the same version as Everest.
-		recVer.EverestOperator = latest
-	}
+	// if err := o.provisionMonitoringStack(ctx); err != nil {
+	// 	return err
+	// }
 
-	if err := o.provisionEverestComponents(ctx, latest, recVer); err != nil {
-		return err
-	}
+	// recVer, err := version.RecommendedVersions(latestMeta)
+	// if err != nil {
+	// 	return err
+	// }
 
-	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
-	if err != nil {
-		return errors.Join(err, errors.New("could not check if the admin password is secure"))
-	}
-	if !isAdminSecure {
-		fmt.Fprint(os.Stdout, postInstallMessage)
-	}
+	// if recVer.EverestOperator == nil {
+	// 	// If there's no recommended version of the operator, install the same version as Everest.
+	// 	recVer.EverestOperator = latest
+	// }
+
+	// if err := o.provisionEverestComponents(ctx, latest, recVer); err != nil {
+	// 	return err
+	// }
+
+	// isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
+	// if err != nil {
+	// 	return errors.Join(err, errors.New("could not check if the admin password is secure"))
+	// }
+	// if !isAdminSecure {
+	// 	fmt.Fprint(os.Stdout, postInstallMessage)
+	// }
 	return nil
 }
 
