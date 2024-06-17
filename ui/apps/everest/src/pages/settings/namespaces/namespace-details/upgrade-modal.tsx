@@ -11,7 +11,6 @@ const UpgradeModal = ({
   dbType,
   newVersion,
 }: UpgradeModalProps) => {
-  // const [showVersions, setShowVersions] = useState(false);
 
   return (
     <ConfirmDialog
