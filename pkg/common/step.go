@@ -30,7 +30,7 @@ func RunStepsWithSpinner(
 	out io.Writer,
 ) error {
 	s := spinner.New(
-		spinner.CharSets[11],
+		spinner.CharSets[9],
 		150*time.Millisecond,
 		spinner.WithWriter(out),
 	)
