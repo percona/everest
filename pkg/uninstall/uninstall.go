@@ -284,7 +284,7 @@ func (u *Uninstall) deleteDBs(ctx context.Context) error {
 
 func (u *Uninstall) deleteNamespaces(ctx context.Context, namespaces []string) error {
 	for _, ns := range namespaces {
-		u.l.Infof("Trying to deleting namespace '%s'", ns)
+		u.l.Infof("Trying to delete namespace '%s'", ns)
 		if err := u.kubeClient.DeleteNamespace(ctx, ns); err != nil {
 			if k8serrors.IsNotFound(err) {
 				u.l.Infof("Namespace '%s' was not found", ns)
