@@ -21,16 +21,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
-	"github.com/briandowns/spinner"
-	"github.com/fatih/color"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/spf13/cobra"
@@ -47,11 +45,6 @@ import (
 	"github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
-
-type installStep struct {
-	desc string
-	fn   func(context.Context) error
-}
 
 const (
 	// DefaultEverestNamespace is the default namespace managed by everest Everest.
@@ -164,6 +157,10 @@ type (
 		Version string `mapstructure:"version"`
 
 		Operator OperatorConfig
+
+		// If set, enables logging for the installation process.
+		// Otherwise, it uses the user-friendly terimnal UI (animations, spinners, etc.)
+		EnableLogging bool `mapstructure:"logs"`
 	}
 
 	// OperatorConfig identifies which operators shall be installed.
@@ -177,17 +174,15 @@ type (
 	}
 )
 
-var (
-	okStatus   = color.New(color.FgGreen).SprintFunc()("\u2713")           // √
-	failStatus = color.New(color.FgRed, color.Bold).SprintFunc()("\u00D7") // ×
-)
-
 // NewInstall returns a new Install struct.
 func NewInstall(c Config, l *zap.SugaredLogger, cmd *cobra.Command) (*Install, error) {
 	cli := &Install{
 		config: c,
 		cmd:    cmd,
 		l:      l.With("component", "install"),
+	}
+	if !c.EnableLogging {
+		cli.l = zap.NewNop().Sugar()
 	}
 
 	k, err := kubernetes.New(c.KubeconfigPath, cli.l)
@@ -214,115 +209,75 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	meta, err := o.versionService.GetEverestMetadata(ctx)
-	if err != nil {
-		return err
-	}
+	var err error
+	installSteps := []common.Step{}
 
-	latest, latestMeta, err := o.latestVersion(meta)
-	if err != nil {
-		return err
-	}
+	var (
+		meta       *versionpb.MetadataResponse
+		latest     *goversion.Version
+		latestMeta *versionpb.MetadataVersion
+		recVer     *version.RecommendedVersion
+	)
+	installSteps = append(installSteps, common.Step{
+		Desc: "Fetch version metadata",
+		F: func(ctx context.Context) error {
+			meta, err = o.versionService.GetEverestMetadata(ctx)
+			if err != nil {
+				return errors.Join(err, errors.New("could not fetch version metadata"))
+			}
+			latest, latestMeta, err = o.latestVersion(meta)
+			if err != nil {
+				return err
+			}
+			recVer, err = version.RecommendedVersions(latestMeta)
+			if err != nil {
+				return err
+			}
+			if recVer.EverestOperator == nil {
+				// If there's no recommended version of the operator, install the same version as Everest.
+				recVer.EverestOperator = latest
+			}
+			return nil
+		},
+	})
 
 	o.l.Debugf("Everest latest version available: %s", latest)
 	o.l.Debugf("Everest version information %#v", latestMeta)
-	// if err := o.provisionOLM(ctx, latest); err != nil {
-	// 	return err
-	// }
 
-	steps := []installStep{
-		{
-			desc: "Provisioning OLM",
-			fn: func(ctx context.Context) error {
-				time.Sleep(5 * time.Second)
-				return nil
-			},
+	installSteps = append(installSteps, common.Step{
+		Desc: "Provision Operator Lifecycle Manager",
+		F: func(ctx context.Context) error {
+			return o.provisionOLM(ctx, latest)
 		},
-		{
-			desc: "Creating Monitoring namespace",
-			fn: func(ctx context.Context) error {
-				time.Sleep(5 * time.Second)
-				return nil
-			},
+	})
+
+	installSteps = append(installSteps, common.Step{
+		Desc: "Provision Monitoring Stack",
+		F:    o.provisionMonitoringStack,
+	})
+
+	installSteps = append(installSteps, common.Step{
+		Desc: "Provision Everest Components",
+		F: func(ctx context.Context) error {
+			return o.provisionEverestComponents(ctx, latest, recVer)
 		},
-		{
-			desc: "Installing VictoriaMetrics Operator",
-			fn: func(ctx context.Context) error {
-				time.Sleep(5 * time.Second)
-				return nil
-			},
-		},
-		{
-			desc: "Provisioning monitoring stack",
-			fn: func(ctx context.Context) error {
-				time.Sleep(5 * time.Second)
-				return nil
-			},
-		},
-		{
-			desc: "Creating DB Namespaces",
-			fn: func(ctx context.Context) error {
-				time.Sleep(5 * time.Second)
-				return nil
-			},
-		},
-		{
-			desc: "Provisioning Everest Operator",
-			fn: func(ctx context.Context) error {
-				time.Sleep(5 * time.Second)
-				return nil
-			},
-		},
-		{
-			desc: "Provisioning Everest",
-			fn: func(ctx context.Context) error {
-				time.Sleep(5 * time.Second)
-				return errors.New("cannot provision Everest because something failed")
-			},
-		},
+	})
+
+	var out io.Writer = os.Stdout
+	if o.config.EnableLogging {
+		out = io.Discard
+	}
+	if err := common.RunStepsWithSpinner(ctx, installSteps, out); err != nil {
+		return err
 	}
 
-	s := spinner.New(spinner.CharSets[9], 200*time.Millisecond)
-	for _, step := range steps {
-		s.Suffix = " " + step.desc + "..."
-		s.Start()
-		if err := step.fn(ctx); err != nil {
-			s.Stop()
-			fmt.Fprintf(os.Stdout, "%s %s\n", failStatus, step.desc)
-			fmt.Fprintf(os.Stdout, "\t %s\n", err.Error())
-			return nil
-		}
-		s.Stop()
-		fmt.Fprintf(os.Stdout, "%s %s\n", okStatus, step.desc)
+	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
+	if err != nil {
+		return errors.Join(err, errors.New("could not check if the admin password is secure"))
 	}
-
-	fmt.Fprintf(os.Stdout, postInstallMessage)
-
-	// if err := o.provisionMonitoringStack(ctx); err != nil {
-	// 	return err
-	// }
-
-	// recVer, err := version.RecommendedVersions(latestMeta)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// if recVer.EverestOperator == nil {
-	// 	// If there's no recommended version of the operator, install the same version as Everest.
-	// 	recVer.EverestOperator = latest
-	// }
-
-	// if err := o.provisionEverestComponents(ctx, latest, recVer); err != nil {
-	// 	return err
-	// }
-
-	// isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
-	// if err != nil {
-	// 	return errors.Join(err, errors.New("could not check if the admin password is secure"))
-	// }
-	// if !isAdminSecure {
-	// 	fmt.Fprint(os.Stdout, postInstallMessage)
-	// }
+	if !isAdminSecure {
+		fmt.Fprint(os.Stdout, postInstallMessage)
+	}
 	return nil
 }
 
