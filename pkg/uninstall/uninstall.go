@@ -74,6 +74,8 @@ func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
 }
 
 // Run runs the cluster command.
+//
+//nolint:cyclop
 func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
 	if abort, err := u.runWizard(); err != nil {
 		return err
@@ -335,7 +337,7 @@ func (u *Uninstall) deleteDBNamespaces(ctx context.Context) error {
 	return u.deleteNamespaces(ctx, namespaces)
 }
 
-func (u *Uninstall) deleteBackupStorages(ctx context.Context) error { //nolint:dupl
+func (u *Uninstall) deleteBackupStorages(ctx context.Context) error {
 	u.l.Info("Trying to delete backup storages")
 	storages, err := u.kubeClient.ListBackupStorages(ctx, common.SystemNamespace)
 	if client.IgnoreNotFound(err) != nil {
@@ -373,7 +375,7 @@ func (u *Uninstall) deleteBackupStorages(ctx context.Context) error { //nolint:d
 	})
 }
 
-func (u *Uninstall) deleteMonitoringConfigs(ctx context.Context) error { //nolint:dupl
+func (u *Uninstall) deleteMonitoringConfigs(ctx context.Context) error {
 	u.l.Info("Trying to delete monitoring configs")
 	monitoringConfigs, err := u.kubeClient.ListMonitoringConfigs(ctx, install.MonitoringNamespace)
 	if client.IgnoreNotFound(err) != nil {
