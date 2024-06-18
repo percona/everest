@@ -84,7 +84,7 @@ func getUpgradePreflightCheckResultForDatabase(
 			Name:        pointer.To(database.GetName()),
 			PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskUpgradeEngine),
 			Message: pointer.ToString(
-				fmt.Sprintf("Upgrade DB version to at least %s", minReqVer)),
+				fmt.Sprintf("Upgrade DB version to %s or higher", minReqVer)),
 		}, nil
 	}
 
