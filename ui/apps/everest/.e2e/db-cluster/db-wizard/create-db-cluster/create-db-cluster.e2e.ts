@@ -233,7 +233,7 @@ test.describe('DB Cluster creation', () => {
     await moveForward(page);
     await moveForward(page);
     await expect(
-      page.getByText('You don’t have any backup schedules yet.')
+      page.getByText('You currently do not have any backup schedules set up.')
     ).toBeVisible();
     const enabledPitrCheckbox = page
       .getByTestId('switch-input-pitr-enabled-label')

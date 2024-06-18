@@ -17,7 +17,7 @@ export const Messages = {
   createSchedule: {
     headerMessage: 'Create backup schedule',
     subhead:
-      'Create a task that takes regular backups of this database, according to the schedule that you specify.',
+      'Create a task that regularly backs up this database according to your specified schedule.',
     submitMessage: 'Create',
   },
   editSchedule: {
