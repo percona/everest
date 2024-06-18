@@ -43,9 +43,9 @@ import { findDbAndClickActions } from '../../../utils/db-clusters-list';
 import { waitForInitializingState } from '../../../utils/table';
 
 test.describe('DB Cluster creation', () => {
-  // Johannesburg is UTC+2, with ou without DST
+  // IST is UTC+5h30, with or without DST
   test.use({
-    timezoneId: 'Africa/Johannesburg',
+    timezoneId: 'IST',
   });
 
   let engineVersions = {
@@ -218,8 +218,8 @@ test.describe('DB Cluster creation', () => {
     expect(addedCluster?.spec.engine.storage.class).toBe(storageClasses[0]);
     expect(addedCluster?.spec.backup.schedules[0].retentionCopies).toBe(1);
     // Verify timezone conversion was applied to the schedule cron
-    // Day 10, 1h05 in Johannesburg timezone is day 9, 23h05 UTC
-    expect(addedCluster?.spec.backup.schedules[0].schedule).toBe('5 23 9 * *');
+    // Day 10, 1h05 in IST timezone is day 9, 19h35 UTC
+    expect(addedCluster?.spec.backup.schedules[0].schedule).toBe('35 19 9 * *');
   });
 
   test('PITR should be disabled when backups has no schedules checked', async ({
