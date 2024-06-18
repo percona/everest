@@ -107,7 +107,7 @@ func TestGetUpgradePreflightChecks(t *testing.T) {
 		dbResult := (*result.Databases)[0]
 		assert.Equal(t, "test-db", pointer.Get(dbResult.Name))
 		assert.Equal(t, OperatorUpgradePreflightForDatabasePendingTaskUpgradeEngine, pointer.Get(dbResult.PendingTask))
-		assert.Equal(t, "Upgrade DB version to 0.5.0", pointer.Get(dbResult.Message))
+		assert.Equal(t, "Upgrade DB version to at least 0.5.0", pointer.Get(dbResult.Message))
 	})
 
 	t.Run("pending CRVersion update", func(t *testing.T) {
