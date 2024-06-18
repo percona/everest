@@ -10,26 +10,35 @@ info:
     
     The token can be obtained by using `everestctl token reset` which resets the token and prints it to the screen.
 tags:
-  - name: k8s
+  - name: Kubernetes
     description: Everything related to the Kubernetes Clusters
-  - name: databaseCluster
+  - name: Database Cluster
     description: Everything related to the Database Clusters
-  - name: databaseEngine
+  - name: Database Engine
     description: Everything related to the Database Engines
-  - name: databaseClusterRestore
+  - name: Restore
     description: Everything related to the Database Cluster Restores
-  - name: databaseClusterBackup
+  - name: Backup
     description: Everything related to the Database Cluster Backups
-  - name: backupStorage
+  - name: Backup Storage
     description: Everything related to the Backup storage
+  - name: Monitoring
+    description: Everything related to monitoring
+  - name: Authentication
+    description: Everything related to authentication
+  - name: General info
+    description: General information about the Everest installation
+  - name: Operators
+    description: Everything related to the Database Engine Operators
 security:
   - BearerAuth: []
 paths:
   '/session':
     post:
+      tags:
+        - Authentication
       security: []
-      summary: Create a new session
-      description: Create a new session
+      summary: Create new login session
       operationId: createSession
       responses:
         '200':
@@ -62,6 +71,8 @@ paths:
               $ref: '#/components/schemas/UserCredentials'
   '/namespaces':
     get:
+      tags:
+        - General info
       summary: Get all namespaces managed by Everest
       description: Get all namespaces managed by Everest
       operationId: listNamespaces
@@ -74,6 +85,8 @@ paths:
                 $ref: '#/components/schemas/NamespaceList'
   '/version':
     get:
+      tags:
+        - General info
       summary: Get Everest API Server version info
       description: Get Everest API Server version info
       operationId: versionInfo
@@ -86,6 +99,8 @@ paths:
                 $ref: '#/components/schemas/Version'
   '/settings':
     get:
+      tags:
+        - General info
       security: []
       summary: Get Everest global settings
       description: Get Everest global settings
@@ -100,9 +115,10 @@ paths:
   '/resources':
     get:
       tags:
-        - k8s
-      summary: Get the capacity and available resources of a kubernetes cluster
-      description: Get the capacity and available resources of a kubernetes cluster
+        - Kubernetes
+      summary: Cluster resources
+      description: |
+        This API gets the capacity and available resources of the Kubernetes cluster.
       operationId: getKubernetesClusterResources
       responses:
         '200':
@@ -126,9 +142,10 @@ paths:
   '/cluster-info':
     get:
       tags:
-        - k8s
-      summary: Get the cluster type and storage classes of a kubernetes cluster
-      description: Get the cluster type and storage classes of a kubernetes cluster
+        - Kubernetes
+      summary: Cluster info
+      description: |
+        This API gets the type of the cluster type and the storage class used by the cluster.
       operationId: getKubernetesClusterInfo
       responses:
         '200':
@@ -152,9 +169,10 @@ paths:
   '/namespaces/{namespace}/database-clusters':
     post:
       tags:
-        - databaseCluster
-      summary: Create a database cluster
-      description: Create a database cluster
+        - Database Cluster
+      summary: Create database cluster
+      description: |
+        This API creates a new database cluster in the specified namespace.
       operationId: createDatabaseCluster
       parameters:
         - name: namespace
@@ -203,9 +221,10 @@ paths:
               $ref: '#/components/schemas/DatabaseCluster'
     get:
       tags:
-        - databaseCluster
-      summary: List of the created database clusters
-      description: List of the created database clusters
+        - Database Cluster
+      summary: List database clusters
+      description: |
+        This API lists all database clusters in the specified namespace.
       operationId: listDatabaseClusters
       parameters:
         - name: namespace
@@ -236,9 +255,10 @@ paths:
   '/namespaces/{namespace}/database-clusters/{name}':
     get:
       tags:
-        - databaseCluster
-      summary: Get the specified database cluster
-      description: Get the specified database cluster
+        - Database Cluster
+      summary: Get database cluster
+      description: |
+        This API gets the specified database cluster specified by the `name` and `namespace`.
       operationId: getDatabaseCluster
       parameters:
         - name: namespace
@@ -274,9 +294,10 @@ paths:
                 $ref: '#/components/schemas/Error'
     put:
       tags:
-        - databaseCluster
-      summary: Replace the specified database cluster
-      description: Replace the specified database cluster
+        - Database Cluster
+      summary: Update the specified database cluster
+      description: |
+        This API updates a database cluster specified by the `name` and `namespace`.
       operationId: updateDatabaseCluster
       parameters:
         - name: namespace
@@ -319,9 +340,10 @@ paths:
               $ref: '#/components/schemas/DatabaseCluster'
     delete:
       tags:
-        - databaseCluster
-      summary: Delete the specified database cluster
-      description: Delete the specified database cluster
+        - Database Cluster
+      summary: Delete database cluster
+      description: |
+        This API deletes the specified database cluster specified by the `name` and `namespace`.
       operationId: deleteDatabaseCluster
       parameters:
         - name: namespace
@@ -363,7 +385,7 @@ paths:
   '/namespaces/{namespace}/database-clusters/{name}/backups':
     get:
       tags:
-        - databaseClusterBackup
+        - Backup
       summary: List of the created database cluster backups
       description: List of the created database cluster backups
       operationId: listDatabaseClusterBackups
@@ -402,7 +424,7 @@ paths:
   '/namespaces/{namespace}/database-clusters/{name}/restores':
     get:
       tags:
-        - databaseClusterRestore
+        - Restore
       summary: List of the created database cluster restores
       description: List of the created database cluster restores
       operationId: listDatabaseClusterRestores
@@ -441,9 +463,10 @@ paths:
   '/namespaces/{namespace}/database-clusters/{name}/credentials':
     get:
       tags:
-        - databaseCluster
-      summary: Get the specified database cluster credentials
-      description: Get the specified database cluster credentials
+        - Database Cluster
+      summary: Get database cluster credentials
+      description: |
+        This API gets the credentials for the database cluster specified by the `name` and `namespace`.
       operationId: getDatabaseClusterCredentials
       parameters:
         - name: namespace
@@ -480,9 +503,10 @@ paths:
   '/namespaces/{namespace}/database-clusters/{name}/pitr':
     get:
       tags:
-        - databaseCluster
-      summary: Get the Point-in-Time related data for the specified database cluster
-      description: Get the Point-in-Time related data for the specified database cluster
+        - Database Cluster
+      summary: Get the Point-in-Time info
+      description: |
+        This API gets the Point-in-Time info for the database cluster specified by the `name` and `namespace`.
       operationId: getDatabaseClusterPitr
       parameters:
         - name: namespace
@@ -519,9 +543,10 @@ paths:
   '/namespaces/{namespace}/database-clusters/{name}/components':
     get:
       tags:
-        - databaseCluster
-      summary: Get the components related data for the specified database cluster
-      description: Get the components related data for the specified database cluster
+        - Database Cluster
+      summary: Get database cluster components
+      description: |
+        This API gets the various components of the database cluster specified by the `name` and `namespace`.
       operationId: getDatabaseClusterComponents
       parameters:
         - name: namespace
@@ -558,7 +583,7 @@ paths:
   '/namespaces/{namespace}/database-engines':
     get:
       tags:
-        - databaseEngine
+        - Database Engine
       summary: List of the available database engines
       description: List of available database engines
       operationId: listDatabaseEngines
@@ -591,7 +616,7 @@ paths:
   '/namespaces/{namespace}/database-engines/{name}':
     get:
       tags:
-        - databaseEngine
+        - Database Engine
       summary: Get the specified database engine
       description: Get the specified database engine
       operationId: getDatabaseEngine
@@ -629,7 +654,7 @@ paths:
                 $ref: '#/components/schemas/Error'
     put:
       tags:
-        - databaseEngine
+        - Database Engine
       summary: Update the specified database engine
       description: Update the specified database engine
       operationId: updateDatabaseEngine
@@ -675,7 +700,7 @@ paths:
   '/namespaces/{namespace}/database-engines/{name}/operator-version/preflight':
     get:
       tags:
-        - getOperatorUpgradePreflight
+        - Operators
       summary: Get the preflight check results for upgrading the specified database engine operator
       description: Get the preflight check results for upgrading the specified database engine operator
       operationId: getOperatorUpgradePreflight
@@ -720,7 +745,7 @@ paths:
   '/namespaces/{namespace}/database-engines/{name}/operator-version':
     get:
       tags:
-        - getOperatorVersion
+        - Operators
       summary: Get the operator version and check results for the specified database engine
       description: Get the operator version and check results for the specified database engine
       operationId: getOperatorVersion
@@ -758,8 +783,8 @@ paths:
                 $ref: '#/components/schemas/Error'
     put:
       tags:
-        - upgradeDatabaseEngineOperator
-      summary: Update the specified database engine
+        - Operators
+      summary: Upgrade the specified database engine
       description: Upgrade the specified database engine to a desired version
       operationId: upgradeDatabaseEngineOperator
       parameters:
@@ -800,7 +825,7 @@ paths:
   '/namespaces/{namespace}/database-cluster-restores':
     post:
       tags:
-        - databaseClusterRestore
+        - Restore
       summary: Create a database cluster restore
       description: Create a database cluster restore
       operationId: createDatabaseClusterRestore
@@ -852,7 +877,7 @@ paths:
   '/namespaces/{namespace}/database-cluster-restores/{name}':
     get:
       tags:
-        - databaseClusterRestore
+        - Restore
       summary: Returns the specified cluster restore
       description: Returns the specified cluster restore
       operationId: getDatabaseClusterRestore
@@ -890,7 +915,7 @@ paths:
                 $ref: '#/components/schemas/Error'
     put:
       tags:
-        - databaseClusterRestore
+        - Restore
       summary: Replace the specified cluster restore
       description: Replace the specified cluster restore
       operationId: updateDatabaseClusterRestore
@@ -941,7 +966,7 @@ paths:
               $ref: '#/components/schemas/DatabaseClusterRestore'
     delete:
       tags:
-        - databaseClusterRestore
+        - Restore
       summary: Delete the specified cluster restore
       description: Delete the specified cluster restore
       operationId: deleteDatabaseClusterRestore
@@ -980,7 +1005,7 @@ paths:
   '/namespaces/{namespace}/database-cluster-backups':
     post:
       tags:
-        - databaseClusterBackup
+        - Backup
       summary: Create a database cluster backup
       description: Create a database cluster backup
       operationId: createDatabaseClusterBackup
@@ -1032,7 +1057,7 @@ paths:
   '/namespaces/{namespace}/database-cluster-backups/{name}':
     get:
       tags:
-        - databaseClusterBackup
+        - Backup
       summary: Returns the specified cluster backup
       description: Returns the specified cluster backup
       operationId: getDatabaseClusterBackup
@@ -1071,7 +1096,7 @@ paths:
                 $ref: '#/components/schemas/Error'
     delete:
       tags:
-        - databaseClusterBackup
+        - Backup
       summary: Delete the specified cluster backup
       description: Delete the specified cluster backup
       operationId: deleteDatabaseClusterBackup
@@ -1115,7 +1140,7 @@ paths:
   '/backup-storages':
     post:
       tags:
-        - backupStorage
+        - Backup Storage
       summary: Create a new backup storage object
       description: |
         Create a new backup storage object.
@@ -1170,7 +1195,7 @@ paths:
               $ref: '#/components/schemas/CreateBackupStorageParams'
     get:
       tags:
-        - backupStorage
+        - Backup Storage
       summary: List of the created backup storages
       description: List of the created backup storages
       operationId: listBackupStorages
@@ -1196,7 +1221,7 @@ paths:
   '/backup-storages/{name}':
     get:
       tags:
-        - backupStorage
+        - Backup Storage
       summary: Get the specified backup storage
       description: Get the specified backup storage
       operationId: getBackupStorage
@@ -1228,7 +1253,7 @@ paths:
                 $ref: '#/components/schemas/Error'
     patch:
       tags:
-        - backupStorage
+        - Backup Storage
       summary: Partial update of the specified backup storage
       description: Partial update of the specified backup storage. Updates only the specified fields.
       operationId: updateBackupStorage
@@ -1267,7 +1292,7 @@ paths:
               $ref: '#/components/schemas/UpdateBackupStorageParams'
     delete:
       tags:
-        - backupStorage
+        - Backup Storage
       summary: Delete the specified backup storage
       description: Delete the specified backup storage
       operationId: deleteBackupStorage
@@ -1296,7 +1321,7 @@ paths:
   '/monitoring-instances':
     post:
       tags:
-        - monitoringInstances
+        - Monitoring
       summary: Create a new monitoring instance object
       description: |
         A monitoring instance object requires `type` to be set.
@@ -1331,7 +1356,7 @@ paths:
               $ref: '#/components/schemas/MonitoringInstanceCreateParams'
     get:
       tags:
-        - monitoringInstances
+        - Monitoring
       summary: List of the created monitoring instances
       description: List of the created monitoring instances
       operationId: listMonitoringInstances
@@ -1357,7 +1382,7 @@ paths:
   '/monitoring-instances/{name}':
     get:
       tags:
-        - monitoringInstances
+        - Monitoring
       summary: Get the specified monitoring instance
       description: Get the specified monitoring instance
       operationId: getMonitoringInstance
@@ -1395,7 +1420,7 @@ paths:
                 $ref: '#/components/schemas/Error'
     patch:
       tags:
-        - monitoringInstances
+        - Monitoring
       summary: Update the specified Monitoring instance
       description: Update the specified Monitoring instance
       operationId: updateMonitoringInstance
@@ -1440,7 +1465,7 @@ paths:
               $ref: '#/components/schemas/MonitoringInstanceUpdateParams'
     delete:
       tags:
-        - monitoringInstances
+        - Monitoring
       summary: Delete the specified Monitoring instance
       description: Delete the specified Monitoring instance
       operationId: deleteMonitoringInstance
