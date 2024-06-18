@@ -22,6 +22,7 @@ func NewInitialAdminPasswdCommand(l *zap.SugaredLogger) *cobra.Command {
 		Use:     "initial-admin-password",
 		Example: "everestctl accounts initial-admin-password",
 		Long:    "Get the initial admin password for Everest",
+		Short:   "Get the initial admin password for Everest",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			viper.BindEnv("kubeconfig")                                     //nolint:errcheck,gosec
 			viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec

@@ -32,7 +32,10 @@ export const getOperatorUpgradePreflight = async (
   targetVersion: string
 ) => {
   const response = await api.get<OperatorUpgradePreflightPayload>(
-    `/namespaces/${namespace}/database-engines/${dbEngineName}/operator-version/preflight?targetVersion=${targetVersion}`
+    `/namespaces/${namespace}/database-engines/${dbEngineName}/operator-version/preflight?targetVersion=${targetVersion}`,
+    {
+      disableNotifications: true,
+    }
   );
 
   return response.data;
@@ -47,6 +50,20 @@ export const upgradeOperator = async (
     `/namespaces/${namespace}/database-engines/${dbEngineName}/operator-version/`,
     {
       targetVersion,
+    }
+  );
+
+  return response.data;
+};
+
+export const getOperatorVersions = async (
+  namespace: string,
+  dbEngineName: string
+) => {
+  const response = await api.get<OperatorUpgradePreflightPayload>(
+    `/namespaces/${namespace}/database-engines/${dbEngineName}/operator-version`,
+    {
+      disableNotifications: true,
     }
   );
 

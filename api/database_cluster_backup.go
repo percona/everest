@@ -31,12 +31,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/common"
 )
 
 const (
 	databaseClusterBackupKind = "databaseclusterbackups"
-
-	foregroundDeletionFinalizer = "foregroundDeletion"
 )
 
 //nolint:gochecknoglobals
@@ -117,7 +116,7 @@ func (e *EverestServer) ensureBackupStorageProtection(ctx context.Context, backu
 			return err
 		}
 		controllerutil.AddFinalizer(backup, everestv1alpha1.DBBackupStorageProtectionFinalizer)
-		controllerutil.AddFinalizer(backup, foregroundDeletionFinalizer)
+		controllerutil.AddFinalizer(backup, common.ForegroundDeletionFinalizer)
 		_, err = e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
 		return err
 	},
@@ -132,7 +131,7 @@ func (e *EverestServer) ensureBackupForegroundDeletion(ctx context.Context, back
 		if err != nil {
 			return err
 		}
-		controllerutil.AddFinalizer(backup, foregroundDeletionFinalizer)
+		controllerutil.AddFinalizer(backup, common.ForegroundDeletionFinalizer)
 		_, err = e.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
 		return err
 	},

@@ -29,6 +29,7 @@ export const BACKUP_STATE_TO_STATUS: Record<string, BackupStatus> = {
   Running: BackupStatus.IN_PROGRESS,
   Failed: BackupStatus.FAILED,
   Succeeded: BackupStatus.OK,
+  Deleting: BackupStatus.DELETING,
   waiting: BackupStatus.IN_PROGRESS,
   requested: BackupStatus.IN_PROGRESS,
   rejected: BackupStatus.FAILED,
