@@ -31,13 +31,21 @@ const backupScheduleFormValuesToDbClusterPayload = (
     weekDay,
   });
 
-  const backupSchedule = cronConverter(originalSchedule, Intl.DateTimeFormat().resolvedOptions().timeZone, 'UTC');
+  const backupSchedule = cronConverter(
+    originalSchedule,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+    'UTC'
+  );
   let schedulesPayload: Schedule[] = [];
   if (mode === 'new') {
     schedulesPayload = [
       ...(dbCluster.spec.backup?.schedules || []).map((schedule) => ({
         ...schedule,
-        schedule: cronConverter(schedule.schedule, Intl.DateTimeFormat().resolvedOptions().timeZone, 'UTC'),
+        schedule: cronConverter(
+          schedule.schedule,
+          Intl.DateTimeFormat().resolvedOptions().timeZone,
+          'UTC'
+        ),
       })),
       {
         enabled: true,
@@ -53,10 +61,16 @@ const backupScheduleFormValuesToDbClusterPayload = (
   }
 
   if (mode === 'edit') {
-    const newSchedulesArray = (dbCluster?.spec?.backup?.schedules || []).map((schedule) => ({
-      ...schedule,
-      schedule: cronConverter(schedule.schedule, Intl.DateTimeFormat().resolvedOptions().timeZone, 'UTC'),
-    }));
+    const newSchedulesArray = (dbCluster?.spec?.backup?.schedules || []).map(
+      (schedule) => ({
+        ...schedule,
+        schedule: cronConverter(
+          schedule.schedule,
+          Intl.DateTimeFormat().resolvedOptions().timeZone,
+          'UTC'
+        ),
+      })
+    );
     const editedScheduleIndex = newSchedulesArray?.findIndex(
       (item) => item.name === scheduleName
     );

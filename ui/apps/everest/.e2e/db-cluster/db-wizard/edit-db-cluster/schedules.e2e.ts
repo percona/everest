@@ -97,7 +97,13 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     ).toBeVisible();
     await goToStep(page, 'backups');
 
-    await addScheduleInDbWizard(page, { frequency: 'week', weekDay: 'Tuesdays', hour: '2', minute: '15', amPm: 'AM' });
+    await addScheduleInDbWizard(page, {
+      frequency: 'week',
+      weekDay: 'Tuesdays',
+      hour: '2',
+      minute: '15',
+      amPm: 'AM',
+    });
 
     // Go to Advanced Configuration step
     await moveForward(page);
@@ -121,7 +127,12 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     expect(await page.getByText('Weekly on Tuesdays at 2:15 AM')).toBeVisible();
     await page.getByTestId('menu-button').click();
     await page.getByTestId('schedule-menu-item').click();
-    await fillScheduleModalForm(page, { frequency: 'day', hour: '12', minute: '00', amPm: 'AM' });
+    await fillScheduleModalForm(page, {
+      frequency: 'day',
+      hour: '12',
+      minute: '00',
+      amPm: 'AM',
+    });
     await page.getByTestId('form-dialog-create').click();
     expect(await page.getByText('Daily at 12:00 AM')).toBeVisible();
   });
