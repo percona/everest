@@ -43,6 +43,11 @@ import { findDbAndClickActions } from '../../../utils/db-clusters-list';
 import { waitForInitializingState } from '../../../utils/table';
 
 test.describe('DB Cluster creation', () => {
+  // IST is UTC+5h30, with or without DST
+  test.use({
+    timezoneId: 'IST',
+  });
+
   let engineVersions = {
     pxc: [],
     psmdb: [],
@@ -148,7 +153,7 @@ test.describe('DB Cluster creation', () => {
     // Test the mechanism for default number of nodes
     await page.getByTestId('button-edit-preview-basic-information').click();
     // Here we test that version wasn't reset to default
-    await expect(page.getByText('Version: 5.0.7-6')).toBeVisible();
+    await expect(page.getByText('Version: 6.0.4-3')).toBeVisible();
 
     // Make sure name doesn't change when we go back to first step
     expect(await page.getByTestId('text-input-db-name').inputValue()).toBe(
@@ -212,6 +217,9 @@ test.describe('DB Cluster creation', () => {
     // ]);
     expect(addedCluster?.spec.engine.storage.class).toBe(storageClasses[0]);
     expect(addedCluster?.spec.backup.schedules[0].retentionCopies).toBe(1);
+    // Verify timezone conversion was applied to the schedule cron
+    // Day 10, 1h05 in IST timezone is day 9, 19h35 UTC
+    expect(addedCluster?.spec.backup.schedules[0].schedule).toBe('35 19 9 * *');
   });
 
   test('PITR should be disabled when backups has no schedules checked', async ({
@@ -225,7 +233,7 @@ test.describe('DB Cluster creation', () => {
     await moveForward(page);
     await moveForward(page);
     await expect(
-      page.getByText('You don’t have any backup schedules yet.')
+      page.getByText('You currently do not have any backup schedules set up.')
     ).toBeVisible();
     const enabledPitrCheckbox = page
       .getByTestId('switch-input-pitr-enabled-label')

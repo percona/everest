@@ -30,7 +30,9 @@ import (
 // NewConfigureCommand returns the command to configure OIDC.
 func NewConfigureCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "configure",
+		Use:   "configure",
+		Long:  "Configure OIDC settings",
+		Short: "Configure OIDC settings",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initOIDCViperFlags(cmd)
 			c, err := parseOIDCConfig()

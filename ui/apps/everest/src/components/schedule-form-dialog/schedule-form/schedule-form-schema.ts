@@ -21,6 +21,7 @@ import { rfc_123_schema } from 'utils/common-validation';
 import { timeSelectionSchemaObject } from '../../time-selection/time-selection-schema.ts';
 import { Schedule } from 'shared-types/dbCluster.types';
 import { getCronExpressionFromFormValues } from '../../time-selection/time-selection.utils';
+import { sameScheduleFunc } from '../schedule-form-dialog.utils';
 
 export const storageLocationZodObject = z
   .string()
@@ -54,7 +55,7 @@ export const storageLocationScheduleFormSchema = (
   };
 };
 
-export const schema = (schedules: Schedule[], mode?: 'edit' | 'new') => {
+export const schema = (schedules: Schedule[], mode: 'edit' | 'new') => {
   const schedulesNamesList = schedules.map((item) => item?.name);
   return z
     .object({
@@ -94,7 +95,10 @@ export const schema = (schedules: Schedule[], mode?: 'edit' | 'new') => {
       ...storageLocationScheduleFormSchema('scheduledBackups'),
     })
     .superRefine(
-      ({ selectedTime, hour, minute, onDay, weekDay, amPm }, ctx) => {
+      (
+        { selectedTime, hour, minute, onDay, weekDay, amPm, scheduleName },
+        ctx
+      ) => {
         const currentSchedule = getCronExpressionFromFormValues({
           selectedTime,
           amPm,
@@ -103,8 +107,11 @@ export const schema = (schedules: Schedule[], mode?: 'edit' | 'new') => {
           onDay,
           weekDay,
         });
-        const sameSchedule = schedules.find(
-          (item) => item.schedule === currentSchedule
+        const sameSchedule = sameScheduleFunc(
+          schedules,
+          mode,
+          currentSchedule,
+          scheduleName
         );
         if (sameSchedule) {
           ctx.addIssue({

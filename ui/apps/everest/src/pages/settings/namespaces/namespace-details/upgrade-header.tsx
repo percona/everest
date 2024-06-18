@@ -4,44 +4,70 @@ import { UpgradeHeaderProps } from './types';
 import { DbEngineStatus } from 'shared-types/dbEngines.types';
 import { Messages } from './messages';
 
-const upgradeMessage = (pendingTasks: boolean, dbType: DbEngineType) => {
-  return `A new version of the ${dbType} operator is available. ${
-    pendingTasks ? 'Start upgrading by performing all the pending tasks.' : ''
-  }`;
+const upgradeMessage = (
+  dbType: DbEngineType,
+  isUpToDate: boolean,
+  pendingTasks: boolean,
+  hasPostUpgradeTasks: boolean,
+  targetVersion: string
+) => {
+  if (isUpToDate) {
+    if (hasPostUpgradeTasks) {
+      return 'Complete the upgrade by completing the post-upgrade tasks.';
+    }
+  } else {
+    return `Version ${targetVersion} of the ${dbType} operator is available. ${
+      pendingTasks ? 'Start upgrading by performing all the pending tasks.' : ''
+    }`;
+  }
 };
 
 const UpgradeHeader = ({
   onUpgrade,
   engine,
   preflightPayload,
+  targetVersion,
 }: UpgradeHeaderProps) => {
+  const isUpToDate = engine.pendingOperatorUpgrades?.length === 0;
+
   if (engine.status === DbEngineStatus.UPGRADING) {
     return (
       <Typography variant="body1">{Messages.upgradingOperator}</Typography>
     );
   }
 
-  if (!preflightPayload?.databases) {
+  if (isUpToDate && !preflightPayload?.databases?.length) {
     return null;
   }
 
-  const pendingTasks = !!preflightPayload.databases.filter(
-    (db) => db.pendingTask !== 'ready'
+  const pendingTasks = !!(preflightPayload?.databases || []).filter(
+    (db) => db.pendingTask && db.pendingTask !== 'ready'
   ).length;
+
+  // If there are no pending operator upgrades but there are "databases", this means post-upgrade tasks
+  const hasPostUpgradeTasks = isUpToDate && pendingTasks;
 
   return (
     <Box display="flex" justifyContent="space-between" alignItems="center">
       <Typography variant="body1">
-        {upgradeMessage(pendingTasks, engine.type)}
+        {upgradeMessage(
+          engine.type,
+          isUpToDate,
+          pendingTasks,
+          hasPostUpgradeTasks,
+          targetVersion
+        )}
       </Typography>
-      <Button
-        size="medium"
-        variant="contained"
-        onClick={onUpgrade}
-        disabled={pendingTasks}
-      >
-        {Messages.upgradeOperator}
-      </Button>
+      {!isUpToDate && (
+        <Button
+          size="medium"
+          variant="contained"
+          onClick={onUpgrade}
+          disabled={pendingTasks}
+        >
+          {Messages.upgradeOperator}
+        </Button>
+      )}
     </Box>
   );
 };

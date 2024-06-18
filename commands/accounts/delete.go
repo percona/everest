@@ -35,6 +35,8 @@ func NewDeleteCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "delete",
 		Example: "everestctl accounts delete --username user1",
+		Short:   "Delete an existing Everest user account",
+		Long:    "Delete an existing Everest user account",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initDeleteViperFlags(cmd)
 

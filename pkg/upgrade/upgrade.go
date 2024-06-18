@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"time"
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
@@ -49,7 +50,30 @@ var skipObjects = []client.Object{ //nolint:gochecknoglobals
 			Namespace: common.SystemNamespace,
 		},
 	},
+	&corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestAccountsSecretName,
+			Namespace: common.SystemNamespace,
+		},
+	},
 }
+
+const postUpgradeMessage = `
+Everest has been successfully upgraded!
+
+
+To view the password for the 'admin' user, run the following command:
+
+everestctl accounts initial-admin-password
+
+
+IMPORTANT: This password is NOT stored in a hashed format. To secure it, update the password using the following command:
+
+everestctl accounts set-password --username admin
+`
 
 type (
 	// Config defines configuration required for upgrade command.
@@ -110,7 +134,7 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 
 // Run runs the operators installation process.
 //
-//nolint:funlen
+//nolint:funlen,cyclop
 func (u *Upgrade) Run(ctx context.Context) error {
 	// Get Everest version.
 	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
@@ -158,6 +182,12 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return errors.Join(err, errors.New("could not find install plan"))
 	}
 
+	if common.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
+		if err := u.ensureEverestJWTIfNotExists(ctx); err != nil {
+			return err
+		}
+	}
+
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
 
 	// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
@@ -171,11 +201,27 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)
 
-	// Ensure managed-by label is set on all database namespaces.
-	// This code can be removed after 0.11.0 release.
-	if err := u.ensureManagedByLabelOnDBNamespaces(ctx); err != nil {
-		return err
+	if common.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
+		if err := u.ensureEverestAccountsIfNotExists(ctx); err != nil {
+			return err
+		}
+		if err := u.ensureManagedByLabelOnDBNamespaces(ctx); err != nil {
+			return err
+		}
+		if err := u.kubeClient.DeleteSecret(ctx, common.SystemNamespace, "everest-token"); client.IgnoreNotFound(err) != nil {
+			return err
+		}
+		if err := u.kubeClient.DeleteSecret(ctx, common.SystemNamespace, "everest-admin-token"); client.IgnoreNotFound(err) != nil {
+			return err
+		}
 	}
+
+	if isSecure, err := u.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser); err != nil {
+		return errors.Join(err, errors.New("could not check if the admin password is secure"))
+	} else if !isSecure {
+		fmt.Fprint(os.Stderr, postUpgradeMessage)
+	}
+
 	return nil
 }
 
@@ -220,6 +266,35 @@ func (u *Upgrade) ensureManagedByLabelOnDBNamespaces(ctx context.Context) error 
 		}
 	}
 	return nil
+}
+
+func (u *Upgrade) ensureEverestAccountsIfNotExists(ctx context.Context) error {
+	if _, err := u.kubeClient.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsSecretName); client.IgnoreNotFound(err) != nil {
+		return err
+	} else if err == nil {
+		return nil // Everest accounts already exists.
+	}
+
+	// Create Everest accounts secret.
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestAccountsSecretName,
+			Namespace: common.SystemNamespace,
+		},
+	}
+	if _, err := u.kubeClient.CreateSecret(ctx, secret); err != nil {
+		return err
+	}
+	return common.CreateInitialAdminAccount(ctx, u.kubeClient.Accounts())
+}
+
+func (u *Upgrade) ensureEverestJWTIfNotExists(ctx context.Context) error {
+	if _, err := u.kubeClient.GetSecret(ctx, common.SystemNamespace, common.EverestJWTSecretName); client.IgnoreNotFound(err) != nil {
+		return err
+	} else if err == nil {
+		return nil // JWT keys already exist.
+	}
+	return u.kubeClient.CreateRSAKeyPair(ctx)
 }
 
 // canUpgrade checks if there's a new Everest version available and if we can upgrade to it
