@@ -46,6 +46,10 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
+			if !c.EnableLogging {
+				l = zap.NewNop().Sugar()
+			}
+
 			op, err := upgrade.NewUpgrade(c, l)
 			if err != nil {
 				l.Error(err)

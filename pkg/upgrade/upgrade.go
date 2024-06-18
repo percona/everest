@@ -249,6 +249,10 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		},
 	})
 
+	if err := common.RunStepsWithSpinner(ctx, upgradeSteps, out); err != nil {
+		return err
+	}
+
 	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)
 	fmt.Fprintln(out, "\n", output.Rocket("Everest has been upgraded to version %s", upgradeEverestTo))
 
