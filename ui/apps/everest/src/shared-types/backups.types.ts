@@ -31,6 +31,7 @@ export enum BackupStatus {
   FAILED = 'Failed',
   IN_PROGRESS = 'In progress',
   UNKNOWN = 'Unknown',
+  DELETING = 'Deleting',
 }
 
 export type BackupPayload = {
