@@ -67,7 +67,6 @@ func PrintError(err error, l *zap.SugaredLogger) {
 var (
 	okStatus   = color.New(color.FgGreen).SprintFunc()("\u2713")           // ✓
 	failStatus = color.New(color.FgRed, color.Bold).SprintFunc()("\u00D7") // ×
-	infoStatus = color.New(color.FgYellow).SprintFunc()("\u2139")          // ℹ
 )
 
 func Success(msg string, args ...any) string {
@@ -79,5 +78,5 @@ func Failure(msg string, args ...any) string {
 }
 
 func Info(msg string, args ...any) string {
-	return fmt.Sprintf("%s %s\n", infoStatus, fmt.Sprintf(msg, args...))
+	return fmt.Sprintf("ℹ️ %s\n", fmt.Sprintf(msg, args...))
 }
