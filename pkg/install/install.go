@@ -71,17 +71,6 @@ const postInstallMessage = `
 Everest has been successfully installed!
 `
 
-const initialPasswordMessage = `
-To view the password for the 'admin' user, run the following command:
-
-everestctl accounts initial-admin-password
-
-
-IMPORTANT: This password is NOT stored in a hashed format. To secure it, update the password using the following command:
-
-everestctl accounts set-password --username admin
-`
-
 // Install implements the main logic for commands.
 type Install struct {
 	l *zap.SugaredLogger
@@ -243,7 +232,7 @@ func (o *Install) Run(ctx context.Context) error {
 	if err := common.RunStepsWithSpinner(ctx, installSteps, out); err != nil {
 		return err
 	}
-	fmt.Fprint(os.Stdout, postInstallMessage)
+	fmt.Fprint(os.Stdout, output.Rocket(postInstallMessage))
 	fmt.Fprint(os.Stdout, "\n")
 
 	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
@@ -251,7 +240,7 @@ func (o *Install) Run(ctx context.Context) error {
 		return errors.Join(err, errors.New("could not check if the admin password is secure"))
 	}
 	if !isAdminSecure {
-		fmt.Fprint(os.Stdout, initialPasswordMessage)
+		fmt.Fprint(os.Stdout, common.InitialPasswordWarningMessage)
 	}
 	return nil
 }

@@ -77,7 +77,7 @@ func initInstallFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(install.FlagOperatorMongoDB, true, "Install MongoDB operator")
 	cmd.Flags().Bool(install.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
 	cmd.Flags().Bool(install.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
-	cmd.Flags().BoolP("logs", "l", false, "If set, logs are printed for the installation process")
+	cmd.Flags().BoolP("logs", "l", false, "If set, logs are printed during the installation process")
 }
 
 func initInstallViperFlags(cmd *cobra.Command) {

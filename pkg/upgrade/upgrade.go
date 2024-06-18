@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"time"
@@ -27,6 +28,7 @@ import (
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
 	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
+	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,6 +37,7 @@ import (
 
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/output"
 	cliVersion "github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
@@ -63,16 +66,6 @@ var skipObjects = []client.Object{ //nolint:gochecknoglobals
 
 const postUpgradeMessage = `
 Everest has been successfully upgraded!
-
-
-To view the password for the 'admin' user, run the following command:
-
-everestctl accounts initial-admin-password
-
-
-IMPORTANT: This password is NOT stored in a hashed format. To secure it, update the password using the following command:
-
-everestctl accounts set-password --username admin
 `
 
 type (
@@ -82,6 +75,9 @@ type (
 		KubeconfigPath string `mapstructure:"kubeconfig"`
 		// VersionMetadataURL stores hostname to retrieve version metadata information from.
 		VersionMetadataURL string `mapstructure:"version-metadata-url"`
+		// If set, enables logging for the upgrade process.
+		// Otherwise, it uses the user-friendly terimnal UI (animations, spinners, etc.)
+		EnableLogging bool `mapstructure:"logs"`
 	}
 
 	// Upgrade struct implements upgrade command.
@@ -142,20 +138,31 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return errors.Join(err, errors.New("could not retrieve Everest version"))
 	}
 
+	var out io.Writer = os.Stdout
+	if u.config.EnableLogging {
+		out = io.Discard // logging is enabled, we don't want the spinner animations.
+	}
+
 	// Check prerequisites
 	upgradeEverestTo, recVer, err := u.canUpgrade(ctx, everestVersion)
 	if err != nil {
 		if errors.Is(err, ErrNoUpdateAvailable) {
 			u.l.Info("You're running the latest version of Everest")
+			fmt.Fprintln(out, output.Rocket("You're running the latest version of Everest"))
 			return nil
 		}
 		return err
 	}
 
+	upgradeSteps := []common.Step{}
+
 	// Start upgrade.
-	if err := u.upgradeOLM(ctx, recVer.OLM); err != nil {
-		return err
-	}
+	upgradeSteps = append(upgradeSteps, common.Step{
+		Desc: "Upgrade Operator Lifecycle Manager",
+		F: func(ctx context.Context) error {
+			return u.upgradeOLM(ctx, recVer.OLM)
+		},
+	})
 
 	// We cannot use the latest version of catalog yet since
 	// at the time of writing, each catalog version supports only one Everest version.
@@ -164,62 +171,91 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		u.l.Debugf("Percona catalog version was nil. Changing to %s", upgradeEverestTo)
 		catalogVersion = upgradeEverestTo
 	}
-	u.l.Infof("Upgrading Percona Catalog to %s", catalogVersion)
-	if err := u.kubeClient.InstallPerconaCatalog(ctx, catalogVersion); err != nil {
-		return err
-	}
+	upgradeSteps = append(upgradeSteps, common.Step{
+		Desc: "Upgrade Percona Catalog",
+		F: func(ctx context.Context) error {
+			u.l.Infof("Upgrading Percona Catalog to %s", catalogVersion)
+			return u.kubeClient.InstallPerconaCatalog(ctx, catalogVersion)
+		},
+	})
 
 	// Locate the correct install plan.
 	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
-	u.l.Info("Waiting for install plan for Everest operator")
-	ip, err := u.kubeClient.WaitForInstallPlan(
-		ctxTimeout, common.SystemNamespace,
-		common.EverestOperatorName, upgradeEverestTo,
-	)
-	if err != nil {
-		return errors.Join(err, errors.New("could not find install plan"))
-	}
-
-	if common.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
-		if err := u.ensureEverestJWTIfNotExists(ctx); err != nil {
-			return err
-		}
-	}
+	var ip *olmv1alpha1.InstallPlan
+	upgradeSteps = append(upgradeSteps, common.Step{
+		Desc: "Wait for Everest Operator InstallPlan",
+		F: func(ctx context.Context) error {
+			u.l.Info("Waiting for install plan for Everest operator")
+			var err error
+			ip, err = u.kubeClient.WaitForInstallPlan(
+				ctxTimeout, common.SystemNamespace,
+				common.EverestOperatorName, upgradeEverestTo,
+			)
+			if err != nil {
+				return errors.Join(err, errors.New("could not find install plan"))
+			}
+			return nil
+		},
+	})
 
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
 
-	// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
-	if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo, skipObjects...); err != nil {
-		return err
-	}
+	upgradeSteps = append(upgradeSteps, common.Step{
+		Desc: "Upgrade Everest API server",
+		F: func(ctx context.Context) error {
+			if common.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
+				if err := u.ensureEverestJWTIfNotExists(ctx); err != nil {
+					return err
+				}
+			}
+			// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
+			if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo, skipObjects...); err != nil {
+				return err
+			}
+			return nil
+		},
+	})
 
-	if err := u.upgradeEverestOperator(ctx, ip.Name); err != nil {
-		return err
-	}
+	upgradeSteps = append(upgradeSteps, common.Step{
+		Desc: "Upgrade Everest Operator",
+		F: func(ctx context.Context) error {
+			if err := u.upgradeEverestOperator(ctx, ip.Name); err != nil {
+				return err
+			}
+			return nil
+		},
+	})
+
+	upgradeSteps = append(upgradeSteps, common.Step{
+		Desc: "Run post-upgrade tasks",
+		F: func(ctx context.Context) error {
+			if common.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
+				if err := u.ensureEverestAccountsIfNotExists(ctx); err != nil {
+					return err
+				}
+				if err := u.ensureManagedByLabelOnDBNamespaces(ctx); err != nil {
+					return err
+				}
+				if err := u.kubeClient.DeleteSecret(ctx, common.SystemNamespace, "everest-token"); client.IgnoreNotFound(err) != nil {
+					return err
+				}
+				if err := u.kubeClient.DeleteSecret(ctx, common.SystemNamespace, "everest-admin-token"); client.IgnoreNotFound(err) != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	})
 
 	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)
-
-	if common.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
-		if err := u.ensureEverestAccountsIfNotExists(ctx); err != nil {
-			return err
-		}
-		if err := u.ensureManagedByLabelOnDBNamespaces(ctx); err != nil {
-			return err
-		}
-		if err := u.kubeClient.DeleteSecret(ctx, common.SystemNamespace, "everest-token"); client.IgnoreNotFound(err) != nil {
-			return err
-		}
-		if err := u.kubeClient.DeleteSecret(ctx, common.SystemNamespace, "everest-admin-token"); client.IgnoreNotFound(err) != nil {
-			return err
-		}
-	}
+	fmt.Fprintln(out, output.Rocket("Everest has been upgraded to version %s", upgradeEverestTo))
 
 	if isSecure, err := u.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser); err != nil {
 		return errors.Join(err, errors.New("could not check if the admin password is secure"))
 	} else if !isSecure {
-		fmt.Fprint(os.Stderr, postUpgradeMessage)
+		fmt.Fprint(os.Stdout, common.InitialPasswordWarningMessage)
 	}
 
 	return nil

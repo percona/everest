@@ -80,3 +80,7 @@ func Failure(msg string, args ...any) string {
 func Info(msg string, args ...any) string {
 	return fmt.Sprintf("ℹ️ %s\n", fmt.Sprintf(msg, args...))
 }
+
+func Rocket(msg string, args ...any) string {
+	return fmt.Sprintf("🚀 %s\n", fmt.Sprintf(msg, args...))
+}
