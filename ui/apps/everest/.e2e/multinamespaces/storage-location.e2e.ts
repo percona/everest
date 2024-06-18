@@ -86,6 +86,7 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
     await page
       .getByRole('option', { name: EVEREST_CI_NAMESPACES.PXC_ONLY })
       .click();
+    await expect(page.getByTestId('mysql-toggle-button')).toBeVisible();
 
     // Resources Step
     await moveForward(page);
@@ -102,9 +103,6 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
     expect(await page.getByRole('option').count()).toBe(1);
     await page.getByRole('option', { name: pxcStorageLocationName }).click();
     await page.getByTestId('form-dialog-create').click();
-
-    // PITR step
-    await moveForward(page);
 
     const pitrCheckbox = page
       .getByTestId('switch-input-pitr-enabled')

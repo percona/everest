@@ -17,6 +17,8 @@
 package common
 
 const (
+	// Everest ...
+	Everest = "everest"
 	// PXCOperatorName holds operator name in k8s.
 	PXCOperatorName = "percona-xtradb-cluster-operator"
 	// PSMDBOperatorName holds operator name in k8s.
@@ -35,4 +37,25 @@ const (
 
 	// EverestOperatorName holds the name for Everest operator.
 	EverestOperatorName = "everest-operator"
+
+	// EverestAccountsSecretName is the name of the secret that holds accounts.
+	EverestAccountsSecretName = "everest-accounts"
+	// EverestJWTSecretName is the name of the secret that holds JWT secret.
+	EverestJWTSecretName = "everest-jwt"
+	// EverestJWTPrivateKeyFile is the path to the JWT private key.
+	EverestJWTPrivateKeyFile = "/etc/jwt/id_rsa"
+	// EverestJWTPublicKeyFile is the path to the JWT public key.
+	EverestJWTPublicKeyFile = "/etc/jwt/id_rsa.pub"
+
+	// EverestAdminUser is the name of the admin user.
+	EverestAdminUser = "admin"
+
+	// EverestSettingsConfigMapName is the name of the Everest settings ConfigMap.
+	EverestSettingsConfigMapName = "everest-settings"
+	// EverestTokenCookie is the name of the cookie that holds the token.
+	EverestTokenCookie = "everest_token"
+	// KubernetesManagedByLabel is the label used to identify resources managed by Everest.
+	KubernetesManagedByLabel = "app.kubernetes.io/managed-by"
+	// ForegroundDeletionFinalizer is the finalizer used to delete resources in foreground.
+	ForegroundDeletionFinalizer = "foregroundDeletion"
 )

@@ -1,0 +1,160 @@
+name: FE E2E Workflow
+
+on:
+  workflow_call:
+    secrets:
+      CI_USER:
+        required: true
+      CI_PASSWORD:
+        required: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'pnpm'
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Set up Go release
+        uses: percona-platform/setup-go@v4
+        with:
+          go-version: 1.22.x
+
+      - name: Set GO_VERSION environment variable
+        shell: bash
+        run: |
+          go version
+          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
+
+      - name: Create KIND cluster
+        uses: helm/kind-action@v1.9.0
+
+      - name: Set MinIO
+        run: kubectl apply -f ./.github/minio.conf.yaml
+
+      - name: Add Helm Percona repository
+        shell: bash
+        run: |
+          helm repo add percona https://percona.github.io/percona-helm-charts/
+
+      - name: Install Helm PMM chart
+        shell: bash
+        run: |
+          helm install pmm --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm
+
+      - name: Echo PMM credentials
+        shell: bash
+        run: |
+          url=$(kubectl get svc/monitoring-service -o json | jq -r '.spec.clusterIP')
+          echo -n "MONITORING_URL=http://$url" >> $GITHUB_ENV
+
+      - name: Run Provisioning
+        shell: bash
+        run: |
+          make build-cli
+          ./bin/everestctl install -v \
+          --version 0.0.0 \
+          --version-metadata-url https://check-dev.percona.com \
+          --operator.mongodb \
+          --operator.postgresql \
+          --operator.xtradb-cluster \
+          --skip-wizard \
+          --namespaces everest-ui
+
+      - name: Adding psmdb namespace
+        shell: bash
+        run: |
+          ./bin/everestctl install -v \
+          --version 0.0.0 \
+          --version-metadata-url https://check-dev.percona.com \
+          --operator.mongodb \
+          --operator.postgresql=false \
+          --operator.xtradb-cluster=false \
+          --skip-wizard \
+          --namespaces psmdb-only
+
+      - name: Adding pxc namespace
+        shell: bash
+        run: |
+          ./bin/everestctl install -v \
+          --version 0.0.0 \
+          --version-metadata-url https://check-dev.percona.com \
+          --operator.mongodb=false \
+          --operator.postgresql=false \
+          --operator.xtradb-cluster \
+          --skip-wizard \
+          --namespaces pxc-only
+
+      - name: Adding pg namespace
+        shell: bash
+        run: |
+          ./bin/everestctl install -v \
+          --version 0.0.0 \
+          --version-metadata-url https://check-dev.percona.com \
+          --operator.mongodb=false \
+          --operator.postgresql \
+          --operator.xtradb-cluster=false \
+          --skip-wizard \
+          --namespaces pg-only
+
+      - name: Create Everest test user
+        shell: bash
+        run: |
+          ./bin/everestctl accounts create -u ${{ secrets.CI_USER }} -p ${{ secrets.CI_PASSWORD }}
+
+      - name: Expose Everest API Server
+        shell: bash
+        run: |
+          kubectl port-forward -n everest-system deployment/percona-everest 8080:8080 &
+
+      - name: Run Everest
+        shell: bash
+        run: |
+          cd ui
+          make init
+          pnpm --filter "@percona/everest" dev &
+
+      - name: Install Chromium for Playwright
+        shell: bash
+        run: |
+          cd ui/apps/everest
+          npx playwright install chromium
+
+      - name: Run integration tests
+        shell: bash
+        env:
+          EVEREST_LOCATION_BUCKET_NAME: 'bucket-1'
+          EVEREST_LOCATION_ACCESS_KEY: 'minioadmin'
+          EVEREST_LOCATION_SECRET_KEY: 'minioadmin'
+          EVEREST_LOCATION_REGION: 'us-east-1'
+          EVEREST_LOCATION_URL: 'https://minio.minio.svc.cluster.local'
+          CI_USER: '${{ secrets.CI_USER }}'
+          CI_PASSWORD: '${{ secrets.CI_PASSWORD }}'
+          MONITORING_USER: 'admin'
+          MONITORING_PASSWORD: 'admin'
+        run: |
+          cd ui
+          pnpm --filter "@percona/everest" e2e
+
+      - name: Archive report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: ui/apps/everest/.e2e/playwright-report/
+          overwrite: true

@@ -28,12 +28,18 @@ export const addFirstScheduleInDBWizard = async (page: Page) => {
   await openCreateScheduleDialogFromDBWizard(page);
   await fillScheduleModalForm(page);
   await page.getByTestId('form-dialog-create').click();
-
   // checking created schedule in dbWiard schedules list
   await expect(
-    page.getByTestId('editable-item').getByText('Monthly on day 10 at 5:05 PM')
+    page.getByTestId('editable-item').getByText('Monthly on day 10 at 1:05 AM')
   ).toBeVisible();
-  await expect(page.getByText(STORAGE_NAMES[1])).toBeVisible();
+
+  if (await checkDbTypeisVisibleInPreview(page, DbType.Mongo)) {
+    expect(await page.getByText(STORAGE_NAMES[1]).allInnerTexts()).toHaveLength(
+      2
+    );
+  } else {
+    await expect(page.getByText(STORAGE_NAMES[1])).toBeVisible();
+  }
 };
 
 export const addScheduleInDbWizard = async (page: Page) => {
@@ -47,7 +53,7 @@ const checkDbTypeisVisibleInPreview = async (page: Page, dbType: DbType) => {
   return (await dbTypeLocator.allInnerTexts())?.length > 0;
 };
 
-const fillScheduleModalForm = async (page: Page) => {
+export const fillScheduleModalForm = async (page: Page) => {
   // TODO can be customizable
   if (await checkDbTypeisVisibleInPreview(page, DbType.Mongo)) {
     await expect(page.getByTestId('radio-option-logical')).toBeChecked();
@@ -74,11 +80,11 @@ const fillScheduleModalForm = async (page: Page) => {
   await page.getByTestId('select-on-day-button').click();
   await page.getByTestId('10').click();
   await page.getByTestId('select-hour-button').click();
-  await page.getByRole('option', { name: '5' }).click();
+  await page.getByRole('option', { name: '1', exact: true }).click();
   await page.getByTestId('select-minute-button').click();
   await page.getByRole('option', { name: '05' }).click();
   await page.getByTestId('select-am-pm-button').click();
-  await page.getByRole('option', { name: 'PM' }).click();
+  await page.getByRole('option', { name: 'AM' }).click();
 };
 
 export const openCreateScheduleDialogFromDBWizard = async (page: Page) => {

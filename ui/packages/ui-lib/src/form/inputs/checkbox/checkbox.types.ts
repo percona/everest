@@ -9,4 +9,5 @@ export type CheckboxProps = {
   controllerProps?: Omit<UseControllerProps, 'name'>;
   checkboxProps?: MUICheckboxProps;
   labelProps?: LabeledContentProps;
+  disabled?: boolean;
 };

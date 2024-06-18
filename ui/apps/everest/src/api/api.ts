@@ -18,15 +18,16 @@ import { enqueueSnackbar } from 'notistack';
 const BASE_URL = '/v1/';
 const DEFAULT_ERROR_MESSAGE = 'Something went wrong';
 const MAX_ERROR_MESSAGE_LENGTH = 120;
+let errorInterceptor: number | null = null;
 let authInterceptor: number | null = null;
 
 export const api = axios.create({
   baseURL: BASE_URL,
 });
 
-export const addApiInterceptors = () => {
-  if (authInterceptor === null) {
-    authInterceptor = api.interceptors.response.use(
+export const addApiErrorInterceptor = () => {
+  if (errorInterceptor === null) {
+    errorInterceptor = api.interceptors.response.use(
       (response) => response,
       (error) => {
         if (
@@ -37,23 +38,28 @@ export const addApiInterceptors = () => {
           let message = DEFAULT_ERROR_MESSAGE;
 
           if (error.response.status === 401) {
-            localStorage.removeItem('pwd');
+            localStorage.removeItem('everestToken');
+            sessionStorage.clear();
             location.replace('/login');
           }
 
-          if (error.response.data && error.response.data.message) {
-            if (error.response.data.message.length > MAX_ERROR_MESSAGE_LENGTH) {
-              message = `${error.response.data.message
-                .trim()
-                .substring(0, MAX_ERROR_MESSAGE_LENGTH)}...`;
-            } else {
-              message = error.response.data.message.trim();
+          if (error.config?.disableNotifications !== true) {
+            if (error.response.data && error.response.data.message) {
+              if (
+                error.response.data.message.length > MAX_ERROR_MESSAGE_LENGTH
+              ) {
+                message = `${error.response.data.message
+                  .trim()
+                  .substring(0, MAX_ERROR_MESSAGE_LENGTH)}...`;
+              } else {
+                message = error.response.data.message.trim();
+              }
             }
-          }
 
-          enqueueSnackbar(message, {
-            variant: 'error',
-          });
+            enqueueSnackbar(message, {
+              variant: 'error',
+            });
+          }
         }
 
         return Promise.reject(error);
@@ -62,7 +68,26 @@ export const addApiInterceptors = () => {
   }
 };
 
-export const removeApiInterceptors = () => {
+export const removeApiErrorInterceptor = () => {
+  if (errorInterceptor !== null) {
+    api.interceptors.response.eject(errorInterceptor);
+  }
+};
+
+export const addApiAuthInterceptor = () => {
+  if (authInterceptor === null) {
+    authInterceptor = api.interceptors.request.use((config) => {
+      const token = localStorage.getItem('everestToken');
+      if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      return config;
+    });
+  }
+};
+
+export const removeApiAuthInterceptor = () => {
   if (authInterceptor !== null) {
     api.interceptors.response.eject(authInterceptor);
   }

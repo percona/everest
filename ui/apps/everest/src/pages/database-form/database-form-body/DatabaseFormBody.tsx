@@ -52,7 +52,7 @@ const DatabaseFormBody = ({
           })}
       </Box>
       <DatabaseFormStepControllers
-        disableBack={isFirstStep}
+        disableBack={isFirstStep || hasErrors}
         disableNext={disableNext}
         disableSubmit={isSubmitting || hasErrors}
         disableCancel={isSubmitting}

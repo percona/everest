@@ -14,12 +14,19 @@ import { MonitoringEndpoints } from 'pages/settings/monitoring-endpoints/monitor
 import { NoMatch } from 'pages/404/NoMatch';
 import { Backups } from 'pages/db-cluster-details/backups/backups';
 import { Namespaces } from './pages/settings/namespaces/namespaces';
+import NamespaceDetails from 'pages/settings/namespaces/namespace-details';
 import Restores from 'pages/db-cluster-details/restores';
+import Components from './pages/db-cluster-details/components';
+import LoginCallback from 'components/login-callback/LoginCallback';
 
 const router = createBrowserRouter([
   {
     path: 'login',
     element: <Login />,
+  },
+  {
+    path: '/login-callback',
+    element: <LoginCallback />,
   },
   {
     path: '/',
@@ -53,6 +60,10 @@ const router = createBrowserRouter([
           {
             path: DBClusterDetailsTabs.overview,
             element: <ClusterOverview />,
+          },
+          {
+            path: DBClusterDetailsTabs.components,
+            element: <Components />,
           },
           {
             path: DBClusterDetailsTabs.restores,
@@ -89,6 +100,10 @@ const router = createBrowserRouter([
           //   element: <K8sClusters />,
           // },
         ],
+      },
+      {
+        path: '/settings/namespaces/:namespace',
+        element: <NamespaceDetails />,
       },
       {
         path: '*',

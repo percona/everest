@@ -10,6 +10,7 @@ const ToggleCard = ({ children, sx, ...props }: ToggleCardProps) => {
       sx={{
         backgroundColor: 'background.default',
         color: theme.palette.text.primary,
+        p: 2,
         textTransform: 'none',
         border: 'none',
         outlineStyle: 'solid',

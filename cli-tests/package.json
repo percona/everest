@@ -8,10 +8,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@faker-js/faker": "^8.4.0",
-    "@playwright/test": "^1.42.1",
-    "playwright": "^1.42.1",
-    "semver": "^7.6.0",
+    "@faker-js/faker": "^8.4.1",
+    "@playwright/test": "^1.44.1",
+    "playwright": "^1.44.1",
+    "semver": "^7.6.2",
     "shelljs": "^0.8.5"
   },
   "devDependencies": {

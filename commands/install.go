@@ -37,6 +37,8 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 		//        Error: unknown command "a" for "everestctl install"
 		Args:    cobra.NoArgs,
 		Example: "everestctl install --namespaces dev,staging,prod --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard",
+		Long:    "Install Percona Everest",
+		Short:   "Install Percona Everest",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initInstallViperFlags(cmd)
 			c := &install.Config{}
@@ -45,7 +47,7 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
-			op, err := install.NewInstall(*c, l)
+			op, err := install.NewInstall(*c, l, cmd)
 			if err != nil {
 				l.Error(err)
 				os.Exit(1)
@@ -63,27 +65,26 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initInstallFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
-	cmd.Flags().String("namespaces", install.DefaultEverestNamespace, "Comma-separated namespaces list Percona Everest can manage")
-	cmd.Flags().Bool("skip-wizard", false, "Skip installation wizard")
-	cmd.Flags().String("version-metadata-url", "https://check.percona.com", "URL to retrieve version metadata information from")
-	cmd.Flags().String("version", "", "Everest version to install. By default the latest version is installed")
+	cmd.Flags().String(install.FlagNamespaces, install.DefaultEverestNamespace, "Comma-separated namespaces list Percona Everest can manage")
+	cmd.Flags().Bool(install.FlagSkipWizard, false, "Skip installation wizard")
+	cmd.Flags().String(install.FlagVersionMetadataURL, "https://check.percona.com", "URL to retrieve version metadata information from")
+	cmd.Flags().String(install.FlagVersion, "", "Everest version to install. By default the latest version is installed")
 
-	cmd.Flags().Bool("operator.mongodb", true, "Install MongoDB operator")
-	cmd.Flags().Bool("operator.postgresql", true, "Install PostgreSQL operator")
-	cmd.Flags().Bool("operator.xtradb-cluster", true, "Install XtraDB Cluster operator")
+	cmd.Flags().Bool(install.FlagOperatorMongoDB, true, "Install MongoDB operator")
+	cmd.Flags().Bool(install.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
+	cmd.Flags().Bool(install.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
 }
 
 func initInstallViperFlags(cmd *cobra.Command) {
-	viper.BindPFlag("skip-wizard", cmd.Flags().Lookup("skip-wizard")) //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagSkipWizard, cmd.Flags().Lookup(install.FlagSkipWizard)) //nolint:errcheck,gosec
 
-	viper.BindEnv("kubeconfig")                                                         //nolint:errcheck,gosec
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))                     //nolint:errcheck,gosec
-	viper.BindPFlag("namespaces", cmd.Flags().Lookup("namespaces"))                     //nolint:errcheck,gosec
-	viper.BindPFlag("version-metadata-url", cmd.Flags().Lookup("version-metadata-url")) //nolint:errcheck,gosec
-	viper.BindPFlag("version", cmd.Flags().Lookup("version"))                           //nolint:errcheck,gosec
+	viper.BindEnv("kubeconfig")                                                                         //nolint:errcheck,gosec
+	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))                                     //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagNamespaces, cmd.Flags().Lookup(install.FlagNamespaces))                 //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagVersionMetadataURL, cmd.Flags().Lookup(install.FlagVersionMetadataURL)) //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagVersion, cmd.Flags().Lookup(install.FlagVersion))                       //nolint:errcheck,gosec
 
-	viper.BindPFlag("operator.mongodb", cmd.Flags().Lookup("operator.mongodb"))               //nolint:errcheck,gosec
-	viper.BindPFlag("operator.postgresql", cmd.Flags().Lookup("operator.postgresql"))         //nolint:errcheck,gosec
-	viper.BindPFlag("operator.xtradb-cluster", cmd.Flags().Lookup("operator.xtradb-cluster")) //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagOperatorMongoDB, cmd.Flags().Lookup(install.FlagOperatorMongoDB))             //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagOperatorPostgresql, cmd.Flags().Lookup(install.FlagOperatorPostgresql))       //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagOperatorXtraDBCluster, cmd.Flags().Lookup(install.FlagOperatorXtraDBCluster)) //nolint:errcheck,gosec
 }

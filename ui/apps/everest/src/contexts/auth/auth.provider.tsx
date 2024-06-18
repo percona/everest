@@ -1,77 +1,185 @@
-import { addApiInterceptors, api, removeApiInterceptors } from 'api/api';
-import { useVersion } from 'hooks/api/version/useVersion';
-import { ReactNode, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  AuthProvider as OidcAuthProvider,
+  AuthProviderProps as OidcAuthProviderProps,
+  useAuth as useOidcAuth,
+} from 'oidc-react';
+import { jwtDecode } from 'jwt-decode';
+import {
+  api,
+  addApiErrorInterceptor,
+  removeApiErrorInterceptor,
+  addApiAuthInterceptor,
+  removeApiAuthInterceptor,
+} from 'api/api';
 import { enqueueSnackbar } from 'notistack';
 import AuthContext from './auth.context';
-import { UserAuthStatus } from './auth.context.types';
+import { EVEREST_JWT_ISSUER } from 'consts';
+import {
+  AuthMode,
+  AuthProviderProps,
+  ManualAuthArgs,
+  UserAuthStatus,
+} from './auth.context.types';
+import { isAfter } from 'date-fns';
 
-const setApiBearerToken = (token: string) =>
-  (api.defaults.headers.common['Authorization'] = `Bearer ${token}`);
+const Provider = ({
+  oidcConfig,
+  children,
+}: {
+  oidcConfig?: OidcAuthProviderProps;
+  children: React.ReactNode;
+}) => {
+  const authProvider = useMemo(
+    () => (
+      <AuthProvider
+        isSsoEnabled={!!oidcConfig?.authority && !!oidcConfig?.clientId}
+      >
+        {children}
+      </AuthProvider>
+    ),
+    [children, oidcConfig]
+  );
+  return <OidcAuthProvider {...oidcConfig}>{authProvider}</OidcAuthProvider>;
+};
 
-const AuthProvider = ({ children }: { children: ReactNode }) => {
+const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   const [authStatus, setAuthStatus] = useState<UserAuthStatus>('unknown');
-  const [token, setToken] = useState('');
   const [redirect, setRedirect] = useState<string | null>(null);
+  const { signIn, userManager } = useOidcAuth();
+  const checkAuth = useCallback(async (token: string) => {
+    try {
+      await api.get('/version', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
 
-  // We use the "/version" API call just to make sure the token works
-  // At this point, there's not really a login flow, per se
-  const {
-    status: queryStatus,
-    fetchStatus,
-    refetch,
-  } = useVersion({
-    enabled: false,
-    retry: false,
-  });
-
-  const login = (token: string) => {
+  const login = async (mode: AuthMode, manualAuthArgs?: ManualAuthArgs) => {
     setAuthStatus('loggingIn');
-    setApiBearerToken(token);
-    setToken(token);
-    refetch();
+    if (mode === 'sso') {
+      await signIn();
+    } else {
+      const { username, password } = manualAuthArgs!;
+      try {
+        const response = await api.post('/session', { username, password });
+        const token = response.data.token; // Assuming the response structure has a token field
+        localStorage.setItem('everestToken', token);
+        setLoggedInStatus();
+      } catch (error) {
+        setLogoutStatus();
+        enqueueSnackbar('Invalid credentials', {
+          variant: 'error',
+        });
+        return;
+      }
+    }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    if (isSsoEnabled) {
+      await userManager.clearStaleState();
+      await setLogoutStatus();
+    }
+
     setAuthStatus('loggedOut');
-    setApiBearerToken('');
-    localStorage.removeItem('pwd');
+    localStorage.removeItem('everestToken');
     setRedirect(null);
-    removeApiInterceptors();
+    removeApiErrorInterceptor();
+    removeApiAuthInterceptor();
   };
 
   const setRedirectRoute = (route: string) => {
     setRedirect(route);
   };
 
-  useEffect(() => {
-    const savedToken = localStorage.getItem('pwd');
+  const setLoggedInStatus = () => {
+    setAuthStatus('loggedIn');
+    addApiErrorInterceptor();
+    addApiAuthInterceptor();
+  };
 
-    if (savedToken) {
-      login(savedToken);
-    } else {
-      setAuthStatus('loggedOut');
+  const setLogoutStatus = useCallback(async () => {
+    setAuthStatus('loggedOut');
+    localStorage.removeItem('everestToken');
+    if (isSsoEnabled) {
+      await userManager.clearStaleState();
+      await userManager.removeUser();
     }
-  }, []);
+  }, [userManager]);
+
+  const silentlyRenewToken = useCallback(async () => {
+    const newLoggedUser = await userManager.signinSilent();
+
+    if (newLoggedUser && newLoggedUser.access_token) {
+      localStorage.setItem('everestToken', newLoggedUser.access_token);
+    } else {
+      setLogoutStatus();
+    }
+  }, [userManager]);
 
   useEffect(() => {
-    if (fetchStatus === 'fetching') {
+    if (isSsoEnabled) {
+      userManager.events.addUserLoaded((user) => {
+        localStorage.setItem('everestToken', user.access_token || '');
+        setLoggedInStatus();
+      });
+
+      userManager.events.addAccessTokenExpiring(() => {
+        silentlyRenewToken();
+      });
+
+      userManager.signinSilentCallback();
+    }
+  }, [isSsoEnabled, silentlyRenewToken, userManager]);
+
+  useEffect(() => {
+    if (window.location !== window.parent.location) {
+      // This is running in the iframe, so we are renewing the token silently
       return;
     }
-    if (queryStatus === 'success') {
-      setAuthStatus('loggedIn');
-      localStorage.setItem('pwd', token);
-      addApiInterceptors();
-    } else if (queryStatus === 'error') {
-      setAuthStatus('loggedOut');
-      // This means the request was triggered by clicking the button, not an auto login
-      if (!localStorage.getItem('pwd')) {
-        enqueueSnackbar('Invalid authorization token', {
-          variant: 'error',
-        });
-      }
-      localStorage.removeItem('pwd');
+
+    if (authStatus === 'loggedIn' || authStatus === 'loggingIn') {
+      return;
     }
-  }, [fetchStatus, queryStatus, token]);
+
+    const authRoutine = async (token: string) => {
+      const { iss, exp } = jwtDecode(token);
+      if (iss === EVEREST_JWT_ISSUER) {
+        const isTokenValid = await checkAuth(token);
+        if (isTokenValid) {
+          setLoggedInStatus();
+        } else {
+          setLogoutStatus();
+        }
+      } else {
+        if (isAfter(new Date(), new Date((exp || 0) * 1000))) {
+          silentlyRenewToken();
+          return;
+        }
+
+        const user = await userManager.getUser();
+
+        if (!user) {
+          setLogoutStatus();
+        } else {
+          setLoggedInStatus();
+          return;
+        }
+      }
+    };
+    const savedToken = localStorage.getItem('everestToken');
+
+    if (!savedToken) {
+      setLogoutStatus();
+      return;
+    }
+
+    authRoutine(savedToken);
+  }, [authStatus, silentlyRenewToken, userManager]);
 
   return (
     <AuthContext.Provider
@@ -81,6 +189,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
         authStatus,
         redirectRoute: redirect,
         setRedirectRoute,
+        isSsoEnabled,
       }}
     >
       {children}
@@ -88,4 +197,4 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export default AuthProvider;
+export default Provider;

@@ -21,7 +21,8 @@ import {
 } from '@tanstack/react-query';
 import { getDbClustersFn } from 'api/dbClusterApi';
 import { DbCluster, GetDbClusterPayload } from 'shared-types/dbCluster.types';
-import { useNamespaces } from '../namespaces/useNamespaces';
+import { PerconaQueryOptions } from 'shared-types/query.types';
+import cronConverter from 'utils/cron-converter';
 
 export interface DbClusterForNamespaceResult {
   namespace: string;
@@ -35,19 +36,37 @@ export const dbClustersQuerySelect = ({
 }: GetDbClusterPayload): DbCluster[] =>
   items.map(({ ...props }) => ({
     ...props,
+    spec: {
+      ...props.spec,
+      ...(props.spec?.backup?.schedules && {
+        backup: {
+          ...props.spec.backup,
+          schedules: props.spec.backup.schedules.map((schedule) => ({
+            ...schedule,
+            schedule: cronConverter(
+              schedule.schedule,
+              'UTC',
+              Intl.DateTimeFormat().resolvedOptions().timeZone
+            ),
+          })),
+        },
+      }),
+    },
   }));
 
-export const useDbClusters = (namespace: string) =>
+export const useDbClusters = (
+  namespace: string,
+  options?: PerconaQueryOptions<GetDbClusterPayload, unknown, DbCluster[]>
+) =>
   useQuery({
     queryKey: [DB_CLUSTERS_QUERY_KEY],
     queryFn: () => getDbClustersFn(namespace),
     refetchInterval: 5 * 1000,
     select: dbClustersQuerySelect,
+    ...options,
   });
 
-export const useDBClustersForNamespaces = () => {
-  const { data: namespaces = [] } = useNamespaces();
-
+export const useDBClustersForNamespaces = (namespaces: string[]) => {
   const queries = namespaces.map<
     UseQueryOptions<GetDbClusterPayload, unknown, DbCluster[]>
   >((namespace) => ({

@@ -35,7 +35,9 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 		//       ./everestctl upgrade --namespaces=aaa, a
 		// it will return
 		//        Error: unknown command "a" for "everestctl upgrade"
-		Args: cobra.NoArgs,
+		Args:  cobra.NoArgs,
+		Long:  "Upgrade Percona Everest",
+		Short: "Upgrade Percona Everest",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initUpgradeViperFlags(cmd)
 
@@ -63,7 +65,6 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initUpgradeFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
 	cmd.Flags().String("version-metadata-url", "https://check.percona.com", "URL to retrieve version metadata information from")
 }
 

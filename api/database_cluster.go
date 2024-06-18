@@ -17,7 +17,9 @@
 package api
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 	"time"
@@ -47,7 +49,20 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
 
-	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, "")
+	err := e.proxyKubernetes(ctx, namespace, databaseClusterKind, "")
+	if err == nil {
+		// Collect metrics immediately after a DB cluster has been created.
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+
+			if err := e.collectMetrics(ctx, e.config.TelemetryURL); err != nil {
+				e.l.Errorf("Could not send metrics: %s", err)
+			}
+		}()
+	}
+
+	return err
 }
 
 // ListDatabaseClusters lists the created database clusters on the specified kubernetes cluster.
@@ -62,22 +77,34 @@ func (e *EverestServer) DeleteDatabaseCluster(
 	params DeleteDatabaseClusterParams,
 ) error {
 	cleanupStorage := pointer.Get(params.CleanupBackupStorage)
-	// If cleanup is required, we add a finalizer to all backup object for this cluster.
-	if cleanupStorage {
-		reqCtx := ctx.Request().Context()
-		backups, err := e.kubeClient.ListDatabaseClusterBackups(reqCtx, namespace, metav1.ListOptions{})
-		if err != nil {
-			return errors.Join(err, errors.New("could not list database backups"))
-		}
-		// Cleanup storage.
+	reqCtx := ctx.Request().Context()
+
+	backups, err := e.kubeClient.ListDatabaseClusterBackups(reqCtx, namespace, metav1.ListOptions{})
+	if err != nil {
+		return errors.Join(err, errors.New("could not list database backups"))
+	}
+
+	if !cleanupStorage {
 		for _, backup := range backups.Items {
 			// Doesn't belong to this cluster, skip.
-			if backup.Spec.DBClusterName != name {
+			if backup.Spec.DBClusterName != name || !backup.GetDeletionTimestamp().IsZero() {
 				continue
 			}
-			if err := e.cleanupBackupStorage(reqCtx, &backup); err != nil { //nolint:gosec // We use Go 1.21+
-				return errors.Join(err, errors.New("could not cleanup backup storage"))
+			if err := e.ensureBackupStorageProtection(reqCtx, &backup); err != nil { //nolint:gosec
+				return errors.Join(err, errors.New("could not ensure backup storage protection"))
 			}
+		}
+	}
+
+	// Ensure foreground deletion on the Backups,
+	// so that they're visible on the UI while getting deleted.
+	for _, backup := range backups.Items {
+		// Doesn't belong to this cluster, skip.
+		if backup.Spec.DBClusterName != name || !backup.GetDeletionTimestamp().IsZero() {
+			continue
+		}
+		if err := e.ensureBackupForegroundDeletion(reqCtx, &backup); err != nil { //nolint:gosec
+			return errors.Join(err, errors.New("could not ensure foreground deletion"))
 		}
 	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, name)
@@ -86,6 +113,78 @@ func (e *EverestServer) DeleteDatabaseCluster(
 // GetDatabaseCluster retrieves the specified database cluster on the specified kubernetes cluster.
 func (e *EverestServer) GetDatabaseCluster(ctx echo.Context, namespace, name string) error {
 	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, name)
+}
+
+// GetDatabaseClusterComponents returns database cluster components.
+//
+//nolint:funlen
+func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace, name string) error {
+	pods, err := e.kubeClient.GetPods(ctx.Request().Context(), namespace, &metav1.LabelSelector{
+		MatchLabels: map[string]string{"app.kubernetes.io/instance": name},
+	})
+	if err != nil {
+		e.l.Error(err)
+		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString("Could not get pods")})
+	}
+
+	res := make([]DatabaseClusterComponent, 0, len(pods.Items))
+	for _, pod := range pods.Items {
+		component := pod.Labels["app.kubernetes.io/component"]
+		if component == "" {
+			continue
+		}
+
+		restarts := 0
+		ready := 0
+		containers := make([]DatabaseClusterComponentContainer, 0, len(pod.Status.ContainerStatuses))
+		for _, c := range pod.Status.ContainerStatuses {
+			restarts += int(c.RestartCount)
+			if c.Ready {
+				ready++
+			}
+			var started time.Time
+			if c.State.Running != nil {
+				started = c.State.Running.StartedAt.Time
+			}
+
+			var status string
+			switch {
+			case c.State.Running != nil:
+				status = "Running"
+			case c.State.Waiting != nil:
+				status = "Waiting"
+			case c.State.Terminated != nil:
+				status = "Terminated"
+			}
+
+			var startedString *string
+			if !started.IsZero() {
+				startedString = pointer.ToString(started.Format(time.RFC3339))
+			}
+			containers = append(containers, DatabaseClusterComponentContainer{
+				Name:     &c.Name, //nolint:gosec,exportloopref
+				Started:  startedString,
+				Restarts: pointer.ToInt(int(c.RestartCount)),
+				Status:   &status,
+			})
+		}
+
+		var started *string
+		if !pod.Status.StartTime.Time.IsZero() {
+			started = pointer.ToString(pod.Status.StartTime.Time.Format(time.RFC3339))
+		}
+		res = append(res, DatabaseClusterComponent{
+			Status:     pointer.ToString(string(pod.Status.Phase)),
+			Name:       &pod.Name, //nolint:gosec,exportloopref
+			Type:       &component,
+			Started:    started,
+			Restarts:   pointer.ToInt(restarts),
+			Ready:      pointer.ToString(fmt.Sprintf("%d/%d", ready, len(pod.Status.ContainerStatuses))),
+			Containers: &containers,
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, res)
 }
 
 // UpdateDatabaseCluster replaces the specified database cluster on the specified kubernetes cluster.
