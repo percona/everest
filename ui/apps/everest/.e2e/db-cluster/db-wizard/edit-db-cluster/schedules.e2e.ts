@@ -31,11 +31,16 @@ import { goToStep, moveForward } from '../../../utils/db-wizard';
 import {
   addFirstScheduleInDBWizard,
   addScheduleInDbWizard,
+  fillScheduleModalForm,
 } from '../db-wizard-utils';
 import { waitForInitializingState } from '../../../utils/table';
 
 test.describe.serial('DB Cluster Editing Backups Step', async () => {
   const mySQLName = 'db-backup-mysql';
+
+  test.use({
+    timezoneId: 'IST',
+  });
 
   test.beforeAll(async ({ request }) => {
     await createDbClusterFn(request, {
@@ -82,7 +87,7 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     await expect(scheduledBackupsAccordion).toBeVisible();
     await scheduledBackupsAccordion.click();
 
-    expect(page.getByText('Every hour at minute 0')).toBeTruthy();
+    expect(await page.getByText('Monthly on day 10 at 1:05 AM')).toBeVisible();
   });
 
   test('Adding multi schedules during dbWizard editing', async ({ page }) => {
@@ -92,8 +97,13 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     ).toBeVisible();
     await goToStep(page, 'backups');
 
-    await addScheduleInDbWizard(page);
-    await addScheduleInDbWizard(page);
+    await addScheduleInDbWizard(page, {
+      frequency: 'week',
+      weekDay: 'Tuesdays',
+      hour: '2',
+      minute: '15',
+      amPm: 'AM',
+    });
 
     // Go to Advanced Configuration step
     await moveForward(page);
@@ -114,8 +124,16 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     await expect(scheduledBackupsAccordion).toBeVisible();
     await scheduledBackupsAccordion.click();
 
-    expect(
-      await page.getByText('Monthly on day 10 at 5:05 PM').allInnerTexts()
-    ).toHaveLength(3);
+    expect(await page.getByText('Weekly on Tuesdays at 2:15 AM')).toBeVisible();
+    await page.getByTestId('menu-button').click();
+    await page.getByTestId('schedule-menu-item').click();
+    await fillScheduleModalForm(page, {
+      frequency: 'day',
+      hour: '12',
+      minute: '00',
+      amPm: 'AM',
+    });
+    await page.getByTestId('form-dialog-create').click();
+    expect(await page.getByText('Daily at 12:00 AM')).toBeVisible();
   });
 });
