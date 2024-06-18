@@ -307,7 +307,7 @@ func latestRestorableDate(now, latestBackupTime time.Time, uploadInterval int) *
 func latestSuccessfulBackup(backups []everestv1alpha1.DatabaseClusterBackup, engineType everestv1alpha1.EngineType) *everestv1alpha1.DatabaseClusterBackup {
 	slices.SortFunc(backups, sortFunc)
 	for _, backup := range backups {
-		if successStatus(backup.Status.State, engineType) {
+		if backup.Status.State == everestv1alpha1.BackupSucceeded {
 			return &backup
 		}
 	}
@@ -325,19 +325,6 @@ func sortFunc(a, b everestv1alpha1.DatabaseClusterBackup) int {
 		return 1
 	}
 	return -1
-}
-
-func successStatus(state everestv1alpha1.BackupState, engineType everestv1alpha1.EngineType) bool {
-	var successState string
-	switch engineType {
-	case everestv1alpha1.DatabaseEnginePXC:
-		successState = "Succeeded"
-	case everestv1alpha1.DatabaseEnginePSMDB:
-		successState = "ready"
-	case everestv1alpha1.DatabaseEnginePostgresql:
-		successState = "Succeeded"
-	}
-	return string(state) == successState
 }
 
 func getDefaultUploadInterval(engineType everestv1alpha1.EngineType, uploadInterval *int) int {
