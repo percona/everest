@@ -275,7 +275,7 @@ func (e *EverestServer) GetDatabaseClusterPitr(ctx echo.Context, namespace, name
 		return ctx.JSON(http.StatusOK, response)
 	}
 
-	latestBackup := latestSuccessfulBackup(backups.Items, databaseCluster.Spec.Engine.Type)
+	latestBackup := latestSuccessfulBackup(backups.Items)
 
 	uploadInterval := getDefaultUploadInterval(databaseCluster.Spec.Engine.Type, databaseCluster.Spec.Backup.PITR.UploadIntervalSec)
 	backupTime := latestBackup.Status.CreatedAt.UTC()
@@ -304,7 +304,7 @@ func latestRestorableDate(now, latestBackupTime time.Time, uploadInterval int) *
 	return &date
 }
 
-func latestSuccessfulBackup(backups []everestv1alpha1.DatabaseClusterBackup, engineType everestv1alpha1.EngineType) *everestv1alpha1.DatabaseClusterBackup {
+func latestSuccessfulBackup(backups []everestv1alpha1.DatabaseClusterBackup) *everestv1alpha1.DatabaseClusterBackup {
 	slices.SortFunc(backups, sortFunc)
 	for _, backup := range backups {
 		if backup.Status.State == everestv1alpha1.BackupSucceeded {
