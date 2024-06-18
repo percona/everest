@@ -62,8 +62,7 @@ const (
 
 // InitialPasswordWarningMessage is the message that is shown to the user after the installation/upgrade,
 // regarding insecure admin password.
-const InitialPasswordWarningMessage = `
-To view the password for the 'admin' user, run the following command:
+const InitialPasswordWarningMessage = `To view the password for the 'admin' user, run the following command:
 
 everestctl accounts initial-admin-password
 

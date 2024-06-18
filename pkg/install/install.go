@@ -67,9 +67,7 @@ const (
 	FlagSkipWizard = "skip-wizard"
 )
 
-const postInstallMessage = `
-Everest has been successfully installed!
-`
+const postInstallMessage = "Everest has been successfully installed!"
 
 // Install implements the main logic for commands.
 type Install struct {
@@ -232,15 +230,14 @@ func (o *Install) Run(ctx context.Context) error {
 	if err := common.RunStepsWithSpinner(ctx, installSteps, out); err != nil {
 		return err
 	}
-	fmt.Fprint(os.Stdout, output.Rocket(postInstallMessage))
-	fmt.Fprint(os.Stdout, "\n")
+	fmt.Fprint(os.Stdout, "\n", output.Rocket(postInstallMessage))
 
 	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
 	if err != nil {
 		return errors.Join(err, errors.New("could not check if the admin password is secure"))
 	}
 	if !isAdminSecure {
-		fmt.Fprint(os.Stdout, common.InitialPasswordWarningMessage)
+		fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage)
 	}
 	return nil
 }

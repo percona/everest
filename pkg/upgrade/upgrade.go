@@ -148,7 +148,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	if err != nil {
 		if errors.Is(err, ErrNoUpdateAvailable) {
 			u.l.Info("You're running the latest version of Everest")
-			fmt.Fprintln(out, output.Rocket("You're running the latest version of Everest"))
+			fmt.Fprintln(out, "\n", output.Rocket("You're running the latest version of Everest"))
 			return nil
 		}
 		return err
@@ -250,12 +250,12 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	})
 
 	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)
-	fmt.Fprintln(out, output.Rocket("Everest has been upgraded to version %s", upgradeEverestTo))
+	fmt.Fprintln(out, "\n", output.Rocket("Everest has been upgraded to version %s", upgradeEverestTo))
 
 	if isSecure, err := u.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser); err != nil {
 		return errors.Join(err, errors.New("could not check if the admin password is secure"))
 	} else if !isSecure {
-		fmt.Fprint(os.Stdout, common.InitialPasswordWarningMessage)
+		fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage)
 	}
 
 	return nil
