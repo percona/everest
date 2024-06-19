@@ -25,8 +25,8 @@ export const CreateEditModalStorage = ({
     () =>
       isEditMode
         ? storageLocationsSchema.partial({
-          [StorageLocationsFields.accessKey]: true,
-          [StorageLocationsFields.secretKey]: true,
+            [StorageLocationsFields.accessKey]: true,
+            [StorageLocationsFields.secretKey]: true,
           })
         : storageLocationsSchema,
     [isEditMode]
