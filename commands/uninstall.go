@@ -40,6 +40,12 @@ func newUninstallCmd(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
+			enableLogging := viper.GetBool("logs")
+			if !enableLogging {
+				l = zap.NewNop().Sugar()
+			}
+			c.Pretty = !enableLogging
+
 			op, err := uninstall.NewUninstall(*c, l)
 			if err != nil {
 				l.Error(err)
@@ -61,6 +67,7 @@ func newUninstallCmd(l *zap.SugaredLogger) *cobra.Command {
 func initUninstallFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolP("assume-yes", "y", false, "Assume yes to all questions")
 	cmd.Flags().BoolP("force", "f", false, "Force removal in case there are database clusters running")
+	cmd.Flags().BoolP("logs", "l", false, "If set, logs are printed during the installation process")
 }
 
 func initUninstallViperFlags(cmd *cobra.Command) {
@@ -68,6 +75,7 @@ func initUninstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
 	viper.BindPFlag("assume-yes", cmd.Flags().Lookup("assume-yes")) //nolint:errcheck,gosec
 	viper.BindPFlag("force", cmd.Flags().Lookup("force"))           //nolint:errcheck,gosec
+	viper.BindPFlag("logs", cmd.Flags().Lookup("logs"))             //nolint:errcheck,gosec
 }
 
 func parseClusterConfig() (*uninstall.Config, error) {
