@@ -305,7 +305,8 @@ func (o *Install) latestVersion(meta *versionpb.MetadataResponse) (*goversion.Ve
 }
 
 func (o *Install) provisionEverestComponents(
-	latest *goversion.Version, recVer *version.RecommendedVersion) []common.Step {
+	latest *goversion.Version, recVer *version.RecommendedVersion,
+) []common.Step {
 	result := []common.Step{}
 
 	result = append(result, o.provisionDBNamespaces(recVer)...)

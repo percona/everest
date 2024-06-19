@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+
 	"github.com/percona/everest/pkg/output"
 )
 
