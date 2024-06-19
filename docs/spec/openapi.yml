@@ -38,7 +38,7 @@ paths:
       tags:
         - Authentication
       security: []
-      summary: Create login session
+      summary: Everest UI Login
       description: |
         This API issues a new JWT token for logging in from the Everest API.
         The provided user must have the `login` capability.
@@ -1752,6 +1752,7 @@ components:
               minLength: 1
               description: A user defined string name of the storage in the DNS name format https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names
               x-go-type-skip-optional-pointer: true
+              example: pmm-instance
     MonitoringInstancePMM:
       type: object
       properties:
@@ -1762,13 +1763,16 @@ components:
             user:
               type: string
               x-go-type-skip-optional-pointer: true
+              example: admin
             password:
               type: string
               x-go-type-skip-optional-pointer: true
+              example: password
             apiKey:
               type: string
               minLength: 1
               x-go-type-skip-optional-pointer: true
+              example: apikey
     MonitoringInstanceCreateParams:
       description: Monitoring instance create information
       allOf:
