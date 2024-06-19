@@ -150,7 +150,7 @@ paths:
         - Kubernetes
       summary: Cluster info
       description: |
-        This API gets the type of the cluster type and the storage class used by the cluster.
+        This API gets the cluster type and the storage classes available in the cluster.
       operationId: getKubernetesClusterInfo
       responses:
         '200':
