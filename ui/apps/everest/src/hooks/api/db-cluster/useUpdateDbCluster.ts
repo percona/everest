@@ -150,3 +150,28 @@ export const useUpdateDbClusterCrd = () =>
         },
       }),
   });
+
+export const useUpdateDbClusterEngine = () =>
+  useMutation({
+    mutationFn: ({
+      clusterName,
+      namespace,
+      dbCluster,
+      newEngineVersion,
+    }: {
+      clusterName: string;
+      namespace: string;
+      dbCluster: DbCluster;
+      newEngineVersion: string;
+    }) =>
+      updateDbClusterFn(clusterName, namespace, {
+        ...dbCluster,
+        spec: {
+          ...dbCluster.spec,
+          engine: {
+            ...dbCluster.spec.engine,
+            version: newEngineVersion,
+          },
+        },
+      }),
+  });
