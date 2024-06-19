@@ -97,6 +97,7 @@ var (
 	errInvalidVersion                = errors.New("invalid database engine version provided")
 	errDBEngineMajorVersionUpgrade   = errors.New("database engine cannot be upgraded to a major version")
 	errDBEngineDowngrade             = errors.New("database engine version cannot be downgraded")
+	errDuplicatedSchedules           = errors.New("duplicated backup schedules are not allowed")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -746,6 +747,26 @@ func validateBackupSpec(cluster *DatabaseCluster) error {
 		if schedule.Enabled && schedule.BackupStorageName == "" {
 			return errScheduleNoBackupStorageName
 		}
+	}
+	return checkDuplicateSchedules(*cluster.Spec.Backup.Schedules)
+}
+
+type apiSchedule []struct {
+	BackupStorageName string `json:"backupStorageName"`
+	Enabled           bool   `json:"enabled"`
+	Name              string `json:"name"`
+	RetentionCopies   *int32 `json:"retentionCopies,omitempty"`
+	Schedule          string `json:"schedule"`
+}
+
+func checkDuplicateSchedules(schedules apiSchedule) error {
+	m := make(map[string]struct{})
+	for _, s := range schedules {
+		key := s.Schedule
+		if _, ok := m[key]; ok {
+			return errDuplicatedSchedules
+		}
+		m[key] = struct{}{}
 	}
 	return nil
 }

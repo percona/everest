@@ -167,7 +167,7 @@ jobs:
 
       - name: Run linters
         run: |
-          bin/golangci-lint run --out-format=line-number | env REVIEWDOG_GITHUB_API_TOKEN=${{ secrets.GITHUB_TOKEN }} bin/reviewdog -f=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=true
+          bin/golangci-lint run --new --out-format=line-number | env REVIEWDOG_GITHUB_API_TOKEN=${{ secrets.GITHUB_TOKEN }} bin/reviewdog -f=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=true
       
 
       - name: Check that there are no source code changes
@@ -332,10 +332,6 @@ jobs:
             --skip-wizard \
             --namespaces everest
 
-          # API_TOKEN is used later by "make test"
-          echo "API_TOKEN=$(./bin/everestctl token reset --json | jq .token -r)" >> $GITHUB_ENV
-
-
       - name: Patch Everest Deployment to use the PR image
         run: |
           kubectl -n everest-system patch deployment percona-everest --type strategic --patch-file dev/patch-deployment-image.yaml
@@ -344,6 +340,11 @@ jobs:
       - name: Expose Everest API Server
         run: |
           kubectl port-forward --namespace everest-system deployment/percona-everest 8080:8080 &
+
+      - name: Create Everest test user
+        run: |
+          ./bin/everestctl accounts create -u everest_ci -p password
+          echo "API_TOKEN=$(curl --location -s 'localhost:8080/v1/session' --header 'Content-Type: application/json' --data '{"username": "everest_ci","password": "password"}' | jq -r .token)" >> $GITHUB_ENV
 
       - name: Run integration tests
         run: |
@@ -466,5 +467,5 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           interval: 45
           timeout: 300
-          ignored: "license/snyk (Percona Github Org), security/snyk (Percona Github Org)"
+          ignored: "license/snyk (Percona Everest), security/snyk (Percona Everest)"
           ref: ${{ github.event.pull_request.head.sha || github.sha }}

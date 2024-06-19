@@ -28,6 +28,7 @@ const DB_CLUSTER_STATUS_HUMANIFIED: Record<DbClusterStatus, string> = {
   [DbClusterStatus.stopping]: Messages.statusProvider.stopping,
   [DbClusterStatus.unknown]: Messages.statusProvider.unknown,
   [DbClusterStatus.restoring]: Messages.statusProvider.restoring,
+  [DbClusterStatus.deleting]: Messages.statusProvider.deleting,
 };
 
 export const beautifyDbClusterStatus = (status: DbClusterStatus): string =>
@@ -127,4 +128,12 @@ export const getLastBackupStatus = (
   if (lastBackup.state === BackupStatus.UNKNOWN) {
     return Messages.lastBackup.notStarted;
   }
+};
+
+export const sortBackupsByTime = (backups: Backup[]) => {
+  return backups.sort((b1, b2) => {
+    const date1 = b1?.completed || new Date();
+    const date2 = b2?.completed || new Date();
+    return date1.getTime() - date2.getTime();
+  });
 };

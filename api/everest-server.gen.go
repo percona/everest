@@ -20,6 +20,10 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+const (
+	BearerAuthScopes = "BearerAuth.Scopes"
+)
+
 // Defines values for BackupStorageType.
 const (
 	BackupStorageTypeAzure BackupStorageType = "azure"
@@ -87,10 +91,15 @@ const (
 
 // Defines values for OperatorUpgradePreflightForDatabasePendingTask.
 const (
-	NotReady      OperatorUpgradePreflightForDatabasePendingTask = "notReady"
-	Ready         OperatorUpgradePreflightForDatabasePendingTask = "ready"
-	Restart       OperatorUpgradePreflightForDatabasePendingTask = "restart"
-	UpgradeEngine OperatorUpgradePreflightForDatabasePendingTask = "upgradeEngine"
+	OperatorUpgradePreflightForDatabasePendingTaskNotReady      OperatorUpgradePreflightForDatabasePendingTask = "notReady"
+	OperatorUpgradePreflightForDatabasePendingTaskReady         OperatorUpgradePreflightForDatabasePendingTask = "ready"
+	OperatorUpgradePreflightForDatabasePendingTaskRestart       OperatorUpgradePreflightForDatabasePendingTask = "restart"
+	OperatorUpgradePreflightForDatabasePendingTaskUpgradeEngine OperatorUpgradePreflightForDatabasePendingTask = "upgradeEngine"
+)
+
+// Defines values for OperatorVersionCheckForDatabasePendingTask.
+const (
+	OperatorVersionCheckForDatabasePendingTaskRestart OperatorVersionCheckForDatabasePendingTask = "restart"
 )
 
 // BackupStorage Backup storage information
@@ -508,6 +517,28 @@ type DatabaseClusterBackupList struct {
 	Metadata *map[string]interface{} `json:"metadata,omitempty"`
 }
 
+// DatabaseClusterComponentContainer defines model for DatabaseClusterComponentContainer.
+type DatabaseClusterComponentContainer struct {
+	Name     *string `json:"name,omitempty"`
+	Restarts *int    `json:"restarts,omitempty"`
+	Started  *string `json:"started,omitempty"`
+	Status   *string `json:"status,omitempty"`
+}
+
+// DatabaseClusterComponents components related data
+type DatabaseClusterComponents = []DatabaseClusterComponent
+
+// DatabaseClusterComponent defines model for .
+type DatabaseClusterComponent struct {
+	Containers *[]DatabaseClusterComponentContainer `json:"containers,omitempty"`
+	Name       *string                              `json:"name,omitempty"`
+	Ready      *string                              `json:"ready,omitempty"`
+	Restarts   *int                                 `json:"restarts,omitempty"`
+	Started    *string                              `json:"started,omitempty"`
+	Status     *string                              `json:"status,omitempty"`
+	Type       *string                              `json:"type,omitempty"`
+}
+
 // DatabaseClusterCredential kubernetes object
 type DatabaseClusterCredential struct {
 	Password *string `json:"password,omitempty"`
@@ -816,6 +847,15 @@ type MonitoringInstancesList = []MonitoringInstance
 // NamespaceList defines model for NamespaceList.
 type NamespaceList = []string
 
+// OIDCConfig Everest OIDC provider configuration
+type OIDCConfig struct {
+	// ClientId OIDC application clientID
+	ClientId string `json:"clientId"`
+
+	// IssuerURL OIDC provider url
+	IssuerURL string `json:"issuerURL"`
+}
+
 // OperatorUpgradePreflight Operator upgrade preflight check results
 type OperatorUpgradePreflight struct {
 	// CurrentVersion The current operator version
@@ -837,6 +877,33 @@ type OperatorUpgradePreflightForDatabase struct {
 // OperatorUpgradePreflightForDatabasePendingTask Pending task for the database cluster
 type OperatorUpgradePreflightForDatabasePendingTask string
 
+// OperatorVersion Operator version check results
+type OperatorVersion struct {
+	// CurrentVersion The current operator version
+	CurrentVersion *string                            `json:"currentVersion,omitempty"`
+	Databases      *[]OperatorVersionCheckForDatabase `json:"databases,omitempty"`
+}
+
+// OperatorVersionCheckForDatabase Operator version checks for a single database
+type OperatorVersionCheckForDatabase struct {
+	Message *string `json:"message,omitempty"`
+
+	// Name Name of the database cluster
+	Name *string `json:"name,omitempty"`
+
+	// PendingTask Pending task for the database cluster
+	PendingTask *OperatorVersionCheckForDatabasePendingTask `json:"pendingTask,omitempty"`
+}
+
+// OperatorVersionCheckForDatabasePendingTask Pending task for the database cluster
+type OperatorVersionCheckForDatabasePendingTask string
+
+// Settings Everest global settings
+type Settings struct {
+	// OidcConfig Everest OIDC provider configuration
+	OidcConfig OIDCConfig `json:"oidcConfig"`
+}
+
 // UpdateBackupStorageParams Backup storage parameters
 type UpdateBackupStorageParams struct {
 	AccessKey *string `json:"accessKey,omitempty"`
@@ -852,6 +919,12 @@ type UpdateBackupStorageParams struct {
 	SecretKey      *string `json:"secretKey,omitempty"`
 	Url            *string `json:"url,omitempty"`
 	VerifyTLS      *bool   `json:"verifyTLS,omitempty"`
+}
+
+// UserCredentials defines model for UserCredentials.
+type UserCredentials struct {
+	Password *string `json:"password,omitempty"`
+	Username *string `json:"username,omitempty"`
 }
 
 // Version Everest version info
@@ -992,6 +1065,9 @@ type UpdateDatabaseEngineJSONRequestBody = DatabaseEngine
 
 // UpgradeDatabaseEngineOperatorJSONRequestBody defines body for UpgradeDatabaseEngineOperator for application/json ContentType.
 type UpgradeDatabaseEngineOperatorJSONRequestBody = DatabaseEngineOperatorUpgradeParams
+
+// CreateSessionJSONRequestBody defines body for CreateSession for application/json ContentType.
+type CreateSessionJSONRequestBody = UserCredentials
 
 // AsDatabaseClusterSpecEngineResourcesCpu0 returns the union data inside the DatabaseCluster_Spec_Engine_Resources_Cpu as a DatabaseClusterSpecEngineResourcesCpu0
 func (t DatabaseCluster_Spec_Engine_Resources_Cpu) AsDatabaseClusterSpecEngineResourcesCpu0() (DatabaseClusterSpecEngineResourcesCpu0, error) {
@@ -1429,109 +1505,121 @@ func (t *DatabaseCluster_Spec_Proxy_Resources_Memory) UnmarshalJSON(b []byte) er
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// List of the created backup storages
+	// List backup storages
 	// (GET /backup-storages)
 	ListBackupStorages(ctx echo.Context) error
-	// Create a new backup storage object
+	// Create backup storage
 	// (POST /backup-storages)
 	CreateBackupStorage(ctx echo.Context) error
-	// Delete the specified backup storage
+	// Delete backup storage
 	// (DELETE /backup-storages/{name})
 	DeleteBackupStorage(ctx echo.Context, name string) error
-	// Get the specified backup storage
+	// Get backup storage
 	// (GET /backup-storages/{name})
 	GetBackupStorage(ctx echo.Context, name string) error
-	// Partial update of the specified backup storage
+	// Update backup storage
 	// (PATCH /backup-storages/{name})
 	UpdateBackupStorage(ctx echo.Context, name string) error
-	// Get the cluster type and storage classes of a kubernetes cluster
+	// Cluster info
 	// (GET /cluster-info)
 	GetKubernetesClusterInfo(ctx echo.Context) error
-	// List of the created monitoring instances
+	// List monitoring instances
 	// (GET /monitoring-instances)
 	ListMonitoringInstances(ctx echo.Context) error
-	// Create a new monitoring instance object
+	// Create monitoring instance
 	// (POST /monitoring-instances)
 	CreateMonitoringInstance(ctx echo.Context) error
-	// Delete the specified Monitoring instance
+	// Delete monitoring instnace
 	// (DELETE /monitoring-instances/{name})
 	DeleteMonitoringInstance(ctx echo.Context, name string) error
-	// Get the specified monitoring instance
+	// Get monitoring instance
 	// (GET /monitoring-instances/{name})
 	GetMonitoringInstance(ctx echo.Context, name string) error
-	// Update the specified Monitoring instance
+	// Update monitoring instance
 	// (PATCH /monitoring-instances/{name})
 	UpdateMonitoringInstance(ctx echo.Context, name string) error
-	// Get all namespaces managed by Everest
+	// Managed namespaces
 	// (GET /namespaces)
 	ListNamespaces(ctx echo.Context) error
-	// Create a database cluster backup
+	// Create database cluster backup
 	// (POST /namespaces/{namespace}/database-cluster-backups)
 	CreateDatabaseClusterBackup(ctx echo.Context, namespace string) error
-	// Delete the specified cluster backup
+	// Delete database cluster backup
 	// (DELETE /namespaces/{namespace}/database-cluster-backups/{name})
 	DeleteDatabaseClusterBackup(ctx echo.Context, namespace string, name string, params DeleteDatabaseClusterBackupParams) error
-	// Returns the specified cluster backup
+	// Get database cluster backup
 	// (GET /namespaces/{namespace}/database-cluster-backups/{name})
 	GetDatabaseClusterBackup(ctx echo.Context, namespace string, name string) error
-	// Create a database cluster restore
+	// Create database cluster restore
 	// (POST /namespaces/{namespace}/database-cluster-restores)
 	CreateDatabaseClusterRestore(ctx echo.Context, namespace string) error
-	// Delete the specified cluster restore
+	// Delete database cluster restore
 	// (DELETE /namespaces/{namespace}/database-cluster-restores/{name})
 	DeleteDatabaseClusterRestore(ctx echo.Context, namespace string, name string) error
-	// Returns the specified cluster restore
+	// Get database cluster restore
 	// (GET /namespaces/{namespace}/database-cluster-restores/{name})
 	GetDatabaseClusterRestore(ctx echo.Context, namespace string, name string) error
-	// Replace the specified cluster restore
+	// Update database cluster restore
 	// (PUT /namespaces/{namespace}/database-cluster-restores/{name})
 	UpdateDatabaseClusterRestore(ctx echo.Context, namespace string, name string) error
-	// List of the created database clusters
+	// List database clusters
 	// (GET /namespaces/{namespace}/database-clusters)
 	ListDatabaseClusters(ctx echo.Context, namespace string) error
-	// Create a database cluster
+	// Create database cluster
 	// (POST /namespaces/{namespace}/database-clusters)
 	CreateDatabaseCluster(ctx echo.Context, namespace string) error
-	// Delete the specified database cluster
+	// Delete database cluster
 	// (DELETE /namespaces/{namespace}/database-clusters/{name})
 	DeleteDatabaseCluster(ctx echo.Context, namespace string, name string, params DeleteDatabaseClusterParams) error
-	// Get the specified database cluster
+	// Get database cluster
 	// (GET /namespaces/{namespace}/database-clusters/{name})
 	GetDatabaseCluster(ctx echo.Context, namespace string, name string) error
-	// Replace the specified database cluster
+	// Update database cluster
 	// (PUT /namespaces/{namespace}/database-clusters/{name})
 	UpdateDatabaseCluster(ctx echo.Context, namespace string, name string) error
-	// List of the created database cluster backups
+	// List database cluster backups
 	// (GET /namespaces/{namespace}/database-clusters/{name}/backups)
 	ListDatabaseClusterBackups(ctx echo.Context, namespace string, name string) error
-	// Get the specified database cluster credentials
+	// Get database cluster components
+	// (GET /namespaces/{namespace}/database-clusters/{name}/components)
+	GetDatabaseClusterComponents(ctx echo.Context, namespace string, name string) error
+	// Get database cluster credentials
 	// (GET /namespaces/{namespace}/database-clusters/{name}/credentials)
 	GetDatabaseClusterCredentials(ctx echo.Context, namespace string, name string) error
-	// Get the Point-in-Time related data for the specified database cluster
+	// Get the Point-in-Time recovery info
 	// (GET /namespaces/{namespace}/database-clusters/{name}/pitr)
 	GetDatabaseClusterPitr(ctx echo.Context, namespace string, name string) error
-	// List of the created database cluster restores
+	// List database cluster restores
 	// (GET /namespaces/{namespace}/database-clusters/{name}/restores)
 	ListDatabaseClusterRestores(ctx echo.Context, namespace string, name string) error
-	// List of the available database engines
+	// List database engines
 	// (GET /namespaces/{namespace}/database-engines)
 	ListDatabaseEngines(ctx echo.Context, namespace string) error
-	// Get the specified database engine
+	// Get database engine
 	// (GET /namespaces/{namespace}/database-engines/{name})
 	GetDatabaseEngine(ctx echo.Context, namespace string, name string) error
-	// Update the specified database engine
+	// Update database engine
 	// (PUT /namespaces/{namespace}/database-engines/{name})
 	UpdateDatabaseEngine(ctx echo.Context, namespace string, name string) error
-	// Update the specified database engine
+	// Version info
+	// (GET /namespaces/{namespace}/database-engines/{name}/operator-version)
+	GetOperatorVersion(ctx echo.Context, namespace string, name string) error
+	// Upgrade database engine operator
 	// (PUT /namespaces/{namespace}/database-engines/{name}/operator-version)
 	UpgradeDatabaseEngineOperator(ctx echo.Context, namespace string, name string) error
-	// Get the preflight check results for upgrading the specified database engine operator
+	// Upgrade preflight
 	// (GET /namespaces/{namespace}/database-engines/{name}/operator-version/preflight)
 	GetOperatorUpgradePreflight(ctx echo.Context, namespace string, name string, params GetOperatorUpgradePreflightParams) error
-	// Get the capacity and available resources of a kubernetes cluster
+	// Cluster resources
 	// (GET /resources)
 	GetKubernetesClusterResources(ctx echo.Context) error
-	// Get Everest API Server version info
+	// Everest UI Login
+	// (POST /session)
+	CreateSession(ctx echo.Context) error
+	// Settings
+	// (GET /settings)
+	GetSettings(ctx echo.Context) error
+	// Version
 	// (GET /version)
 	VersionInfo(ctx echo.Context) error
 }
@@ -1545,6 +1633,8 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) ListBackupStorages(ctx echo.Context) error {
 	var err error
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ListBackupStorages(ctx)
 	return err
@@ -1553,6 +1643,8 @@ func (w *ServerInterfaceWrapper) ListBackupStorages(ctx echo.Context) error {
 // CreateBackupStorage converts echo context to params.
 func (w *ServerInterfaceWrapper) CreateBackupStorage(ctx echo.Context) error {
 	var err error
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.CreateBackupStorage(ctx)
@@ -1570,6 +1662,8 @@ func (w *ServerInterfaceWrapper) DeleteBackupStorage(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.DeleteBackupStorage(ctx, name)
 	return err
@@ -1585,6 +1679,8 @@ func (w *ServerInterfaceWrapper) GetBackupStorage(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetBackupStorage(ctx, name)
@@ -1602,6 +1698,8 @@ func (w *ServerInterfaceWrapper) UpdateBackupStorage(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.UpdateBackupStorage(ctx, name)
 	return err
@@ -1610,6 +1708,8 @@ func (w *ServerInterfaceWrapper) UpdateBackupStorage(ctx echo.Context) error {
 // GetKubernetesClusterInfo converts echo context to params.
 func (w *ServerInterfaceWrapper) GetKubernetesClusterInfo(ctx echo.Context) error {
 	var err error
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetKubernetesClusterInfo(ctx)
@@ -1620,6 +1720,8 @@ func (w *ServerInterfaceWrapper) GetKubernetesClusterInfo(ctx echo.Context) erro
 func (w *ServerInterfaceWrapper) ListMonitoringInstances(ctx echo.Context) error {
 	var err error
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ListMonitoringInstances(ctx)
 	return err
@@ -1628,6 +1730,8 @@ func (w *ServerInterfaceWrapper) ListMonitoringInstances(ctx echo.Context) error
 // CreateMonitoringInstance converts echo context to params.
 func (w *ServerInterfaceWrapper) CreateMonitoringInstance(ctx echo.Context) error {
 	var err error
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.CreateMonitoringInstance(ctx)
@@ -1645,6 +1749,8 @@ func (w *ServerInterfaceWrapper) DeleteMonitoringInstance(ctx echo.Context) erro
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.DeleteMonitoringInstance(ctx, name)
 	return err
@@ -1660,6 +1766,8 @@ func (w *ServerInterfaceWrapper) GetMonitoringInstance(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetMonitoringInstance(ctx, name)
@@ -1677,6 +1785,8 @@ func (w *ServerInterfaceWrapper) UpdateMonitoringInstance(ctx echo.Context) erro
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.UpdateMonitoringInstance(ctx, name)
 	return err
@@ -1685,6 +1795,8 @@ func (w *ServerInterfaceWrapper) UpdateMonitoringInstance(ctx echo.Context) erro
 // ListNamespaces converts echo context to params.
 func (w *ServerInterfaceWrapper) ListNamespaces(ctx echo.Context) error {
 	var err error
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ListNamespaces(ctx)
@@ -1701,6 +1813,8 @@ func (w *ServerInterfaceWrapper) CreateDatabaseClusterBackup(ctx echo.Context) e
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
 	}
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.CreateDatabaseClusterBackup(ctx, namespace)
@@ -1725,6 +1839,8 @@ func (w *ServerInterfaceWrapper) DeleteDatabaseClusterBackup(ctx echo.Context) e
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params DeleteDatabaseClusterBackupParams
@@ -1759,6 +1875,8 @@ func (w *ServerInterfaceWrapper) GetDatabaseClusterBackup(ctx echo.Context) erro
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetDatabaseClusterBackup(ctx, namespace, name)
 	return err
@@ -1774,6 +1892,8 @@ func (w *ServerInterfaceWrapper) CreateDatabaseClusterRestore(ctx echo.Context) 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
 	}
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.CreateDatabaseClusterRestore(ctx, namespace)
@@ -1799,6 +1919,8 @@ func (w *ServerInterfaceWrapper) DeleteDatabaseClusterRestore(ctx echo.Context) 
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.DeleteDatabaseClusterRestore(ctx, namespace, name)
 	return err
@@ -1822,6 +1944,8 @@ func (w *ServerInterfaceWrapper) GetDatabaseClusterRestore(ctx echo.Context) err
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetDatabaseClusterRestore(ctx, namespace, name)
@@ -1847,6 +1971,8 @@ func (w *ServerInterfaceWrapper) UpdateDatabaseClusterRestore(ctx echo.Context) 
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.UpdateDatabaseClusterRestore(ctx, namespace, name)
 	return err
@@ -1863,6 +1989,8 @@ func (w *ServerInterfaceWrapper) ListDatabaseClusters(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
 	}
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ListDatabaseClusters(ctx, namespace)
 	return err
@@ -1878,6 +2006,8 @@ func (w *ServerInterfaceWrapper) CreateDatabaseCluster(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
 	}
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.CreateDatabaseCluster(ctx, namespace)
@@ -1902,6 +2032,8 @@ func (w *ServerInterfaceWrapper) DeleteDatabaseCluster(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params DeleteDatabaseClusterParams
@@ -1936,6 +2068,8 @@ func (w *ServerInterfaceWrapper) GetDatabaseCluster(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetDatabaseCluster(ctx, namespace, name)
 	return err
@@ -1959,6 +2093,8 @@ func (w *ServerInterfaceWrapper) UpdateDatabaseCluster(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.UpdateDatabaseCluster(ctx, namespace, name)
@@ -1984,8 +2120,36 @@ func (w *ServerInterfaceWrapper) ListDatabaseClusterBackups(ctx echo.Context) er
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ListDatabaseClusterBackups(ctx, namespace, name)
+	return err
+}
+
+// GetDatabaseClusterComponents converts echo context to params.
+func (w *ServerInterfaceWrapper) GetDatabaseClusterComponents(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", ctx.Param("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetDatabaseClusterComponents(ctx, namespace, name)
 	return err
 }
 
@@ -2007,6 +2171,8 @@ func (w *ServerInterfaceWrapper) GetDatabaseClusterCredentials(ctx echo.Context)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetDatabaseClusterCredentials(ctx, namespace, name)
@@ -2032,6 +2198,8 @@ func (w *ServerInterfaceWrapper) GetDatabaseClusterPitr(ctx echo.Context) error 
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetDatabaseClusterPitr(ctx, namespace, name)
 	return err
@@ -2056,6 +2224,8 @@ func (w *ServerInterfaceWrapper) ListDatabaseClusterRestores(ctx echo.Context) e
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ListDatabaseClusterRestores(ctx, namespace, name)
 	return err
@@ -2071,6 +2241,8 @@ func (w *ServerInterfaceWrapper) ListDatabaseEngines(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
 	}
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ListDatabaseEngines(ctx, namespace)
@@ -2096,6 +2268,8 @@ func (w *ServerInterfaceWrapper) GetDatabaseEngine(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetDatabaseEngine(ctx, namespace, name)
 	return err
@@ -2120,8 +2294,36 @@ func (w *ServerInterfaceWrapper) UpdateDatabaseEngine(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.UpdateDatabaseEngine(ctx, namespace, name)
+	return err
+}
+
+// GetOperatorVersion converts echo context to params.
+func (w *ServerInterfaceWrapper) GetOperatorVersion(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", ctx.Param("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetOperatorVersion(ctx, namespace, name)
 	return err
 }
 
@@ -2143,6 +2345,8 @@ func (w *ServerInterfaceWrapper) UpgradeDatabaseEngineOperator(ctx echo.Context)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.UpgradeDatabaseEngineOperator(ctx, namespace, name)
@@ -2168,6 +2372,8 @@ func (w *ServerInterfaceWrapper) GetOperatorUpgradePreflight(ctx echo.Context) e
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetOperatorUpgradePreflightParams
 	// ------------- Required query parameter "targetVersion" -------------
@@ -2186,14 +2392,36 @@ func (w *ServerInterfaceWrapper) GetOperatorUpgradePreflight(ctx echo.Context) e
 func (w *ServerInterfaceWrapper) GetKubernetesClusterResources(ctx echo.Context) error {
 	var err error
 
+	ctx.Set(BearerAuthScopes, []string{})
+
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetKubernetesClusterResources(ctx)
+	return err
+}
+
+// CreateSession converts echo context to params.
+func (w *ServerInterfaceWrapper) CreateSession(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.CreateSession(ctx)
+	return err
+}
+
+// GetSettings converts echo context to params.
+func (w *ServerInterfaceWrapper) GetSettings(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetSettings(ctx)
 	return err
 }
 
 // VersionInfo converts echo context to params.
 func (w *ServerInterfaceWrapper) VersionInfo(ctx echo.Context) error {
 	var err error
+
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.VersionInfo(ctx)
@@ -2252,169 +2480,186 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/namespaces/:namespace/database-clusters/:name", wrapper.GetDatabaseCluster)
 	router.PUT(baseURL+"/namespaces/:namespace/database-clusters/:name", wrapper.UpdateDatabaseCluster)
 	router.GET(baseURL+"/namespaces/:namespace/database-clusters/:name/backups", wrapper.ListDatabaseClusterBackups)
+	router.GET(baseURL+"/namespaces/:namespace/database-clusters/:name/components", wrapper.GetDatabaseClusterComponents)
 	router.GET(baseURL+"/namespaces/:namespace/database-clusters/:name/credentials", wrapper.GetDatabaseClusterCredentials)
 	router.GET(baseURL+"/namespaces/:namespace/database-clusters/:name/pitr", wrapper.GetDatabaseClusterPitr)
 	router.GET(baseURL+"/namespaces/:namespace/database-clusters/:name/restores", wrapper.ListDatabaseClusterRestores)
 	router.GET(baseURL+"/namespaces/:namespace/database-engines", wrapper.ListDatabaseEngines)
 	router.GET(baseURL+"/namespaces/:namespace/database-engines/:name", wrapper.GetDatabaseEngine)
 	router.PUT(baseURL+"/namespaces/:namespace/database-engines/:name", wrapper.UpdateDatabaseEngine)
+	router.GET(baseURL+"/namespaces/:namespace/database-engines/:name/operator-version", wrapper.GetOperatorVersion)
 	router.PUT(baseURL+"/namespaces/:namespace/database-engines/:name/operator-version", wrapper.UpgradeDatabaseEngineOperator)
 	router.GET(baseURL+"/namespaces/:namespace/database-engines/:name/operator-version/preflight", wrapper.GetOperatorUpgradePreflight)
 	router.GET(baseURL+"/resources", wrapper.GetKubernetesClusterResources)
+	router.POST(baseURL+"/session", wrapper.CreateSession)
+	router.GET(baseURL+"/settings", wrapper.GetSettings)
 	router.GET(baseURL+"/version", wrapper.VersionInfo)
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
-	"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",
-	"03169+l/AwAA//8XJY34sBQBAA==",
+	"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",
+	"ynrRd/no8/vP/xcAAP//BWxQgbEsAQA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

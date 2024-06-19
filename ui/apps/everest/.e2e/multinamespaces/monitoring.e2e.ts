@@ -57,8 +57,6 @@ test.describe('Namespaces: Monitoring availability', () => {
     await moveForward(page);
     // Backups step
     await moveForward(page);
-    // PITR step
-    await moveForward(page);
     // Advanced Configuration step
     await moveForward(page);
     // Monitoring Step

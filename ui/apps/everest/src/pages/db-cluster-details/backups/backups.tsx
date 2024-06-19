@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { useBackupStorages } from 'hooks/api/backup-storages/useBackupStorages.ts';
-import { useDbClusters } from 'hooks/api/db-clusters/useDbClusters';
+import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster.ts';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { BackupsList } from './backups-list/backups-list';
@@ -24,19 +24,16 @@ import { ScheduledBackupModal } from './scheduled-backup-modal/scheduled-backup-
 import { OnDemandBackupModal } from './on-demand-backup-modal/on-demand-backup-modal';
 
 export const Backups = () => {
-  const { dbClusterName, namespace = '' } = useParams();
-  const { data = [] } = useDbClusters(namespace);
-  const { data: backupStorages = [] } = useBackupStorages();
-  const dbCluster = data.find(
-    (cluster) => cluster.metadata.name === dbClusterName
-  );
+  const { dbClusterName = '', namespace = '' } = useParams();
+  const { data: dbCluster } = useDbCluster(dbClusterName, namespace);
+  const { data: backupStorages = [], isFetching } = useBackupStorages();
 
   const [mode, setMode] = useState<'new' | 'edit'>('new');
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
   const [openOnDemandModal, setOpenOnDemandModal] = useState(false);
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');
 
-  if (!dbCluster) {
+  if (!dbCluster || isFetching) {
     return null;
   }
 

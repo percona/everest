@@ -33,4 +33,6 @@ export const Messages = {
   },
   backupDetails: 'Backup Details',
   repeats: 'Repeats',
+  sameTimeSchedule:
+    'A schedule with the same time selection already exists. Set a different time to create a new one.',
 };

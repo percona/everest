@@ -16,7 +16,7 @@ export const StepHeader = ({ pageTitle, pageDescription }: StepHeaderProps) => {
         <Typography
           data-testid="step-description"
           variant="subtitle2"
-          sx={{ mt: 1 }}
+          sx={{ mt: 1, mb: 2 }}
         >
           {pageDescription}
         </Typography>

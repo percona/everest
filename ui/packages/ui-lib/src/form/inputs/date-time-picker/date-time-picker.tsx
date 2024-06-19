@@ -2,8 +2,9 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { kebabize } from '@percona/utils';
 import { DateTimePickerInputProps } from './date-time-picker.types';
+import { PickerValidDate } from '@mui/x-date-pickers';
 
-const DateTimePickerInput = <T extends object>({
+const DateTimePickerInput = <T extends PickerValidDate>({
   name,
   control,
   controllerProps,
@@ -15,11 +16,17 @@ const DateTimePickerInput = <T extends object>({
     <Controller
       name={name}
       control={control ?? contextControl}
-      render={({ field }) => (
+      render={({ field, fieldState: { error } }) => (
         <DateTimePicker
           {...field}
           inputRef={field.ref}
           data-testid={`date-time-picker-${kebabize(name)}`}
+          slotProps={{
+            textField: {
+              error: !!error,
+              helperText: error ? error.message : '',
+            },
+          }}
           {...dateTimePickerProps}
         />
       )}

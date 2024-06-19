@@ -42,3 +42,18 @@ export const scheduleModalDefaultValues = (
     ...TIME_SELECTION_DEFAULTS,
   };
 };
+
+export const sameScheduleFunc = (
+  schedules: Schedule[],
+  mode: 'edit' | 'new',
+  currentSchedule: string,
+  scheduleName: string
+) => {
+  if (mode === 'edit') {
+    return schedules.find(
+      (item) => item.schedule === currentSchedule && item.name !== scheduleName
+    );
+  } else {
+    return schedules.find((item) => item.schedule === currentSchedule);
+  }
+};

@@ -37,7 +37,7 @@ describe('DatabasePreview', () => {
     );
 
     expect(screen.getAllByTestId(/^section-*/, { exact: false })).toHaveLength(
-      6
+      5
     );
   });
 

@@ -1,0 +1,147 @@
+---
+name: FE CI Gatekeeper
+on:
+  push:
+    paths:
+      - 'ui/**'
+      - '.github/workflows/dev-fe-gatekeeper.yaml'
+      - '.github/workflows/dev-fe-e2e.yaml'
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'ui/**'
+      - '.github/workflows/dev-fe-gatekeeper.yaml'
+      - '.github/workflows/dev-fe-e2e.yaml'
+    types: [opened, synchronize]
+
+permissions:
+  contents: write
+  packages: write
+  checks: write
+  pull-requests: write
+  repository-projects: read
+
+env:
+  NODE_OPTIONS: '—-max_old_space_size=4096'
+
+jobs:
+  cache_pnpm:
+    name: Cache PNPM
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'pnpm'
+          cache-dependency-path: 'ui/pnpm-lock.yaml'
+
+      - name: Install dependencies
+        run: cd ui && make init
+
+  CI_checks:
+    runs-on: ubuntu-latest
+    needs: cache_pnpm
+    strategy:
+      matrix:
+        action: ['lint', 'format', 'test', 'build']
+    defaults:
+      run:
+        working-directory: ui
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'pnpm'
+          cache-dependency-path: 'ui/pnpm-lock.yaml'
+
+      - run: make init
+
+      - name: lint
+        if: matrix.action == 'lint'
+        run: make lint
+
+      - name: format
+        if: matrix.action == 'format'
+        run: make format
+
+      - name: test
+        if: matrix.action == 'test'
+        run: make test
+
+      - name: build
+        if: matrix.action == 'build'
+        run: make build
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git config --global user.email "ci-bot@percona.com"
+          git config --global user.name "CI Bot"
+          git diff --exit-code || echo "::set-output name=changes::true"
+
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        if: steps.check_changes.outputs.changes == 'true' && github.event_name == 'pull_request'
+        with:
+          commit_message: 'chore: lint/format'
+
+  permission_checks:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Get User Permission
+        id: checkAccess
+        uses: actions-cool/check-user-permission@v2
+        with:
+          require: write
+          username: ${{ github.triggering_actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check User Permission
+        if: steps.checkAccess.outputs.require-result == 'false'
+        run: |
+          echo "${{ github.triggering_actor }} does not have permissions on this repo."
+          exit 1
+
+  E2E_tests_workflow:
+    uses: ./.github/workflows/dev-fe-e2e.yaml
+    secrets:
+      CI_USER: everestadmin
+      CI_PASSWORD: everestadmin
+
+  merge-gatekeeper:
+    needs: [CI_checks, permission_checks, E2E_tests_workflow]
+    name: Merge Gatekeeper
+    if: ${{ always() }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Run Merge Gatekeeper
+        uses: upsidr/merge-gatekeeper@v1.2.1
+        with:
+          self: Merge Gatekeeper
+          token: ${{ secrets.GITHUB_TOKEN }}
+          interval: 45
+          timeout: 300
+          ignored: 'license/snyk (Percona Github Org), security/snyk (Percona Github Org)'
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
