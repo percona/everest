@@ -32,7 +32,6 @@ export const getDBClustersList = async (
 
 export const findDbAndClickRow = async (page: Page, dbName: string) => {
   const dbRow = page.getByRole('row').filter({ hasText: dbName });
-  page.getByTestId(`${dbName}-status`).filter({ hasText: 'Initializing' });
 
   await dbRow.click();
 };

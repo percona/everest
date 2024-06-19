@@ -49,6 +49,8 @@ test.describe('Backup storage', () => {
     await page
       .getByTestId('text-input-secret-key')
       .fill(EVEREST_LOCATION_SECRET_KEY);
+    await page.getByTestId('checkbox-verify-tls').setChecked(false);
+    await page.getByTestId('checkbox-force-path-style').setChecked(true);
     await page.getByTestId('form-dialog-add').click();
 
     await findRowAndClickActions(page, 'test-storage-name', 'Delete');

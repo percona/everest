@@ -30,7 +30,9 @@ import (
 // newUninstallCmd returns a new uninstall command.
 func newUninstallCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "uninstall",
+		Use:   "uninstall",
+		Long:  "Uninstall Percona Everest",
+		Short: "Uninstall Percona Everest",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initUninstallViperFlags(cmd)
 			c, err := parseClusterConfig()
@@ -57,7 +59,6 @@ func newUninstallCmd(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initUninstallFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
 	cmd.Flags().BoolP("assume-yes", "y", false, "Assume yes to all questions")
 	cmd.Flags().BoolP("force", "f", false, "Force removal in case there are database clusters running")
 }

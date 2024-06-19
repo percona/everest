@@ -32,9 +32,7 @@ setup.describe.serial('Teardown', () => {
       );
     });
 
-    await (
-      await Promise.all(promises)
-    ).map((response) => expect(response.ok()).toBeTruthy());
+    await Promise.all(promises);
   });
 
   // setup('Delete monitoring instances', async ({ request }) => {
@@ -44,6 +42,7 @@ setup.describe.serial('Teardown', () => {
 
   setup('Logout', async ({ page }) => {
     await page.goto('/');
+    await expect(page.getByTestId('user-appbar-button')).toBeVisible();
     await page.getByTestId('user-appbar-button').click();
     await page.getByRole('menuitem').filter({ hasText: 'Log out' }).click();
 

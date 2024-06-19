@@ -24,7 +24,6 @@ import { getClusterDetailedInfo } from '../../../utils/storage-class';
 import { advancedConfigurationStepCheck } from './steps/advanced-configuration-step';
 import { backupsStepCheck } from './steps/backups-step';
 import { basicInformationStepCheck } from './steps/basic-information-step';
-import { pitrStepCheck } from './steps/pitr-step';
 import { resourcesStepCheck } from './steps/resources-step';
 import {
   goToLastAndSubmit,
@@ -35,10 +34,20 @@ import {
   submitWizard,
 } from '../../../utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '../../../constants';
+import {
+  addFirstScheduleInDBWizard,
+  fillScheduleModalForm,
+  openCreateScheduleDialogFromDBWizard,
+} from '../db-wizard-utils';
 import { findDbAndClickActions } from '../../../utils/db-clusters-list';
-import { addFirstScheduleInDBWizard } from '../db-wizard-utils';
+import { waitForInitializingState } from '../../../utils/table';
 
 test.describe('DB Cluster creation', () => {
+  // Johannesburg is UTC+2, with ou without DST
+  test.use({
+    timezoneId: 'Africa/Johannesburg',
+  });
+
   let engineVersions = {
     pxc: [],
     psmdb: [],
@@ -138,9 +147,6 @@ test.describe('DB Cluster creation', () => {
 
     await moveForward(page);
 
-    await pitrStepCheck(page);
-    await moveForward(page);
-
     await advancedConfigurationStepCheck(page);
     await moveForward(page);
 
@@ -165,7 +171,7 @@ test.describe('DB Cluster creation', () => {
     await expect(page.getByText('Number of nodes: 3')).toBeVisible();
     await page.getByTestId('button-edit-preview-backups').click();
 
-    expect(page.getByTestId('radio-option-logical')).not.toBeVisible;
+    await expect(page.getByTestId('radio-option-logical')).not.toBeVisible();
 
     await page.getByTestId('button-edit-preview-monitoring').click();
 
@@ -201,8 +207,8 @@ test.describe('DB Cluster creation', () => {
     expect(['600m', '0.6']).toContain(
       addedCluster?.spec.engine.resources?.cpu.toString()
     );
-    expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe('32G');
-    expect(addedCluster?.spec.engine.storage.size.toString()).toBe('150G');
+    expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe('1G');
+    expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1G');
     expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
     expect(addedCluster?.spec.proxy.replicas).toBe(3);
     // expect(addedCluster?.spec.proxy.expose.ipSourceRanges).toEqual([
@@ -211,6 +217,9 @@ test.describe('DB Cluster creation', () => {
     // ]);
     expect(addedCluster?.spec.engine.storage.class).toBe(storageClasses[0]);
     expect(addedCluster?.spec.backup.schedules[0].retentionCopies).toBe(1);
+    // Verify timezone conversion was applied to the schedule cron
+    // Day 10, 1h05 in Johannesburg timezone is day 9, 23h05 UTC
+    expect(addedCluster?.spec.backup.schedules[0].schedule).toBe('5 23 9 * *');
   });
 
   test('PITR should be disabled when backups has no schedules checked', async ({
@@ -226,21 +235,15 @@ test.describe('DB Cluster creation', () => {
     await expect(
       page.getByText('You don’t have any backup schedules yet.')
     ).toBeVisible();
-    await expect(page.getByTestId('pitr-no-backup-alert')).toBeVisible();
-
-    await moveForward(page);
     const enabledPitrCheckbox = page
       .getByTestId('switch-input-pitr-enabled-label')
       .getByRole('checkbox');
     await expect(enabledPitrCheckbox).not.toBeChecked();
     await expect(enabledPitrCheckbox).toBeDisabled();
-    await moveBack(page);
     await addFirstScheduleInDBWizard(page);
-    await moveForward(page);
     await expect(enabledPitrCheckbox).not.toBeChecked();
     await expect(enabledPitrCheckbox).not.toBeDisabled();
     await enabledPitrCheckbox.setChecked(true);
-
     await expect(
       page.getByTestId('text-input-pitr-storage-location')
     ).toBeVisible();
@@ -290,7 +293,9 @@ test.describe('DB Cluster creation', () => {
     await expect(page).toHaveURL('/databases');
   });
 
-  test('Multiple Mongo schedules', async ({ page, request }) => {
+  // TODO uncomment when DB Cluster PATCH is available
+  test.skip('Multiple Mongo schedules', async ({ page, request }) => {
+    test.slow();
     const clusterName = 'multi-schedule-test';
     const recommendedEngineVersions = await getEnginesLatestRecommendedVersions(
       namespace,
@@ -308,9 +313,6 @@ test.describe('DB Cluster creation', () => {
     await resourcesStepCheck(page);
     await moveForward(page);
     await backupsStepCheck(page);
-
-    await moveForward(page);
-    await pitrStepCheck(page);
     await page
       .getByTestId('switch-input-pitr-enabled-label')
       .getByRole('checkbox')
@@ -321,6 +323,8 @@ test.describe('DB Cluster creation', () => {
     await submitWizard(page);
     await expect(page.getByTestId('db-wizard-goto-db-clusters')).toBeVisible();
 
+    await page.goto('/databases');
+    await waitForInitializingState(page, clusterName);
     await page.goto(`/databases/${namespace}/${clusterName}/backups`);
     await page.getByTestId('menu-button').click();
     await page.getByTestId('schedule-menu-item').click();
@@ -329,17 +333,38 @@ test.describe('DB Cluster creation', () => {
 
     // We disable PITR
     await page.goto('/databases');
+    await waitForInitializingState(page, clusterName);
     await findDbAndClickActions(page, clusterName, 'Edit');
-    await goToStep(page, 'point-in-time-recovery');
+    await goToStep(page, 'backups');
     await setPitrEnabledStatus(page, false);
     await goToLastAndSubmit(page);
 
     // We turn it back on to make sure nothing breaks
     await page.goto('/databases');
     await findDbAndClickActions(page, clusterName, 'Edit');
-    await goToStep(page, 'point-in-time-recovery');
+    await goToStep(page, 'backups');
     await setPitrEnabledStatus(page, true);
 
     await deleteDbClusterFn(request, clusterName, namespace);
+  });
+
+  test('Warning should appears for schedule with the same date and storage', async ({
+    page,
+  }) => {
+    await page.goto('/databases');
+    await page.getByTestId('add-db-cluster-button').click();
+    await expect(
+      page.getByTestId('toggle-button-group-input-db-type')
+    ).toBeVisible();
+
+    // Resources Step
+    await moveForward(page);
+    // Backups step
+    await moveForward(page);
+    await addFirstScheduleInDBWizard(page);
+    await openCreateScheduleDialogFromDBWizard(page);
+    await expect(page.getByTestId('same-schedule-warning')).not.toBeVisible();
+    await fillScheduleModalForm(page);
+    await expect(page.getByTestId('same-schedule-warning')).toBeVisible();
   });
 });

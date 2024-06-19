@@ -19,6 +19,7 @@ import { getNamespacesFn } from 'api/namespaces';
 import { dbEnginesQuerySelect } from '../db-engines/useDbEngines';
 import { getDbEnginesFn } from 'api/dbEngineApi';
 import { DbEngine, GetDbEnginesPayload } from 'shared-types/dbEngines.types';
+import { PerconaQueryOptions } from 'shared-types/query.types';
 
 export const NAMESPACES_QUERY_KEY = 'namespace';
 
@@ -27,7 +28,8 @@ export const useNamespaces = () =>
     queryKey: [NAMESPACES_QUERY_KEY],
     queryFn: getNamespacesFn,
   });
-export const useDBEnginesForNamespaces = () => {
+
+export const useDBEnginesForNamespaces = (retrieveUpgradingEngines = false) => {
   const { data: namespaces = [] } = useNamespaces();
 
   const queries = namespaces.map<
@@ -36,7 +38,7 @@ export const useDBEnginesForNamespaces = () => {
     queryKey: [`dbEngines_${namespace}`],
     retry: false,
     queryFn: () => getDbEnginesFn(namespace),
-    select: dbEnginesQuerySelect,
+    select: (data) => dbEnginesQuerySelect(data, retrieveUpgradingEngines),
   }));
 
   const queryResults = useQueries({
@@ -48,3 +50,18 @@ export const useDBEnginesForNamespaces = () => {
   }));
   return results;
 };
+
+export const useNamespace = (
+  namespace: string,
+  options?: PerconaQueryOptions<
+    GetNamespacesPayload,
+    unknown,
+    string | undefined
+  >
+) =>
+  useQuery<GetNamespacesPayload, unknown, string | undefined>({
+    queryKey: [NAMESPACES_QUERY_KEY],
+    queryFn: getNamespacesFn,
+    select: (data) => data.find((item) => item === namespace),
+    ...options,
+  });

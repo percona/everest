@@ -32,7 +32,20 @@ export const ScheduleFormWrapper = () => {
   const { data: backupStorages = [], isFetching } =
     useBackupStoragesByNamespace(namespace);
 
-  const scheduleName = watch(ScheduleFormFields.scheduleName);
+  const [scheduleName] = watch([ScheduleFormFields.scheduleName]);
+  const [amPm, hour, minute, onDay, weekDay, selectedTime] = watch([
+    ScheduleFormFields.amPm,
+    ScheduleFormFields.hour,
+    ScheduleFormFields.minute,
+    ScheduleFormFields.onDay,
+    ScheduleFormFields.weekDay,
+    ScheduleFormFields.selectedTime,
+  ]);
+
+  useEffect(() => {
+    // This allowed us to get an error from zod .superRefine to avoid duplication of checking the schedule with the same time
+    trigger();
+  }, [amPm, hour, minute, onDay, weekDay, selectedTime]);
 
   useEffect(() => {
     if (mode === 'edit' && setSelectedScheduleName) {
@@ -47,11 +60,12 @@ export const ScheduleFormWrapper = () => {
       });
       trigger(ScheduleFormFields.storageLocation);
     }
-  }, [activeStorage]);
+  }, [activeStorage, setValue, trigger]);
 
   return (
     <ScheduleForm
       showTypeRadio={dbEngine === DbEngineType.PSMDB}
+      hideRetentionCopies={dbEngine === DbEngineType.POSTGRESQL}
       allowScheduleSelection={mode === 'edit'}
       disableStorageSelection={!!activeStorage}
       autoFillLocation={mode === 'new'}

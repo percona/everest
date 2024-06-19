@@ -13,10 +13,12 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/percona/everest/cmd/config"
+	"github.com/percona/everest/pkg/version"
 )
 
 const (
 	telemetryProductFamily = "PRODUCT_FAMILY_EVEREST"
+	telemetryVersionKey    = "version"
 
 	// delay the initial metrics to prevent flooding in case of many restarts.
 	initialMetricsDelay = 5 * time.Minute
@@ -110,6 +112,13 @@ func (e *EverestServer) collectMetrics(ctx context.Context, url string) error {
 	}
 
 	types := make(map[string]int, 3)
+	metrics := make([]Metric, 0, 4)
+	// Everest version.
+	metrics = append(metrics, Metric{
+		Key:   telemetryVersionKey,
+		Value: version.Version,
+	})
+
 	for _, ns := range namespaces {
 		clusters, err := e.kubeClient.ListDatabaseClusters(ctx, ns)
 		if err != nil {
@@ -122,9 +131,8 @@ func (e *EverestServer) collectMetrics(ctx context.Context, url string) error {
 		}
 	}
 
-	// key - the engine type, value - the amount of db clusters of that type
-	metrics := make([]Metric, 0, 3)
 	for key, val := range types {
+		// Number of DBs per DB engine.
 		metrics = append(metrics, Metric{key, strconv.Itoa(val)})
 	}
 

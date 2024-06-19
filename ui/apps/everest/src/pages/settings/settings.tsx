@@ -14,9 +14,7 @@ export const Settings = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Box
-        sx={{ borderBottom: 1, borderColor: 'divider', width: 'fit-content' }}
-      >
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
           value={currentTab}
           variant="scrollable"
