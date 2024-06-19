@@ -511,9 +511,9 @@ paths:
     get:
       tags:
         - Database Cluster
-      summary: Get the Point-in-Time info
+      summary: Get the Point-in-Time recovery info
       description: |
-        This API gets the Point-in-Time info for the database cluster specified by the `name` and `namespace`.
+        This API gets the Point-in-Time recovery info for the database cluster specified by the `name` and `namespace`.
       operationId: getDatabaseClusterPitr
       parameters:
         - name: namespace
