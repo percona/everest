@@ -147,9 +147,8 @@ type (
 
 		Operator OperatorConfig
 
-		// If set, enables logging for the installation process.
-		// Otherwise, it uses the user-friendly terimnal UI (animations, spinners, etc.)
-		EnableLogging bool `mapstructure:"logs"`
+		// If set, we will print the pretty output.
+		Pretty bool
 	}
 
 	// OperatorConfig identifies which operators shall be installed.
@@ -223,8 +222,8 @@ func (o *Install) Run(ctx context.Context) error {
 	installSteps = append(installSteps, o.provisionEverestComponents(latest, recVer)...)
 
 	var out io.Writer = os.Stdout
-	if o.config.EnableLogging {
-		out = io.Discard // logging is enabled, we don't want the spinner animations.
+	if !o.config.Pretty {
+		out = io.Discard
 	}
 	fmt.Fprintln(out, output.Info("Installing Everest version %s", latest))
 	if err := common.RunStepsWithSpinner(ctx, installSteps, out); err != nil {

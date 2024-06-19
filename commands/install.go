@@ -47,9 +47,11 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
-			if !c.EnableLogging {
+			enableLogging := viper.GetBool("logs")
+			if !enableLogging {
 				l = zap.NewNop().Sugar()
 			}
+			c.Pretty = !enableLogging
 
 			op, err := install.NewInstall(*c, l, cmd)
 			if err != nil {

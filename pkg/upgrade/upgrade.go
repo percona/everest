@@ -75,9 +75,8 @@ type (
 		KubeconfigPath string `mapstructure:"kubeconfig"`
 		// VersionMetadataURL stores hostname to retrieve version metadata information from.
 		VersionMetadataURL string `mapstructure:"version-metadata-url"`
-		// If set, enables logging for the upgrade process.
-		// Otherwise, it uses the user-friendly terimnal UI (animations, spinners, etc.)
-		EnableLogging bool `mapstructure:"logs"`
+		// If set, we will print the pretty output.
+		Pretty bool
 	}
 
 	// Upgrade struct implements upgrade command.
@@ -139,8 +138,8 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	}
 
 	var out io.Writer = os.Stdout
-	if u.config.EnableLogging {
-		out = io.Discard // logging is enabled, we don't want the spinner animations.
+	if !u.config.Pretty {
+		out = io.Discard
 	}
 
 	// Check prerequisites
