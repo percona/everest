@@ -20,6 +20,7 @@ type Step struct {
 	F func(ctx context.Context) error
 }
 
+// RunStepsWithSpinner runs a list of steps with a loading spinner animation.
 func RunStepsWithSpinner(
 	ctx context.Context,
 	steps []Step,

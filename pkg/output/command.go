@@ -64,23 +64,28 @@ func PrintError(err error, l *zap.SugaredLogger) {
 	l.Error(err)
 }
 
+//nolint:gochecknoglobals
 var (
 	okStatus   = color.New(color.FgGreen).SprintFunc()("\u2713")           // ✓
 	failStatus = color.New(color.FgRed, color.Bold).SprintFunc()("\u00D7") // ×
 )
 
+// Success prints a message with a success emoji.
 func Success(msg string, args ...any) string {
 	return fmt.Sprintf("%s %s\n", okStatus, fmt.Sprintf(msg, args...))
 }
 
+// Failure prints a message with a fail emoji.
 func Failure(msg string, args ...any) string {
 	return fmt.Sprintf("%s %s\n", failStatus, fmt.Sprintf(msg, args...))
 }
 
+// Info prints a message with an info emoji.
 func Info(msg string, args ...any) string {
 	return fmt.Sprintf("ℹ️ %s\n", fmt.Sprintf(msg, args...))
 }
 
+// Rocket prints a message with a rocket emoji.
 func Rocket(msg string, args ...any) string {
 	return fmt.Sprintf("🚀 %s\n", fmt.Sprintf(msg, args...))
 }

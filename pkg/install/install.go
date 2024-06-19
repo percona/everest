@@ -373,7 +373,7 @@ func (o *Install) provisionMonitoringStack() []common.Step {
 
 	result = append(result, common.Step{
 		Desc: "Provision monitoring stack",
-		F: func(ctx context.Context) error {
+		F: func(_ context.Context) error {
 			if err := o.kubeClient.ProvisionMonitoring(MonitoringNamespace); err != nil {
 				return err
 			}
@@ -473,7 +473,7 @@ func (o *Install) provisionDBNamespaces(recVer *version.RecommendedVersion) []co
 
 		result = append(result, common.Step{
 			Desc: fmt.Sprintf("Configure RBAC in namespace '%s'", namespace),
-			F: func(ctx context.Context) error {
+			F: func(_ context.Context) error {
 				o.l.Info("Creating role for the Everest service account")
 				err := o.kubeClient.CreateRole(namespace, everestServiceAccountRole, o.serviceAccountRolePolicyRules())
 				if err != nil {

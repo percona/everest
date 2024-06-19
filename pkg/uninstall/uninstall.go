@@ -79,8 +79,6 @@ func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
 }
 
 // Run runs the cluster command.
-//
-//nolint:cyclop
 func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
 	if abort, err := u.runWizard(); err != nil {
 		return err

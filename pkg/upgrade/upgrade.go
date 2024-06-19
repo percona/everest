@@ -64,10 +64,6 @@ var skipObjects = []client.Object{ //nolint:gochecknoglobals
 	},
 }
 
-const postUpgradeMessage = `
-Everest has been successfully upgraded!
-`
-
 type (
 	// Config defines configuration required for upgrade command.
 	Config struct {
@@ -129,7 +125,7 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 
 // Run runs the operators installation process.
 //
-//nolint:funlen,cyclop
+//nolint:funlen,cyclop,gocognit
 func (u *Upgrade) Run(ctx context.Context) error {
 	// Get Everest version.
 	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
@@ -185,7 +181,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	var ip *olmv1alpha1.InstallPlan
 	upgradeSteps = append(upgradeSteps, common.Step{
 		Desc: "Wait for Everest Operator InstallPlan",
-		F: func(ctx context.Context) error {
+		F: func(_ context.Context) error {
 			u.l.Info("Waiting for install plan for Everest operator")
 			var err error
 			ip, err = u.kubeClient.WaitForInstallPlan(
