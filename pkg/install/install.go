@@ -446,7 +446,22 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 	return nil
 }
 
+func (o *Install) operatorNamesListShortHand() string {
+	operators := []string{}
+	if o.config.Operator.PXC {
+		operators = append(operators, common.PXCOperatorName)
+	}
+	if o.config.Operator.PSMDB {
+		operators = append(operators, common.PSMDBOperatorName)
+	}
+	if o.config.Operator.PG {
+		operators = append(operators, common.PGOperatorName)
+	}
+	return strings.Join(operators, ", ")
+}
+
 func (o *Install) provisionDBNamespaces(recVer *version.RecommendedVersion) []common.Step {
+
 	result := []common.Step{}
 	for _, namespace := range o.config.NamespacesList {
 		result = append(result, common.Step{
@@ -457,7 +472,7 @@ func (o *Install) provisionDBNamespaces(recVer *version.RecommendedVersion) []co
 		})
 
 		result = append(result, common.Step{
-			Desc: fmt.Sprintf("Install operators in namespace '%s'", namespace),
+			Desc: fmt.Sprintf("Install operators [%s] in namespace '%s'", namespace, o.operatorNamesListShortHand()),
 			F: func(ctx context.Context) error {
 				if err := o.kubeClient.CreateOperatorGroup(ctx, dbsOperatorGroup, namespace, []string{}); err != nil {
 					return err
