@@ -759,7 +759,10 @@ paths:
         - Operators
       summary: Version info
       description: |
-        This API gets the operator version and check results for the specified database engine.
+        This API gets the version information of the database engine operator specified by the `name` and `namespace`.
+
+        Additionally, if the specified database engine operator was newly upgraded to the specified version, it also returns
+        a list of pending action items that need to be performed before the operator can be considered fully upgraded.
       operationId: getOperatorVersion
       parameters:
         - name: namespace
