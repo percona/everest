@@ -22,7 +22,7 @@ import AddIcon from '@mui/icons-material/Add';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { Box, Button, MenuItem, Stack } from '@mui/material';
-import { Table, humanizeDbType } from '@percona/ui-lib';
+import { Table } from '@percona/ui-lib';
 import StatusField from 'components/status-field';
 import { useDbActions } from 'hooks/api/db-cluster/useDbActions';
 import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
@@ -45,7 +45,7 @@ import { ExpandedRow } from './expandedRow/ExpandedRow';
 import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
 import { LastBackup } from './lastBackup/LastBackup';
 import { useDbBackups } from 'hooks/api/backups/useBackups';
-import { dbEngineToDbType } from '@percona/utils';
+import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
 
 export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
@@ -127,7 +127,7 @@ export const DbClusterView = () => {
             alignItems="center"
             gap={1}
           >
-            {humanizeDbType(dbEngineToDbType(row.original?.dbType))}{' '}
+            {beautifyDbTypeName(dbEngineToDbType(row.original?.dbType))}{' '}
             {row.original?.dbVersion}
           </Stack>
         ),
