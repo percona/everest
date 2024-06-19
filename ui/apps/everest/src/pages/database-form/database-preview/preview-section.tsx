@@ -19,7 +19,7 @@ export const PreviewSection = ({
   ...stackProps
 }: PreviewSectionProps) => {
   const theme = useTheme();
-  const showEdit = !active && hasBeenReached && !disabled;
+  const showEdit = !active && hasBeenReached;
   const { isDesktop } = useActiveBreakpoint();
 
   return (
