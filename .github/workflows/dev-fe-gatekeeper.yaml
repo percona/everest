@@ -48,7 +48,7 @@ jobs:
           cache-dependency-path: 'ui/pnpm-lock.yaml'
 
       - name: Install dependencies
-        run: cd ui && make init
+        run: cd ui && pnpm install --frozen-lockfile
 
   CI_checks:
     runs-on: ubuntu-latest
