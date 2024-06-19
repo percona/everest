@@ -348,7 +348,7 @@ paths:
         - Database Cluster
       summary: Delete database cluster
       description: |
-        This API deletes the specified database cluster specified by the `name` and `namespace`.
+        This API deletes the database cluster specified by the `name` and `namespace`.
       operationId: deleteDatabaseCluster
       parameters:
         - name: namespace
