@@ -9,8 +9,8 @@ export const useActiveBreakpoint = () => {
   const activeBreakpoint: 'desktop' | 'tablet' | 'mobile' = isMobile
     ? 'mobile'
     : isDesktop
-    ? 'desktop'
-    : 'tablet';
+      ? 'desktop'
+      : 'tablet';
 
   return { activeBreakpoint, isMobile, isDesktop, isTablet };
 };
