@@ -263,7 +263,7 @@ paths:
         - Database Cluster
       summary: Get database cluster
       description: |
-        This API gets the specified database cluster specified by the `name` and `namespace`.
+        This API gets the database cluster specified by the `name` and `namespace`.
       operationId: getDatabaseCluster
       parameters:
         - name: namespace
