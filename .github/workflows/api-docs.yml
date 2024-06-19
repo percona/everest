@@ -1,0 +1,16 @@
+name: API Docs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rdme-openapi:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repo 📚
+        uses: actions/checkout@v4
+
+      - name: Run `openapi` command 🚀
+        uses: readmeio/rdme@v8
+        with:
+          rdme: openapi docs/spec/openapi.yml --key=${{ secrets.README_API_KEY }} --id=66706dadbe980c00249a8846

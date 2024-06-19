@@ -26,8 +26,9 @@ import (
 // NewOIDCCmd returns an new OIDC sub-command.
 func NewOIDCCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "oidc",
-		Long: "Manage settings related to OIDC",
+		Use:   "oidc",
+		Long:  "Manage settings related to OIDC",
+		Short: "Manage settings related to OIDC",
 	}
 
 	cmd.AddCommand(oidc.NewConfigureCommand(l))
