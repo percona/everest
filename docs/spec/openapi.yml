@@ -38,7 +38,10 @@ paths:
       tags:
         - Authentication
       security: []
-      summary: Create new login session
+      summary: Create login session
+      description: |
+        This API issues a new JWT token for logging in from the Everest API.
+        The provided user must have the `login` capability.
       operationId: createSession
       responses:
         '200':
@@ -73,8 +76,9 @@ paths:
     get:
       tags:
         - General info
-      summary: Get all namespaces managed by Everest
-      description: Get all namespaces managed by Everest
+      summary: Managed namespaces
+      description: |
+        This API returns a list of namespaces managed by Everest.
       operationId: listNamespaces
       responses:
         '200':
@@ -87,8 +91,9 @@ paths:
     get:
       tags:
         - General info
-      summary: Get Everest API Server version info
-      description: Get Everest API Server version info
+      summary: Version
+      description: |
+        This API returns the version of the Everest API server.
       operationId: versionInfo
       responses:
         '200':
@@ -102,8 +107,8 @@ paths:
       tags:
         - General info
       security: []
-      summary: Get Everest global settings
-      description: Get Everest global settings
+      summary: Settings
+      description: This API returns the settings of the Everest installation.
       operationId: getSettings
       responses:
         '200':
@@ -295,7 +300,7 @@ paths:
     put:
       tags:
         - Database Cluster
-      summary: Update the specified database cluster
+      summary: Update database cluster
       description: |
         This API updates a database cluster specified by the `name` and `namespace`.
       operationId: updateDatabaseCluster
@@ -386,8 +391,9 @@ paths:
     get:
       tags:
         - Backup
-      summary: List of the created database cluster backups
-      description: List of the created database cluster backups
+      summary: List database cluster backups
+      description: |
+        This API lists all database cluster backups in the specified `namespace`.
       operationId: listDatabaseClusterBackups
       parameters:
         - name: namespace
@@ -425,8 +431,9 @@ paths:
     get:
       tags:
         - Restore
-      summary: List of the created database cluster restores
-      description: List of the created database cluster restores
+      summary: List database cluster restores
+      description: |
+        This API lists all database cluster restores for a database cluster specified by the `name` and `namespace`.
       operationId: listDatabaseClusterRestores
       parameters:
         - name: namespace
@@ -584,8 +591,9 @@ paths:
     get:
       tags:
         - Database Engine
-      summary: List of the available database engines
-      description: List of available database engines
+      summary: List database engines
+      description: |
+        This API lists all database engines in the specified `namespace`.
       operationId: listDatabaseEngines
       parameters:
         - name: namespace
@@ -617,8 +625,9 @@ paths:
     get:
       tags:
         - Database Engine
-      summary: Get the specified database engine
-      description: Get the specified database engine
+      summary: Get database engine
+      description: |
+        This API gets the database engine specified by the `name` and `namespace`.
       operationId: getDatabaseEngine
       parameters:
         - name: namespace
@@ -655,8 +664,9 @@ paths:
     put:
       tags:
         - Database Engine
-      summary: Update the specified database engine
-      description: Update the specified database engine
+      summary: Update database engine
+      description: |
+        This API updates the database engine specified by the `name` and `namespace`.
       operationId: updateDatabaseEngine
       parameters:
         - name: namespace
@@ -701,8 +711,9 @@ paths:
     get:
       tags:
         - Operators
-      summary: Get the preflight check results for upgrading the specified database engine operator
-      description: Get the preflight check results for upgrading the specified database engine operator
+      summary: Upgrade preflight
+      description: |
+        This API gets the results of the preflight checks that must be performed before upgrading a database engine operator.
       operationId: getOperatorUpgradePreflight
       parameters:
         - name: namespace
@@ -746,8 +757,9 @@ paths:
     get:
       tags:
         - Operators
-      summary: Get the operator version and check results for the specified database engine
-      description: Get the operator version and check results for the specified database engine
+      summary: Version info
+      description: |
+        This API gets the operator version and check results for the specified database engine.
       operationId: getOperatorVersion
       parameters:
         - name: namespace
@@ -784,8 +796,10 @@ paths:
     put:
       tags:
         - Operators
-      summary: Upgrade the specified database engine
-      description: Upgrade the specified database engine to a desired version
+      summary: Upgrade database engine operator
+      description: |
+        This API upgrades the database engine operator specified by the `name` and `namespace`.
+        Before performing the upgrade, the preflight checks must be performed.
       operationId: upgradeDatabaseEngineOperator
       parameters:
         - name: namespace
@@ -826,8 +840,9 @@ paths:
     post:
       tags:
         - Restore
-      summary: Create a database cluster restore
-      description: Create a database cluster restore
+      summary: Create database cluster restore
+      description: |
+        This API creates a new database cluster restore in the specified `namespace`.
       operationId: createDatabaseClusterRestore
       parameters:
         - name: namespace
@@ -878,8 +893,9 @@ paths:
     get:
       tags:
         - Restore
-      summary: Returns the specified cluster restore
-      description: Returns the specified cluster restore
+      summary: Get database cluster restore
+      description: |
+        This API gets the database cluster restore specified by the `name` and `namespace`.
       operationId: getDatabaseClusterRestore
       parameters:
         - name: namespace
@@ -916,8 +932,9 @@ paths:
     put:
       tags:
         - Restore
-      summary: Replace the specified cluster restore
-      description: Replace the specified cluster restore
+      summary: Update database cluster restore
+      description: |
+        This API updates the database cluster restore specified by the `name` and `namespace`.
       operationId: updateDatabaseClusterRestore
       parameters:
         - name: namespace
@@ -967,8 +984,9 @@ paths:
     delete:
       tags:
         - Restore
-      summary: Delete the specified cluster restore
-      description: Delete the specified cluster restore
+      summary: Delete database cluster restore
+      description: |
+        This API deletes the database cluster restore specified by the `name` and `namespace`.
       operationId: deleteDatabaseClusterRestore
       parameters:
         - name: namespace
@@ -1006,8 +1024,9 @@ paths:
     post:
       tags:
         - Backup
-      summary: Create a database cluster backup
-      description: Create a database cluster backup
+      summary: Create database cluster backup
+      description: |
+        This API creates a new database cluster backup in the specified `namespace`.
       operationId: createDatabaseClusterBackup
       parameters:
         - name: namespace
@@ -1058,8 +1077,9 @@ paths:
     get:
       tags:
         - Backup
-      summary: Returns the specified cluster backup
-      description: Returns the specified cluster backup
+      summary: Get database cluster backup
+      description: |
+        This API gets the database cluster backup specified by the `name` and `namespace`.
       operationId: getDatabaseClusterBackup
       parameters:
         - name: namespace
@@ -1097,8 +1117,9 @@ paths:
     delete:
       tags:
         - Backup
-      summary: Delete the specified cluster backup
-      description: Delete the specified cluster backup
+      summary: Delete database cluster backup
+      description: |
+        This API deletes the database cluster backup specified by the `name` and `namespace`.
       operationId: deleteDatabaseClusterBackup
       parameters:
         - name: namespace
@@ -1141,9 +1162,9 @@ paths:
     post:
       tags:
         - Backup Storage
-      summary: Create a new backup storage object
+      summary: Create backup storage
       description: |
-        Create a new backup storage object.
+        This API creates a new backup storage.
 
         **Examples**:
           ```
@@ -1196,8 +1217,8 @@ paths:
     get:
       tags:
         - Backup Storage
-      summary: List of the created backup storages
-      description: List of the created backup storages
+      summary: List backup storages
+      description: This API lists all backup storages.
       operationId: listBackupStorages
       responses:
         '200':
@@ -1222,8 +1243,8 @@ paths:
     get:
       tags:
         - Backup Storage
-      summary: Get the specified backup storage
-      description: Get the specified backup storage
+      summary: Get backup storage
+      description: This API gets the backup storage speciciied by the `name`.
       operationId: getBackupStorage
       parameters:
         - name: name
@@ -1254,8 +1275,9 @@ paths:
     patch:
       tags:
         - Backup Storage
-      summary: Partial update of the specified backup storage
-      description: Partial update of the specified backup storage. Updates only the specified fields.
+      summary: Update backup storage
+      description: |
+        This API updates the backup storage specified by the `name`. Only the specified fields will be updated.
       operationId: updateBackupStorage
       parameters:
         - name: name
@@ -1293,8 +1315,8 @@ paths:
     delete:
       tags:
         - Backup Storage
-      summary: Delete the specified backup storage
-      description: Delete the specified backup storage
+      summary: Delete backup storage
+      description: This API deletes the backup storage specified by the `name`.
       operationId: deleteBackupStorage
       parameters:
         - name: name
@@ -1322,8 +1344,10 @@ paths:
     post:
       tags:
         - Monitoring
-      summary: Create a new monitoring instance object
+      summary: Create monitoring instance
       description: |
+        This API creates a new monitoring instance.
+
         A monitoring instance object requires `type` to be set.
         Based on the `type` the respective key with configuration needs to be set.
         Such as, if `type: pmm`, then `pmm` key needs to be provided with a configuration.
@@ -1357,8 +1381,8 @@ paths:
     get:
       tags:
         - Monitoring
-      summary: List of the created monitoring instances
-      description: List of the created monitoring instances
+      summary: List monitoring instances
+      description: This API lists all monitoring instances.
       operationId: listMonitoringInstances
       responses:
         '200':
@@ -1383,8 +1407,8 @@ paths:
     get:
       tags:
         - Monitoring
-      summary: Get the specified monitoring instance
-      description: Get the specified monitoring instance
+      summary: Get monitoring instance
+      description: This API gets the monitoring instance specified by the `name`.
       operationId: getMonitoringInstance
       parameters:
         - name: name
@@ -1421,8 +1445,8 @@ paths:
     patch:
       tags:
         - Monitoring
-      summary: Update the specified Monitoring instance
-      description: Update the specified Monitoring instance
+      summary: Update monitoring instance
+      description: This API updates the monitoring instance specified by the `name`.
       operationId: updateMonitoringInstance
       parameters:
         - name: name
@@ -1466,8 +1490,8 @@ paths:
     delete:
       tags:
         - Monitoring
-      summary: Delete the specified Monitoring instance
-      description: Delete the specified Monitoring instance
+      summary: Delete monitoring instnace
+      description: This API deletes the monitoring instance specified by the `name`.
       operationId: deleteMonitoringInstance
       parameters:
         - name: name
