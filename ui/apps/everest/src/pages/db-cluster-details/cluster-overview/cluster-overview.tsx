@@ -1,21 +1,15 @@
 import { Stack } from '@mui/material';
 import { dbEngineToDbType } from '@percona/utils';
 import { useDbClusterCredentials } from 'hooks/api/db-cluster/useCreateDbCluster';
-import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
 import { useParams } from 'react-router-dom';
 import { ProxyExposeType } from 'shared-types/dbCluster.types';
 import { ConnectionDetails, DatabaseDetails } from './cards';
+import { useContext } from 'react';
+import { DbClusterContext } from '../dbCluster.context';
 
 export const ClusterOverview = () => {
   const { dbClusterName, namespace = '' } = useParams();
-  const { data: dbCluster, isLoading: loadingCluster } = useDbCluster(
-    dbClusterName || '',
-    namespace,
-    {
-      enabled: !!dbClusterName,
-      refetchInterval: 5 * 1000,
-    }
-  );
+  const { dbCluster, isLoading: loadingCluster } = useContext(DbClusterContext);
   const { data: dbClusterDetails, isFetching: fetchingClusterDetails } =
     useDbClusterCredentials(dbClusterName || '', namespace, {
       enabled: !!dbClusterName,
