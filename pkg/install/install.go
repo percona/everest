@@ -461,7 +461,6 @@ func (o *Install) operatorNamesListShortHand() string {
 }
 
 func (o *Install) provisionDBNamespaces(recVer *version.RecommendedVersion) []common.Step {
-
 	result := []common.Step{}
 	for _, namespace := range o.config.NamespacesList {
 		result = append(result, common.Step{
