@@ -56,7 +56,6 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/bshuster-repo/logrus-logstash-hook v1.0.0 // indirect
 	github.com/casbin/govaluate v1.1.1 // indirect
-	github.com/cert-manager/cert-manager v1.12.4 // indirect
 	github.com/cert-manager/cert-manager v1.14.6 // indirect
 	github.com/creack/pty v1.1.18 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
