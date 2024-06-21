@@ -486,7 +486,7 @@ func validateCreateMonitoringInstanceRequest(ctx echo.Context) (*CreateMonitorin
 	return &params, nil
 }
 
-//nolint:nestif,cyclop
+//nolint:nestif
 func (e *EverestServer) validateUpdateMonitoringInstanceRequest(ctx echo.Context, mc *everestv1alpha1.MonitoringConfig, monitoringConfigName string) (*UpdateMonitoringInstanceJSONRequestBody, error) {
 	var params UpdateMonitoringInstanceJSONRequestBody
 	if err := ctx.Bind(&params); err != nil {
@@ -527,10 +527,6 @@ func (e *EverestServer) validateUpdateMonitoringInstanceRequest(ctx echo.Context
 
 	if err := validateUpdateMonitoringInstanceType(params); err != nil {
 		return nil, err
-	}
-
-	if params.Pmm != nil && params.Pmm.ApiKey == "" && params.Pmm.User == "" && params.Pmm.Password == "" {
-		return nil, errors.New("one of pmm.apiKey, pmm.user or pmm.password fields is required")
 	}
 
 	return &params, nil
