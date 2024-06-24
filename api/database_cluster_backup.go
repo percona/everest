@@ -29,11 +29,11 @@ import (
 	"github.com/AlekSi/pointer"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/labstack/echo/v4"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/common"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
