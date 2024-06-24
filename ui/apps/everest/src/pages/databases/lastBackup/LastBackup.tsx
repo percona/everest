@@ -5,6 +5,7 @@ import { Messages } from '../dbClusterView.messages';
 import {
   getLastBackupStatus,
   getLastBackupTimeDiff,
+  sortBackupsByTime,
 } from '../DbClusterView.utils';
 import { WarningIcon } from '@percona/ui-lib';
 import { BackupStatus } from 'shared-types/backups.types';
@@ -24,7 +25,8 @@ export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
   const finishedBackups = backups.filter(
     (backup) => backup.completed && backup.state === BackupStatus.OK
   );
-  const lastFinishedBackup = finishedBackups[finishedBackups.length - 1];
+  const sortedBackups = sortBackupsByTime(finishedBackups);
+  const lastFinishedBackup = sortedBackups[sortedBackups.length - 1];
   const lastFinishedBackupDate = lastFinishedBackup?.completed || new Date();
 
   return (
@@ -48,7 +50,7 @@ export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
         </>
       ) : (
         <Typography variant="body2">
-          {getLastBackupStatus(backups, schedules)}
+          {getLastBackupStatus(sortedBackups, schedules)}
         </Typography>
       )}
     </>
