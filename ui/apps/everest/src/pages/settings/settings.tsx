@@ -13,7 +13,7 @@ export const Settings = () => {
   }
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ maxWidth: '1280px', mx: 'auto' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
           value={currentTab}

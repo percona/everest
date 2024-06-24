@@ -154,6 +154,7 @@ export const DbClusterView = () => {
       },
       {
         accessorKey: 'monitoringConfigName',
+        minSize: 250,
         header: 'Monitoring instance name',
       },
       // {
@@ -172,7 +173,16 @@ export const DbClusterView = () => {
     []
   );
   return (
-    <Stack direction="column" alignItems="center">
+    <Stack
+      direction="column"
+      alignItems="center"
+      sx={{
+        width: 'fit-content',
+        minWidth: 'min(100%, 1280px)',
+        maxWidth: '100%',
+        mx: 'auto',
+      }}
+    >
       <Box sx={{ width: '100%' }}>
         <Table
           tableName="dbClusterView"

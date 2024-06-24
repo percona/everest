@@ -21,6 +21,7 @@ import {
   getOperatorVersions,
 } from 'api/dbEngineApi';
 import EngineLowerContent from './engine-lower-content';
+import { Box } from '@mui/material';
 
 const NamespaceDetails = () => {
   const queryClient = useQueryClient();
@@ -140,7 +141,7 @@ const NamespaceDetails = () => {
   }
 
   return (
-    <>
+    <Box sx={{ maxWidth: '1280px', mx: 'auto' }}>
       <BackNavigationText
         text={namespaceName}
         onBackClick={() => navigate('/settings/namespaces')}
@@ -197,7 +198,7 @@ const NamespaceDetails = () => {
         onClose={() => setModalOpen(false)}
         onConfirm={() => performUpgrade(selectedEngine!.name)}
       />
-    </>
+    </Box>
   );
 };
 

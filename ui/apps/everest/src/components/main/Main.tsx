@@ -58,8 +58,6 @@ export const Main = () => {
                 activeBreakpoint === 'mobile'
                   ? '100%'
                   : `calc(100% - ${drawerWidth})`,
-              maxWidth: 1280,
-              mx: 'auto',
             }}
           >
             <Toolbar />
