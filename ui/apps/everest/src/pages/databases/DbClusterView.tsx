@@ -155,6 +155,7 @@ export const DbClusterView = () => {
       {
         accessorKey: 'monitoringConfigName',
         header: 'Monitoring instance name',
+        minSize: 250,
       },
       // {
       //   accessorKey: 'backupsEnabled',
