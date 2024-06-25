@@ -8,14 +8,15 @@ const upgradeMessage = (
   dbType: DbEngineType,
   isUpToDate: boolean,
   pendingTasks: boolean,
-  hasPostUpgradeTasks: boolean
+  hasPostUpgradeTasks: boolean,
+  targetVersion: string
 ) => {
   if (isUpToDate) {
     if (hasPostUpgradeTasks) {
       return 'Complete the upgrade by completing the post-upgrade tasks.';
     }
   } else {
-    return `A new version of the ${dbType} operator is available. ${
+    return `Version ${targetVersion} of the ${dbType} operator is available. ${
       pendingTasks ? 'Start upgrading by performing all the pending tasks.' : ''
     }`;
   }
@@ -25,20 +26,21 @@ const UpgradeHeader = ({
   onUpgrade,
   engine,
   preflightPayload,
+  targetVersion,
 }: UpgradeHeaderProps) => {
+  const isUpToDate = engine.pendingOperatorUpgrades?.length === 0;
+
   if (engine.status === DbEngineStatus.UPGRADING) {
     return (
       <Typography variant="body1">{Messages.upgradingOperator}</Typography>
     );
   }
 
-  if (!preflightPayload?.databases?.length) {
+  if (isUpToDate && !preflightPayload?.databases?.length) {
     return null;
   }
 
-  const isUpToDate = engine.pendingOperatorUpgrades?.length === 0;
-
-  const pendingTasks = !!preflightPayload.databases.filter(
+  const pendingTasks = !!(preflightPayload?.databases || []).filter(
     (db) => db.pendingTask && db.pendingTask !== 'ready'
   ).length;
 
@@ -52,7 +54,8 @@ const UpgradeHeader = ({
           engine.type,
           isUpToDate,
           pendingTasks,
-          hasPostUpgradeTasks
+          hasPostUpgradeTasks,
+          targetVersion
         )}
       </Typography>
       {!isUpToDate && (

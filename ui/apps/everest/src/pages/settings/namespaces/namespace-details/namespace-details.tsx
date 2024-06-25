@@ -83,11 +83,6 @@ const NamespaceDetails = () => {
     selectedEngine?.name || '',
     targetVersion
   );
-  const lastTargetVersion = selectedEngine?.pendingOperatorUpgrades?.length
-    ? selectedEngine?.pendingOperatorUpgrades[
-        selectedEngine?.pendingOperatorUpgrades?.length - 1
-      ].targetVersion
-    : '';
 
   const performUpgrade = (engineName: string) => {
     upgradeOperator(null, {
@@ -178,6 +173,7 @@ const NamespaceDetails = () => {
           <UpgradeHeader
             engine={selectedEngine}
             preflightPayload={preflightQueriesResults[selectedEngineIdx].data}
+            targetVersion={targetVersion}
             onUpgrade={() => setModalOpen(true)}
             mt={2}
           />
@@ -190,8 +186,7 @@ const NamespaceDetails = () => {
         </>
       )}
       <UpgradeModal
-        // TODO get values from API
-        newVersion={lastTargetVersion}
+        newVersion={targetVersion}
         namespace={namespace}
         dbType={dbTypeToDbEngine(methods.getValues('dbType'))}
         open={modalOpen}
