@@ -74,7 +74,7 @@ func (c *CLI) SetPassword(ctx context.Context, username, password string) error 
 		pUsername := survey.Input{
 			Message: "Enter username",
 		}
-		if err := survey.AskOne(&pUsername, username); err != nil {
+		if err := survey.AskOne(&pUsername, &username); err != nil {
 			return err
 		}
 	}
