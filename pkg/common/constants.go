@@ -47,9 +47,6 @@ const (
 	// EverestJWTPublicKeyFile is the path to the JWT public key.
 	EverestJWTPublicKeyFile = "/etc/jwt/id_rsa.pub"
 
-	// EverestAdminUser is the name of the admin user.
-	EverestAdminUser = "admin"
-
 	// EverestSettingsConfigMapName is the name of the Everest settings ConfigMap.
 	EverestSettingsConfigMapName = "everest-settings"
 	// EverestTokenCookie is the name of the cookie that holds the token.

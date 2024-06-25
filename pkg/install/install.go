@@ -40,6 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
+	accountshelper "github.com/percona/everest/pkg/common/accounts"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
@@ -235,7 +236,7 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
+	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, accountshelper.EverestAdminUser)
 	if err != nil {
 		return errors.Join(err, errors.New("could not check if the admin password is secure"))
 	}
@@ -408,7 +409,7 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		if err := o.kubeClient.CreateRSAKeyPair(ctx); err != nil {
 			return err
 		}
-		if err := common.CreateInitialAdminAccount(ctx, o.kubeClient.Accounts()); err != nil {
+		if err := accountshelper.CreateInitialAdminAccount(ctx, o.kubeClient.Accounts()); err != nil {
 			return err
 		}
 	} else {

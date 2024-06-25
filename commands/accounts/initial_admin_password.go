@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
-	"github.com/percona/everest/pkg/common"
+	accountshelper "github.com/percona/everest/pkg/common/accounts"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -39,7 +39,7 @@ func NewInitialAdminPasswdCommand(l *zap.SugaredLogger) *cobra.Command {
 			}
 
 			ctx := context.Background()
-			secure, err := k.Accounts().IsSecure(ctx, common.EverestAdminUser)
+			secure, err := k.Accounts().IsSecure(ctx, accountshelper.EverestAdminUser)
 			if err != nil {
 				l.Error(err)
 				os.Exit(1)
@@ -48,7 +48,7 @@ func NewInitialAdminPasswdCommand(l *zap.SugaredLogger) *cobra.Command {
 				l.Error("Cannot retrieve admin password after it has been updated.")
 				os.Exit(1)
 			}
-			admin, err := k.Accounts().Get(ctx, common.EverestAdminUser)
+			admin, err := k.Accounts().Get(ctx, accountshelper.EverestAdminUser)
 			if err != nil {
 				l.Error(err)
 				os.Exit(1)

@@ -34,6 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
+	accountshelper "github.com/percona/everest/pkg/common/accounts"
 	versionhelper "github.com/percona/everest/pkg/common/version"
 	"github.com/percona/everest/pkg/kubernetes"
 	cliVersion "github.com/percona/everest/pkg/version"
@@ -217,7 +218,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		}
 	}
 
-	if isSecure, err := u.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser); err != nil {
+	if isSecure, err := u.kubeClient.Accounts().IsSecure(ctx, accountshelper.EverestAdminUser); err != nil {
 		return errors.Join(err, errors.New("could not check if the admin password is secure"))
 	} else if !isSecure {
 		fmt.Fprint(os.Stderr, postUpgradeMessage)
@@ -286,7 +287,7 @@ func (u *Upgrade) ensureEverestAccountsIfNotExists(ctx context.Context) error {
 	if _, err := u.kubeClient.CreateSecret(ctx, secret); err != nil {
 		return err
 	}
-	return common.CreateInitialAdminAccount(ctx, u.kubeClient.Accounts())
+	return accountshelper.CreateInitialAdminAccount(ctx, u.kubeClient.Accounts())
 }
 
 func (u *Upgrade) ensureEverestJWTIfNotExists(ctx context.Context) error {
