@@ -484,10 +484,6 @@ func validateUpdateMonitoringInstanceRequest(ctx echo.Context) (*UpdateMonitorin
 		return nil, err
 	}
 
-	if params.Pmm != nil && params.Pmm.ApiKey == "" && params.Pmm.User == "" && params.Pmm.Password == "" {
-		return nil, errors.New("one of pmm.apiKey, pmm.user or pmm.password fields is required")
-	}
-
 	return &params, nil
 }
 
