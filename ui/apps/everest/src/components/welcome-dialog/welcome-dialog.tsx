@@ -69,7 +69,12 @@ export const WelcomeDialog = ({
       </DialogContent>
       {/* TODO: remove dialog actions when cards are uncommented */}
       <DialogActions sx={{ mt: 4 }}>
-        <Button onClick={handleRedirectHome} variant="contained" size="large">
+        <Button
+          onClick={handleRedirectHome}
+          variant="contained"
+          size="large"
+          data-testid="lets-go-button"
+        >
           {Messages.letsGo}
         </Button>
       </DialogActions>
