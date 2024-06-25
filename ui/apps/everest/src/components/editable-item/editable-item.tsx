@@ -21,9 +21,9 @@ import { EditableItemProps } from './editable-item.types';
 const EditableItem = ({
   children,
   dataTestId,
-  onEdit,
-  onDelete,
   paperProps,
+  deleteButtonProps,
+  editButtonProps,
 }: EditableItemProps) => {
   return (
     <Paper
@@ -42,22 +42,24 @@ const EditableItem = ({
     >
       {children}
       <Box flexWrap="nowrap" display="flex">
-        {onEdit && (
+        {editButtonProps && (
           <IconButton
             size="small"
             data-testid={`delete-editable-item-button-${dataTestId}`}
-            onClick={() => onEdit()}
+            color="primary"
+            {...editButtonProps}
           >
-            <EditOutlinedIcon color="primary" />
+            <EditOutlinedIcon />
           </IconButton>
         )}
-        {onDelete && (
+        {deleteButtonProps && (
           <IconButton
             size="small"
             data-testid={`delete-editable-item-button-${dataTestId}`}
-            onClick={() => onDelete()}
+            color="primary"
+            {...deleteButtonProps}
           >
-            <DeleteOutlineOutlinedIcon color="primary" />
+            <DeleteOutlineOutlinedIcon />
           </IconButton>
         )}
       </Box>

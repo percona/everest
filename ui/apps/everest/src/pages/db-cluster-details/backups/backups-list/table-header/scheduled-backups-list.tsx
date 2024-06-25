@@ -10,6 +10,7 @@ import { ScheduleModalContext } from '../../backups.context';
 import { getTimeSelectionPreviewMessage } from 'pages/database-form/database-preview/database.preview.messages';
 import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils';
 import { Messages } from './backups-list-table-header.messages';
+import { DbEngineType } from '@percona/types';
 
 const ScheduledBackupsList = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -109,7 +110,10 @@ const ScheduledBackupsList = () => {
               </IconButton>
               <IconButton
                 color="primary"
-                disabled={!dbCluster.spec.backup?.enabled}
+                disabled={
+                  !dbCluster.spec.backup?.enabled ||
+                  dbType === DbEngineType.POSTGRESQL
+                }
                 onClick={() => handleDelete(item.name)}
                 data-testid="delete-schedule-button"
               >

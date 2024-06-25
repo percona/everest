@@ -31,9 +31,16 @@ import { ScheduleFormDialogContext } from 'components/schedule-form-dialog/sched
 import { ScheduleFormData } from 'components/schedule-form-dialog/schedule-form/schedule-form-schema';
 import { dbTypeToDbEngine } from '@percona/utils';
 import { DbType } from '@percona/types';
+import { useDatabasePageMode } from '../../../../useDatabasePageMode';
+import { dbWizardToScheduleFormDialogMap } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog-context.types';
+import { useDatabasePageDefaultValues } from '../../../../useDatabaseFormDefaultValues';
 
 const Schedules = () => {
   const { watch, setValue } = useFormContext();
+  const dbWizardMode = useDatabasePageMode();
+  const {
+    defaultValues: { schedules: defaultDbSchedules },
+  } = useDatabasePageDefaultValues(dbWizardMode);
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
   const [mode, setMode] = useState<'new' | 'edit'>('new');
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');
@@ -116,8 +123,18 @@ const Schedules = () => {
                   storageName={item.backupStorageName}
                 />
               }
-              onDelete={() => handleDelete(item.name)}
-              onEdit={() => handleEdit(item.name)}
+              editButtonProps={{
+                onClick: () => handleEdit(item.name),
+              }}
+              deleteButtonProps={{
+                disabled:
+                  dbType === DbType.Postresql &&
+                  dbWizardMode === 'edit' &&
+                  !!defaultDbSchedules?.find(
+                    (schedule) => schedule?.name === item.name
+                  ),
+                onClick: () => handleDelete(item.name),
+              }}
             />
           ))}
           {schedules.length === 0 && (
@@ -142,8 +159,10 @@ const Schedules = () => {
             setSelectedScheduleName,
             openScheduleModal,
             setOpenScheduleModal,
+            externalContext: dbWizardToScheduleFormDialogMap(dbWizardMode),
             dbClusterInfo: {
               schedules,
+              defaultSchedules: defaultDbSchedules,
               namespace: k8sNamespace,
               dbEngine: dbTypeToDbEngine(dbType),
               activeStorage,
