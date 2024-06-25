@@ -18,7 +18,7 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/accounts"
-	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/common/settings"
 	"github.com/percona/everest/pkg/kubernetes/client"
 )
 
@@ -127,9 +127,9 @@ type KubernetesConnector interface {
 	// CreateRSAKeyPair creates a new RSA key pair and stores it in a secret.
 	CreateRSAKeyPair(ctx context.Context) error
 	// UpdateEverestSettings accepts the full list of Everest settings and updates the settings.
-	UpdateEverestSettings(ctx context.Context, settings common.EverestSettings) error
+	UpdateEverestSettings(ctx context.Context, settings settings.EverestSettings) error
 	// GetEverestSettings returns Everest settings.
-	GetEverestSettings(ctx context.Context) (common.EverestSettings, error)
+	GetEverestSettings(ctx context.Context) (settings.EverestSettings, error)
 	// ListSecrets returns secret by name.
 	ListSecrets(ctx context.Context, namespace string) (*corev1.SecretList, error)
 	// GetSecret returns a secret by name.

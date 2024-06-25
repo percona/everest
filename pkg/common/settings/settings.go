@@ -1,4 +1,5 @@
-package common
+// Package settings contains helpers for Everest settings.
+package settings
 
 import (
 	"github.com/mitchellh/mapstructure"

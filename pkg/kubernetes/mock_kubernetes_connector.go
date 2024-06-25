@@ -19,7 +19,7 @@ import (
 
 	v1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	accounts "github.com/percona/everest/pkg/accounts"
-	common "github.com/percona/everest/pkg/common"
+	settings "github.com/percona/everest/pkg/common/settings"
 	kubernetesclient "github.com/percona/everest/pkg/kubernetes/client"
 )
 
@@ -575,22 +575,22 @@ func (_m *MockKubernetesConnector) GetEverestID(ctx context.Context) (string, er
 }
 
 // GetEverestSettings provides a mock function with given fields: ctx
-func (_m *MockKubernetesConnector) GetEverestSettings(ctx context.Context) (common.EverestSettings, error) {
+func (_m *MockKubernetesConnector) GetEverestSettings(ctx context.Context) (settings.EverestSettings, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetEverestSettings")
 	}
 
-	var r0 common.EverestSettings
+	var r0 settings.EverestSettings
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (common.EverestSettings, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (settings.EverestSettings, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) common.EverestSettings); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) settings.EverestSettings); ok {
 		r0 = rf(ctx)
 	} else {
-		r0 = ret.Get(0).(common.EverestSettings)
+		r0 = ret.Get(0).(settings.EverestSettings)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -1205,17 +1205,17 @@ func (_m *MockKubernetesConnector) UpdateDeployment(ctx context.Context, deploym
 	return r0, r1
 }
 
-// UpdateEverestSettings provides a mock function with given fields: ctx, settings
-func (_m *MockKubernetesConnector) UpdateEverestSettings(ctx context.Context, settings common.EverestSettings) error {
-	ret := _m.Called(ctx, settings)
+// UpdateEverestSettings provides a mock function with given fields: ctx, _a1
+func (_m *MockKubernetesConnector) UpdateEverestSettings(ctx context.Context, _a1 settings.EverestSettings) error {
+	ret := _m.Called(ctx, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateEverestSettings")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, common.EverestSettings) error); ok {
-		r0 = rf(ctx, settings)
+	if rf, ok := ret.Get(0).(func(context.Context, settings.EverestSettings) error); ok {
+		r0 = rf(ctx, _a1)
 	} else {
 		r0 = ret.Error(0)
 	}
