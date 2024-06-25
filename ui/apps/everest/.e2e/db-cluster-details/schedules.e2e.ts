@@ -192,6 +192,7 @@ test.describe.skip('Schedules List', async () => {
   });
 
   test('Delete Schedule', async ({ page }) => {
+    // TODO check other schedule time
     await gotoDbClusterBackups(page, mySQLName);
     const scheduledBackupsAccordion =
       await page.getByTestId('scheduled-backups');
@@ -203,6 +204,7 @@ test.describe.skip('Schedules List', async () => {
     await scheduleForDeleteBtn.click();
     await (await page.getByTestId('confirm-dialog-delete')).click();
     expect(page.getByText('1 active schedule')).toBeTruthy();
+    // TODO check other schedule time is the same as before deletion
   });
 
   test('Edit Schedule', async ({ page }) => {
