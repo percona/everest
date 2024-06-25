@@ -191,7 +191,7 @@ func (e *EverestServer) GetMonitoringInstance(ctx echo.Context, name string) err
 }
 
 // UpdateMonitoringInstance updates a monitoring instance based on the provided fields.
-func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, name string) error { //nolint:funlen
+func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, name string) error { //nolint:funlen,cyclop
 	c := ctx.Request().Context()
 	m, err := e.kubeClient.GetMonitoringConfig(c, MonitoringNamespace, name)
 	if err != nil {
@@ -229,19 +229,21 @@ func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, name string) 
 			})
 		}
 	}
-	_, err = e.kubeClient.UpdateSecret(c, &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: MonitoringNamespace,
-		},
-		Type:       corev1.SecretTypeOpaque,
-		StringData: e.monitoringConfigSecretData(apiKey),
-	})
-	if err != nil {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString(fmt.Sprintf("Could not update k8s secret %s", name)),
+	if apiKey != "" {
+		_, err = e.kubeClient.UpdateSecret(c, &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: MonitoringNamespace,
+			},
+			Type:       corev1.SecretTypeOpaque,
+			StringData: e.monitoringConfigSecretData(apiKey),
 		})
+		if err != nil {
+			e.l.Error(err)
+			return ctx.JSON(http.StatusInternalServerError, Error{
+				Message: pointer.ToString(fmt.Sprintf("Could not update k8s secret %s", name)),
+			})
+		}
 	}
 	if params.Url != "" {
 		m.Spec.PMM.URL = params.Url
