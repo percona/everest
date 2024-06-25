@@ -14,7 +14,7 @@ export const COMPONENT_STATUS_TO_BASE_STATUS: Record<
 > = {
   [COMPONENT_STATUS.PENDING]: 'pending',
   [COMPONENT_STATUS.FAILED]: 'error',
-  [COMPONENT_STATUS.RUNNING]: 'pending',
+  [COMPONENT_STATUS.RUNNING]: 'success',
   [COMPONENT_STATUS.SUCCEEDED]: 'success',
   [COMPONENT_STATUS.UNKNOWN]: 'unknown',
 };

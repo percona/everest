@@ -124,9 +124,7 @@ const Schedules = () => {
             <EditableItem
               dataTestId="empty"
               children={
-                <Typography variant="body1">
-                  You don’t have any backup schedules yet.
-                </Typography>
+                <Typography variant="body1">{Messages.noSchedules}</Typography>
               }
             />
           )}
