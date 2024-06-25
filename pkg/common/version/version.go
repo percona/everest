@@ -1,4 +1,5 @@
-package common
+// Package version contains helpers for version comparison.
+package version
 
 import goversion "github.com/hashicorp/go-version"
 

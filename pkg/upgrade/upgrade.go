@@ -34,6 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
+	versionhelper "github.com/percona/everest/pkg/common/version"
 	"github.com/percona/everest/pkg/kubernetes"
 	cliVersion "github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
@@ -182,7 +183,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return errors.Join(err, errors.New("could not find install plan"))
 	}
 
-	if common.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
+	if versionhelper.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
 		if err := u.ensureEverestJWTIfNotExists(ctx); err != nil {
 			return err
 		}
@@ -201,7 +202,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)
 
-	if common.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
+	if versionhelper.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
 		if err := u.ensureEverestAccountsIfNotExists(ctx); err != nil {
 			return err
 		}
