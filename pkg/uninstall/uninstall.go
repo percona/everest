@@ -233,6 +233,7 @@ func (u *Uninstall) dbsExist(ctx context.Context) (bool, error) {
 	return exist, nil
 }
 
+//nolint:funlen
 func (u *Uninstall) deleteDBs(ctx context.Context) error {
 	allDBs, err := u.getDBs(ctx)
 	if err != nil {
