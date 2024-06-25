@@ -23,8 +23,9 @@ import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { Box, Button, MenuItem, Stack } from '@mui/material';
 import { Table } from '@percona/ui-lib';
-import { StatusField } from 'components/status-field/status-field';
+import StatusField from 'components/status-field';
 import { useDbActions } from 'hooks/api/db-cluster/useDbActions';
+import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { useDeleteDbCluster } from 'hooks/api/db-cluster/useDeleteDbCluster';
 import { type MRT_ColumnDef } from 'material-react-table';
 import { RestoreDbModal } from 'modals';
@@ -42,12 +43,15 @@ import { Messages } from './dbClusterView.messages';
 import { DbClusterTableElement } from './dbClusterView.types';
 import { DbTypeIconProvider } from './dbTypeIconProvider/DbTypeIconProvider';
 import { ExpandedRow } from './expandedRow/ExpandedRow';
-import { ConfirmFormDialog } from 'components/confirm-form-dialog';
+import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
 import { LastBackup } from './lastBackup/LastBackup';
+import { useDbBackups } from 'hooks/api/backups/useBackups';
 
 export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
-  const dbClustersResults = useDBClustersForNamespaces();
+  const { data: namespaces = [], isLoading: loadingNamespaces } =
+    useNamespaces();
+  const dbClustersResults = useDBClustersForNamespaces(namespaces);
   const dbClustersLoading = dbClustersResults.some(
     (result) => result.queryResult.isLoading
   );
@@ -72,6 +76,18 @@ export const DbClusterView = () => {
     selectedDbCluster,
   } = useDbActions();
   const navigate = useNavigate();
+
+  const { data: backups = [] } = useDbBackups(
+    selectedDbCluster?.metadata.name!,
+    selectedDbCluster?.metadata.namespace!,
+    {
+      enabled: !!selectedDbCluster?.metadata.name,
+      refetchInterval: 10 * 1000,
+    }
+  );
+  const disableKeepDataCheckbox =
+    selectedDbCluster?.spec.engine.type === DbEngineType.POSTGRESQL;
+  const hideCheckbox = !backups.length;
 
   const columns = useMemo<MRT_ColumnDef<DbClusterTableElement>[]>(
     () => [
@@ -161,7 +177,7 @@ export const DbClusterView = () => {
         <Table
           tableName="dbClusterView"
           noDataMessage={Messages.dbCluster.noData}
-          state={{ isLoading: dbClustersLoading }}
+          state={{ isLoading: dbClustersLoading || loadingNamespaces }}
           columns={columns}
           data={tableData}
           enableRowActions
@@ -325,7 +341,7 @@ export const DbClusterView = () => {
         />
       )}
       {openDeleteDialog && (
-        <ConfirmFormDialog
+        <CustomConfirmDialog
           inputLabel={Messages.deleteModal.databaseName}
           inputPlaceholder={Messages.deleteModal.databaseName}
           isOpen={openDeleteDialog}
@@ -333,10 +349,18 @@ export const DbClusterView = () => {
           headerMessage={Messages.deleteModal.header}
           submitting={deletingCluster}
           selectedId={selectedDbCluster?.metadata.name || ''}
-          handleConfirm={() => handleConfirmDelete()}
+          handleConfirm={({ dataCheckbox: keepBackupStorageData }) =>
+            handleConfirmDelete(keepBackupStorageData)
+          }
+          alertMessage={Messages.deleteModal.alertMessage}
           dialogContent={Messages.deleteModal.content(
             selectedDbCluster!.metadata.name
           )}
+          submitMessage={Messages.deleteModal.confirmButtom}
+          checkboxMessage={Messages.deleteModal.checkboxMessage}
+          disableCheckbox={disableKeepDataCheckbox}
+          tooltipText={Messages.deleteModal.disabledCheckboxForPGTooltip}
+          hideCheckbox={hideCheckbox}
         />
       )}
     </Stack>

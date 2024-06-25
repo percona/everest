@@ -36,7 +36,7 @@ const BackupsActionableAlert = ({ namespace }: BackupsActionableAlertProps) => {
   return (
     <>
       <ActionableAlert
-        message={Messages.noStoragesMessage(namespace)}
+        message={Messages.noStoragesMessage}
         buttonMessage={Messages.addStorage}
         data-testid="no-storage-message"
         onClick={() => setOpenCreateEditModal(true)}

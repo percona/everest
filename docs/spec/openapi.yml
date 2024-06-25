@@ -22,8 +22,44 @@ tags:
     description: Everything related to the Database Cluster Backups
   - name: backupStorage
     description: Everything related to the Backup storage
-
+security:
+  - BearerAuth: []
 paths:
+  '/session':
+    post:
+      security: []
+      summary: Create a new session
+      description: Create a new session
+      operationId: createSession
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The user credentials
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCredentials'
   '/namespaces':
     get:
       summary: Get all namespaces managed by Everest
@@ -48,6 +84,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Version'
+  '/settings':
+    get:
+      security: []
+      summary: Get Everest global settings
+      description: Get Everest global settings
+      operationId: getSettings
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
   '/resources':
     get:
       tags:
@@ -467,6 +516,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-clusters/{name}/components':
+    get:
+      tags:
+        - databaseCluster
+      summary: Get the components related data for the specified database cluster
+      description: Get the components related data for the specified database cluster
+      operationId: getDatabaseClusterComponents
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseClusterComponents'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines':
     get:
       tags:
@@ -630,6 +718,44 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines/{name}/operator-version':
+    get:
+      tags:
+        - getOperatorVersion
+      summary: Get the operator version and check results for the specified database engine
+      description: Get the operator version and check results for the specified database engine
+      operationId: getOperatorVersion
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database engine
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperatorVersion'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     put:
       tags:
         - upgradeDatabaseEngineOperator
@@ -1348,6 +1474,10 @@ paths:
                 $ref: '#/components/schemas/Error'
 
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
   schemas:
     Error:
       type: object
@@ -1359,6 +1489,13 @@ components:
       type: array
       items:
         type: string
+    UserCredentials:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
     CreateBackupStorageParams:
       type: object
       description: Backup storage parameters
@@ -1431,6 +1568,34 @@ components:
           description: List of namespaces allowed to use this backup storage
           items:
             type: string
+      additionalProperties: false
+    OperatorVersionCheckForDatabase:
+      type: object
+      description: Operator version checks for a single database
+      properties:
+        name:
+          type: string
+          description: Name of the database cluster
+        message:
+          type: string
+        pendingTask:
+          type: string
+          description: Pending task for the database cluster
+          enum:
+            - restart
+      additionalProperties: false
+    OperatorVersion:
+      type: object
+      description: Operator version check results
+      properties:
+        currentVersion:
+          type: string
+          description: The current operator version
+        databases:
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/OperatorVersionCheckForDatabase'
       additionalProperties: false
     OperatorUpgradePreflightForDatabase:
       type: object
@@ -1594,6 +1759,40 @@ components:
         password:
           type: string
           example: root
+    DatabaseClusterComponents:
+      type: array
+      description: components related data
+      items:
+        type: object
+        x-go-type-name: DatabaseClusterComponent
+        properties:
+          status:
+            type: string
+          name:
+            type: string
+          type:
+            type: string
+          started:
+            type: string
+          restarts:
+            type: integer
+          ready:
+            type: string
+          containers:
+            type: array
+            items:
+              $ref: '#/components/schemas/DatabaseClusterComponentContainer'
+    DatabaseClusterComponentContainer:
+      type: object
+      properties:
+        name:
+          type: string
+        started:
+          type: string
+        restarts:
+          type: integer
+        status:
+          type: string
     DatabaseClusterPitr:
       type: object
       description: point-in-time recovery related data
@@ -1675,6 +1874,27 @@ components:
         - projectName
         - version
         - fullCommit
+    Settings:
+      type: object
+      description: Everest global settings
+      properties:
+        oidcConfig:
+          $ref: '#/components/schemas/OIDCConfig'
+      required:
+        - oidcConfig
+    OIDCConfig:
+      type: object
+      description: Everest OIDC provider configuration
+      properties:
+        clientId:
+          type: string
+          description: OIDC application clientID
+        issuerURL:
+          type: string
+          description: OIDC provider url
+      required:
+        - clientId
+        - issuerURL
     DatabaseClusterList:
       description: DatabaseClusterList is an object that contains the list of the existing database clusters.
       properties:

@@ -28,6 +28,7 @@ export enum DbClusterStatus {
   ready = 'ready',
   error = 'error',
   restoring = 'restoring',
+  deleting = 'deleting',
 }
 
 export interface Schedule {
@@ -63,6 +64,7 @@ interface Engine {
   replicas: number;
   resources?: Resources;
   storage: Storage;
+  crVersion?: string;
   type: DbEngineType;
   version?: string;
   config?: string;
@@ -105,6 +107,8 @@ export interface StatusSpec {
   hostname: string;
   port: number;
   activeStorage?: string;
+  crVersion: string;
+  recommendedCRVersion?: string;
 }
 
 export interface DbClusterMetadata {

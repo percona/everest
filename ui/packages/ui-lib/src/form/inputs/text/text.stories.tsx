@@ -7,15 +7,15 @@ import { TextInputProps } from './text.types';
 import { Box } from '@mui/material';
 
 type ExpandedTextInputProps = TextInputProps & {
-  readOnly?: boolean,
-  type?: string, 
-  maxLength?: number, 
-  placeholder?: string,
-  error?: boolean,
-  minRows?: number,
-  size?: "small" | "medium", 
-  multiline: boolean
-}
+  readOnly?: boolean;
+  type?: string;
+  maxLength?: number;
+  placeholder?: string;
+  error?: boolean;
+  minRows?: number;
+  size?: 'small' | 'medium';
+  multiline: boolean;
+};
 
 const meta = {
   title: 'TextInput',
@@ -30,17 +30,17 @@ const meta = {
     },
     type: {
       options: ['email', 'password', 'number', 'text', 'tel', 'url'],
-      control: 'select'
+      control: 'select',
     },
     multiline: {
       table: {
-        disable: true
-      }
+        disable: true,
+      },
     },
     error: {
       table: {
-        disable: true
-      }
+        disable: true,
+      },
     },
   },
   render: function Render({
@@ -56,8 +56,8 @@ const meta = {
     ...args
   }) {
     const methods = useForm();
-    if(error) {
-      methods.setError('error', {message: 'Please insert a valid value'});
+    if (error) {
+      methods.setError('error', { message: 'Please insert a valid value' });
     } else {
       methods.clearErrors('error');
     }
@@ -66,16 +66,15 @@ const meta = {
       <FormProvider {...methods}>
         <Box
           sx={{
-            '& .MuiTextField-root': { 
-              display: 'flex', 
-              m: 5
+            '& .MuiTextField-root': {
+              display: 'flex',
+              m: 5,
             },
           }}
-          
         >
           <TextInput
             {...args}
-            name='TextInput'
+            name="TextInput"
             label={type ? 'TextInput.' + ' Type: ' + type : 'TextInput'}
             textFieldProps={{
               placeholder,
@@ -84,15 +83,15 @@ const meta = {
               minRows,
               type,
               inputProps: {
-                readOnly, 
-                maxLength
-              }
+                readOnly,
+                maxLength,
+              },
             }}
           />
 
           <TextInput
             {...args}
-            name='disabled'
+            name="disabled"
             label={label + '. Disabled'}
             textFieldProps={{
               placeholder,
@@ -101,15 +100,15 @@ const meta = {
               multiline,
               minRows,
               inputProps: {
-                readOnly, 
-                maxLength
+                readOnly,
+                maxLength,
               },
             }}
           />
 
           <TextInput
             {...args}
-            name='error'
+            name="error"
             label={label + '. Error'}
             textFieldProps={{
               placeholder,
@@ -117,9 +116,9 @@ const meta = {
               multiline,
               minRows,
               inputProps: {
-                readOnly, 
-                maxLength
-              }
+                readOnly,
+                maxLength,
+              },
             }}
           />
         </Box>
@@ -132,8 +131,7 @@ export default meta;
 type Story = StoryObj<Meta>;
 
 export const TextField: Story = {
-  argTypes: {
-  },
+  argTypes: {},
   args: {
     label: 'TextInput',
     placeholder: 'Placeholder',
@@ -145,14 +143,14 @@ export const TextField: Story = {
     isRequired: false,
     multiline: false,
   },
-}
+};
 
 export const TextArea: Story = {
   argTypes: {
     type: {
       table: {
-        disable: true
-      }
+        disable: true,
+      },
     },
   },
   args: {
@@ -164,6 +162,6 @@ export const TextArea: Story = {
     readOnly: false,
     isRequired: false,
     multiline: true,
-    minRows: 3
+    minRows: 3,
   },
-}
+};

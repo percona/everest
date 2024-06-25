@@ -18,9 +18,9 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
-	"time"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cenkalti/backoff/v4"
@@ -65,6 +65,55 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
 	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, name)
+}
+
+// GetOperatorVersion returns the current version of the operator and the status of the database clusters.
+func (e *EverestServer) GetOperatorVersion(c echo.Context, namespace, name string) error {
+	ctx := c.Request().Context()
+	engine, err := e.kubeClient.GetDatabaseEngine(ctx, namespace, name)
+	if err != nil {
+		return err
+	}
+
+	result := &OperatorVersion{
+		CurrentVersion: pointer.To(engine.Status.OperatorVersion),
+	}
+
+	checks, err := e.checkDatabases(ctx, namespace, engine)
+	if err != nil {
+		return errors.Join(err, errors.New("failed to check databases"))
+	}
+	result.Databases = pointer.To(checks)
+	return c.JSON(http.StatusOK, result)
+}
+
+// check the databases in the namespace from the perspective of operator version.
+func (e *EverestServer) checkDatabases(
+	ctx context.Context,
+	namespace string, engine *everestv1alpha1.DatabaseEngine,
+) ([]OperatorVersionCheckForDatabase, error) {
+	// List all clusters in this namespace.
+	clusters, err := e.kubeClient.ListDatabaseClusters(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check that every cluster is using the recommended CRVersion.
+	checks := []OperatorVersionCheckForDatabase{}
+	for _, cluster := range clusters.Items {
+		if cluster.Spec.Engine.Type != engine.Spec.Type {
+			continue
+		}
+		check := OperatorVersionCheckForDatabase{
+			Name: pointer.To(cluster.Name),
+		}
+		if recVer := cluster.Status.RecommendedCRVersion; recVer != nil {
+			check.PendingTask = pointer.To(OperatorVersionCheckForDatabasePendingTaskRestart)
+			check.Message = pointer.To(fmt.Sprintf("Database needs restart to use CRVersion '%s'", *recVer))
+		}
+		checks = append(checks, check)
+	}
+	return checks, nil
 }
 
 // UpgradeDatabaseEngineOperator upgrades the database engine operator to the specified version.
@@ -130,14 +179,10 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 // startOperatorUpgradeWithRetry wraps the startOperatorUpgrade function with a retry mechanism.
 // This is done to reduce the chances of failures due to resource conflicts.
 func (e *EverestServer) startOperatorUpgradeWithRetry(ctx context.Context, targetVersion, namespace, name string) error {
-	var b backoff.BackOff
-	b = backoff.NewConstantBackOff(3 * time.Second)
-	b = backoff.WithMaxRetries(b, 5)
-	b = backoff.WithContext(b, ctx)
 	return backoff.Retry(func() error {
 		return e.startOperatorUpgrade(ctx, targetVersion, namespace, name)
 	},
-		b,
+		backoff.WithContext(everestAPIConstantBackoff, ctx),
 	)
 }
 
@@ -227,7 +272,7 @@ func validateOperatorUpgradeVersion(currentVersion, targetVersion string) error 
 func canUpgrade(dbs []OperatorUpgradePreflightForDatabase) bool {
 	// Check if there is any database that is not ready.
 	notReadyExists := slices.ContainsFunc(dbs, func(db OperatorUpgradePreflightForDatabase) bool {
-		return pointer.Get(db.PendingTask) != Ready
+		return pointer.Get(db.PendingTask) != OperatorUpgradePreflightForDatabasePendingTaskReady
 	})
 	return !notReadyExists
 }

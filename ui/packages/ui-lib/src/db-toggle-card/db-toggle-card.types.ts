@@ -16,4 +16,7 @@
 import { DbType } from '@percona/types';
 import { ToggleCardProps } from '../toggle-card';
 
-export type DbToggleCardProps = { value: DbType } & ToggleCardProps;
+export type DbToggleCardProps = {
+  value: DbType;
+  lowerContent?: React.ReactNode;
+} & ToggleCardProps;

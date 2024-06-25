@@ -19,6 +19,8 @@ import { Messages } from './schedule-form.messages.ts';
 import { ScheduleFormFields } from './schedule-form.types.ts';
 import { rfc_123_schema } from 'utils/common-validation';
 import { timeSelectionSchemaObject } from '../../time-selection/time-selection-schema.ts';
+import { Schedule } from 'shared-types/dbCluster.types';
+import { getCronExpressionFromFormValues } from '../../time-selection/time-selection.utils';
 
 export const storageLocationZodObject = z
   .string()
@@ -52,38 +54,67 @@ export const storageLocationScheduleFormSchema = (
   };
 };
 
-export const schema = (schedulesNamesList: string[], mode?: 'edit' | 'new') =>
-  z.object({
-    [ScheduleFormFields.scheduleName]: rfc_123_schema(
-      `${Messages.scheduleName.label.toLowerCase()} name`
-    )
-      .nonempty()
-      .max(MAX_SCHEDULE_NAME_LENGTH, Messages.scheduleName.tooLong)
-      .superRefine((input, ctx) => {
-        if (
-          mode === 'new' &&
-          !!schedulesNamesList.find((item) => item === input)
-        ) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: Messages.scheduleName.duplicate,
-          });
-        }
-      }),
-    [ScheduleFormFields.retentionCopies]: z
-      .string()
-      .superRefine((nrCopies, ctx) => {
-        const nrCopiesInt = parseInt(nrCopies, 10);
+export const schema = (schedules: Schedule[], mode?: 'edit' | 'new') => {
+  const schedulesNamesList = schedules.map((item) => item?.name);
+  return z
+    .object({
+      [ScheduleFormFields.scheduleName]: rfc_123_schema(
+        `${Messages.scheduleName.label.toLowerCase()} name`
+      )
+        .nonempty()
+        .max(MAX_SCHEDULE_NAME_LENGTH, Messages.scheduleName.tooLong)
+        .superRefine((input, ctx) => {
+          if (
+            mode === 'new' &&
+            !!schedulesNamesList.find((item) => item === input)
+          ) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: Messages.scheduleName.duplicate,
+            });
+          }
+        }),
+      [ScheduleFormFields.retentionCopies]: z
+        .string()
+        .superRefine((nrCopies, ctx) => {
+          const nrCopiesInt = parseInt(nrCopies, 10);
 
-        if (isNaN(nrCopiesInt) || nrCopiesInt < 0) {
+          if (
+            isNaN(nrCopiesInt) ||
+            nrCopiesInt < 0 ||
+            nrCopiesInt > Math.pow(2, 31) - 1
+          ) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: Messages.retentionCopies.invalidNumber,
+            });
+          }
+        }),
+      ...timeSelectionSchemaObject,
+      ...storageLocationScheduleFormSchema('scheduledBackups'),
+    })
+    .superRefine(
+      ({ selectedTime, hour, minute, onDay, weekDay, amPm }, ctx) => {
+        const currentSchedule = getCronExpressionFromFormValues({
+          selectedTime,
+          amPm,
+          hour,
+          minute,
+          onDay,
+          weekDay,
+        });
+        const sameSchedule = schedules.find(
+          (item) => item.schedule === currentSchedule
+        );
+        if (sameSchedule) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: Messages.retentionCopies.invalidNumber,
+            message: Messages.sameTimeSchedule,
+            path: ['root'],
           });
         }
-      }),
-    ...timeSelectionSchemaObject,
-    ...storageLocationScheduleFormSchema('scheduledBackups'),
-  });
+      }
+    );
+};
 
 export type ScheduleFormData = z.infer<ReturnType<typeof schema>>;

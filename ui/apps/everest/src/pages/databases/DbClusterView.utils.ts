@@ -13,10 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DbClusterStatus } from 'shared-types/dbCluster.types';
+import { DbClusterStatus, Schedule } from 'shared-types/dbCluster.types';
 import { DbClusterForNamespaceResult } from '../../hooks/api/db-clusters/useDbClusters';
 import { Messages } from './dbClusterView.messages';
 import { DbClusterTableElement } from './dbClusterView.types';
+import { Backup, BackupStatus } from 'shared-types/backups.types';
 
 const DB_CLUSTER_STATUS_HUMANIFIED: Record<DbClusterStatus, string> = {
   [DbClusterStatus.ready]: Messages.statusProvider.up,
@@ -27,6 +28,7 @@ const DB_CLUSTER_STATUS_HUMANIFIED: Record<DbClusterStatus, string> = {
   [DbClusterStatus.stopping]: Messages.statusProvider.stopping,
   [DbClusterStatus.unknown]: Messages.statusProvider.unknown,
   [DbClusterStatus.restoring]: Messages.statusProvider.restoring,
+  [DbClusterStatus.deleting]: Messages.statusProvider.deleting,
 };
 
 export const beautifyDbClusterStatus = (status: DbClusterStatus): string =>
@@ -96,4 +98,34 @@ export const getLastBackupTimeDiff = (lastBackup: Date): string => {
 
   return `${seconds} ${Messages.lastBackup.seconds} ${Messages.lastBackup.ago}
     `;
+};
+
+export const getLastBackupStatus = (
+  backups: Backup[],
+  schedules: Schedule[]
+) => {
+  if (!backups.length) {
+    if (!schedules.length) {
+      return Messages.lastBackup.inactive;
+    }
+    return Messages.lastBackup.scheduled;
+  }
+
+  const filteredBackups = backups.filter(
+    (backup) => backup.state !== BackupStatus.FAILED
+  );
+
+  const lastBackup = filteredBackups[filteredBackups.length - 1];
+
+  if (!lastBackup) {
+    return Messages.lastBackup.inactive;
+  }
+
+  if (lastBackup.state === BackupStatus.IN_PROGRESS) {
+    return Messages.lastBackup.pending;
+  }
+
+  if (lastBackup.state === BackupStatus.UNKNOWN) {
+    return Messages.lastBackup.notStarted;
+  }
 };

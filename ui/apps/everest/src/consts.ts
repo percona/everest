@@ -20,7 +20,7 @@ export const IP_REGEX =
 
 export const INVALID_SOURCE_RANGE_ERROR = 'Invalid IP address range';
 export const SOURCE_RANGE_PLACEHOLDER =
-  'Please insert the single IP address or range using netmask (e.g. 192.168.1.1/24)';
+  'Please enter the single IP address or range using netmask (e.g. 192.168.1.1/24)';
 export const DATE_FORMAT = "dd'/'MM'/'yyyy 'at' hh':'mm' 'a";
 export const PITR_DATE_FORMAT = "dd'/'MM'/'yyyy 'at' hh':'mm':'ss' 'a";
 
@@ -40,3 +40,4 @@ export const BACKUP_STATE_TO_STATUS: Record<string, BackupStatus> = {
 export const MAX_DB_CLUSTER_NAME_LENGTH = 22;
 // export const MAX_RFC_1123_NAME_LENGTH = 63;
 export const MAX_SCHEDULE_NAME_LENGTH = 57;
+export const EVEREST_JWT_ISSUER = 'everest';

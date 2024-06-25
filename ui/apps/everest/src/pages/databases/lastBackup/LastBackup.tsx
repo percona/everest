@@ -2,9 +2,13 @@ import { useDbBackups, useDbClusterPitr } from 'hooks/api/backups/useBackups';
 import { LastBackupProps } from './LastBackup.types';
 import { IconButton, Tooltip, Typography } from '@mui/material';
 import { Messages } from '../dbClusterView.messages';
-import { getLastBackupTimeDiff } from '../DbClusterView.utils';
+import {
+  getLastBackupStatus,
+  getLastBackupTimeDiff,
+} from '../DbClusterView.utils';
 import { WarningIcon } from '@percona/ui-lib';
 import { BackupStatus } from 'shared-types/backups.types';
+import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
 
 export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
   const { data: backups = [] } = useDbBackups(dbName!, namespace, {
@@ -13,19 +17,22 @@ export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
   });
 
   const { data: pitrData } = useDbClusterPitr(dbName, namespace);
+  const { data: dbCluster } = useDbCluster(dbName, namespace);
+
+  const schedules = dbCluster?.spec.backup?.schedules || [];
 
   const finishedBackups = backups.filter(
     (backup) => backup.completed && backup.state === BackupStatus.OK
   );
-  const lastBackup = finishedBackups[finishedBackups.length - 1];
-  const lastBackupDate = lastBackup?.completed || new Date();
+  const lastFinishedBackup = finishedBackups[finishedBackups.length - 1];
+  const lastFinishedBackupDate = lastFinishedBackup?.completed || new Date();
 
   return (
     <>
       {finishedBackups.length ? (
         <>
           <Typography variant="body2">
-            {getLastBackupTimeDiff(lastBackupDate)}
+            {getLastBackupTimeDiff(lastFinishedBackupDate)}
           </Typography>
           {pitrData?.gaps && (
             <Tooltip
@@ -40,7 +47,9 @@ export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
           )}
         </>
       ) : (
-        <Typography variant="body2">{Messages.lastBackup.inactive}</Typography>
+        <Typography variant="body2">
+          {getLastBackupStatus(backups, schedules)}
+        </Typography>
       )}
     </>
   );

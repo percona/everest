@@ -8,6 +8,7 @@ const DatabaseFormSideDrawer = ({
   activeStep,
   longestAchievedStep,
   handleSectionEdit,
+  disabled,
 }: DatabaseFormSideDrawerProps) => {
   const theme = useTheme();
   const { isDesktop } = useActiveBreakpoint();
@@ -15,6 +16,7 @@ const DatabaseFormSideDrawer = ({
   const PreviewContent = useMemo(
     () => (
       <DatabasePreview
+        disabled={disabled}
         activeStep={activeStep}
         longestAchievedStep={longestAchievedStep}
         onSectionEdit={handleSectionEdit}
