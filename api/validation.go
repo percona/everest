@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -332,7 +333,11 @@ func validateBackupStorageAccess(
 	return nil
 }
 
-func validateUpdateBackupStorageRequest(ctx echo.Context, bs *everestv1alpha1.BackupStorage, secret *corev1.Secret, namespaces []string, l *zap.SugaredLogger) (*UpdateBackupStorageParams, error) {
+//nolint:funlen,nestif,gocognit,cyclop
+func (e *EverestServer) validateUpdateBackupStorageRequest(
+	ctx echo.Context, backupStorageName string, bs *everestv1alpha1.BackupStorage, secret *corev1.Secret,
+	namespaces []string, l *zap.SugaredLogger,
+) (*UpdateBackupStorageParams, error) {
 	var params UpdateBackupStorageParams
 	if err := ctx.Bind(&params); err != nil {
 		return nil, err
@@ -353,9 +358,30 @@ func validateUpdateBackupStorageRequest(ctx echo.Context, bs *everestv1alpha1.Ba
 		}
 	}
 
+	removedNs := []string{}
 	if params.AllowedNamespaces != nil {
 		if err := validateAllowedNamespaces(*params.AllowedNamespaces, namespaces); err != nil {
 			return nil, err
+		}
+
+		if len(*params.AllowedNamespaces) > 0 {
+			for _, ns := range bs.Spec.AllowedNamespaces {
+				if !slices.Contains(*params.AllowedNamespaces, ns) {
+					removedNs = append(removedNs, ns)
+				}
+			}
+
+			if len(removedNs) > 0 {
+				// Check if backup storage is used in the removed namespaces
+				used, err := e.kubeClient.IsBackupStorageUsed(ctx.Request().Context(), e.kubeClient.Namespace(), backupStorageName, removedNs)
+				if err != nil {
+					return nil, err
+				}
+
+				if used {
+					return nil, errors.New("backup storage cannot be removed because it's used in some namespace")
+				}
+			}
 		}
 	}
 
@@ -460,7 +486,8 @@ func validateCreateMonitoringInstanceRequest(ctx echo.Context) (*CreateMonitorin
 	return &params, nil
 }
 
-func validateUpdateMonitoringInstanceRequest(ctx echo.Context) (*UpdateMonitoringInstanceJSONRequestBody, error) {
+//nolint:nestif,cyclop
+func (e *EverestServer) validateUpdateMonitoringInstanceRequest(ctx echo.Context, mc *everestv1alpha1.MonitoringConfig, monitoringConfigName string) (*UpdateMonitoringInstanceJSONRequestBody, error) {
 	var params UpdateMonitoringInstanceJSONRequestBody
 	if err := ctx.Bind(&params); err != nil {
 		return nil, err
@@ -475,6 +502,27 @@ func validateUpdateMonitoringInstanceRequest(ctx echo.Context) (*UpdateMonitorin
 
 	if params.AllowedNamespaces != nil && len(*params.AllowedNamespaces) == 0 {
 		return nil, errors.New("allowedNamespaces cannot be empty")
+	}
+
+	if params.AllowedNamespaces != nil && len(*params.AllowedNamespaces) > 0 {
+		removedNs := []string{}
+		for _, ns := range mc.Spec.AllowedNamespaces {
+			if !slices.Contains(*params.AllowedNamespaces, ns) {
+				removedNs = append(removedNs, ns)
+			}
+		}
+
+		if len(removedNs) > 0 {
+			// Check if monitoring config is used in the removed namespaces
+			used, err := e.kubeClient.IsMonitoringConfigUsed(ctx.Request().Context(), MonitoringNamespace, monitoringConfigName, removedNs)
+			if err != nil {
+				return nil, err
+			}
+
+			if used {
+				return nil, errors.New("monitoring config cannot be removed because it's used in some namespace")
+			}
+		}
 	}
 
 	if err := validateUpdateMonitoringInstanceType(params); err != nil {
