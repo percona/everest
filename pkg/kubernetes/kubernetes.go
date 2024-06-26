@@ -1022,7 +1022,6 @@ func (k *Kubernetes) GetDBNamespaces(ctx context.Context, namespace string) ([]s
 		result = append(result, ns.Name)
 	}
 	return result, nil
-
 }
 
 // WaitForRollout waits for rollout of a provided deployment in the provided namespace.
