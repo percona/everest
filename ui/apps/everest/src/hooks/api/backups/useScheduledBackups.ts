@@ -97,7 +97,7 @@ const backupScheduleFormValuesToDbClusterPayload = (
       ...dbCluster?.spec,
       backup: {
         ...dbCluster.spec.backup,
-        enabled: true,
+        enabled: schedulesPayload.length > 0,
         schedules: schedulesPayload,
       },
     },
@@ -134,7 +134,7 @@ const deletedScheduleToDbClusterPayload = (
       ...dbCluster?.spec,
       backup: {
         ...dbCluster.spec.backup,
-        enabled: true,
+        enabled: filteredSchedulesWithCronCorrection.length > 0,
         schedules: filteredSchedulesWithCronCorrection,
       },
     },
