@@ -34,11 +34,11 @@ export const ScheduleFormDialog = () => {
     handleSubmit,
   } = useContext(ScheduleFormDialogContext);
 
-  const { schedules = [] } = dbClusterInfo;
+  const { schedules = [], dbEngine } = dbClusterInfo;
 
   const scheduledBackupSchema = useMemo(
-    () => schema(schedules, mode),
-    [schedules, mode]
+    () => schema(schedules, mode, dbEngine),
+    [schedules, mode, dbEngine]
   );
 
   const selectedSchedule = useMemo(() => {
