@@ -315,20 +315,9 @@ func (u *Uninstall) deleteNamespaces(ctx context.Context, namespaces []string) e
 
 func (u *Uninstall) deleteDBNamespaces(ctx context.Context) error {
 	u.l.Info("Trying to delete database namespaces")
-	// List all namespaces managed by everest.
-	namespaceList, err := u.kubeClient.ListNamespaces(ctx, metav1.ListOptions{
-		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
-			MatchLabels: map[string]string{
-				common.KubernetesManagedByLabel: common.Everest,
-			},
-		}),
-	})
+	namespaces, err := u.kubeClient.GetDBNamespaces(ctx, common.SystemNamespace)
 	if err != nil {
-		return err
-	}
-	namespaces := make([]string, 0, len(namespaceList.Items))
-	for _, item := range namespaceList.Items {
-		namespaces = append(namespaces, item.Name)
+		return errors.Join(err, errors.New("failed to deleteDBNamespaces"))
 	}
 	if len(namespaces) == 0 {
 		u.l.Info("No database namespaces found")
