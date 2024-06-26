@@ -41,6 +41,7 @@ import (
 
 	"github.com/percona/everest/pkg/common"
 	accountshelper "github.com/percona/everest/pkg/common/accounts"
+	"github.com/percona/everest/pkg/common/settings"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
@@ -315,6 +316,11 @@ func (o *Install) provisionEverestComponents(ctx context.Context, latest *govers
 	}
 
 	if err := o.provisionEverestOperator(ctx, recVer); err != nil {
+		return err
+	}
+
+	// Create an empty settings ConfigMap.
+	if err := o.kubeClient.UpdateEverestSettings(ctx, settings.EverestSettings{}); err != nil {
 		return err
 	}
 
