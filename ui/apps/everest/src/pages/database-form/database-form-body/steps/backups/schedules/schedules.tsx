@@ -132,7 +132,7 @@ const Schedules = () => {
                 message={Messages.pgRestrictions}
                 linkProps={{
                   linkContent: 'Learn More',
-                  href: 'https://docs.percona.com/everest/',
+                  href: 'https://docs.percona.com/everest/reference/known_limitations.html',
                 }}
               />
             </>

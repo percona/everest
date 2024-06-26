@@ -28,6 +28,8 @@ const LinkedAlert = ({
           <Link
             sx={{
               fontWeight: 600,
+              whiteSpace: 'nowrap',
+              ml: 2,
             }}
             underline="none"
             color="inherit"

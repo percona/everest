@@ -27,6 +27,7 @@ import { useFormContext } from 'react-hook-form';
 import { useContext } from 'react';
 import { ScheduleFormDialogContext } from '../schedule-form-dialog-context/schedule-form-dialog.context';
 import { DbEngineType } from '@percona/types';
+import LinkedAlert from '../../linked-alert';
 
 export const ScheduleForm = ({
   allowScheduleSelection,
@@ -59,9 +60,14 @@ export const ScheduleForm = ({
       {showTypeRadio && <LogicalPhysicalRadioGroup />}
       <LabeledContent label={Messages.backupDetails}>
         {dbEngine === DbEngineType.POSTGRESQL && disableStorageSelection && (
-          <Alert sx={{ mt: 1 }} severity="warning">
-            {Messages.pgStorageEditRestriction}
-          </Alert>
+          <LinkedAlert
+            severity="warning"
+            message={Messages.pgStorageEditRestriction}
+            linkProps={{
+              linkContent: 'Learn More',
+              href: 'https://docs.percona.com/everest/reference/known_limitations.html',
+            }}
+          />
         )}
         {allowScheduleSelection ? (
           <AutoCompleteInput

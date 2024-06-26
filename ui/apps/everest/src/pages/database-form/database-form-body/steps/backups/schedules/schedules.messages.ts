@@ -20,7 +20,7 @@ export const Messages = {
     'The backup storage you select for your first backup schedule will be used for all subsequent schedules and PITR.',
   pg: 'Note: Maximum 3 schedules for PostgreSQL',
   pgRestrictions:
-    'Be careful when creating a schedule, as it cannot be deleted later due to a limitation of the PG operator.',
+    "Once you've created a schedule, it cannot be deleted later due to a limitation of the PG operator.",
   pgDeleteTooltip:
     'It cannot be deleted due to a limitation of the PG operator.',
 };
