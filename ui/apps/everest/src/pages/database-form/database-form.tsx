@@ -143,7 +143,7 @@ export const DatabasePage = () => {
     setActiveStep(order - 1);
   };
 
-  const handleCloseModal = () => {
+  const handleCloseCancellationModal = () => {
     if (blocker.state === 'blocked') {
       blocker.reset();
     }
@@ -203,7 +203,7 @@ export const DatabasePage = () => {
       </Stack>
       <DatabaseFormCancelDialog
         open={blocker.state === 'blocked'}
-        onClose={handleCloseModal}
+        onClose={handleCloseCancellationModal}
         onConfirm={handleCancel}
       />
     </>
