@@ -9,6 +9,8 @@ import (
 // EverestSettings represents the everest settings.
 type EverestSettings struct {
 	OIDCConfigRaw string `mapstructure:"oidc.config"`
+	// Insecure is set if Everest should run without TLS.
+	Insecure bool `mapstructure:"insecure"`
 }
 
 // OIDCConfig represents the OIDC provider configuration.

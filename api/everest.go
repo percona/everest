@@ -52,6 +52,7 @@ type EverestServer struct {
 	echo       *echo.Echo
 	kubeClient *kubernetes.Kubernetes
 	sessionMgr *session.Manager
+	insecure   bool
 }
 
 // NewEverestServer creates and configures everest API.
@@ -71,12 +72,18 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
 	}
 
+	settings, err := kubeClient.GetEverestSettings(ctx)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to get everest settings"))
+	}
+
 	e := &EverestServer{
 		config:     c,
 		l:          l,
 		echo:       echoServer,
 		kubeClient: kubeClient,
 		sessionMgr: sessMgr,
+		insecure:   settings.Insecure,
 	}
 
 	if err := e.initHTTPServer(ctx); err != nil {
