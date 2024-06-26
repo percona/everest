@@ -1005,7 +1005,7 @@ func (k *Kubernetes) DeleteEverest(ctx context.Context, namespace string, versio
 }
 
 // GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.
-func (k *Kubernetes) GetDBNamespaces(ctx context.Context, namespace string) ([]string, error) {
+func (k *Kubernetes) GetDBNamespaces(ctx context.Context) ([]string, error) {
 	// List all namespaces managed by everest.
 	namespaceList, err := k.ListNamespaces(ctx, metav1.ListOptions{
 		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{

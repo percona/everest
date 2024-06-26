@@ -189,7 +189,7 @@ func (u *Uninstall) confirmForce() (bool, error) {
 
 func (u *Uninstall) getDBs(ctx context.Context) (map[string]*everestv1alpha1.DatabaseClusterList, error) {
 	allDBs := make(map[string]*everestv1alpha1.DatabaseClusterList)
-	namespaces, err := u.kubeClient.GetDBNamespaces(ctx, common.SystemNamespace)
+	namespaces, err := u.kubeClient.GetDBNamespaces(ctx)
 	if err != nil {
 		// If the system namespace doesn't exist, we assume there are no DBs.
 		if k8serrors.IsNotFound(err) {
@@ -314,7 +314,7 @@ func (u *Uninstall) deleteNamespaces(ctx context.Context, namespaces []string) e
 
 func (u *Uninstall) deleteDBNamespaces(ctx context.Context) error {
 	u.l.Info("Trying to delete database namespaces")
-	namespaces, err := u.kubeClient.GetDBNamespaces(ctx, common.SystemNamespace)
+	namespaces, err := u.kubeClient.GetDBNamespaces(ctx)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to deleteDBNamespaces"))
 	}

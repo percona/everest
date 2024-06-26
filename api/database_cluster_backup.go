@@ -83,7 +83,8 @@ func (e *EverestServer) CreateDatabaseClusterBackup(ctx echo.Context, namespace 
 		return err
 	} else if !ok {
 		return ctx.JSON(http.StatusPreconditionFailed,
-			Error{Message: pointer.ToString("Cannot create a new backup when another backup is already running")})
+			Error{Message: pointer.ToString("Cannot create a new backup when another backup is already running")},
+		)
 	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, "")
 }
