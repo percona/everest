@@ -18,7 +18,10 @@ import EditableItem from 'components/editable-item/editable-item';
 import { LabeledContent } from '@percona/ui-lib';
 import { Messages } from './schedules.messages';
 import { useEffect, useState } from 'react';
-import { DbWizardFormFields } from '../../../../database-form.types';
+import {
+  DbWizardFormFields,
+  DbWizardMode,
+} from '../../../../database-form.types';
 import { useFormContext } from 'react-hook-form';
 import { Schedule } from 'shared-types/dbCluster.types';
 import {
@@ -31,12 +34,30 @@ import { ScheduleFormDialogContext } from 'components/schedule-form-dialog/sched
 import { ScheduleFormData } from 'components/schedule-form-dialog/schedule-form/schedule-form-schema';
 import { dbTypeToDbEngine } from '@percona/utils';
 import { DbType } from '@percona/types';
+import { useDatabasePageMode } from '../../../../useDatabasePageMode';
+import { dbWizardToScheduleFormDialogMap } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog-context.types';
+import { useDatabasePageDefaultValues } from '../../../../useDatabaseFormDefaultValues';
+import LinkedAlert from 'components/linked-alert';
 
 const Schedules = () => {
   const { watch, setValue } = useFormContext();
+  const dbWizardMode = useDatabasePageMode();
+  const {
+    defaultValues: { schedules: defaultDbSchedules },
+  } = useDatabasePageDefaultValues(dbWizardMode);
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
   const [mode, setMode] = useState<'new' | 'edit'>('new');
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');
+
+  const getDisabledForScheduleItem = (
+    dbType: DbType,
+    dbWizardMode: DbWizardMode,
+    defaultDbSchedules: Schedule[],
+    item: Schedule
+  ) =>
+    dbType === DbType.Postresql &&
+    dbWizardMode === 'edit' &&
+    !!defaultDbSchedules?.find((schedule) => schedule?.name === item.name);
 
   const [dbType, k8sNamespace, schedules] = watch([
     DbWizardFormFields.dbType,
@@ -104,7 +125,17 @@ const Schedules = () => {
             <Typography variant="caption">{Messages.mongoDb}</Typography>
           )}
           {dbType === DbType.Postresql && (
-            <Typography variant="caption">{Messages.pg}</Typography>
+            <>
+              <Typography variant="caption">{Messages.pg}</Typography>
+              <LinkedAlert
+                severity="warning"
+                message={Messages.pgRestrictions}
+                linkProps={{
+                  linkContent: 'Learn More',
+                  href: 'https://docs.percona.com/everest/reference/known_limitations.html',
+                }}
+              />
+            </>
           )}
           {schedules.map((item: Schedule) => (
             <EditableItem
@@ -116,8 +147,26 @@ const Schedules = () => {
                   storageName={item.backupStorageName}
                 />
               }
-              onDelete={() => handleDelete(item.name)}
-              onEdit={() => handleEdit(item.name)}
+              editButtonProps={{
+                onClick: () => handleEdit(item.name),
+              }}
+              deleteButtonProps={{
+                tooltipMessage: getDisabledForScheduleItem(
+                  dbType,
+                  dbWizardMode,
+                  defaultDbSchedules,
+                  item
+                )
+                  ? Messages.pgDeleteTooltip
+                  : '',
+                disabled: getDisabledForScheduleItem(
+                  dbType,
+                  dbWizardMode,
+                  defaultDbSchedules,
+                  item
+                ),
+                onClick: () => handleDelete(item.name),
+              }}
             />
           ))}
           {schedules.length === 0 && (
@@ -142,8 +191,10 @@ const Schedules = () => {
             setSelectedScheduleName,
             openScheduleModal,
             setOpenScheduleModal,
+            externalContext: dbWizardToScheduleFormDialogMap(dbWizardMode),
             dbClusterInfo: {
               schedules,
+              defaultSchedules: defaultDbSchedules,
               namespace: k8sNamespace,
               dbEngine: dbTypeToDbEngine(dbType),
               activeStorage,

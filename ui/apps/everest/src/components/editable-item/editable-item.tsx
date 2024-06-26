@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Box, IconButton, Paper } from '@mui/material';
+import { Box, IconButton, Paper, Tooltip } from '@mui/material';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { EditableItemProps } from './editable-item.types';
@@ -21,9 +21,9 @@ import { EditableItemProps } from './editable-item.types';
 const EditableItem = ({
   children,
   dataTestId,
-  onEdit,
-  onDelete,
   paperProps,
+  deleteButtonProps,
+  editButtonProps,
 }: EditableItemProps) => {
   return (
     <Paper
@@ -42,23 +42,37 @@ const EditableItem = ({
     >
       {children}
       <Box flexWrap="nowrap" display="flex">
-        {onEdit && (
+        {editButtonProps && (
           <IconButton
             size="small"
             data-testid={`delete-editable-item-button-${dataTestId}`}
-            onClick={() => onEdit()}
+            color="primary"
+            {...editButtonProps}
           >
-            <EditOutlinedIcon color="primary" />
+            <EditOutlinedIcon />
           </IconButton>
         )}
-        {onDelete && (
-          <IconButton
-            size="small"
-            data-testid={`delete-editable-item-button-${dataTestId}`}
-            onClick={() => onDelete()}
+        {deleteButtonProps && (
+          <Tooltip
+            title={
+              deleteButtonProps.tooltipMessage
+                ? deleteButtonProps.tooltipMessage
+                : ''
+            }
+            placement="top"
+            arrow
           >
-            <DeleteOutlineOutlinedIcon color="primary" />
-          </IconButton>
+            <span>
+              <IconButton
+                size="small"
+                data-testid={`delete-editable-item-button-${dataTestId}`}
+                color="primary"
+                {...deleteButtonProps}
+              >
+                <DeleteOutlineOutlinedIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
         )}
       </Box>
     </Paper>
