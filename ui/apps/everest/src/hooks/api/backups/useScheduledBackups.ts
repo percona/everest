@@ -109,8 +109,21 @@ const deletedScheduleToDbClusterPayload = (
   dbCluster: DbCluster
 ): DbCluster => {
   const schedules = dbCluster?.spec?.backup?.schedules || [];
-  const filteredSchedules = schedules.filter(
-    (item) => item?.name !== scheduleName
+  const filteredSchedulesWithCronCorrection = schedules.reduce(
+    (result: Schedule[], schedule) => {
+      if (schedule?.name !== scheduleName) {
+        result.push({
+          ...schedule,
+          schedule: cronConverter(
+            schedule.schedule,
+            Intl.DateTimeFormat().resolvedOptions().timeZone,
+            'UTC'
+          ),
+        });
+      }
+      return result;
+    },
+    []
   );
 
   return {
@@ -122,7 +135,7 @@ const deletedScheduleToDbClusterPayload = (
       backup: {
         ...dbCluster.spec.backup,
         enabled: true,
-        schedules: filteredSchedules,
+        schedules: filteredSchedulesWithCronCorrection,
       },
     },
   };

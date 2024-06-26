@@ -54,15 +54,19 @@ func (k *Kubernetes) DeleteMonitoringConfig(ctx context.Context, namespace, name
 }
 
 // IsMonitoringConfigUsed checks that a backup storage by provided name is used across k8s cluster.
-func (k *Kubernetes) IsMonitoringConfigUsed(ctx context.Context, namespace, monitoringConfigName string) (bool, error) {
+// Optionally you can provide a list of namespaces which shall be checked. If not provided, all namespaces are checked.
+func (k *Kubernetes) IsMonitoringConfigUsed(ctx context.Context, namespace, monitoringConfigName string, nsList []string) (bool, error) {
 	_, err := k.client.GetMonitoringConfig(ctx, namespace, monitoringConfigName)
 	if err != nil {
 		return false, err
 	}
 
-	namespaces, err := k.GetDBNamespaces(ctx, k.Namespace())
-	if err != nil {
-		return false, err
+	namespaces := nsList
+	if len(nsList) == 0 {
+		namespaces, err = k.GetDBNamespaces(ctx, k.Namespace())
+		if err != nil {
+			return false, err
+		}
 	}
 
 	options := metav1.ListOptions{
