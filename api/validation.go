@@ -98,6 +98,9 @@ var (
 	errDBEngineMajorVersionUpgrade   = errors.New("database engine cannot be upgraded to a major version")
 	errDBEngineDowngrade             = errors.New("database engine version cannot be downgraded")
 	errDuplicatedSchedules           = errors.New("duplicated backup schedules are not allowed")
+	errDuplicatedStoragePG           = errors.New("postgres clusters can't use the same storage for the different schedules")
+	errStorageDeletionPG             = errors.New("the existing postgres schedules can't be deleted")
+	errStorageChangePG               = errors.New("the existing postgres schedules can't change their storage")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -583,12 +586,76 @@ func (e *EverestServer) validateDatabaseClusterCR(ctx echo.Context, namespace st
 	}
 
 	if databaseCluster.Spec.Engine.Type == DatabaseClusterSpecEngineType(everestv1alpha1.DatabaseEnginePostgresql) {
+		if err = e.validatePGSchedulesRestrictions(ctx.Request().Context(), *databaseCluster); err != nil {
+			return err
+		}
 		if err = validatePGReposForAPIDB(ctx.Request().Context(), databaseCluster, e.kubeClient.ListDatabaseClusterBackups); err != nil {
 			return err
 		}
 	}
-
 	return validateResourceLimits(databaseCluster)
+}
+
+func (e *EverestServer) validatePGSchedulesRestrictions(ctx context.Context, newDbc DatabaseCluster) error {
+	dbcName, dbcNamespace, err := nameFromDatabaseCluster(newDbc)
+	if err != nil {
+		return err
+	}
+	existingDbc, err := e.kubeClient.GetDatabaseCluster(ctx, dbcNamespace, dbcName)
+	if err != nil {
+		// if there was no such cluster before (creating cluster) - check only the duplicates for storages
+		if k8serrors.IsNotFound(err) {
+			return checkStorageDuplicates(newDbc)
+		}
+		return err
+	}
+	// if there is an old cluster - compare old and new schedules
+	return checkSchedulesChanges(*existingDbc, newDbc)
+}
+
+func checkStorageDuplicates(dbc DatabaseCluster) error {
+	if dbc.Spec == nil || dbc.Spec.Backup == nil || dbc.Spec.Backup.Schedules == nil {
+		return nil
+	}
+	schedules := *dbc.Spec.Backup.Schedules
+	storagesMap := make(map[string]bool)
+	for _, schedule := range schedules {
+		if _, inUse := storagesMap[schedule.BackupStorageName]; inUse {
+			return errDuplicatedStoragePG
+		}
+		storagesMap[schedule.BackupStorageName] = true
+	}
+	return nil
+}
+
+func checkSchedulesChanges(oldDbc everestv1alpha1.DatabaseCluster, newDbc DatabaseCluster) error {
+	if newDbc.Spec == nil || newDbc.Spec.Backup == nil || newDbc.Spec.Backup.Schedules == nil {
+		return nil
+	}
+	newSchedules := *newDbc.Spec.Backup.Schedules
+	// check the old storage wasn't deleted
+	if len(oldDbc.Spec.Backup.Schedules) > len(newSchedules) {
+		return errStorageDeletionPG
+	}
+	var found bool
+	for _, oldSched := range oldDbc.Spec.Backup.Schedules {
+		found = false
+		for _, newShed := range newSchedules {
+			// check the existing schedule storage wasn't changed
+			if oldSched.Name == newShed.Name {
+				found = true
+				if oldSched.BackupStorageName != newShed.BackupStorageName {
+					return errStorageChangePG
+				}
+			}
+		}
+		// check the old storage wasn't deleted
+		if !found {
+			return errStorageDeletionPG
+		}
+	}
+	// check there is no duplicated storages
+	return checkStorageDuplicates(newDbc)
 }
 
 func validateBackupStoragesFor( //nolint:cyclop
