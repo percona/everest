@@ -135,9 +135,10 @@ const deletedScheduleToDbClusterPayload = (
       backup: {
         ...dbCluster.spec.backup,
         enabled: filteredSchedulesWithCronCorrection.length > 0,
-        schedules: filteredSchedulesWithCronCorrection.length
-          ? filteredSchedulesWithCronCorrection
-          : undefined,
+        schedules:
+          filteredSchedulesWithCronCorrection.length > 0
+            ? filteredSchedulesWithCronCorrection
+            : undefined,
       },
     },
   };
