@@ -18,7 +18,10 @@ import EditableItem from 'components/editable-item/editable-item';
 import { LabeledContent } from '@percona/ui-lib';
 import { Messages } from './schedules.messages';
 import { useEffect, useState } from 'react';
-import { DbWizardFormFields } from '../../../../database-form.types';
+import {
+  DbWizardFormFields,
+  DbWizardMode,
+} from '../../../../database-form.types';
 import { useFormContext } from 'react-hook-form';
 import { Schedule } from 'shared-types/dbCluster.types';
 import {
@@ -34,6 +37,7 @@ import { DbType } from '@percona/types';
 import { useDatabasePageMode } from '../../../../useDatabasePageMode';
 import { dbWizardToScheduleFormDialogMap } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog-context.types';
 import { useDatabasePageDefaultValues } from '../../../../useDatabaseFormDefaultValues';
+import LinkedAlert from 'components/linked-alert';
 
 const Schedules = () => {
   const { watch, setValue } = useFormContext();
@@ -44,6 +48,16 @@ const Schedules = () => {
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
   const [mode, setMode] = useState<'new' | 'edit'>('new');
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');
+
+  const getDisabledForScheduleItem = (
+    dbType: DbType,
+    dbWizardMode: DbWizardMode,
+    defaultDbSchedules: Schedule[],
+    item: Schedule
+  ) =>
+    dbType === DbType.Postresql &&
+    dbWizardMode === 'edit' &&
+    !!defaultDbSchedules?.find((schedule) => schedule?.name === item.name);
 
   const [dbType, k8sNamespace, schedules] = watch([
     DbWizardFormFields.dbType,
@@ -111,7 +125,17 @@ const Schedules = () => {
             <Typography variant="caption">{Messages.mongoDb}</Typography>
           )}
           {dbType === DbType.Postresql && (
-            <Typography variant="caption">{Messages.pg}</Typography>
+            <>
+              <Typography variant="caption">{Messages.pg}</Typography>
+              <LinkedAlert
+                severity="warning"
+                message={Messages.pgRestrictions}
+                linkProps={{
+                  linkContent: 'Learn More',
+                  href: 'https://docs.percona.com/everest/',
+                }}
+              />
+            </>
           )}
           {schedules.map((item: Schedule) => (
             <EditableItem
@@ -127,12 +151,20 @@ const Schedules = () => {
                 onClick: () => handleEdit(item.name),
               }}
               deleteButtonProps={{
-                disabled:
-                  dbType === DbType.Postresql &&
-                  dbWizardMode === 'edit' &&
-                  !!defaultDbSchedules?.find(
-                    (schedule) => schedule?.name === item.name
-                  ),
+                tooltipMessage: getDisabledForScheduleItem(
+                  dbType,
+                  dbWizardMode,
+                  defaultDbSchedules,
+                  item
+                )
+                  ? Messages.pgDeleteTooltip
+                  : '',
+                disabled: getDisabledForScheduleItem(
+                  dbType,
+                  dbWizardMode,
+                  defaultDbSchedules,
+                  item
+                ),
                 onClick: () => handleDelete(item.name),
               }}
             />

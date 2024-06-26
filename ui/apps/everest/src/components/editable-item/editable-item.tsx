@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Box, IconButton, Paper } from '@mui/material';
+import { Box, IconButton, Paper, Tooltip } from '@mui/material';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { EditableItemProps } from './editable-item.types';
@@ -53,14 +53,26 @@ const EditableItem = ({
           </IconButton>
         )}
         {deleteButtonProps && (
-          <IconButton
-            size="small"
-            data-testid={`delete-editable-item-button-${dataTestId}`}
-            color="primary"
-            {...deleteButtonProps}
+          <Tooltip
+            title={
+              deleteButtonProps.tooltipMessage
+                ? deleteButtonProps.tooltipMessage
+                : ''
+            }
+            placement="top"
+            arrow
           >
-            <DeleteOutlineOutlinedIcon />
-          </IconButton>
+            <span>
+              <IconButton
+                size="small"
+                data-testid={`delete-editable-item-button-${dataTestId}`}
+                color="primary"
+                {...deleteButtonProps}
+              >
+                <DeleteOutlineOutlinedIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
         )}
       </Box>
     </Paper>

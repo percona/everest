@@ -37,4 +37,6 @@ export const Messages = {
     'A schedule with the same time selection already exists. Set a different time to create a new one.',
   sameStorageScheduleForPG:
     'A schedule with the same storage already exists. Set a different storage to create a new one.',
+  pgStorageEditRestriction:
+    'You cannot modify the storage location for an existing schedule due to a limitation of the PG operator.',
 };

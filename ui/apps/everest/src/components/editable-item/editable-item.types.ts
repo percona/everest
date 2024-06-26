@@ -18,7 +18,9 @@ import { IconButtonProps, PaperProps } from '@mui/material';
 export interface EditableItemProps {
   children: React.ReactNode;
   editButtonProps?: IconButtonProps;
-  deleteButtonProps?: IconButtonProps;
+  deleteButtonProps?: IconButtonProps & {
+    tooltipMessage?: string;
+  };
   dataTestId: string;
   paperProps?: PaperProps;
 }

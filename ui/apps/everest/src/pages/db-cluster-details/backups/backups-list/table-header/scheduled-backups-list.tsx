@@ -1,6 +1,13 @@
 import { useContext, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Box, IconButton, Paper, Stack, Typography } from '@mui/material';
+import {
+  Box,
+  IconButton,
+  Paper,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { useDeleteSchedule } from 'hooks/api/backups/useScheduledBackups';
@@ -108,17 +115,29 @@ const ScheduledBackupsList = () => {
               >
                 <EditOutlinedIcon />
               </IconButton>
-              <IconButton
-                color="primary"
-                disabled={
-                  !dbCluster.spec.backup?.enabled ||
+              <Tooltip
+                title={
                   dbType === DbEngineType.POSTGRESQL
+                    ? Messages.pgDeleteTooltip
+                    : ''
                 }
-                onClick={() => handleDelete(item.name)}
-                data-testid="delete-schedule-button"
+                placement="top"
+                arrow
               >
-                <DeleteOutlineOutlinedIcon />
-              </IconButton>
+                <span>
+                  <IconButton
+                    color="primary"
+                    disabled={
+                      !dbCluster.spec.backup?.enabled ||
+                      dbType === DbEngineType.POSTGRESQL
+                    }
+                    onClick={() => handleDelete(item.name)}
+                    data-testid="delete-schedule-button"
+                  >
+                    <DeleteOutlineOutlinedIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
             </Box>
           </Box>
         </Paper>
