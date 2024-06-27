@@ -57,3 +57,23 @@ export const sameScheduleFunc = (
     return schedules.find((item) => item.schedule === currentSchedule);
   }
 };
+
+export const sameStorageLocationFunc = (
+  schedules: Schedule[],
+  mode: 'edit' | 'new',
+  currentBackupStorage: string | { name: string } | undefined | null,
+  scheduleName: string
+) => {
+  const currentStorage =
+    typeof currentBackupStorage === 'object'
+      ? currentBackupStorage?.name
+      : currentBackupStorage;
+  if (mode === 'edit') {
+    return schedules.find(
+      (item) =>
+        item.backupStorageName === currentStorage && item.name !== scheduleName
+    );
+  } else {
+    return schedules.find((item) => item.backupStorageName === currentStorage);
+  }
+};
