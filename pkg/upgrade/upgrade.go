@@ -61,6 +61,15 @@ var skipObjects = []client.Object{ //nolint:gochecknoglobals
 			Namespace: common.SystemNamespace,
 		},
 	},
+	&corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestTLSecretName,
+			Namespace: common.SystemNamespace,
+		},
+	},
 }
 
 const postUpgradeMessage = `
