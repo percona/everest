@@ -7,8 +7,9 @@ import (
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
-	tlsManager "github.com/percona/everest/pkg/tls"
 	"go.uber.org/zap"
+
+	tlsManager "github.com/percona/everest/pkg/tls"
 )
 
 var _ tlsManager.TLSCertManager = (*filepathTlsCertManager)(nil)
@@ -29,7 +30,8 @@ type filepathTlsCertManager struct {
 // It watches the certFile and keyFile for changes, and updates the internal in-memory structures.
 // All Getters and Setters provided by this struct are thread-safe.
 func New(log *zap.SugaredLogger,
-	certFilePath, keyFilePath string) (*filepathTlsCertManager, error) {
+	certFilePath, keyFilePath string,
+) (*filepathTlsCertManager, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
