@@ -599,7 +599,9 @@ func (k *Kubernetes) getTargetInstallPlanName(ctx context.Context, subscription 
 			// InstallPlan that is actually ready to be approved.
 			// See https://github.com/operator-framework/kubectl-operator/issues/13
 			// for more details on a similar issue.
-			if csv == targetCSV && ip.Status.Phase == olmv1alpha1.InstallPlanPhaseRequiresApproval {
+			// We also need to return the InstallPlan if the Phase is Complete
+			// to ensure the idempotency of the InstallOperator function.
+			if csv == targetCSV && (ip.Status.Phase == olmv1alpha1.InstallPlanPhaseRequiresApproval || ip.Status.Phase == olmv1alpha1.InstallPlanPhaseComplete) {
 				return ip.GetName(), nil
 			}
 		}
