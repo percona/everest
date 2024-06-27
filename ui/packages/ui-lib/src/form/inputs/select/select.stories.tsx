@@ -204,3 +204,29 @@ export const Error: Story = {
     width: '200px',
   },
 };
+
+export const Hover: Story = {
+  parameters: {
+    pseudo: {
+      hover: true,
+    }
+  },
+  args: {
+    label: 'Hover',
+    options: ['First', 'Second', 'Third'],
+    width: '200px',
+  },
+};
+
+export const Focus: Story = {
+  parameters: {
+    pseudo: {
+      focus: true,
+    }
+  },
+  args: {
+    label: 'Focus',
+    options: ['First', 'Second', 'Third'],
+    width: '200px',
+  },
+};
