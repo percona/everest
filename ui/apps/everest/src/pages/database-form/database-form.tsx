@@ -68,7 +68,9 @@ export const DatabasePage = () => {
 
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
-      !formSubmitted && currentLocation.pathname !== nextLocation.pathname
+      isDirty &&
+      !formSubmitted &&
+      currentLocation.pathname !== nextLocation.pathname
   );
 
   const formHasErrors = Object.values(errors).length > 0;
