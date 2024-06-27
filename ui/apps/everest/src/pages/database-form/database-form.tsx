@@ -44,6 +44,7 @@ export const DatabasePage = () => {
     ({ currentLocation, nextLocation }) =>
       currentLocation.pathname !== nextLocation.pathname
   );
+
   const navigate = useNavigate();
   const { isDesktop } = useActiveBreakpoint();
   const mode = useDatabasePageMode();
@@ -149,7 +150,8 @@ export const DatabasePage = () => {
     }
   };
 
-  const handleCancel = () => {
+  const proceedNavigation = () => {
+    console.log('proceedNavigation', blocker.state);
     if (blocker.state === 'blocked') {
       blocker.proceed();
     }
@@ -169,8 +171,14 @@ export const DatabasePage = () => {
     }
   }, [defaultValues, isDirty, reset, mode]);
 
+  useEffect(() => {
+    if (formSubmitted) {
+      navigate('/databases');
+    }
+  }, [formSubmitted, navigate]);
+
   return formSubmitted ? (
-    <ConfirmationScreen />
+    <ConfirmationScreen onConfirm={proceedNavigation} />
   ) : (
     <>
       <Stepper noConnector activeStep={activeStep} sx={{ marginBottom: 4 }}>
@@ -204,7 +212,7 @@ export const DatabasePage = () => {
       <DatabaseFormCancelDialog
         open={blocker.state === 'blocked'}
         onClose={handleCloseCancellationModal}
-        onConfirm={handleCancel}
+        onConfirm={proceedNavigation}
       />
     </>
   );
