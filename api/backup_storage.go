@@ -166,7 +166,7 @@ func (e *EverestServer) CreateBackupStorage(ctx echo.Context) error { //nolint:f
 
 // DeleteBackupStorage deletes the specified backup storage.
 func (e *EverestServer) DeleteBackupStorage(ctx echo.Context, backupStorageName string) error {
-	used, err := e.kubeClient.IsBackupStorageUsed(ctx.Request().Context(), e.kubeClient.Namespace(), backupStorageName)
+	used, err := e.kubeClient.IsBackupStorageUsed(ctx.Request().Context(), e.kubeClient.Namespace(), backupStorageName, nil)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return ctx.JSON(http.StatusNotFound, Error{
@@ -276,7 +276,7 @@ func (e *EverestServer) UpdateBackupStorage(ctx echo.Context, backupStorageName 
 		})
 	}
 
-	params, err := validateUpdateBackupStorageRequest(ctx, bs, secret, namespaces, e.l)
+	params, err := e.validateUpdateBackupStorageRequest(ctx, backupStorageName, bs, secret, namespaces, e.l)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
