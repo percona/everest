@@ -249,20 +249,6 @@ func (o *Install) Run(ctx context.Context) error {
 		recVer.EverestOperator = latest
 	}
 
-	if !o.config.Insecure {
-		skipInstallObjects = append(skipInstallObjects, // Do not create a TLS secret from the manifests.
-			&corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      common.EverestTLSecretName,
-					Namespace: common.SystemNamespace,
-				},
-			},
-		)
-		if err := o.provisionEverestTLSCerts(ctx); err != nil {
-			return err
-		}
-	}
-
 	if err := o.provisionEverestComponents(ctx, latest, recVer); err != nil {
 		return err
 	}
@@ -357,6 +343,20 @@ func (o *Install) provisionEverestComponents(ctx context.Context, latest *govers
 
 	if err := o.kubeClient.UpdateEverestSettings(ctx, o.initialEverestSettings()); err != nil {
 		return err
+	}
+
+	if !o.config.Insecure {
+		skipInstallObjects = append(skipInstallObjects, // Do not create a TLS secret from the manifests.
+			&corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      common.EverestTLSecretName,
+					Namespace: common.SystemNamespace,
+				},
+			},
+		)
+		if err := o.provisionEverestTLSCerts(ctx); err != nil {
+			return err
+		}
 	}
 
 	if err := o.provisionEverest(ctx, latest); err != nil {
