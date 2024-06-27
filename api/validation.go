@@ -795,7 +795,7 @@ func validateBackupSpec(cluster *DatabaseCluster) error {
 	if !cluster.Spec.Backup.Enabled {
 		return nil
 	}
-	if cluster.Spec.Backup.Schedules == nil {
+	if cluster.Spec.Backup.Schedules == nil || len(*cluster.Spec.Backup.Schedules) == 0 {
 		return errNoSchedules
 	}
 
