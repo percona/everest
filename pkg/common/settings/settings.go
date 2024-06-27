@@ -10,7 +10,7 @@ import (
 type EverestSettings struct {
 	OIDCConfigRaw string `mapstructure:"oidc.config"`
 	// Insecure is set if Everest should run without TLS.
-	Insecure bool `mapstructure:"insecure"`
+	Insecure string `mapstructure:"insecure"`
 }
 
 // OIDCConfig represents the OIDC provider configuration.
@@ -50,4 +50,8 @@ func (e *EverestSettings) ToMap() (map[string]string, error) {
 // FromMap tries to convert a map the EverestSettings struct.
 func (e *EverestSettings) FromMap(m map[string]string) error {
 	return mapstructure.Decode(m, e)
+}
+
+func (e *EverestSettings) GetInsecure() bool {
+	return e.Insecure == "true"
 }
