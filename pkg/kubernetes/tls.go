@@ -98,8 +98,7 @@ func (k *Kubernetes) CreateTLSCertificate(ctx context.Context) error {
 		if _, err := k.CreateSecret(ctx, secret); err != nil {
 			return err
 		}
-		// Restart the deployment to pick up the new secret.
-		return k.RestartDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
+		return nil
 	}
 	// Otherwise, update the secret.
 	secret.Data[tlsCrtFileName] = crtEncodedBytes
@@ -107,6 +106,5 @@ func (k *Kubernetes) CreateTLSCertificate(ctx context.Context) error {
 	if _, err := k.UpdateSecret(ctx, secret); err != nil {
 		return err
 	}
-	// Restart the deployment to pick up the new secret.
-	return k.RestartDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
+	return nil
 }
