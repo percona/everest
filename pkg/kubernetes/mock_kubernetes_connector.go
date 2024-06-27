@@ -252,6 +252,24 @@ func (_m *MockKubernetesConnector) CreateSecret(ctx context.Context, secret *v1.
 	return r0, r1
 }
 
+// CreateTLSCertificate provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) CreateTLSCertificate(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateTLSCertificate")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteClusterServiceVersion provides a mock function with given fields: ctx, key
 func (_m *MockKubernetesConnector) DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error {
 	ret := _m.Called(ctx, key)

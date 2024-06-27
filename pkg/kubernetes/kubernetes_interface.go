@@ -124,6 +124,8 @@ type KubernetesConnector interface {
 	UpdateNamespace(ctx context.Context, namespace *corev1.Namespace, opts metav1.UpdateOptions) (*corev1.Namespace, error)
 	// OperatorInstalledVersion returns the installed version of operator by name.
 	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
+	// CreateTLSCertificate creates a new TLS certificate and private key and stores them in a secret.
+	CreateTLSCertificate(ctx context.Context) error
 	// CreateRSAKeyPair creates a new RSA key pair and stores it in a secret.
 	CreateRSAKeyPair(ctx context.Context) error
 	// UpdateEverestSettings accepts the full list of Everest settings and updates the settings.
