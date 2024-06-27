@@ -77,6 +77,7 @@ func (m *filepathTlsCertManager) watchLocalStorage(ctx context.Context) error {
 		case <-ctx.Done():
 			if err := ctx.Err(); err != nil {
 				m.log.Error("context error", zap.Error(err))
+				return err
 			}
 		case _ = <-m.watcher.Events:
 			if err := m.reload(); err != nil {
