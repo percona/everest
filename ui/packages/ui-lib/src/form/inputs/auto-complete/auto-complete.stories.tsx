@@ -103,7 +103,7 @@ export default meta;
 type Story = StoryObj<CustomArgs>;
 
 export const Basic: Story = {
-  tags: ["!autodocs"],
+  tags: ['!autodocs'],
   args: {
     label: 'Label',
     disabled: false,
@@ -123,9 +123,9 @@ export const Small: Story = {
       description: {
         story: `\`\`\`ts
 <AutoCompleteInput textFieldProps={{size: 'small'}} />
-        \`\`\``
-      }
-    }
+        \`\`\``,
+      },
+    },
   },
   args: {
     label: 'Small',
@@ -141,9 +141,9 @@ export const Medium: Story = {
       description: {
         story: `\`\`\`ts
 <AutoCompleteInput textFieldProps={{size: 'medium'}} />
-        \`\`\``
-      }
-    }
+        \`\`\``,
+      },
+    },
   },
   args: {
     label: 'Medium',
@@ -159,9 +159,9 @@ export const Required: Story = {
       description: {
         story: `\`\`\`ts
 <AutoCompleteInput isRequired={true} />
-        \`\`\``
-      }
-    }
+        \`\`\``,
+      },
+    },
   },
   args: {
     label: 'Required',
@@ -178,9 +178,9 @@ export const Disabled: Story = {
       description: {
         story: `\`\`\`ts
 <AutoCompleteInput disabled={true} />
-        \`\`\``
-      }
-    }
+        \`\`\``,
+      },
+    },
   },
   args: {
     label: 'Disabled',
@@ -190,8 +190,6 @@ export const Disabled: Story = {
     width: '200px',
   },
 };
-
-
 
 export const Error: Story = {
   parameters: {
@@ -204,15 +202,15 @@ export const Error: Story = {
     helperText: 'Error helper text'
   }
 } />
-        \`\`\``
-      }
-    }
+        \`\`\``,
+      },
+    },
   },
   args: {
     label: 'Error with helper',
     size: 'small',
     error: true,
-    helperText: "Error helper text",
+    helperText: 'Error helper text',
     options: ['First', 'Second', 'Third'],
     width: '200px',
   },
@@ -224,13 +222,41 @@ export const Loading: Story = {
       description: {
         story: `\`\`\`ts
 <AutoCompleteInput loading={true} />
-        \`\`\``
-      }
-    }
+        \`\`\``,
+      },
+    },
   },
   args: {
     label: 'Loading',
     loading: true,
+    size: 'small',
+    options: ['First', 'Second', 'Third'],
+    width: '200px',
+  },
+};
+
+export const Hover: Story = {
+  parameters: {
+    pseudo: {
+      hover: true,
+    },
+  },
+  args: {
+    label: 'Hover',
+    size: 'small',
+    options: ['First', 'Second', 'Third'],
+    width: '200px',
+  },
+};
+
+export const Focus: Story = {
+  parameters: {
+    pseudo: {
+      focus: true,
+    },
+  },
+  args: {
+    label: 'Focus',
     size: 'small',
     options: ['First', 'Second', 'Third'],
     width: '200px',
