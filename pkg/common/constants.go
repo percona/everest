@@ -61,5 +61,5 @@ const (
 	// EverestTLSCertKeyPath is the path to the TLS certificate key.
 	EverestTLSCertKeyPath = "/etc/ssl/certs/tls.key"
 	// EverestTLSSecretName is the name of the secret that holds the TLS certificate.
-	EverestTLSecretName = "everest-tls-secret"
+	EverestTLSecretName = "everest-tls"
 )
