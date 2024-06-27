@@ -55,4 +55,11 @@ const (
 	KubernetesManagedByLabel = "app.kubernetes.io/managed-by"
 	// ForegroundDeletionFinalizer is the finalizer used to delete resources in foreground.
 	ForegroundDeletionFinalizer = "foregroundDeletion"
+
+	// EverestTLSCertPath is the path to the TLS certificate.
+	EverestTLSCertPath = "/etc/ssl/certs/tls.crt"
+	// EverestTLSCertKeyPath is the path to the TLS certificate key.
+	EverestTLSCertKeyPath = "/etc/ssl/certs/tls.key"
+	// EverestTLSSecretName is the name of the secret that holds the TLS certificate.
+	EverestTLSecretName = "everest-tls-secret"
 )
