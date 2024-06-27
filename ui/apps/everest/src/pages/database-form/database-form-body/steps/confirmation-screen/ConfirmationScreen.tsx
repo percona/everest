@@ -14,17 +14,13 @@
 // limitations under the License.
 
 import { Stack, Typography, Button } from '@mui/material';
+import { Link } from 'react-router-dom';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { Messages } from './ConfirmationScreen.messages';
 import { useDatabasePageMode } from '../../../useDatabasePageMode';
-import { ConfirmationScreenProps } from './ConfirmationScreen.types';
 
-const ConfirmationScreen = ({ onConfirm }: ConfirmationScreenProps) => {
+const ConfirmationScreen = () => {
   const mode = useDatabasePageMode();
-
-  const confirm = () => {
-    onConfirm();
-  };
 
   return (
     <Stack alignItems="center">
@@ -43,9 +39,10 @@ const ConfirmationScreen = ({ onConfirm }: ConfirmationScreenProps) => {
       </Stack>
       <Button
         variant="outlined"
+        component={Link}
+        to="/databases"
         size="small"
         sx={{ mt: 4 }}
-        onClick={confirm}
         data-testid="db-wizard-goto-db-clusters"
       >
         {Messages.goToList}

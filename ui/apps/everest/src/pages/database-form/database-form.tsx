@@ -40,11 +40,6 @@ export const DatabasePage = () => {
   const { mutate: addDbCluster, isPending: isCreating } = useCreateDbCluster();
   const { mutate: editDbCluster, isPending: isUpdating } = useUpdateDbCluster();
   const location = useLocation();
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      currentLocation.pathname !== nextLocation.pathname
-  );
-
   const navigate = useNavigate();
   const { isDesktop } = useActiveBreakpoint();
   const mode = useDatabasePageMode();
@@ -70,6 +65,11 @@ export const DatabasePage = () => {
     trigger,
     handleSubmit,
   } = methods;
+
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      !formSubmitted && currentLocation.pathname !== nextLocation.pathname
+  );
 
   const formHasErrors = Object.values(errors).length > 0;
 
@@ -151,7 +151,6 @@ export const DatabasePage = () => {
   };
 
   const proceedNavigation = () => {
-    console.log('proceedNavigation', blocker.state);
     if (blocker.state === 'blocked') {
       blocker.proceed();
     }
@@ -171,14 +170,8 @@ export const DatabasePage = () => {
     }
   }, [defaultValues, isDirty, reset, mode]);
 
-  useEffect(() => {
-    if (formSubmitted) {
-      navigate('/databases');
-    }
-  }, [formSubmitted, navigate]);
-
   return formSubmitted ? (
-    <ConfirmationScreen onConfirm={proceedNavigation} />
+    <ConfirmationScreen />
   ) : (
     <>
       <Stepper noConnector activeStep={activeStep} sx={{ marginBottom: 4 }}>
