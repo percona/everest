@@ -20,6 +20,7 @@ package api
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -39,9 +40,11 @@ import (
 
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/common/settings"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/oidc"
 	"github.com/percona/everest/pkg/session"
+	"github.com/percona/everest/pkg/tls/localstorage"
 	"github.com/percona/everest/public"
 )
 
@@ -52,7 +55,7 @@ type EverestServer struct {
 	echo       *echo.Echo
 	kubeClient *kubernetes.Kubernetes
 	sessionMgr *session.Manager
-	insecure   bool
+	settings   settings.EverestSettings
 }
 
 // NewEverestServer creates and configures everest API.
@@ -73,7 +76,7 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	}
 
 	settings, err := kubeClient.GetEverestSettings(ctx)
-	if err != nil {
+	if client.IgnoreNotFound(err) != nil {
 		return nil, errors.Join(err, errors.New("failed to get everest settings"))
 	}
 
@@ -83,13 +86,26 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		echo:       echoServer,
 		kubeClient: kubeClient,
 		sessionMgr: sessMgr,
-		insecure:   settings.Insecure,
+		settings:   settings,
 	}
 
 	if err := e.initHTTPServer(ctx); err != nil {
 		return e, err
 	}
 	return e, err
+}
+
+func (e *EverestServer) configureTLS(ctx context.Context, srv *http.Server) error {
+	tlsLocalMgr, err := localstorage.New(e.l, common.EverestTLSCertPath, common.EverestTLSCertKeyPath)
+	if err != nil {
+		return err
+	}
+	tlsLocalMgr.Start(ctx)
+	srv.TLSConfig = &tls.Config{}
+	srv.TLSConfig.GetCertificate = func(chi *tls.ClientHelloInfo) (*tls.Certificate, error) {
+		return tlsLocalMgr.GetCertificate()
+	}
+	return nil
 }
 
 // initHTTPServer configures http server for the current EverestServer instance.
@@ -153,14 +169,10 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 }
 
 func (e *EverestServer) oidcKeyFn(ctx context.Context) (jwt.Keyfunc, error) {
-	settings, err := e.kubeClient.GetEverestSettings(ctx)
-	if err = client.IgnoreNotFound(err); err != nil {
-		return nil, err
-	}
-	if settings.OIDCConfigRaw == "" {
+	if e.settings.OIDCConfigRaw == "" {
 		return nil, nil
 	}
-	oidcConfig, err := settings.OIDCConfig()
+	oidcConfig, err := e.settings.OIDCConfig()
 	if err != nil {
 		return nil, errors.Join(err, errors.New("cannot parse OIDC raw config"))
 	}
@@ -235,8 +247,16 @@ func newSkipperFunc() (echomiddleware.Skipper, error) {
 }
 
 // Start starts everest server.
-func (e *EverestServer) Start() error {
-	return e.echo.Start(fmt.Sprintf("0.0.0.0:%d", e.config.HTTPPort))
+func (e *EverestServer) Start(ctx context.Context) error {
+	srv := e.echo.Server
+	if !e.settings.GetInsecure() {
+		srv = e.echo.TLSServer
+		if err := e.configureTLS(ctx, srv); err != nil {
+			return err
+		}
+	}
+	srv.Addr = fmt.Sprintf("0.0.0.0:%d", e.config.HTTPPort)
+	return e.echo.StartServer(srv)
 }
 
 // Shutdown gracefully stops the Everest server.
