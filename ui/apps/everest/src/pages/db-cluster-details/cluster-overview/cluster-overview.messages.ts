@@ -19,8 +19,7 @@ export const Messages = {
     name: (clusterName?: string) => `Name: ${clusterName}`,
     namespace: (namespace?: string) => `Namespace: ${namespace}`,
     version: (type?: string) => `Version: ${type}`,
-    numberOfNodes: (numberOfNodes?: number) =>
-      `Number of nodes: ${numberOfNodes}`,
+    numberOfNodes: (numberOfNodes?: number) => `Nº nodes: ${numberOfNodes}`,
     cpu: (cpu?: string | number) => `CPU: ${cpu}`,
     memory: (memory: string | number) => `Memory: ${memory}`,
     disk: (disk: string | number) => `Disk: ${disk}`,
