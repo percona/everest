@@ -66,7 +66,7 @@ var skipObjects = []client.Object{ //nolint:gochecknoglobals
 			Kind: "Secret",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      common.EverestTLSecretName,
+			Name:      common.EverestTLSSecretName,
 			Namespace: common.SystemNamespace,
 		},
 	},

@@ -409,7 +409,6 @@ k8s_resource(
     'everest-jwt:secret',
     'everest-accounts:secret',
     'everest-settings:configmap',
-    'everest-server-tls:secret'
     'everest-tls:secret'
   ],
   new_name='everest',

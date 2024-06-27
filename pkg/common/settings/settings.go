@@ -52,6 +52,7 @@ func (e *EverestSettings) FromMap(m map[string]string) error {
 	return mapstructure.Decode(m, e)
 }
 
+// GetInsecure ...
 func (e *EverestSettings) GetInsecure() bool {
 	return e.Insecure == "true"
 }

@@ -101,8 +101,10 @@ func (e *EverestServer) configureTLS(ctx context.Context, srv *http.Server) erro
 		return err
 	}
 	tlsLocalMgr.Start(ctx)
-	srv.TLSConfig = &tls.Config{}
-	srv.TLSConfig.GetCertificate = func(chi *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	srv.TLSConfig = &tls.Config{
+		MinVersion: tls.VersionTLS12,
+	}
+	srv.TLSConfig.GetCertificate = func(_ *tls.ClientHelloInfo) (*tls.Certificate, error) {
 		return tlsLocalMgr.GetCertificate()
 	}
 	return nil

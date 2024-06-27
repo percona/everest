@@ -12,12 +12,12 @@ import (
 	tlsManager "github.com/percona/everest/pkg/tls"
 )
 
-var _ tlsManager.TLSCertManager = (*filepathTlsCertManager)(nil)
+var _ tlsManager.Manager = (*manager)(nil)
 
-// filepathTlsCertManager watches TLS certificates stored on local
+// manager watches TLS certificates stored on local
 // storage, and refreshes them.
 // It implements the TLSCertManager interface.
-type filepathTlsCertManager struct {
+type manager struct {
 	certificate               tls.Certificate
 	watcher                   *fsnotify.Watcher
 	log                       *zap.SugaredLogger
@@ -31,7 +31,7 @@ type filepathTlsCertManager struct {
 // All Getters and Setters provided by this struct are thread-safe.
 func New(log *zap.SugaredLogger,
 	certFilePath, keyFilePath string,
-) (*filepathTlsCertManager, error) {
+) (*manager, error) { //nolint:revive
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func New(log *zap.SugaredLogger,
 	if err := watcher.Add(keyFilePath); err != nil {
 		return nil, err
 	}
-	mgr := &filepathTlsCertManager{
+	mgr := &manager{
 		watcher:      watcher,
 		log:          log,
 		certFilePath: certFilePath,
@@ -55,13 +55,13 @@ func New(log *zap.SugaredLogger,
 }
 
 // GetCertificate returns the TLS certificate.
-func (m *filepathTlsCertManager) GetCertificate() (*tls.Certificate, error) {
+func (m *manager) GetCertificate() (*tls.Certificate, error) {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
 	return &m.certificate, nil
 }
 
-func (m *filepathTlsCertManager) reload() error {
+func (m *manager) reload() error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	cert, err := tls.LoadX509KeyPair(m.certFilePath, m.keyFilePath)
@@ -72,8 +72,12 @@ func (m *filepathTlsCertManager) reload() error {
 	return nil
 }
 
-func (m *filepathTlsCertManager) watchLocalStorage(ctx context.Context) error {
-	defer m.watcher.Close()
+func (m *manager) watchLocalStorage(ctx context.Context) error {
+	defer func() {
+		if err := m.watcher.Close(); err != nil {
+			m.log.Error("failed to close watcher", zap.Error(err))
+		}
+	}()
 	for {
 		select {
 		case <-ctx.Done():
@@ -81,7 +85,7 @@ func (m *filepathTlsCertManager) watchLocalStorage(ctx context.Context) error {
 				m.log.Error("context error", zap.Error(err))
 				return err
 			}
-		case _ = <-m.watcher.Events:
+		case <-m.watcher.Events:
 			if err := m.reload(); err != nil {
 				m.log.Error("failed to reload certificates", zap.Error(err))
 				return err
@@ -90,7 +94,10 @@ func (m *filepathTlsCertManager) watchLocalStorage(ctx context.Context) error {
 	}
 }
 
-func (m *filepathTlsCertManager) Start(ctx context.Context) error {
-	go m.watchLocalStorage(ctx)
-	return nil
+func (m *manager) Start(ctx context.Context) {
+	go func() {
+		if err := m.watchLocalStorage(ctx); err != nil {
+			panic(err)
+		}
+	}()
 }

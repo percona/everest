@@ -3,8 +3,8 @@ package tls
 
 import "crypto/tls"
 
-// TLSCertManager provides an interface for getting TLS certificates that
+// Manager provides an interface for getting TLS certificates that
 // are managed externally (local files, secrets, vault, etc.)
-type TLSCertManager interface {
+type Manager interface {
 	GetCertificate() (*tls.Certificate, error)
 }

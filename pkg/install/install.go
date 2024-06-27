@@ -65,7 +65,7 @@ const (
 	FlagVersion = "version"
 	// FlagSkipWizard represents the flag to skip the installation wizard.
 	FlagSkipWizard = "skip-wizard"
-	// If set, Everest is configured without TLS.
+	// FlagInsecure is set to run Everest without TLS.
 	FlagInsecure = "insecure"
 )
 
@@ -89,7 +89,7 @@ var skipInstallObjects = []client.Object{ //nolint:gochecknoglobals
 			Kind: "Secret",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      common.EverestTLSecretName,
+			Name:      common.EverestTLSSecretName,
 			Namespace: common.SystemNamespace,
 		},
 	},
@@ -349,7 +349,7 @@ func (o *Install) provisionEverestComponents(ctx context.Context, latest *govers
 		skipInstallObjects = append(skipInstallObjects, // Do not create a TLS secret from the manifests.
 			&corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      common.EverestTLSecretName,
+					Name:      common.EverestTLSSecretName,
 					Namespace: common.SystemNamespace,
 				},
 			},
@@ -450,8 +450,10 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 
 	if !everestExists { //nolint:nestif
 		o.l.Info(fmt.Sprintf("Deploying Everest to %s", common.SystemNamespace))
-		if err = o.kubeClient.InstallEverest(ctx, common.SystemNamespace,
-			v, skipInstallObjects...); err != nil {
+		if err = o.kubeClient.InstallEverest(
+			ctx, common.SystemNamespace,
+			v, skipInstallObjects...,
+		); err != nil {
 			return err
 		}
 		if err := o.kubeClient.CreateRSAKeyPair(ctx); err != nil {
