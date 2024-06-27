@@ -51,16 +51,17 @@ const formValuesToPayloadOverrides = (
           enabled: dbPayload.pitrEnabled,
           backupStorageName: pitrBackupStorageName,
         },
-        ...(dbPayload.schedules?.length > 0 && {
-          schedules: dbPayload.schedules.map((schedule) => ({
-            ...schedule,
-            schedule: cronConverter(
-              schedule.schedule,
-              Intl.DateTimeFormat().resolvedOptions().timeZone,
-              'UTC'
-            ),
-          })),
-        }),
+        schedules:
+          dbPayload.schedules.length > 0
+            ? dbPayload.schedules.map((schedule) => ({
+                ...schedule,
+                schedule: cronConverter(
+                  schedule.schedule,
+                  Intl.DateTimeFormat().resolvedOptions().timeZone,
+                  'UTC'
+                ),
+              }))
+            : undefined,
       },
       engine: {
         ...dbCluster.spec.engine,
