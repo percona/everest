@@ -26,7 +26,6 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"go.uber.org/zap"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -190,7 +189,7 @@ func (u *Uninstall) confirmForce() (bool, error) {
 
 func (u *Uninstall) getDBs(ctx context.Context) (map[string]*everestv1alpha1.DatabaseClusterList, error) {
 	allDBs := make(map[string]*everestv1alpha1.DatabaseClusterList)
-	namespaces, err := u.kubeClient.GetDBNamespaces(ctx, common.SystemNamespace)
+	namespaces, err := u.kubeClient.GetDBNamespaces(ctx)
 	if err != nil {
 		// If the system namespace doesn't exist, we assume there are no DBs.
 		if k8serrors.IsNotFound(err) {
@@ -315,20 +314,9 @@ func (u *Uninstall) deleteNamespaces(ctx context.Context, namespaces []string) e
 
 func (u *Uninstall) deleteDBNamespaces(ctx context.Context) error {
 	u.l.Info("Trying to delete database namespaces")
-	// List all namespaces managed by everest.
-	namespaceList, err := u.kubeClient.ListNamespaces(ctx, metav1.ListOptions{
-		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
-			MatchLabels: map[string]string{
-				common.KubernetesManagedByLabel: common.Everest,
-			},
-		}),
-	})
+	namespaces, err := u.kubeClient.GetDBNamespaces(ctx)
 	if err != nil {
-		return err
-	}
-	namespaces := make([]string, 0, len(namespaceList.Items))
-	for _, item := range namespaceList.Items {
-		namespaces = append(namespaces, item.Name)
+		return errors.Join(err, errors.New("failed to deleteDBNamespaces"))
 	}
 	if len(namespaces) == 0 {
 		u.l.Info("No database namespaces found")

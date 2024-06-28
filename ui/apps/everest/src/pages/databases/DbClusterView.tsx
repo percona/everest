@@ -145,12 +145,12 @@ export const DbClusterView = () => {
       {
         accessorKey: 'nodes',
         id: 'nodes',
-        header: 'Number of nodes',
+        header: 'Nº nodes',
       },
       {
         accessorKey: 'namespace',
         id: 'namespace',
-        header: 'Namespaces',
+        header: 'Namespace',
       },
       {
         accessorKey: 'monitoringConfigName',
