@@ -22,6 +22,7 @@ If you'd like to get a complete understanding of the features offered by Percona
 ## Documentation
 
 For comprehensive information about Percona Everest, see the [documentation](https://docs.percona.com/everest/index.html).
+Also, visit our [Storybook](https://percona.github.io/everest/) to check documentation for our UI components (under development).
 
 # Installation
 
