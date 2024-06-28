@@ -79,8 +79,7 @@ func (_m *MockInterface) GetSupportedEngineVersions(ctx context.Context, operato
 func NewMockInterface(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *MockInterface {
+}) *MockInterface {
 	mock := &MockInterface{}
 	mock.Mock.Test(t)
 
