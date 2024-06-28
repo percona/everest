@@ -8,7 +8,6 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"errors"
-	"fmt"
 	"math/big"
 	"time"
 
@@ -54,13 +53,7 @@ func tlsCertPair() ([]byte, []byte, error) {
 		KeyUsage:              keyUsage,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
-		DNSNames: []string{
-			"localhost",
-			"everest",
-			fmt.Sprintf("everest.%s", common.SystemNamespace),
-			fmt.Sprintf("everest.%s.svc", common.SystemNamespace),
-			fmt.Sprintf("everest.%s.svc.cluster.local", common.SystemNamespace),
-		},
+		DNSNames:              common.EverestCertDNSNames,
 	}
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, pub, priv)

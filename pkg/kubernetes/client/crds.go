@@ -9,7 +9,7 @@ import (
 
 // GetCRD gets a CustomResourceDefinition by name.
 // Provided name should be of the format <resourcename>.<apiGroup>.
-// Example: installplans.operators.coreos.com
+// Example: installplans.operators.coreos.com .
 func (c *Client) GetCRD(ctx context.Context, name string) (*apiextensionsv1.CustomResourceDefinition, error) {
 	return c.apiextClientset.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, name, metav1.GetOptions{})
 }

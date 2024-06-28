@@ -67,6 +67,8 @@ const (
 )
 
 // EverestCertDNSNames holds the DNS names for the Everest certificate.
+//
+//nolint:gochecknoglobals
 var EverestCertDNSNames = []string{
 	"localhost",
 	"everest",
