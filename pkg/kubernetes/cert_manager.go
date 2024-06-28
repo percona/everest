@@ -7,13 +7,14 @@ import (
 	cm "github.com/cert-manager/cert-manager/pkg/apis/certmanager"
 	certmanv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
-	"github.com/percona/everest/pkg/common"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/percona/everest/pkg/common"
 )
 
 // IsCertManagerInstalled checks if cert-manager is installed in the cluster.
-func (k *Kubernetes) IsCertManagerInstalled(ctx context.Context, namespace string) (bool, error) {
+func (k *Kubernetes) IsCertManagerInstalled(ctx context.Context) (bool, error) {
 	_, err := k.client.GetCRD(ctx, "certificates.cert-manager.io")
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
