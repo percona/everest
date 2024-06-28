@@ -59,16 +59,17 @@ const formValuesToPayloadMapping = (
                 : dbPayload.pitrStorageLocation!.name,
           },
         }),
-        ...(dbPayload.schedules?.length > 0 && {
-          schedules: dbPayload.schedules.map((schedule) => ({
-            ...schedule,
-            schedule: cronConverter(
-              schedule.schedule,
-              Intl.DateTimeFormat().resolvedOptions().timeZone,
-              'UTC'
-            ),
-          })),
-        }),
+        schedules:
+          dbPayload.schedules?.length > 0
+            ? dbPayload.schedules.map((schedule) => ({
+                ...schedule,
+                schedule: cronConverter(
+                  schedule.schedule,
+                  Intl.DateTimeFormat().resolvedOptions().timeZone,
+                  'UTC'
+                ),
+              }))
+            : undefined,
       },
       engine: {
         type: dbTypeToDbEngine(dbPayload.dbType),
