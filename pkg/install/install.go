@@ -433,9 +433,28 @@ func (o *Install) provisionEverestOperator(ctx context.Context, recVer *version.
 }
 
 func (o *Install) provisionEverestTLSCerts(ctx context.Context) error {
-	// TODO(mayank): Add mechanism for using cert-manager
-	// I.e, detect if cert-manager is installed and use it to generate certs.
+	if ok, err := o.kubeClient.IsCertManagerInstalled(ctx); err != nil {
+		return errors.Join(err, errors.New("failed to check for cert-manager installation"))
+	} else if ok {
+		return o.provisionCertManagerCertificates(ctx)
+	}
 	return o.kubeClient.CreateTLSCertificate(ctx)
+}
+
+func (o *Install) provisionCertManagerCertificates(ctx context.Context) error {
+	if err := o.kubeClient.ApplyEverestCAIssuer(ctx); err != nil {
+		return err
+	}
+	if err := o.kubeClient.ApplyEverestCACertificate(ctx); err != nil {
+		return err
+	}
+	if err := o.kubeClient.ApplyEverestIssuer(ctx); err != nil {
+		return err
+	}
+	if err := o.kubeClient.ApplyEverestCertificate(ctx); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) error {
