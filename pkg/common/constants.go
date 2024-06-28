@@ -66,13 +66,11 @@ const (
 	EverestTLSSecretName = "everest-tls"
 )
 
-var (
-	// EverestCertDNSNames holds the DNS names for the Everest certificate.
-	EverestCertDNSNames = []string{
-		"localhost",
-		"everest",
-		fmt.Sprintf("everest.%s", SystemNamespace),
-		fmt.Sprintf("everest.%s.svc", SystemNamespace),
-		fmt.Sprintf("everest.%s.svc.cluster.local", SystemNamespace),
-	}
-)
+// EverestCertDNSNames holds the DNS names for the Everest certificate.
+var EverestCertDNSNames = []string{
+	"localhost",
+	"everest",
+	fmt.Sprintf("everest.%s", SystemNamespace),
+	fmt.Sprintf("everest.%s.svc", SystemNamespace),
+	fmt.Sprintf("everest.%s.svc.cluster.local", SystemNamespace),
+}
