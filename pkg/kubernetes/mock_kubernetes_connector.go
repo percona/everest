@@ -430,9 +430,9 @@ func (_m *MockKubernetesConnector) GetConfigMap(ctx context.Context, name string
 	return r0, r1
 }
 
-// GetDBNamespaces provides a mock function with given fields: ctx, namespace
-func (_m *MockKubernetesConnector) GetDBNamespaces(ctx context.Context, namespace string) ([]string, error) {
-	ret := _m.Called(ctx, namespace)
+// GetDBNamespaces provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) GetDBNamespaces(ctx context.Context) ([]string, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetDBNamespaces")
