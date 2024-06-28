@@ -138,7 +138,7 @@ test.describe('DB Cluster creation', () => {
     dbName = await page.getByTestId('text-input-db-name').inputValue();
 
     await moveForward(page);
-    await expect(page.getByText('Number of nodes: 3')).toBeVisible();
+    await expect(page.getByText('Nº nodes: 3')).toBeVisible();
 
     await resourcesStepCheck(page);
     await moveForward(page);
@@ -160,7 +160,7 @@ test.describe('DB Cluster creation', () => {
       dbName
     );
     await page.getByTestId('postgresql-toggle-button').click();
-    await expect(page.getByText('Number of nodes: 2')).toBeVisible();
+    await expect(page.getByText('Nº nodes: 2')).toBeVisible();
     // Now we change the number of nodes
     await page.getByTestId('button-edit-preview-resources').click();
     await page.getByTestId('toggle-button-nodes-3').click();
@@ -168,7 +168,7 @@ test.describe('DB Cluster creation', () => {
     await page.getByTestId('button-edit-preview-basic-information').click();
     // Because 2 nodes is not valid for MongoDB, the default will be picked
     await page.getByTestId('mongodb-toggle-button').click();
-    await expect(page.getByText('Number of nodes: 3')).toBeVisible();
+    await expect(page.getByText('Nº nodes: 3')).toBeVisible();
     await page.getByTestId('button-edit-preview-backups').click();
 
     await expect(page.getByTestId('radio-option-logical')).not.toBeVisible();
