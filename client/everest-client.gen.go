@@ -2833,7 +2833,6 @@ func NewDeleteDatabaseClusterBackupRequest(server string, namespace string, name
 		queryValues := queryURL.Query()
 
 		if params.CleanupBackupStorage != nil {
-
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "cleanupBackupStorage", runtime.ParamLocationQuery, *params.CleanupBackupStorage); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2845,7 +2844,6 @@ func NewDeleteDatabaseClusterBackupRequest(server string, namespace string, name
 					}
 				}
 			}
-
 		}
 
 		queryURL.RawQuery = queryValues.Encode()
@@ -3201,7 +3199,6 @@ func NewDeleteDatabaseClusterRequest(server string, namespace string, name strin
 		queryValues := queryURL.Query()
 
 		if params.CleanupBackupStorage != nil {
-
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "cleanupBackupStorage", runtime.ParamLocationQuery, *params.CleanupBackupStorage); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3213,7 +3210,6 @@ func NewDeleteDatabaseClusterRequest(server string, namespace string, name strin
 					}
 				}
 			}
-
 		}
 
 		queryURL.RawQuery = queryValues.Encode()
@@ -5969,7 +5965,6 @@ func ParseListNamespacesResponse(rsp *http.Response) (*ListNamespacesResponse, e
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -7039,7 +7034,6 @@ func ParseGetSettingsResponse(rsp *http.Response) (*GetSettingsResponse, error) 
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -7065,7 +7059,6 @@ func ParseVersionInfoResponse(rsp *http.Response) (*VersionInfoResponse, error) 
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -7073,7 +7066,6 @@ func ParseVersionInfoResponse(rsp *http.Response) (*VersionInfoResponse, error) 
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
-
 	"H4sIAAAAAAAC/+x9e3Mbt7X4V8Ewd6Z2SlKyk3Ru9U9Hlt1UN3GskeTe+dX0rwZ3D0lUu8AGwEpmXH/3",
 	"OzgA9okllxJlS81OZmJxF4vHwXmfA5xPo0ikmeDAtRodfRqpaAUpxT9f0Ogqzy60kHQJ5gGNY6aZ4DQ5",
 	"kyIDqRmo0dGCJgrGoxhUJFlm3o+O3LdE2Y8J4wshU4ovx6Os8vWnEU0ScQPxLzQFldHIPqz39jNTmogF",
