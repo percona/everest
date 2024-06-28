@@ -1032,9 +1032,13 @@ func (k *Kubernetes) GetDBNamespaces(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, errors.New("failed to get watched namespaces")
 	}
+	internalNs := []string{common.SystemNamespace, common.MonitoringNamespace}
 	result := make([]string, 0, len(namespaceList.Items))
 	for _, ns := range namespaceList.Items {
-		result = append(result, ns.Name)
+		if slices.Contains(internalNs, ns.GetName()) {
+			continue
+		}
+		result = append(result, ns.GetName())
 	}
 	return result, nil
 }
