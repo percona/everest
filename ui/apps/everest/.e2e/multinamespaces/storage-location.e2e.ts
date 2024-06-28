@@ -56,8 +56,7 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
         dbType: 'mysql',
         numberOfNodes: '1',
         backup: {
-          enabled: true,
-          schedules: [],
+          enabled: false,
         },
       },
       EVEREST_CI_NAMESPACES.PXC_ONLY
