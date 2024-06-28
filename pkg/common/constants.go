@@ -16,6 +16,8 @@
 // Package common holds common constants used across Everest.
 package common
 
+import "fmt"
+
 const (
 	// Everest ...
 	Everest = "everest"
@@ -62,4 +64,15 @@ const (
 	EverestTLSCertKeyPath = "/etc/ssl/certs/tls.key"
 	// EverestTLSSecretName is the name of the secret that holds the TLS certificate.
 	EverestTLSSecretName = "everest-tls"
+)
+
+var (
+	// EverestCertDNSNames holds the DNS names for the Everest certificate.
+	EverestCertDNSNames = []string{
+		"localhost",
+		"everest",
+		fmt.Sprintf("everest.%s", SystemNamespace),
+		fmt.Sprintf("everest.%s.svc", SystemNamespace),
+		fmt.Sprintf("everest.%s.svc.cluster.local", SystemNamespace),
+	}
 )
