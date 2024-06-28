@@ -586,7 +586,22 @@ func (k *Kubernetes) getTargetInstallPlanName(ctx context.Context, subscription 
 	}
 	for _, ip := range ipList.Items {
 		for _, csv := range ip.Spec.ClusterServiceVersionNames {
-			if csv == targetCSV {
+			// If the CSV is the one we are looking for and the InstallPlan is
+			// waiting for approval, we return it.
+			// We introduced this phase check because OLM has a bug where it
+			// sometimes creates duplicate InstallPlans for the same CSV and we
+			// found a few cases where the duplicate InstallPlan wasn't
+			// reconciled correctly and abandoned by OLM. This abandoned
+			// InstallPlan was missing the status field meaning it was also
+			// missing the necessary plan to install the operator. Approving
+			// this InstallPlan would cause the operator to never be installed.
+			// By checking the phase we make sure we will be approving an
+			// InstallPlan that is actually ready to be approved.
+			// See https://github.com/operator-framework/kubectl-operator/issues/13
+			// for more details on a similar issue.
+			// We also need to return the InstallPlan if the Phase is Complete
+			// to ensure the idempotency of the InstallOperator function.
+			if csv == targetCSV && (ip.Status.Phase == olmv1alpha1.InstallPlanPhaseRequiresApproval || ip.Status.Phase == olmv1alpha1.InstallPlanPhaseComplete) {
 				return ip.GetName(), nil
 			}
 		}
