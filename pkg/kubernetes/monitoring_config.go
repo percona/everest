@@ -63,7 +63,7 @@ func (k *Kubernetes) IsMonitoringConfigUsed(ctx context.Context, namespace, moni
 
 	namespaces := nsList
 	if len(nsList) == 0 {
-		namespaces, err = k.GetDBNamespaces(ctx, k.Namespace())
+		namespaces, err = k.GetDBNamespaces(ctx)
 		if err != nil {
 			return false, err
 		}
