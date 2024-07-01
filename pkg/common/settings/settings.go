@@ -1,4 +1,5 @@
-package common
+// Package settings contains helpers for Everest settings.
+package settings
 
 import (
 	"github.com/mitchellh/mapstructure"
@@ -8,6 +9,8 @@ import (
 // EverestSettings represents the everest settings.
 type EverestSettings struct {
 	OIDCConfigRaw string `mapstructure:"oidc.config"`
+	// Insecure is set if Everest should run without TLS.
+	Insecure string `mapstructure:"insecure"`
 }
 
 // OIDCConfig represents the OIDC provider configuration.
@@ -47,4 +50,9 @@ func (e *EverestSettings) ToMap() (map[string]string, error) {
 // FromMap tries to convert a map the EverestSettings struct.
 func (e *EverestSettings) FromMap(m map[string]string) error {
 	return mapstructure.Decode(m, e)
+}
+
+// GetInsecure ...
+func (e *EverestSettings) GetInsecure() bool {
+	return e.Insecure == "true"
 }

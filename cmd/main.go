@@ -60,7 +60,7 @@ func main() {
 	}
 
 	go func() {
-		err := server.Start()
+		err := server.Start(tCtx)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			l.Fatal(err)
 		}

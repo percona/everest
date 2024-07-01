@@ -5,6 +5,7 @@ package client
 import (
 	"context"
 
+	cmVersioned "github.com/cert-manager/cert-manager/pkg/client/clientset/versioned"
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	versioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
@@ -13,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -40,6 +42,10 @@ type KubeClientConnector interface {
 	ListBackupStorages(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.BackupStorageList, error)
 	// DeleteBackupStorage deletes the backupStorage.
 	DeleteBackupStorage(ctx context.Context, namespace, name string) error
+	// CertManager returns CertManager client set.
+	//
+	//nolint:ireturn
+	CertManager() cmVersioned.Interface
 	// GetConfigMap returns config map by name and namespace.
 	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
 	// CreateConfigMap creates the provided ConfigMap.
@@ -126,6 +132,10 @@ type KubeClientConnector interface {
 	GetService(ctx context.Context, namespace, name string) (*corev1.Service, error)
 	// GetClusterRoleBinding returns cluster role binding by given name.
 	GetClusterRoleBinding(ctx context.Context, name string) (*rbacv1.ClusterRoleBinding, error)
+	// GetCRD gets a CustomResourceDefinition by name.
+	// Provided name should be of the format <resourcename>.<apiGroup>.
+	// Example: installplans.operators.coreos.com .
+	GetCRD(ctx context.Context, name string) (*apiextensionsv1.CustomResourceDefinition, error)
 	// ListDatabaseClusters returns list of managed database clusters.
 	ListDatabaseClusters(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterList, error)
 	// GetDatabaseCluster returns database clusters by provided name.

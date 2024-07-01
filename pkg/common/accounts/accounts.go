@@ -1,4 +1,5 @@
-package common
+// Package accounts contains helpers for Everest accounts.
+package accounts
 
 import (
 	"context"
@@ -7,6 +8,11 @@ import (
 	"errors"
 
 	"github.com/percona/everest/pkg/accounts"
+)
+
+const (
+	// EverestAdminUser is the name of the admin user.
+	EverestAdminUser = "admin"
 )
 
 func generateRandomPassword() (string, error) {

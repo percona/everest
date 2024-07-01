@@ -5,9 +5,10 @@ package client
 import (
 	context "context"
 
+	versioned "github.com/cert-manager/cert-manager/pkg/client/clientset/versioned"
 	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	versioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
+	clientsetversioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	apisoperatorsv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	mock "github.com/stretchr/testify/mock"
 	appsv1 "k8s.io/api/apps/v1"
@@ -89,6 +90,26 @@ func (_m *MockKubeClientConnector) ApplyObject(obj runtime.Object) error {
 		r0 = rf(obj)
 	} else {
 		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CertManager provides a mock function with given fields:
+func (_m *MockKubeClientConnector) CertManager() versioned.Interface {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for CertManager")
+	}
+
+	var r0 versioned.Interface
+	if rf, ok := ret.Get(0).(func() versioned.Interface); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(versioned.Interface)
+		}
 	}
 
 	return r0
@@ -655,6 +676,36 @@ func (_m *MockKubeClientConnector) GetBackupStorage(ctx context.Context, namespa
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
 		r1 = rf(ctx, namespace, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetCRD provides a mock function with given fields: ctx, name
+func (_m *MockKubeClientConnector) GetCRD(ctx context.Context, name string) (*apiextensionsv1.CustomResourceDefinition, error) {
+	ret := _m.Called(ctx, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCRD")
+	}
+
+	var r0 *apiextensionsv1.CustomResourceDefinition
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*apiextensionsv1.CustomResourceDefinition, error)); ok {
+		return rf(ctx, name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *apiextensionsv1.CustomResourceDefinition); ok {
+		r0 = rf(ctx, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*apiextensionsv1.CustomResourceDefinition)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, name)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1911,19 +1962,19 @@ func (_m *MockKubeClientConnector) Namespace() string {
 }
 
 // OLM provides a mock function with given fields:
-func (_m *MockKubeClientConnector) OLM() versioned.Interface {
+func (_m *MockKubeClientConnector) OLM() clientsetversioned.Interface {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for OLM")
 	}
 
-	var r0 versioned.Interface
-	if rf, ok := ret.Get(0).(func() versioned.Interface); ok {
+	var r0 clientsetversioned.Interface
+	if rf, ok := ret.Get(0).(func() clientsetversioned.Interface); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(versioned.Interface)
+			r0 = ret.Get(0).(clientsetversioned.Interface)
 		}
 	}
 

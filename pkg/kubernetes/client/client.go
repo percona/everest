@@ -32,6 +32,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	cmVersioned "github.com/cert-manager/cert-manager/pkg/client/clientset/versioned"
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	olmVersioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
@@ -105,6 +106,7 @@ type Client struct {
 	apiextClientset  apiextv1clientset.Interface
 	dynamicClientset dynamic.Interface
 	olmClientset     olmVersioned.Interface
+	cmClientset      cmVersioned.Interface
 	rcLock           *sync.Mutex
 	restConfig       *rest.Config
 	namespace        string
@@ -198,6 +200,10 @@ func NewFromKubeConfig(kubeconfig string, l *zap.SugaredLogger) (*Client, error)
 	if err != nil {
 		return nil, err
 	}
+	cmClientset, err := cmVersioned.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
 
 	c := &Client{
 		l:                l,
@@ -205,6 +211,7 @@ func NewFromKubeConfig(kubeconfig string, l *zap.SugaredLogger) (*Client, error)
 		apiextClientset:  apiextClientset,
 		dynamicClientset: dynamicClientset,
 		olmClientset:     olmClientset,
+		cmClientset:      cmClientset,
 		restConfig:       config,
 		rcLock:           &sync.Mutex{},
 		clusterName:      clientConfig.Contexts[clientConfig.CurrentContext].Cluster,

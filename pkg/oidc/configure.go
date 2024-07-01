@@ -24,6 +24,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/common/settings"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -91,7 +92,7 @@ func (u *OIDC) Run(ctx context.Context) error {
 		return errors.Join(err, errors.New("failed to connect with OIDC provider"))
 	}
 
-	oidcCfg := common.OIDCConfig{
+	oidcCfg := settings.OIDCConfig{
 		IssuerURL: issuerURL,
 		ClientID:  clientID,
 	}
@@ -101,7 +102,7 @@ func (u *OIDC) Run(ctx context.Context) error {
 		return err
 	}
 
-	if err := u.kubeClient.UpdateEverestSettings(ctx, common.EverestSettings{
+	if err := u.kubeClient.UpdateEverestSettings(ctx, settings.EverestSettings{
 		OIDCConfigRaw: oidcRaw,
 	}); err != nil {
 		return err

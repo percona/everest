@@ -34,6 +34,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
+	accountshelper "github.com/percona/everest/pkg/common/accounts"
+	versionhelper "github.com/percona/everest/pkg/common/version"
 	"github.com/percona/everest/pkg/kubernetes"
 	cliVersion "github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
@@ -56,6 +58,24 @@ var skipObjects = []client.Object{ //nolint:gochecknoglobals
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      common.EverestAccountsSecretName,
+			Namespace: common.SystemNamespace,
+		},
+	},
+	&corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestTLSSecretName,
+			Namespace: common.SystemNamespace,
+		},
+	},
+	&corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestSettingsConfigMapName,
 			Namespace: common.SystemNamespace,
 		},
 	},
@@ -182,7 +202,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return errors.Join(err, errors.New("could not find install plan"))
 	}
 
-	if common.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
+	if versionhelper.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
 		if err := u.ensureEverestJWTIfNotExists(ctx); err != nil {
 			return err
 		}
@@ -191,7 +211,11 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
 
 	// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
-	if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo, skipObjects...); err != nil {
+	if err := u.kubeClient.InstallEverest(ctx, kubernetes.InstallEverestRequest{
+		Namespace: common.SystemNamespace,
+		Version:   upgradeEverestTo,
+		SkipObjs:  skipObjects,
+	}); err != nil {
 		return err
 	}
 
@@ -201,7 +225,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)
 
-	if common.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
+	if versionhelper.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
 		if err := u.ensureEverestAccountsIfNotExists(ctx); err != nil {
 			return err
 		}
@@ -216,7 +240,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		}
 	}
 
-	if isSecure, err := u.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser); err != nil {
+	if isSecure, err := u.kubeClient.Accounts().IsSecure(ctx, accountshelper.EverestAdminUser); err != nil {
 		return errors.Join(err, errors.New("could not check if the admin password is secure"))
 	} else if !isSecure {
 		fmt.Fprint(os.Stderr, postUpgradeMessage)
@@ -285,7 +309,7 @@ func (u *Upgrade) ensureEverestAccountsIfNotExists(ctx context.Context) error {
 	if _, err := u.kubeClient.CreateSecret(ctx, secret); err != nil {
 		return err
 	}
-	return common.CreateInitialAdminAccount(ctx, u.kubeClient.Accounts())
+	return accountshelper.CreateInitialAdminAccount(ctx, u.kubeClient.Accounts())
 }
 
 func (u *Upgrade) ensureEverestJWTIfNotExists(ctx context.Context) error {

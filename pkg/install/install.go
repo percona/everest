@@ -40,6 +40,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
+	accountshelper "github.com/percona/everest/pkg/common/accounts"
+	"github.com/percona/everest/pkg/common/settings"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
@@ -63,6 +65,8 @@ const (
 	FlagVersion = "version"
 	// FlagSkipWizard represents the flag to skip the installation wizard.
 	FlagSkipWizard = "skip-wizard"
+	// FlagInsecure is set to run Everest without TLS.
+	FlagInsecure = "insecure"
 )
 
 const postInstallMessage = `
@@ -78,6 +82,27 @@ IMPORTANT: This password is NOT stored in a hashed format. To secure it, update 
 
 everestctl accounts set-password --username admin
 `
+
+var skipInstallObjects = []client.Object{ //nolint:gochecknoglobals
+	&corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestTLSSecretName,
+			Namespace: common.SystemNamespace,
+		},
+	},
+	&corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestSettingsConfigMapName,
+			Namespace: common.SystemNamespace,
+		},
+	},
+}
 
 // Install implements the main logic for commands.
 type Install struct {
@@ -154,6 +179,8 @@ type (
 		VersionMetadataURL string `mapstructure:"version-metadata-url"`
 		// Version defines the version to be installed. If empty, the latest version is installed.
 		Version string `mapstructure:"version"`
+		// Insecure is a flag to disable TLS for Everest server.
+		Insecure bool `mapstructure:"insecure"`
 
 		Operator OperatorConfig
 	}
@@ -235,7 +262,7 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
+	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, accountshelper.EverestAdminUser)
 	if err != nil {
 		return errors.Join(err, errors.New("could not check if the admin password is secure"))
 	}
@@ -308,6 +335,12 @@ func (o *Install) latestVersion(meta *versionpb.MetadataResponse) (*goversion.Ve
 	return latest, latestMeta, nil
 }
 
+func (o *Install) initialEverestSettings() settings.EverestSettings {
+	return settings.EverestSettings{
+		Insecure: fmt.Sprintf("%t", o.config.Insecure),
+	}
+}
+
 func (o *Install) provisionEverestComponents(ctx context.Context, latest *goversion.Version, recVer *version.RecommendedVersion) error {
 	if err := o.provisionDBNamespaces(ctx, recVer); err != nil {
 		return err
@@ -315,6 +348,24 @@ func (o *Install) provisionEverestComponents(ctx context.Context, latest *govers
 
 	if err := o.provisionEverestOperator(ctx, recVer); err != nil {
 		return err
+	}
+
+	if err := o.kubeClient.UpdateEverestSettings(ctx, o.initialEverestSettings()); err != nil {
+		return err
+	}
+
+	if !o.config.Insecure {
+		skipInstallObjects = append(skipInstallObjects, // Do not create a TLS secret from the manifests.
+			&corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      common.EverestTLSSecretName,
+					Namespace: common.SystemNamespace,
+				},
+			},
+		)
+		if err := o.provisionEverestTLSCerts(ctx); err != nil {
+			return err
+		}
 	}
 
 	if err := o.provisionEverest(ctx, latest); err != nil {
@@ -390,6 +441,33 @@ func (o *Install) provisionEverestOperator(ctx context.Context, recVer *version.
 	return nil
 }
 
+func (o *Install) provisionEverestTLSCerts(ctx context.Context) error {
+	if ok, err := o.kubeClient.IsCertManagerInstalled(ctx); err != nil {
+		return errors.Join(err, errors.New("failed to check for cert-manager installation"))
+	} else if ok {
+		o.l.Info("Cert-manager installation detected, provisioning certificates with cert-manager")
+		return o.provisionCertManagerCertificates(ctx)
+	}
+	o.l.Info("Provisioning self-signed certificates")
+	return o.kubeClient.CreateTLSCertificate(ctx)
+}
+
+func (o *Install) provisionCertManagerCertificates(ctx context.Context) error {
+	if err := o.kubeClient.ApplyEverestCAIssuer(ctx); err != nil {
+		return err
+	}
+	if err := o.kubeClient.ApplyEverestCACertificate(ctx); err != nil {
+		return err
+	}
+	if err := o.kubeClient.ApplyEverestIssuer(ctx); err != nil {
+		return err
+	}
+	if err := o.kubeClient.ApplyEverestCertificate(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) error {
 	d, err := o.kubeClient.GetDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
 	var everestExists bool
@@ -402,13 +480,21 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 
 	if !everestExists { //nolint:nestif
 		o.l.Info(fmt.Sprintf("Deploying Everest to %s", common.SystemNamespace))
-		if err = o.kubeClient.InstallEverest(ctx, common.SystemNamespace, v); err != nil {
+		if err = o.kubeClient.InstallEverest(
+			ctx,
+			kubernetes.InstallEverestRequest{
+				Namespace: common.SystemNamespace,
+				Version:   v,
+				SkipObjs:  skipInstallObjects,
+				Insecure:  o.config.Insecure,
+			},
+		); err != nil {
 			return err
 		}
 		if err := o.kubeClient.CreateRSAKeyPair(ctx); err != nil {
 			return err
 		}
-		if err := common.CreateInitialAdminAccount(ctx, o.kubeClient.Accounts()); err != nil {
+		if err := accountshelper.CreateInitialAdminAccount(ctx, o.kubeClient.Accounts()); err != nil {
 			return err
 		}
 	} else {

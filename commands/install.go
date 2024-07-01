@@ -73,6 +73,7 @@ func initInstallFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(install.FlagOperatorMongoDB, true, "Install MongoDB operator")
 	cmd.Flags().Bool(install.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
 	cmd.Flags().Bool(install.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
+	cmd.Flags().Bool(install.FlagInsecure, false, "If set, TLS is disabled for Everest server")
 }
 
 func initInstallViperFlags(cmd *cobra.Command) {
@@ -87,4 +88,5 @@ func initInstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(install.FlagOperatorMongoDB, cmd.Flags().Lookup(install.FlagOperatorMongoDB))             //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagOperatorPostgresql, cmd.Flags().Lookup(install.FlagOperatorPostgresql))       //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagOperatorXtraDBCluster, cmd.Flags().Lookup(install.FlagOperatorXtraDBCluster)) //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagInsecure, cmd.Flags().Lookup(install.FlagInsecure))                           //nolint:errcheck,gosec
 }

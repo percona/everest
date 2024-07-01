@@ -8,10 +8,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/common/settings"
 )
 
 // UpdateEverestSettings accepts the full list of Everest settings and updates the settings.
-func (k *Kubernetes) UpdateEverestSettings(ctx context.Context, settings common.EverestSettings) error {
+func (k *Kubernetes) UpdateEverestSettings(ctx context.Context, settings settings.EverestSettings) error {
 	configMapData, err := settings.ToMap()
 	if err != nil {
 		return err
@@ -40,8 +41,8 @@ func (k *Kubernetes) UpdateEverestSettings(ctx context.Context, settings common.
 }
 
 // GetEverestSettings returns Everest settings.
-func (k *Kubernetes) GetEverestSettings(ctx context.Context) (common.EverestSettings, error) {
-	settings := common.EverestSettings{}
+func (k *Kubernetes) GetEverestSettings(ctx context.Context) (settings.EverestSettings, error) {
+	settings := settings.EverestSettings{}
 	m, err := k.client.GetConfigMap(ctx, common.SystemNamespace, common.EverestSettingsConfigMapName)
 	if err != nil {
 		return settings, err

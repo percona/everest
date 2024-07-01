@@ -19,7 +19,7 @@ import (
 
 	v1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	accounts "github.com/percona/everest/pkg/accounts"
-	common "github.com/percona/everest/pkg/common"
+	settings "github.com/percona/everest/pkg/common/settings"
 	kubernetesclient "github.com/percona/everest/pkg/kubernetes/client"
 )
 
@@ -43,6 +43,78 @@ func (_m *MockKubernetesConnector) Accounts() accounts.Interface {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(accounts.Interface)
 		}
+	}
+
+	return r0
+}
+
+// ApplyEverestCACertificate provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) ApplyEverestCACertificate(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ApplyEverestCACertificate")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ApplyEverestCAIssuer provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) ApplyEverestCAIssuer(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ApplyEverestCAIssuer")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ApplyEverestCertificate provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) ApplyEverestCertificate(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ApplyEverestCertificate")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ApplyEverestIssuer provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) ApplyEverestIssuer(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ApplyEverestIssuer")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
 	}
 
 	return r0
@@ -250,6 +322,24 @@ func (_m *MockKubernetesConnector) CreateSecret(ctx context.Context, secret *v1.
 	}
 
 	return r0, r1
+}
+
+// CreateTLSCertificate provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) CreateTLSCertificate(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateTLSCertificate")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // DeleteClusterServiceVersion provides a mock function with given fields: ctx, key
@@ -575,22 +665,22 @@ func (_m *MockKubernetesConnector) GetEverestID(ctx context.Context) (string, er
 }
 
 // GetEverestSettings provides a mock function with given fields: ctx
-func (_m *MockKubernetesConnector) GetEverestSettings(ctx context.Context) (common.EverestSettings, error) {
+func (_m *MockKubernetesConnector) GetEverestSettings(ctx context.Context) (settings.EverestSettings, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetEverestSettings")
 	}
 
-	var r0 common.EverestSettings
+	var r0 settings.EverestSettings
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (common.EverestSettings, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (settings.EverestSettings, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) common.EverestSettings); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) settings.EverestSettings); ok {
 		r0 = rf(ctx)
 	} else {
-		r0 = ret.Get(0).(common.EverestSettings)
+		r0 = ret.Get(0).(settings.EverestSettings)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -855,6 +945,34 @@ func (_m *MockKubernetesConnector) InstallPerconaCatalog(ctx context.Context, _a
 	}
 
 	return r0
+}
+
+// IsCertManagerInstalled provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) IsCertManagerInstalled(ctx context.Context) (bool, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsCertManagerInstalled")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (bool, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) bool); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // ListClusterServiceVersion provides a mock function with given fields: ctx, namespace
@@ -1205,17 +1323,17 @@ func (_m *MockKubernetesConnector) UpdateDeployment(ctx context.Context, deploym
 	return r0, r1
 }
 
-// UpdateEverestSettings provides a mock function with given fields: ctx, settings
-func (_m *MockKubernetesConnector) UpdateEverestSettings(ctx context.Context, settings common.EverestSettings) error {
-	ret := _m.Called(ctx, settings)
+// UpdateEverestSettings provides a mock function with given fields: ctx, _a1
+func (_m *MockKubernetesConnector) UpdateEverestSettings(ctx context.Context, _a1 settings.EverestSettings) error {
+	ret := _m.Called(ctx, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateEverestSettings")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, common.EverestSettings) error); ok {
-		r0 = rf(ctx, settings)
+	if rf, ok := ret.Get(0).(func(context.Context, settings.EverestSettings) error); ok {
+		r0 = rf(ctx, _a1)
 	} else {
 		r0 = ret.Error(0)
 	}

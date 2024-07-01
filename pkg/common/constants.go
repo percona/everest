@@ -16,6 +16,8 @@
 // Package common holds common constants used across Everest.
 package common
 
+import "fmt"
+
 const (
 	// Everest ...
 	Everest = "everest"
@@ -49,9 +51,6 @@ const (
 	// EverestJWTPublicKeyFile is the path to the JWT public key.
 	EverestJWTPublicKeyFile = "/etc/jwt/id_rsa.pub"
 
-	// EverestAdminUser is the name of the admin user.
-	EverestAdminUser = "admin"
-
 	// EverestSettingsConfigMapName is the name of the Everest settings ConfigMap.
 	EverestSettingsConfigMapName = "everest-settings"
 	// EverestTokenCookie is the name of the cookie that holds the token.
@@ -60,4 +59,22 @@ const (
 	KubernetesManagedByLabel = "app.kubernetes.io/managed-by"
 	// ForegroundDeletionFinalizer is the finalizer used to delete resources in foreground.
 	ForegroundDeletionFinalizer = "foregroundDeletion"
+
+	// EverestTLSCertPath is the path to the TLS certificate.
+	EverestTLSCertPath = "/etc/ssl/certs/tls.crt"
+	// EverestTLSCertKeyPath is the path to the TLS certificate key.
+	EverestTLSCertKeyPath = "/etc/ssl/certs/tls.key"
+	// EverestTLSSecretName is the name of the secret that holds the TLS certificate.
+	EverestTLSSecretName = "everest-tls"
 )
+
+// EverestCertDNSNames holds the DNS names for the Everest certificate.
+//
+//nolint:gochecknoglobals
+var EverestCertDNSNames = []string{
+	"localhost",
+	"everest",
+	fmt.Sprintf("everest.%s", SystemNamespace),
+	fmt.Sprintf("everest.%s.svc", SystemNamespace),
+	fmt.Sprintf("everest.%s.svc.cluster.local", SystemNamespace),
+}
