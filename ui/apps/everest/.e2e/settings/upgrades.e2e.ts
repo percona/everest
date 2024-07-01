@@ -142,7 +142,7 @@ test.describe('Operator upgrades', () => {
       page.getByRole('button', { name: 'Upgrade Operator' })
     ).toBeVisible();
     await expect(
-      page.getByText('A new version of the psmdb operator is available.')
+      page.getByText('Version 1.16.0 of the psmdb operator is available.')
     ).toBeVisible();
     await expect(await page.locator('tbody tr').count()).toBe(1);
     await expect(
@@ -153,6 +153,39 @@ test.describe('Operator upgrades', () => {
       page.getByText(
         `Are you sure you want to upgrade psmdb operator in namespace ${namespaces[0]} to version 1.16.0?`
       )
+    ).toBeVisible();
+  });
+
+  test('show new version even if no databases available', async ({ page }) => {
+    await page.route(
+      `/v1/namespaces/${namespaces[0]}/database-engines`,
+      async (route) => {
+        await route.fulfill({
+          json: generateMockEngineData({
+            pg: { status: 'installed', version: '2.3.1' },
+            mongo: {
+              status: 'installed',
+              version: '1.15.0',
+              pendingVersion: '1.16.0',
+            },
+            mysql: { status: 'installed', version: '1.13.0' },
+          }),
+        });
+      }
+    );
+    await page.route(
+      `/v1/namespaces/${namespaces[0]}/database-engines/*/operator-version/preflight?targetVersion=1.16.0`,
+      async (route) => {
+        await route.fulfill({
+          json: generateMockOperatorVersionData([]),
+        });
+      }
+    );
+    await page.goto(`/settings/namespaces/${namespaces[0]}`);
+    await expect(page.getByText('Upgrade available')).toBeVisible();
+    await page.getByTestId('mongodb-toggle-button').click();
+    await expect(
+      page.getByRole('button', { name: 'Upgrade Operator' })
     ).toBeVisible();
   });
 
@@ -232,7 +265,7 @@ test.describe('Operator upgrades', () => {
     await expect(page.getByText('1/2 tasks pending')).toBeVisible();
     await expect(
       page.getByText(
-        'A new version of the psmdb operator is available. Start upgrading by performing all the pending tasks.'
+        'Version 1.16.0 of the psmdb operator is available. Start upgrading by performing all the pending tasks.'
       )
     ).toBeVisible();
   });

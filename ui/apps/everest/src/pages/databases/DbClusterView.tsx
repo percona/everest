@@ -41,11 +41,11 @@ import {
 } from './DbClusterView.utils';
 import { Messages } from './dbClusterView.messages';
 import { DbClusterTableElement } from './dbClusterView.types';
-import { DbTypeIconProvider } from './dbTypeIconProvider/DbTypeIconProvider';
 import { ExpandedRow } from './expandedRow/ExpandedRow';
 import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
 import { LastBackup } from './lastBackup/LastBackup';
 import { useDbBackups } from 'hooks/api/backups/useBackups';
+import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
 
 export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
@@ -127,7 +127,7 @@ export const DbClusterView = () => {
             alignItems="center"
             gap={1}
           >
-            <DbTypeIconProvider dbType={row.original?.dbType} />
+            {beautifyDbTypeName(dbEngineToDbType(row.original?.dbType))}{' '}
             {row.original?.dbVersion}
           </Stack>
         ),
@@ -145,16 +145,17 @@ export const DbClusterView = () => {
       {
         accessorKey: 'nodes',
         id: 'nodes',
-        header: 'Number of nodes',
+        header: 'Nº nodes',
       },
       {
         accessorKey: 'namespace',
         id: 'namespace',
-        header: 'Namespaces',
+        header: 'Namespace',
       },
       {
         accessorKey: 'monitoringConfigName',
         header: 'Monitoring instance name',
+        minSize: 250,
       },
       // {
       //   accessorKey: 'backupsEnabled',

@@ -90,8 +90,8 @@ setup('Backup storages', async ({ request }) => {
 
 setup('Close modal permanently', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByTestId('close-dialog-icon')).toBeVisible();
-  await page.getByTestId('close-dialog-icon').click();
+  await expect(page.getByTestId('lets-go-button')).toBeVisible();
+  await page.getByTestId('lets-go-button').click();
   await page.context().storageState({ path: 'user.json' });
 });
 

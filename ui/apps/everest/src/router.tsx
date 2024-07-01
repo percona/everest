@@ -18,6 +18,7 @@ import NamespaceDetails from 'pages/settings/namespaces/namespace-details';
 import Restores from 'pages/db-cluster-details/restores';
 import Components from './pages/db-cluster-details/components';
 import LoginCallback from 'components/login-callback/LoginCallback';
+import { DbClusterContextProvider } from 'pages/db-cluster-details/dbCluster.context';
 
 const router = createBrowserRouter([
   {
@@ -50,7 +51,11 @@ const router = createBrowserRouter([
       },
       {
         path: 'databases/:namespace/:dbClusterName',
-        element: <DbClusterDetails />,
+        element: (
+          <DbClusterContextProvider>
+            <DbClusterDetails />
+          </DbClusterContextProvider>
+        ),
         children: [
           {
             index: true,
