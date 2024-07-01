@@ -93,6 +93,15 @@ var skipInstallObjects = []client.Object{ //nolint:gochecknoglobals
 			Namespace: common.SystemNamespace,
 		},
 	},
+	&corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestSettingsConfigMapName,
+			Namespace: common.SystemNamespace,
+		},
+	},
 }
 
 // Install implements the main logic for commands.
@@ -472,7 +481,8 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 	if !everestExists { //nolint:nestif
 		o.l.Info(fmt.Sprintf("Deploying Everest to %s", common.SystemNamespace))
 		if err = o.kubeClient.InstallEverest(
-			ctx, common.SystemNamespace,
+			ctx,
+			common.SystemNamespace,
 			v, skipInstallObjects...,
 		); err != nil {
 			return err
