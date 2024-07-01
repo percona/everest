@@ -29,22 +29,24 @@ const (
 	everestCAIssuerName = "everest-ca-issuer"
 	everestCACertName   = "everest-ca-cert"
 	everestIssuerName   = "everest-issuer"
-	everestCertName     = "everest-cert"
 )
 
 // ApplyEverestCAIssuer creates a new CA Issuer for Everest.
 func (k *Kubernetes) ApplyEverestCAIssuer(ctx context.Context) error {
-	if _, err := k.client.CreateIssuer(ctx, &certmanv1.Issuer{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      everestCAIssuerName,
-			Namespace: common.SystemNamespace,
-		},
-		Spec: certmanv1.IssuerSpec{
-			IssuerConfig: certmanv1.IssuerConfig{
-				SelfSigned: &certmanv1.SelfSignedIssuer{},
+	if _, err := k.client.CertManager().
+		CertmanagerV1().
+		Issuers(common.SystemNamespace).
+		Create(ctx, &certmanv1.Issuer{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      everestCAIssuerName,
+				Namespace: common.SystemNamespace,
 			},
-		},
-	}); err != nil {
+			Spec: certmanv1.IssuerSpec{
+				IssuerConfig: certmanv1.IssuerConfig{
+					SelfSigned: &certmanv1.SelfSignedIssuer{},
+				},
+			},
+		}, metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	return nil
@@ -52,23 +54,26 @@ func (k *Kubernetes) ApplyEverestCAIssuer(ctx context.Context) error {
 
 // ApplyEverestCACertificate creates a new CA certificate for Everest.
 func (k *Kubernetes) ApplyEverestCACertificate(ctx context.Context) error {
-	if _, err := k.client.CreateCertificate(ctx, &certmanv1.Certificate{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      everestCACertName,
-			Namespace: common.SystemNamespace,
-		},
-		Spec: certmanv1.CertificateSpec{
-			SecretName: everestCACertName,
-			CommonName: "everest-ca",
-			IsCA:       true,
-			IssuerRef: cmmeta.ObjectReference{
-				Name: everestCAIssuerName,
-				Kind: certmanv1.IssuerKind,
+	if _, err := k.client.CertManager().
+		CertmanagerV1().
+		Certificates(common.SystemNamespace).
+		Create(ctx, &certmanv1.Certificate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      everestCACertName,
+				Namespace: common.SystemNamespace,
 			},
-			Duration:    &metav1.Duration{Duration: time.Hour * 24 * 365},
-			RenewBefore: &metav1.Duration{Duration: 730 * time.Hour},
-		},
-	}); err != nil {
+			Spec: certmanv1.CertificateSpec{
+				SecretName: everestCACertName,
+				CommonName: "everest-ca",
+				IsCA:       true,
+				IssuerRef: cmmeta.ObjectReference{
+					Name: everestCAIssuerName,
+					Kind: certmanv1.IssuerKind,
+				},
+				Duration:    &metav1.Duration{Duration: time.Hour * 24 * 365},
+				RenewBefore: &metav1.Duration{Duration: 730 * time.Hour},
+			},
+		}, metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	return nil
@@ -76,19 +81,22 @@ func (k *Kubernetes) ApplyEverestCACertificate(ctx context.Context) error {
 
 // ApplyEverestIssuer creates a new issuer for everest.
 func (k *Kubernetes) ApplyEverestIssuer(ctx context.Context) error {
-	if _, err := k.client.CreateIssuer(ctx, &certmanv1.Issuer{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      everestIssuerName,
-			Namespace: common.SystemNamespace,
-		},
-		Spec: certmanv1.IssuerSpec{
-			IssuerConfig: certmanv1.IssuerConfig{
-				CA: &certmanv1.CAIssuer{
-					SecretName: everestCACertName,
+	if _, err := k.client.CertManager().
+		CertmanagerV1().
+		Issuers(common.SystemNamespace).
+		Create(ctx, &certmanv1.Issuer{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      everestIssuerName,
+				Namespace: common.SystemNamespace,
+			},
+			Spec: certmanv1.IssuerSpec{
+				IssuerConfig: certmanv1.IssuerConfig{
+					CA: &certmanv1.CAIssuer{
+						SecretName: everestCACertName,
+					},
 				},
 			},
-		},
-	}); err != nil {
+		}, metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	return nil
@@ -96,27 +104,30 @@ func (k *Kubernetes) ApplyEverestIssuer(ctx context.Context) error {
 
 // ApplyEverestCertificate creates a new certificate for Everest.
 func (k *Kubernetes) ApplyEverestCertificate(ctx context.Context) error {
-	if _, err := k.client.CreateCertificate(ctx, &certmanv1.Certificate{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      everestCertName,
-			Namespace: common.SystemNamespace,
-		},
-		Spec: certmanv1.CertificateSpec{
-			Subject: &certmanv1.X509Subject{
-				Organizations: []string{"Percona Everest"},
+	if _, err := k.client.CertManager().
+		CertmanagerV1().
+		Certificates(common.SystemNamespace).
+		Create(ctx, &certmanv1.Certificate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      common.EverestTLSSecretName,
+				Namespace: common.SystemNamespace,
 			},
-			CommonName: "everest",
-			SecretName: everestCertName,
-			DNSNames:   common.EverestCertDNSNames,
-			IsCA:       false,
-			Duration:   &metav1.Duration{Duration: time.Hour * 24 * 365},
-			IssuerRef: cmmeta.ObjectReference{
-				Name:  everestIssuerName,
-				Kind:  certmanv1.IssuerKind,
-				Group: cm.GroupName,
+			Spec: certmanv1.CertificateSpec{
+				Subject: &certmanv1.X509Subject{
+					Organizations: []string{"Percona Everest"},
+				},
+				CommonName: "everest",
+				SecretName: common.EverestTLSSecretName,
+				DNSNames:   common.EverestCertDNSNames,
+				IsCA:       false,
+				Duration:   &metav1.Duration{Duration: time.Hour * 24 * 365},
+				IssuerRef: cmmeta.ObjectReference{
+					Name:  everestIssuerName,
+					Kind:  certmanv1.IssuerKind,
+					Group: cm.GroupName,
+				},
 			},
-		},
-	}); err != nil {
+		}, metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	return nil

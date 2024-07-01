@@ -5,7 +5,7 @@ package client
 import (
 	"context"
 
-	certmanv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	cmVersioned "github.com/cert-manager/cert-manager/pkg/client/clientset/versioned"
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	versioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
@@ -42,12 +42,10 @@ type KubeClientConnector interface {
 	ListBackupStorages(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.BackupStorageList, error)
 	// DeleteBackupStorage deletes the backupStorage.
 	DeleteBackupStorage(ctx context.Context, namespace, name string) error
-	// CreateIssuer creates the given issuer resources.
-	CreateIssuer(ctx context.Context, issuer *certmanv1.Issuer) (*certmanv1.Issuer, error)
-	// CreateClusterIssuer creates the given cluster issuer resources.
-	CreateClusterIssuer(ctx context.Context, issuer *certmanv1.ClusterIssuer) (*certmanv1.ClusterIssuer, error)
-	// CreateCertificate creates the given certificate resources.
-	CreateCertificate(ctx context.Context, certificate *certmanv1.Certificate) (*certmanv1.Certificate, error)
+	// CertManager returns CertManager client set.
+	//
+	//nolint:ireturn
+	CertManager() cmVersioned.Interface
 	// GetConfigMap returns config map by name and namespace.
 	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
 	// CreateConfigMap creates the provided ConfigMap.
