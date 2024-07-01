@@ -48,6 +48,78 @@ func (_m *MockKubernetesConnector) Accounts() accounts.Interface {
 	return r0
 }
 
+// ApplyEverestCACertificate provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) ApplyEverestCACertificate(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ApplyEverestCACertificate")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ApplyEverestCAIssuer provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) ApplyEverestCAIssuer(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ApplyEverestCAIssuer")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ApplyEverestCertificate provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) ApplyEverestCertificate(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ApplyEverestCertificate")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ApplyEverestIssuer provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) ApplyEverestIssuer(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ApplyEverestIssuer")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ApplyObject provides a mock function with given fields: obj
 func (_m *MockKubernetesConnector) ApplyObject(obj runtime.Object) error {
 	ret := _m.Called(obj)
@@ -873,6 +945,34 @@ func (_m *MockKubernetesConnector) InstallPerconaCatalog(ctx context.Context, _a
 	}
 
 	return r0
+}
+
+// IsCertManagerInstalled provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) IsCertManagerInstalled(ctx context.Context) (bool, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsCertManagerInstalled")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (bool, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) bool); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // ListClusterServiceVersion provides a mock function with given fields: ctx, namespace

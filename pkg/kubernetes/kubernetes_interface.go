@@ -24,6 +24,16 @@ import (
 
 // KubernetesConnector ...
 type KubernetesConnector interface {
+	// IsCertManagerInstalled checks if cert-manager is installed in the cluster.
+	IsCertManagerInstalled(ctx context.Context) (bool, error)
+	// ApplyEverestCAIssuer creates a new CA Issuer for Everest.
+	ApplyEverestCAIssuer(ctx context.Context) error
+	// ApplyEverestCACertificate creates a new CA certificate for Everest.
+	ApplyEverestCACertificate(ctx context.Context) error
+	// ApplyEverestIssuer creates a new issuer for everest.
+	ApplyEverestIssuer(ctx context.Context) error
+	// ApplyEverestCertificate creates a new certificate for Everest.
+	ApplyEverestCertificate(ctx context.Context) error
 	// Accounts returns a new client for managing everest user accounts.
 	//
 	//nolint:ireturn,stylecheck
