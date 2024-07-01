@@ -136,7 +136,7 @@ type KubeClientConnector interface {
 	GetClusterRoleBinding(ctx context.Context, name string) (*rbacv1.ClusterRoleBinding, error)
 	// GetCRD gets a CustomResourceDefinition by name.
 	// Provided name should be of the format <resourcename>.<apiGroup>.
-	// Example: installplans.operators.coreos.com
+	// Example: installplans.operators.coreos.com .
 	GetCRD(ctx context.Context, name string) (*apiextensionsv1.CustomResourceDefinition, error)
 	// ListDatabaseClusters returns list of managed database clusters.
 	ListDatabaseClusters(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterList, error)
