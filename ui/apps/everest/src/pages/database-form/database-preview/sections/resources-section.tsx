@@ -13,7 +13,7 @@ export const ResourcesPreviewSection = ({
 
   return (
     <>
-      <PreviewContentText text={`Number of nodes: ${numberOfNodes}`} />
+      <PreviewContentText text={`Nº nodes: ${numberOfNodes}`} />
       <PreviewContentText
         text={`CPU: ${Number.isNaN(parsedCPU) ? '' : `${parsedCPU} CPU`}`}
       />

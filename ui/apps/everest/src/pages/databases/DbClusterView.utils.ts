@@ -86,8 +86,8 @@ export const getLastBackupTimeDiff = (lastBackup: Date): string => {
 
   if (hours > 0) {
     return `${hours}${Messages.lastBackup.hours} ${
-      minutes > 0 ? minutes : ''
-    } ${Messages.lastBackup.minutes}
+      minutes > 0 ? minutes + Messages.lastBackup.minutes : ''
+    } 
      ${Messages.lastBackup.ago}`;
   }
 
