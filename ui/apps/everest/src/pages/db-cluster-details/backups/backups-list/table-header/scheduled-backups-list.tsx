@@ -1,6 +1,13 @@
 import { useContext, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Box, IconButton, Paper, Stack, Typography } from '@mui/material';
+import {
+  Box,
+  IconButton,
+  Paper,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { useDeleteSchedule } from 'hooks/api/backups/useScheduledBackups';
@@ -10,6 +17,7 @@ import { ScheduleModalContext } from '../../backups.context';
 import { getTimeSelectionPreviewMessage } from 'pages/database-form/database-preview/database.preview.messages';
 import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils';
 import { Messages } from './backups-list-table-header.messages';
+import { DbEngineType } from '@percona/types';
 
 const ScheduledBackupsList = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -107,14 +115,29 @@ const ScheduledBackupsList = () => {
               >
                 <EditOutlinedIcon />
               </IconButton>
-              <IconButton
-                color="primary"
-                disabled={!dbCluster.spec.backup?.enabled}
-                onClick={() => handleDelete(item.name)}
-                data-testid="delete-schedule-button"
+              <Tooltip
+                title={
+                  dbType === DbEngineType.POSTGRESQL
+                    ? Messages.pgDeleteTooltip
+                    : ''
+                }
+                placement="top"
+                arrow
               >
-                <DeleteOutlineOutlinedIcon />
-              </IconButton>
+                <span>
+                  <IconButton
+                    color="primary"
+                    disabled={
+                      !dbCluster.spec.backup?.enabled ||
+                      dbType === DbEngineType.POSTGRESQL
+                    }
+                    onClick={() => handleDelete(item.name)}
+                    data-testid="delete-schedule-button"
+                  >
+                    <DeleteOutlineOutlinedIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
             </Box>
           </Box>
         </Paper>

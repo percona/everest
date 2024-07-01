@@ -262,7 +262,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 // ensureManagedByLabelOnDBNamespaces ensures that all database namespaces have the managed-by label set.
 func (u *Upgrade) ensureManagedByLabelOnDBNamespaces(ctx context.Context) error {
-	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx, common.SystemNamespace)
+	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx)
 	if err != nil {
 		u.l.Error(err)
 		return errors.Join(err, errors.New("could not retrieve database namespaces"))
@@ -506,7 +506,7 @@ func (u *Upgrade) checkRequirements(ctx context.Context, supVer *supportedVersio
 		u.l.Debug("cli version is empty")
 	}
 
-	nss, err := u.kubeClient.GetDBNamespaces(ctx, common.SystemNamespace)
+	nss, err := u.kubeClient.GetDBNamespaces(ctx)
 	if err != nil {
 		return err
 	}
