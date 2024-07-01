@@ -2,9 +2,6 @@
 
 ![!image](logo.png)
 
-**Note**: Percona Everest is now in **Beta**, and we need your [feedback](https://forums.percona.com/c/percona-everest/81)! We want you to be a part of this journey and help us shape our product.
-    
-
 [Percona Everest](https://docs.percona.com/everest/index.html) is an open source cloud-native database platform that helps developers deploy code faster, scale deployments rapidly, and reduce database administration overhead while regaining control over their data, database configuration, and DBaaS costs.
 
 Here’s why you should try Percona Everest:
