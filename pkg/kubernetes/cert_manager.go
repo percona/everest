@@ -46,7 +46,8 @@ func (k *Kubernetes) ApplyEverestCAIssuer(ctx context.Context) error {
 					SelfSigned: &certmanv1.SelfSignedIssuer{},
 				},
 			},
-		}, metav1.CreateOptions{}); err != nil {
+		}, metav1.CreateOptions{},
+		); err != nil {
 		return err
 	}
 	return nil
@@ -73,7 +74,8 @@ func (k *Kubernetes) ApplyEverestCACertificate(ctx context.Context) error {
 				Duration:    &metav1.Duration{Duration: time.Hour * 24 * 365},
 				RenewBefore: &metav1.Duration{Duration: 730 * time.Hour},
 			},
-		}, metav1.CreateOptions{}); err != nil {
+		}, metav1.CreateOptions{},
+		); err != nil {
 		return err
 	}
 	return nil
@@ -96,7 +98,8 @@ func (k *Kubernetes) ApplyEverestIssuer(ctx context.Context) error {
 					},
 				},
 			},
-		}, metav1.CreateOptions{}); err != nil {
+		}, metav1.CreateOptions{},
+		); err != nil {
 		return err
 	}
 	return nil
@@ -127,7 +130,8 @@ func (k *Kubernetes) ApplyEverestCertificate(ctx context.Context) error {
 					Group: cm.GroupName,
 				},
 			},
-		}, metav1.CreateOptions{}); err != nil {
+		}, metav1.CreateOptions{},
+		); err != nil {
 		return err
 	}
 	return nil
