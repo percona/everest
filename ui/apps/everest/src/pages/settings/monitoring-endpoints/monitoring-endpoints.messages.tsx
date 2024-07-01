@@ -27,7 +27,7 @@ export const Messages = {
       'Percona Everest does not store PMM credentials, so fill in both the User and Password fields.',
   },
   fieldPlaceholders: {
-    name: 'Enter Monitoring Endpoint name',
+    name: 'Insert Monitoring endpoint display name',
     namespaces: 'Select namespaces',
     endpoint: 'Enter endpoint URL',
     user: 'Enter username',

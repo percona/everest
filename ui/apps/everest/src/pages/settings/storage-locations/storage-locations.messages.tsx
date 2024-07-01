@@ -9,7 +9,7 @@ export const Messages = {
       description: 'Enter an optional description',
       namespaces: 'Select namespaces',
       type: 'Enter bucket name',
-      region: 'Enter regions',
+      region: 'Enter region',
       url: 'Enter URL',
       accessKey: 'Enter Access key',
       secretKey: 'Enter Secret key',
