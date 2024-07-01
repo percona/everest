@@ -482,8 +482,12 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		o.l.Info(fmt.Sprintf("Deploying Everest to %s", common.SystemNamespace))
 		if err = o.kubeClient.InstallEverest(
 			ctx,
-			common.SystemNamespace,
-			v, skipInstallObjects...,
+			kubernetes.InstallEverestRequest{
+				Namespace: common.SystemNamespace,
+				Version:   v,
+				SkipObjs:  skipInstallObjects,
+				Insecure:  o.config.Insecure,
+			},
 		); err != nil {
 			return err
 		}

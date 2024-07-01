@@ -70,6 +70,15 @@ var skipObjects = []client.Object{ //nolint:gochecknoglobals
 			Namespace: common.SystemNamespace,
 		},
 	},
+	&corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestSettingsConfigMapName,
+			Namespace: common.SystemNamespace,
+		},
+	},
 }
 
 const postUpgradeMessage = `
@@ -202,7 +211,11 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
 
 	// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
-	if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo, skipObjects...); err != nil {
+	if err := u.kubeClient.InstallEverest(ctx, kubernetes.InstallEverestRequest{
+		Namespace: common.SystemNamespace,
+		Version:   upgradeEverestTo,
+		SkipObjs:  skipObjects,
+	}); err != nil {
 		return err
 	}
 

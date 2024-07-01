@@ -960,13 +960,21 @@ func (k *Kubernetes) ApplyObject(obj runtime.Object) error {
 	return k.client.ApplyObject(obj)
 }
 
+type InstallEverestRequest struct {
+	Namespace string
+	Version   *goversion.Version
+	SkipObjs  []ctrlclient.Object
+	Insecure  bool
+}
+
 // InstallEverest downloads the manifest file and applies it against provisioned k8s cluster.
 func (k *Kubernetes) InstallEverest(
 	ctx context.Context,
-	namespace string,
-	version *goversion.Version,
-	skipObjs ...ctrlclient.Object,
+	req InstallEverestRequest,
 ) error {
+	version := req.Version
+	namespace := req.Namespace
+	skipObjs := req.SkipObjs
 	if version == nil {
 		return errors.New("no version provided for Everest installation")
 	}
@@ -982,9 +990,38 @@ func (k *Kubernetes) InstallEverest(
 		return errors.Join(err, errors.New("failed applying manifest file"))
 	}
 
+	if !req.Insecure {
+		if err := k.ensureHTTPSProbes(ctx); err != nil {
+			return errors.Join(err, errors.New("failed ensuring HTTPS probes"))
+		}
+	}
+
 	k.l.Debug("Waiting for manifest rollout")
 	if err := k.client.DoRolloutWait(ctx, types.NamespacedName{Name: common.PerconaEverestDeploymentName, Namespace: namespace}); err != nil {
 		return errors.Join(err, errors.New("failed waiting for the Everest deployment to be ready"))
+	}
+	return nil
+}
+
+func (k *Kubernetes) ensureHTTPSProbes(ctx context.Context) error {
+	depl, err := k.client.GetDeployment(ctx, common.PerconaEverestDeploymentName, k.namespace)
+	if err != nil {
+		return err
+	}
+	for i, container := range depl.Spec.Template.Spec.Containers {
+		if container.ReadinessProbe != nil &&
+			container.ReadinessProbe.HTTPGet != nil {
+			depl.Spec.Template.Spec.Containers[i].
+				ReadinessProbe.HTTPGet.Scheme = corev1.URISchemeHTTPS
+		}
+		if container.LivenessProbe != nil &&
+			container.LivenessProbe.HTTPGet != nil {
+			depl.Spec.Template.Spec.Containers[i].
+				LivenessProbe.HTTPGet.Scheme = corev1.URISchemeHTTPS
+		}
+	}
+	if _, err := k.client.UpdateDeployment(ctx, depl); err != nil {
+		return err
 	}
 	return nil
 }
