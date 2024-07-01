@@ -18,7 +18,7 @@ export const Messages = {
   pageDescription:
     'Configure the resources your new database will have access to.',
   labels: {
-    numberOfNodes: 'Number of nodes',
+    numberOfNodes: 'Nº nodes',
     resourceSizePerNode: 'Resource size per node',
     cpu: 'cpu',
     memory: 'memory',

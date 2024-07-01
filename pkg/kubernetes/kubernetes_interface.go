@@ -107,7 +107,7 @@ type KubernetesConnector interface {
 	// DeleteEverest downloads the manifest file and deletes it from provisioned k8s cluster.
 	DeleteEverest(ctx context.Context, namespace string, version *goversion.Version) error
 	// GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.
-	GetDBNamespaces(ctx context.Context, namespace string) ([]string, error)
+	GetDBNamespaces(ctx context.Context) ([]string, error)
 	// WaitForRollout waits for rollout of a provided deployment in the provided namespace.
 	WaitForRollout(ctx context.Context, name, namespace string) error
 	// UpdateClusterRoleBinding updates namespaces list for the cluster role by provided name.
