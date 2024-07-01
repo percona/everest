@@ -44,7 +44,7 @@ func (c *certmanclient) CreateIssuer(
 	err := c.restClient.
 		Post().
 		Namespace(c.namespace).
-		Resource(issuerAPIKind).Body(&issuer).
+		Resource(issuerAPIKind).Body(issuer).
 		Do(ctx).Into(result)
 	return result, err
 }
@@ -57,7 +57,7 @@ func (c *certmanclient) CreateClusterIssuer(
 	result := &certmanv1.ClusterIssuer{}
 	err := c.restClient.
 		Post().
-		Resource(clusterIssuerAPIKind).Body(&issuer).
+		Resource(clusterIssuerAPIKind).Body(issuer).
 		Do(ctx).Into(result)
 	return result, err
 }
@@ -71,7 +71,7 @@ func (c *certmanclient) CreateCertificate(
 	err := c.restClient.
 		Post().
 		Namespace(c.namespace).
-		Resource(certificateAPIKind).Body(&certificate).
+		Resource(certificateAPIKind).Body(certificate).
 		Do(ctx).Into(result)
 	return result, err
 }

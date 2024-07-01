@@ -436,8 +436,10 @@ func (o *Install) provisionEverestTLSCerts(ctx context.Context) error {
 	if ok, err := o.kubeClient.IsCertManagerInstalled(ctx); err != nil {
 		return errors.Join(err, errors.New("failed to check for cert-manager installation"))
 	} else if ok {
+		o.l.Info("Cert-manager installation detected, provisioning certificates with cert-manager")
 		return o.provisionCertManagerCertificates(ctx)
 	}
+	o.l.Info("Provisioning self-signed certificates")
 	return o.kubeClient.CreateTLSCertificate(ctx)
 }
 
