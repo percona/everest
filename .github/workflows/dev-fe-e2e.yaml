@@ -42,7 +42,7 @@ jobs:
           echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
 
       - name: Create KIND cluster
-        uses: helm/kind-action@v1.9.0
+        uses: helm/kind-action@v1.10.0
 
       - name: Set MinIO
         run: kubectl apply -f ./.github/minio.conf.yaml
