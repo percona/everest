@@ -134,7 +134,7 @@ jobs:
 
       - name: Operator - setup Docker meta for everest-operator
         id: operator_meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         # docker/metadata-action action looks more elegant when being triggered by a GH tag,
         # however this workflow can't be triggered by a GH tag since there are some changes need to be done
         # in the codebase prior putting the tag, so the action uses the raw tags
@@ -149,7 +149,7 @@ jobs:
 
       - name: Operator - setup Docker meta for everest-operator-bundle
         id: bundle_meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
             percona/everest-operator-bundle,enable=${{ env.IS_RC == 0 }}
@@ -323,7 +323,7 @@ jobs:
 
       - name: Catalog - docker meta
         id: catalog_meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
             percona/everest-catalog,enable=${{ env.IS_RC == 0 }}
