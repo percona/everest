@@ -43,7 +43,7 @@ export const DbClusterDetails = () => {
 
   // All clear, show the cluster data
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ maxWidth: '1280px', mx: 'auto' }}>
       <Box
         sx={{
           display: 'flex',
