@@ -211,7 +211,7 @@ func (e *EverestServer) rbacMiddleware(ctx context.Context, basePath string) (ec
 
 	return casbinmiddleware.MiddlewareWithConfig(casbinmiddleware.Config{
 		Skipper:        rbac.Skipper,
-		UserGetter:     rbac.UserGetter,
+		UserGetter:     rbac.GetUser,
 		EnforceHandler: rbac.NewEnforceHandler(basePath, enforcer),
 	}), nil
 }
