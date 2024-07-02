@@ -48,7 +48,7 @@ test.describe('Everest CLI install', async () => {
 
     await test.step('run everest install command', async () => {
       const out = await cli.everestExecSkipWizard(
-        `install --operator.mongodb=false --operator.postgresql=true --operator.xtradb-cluster=false --namespaces=everest-operators`,
+        `install -v --operator.mongodb=false --operator.postgresql=true --operator.xtradb-cluster=false --namespaces=everest-operators`,
       );
 
       await out.assertSuccess();
@@ -68,7 +68,7 @@ test.describe('Everest CLI install', async () => {
       await operator.assertSuccess();
 
       const out = await cli.everestExecSkipWizard(
-        `install --operator.mongodb=false --operator.postgresql=true --operator.xtradb-cluster=true --namespaces=everest-operators`,
+        `install -v --operator.mongodb=false --operator.postgresql=true --operator.xtradb-cluster=true --namespaces=everest-operators`,
       );
       const restartedOperator = await cli.exec(`kubectl -n everest-system get po | grep everest|awk {'print $1'}`);
       await restartedOperator.assertSuccess();
