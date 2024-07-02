@@ -24,8 +24,8 @@ tags:
     description: Everything related to the Backup storage
   - name: Monitoring
     description: Everything related to monitoring
-  - name: Authentication
-    description: Everything related to authentication
+  - name: Authentication & Authorization
+    description: Everything related to authentication and authorization
   - name: General info
     description: General information about the Everest installation
   - name: Operators
@@ -36,7 +36,7 @@ paths:
   '/session':
     post:
       tags:
-        - Authentication
+        - Authentication & Authorization
       security: []
       summary: Everest UI Login
       description: |
@@ -72,6 +72,33 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserCredentials'
+  '/permissions':
+    get:
+      tags:
+        - Authentication & Authorization
+      summary: Get user permissions
+      description: |
+        This API returns a list of permissions for the user that is currently logged in.
+      operationId: getUserPermissions
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPermissions'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   '/namespaces':
     get:
       tags:
@@ -1541,6 +1568,15 @@ components:
       type: array
       items:
         type: string
+    UserPermissions:
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
     UserCredentials:
       type: object
       properties:

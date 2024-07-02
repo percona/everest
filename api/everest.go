@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/casbin/casbin/v2"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/golang-jwt/jwt/v5"
 	casbinmiddleware "github.com/labstack/echo-contrib/casbin"
@@ -49,11 +50,12 @@ import (
 
 // EverestServer represents the server struct.
 type EverestServer struct {
-	config     *config.EverestConfig
-	l          *zap.SugaredLogger
-	echo       *echo.Echo
-	kubeClient *kubernetes.Kubernetes
-	sessionMgr *session.Manager
+	config       *config.EverestConfig
+	l            *zap.SugaredLogger
+	echo         *echo.Echo
+	kubeClient   *kubernetes.Kubernetes
+	sessionMgr   *session.Manager
+	rbacEnforcer *casbin.Enforcer
 }
 
 // NewEverestServer creates and configures everest API.
@@ -205,6 +207,7 @@ func (e *EverestServer) rbacMiddleware(ctx context.Context, basePath string) (ec
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not create casbin enforcer"))
 	}
+	e.rbacEnforcer = enforcer
 
 	return casbinmiddleware.MiddlewareWithConfig(casbinmiddleware.Config{
 		Skipper:        rbac.Skipper,
