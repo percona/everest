@@ -93,8 +93,8 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
 }
 
-// UserGetter is a function that extracts the user from the JWT token.
-func UserGetter(c echo.Context) (string, error) {
+// GetUser extracts the user from the JWT token in the context.
+func GetUser(c echo.Context) (string, error) {
 	token, ok := c.Get("user").(*jwt.Token) // by default token is stored under `user` key
 	if !ok {
 		return "", errors.New("failed to get token from context")
@@ -185,6 +185,7 @@ func Skipper(c echo.Context) bool {
 		"/resources",
 		"/namespaces",
 		"/settings",
+		"/permissions",
 	}
 	path := strings.TrimPrefix(c.Request().URL.Path, "/v1")
 	return slices.Contains(skipPaths, path)
