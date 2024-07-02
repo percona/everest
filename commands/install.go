@@ -47,6 +47,12 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
+			enableLogging := viper.GetBool("verbose")
+			if !enableLogging {
+				l = zap.NewNop().Sugar()
+			}
+			c.Pretty = !enableLogging
+
 			op, err := install.NewInstall(*c, l, cmd)
 			if err != nil {
 				l.Error(err)
@@ -87,4 +93,5 @@ func initInstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(install.FlagOperatorMongoDB, cmd.Flags().Lookup(install.FlagOperatorMongoDB))             //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagOperatorPostgresql, cmd.Flags().Lookup(install.FlagOperatorPostgresql))       //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagOperatorXtraDBCluster, cmd.Flags().Lookup(install.FlagOperatorXtraDBCluster)) //nolint:errcheck,gosec
+	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose"))                                                 //nolint:errcheck,gosec
 }
