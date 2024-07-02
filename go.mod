@@ -8,8 +8,8 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.3.2
 	github.com/Percona-Lab/percona-version-service v0.0.0-20240311164804-ffbc02387a1b
 	github.com/aws/aws-sdk-go v1.53.10
-	github.com/casbin/casbin/v2 v2.85.0
 	github.com/briandowns/spinner v1.23.1
+	github.com/casbin/casbin/v2 v2.85.0
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/fatih/color v1.17.0
 	github.com/getkin/kin-openapi v0.124.0
