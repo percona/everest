@@ -14,6 +14,8 @@
 // limitations under the License.
 
 // Package accounts holds commands for accounts command.
+//
+//nolint:dupl
 package accounts
 
 import (
@@ -35,6 +37,8 @@ func NewCreateCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "create",
 		Example: "everestctl accounts create --username user1 --password $USER_PASS",
+		Short:   "Create a new Everest user account",
+		Long:    "Create a new Everest user account",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initCreateViperFlags(cmd)
 
@@ -54,10 +58,6 @@ func NewCreateCmd(l *zap.SugaredLogger) *cobra.Command {
 
 			cli := accountscli.New(l)
 			cli.WithAccountManager(k.Accounts())
-			if err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
 
 			if err := cli.Create(context.Background(), username, password); err != nil {
 				l.Error(err)

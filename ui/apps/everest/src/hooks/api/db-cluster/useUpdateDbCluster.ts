@@ -17,6 +17,7 @@ import { UseMutationOptions, useMutation } from '@tanstack/react-query';
 import { updateDbClusterFn } from 'api/dbClusterApi';
 import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
+import cronConverter from 'utils/cron-converter';
 
 type UpdateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -50,9 +51,17 @@ const formValuesToPayloadOverrides = (
           enabled: dbPayload.pitrEnabled,
           backupStorageName: pitrBackupStorageName,
         },
-        ...(dbPayload.schedules?.length > 0 && {
-          schedules: dbPayload.schedules,
-        }),
+        schedules:
+          dbPayload.schedules.length > 0
+            ? dbPayload.schedules.map((schedule) => ({
+                ...schedule,
+                schedule: cronConverter(
+                  schedule.schedule,
+                  Intl.DateTimeFormat().resolvedOptions().timeZone,
+                  'UTC'
+                ),
+              }))
+            : undefined,
       },
       engine: {
         ...dbCluster.spec.engine,
@@ -116,4 +125,29 @@ export const useUpdateDbCluster = (
       );
     },
     ...options,
+  });
+
+export const useUpdateDbClusterCrd = () =>
+  useMutation({
+    mutationFn: ({
+      clusterName,
+      namespace,
+      dbCluster,
+      newCrdVersion,
+    }: {
+      clusterName: string;
+      namespace: string;
+      dbCluster: DbCluster;
+      newCrdVersion: string;
+    }) =>
+      updateDbClusterFn(clusterName, namespace, {
+        ...dbCluster,
+        spec: {
+          ...dbCluster.spec,
+          engine: {
+            ...dbCluster.spec.engine,
+            crVersion: newCrdVersion,
+          },
+        },
+      }),
   });

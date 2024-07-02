@@ -30,13 +30,21 @@ import (
 // newUninstallCmd returns a new uninstall command.
 func newUninstallCmd(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "uninstall",
+		Use:   "uninstall",
+		Long:  "Uninstall Percona Everest",
+		Short: "Uninstall Percona Everest",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initUninstallViperFlags(cmd)
 			c, err := parseClusterConfig()
 			if err != nil {
 				os.Exit(1)
 			}
+
+			enableLogging := viper.GetBool("verbose")
+			if !enableLogging {
+				l = zap.NewNop().Sugar()
+			}
+			c.Pretty = !enableLogging
 
 			op, err := uninstall.NewUninstall(*c, l)
 			if err != nil {
@@ -66,6 +74,7 @@ func initUninstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
 	viper.BindPFlag("assume-yes", cmd.Flags().Lookup("assume-yes")) //nolint:errcheck,gosec
 	viper.BindPFlag("force", cmd.Flags().Lookup("force"))           //nolint:errcheck,gosec
+	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose"))       //nolint:errcheck,gosec
 }
 
 func parseClusterConfig() (*uninstall.Config, error) {

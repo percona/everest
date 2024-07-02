@@ -25,6 +25,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -788,13 +789,23 @@ func (c *Client) ApplyFile(fileBytes []byte) error {
 
 // ApplyManifestFile accepts manifest file contents, parses into []runtime.Object
 // and applies them against the cluster.
-func (c *Client) ApplyManifestFile(fileBytes []byte, namespace string) error {
+func (c *Client) ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...client.Object) error {
 	objs, err := c.getObjects(fileBytes)
 	if err != nil {
 		return err
 	}
 	for i := range objs {
 		o := objs[i]
+
+		// Check if this object should be ignored?
+		if slices.ContainsFunc(ignoreObjects, func(ign client.Object) bool {
+			return o.GetKind() == ign.GetObjectKind().GroupVersionKind().Kind &&
+				o.GetName() == ign.GetName() &&
+				ign.GetNamespace() == namespace
+		}) {
+			continue
+		}
+
 		if err := c.applyTemplateCustomization(o, namespace); err != nil {
 			return err
 		}
@@ -1162,21 +1173,6 @@ func (c Client) pollRolloutComplete(ctx context.Context, key types.NamespacedNam
 		return false, nil
 	}
 	return wait.PollUntilContextCancel(ctx, time.Second, true, rolloutComplete)
-}
-
-// CreateNamespace creates a new namespace.
-func (c *Client) CreateNamespace(name string) error {
-	n := &corev1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Namespace",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-	}
-
-	return c.ApplyObject(n)
 }
 
 // GetOperatorGroup retrieves an operator group details by namespace and name.

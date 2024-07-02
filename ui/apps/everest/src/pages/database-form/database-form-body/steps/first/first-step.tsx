@@ -220,7 +220,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         pageTitle={Messages.pageTitle}
         pageDescription={Messages.pageDescription}
       />
-      <FormGroup sx={{ mt: 2 }}>
+      <FormGroup sx={{ mt: 3 }}>
         <AutoCompleteInput
           labelProps={{
             sx: { mt: 1 },

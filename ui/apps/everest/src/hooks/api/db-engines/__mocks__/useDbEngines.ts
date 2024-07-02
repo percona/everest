@@ -30,6 +30,7 @@ export const useDbEngines = (): { isFetching: boolean; data: DbEngine[] } => ({
         proxy: [],
         engine: [],
       },
+      name: 'pg-1',
     },
     {
       type: DbEngineType.PSMDB,
@@ -74,6 +75,7 @@ export const useDbEngines = (): { isFetching: boolean; data: DbEngine[] } => ({
         ],
         proxy: [],
       },
+      name: 'psmdb-1',
     },
     {
       type: DbEngineType.PXC,
@@ -137,6 +139,7 @@ export const useDbEngines = (): { isFetching: boolean; data: DbEngine[] } => ({
           },
         ],
       },
+      name: 'pxc-1',
     },
   ],
   isFetching: false,

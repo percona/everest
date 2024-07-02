@@ -29,6 +29,7 @@ import {
   ProxyExposeType,
 } from 'shared-types/dbCluster.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
+import cronConverter from 'utils/cron-converter';
 
 type CreateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -58,9 +59,17 @@ const formValuesToPayloadMapping = (
                 : dbPayload.pitrStorageLocation!.name,
           },
         }),
-        ...(dbPayload.schedules?.length > 0 && {
-          schedules: dbPayload.schedules,
-        }),
+        schedules:
+          dbPayload.schedules?.length > 0
+            ? dbPayload.schedules.map((schedule) => ({
+                ...schedule,
+                schedule: cronConverter(
+                  schedule.schedule,
+                  Intl.DateTimeFormat().resolvedOptions().timeZone,
+                  'UTC'
+                ),
+              }))
+            : undefined,
       },
       engine: {
         type: dbTypeToDbEngine(dbPayload.dbType),

@@ -72,6 +72,12 @@ test('create db cluster with monitoring config', async ({ request, page }) => {
       const res = (await pgCluster.json())
 
       expect(res?.status?.size).toBeGreaterThanOrEqual(1)
+
+      const components = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}/components`)
+      await checkError(components)
+      const resComponents = (await components.json())
+
+      expect(resComponents?.length).toBeGreaterThanOrEqual(1)
     }).toPass({
       intervals: [1000],
       timeout: 60 * 1000,

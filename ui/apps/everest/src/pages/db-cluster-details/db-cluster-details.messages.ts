@@ -10,7 +10,7 @@ export const Messages = {
   },
   schedulesBackupModal: {
     subHead:
-      'Create a task that takes regular backups of this database, according to the schedule that you specify.',
+      'Create a task that regularly backs up this database according to your specified schedule.',
   },
   noStorages: {
     alert:
@@ -21,6 +21,7 @@ export const Messages = {
   backups: 'Backups',
   restores: 'Restores',
   overview: 'Overview',
+  components: 'Components',
   dbActions: 'Actions',
   restoringDb:
     'We are recovering your database. Do not perform any actions on the database until recovery is complete.',

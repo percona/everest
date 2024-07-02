@@ -18,23 +18,51 @@ package upgrade
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"net/url"
+	"os"
 	"time"
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
+	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
+	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/output"
 	cliVersion "github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
+
+// list of objects to skip during upgrade.
+var skipObjects = []client.Object{ //nolint:gochecknoglobals
+	&corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestJWTSecretName,
+			Namespace: common.SystemNamespace,
+		},
+	},
+	&corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestAccountsSecretName,
+			Namespace: common.SystemNamespace,
+		},
+	},
+}
 
 type (
 	// Config defines configuration required for upgrade command.
@@ -43,6 +71,8 @@ type (
 		KubeconfigPath string `mapstructure:"kubeconfig"`
 		// VersionMetadataURL stores hostname to retrieve version metadata information from.
 		VersionMetadataURL string `mapstructure:"version-metadata-url"`
+		// If set, we will print the pretty output.
+		Pretty bool
 	}
 
 	// Upgrade struct implements upgrade command.
@@ -95,7 +125,7 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 
 // Run runs the operators installation process.
 //
-//nolint:funlen
+//nolint:funlen,cyclop,gocognit
 func (u *Upgrade) Run(ctx context.Context) error {
 	// Get Everest version.
 	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
@@ -103,20 +133,31 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return errors.Join(err, errors.New("could not retrieve Everest version"))
 	}
 
+	var out io.Writer = os.Stdout
+	if !u.config.Pretty {
+		out = io.Discard
+	}
+
 	// Check prerequisites
 	upgradeEverestTo, recVer, err := u.canUpgrade(ctx, everestVersion)
 	if err != nil {
 		if errors.Is(err, ErrNoUpdateAvailable) {
 			u.l.Info("You're running the latest version of Everest")
+			fmt.Fprintln(out, "\n", output.Rocket("You're running the latest version of Everest"))
 			return nil
 		}
 		return err
 	}
 
+	upgradeSteps := []common.Step{}
+
 	// Start upgrade.
-	if err := u.upgradeOLM(ctx, recVer.OLM); err != nil {
-		return err
-	}
+	upgradeSteps = append(upgradeSteps, common.Step{
+		Desc: "Upgrade Operator Lifecycle Manager",
+		F: func(ctx context.Context) error {
+			return u.upgradeOLM(ctx, recVer.OLM)
+		},
+	})
 
 	// We cannot use the latest version of catalog yet since
 	// at the time of writing, each catalog version supports only one Everest version.
@@ -125,55 +166,170 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		u.l.Debugf("Percona catalog version was nil. Changing to %s", upgradeEverestTo)
 		catalogVersion = upgradeEverestTo
 	}
-	u.l.Infof("Upgrading Percona Catalog to %s", catalogVersion)
-	if err := u.kubeClient.InstallPerconaCatalog(ctx, catalogVersion); err != nil {
-		return err
-	}
+	upgradeSteps = append(upgradeSteps, common.Step{
+		Desc: "Upgrade Percona Catalog",
+		F: func(ctx context.Context) error {
+			u.l.Infof("Upgrading Percona Catalog to %s", catalogVersion)
+			return u.kubeClient.InstallPerconaCatalog(ctx, catalogVersion)
+		},
+	})
 
 	// Locate the correct install plan.
 	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
-	u.l.Info("Waiting for install plan for Everest operator")
-	ip, err := u.kubeClient.WaitForInstallPlan(
-		ctxTimeout, common.SystemNamespace,
-		common.EverestOperatorName, upgradeEverestTo,
-	)
-	if err != nil {
-		return errors.Join(err, errors.New("could not find install plan"))
-	}
-
-	// We get the JWT token so that we can preserve it, since InstallEverest()
-	// will overwrite it.
-	jwtToken, err := u.kubeClient.GetJWTToken(ctx)
-	if err != nil {
-		return err
-	}
+	var ip *olmv1alpha1.InstallPlan
+	upgradeSteps = append(upgradeSteps, common.Step{
+		Desc: "Wait for Everest Operator InstallPlan",
+		F: func(_ context.Context) error {
+			u.l.Info("Waiting for install plan for Everest operator")
+			var err error
+			ip, err = u.kubeClient.WaitForInstallPlan(
+				ctxTimeout, common.SystemNamespace,
+				common.EverestOperatorName, upgradeEverestTo,
+			)
+			if err != nil {
+				return errors.Join(err, errors.New("could not find install plan"))
+			}
+			return nil
+		},
+	})
 
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
-	if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo); err != nil {
-		return err
-	}
 
-	// Restore the JWT token.
-	if jwtToken == "" {
-		b := make([]byte, 32)
-		if _, err := rand.Read(b); err != nil {
-			return err
-		}
-		jwtToken = hex.EncodeToString(b)
-	}
-	if err := u.kubeClient.SetJWTToken(ctx, jwtToken); err != nil {
-		return err
-	}
+	upgradeSteps = append(upgradeSteps, common.Step{
+		Desc: "Upgrade Everest API server",
+		F: func(ctx context.Context) error {
+			if common.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
+				if err := u.ensureEverestJWTIfNotExists(ctx); err != nil {
+					return err
+				}
+			}
+			// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
+			if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo, skipObjects...); err != nil {
+				return err
+			}
+			return nil
+		},
+	})
 
-	if err := u.upgradeEverestOperator(ctx, ip.Name); err != nil {
+	upgradeSteps = append(upgradeSteps, common.Step{
+		Desc: "Upgrade Everest Operator",
+		F: func(ctx context.Context) error {
+			if err := u.upgradeEverestOperator(ctx, ip.Name); err != nil {
+				return err
+			}
+			return nil
+		},
+	})
+
+	upgradeSteps = append(upgradeSteps, common.Step{
+		Desc: "Run post-upgrade tasks",
+		F: func(ctx context.Context) error {
+			if common.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
+				if err := u.ensureEverestAccountsIfNotExists(ctx); err != nil {
+					return err
+				}
+				if err := u.ensureManagedByLabelOnDBNamespaces(ctx); err != nil {
+					return err
+				}
+				if err := u.kubeClient.DeleteSecret(ctx, common.SystemNamespace, "everest-token"); client.IgnoreNotFound(err) != nil {
+					return err
+				}
+				if err := u.kubeClient.DeleteSecret(ctx, common.SystemNamespace, "everest-admin-token"); client.IgnoreNotFound(err) != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	})
+
+	if err := common.RunStepsWithSpinner(ctx, upgradeSteps, out); err != nil {
 		return err
 	}
 
 	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)
+	fmt.Fprintln(out, "\n", output.Rocket("Everest has been upgraded to version %s", upgradeEverestTo))
+
+	if isSecure, err := u.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser); err != nil {
+		return errors.Join(err, errors.New("could not check if the admin password is secure"))
+	} else if !isSecure {
+		fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage)
+	}
 
 	return nil
+}
+
+// ensureManagedByLabelOnDBNamespaces ensures that all database namespaces have the managed-by label set.
+func (u *Upgrade) ensureManagedByLabelOnDBNamespaces(ctx context.Context) error {
+	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx)
+	if err != nil {
+		u.l.Error(err)
+		return errors.Join(err, errors.New("could not retrieve database namespaces"))
+	}
+	for _, nsName := range dbNamespaces {
+		// Ensure we add the managed-by label to the namespace.
+		// We should retry this operation since there may be update conflicts.
+		var b backoff.BackOff
+		b = backoff.NewConstantBackOff(5 * time.Second)
+		b = backoff.WithMaxRetries(b, 5)
+		b = backoff.WithContext(b, ctx)
+		if err := backoff.Retry(func() error {
+			// Get the namespace.
+			ns, err := u.kubeClient.GetNamespace(ctx, nsName)
+			if err != nil {
+				return errors.Join(err, fmt.Errorf("could not get namespace '%s'", nsName))
+			}
+			labels := ns.GetLabels()
+			_, found := labels[common.KubernetesManagedByLabel]
+			if found {
+				return nil // label already exists.
+			}
+			if labels == nil {
+				labels = make(map[string]string)
+			}
+			// Set the label.
+			labels[common.KubernetesManagedByLabel] = common.Everest
+			ns.SetLabels(labels)
+			if _, err := u.kubeClient.UpdateNamespace(ctx, ns, metav1.UpdateOptions{}); err != nil {
+				return errors.Join(err, fmt.Errorf("could not update namespace '%s'", nsName))
+			}
+			return nil
+		}, b,
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (u *Upgrade) ensureEverestAccountsIfNotExists(ctx context.Context) error {
+	if _, err := u.kubeClient.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsSecretName); client.IgnoreNotFound(err) != nil {
+		return err
+	} else if err == nil {
+		return nil // Everest accounts already exists.
+	}
+
+	// Create Everest accounts secret.
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestAccountsSecretName,
+			Namespace: common.SystemNamespace,
+		},
+	}
+	if _, err := u.kubeClient.CreateSecret(ctx, secret); err != nil {
+		return err
+	}
+	return common.CreateInitialAdminAccount(ctx, u.kubeClient.Accounts())
+}
+
+func (u *Upgrade) ensureEverestJWTIfNotExists(ctx context.Context) error {
+	if _, err := u.kubeClient.GetSecret(ctx, common.SystemNamespace, common.EverestJWTSecretName); client.IgnoreNotFound(err) != nil {
+		return err
+	} else if err == nil {
+		return nil // JWT keys already exist.
+	}
+	return u.kubeClient.CreateRSAKeyPair(ctx)
 }
 
 // canUpgrade checks if there's a new Everest version available and if we can upgrade to it
@@ -350,7 +506,7 @@ func (u *Upgrade) checkRequirements(ctx context.Context, supVer *supportedVersio
 		u.l.Debug("cli version is empty")
 	}
 
-	nss, err := u.kubeClient.GetDBNamespaces(ctx, common.SystemNamespace)
+	nss, err := u.kubeClient.GetDBNamespaces(ctx)
 	if err != nil {
 		return err
 	}

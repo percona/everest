@@ -86,8 +86,8 @@ export const getLastBackupTimeDiff = (lastBackup: Date): string => {
 
   if (hours > 0) {
     return `${hours}${Messages.lastBackup.hours} ${
-      minutes > 0 ? minutes : ''
-    } ${Messages.lastBackup.minutes}
+      minutes > 0 ? minutes + Messages.lastBackup.minutes : ''
+    } 
      ${Messages.lastBackup.ago}`;
   }
 
@@ -128,4 +128,12 @@ export const getLastBackupStatus = (
   if (lastBackup.state === BackupStatus.UNKNOWN) {
     return Messages.lastBackup.notStarted;
   }
+};
+
+export const sortBackupsByTime = (backups: Backup[]) => {
+  return backups.sort((b1, b2) => {
+    const date1 = b1?.completed || new Date();
+    const date2 = b2?.completed || new Date();
+    return date1.getTime() - date2.getTime();
+  });
 };

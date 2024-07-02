@@ -29,6 +29,7 @@ export const BACKUP_STATE_TO_STATUS: Record<string, BackupStatus> = {
   Running: BackupStatus.IN_PROGRESS,
   Failed: BackupStatus.FAILED,
   Succeeded: BackupStatus.OK,
+  Deleting: BackupStatus.DELETING,
   waiting: BackupStatus.IN_PROGRESS,
   requested: BackupStatus.IN_PROGRESS,
   rejected: BackupStatus.FAILED,
@@ -40,3 +41,4 @@ export const BACKUP_STATE_TO_STATUS: Record<string, BackupStatus> = {
 export const MAX_DB_CLUSTER_NAME_LENGTH = 22;
 // export const MAX_RFC_1123_NAME_LENGTH = 63;
 export const MAX_SCHEDULE_NAME_LENGTH = 57;
+export const EVEREST_JWT_ISSUER = 'everest';

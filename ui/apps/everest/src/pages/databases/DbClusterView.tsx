@@ -23,7 +23,7 @@ import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { Box, Button, MenuItem, Stack } from '@mui/material';
 import { Table } from '@percona/ui-lib';
-import { StatusField } from 'components/status-field/status-field';
+import StatusField from 'components/status-field';
 import { useDbActions } from 'hooks/api/db-cluster/useDbActions';
 import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { useDeleteDbCluster } from 'hooks/api/db-cluster/useDeleteDbCluster';
@@ -41,11 +41,12 @@ import {
 } from './DbClusterView.utils';
 import { Messages } from './dbClusterView.messages';
 import { DbClusterTableElement } from './dbClusterView.types';
-import { DbTypeIconProvider } from './dbTypeIconProvider/DbTypeIconProvider';
 import { ExpandedRow } from './expandedRow/ExpandedRow';
 import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
 import { LastBackup } from './lastBackup/LastBackup';
 import { AuthContext } from 'contexts/auth';
+import { useDbBackups } from 'hooks/api/backups/useBackups';
+import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
 
 const useGetPermissions = (resource: string, specificResource?: string) => {
   const [permissions, setPermissions] = useState({
@@ -122,6 +123,17 @@ export const DbClusterView = () => {
 
   const { canUpdate, canCreate, canDelete } =
     useGetPermissions('database_clusters');
+  const { data: backups = [] } = useDbBackups(
+    selectedDbCluster?.metadata.name!,
+    selectedDbCluster?.metadata.namespace!,
+    {
+      enabled: !!selectedDbCluster?.metadata.name,
+      refetchInterval: 10 * 1000,
+    }
+  );
+  const disableKeepDataCheckbox =
+    selectedDbCluster?.spec.engine.type === DbEngineType.POSTGRESQL;
+  const hideCheckbox = !backups.length;
 
   const columns = useMemo<MRT_ColumnDef<DbClusterTableElement>[]>(
     () => [
@@ -161,7 +173,7 @@ export const DbClusterView = () => {
             alignItems="center"
             gap={1}
           >
-            <DbTypeIconProvider dbType={row.original?.dbType} />
+            {beautifyDbTypeName(dbEngineToDbType(row.original?.dbType))}{' '}
             {row.original?.dbVersion}
           </Stack>
         ),
@@ -179,16 +191,17 @@ export const DbClusterView = () => {
       {
         accessorKey: 'nodes',
         id: 'nodes',
-        header: 'Number of nodes',
+        header: 'Nº nodes',
       },
       {
         accessorKey: 'namespace',
         id: 'namespace',
-        header: 'Namespaces',
+        header: 'Namespace',
       },
       {
         accessorKey: 'monitoringConfigName',
         header: 'Monitoring instance name',
+        minSize: 250,
       },
       // {
       //   accessorKey: 'backupsEnabled',
@@ -392,8 +405,8 @@ export const DbClusterView = () => {
           headerMessage={Messages.deleteModal.header}
           submitting={deletingCluster}
           selectedId={selectedDbCluster?.metadata.name || ''}
-          handleConfirm={({ dataCheckbox: cleanupBackupStorage }) =>
-            handleConfirmDelete(cleanupBackupStorage)
+          handleConfirm={({ dataCheckbox: keepBackupStorageData }) =>
+            handleConfirmDelete(keepBackupStorageData)
           }
           alertMessage={Messages.deleteModal.alertMessage}
           dialogContent={Messages.deleteModal.content(
@@ -401,6 +414,9 @@ export const DbClusterView = () => {
           )}
           submitMessage={Messages.deleteModal.confirmButtom}
           checkboxMessage={Messages.deleteModal.checkboxMessage}
+          disableCheckbox={disableKeepDataCheckbox}
+          tooltipText={Messages.deleteModal.disabledCheckboxForPGTooltip}
+          hideCheckbox={hideCheckbox}
         />
       )}
     </Stack>

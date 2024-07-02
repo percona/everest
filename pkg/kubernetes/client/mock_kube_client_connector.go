@@ -23,6 +23,7 @@ import (
 	version "k8s.io/apimachinery/pkg/version"
 	kubernetes "k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
+	pkgclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
@@ -50,17 +51,24 @@ func (_m *MockKubeClientConnector) ApplyFile(fileBytes []byte) error {
 	return r0
 }
 
-// ApplyManifestFile provides a mock function with given fields: fileBytes, namespace
-func (_m *MockKubeClientConnector) ApplyManifestFile(fileBytes []byte, namespace string) error {
-	ret := _m.Called(fileBytes, namespace)
+// ApplyManifestFile provides a mock function with given fields: fileBytes, namespace, ignoreObjects
+func (_m *MockKubeClientConnector) ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...pkgclient.Object) error {
+	_va := make([]interface{}, len(ignoreObjects))
+	for _i := range ignoreObjects {
+		_va[_i] = ignoreObjects[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, fileBytes, namespace)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApplyManifestFile")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]byte, string) error); ok {
-		r0 = rf(fileBytes, namespace)
+	if rf, ok := ret.Get(0).(func([]byte, string, ...pkgclient.Object) error); ok {
+		r0 = rf(fileBytes, namespace, ignoreObjects...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -210,22 +218,34 @@ func (_m *MockKubeClientConnector) CreateMonitoringConfig(ctx context.Context, c
 	return r0
 }
 
-// CreateNamespace provides a mock function with given fields: name
-func (_m *MockKubeClientConnector) CreateNamespace(name string) error {
-	ret := _m.Called(name)
+// CreateNamespace provides a mock function with given fields: ctx, namespace
+func (_m *MockKubeClientConnector) CreateNamespace(ctx context.Context, namespace *v1.Namespace) (*v1.Namespace, error) {
+	ret := _m.Called(ctx, namespace)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateNamespace")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
+	var r0 *v1.Namespace
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Namespace) (*v1.Namespace, error)); ok {
+		return rf(ctx, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Namespace) *v1.Namespace); ok {
+		r0 = rf(ctx, namespace)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.Namespace)
+		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, *v1.Namespace) error); ok {
+		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // CreateOperatorGroup provides a mock function with given fields: ctx, namespace, name, targetNamespaces
@@ -1734,6 +1754,36 @@ func (_m *MockKubeClientConnector) ListMonitoringConfigs(ctx context.Context, na
 	return r0, r1
 }
 
+// ListNamespaces provides a mock function with given fields: ctx, opts
+func (_m *MockKubeClientConnector) ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*v1.NamespaceList, error) {
+	ret := _m.Called(ctx, opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListNamespaces")
+	}
+
+	var r0 *v1.NamespaceList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, metav1.ListOptions) (*v1.NamespaceList, error)); ok {
+		return rf(ctx, opts)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, metav1.ListOptions) *v1.NamespaceList); ok {
+		r0 = rf(ctx, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.NamespaceList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, metav1.ListOptions) error); ok {
+		r1 = rf(ctx, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListObjects provides a mock function with given fields: gvk, into
 func (_m *MockKubeClientConnector) ListObjects(gvk schema.GroupVersionKind, into runtime.Object) error {
 	ret := _m.Called(gvk, into)
@@ -2094,6 +2144,36 @@ func (_m *MockKubeClientConnector) UpdateMonitoringConfig(ctx context.Context, c
 	}
 
 	return r0
+}
+
+// UpdateNamespace provides a mock function with given fields: ctx, namespace, opts
+func (_m *MockKubeClientConnector) UpdateNamespace(ctx context.Context, namespace *v1.Namespace, opts metav1.UpdateOptions) (*v1.Namespace, error) {
+	ret := _m.Called(ctx, namespace, opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateNamespace")
+	}
+
+	var r0 *v1.Namespace
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Namespace, metav1.UpdateOptions) (*v1.Namespace, error)); ok {
+		return rf(ctx, namespace, opts)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Namespace, metav1.UpdateOptions) *v1.Namespace); ok {
+		r0 = rf(ctx, namespace, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.Namespace)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *v1.Namespace, metav1.UpdateOptions) error); ok {
+		r1 = rf(ctx, namespace, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // UpdateSecret provides a mock function with given fields: ctx, secret

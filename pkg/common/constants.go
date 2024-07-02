@@ -17,6 +17,8 @@
 package common
 
 const (
+	// Everest ...
+	Everest = "everest"
 	// PXCOperatorName holds operator name in k8s.
 	PXCOperatorName = "percona-xtradb-cluster-operator"
 	// PSMDBOperatorName holds operator name in k8s.
@@ -26,6 +28,8 @@ const (
 
 	// SystemNamespace is the namespace where everest is installed.
 	SystemNamespace = "everest-system"
+	// MonitoringNamespace is the namespace where monitoring configs are created.
+	MonitoringNamespace = "everest-monitoring"
 	// PerconaEverestDeploymentName stores the name of everest API Server deployment.
 	PerconaEverestDeploymentName = "percona-everest"
 	// PerconaEverestOperatorDeploymentName stores the name of everest operator deployment.
@@ -40,12 +44,34 @@ const (
 	EverestAccountsSecretName = "everest-accounts"
 	// EverestJWTSecretName is the name of the secret that holds JWT secret.
 	EverestJWTSecretName = "everest-jwt"
-	// EverestJWTSecretKey is the key in the secret that holds JWT secret.
-	EverestJWTSecretKey = "signing_key"
+	// EverestJWTPrivateKeyFile is the path to the JWT private key.
+	EverestJWTPrivateKeyFile = "/etc/jwt/id_rsa"
+	// EverestJWTPublicKeyFile is the path to the JWT public key.
+	EverestJWTPublicKeyFile = "/etc/jwt/id_rsa.pub"
 
 	// EverestAdminUser is the name of the admin user.
 	EverestAdminUser = "admin"
 
+	// EverestSettingsConfigMapName is the name of the Everest settings ConfigMap.
+	EverestSettingsConfigMapName = "everest-settings"
 	// EverestTokenCookie is the name of the cookie that holds the token.
 	EverestTokenCookie = "everest_token"
+	// EverestRBACConfigMapName is the name of the Everest RBAC ConfigMap.
+	EverestRBACConfigMapName = "everest-rbac"
+	// KubernetesManagedByLabel is the label used to identify resources managed by Everest.
+	KubernetesManagedByLabel = "app.kubernetes.io/managed-by"
+	// ForegroundDeletionFinalizer is the finalizer used to delete resources in foreground.
+	ForegroundDeletionFinalizer = "foregroundDeletion"
 )
+
+// InitialPasswordWarningMessage is the message that is shown to the user after the installation/upgrade,
+// regarding insecure admin password.
+const InitialPasswordWarningMessage = `To view the password for the 'admin' user, run the following command:
+
+everestctl accounts initial-admin-password
+
+
+IMPORTANT: This password is NOT stored in a hashed format. To secure it, update the password using the following command:
+
+everestctl accounts set-password --username admin
+`

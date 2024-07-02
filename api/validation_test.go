@@ -422,7 +422,7 @@ func TestValidateBackupSpec(t *testing.T) {
 		},
 		{
 			name:    "errDuplicatedSchedules",
-			cluster: []byte(`{"spec": {"backup": {"enabled": true, "schedules": [{"schedule": "0 0 * * *", "name": "name"}, {"schedule": "0 0 * * *", "name": "name"}]}}}`),
+			cluster: []byte(`{"spec": {"backup": {"enabled": true, "schedules": [{"schedule": "0 0 * * *", "name": "name"}, {"schedule": "0 0 * * *", "name": "otherName"}]}}}`),
 			err:     errDuplicatedSchedules,
 		},
 		{
@@ -1013,6 +1013,105 @@ func TestValidateDBEngineUpgrade(t *testing.T) {
 			t.Parallel()
 			err := validateDBEngineVersionUpgrade(tc.newVersion, tc.oldVersion)
 			assert.ErrorIs(t, err, tc.err)
+		})
+	}
+}
+
+func TestCheckStorageDuplicates(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name    string
+		cluster []byte
+		err     error
+	}{
+		{
+			name:    "ok: no schedules no backups",
+			cluster: []byte(`{}`),
+			err:     nil,
+		},
+		{
+			name:    "ok: no duplicated storages",
+			cluster: []byte(`{"spec":{"backup":{"schedules":[{"backupStorageName":"bs1"},{"backupStorageName":"bs2"}]}}}`),
+			err:     nil,
+		},
+		{
+			name:    "error duplicated storage",
+			cluster: []byte(`{"spec":{"backup":{"schedules":[{"backupStorageName":"bs1"},{"backupStorageName":"bs2"},{"backupStorageName":"bs1"}]}}}`),
+			err:     errDuplicatedStoragePG,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			db := &DatabaseCluster{}
+			err := json.Unmarshal(tc.cluster, db)
+			require.NoError(t, err)
+			err = checkStorageDuplicates(*db)
+			if tc.err == nil {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.Equal(t, tc.err.Error(), err.Error())
+		})
+	}
+}
+
+func TestCheckSchedulesChanges(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name       string
+		oldCluster []byte
+		newCluster []byte
+		err        error
+	}{
+		{
+			name:       "ok: no schedules no backups",
+			oldCluster: []byte(`{}`),
+			newCluster: []byte(`{}`),
+			err:        nil,
+		},
+		{
+			name:       "ok: added storage",
+			oldCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A", "backupStorageName":"bs1"}]}}}`),
+			newCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A", "backupStorageName":"bs1"}, {"name":"B", "backupStorageName":"bs2"}]}}}`),
+			err:        nil,
+		},
+		{
+			name:       "error: deleted storage",
+			oldCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A","backupStorageName":"bs1"},{"name":"B", "backupStorageName":"bs2"}]}}}`),
+			newCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A","backupStorageName":"bs1"}]}}}`),
+			err:        errStorageDeletionPG,
+		},
+		{
+			name:       "error: deleted storage and new added",
+			oldCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A", "backupStorageName":"bs1"},{"name": "B", "backupStorageName":"bs2"}]}}}`),
+			newCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A", "backupStorageName":"bs1"},{"name": "C", "backupStorageName":"bs2"}]}}}`),
+			err:        errStorageDeletionPG,
+		},
+		{
+			name:       "error: edited storage",
+			oldCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A", "backupStorageName":"bs1"},{"name": "B", "backupStorageName":"bs2"}]}}}`),
+			newCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A", "backupStorageName":"bs1"},{"name": "B", "backupStorageName":"bs3"}]}}}`),
+			err:        errStorageChangePG,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			newDB := &DatabaseCluster{}
+			err := json.Unmarshal(tc.newCluster, newDB)
+			require.NoError(t, err)
+			oldDB := &everestv1alpha1.DatabaseCluster{}
+			err = json.Unmarshal(tc.oldCluster, oldDB)
+			require.NoError(t, err)
+			err = checkSchedulesChanges(*oldDB, *newDB)
+			if tc.err == nil {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.Equal(t, tc.err.Error(), err.Error())
 		})
 	}
 }

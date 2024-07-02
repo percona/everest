@@ -15,11 +15,11 @@
 
 import { Delete } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import { MenuItem } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { useQueryClient } from '@tanstack/react-query';
-import { StatusField } from 'components/status-field/status-field';
+import StatusField from 'components/status-field';
 import { DATE_FORMAT } from 'consts';
 import { format } from 'date-fns';
 import {
@@ -37,6 +37,7 @@ import { BACKUP_STATUS_TO_BASE_STATUS } from './backups-list.constants';
 import { Messages } from './backups-list.messages';
 import BackupListTableHeader from './table-header';
 import { CustomConfirmDialog } from 'components/custom-confirm-dialog/custom-confirm-dialog.tsx';
+import { DbEngineType } from '@percona/types';
 
 export const BackupsList = () => {
   const queryClient = useQueryClient();
@@ -196,7 +197,7 @@ export const BackupsList = () => {
             }}
             sx={{ m: 0, display: 'flex', gap: 1, px: 2, py: '10px' }}
           >
-            <RestartAltIcon />
+            <KeyboardReturnIcon />
             {Messages.restore}
           </MenuItem>,
           <MenuItem
@@ -230,15 +231,22 @@ export const BackupsList = () => {
           selectedId={selectedBackup}
           closeModal={handleCloseDeleteDialog}
           headerMessage={Messages.deleteDialog.header}
-          handleConfirm={({ dataCheckbox: cleanupBackupStorage }) =>
-            handleConfirmDelete(selectedBackup, cleanupBackupStorage)
+          handleConfirm={() =>
+            handleConfirmDelete(
+              selectedBackup,
+              dbCluster.spec.engine.type === DbEngineType.POSTGRESQL
+                ? false
+                : true
+            )
           }
           submitting={deletingBackup}
           confirmationInput={false}
-          dialogContent={Messages.deleteDialog.content(selectedBackup)}
+          dialogContent={Messages.deleteDialog.content(
+            selectedBackup,
+            dbCluster.spec.engine.type
+          )}
           alertMessage={Messages.deleteDialog.alertMessage}
           submitMessage={Messages.deleteDialog.confirmButton}
-          checkboxMessage={Messages.deleteDialog.checkboxMessage}
         />
       )}
       {openRestoreDbModal && dbCluster && (

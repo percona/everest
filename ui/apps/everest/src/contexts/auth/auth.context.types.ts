@@ -5,8 +5,10 @@ export type UserAuthStatus =
   | 'loggedOut'
   | 'unknown';
 
+export type AuthMode = 'manual' | 'sso';
+export type ManualAuthArgs = { username: string; password: string };
 export interface AuthContextProps {
-  login: (username: string, password: string) => void;
+  login: (mode: AuthMode, manualAuthArgs?: ManualAuthArgs) => void;
   logout: () => void;
   setRedirectRoute: (route: string) => void;
   authStatus: UserAuthStatus;
@@ -16,4 +18,10 @@ export interface AuthContextProps {
     resource: string,
     specificResource?: string
   ) => Promise<boolean>;
+  isSsoEnabled: boolean;
+}
+
+export interface AuthProviderProps {
+  children: React.ReactNode;
+  isSsoEnabled: boolean;
 }

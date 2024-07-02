@@ -1,11 +1,13 @@
 import { Table } from '@percona/ui-lib';
 import { MRT_ColumnDef } from 'material-react-table';
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { NamespaceInstance } from 'shared-types/namespaces.types';
-import { useDBEnginesForNamespaces } from '../../../hooks/api/namespaces/useNamespaces';
+import { useDBEnginesForNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { Messages } from './namespaces.messages';
 
 export const Namespaces = () => {
+  const navigate = useNavigate();
   const dbEngines = useDBEnginesForNamespaces();
   const namespacesData = dbEngines.map((item) => ({
     name: item.namespace,
@@ -51,6 +53,14 @@ export const Namespaces = () => {
         }}
         columns={columns}
         data={namespacesData}
+        muiTableBodyRowProps={({ row }) => ({
+          onClick: () => {
+            navigate(`/settings/namespaces/${row.original.name}`);
+          },
+          sx: {
+            cursor: 'pointer',
+          },
+        })}
         // enableRowActions
         // renderRowActionMenuItems={({ row, closeMenu }) => [
         //     <MenuItem

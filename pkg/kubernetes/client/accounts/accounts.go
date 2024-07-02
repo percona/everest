@@ -18,10 +18,8 @@ package accounts
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"time"
@@ -38,6 +36,7 @@ const (
 	usersFile = "users.yaml"
 	// We set this annotation on the secret to indicate which passwords are stored in plain text.
 	insecurePasswordAnnotation = "insecure-password/%s"
+	insecurePasswordValueTrue  = "true"
 )
 
 type configMapsClient struct {
@@ -84,21 +83,22 @@ func (a *configMapsClient) listAllAccounts(ctx context.Context) (map[string]*acc
 
 // Create a new user account.
 func (a *configMapsClient) Create(ctx context.Context, username, password string) error {
+	// Ensure that the user does not already exist.
+	_, err := a.Get(ctx, username)
+	if err != nil && !errors.Is(err, accounts.ErrAccountNotFound) {
+		return errors.Join(err, errors.New("failed to check if account already exists"))
+	} else if err == nil {
+		return accounts.ErrUserAlreadyExists
+	}
+
+	if password == "" {
+		return errors.New("password cannot be empty")
+	}
+
 	// Compute a hash for the password.
 	hash, err := a.computePasswordHash(ctx, password)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to compute hash"))
-	}
-	secure := true
-
-	// Initial admin account is stored in plain text.
-	if username == common.EverestAdminUser && password == "" {
-		randomPass, err := a.generateRandomPassword()
-		if err != nil {
-			return errors.Join(err, errors.New("failed to generate random password"))
-		}
-		hash = randomPass
-		secure = false
 	}
 
 	account := &accounts.Account{
@@ -107,16 +107,25 @@ func (a *configMapsClient) Create(ctx context.Context, username, password string
 		PasswordMtime: time.Now().Format(time.RFC3339),
 		PasswordHash:  hash,
 	}
-
-	return a.insertOrUpdateAccount(ctx, username, account, secure)
+	return a.insertOrUpdateAccount(ctx, username, account, true)
 }
 
-func (a *configMapsClient) generateRandomPassword() (string, error) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
+// SetPassword sets a new password for an existing user account.
+func (a *configMapsClient) SetPassword(ctx context.Context, username, newPassword string, secure bool) error {
+	user, err := a.Get(ctx, username)
+	if err != nil {
+		return err
 	}
-	return hex.EncodeToString(b), nil
+	user.PasswordHash = newPassword
+	if secure {
+		pwHash, err := a.computePasswordHash(ctx, newPassword)
+		if err != nil {
+			return err
+		}
+		user.PasswordHash = pwHash
+	}
+	user.PasswordMtime = time.Now().Format(time.RFC3339)
+	return a.insertOrUpdateAccount(ctx, username, user, secure)
 }
 
 func (a *configMapsClient) insertOrUpdateAccount(
@@ -152,8 +161,9 @@ func (a *configMapsClient) insertOrUpdateAccount(
 	}
 	delete(annotations, fmt.Sprintf(insecurePasswordAnnotation, username))
 	if !secure {
-		annotations[fmt.Sprintf(insecurePasswordAnnotation, username)] = "true"
+		annotations[fmt.Sprintf(insecurePasswordAnnotation, username)] = insecurePasswordValueTrue
 	}
+	secret.SetAnnotations(annotations)
 
 	if _, err := a.k.UpdateSecret(ctx, secret); err != nil {
 		return err
@@ -233,6 +243,17 @@ func (a *configMapsClient) Verify(ctx context.Context, username, password string
 		return accounts.ErrIncorrectPassword
 	}
 	return nil
+}
+
+// IsSecure returns true if the password for the given user is stored as a hash.
+func (a *configMapsClient) IsSecure(ctx context.Context, username string) (bool, error) {
+	secret, err := a.k.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsSecretName)
+	if err != nil {
+		return false, err
+	}
+	annotations := secret.GetAnnotations()
+	isSecure, found := annotations[fmt.Sprintf(insecurePasswordAnnotation, username)]
+	return !found || isSecure != insecurePasswordValueTrue, nil
 }
 
 func (a *configMapsClient) computePasswordHash(ctx context.Context, password string) (string, error) {
