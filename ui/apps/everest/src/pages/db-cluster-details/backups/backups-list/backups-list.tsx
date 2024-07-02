@@ -15,7 +15,7 @@
 
 import { Delete } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import { MenuItem } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { useQueryClient } from '@tanstack/react-query';
@@ -197,7 +197,7 @@ export const BackupsList = () => {
             }}
             sx={{ m: 0, display: 'flex', gap: 1, px: 2, py: '10px' }}
           >
-            <RestartAltIcon />
+            <KeyboardReturnIcon />
             {Messages.restore}
           </MenuItem>,
           <MenuItem
