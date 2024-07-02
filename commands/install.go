@@ -47,7 +47,7 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
-			enableLogging := viper.GetBool("logs")
+			enableLogging := viper.GetBool("verbose")
 			if !enableLogging {
 				l = zap.NewNop().Sugar()
 			}
@@ -79,7 +79,6 @@ func initInstallFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(install.FlagOperatorMongoDB, true, "Install MongoDB operator")
 	cmd.Flags().Bool(install.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
 	cmd.Flags().Bool(install.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
-	cmd.Flags().BoolP("logs", "l", false, "If set, logs are printed during the installation process")
 }
 
 func initInstallViperFlags(cmd *cobra.Command) {
@@ -94,5 +93,5 @@ func initInstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(install.FlagOperatorMongoDB, cmd.Flags().Lookup(install.FlagOperatorMongoDB))             //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagOperatorPostgresql, cmd.Flags().Lookup(install.FlagOperatorPostgresql))       //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagOperatorXtraDBCluster, cmd.Flags().Lookup(install.FlagOperatorXtraDBCluster)) //nolint:errcheck,gosec
-	viper.BindPFlag("logs", cmd.Flags().Lookup("logs"))                                                       //nolint:errcheck,gosec
+	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose"))                                                 //nolint:errcheck,gosec
 }

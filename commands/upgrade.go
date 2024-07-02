@@ -46,7 +46,7 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
-			enableLogging := viper.GetBool("logs")
+			enableLogging := viper.GetBool("verbose")
 			if !enableLogging {
 				l = zap.NewNop().Sugar()
 			}
@@ -79,7 +79,7 @@ func initUpgradeViperFlags(cmd *cobra.Command) {
 	viper.BindEnv("kubeconfig")                                                         //nolint:errcheck,gosec
 	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))                     //nolint:errcheck,gosec
 	viper.BindPFlag("version-metadata-url", cmd.Flags().Lookup("version-metadata-url")) //nolint:errcheck,gosec
-	viper.BindPFlag("logs", cmd.Flags().Lookup("logs"))                                 //nolint:errcheck,gosec
+	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose"))                           //nolint:errcheck,gosec
 }
 
 func parseUpgradeConfig() (*upgrade.Config, error) {
