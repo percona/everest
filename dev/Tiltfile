@@ -69,7 +69,6 @@ k8s_resource(
 namespaces = sorted([namespace['name'] for namespace in config_yaml['namespaces']])
 for namespace in namespaces:
   namespace_create(namespace)
-  local('kubectl label namespace %s app.kubernetes.io/managed-by=everest --overwrite' % namespace)
 k8s_resource(
   objects=[
     '%s:namespace' % namespace for namespace in namespaces
@@ -77,6 +76,12 @@ k8s_resource(
   new_name='namespaces',
 )
 
+for namespace in namespaces:
+  local_resource('update-label-%s' % namespace, 
+  cmd='kubectl label namespace %s --overwrite app.kubernetes.io/managed-by=everest' % namespace, 
+  resource_deps = [
+    'namespaces',
+  ])
 
 #################################
 ## Install DB engine operators ##
