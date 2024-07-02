@@ -27,12 +27,30 @@ export const ScheduleFormWrapper = () => {
     mode = 'new',
     setSelectedScheduleName,
     dbClusterInfo,
+    externalContext,
   } = useContext(ScheduleFormDialogContext);
-  const { namespace, schedules = [], activeStorage, dbEngine } = dbClusterInfo;
+  const {
+    namespace,
+    schedules = [],
+    defaultSchedules = [],
+    activeStorage,
+    dbEngine,
+  } = dbClusterInfo;
   const { data: backupStorages = [], isFetching } =
     useBackupStoragesByNamespace(namespace);
 
   const [scheduleName] = watch([ScheduleFormFields.scheduleName]);
+
+  const isJustAddedSchedule = !defaultSchedules.find(
+    (item) => item?.name === scheduleName
+  );
+  const disableStorageSelection =
+    !!activeStorage ||
+    (dbEngine === DbEngineType.POSTGRESQL &&
+      mode === 'edit' &&
+      (externalContext === 'db-details-backups' ||
+        (externalContext === 'db-wizard-edit' && !isJustAddedSchedule)));
+
   const [amPm, hour, minute, onDay, weekDay, selectedTime] = watch([
     ScheduleFormFields.amPm,
     ScheduleFormFields.hour,
@@ -67,7 +85,7 @@ export const ScheduleFormWrapper = () => {
       showTypeRadio={dbEngine === DbEngineType.PSMDB}
       hideRetentionCopies={dbEngine === DbEngineType.POSTGRESQL}
       allowScheduleSelection={mode === 'edit'}
-      disableStorageSelection={!!activeStorage}
+      disableStorageSelection={disableStorageSelection}
       autoFillLocation={mode === 'new'}
       schedules={schedules}
       storageLocationFetching={isFetching}

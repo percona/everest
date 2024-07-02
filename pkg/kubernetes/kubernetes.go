@@ -586,7 +586,22 @@ func (k *Kubernetes) getTargetInstallPlanName(ctx context.Context, subscription 
 	}
 	for _, ip := range ipList.Items {
 		for _, csv := range ip.Spec.ClusterServiceVersionNames {
-			if csv == targetCSV {
+			// If the CSV is the one we are looking for and the InstallPlan is
+			// waiting for approval, we return it.
+			// We introduced this phase check because OLM has a bug where it
+			// sometimes creates duplicate InstallPlans for the same CSV and we
+			// found a few cases where the duplicate InstallPlan wasn't
+			// reconciled correctly and abandoned by OLM. This abandoned
+			// InstallPlan was missing the status field meaning it was also
+			// missing the necessary plan to install the operator. Approving
+			// this InstallPlan would cause the operator to never be installed.
+			// By checking the phase we make sure we will be approving an
+			// InstallPlan that is actually ready to be approved.
+			// See https://github.com/operator-framework/kubectl-operator/issues/13
+			// for more details on a similar issue.
+			// We also need to return the InstallPlan if the Phase is Complete
+			// to ensure the idempotency of the InstallOperator function.
+			if csv == targetCSV && (ip.Status.Phase == olmv1alpha1.InstallPlanPhaseRequiresApproval || ip.Status.Phase == olmv1alpha1.InstallPlanPhaseComplete) {
 				return ip.GetName(), nil
 			}
 		}
@@ -1005,29 +1020,27 @@ func (k *Kubernetes) DeleteEverest(ctx context.Context, namespace string, versio
 }
 
 // GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.
-func (k *Kubernetes) GetDBNamespaces(ctx context.Context, namespace string) ([]string, error) {
-	deployment, err := k.GetDeployment(ctx, EverestOperatorDeploymentName, namespace)
+func (k *Kubernetes) GetDBNamespaces(ctx context.Context) ([]string, error) {
+	// List all namespaces managed by everest.
+	namespaceList, err := k.ListNamespaces(ctx, metav1.ListOptions{
+		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
+			MatchLabels: map[string]string{
+				common.KubernetesManagedByLabel: common.Everest,
+			},
+		}),
+	})
 	if err != nil {
-		// If the operator is not found, we assume that no namespaces are being watched.
-		if apierrors.IsNotFound(err) {
-			return []string{}, nil
-		}
-		return nil, err
+		return nil, errors.Join(err, errors.New("failed to get watched namespaces"))
 	}
-
-	for _, container := range deployment.Spec.Template.Spec.Containers {
-		if container.Name != everestOperatorContainerName {
+	internalNs := []string{common.SystemNamespace, common.MonitoringNamespace}
+	result := make([]string, 0, len(namespaceList.Items))
+	for _, ns := range namespaceList.Items {
+		if slices.Contains(internalNs, ns.GetName()) {
 			continue
 		}
-		for _, envVar := range container.Env {
-			if envVar.Name != EverestDBNamespacesEnvVar {
-				continue
-			}
-			return strings.Split(envVar.Value, ","), nil
-		}
+		result = append(result, ns.GetName())
 	}
-
-	return nil, errors.New("failed to get watched namespaces")
+	return result, nil
 }
 
 // WaitForRollout waits for rollout of a provided deployment in the provided namespace.

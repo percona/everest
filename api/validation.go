@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -98,6 +99,9 @@ var (
 	errDBEngineMajorVersionUpgrade   = errors.New("database engine cannot be upgraded to a major version")
 	errDBEngineDowngrade             = errors.New("database engine version cannot be downgraded")
 	errDuplicatedSchedules           = errors.New("duplicated backup schedules are not allowed")
+	errDuplicatedStoragePG           = errors.New("postgres clusters can't use the same storage for the different schedules")
+	errStorageDeletionPG             = errors.New("the existing postgres schedules can't be deleted")
+	errStorageChangePG               = errors.New("the existing postgres schedules can't change their storage")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -332,7 +336,11 @@ func validateBackupStorageAccess(
 	return nil
 }
 
-func validateUpdateBackupStorageRequest(ctx echo.Context, bs *everestv1alpha1.BackupStorage, secret *corev1.Secret, namespaces []string, l *zap.SugaredLogger) (*UpdateBackupStorageParams, error) {
+//nolint:funlen,nestif,gocognit,cyclop
+func (e *EverestServer) validateUpdateBackupStorageRequest(
+	ctx echo.Context, backupStorageName string, bs *everestv1alpha1.BackupStorage, secret *corev1.Secret,
+	namespaces []string, l *zap.SugaredLogger,
+) (*UpdateBackupStorageParams, error) {
 	var params UpdateBackupStorageParams
 	if err := ctx.Bind(&params); err != nil {
 		return nil, err
@@ -353,9 +361,30 @@ func validateUpdateBackupStorageRequest(ctx echo.Context, bs *everestv1alpha1.Ba
 		}
 	}
 
+	removedNs := []string{}
 	if params.AllowedNamespaces != nil {
 		if err := validateAllowedNamespaces(*params.AllowedNamespaces, namespaces); err != nil {
 			return nil, err
+		}
+
+		if len(*params.AllowedNamespaces) > 0 {
+			for _, ns := range bs.Spec.AllowedNamespaces {
+				if !slices.Contains(*params.AllowedNamespaces, ns) {
+					removedNs = append(removedNs, ns)
+				}
+			}
+
+			if len(removedNs) > 0 {
+				// Check if backup storage is used in the removed namespaces
+				used, err := e.kubeClient.IsBackupStorageUsed(ctx.Request().Context(), e.kubeClient.Namespace(), backupStorageName, removedNs)
+				if err != nil {
+					return nil, err
+				}
+
+				if used {
+					return nil, errors.New("backup storage cannot be removed because it's used in some namespace")
+				}
+			}
 		}
 	}
 
@@ -460,7 +489,8 @@ func validateCreateMonitoringInstanceRequest(ctx echo.Context) (*CreateMonitorin
 	return &params, nil
 }
 
-func validateUpdateMonitoringInstanceRequest(ctx echo.Context) (*UpdateMonitoringInstanceJSONRequestBody, error) {
+//nolint:nestif
+func (e *EverestServer) validateUpdateMonitoringInstanceRequest(ctx echo.Context, mc *everestv1alpha1.MonitoringConfig, monitoringConfigName string) (*UpdateMonitoringInstanceJSONRequestBody, error) {
 	var params UpdateMonitoringInstanceJSONRequestBody
 	if err := ctx.Bind(&params); err != nil {
 		return nil, err
@@ -477,12 +507,29 @@ func validateUpdateMonitoringInstanceRequest(ctx echo.Context) (*UpdateMonitorin
 		return nil, errors.New("allowedNamespaces cannot be empty")
 	}
 
-	if err := validateUpdateMonitoringInstanceType(params); err != nil {
-		return nil, err
+	if params.AllowedNamespaces != nil && len(*params.AllowedNamespaces) > 0 {
+		removedNs := []string{}
+		for _, ns := range mc.Spec.AllowedNamespaces {
+			if !slices.Contains(*params.AllowedNamespaces, ns) {
+				removedNs = append(removedNs, ns)
+			}
+		}
+
+		if len(removedNs) > 0 {
+			// Check if monitoring config is used in the removed namespaces
+			used, err := e.kubeClient.IsMonitoringConfigUsed(ctx.Request().Context(), MonitoringNamespace, monitoringConfigName, removedNs)
+			if err != nil {
+				return nil, err
+			}
+
+			if used {
+				return nil, errors.New("monitoring config cannot be removed because it's used in some namespace")
+			}
+		}
 	}
 
-	if params.Pmm != nil && params.Pmm.ApiKey == "" && params.Pmm.User == "" && params.Pmm.Password == "" {
-		return nil, errors.New("one of pmm.apiKey, pmm.user or pmm.password fields is required")
+	if err := validateUpdateMonitoringInstanceType(params); err != nil {
+		return nil, err
 	}
 
 	return &params, nil
@@ -583,12 +630,76 @@ func (e *EverestServer) validateDatabaseClusterCR(ctx echo.Context, namespace st
 	}
 
 	if databaseCluster.Spec.Engine.Type == DatabaseClusterSpecEngineType(everestv1alpha1.DatabaseEnginePostgresql) {
+		if err = e.validatePGSchedulesRestrictions(ctx.Request().Context(), *databaseCluster); err != nil {
+			return err
+		}
 		if err = validatePGReposForAPIDB(ctx.Request().Context(), databaseCluster, e.kubeClient.ListDatabaseClusterBackups); err != nil {
 			return err
 		}
 	}
-
 	return validateResourceLimits(databaseCluster)
+}
+
+func (e *EverestServer) validatePGSchedulesRestrictions(ctx context.Context, newDbc DatabaseCluster) error {
+	dbcName, dbcNamespace, err := nameFromDatabaseCluster(newDbc)
+	if err != nil {
+		return err
+	}
+	existingDbc, err := e.kubeClient.GetDatabaseCluster(ctx, dbcNamespace, dbcName)
+	if err != nil {
+		// if there was no such cluster before (creating cluster) - check only the duplicates for storages
+		if k8serrors.IsNotFound(err) {
+			return checkStorageDuplicates(newDbc)
+		}
+		return err
+	}
+	// if there is an old cluster - compare old and new schedules
+	return checkSchedulesChanges(*existingDbc, newDbc)
+}
+
+func checkStorageDuplicates(dbc DatabaseCluster) error {
+	if dbc.Spec == nil || dbc.Spec.Backup == nil || dbc.Spec.Backup.Schedules == nil {
+		return nil
+	}
+	schedules := *dbc.Spec.Backup.Schedules
+	storagesMap := make(map[string]bool)
+	for _, schedule := range schedules {
+		if _, inUse := storagesMap[schedule.BackupStorageName]; inUse {
+			return errDuplicatedStoragePG
+		}
+		storagesMap[schedule.BackupStorageName] = true
+	}
+	return nil
+}
+
+func checkSchedulesChanges(oldDbc everestv1alpha1.DatabaseCluster, newDbc DatabaseCluster) error {
+	if newDbc.Spec == nil || newDbc.Spec.Backup == nil || newDbc.Spec.Backup.Schedules == nil {
+		return nil
+	}
+	newSchedules := *newDbc.Spec.Backup.Schedules
+	// check the old storage wasn't deleted
+	if len(oldDbc.Spec.Backup.Schedules) > len(newSchedules) {
+		return errStorageDeletionPG
+	}
+	var found bool
+	for _, oldSched := range oldDbc.Spec.Backup.Schedules {
+		found = false
+		for _, newShed := range newSchedules {
+			// check the existing schedule storage wasn't changed
+			if oldSched.Name == newShed.Name {
+				found = true
+				if oldSched.BackupStorageName != newShed.BackupStorageName {
+					return errStorageChangePG
+				}
+			}
+		}
+		// check the old storage wasn't deleted
+		if !found {
+			return errStorageDeletionPG
+		}
+	}
+	// check there is no duplicated storages
+	return checkStorageDuplicates(newDbc)
 }
 
 func validateBackupStoragesFor( //nolint:cyclop
@@ -732,7 +843,7 @@ func validateBackupSpec(cluster *DatabaseCluster) error {
 	if !cluster.Spec.Backup.Enabled {
 		return nil
 	}
-	if cluster.Spec.Backup.Schedules == nil {
+	if cluster.Spec.Backup.Schedules == nil || len(*cluster.Spec.Backup.Schedules) == 0 {
 		return errNoSchedules
 	}
 

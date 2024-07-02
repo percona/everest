@@ -22,3 +22,8 @@ import "embed"
 //
 //go:embed crds/*
 var OLMCRDs embed.FS
+
+// RBAC stores RBAC config in an embedded filesystem.
+//
+//go:embed rbac/*
+var RBAC embed.FS

@@ -24,6 +24,10 @@ import {
 } from './schedule-form.types.ts';
 import { Alert } from '@mui/material';
 import { useFormContext } from 'react-hook-form';
+import { useContext } from 'react';
+import { ScheduleFormDialogContext } from '../schedule-form-dialog-context/schedule-form-dialog.context';
+import { DbEngineType } from '@percona/types';
+import LinkedAlert from '../../linked-alert';
 
 export const ScheduleForm = ({
   allowScheduleSelection,
@@ -41,6 +45,9 @@ export const ScheduleForm = ({
   } = useFormContext();
   const schedulesNamesList =
     (schedules && schedules.map((item) => item?.name)) || [];
+  const {
+    dbClusterInfo: { dbEngine },
+  } = useContext(ScheduleFormDialogContext);
 
   const errorInfoAlert = errors?.root ? (
     <Alert data-testid="same-schedule-warning" severity="error">
@@ -52,6 +59,16 @@ export const ScheduleForm = ({
     <>
       {showTypeRadio && <LogicalPhysicalRadioGroup />}
       <LabeledContent label={Messages.backupDetails}>
+        {dbEngine === DbEngineType.POSTGRESQL && disableStorageSelection && (
+          <LinkedAlert
+            severity="warning"
+            message={Messages.pgStorageEditRestriction}
+            linkProps={{
+              linkContent: 'Learn More',
+              href: 'https://docs.percona.com/everest/reference/known_limitations.html',
+            }}
+          />
+        )}
         {allowScheduleSelection ? (
           <AutoCompleteInput
             name={ScheduleFormFields.scheduleName}
@@ -72,7 +89,6 @@ export const ScheduleForm = ({
           />
         )}
       </LabeledContent>
-
       <AutoCompleteAutoFill
         name={ScheduleFormFields.storageLocation}
         textFieldProps={{
