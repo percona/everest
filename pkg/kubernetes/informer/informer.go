@@ -28,7 +28,7 @@ import (
 )
 
 // Informer is a generic wrapper around the controller-runtime cache.
-// It provides a minimastic interface for watching Kubernetes objects
+// It provides a minimalist interface for watching Kubernetes objects
 // and triggering callbacks.
 type Informer struct {
 	cache cache.Cache
