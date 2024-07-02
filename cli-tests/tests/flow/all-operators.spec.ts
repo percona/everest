@@ -45,7 +45,7 @@ test.describe('Everest CLI install', async () => {
 
     await test.step('run everest install command', async () => {
       const out = await cli.everestExecSkipWizard(
-        `install --namespaces=everest-all -l`,
+        `install --namespaces=everest-all -v`,
       );
 
       await out.assertSuccess();
@@ -63,7 +63,7 @@ test.describe('Everest CLI install', async () => {
 
     await test.step('uninstall Everest', async () => {
       let out = await cli.everestExec(
-        `uninstall --assume-yes -l`,
+        `uninstall --assume-yes -v`,
       );
 
       await out.assertSuccess();
