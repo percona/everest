@@ -21,20 +21,14 @@ import {
   Typography,
 } from '@mui/material';
 import { DialogTitle } from '@percona/ui-lib';
-import { useNavigate } from 'react-router-dom';
 import { Messages } from '../database-form.messages';
 import { DatabaseFormCancelDialogProps } from './DatabaseFormCancelDialog.types';
 
 const DatabaseFormCancelDialog = ({
   open,
   onClose,
+  onConfirm,
 }: DatabaseFormCancelDialogProps) => {
-  const navigate = useNavigate();
-
-  const handleCancel = () => {
-    navigate('/databases');
-  };
-
   return (
     <Dialog open={open}>
       <DialogTitle onClose={onClose}>{Messages.dialog.title}</DialogTitle>
@@ -45,7 +39,7 @@ const DatabaseFormCancelDialog = ({
         <Button autoFocus variant="text" onClick={onClose}>
           {Messages.dialog.reject}
         </Button>
-        <Button variant="contained" onClick={handleCancel}>
+        <Button variant="contained" onClick={onConfirm}>
           {Messages.dialog.accept}
         </Button>
       </DialogActions>
