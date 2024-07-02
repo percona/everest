@@ -5,11 +5,12 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
-	"github.com/percona/everest/api/rbac"
 	"go.uber.org/zap"
+
+	"github.com/percona/everest/api/rbac"
 )
 
-// GetUserPermissions ...
+// GetUserPermissions returns the permissions for the currently logged in user.
 func (e *EverestServer) GetUserPermissions(c echo.Context) error {
 	user, err := rbac.UserGetter(c)
 	if err != nil {
@@ -18,6 +19,7 @@ func (e *EverestServer) GetUserPermissions(c echo.Context) error {
 	}
 	permissions, err := e.rbacEnforcer.GetImplicitPermissionsForUser(user)
 	if err != nil {
+		e.l.Error("Failed to get implicit permissions: ", zap.Error(err))
 		return err
 	}
 	return c.JSON(http.StatusOK, &UserPermissions{

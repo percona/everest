@@ -79,6 +79,58 @@ paths:
       summary: Get user permissions
       description: |
         This API returns a list of permissions for the user that is currently logged in.
+        
+        *Example:*
+        Assume the following RBAC policy, and users `alice` and `bob:
+        ```
+        p, adminrole:role, namespaces, read, *
+        p, adminrole:role, database-engines, *, */*
+        p, adminrole:role, database-clusters, *, */*
+        p, bob, database-clusters, *, */*
+
+        g, alice, adminrole:role
+        ```
+
+        The API will return the following permissions for `alice`:
+        ```
+        {
+          "permissions": [
+            [
+                "adminrole:role",
+                "namespaces",
+                "read",
+                "*"
+            ],
+            [
+                "adminrole:role",
+                "database-engines",
+                "*",
+                "*/*"
+            ],
+            [
+                "adminrole:role",
+                "database-clusters",
+                "*",
+                "*/*"
+            ]
+          ]
+        }
+        ```
+
+        And the following permissions for `bob`:
+        ```
+        {
+          "permissions": [
+            [
+                "bob",
+                "database-clusters",
+                "*",
+                "*/*"
+            ]
+          ]
+        }
+        ```
+
       operationId: getUserPermissions
       responses:
         '200':
