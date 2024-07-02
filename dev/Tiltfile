@@ -409,6 +409,7 @@ k8s_resource(
     'everest-admin-cluster-role-binding:clusterrolebinding',
     'everest-jwt:secret',
     'everest-accounts:secret',
+    'everest-rbac:configmap',
   ],
   new_name='everest',
   port_forwards=8080,
