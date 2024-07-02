@@ -57,7 +57,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     useDbEngines(dbNamespace);
   const dbEngine = dbTypeToDbEngine(dbType);
 
-  const [dbVersions, setDbVersions] = useState(
+  const [dbEngineData, setDbEngineData] = useState(
     dbEngines.find((engine) => engine.type === dbEngine)
   );
 
@@ -70,23 +70,23 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     [setValue]
   );
 
-  const setDbVersionsForEngine = useCallback(() => {
-    const newVersions = dbEngines.find((engine) => engine.type === dbEngine);
+  const setDbEngineDataForEngineType = useCallback(() => {
+    const newEngineData = dbEngines.find((engine) => engine.type === dbEngine);
 
-    setDbVersions(newVersions);
+    setDbEngineData(newEngineData);
   }, [dbEngine, dbEngines]);
 
   const updateDbVersions = useCallback(() => {
     const { isDirty: dbVersionDirty } = getFieldState(
       DbWizardFormFields.dbVersion
     );
-    setDbVersionsForEngine();
+    setDbEngineDataForEngineType();
 
     // Safety check
     if (
       dbVersionDirty ||
-      !dbVersions ||
-      !dbVersions.availableVersions.engine.length
+      !dbEngineData ||
+      !dbEngineData.availableVersions.engine.length
     ) {
       return;
     }
@@ -95,7 +95,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       ((mode === 'edit' || mode === 'restoreFromBackup') && !dbVersion) ||
       mode === 'new'
     ) {
-      const recommendedVersion = dbVersions.availableVersions.engine
+      const recommendedVersion = dbEngineData.availableVersions.engine
         .slice()
         .reverse()
         .find((version) => version.status === DbEngineToolStatus.RECOMMENDED);
@@ -104,15 +104,15 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         DbWizardFormFields.dbVersion,
         recommendedVersion
           ? recommendedVersion.version
-          : dbVersions.availableVersions.engine[0].version
+          : dbEngineData.availableVersions.engine[0].version
       );
     }
   }, [
     dbVersion,
-    dbVersions,
+    dbEngineData,
     getFieldState,
     mode,
-    setDbVersionsForEngine,
+    setDbEngineDataForEngineType,
     setValue,
   ]);
 
@@ -200,8 +200,8 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   }, [clusterInfo]);
 
   useEffect(() => {
-    setDbVersionsForEngine();
-  }, [setDbVersionsForEngine]);
+    setDbEngineDataForEngineType();
+  }, [setDbEngineDataForEngineType]);
 
   useEffect(() => {
     const { isTouched: k8sNamespaceTouched } = getFieldState(
@@ -285,7 +285,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             disabled: mode === 'restoreFromBackup',
           }}
         >
-          {dbVersions?.availableVersions.engine.map((version) => (
+          {dbEngineData?.availableVersions.engine.map((version) => (
             <MenuItem value={version.version} key={version.version}>
               {version.version}
             </MenuItem>
