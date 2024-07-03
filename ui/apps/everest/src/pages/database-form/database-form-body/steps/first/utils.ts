@@ -30,7 +30,7 @@ export const changeAvailableDbVersionsForDbEngine = (
   dbEngine: DbEngine,
   currentVersion: string
 ) => {
-  const versions = dbEngine.availableVersions.engine || [];
+  let versions = dbEngine.availableVersions.engine || [];
   const currentSemverVersion = coerce(currentVersion);
   const dbType = dbEngine.type;
 
@@ -40,17 +40,19 @@ export const changeAvailableDbVersionsForDbEngine = (
 
   const currentMajor = currentSemverVersion.major;
 
-  // If the engine is PSMDB or PG, major version up/downgrades are ruled out
+  // Filter out downgrades
+  versions = versions.filter(({ version }) => {
+    const semverVersion = coerce(version);
+    return semverVersion ? gte(semverVersion, currentSemverVersion) : true;
+  });
+
+  // If the engine is PSMDB or PG, major version upgrades are also ruled out
   if ([DbEngineType.PSMDB, DbEngineType.POSTGRESQL].includes(dbType)) {
-    return versions.filter(({ version }) => {
+    versions = versions.filter(({ version }) => {
       const semverVersion = coerce(version);
       return semverVersion ? semverVersion.major === currentMajor : true;
     });
   }
 
-  // If not, we just filter out downgrades
-  return versions.filter(({ version }) => {
-    const semverVersion = coerce(version);
-    return semverVersion ? gte(semverVersion, currentSemverVersion) : true;
-  });
+  return versions;
 };
