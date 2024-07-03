@@ -37,11 +37,17 @@ import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { DEFAULT_NODES } from './first-step.constants.ts';
 import { Messages } from './first-step.messages.ts';
-import { generateShortUID } from './utils.ts';
+import {
+  changeAvailableDbVersionsForDbEngine,
+  generateShortUID,
+} from './utils.ts';
+import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
-
+  const {
+    defaultValues: { [DbWizardFormFields.dbVersion]: defaultDbVersion },
+  } = useDatabasePageDefaultValues(mode);
   const { watch, setValue, getFieldState, resetField, getValues, trigger } =
     useFormContext();
 
@@ -73,8 +79,16 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const setDbEngineDataForEngineType = useCallback(() => {
     const newEngineData = dbEngines.find((engine) => engine.type === dbEngine);
 
+    if (newEngineData && mode === 'edit') {
+      const validVersions = changeAvailableDbVersionsForDbEngine(
+        newEngineData,
+        defaultDbVersion
+      );
+      newEngineData.availableVersions.engine = validVersions;
+    }
+
     setDbEngineData(newEngineData);
-  }, [dbEngine, dbEngines]);
+  }, [dbEngine, dbEngines, defaultDbVersion]);
 
   const updateDbVersions = useCallback(() => {
     const { isDirty: dbVersionDirty } = getFieldState(
