@@ -26,7 +26,7 @@ export const generateShortUID = (): string => {
   return `${firstPart}${secondPart}`.slice(0, 3);
 };
 
-export const changeAvailableDbVersionsForDbEngine = (
+export const filterAvailableDbVersionsForDbEngineEdition = (
   dbEngine: DbEngine,
   currentVersion: string
 ) => {

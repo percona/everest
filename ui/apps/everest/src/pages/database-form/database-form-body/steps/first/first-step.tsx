@@ -38,7 +38,7 @@ import { StepHeader } from '../step-header/step-header.tsx';
 import { DEFAULT_NODES } from './first-step.constants.ts';
 import { Messages } from './first-step.messages.ts';
 import {
-  changeAvailableDbVersionsForDbEngine,
+  filterAvailableDbVersionsForDbEngineEdition,
   generateShortUID,
 } from './utils.ts';
 import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
@@ -80,7 +80,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     const newEngineData = dbEngines.find((engine) => engine.type === dbEngine);
 
     if (newEngineData && mode === 'edit') {
-      const validVersions = changeAvailableDbVersionsForDbEngine(
+      const validVersions = filterAvailableDbVersionsForDbEngineEdition(
         newEngineData,
         defaultDbVersion
       );

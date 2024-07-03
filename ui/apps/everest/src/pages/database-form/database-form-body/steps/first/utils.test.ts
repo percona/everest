@@ -1,11 +1,11 @@
 import { DbEngineType } from 'shared-types/dbEngines.types';
-import { changeAvailableDbVersionsForDbEngine } from './utils';
+import { filterAvailableDbVersionsForDbEngineEdition } from './utils';
 
 describe('Wizard first step::utils', () => {
-  describe('changeAvailableDbVersionsForDbEngine', () => {
+  describe('filterAvailableDbVersionsForDbEngineEdition', () => {
     it('should rule out downgrades', () => {
       expect(
-        changeAvailableDbVersionsForDbEngine(
+        filterAvailableDbVersionsForDbEngineEdition(
           {
             availableVersions: {
               engine: [
@@ -24,7 +24,7 @@ describe('Wizard first step::utils', () => {
 
     it('should coerce PG versions to semver', () => {
       expect(
-        changeAvailableDbVersionsForDbEngine(
+        filterAvailableDbVersionsForDbEngineEdition(
           {
             availableVersions: {
               engine: [
@@ -43,7 +43,7 @@ describe('Wizard first step::utils', () => {
 
     it('should allow major upgrades for PXC', () => {
       expect(
-        changeAvailableDbVersionsForDbEngine(
+        filterAvailableDbVersionsForDbEngineEdition(
           {
             availableVersions: {
               engine: [
@@ -62,7 +62,7 @@ describe('Wizard first step::utils', () => {
 
     it('should rule out major upgrades/downgrades for PSMDB/PG', () => {
       expect(
-        changeAvailableDbVersionsForDbEngine(
+        filterAvailableDbVersionsForDbEngineEdition(
           {
             availableVersions: {
               engine: [
