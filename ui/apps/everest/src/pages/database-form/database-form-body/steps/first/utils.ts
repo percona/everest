@@ -40,7 +40,7 @@ export const changeAvailableDbVersionsForDbEngine = (
 
   const currentMajor = currentSemverVersion.major;
 
-  // If the engine is PSMDB or PG, major versions are ruled out
+  // If the engine is PSMDB or PG, major version up/downgrades are ruled out
   if ([DbEngineType.PSMDB, DbEngineType.POSTGRESQL].includes(dbType)) {
     return versions.filter(({ version }) => {
       const semverVersion = coerce(version);
