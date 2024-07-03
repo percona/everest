@@ -81,7 +81,7 @@ paths:
         This API returns a list of permissions for the user that is currently logged in.
         
         *Example:*
-        Assume the following RBAC policy, and users `alice` and `bob:
+        Assume the following RBAC policy, and users `alice` and `bob`:
         ```
         p, adminrole:role, namespaces, read, *
         p, adminrole:role, database-engines, *, */*
