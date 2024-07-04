@@ -123,7 +123,7 @@ func GetUser(c echo.Context) (string, error) {
 }
 
 // buildPathResourceMap builds a map of paths to resources and a list of resources.
-// Returns: (resourceMap, skipPaths, error)
+// Returns: (resourceMap, skipPaths, error) .
 func buildPathResourceMap(basePath string) (map[string]string, []string, error) {
 	swg, err := everestclient.GetSwagger()
 	if err != nil {
