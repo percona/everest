@@ -65,8 +65,8 @@ export const getCronExpressionFromFormValues = (
         ? parsedHour
         : parsedHour + 12
       : parsedHour === 12
-      ? 0
-      : parsedHour;
+        ? 0
+        : parsedHour;
 
   switch (selectedTime) {
     case TimeValue.hours:

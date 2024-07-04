@@ -181,6 +181,7 @@ const NamespaceDetails = () => {
             databases={
               preflightQueriesResults[selectedEngineIdx].data?.databases || []
             }
+            dbEngine={selectedEngine}
           />
         </>
       )}

@@ -15,4 +15,10 @@ export const Messages = {
       version {newVersion} in <b>{clusterName}</b> cluster?
     </Typography>
   ),
+  upgradeEngineVersion: (clusterName: string, newVersion: string) => (
+    <Typography variant="body1">
+      Your DB engine will be upgraded to version {newVersion} in{' '}
+      <b>{clusterName}</b> cluster.
+    </Typography>
+  ),
 };
