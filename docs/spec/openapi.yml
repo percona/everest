@@ -96,19 +96,19 @@ paths:
         {
           "permissions": [
             [
-                "adminrole:role",
+                "alice",
                 "namespaces",
                 "read",
                 "*"
             ],
             [
-                "adminrole:role",
+                "alice",
                 "database-engines",
                 "*",
                 "*/*"
             ],
             [
-                "adminrole:role",
+                "alice",
                 "database-clusters",
                 "*",
                 "*/*"
