@@ -53,8 +53,10 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const dbVersion: DbType = watch(DbWizardFormFields.dbVersion);
   const dbNamespace = watch(DbWizardFormFields.k8sNamespace);
 
-  const { data: dbEngines = [], isFetching: dbEnginesFetching } =
-    useDbEngines(dbNamespace);
+  const { data: dbEngines = [], isFetching: dbEnginesFetching } = useDbEngines(
+    dbNamespace,
+    { gcTime: 1000 * 5 }
+  );
   const dbEngine = dbTypeToDbEngine(dbType);
 
   const [dbVersions, setDbVersions] = useState(
