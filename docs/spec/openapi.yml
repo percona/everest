@@ -1504,6 +1504,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/monitoring-instances/{name}':
+    x-everest-resource-name: monitoring-instances
     get:
       tags:
         - Monitoring
