@@ -63,7 +63,7 @@ func PrintError(err error, l *zap.SugaredLogger, prettyPrint bool) {
 
 	l.Error(err)
 	if prettyPrint {
-		fmt.Printf(Failure("%s", err))
+		fmt.Print(Failure("%s", err)) //nolint:forbidigo
 	}
 }
 
