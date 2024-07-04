@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-          cache: 'pnpm'
+          cache: "pnpm"
           cache-dependency-path: ui/pnpm-lock.yaml
 
       - name: Set up Helm
@@ -112,10 +112,10 @@ jobs:
           --skip-wizard \
           --namespaces pg-only
 
-      - name: Create Everest test user
+      - name: Get Everest admin password
         shell: bash
         run: |
-          ./bin/everestctl accounts create -u ${{ secrets.CI_USER }} -p ${{ secrets.CI_PASSWORD }}
+          echo "EVEREST_ADMIN_PASSWORD=$(./bin/everestctl accounts initial-admin-password)" >> $GITHUB_ENV
 
       - name: Expose Everest API Server
         shell: bash
@@ -138,15 +138,15 @@ jobs:
       - name: Run integration tests
         shell: bash
         env:
-          EVEREST_LOCATION_BUCKET_NAME: 'bucket-1'
-          EVEREST_LOCATION_ACCESS_KEY: 'minioadmin'
-          EVEREST_LOCATION_SECRET_KEY: 'minioadmin'
-          EVEREST_LOCATION_REGION: 'us-east-1'
-          EVEREST_LOCATION_URL: 'https://minio.minio.svc.cluster.local'
-          CI_USER: '${{ secrets.CI_USER }}'
-          CI_PASSWORD: '${{ secrets.CI_PASSWORD }}'
-          MONITORING_USER: 'admin'
-          MONITORING_PASSWORD: 'admin'
+          EVEREST_LOCATION_BUCKET_NAME: "bucket-1"
+          EVEREST_LOCATION_ACCESS_KEY: "minioadmin"
+          EVEREST_LOCATION_SECRET_KEY: "minioadmin"
+          EVEREST_LOCATION_REGION: "us-east-1"
+          EVEREST_LOCATION_URL: "https://minio.minio.svc.cluster.local"
+          CI_USER: "admin"
+          CI_PASSWORD: "${{ env.EVEREST_ADMIN_PASSWORD }}"
+          MONITORING_USER: "admin"
+          MONITORING_PASSWORD: "admin"
         run: |
           cd ui
           pnpm --filter "@percona/everest" e2e

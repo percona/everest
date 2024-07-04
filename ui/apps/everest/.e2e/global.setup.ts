@@ -75,7 +75,7 @@ setup('Backup storages', async ({ request }) => {
             url: EVEREST_LOCATION_URL,
             region: EVEREST_LOCATION_REGION,
             verifyTLS: false,
-            forcePathStyle: false,
+            forcePathStyle: true,
           },
           headers: {
             Authorization: `Bearer ${token}`,
