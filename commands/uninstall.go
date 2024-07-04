@@ -53,7 +53,7 @@ func newUninstallCmd(l *zap.SugaredLogger) *cobra.Command {
 			}
 
 			if err := op.Run(cmd.Context()); err != nil {
-				output.PrintError(err, l)
+				output.PrintError(err, l, !enableLogging)
 				os.Exit(1)
 			}
 		},
