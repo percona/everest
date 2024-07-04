@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/AlekSi/pointer"
@@ -24,7 +25,29 @@ func (e *EverestServer) GetUserPermissions(c echo.Context) error {
 		return err
 	}
 
+	if err := e.resolveRoles(user, permissions); err != nil {
+		e.l.Error(err)
+		return err
+	}
+
 	return c.JSON(http.StatusOK, &UserPermissions{
 		Permissions: pointer.To(permissions),
 	})
+}
+
+// For a given set of `permissions` for a `user`, this function
+// will resolve all roles for the user.
+func (e *EverestServer) resolveRoles(user string, permissions [][]string) error {
+	userRoles, err := e.rbacEnforcer.GetRolesForUser(user)
+	if err != nil {
+		return errors.Join(err, errors.New("cannot get user roles"))
+	}
+	for _, role := range userRoles {
+		for i, perm := range permissions {
+			if perm[0] == role {
+				permissions[i][0] = user
+			}
+		}
+	}
+	return nil
 }
