@@ -5,5 +5,5 @@ export const useRBACPolicies = () =>
   useQuery({
     queryKey: ['rbacPolicies'],
     queryFn: getRBACPolicies,
-    refetchInterval: 1000,
+    refetchInterval: 5000,
   });

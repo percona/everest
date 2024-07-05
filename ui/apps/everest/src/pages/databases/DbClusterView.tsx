@@ -59,14 +59,14 @@ const useGetPermissions = (resource: string, specificResource?: string) => {
   const { authorize } = useContext(AuthContext);
 
   useEffect(() => {
-    authorize('read', resource, 'mysql-0oi').then((data) => {
+    authorize('read', resource, '*').then((data) => {
       setPermissions((oldPermissions) => ({
         ...oldPermissions,
         canRead: data,
       }));
     });
 
-    authorize('create', resource, 'mysql-0oi').then((data) => {
+    authorize('create', resource, '*').then((data) => {
       setPermissions((oldPermissions) => ({
         ...oldPermissions,
         canCreate: data,
@@ -122,7 +122,7 @@ export const DbClusterView = () => {
   const navigate = useNavigate();
 
   const { canUpdate, canCreate, canDelete } =
-    useGetPermissions('database_clusters');
+    useGetPermissions('database-clusters');
   const { data: backups = [] } = useDbBackups(
     selectedDbCluster?.metadata.name!,
     selectedDbCluster?.metadata.namespace!,

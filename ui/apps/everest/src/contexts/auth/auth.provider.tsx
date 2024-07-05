@@ -103,22 +103,6 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     setRedirect(route);
   };
 
-  // useEffect(() => {
-  //   const savedToken = localStorage.getItem('pwd');
-  //   if (savedToken) {
-  //     setAuthStatus('loggedIn');
-  //     // setApiBearerToken(savedToken);
-  //     addApiInterceptors();
-
-  //     const decoded = jwtDecode(savedToken);
-  //     // TODO: remove indexOf when API removes the colon
-  //     const username = decoded.sub?.substring(0, decoded.sub.indexOf(':'));
-  //     setUsername(username || '');
-  //   } else {
-  //     setAuthStatus('loggedOut');
-  //   }
-  // });
-
   const setLoggedInStatus = () => {
     setAuthStatus('loggedIn');
     addApiErrorInterceptor();
@@ -170,7 +154,11 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     }
 
     const authRoutine = async (token: string) => {
-      const { iss, exp } = jwtDecode(token);
+      const decoded = jwtDecode(token);
+      const iss = decoded.iss;
+      const exp = decoded.exp;
+      const username = decoded.sub?.substring(0, decoded.sub.indexOf(':'));
+      setUsername(username || '');
       if (iss === EVEREST_JWT_ISSUER) {
         const isTokenValid = await checkAuth(token);
         if (isTokenValid) {
@@ -185,7 +173,6 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
         }
 
         const user = await userManager.getUser();
-        console.log('🚀 ~ authRoutine ~ user:', user);
 
         if (!user) {
           setLogoutStatus();

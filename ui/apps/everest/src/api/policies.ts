@@ -1,25 +1,14 @@
 import { api } from './api';
-
-const rbacModel = `[request_definition]
-    r = sub, res, act, obj
-    
-    [policy_definition]
-    p = sub, res, act, obj
-    
-    [role_definition]
-    g = _, _
-    
-    [policy_effect]
-    e = some(where (p.eft == allow)) && !some(where (p.eft == deny))
-    
-    [matchers]
-    m = g(r.sub, p.sub) && globMatch(r.res, p.res) && globMatch(r.act, p.act) && keyMatch(r.obj, p.obj)`;
+import rbac from '/public/static/model.conf?raw';
 
 export const getRBACPolicies = async () => {
-  const response = await api.get('policies');
+  const response = await api.get('permissions');
+  const permissions = response.data.permissions.map((permission: string[]) => {
+    return [...'p', ...permission];
+  });
 
   return {
-    m: rbacModel,
-    p: response.data,
+    m: rbac,
+    p: permissions,
   };
 };
