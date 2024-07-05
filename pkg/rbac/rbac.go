@@ -97,6 +97,15 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
 }
 
+// NewEnforcerFromFilePath creates a new Casbin enforcer with the policy stored at the given filePath.
+func NewEnforcerFromFilePath(ctx context.Context, filePath string) (*casbin.Enforcer, error) {
+	model, err := getModel()
+	if err != nil {
+		return nil, err
+	}
+	return casbin.NewEnforcer(model, filePath)
+}
+
 // GetUser extracts the user from the JWT token in the context.
 func GetUser(c echo.Context) (string, error) {
 	token, ok := c.Get("user").(*jwt.Token) // by default token is stored under `user` key
