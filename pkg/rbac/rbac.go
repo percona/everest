@@ -37,6 +37,7 @@ import (
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/kubernetes/informer"
 	configmapadapter "github.com/percona/everest/pkg/rbac/configmap-adapter"
+	"github.com/percona/everest/pkg/rbac/fileadapter"
 	"github.com/percona/everest/pkg/session"
 )
 
@@ -87,7 +88,7 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 		Namespace: common.SystemNamespace,
 		Name:      common.EverestRBACConfigMapName,
 	}
-	adapter := configmapadapter.NewAdapter(kubeClient, cmReq)
+	adapter := configmapadapter.New(kubeClient, cmReq)
 
 	enforcer, err := casbin.NewEnforcer(model, adapter, false)
 	if err != nil {
@@ -103,7 +104,11 @@ func NewEnforcerFromFilePath(ctx context.Context, filePath string) (*casbin.Enfo
 	if err != nil {
 		return nil, err
 	}
-	return casbin.NewEnforcer(model, filePath)
+	adapter, err := fileadapter.New(filePath)
+	if err != nil {
+		return nil, err
+	}
+	return casbin.NewEnforcer(model, adapter)
 }
 
 // GetUser extracts the user from the JWT token in the context.

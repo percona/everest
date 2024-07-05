@@ -9,16 +9,11 @@ import (
 	"go.uber.org/zap"
 )
 
-type ValidationArgs struct {
-	Filepath   string
-	KubeClient *kubernetes.Kubernetes
-}
-
 // ValidatePolicy validates a policy from either Kubernetes or local file.
 func ValidatePolicy(ctx context.Context, k *kubernetes.Kubernetes, filepath string) error {
 	_, err := newKubeOrFileEnforcer(ctx, k, filepath)
 	if err != nil {
-		return fmt.Errorf("policy syntax error")
+		return fmt.Errorf("policy syntax error: %w", err)
 	}
 	return nil
 }

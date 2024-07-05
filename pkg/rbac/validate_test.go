@@ -4,46 +4,27 @@ import (
 	"context"
 	"fmt"
 	"testing"
-
-	"github.com/spf13/afero"
 )
-
-const policyGood = `p, adminrole:role, namespaces, read, *
-p, adminrole:role, database-engines, *, */*
-p, adminrole:role, monitoring-instances, *, */*
-g, admin, adminrole:role`
-
-const policyBad = `p, adminrole:role, namespaces, read, *
-this is a bad policy
-g, admin, adminrole:role
-`
 
 func TestValidatePolicy(t *testing.T) {
 	testcases := []struct {
-		policy  string
+		path    string
 		isValid bool
 	}{
 		{
-			policy:  policyGood,
+			path:    "./testdata/policy-1-good.csv",
 			isValid: true,
 		},
 		{
-			policy:  policyBad,
+			path:    "./testdata/policy-2-bad.csv",
 			isValid: false,
 		},
 	}
 
-	// prepare a mock filesystem.
-	testFS := afero.NewMemMapFs()
-	for i, tc := range testcases {
-		afero.WriteFile(testFS, fmt.Sprintf("policy_%d.csv", i), []byte(tc.policy), 0644)
-	}
-
-	// run tests.
 	ctx := context.Background()
 	for i, tc := range testcases {
 		t.Run(fmt.Sprintf("test-%d", i), func(t *testing.T) {
-			err := ValidatePolicy(ctx, nil, fmt.Sprintf("policy_%d.csv", i))
+			err := ValidatePolicy(ctx, nil, tc.path)
 			if tc.isValid && err != nil {
 				t.Errorf("expected no error, got %v", err)
 			}

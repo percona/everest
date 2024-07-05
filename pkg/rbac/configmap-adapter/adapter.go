@@ -35,8 +35,8 @@ type Adapter struct {
 	namespacedName types.NamespacedName
 }
 
-// NewAdapter is the constructor for Adapter.
-func NewAdapter(kubeClient *kubernetes.Kubernetes, namespacedName types.NamespacedName) *Adapter {
+// New constructs a new adapter that manages a policy inside a ConfigMap.
+func New(kubeClient *kubernetes.Kubernetes, namespacedName types.NamespacedName) *Adapter {
 	return &Adapter{
 		kubeClient:     kubeClient,
 		namespacedName: namespacedName,
