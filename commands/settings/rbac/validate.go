@@ -41,8 +41,6 @@ func NewValidateCommand(l *zap.SugaredLogger) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initValidateViperFlags(cmd)
 
-			// Try to create a new enforcer.
-			// If the policy is valid, no error is returned.
 			_, err := newEnforcer(cmd.Context(), l)
 			if err != nil {
 				var u *url.Error
@@ -51,7 +49,7 @@ func NewValidateCommand(l *zap.SugaredLogger) *cobra.Command {
 						"Make sure Kubernetes is running and is accessible from this computer/server.")
 					os.Exit(1)
 				}
-				l.Error(err)
+				fmt.Fprintf(os.Stdout, output.Failure("Invalid"))
 				os.Exit(1)
 			}
 			fmt.Fprintf(os.Stdout, output.Success("Valid"))
@@ -61,7 +59,16 @@ func NewValidateCommand(l *zap.SugaredLogger) *cobra.Command {
 	return cmd
 }
 
-func newEnforcer(ctx context.Context, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+func newEnforcer(
+	ctx context.Context,
+	l *zap.SugaredLogger) (enf *casbin.Enforcer, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+			enf = nil
+		}
+	}()
+
 	if filePath := viper.GetString("policy-file"); filePath != "" {
 		return rbac.NewEnforcerFromFilePath(context.Background(), filePath)
 	}
