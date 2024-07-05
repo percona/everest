@@ -33,7 +33,7 @@ import (
 )
 
 // NewValidateCommand returns a new command for validating RBAC.
-func NewConfigureCommand(l *zap.SugaredLogger) *cobra.Command {
+func NewValidateCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validate",
 		Long:  "Validate RBAC settings",

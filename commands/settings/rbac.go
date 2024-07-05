@@ -2,6 +2,7 @@
 package settings
 
 import (
+	"github.com/percona/everest/commands/settings/rbac"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -13,5 +14,6 @@ func NewRBACCmd(l *zap.SugaredLogger) *cobra.Command {
 		Long:  "Manage RBAC settings",
 		Short: "Manage RBAC settings",
 	}
+	cmd.AddCommand(rbac.NewValidateCommand(l))
 	return cmd
 }
