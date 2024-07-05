@@ -31,12 +31,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	configmapadapter "github.com/percona/everest/api/rbac/configmap-adapter"
 	everestclient "github.com/percona/everest/client"
 	"github.com/percona/everest/data"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/kubernetes/informer"
+	configmapadapter "github.com/percona/everest/pkg/rbac/configmap-adapter"
 	"github.com/percona/everest/pkg/session"
 )
 
