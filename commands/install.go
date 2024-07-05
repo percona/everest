@@ -47,7 +47,7 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
-			enableLogging := viper.GetBool("verbose")
+			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
 			if !enableLogging {
 				l = zap.NewNop().Sugar()
 			}
@@ -94,4 +94,5 @@ func initInstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(install.FlagOperatorPostgresql, cmd.Flags().Lookup(install.FlagOperatorPostgresql))       //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagOperatorXtraDBCluster, cmd.Flags().Lookup(install.FlagOperatorXtraDBCluster)) //nolint:errcheck,gosec
 	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose"))                                                 //nolint:errcheck,gosec
+	viper.BindPFlag("json", cmd.Flags().Lookup("json"))                                                       //nolint:errcheck,gosec
 }
