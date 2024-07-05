@@ -155,11 +155,11 @@ func buildPathResourceMap(basePath string) (map[string]string, []string, error) 
 
 // NewEnforceHandler returns a function that checks if a user is allowed to access a resource.
 func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.Context, user string) (bool, error) {
+	pathResourceMap, _, err := buildPathResourceMap(basePath)
+	if err != nil {
+		panic("failed to build path resource map: " + err.Error())
+	}
 	return func(c echo.Context, user string) (bool, error) {
-		pathResourceMap, _, err := buildPathResourceMap(basePath)
-		if err != nil {
-			return false, errors.Join(err, errors.New("failed to build path resource map"))
-		}
 		actionMethodMap := map[string]string{
 			"GET":    "read",
 			"POST":   "create",
