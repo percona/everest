@@ -62,6 +62,10 @@ const (
 	KubernetesManagedByLabel = "app.kubernetes.io/managed-by"
 	// ForegroundDeletionFinalizer is the finalizer used to delete resources in foreground.
 	ForegroundDeletionFinalizer = "foregroundDeletion"
+
+	// EverestAPIExtnResourceName is the name of the Everest API extension header
+	// that holds the name of the resource being served by an API endpoint.
+	EverestAPIExtnResourceName = "x-everest-resource-name"
 )
 
 // InitialPasswordWarningMessage is the message that is shown to the user after the installation/upgrade,
