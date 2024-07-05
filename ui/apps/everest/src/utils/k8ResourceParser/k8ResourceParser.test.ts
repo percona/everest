@@ -23,6 +23,6 @@ describe('memory parser', () => {
     expect(memoryParser('1')).toEqual(1);
     expect(memoryParser('1k', 'G')).toEqual(1 * 10 ** -6);
     expect(memoryParser('1G', 'Gi')).toEqual(10 ** 9 / 1024 ** 3);
-    expect(memoryParser('1G', 'G')).toEqual(10 ** 9 / 1024 ** 3);
+    expect(memoryParser('1G', 'G')).toEqual(1);
   });
 });
