@@ -68,16 +68,19 @@ func refreshEnforcerInBackground(
 	return nil
 }
 
-// NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
-func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+func getModel() (model.Model, error) {
 	modelData, err := fs.ReadFile(data.RBAC, "rbac/model.conf")
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not read casbin model"))
 	}
+	return model.NewModelFromString(string(modelData))
+}
 
-	model, err := model.NewModelFromString(string(modelData))
+// NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
+func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+	model, err := getModel()
 	if err != nil {
-		return nil, errors.Join(err, errors.New("could not create casbin model"))
+		return nil, err
 	}
 
 	cmReq := types.NamespacedName{
