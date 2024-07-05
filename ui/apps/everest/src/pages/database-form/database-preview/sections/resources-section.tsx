@@ -23,7 +23,7 @@ export const ResourcesPreviewSection = ({
         }`}
       />
       <PreviewContentText
-        text={`Disk: ${Number.isNaN(parsedDisk) ? '' : `${parsedDisk.toFixed(2)} GB`}`}
+        text={`Disk: ${Number.isNaN(parsedDisk) ? '' : `${parsedDisk.toFixed(2)} Gi`}`}
       />
     </>
   );
