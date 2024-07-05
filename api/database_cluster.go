@@ -170,7 +170,7 @@ func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace
 		}
 
 		var started *string
-		if !pod.Status.StartTime.Time.IsZero() {
+		if startTime := pod.Status.StartTime; startTime != nil && !startTime.Time.IsZero() {
 			started = pointer.ToString(pod.Status.StartTime.Time.Format(time.RFC3339))
 		}
 		res = append(res, DatabaseClusterComponent{
