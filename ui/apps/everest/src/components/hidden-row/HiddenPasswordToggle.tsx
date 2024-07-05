@@ -34,8 +34,8 @@ export const HiddenPasswordToggle = ({
   const formattedValue = show
     ? value
     : fixedAsteriskLength
-    ? Messages.asteriskHiddenText
-    : value.replace(/./g, '*');
+      ? Messages.asteriskHiddenText
+      : value.replace(/./g, '*');
 
   const toggle = () => {
     setShow((prevState) => !prevState);

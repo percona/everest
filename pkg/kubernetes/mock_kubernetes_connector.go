@@ -400,6 +400,36 @@ func (_m *MockKubernetesConnector) GetClusterType(ctx context.Context) (ClusterT
 	return r0, r1
 }
 
+// GetConfigMap provides a mock function with given fields: ctx, name, namespace
+func (_m *MockKubernetesConnector) GetConfigMap(ctx context.Context, name string, namespace string) (*v1.ConfigMap, error) {
+	ret := _m.Called(ctx, name, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetConfigMap")
+	}
+
+	var r0 *v1.ConfigMap
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v1.ConfigMap, error)); ok {
+		return rf(ctx, name, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v1.ConfigMap); ok {
+		r0 = rf(ctx, name, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.ConfigMap)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, name, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetDBNamespaces provides a mock function with given fields: ctx
 func (_m *MockKubernetesConnector) GetDBNamespaces(ctx context.Context) ([]string, error) {
 	ret := _m.Called(ctx)

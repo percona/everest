@@ -16,6 +16,7 @@ export type UpgradeHeaderProps = {
 export type ClusterStatusTableProps = {
   namespace: string;
   databases: OperatorUpgradeDb[];
+  dbEngine: DbEngine;
 };
 
 export type UpgradeModalProps = {
