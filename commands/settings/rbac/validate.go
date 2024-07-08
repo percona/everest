@@ -49,7 +49,7 @@ func NewValidateCommand(l *zap.SugaredLogger) *cobra.Command {
 						"Make sure Kubernetes is running and is accessible from this computer/server.")
 					os.Exit(1)
 				}
-				fmt.Fprintf(os.Stdout, output.Failure("Invalid"))
+				fmt.Fprintf(os.Stdout, output.Failure("Invalid"), ": ", err.Error())
 				os.Exit(1)
 			}
 			fmt.Fprintf(os.Stdout, output.Success("Valid"))
