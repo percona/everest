@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -49,7 +50,7 @@ func NewValidateCommand(l *zap.SugaredLogger) *cobra.Command {
 			}
 
 			var k *kubernetes.Kubernetes
-			if kubeconfigPath != "" {
+			if kubeconfigPath != "" && policyFilepath == "" {
 				client, err := kubernetes.New(kubeconfigPath, l)
 				if err != nil {
 					var u *url.Error
@@ -64,8 +65,10 @@ func NewValidateCommand(l *zap.SugaredLogger) *cobra.Command {
 
 			err := rbac.ValidatePolicy(cmd.Context(), k, policyFilepath)
 			if err != nil {
-				fmt.Fprintln(os.Stdout, output.Failure("Invalid"))
-				fmt.Fprintln(os.Stdout, err.Error())
+				fmt.Fprint(os.Stdout, output.Failure("Invalid"))
+				msg := err.Error()
+				msg = strings.Join(strings.Split(msg, "\n"), " - ")
+				fmt.Fprintln(os.Stdout, msg)
 				os.Exit(1)
 			}
 			fmt.Fprintln(os.Stdout, output.Success("Valid"))

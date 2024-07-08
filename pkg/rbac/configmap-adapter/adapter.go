@@ -22,11 +22,11 @@ import (
 	"strings"
 
 	"github.com/casbin/casbin/v2/model"
-	"github.com/casbin/casbin/v2/persist"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/percona/everest/pkg/kubernetes"
+	rbacutils "github.com/percona/everest/pkg/rbac/utils"
 )
 
 // Adapter is the ConfigMap adapter for Casbin.
@@ -75,8 +75,7 @@ func (a *Adapter) LoadPolicy(model model.Model) error {
 		if str == "" {
 			continue
 		}
-		err = persist.LoadPolicyLine(str, model)
-		if err != nil {
+		if err := rbacutils.LoadPolicyLine(str, model); err != nil {
 			a.l.Error("failed to load policy", zap.Error(err))
 			return err
 		}

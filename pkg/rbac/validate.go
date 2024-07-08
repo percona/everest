@@ -51,7 +51,7 @@ func checkRoles(roles []string, policies [][]string) error {
 			continue
 		}
 		if !slices.Contains(roles, roleName) {
-			return fmt.Errorf("role %s is invalid", roleName)
+			return fmt.Errorf("role '%s' does not exist", roleName)
 		}
 	}
 	return nil
@@ -62,7 +62,7 @@ func validateTerms(terms []string) error {
 	compiled := regexp.MustCompile(pattern)
 	for _, term := range terms {
 		if !compiled.MatchString(term) {
-			return fmt.Errorf("invalid policy term: %s", term)
+			return fmt.Errorf("invalid policy term '%s'", term)
 		}
 	}
 	return nil
@@ -74,12 +74,12 @@ func newKubeOrFileEnforcer(
 	kubeClient *kubernetes.Kubernetes,
 	filePath string,
 ) (e *casbin.Enforcer, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("%v", r)
-			e = nil
-		}
-	}()
+	// defer func() {
+	// 	if r := recover(); r != nil {
+	// 		err = fmt.Errorf("cannot create enforcer: %v", r)
+	// 		e = nil
+	// 	}
+	// }()
 	if filePath != "" {
 		return NewEnforcerFromFilePath(filePath)
 	}
