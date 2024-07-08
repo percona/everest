@@ -102,6 +102,7 @@ var (
 	errDuplicatedStoragePG           = errors.New("postgres clusters can't use the same storage for the different schedules")
 	errStorageDeletionPG             = errors.New("the existing postgres schedules can't be deleted")
 	errStorageChangePG               = errors.New("the existing postgres schedules can't change their storage")
+	errEditBackupStorageInUse        = errors.New("can't edit bucket, region or url of the backup storage in use")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -346,6 +347,14 @@ func (e *EverestServer) validateUpdateBackupStorageRequest(
 		return nil, err
 	}
 
+	used, err := e.kubeClient.IsBackupStorageUsed(ctx.Request().Context(), e.kubeClient.Namespace(), backupStorageName, nil)
+	if err != nil {
+		return nil, err
+	}
+	if used && basicStorageParamsAreChanged(bs, params) {
+		return nil, errEditBackupStorageInUse
+	}
+
 	url := &bs.Spec.EndpointURL
 	if params.Url != nil {
 		if ok := validateURL(*params.Url); !ok {
@@ -407,12 +416,25 @@ func (e *EverestServer) validateUpdateBackupStorageRequest(
 		region = *params.Region
 	}
 
-	err := validateBackupStorageAccess(ctx, string(bs.Spec.Type), url, bucketName, region, accessKey, secretKey, pointer.Get(params.VerifyTLS), pointer.Get(params.ForcePathStyle), l)
+	err = validateBackupStorageAccess(ctx, string(bs.Spec.Type), url, bucketName, region, accessKey, secretKey, pointer.Get(params.VerifyTLS), pointer.Get(params.ForcePathStyle), l)
 	if err != nil {
 		return nil, err
 	}
 
 	return &params, nil
+}
+
+func basicStorageParamsAreChanged(bs *everestv1alpha1.BackupStorage, params UpdateBackupStorageParams) bool {
+	if params.Url != nil && bs.Spec.EndpointURL != pointer.GetString(params.Url) {
+		return true
+	}
+	if params.BucketName != nil && bs.Spec.Bucket != pointer.GetString(params.BucketName) {
+		return true
+	}
+	if params.Region != nil && bs.Spec.Region != pointer.GetString(params.Region) {
+		return true
+	}
+	return false
 }
 
 func validateCreateBackupStorageRequest(ctx echo.Context, namespaces []string, l *zap.SugaredLogger) (*CreateBackupStorageParams, error) {
