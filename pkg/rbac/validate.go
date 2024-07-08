@@ -74,12 +74,12 @@ func newKubeOrFileEnforcer(
 	kubeClient *kubernetes.Kubernetes,
 	filePath string,
 ) (e *casbin.Enforcer, err error) {
-	// defer func() {
-	// 	if r := recover(); r != nil {
-	// 		err = fmt.Errorf("cannot create enforcer: %v", r)
-	// 		e = nil
-	// 	}
-	// }()
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("cannot create enforcer: %v", r)
+			e = nil
+		}
+	}()
 	if filePath != "" {
 		return NewEnforcerFromFilePath(filePath)
 	}
