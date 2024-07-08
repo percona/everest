@@ -28,6 +28,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // NewValidateCommand returns a new command for validating RBAC.
@@ -51,11 +52,11 @@ func NewValidateCommand(l *zap.SugaredLogger) *cobra.Command {
 				client, err := kubernetes.New(kubeconfigPath, l)
 				if err != nil {
 					var u *url.Error
-					if errors.As(err, &u) {
+					if errors.As(err, &u) || errors.Is(err, clientcmd.ErrEmptyConfig) {
 						l.Error("Could not connect to Kubernetes. " +
 							"Make sure Kubernetes is running and is accessible from this computer/server.")
-						os.Exit(1)
 					}
+					os.Exit(1)
 				}
 				k = client
 			}
