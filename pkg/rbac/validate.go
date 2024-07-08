@@ -9,8 +9,9 @@ import (
 	"strings"
 
 	"github.com/casbin/casbin/v2"
-	"github.com/percona/everest/pkg/kubernetes"
 	"go.uber.org/zap"
+
+	"github.com/percona/everest/pkg/kubernetes"
 )
 
 var (

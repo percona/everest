@@ -2,9 +2,10 @@
 package settings
 
 import (
-	"github.com/percona/everest/commands/settings/rbac"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+
+	"github.com/percona/everest/commands/settings/rbac"
 )
 
 // NewRBACCmd returns an new RBAC sub-command.

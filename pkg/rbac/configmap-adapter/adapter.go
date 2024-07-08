@@ -41,7 +41,8 @@ type Adapter struct {
 func New(
 	l *zap.SugaredLogger,
 	kubeClient *kubernetes.Kubernetes,
-	namespacedName types.NamespacedName) *Adapter {
+	namespacedName types.NamespacedName,
+) *Adapter {
 	return &Adapter{
 		kubeClient:     kubeClient,
 		namespacedName: namespacedName,

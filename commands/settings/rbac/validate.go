@@ -22,13 +22,14 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/output"
-	"github.com/percona/everest/pkg/rbac"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/output"
+	"github.com/percona/everest/pkg/rbac"
 )
 
 // NewValidateCommand returns a new command for validating RBAC.
