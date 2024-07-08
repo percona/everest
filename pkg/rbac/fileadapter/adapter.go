@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/casbin/casbin/v2/model"
+
 	rbacutils "github.com/percona/everest/pkg/rbac/utils"
 )
 
