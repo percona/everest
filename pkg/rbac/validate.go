@@ -60,7 +60,7 @@ func checkResourceNames(policies [][]string) error {
 			continue
 		}
 		if _, ok := knownResources[resourceName]; !ok {
-			return errors.New(fmt.Sprintf("unknown resource name '%s'", resourceName))
+			return fmt.Errorf("unknown resource name '%s'", resourceName)
 		}
 	}
 	return nil
