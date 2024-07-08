@@ -50,12 +50,16 @@ func checkResourceNames(policies [][]string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get resource path map: %w", err)
 	}
+	knownResources := map[string]struct{}{}
+	for _, resource := range resourcePathMap {
+		knownResources[resource] = struct{}{}
+	}
 	for _, policy := range policies {
 		resourceName := policy[1]
 		if resourceName == "*" {
 			continue
 		}
-		if _, ok := resourcePathMap[resourceName]; !ok {
+		if _, ok := knownResources[resourceName]; !ok {
 			return errors.New(fmt.Sprintf("unknown resource name '%s'", resourceName))
 		}
 	}
