@@ -14,10 +14,8 @@ import (
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
-var (
-	// ErrPolicySyntax is returned when a policy has a syntax error.
-	errPolicySyntax = errors.New("policy syntax error")
-)
+// ErrPolicySyntax is returned when a policy has a syntax error.
+var errPolicySyntax = errors.New("policy syntax error")
 
 // ValidatePolicy validates a policy from either Kubernetes or local file.
 func ValidatePolicy(ctx context.Context, k *kubernetes.Kubernetes, filepath string) error {
