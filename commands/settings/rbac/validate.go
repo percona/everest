@@ -64,11 +64,11 @@ func NewValidateCommand(l *zap.SugaredLogger) *cobra.Command {
 
 			err := rbac.ValidatePolicy(cmd.Context(), k, policyFilepath)
 			if err != nil {
-				fmt.Fprintf(os.Stdout, output.Failure("Invalid"))
-				fmt.Fprintf(os.Stdout, err.Error())
+				fmt.Fprintln(os.Stdout, output.Failure("Invalid"))
+				fmt.Fprintln(os.Stdout, err.Error())
 				os.Exit(1)
 			}
-			fmt.Fprintf(os.Stdout, output.Success("Valid"))
+			fmt.Fprintln(os.Stdout, output.Success("Valid"))
 		},
 	}
 	initValidateFlags(cmd)

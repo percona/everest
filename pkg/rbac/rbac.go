@@ -98,7 +98,7 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 }
 
 // NewEnforcerFromFilePath creates a new Casbin enforcer with the policy stored at the given filePath.
-func NewEnforcerFromFilePath(ctx context.Context, filePath string) (*casbin.Enforcer, error) {
+func NewEnforcerFromFilePath(filePath string) (*casbin.Enforcer, error) {
 	model, err := getModel()
 	if err != nil {
 		return nil, err

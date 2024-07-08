@@ -18,11 +18,11 @@ type Adapter struct {
 
 // New returns a new adapter that reads a policy located at the given path.
 func New(path string) (*Adapter, error) {
-	f, err := os.Open(path)
+	f, err := os.Open(path) //nolint:gosec
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 
 	content, err := io.ReadAll(f)
 	if err != nil {

@@ -46,6 +46,7 @@ func New(
 	return &Adapter{
 		kubeClient:     kubeClient,
 		namespacedName: namespacedName,
+		l:              l,
 	}
 }
 

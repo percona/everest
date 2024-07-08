@@ -8,6 +8,7 @@ import (
 )
 
 func TestValidatePolicy(t *testing.T) {
+	t.Parallel()
 	testcases := []struct {
 		path string
 		err  error
@@ -37,6 +38,7 @@ func TestValidatePolicy(t *testing.T) {
 	ctx := context.Background()
 	for i, tc := range testcases {
 		t.Run(fmt.Sprintf("test-%d", i), func(t *testing.T) {
+			t.Parallel()
 			err := ValidatePolicy(ctx, nil, tc.path)
 			if err != nil && tc.err == nil {
 				t.Fatalf("expected no error, got %v", err)

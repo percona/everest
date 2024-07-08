@@ -68,6 +68,7 @@ func validateTerms(terms []string) error {
 	return nil
 }
 
+//nolint:nonamedreturns
 func newKubeOrFileEnforcer(
 	ctx context.Context,
 	kubeClient *kubernetes.Kubernetes,
@@ -80,7 +81,7 @@ func newKubeOrFileEnforcer(
 		}
 	}()
 	if filePath != "" {
-		return NewEnforcerFromFilePath(ctx, filePath)
+		return NewEnforcerFromFilePath(filePath)
 	}
 	return NewEnforcer(ctx, kubeClient, zap.NewNop().Sugar())
 }
