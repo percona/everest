@@ -88,13 +88,12 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 		Namespace: common.SystemNamespace,
 		Name:      common.EverestRBACConfigMapName,
 	}
-	adapter := configmapadapter.New(kubeClient, cmReq)
+	adapter := configmapadapter.New(l, kubeClient, cmReq)
 
 	enforcer, err := casbin.NewEnforcer(model, adapter, false)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not create casbin enforcer"))
 	}
-
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
 }
 

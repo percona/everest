@@ -23,6 +23,7 @@ import (
 
 	"github.com/casbin/casbin/v2/model"
 	"github.com/casbin/casbin/v2/persist"
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/percona/everest/pkg/kubernetes"
@@ -33,10 +34,14 @@ import (
 type Adapter struct {
 	kubeClient     *kubernetes.Kubernetes
 	namespacedName types.NamespacedName
+	l              *zap.SugaredLogger
 }
 
 // New constructs a new adapter that manages a policy inside a ConfigMap.
-func New(kubeClient *kubernetes.Kubernetes, namespacedName types.NamespacedName) *Adapter {
+func New(
+	l *zap.SugaredLogger,
+	kubeClient *kubernetes.Kubernetes,
+	namespacedName types.NamespacedName) *Adapter {
 	return &Adapter{
 		kubeClient:     kubeClient,
 		namespacedName: namespacedName,
@@ -68,9 +73,12 @@ func (a *Adapter) LoadPolicy(model model.Model) error {
 		if str == "" {
 			continue
 		}
-		_ = persist.LoadPolicyLine(str, model)
+		err = persist.LoadPolicyLine(str, model)
+		if err != nil {
+			a.l.Error("failed to load policy", zap.Error(err))
+			return err
+		}
 	}
-
 	return nil
 }
 

@@ -2,22 +2,35 @@ package rbac
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 )
 
 func TestValidatePolicy(t *testing.T) {
 	testcases := []struct {
-		path    string
-		isValid bool
+		path string
+		err  error
 	}{
 		{
-			path:    "./testdata/policy-1-good.csv",
-			isValid: true,
+			path: "./testdata/policy-1-good.csv",
+			err:  nil,
 		},
 		{
-			path:    "./testdata/policy-2-bad.csv",
-			isValid: false,
+			path: "./testdata/policy-2-bad.csv",
+			err:  errPolicySyntax,
+		},
+		{
+			path: "./testdata/policy-3-bad.csv",
+			err:  errPolicySyntax,
+		},
+		{
+			path: "./testdata/policy-4-bad.csv",
+			err:  errRoleNotFound,
+		},
+		{
+			path: "./testdata/policy-5-bad.csv",
+			err:  errPolicySyntax,
 		},
 	}
 
@@ -25,11 +38,14 @@ func TestValidatePolicy(t *testing.T) {
 	for i, tc := range testcases {
 		t.Run(fmt.Sprintf("test-%d", i), func(t *testing.T) {
 			err := ValidatePolicy(ctx, nil, tc.path)
-			if tc.isValid && err != nil {
-				t.Errorf("expected no error, got %v", err)
+			if err != nil && tc.err == nil {
+				t.Fatalf("expected no error, got %v", err)
 			}
-			if !tc.isValid && err == nil {
-				t.Errorf("expected error, got nil")
+			if err == nil && tc.err != nil {
+				t.Fatalf("expected error %v, got nil", tc.err)
+			}
+			if !errors.Is(err, tc.err) {
+				t.Fatalf("unexpected error %v", err)
 			}
 		})
 	}
