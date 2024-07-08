@@ -199,6 +199,9 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 			namespace := c.Param("namespace")
 			name := c.Param("name")
 			object = namespace + "/" + name
+		case "namespaces":
+			name := c.Param("name")
+			object = name
 		}
 
 		action, ok := actionMethodMap[c.Request().Method]
