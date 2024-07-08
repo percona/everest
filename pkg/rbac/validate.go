@@ -50,7 +50,7 @@ func checkResourceNames(policies [][]string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get resource path map: %w", err)
 	}
-	knownResources := map[string]struct{}{}
+	knownResources := make(map[string]struct{})
 	for _, resource := range resourcePathMap {
 		knownResources[resource] = struct{}{}
 	}
