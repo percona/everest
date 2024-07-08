@@ -1,3 +1,4 @@
+// Package utils contains utility functions for RBAC.
 package utils
 
 import (
