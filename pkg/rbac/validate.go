@@ -17,8 +17,6 @@ import (
 var (
 	// ErrPolicySyntax is returned when a policy has a syntax error.
 	errPolicySyntax = errors.New("policy syntax error")
-	// ErrRoleNotFound is returned when a role is not found.
-	errRoleNotFound = errors.New("role not found")
 )
 
 // ValidatePolicy validates a policy from either Kubernetes or local file.
@@ -39,7 +37,29 @@ func ValidatePolicy(ctx context.Context, k *kubernetes.Kubernetes, filepath stri
 	// ensure that non-existent roles are not used.
 	roles := enforcer.GetAllRoles()
 	if err := checkRoles(roles, policy); err != nil {
-		return errors.Join(errRoleNotFound, err)
+		return errors.Join(errPolicySyntax, err)
+	}
+
+	// ensure that non-existent resources are not used.
+	if err := checkResourceNames(policy); err != nil {
+		return errors.Join(errPolicySyntax, err)
+	}
+	return nil
+}
+
+func checkResourceNames(policies [][]string) error {
+	resourcePathMap, _, err := buildPathResourceMap("")
+	if err != nil {
+		return fmt.Errorf("failed to get resource path map: %w", err)
+	}
+	for _, policy := range policies {
+		resourceName := policy[1]
+		if resourceName == "*" {
+			continue
+		}
+		if _, ok := resourcePathMap[resourceName]; !ok {
+			return errors.New(fmt.Sprintf("unknown resource name '%s'", resourceName))
+		}
 	}
 	return nil
 }

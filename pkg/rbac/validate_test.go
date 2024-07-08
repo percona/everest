@@ -27,7 +27,7 @@ func TestValidatePolicy(t *testing.T) {
 		},
 		{
 			path: "./testdata/policy-4-bad.csv",
-			err:  errRoleNotFound,
+			err:  errPolicySyntax,
 		},
 		{
 			path: "./testdata/policy-5-bad.csv",
