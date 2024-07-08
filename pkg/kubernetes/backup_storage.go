@@ -104,9 +104,7 @@ func (k *Kubernetes) IsBackupStorageUsed(ctx context.Context, namespace, backupS
 					return true, nil
 				}
 			}
-
 		}
-		return false, nil
 	}
 
 	return false, nil
