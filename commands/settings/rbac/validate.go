@@ -17,13 +17,11 @@
 package rbac
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/url"
 	"os"
 
-	"github.com/casbin/casbin/v2"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
 	"github.com/percona/everest/pkg/rbac"
@@ -41,15 +39,31 @@ func NewValidateCommand(l *zap.SugaredLogger) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initValidateViperFlags(cmd)
 
-			_, err := newEnforcer(cmd.Context(), l)
-			if err != nil {
-				var u *url.Error
-				if errors.As(err, &u) {
-					l.Error("Could not connect to Kubernetes. " +
-						"Make sure Kubernetes is running and is accessible from this computer/server.")
-					os.Exit(1)
+			kubeconfigPath := viper.GetString("kubeconfig")
+			policyFilepath := viper.GetString("policy-file")
+			if kubeconfigPath == "" && policyFilepath == "" {
+				l.Error("Either --kubeconfig or --policy-file must be set")
+				os.Exit(1)
+			}
+
+			var k *kubernetes.Kubernetes
+			if kubeconfigPath != "" {
+				client, err := kubernetes.New(kubeconfigPath, l)
+				if err != nil {
+					var u *url.Error
+					if errors.As(err, &u) {
+						l.Error("Could not connect to Kubernetes. " +
+							"Make sure Kubernetes is running and is accessible from this computer/server.")
+						os.Exit(1)
+					}
 				}
-				fmt.Fprintf(os.Stdout, output.Failure("Invalid"), ": ", err.Error())
+				k = client
+			}
+
+			err := rbac.ValidatePolicy(cmd.Context(), k, policyFilepath)
+			if err != nil {
+				fmt.Fprintf(os.Stdout, output.Failure("Invalid"))
+				fmt.Fprintf(os.Stdout, err.Error())
 				os.Exit(1)
 			}
 			fmt.Fprintf(os.Stdout, output.Success("Valid"))
@@ -57,28 +71,6 @@ func NewValidateCommand(l *zap.SugaredLogger) *cobra.Command {
 	}
 	initValidateFlags(cmd)
 	return cmd
-}
-
-func newEnforcer(
-	ctx context.Context,
-	l *zap.SugaredLogger) (enf *casbin.Enforcer, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("%v", r)
-			enf = nil
-		}
-	}()
-
-	if filePath := viper.GetString("policy-file"); filePath != "" {
-		return rbac.NewEnforcerFromFilePath(context.Background(), filePath)
-	}
-
-	kubeconfigPath := viper.GetString("kubeconfig")
-	k, err := kubernetes.New(kubeconfigPath, l)
-	if err != nil {
-		return nil, err
-	}
-	return rbac.NewEnforcer(ctx, k, l)
 }
 
 func initValidateFlags(cmd *cobra.Command) {

@@ -30,7 +30,6 @@ func ValidatePolicy(ctx context.Context, k *kubernetes.Kubernetes, filepath stri
 	// check basic policy syntax.
 	policy := enforcer.GetPolicy()
 	for _, policy := range policy {
-		fmt.Println(policy)
 		if err := validateTerms(policy); err != nil {
 			return errors.Join(errPolicySyntax, err)
 		}
