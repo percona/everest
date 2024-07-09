@@ -67,12 +67,18 @@ func (e *EverestServer) CreateBackupStorage(ctx echo.Context) error { //nolint:f
 			Message: pointer.ToString("Failed getting watched namespaces"),
 		})
 	}
+	c := ctx.Request().Context()
+	existingStorages, err := e.kubeClient.ListBackupStorages(c, e.kubeClient.Namespace())
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed getting existing backup storages"),
+		})
+	}
 
-	params, err := validateCreateBackupStorageRequest(ctx, namespaces, e.l)
+	params, err := validateCreateBackupStorageRequest(ctx, namespaces, e.l, existingStorages)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
-	c := ctx.Request().Context()
 	s, err := e.kubeClient.GetBackupStorage(c, e.kubeClient.Namespace(), params.Name)
 	if err != nil && !k8serrors.IsNotFound(err) {
 		e.l.Error(err)
