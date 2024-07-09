@@ -103,7 +103,7 @@ var (
 	errStorageDeletionPG             = errors.New("the existing postgres schedules can't be deleted")
 	errStorageChangePG               = errors.New("the existing postgres schedules can't change their storage")
 	errDuplicatedBackupStorage       = errors.New("backup storages with the same url, bucket and url are not allowed")
-	errEditBackupStorageInUse        = errors.New("can't edit bucket, region or url of the backup storage in use")
+	errEditBackupStorageInUse        = errors.New("can't edit bucket or region of the backup storage in use")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -478,9 +478,6 @@ func validateDuplicateStorageByUpdate(
 }
 
 func basicStorageParamsAreChanged(bs *everestv1alpha1.BackupStorage, params UpdateBackupStorageParams) bool {
-	if params.Url != nil && bs.Spec.EndpointURL != pointer.GetString(params.Url) {
-		return true
-	}
 	if params.BucketName != nil && bs.Spec.Bucket != pointer.GetString(params.BucketName) {
 		return true
 	}
