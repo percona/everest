@@ -1020,29 +1020,27 @@ func (k *Kubernetes) DeleteEverest(ctx context.Context, namespace string, versio
 }
 
 // GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.
-func (k *Kubernetes) GetDBNamespaces(ctx context.Context, namespace string) ([]string, error) {
-	deployment, err := k.GetDeployment(ctx, EverestOperatorDeploymentName, namespace)
+func (k *Kubernetes) GetDBNamespaces(ctx context.Context) ([]string, error) {
+	// List all namespaces managed by everest.
+	namespaceList, err := k.ListNamespaces(ctx, metav1.ListOptions{
+		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
+			MatchLabels: map[string]string{
+				common.KubernetesManagedByLabel: common.Everest,
+			},
+		}),
+	})
 	if err != nil {
-		// If the operator is not found, we assume that no namespaces are being watched.
-		if apierrors.IsNotFound(err) {
-			return []string{}, nil
-		}
-		return nil, err
+		return nil, errors.Join(err, errors.New("failed to get watched namespaces"))
 	}
-
-	for _, container := range deployment.Spec.Template.Spec.Containers {
-		if container.Name != everestOperatorContainerName {
+	internalNs := []string{common.SystemNamespace, common.MonitoringNamespace}
+	result := make([]string, 0, len(namespaceList.Items))
+	for _, ns := range namespaceList.Items {
+		if slices.Contains(internalNs, ns.GetName()) {
 			continue
 		}
-		for _, envVar := range container.Env {
-			if envVar.Name != EverestDBNamespacesEnvVar {
-				continue
-			}
-			return strings.Split(envVar.Value, ","), nil
-		}
+		result = append(result, ns.GetName())
 	}
-
-	return nil, errors.New("failed to get watched namespaces")
+	return result, nil
 }
 
 // WaitForRollout waits for rollout of a provided deployment in the provided namespace.

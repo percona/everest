@@ -28,6 +28,8 @@ const (
 
 	// SystemNamespace is the namespace where everest is installed.
 	SystemNamespace = "everest-system"
+	// MonitoringNamespace is the namespace where monitoring configs are created.
+	MonitoringNamespace = "everest-monitoring"
 	// PerconaEverestDeploymentName stores the name of everest API Server deployment.
 	PerconaEverestDeploymentName = "percona-everest"
 	// PerconaEverestOperatorDeploymentName stores the name of everest operator deployment.
@@ -54,8 +56,26 @@ const (
 	EverestSettingsConfigMapName = "everest-settings"
 	// EverestTokenCookie is the name of the cookie that holds the token.
 	EverestTokenCookie = "everest_token"
+	// EverestRBACConfigMapName is the name of the Everest RBAC ConfigMap.
+	EverestRBACConfigMapName = "everest-rbac"
 	// KubernetesManagedByLabel is the label used to identify resources managed by Everest.
 	KubernetesManagedByLabel = "app.kubernetes.io/managed-by"
 	// ForegroundDeletionFinalizer is the finalizer used to delete resources in foreground.
 	ForegroundDeletionFinalizer = "foregroundDeletion"
+
+	// EverestAPIExtnResourceName is the name of the Everest API extension header
+	// that holds the name of the resource being served by an API endpoint.
+	EverestAPIExtnResourceName = "x-everest-resource-name"
 )
+
+// InitialPasswordWarningMessage is the message that is shown to the user after the installation/upgrade,
+// regarding insecure admin password.
+const InitialPasswordWarningMessage = `To view the password for the 'admin' user, run the following command:
+
+everestctl accounts initial-admin-password
+
+
+IMPORTANT: This password is NOT stored in a hashed format. To secure it, update the password using the following command:
+
+everestctl accounts set-password --username admin
+`

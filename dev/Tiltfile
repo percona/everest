@@ -76,6 +76,12 @@ k8s_resource(
   new_name='namespaces',
 )
 
+for namespace in namespaces:
+  local_resource('update-label-%s' % namespace, 
+  cmd='kubectl label namespace %s --overwrite app.kubernetes.io/managed-by=everest' % namespace, 
+  resource_deps = [
+    'namespaces',
+  ])
 
 #################################
 ## Install DB engine operators ##
@@ -408,6 +414,7 @@ k8s_resource(
     'everest-admin-cluster-role-binding:clusterrolebinding',
     'everest-jwt:secret',
     'everest-accounts:secret',
+    'everest-rbac:configmap',
   ],
   new_name='everest',
   port_forwards=8080,

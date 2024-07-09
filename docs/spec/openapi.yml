@@ -24,8 +24,8 @@ tags:
     description: Everything related to the Backup storage
   - name: Monitoring
     description: Everything related to monitoring
-  - name: Authentication
-    description: Everything related to authentication
+  - name: Authentication & Authorization
+    description: Everything related to authentication and authorization
   - name: General info
     description: General information about the Everest installation
   - name: Operators
@@ -36,7 +36,7 @@ paths:
   '/session':
     post:
       tags:
-        - Authentication
+        - Authentication & Authorization
       security: []
       summary: Everest UI Login
       description: |
@@ -72,6 +72,85 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserCredentials'
+  '/permissions':
+    get:
+      tags:
+        - Authentication & Authorization
+      summary: Get user permissions
+      description: |
+        This API returns a list of permissions for the user that is currently logged in.
+        
+        *Example:*
+        Assume the following RBAC policy, and users `alice` and `bob`:
+        ```
+        p, adminrole:role, namespaces, read, *
+        p, adminrole:role, database-engines, *, */*
+        p, adminrole:role, database-clusters, *, */*
+        p, bob, database-clusters, *, */*
+
+        g, alice, adminrole:role
+        ```
+
+        The API will return the following permissions for `alice`:
+        ```
+        {
+          "permissions": [
+            [
+                "alice",
+                "namespaces",
+                "read",
+                "*"
+            ],
+            [
+                "alice",
+                "database-engines",
+                "*",
+                "*/*"
+            ],
+            [
+                "alice",
+                "database-clusters",
+                "*",
+                "*/*"
+            ]
+          ]
+        }
+        ```
+
+        And the following permissions for `bob`:
+        ```
+        {
+          "permissions": [
+            [
+                "bob",
+                "database-clusters",
+                "*",
+                "*/*"
+            ]
+          ]
+        }
+        ```
+
+      operationId: getUserPermissions
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPermissions'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   '/namespaces':
     get:
       tags:
@@ -172,6 +251,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters':
+    x-everest-resource-name: database-clusters
     post:
       tags:
         - Database Cluster
@@ -258,6 +338,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}':
+    x-everest-resource-name: database-clusters
     get:
       tags:
         - Database Cluster
@@ -388,6 +469,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}/backups':
+    x-everest-resource-name: database-clusters
     get:
       tags:
         - Backup
@@ -428,6 +510,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}/restores':
+    x-everest-resource-name: database-clusters
     get:
       tags:
         - Restore
@@ -468,6 +551,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}/credentials':
+    x-everest-resource-name: database-clusters
     get:
       tags:
         - Database Cluster
@@ -508,6 +592,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}/pitr':
+    x-everest-resource-name: database-clusters
     get:
       tags:
         - Database Cluster
@@ -548,6 +633,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}/components':
+    x-everest-resource-name: database-clusters
     get:
       tags:
         - Database Cluster
@@ -588,6 +674,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines':
+    x-everest-resource-name: database-engines
     get:
       tags:
         - Database Engine
@@ -622,6 +709,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines/{name}':
+    x-everest-resource-name: database-engines
     get:
       tags:
         - Database Engine
@@ -708,6 +796,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines/{name}/operator-version/preflight':
+    x-everest-resource-name: database-engines
     get:
       tags:
         - Operators
@@ -754,6 +843,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines/{name}/operator-version':
+    x-everest-resource-name: database-engines
     get:
       tags:
         - Operators
@@ -840,6 +930,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-cluster-restores':
+    x-everest-resource-name: database-cluster-restores
     post:
       tags:
         - Restore
@@ -893,6 +984,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DatabaseClusterRestore'
   '/namespaces/{namespace}/database-cluster-restores/{name}':
+    x-everest-resource-name: database-cluster-restores
     get:
       tags:
         - Restore
@@ -1024,6 +1116,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-cluster-backups':
+    x-everest-resource-name: database-cluster-backups
     post:
       tags:
         - Backup
@@ -1077,6 +1170,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DatabaseClusterBackup'
   '/namespaces/{namespace}/database-cluster-backups/{name}':
+    x-everest-resource-name: database-cluster-backups
     get:
       tags:
         - Backup
@@ -1162,6 +1256,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/backup-storages':
+    x-everest-resource-name: backup-storages
     post:
       tags:
         - Backup Storage
@@ -1243,6 +1338,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/backup-storages/{name}':
+    x-everest-resource-name: backup-storages
     get:
       tags:
         - Backup Storage
@@ -1344,6 +1440,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/monitoring-instances':
+    x-everest-resource-name: monitoring-instances
     post:
       tags:
         - Monitoring
@@ -1407,6 +1504,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/monitoring-instances/{name}':
+    x-everest-resource-name: monitoring-instances
     get:
       tags:
         - Monitoring
@@ -1541,6 +1639,15 @@ components:
       type: array
       items:
         type: string
+    UserPermissions:
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
     UserCredentials:
       type: object
       properties:
