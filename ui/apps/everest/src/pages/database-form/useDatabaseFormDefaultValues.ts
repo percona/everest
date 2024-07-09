@@ -47,8 +47,8 @@ export const useDatabasePageDefaultValues = (
     mode === 'new'
       ? DB_WIZARD_DEFAULTS
       : dbClusterRequestStatus === 'success'
-      ? DbClusterPayloadToFormValues(dbCluster, mode, namespace)
-      : { ...DB_WIZARD_DEFAULTS, [DbWizardFormFields.dbVersion]: '' }
+        ? DbClusterPayloadToFormValues(dbCluster, mode, namespace)
+        : { ...DB_WIZARD_DEFAULTS, [DbWizardFormFields.dbVersion]: '' }
   );
 
   useEffect(() => {

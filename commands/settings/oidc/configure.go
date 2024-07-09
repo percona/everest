@@ -48,7 +48,7 @@ func NewConfigureCommand(l *zap.SugaredLogger) *cobra.Command {
 			}
 
 			if err := op.Run(cmd.Context()); err != nil {
-				output.PrintError(err, l)
+				output.PrintError(err, l, false)
 				os.Exit(1)
 			}
 		},

@@ -27,7 +27,7 @@ rules:
     resources: ["databaseclusters", "databaseclusterbackups", "databaseclusterrestores", "backupstorages", "monitoringconfigs"]
     verbs: ["*"]
   - apiGroups: [""]
-    resources: ["secrets", "configmaps"]
+    resources: ["secrets", "configmaps", "namespaces"]
     verbs: ["*"]
   - apiGroups: [""]
     resources: ["nodes", "pods", "persistentvolumes"]
@@ -81,6 +81,22 @@ metadata:
 data:
   # username: admin | password: admin
   users.yaml: YWRtaW46CiAgcGFzc3dvcmRIYXNoOiBhZG1pbgogIGVuYWJsZWQ6IHRydWUKICBjYXBhYmlsaXRpZXM6CiAgICAtIGxvZ2lu
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: everest-rbac
+data:
+  policy.csv: |
+    p, adminrole:role, namespaces, read, *
+    p, adminrole:role, database-engines, *, */*
+    p, adminrole:role, database-clusters, *, */*
+    p, adminrole:role, database-cluster-backups, *, */*
+    p, adminrole:role, database-cluster-restores, *, */*
+    p, adminrole:role, database-clusters-credentials, read, */*
+    p, adminrole:role, backup-storages, *, */*
+    p, adminrole:role, monitoring-instances, *, */*
+    g, admin, adminrole:role
 ---
 apiVersion: apps/v1
 kind: Deployment

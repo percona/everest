@@ -40,6 +40,12 @@ func newUninstallCmd(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
+			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
+			if !enableLogging {
+				l = zap.NewNop().Sugar()
+			}
+			c.Pretty = !enableLogging
+
 			op, err := uninstall.NewUninstall(*c, l)
 			if err != nil {
 				l.Error(err)
@@ -47,7 +53,7 @@ func newUninstallCmd(l *zap.SugaredLogger) *cobra.Command {
 			}
 
 			if err := op.Run(cmd.Context()); err != nil {
-				output.PrintError(err, l)
+				output.PrintError(err, l, !enableLogging)
 				os.Exit(1)
 			}
 		},
@@ -68,6 +74,8 @@ func initUninstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
 	viper.BindPFlag("assume-yes", cmd.Flags().Lookup("assume-yes")) //nolint:errcheck,gosec
 	viper.BindPFlag("force", cmd.Flags().Lookup("force"))           //nolint:errcheck,gosec
+	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose"))       //nolint:errcheck,gosec
+	viper.BindPFlag("json", cmd.Flags().Lookup("json"))             //nolint:errcheck,gosec
 }
 
 func parseClusterConfig() (*uninstall.Config, error) {

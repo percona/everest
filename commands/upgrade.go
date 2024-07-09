@@ -46,6 +46,12 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
+			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
+			if !enableLogging {
+				l = zap.NewNop().Sugar()
+			}
+			c.Pretty = !enableLogging
+
 			op, err := upgrade.NewUpgrade(c, l)
 			if err != nil {
 				l.Error(err)
@@ -53,7 +59,7 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 			}
 
 			if err := op.Run(cmd.Context()); err != nil {
-				output.PrintError(err, l)
+				output.PrintError(err, l, !enableLogging)
 				os.Exit(1)
 			}
 		},
@@ -66,12 +72,15 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 
 func initUpgradeFlags(cmd *cobra.Command) {
 	cmd.Flags().String("version-metadata-url", "https://check.percona.com", "URL to retrieve version metadata information from")
+	cmd.Flags().BoolP("logs", "l", false, "If set, logs are printed during the upgrade process")
 }
 
 func initUpgradeViperFlags(cmd *cobra.Command) {
 	viper.BindEnv("kubeconfig")                                                         //nolint:errcheck,gosec
 	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))                     //nolint:errcheck,gosec
 	viper.BindPFlag("version-metadata-url", cmd.Flags().Lookup("version-metadata-url")) //nolint:errcheck,gosec
+	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose"))                           //nolint:errcheck,gosec
+	viper.BindPFlag("json", cmd.Flags().Lookup("json"))                                 //nolint:errcheck,gosec
 }
 
 func parseUpgradeConfig() (*upgrade.Config, error) {
