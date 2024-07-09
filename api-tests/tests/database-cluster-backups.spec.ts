@@ -49,6 +49,7 @@ test('create/delete database cluster backups', async ({ request, page }) => {
   expect(result.spec).toMatchObject(payload.spec)
 
   await th.deleteBackup(request, backupName)
+  await th.deleteDBCluster(request, page, clName)
   await waitClusterDeletion(request, page, clName)
   await th.deleteBackupStorage(request, bsName)
 })
@@ -164,9 +165,11 @@ test('list backups', async ({ request, page }) => {
   for (const payload of payloads) {
     await request.delete(`/v1/namespaces/${testsNs}/database-cluster-backups/${payload.metadata.name}`)
     response = await request.get(`/v1/namespaces/${testsNs}/database-cluster-backups/${payload.metadata.name}`)
-    checkObjectDeletion(response)
+    await checkObjectDeletion(response)
   }
 
+  await th.deleteDBCluster(request, page, clusterName1)
+  await th.deleteDBCluster(request, page, clusterName2)
   await waitClusterDeletion(request, page, clusterName1)
   await waitClusterDeletion(request, page, clusterName2)
   await th.deleteBackupStorage(request, bsName)
