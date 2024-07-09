@@ -74,7 +74,7 @@ export const createBackupStorage = async (request, name) => {
     name,
     url: 'http://custom-url',
     description: 'Dev storage',
-    bucketName: 'percona-test-backup-storage',
+    bucketName: suffixedName('percona-test-backup-storage'),
     region: 'us-east-2',
     accessKey: 'sdfs',
     secretKey: 'sdfsdfsd',

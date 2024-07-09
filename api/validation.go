@@ -101,6 +101,7 @@ var (
 	errDuplicatedSchedules           = errors.New("duplicated backup schedules are not allowed")
 	errDuplicatedStoragePG           = errors.New("postgres clusters can't use the same storage for the different schedules")
 	errStorageChangePG               = errors.New("the existing postgres schedules can't change their storage")
+	errDuplicatedBackupStorage       = errors.New("backup storages with the same url, bucket and url are not allowed")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -414,10 +415,23 @@ func (e *EverestServer) validateUpdateBackupStorageRequest(
 	return &params, nil
 }
 
-func validateCreateBackupStorageRequest(ctx echo.Context, namespaces []string, l *zap.SugaredLogger) (*CreateBackupStorageParams, error) {
+func validateCreateBackupStorageRequest(
+	ctx echo.Context,
+	namespaces []string,
+	l *zap.SugaredLogger,
+	existingStorages *everestv1alpha1.BackupStorageList,
+) (*CreateBackupStorageParams, error) {
 	var params CreateBackupStorageParams
 	if err := ctx.Bind(&params); err != nil {
 		return nil, err
+	}
+
+	for _, storage := range existingStorages.Items {
+		if storage.Spec.Region == params.Region &&
+			storage.Spec.EndpointURL == pointer.GetString(params.Url) &&
+			storage.Spec.Bucket == params.BucketName {
+			return nil, errDuplicatedBackupStorage
+		}
 	}
 
 	if err := validateRFC1035(params.Name, "name"); err != nil {
