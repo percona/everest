@@ -52,7 +52,7 @@ func PrintOutput(cmd *cobra.Command, l *zap.SugaredLogger, output interface{}) {
 }
 
 // PrintError formats and prints an error to logger.
-func PrintError(err error, l *zap.SugaredLogger) {
+func PrintError(err error, l *zap.SugaredLogger, prettyPrint bool) {
 	if errors.Is(err, common.ErrExitWithError) {
 		return
 	}
@@ -62,6 +62,9 @@ func PrintError(err error, l *zap.SugaredLogger) {
 	}
 
 	l.Error(err)
+	if prettyPrint {
+		fmt.Print(Failure("%s", err)) //nolint:forbidigo
+	}
 }
 
 //nolint:gochecknoglobals
