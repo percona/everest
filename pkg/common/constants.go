@@ -46,8 +46,6 @@ const (
 	EverestJWTSecretName = "everest-jwt"
 	// EverestJWTPrivateKeyFile is the path to the JWT private key.
 	EverestJWTPrivateKeyFile = "/etc/jwt/id_rsa"
-	// EverestJWTPublicKeyFile is the path to the JWT public key.
-	EverestJWTPublicKeyFile = "/etc/jwt/id_rsa.pub"
 
 	// EverestAdminUser is the name of the admin user.
 	EverestAdminUser = "admin"
