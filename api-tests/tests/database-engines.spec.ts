@@ -43,9 +43,9 @@ test('get/edit database engine versions', async ({ request }) => {
   const availableVersions = engineData.status.availableVersions
 
   expect(availableVersions.engine['6.0.5-4'].imageHash).toBe('b6f875974c59d8ea0174675c85f41668460233784cbf2cbe7ce5eca212ac5f6a')
-  expect(availableVersions.backup['2.3.0'].status).toBe('recommended')
+  expect(availableVersions.backup['2.4.1'].status).toBe('recommended')
 
-  const allowedVersions = ['6.0.5-4', '6.0.4-3', '5.0.7-6', '6.0.9-7']
+  const allowedVersions = ['6.0.5-4', '6.0.4-3', '5.0.7-6', '7.0.8-5']
 
   delete engineData.status
   engineData.spec.allowedVersions = allowedVersions

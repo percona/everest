@@ -28,6 +28,8 @@ type KubernetesConnector interface {
 	//
 	//nolint:ireturn,stylecheck
 	Accounts() accounts.Interface
+	// GetConfigMap returns k8s configmap by provided name and namespace.
+	GetConfigMap(ctx context.Context, name, namespace string) (*corev1.ConfigMap, error)
 	// GetDeployment returns k8s deployment by provided name and namespace.
 	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
 	// UpdateDeployment updates a deployment and returns the updated object.
@@ -107,7 +109,7 @@ type KubernetesConnector interface {
 	// DeleteEverest downloads the manifest file and deletes it from provisioned k8s cluster.
 	DeleteEverest(ctx context.Context, namespace string, version *goversion.Version) error
 	// GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.
-	GetDBNamespaces(ctx context.Context, namespace string) ([]string, error)
+	GetDBNamespaces(ctx context.Context) ([]string, error)
 	// WaitForRollout waits for rollout of a provided deployment in the provided namespace.
 	WaitForRollout(ctx context.Context, name, namespace string) error
 	// UpdateClusterRoleBinding updates namespaces list for the cluster role by provided name.

@@ -12,17 +12,13 @@ import { DbActionButton } from './db-action-button';
 import { Messages } from './db-cluster-details.messages';
 import { DBClusterDetailsTabs } from './db-cluster-details.types';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
-import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
+import { DbClusterContext } from './dbCluster.context';
+import { useContext } from 'react';
 
 export const DbClusterDetails = () => {
-  const { dbClusterName = '', namespace = '' } = useParams();
-  const { data: dbCluster, isLoading } = useDbCluster(
-    dbClusterName,
-    namespace,
-    {
-      enabled: !!namespace && !!dbClusterName,
-    }
-  );
+  const { dbClusterName = '' } = useParams();
+
+  const { dbCluster, isLoading } = useContext(DbClusterContext);
   const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
   const navigate = useNavigate();
   const currentTab = routeMatch?.params?.tabs;

@@ -9,12 +9,14 @@ import {
 export type UpgradeHeaderProps = {
   engine: DbEngine;
   preflightPayload?: OperatorUpgradePreflightPayload;
+  targetVersion: string;
   onUpgrade: () => void;
 } & BoxProps;
 
 export type ClusterStatusTableProps = {
   namespace: string;
   databases: OperatorUpgradeDb[];
+  dbEngine: DbEngine;
 };
 
 export type UpgradeModalProps = {

@@ -5,6 +5,7 @@ import { Schedule } from 'shared-types/dbCluster.types';
 import { useDbCluster } from '../db-cluster/useDbCluster';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { ScheduleFormData } from 'components/schedule-form-dialog/schedule-form/schedule-form-schema';
+import cronConverter from 'utils/cron-converter';
 
 const backupScheduleFormValuesToDbClusterPayload = (
   dbPayload: ScheduleFormData,
@@ -21,7 +22,7 @@ const backupScheduleFormValuesToDbClusterPayload = (
     scheduleName,
     retentionCopies,
   } = dbPayload;
-  const backupSchedule = getCronExpressionFromFormValues({
+  const originalSchedule = getCronExpressionFromFormValues({
     selectedTime,
     minute,
     hour,
@@ -29,10 +30,23 @@ const backupScheduleFormValuesToDbClusterPayload = (
     onDay,
     weekDay,
   });
+
+  const backupSchedule = cronConverter(
+    originalSchedule,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+    'UTC'
+  );
   let schedulesPayload: Schedule[] = [];
   if (mode === 'new') {
     schedulesPayload = [
-      ...(dbCluster.spec.backup?.schedules ?? []),
+      ...(dbCluster.spec.backup?.schedules || []).map((schedule) => ({
+        ...schedule,
+        schedule: cronConverter(
+          schedule.schedule,
+          Intl.DateTimeFormat().resolvedOptions().timeZone,
+          'UTC'
+        ),
+      })),
       {
         enabled: true,
         retentionCopies: parseInt(retentionCopies, 10),
@@ -47,9 +61,16 @@ const backupScheduleFormValuesToDbClusterPayload = (
   }
 
   if (mode === 'edit') {
-    const newSchedulesArray = dbCluster?.spec?.backup?.schedules && [
-      ...(dbCluster?.spec?.backup?.schedules || []),
-    ];
+    const newSchedulesArray = (dbCluster?.spec?.backup?.schedules || []).map(
+      (schedule) => ({
+        ...schedule,
+        schedule: cronConverter(
+          schedule.schedule,
+          Intl.DateTimeFormat().resolvedOptions().timeZone,
+          'UTC'
+        ),
+      })
+    );
     const editedScheduleIndex = newSchedulesArray?.findIndex(
       (item) => item.name === scheduleName
     );
@@ -76,8 +97,8 @@ const backupScheduleFormValuesToDbClusterPayload = (
       ...dbCluster?.spec,
       backup: {
         ...dbCluster.spec.backup,
-        enabled: true,
-        schedules: schedulesPayload,
+        enabled: schedulesPayload.length > 0,
+        schedules: schedulesPayload.length > 0 ? schedulesPayload : undefined,
       },
     },
   };
@@ -88,8 +109,21 @@ const deletedScheduleToDbClusterPayload = (
   dbCluster: DbCluster
 ): DbCluster => {
   const schedules = dbCluster?.spec?.backup?.schedules || [];
-  const filteredSchedules = schedules.filter(
-    (item) => item?.name !== scheduleName
+  const filteredSchedulesWithCronCorrection = schedules.reduce(
+    (result: Schedule[], schedule) => {
+      if (schedule?.name !== scheduleName) {
+        result.push({
+          ...schedule,
+          schedule: cronConverter(
+            schedule.schedule,
+            Intl.DateTimeFormat().resolvedOptions().timeZone,
+            'UTC'
+          ),
+        });
+      }
+      return result;
+    },
+    []
   );
 
   return {
@@ -100,8 +134,11 @@ const deletedScheduleToDbClusterPayload = (
       ...dbCluster?.spec,
       backup: {
         ...dbCluster.spec.backup,
-        enabled: true,
-        schedules: filteredSchedules,
+        enabled: filteredSchedulesWithCronCorrection.length > 0,
+        schedules:
+          filteredSchedulesWithCronCorrection.length > 0
+            ? filteredSchedulesWithCronCorrection
+            : undefined,
       },
     },
   };
