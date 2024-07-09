@@ -122,7 +122,7 @@ export const Small: Story = {
     docs: {
       description: {
         story: `\`\`\`ts
-<AutoCompleteInput textFieldProps={{size: 'small'}} />
+          <AutoCompleteInput textFieldProps={{size: 'small'}} />
         \`\`\``,
       },
     },
@@ -140,7 +140,7 @@ export const Medium: Story = {
     docs: {
       description: {
         story: `\`\`\`ts
-<AutoCompleteInput textFieldProps={{size: 'medium'}} />
+          <AutoCompleteInput textFieldProps={{size: 'medium'}} />
         \`\`\``,
       },
     },
@@ -158,7 +158,7 @@ export const Required: Story = {
     docs: {
       description: {
         story: `\`\`\`ts
-<AutoCompleteInput isRequired={true} />
+          <AutoCompleteInput isRequired={true} />
         \`\`\``,
       },
     },
@@ -177,7 +177,7 @@ export const Disabled: Story = {
     docs: {
       description: {
         story: `\`\`\`ts
-<AutoCompleteInput disabled={true} />
+          <AutoCompleteInput disabled={true} />
         \`\`\``,
       },
     },
@@ -196,12 +196,12 @@ export const Error: Story = {
     docs: {
       description: {
         story: `\`\`\`ts
-<AutoCompleteInput textFieldProps={
-  {
-    error: true,
-    helperText: 'Error helper text'
-  }
-} />
+          <AutoCompleteInput textFieldProps={
+            {
+              error: true,
+              helperText: 'Error helper text'
+            }
+          } />
         \`\`\``,
       },
     },
@@ -221,7 +221,7 @@ export const Loading: Story = {
     docs: {
       description: {
         story: `\`\`\`ts
-<AutoCompleteInput loading={true} />
+          <AutoCompleteInput loading={true} />
         \`\`\``,
       },
     },
