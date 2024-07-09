@@ -490,10 +490,24 @@ func basicStorageParamsAreChanged(bs *everestv1alpha1.BackupStorage, params Upda
 	return false
 }
 
-func validateCreateBackupStorageRequest(ctx echo.Context, namespaces []string, l *zap.SugaredLogger) (*CreateBackupStorageParams, error) {
+
+func validateCreateBackupStorageRequest(
+	ctx echo.Context,
+	namespaces []string,
+	l *zap.SugaredLogger,
+	existingStorages *everestv1alpha1.BackupStorageList,
+) (*CreateBackupStorageParams, error) {
 	var params CreateBackupStorageParams
 	if err := ctx.Bind(&params); err != nil {
 		return nil, err
+	}
+
+	for _, storage := range existingStorages.Items {
+		if storage.Spec.Region == params.Region &&
+			storage.Spec.EndpointURL == pointer.GetString(params.Url) &&
+			storage.Spec.Bucket == params.BucketName {
+			return nil, errDuplicatedBackupStorage
+		}
 	}
 
 	if err := validateRFC1035(params.Name, "name"); err != nil {
