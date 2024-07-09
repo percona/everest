@@ -490,7 +490,6 @@ func basicStorageParamsAreChanged(bs *everestv1alpha1.BackupStorage, params Upda
 	return false
 }
 
-
 func validateCreateBackupStorageRequest(
 	ctx echo.Context,
 	namespaces []string,
