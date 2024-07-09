@@ -1,0 +1,54 @@
+{{- if .Values.server.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: percona-everest
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: everest
+      app.kubernetes.io/component: everest
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: everest
+        app.kubernetes.io/component: everest
+    spec:
+      serviceAccountName: everest-admin
+      automountServiceAccountToken: true
+      volumes:
+      - name: jwt-secret
+        secret:
+          secretName: everest-jwt
+      containers:
+        - name: everest
+          image: perconalab/everest:{{  .Chart.Version }}
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 300
+            periodSeconds: 15
+          resources:
+            limits:
+              cpu: 200m
+              memory: 500Mi
+            requests:
+              cpu: 100m
+              memory: 20Mi
+          volumeMounts:
+          - name: jwt-secret
+            mountPath: /etc/jwt
+{{- end }}

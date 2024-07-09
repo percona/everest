@@ -1,0 +1,15 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: {{ .Values.catalogSourceName }}
+  namespace: {{ .Values.olm.namespace }}
+spec:
+  displayName: Everest Catalog
+  grpcPodConfig:
+    securityContextConfig: restricted
+  image: docker.io/perconalab/everest-catalog:{{ .Values.catalogSourceTag }}
+  publisher: Percona
+  sourceType: grpc
+  updateStrategy:
+    registryPoll:
+      interval: 45m

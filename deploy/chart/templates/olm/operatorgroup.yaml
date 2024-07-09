@@ -1,0 +1,10 @@
+{{- if .Values.olm.enabled }}
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: olm-operators
+  namespace: everest-olm
+spec:
+  targetNamespaces:
+    - everest-olm
+{{- end}}

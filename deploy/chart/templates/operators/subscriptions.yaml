@@ -1,0 +1,68 @@
+{{- range $i, $ns := .Values.namespaces }}
+{{- if $ns.mongodb.enabled }}
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: percona-server-mongodb-operator
+  namespace: {{ $ns.name }}
+spec:
+  channel: {{ $ns.mongodb.channel }}
+  installPlanApproval: Manual
+  name: percona-server-mongodb-operator
+  source: {{ $.Values.catalogSourceName }}
+  sourceNamespace: {{ $.Values.olm.namespace }}
+  config:
+    env:
+    - name: DISABLE_TELEMETRY
+      {{- if $.Values.telemetry }}
+      value: "true"
+      {{- else }}
+      value: "false"
+      {{- end }}
+{{- end }}
+---
+{{- if $ns.pxc.enabled }}
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: percona-xtradb-cluster-operator
+  namespace: {{ $ns.name }}
+spec:
+  channel: {{ $ns.pxc.channel }}
+  installPlanApproval: Manual
+  name: percona-xtradb-cluster-operator
+  source: {{ $.Values.catalogSourceName }}
+  sourceNamespace: {{ $.Values.olm.namespace }}
+  config:
+    env:
+    - name: DISABLE_TELEMETRY
+      {{- if $.Values.telemetry }}
+      value: "true"
+      {{- else }}
+      value: "false"
+      {{- end }}
+{{- end }}
+---
+{{- if $ns.pg.enabled }}
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: percona-postgresql-operator
+  namespace: {{ $ns.name }}
+spec:
+  channel: {{ $ns.pg.channel }}
+  installPlanApproval: Manual
+  name: percona-postgresql-operator
+  source: {{ $.Values.catalogSourceName }}
+  sourceNamespace: {{ $.Values.olm.namespace }}
+  config:
+    env:
+    - name: DISABLE_TELEMETRY
+      {{- if $.Values.telemetry }}
+      value: "true"
+      {{- else }}
+      value: "false"
+      {{- end }}
+{{- end }}
+---
+{{- end }}

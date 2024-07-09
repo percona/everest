@@ -1,0 +1,28 @@
+catalogSourceName: everest-catalog
+catalogSourceTag: latest
+telemetry: true
+server:
+  enabled: true
+olm:
+  enabled: true
+  namespace: everest-olm
+vmOperator:
+  enabled: true
+  namespace: everest-monitoring
+  channel: stable-v0
+everestOperator:
+  enabled: true
+  channel: fast-v0
+  version: 0.0.0
+namespaces:
+  - name: everest
+    mongodb:
+      enabled: true
+      channel: stable-v1
+    pxc:
+      enabled: true
+      channel: stable-v1
+    pg:
+      enabled: true
+      channel: stable-v2
+

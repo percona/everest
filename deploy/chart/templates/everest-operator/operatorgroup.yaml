@@ -1,0 +1,12 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: {{ .Release.Namespace }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  targetNamespaces:
+  - {{ .Release.Namespace }}
+  {{- range $i, $ns := .Values.namespaces }}
+  - {{ $ns.name }}
+  {{- end }}
+  upgradeStrategy: Default

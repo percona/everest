@@ -1,0 +1,6 @@
+{{- if .Values.vmOperator.enabled }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.vmOperator.namespace }}
+{{- end }}

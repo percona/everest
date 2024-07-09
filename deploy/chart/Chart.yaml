@@ -1,0 +1,7 @@
+apiVersion: v2
+name: everest
+displayName: Percona Everest
+description: A cloud-native database platform
+version: 0.0.0
+type: application
+appVersion: 0.0.0

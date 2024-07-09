@@ -1,0 +1,13 @@
+{{- if .Values.vmOperator.enabled }}
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: victoriametrics-operator
+  namespace: everest-monitoring
+spec:
+  channel: {{ .Values.vmOperator.channel }}
+  installPlanApproval: Manual
+  name: victoriametrics-operator
+  source: {{ .Values.catalogSourceName }}
+  sourceNamespace: {{ .Values.olm.namespace }}
+{{- end }}

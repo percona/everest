@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: everest-rbac
+  namespace: {{ .Release.Namespace }}
+data:
+  policy.csv: |
+    p, adminrole:role, namespaces, read, *
+    p, adminrole:role, database-engines, *, */*
+    p, adminrole:role, database-clusters, *, */*
+    p, adminrole:role, database-cluster-backups, *, */*
+    p, adminrole:role, database-cluster-restores, *, */*
+    p, adminrole:role, database-clusters-credentials, read, */*
+    p, adminrole:role, backup-storages, *, */*
+    p, adminrole:role, monitoring-instances, *, */*
+    g, admin, adminrole:role

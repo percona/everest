@@ -1,0 +1,27 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: everest-operator
+  namespace: {{ .Release.Namespace }}
+spec:
+  channel: {{ .Values.everestOperator.channel }}
+  installPlanApproval: Manual
+  name: everest-operator
+  source: {{ .Values.catalogSourceName }}
+  sourceNamespace: {{ .Values.olm.namespace }}
+  {{- if ne .Values.everestOperator.version "" }}
+  startingCSV: everest-operator.v{{ .Values.everestOperator.version }}
+  {{- end }}
+  config:
+    env:
+    - name: DISABLE_TELEMETRY
+      {{- if .Values.telemetry }}
+      value: "true"
+      {{- else }}
+      value: "false"
+      {{- end }}
+    - name: MONITORING_NAMESPACE
+      value: {{ .Values.vmOperator.namespace }}
+    - name: DB_NAMESPACES
+      value: {{ range $i, $ns := .Values.namespaces }}{{ if ne $i 0 }},{{ end }}{{ $ns.name }}{{ end }}
+

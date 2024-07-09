@@ -1,0 +1,19 @@
+{{- if .Values.server.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: everest
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: everest
+    app.kubernetes.io/component: everest
+spec:
+  selector:
+    app.kubernetes.io/component: everest
+    app.kubernetes.io/name: everest
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 8080
+---
+{{- end }}

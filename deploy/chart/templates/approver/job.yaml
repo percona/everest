@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: everest-installer
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-install
+spec:
+  template:
+    spec:
+      containers:
+        - image: bitnami/kubectl:latest
+          command:
+            - /bin/bash
+            - -c
+            - |
+              echo "Sleep for sometime to wait for all the resources to be created..."
+              sleep 30
+              for ns in $(echo $NAMESPACES | sed "s/,/ /g")
+              do
+                  echo "Approving InstallPlans in namespace $ns"
+                  for subscription in `kubectl -n $ns get subscriptions -o jsonpath='{.items[*].metadata.name}'`
+                  do
+                    echo "Processing subscription $subscription"
+                    installplan=$(kubectl -n $ns get subscriptions $subscription -o jsonpath='{.status.installPlanRef.name}')
+                    if [ "`kubectl -n $ns get installplan $installplan -o jsonpath="{.spec.approved}"`" == "false" ]; then
+                      echo "Approving Subscription $subscription with install plan $installplan"
+                      kubectl -n $ns patch installplan $installplan --type=json -p='[{"op":"replace","path": "/spec/approved", "value": true}]'
+                    else
+                      echo "Install Plan '$installplan' already approved"
+                    fi
+                  done
+              done
+          imagePullPolicy: Always
+          name: installplan-approver
+          env:
+            - name: NAMESPACES
+              value: {{ range $i, $ns := .Values.namespaces }}{{ if ne $i 0 }},{{ end }}{{ $ns.name }}{{ end }},{{ .Release.Namespace }},{{ .Values.vmOperator.namespace }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      serviceAccount: everest-installer
+      serviceAccountName: everest-installer
+      terminationGracePeriodSeconds: 30
