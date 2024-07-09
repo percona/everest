@@ -14,7 +14,7 @@
 // limitations under the License.
 import { expect, test } from '@playwright/test'
 import * as th from './helpers'
-import {checkError, testsNs} from "./helpers";
+import {checkError, testsNs, waitClusterDeletion} from "./helpers";
 
 
 test('create/update/delete database cluster restore', async ({ request, page }) => {
@@ -78,8 +78,8 @@ test('create/update/delete database cluster restore', async ({ request, page }) 
   expect(response.status()).toBe(404)
 
   await th.deleteBackup(request, backupName)
-  await th.deleteDBCluster(request, page, clName)
-  await th.deleteDBCluster(request, page, clName2)
+  await waitClusterDeletion(request, page, clName)
+  await waitClusterDeletion(request, page, clName2)
   await th.deleteBackupStorage(request, bsName)
 })
 
@@ -155,8 +155,8 @@ test('list restores', async ({ request, page }) => {
   }
 
   await th.deleteBackup(request, backupName)
-  await th.deleteDBCluster(request, page, clName1)
-  await th.deleteDBCluster(request, page, clName2)
+  await waitClusterDeletion(request, page, clName1)
+  await waitClusterDeletion(request, page, clName2)
   await th.deleteBackupStorage(request, bsName)
 })
 
@@ -208,6 +208,6 @@ test('create restore: validation errors', async ({ request, page }) => {
   expect(await response.text()).toContain('{"message":".spec cannot be empty"}')
 
   await th.deleteBackup(request, backupName)
-  await th.deleteDBCluster(request, page, clName)
+  await waitClusterDeletion(request, page, clName)
   await th.deleteBackupStorage(request, bsName)
 })
