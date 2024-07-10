@@ -167,3 +167,45 @@ func TestValidateTerms(t *testing.T) {
 		})
 	}
 }
+
+func TestCan(t *testing.T) {
+	t.Parallel()
+	testcases := []struct {
+		request []string
+		can     bool
+	}{
+		{
+			request: []string{"admin", "database-clusters", "create", "*"},
+			can:     true,
+		},
+		{
+			request: []string{"admin", "namespaces", "read", "*"},
+			can:     true,
+		},
+		{
+			request: []string{"adminrole:role", "database-cluster-restores", "create", "*"},
+			can:     true,
+		},
+		{
+			request: []string{"alice", "namespaces", "read", "*"},
+			can:     true,
+		},
+		{
+			request: []string{"alice", "database-clusters", "create", "*"},
+			can:     false,
+		},
+	}
+
+	for i, tc := range testcases {
+		t.Run(fmt.Sprintf("test-%d", i), func(t *testing.T) {
+			t.Parallel()
+			can, err := Can(context.Background(), "./testdata/policy-1-good.csv", nil, tc.request...)
+			if err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+			if can != tc.can {
+				t.Fatalf("expected %v, got %v", tc.can, can)
+			}
+		})
+	}
+}
