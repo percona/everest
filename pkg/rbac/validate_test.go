@@ -129,3 +129,41 @@ func TestCheckRoles(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateTerms(t *testing.T) {
+	t.Parallel()
+	testcases := []struct {
+		terms []string
+		valid bool
+	}{
+		{
+			terms: []string{"admin:role", "database-clusters", "create", "*"},
+			valid: true,
+		},
+		{
+			terms: []string{"admin!!:role", "database-clusters", "create", "*"},
+			valid: false,
+		},
+		{
+			terms: []string{"admin!!:role", "database clusters", "create", "*"},
+			valid: false,
+		},
+		{
+			terms: []string{"admin!!:role", "", "create", "*"},
+			valid: false,
+		},
+	}
+
+	for i, tc := range testcases {
+		t.Run(fmt.Sprintf("test-%d", i), func(t *testing.T) {
+			t.Parallel()
+			err := validateTerms(tc.terms)
+			if err != nil && tc.valid {
+				t.Fatalf("expected no error, got %v", err)
+			}
+			if err == nil && !tc.valid {
+				t.Fatalf("expected error, got nil")
+			}
+		})
+	}
+}
