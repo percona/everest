@@ -1055,6 +1055,10 @@ func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
 		return errInvalidVersion
 	}
 
+	// We will not allow downgrades.
+	if semver.Compare(newVersion, oldVersion) < 0 {
+		return errDBEngineDowngrade
+	}
 	// We will not allow major upgrades.
 	// Major upgrades are handled differently for different operators, so for now we simply won't allow it.
 	// For example:
@@ -1063,10 +1067,6 @@ func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
 	// - PG operator does not allow major upgrades.
 	if semver.Major(oldVersion) != semver.Major(newVersion) {
 		return errDBEngineMajorVersionUpgrade
-	}
-	// We will not allow downgrades.
-	if semver.Compare(newVersion, oldVersion) < 0 {
-		return errDBEngineDowngrade
 	}
 	return nil
 }
