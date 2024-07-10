@@ -1084,16 +1084,16 @@ func TestCheckSchedulesChanges(t *testing.T) {
 			err:        nil,
 		},
 		{
-			name:       "error: deleted storage",
+			name:       "ok: deleted storage",
 			oldCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A","backupStorageName":"bs1"},{"name":"B", "backupStorageName":"bs2"}]}}}`),
 			newCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A","backupStorageName":"bs1"}]}}}`),
-			err:        errStorageDeletionPG,
+			err:        nil,
 		},
 		{
-			name:       "error: deleted storage and new added",
+			name:       "ok: deleted storage and new added",
 			oldCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A", "backupStorageName":"bs1"},{"name": "B", "backupStorageName":"bs2"}]}}}`),
 			newCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A", "backupStorageName":"bs1"},{"name": "C", "backupStorageName":"bs2"}]}}}`),
-			err:        errStorageDeletionPG,
+			err:        nil,
 		},
 		{
 			name:       "error: edited storage",
