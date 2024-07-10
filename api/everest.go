@@ -39,11 +39,11 @@ import (
 	"golang.org/x/time/rate"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/percona/everest/api/rbac"
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/oidc"
+	"github.com/percona/everest/pkg/rbac"
 	"github.com/percona/everest/pkg/session"
 	"github.com/percona/everest/public"
 )
@@ -209,8 +209,12 @@ func (e *EverestServer) rbacMiddleware(ctx context.Context, basePath string) (ec
 	}
 	e.rbacEnforcer = enforcer
 
+	skipper, err := rbac.NewSkipper(basePath)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not create RBAC skipper"))
+	}
 	return casbinmiddleware.MiddlewareWithConfig(casbinmiddleware.Config{
-		Skipper:        rbac.Skipper,
+		Skipper:        skipper,
 		UserGetter:     rbac.GetUser,
 		EnforceHandler: rbac.NewEnforceHandler(basePath, enforcer),
 	}), nil

@@ -152,6 +152,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces':
+    x-everest-resource-name: namespaces
     get:
       tags:
         - General info
@@ -251,6 +252,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters':
+    x-everest-resource-name: database-clusters
     post:
       tags:
         - Database Cluster
@@ -337,6 +339,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}':
+    x-everest-resource-name: database-clusters
     get:
       tags:
         - Database Cluster
@@ -467,6 +470,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}/backups':
+    x-everest-resource-name: database-clusters
     get:
       tags:
         - Backup
@@ -507,6 +511,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}/restores':
+    x-everest-resource-name: database-clusters
     get:
       tags:
         - Restore
@@ -547,6 +552,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}/credentials':
+    x-everest-resource-name: database-clusters
     get:
       tags:
         - Database Cluster
@@ -587,6 +593,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}/pitr':
+    x-everest-resource-name: database-clusters
     get:
       tags:
         - Database Cluster
@@ -627,6 +634,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}/components':
+    x-everest-resource-name: database-clusters
     get:
       tags:
         - Database Cluster
@@ -667,6 +675,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines':
+    x-everest-resource-name: database-engines
     get:
       tags:
         - Database Engine
@@ -701,6 +710,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines/{name}':
+    x-everest-resource-name: database-engines
     get:
       tags:
         - Database Engine
@@ -787,6 +797,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines/{name}/operator-version/preflight':
+    x-everest-resource-name: database-engines
     get:
       tags:
         - Operators
@@ -833,6 +844,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines/{name}/operator-version':
+    x-everest-resource-name: database-engines
     get:
       tags:
         - Operators
@@ -919,6 +931,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-cluster-restores':
+    x-everest-resource-name: database-cluster-restores
     post:
       tags:
         - Restore
@@ -972,6 +985,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DatabaseClusterRestore'
   '/namespaces/{namespace}/database-cluster-restores/{name}':
+    x-everest-resource-name: database-cluster-restores
     get:
       tags:
         - Restore
@@ -1103,6 +1117,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-cluster-backups':
+    x-everest-resource-name: database-cluster-backups
     post:
       tags:
         - Backup
@@ -1156,6 +1171,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DatabaseClusterBackup'
   '/namespaces/{namespace}/database-cluster-backups/{name}':
+    x-everest-resource-name: database-cluster-backups
     get:
       tags:
         - Backup
@@ -1241,6 +1257,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/backup-storages':
+    x-everest-resource-name: backup-storages
     post:
       tags:
         - Backup Storage
@@ -1322,6 +1339,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/backup-storages/{name}':
+    x-everest-resource-name: backup-storages
     get:
       tags:
         - Backup Storage
@@ -1423,6 +1441,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/monitoring-instances':
+    x-everest-resource-name: monitoring-instances
     post:
       tags:
         - Monitoring
@@ -1486,6 +1505,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/monitoring-instances/{name}':
+    x-everest-resource-name: monitoring-instances
     get:
       tags:
         - Monitoring

@@ -31,11 +31,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	configmapadapter "github.com/percona/everest/api/rbac/configmap-adapter"
+	everestclient "github.com/percona/everest/client"
 	"github.com/percona/everest/data"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/kubernetes/informer"
+	configmapadapter "github.com/percona/everest/pkg/rbac/configmap-adapter"
+	"github.com/percona/everest/pkg/rbac/fileadapter"
 	"github.com/percona/everest/pkg/session"
 )
 
@@ -67,30 +69,45 @@ func refreshEnforcerInBackground(
 	return nil
 }
 
-// NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
-func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+func getModel() (model.Model, error) {
 	modelData, err := fs.ReadFile(data.RBAC, "rbac/model.conf")
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not read casbin model"))
 	}
+	return model.NewModelFromString(string(modelData))
+}
 
-	model, err := model.NewModelFromString(string(modelData))
+// NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
+func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+	model, err := getModel()
 	if err != nil {
-		return nil, errors.Join(err, errors.New("could not create casbin model"))
+		return nil, err
 	}
 
 	cmReq := types.NamespacedName{
-		Namespace: kubeClient.Namespace(),
+		Namespace: common.SystemNamespace,
 		Name:      common.EverestRBACConfigMapName,
 	}
-	adapter := configmapadapter.NewAdapter(kubeClient, cmReq)
+	adapter := configmapadapter.New(l, kubeClient, cmReq)
 
-	enforcer, err := casbin.NewEnforcer(model, adapter, true)
+	enforcer, err := casbin.NewEnforcer(model, adapter, false)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not create casbin enforcer"))
 	}
-
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
+}
+
+// NewEnforcerFromFilePath creates a new Casbin enforcer with the policy stored at the given filePath.
+func NewEnforcerFromFilePath(filePath string) (*casbin.Enforcer, error) {
+	model, err := getModel()
+	if err != nil {
+		return nil, err
+	}
+	adapter, err := fileadapter.New(filePath)
+	if err != nil {
+		return nil, err
+	}
+	return casbin.NewEnforcer(model, adapter)
 }
 
 // GetUser extracts the user from the JWT token in the context.
@@ -121,28 +138,44 @@ func GetUser(c echo.Context) (string, error) {
 	return subject, nil
 }
 
+// buildPathResourceMap builds a map of paths to resources and a list of resources.
+// Returns: (resourceMap, skipPaths, error) .
+func buildPathResourceMap(basePath string) (map[string]string, []string, error) {
+	swg, err := everestclient.GetSwagger()
+	if err != nil {
+		return nil, nil, errors.Join(err, errors.New("failed to get swagger"))
+	}
+
+	// parseEndpoint replaces the curly braces in the endpoint with colons.
+	// example: '/{namespace}/clusters' -> '/:namespace/clusters'
+	parseEndpoint := func(ep string) string {
+		parsed := strings.ReplaceAll(ep, "{", ":")
+		parsed = strings.ReplaceAll(parsed, "}", "")
+		return basePath + parsed
+	}
+
+	resourceMap := make(map[string]string)
+	skipPaths := []string{}
+	for path, pathItem := range swg.Paths.Map() {
+		parsedPath := parseEndpoint(path)
+		if val, ok := pathItem.Extensions[common.EverestAPIExtnResourceName]; ok {
+			if resourceName, ok := val.(string); ok {
+				resourceMap[parsedPath] = resourceName
+			}
+			continue
+		}
+		skipPaths = append(skipPaths, parsedPath)
+	}
+	return resourceMap, skipPaths, nil
+}
+
 // NewEnforceHandler returns a function that checks if a user is allowed to access a resource.
 func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.Context, user string) (bool, error) {
+	pathResourceMap, _, err := buildPathResourceMap(basePath)
+	if err != nil {
+		panic("failed to build path resource map: " + err.Error())
+	}
 	return func(c echo.Context, user string) (bool, error) {
-		pathResourceMap := map[string]string{
-			basePath + "/backup-storages":                                           "backup-storages",
-			basePath + "/backup-storages/:name":                                     "backup-storages",
-			basePath + "/monitoring-instances":                                      "monitoring-instances",
-			basePath + "/monitoring-instances/:name":                                "monitoring-instances",
-			basePath + "/namespaces/:namespace/database-engines":                    "database-engines",
-			basePath + "/namespaces/:namespace/database-engines/:name":              "database-engines",
-			basePath + "/namespaces/:namespace/database-clusters":                   "database-clusters",
-			basePath + "/namespaces/:namespace/database-clusters/:name":             "database-clusters",
-			basePath + "/namespaces/:namespace/database-clusters/:name/backups":     "database-clusters",
-			basePath + "/namespaces/:namespace/database-clusters/:name/credentials": "database-clusters",
-			basePath + "/namespaces/:namespace/database-clusters/:name/pitr":        "database-clusters",
-			basePath + "/namespaces/:namespace/database-clusters/:name/restores":    "database-clusters",
-			basePath + "/namespaces/:namespace/database-clusters/:name/components":  "database-clusters",
-			basePath + "/namespaces/:namespace/database-cluster-backups":            "database-cluster-backups",
-			basePath + "/namespaces/:namespace/database-cluster-backups/:name":      "database-cluster-backups",
-			basePath + "/namespaces/:namespace/database-cluster-restores":           "database-cluster-restores",
-			basePath + "/namespaces/:namespace/database-cluster-restores/:name":     "database-cluster-restores",
-		}
 		actionMethodMap := map[string]string{
 			"GET":    "read",
 			"POST":   "create",
@@ -166,6 +199,9 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 			namespace := c.Param("namespace")
 			name := c.Param("name")
 			object = namespace + "/" + name
+		case "namespaces":
+			name := c.Param("name")
+			object = name
 		}
 
 		action, ok := actionMethodMap[c.Request().Method]
@@ -176,17 +212,14 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 	}
 }
 
-// Skipper is called by the RBAC middleware to decide if a path must be skipped from RBAC.
-func Skipper(c echo.Context) bool {
-	skipPaths := []string{
-		"/session",
-		"/version",
-		"/cluster-info",
-		"/resources",
-		"/namespaces",
-		"/settings",
-		"/permissions",
+// NewSkipper returns a new function that checks if a given request should be skipped
+// from RBAC checks.
+func NewSkipper(basePath string) (func(echo.Context) bool, error) {
+	_, skipPaths, err := buildPathResourceMap(basePath)
+	if err != nil {
+		return nil, err
 	}
-	path := strings.TrimPrefix(c.Request().URL.Path, "/v1")
-	return slices.Contains(skipPaths, path)
+	return func(c echo.Context) bool {
+		return slices.Contains(skipPaths, c.Request().URL.Path)
+	}, nil
 }
