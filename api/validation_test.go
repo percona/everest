@@ -853,7 +853,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					Items: []everestv1alpha1.DatabaseClusterBackup{},
 				}, nil
 			},
-			err: errTooManyPGSchedules,
+			err: errTooManyPGStorages,
 		},
 		{
 			name:    "error: 2 schedules 2 backups with different storages",

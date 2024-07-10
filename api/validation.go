@@ -90,7 +90,6 @@ var (
 	errDataSourceNoPath              = errors.New("'path' should be specified in .Spec.DataSource.BackupSource")
 	errIncorrectDataSourceStruct     = errors.New("incorrect data source struct")
 	errUnsupportedPitrType           = errors.New("the given point-in-time recovery type is not supported")
-	errTooManyPGSchedules            = fmt.Errorf("only %d schedules are allowed in a PostgreSQL cluster", pgReposLimit)
 	errTooManyPGStorages             = fmt.Errorf("only %d different storages are allowed in a PostgreSQL cluster", pgReposLimit)
 	errNoMetadata                    = fmt.Errorf("no metadata provided")
 	errInvalidResourceVersion        = fmt.Errorf("invalid 'resourceVersion' value")
@@ -1249,10 +1248,6 @@ func validatePGReposForAPIDB(ctx context.Context, dbc *DatabaseCluster, getBacku
 		}
 		// each schedule counts as a separate repo regardless of the BS used in it
 		reposCount = len(*dbc.Spec.Backup.Schedules)
-		// first check if there are too many schedules. Each schedule is configured in a separate repo.
-		if reposCount > pgReposLimit {
-			return errTooManyPGSchedules
-		}
 	}
 
 	dbcName, dbcNamespace, err := nameFromDatabaseCluster(*dbc)
