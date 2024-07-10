@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"github.com/percona/everest/api/rbac"
+	"github.com/percona/everest/pkg/rbac"
 )
 
 // GetUserPermissions returns the permissions for the currently logged in user.
