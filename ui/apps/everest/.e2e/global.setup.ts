@@ -16,6 +16,7 @@
 import { test as setup, expect, APIResponse } from '@playwright/test';
 import 'dotenv/config';
 import { getTokenFromLocalStorage } from './utils/localStorage';
+import { setBucketNamespacesMap } from './constants';
 const {
   EVEREST_LOCATION_ACCESS_KEY,
   EVEREST_LOCATION_SECRET_KEY,
@@ -62,6 +63,7 @@ setup('Backup storages', async ({ request }) => {
   //   ['bucket2', ['namespace3']],
   // ]
   const bucketNamespacesMap = JSON.parse(EVEREST_BUCKETS_NAMESPACES_MAP);
+  setBucketNamespacesMap(bucketNamespacesMap);
 
   bucketNamespacesMap.forEach(async ([bucket, namespaces]) => {
     promises.push(
