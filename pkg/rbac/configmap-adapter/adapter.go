@@ -22,10 +22,11 @@ import (
 	"strings"
 
 	"github.com/casbin/casbin/v2/model"
-	"github.com/casbin/casbin/v2/persist"
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/percona/everest/pkg/kubernetes"
+	rbacutils "github.com/percona/everest/pkg/rbac/utils"
 )
 
 // Adapter is the ConfigMap adapter for Casbin.
@@ -33,13 +34,19 @@ import (
 type Adapter struct {
 	kubeClient     *kubernetes.Kubernetes
 	namespacedName types.NamespacedName
+	l              *zap.SugaredLogger
 }
 
-// NewAdapter is the constructor for Adapter.
-func NewAdapter(kubeClient *kubernetes.Kubernetes, namespacedName types.NamespacedName) *Adapter {
+// New constructs a new adapter that manages a policy inside a ConfigMap.
+func New(
+	l *zap.SugaredLogger,
+	kubeClient *kubernetes.Kubernetes,
+	namespacedName types.NamespacedName,
+) *Adapter {
 	return &Adapter{
 		kubeClient:     kubeClient,
 		namespacedName: namespacedName,
+		l:              l,
 	}
 }
 
@@ -68,9 +75,11 @@ func (a *Adapter) LoadPolicy(model model.Model) error {
 		if str == "" {
 			continue
 		}
-		_ = persist.LoadPolicyLine(str, model)
+		if err := rbacutils.LoadPolicyLine(str, model); err != nil {
+			a.l.Error("failed to load policy", zap.Error(err))
+			return err
+		}
 	}
-
 	return nil
 }
 

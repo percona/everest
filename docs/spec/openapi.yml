@@ -152,6 +152,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces':
+    x-everest-resource-name: namespaces
     get:
       tags:
         - General info
