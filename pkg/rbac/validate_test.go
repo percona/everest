@@ -175,24 +175,84 @@ func TestCan(t *testing.T) {
 		can     bool
 	}{
 		{
-			request: []string{"admin", "database-clusters", "create", "*"},
-			can:     true,
+			request: []string{
+				"admin",
+				"create",
+				"database-clusters",
+				"*"},
+			can: true,
 		},
 		{
-			request: []string{"admin", "namespaces", "read", "*"},
-			can:     true,
+			request: []string{
+				"admin",
+				"read",
+				"database-clusters",
+				"*"},
+			can: true,
 		},
 		{
-			request: []string{"adminrole:role", "database-cluster-restores", "create", "*"},
-			can:     true,
+			request: []string{
+				"admin",
+				"update",
+				"database-clusters",
+				"*"},
+			can: true,
 		},
 		{
-			request: []string{"alice", "namespaces", "read", "*"},
-			can:     true,
+			request: []string{
+				"admin",
+				"update",
+				"database-cluster-backups",
+				"*"},
+			can: true,
 		},
 		{
-			request: []string{"alice", "database-clusters", "create", "*"},
-			can:     false,
+			request: []string{
+				"alice",
+				"create",
+				"database-clusters",
+				"*"},
+			can: false,
+		},
+		{
+			request: []string{
+				"alice",
+				"read",
+				"database-engines",
+				"*"},
+			can: true,
+		},
+		{
+			request: []string{
+				"alice",
+				"create",
+				"database-clusters",
+				"alice/alice-cluster-1"},
+			can: true,
+		},
+		{
+			request: []string{
+				"bob",
+				"create",
+				"database-clusters",
+				"*"},
+			can: false,
+		},
+		{
+			request: []string{
+				"bob",
+				"create",
+				"database-clusters",
+				"dev/*"},
+			can: true,
+		},
+		{
+			request: []string{
+				"bob",
+				"create",
+				"database-clusters",
+				"dev/bob-1"},
+			can: true,
 		},
 	}
 

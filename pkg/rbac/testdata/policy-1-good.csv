@@ -12,9 +12,21 @@ p, readonly:role, database-engines, read, */*
 p, readonly:role, database-clusters, read, */*
 p, readonly:role, database-cluster-backups, read, */*
 p, readonly:role, database-cluster-restores, read, */*
+p, readonly:role, database-clusters-credentials, read, */*
+p, readonly:role, backup-storages, read, */*
+p, readonly:role, monitoring-instances, read, */*
 
-g, alice, readonly:role
-p, alice, database-engines, create, */*
+p, devteam:role, namespaces, *, *
+p, devteam:role, database-engines, *, dev/*
+p, devteam:role, database-clusters, *, dev/*
+p, devteam:role, database-cluster-backups, *, dev/*
+p, devteam:role, database-cluster-restores, *, dev/*
+p, devteam:role, database-clusters-credentials, *, dev/*
+p, devteam:role, backup-storages, *, */*
+p, devteam:role, monitoring-instances, *, */*
+
+p, alice, database-clusters, create, alice/*
 
 g, admin, adminrole:role
-
+g, alice, readonly:role
+g, bob, devteam:role
