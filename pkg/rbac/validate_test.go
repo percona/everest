@@ -52,3 +52,40 @@ func TestValidatePolicy(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckResourceNames(t *testing.T) {
+	t.Parallel()
+	testcases := []struct {
+		policies [][]string
+		valid    bool
+	}{
+		{
+			policies: [][]string{
+				{"admin:role", "database-clusters", "create", "*"},
+				{"admin:role", "monitoring-instances", "*", "*"},
+			},
+			valid: true,
+		},
+		{
+			policies: [][]string{
+				{"admin:role", "database-clusters", "create", "*"},
+				{"admin:role", "monitoring-instances", "*", "*"},
+				{"admin:role", "does-not-exist", "*", "*"},
+			},
+			valid: false,
+		},
+	}
+
+	for i, tc := range testcases {
+		t.Run(fmt.Sprintf("test-%d", i), func(t *testing.T) {
+			t.Parallel()
+			err := checkResourceNames(tc.policies)
+			if err != nil && tc.valid {
+				t.Fatalf("expected no error, got %v", err)
+			}
+			if err == nil && !tc.valid {
+				t.Fatalf("expected error, got nil")
+			}
+		})
+	}
+}
