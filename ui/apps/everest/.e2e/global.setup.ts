@@ -16,9 +16,7 @@
 import { test as setup, expect, APIResponse } from '@playwright/test';
 import 'dotenv/config';
 import { getTokenFromLocalStorage } from './utils/localStorage';
-import { getNamespacesFn } from './utils/namespaces';
 const {
-  EVEREST_LOCATION_BUCKET_NAME,
   EVEREST_LOCATION_ACCESS_KEY,
   EVEREST_LOCATION_SECRET_KEY,
   EVEREST_LOCATION_REGION,
@@ -73,7 +71,7 @@ setup('Backup storages', async ({ request }) => {
             name: bucket,
             description: 'CI test bucket',
             type: 's3',
-            bucketName: EVEREST_LOCATION_BUCKET_NAME,
+            bucketName: bucket,
             secretKey: EVEREST_LOCATION_SECRET_KEY,
             accessKey: EVEREST_LOCATION_ACCESS_KEY,
             allowedNamespaces: namespaces,
