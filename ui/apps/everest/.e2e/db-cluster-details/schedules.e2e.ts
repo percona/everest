@@ -39,7 +39,7 @@ test.describe.skip('Schedules List', async () => {
         enabled: true,
         schedules: [
           {
-            backupStorageName: getBucketNamespacesMap[0][0],
+            backupStorageName: getBucketNamespacesMap()[0][0],
             enabled: true,
             name: 'backup-1',
             schedule: '0 * * * *',
@@ -161,19 +161,19 @@ test.describe.skip('Schedules List', async () => {
         enabled: true,
         schedules: [
           {
-            backupStorageName: getBucketNamespacesMap[0][0],
+            backupStorageName: getBucketNamespacesMap()[0][0],
             enabled: true,
             name: 'backup-1',
             schedule: '0 * * * *',
           },
           {
-            backupStorageName: getBucketNamespacesMap[0][0],
+            backupStorageName: getBucketNamespacesMap()[0][0],
             enabled: true,
             name: 'backup-2',
             schedule: '0 * * * *',
           },
           {
-            backupStorageName: getBucketNamespacesMap[0][0],
+            backupStorageName: getBucketNamespacesMap()[0][0],
             enabled: true,
             name: 'backup-3',
             schedule: '0 * * * *',

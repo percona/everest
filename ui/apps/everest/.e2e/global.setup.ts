@@ -16,7 +16,7 @@
 import { test as setup, expect, APIResponse } from '@playwright/test';
 import 'dotenv/config';
 import { getTokenFromLocalStorage } from './utils/localStorage';
-import { setBucketNamespacesMap } from './constants';
+import { getBucketNamespacesMap } from './constants';
 const {
   EVEREST_LOCATION_ACCESS_KEY,
   EVEREST_LOCATION_SECRET_KEY,
@@ -40,12 +40,12 @@ const doBackupCall = async (fn: () => Promise<APIResponse>, retries = 3) => {
     }
 
     if (statusText && statusText.message) {
-      if (statusText.message.includes('already exists')) {
-        return Promise.resolve();
-      } else if (statusText.message.includes('Could not read')) {
+      if (statusText.message.includes('Could not read')) {
         if (retries > 0) {
           return doBackupCall(fn, retries - 1);
         }
+      } else {
+        return Promise.resolve();
       }
     }
     return Promise.reject();
@@ -62,8 +62,7 @@ setup('Backup storages', async ({ request }) => {
   //   ['bucket1', ['namespace1', 'namespace2']],
   //   ['bucket2', ['namespace3']],
   // ]
-  const bucketNamespacesMap = JSON.parse(EVEREST_BUCKETS_NAMESPACES_MAP);
-  setBucketNamespacesMap(bucketNamespacesMap);
+  const bucketNamespacesMap = getBucketNamespacesMap();
 
   bucketNamespacesMap.forEach(async ([bucket, namespaces]) => {
     promises.push(

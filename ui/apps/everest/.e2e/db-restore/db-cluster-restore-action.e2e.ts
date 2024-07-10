@@ -34,7 +34,7 @@ test.describe('DB Cluster Restore', () => {
         enabled: true,
         schedules: [
           {
-            backupStorageName: getBucketNamespacesMap[0][0],
+            backupStorageName: getBucketNamespacesMap()[0][0],
             enabled: true,
             name: 'backup-1',
             schedule: '0 * * * *',

@@ -1,6 +1,7 @@
+const { EVEREST_BUCKETS_NAMESPACES_MAP } = process.env;
+
 type BucketsNamespaceMap = [string, string[]][];
 
-let bucketNamespacesMap: BucketsNamespaceMap = [];
 export const STORAGE_STATE_FILE = 'user.json';
 
 export enum EVEREST_CI_NAMESPACES {
@@ -10,8 +11,5 @@ export enum EVEREST_CI_NAMESPACES {
   PG_ONLY = 'pg-only',
 }
 
-export const setBucketNamespacesMap = (map: BucketsNamespaceMap) => {
-  bucketNamespacesMap = map;
-};
-
-export const getBucketNamespacesMap = () => bucketNamespacesMap;
+export const getBucketNamespacesMap = (): BucketsNamespaceMap =>
+  JSON.parse(EVEREST_BUCKETS_NAMESPACES_MAP);
