@@ -100,7 +100,6 @@ var (
 	errDBEngineDowngrade             = errors.New("database engine version cannot be downgraded")
 	errDuplicatedSchedules           = errors.New("duplicated backup schedules are not allowed")
 	errDuplicatedStoragePG           = errors.New("postgres clusters can't use the same storage for the different schedules")
-	errStorageDeletionPG             = errors.New("the existing postgres schedules can't be deleted")
 	errStorageChangePG               = errors.New("the existing postgres schedules can't change their storage")
 	errDuplicatedBackupStorage       = errors.New("backup storages with the same url, bucket and url are not allowed")
 
@@ -691,25 +690,14 @@ func checkSchedulesChanges(oldDbc everestv1alpha1.DatabaseCluster, newDbc Databa
 		return nil
 	}
 	newSchedules := *newDbc.Spec.Backup.Schedules
-	// check the old storage wasn't deleted
-	if len(oldDbc.Spec.Backup.Schedules) > len(newSchedules) {
-		return errStorageDeletionPG
-	}
-	var found bool
 	for _, oldSched := range oldDbc.Spec.Backup.Schedules {
-		found = false
 		for _, newShed := range newSchedules {
 			// check the existing schedule storage wasn't changed
 			if oldSched.Name == newShed.Name {
-				found = true
 				if oldSched.BackupStorageName != newShed.BackupStorageName {
 					return errStorageChangePG
 				}
 			}
-		}
-		// check the old storage wasn't deleted
-		if !found {
-			return errStorageDeletionPG
 		}
 	}
 	// check there is no duplicated storages
