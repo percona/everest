@@ -1241,13 +1241,10 @@ type dataSourceStruct struct {
 
 func validatePGReposForAPIDB(ctx context.Context, dbc *DatabaseCluster, getBackupsFunc func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error)) error {
 	bs := make(map[string]bool)
-	var reposCount int
 	if dbc.Spec != nil && dbc.Spec.Backup != nil && dbc.Spec.Backup.Schedules != nil {
 		for _, shed := range *dbc.Spec.Backup.Schedules {
 			bs[shed.BackupStorageName] = true
 		}
-		// each schedule counts as a separate repo regardless of the BS used in it
-		reposCount = len(*dbc.Spec.Backup.Schedules)
 	}
 
 	dbcName, dbcNamespace, err := nameFromDatabaseCluster(*dbc)
@@ -1266,12 +1263,11 @@ func validatePGReposForAPIDB(ctx context.Context, dbc *DatabaseCluster, getBacku
 		// repos count is increased only if there wasn't such a BS used
 		if _, ok := bs[backup.Spec.BackupStorageName]; !ok {
 			bs[backup.Spec.BackupStorageName] = true
-			reposCount++
 		}
 	}
 
 	// second check if there are too many repos used.
-	if reposCount > pgReposLimit {
+	if len(bs) > pgReposLimit {
 		return errTooManyPGStorages
 	}
 

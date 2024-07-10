@@ -764,12 +764,12 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 			err: nil,
 		},
 		{
-			name:    "error: 3 schedules in one bs and 1 backup in other",
-			cluster: []byte(`{"metaData":{"name":"some","namespace":"ns"},"spec":{"backup":{"schedules":[{"backupStorageName":"bs1"},{"backupStorageName":"bs1"},{"backupStorageName":"bs1"}]}}}`),
+			name:    "error: 3 schedules in different bs and 1 backup in another bs",
+			cluster: []byte(`{"metaData":{"name":"some","namespace":"ns"},"spec":{"backup":{"schedules":[{"backupStorageName":"bs1"},{"backupStorageName":"bs2"},{"backupStorageName":"bs3"}]}}}`),
 			getBackupsFunc: func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error) {
 				return &everestv1alpha1.DatabaseClusterBackupList{
 					Items: []everestv1alpha1.DatabaseClusterBackup{
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"}},
+						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs4"}},
 					},
 				}, nil
 			},
