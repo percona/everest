@@ -1007,6 +1007,12 @@ func TestValidateDBEngineUpgrade(t *testing.T) {
 			newVersion: "v8.0.23",
 			err:        nil,
 		},
+		{
+			name:       "major version downgrade",
+			oldVersion: "16.1",
+			newVersion: "15.5",
+			err:        errDBEngineDowngrade,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
