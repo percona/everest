@@ -92,9 +92,9 @@ const ScheduledBackupsList = () => {
               alignItems: 'center',
             }}
           >
-            <Box sx={{ width: '65%' }}>
+            <Box sx={{ width: '40%' }}>
               {' '}
-              <Typography variant="body1">
+              <Typography variant="body2">
                 {getTimeSelectionPreviewMessage(
                   getFormValuesFromCronExpression(item.schedule)
                 )}
@@ -104,6 +104,13 @@ const ScheduledBackupsList = () => {
               <Typography variant="body2">
                 {`Retention copies: 
                 ${item?.retentionCopies || 'infinite'}`}
+              </Typography>
+            </Box>
+            <Box sx={{ width: '15%' }}>
+              {' '}
+              <Typography variant="body2">
+                {' '}
+                {`Storage: ${item.backupStorageName}`}
               </Typography>
             </Box>
             <Box display="flex">
