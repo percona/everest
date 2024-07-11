@@ -9,8 +9,12 @@ import (
 	"github.com/percona/everest/pkg/accounts"
 )
 
+const (
+	defaultPasswordLength = 32
+)
+
 func generateRandomPassword() (string, error) {
-	b := make([]byte, 32)
+	b := make([]byte, defaultPasswordLength)
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
