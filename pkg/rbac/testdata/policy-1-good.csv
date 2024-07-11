@@ -12,7 +12,7 @@ p, readonly:role, database-engines, read, */*
 p, readonly:role, database-clusters, read, */*
 p, readonly:role, database-cluster-backups, read, */*
 p, readonly:role, database-cluster-restores, read, */*
-p, readonly:role, database-clusters-credentials, read, */*
+p, readonly:role, database-cluster-credentials, read, */*
 p, readonly:role, backup-storages, read, */*
 p, readonly:role, monitoring-instances, read, */*
 
