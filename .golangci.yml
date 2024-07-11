@@ -32,6 +32,12 @@ linters-settings:
       - default # Contains all imports that could not be matched to another section type.
       - prefix(github.com/percona/everest) # Groups all local imports.
 
+  errcheck:
+    exclude-functions:
+      - fmt.Fprint
+      - fmt.Fprintf
+      - fmt.Fprintln
+
 
 linters:
   enable-all: true
