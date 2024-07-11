@@ -11,6 +11,9 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
+import { gte, coerce } from 'semver';
+import { DbEngine, DbEngineType } from 'shared-types/dbEngines.types';
+
 // limitations under the License.
 export const generateShortUID = (): string => {
   const firstPart = `000${((Math.random() * 46656) | 0).toString(36)}`.slice(
@@ -21,4 +24,35 @@ export const generateShortUID = (): string => {
   );
 
   return `${firstPart}${secondPart}`.slice(0, 3);
+};
+
+export const filterAvailableDbVersionsForDbEngineEdition = (
+  dbEngine: DbEngine,
+  currentVersion: string
+) => {
+  let versions = dbEngine.availableVersions.engine || [];
+  const currentSemverVersion = coerce(currentVersion);
+  const dbType = dbEngine.type;
+
+  if (!currentSemverVersion) {
+    return versions;
+  }
+
+  const currentMajor = currentSemverVersion.major;
+
+  // Filter out downgrades
+  versions = versions.filter(({ version }) => {
+    const semverVersion = coerce(version);
+    return semverVersion ? gte(semverVersion, currentSemverVersion) : true;
+  });
+
+  // If the engine is PSMDB or PG, major version upgrades are also ruled out
+  if ([DbEngineType.PSMDB, DbEngineType.POSTGRESQL].includes(dbType)) {
+    versions = versions.filter(({ version }) => {
+      const semverVersion = coerce(version);
+      return semverVersion ? semverVersion.major === currentMajor : true;
+    });
+  }
+
+  return versions;
 };

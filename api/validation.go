@@ -100,8 +100,8 @@ var (
 	errDBEngineDowngrade             = errors.New("database engine version cannot be downgraded")
 	errDuplicatedSchedules           = errors.New("duplicated backup schedules are not allowed")
 	errDuplicatedStoragePG           = errors.New("postgres clusters can't use the same storage for the different schedules")
-	errStorageDeletionPG             = errors.New("the existing postgres schedules can't be deleted")
 	errStorageChangePG               = errors.New("the existing postgres schedules can't change their storage")
+	errDuplicatedBackupStorage       = errors.New("backup storages with the same url, bucket and url are not allowed")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -415,10 +415,23 @@ func (e *EverestServer) validateUpdateBackupStorageRequest(
 	return &params, nil
 }
 
-func validateCreateBackupStorageRequest(ctx echo.Context, namespaces []string, l *zap.SugaredLogger) (*CreateBackupStorageParams, error) {
+func validateCreateBackupStorageRequest(
+	ctx echo.Context,
+	namespaces []string,
+	l *zap.SugaredLogger,
+	existingStorages *everestv1alpha1.BackupStorageList,
+) (*CreateBackupStorageParams, error) {
 	var params CreateBackupStorageParams
 	if err := ctx.Bind(&params); err != nil {
 		return nil, err
+	}
+
+	for _, storage := range existingStorages.Items {
+		if storage.Spec.Region == params.Region &&
+			storage.Spec.EndpointURL == pointer.GetString(params.Url) &&
+			storage.Spec.Bucket == params.BucketName {
+			return nil, errDuplicatedBackupStorage
+		}
 	}
 
 	if err := validateRFC1035(params.Name, "name"); err != nil {
@@ -677,25 +690,14 @@ func checkSchedulesChanges(oldDbc everestv1alpha1.DatabaseCluster, newDbc Databa
 		return nil
 	}
 	newSchedules := *newDbc.Spec.Backup.Schedules
-	// check the old storage wasn't deleted
-	if len(oldDbc.Spec.Backup.Schedules) > len(newSchedules) {
-		return errStorageDeletionPG
-	}
-	var found bool
 	for _, oldSched := range oldDbc.Spec.Backup.Schedules {
-		found = false
 		for _, newShed := range newSchedules {
 			// check the existing schedule storage wasn't changed
 			if oldSched.Name == newShed.Name {
-				found = true
 				if oldSched.BackupStorageName != newShed.BackupStorageName {
 					return errStorageChangePG
 				}
 			}
-		}
-		// check the old storage wasn't deleted
-		if !found {
-			return errStorageDeletionPG
 		}
 	}
 	// check there is no duplicated storages
@@ -1053,6 +1055,10 @@ func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
 		return errInvalidVersion
 	}
 
+	// We will not allow downgrades.
+	if semver.Compare(newVersion, oldVersion) < 0 {
+		return errDBEngineDowngrade
+	}
 	// We will not allow major upgrades.
 	// Major upgrades are handled differently for different operators, so for now we simply won't allow it.
 	// For example:
@@ -1061,10 +1067,6 @@ func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
 	// - PG operator does not allow major upgrades.
 	if semver.Major(oldVersion) != semver.Major(newVersion) {
 		return errDBEngineMajorVersionUpgrade
-	}
-	// We will not allow downgrades.
-	if semver.Compare(newVersion, oldVersion) < 0 {
-		return errDBEngineDowngrade
 	}
 	return nil
 }
