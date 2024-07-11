@@ -30,11 +30,10 @@ const MonitoringActionButtons = (
   handleDeleteInstance: (instance: MonitoringInstance) => void,
   handleOpenEditModal: (instance: MonitoringInstance) => void
 ) => {
-  const { canUpdate, canDelete } = useGetPermissions(
-    'monitoring-instances',
-    row.original.name,
-    '*'
-  );
+  const { canUpdate, canDelete } = useGetPermissions({
+    resource: 'monitoring-instances',
+    specificResource: row.original.name,
+  });
   return [
     <MenuItem
       key={0}
@@ -194,7 +193,7 @@ export const MonitoringEndpoints = () => {
     });
   };
 
-  const { canCreate } = useGetPermissions('monitoring-instances');
+  const { canCreate } = useGetPermissions({ resource: 'monitoring-instances' });
 
   return (
     <>

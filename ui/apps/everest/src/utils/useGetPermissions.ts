@@ -1,11 +1,17 @@
 import { AuthContext } from 'contexts/auth';
 import { useContext, useEffect, useState } from 'react';
 
-export const useGetPermissions = (
-  resource: string,
-  specificResource?: string,
-  namespace?: string
-) => {
+type GetPermissionProps = {
+  resource: string;
+  specificResource?: string;
+  namespace?: string;
+};
+
+export const useGetPermissions = ({
+  resource,
+  specificResource = '*',
+  namespace = '*',
+}: GetPermissionProps) => {
   const [permissions, setPermissions] = useState({
     canRead: false,
     canUpdate: false,
@@ -30,26 +36,22 @@ export const useGetPermissions = (
       }));
     });
 
-    authorize(
-      'update',
-      resource,
-      `${namespace || '*'}/${specificResource}`
-    ).then((data) => {
-      setPermissions((oldPermissions) => ({
-        ...oldPermissions,
-        canUpdate: data,
-      }));
-    });
-    authorize(
-      'delete',
-      resource,
-      `${namespace || '*'}/${specificResource}`
-    ).then((data) => {
-      setPermissions((oldPermissions) => ({
-        ...oldPermissions,
-        canDelete: data,
-      }));
-    });
+    authorize('update', resource, `${namespace}/${specificResource}`).then(
+      (data) => {
+        setPermissions((oldPermissions) => ({
+          ...oldPermissions,
+          canUpdate: data,
+        }));
+      }
+    );
+    authorize('delete', resource, `${namespace}/${specificResource}`).then(
+      (data) => {
+        setPermissions((oldPermissions) => ({
+          ...oldPermissions,
+          canDelete: data,
+        }));
+      }
+    );
   }, [authorize, namespace, resource, specificResource]);
 
   return permissions;

@@ -10,7 +10,7 @@ import {
   useDeleteBackupStorage,
   useEditBackupStorage,
 } from 'hooks/api/backup-storages/useBackupStorages';
-import { type MRT_ColumnDef } from 'material-react-table';
+import { MRT_Row, type MRT_ColumnDef } from 'material-react-table';
 import { LabelValue } from 'pages/databases/expandedRow/LabelValue';
 import { useMemo, useState } from 'react';
 import { BackupStorage, StorageType } from 'shared-types/backupStorages.types';
@@ -26,16 +26,14 @@ import { convertStoragesType } from './storage-locations.utils';
 import { useGetPermissions } from 'utils/useGetPermissions';
 
 const StorageLocationsActionButtons = (
-  row,
-  closeMenu,
-  handleOpenEditModal,
-  handleDeleteBackup
+  row: MRT_Row<BackupStorage>,
+  closeMenu: () => void,
+  handleOpenEditModal: (storageLocation: BackupStorage) => void,
+  handleDeleteBackup: (backupStorageName: string) => void
 ) => {
-  const { canUpdate, canDelete } = useGetPermissions(
-    'backup-storages',
-    '*',
-    '*'
-  );
+  const { canUpdate, canDelete } = useGetPermissions({
+    resource: 'backup-storages',
+  });
 
   return [
     <MenuItem
@@ -140,7 +138,7 @@ export const StorageLocations = () => {
     []
   );
 
-  const { canCreate } = useGetPermissions('backup-storages');
+  const { canCreate } = useGetPermissions({ resource: 'backup-storages' });
 
   const handleOpenCreateModal = () => {
     setSelectedStorageLocation(undefined);

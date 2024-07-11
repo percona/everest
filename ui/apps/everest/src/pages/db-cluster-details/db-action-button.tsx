@@ -57,12 +57,12 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
     dbCluster?.spec.engine.type === DbEngineType.POSTGRESQL;
   const hideCheckbox = !backups.length;
 
-  const { canUpdate, canDelete } = useGetPermissions(
-    'database-clusters',
-    dbCluster?.metadata.name,
-    dbCluster?.metadata.namespace
-  );
-  const { canCreate } = useGetPermissions('database-clusters');
+  const { canUpdate, canDelete } = useGetPermissions({
+    resource: 'database-clusters',
+    specificResource: dbCluster?.metadata.name,
+    namespace: dbCluster?.metadata.namespace,
+  });
+  const { canCreate } = useGetPermissions({ resource: 'database-clusters' });
 
   return (
     <Box>

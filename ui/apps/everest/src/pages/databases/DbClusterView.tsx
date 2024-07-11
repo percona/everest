@@ -59,11 +59,11 @@ const DbActionButtons = (
   handleRestoreDbCluster: (dbCluster: DbCluster) => void,
   canCreate: boolean
 ) => {
-  const { canUpdate, canDelete } = useGetPermissions(
-    'database-clusters',
-    row.original.databaseName,
-    row.original.namespace
-  );
+  const { canUpdate, canDelete } = useGetPermissions({
+    resource: 'database-clusters',
+    specificResource: row.original.databaseName,
+    namespace: row.original.namespace,
+  });
 
   return [
     // TODO: finish when design is ready
@@ -216,7 +216,7 @@ export const DbClusterView = () => {
   } = useDbActions();
   const navigate = useNavigate();
 
-  const { canCreate } = useGetPermissions('database-clusters');
+  const { canCreate } = useGetPermissions({ resource: 'database-clusters' });
   const { data: backups = [] } = useDbBackups(
     selectedDbCluster?.metadata.name!,
     selectedDbCluster?.metadata.namespace!,

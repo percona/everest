@@ -37,7 +37,7 @@ export const NoStoragesMessage = () => {
     setOpenCreateEditModal(false);
   };
 
-  const { canCreate } = useGetPermissions('backup-storages');
+  const { canCreate } = useGetPermissions({ resource: 'backup-storages' });
   return (
     <Box
       sx={{

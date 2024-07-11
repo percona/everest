@@ -46,11 +46,11 @@ const DeleteBackupAction = (
   namespace: string,
   handleDeleteBackup: (backupName: string) => void
 ) => {
-  const { canDelete } = useGetPermissions(
-    'database-cluster-backups',
-    row.original.backupStorageName,
-    namespace
-  );
+  const { canDelete } = useGetPermissions({
+    resource: 'database-cluster-backups',
+    specificResource: row.original.backupStorageName,
+    namespace: namespace,
+  });
   return (
     <MenuItem
       key={2}
@@ -96,13 +96,15 @@ export const BackupsList = () => {
     }
   );
 
-  const { canUpdate: canUpdateDb } = useGetPermissions(
-    'database-clusters',
-    dbCluster.metadata.name,
-    dbCluster.metadata.namespace
-  );
+  const { canUpdate: canUpdateDb } = useGetPermissions({
+    resource: 'database-clusters',
+    specificResource: dbCluster.metadata.name,
+    namespace: dbCluster.metadata.namespace,
+  });
 
-  const { canCreate: canCreateDb } = useGetPermissions('database-clusters');
+  const { canCreate: canCreateDb } = useGetPermissions({
+    resource: 'database-clusters',
+  });
 
   const columns = useMemo<MRT_ColumnDef<Backup>[]>(
     () => [

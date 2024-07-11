@@ -37,7 +37,9 @@ const BackupListTableHeader = ({
   const handleShowSchedules = () => {
     setShowSchedules((prev) => !prev);
   };
-  const { canCreate } = useGetPermissions('database-cluster-backups');
+  const { canCreate } = useGetPermissions({
+    resource: 'database-cluster-backups',
+  });
 
   return (
     <>
