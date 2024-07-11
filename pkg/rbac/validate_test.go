@@ -179,7 +179,8 @@ func TestCan(t *testing.T) {
 				"admin",
 				"create",
 				"database-clusters",
-				"*"},
+				"*",
+			},
 			can: true,
 		},
 		{
@@ -187,7 +188,8 @@ func TestCan(t *testing.T) {
 				"admin",
 				"read",
 				"database-clusters",
-				"*"},
+				"*",
+			},
 			can: true,
 		},
 		{
@@ -195,7 +197,8 @@ func TestCan(t *testing.T) {
 				"admin",
 				"update",
 				"database-clusters",
-				"*"},
+				"*",
+			},
 			can: true,
 		},
 		{
@@ -203,7 +206,8 @@ func TestCan(t *testing.T) {
 				"admin",
 				"update",
 				"database-cluster-backups",
-				"*"},
+				"*",
+			},
 			can: true,
 		},
 		{
@@ -211,7 +215,8 @@ func TestCan(t *testing.T) {
 				"alice",
 				"create",
 				"database-clusters",
-				"*"},
+				"*",
+			},
 			can: false,
 		},
 		{
@@ -219,7 +224,8 @@ func TestCan(t *testing.T) {
 				"alice",
 				"read",
 				"database-engines",
-				"*"},
+				"*",
+			},
 			can: true,
 		},
 		{
@@ -227,7 +233,8 @@ func TestCan(t *testing.T) {
 				"alice",
 				"create",
 				"database-clusters",
-				"alice/alice-cluster-1"},
+				"alice/alice-cluster-1",
+			},
 			can: true,
 		},
 		{
@@ -235,7 +242,8 @@ func TestCan(t *testing.T) {
 				"bob",
 				"create",
 				"database-clusters",
-				"*"},
+				"*",
+			},
 			can: false,
 		},
 		{
@@ -243,7 +251,8 @@ func TestCan(t *testing.T) {
 				"bob",
 				"create",
 				"database-clusters",
-				"dev/*"},
+				"dev/*",
+			},
 			can: true,
 		},
 		{
@@ -251,7 +260,8 @@ func TestCan(t *testing.T) {
 				"bob",
 				"create",
 				"database-clusters",
-				"dev/bob-1"},
+				"dev/bob-1",
+			},
 			can: true,
 		},
 	}

@@ -32,6 +32,8 @@ import (
 )
 
 // NewCanCommand returns a new command for testing RBAC.
+//
+//nolint:funlen
 func NewCanCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "can SUBJECT ACTION RESOURCE SUBRESOURCE",
@@ -45,7 +47,7 @@ $ everestctl settings rbac can adminrole:role update database-cluster-backups pr
 `,
 		Short:   "Test RBAC policy",
 		Example: "everestctl settings rbac can alice read database-clusters all",
-		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
+		Run: func(cmd *cobra.Command, args []string) {
 			initCanViperFlags(cmd)
 
 			kubeconfigPath := viper.GetString("kubeconfig")
@@ -71,7 +73,9 @@ $ everestctl settings rbac can adminrole:role update database-cluster-backups pr
 
 			if len(args) != 4 {
 				l.Error("invalid number of arguments provided")
-				cmd.Usage()
+				if err := cmd.Usage(); err != nil {
+					panic(err)
+				}
 				os.Exit(1)
 			}
 
