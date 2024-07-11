@@ -1121,3 +1121,77 @@ func TestCheckSchedulesChanges(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateDuplicateStorageByUpdate(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name               string
+		storages           []byte
+		currentStorage     []byte
+		currentStorageName string
+		params             UpdateBackupStorageParams
+		isDuplicate        bool
+	}{
+		{
+			name:               "another storage with the same 3 params",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageB", "bucket": "bucket1", "region": "region1", "endpointURL":"url1" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{Url: pointer.ToString("url1"), BucketName: pointer.ToString("bucket1"), Region: pointer.ToString("region1")},
+			isDuplicate:        true,
+		},
+		{
+			name:               "change of url will lead to duplication",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageB", "bucket": "bucket2", "region": "region2", "endpointURL":"url1" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{Url: pointer.ToString("url1")},
+			isDuplicate:        true,
+		},
+		{
+			name:               "change of bucket will lead to duplication",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageB", "bucket": "bucket1", "region": "region2", "endpointURL":"url2" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{BucketName: pointer.ToString("bucket1")},
+			isDuplicate:        true,
+		},
+		{
+			name:               "change of region will lead to duplication",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageB", "bucket": "bucket2", "region": "region1", "endpointURL":"url2" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{Region: pointer.ToString("region1")},
+			isDuplicate:        true,
+		},
+		{
+			name:               "change of region and bucket will lead to duplication",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageB", "bucket": "bucket1", "region": "region1", "endpointURL":"url2" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{Region: pointer.ToString("region1"), BucketName: pointer.ToString("bucket1")},
+			isDuplicate:        true,
+		},
+		{
+			name:               "no other storages: no duplictation",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{Url: pointer.ToString("url1"), BucketName: pointer.ToString("bucket1"), Region: pointer.ToString("region1")},
+			isDuplicate:        false,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			storages := &everestv1alpha1.BackupStorageList{}
+			err := json.Unmarshal(tc.storages, storages)
+			require.NoError(t, err)
+			currentStorage := &everestv1alpha1.BackupStorage{}
+			err = json.Unmarshal(tc.currentStorage, currentStorage)
+			require.NoError(t, err)
+			isDuplicate := validateDuplicateStorageByUpdate(tc.currentStorageName, currentStorage, storages, tc.params)
+			assert.Equal(t, tc.isDuplicate, isDuplicate)
+		})
+	}
+}
