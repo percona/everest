@@ -3,7 +3,7 @@ p, adminrole:role, database-engines, *, */*
 p, adminrole:role, database-clusters, *, */*
 p, adminrole:role, database-cluster-backups, *, */*
 p, adminrole:role, database-cluster-restores, *, */*
-p, adminrole:role, database-clusters-credentials, read, */*
+p, adminrole:role, database-cluster-credentials, read, */*
 p, adminrole:role, backup-storages, *, */*
 p, adminrole:role, monitoring-instances, *, */*
 
@@ -21,7 +21,7 @@ p, devteam:role, database-engines, *, dev/*
 p, devteam:role, database-clusters, *, dev/*
 p, devteam:role, database-cluster-backups, *, dev/*
 p, devteam:role, database-cluster-restores, *, dev/*
-p, devteam:role, database-clusters-credentials, *, dev/*
+p, devteam:role, database-cluster-credentials, *, dev/*
 p, devteam:role, backup-storages, *, */*
 p, devteam:role, monitoring-instances, *, */*
 
