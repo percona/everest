@@ -10,7 +10,7 @@ import {
   useMonitoringInstancesList,
   useUpdateMonitoringInstance,
 } from 'hooks/api/monitoring/useMonitoringInstancesList';
-import { MRT_ColumnDef } from 'material-react-table';
+import { MRT_ColumnDef, MRT_Row } from 'material-react-table';
 import { useMemo, useState } from 'react';
 import { MonitoringInstance } from 'shared-types/monitoring.types';
 import {
@@ -22,6 +22,48 @@ import { StorageLocationsFields } from '../storage-locations/storage-locations.t
 import { CreateEditEndpointModal } from './createEditModal/create-edit-modal';
 import { EndpointFormType } from './createEditModal/create-edit-modal.types';
 import { Messages } from './monitoring-endpoints.messages';
+import { useGetPermissions } from 'utils/useGetPermissions';
+
+const MonitoringActionButtons = (
+  row: MRT_Row<MonitoringInstance>,
+  closeMenu: () => void,
+  handleDeleteInstance: (instance: MonitoringInstance) => void,
+  handleOpenEditModal: (instance: MonitoringInstance) => void
+) => {
+  const { canUpdate, canDelete } = useGetPermissions(
+    'monitoring-instances',
+    row.original.name,
+    '*'
+  );
+  return [
+    <MenuItem
+      key={0}
+      onClick={() => {
+        handleOpenEditModal(row.original);
+        closeMenu();
+      }}
+      sx={{
+        m: 0,
+        display: canUpdate ? 'flex' : 'none',
+        gap: 1,
+        px: 2,
+        py: '10px',
+      }}
+    >
+      <Edit /> {Messages.edit}
+    </MenuItem>,
+    <MenuItem
+      key={1}
+      onClick={() => {
+        handleDeleteInstance(row.original);
+        closeMenu();
+      }}
+      sx={{ display: canDelete ? 'flex' : 'none' }}
+    >
+      <Delete /> {Messages.delete}
+    </MenuItem>,
+  ];
+};
 
 export const MonitoringEndpoints = () => {
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
@@ -152,6 +194,8 @@ export const MonitoringEndpoints = () => {
     });
   };
 
+  const { canCreate } = useGetPermissions('monitoring-instances');
+
   return (
     <>
       <Table
@@ -171,31 +215,19 @@ export const MonitoringEndpoints = () => {
             data-testid="add-monitoring-endpoint"
             variant="outlined"
             onClick={handleOpenCreateModal}
+            sx={{ display: canCreate ? 'flex' : 'none' }}
           >
             {Messages.add}
           </Button>
         )}
-        renderRowActionMenuItems={({ row, closeMenu }) => [
-          <MenuItem
-            key={0}
-            onClick={() => {
-              handleOpenEditModal(row.original);
-              closeMenu();
-            }}
-            sx={{ m: 0, display: 'flex', gap: 1, px: 2, py: '10px' }}
-          >
-            <Edit /> {Messages.edit}
-          </MenuItem>,
-          <MenuItem
-            key={1}
-            onClick={() => {
-              handleDeleteInstance(row.original);
-              closeMenu();
-            }}
-          >
-            <Delete /> {Messages.delete}
-          </MenuItem>,
-        ]}
+        renderRowActionMenuItems={({ row, closeMenu }) =>
+          MonitoringActionButtons(
+            row,
+            closeMenu,
+            handleDeleteInstance,
+            handleOpenEditModal
+          )
+        }
       />
       {openCreateEditModal && (
         <CreateEditEndpointModal

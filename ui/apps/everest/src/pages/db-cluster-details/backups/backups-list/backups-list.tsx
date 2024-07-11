@@ -27,7 +27,7 @@ import {
   useDbBackups,
   useDeleteBackup,
 } from 'hooks/api/backups/useBackups';
-import { MRT_ColumnDef } from 'material-react-table';
+import { MRT_ColumnDef, MRT_Row } from 'material-react-table';
 import { RestoreDbModal } from 'modals/index.ts';
 import { useContext, useMemo, useState } from 'react';
 import { Backup, BackupStatus } from 'shared-types/backups.types';
@@ -38,6 +38,39 @@ import { Messages } from './backups-list.messages';
 import BackupListTableHeader from './table-header';
 import { CustomConfirmDialog } from 'components/custom-confirm-dialog/custom-confirm-dialog.tsx';
 import { DbEngineType } from '@percona/types';
+import { useGetPermissions } from 'utils/useGetPermissions.ts';
+
+const DeleteBackupAction = (
+  row: MRT_Row<Backup>,
+  closeMenu: () => void,
+  namespace: string,
+  handleDeleteBackup: (backupName: string) => void
+) => {
+  const { canDelete } = useGetPermissions(
+    'database-cluster-backups',
+    row.original.backupStorageName,
+    namespace
+  );
+  return (
+    <MenuItem
+      key={2}
+      onClick={() => {
+        handleDeleteBackup(row.original.name);
+        closeMenu();
+      }}
+      sx={{
+        m: 0,
+        display: canDelete ? 'flex' : 'none',
+        gap: 1,
+        px: 2,
+        py: '10px',
+      }}
+    >
+      <Delete />
+      {Messages.delete}
+    </MenuItem>
+  );
+};
 
 export const BackupsList = () => {
   const queryClient = useQueryClient();
@@ -62,6 +95,14 @@ export const BackupsList = () => {
       refetchInterval: 10 * 1000,
     }
   );
+
+  const { canUpdate: canUpdateDb } = useGetPermissions(
+    'database-clusters',
+    dbCluster.metadata.name,
+    dbCluster.metadata.namespace
+  );
+
+  const { canCreate: canCreateDb } = useGetPermissions('database-clusters');
 
   const columns = useMemo<MRT_ColumnDef<Backup>[]>(
     () => [
@@ -195,7 +236,13 @@ export const BackupsList = () => {
               handleRestoreBackup(row.original.name);
               closeMenu();
             }}
-            sx={{ m: 0, display: 'flex', gap: 1, px: 2, py: '10px' }}
+            sx={{
+              m: 0,
+              display: canUpdateDb ? 'flex' : 'none',
+              gap: 1,
+              px: 2,
+              py: '10px',
+            }}
           >
             <KeyboardReturnIcon />
             {Messages.restore}
@@ -207,22 +254,23 @@ export const BackupsList = () => {
               handleRestoreToNewDbBackup(row.original.name);
               closeMenu();
             }}
-            sx={{ m: 0, display: 'flex', gap: 1, px: 2, py: '10px' }}
+            sx={{
+              m: 0,
+              display: canCreateDb ? 'flex' : 'none',
+              gap: 1,
+              px: 2,
+              py: '10px',
+            }}
           >
             <AddIcon />
             {Messages.restoreToNewDb}
           </MenuItem>,
-          <MenuItem
-            key={2}
-            onClick={() => {
-              handleDeleteBackup(row.original.name);
-              closeMenu();
-            }}
-            sx={{ m: 0, display: 'flex', gap: 1, px: 2, py: '10px' }}
-          >
-            <Delete />
-            {Messages.delete}
-          </MenuItem>,
+          DeleteBackupAction(
+            row,
+            closeMenu,
+            dbCluster.metadata.namespace,
+            handleDeleteBackup
+          ),
         ]}
       />
       {openDeleteDialog && (

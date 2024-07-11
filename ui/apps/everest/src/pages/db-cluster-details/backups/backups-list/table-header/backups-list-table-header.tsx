@@ -9,6 +9,7 @@ import { ScheduleModalContext } from '../../backups.context';
 import ScheduledBackupsList from './scheduled-backups-list';
 import { BackupListTableHeaderProps } from './backups-list-table-header.types';
 import { Messages } from './backups-list-table-header.messages';
+import { useGetPermissions } from 'utils/useGetPermissions';
 
 const BackupListTableHeader = ({
   onNowClick,
@@ -36,6 +37,7 @@ const BackupListTableHeader = ({
   const handleShowSchedules = () => {
     setShowSchedules((prev) => !prev);
   };
+  const { canCreate } = useGetPermissions('database-cluster-backups');
 
   return (
     <>
@@ -86,6 +88,7 @@ const BackupListTableHeader = ({
         <MenuButton
           buttonProps={{
             disabled: restoring,
+            sx: { display: canCreate ? 'flex' : 'none' },
           }}
           buttonText="Create backup"
         >

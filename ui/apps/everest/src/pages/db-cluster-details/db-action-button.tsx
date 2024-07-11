@@ -19,6 +19,7 @@ import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
 import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
 import { useDbBackups } from 'hooks/api/backups/useBackups';
 import { DbEngineType } from '@percona/types';
+import { useGetPermissions } from 'utils/useGetPermissions';
 
 export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -56,6 +57,13 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
     dbCluster?.spec.engine.type === DbEngineType.POSTGRESQL;
   const hideCheckbox = !backups.length;
 
+  const { canUpdate, canDelete } = useGetPermissions(
+    'database-clusters',
+    dbCluster?.metadata.name,
+    dbCluster?.metadata.namespace
+  );
+  const { canCreate } = useGetPermissions('database-clusters');
+
   return (
     <Box>
       <Button
@@ -85,7 +93,7 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
             to="/databases/edit"
             state={{ selectedDbCluster: dbClusterName, namespace }}
             sx={{
-              display: 'flex',
+              display: canUpdate ? 'flex' : 'none',
               gap: 1,
               alignItems: 'center',
               px: 2,
@@ -102,7 +110,7 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
               closeMenu();
             }}
             sx={{
-              display: 'flex',
+              display: canUpdate ? 'flex' : 'none',
               gap: 1,
               alignItems: 'center',
               px: 2,
@@ -121,7 +129,7 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
               closeMenu();
             }}
             sx={{
-              display: 'flex',
+              display: canCreate ? 'flex' : 'none',
               gap: 1,
               alignItems: 'center',
               px: 2,
@@ -140,7 +148,7 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
               closeMenu();
             }}
             sx={{
-              display: 'flex',
+              display: canUpdate ? 'flex' : 'none',
               gap: 1,
               alignItems: 'center',
               px: 2,
@@ -157,7 +165,7 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
               closeMenu();
             }}
             sx={{
-              display: 'flex',
+              display: canUpdate ? 'flex' : 'none',
               gap: 1,
               alignItems: 'center',
               px: 2,
@@ -177,7 +185,7 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
               closeMenu();
             }}
             sx={{
-              display: 'flex',
+              display: canDelete ? 'flex' : 'none',
               gap: 1,
               alignItems: 'center',
               px: 2,

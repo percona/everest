@@ -23,6 +23,65 @@ import { CreateEditModalStorage } from './createEditModal/create-edit-modal';
 import { Messages } from './storage-locations.messages';
 import { StorageLocationsFields } from './storage-locations.types';
 import { convertStoragesType } from './storage-locations.utils';
+import { useGetPermissions } from 'utils/useGetPermissions';
+
+const StorageLocationsActionButtons = (
+  row,
+  closeMenu,
+  handleOpenEditModal,
+  handleDeleteBackup
+) => {
+  const { canUpdate, canDelete } = useGetPermissions(
+    'backup-storages',
+    '*',
+    '*'
+  );
+
+  return [
+    <MenuItem
+      key={0}
+      onClick={() => {
+        handleOpenEditModal(row.original);
+        closeMenu();
+      }}
+      sx={{
+        m: 0,
+        display: canUpdate ? 'flex' : 'none',
+        gap: 1,
+        px: 2,
+        py: '10px',
+      }}
+    >
+      <Edit /> {Messages.edit}
+    </MenuItem>,
+    <MenuItem
+      key={1}
+      onClick={() => {
+        handleDeleteBackup(row.original.name);
+        closeMenu();
+      }}
+      sx={{
+        m: 0,
+        display: canDelete ? 'flex' : 'none',
+        gap: 1,
+        px: 2,
+        py: '10px',
+      }}
+    >
+      <Delete />
+      {Messages.delete}
+    </MenuItem>,
+    // TODO: uncomment when api is ready
+    // <MenuItem
+    //   key={2}
+    //   onClick={() => {}}
+    //   sx={{ m: 0, display: 'flex', gap: 1 }}
+    // >
+    //   <AutoAwesome /> Set as default
+    // </MenuItem>,
+  ];
+};
+
 export const StorageLocations = () => {
   const queryClient = useQueryClient();
 
@@ -80,6 +139,9 @@ export const StorageLocations = () => {
     ],
     []
   );
+
+  const { canCreate } = useGetPermissions('backup-storages');
+
   const handleOpenCreateModal = () => {
     setSelectedStorageLocation(undefined);
     setOpenCreateEditModal(true);
@@ -172,42 +234,20 @@ export const StorageLocations = () => {
             data-testid="add-backup-storage"
             variant="outlined"
             onClick={handleOpenCreateModal}
+            sx={{ display: canCreate ? 'flex' : 'none' }}
           >
             {Messages.addStorageLocationButton}
           </Button>
         )}
         enableRowActions
-        renderRowActionMenuItems={({ row, closeMenu }) => [
-          <MenuItem
-            key={0}
-            onClick={() => {
-              handleOpenEditModal(row.original);
-              closeMenu();
-            }}
-            sx={{ m: 0, display: 'flex', gap: 1, px: 2, py: '10px' }}
-          >
-            <Edit /> {Messages.edit}
-          </MenuItem>,
-          <MenuItem
-            key={1}
-            onClick={() => {
-              handleDeleteBackup(row.original.name);
-              closeMenu();
-            }}
-            sx={{ m: 0, display: 'flex', gap: 1, px: 2, py: '10px' }}
-          >
-            <Delete />
-            {Messages.delete}
-          </MenuItem>,
-          // TODO: uncomment when api is ready
-          // <MenuItem
-          //   key={2}
-          //   onClick={() => {}}
-          //   sx={{ m: 0, display: 'flex', gap: 1 }}
-          // >
-          //   <AutoAwesome /> Set as default
-          // </MenuItem>,
-        ]}
+        renderRowActionMenuItems={({ row, closeMenu }) =>
+          StorageLocationsActionButtons(
+            row,
+            closeMenu,
+            handleOpenEditModal,
+            handleDeleteBackup
+          )
+        }
         renderDetailPanel={({ row }) => (
           <Box
             sx={{
