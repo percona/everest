@@ -122,7 +122,7 @@ func (c *versionServiceClient) GetSupportedEngineVersions(ctx context.Context, o
 	if operator == PXCOperatorName {
 		result = slices.DeleteFunc(result, func(v string) bool {
 			semver, _ := goversion.NewVersion(v)
-			return semver.Segments()[0] == 5
+			return semver.Segments()[0] == 5 //nolint:mnd
 		})
 	}
 	slices.Sort(result)

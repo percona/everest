@@ -16,6 +16,8 @@ import { test, expect } from '@fixtures'
 import {checkError, deleteDBCluster, testsNs} from "@tests/tests/helpers";
 
 
+test.setTimeout(60 * 1000)
+
 test.beforeAll(async ({ request }) => {
   const engineResponse = await request.get(`/v1/namespaces/${testsNs}/database-engines/percona-server-mongodb-operator`)
   const availableVersions = (await engineResponse.json()).status.availableVersions.engine

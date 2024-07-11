@@ -32,6 +32,10 @@ import (
 	"github.com/percona/everest/pkg/logger"
 )
 
+const (
+	contextTimeout = 10 * time.Second
+)
+
 func main() {
 	logger := logger.MustInitLogger(true)
 	defer logger.Sync() //nolint:errcheck
@@ -82,7 +86,7 @@ func main() {
 	<-quit
 
 	tCancel()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
 	defer cancel()
 	if err := server.Shutdown(ctx); err != nil {
 		l.Error(errors.Join(err, errors.New("could not shut down Everest")))
