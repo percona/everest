@@ -262,7 +262,8 @@ jobs:
             go run . \
               --veneer-file ../veneer/everest-operator-original.yaml \
               --channel fast-v0  \
-              --new-version ${{ env.VERSION }} 
+              --new-version ${{ env.VERSION }} \
+              >| ../veneer/everest-operator.yaml
           else
             go run . \
               --veneer-file ../veneer/everest-operator-original.yaml \
@@ -275,7 +276,8 @@ jobs:
             go run . \
               --veneer-file ../veneer/everest-operator-original.yaml \
               --channel fast-v0 \
-              --new-version ${{ env.VERSION }} 
+              --new-version ${{ env.VERSION }} \ 
+              >| ../veneer/everest-operator.yaml
           fi
           rm -f ../veneer/everest-operator-original.yaml
           
