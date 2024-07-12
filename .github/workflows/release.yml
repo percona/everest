@@ -165,7 +165,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Operator - build everest-operator image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-operator
           push: false
@@ -186,14 +186,14 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Operator - push everest-operator image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-operator
           push: true
           tags: ${{ steps.operator_meta.outputs.tags }}
 
       - name: Operator - build everest-operator-bundle image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-operator
           push: false
@@ -215,7 +215,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Operator - push everest-operator-bundle image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-operator
           push: true
@@ -334,7 +334,7 @@ jobs:
 
 
       - name: Catalog - build image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-catalog
           push: false
@@ -357,7 +357,7 @@ jobs:
 #          severity: 'CRITICAL,HIGH'
 
       - name: Catalog - push image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-catalog
           push: true
@@ -459,7 +459,7 @@ jobs:
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
 
       - name: Everest - build Everest image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: false
@@ -482,7 +482,7 @@ jobs:
 #          severity: 'CRITICAL,HIGH'
 
       - name: Everest - push Everest image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
