@@ -252,7 +252,7 @@ jobs:
         run: |
           cd everest-catalog/tools
           
-           # configure userdata for commits
+          # configure userdata for commits
           git config --global user.email "everest-ci@percona.com"
           git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
 
@@ -277,7 +277,6 @@ jobs:
               --channel fast-v0 \
               --new-version ${{ env.VERSION }} 
           fi
-          
           rm -f ../veneer/everest-operator-original.yaml
           
           curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/latest/download/${OS}-${ARCH}-opm
