@@ -134,7 +134,7 @@ jobs:
 
       - name: Operator - setup Docker meta for everest-operator
         id: operator_meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         # docker/metadata-action action looks more elegant when being triggered by a GH tag,
         # however this workflow can't be triggered by a GH tag since there are some changes need to be done
         # in the codebase prior putting the tag, so the action uses the raw tags
@@ -149,7 +149,7 @@ jobs:
 
       - name: Operator - setup Docker meta for everest-operator-bundle
         id: bundle_meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
             percona/everest-operator-bundle,enable=${{ env.IS_RC == 0 }}
@@ -159,13 +159,13 @@ jobs:
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Operator - build everest-operator image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-operator
           push: false
@@ -186,14 +186,14 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Operator - push everest-operator image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-operator
           push: true
           tags: ${{ steps.operator_meta.outputs.tags }}
 
       - name: Operator - build everest-operator-bundle image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-operator
           push: false
@@ -215,7 +215,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Operator - push everest-operator-bundle image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-operator
           push: true
@@ -299,7 +299,7 @@ jobs:
 
       - name: Catalog - docker meta
         id: catalog_meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
             percona/everest-catalog,enable=${{ env.IS_RC == 0 }}
@@ -310,7 +310,7 @@ jobs:
 
 
       - name: Catalog - build image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-catalog
           push: false
@@ -333,7 +333,7 @@ jobs:
 #          severity: 'CRITICAL,HIGH'
 
       - name: Catalog - push image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-catalog
           push: true
@@ -416,7 +416,11 @@ jobs:
 
       - name: Everest - build binary
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make release
+          if [[ $env.IS_RC ]]; then 
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
+          else
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make release
+          fi
 
       - name: Everest - setup docker build metadata
         uses: docker/metadata-action@v5
@@ -431,7 +435,7 @@ jobs:
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
 
       - name: Everest - build Everest image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: false
@@ -454,7 +458,7 @@ jobs:
 #          severity: 'CRITICAL,HIGH'
 
       - name: Everest - push Everest image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
@@ -465,12 +469,9 @@ jobs:
           make release-cli
 
       - name: CLI - create release with binaries
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           draft: true
           files: |
             dist/*
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-
 

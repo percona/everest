@@ -39,10 +39,11 @@ import (
 const (
 	databaseClusterBackupKind = "databaseclusterbackups"
 	databaseClusterNameLabel  = "clusterName"
+	maxRetries                = 10
 )
 
 //nolint:gochecknoglobals
-var everestAPIConstantBackoff = backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), 10)
+var everestAPIConstantBackoff = backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), maxRetries)
 
 // ListDatabaseClusterBackups returns list of the created database cluster backups on the specified kubernetes cluster.
 func (e *EverestServer) ListDatabaseClusterBackups(ctx echo.Context, namespace, name string) error {
@@ -102,7 +103,10 @@ func (e *EverestServer) ensureNoBackupsRunningForCluster(ctx context.Context, db
 		return false, errors.Join(err, errors.New("could not list Database Cluster Backups"))
 	}
 	return !slices.ContainsFunc(backupList.Items, func(b everestv1alpha1.DatabaseClusterBackup) bool {
-		return b.Status.State == everestv1alpha1.BackupRunning || b.Status.State == everestv1alpha1.BackupStarting
+		return (b.Status.State == everestv1alpha1.BackupRunning ||
+			b.Status.State == everestv1alpha1.BackupStarting ||
+			b.Status.State == everestv1alpha1.BackupNew) &&
+			b.DeletionTimestamp.IsZero()
 	}), nil
 }
 

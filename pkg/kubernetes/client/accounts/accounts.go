@@ -37,6 +37,9 @@ const (
 	// We set this annotation on the secret to indicate which passwords are stored in plain text.
 	insecurePasswordAnnotation = "insecure-password/%s"
 	insecurePasswordValueTrue  = "true"
+
+	keyLength = 32
+	iter      = 4096
 )
 
 type configMapsClient struct {
@@ -261,6 +264,6 @@ func (a *configMapsClient) computePasswordHash(ctx context.Context, password str
 	if err != nil {
 		return "", errors.Join(err, errors.New("failed to get salt"))
 	}
-	hash := pbkdf2.Key([]byte(password), salt, 4096, 32, sha256.New)
+	hash := pbkdf2.Key([]byte(password), salt, iter, keyLength, sha256.New)
 	return string(hash), nil
 }

@@ -30,6 +30,10 @@ import (
 	"github.com/percona/everest/pkg/accounts"
 )
 
+const (
+	minPasswordLength = 6
+)
+
 // CLI provides functionality for managing user accounts via the CLI.
 type CLI struct {
 	accountManager accounts.Interface
@@ -244,7 +248,7 @@ func validatePassword(password string) bool {
 	if strings.Contains(password, " ") {
 		return false
 	}
-	if len(password) < 6 {
+	if len(password) < minPasswordLength {
 		return false
 	}
 	return true

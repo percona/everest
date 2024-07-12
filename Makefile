@@ -31,6 +31,10 @@ release: FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https:/
 
 release: build  ## Build release version
 
+rc: FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check-dev.percona.com' -X 'github.com/percona/everest/cmd/config.TelemetryInterval=24h'
+
+rc: build  ## Build RC version
+
 release-cli:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v $(LD_FLAGS_CLI) -o ./dist/everestctl-linux-amd64 ./cmd/cli
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -v $(LD_FLAGS_CLI) -o ./dist/everestctl-linux-arm64 ./cmd/cli
