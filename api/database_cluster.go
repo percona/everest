@@ -33,6 +33,15 @@ import (
 
 const (
 	databaseClusterKind = "databaseclusters"
+	// PXC default upload interval
+	// https://github.com/percona/percona-xtradb-cluster-operator/blob/25ad952931b3760ba22f082aa827fecb0e48162e/pkg/apis/pxc/v1/pxc_types.go#L938
+	pxcDefaultUploadInterval = 60
+	// PSMDB default upload interval
+	// https://github.com/percona/percona-server-mongodb-operator/blob/98b72fac893eeb8a96e366d49a70d3aaaa4e9ed4/pkg/apis/psmdb/v1/psmdb_defaults.go#L514
+	psmdbDefaultUploadInterval = 600
+	// PG default upload interval
+	// https://github.com/percona/percona-postgresql-operator/blob/82673d4d80aa329b5bd985889121280caad064fb/internal/pgbackrest/postgres.go#L58
+	pgDefaultUploadInterval = 60
 )
 
 // CreateDatabaseCluster creates a new db cluster inside the given k8s cluster.
@@ -90,7 +99,7 @@ func (e *EverestServer) DeleteDatabaseCluster(
 			if backup.Spec.DBClusterName != name || !backup.GetDeletionTimestamp().IsZero() {
 				continue
 			}
-			if err := e.ensureBackupStorageProtection(reqCtx, &backup); err != nil { //nolint:gosec
+			if err := e.ensureBackupStorageProtection(reqCtx, &backup); err != nil {
 				return errors.Join(err, errors.New("could not ensure backup storage protection"))
 			}
 		}
@@ -103,7 +112,7 @@ func (e *EverestServer) DeleteDatabaseCluster(
 		if backup.Spec.DBClusterName != name || !backup.GetDeletionTimestamp().IsZero() {
 			continue
 		}
-		if err := e.ensureBackupForegroundDeletion(reqCtx, &backup); err != nil { //nolint:gosec
+		if err := e.ensureBackupForegroundDeletion(reqCtx, &backup); err != nil {
 			return errors.Join(err, errors.New("could not ensure foreground deletion"))
 		}
 	}
@@ -162,7 +171,7 @@ func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace
 				startedString = pointer.ToString(started.Format(time.RFC3339))
 			}
 			containers = append(containers, DatabaseClusterComponentContainer{
-				Name:     &c.Name, //nolint:gosec,exportloopref
+				Name:     &c.Name, //nolint:exportloopref
 				Started:  startedString,
 				Restarts: pointer.ToInt(int(c.RestartCount)),
 				Status:   &status,
@@ -175,7 +184,7 @@ func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace
 		}
 		res = append(res, DatabaseClusterComponent{
 			Status:     pointer.ToString(string(pod.Status.Phase)),
-			Name:       &pod.Name, //nolint:gosec,exportloopref
+			Name:       &pod.Name, //nolint:exportloopref
 			Type:       &component,
 			Started:    started,
 			Restarts:   pointer.ToInt(restarts),
@@ -333,17 +342,11 @@ func getDefaultUploadInterval(engineType everestv1alpha1.EngineType, uploadInter
 	}
 	switch engineType {
 	case everestv1alpha1.DatabaseEnginePXC:
-		// PXC default upload interval
-		// https://github.com/percona/percona-xtradb-cluster-operator/blob/25ad952931b3760ba22f082aa827fecb0e48162e/pkg/apis/pxc/v1/pxc_types.go#L938
-		return 60
+		return pxcDefaultUploadInterval
 	case everestv1alpha1.DatabaseEnginePSMDB:
-		// PSMDB default upload interval
-		// https://github.com/percona/percona-server-mongodb-operator/blob/98b72fac893eeb8a96e366d49a70d3aaaa4e9ed4/pkg/apis/psmdb/v1/psmdb_defaults.go#L514
-		return 600
+		return psmdbDefaultUploadInterval
 	case everestv1alpha1.DatabaseEnginePostgresql:
-		// PG default upload interval
-		// https://github.com/percona/percona-postgresql-operator/blob/82673d4d80aa329b5bd985889121280caad064fb/internal/pgbackrest/postgres.go#L58
-		return 60
+		return pgDefaultUploadInterval
 	}
 	return 0
 }

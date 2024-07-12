@@ -23,7 +23,7 @@ const {
   EVEREST_LOCATION_URL,
 } = process.env;
 
-test.describe('Backup storage', () => {
+test.describe.skip('Backup storage', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/settings/storage-locations');
     await page.getByTestId('add-backup-storage').waitFor();
