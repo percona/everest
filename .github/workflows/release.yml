@@ -65,11 +65,13 @@ jobs:
           
           echo "---- start -----"
           if [[ $env.IS_RC ]]; then
+            echo "---- is RC -----"
             go run . \
               --veneer-file ../veneer/everest-operator-original.yaml \
               --channel fast-v0  \
               --new-version ${{ env.VERSION }} 
           else
+            echo "---- not RC -----"
             go run . \
               --veneer-file ../veneer/everest-operator-original.yaml \
               --channel stable-v0 \
