@@ -426,7 +426,7 @@ jobs:
           make init
           make build-cli
       - name: Create KIND cluster
-        uses: helm/kind-action@v1.9.0
+        uses: helm/kind-action@v1.10.0
 
       - name: Run integration tests
         working-directory: cli-tests
