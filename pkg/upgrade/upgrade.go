@@ -43,6 +43,12 @@ import (
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
+const (
+	contextTimeout    = 5 * time.Minute
+	backoffInterval   = 5 * time.Second
+	backoffMaxRetries = 5
+)
+
 // list of objects to skip during upgrade.
 var skipObjects = []client.Object{ //nolint:gochecknoglobals
 	&corev1.Secret{
@@ -185,7 +191,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	})
 
 	// Locate the correct install plan.
-	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	ctxTimeout, cancel := context.WithTimeout(ctx, contextTimeout)
 	defer cancel()
 
 	var ip *olmv1alpha1.InstallPlan
@@ -288,8 +294,8 @@ func (u *Upgrade) ensureManagedByLabelOnDBNamespaces(ctx context.Context) error 
 		// Ensure we add the managed-by label to the namespace.
 		// We should retry this operation since there may be update conflicts.
 		var b backoff.BackOff
-		b = backoff.NewConstantBackOff(5 * time.Second)
-		b = backoff.WithMaxRetries(b, 5)
+		b = backoff.NewConstantBackOff(backoffInterval)
+		b = backoff.WithMaxRetries(b, backoffMaxRetries)
 		b = backoff.WithContext(b, ctx)
 		if err := backoff.Retry(func() error {
 			// Get the namespace.
