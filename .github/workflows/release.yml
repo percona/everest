@@ -44,6 +44,7 @@ jobs:
           echo "BRANCH_NAME=release-$floating_tag" >> $GITHUB_ENV
           echo "GH_TAG=v$VERSION" >> $GITHUB_ENV
           if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "wtf????"
             echo "IS_RC=1" >> $GITHUB_ENV
           fi
           echo "ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" >> $GITHUB_ENV
@@ -57,35 +58,35 @@ jobs:
           token: ${{ secrets.ROBOT_TOKEN }}
 
 
-      - name: Catalog - update veneer file
-        run: |
-          cd everest-catalog/tools
-          
-          cp ../veneer/everest-operator.yaml ../veneer/everest-operator-original.yaml
-          
-          echo "---- start -----"
-          if [[ $env.IS_RC ]]; then
-            echo "---- is RC -----"
-            go run . \
-              --veneer-file ../veneer/everest-operator-original.yaml \
-              --channel fast-v0  \
-              --new-version ${{ env.VERSION }} 
-          else
-            echo "---- not RC -----"
-            go run . \
-              --veneer-file ../veneer/everest-operator-original.yaml \
-              --channel stable-v0 \
-              --new-version ${{ env.VERSION }} 
-            echo "---------"
-            go run . \
-              --veneer-file ../veneer/everest-operator-original.yaml \
-              --channel fast-v0 \
-              --new-version ${{ env.VERSION }} 
-          fi
-          echo "---- end -----"
-          rm -f ../veneer/everest-operator-original.yaml
-          
-          
+#      - name: Catalog - update veneer file
+#        run: |
+#          cd everest-catalog/tools
+#
+#          cp ../veneer/everest-operator.yaml ../veneer/everest-operator-original.yaml
+#
+#          echo "---- start -----"
+#          if [[ $env.IS_RC ]]; then
+#            echo "---- is RC -----"
+#            go run . \
+#              --veneer-file ../veneer/everest-operator-original.yaml \
+#              --channel fast-v0  \
+#              --new-version ${{ env.VERSION }}
+#          else
+#            echo "---- not RC -----"
+#            go run . \
+#              --veneer-file ../veneer/everest-operator-original.yaml \
+#              --channel stable-v0 \
+#              --new-version ${{ env.VERSION }}
+#            echo "---------"
+#            go run . \
+#              --veneer-file ../veneer/everest-operator-original.yaml \
+#              --channel fast-v0 \
+#              --new-version ${{ env.VERSION }}
+#          fi
+#          echo "---- end -----"
+#          rm -f ../veneer/everest-operator-original.yaml
+#
+#
 #          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/latest/download/${OS}-${ARCH}-opm
 #          chmod +x /tmp/opm
 #          /tmp/opm alpha render-template basic -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
