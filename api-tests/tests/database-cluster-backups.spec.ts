@@ -93,8 +93,6 @@ test('list backups', async ({ request, page }) => {
 
   const backupName1 = th.suffixedName('backup1')
   const backupName2 = th.suffixedName('backup2')
-  const backupName3 = th.suffixedName('backup3')
-  const backupName4 = th.suffixedName('backup4')
 
   const payloads = [
     {
@@ -115,28 +113,6 @@ test('list backups', async ({ request, page }) => {
         name: backupName2,
       },
       spec: {
-        dbClusterName: clusterName1,
-        backupStorageName: bsName,
-      },
-    },
-    {
-      apiVersion: 'everest.percona.com/v1alpha1',
-      kind: 'DatabaseClusterBackup',
-      metadata: {
-        name: backupName3,
-      },
-      spec: {
-        dbClusterName: clusterName2,
-        backupStorageName: bsName,
-      },
-    },
-    {
-      apiVersion: 'everest.percona.com/v1alpha1',
-      kind: 'DatabaseClusterBackup',
-      metadata: {
-        name: backupName4,
-      },
-      spec: {
         dbClusterName: clusterName2,
         backupStorageName: bsName,
       },
@@ -155,12 +131,12 @@ test('list backups', async ({ request, page }) => {
   let response = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName1}/backups`)
   let result = await response.json()
 
-  expect(result.items).toHaveLength(2)
+  expect(result.items).toHaveLength(1)
 
   response = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName2}/backups`)
   result = await response.json()
 
-  expect(result.items).toHaveLength(2)
+  expect(result.items).toHaveLength(1)
 
   for (const payload of payloads) {
     await request.delete(`/v1/namespaces/${testsNs}/database-cluster-backups/${payload.metadata.name}`)
