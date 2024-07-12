@@ -251,7 +251,7 @@ jobs:
       - name: Catalog - update veneer file
         run: |
           cd everest-catalog/tools
-          
+
           # configure userdata for commits
           git config --global user.email "everest-ci@percona.com"
           git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
