@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { expect, Page } from '@playwright/test';
-import { STORAGE_NAMES } from '../../constants';
+import { getBucketNamespacesMap } from '../../constants';
 import { beautifyDbTypeName } from '@percona/utils';
 import { DbType } from '@percona/types';
 
@@ -43,6 +43,7 @@ const defaultTimeOptions: ScheduleTimeOptions = {
 };
 
 export const addFirstScheduleInDBWizard = async (page: Page) => {
+  const bucketNamespacesMap = getBucketNamespacesMap();
   // checking that we haven't schedules
   await expect(
     page.getByText('You currently do not have any backup schedules set up.')
@@ -58,11 +59,11 @@ export const addFirstScheduleInDBWizard = async (page: Page) => {
   ).toBeVisible();
 
   if (await checkDbTypeisVisibleInPreview(page, DbType.Mongo)) {
-    expect(await page.getByText(STORAGE_NAMES[1]).allInnerTexts()).toHaveLength(
-      2
-    );
+    expect(
+      await page.getByText(bucketNamespacesMap[0][0]).allInnerTexts()
+    ).toHaveLength(2);
   } else {
-    await expect(page.getByText(STORAGE_NAMES[1])).toBeVisible();
+    await expect(page.getByText(bucketNamespacesMap[0][0])).toBeVisible();
   }
 };
 
@@ -132,6 +133,7 @@ export const fillScheduleModalForm = async (
   page: Page,
   timeOptions: ScheduleTimeOptions = defaultTimeOptions
 ) => {
+  const bucketNamespacesMap = getBucketNamespacesMap();
   // TODO can be customizable
   if (await checkDbTypeisVisibleInPreview(page, DbType.Mongo)) {
     await expect(page.getByTestId('radio-option-logical')).toBeChecked();
@@ -144,7 +146,7 @@ export const fillScheduleModalForm = async (
 
   const storageOptions = page.getByRole('option');
   const testStorage = storageOptions.filter({
-    hasText: STORAGE_NAMES[1],
+    hasText: bucketNamespacesMap[0][0],
   });
   await testStorage.click();
 
