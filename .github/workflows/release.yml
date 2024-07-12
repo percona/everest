@@ -59,8 +59,9 @@ jobs:
 
       - name: Catalog - update veneer file
         run: |
-          cp veneer/everest-operator.yaml veneer/everest-operator-original.yaml
           cd everest-catalog/tools
+          
+          cp ../veneer/everest-operator.yaml ../veneer/everest-operator-original.yaml
           
           echo "---- start -----"
           if [[ $env.IS_RC ]]; then
