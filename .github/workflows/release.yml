@@ -494,7 +494,4 @@ jobs:
           draft: true
           files: |
             dist/*
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-
 
