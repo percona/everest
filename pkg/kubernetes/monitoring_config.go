@@ -103,7 +103,7 @@ func (k *Kubernetes) GetMonitoringConfigsBySecretName(
 	res := make([]*everestv1alpha1.MonitoringConfig, 0, 1)
 	for _, mc := range mcs.Items {
 		if mc.Spec.CredentialsSecretName == secretName {
-			//nolint:gosec,exportloopref
+			//nolint:exportloopref
 			res = append(res, &mc)
 		}
 	}

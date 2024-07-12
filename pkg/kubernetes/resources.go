@@ -14,6 +14,9 @@ import (
 const (
 	// Max size of volume for AWS Elastic Block Storage service is 16TiB.
 	maxVolumeSizeEBS = 16 * 1024 * 1024 * 1024 * 1024
+
+	// 39 is a default limit for EKS cluster nodes ...
+	eksVolumeLimitPerNode = 39
 )
 
 // GetAllClusterResources goes through all cluster nodes and sums their allocatable resources.
@@ -95,10 +98,9 @@ func (k *Kubernetes) getEKSVolumeCount(node corev1.Node) (uint64, error) {
 	if !ok {
 		return 0, errors.New("dealing with AWS EKS cluster but the node does not have label 'beta.kubernetes.io/instance-type'")
 	}
-	// 39 is a default limit for EKS cluster nodes ...
-	volumeLimitPerNode := uint64(39)
+	volumeLimitPerNode := uint64(eksVolumeLimitPerNode)
 	typeAndSize := strings.Split(strings.ToLower(nodeType), ".")
-	if len(typeAndSize) < 2 {
+	if len(typeAndSize) < 2 { //nolint:mnd
 		return 0, fmt.Errorf("failed to parse EKS node type '%s', it's not in expected format 'type.size'", nodeType)
 	}
 	// ... however, if the node type is one of M5, C5, R5, T3, Z1D it's 25.

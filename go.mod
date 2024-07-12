@@ -12,20 +12,20 @@ require (
 	github.com/casbin/casbin/v2 v2.85.0
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/fatih/color v1.17.0
-	github.com/getkin/kin-openapi v0.124.0
+	github.com/getkin/kin-openapi v0.126.0
 	github.com/go-logr/zapr v1.3.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
-	github.com/hashicorp/go-version v1.6.0
+	github.com/hashicorp/go-version v1.7.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/labstack/echo-contrib v0.16.0
 	github.com/labstack/echo-jwt/v4 v4.2.0
-	github.com/labstack/echo/v4 v4.11.4
+	github.com/labstack/echo/v4 v4.12.0
 	github.com/lestrrat-go/jwx/v2 v2.0.21
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oapi-codegen/echo-middleware v1.0.1
 	github.com/oapi-codegen/runtime v1.1.1
-	github.com/operator-framework/api v0.23.0
+	github.com/operator-framework/api v0.26.0
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
 	github.com/percona/everest-operator v0.6.0-dev1.0.20240618051212-6a5ade3468a9
 	github.com/rodaine/table v1.2.0
@@ -44,9 +44,9 @@ require (
 	k8s.io/api v0.30.2
 	k8s.io/apiextensions-apiserver v0.30.2
 	k8s.io/apimachinery v0.30.2
-	k8s.io/cli-runtime v0.29.3
+	k8s.io/cli-runtime v0.30.2
 	k8s.io/client-go v0.30.2
-	k8s.io/kubectl v0.29.3
+	k8s.io/kubectl v0.30.2
 	sigs.k8s.io/controller-runtime v0.18.4
 )
 
@@ -70,9 +70,9 @@ require (
 	github.com/go-errors/errors v1.5.0 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
-	github.com/go-openapi/jsonpointer v0.20.2 // indirect
+	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.20.4 // indirect
-	github.com/go-openapi/swag v0.22.9 // indirect
+	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/go-test/deep v1.1.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
@@ -95,7 +95,7 @@ require (
 	github.com/hashicorp/hcl v1.0.1-vault-5 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/invopop/yaml v0.2.0 // indirect
+	github.com/invopop/yaml v0.3.1 // indirect
 	github.com/jessevdk/go-flags v1.5.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.1-0.20220621161143-b0104c826a24 // indirect
 	github.com/josharian/intern v1.0.0 // indirect

@@ -31,7 +31,7 @@ import {
   checkDbWizardEditSubmitIsAvailableAndClick,
   checkSuccessOfUpdateAndGoToDbClustersList,
 } from './edit-db-cluster.utils';
-import { STORAGE_NAMES } from '../../../constants';
+import { getBucketNamespacesMap } from '../../../constants';
 import { addFirstScheduleInDBWizard } from '../db-wizard-utils';
 import { waitForInitializingState } from '../../../utils/table';
 
@@ -50,7 +50,7 @@ test.describe.serial('MySQL PITR editing', async () => {
         enabled: true,
         schedules: [
           {
-            backupStorageName: STORAGE_NAMES[0],
+            backupStorageName: getBucketNamespacesMap()[0][0],
             enabled: true,
             name: 'backup-1',
             schedule: '0 * * * *',
@@ -96,7 +96,7 @@ test.describe.serial('MySQL PITR editing', async () => {
     );
     const storageOptions = page.getByRole('option');
     await expect(
-      storageOptions.filter({ hasText: STORAGE_NAMES[1] })
+      storageOptions.filter({ hasText: getBucketNamespacesMap()[0][0] })
     ).toBeVisible();
     await storageOptions.first().click();
 
@@ -211,7 +211,7 @@ test.describe.serial('MongoDb PITR editing', async () => {
     await expect(
       page
         .getByTestId('switch-input-pitr-enabled-label')
-        .getByText(`Storage: ${STORAGE_NAMES[1]}`)
+        .getByText(`Storage: ${getBucketNamespacesMap()[0][0]}`)
     ).toBeVisible();
 
     // TODO move to schedules part
