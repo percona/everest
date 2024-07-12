@@ -55,6 +55,9 @@ const (
 	pgDeploymentName    = "percona-postgresql-operator"
 	dateFormat          = "2006-01-02T15:04:05Z"
 	pgReposLimit        = 3
+	// We are diverging from the RFC1035 spec in regards to the length of the
+	// name because the PXC operator limits the name of the cluster to 22.
+	maxNameLength = 22
 )
 
 var (
@@ -140,9 +143,7 @@ func ErrInvalidURL(fieldName string) error {
 
 // validates names to be RFC-1035 compatible  https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
 func validateRFC1035(s, name string) error {
-	// We are diverging from the RFC1035 spec in regards to the length of the
-	// name because the PXC operator limits the name of the cluster to 22.
-	if len(s) > 22 {
+	if len(s) > maxNameLength {
 		return ErrNameTooLong(name)
 	}
 

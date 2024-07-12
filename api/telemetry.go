@@ -22,6 +22,8 @@ const (
 
 	// delay the initial metrics to prevent flooding in case of many restarts.
 	initialMetricsDelay = 5 * time.Minute
+
+	numEngineTypes = 3
 )
 
 // Telemetry is the struct for telemetry reports.
@@ -111,8 +113,8 @@ func (e *EverestServer) collectMetrics(ctx context.Context, url string) error {
 		return err
 	}
 
-	types := make(map[string]int, 3)
-	metrics := make([]Metric, 0, 4)
+	types := make(map[string]int, numEngineTypes)
+	metrics := make([]Metric, 0, numEngineTypes+1)
 	// Everest version.
 	metrics = append(metrics, Metric{
 		Key:   telemetryVersionKey,
