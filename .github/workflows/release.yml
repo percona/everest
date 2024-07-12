@@ -440,7 +440,11 @@ jobs:
 
       - name: Everest - build binary
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make release
+          if [[ $env.IS_RC ]]; then 
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
+          else
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make release
+          fi
 
       - name: Everest - setup docker build metadata
         uses: docker/metadata-action@v5
