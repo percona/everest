@@ -51,6 +51,16 @@ func (e *EverestServer) GetDatabaseEngine(ctx echo.Context, namespace, name stri
 	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, name)
 }
 
+// ListOperatorUpgrades list operator upgrades in this namespace.
+func (e *EverestServer) ListOperatorUpgrades(c echo.Context, namespace string) error {
+	return nil
+}
+
+// Upgrade database engine operators
+func (e *EverestServer) UpgradeOperators(c echo.Context, namespace string) error {
+	return nil
+}
+
 // UpdateDatabaseEngine Update the specified database engine on the specified namespace.
 func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name string) error {
 	dbe := &DatabaseEngine{}
@@ -68,6 +78,7 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 }
 
 // GetOperatorVersion returns the current version of the operator and the status of the database clusters.
+// DEPRECATED
 func (e *EverestServer) GetOperatorVersion(c echo.Context, namespace, name string) error {
 	ctx := c.Request().Context()
 	engine, err := e.kubeClient.GetDatabaseEngine(ctx, namespace, name)
@@ -108,7 +119,9 @@ func (e *EverestServer) checkDatabases(
 			Name: pointer.To(cluster.Name),
 		}
 		if recVer := cluster.Status.RecommendedCRVersion; recVer != nil {
-			check.PendingTask = pointer.To(OperatorVersionCheckForDatabasePendingTaskRestart)
+			check.PendingTask = pointer.To(
+				OperatorVersionCheckForDatabasePendingTask(OperatorUpgradesListItemsDatabasesPendingTaskRestart),
+			)
 			check.Message = pointer.To(fmt.Sprintf("Database needs restart to use CRVersion '%s'", *recVer))
 		}
 		checks = append(checks, check)
@@ -117,6 +130,7 @@ func (e *EverestServer) checkDatabases(
 }
 
 // UpgradeDatabaseEngineOperator upgrades the database engine operator to the specified version.
+// DEPRECATED
 func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespace string, name string) error {
 	// Parse request body.
 	req := &DatabaseEngineOperatorUpgradeParams{}
@@ -236,6 +250,8 @@ func (e *EverestServer) getOperatorUpgradePreflight(ctx context.Context, targetV
 }
 
 // GetOperatorUpgradePreflight gets the preflight check results for upgrading the specified database engine operator.
+//
+// DEPRECATED
 func (e *EverestServer) GetOperatorUpgradePreflight(
 	ctx echo.Context,
 	namespace, name string,
