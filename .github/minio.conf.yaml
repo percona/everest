@@ -26,33 +26,33 @@ metadata:
   namespace: minio
 spec:
   containers:
-  - name: minio
-    image: quay.io/minio/minio:latest
-    command:
-    - /bin/bash
-    - -c
-    args: 
-    - minio server /data --console-address :9090
-    volumeMounts:
-    - mountPath: /data
-      name: minio-data-vol
-    - mountPath: /root/.minio/certs
-      name: minio-cert
+    - name: minio
+      image: quay.io/minio/minio:latest
+      command:
+        - /bin/bash
+        - -c
+      args:
+        - minio server /data --console-address :9090
+      volumeMounts:
+        - mountPath: /data
+          name: minio-data-vol
+        - mountPath: /root/.minio/certs
+          name: minio-cert
   initContainers:
-  - name: init-minio
-    image: busybox
-    command:
-    - /bin/sh
-    - -c
-    args:
-    - mkdir -p /data/bucket-1 /data/bucket-2 /data/bucket-3
-    volumeMounts:
-    - mountPath: /data
-      name: minio-data-vol
+    - name: init-minio
+      image: busybox
+      command:
+        - /bin/sh
+        - -c
+      args:
+        - mkdir -p /data/bucket-1 /data/bucket-2 /data/bucket-3 /data/bucket-4
+      volumeMounts:
+        - mountPath: /data
+          name: minio-data-vol
   volumes:
     - name: minio-data-vol
       persistentVolumeClaim:
-       claimName: minio-data
+        claimName: minio-data
     - name: minio-cert
       secret:
         secretName: minio-cert
