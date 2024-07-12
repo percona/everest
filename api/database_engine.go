@@ -101,7 +101,8 @@ func (e *EverestServer) GetOperatorVersion(c echo.Context, namespace, name strin
 // check the databases in the namespace from the perspective of operator version.
 func (e *EverestServer) checkDatabases(
 	ctx context.Context,
-	namespace string, engine *everestv1alpha1.DatabaseEngine,
+	namespace string,
+	engine *everestv1alpha1.DatabaseEngine,
 ) ([]OperatorVersionCheckForDatabase, error) {
 	// List all clusters in this namespace.
 	clusters, err := e.kubeClient.ListDatabaseClusters(ctx, namespace)

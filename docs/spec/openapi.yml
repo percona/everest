@@ -1849,6 +1849,43 @@ components:
             - restart
             - upgradeEngine
       additionalProperties: false
+    OperatorUpgrade:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the operator
+        currentVersion:
+          type: string
+          description: The current operator version
+        targetVersion:
+          type: string
+          description: | 
+            The next version of the operator to upgrade to.
+            If unspecified, the operator is already at the latest version, and the database action items
+            list contains post-upgrade tasks that need to be performed (if any).
+        databases:
+          type: array
+          description: |
+            List of databases included for this operator upgrade.
+            If `targetVersion` is specified, this list will contain pre-upgrade tasks.
+            Otherwise, it contains post-upgrade tasks.
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Name of the database cluster
+              message:
+                type: string
+              pendingTask:
+                type: string
+                description: Pending task for the database cluster
+                enum:
+                  - ready
+                  - notReady
+                  - restart
+                  - upgradeEngine
     OperatorUpgradesList:
       type: object
       description: List of operator upgrades
@@ -1857,41 +1894,7 @@ components:
           type: array
           items:
             type: object
-            properties:
-              name:
-                type: string
-                description: Name of the operator
-              currentVersion:
-                type: string
-                description: The current operator version
-              targetVersion:
-                type: string
-                description: | 
-                  The next version of the operator to upgrade to.
-                  If unspecified, the operator is already at the latest version, and the database action items
-                  list contains post-upgrade tasks that need to be performed (if any).
-              databases:
-                type: array
-                description: |
-                  List of databases included for this operator upgrade.
-                  If `targetVersion` is specified, this list will contain pre-upgrade tasks.
-                  Otherwise, it contains post-upgrade tasks.
-                items:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                      description: Name of the database cluster
-                    message:
-                      type: string
-                    pendingTask:
-                      type: string
-                      description: Pending task for the database cluster
-                      enum:
-                        - ready
-                        - notReady
-                        - restart
-                        - upgradeEngine
+            $ref: '#/components/schemas/OperatorUpgrade'
       additionalProperties: false
     OperatorUpgradePreflight:
       deprecated: true
