@@ -799,6 +799,7 @@ paths:
   '/namespaces/{namespace}/database-engines/{name}/operator-version/preflight':
     x-everest-resource-name: database-engines
     get:
+      deprecated: true
       tags:
         - Operators
       summary: Upgrade preflight
@@ -846,6 +847,7 @@ paths:
   '/namespaces/{namespace}/database-engines/{name}/operator-version':
     x-everest-resource-name: database-engines
     get:
+      deprecated: true
       tags:
         - Operators
       summary: Version info
