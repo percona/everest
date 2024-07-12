@@ -20,7 +20,7 @@ import {
   findDbAndClickActions,
   findDbAndClickRow,
 } from '../utils/db-clusters-list';
-import { STORAGE_NAMES } from '../constants';
+import { getBucketNamespacesMap } from '../constants';
 
 const dbClusterName = 'restore-to-new-cluster';
 
@@ -34,7 +34,7 @@ test.describe('DB Cluster Restore to the new cluster', () => {
         enabled: true,
         schedules: [
           {
-            backupStorageName: STORAGE_NAMES[0],
+            backupStorageName: getBucketNamespacesMap()[0][0],
             enabled: true,
             name: 'backup-1',
             schedule: '0 * * * *',
