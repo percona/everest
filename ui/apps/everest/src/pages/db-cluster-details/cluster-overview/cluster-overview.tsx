@@ -51,6 +51,8 @@ export const ClusterOverview = () => {
         port={dbCluster?.status?.port!}
         username={dbClusterDetails?.username!}
         password={dbClusterDetails?.password!}
+        clusterName={dbCluster?.metadata.name}
+        clusterNamespace={dbCluster?.metadata.namespace}
       />
     </Stack>
   );

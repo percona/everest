@@ -33,6 +33,7 @@ const StorageLocationsActionButtons = (
 ) => {
   const { canUpdate, canDelete } = useGetPermissions({
     resource: 'backup-storages',
+    specificResource: row.original.name,
   });
 
   return [

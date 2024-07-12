@@ -26,6 +26,8 @@ export type ConnectionDetailsOverviewCardProps = {
   port: number;
   username: string;
   password: string;
+  clusterName?: string;
+  clusterNamespace?: string;
 } & OverviewCardProps;
 
 export type BackupsDetailsOverviewCardProps = {
