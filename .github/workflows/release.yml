@@ -258,29 +258,26 @@ jobs:
 
           cp ../veneer/everest-operator.yaml ../veneer/everest-operator-original.yaml
           
-          echo "---- start -----"
           if [[ $IS_RC == 1 ]]; then
-            echo "---- is RC -----"
             go run . \
               --veneer-file ../veneer/everest-operator-original.yaml \
               --channel fast-v0  \
               --new-version ${{ env.VERSION }} 
           else
-            echo "---- not RC -----"
             go run . \
               --veneer-file ../veneer/everest-operator-original.yaml \
               --channel stable-v0 \
               --new-version ${{ env.VERSION }} \
               >| ../veneer/everest-operator.yaml
-            echo "---------"
+          
             cp ../veneer/everest-operator.yaml ../veneer/everest-operator-original.yaml
-
+            
             go run . \
               --veneer-file ../veneer/everest-operator-original.yaml \
               --channel fast-v0 \
               --new-version ${{ env.VERSION }} 
           fi
-          echo "---- end -----"
+          
           rm -f ../veneer/everest-operator-original.yaml
           
           curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/latest/download/${OS}-${ARCH}-opm
@@ -365,7 +362,7 @@ jobs:
           git checkout $BRANCH_NAME
           
           # Update deploy manifest 
-          if [[ $env.IS_RC ]]; then 
+          if [[ $IS_RC == 1 ]]; then 
             sed -i "s/perconalab\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
             sed -i "s/percona\/percona-everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
           else
