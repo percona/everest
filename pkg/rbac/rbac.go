@@ -227,7 +227,7 @@ func NewSkipper(basePath string) (func(echo.Context) bool, error) {
 // Can checks if a user is allowed to perform an action on a resource.
 // Input request should be of the form [user action resource object].
 func Can(ctx context.Context, filePath string, k *kubernetes.Kubernetes, req ...string) (bool, error) {
-	if len(req) != 4 {
+	if len(req) != 4 { //nolint:mnd
 		return false, errors.New("expected input of the form [user action resource object]")
 	}
 	user, action, resource, object := req[0], req[1], req[2], req[3]

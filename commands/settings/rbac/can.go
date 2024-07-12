@@ -71,7 +71,7 @@ $ everestctl settings rbac can adminrole:role update database-cluster-backups pr
 				k = client
 			}
 
-			if len(args) != 4 {
+			if len(args) != 4 { //nolint:mnd
 				l.Error("invalid number of arguments provided")
 				if err := cmd.Usage(); err != nil {
 					panic(err)
