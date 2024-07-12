@@ -75,8 +75,11 @@ jobs:
             go run . \
               --veneer-file ../veneer/everest-operator-original.yaml \
               --channel stable-v0 \
-              --new-version ${{ env.VERSION }} 
+              --new-version ${{ env.VERSION }} \
+              >| ../veneer/everest-operator.yaml
             echo "---------"
+            cp ../veneer/everest-operator.yaml ../veneer/everest-operator-original.yaml
+
             go run . \
               --veneer-file ../veneer/everest-operator-original.yaml \
               --channel fast-v0 \
