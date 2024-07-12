@@ -159,7 +159,7 @@ jobs:
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -440,7 +440,11 @@ jobs:
 
       - name: Everest - build binary
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make release
+          if [[ $env.IS_RC ]]; then 
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
+          else
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make release
+          fi
 
       - name: Everest - setup docker build metadata
         uses: docker/metadata-action@v5
