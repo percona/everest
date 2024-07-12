@@ -80,11 +80,11 @@ func (k *Kubernetes) IsBackupStorageUsed(ctx context.Context, namespace, backupS
 	}
 
 	for _, namespace := range namespaces {
-		list, err := k.client.ListDatabaseClusters(ctx, namespace, options)
+		dblist, err := k.client.ListDatabaseClusters(ctx, namespace, options)
 		if err != nil {
 			return false, err
 		}
-		if len(list.Items) > 0 {
+		if len(dblist.Items) > 0 {
 			return true, nil
 		}
 		bList, err := k.client.ListDatabaseClusterBackups(ctx, namespace, options)
@@ -98,8 +98,12 @@ func (k *Kubernetes) IsBackupStorageUsed(ctx context.Context, namespace, backupS
 		if err != nil {
 			return false, err
 		}
-		if len(rList.Items) > 0 {
-			return true, nil
+		for _, restore := range rList.Items {
+			for _, db := range dblist.Items {
+				if restore.Spec.DBClusterName == db.Name && !restore.IsComplete(db.Spec.Engine.Type) {
+					return true, nil
+				}
+			}
 		}
 	}
 
