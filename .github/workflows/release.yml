@@ -64,7 +64,7 @@ jobs:
           cp ../veneer/everest-operator.yaml ../veneer/everest-operator-original.yaml
           
           echo "---- start -----"
-          if [[ $IS_RC == 0 ]]; then
+          if [[ $IS_RC == 1 ]]; then
             echo "---- is RC -----"
             go run . \
               --veneer-file ../veneer/everest-operator-original.yaml \
