@@ -61,45 +61,23 @@ jobs:
         run: |
           cd everest-catalog
 
-          CURRENT_STABLE_VERSION=$(yq 'select(.name == "stable-v0").entries[-1].name' veneer/everest-operator.yaml | sed 's/^everest-operator.v//')
-          CURRENT_FAST_VERSION=$(yq 'select(.name == "fast-v0").entries[-1].name' veneer/everest-operator.yaml | sed 's/^everest-operator.v//')
-
-          if [[ -z "$CURRENT_STABLE_VERSION" ]]; then
-            echo "CURRENT_STABLE_VERSION is required"
-            exit 1
-          fi
-
-          if [[ -z "$CURRENT_FAST_VERSION" ]]; then
-            echo "CURRENT_FAST_VERSION is required"
-            exit 1
-          fi
-
-          echo "CURRENT_STABLE_VERSION=$CURRENT_STABLE_VERSION"
-          echo "CURRENT_FAST_VERSION=$CURRENT_FAST_VERSION"
-
           cp veneer/everest-operator.yaml veneer/everest-operator-original.yaml
           echo "---- start -----"
           if [[ $env.IS_RC ]]; then
             go run ./tools/ \
               --veneer-file veneer/everest-operator-original.yaml \
-              --version-type ${{ env.RELEASE_TYPE }} \
               --channel fast-v0 \
-              --new-version ${{ env.VERSION }} \
-              --current-version "$CURRENT_FAST_VERSION" 
+              --new-version ${{ env.VERSION }} 
           else
             go run ./tools/ \
               --veneer-file veneer/everest-operator-original.yaml \
-              --version-type ${{ env.RELEASE_TYPE }} \
               --channel stable-v0 \
-              --new-version ${{ env.VERSION }} \
-              --current-version "$CURRENT_STABLE_VERSION" 
+              --new-version ${{ env.VERSION }} 
             echo "---------"
             go run ./tools/ \
               --veneer-file veneer/everest-operator-original.yaml \
-              --version-type ${{ env.RELEASE_TYPE }} \
               --channel fast-v0 \
-              --new-version ${{ env.VERSION }} \
-              --current-version "$CURRENT_FAST_VERSION" 
+              --new-version ${{ env.VERSION }} 
           fi
           echo "---- end -----"
           rm -f veneer/everest-operator-original.yaml
