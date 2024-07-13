@@ -29,6 +29,7 @@ import (
 	"golang.org/x/net/context"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/common"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
@@ -51,9 +52,114 @@ func (e *EverestServer) GetDatabaseEngine(ctx echo.Context, namespace, name stri
 	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, name)
 }
 
+func getNextUpgradeVersion(engine *everestv1alpha1.DatabaseEngine) string {
+	nextVersion := ""
+	for _, upgrade := range engine.Status.PendingOperatorUpgrades {
+		currentTarget := upgrade.TargetVersion
+		if nextVersion == "" {
+			nextVersion = currentTarget
+			continue
+		}
+		// Is the current target less than the next version?
+		if common.CompareVersions(currentTarget, nextVersion) < 0 {
+			nextVersion = upgrade.TargetVersion
+		}
+	}
+	return nextVersion
+}
+
 // ListOperatorUpgrades list operator upgrades in this namespace.
 func (e *EverestServer) ListOperatorUpgrades(c echo.Context, namespace string) error {
-	return nil
+	ctx := c.Request().Context()
+
+	engines, err := e.kubeClient.ListDatabaseEngines(ctx, namespace)
+	if err != nil {
+		return err
+	}
+
+	result := OperatorUpgradesList{
+		Items: pointer.To(make([]OperatorUpgrade, 0)),
+	}
+
+	for _, engine := range engines.Items {
+		// Find a version to upgrade to.
+		nextVersion := getNextUpgradeVersion(&engine)
+
+		// We found a version to upgrade to, so perform preflight checks.
+		if nextVersion != "" {
+			u, err := e.getPreUpgradeItem(ctx, nextVersion, &engine)
+			if err != nil {
+				return err
+			}
+			*result.Items = append(*result.Items, u)
+			continue
+		}
+
+		// Already upgraded, check if post-upgrade tasks are needed.
+		u, err := e.getPostUpgradeItem(ctx, &engine)
+		if err != nil {
+			return err
+		}
+		*result.Items = append(*result.Items, u)
+	}
+	return c.JSON(http.StatusOK, result)
+}
+
+func (e *EverestServer) getPostUpgradeItem(ctx context.Context, engine *everestv1alpha1.DatabaseEngine) (OperatorUpgrade, error) {
+	item := OperatorUpgrade{
+		CurrentVersion: pointer.To(engine.Status.OperatorVersion),
+		Name:           pointer.To(engine.GetName()),
+		Databases:      pointer.To(make([]OperatorUpgradeDatabaseItem, 0)),
+	}
+	checks, err := e.checkDatabases(ctx, engine)
+	if err != nil {
+		return item, errors.Join(err, errors.New("failed to check databases"))
+	}
+	for _, check := range checks {
+		*item.Databases = append(*item.Databases, check.ToOperatorUpgradeDatabaseItem())
+	}
+	return item, nil
+}
+
+func (s *OperatorUpgradePreflightForDatabase) ToOperatorUpgradeDatabaseItem() OperatorUpgradeDatabaseItem {
+	return OperatorUpgradeDatabaseItem{
+		Name:        s.Name,
+		PendingTask: pointer.To(OperatorUpgradeDatabaseItemPendingTask(*s.PendingTask)),
+		Message:     s.Message,
+	}
+}
+
+// ToOperatorUpgradeDatabaseItem converts OperatorVersionCheckForDatabase to OperatorUpgradeDatabaseItem.
+// TODO: Remove this function when the deprecated API is removed.
+//
+//nolint:todo
+func (s *OperatorVersionCheckForDatabase) ToOperatorUpgradeDatabaseItem() OperatorUpgradeDatabaseItem {
+	return OperatorUpgradeDatabaseItem{
+		Name:        s.Name,
+		PendingTask: pointer.To(OperatorUpgradeDatabaseItemPendingTask(*s.PendingTask)),
+		Message:     s.Message,
+	}
+}
+
+func (e *EverestServer) getPreUpgradeItem(
+	ctx context.Context,
+	targetVersion string,
+	engine *everestv1alpha1.DatabaseEngine) (OperatorUpgrade, error) {
+	item := OperatorUpgrade{
+		CurrentVersion: pointer.To(engine.Status.OperatorVersion),
+		Name:           pointer.To(engine.GetName()),
+		TargetVersion:  pointer.To(targetVersion),
+		Databases:      pointer.To(make([]OperatorUpgradeDatabaseItem, 0)),
+	}
+	resultPtr, err := e.getOperatorUpgradePreflight(ctx, targetVersion, engine)
+	if err != nil {
+		return item, err
+	}
+	result := pointer.Get(resultPtr)
+	for _, db := range pointer.Get(result.Databases) {
+		*item.Databases = append(*item.Databases, db.ToOperatorUpgradeDatabaseItem())
+	}
+	return item, nil
 }
 
 // Upgrade database engine operators
@@ -90,7 +196,7 @@ func (e *EverestServer) GetOperatorVersion(c echo.Context, namespace, name strin
 		CurrentVersion: pointer.To(engine.Status.OperatorVersion),
 	}
 
-	checks, err := e.checkDatabases(ctx, namespace, engine)
+	checks, err := e.checkDatabases(ctx, engine)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to check databases"))
 	}
@@ -101,9 +207,9 @@ func (e *EverestServer) GetOperatorVersion(c echo.Context, namespace, name strin
 // check the databases in the namespace from the perspective of operator version.
 func (e *EverestServer) checkDatabases(
 	ctx context.Context,
-	namespace string,
 	engine *everestv1alpha1.DatabaseEngine,
 ) ([]OperatorVersionCheckForDatabase, error) {
+	namespace := engine.GetNamespace()
 	// List all clusters in this namespace.
 	clusters, err := e.kubeClient.ListDatabaseClusters(ctx, namespace)
 	if err != nil {
@@ -121,7 +227,7 @@ func (e *EverestServer) checkDatabases(
 		}
 		if recVer := cluster.Status.RecommendedCRVersion; recVer != nil {
 			check.PendingTask = pointer.To(
-				OperatorVersionCheckForDatabasePendingTask(OperatorUpgradesListItemsDatabasesPendingTaskRestart),
+				OperatorVersionCheckForDatabasePendingTask(OperatorUpgradeDatabaseItemPendingTaskRestart),
 			)
 			check.Message = pointer.To(fmt.Sprintf("Database needs restart to use CRVersion '%s'", *recVer))
 		}
@@ -167,7 +273,7 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 	}
 
 	// Validate preflight checks.
-	preflight, err := e.getOperatorUpgradePreflight(ctx.Request().Context(), req.TargetVersion, name, namespace)
+	preflight, err := e.getOperatorUpgradePreflight(ctx.Request().Context(), req.TargetVersion, dbEngine)
 	if err != nil {
 		return err
 	}
@@ -218,12 +324,12 @@ func (e *EverestServer) startOperatorUpgrade(ctx context.Context, targetVersion,
 	return err
 }
 
-func (e *EverestServer) getOperatorUpgradePreflight(ctx context.Context, targetVersion, name, namespace string) (*OperatorUpgradePreflight, error) {
-	// Get existing database engine.
-	engine, err := e.kubeClient.GetDatabaseEngine(ctx, namespace, name)
-	if err != nil {
-		return nil, err
-	}
+func (e *EverestServer) getOperatorUpgradePreflight(
+	ctx context.Context,
+	targetVersion string,
+	engine *everestv1alpha1.DatabaseEngine,
+) (*OperatorUpgradePreflight, error) {
+	namespace := engine.GetNamespace()
 	// Get all database clusters in the namespace.
 	databases, err := e.kubeClient.ListDatabaseClusters(ctx, namespace)
 	if err != nil {
@@ -258,7 +364,11 @@ func (e *EverestServer) GetOperatorUpgradePreflight(
 	namespace, name string,
 	params GetOperatorUpgradePreflightParams,
 ) error {
-	result, err := e.getOperatorUpgradePreflight(ctx.Request().Context(), params.TargetVersion, name, namespace)
+	engine, err := e.kubeClient.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
+	if err != nil {
+		return err
+	}
+	result, err := e.getOperatorUpgradePreflight(ctx.Request().Context(), params.TargetVersion, engine)
 	if err != nil {
 		code := http.StatusInternalServerError
 		if errors.Is(err, errDBEngineInvalidTargetVersion) {

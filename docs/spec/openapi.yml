@@ -1849,6 +1849,22 @@ components:
             - restart
             - upgradeEngine
       additionalProperties: false
+    OperatorUpgrade_DatabaseItem:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the database cluster
+        message:
+          type: string
+        pendingTask:
+          type: string
+          description: Pending task for the database cluster
+          enum:
+            - ready
+            - notReady
+            - restart
+            - upgradeEngine
     OperatorUpgrade:
       type: object
       properties:
@@ -1872,20 +1888,7 @@ components:
             Otherwise, it contains post-upgrade tasks.
           items:
             type: object
-            properties:
-              name:
-                type: string
-                description: Name of the database cluster
-              message:
-                type: string
-              pendingTask:
-                type: string
-                description: Pending task for the database cluster
-                enum:
-                  - ready
-                  - notReady
-                  - restart
-                  - upgradeEngine
+            $ref: '#/components/schemas/OperatorUpgrade_DatabaseItem'
     OperatorUpgradesList:
       type: object
       description: List of operator upgrades
