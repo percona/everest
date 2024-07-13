@@ -860,6 +860,14 @@ paths:
           required: true
           schema:
             type: string
+        - name: type
+          in: query
+          description: |
+            Should be one of 'pre' or 'post'.
+            If 'pre', returns pre-upgrade (preflight) checklist.
+            If 'post', returns post-upgrade checklist.
+          schema:
+            type: boolean
       responses:
         '200':
           description: Successful operation
