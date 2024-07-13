@@ -78,7 +78,7 @@ func (e *EverestServer) ListOperatorUpgrades(c echo.Context, namespace string) e
 	}
 
 	result := OperatorUpgradesList{
-		Items: pointer.To(make([]OperatorUpgrade, 0)),
+		Items: pointer.To([]OperatorUpgrade{}),
 	}
 
 	for _, engine := range engines.Items {
@@ -109,7 +109,7 @@ func (e *EverestServer) getPostUpgradeItem(ctx context.Context, engine *everestv
 	item := OperatorUpgrade{
 		CurrentVersion: pointer.To(engine.Status.OperatorVersion),
 		Name:           pointer.To(engine.GetName()),
-		Databases:      pointer.To(make([]OperatorUpgradeDatabaseItem, 0)),
+		Databases:      pointer.To([]OperatorUpgradeDatabaseItem{}),
 	}
 	checks, err := e.checkDatabases(ctx, engine)
 	if err != nil {
@@ -121,6 +121,10 @@ func (e *EverestServer) getPostUpgradeItem(ctx context.Context, engine *everestv
 	return item, nil
 }
 
+// ToOperatorUpgradeDatabaseItem converts OperatorUpgradePreflightForDatabase to OperatorUpgradeDatabaseItem.
+// TODO: Remove this function when the deprecated API is removed.
+//
+//nolint:todo
 func (s *OperatorUpgradePreflightForDatabase) ToOperatorUpgradeDatabaseItem() OperatorUpgradeDatabaseItem {
 	return OperatorUpgradeDatabaseItem{
 		Name:        s.Name,
@@ -144,12 +148,13 @@ func (s *OperatorVersionCheckForDatabase) ToOperatorUpgradeDatabaseItem() Operat
 func (e *EverestServer) getPreUpgradeItem(
 	ctx context.Context,
 	targetVersion string,
-	engine *everestv1alpha1.DatabaseEngine) (OperatorUpgrade, error) {
+	engine *everestv1alpha1.DatabaseEngine,
+) (OperatorUpgrade, error) {
 	item := OperatorUpgrade{
 		CurrentVersion: pointer.To(engine.Status.OperatorVersion),
 		Name:           pointer.To(engine.GetName()),
 		TargetVersion:  pointer.To(targetVersion),
-		Databases:      pointer.To(make([]OperatorUpgradeDatabaseItem, 0)),
+		Databases:      pointer.To([]OperatorUpgradeDatabaseItem{}),
 	}
 	resultPtr, err := e.getOperatorUpgradePreflight(ctx, targetVersion, engine)
 	if err != nil {
@@ -162,8 +167,9 @@ func (e *EverestServer) getPreUpgradeItem(
 	return item, nil
 }
 
-// Upgrade database engine operators
-func (e *EverestServer) UpgradeOperators(c echo.Context, namespace string) error {
+// UpgradeOperators upgrades the operators in the specified namespace.
+func (e *EverestServer) UpgradeOperators(_ echo.Context, namespace string) error {
+	// TODO
 	return nil
 }
 
@@ -184,7 +190,7 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 }
 
 // GetOperatorVersion returns the current version of the operator and the status of the database clusters.
-// DEPRECATED
+// DEPRECATED.
 func (e *EverestServer) GetOperatorVersion(c echo.Context, namespace, name string) error {
 	ctx := c.Request().Context()
 	engine, err := e.kubeClient.GetDatabaseEngine(ctx, namespace, name)
@@ -237,7 +243,7 @@ func (e *EverestServer) checkDatabases(
 }
 
 // UpgradeDatabaseEngineOperator upgrades the database engine operator to the specified version.
-// DEPRECATED
+// DEPRECATED.
 func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespace string, name string) error {
 	// Parse request body.
 	req := &DatabaseEngineOperatorUpgradeParams{}
@@ -358,7 +364,7 @@ func (e *EverestServer) getOperatorUpgradePreflight(
 
 // GetOperatorUpgradePreflight gets the preflight check results for upgrading the specified database engine operator.
 //
-// DEPRECATED
+// DEPRECATED.
 func (e *EverestServer) GetOperatorUpgradePreflight(
 	ctx echo.Context,
 	namespace, name string,
