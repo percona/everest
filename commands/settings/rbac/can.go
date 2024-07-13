@@ -31,20 +31,34 @@ import (
 	"github.com/percona/everest/pkg/rbac"
 )
 
+const canCmdExamples = `
+Examples:
+# Check if user 'alice' can get 'cluster-1' in namespace 'my-namespace'
+$ everestctl settings rbac can alice read database-clusters my-namespace/cluster-1
+
+# Check if user 'alice' can perform all/any actions on 'cluster-1' in namespace 'my-namespace'
+$ everestctl settings rbac can alice '*' database-clusters my-namespace/cluster-1
+
+# Check if role 'adminrole' can update backup 'prod-backup-1' in namespace 'prod-namespace'
+$ everestctl settings rbac can adminrole:role update database-cluster-backups prod-namespace/prod-backup-1
+
+# Check if user 'bob' can delete all/any backups in namespace 'prod-namespace'
+$ everestctl settings rbac can bob delete database-cluster-backups prod-namespace/*
+
+# Check if user 'alice' can perform all/any actions on all backups in all namespaces
+$ everestctl settings rbac can alice '*' database-cluster-backups '*'
+
+NOTE: The asterisk character (*) holds a special meaning in the unix shell.
+To prevent misinterpretation, you need to add single quotes around it.
+`
+
 // NewCanCommand returns a new command for testing RBAC.
 //
 //nolint:funlen
 func NewCanCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "can SUBJECT ACTION RESOURCE SUBRESOURCE",
-		Long: `Test RBAC policy.
-Examples:
-$ everestctl settings rbac can alice read database-clusters all
-
-$ everestctl settings rbac can alice read database-clusters my-namespace/my-cluster
-
-$ everestctl settings rbac can adminrole:role update database-cluster-backups prod-namespace/prod-backup-1
-`,
+		Use:     "can SUBJECT ACTION RESOURCE SUBRESOURCE",
+		Long:    `Test RBAC policy.` + "\n" + canCmdExamples,
 		Short:   "Test RBAC policy",
 		Example: "everestctl settings rbac can alice read database-clusters all",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -77,10 +91,6 @@ $ everestctl settings rbac can adminrole:role update database-cluster-backups pr
 					panic(err)
 				}
 				os.Exit(1)
-			}
-
-			if args[3] == "all" {
-				args[3] = "*"
 			}
 
 			can, err := rbac.Can(cmd.Context(), policyFilepath, k, args...)
