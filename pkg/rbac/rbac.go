@@ -190,18 +190,16 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 			return false, errors.New("invalid URL")
 		}
 		switch resource {
-		case "backup-storages", "monitoring-instances":
-			object = "*"
-		case "database-clusters",
-			"database-engines",
-			"database-cluster-backups",
-			"database-cluster-restores":
+		// These resources are not namespaced.
+		case "namespaces",
+			"backup-storages",
+			"monitoring-instances":
+			name := c.Param("name")
+			object = name
+		default:
 			namespace := c.Param("namespace")
 			name := c.Param("name")
 			object = namespace + "/" + name
-		case "namespaces":
-			name := c.Param("name")
-			object = name
 		}
 
 		action, ok := actionMethodMap[c.Request().Method]
