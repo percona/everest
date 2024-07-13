@@ -552,7 +552,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}/credentials':
-    x-everest-resource-name: database-clusters
+    x-everest-resource-name: database-cluster-credentials
     get:
       tags:
         - Database Cluster
