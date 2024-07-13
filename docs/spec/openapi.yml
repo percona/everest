@@ -867,7 +867,7 @@ paths:
             If 'pre', returns pre-upgrade (preflight) checklist.
             If 'post', returns post-upgrade checklist.
           schema:
-            type: boolean
+            type: string
       responses:
         '200':
           description: Successful operation
