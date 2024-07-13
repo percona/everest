@@ -167,3 +167,115 @@ func TestValidateTerms(t *testing.T) {
 		})
 	}
 }
+
+func TestCan(t *testing.T) {
+	t.Parallel()
+	testcases := []struct {
+		request []string
+		can     bool
+	}{
+		{
+			request: []string{
+				"admin",
+				"create",
+				"database-clusters",
+				"*",
+			},
+			can: true,
+		},
+		{
+			request: []string{
+				"admin",
+				"read",
+				"database-clusters",
+				"*",
+			},
+			can: true,
+		},
+		{
+			request: []string{
+				"admin",
+				"update",
+				"database-clusters",
+				"*",
+			},
+			can: true,
+		},
+		{
+			request: []string{
+				"admin",
+				"update",
+				"database-cluster-backups",
+				"*",
+			},
+			can: true,
+		},
+		{
+			request: []string{
+				"alice",
+				"create",
+				"database-clusters",
+				"*",
+			},
+			can: false,
+		},
+		{
+			request: []string{
+				"alice",
+				"read",
+				"database-engines",
+				"*",
+			},
+			can: true,
+		},
+		{
+			request: []string{
+				"alice",
+				"create",
+				"database-clusters",
+				"alice/alice-cluster-1",
+			},
+			can: true,
+		},
+		{
+			request: []string{
+				"bob",
+				"create",
+				"database-clusters",
+				"*",
+			},
+			can: false,
+		},
+		{
+			request: []string{
+				"bob",
+				"create",
+				"database-clusters",
+				"dev/*",
+			},
+			can: true,
+		},
+		{
+			request: []string{
+				"bob",
+				"create",
+				"database-clusters",
+				"dev/bob-1",
+			},
+			can: true,
+		},
+	}
+
+	for i, tc := range testcases {
+		t.Run(fmt.Sprintf("test-%d", i), func(t *testing.T) {
+			t.Parallel()
+			can, err := Can(context.Background(), "./testdata/policy-1-good.csv", nil, tc.request...)
+			if err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+			if can != tc.can {
+				t.Fatalf("expected %v, got %v", tc.can, can)
+			}
+		})
+	}
+}
