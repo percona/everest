@@ -53,8 +53,6 @@ To prevent misinterpretation, you need to add single quotes around it.
 `
 
 // NewCanCommand returns a new command for testing RBAC.
-//
-//nolint:funlen
 func NewCanCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "can SUBJECT ACTION RESOURCE SUBRESOURCE",
