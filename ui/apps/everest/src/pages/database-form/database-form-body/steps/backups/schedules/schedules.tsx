@@ -39,7 +39,7 @@ const Schedules = () => {
   const { watch, setValue } = useFormContext();
   const dbWizardMode = useDatabasePageMode();
   const {
-    defaultValues: { schedules: defaultDbSchedules },
+    defaultValues: { schedules: defaultDbSchedules, dbName },
   } = useDatabasePageDefaultValues(dbWizardMode);
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
   const [mode, setMode] = useState<'new' | 'edit'>('new');
@@ -51,9 +51,6 @@ const Schedules = () => {
     DbWizardFormFields.schedules,
   ]);
 
-  const createButtonDisabled =
-    openScheduleModal ||
-    (dbType === DbType.Postresql && schedules?.length >= 3);
   const [activeStorage, setActiveStorage] = useState(undefined);
 
   useEffect(() => {
@@ -102,7 +99,6 @@ const Schedules = () => {
         actionButtonProps={{
           dataTestId: 'create-schedule',
           buttonText: 'Create backup schedule',
-          disabled: createButtonDisabled,
           onClick: () => handleCreate(),
         }}
       >
@@ -157,6 +153,7 @@ const Schedules = () => {
               namespace: k8sNamespace,
               dbEngine: dbTypeToDbEngine(dbType),
               activeStorage,
+              dbClusterName: dbName,
             },
           }}
         >
