@@ -18,6 +18,7 @@ package kubernetes
 
 import (
 	"context"
+	"time"
 
 	backoff "github.com/cenkalti/backoff/v4"
 
@@ -56,7 +57,7 @@ func (k *Kubernetes) SetDatabaseEngineLock(ctx context.Context, namespace, name 
 		if annotations == nil {
 			annotations = make(map[string]string)
 		}
-		annotations[everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation] = "true"
+		annotations[everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation] = time.Now().Format(time.RFC3339)
 		if !locked {
 			delete(annotations, everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation)
 		}

@@ -29,8 +29,12 @@ import (
 	"golang.org/x/net/context"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	"github.com/percona/everest/pkg/common"
 	versionservice "github.com/percona/everest/pkg/version_service"
+)
+
+const (
+	checkTypePre  = "pre"
+	checkTypePost = "post"
 )
 
 const (
@@ -52,55 +56,55 @@ func (e *EverestServer) GetDatabaseEngine(ctx echo.Context, namespace, name stri
 	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, name)
 }
 
-func getNextUpgradeVersion(engine *everestv1alpha1.DatabaseEngine) string {
-	nextVersion := ""
-	for _, upgrade := range engine.Status.PendingOperatorUpgrades {
-		currentTarget := upgrade.TargetVersion
-		if nextVersion == "" {
-			nextVersion = currentTarget
-			continue
-		}
-		// Is the current target less than the next version?
-		if common.CompareVersions(currentTarget, nextVersion) < 0 {
-			nextVersion = upgrade.TargetVersion
-		}
-	}
-	return nextVersion
-}
-
-// ListOperatorUpgrades list operator upgrades in this namespace.
-func (e *EverestServer) ListOperatorUpgrades(c echo.Context, namespace string) error {
-	ctx := c.Request().Context()
-
+func (e *EverestServer) listOperatorUpgrades(
+	ctx context.Context,
+	namespace string,
+	checkType string,
+) (*OperatorUpgradesList, error) {
 	engines, err := e.kubeClient.ListDatabaseEngines(ctx, namespace)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	result := OperatorUpgradesList{
+	result := &OperatorUpgradesList{
 		Items: pointer.To([]OperatorUpgrade{}),
 	}
 
 	for _, engine := range engines.Items {
-		// Find a version to upgrade to.
-		nextVersion := getNextUpgradeVersion(&engine)
-
-		// We found a version to upgrade to, so perform preflight checks.
-		if nextVersion != "" {
-			u, err := e.getPreUpgradeItem(ctx, nextVersion, &engine)
+		switch checkType {
+		case checkTypePre:
+			u, err := e.getPreUpgradeItem(ctx, &engine)
 			if err != nil {
-				return err
+				return nil, err
+			}
+			if u != nil {
+				*result.Items = append(*result.Items, *u)
+			}
+		case checkTypePost:
+			u, err := e.getPostUpgradeItem(ctx, &engine)
+			if err != nil {
+				return nil, err
 			}
 			*result.Items = append(*result.Items, u)
-			continue
+		default:
+			return nil, errors.New("invalid type provided")
 		}
+	}
+	return result, nil
+}
 
-		// Already upgraded, check if post-upgrade tasks are needed.
-		u, err := e.getPostUpgradeItem(ctx, &engine)
-		if err != nil {
-			return err
-		}
-		*result.Items = append(*result.Items, u)
+// ListOperatorUpgrades list operator upgrades in this namespace.
+func (e *EverestServer) ListOperatorUpgrades(
+	c echo.Context,
+	namespace string,
+	params ListOperatorUpgradesParams,
+) error {
+	ctx := c.Request().Context()
+	t := pointer.Get(params.Type)
+
+	result, err := e.listOperatorUpgrades(ctx, namespace, t)
+	if err != nil {
+		return err
 	}
 	return c.JSON(http.StatusOK, result)
 }
@@ -147,16 +151,19 @@ func (s *OperatorVersionCheckForDatabase) ToOperatorUpgradeDatabaseItem() Operat
 
 func (e *EverestServer) getPreUpgradeItem(
 	ctx context.Context,
-	targetVersion string,
 	engine *everestv1alpha1.DatabaseEngine,
-) (OperatorUpgrade, error) {
-	item := OperatorUpgrade{
+) (*OperatorUpgrade, error) {
+	nextVersion := engine.Status.GetNextUpgradeVersion()
+	if nextVersion == "" {
+		return nil, nil
+	}
+	item := &OperatorUpgrade{
 		CurrentVersion: pointer.To(engine.Status.OperatorVersion),
 		Name:           pointer.To(engine.GetName()),
-		TargetVersion:  pointer.To(targetVersion),
+		TargetVersion:  pointer.To(nextVersion),
 		Databases:      pointer.To([]OperatorUpgradeDatabaseItem{}),
 	}
-	resultPtr, err := e.getOperatorUpgradePreflight(ctx, targetVersion, engine)
+	resultPtr, err := e.getOperatorUpgradePreflight(ctx, nextVersion, engine)
 	if err != nil {
 		return item, err
 	}
@@ -167,9 +174,62 @@ func (e *EverestServer) getPreUpgradeItem(
 	return item, nil
 }
 
+func (e *EverestServer) setLockDBEnginesForUpgrade(
+	ctx context.Context,
+	namespace string,
+	upgrades *OperatorUpgradesList,
+	lock bool) error {
+	return backoff.Retry(func() error {
+		for _, upgrade := range pointer.Get(upgrades.Items) {
+			if err := e.kubeClient.SetDatabaseEngineLock(ctx, namespace, pointer.Get(upgrade.Name), lock); err != nil {
+				return err
+			}
+		}
+		return nil
+	}, backoff.WithContext(everestAPIConstantBackoff, ctx))
+}
+
 // UpgradeOperators upgrades the operators in the specified namespace.
-func (e *EverestServer) UpgradeOperators(_ echo.Context, namespace string) error {
-	// TODO
+func (e *EverestServer) UpgradeOperators(c echo.Context, namespace string) (err error) {
+	ctx := c.Request().Context()
+
+	upgrades, err := e.listOperatorUpgrades(ctx, namespace, checkTypePre)
+	if err != nil {
+		return err
+	}
+
+	// lock all engines that will be upgraded.
+	if err := e.setLockDBEnginesForUpgrade(ctx, namespace, upgrades, true); err != nil {
+		return errors.Join(err, errors.New("failed to lock engines"))
+	}
+	// unlock on exit.
+	defer func() {
+		if lockErr := e.setLockDBEnginesForUpgrade(ctx, namespace, upgrades, false); lockErr != nil {
+			err = errors.Join(err, errors.New("failed to unlock engines"))
+		}
+	}()
+
+	canUpgrade := func(u OperatorUpgrade) bool {
+		dbs := pointer.Get(u.Databases)
+		return !slices.ContainsFunc(dbs, func(db OperatorUpgradeDatabaseItem) bool {
+			return pointer.Get(db.PendingTask) != OperatorUpgradeDatabaseItemPendingTaskReady
+		})
+	}
+
+	// Check if we're ready to upgrade?
+	for _, upgrade := range pointer.Get(upgrades.Items) {
+		if !canUpgrade(upgrade) {
+			// return an error that we cannot upgrade.
+			return c.JSON(http.StatusPreconditionFailed, Error{
+				Message: pointer.ToString("One or more databases are not ready for upgrade"),
+			})
+		}
+	}
+
+	// start upgrade process.
+	if err := e.startOperatorUpgradeWithRetry(ctx, "", namespace, ""); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -305,6 +365,7 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 
 // startOperatorUpgradeWithRetry wraps the startOperatorUpgrade function with a retry mechanism.
 // This is done to reduce the chances of failures due to resource conflicts.
+// TODO: remove/refactor this once deprecated APIs are removed.
 func (e *EverestServer) startOperatorUpgradeWithRetry(ctx context.Context, targetVersion, namespace, name string) error {
 	return backoff.Retry(func() error {
 		return e.startOperatorUpgrade(ctx, targetVersion, namespace, name)
@@ -313,21 +374,41 @@ func (e *EverestServer) startOperatorUpgradeWithRetry(ctx context.Context, targe
 	)
 }
 
-// startOperatorUpgrade starts the operator upgrade process by adding the upgrade annotation to the database engine.
-func (e *EverestServer) startOperatorUpgrade(ctx context.Context, targetVersion, namespace, name string) error {
-	engine, err := e.kubeClient.GetDatabaseEngine(ctx, namespace, name)
+// TODO: remove/refactor this once deprecated APIs are removed.
+func (e *EverestServer) startOperatorUpgrade(ctx context.Context, _, namespace, _ string) error {
+	engines, err := e.kubeClient.ListDatabaseEngines(ctx, namespace)
 	if err != nil {
 		return err
 	}
-	// Update annotation to start upgrade.
-	annotations := engine.GetAnnotations()
-	if annotations == nil {
-		annotations = make(map[string]string)
+
+	// gather install plans to approve.
+	installPlans := []string{}
+	for _, engine := range engines.Items {
+		nextVer := engine.Status.GetNextUpgradeVersion()
+		if nextVer == "" {
+			continue
+		}
+		for _, pending := range engine.Status.PendingOperatorUpgrades {
+			if pending.TargetVersion == nextVer {
+				installPlans = append(installPlans, pending.InstallPlanRef.Name)
+			}
+		}
 	}
-	annotations[everestv1alpha1.DatabaseOperatorUpgradeAnnotation] = targetVersion
-	engine.SetAnnotations(annotations)
-	_, err = e.kubeClient.UpdateDatabaseEngine(ctx, namespace, engine)
-	return err
+
+	// de-duplicate the list.
+	slices.Sort(installPlans)
+	installPlans = slices.Compact(installPlans)
+
+	// approve install plans.
+	for _, plan := range installPlans {
+		if err := backoff.Retry(func() error {
+			_, err := e.kubeClient.ApproveInstallPlan(ctx, namespace, plan)
+			return err
+		}, backoff.WithContext(everestAPIConstantBackoff, ctx)); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (e *EverestServer) getOperatorUpgradePreflight(
