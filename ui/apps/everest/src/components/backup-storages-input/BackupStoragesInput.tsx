@@ -3,23 +3,24 @@ import { AutoCompleteAutoFill } from 'components/auto-complete-auto-fill/auto-co
 import { AutoCompleteAutoFillProps } from 'components/auto-complete-auto-fill/auto-complete-auto-fill.types';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages';
 import { useDbBackups } from 'hooks/api/backups/useBackups';
+import { BackupStorage } from 'shared-types/backupStorages.types';
 import { Schedule } from 'shared-types/dbCluster.types';
 
-type Props<T> = {
+type Props = {
   dbClusterName?: string;
   namespace: string;
   dbType: DbType;
   schedules: Schedule[];
-  autoFillProps?: Partial<AutoCompleteAutoFillProps<T>>;
+  autoFillProps?: Partial<AutoCompleteAutoFillProps<BackupStorage>>;
 };
 
-const BackupStoragesInput = <T,>({
+const BackupStoragesInput = ({
   namespace,
   dbClusterName,
   dbType,
   schedules,
-  ...rest
-}: Props<T>) => {
+  autoFillProps,
+}: Props) => {
   const { data: backupStorages = [], isFetching: fetchingStorages } =
     useBackupStoragesByNamespace(namespace);
   const { data: backups = [], isFetching: fetchingBackups } = useDbBackups(
@@ -38,14 +39,14 @@ const BackupStoragesInput = <T,>({
   const uniqueStoragesInUse = [...new Set(storagesInUse)];
   const pgLimitAchieved =
     dbType === DbType.Postresql && uniqueStoragesInUse.length >= 3;
-  const storagesToShow = pgLimitAchieved
+  const storagesToShow: BackupStorage[] = pgLimitAchieved
     ? backupStorages.filter((storage) =>
         uniqueStoragesInUse.includes(storage.name)
       )
     : backupStorages;
 
   return (
-    <AutoCompleteAutoFill
+    <AutoCompleteAutoFill<BackupStorage>
       name="storageLocation"
       textFieldProps={{
         label: 'Backup storage',
@@ -60,7 +61,7 @@ const BackupStoragesInput = <T,>({
         getOptionLabel: (option) =>
           typeof option === 'string' ? option : option.name,
       }}
-      {...rest}
+      {...autoFillProps}
     />
   );
 };
