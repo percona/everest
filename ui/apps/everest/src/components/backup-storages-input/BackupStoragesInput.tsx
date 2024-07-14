@@ -49,6 +49,7 @@ const BackupStoragesInput = <T,>({
       name="storageLocation"
       textFieldProps={{
         label: 'Backup storage',
+        // TODO change helper text
         helperText: pgLimitAchieved ? '<SLOTS ACHIEVED>' : '',
       }}
       loading={isFetching}
