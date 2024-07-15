@@ -805,6 +805,8 @@ paths:
       summary: Upgrade preflight
       description: |
         This API gets the results of the preflight checks that must be performed before upgrading a database engine operator.
+
+        *This API is deprecated and will be removed from v1.2.0*
       operationId: getOperatorUpgradePreflight
       parameters:
         - name: namespace
@@ -851,7 +853,9 @@ paths:
         - Operators
       summary: List pending upgrades
       description: |
-        This API gets a list of pending operator upgrades available for a given namespaces.
+        This API lists pending operator upgrades in the given namespace.
+
+        Aditionally, it also returns a list of pending action items that need to be performed before the operators may be upgraded.
       operationId: listDatabaseEnginesPendingUpgrades
       parameters:
         - name: namespace
@@ -886,7 +890,7 @@ paths:
         - Operators
       summary: Upgrade database engine operators
       description: |
-        This API upgrades all database engine operators specified in the given `namespace`.
+        This API upgrades all database engine operators in the specified namespace.
       operationId: createOperatorsUpgrade
       parameters:
         - name: namespace
@@ -925,6 +929,8 @@ paths:
       summary: Get operator upgrade status
       description: |
         This API gets the status of the operator upgrade for the given namespace.
+
+        Additionally, it also returns a list of pending action items that need to be performed before considering an operator upgraded.
       operationId: getOperatorsUpgradeStatus
       parameters:
         - name: namespace
@@ -964,6 +970,8 @@ paths:
 
         Additionally, if the specified database engine operator was newly upgraded to the specified version, it also returns
         a list of pending action items that need to be performed before the operator can be considered fully upgraded.
+
+        *This API is deprecated and will be removed from v1.2.0*
       operationId: getOperatorVersion
       parameters:
         - name: namespace
@@ -1000,10 +1008,13 @@ paths:
     put:
       tags:
         - Operators
+      deprecated: true
       summary: Upgrade database engine operator
       description: |
         This API upgrades the database engine operator specified by the `name` and `namespace`.
         Before performing the upgrade, the preflight checks must be performed.
+
+        *This API is deprecated and will be removed from v1.2.0*
       operationId: upgradeDatabaseEngineOperator
       parameters:
         - name: namespace
