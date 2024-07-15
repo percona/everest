@@ -849,7 +849,7 @@ paths:
     get:
       tags:
         - Operators
-      summary: Get operator upgrades
+      summary: List pending upgrades
       description: |
         This API gets a list of pending operator upgrades available for a given namespaces.
       operationId: listDatabaseEnginesPendingUpgrades
@@ -2268,19 +2268,17 @@ components:
       description: |
         Status of the operators upgrade in a namespace.
       properties:
-        name:
-          type: string
-          description: Name of the operator
         state:
           type: string
           description: State of the operator upgrade
           enum:
-            - installed
+            - complete
             - upgrading
+            - pendingActions
         pendingActions:
           type: array
           description: |
-            List of actions that need to be performed for the clusters managed by this operator.
+            List of actions that need to be performed in order to complete the upgrade.
           items:
             type: object
             $ref: '#/components/schemas/OperatorUpgrade_Task'
