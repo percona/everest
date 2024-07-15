@@ -60,7 +60,7 @@ const DbActionButtons = (
   handleRestoreDbCluster: (dbCluster: DbCluster) => void,
   canCreate: boolean,
   canUpdate: boolean,
-  canDelete: boolean,
+  canDelete: boolean
 ) => {
   return [
     ...(canUpdate
@@ -327,7 +327,7 @@ export const DbClusterView = () => {
           data={tableData}
           enableRowActions
           renderRowActions={({ row }) => {
-            const {canUpdate, canDelete, canCreate } = useGetPermissions({
+            const { canUpdate, canDelete, canCreate } = useGetPermissions({
               resource: 'database-clusters',
               specificResource: row.original.databaseName,
               namespace: row.original.namespace,
