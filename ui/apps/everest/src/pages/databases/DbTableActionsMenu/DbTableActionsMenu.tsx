@@ -231,8 +231,6 @@ export const DbTableActionsMenu = ({
           anchorEl={anchorEl}
           open={open}
           onClose={(event: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
-            debugger;
-            console.log(event);
             handleClose(event);
           }}
           MenuListProps={{
