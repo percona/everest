@@ -2,14 +2,6 @@
 name: Release
 on:
   workflow_dispatch:
-    inputs:
-      releaseType:
-        description: "Type of release"
-        required: true
-        type: choice
-        options:
-          - patch
-          - minor
       version:
         description: "The RC/Release version, format: X.Y.Z-rcN for RC, X.Y.Z for releases"
         required: true
@@ -26,7 +18,6 @@ jobs:
     env:
       TOOLS_PATH: "/opt/tools/bin"
       VERSION: ${{ github.event.inputs.version }}
-      RELEASE_TYPE: ${{ github.event.inputs.releaseType }}
       # version in format "X.Y" which is going to be updated with each patch release
       FLOATING_TAG: ''
       # branch name in format "release-X.Y"
