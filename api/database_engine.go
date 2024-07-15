@@ -126,21 +126,26 @@ func (e *EverestServer) CreateOperatorsUpgrade(c echo.Context, namespace string)
 	return nil
 }
 
-// GetOperatorsUpgradeStatus starts the upgrade of operators in the provided namespace.
+// GetOperatorsUpgradeStatus gets the status of the operators upgrade in the namespace.
 func (e *EverestServer) GetOperatorsUpgradeStatus(c echo.Context, namespace string) error {
 	result := &OperatorsUpgradeStatus{
 		PendingActions: pointer.To([]OperatorUpgradeTask{}),
 	}
 	ctx := c.Request().Context()
+
 	engines, err := e.kubeClient.ListDatabaseEngines(ctx, namespace)
 	if err != nil {
 		return err
 	}
 	state := Complete
+
+	// Are any engines upgrading?
 	if slices.ContainsFunc(engines.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
 		return engine.Status.State == everestv1alpha1.DBEngineStateUpgrading
 	}) {
 		state = Upgrading
+		result.State = pointer.To(state)
+		return c.JSON(http.StatusOK, result)
 	}
 
 	for _, engine := range engines.Items {
@@ -362,7 +367,9 @@ func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespac
 
 // startOperatorUpgradeWithRetry wraps the startOperatorUpgrade function with a retry mechanism.
 // This is done to reduce the chances of failures due to resource conflicts.
+//
 // TODO: remove/refactor this once deprecated APIs are removed.
+// There are unused parameters in this function to maintain backward compatibility with deprecated APIs.
 func (e *EverestServer) startOperatorUpgradeWithRetry(ctx context.Context, targetVersion, namespace, name string) error {
 	return backoff.Retry(func() error {
 		return e.startOperatorUpgrade(ctx, targetVersion, namespace, name)
