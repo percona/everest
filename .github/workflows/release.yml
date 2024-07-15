@@ -347,7 +347,7 @@ jobs:
           
           # Update deploy manifest 
           if [[ $IS_RC == 1 ]]; then 
-            # if the build is being run over another RC build, there will be the "perconalab" org mentioned in the quickstart file, 
+            # if the build is being run over de/RC build, there will be the "perconalab" org mentioned in the quickstart file, 
             # so we should replace only the version
             sed -i "s/perconalab\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
             
