@@ -28,9 +28,7 @@ import { Messages } from '../dbClusterView.messages';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import AddIcon from '@mui/icons-material/Add';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
-import {
-  DbCluster, DbClusterStatus,
-} from 'shared-types/dbCluster.types';
+import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
 import { useDbActions } from 'hooks/api/db-cluster/useDbActions';
 import { useGetPermissions } from 'utils/useGetPermissions';
 
@@ -56,7 +54,7 @@ const DbActionButtons = (
       disabled={row.original.status === DbClusterStatus.restoring}
       key={0}
       component={Link}
-      onClick={(event)=>{
+      onClick={(event) => {
         closeMenu(event);
       }}
       to="/databases/edit"
@@ -180,7 +178,10 @@ type TableActionsMenuProps = {
   setIsNewClusterMode: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-export const DbTableActionsMenu = ({ row, setIsNewClusterMode }: TableActionsMenuProps) => {
+export const DbTableActionsMenu = ({
+  row,
+  setIsNewClusterMode,
+}: TableActionsMenuProps) => {
   const {
     handleDbRestart,
     handleDbSuspendOrResumed,
@@ -195,7 +196,7 @@ export const DbTableActionsMenu = ({ row, setIsNewClusterMode }: TableActionsMen
     setAnchorEl(event.currentTarget);
     event.stopPropagation();
   };
-  const handleClose = (event:  React.MouseEvent) => {
+  const handleClose = (event: React.MouseEvent) => {
     event.stopPropagation();
     setAnchorEl(null);
   };
@@ -224,11 +225,12 @@ export const DbTableActionsMenu = ({ row, setIsNewClusterMode }: TableActionsMen
       >
         <MoreHorizOutlinedIcon />
       </IconButton>
-      {menuItems?.length > 0 && (<Menu
+      {menuItems?.length > 0 && (
+        <Menu
           id="row-actions-menu"
           anchorEl={anchorEl}
           open={open}
-          onClose={(event:  React.MouseEvent<HTMLLIElement, MouseEvent>) => {
+          onClose={(event: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
             debugger;
             console.log(event);
             handleClose(event);
