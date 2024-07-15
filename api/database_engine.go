@@ -33,11 +33,6 @@ import (
 )
 
 const (
-	checkTypePre  = "pre"
-	checkTypePost = "post"
-)
-
-const (
 	databaseEngineKind = "databaseengines"
 )
 
@@ -212,7 +207,7 @@ func (e *EverestServer) getPreUpgradeItem(
 ) (*OperatorUpgrade, error) {
 	nextVersion := engine.Status.GetNextUpgradeVersion()
 	if nextVersion == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 	item := &OperatorUpgrade{
 		CurrentVersion: pointer.To(engine.Status.OperatorVersion),
@@ -244,7 +239,8 @@ func (e *EverestServer) setLockDBEnginesForUpgrade(
 			}
 		}
 		return nil
-	}, backoff.WithContext(everestAPIConstantBackoff, ctx))
+	}, backoff.WithContext(everestAPIConstantBackoff, ctx),
+	)
 }
 
 // GetOperatorVersion returns the current version of the operator and the status of the database clusters.
@@ -405,7 +401,8 @@ func (e *EverestServer) startOperatorUpgrade(ctx context.Context, _, namespace, 
 		if err := backoff.Retry(func() error {
 			_, err := e.kubeClient.ApproveInstallPlan(ctx, namespace, plan)
 			return err
-		}, backoff.WithContext(everestAPIConstantBackoff, ctx)); err != nil {
+		}, backoff.WithContext(everestAPIConstantBackoff, ctx),
+		); err != nil {
 			return err
 		}
 	}
