@@ -846,17 +846,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-engines/pending-upgrades':
+  '/namespaces/{namespace}/database-engines/upgrade-plan':
     x-everest-resource-name: database-engines
     get:
       tags:
         - Operators
-      summary: List pending upgrades
+      summary: Get upgrade plan
       description: |
         This API lists pending operator upgrades in the given namespace.
 
-        Aditionally, it also returns a list of pending action items that need to be performed before the operators may be upgraded.
-      operationId: listDatabaseEnginesPendingUpgrades
+        Additionally, it also returns a list of pending action items that need to be performed 
+        before and after upgrading a database operator.
+      operationId: getUpgradePlan
       parameters:
         - name: namespace
           in: path
@@ -870,7 +871,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperatorUpgradesList'
+                $ref: '#/components/schemas/UpgradePlan'
         '400':
           description: Unsuccessful operation
           content:
@@ -883,15 +884,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-engines/operators-upgrade':
+  '/namespaces/{namespace}/database-engines/upgrade-plan/approval':
     x-everest-resource-name: database-engines
-    put:
+    post:
       tags:
         - Operators
       summary: Upgrade database engine operators
       description: |
         This API upgrades all database engine operators in the specified namespace.
-      operationId: createOperatorsUpgrade
+      operationId: approveUpgradePlan
       parameters:
         - name: namespace
           in: path
@@ -905,47 +906,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OperatorsUpgrade'
+              $ref: '#/components/schemas/UpgradePlanApproval'
       responses:
         '200':
           description: Successful operation
-        '400':
-          description: Unsuccessful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-engines/operators-upgrade/status':
-    x-everest-resource-name: database-engines
-    get:
-      tags:
-        - Operators
-      summary: Get operator upgrade status
-      description: |
-        This API gets the status of the operator upgrade for the given namespace.
-
-        Additionally, it also returns a list of pending action items that need to be performed before considering an operator upgraded.
-      operationId: getOperatorsUpgradeStatus
-      parameters:
-        - name: namespace
-          in: path
-          description: Name of the namespace
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OperatorsUpgradeStatus'
         '400':
           description: Unsuccessful operation
           content:
@@ -1897,7 +1861,7 @@ components:
             - restart
             - upgradeEngine
       additionalProperties: false
-    OperatorUpgrade_Task:
+    UpgradeTask:
       type: object
       properties:
         name:
@@ -1913,7 +1877,7 @@ components:
             - notReady
             - restart
             - upgradeEngine
-    OperatorUpgrade:
+    Upgrade:
       type: object
       properties:
         name:
@@ -1926,22 +1890,20 @@ components:
           type: string
           description: | 
             The next version of the operator to upgrade to.
+    UpgradePlan:
+      type: object
+      description: Operators upgrade plan
+      properties:
+        upgrades:
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/Upgrade'
         pendingActions:
           type: array
-          description: |
-            List of actions that need to be performed for the clusters managed by this operator.
           items:
             type: object
-            $ref: '#/components/schemas/OperatorUpgrade_Task'
-    OperatorUpgradesList:
-      type: object
-      description: List of operator upgrades
-      properties:
-        items:
-          type: array
-          items:
-            type: object
-            $ref: '#/components/schemas/OperatorUpgrade'
+            $ref: '#/components/schemas/UpgradeTask'
       additionalProperties: false
     OperatorUpgradePreflight:
       deprecated: true
@@ -2268,31 +2230,11 @@ components:
         metadata:
           type: object
       type: object
-    OperatorsUpgrade:
+    UpgradePlanApproval:
       type: object
       description: |
         This no-op object is used to trigger the operator upgrade in a namespace.
-        To check the status of the upgrade, see the status of the individual database-engines status.
       properties: {}
-    OperatorsUpgradeStatus:
-      type: object
-      description: |
-        Status of the operators upgrade in a namespace.
-      properties:
-        state:
-          type: string
-          description: State of the operator upgrade
-          enum:
-            - complete
-            - upgrading
-            - pendingActions
-        pendingActions:
-          type: array
-          description: |
-            List of actions that need to be performed in order to complete the upgrade.
-          items:
-            type: object
-            $ref: '#/components/schemas/OperatorUpgrade_Task'
     DatabaseEngineOperatorUpgradeParams:
       deprecated: true
       type: object

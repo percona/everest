@@ -98,24 +98,17 @@ const (
 	OperatorUpgradePreflightForDatabasePendingTaskUpgradeEngine OperatorUpgradePreflightForDatabasePendingTask = "upgradeEngine"
 )
 
-// Defines values for OperatorUpgradeTaskPendingTask.
-const (
-	OperatorUpgradeTaskPendingTaskNotReady      OperatorUpgradeTaskPendingTask = "notReady"
-	OperatorUpgradeTaskPendingTaskReady         OperatorUpgradeTaskPendingTask = "ready"
-	OperatorUpgradeTaskPendingTaskRestart       OperatorUpgradeTaskPendingTask = "restart"
-	OperatorUpgradeTaskPendingTaskUpgradeEngine OperatorUpgradeTaskPendingTask = "upgradeEngine"
-)
-
 // Defines values for OperatorVersionCheckForDatabasePendingTask.
 const (
-	Restart OperatorVersionCheckForDatabasePendingTask = "restart"
+	OperatorVersionCheckForDatabasePendingTaskRestart OperatorVersionCheckForDatabasePendingTask = "restart"
 )
 
-// Defines values for OperatorsUpgradeStatusState.
+// Defines values for UpgradeTaskPendingTask.
 const (
-	Complete       OperatorsUpgradeStatusState = "complete"
-	PendingActions OperatorsUpgradeStatusState = "pendingActions"
-	Upgrading      OperatorsUpgradeStatusState = "upgrading"
+	NotReady      UpgradeTaskPendingTask = "notReady"
+	Ready         UpgradeTaskPendingTask = "ready"
+	Restart       UpgradeTaskPendingTask = "restart"
+	UpgradeEngine UpgradeTaskPendingTask = "upgradeEngine"
 )
 
 // BackupStorage Backup storage information
@@ -872,21 +865,6 @@ type OIDCConfig struct {
 	IssuerURL string `json:"issuerURL"`
 }
 
-// OperatorUpgrade defines model for OperatorUpgrade.
-type OperatorUpgrade struct {
-	// CurrentVersion The current operator version
-	CurrentVersion *string `json:"currentVersion,omitempty"`
-
-	// Name Name of the operator
-	Name *string `json:"name,omitempty"`
-
-	// PendingActions List of actions that need to be performed for the clusters managed by this operator.
-	PendingActions *[]OperatorUpgradeTask `json:"pendingActions,omitempty"`
-
-	// TargetVersion The next version of the operator to upgrade to.
-	TargetVersion *string `json:"targetVersion,omitempty"`
-}
-
 // OperatorUpgradePreflight Operator upgrade preflight check results
 type OperatorUpgradePreflight struct {
 	// CurrentVersion The current operator version
@@ -908,25 +886,6 @@ type OperatorUpgradePreflightForDatabase struct {
 // OperatorUpgradePreflightForDatabasePendingTask Pending task for the database cluster
 type OperatorUpgradePreflightForDatabasePendingTask string
 
-// OperatorUpgradeTask defines model for OperatorUpgrade_Task.
-type OperatorUpgradeTask struct {
-	Message *string `json:"message,omitempty"`
-
-	// Name Name of the database cluster
-	Name *string `json:"name,omitempty"`
-
-	// PendingTask Pending task for the database cluster
-	PendingTask *OperatorUpgradeTaskPendingTask `json:"pendingTask,omitempty"`
-}
-
-// OperatorUpgradeTaskPendingTask Pending task for the database cluster
-type OperatorUpgradeTaskPendingTask string
-
-// OperatorUpgradesList List of operator upgrades
-type OperatorUpgradesList struct {
-	Items *[]OperatorUpgrade `json:"items,omitempty"`
-}
-
 // OperatorVersion Operator version check results
 type OperatorVersion struct {
 	// CurrentVersion The current operator version
@@ -947,22 +906,6 @@ type OperatorVersionCheckForDatabase struct {
 
 // OperatorVersionCheckForDatabasePendingTask Pending task for the database cluster
 type OperatorVersionCheckForDatabasePendingTask string
-
-// OperatorsUpgrade This no-op object is used to trigger the operator upgrade in a namespace.
-// To check the status of the upgrade, see the status of the individual database-engines status.
-type OperatorsUpgrade = map[string]interface{}
-
-// OperatorsUpgradeStatus Status of the operators upgrade in a namespace.
-type OperatorsUpgradeStatus struct {
-	// PendingActions List of actions that need to be performed in order to complete the upgrade.
-	PendingActions *[]OperatorUpgradeTask `json:"pendingActions,omitempty"`
-
-	// State State of the operator upgrade
-	State *OperatorsUpgradeStatusState `json:"state,omitempty"`
-}
-
-// OperatorsUpgradeStatusState State of the operator upgrade
-type OperatorsUpgradeStatusState string
 
 // Settings Everest global settings
 type Settings struct {
@@ -986,6 +929,41 @@ type UpdateBackupStorageParams struct {
 	Url            *string `json:"url,omitempty"`
 	VerifyTLS      *bool   `json:"verifyTLS,omitempty"`
 }
+
+// Upgrade defines model for Upgrade.
+type Upgrade struct {
+	// CurrentVersion The current operator version
+	CurrentVersion *string `json:"currentVersion,omitempty"`
+
+	// Name Name of the operator
+	Name *string `json:"name,omitempty"`
+
+	// TargetVersion The next version of the operator to upgrade to.
+	TargetVersion *string `json:"targetVersion,omitempty"`
+}
+
+// UpgradePlan Operators upgrade plan
+type UpgradePlan struct {
+	PendingActions *[]UpgradeTask `json:"pendingActions,omitempty"`
+	Upgrades       *[]Upgrade     `json:"upgrades,omitempty"`
+}
+
+// UpgradePlanApproval This no-op object is used to trigger the operator upgrade in a namespace.
+type UpgradePlanApproval = map[string]interface{}
+
+// UpgradeTask defines model for UpgradeTask.
+type UpgradeTask struct {
+	Message *string `json:"message,omitempty"`
+
+	// Name Name of the database cluster
+	Name *string `json:"name,omitempty"`
+
+	// PendingTask Pending task for the database cluster
+	PendingTask *UpgradeTaskPendingTask `json:"pendingTask,omitempty"`
+}
+
+// UpgradeTaskPendingTask Pending task for the database cluster
+type UpgradeTaskPendingTask string
 
 // UserCredentials defines model for UserCredentials.
 type UserCredentials struct {
@@ -1131,8 +1109,8 @@ type CreateDatabaseClusterJSONRequestBody = DatabaseCluster
 // UpdateDatabaseClusterJSONRequestBody defines body for UpdateDatabaseCluster for application/json ContentType.
 type UpdateDatabaseClusterJSONRequestBody = DatabaseCluster
 
-// CreateOperatorsUpgradeJSONRequestBody defines body for CreateOperatorsUpgrade for application/json ContentType.
-type CreateOperatorsUpgradeJSONRequestBody = OperatorsUpgrade
+// ApproveUpgradePlanJSONRequestBody defines body for ApproveUpgradePlan for application/json ContentType.
+type ApproveUpgradePlanJSONRequestBody = UpgradePlanApproval
 
 // UpdateDatabaseEngineJSONRequestBody defines body for UpdateDatabaseEngine for application/json ContentType.
 type UpdateDatabaseEngineJSONRequestBody = DatabaseEngine
@@ -1758,16 +1736,13 @@ type ClientInterface interface {
 	// ListDatabaseEngines request
 	ListDatabaseEngines(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateOperatorsUpgradeWithBody request with any body
-	CreateOperatorsUpgradeWithBody(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetUpgradePlan request
+	GetUpgradePlan(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateOperatorsUpgrade(ctx context.Context, namespace string, body CreateOperatorsUpgradeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ApproveUpgradePlanWithBody request with any body
+	ApproveUpgradePlanWithBody(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOperatorsUpgradeStatus request
-	GetOperatorsUpgradeStatus(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// ListDatabaseEnginesPendingUpgrades request
-	ListDatabaseEnginesPendingUpgrades(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ApproveUpgradePlan(ctx context.Context, namespace string, body ApproveUpgradePlanJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetDatabaseEngine request
 	GetDatabaseEngine(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -2274,8 +2249,8 @@ func (c *Client) ListDatabaseEngines(ctx context.Context, namespace string, reqE
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateOperatorsUpgradeWithBody(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateOperatorsUpgradeRequestWithBody(c.Server, namespace, contentType, body)
+func (c *Client) GetUpgradePlan(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetUpgradePlanRequest(c.Server, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -2286,8 +2261,8 @@ func (c *Client) CreateOperatorsUpgradeWithBody(ctx context.Context, namespace s
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateOperatorsUpgrade(ctx context.Context, namespace string, body CreateOperatorsUpgradeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateOperatorsUpgradeRequest(c.Server, namespace, body)
+func (c *Client) ApproveUpgradePlanWithBody(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewApproveUpgradePlanRequestWithBody(c.Server, namespace, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2298,20 +2273,8 @@ func (c *Client) CreateOperatorsUpgrade(ctx context.Context, namespace string, b
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOperatorsUpgradeStatus(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOperatorsUpgradeStatusRequest(c.Server, namespace)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) ListDatabaseEnginesPendingUpgrades(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListDatabaseEnginesPendingUpgradesRequest(c.Server, namespace)
+func (c *Client) ApproveUpgradePlan(ctx context.Context, namespace string, body ApproveUpgradePlanJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewApproveUpgradePlanRequest(c.Server, namespace, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3704,19 +3667,53 @@ func NewListDatabaseEnginesRequest(server string, namespace string) (*http.Reque
 	return req, nil
 }
 
-// NewCreateOperatorsUpgradeRequest calls the generic CreateOperatorsUpgrade builder with application/json body
-func NewCreateOperatorsUpgradeRequest(server string, namespace string, body CreateOperatorsUpgradeJSONRequestBody) (*http.Request, error) {
+// NewGetUpgradePlanRequest generates requests for GetUpgradePlan
+func NewGetUpgradePlanRequest(server string, namespace string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "namespace", runtime.ParamLocationPath, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/namespaces/%s/database-engines/upgrade-plan", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewApproveUpgradePlanRequest calls the generic ApproveUpgradePlan builder with application/json body
+func NewApproveUpgradePlanRequest(server string, namespace string, body ApproveUpgradePlanJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateOperatorsUpgradeRequestWithBody(server, namespace, "application/json", bodyReader)
+	return NewApproveUpgradePlanRequestWithBody(server, namespace, "application/json", bodyReader)
 }
 
-// NewCreateOperatorsUpgradeRequestWithBody generates requests for CreateOperatorsUpgrade with any type of body
-func NewCreateOperatorsUpgradeRequestWithBody(server string, namespace string, contentType string, body io.Reader) (*http.Request, error) {
+// NewApproveUpgradePlanRequestWithBody generates requests for ApproveUpgradePlan with any type of body
+func NewApproveUpgradePlanRequestWithBody(server string, namespace string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -3731,7 +3728,7 @@ func NewCreateOperatorsUpgradeRequestWithBody(server string, namespace string, c
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/namespaces/%s/database-engines/operators-upgrade", pathParam0)
+	operationPath := fmt.Sprintf("/namespaces/%s/database-engines/upgrade-plan/approval", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -3741,80 +3738,12 @@ func NewCreateOperatorsUpgradeRequestWithBody(server string, namespace string, c
 		return nil, err
 	}
 
-	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewGetOperatorsUpgradeStatusRequest generates requests for GetOperatorsUpgradeStatus
-func NewGetOperatorsUpgradeStatusRequest(server string, namespace string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "namespace", runtime.ParamLocationPath, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/namespaces/%s/database-engines/operators-upgrade/status", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewListDatabaseEnginesPendingUpgradesRequest generates requests for ListDatabaseEnginesPendingUpgrades
-func NewListDatabaseEnginesPendingUpgradesRequest(server string, namespace string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "namespace", runtime.ParamLocationPath, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/namespaces/%s/database-engines/pending-upgrades", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
 
 	return req, nil
 }
@@ -4367,16 +4296,13 @@ type ClientWithResponsesInterface interface {
 	// ListDatabaseEnginesWithResponse request
 	ListDatabaseEnginesWithResponse(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*ListDatabaseEnginesResponse, error)
 
-	// CreateOperatorsUpgradeWithBodyWithResponse request with any body
-	CreateOperatorsUpgradeWithBodyWithResponse(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOperatorsUpgradeResponse, error)
+	// GetUpgradePlanWithResponse request
+	GetUpgradePlanWithResponse(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*GetUpgradePlanResponse, error)
 
-	CreateOperatorsUpgradeWithResponse(ctx context.Context, namespace string, body CreateOperatorsUpgradeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOperatorsUpgradeResponse, error)
+	// ApproveUpgradePlanWithBodyWithResponse request with any body
+	ApproveUpgradePlanWithBodyWithResponse(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ApproveUpgradePlanResponse, error)
 
-	// GetOperatorsUpgradeStatusWithResponse request
-	GetOperatorsUpgradeStatusWithResponse(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*GetOperatorsUpgradeStatusResponse, error)
-
-	// ListDatabaseEnginesPendingUpgradesWithResponse request
-	ListDatabaseEnginesPendingUpgradesWithResponse(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*ListDatabaseEnginesPendingUpgradesResponse, error)
+	ApproveUpgradePlanWithResponse(ctx context.Context, namespace string, body ApproveUpgradePlanJSONRequestBody, reqEditors ...RequestEditorFn) (*ApproveUpgradePlanResponse, error)
 
 	// GetDatabaseEngineWithResponse request
 	GetDatabaseEngineWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*GetDatabaseEngineResponse, error)
@@ -5141,15 +5067,16 @@ func (r ListDatabaseEnginesResponse) StatusCode() int {
 	return 0
 }
 
-type CreateOperatorsUpgradeResponse struct {
+type GetUpgradePlanResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON200      *UpgradePlan
 	JSON400      *Error
 	JSON500      *Error
 }
 
 // Status returns HTTPResponse.Status
-func (r CreateOperatorsUpgradeResponse) Status() string {
+func (r GetUpgradePlanResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -5157,23 +5084,22 @@ func (r CreateOperatorsUpgradeResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r CreateOperatorsUpgradeResponse) StatusCode() int {
+func (r GetUpgradePlanResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetOperatorsUpgradeStatusResponse struct {
+type ApproveUpgradePlanResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *OperatorsUpgradeStatus
 	JSON400      *Error
 	JSON500      *Error
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOperatorsUpgradeStatusResponse) Status() string {
+func (r ApproveUpgradePlanResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -5181,31 +5107,7 @@ func (r GetOperatorsUpgradeStatusResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOperatorsUpgradeStatusResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type ListDatabaseEnginesPendingUpgradesResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *OperatorUpgradesList
-	JSON400      *Error
-	JSON500      *Error
-}
-
-// Status returns HTTPResponse.Status
-func (r ListDatabaseEnginesPendingUpgradesResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r ListDatabaseEnginesPendingUpgradesResponse) StatusCode() int {
+func (r ApproveUpgradePlanResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -5791,39 +5693,30 @@ func (c *ClientWithResponses) ListDatabaseEnginesWithResponse(ctx context.Contex
 	return ParseListDatabaseEnginesResponse(rsp)
 }
 
-// CreateOperatorsUpgradeWithBodyWithResponse request with arbitrary body returning *CreateOperatorsUpgradeResponse
-func (c *ClientWithResponses) CreateOperatorsUpgradeWithBodyWithResponse(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOperatorsUpgradeResponse, error) {
-	rsp, err := c.CreateOperatorsUpgradeWithBody(ctx, namespace, contentType, body, reqEditors...)
+// GetUpgradePlanWithResponse request returning *GetUpgradePlanResponse
+func (c *ClientWithResponses) GetUpgradePlanWithResponse(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*GetUpgradePlanResponse, error) {
+	rsp, err := c.GetUpgradePlan(ctx, namespace, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateOperatorsUpgradeResponse(rsp)
+	return ParseGetUpgradePlanResponse(rsp)
 }
 
-func (c *ClientWithResponses) CreateOperatorsUpgradeWithResponse(ctx context.Context, namespace string, body CreateOperatorsUpgradeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOperatorsUpgradeResponse, error) {
-	rsp, err := c.CreateOperatorsUpgrade(ctx, namespace, body, reqEditors...)
+// ApproveUpgradePlanWithBodyWithResponse request with arbitrary body returning *ApproveUpgradePlanResponse
+func (c *ClientWithResponses) ApproveUpgradePlanWithBodyWithResponse(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ApproveUpgradePlanResponse, error) {
+	rsp, err := c.ApproveUpgradePlanWithBody(ctx, namespace, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateOperatorsUpgradeResponse(rsp)
+	return ParseApproveUpgradePlanResponse(rsp)
 }
 
-// GetOperatorsUpgradeStatusWithResponse request returning *GetOperatorsUpgradeStatusResponse
-func (c *ClientWithResponses) GetOperatorsUpgradeStatusWithResponse(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*GetOperatorsUpgradeStatusResponse, error) {
-	rsp, err := c.GetOperatorsUpgradeStatus(ctx, namespace, reqEditors...)
+func (c *ClientWithResponses) ApproveUpgradePlanWithResponse(ctx context.Context, namespace string, body ApproveUpgradePlanJSONRequestBody, reqEditors ...RequestEditorFn) (*ApproveUpgradePlanResponse, error) {
+	rsp, err := c.ApproveUpgradePlan(ctx, namespace, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOperatorsUpgradeStatusResponse(rsp)
-}
-
-// ListDatabaseEnginesPendingUpgradesWithResponse request returning *ListDatabaseEnginesPendingUpgradesResponse
-func (c *ClientWithResponses) ListDatabaseEnginesPendingUpgradesWithResponse(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*ListDatabaseEnginesPendingUpgradesResponse, error) {
-	rsp, err := c.ListDatabaseEnginesPendingUpgrades(ctx, namespace, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseListDatabaseEnginesPendingUpgradesResponse(rsp)
+	return ParseApproveUpgradePlanResponse(rsp)
 }
 
 // GetDatabaseEngineWithResponse request returning *GetDatabaseEngineResponse
@@ -7181,55 +7074,22 @@ func ParseListDatabaseEnginesResponse(rsp *http.Response) (*ListDatabaseEnginesR
 	return response, nil
 }
 
-// ParseCreateOperatorsUpgradeResponse parses an HTTP response from a CreateOperatorsUpgradeWithResponse call
-func ParseCreateOperatorsUpgradeResponse(rsp *http.Response) (*CreateOperatorsUpgradeResponse, error) {
+// ParseGetUpgradePlanResponse parses an HTTP response from a GetUpgradePlanWithResponse call
+func ParseGetUpgradePlanResponse(rsp *http.Response) (*GetUpgradePlanResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &CreateOperatorsUpgradeResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseGetOperatorsUpgradeStatusResponse parses an HTTP response from a GetOperatorsUpgradeStatusWithResponse call
-func ParseGetOperatorsUpgradeStatusResponse(rsp *http.Response) (*GetOperatorsUpgradeStatusResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetOperatorsUpgradeStatusResponse{
+	response := &GetUpgradePlanResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest OperatorsUpgradeStatus
+		var dest UpgradePlan
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -7254,27 +7114,20 @@ func ParseGetOperatorsUpgradeStatusResponse(rsp *http.Response) (*GetOperatorsUp
 	return response, nil
 }
 
-// ParseListDatabaseEnginesPendingUpgradesResponse parses an HTTP response from a ListDatabaseEnginesPendingUpgradesWithResponse call
-func ParseListDatabaseEnginesPendingUpgradesResponse(rsp *http.Response) (*ListDatabaseEnginesPendingUpgradesResponse, error) {
+// ParseApproveUpgradePlanResponse parses an HTTP response from a ApproveUpgradePlanWithResponse call
+func ParseApproveUpgradePlanResponse(rsp *http.Response) (*ApproveUpgradePlanResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ListDatabaseEnginesPendingUpgradesResponse{
+	response := &ApproveUpgradePlanResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest OperatorUpgradesList
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest Error
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -7661,183 +7514,179 @@ func ParseVersionInfoResponse(rsp *http.Response) (*VersionInfoResponse, error) 
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
-	"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",
-	"3geh+rbv6tHXT1//XwAAAP//6pDPEvNJAQA=",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
