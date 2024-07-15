@@ -202,10 +202,12 @@ func (e *EverestServer) UpgradeOperators(c echo.Context, namespace string) (err 
 	if err := e.setLockDBEnginesForUpgrade(ctx, namespace, upgrades, true); err != nil {
 		return errors.Join(err, errors.New("failed to lock engines"))
 	}
-	// unlock on exit.
+	// unlock if we return with error.
 	defer func() {
-		if lockErr := e.setLockDBEnginesForUpgrade(ctx, namespace, upgrades, false); lockErr != nil {
-			err = errors.Join(err, errors.New("failed to unlock engines"))
+		if err != nil {
+			if lockErr := e.setLockDBEnginesForUpgrade(ctx, namespace, upgrades, false); lockErr != nil {
+				err = errors.Join(err, errors.New("failed to unlock engines"))
+			}
 		}
 	}()
 

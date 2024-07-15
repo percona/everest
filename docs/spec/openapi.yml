@@ -844,28 +844,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-engines/upgrades':
+  '/namespaces/{namespace}/database-engines/pending-upgrades':
     x-everest-resource-name: database-engines
     get:
       tags:
         - Operators
       summary: Get operator upgrades
       description: |
-        This API gets a list of operator upgrades available for a given namespaces.
-      operationId: listOperatorUpgrades
+        This API gets a list of pending operator upgrades available for a given namespaces.
+      operationId: listDatabaseEnginesPendingUpgrades
       parameters:
         - name: namespace
           in: path
           description: Name of the namespace
           required: true
-          schema:
-            type: string
-        - name: type
-          in: query
-          description: |
-            Should be one of 'pre' or 'post'.
-            If 'pre', returns pre-upgrade (preflight) checklist.
-            If 'post', returns post-upgrade checklist.
           schema:
             type: string
       responses:
@@ -887,13 +879,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-engines/operators-upgrade':
+    x-everest-resource-name: database-engines
     put:
       tags:
         - Operators
       summary: Upgrade database engine operators
       description: |
         This API upgrades all database engine operators specified in the given `namespace`.
-      operationId: upgradeOperators
+      operationId: createOperatorsUpgrade
       parameters:
         - name: namespace
           in: path
@@ -911,6 +905,41 @@ paths:
       responses:
         '200':
           description: Successful operation
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-engines/operators-upgrade/status':
+    x-everest-resource-name: database-engines
+    get:
+      tags:
+        - Operators
+      summary: Get operator upgrade status
+      description: |
+        This API gets the status of the operator upgrade for the given namespace.
+      operationId: getOperatorsUpgradeStatus
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperatorsUpgradeStatus'
         '400':
           description: Unsuccessful operation
           content:
@@ -1857,7 +1886,7 @@ components:
             - restart
             - upgradeEngine
       additionalProperties: false
-    OperatorUpgrade_DatabaseItem:
+    OperatorUpgrade_Task:
       type: object
       properties:
         name:
@@ -1886,17 +1915,13 @@ components:
           type: string
           description: | 
             The next version of the operator to upgrade to.
-            If unspecified, the operator is already at the latest version, and the database action items
-            list contains post-upgrade tasks that need to be performed (if any).
-        databases:
+        pendingActions:
           type: array
           description: |
-            List of databases included for this operator upgrade.
-            If `targetVersion` is specified, this list will contain pre-upgrade tasks.
-            Otherwise, it contains post-upgrade tasks.
+            List of actions that need to be performed for the clusters managed by this operator.
           items:
             type: object
-            $ref: '#/components/schemas/OperatorUpgrade_DatabaseItem'
+            $ref: '#/components/schemas/OperatorUpgrade_Task'
     OperatorUpgradesList:
       type: object
       description: List of operator upgrades
@@ -2238,6 +2263,27 @@ components:
         This no-op object is used to trigger the operator upgrade in a namespace.
         To check the status of the upgrade, see the status of the individual database-engines status.
       properties: {}
+    OperatorsUpgradeStatus:
+      type: object
+      description: |
+        Status of the operators upgrade in a namespace.
+      properties:
+        name:
+          type: string
+          description: Name of the operator
+        state:
+          type: string
+          description: State of the operator upgrade
+          enum:
+            - installed
+            - upgrading
+        pendingActions:
+          type: array
+          description: |
+            List of actions that need to be performed for the clusters managed by this operator.
+          items:
+            type: object
+            $ref: '#/components/schemas/OperatorUpgrade_Task'
     DatabaseEngineOperatorUpgradeParams:
       deprecated: true
       type: object
