@@ -39,37 +39,96 @@ import BackupListTableHeader from './table-header';
 import { CustomConfirmDialog } from 'components/custom-confirm-dialog/custom-confirm-dialog.tsx';
 import { DbEngineType } from '@percona/types';
 import { useGetPermissions } from 'utils/useGetPermissions.ts';
+import { DbCluster } from 'shared-types/dbCluster.types';
+import TableActionsMenu from 'components/table-actions-menu';
 
-const DeleteBackupAction = (
+const BackupActionButtons = (
   row: MRT_Row<Backup>,
-  closeMenu: () => void,
-  namespace: string,
-  handleDeleteBackup: (backupName: string) => void
+  restoring: boolean,
+  handleDeleteBackup: (backupName: string) => void,
+  handleRestoreBackup: (backupName: string) => void,
+  handleRestoreToNewDbBackup: (backupName: string) => void,
+  dbCluster: DbCluster
 ) => {
   const { canDelete } = useGetPermissions({
     resource: 'database-cluster-backups',
     specificResource: row.original.backupStorageName,
-    namespace: namespace,
+    namespace: dbCluster.metadata.namespace,
   });
-  return (
-    <MenuItem
-      key={2}
-      onClick={() => {
-        handleDeleteBackup(row.original.name);
-        closeMenu();
-      }}
-      sx={{
-        m: 0,
-        display: canDelete ? 'flex' : 'none',
-        gap: 1,
-        px: 2,
-        py: '10px',
-      }}
-    >
-      <Delete />
-      {Messages.delete}
-    </MenuItem>
-  );
+
+  const { canUpdate: canUpdateDb } = useGetPermissions({
+    resource: 'database-clusters',
+    specificResource: dbCluster.metadata.name,
+    namespace: dbCluster.metadata.namespace,
+  });
+
+  const { canCreate: canCreateDb } = useGetPermissions({
+    resource: 'database-clusters',
+  });
+
+  return [
+    ...(canUpdateDb
+      ? [
+          <MenuItem
+            key={0}
+            disabled={row.original.state !== BackupStatus.OK || restoring}
+            onClick={() => {
+              handleRestoreBackup(row.original.name);
+            }}
+            sx={{
+              m: 0,
+              gap: 1,
+              px: 2,
+              py: '10px',
+            }}
+          >
+            <KeyboardReturnIcon />
+            {Messages.restore}
+          </MenuItem>,
+        ]
+      : []),
+    ...(canCreateDb
+      ? [
+          <MenuItem
+            key={1}
+            disabled={row.original.state !== BackupStatus.OK || restoring}
+            onClick={() => {
+              handleRestoreToNewDbBackup(row.original.name);
+            }}
+            sx={{
+              m: 0,
+              display: canCreateDb ? 'flex' : 'none',
+              gap: 1,
+              px: 2,
+              py: '10px',
+            }}
+          >
+            <AddIcon />
+            {Messages.restoreToNewDb}
+          </MenuItem>,
+        ]
+      : []),
+    ...(canDelete
+      ? [
+          <MenuItem
+            key={2}
+            onClick={() => {
+              handleDeleteBackup(row.original.name);
+            }}
+            sx={{
+              m: 0,
+              display: canDelete ? 'flex' : 'none',
+              gap: 1,
+              px: 2,
+              py: '10px',
+            }}
+          >
+            <Delete />
+            {Messages.delete}
+          </MenuItem>,
+        ]
+      : []),
+  ];
 };
 
 export const BackupsList = () => {
@@ -95,16 +154,6 @@ export const BackupsList = () => {
       refetchInterval: 10 * 1000,
     }
   );
-
-  const { canUpdate: canUpdateDb } = useGetPermissions({
-    resource: 'database-clusters',
-    specificResource: dbCluster.metadata.name,
-    namespace: dbCluster.metadata.namespace,
-  });
-
-  const { canCreate: canCreateDb } = useGetPermissions({
-    resource: 'database-clusters',
-  });
 
   const columns = useMemo<MRT_ColumnDef<Backup>[]>(
     () => [
@@ -230,50 +279,17 @@ export const BackupsList = () => {
           />
         )}
         enableRowActions
-        renderRowActionMenuItems={({ row, closeMenu }) => [
-          <MenuItem
-            key={0}
-            disabled={row.original.state !== BackupStatus.OK || restoring}
-            onClick={() => {
-              handleRestoreBackup(row.original.name);
-              closeMenu();
-            }}
-            sx={{
-              m: 0,
-              display: canUpdateDb ? 'flex' : 'none',
-              gap: 1,
-              px: 2,
-              py: '10px',
-            }}
-          >
-            <KeyboardReturnIcon />
-            {Messages.restore}
-          </MenuItem>,
-          <MenuItem
-            key={1}
-            disabled={row.original.state !== BackupStatus.OK || restoring}
-            onClick={() => {
-              handleRestoreToNewDbBackup(row.original.name);
-              closeMenu();
-            }}
-            sx={{
-              m: 0,
-              display: canCreateDb ? 'flex' : 'none',
-              gap: 1,
-              px: 2,
-              py: '10px',
-            }}
-          >
-            <AddIcon />
-            {Messages.restoreToNewDb}
-          </MenuItem>,
-          DeleteBackupAction(
+        renderRowActions={({ row }) => {
+          const menuItems = BackupActionButtons(
             row,
-            closeMenu,
-            dbCluster.metadata.namespace,
-            handleDeleteBackup
-          ),
-        ]}
+            restoring,
+            handleDeleteBackup,
+            handleRestoreBackup,
+            handleRestoreToNewDbBackup,
+            dbCluster
+          );
+          return <TableActionsMenu menuItems={menuItems} />;
+        }}
       />
       {openDeleteDialog && (
         <CustomConfirmDialog
@@ -284,9 +300,7 @@ export const BackupsList = () => {
           handleConfirm={() =>
             handleConfirmDelete(
               selectedBackup,
-              dbCluster.spec.engine.type === DbEngineType.POSTGRESQL
-                ? false
-                : true
+              dbCluster.spec.engine.type !== DbEngineType.POSTGRESQL
             )
           }
           submitting={deletingBackup}

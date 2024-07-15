@@ -1,5 +1,5 @@
-import { Add, Delete, Edit } from '@mui/icons-material';
-import { Button, MenuItem } from '@mui/material';
+import { Add } from '@mui/icons-material';
+import { Button } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
@@ -10,7 +10,7 @@ import {
   useMonitoringInstancesList,
   useUpdateMonitoringInstance,
 } from 'hooks/api/monitoring/useMonitoringInstancesList';
-import { MRT_ColumnDef, MRT_Row } from 'material-react-table';
+import { MRT_ColumnDef } from 'material-react-table';
 import { useMemo, useState } from 'react';
 import { MonitoringInstance } from 'shared-types/monitoring.types';
 import {
@@ -23,46 +23,8 @@ import { CreateEditEndpointModal } from './createEditModal/create-edit-modal';
 import { EndpointFormType } from './createEditModal/create-edit-modal.types';
 import { Messages } from './monitoring-endpoints.messages';
 import { useGetPermissions } from 'utils/useGetPermissions';
-
-const MonitoringActionButtons = (
-  row: MRT_Row<MonitoringInstance>,
-  closeMenu: () => void,
-  handleDeleteInstance: (instance: MonitoringInstance) => void,
-  handleOpenEditModal: (instance: MonitoringInstance) => void
-) => {
-  const { canUpdate, canDelete } = useGetPermissions({
-    resource: 'monitoring-instances',
-    specificResource: row.original.name,
-  });
-  return [
-    <MenuItem
-      key={0}
-      onClick={() => {
-        handleOpenEditModal(row.original);
-        closeMenu();
-      }}
-      sx={{
-        m: 0,
-        display: canUpdate ? 'flex' : 'none',
-        gap: 1,
-        px: 2,
-        py: '10px',
-      }}
-    >
-      <Edit /> {Messages.edit}
-    </MenuItem>,
-    <MenuItem
-      key={1}
-      onClick={() => {
-        handleDeleteInstance(row.original);
-        closeMenu();
-      }}
-      sx={{ display: canDelete ? 'flex' : 'none' }}
-    >
-      <Delete /> {Messages.delete}
-    </MenuItem>,
-  ];
-};
+import TableActionsMenu from '../../../components/table-actions-menu';
+import { MonitoringActionButtons } from './monitoring-endpoint-menu-actions';
 
 export const MonitoringEndpoints = () => {
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
@@ -219,14 +181,14 @@ export const MonitoringEndpoints = () => {
             {Messages.add}
           </Button>
         )}
-        renderRowActionMenuItems={({ row, closeMenu }) =>
-          MonitoringActionButtons(
+        renderRowActions={({ row }) => {
+          const menuItems = MonitoringActionButtons(
             row,
-            closeMenu,
             handleDeleteInstance,
             handleOpenEditModal
-          )
-        }
+          );
+          return <TableActionsMenu menuItems={menuItems} />;
+        }}
       />
       {openCreateEditModal && (
         <CreateEditEndpointModal

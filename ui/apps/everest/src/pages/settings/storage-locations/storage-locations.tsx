@@ -1,5 +1,5 @@
-import { Add, Delete, Edit } from '@mui/icons-material';
-import { Box, Button, MenuItem } from '@mui/material';
+import { Add } from '@mui/icons-material';
+import { Box, Button } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
@@ -10,7 +10,7 @@ import {
   useDeleteBackupStorage,
   useEditBackupStorage,
 } from 'hooks/api/backup-storages/useBackupStorages';
-import { MRT_Row, type MRT_ColumnDef } from 'material-react-table';
+import { type MRT_ColumnDef } from 'material-react-table';
 import { LabelValue } from 'pages/databases/expandedRow/LabelValue';
 import { useMemo, useState } from 'react';
 import { BackupStorage, StorageType } from 'shared-types/backupStorages.types';
@@ -24,62 +24,8 @@ import { Messages } from './storage-locations.messages';
 import { StorageLocationsFields } from './storage-locations.types';
 import { convertStoragesType } from './storage-locations.utils';
 import { useGetPermissions } from 'utils/useGetPermissions';
-
-const StorageLocationsActionButtons = (
-  row: MRT_Row<BackupStorage>,
-  closeMenu: () => void,
-  handleOpenEditModal: (storageLocation: BackupStorage) => void,
-  handleDeleteBackup: (backupStorageName: string) => void
-) => {
-  const { canUpdate, canDelete } = useGetPermissions({
-    resource: 'backup-storages',
-    specificResource: row.original.name,
-  });
-
-  return [
-    <MenuItem
-      key={0}
-      onClick={() => {
-        handleOpenEditModal(row.original);
-        closeMenu();
-      }}
-      sx={{
-        m: 0,
-        display: canUpdate ? 'flex' : 'none',
-        gap: 1,
-        px: 2,
-        py: '10px',
-      }}
-    >
-      <Edit /> {Messages.edit}
-    </MenuItem>,
-    <MenuItem
-      key={1}
-      onClick={() => {
-        handleDeleteBackup(row.original.name);
-        closeMenu();
-      }}
-      sx={{
-        m: 0,
-        display: canDelete ? 'flex' : 'none',
-        gap: 1,
-        px: 2,
-        py: '10px',
-      }}
-    >
-      <Delete />
-      {Messages.delete}
-    </MenuItem>,
-    // TODO: uncomment when api is ready
-    // <MenuItem
-    //   key={2}
-    //   onClick={() => {}}
-    //   sx={{ m: 0, display: 'flex', gap: 1 }}
-    // >
-    //   <AutoAwesome /> Set as default
-    // </MenuItem>,
-  ];
-};
+import TableActionsMenu from '../../../components/table-actions-menu';
+import { StorageLocationsActionButtons } from './storage-locations-menu-actions';
 
 export const StorageLocations = () => {
   const queryClient = useQueryClient();
@@ -239,14 +185,14 @@ export const StorageLocations = () => {
           </Button>
         )}
         enableRowActions
-        renderRowActionMenuItems={({ row, closeMenu }) =>
-          StorageLocationsActionButtons(
+        renderRowActions={({ row }) => {
+          const menuItems = StorageLocationsActionButtons(
             row,
-            closeMenu,
             handleOpenEditModal,
             handleDeleteBackup
-          )
-        }
+          );
+          return <TableActionsMenu menuItems={menuItems} />;
+        }}
         renderDetailPanel={({ row }) => (
           <Box
             sx={{

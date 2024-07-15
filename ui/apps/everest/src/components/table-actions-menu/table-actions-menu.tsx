@@ -43,42 +43,43 @@ export const TableActionsMenu = ({
 
   return (
     <Box>
-      <IconButton
-        data-testid="row-actions-menu-button"
-        aria-haspopup="true"
-        aria-controls={open ? 'basic-menu' : undefined}
-        aria-expanded={open ? 'true' : undefined}
-        onClick={handleClick}
-        disabled={menuItems?.length === 0}
-        {...buttonProps}
-      >
-        <MoreHorizOutlinedIcon />
-      </IconButton>
       {showMenu && (
-        <Menu
-          id="row-actions-menu"
-          data-testId="row-actions-menu"
-          open={open}
-          onClose={(
-            event: React.MouseEvent<HTMLLIElement, MouseEvent>,
-            reason
-          ) => {
-            if (menuProps?.onClose) {
-              menuProps?.onClose(event, reason);
-            }
-            handleClose(event);
-          }}
-          anchorEl={anchorEl}
-          onClick={(event) => {
-            handleClose(event);
-          }}
-          MenuListProps={{
-            'aria-labelledby': 'row-actions-button',
-          }}
-          {...menuProps}
-        >
-          {...menuItems}
-        </Menu>
+        <>
+          <IconButton
+            data-testid="row-actions-menu-button"
+            aria-haspopup="true"
+            aria-controls={open ? 'basic-menu' : undefined}
+            aria-expanded={open ? 'true' : undefined}
+            onClick={handleClick}
+            {...buttonProps}
+          >
+            <MoreHorizOutlinedIcon />
+          </IconButton>
+          <Menu
+            id="row-actions-menu"
+            data-testId="row-actions-menu"
+            open={open}
+            onClose={(
+              event: React.MouseEvent<HTMLLIElement, MouseEvent>,
+              reason
+            ) => {
+              if (menuProps?.onClose) {
+                menuProps?.onClose(event, reason);
+              }
+              handleClose(event);
+            }}
+            anchorEl={anchorEl}
+            onClick={(event) => {
+              handleClose(event);
+            }}
+            MenuListProps={{
+              'aria-labelledby': 'row-actions-button',
+            }}
+            {...menuProps}
+          >
+            {...menuItems}
+          </Menu>
+        </>
       )}
     </Box>
   );
