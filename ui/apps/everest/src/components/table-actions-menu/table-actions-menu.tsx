@@ -15,7 +15,7 @@
 
 import { useState } from 'react';
 import { Box, IconButton, Menu } from '@mui/material';
-import MoreHorizOutlinedIcon from '@mui/icons-material/MoreHorizOutlined';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { TableActionsMenuProps } from './table-actions-menu.types';
 
 export const TableActionsMenu = ({
@@ -53,11 +53,10 @@ export const TableActionsMenu = ({
             onClick={handleClick}
             {...buttonProps}
           >
-            <MoreHorizOutlinedIcon />
+            <MoreHorizIcon />
           </IconButton>
           <Menu
-            id="row-actions-menu"
-            data-testId="row-actions-menu"
+            data-testid="row-actions-menu"
             open={open}
             onClose={(
               event: React.MouseEvent<HTMLLIElement, MouseEvent>,
