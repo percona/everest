@@ -79,8 +79,8 @@ func (e *EverestServer) GetUpgradePlan(
 	}
 
 	// No upgrades available, so we will check if our clusters are ready for current version.
-	result.PendingActions = pointer.To([]UpgradeTask{})
 	if len(pointer.Get(result.Upgrades)) == 0 {
+		result.PendingActions = pointer.To([]UpgradeTask{})
 		engines, err := e.kubeClient.ListDatabaseEngines(ctx, namespace)
 		if err != nil {
 			return err
@@ -103,7 +103,7 @@ func (e *EverestServer) GetUpgradePlan(
 	return c.JSON(http.StatusOK, result)
 }
 
-// CreateOperatorsUpgrade starts the upgrade of operators in the provided namespace.
+// ApproveUpgradePlan starts the upgrade of operators in the provided namespace.
 func (e *EverestServer) ApproveUpgradePlan(c echo.Context, namespace string) (err error) {
 	ctx := c.Request().Context()
 
@@ -174,7 +174,6 @@ func (e *EverestServer) getUpgradePlan(
 		for _, db := range pointer.Get(pointer.Get(pf).Databases) {
 			*result.PendingActions = append(*result.PendingActions, db.toUpgradeTask())
 		}
-
 	}
 	return result, nil
 }
