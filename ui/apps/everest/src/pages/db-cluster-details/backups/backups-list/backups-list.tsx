@@ -36,7 +36,7 @@ import { CustomConfirmDialog } from 'components/custom-confirm-dialog/custom-con
 import { DbEngineType } from '@percona/types';
 
 import TableActionsMenu from 'components/table-actions-menu';
-import {BackupActionButtons} from "./backups-list-menu-actions";
+import { BackupActionButtons } from './backups-list-menu-actions';
 
 export const BackupsList = () => {
   const queryClient = useQueryClient();
