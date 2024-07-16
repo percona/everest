@@ -18,7 +18,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/AlekSi/pointer"
 	"github.com/stretchr/testify/assert"
@@ -1192,6 +1194,67 @@ func TestValidateDuplicateStorageByUpdate(t *testing.T) {
 			require.NoError(t, err)
 			isDuplicate := validateDuplicateStorageByUpdate(tc.currentStorageName, currentStorage, storages, tc.params)
 			assert.Equal(t, tc.isDuplicate, isDuplicate)
+		})
+	}
+}
+
+func TestIsBackupScheduleRunning(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		schedules []everestv1alpha1.BackupSchedule
+		expected  bool
+	}{
+		{
+			schedules: []everestv1alpha1.BackupSchedule{
+				{
+					Schedule: "30 10 * * *",
+					Enabled:  true,
+				},
+			},
+			expected: true,
+		},
+		{
+			schedules: []everestv1alpha1.BackupSchedule{
+				{Schedule: "30 10 * * *"},
+			},
+			expected: false,
+		},
+		{
+			schedules: []everestv1alpha1.BackupSchedule{
+				{
+					Schedule: "34 10 * * *",
+					Enabled:  true,
+				},
+			},
+			expected: false,
+		},
+		{
+			schedules: []everestv1alpha1.BackupSchedule{
+				{
+					Schedule: "34 10 * * 4",
+					Enabled:  true,
+				},
+			},
+			expected: false,
+		},
+		{
+			schedules: []everestv1alpha1.BackupSchedule{
+				{
+					Schedule: "30 10 * * 2",
+					Enabled:  true,
+				},
+			},
+			expected: true,
+		},
+	}
+	now := time.Date(2024, 07, 16, 10, 30, 21, 0, time.UTC) // 16 July, 2024, 10:30:21 UTC
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("test-%d", i), func(t *testing.T) {
+			t.Parallel()
+			isRunning, err := isBackupScheduleRunning(now, tc.schedules)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expected, isRunning)
 		})
 	}
 }

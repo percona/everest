@@ -32,6 +32,7 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
+	"github.com/adhocore/gronx"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -1162,7 +1163,10 @@ func validateDatabaseClusterOnUpdate(dbc *DatabaseCluster, oldDB *everestv1alpha
 	return nil
 }
 
-func (e *EverestServer) validateDatabaseClusterBackup(ctx context.Context, namespace string, backup *DatabaseClusterBackup) error {
+func (e *EverestServer) validateDatabaseClusterBackup(
+	ctx context.Context,
+	namespace string,
+	backup *DatabaseClusterBackup) error {
 	if backup == nil {
 		return errors.New("backup cannot be empty")
 	}
@@ -1203,6 +1207,27 @@ func (e *EverestServer) validateDatabaseClusterBackup(ctx context.Context, names
 	if db.Spec.Engine.Type == everestv1alpha1.DatabaseEnginePSMDB {
 		if db.Status.ActiveStorage != "" && db.Status.ActiveStorage != b.Spec.BackupStorageName {
 			return errPSMDBViolateActiveStorage
+		}
+	}
+
+	// Do not allow a new backup to be created if there's another backup running already.
+	if ok, err := e.ensureNoBackupsRunningForCluster(ctx, backup.Spec.DbClusterName, namespace); err != nil {
+		return err
+	} else if !ok {
+		return errBackupInProgress
+	}
+
+	// Due to a known limitation in the PSMDB operator, everest-operator does not immediately create a dbbackup
+	// upon creation of a psmdb-backup (it waits for it to progress beyond 'waiting' state).
+	// This creates a considerable delay for the creation of the dbbackup, hence the above logic cannot correctly
+	// determine if a scheduled backup is actually running.
+	// To work around this, we will look at the backup schedule and check if a backup is about to be triggered.
+	//
+	// This issue is being tackled upstream: https://perconadev.atlassian.net/browse/K8SPSMDB-1088
+	if db.Spec.Engine.Type == everestv1alpha1.DatabaseEnginePSMDB {
+		if ok, err := isBackupScheduleRunning(time.Now(), db.Spec.Backup.Schedules); err != nil {
+		} else if !ok {
+			return errBackupInProgress
 		}
 	}
 	return nil
@@ -1355,4 +1380,45 @@ func validateBucketName(s string) error {
 	}
 
 	return nil
+}
+
+// Returns `true` if no backups are running for the specified cluster.
+func (e *EverestServer) ensureNoBackupsRunningForCluster(ctx context.Context, dbClusterName, namespace string) (bool, error) {
+	backupList, err := e.kubeClient.ListDatabaseClusterBackups(ctx, namespace, metav1.ListOptions{
+		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
+			MatchLabels: map[string]string{
+				databaseClusterNameLabel: dbClusterName,
+			},
+		}),
+	})
+	if err != nil {
+		return false, errors.Join(err, errors.New("could not list Database Cluster Backups"))
+	}
+	return !slices.ContainsFunc(backupList.Items, func(b everestv1alpha1.DatabaseClusterBackup) bool {
+		return (b.Status.State == everestv1alpha1.BackupRunning ||
+			b.Status.State == everestv1alpha1.BackupStarting ||
+			b.Status.State == everestv1alpha1.BackupNew) &&
+			b.DeletionTimestamp.IsZero()
+	}), nil
+}
+
+// isBackupScheduleRunning returns true if a backup schedule is running at the current time.
+func isBackupScheduleRunning(
+	currTime time.Time,
+	backupSchedules []everestv1alpha1.BackupSchedule,
+) (bool, error) {
+	currTime = currTime.Truncate(time.Minute)
+	for _, sched := range backupSchedules {
+		if !sched.Enabled {
+			continue
+		}
+		nextRun, err := gronx.NextTickAfter(sched.Schedule, currTime, true)
+		if err != nil {
+			return false, errors.Join(err, errors.New("could not calculate next scheduled backup run"))
+		}
+		if nextRun.Equal(currTime) {
+			return true, nil
+		}
+	}
+	return false, nil
 }

@@ -22,14 +22,12 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"slices"
 	"strings"
 	"time"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/labstack/echo/v4"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
@@ -44,6 +42,8 @@ const (
 
 //nolint:gochecknoglobals
 var everestAPIConstantBackoff = backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), maxRetries)
+
+var errBackupInProgress = errors.New("backup in progress")
 
 // ListDatabaseClusterBackups returns list of the created database cluster backups on the specified kubernetes cluster.
 func (e *EverestServer) ListDatabaseClusterBackups(ctx echo.Context, namespace, name string) error {
@@ -76,38 +76,14 @@ func (e *EverestServer) CreateDatabaseClusterBackup(ctx echo.Context, namespace 
 	// TODO: Improve returns status code in EVEREST-616
 	if err := e.validateDatabaseClusterBackup(ctx.Request().Context(), namespace, dbb); err != nil {
 		e.l.Error(err)
+		if errors.Is(err, errBackupInProgress) {
+			return ctx.JSON(http.StatusPreconditionFailed, Error{
+				Message: pointer.ToString("Cannot create a backup when another is in progress"),
+			})
+		}
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
-
-	// Do not allow a new backup to be created if there's another backup running already.
-	if ok, err := e.ensureNoBackupsRunningForCluster(ctx.Request().Context(), dbb.Spec.DbClusterName, namespace); err != nil {
-		return err
-	} else if !ok {
-		return ctx.JSON(http.StatusPreconditionFailed,
-			Error{Message: pointer.ToString("Cannot create a new backup when another backup is already running")},
-		)
-	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, "")
-}
-
-// Returns `true` if no backups are running for the specified cluster.
-func (e *EverestServer) ensureNoBackupsRunningForCluster(ctx context.Context, dbClusterName, namespace string) (bool, error) {
-	backupList, err := e.kubeClient.ListDatabaseClusterBackups(ctx, namespace, metav1.ListOptions{
-		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
-			MatchLabels: map[string]string{
-				databaseClusterNameLabel: dbClusterName,
-			},
-		}),
-	})
-	if err != nil {
-		return false, errors.Join(err, errors.New("could not list Database Cluster Backups"))
-	}
-	return !slices.ContainsFunc(backupList.Items, func(b everestv1alpha1.DatabaseClusterBackup) bool {
-		return (b.Status.State == everestv1alpha1.BackupRunning ||
-			b.Status.State == everestv1alpha1.BackupStarting ||
-			b.Status.State == everestv1alpha1.BackupNew) &&
-			b.DeletionTimestamp.IsZero()
-	}), nil
 }
 
 // DeleteDatabaseClusterBackup deletes the specified cluster backup on the specified kubernetes cluster.
