@@ -21,7 +21,7 @@ import { useDbBackups } from 'hooks/api/backups/useBackups';
 import { DbEngineType } from '@percona/types';
 import { useGetPermissions } from 'utils/useGetPermissions';
 
-export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
+export const DbActionButton = ({ dbCluster, canUpdate , canDelete }: { dbCluster: DbCluster, canUpdate: boolean, canDelete: boolean }) => {
   const { dbClusterName, namespace = '' } = useParams();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openRestoreDbModal, setOpenRestoreDbModal] = useState(false);
@@ -57,11 +57,6 @@ export const DbActionButton = ({ dbCluster }: { dbCluster: DbCluster }) => {
     dbCluster?.spec.engine.type === DbEngineType.POSTGRESQL;
   const hideCheckbox = !backups.length;
 
-  const { canUpdate, canDelete } = useGetPermissions({
-    resource: 'database-clusters',
-    specificResource: dbCluster?.metadata.name,
-    namespace: dbCluster?.metadata.namespace,
-  });
   const { canCreate } = useGetPermissions({ resource: 'database-clusters' });
 
   return (
