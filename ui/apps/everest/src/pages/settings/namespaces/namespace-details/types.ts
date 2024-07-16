@@ -32,3 +32,8 @@ export type EngineLowerContentProps = {
   engine: DbEngine;
   preflightPayload?: OperatorUpgradePreflightPayload;
 };
+
+export type OperatorVersionsHeaderProps = {
+  dbEngines: DbEngine[];
+  preflightPayload?: OperatorUpgradePreflightPayload;
+};

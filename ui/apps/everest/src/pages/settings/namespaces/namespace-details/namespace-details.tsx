@@ -10,7 +10,11 @@ import {
   GetDbEnginesPayload,
 } from 'shared-types/dbEngines.types';
 import { useNamespace } from 'hooks/api/namespaces';
-import { useDbEngines, useOperatorUpgrade } from 'hooks/api/db-engines';
+import {
+  useDbEngines,
+  useOperatorUpgrade,
+  useOperatorsUpgradePlan,
+} from 'hooks/api/db-engines';
 import { NoMatch } from 'pages/404/NoMatch';
 import { FormProvider, useForm } from 'react-hook-form';
 import UpgradeHeader from './upgrade-header';
@@ -21,6 +25,7 @@ import {
   getOperatorVersions,
 } from 'api/dbEngineApi';
 import EngineLowerContent from './engine-lower-content';
+import { Stack, Typography } from '@mui/material';
 
 const NamespaceDetails = () => {
   const queryClient = useQueryClient();
@@ -42,6 +47,10 @@ const NamespaceDetails = () => {
     },
     true
   );
+  const { data: operatorsUpgradePlan, isLoading: loadingOperatorsUpgradePlan } =
+    useOperatorsUpgradePlan(namespaceName, {
+      enabled: !!namespace,
+    });
 
   const methods = useForm({
     defaultValues: {
@@ -126,7 +135,7 @@ const NamespaceDetails = () => {
     }
   }, [dbEngines, methods, selectedEngine]);
 
-  if (loadingNamespace) {
+  if (loadingNamespace || loadingOperatorsUpgradePlan) {
     return null;
   }
 
@@ -139,6 +148,22 @@ const NamespaceDetails = () => {
       <BackNavigationText
         text={namespaceName}
         onBackClick={() => navigate('/settings/namespaces')}
+        rightSlot={
+          <Stack direction="row">
+            {operatorsUpgradePlan?.upgrades.map((upgrade) => (
+              <Typography
+                key={upgrade.name}
+                variant="body2"
+              >{`${upgrade.name} v${upgrade.currentVersion} (Upgrade available)`}</Typography>
+            ))}
+            {operatorsUpgradePlan?.upToDate.map((operator) => (
+              <Typography
+                key={operator.name}
+                variant="body2"
+              >{`${operator} v${operator.currentVersion}`}</Typography>
+            ))}
+          </Stack>
+        }
       />
       <FormProvider {...methods}>
         <ToggleButtonGroupInput

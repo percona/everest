@@ -101,3 +101,16 @@ export type OperatorUpgradePreflightPayload = {
   currentVersion: string;
   databases?: OperatorUpgradeDb[];
 };
+
+export type OperatorsUpgradePlan = {
+  upgrades: Array<{
+    name: string;
+    currentVersion: string;
+    targetVersion: string;
+  }>;
+  pendingActions: Array<{
+    name: string;
+    message: string;
+    pendingTask: DbUpgradePendingTask;
+  }>;
+};

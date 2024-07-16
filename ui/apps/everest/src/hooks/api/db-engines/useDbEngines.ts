@@ -25,10 +25,12 @@ import {
   EngineToolPayload,
   GetDbEnginesPayload,
   OperatorUpgradePreflightPayload,
+  OperatorsUpgradePlan,
 } from 'shared-types/dbEngines.types';
 import {
   getDbEnginesFn,
   getOperatorUpgradePreflight,
+  getOperatorsUpgradePlan,
   upgradeOperator,
 } from 'api/dbEngineApi';
 
@@ -145,5 +147,40 @@ export const useOperatorUpgrade = (
   useMutation({
     mutationKey: ['operatorUpgrade', namespace, dbEngineName, targetVersion],
     mutationFn: () => upgradeOperator(namespace, dbEngineName, targetVersion),
+    ...options,
+  });
+
+type UseOperatorsUpgradePlanType = OperatorsUpgradePlan & {
+  upToDate: Array<{
+    name: string;
+    currentVersion: string;
+  }>;
+};
+
+export const useOperatorsUpgradePlan = (
+  namespace: string,
+  options?: PerconaQueryOptions<UseOperatorsUpgradePlanType>
+) =>
+  useQuery<UseOperatorsUpgradePlanType>({
+    queryKey: ['operatorUpgradePlan', namespace],
+    queryFn: async () => {
+      const engines = await getDbEnginesFn(namespace);
+      const operatorUpgradePlan = await getOperatorsUpgradePlan(namespace);
+      const operatorsWithUpgrades = operatorUpgradePlan.upgrades.map(
+        (plan) => plan.name
+      );
+
+      return {
+        ...operatorUpgradePlan,
+        upToDate: engines.items
+          .filter(
+            (engine) => !operatorsWithUpgrades.includes(engine.metadata.name)
+          )
+          .map((engine) => ({
+            name: engine.metadata.name,
+            currentVersion: engine.status?.operatorVersion || '',
+          })),
+      };
+    },
     ...options,
   });

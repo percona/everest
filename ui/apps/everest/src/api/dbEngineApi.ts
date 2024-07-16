@@ -15,6 +15,7 @@
 import {
   GetDbEnginesPayload,
   OperatorUpgradePreflightPayload,
+  OperatorsUpgradePlan,
 } from 'shared-types/dbEngines.types';
 import { api } from './api';
 
@@ -69,3 +70,10 @@ export const getOperatorVersions = async (
 
   return response.data;
 };
+
+export const getOperatorsUpgradePlan = async (namespace: string) =>
+  (
+    await api.get<OperatorsUpgradePlan>(
+      `/namespaces/${namespace}/database-engines/upgrade-plan`
+    )
+  ).data;
