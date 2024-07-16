@@ -98,7 +98,6 @@ func (e *EverestServer) GetUpgradePlan(
 				})
 			}
 		}
-
 	}
 	return c.JSON(http.StatusOK, result)
 }
