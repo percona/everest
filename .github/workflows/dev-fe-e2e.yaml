@@ -120,13 +120,14 @@ jobs:
       - name: Expose Everest API Server
         shell: bash
         run: |
-          kubectl port-forward -n everest-system deployment/percona-everest 3000:8080 &
+          kubectl port-forward -n everest-system deployment/percona-everest 8080:8080 &
 
-      - name: Install dependencies
+      - name: Run Everest
         shell: bash
         run: |
           cd ui
           make init
+          pnpm --filter "@percona/everest" dev &
 
       - name: Install Chromium for Playwright
         shell: bash
