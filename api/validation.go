@@ -1163,10 +1163,12 @@ func validateDatabaseClusterOnUpdate(dbc *DatabaseCluster, oldDB *everestv1alpha
 	return nil
 }
 
+//nolint:funlen,cyclop
 func (e *EverestServer) validateDatabaseClusterBackup(
 	ctx context.Context,
 	namespace string,
-	backup *DatabaseClusterBackup) error {
+	backup *DatabaseClusterBackup,
+) error {
 	if backup == nil {
 		return errors.New("backup cannot be empty")
 	}
@@ -1226,6 +1228,7 @@ func (e *EverestServer) validateDatabaseClusterBackup(
 	// This issue is being tackled upstream: https://perconadev.atlassian.net/browse/K8SPSMDB-1088
 	if db.Spec.Engine.Type == everestv1alpha1.DatabaseEnginePSMDB {
 		if ok, err := isBackupScheduleRunning(time.Now(), db.Spec.Backup.Schedules); err != nil {
+			return err
 		} else if !ok {
 			return errBackupInProgress
 		}

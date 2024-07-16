@@ -1247,13 +1247,13 @@ func TestIsBackupScheduleRunning(t *testing.T) {
 			expected: true,
 		},
 	}
-	now := time.Date(2024, 07, 16, 10, 30, 21, 0, time.UTC) // 16 July, 2024, 10:30:21 UTC
+	now := time.Date(2024, 0o7, 16, 10, 30, 21, 0, time.UTC) // 16 July, 2024, 10:30:21 UTC
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("test-%d", i), func(t *testing.T) {
 			t.Parallel()
 			isRunning, err := isBackupScheduleRunning(now, tc.schedules)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tc.expected, isRunning)
 		})
 	}
