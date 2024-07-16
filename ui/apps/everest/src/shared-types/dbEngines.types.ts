@@ -91,26 +91,19 @@ export type DbUpgradePendingTask =
   | 'restart'
   | 'upgradeEngine';
 
-export type OperatorUpgradeDb = {
+export type OperatorUpgradePendingAction = {
   name: string;
   message: string;
   pendingTask: DbUpgradePendingTask;
 };
 
-export type OperatorUpgradePreflightPayload = {
+export type OperatorUpgradeTask = {
+  name: string;
   currentVersion: string;
-  databases?: OperatorUpgradeDb[];
+  targetVersion: string;
 };
 
 export type OperatorsUpgradePlan = {
-  upgrades: Array<{
-    name: string;
-    currentVersion: string;
-    targetVersion: string;
-  }>;
-  pendingActions: Array<{
-    name: string;
-    message: string;
-    pendingTask: DbUpgradePendingTask;
-  }>;
+  upgrades: OperatorUpgradeTask[];
+  pendingActions: OperatorUpgradePendingAction[];
 };

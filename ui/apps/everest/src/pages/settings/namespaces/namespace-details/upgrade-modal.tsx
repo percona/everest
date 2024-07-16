@@ -8,21 +8,30 @@ const UpgradeModal = ({
   onClose,
   onConfirm,
   namespace,
-  dbType,
-  newVersion,
+  operatorsUpgradeTasks,
 }: UpgradeModalProps) => {
   return (
     <ConfirmDialog
       isOpen={open}
-      selectedId={dbType}
+      selectedId={namespace}
       closeModal={onClose}
-      headerMessage="Operator upgrade"
-      submitMessage="OK"
+      headerMessage="Upgrade Operators"
+      submitMessage="Upgrade"
       handleConfirm={onConfirm}
     >
       <Typography variant="body1">
-        {Messages.upgradeConfirmation(dbType, namespace, newVersion)}
+        {Messages.upgradeConfirmation(namespace)}
+        <br />
+        The following upgrades will take place:
       </Typography>
+      <ul>
+        {operatorsUpgradeTasks.map((task) => (
+          <li>
+            {task.name} v{task.currentVersion} will be upgraded to v
+            {task.targetVersion}
+          </li>
+        ))}
+      </ul>
     </ConfirmDialog>
   );
 };
