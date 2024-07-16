@@ -44,6 +44,11 @@ export const DbActionButtons = (
     namespace: row.original.namespace,
   });
 
+  const { canCreate: canCreateRestore } = useGetPermissions({
+    resource: 'database-cluster-restores',
+    namespace: row.original.namespace,
+  });
+
   return [
     ...(canUpdate
       ? [
@@ -104,27 +109,32 @@ export const DbActionButtons = (
           </MenuItem>,
         ]
       : []),
+      ...(canCreateRestore 
+        ? [
+        <MenuItem
+        disabled={
+          row.original.status === DbClusterStatus.restoring || !canUpdate
+        }
+        key={3}
+        data-testid={`${row.original?.databaseName}-restore`}
+        onClick={() => {
+          handleRestoreDbCluster(row.original.raw);
+          setIsNewClusterMode(false);
+        }}
+        sx={{
+          gap: 1,
+          alignItems: 'center',
+          px: 2,
+          py: '10px',
+        }}
+      >
+        <KeyboardReturnIcon /> {Messages.menuItems.restoreFromBackup}
+      </MenuItem>,
+      ] 
+      : []),
     ...(canUpdate
       ? [
-          <MenuItem
-            disabled={
-              row.original.status === DbClusterStatus.restoring || !canUpdate
-            }
-            key={3}
-            data-testid={`${row.original?.databaseName}-restore`}
-            onClick={() => {
-              handleRestoreDbCluster(row.original.raw);
-              setIsNewClusterMode(false);
-            }}
-            sx={{
-              gap: 1,
-              alignItems: 'center',
-              px: 2,
-              py: '10px',
-            }}
-          >
-            <KeyboardReturnIcon /> {Messages.menuItems.restoreFromBackup}
-          </MenuItem>,
+          
           <MenuItem
             key={4}
             disabled={

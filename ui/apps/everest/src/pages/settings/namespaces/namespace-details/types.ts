@@ -10,6 +10,7 @@ export type UpgradeHeaderProps = {
   engine: DbEngine;
   preflightPayload?: OperatorUpgradePreflightPayload;
   targetVersion: string;
+  namespace: string;
   onUpgrade: () => void;
 } & BoxProps;
 

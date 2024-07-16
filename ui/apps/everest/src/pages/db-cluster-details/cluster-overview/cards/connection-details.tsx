@@ -20,7 +20,7 @@ export const ConnectionDetails = ({
   clusterNamespace,
 }: ConnectionDetailsOverviewCardProps) => {
   const { canRead } = useGetPermissions({
-    resource: 'database-clusters-credentials',
+    resource: 'database-cluster-credentials',
     specificResource: clusterName,
     namespace: clusterNamespace,
   });

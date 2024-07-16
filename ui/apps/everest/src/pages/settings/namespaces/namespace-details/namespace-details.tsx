@@ -173,6 +173,7 @@ const NamespaceDetails = () => {
             engine={selectedEngine}
             preflightPayload={preflightQueriesResults[selectedEngineIdx].data}
             targetVersion={targetVersion}
+            namespace={namespaceName}
             onUpgrade={() => setModalOpen(true)}
             mt={2}
           />

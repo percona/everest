@@ -1,4 +1,5 @@
 import { AuthContext } from 'contexts/auth';
+import { useNamespaces } from 'hooks/api/namespaces';
 import { useContext, useEffect, useState } from 'react';
 
 type GetPermissionProps = {
@@ -6,6 +7,24 @@ type GetPermissionProps = {
   specificResource?: string;
   namespace?: string;
 };
+
+
+export const useGetPermittedNamespaces = ({
+  resource,
+}:{resource: string}) => {
+  const permittedNamespaces: string[] = [];
+  const { data: namespaces = []} =
+  useNamespaces();
+
+
+  const { authorize } = useContext(AuthContext);
+
+  namespaces.forEach((namespace)=>authorize('create', resource, `${namespace}/*`).then((data) => {
+    if(data===true){
+      permittedNamespaces.push(namespace);}
+  }))
+  return permittedNamespaces;
+}
 
 export const useGetPermissions = ({
   resource,
@@ -16,10 +35,13 @@ export const useGetPermissions = ({
     canRead: false,
     canUpdate: false,
     canDelete: false,
-    canCreate: false,
+    canCreate: true,
   });
 
   const { authorize } = useContext(AuthContext);
+
+  const { data: namespaces = []} =
+    useNamespaces();
 
   useEffect(() => {
     authorize('read', resource, specificResource).then((data) => {
@@ -29,12 +51,14 @@ export const useGetPermissions = ({
       }));
     });
 
-    authorize('create', resource, specificResource).then((data) => {
+    namespaces.forEach((namespace)=>authorize('create', resource, `${namespace}/*`).then((data) => {
+      if(data===false){
       setPermissions((oldPermissions) => ({
         ...oldPermissions,
         canCreate: data,
-      }));
-    });
+      }));}
+    }))
+    
 
     authorize('update', resource, `${namespace}/${specificResource}`).then(
       (data) => {

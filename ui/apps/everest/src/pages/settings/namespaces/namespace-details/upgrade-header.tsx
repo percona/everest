@@ -3,6 +3,7 @@ import { DbEngineType } from '@percona/types';
 import { UpgradeHeaderProps } from './types';
 import { DbEngineStatus } from 'shared-types/dbEngines.types';
 import { Messages } from './messages';
+import { useGetPermissions } from 'utils/useGetPermissions';
 
 const upgradeMessage = (
   dbType: DbEngineType,
@@ -27,8 +28,14 @@ const UpgradeHeader = ({
   engine,
   preflightPayload,
   targetVersion,
+  namespace,
 }: UpgradeHeaderProps) => {
   const isUpToDate = engine.pendingOperatorUpgrades?.length === 0;
+
+  const { canUpdate } = useGetPermissions({
+    resource: 'database-engines',
+    namespace: namespace,
+  });
 
   if (engine.status === DbEngineStatus.UPGRADING) {
     return (
@@ -58,7 +65,7 @@ const UpgradeHeader = ({
           targetVersion
         )}
       </Typography>
-      {!isUpToDate && (
+      {!isUpToDate && canUpdate && (
         <Button
           size="medium"
           variant="contained"
