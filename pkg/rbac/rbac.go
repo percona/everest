@@ -30,7 +30,9 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/rest"
 
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	everestclient "github.com/percona/everest/client"
 	"github.com/percona/everest/data"
 	"github.com/percona/everest/pkg/common"
@@ -40,6 +42,13 @@ import (
 	"github.com/percona/everest/pkg/rbac/fileadapter"
 	"github.com/percona/everest/pkg/session"
 )
+
+// globalResourceGetter is an interface for getting
+// global (non-namespaced) resources like monitoring-configs and backup-storages.
+type globalResourceGetter interface {
+	GetMonitoringConfig(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error)
+	GetBackupStorage(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error)
+}
 
 // Setup a new informer that watches our RBAC ConfigMap.
 // This informer reloads the policy whenever the ConfigMap is updated.
@@ -175,11 +184,38 @@ func buildPathResourceMap(basePath string) (map[string]string, []string, error) 
 	return resourceMap, skipPaths, nil
 }
 
+func isBackupStorageAllowed(
+	ctx context.Context,
+	getter globalResourceGetter,
+	enforcer *casbin.Enforcer,
+	user, bsName string) (bool, error) {
+	bs, err := getter.GetBackupStorage(ctx, common.SystemNamespace, bsName)
+	if err != nil {
+		return false, err
+	}
+	// Is it used in a namespace that the user does not have access to?
+	for ns, used := range bs.Status.UsedNamespaces {
+		if !used {
+			continue
+		}
+		if allowed, err := IsNamespaceAllowedForUser(enforcer, user, ns); err != nil {
+			return false, err
+		} else if !allowed {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
 // NewEnforceHandler returns a function that checks if a user is allowed to access a resource.
-func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.Context, user string) (bool, error) {
+func NewEnforceHandler(ctx context.Context, cfg *rest.Config, basePath string, enforcer *casbin.Enforcer) func(c echo.Context, user string) (bool, error) {
 	pathResourceMap, _, err := buildPathResourceMap(basePath)
 	if err != nil {
 		panic("failed to build path resource map: " + err.Error())
+	}
+	cache, err := newCache(ctx, zap.NewNop().Sugar(), cfg)
+	if err != nil {
+		panic("cannot initialize cache for global resources: " + err.Error())
 	}
 	return func(c echo.Context, user string) (bool, error) {
 		actionMethodMap := map[string]string{
@@ -240,4 +276,9 @@ func Can(ctx context.Context, filePath string, k *kubernetes.Kubernetes, req ...
 		return false, err
 	}
 	return enforcer.Enforce(user, resource, action, object)
+}
+
+// IsNamespaceAllowedForUser checks if a user is allowed to access a namespace.
+func IsNamespaceAllowedForUser(e *casbin.Enforcer, user, namespace string) (bool, error) {
+	return e.Enforce(user, "namespaces", "read", namespace)
 }
