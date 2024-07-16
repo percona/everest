@@ -13,27 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  BorderColor,
-  DeleteOutline,
-  PauseCircleOutline,
-} from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
-import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import { Box, Button, MenuItem, Stack } from '@mui/material';
+import { Box, Button, Stack } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import StatusField from 'components/status-field';
 import { useDbActions } from 'hooks/api/db-cluster/useDbActions';
 import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { useDeleteDbCluster } from 'hooks/api/db-cluster/useDeleteDbCluster';
-import { MRT_Row, type MRT_ColumnDef } from 'material-react-table';
+import { type MRT_ColumnDef } from 'material-react-table';
 import { RestoreDbModal } from 'modals';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
+import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbEngineType } from 'shared-types/dbEngines.types';
-import { useDBClustersForNamespaces } from '../../hooks/api/db-clusters/useDbClusters';
+import { useDBClustersForNamespaces } from 'hooks/api/db-clusters/useDbClusters';
 import { DB_CLUSTER_STATUS_TO_BASE_STATUS } from './DbClusterView.constants';
 import {
   beautifyDbClusterStatus,
@@ -47,145 +40,9 @@ import { LastBackup } from './lastBackup/LastBackup';
 import { useDbBackups } from 'hooks/api/backups/useBackups';
 import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
 import { useGetPermissions } from 'utils/useGetPermissions';
+import TableActionsMenu from 'components/table-actions-menu';
+import { DbActionButtons } from './db-cluster-view-menu-actions';
 
-const DbActionButtons = (
-  row: MRT_Row<DbClusterTableElement>,
-  closeMenu: () => void,
-  setIsNewClusterMode: React.Dispatch<React.SetStateAction<boolean>>,
-  handleDbRestart: (dbCluster: DbCluster) => void,
-  handleDbSuspendOrResumed: (dbCluster: DbCluster) => void,
-  handleDeleteDbCluster: (dbCluster: DbCluster) => void,
-  isPaused: (dbCluster: DbCluster) => boolean | undefined,
-  handleRestoreDbCluster: (dbCluster: DbCluster) => void,
-  canCreate: boolean
-) => {
-  const { canUpdate, canDelete } = useGetPermissions({
-    resource: 'database-clusters',
-    specificResource: row.original.databaseName,
-    namespace: row.original.namespace,
-  });
-
-  return [
-    // TODO: finish when design is ready
-    <MenuItem
-      disabled={row.original.status === DbClusterStatus.restoring}
-      key={0}
-      component={Link}
-      to="/databases/edit"
-      state={{
-        selectedDbCluster: row.original.databaseName!,
-        namespace: row.original.namespace,
-      }}
-      sx={{
-        m: 0,
-        display: canUpdate ? 'flex' : 'none',
-        gap: 1,
-        alignItems: 'center',
-        px: 2,
-        py: '10px',
-      }}
-    >
-      <BorderColor fontSize="small" /> {Messages.menuItems.edit}
-    </MenuItem>,
-    <MenuItem
-      disabled={row.original.status === DbClusterStatus.restoring}
-      key={2}
-      onClick={() => {
-        handleDbRestart(row.original.raw);
-        closeMenu();
-      }}
-      sx={{
-        m: 0,
-        display: canUpdate ? 'flex' : 'none',
-        gap: 1,
-        alignItems: 'center',
-        px: 2,
-        py: '10px',
-      }}
-    >
-      <RestartAltIcon /> {Messages.menuItems.restart}
-    </MenuItem>,
-    <MenuItem
-      disabled={row.original.status === DbClusterStatus.restoring}
-      key={5}
-      onClick={() => {
-        handleRestoreDbCluster(row.original.raw);
-        setIsNewClusterMode(true);
-        closeMenu();
-      }}
-      sx={{
-        display: canCreate ? 'flex' : 'none',
-        gap: 1,
-        alignItems: 'center',
-        px: 2,
-        py: '10px',
-      }}
-    >
-      <AddIcon /> {Messages.menuItems.createNewDbFromBackup}
-    </MenuItem>,
-    <MenuItem
-      disabled={row.original.status === DbClusterStatus.restoring || !canUpdate}
-      key={3}
-      data-testid={`${row.original?.databaseName}-restore`}
-      onClick={() => {
-        handleRestoreDbCluster(row.original.raw);
-        setIsNewClusterMode(false);
-        closeMenu();
-      }}
-      sx={{
-        display: canUpdate ? 'flex' : 'none',
-        gap: 1,
-        alignItems: 'center',
-        px: 2,
-        py: '10px',
-      }}
-    >
-      <KeyboardReturnIcon /> {Messages.menuItems.restoreFromBackup}
-    </MenuItem>,
-    <MenuItem
-      key={4}
-      disabled={
-        row.original.status === DbClusterStatus.pausing ||
-        row.original.status === DbClusterStatus.restoring
-      }
-      onClick={() => {
-        handleDbSuspendOrResumed(row.original.raw);
-        closeMenu();
-      }}
-      sx={{
-        m: 0,
-        display: canUpdate ? 'flex' : 'none',
-        gap: 1,
-        alignItems: 'center',
-        px: 2,
-        py: '10px',
-      }}
-    >
-      <PauseCircleOutline />{' '}
-      {isPaused(row.original.raw)
-        ? Messages.menuItems.resume
-        : Messages.menuItems.suspend}
-    </MenuItem>,
-    <MenuItem
-      data-testid={`${row.original?.databaseName}-delete`}
-      key={1}
-      onClick={() => {
-        handleDeleteDbCluster(row.original.raw);
-        closeMenu();
-      }}
-      sx={{
-        m: 0,
-        display: canDelete ? 'flex' : 'none',
-        gap: 1,
-        alignItems: 'center',
-        px: 2,
-        py: '10px',
-      }}
-    >
-      <DeleteOutline /> {Messages.menuItems.delete}
-    </MenuItem>,
-  ];
-};
 export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
   const { data: namespaces = [], isLoading: loadingNamespaces } =
@@ -207,12 +64,12 @@ export const DbClusterView = () => {
     handleConfirmDelete,
     handleCloseDeleteDialog,
     handleCloseRestoreDialog,
-    selectedDbCluster,
+    handleRestoreDbCluster,
     handleDbRestart,
     handleDbSuspendOrResumed,
     handleDeleteDbCluster,
     isPaused,
-    handleRestoreDbCluster,
+    selectedDbCluster,
   } = useDbActions();
   const navigate = useNavigate();
 
@@ -322,18 +179,17 @@ export const DbClusterView = () => {
           columns={columns}
           data={tableData}
           enableRowActions
-          renderRowActionMenuItems={({ row, closeMenu }) => {
-            return DbActionButtons(
+          renderRowActions={({ row }) => {
+            const menuItems = DbActionButtons(
               row,
-              closeMenu,
               setIsNewClusterMode,
               handleDbRestart,
               handleDbSuspendOrResumed,
               handleDeleteDbCluster,
               isPaused,
-              handleRestoreDbCluster,
-              canCreate
+              handleRestoreDbCluster
             );
+            return <TableActionsMenu menuItems={menuItems} />;
           }}
           renderDetailPanel={({ row }) => <ExpandedRow row={row} />}
           muiTableBodyRowProps={({ row, isDetailPanel }) => ({
