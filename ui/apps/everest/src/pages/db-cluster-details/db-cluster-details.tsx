@@ -66,7 +66,13 @@ export const DbClusterDetails = () => {
         />
         {/* At this point, loading is done and we either have the cluster or not */}
         <>
-        {canUpdate || canDelete ? <DbActionButton dbCluster={dbCluster!} canUpdate={canUpdate} canDelete={canDelete} /> : undefined}
+          {canUpdate || canDelete ? (
+            <DbActionButton
+              dbCluster={dbCluster!}
+              canUpdate={canUpdate}
+              canDelete={canDelete}
+            />
+          ) : undefined}
         </>
       </Box>
       <Box

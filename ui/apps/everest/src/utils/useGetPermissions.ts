@@ -8,23 +8,25 @@ type GetPermissionProps = {
   namespace?: string;
 };
 
-
 export const useGetPermittedNamespaces = ({
   resource,
-}:{resource: string}) => {
+}: {
+  resource: string;
+}) => {
   const permittedNamespaces: string[] = [];
-  const { data: namespaces = []} =
-  useNamespaces();
-
+  const { data: namespaces = [] } = useNamespaces();
 
   const { authorize } = useContext(AuthContext);
 
-  namespaces.forEach((namespace)=>authorize('create', resource, `${namespace}/*`).then((data) => {
-    if(data===true){
-      permittedNamespaces.push(namespace);}
-  }))
+  namespaces.forEach((namespace) =>
+    authorize('create', resource, `${namespace}/*`).then((data) => {
+      if (data === true) {
+        permittedNamespaces.push(namespace);
+      }
+    })
+  );
   return permittedNamespaces;
-}
+};
 
 export const useGetPermissions = ({
   resource,
@@ -40,8 +42,7 @@ export const useGetPermissions = ({
 
   const { authorize } = useContext(AuthContext);
 
-  const { data: namespaces = []} =
-    useNamespaces();
+  const { data: namespaces = [] } = useNamespaces();
 
   useEffect(() => {
     authorize('read', resource, specificResource).then((data) => {
@@ -51,14 +52,16 @@ export const useGetPermissions = ({
       }));
     });
 
-    namespaces.forEach((namespace)=>authorize('create', resource, `${namespace}/*`).then((data) => {
-      if(data===false){
-      setPermissions((oldPermissions) => ({
-        ...oldPermissions,
-        canCreate: data,
-      }));}
-    }))
-    
+    namespaces.forEach((namespace) =>
+      authorize('create', resource, `${namespace}/*`).then((data) => {
+        if (data === false) {
+          setPermissions((oldPermissions) => ({
+            ...oldPermissions,
+            canCreate: data,
+          }));
+        }
+      })
+    );
 
     authorize('update', resource, `${namespace}/${specificResource}`).then(
       (data) => {

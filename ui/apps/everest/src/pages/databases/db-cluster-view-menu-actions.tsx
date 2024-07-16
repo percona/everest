@@ -109,32 +109,31 @@ export const DbActionButtons = (
           </MenuItem>,
         ]
       : []),
-      ...(canCreateRestore 
-        ? [
-        <MenuItem
-        disabled={
-          row.original.status === DbClusterStatus.restoring || !canUpdate
-        }
-        key={3}
-        data-testid={`${row.original?.databaseName}-restore`}
-        onClick={() => {
-          handleRestoreDbCluster(row.original.raw);
-          setIsNewClusterMode(false);
-        }}
-        sx={{
-          gap: 1,
-          alignItems: 'center',
-          px: 2,
-          py: '10px',
-        }}
-      >
-        <KeyboardReturnIcon /> {Messages.menuItems.restoreFromBackup}
-      </MenuItem>,
-      ] 
+    ...(canCreateRestore
+      ? [
+          <MenuItem
+            disabled={
+              row.original.status === DbClusterStatus.restoring || !canUpdate
+            }
+            key={3}
+            data-testid={`${row.original?.databaseName}-restore`}
+            onClick={() => {
+              handleRestoreDbCluster(row.original.raw);
+              setIsNewClusterMode(false);
+            }}
+            sx={{
+              gap: 1,
+              alignItems: 'center',
+              px: 2,
+              py: '10px',
+            }}
+          >
+            <KeyboardReturnIcon /> {Messages.menuItems.restoreFromBackup}
+          </MenuItem>,
+        ]
       : []),
     ...(canUpdate
       ? [
-          
           <MenuItem
             key={4}
             disabled={
