@@ -756,10 +756,10 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
         root: ({ theme }) => ({
           '.MuiBadge-overlapCircular': {
             backgroundColor: 'transparent',
-          }
+          },
         }),
       },
-    }
+    },
   },
 });
 
