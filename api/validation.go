@@ -1227,9 +1227,9 @@ func (e *EverestServer) validateDatabaseClusterBackup(
 	//
 	// This issue is being tackled upstream: https://perconadev.atlassian.net/browse/K8SPSMDB-1088
 	if db.Spec.Engine.Type == everestv1alpha1.DatabaseEnginePSMDB {
-		if ok, err := isBackupScheduleRunning(time.Now(), db.Spec.Backup.Schedules); err != nil {
+		if running, err := isBackupScheduleRunning(time.Now(), db.Spec.Backup.Schedules); err != nil {
 			return err
-		} else if !ok {
+		} else if running {
 			return errBackupInProgress
 		}
 	}
