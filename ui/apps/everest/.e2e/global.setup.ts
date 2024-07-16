@@ -15,15 +15,14 @@
 
 import { test as setup, expect, APIResponse } from '@playwright/test';
 import 'dotenv/config';
-import { STORAGE_NAMES } from './constants';
 import { getTokenFromLocalStorage } from './utils/localStorage';
-import { getNamespacesFn } from './utils/namespaces';
+import { getBucketNamespacesMap } from './constants';
 const {
-  EVEREST_LOCATION_BUCKET_NAME,
   EVEREST_LOCATION_ACCESS_KEY,
   EVEREST_LOCATION_SECRET_KEY,
   EVEREST_LOCATION_REGION,
   EVEREST_LOCATION_URL,
+  EVEREST_BUCKETS_NAMESPACES_MAP,
 } = process.env;
 
 const doBackupCall = async (fn: () => Promise<APIResponse>, retries = 3) => {
@@ -41,12 +40,12 @@ const doBackupCall = async (fn: () => Promise<APIResponse>, retries = 3) => {
     }
 
     if (statusText && statusText.message) {
-      if (statusText.message.includes('already exists')) {
-        return Promise.resolve();
-      } else if (statusText.message.includes('Could not read')) {
+      if (statusText.message.includes('Could not read')) {
         if (retries > 0) {
           return doBackupCall(fn, retries - 1);
         }
+      } else {
+        return Promise.resolve();
       }
     }
     return Promise.reject();
@@ -57,21 +56,26 @@ const doBackupCall = async (fn: () => Promise<APIResponse>, retries = 3) => {
 
 setup('Backup storages', async ({ request }) => {
   const token = await getTokenFromLocalStorage();
-  const namespaces = await getNamespacesFn(token, request);
   const promises: Promise<any>[] = [];
+  // This has a nested array structure, in the form of
+  // [
+  //   ['bucket1', ['namespace1', 'namespace2']],
+  //   ['bucket2', ['namespace3']],
+  // ]
+  const bucketNamespacesMap = getBucketNamespacesMap();
 
-  STORAGE_NAMES.forEach(async (storage) => {
+  bucketNamespacesMap.forEach(async ([bucket, namespaces]) => {
     promises.push(
       doBackupCall(() =>
         request.post('/v1/backup-storages/', {
           data: {
-            name: storage,
+            name: bucket,
             description: 'CI test bucket',
             type: 's3',
-            bucketName: EVEREST_LOCATION_BUCKET_NAME,
+            bucketName: bucket,
             secretKey: EVEREST_LOCATION_SECRET_KEY,
             accessKey: EVEREST_LOCATION_ACCESS_KEY,
-            allowedNamespaces: [namespaces[0]],
+            allowedNamespaces: namespaces,
             url: EVEREST_LOCATION_URL,
             region: EVEREST_LOCATION_REGION,
             verifyTLS: false,
@@ -84,6 +88,31 @@ setup('Backup storages', async ({ request }) => {
       )
     );
   });
+
+  // STORAGE_NAMES.forEach(async (storage) => {
+  //   promises.push(
+  //     doBackupCall(() =>
+  //       request.post('/v1/backup-storages/', {
+  //         data: {
+  //           name: storage,
+  //           description: 'CI test bucket',
+  //           type: 's3',
+  //           bucketName: EVEREST_LOCATION_BUCKET_NAME,
+  //           secretKey: EVEREST_LOCATION_SECRET_KEY,
+  //           accessKey: EVEREST_LOCATION_ACCESS_KEY,
+  //           allowedNamespaces: [namespaces[0]],
+  //           url: EVEREST_LOCATION_URL,
+  //           region: EVEREST_LOCATION_REGION,
+  //           verifyTLS: false,
+  //           forcePathStyle: true,
+  //         },
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       })
+  //     )
+  //   );
+  // });
 
   await Promise.all(promises);
 });

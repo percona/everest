@@ -55,6 +55,9 @@ const (
 	pgDeploymentName    = "percona-postgresql-operator"
 	dateFormat          = "2006-01-02T15:04:05Z"
 	pgReposLimit        = 3
+	// We are diverging from the RFC1035 spec in regards to the length of the
+	// name because the PXC operator limits the name of the cluster to 22.
+	maxNameLength = 22
 )
 
 var (
@@ -90,7 +93,6 @@ var (
 	errDataSourceNoPath              = errors.New("'path' should be specified in .Spec.DataSource.BackupSource")
 	errIncorrectDataSourceStruct     = errors.New("incorrect data source struct")
 	errUnsupportedPitrType           = errors.New("the given point-in-time recovery type is not supported")
-	errTooManyPGSchedules            = fmt.Errorf("only %d schedules are allowed in a PostgreSQL cluster", pgReposLimit)
 	errTooManyPGStorages             = fmt.Errorf("only %d different storages are allowed in a PostgreSQL cluster", pgReposLimit)
 	errNoMetadata                    = fmt.Errorf("no metadata provided")
 	errInvalidResourceVersion        = fmt.Errorf("invalid 'resourceVersion' value")
@@ -100,9 +102,9 @@ var (
 	errDBEngineDowngrade             = errors.New("database engine version cannot be downgraded")
 	errDuplicatedSchedules           = errors.New("duplicated backup schedules are not allowed")
 	errDuplicatedStoragePG           = errors.New("postgres clusters can't use the same storage for the different schedules")
-	errStorageDeletionPG             = errors.New("the existing postgres schedules can't be deleted")
 	errStorageChangePG               = errors.New("the existing postgres schedules can't change their storage")
 	errDuplicatedBackupStorage       = errors.New("backup storages with the same url, bucket and url are not allowed")
+	errEditBackupStorageInUse        = errors.New("can't edit bucket or region of the backup storage in use")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -141,9 +143,7 @@ func ErrInvalidURL(fieldName string) error {
 
 // validates names to be RFC-1035 compatible  https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
 func validateRFC1035(s, name string) error {
-	// We are diverging from the RFC1035 spec in regards to the length of the
-	// name because the PXC operator limits the name of the cluster to 22.
-	if len(s) > 22 {
+	if len(s) > maxNameLength {
 		return ErrNameTooLong(name)
 	}
 
@@ -347,6 +347,23 @@ func (e *EverestServer) validateUpdateBackupStorageRequest(
 		return nil, err
 	}
 
+	c := ctx.Request().Context()
+	used, err := e.kubeClient.IsBackupStorageUsed(c, e.kubeClient.Namespace(), backupStorageName, nil)
+	if err != nil {
+		return nil, err
+	}
+	if used && basicStorageParamsAreChanged(bs, params) {
+		return nil, errEditBackupStorageInUse
+	}
+
+	existingStorages, err := e.kubeClient.ListBackupStorages(c, e.kubeClient.Namespace())
+	if err != nil {
+		return nil, err
+	}
+	if duplicate := validateDuplicateStorageByUpdate(backupStorageName, bs, existingStorages, params); duplicate {
+		return nil, errDuplicatedBackupStorage
+	}
+
 	url := &bs.Spec.EndpointURL
 	if params.Url != nil {
 		if ok := validateURL(*params.Url); !ok {
@@ -408,12 +425,65 @@ func (e *EverestServer) validateUpdateBackupStorageRequest(
 		region = *params.Region
 	}
 
-	err := validateBackupStorageAccess(ctx, string(bs.Spec.Type), url, bucketName, region, accessKey, secretKey, pointer.Get(params.VerifyTLS), pointer.Get(params.ForcePathStyle), l)
+	err = validateBackupStorageAccess(ctx, string(bs.Spec.Type), url, bucketName, region, accessKey, secretKey, pointer.Get(params.VerifyTLS), pointer.Get(params.ForcePathStyle), l)
 	if err != nil {
 		return nil, err
 	}
 
 	return &params, nil
+}
+
+func (params *UpdateBackupStorageParams) regionOrDefault(defaultRegion string) string {
+	if params.Region != nil {
+		return *params.Region
+	}
+	return defaultRegion
+}
+
+func (params *UpdateBackupStorageParams) bucketNameOrDefault(defaultBucketName string) string {
+	if params.BucketName != nil {
+		return *params.BucketName
+	}
+	return defaultBucketName
+}
+
+func (params *UpdateBackupStorageParams) urlOrDefault(defaultURL string) string {
+	if params.Url != nil {
+		return *params.Url
+	}
+	return defaultURL
+}
+
+func validateDuplicateStorageByUpdate(
+	currentStorageName string,
+	currentStorage *everestv1alpha1.BackupStorage,
+	existingStorages *everestv1alpha1.BackupStorageList,
+	params UpdateBackupStorageParams,
+) bool {
+	// Construct the combined key for comparison
+	toCompare := params.regionOrDefault(currentStorage.Spec.Region) +
+		params.bucketNameOrDefault(currentStorage.Spec.Bucket) +
+		params.urlOrDefault(currentStorage.Spec.EndpointURL)
+
+	for _, s := range existingStorages.Items {
+		if s.Name == currentStorageName {
+			continue
+		}
+		if s.Spec.Region+s.Spec.Bucket+s.Spec.EndpointURL == toCompare {
+			return true
+		}
+	}
+	return false
+}
+
+func basicStorageParamsAreChanged(bs *everestv1alpha1.BackupStorage, params UpdateBackupStorageParams) bool {
+	if params.BucketName != nil && bs.Spec.Bucket != pointer.GetString(params.BucketName) {
+		return true
+	}
+	if params.Region != nil && bs.Spec.Region != pointer.GetString(params.Region) {
+		return true
+	}
+	return false
 }
 
 func validateCreateBackupStorageRequest(
@@ -691,25 +761,14 @@ func checkSchedulesChanges(oldDbc everestv1alpha1.DatabaseCluster, newDbc Databa
 		return nil
 	}
 	newSchedules := *newDbc.Spec.Backup.Schedules
-	// check the old storage wasn't deleted
-	if len(oldDbc.Spec.Backup.Schedules) > len(newSchedules) {
-		return errStorageDeletionPG
-	}
-	var found bool
 	for _, oldSched := range oldDbc.Spec.Backup.Schedules {
-		found = false
 		for _, newShed := range newSchedules {
 			// check the existing schedule storage wasn't changed
 			if oldSched.Name == newShed.Name {
-				found = true
 				if oldSched.BackupStorageName != newShed.BackupStorageName {
 					return errStorageChangePG
 				}
 			}
-		}
-		// check the old storage wasn't deleted
-		if !found {
-			return errStorageDeletionPG
 		}
 	}
 	// check there is no duplicated storages
@@ -1067,6 +1126,10 @@ func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
 		return errInvalidVersion
 	}
 
+	// We will not allow downgrades.
+	if semver.Compare(newVersion, oldVersion) < 0 {
+		return errDBEngineDowngrade
+	}
 	// We will not allow major upgrades.
 	// Major upgrades are handled differently for different operators, so for now we simply won't allow it.
 	// For example:
@@ -1075,10 +1138,6 @@ func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
 	// - PG operator does not allow major upgrades.
 	if semver.Major(oldVersion) != semver.Major(newVersion) {
 		return errDBEngineMajorVersionUpgrade
-	}
-	// We will not allow downgrades.
-	if semver.Compare(newVersion, oldVersion) < 0 {
-		return errDBEngineDowngrade
 	}
 	return nil
 }
@@ -1242,16 +1301,9 @@ type dataSourceStruct struct {
 
 func validatePGReposForAPIDB(ctx context.Context, dbc *DatabaseCluster, getBackupsFunc func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error)) error {
 	bs := make(map[string]bool)
-	var reposCount int
 	if dbc.Spec != nil && dbc.Spec.Backup != nil && dbc.Spec.Backup.Schedules != nil {
 		for _, shed := range *dbc.Spec.Backup.Schedules {
 			bs[shed.BackupStorageName] = true
-		}
-		// each schedule counts as a separate repo regardless of the BS used in it
-		reposCount = len(*dbc.Spec.Backup.Schedules)
-		// first check if there are too many schedules. Each schedule is configured in a separate repo.
-		if reposCount > pgReposLimit {
-			return errTooManyPGSchedules
 		}
 	}
 
@@ -1271,12 +1323,11 @@ func validatePGReposForAPIDB(ctx context.Context, dbc *DatabaseCluster, getBacku
 		// repos count is increased only if there wasn't such a BS used
 		if _, ok := bs[backup.Spec.BackupStorageName]; !ok {
 			bs[backup.Spec.BackupStorageName] = true
-			reposCount++
 		}
 	}
 
 	// second check if there are too many repos used.
-	if reposCount > pgReposLimit {
+	if len(bs) > pgReposLimit {
 		return errTooManyPGStorages
 	}
 

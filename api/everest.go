@@ -39,11 +39,11 @@ import (
 	"golang.org/x/time/rate"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/percona/everest/api/rbac"
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/oidc"
+	"github.com/percona/everest/pkg/rbac"
 	"github.com/percona/everest/pkg/session"
 	"github.com/percona/everest/public"
 )
@@ -165,7 +165,7 @@ func (e *EverestServer) oidcKeyFn(ctx context.Context) (jwt.Keyfunc, error) {
 		return nil, err
 	}
 	if settings.OIDCConfigRaw == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 	oidcConfig, err := settings.OIDCConfig()
 	if err != nil {

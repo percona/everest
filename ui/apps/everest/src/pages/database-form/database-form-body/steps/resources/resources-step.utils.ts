@@ -54,8 +54,11 @@ export const matchFieldsValueToResourceSize = (
     return ResourceSize.custom;
   }
 
-  const size = memoryParser(dbCluster?.spec?.engine?.storage?.size.toString());
-  const memory = memoryParser(resources.memory.toString());
+  const size = memoryParser(
+    dbCluster?.spec?.engine?.storage?.size.toString(),
+    'Gi'
+  );
+  const memory = memoryParser(resources.memory.toString(), 'G');
 
   const res = Object.values(DEFAULT_SIZES).findIndex(
     (item) =>

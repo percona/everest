@@ -3,7 +3,6 @@ import { MRT_ColumnDef } from 'material-react-table';
 import { Button } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import semverCoerce from 'semver/functions/coerce';
-import semverMajor from 'semver/functions/major';
 import {
   DbEngineToolStatus,
   OperatorUpgradeDb,
@@ -73,9 +72,10 @@ const ClusterStatusTable = ({
             const currentMajor = currenEngineVersion.major;
             const availableVersions = dbEngine.availableVersions.engine
               .filter(({ version, status }) => {
+                const semver = semverCoerce(version);
                 return (
                   status === DbEngineToolStatus.RECOMMENDED &&
-                  semverMajor(version) === currentMajor
+                  semver?.major === currentMajor
                 );
               })
               .map(({ version }) => version);

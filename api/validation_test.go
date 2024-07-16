@@ -764,12 +764,12 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 			err: nil,
 		},
 		{
-			name:    "error: 3 schedules in one bs and 1 backup in other",
-			cluster: []byte(`{"metaData":{"name":"some","namespace":"ns"},"spec":{"backup":{"schedules":[{"backupStorageName":"bs1"},{"backupStorageName":"bs1"},{"backupStorageName":"bs1"}]}}}`),
+			name:    "error: 3 schedules in different bs and 1 backup in another bs",
+			cluster: []byte(`{"metaData":{"name":"some","namespace":"ns"},"spec":{"backup":{"schedules":[{"backupStorageName":"bs1"},{"backupStorageName":"bs2"},{"backupStorageName":"bs3"}]}}}`),
 			getBackupsFunc: func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error) {
 				return &everestv1alpha1.DatabaseClusterBackupList{
 					Items: []everestv1alpha1.DatabaseClusterBackup{
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"}},
+						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs4"}},
 					},
 				}, nil
 			},
@@ -853,7 +853,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					Items: []everestv1alpha1.DatabaseClusterBackup{},
 				}, nil
 			},
-			err: errTooManyPGSchedules,
+			err: errTooManyPGStorages,
 		},
 		{
 			name:    "error: 2 schedules 2 backups with different storages",
@@ -1007,6 +1007,12 @@ func TestValidateDBEngineUpgrade(t *testing.T) {
 			newVersion: "v8.0.23",
 			err:        nil,
 		},
+		{
+			name:       "major version downgrade",
+			oldVersion: "16.1",
+			newVersion: "15.5",
+			err:        errDBEngineDowngrade,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1078,16 +1084,16 @@ func TestCheckSchedulesChanges(t *testing.T) {
 			err:        nil,
 		},
 		{
-			name:       "error: deleted storage",
+			name:       "ok: deleted storage",
 			oldCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A","backupStorageName":"bs1"},{"name":"B", "backupStorageName":"bs2"}]}}}`),
 			newCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A","backupStorageName":"bs1"}]}}}`),
-			err:        errStorageDeletionPG,
+			err:        nil,
 		},
 		{
-			name:       "error: deleted storage and new added",
+			name:       "ok: deleted storage and new added",
 			oldCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A", "backupStorageName":"bs1"},{"name": "B", "backupStorageName":"bs2"}]}}}`),
 			newCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A", "backupStorageName":"bs1"},{"name": "C", "backupStorageName":"bs2"}]}}}`),
-			err:        errStorageDeletionPG,
+			err:        nil,
 		},
 		{
 			name:       "error: edited storage",
@@ -1112,6 +1118,80 @@ func TestCheckSchedulesChanges(t *testing.T) {
 			}
 			require.Error(t, err)
 			assert.Equal(t, tc.err.Error(), err.Error())
+		})
+	}
+}
+
+func TestValidateDuplicateStorageByUpdate(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name               string
+		storages           []byte
+		currentStorage     []byte
+		currentStorageName string
+		params             UpdateBackupStorageParams
+		isDuplicate        bool
+	}{
+		{
+			name:               "another storage with the same 3 params",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageB", "bucket": "bucket1", "region": "region1", "endpointURL":"url1" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{Url: pointer.ToString("url1"), BucketName: pointer.ToString("bucket1"), Region: pointer.ToString("region1")},
+			isDuplicate:        true,
+		},
+		{
+			name:               "change of url will lead to duplication",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageB", "bucket": "bucket2", "region": "region2", "endpointURL":"url1" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{Url: pointer.ToString("url1")},
+			isDuplicate:        true,
+		},
+		{
+			name:               "change of bucket will lead to duplication",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageB", "bucket": "bucket1", "region": "region2", "endpointURL":"url2" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{BucketName: pointer.ToString("bucket1")},
+			isDuplicate:        true,
+		},
+		{
+			name:               "change of region will lead to duplication",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageB", "bucket": "bucket2", "region": "region1", "endpointURL":"url2" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{Region: pointer.ToString("region1")},
+			isDuplicate:        true,
+		},
+		{
+			name:               "change of region and bucket will lead to duplication",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageB", "bucket": "bucket1", "region": "region1", "endpointURL":"url2" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{Region: pointer.ToString("region1"), BucketName: pointer.ToString("bucket1")},
+			isDuplicate:        true,
+		},
+		{
+			name:               "no other storages: no duplictation",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{Url: pointer.ToString("url1"), BucketName: pointer.ToString("bucket1"), Region: pointer.ToString("region1")},
+			isDuplicate:        false,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			storages := &everestv1alpha1.BackupStorageList{}
+			err := json.Unmarshal(tc.storages, storages)
+			require.NoError(t, err)
+			currentStorage := &everestv1alpha1.BackupStorage{}
+			err = json.Unmarshal(tc.currentStorage, currentStorage)
+			require.NoError(t, err)
+			isDuplicate := validateDuplicateStorageByUpdate(tc.currentStorageName, currentStorage, storages, tc.params)
+			assert.Equal(t, tc.isDuplicate, isDuplicate)
 		})
 	}
 }

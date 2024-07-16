@@ -31,12 +31,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	configmapadapter "github.com/percona/everest/api/rbac/configmap-adapter"
 	everestclient "github.com/percona/everest/client"
 	"github.com/percona/everest/data"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/kubernetes/informer"
+	configmapadapter "github.com/percona/everest/pkg/rbac/configmap-adapter"
+	"github.com/percona/everest/pkg/rbac/fileadapter"
 	"github.com/percona/everest/pkg/session"
 )
 
@@ -68,30 +69,45 @@ func refreshEnforcerInBackground(
 	return nil
 }
 
-// NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
-func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+func getModel() (model.Model, error) {
 	modelData, err := fs.ReadFile(data.RBAC, "rbac/model.conf")
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not read casbin model"))
 	}
+	return model.NewModelFromString(string(modelData))
+}
 
-	model, err := model.NewModelFromString(string(modelData))
+// NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
+func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+	model, err := getModel()
 	if err != nil {
-		return nil, errors.Join(err, errors.New("could not create casbin model"))
+		return nil, err
 	}
 
 	cmReq := types.NamespacedName{
-		Namespace: kubeClient.Namespace(),
+		Namespace: common.SystemNamespace,
 		Name:      common.EverestRBACConfigMapName,
 	}
-	adapter := configmapadapter.NewAdapter(kubeClient, cmReq)
+	adapter := configmapadapter.New(l, kubeClient, cmReq)
 
-	enforcer, err := casbin.NewEnforcer(model, adapter, true)
+	enforcer, err := casbin.NewEnforcer(model, adapter, false)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not create casbin enforcer"))
 	}
-
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
+}
+
+// NewEnforcerFromFilePath creates a new Casbin enforcer with the policy stored at the given filePath.
+func NewEnforcerFromFilePath(filePath string) (*casbin.Enforcer, error) {
+	model, err := getModel()
+	if err != nil {
+		return nil, err
+	}
+	adapter, err := fileadapter.New(filePath)
+	if err != nil {
+		return nil, err
+	}
+	return casbin.NewEnforcer(model, adapter)
 }
 
 // GetUser extracts the user from the JWT token in the context.
@@ -174,12 +190,13 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 			return false, errors.New("invalid URL")
 		}
 		switch resource {
-		case "backup-storages", "monitoring-instances":
-			object = "*"
-		case "database-clusters",
-			"database-engines",
-			"database-cluster-backups",
-			"database-cluster-restores":
+		// These resources are not namespaced.
+		case "namespaces",
+			"backup-storages",
+			"monitoring-instances":
+			name := c.Param("name")
+			object = name
+		default:
 			namespace := c.Param("namespace")
 			name := c.Param("name")
 			object = namespace + "/" + name
@@ -203,4 +220,18 @@ func NewSkipper(basePath string) (func(echo.Context) bool, error) {
 	return func(c echo.Context) bool {
 		return slices.Contains(skipPaths, c.Request().URL.Path)
 	}, nil
+}
+
+// Can checks if a user is allowed to perform an action on a resource.
+// Input request should be of the form [user action resource object].
+func Can(ctx context.Context, filePath string, k *kubernetes.Kubernetes, req ...string) (bool, error) {
+	if len(req) != 4 { //nolint:mnd
+		return false, errors.New("expected input of the form [user action resource object]")
+	}
+	user, action, resource, object := req[0], req[1], req[2], req[3]
+	enforcer, err := newKubeOrFileEnforcer(ctx, k, filePath)
+	if err != nil {
+		return false, err
+	}
+	return enforcer.Enforce(user, resource, action, object)
 }
