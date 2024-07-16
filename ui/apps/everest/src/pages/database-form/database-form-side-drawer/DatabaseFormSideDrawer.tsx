@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Divider, Drawer, Toolbar, useTheme } from '@mui/material';
+import { Divider, Drawer, useTheme } from '@mui/material';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
 import { DatabasePreview } from '../database-preview/database-preview';
 import { DatabaseFormSideDrawerProps } from './DatabaseFormSideDrawer.types';
@@ -21,7 +21,6 @@ const DatabaseFormSideDrawer = ({
         longestAchievedStep={longestAchievedStep}
         onSectionEdit={handleSectionEdit}
         sx={{
-          mt: 2,
           ...(!isDesktop && {
             padding: 0,
           }),
@@ -37,19 +36,15 @@ const DatabaseFormSideDrawer = ({
         variant="permanent"
         anchor="right"
         sx={{
-          // MuiDrawer-paper will take 25% of the whole screen because it has a "fixed" positioning
-          // Hence, we must use vw here to have the same calculation
-          // We subtract the padding
-          width: (theme) => `calc(25vw - ${theme.spacing(4)})`,
+          width: '25%',
           flexShrink: 0,
           ml: 3,
           [`& .MuiDrawer-paper`]: {
-            width: '25%',
+            position: 'relative',
             boxSizing: 'border-box',
           },
         }}
       >
-        <Toolbar />
         {PreviewContent}
       </Drawer>
     );

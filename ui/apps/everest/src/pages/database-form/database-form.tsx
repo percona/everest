@@ -16,7 +16,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useBlocker, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Stack, Step, StepLabel } from '@mui/material';
+import { Box, Stack, Step, StepLabel } from '@mui/material';
 import { Stepper } from '@percona/ui-lib';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useCreateDbCluster } from 'hooks/api/db-cluster/useCreateDbCluster';
@@ -175,7 +175,7 @@ export const DatabasePage = () => {
   return formSubmitted ? (
     <ConfirmationScreen />
   ) : (
-    <>
+    <Box sx={{ maxWidth: '1280px', mx: 'auto' }}>
       <Stepper noConnector activeStep={activeStep} sx={{ marginBottom: 4 }}>
         {steps.map((_, idx) => (
           <Step key={`step-${idx + 1}`}>
@@ -209,6 +209,6 @@ export const DatabasePage = () => {
         onClose={handleCloseCancellationModal}
         onConfirm={proceedNavigation}
       />
-    </>
+    </Box>
   );
 };
