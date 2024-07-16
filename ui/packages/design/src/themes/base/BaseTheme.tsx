@@ -751,6 +751,15 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
         }),
       },
     },
+    MuiTableHead: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          '.MuiBadge-overlapCircular': {
+            backgroundColor: 'transparent',
+          }
+        }),
+      },
+    }
   },
 });
 
