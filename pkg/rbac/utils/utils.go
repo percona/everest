@@ -82,7 +82,7 @@ func ErrorHandler(c echo.Context, internal error, proposedStatus int) error {
 		if strings.Contains(c.Request().URL.Path, "backup-storages") ||
 			strings.Contains(c.Request().URL.Path, "monitoring-instances") {
 			internal = errors.New(
-				"unauthorized: object is used in a namespace that a user does not have access to",
+				"unauthorized: object is used in a namespace that the user does not have access to",
 			)
 		}
 	}

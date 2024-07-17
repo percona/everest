@@ -21,12 +21,28 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	rbacutils "github.com/percona/everest/pkg/rbac/utils"
 )
+
+func (e *EverestServer) shouldFilterGlobalResource(user, resourceName, resourceType string, allowedNamespaces []string) bool {
+	for _, ns := range allowedNamespaces {
+		allowed, err := e.rbacMgr.GetEnforcer().Enforce(user, resourceType, "read", ns+"/"+resourceName)
+		if err != nil {
+			e.l.Error("failed to check if user has access to the backup storage", zap.Error(err))
+			return true
+		}
+		if !allowed {
+			return true
+		}
+	}
+	return false
+}
 
 // ListBackupStorages lists backup storages.
 func (e *EverestServer) ListBackupStorages(ctx echo.Context) error {
@@ -38,8 +54,18 @@ func (e *EverestServer) ListBackupStorages(ctx echo.Context) error {
 		})
 	}
 
+	user, err := rbacutils.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user"),
+		})
+	}
+
 	result := make([]BackupStorage, 0, len(backupList.Items))
 	for _, s := range backupList.Items {
+		if e.shouldFilterGlobalResource(user, s.GetName(), "backup-storages", s.Spec.AllowedNamespaces) {
+			continue
+		}
 		result = append(result, BackupStorage{
 			Type: BackupStorageType(s.Spec.Type),
 			Name: s.Name,

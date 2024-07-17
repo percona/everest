@@ -29,6 +29,7 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/pmm"
+	rbacutils "github.com/percona/everest/pkg/rbac/utils"
 )
 
 const (
@@ -154,8 +155,18 @@ func (e *EverestServer) ListMonitoringInstances(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, Error{Message: pointer.ToString("Could not get a list of monitoring instances")})
 	}
 
+	user, err := rbacutils.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user"),
+		})
+	}
+
 	result := make([]*MonitoringInstance, 0, len(mcList.Items))
 	for _, mc := range mcList.Items {
+		if e.shouldFilterGlobalResource(user, mc.GetName(), "monitoring-instances", mc.Spec.AllowedNamespaces) {
+			continue
+		}
 		result = append(result, &MonitoringInstance{
 			Type: MonitoringInstanceBaseWithNameType(mc.Spec.Type),
 			Name: mc.Name,

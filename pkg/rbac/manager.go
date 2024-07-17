@@ -124,9 +124,21 @@ func (m *Manager) Handler(ctx context.Context, basePath string) func(c echo.Cont
 			object = name
 		case backupStoragesResourceName:
 			bsName := c.Param("name")
+			// We're trying to list all backup-storages,
+			// so at the enforcer level, we always allow it.
+			// But the actual list of backup-storages is filtered by the API.
+			if bsName == "" {
+				return true, nil
+			}
 			object = bsName
 		case monitoringInstancesResourceName:
 			mcName := c.Param("name")
+			// We're trying to list all monitoring-instances,
+			// so at the enforcer level, we always allow it.
+			// But the actual list of backup-storages is filtered by the API.
+			if mcName == "" {
+				return true, nil
+			}
 			object = mcName
 		default:
 			namespace := c.Param("namespace")
