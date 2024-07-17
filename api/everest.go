@@ -217,6 +217,7 @@ func (e *EverestServer) rbacMiddleware(ctx context.Context, basePath string) (ec
 		Skipper:        skipper,
 		UserGetter:     rbac.GetUser,
 		EnforceHandler: rbac.NewEnforceHandler(ctx, e.kubeClient.Config(), basePath, enforcer),
+		ErrorHandler:   rbac.ErrorHandler,
 	}), nil
 }
 

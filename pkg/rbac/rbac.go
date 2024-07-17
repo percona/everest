@@ -26,6 +26,7 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
 	"github.com/golang-jwt/jwt/v5"
+	casbinmiddleware "github.com/labstack/echo-contrib/casbin"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -42,6 +43,8 @@ import (
 	"github.com/percona/everest/pkg/rbac/fileadapter"
 	"github.com/percona/everest/pkg/session"
 )
+
+var errObjectLinkedToUnauthorisedNamespace = errors.New("object linked to unauthorised namespace")
 
 // globalResourceGetter is an interface for getting
 // global (non-namespaced) resources like monitoring-configs and backup-storages.
@@ -184,47 +187,44 @@ func buildPathResourceMap(basePath string) (map[string]string, []string, error) 
 	return resourceMap, skipPaths, nil
 }
 
-// isBackupStorageAllowed returns false if the backupstorage is used in a namespace
-// that the user does not have access to.
-func isBackupStorageAllowed(
+func handleBackupStorage(
 	ctx context.Context,
 	getter globalResourceGetter,
 	enforcer *casbin.Enforcer,
-	user, bsName string) (bool, error) {
+	user, action, bsName string) error {
 	bs, err := getter.GetBackupStorage(ctx, common.SystemNamespace, bsName)
 	if err != nil {
-		return false, err
+		return err
 	}
 	// Is it used in a namespace that the user does not have access to?
 	for _, ns := range bs.Spec.AllowedNamespaces {
-		if allowed, err := IsNamespaceAllowedForUser(enforcer, user, ns); err != nil {
-			return false, err
+		if allowed, err := enforcer.Enforce(user, "backup-storages", action, ns+"/"+bsName); err != nil {
+			return err
 		} else if !allowed {
-			return false, nil
+			return errObjectLinkedToUnauthorisedNamespace
 		}
 	}
-	return true, nil
+	return nil
 }
 
-func isMonitoringConfigAllowed(
+func handleMonitoringConfig(
 	ctx context.Context,
 	getter globalResourceGetter,
 	enforcer *casbin.Enforcer,
-	user, mcName string,
-) (bool, error) {
-	mc, err := getter.GetMonitoringConfig(ctx, common.SystemNamespace, mcName)
+	user, action, bsName string) error {
+	bs, err := getter.GetMonitoringConfig(ctx, common.SystemNamespace, bsName)
 	if err != nil {
-		return false, err
+		return err
 	}
 	// Is it used in a namespace that the user does not have access to?
-	for _, ns := range mc.Spec.AllowedNamespaces {
-		if allowed, err := IsNamespaceAllowedForUser(enforcer, user, ns); err != nil {
-			return false, err
+	for _, ns := range bs.Spec.AllowedNamespaces {
+		if allowed, err := enforcer.Enforce(user, "monitoring-instances", action, ns+"/"+bsName); err != nil {
+			return err
 		} else if !allowed {
-			return false, nil
+			return errObjectLinkedToUnauthorisedNamespace
 		}
 	}
-	return true, nil
+	return nil
 }
 
 // NewEnforceHandler returns a function that checks if a user is allowed to access a resource.
@@ -251,8 +251,13 @@ func NewEnforceHandler(ctx context.Context, cfg *rest.Config, basePath string, e
 		if !ok {
 			return false, errors.New("invalid URL")
 		}
+
+		action, ok := actionMethodMap[c.Request().Method]
+		if !ok {
+			return false, errors.New("invalid method")
+		}
+
 		switch resource {
-		// These resources are not namespaced.
 		case "namespaces":
 			name := c.Param("name")
 			object = name
@@ -260,13 +265,13 @@ func NewEnforceHandler(ctx context.Context, cfg *rest.Config, basePath string, e
 			bsName := c.Param("name")
 			object = bsName
 			if bsName != "" {
-				return isBackupStorageAllowed(ctx, cache, enforcer, user, bsName)
+				return true, handleBackupStorage(ctx, cache, enforcer, user, action, bsName)
 			}
 		case "monitoring-instances":
 			mcName := c.Param("name")
 			object = mcName
 			if mcName != "" {
-				return isMonitoringConfigAllowed(ctx, cache, enforcer, user, mcName)
+				return true, handleMonitoringConfig(ctx, cache, enforcer, user, action, mcName)
 			}
 		default:
 			namespace := c.Param("namespace")
@@ -274,10 +279,6 @@ func NewEnforceHandler(ctx context.Context, cfg *rest.Config, basePath string, e
 			object = namespace + "/" + name
 		}
 
-		action, ok := actionMethodMap[c.Request().Method]
-		if !ok {
-			return false, errors.New("invalid method")
-		}
 		return enforcer.Enforce(user, resource, action, object)
 	}
 }
@@ -308,7 +309,12 @@ func Can(ctx context.Context, filePath string, k *kubernetes.Kubernetes, req ...
 	return enforcer.Enforce(user, resource, action, object)
 }
 
-// IsNamespaceAllowedForUser checks if a user is allowed to access a namespace.
-func IsNamespaceAllowedForUser(e *casbin.Enforcer, user, namespace string) (bool, error) {
-	return e.Enforce(user, "namespaces", "read", namespace)
+func ErrorHandler(c echo.Context, internal error, proposedStatus int) error {
+	if errors.Is(internal, errObjectLinkedToUnauthorisedNamespace) {
+		msg := "Object is used in a namespace that you do not have access to"
+		err := echo.NewHTTPError(proposedStatus, msg)
+		err.Internal = errors.New(msg)
+		return err
+	}
+	return casbinmiddleware.DefaultConfig.ErrorHandler(c, internal, proposedStatus)
 }
