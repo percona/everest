@@ -60,7 +60,10 @@ func refreshEnforcerInBackground(
 			return
 		}
 		if err := enforcer.LoadPolicy(); err != nil {
-			l.Error("failed to load policy", zap.Error(err))
+			panic("invalid policy detected - " + err.Error())
+		}
+		if err := validatePolicy(enforcer); err != nil {
+			panic("invalid policy detected - " + err.Error())
 		}
 	})
 	if inf.Start(ctx, &corev1.ConfigMap{}) != nil {
@@ -93,6 +96,9 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 	enforcer, err := casbin.NewEnforcer(model, adapter, false)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not create casbin enforcer"))
+	}
+	if err := validatePolicy(enforcer); err != nil {
+		return nil, err
 	}
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
 }
