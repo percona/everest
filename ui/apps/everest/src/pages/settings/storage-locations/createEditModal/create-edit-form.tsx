@@ -62,6 +62,7 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
         isRequired
         textFieldProps={{
           placeholder: Messages.createEditModal.placeholders.type,
+          disabled: isEditMode,
         }}
       />
       <TextInput
@@ -70,6 +71,7 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
         isRequired
         textFieldProps={{
           placeholder: Messages.createEditModal.placeholders.region,
+          disabled: isEditMode,
         }}
       />
       <TextInput

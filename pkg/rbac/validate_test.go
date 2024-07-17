@@ -33,6 +33,14 @@ func TestValidatePolicy(t *testing.T) {
 			path: "./testdata/policy-5-bad.csv",
 			err:  errPolicySyntax,
 		},
+		{
+			path: "./testdata/policy-6-bad.csv",
+			err:  errPolicySyntax,
+		},
+		{
+			path: "./testdata/policy-7-bad.csv",
+			err:  errPolicySyntax,
+		},
 	}
 
 	ctx := context.Background()
