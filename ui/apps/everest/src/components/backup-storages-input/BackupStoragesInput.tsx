@@ -5,6 +5,8 @@ import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBacku
 import { useDbBackups } from 'hooks/api/backups/useBackups';
 import { BackupStorage } from 'shared-types/backupStorages.types';
 import { Schedule } from 'shared-types/dbCluster.types';
+import { PG_SLOTS_LIMIT } from './constants';
+import { Messages } from './BackupStoragesInput.messages';
 
 type Props = {
   dbClusterName?: string;
@@ -38,7 +40,7 @@ const BackupStoragesInput = ({
   ];
   const uniqueStoragesInUse = [...new Set(storagesInUse)];
   const pgLimitAchieved =
-    dbType === DbType.Postresql && uniqueStoragesInUse.length >= 3;
+    dbType === DbType.Postresql && uniqueStoragesInUse.length >= PG_SLOTS_LIMIT;
   const storagesToShow: BackupStorage[] = pgLimitAchieved
     ? backupStorages.filter((storage) =>
         uniqueStoragesInUse.includes(storage.name)
@@ -50,8 +52,10 @@ const BackupStoragesInput = ({
       name="storageLocation"
       textFieldProps={{
         label: 'Backup storage',
-        // TODO change helper text
-        helperText: pgLimitAchieved ? '<SLOTS ACHIEVED>' : '',
+        helperText:
+          dbType === DbType.Postresql
+            ? Messages.pgHelperText(uniqueStoragesInUse.length)
+            : undefined,
       }}
       loading={isFetching}
       options={storagesToShow}
