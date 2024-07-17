@@ -91,7 +91,13 @@ func NewCanCommand(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
-			can, err := rbac.Can(cmd.Context(), policyFilepath, k, args...)
+			rbacManager, err := rbac.New(cmd.Context(), &rbac.Options{
+				Kubernetes: k,
+				Filepath:   policyFilepath,
+				Logger:     l,
+			})
+
+			can, err := rbacManager.Can(cmd.Context(), args[0], args[1], args[2], args[3])
 			if err != nil {
 				l.Error(err)
 				os.Exit(1)

@@ -3,11 +3,15 @@ package utils
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/casbin/casbin/v2/model"
 	"github.com/casbin/casbin/v2/persist"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo/v4"
+	"github.com/percona/everest/pkg/session"
 )
 
 const (
@@ -41,4 +45,32 @@ func LoadPolicyLine(line string, m model.Model) error {
 	}
 
 	return persist.LoadPolicyArray(tokens, m)
+}
+
+// GetUser extracts the user from the JWT token in the context.
+func GetUser(c echo.Context) (string, error) {
+	token, ok := c.Get("user").(*jwt.Token) // by default token is stored under `user` key
+	if !ok {
+		return "", errors.New("failed to get token from context")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims) // by default claims is of type `jwt.MapClaims`
+	if !ok {
+		return "", errors.New("failed to get claims from token")
+	}
+
+	subject, err := claims.GetSubject()
+	if err != nil {
+		return "", errors.Join(err, errors.New("failed to get subject from claims"))
+	}
+
+	issuer, err := claims.GetIssuer()
+	if err != nil {
+		return "", errors.Join(err, errors.New("failed to get issuer from claims"))
+	}
+
+	if issuer == session.SessionManagerClaimsIssuer {
+		return strings.Split(subject, ":")[0], nil
+	}
+	return subject, nil
 }

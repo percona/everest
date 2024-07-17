@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestValidatePolicy(t *testing.T) {
@@ -274,10 +277,17 @@ func TestCan(t *testing.T) {
 		},
 	}
 
+	ctx := context.Background()
+	m, err := New(ctx, &Options{
+		Filepath: "./testdata/policy-1-good.csv",
+		Logger:   zap.NewNop().Sugar(),
+	})
+	require.NoError(t, err)
+
 	for i, tc := range testcases {
 		t.Run(fmt.Sprintf("test-%d", i), func(t *testing.T) {
 			t.Parallel()
-			can, err := Can(context.Background(), "./testdata/policy-1-good.csv", nil, tc.request...)
+			can, err := m.Can(ctx, tc.request[0], tc.request[1], tc.request[2], tc.request[3])
 			if err != nil {
 				t.Fatalf("expected no error, got %v", err)
 			}

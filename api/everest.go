@@ -27,7 +27,6 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/casbin/casbin/v2"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/golang-jwt/jwt/v5"
 	casbinmiddleware "github.com/labstack/echo-contrib/casbin"
@@ -44,18 +43,19 @@ import (
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/oidc"
 	"github.com/percona/everest/pkg/rbac"
+	rbacutils "github.com/percona/everest/pkg/rbac/utils"
 	"github.com/percona/everest/pkg/session"
 	"github.com/percona/everest/public"
 )
 
 // EverestServer represents the server struct.
 type EverestServer struct {
-	config       *config.EverestConfig
-	l            *zap.SugaredLogger
-	echo         *echo.Echo
-	kubeClient   *kubernetes.Kubernetes
-	sessionMgr   *session.Manager
-	rbacEnforcer *casbin.Enforcer
+	config     *config.EverestConfig
+	l          *zap.SugaredLogger
+	echo       *echo.Echo
+	kubeClient *kubernetes.Kubernetes
+	sessionMgr *session.Manager
+	rbacMgr    *rbac.Manager
 }
 
 // NewEverestServer creates and configures everest API.
@@ -203,21 +203,18 @@ func (e *EverestServer) newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) 
 }
 
 func (e *EverestServer) rbacMiddleware(ctx context.Context, basePath string) (echo.MiddlewareFunc, error) {
-	enforcer, err := rbac.NewEnforcer(ctx, e.kubeClient, e.l)
+	rbacManager, err := rbac.New(ctx, &rbac.Options{
+		Kubernetes: e.kubeClient,
+		Logger:     e.l,
+	})
 	if err != nil {
-		return nil, errors.Join(err, errors.New("could not create casbin enforcer"))
+		return nil, errors.Join(err, errors.New("cannot create RBAC manager"))
 	}
-	e.rbacEnforcer = enforcer
-
-	skipper, err := rbac.NewSkipper(basePath)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("could not create RBAC skipper"))
-	}
+	e.rbacMgr = rbacManager
 	return casbinmiddleware.MiddlewareWithConfig(casbinmiddleware.Config{
-		Skipper:        skipper,
-		UserGetter:     rbac.GetUser,
-		EnforceHandler: rbac.NewEnforceHandler(ctx, e.kubeClient.Config(), basePath, enforcer),
-		ErrorHandler:   rbac.ErrorHandler,
+		Skipper:        rbacManager.Skipper(basePath),
+		UserGetter:     rbacutils.GetUser,
+		EnforceHandler: rbacManager.Handler(ctx, basePath),
 	}), nil
 }
 

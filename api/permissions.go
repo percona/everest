@@ -8,18 +8,18 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"github.com/percona/everest/pkg/rbac"
+	rbacutils "github.com/percona/everest/pkg/rbac/utils"
 )
 
 // GetUserPermissions returns the permissions for the currently logged in user.
 func (e *EverestServer) GetUserPermissions(c echo.Context) error {
-	user, err := rbac.GetUser(c)
+	user, err := rbacutils.GetUser(c)
 	if err != nil {
 		e.l.Error("Failed to get user from context: ", zap.Error(err))
 		return err
 	}
 
-	permissions, err := e.rbacEnforcer.GetImplicitPermissionsForUser(user)
+	permissions, err := e.rbacMgr.GetEnforcer().GetImplicitPermissionsForUser(user)
 	if err != nil {
 		e.l.Error("Failed to get implicit permissions: ", zap.Error(err))
 		return err
@@ -38,7 +38,7 @@ func (e *EverestServer) GetUserPermissions(c echo.Context) error {
 // For a given set of `permissions` for a `user`, this function
 // will resolve all roles for the user.
 func (e *EverestServer) resolveRoles(user string, permissions [][]string) error {
-	userRoles, err := e.rbacEnforcer.GetRolesForUser(user)
+	userRoles, err := e.rbacMgr.GetEnforcer().GetRolesForUser(user)
 	if err != nil {
 		return errors.Join(err, errors.New("cannot get user roles"))
 	}
