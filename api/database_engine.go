@@ -177,7 +177,6 @@ func (e *EverestServer) getUpgradePlan(
 	return result, nil
 }
 
-// ToOperatorUpgradeDatabaseItem converts OperatorUpgradePreflightForDatabase to OperatorUpgradeDatabaseItem.
 // TODO: Remove this function when the deprecated API is removed.
 //
 //nolint:godox
