@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/casbin/casbin/v2/model"
@@ -73,4 +74,19 @@ func GetUser(c echo.Context) (string, error) {
 		return strings.Split(subject, ":")[0], nil
 	}
 	return subject, nil
+}
+
+func ErrorHandler(c echo.Context, internal error, proposedStatus int) error {
+	if proposedStatus == http.StatusUnauthorized {
+		internal = errors.New("unauthorized access")
+		if strings.Contains(c.Request().URL.Path, "backup-storages") ||
+			strings.Contains(c.Request().URL.Path, "monitoring-instances") {
+			internal = errors.New(
+				"unauthorized: object is used in a namespace that a user does not have access to",
+			)
+		}
+	}
+	err := echo.NewHTTPError(proposedStatus, internal.Error())
+	err.Internal = internal
+	return err
 }

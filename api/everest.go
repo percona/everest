@@ -215,6 +215,7 @@ func (e *EverestServer) rbacMiddleware(ctx context.Context, basePath string) (ec
 		Skipper:        rbacManager.Skipper(basePath),
 		UserGetter:     rbacutils.GetUser,
 		EnforceHandler: rbacManager.Handler(ctx, basePath),
+		ErrorHandler:   rbacutils.ErrorHandler,
 	}), nil
 }
 
