@@ -93,7 +93,9 @@ func getModel() (model.Model, error) {
 }
 
 // NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
-func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+func newConfigMapEnforcer(ctx context.Context,
+	kubeClient *kubernetes.Kubernetes,
+	l *zap.SugaredLogger) (*casbin.Enforcer, error) {
 	model, err := getModel()
 	if err != nil {
 		return nil, err
@@ -116,7 +118,7 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 }
 
 // NewEnforcerFromFilePath creates a new Casbin enforcer with the policy stored at the given filePath.
-func NewEnforcerFromFilePath(filePath string) (*casbin.Enforcer, error) {
+func newFilePathEnforcer(filePath string) (*casbin.Enforcer, error) {
 	model, err := getModel()
 	if err != nil {
 		return nil, err

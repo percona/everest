@@ -110,7 +110,7 @@ func newKubeOrFileEnforcer(
 		}
 	}()
 	if filePath != "" {
-		return NewEnforcerFromFilePath(filePath)
+		return newFilePathEnforcer(filePath)
 	}
-	return NewEnforcer(ctx, kubeClient, zap.NewNop().Sugar())
+	return newConfigMapEnforcer(ctx, kubeClient, zap.NewNop().Sugar())
 }
