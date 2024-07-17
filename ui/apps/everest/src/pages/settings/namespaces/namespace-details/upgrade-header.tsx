@@ -6,13 +6,19 @@ const UpgradeHeader = ({
   upgradeAvailable,
   pendingUpgradeTasks,
   onUpgrade,
+  ...boxProps
 }: UpgradeHeaderProps) => {
   if (!upgradeAvailable) {
     return null;
   }
 
   return (
-    <Box display="flex" justifyContent="space-between" alignItems="center">
+    <Box
+      display="flex"
+      justifyContent="space-between"
+      alignItems="center"
+      {...boxProps}
+    >
       <Typography variant="body1">
         A new version of the operators is available.
         {pendingUpgradeTasks

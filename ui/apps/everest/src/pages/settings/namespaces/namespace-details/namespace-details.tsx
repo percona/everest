@@ -82,7 +82,7 @@ const NamespaceDetails = () => {
         onUpgrade={() => setModalOpen(true)}
         upgradeAvailable={!!operatorsUpgradePlan?.upgrades.length}
         pendingUpgradeTasks={!!operatorsUpgradePlan?.pendingActions.length}
-        mt={2}
+        mt={3}
       />
       <ClusterStatusTable
         namespace={namespaceName}
