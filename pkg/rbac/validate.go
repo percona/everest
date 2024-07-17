@@ -43,13 +43,13 @@ func validatePolicy(enforcer *casbin.Enforcer) error {
 func ValidatePolicy(
 	ctx context.Context,
 	k *kubernetes.Kubernetes,
-	filepath string) error {
+	filepath string,
+) error {
 	enforcer, err := newKubeOrFileEnforcer(ctx, k, filepath)
 	if err != nil {
 		return errors.Join(errPolicySyntax, err)
 	}
 	return validatePolicy(enforcer)
-
 }
 
 func checkResourceNames(policies [][]string) error {
