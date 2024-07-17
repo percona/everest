@@ -24,6 +24,12 @@ export const DbClusterDetails = () => {
   const navigate = useNavigate();
   const currentTab = routeMatch?.params?.tabs;
 
+  const { canUpdate, canDelete } = useGetPermissions({
+    resource: 'database-clusters',
+    specificResource: dbCluster?.metadata.name,
+    namespace: dbCluster?.metadata.namespace,
+  });
+
   if (isLoading) {
     return (
       <>
@@ -41,12 +47,6 @@ export const DbClusterDetails = () => {
   if (!dbCluster) {
     return <NoMatch />;
   }
-
-  const { canUpdate, canDelete } = useGetPermissions({
-    resource: 'database-clusters',
-    specificResource: dbCluster?.metadata.name,
-    namespace: dbCluster?.metadata.namespace,
-  });
 
   // All clear, show the cluster data
   return (
