@@ -26,7 +26,7 @@ const UpgradeModal = ({
       </Typography>
       <ul>
         {operatorsUpgradeTasks.map((task) => (
-          <li>
+          <li key={task.name}>
             {task.name} v{task.currentVersion} will be upgraded to v
             {task.targetVersion}
           </li>

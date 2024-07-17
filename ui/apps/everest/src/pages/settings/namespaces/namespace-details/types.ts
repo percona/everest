@@ -1,4 +1,5 @@
 import { BoxProps } from '@mui/material';
+import { UseOperatorsUpgradePlanType } from 'hooks/api/db-engines';
 import {
   DbEngine,
   OperatorUpgradePendingAction,
@@ -23,4 +24,8 @@ export type UpgradeModalProps = {
   onConfirm: () => void;
   namespace: string;
   operatorsUpgradeTasks: OperatorUpgradeTask[];
+};
+
+export type OperatorVersionsHeaderProps = {
+  operatorsUpgradePlan: UseOperatorsUpgradePlanType;
 };

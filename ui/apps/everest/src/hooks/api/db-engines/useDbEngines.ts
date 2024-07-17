@@ -128,7 +128,7 @@ export const useOperatorUpgrade = (
     ...options,
   });
 
-type UseOperatorsUpgradePlanType = OperatorsUpgradePlan & {
+export type UseOperatorsUpgradePlanType = OperatorsUpgradePlan & {
   upToDate: Array<{
     name: string;
     currentVersion: string;

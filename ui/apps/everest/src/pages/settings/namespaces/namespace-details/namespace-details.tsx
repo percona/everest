@@ -12,7 +12,7 @@ import { NoMatch } from 'pages/404/NoMatch';
 import UpgradeHeader from './upgrade-header';
 import ClusterStatusTable from './cluster-status-table';
 import UpgradeModal from './upgrade-modal';
-import { Stack, Typography } from '@mui/material';
+import OperatorVersionsHeader from './operator-versions-header';
 
 const NamespaceDetails = () => {
   const queryClient = useQueryClient();
@@ -35,6 +35,11 @@ const NamespaceDetails = () => {
   );
   const { data: operatorsUpgradePlan, isLoading: loadingOperatorsUpgradePlan } =
     useOperatorsUpgradePlan(namespaceName, {
+      initialData: {
+        upgrades: [],
+        pendingActions: [],
+        upToDate: [],
+      },
       enabled: !!namespace,
     });
 
@@ -68,20 +73,9 @@ const NamespaceDetails = () => {
         text={namespaceName}
         onBackClick={() => navigate('/settings/namespaces')}
         rightSlot={
-          <Stack direction="row">
-            {operatorsUpgradePlan?.upgrades.map((upgrade) => (
-              <Typography
-                key={upgrade.name}
-                variant="body2"
-              >{`${upgrade.name} v${upgrade.currentVersion} (Upgrade available)`}</Typography>
-            ))}
-            {operatorsUpgradePlan?.upToDate.map((operator) => (
-              <Typography
-                key={operator.name}
-                variant="body2"
-              >{`${operator} v${operator.currentVersion}`}</Typography>
-            ))}
-          </Stack>
+          <OperatorVersionsHeader
+            operatorsUpgradePlan={operatorsUpgradePlan!}
+          />
         }
       />
       <UpgradeHeader
