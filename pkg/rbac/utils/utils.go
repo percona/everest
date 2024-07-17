@@ -77,7 +77,7 @@ func GetUser(c echo.Context) (string, error) {
 }
 
 func ErrorHandler(c echo.Context, internal error, proposedStatus int) error {
-	if proposedStatus == http.StatusUnauthorized {
+	if proposedStatus == http.StatusForbidden {
 		internal = errors.New("unauthorized access")
 		if strings.Contains(c.Request().URL.Path, "backup-storages") ||
 			strings.Contains(c.Request().URL.Path, "monitoring-instances") {

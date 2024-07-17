@@ -44,9 +44,9 @@ var methodToAction = map[string]string{
 }
 
 type Manager struct {
-	enforcer        *casbin.Enforcer
-	globalResources globalResourceGetter
-	logger          *zap.SugaredLogger
+	enforcer *casbin.Enforcer
+	k8s      globalResourceGetter
+	logger   *zap.SugaredLogger
 
 	resourcePathMap map[string]string
 	skipPaths       []string
@@ -70,6 +70,7 @@ func New(ctx context.Context, o *Options) (m *Manager, err error) {
 	}()
 
 	var enforcer *casbin.Enforcer
+	var resourceGetter globalResourceGetter
 	if o.Filepath != "" {
 		e, err := newFilePathEnforcer(o.Filepath)
 		if err != nil {
@@ -82,6 +83,11 @@ func New(ctx context.Context, o *Options) (m *Manager, err error) {
 			return nil, errors.Join(err, errors.New("cannot create enforcer from kubernetes"))
 		}
 		enforcer = e
+		c, err := newCache(ctx, o.Logger, o.Kubernetes.Config())
+		if err != nil {
+			return nil, errors.Join(err, errors.New("cannot create cache for global resources"))
+		}
+		resourceGetter = c
 	} else {
 		return nil, errors.New("no enforcer source provided")
 	}
@@ -89,6 +95,7 @@ func New(ctx context.Context, o *Options) (m *Manager, err error) {
 	return &Manager{
 		enforcer: enforcer,
 		logger:   o.Logger,
+		k8s:      resourceGetter,
 	}, nil
 }
 
@@ -156,21 +163,31 @@ func (m *Manager) Can(
 	ctx context.Context,
 	subject, action, resource, object string,
 ) (bool, error) {
-	if resource == backupStoragesResourceName && object != "" {
-		return m.enforceBackupStorage(ctx, subject, action, object)
-	}
+	if m.k8s != nil {
+		if resource == backupStoragesResourceName && object != "" {
+			return m.enforceBackupStorage(ctx, subject, action, object)
+		}
 
-	if resource == monitoringInstancesResourceName && object != "" {
-		return m.enforceMonitoringConfig(ctx, subject, action, object)
+		if resource == monitoringInstancesResourceName && object != "" {
+			return m.enforceMonitoringConfig(ctx, subject, action, object)
+		}
 	}
 	return m.enforcer.Enforce(subject, resource, action, object)
+}
+
+// IsNamespaceAllowed returns true if the subject is allowed to read the namespace.
+func (m *Manager) IsNamespaceAllowed(
+	ctx context.Context,
+	subject, namespace string,
+) (bool, error) {
+	return m.enforcer.Enforce(subject, "namespaces", "read", namespace)
 }
 
 func (m *Manager) enforceBackupStorage(
 	ctx context.Context,
 	user, action, bsName string,
 ) (bool, error) {
-	bs, err := m.globalResources.GetBackupStorage(ctx, bsName, common.SystemNamespace)
+	bs, err := m.k8s.GetBackupStorage(ctx, common.SystemNamespace, bsName)
 	if err != nil {
 		return false, err
 	}
@@ -182,14 +199,14 @@ func (m *Manager) enforceBackupStorage(
 			return false, nil
 		}
 	}
-	return false, nil
+	return true, nil
 }
 
 func (m *Manager) enforceMonitoringConfig(
 	ctx context.Context,
 	user, action, mcName string,
 ) (bool, error) {
-	mc, err := m.globalResources.GetMonitoringConfig(ctx, mcName, common.SystemNamespace)
+	mc, err := m.k8s.GetMonitoringConfig(ctx, common.SystemNamespace, mcName)
 	if err != nil {
 		return false, err
 	}
@@ -201,7 +218,7 @@ func (m *Manager) enforceMonitoringConfig(
 			return false, nil
 		}
 	}
-	return false, nil
+	return true, nil
 }
 
 func getModel() (model.Model, error) {

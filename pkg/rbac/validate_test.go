@@ -297,3 +297,54 @@ func TestCan(t *testing.T) {
 		})
 	}
 }
+
+func TestIsNamespaceAllowed(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	m, err := New(ctx, &Options{
+		Filepath: "./testdata/policy-test-namespace.csv",
+		Logger:   zap.NewNop().Sugar(),
+	})
+	require.NoError(t, err)
+
+	testcases := []struct {
+		namespace string
+		user      string
+		allowed   bool
+	}{
+		{
+			namespace: "namespace-1",
+			user:      "alice",
+			allowed:   true,
+		},
+		{
+			namespace: "namespace-2",
+			user:      "alice",
+			allowed:   true,
+		},
+		{
+			namespace: "namespace-3",
+			user:      "alice",
+			allowed:   false,
+		},
+		{
+			namespace: "namespace-3",
+			user:      "bob",
+			allowed:   true,
+		},
+	}
+
+	for i, tc := range testcases {
+		t.Run(fmt.Sprintf("test-%d", i), func(t *testing.T) {
+			t.Parallel()
+			allowed, err := m.IsNamespaceAllowed(ctx, tc.user, tc.namespace)
+			if err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+			if allowed != tc.allowed {
+				t.Fatalf("expected %v, got %v", tc.allowed, allowed)
+			}
+		})
+	}
+}
