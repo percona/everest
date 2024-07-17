@@ -16,5 +16,6 @@ func NewRBACCmd(l *zap.SugaredLogger) *cobra.Command {
 		Short: "Manage RBAC settings",
 	}
 	cmd.AddCommand(rbac.NewValidateCommand(l))
+	cmd.AddCommand(rbac.NewCanCommand(l))
 	return cmd
 }

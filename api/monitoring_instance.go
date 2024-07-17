@@ -160,7 +160,7 @@ func (e *EverestServer) ListMonitoringInstances(ctx echo.Context) error {
 			Type: MonitoringInstanceBaseWithNameType(mc.Spec.Type),
 			Name: mc.Name,
 			Url:  mc.Spec.PMM.URL,
-			//nolint:gosec,exportloopref
+			//nolint:exportloopref
 			AllowedNamespaces: &mc.Spec.AllowedNamespaces,
 			VerifyTLS:         mc.Spec.VerifyTLS,
 		})

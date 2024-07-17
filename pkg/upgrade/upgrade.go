@@ -23,6 +23,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"slices"
 	"time"
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
@@ -42,6 +43,12 @@ import (
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
+const (
+	contextTimeout    = 5 * time.Minute
+	backoffInterval   = 5 * time.Second
+	backoffMaxRetries = 5
+)
+
 // list of objects to skip during upgrade.
 var skipObjects = []client.Object{ //nolint:gochecknoglobals
 	&corev1.Secret{
@@ -59,6 +66,15 @@ var skipObjects = []client.Object{ //nolint:gochecknoglobals
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      common.EverestAccountsSecretName,
+			Namespace: common.SystemNamespace,
+		},
+	},
+	&corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestRBACConfigMapName,
 			Namespace: common.SystemNamespace,
 		},
 	},
@@ -175,7 +191,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	})
 
 	// Locate the correct install plan.
-	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	ctxTimeout, cancel := context.WithTimeout(ctx, contextTimeout)
 	defer cancel()
 
 	var ip *olmv1alpha1.InstallPlan
@@ -204,6 +220,13 @@ func (u *Upgrade) Run(ctx context.Context) error {
 				if err := u.ensureEverestJWTIfNotExists(ctx); err != nil {
 					return err
 				}
+			}
+			// RBAC is added in 1.1.x, so if we're upgrading to that version, we need to ensure
+			// that the RBAC configmap is present.
+			if common.CheckConstraint(upgradeEverestTo, "~> 1.1.0") {
+				_ = slices.DeleteFunc(skipObjects, func(o client.Object) bool {
+					return o.GetName() == common.EverestRBACConfigMapName
+				})
 			}
 			// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
 			if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo, skipObjects...); err != nil {
@@ -271,8 +294,8 @@ func (u *Upgrade) ensureManagedByLabelOnDBNamespaces(ctx context.Context) error 
 		// Ensure we add the managed-by label to the namespace.
 		// We should retry this operation since there may be update conflicts.
 		var b backoff.BackOff
-		b = backoff.NewConstantBackOff(5 * time.Second)
-		b = backoff.WithMaxRetries(b, 5)
+		b = backoff.NewConstantBackOff(backoffInterval)
+		b = backoff.WithMaxRetries(b, backoffMaxRetries)
 		b = backoff.WithContext(b, ctx)
 		if err := backoff.Retry(func() error {
 			// Get the namespace.
