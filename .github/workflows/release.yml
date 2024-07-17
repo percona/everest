@@ -2,14 +2,6 @@
 name: Release
 on:
   workflow_dispatch:
-    inputs:
-      releaseType:
-        description: "Type of release"
-        required: true
-        type: choice
-        options:
-          - patch
-          - minor
       version:
         description: "The RC/Release version, format: X.Y.Z-rcN for RC, X.Y.Z for releases"
         required: true
@@ -26,7 +18,6 @@ jobs:
     env:
       TOOLS_PATH: "/opt/tools/bin"
       VERSION: ${{ github.event.inputs.version }}
-      RELEASE_TYPE: ${{ github.event.inputs.releaseType }}
       # version in format "X.Y" which is going to be updated with each patch release
       FLOATING_TAG: ''
       # branch name in format "release-X.Y"
@@ -134,7 +125,7 @@ jobs:
 
       - name: Operator - setup Docker meta for everest-operator
         id: operator_meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         # docker/metadata-action action looks more elegant when being triggered by a GH tag,
         # however this workflow can't be triggered by a GH tag since there are some changes need to be done
         # in the codebase prior putting the tag, so the action uses the raw tags
@@ -149,7 +140,7 @@ jobs:
 
       - name: Operator - setup Docker meta for everest-operator-bundle
         id: bundle_meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
             percona/everest-operator-bundle,enable=${{ env.IS_RC == 0 }}
@@ -159,13 +150,13 @@ jobs:
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Operator - build everest-operator image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-operator
           push: false
@@ -186,14 +177,14 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Operator - push everest-operator image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-operator
           push: true
           tags: ${{ steps.operator_meta.outputs.tags }}
 
       - name: Operator - build everest-operator-bundle image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-operator
           push: false
@@ -215,7 +206,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Operator - push everest-operator-bundle image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-operator
           push: true
@@ -250,62 +241,30 @@ jobs:
 
       - name: Catalog - update veneer file
         run: |
-          cd everest-catalog
+          cd everest-catalog/tools
 
           # configure userdata for commits
           git config --global user.email "everest-ci@percona.com"
           git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
-
-          CURRENT_STABLE_VERSION=$(yq 'select(.name == "stable-v0").entries[-1].name' veneer/everest-operator.yaml | sed 's/^everest-operator.v//')
-          CURRENT_FAST_VERSION=$(yq 'select(.name == "fast-v0").entries[-1].name' veneer/everest-operator.yaml | sed 's/^everest-operator.v//')
-
-          if [[ -z "$CURRENT_STABLE_VERSION" ]]; then
-            echo "CURRENT_STABLE_VERSION is required"
-            exit 1
-          fi
-
-          if [[ -z "$CURRENT_FAST_VERSION" ]]; then
-            echo "CURRENT_FAST_VERSION is required"
-            exit 1
-          fi
-
-          echo "CURRENT_STABLE_VERSION=$CURRENT_STABLE_VERSION"
-          echo "CURRENT_FAST_VERSION=$CURRENT_FAST_VERSION"
-
-          cp veneer/everest-operator.yaml veneer/everest-operator-original.yaml
           
-          if [[ $env.IS_RC ]]; then
-            go run ./tools/ \
-              --veneer-file veneer/everest-operator-original.yaml \
-              --version-type ${{ env.RELEASE_TYPE }} \
-              --channel fast-v0 \
-              --new-version ${{ env.VERSION }} \
-              --current-version "$CURRENT_FAST_VERSION" \
-              \
-              >| veneer/everest-operator.yaml
+          if [[ $IS_RC == 1 ]]; then
+            go run . \
+              --veneer-file ../veneer/everest-operator.yaml \
+              --channel fast-v0  \
+              --new-version ${{ env.VERSION }} 
           else
-            go run ./tools/ \
-              --veneer-file veneer/everest-operator-original.yaml \
-              --version-type ${{ env.RELEASE_TYPE }} \
+            go run . \
+              --veneer-file ../veneer/everest-operator.yaml \
               --channel stable-v0 \
-              --new-version ${{ env.VERSION }} \
-              --current-version "$CURRENT_STABLE_VERSION" \
-              \
-              >| veneer/everest-operator.yaml
-
-            go run ./tools/ \
-              --veneer-file veneer/everest-operator-original.yaml \
-              --version-type ${{ env.RELEASE_TYPE }} \
+              --new-version ${{ env.VERSION }} 
+                      
+            go run . \
+              --veneer-file ../veneer/everest-operator.yaml \
               --channel fast-v0 \
-              --new-version ${{ env.VERSION }} \
-              --current-version "$CURRENT_FAST_VERSION" \
-              \
-              >| veneer/everest-operator.yaml
+              --new-version ${{ env.VERSION }} 
           fi
-
-          rm -f veneer/everest-operator-original.yaml
           
-          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/latest/download/${OS}-${ARCH}-opm
+          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.44.0/${OS}-${ARCH}-opm
           chmod +x /tmp/opm
           /tmp/opm alpha render-template basic -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
           
@@ -323,7 +282,7 @@ jobs:
 
       - name: Catalog - docker meta
         id: catalog_meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
             percona/everest-catalog,enable=${{ env.IS_RC == 0 }}
@@ -334,7 +293,7 @@ jobs:
 
 
       - name: Catalog - build image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-catalog
           push: false
@@ -357,7 +316,7 @@ jobs:
 #          severity: 'CRITICAL,HIGH'
 
       - name: Catalog - push image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-catalog
           push: true
@@ -387,12 +346,17 @@ jobs:
           git checkout $BRANCH_NAME
           
           # Update deploy manifest 
-          if [[ $env.IS_RC ]]; then 
+          if [[ $IS_RC == 1 ]]; then 
+            # if the build is being run over dev/RC build, there will be the "perconalab" org mentioned in the quickstart file, 
+            # so we should replace only the version
             sed -i "s/perconalab\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-            sed -i "s/percona\/percona-everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
+            
+            # if the build is being run over a Release build, there will be the "percona" org mentioned in the quickstart file, 
+            # so we should replace both the org and the version
+            sed -i "s/percona\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
           else
-            sed -i "s/perconalab\/everest.*/percona\/percona-everest:$VERSION/g" deploy/quickstart-k8s.yaml
-            sed -i "s/percona\/percona-everest.*/percona\/percona-everest:$VERSION/g" deploy/quickstart-k8s.yaml
+            sed -i "s/perconalab\/everest.*/percona\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
+            sed -i "s/percona\/everest.*/percona\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
           fi 
           
           # Update the operator go module to reference the version tag
@@ -440,14 +404,18 @@ jobs:
 
       - name: Everest - build binary
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make release
+          if [[ $env.IS_RC ]]; then 
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
+          else
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make release
+          fi
 
       - name: Everest - setup docker build metadata
         uses: docker/metadata-action@v5
         id: everest_meta
         with:
           images: |
-            percona/percona-everest,enable=${{ env.IS_RC == 0 }}
+            percona/everest,enable=${{ env.IS_RC == 0 }}
             perconalab/everest
           tags: |
             type=raw,value=${{ env.VERSION }}
@@ -455,7 +423,7 @@ jobs:
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
 
       - name: Everest - build Everest image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: false
@@ -478,7 +446,7 @@ jobs:
 #          severity: 'CRITICAL,HIGH'
 
       - name: Everest - push Everest image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
@@ -489,12 +457,9 @@ jobs:
           make release-cli
 
       - name: CLI - create release with binaries
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           draft: true
           files: |
             dist/*
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-
 

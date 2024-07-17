@@ -103,7 +103,10 @@ func (e *EverestServer) ensureNoBackupsRunningForCluster(ctx context.Context, db
 		return false, errors.Join(err, errors.New("could not list Database Cluster Backups"))
 	}
 	return !slices.ContainsFunc(backupList.Items, func(b everestv1alpha1.DatabaseClusterBackup) bool {
-		return b.Status.State == everestv1alpha1.BackupRunning || b.Status.State == everestv1alpha1.BackupStarting
+		return (b.Status.State == everestv1alpha1.BackupRunning ||
+			b.Status.State == everestv1alpha1.BackupStarting ||
+			b.Status.State == everestv1alpha1.BackupNew) &&
+			b.DeletionTimestamp.IsZero()
 	}), nil
 }
 
