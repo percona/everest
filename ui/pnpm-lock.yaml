@@ -431,6 +431,9 @@ importers:
       storybook:
         specifier: ^8.1.10
         version: 8.1.10(react-dom@18.3.1)(react@18.3.1)
+      storybook-addon-pseudo-states:
+        specifier: ^3.1.1
+        version: 3.1.1
       tslib:
         specifier: ^2.6.2
         version: 2.6.3
@@ -10284,6 +10287,10 @@ packages:
 
   /store2@2.14.3:
     resolution: {integrity: sha512-4QcZ+yx7nzEFiV4BMLnr/pRa5HYzNITX2ri0Zh6sT9EyQHbBHacC6YigllUPU9X3D0f/22QCgfokpKs52YRrUg==}
+    dev: true
+
+  /storybook-addon-pseudo-states@3.1.1:
+    resolution: {integrity: sha512-08JNTfsiSfj0GgNV4q6+v6iU+Acp7ib/MdySPDb8p+C8N/e+kf6lnM7kIiE/GnTPXlg3dfV6FMaWgGYVfdTcLw==}
     dev: true
 
   /storybook@8.1.10(react-dom@18.3.1)(react@18.3.1):

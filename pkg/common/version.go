@@ -32,3 +32,24 @@ func CompareVersions[T1, T2 version](v1 T1, v2 T2) int {
 	}
 	return ver1.Core().Compare(ver2.Core())
 }
+
+// CheckConstraint returns true if the version `v` satisfies the constraint.
+//
+// v can be passed either as string or *goversion.Version,
+// otherwise this function will panic.
+func CheckConstraint[V version](v V, c string) bool {
+	var ver *goversion.Version
+
+	switch val := any(v).(type) {
+	case string:
+		ver = goversion.Must(goversion.NewVersion(val))
+	case *goversion.Version:
+		ver = val
+	}
+
+	constraint, err := goversion.NewConstraint(c)
+	if err != nil {
+		panic(err)
+	}
+	return constraint.Check(ver)
+}
