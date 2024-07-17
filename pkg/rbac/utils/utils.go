@@ -12,6 +12,7 @@ import (
 	"github.com/casbin/casbin/v2/persist"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
+
 	"github.com/percona/everest/pkg/session"
 )
 
@@ -76,6 +77,7 @@ func GetUser(c echo.Context) (string, error) {
 	return subject, nil
 }
 
+// ErrorHandler is the error handler for RBAC.
 func ErrorHandler(c echo.Context, internal error, proposedStatus int) error {
 	if proposedStatus == http.StatusForbidden {
 		internal = errors.New("unauthorized access")

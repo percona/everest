@@ -1,3 +1,4 @@
+// Package rbac ...
 package rbac
 
 import (
@@ -10,6 +11,10 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	everestclient "github.com/percona/everest/client"
 	"github.com/percona/everest/data"
@@ -18,14 +23,11 @@ import (
 	"github.com/percona/everest/pkg/kubernetes/informer"
 	configmapadapter "github.com/percona/everest/pkg/rbac/configmap-adapter"
 	"github.com/percona/everest/pkg/rbac/fileadapter"
-	"go.uber.org/zap"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
-// globalResourceGetter is an interface for getting
-// global (non-namespaced) resources like monitoring-configs and backup-storages.
-type globalResourceGetter interface {
+// kubeAPI is an interface internal to this RBAC package
+// for getting resources from the Kubernetes API.
+type kubeAPI interface {
 	GetMonitoringConfig(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error)
 	GetBackupStorage(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error)
 }
@@ -35,6 +37,7 @@ const (
 	monitoringInstancesResourceName = "monitoring-instances"
 )
 
+//nolint:gochecknoglobals
 var methodToAction = map[string]string{
 	"GET":    "read",
 	"POST":   "create",
@@ -43,15 +46,14 @@ var methodToAction = map[string]string{
 	"DELETE": "delete",
 }
 
+// Manager manages RBAC.
 type Manager struct {
 	enforcer *casbin.Enforcer
-	k8s      globalResourceGetter
+	kube     kubeAPI
 	logger   *zap.SugaredLogger
-
-	resourcePathMap map[string]string
-	skipPaths       []string
 }
 
+// Options for configuring RBAC manager.
 type Options struct {
 	Kubernetes *kubernetes.Kubernetes
 	Filepath   string
@@ -59,6 +61,8 @@ type Options struct {
 }
 
 // New creates a new manager for RBAC.
+//
+//nolint:nonamedreturns
 func New(ctx context.Context, o *Options) (m *Manager, err error) {
 	// The Casbin library lacks proper error handling,
 	// so we need to recover from panics.
@@ -70,14 +74,13 @@ func New(ctx context.Context, o *Options) (m *Manager, err error) {
 	}()
 
 	var enforcer *casbin.Enforcer
-	var resourceGetter globalResourceGetter
-	if o.Filepath != "" {
-		e, err := newFilePathEnforcer(o.Filepath)
-		if err != nil {
-			return nil, errors.Join(err, errors.New("cannot create enforcer from file"))
-		}
-		enforcer = e
-	} else if o.Kubernetes != nil {
+	var k8s kubeAPI
+
+	if o.Filepath == "" && o.Kubernetes == nil {
+		return nil, errors.New("no enforcer source provided")
+	}
+
+	if o.Kubernetes != nil {
 		e, err := newConfigMapEnforcer(ctx, o.Kubernetes, o.Logger)
 		if err != nil {
 			return nil, errors.Join(err, errors.New("cannot create enforcer from kubernetes"))
@@ -87,15 +90,21 @@ func New(ctx context.Context, o *Options) (m *Manager, err error) {
 		if err != nil {
 			return nil, errors.Join(err, errors.New("cannot create cache for global resources"))
 		}
-		resourceGetter = c
-	} else {
-		return nil, errors.New("no enforcer source provided")
+		k8s = c
+	}
+
+	if o.Filepath != "" {
+		e, err := newFilePathEnforcer(o.Filepath)
+		if err != nil {
+			return nil, errors.Join(err, errors.New("cannot create enforcer from file"))
+		}
+		enforcer = e
 	}
 
 	return &Manager{
 		enforcer: enforcer,
 		logger:   o.Logger,
-		k8s:      resourceGetter,
+		kube:     k8s,
 	}, nil
 }
 
@@ -149,6 +158,8 @@ func (m *Manager) Handler(ctx context.Context, basePath string) func(c echo.Cont
 	}
 }
 
+// Skipper returns a function that is used by the RBAC middleware
+// to determine when an API path should be skipped from RBAC.
 func (m *Manager) Skipper(basePath string) func(echo.Context) bool {
 	_, skipPaths, err := buildPathResourceMap(basePath)
 	if err != nil {
@@ -175,7 +186,7 @@ func (m *Manager) Can(
 	ctx context.Context,
 	subject, action, resource, object string,
 ) (bool, error) {
-	if m.k8s != nil {
+	if m.kube != nil {
 		if resource == backupStoragesResourceName && object != "" {
 			return m.enforceBackupStorage(ctx, subject, action, object)
 		}
@@ -187,19 +198,11 @@ func (m *Manager) Can(
 	return m.enforcer.Enforce(subject, resource, action, object)
 }
 
-// IsNamespaceAllowed returns true if the subject is allowed to read the namespace.
-func (m *Manager) IsNamespaceAllowed(
-	ctx context.Context,
-	subject, namespace string,
-) (bool, error) {
-	return m.enforcer.Enforce(subject, "namespaces", "read", namespace)
-}
-
 func (m *Manager) enforceBackupStorage(
 	ctx context.Context,
 	user, action, bsName string,
 ) (bool, error) {
-	bs, err := m.k8s.GetBackupStorage(ctx, common.SystemNamespace, bsName)
+	bs, err := m.kube.GetBackupStorage(ctx, common.SystemNamespace, bsName)
 	if err != nil {
 		return false, err
 	}
@@ -218,7 +221,7 @@ func (m *Manager) enforceMonitoringConfig(
 	ctx context.Context,
 	user, action, mcName string,
 ) (bool, error) {
-	mc, err := m.k8s.GetMonitoringConfig(ctx, common.SystemNamespace, mcName)
+	mc, err := m.kube.GetMonitoringConfig(ctx, common.SystemNamespace, mcName)
 	if err != nil {
 		return false, err
 	}
@@ -244,7 +247,8 @@ func getModel() (model.Model, error) {
 // NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
 func newConfigMapEnforcer(ctx context.Context,
 	kubeClient *kubernetes.Kubernetes,
-	l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+	l *zap.SugaredLogger,
+) (*casbin.Enforcer, error) {
 	model, err := getModel()
 	if err != nil {
 		return nil, err

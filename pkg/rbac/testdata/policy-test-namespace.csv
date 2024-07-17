@@ -1,8 +1,0 @@
-p, viewer:role, namespaces, read, namespace-1
-p, viewer:role, namespaces, read, namespace-2
-
-p, adminviewer:role, namespaces, read, *
-
-g, alice, viewer:role
-g, bob, adminviewer:role
-

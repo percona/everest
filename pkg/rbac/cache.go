@@ -1,3 +1,4 @@
+// Package rbac ...
 package rbac
 
 import (
@@ -5,14 +6,19 @@ import (
 	"errors"
 	"sync"
 
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	"github.com/percona/everest/pkg/kubernetes/informer"
 	"go.uber.org/zap"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
+
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/kubernetes/informer"
 )
 
+// objectCache is used by the RBAC manager to cache
+// Kubernetes resources.
+// We use this cache to avoid having to query the Kube API server
+// on each request (which would otherwise incur a performance penalty).
 type objectCache struct {
 	monitoringInstances map[string]*everestv1alpha1.MonitoringConfig
 	backupStorages      map[string]*everestv1alpha1.BackupStorage
@@ -21,7 +27,7 @@ type objectCache struct {
 	mutex    sync.RWMutex
 }
 
-var _ globalResourceGetter = (*objectCache)(nil)
+var _ kubeAPI = (*objectCache)(nil)
 
 func (c *objectCache) onAdd(obj interface{}) {
 	c.mutex.Lock()
@@ -37,11 +43,10 @@ func (c *objectCache) onAdd(obj interface{}) {
 		c.backupStorages[bs.GetName()] = bs
 		return
 	}
-	return
 }
 
-func (c *objectCache) onUpdate(_, new interface{}) {
-	c.onAdd(new)
+func (c *objectCache) onUpdate(_, updated interface{}) {
+	c.onAdd(updated)
 }
 
 func (c *objectCache) onDelete(obj interface{}) {
@@ -58,7 +63,6 @@ func (c *objectCache) onDelete(obj interface{}) {
 		delete(c.backupStorages, bs.GetName())
 		return
 	}
-	return
 }
 
 func newCache(ctx context.Context, l *zap.SugaredLogger, cfg *rest.Config) (*objectCache, error) {
@@ -95,7 +99,7 @@ func newCache(ctx context.Context, l *zap.SugaredLogger, cfg *rest.Config) (*obj
 }
 
 // GetMonitoringConfig gets the monitoring config.
-func (c *objectCache) GetMonitoringConfig(ctx context.Context, _, name string) (*everestv1alpha1.MonitoringConfig, error) {
+func (c *objectCache) GetMonitoringConfig(_ context.Context, _, name string) (*everestv1alpha1.MonitoringConfig, error) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
@@ -107,7 +111,7 @@ func (c *objectCache) GetMonitoringConfig(ctx context.Context, _, name string) (
 }
 
 // GetBackupStorage gets the backup storage.
-func (c *objectCache) GetBackupStorage(ctx context.Context, _, name string) (*everestv1alpha1.BackupStorage, error) {
+func (c *objectCache) GetBackupStorage(_ context.Context, _, name string) (*everestv1alpha1.BackupStorage, error) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
