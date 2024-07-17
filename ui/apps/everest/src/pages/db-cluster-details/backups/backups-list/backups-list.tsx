@@ -84,6 +84,10 @@ export const BackupsList = () => {
         header: 'Name',
       },
       {
+        accessorKey: 'backupStorageName',
+        header: 'Storage',
+      },
+      {
         accessorKey: 'created',
         header: 'Started',
         enableColumnFilter: false,

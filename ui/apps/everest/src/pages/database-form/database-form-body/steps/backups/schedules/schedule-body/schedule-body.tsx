@@ -28,20 +28,23 @@ const ScheduleContent = ({
   return (
     <Stack
       direction="row"
+      alignItems="center"
       sx={{
         width: '100%',
       }}
     >
-      <Typography
+      <Stack
         sx={{
           width: '50%',
         }}
-        variant="body1"
       >
-        {getTimeSelectionPreviewMessage(
-          getFormValuesFromCronExpression(schedule.schedule)
-        )}
-      </Typography>
+        <Typography variant="body1">{schedule.name}</Typography>
+        <Typography variant="body2">
+          {getTimeSelectionPreviewMessage(
+            getFormValuesFromCronExpression(schedule.schedule)
+          )}
+        </Typography>
+      </Stack>
       <Typography
         sx={{
           width: '50%',
