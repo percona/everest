@@ -206,19 +206,21 @@ export const DbClusterView = () => {
               }),
             },
           })}
-          renderTopToolbarCustomActions={() => (
-            <Button
-              size="small"
-              startIcon={<AddIcon />}
-              component={Link}
-              to="/databases/new"
-              variant="contained"
-              data-testid="add-db-cluster-button"
-              sx={{ display: canCreate ? 'flex' : 'none' }}
-            >
-              {Messages.createDatabase}
-            </Button>
-          )}
+          renderTopToolbarCustomActions={() =>
+            canCreate && (
+              <Button
+                size="small"
+                startIcon={<AddIcon />}
+                component={Link}
+                to="/databases/new"
+                variant="contained"
+                data-testid="add-db-cluster-button"
+                sx={{ display: 'flex' }}
+              >
+                {Messages.createDatabase}
+              </Button>
+            )
+          }
           hideExpandAllIcon
         />
       </Box>

@@ -87,45 +87,47 @@ const BackupListTableHeader = ({
             {Messages.activeSchedules(schedulesNumber)}
           </Button>
         )}
-        <MenuButton
-          buttonProps={{
-            disabled: restoring,
-            sx: { display: canCreate ? 'flex' : 'none' },
-          }}
-          buttonText="Create backup"
-        >
-          {(handleClose) => [
-            <MenuItem
-              key="now"
-              data-testid="now-menu-item"
-              onClick={() => handleNowClick(handleClose)}
-            >
-              {Messages.now}
-            </MenuItem>,
-            <Box key="schedule">
-              {disableScheduleBackups ? (
-                <Tooltip
-                  title={Messages.exceededScheduleBackupsNumber}
-                  placement="right"
-                  arrow
-                >
-                  <div>
-                    <MenuItem data-testid="schedule-menu-item" disabled>
-                      {Messages.schedule}
-                    </MenuItem>
-                  </div>
-                </Tooltip>
-              ) : (
-                <MenuItem
-                  onClick={() => handleScheduleClick(handleClose)}
-                  data-testid="schedule-menu-item"
-                >
-                  {Messages.schedule}
-                </MenuItem>
-              )}
-            </Box>,
-          ]}
-        </MenuButton>
+        {canCreate && (
+          <MenuButton
+            buttonProps={{
+              disabled: restoring,
+              sx: { display: 'flex' },
+            }}
+            buttonText="Create backup"
+          >
+            {(handleClose) => [
+              <MenuItem
+                key="now"
+                data-testid="now-menu-item"
+                onClick={() => handleNowClick(handleClose)}
+              >
+                {Messages.now}
+              </MenuItem>,
+              <Box key="schedule">
+                {disableScheduleBackups ? (
+                  <Tooltip
+                    title={Messages.exceededScheduleBackupsNumber}
+                    placement="right"
+                    arrow
+                  >
+                    <div>
+                      <MenuItem data-testid="schedule-menu-item" disabled>
+                        {Messages.schedule}
+                      </MenuItem>
+                    </div>
+                  </Tooltip>
+                ) : (
+                  <MenuItem
+                    onClick={() => handleScheduleClick(handleClose)}
+                    data-testid="schedule-menu-item"
+                  >
+                    {Messages.schedule}
+                  </MenuItem>
+                )}
+              </Box>,
+            ]}
+          </MenuButton>
+        )}
       </Box>
       {schedulesNumber > 0 && showSchedules && <ScheduledBackupsList />}
     </>

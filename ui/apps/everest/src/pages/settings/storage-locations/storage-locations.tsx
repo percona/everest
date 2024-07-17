@@ -172,18 +172,20 @@ export const StorageLocations = () => {
         }}
         columns={columns}
         data={backupStorages}
-        renderTopToolbarCustomActions={() => (
-          <Button
-            size="small"
-            startIcon={<Add />}
-            data-testid="add-backup-storage"
-            variant="outlined"
-            onClick={handleOpenCreateModal}
-            sx={{ display: canCreate ? 'flex' : 'none' }}
-          >
-            {Messages.addStorageLocationButton}
-          </Button>
-        )}
+        renderTopToolbarCustomActions={() =>
+          canCreate && (
+            <Button
+              size="small"
+              startIcon={<Add />}
+              data-testid="add-backup-storage"
+              variant="outlined"
+              onClick={handleOpenCreateModal}
+              sx={{ display: 'flex' }}
+            >
+              {Messages.addStorageLocationButton}
+            </Button>
+          )
+        }
         enableRowActions
         renderRowActions={({ row }) => {
           const menuItems = StorageLocationsActionButtons(

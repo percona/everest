@@ -169,18 +169,20 @@ export const MonitoringEndpoints = () => {
         }}
         enableRowActions
         noDataMessage="No monitoring endpoint added"
-        renderTopToolbarCustomActions={() => (
-          <Button
-            size="small"
-            startIcon={<Add />}
-            data-testid="add-monitoring-endpoint"
-            variant="outlined"
-            onClick={handleOpenCreateModal}
-            sx={{ display: canCreate ? 'flex' : 'none' }}
-          >
-            {Messages.add}
-          </Button>
-        )}
+        renderTopToolbarCustomActions={() =>
+          canCreate && (
+            <Button
+              size="small"
+              startIcon={<Add />}
+              data-testid="add-monitoring-endpoint"
+              variant="outlined"
+              onClick={handleOpenCreateModal}
+              sx={{ display: 'flex' }}
+            >
+              {Messages.add}
+            </Button>
+          )
+        }
         renderRowActions={({ row }) => {
           const menuItems = MonitoringActionButtons(
             row,
