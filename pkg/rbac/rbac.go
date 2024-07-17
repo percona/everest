@@ -184,6 +184,8 @@ func buildPathResourceMap(basePath string) (map[string]string, []string, error) 
 	return resourceMap, skipPaths, nil
 }
 
+// isBackupStorageAllowed returns false if the backupstorage is used in a namespace
+// that the user does not have access to.
 func isBackupStorageAllowed(
 	ctx context.Context,
 	getter globalResourceGetter,
@@ -194,10 +196,28 @@ func isBackupStorageAllowed(
 		return false, err
 	}
 	// Is it used in a namespace that the user does not have access to?
-	for ns, used := range bs.Status.UsedNamespaces {
-		if !used {
-			continue
+	for _, ns := range bs.Spec.AllowedNamespaces {
+		if allowed, err := IsNamespaceAllowedForUser(enforcer, user, ns); err != nil {
+			return false, err
+		} else if !allowed {
+			return false, nil
 		}
+	}
+	return true, nil
+}
+
+func isMonitoringConfigAllowed(
+	ctx context.Context,
+	getter globalResourceGetter,
+	enforcer *casbin.Enforcer,
+	user, mcName string,
+) (bool, error) {
+	mc, err := getter.GetMonitoringConfig(ctx, common.SystemNamespace, mcName)
+	if err != nil {
+		return false, err
+	}
+	// Is it used in a namespace that the user does not have access to?
+	for _, ns := range mc.Spec.AllowedNamespaces {
 		if allowed, err := IsNamespaceAllowedForUser(enforcer, user, ns); err != nil {
 			return false, err
 		} else if !allowed {
@@ -233,11 +253,21 @@ func NewEnforceHandler(ctx context.Context, cfg *rest.Config, basePath string, e
 		}
 		switch resource {
 		// These resources are not namespaced.
-		case "namespaces",
-			"backup-storages",
-			"monitoring-instances":
+		case "namespaces":
 			name := c.Param("name")
 			object = name
+		case "backup-storages":
+			bsName := c.Param("name")
+			object = bsName
+			if bsName != "" {
+				return isBackupStorageAllowed(ctx, cache, enforcer, user, bsName)
+			}
+		case "monitoring-instances":
+			mcName := c.Param("name")
+			object = mcName
+			if mcName != "" {
+				return isMonitoringConfigAllowed(ctx, cache, enforcer, user, mcName)
+			}
 		default:
 			namespace := c.Param("namespace")
 			name := c.Param("name")
