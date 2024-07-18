@@ -169,12 +169,15 @@ func NewInstall(c Config, l *zap.SugaredLogger, cmd *cobra.Command) (*Install, e
 		cmd:    cmd,
 		l:      l.With("component", "install"),
 	}
+	if c.Pretty {
+		cli.l = zap.NewNop().Sugar()
+	}
 
 	k, err := kubernetes.New(c.KubeconfigPath, cli.l)
 	if err != nil {
 		var u *url.Error
 		if errors.As(err, &u) {
-			cli.l.Error("Could not connect to Kubernetes. " +
+			l.Error("Could not connect to Kubernetes. " +
 				"Make sure Kubernetes is running and is accessible from this computer/server.")
 		}
 		return nil, err
