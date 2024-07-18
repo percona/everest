@@ -15,7 +15,7 @@
 
 import { Messages } from '../../cluster-overview.messages';
 import OverviewSection from '../../overview-section';
-import { ConnectionDetailsOverviewCardProps1 } from '../card.types';
+import { ConnectionDetailsOverviewCardProps } from '../card.types';
 import OverviewSectionRow from '../../overview-section-row';
 import { Box } from '@mui/material';
 import { CopyToClipboardButton } from '@percona/ui-lib';
@@ -28,7 +28,7 @@ export const ConnectionDetails = ({
   username,
   password,
   port,
-}: ConnectionDetailsOverviewCardProps1) => {
+}: ConnectionDetailsOverviewCardProps) => {
   return (
     <OverviewSection
       title={Messages.titles.connectionDetails}
