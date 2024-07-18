@@ -25,8 +25,8 @@ import (
 	"github.com/percona/everest/pkg/rbac/fileadapter"
 )
 
-// kubeAPI is an interface internal to this RBAC package
-// for getting resources from the Kubernetes API.
+// kubeAPI is an internal interface for this package,
+// which is used by the RBAC manager to interact with the Kubernetes API.
 type kubeAPI interface {
 	GetMonitoringConfig(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error)
 	GetBackupStorage(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error)
@@ -73,39 +73,39 @@ func New(ctx context.Context, o *Options) (m *Manager, err error) {
 		}
 	}()
 
-	var enforcer *casbin.Enforcer
-	var k8s kubeAPI
-
 	if o.Filepath == "" && o.Kubernetes == nil {
 		return nil, errors.New("no enforcer source provided")
 	}
 
+	if o.Filepath != "" && o.Kubernetes != nil {
+		return nil, errors.New("cannot use both file and kubernetes as enforcer sources")
+	}
+
+	manager := &Manager{
+		logger: o.Logger,
+	}
+
 	if o.Kubernetes != nil {
-		e, err := newConfigMapEnforcer(ctx, o.Kubernetes, o.Logger)
+		enforcer, err := newConfigMapEnforcer(ctx, o.Kubernetes, o.Logger)
 		if err != nil {
 			return nil, errors.Join(err, errors.New("cannot create enforcer from kubernetes"))
 		}
-		enforcer = e
-		c, err := newCache(ctx, o.Logger, o.Kubernetes.Config())
+		cache, err := newCache(ctx, o.Logger, o.Kubernetes.Config())
 		if err != nil {
 			return nil, errors.Join(err, errors.New("cannot create cache for global resources"))
 		}
-		k8s = c
+		manager.kube = cache
+		manager.enforcer = enforcer
 	}
 
 	if o.Filepath != "" {
-		e, err := newFilePathEnforcer(o.Filepath)
+		enforcer, err := newFilePathEnforcer(o.Filepath)
 		if err != nil {
 			return nil, errors.Join(err, errors.New("cannot create enforcer from file"))
 		}
-		enforcer = e
+		manager.enforcer = enforcer
 	}
-
-	return &Manager{
-		enforcer: enforcer,
-		logger:   o.Logger,
-		kube:     k8s,
-	}, nil
+	return manager, nil
 }
 
 // Handler returns a function that can be used as a middleware for echo.
