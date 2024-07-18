@@ -65,7 +65,7 @@ test.describe('Everest CLI install', async () => {
       );
 
       await out.assertSuccess();
-      await out.outErrContainsNormalizedMany([
+      await out.outContainsNormalizedMany([
         '✓ Install Operator Lifecycle Manager',
         '✓ Install Percona OLM Catalog',
         '✓ Create namespace \'everest-monitoring\'',
