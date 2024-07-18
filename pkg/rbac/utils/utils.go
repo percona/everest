@@ -36,6 +36,9 @@ func LoadPolicyLine(line string, m model.Model) error {
 	if len(tokens) < numFieldsPolicyLine {
 		return fmt.Errorf("invalid policy line '%s'", line)
 	}
+	if tokens[0] != "p" && tokens[0] != "g" {
+		return fmt.Errorf("invalid policy line '%s'", line)
+	}
 
 	return persist.LoadPolicyArray(tokens, m)
 }
