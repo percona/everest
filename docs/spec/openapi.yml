@@ -859,7 +859,7 @@ paths:
         before and after upgrading a database operator.
 
         Added in v1.1.0, it is recommended to use this API for operator upgrades.
-        The older upgrade APIs are deprecated and removed in 1.2.0
+        The older upgrade APIs are deprecated and will be removed in v1.2.0
       operationId: getUpgradePlan
       parameters:
         - name: namespace
