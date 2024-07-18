@@ -79,7 +79,7 @@ export const ExpandedRow = ({
                 {host}
               </Box>
               <CopyToClipboardButton
-                buttonProps={{color: "primary"}}
+                buttonProps={{ color: 'primary' }}
                 textToCopy={host}
               />
             </Box>

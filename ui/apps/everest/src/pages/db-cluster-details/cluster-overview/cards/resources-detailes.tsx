@@ -27,7 +27,7 @@ export const ResourcesDetails = ({
   disk,
   loading,
 }: ResourcesDetailsOverviewProps) => {
-    //TODO 1230 move text to messages
+  //TODO 1230 move text to messages
   return (
     <OverviewCard
       dataTestId="resources"

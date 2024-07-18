@@ -42,7 +42,7 @@ export const ConnectionDetails = ({
             <CopyToClipboardButton
               buttonProps={{
                 color: 'primary',
-                size: "xs",
+                size: 'xs',
               }}
               inline={true}
               textToCopy={host}

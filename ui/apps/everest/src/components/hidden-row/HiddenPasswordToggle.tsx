@@ -50,7 +50,10 @@ export const HiddenPasswordToggle = ({
       }}
       data-testid="hidden-row"
     >
-      <Typography variant="body2" sx={{ wordBreak: 'break-all', pt: show ? 0 : 0.5, pr: 1.5}}>
+      <Typography
+        variant="body2"
+        sx={{ wordBreak: 'break-all', pt: show ? 0 : 0.5, pr: 1.5 }}
+      >
         {formattedValue}
       </Typography>
       <IconButton
@@ -59,16 +62,18 @@ export const HiddenPasswordToggle = ({
         aria-label={`visibility-${show ? 'off' : 'on'}`}
         sx={{ mt: -0.25 }}
       >
-        { //TODO 1230 discussion with Nuna about common usage of this part
+        {
+          //TODO 1230 discussion with Nuna about common usage of this part
           show ? (
-          <VisibilityOutlinedIcon color="primary" />
-        ) : (
-          <VisibilityOffOutlinedIcon color="primary" />
-        )}
+            <VisibilityOutlinedIcon color="primary" />
+          ) : (
+            <VisibilityOffOutlinedIcon color="primary" />
+          )
+        }
       </IconButton>
       {showCopy && (
         <CopyToClipboardButton
-          buttonProps={{ sx: {mt: -0.25},  color: 'primary' }}
+          buttonProps={{ sx: { mt: -0.25 }, color: 'primary' }}
           textToCopy={value}
         />
       )}

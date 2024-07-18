@@ -527,7 +527,8 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
               height: '16px',
             },
           }),
-        }]
+        },
+      ],
     },
     MuiButtonGroup: {
       styleOverrides: {
