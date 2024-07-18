@@ -135,12 +135,12 @@ func (e *EverestServer) ApproveUpgradePlan(c echo.Context, namespace string) err
 
 	// start upgrade process.
 	if err := e.startOperatorUpgradeWithRetry(ctx, "", namespace, ""); err != nil {
+		e.l.Errorf("Failed to upgrade operators: %w", err)
 		// Upgrade has failed, so we release the lock.
 		if err := e.setLockDBEnginesForUpgrade(ctx, namespace, up, false); err != nil {
 			e.l.Errorf("Cannot unlock engines: %w", err)
 			return errors.Join(err, errors.New("failed to release lock"))
 		}
-		e.l.Errorf("Failed to upgrade operators: %w", err)
 		return err
 	}
 	return nil
