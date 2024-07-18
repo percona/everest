@@ -73,7 +73,7 @@ test.describe('Everest CLI install', async () => {
         '✓ Provision monitoring stack',
         '✓ Create namespace \'everest-all\'',
         '✓ Install operators [pxc, psmdb, pg] in namespace \'everest-all\'',
-        '✓ Configure RBAC in namespace \'everest\'',
+        '✓ Configure RBAC in namespace \'everest-all\'',
         '✓ Install Everest Operator',
         '✓ Install Everest API server',
       ]);
