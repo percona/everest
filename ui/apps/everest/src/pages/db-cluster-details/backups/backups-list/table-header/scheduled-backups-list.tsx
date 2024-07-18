@@ -29,7 +29,7 @@ const ScheduleActionButtons = (
 ) => {
   const { canUpdate } = useGetPermissions({
     resource: 'database-clusters',
-    specificResource: scheduleName,
+    specificResource: dbCluster.metadata.name,
     namespace: dbCluster.metadata.namespace,
   });
 
