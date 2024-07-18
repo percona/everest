@@ -116,7 +116,7 @@ func (e *EverestServer) ApproveUpgradePlan(c echo.Context, namespace string) err
 
 	// lock all engines that will be upgraded.
 	if err := e.setLockDBEnginesForUpgrade(ctx, namespace, up, true); err != nil {
-		e.l.Errorf("Cannot unlock engines: %w", err)
+		e.l.Errorf("Cannot lock engines: %w", err)
 		return errors.Join(err, errors.New("failed to lock engines"))
 	}
 
