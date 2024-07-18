@@ -12,6 +12,7 @@ import (
 	"github.com/casbin/casbin/v2/persist"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/percona/everest/pkg/session"
 )
@@ -87,6 +88,9 @@ func ErrorHandler(c echo.Context, internal error, proposedStatus int) error {
 				"unauthorized: object is used in a namespace that the user does not have access to",
 			)
 		}
+	}
+	if k8serrors.IsNotFound(internal) {
+		proposedStatus = http.StatusNotFound
 	}
 	err := echo.NewHTTPError(proposedStatus, internal.Error())
 	err.Internal = internal
