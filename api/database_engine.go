@@ -75,6 +75,7 @@ func (e *EverestServer) GetUpgradePlan(
 	ctx := c.Request().Context()
 	result, err := e.getUpgradePlan(ctx, namespace)
 	if err != nil {
+		e.l.Errorf("Cannot get upgrade plan: %w", err)
 		return err
 	}
 
@@ -88,6 +89,7 @@ func (e *EverestServer) GetUpgradePlan(
 		for _, engine := range engines.Items {
 			check, err := e.checkDatabases(ctx, &engine)
 			if err != nil {
+				e.l.Errorf("Failed to check databases: %w", err)
 				return err
 			}
 			for _, c := range check {
@@ -103,31 +105,29 @@ func (e *EverestServer) GetUpgradePlan(
 }
 
 // ApproveUpgradePlan starts the upgrade of operators in the provided namespace.
-func (e *EverestServer) ApproveUpgradePlan(c echo.Context, namespace string) (err error) {
+func (e *EverestServer) ApproveUpgradePlan(c echo.Context, namespace string) error {
 	ctx := c.Request().Context()
 
 	up, err := e.getUpgradePlan(ctx, namespace)
 	if err != nil {
+		e.l.Errorf("Cannot get upgrade plan: %w", err)
 		return err
 	}
 
 	// lock all engines that will be upgraded.
 	if err := e.setLockDBEnginesForUpgrade(ctx, namespace, up, true); err != nil {
+		e.l.Errorf("Cannot unlock engines: %w", err)
 		return errors.Join(err, errors.New("failed to lock engines"))
 	}
-	// unlock if we return with error.
-	defer func() {
-		if err != nil {
-			if lockErr := e.setLockDBEnginesForUpgrade(ctx, namespace, up, false); lockErr != nil {
-				err = errors.Join(err, errors.New("failed to unlock engines"))
-			}
-		}
-	}()
 
 	// Check if we're ready to upgrade?
 	if slices.ContainsFunc(pointer.Get(up.PendingActions), func(task UpgradeTask) bool {
 		return pointer.Get(task.PendingTask) != Ready
 	}) {
+		// Not ready for upgrade, release the lock and return a failured message.
+		if err := e.setLockDBEnginesForUpgrade(ctx, namespace, up, false); err != nil {
+			return errors.Join(err, errors.New("failed to release lock"))
+		}
 		return c.JSON(http.StatusPreconditionFailed, Error{
 			Message: pointer.ToString("One or more database clusters are not ready for upgrade"),
 		})
@@ -135,6 +135,12 @@ func (e *EverestServer) ApproveUpgradePlan(c echo.Context, namespace string) (er
 
 	// start upgrade process.
 	if err := e.startOperatorUpgradeWithRetry(ctx, "", namespace, ""); err != nil {
+		// Upgrade has failed, so we release the lock.
+		if err := e.setLockDBEnginesForUpgrade(ctx, namespace, up, false); err != nil {
+			e.l.Errorf("Cannot unlock engines: %w", err)
+			return errors.Join(err, errors.New("failed to release lock"))
+		}
+		e.l.Errorf("Failed to upgrade operators: %w", err)
 		return err
 	}
 	return nil
