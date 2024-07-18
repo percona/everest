@@ -857,6 +857,9 @@ paths:
 
         Additionally, it also returns a list of pending action items that need to be performed 
         before and after upgrading a database operator.
+
+        Added in v1.1.0, it is recommended to use this API for operator upgrades.
+        The older upgrade APIs are deprecated and removed in 1.2.0
       operationId: getUpgradePlan
       parameters:
         - name: namespace
@@ -892,6 +895,9 @@ paths:
       summary: Upgrade database engine operators
       description: |
         This API upgrades all database engine operators in the specified namespace.
+
+        Added in v1.1.0, it is recommended to use this API for operator upgrades.
+        The older upgrade APIs are deprecated and removed in 1.2.0
       operationId: approveUpgradePlan
       parameters:
         - name: namespace
