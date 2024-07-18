@@ -47,23 +47,28 @@ export const HiddenPasswordToggle = ({
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'flex-start',
-        minHeight: '45px',
       }}
       data-testid="hidden-row"
     >
-      <Typography variant="body2" sx={{ wordBreak: 'break-all', pt: 0.5 }}>
+      <Typography variant="body2" sx={{ wordBreak: 'break-all', pt: show ? 0 : 0.5, pr: 1.5}}>
         {formattedValue}
       </Typography>
       <IconButton
         onClick={toggle}
+        size="xs"
         aria-label={`visibility-${show ? 'off' : 'on'}`}
-        sx={{ mt: -1 }}
+        sx={{ mt: -0.25 }}
       >
-        {show ? <VisibilityOutlinedIcon /> : <VisibilityOffOutlinedIcon />}
+        { //TODO 1230 discussion with Nuna about common usage of this part
+          show ? (
+          <VisibilityOutlinedIcon color="primary" />
+        ) : (
+          <VisibilityOffOutlinedIcon color="primary" />
+        )}
       </IconButton>
       {showCopy && (
         <CopyToClipboardButton
-          buttonProps={{ sx: { mt: -1 } }}
+          buttonProps={{ sx: {mt: -0.25},  color: 'primary' }}
           textToCopy={value}
         />
       )}

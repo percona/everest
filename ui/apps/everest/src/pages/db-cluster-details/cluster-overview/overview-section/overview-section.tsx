@@ -13,12 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Grid, Stack, Typography, Divider } from '@mui/material';
+import { Grid, Stack, Typography, Divider, Box } from '@mui/material';
 import { LoadableChildren } from '@percona/ui-lib';
-import {
-  OverviewSectionProps,
-  OverviewSectionTextProps,
-} from './overview-section.types';
+import { OverviewSectionProps } from './overview-section.types';
 
 export const OverviewSection = ({
   title,
@@ -37,26 +34,12 @@ export const OverviewSection = ({
       <Typography color="text.primary" variant="sectionHeading">
         {title}
       </Typography>
-      <Divider />
-      <LoadableChildren loading={loading}>{children}</LoadableChildren>
+      <Divider sx={{ mt: 0.25 }} />
+      <LoadableChildren loading={loading}>
+        <Box sx={{ mt: 1 }}>{children}</Box>
+      </LoadableChildren>
     </Stack>
   </Grid>
 );
 
-export const OverviewSectionText = ({
-  children,
-  dataTestId,
-}: OverviewSectionTextProps) => (
-  <Typography
-    color="text.secondary"
-    variant="caption"
-    sx={{ wordBreak: 'break-word' }}
-    data-testid={
-      dataTestId
-        ? `${dataTestId}-overview-section-text`
-        : 'overview-section-text'
-    }
-  >
-    {children}
-  </Typography>
-);
+export default OverviewSection;

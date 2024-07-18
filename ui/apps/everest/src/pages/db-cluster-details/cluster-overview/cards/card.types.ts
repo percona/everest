@@ -14,25 +14,43 @@
 // limitations under the License.
 
 import { DbType } from '@percona/types';
-import { DbCluster, Backup } from 'shared-types/dbCluster.types';
+import { DbCluster } from 'shared-types/dbCluster.types';
 
 export type OverviewCardProps = {
   loading?: boolean;
 };
 
-export type DatabaseDetailsOverviewCardProps = {
+export type BasicInformationOverviewCardProps = {
+  type: DbType;
   name: string;
   namespace: string;
-  type: DbType;
   version: string;
-  numberOfNodes: number;
-  cpu: number | string;
-  memory: number | string;
-  disk: number | string;
-  externalAccess: boolean;
-  monitoring?: string;
-  backup?: Backup;
 } & OverviewCardProps;
+
+export type ConnectionDetailsOverviewCardProps1 = {
+  loadingClusterDetails: boolean;
+  // Since we do hostname.split, we must do proper checks
+  hostname?: string;
+  port: number;
+  username: string;
+  password: string;
+} & OverviewCardProps;
+
+export type AdvancedConfigurationOverviewCardProps = {
+  externalAccess: boolean;
+  parameters: boolean;
+};
+
+export type MonitoringConfigurationOverviewCardProps = {
+  monitoring?: string;
+};
+
+export type DatabaseDetailsOverviewCardProps =
+  BasicInformationOverviewCardProps &
+    ConnectionDetailsOverviewCardProps1 &
+    AdvancedConfigurationOverviewCardProps &
+    MonitoringConfigurationOverviewCardProps &
+    OverviewCardProps;
 
 export type ConnectionDetailsOverviewCardProps = {
   loadingClusterDetails: boolean;

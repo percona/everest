@@ -1,5 +1,8 @@
-export * from './card';
-export { default as Card } from './card';
+export * from './cards/card';
+export { default as Card } from './cards/card';
+
+export * from './cards/overview-card';
+export { default as OverviewCard } from './cards/overview-card';
 
 export * from './toggle-card';
 export { default as ToggleCard } from './toggle-card';

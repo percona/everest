@@ -18,7 +18,7 @@ import { dbEngineToDbType } from '@percona/utils';
 import { useDbClusterCredentials } from 'hooks/api/db-cluster/useCreateDbCluster';
 import { useParams } from 'react-router-dom';
 import { ProxyExposeType } from 'shared-types/dbCluster.types';
-import { ConnectionDetails, DatabaseDetails, ResourcesDetails } from './cards';
+import { DbDetails, ResourcesDetails } from './cards';
 import { useContext } from 'react';
 import { DbClusterContext } from '../dbCluster.context';
 
@@ -43,30 +43,31 @@ export const ClusterOverview = () => {
       }}
     >
       {/* We force ! because while loading no info is shown */}
-      <DatabaseDetails
+      <DbDetails
         loading={loadingCluster}
         type={dbEngineToDbType(dbCluster?.spec.engine.type!)}
         name={dbCluster?.metadata.name!}
         namespace={dbCluster?.metadata.namespace!}
         version={dbCluster?.spec.engine.version!}
-        numberOfNodes={dbCluster?.spec.engine.replicas!}
-        cpu={dbCluster?.spec.engine.resources?.cpu!}
-        memory={dbCluster?.spec.engine.resources?.memory!}
-        disk={dbCluster?.spec.engine.storage.size!}
-        backup={dbCluster?.spec?.backup}
-        externalAccess={
-          dbCluster?.spec.proxy.expose.type === ProxyExposeType.external
-        }
-        monitoring={dbCluster?.spec.monitoring.monitoringConfigName}
-      />
-      <ConnectionDetails
-        loading={loadingCluster}
         loadingClusterDetails={fetchingClusterDetails}
         hostname={dbCluster?.status?.hostname!}
         port={dbCluster?.status?.port!}
         username={dbClusterDetails?.username!}
         password={dbClusterDetails?.password!}
+        externalAccess={
+          dbCluster?.spec.proxy.expose.type === ProxyExposeType.external
+        }
+        monitoring={dbCluster?.spec.monitoring.monitoringConfigName}
+        parameters={true} //TODO 1230
       />
+      {/*<ConnectionDetails*/}
+      {/*  loading={loadingCluster}*/}
+      {/*  loadingClusterDetails={fetchingClusterDetails}*/}
+      {/*  hostname={dbCluster?.status?.hostname!}*/}
+      {/*  port={dbCluster?.status?.port!}*/}
+      {/*  username={dbClusterDetails?.username!}*/}
+      {/*  password={dbClusterDetails?.password!}*/}
+      {/*/>*/}
       <ResourcesDetails
         numberOfNodes={dbCluster?.spec.engine.replicas!}
         cpu={dbCluster?.spec.engine.resources?.cpu!}

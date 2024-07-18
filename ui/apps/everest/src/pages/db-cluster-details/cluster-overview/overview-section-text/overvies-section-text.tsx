@@ -13,12 +13,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CardContentProps, CardHeaderProps } from '@mui/material';
-import { ReactNode } from 'react';
+import { Typography } from '@mui/material';
+import { OverviewSectionTextProps } from './overview-section-text.types';
 
-export type OverviewCardProps = {
-  cardHeaderProps?: CardHeaderProps;
-  cardContentProps?: CardContentProps;
-  dataTestId: string;
-  content: ReactNode;
-};
+//TODO 1230 check where we use this one
+export const OverviewSectionText = ({
+  children,
+  dataTestId,
+}: OverviewSectionTextProps) => (
+  <Typography
+    color="text.secondary"
+    variant="caption"
+    sx={{ wordBreak: 'break-word' }}
+    data-testid={
+      dataTestId
+        ? `${dataTestId}-overview-section-text`
+        : 'overview-section-text'
+    }
+  >
+    {children}
+  </Typography>
+);
+
+export default OverviewSectionText;

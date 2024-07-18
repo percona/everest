@@ -13,38 +13,42 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DatabaseIcon } from '@percona/ui-lib';
-import { OverviewSection } from '../overview-section/overview-section';
+import { DatabaseIcon, OverviewCard } from '@percona/ui-lib';
+import OverviewSection from '../overview-section';
 import { ResourcesDetailsOverviewProps } from './card.types';
-import { OverviewCard } from '../overview-card/overview-card';
-import { Box, Typography } from '@mui/material';
+import { Button } from '@mui/material';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import OverviewSectionRow from '../overview-section-row';
 
 export const ResourcesDetails = ({
   numberOfNodes,
   cpu,
-  // memory,
-  // disk,
+  memory,
+  disk,
   loading,
 }: ResourcesDetailsOverviewProps) => {
+    //TODO 1230 move text to messages
   return (
     <OverviewCard
-      dataTestId="resources-details"
+      dataTestId="resources"
       cardHeaderProps={{
         title: 'Resources',
         avatar: <DatabaseIcon />,
+        action: (
+          <Button size="small" startIcon={<EditOutlinedIcon />}>
+            Edit
+          </Button>
+        ),
       }}
-      content={
-        <OverviewSection
-          title={`${numberOfNodes} node${+numberOfNodes > 1 ? 's' : ''}`}
-          loading={loading}
-        >
-          <Box>
-            <Typography variant="overline">CPU</Typography>
-            <Typography variant="caption">{cpu}</Typography>
-          </Box>
-          {/*waiting the typography from Nuna*/}
-        </OverviewSection>
-      }
-    />
+    >
+      <OverviewSection
+        title={`${numberOfNodes} node${+numberOfNodes > 1 ? 's' : ''}`}
+        loading={loading}
+      >
+        <OverviewSectionRow label="CPU" contentString={`${cpu}`} />
+        <OverviewSectionRow label="Disk" contentString={`${disk}`} />
+        <OverviewSectionRow label="Memory" contentString={`${memory}`} />
+      </OverviewSection>
+    </OverviewCard>
   );
 };
