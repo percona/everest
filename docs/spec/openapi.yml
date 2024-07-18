@@ -897,7 +897,8 @@ paths:
         This API upgrades all database engine operators in the specified namespace.
 
         Added in v1.1.0, it is recommended to use this API for operator upgrades.
-        The older upgrade APIs are deprecated and removed in 1.2.0
+        The older upgrade APIs are deprecated and will be removed in v1.2.0
+
       operationId: approveUpgradePlan
       parameters:
         - name: namespace
