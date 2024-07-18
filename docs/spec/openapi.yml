@@ -942,7 +942,7 @@ paths:
         Additionally, if the specified database engine operator was newly upgraded to the specified version, it also returns
         a list of pending action items that need to be performed before the operator can be considered fully upgraded.
 
-        *This API is deprecated and will be removed from v1.2.0*
+        *This API is deprecated and will be removed in v1.2.0*
       operationId: getOperatorVersion
       parameters:
         - name: namespace
