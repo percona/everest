@@ -985,7 +985,7 @@ paths:
         This API upgrades the database engine operator specified by the `name` and `namespace`.
         Before performing the upgrade, the preflight checks must be performed.
 
-        *This API is deprecated and will be removed from v1.2.0*
+        *This API is deprecated and will be removed in v1.2.0*
       operationId: upgradeDatabaseEngineOperator
       parameters:
         - name: namespace
