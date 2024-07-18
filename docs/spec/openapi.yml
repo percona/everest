@@ -806,7 +806,7 @@ paths:
       description: |
         This API gets the results of the preflight checks that must be performed before upgrading a database engine operator.
 
-        *This API is deprecated and will be removed from v1.2.0*
+        *This API is deprecated and will be removed in v1.2.0*
       operationId: getOperatorUpgradePreflight
       parameters:
         - name: namespace
