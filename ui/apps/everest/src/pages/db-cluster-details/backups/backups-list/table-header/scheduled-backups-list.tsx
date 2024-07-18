@@ -27,8 +27,8 @@ const ScheduleActionButtons = (
   handleEdit: (scheduleName: string) => void,
   handleDelete: (scheduleName: string) => void
 ) => {
-  const { canUpdate, canDelete } = useGetPermissions({
-    resource: 'database-cluster-backups',
+  const { canUpdate } = useGetPermissions({
+    resource: 'database-clusters',
     specificResource: scheduleName,
     namespace: dbCluster.metadata.namespace,
   });
@@ -47,7 +47,7 @@ const ScheduleActionButtons = (
           <EditOutlinedIcon />
         </IconButton>
       )}
-      {canDelete && (
+      {canUpdate && (
         <Tooltip
           title={
             dbType === DbEngineType.POSTGRESQL ? Messages.pgDeleteTooltip : ''
