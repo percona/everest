@@ -15,34 +15,32 @@
 
 import { Messages } from '../../cluster-overview.messages';
 import OverviewSection from '../../overview-section';
-import {AdvancedConfigurationOverviewCardProps} from '../card.types';
+import { AdvancedConfigurationOverviewCardProps } from '../card.types';
 import OverviewSectionRow from '../../overview-section-row';
-
 
 //TODO 1230
 export const AdvancedConfiguration = ({
   loading,
-    externalAccess,
-    parameters
+  externalAccess,
+  parameters,
 }: AdvancedConfigurationOverviewCardProps) => {
   return (
-    <OverviewSection title={Messages.titles.advancedConfiguration} loading={loading}>
+    <OverviewSection
+      title={Messages.titles.advancedConfiguration}
+      loading={loading}
+    >
       <OverviewSectionRow
         label={Messages.fields.externalAccess}
         contentString={
-            externalAccess
-                ? Messages.fields.enabled
-                : Messages.fields.disabled
+          externalAccess ? Messages.fields.enabled : Messages.fields.disabled
         }
       />
-        <OverviewSectionRow
-            label={Messages.fields.parameters}
-            contentString={
-                parameters
-                    ? Messages.fields.enabled
-                    : Messages.fields.disabled
-            }
-        />
+      <OverviewSectionRow
+        label={Messages.fields.parameters}
+        contentString={
+          parameters ? Messages.fields.enabled : Messages.fields.disabled
+        }
+      />
     </OverviewSection>
   );
 };

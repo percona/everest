@@ -20,7 +20,7 @@ import { DatabaseDetailsOverviewCardProps } from '../card.types';
 import { BasicInformationSection } from './basic';
 import { ConnectionDetails } from './connection-details';
 import { MonitoringDetails } from './monitoring';
-import { AdvancedConfiguration } from "./advanced-configuration";
+import { AdvancedConfiguration } from './advanced-configuration';
 
 // TODO 1230 add OtherColumns
 export const DbDetails = ({
@@ -35,8 +35,8 @@ export const DbDetails = ({
   password,
   hostname,
   monitoring,
-    externalAccess,
-    parameters,
+  externalAccess,
+  parameters,
 }: DatabaseDetailsOverviewCardProps) => {
   return (
     <OverviewCard
@@ -63,7 +63,10 @@ export const DbDetails = ({
           password={password}
         />
         <MonitoringDetails loading={loading} monitoring={monitoring} />
-        <AdvancedConfiguration externalAccess={externalAccess} parameters={parameters} />
+        <AdvancedConfiguration
+          externalAccess={externalAccess}
+          parameters={parameters}
+        />
         {/*<OverviewSection title={Messages.titles.monitoring} loading={loading}>*/}
         {/*  <OverviewSectionRow*/}
         {/*    label={Messages.fields.status}*/}
