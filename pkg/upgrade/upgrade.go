@@ -124,12 +124,15 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 		config: cfg,
 		l:      l.With("component", "upgrade"),
 	}
+	if cfg.Pretty {
+		cli.l = zap.NewNop().Sugar()
+	}
 
 	k, err := kubernetes.New(cfg.KubeconfigPath, cli.l)
 	if err != nil {
 		var u *url.Error
 		if errors.As(err, &u) {
-			cli.l.Error("Could not connect to Kubernetes. " +
+			l.Error("Could not connect to Kubernetes. " +
 				"Make sure Kubernetes is running and is accessible from this computer/server.")
 		}
 		return nil, err
