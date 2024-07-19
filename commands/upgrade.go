@@ -46,17 +46,14 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
+			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
+			c.Pretty = !enableLogging
+
 			op, err := upgrade.NewUpgrade(c, l)
 			if err != nil {
 				l.Error(err)
 				os.Exit(1)
 			}
-
-			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
-			if !enableLogging {
-				l = zap.NewNop().Sugar()
-			}
-			c.Pretty = !enableLogging
 
 			if err := op.Run(cmd.Context()); err != nil {
 				output.PrintError(err, l, !enableLogging)

@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -69,16 +70,24 @@ type Config struct {
 
 // NewUninstall returns a new Uninstall struct.
 func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
-	kubeClient, err := kubernetes.New(c.KubeconfigPath, l)
+	cli := &Uninstall{
+		config: c,
+		l:      l,
+	}
+	if c.Pretty {
+		cli.l = zap.NewNop().Sugar()
+	}
+	kubeClient, err := kubernetes.New(c.KubeconfigPath, cli.l)
 	if err != nil {
+		var u *url.Error
+		if errors.As(err, &u) {
+			l.Error("Could not connect to Kubernetes. " +
+				"Make sure Kubernetes is running and is accessible from this computer/server.")
+		}
 		return nil, err
 	}
 
-	cli := &Uninstall{
-		config:     c,
-		kubeClient: kubeClient,
-		l:          l,
-	}
+	cli.kubeClient = kubeClient
 	return cli, nil
 }
 
