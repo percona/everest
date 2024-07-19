@@ -41,6 +41,12 @@ const BackupListTableHeader = ({
     resource: 'database-cluster-backups',
   });
 
+  const { canUpdate: canUpdateDb } = useGetPermissions({
+    resource: 'database-clusters',
+    specificResource: dbCluster.metadata.name,
+    namespace: dbCluster.metadata.namespace,
+  });
+
   return (
     <>
       <Box
@@ -129,7 +135,9 @@ const BackupListTableHeader = ({
           </MenuButton>
         )}
       </Box>
-      {schedulesNumber > 0 && showSchedules && <ScheduledBackupsList />}
+      {schedulesNumber > 0 && showSchedules && (
+        <ScheduledBackupsList canUpdateDb={canUpdateDb} />
+      )}
     </>
   );
 };

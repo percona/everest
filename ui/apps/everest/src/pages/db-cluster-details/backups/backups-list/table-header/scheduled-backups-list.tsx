@@ -18,63 +18,7 @@ import { getTimeSelectionPreviewMessage } from 'pages/database-form/database-pre
 import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils';
 import { Messages } from './backups-list-table-header.messages';
 import { DbEngineType } from '@percona/types';
-import { useGetPermissions } from 'utils/useGetPermissions';
-import { DbCluster } from 'shared-types/dbCluster.types';
-
-const ScheduleActionButtons = (
-  scheduleName: string,
-  dbCluster: DbCluster,
-  handleEdit: (scheduleName: string) => void,
-  handleDelete: (scheduleName: string) => void
-) => {
-  const { canUpdate } = useGetPermissions({
-    resource: 'database-clusters',
-    specificResource: dbCluster.metadata.name,
-    namespace: dbCluster.metadata.namespace,
-  });
-
-  const dbType = dbCluster.spec?.engine.type;
-
-  return (
-    <Box display="flex">
-      {canUpdate && (
-        <IconButton
-          color="primary"
-          disabled={!dbCluster.spec.backup?.enabled}
-          onClick={() => handleEdit(scheduleName)}
-          data-testid="edit-schedule-button"
-        >
-          <EditOutlinedIcon />
-        </IconButton>
-      )}
-      {canUpdate && (
-        <Tooltip
-          title={
-            dbType === DbEngineType.POSTGRESQL ? Messages.pgDeleteTooltip : ''
-          }
-          placement="top"
-          arrow
-        >
-          <span>
-            <IconButton
-              color="primary"
-              disabled={
-                !dbCluster.spec.backup?.enabled ||
-                dbType === DbEngineType.POSTGRESQL
-              }
-              onClick={() => handleDelete(scheduleName)}
-              data-testid="delete-schedule-button"
-            >
-              <DeleteOutlineOutlinedIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-      )}
-    </Box>
-  );
-};
-
-const ScheduledBackupsList = () => {
+const ScheduledBackupsList = ({ canUpdateDb }: { canUpdateDb: boolean }) => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<string>('');
   const queryClient = useQueryClient();
@@ -170,12 +114,43 @@ const ScheduledBackupsList = () => {
                 {`Storage: ${item.backupStorageName}`}
               </Typography>
             </Box>
-            {ScheduleActionButtons(
-              item.name,
-              dbCluster,
-              handleEdit,
-              handleDelete
-            )}
+            <Box display="flex">
+              {canUpdateDb && (
+                <IconButton
+                  color="primary"
+                  disabled={!dbCluster.spec.backup?.enabled}
+                  onClick={() => handleEdit(item.name)}
+                  data-testid="edit-schedule-button"
+                >
+                  <EditOutlinedIcon />
+                </IconButton>
+              )}
+              {canUpdateDb && (
+                <Tooltip
+                  title={
+                    dbType === DbEngineType.POSTGRESQL
+                      ? Messages.pgDeleteTooltip
+                      : ''
+                  }
+                  placement="top"
+                  arrow
+                >
+                  <span>
+                    <IconButton
+                      color="primary"
+                      disabled={
+                        !dbCluster.spec.backup?.enabled ||
+                        dbType === DbEngineType.POSTGRESQL
+                      }
+                      onClick={() => handleDelete(item.name)}
+                      data-testid="delete-schedule-button"
+                    >
+                      <DeleteOutlineOutlinedIcon />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              )}
+            </Box>
           </Box>
         </Paper>
       ))}
