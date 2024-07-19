@@ -50,7 +50,12 @@ func TestValidatePolicy(t *testing.T) {
 	for i, tc := range testcases {
 		t.Run(fmt.Sprintf("test-%d", i), func(t *testing.T) {
 			t.Parallel()
-			err := ValidatePolicy(ctx, nil, tc.path)
+			m, err := New(ctx, &Options{
+				Filepath: tc.path,
+				Logger:   zap.NewNop().Sugar(),
+			})
+			require.NoError(t, err)
+			err = m.Validate()
 			if err != nil && tc.err == nil {
 				t.Fatalf("expected no error, got %v", err)
 			}

@@ -1,7 +1,6 @@
 package rbac
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"regexp"
@@ -9,9 +8,6 @@ import (
 	"strings"
 
 	"github.com/casbin/casbin/v2"
-	"go.uber.org/zap"
-
-	"github.com/percona/everest/pkg/kubernetes"
 )
 
 // ErrPolicySyntax is returned when a policy has a syntax error.
@@ -37,19 +33,6 @@ func validatePolicy(enforcer *casbin.Enforcer) error {
 		return errors.Join(errPolicySyntax, err)
 	}
 	return nil
-}
-
-// ValidatePolicy validates a policy from either Kubernetes or local file.
-func ValidatePolicy(
-	ctx context.Context,
-	k *kubernetes.Kubernetes,
-	filepath string,
-) error {
-	enforcer, err := newKubeOrFileEnforcer(ctx, k, filepath)
-	if err != nil {
-		return errors.Join(errPolicySyntax, err)
-	}
-	return validatePolicy(enforcer)
 }
 
 func checkResourceNames(policies [][]string) error {
@@ -95,22 +78,4 @@ func validateTerms(terms []string) error {
 		}
 	}
 	return nil
-}
-
-//nolint:nonamedreturns
-func newKubeOrFileEnforcer(
-	ctx context.Context,
-	kubeClient *kubernetes.Kubernetes,
-	filePath string,
-) (e *casbin.Enforcer, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("cannot create enforcer: %v", r)
-			e = nil
-		}
-	}()
-	if filePath != "" {
-		return newFilePathEnforcer(filePath)
-	}
-	return newConfigMapEnforcer(ctx, kubeClient, zap.NewNop().Sugar())
 }

@@ -62,8 +62,17 @@ func NewValidateCommand(l *zap.SugaredLogger) *cobra.Command {
 				}
 				k = client
 			}
+			rbacManager, err := rbac.New(cmd.Context(), &rbac.Options{
+				Kubernetes: k,
+				Filepath:   policyFilepath,
+				Logger:     l,
+			})
+			if err != nil {
+				l.Error(err)
+				os.Exit(1)
+			}
 
-			err := rbac.ValidatePolicy(cmd.Context(), k, policyFilepath)
+			err = rbacManager.Validate()
 			if err != nil {
 				fmt.Fprint(os.Stdout, output.Failure("Invalid"))
 				msg := err.Error()
