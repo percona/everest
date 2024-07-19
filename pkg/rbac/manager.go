@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"net/http"
 	"slices"
 	"strings"
 
@@ -37,13 +38,20 @@ const (
 	monitoringInstancesResourceName = "monitoring-instances"
 )
 
+const (
+	ActionRead   = "read"
+	ActionCreate = "create"
+	ActionUpdate = "update"
+	ActionDelete = "delete"
+)
+
 //nolint:gochecknoglobals
 var methodToAction = map[string]string{
-	"GET":    "read",
-	"POST":   "create",
-	"PUT":    "update",
-	"PATCH":  "update",
-	"DELETE": "delete",
+	http.MethodGet:    ActionRead,
+	http.MethodPost:   ActionCreate,
+	http.MethodPut:    ActionUpdate,
+	http.MethodPatch:  ActionUpdate,
+	http.MethodDelete: ActionDelete,
 }
 
 // Manager manages RBAC.
