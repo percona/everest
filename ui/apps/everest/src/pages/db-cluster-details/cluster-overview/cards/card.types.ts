@@ -27,7 +27,7 @@ export type BasicInformationOverviewCardProps = {
   version: string;
 } & OverviewCardProps;
 
-export type ConnectionDetailsOverviewCardProps1 = {
+export type ConnectionDetailsOverviewCardProps = {
   loadingClusterDetails: boolean;
   // Since we do hostname.split, we must do proper checks
   hostname?: string;
@@ -39,27 +39,18 @@ export type ConnectionDetailsOverviewCardProps1 = {
 export type AdvancedConfigurationOverviewCardProps = {
   externalAccess: boolean;
   parameters: boolean;
-};
+} & OverviewCardProps;
 
 export type MonitoringConfigurationOverviewCardProps = {
   monitoring?: string;
-};
+} & OverviewCardProps;
 
 export type DatabaseDetailsOverviewCardProps =
   BasicInformationOverviewCardProps &
-    ConnectionDetailsOverviewCardProps1 &
+    ConnectionDetailsOverviewCardProps &
     AdvancedConfigurationOverviewCardProps &
     MonitoringConfigurationOverviewCardProps &
     OverviewCardProps;
-
-export type ConnectionDetailsOverviewCardProps = {
-  loadingClusterDetails: boolean;
-  // Since we do hostname.split, we must do proper checks
-  hostname?: string;
-  port: number;
-  username: string;
-  password: string;
-} & OverviewCardProps;
 
 export type BackupsDetailsOverviewCardProps = {
   scheduledBackups?: boolean;

@@ -58,7 +58,7 @@ export const ClusterOverview = () => {
           dbCluster?.spec.proxy.expose.type === ProxyExposeType.external
         }
         monitoring={dbCluster?.spec.monitoring.monitoringConfigName}
-        parameters={true} //TODO 1230
+        parameters={!!dbCluster?.spec.engine.config} //TODO 1230
       />
       {/*<ConnectionDetails*/}
       {/*  loading={loadingCluster}*/}
