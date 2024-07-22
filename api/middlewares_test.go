@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -25,6 +26,7 @@ import (
 )
 
 func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
+	lockedAt := time.Now().Format(time.RFC3339)
 	t.Parallel()
 	testCases := []struct {
 		description string
@@ -126,7 +128,7 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 									Name:      "test-engine",
 									Namespace: "default",
 									Annotations: map[string]string{
-										everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation: everestv1alpha1.DatabaseOperatorUpgradeLockAnnotationValueTrue,
+										everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation: lockedAt,
 									},
 								},
 							},
