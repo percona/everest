@@ -27,7 +27,6 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/casbin/casbin/v2"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -48,12 +47,11 @@ import (
 
 // EverestServer represents the server struct.
 type EverestServer struct {
-	config       *config.EverestConfig
-	l            *zap.SugaredLogger
-	echo         *echo.Echo
-	kubeClient   *kubernetes.Kubernetes
-	sessionMgr   *session.Manager
-	rbacEnforcer *casbin.Enforcer
+	config     *config.EverestConfig
+	l          *zap.SugaredLogger
+	echo       *echo.Echo
+	kubeClient *kubernetes.Kubernetes
+	sessionMgr *session.Manager
 }
 
 // NewEverestServer creates and configures everest API.
@@ -88,8 +86,6 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 }
 
 // initHTTPServer configures http server for the current EverestServer instance.
-//
-//nolint:funlen
 func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	swagger, err := GetSwagger()
 	if err != nil {

@@ -23,7 +23,6 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"slices"
 	"time"
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
