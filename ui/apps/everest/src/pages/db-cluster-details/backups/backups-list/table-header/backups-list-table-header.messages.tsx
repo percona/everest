@@ -10,11 +10,6 @@ export const Messages = {
       </>
     ),
   },
-  maximumPgSchedules: 'Note: Maximum 3 schedules for PostgreSQL',
   activeSchedules: (schedulesNumber: number) =>
     `${schedulesNumber} active schedule${schedulesNumber > 1 ? 's' : ''}`,
-  exceededScheduleBackupsNumber:
-    'Maximum limit of schedules for PostgreSQL reached.',
-  pgDeleteTooltip:
-    'It cannot be deleted due to a limitation of the PG operator.',
 };
