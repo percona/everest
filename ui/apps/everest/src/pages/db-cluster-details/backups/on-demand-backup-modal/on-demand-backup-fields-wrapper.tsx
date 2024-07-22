@@ -1,7 +1,5 @@
 import { TextInput } from '@percona/ui-lib';
-import { AutoCompleteAutoFill } from 'components/auto-complete-auto-fill/auto-complete-auto-fill';
 import LogicalPhysicalRadioGroup from 'components/logical-physical-radio-group';
-import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
 import { useContext, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Messages } from '../../db-cluster-details.messages.ts';
@@ -9,6 +7,8 @@ import { BackupFields } from './on-demand-backup-modal.types.ts';
 import { DbEngineType } from '@percona/types';
 import { ScheduleModalContext } from '../backups.context.ts';
 import { Typography } from '@mui/material';
+import BackupStoragesInput from 'components/backup-storages-input';
+import { dbEngineToDbType } from '@percona/utils';
 
 export const OnDemandBackupFieldsWrapper = () => {
   const { dbCluster } = useContext(ScheduleModalContext);
@@ -17,11 +17,10 @@ export const OnDemandBackupFieldsWrapper = () => {
     status,
     spec: {
       engine: { type },
+      backup,
     },
   } = dbCluster;
   const { setValue, trigger } = useFormContext();
-  const { data: backupStorages = [], isFetching } =
-    useBackupStoragesByNamespace(namespace);
   const dbClusterActiveStorage = status?.activeStorage;
 
   useEffect(() => {
@@ -46,16 +45,16 @@ export const OnDemandBackupFieldsWrapper = () => {
         }}
         isRequired
       />
-      <AutoCompleteAutoFill
-        name={BackupFields.storageLocation}
-        textFieldProps={{
-          label: Messages.onDemandBackupModal.storageLocation,
+      <BackupStoragesInput
+        dbClusterName={dbCluster.metadata.name}
+        namespace={namespace}
+        dbType={dbEngineToDbType(type)}
+        schedules={backup?.schedules || []}
+        autoFillProps={{
+          enableFillFirst: true,
+          isRequired: true,
+          disabled: !!dbClusterActiveStorage,
         }}
-        loading={isFetching}
-        options={backupStorages}
-        enableFillFirst
-        isRequired
-        disabled={!!dbClusterActiveStorage}
       />
     </>
   );
