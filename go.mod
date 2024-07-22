@@ -29,7 +29,7 @@ require (
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
 	github.com/percona/everest-operator v0.6.0-dev1.0.20240618051212-6a5ade3468a9
 	github.com/rodaine/table v1.2.0
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
