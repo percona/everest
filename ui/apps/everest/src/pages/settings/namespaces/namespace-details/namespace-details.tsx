@@ -41,6 +41,7 @@ const NamespaceDetails = () => {
         upToDate: [],
       },
       enabled: !!namespace,
+      refetchInterval: 5 * 1000,
     });
 
   const { mutate: upgradeOperator } = useOperatorUpgrade(namespaceName);
@@ -81,7 +82,11 @@ const NamespaceDetails = () => {
       <UpgradeHeader
         onUpgrade={() => setModalOpen(true)}
         upgradeAvailable={!!operatorsUpgradePlan?.upgrades.length}
-        pendingUpgradeTasks={!!operatorsUpgradePlan?.pendingActions.length}
+        pendingUpgradeTasks={
+          !!operatorsUpgradePlan?.pendingActions.some(
+            (action) => action.pendingTask !== 'ready'
+          )
+        }
         mt={3}
       />
       <ClusterStatusTable

@@ -28,7 +28,8 @@ export const getDbEnginesFn = async (namespace: string) => {
 
 export const upgradeOperator = async (namespace: string) => {
   const response = await api.post(
-    `/namespaces/${namespace}/database-engines/upgrade-plan/approval/`
+    `/namespaces/${namespace}/database-engines/upgrade-plan/approval/`,
+    {}
   );
 
   return response.data;
