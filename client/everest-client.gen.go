@@ -971,11 +971,6 @@ type UserCredentials struct {
 	Username *string `json:"username,omitempty"`
 }
 
-// UserPermissions defines model for UserPermissions.
-type UserPermissions struct {
-	Permissions *[][]string `json:"permissions,omitempty"`
-}
-
 // Version Everest version info
 type Version struct {
 	FullCommit  string `json:"fullCommit"`
@@ -1763,9 +1758,6 @@ type ClientInterface interface {
 	// GetOperatorUpgradePreflight request
 	GetOperatorUpgradePreflight(ctx context.Context, namespace string, name string, params *GetOperatorUpgradePreflightParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetUserPermissions request
-	GetUserPermissions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// GetKubernetesClusterResources request
 	GetKubernetesClusterResources(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -2359,18 +2351,6 @@ func (c *Client) UpgradeDatabaseEngineOperator(ctx context.Context, namespace st
 
 func (c *Client) GetOperatorUpgradePreflight(ctx context.Context, namespace string, name string, params *GetOperatorUpgradePreflightParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOperatorUpgradePreflightRequest(c.Server, namespace, name, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) GetUserPermissions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetUserPermissionsRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -3997,33 +3977,6 @@ func NewGetOperatorUpgradePreflightRequest(server string, namespace string, name
 	return req, nil
 }
 
-// NewGetUserPermissionsRequest generates requests for GetUserPermissions
-func NewGetUserPermissionsRequest(server string) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/permissions")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 // NewGetKubernetesClusterResourcesRequest generates requests for GetKubernetesClusterResources
 func NewGetKubernetesClusterResourcesRequest(server string) (*http.Request, error) {
 	var err error
@@ -4322,9 +4275,6 @@ type ClientWithResponsesInterface interface {
 
 	// GetOperatorUpgradePreflightWithResponse request
 	GetOperatorUpgradePreflightWithResponse(ctx context.Context, namespace string, name string, params *GetOperatorUpgradePreflightParams, reqEditors ...RequestEditorFn) (*GetOperatorUpgradePreflightResponse, error)
-
-	// GetUserPermissionsWithResponse request
-	GetUserPermissionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetUserPermissionsResponse, error)
 
 	// GetKubernetesClusterResourcesWithResponse request
 	GetKubernetesClusterResourcesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetKubernetesClusterResourcesResponse, error)
@@ -5233,30 +5183,6 @@ func (r GetOperatorUpgradePreflightResponse) StatusCode() int {
 	return 0
 }
 
-type GetUserPermissionsResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *UserPermissions
-	JSON400      *Error
-	JSON500      *Error
-}
-
-// Status returns HTTPResponse.Status
-func (r GetUserPermissionsResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetUserPermissionsResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type GetKubernetesClusterResourcesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -5778,15 +5704,6 @@ func (c *ClientWithResponses) GetOperatorUpgradePreflightWithResponse(ctx contex
 		return nil, err
 	}
 	return ParseGetOperatorUpgradePreflightResponse(rsp)
-}
-
-// GetUserPermissionsWithResponse request returning *GetUserPermissionsResponse
-func (c *ClientWithResponses) GetUserPermissionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetUserPermissionsResponse, error) {
-	rsp, err := c.GetUserPermissions(ctx, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetUserPermissionsResponse(rsp)
 }
 
 // GetKubernetesClusterResourcesWithResponse request returning *GetKubernetesClusterResourcesResponse
@@ -7316,46 +7233,6 @@ func ParseGetOperatorUpgradePreflightResponse(rsp *http.Response) (*GetOperatorU
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest OperatorUpgradePreflight
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseGetUserPermissionsResponse parses an HTTP response from a GetUserPermissionsWithResponse call
-func ParseGetUserPermissionsResponse(rsp *http.Response) (*GetUserPermissionsResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetUserPermissionsResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest UserPermissions
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

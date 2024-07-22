@@ -970,11 +970,6 @@ type UserCredentials struct {
 	Username *string `json:"username,omitempty"`
 }
 
-// UserPermissions defines model for UserPermissions.
-type UserPermissions struct {
-	Permissions *[][]string `json:"permissions,omitempty"`
-}
-
 // Version Everest version info
 type Version struct {
 	FullCommit  string `json:"fullCommit"`
@@ -1667,9 +1662,6 @@ type ServerInterface interface {
 	// Upgrade preflight
 	// (GET /namespaces/{namespace}/database-engines/{name}/operator-version/preflight)
 	GetOperatorUpgradePreflight(ctx echo.Context, namespace string, name string, params GetOperatorUpgradePreflightParams) error
-	// Get user permissions
-	// (GET /permissions)
-	GetUserPermissions(ctx echo.Context) error
 	// Cluster resources
 	// (GET /resources)
 	GetKubernetesClusterResources(ctx echo.Context) error
@@ -2484,17 +2476,6 @@ func (w *ServerInterfaceWrapper) GetOperatorUpgradePreflight(ctx echo.Context) e
 	return err
 }
 
-// GetUserPermissions converts echo context to params.
-func (w *ServerInterfaceWrapper) GetUserPermissions(ctx echo.Context) error {
-	var err error
-
-	ctx.Set(BearerAuthScopes, []string{})
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserPermissions(ctx)
-	return err
-}
-
 // GetKubernetesClusterResources converts echo context to params.
 func (w *ServerInterfaceWrapper) GetKubernetesClusterResources(ctx echo.Context) error {
 	var err error
@@ -2599,7 +2580,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/namespaces/:namespace/database-engines/:name/operator-version", wrapper.GetOperatorVersion)
 	router.PUT(baseURL+"/namespaces/:namespace/database-engines/:name/operator-version", wrapper.UpgradeDatabaseEngineOperator)
 	router.GET(baseURL+"/namespaces/:namespace/database-engines/:name/operator-version/preflight", wrapper.GetOperatorUpgradePreflight)
-	router.GET(baseURL+"/permissions", wrapper.GetUserPermissions)
 	router.GET(baseURL+"/resources", wrapper.GetKubernetesClusterResources)
 	router.POST(baseURL+"/session", wrapper.CreateSession)
 	router.GET(baseURL+"/settings", wrapper.GetSettings)
