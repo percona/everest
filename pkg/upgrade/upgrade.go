@@ -69,15 +69,6 @@ var skipObjects = []client.Object{ //nolint:gochecknoglobals
 			Namespace: common.SystemNamespace,
 		},
 	},
-	&corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			Kind: "ConfigMap",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      common.EverestRBACConfigMapName,
-			Namespace: common.SystemNamespace,
-		},
-	},
 }
 
 type (
@@ -223,13 +214,6 @@ func (u *Upgrade) Run(ctx context.Context) error {
 				if err := u.ensureEverestJWTIfNotExists(ctx); err != nil {
 					return err
 				}
-			}
-			// RBAC is added in 1.1.x, so if we're upgrading to that version, we need to ensure
-			// that the RBAC configmap is present.
-			if common.CheckConstraint(upgradeEverestTo, "~> 1.1.0") {
-				_ = slices.DeleteFunc(skipObjects, func(o client.Object) bool {
-					return o.GetName() == common.EverestRBACConfigMapName
-				})
 			}
 			// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
 			if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo, skipObjects...); err != nil {
