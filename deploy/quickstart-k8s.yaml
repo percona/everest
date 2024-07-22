@@ -38,6 +38,9 @@ rules:
   - apiGroups: ["everest.percona.com"]
     resources: ["*"]
     verbs: ["*"]
+  - apiGroups: ["operators.coreos.com"]
+    resources: ["installplans"]
+    verbs: ["get", "list", "update"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
