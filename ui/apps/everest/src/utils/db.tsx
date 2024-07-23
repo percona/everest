@@ -11,3 +11,19 @@ export const dbTypeToIcon = (dbType: DbType) => {
       return PostgreSqlIcon;
   }
 };
+
+export const shortenOperatorName = (name: string) => {
+  if (name.includes('postgresql')) {
+    return 'postgresql';
+  }
+
+  if (name.includes('xtradb')) {
+    return 'pxc';
+  }
+
+  if (name.includes('mongodb')) {
+    return 'psmdb';
+  }
+
+  return name;
+};

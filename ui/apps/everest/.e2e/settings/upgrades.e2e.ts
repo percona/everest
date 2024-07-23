@@ -10,7 +10,6 @@ const generateMockEngineData = ({
   [key in 'pg' | 'mysql' | 'mongo']: {
     status: string;
     version: string;
-    pendingVersion?: string;
   };
 }) => ({
   items: [
@@ -21,9 +20,6 @@ const generateMockEngineData = ({
       status: {
         status: pg.status,
         operatorVersion: pg.version,
-        pendingOperatorUpgrades: pg.pendingVersion
-          ? [{ targetVersion: pg.pendingVersion }]
-          : undefined,
         availableVersions: {
           engine: {},
         },
@@ -39,9 +35,6 @@ const generateMockEngineData = ({
       status: {
         status: mysql.status,
         operatorVersion: mysql.version,
-        pendingOperatorUpgrades: mysql.pendingVersion
-          ? [{ targetVersion: mysql.pendingVersion }]
-          : undefined,
         availableVersions: {
           engine: {},
         },
@@ -57,9 +50,6 @@ const generateMockEngineData = ({
       status: {
         status: mongo.status,
         operatorVersion: mongo.version,
-        pendingOperatorUpgrades: mongo.pendingVersion
-          ? [{ targetVersion: mongo.pendingVersion }]
-          : undefined,
         availableVersions: {
           engine: {},
         },
@@ -69,13 +59,6 @@ const generateMockEngineData = ({
       },
     },
   ],
-});
-
-const generateMockOperatorVersionData = (
-  databases: Array<{ name: string; message: string; pendingTask: string }>
-) => ({
-  currentVersion: '',
-  databases,
 });
 
 test.describe('Operator upgrades', () => {
@@ -102,11 +85,11 @@ test.describe('Operator upgrades', () => {
       }
     );
     await page.goto(`/settings/namespaces/${namespaces[0]}`);
-    await expect(page.getByText('version 2.3.1')).toBeVisible();
-    await expect(page.getByText('version 1.15.0')).toBeVisible();
-    await expect(page.getByText('version 1.13.0')).toBeVisible();
+    await expect(page.getByText('v2.3.1')).toBeVisible();
+    await expect(page.getByText('v1.15.0')).toBeVisible();
+    await expect(page.getByText('v1.13.0')).toBeVisible();
     await expect(
-      page.getByRole('button', { name: 'Upgrade Operator' })
+      page.getByRole('button', { name: 'Upgrade Operators' })
     ).not.toBeVisible();
   });
 
@@ -120,7 +103,6 @@ test.describe('Operator upgrades', () => {
             mongo: {
               status: 'installed',
               version: '1.15.0',
-              pendingVersion: '1.16.0',
             },
             mysql: { status: 'installed', version: '1.13.0' },
           }),
@@ -128,105 +110,36 @@ test.describe('Operator upgrades', () => {
       }
     );
     await page.route(
-      `/v1/namespaces/${namespaces[0]}/database-engines/*/operator-version/preflight?targetVersion=1.16.0`,
+      `/v1/namespaces/${namespaces[0]}/database-engines/upgrade-plan`,
       async (route) => {
         await route.fulfill({
-          json: generateMockOperatorVersionData([
-            {
-              name: 'db1',
-              message: 'some message',
-              pendingTask: 'ready',
-            },
-          ]),
+          json: {
+            upgrades: [
+              {
+                name: 'percona-server-mongodb-operator',
+                currentVersion: '1.15.0',
+                targetVersion: '1.16.0',
+              },
+            ],
+            pendingActions: [],
+          },
         });
       }
     );
     await page.goto(`/settings/namespaces/${namespaces[0]}`);
     await expect(
-      page.getByRole('button', { name: 'Upgrade Operator' })
-    ).not.toBeVisible();
-    await expect(page.getByText('Upgrade available')).toBeVisible();
-    await page.getByTestId('mongodb-toggle-button').click();
-    await expect(
-      page.getByRole('button', { name: 'Upgrade Operator' })
-    ).toBeVisible();
-    await expect(
-      page.getByText('Version 1.16.0 of the psmdb operator is available.')
+      page.getByRole('button', { name: 'Upgrade Operators' })
     ).toBeVisible();
     await expect(await page.locator('tbody tr').count()).toBe(1);
-    await expect(
-      page.getByRole('button', { name: 'Upgrade Operator' })
-    ).not.toBeDisabled();
-    await page.getByRole('button', { name: 'Upgrade Operator' }).click();
+    await page.getByRole('button', { name: 'Upgrade Operators' }).click();
     await expect(
       page.getByText(
-        `Are you sure you want to upgrade psmdb operator in namespace ${namespaces[0]} to version 1.16.0?`
+        `Are you sure you want to upgrade your operators in ${namespaces[0]}?`
       )
     ).toBeVisible();
-  });
-
-  test('show new version even if no databases available', async ({ page }) => {
-    await page.route(
-      `/v1/namespaces/${namespaces[0]}/database-engines`,
-      async (route) => {
-        await route.fulfill({
-          json: generateMockEngineData({
-            pg: { status: 'installed', version: '2.3.1' },
-            mongo: {
-              status: 'installed',
-              version: '1.15.0',
-              pendingVersion: '1.16.0',
-            },
-            mysql: { status: 'installed', version: '1.13.0' },
-          }),
-        });
-      }
-    );
-    await page.route(
-      `/v1/namespaces/${namespaces[0]}/database-engines/*/operator-version/preflight?targetVersion=1.16.0`,
-      async (route) => {
-        await route.fulfill({
-          json: generateMockOperatorVersionData([]),
-        });
-      }
-    );
-    await page.goto(`/settings/namespaces/${namespaces[0]}`);
-    await expect(page.getByText('Upgrade available')).toBeVisible();
-    await page.getByTestId('mongodb-toggle-button').click();
     await expect(
-      page.getByRole('button', { name: 'Upgrade Operator' })
+      page.getByText('v1.15.0 will be upgraded to v1.16.0')
     ).toBeVisible();
-  });
-
-  test('Upgrading', async ({ page }) => {
-    await page.route(
-      `/v1/namespaces/${namespaces[0]}/database-engines`,
-      async (route) => {
-        await route.fulfill({
-          json: generateMockEngineData({
-            pg: { status: 'installed', version: '2.3.1' },
-            mongo: {
-              status: 'upgrading',
-              version: '1.15.0',
-            },
-            mysql: { status: 'installed', version: '1.13.0' },
-          }),
-        });
-      }
-    );
-    await page.goto(`/settings/namespaces/${namespaces[0]}`);
-    await expect(
-      page
-        .getByTestId('toggle-button-group-input-db-type')
-        .getByText('Upgrading')
-    ).toBeVisible();
-    const dbButtons = await page
-      .getByTestId('toggle-button-group-input-db-type')
-      .getByRole('button')
-      .all();
-    dbButtons.forEach(async (button) => {
-      await expect(button).toBeDisabled();
-    });
   });
 
   test('Pending tasks', async ({ page }) => {
@@ -239,7 +152,6 @@ test.describe('Operator upgrades', () => {
             mongo: {
               status: 'installed',
               version: '1.15.0',
-              pendingVersion: '1.16.0',
             },
             mysql: { status: 'installed', version: '1.13.0' },
           }),
@@ -247,34 +159,44 @@ test.describe('Operator upgrades', () => {
       }
     );
     await page.route(
-      `/v1/namespaces/${namespaces[0]}/database-engines/*/operator-version/preflight?targetVersion=1.16.0`,
+      `/v1/namespaces/${namespaces[0]}/database-engines/upgrade-plan`,
       async (route) => {
         await route.fulfill({
-          json: generateMockOperatorVersionData([
-            {
-              name: 'db1',
-              message: 'some message',
-              pendingTask: 'notReady',
-            },
-            {
-              name: 'db2',
-              message: 'some message',
-              pendingTask: 'ready',
-            },
-          ]),
+          json: {
+            upgrades: [
+              {
+                name: '',
+                currentVersion: '1.15.0',
+                targetVersion: '1.16.0',
+              },
+            ],
+            pendingActions: [
+              {
+                name: 'db1',
+                message: 'some message',
+                pendingTask: 'notReady',
+              },
+              {
+                name: 'db2',
+                message: 'some message',
+                pendingTask: 'ready',
+              },
+            ],
+          },
         });
       }
     );
     await page.goto(`/settings/namespaces/${namespaces[0]}`);
-    await page.getByTestId('mongodb-toggle-button').click();
+    await expect(
+      page.getByRole('button', { name: 'Upgrade Operators' })
+    ).toBeVisible();
     await expect(await page.locator('tbody tr').count()).toBe(2);
     await expect(
-      page.getByRole('button', { name: 'Upgrade Operator' })
+      page.getByRole('button', { name: 'Upgrade Operators' })
     ).toBeDisabled();
-    await expect(page.getByText('1/2 tasks pending')).toBeVisible();
     await expect(
       page.getByText(
-        'Version 1.16.0 of the psmdb operator is available. Start upgrading by performing all the pending tasks.'
+        'A new version of the operators is available.Start upgrading by performing all the pending tasks in the Actions column.'
       )
     ).toBeVisible();
   });
@@ -294,32 +216,25 @@ test.describe('Operator upgrades', () => {
     );
 
     await page.route(
-      `/v1/namespaces/${namespaces[0]}/database-engines/*/operator-version`,
+      `/v1/namespaces/${namespaces[0]}/database-engines/upgrade-plan`,
       async (route) => {
         await route.fulfill({
-          json: generateMockOperatorVersionData([
-            {
-              name: 'db1',
-              message: 'Restart required',
-              pendingTask: 'restart',
-            },
-            {
-              name: 'db2',
-              message: 'Ready',
-              pendingTask: 'ready',
-            },
-          ]),
+          json: {
+            upgrades: [],
+            pendingActions: [
+              {
+                name: 'db1',
+                message: 'Upgrade CRD',
+                pendingTask: 'restart',
+              },
+            ],
+          },
         });
       }
     );
 
     await page.goto(`/settings/namespaces/${namespaces[0]}`);
-    await page.getByTestId('mongodb-toggle-button').click();
-    await expect(
-      page.getByText(
-        'Complete the upgrade by completing the post-upgrade tasks.'
-      )
-    ).toBeVisible();
+    await expect(page.getByTestId('update-db-button')).toBeVisible();
   });
 
   test('Upgrade engine version via message parsing', async ({ page }) => {
@@ -328,7 +243,6 @@ test.describe('Operator upgrades', () => {
       mongo: {
         status: 'installed',
         version: '1.15.0',
-        pendingVersion: '1.16.0',
       },
       mysql: { status: 'installed', version: '1.13.0' },
     });
@@ -368,28 +282,39 @@ test.describe('Operator upgrades', () => {
       }
     );
     await page.route(
-      `/v1/namespaces/${namespaces[0]}/database-engines/*/operator-version/preflight?targetVersion=1.16.0`,
+      `/v1/namespaces/${namespaces[0]}/database-engines/upgrade-plan`,
       async (route) => {
         await route.fulfill({
-          json: generateMockOperatorVersionData([
-            {
-              name: 'db1',
-              message: 'Upgrade DB version to 8.0.29-21.1 or higher',
-              pendingTask: 'upgradeEngine',
-            },
-            {
-              name: 'db2',
-              message: 'some message',
-              pendingTask: 'ready',
-            },
-          ]),
+          json: {
+            upgrades: [
+              {
+                name: 'percona-server-mongodb-operator',
+                currentVersion: '1.15.0',
+                targetVersion: '1.16.0',
+              },
+            ],
+            pendingActions: [
+              {
+                name: 'db1',
+                message: 'Upgrade DB version to 8.0.29-21.1 or higher',
+                pendingTask: 'upgradeEngine',
+              },
+              {
+                name: 'db2',
+                message: 'some message',
+                pendingTask: 'ready',
+              },
+            ],
+          },
         });
       }
     );
     await page.goto(`/settings/namespaces/${namespaces[0]}`);
-    await page.getByTestId('mongodb-toggle-button').click();
     await expect(
-      page.getByRole('button', { name: 'Upgrade Operator' })
+      page.getByRole('button', { name: 'Upgrade Operators' })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Upgrade Operators' })
     ).toBeDisabled();
     await expect(
       page.getByText('Upgrade DB version to 8.0.29-21.1 or higher')
@@ -404,26 +329,28 @@ test.describe('Operator upgrades', () => {
 
   test('Upgrade engine version via recommended versions', async ({ page }) => {
     const mockData = generateMockEngineData({
-      pg: { status: 'installed', version: '2.3.1' },
+      pg: { status: 'installed', version: '2.3' },
       mongo: {
         status: 'installed',
         version: '1.15.0',
-        pendingVersion: '1.16.0',
       },
       mysql: { status: 'installed', version: '1.13.0' },
     });
 
-    mockData.items[2].status.availableVersions.engine = {
-      '8.0.29-21.0': {
+    mockData.items[0].status.availableVersions.engine = {
+      '15.1': {
         status: 'available',
       },
-      '8.0.29-21.1': {
+      '15.2': {
         status: 'available',
       },
-      '8.0.29-21.2': {
+      '15.3': {
         status: 'recommended',
       },
-      '8.0.29-21.3': {
+      '15.4': {
+        status: 'recommended',
+      },
+      '16.7': {
         status: 'recommended',
       },
     };
@@ -447,7 +374,8 @@ test.describe('Operator upgrades', () => {
                 },
                 spec: {
                   engine: {
-                    version: '8.0.25-15.1',
+                    version: '15.0',
+                    type: 'postgresql',
                   },
                 },
               },
@@ -457,34 +385,45 @@ test.describe('Operator upgrades', () => {
       }
     );
     await page.route(
-      `/v1/namespaces/${namespaces[0]}/database-engines/*/operator-version/preflight?targetVersion=1.16.0`,
+      `/v1/namespaces/${namespaces[0]}/database-engines/upgrade-plan`,
       async (route) => {
         await route.fulfill({
-          json: generateMockOperatorVersionData([
-            {
-              name: 'db1',
-              message: 'Upgrade DB version',
-              pendingTask: 'upgradeEngine',
-            },
-            {
-              name: 'db2',
-              message: 'some message',
-              pendingTask: 'ready',
-            },
-          ]),
+          json: {
+            upgrades: [
+              {
+                name: 'percona-server-postgresql-operator',
+                currentVersion: '2.3',
+                targetVersion: '2.4',
+              },
+            ],
+            pendingActions: [
+              {
+                name: 'db1',
+                message: 'Upgrade DB version',
+                pendingTask: 'upgradeEngine',
+              },
+              {
+                name: 'db2',
+                message: 'some message',
+                pendingTask: 'ready',
+              },
+            ],
+          },
         });
       }
     );
     await page.goto(`/settings/namespaces/${namespaces[0]}`);
-    await page.getByTestId('mongodb-toggle-button').click();
     await expect(
-      page.getByRole('button', { name: 'Upgrade Operator' })
+      page.getByRole('button', { name: 'Upgrade Operators' })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Upgrade Operators' })
     ).toBeDisabled();
     await expect(page.getByText('Upgrade DB version')).toBeVisible();
     await page.getByTestId('update-db-button').click();
     await expect(
       page.getByText(
-        'Your DB engine will be upgraded to version 8.0.29-21.3 in db1 cluster.'
+        'Your DB engine will be upgraded to version 15.4 in db1 cluster.'
       )
     ).toBeVisible();
   });
