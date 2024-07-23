@@ -17,7 +17,7 @@ import { Messages } from '../../cluster-overview.messages';
 import OverviewSection from '../../overview-section';
 import { ConnectionDetailsOverviewCardProps } from '../card.types';
 import OverviewSectionRow from '../../overview-section-row';
-import {Box, Typography} from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { CopyToClipboardButton } from '@percona/ui-lib';
 import { HiddenPasswordToggle } from 'components/hidden-row';
 
@@ -42,7 +42,7 @@ export const ConnectionDetails = ({
               buttonProps={{
                 color: 'primary',
                 size: 'xs',
-                sx: { mt: -0.25 }
+                sx: { mt: -0.25 },
               }}
               textToCopy={host}
             />

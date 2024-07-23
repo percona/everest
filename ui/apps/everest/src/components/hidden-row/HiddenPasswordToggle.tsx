@@ -73,7 +73,7 @@ export const HiddenPasswordToggle = ({
       </IconButton>
       {showCopy && (
         <CopyToClipboardButton
-          buttonProps={{ sx: { mt: -0.25 }, color: 'primary', size: "xs" }}
+          buttonProps={{ sx: { mt: -0.25 }, color: 'primary', size: 'xs' }}
           textToCopy={value}
         />
       )}

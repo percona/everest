@@ -5,7 +5,7 @@ export const Messages = {
     connectionDetails: 'Connection Details',
     monitoring: 'Monitoring',
     advancedConfiguration: 'Advanced configuration',
-    resources: "Resources",
+    resources: 'Resources',
   },
   fields: {
     // monitoring: (name: string) => `Name: ${name}`,
@@ -24,8 +24,8 @@ export const Messages = {
     parameters: 'Parameters',
     enabled: `Enabled`,
     disabled: `Disabled`,
-    cpu: "CPU",
-    disk: "Disk",
-    memory: "Memory",
+    cpu: 'CPU',
+    disk: 'Disk',
+    memory: 'Memory',
   },
 };

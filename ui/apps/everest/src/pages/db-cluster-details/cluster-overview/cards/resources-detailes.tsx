@@ -17,7 +17,7 @@ import { DatabaseIcon, OverviewCard } from '@percona/ui-lib';
 import OverviewSection from '../overview-section';
 import { ResourcesDetailsOverviewProps } from './card.types';
 import OverviewSectionRow from '../overview-section-row';
-import { Messages } from "../cluster-overview.messages";
+import { Messages } from '../cluster-overview.messages';
 
 export const ResourcesDetails = ({
   numberOfNodes,
@@ -44,9 +44,18 @@ export const ResourcesDetails = ({
         title={`${numberOfNodes} node${+numberOfNodes > 1 ? 's' : ''}`}
         loading={loading}
       >
-        <OverviewSectionRow label={Messages.fields.cpu} contentString={`${cpu}`} />
-        <OverviewSectionRow label={Messages.fields.disk} contentString={`${disk}`} />
-        <OverviewSectionRow label={Messages.fields.memory} contentString={`${memory}`} />
+        <OverviewSectionRow
+          label={Messages.fields.cpu}
+          contentString={`${cpu}`}
+        />
+        <OverviewSectionRow
+          label={Messages.fields.disk}
+          contentString={`${disk}`}
+        />
+        <OverviewSectionRow
+          label={Messages.fields.memory}
+          contentString={`${memory}`}
+        />
       </OverviewSection>
     </OverviewCard>
   );
