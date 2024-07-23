@@ -58,16 +58,8 @@ export const ClusterOverview = () => {
           dbCluster?.spec.proxy.expose.type === ProxyExposeType.external
         }
         monitoring={dbCluster?.spec.monitoring.monitoringConfigName}
-        parameters={!!dbCluster?.spec.engine.config} //TODO 1230
+        parameters={!!dbCluster?.spec.engine.config} //TODO 1230 waits https://perconacorp.slack.com/archives/C0545J2BEJX/p1721309559055999
       />
-      {/*<ConnectionDetails*/}
-      {/*  loading={loadingCluster}*/}
-      {/*  loadingClusterDetails={fetchingClusterDetails}*/}
-      {/*  hostname={dbCluster?.status?.hostname!}*/}
-      {/*  port={dbCluster?.status?.port!}*/}
-      {/*  username={dbClusterDetails?.username!}*/}
-      {/*  password={dbClusterDetails?.password!}*/}
-      {/*/>*/}
       <ResourcesDetails
         numberOfNodes={dbCluster?.spec.engine.replicas!}
         cpu={dbCluster?.spec.engine.resources?.cpu!}

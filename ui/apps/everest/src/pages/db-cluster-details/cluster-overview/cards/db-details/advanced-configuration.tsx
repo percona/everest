@@ -18,11 +18,10 @@ import OverviewSection from '../../overview-section';
 import { AdvancedConfigurationOverviewCardProps } from '../card.types';
 import OverviewSectionRow from '../../overview-section-row';
 
-//TODO 1230
 export const AdvancedConfiguration = ({
   loading,
   externalAccess,
-  parameters,
+  // parameters,
 }: AdvancedConfigurationOverviewCardProps) => {
   return (
     <OverviewSection
@@ -35,12 +34,13 @@ export const AdvancedConfiguration = ({
           externalAccess ? Messages.fields.enabled : Messages.fields.disabled
         }
       />
-      <OverviewSectionRow
-        label={Messages.fields.parameters}
-        contentString={
-          parameters ? Messages.fields.enabled : Messages.fields.disabled
-        }
-      />
+      {/*<OverviewSectionRow*/}
+      {/*  label={Messages.fields.parameters}*/}
+      {/*  contentString={*/}
+      {/*    parameters ? Messages.fields.enabled : Messages.fields.disabled*/}
+      {/*  }*/}
+      {/*/>*/}
+      {/*//TODO 1230 waits https://perconacorp.slack.com/archives/C0545J2BEJX/p1721309559055999*/}
     </OverviewSection>
   );
 };

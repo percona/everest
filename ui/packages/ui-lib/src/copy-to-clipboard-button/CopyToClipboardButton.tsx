@@ -14,7 +14,6 @@ const CopyToClipboardButton = ({
   const [open, setOpen] = useState(false);
   const clipboardAvailable = !!navigator.clipboard;
 
-  //TODO check where we use CopyToClipboard to avoid xs where we don't need it
   const handleClick = () => {
     if (clipboardAvailable) {
       navigator.clipboard.writeText(textToCopy);
@@ -62,7 +61,6 @@ const CopyToClipboardButton = ({
               pointerEvents: 'auto',
             },
           }}
-          size="xs"
           onClick={handleClick}
           disabled={!clipboardAvailable}
           {...buttonProps}

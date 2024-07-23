@@ -17,11 +17,10 @@ import { Messages } from '../../cluster-overview.messages';
 import OverviewSection from '../../overview-section';
 import { ConnectionDetailsOverviewCardProps } from '../card.types';
 import OverviewSectionRow from '../../overview-section-row';
-import { Box } from '@mui/material';
+import {Box, Typography} from '@mui/material';
 import { CopyToClipboardButton } from '@percona/ui-lib';
 import { HiddenPasswordToggle } from 'components/hidden-row';
 
-//TODO 1230 check size with typescript
 export const ConnectionDetails = ({
   loading,
   hostname = '',
@@ -38,13 +37,13 @@ export const ConnectionDetails = ({
         label={Messages.fields.host}
         content={hostname.split(',').map((host) => (
           <Box key={host} sx={{ display: 'flex', gap: 1 }}>
-            <div>{host}</div>
+            <Typography variant="body2">{host}</Typography>
             <CopyToClipboardButton
               buttonProps={{
                 color: 'primary',
                 size: 'xs',
+                sx: { mt: -0.25 }
               }}
-              inline={true}
               textToCopy={host}
             />
           </Box>

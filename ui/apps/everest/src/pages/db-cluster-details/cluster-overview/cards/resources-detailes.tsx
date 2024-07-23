@@ -16,9 +16,8 @@
 import { DatabaseIcon, OverviewCard } from '@percona/ui-lib';
 import OverviewSection from '../overview-section';
 import { ResourcesDetailsOverviewProps } from './card.types';
-import { Button } from '@mui/material';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import OverviewSectionRow from '../overview-section-row';
+import { Messages } from "../cluster-overview.messages";
 
 export const ResourcesDetails = ({
   numberOfNodes,
@@ -27,27 +26,27 @@ export const ResourcesDetails = ({
   disk,
   loading,
 }: ResourcesDetailsOverviewProps) => {
-  //TODO 1230 move text to messages
   return (
     <OverviewCard
       dataTestId="resources"
       cardHeaderProps={{
-        title: 'Resources',
+        title: Messages.titles.resources,
         avatar: <DatabaseIcon />,
-        action: (
-          <Button size="small" startIcon={<EditOutlinedIcon />}>
-            Edit
-          </Button>
-        ),
+        // TODO implement with EVEREST-1211
+        // action: (
+        //     <Button size="small" startIcon={<EditOutlinedIcon />}>
+        //     Edit
+        //   </Button>
+        // ),
       }}
     >
       <OverviewSection
         title={`${numberOfNodes} node${+numberOfNodes > 1 ? 's' : ''}`}
         loading={loading}
       >
-        <OverviewSectionRow label="CPU" contentString={`${cpu}`} />
-        <OverviewSectionRow label="Disk" contentString={`${disk}`} />
-        <OverviewSectionRow label="Memory" contentString={`${memory}`} />
+        <OverviewSectionRow label={Messages.fields.cpu} contentString={`${cpu}`} />
+        <OverviewSectionRow label={Messages.fields.disk} contentString={`${disk}`} />
+        <OverviewSectionRow label={Messages.fields.memory} contentString={`${memory}`} />
       </OverviewSection>
     </OverviewCard>
   );

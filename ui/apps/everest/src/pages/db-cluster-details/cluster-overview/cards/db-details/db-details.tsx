@@ -67,35 +67,6 @@ export const DbDetails = ({
           externalAccess={externalAccess}
           parameters={parameters}
         />
-        {/*<OverviewSection title={Messages.titles.monitoring} loading={loading}>*/}
-        {/*  <OverviewSectionRow*/}
-        {/*    label={Messages.fields.status}*/}
-        {/*    contentString={*/}
-        {/*      monitoring ? Messages.fields.enabled : Messages.fields.disabled*/}
-        {/*    }*/}
-        {/*  />*/}
-        {/*  <OverviewSectionRow*/}
-        {/*    label={Messages.fields.name}*/}
-        {/*    contentString={monitoring}*/}
-        {/*  />*/}
-        {/*</OverviewSection>*/}
-        {/*<OverviewSection*/}
-        {/*  title={Messages.titles.advancedConfiguration}*/}
-        {/*  loading={loading}*/}
-        {/*>*/}
-        {/*  <OverviewSectionRow*/}
-        {/*    label={Messages.fields.externalAccess}*/}
-        {/*    contentString={*/}
-        {/*      externalAccess*/}
-        {/*        ? Messages.fields.enabled*/}
-        {/*        : Messages.fields.disabled*/}
-        {/*    }*/}
-        {/*  />*/}
-        {/*  <OverviewSectionRow*/}
-        {/*    label={Messages.fields.parameters}*/}
-        {/*    contentString="TODO"*/}
-        {/*  />*/}
-        {/*</OverviewSection>*/}
       </Stack>
     </OverviewCard>
   );
