@@ -22,7 +22,7 @@ const UpgradeHeader = ({
       <Typography variant="body1">
         A new version of the operators is available.
         {pendingUpgradeTasks
-          ? 'Start upgrading by performing all the pending tasks in the Actions column'
+          ? 'Start upgrading by performing all the pending tasks in the Actions column.'
           : ''}
       </Typography>
       <Button
@@ -31,7 +31,7 @@ const UpgradeHeader = ({
         onClick={onUpgrade}
         disabled={pendingUpgradeTasks}
       >
-        {Messages.upgradeOperator}
+        {Messages.upgradeOperators}
       </Button>
     </Box>
   );

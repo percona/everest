@@ -34,13 +34,13 @@ const NamespaceDetails = () => {
     true
   );
   const { data: operatorsUpgradePlan, isLoading: loadingOperatorsUpgradePlan } =
-    useOperatorsUpgradePlan(namespaceName, {
+    useOperatorsUpgradePlan(namespaceName, dbEngines, {
       initialData: {
         upgrades: [],
         pendingActions: [],
         upToDate: [],
       },
-      enabled: !!namespace,
+      enabled: !!namespace && dbEngines.length > 0,
       refetchInterval: 5 * 1000,
     });
 

@@ -137,12 +137,12 @@ export type UseOperatorsUpgradePlanType = OperatorsUpgradePlan & {
 
 export const useOperatorsUpgradePlan = (
   namespace: string,
+  dbEngines: DbEngine[],
   options?: PerconaQueryOptions<UseOperatorsUpgradePlanType>
 ) =>
   useQuery<UseOperatorsUpgradePlanType>({
     queryKey: ['operatorUpgradePlan', namespace],
     queryFn: async () => {
-      const engines = await getDbEnginesFn(namespace);
       const operatorUpgradePlan = await getOperatorsUpgradePlan(namespace);
       const operatorsWithUpgrades = operatorUpgradePlan.upgrades.map(
         (plan) => plan.name
@@ -150,13 +150,11 @@ export const useOperatorsUpgradePlan = (
 
       return {
         ...operatorUpgradePlan,
-        upToDate: engines.items
-          .filter(
-            (engine) => !operatorsWithUpgrades.includes(engine.metadata.name)
-          )
+        upToDate: dbEngines
+          .filter((engine) => !operatorsWithUpgrades.includes(engine.name))
           .map((engine) => ({
-            name: engine.metadata.name,
-            currentVersion: engine.status?.operatorVersion || '',
+            name: engine.name,
+            currentVersion: engine.operatorVersion || '',
           })),
       };
     },

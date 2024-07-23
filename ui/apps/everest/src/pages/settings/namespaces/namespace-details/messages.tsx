@@ -1,8 +1,7 @@
 import { Typography } from '@mui/material';
 
 export const Messages = {
-  upgradingOperator: 'Upgrading the operator...',
-  upgradeOperator: 'Upgrade Operator',
+  upgradeOperators: 'Upgrade Operators',
   upgradeConfirmation: (namespace: string) => (
     <Typography variant="body1">
       Are you sure you want to upgrade your operators in <b>{namespace}</b>?
