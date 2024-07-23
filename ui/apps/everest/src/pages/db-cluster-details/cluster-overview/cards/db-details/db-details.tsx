@@ -22,7 +22,6 @@ import { ConnectionDetails } from './connection-details';
 import { MonitoringDetails } from './monitoring';
 import { AdvancedConfiguration } from './advanced-configuration';
 
-// TODO 1230 add OtherColumns
 export const DbDetails = ({
   loading,
   type,

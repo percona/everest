@@ -8,9 +8,6 @@ export const Messages = {
     resources: 'Resources',
   },
   fields: {
-    // monitoring: (name: string) => `Name: ${name}`,
-    // pitr: (isEnabled: string) =>
-    //   `${Messages.titles.pitr} ${isEnabled.toLocaleLowerCase()}`,
     type: 'Type',
     name: 'Name',
     namespace: 'Namespace',

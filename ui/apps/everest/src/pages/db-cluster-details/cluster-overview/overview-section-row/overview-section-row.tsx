@@ -16,7 +16,6 @@
 import { Grid, Typography } from '@mui/material';
 import { OverviewSectionRowProps } from './overview-section-row.types';
 
-// TODO move typography to baseTheme as body2bold?
 export const OverviewSectionRow = ({
   label,
   contentString,

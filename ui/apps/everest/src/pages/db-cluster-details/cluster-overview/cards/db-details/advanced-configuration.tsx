@@ -40,7 +40,7 @@ export const AdvancedConfiguration = ({
       {/*    parameters ? Messages.fields.enabled : Messages.fields.disabled*/}
       {/*  }*/}
       {/*/>*/}
-      {/*//TODO 1230 waits https://perconacorp.slack.com/archives/C0545J2BEJX/p1721309559055999*/}
+      {/*//TODO 1210 waits https://perconacorp.slack.com/archives/C0545J2BEJX/p1721309559055999*/}
     </OverviewSection>
   );
 };

@@ -61,6 +61,7 @@ export const ConnectionDetails = ({
         label={Messages.fields.password}
         content={<HiddenPasswordToggle showCopy value={password} />}
       />
+      {/*//TODO https://perconadev.atlassian.net/browse/EVEREST-1255 Connection URL*/}
     </OverviewSection>
   );
 };
