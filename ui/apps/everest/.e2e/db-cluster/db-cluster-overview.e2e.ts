@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { createDbClusterFn, deleteDbClusterFn } from '../utils/db-cluster';
+import { EVEREST_CI_NAMESPACES } from '../constants';
 
 test.describe('DB Cluster Overview', async () => {
   const dbClusterName = 'cluster-overview-test';
@@ -40,22 +41,39 @@ test.describe('DB Cluster Overview', async () => {
       })
     ).toBeVisible();
 
-    await expect(page.getByText('Type: MySQL')).toBeVisible();
-    await expect(page.getByText(`Name: ${dbClusterName}`)).toBeVisible();
-    await expect(page.getByText('Nº nodes: 1')).toBeVisible();
     await expect(
-      page.getByText('CPU: 600m').or(page.getByText('CPU: 0.6'))
+      page.getByTestId('basic-information-overview-section')
     ).toBeVisible();
-    await expect(page.getByText('Disk: 1G')).toBeVisible();
-    await expect(page.getByText('Memory: 1G')).toBeVisible();
-
+    await expect(
+      page.getByTestId('type-overview-section-row').filter({ hasText: 'MySQL' })
+    ).toBeVisible();
     await expect(
       page
-        .getByTestId('overview-section')
-        .filter({
-          hasText: 'External Access',
-        })
-        .getByText('Enabled')
+        .getByTestId('name-overview-section-row')
+        .filter({ hasText: `${dbClusterName}` })
+    ).toBeVisible();
+    await expect(
+      page
+        .getByTestId('namespace-overview-section-row')
+        .filter({ hasText: `${EVEREST_CI_NAMESPACES.EVEREST_UI}` })
+    ).toBeVisible();
+    await expect(
+      page.getByTestId('type-overview-section-row').filter({ hasText: 'MySQL' })
+    ).toBeVisible();
+
+    await expect(
+      page.getByTestId('connection-details-overview-section')
+    ).toBeVisible();
+
+    await expect(page.getByTestId('monitoring-overview-section')).toBeVisible();
+
+    await expect(
+      page.getByTestId('advanced-configuration-overview-section')
+    ).toBeVisible();
+    await expect(
+      page
+        .getByTestId('ext.access-overview-section-row')
+        .filter({ hasText: 'Enabled' })
     ).toBeVisible();
   });
 

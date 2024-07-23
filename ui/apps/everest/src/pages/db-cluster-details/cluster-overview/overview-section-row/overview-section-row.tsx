@@ -15,6 +15,7 @@
 
 import { Grid, Typography } from '@mui/material';
 import { OverviewSectionRowProps } from './overview-section-row.types';
+import { kebabize } from '@percona/utils';
 
 export const OverviewSectionRow = ({
   label,
@@ -22,7 +23,7 @@ export const OverviewSectionRow = ({
   contentString,
   content,
 }: OverviewSectionRowProps) => (
-  <Grid container>
+  <Grid container data-testid={`${kebabize(label)}-overview-section-row`}>
     <Grid item xs={3} minWidth="90px" {...labelProps}>
       <Typography
         variant="body2"

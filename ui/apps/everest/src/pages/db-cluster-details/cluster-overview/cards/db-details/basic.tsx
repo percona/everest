@@ -27,7 +27,11 @@ export const BasicInformationSection = ({
   version,
 }: BasicInformationOverviewCardProps) => {
   return (
-    <OverviewSection title={Messages.titles.basicInformation} loading={loading}>
+    <OverviewSection
+      dataTestId="basic-information"
+      title={Messages.titles.basicInformation}
+      loading={loading}
+    >
       <OverviewSectionRow
         label="Type"
         contentString={beautifyDbTypeName(type)}

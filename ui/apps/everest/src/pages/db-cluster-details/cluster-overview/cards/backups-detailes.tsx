@@ -53,7 +53,7 @@ export const BackupsDetails = ({
     >
       <Stack gap={3}>
         {/*//TODO EVEREST-1066 backups statuses list*/}
-        <OverviewSection title={Messages.titles.schedules} loading={loading}>
+        <OverviewSection dataTestId="schedules" title={Messages.titles.schedules} loading={loading}>
           {Array.isArray(schedules) &&
           schedules?.length > 0 &&
           backup?.enabled ? (
@@ -70,7 +70,7 @@ export const BackupsDetails = ({
             </OverviewSectionText>
           )}
         </OverviewSection>
-        <OverviewSection title={Messages.titles.pitr} loading={loading}>
+        <OverviewSection dataTestId="pitr" title={Messages.titles.pitr} loading={loading}>
           {/*// TODO EVEREST-1066 the width of the columns on the layouts in different places is limited by a different number (but not by the content), a discussion with Design is required*/}
           <OverviewSectionRow
             labelProps={{ minWidth: '126px' }}

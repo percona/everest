@@ -27,6 +27,7 @@ export const AdvancedConfiguration = ({
     <OverviewSection
       title={Messages.titles.advancedConfiguration}
       loading={loading}
+      dataTestId="advanced-configuration"
     >
       <OverviewSectionRow
         label={Messages.fields.externalAccess}

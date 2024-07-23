@@ -32,6 +32,7 @@ export const ConnectionDetails = ({
     <OverviewSection
       title={Messages.titles.connectionDetails}
       loading={loading}
+      dataTestId="connection-details"
     >
       <OverviewSectionRow
         label={Messages.fields.host}

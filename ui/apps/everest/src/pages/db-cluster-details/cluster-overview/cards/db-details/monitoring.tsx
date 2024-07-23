@@ -23,7 +23,11 @@ export const MonitoringDetails = ({
   monitoring,
 }: MonitoringConfigurationOverviewCardProps) => {
   return (
-    <OverviewSection title={Messages.titles.monitoring} loading={loading}>
+    <OverviewSection
+      dataTestId="monitoring"
+      title={Messages.titles.monitoring}
+      loading={loading}
+    >
       <OverviewSectionRow
         label={Messages.fields.status}
         contentString={
