@@ -56,8 +56,6 @@ const (
 	EverestSettingsConfigMapName = "everest-settings"
 	// EverestTokenCookie is the name of the cookie that holds the token.
 	EverestTokenCookie = "everest_token"
-	// EverestRBACConfigMapName is the name of the Everest RBAC ConfigMap.
-	EverestRBACConfigMapName = "everest-rbac"
 	// KubernetesManagedByLabel is the label used to identify resources managed by Everest.
 	KubernetesManagedByLabel = "app.kubernetes.io/managed-by"
 	// ForegroundDeletionFinalizer is the finalizer used to delete resources in foreground.
