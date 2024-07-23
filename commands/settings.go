@@ -30,6 +30,5 @@ func newSettingsCommand(l *zap.SugaredLogger) *cobra.Command {
 		Short: "Configure Everest settings",
 	}
 	cmd.AddCommand(settings.NewOIDCCmd(l))
-	cmd.AddCommand(settings.NewRBACCmd(l))
 	return cmd
 }
