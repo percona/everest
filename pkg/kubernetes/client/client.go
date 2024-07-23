@@ -255,6 +255,7 @@ func NewInCluster() (*Client, error) {
 		clientset:    clientset,
 		olmClientset: olmClientset,
 		restConfig:   config,
+		rcLock:       &sync.Mutex{},
 		namespace:    string(namespace),
 	}
 
