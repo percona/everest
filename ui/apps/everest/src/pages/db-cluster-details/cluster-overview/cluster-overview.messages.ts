@@ -6,6 +6,15 @@ export const Messages = {
     monitoring: 'Monitoring',
     advancedConfiguration: 'Advanced configuration',
     resources: 'Resources',
+    backups: 'Backups & PITR',
+    started: 'Started',
+    finished: 'Finished',
+    schedules: 'Schedules',
+    pitr: 'Point-in-time Recovery (PITR)',
+  },
+  actions: {
+    edit: 'Edit',
+    details: 'Details',
   },
   fields: {
     type: 'Type',
@@ -24,5 +33,6 @@ export const Messages = {
     cpu: 'CPU',
     disk: 'Disk',
     memory: 'Memory',
+    backupStorages: 'Backup\u00A0storage',
   },
 };

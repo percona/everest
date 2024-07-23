@@ -15,7 +15,7 @@ export interface OverviewCardProps extends Omit<MuiCardProps, 'content'> {
   dataTestId: string;
   children: ReactNode;
 }
-//TODO 1230 probably we need to combine with old
+
 const OverviewCard = ({
   cardHeaderProps,
   children,
@@ -25,7 +25,12 @@ const OverviewCard = ({
   ...props
 }: OverviewCardProps) => {
   return (
-    <MuiCard variant="grey" data-testid={dataTestId} {...props}>
+    <MuiCard
+      variant="grey"
+      sx={{ width: '368px', height: 'fit-content', ...sx }}
+      data-testid={dataTestId}
+      {...props}
+    >
       {cardHeaderProps?.title && (
         <CardHeader
           data-testid={`${dataTestId}-card-header`}

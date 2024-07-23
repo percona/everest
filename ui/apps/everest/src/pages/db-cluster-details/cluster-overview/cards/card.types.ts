@@ -52,13 +52,20 @@ export type DatabaseDetailsOverviewCardProps =
     MonitoringConfigurationOverviewCardProps &
     OverviewCardProps;
 
-export type BackupsDetailsOverviewCardProps = {
-  scheduledBackups?: boolean;
-} & OverviewCardProps;
-
 export type ResourcesDetailsOverviewProps = {
   numberOfNodes: DbCluster['spec']['engine']['replicas'];
   cpu: NonNullable<DbCluster['spec']['engine']['resources']>['cpu'];
   memory: NonNullable<DbCluster['spec']['engine']['resources']>['memory'];
   disk: DbCluster['spec']['engine']['storage']['size'];
+} & OverviewCardProps;
+
+export type BackupsDetailsOverviewCardProps = {
+  schedules: NonNullable<DbCluster['spec']['backup']>['schedules'];
+  backup: DbCluster['spec']['backup'];
+  pitrEnabled: NonNullable<
+    NonNullable<DbCluster['spec']['backup']>['pitr']
+  >['enabled'];
+  pitrStorageName: NonNullable<
+    NonNullable<DbCluster['spec']['backup']>['pitr']
+  >['backupStorageName'];
 } & OverviewCardProps;

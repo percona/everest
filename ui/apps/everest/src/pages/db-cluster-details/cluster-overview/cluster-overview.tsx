@@ -21,6 +21,7 @@ import { ProxyExposeType } from 'shared-types/dbCluster.types';
 import { DbDetails, ResourcesDetails } from './cards';
 import { useContext } from 'react';
 import { DbClusterContext } from '../dbCluster.context';
+import { BackupsDetails } from './cards/backups-detailes';
 
 export const ClusterOverview = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -65,6 +66,13 @@ export const ClusterOverview = () => {
         cpu={dbCluster?.spec.engine.resources?.cpu!}
         memory={dbCluster?.spec.engine.resources?.memory!}
         disk={dbCluster?.spec.engine.storage.size!}
+        loading={loadingCluster}
+      />
+      <BackupsDetails
+        backup={dbCluster?.spec.backup!}
+        schedules={dbCluster?.spec.backup?.schedules}
+        pitrEnabled={dbCluster?.spec.backup?.pitr?.enabled!}
+        pitrStorageName={dbCluster?.spec.backup?.pitr?.backupStorageName!}
         loading={loadingCluster}
       />
     </Stack>

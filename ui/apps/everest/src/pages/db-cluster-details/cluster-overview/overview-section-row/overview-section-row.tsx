@@ -18,11 +18,12 @@ import { OverviewSectionRowProps } from './overview-section-row.types';
 
 export const OverviewSectionRow = ({
   label,
+  labelProps,
   contentString,
   content,
 }: OverviewSectionRowProps) => (
   <Grid container>
-    <Grid item xs={3} minWidth="90px">
+    <Grid item xs={3} minWidth="90px" {...labelProps}>
       <Typography
         variant="body2"
         sx={{ fontWeight: '700', lineHeight: '22.4px' }}
