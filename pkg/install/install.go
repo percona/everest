@@ -160,6 +160,10 @@ type (
 		// PXC stores if XtraDB Cluster shall be installed.
 		PXC bool `mapstructure:"xtradb-cluster"`
 	}
+
+	supportedVersion struct {
+		kubernetes goversion.Constraints
+	}
 )
 
 // NewInstall returns a new Install struct.
@@ -208,6 +212,11 @@ func (o *Install) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	if err = o.checkRequirements(latestMeta); err != nil {
+		return err
+	}
+
 	recVer, err := version.RecommendedVersions(latestMeta)
 	if err != nil {
 		return err
@@ -241,6 +250,57 @@ func (o *Install) Run(ctx context.Context) error {
 	if !isAdminSecure {
 		fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage)
 	}
+	return nil
+}
+
+func (o *Install) supportedVersion(meta *versionpb.MetadataVersion) (*supportedVersion, error) {
+	supVer := &supportedVersion{}
+
+	// Parse MetadataVersion into supportedVersion struct.
+	config := map[string]*goversion.Constraints{
+		"kubernetes": &supVer.kubernetes,
+	}
+	for key, ref := range config {
+		if s, ok := meta.GetSupported()[key]; ok {
+			c, err := goversion.NewConstraint(s)
+			if err != nil {
+				return nil, errors.Join(err, fmt.Errorf("invalid %s constraint %s", key, s))
+			}
+			*ref = c
+		}
+	}
+
+	return supVer, nil
+}
+
+func (o *Install) checkRequirements(meta *versionpb.MetadataVersion) error {
+	supVer, err := o.supportedVersion(meta)
+	if err != nil {
+		return err
+	}
+
+	if len(supVer.kubernetes) > 0 {
+		o.l.Info("Checking Kubernetes version requirements")
+		k8sVersionInfo, err := o.kubeClient.GetServerVersion()
+		if err != nil {
+			return errors.Join(err, errors.New("could not retrieve Kubernetes version"))
+		}
+
+		k8sVersion, err := goversion.NewVersion(fmt.Sprintf("%s.%s", k8sVersionInfo.Major, k8sVersionInfo.Minor))
+		if err != nil {
+			return errors.Join(err, errors.New("invalid Kubernetes version"))
+		}
+
+		if !supVer.kubernetes.Check(k8sVersion) {
+			return fmt.Errorf(
+				"kubernetes version %q does not meet minimum requirements of %q",
+				k8sVersion.String(), supVer.kubernetes.String(),
+			)
+		}
+
+		o.l.Debugf("Finished requirements check for Kubernetes version")
+	}
+
 	return nil
 }
 

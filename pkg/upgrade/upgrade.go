@@ -93,6 +93,7 @@ type (
 	supportedVersion struct {
 		catalog       goversion.Constraints
 		cli           goversion.Constraints
+		kubernetes    goversion.Constraints
 		olm           goversion.Constraints
 		pgOperator    goversion.Constraints
 		pxcOperator   goversion.Constraints
@@ -476,6 +477,7 @@ func (u *Upgrade) supportedVersion(meta *version.MetadataVersion) (*supportedVer
 		"cli":           &supVer.cli,
 		"olm":           &supVer.olm,
 		"catalog":       &supVer.catalog,
+		"kubernetes":    &supVer.kubernetes,
 		"pgOperator":    &supVer.pgOperator,
 		"pxcOperator":   &supVer.pxcOperator,
 		"psmdbOperator": &supVer.psmdbOperator,
@@ -515,12 +517,51 @@ func (u *Upgrade) checkRequirements(ctx context.Context, supVer *supportedVersio
 		u.l.Debug("cli version is empty")
 	}
 
+	// Kubernetes version check
+	if err := u.checkK8sRequirements(supVer); err != nil {
+		return err
+	}
+
+	// Operator version check.
+	if err := u.checkOperatorRequirements(ctx, supVer); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *Upgrade) checkK8sRequirements(supVer *supportedVersion) error {
+	if len(supVer.kubernetes) > 0 {
+		u.l.Info("Checking Kubernetes version requirements")
+		k8sVersionInfo, err := u.kubeClient.GetServerVersion()
+		if err != nil {
+			return errors.Join(err, errors.New("could not retrieve Kubernetes version"))
+		}
+
+		k8sVersion, err := goversion.NewVersion(fmt.Sprintf("%s.%s", k8sVersionInfo.Major, k8sVersionInfo.Minor))
+		if err != nil {
+			return errors.Join(err, errors.New("invalid Kubernetes version"))
+		}
+
+		if !supVer.kubernetes.Check(k8sVersion) {
+			return fmt.Errorf(
+				"kubernetes version %q does not meet minimum requirements of %q",
+				k8sVersion.String(), supVer.kubernetes.String(),
+			)
+		}
+
+		u.l.Debugf("Finished requirements check for Kubernetes version")
+	}
+
+	return nil
+}
+
+func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *supportedVersion) error {
 	nss, err := u.kubeClient.GetDBNamespaces(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Operator version check.
 	cfg := []requirementsCheck{
 		{common.PXCOperatorName, supVer.pxcOperator},
 		{common.PGOperatorName, supVer.pgOperator},
