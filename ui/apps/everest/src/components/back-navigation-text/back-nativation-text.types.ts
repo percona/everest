@@ -4,4 +4,5 @@ export type BackNavigationTextProps = {
   text: string;
   onBackClick?: () => void;
   stackProps?: StackProps;
+  rightSlot?: React.ReactNode;
 };

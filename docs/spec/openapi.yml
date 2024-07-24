@@ -72,85 +72,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserCredentials'
-  '/permissions':
-    get:
-      tags:
-        - Authentication & Authorization
-      summary: Get user permissions
-      description: |
-        This API returns a list of permissions for the user that is currently logged in.
-        
-        *Example:*
-        Assume the following RBAC policy, and users `alice` and `bob`:
-        ```
-        p, adminrole:role, namespaces, read, *
-        p, adminrole:role, database-engines, *, */*
-        p, adminrole:role, database-clusters, *, */*
-        p, bob, database-clusters, *, */*
-
-        g, alice, adminrole:role
-        ```
-
-        The API will return the following permissions for `alice`:
-        ```
-        {
-          "permissions": [
-            [
-                "alice",
-                "namespaces",
-                "read",
-                "*"
-            ],
-            [
-                "alice",
-                "database-engines",
-                "*",
-                "*/*"
-            ],
-            [
-                "alice",
-                "database-clusters",
-                "*",
-                "*/*"
-            ]
-          ]
-        }
-        ```
-
-        And the following permissions for `bob`:
-        ```
-        {
-          "permissions": [
-            [
-                "bob",
-                "database-clusters",
-                "*",
-                "*/*"
-            ]
-          ]
-        }
-        ```
-
-      operationId: getUserPermissions
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserPermissions'
-        '400':
-          description: Unsuccessful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
   '/namespaces':
     x-everest-resource-name: namespaces
     get:
@@ -799,11 +720,14 @@ paths:
   '/namespaces/{namespace}/database-engines/{name}/operator-version/preflight':
     x-everest-resource-name: database-engines
     get:
+      deprecated: true
       tags:
         - Operators
       summary: Upgrade preflight
       description: |
         This API gets the results of the preflight checks that must be performed before upgrading a database engine operator.
+
+        *This API is deprecated and will be removed in v1.2.0*
       operationId: getOperatorUpgradePreflight
       parameters:
         - name: namespace
@@ -843,9 +767,93 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-engines/upgrade-plan':
+    x-everest-resource-name: database-engines
+    get:
+      tags:
+        - Operators
+      summary: Get upgrade plan
+      description: |
+        This API lists pending operator upgrades in the given namespace.
+
+        Additionally, it also returns a list of pending action items that need to be performed 
+        before and after upgrading a database operator.
+
+        Added in v1.1.0, it is recommended to use this API for operator upgrades.
+        The older upgrade APIs are deprecated and will be removed in v1.2.0
+      operationId: getUpgradePlan
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpgradePlan'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-engines/upgrade-plan/approval':
+    x-everest-resource-name: database-engines
+    post:
+      tags:
+        - Operators
+      summary: Upgrade database engine operators
+      description: |
+        This API upgrades all database engine operators in the specified namespace.
+
+        Added in v1.1.0, it is recommended to use this API for operator upgrades.
+        The older upgrade APIs are deprecated and will be removed in v1.2.0
+
+      operationId: approveUpgradePlan
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Request for upgrading the database engine operators
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpgradePlanApproval'
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines/{name}/operator-version':
     x-everest-resource-name: database-engines
     get:
+      deprecated: true
       tags:
         - Operators
       summary: Version info
@@ -854,6 +862,8 @@ paths:
 
         Additionally, if the specified database engine operator was newly upgraded to the specified version, it also returns
         a list of pending action items that need to be performed before the operator can be considered fully upgraded.
+
+        *This API is deprecated and will be removed in v1.2.0*
       operationId: getOperatorVersion
       parameters:
         - name: namespace
@@ -890,10 +900,13 @@ paths:
     put:
       tags:
         - Operators
+      deprecated: true
       summary: Upgrade database engine operator
       description: |
         This API upgrades the database engine operator specified by the `name` and `namespace`.
         Before performing the upgrade, the preflight checks must be performed.
+
+        *This API is deprecated and will be removed in v1.2.0*
       operationId: upgradeDatabaseEngineOperator
       parameters:
         - name: namespace
@@ -1758,6 +1771,7 @@ components:
             $ref: '#/components/schemas/OperatorVersionCheckForDatabase'
       additionalProperties: false
     OperatorUpgradePreflightForDatabase:
+      deprecated: true
       type: object
       description: Operator upgrade preflight check results for a database
       properties:
@@ -1775,7 +1789,52 @@ components:
             - restart
             - upgradeEngine
       additionalProperties: false
+    UpgradeTask:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the database cluster
+        message:
+          type: string
+        pendingTask:
+          type: string
+          description: Pending task for the database cluster
+          enum:
+            - ready
+            - notReady
+            - restart
+            - upgradeEngine
+    Upgrade:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the operator
+        currentVersion:
+          type: string
+          description: The current operator version
+        targetVersion:
+          type: string
+          description: | 
+            The next version of the operator to upgrade to.
+    UpgradePlan:
+      type: object
+      description: Operators upgrade plan
+      properties:
+        upgrades:
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/Upgrade'
+        pendingActions:
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/UpgradeTask'
+      additionalProperties: false
     OperatorUpgradePreflight:
+      deprecated: true
       type: object
       description: Operator upgrade preflight check results
       properties:
@@ -2099,7 +2158,13 @@ components:
         metadata:
           type: object
       type: object
+    UpgradePlanApproval:
+      type: object
+      description: |
+        This no-op object is used to trigger the operator upgrade in a namespace.
+      properties: {}
     DatabaseEngineOperatorUpgradeParams:
+      deprecated: true
       type: object
       description: Database engine operator upgrade parameters
       properties:
