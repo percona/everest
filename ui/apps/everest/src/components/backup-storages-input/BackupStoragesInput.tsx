@@ -14,6 +14,7 @@ type Props = {
   dbType: DbType;
   schedules: Schedule[];
   autoFillProps?: Partial<AutoCompleteAutoFillProps<BackupStorage>>;
+  hideUsedStoragesInSchedules?: boolean;
 };
 
 const BackupStoragesInput = ({
@@ -22,6 +23,7 @@ const BackupStoragesInput = ({
   dbType,
   schedules,
   autoFillProps,
+  hideUsedStoragesInSchedules,
 }: Props) => {
   const { data: backupStorages = [], isFetching: fetchingStorages } =
     useBackupStoragesByNamespace(namespace);
@@ -32,20 +34,28 @@ const BackupStoragesInput = ({
       enabled: !!dbClusterName && dbType === DbType.Postresql,
     }
   );
-
   const isFetching = fetchingStorages || fetchingBackups;
-  const storagesInUse = [
-    ...backups.map((backup) => backup.backupStorageName),
-    ...schedules.map((schedule) => schedule.backupStorageName),
-  ];
+  const storagesInDemandBackups = backups.map(
+    (backup) => backup.backupStorageName
+  );
+  const storagesInSchedules = schedules.map(
+    (schedule) => schedule.backupStorageName
+  );
+  const storagesInUse = [...storagesInDemandBackups, ...storagesInSchedules];
   const uniqueStoragesInUse = [...new Set(storagesInUse)];
   const pgLimitAchieved =
     dbType === DbType.Postresql && uniqueStoragesInUse.length >= PG_SLOTS_LIMIT;
-  const storagesToShow: BackupStorage[] = pgLimitAchieved
+  let storagesToShow: BackupStorage[] = pgLimitAchieved
     ? backupStorages.filter((storage) =>
         uniqueStoragesInUse.includes(storage.name)
       )
     : backupStorages;
+
+  if (hideUsedStoragesInSchedules) {
+    storagesToShow = storagesToShow.filter(
+      (storage) => !storagesInSchedules.includes(storage.name)
+    );
+  }
 
   return (
     <AutoCompleteAutoFill<BackupStorage>
