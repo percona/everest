@@ -356,7 +356,6 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
     body2: {
       fontWeight: 400,
       fontSize: '14px',
-      lineHeight: '21px',
     },
     caption: {
       fontWeight: 400,
