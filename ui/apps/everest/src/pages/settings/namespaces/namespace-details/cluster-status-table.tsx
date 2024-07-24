@@ -5,7 +5,7 @@ import { Table } from '@percona/ui-lib';
 import semverCoerce from 'semver/functions/coerce';
 import {
   DbEngineToolStatus,
-  OperatorUpgradeDb,
+  OperatorUpgradePendingAction,
 } from 'shared-types/dbEngines.types';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { ClusterStatusTableProps } from './types';
@@ -19,16 +19,16 @@ import { Messages } from './messages';
 
 const ClusterStatusTable = ({
   namespace,
-  databases,
-  dbEngine,
+  pendingActions,
+  dbEngines,
 }: ClusterStatusTableProps) => {
-  const dbNames = databases.map((db) => db.name);
+  const dbNames = pendingActions.map((db) => db.name);
   const { data: dbClusters = [] } = useDbClusters(namespace, {
     select: (clusters) =>
       clusters.items.filter((cluster) =>
         dbNames.includes(cluster.metadata.name)
       ),
-    enabled: !!namespace && !!databases.length,
+    enabled: !!namespace && !!pendingActions.length,
   });
   const { mutate: updateDbClusterCrd } = useUpdateDbClusterCrd();
   const { mutate: updateDbClusterEngine } = useUpdateDbClusterEngine();
@@ -38,7 +38,7 @@ const ClusterStatusTable = ({
   const selectedDbEngineVersion = useRef<string>();
 
   const onDbClick = useCallback(
-    (db: OperatorUpgradeDb) => {
+    (db: OperatorUpgradePendingAction) => {
       const { pendingTask } = db;
       selectedDbCluster.current = dbClusters.find(
         (cluster) => cluster.metadata.name === db.name
@@ -70,7 +70,11 @@ const ClusterStatusTable = ({
 
           if (currenEngineVersion) {
             const currentMajor = currenEngineVersion.major;
-            const availableVersions = dbEngine.availableVersions.engine
+            const dbEngine = dbEngines.find(
+              (engine) =>
+                engine.type === selectedDbCluster.current?.spec.engine.type
+            );
+            const availableVersions = (dbEngine?.availableVersions.engine || [])
               .filter(({ version, status }) => {
                 const semver = semverCoerce(version);
                 return (
@@ -89,7 +93,7 @@ const ClusterStatusTable = ({
         }
       }
     },
-    [dbClusters, dbEngine.availableVersions.engine]
+    [dbClusters, dbEngines]
   );
 
   const onCrdUpdate = async () => {
@@ -131,7 +135,7 @@ const ClusterStatusTable = ({
     setOpenUpdateEngineDialog(false);
   };
 
-  const columns = useMemo<MRT_ColumnDef<OperatorUpgradeDb>[]>(
+  const columns = useMemo<MRT_ColumnDef<OperatorUpgradePendingAction>[]>(
     () => [
       {
         accessorKey: 'name',
@@ -184,7 +188,7 @@ const ClusterStatusTable = ({
         tableName={`${namespace}-upgrade-pending-actions`}
         noDataMessage="No pending actions"
         columns={columns}
-        data={databases}
+        data={pendingActions}
       />
       <ConfirmDialog
         isOpen={openUpdateCrDialog}

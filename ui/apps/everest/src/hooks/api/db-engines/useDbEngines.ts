@@ -24,11 +24,11 @@ import {
   DbEngineType,
   EngineToolPayload,
   GetDbEnginesPayload,
-  OperatorUpgradePreflightPayload,
+  OperatorsUpgradePlan,
 } from 'shared-types/dbEngines.types';
 import {
   getDbEnginesFn,
-  getOperatorUpgradePreflight,
+  getOperatorsUpgradePlan,
   upgradeOperator,
 } from 'api/dbEngineApi';
 
@@ -118,32 +118,45 @@ export const useDbEngines = (
     ...options,
   });
 
-export const useDbEngineUpgradePreflight = (
-  namespace: string,
-  dbEngineName: string,
-  targetVersion: string,
-  options?: PerconaQueryOptions<OperatorUpgradePreflightPayload>
-) =>
-  useQuery<OperatorUpgradePreflightPayload>({
-    queryKey: [
-      'dbEngineUpgradePreflight',
-      namespace,
-      dbEngineName,
-      targetVersion,
-    ],
-    queryFn: () =>
-      getOperatorUpgradePreflight(namespace, dbEngineName, targetVersion),
-    ...options,
-  });
-
 export const useOperatorUpgrade = (
   namespace: string,
-  dbEngineName: string,
-  targetVersion: string,
   options?: UseMutationOptions<unknown, unknown, null, unknown>
 ) =>
   useMutation({
-    mutationKey: ['operatorUpgrade', namespace, dbEngineName, targetVersion],
-    mutationFn: () => upgradeOperator(namespace, dbEngineName, targetVersion),
+    mutationKey: ['operatorUpgrade', namespace],
+    mutationFn: () => upgradeOperator(namespace),
+    ...options,
+  });
+
+export type UseOperatorsUpgradePlanType = OperatorsUpgradePlan & {
+  upToDate: Array<{
+    name: string;
+    currentVersion: string;
+  }>;
+};
+
+export const useOperatorsUpgradePlan = (
+  namespace: string,
+  dbEngines: DbEngine[],
+  options?: PerconaQueryOptions<UseOperatorsUpgradePlanType>
+) =>
+  useQuery<UseOperatorsUpgradePlanType>({
+    queryKey: ['operatorUpgradePlan', namespace],
+    queryFn: async () => {
+      const operatorUpgradePlan = await getOperatorsUpgradePlan(namespace);
+      const operatorsWithUpgrades = operatorUpgradePlan.upgrades.map(
+        (plan) => plan.name
+      );
+
+      return {
+        ...operatorUpgradePlan,
+        upToDate: dbEngines
+          .filter((engine) => !operatorsWithUpgrades.includes(engine.name))
+          .map((engine) => ({
+            name: engine.name,
+            currentVersion: engine.operatorVersion || '',
+          })),
+      };
+    },
     ...options,
   });
