@@ -518,6 +518,19 @@ func (u *Upgrade) checkRequirements(ctx context.Context, supVer *supportedVersio
 	}
 
 	// Kubernetes version check
+	if err := u.checkK8sRequirements(supVer); err != nil {
+		return err
+	}
+
+	// Operator version check.
+	if err := u.checkOperatorRequirements(ctx, supVer); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *Upgrade) checkK8sRequirements(supVer *supportedVersion) error {
 	if len(supVer.kubernetes) > 0 {
 		u.l.Info("Checking Kubernetes version requirements")
 		k8sVersionInfo, err := u.kubeClient.GetServerVersion()
@@ -540,12 +553,15 @@ func (u *Upgrade) checkRequirements(ctx context.Context, supVer *supportedVersio
 		u.l.Debugf("Finished requirements check for Kubernetes version")
 	}
 
+	return nil
+}
+
+func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *supportedVersion) error {
 	nss, err := u.kubeClient.GetDBNamespaces(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Operator version check.
 	cfg := []requirementsCheck{
 		{common.PXCOperatorName, supVer.pxcOperator},
 		{common.PGOperatorName, supVer.pgOperator},
