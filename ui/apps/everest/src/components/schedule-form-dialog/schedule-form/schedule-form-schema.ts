@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DbEngineType } from '@percona/types';
 import z from 'zod';
 import { MAX_SCHEDULE_NAME_LENGTH } from '../../../consts.ts';
 import { Messages } from './schedule-form.messages.ts';
@@ -22,10 +21,7 @@ import { rfc_123_schema } from 'utils/common-validation';
 import { timeSelectionSchemaObject } from '../../time-selection/time-selection-schema.ts';
 import { Schedule } from 'shared-types/dbCluster.types';
 import { getCronExpressionFromFormValues } from '../../time-selection/time-selection.utils';
-import {
-  sameScheduleFunc,
-  sameStorageLocationFunc,
-} from '../schedule-form-dialog.utils';
+import { sameScheduleFunc } from '../schedule-form-dialog.utils';
 
 export const storageLocationZodObject = z
   .string()
@@ -59,11 +55,7 @@ export const storageLocationScheduleFormSchema = (
   };
 };
 
-export const schema = (
-  schedules: Schedule[],
-  mode: 'edit' | 'new',
-  dbType: DbEngineType
-) => {
+export const schema = (schedules: Schedule[], mode: 'edit' | 'new') => {
   const schedulesNamesList = schedules.map((item) => item?.name);
   return z
     .object({
@@ -104,16 +96,7 @@ export const schema = (
     })
     .superRefine(
       (
-        {
-          selectedTime,
-          hour,
-          minute,
-          onDay,
-          weekDay,
-          amPm,
-          scheduleName,
-          storageLocation,
-        },
+        { selectedTime, hour, minute, onDay, weekDay, amPm, scheduleName },
         ctx
       ) => {
         const currentSchedule = getCronExpressionFromFormValues({
@@ -135,20 +118,6 @@ export const schema = (
             code: z.ZodIssueCode.custom,
             message: Messages.sameTimeSchedule,
             path: ['root'],
-          });
-        }
-
-        const sameStorageLocation = sameStorageLocationFunc(
-          schedules,
-          mode,
-          storageLocation,
-          scheduleName
-        );
-        if (sameStorageLocation && dbType === DbEngineType.POSTGRESQL) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: Messages.sameStorageScheduleForPG,
-            path: [ScheduleFormFields.storageLocation],
           });
         }
       }
