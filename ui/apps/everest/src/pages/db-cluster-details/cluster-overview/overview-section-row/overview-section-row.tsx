@@ -25,18 +25,13 @@ export const OverviewSectionRow = ({
 }: OverviewSectionRowProps) => (
   <Grid container data-testid={`${kebabize(label)}-overview-section-row`}>
     <Grid item xs={3} minWidth="90px" {...labelProps}>
-      <Typography
-        variant="body2"
-        sx={{ fontWeight: '700', lineHeight: '22.4px' }}
-      >
+      <Typography variant="body2" sx={{ fontWeight: '700' }}>
         {label}
       </Typography>
     </Grid>
     <Grid item>
       {contentString && (
-        <Typography variant="body2" sx={{ lineHeight: '22.4px' }}>
-          {contentString}
-        </Typography>
+        <Typography variant="body2">{contentString}</Typography>
       )}
       {content}
     </Grid>

@@ -21,7 +21,7 @@ import { ProxyExposeType } from 'shared-types/dbCluster.types';
 import { DbDetails, ResourcesDetails } from './cards';
 import { useContext } from 'react';
 import { DbClusterContext } from '../dbCluster.context';
-import { BackupsDetails } from './cards/backups-detailes';
+import { BackupsDetails } from './cards/backups-details';
 
 export const ClusterOverview = () => {
   const { dbClusterName, namespace = '' } = useParams();

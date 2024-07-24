@@ -27,6 +27,10 @@ export const MonitoringDetails = ({
       dataTestId="monitoring"
       title={Messages.titles.monitoring}
       loading={loading}
+      // actionButtonProps={{
+      //   onClick: () => {console.log('edit action')}
+      // }}
+      // editable={true}
     >
       <OverviewSectionRow
         label={Messages.fields.status}

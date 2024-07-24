@@ -58,12 +58,12 @@ export const HiddenPasswordToggle = ({
       </Typography>
       <IconButton
         onClick={toggle}
-        size="xs"
+        size="small"
         aria-label={`visibility-${show ? 'off' : 'on'}`}
-        sx={{ mt: -0.25 }}
+        sx={{ mt: -0.5 }}
       >
         {
-          //TODO 1230 discussion with Nuna about common usage of this part
+          //TODO 1230 discussion with Nuna about common usage of this part in overview and expanded row
           show ? (
             <VisibilityOutlinedIcon color="primary" />
           ) : (
@@ -73,7 +73,7 @@ export const HiddenPasswordToggle = ({
       </IconButton>
       {showCopy && (
         <CopyToClipboardButton
-          buttonProps={{ sx: { mt: -0.25 }, color: 'primary', size: 'xs' }}
+          buttonProps={{ sx: { mt: -0.5 }, color: 'primary', size: 'small' }}
           textToCopy={value}
         />
       )}

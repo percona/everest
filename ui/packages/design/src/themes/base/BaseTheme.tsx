@@ -100,12 +100,6 @@ declare module '@mui/material/Paper' {
     grey: true;
   }
 }
-//TODO 1230 it still returns error for eslint
-declare module '@mui/material/IconButton' {
-  interface IconButtonPropsSizeOverrides {
-    xs: true;
-  }
-}
 
 const BaseTheme = createTheme();
 
@@ -515,20 +509,6 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
           },
         }),
       },
-    },
-    MuiIconButton: {
-      variants: [
-        {
-          props: { size: 'xs' },
-          style: () => ({
-            padding: '4px',
-            '.MuiSvgIcon-root': {
-              width: '16px',
-              height: '16px',
-            },
-          }),
-        },
-      ],
     },
     MuiButtonGroup: {
       styleOverrides: {
