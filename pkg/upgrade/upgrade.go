@@ -90,16 +90,6 @@ type (
 		versionService versionservice.Interface
 	}
 
-	supportedVersion struct {
-		catalog       goversion.Constraints
-		cli           goversion.Constraints
-		kubernetes    goversion.Constraints
-		olm           goversion.Constraints
-		pgOperator    goversion.Constraints
-		pxcOperator   goversion.Constraints
-		psmdbOperator goversion.Constraints
-	}
-
 	requirementsCheck struct {
 		operatorName string
 		constraints  goversion.Constraints
@@ -457,7 +447,7 @@ func (u *Upgrade) findNextMinorVersion(
 }
 
 func (u *Upgrade) verifyRequirements(ctx context.Context, meta *version.MetadataVersion) error {
-	supVer, err := u.supportedVersion(meta)
+	supVer, err := common.NewSupportedVersion(meta)
 	if err != nil {
 		return err
 	}
@@ -469,33 +459,7 @@ func (u *Upgrade) verifyRequirements(ctx context.Context, meta *version.Metadata
 	return nil
 }
 
-func (u *Upgrade) supportedVersion(meta *version.MetadataVersion) (*supportedVersion, error) {
-	supVer := &supportedVersion{}
-
-	// Parse MetadataVersion into supportedVersion struct.
-	config := map[string]*goversion.Constraints{
-		"cli":           &supVer.cli,
-		"olm":           &supVer.olm,
-		"catalog":       &supVer.catalog,
-		"kubernetes":    &supVer.kubernetes,
-		"pgOperator":    &supVer.pgOperator,
-		"pxcOperator":   &supVer.pxcOperator,
-		"psmdbOperator": &supVer.psmdbOperator,
-	}
-	for key, ref := range config {
-		if s, ok := meta.GetSupported()[key]; ok {
-			c, err := goversion.NewConstraint(s)
-			if err != nil {
-				return nil, errors.Join(err, fmt.Errorf("invalid %s constraint %s", key, s))
-			}
-			*ref = c
-		}
-	}
-
-	return supVer, nil
-}
-
-func (u *Upgrade) checkRequirements(ctx context.Context, supVer *supportedVersion) error {
+func (u *Upgrade) checkRequirements(ctx context.Context, supVer *common.SupportedVersion) error {
 	// TODO: olm, catalog to be implemented.
 
 	// cli version check.
@@ -506,19 +470,19 @@ func (u *Upgrade) checkRequirements(ctx context.Context, supVer *supportedVersio
 			return errors.Join(err, fmt.Errorf("invalid cli version %s", cliVersion.Version))
 		}
 
-		if !supVer.cli.Check(cli.Core()) {
+		if !supVer.Cli.Check(cli.Core()) {
 			return fmt.Errorf(
 				"cli version %q does not meet minimum requirements of %q",
-				cli, supVer.cli.String(),
+				cli, supVer.Cli.String(),
 			)
 		}
-		u.l.Debugf("cli version %q meets requirements %q", cli, supVer.cli.String())
+		u.l.Debugf("cli version %q meets requirements %q", cli, supVer.Cli.String())
 	} else {
 		u.l.Debug("cli version is empty")
 	}
 
 	// Kubernetes version check
-	if err := u.checkK8sRequirements(supVer); err != nil {
+	if err := common.CheckK8sRequirements(supVer, u.l, u.kubeClient); err != nil {
 		return err
 	}
 
@@ -530,42 +494,16 @@ func (u *Upgrade) checkRequirements(ctx context.Context, supVer *supportedVersio
 	return nil
 }
 
-func (u *Upgrade) checkK8sRequirements(supVer *supportedVersion) error {
-	if len(supVer.kubernetes) > 0 {
-		u.l.Info("Checking Kubernetes version requirements")
-		k8sVersionInfo, err := u.kubeClient.GetServerVersion()
-		if err != nil {
-			return errors.Join(err, errors.New("could not retrieve Kubernetes version"))
-		}
-
-		k8sVersion, err := goversion.NewVersion(fmt.Sprintf("%s.%s", k8sVersionInfo.Major, k8sVersionInfo.Minor))
-		if err != nil {
-			return errors.Join(err, errors.New("invalid Kubernetes version"))
-		}
-
-		if !supVer.kubernetes.Check(k8sVersion) {
-			return fmt.Errorf(
-				"kubernetes version %q does not meet minimum requirements of %q",
-				k8sVersion.String(), supVer.kubernetes.String(),
-			)
-		}
-
-		u.l.Debugf("Finished requirements check for Kubernetes version")
-	}
-
-	return nil
-}
-
-func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *supportedVersion) error {
+func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *common.SupportedVersion) error {
 	nss, err := u.kubeClient.GetDBNamespaces(ctx)
 	if err != nil {
 		return err
 	}
 
 	cfg := []requirementsCheck{
-		{common.PXCOperatorName, supVer.pxcOperator},
-		{common.PGOperatorName, supVer.pgOperator},
-		{common.PSMDBOperatorName, supVer.psmdbOperator},
+		{common.PXCOperatorName, supVer.PXCOperator},
+		{common.PGOperatorName, supVer.PGOperator},
+		{common.PSMDBOperatorName, supVer.PSMBDOperator},
 	}
 	for _, ns := range nss {
 		u.l.Infof("Checking operator requirements in namespace %s", ns)
@@ -585,7 +523,7 @@ func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *support
 			if !c.constraints.Check(v) {
 				return fmt.Errorf(
 					"%s version %q does not meet minimum requirements of %q",
-					c.operatorName, v, supVer.pxcOperator.String(),
+					c.operatorName, v, supVer.PXCOperator.String(),
 				)
 			}
 			u.l.Debugf("Finished requirements check for operator %s", c.operatorName)
