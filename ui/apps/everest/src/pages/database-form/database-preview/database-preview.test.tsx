@@ -85,7 +85,7 @@ describe('DatabasePreview', () => {
 
     expect(screen.getByText('Nº nodes: 1')).toBeInTheDocument();
     expect(screen.getByText('CPU: 1 CPU')).toBeInTheDocument();
-    expect(screen.getByText('Disk: 30 Gi')).toBeInTheDocument();
+    expect(screen.getByText('Disk: 30 GB')).toBeInTheDocument();
   });
 
   it('should get updated form values', async () => {
