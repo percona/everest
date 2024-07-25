@@ -98,6 +98,7 @@ export const ScheduleForm = ({
           enableFillFirst: autoFillLocation,
           disabled: disableStorageSelection,
         }}
+        hideUsedStoragesInSchedules={dbEngine === DbEngineType.POSTGRESQL}
       />
       {!hideRetentionCopies && (
         <TextInput
