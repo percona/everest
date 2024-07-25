@@ -16,6 +16,7 @@
 // TODO EVEREST-677
 export interface NamespaceInstance {
   name: string;
+  upgradeAvailable: boolean;
   operator: string;
 }
 
