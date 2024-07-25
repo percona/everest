@@ -4,6 +4,7 @@ import {
   AuthProviderProps as OidcAuthProviderProps,
   useAuth as useOidcAuth,
 } from 'oidc-react';
+import { AxiosError } from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import {
   api,
@@ -70,10 +71,21 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
         localStorage.setItem('everestToken', token);
         setLoggedInStatus();
       } catch (error) {
+        if (error instanceof AxiosError) {
+          const errorStatus = error.response?.status;
+          let errorMsg = 'Something went wrong';
+
+          if (errorStatus === 401) {
+            errorMsg = 'Invalid credentials';
+          } else if (errorStatus === 429) {
+            errorMsg =
+              "Looks like you've made too many attempts. Try again later.";
+          }
+          enqueueSnackbar(errorMsg, {
+            variant: 'error',
+          });
+        }
         setLogoutStatus();
-        enqueueSnackbar('Invalid credentials', {
-          variant: 'error',
-        });
         return;
       }
     }
