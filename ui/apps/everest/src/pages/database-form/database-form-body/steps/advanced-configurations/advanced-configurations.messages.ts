@@ -12,7 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 
-import { SOURCE_RANGE_PLACEHOLDER } from 'consts';
+import { SOURCE_RANGE_MESSAGE } from 'consts';
 
 // limitations under the License.
 export const Messages = {
@@ -31,7 +31,7 @@ export const Messages = {
   },
   internetFacing: 'Internet Facing',
   sourceRange: 'Source Range',
-  sourceRangePlaceholder: SOURCE_RANGE_PLACEHOLDER,
+  sourceRangePlaceholder: SOURCE_RANGE_MESSAGE,
   engineParameters: {
     title: 'Set database engine parameters',
     caption:

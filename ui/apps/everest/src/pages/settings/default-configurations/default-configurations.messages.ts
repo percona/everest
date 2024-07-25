@@ -12,7 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 
-import { INVALID_SOURCE_RANGE_ERROR, SOURCE_RANGE_PLACEHOLDER } from 'consts';
+import {  SOURCE_RANGE_MESSAGE } from 'consts';
 
 // limitations under the License.
 export const Messages = {
@@ -30,10 +30,10 @@ export const Messages = {
   externalAccessMessage:
     'Enable external access by default for db-cluster that should be reachable outside the network cluster.',
   repeatsEvery: 'Repeats',
-  sourceRangePlaceholder: SOURCE_RANGE_PLACEHOLDER,
+  sourceRangePlaceholder: SOURCE_RANGE_MESSAGE,
   addNew: 'Add new',
   errors: {
-    invalidIP: INVALID_SOURCE_RANGE_ERROR,
+    invalidIP: SOURCE_RANGE_MESSAGE,
     required: 'Required field',
   },
 };

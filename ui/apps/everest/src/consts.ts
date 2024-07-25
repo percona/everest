@@ -18,10 +18,8 @@ import { BackupStatus } from 'shared-types/backups.types';
 export const IP_REGEX =
   /^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2])){1}$/;
 
-export const INVALID_SOURCE_RANGE_ERROR =
-  'Provide an IP address along with its corresponding netmask. For example, 255.255.255.0/32.';
-export const SOURCE_RANGE_PLACEHOLDER =
-  'Please enter the single IP address or range using netmask (e.g. 192.168.1.1/24)';
+export const SOURCE_RANGE_MESSAGE =
+  'Please enter a single IP address (e.g., 192.168.1.1/32) or a network range (e.g., 192.168.1.0/24).';
 export const DATE_FORMAT = "dd'/'MM'/'yyyy 'at' hh':'mm' 'a";
 export const PITR_DATE_FORMAT = "dd'/'MM'/'yyyy 'at' hh':'mm':'ss' 'a";
 
