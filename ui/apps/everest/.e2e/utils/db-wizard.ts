@@ -54,3 +54,15 @@ export const goToLastAndSubmit = async (page: Page) => {
   await goToStep(page, 'monitoring');
   await submitWizard(page);
 };
+
+export const populateBasicInformation = async (page: Page, dbType, storageClass: string, clusterName: string) => {
+  await page.getByTestId('text-input-db-name').fill(clusterName);
+
+  if (dbType == "psmdb") {
+    await page.getByTestId('mongodb-toggle-button').click();
+  } else if (dbType == "pxc") {
+      await page.getByTestId('mysql-toggle-button').click();
+  } else if (dbType == "postgresql") {
+    await page.getByTestId('postgresql-toggle-button').click();
+  }
+};

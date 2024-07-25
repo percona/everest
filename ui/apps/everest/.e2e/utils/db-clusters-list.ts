@@ -54,3 +54,27 @@ export const gotoDbClusterBackups = async (page: Page, clusterName: string) => {
   await expect(page.getByText('Overview')).toBeVisible();
   await page.getByTestId('backups').click();
 };
+
+export const deleteDbCluster = async (page: Page, clusterName: string) => {
+  await page.goto('databases');
+  await findDbAndClickActions(page, clusterName, 'delete', 'Up')
+  await expect(page.getByText('Delete database')).toBeVisible();
+  await expect(page.getByText('Irreversible action')).toBeVisible();
+  await page.getByTestId('text-input-confirm-input').fill(clusterName);
+  await page.getByTestId('form-dialog-delete').click();
+};
+
+export const suspendDbCluster = async (page: Page, clusterName: string) => {
+  await page.goto('databases');
+  await findDbAndClickActions(page, clusterName, 'suspend', 'Up')
+};
+
+export const resumeDbCluster = async (page: Page, clusterName: string) => {
+  await page.goto('databases');
+  await findDbAndClickActions(page, clusterName, 'resume', 'Paused')
+};
+
+export const restartDbCluster = async (page: Page, clusterName: string) => {
+  await page.goto('databases');
+  await findDbAndClickActions(page, clusterName, 'restart', 'Up')
+};

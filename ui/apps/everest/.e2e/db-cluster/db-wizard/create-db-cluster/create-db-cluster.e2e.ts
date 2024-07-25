@@ -140,7 +140,7 @@ test.describe('DB Cluster creation', () => {
     await moveForward(page);
     await expect(page.getByText('Nº nodes: 3')).toBeVisible();
 
-    await resourcesStepCheck(page);
+    await resourcesStepCheck(page,0.6,1,1,3);
     await moveForward(page);
 
     await backupsStepCheck(page);
@@ -310,7 +310,7 @@ test.describe('DB Cluster creation', () => {
       clusterName
     );
     await moveForward(page);
-    await resourcesStepCheck(page);
+    await resourcesStepCheck(page,0.6,1,1,3);
     await moveForward(page);
     await backupsStepCheck(page);
     await page
