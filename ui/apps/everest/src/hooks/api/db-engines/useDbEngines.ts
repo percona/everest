@@ -135,6 +135,26 @@ export type UseOperatorsUpgradePlanType = OperatorsUpgradePlan & {
   }>;
 };
 
+export const operatorUpgradePlanQueryFn = async (
+  namespace: string,
+  dbEngines: DbEngine[]
+) => {
+  const operatorUpgradePlan = await getOperatorsUpgradePlan(namespace);
+  const operatorsWithUpgrades = operatorUpgradePlan.upgrades.map(
+    (plan) => plan.name
+  );
+
+  return {
+    ...operatorUpgradePlan,
+    upToDate: dbEngines
+      .filter((engine) => !operatorsWithUpgrades.includes(engine.name))
+      .map((engine) => ({
+        name: engine.name,
+        currentVersion: engine.operatorVersion || '',
+      })),
+  };
+};
+
 export const useOperatorsUpgradePlan = (
   namespace: string,
   dbEngines: DbEngine[],
@@ -142,21 +162,6 @@ export const useOperatorsUpgradePlan = (
 ) =>
   useQuery<UseOperatorsUpgradePlanType>({
     queryKey: ['operatorUpgradePlan', namespace],
-    queryFn: async () => {
-      const operatorUpgradePlan = await getOperatorsUpgradePlan(namespace);
-      const operatorsWithUpgrades = operatorUpgradePlan.upgrades.map(
-        (plan) => plan.name
-      );
-
-      return {
-        ...operatorUpgradePlan,
-        upToDate: dbEngines
-          .filter((engine) => !operatorsWithUpgrades.includes(engine.name))
-          .map((engine) => ({
-            name: engine.name,
-            currentVersion: engine.operatorVersion || '',
-          })),
-      };
-    },
+    queryFn: () => operatorUpgradePlanQueryFn(namespace, dbEngines),
     ...options,
   });
