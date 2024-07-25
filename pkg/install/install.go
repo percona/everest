@@ -208,6 +208,11 @@ func (o *Install) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	if err = o.checkRequirements(latestMeta); err != nil {
+		return err
+	}
+
 	recVer, err := version.RecommendedVersions(latestMeta)
 	if err != nil {
 		return err
@@ -241,6 +246,19 @@ func (o *Install) Run(ctx context.Context) error {
 	if !isAdminSecure {
 		fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage)
 	}
+	return nil
+}
+
+func (o *Install) checkRequirements(meta *versionpb.MetadataVersion) error {
+	supVer, err := common.NewSupportedVersion(meta)
+	if err != nil {
+		return err
+	}
+
+	if err := common.CheckK8sRequirements(supVer, o.l, o.kubeClient); err != nil {
+		return err
+	}
+
 	return nil
 }
 

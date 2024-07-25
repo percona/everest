@@ -202,4 +202,56 @@ describe('BackupStoragesInput', () => {
 
     backupMocks.useDbBackups.mockClear();
   });
+
+  it('should hide used storages in schedules when required', async () => {
+    backupMocks.useDbBackups.mockReturnValue({
+      data: [
+        {
+          backupStorageName: 'storage1',
+        },
+        {
+          backupStorageName: 'storage2',
+        },
+        {
+          backupStorageName: 'storage3',
+        },
+        {
+          backupStorageName: 'storage4',
+        },
+      ],
+      isFetching: false,
+    });
+    render(
+      <FormProviderWrapper>
+        <QueryClientProvider client={queryClient}>
+          <BackupStoragesInput
+            namespace="test"
+            hideUsedStoragesInSchedules
+            dbType={DbType.Postresql}
+            schedules={[
+              {
+                name: 'schedule1',
+                schedule: '0 0 * * *',
+                backupStorageName: 'storage1',
+                enabled: true,
+              },
+              {
+                name: 'schedule2',
+                schedule: '0 0 * * *',
+                backupStorageName: 'storage2',
+                enabled: true,
+              },
+            ]}
+          />
+        </QueryClientProvider>
+      </FormProviderWrapper>
+    );
+
+    fireEvent.click(
+      screen.getAllByRole('button').find((el) => el.title === 'Open')!
+    );
+    expect(screen.getAllByRole('option').length).toBe(2);
+
+    backupMocks.useDbBackups.mockClear();
+  });
 });
