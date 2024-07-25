@@ -17,7 +17,59 @@ const meta = {
           <DocBlock.Title />
           <DocBlock.Subtitle />
           <DocBlock.Description />
-          <DocBlock.Stories />
+          <div>
+            <DocBlock.Heading>Heading</DocBlock.Heading>
+            <div>
+              <DocBlock.Subheading>H1</DocBlock.Subheading>
+              <DocBlock.Canvas of={H1} />
+              <DocBlock.Subheading>H2</DocBlock.Subheading>
+              <DocBlock.Canvas of={H2} />
+              <DocBlock.Subheading>H3</DocBlock.Subheading>
+              <DocBlock.Canvas of={H3} />
+              <DocBlock.Subheading>H4</DocBlock.Subheading>
+              <DocBlock.Canvas of={H4} />
+              <DocBlock.Subheading>H5</DocBlock.Subheading>
+              <DocBlock.Canvas of={H5} />
+              <DocBlock.Subheading>H6</DocBlock.Subheading>
+              <DocBlock.Canvas of={H6} />
+            </div>
+            <DocBlock.Heading>Titling</DocBlock.Heading>
+            <div>
+              <DocBlock.Subheading>Subhead 1</DocBlock.Subheading>
+              <DocBlock.Canvas of={Subhead1} />
+              <DocBlock.Subheading>Subhead 2</DocBlock.Subheading>
+              <DocBlock.Canvas of={Subhead2} />
+              <DocBlock.Subheading>Overline</DocBlock.Subheading>
+              <DocBlock.Canvas of={Overline} />
+              <DocBlock.Subheading>Section Heading</DocBlock.Subheading>
+              <DocBlock.Canvas of={SectionHeading} />
+            </div>
+            <DocBlock.Heading>Body</DocBlock.Heading>
+            <div>
+              <DocBlock.Subheading>Body 1</DocBlock.Subheading>
+              <DocBlock.Canvas of={Body1} />
+              <DocBlock.Subheading>Body 2</DocBlock.Subheading>
+              <DocBlock.Canvas of={Body2} />
+              <DocBlock.Subheading>Caption</DocBlock.Subheading>
+              <DocBlock.Canvas of={Caption} />
+            </div>
+            <DocBlock.Heading>Actions</DocBlock.Heading>
+            <div>
+              <DocBlock.Subheading>Button</DocBlock.Subheading>
+              <DocBlock.Canvas of={Button} />
+              <DocBlock.Subheading>Menu Text</DocBlock.Subheading>
+              <DocBlock.Canvas of={MenuText} />
+            </div>
+            <DocBlock.Heading>Inputs</DocBlock.Heading>
+            <div>
+              <DocBlock.Subheading>Input Text</DocBlock.Subheading>
+              <DocBlock.Canvas of={InputText} />
+              <DocBlock.Subheading>Input Label</DocBlock.Subheading>
+              <DocBlock.Canvas of={InputLabel} />
+              <DocBlock.Subheading>Helper Text</DocBlock.Subheading>
+              <DocBlock.Canvas of={HelperText} />
+            </div>
+          </div>
         </>
       ),
     },
@@ -287,6 +339,46 @@ export const Caption: Story = {
   },
 };
 
+export const Button: Story = {
+  parameters: {
+    docs: {
+      source: {
+        code: '<Typography variant="button">Whereas recognition</Typography>',
+      },
+    },
+  },
+
+  render: function Render() {
+    return (
+      <>
+        <Typography variant={TYPOGRAPHY[4][0].variant}>
+          {TYPOGRAPHY[4][0].text}
+        </Typography>
+      </>
+    );
+  },
+};
+
+export const MenuText: Story = {
+  parameters: {
+    docs: {
+      source: {
+        code: '<Typography variant="menuText">Whereas recognition</Typography>',
+      },
+    },
+  },
+
+  render: function Render() {
+    return (
+      <>
+        <Typography variant={TYPOGRAPHY[4][1].variant}>
+          {TYPOGRAPHY[4][1].text}
+        </Typography>
+      </>
+    );
+  },
+};
+
 export const InputText: Story = {
   parameters: {
     docs: {
@@ -299,8 +391,8 @@ export const InputText: Story = {
   render: function Render() {
     return (
       <>
-        <Typography variant={TYPOGRAPHY[4][0].variant}>
-          {TYPOGRAPHY[4][0].text}
+        <Typography variant={TYPOGRAPHY[5][0].variant}>
+          {TYPOGRAPHY[5][0].text}
         </Typography>
       </>
     );
@@ -319,8 +411,8 @@ export const InputLabel: Story = {
   render: function Render() {
     return (
       <>
-        <Typography variant={TYPOGRAPHY[4][1].variant}>
-          {TYPOGRAPHY[4][1].text}
+        <Typography variant={TYPOGRAPHY[5][1].variant}>
+          {TYPOGRAPHY[5][1].text}
         </Typography>
       </>
     );
@@ -339,8 +431,8 @@ export const HelperText: Story = {
   render: function Render() {
     return (
       <>
-        <Typography variant={TYPOGRAPHY[4][2].variant}>
-          {TYPOGRAPHY[4][2].text}
+        <Typography variant={TYPOGRAPHY[5][2].variant}>
+          {TYPOGRAPHY[5][2].text}
         </Typography>
       </>
     );

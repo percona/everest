@@ -148,6 +148,16 @@ export const TYPOGRAPHY: Typography = [
   ],
   [
     {
+      variant: 'button',
+      text: 'Whereas recognition',
+    },
+    {
+      variant: 'menuText',
+      text: 'Whereas recognition',
+    },
+  ],
+  [
+    {
       variant: 'inputText',
       text: 'Whereas recognition',
     },
