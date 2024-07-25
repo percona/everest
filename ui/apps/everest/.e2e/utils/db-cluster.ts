@@ -73,7 +73,7 @@ export const createDbClusterFn = async (
         },
         storage: {
           class: customOptions?.storageClass! || storageClassNames,
-          size: `${customOptions?.disk || 25}Gi`,
+          size: `${customOptions?.disk || 25}G`,
         },
         // TODO return engineParams to tests
         // config: dbPayload.engineParametersEnabled

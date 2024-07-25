@@ -189,11 +189,11 @@ export const ResourcesStep = () => {
             label={Messages.labels.disk.toUpperCase()}
             helperText={checkResourceText(
               resourcesInfo?.available?.diskSize,
-              'Gi',
+              'GB',
               Messages.labels.disk,
               diskCapacityExceeded
             )}
-            endSuffix="Gi"
+            endSuffix="GB"
             numberOfNodes={numberOfNodes}
           />
         </Box>
