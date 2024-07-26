@@ -118,7 +118,7 @@ func CheckK8sRequirements(supVer *SupportedVersion, l *zap.SugaredLogger, kubeCl
 			return fmt.Errorf("invalid Kubernetes version %s: %w", k8sVersionInfo.GitVersion, err)
 		}
 
-		if !supVer.Kubernetes.Check(k8sVersion) {
+		if !supVer.Kubernetes.Check(k8sVersion.Core()) {
 			return fmt.Errorf(
 				"kubernetes version %q does not meet minimum requirements of %q",
 				k8sVersion.String(), supVer.Kubernetes.String(),
