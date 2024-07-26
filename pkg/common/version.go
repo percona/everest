@@ -113,9 +113,9 @@ func CheckK8sRequirements(supVer *SupportedVersion, l *zap.SugaredLogger, kubeCl
 			return errors.Join(err, errors.New("could not retrieve Kubernetes version"))
 		}
 
-		k8sVersion, err := goversion.NewVersion(fmt.Sprintf("%s.%s", k8sVersionInfo.Major, k8sVersionInfo.Minor))
+		k8sVersion, err := goversion.NewVersion(k8sVersionInfo.GitVersion)
 		if err != nil {
-			return errors.Join(err, errors.New("invalid Kubernetes version"))
+			return fmt.Errorf("invalid Kubernetes version %s: %w", k8sVersionInfo.GitVersion, err)
 		}
 
 		if !supVer.Kubernetes.Check(k8sVersion) {
