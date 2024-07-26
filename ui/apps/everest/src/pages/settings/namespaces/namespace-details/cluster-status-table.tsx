@@ -2,20 +2,28 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
 import { Button } from '@mui/material';
 import { Table } from '@percona/ui-lib';
+import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
 import semverCoerce from 'semver/functions/coerce';
 import {
   DbEngineToolStatus,
   OperatorUpgradePendingAction,
 } from 'shared-types/dbEngines.types';
-import { DbCluster } from 'shared-types/dbCluster.types';
+import { DbCluster, DbClusterStatus, Spec } from 'shared-types/dbCluster.types';
 import { ClusterStatusTableProps } from './types';
 import { useDbClusters } from 'hooks/api/db-clusters/useDbClusters';
+import { DB_CLUSTER_STATUS_TO_BASE_STATUS } from 'pages/databases/DbClusterView.constants';
+import { beautifyDbClusterStatus } from 'pages/databases/DbClusterView.utils';
 import {
   useUpdateDbClusterCrd,
   useUpdateDbClusterEngine,
 } from 'hooks/api/db-cluster/useUpdateDbCluster';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import { Messages } from './messages';
+import StatusField from 'components/status-field';
+
+type EnhancedDbList = OperatorUpgradePendingAction & {
+  db?: DbCluster;
+};
 
 const ClusterStatusTable = ({
   namespace,
@@ -36,6 +44,20 @@ const ClusterStatusTable = ({
   const [openUpdateEngineDialog, setOpenUpdateEngineDialog] = useState(false);
   const selectedDbCluster = useRef<DbCluster>();
   const selectedDbEngineVersion = useRef<string>();
+  const enhancedDbList: EnhancedDbList[] = useMemo(
+    () =>
+      pendingActions.map((action) => {
+        const db = dbClusters.find(
+          (cluster) => cluster.metadata.name === action.name
+        );
+
+        return {
+          ...action,
+          db,
+        };
+      }),
+    [dbClusters, pendingActions]
+  );
 
   const onDbClick = useCallback(
     (db: OperatorUpgradePendingAction) => {
@@ -135,24 +157,45 @@ const ClusterStatusTable = ({
     setOpenUpdateEngineDialog(false);
   };
 
-  const columns = useMemo<MRT_ColumnDef<OperatorUpgradePendingAction>[]>(
+  const columns = useMemo<MRT_ColumnDef<EnhancedDbList>[]>(
     () => [
+      {
+        id: 'status',
+        header: 'Status',
+        accessorFn: (row) => row.db?.status?.status,
+        Cell: ({ cell }) => (
+          <StatusField
+            status={cell.getValue<DbClusterStatus>()}
+            statusMap={DB_CLUSTER_STATUS_TO_BASE_STATUS}
+          >
+            {beautifyDbClusterStatus(cell.getValue<DbClusterStatus>())}
+          </StatusField>
+        ),
+      },
       {
         accessorKey: 'name',
         header: 'Database name',
       },
       {
-        id: 'crd',
-        accessorFn: (row) => row.name,
-        header: 'CRD Version',
+        id: 'technology',
+        header: 'Technology',
+        accessorFn: (row) => row.db?.spec.engine,
         Cell: ({ cell }) => {
-          if (!dbClusters.length) {
-            return null;
+          const engine = cell.getValue<Spec['engine']>();
+
+          if (!engine) {
+            return 'N/A';
           }
 
-          const db = dbClusters.find(
-            (cluster) => cluster.metadata.name === cell.getValue()
-          );
+          return `${beautifyDbTypeName(dbEngineToDbType(engine.type))} ${engine.version}`;
+        },
+      },
+      {
+        id: 'crd',
+        accessorFn: (row) => row.db,
+        header: 'CRD Version',
+        Cell: ({ cell }) => {
+          const db = cell.getValue<DbCluster | undefined>();
 
           return db?.status?.crVersion || 'N/A';
         },
@@ -188,7 +231,7 @@ const ClusterStatusTable = ({
         tableName={`${namespace}-upgrade-pending-actions`}
         noDataMessage="No pending actions"
         columns={columns}
-        data={pendingActions}
+        data={enhancedDbList}
       />
       <ConfirmDialog
         isOpen={openUpdateCrDialog}
