@@ -11,6 +11,7 @@ export const Messages = {
     finished: 'Finished',
     schedules: 'Schedules',
     pitr: 'Point-in-time Recovery (PITR)',
+    editMonitoring: 'Edit Monitoring',
   },
   actions: {
     edit: 'Edit',

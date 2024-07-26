@@ -19,7 +19,7 @@ import { Messages } from '../../cluster-overview.messages';
 import { DatabaseDetailsOverviewCardProps } from '../card.types';
 import { BasicInformationSection } from './basic';
 import { ConnectionDetails } from './connection-details';
-import { MonitoringDetails } from './monitoring';
+import { MonitoringDetails } from './monitoring/monitoring';
 import { AdvancedConfiguration } from './advanced-configuration';
 
 export const DbDetails = ({
