@@ -51,8 +51,8 @@ export { default as CheckboxInput } from './form/inputs/checkbox';
 export * from './loadable-children';
 export { default as LoadableChildren } from './loadable-children';
 
-export * from './menu-button';
-export { default as MenuButton } from './menu-button';
+export * from './buttons/menu-button';
+export { default as MenuButton } from './buttons/menu-button';
 
 export * from './progress-bar';
 export { default as ProgressBar } from './progress-bar';
@@ -60,6 +60,6 @@ export { default as ProgressBar } from './progress-bar';
 export * from './table';
 export { default as Table } from './table';
 
-export { default as CopyToClipboardButton } from './copy-to-clipboard-button';
+export { default as CopyToClipboardButton } from './buttons/copy-to-clipboard-button';
 
 export { default as NotistackMuiSnackbar } from './notistack-mui-snackbar';

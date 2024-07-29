@@ -436,15 +436,14 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
           borderRadius: 128,
           borderWidth: 2,
 
-          '& > svg': {
-            width: 20,
-            height: 20,
-            margin: -3,
+          '.MuiButton-startIcon': {
+            height: 0,
+            alignItems: 'center',
           },
 
           ...(ownerState.variant === 'contained' && {
             ...(ownerState.size === 'large' && {
-              padding: '13px 24px',
+              padding: '12px 24px',
             }),
             ...(ownerState.size === 'medium' && {
               padding: '11px 16px',
@@ -456,26 +455,26 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
 
           ...(ownerState.variant === 'outlined' && {
             ...(ownerState.size === 'large' && {
-              padding: '11px 22px',
+              padding: '12px 22px',
             }),
             ...(ownerState.size === 'medium' && {
-              padding: '9px 14px',
+              padding: '11px 16px',
             }),
             ...(ownerState.size === 'small' && {
-              padding: '6px 10px',
+              padding: '8px 10px',
             }),
             borderColor: theme.palette.primary.main,
           }),
 
           ...(ownerState.variant === 'text' && {
             ...(ownerState.size === 'large' && {
-              padding: '13px 22px',
+              padding: '8px 11px',
             }),
             ...(ownerState.size === 'medium' && {
-              padding: '11px 14px',
+              padding: '6px 8px',
             }),
             ...(ownerState.size === 'small' && {
-              padding: '8px 10px',
+              padding: '4px 5px',
             }),
             borderColor: theme.palette.primary.main,
           }),
