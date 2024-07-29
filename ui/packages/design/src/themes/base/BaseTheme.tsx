@@ -431,10 +431,9 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
           borderRadius: 128,
           borderWidth: 2,
 
-          '& > svg': {
-            width: 20,
-            height: 20,
-            margin: -3,
+          '.MuiButton-startIcon': {
+            height: 0,
+            alignItems: 'center',
           },
 
           ...(ownerState.variant === 'contained' && {

@@ -10,6 +10,12 @@ const ActionableAlert = ({
 }: ActionableAlertProps) => (
   <Alert
     severity="warning"
+    sx={{
+      '& .MuiAlert-action': {
+        alignItems: 'center',
+        pt: 0,
+      },
+    }}
     action={
       <Button
         sx={{ color: 'warning.contrastText', fontWeight: 600 }}
