@@ -30,7 +30,7 @@ const LabeledContent = ({
     <Stack
       sx={{
         '.MuiTextField-root': {
-          mt: 1.5,
+          mt: actionButtonProps ? 0 : 1.5,
         },
         '.MuiAutocomplete-root': {
           mt: 1.5,
@@ -61,7 +61,6 @@ const LabeledContent = ({
             startIcon={<AddIcon />}
             sx={{
               width: 'fit-content',
-              alignSelf: 'end',
               ml: 'auto',
             }}
             data-testid={dataTestId || 'labeled-content-action-button'}
