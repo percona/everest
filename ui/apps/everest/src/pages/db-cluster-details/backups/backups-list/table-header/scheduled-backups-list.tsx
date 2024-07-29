@@ -25,6 +25,7 @@ const ScheduledBackupsList = () => {
     useDeleteSchedule(dbCluster.metadata.name, dbCluster.metadata.namespace);
 
   const schedules = dbCluster.spec?.backup?.schedules || [];
+  const dbType = dbCluster.spec?.engine.type;
 
   const handleDelete = (scheduleName: string) => {
     setSelectedSchedule(scheduleName);
@@ -62,6 +63,9 @@ const ScheduledBackupsList = () => {
       p={2}
       mt={2}
     >
+      {dbType === 'postgresql' && (
+        <Typography variant="caption">{Messages.maximumPgSchedules}</Typography>
+      )}
       {schedules.map((item) => (
         <Paper
           key={`schedule-${item?.name}`}

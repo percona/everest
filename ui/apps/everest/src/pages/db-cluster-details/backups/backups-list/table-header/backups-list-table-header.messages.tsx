@@ -12,4 +12,7 @@ export const Messages = {
   },
   activeSchedules: (schedulesNumber: number) =>
     `${schedulesNumber} active schedule${schedulesNumber > 1 ? 's' : ''}`,
+  exceededScheduleBackupsNumber:
+    'Maximum limit of schedules for PostgreSQL reached.',
+  maximumPgSchedules: 'Note: Maximum 3 schedules for PostgreSQL',
 };
