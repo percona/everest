@@ -52,6 +52,9 @@ const Schedules = () => {
   ]);
 
   const [activeStorage, setActiveStorage] = useState(undefined);
+  const createButtonDisabled =
+    openScheduleModal ||
+    (dbType === DbType.Postresql && schedules?.length >= 3);
 
   useEffect(() => {
     if (schedules?.length > 0 && dbType === DbType.Mongo) {
@@ -97,6 +100,7 @@ const Schedules = () => {
       <LabeledContent
         label={Messages.label}
         actionButtonProps={{
+          disabled: createButtonDisabled,
           dataTestId: 'create-schedule',
           buttonText: 'Create backup schedule',
           onClick: () => handleCreate(),
@@ -105,6 +109,9 @@ const Schedules = () => {
         <Stack>
           {dbType === DbType.Mongo && (
             <Typography variant="caption">{Messages.mongoDb}</Typography>
+          )}
+          {dbType === DbType.Postresql && (
+            <Typography variant="caption">{Messages.pg}</Typography>
           )}
           {schedules.map((item: Schedule) => (
             <EditableItem
