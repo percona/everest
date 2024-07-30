@@ -2,6 +2,7 @@
 name: Release
 on:
   workflow_dispatch:
+    inputs:
       version:
         description: "The RC/Release version, format: X.Y.Z-rcN for RC, X.Y.Z for releases"
         required: true
@@ -404,7 +405,7 @@ jobs:
 
       - name: Everest - build binary
         run: |
-          if [[ $env.IS_RC ]]; then 
+          if [[ $IS_RC == 1 ]]; then 
             CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
           else
             CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make release
