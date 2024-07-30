@@ -3,6 +3,7 @@ import { Button, IconButton } from '@mui/material';
 import Tooltip from '@mui/material/Tooltip';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import { CopyToClipboardButtonProps } from './CopyToClipboardButton.types';
+import { Messages } from './clipboard.messages';
 
 const CopyToClipboardButton = ({
   textToCopy,
@@ -36,11 +37,7 @@ const CopyToClipboardButton = ({
       PopperProps={{
         disablePortal: true,
       }}
-      title={
-        clipboardAvailable
-          ? 'Copied to clipboard!'
-          : 'Clipboard access is restricted in unsecured contexts. Switch to HTTPS or localhost, or copy the content manually.'
-      }
+      title={clipboardAvailable ? Messages.copied : Messages.restrictedAccess}
     >
       {showCopyButtonText ? (
         <Button
@@ -53,20 +50,22 @@ const CopyToClipboardButton = ({
           {copyCommand}
         </Button>
       ) : (
-        <IconButton
-          component="div"
-          sx={{
-            ...buttonProps?.sx,
-            '&.Mui-disabled': {
-              pointerEvents: 'auto',
-            },
-          }}
-          onClick={handleClick}
-          disabled={!clipboardAvailable}
-          {...buttonProps}
-        >
-          <ContentCopyOutlinedIcon sx={iconSx} />
-        </IconButton>
+        <span>
+          <IconButton
+            component="div"
+            sx={{
+              ...buttonProps?.sx,
+              '&.Mui-disabled': {
+                pointerEvents: 'auto',
+              },
+            }}
+            onClick={handleClick}
+            disabled={!clipboardAvailable}
+            {...buttonProps}
+          >
+            <ContentCopyOutlinedIcon sx={iconSx} />
+          </IconButton>
+        </span>
       )}
     </Tooltip>
   );
