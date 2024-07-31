@@ -93,7 +93,7 @@ export const checkResourceText = (
         units
       );
     }
-    return Messages.labels.estimated(processedValue, units);
+    return Messages.labels.estimated(processedValue.toFixed(2), units);
   }
   return '';
 };
