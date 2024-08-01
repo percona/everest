@@ -30,6 +30,7 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/golang-jwt/jwt/v5"
+	casbinmiddleware "github.com/labstack/echo-contrib/casbin"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
@@ -42,6 +43,7 @@ import (
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/oidc"
+	"github.com/percona/everest/pkg/rbac"
 	"github.com/percona/everest/pkg/session"
 	"github.com/percona/everest/public"
 )
@@ -146,6 +148,13 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	}
 	apiGroup.Use(jwtMW)
 
+	// Setup and use RBAC (casbin) middleware.
+	rbacMW, err := e.rbacMiddleware(ctx, basePath)
+	if err != nil {
+		return err
+	}
+	apiGroup.Use(rbacMW)
+
 	apiGroup.Use(e.checkOperatorUpgradeState)
 	RegisterHandlers(apiGroup, e)
 
@@ -193,6 +202,24 @@ func (e *EverestServer) newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) 
 		}
 		return nil, errors.New("no key found for token")
 	}, nil
+}
+
+func (e *EverestServer) rbacMiddleware(ctx context.Context, basePath string) (echo.MiddlewareFunc, error) {
+	enforcer, err := rbac.NewEnforcer(ctx, e.kubeClient, e.l)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not create casbin enforcer"))
+	}
+	e.rbacEnforcer = enforcer
+
+	skipper, err := rbac.NewSkipper(basePath)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not create RBAC skipper"))
+	}
+	return casbinmiddleware.MiddlewareWithConfig(casbinmiddleware.Config{
+		Skipper:        skipper,
+		UserGetter:     rbac.GetUser,
+		EnforceHandler: rbac.NewEnforceHandler(basePath, enforcer),
+	}), nil
 }
 
 func (e *EverestServer) jwtMiddleWare(ctx context.Context) (echo.MiddlewareFunc, error) {
