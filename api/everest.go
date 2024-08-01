@@ -94,6 +94,8 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 }
 
 // initHTTPServer configures http server for the current EverestServer instance.
+//
+//nolint:funlen
 func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	swagger, err := GetSwagger()
 	if err != nil {
