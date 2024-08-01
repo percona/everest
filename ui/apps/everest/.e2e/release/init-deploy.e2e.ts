@@ -21,6 +21,7 @@ import { resourcesStepCheck } from '../db-cluster/db-wizard/create-db-cluster/st
 import { moveForward, submitWizard, populateBasicInformation } from '../utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '../constants';
 import { waitForStatus, waitForDelete } from '../utils/table';
+import { checkError } from '../utils/generic';
 
 test.describe.configure({ retries: 0 });
 
@@ -96,7 +97,8 @@ test.describe.configure({ retries: 0 });
         }
       );
 
-      expect(response.ok()).toBeTruthy();
+      await checkError(response)
+
       // TODO: replace with correct payload typings from GET DB Clusters
       const { items: clusters } = await response.json();
 
