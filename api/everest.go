@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/casbin/casbin/v2"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -53,6 +54,7 @@ type EverestServer struct {
 	kubeClient    *kubernetes.Kubernetes
 	sessionMgr    *session.Manager
 	attemptsStore *RateLimiterMemoryStore
+	rbacEnforcer  *casbin.Enforcer
 }
 
 // NewEverestServer creates and configures everest API.
