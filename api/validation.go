@@ -189,6 +189,7 @@ func s3Access(
 	}
 
 	c := http.DefaultClient
+	c.Timeout = 2 * time.Second
 	c.Transport = &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: !verifyTLS}, //nolint:gosec
 	}
