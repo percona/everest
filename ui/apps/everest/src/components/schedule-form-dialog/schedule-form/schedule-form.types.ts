@@ -15,6 +15,7 @@ export type ScheduleFormProps = {
   schedules: Schedule[];
   showTypeRadio: boolean;
   hideRetentionCopies?: boolean;
+  disableNameEdit?: boolean;
 };
 
 export const ScheduleFormFields = { ...ScheduleForm, ...TimeSelectionFields };
