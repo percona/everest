@@ -25,7 +25,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -541,31 +540,6 @@ func (e *EverestServer) validateUpdateMonitoringInstanceRequest(ctx echo.Context
 		if ok := validateURL(params.Url); !ok {
 			err := ErrInvalidURL("url")
 			return nil, err
-		}
-	}
-
-	if params.AllowedNamespaces != nil && len(*params.AllowedNamespaces) == 0 {
-		return nil, errors.New("allowedNamespaces cannot be empty")
-	}
-
-	if params.AllowedNamespaces != nil && len(*params.AllowedNamespaces) > 0 {
-		removedNs := []string{}
-		for _, ns := range mc.Spec.AllowedNamespaces {
-			if !slices.Contains(*params.AllowedNamespaces, ns) {
-				removedNs = append(removedNs, ns)
-			}
-		}
-
-		if len(removedNs) > 0 {
-			// Check if monitoring config is used in the removed namespaces
-			used, err := e.kubeClient.IsMonitoringConfigUsed(ctx.Request().Context(), MonitoringNamespace, monitoringConfigName, removedNs)
-			if err != nil {
-				return nil, err
-			}
-
-			if used {
-				return nil, errors.New("monitoring config cannot be removed because it's used in some namespace")
-			}
 		}
 	}
 
