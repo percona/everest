@@ -1344,7 +1344,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/backup-storages':
+  '/namespaces/{namespace}/backup-storages':
     x-everest-resource-name: backup-storages
     post:
       tags:
@@ -1356,25 +1356,42 @@ paths:
         **Examples**:
           ```
           {
-            "name": "s3-storage",
-            "type": "s3",
-            "bucketName": "bucket1",
-            "accessKey": "access_key",
-            "secretKey": "secret_key",
-            "region": "eu-central-1"
+            "metadata": {
+              "name": "s3-storage",
+              "namespace": "everest",
+            },
+            "spec": {
+              "type": "s3",
+              "bucketName": "bucket1",
+              "accessKey": "access_key",
+              "secretKey": "secret_key",
+              "region": "eu-central-1"
+            },
           }
           ```
 
           ```
           {
-            "name": "azure-storage",
-            "type": "azure",
-            "bucketName": "container1",
-            "accessKey": "storage_account_name",
-            "secretKey": "storage_account_key",
+            "metadata": {
+              "name": "azure-storage",
+              "namespace": "everest",
+            },
+            "spec": {
+              "type": "azure",
+              "bucketName": "container1",
+              "accessKey": "storage_account_name",
+              "secretKey": "storage_account_key",
+            },
           }
           ```
       operationId: createBackupStorage
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace of the backup storage
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: Successful operation
@@ -1407,6 +1424,13 @@ paths:
       summary: List backup storages
       description: This API lists all backup storages.
       operationId: listBackupStorages
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace of the backup storage
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: Successful operation
@@ -1426,18 +1450,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/backup-storages/{name}':
+  '/namespaces/{namespace}/backup-storages/{name}':
     x-everest-resource-name: backup-storages
     get:
       tags:
         - Backup Storage
       summary: Get backup storage
-      description: This API gets the backup storage speciciied by the `name`.
+      description: This API gets the backup storage speciciied by the `name` in the given `namespace`.
       operationId: getBackupStorage
       parameters:
         - name: name
           in: path
           description: Name of the backup storage
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          description: Namespace of the backup storage
           required: true
           schema:
             type: string
@@ -1471,6 +1501,12 @@ paths:
         - name: name
           in: path
           description: Name of the backup storage
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          description: Namespace of the backup storage
           required: true
           schema:
             type: string
@@ -1510,6 +1546,12 @@ paths:
         - name: name
           in: path
           description: Name of the backup storage
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          description: Namespace of the backup storage
           required: true
           schema:
             type: string
@@ -1931,6 +1973,9 @@ components:
           enum:
             - s3
             - azure
+        namespace:
+          type: string
+          x-go-type-skip-optional-pointer: true
         name:
           type: string
         description:
@@ -1949,6 +1994,7 @@ components:
           default: false
           type: boolean
         allowedNamespaces:
+          deprecated: true
           type: array
           description: List of namespaces allowed to use this backup storage
           items:
