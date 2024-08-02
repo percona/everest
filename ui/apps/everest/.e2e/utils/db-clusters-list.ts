@@ -57,7 +57,7 @@ export const gotoDbClusterBackups = async (page: Page, clusterName: string) => {
 
 export const deleteDbCluster = async (page: Page, clusterName: string) => {
   await page.goto('databases');
-  await findDbAndClickActions(page, clusterName, 'delete', 'Up')
+  await findDbAndClickActions(page, clusterName, 'delete', 'Up');
   await expect(page.getByText('Delete database')).toBeVisible();
   await expect(page.getByText('Irreversible action')).toBeVisible();
   await page.getByTestId('text-input-confirm-input').fill(clusterName);
@@ -66,15 +66,15 @@ export const deleteDbCluster = async (page: Page, clusterName: string) => {
 
 export const suspendDbCluster = async (page: Page, clusterName: string) => {
   await page.goto('databases');
-  await findDbAndClickActions(page, clusterName, 'suspend', 'Up')
+  await findDbAndClickActions(page, clusterName, 'suspend', 'Up');
 };
 
 export const resumeDbCluster = async (page: Page, clusterName: string) => {
   await page.goto('databases');
-  await findDbAndClickActions(page, clusterName, 'resume', 'Paused')
+  await findDbAndClickActions(page, clusterName, 'resume', 'Paused');
 };
 
 export const restartDbCluster = async (page: Page, clusterName: string) => {
   await page.goto('databases');
-  await findDbAndClickActions(page, clusterName, 'restart', 'Up')
+  await findDbAndClickActions(page, clusterName, 'restart', 'Up');
 };

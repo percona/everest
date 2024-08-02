@@ -13,11 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {expect} from '@playwright/test'
+import { expect } from '@playwright/test';
 
-export const checkError = async response => {
+export const checkError = async (response) => {
   if (!response.ok()) {
     console.log(`${response.url()}: `, await response.json());
   }
-  expect(response.ok()).toBeTruthy()
-}
+  expect(response.ok()).toBeTruthy();
+};

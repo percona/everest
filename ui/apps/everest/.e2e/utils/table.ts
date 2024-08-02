@@ -31,7 +31,12 @@ export const waitForInitializingState = async (page: Page, name: string) => {
  * @param status Desired status of the cluster
  * @param timeout How long to wait until error thrown
  */
-export const waitForStatus = async (page: Page, dbName: string, status: string, timeout: number) => {
+export const waitForStatus = async (
+  page: Page,
+  dbName: string,
+  status: string,
+  timeout: number
+) => {
   const dbRow = page.getByRole('row').filter({ hasText: dbName });
   await expect(dbRow).toBeVisible();
   await expect(dbRow.getByText(status)).toBeVisible({ timeout: timeout });
@@ -43,6 +48,10 @@ export const waitForStatus = async (page: Page, dbName: string, status: string, 
  * @param name Name of the cluster
  * @param timeout How long to wait until error thrown
  */
-export const waitForDelete = async (page: Page, dbName: string, timeout: number) => {
-  await expect(page.getByText(dbName)).not.toBeVisible({ timeout: timeout })
+export const waitForDelete = async (
+  page: Page,
+  dbName: string,
+  timeout: number
+) => {
+  await expect(page.getByText(dbName)).not.toBeVisible({ timeout: timeout });
 };

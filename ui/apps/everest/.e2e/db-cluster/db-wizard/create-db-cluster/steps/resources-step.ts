@@ -24,7 +24,13 @@ import { Page, expect } from '@playwright/test';
  * @param disk Requested disk size in Gb
  * @param clusterSize Number of nodes in DB cluster
  */
-export const resourcesStepCheck = async (page: Page, cpu: number, memory: number, disk: number, clusterSize: number) => {
+export const resourcesStepCheck = async (
+  page: Page,
+  cpu: number,
+  memory: number,
+  disk: number,
+  clusterSize: number
+) => {
   await expect(page.getByTestId('step-header')).toBeVisible();
   await expect(page.getByTestId('step-description')).toBeVisible();
 
@@ -33,14 +39,21 @@ export const resourcesStepCheck = async (page: Page, cpu: number, memory: number
   await page.getByTestId('text-input-memory').fill(memory.toString());
   await page.getByTestId('text-input-disk').fill(disk.toString());
 
-  let cpuRounded = Math.round(cpu * clusterSize * 10) / 10
+  let cpuRounded = Math.round(cpu * clusterSize * 10) / 10;
   const expectedCpuText = `= ${cpuRounded} CPU`;
   const expectedMemoryText = `= ${memory * clusterSize} GB`;
   const expectedDiskText = ` = ${disk * clusterSize} GB`;
 
-  let nodesText = (clusterSize == 1)? `x ${clusterSize} node` : `x ${clusterSize} nodes`
+  let nodesText =
+    clusterSize == 1 ? `x ${clusterSize} node` : `x ${clusterSize} nodes`;
   expect(await page.getByText(nodesText).count()).toBe(3);
-  await expect(page.getByTestId('cpu-resource-sum')).toHaveText(expectedCpuText);
-  await expect(page.getByTestId('memory-resource-sum')).toHaveText(expectedMemoryText);
-  await expect(page.getByTestId('disk-resource-sum')).toHaveText(expectedDiskText);
+  await expect(page.getByTestId('cpu-resource-sum')).toHaveText(
+    expectedCpuText
+  );
+  await expect(page.getByTestId('memory-resource-sum')).toHaveText(
+    expectedMemoryText
+  );
+  await expect(page.getByTestId('disk-resource-sum')).toHaveText(
+    expectedDiskText
+  );
 };
