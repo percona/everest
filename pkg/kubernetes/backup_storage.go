@@ -18,7 +18,6 @@ package kubernetes
 
 import (
 	"context"
-	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -55,57 +54,52 @@ func (k *Kubernetes) DeleteBackupStorage(ctx context.Context, namespace, name st
 	return k.client.DeleteBackupStorage(ctx, namespace, name)
 }
 
-// IsBackupStorageUsed checks that a backup storage by provided name is used across k8s cluster.
-// Optionally you can provide a list of namespaces which shall be checked. If not provided, all namespaces are checked.
-func (k *Kubernetes) IsBackupStorageUsed(ctx context.Context, namespace, backupStorageName string, nsList []string) (bool, error) {
-	_, err := k.client.GetBackupStorage(ctx, namespace, backupStorageName)
+// IsBackupStorageUsed checks if a backup storage in a given namespace is used by any clusters
+// in that namespace.
+func (k *Kubernetes) IsBackupStorageUsed(ctx context.Context, namespace, name string) (bool, error) {
+	_, err := k.client.GetBackupStorage(ctx, namespace, name)
 	if err != nil {
 		return false, err
 	}
 
-	namespaces := nsList
-	if len(nsList) == 0 {
-		namespaces, err = k.GetDBNamespaces(ctx)
-		if err != nil {
-			return false, err
-		}
+	// Check if it is in use by clusters?
+	clusters, err := k.client.ListDatabaseClusters(ctx, namespace, metav1.ListOptions{})
+	if err != nil {
+		return false, err
 	}
-
-	options := metav1.ListOptions{
-		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
-			MatchLabels: map[string]string{
-				fmt.Sprintf(backupStorageNameLabelTmpl, backupStorageName): backupStorageLabelValue,
-			},
-		}),
-	}
-
-	for _, namespace := range namespaces {
-		dblist, err := k.client.ListDatabaseClusters(ctx, namespace, options)
-		if err != nil {
-			return false, err
-		}
-		if len(dblist.Items) > 0 {
-			return true, nil
-		}
-		bList, err := k.client.ListDatabaseClusterBackups(ctx, namespace, options)
-		if err != nil {
-			return false, err
-		}
-		if len(bList.Items) > 0 {
-			return true, nil
-		}
-		rList, err := k.client.ListDatabaseClusterRestores(ctx, namespace, options)
-		if err != nil {
-			return false, err
-		}
-		for _, restore := range rList.Items {
-			for _, db := range dblist.Items {
-				if restore.Spec.DBClusterName == db.Name && !restore.IsComplete() {
-					return true, nil
-				}
+	for _, cluster := range clusters.Items {
+		for _, sched := range cluster.Spec.Backup.Schedules {
+			if sched.Enabled && sched.BackupStorageName == name {
+				return true, nil
 			}
 		}
 	}
 
+	// Check if it is in use by backups?
+	backups, err := k.client.ListDatabaseClusterBackups(ctx, namespace, metav1.ListOptions{})
+	if err != nil {
+		return false, err
+	}
+	for _, backup := range backups.Items {
+		if backup.Spec.BackupStorageName == name {
+			return true, nil
+		}
+	}
+
+	// Check if it is in use by restores?
+	restores, err := k.client.ListDatabaseClusterRestores(ctx, namespace, metav1.ListOptions{})
+	if err != nil {
+		return false, err
+	}
+	for _, restore := range restores.Items {
+		if restore.Spec.DataSource.BackupSource.BackupStorageName == name {
+			return true, nil
+		}
+		for _, db := range clusters.Items {
+			if db.GetName() == restore.Spec.DBClusterName && !restore.IsComplete() {
+				return true, nil
+			}
+		}
+	}
 	return false, nil
 }

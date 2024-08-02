@@ -296,23 +296,6 @@ func azureAccess(ctx context.Context, l *zap.SugaredLogger, accountName, account
 	return nil
 }
 
-func validateAllowedNamespaces(allowedNamespaces, namespaces []string) error {
-	for _, allowedNamespace := range allowedNamespaces {
-		found := false
-		for _, namespace := range namespaces {
-			if allowedNamespace == namespace {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return fmt.Errorf("unknown namespace '%s'", allowedNamespace)
-		}
-	}
-
-	return nil
-}
-
 func validateBackupStorageAccess(
 	ctx echo.Context,
 	sType string,
@@ -343,8 +326,10 @@ func validateBackupStorageAccess(
 
 //nolint:funlen,nestif,gocognit,cyclop
 func (e *EverestServer) validateUpdateBackupStorageRequest(
-	ctx echo.Context, backupStorageName string, bs *everestv1alpha1.BackupStorage, secret *corev1.Secret,
-	namespaces []string, l *zap.SugaredLogger,
+	ctx echo.Context,
+	bs *everestv1alpha1.BackupStorage,
+	secret *corev1.Secret,
+	l *zap.SugaredLogger,
 ) (*UpdateBackupStorageParams, error) {
 	var params UpdateBackupStorageParams
 	if err := ctx.Bind(&params); err != nil {
@@ -352,7 +337,7 @@ func (e *EverestServer) validateUpdateBackupStorageRequest(
 	}
 
 	c := ctx.Request().Context()
-	used, err := e.kubeClient.IsBackupStorageUsed(c, e.kubeClient.Namespace(), backupStorageName, nil)
+	used, err := e.kubeClient.IsBackupStorageUsed(c, bs.GetNamespace(), bs.GetName())
 	if err != nil {
 		return nil, err
 	}
@@ -364,7 +349,7 @@ func (e *EverestServer) validateUpdateBackupStorageRequest(
 	if err != nil {
 		return nil, err
 	}
-	if duplicate := validateDuplicateStorageByUpdate(backupStorageName, bs, existingStorages, params); duplicate {
+	if duplicate := validateDuplicateStorageByUpdate(bs.GetName(), bs, existingStorages, params); duplicate {
 		return nil, errDuplicatedBackupStorage
 	}
 
@@ -380,33 +365,6 @@ func (e *EverestServer) validateUpdateBackupStorageRequest(
 	if params.BucketName != nil {
 		if err := validateBucketName(*params.BucketName); err != nil {
 			return nil, err
-		}
-	}
-
-	removedNs := []string{}
-	if params.AllowedNamespaces != nil {
-		if err := validateAllowedNamespaces(*params.AllowedNamespaces, namespaces); err != nil {
-			return nil, err
-		}
-
-		if len(*params.AllowedNamespaces) > 0 {
-			for _, ns := range bs.Spec.AllowedNamespaces {
-				if !slices.Contains(*params.AllowedNamespaces, ns) {
-					removedNs = append(removedNs, ns)
-				}
-			}
-
-			if len(removedNs) > 0 {
-				// Check if backup storage is used in the removed namespaces
-				used, err := e.kubeClient.IsBackupStorageUsed(ctx.Request().Context(), e.kubeClient.Namespace(), backupStorageName, removedNs)
-				if err != nil {
-					return nil, err
-				}
-
-				if used {
-					return nil, errors.New("backup storage cannot be removed because it's used in some namespace")
-				}
-			}
 		}
 	}
 
@@ -492,7 +450,6 @@ func basicStorageParamsAreChanged(bs *everestv1alpha1.BackupStorage, params Upda
 
 func validateCreateBackupStorageRequest(
 	ctx echo.Context,
-	namespaces []string,
 	l *zap.SugaredLogger,
 	existingStorages *everestv1alpha1.BackupStorageList,
 ) (*CreateBackupStorageParams, error) {
@@ -528,10 +485,6 @@ func validateCreateBackupStorageRequest(
 		if params.Region == "" {
 			return nil, errors.New("region is required when using S3 storage type")
 		}
-	}
-
-	if err := validateAllowedNamespaces(params.AllowedNamespaces, namespaces); err != nil {
-		return nil, err
 	}
 
 	// check data access
