@@ -188,6 +188,7 @@ func s3Access(
 	if endpoint != nil && *endpoint == "" {
 		endpoint = nil
 	}
+
 	c := http.DefaultClient
 	c.Timeout = timeoutS3AccessSec * time.Second
 	c.Transport = &http.Transport{
