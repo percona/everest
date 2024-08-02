@@ -43,9 +43,16 @@ export const resourcesStepCheck = async (
   const expectedMemoryText = ` = ${(memory * clusterSize).toFixed(2)} GB`;
   const expectedDiskText = ` = ${(disk * clusterSize).toFixed(2)} GB`;
 
-  let nodesText = clusterSize == 1 ? `x ${clusterSize} node` : `x ${clusterSize} nodes`;
+  let nodesText =
+    clusterSize == 1 ? `x ${clusterSize} node` : `x ${clusterSize} nodes`;
   expect(await page.getByText(nodesText).count()).toBe(3);
-  await expect(page.getByTestId('cpu-resource-sum')).toHaveText(expectedCpuText);
-  await expect(page.getByTestId('memory-resource-sum')).toHaveText(expectedMemoryText);
-  await expect(page.getByTestId('disk-resource-sum')).toHaveText(expectedDiskText);
+  await expect(page.getByTestId('cpu-resource-sum')).toHaveText(
+    expectedCpuText
+  );
+  await expect(page.getByTestId('memory-resource-sum')).toHaveText(
+    expectedMemoryText
+  );
+  await expect(page.getByTestId('disk-resource-sum')).toHaveText(
+    expectedDiskText
+  );
 };
