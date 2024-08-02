@@ -83,7 +83,6 @@ declare module '@mui/material/styles' {
     };
   }
 }
-
 declare module '@mui/material/Typography' {
   interface TypographyPropsVariantOverrides {
     sectionHeading: true;
@@ -93,6 +92,12 @@ declare module '@mui/material/Typography' {
     menuText: true;
     inputText: true;
     inputLabel: true;
+  }
+}
+
+declare module '@mui/material/Paper' {
+  interface PaperPropsVariantOverrides {
+    grey: true;
   }
 }
 
@@ -679,6 +684,30 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
           },
         }),
       },
+    },
+    MuiCard: {
+      variants: [
+        {
+          props: { variant: 'grey' },
+          style: ({ theme }) => ({
+            border: `${theme.palette.dividers?.divider} 1px solid`,
+            '.MuiCardHeader-root': {
+              backgroundColor: theme.palette.surfaces?.elevation0,
+              borderBottomColor: theme.palette.dividers?.divider,
+              borderBottomWidth: 1,
+              borderBottomStyle: 'solid',
+              padding: `${theme.spacing(1.5)} ${theme.spacing(2)}`,
+              '.MuiTypography-root': {
+                ...theme.typography.sectionHeading,
+              },
+            },
+            '.MuiCardContent': {
+              py: 1,
+              px: 2,
+            },
+          }),
+        },
+      ],
     },
     MuiDateCalendar: {
       styleOverrides: {

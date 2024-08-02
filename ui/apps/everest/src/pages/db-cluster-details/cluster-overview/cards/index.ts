@@ -1,2 +1,3 @@
-export { ConnectionDetails } from './connection-details';
-export { DatabaseDetails } from './database-details';
+export { ConnectionDetails } from './db-details/connection-details';
+export { DbDetails } from './db-details/db-details';
+export { ResourcesDetails } from './resources-details';

@@ -38,6 +38,7 @@ export const ScheduleForm = ({
   schedules,
   showTypeRadio,
   hideRetentionCopies,
+  disableNameEdit = false,
 }: ScheduleFormProps) => {
   const {
     formState: { errors },
@@ -76,6 +77,7 @@ export const ScheduleForm = ({
             }}
             options={schedulesNamesList}
             isRequired
+            disabled={disableNameEdit}
           />
         ) : (
           <TextInput
