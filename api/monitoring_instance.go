@@ -209,7 +209,7 @@ func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, namespace, na
 		})
 	}
 
-	params, err := e.validateUpdateMonitoringInstanceRequest(ctx, m, name)
+	params, err := e.validateUpdateMonitoringInstanceRequest(ctx)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}

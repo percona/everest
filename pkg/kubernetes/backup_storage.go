@@ -24,11 +24,6 @@ import (
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
-const (
-	backupStorageNameLabelTmpl = "backupStorage-%s"
-	backupStorageLabelValue    = "used"
-)
-
 // ListBackupStorages returns list of managed backup storages.
 func (k *Kubernetes) ListBackupStorages(ctx context.Context, namespace string) (*everestv1alpha1.BackupStorageList, error) {
 	return k.client.ListBackupStorages(ctx, namespace, metav1.ListOptions{})
@@ -56,6 +51,8 @@ func (k *Kubernetes) DeleteBackupStorage(ctx context.Context, namespace, name st
 
 // IsBackupStorageUsed checks if a backup storage in a given namespace is used by any clusters
 // in that namespace.
+//
+//nolint:cyclop
 func (k *Kubernetes) IsBackupStorageUsed(ctx context.Context, namespace, name string) (bool, error) {
 	_, err := k.client.GetBackupStorage(ctx, namespace, name)
 	if err != nil {

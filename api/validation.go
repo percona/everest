@@ -323,7 +323,7 @@ func validateBackupStorageAccess(
 	return nil
 }
 
-//nolint:funlen,nestif,gocognit,cyclop
+//nolint:funlen,cyclop
 func (e *EverestServer) validateUpdateBackupStorageRequest(
 	ctx echo.Context,
 	bs *everestv1alpha1.BackupStorage,
@@ -529,8 +529,7 @@ func validateCreateMonitoringInstanceRequest(ctx echo.Context) (*CreateMonitorin
 	return &params, nil
 }
 
-//nolint:nestif
-func (e *EverestServer) validateUpdateMonitoringInstanceRequest(ctx echo.Context, mc *everestv1alpha1.MonitoringConfig, monitoringConfigName string) (*UpdateMonitoringInstanceJSONRequestBody, error) {
+func (e *EverestServer) validateUpdateMonitoringInstanceRequest(ctx echo.Context) (*UpdateMonitoringInstanceJSONRequestBody, error) {
 	var params UpdateMonitoringInstanceJSONRequestBody
 	if err := ctx.Bind(&params); err != nil {
 		return nil, err
