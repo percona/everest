@@ -83,6 +83,7 @@ export const ScheduleFormWrapper = () => {
       allowScheduleSelection={mode === 'edit'}
       disableStorageSelection={disableStorageSelection}
       autoFillLocation={mode === 'new'}
+      disableNameEdit={mode === 'edit'}
       schedules={schedules}
     />
   );
