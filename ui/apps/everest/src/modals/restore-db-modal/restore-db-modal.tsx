@@ -217,7 +217,7 @@ const RestoreDbModal = <T extends FieldValues>({
                 .map((value) => {
                   const valueWithTime = `${
                     value.name
-                  } - ${value.created?.toLocaleString('en-US')}`;
+                  } - ${value.created?.toLocaleString('en-GB')}`;
                   return (
                     <MenuItem key={value.name} value={value.name}>
                       {valueWithTime}

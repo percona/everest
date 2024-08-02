@@ -72,6 +72,81 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserCredentials'
+  '/permissions':
+    get:
+      tags:
+        - Authentication & Authorization
+      summary: Get user permissions
+      description: |
+        This API returns a list of permissions for the user that is currently logged in.
+        
+        *Example:*
+        Assume the following RBAC policy, and users `alice` and `bob`:
+        ```
+        p, adminrole:role, namespaces, read, *
+        p, adminrole:role, database-engines, *, */*
+        p, adminrole:role, database-clusters, *, */*
+        p, bob, database-clusters, *, */*
+        g, alice, adminrole:role
+        ```
+        The API will return the following permissions for `alice`:
+        ```
+        {
+          "permissions": [
+            [
+                "alice",
+                "namespaces",
+                "read",
+                "*"
+            ],
+            [
+                "alice",
+                "database-engines",
+                "*",
+                "*/*"
+            ],
+            [
+                "alice",
+                "database-clusters",
+                "*",
+                "*/*"
+            ]
+          ]
+        }
+        ```
+        And the following permissions for `bob`:
+        ```
+        {
+          "permissions": [
+            [
+                "bob",
+                "database-clusters",
+                "*",
+                "*/*"
+            ]
+          ]
+        }
+        ```
+      operationId: getUserPermissions
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPermissions'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   '/namespaces':
     x-everest-resource-name: namespaces
     get:
