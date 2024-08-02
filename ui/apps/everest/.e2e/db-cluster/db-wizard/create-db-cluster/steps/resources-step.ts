@@ -39,21 +39,13 @@ export const resourcesStepCheck = async (
   await page.getByTestId('text-input-memory').fill(memory.toString());
   await page.getByTestId('text-input-disk').fill(disk.toString());
 
-  let cpuRounded = Math.round(cpu * clusterSize * 10) / 10;
-  const expectedCpuText = `= ${cpuRounded} CPU`;
-  const expectedMemoryText = `= ${memory * clusterSize} GB`;
-  const expectedDiskText = ` = ${disk * clusterSize} GB`;
+  const expectedCpuText = ` = ${(cpu * clusterSize).toFixed(2)} CPU`;
+  const expectedMemoryText = ` = ${(memory * clusterSize).toFixed(2)} GB`;
+  const expectedDiskText = ` = ${(disk * clusterSize).toFixed(2)} GB`;
 
-  let nodesText =
-    clusterSize == 1 ? `x ${clusterSize} node` : `x ${clusterSize} nodes`;
+  let nodesText = clusterSize == 1 ? `x ${clusterSize} node` : `x ${clusterSize} nodes`;
   expect(await page.getByText(nodesText).count()).toBe(3);
-  await expect(page.getByTestId('cpu-resource-sum')).toHaveText(
-    expectedCpuText
-  );
-  await expect(page.getByTestId('memory-resource-sum')).toHaveText(
-    expectedMemoryText
-  );
-  await expect(page.getByTestId('disk-resource-sum')).toHaveText(
-    expectedDiskText
-  );
+  await expect(page.getByTestId('cpu-resource-sum')).toHaveText(expectedCpuText);
+  await expect(page.getByTestId('memory-resource-sum')).toHaveText(expectedMemoryText);
+  await expect(page.getByTestId('disk-resource-sum')).toHaveText(expectedDiskText);
 };
