@@ -170,7 +170,7 @@ jobs:
           echo "::set-output name=image_to_check::$(echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1)"
 
       - name: Operator - run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.19.0
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: ${{ steps.set_operator_image.outputs.image_to_check }}
           format: 'table'
@@ -199,7 +199,7 @@ jobs:
           echo "::set-output name=image_to_check::$(echo "${{ steps.bundle_meta.outputs.tags }}" | head -n 1)"
 
       - name: Operator - Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.19.0
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: ${{ steps.set_operator_bundle_image.outputs.image_to_check }}
           format: 'table'
@@ -310,7 +310,7 @@ jobs:
 
 # TODO: fix the vulnerabilities in main and enable this check
 #      - name: Catalog - run Trivy vulnerability scanner
-#        uses: aquasecurity/trivy-action@0.19.0
+#        uses: aquasecurity/trivy-action@0.24.0
 #        with:
 #          image-ref: ${{ steps.set_catalog_image.outputs.image_to_check }}
 #          format: 'table'
@@ -440,7 +440,7 @@ jobs:
 
 # TODO: fix the vulnerabilities in main and enable this check
 #      - name: Everest - run Trivy vulnerability scanner
-#        uses: aquasecurity/trivy-action@0.19.0
+#        uses: aquasecurity/trivy-action@0.24.0
 #        with:
 #          image-ref: ${{ steps.set_everest_image.outputs.image_to_check }}
 #          format: 'table'

@@ -366,7 +366,7 @@ jobs:
           kubectl -n everest-system logs deploy/percona-everest
 
       - name: Everest - run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.19.0
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: "localhost:5000/perconalab/everest:0.0.0"
           format: 'table'
