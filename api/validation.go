@@ -57,7 +57,8 @@ const (
 	pgReposLimit        = 3
 	// We are diverging from the RFC1035 spec in regards to the length of the
 	// name because the PXC operator limits the name of the cluster to 22.
-	maxNameLength = 22
+	maxNameLength      = 22
+	timeoutS3AccessSec = 2
 )
 
 var (
@@ -189,6 +190,7 @@ func s3Access(
 	}
 
 	c := http.DefaultClient
+	c.Timeout = timeoutS3AccessSec * time.Second
 	c.Transport = &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: !verifyTLS}, //nolint:gosec
 	}
