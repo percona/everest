@@ -64,7 +64,7 @@ export const MonitoringEditModal = ({
       schema={monitoringEditDialogPropsSchema()}
       headerMessage={Messages.editMonitoring}
       onSubmit={onSubmit}
-      submitMessage="Edit"
+      submitMessage={Messages.save}
       defaultValues={monitoringEditDialogDefaultValues(
         monitoringName || monitoringInstancesOptions[0],
         enabled
