@@ -48,13 +48,13 @@ test('create/delete database cluster backups', async ({ request, page }) => {
 
   expect(result.spec).toMatchObject(payload.spec)
 
-  await th.deleteBackup(request, backupName)
+  await th.deleteBackup(page, request, backupName)
   await th.deleteDBCluster(request, page, clName)
   await waitClusterDeletion(request, page, clName)
-  await th.deleteBackupStorage(request, bsName, testsNs)
+  await th.deleteBackupStorage(page, request, bsName, testsNs)
 })
 
-test('dbcluster not found', async ({ request }) => {
+test('dbcluster not found', async ({ request, page }) => {
   const bsName = th.suffixedName('storage')
 
   await th.createBackupStorage(request, bsName, testsNs)
@@ -79,7 +79,7 @@ test('dbcluster not found', async ({ request }) => {
   expect(response.status()).toBe(400)
   expect(await response.text()).toContain('{"message":"Database cluster not-existing-cluster does not exist"}')
 
-  await th.deleteBackupStorage(request, bsName, testsNs)
+  await th.deleteBackupStorage(page, request, bsName, testsNs)
 })
 
 test('list backups', async ({ request, page }) => {
@@ -148,5 +148,5 @@ test('list backups', async ({ request, page }) => {
   await th.deleteDBCluster(request, page, clusterName2)
   await waitClusterDeletion(request, page, clusterName1)
   await waitClusterDeletion(request, page, clusterName2)
-  await th.deleteBackupStorage(request, bsName, testsNs)
+  await th.deleteBackupStorage(page, request, bsName, testsNs)
 })

@@ -77,12 +77,12 @@ test('create/update/delete database cluster restore', async ({ request, page }) 
   response = await request.get(`/v1/namespaces/${testsNs}/database-cluster-restores/${restoreName}`)
   expect(response.status()).toBe(404)
 
-  await th.deleteBackup(request, backupName)
+  await th.deleteBackup(page, request, backupName)
   await th.deleteDBCluster(request, page, clName)
   await th.deleteDBCluster(request, page, clName2)
   await waitClusterDeletion(request, page, clName)
   await waitClusterDeletion(request, page, clName2)
-  await th.deleteBackupStorage(request, bsName, testsNs)
+  await th.deleteBackupStorage(page, request, bsName, testsNs)
 })
 
 test('list restores', async ({ request, page }) => {
@@ -156,12 +156,12 @@ test('list restores', async ({ request, page }) => {
     expect(response.status()).toBe(404)
   }
 
-  await th.deleteBackup(request, backupName)
+  await th.deleteBackup(page, request, backupName)
   await th.deleteDBCluster(request, page, clName1)
   await th.deleteDBCluster(request, page, clName2)
   await waitClusterDeletion(request, page, clName1)
   await waitClusterDeletion(request, page, clName2)
-  await th.deleteBackupStorage(request, bsName, testsNs)
+  await th.deleteBackupStorage(page, request, bsName, testsNs)
 })
 
 test('create restore: validation errors', async ({ request, page }) => {
@@ -211,8 +211,8 @@ test('create restore: validation errors', async ({ request, page }) => {
   expect(response.status()).toBe(400)
   expect(await response.text()).toContain('{"message":".spec cannot be empty"}')
 
-  await th.deleteBackup(request, backupName)
+  await th.deleteBackup(page, request, backupName)
   await th.deleteDBCluster(request, page, clName)
   await waitClusterDeletion(request, page, clName)
-  await th.deleteBackupStorage(request, bsName, testsNs)
+  await th.deleteBackupStorage(page, request, bsName, testsNs)
 })

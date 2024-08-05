@@ -15,7 +15,7 @@ export const checkError = async response => {
   expect(response.ok()).toBeTruthy()
 }
 
-export const testsNs = 'everest'
+export const testsNs = 'my-special-place'
 
 export const createDBCluster = async (request, name) => {
   const data = {
@@ -86,10 +86,19 @@ export const createBackupStorage = async (request, name, namespace) => {
   await checkError(response)
 }
 
-export const deleteBackupStorage = async (request, name, namespace) => {
-  const res = await request.delete(`/v1/namespaces/${namespace}/backup-storages/${name}`)
-
-  await checkError(res)
+export const deleteBackupStorage = async (page, request, name, namespace) => {
+  let res = await request.delete(`/v1/namespaces/${namespace}/backup-storages/${name}`)
+  if (res.ok()) {
+      return;
+  }
+  for (let i = 0; i < 100; i++) {
+    res = await request.delete(`/v1/namespaces/${namespace}/backup-storages/${name}`)
+    if (res.ok()) {
+        break;
+    }
+    await page.waitForTimeout(1000)
+  }
+  checkError(res)
 }
 
 export const createBackup = async (request,  clusterName, backupName, storageName) => {
@@ -112,10 +121,16 @@ export const createBackup = async (request,  clusterName, backupName, storageNam
   await checkError(responseBackup)
 }
 
-export const deleteBackup = async (request, backupName) => {
-  const res = await request.delete(`/v1/namespaces/${testsNs}/database-cluster-backups/${backupName}`)
-
-  await checkError(res)
+export const deleteBackup = async (page, request, name) => {
+  let res = await request.delete(`/v1/namespaces/${testsNs}/database-cluster-backups/${name}`)
+  checkError(res)
+  for (let i = 0; i < 100; i++) {
+    const bkp = await request.get(`/v1/namespaces/${testsNs}/database-cluster-backups/${name}`)
+    if (bkp.status() == 404) {
+      return;
+    }
+    await page.waitForTimeout(1000)
+  }
 }
 
 export const deleteRestore = async (request, restoreName) => {
