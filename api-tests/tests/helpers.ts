@@ -15,7 +15,7 @@ export const checkError = async response => {
   expect(response.ok()).toBeTruthy()
 }
 
-export const testsNs = 'everest'
+export const testsNs = 'my-special-place'
 
 export const createDBCluster = async (request, name) => {
   const data = {

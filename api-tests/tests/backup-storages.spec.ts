@@ -183,7 +183,7 @@ test('create backup storage failures', async ({request}) => {
                 type: 's3',
                 name: 'Backup Name',
                 bucketName: 'percona-test-backup-storage',
-                region: 'us-east-2',
+                region: 'us-west-2',
                 accessKey: 'ssdssd',
                 secretKey: 'ssdssdssdssd',
                 allowedNamespaces: [testsNs]

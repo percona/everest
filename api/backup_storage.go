@@ -165,7 +165,7 @@ func (e *EverestServer) CreateBackupStorage(ctx echo.Context, namespace string) 
 }
 
 // DeleteBackupStorage deletes the specified backup storage.
-func (e *EverestServer) DeleteBackupStorage(ctx echo.Context, name, namespace string) error {
+func (e *EverestServer) DeleteBackupStorage(ctx echo.Context, namespace, name string) error {
 	used, err := e.kubeClient.IsBackupStorageUsed(ctx.Request().Context(), namespace, name)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
@@ -213,7 +213,7 @@ func (e *EverestServer) backupSecretData(secretKey, accessKey string) map[string
 }
 
 // GetBackupStorage retrieves the specified backup storage.
-func (e *EverestServer) GetBackupStorage(ctx echo.Context, name, namespace string) error {
+func (e *EverestServer) GetBackupStorage(ctx echo.Context, namespace, name string) error {
 	s, err := e.kubeClient.GetBackupStorage(ctx.Request().Context(), namespace, name)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
@@ -241,7 +241,7 @@ func (e *EverestServer) GetBackupStorage(ctx echo.Context, name, namespace strin
 }
 
 // UpdateBackupStorage updates of the specified backup storage.
-func (e *EverestServer) UpdateBackupStorage(ctx echo.Context, name, namespace string) error { //nolint:funlen,cyclop
+func (e *EverestServer) UpdateBackupStorage(ctx echo.Context, namespace, name string) error { //nolint:funlen,cyclop
 	c := ctx.Request().Context()
 	bs, err := e.kubeClient.GetBackupStorage(c, namespace, name)
 	if err != nil {
