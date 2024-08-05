@@ -29,6 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/rbac"
 )
 
 const (
@@ -218,7 +219,12 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 	if err != nil {
 		return errors.Join(err, errors.New("could not get old Database Cluster"))
 	}
-	if err := validateDatabaseClusterOnUpdate(dbc, oldDB); err != nil {
+
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return errors.Join(err, errors.New("cannot get user from request context"))
+	}
+	if err := e.validateDatabaseClusterOnUpdate(user, dbc, oldDB); err != nil {
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
 
@@ -349,4 +355,16 @@ func getDefaultUploadInterval(engineType everestv1alpha1.EngineType, uploadInter
 		return pgDefaultUploadInterval
 	}
 	return 0
+}
+
+// canTakeBackups checks if a given user is allowed to take backups.
+func (e *EverestServer) canTakeBackups(user string, object string) (bool, error) {
+	ok, err := e.rbacEnforcer.Enforce(
+		user, object,
+		rbac.ActionCreate,
+		rbac.ResourceDatabaseClusterBackups)
+	if err != nil {
+		return false, fmt.Errorf("failed to Enforce: %w", err)
+	}
+	return ok, nil
 }

@@ -47,6 +47,7 @@ import (
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/rbac"
 )
 
 const (
@@ -106,6 +107,7 @@ var (
 	errStorageChangePG               = errors.New("the existing postgres schedules can't change their storage")
 	errDuplicatedBackupStorage       = errors.New("backup storages with the same url, bucket and url are not allowed")
 	errEditBackupStorageInUse        = errors.New("can't edit bucket or region of the backup storage in use")
+	errInsufficientPermissions       = errors.New("insufficient permissions for performing the operation")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -676,6 +678,20 @@ func nameFromDatabaseCluster(dbc DatabaseCluster) (string, string, error) {
 }
 
 func (e *EverestServer) validateDatabaseClusterCR(ctx echo.Context, namespace string, databaseCluster *DatabaseCluster) error { //nolint:cyclop
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get user: %w", err)
+	}
+	// To be able to create a cluster with backup schedules, the user needs to explicitly
+	// have permissions to take backups.
+	if schedules := databaseCluster.Spec.Backup.Schedules; schedules != nil && len(*schedules) > 0 {
+		if can, err := e.canTakeBackups(user, namespace+"/"); err != nil {
+			return err
+		} else if !can {
+			return errInsufficientPermissions
+		}
+	}
+
 	if err := validateCreateDatabaseClusterRequest(*databaseCluster); err != nil {
 		return err
 	}
@@ -1144,7 +1160,59 @@ func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
 	return nil
 }
 
-func validateDatabaseClusterOnUpdate(dbc *DatabaseCluster, oldDB *everestv1alpha1.DatabaseCluster) error {
+func (e *EverestServer) validateBackupScheduledUpdate(
+	user string,
+	dbc *DatabaseCluster,
+	oldDB *everestv1alpha1.DatabaseCluster) error {
+	isSchedulesEqual := func() bool {
+		oldSchedules := oldDB.Spec.Backup.Schedules
+		newSchedules := []everestv1alpha1.BackupSchedule{}
+		for _, schedule := range pointer.Get(dbc.Spec.Backup.Schedules) {
+			newSchedules = append(newSchedules, everestv1alpha1.BackupSchedule{
+				Name:              schedule.Name,
+				Enabled:           schedule.Enabled,
+				BackupStorageName: schedule.BackupStorageName,
+				Schedule:          schedule.Schedule,
+				RetentionCopies:   pointer.GetInt32(schedule.RetentionCopies),
+			})
+		}
+		if len(oldSchedules) != len(newSchedules) {
+			return false
+		}
+		// sort slices by name.
+		sortFn := func(a, b everestv1alpha1.BackupSchedule) int { return strings.Compare(a.Name, b.Name) }
+		slices.SortFunc(oldSchedules, sortFn)
+		slices.SortFunc(newSchedules, sortFn)
+
+		// compare each.
+		for i := range oldSchedules {
+			if oldSchedules[i].Name != newSchedules[i].Name ||
+				oldSchedules[i].Enabled != newSchedules[i].Enabled ||
+				oldSchedules[i].BackupStorageName != newSchedules[i].BackupStorageName ||
+				oldSchedules[i].Schedule != newSchedules[i].Schedule ||
+				oldSchedules[i].RetentionCopies != newSchedules[i].RetentionCopies {
+				return false
+			}
+		}
+		return true
+	}
+
+	// If the schedules are updated, we need to check that the user has
+	// permission to create backups in this namespace.
+	if !isSchedulesEqual() {
+		if can, err := e.canTakeBackups(user, oldDB.GetNamespace()+"/"); err != nil {
+			return err
+		} else if !can {
+			return errInsufficientPermissions
+		}
+	}
+	return nil
+}
+
+func (e *EverestServer) validateDatabaseClusterOnUpdate(
+	user string,
+	dbc *DatabaseCluster,
+	oldDB *everestv1alpha1.DatabaseCluster) error {
 	newVersion := pointer.Get(dbc.Spec.Engine.Version)
 	oldVersion := oldDB.Spec.Engine.Version
 	if newVersion != "" && newVersion != oldVersion {
@@ -1160,6 +1228,10 @@ func validateDatabaseClusterOnUpdate(dbc *DatabaseCluster, oldDB *everestv1alpha
 		//
 		// Once it is supported by all operators we can revert this.
 		return fmt.Errorf("cannot scale down %d node cluster to 1. The operation is not supported", oldDB.Spec.Engine.Replicas)
+	}
+
+	if err := e.validateBackupScheduledUpdate(user, dbc, oldDB); err != nil {
+		return err
 	}
 	return nil
 }

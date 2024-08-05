@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"net/http"
 	"slices"
 	"strings"
 
@@ -39,6 +40,19 @@ import (
 	configmapadapter "github.com/percona/everest/pkg/rbac/configmap-adapter"
 	"github.com/percona/everest/pkg/rbac/fileadapter"
 	"github.com/percona/everest/pkg/session"
+)
+
+// Everest API resource names.
+const (
+	ResourceDatabaseClusterBackups  = "database-cluster-backups"
+	ResourceDatabaseClusterRestores = "database-cluster-restores"
+)
+
+const (
+	ActionCreate = "create"
+	ActionRead   = "read"
+	ActionUpdate = "update"
+	ActionDelete = "delete"
 )
 
 // Setup a new informer that watches our RBAC ConfigMap.
@@ -183,11 +197,11 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 	}
 	return func(c echo.Context, user string) (bool, error) {
 		actionMethodMap := map[string]string{
-			"GET":    "read",
-			"POST":   "create",
-			"PUT":    "update",
-			"PATCH":  "update",
-			"DELETE": "delete",
+			http.MethodGet:    ActionRead,
+			http.MethodPost:   ActionCreate,
+			http.MethodPut:    ActionUpdate,
+			http.MethodPatch:  ActionUpdate,
+			http.MethodDelete: ActionDelete,
 		}
 		var resource string
 		var object string
