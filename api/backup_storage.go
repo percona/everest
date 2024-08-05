@@ -123,7 +123,7 @@ func (e *EverestServer) CreateBackupStorage(ctx echo.Context, namespace string) 
 			Bucket:                params.BucketName,
 			Region:                params.Region,
 			CredentialsSecretName: params.Name,
-			AllowedNamespaces:     params.AllowedNamespaces,
+			AllowedNamespaces:     pointer.Get(params.AllowedNamespaces),
 			VerifyTLS:             params.VerifyTLS,
 			ForcePathStyle:        params.ForcePathStyle,
 		},
@@ -234,7 +234,7 @@ func (e *EverestServer) GetBackupStorage(ctx echo.Context, namespace, name strin
 		BucketName:        s.Spec.Bucket,
 		Region:            s.Spec.Region,
 		Url:               &s.Spec.EndpointURL,
-		AllowedNamespaces: s.Spec.AllowedNamespaces,
+		AllowedNamespaces: pointer.To(s.Spec.AllowedNamespaces),
 		VerifyTLS:         s.Spec.VerifyTLS,
 		ForcePathStyle:    s.Spec.ForcePathStyle,
 	})
@@ -326,7 +326,7 @@ func (e *EverestServer) UpdateBackupStorage(ctx echo.Context, namespace, name st
 		BucketName:        bs.Spec.Bucket,
 		Region:            bs.Spec.Region,
 		Url:               &bs.Spec.EndpointURL,
-		AllowedNamespaces: bs.Spec.AllowedNamespaces,
+		AllowedNamespaces: pointer.To(bs.Spec.AllowedNamespaces),
 		VerifyTLS:         bs.Spec.VerifyTLS,
 		ForcePathStyle:    bs.Spec.ForcePathStyle,
 	}

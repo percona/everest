@@ -1846,6 +1846,7 @@ components:
           type: string
           x-go-type-skip-optional-pointer: true
         allowedNamespaces:
+          deprecated: true
           type: array
           description: List of namespaces allowed to use this backup storage
           items:
@@ -1862,7 +1863,6 @@ components:
         - accessKey
         - secretKey
         - type
-        - allowedNamespaces
       additionalProperties: false
     UpdateBackupStorageParams:
       type: object
@@ -1886,6 +1886,7 @@ components:
         forcePathStyle:
           type: boolean
         allowedNamespaces:
+          deprecated: true
           type: array
           description: List of namespaces allowed to use this backup storage
           items:
@@ -2036,7 +2037,6 @@ components:
         - name
         - bucketName
         - type
-        - allowedNamespaces
     BackupStoragesList:
       type: array
       items:
@@ -2056,6 +2056,7 @@ components:
           minLength: 1
           x-go-type-skip-optional-pointer: true
         allowedNamespaces:
+          deprecated: true
           type: array
           description: List of namespaces allowed to use this monitoring instance
           items:
@@ -2107,7 +2108,6 @@ components:
       required:
         - type
         - url
-        - allowedNamespaces
         - name
     MonitoringInstanceUpdateParams:
       description: Monitoring instance update information
@@ -2121,7 +2121,6 @@ components:
       required:
         - type
         - url
-        - allowedNamespaces
         - name
     MonitoringInstancesList:
       type: array
