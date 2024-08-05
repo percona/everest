@@ -129,6 +129,12 @@ export const deleteBackup = async (page, request, name) => {
     if (bkp.status() == 404) {
       return;
     }
+
+    // remove finalizers.
+    let data = await bkp.json()
+    data.metadata.finalizers = null
+    await request.put(`/v1/namespaces/${testsNs}/database-cluster-backups/${name}`, { data })
+
     await page.waitForTimeout(1000)
   }
 }
