@@ -89,7 +89,8 @@ func (k *Kubernetes) IsBackupStorageUsed(ctx context.Context, namespace, name st
 		return false, err
 	}
 	for _, restore := range restores.Items {
-		if restore.Spec.DataSource.BackupSource.BackupStorageName == name {
+		src := restore.Spec.DataSource.BackupSource
+		if src != nil && src.BackupStorageName == name {
 			return true, nil
 		}
 		for _, db := range clusters.Items {
