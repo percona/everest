@@ -774,23 +774,6 @@ func (e *EverestServer) validateBackupStoragesFor( //nolint:cyclop
 	return nil
 }
 
-func (e *EverestServer) validateMonitoringConfigAccess(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error) {
-	mc, err := e.kubeClient.GetMonitoringConfig(ctx, namespace, name)
-	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return nil, fmt.Errorf("monitoring config %s does not exist", name)
-		}
-		return nil, fmt.Errorf("failed getting monitoring config %s", name)
-	}
-
-	for _, ns := range mc.Spec.AllowedNamespaces {
-		if ns == namespace {
-			return mc, nil
-		}
-	}
-	return nil, fmt.Errorf("monitoring config %s is not allowed for namespace %s", name, namespace)
-}
-
 func validateVersion(version *string, engine *everestv1alpha1.DatabaseEngine) error {
 	if version != nil {
 		if len(engine.Spec.AllowedVersions) > 0 {
@@ -1261,7 +1244,8 @@ func validateDatabaseClusterRestore(ctx context.Context, namespace string, resto
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return fmt.Errorf("backup storage %s does not exist",
-				b.Spec.BackupStorageName)
+				b.Spec.BackupStorageName,
+			)
 		}
 		return err
 	}
