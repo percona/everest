@@ -1257,10 +1257,11 @@ func validateDatabaseClusterRestore(ctx context.Context, namespace string, resto
 		}
 		return err
 	}
-	_, err = kubeClient.GetBackupStorage(ctx, kubeClient.Namespace(), b.Spec.BackupStorageName)
+	_, err = kubeClient.GetBackupStorage(ctx, namespace, b.Spec.BackupStorageName)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			return fmt.Errorf("backup storage %s does not exist", r.Spec.DataSource.BackupSource.BackupStorageName)
+			return fmt.Errorf("backup storage %s does not exist",
+				b.Spec.BackupStorageName)
 		}
 		return err
 	}
