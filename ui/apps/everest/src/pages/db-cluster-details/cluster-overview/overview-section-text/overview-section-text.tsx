@@ -13,23 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package commands ...
-package commands
+import { Typography } from '@mui/material';
+import { OverviewSectionTextProps } from './overview-section-text.types';
 
-import (
-	"github.com/spf13/cobra"
-	"go.uber.org/zap"
-
-	"github.com/percona/everest/commands/settings"
-)
-
-func newSettingsCommand(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "settings",
-		Long:  "Configure Everest settings",
-		Short: "Configure Everest settings",
-	}
-	cmd.AddCommand(settings.NewOIDCCmd(l))
-	cmd.AddCommand(settings.NewRBACCmd(l))
-	return cmd
-}
+export const OverviewSectionText = ({
+  children,
+  dataTestId,
+}: OverviewSectionTextProps) => (
+  <Typography
+    variant="body2"
+    sx={{ wordBreak: 'break-word' }}
+    data-testid={
+      dataTestId
+        ? `${dataTestId}-overview-section-text`
+        : 'overview-section-text'
+    }
+  >
+    {children}
+  </Typography>
+);
+export default OverviewSectionText;
