@@ -68,7 +68,7 @@ export const deleteDBCluster = async (request, page, name) => {
   }
 }
 
-export const createBackupStorage = async (request, name) => {
+export const createBackupStorage = async (request, name, namespace) => {
   const storagePayload = {
     type: 's3',
     name,
@@ -81,13 +81,13 @@ export const createBackupStorage = async (request, name) => {
     allowedNamespaces: [testsNs],
   }
 
-  const response = await request.post(`/v1/backup-storages`, { data: storagePayload })
+  const response = await request.post(`/v1/namespaces/${namespace}/backup-storages`, { data: storagePayload })
 
   await checkError(response)
 }
 
-export const deleteBackupStorage = async (request, name) => {
-  const res = await request.delete(`/v1/backup-storages/${name}`)
+export const deleteBackupStorage = async (request, name, namespace) => {
+  const res = await request.delete(`/v1/namespaces/${namespace}/backup-storages/${name}`)
 
   await checkError(res)
 }
@@ -152,7 +152,7 @@ export const waitClusterDeletion = async (request, page, clusterName) => {
   expect(cluster.status()).toBe(404)
 }
 
-export const createMonitoringConfig = async (request, name) => {
+export const createMonitoringConfig = async (request, name, namespace) => {
   const miData = {
     type: 'pmm',
     name: name,
@@ -162,13 +162,13 @@ export const createMonitoringConfig = async (request, name) => {
       apiKey: '123',
     },
   }
-  let res = await request.post('/v1/monitoring-instances', { data: miData })
+  let res = await request.post(`/v1/namespaces/${namespace}/monitoring-instances`, { data: miData })
 
   await checkError(res)
 }
 
-export const deleteMonitoringConfig = async (request, name) => {
-  let res = await request.delete(`/v1/monitoring-instances/${name}`)
+export const deleteMonitoringConfig = async (request, name, namespace) => {
+  let res = await request.delete(`/v1/namespaces/${namespace}/monitoring-instances/${name}`)
 
   await checkError(res)
 }

@@ -23,7 +23,7 @@ test('create/update/delete database cluster restore', async ({ request, page }) 
   const clName2 = th.suffixedName('cluster2')
   const backupName = th.suffixedName('backup')
 
-  await th.createBackupStorage(request, bsName)
+  await th.createBackupStorage(request, bsName, testsNs)
   await th.createDBCluster(request, clName)
   await th.createDBCluster(request, clName2)
   await th.createBackup(request, clName, backupName, bsName)
@@ -82,7 +82,7 @@ test('create/update/delete database cluster restore', async ({ request, page }) 
   await th.deleteDBCluster(request, page, clName2)
   await waitClusterDeletion(request, page, clName)
   await waitClusterDeletion(request, page, clName2)
-  await th.deleteBackupStorage(request, bsName)
+  await th.deleteBackupStorage(request, bsName, testsNs)
 })
 
 test('list restores', async ({ request, page }) => {
@@ -91,7 +91,7 @@ test('list restores', async ({ request, page }) => {
   const clName2 = th.suffixedName('cluster2')
   const backupName = th.suffixedName('backup')
 
-  await th.createBackupStorage(request, bsName)
+  await th.createBackupStorage(request, bsName, testsNs)
   await th.createDBCluster(request, clName1)
   await th.createDBCluster(request, clName2)
   await th.createBackup(request, clName1, backupName, bsName)
@@ -161,7 +161,7 @@ test('list restores', async ({ request, page }) => {
   await th.deleteDBCluster(request, page, clName2)
   await waitClusterDeletion(request, page, clName1)
   await waitClusterDeletion(request, page, clName2)
-  await th.deleteBackupStorage(request, bsName)
+  await th.deleteBackupStorage(request, bsName, testsNs)
 })
 
 test('create restore: validation errors', async ({ request, page }) => {
@@ -169,7 +169,7 @@ test('create restore: validation errors', async ({ request, page }) => {
   const backupName = th.suffixedName('backup')
   const clName = th.suffixedName('cl')
 
-  await th.createBackupStorage(request, bsName)
+  await th.createBackupStorage(request, bsName, testsNs)
   await th.createDBCluster(request, clName)
   await th.createBackup(request, clName, backupName, bsName)
 
@@ -214,5 +214,5 @@ test('create restore: validation errors', async ({ request, page }) => {
   await th.deleteBackup(request, backupName)
   await th.deleteDBCluster(request, page, clName)
   await waitClusterDeletion(request, page, clName)
-  await th.deleteBackupStorage(request, bsName)
+  await th.deleteBackupStorage(request, bsName, testsNs)
 })
