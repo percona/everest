@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -642,11 +643,6 @@ func (e *EverestServer) validateDatabaseClusterCR(
 	if err := validateVersion(databaseCluster.Spec.Engine.Version, engine); err != nil {
 		return err
 	}
-	if databaseCluster.Spec != nil && databaseCluster.Spec.Monitoring != nil && databaseCluster.Spec.Monitoring.MonitoringConfigName != nil {
-		if _, err := e.validateMonitoringConfigAccess(context.Background(), namespace, *databaseCluster.Spec.Monitoring.MonitoringConfigName); err != nil {
-			return err
-		}
-	}
 	if databaseCluster.Spec.Proxy != nil && databaseCluster.Spec.Proxy.Type != nil {
 		if err := validateProxy(databaseCluster.Spec.Engine.Type, string(*databaseCluster.Spec.Proxy.Type)); err != nil {
 			return err
@@ -656,7 +652,7 @@ func (e *EverestServer) validateDatabaseClusterCR(
 		return err
 	}
 
-	if err = validateBackupStoragesFor(ctx.Request().Context(), namespace, databaseCluster, e.validateBackupStoragesAccess); err != nil {
+	if err = e.validateBackupStoragesFor(ctx.Request().Context(), namespace, databaseCluster); err != nil {
 		return err
 	}
 
@@ -728,24 +724,17 @@ func checkSchedulesChanges(oldDbc everestv1alpha1.DatabaseCluster, newDbc Databa
 	return checkStorageDuplicates(newDbc)
 }
 
-func validateBackupStoragesFor( //nolint:cyclop
+func (e *EverestServer) validateBackupStoragesFor( //nolint:cyclop
 	ctx context.Context,
 	namespace string,
 	databaseCluster *DatabaseCluster,
-	validateBackupStorageAccessFunc func(context.Context, string, string) (*everestv1alpha1.BackupStorage, error),
 ) error {
 	if databaseCluster.Spec.Backup == nil {
 		return nil
 	}
 	storages := make(map[string]bool)
-	if databaseCluster.Spec.Backup.Schedules != nil {
-		for _, schedule := range *databaseCluster.Spec.Backup.Schedules {
-			_, err := validateBackupStorageAccessFunc(ctx, namespace, schedule.BackupStorageName)
-			if err != nil {
-				return err
-			}
-			storages[schedule.BackupStorageName] = true
-		}
+	for _, schedule := range pointer.Get(databaseCluster.Spec.Backup.Schedules) {
+		storages[schedule.BackupStorageName] = true
 	}
 
 	if databaseCluster.Spec.Engine.Type == DatabaseClusterSpecEngineType(everestv1alpha1.DatabaseEnginePSMDB) {
@@ -772,7 +761,7 @@ func validateBackupStoragesFor( //nolint:cyclop
 		if databaseCluster.Spec.Backup.Pitr.BackupStorageName == nil || *databaseCluster.Spec.Backup.Pitr.BackupStorageName == "" {
 			return errPitrNoBackupStorageName
 		}
-		storage, err := validateBackupStorageAccessFunc(ctx, namespace, *databaseCluster.Spec.Backup.Pitr.BackupStorageName)
+		storage, err := e.kubeClient.GetBackupStorage(ctx, namespace, *databaseCluster.Spec.Backup.Pitr.BackupStorageName)
 		if err != nil {
 			return err
 		}
@@ -785,25 +774,8 @@ func validateBackupStoragesFor( //nolint:cyclop
 	return nil
 }
 
-func (e *EverestServer) validateBackupStoragesAccess(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error) {
-	bs, err := e.kubeClient.GetBackupStorage(ctx, e.kubeClient.Namespace(), name)
-	if k8serrors.IsNotFound(err) {
-		return nil, fmt.Errorf("backup storage %s does not exist", name)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("could not validate backup storage %s", name)
-	}
-
-	for _, ns := range bs.Spec.AllowedNamespaces {
-		if ns == namespace {
-			return bs, nil
-		}
-	}
-	return nil, fmt.Errorf("backup storage %s is not allowed for namespace %s", name, namespace)
-}
-
 func (e *EverestServer) validateMonitoringConfigAccess(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error) {
-	mc, err := e.kubeClient.GetMonitoringConfig(ctx, MonitoringNamespace, name)
+	mc, err := e.kubeClient.GetMonitoringConfig(ctx, namespace, name)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return nil, fmt.Errorf("monitoring config %s does not exist", name)
@@ -1204,11 +1176,6 @@ func (e *EverestServer) validateDatabaseClusterBackup(ctx context.Context, names
 		if k8serrors.IsNotFound(err) {
 			return fmt.Errorf("database cluster %s does not exist", b.Spec.DBClusterName)
 		}
-		return err
-	}
-
-	_, err = e.validateBackupStoragesAccess(ctx, namespace, b.Spec.BackupStorageName)
-	if err != nil {
 		return err
 	}
 
