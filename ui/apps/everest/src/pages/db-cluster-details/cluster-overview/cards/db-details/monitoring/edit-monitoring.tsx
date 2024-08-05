@@ -81,7 +81,7 @@ export const MonitoringEditModal = ({
       {monitoringAvailable && (
         <>
           <SwitchInput
-            label={'enabled'}
+            label={Messages.enableMonitoring}
             name={MonitoringEditDialogFields.monitoringEnabledInput}
             formControlLabelProps={{
               sx: {
@@ -91,7 +91,7 @@ export const MonitoringEditModal = ({
           />
           <AutoCompleteInput
             name={MonitoringEditDialogFields.monitoringNameInput}
-            label={'monitoring'}
+            label={Messages.monitoringInputLabel}
             loading={monitoringInstancesLoading}
             options={monitoringInstancesOptions}
             autoCompleteProps={{

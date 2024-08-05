@@ -66,6 +66,7 @@ export const MonitoringDetails = ({
         <OverviewSectionRow
           label={Messages.fields.username}
           contentString={monitoring}
+          contentProps={{ sx: { textDecoration: 'underline' } }}
         />
       )}
 
