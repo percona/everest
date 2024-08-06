@@ -62,7 +62,7 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 	if err := e.validateDatabaseClusterOnCreate(ctx, namespace, dbc); err != nil {
 		if errors.Is(err, errInsufficientPermissions) {
 			return ctx.JSON(http.StatusForbidden, Error{
-				Message: pointer.ToString("Insufficient permissions to perform this action"),
+				Message: pointer.ToString("Cannot perform the operation due to insufficient permissions"),
 			})
 		}
 		return err
@@ -232,7 +232,7 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 	if err := e.validateDatabaseClusterOnUpdate(ctx, dbc, oldDB); err != nil {
 		if errors.Is(err, errInsufficientPermissions) {
 			return ctx.JSON(http.StatusForbidden, Error{
-				Message: pointer.ToString("Insufficient permissions to perform this action"),
+				Message: pointer.ToString("Cannot perform the operation due to insufficient permissions"),
 			})
 		}
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})

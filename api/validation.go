@@ -690,7 +690,7 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 		if can, err := e.canTakeBackups(user, namespace+"/"); err != nil {
 			return err
 		} else if !can {
-			return errInsufficientPermissions
+			return errors.Join(errInsufficientPermissions, errors.New("missing permission to take backups"))
 		}
 	}
 	return nil
@@ -1212,7 +1212,7 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 		if can, err := e.canTakeBackups(user, oldDB.GetNamespace()+"/"); err != nil {
 			return err
 		} else if !can {
-			return errInsufficientPermissions
+			return errors.Join(errInsufficientPermissions, errors.New("missing permission to take backups"))
 		}
 	}
 	return nil
