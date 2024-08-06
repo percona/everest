@@ -48,6 +48,7 @@ const (
 	ResourceDatabaseClusterRestores = "database-cluster-restores"
 )
 
+// RBAC actions.
 const (
 	ActionCreate = "create"
 	ActionRead   = "read"

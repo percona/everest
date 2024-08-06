@@ -679,7 +679,7 @@ func nameFromDatabaseCluster(dbc DatabaseCluster) (string, string, error) {
 
 func (e *EverestServer) validateDatabaseClusterOnCreate(
 	ctx echo.Context, namespace string, databaseCluster *DatabaseCluster,
-) error { //nolint:cyclop
+) error {
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get user: %w", err)
@@ -696,9 +696,10 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 	return nil
 }
 
+//nolint:cyclop
 func (e *EverestServer) validateDatabaseClusterCR(
 	ctx echo.Context, namespace string, databaseCluster *DatabaseCluster,
-) error { //nolint:cyclop
+) error {
 	if err := validateCreateDatabaseClusterRequest(*databaseCluster); err != nil {
 		return err
 	}
