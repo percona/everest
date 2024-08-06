@@ -372,7 +372,8 @@ func (e *EverestServer) canTakeBackups(user string, object string) (bool, error)
 	ok, err := e.rbacEnforcer.Enforce(
 		user, object,
 		rbac.ActionCreate,
-		rbac.ResourceDatabaseClusterBackups)
+		rbac.ResourceDatabaseClusterBackups,
+	)
 	if err != nil {
 		return false, fmt.Errorf("failed to Enforce: %w", err)
 	}
