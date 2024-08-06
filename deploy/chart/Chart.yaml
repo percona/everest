@@ -5,3 +5,4 @@ description: A cloud-native database platform
 version: 0.0.0
 type: application
 appVersion: 0.0.0
+kubeVersion: ">=1.22.0-0"

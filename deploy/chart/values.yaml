@@ -1,3 +1,4 @@
+image: perconalab/everest:0.0.0
 catalogSourceName: everest-catalog
 catalogSourceTag: latest
 telemetry: true
@@ -25,4 +26,3 @@ namespaces:
     pg:
       enabled: true
       channel: stable-v2
-
