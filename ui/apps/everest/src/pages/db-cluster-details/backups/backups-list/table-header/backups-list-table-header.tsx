@@ -13,15 +13,17 @@ import { Messages } from './backups-list-table-header.messages';
 const BackupListTableHeader = ({
   onNowClick,
   onScheduleClick,
+  noStoragesAvailable,
 }: BackupListTableHeaderProps) => {
   const [showSchedules, setShowSchedules] = useState(false);
   const { dbCluster } = useContext(ScheduleModalContext);
   const schedulesNumber = dbCluster.spec.backup?.schedules?.length || 0;
   const restoring = dbCluster.status?.status === DbClusterStatus.restoring;
-  const disableScheduleBackups =
+  const pgLimitExceeded =
     dbCluster?.spec.engine.type === DbEngineType.POSTGRESQL &&
     dbCluster?.spec.backup?.schedules &&
     dbCluster?.spec.backup?.schedules.length >= 3;
+  const disableScheduleBackups = noStoragesAvailable || pgLimitExceeded;
 
   const handleNowClick = (handleClose: () => void) => {
     onNowClick();
@@ -100,7 +102,11 @@ const BackupListTableHeader = ({
             <Box key="schedule">
               {disableScheduleBackups ? (
                 <Tooltip
-                  title={Messages.exceededScheduleBackupsNumber}
+                  title={
+                    pgLimitExceeded
+                      ? Messages.exceededScheduleBackupsNumber
+                      : Messages.noStoragesAvailable
+                  }
                   placement="right"
                   arrow
                 >
