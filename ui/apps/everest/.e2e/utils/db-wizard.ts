@@ -138,19 +138,31 @@ export const populateAdvancedConfig = async (
 ) => {
   if (externalAccess != '') {
     await page.getByLabel('Enable External Access').check();
-    await page.getByTestId('text-input-source-ranges.0.source-range').fill(externalAccess)
+    await page
+      .getByTestId('text-input-source-ranges.0.source-range')
+      .fill(externalAccess);
   }
   if (engineParameters != '' || addDefaultEngineParameters) {
     //await page.getByRole('checkbox', {name: "engineParametersEnabled"}).check({force: true})
     await page.getByLabel('Database engine parameters').check();
     if (engineParameters != '')
-      await page.getByTestId('text-input-engine-parameters').fill(engineParameters)
+      await page
+        .getByTestId('text-input-engine-parameters')
+        .fill(engineParameters);
     else if (dbType == 'psmdb') {
-      await page.getByTestId('text-input-engine-parameters').fill('systemLog:\n  verbosity: 1')
+      await page
+        .getByTestId('text-input-engine-parameters')
+        .fill('systemLog:\n  verbosity: 1');
     } else if (dbType == 'pxc') {
-      await page.getByTestId('text-input-engine-parameters').fill('[mysqld]\n  key_buffer_size=16M\n  max_allowed_packet=128M\n  max_connections=250')
+      await page
+        .getByTestId('text-input-engine-parameters')
+        .fill(
+          '[mysqld]\n  key_buffer_size=16M\n  max_allowed_packet=128M\n  max_connections=250'
+        );
     } else if (dbType == 'postgresql') {
-      await page.getByTestId('text-input-engine-parameters').fill('log_connections = yes\nshared_buffers = 128MB')
+      await page
+        .getByTestId('text-input-engine-parameters')
+        .fill('log_connections = yes\nshared_buffers = 128MB');
     }
   }
 };
@@ -172,24 +184,22 @@ export const populateMonitoringModalForm = async (
   user: string,
   password: string
 ) => {
-    // check monitoring is not available
-    await expect(page.getByTestId('monitoring-warning')).toBeVisible();
-    expect(await page.getByLabel('Enable monitoring').isChecked()).toBeFalsy();
-    await page.getByRole('button', { name: 'Add monitoring endpoint' }).click();
+  // check monitoring is not available
+  await expect(page.getByTestId('monitoring-warning')).toBeVisible();
+  expect(await page.getByLabel('Enable monitoring').isChecked()).toBeFalsy();
+  await page.getByRole('button', { name: 'Add monitoring endpoint' }).click();
 
-    await page.getByTestId('text-input-name').fill(endpointName);
-    const namespaces = page.getByTestId('text-input-allowed-namespaces');
-    await namespaces.click();
-    await page
-      .getByRole('option', { name: namespace })
-      .click();
-    await page.getByTestId('text-input-url').fill(url);
-    await page.getByTestId('text-input-user').fill(user);
-    await page.getByTestId('text-input-password').fill(password);
+  await page.getByTestId('text-input-name').fill(endpointName);
+  const namespaces = page.getByTestId('text-input-allowed-namespaces');
+  await namespaces.click();
+  await page.getByRole('option', { name: namespace }).click();
+  await page.getByTestId('text-input-url').fill(url);
+  await page.getByTestId('text-input-user').fill(user);
+  await page.getByTestId('text-input-password').fill(password);
 
-    await expect(page.getByTestId('form-dialog-add')).toBeEnabled();
-    await page.getByTestId('form-dialog-add').click();
+  await expect(page.getByTestId('form-dialog-add')).toBeEnabled();
+  await page.getByTestId('form-dialog-add').click();
 
-    await expect(page.getByTestId('monitoring-warning')).not.toBeVisible();
-    await expect(page.getByTestId('switch-input-monitoring')).toBeEnabled();
+  await expect(page.getByTestId('monitoring-warning')).not.toBeVisible();
+  await expect(page.getByTestId('switch-input-monitoring')).toBeEnabled();
 };

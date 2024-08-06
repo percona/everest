@@ -59,7 +59,7 @@ test.describe.configure({ retries: 0 });
 
       let storageClasses = [];
       let namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
-      let monitoringName = `${db}-${size}-pmm`
+      let monitoringName = `${db}-${size}-pmm`;
 
       test.beforeAll(async ({ request }) => {
         token = await getTokenFromLocalStorage();
@@ -105,11 +105,18 @@ test.describe.configure({ retries: 0 });
         await moveForward(page);
 
         // advanced
-        await populateAdvancedConfig(page, db, '', true, '')
+        await populateAdvancedConfig(page, db, '', true, '');
         await moveForward(page);
 
         // monitoring modal form
-        await populateMonitoringModalForm(page, monitoringName, EVEREST_CI_NAMESPACES.EVEREST_UI, MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD)
+        await populateMonitoringModalForm(
+          page,
+          monitoringName,
+          EVEREST_CI_NAMESPACES.EVEREST_UI,
+          MONITORING_URL,
+          MONITORING_USER,
+          MONITORING_PASSWORD
+        );
         await submitWizard(page);
         await expect(
           page.getByText('Awesome! Your database is being created!')
@@ -181,7 +188,10 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, clusterName, 'Up', 240000);
       });
 
-      test(`Delete cluster with ${db} and size ${size}`, async ({ page, request }) => {
+      test(`Delete cluster with ${db} and size ${size}`, async ({
+        page,
+        request,
+      }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
         await waitForDelete(page, clusterName, 15000);
