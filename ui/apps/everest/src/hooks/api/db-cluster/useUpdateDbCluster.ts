@@ -152,6 +152,32 @@ export const useUpdateDbClusterCrd = () =>
       }),
   });
 
+export const useUpdateDbClusterMonitoring = () =>
+  useMutation({
+    mutationFn: ({
+      clusterName,
+      namespace,
+      dbCluster,
+      monitoringName,
+    }: {
+      clusterName: string;
+      namespace: string;
+      dbCluster: DbCluster;
+      monitoringName?: string;
+    }) =>
+      updateDbClusterFn(clusterName, namespace, {
+        ...dbCluster,
+        spec: {
+          ...dbCluster.spec,
+          monitoring: monitoringName
+            ? {
+                monitoringConfigName: monitoringName,
+              }
+            : {},
+        },
+      }),
+  });
+
 export const useUpdateDbClusterEngine = () =>
   useMutation({
     mutationFn: ({

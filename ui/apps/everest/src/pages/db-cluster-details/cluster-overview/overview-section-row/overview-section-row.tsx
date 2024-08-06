@@ -22,6 +22,7 @@ export const OverviewSectionRow = ({
   labelProps,
   contentString,
   content,
+  contentProps,
 }: OverviewSectionRowProps) => (
   <Grid container data-testid={`${kebabize(label)}-overview-section-row`}>
     <Grid item xs={3} minWidth="90px" {...labelProps}>
@@ -31,7 +32,9 @@ export const OverviewSectionRow = ({
     </Grid>
     <Grid item>
       {contentString && (
-        <Typography variant="body2">{contentString}</Typography>
+        <Typography {...contentProps} variant="body2">
+          {contentString}
+        </Typography>
       )}
       {content}
     </Grid>
