@@ -370,9 +370,9 @@ func getDefaultUploadInterval(engineType everestv1alpha1.EngineType, uploadInter
 // canTakeBackups checks if a given user is allowed to take backups.
 func (e *EverestServer) canTakeBackups(user string, object string) (bool, error) {
 	ok, err := e.rbacEnforcer.Enforce(
-		user, object,
+		user, rbac.ResourceDatabaseClusterBackups,
 		rbac.ActionCreate,
-		rbac.ResourceDatabaseClusterBackups,
+		object,
 	)
 	if err != nil {
 		return false, fmt.Errorf("failed to Enforce: %w", err)
