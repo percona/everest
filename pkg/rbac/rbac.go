@@ -42,11 +42,6 @@ import (
 	"github.com/percona/everest/pkg/session"
 )
 
-// Enforcer provides an interface for the Casbin enforcer.
-type Enforcer interface {
-	Enforce(v ...interface{}) (bool, error)
-}
-
 // Everest API resource names.
 const (
 	ResourceDatabaseClusterBackups  = "database-cluster-backups"

@@ -15,4 +15,4 @@
 
 package rbac
 
-//go:generate ../../bin/mockery --name=Enforcer --case=snake --inpackage
+//go:generate ../../bin/mockery --name=IEnforcer --case=snake --srcpkg=github.com/casbin/casbin/v2
