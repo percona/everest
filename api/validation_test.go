@@ -1215,12 +1215,13 @@ func TestValidateBackupSchedulesUpdate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns"},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Schedules: []everestv1alpha1.BackupSchedule{{
-							Name:              "test-1",
-							Enabled:           true,
-							BackupStorageName: "storage-1",
-							Schedule:          "0 1 * * *",
-						},
+						Schedules: []everestv1alpha1.BackupSchedule{
+							{
+								Name:              "test-1",
+								Enabled:           true,
+								BackupStorageName: "storage-1",
+								Schedule:          "0 1 * * *",
+							},
 						},
 					},
 				},
@@ -1235,12 +1236,13 @@ func TestValidateBackupSchedulesUpdate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns"},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Schedules: []everestv1alpha1.BackupSchedule{{
-							Name:              "test-1",
-							Enabled:           true,
-							BackupStorageName: "storage-1",
-							Schedule:          "0 1 * * *",
-						},
+						Schedules: []everestv1alpha1.BackupSchedule{
+							{
+								Name:              "test-1",
+								Enabled:           true,
+								BackupStorageName: "storage-1",
+								Schedule:          "0 1 * * *",
+							},
 						},
 					},
 				},
@@ -1255,12 +1257,13 @@ func TestValidateBackupSchedulesUpdate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns"},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Schedules: []everestv1alpha1.BackupSchedule{{
-							Name:              "test-1",
-							Enabled:           true,
-							BackupStorageName: "storage-1",
-							Schedule:          "0 1 * * *",
-						},
+						Schedules: []everestv1alpha1.BackupSchedule{
+							{
+								Name:              "test-1",
+								Enabled:           true,
+								BackupStorageName: "storage-1",
+								Schedule:          "0 1 * * *",
+							},
 						},
 					},
 				},
