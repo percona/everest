@@ -1289,7 +1289,7 @@ func TestValidateBackupSchedulesUpdate(t *testing.T) {
 			require.NoError(t, err)
 
 			err = e.validateBackupScheduledUpdate("user", updated, tc.old)
-			assert.Equal(t, err, tc.expected)
+			assert.Equal(t, tc.expected, err)
 		})
 	}
 }
