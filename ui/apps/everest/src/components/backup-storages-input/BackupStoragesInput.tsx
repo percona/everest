@@ -5,8 +5,8 @@ import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBacku
 import { useDbBackups } from 'hooks/api/backups/useBackups';
 import { BackupStorage } from 'shared-types/backupStorages.types';
 import { Schedule } from 'shared-types/dbCluster.types';
-import { PG_SLOTS_LIMIT } from './constants';
 import { Messages } from './BackupStoragesInput.messages';
+import { getAvailableBackupStoragesForBackups } from 'utils/backups';
 
 type Props = {
   dbClusterName?: string;
@@ -35,27 +35,14 @@ const BackupStoragesInput = ({
     }
   );
   const isFetching = fetchingStorages || fetchingBackups;
-  const storagesInDemandBackups = backups.map(
-    (backup) => backup.backupStorageName
-  );
-  const storagesInSchedules = schedules.map(
-    (schedule) => schedule.backupStorageName
-  );
-  const storagesInUse = [...storagesInDemandBackups, ...storagesInSchedules];
-  const uniqueStoragesInUse = [...new Set(storagesInUse)];
-  const pgLimitAchieved =
-    dbType === DbType.Postresql && uniqueStoragesInUse.length >= PG_SLOTS_LIMIT;
-  let storagesToShow: BackupStorage[] = pgLimitAchieved
-    ? backupStorages.filter((storage) =>
-        uniqueStoragesInUse.includes(storage.name)
-      )
-    : backupStorages;
-
-  if (hideUsedStoragesInSchedules) {
-    storagesToShow = storagesToShow.filter(
-      (storage) => !storagesInSchedules.includes(storage.name)
+  const { storagesToShow, uniqueStoragesInUse } =
+    getAvailableBackupStoragesForBackups(
+      backups,
+      schedules,
+      backupStorages,
+      dbType,
+      hideUsedStoragesInSchedules
     );
-  }
 
   return (
     <AutoCompleteAutoFill<BackupStorage>
