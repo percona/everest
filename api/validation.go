@@ -1177,7 +1177,8 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 	isSchedulesEqual := func() bool {
 		oldSchedules := oldDB.Spec.Backup.Schedules
 		newSchedules := []everestv1alpha1.BackupSchedule{}
-		for _, schedule := range pointer.Get(dbc.Spec.Backup.Schedules) {
+		schedules := pointer.Get(pointer.Get(pointer.Get(dbc.Spec).Backup).Schedules)
+		for _, schedule := range schedules {
 			newSchedules = append(newSchedules, everestv1alpha1.BackupSchedule{
 				Name:              schedule.Name,
 				Enabled:           schedule.Enabled,
