@@ -14,8 +14,11 @@
 // limitations under the License.
 
 import { FormGroup, Box, Skeleton } from '@mui/material';
+import { DbType } from '@percona/types';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages';
+import { useDbBackups } from 'hooks/api/backups/useBackups.ts';
 import { useFormContext } from 'react-hook-form';
+import { getAvailableBackupStoragesForBackups } from 'utils/backups.ts';
 import { DbWizardFormFields } from '../../../database-form.types.ts';
 import BackupsActionableAlert from 'components/actionable-alert/backups-actionable-alert';
 import { StepHeader } from '../step-header/step-header.tsx';
@@ -26,12 +29,26 @@ import PITR from './pitr';
 export const Backups = () => {
   const { watch } = useFormContext();
 
-  const [selectedNamespace] = watch([
+  const [selectedNamespace, schedules, dbType, dbName] = watch([
     DbWizardFormFields.k8sNamespace,
     DbWizardFormFields.schedules,
+    DbWizardFormFields.dbType,
+    DbWizardFormFields.dbName,
   ]);
   const { data: backupStorages = [], isLoading } =
     useBackupStoragesByNamespace(selectedNamespace);
+  const { data: backups = [] } = useDbBackups(dbName, selectedNamespace, {
+    enabled: dbType === DbType.Postresql,
+  });
+  const { storagesToShow } = getAvailableBackupStoragesForBackups(
+    backups,
+    schedules,
+    backupStorages,
+    dbType,
+    dbType === DbType.Postresql
+  );
+  const scheduleCreationDisabled =
+    dbType === DbType.Postresql && storagesToShow.length === 0;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -45,17 +62,18 @@ export const Backups = () => {
           <Skeleton />
           <Skeleton />
         </>
-      ) : (
+      ) : backupStorages.length > 0 ? (
         <>
-          {backupStorages?.length > 0 ? (
-            <FormGroup sx={{ mt: 3 }}>
-              <Schedules />
-              <PITR />
-            </FormGroup>
-          ) : (
+          {scheduleCreationDisabled && (
             <BackupsActionableAlert namespace={selectedNamespace} />
           )}
+          <FormGroup sx={{ mt: 3 }}>
+            <Schedules disableCreateButton={scheduleCreationDisabled} />
+            <PITR />
+          </FormGroup>
         </>
+      ) : (
+        <BackupsActionableAlert namespace={selectedNamespace} />
       )}
     </Box>
   );

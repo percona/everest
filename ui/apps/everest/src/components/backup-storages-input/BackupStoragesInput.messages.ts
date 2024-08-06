@@ -1,4 +1,4 @@
-import { PG_SLOTS_LIMIT } from './constants';
+import { PG_SLOTS_LIMIT } from 'consts';
 
 export const Messages = {
   pgHelperText: (availableSlots: number) =>

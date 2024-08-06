@@ -16,7 +16,7 @@
 import { Delete } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
-import { MenuItem } from '@mui/material';
+import { MenuItem, Typography } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { useQueryClient } from '@tanstack/react-query';
 import StatusField from 'components/status-field';
@@ -38,6 +38,9 @@ import { Messages } from './backups-list.messages';
 import BackupListTableHeader from './table-header';
 import { CustomConfirmDialog } from 'components/custom-confirm-dialog/custom-confirm-dialog.tsx';
 import { DbEngineType } from '@percona/types';
+import { getAvailableBackupStoragesForBackups } from 'utils/backups.ts';
+import { dbEngineToDbType } from '@percona/utils';
+import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
 
 export const BackupsList = () => {
   const queryClient = useQueryClient();
@@ -62,6 +65,20 @@ export const BackupsList = () => {
       refetchInterval: 10 * 1000,
     }
   );
+  const { data: backupStorages = [] } = useBackupStoragesByNamespace(
+    dbCluster?.metadata.namespace
+  );
+  const dbType = dbCluster.spec?.engine.type;
+  const { storagesToShow, uniqueStoragesInUse } =
+    getAvailableBackupStoragesForBackups(
+      backups,
+      dbCluster.spec?.backup?.schedules || [],
+      backupStorages,
+      dbEngineToDbType(dbType),
+      dbType === DbEngineType.POSTGRESQL
+    );
+  const noStoragesAvailable =
+    dbType === DbEngineType.POSTGRESQL && storagesToShow.length === 0;
 
   const columns = useMemo<MRT_ColumnDef<Backup>[]>(
     () => [
@@ -171,6 +188,11 @@ export const BackupsList = () => {
 
   return (
     <>
+      {dbType === DbEngineType.POSTGRESQL && (
+        <Typography variant="body2" mt={2} px={1}>
+          {Messages.pgMaximum(uniqueStoragesInUse.length)}
+        </Typography>
+      )}
       <Table
         tableName="backupList"
         noDataMessage={Messages.noData}
@@ -188,6 +210,7 @@ export const BackupsList = () => {
           <BackupListTableHeader
             onNowClick={handleManualBackup}
             onScheduleClick={handleScheduledBackup}
+            noStoragesAvailable={noStoragesAvailable}
           />
         )}
         enableRowActions
