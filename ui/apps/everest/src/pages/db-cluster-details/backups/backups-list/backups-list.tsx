@@ -189,7 +189,7 @@ export const BackupsList = () => {
   return (
     <>
       {dbType === DbEngineType.POSTGRESQL && (
-        <Typography variant="body2">
+        <Typography variant="body2" mt={2} px={1}>
           {Messages.pgMaximum(uniqueStoragesInUse.length)}
         </Typography>
       )}
