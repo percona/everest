@@ -44,7 +44,7 @@ import (
 
 // Enforcer provides an interface for the Casbin enforcer.
 type Enforcer interface {
-	Enforce(args ...interface{}) (bool, error)
+	Enforce(v ...interface{}) (bool, error)
 }
 
 // Everest API resource names.

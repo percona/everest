@@ -9,10 +9,10 @@ type MockEnforcer struct {
 	mock.Mock
 }
 
-// Enforce provides a mock function with given fields: args
-func (_m *MockEnforcer) Enforce(args ...interface{}) (bool, error) {
+// Enforce provides a mock function with given fields: v
+func (_m *MockEnforcer) Enforce(v ...interface{}) (bool, error) {
 	var _ca []interface{}
-	_ca = append(_ca, args...)
+	_ca = append(_ca, v...)
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
@@ -22,16 +22,16 @@ func (_m *MockEnforcer) Enforce(args ...interface{}) (bool, error) {
 	var r0 bool
 	var r1 error
 	if rf, ok := ret.Get(0).(func(...interface{}) (bool, error)); ok {
-		return rf(args...)
+		return rf(v...)
 	}
 	if rf, ok := ret.Get(0).(func(...interface{}) bool); ok {
-		r0 = rf(args...)
+		r0 = rf(v...)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
 	if rf, ok := ret.Get(1).(func(...interface{}) error); ok {
-		r1 = rf(args...)
+		r1 = rf(v...)
 	} else {
 		r1 = ret.Error(1)
 	}
