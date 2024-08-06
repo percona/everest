@@ -686,7 +686,8 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 	}
 	// To be able to create a cluster with backup schedules, the user needs to explicitly
 	// have permissions to take backups.
-	if schedules := databaseCluster.Spec.Backup.Schedules; schedules != nil && len(*schedules) > 0 {
+	schedules := pointer.Get(pointer.Get(pointer.Get(databaseCluster.Spec).Backup).Schedules)
+	if len(schedules) > 0 {
 		if can, err := e.canTakeBackups(user, namespace+"/"); err != nil {
 			return err
 		} else if !can {
