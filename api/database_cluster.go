@@ -59,6 +59,15 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
 
+	if err := e.validateDatabaseClusterOnCreate(ctx, namespace, dbc); err != nil {
+		if errors.Is(err, errInsufficientPermissions) {
+			return ctx.JSON(http.StatusForbidden, Error{
+				Message: pointer.ToString("Insufficient permissions to perform this action"),
+			})
+		}
+		return err
+	}
+
 	err := e.proxyKubernetes(ctx, namespace, databaseClusterKind, "")
 	if err == nil {
 		// Collect metrics immediately after a DB cluster has been created.
@@ -220,11 +229,12 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 		return errors.Join(err, errors.New("could not get old Database Cluster"))
 	}
 
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return errors.Join(err, errors.New("cannot get user from request context"))
-	}
-	if err := e.validateDatabaseClusterOnUpdate(user, dbc, oldDB); err != nil {
+	if err := e.validateDatabaseClusterOnUpdate(ctx, dbc, oldDB); err != nil {
+		if errors.Is(err, errInsufficientPermissions) {
+			return ctx.JSON(http.StatusForbidden, Error{
+				Message: pointer.ToString("Insufficient permissions to perform this action"),
+			})
+		}
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
 

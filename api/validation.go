@@ -677,7 +677,8 @@ func nameFromDatabaseCluster(dbc DatabaseCluster) (string, string, error) {
 	return strName, strNS, nil
 }
 
-func (e *EverestServer) validateDatabaseClusterCR(ctx echo.Context, namespace string, databaseCluster *DatabaseCluster) error { //nolint:cyclop
+func (e *EverestServer) validateDatabaseClusterOnCreate(
+	ctx echo.Context, namespace string, databaseCluster *DatabaseCluster) error { //nolint:cyclop
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get user: %w", err)
@@ -691,7 +692,11 @@ func (e *EverestServer) validateDatabaseClusterCR(ctx echo.Context, namespace st
 			return errInsufficientPermissions
 		}
 	}
+	return nil
+}
 
+func (e *EverestServer) validateDatabaseClusterCR(
+	ctx echo.Context, namespace string, databaseCluster *DatabaseCluster) error { //nolint:cyclop
 	if err := validateCreateDatabaseClusterRequest(*databaseCluster); err != nil {
 		return err
 	}
@@ -1210,7 +1215,7 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 }
 
 func (e *EverestServer) validateDatabaseClusterOnUpdate(
-	user string,
+	c echo.Context,
 	dbc *DatabaseCluster,
 	oldDB *everestv1alpha1.DatabaseCluster) error {
 	newVersion := pointer.Get(dbc.Spec.Engine.Version)
@@ -1230,6 +1235,10 @@ func (e *EverestServer) validateDatabaseClusterOnUpdate(
 		return fmt.Errorf("cannot scale down %d node cluster to 1. The operation is not supported", oldDB.Spec.Engine.Replicas)
 	}
 
+	user, err := rbac.GetUser(c)
+	if err != nil {
+		return errors.Join(err, errors.New("cannot get user from request context"))
+	}
 	if err := e.validateBackupScheduledUpdate(user, dbc, oldDB); err != nil {
 		return err
 	}
