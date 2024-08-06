@@ -678,7 +678,8 @@ func nameFromDatabaseCluster(dbc DatabaseCluster) (string, string, error) {
 }
 
 func (e *EverestServer) validateDatabaseClusterOnCreate(
-	ctx echo.Context, namespace string, databaseCluster *DatabaseCluster) error { //nolint:cyclop
+	ctx echo.Context, namespace string, databaseCluster *DatabaseCluster,
+) error { //nolint:cyclop
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get user: %w", err)
@@ -696,7 +697,8 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 }
 
 func (e *EverestServer) validateDatabaseClusterCR(
-	ctx echo.Context, namespace string, databaseCluster *DatabaseCluster) error { //nolint:cyclop
+	ctx echo.Context, namespace string, databaseCluster *DatabaseCluster,
+) error { //nolint:cyclop
 	if err := validateCreateDatabaseClusterRequest(*databaseCluster); err != nil {
 		return err
 	}
@@ -1168,7 +1170,8 @@ func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
 func (e *EverestServer) validateBackupScheduledUpdate(
 	user string,
 	dbc *DatabaseCluster,
-	oldDB *everestv1alpha1.DatabaseCluster) error {
+	oldDB *everestv1alpha1.DatabaseCluster,
+) error {
 	isSchedulesEqual := func() bool {
 		oldSchedules := oldDB.Spec.Backup.Schedules
 		newSchedules := []everestv1alpha1.BackupSchedule{}
@@ -1217,7 +1220,8 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 func (e *EverestServer) validateDatabaseClusterOnUpdate(
 	c echo.Context,
 	dbc *DatabaseCluster,
-	oldDB *everestv1alpha1.DatabaseCluster) error {
+	oldDB *everestv1alpha1.DatabaseCluster,
+) error {
 	newVersion := pointer.Get(dbc.Spec.Engine.Version)
 	oldVersion := oldDB.Spec.Engine.Version
 	if newVersion != "" && newVersion != oldVersion {
