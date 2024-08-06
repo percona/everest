@@ -15,44 +15,17 @@
 
 import { Page, expect } from '@playwright/test';
 
-/**
- * Selects the required DB resources in db wizard and checks if the calculation of total amount
- * of resources is correct
- * @param page Page object
- * @param cpu Requested CPU amount
- * @param memory Requested memory amount in GB
- * @param disk Requested disk size in Gb
- * @param clusterSize Number of nodes in DB cluster
- */
-export const resourcesStepCheck = async (
-  page: Page,
-  cpu: number,
-  memory: number,
-  disk: number,
-  clusterSize: number
-) => {
+export const resourcesStepCheck = async (page: Page) => {
   await expect(page.getByTestId('step-header')).toBeVisible();
   await expect(page.getByTestId('step-description')).toBeVisible();
 
   await page.getByTestId('toggle-button-large').click();
-  await page.getByTestId('text-input-cpu').fill(cpu.toString());
-  await page.getByTestId('text-input-memory').fill(memory.toString());
-  await page.getByTestId('text-input-disk').fill(disk.toString());
+  await page.getByTestId('text-input-cpu').fill('0.6');
+  await page.getByTestId('text-input-memory').fill('1');
+  await page.getByTestId('text-input-disk').fill('1');
 
-  const expectedCpuText = ` = ${(cpu * clusterSize).toFixed(2)} CPU`;
-  const expectedMemoryText = ` = ${(memory * clusterSize).toFixed(2)} GB`;
-  const expectedDiskText = ` = ${(disk * clusterSize).toFixed(2)} GB`;
-
-  let nodesText =
-    clusterSize == 1 ? `x ${clusterSize} node` : `x ${clusterSize} nodes`;
-  expect(await page.getByText(nodesText).count()).toBe(3);
-  await expect(page.getByTestId('cpu-resource-sum')).toHaveText(
-    expectedCpuText
-  );
-  await expect(page.getByTestId('memory-resource-sum')).toHaveText(
-    expectedMemoryText
-  );
-  await expect(page.getByTestId('disk-resource-sum')).toHaveText(
-    expectedDiskText
-  );
+  expect(await page.getByText('x 3 nodes').count()).toBe(3);
+  await expect(page.getByTestId('cpu-resource-sum')).toHaveText('= 1.80 CPU');
+  await expect(page.getByTestId('memory-resource-sum')).toHaveText('= 3.00 GB');
+  await expect(page.getByTestId('disk-resource-sum')).toHaveText(' = 3.00 GB');
 };

@@ -22,15 +22,21 @@ import {
 } from '../utils/db-clusters-list';
 import { getTokenFromLocalStorage } from '../utils/localStorage';
 import { getClusterDetailedInfo } from '../utils/storage-class';
-import { resourcesStepCheck } from '../db-cluster/db-wizard/create-db-cluster/steps/resources-step';
 import {
   moveForward,
   submitWizard,
   populateBasicInformation,
+  populateResources,
+  populateAdvancedConfig,
+  populateMonitoringModalForm,
 } from '../utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '../constants';
 import { waitForStatus, waitForDelete } from '../utils/table';
 import { checkError } from '../utils/generic';
+import { deleteMonitoringInstance } from '../utils/monitoring-instance';
+
+const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
+let token: string;
 
 test.describe.configure({ retries: 0 });
 
@@ -53,9 +59,10 @@ test.describe.configure({ retries: 0 });
 
       let storageClasses = [];
       let namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
+      let monitoringName = `${db}-${size}-pmm`
 
       test.beforeAll(async ({ request }) => {
-        const token = await getTokenFromLocalStorage();
+        token = await getTokenFromLocalStorage();
 
         const { storageClassNames = [] } = await getClusterDetailedInfo(
           token,
@@ -91,16 +98,18 @@ test.describe.configure({ retries: 0 });
           .getByText(size + ' node')
           .click();
         await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
-        await resourcesStepCheck(page, 0.6, 1, 1, size);
+        await populateResources(page, 0.6, 1, 1, size);
         await moveForward(page);
 
         // backups
         await moveForward(page);
 
         // advanced
+        await populateAdvancedConfig(page, db, '', true, '')
         await moveForward(page);
 
-        // monitoring
+        // monitoring modal form
+        await populateMonitoringModalForm(page, monitoringName, EVEREST_CI_NAMESPACES.EVEREST_UI, MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD)
         await submitWizard(page);
         await expect(
           page.getByText('Awesome! Your database is being created!')
@@ -115,7 +124,7 @@ test.describe.configure({ retries: 0 });
           `/v1/namespaces/${namespace}/database-clusters`,
           {
             headers: {
-              Authorization: `Bearer ${await getTokenFromLocalStorage()}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -172,10 +181,11 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, clusterName, 'Up', 240000);
       });
 
-      test(`Delete cluster with ${db} and size ${size}`, async ({ page }) => {
+      test(`Delete cluster with ${db} and size ${size}`, async ({ page, request }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
         await waitForDelete(page, clusterName, 15000);
+        await deleteMonitoringInstance(request, monitoringName, token);
       });
     }
   );
