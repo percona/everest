@@ -50,7 +50,7 @@ const BackupStoragesInput = ({
       textFieldProps={{
         label: 'Backup storage',
         helperText:
-          dbType === DbType.Postresql && !autoFillProps?.disabled
+          dbType === DbType.Postresql
             ? Messages.pgHelperText(uniqueStoragesInUse.length)
             : undefined,
       }}
