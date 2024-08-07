@@ -290,6 +290,7 @@ export const DbClusterView = () => {
                 handleDeleteDbCluster(row.original.raw);
                 closeMenu();
               }}
+              disabled={row.original?.status === DbClusterStatus.deleting}
               sx={{
                 m: 0,
                 display: 'flex',

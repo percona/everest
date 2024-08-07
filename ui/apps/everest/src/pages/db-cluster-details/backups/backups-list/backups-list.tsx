@@ -245,6 +245,7 @@ export const BackupsList = () => {
               handleDeleteBackup(row.original.name);
               closeMenu();
             }}
+            disabled={row.original.state === BackupStatus.DELETING}
             sx={{ m: 0, display: 'flex', gap: 1, px: 2, py: '10px' }}
           >
             <Delete />
