@@ -38,7 +38,6 @@ import { DbEngineType } from '@percona/types';
 import { getAvailableBackupStoragesForBackups } from 'utils/backups.ts';
 import { dbEngineToDbType } from '@percona/utils';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
-
 import TableActionsMenu from 'components/table-actions-menu';
 import { BackupActionButtons } from './backups-list-menu-actions';
 
