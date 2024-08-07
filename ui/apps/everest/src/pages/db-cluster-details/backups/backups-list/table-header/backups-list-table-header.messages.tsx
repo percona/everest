@@ -14,5 +14,6 @@ export const Messages = {
     `${schedulesNumber} active schedule${schedulesNumber > 1 ? 's' : ''}`,
   exceededScheduleBackupsNumber:
     'Maximum limit of schedules for PostgreSQL reached.',
-  maximumPgSchedules: 'Note: Maximum 3 schedules for PostgreSQL',
+  noStoragesAvailable:
+    'Add a new backup storage in order to create a backup schedule',
 };

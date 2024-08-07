@@ -34,8 +34,13 @@ import { DbType } from '@percona/types';
 import { useDatabasePageMode } from '../../../../useDatabasePageMode';
 import { dbWizardToScheduleFormDialogMap } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog-context.types';
 import { useDatabasePageDefaultValues } from '../../../../useDatabaseFormDefaultValues';
+import { PG_SLOTS_LIMIT } from 'consts';
 
-const Schedules = () => {
+type Props = {
+  disableCreateButton?: boolean;
+};
+
+const Schedules = ({ disableCreateButton = false }: Props) => {
   const { watch, setValue } = useFormContext();
   const dbWizardMode = useDatabasePageMode();
   const {
@@ -53,8 +58,9 @@ const Schedules = () => {
 
   const [activeStorage, setActiveStorage] = useState(undefined);
   const createButtonDisabled =
+    disableCreateButton ||
     openScheduleModal ||
-    (dbType === DbType.Postresql && schedules?.length >= 3);
+    (dbType === DbType.Postresql && schedules?.length >= PG_SLOTS_LIMIT);
 
   useEffect(() => {
     if (schedules?.length > 0 && dbType === DbType.Mongo) {
