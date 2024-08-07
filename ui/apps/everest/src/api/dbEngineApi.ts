@@ -14,7 +14,7 @@
 // limitations under the License.
 import {
   GetDbEnginesPayload,
-  OperatorUpgradePreflightPayload,
+  OperatorsUpgradePlan,
 } from 'shared-types/dbEngines.types';
 import { api } from './api';
 
@@ -26,46 +26,18 @@ export const getDbEnginesFn = async (namespace: string) => {
   return response.data;
 };
 
-export const getOperatorUpgradePreflight = async (
-  namespace: string,
-  dbEngineName: string,
-  targetVersion: string
-) => {
-  const response = await api.get<OperatorUpgradePreflightPayload>(
-    `/namespaces/${namespace}/database-engines/${dbEngineName}/operator-version/preflight?targetVersion=${targetVersion}`,
-    {
-      disableNotifications: true,
-    }
+export const upgradeOperator = async (namespace: string) => {
+  const response = await api.post(
+    `/namespaces/${namespace}/database-engines/upgrade-plan/approval/`,
+    {}
   );
 
   return response.data;
 };
 
-export const upgradeOperator = async (
-  namespace: string,
-  dbEngineName: string,
-  targetVersion: string
-) => {
-  const response = await api.put(
-    `/namespaces/${namespace}/database-engines/${dbEngineName}/operator-version/`,
-    {
-      targetVersion,
-    }
-  );
-
-  return response.data;
-};
-
-export const getOperatorVersions = async (
-  namespace: string,
-  dbEngineName: string
-) => {
-  const response = await api.get<OperatorUpgradePreflightPayload>(
-    `/namespaces/${namespace}/database-engines/${dbEngineName}/operator-version`,
-    {
-      disableNotifications: true,
-    }
-  );
-
-  return response.data;
-};
+export const getOperatorsUpgradePlan = async (namespace: string) =>
+  (
+    await api.get<OperatorsUpgradePlan>(
+      `/namespaces/${namespace}/database-engines/upgrade-plan`
+    )
+  ).data;

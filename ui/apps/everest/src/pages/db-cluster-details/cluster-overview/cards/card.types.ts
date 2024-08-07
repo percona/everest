@@ -1,22 +1,30 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import { DbType } from '@percona/types';
-import { Backup } from 'shared-types/dbCluster.types';
+import { DbCluster } from 'shared-types/dbCluster.types';
 
 export type OverviewCardProps = {
   loading?: boolean;
 };
 
-export type DatabaseDetailsOverviewCardProps = {
+export type BasicInformationOverviewCardProps = {
+  type: DbType;
   name: string;
   namespace: string;
-  type: DbType;
   version: string;
-  numberOfNodes: number;
-  cpu: number | string;
-  memory: number | string;
-  disk: number | string;
-  externalAccess: boolean;
-  monitoring?: string;
-  backup?: Backup;
 } & OverviewCardProps;
 
 export type ConnectionDetailsOverviewCardProps = {
@@ -30,6 +38,36 @@ export type ConnectionDetailsOverviewCardProps = {
   clusterNamespace?: string;
 } & OverviewCardProps;
 
+export type AdvancedConfigurationOverviewCardProps = {
+  externalAccess: boolean;
+  parameters: boolean;
+} & OverviewCardProps;
+
+export type MonitoringConfigurationOverviewCardProps = {
+  monitoring?: string;
+} & OverviewCardProps;
+
+export type DatabaseDetailsOverviewCardProps =
+  BasicInformationOverviewCardProps &
+    ConnectionDetailsOverviewCardProps &
+    AdvancedConfigurationOverviewCardProps &
+    MonitoringConfigurationOverviewCardProps &
+    OverviewCardProps;
+
+export type ResourcesDetailsOverviewProps = {
+  numberOfNodes: DbCluster['spec']['engine']['replicas'];
+  cpu: NonNullable<DbCluster['spec']['engine']['resources']>['cpu'];
+  memory: NonNullable<DbCluster['spec']['engine']['resources']>['memory'];
+  disk: DbCluster['spec']['engine']['storage']['size'];
+} & OverviewCardProps;
+
 export type BackupsDetailsOverviewCardProps = {
-  scheduledBackups?: boolean;
+  schedules: NonNullable<DbCluster['spec']['backup']>['schedules'];
+  backup: DbCluster['spec']['backup'];
+  pitrEnabled: NonNullable<
+    NonNullable<DbCluster['spec']['backup']>['pitr']
+  >['enabled'];
+  pitrStorageName: NonNullable<
+    NonNullable<DbCluster['spec']['backup']>['pitr']
+  >['backupStorageName'];
 } & OverviewCardProps;

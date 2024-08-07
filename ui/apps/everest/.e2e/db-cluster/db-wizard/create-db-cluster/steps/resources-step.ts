@@ -25,7 +25,7 @@ export const resourcesStepCheck = async (page: Page) => {
   await page.getByTestId('text-input-disk').fill('1');
 
   expect(await page.getByText('x 3 nodes').count()).toBe(3);
-  await expect(page.getByTestId('cpu-resource-sum')).toHaveText('= 1.8 CPU');
-  await expect(page.getByTestId('memory-resource-sum')).toHaveText('= 3 GB');
-  await expect(page.getByTestId('disk-resource-sum')).toHaveText(' = 3 Gi');
+  await expect(page.getByTestId('cpu-resource-sum')).toHaveText('= 1.80 CPU');
+  await expect(page.getByTestId('memory-resource-sum')).toHaveText('= 3.00 GB');
+  await expect(page.getByTestId('disk-resource-sum')).toHaveText(' = 3.00 GB');
 };

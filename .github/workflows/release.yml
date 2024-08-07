@@ -2,6 +2,7 @@
 name: Release
 on:
   workflow_dispatch:
+    inputs:
       version:
         description: "The RC/Release version, format: X.Y.Z-rcN for RC, X.Y.Z for releases"
         required: true
@@ -264,6 +265,7 @@ jobs:
               --new-version ${{ env.VERSION }} 
           fi
           
+          cd ..
           curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.44.0/${OS}-${ARCH}-opm
           chmod +x /tmp/opm
           /tmp/opm alpha render-template basic -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
@@ -404,7 +406,7 @@ jobs:
 
       - name: Everest - build binary
         run: |
-          if [[ $env.IS_RC ]]; then 
+          if [[ $IS_RC == 1 ]]; then 
             CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
           else
             CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make release

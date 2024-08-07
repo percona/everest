@@ -166,6 +166,7 @@ export const DbActionButtons = (
             onClick={() => {
               handleDeleteDbCluster(row.original.raw);
             }}
+            disabled={row.original?.status === DbClusterStatus.deleting}
             sx={{
               m: 0,
               gap: 1,

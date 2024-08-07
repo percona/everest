@@ -95,6 +95,7 @@ const Login = () => {
                   />
                   <Button
                     onClick={methods.handleSubmit(handleLogin)}
+                    type="submit"
                     disabled={authStatus === 'loggingIn'}
                     data-testid="login-button"
                     variant="contained"

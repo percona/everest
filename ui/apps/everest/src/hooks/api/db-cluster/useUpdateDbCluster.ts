@@ -75,7 +75,7 @@ const formValuesToPayloadOverrides = (
         storage: {
           ...dbCluster.spec.engine.storage,
           class: dbPayload.storageClass!,
-          size: `${dbPayload.disk}Gi`,
+          size: `${dbPayload.disk}G`,
         },
         config: dbPayload.engineParametersEnabled
           ? dbPayload.engineParameters
@@ -148,6 +148,32 @@ export const useUpdateDbClusterCrd = () =>
             ...dbCluster.spec.engine,
             crVersion: newCrdVersion,
           },
+        },
+      }),
+  });
+
+export const useUpdateDbClusterMonitoring = () =>
+  useMutation({
+    mutationFn: ({
+      clusterName,
+      namespace,
+      dbCluster,
+      monitoringName,
+    }: {
+      clusterName: string;
+      namespace: string;
+      dbCluster: DbCluster;
+      monitoringName?: string;
+    }) =>
+      updateDbClusterFn(clusterName, namespace, {
+        ...dbCluster,
+        spec: {
+          ...dbCluster.spec,
+          monitoring: monitoringName
+            ? {
+                monitoringConfigName: monitoringName,
+              }
+            : {},
         },
       }),
   });

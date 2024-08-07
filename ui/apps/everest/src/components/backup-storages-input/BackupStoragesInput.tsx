@@ -5,8 +5,8 @@ import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBacku
 import { useDbBackups } from 'hooks/api/backups/useBackups';
 import { BackupStorage } from 'shared-types/backupStorages.types';
 import { Schedule } from 'shared-types/dbCluster.types';
-import { PG_SLOTS_LIMIT } from './constants';
 import { Messages } from './BackupStoragesInput.messages';
+import { getAvailableBackupStoragesForBackups } from 'utils/backups';
 
 type Props = {
   dbClusterName?: string;
@@ -14,6 +14,7 @@ type Props = {
   dbType: DbType;
   schedules: Schedule[];
   autoFillProps?: Partial<AutoCompleteAutoFillProps<BackupStorage>>;
+  hideUsedStoragesInSchedules?: boolean;
 };
 
 const BackupStoragesInput = ({
@@ -22,6 +23,7 @@ const BackupStoragesInput = ({
   dbType,
   schedules,
   autoFillProps,
+  hideUsedStoragesInSchedules,
 }: Props) => {
   const { data: backupStorages = [], isFetching: fetchingStorages } =
     useBackupStoragesByNamespace(namespace);
@@ -32,20 +34,15 @@ const BackupStoragesInput = ({
       enabled: !!dbClusterName && dbType === DbType.Postresql,
     }
   );
-
   const isFetching = fetchingStorages || fetchingBackups;
-  const storagesInUse = [
-    ...backups.map((backup) => backup.backupStorageName),
-    ...schedules.map((schedule) => schedule.backupStorageName),
-  ];
-  const uniqueStoragesInUse = [...new Set(storagesInUse)];
-  const pgLimitAchieved =
-    dbType === DbType.Postresql && uniqueStoragesInUse.length >= PG_SLOTS_LIMIT;
-  const storagesToShow: BackupStorage[] = pgLimitAchieved
-    ? backupStorages.filter((storage) =>
-        uniqueStoragesInUse.includes(storage.name)
-      )
-    : backupStorages;
+  const { storagesToShow, uniqueStoragesInUse } =
+    getAvailableBackupStoragesForBackups(
+      backups,
+      schedules,
+      backupStorages,
+      dbType,
+      hideUsedStoragesInSchedules
+    );
 
   return (
     <AutoCompleteAutoFill<BackupStorage>
@@ -53,7 +50,7 @@ const BackupStoragesInput = ({
       textFieldProps={{
         label: 'Backup storage',
         helperText:
-          dbType === DbType.Postresql
+          dbType === DbType.Postresql && !autoFillProps?.disabled
             ? Messages.pgHelperText(uniqueStoragesInUse.length)
             : undefined,
       }}

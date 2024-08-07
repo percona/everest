@@ -81,7 +81,7 @@ const formValuesToPayloadMapping = (
         },
         storage: {
           class: dbPayload.storageClass!,
-          size: `${dbPayload.disk}Gi`,
+          size: `${dbPayload.disk}G`,
         },
         config: dbPayload.engineParametersEnabled
           ? dbPayload.engineParameters

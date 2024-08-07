@@ -23,6 +23,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"slices"
 	"time"
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
@@ -68,6 +69,15 @@ var skipObjects = []client.Object{ //nolint:gochecknoglobals
 			Namespace: common.SystemNamespace,
 		},
 	},
+	&corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestRBACConfigMapName,
+			Namespace: common.SystemNamespace,
+		},
+	},
 }
 
 type (
@@ -88,15 +98,6 @@ type (
 		config         *Config
 		kubeClient     kubernetes.KubernetesConnector
 		versionService versionservice.Interface
-	}
-
-	supportedVersion struct {
-		catalog       goversion.Constraints
-		cli           goversion.Constraints
-		olm           goversion.Constraints
-		pgOperator    goversion.Constraints
-		pxcOperator   goversion.Constraints
-		psmdbOperator goversion.Constraints
 	}
 
 	requirementsCheck struct {
@@ -213,6 +214,13 @@ func (u *Upgrade) Run(ctx context.Context) error {
 				if err := u.ensureEverestJWTIfNotExists(ctx); err != nil {
 					return err
 				}
+			}
+			// RBAC is added in 1.2.x, so if we're upgrading to that version, we need to ensure
+			// that the RBAC configmap is present.
+			if common.CheckConstraint(upgradeEverestTo, "~> 1.2.0") {
+				skipObjects = slices.DeleteFunc(skipObjects, func(o client.Object) bool {
+					return o.GetName() == common.EverestRBACConfigMapName
+				})
 			}
 			// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
 			if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo, skipObjects...); err != nil {
@@ -456,7 +464,7 @@ func (u *Upgrade) findNextMinorVersion(
 }
 
 func (u *Upgrade) verifyRequirements(ctx context.Context, meta *version.MetadataVersion) error {
-	supVer, err := u.supportedVersion(meta)
+	supVer, err := common.NewSupportedVersion(meta)
 	if err != nil {
 		return err
 	}
@@ -468,32 +476,7 @@ func (u *Upgrade) verifyRequirements(ctx context.Context, meta *version.Metadata
 	return nil
 }
 
-func (u *Upgrade) supportedVersion(meta *version.MetadataVersion) (*supportedVersion, error) {
-	supVer := &supportedVersion{}
-
-	// Parse MetadataVersion into supportedVersion struct.
-	config := map[string]*goversion.Constraints{
-		"cli":           &supVer.cli,
-		"olm":           &supVer.olm,
-		"catalog":       &supVer.catalog,
-		"pgOperator":    &supVer.pgOperator,
-		"pxcOperator":   &supVer.pxcOperator,
-		"psmdbOperator": &supVer.psmdbOperator,
-	}
-	for key, ref := range config {
-		if s, ok := meta.GetSupported()[key]; ok {
-			c, err := goversion.NewConstraint(s)
-			if err != nil {
-				return nil, errors.Join(err, fmt.Errorf("invalid %s constraint %s", key, s))
-			}
-			*ref = c
-		}
-	}
-
-	return supVer, nil
-}
-
-func (u *Upgrade) checkRequirements(ctx context.Context, supVer *supportedVersion) error {
+func (u *Upgrade) checkRequirements(ctx context.Context, supVer *common.SupportedVersion) error {
 	// TODO: olm, catalog to be implemented.
 
 	// cli version check.
@@ -504,27 +487,40 @@ func (u *Upgrade) checkRequirements(ctx context.Context, supVer *supportedVersio
 			return errors.Join(err, fmt.Errorf("invalid cli version %s", cliVersion.Version))
 		}
 
-		if !supVer.cli.Check(cli.Core()) {
+		if !supVer.Cli.Check(cli.Core()) {
 			return fmt.Errorf(
 				"cli version %q does not meet minimum requirements of %q",
-				cli, supVer.cli.String(),
+				cli, supVer.Cli.String(),
 			)
 		}
-		u.l.Debugf("cli version %q meets requirements %q", cli, supVer.cli.String())
+		u.l.Debugf("cli version %q meets requirements %q", cli, supVer.Cli.String())
 	} else {
 		u.l.Debug("cli version is empty")
 	}
 
+	// Kubernetes version check
+	if err := common.CheckK8sRequirements(supVer, u.l, u.kubeClient); err != nil {
+		return err
+	}
+
+	// Operator version check.
+	if err := u.checkOperatorRequirements(ctx, supVer); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *common.SupportedVersion) error {
 	nss, err := u.kubeClient.GetDBNamespaces(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Operator version check.
 	cfg := []requirementsCheck{
-		{common.PXCOperatorName, supVer.pxcOperator},
-		{common.PGOperatorName, supVer.pgOperator},
-		{common.PSMDBOperatorName, supVer.psmdbOperator},
+		{common.PXCOperatorName, supVer.PXCOperator},
+		{common.PGOperatorName, supVer.PGOperator},
+		{common.PSMDBOperatorName, supVer.PSMBDOperator},
 	}
 	for _, ns := range nss {
 		u.l.Infof("Checking operator requirements in namespace %s", ns)
@@ -544,7 +540,7 @@ func (u *Upgrade) checkRequirements(ctx context.Context, supVer *supportedVersio
 			if !c.constraints.Check(v) {
 				return fmt.Errorf(
 					"%s version %q does not meet minimum requirements of %q",
-					c.operatorName, v, supVer.pxcOperator.String(),
+					c.operatorName, v, supVer.PXCOperator.String(),
 				)
 			}
 			u.l.Debugf("Finished requirements check for operator %s", c.operatorName)

@@ -1,8 +1,9 @@
 import { useContext, useState } from 'react';
-import { Box, Button, MenuItem } from '@mui/material';
+import { Box, Button, MenuItem, Tooltip } from '@mui/material';
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
 import KeyboardArrowUpOutlined from '@mui/icons-material/KeyboardArrowUpOutlined';
 import { MenuButton } from '@percona/ui-lib';
+import { DbEngineType } from '@percona/types';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { ScheduleModalContext } from '../../backups.context';
 import ScheduledBackupsList from './scheduled-backups-list';
@@ -13,11 +14,17 @@ import { useGetPermissions } from 'utils/useGetPermissions';
 const BackupListTableHeader = ({
   onNowClick,
   onScheduleClick,
+  noStoragesAvailable,
 }: BackupListTableHeaderProps) => {
   const [showSchedules, setShowSchedules] = useState(false);
   const { dbCluster } = useContext(ScheduleModalContext);
   const schedulesNumber = dbCluster.spec.backup?.schedules?.length || 0;
   const restoring = dbCluster.status?.status === DbClusterStatus.restoring;
+  const pgLimitExceeded =
+    dbCluster?.spec.engine.type === DbEngineType.POSTGRESQL &&
+    dbCluster?.spec.backup?.schedules &&
+    dbCluster?.spec.backup?.schedules.length >= 3;
+  const disableScheduleBackups = noStoragesAvailable || pgLimitExceeded;
 
   const handleNowClick = (handleClose: () => void) => {
     onNowClick();
@@ -104,12 +111,30 @@ const BackupListTableHeader = ({
                 {Messages.now}
               </MenuItem>,
               <Box key="schedule">
-                <MenuItem
-                  onClick={() => handleScheduleClick(handleClose)}
-                  data-testid="schedule-menu-item"
-                >
-                  {Messages.schedule}
-                </MenuItem>
+                {disableScheduleBackups ? (
+                  <Tooltip
+                    title={
+                      pgLimitExceeded
+                        ? Messages.exceededScheduleBackupsNumber
+                        : Messages.noStoragesAvailable
+                    }
+                    placement="right"
+                    arrow
+                  >
+                    <div>
+                      <MenuItem data-testid="schedule-menu-item" disabled>
+                        {Messages.schedule}
+                      </MenuItem>
+                    </div>
+                  </Tooltip>
+                ) : (
+                  <MenuItem
+                    onClick={() => handleScheduleClick(handleClose)}
+                    data-testid="schedule-menu-item"
+                  >
+                    {Messages.schedule}
+                  </MenuItem>
+                )}
               </Box>,
             ]}
           </MenuButton>

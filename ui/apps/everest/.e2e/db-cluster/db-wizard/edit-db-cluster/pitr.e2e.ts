@@ -162,9 +162,12 @@ test.describe.serial('MySQL PITR editing', async () => {
 
     // Go to DB details and check pitr
     await findDbAndClickRow(page, mySQLName);
-    await expect(page.getByTestId('pitr-overview-section-text')).toHaveText(
-      'Disabled'
-    );
+    await expect(
+      page
+        .getByTestId('backups-and-pitr')
+        .getByTestId('status-overview-section-row')
+        .filter({ hasText: 'Disabled' })
+    ).toBeVisible();
   });
 });
 

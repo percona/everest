@@ -45,6 +45,7 @@ func (e *EverestServer) CreateSession(ctx echo.Context) error {
 	c := ctx.Request().Context()
 	err := e.sessionMgr.Authenticate(c, *params.Username, *params.Password)
 	if err != nil {
+		e.attemptsStore.IncreaseTimeout(ctx.RealIP())
 		return sessionErrToHTTPRes(ctx, err)
 	}
 
@@ -64,6 +65,8 @@ func (e *EverestServer) CreateSession(ctx echo.Context) error {
 		Name:  common.EverestTokenCookie,
 		Value: jwtToken,
 	})
+	e.attemptsStore.CleanupVisitor(ctx.RealIP())
+
 	return ctx.JSON(http.StatusOK, map[string]string{"token": jwtToken})
 }
 

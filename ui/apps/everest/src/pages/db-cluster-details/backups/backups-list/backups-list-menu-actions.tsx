@@ -95,6 +95,7 @@ export const BackupActionButtons = (
             onClick={() => {
               handleDeleteBackup(row.original.name);
             }}
+            disabled={row.original.state === BackupStatus.DELETING}
             sx={{
               m: 0,
               gap: 1,

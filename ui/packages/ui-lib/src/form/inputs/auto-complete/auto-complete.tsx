@@ -9,7 +9,7 @@ function AutoCompleteInput<T>({
   controllerProps,
   label,
   autoCompleteProps,
-  textFieldProps,
+  textFieldProps = {},
   options,
   loading = false,
   isRequired = false,
@@ -17,6 +17,7 @@ function AutoCompleteInput<T>({
   onChange,
 }: AutoCompleteInputProps<T>) {
   const { control: contextControl } = useFormContext();
+  const { helperText, ...restTextFieldProps } = textFieldProps;
   return (
     <Controller
       name={name}
@@ -41,7 +42,7 @@ function AutoCompleteInput<T>({
               {...params}
               error={!!error}
               label={label}
-              helperText={error ? error.message : textFieldProps?.helperText}
+              helperText={error ? error.message : helperText}
               inputProps={{
                 'data-testid': `text-input-${kebabize(name)}`,
                 ...params.inputProps,
@@ -63,7 +64,7 @@ function AutoCompleteInput<T>({
               }}
               size="small"
               required={isRequired}
-              {...textFieldProps}
+              {...restTextFieldProps}
             />
           )}
           {...autoCompleteProps}
