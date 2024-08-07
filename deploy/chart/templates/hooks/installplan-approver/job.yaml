@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: everest-installer
+  name: installplan-approver
   namespace: {{ .Release.Namespace }}
   annotations:
     "helm.sh/hook": post-install
@@ -15,7 +15,7 @@ spec:
             - -c
             - |
               echo "Sleep for sometime to wait for all the resources to be created..."
-              sleep 30
+              sleep 90
               for ns in $(echo $NAMESPACES | sed "s/,/ /g")
               do
                   echo "Approving InstallPlans in namespace $ns"

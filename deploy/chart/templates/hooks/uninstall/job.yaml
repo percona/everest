@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: uninstall
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-delete
+spec:
+  template:
+    spec:
+      containers:
+        - image: bitnami/kubectl:latest
+          command:
+            - /bin/bash
+            - -c
+            - |
+              # For each DB namespace
+              for ns in $(echo $NAMESPACES | sed "s/,/ /g")
+              do
+                # List DBs in this namespace
+                dbs=$(kubectl get db -n ${ns} -o=jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}{"\n"}{end}')
+                for db in $dbs; do
+                  kubectl delete db $db -n $ns --wait
+                done
+                kubectl delete -n ${ns} csv --all --wait 
+              done
+              echo "Deleted databases"
+              
+              kubectl delete csv packageserver -n {{ .Values.olm.namespace }} --wait 
+          imagePullPolicy: Always
+          name: uninstaller
+          env:
+            - name: NAMESPACES
+              value: {{ range $i, $ns := .Values.namespaces }}{{ if ne $i 0 }},{{ end }}{{ $ns.name }}{{ end }},{{ .Release.Namespace }},{{ .Values.vmOperator.namespace }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      serviceAccount: everest-uninstaller
+      serviceAccountName: everest-uninstaller
+      terminationGracePeriodSeconds: 30
