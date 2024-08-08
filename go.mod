@@ -24,7 +24,7 @@ require (
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/lestrrat-go/jwx/v2 v2.0.21
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/oapi-codegen/echo-middleware v1.0.1
+	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.26.0
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
