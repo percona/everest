@@ -1,5 +1,5 @@
-import { Add, Delete, Edit } from '@mui/icons-material';
-import { Button, MenuItem } from '@mui/material';
+import { Add } from '@mui/icons-material';
+import { Button } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
@@ -22,6 +22,9 @@ import { StorageLocationsFields } from '../storage-locations/storage-locations.t
 import { CreateEditEndpointModal } from './createEditModal/create-edit-modal';
 import { EndpointFormType } from './createEditModal/create-edit-modal.types';
 import { Messages } from './monitoring-endpoints.messages';
+import { useGetPermissions } from 'utils/useGetPermissions';
+import TableActionsMenu from '../../../components/table-actions-menu';
+import { MonitoringActionButtons } from './monitoring-endpoint-menu-actions';
 
 export const MonitoringEndpoints = () => {
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
@@ -152,6 +155,8 @@ export const MonitoringEndpoints = () => {
     });
   };
 
+  const { canCreate } = useGetPermissions({ resource: 'monitoring-instances' });
+
   return (
     <>
       <Table
@@ -164,38 +169,28 @@ export const MonitoringEndpoints = () => {
         }}
         enableRowActions
         noDataMessage="No monitoring endpoint added"
-        renderTopToolbarCustomActions={() => (
-          <Button
-            size="small"
-            startIcon={<Add />}
-            data-testid="add-monitoring-endpoint"
-            variant="outlined"
-            onClick={handleOpenCreateModal}
-          >
-            {Messages.add}
-          </Button>
-        )}
-        renderRowActionMenuItems={({ row, closeMenu }) => [
-          <MenuItem
-            key={0}
-            onClick={() => {
-              handleOpenEditModal(row.original);
-              closeMenu();
-            }}
-            sx={{ m: 0, display: 'flex', gap: 1, px: 2, py: '10px' }}
-          >
-            <Edit /> {Messages.edit}
-          </MenuItem>,
-          <MenuItem
-            key={1}
-            onClick={() => {
-              handleDeleteInstance(row.original);
-              closeMenu();
-            }}
-          >
-            <Delete /> {Messages.delete}
-          </MenuItem>,
-        ]}
+        renderTopToolbarCustomActions={() =>
+          canCreate && (
+            <Button
+              size="small"
+              startIcon={<Add />}
+              data-testid="add-monitoring-endpoint"
+              variant="outlined"
+              onClick={handleOpenCreateModal}
+              sx={{ display: 'flex' }}
+            >
+              {Messages.add}
+            </Button>
+          )
+        }
+        renderRowActions={({ row }) => {
+          const menuItems = MonitoringActionButtons(
+            row,
+            handleDeleteInstance,
+            handleOpenEditModal
+          );
+          return <TableActionsMenu menuItems={menuItems} />;
+        }}
       />
       {openCreateEditModal && (
         <CreateEditEndpointModal

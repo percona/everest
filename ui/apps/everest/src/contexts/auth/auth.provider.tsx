@@ -6,6 +6,7 @@ import {
 } from 'oidc-react';
 import { AxiosError } from 'axios';
 import { jwtDecode } from 'jwt-decode';
+import { Authorizer } from 'casbin.js';
 import {
   api,
   addApiErrorInterceptor,
@@ -23,6 +24,7 @@ import {
   UserAuthStatus,
 } from './auth.context.types';
 import { isAfter } from 'date-fns';
+import { useRBACPolicies } from 'hooks/api/policies/usePolicies';
 
 const Provider = ({
   oidcConfig,
@@ -47,6 +49,10 @@ const Provider = ({
 const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   const [authStatus, setAuthStatus] = useState<UserAuthStatus>('unknown');
   const [redirect, setRedirect] = useState<string | null>(null);
+
+  const { data: policies = '' } = useRBACPolicies();
+  const [username, setUsername] = useState('');
+
   const { signIn, userManager } = useOidcAuth();
   const checkAuth = useCallback(async (token: string) => {
     try {
@@ -65,6 +71,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
       await signIn();
     } else {
       const { username, password } = manualAuthArgs!;
+      setUsername(username);
       try {
         const response = await api.post('/session', { username, password });
         const token = response.data.token; // Assuming the response structure has a token field
@@ -159,7 +166,11 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     }
 
     const authRoutine = async (token: string) => {
-      const { iss, exp } = jwtDecode(token);
+      const decoded = jwtDecode(token);
+      const iss = decoded.iss;
+      const exp = decoded.exp;
+      const username = decoded.sub?.substring(0, decoded.sub.indexOf(':'));
+      setUsername(username || '');
       if (iss === EVEREST_JWT_ISSUER) {
         const isTokenValid = await checkAuth(token);
         if (isTokenValid) {
@@ -193,6 +204,16 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     authRoutine(savedToken);
   }, [authStatus, silentlyRenewToken, userManager]);
 
+  const authorize = useCallback(
+    async (action: string, resource: string, specificResource?: string) => {
+      const authorizer = new Authorizer('auto', { endpoint: '/' });
+      authorizer.user = username;
+      await authorizer.initEnforcer(JSON.stringify(policies));
+      return (await authorizer).can(specificResource || '*', action, resource);
+    },
+    [username, policies]
+  );
+
   return (
     <AuthContext.Provider
       value={{
@@ -201,6 +222,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
         authStatus,
         redirectRoute: redirect,
         setRedirectRoute,
+        authorize,
         isSsoEnabled,
       }}
     >

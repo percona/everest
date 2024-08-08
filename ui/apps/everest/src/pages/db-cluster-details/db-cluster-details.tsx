@@ -14,6 +14,7 @@ import { DBClusterDetailsTabs } from './db-cluster-details.types';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbClusterContext } from './dbCluster.context';
 import { useContext } from 'react';
+import { useGetPermissions } from 'utils/useGetPermissions';
 
 export const DbClusterDetails = () => {
   const { dbClusterName = '' } = useParams();
@@ -22,6 +23,12 @@ export const DbClusterDetails = () => {
   const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
   const navigate = useNavigate();
   const currentTab = routeMatch?.params?.tabs;
+
+  const { canUpdate, canDelete } = useGetPermissions({
+    resource: 'database-clusters',
+    specificResource: dbCluster?.metadata.name,
+    namespace: dbCluster?.metadata.namespace,
+  });
 
   if (isLoading) {
     return (
@@ -58,7 +65,15 @@ export const DbClusterDetails = () => {
           onBackClick={() => navigate('/databases')}
         />
         {/* At this point, loading is done and we either have the cluster or not */}
-        <DbActionButton dbCluster={dbCluster!} />
+        <>
+          {canUpdate || canDelete ? (
+            <DbActionButton
+              dbCluster={dbCluster!}
+              canUpdate={canUpdate}
+              canDelete={canDelete}
+            />
+          ) : undefined}
+        </>
       </Box>
       <Box
         sx={{
