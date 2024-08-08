@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FormGroup, MenuItem, Skeleton } from '@mui/material';
+import { FormGroup, MenuItem, Skeleton, Typography } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 
 import { DbType } from '@percona/types';
@@ -22,6 +22,7 @@ import {
   DbToggleCard,
   LabeledContent,
   SelectInput,
+  SwitchInput,
   TextInput,
   ToggleButtonGroupInput,
 } from '@percona/ui-lib';
@@ -58,6 +59,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const dbType: DbType = watch(DbWizardFormFields.dbType);
   const dbVersion: DbType = watch(DbWizardFormFields.dbVersion);
   const dbNamespace = watch(DbWizardFormFields.k8sNamespace);
+  const sharding = watch(DbWizardFormFields.sharding);
 
   const { data: dbEngines = [], isFetching: dbEnginesFetching } = useDbEngines(
     dbNamespace,
@@ -157,6 +159,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       }
 
       setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[newDbType]);
+      setValue(DbWizardFormFields.sharding, false);
       updateDbVersions();
     },
     [
@@ -317,6 +320,47 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             disabled: mode === 'edit' || loadingDefaultsForEdition,
           }}
         />
+        {dbType === DbType.Mongo && (
+          <>
+            <Typography variant="sectionHeading" sx={{ mt: 4 }}>
+              Shards
+            </Typography>
+            <SwitchInput
+              label={Messages.labels.shardedCluster}
+              name={DbWizardFormFields.sharding}
+              switchFieldProps={{
+                onChange: (e) => {
+                  if (!e.target.checked) {
+                    resetField(DbWizardFormFields.shardNr, {
+                      keepError: false,
+                    });
+                    resetField(DbWizardFormFields.shardConfigServers, {
+                      keepError: false,
+                    });
+                  }
+                },
+              }}
+            />
+            {sharding && (
+              <>
+                <TextInput
+                  name={DbWizardFormFields.shardNr}
+                  textFieldProps={{
+                    label: Messages.labels.numberOfShards,
+                    type: 'number',
+                  }}
+                />
+                <TextInput
+                  name={DbWizardFormFields.shardConfigServers}
+                  textFieldProps={{
+                    label: Messages.labels.numberOfConfigServers,
+                    type: 'number',
+                  }}
+                />
+              </>
+            )}
+          </>
+        )}
       </FormGroup>
     </>
   );

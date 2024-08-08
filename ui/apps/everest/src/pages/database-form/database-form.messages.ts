@@ -49,5 +49,8 @@ export const Messages = {
       invalidOption:
         'Invalid option. Please make sure you added a monitoring endpoint and select it from the dropdown',
     },
+    sharding: {
+      invalid: 'Please fill in valid values for sharding',
+    },
   },
 };

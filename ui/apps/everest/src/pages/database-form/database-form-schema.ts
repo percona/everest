@@ -35,8 +35,33 @@ const basicInfoSchema = z
           });
         }
       }),
+    [DbWizardFormFields.sharding]: z.boolean(),
+    [DbWizardFormFields.shardNr]: z.string().optional(),
+    [DbWizardFormFields.shardConfigServers]: z.string().optional(),
   })
-  .passthrough();
+  .passthrough()
+  .superRefine(({ sharding, shardNr = '', shardConfigServers = '' }, ctx) => {
+    if (sharding) {
+      const intShardNr = parseInt(shardNr, 10);
+      const intShardConfigServers = parseInt(shardConfigServers, 10);
+
+      if (Number.isNaN(intShardNr) || intShardNr <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: Messages.errors.sharding.invalid,
+          path: [DbWizardFormFields.shardNr],
+        });
+      }
+
+      if (Number.isNaN(intShardConfigServers) || intShardConfigServers <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: Messages.errors.sharding.invalid,
+          path: [DbWizardFormFields.shardConfigServers],
+        });
+      }
+    }
+  });
 
 // .passthrough tells Zod to not drop unrecognized keys
 // this is needed because we parse step by step
