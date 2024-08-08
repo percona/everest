@@ -10,6 +10,7 @@ require (
 	github.com/aws/aws-sdk-go v1.54.19
 	github.com/briandowns/spinner v1.23.1
 	github.com/casbin/casbin/v2 v2.87.1
+	github.com/casbin/govaluate v1.1.1
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/fatih/color v1.17.0
 	github.com/getkin/kin-openapi v0.126.0
@@ -57,7 +58,6 @@ require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/bshuster-repo/logrus-logstash-hook v1.0.0 // indirect
-	github.com/casbin/govaluate v1.1.1 // indirect
 	github.com/cert-manager/cert-manager v1.14.6 // indirect
 	github.com/creack/pty v1.1.18 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
