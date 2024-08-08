@@ -143,26 +143,30 @@ export const populateAdvancedConfig = async (
       .fill(externalAccess);
   }
   if (engineParameters != '' || addDefaultEngineParameters) {
-    //await page.getByRole('checkbox', {name: "engineParametersEnabled"}).check({force: true})
     await page.getByLabel('Database engine parameters').check();
-    if (engineParameters != '')
+    if (engineParameters != '') {
       await page
         .getByTestId('text-input-engine-parameters')
         .fill(engineParameters);
-    else if (dbType == 'psmdb') {
+    } else {
+      let inputParameters = '';
+
+      switch (dbType) {
+          case 'psmdb':
+              inputParameters = 'systemLog:\n verbosity: 1';
+          break;
+          case 'postgresql':
+              inputParameters = 'log_connections = yes\nshared_buffers = 128MB';
+          break;
+          case 'pxc':
+          default:
+              inputParameters = '[mysqld]\n key_buffer_size=16M\n max_allowed_packet=128M\n max_connections=250';
+          break;
+      }
+
       await page
         .getByTestId('text-input-engine-parameters')
-        .fill('systemLog:\n  verbosity: 1');
-    } else if (dbType == 'pxc') {
-      await page
-        .getByTestId('text-input-engine-parameters')
-        .fill(
-          '[mysqld]\n  key_buffer_size=16M\n  max_allowed_packet=128M\n  max_connections=250'
-        );
-    } else if (dbType == 'postgresql') {
-      await page
-        .getByTestId('text-input-engine-parameters')
-        .fill('log_connections = yes\nshared_buffers = 128MB');
+        .fill(inputParameters);
     }
   }
 };
