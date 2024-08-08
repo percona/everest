@@ -20,7 +20,7 @@ test('create/delete database cluster backups', async ({ request, page }) => {
   const bsName = th.suffixedName('storage')
   const clName = th.suffixedName('cluster')
 
-  await th.createBackupStorage(request, bsName)
+  await th.createBackupStorage(request, bsName, testsNs)
   await th.createDBCluster(request, clName)
 
   const backupName = th.suffixedName('backup')
@@ -48,16 +48,16 @@ test('create/delete database cluster backups', async ({ request, page }) => {
 
   expect(result.spec).toMatchObject(payload.spec)
 
-  await th.deleteBackup(request, backupName)
+  await th.deleteBackup(page, request, backupName)
   await th.deleteDBCluster(request, page, clName)
   await waitClusterDeletion(request, page, clName)
-  await th.deleteBackupStorage(request, bsName)
+  await th.deleteBackupStorage(page, request, bsName, testsNs)
 })
 
-test('dbcluster not found', async ({ request }) => {
+test('dbcluster not found', async ({ request, page }) => {
   const bsName = th.suffixedName('storage')
 
-  await th.createBackupStorage(request, bsName)
+  await th.createBackupStorage(request, bsName, testsNs)
 
   const backupName = th.suffixedName('backup')
   const payload = {
@@ -79,7 +79,7 @@ test('dbcluster not found', async ({ request }) => {
   expect(response.status()).toBe(400)
   expect(await response.text()).toContain('{"message":"Database cluster not-existing-cluster does not exist"}')
 
-  await th.deleteBackupStorage(request, bsName)
+  await th.deleteBackupStorage(page, request, bsName, testsNs)
 })
 
 test('list backups', async ({ request, page }) => {
@@ -87,7 +87,7 @@ test('list backups', async ({ request, page }) => {
   const clusterName1 = th.suffixedName('cluster1')
   const clusterName2 = th.suffixedName('cluster2')
 
-  await th.createBackupStorage(request, bsName)
+  await th.createBackupStorage(request, bsName, testsNs)
   await th.createDBCluster(request, clusterName1)
   await th.createDBCluster(request, clusterName2)
 
@@ -148,5 +148,5 @@ test('list backups', async ({ request, page }) => {
   await th.deleteDBCluster(request, page, clusterName2)
   await waitClusterDeletion(request, page, clusterName1)
   await waitClusterDeletion(request, page, clusterName2)
-  await th.deleteBackupStorage(request, bsName)
+  await th.deleteBackupStorage(page, request, bsName, testsNs)
 })

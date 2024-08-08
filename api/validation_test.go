@@ -22,10 +22,13 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/kubernetes/client"
 	"github.com/percona/everest/pkg/rbac"
 	"github.com/percona/everest/pkg/rbac/mocks"
 )
@@ -512,11 +515,19 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 			err = json.Unmarshal(tc.storage, storage)
 			require.NoError(t, err)
 
-			err = validateBackupStoragesFor(
+			k := &kubernetes.Kubernetes{}
+			mockConnector := &client.MockKubeClientConnector{}
+			mockConnector.On("GetBackupStorage", mock.Anything, mock.Anything, mock.Anything).
+				Return(storage, nil)
+			k.WithClient(mockConnector)
+			e := EverestServer{
+				kubeClient: k,
+			}
+
+			err = e.validateBackupStoragesFor(
 				context.Background(),
 				tc.namespace,
 				cluster,
-				func(context.Context, string, string) (*everestv1alpha1.BackupStorage, error) { return storage, nil },
 			)
 			if tc.err == nil {
 				require.NoError(t, err)
