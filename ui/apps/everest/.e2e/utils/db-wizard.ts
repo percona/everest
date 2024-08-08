@@ -152,15 +152,16 @@ export const populateAdvancedConfig = async (
       let inputParameters = '';
 
       switch (dbType) {
-          case 'psmdb':
-              inputParameters = 'systemLog:\n verbosity: 1';
+        case 'psmdb':
+          inputParameters = 'systemLog:\n verbosity: 1';
           break;
-          case 'postgresql':
-              inputParameters = 'log_connections = yes\nshared_buffers = 128MB';
+        case 'postgresql':
+          inputParameters = 'log_connections = yes\nshared_buffers = 128MB';
           break;
-          case 'pxc':
-          default:
-              inputParameters = '[mysqld]\n key_buffer_size=16M\n max_allowed_packet=128M\n max_connections=250';
+        case 'pxc':
+        default:
+          inputParameters =
+            '[mysqld]\n key_buffer_size=16M\n max_allowed_packet=128M\n max_connections=250';
           break;
       }
 
