@@ -159,7 +159,12 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       }
 
       setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[newDbType]);
-      setValue(DbWizardFormFields.sharding, false);
+      resetField(DbWizardFormFields.shardNr, {
+        keepError: false,
+      });
+      resetField(DbWizardFormFields.shardConfigServers, {
+        keepError: false,
+      });
       updateDbVersions();
     },
     [
