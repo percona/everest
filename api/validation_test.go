@@ -26,6 +26,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/rbac"
+	"github.com/percona/everest/pkg/rbac/mocks"
 )
 
 func TestValidateRFC1035(t *testing.T) {
@@ -1192,6 +1194,102 @@ func TestValidateDuplicateStorageByUpdate(t *testing.T) {
 			require.NoError(t, err)
 			isDuplicate := validateDuplicateStorageByUpdate(tc.currentStorageName, currentStorage, storages, tc.params)
 			assert.Equal(t, tc.isDuplicate, isDuplicate)
+		})
+	}
+}
+
+func TestValidateBackupSchedulesUpdate(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		desc           string
+		canTakeBackups bool
+		expected       error
+		updated        []byte
+		old            *everestv1alpha1.DatabaseCluster
+	}{
+		{
+			desc:           "schedules not updated and no permission",
+			canTakeBackups: false,
+			updated:        []byte(`{"spec": {"backup": {"schedules": [{"name": "test-1","enabled": true,"backupStorageName": "storage-1","schedule": "0 1 * * *"}]}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns"},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Backup: everestv1alpha1.Backup{
+						Schedules: []everestv1alpha1.BackupSchedule{
+							{
+								Name:              "test-1",
+								Enabled:           true,
+								BackupStorageName: "storage-1",
+								Schedule:          "0 1 * * *",
+							},
+						},
+					},
+				},
+			},
+			expected: nil,
+		},
+		{
+			desc:           "schedules updated and no permission",
+			canTakeBackups: false,
+			updated:        []byte(`{"spec": {"backup": {"schedules": [{"name": "test-1","enabled": true,"backupStorageName": "storage-1","schedule": "0 3 * * *"}]}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns"},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Backup: everestv1alpha1.Backup{
+						Schedules: []everestv1alpha1.BackupSchedule{
+							{
+								Name:              "test-1",
+								Enabled:           true,
+								BackupStorageName: "storage-1",
+								Schedule:          "0 1 * * *",
+							},
+						},
+					},
+				},
+			},
+			expected: errInsufficientPermissions,
+		},
+		{
+			desc:           "schedules updated with permission",
+			canTakeBackups: true,
+			updated:        []byte(`{"spec": {"backup": {"schedules": [{"name": "test-1","enabled": true,"backupStorageName": "storage-1","schedule": "0 3 * * *"}]}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns"},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Backup: everestv1alpha1.Backup{
+						Schedules: []everestv1alpha1.BackupSchedule{
+							{
+								Name:              "test-1",
+								Enabled:           true,
+								BackupStorageName: "storage-1",
+								Schedule:          "0 1 * * *",
+							},
+						},
+					},
+				},
+			},
+			expected: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// Setup mock.
+			e := &EverestServer{}
+			enforcer := &mocks.IEnforcer{}
+			enforcer.On("Enforce",
+				"user", rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, "test-ns/",
+			).Return(tc.canTakeBackups, nil)
+			e.rbacEnforcer = enforcer
+
+			updated := &DatabaseCluster{}
+			err := json.Unmarshal(tc.updated, updated)
+			require.NoError(t, err)
+
+			err = e.validateBackupScheduledUpdate("user", updated, tc.old)
+			assert.ErrorIs(t, err, tc.expected)
 		})
 	}
 }
