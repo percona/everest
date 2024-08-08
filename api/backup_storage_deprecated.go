@@ -22,7 +22,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// ListBackupStorages lists backup storages.
+// ListBackupStoragesV0 lists backup storages.
 func (e *EverestServer) ListBackupStoragesV0(ctx echo.Context) error {
 	return ctx.JSON(http.StatusMovedPermanently, Error{
 		Message: pointer.To(
@@ -32,8 +32,8 @@ func (e *EverestServer) ListBackupStoragesV0(ctx echo.Context) error {
 	})
 }
 
-// CreateBackupStorage creates a new backup storage object.
-func (e *EverestServer) CreateBackupStorageV0(ctx echo.Context) error { //nolint:funlen
+// CreateBackupStorageV0 creates a new backup storage object.
+func (e *EverestServer) CreateBackupStorageV0(ctx echo.Context) error {
 	return ctx.JSON(http.StatusMovedPermanently, Error{
 		Message: pointer.To(
 			"The usage of this API has been discontinued. " +
@@ -42,8 +42,8 @@ func (e *EverestServer) CreateBackupStorageV0(ctx echo.Context) error { //nolint
 	})
 }
 
-// DeleteBackupStorage deletes the specified backup storage.
-func (e *EverestServer) DeleteBackupStorageV0(ctx echo.Context, name string) error {
+// DeleteBackupStorageV0 deletes the specified backup storage.
+func (e *EverestServer) DeleteBackupStorageV0(ctx echo.Context, _ string) error {
 	return ctx.JSON(http.StatusMovedPermanently, Error{
 		Message: pointer.To(
 			"The usage of this API has been discontinued. " +
@@ -52,8 +52,8 @@ func (e *EverestServer) DeleteBackupStorageV0(ctx echo.Context, name string) err
 	})
 }
 
-// GetBackupStorage retrieves the specified backup storage.
-func (e *EverestServer) GetBackupStorageV0(ctx echo.Context, name string) error {
+// GetBackupStorageV0 retrieves the specified backup storage.
+func (e *EverestServer) GetBackupStorageV0(ctx echo.Context, _ string) error {
 	return ctx.JSON(http.StatusMovedPermanently, Error{
 		Message: pointer.To(
 			"The usage of this API has been discontinued. " +
@@ -62,8 +62,8 @@ func (e *EverestServer) GetBackupStorageV0(ctx echo.Context, name string) error 
 	})
 }
 
-// UpdateBackupStorage updates of the specified backup storage.
-func (e *EverestServer) UpdateBackupStorageV0(ctx echo.Context, name string) error { //nolint:funlen,cyclop
+// UpdateBackupStorageV0 updates of the specified backup storage.
+func (e *EverestServer) UpdateBackupStorageV0(ctx echo.Context, _ string) error {
 	return ctx.JSON(http.StatusMovedPermanently, Error{
 		Message: pointer.To(
 			"The usage of this API has been discontinued. " +

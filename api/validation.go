@@ -624,7 +624,6 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 	return nil
 }
 
-//nolint:cyclop
 func (e *EverestServer) validateDatabaseClusterCR(
 	ctx echo.Context, namespace string, databaseCluster *DatabaseCluster,
 ) error {
