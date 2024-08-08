@@ -329,6 +329,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
               label={Messages.labels.shardedCluster}
               name={DbWizardFormFields.sharding}
               switchFieldProps={{
+                disabled: mode === 'edit' || loadingDefaultsForEdition,
                 onChange: (e) => {
                   if (!e.target.checked) {
                     resetField(DbWizardFormFields.shardNr, {
