@@ -47,7 +47,10 @@ import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultVal
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
   const {
-    defaultValues: { [DbWizardFormFields.dbVersion]: defaultDbVersion },
+    defaultValues: {
+      [DbWizardFormFields.dbVersion]: defaultDbVersion,
+      [DbWizardFormFields.sharding]: defaultSharding,
+    },
   } = useDatabasePageDefaultValues(mode);
   const { watch, setValue, getFieldState, resetField, getValues, trigger } =
     useFormContext();
@@ -60,6 +63,8 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const dbVersion: DbType = watch(DbWizardFormFields.dbVersion);
   const dbNamespace = watch(DbWizardFormFields.k8sNamespace);
   const sharding = watch(DbWizardFormFields.sharding);
+  const disableShardingChange =
+    loadingDefaultsForEdition || (mode === 'edit' && defaultSharding);
 
   const { data: dbEngines = [], isFetching: dbEnginesFetching } = useDbEngines(
     dbNamespace,
@@ -334,7 +339,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
               label={Messages.labels.shardedCluster}
               name={DbWizardFormFields.sharding}
               switchFieldProps={{
-                disabled: mode === 'edit' || loadingDefaultsForEdition,
+                disabled: disableShardingChange,
                 onChange: (e) => {
                   if (!e.target.checked) {
                     resetField(DbWizardFormFields.shardNr, {
