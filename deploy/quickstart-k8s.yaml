@@ -111,7 +111,7 @@ spec:
           secretName: everest-jwt
       containers:
         - name: everest
-          image: perconalab/everest:1.1.0-rc2
+          image: perconalab/everest:1.1.0-rc3
           ports:
             - containerPort: 8080
           readinessProbe:
