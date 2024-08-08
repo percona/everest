@@ -83,11 +83,10 @@ github.com/bugsnag/bugsnag-go v1.5.3 h1:yeRUT3mUE13jL1tGwvoQsKdVbAsQx9AJ+fqahKve
 github.com/bugsnag/bugsnag-go v1.5.3/go.mod h1:2oa8nejYd4cQ/b0hMIopN0lCRxU0bueqREvZLWFrtK8=
 github.com/bugsnag/panicwrap v1.2.0 h1:OzrKrRvXis8qEvOkfcxNcYbOd2O7xXS2nnKMEMABFQA=
 github.com/bugsnag/panicwrap v1.2.0/go.mod h1:D/8v3kj0zr8ZAKg1AQ6crr+5VwKN5eIywRkfhyM/+dE=
-github.com/casbin/casbin/v2 v2.87.1 h1:7H+ENAfYt3HmZJVw++tJsxx/ko7WEHsfNzpOdYTkpYo=
-github.com/casbin/casbin/v2 v2.87.1/go.mod h1:jX8uoN4veP85O/n2674r2qtfSXI6myvxW85f6TH50fw=
-github.com/casbin/govaluate v1.1.0/go.mod h1:G/UnbIjZk/0uMNaLwZZmFQrR72tYRZWQkO70si/iR7A=
-github.com/casbin/govaluate v1.1.1 h1:J1rFKIBhiC5xr0APd5HP6rDL+xt+BRoyq1pa4o2i/5c=
-github.com/casbin/govaluate v1.1.1/go.mod h1:G/UnbIjZk/0uMNaLwZZmFQrR72tYRZWQkO70si/iR7A=
+github.com/casbin/casbin/v2 v2.98.0 h1:xjsnyQh1hhw5kYTZJTGh4K+pxXhPgYhcr+X7zEbEB4o=
+github.com/casbin/casbin/v2 v2.98.0/go.mod h1:G2UyxPbyyrClPvzHQ4Yog6rtTz0x+Y2lc8qOwfqWLuc=
+github.com/casbin/govaluate v1.2.0 h1:wXCXFmqyY+1RwiKfYo3jMKyrtZmOL3kHwaqDyCPOYak=
+github.com/casbin/govaluate v1.2.0/go.mod h1:G/UnbIjZk/0uMNaLwZZmFQrR72tYRZWQkO70si/iR7A=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
 github.com/cenkalti/backoff/v4 v4.3.0/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
