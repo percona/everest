@@ -13,6 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package api ...
+//
+//nolint:dupl
 package api
 
 import (
@@ -22,7 +25,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// ListBackupStoragesV0 lists backup storages.
+// ListBackupStoragesV0 is discontinued and moved to ListBackupStorages.
 func (e *EverestServer) ListBackupStoragesV0(ctx echo.Context) error {
 	return ctx.JSON(http.StatusMovedPermanently, Error{
 		Message: pointer.To(
@@ -32,7 +35,7 @@ func (e *EverestServer) ListBackupStoragesV0(ctx echo.Context) error {
 	})
 }
 
-// CreateBackupStorageV0 creates a new backup storage object.
+// CreateBackupStorageV0 is discontinued and moved to CreateBackupStorage.
 func (e *EverestServer) CreateBackupStorageV0(ctx echo.Context) error {
 	return ctx.JSON(http.StatusMovedPermanently, Error{
 		Message: pointer.To(
@@ -42,7 +45,7 @@ func (e *EverestServer) CreateBackupStorageV0(ctx echo.Context) error {
 	})
 }
 
-// DeleteBackupStorageV0 deletes the specified backup storage.
+// DeleteBackupStorageV0 is discontinued and moved to DeleteBackupStorage.
 func (e *EverestServer) DeleteBackupStorageV0(ctx echo.Context, _ string) error {
 	return ctx.JSON(http.StatusMovedPermanently, Error{
 		Message: pointer.To(
@@ -52,7 +55,7 @@ func (e *EverestServer) DeleteBackupStorageV0(ctx echo.Context, _ string) error 
 	})
 }
 
-// GetBackupStorageV0 retrieves the specified backup storage.
+// GetBackupStorageV0 is discontinued and moved to GetBackupStorage.
 func (e *EverestServer) GetBackupStorageV0(ctx echo.Context, _ string) error {
 	return ctx.JSON(http.StatusMovedPermanently, Error{
 		Message: pointer.To(
@@ -62,7 +65,7 @@ func (e *EverestServer) GetBackupStorageV0(ctx echo.Context, _ string) error {
 	})
 }
 
-// UpdateBackupStorageV0 updates of the specified backup storage.
+// UpdateBackupStorageV0 is discontinued and moved to UpdateBackupStorage.
 func (e *EverestServer) UpdateBackupStorageV0(ctx echo.Context, _ string) error {
 	return ctx.JSON(http.StatusMovedPermanently, Error{
 		Message: pointer.To(
