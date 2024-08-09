@@ -149,7 +149,7 @@ jobs:
           MONITORING_PASSWORD: "admin"
         run: |
           cd ui
-          pnpm --filter "@percona/everest" e2e
+          pnpm --filter "@percona/everest" e2e --grep-invert @release
 
       - name: Archive report
         if: always()
