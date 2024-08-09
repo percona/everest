@@ -150,6 +150,24 @@ func (_m *MockKubernetesConnector) CreateBackupStorage(ctx context.Context, stor
 	return r0
 }
 
+// CreateMonitoringConfig provides a mock function with given fields: ctx, storage
+func (_m *MockKubernetesConnector) CreateMonitoringConfig(ctx context.Context, storage *v1alpha1.MonitoringConfig) error {
+	ret := _m.Called(ctx, storage)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateMonitoringConfig")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.MonitoringConfig) error); ok {
+		r0 = rf(ctx, storage)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CreateNamespace provides a mock function with given fields: ctx, namespace
 func (_m *MockKubernetesConnector) CreateNamespace(ctx context.Context, namespace *v1.Namespace) error {
 	ret := _m.Called(ctx, namespace)
@@ -317,6 +335,24 @@ func (_m *MockKubernetesConnector) DeleteEverest(ctx context.Context, namespace 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, *version.Version) error); ok {
 		r0 = rf(ctx, namespace, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteMonitoringConfig provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubernetesConnector) DeleteMonitoringConfig(ctx context.Context, namespace string, name string) error {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteMonitoringConfig")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, namespace, name)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -728,6 +764,66 @@ func (_m *MockKubernetesConnector) GetLogs(ctx context.Context, containerStatuse
 	return r0, r1
 }
 
+// GetMonitoringConfig provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubernetesConnector) GetMonitoringConfig(ctx context.Context, namespace string, name string) (*v1alpha1.MonitoringConfig, error) {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMonitoringConfig")
+	}
+
+	var r0 *v1alpha1.MonitoringConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v1alpha1.MonitoringConfig, error)); ok {
+		return rf(ctx, namespace, name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v1alpha1.MonitoringConfig); ok {
+		r0 = rf(ctx, namespace, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.MonitoringConfig)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetMonitoringConfigsBySecretName provides a mock function with given fields: ctx, namespace, secretName
+func (_m *MockKubernetesConnector) GetMonitoringConfigsBySecretName(ctx context.Context, namespace string, secretName string) ([]*v1alpha1.MonitoringConfig, error) {
+	ret := _m.Called(ctx, namespace, secretName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMonitoringConfigsBySecretName")
+	}
+
+	var r0 []*v1alpha1.MonitoringConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]*v1alpha1.MonitoringConfig, error)); ok {
+		return rf(ctx, namespace, secretName)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) []*v1alpha1.MonitoringConfig); ok {
+		r0 = rf(ctx, namespace, secretName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*v1alpha1.MonitoringConfig)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, secretName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetNamespace provides a mock function with given fields: ctx, name
 func (_m *MockKubernetesConnector) GetNamespace(ctx context.Context, name string) (*v1.Namespace, error) {
 	ret := _m.Called(ctx, name)
@@ -981,6 +1077,34 @@ func (_m *MockKubernetesConnector) IsBackupStorageUsed(ctx context.Context, name
 	return r0, r1
 }
 
+// IsMonitoringConfigUsed provides a mock function with given fields: ctx, namespace, monitoringConfigName, nsList
+func (_m *MockKubernetesConnector) IsMonitoringConfigUsed(ctx context.Context, namespace string, monitoringConfigName string, nsList []string) (bool, error) {
+	ret := _m.Called(ctx, namespace, monitoringConfigName, nsList)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsMonitoringConfigUsed")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, []string) (bool, error)); ok {
+		return rf(ctx, namespace, monitoringConfigName, nsList)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, []string) bool); ok {
+		r0 = rf(ctx, namespace, monitoringConfigName, nsList)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, []string) error); ok {
+		r1 = rf(ctx, namespace, monitoringConfigName, nsList)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListBackupStorages provides a mock function with given fields: ctx, namespace
 func (_m *MockKubernetesConnector) ListBackupStorages(ctx context.Context, namespace string) (*v1alpha1.BackupStorageList, error) {
 	ret := _m.Called(ctx, namespace)
@@ -1059,6 +1183,36 @@ func (_m *MockKubernetesConnector) ListEngineDeploymentNames(ctx context.Context
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListMonitoringConfigs provides a mock function with given fields: ctx, namespace
+func (_m *MockKubernetesConnector) ListMonitoringConfigs(ctx context.Context, namespace string) (*v1alpha1.MonitoringConfigList, error) {
+	ret := _m.Called(ctx, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListMonitoringConfigs")
+	}
+
+	var r0 *v1alpha1.MonitoringConfigList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*v1alpha1.MonitoringConfigList, error)); ok {
+		return rf(ctx, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *v1alpha1.MonitoringConfigList); ok {
+		r0 = rf(ctx, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.MonitoringConfigList)
 		}
 	}
 
@@ -1388,6 +1542,24 @@ func (_m *MockKubernetesConnector) UpdateEverestSettings(ctx context.Context, se
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, common.EverestSettings) error); ok {
 		r0 = rf(ctx, settings)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateMonitoringConfig provides a mock function with given fields: ctx, storage
+func (_m *MockKubernetesConnector) UpdateMonitoringConfig(ctx context.Context, storage *v1alpha1.MonitoringConfig) error {
+	ret := _m.Called(ctx, storage)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateMonitoringConfig")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.MonitoringConfig) error); ok {
+		r0 = rf(ctx, storage)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -127,6 +127,22 @@ type KubernetesConnector interface {
 	WaitForRollout(ctx context.Context, name, namespace string) error
 	// UpdateClusterRoleBinding updates namespaces list for the cluster role by provided name.
 	UpdateClusterRoleBinding(ctx context.Context, name string, namespaces []string) error
+	// ListMonitoringConfigs returns list of managed monitoring configs.
+	ListMonitoringConfigs(ctx context.Context, namespace string) (*everestv1alpha1.MonitoringConfigList, error)
+	// GetMonitoringConfig returns monitoring configs by provided name.
+	GetMonitoringConfig(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error)
+	// CreateMonitoringConfig returns monitoring configs by provided name.
+	CreateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) error
+	// UpdateMonitoringConfig returns monitoring configs by provided name.
+	UpdateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) error
+	// DeleteMonitoringConfig returns monitoring configs by provided name.
+	DeleteMonitoringConfig(ctx context.Context, namespace, name string) error
+	// IsMonitoringConfigUsed checks that a backup storage by provided name is used across k8s cluster.
+	// Optionally you can provide a list of namespaces which shall be checked. If not provided, all namespaces are checked.
+	IsMonitoringConfigUsed(ctx context.Context, namespace, monitoringConfigName string, nsList []string) (bool, error)
+	// GetMonitoringConfigsBySecretName returns a list of monitoring configs which use
+	// the provided secret name.
+	GetMonitoringConfigsBySecretName(ctx context.Context, namespace, secretName string) ([]*everestv1alpha1.MonitoringConfig, error)
 	// CreateNamespace creates the given namespace.
 	CreateNamespace(ctx context.Context, namespace *corev1.Namespace) error
 	// GetNamespace returns a namespace.
