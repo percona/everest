@@ -132,6 +132,24 @@ func (_m *MockKubernetesConnector) Config() *rest.Config {
 	return r0
 }
 
+// CreateBackupStorage provides a mock function with given fields: ctx, storage
+func (_m *MockKubernetesConnector) CreateBackupStorage(ctx context.Context, storage *v1alpha1.BackupStorage) error {
+	ret := _m.Called(ctx, storage)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateBackupStorage")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.BackupStorage) error); ok {
+		r0 = rf(ctx, storage)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CreateNamespace provides a mock function with given fields: ctx, namespace
 func (_m *MockKubernetesConnector) CreateNamespace(ctx context.Context, namespace *v1.Namespace) error {
 	ret := _m.Called(ctx, namespace)
@@ -252,6 +270,24 @@ func (_m *MockKubernetesConnector) CreateSecret(ctx context.Context, secret *v1.
 	return r0, r1
 }
 
+// DeleteBackupStorage provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubernetesConnector) DeleteBackupStorage(ctx context.Context, namespace string, name string) error {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteBackupStorage")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, namespace, name)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteClusterServiceVersion provides a mock function with given fields: ctx, key
 func (_m *MockKubernetesConnector) DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error {
 	ret := _m.Called(ctx, key)
@@ -340,6 +376,36 @@ func (_m *MockKubernetesConnector) DeleteSecret(ctx context.Context, namespace s
 	}
 
 	return r0
+}
+
+// GetBackupStorage provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubernetesConnector) GetBackupStorage(ctx context.Context, namespace string, name string) (*v1alpha1.BackupStorage, error) {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetBackupStorage")
+	}
+
+	var r0 *v1alpha1.BackupStorage
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v1alpha1.BackupStorage, error)); ok {
+		return rf(ctx, namespace, name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v1alpha1.BackupStorage); ok {
+		r0 = rf(ctx, namespace, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.BackupStorage)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetClusterServiceVersion provides a mock function with given fields: ctx, key
@@ -887,6 +953,64 @@ func (_m *MockKubernetesConnector) InstallPerconaCatalog(ctx context.Context, _a
 	return r0
 }
 
+// IsBackupStorageUsed provides a mock function with given fields: ctx, namespace, backupStorageName, nsList
+func (_m *MockKubernetesConnector) IsBackupStorageUsed(ctx context.Context, namespace string, backupStorageName string, nsList []string) (bool, error) {
+	ret := _m.Called(ctx, namespace, backupStorageName, nsList)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsBackupStorageUsed")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, []string) (bool, error)); ok {
+		return rf(ctx, namespace, backupStorageName, nsList)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, []string) bool); ok {
+		r0 = rf(ctx, namespace, backupStorageName, nsList)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, []string) error); ok {
+		r1 = rf(ctx, namespace, backupStorageName, nsList)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListBackupStorages provides a mock function with given fields: ctx, namespace
+func (_m *MockKubernetesConnector) ListBackupStorages(ctx context.Context, namespace string) (*v1alpha1.BackupStorageList, error) {
+	ret := _m.Called(ctx, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListBackupStorages")
+	}
+
+	var r0 *v1alpha1.BackupStorageList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*v1alpha1.BackupStorageList, error)); ok {
+		return rf(ctx, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *v1alpha1.BackupStorageList); ok {
+		r0 = rf(ctx, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.BackupStorageList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListClusterServiceVersion provides a mock function with given fields: ctx, namespace
 func (_m *MockKubernetesConnector) ListClusterServiceVersion(ctx context.Context, namespace string) (*operatorsv1alpha1.ClusterServiceVersionList, error) {
 	ret := _m.Called(ctx, namespace)
@@ -1150,6 +1274,24 @@ func (_m *MockKubernetesConnector) SetSecret(secret *v1.Secret) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*v1.Secret) error); ok {
 		r0 = rf(secret)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateBackupStorage provides a mock function with given fields: ctx, storage
+func (_m *MockKubernetesConnector) UpdateBackupStorage(ctx context.Context, storage *v1alpha1.BackupStorage) error {
+	ret := _m.Called(ctx, storage)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateBackupStorage")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.BackupStorage) error); ok {
+		r0 = rf(ctx, storage)
 	} else {
 		r0 = ret.Error(0)
 	}

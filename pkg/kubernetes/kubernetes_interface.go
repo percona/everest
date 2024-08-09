@@ -28,6 +28,19 @@ type KubernetesConnector interface {
 	//
 	//nolint:ireturn,stylecheck
 	Accounts() accounts.Interface
+	// ListBackupStorages returns list of managed backup storages.
+	ListBackupStorages(ctx context.Context, namespace string) (*everestv1alpha1.BackupStorageList, error)
+	// GetBackupStorage returns backup storages by provided name.
+	GetBackupStorage(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error)
+	// CreateBackupStorage returns backup storages by provided name.
+	CreateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
+	// UpdateBackupStorage returns backup storages by provided name.
+	UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
+	// DeleteBackupStorage returns backup storages by provided name.
+	DeleteBackupStorage(ctx context.Context, namespace, name string) error
+	// IsBackupStorageUsed checks that a backup storage by provided name is used across k8s cluster.
+	// Optionally you can provide a list of namespaces which shall be checked. If not provided, all namespaces are checked.
+	IsBackupStorageUsed(ctx context.Context, namespace, backupStorageName string, nsList []string) (bool, error)
 	// GetConfigMap returns k8s configmap by provided name and namespace.
 	GetConfigMap(ctx context.Context, name, namespace string) (*corev1.ConfigMap, error)
 	// GetDeployment returns k8s deployment by provided name and namespace.
