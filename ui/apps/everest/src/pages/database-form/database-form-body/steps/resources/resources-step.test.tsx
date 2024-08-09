@@ -4,11 +4,13 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { DbType } from '@percona/types';
 import { TestWrapper } from 'utils/test';
 import { ResourcesStep } from './resources-step.tsx';
-import { ResourceSize } from './resources-step.types.ts';
-import { DEFAULT_SIZES } from './resources-step.const.ts';
-import { DbWizardFormFields } from '../../../database-form.types.ts';
+import { DbWizardFormFields } from 'consts.ts';
 import { Mock } from 'vitest';
 import { DbWizardType } from '../../../database-form-schema.ts';
+import {
+  DEFAULT_SIZES,
+  ResourceSize,
+} from 'components/cluster-form/resources/constants.ts';
 
 vi.mock('hooks/api/kubernetesClusters/useSelectedKubernetesCluster');
 vi.mock('hooks/api/kubernetesClusters/useKubernetesClusterResourcesInfo');

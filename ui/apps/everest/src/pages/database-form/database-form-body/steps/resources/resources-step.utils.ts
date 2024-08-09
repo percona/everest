@@ -13,37 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ResourceSize } from './resources-step.types.ts';
-import { DEFAULT_SIZES } from './resources-step.const.ts';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { memoryParser } from 'utils/k8ResourceParser';
-import { Messages } from './resources-step.messages.ts';
-
-const humanizedResourceSizeMap: Record<ResourceSize, string> = {
-  [ResourceSize.small]: 'Small',
-  [ResourceSize.medium]: 'Medium',
-  [ResourceSize.large]: 'Large',
-  [ResourceSize.custom]: 'Custom',
-};
-
-export const humanizeResourceSizeMap = (type: ResourceSize): string =>
-  humanizedResourceSizeMap[type];
-
-export const getResourceNames = (names: string[]): string => {
-  if (names.length === 1) {
-    return names[0];
-  }
-
-  if (names.length === 2) {
-    return `${names[0]} and ${names[1]}`;
-  }
-
-  if (names.length === 3) {
-    return `${names[0]}, ${names[1]}, and ${names[2]}`;
-  }
-
-  return '';
-};
+import {
+  DEFAULT_SIZES,
+  ResourceSize,
+} from 'components/cluster-form/resources/constants.ts';
 
 export const matchFieldsValueToResourceSize = (
   dbCluster: DbCluster
@@ -66,34 +41,4 @@ export const matchFieldsValueToResourceSize = (
   return res !== -1
     ? (Object.keys(DEFAULT_SIZES)[res] as ResourceSize)
     : ResourceSize.custom;
-};
-
-export const checkResourceText = (
-  value: string | number | undefined,
-  units: string,
-  fieldLabel: string,
-  exceedFlag: boolean
-) => {
-  if (value) {
-    const parsedNumber = Number(value);
-
-    if (Number.isNaN(parsedNumber)) {
-      return '';
-    }
-
-    const processedValue =
-      fieldLabel === Messages.labels.cpu
-        ? parsedNumber / 1000
-        : parsedNumber / 10 ** 9;
-
-    if (exceedFlag) {
-      return Messages.alerts.resourcesCapacityExceeding(
-        fieldLabel,
-        processedValue,
-        units
-      );
-    }
-    return Messages.labels.estimated(processedValue.toFixed(2), units);
-  }
-  return '';
 };

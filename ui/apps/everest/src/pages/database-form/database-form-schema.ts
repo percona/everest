@@ -2,10 +2,10 @@ import { z } from 'zod';
 import { DbType } from '@percona/types';
 import { IP_REGEX, MAX_DB_CLUSTER_NAME_LENGTH } from '../../consts.ts';
 import { Messages } from './database-form.messages.ts';
-import { ResourceSize } from './database-form-body/steps/resources/resources-step.types.ts';
-import { DbWizardFormFields } from './database-form.types.ts';
+import { DbWizardFormFields } from 'consts.ts';
 import { rfc_123_schema } from 'utils/common-validation.ts';
 import { Messages as ScheduleFormMessages } from 'components/schedule-form-dialog/schedule-form/schedule-form.messages.ts';
+import { ResourceSize } from 'components/cluster-form/resources/constants.ts';
 
 const resourceToNumber = (minimum = 0) =>
   z.union([z.string().nonempty(), z.number()]).pipe(

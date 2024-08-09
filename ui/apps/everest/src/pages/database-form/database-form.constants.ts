@@ -14,10 +14,12 @@
 // limitations under the License.
 
 import { DbType } from '@percona/types';
-import { DbWizardFormFields } from './database-form.types';
-import { DEFAULT_SIZES } from './database-form-body/steps/resources/resources-step.const.ts';
-import { ResourceSize } from './database-form-body/steps/resources/resources-step.types.ts';
+import { DbWizardFormFields } from 'consts.ts';
 import { DbWizardType } from './database-form-schema.ts';
+import {
+  DEFAULT_SIZES,
+  ResourceSize,
+} from 'components/cluster-form/resources/constants.ts';
 
 export const DB_WIZARD_DEFAULTS: DbWizardType = {
   // TODO should be changed to true after  https://jira.percona.com/browse/EVEREST-509

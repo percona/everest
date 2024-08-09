@@ -14,7 +14,8 @@
 // limitations under the License.
 
 import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
-import { DbWizardFormFields, DbWizardMode } from './database-form.types';
+import { DbWizardMode } from './database-form.types';
+import { DbWizardFormFields } from 'consts.ts';
 import { dbEngineToDbType } from '@percona/utils';
 import { matchFieldsValueToResourceSize } from './database-form-body/steps/resources/resources-step.utils.ts';
 import { cpuParser, memoryParser } from 'utils/k8ResourceParser';

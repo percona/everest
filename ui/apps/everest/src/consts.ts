@@ -43,3 +43,33 @@ export const MAX_DB_CLUSTER_NAME_LENGTH = 22;
 export const MAX_SCHEDULE_NAME_LENGTH = 57;
 export const EVEREST_JWT_ISSUER = 'everest';
 export const PG_SLOTS_LIMIT = 3;
+
+export enum DbWizardForm {
+  dbName = 'dbName',
+  dbType = 'dbType',
+  k8sNamespace = 'k8sNamespace',
+  dbEnvironment = 'dbEnvironment',
+  dbVersion = 'dbVersion',
+  storageClass = 'storageClass',
+  cpu = 'cpu',
+  memory = 'memory',
+  disk = 'disk',
+  numberOfNodes = 'numberOfNodes',
+  resourceSizePerNode = 'resourceSizePerNode',
+  backupsEnabled = 'backupsEnabled',
+  schedules = 'schedules',
+  pitrEnabled = 'pitrEnabled',
+  pitrStorageLocation = 'pitrStorageLocation',
+  externalAccess = 'externalAccess',
+  internetFacing = 'internetFacing',
+  sourceRanges = 'sourceRanges',
+  engineParametersEnabled = 'engineParametersEnabled',
+  engineParameters = 'engineParameters',
+  monitoring = 'monitoring',
+  monitoringInstance = 'monitoringInstance',
+  endpoint = 'endpoint',
+}
+
+export const DbWizardFormFields = {
+  ...DbWizardForm,
+};

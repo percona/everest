@@ -19,7 +19,7 @@ import { useFormContext } from 'react-hook-form';
 import { Messages } from './advanced-configurations.messages.ts';
 import { getParamsPlaceholderFromDbType } from './advanced-configurations.utils.ts';
 
-import { DbWizardFormFields } from '../../../database-form.types.ts';
+import { DbWizardFormFields } from 'consts.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 
 export const AdvancedConfigurations = () => {

@@ -14,6 +14,8 @@
 // limitations under the License.
 
 import { DatabaseIcon, OverviewCard } from '@percona/ui-lib';
+import { Button } from '@mui/material';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import OverviewSection from '../overview-section';
 import { ResourcesDetailsOverviewProps } from './card.types';
 import OverviewSectionRow from '../overview-section-row';
@@ -32,12 +34,11 @@ export const ResourcesDetails = ({
       cardHeaderProps={{
         title: Messages.titles.resources,
         avatar: <DatabaseIcon />,
-        // TODO implement with EVEREST-1211
-        // action: (
-        //     <Button size="small" startIcon={<EditOutlinedIcon />}>
-        //     Edit
-        //   </Button>
-        // ),
+        action: (
+          <Button size="small" startIcon={<EditOutlinedIcon />}>
+            Edit
+          </Button>
+        ),
       }}
     >
       <OverviewSection
