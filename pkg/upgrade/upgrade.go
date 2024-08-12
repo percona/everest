@@ -604,6 +604,7 @@ func (u *Upgrade) upgradeEverestOperator(ctx context.Context, installPlanName st
 	return nil
 }
 
+//nolint:mnd
 func (u *Upgrade) migrateSharedResources(ctx context.Context) error {
 	var b backoff.BackOff
 	b = backoff.NewConstantBackOff(5 * time.Second)
@@ -613,18 +614,21 @@ func (u *Upgrade) migrateSharedResources(ctx context.Context) error {
 	// Migrate backup storages.
 	if err := backoff.Retry(func() error {
 		return u.migrateBackupStorages(ctx)
-	}, b); err != nil {
+	}, b,
+	); err != nil {
 		return err
 	}
 	// Migrate monitoring configs.
 	if err := backoff.Retry(func() error {
 		return u.migrateMonitoringInstaces(ctx)
-	}, b); err != nil {
+	}, b,
+	); err != nil {
 		return err
 	}
 	return nil
 }
 
+//nolint:dupl
 func (u *Upgrade) migrateBackupStorages(ctx context.Context) error {
 	backupStorages, err := u.kubeClient.ListBackupStorages(ctx, common.SystemNamespace)
 	if err != nil {
@@ -642,12 +646,14 @@ func (u *Upgrade) migrateBackupStorages(ctx context.Context) error {
 			secret, err := u.kubeClient.GetSecret(ctx, common.SystemNamespace, bs.Spec.CredentialsSecretName)
 			if err != nil {
 				return fmt.Errorf("cannot find credentials secret %s for backup storage %s",
-					bs.Spec.CredentialsSecretName, bs.Name)
+					bs.Spec.CredentialsSecretName, bs.Name,
+				)
 			}
 			secret.SetNamespace(ns)
 			if _, err := u.kubeClient.CreateSecret(ctx, secret); client.IgnoreAlreadyExists(err) != nil {
 				return fmt.Errorf("cannot create credentials secret %s in namespace %s",
-					secret.Name, ns)
+					secret.Name, ns,
+				)
 			}
 			// Create the BackupStorage.
 			bs.SetNamespace(ns)
@@ -661,6 +667,7 @@ func (u *Upgrade) migrateBackupStorages(ctx context.Context) error {
 	return nil
 }
 
+//nolint:dupl
 func (u *Upgrade) migrateMonitoringInstaces(ctx context.Context) error {
 	monitoringConfigs, err := u.kubeClient.ListMonitoringConfigs(ctx, common.MonitoringNamespace)
 	if err != nil {
