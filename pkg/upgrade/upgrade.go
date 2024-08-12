@@ -32,7 +32,6 @@ import (
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -600,109 +599,5 @@ func (u *Upgrade) upgradeEverestOperator(ctx context.Context, installPlanName st
 		return errors.Join(err, fmt.Errorf("install plan %s is not in phase completed", installPlanName))
 	}
 
-	return nil
-}
-
-//nolint:mnd
-func (u *Upgrade) migrateSharedResources(ctx context.Context) error {
-	var b backoff.BackOff
-	b = backoff.NewConstantBackOff(5 * time.Second)
-	b = backoff.WithMaxRetries(b, 5)
-	b = backoff.WithContext(b, ctx)
-
-	// Migrate backup storages.
-	if err := backoff.Retry(func() error {
-		return u.migrateBackupStorages(ctx)
-	}, b,
-	); err != nil {
-		return err
-	}
-	// Migrate monitoring configs.
-	if err := backoff.Retry(func() error {
-		return u.migrateMonitoringInstaces(ctx)
-	}, b,
-	); err != nil {
-		return err
-	}
-	return nil
-}
-
-//nolint:dupl
-func (u *Upgrade) migrateBackupStorages(ctx context.Context) error {
-	backupStorages, err := u.kubeClient.ListBackupStorages(ctx, common.SystemNamespace)
-	if err != nil {
-		return err
-	}
-	for _, bs := range backupStorages.Items {
-		for _, ns := range bs.Spec.AllowedNamespaces {
-			// Check if the namespace exists?
-			if _, err := u.kubeClient.GetNamespace(ctx, ns); err != nil && k8serrors.IsNotFound(err) {
-				continue
-			} else if err != nil {
-				return err
-			}
-			// Create the credential Secret.
-			secret, err := u.kubeClient.GetSecret(ctx, common.SystemNamespace, bs.Spec.CredentialsSecretName)
-			if err != nil {
-				return fmt.Errorf("cannot find credentials secret %s for backup storage %s",
-					bs.Spec.CredentialsSecretName, bs.Name,
-				)
-			}
-			secret.SetNamespace(ns)
-			if _, err := u.kubeClient.CreateSecret(ctx, secret); client.IgnoreAlreadyExists(err) != nil {
-				return fmt.Errorf("cannot create credentials secret %s in namespace %s",
-					secret.Name, ns,
-				)
-			}
-			// Create the BackupStorage.
-			updated := bs.DeepCopy()
-			updated.ObjectMeta = metav1.ObjectMeta{
-				Name:      bs.GetName(),
-				Namespace: ns,
-			}
-			updated.Spec.AllowedNamespaces = nil
-			if err := u.kubeClient.CreateBackupStorage(ctx, updated); client.IgnoreAlreadyExists(err) != nil {
-				return fmt.Errorf("cannot create backup storage %s in namespace %s", updated.GetName(), ns)
-			}
-		}
-	}
-	return nil
-}
-
-//nolint:dupl
-func (u *Upgrade) migrateMonitoringInstaces(ctx context.Context) error {
-	monitoringConfigs, err := u.kubeClient.ListMonitoringConfigs(ctx, common.MonitoringNamespace)
-	if err != nil {
-		return err
-	}
-	for _, mc := range monitoringConfigs.Items {
-		for _, ns := range mc.Spec.AllowedNamespaces {
-			// Check if the namespace exists?
-			if _, err := u.kubeClient.GetNamespace(ctx, ns); err != nil && k8serrors.IsNotFound(err) {
-				continue
-			} else if err != nil {
-				return err
-			}
-			// Create the credential Secret.
-			secret, err := u.kubeClient.GetSecret(ctx, common.MonitoringNamespace, mc.Spec.CredentialsSecretName)
-			if err != nil {
-				return fmt.Errorf("cannot find credentials secret %s for monitoring config %s", mc.Spec.CredentialsSecretName, mc.Name)
-			}
-			secret.SetNamespace(ns)
-			if _, err := u.kubeClient.CreateSecret(ctx, secret); client.IgnoreAlreadyExists(err) != nil {
-				return fmt.Errorf("cannot create credentials secret %s in namespace %s", secret.Name, ns)
-			}
-			// Create the MonitoringConfig.
-			updated := mc.DeepCopy()
-			updated.ObjectMeta = metav1.ObjectMeta{
-				Name:      mc.GetName(),
-				Namespace: ns,
-			}
-			updated.Spec.AllowedNamespaces = nil
-			if err := u.kubeClient.CreateMonitoringConfig(ctx, updated); client.IgnoreAlreadyExists(err) != nil {
-				return fmt.Errorf("cannot create monitoring config %s in namespace %s", mc.GetName(), ns)
-			}
-		}
-	}
 	return nil
 }
