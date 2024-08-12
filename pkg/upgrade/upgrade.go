@@ -258,6 +258,11 @@ func (u *Upgrade) Run(ctx context.Context) error {
 					return err
 				}
 			}
+			if common.CheckConstraint(upgradeEverestTo, "~> 1.2.0") {
+				if err := u.migrateSharedResources(ctx); err != nil {
+					return fmt.Errorf("migration of shared resources failed: %w", err)
+				}
+			}
 			return nil
 		},
 	})
