@@ -178,6 +178,46 @@ export const useUpdateDbClusterMonitoring = () =>
       }),
   });
 
+export const useUpdateDbClusterResources = () =>
+  useMutation({
+    mutationFn: ({
+      clusterName,
+      namespace,
+      dbCluster,
+      cpu,
+      memory,
+      disk,
+      numberOfNodes,
+    }: {
+      clusterName: string;
+      namespace: string;
+      dbCluster: DbCluster;
+      cpu: number;
+      memory: number;
+      disk: number;
+      numberOfNodes: number;
+    }) =>
+      updateDbClusterFn(clusterName, namespace, {
+        ...dbCluster,
+        spec: {
+          ...dbCluster.spec,
+          engine: {
+            ...dbCluster.spec.engine,
+            resources: {
+              ...dbCluster.spec.engine.resources,
+              cpu: cpu,
+              memory: memory,
+            },
+            storage: {
+              ...dbCluster.spec.engine.storage,
+              size: disk,
+            },
+            replicas: numberOfNodes,
+          },
+        },
+      }),
+  });
+
 export const useUpdateDbClusterEngine = () =>
   useMutation({
     mutationFn: ({

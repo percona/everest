@@ -12,9 +12,31 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+import z from 'zod';
+import { DbType } from '@percona/types';
+import { dbResourcesFormSchema } from './db-resources-form-schema';
+
+export type DbResourcesFormMode = 'new' | 'edit';
 export enum ResourceSize {
   small = 'small',
   medium = 'medium',
   large = 'large',
   custom = 'custom',
 }
+
+export interface ResourcesFormFieldsProps {
+  dbType: DbType;
+  memoryBytes?: number;
+  mode: DbResourcesFormMode;
+}
+
+export enum DbResourcesFields {
+  cpu = 'cpu',
+  memory = 'memory',
+  disk = 'disk',
+  numberOfNodes = 'numberOfNodes',
+  resourceSizePerNode = 'resourceSizePerNode',
+}
+
+export type ResourcesData = z.infer<typeof dbResourcesFormSchema>;

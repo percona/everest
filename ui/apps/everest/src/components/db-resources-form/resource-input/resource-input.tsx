@@ -1,4 +1,4 @@
-import { TextInput } from '@percona/ui-lib';
+import { TextInput } from 'ui/packages/ui-lib/src';
 import { Box, InputAdornment, Typography, useTheme } from '@mui/material';
 import { ResourceInputProps } from './resource-input.types';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint.ts';

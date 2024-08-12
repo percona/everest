@@ -15,8 +15,8 @@
 
 import { DbType } from '@percona/types';
 import { DbWizardFormFields } from './database-form.types';
-import { DEFAULT_SIZES } from './database-form-body/steps/resources/resources-step.const.ts';
-import { ResourceSize } from './database-form-body/steps/resources/resources-step.types.ts';
+import { DEFAULT_SIZES } from '../../components/db-resources-form/db-resources-form.const.ts';
+import { ResourceSize } from '../../components/db-resources-form/db-resources-form.types.ts';
 import { DbWizardType } from './database-form-schema.ts';
 
 export const DB_WIZARD_DEFAULTS: DbWizardType = {
@@ -43,10 +43,4 @@ export const DB_WIZARD_DEFAULTS: DbWizardType = {
   [DbWizardFormFields.cpu]: DEFAULT_SIZES.small.cpu,
   [DbWizardFormFields.disk]: DEFAULT_SIZES.small.disk,
   [DbWizardFormFields.memory]: DEFAULT_SIZES.small.memory,
-};
-
-export const NODES_DB_TYPE_MAP: Record<DbType, string[]> = {
-  [DbType.Mongo]: ['1', '3', '5'],
-  [DbType.Mysql]: ['1', '3', '5'],
-  [DbType.Postresql]: ['1', '2', '3'],
 };

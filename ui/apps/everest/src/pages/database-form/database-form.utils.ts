@@ -16,7 +16,7 @@
 import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
 import { DbWizardFormFields, DbWizardMode } from './database-form.types';
 import { dbEngineToDbType } from '@percona/utils';
-import { matchFieldsValueToResourceSize } from './database-form-body/steps/resources/resources-step.utils.ts';
+import { matchFieldsValueToResourceSize } from '../../components/db-resources-form/db-resources-form.utils.ts';
 import { cpuParser, memoryParser } from 'utils/k8ResourceParser';
 import { generateShortUID } from './database-form-body/steps/first/utils.ts';
 import { MAX_DB_CLUSTER_NAME_LENGTH } from 'consts';

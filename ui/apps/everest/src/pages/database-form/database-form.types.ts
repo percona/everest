@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { DbResourcesFields } from '../../components/db-resources-form/db-resources-form.types';
+
 export enum DbWizardForm {
   dbName = 'dbName',
   dbType = 'dbType',
@@ -20,11 +22,6 @@ export enum DbWizardForm {
   dbEnvironment = 'dbEnvironment',
   dbVersion = 'dbVersion',
   storageClass = 'storageClass',
-  cpu = 'cpu',
-  memory = 'memory',
-  disk = 'disk',
-  numberOfNodes = 'numberOfNodes',
-  resourceSizePerNode = 'resourceSizePerNode',
   backupsEnabled = 'backupsEnabled',
   schedules = 'schedules',
   pitrEnabled = 'pitrEnabled',
@@ -41,6 +38,7 @@ export enum DbWizardForm {
 
 export const DbWizardFormFields = {
   ...DbWizardForm,
+  ...DbResourcesFields,
 };
 
 export type DbWizardMode = 'edit' | 'new' | 'restoreFromBackup';
