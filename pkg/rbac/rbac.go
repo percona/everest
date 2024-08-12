@@ -211,10 +211,7 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 			return false, errors.New("invalid URL")
 		}
 		switch resource {
-		// These resources are not namespaced.
-		case "namespaces",
-			"backup-storages",
-			"monitoring-instances":
+		case "namespaces":
 			name := c.Param("name")
 			object = name
 		default:
