@@ -1,5 +1,40 @@
 import { DbType } from '@percona/types';
+import { z } from 'zod';
+import { DbCluster } from 'shared-types/dbCluster.types';
 import { DbWizardFormFields } from 'consts';
+import { memoryParser } from 'utils/k8ResourceParser';
+
+const resourceToNumber = (minimum = 0) =>
+  z.union([z.string().min(1), z.number()]).pipe(
+    z.coerce
+      .number({
+        invalid_type_error: 'Please enter a valid number',
+      })
+      .min(minimum)
+  );
+
+export const matchFieldsValueToResourceSize = (
+  dbCluster: DbCluster
+): ResourceSize => {
+  const resources = dbCluster?.spec?.engine?.resources;
+
+  if (!resources) {
+    return ResourceSize.custom;
+  }
+
+  const size = memoryParser(dbCluster?.spec?.engine?.storage?.size.toString());
+  const memory = memoryParser(resources.memory.toString());
+
+  const res = Object.values(DEFAULT_SIZES).findIndex(
+    (item) =>
+      item.cpu === Number(resources.cpu) &&
+      item.memory === memory &&
+      item.disk === size
+  );
+  return res !== -1
+    ? (Object.keys(DEFAULT_SIZES)[res] as ResourceSize)
+    : ResourceSize.custom;
+};
 
 export const NODES_DB_TYPE_MAP: Record<DbType, string[]> = {
   [DbType.Mongo]: ['1', '3', '5'],
@@ -38,3 +73,11 @@ export const DEFAULT_SIZES = {
     [DbWizardFormFields.disk]: 200,
   },
 };
+
+export const resourcesFormSchema = z.object({
+  [DbWizardFormFields.cpu]: resourceToNumber(0.6),
+  [DbWizardFormFields.memory]: resourceToNumber(0.512),
+  [DbWizardFormFields.disk]: resourceToNumber(1),
+  [DbWizardFormFields.resourceSizePerNode]: z.nativeEnum(ResourceSize),
+  [DbWizardFormFields.numberOfNodes]: z.string(),
+});

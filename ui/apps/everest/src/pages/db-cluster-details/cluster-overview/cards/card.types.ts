@@ -53,10 +53,7 @@ export type DatabaseDetailsOverviewCardProps =
     OverviewCardProps;
 
 export type ResourcesDetailsOverviewProps = {
-  numberOfNodes: DbCluster['spec']['engine']['replicas'];
-  cpu: NonNullable<DbCluster['spec']['engine']['resources']>['cpu'];
-  memory: NonNullable<DbCluster['spec']['engine']['resources']>['memory'];
-  disk: DbCluster['spec']['engine']['storage']['size'];
+  dbCluster: DbCluster;
 } & OverviewCardProps;
 
 export type BackupsDetailsOverviewCardProps = {

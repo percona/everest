@@ -5,16 +5,7 @@ import { Messages } from './database-form.messages.ts';
 import { DbWizardFormFields } from 'consts.ts';
 import { rfc_123_schema } from 'utils/common-validation.ts';
 import { Messages as ScheduleFormMessages } from 'components/schedule-form-dialog/schedule-form/schedule-form.messages.ts';
-import { ResourceSize } from 'components/cluster-form/resources/constants.ts';
-
-const resourceToNumber = (minimum = 0) =>
-  z.union([z.string().nonempty(), z.number()]).pipe(
-    z.coerce
-      .number({
-        invalid_type_error: 'Please enter a valid number',
-      })
-      .min(minimum)
-  );
+import { resourcesFormSchema } from 'components/cluster-form';
 
 const basicInfoSchema = z
   .object({
@@ -42,15 +33,7 @@ const basicInfoSchema = z
 // this is needed because we parse step by step
 // so, by default, Zod would leave behind the keys from previous steps
 
-const stepTwoSchema = z
-  .object({
-    [DbWizardFormFields.cpu]: resourceToNumber(0.6),
-    [DbWizardFormFields.memory]: resourceToNumber(0.512),
-    [DbWizardFormFields.disk]: resourceToNumber(1),
-    [DbWizardFormFields.resourceSizePerNode]: z.nativeEnum(ResourceSize),
-    [DbWizardFormFields.numberOfNodes]: z.string(),
-  })
-  .passthrough();
+const stepTwoSchema = resourcesFormSchema.passthrough();
 
 const backupsStepSchema = z
   .object({
