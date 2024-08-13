@@ -52,7 +52,6 @@ export const ResourcesDetails = ({
   const onSubmit: SubmitHandler<
     z.infer<ReturnType<typeof resourcesFormSchema>>
   > = ({ cpu, disk, memory, numberOfNodes, customNrOfNodes }) => {
-    console.log(numberOfNodes);
     updateDbClusterResources(
       {
         dbCluster,
