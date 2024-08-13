@@ -11,7 +11,7 @@ import { getTimeSelectionPreviewMessage } from 'pages/database-form/database-pre
 import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils';
 import { Messages } from './backups-list-table-header.messages';
 
-const ScheduledBackupsList = () => {
+const ScheduledBackupsList = ({ canUpdateDb }: { canUpdateDb: boolean }) => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<string>('');
   const queryClient = useQueryClient();
@@ -104,22 +104,26 @@ const ScheduledBackupsList = () => {
               </Typography>
             </Box>
             <Box display="flex">
-              <IconButton
-                color="primary"
-                disabled={!dbCluster.spec.backup?.enabled}
-                onClick={() => handleEdit(item.name)}
-                data-testid="edit-schedule-button"
-              >
-                <EditOutlinedIcon />
-              </IconButton>
-              <IconButton
-                color="primary"
-                disabled={!dbCluster.spec.backup?.enabled}
-                onClick={() => handleDelete(item.name)}
-                data-testid="delete-schedule-button"
-              >
-                <DeleteOutlineOutlinedIcon />
-              </IconButton>
+              {canUpdateDb && (
+                <IconButton
+                  color="primary"
+                  disabled={!dbCluster.spec.backup?.enabled}
+                  onClick={() => handleEdit(item.name)}
+                  data-testid="edit-schedule-button"
+                >
+                  <EditOutlinedIcon />
+                </IconButton>
+              )}
+              {canUpdateDb && (
+                <IconButton
+                  color="primary"
+                  disabled={!dbCluster.spec.backup?.enabled}
+                  onClick={() => handleDelete(item.name)}
+                  data-testid="delete-schedule-button"
+                >
+                  <DeleteOutlineOutlinedIcon />
+                </IconButton>
+              )}
             </Box>
           </Box>
         </Paper>

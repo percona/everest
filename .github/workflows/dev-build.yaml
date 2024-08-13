@@ -65,7 +65,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.19.0
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: "perconalab/everest:0.0.0"
           format: 'table'
@@ -76,7 +76,7 @@ jobs:
     needs: [build]
     steps:
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.19.0
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: 'docker.io/perconalab/everest:0.0.0'
           format: 'table'
