@@ -30,7 +30,7 @@ import {
   NODES_DB_TYPE_MAP,
 } from 'components/cluster-form';
 
-const replicasToNodes = (replicas: number, dbType: DbType): string => {
+const replicasToNodes = (replicas: string, dbType: DbType): string => {
   const nodeOptions = NODES_DB_TYPE_MAP[dbType];
   const replicasString = replicas.toString();
 
@@ -47,6 +47,7 @@ export const DbClusterPayloadToFormValues = (
   namespace: string
 ): DbWizardType => {
   const backup = dbCluster?.spec?.backup;
+  const replicas = dbCluster?.spec?.proxy?.replicas.toString();
 
   return {
     [DbWizardFormFields.backupsEnabled]: !!backup?.enabled,
@@ -86,11 +87,10 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.monitoringInstance]:
       dbCluster?.spec?.monitoring?.monitoringConfigName || '',
     [DbWizardFormFields.numberOfNodes]: replicasToNodes(
-      dbCluster?.spec?.proxy?.replicas,
+      replicas,
       dbEngineToDbType(dbCluster?.spec?.engine?.type)
     ),
-    [DbWizardFormFields.customNrOfNodes]:
-      dbCluster?.spec?.proxy?.replicas.toString(),
+    [DbWizardFormFields.customNrOfNodes]: replicas,
     [DbWizardFormFields.resourceSizePerNode]:
       matchFieldsValueToResourceSize(dbCluster),
     [DbWizardFormFields.cpu]: cpuParser(
