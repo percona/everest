@@ -20,6 +20,7 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
+import { CUSTOM_NODES_NR_INPUT_VALUE } from 'components/cluster-form';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import {
   ClusterCredentials,
@@ -40,6 +41,12 @@ const formValuesToPayloadMapping = (
   dbPayload: DbWizardType,
   backupDataSource?: DataSource
 ): DbCluster => {
+  const numberOfNodes = parseInt(
+    dbPayload.numberOfNodes === CUSTOM_NODES_NR_INPUT_VALUE
+      ? dbPayload.customNrOfNodes || ''
+      : dbPayload.numberOfNodes,
+    10
+  );
   const dbClusterPayload: DbCluster = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
@@ -74,7 +81,7 @@ const formValuesToPayloadMapping = (
       engine: {
         type: dbTypeToDbEngine(dbPayload.dbType),
         version: dbPayload.dbVersion,
-        replicas: +dbPayload.numberOfNodes,
+        replicas: numberOfNodes,
         resources: {
           cpu: `${dbPayload.cpu}`,
           memory: `${dbPayload.memory}G`,
@@ -93,7 +100,7 @@ const formValuesToPayloadMapping = (
         }),
       },
       proxy: {
-        replicas: +dbPayload.numberOfNodes,
+        replicas: numberOfNodes,
         expose: {
           type: dbPayload.externalAccess
             ? ProxyExposeType.external

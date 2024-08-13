@@ -33,7 +33,7 @@ const basicInfoSchema = z
 // this is needed because we parse step by step
 // so, by default, Zod would leave behind the keys from previous steps
 
-const stepTwoSchema = resourcesFormSchema.passthrough();
+const stepTwoSchema = resourcesFormSchema(true);
 
 const backupsStepSchema = z
   .object({

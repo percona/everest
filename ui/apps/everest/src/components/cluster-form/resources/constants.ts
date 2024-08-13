@@ -74,10 +74,35 @@ export const DEFAULT_SIZES = {
   },
 };
 
-export const resourcesFormSchema = z.object({
-  [DbWizardFormFields.cpu]: resourceToNumber(0.6),
-  [DbWizardFormFields.memory]: resourceToNumber(0.512),
-  [DbWizardFormFields.disk]: resourceToNumber(1),
-  [DbWizardFormFields.resourceSizePerNode]: z.nativeEnum(ResourceSize),
-  [DbWizardFormFields.numberOfNodes]: z.string(),
-});
+export const resourcesFormSchema = (passthrough?: boolean) => {
+  const objectShape = {
+    [DbWizardFormFields.cpu]: resourceToNumber(0.6),
+    [DbWizardFormFields.memory]: resourceToNumber(0.512),
+    [DbWizardFormFields.disk]: resourceToNumber(1),
+    [DbWizardFormFields.resourceSizePerNode]: z.nativeEnum(ResourceSize),
+    [DbWizardFormFields.numberOfNodes]: z.string(),
+    [DbWizardFormFields.customNrOfNodes]: z.string().optional(),
+  };
+
+  const zObject = passthrough
+    ? z.object(objectShape).passthrough()
+    : z.object(objectShape);
+
+  return zObject.superRefine(({ numberOfNodes, customNrOfNodes = '' }, ctx) => {
+    if (numberOfNodes !== CUSTOM_NODES_NR_INPUT_VALUE) {
+      return;
+    }
+
+    const intNumberOfNodes = parseInt(customNrOfNodes, 10);
+
+    if (Number.isNaN(intNumberOfNodes) || intNumberOfNodes < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Please enter a valid number of nodes',
+        path: [DbWizardFormFields.customNrOfNodes],
+      });
+    }
+  });
+};
+
+export const CUSTOM_NODES_NR_INPUT_VALUE = 'custom-nr-nodes';

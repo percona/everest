@@ -45,6 +45,7 @@ import {
 import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
+  console.log('FirstStep');
   const mode = useDatabasePageMode();
   const {
     defaultValues: { [DbWizardFormFields.dbVersion]: defaultDbVersion },
@@ -217,8 +218,10 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   }, [clusterInfo]);
 
   useEffect(() => {
-    setDbEngineDataForEngineType();
-  }, [setDbEngineDataForEngineType]);
+    if (!dbEngineData) {
+      setDbEngineDataForEngineType();
+    }
+  }, [dbEngineData, setDbEngineDataForEngineType]);
 
   useEffect(() => {
     const { isTouched: k8sNamespaceTouched } = getFieldState(

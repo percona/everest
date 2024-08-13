@@ -20,7 +20,9 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import {
+  CUSTOM_NODES_NR_INPUT_VALUE,
   matchFieldsValueToResourceSize,
+  NODES_DB_TYPE_MAP,
   resourcesFormSchema,
 } from 'components/cluster-form';
 import OverviewSection from '../overview-section';
@@ -38,18 +40,19 @@ export const ResourcesDetails = ({
 }: ResourcesDetailsOverviewProps) => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const { mutate: updateDbClusterResources } = useUpdateDbClusterResources();
-  const numberOfNodes = dbCluster.spec.engine.replicas;
   const cpu = dbCluster.spec.engine.resources?.cpu || 0;
   const memory = dbCluster.spec.engine.resources?.memory || 0;
   const disk = dbCluster.spec.engine.storage.size;
   const dbType = dbEngineToDbType(dbCluster.spec.engine.type);
+  const replicas = dbCluster.spec.engine.replicas.toString();
+  const numberOfNodes = NODES_DB_TYPE_MAP[dbType].includes(replicas)
+    ? replicas
+    : CUSTOM_NODES_NR_INPUT_VALUE;
 
-  const onSubmit: SubmitHandler<z.infer<typeof resourcesFormSchema>> = ({
-    cpu,
-    disk,
-    memory,
-    numberOfNodes,
-  }) => {
+  const onSubmit: SubmitHandler<
+    z.infer<ReturnType<typeof resourcesFormSchema>>
+  > = ({ cpu, disk, memory, numberOfNodes, customNrOfNodes }) => {
+    console.log(numberOfNodes);
     updateDbClusterResources(
       {
         dbCluster,
@@ -57,7 +60,12 @@ export const ResourcesDetails = ({
           cpu,
           disk,
           memory,
-          numberOfNodes: +numberOfNodes,
+          numberOfNodes: parseInt(
+            numberOfNodes === CUSTOM_NODES_NR_INPUT_VALUE
+              ? customNrOfNodes || '1'
+              : numberOfNodes,
+            10
+          ),
         },
       },
       {
@@ -87,7 +95,7 @@ export const ResourcesDetails = ({
         }}
       >
         <OverviewSection
-          title={`${numberOfNodes} node${+numberOfNodes > 1 ? 's' : ''}`}
+          title={`${replicas} node${+replicas > 1 ? 's' : ''}`}
           loading={loading}
         >
           <OverviewSectionRow
@@ -113,7 +121,8 @@ export const ResourcesDetails = ({
             cpu: cpuParser(cpu.toString() || '0'),
             disk: memoryParser(disk.toString()),
             memory: memoryParser(memory.toString()),
-            numberOfNodes: numberOfNodes.toString(),
+            numberOfNodes,
+            customNrOfNodes: replicas,
             resourceSizePerNode: matchFieldsValueToResourceSize(dbCluster),
           }}
         />

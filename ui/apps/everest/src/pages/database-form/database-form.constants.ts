@@ -42,6 +42,7 @@ export const DB_WIZARD_DEFAULTS: DbWizardType = {
   [DbWizardFormFields.monitoringInstance]: '',
   [DbWizardFormFields.numberOfNodes]: '1',
   [DbWizardFormFields.resourceSizePerNode]: ResourceSize.small,
+  [DbWizardFormFields.customNrOfNodes]: '1',
   [DbWizardFormFields.cpu]: DEFAULT_SIZES.small.cpu,
   [DbWizardFormFields.disk]: DEFAULT_SIZES.small.disk,
   [DbWizardFormFields.memory]: DEFAULT_SIZES.small.memory,

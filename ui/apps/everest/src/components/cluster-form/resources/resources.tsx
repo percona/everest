@@ -4,6 +4,7 @@ import {
   Box,
   FormGroup,
   InputAdornment,
+  Stack,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -13,6 +14,7 @@ import { DbWizardFormFields } from 'consts';
 import { useKubernetesClusterResourcesInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterResourcesInfo';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
 import {
+  CUSTOM_NODES_NR_INPUT_VALUE,
   DEFAULT_SIZES,
   humanizedResourceSizeMap,
   NODES_DB_TYPE_MAP,
@@ -86,6 +88,10 @@ const ResourceInput = ({
   const { watch } = useFormContext();
   const value: number = watch(name);
 
+  if ((numberOfNodes && Number.isNaN(numberOfNodes)) || numberOfNodes < 1) {
+    numberOfNodes = 1;
+  }
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'row' }}>
       <TextInput
@@ -133,7 +139,8 @@ const ResourcesForm = ({
   const { isMobile, isDesktop } = useActiveBreakpoint();
   const { data: resourcesInfo, isFetching: resourcesInfoLoading } =
     useKubernetesClusterResourcesInfo();
-  const { watch, setValue, setError, clearErrors } = useFormContext();
+  const { watch, setValue, setError, clearErrors, resetField } =
+    useFormContext();
 
   const resourceSizePerNode: ResourceSize = watch(
     DbWizardFormFields.resourceSizePerNode
@@ -141,7 +148,14 @@ const ResourcesForm = ({
   const cpu: number = watch(DbWizardFormFields.cpu);
   const memory: number = watch(DbWizardFormFields.memory);
   const disk: number = watch(DbWizardFormFields.disk);
-  const numberOfNodes = watch(DbWizardFormFields.numberOfNodes);
+  const numberOfNodes: string = watch(DbWizardFormFields.numberOfNodes);
+  const customNrOfNodes: string = watch(DbWizardFormFields.customNrOfNodes);
+  const intNumberOfNodes = parseInt(
+    numberOfNodes === CUSTOM_NODES_NR_INPUT_VALUE
+      ? customNrOfNodes
+      : numberOfNodes,
+    10
+  );
 
   const cpuCapacityExceeded = resourcesInfo
     ? cpu * 1000 > resourcesInfo?.available.cpuMillis
@@ -204,23 +218,48 @@ const ResourcesForm = ({
 
   return (
     <FormGroup sx={{ mt: 3 }}>
-      <ToggleButtonGroupInput
-        name={DbWizardFormFields.numberOfNodes}
-        label={'Number of nodes'}
-      >
-        {NODES_DB_TYPE_MAP[dbType].map((value) => (
-          <ToggleCard
-            value={value}
-            data-testid={`toggle-button-nodes-${value}`}
-            key={value}
-          >
-            {`${value} node${+value > 1 ? 's' : ''}`}
-          </ToggleCard>
-        ))}
-      </ToggleButtonGroupInput>
+      <Stack>
+        <ToggleButtonGroupInput
+          name={DbWizardFormFields.numberOfNodes}
+          label={'Number of nodes'}
+          toggleButtonGroupProps={{
+            onChange: (_, value) => {
+              if (value !== CUSTOM_NODES_NR_INPUT_VALUE) {
+                resetField(DbWizardFormFields.customNrOfNodes, {
+                  keepError: false,
+                });
+              }
+            },
+          }}
+        >
+          {NODES_DB_TYPE_MAP[dbType].map((value) => (
+            <ToggleCard
+              value={value}
+              data-testid={`toggle-button-nodes-${value}`}
+              key={value}
+            >
+              {`${value} node${+value > 1 ? 's' : ''}`}
+            </ToggleCard>
+          ))}
+          <ToggleCard value={CUSTOM_NODES_NR_INPUT_VALUE}>Custom</ToggleCard>
+        </ToggleButtonGroupInput>
+        {numberOfNodes === CUSTOM_NODES_NR_INPUT_VALUE && (
+          <TextInput
+            name={DbWizardFormFields.customNrOfNodes}
+            textFieldProps={{
+              type: 'number',
+              sx: {
+                width: `${100 / (NODES_DB_TYPE_MAP[dbType].length + 1)}%`,
+                alignSelf: 'flex-end',
+                mt: 1,
+              },
+            }}
+          />
+        )}
+      </Stack>
       <ToggleButtonGroupInput
         name={DbWizardFormFields.resourceSizePerNode}
-        label={'resourceSizePerNode'}
+        label={'Resource size per node'}
       >
         <ToggleCard
           value={ResourceSize.small}
@@ -272,7 +311,7 @@ const ResourcesForm = ({
             cpuCapacityExceeded
           )}
           endSuffix="CPU"
-          numberOfNodes={numberOfNodes}
+          numberOfNodes={intNumberOfNodes}
         />
         <ResourceInput
           name={DbWizardFormFields.memory}
@@ -284,7 +323,7 @@ const ResourcesForm = ({
             memoryCapacityExceeded
           )}
           endSuffix="GB"
-          numberOfNodes={numberOfNodes}
+          numberOfNodes={intNumberOfNodes}
         />
         <ResourceInput
           name={DbWizardFormFields.disk}
@@ -297,7 +336,7 @@ const ResourcesForm = ({
             diskCapacityExceeded
           )}
           endSuffix="GB"
-          numberOfNodes={numberOfNodes}
+          numberOfNodes={intNumberOfNodes}
         />
       </Box>
     </FormGroup>

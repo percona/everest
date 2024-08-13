@@ -55,6 +55,7 @@ export enum DbWizardForm {
   memory = 'memory',
   disk = 'disk',
   numberOfNodes = 'numberOfNodes',
+  customNrOfNodes = 'customNrOfNodes',
   resourceSizePerNode = 'resourceSizePerNode',
   backupsEnabled = 'backupsEnabled',
   schedules = 'schedules',

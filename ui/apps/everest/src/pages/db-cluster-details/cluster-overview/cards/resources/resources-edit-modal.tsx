@@ -6,8 +6,8 @@ import { FormDialog } from 'components/form-dialog';
 type Props = {
   handleCloseModal: () => void;
   dbType: DbType;
-  onSubmit: SubmitHandler<z.infer<typeof resourcesFormSchema>>;
-  defaultValues: z.infer<typeof resourcesFormSchema>;
+  onSubmit: SubmitHandler<z.infer<ReturnType<typeof resourcesFormSchema>>>;
+  defaultValues: z.infer<ReturnType<typeof resourcesFormSchema>>;
 };
 
 const ResourcesEditModal = ({
@@ -23,7 +23,7 @@ const ResourcesEditModal = ({
       closeModal={handleCloseModal}
       headerMessage="Edit Topology"
       submitMessage="Save"
-      schema={resourcesFormSchema}
+      schema={resourcesFormSchema()}
       onSubmit={onSubmit}
       defaultValues={defaultValues}
     >

@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { DbType } from '@percona/types';
 import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
 import { DbWizardMode } from './database-form.types';
 import { DbWizardFormFields } from 'consts.ts';
@@ -23,7 +24,22 @@ import { generateShortUID } from './database-form-body/steps/first/utils.ts';
 import { MAX_DB_CLUSTER_NAME_LENGTH } from 'consts';
 import { DbWizardType } from './database-form-schema.ts';
 import { DB_WIZARD_DEFAULTS } from './database-form.constants.ts';
-import { matchFieldsValueToResourceSize } from 'components/cluster-form';
+import {
+  CUSTOM_NODES_NR_INPUT_VALUE,
+  matchFieldsValueToResourceSize,
+  NODES_DB_TYPE_MAP,
+} from 'components/cluster-form';
+
+const replicasToNodes = (replicas: number, dbType: DbType): string => {
+  const nodeOptions = NODES_DB_TYPE_MAP[dbType];
+  const replicasString = replicas.toString();
+
+  if (nodeOptions.includes(replicasString)) {
+    return replicasString;
+  }
+
+  return CUSTOM_NODES_NR_INPUT_VALUE;
+};
 
 export const DbClusterPayloadToFormValues = (
   dbCluster: DbCluster,
@@ -69,7 +85,12 @@ export const DbClusterPayloadToFormValues = (
       !!dbCluster?.spec?.monitoring?.monitoringConfigName,
     [DbWizardFormFields.monitoringInstance]:
       dbCluster?.spec?.monitoring?.monitoringConfigName || '',
-    [DbWizardFormFields.numberOfNodes]: `${dbCluster?.spec?.proxy?.replicas}`,
+    [DbWizardFormFields.numberOfNodes]: replicasToNodes(
+      dbCluster?.spec?.proxy?.replicas,
+      dbEngineToDbType(dbCluster?.spec?.engine?.type)
+    ),
+    [DbWizardFormFields.customNrOfNodes]:
+      dbCluster?.spec?.proxy?.replicas.toString(),
     [DbWizardFormFields.resourceSizePerNode]:
       matchFieldsValueToResourceSize(dbCluster),
     [DbWizardFormFields.cpu]: cpuParser(
