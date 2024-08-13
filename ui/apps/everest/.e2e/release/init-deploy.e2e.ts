@@ -75,6 +75,7 @@ test.describe.configure({ retries: 0 });
         page,
         request,
       }) => {
+        // Timeout is scaled based on the cluster size to account for the additional resources needed.
         test.setTimeout(size * 120000);
 
         expect(storageClasses.length).toBeGreaterThan(0);
@@ -163,6 +164,7 @@ test.describe.configure({ retries: 0 });
         test.setTimeout(size * 120000);
 
         await suspendDbCluster(page, clusterName);
+        // One node clusters and Postgresql don't seem to show Stopping state
         if (size != 1 && db != 'postgresql') {
           await waitForStatus(page, clusterName, 'Stopping', 45000);
         }
