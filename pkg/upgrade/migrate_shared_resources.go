@@ -57,11 +57,12 @@ func (u *Upgrade) migrateSharedResources(ctx context.Context) error {
 // copySecret copies the given secret to the given namespace.
 // preserves only the spec. No error if already exists.
 func (u *Upgrade) copySecret(ctx context.Context, secret *corev1.Secret, namespace string) error {
-	secret.ObjectMeta = metav1.ObjectMeta{
+	clone := secret.DeepCopy()
+	clone.ObjectMeta = metav1.ObjectMeta{
 		Name:      secret.GetName(),
 		Namespace: namespace,
 	}
-	if _, err := u.kubeClient.CreateSecret(ctx, secret); client.IgnoreAlreadyExists(err) != nil {
+	if _, err := u.kubeClient.CreateSecret(ctx, clone); client.IgnoreAlreadyExists(err) != nil {
 		return err
 	}
 	return nil
@@ -92,14 +93,14 @@ func (u *Upgrade) migrateBackupStorages(ctx context.Context) error {
 				return fmt.Errorf("cannot copy credentials secret %s in namespace %s", secret.Name, ns)
 			}
 			// Create the BackupStorage.
-			updated := bs.DeepCopy()
-			updated.ObjectMeta = metav1.ObjectMeta{
+			bsClone := bs.DeepCopy()
+			bsClone.ObjectMeta = metav1.ObjectMeta{
 				Name:      bs.GetName(),
 				Namespace: ns,
 			}
-			updated.Spec.AllowedNamespaces = nil
-			if err := u.kubeClient.CreateBackupStorage(ctx, updated); client.IgnoreAlreadyExists(err) != nil {
-				return fmt.Errorf("cannot create backup storage %s in namespace %s", updated.GetName(), ns)
+			bsClone.Spec.AllowedNamespaces = nil
+			if err := u.kubeClient.CreateBackupStorage(ctx, bsClone); client.IgnoreAlreadyExists(err) != nil {
+				return fmt.Errorf("cannot create backup storage %s in namespace %s", bsClone.GetName(), ns)
 			}
 		}
 	}
@@ -129,14 +130,14 @@ func (u *Upgrade) migrateMonitoringInstaces(ctx context.Context) error {
 				return fmt.Errorf("cannot copy credentials secret %s in namespace %s", secret.Name, ns)
 			}
 			// Create the MonitoringConfig.
-			updated := mc.DeepCopy()
-			updated.ObjectMeta = metav1.ObjectMeta{
+			mcClone := mc.DeepCopy()
+			mcClone.ObjectMeta = metav1.ObjectMeta{
 				Name:      mc.GetName(),
 				Namespace: ns,
 			}
-			updated.Spec.AllowedNamespaces = nil
-			if err := u.kubeClient.CreateMonitoringConfig(ctx, updated); client.IgnoreAlreadyExists(err) != nil {
-				return fmt.Errorf("cannot create monitoring config %s in namespace %s", mc.GetName(), ns)
+			mcClone.Spec.AllowedNamespaces = nil
+			if err := u.kubeClient.CreateMonitoringConfig(ctx, mcClone); client.IgnoreAlreadyExists(err) != nil {
+				return fmt.Errorf("cannot create monitoring config %s in namespace %s", mcClone.GetName(), ns)
 			}
 		}
 	}
