@@ -81,6 +81,15 @@ jobs:
               exit 1
             fi
           
+            # update IMAGE_TAG_OWNER in the Makefile to point to a correct org
+            if [[ $IS_RC == 1 ]]; then 
+              # if the RC build is being run over a Release build, there will be the "percona" org mentioned in the quickstart file, 
+              # so we should replace the org
+              sed -i "s/IMAGE_TAG_OWNER ?= docker.io\/percona\$/IMAGE_TAG_OWNER ?= docker.io\/perconalab/g" Makefile 
+            else
+              sed -i "s/IMAGE_TAG_OWNER ?= docker.io\/perconalab/IMAGE_TAG_OWNER ?= docker.io\/percona/g" Makefile 
+            fi 
+            
             make init
             make release
 
