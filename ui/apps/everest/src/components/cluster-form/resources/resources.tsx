@@ -24,6 +24,7 @@ import {
 } from './constants';
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
+import { getProxyUnitNamesFromDbType } from './utils';
 
 type Props = {
   unit?: string;
@@ -378,6 +379,7 @@ const ResourcesForm = ({
   const { watch } = useFormContext();
   const numberOfNodes: string = watch(DbWizardFormFields.numberOfNodes);
   const numberOfProxies: string = watch(DbWizardFormFields.numberOfProxies);
+  const proxyUnitNames = getProxyUnitNamesFromDbType(dbType);
 
   const handleAccordionChange =
     (panel: 'nodes' | 'proxies') =>
@@ -418,12 +420,15 @@ const ResourcesForm = ({
         }}
       >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h5">{`Proxies (${numberOfProxies})`}</Typography>
+          <Typography
+            variant="h5"
+            textTransform="capitalize"
+          >{`${proxyUnitNames.plural} (${numberOfProxies})`}</Typography>
         </AccordionSummary>
         <Divider />
         <ResourcesToggles
-          unit="proxy"
-          unitPlural="proxies"
+          unit={proxyUnitNames.singular}
+          unitPlural={proxyUnitNames.plural}
           options={NODES_DB_TYPE_MAP[dbType]}
           resourceSizePerUnitInputName={DbWizardFormFields.resourceSizePerProxy}
           cpuInputName={DbWizardFormFields.proxyCpu}
