@@ -27,6 +27,7 @@ import { DbType } from '@percona/types';
 
 type Props = {
   unit?: string;
+  unitPlural?: string;
   options: string[];
   resourceSizePerUnitInputName: string;
   cpuInputName: string;
@@ -40,6 +41,7 @@ type Props = {
 
 type ResourceInputProps = {
   unit: string;
+  unitPlural: string;
   name: string;
   label: string;
   helperText: string;
@@ -89,6 +91,7 @@ const checkResourceText = (
 
 const ResourceInput = ({
   unit,
+  unitPlural,
   name,
   label,
   helperText,
@@ -127,9 +130,7 @@ const ResourceInput = ({
             variant="caption"
             sx={{ whiteSpace: 'nowrap' }}
             color={theme.palette.text.secondary}
-          >{`x ${numberOfUnits} ${unit}${
-            +numberOfUnits > 1 ? 's' : ''
-          }`}</Typography>
+          >{`x ${numberOfUnits} ${+numberOfUnits > 1 ? unitPlural : unit}`}</Typography>
           {value && numberOfUnits && (
             <Typography
               variant="body1"
@@ -146,6 +147,7 @@ const ResourceInput = ({
 
 const ResourcesToggles = ({
   unit = 'node',
+  unitPlural = `${unit}s`,
   options,
   resourceSizePerUnitInputName,
   cpuInputName,
@@ -233,7 +235,7 @@ const ResourcesToggles = ({
       <Stack>
         <ToggleButtonGroupInput
           name={numberOfUnitsInputName}
-          label={`Number of ${unit}s`}
+          label={`Number of ${unitPlural}`}
           toggleButtonGroupProps={{
             onChange: (_, value) => {
               if (value !== CUSTOM_NR_UNITS_INPUT_VALUE) {
@@ -247,10 +249,10 @@ const ResourcesToggles = ({
           {options.map((value) => (
             <ToggleCard
               value={value}
-              data-testid={`toggle-button-${unit}s-${value}`}
+              data-testid={`toggle-button-${unitPlural}-${value}`}
               key={value}
             >
-              {`${value} ${unit}${+value > 1 ? 's' : ''}`}
+              {`${value} ${+value > 1 ? unitPlural : unit}`}
             </ToggleCard>
           ))}
           <ToggleCard value={CUSTOM_NR_UNITS_INPUT_VALUE}>Custom</ToggleCard>
@@ -315,6 +317,7 @@ const ResourcesToggles = ({
       >
         <ResourceInput
           unit={unit}
+          unitPlural={unitPlural}
           name={cpuInputName}
           label="CPU"
           helperText={checkResourceText(
@@ -328,6 +331,7 @@ const ResourcesToggles = ({
         />
         <ResourceInput
           unit={unit}
+          unitPlural={unitPlural}
           name={memoryInputName}
           label="MEMORY"
           helperText={checkResourceText(
@@ -341,6 +345,7 @@ const ResourcesToggles = ({
         />
         <ResourceInput
           unit={unit}
+          unitPlural={unitPlural}
           name={diskInputName}
           disabled={disableDiskInput}
           label="DISK"
@@ -367,12 +372,15 @@ const ResourcesForm = ({
   disableDiskInput?: boolean;
   allowDiskInputUpdate?: boolean;
 }) => {
-  const [expanded, setExpanded] = useState<'nodes' | 'routers' | false>(
+  const [expanded, setExpanded] = useState<'nodes' | 'proxies' | false>(
     'nodes'
   );
+  const { watch } = useFormContext();
+  const numberOfNodes: string = watch(DbWizardFormFields.numberOfNodes);
+  const numberOfProxies: string = watch(DbWizardFormFields.numberOfProxies);
 
   const handleAccordionChange =
-    (panel: 'nodes' | 'routers') =>
+    (panel: 'nodes' | 'proxies') =>
     (_: React.SyntheticEvent, newExpanded: boolean) => {
       setExpanded(newExpanded ? panel : false);
     };
@@ -387,7 +395,7 @@ const ResourcesForm = ({
         }}
       >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h5">Nodes</Typography>
+          <Typography variant="h5">{`Nodes (${numberOfNodes})`}</Typography>
         </AccordionSummary>
         <Divider />
         <ResourcesToggles
@@ -403,27 +411,26 @@ const ResourcesForm = ({
         />
       </Accordion>
       <Accordion
-        expanded={expanded === 'routers'}
-        onChange={handleAccordionChange('routers')}
+        expanded={expanded === 'proxies'}
+        onChange={handleAccordionChange('proxies')}
         sx={{
           px: 2,
         }}
       >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h5">Routers</Typography>
+          <Typography variant="h5">{`Proxies (${numberOfProxies})`}</Typography>
         </AccordionSummary>
         <Divider />
         <ResourcesToggles
-          unit="router"
+          unit="proxy"
+          unitPlural="proxies"
           options={NODES_DB_TYPE_MAP[dbType]}
-          resourceSizePerUnitInputName={
-            DbWizardFormFields.resourceSizePerRouter
-          }
-          cpuInputName={DbWizardFormFields.routerCpu}
-          diskInputName={DbWizardFormFields.routerDisk}
-          memoryInputName={DbWizardFormFields.routerMemory}
-          numberOfUnitsInputName={DbWizardFormFields.numberOfRouters}
-          customNrOfUnitsInputName={DbWizardFormFields.customNrOfRouters}
+          resourceSizePerUnitInputName={DbWizardFormFields.resourceSizePerProxy}
+          cpuInputName={DbWizardFormFields.proxyCpu}
+          diskInputName={DbWizardFormFields.proxyDisk}
+          memoryInputName={DbWizardFormFields.proxyMemory}
+          numberOfUnitsInputName={DbWizardFormFields.numberOfProxies}
+          customNrOfUnitsInputName={DbWizardFormFields.customNrOfProxies}
         />
       </Accordion>
     </>
