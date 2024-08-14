@@ -364,6 +364,25 @@ const ResourcesToggles = ({
   );
 };
 
+const CustomAccordionSummary = ({
+  unitPlural,
+  nr,
+}: {
+  unitPlural: string;
+  nr: number;
+}) => {
+  const text = Number.isNaN(nr) || nr < 1 ? '' : ` (${nr})`;
+
+  return (
+    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+      <Typography
+        variant="h5"
+        textTransform="capitalize"
+      >{`${unitPlural} ${text}`}</Typography>
+    </AccordionSummary>
+  );
+};
+
 const ResourcesForm = ({
   dbType,
   disableDiskInput,
@@ -376,16 +395,43 @@ const ResourcesForm = ({
   const [expanded, setExpanded] = useState<'nodes' | 'proxies' | false>(
     'nodes'
   );
-  const { watch } = useFormContext();
+  const { watch, getFieldState, setValue } = useFormContext();
   const numberOfNodes: string = watch(DbWizardFormFields.numberOfNodes);
   const numberOfProxies: string = watch(DbWizardFormFields.numberOfProxies);
+  const customNrOfNodes: string = watch(DbWizardFormFields.customNrOfNodes);
+  const customNrOfProxies: string = watch(DbWizardFormFields.customNrOfProxies);
   const proxyUnitNames = getProxyUnitNamesFromDbType(dbType);
+  const nodesAccordionSummaryNumber =
+    numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
+      ? customNrOfNodes
+      : numberOfNodes;
+  const proxiesAccordionSummaryNumber =
+    numberOfProxies === CUSTOM_NR_UNITS_INPUT_VALUE
+      ? customNrOfProxies
+      : numberOfProxies;
 
   const handleAccordionChange =
     (panel: 'nodes' | 'proxies') =>
     (_: React.SyntheticEvent, newExpanded: boolean) => {
       setExpanded(newExpanded ? panel : false);
     };
+
+  useEffect(() => {
+    const { isDirty: numberOfProxiesDirty } = getFieldState(
+      DbWizardFormFields.numberOfProxies
+    );
+
+    if (numberOfProxiesDirty) {
+      return;
+    }
+
+    if (NODES_DB_TYPE_MAP[dbType].includes(numberOfNodes)) {
+      setValue(DbWizardFormFields.numberOfProxies, numberOfNodes);
+    } else {
+      setValue(DbWizardFormFields.numberOfProxies, CUSTOM_NR_UNITS_INPUT_VALUE);
+      setValue(DbWizardFormFields.customNrOfProxies, customNrOfNodes);
+    }
+  }, [setValue, getFieldState, customNrOfNodes, dbType, numberOfNodes]);
 
   return (
     <>
@@ -396,9 +442,10 @@ const ResourcesForm = ({
           px: 2,
         }}
       >
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h5">{`Nodes (${numberOfNodes})`}</Typography>
-        </AccordionSummary>
+        <CustomAccordionSummary
+          unitPlural="Nodes"
+          nr={parseInt(nodesAccordionSummaryNumber, 10)}
+        />
         <Divider />
         <ResourcesToggles
           options={NODES_DB_TYPE_MAP[dbType]}
@@ -419,12 +466,10 @@ const ResourcesForm = ({
           px: 2,
         }}
       >
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography
-            variant="h5"
-            textTransform="capitalize"
-          >{`${proxyUnitNames.plural} (${numberOfProxies})`}</Typography>
-        </AccordionSummary>
+        <CustomAccordionSummary
+          unitPlural={proxyUnitNames.plural}
+          nr={parseInt(proxiesAccordionSummaryNumber, 10)}
+        />
         <Divider />
         <ResourcesToggles
           unit={proxyUnitNames.singular}
