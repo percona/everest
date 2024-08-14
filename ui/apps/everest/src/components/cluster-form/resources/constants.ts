@@ -82,27 +82,50 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
     [DbWizardFormFields.resourceSizePerNode]: z.nativeEnum(ResourceSize),
     [DbWizardFormFields.numberOfNodes]: z.string(),
     [DbWizardFormFields.customNrOfNodes]: z.string().optional(),
+    [DbWizardFormFields.proxyCpu]: resourceToNumber(0.6),
+    [DbWizardFormFields.proxyMemory]: resourceToNumber(0.512),
+    [DbWizardFormFields.proxyDisk]: resourceToNumber(1),
+    [DbWizardFormFields.resourceSizePerProxy]: z.nativeEnum(ResourceSize),
+    [DbWizardFormFields.numberOfProxies]: z.string(),
+    [DbWizardFormFields.customNrOfProxies]: z.string().optional(),
   };
 
   const zObject = passthrough
     ? z.object(objectShape).passthrough()
     : z.object(objectShape);
 
-  return zObject.superRefine(({ numberOfNodes, customNrOfNodes = '' }, ctx) => {
-    if (numberOfNodes !== CUSTOM_NR_UNITS_INPUT_VALUE) {
-      return;
-    }
+  return zObject.superRefine(
+    (
+      {
+        numberOfNodes,
+        numberOfProxies,
+        customNrOfNodes = '',
+        customNrOfProxies = '',
+      },
+      ctx
+    ) => {
+      [
+        [numberOfNodes, customNrOfNodes, DbWizardFormFields.customNrOfNodes],
+        [
+          numberOfProxies,
+          customNrOfProxies,
+          DbWizardFormFields.customNrOfProxies,
+        ],
+      ].forEach(([nr, customNr, path]) => {
+        if (nr === CUSTOM_NR_UNITS_INPUT_VALUE) {
+          const intNr = parseInt(customNr, 10);
 
-    const intNumberOfNodes = parseInt(customNrOfNodes, 10);
-
-    if (Number.isNaN(intNumberOfNodes) || intNumberOfNodes < 1) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Please enter a valid number of nodes',
-        path: [DbWizardFormFields.customNrOfNodes],
+          if (Number.isNaN(intNr) || intNr < 1) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Please enter a valid number',
+              path: [path],
+            });
+          }
+        }
       });
     }
-  });
+  );
 };
 
 export const CUSTOM_NR_UNITS_INPUT_VALUE = 'custom-units-nr';
