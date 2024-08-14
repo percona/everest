@@ -1110,7 +1110,7 @@ func (_m *IEnforcer) GetAdapter() persist.Adapter {
 }
 
 // GetAllActions provides a mock function with given fields:
-func (_m *IEnforcer) GetAllActions() []string {
+func (_m *IEnforcer) GetAllActions() ([]string, error) {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
@@ -1118,6 +1118,10 @@ func (_m *IEnforcer) GetAllActions() []string {
 	}
 
 	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func() ([]string, error)); ok {
+		return rf()
+	}
 	if rf, ok := ret.Get(0).(func() []string); ok {
 		r0 = rf()
 	} else {
@@ -1126,7 +1130,13 @@ func (_m *IEnforcer) GetAllActions() []string {
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetAllDomains provides a mock function with given fields:
@@ -1160,7 +1170,7 @@ func (_m *IEnforcer) GetAllDomains() ([]string, error) {
 }
 
 // GetAllNamedActions provides a mock function with given fields: ptype
-func (_m *IEnforcer) GetAllNamedActions(ptype string) []string {
+func (_m *IEnforcer) GetAllNamedActions(ptype string) ([]string, error) {
 	ret := _m.Called(ptype)
 
 	if len(ret) == 0 {
@@ -1168,6 +1178,10 @@ func (_m *IEnforcer) GetAllNamedActions(ptype string) []string {
 	}
 
 	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]string, error)); ok {
+		return rf(ptype)
+	}
 	if rf, ok := ret.Get(0).(func(string) []string); ok {
 		r0 = rf(ptype)
 	} else {
@@ -1176,11 +1190,17 @@ func (_m *IEnforcer) GetAllNamedActions(ptype string) []string {
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(ptype)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetAllNamedObjects provides a mock function with given fields: ptype
-func (_m *IEnforcer) GetAllNamedObjects(ptype string) []string {
+func (_m *IEnforcer) GetAllNamedObjects(ptype string) ([]string, error) {
 	ret := _m.Called(ptype)
 
 	if len(ret) == 0 {
@@ -1188,6 +1208,10 @@ func (_m *IEnforcer) GetAllNamedObjects(ptype string) []string {
 	}
 
 	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]string, error)); ok {
+		return rf(ptype)
+	}
 	if rf, ok := ret.Get(0).(func(string) []string); ok {
 		r0 = rf(ptype)
 	} else {
@@ -1196,11 +1220,17 @@ func (_m *IEnforcer) GetAllNamedObjects(ptype string) []string {
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(ptype)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetAllNamedRoles provides a mock function with given fields: ptype
-func (_m *IEnforcer) GetAllNamedRoles(ptype string) []string {
+func (_m *IEnforcer) GetAllNamedRoles(ptype string) ([]string, error) {
 	ret := _m.Called(ptype)
 
 	if len(ret) == 0 {
@@ -1208,6 +1238,10 @@ func (_m *IEnforcer) GetAllNamedRoles(ptype string) []string {
 	}
 
 	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]string, error)); ok {
+		return rf(ptype)
+	}
 	if rf, ok := ret.Get(0).(func(string) []string); ok {
 		r0 = rf(ptype)
 	} else {
@@ -1216,11 +1250,17 @@ func (_m *IEnforcer) GetAllNamedRoles(ptype string) []string {
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(ptype)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetAllNamedSubjects provides a mock function with given fields: ptype
-func (_m *IEnforcer) GetAllNamedSubjects(ptype string) []string {
+func (_m *IEnforcer) GetAllNamedSubjects(ptype string) ([]string, error) {
 	ret := _m.Called(ptype)
 
 	if len(ret) == 0 {
@@ -1228,6 +1268,10 @@ func (_m *IEnforcer) GetAllNamedSubjects(ptype string) []string {
 	}
 
 	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]string, error)); ok {
+		return rf(ptype)
+	}
 	if rf, ok := ret.Get(0).(func(string) []string); ok {
 		r0 = rf(ptype)
 	} else {
@@ -1236,11 +1280,17 @@ func (_m *IEnforcer) GetAllNamedSubjects(ptype string) []string {
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(ptype)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetAllObjects provides a mock function with given fields:
-func (_m *IEnforcer) GetAllObjects() []string {
+func (_m *IEnforcer) GetAllObjects() ([]string, error) {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
@@ -1248,6 +1298,10 @@ func (_m *IEnforcer) GetAllObjects() []string {
 	}
 
 	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func() ([]string, error)); ok {
+		return rf()
+	}
 	if rf, ok := ret.Get(0).(func() []string); ok {
 		r0 = rf()
 	} else {
@@ -1256,11 +1310,17 @@ func (_m *IEnforcer) GetAllObjects() []string {
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetAllRoles provides a mock function with given fields:
-func (_m *IEnforcer) GetAllRoles() []string {
+func (_m *IEnforcer) GetAllRoles() ([]string, error) {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
@@ -1268,6 +1328,10 @@ func (_m *IEnforcer) GetAllRoles() []string {
 	}
 
 	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func() ([]string, error)); ok {
+		return rf()
+	}
 	if rf, ok := ret.Get(0).(func() []string); ok {
 		r0 = rf()
 	} else {
@@ -1276,11 +1340,17 @@ func (_m *IEnforcer) GetAllRoles() []string {
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetAllRolesByDomain provides a mock function with given fields: domain
-func (_m *IEnforcer) GetAllRolesByDomain(domain string) []string {
+func (_m *IEnforcer) GetAllRolesByDomain(domain string) ([]string, error) {
 	ret := _m.Called(domain)
 
 	if len(ret) == 0 {
@@ -1288,6 +1358,10 @@ func (_m *IEnforcer) GetAllRolesByDomain(domain string) []string {
 	}
 
 	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]string, error)); ok {
+		return rf(domain)
+	}
 	if rf, ok := ret.Get(0).(func(string) []string); ok {
 		r0 = rf(domain)
 	} else {
@@ -1296,11 +1370,17 @@ func (_m *IEnforcer) GetAllRolesByDomain(domain string) []string {
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(domain)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetAllSubjects provides a mock function with given fields:
-func (_m *IEnforcer) GetAllSubjects() []string {
+func (_m *IEnforcer) GetAllSubjects() ([]string, error) {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
@@ -1308,6 +1388,10 @@ func (_m *IEnforcer) GetAllSubjects() []string {
 	}
 
 	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func() ([]string, error)); ok {
+		return rf()
+	}
 	if rf, ok := ret.Get(0).(func() []string); ok {
 		r0 = rf()
 	} else {
@@ -1316,11 +1400,17 @@ func (_m *IEnforcer) GetAllSubjects() []string {
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetAllUsersByDomain provides a mock function with given fields: domain
-func (_m *IEnforcer) GetAllUsersByDomain(domain string) []string {
+func (_m *IEnforcer) GetAllUsersByDomain(domain string) ([]string, error) {
 	ret := _m.Called(domain)
 
 	if len(ret) == 0 {
@@ -1328,6 +1418,10 @@ func (_m *IEnforcer) GetAllUsersByDomain(domain string) []string {
 	}
 
 	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]string, error)); ok {
+		return rf(domain)
+	}
 	if rf, ok := ret.Get(0).(func(string) []string); ok {
 		r0 = rf(domain)
 	} else {
@@ -1336,11 +1430,17 @@ func (_m *IEnforcer) GetAllUsersByDomain(domain string) []string {
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(domain)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetFilteredGroupingPolicy provides a mock function with given fields: fieldIndex, fieldValues
-func (_m *IEnforcer) GetFilteredGroupingPolicy(fieldIndex int, fieldValues ...string) [][]string {
+func (_m *IEnforcer) GetFilteredGroupingPolicy(fieldIndex int, fieldValues ...string) ([][]string, error) {
 	_va := make([]interface{}, len(fieldValues))
 	for _i := range fieldValues {
 		_va[_i] = fieldValues[_i]
@@ -1355,6 +1455,10 @@ func (_m *IEnforcer) GetFilteredGroupingPolicy(fieldIndex int, fieldValues ...st
 	}
 
 	var r0 [][]string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int, ...string) ([][]string, error)); ok {
+		return rf(fieldIndex, fieldValues...)
+	}
 	if rf, ok := ret.Get(0).(func(int, ...string) [][]string); ok {
 		r0 = rf(fieldIndex, fieldValues...)
 	} else {
@@ -1363,11 +1467,17 @@ func (_m *IEnforcer) GetFilteredGroupingPolicy(fieldIndex int, fieldValues ...st
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(int, ...string) error); ok {
+		r1 = rf(fieldIndex, fieldValues...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetFilteredNamedGroupingPolicy provides a mock function with given fields: ptype, fieldIndex, fieldValues
-func (_m *IEnforcer) GetFilteredNamedGroupingPolicy(ptype string, fieldIndex int, fieldValues ...string) [][]string {
+func (_m *IEnforcer) GetFilteredNamedGroupingPolicy(ptype string, fieldIndex int, fieldValues ...string) ([][]string, error) {
 	_va := make([]interface{}, len(fieldValues))
 	for _i := range fieldValues {
 		_va[_i] = fieldValues[_i]
@@ -1382,6 +1492,10 @@ func (_m *IEnforcer) GetFilteredNamedGroupingPolicy(ptype string, fieldIndex int
 	}
 
 	var r0 [][]string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, int, ...string) ([][]string, error)); ok {
+		return rf(ptype, fieldIndex, fieldValues...)
+	}
 	if rf, ok := ret.Get(0).(func(string, int, ...string) [][]string); ok {
 		r0 = rf(ptype, fieldIndex, fieldValues...)
 	} else {
@@ -1390,11 +1504,17 @@ func (_m *IEnforcer) GetFilteredNamedGroupingPolicy(ptype string, fieldIndex int
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string, int, ...string) error); ok {
+		r1 = rf(ptype, fieldIndex, fieldValues...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetFilteredNamedPolicy provides a mock function with given fields: ptype, fieldIndex, fieldValues
-func (_m *IEnforcer) GetFilteredNamedPolicy(ptype string, fieldIndex int, fieldValues ...string) [][]string {
+func (_m *IEnforcer) GetFilteredNamedPolicy(ptype string, fieldIndex int, fieldValues ...string) ([][]string, error) {
 	_va := make([]interface{}, len(fieldValues))
 	for _i := range fieldValues {
 		_va[_i] = fieldValues[_i]
@@ -1409,6 +1529,10 @@ func (_m *IEnforcer) GetFilteredNamedPolicy(ptype string, fieldIndex int, fieldV
 	}
 
 	var r0 [][]string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, int, ...string) ([][]string, error)); ok {
+		return rf(ptype, fieldIndex, fieldValues...)
+	}
 	if rf, ok := ret.Get(0).(func(string, int, ...string) [][]string); ok {
 		r0 = rf(ptype, fieldIndex, fieldValues...)
 	} else {
@@ -1417,11 +1541,17 @@ func (_m *IEnforcer) GetFilteredNamedPolicy(ptype string, fieldIndex int, fieldV
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string, int, ...string) error); ok {
+		r1 = rf(ptype, fieldIndex, fieldValues...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetFilteredPolicy provides a mock function with given fields: fieldIndex, fieldValues
-func (_m *IEnforcer) GetFilteredPolicy(fieldIndex int, fieldValues ...string) [][]string {
+func (_m *IEnforcer) GetFilteredPolicy(fieldIndex int, fieldValues ...string) ([][]string, error) {
 	_va := make([]interface{}, len(fieldValues))
 	for _i := range fieldValues {
 		_va[_i] = fieldValues[_i]
@@ -1436,6 +1566,10 @@ func (_m *IEnforcer) GetFilteredPolicy(fieldIndex int, fieldValues ...string) []
 	}
 
 	var r0 [][]string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int, ...string) ([][]string, error)); ok {
+		return rf(fieldIndex, fieldValues...)
+	}
 	if rf, ok := ret.Get(0).(func(int, ...string) [][]string); ok {
 		r0 = rf(fieldIndex, fieldValues...)
 	} else {
@@ -1444,11 +1578,17 @@ func (_m *IEnforcer) GetFilteredPolicy(fieldIndex int, fieldValues ...string) []
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(int, ...string) error); ok {
+		r1 = rf(fieldIndex, fieldValues...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetGroupingPolicy provides a mock function with given fields:
-func (_m *IEnforcer) GetGroupingPolicy() [][]string {
+func (_m *IEnforcer) GetGroupingPolicy() ([][]string, error) {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
@@ -1456,6 +1596,10 @@ func (_m *IEnforcer) GetGroupingPolicy() [][]string {
 	}
 
 	var r0 [][]string
+	var r1 error
+	if rf, ok := ret.Get(0).(func() ([][]string, error)); ok {
+		return rf()
+	}
 	if rf, ok := ret.Get(0).(func() [][]string); ok {
 		r0 = rf()
 	} else {
@@ -1464,7 +1608,13 @@ func (_m *IEnforcer) GetGroupingPolicy() [][]string {
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetImplicitPermissionsForUser provides a mock function with given fields: user, domain
@@ -1598,7 +1748,7 @@ func (_m *IEnforcer) GetModel() model.Model {
 }
 
 // GetNamedGroupingPolicy provides a mock function with given fields: ptype
-func (_m *IEnforcer) GetNamedGroupingPolicy(ptype string) [][]string {
+func (_m *IEnforcer) GetNamedGroupingPolicy(ptype string) ([][]string, error) {
 	ret := _m.Called(ptype)
 
 	if len(ret) == 0 {
@@ -1606,6 +1756,10 @@ func (_m *IEnforcer) GetNamedGroupingPolicy(ptype string) [][]string {
 	}
 
 	var r0 [][]string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([][]string, error)); ok {
+		return rf(ptype)
+	}
 	if rf, ok := ret.Get(0).(func(string) [][]string); ok {
 		r0 = rf(ptype)
 	} else {
@@ -1614,11 +1768,17 @@ func (_m *IEnforcer) GetNamedGroupingPolicy(ptype string) [][]string {
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(ptype)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetNamedPolicy provides a mock function with given fields: ptype
-func (_m *IEnforcer) GetNamedPolicy(ptype string) [][]string {
+func (_m *IEnforcer) GetNamedPolicy(ptype string) ([][]string, error) {
 	ret := _m.Called(ptype)
 
 	if len(ret) == 0 {
@@ -1626,6 +1786,10 @@ func (_m *IEnforcer) GetNamedPolicy(ptype string) [][]string {
 	}
 
 	var r0 [][]string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([][]string, error)); ok {
+		return rf(ptype)
+	}
 	if rf, ok := ret.Get(0).(func(string) [][]string); ok {
 		r0 = rf(ptype)
 	} else {
@@ -1634,7 +1798,13 @@ func (_m *IEnforcer) GetNamedPolicy(ptype string) [][]string {
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(ptype)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetPermissionsForUser provides a mock function with given fields: user, domain
@@ -1695,7 +1865,7 @@ func (_m *IEnforcer) GetPermissionsForUserInDomain(user string, domain string) [
 }
 
 // GetPolicy provides a mock function with given fields:
-func (_m *IEnforcer) GetPolicy() [][]string {
+func (_m *IEnforcer) GetPolicy() ([][]string, error) {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
@@ -1703,6 +1873,10 @@ func (_m *IEnforcer) GetPolicy() [][]string {
 	}
 
 	var r0 [][]string
+	var r1 error
+	if rf, ok := ret.Get(0).(func() ([][]string, error)); ok {
+		return rf()
+	}
 	if rf, ok := ret.Get(0).(func() [][]string); ok {
 		r0 = rf()
 	} else {
@@ -1711,7 +1885,13 @@ func (_m *IEnforcer) GetPolicy() [][]string {
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetRoleManager provides a mock function with given fields:
@@ -1849,7 +2029,7 @@ func (_m *IEnforcer) GetUsersForRoleInDomain(name string, domain string) []strin
 }
 
 // HasGroupingPolicy provides a mock function with given fields: params
-func (_m *IEnforcer) HasGroupingPolicy(params ...interface{}) bool {
+func (_m *IEnforcer) HasGroupingPolicy(params ...interface{}) (bool, error) {
 	var _ca []interface{}
 	_ca = append(_ca, params...)
 	ret := _m.Called(_ca...)
@@ -1859,17 +2039,27 @@ func (_m *IEnforcer) HasGroupingPolicy(params ...interface{}) bool {
 	}
 
 	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(...interface{}) (bool, error)); ok {
+		return rf(params...)
+	}
 	if rf, ok := ret.Get(0).(func(...interface{}) bool); ok {
 		r0 = rf(params...)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(...interface{}) error); ok {
+		r1 = rf(params...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // HasNamedGroupingPolicy provides a mock function with given fields: ptype, params
-func (_m *IEnforcer) HasNamedGroupingPolicy(ptype string, params ...interface{}) bool {
+func (_m *IEnforcer) HasNamedGroupingPolicy(ptype string, params ...interface{}) (bool, error) {
 	var _ca []interface{}
 	_ca = append(_ca, ptype)
 	_ca = append(_ca, params...)
@@ -1880,17 +2070,27 @@ func (_m *IEnforcer) HasNamedGroupingPolicy(ptype string, params ...interface{})
 	}
 
 	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, ...interface{}) (bool, error)); ok {
+		return rf(ptype, params...)
+	}
 	if rf, ok := ret.Get(0).(func(string, ...interface{}) bool); ok {
 		r0 = rf(ptype, params...)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string, ...interface{}) error); ok {
+		r1 = rf(ptype, params...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // HasNamedPolicy provides a mock function with given fields: ptype, params
-func (_m *IEnforcer) HasNamedPolicy(ptype string, params ...interface{}) bool {
+func (_m *IEnforcer) HasNamedPolicy(ptype string, params ...interface{}) (bool, error) {
 	var _ca []interface{}
 	_ca = append(_ca, ptype)
 	_ca = append(_ca, params...)
@@ -1901,17 +2101,27 @@ func (_m *IEnforcer) HasNamedPolicy(ptype string, params ...interface{}) bool {
 	}
 
 	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, ...interface{}) (bool, error)); ok {
+		return rf(ptype, params...)
+	}
 	if rf, ok := ret.Get(0).(func(string, ...interface{}) bool); ok {
 		r0 = rf(ptype, params...)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string, ...interface{}) error); ok {
+		r1 = rf(ptype, params...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // HasPermissionForUser provides a mock function with given fields: user, permission
-func (_m *IEnforcer) HasPermissionForUser(user string, permission ...string) bool {
+func (_m *IEnforcer) HasPermissionForUser(user string, permission ...string) (bool, error) {
 	_va := make([]interface{}, len(permission))
 	for _i := range permission {
 		_va[_i] = permission[_i]
@@ -1926,17 +2136,27 @@ func (_m *IEnforcer) HasPermissionForUser(user string, permission ...string) boo
 	}
 
 	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, ...string) (bool, error)); ok {
+		return rf(user, permission...)
+	}
 	if rf, ok := ret.Get(0).(func(string, ...string) bool); ok {
 		r0 = rf(user, permission...)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string, ...string) error); ok {
+		r1 = rf(user, permission...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // HasPolicy provides a mock function with given fields: params
-func (_m *IEnforcer) HasPolicy(params ...interface{}) bool {
+func (_m *IEnforcer) HasPolicy(params ...interface{}) (bool, error) {
 	var _ca []interface{}
 	_ca = append(_ca, params...)
 	ret := _m.Called(_ca...)
@@ -1946,13 +2166,23 @@ func (_m *IEnforcer) HasPolicy(params ...interface{}) bool {
 	}
 
 	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(...interface{}) (bool, error)); ok {
+		return rf(params...)
+	}
 	if rf, ok := ret.Get(0).(func(...interface{}) bool); ok {
 		r0 = rf(params...)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(...interface{}) error); ok {
+		r1 = rf(params...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // HasRoleForUser provides a mock function with given fields: name, role, domain

@@ -9,6 +9,7 @@ import { ScheduleModalContext } from '../../backups.context';
 import ScheduledBackupsList from './scheduled-backups-list';
 import { BackupListTableHeaderProps } from './backups-list-table-header.types';
 import { Messages } from './backups-list-table-header.messages';
+import { useGetPermissions } from 'utils/useGetPermissions';
 
 const BackupListTableHeader = ({
   onNowClick,
@@ -38,6 +39,15 @@ const BackupListTableHeader = ({
   const handleShowSchedules = () => {
     setShowSchedules((prev) => !prev);
   };
+  const { canCreate } = useGetPermissions({
+    resource: 'database-cluster-backups',
+  });
+
+  const { canUpdate: canUpdateDb } = useGetPermissions({
+    resource: 'database-clusters',
+    specificResource: dbCluster.metadata.name,
+    namespace: dbCluster.metadata.namespace,
+  });
 
   return (
     <>
@@ -85,50 +95,54 @@ const BackupListTableHeader = ({
             {Messages.activeSchedules(schedulesNumber)}
           </Button>
         )}
-        <MenuButton
-          buttonProps={{
-            disabled: restoring,
-          }}
-          buttonText="Create backup"
-        >
-          {(handleClose) => [
-            <MenuItem
-              key="now"
-              data-testid="now-menu-item"
-              onClick={() => handleNowClick(handleClose)}
-            >
-              {Messages.now}
-            </MenuItem>,
-            <Box key="schedule">
-              {disableScheduleBackups ? (
-                <Tooltip
-                  title={
-                    pgLimitExceeded
-                      ? Messages.exceededScheduleBackupsNumber
-                      : Messages.noStoragesAvailable
-                  }
-                  placement="right"
-                  arrow
-                >
-                  <div>
-                    <MenuItem data-testid="schedule-menu-item" disabled>
-                      {Messages.schedule}
-                    </MenuItem>
-                  </div>
-                </Tooltip>
-              ) : (
-                <MenuItem
-                  onClick={() => handleScheduleClick(handleClose)}
-                  data-testid="schedule-menu-item"
-                >
-                  {Messages.schedule}
-                </MenuItem>
-              )}
-            </Box>,
-          ]}
-        </MenuButton>
+        {canCreate && (
+          <MenuButton
+            buttonProps={{
+              disabled: restoring,
+            }}
+            buttonText="Create backup"
+          >
+            {(handleClose) => [
+              <MenuItem
+                key="now"
+                data-testid="now-menu-item"
+                onClick={() => handleNowClick(handleClose)}
+              >
+                {Messages.now}
+              </MenuItem>,
+              <Box key="schedule">
+                {disableScheduleBackups ? (
+                  <Tooltip
+                    title={
+                      pgLimitExceeded
+                        ? Messages.exceededScheduleBackupsNumber
+                        : Messages.noStoragesAvailable
+                    }
+                    placement="right"
+                    arrow
+                  >
+                    <div>
+                      <MenuItem data-testid="schedule-menu-item" disabled>
+                        {Messages.schedule}
+                      </MenuItem>
+                    </div>
+                  </Tooltip>
+                ) : (
+                  <MenuItem
+                    onClick={() => handleScheduleClick(handleClose)}
+                    data-testid="schedule-menu-item"
+                  >
+                    {Messages.schedule}
+                  </MenuItem>
+                )}
+              </Box>,
+            ]}
+          </MenuButton>
+        )}
       </Box>
-      {schedulesNumber > 0 && showSchedules && <ScheduledBackupsList />}
+      {schedulesNumber > 0 && showSchedules && (
+        <ScheduledBackupsList canUpdateDb={canUpdateDb} />
+      )}
     </>
   );
 };

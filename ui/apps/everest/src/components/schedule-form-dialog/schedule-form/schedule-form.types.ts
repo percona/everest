@@ -14,7 +14,6 @@ export type ScheduleFormProps = {
   autoFillLocation?: boolean;
   schedules: Schedule[];
   showTypeRadio: boolean;
-  hideRetentionCopies?: boolean;
   disableNameEdit?: boolean;
 };
 
