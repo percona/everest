@@ -17,6 +17,7 @@ import { useState } from 'react';
 import { DatabaseIcon, OverviewCard } from '@percona/ui-lib';
 import { Button } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import { useQueryClient } from '@tanstack/react-query';
 import { SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import {
@@ -32,7 +33,7 @@ import { Messages } from '../cluster-overview.messages';
 import { ResourcesEditModal } from './resources';
 import { cpuParser, memoryParser } from 'utils/k8ResourceParser';
 import { dbEngineToDbType } from '@percona/utils';
-import { useUpdateDbClusterResources } from 'hooks';
+import { DB_CLUSTER_QUERY, useUpdateDbClusterResources } from 'hooks';
 
 export const ResourcesDetails = ({
   dbCluster,
@@ -40,18 +41,35 @@ export const ResourcesDetails = ({
 }: ResourcesDetailsOverviewProps) => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const { mutate: updateDbClusterResources } = useUpdateDbClusterResources();
+  const queryClient = useQueryClient();
   const cpu = dbCluster.spec.engine.resources?.cpu || 0;
+  const proxyCpu = dbCluster.spec.proxy.resources?.cpu || 0;
   const memory = dbCluster.spec.engine.resources?.memory || 0;
+  const proxyMemory = dbCluster.spec.proxy.resources?.memory || 0;
   const disk = dbCluster.spec.engine.storage.size;
   const dbType = dbEngineToDbType(dbCluster.spec.engine.type);
   const replicas = dbCluster.spec.engine.replicas.toString();
+  const proxies = dbCluster.spec.proxy.replicas.toString();
   const numberOfNodes = NODES_DB_TYPE_MAP[dbType].includes(replicas)
     ? replicas
+    : CUSTOM_NR_UNITS_INPUT_VALUE;
+  const numberOfProxies = NODES_DB_TYPE_MAP[dbType].includes(proxies)
+    ? proxies
     : CUSTOM_NR_UNITS_INPUT_VALUE;
 
   const onSubmit: SubmitHandler<
     z.infer<ReturnType<typeof resourcesFormSchema>>
-  > = ({ cpu, disk, memory, numberOfNodes, customNrOfNodes }) => {
+  > = ({
+    cpu,
+    disk,
+    memory,
+    proxyCpu,
+    proxyMemory,
+    numberOfNodes,
+    numberOfProxies,
+    customNrOfNodes,
+    customNrOfProxies,
+  }) => {
     updateDbClusterResources(
       {
         dbCluster,
@@ -59,6 +77,14 @@ export const ResourcesDetails = ({
           cpu,
           disk,
           memory,
+          proxyCpu,
+          proxyMemory,
+          numberOfProxies: parseInt(
+            numberOfProxies === CUSTOM_NR_UNITS_INPUT_VALUE
+              ? customNrOfProxies || '1'
+              : numberOfProxies,
+            10
+          ),
           numberOfNodes: parseInt(
             numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
               ? customNrOfNodes || '1'
@@ -70,6 +96,9 @@ export const ResourcesDetails = ({
       {
         onSuccess: () => {
           setOpenEditModal(false);
+          queryClient.invalidateQueries({
+            queryKey: [DB_CLUSTER_QUERY, dbCluster.metadata.name],
+          });
         },
       }
     );
@@ -120,9 +149,23 @@ export const ResourcesDetails = ({
             cpu: cpuParser(cpu.toString() || '0'),
             disk: memoryParser(disk.toString()),
             memory: memoryParser(memory.toString()),
+            proxyCpu: cpuParser(proxyCpu.toString() || '0'),
+            // TODO add proxyDisk to the form
+            proxyDisk: memoryParser('0'),
+            proxyMemory: memoryParser(proxyMemory.toString()),
             numberOfNodes,
+            numberOfProxies,
             customNrOfNodes: replicas,
-            resourceSizePerNode: matchFieldsValueToResourceSize(dbCluster),
+            customNrOfProxies: proxies,
+            resourceSizePerNode: matchFieldsValueToResourceSize(
+              dbCluster.spec.engine.resources,
+              memoryParser(disk.toString())
+            ),
+            // TODO add proxyDisk to the form
+            resourceSizePerProxy: matchFieldsValueToResourceSize(
+              dbCluster.spec.proxy.resources,
+              0
+            ),
           }}
         />
       )}

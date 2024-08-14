@@ -387,10 +387,12 @@ const ResourcesForm = ({
   dbType,
   disableDiskInput,
   allowDiskInputUpdate,
+  pairProxiesWithNodes,
 }: {
   dbType: DbType;
   disableDiskInput?: boolean;
   allowDiskInputUpdate?: boolean;
+  pairProxiesWithNodes?: boolean;
 }) => {
   const [expanded, setExpanded] = useState<'nodes' | 'proxies' | false>(
     'nodes'
@@ -421,7 +423,7 @@ const ResourcesForm = ({
       DbWizardFormFields.numberOfProxies
     );
 
-    if (numberOfProxiesDirty) {
+    if (!pairProxiesWithNodes || numberOfProxiesDirty) {
       return;
     }
 

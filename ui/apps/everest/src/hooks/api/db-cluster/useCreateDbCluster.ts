@@ -27,10 +27,10 @@ import {
   DataSource,
   DbCluster,
   GetDbClusterCredentialsPayload,
-  ProxyExposeType,
 } from 'shared-types/dbCluster.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import cronConverter from 'utils/cron-converter';
+import { getProxySpec } from './utils';
 
 type CreateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -99,20 +99,15 @@ const formValuesToPayloadMapping = (
           monitoringConfigName: dbPayload?.monitoringInstance!,
         }),
       },
-      proxy: {
-        replicas: numberOfNodes,
-        expose: {
-          type: dbPayload.externalAccess
-            ? ProxyExposeType.external
-            : ProxyExposeType.internal,
-          ...(!!dbPayload.externalAccess &&
-            dbPayload.sourceRanges && {
-              ipSourceRanges: dbPayload.sourceRanges.flatMap((source) =>
-                source.sourceRange ? [source.sourceRange] : []
-              ),
-            }),
-        },
-      },
+      proxy: getProxySpec(
+        dbPayload.dbType,
+        dbPayload.numberOfProxies,
+        dbPayload.customNrOfProxies || '',
+        dbPayload.externalAccess,
+        dbPayload.proxyCpu,
+        dbPayload.proxyMemory,
+        dbPayload.sourceRanges || []
+      ),
       ...(backupDataSource?.dbClusterBackupName && {
         dataSource: {
           dbClusterBackupName: backupDataSource.dbClusterBackupName,

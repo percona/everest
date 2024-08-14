@@ -19,6 +19,7 @@ export const ResourcesStep = () => {
       />
       <ResourcesForm
         dbType={dbType}
+        pairProxiesWithNodes={mode !== 'edit'}
         disableDiskInput={mode === 'edit'}
         allowDiskInputUpdate={mode !== 'edit'}
       />
