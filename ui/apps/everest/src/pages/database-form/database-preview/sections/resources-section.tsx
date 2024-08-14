@@ -1,4 +1,4 @@
-import { CUSTOM_NODES_NR_INPUT_VALUE } from 'components/cluster-form';
+import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
 import { PreviewContentText } from '../preview-section';
 import { SectionProps } from './section.types';
 
@@ -9,7 +9,7 @@ export const ResourcesPreviewSection = ({
   disk,
   memory,
 }: SectionProps) => {
-  if (numberOfNodes === CUSTOM_NODES_NR_INPUT_VALUE) {
+  if (numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE) {
     numberOfNodes = customNrOfNodes || '';
   }
 

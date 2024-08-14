@@ -45,7 +45,6 @@ import {
 import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
-  console.log('FirstStep');
   const mode = useDatabasePageMode();
   const {
     defaultValues: { [DbWizardFormFields.dbVersion]: defaultDbVersion },

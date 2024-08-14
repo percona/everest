@@ -20,7 +20,7 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
-import { CUSTOM_NODES_NR_INPUT_VALUE } from 'components/cluster-form';
+import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import {
   ClusterCredentials,
@@ -42,7 +42,7 @@ const formValuesToPayloadMapping = (
   backupDataSource?: DataSource
 ): DbCluster => {
   const numberOfNodes = parseInt(
-    dbPayload.numberOfNodes === CUSTOM_NODES_NR_INPUT_VALUE
+    dbPayload.numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
       ? dbPayload.customNrOfNodes || ''
       : dbPayload.numberOfNodes,
     10

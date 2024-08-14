@@ -1,38 +1,50 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
+  Accordion,
+  AccordionSummary,
   Box,
+  Divider,
   FormGroup,
   InputAdornment,
   Stack,
   Typography,
   useTheme,
 } from '@mui/material';
-import { DbType } from '@percona/types';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { TextInput, ToggleButtonGroupInput, ToggleCard } from '@percona/ui-lib';
-import { DbWizardFormFields } from 'consts';
 import { useKubernetesClusterResourcesInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterResourcesInfo';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
 import {
-  CUSTOM_NODES_NR_INPUT_VALUE,
+  CUSTOM_NR_UNITS_INPUT_VALUE,
   DEFAULT_SIZES,
   humanizedResourceSizeMap,
   NODES_DB_TYPE_MAP,
   ResourceSize,
 } from './constants';
+import { DbWizardFormFields } from 'consts';
+import { DbType } from '@percona/types';
 
 type Props = {
-  dbType: DbType;
+  unit?: string;
+  options: string[];
+  resourceSizePerUnitInputName: string;
+  cpuInputName: string;
+  diskInputName: string;
+  memoryInputName: string;
+  numberOfUnitsInputName: string;
+  customNrOfUnitsInputName: string;
   disableDiskInput?: boolean;
   allowDiskInputUpdate?: boolean;
 };
 
 type ResourceInputProps = {
+  unit: string;
   name: string;
   label: string;
   helperText: string;
   endSuffix: string;
-  numberOfNodes: number;
+  numberOfUnits: number;
   disabled?: boolean;
 };
 
@@ -76,11 +88,12 @@ const checkResourceText = (
 };
 
 const ResourceInput = ({
+  unit,
   name,
   label,
   helperText,
   endSuffix,
-  numberOfNodes,
+  numberOfUnits,
   disabled,
 }: ResourceInputProps) => {
   const { isDesktop } = useActiveBreakpoint();
@@ -88,8 +101,8 @@ const ResourceInput = ({
   const { watch } = useFormContext();
   const value: number = watch(name);
 
-  if ((numberOfNodes && Number.isNaN(numberOfNodes)) || numberOfNodes < 1) {
-    numberOfNodes = 1;
+  if ((numberOfUnits && Number.isNaN(numberOfUnits)) || numberOfUnits < 1) {
+    numberOfUnits = 1;
   }
 
   return (
@@ -108,22 +121,22 @@ const ResourceInput = ({
           },
         }}
       />
-      {isDesktop && numberOfNodes && (
+      {isDesktop && numberOfUnits && (
         <Box sx={{ ml: 1, pt: 0.5, flexBasis: 'fit-content' }}>
           <Typography
             variant="caption"
             sx={{ whiteSpace: 'nowrap' }}
             color={theme.palette.text.secondary}
-          >{`x ${numberOfNodes} node${
-            +numberOfNodes > 1 ? 's' : ''
+          >{`x ${numberOfUnits} ${unit}${
+            +numberOfUnits > 1 ? 's' : ''
           }`}</Typography>
-          {value && numberOfNodes && (
+          {value && numberOfUnits && (
             <Typography
               variant="body1"
               sx={{ whiteSpace: 'nowrap' }}
               color={theme.palette.text.secondary}
               data-testid={`${name}-resource-sum`}
-            >{` = ${(value * numberOfNodes).toFixed(2)} ${endSuffix}`}</Typography>
+            >{` = ${(value * numberOfUnits).toFixed(2)} ${endSuffix}`}</Typography>
           )}
         </Box>
       )}
@@ -131,8 +144,15 @@ const ResourceInput = ({
   );
 };
 
-const ResourcesForm = ({
-  dbType,
+const ResourcesToggles = ({
+  unit = 'node',
+  options,
+  resourceSizePerUnitInputName,
+  cpuInputName,
+  diskInputName,
+  memoryInputName,
+  numberOfUnitsInputName,
+  customNrOfUnitsInputName,
   disableDiskInput,
   allowDiskInputUpdate,
 }: Props) => {
@@ -142,18 +162,16 @@ const ResourcesForm = ({
   const { watch, setValue, setError, clearErrors, resetField } =
     useFormContext();
 
-  const resourceSizePerNode: ResourceSize = watch(
-    DbWizardFormFields.resourceSizePerNode
-  );
-  const cpu: number = watch(DbWizardFormFields.cpu);
-  const memory: number = watch(DbWizardFormFields.memory);
-  const disk: number = watch(DbWizardFormFields.disk);
-  const numberOfNodes: string = watch(DbWizardFormFields.numberOfNodes);
-  const customNrOfNodes: string = watch(DbWizardFormFields.customNrOfNodes);
-  const intNumberOfNodes = parseInt(
-    numberOfNodes === CUSTOM_NODES_NR_INPUT_VALUE
-      ? customNrOfNodes
-      : numberOfNodes,
+  const resourceSizePerUnit: ResourceSize = watch(resourceSizePerUnitInputName);
+  const cpu: number = watch(cpuInputName);
+  const memory: number = watch(memoryInputName);
+  const disk: number = watch(diskInputName);
+  const numberOfUnits: string = watch(numberOfUnitsInputName);
+  const customNrOfUnits: string = watch(customNrOfUnitsInputName);
+  const intNumberOfUnits = parseInt(
+    numberOfUnits === CUSTOM_NR_UNITS_INPUT_VALUE
+      ? customNrOfUnits
+      : numberOfUnits,
     10
   );
 
@@ -168,51 +186,45 @@ const ResourcesForm = ({
     : false;
 
   useEffect(() => {
-    if (resourceSizePerNode && resourceSizePerNode !== ResourceSize.custom) {
-      setValue(DbWizardFormFields.cpu, DEFAULT_SIZES[resourceSizePerNode].cpu);
+    if (resourceSizePerUnit && resourceSizePerUnit !== ResourceSize.custom) {
+      setValue(cpuInputName, DEFAULT_SIZES[resourceSizePerUnit].cpu);
       if (allowDiskInputUpdate) {
-        setValue(
-          DbWizardFormFields.disk,
-          DEFAULT_SIZES[resourceSizePerNode].disk
-        );
+        setValue(diskInputName, DEFAULT_SIZES[resourceSizePerUnit].disk);
       }
-      setValue(
-        DbWizardFormFields.memory,
-        DEFAULT_SIZES[resourceSizePerNode].memory
-      );
+      setValue(memoryInputName, DEFAULT_SIZES[resourceSizePerUnit].memory);
     }
-  }, [resourceSizePerNode, allowDiskInputUpdate, setValue]);
+  }, [resourceSizePerUnit, allowDiskInputUpdate, setValue]);
 
   useEffect(() => {
     if (diskCapacityExceeded) {
-      setError(DbWizardFormFields.disk, { type: 'custom' });
-    } else clearErrors(DbWizardFormFields.disk);
+      setError(diskInputName, { type: 'custom' });
+    } else clearErrors(diskInputName);
   }, [diskCapacityExceeded, clearErrors, setError]);
 
   useEffect(() => {
     if (
-      resourceSizePerNode !== ResourceSize.custom &&
-      cpu !== DEFAULT_SIZES[resourceSizePerNode].cpu
+      resourceSizePerUnit !== ResourceSize.custom &&
+      cpu !== DEFAULT_SIZES[resourceSizePerUnit].cpu
     ) {
-      setValue(DbWizardFormFields.resourceSizePerNode, ResourceSize.custom);
+      setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }
   }, [cpu, setValue]);
 
   useEffect(() => {
     if (
-      resourceSizePerNode !== ResourceSize.custom &&
-      disk !== DEFAULT_SIZES[resourceSizePerNode].disk
+      resourceSizePerUnit !== ResourceSize.custom &&
+      disk !== DEFAULT_SIZES[resourceSizePerUnit].disk
     ) {
-      setValue(DbWizardFormFields.resourceSizePerNode, ResourceSize.custom);
+      setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }
   }, [disk, setValue]);
 
   useEffect(() => {
     if (
-      resourceSizePerNode !== ResourceSize.custom &&
-      memory !== DEFAULT_SIZES[resourceSizePerNode].memory
+      resourceSizePerUnit !== ResourceSize.custom &&
+      memory !== DEFAULT_SIZES[resourceSizePerUnit].memory
     ) {
-      setValue(DbWizardFormFields.resourceSizePerNode, ResourceSize.custom);
+      setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }
   }, [memory, setValue]);
 
@@ -220,36 +232,36 @@ const ResourcesForm = ({
     <FormGroup sx={{ mt: 3 }}>
       <Stack>
         <ToggleButtonGroupInput
-          name={DbWizardFormFields.numberOfNodes}
-          label={'Number of nodes'}
+          name={numberOfUnitsInputName}
+          label={`Number of ${unit}s`}
           toggleButtonGroupProps={{
             onChange: (_, value) => {
-              if (value !== CUSTOM_NODES_NR_INPUT_VALUE) {
-                resetField(DbWizardFormFields.customNrOfNodes, {
+              if (value !== CUSTOM_NR_UNITS_INPUT_VALUE) {
+                resetField(customNrOfUnitsInputName, {
                   keepError: false,
                 });
               }
             },
           }}
         >
-          {NODES_DB_TYPE_MAP[dbType].map((value) => (
+          {options.map((value) => (
             <ToggleCard
               value={value}
-              data-testid={`toggle-button-nodes-${value}`}
+              data-testid={`toggle-button-${unit}s-${value}`}
               key={value}
             >
-              {`${value} node${+value > 1 ? 's' : ''}`}
+              {`${value} ${unit}${+value > 1 ? 's' : ''}`}
             </ToggleCard>
           ))}
-          <ToggleCard value={CUSTOM_NODES_NR_INPUT_VALUE}>Custom</ToggleCard>
+          <ToggleCard value={CUSTOM_NR_UNITS_INPUT_VALUE}>Custom</ToggleCard>
         </ToggleButtonGroupInput>
-        {numberOfNodes === CUSTOM_NODES_NR_INPUT_VALUE && (
+        {numberOfUnits === CUSTOM_NR_UNITS_INPUT_VALUE && (
           <TextInput
-            name={DbWizardFormFields.customNrOfNodes}
+            name={customNrOfUnitsInputName}
             textFieldProps={{
               type: 'number',
               sx: {
-                width: `${100 / (NODES_DB_TYPE_MAP[dbType].length + 1)}%`,
+                width: `${100 / (options.length + 1)}%`,
                 alignSelf: 'flex-end',
                 mt: 1,
               },
@@ -258,8 +270,8 @@ const ResourcesForm = ({
         )}
       </Stack>
       <ToggleButtonGroupInput
-        name={DbWizardFormFields.resourceSizePerNode}
-        label={'Resource size per node'}
+        name={resourceSizePerUnitInputName}
+        label={`Resource size per ${unit}`}
       >
         <ToggleCard
           value={ResourceSize.small}
@@ -302,7 +314,8 @@ const ResourcesForm = ({
         }}
       >
         <ResourceInput
-          name={DbWizardFormFields.cpu}
+          unit={unit}
+          name={cpuInputName}
           label="CPU"
           helperText={checkResourceText(
             resourcesInfo?.available?.cpuMillis,
@@ -311,10 +324,11 @@ const ResourcesForm = ({
             cpuCapacityExceeded
           )}
           endSuffix="CPU"
-          numberOfNodes={intNumberOfNodes}
+          numberOfUnits={intNumberOfUnits}
         />
         <ResourceInput
-          name={DbWizardFormFields.memory}
+          unit={unit}
+          name={memoryInputName}
           label="MEMORY"
           helperText={checkResourceText(
             resourcesInfo?.available?.memoryBytes,
@@ -323,10 +337,11 @@ const ResourcesForm = ({
             memoryCapacityExceeded
           )}
           endSuffix="GB"
-          numberOfNodes={intNumberOfNodes}
+          numberOfUnits={intNumberOfUnits}
         />
         <ResourceInput
-          name={DbWizardFormFields.disk}
+          unit={unit}
+          name={diskInputName}
           disabled={disableDiskInput}
           label="DISK"
           helperText={checkResourceText(
@@ -336,10 +351,82 @@ const ResourcesForm = ({
             diskCapacityExceeded
           )}
           endSuffix="GB"
-          numberOfNodes={intNumberOfNodes}
+          numberOfUnits={intNumberOfUnits}
         />
       </Box>
     </FormGroup>
+  );
+};
+
+const ResourcesForm = ({
+  dbType,
+  disableDiskInput,
+  allowDiskInputUpdate,
+}: {
+  dbType: DbType;
+  disableDiskInput?: boolean;
+  allowDiskInputUpdate?: boolean;
+}) => {
+  const [expanded, setExpanded] = useState<'nodes' | 'routers' | false>(
+    'nodes'
+  );
+
+  const handleAccordionChange =
+    (panel: 'nodes' | 'routers') =>
+    (_: React.SyntheticEvent, newExpanded: boolean) => {
+      setExpanded(newExpanded ? panel : false);
+    };
+
+  return (
+    <>
+      <Accordion
+        expanded={expanded === 'nodes'}
+        onChange={handleAccordionChange('nodes')}
+        sx={{
+          px: 2,
+        }}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="h5">Nodes</Typography>
+        </AccordionSummary>
+        <Divider />
+        <ResourcesToggles
+          options={NODES_DB_TYPE_MAP[dbType]}
+          resourceSizePerUnitInputName={DbWizardFormFields.resourceSizePerNode}
+          cpuInputName={DbWizardFormFields.cpu}
+          diskInputName={DbWizardFormFields.disk}
+          memoryInputName={DbWizardFormFields.memory}
+          numberOfUnitsInputName={DbWizardFormFields.numberOfNodes}
+          customNrOfUnitsInputName={DbWizardFormFields.customNrOfNodes}
+          disableDiskInput={disableDiskInput}
+          allowDiskInputUpdate={allowDiskInputUpdate}
+        />
+      </Accordion>
+      <Accordion
+        expanded={expanded === 'routers'}
+        onChange={handleAccordionChange('routers')}
+        sx={{
+          px: 2,
+        }}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="h5">Routers</Typography>
+        </AccordionSummary>
+        <Divider />
+        <ResourcesToggles
+          unit="router"
+          options={NODES_DB_TYPE_MAP[dbType]}
+          resourceSizePerUnitInputName={
+            DbWizardFormFields.resourceSizePerRouter
+          }
+          cpuInputName={DbWizardFormFields.routerCpu}
+          diskInputName={DbWizardFormFields.routerDisk}
+          memoryInputName={DbWizardFormFields.routerMemory}
+          numberOfUnitsInputName={DbWizardFormFields.numberOfRouters}
+          customNrOfUnitsInputName={DbWizardFormFields.customNrOfRouters}
+        />
+      </Accordion>
+    </>
   );
 };
 

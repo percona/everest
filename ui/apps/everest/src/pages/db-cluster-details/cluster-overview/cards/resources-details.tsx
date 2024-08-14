@@ -20,7 +20,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import {
-  CUSTOM_NODES_NR_INPUT_VALUE,
+  CUSTOM_NR_UNITS_INPUT_VALUE,
   matchFieldsValueToResourceSize,
   NODES_DB_TYPE_MAP,
   resourcesFormSchema,
@@ -47,7 +47,7 @@ export const ResourcesDetails = ({
   const replicas = dbCluster.spec.engine.replicas.toString();
   const numberOfNodes = NODES_DB_TYPE_MAP[dbType].includes(replicas)
     ? replicas
-    : CUSTOM_NODES_NR_INPUT_VALUE;
+    : CUSTOM_NR_UNITS_INPUT_VALUE;
 
   const onSubmit: SubmitHandler<
     z.infer<ReturnType<typeof resourcesFormSchema>>
@@ -60,7 +60,7 @@ export const ResourcesDetails = ({
           disk,
           memory,
           numberOfNodes: parseInt(
-            numberOfNodes === CUSTOM_NODES_NR_INPUT_VALUE
+            numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
               ? customNrOfNodes || '1'
               : numberOfNodes,
             10

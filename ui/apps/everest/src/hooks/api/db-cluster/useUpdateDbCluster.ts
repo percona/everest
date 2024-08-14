@@ -18,7 +18,7 @@ import { updateDbClusterFn } from 'api/dbClusterApi';
 import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import cronConverter from 'utils/cron-converter';
-import { CUSTOM_NODES_NR_INPUT_VALUE } from 'components/cluster-form';
+import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
 
 type UpdateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -30,7 +30,7 @@ const formValuesToPayloadOverrides = (
   dbCluster: DbCluster
 ): DbCluster => {
   const numberOfNodes = parseInt(
-    dbPayload.numberOfNodes === CUSTOM_NODES_NR_INPUT_VALUE
+    dbPayload.numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
       ? dbPayload.customNrOfNodes || ''
       : dbPayload.numberOfNodes,
     10

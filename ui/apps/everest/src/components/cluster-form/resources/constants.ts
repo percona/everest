@@ -89,7 +89,7 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
     : z.object(objectShape);
 
   return zObject.superRefine(({ numberOfNodes, customNrOfNodes = '' }, ctx) => {
-    if (numberOfNodes !== CUSTOM_NODES_NR_INPUT_VALUE) {
+    if (numberOfNodes !== CUSTOM_NR_UNITS_INPUT_VALUE) {
       return;
     }
 
@@ -105,4 +105,4 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
   });
 };
 
-export const CUSTOM_NODES_NR_INPUT_VALUE = 'custom-nr-nodes';
+export const CUSTOM_NR_UNITS_INPUT_VALUE = 'custom-units-nr';

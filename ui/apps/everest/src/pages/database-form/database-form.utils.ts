@@ -25,7 +25,7 @@ import { MAX_DB_CLUSTER_NAME_LENGTH } from 'consts';
 import { DbWizardType } from './database-form-schema.ts';
 import { DB_WIZARD_DEFAULTS } from './database-form.constants.ts';
 import {
-  CUSTOM_NODES_NR_INPUT_VALUE,
+  CUSTOM_NR_UNITS_INPUT_VALUE,
   matchFieldsValueToResourceSize,
   NODES_DB_TYPE_MAP,
 } from 'components/cluster-form';
@@ -38,7 +38,7 @@ const replicasToNodes = (replicas: string, dbType: DbType): string => {
     return replicasString;
   }
 
-  return CUSTOM_NODES_NR_INPUT_VALUE;
+  return CUSTOM_NR_UNITS_INPUT_VALUE;
 };
 
 export const DbClusterPayloadToFormValues = (
