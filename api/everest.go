@@ -56,7 +56,7 @@ type EverestServer struct {
 	kubeClient    *kubernetes.Kubernetes
 	sessionMgr    *session.Manager
 	attemptsStore *RateLimiterMemoryStore
-	rbacEnforcer  *casbin.Enforcer
+	rbacEnforcer  casbin.IEnforcer
 }
 
 // NewEverestServer creates and configures everest API.

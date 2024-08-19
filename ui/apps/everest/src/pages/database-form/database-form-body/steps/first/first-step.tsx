@@ -43,6 +43,7 @@ import {
   generateShortUID,
 } from './utils.ts';
 import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
+import { useGetPermittedNamespaces } from 'utils/useGetPermissions.ts';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
@@ -243,6 +244,10 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [namespaces, mode]);
 
+  const permittedNamespaces = useGetPermittedNamespaces({
+    resource: 'database-clusters',
+  });
+
   return (
     <>
       <StepHeader
@@ -257,7 +262,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           name={DbWizardFormFields.k8sNamespace}
           label={Messages.labels.k8sNamespace}
           loading={namespacesFetching}
-          options={namespaces || []}
+          options={permittedNamespaces || []}
           disabled={
             mode === 'edit' ||
             mode === 'restoreFromBackup' ||

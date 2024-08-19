@@ -29,6 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/rbac"
 )
 
 const (
@@ -56,6 +57,15 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 
 	if err := e.validateDatabaseClusterCR(ctx, namespace, dbc); err != nil {
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
+	}
+
+	if err := e.validateDatabaseClusterOnCreate(ctx, namespace, dbc); err != nil {
+		if errors.Is(err, errInsufficientPermissions) {
+			return ctx.JSON(http.StatusForbidden, Error{
+				Message: pointer.ToString("Cannot perform the operation due to insufficient permissions"),
+			})
+		}
+		return err
 	}
 
 	err := e.proxyKubernetes(ctx, namespace, databaseClusterKind, "")
@@ -173,6 +183,7 @@ func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace
 			containers = append(containers, DatabaseClusterComponentContainer{
 				Name:     &c.Name, //nolint:exportloopref
 				Started:  startedString,
+				Ready:    &c.Ready, //nolint:exportloopref
 				Restarts: pointer.ToInt(int(c.RestartCount)),
 				Status:   &status,
 			})
@@ -218,7 +229,13 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 	if err != nil {
 		return errors.Join(err, errors.New("could not get old Database Cluster"))
 	}
-	if err := validateDatabaseClusterOnUpdate(dbc, oldDB); err != nil {
+
+	if err := e.validateDatabaseClusterOnUpdate(ctx, dbc, oldDB); err != nil {
+		if errors.Is(err, errInsufficientPermissions) {
+			return ctx.JSON(http.StatusForbidden, Error{
+				Message: pointer.ToString("Cannot perform the operation due to insufficient permissions"),
+			})
+		}
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
 
@@ -349,4 +366,17 @@ func getDefaultUploadInterval(engineType everestv1alpha1.EngineType, uploadInter
 		return pgDefaultUploadInterval
 	}
 	return 0
+}
+
+// canTakeBackups checks if a given user is allowed to take backups.
+func (e *EverestServer) canTakeBackups(user string, object string) (bool, error) {
+	ok, err := e.rbacEnforcer.Enforce(
+		user, rbac.ResourceDatabaseClusterBackups,
+		rbac.ActionCreate,
+		object,
+	)
+	if err != nil {
+		return false, fmt.Errorf("failed to Enforce: %w", err)
+	}
+	return ok, nil
 }
