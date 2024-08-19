@@ -2087,6 +2087,8 @@ components:
           type: string
         started:
           type: string
+        ready:
+          type: boolean
         restarts:
           type: integer
         status:

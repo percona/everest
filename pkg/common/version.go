@@ -74,7 +74,7 @@ func CheckConstraint[V version](v V, c string) bool {
 	if err != nil {
 		panic(err)
 	}
-	return constraint.Check(ver)
+	return constraint.Check(ver.Core())
 }
 
 // NewSupportedVersion returns a new SupportedVersion struct.
