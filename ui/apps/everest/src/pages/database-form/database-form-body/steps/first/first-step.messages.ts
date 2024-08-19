@@ -29,4 +29,6 @@ export const Messages = {
   placeholders: {
     dbName: 'E.g. postgresql-123',
   },
+  disableShardingTooltip:
+    'Sharding cannot be disabled unless you pause the cluster',
 };
