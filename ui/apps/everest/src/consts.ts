@@ -56,7 +56,6 @@ export enum DbWizardForm {
   memory = 'memory',
   proxyMemory = 'proxyMemory',
   disk = 'disk',
-  proxyDisk = 'proxyDisk',
   numberOfNodes = 'numberOfNodes',
   numberOfProxies = 'numberOfProxies',
   customNrOfNodes = 'customNrOfNodes',

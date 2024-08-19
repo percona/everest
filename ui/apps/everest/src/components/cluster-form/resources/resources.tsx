@@ -32,7 +32,7 @@ type Props = {
   options: string[];
   resourceSizePerUnitInputName: string;
   cpuInputName: string;
-  diskInputName: string;
+  diskInputName?: string;
   memoryInputName: string;
   numberOfUnitsInputName: string;
   customNrOfUnitsInputName: string;
@@ -152,7 +152,7 @@ const ResourcesToggles = ({
   options,
   resourceSizePerUnitInputName,
   cpuInputName,
-  diskInputName,
+  diskInputName = '',
   memoryInputName,
   numberOfUnitsInputName,
   customNrOfUnitsInputName,
@@ -344,21 +344,23 @@ const ResourcesToggles = ({
           endSuffix="GB"
           numberOfUnits={intNumberOfUnits}
         />
-        <ResourceInput
-          unit={unit}
-          unitPlural={unitPlural}
-          name={diskInputName}
-          disabled={disableDiskInput}
-          label="DISK"
-          helperText={checkResourceText(
-            resourcesInfo?.available?.diskSize,
-            'GB',
-            'disk',
-            diskCapacityExceeded
-          )}
-          endSuffix="GB"
-          numberOfUnits={intNumberOfUnits}
-        />
+        {diskInputName && (
+          <ResourceInput
+            unit={unit}
+            unitPlural={unitPlural}
+            name={diskInputName}
+            disabled={disableDiskInput}
+            label="DISK"
+            helperText={checkResourceText(
+              resourcesInfo?.available?.diskSize,
+              'GB',
+              'disk',
+              diskCapacityExceeded
+            )}
+            endSuffix="GB"
+            numberOfUnits={intNumberOfUnits}
+          />
+        )}
       </Box>
     </FormGroup>
   );
@@ -479,7 +481,6 @@ const ResourcesForm = ({
           options={NODES_DB_TYPE_MAP[dbType]}
           resourceSizePerUnitInputName={DbWizardFormFields.resourceSizePerProxy}
           cpuInputName={DbWizardFormFields.proxyCpu}
-          diskInputName={DbWizardFormFields.proxyDisk}
           memoryInputName={DbWizardFormFields.proxyMemory}
           numberOfUnitsInputName={DbWizardFormFields.numberOfProxies}
           customNrOfUnitsInputName={DbWizardFormFields.customNrOfProxies}

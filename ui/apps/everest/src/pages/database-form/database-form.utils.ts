@@ -114,8 +114,6 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.disk]: memoryParser(
       dbCluster?.spec?.engine?.storage?.size.toString()
     ),
-    // TODO add proxyDisk to the form
-    [DbWizardFormFields.proxyDisk]: memoryParser('0'),
     [DbWizardFormFields.memory]: memoryParser(
       (dbCluster?.spec?.engine?.resources?.memory || 0).toString()
     ),

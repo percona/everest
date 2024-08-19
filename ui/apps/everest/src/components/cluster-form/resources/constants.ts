@@ -81,7 +81,6 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
     [DbWizardFormFields.customNrOfNodes]: z.string().optional(),
     [DbWizardFormFields.proxyCpu]: resourceToNumber(0.6),
     [DbWizardFormFields.proxyMemory]: resourceToNumber(0.512),
-    [DbWizardFormFields.proxyDisk]: resourceToNumber(1),
     [DbWizardFormFields.resourceSizePerProxy]: z.nativeEnum(ResourceSize),
     [DbWizardFormFields.numberOfProxies]: z.string(),
     [DbWizardFormFields.customNrOfProxies]: z.string().optional(),

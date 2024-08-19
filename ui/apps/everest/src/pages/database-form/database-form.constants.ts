@@ -49,7 +49,6 @@ export const DB_WIZARD_DEFAULTS: DbWizardType = {
   [DbWizardFormFields.cpu]: DEFAULT_SIZES.small.cpu,
   [DbWizardFormFields.proxyCpu]: DEFAULT_SIZES.small.cpu,
   [DbWizardFormFields.disk]: DEFAULT_SIZES.small.disk,
-  [DbWizardFormFields.proxyDisk]: DEFAULT_SIZES.small.disk,
   [DbWizardFormFields.memory]: DEFAULT_SIZES.small.memory,
   [DbWizardFormFields.proxyMemory]: DEFAULT_SIZES.small.memory,
 };

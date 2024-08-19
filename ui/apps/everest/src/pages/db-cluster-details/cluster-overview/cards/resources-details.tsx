@@ -150,8 +150,6 @@ export const ResourcesDetails = ({
             disk: memoryParser(disk.toString()),
             memory: memoryParser(memory.toString()),
             proxyCpu: cpuParser(proxyCpu.toString() || '0'),
-            // TODO add proxyDisk to the form
-            proxyDisk: memoryParser('0'),
             proxyMemory: memoryParser(proxyMemory.toString()),
             numberOfNodes,
             numberOfProxies,
@@ -161,7 +159,6 @@ export const ResourcesDetails = ({
               dbCluster.spec.engine.resources,
               memoryParser(disk.toString())
             ),
-            // TODO add proxyDisk to the form
             resourceSizePerProxy: matchFieldsValueToResourceSize(
               dbCluster.spec.proxy.resources,
               0
