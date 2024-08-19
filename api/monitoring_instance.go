@@ -132,7 +132,6 @@ func (e *EverestServer) createMonitoringK8sResources(
 				URL: params.Url,
 			},
 			CredentialsSecretName: params.Name,
-			AllowedNamespaces:     *params.AllowedNamespaces,
 			VerifyTLS:             params.VerifyTLS,
 		},
 	})
