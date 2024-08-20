@@ -7,7 +7,7 @@ require (
 	github.com/AlekSi/pointer v1.2.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.3.2
 	github.com/Percona-Lab/percona-version-service v0.0.0-20240311164804-ffbc02387a1b
-	github.com/aws/aws-sdk-go v1.54.19
+	github.com/aws/aws-sdk-go v1.55.5
 	github.com/briandowns/spinner v1.23.1
 	github.com/casbin/casbin/v2 v2.98.0
 	github.com/casbin/govaluate v1.2.0
