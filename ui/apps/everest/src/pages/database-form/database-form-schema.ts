@@ -6,6 +6,7 @@ import { ResourceSize } from './database-form-body/steps/resources/resources-ste
 import { DbWizardFormFields } from './database-form.types.ts';
 import { rfc_123_schema } from 'utils/common-validation.ts';
 import { Messages as ScheduleFormMessages } from 'components/schedule-form-dialog/schedule-form/schedule-form.messages.ts';
+import { dbVersionSchemaObject } from 'components/db-version/db-version-schema';
 
 const resourceToNumber = (minimum = 0) =>
   z.union([z.string().nonempty(), z.number()]).pipe(
@@ -23,7 +24,7 @@ const basicInfoSchema = z
       .max(MAX_DB_CLUSTER_NAME_LENGTH, Messages.errors.dbName.tooLong)
       .nonempty(),
     [DbWizardFormFields.k8sNamespace]: z.string().nullable(),
-    [DbWizardFormFields.dbVersion]: z.string().nonempty(),
+    ...dbVersionSchemaObject,
     [DbWizardFormFields.storageClass]: z
       .string()
       .nullable()

@@ -23,8 +23,8 @@ import {
   deleteRestore,
   getDbClusterRestores,
 } from 'api/restores';
-import { generateShortUID } from 'pages/database-form/database-form-body/steps/first/utils';
 import { GetRestorePayload, Restore } from 'shared-types/restores.types';
+import { generateShortUID } from 'utils/generateShortUID';
 
 export const RESTORES_QUERY_KEY = 'restores';
 

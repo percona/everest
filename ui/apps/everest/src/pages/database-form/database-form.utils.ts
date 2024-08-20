@@ -18,10 +18,10 @@ import { DbWizardFormFields, DbWizardMode } from './database-form.types';
 import { dbEngineToDbType } from '@percona/utils';
 import { matchFieldsValueToResourceSize } from './database-form-body/steps/resources/resources-step.utils.ts';
 import { cpuParser, memoryParser } from 'utils/k8ResourceParser';
-import { generateShortUID } from './database-form-body/steps/first/utils.ts';
 import { MAX_DB_CLUSTER_NAME_LENGTH } from 'consts';
 import { DbWizardType } from './database-form-schema.ts';
 import { DB_WIZARD_DEFAULTS } from './database-form.constants.ts';
+import { generateShortUID } from 'utils/generateShortUID';
 
 export const DbClusterPayloadToFormValues = (
   dbCluster: DbCluster,

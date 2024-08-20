@@ -1,5 +1,5 @@
 import z from 'zod';
-import { generateShortUID } from '../../../database-form/database-form-body/steps/first/utils.ts';
+import { generateShortUID } from 'utils/generateShortUID';
 
 export enum BackupFields {
   name = 'name',

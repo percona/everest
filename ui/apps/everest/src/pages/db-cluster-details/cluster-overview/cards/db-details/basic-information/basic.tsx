@@ -19,9 +19,9 @@ import OverviewSection from '../../../overview-section';
 import { BasicInformationOverviewCardProps } from '../../card.types';
 import OverviewSectionRow from '../../../overview-section-row';
 import { useContext, useMemo, useState } from 'react';
-import { UpgradeModal } from './upgrade-modal';
-import { useDbVersionsList } from './useDbVersions';
-import { useUpdateDbClusterVersion } from '../../../../../../hooks/api/db-cluster/useUpdateDbCluster';
+import { UpgradeDbVersionModal } from './upgrade-db-version-modal/upgrade-db-version-modal';
+import { useDbVersionsList } from 'components/db-version/useDbVersions';
+import { useUpdateDbClusterVersion } from 'hooks/api/db-cluster/useUpdateDbCluster';
 import { DbClusterContext } from '../../../../dbCluster.context';
 
 export const BasicInformationSection = ({
@@ -35,16 +35,18 @@ export const BasicInformationSection = ({
   const handleCloseModal = () => {
     setOpenEditModal(false);
   };
-  const { dbCluster } = useContext(DbClusterContext);
-  const { mutate: updateDbClusterVersion } = useUpdateDbClusterVersion();
+  const { dbCluster, refetch } = useContext(DbClusterContext);
+  const { mutateAsync: updateDbClusterVersion, isPending } =
+    useUpdateDbClusterVersion();
 
-  const handleSubmit = (dbVersion: string) => {
-    updateDbClusterVersion({
+  const handleSubmit = async (dbVersion: string) => {
+    await updateDbClusterVersion({
       clusterName: dbCluster!.metadata?.name,
       namespace: dbCluster!.metadata?.namespace,
       dbCluster: dbCluster!,
       dbVersion,
     });
+    await refetch();
     handleCloseModal();
   };
 
@@ -55,24 +57,33 @@ export const BasicInformationSection = ({
   });
 
   const shouldShowUpgrade = useMemo(() => {
-    debugger;
-    return (
-      dbVersionsUpgradeList &&
-      dbVersionsUpgradeList?.availableVersions?.engine?.length > 0
-    );
-  }, [dbVersionsUpgradeList]);
+    if (dbVersionsUpgradeList) {
+      const engineVersions = dbVersionsUpgradeList?.availableVersions?.engine;
+      if (engineVersions?.length === 0) {
+        return false;
+      }
+      return !(engineVersions?.length === 1 &&
+          engineVersions?.find((item) => item.version === version));
+    }
+    return false;
+  }, [dbVersionsUpgradeList, version]);
 
   return (
     <OverviewSection
       dataTestId="basic-information"
       title={Messages.titles.basicInformation}
       loading={loading}
-      actionButtonProps={{
-        onClick: () => {
-          setOpenEditModal(true);
-        },
-        children: 'Upgrade',
-      }}
+      {...(shouldShowUpgrade
+        ? {
+            actionButtonProps: {
+              onClick: () => {
+                setOpenEditModal(true);
+              },
+              disabled: isPending,
+              children: 'Upgrade',
+            },
+          }
+        : undefined)}
     >
       <OverviewSectionRow
         label="Type"
@@ -82,7 +93,7 @@ export const BasicInformationSection = ({
       <OverviewSectionRow label="Namespace" contentString={namespace} />
       <OverviewSectionRow label="Version" contentString={version} />
       {openEditModal && shouldShowUpgrade && dbVersionsUpgradeList && (
-        <UpgradeModal
+        <UpgradeDbVersionModal
           open={openEditModal}
           handleCloseModal={handleCloseModal}
           handleSubmitModal={handleSubmit}

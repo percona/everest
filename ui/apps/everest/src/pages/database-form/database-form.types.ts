@@ -13,12 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { DBVersionFields } from 'components/db-version/db-version.types';
+
 export enum DbWizardForm {
   dbName = 'dbName',
   dbType = 'dbType',
   k8sNamespace = 'k8sNamespace',
   dbEnvironment = 'dbEnvironment',
-  dbVersion = 'dbVersion',
   storageClass = 'storageClass',
   cpu = 'cpu',
   memory = 'memory',
@@ -41,6 +42,7 @@ export enum DbWizardForm {
 
 export const DbWizardFormFields = {
   ...DbWizardForm,
+  ...DBVersionFields,
 };
 
 export type DbWizardMode = 'edit' | 'new' | 'restoreFromBackup';

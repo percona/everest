@@ -7,6 +7,7 @@ import { DbClusterContextProps } from './dbCluster.context.types';
 export const DbClusterContext = createContext<DbClusterContextProps>({
   dbCluster: {} as DbCluster,
   isLoading: false,
+  refetch: () => Promise.reject(),
 });
 
 export const DbClusterContextProvider = ({
@@ -15,19 +16,20 @@ export const DbClusterContextProvider = ({
   children: React.ReactNode;
 }) => {
   const { dbClusterName = '', namespace = '' } = useParams();
-  const { data: dbCluster, isLoading } = useDbCluster(
-    dbClusterName,
-    namespace,
-    {
-      enabled: !!namespace && !!dbClusterName,
-      refetchInterval: 5 * 1000,
-    }
-  );
+  const {
+    data: dbCluster,
+    isLoading,
+    refetch,
+  } = useDbCluster(dbClusterName, namespace, {
+    enabled: !!namespace && !!dbClusterName,
+    refetchInterval: 5 * 1000,
+  });
   return (
     <DbClusterContext.Provider
       value={{
         dbCluster,
         isLoading,
+        refetch,
       }}
     >
       {children}

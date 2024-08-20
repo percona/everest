@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FormGroup, MenuItem, Skeleton } from '@mui/material';
+import { FormGroup, Skeleton } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 
 import { DbType } from '@percona/types';
@@ -21,7 +21,6 @@ import {
   AutoCompleteInput,
   DbToggleCard,
   LabeledContent,
-  SelectInput,
   TextInput,
   ToggleButtonGroupInput,
 } from '@percona/ui-lib';
@@ -37,12 +36,11 @@ import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { DEFAULT_NODES } from './first-step.constants.ts';
 import { Messages } from './first-step.messages.ts';
-import {
-  filterAvailableDbVersionsForDbEngineEdition,
-  generateShortUID,
-} from './utils.ts';
+import { filterAvailableDbVersionsForDbEngineEdition } from '../../../../../components/db-version/utils.ts';
 import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
 import { useGetPermittedNamespaces } from 'utils/useGetPermissions.ts';
+import { DbVersion } from '../../../../../components/db-version';
+import { generateShortUID } from '../../../../../utils/generateShortUID';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
@@ -80,6 +78,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   );
 
   const setDbEngineDataForEngineType = useCallback(() => {
+    //TODO 1234 - edit of dbVersion field should be refactored
     const newEngineData = dbEngines.find((engine) => engine.type === dbEngine);
 
     if (newEngineData && mode === 'edit') {
@@ -299,19 +298,12 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             disabled: mode === 'edit' || loadingDefaultsForEdition,
           }}
         />
-        <SelectInput
-          name={DbWizardFormFields.dbVersion}
-          label={Messages.labels.dbVersion}
-          selectFieldProps={{
-            disabled: mode === 'restoreFromBackup',
+        <DbVersion
+          selectInputProps={{
+            selectFieldProps: { disabled: mode === 'restoreFromBackup' },
           }}
-        >
-          {dbEngineData?.availableVersions.engine.map((version) => (
-            <MenuItem value={version.version} key={version.version}>
-              {version.version}
-            </MenuItem>
-          ))}
-        </SelectInput>
+          availableVersions={dbEngineData?.availableVersions.engine}
+        />
         <AutoCompleteInput
           name={DbWizardFormFields.storageClass}
           label={Messages.labels.storageClass}
