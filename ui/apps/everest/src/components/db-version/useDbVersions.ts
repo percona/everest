@@ -30,7 +30,6 @@ export const useDbVersionsList = ({
   dbType,
   currentVersion,
 }: UseDbVersionProps) => {
-  debugger;
   const { data: dbEngines = [] } = useDbEngines(namespace);
 
   const dbEngine = dbTypeToDbEngine(dbType);
@@ -50,5 +49,5 @@ export const useDbVersionsList = ({
       };
     }
     return data;
-  }, [dbEngines, currentVersion]);
+  }, [dbEngines, currentVersion, dbEngine]);
 };
