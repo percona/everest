@@ -159,6 +159,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       }
 
       setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[newDbType]);
+      setValue(DbWizardFormFields.numberOfProxies, DEFAULT_NODES[newDbType]);
       updateDbVersions();
     },
     [
