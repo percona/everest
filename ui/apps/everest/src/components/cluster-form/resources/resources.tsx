@@ -205,7 +205,6 @@ const ResourcesToggles = ({
   }, [diskCapacityExceeded, clearErrors, setError]);
 
   useEffect(() => {
-    console.log('resourceSizePerUnit', resourceSizePerUnit);
     if (
       resourceSizePerUnit !== ResourceSize.custom &&
       cpu !== DEFAULT_SIZES[resourceSizePerUnit].cpu
@@ -422,11 +421,11 @@ const ResourcesForm = ({
     };
 
   useEffect(() => {
-    const { isDirty: numberOfProxiesDirty } = getFieldState(
+    const { isTouched: numberOfProxiesTouched } = getFieldState(
       DbWizardFormFields.numberOfProxies
     );
 
-    if (!pairProxiesWithNodes || numberOfProxiesDirty) {
+    if (!pairProxiesWithNodes || numberOfProxiesTouched) {
       return;
     }
 
@@ -442,6 +441,7 @@ const ResourcesForm = ({
     <>
       <Accordion
         expanded={expanded === 'nodes'}
+        data-testid="nodes-accordion"
         onChange={handleAccordionChange('nodes')}
         sx={{
           px: 2,
@@ -466,6 +466,7 @@ const ResourcesForm = ({
       </Accordion>
       <Accordion
         expanded={expanded === 'proxies'}
+        data-testid="proxies-accordion"
         onChange={handleAccordionChange('proxies')}
         sx={{
           px: 2,
