@@ -15,8 +15,8 @@
 
 import { z } from 'zod';
 import { DbEngine } from 'shared-types/dbEngines.types';
-import { DBVersionFields } from 'components/db-version/db-version.types';
-import { dbVersionSchema } from 'components/db-version/db-version-schema';
+import { DBVersionFields } from 'components/cluster-form/db-version/db-version.types';
+import { dbVersionSchema } from 'components/cluster-form/db-version/db-version-schema';
 
 export interface UpgradeModalProps {
   open: boolean;

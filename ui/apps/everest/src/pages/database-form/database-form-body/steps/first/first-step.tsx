@@ -36,11 +36,11 @@ import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { DEFAULT_NODES } from './first-step.constants.ts';
 import { Messages } from './first-step.messages.ts';
-import { filterAvailableDbVersionsForDbEngineEdition } from '../../../../../components/db-version/utils.ts';
+import { filterAvailableDbVersionsForDbEngineEdition } from 'components/cluster-form/db-version/utils.ts';
 import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
 import { useGetPermittedNamespaces } from 'utils/useGetPermissions.ts';
-import { DbVersion } from '../../../../../components/db-version';
-import { generateShortUID } from '../../../../../utils/generateShortUID';
+import { DbVersion } from 'components/cluster-form/db-version';
+import { generateShortUID } from 'utils/generateShortUID';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();

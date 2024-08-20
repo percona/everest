@@ -20,9 +20,10 @@ import { BasicInformationOverviewCardProps } from '../../card.types';
 import OverviewSectionRow from '../../../overview-section-row';
 import { useContext, useMemo, useState } from 'react';
 import { UpgradeDbVersionModal } from './upgrade-db-version-modal/upgrade-db-version-modal';
-import { useDbVersionsList } from 'components/db-version/useDbVersions';
+import { useDbVersionsList } from 'components/cluster-form/db-version/useDbVersions';
 import { useUpdateDbClusterVersion } from 'hooks/api/db-cluster/useUpdateDbCluster';
 import { DbClusterContext } from '../../../../dbCluster.context';
+import {DbClusterStatus} from "../../../../../../shared-types/dbCluster.types";
 
 export const BasicInformationSection = ({
   loading,
@@ -57,7 +58,7 @@ export const BasicInformationSection = ({
   });
 
   const shouldShowUpgrade = useMemo(() => {
-    if (dbVersionsUpgradeList) {
+    if (dbVersionsUpgradeList && dbCluster?.status?.status === DbClusterStatus.ready) {
       const engineVersions = dbVersionsUpgradeList?.availableVersions?.engine;
       if (engineVersions?.length === 0) {
         return false;

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DBVersionFields } from 'components/db-version/db-version.types';
+import { DBVersionFields } from 'components/cluster-form/db-version/db-version.types';
 
 export enum DbWizardForm {
   dbName = 'dbName',

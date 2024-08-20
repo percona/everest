@@ -15,9 +15,9 @@
 
 import { DBVersionFields } from './db-version.types';
 import { MenuItem } from '@mui/material';
-import { SelectInput, SelectInputProps } from '@percona/ui-lib';
 import { Messages } from './db-version.messages';
-import { DbEngineTool } from '../../shared-types/dbEngines.types';
+import { DbEngineTool } from 'shared-types/dbEngines.types';
+import {SelectInput, SelectInputProps} from "@percona/ui-lib";
 
 interface DbVersionProps {
   selectInputProps?: Omit<SelectInputProps, 'name'>;

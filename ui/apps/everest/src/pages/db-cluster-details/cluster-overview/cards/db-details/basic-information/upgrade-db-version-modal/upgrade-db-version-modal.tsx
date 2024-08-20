@@ -22,8 +22,8 @@ import {
 import { Typography } from '@mui/material';
 import { Messages } from './upgrade-db-version-modal.messages';
 import { SubmitHandler } from 'react-hook-form';
-import { DbVersion } from 'components/db-version';
-import { dbVersionSchema } from 'components/db-version/db-version-schema';
+import { DbVersion } from 'components/cluster-form/db-version';
+import { dbVersionSchema } from 'components/cluster-form/db-version/db-version-schema';
 
 export const UpgradeDbVersionModal = ({
   open,
