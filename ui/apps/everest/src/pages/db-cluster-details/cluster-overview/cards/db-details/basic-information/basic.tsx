@@ -62,8 +62,10 @@ export const BasicInformationSection = ({
       if (engineVersions?.length === 0) {
         return false;
       }
-      return !(engineVersions?.length === 1 &&
-          engineVersions?.find((item) => item.version === version));
+      return !(
+        engineVersions?.length === 1 &&
+        engineVersions?.find((item) => item.version === version)
+      );
     }
     return false;
   }, [dbVersionsUpgradeList, version]);
