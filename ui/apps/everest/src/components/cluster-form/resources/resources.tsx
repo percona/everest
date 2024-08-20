@@ -205,6 +205,7 @@ const ResourcesToggles = ({
   }, [diskCapacityExceeded, clearErrors, setError]);
 
   useEffect(() => {
+    console.log('resourceSizePerUnit', resourceSizePerUnit);
     if (
       resourceSizePerUnit !== ResourceSize.custom &&
       cpu !== DEFAULT_SIZES[resourceSizePerUnit].cpu
@@ -278,25 +279,25 @@ const ResourcesToggles = ({
       >
         <ToggleCard
           value={ResourceSize.small}
-          data-testid="toggle-button-small"
+          data-testid={`${unit}-resources-toggle-button-small`}
         >
           {humanizeResourceSizeMap(ResourceSize.small)}
         </ToggleCard>
         <ToggleCard
           value={ResourceSize.medium}
-          data-testid="toggle-button-medium"
+          data-testid={`${unit}-resources-toggle-button-medium`}
         >
           {humanizeResourceSizeMap(ResourceSize.medium)}
         </ToggleCard>
         <ToggleCard
           value={ResourceSize.large}
-          data-testid="toggle-button-large"
+          data-testid={`${unit}-resources-toggle-button-large`}
         >
           {humanizeResourceSizeMap(ResourceSize.large)}
         </ToggleCard>
         <ToggleCard
           value={ResourceSize.custom}
-          data-testid="toggle-button-custom"
+          data-testid={`${unit}-resources-toggle-button-custom`}
         >
           {humanizeResourceSizeMap(ResourceSize.custom)}
         </ToggleCard>

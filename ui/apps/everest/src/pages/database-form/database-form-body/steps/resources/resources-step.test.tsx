@@ -30,10 +30,14 @@ const FormProviderWrapper = ({
     defaultValues: {
       [DbWizardFormFields.dbType]: DbType.Mysql,
       [DbWizardFormFields.numberOfNodes]: '1',
+      [DbWizardFormFields.numberOfProxies]: '1',
       [DbWizardFormFields.resourceSizePerNode]: ResourceSize.small,
+      [DbWizardFormFields.resourceSizePerProxy]: ResourceSize.small,
       [DbWizardFormFields.cpu]: DEFAULT_SIZES.small.cpu,
+      [DbWizardFormFields.proxyCpu]: DEFAULT_SIZES.small.disk,
       [DbWizardFormFields.disk]: DEFAULT_SIZES.small.disk,
       [DbWizardFormFields.memory]: DEFAULT_SIZES.small.memory,
+      [DbWizardFormFields.proxyMemory]: DEFAULT_SIZES.small.memory,
       ...values,
     },
   });
@@ -139,7 +143,9 @@ describe('Resources Step', () => {
       DEFAULT_SIZES[ResourceSize.small][DbWizardFormFields.disk].toString()
     );
 
-    const mediumButton = screen.getByTestId('toggle-button-medium');
+    const mediumButton = screen.getByTestId(
+      'node-resources-toggle-button-medium'
+    );
     await waitFor(() => fireEvent.click(mediumButton));
 
     expect(screen.getByTestId('text-input-cpu')).toHaveValue(
