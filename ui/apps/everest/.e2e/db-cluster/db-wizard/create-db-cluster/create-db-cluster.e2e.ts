@@ -263,7 +263,7 @@ test.describe('DB Cluster creation', () => {
     ).toBeVisible();
 
     await page.getByTestId('toggle-button-nodes-3').click();
-    await page.getByTestId('toggle-button-large').click();
+    await page.getByTestId('node-resources-toggle-button-large').click();
     await page.getByTestId('text-input-disk').fill('150');
     await moveForward(page);
 
