@@ -2,7 +2,7 @@ import { Add, Delete, Edit } from '@mui/icons-material';
 import { Box, Button, MenuItem } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { useQueryClient } from '@tanstack/react-query';
-import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
+import { ConfirmDialogNamespace } from 'components/confirm-dialog-namespace/confirm-dialog-namespace';
 import {
   BACKUP_STORAGES_QUERY_KEY,
   useBackupStorages,
@@ -262,7 +262,7 @@ export const StorageLocations = () => {
         />
       )}
       {openDeleteDialog && (
-        <ConfirmDialog
+        <ConfirmDialogNamespace
           isOpen={openDeleteDialog}
           selectedId={selectedStorageName}
           selectedNamespace={selectedStorageNamespace}
@@ -272,7 +272,7 @@ export const StorageLocations = () => {
           disabledButtons={deletingBackupStorage}
         >
           {Messages.deleteDialog.content(selectedStorageName)}
-        </ConfirmDialog>
+        </ConfirmDialogNamespace>
       )}
     </>
   );

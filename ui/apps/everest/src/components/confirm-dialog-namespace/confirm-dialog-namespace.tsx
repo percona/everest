@@ -1,21 +1,22 @@
 import { Button, Dialog, DialogActions, DialogContent } from '@mui/material';
 import { DialogTitle } from '@percona/ui-lib';
-import { ConfirmDialogProps } from './confirm-dialog.types';
 import { kebabize } from '@percona/utils';
+import { ConfirmDialogNamespaceProps } from './confirm-dialog-namespace.types';
 
-export const ConfirmDialog = ({
+export const ConfirmDialogNamespace = ({
   isOpen,
   closeModal,
   selectedId,
+  selectedNamespace,
   children: content,
   handleConfirm,
   headerMessage,
   cancelMessage = 'Cancel',
   submitMessage = 'Delete',
   disabledButtons = false,
-}: ConfirmDialogProps) => {
+}: ConfirmDialogNamespaceProps) => {
   const onClick = () => {
-    handleConfirm(selectedId);
+    handleConfirm(selectedId, selectedNamespace);
   };
 
   return (
