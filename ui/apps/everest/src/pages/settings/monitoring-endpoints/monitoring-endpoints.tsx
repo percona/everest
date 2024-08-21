@@ -18,20 +18,29 @@ import {
   updateDataAfterDelete,
   updateDataAfterEdit,
 } from 'utils/generalOptimisticDataUpdate';
-import { StorageLocationsFields } from '../storage-locations/storage-locations.types';
 import { CreateEditEndpointModal } from './createEditModal/create-edit-modal';
 import { EndpointFormType } from './createEditModal/create-edit-modal.types';
 import { Messages } from './monitoring-endpoints.messages';
+import { useNamespaces } from 'hooks/api/namespaces';
+import { convertMonitoringInstancesPayloadToTableFormat } from './monitoring-endpoints.utils';
+import { MonitoringInstanceTableElement } from './monitoring-endpoints.types';
 
 export const MonitoringEndpoints = () => {
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedInstance, setSelectedInstance] =
     useState<MonitoringInstance>();
-  const {
-    data: monitoringInstances = [],
-    isFetching: loadingMonitoringEndpoint,
-  } = useMonitoringInstancesList();
+  const { data: namespaces = [] } = useNamespaces();
+  const monitoringInstances = useMonitoringInstancesList(namespaces);
+
+  const monitoringInstancesLoading = monitoringInstances.some(
+    (result) => result.queryResult.isLoading
+  );
+
+  const tableData = useMemo(
+    () => convertMonitoringInstancesPayloadToTableFormat(monitoringInstances),
+    [monitoringInstances]
+  );
 
   const { mutate: createMonitoringInstance, isPending: creatingInstance } =
     useCreateMonitoringInstance();
@@ -40,7 +49,7 @@ export const MonitoringEndpoints = () => {
   const { mutate: updateMonitoringInstance, isPending: updatingInstance } =
     useUpdateMonitoringInstance();
   const queryClient = useQueryClient();
-  const columns = useMemo<MRT_ColumnDef<MonitoringInstance>[]>(
+  const columns = useMemo<MRT_ColumnDef<MonitoringInstanceTableElement>[]>(
     () => [
       {
         accessorKey: 'name',
@@ -51,16 +60,8 @@ export const MonitoringEndpoints = () => {
         header: 'Endpoint',
       },
       {
-        accessorKey: StorageLocationsFields.namespaces,
+        accessorKey: 'namespace',
         header: Messages.namespaces,
-        Cell: ({ cell }) => {
-          const val = cell.getValue<string[]>();
-          if (val) {
-            return val.join(', ');
-          } else {
-            return '-';
-          }
-        },
       },
     ],
     []
@@ -70,8 +71,8 @@ export const MonitoringEndpoints = () => {
     setOpenCreateEditModal(true);
   };
 
-  const handleOpenEditModal = (instance: MonitoringInstance) => {
-    setSelectedInstance(instance);
+  const handleOpenEditModal = (instance: MonitoringInstanceTableElement) => {
+    setSelectedInstance(instance.raw);
     setOpenCreateEditModal(true);
   };
 
@@ -85,14 +86,14 @@ export const MonitoringEndpoints = () => {
     setOpenDeleteDialog(false);
   };
 
-  const handleDeleteInstance = (instance: MonitoringInstance) => {
-    setSelectedInstance(instance);
+  const handleDeleteInstance = (instance: MonitoringInstanceTableElement) => {
+    setSelectedInstance(instance.raw);
     setOpenDeleteDialog(true);
   };
 
   const handleSubmitModal = (
     isEditMode: boolean,
-    { name, url, allowedNamespaces, verifyTLS, ...pmmData }: EndpointFormType
+    { name, url, namespace, verifyTLS, ...pmmData }: EndpointFormType
   ) => {
     if (isEditMode) {
       updateMonitoringInstance(
@@ -101,9 +102,10 @@ export const MonitoringEndpoints = () => {
           payload: {
             url,
             type: 'pmm',
-            allowedNamespaces,
+            namespace,
             verifyTLS,
             pmm: { ...pmmData },
+            allowedNamespaces: [],
           },
         },
         {
@@ -123,9 +125,10 @@ export const MonitoringEndpoints = () => {
           name,
           url,
           type: 'pmm',
-          allowedNamespaces,
+          namespace,
           verifyTLS,
           pmm: { ...pmmData },
+          allowedNamespaces: [],
         },
         {
           onSuccess: (newInstance) => {
@@ -139,17 +142,20 @@ export const MonitoringEndpoints = () => {
     }
   };
 
-  const handleConfirmDelete = (instanceName: string) => {
-    deleteMonitoringInstance(instanceName, {
-      onSuccess: (_, locationName) => {
-        updateDataAfterDelete(
-          queryClient,
-          MONITORING_INSTANCES_QUERY_KEY,
-          'name'
-        )(_, locationName);
-        handleCloseDeleteDialog();
-      },
-    });
+  const handleConfirmDelete = (instanceName: string, namespace: string) => {
+    deleteMonitoringInstance(
+      { instanceName, namespace },
+      {
+        onSuccess: (_, locationName) => {
+          updateDataAfterDelete(
+            queryClient,
+            MONITORING_INSTANCES_QUERY_KEY,
+            'name'
+          )(_, locationName.instanceName);
+          handleCloseDeleteDialog();
+        },
+      }
+    );
   };
 
   return (
@@ -157,10 +163,10 @@ export const MonitoringEndpoints = () => {
       <Table
         tableName="monitoringEndpoints"
         hideExpandAllIcon
-        data={monitoringInstances}
+        data={tableData}
         columns={columns}
         state={{
-          isLoading: loadingMonitoringEndpoint,
+          isLoading: monitoringInstancesLoading,
         }}
         enableRowActions
         noDataMessage="No monitoring endpoint added"
@@ -210,6 +216,7 @@ export const MonitoringEndpoints = () => {
         <ConfirmDialog
           isOpen={openDeleteDialog}
           selectedId={selectedInstance?.name || ''}
+          selectedNamespace={selectedInstance?.namespace || ''}
           closeModal={handleCloseDeleteDialog}
           headerMessage={Messages.deleteDialogHeader}
           handleConfirm={handleConfirmDelete}

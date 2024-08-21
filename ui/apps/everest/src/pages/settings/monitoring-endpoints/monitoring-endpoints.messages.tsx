@@ -14,7 +14,7 @@ export const Messages = {
   ),
   fieldLabels: {
     name: 'Name',
-    namespaces: 'Namespaces',
+    namespace: 'Namespace',
     endpoint: 'Endpoint',
     user: 'User',
     password: 'Password',

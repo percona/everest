@@ -14,8 +14,10 @@
 // limitations under the License.
 import {
   UseMutationOptions,
+  UseQueryOptions,
+  UseQueryResult,
   useMutation,
-  useQuery,
+  useQueries,
 } from '@tanstack/react-query';
 import {
   getMonitoringInstancesFn,
@@ -37,20 +39,35 @@ type HookUpdateParam = {
 
 export const MONITORING_INSTANCES_QUERY_KEY = 'monitoringInstances';
 
-export const useMonitoringInstancesList = (enabled?: boolean) =>
-  useQuery<MonitoringInstanceList>({
-    queryKey: [MONITORING_INSTANCES_QUERY_KEY],
-    queryFn: getMonitoringInstancesFn,
-    enabled,
-  });
+export interface MonitoringInstanceForNamespaceResult {
+  namespace: string;
+  queryResult: UseQueryResult<MonitoringInstance[], unknown>;
+}
 
-export const useMonitoringInstancesListByNamespace = (namespace: string) =>
-  useQuery<MonitoringInstanceList>({
+export const useMonitoringInstancesList = (
+  namespaces: string[],
+  enabled?: boolean
+) => {
+  const queries = namespaces.map<
+    UseQueryOptions<MonitoringInstanceList, unknown, MonitoringInstance[]>
+  >((namespace) => ({
     queryKey: [MONITORING_INSTANCES_QUERY_KEY, namespace],
-    queryFn: getMonitoringInstancesFn,
-    select: (data) =>
-      data.filter((item) => item.allowedNamespaces?.includes(namespace)),
-  });
+    retry: false,
+    queryFn: () => getMonitoringInstancesFn(namespace),
+    refetchInterval: 5 * 1000,
+    enabled,
+  }));
+  const queryResults = useQueries({ queries });
+
+  const results: MonitoringInstanceForNamespaceResult[] = queryResults.map(
+    (item, i) => ({
+      namespace: namespaces[i],
+      queryResult: item,
+    })
+  );
+
+  return results;
+};
 
 export const useCreateMonitoringInstance = (
   options?: UseMutationOptions<
@@ -61,14 +78,23 @@ export const useCreateMonitoringInstance = (
   >
 ) =>
   useMutation({
-    mutationFn: createMonitoringInstanceFn,
+    mutationFn: (payload: CreateMonitoringInstancePayload) =>
+      createMonitoringInstanceFn(payload, payload.namespace),
     ...options,
   });
 
+type DeleteMonitoringInstanceArgType = {
+  instanceName: string;
+  namespace: string;
+};
+
 export const useDeleteMonitoringInstance = () =>
   useMutation({
-    mutationFn: (instanceName: string) =>
-      deleteMonitoringInstanceFn(instanceName),
+    mutationFn: ({
+      instanceName,
+      namespace,
+    }: DeleteMonitoringInstanceArgType) =>
+      deleteMonitoringInstanceFn(instanceName, namespace),
   });
 
 export const useUpdateMonitoringInstance = (

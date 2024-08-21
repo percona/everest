@@ -16,6 +16,8 @@ import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './monitoring.messages.ts';
 import ActionableAlert from 'components/actionable-alert';
+import { useNamespaces } from 'hooks/api/namespaces/useNamespaces.ts';
+import { convertMonitoringInstancesPayloadToTableFormat } from 'pages/settings/monitoring-endpoints/monitoring-endpoints.utils.ts';
 
 export const Monitoring = () => {
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
@@ -29,13 +31,23 @@ export const Monitoring = () => {
     useCreateMonitoringInstance();
   const { setValue } = useFormContext();
 
-  const { data: monitoringInstances, isFetching: monitoringInstancesLoading } =
-    useMonitoringInstancesList();
+  const { data: namespaces = [] } = useNamespaces();
+  const monitoringInstancesResult = useMonitoringInstancesList(namespaces);
+
+  const monitoringInstancesLoading = monitoringInstancesResult.some(
+    (result) => result.queryResult.isLoading
+  );
+
+  const monitoringInstances = useMemo(
+    () =>
+      convertMonitoringInstancesPayloadToTableFormat(monitoringInstancesResult),
+    [monitoringInstancesResult]
+  );
 
   const availableMonitoringInstances = useMemo(
     () =>
-      (monitoringInstances || []).filter((item) =>
-        item.allowedNamespaces.includes(selectedNamespace)
+      (monitoringInstances || []).filter(
+        (item) => item.namespace === selectedNamespace
       ),
     [monitoringInstances, selectedNamespace]
   );
@@ -58,14 +70,15 @@ export const Monitoring = () => {
   const handleSubmitModal = (
     // @ts-ignore
     _,
-    { name, url, allowedNamespaces, verifyTLS, ...pmmData }: EndpointFormType
+    { name, url, namespace, verifyTLS, ...pmmData }: EndpointFormType
   ) => {
     createMonitoringInstance(
       {
         name,
         url,
         type: 'pmm',
-        allowedNamespaces,
+        namespace,
+        allowedNamespaces: [],
         verifyTLS,
         pmm: { ...pmmData },
       },

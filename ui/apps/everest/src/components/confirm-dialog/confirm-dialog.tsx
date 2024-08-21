@@ -7,6 +7,7 @@ export const ConfirmDialog = ({
   isOpen,
   closeModal,
   selectedId,
+  selectedNamespace,
   children: content,
   handleConfirm,
   headerMessage,
@@ -15,7 +16,7 @@ export const ConfirmDialog = ({
   disabledButtons = false,
 }: ConfirmDialogProps) => {
   const onClick = () => {
-    handleConfirm(selectedId);
+    handleConfirm(selectedId, selectedNamespace);
   };
 
   return (
