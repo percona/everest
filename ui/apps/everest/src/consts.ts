@@ -56,6 +56,8 @@ export enum DbWizardForm {
   memory = 'memory',
   proxyMemory = 'proxyMemory',
   disk = 'disk',
+  // This is for retrocompatibility reasons, as some users still have Gb as a unit
+  diskUnit = 'diskUnit',
   numberOfNodes = 'numberOfNodes',
   numberOfProxies = 'numberOfProxies',
   customNrOfNodes = 'customNrOfNodes',

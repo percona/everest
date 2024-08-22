@@ -49,6 +49,9 @@ export const DbClusterPayloadToFormValues = (
   const backup = dbCluster?.spec?.backup;
   const replicas = dbCluster?.spec?.proxy?.replicas.toString();
   const proxies = dbCluster?.spec?.proxy?.replicas.toString();
+  const diskValues = memoryParser(
+    dbCluster?.spec?.engine?.storage?.size.toString()
+  );
 
   return {
     [DbWizardFormFields.backupsEnabled]: !!backup?.enabled,
@@ -98,12 +101,10 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.customNrOfNodes]: replicas,
     [DbWizardFormFields.customNrOfProxies]: proxies,
     [DbWizardFormFields.resourceSizePerNode]: matchFieldsValueToResourceSize(
-      dbCluster?.spec?.engine?.resources,
-      memoryParser(dbCluster?.spec?.engine?.storage?.size.toString())
+      dbCluster?.spec?.engine?.resources
     ),
     [DbWizardFormFields.resourceSizePerProxy]: matchFieldsValueToResourceSize(
-      dbCluster?.spec?.proxy.resources,
-      0
+      dbCluster?.spec?.proxy.resources
     ),
     [DbWizardFormFields.cpu]: cpuParser(
       dbCluster?.spec?.engine?.resources?.cpu.toString() || '0'
@@ -111,15 +112,14 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.proxyCpu]: cpuParser(
       dbCluster?.spec?.proxy?.resources?.cpu.toString() || '0'
     ),
-    [DbWizardFormFields.disk]: memoryParser(
-      dbCluster?.spec?.engine?.storage?.size.toString()
-    ),
+    [DbWizardFormFields.disk]: diskValues.value,
+    [DbWizardFormFields.diskUnit]: diskValues.originalUnit,
     [DbWizardFormFields.memory]: memoryParser(
       (dbCluster?.spec?.engine?.resources?.memory || 0).toString()
-    ),
+    ).value,
     [DbWizardFormFields.proxyMemory]: memoryParser(
       (dbCluster?.spec?.proxy?.resources?.memory || 0).toString()
-    ),
+    ).value,
     [DbWizardFormFields.storageClass]:
       dbCluster?.spec?.engine?.storage?.class || null,
   };

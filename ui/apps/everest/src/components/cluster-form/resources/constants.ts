@@ -14,8 +14,7 @@ const resourceToNumber = (minimum = 0) =>
   );
 
 export const matchFieldsValueToResourceSize = (
-  resources?: Resources,
-  storageSize?: number
+  resources?: Resources
 ): ResourceSize => {
   if (!resources) {
     return ResourceSize.custom;
@@ -23,10 +22,7 @@ export const matchFieldsValueToResourceSize = (
   const memory = memoryParser(resources.memory.toString());
 
   const res = Object.values(DEFAULT_SIZES).findIndex(
-    (item) =>
-      item.cpu === Number(resources.cpu) &&
-      item.memory === memory &&
-      item.disk === storageSize
+    (item) => item.cpu === Number(resources.cpu) && item.memory === memory.value
   );
   return res !== -1
     ? (Object.keys(DEFAULT_SIZES)[res] as ResourceSize)
@@ -76,6 +72,8 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
     [DbWizardFormFields.cpu]: resourceToNumber(0.6),
     [DbWizardFormFields.memory]: resourceToNumber(0.512),
     [DbWizardFormFields.disk]: resourceToNumber(1),
+    // we will never input this, but we need it and zod will let it pass
+    [DbWizardFormFields.diskUnit]: z.string(),
     [DbWizardFormFields.resourceSizePerNode]: z.nativeEnum(ResourceSize),
     [DbWizardFormFields.numberOfNodes]: z.string(),
     [DbWizardFormFields.customNrOfNodes]: z.string().optional(),

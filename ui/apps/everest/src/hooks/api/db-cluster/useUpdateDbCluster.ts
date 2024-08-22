@@ -83,7 +83,7 @@ const formValuesToPayloadOverrides = (
         storage: {
           ...dbCluster.spec.engine.storage,
           class: dbPayload.storageClass!,
-          size: `${dbPayload.disk}G`,
+          size: `${dbPayload.disk}${dbPayload.diskUnit}`,
         },
         config: dbPayload.engineParametersEnabled
           ? dbPayload.engineParameters
@@ -206,6 +206,7 @@ export const useUpdateDbClusterResources = () =>
         cpu: number;
         memory: number;
         disk: number;
+        diskUnit: string;
         numberOfNodes: number;
         proxyCpu: number;
         proxyMemory: number;
@@ -225,7 +226,7 @@ export const useUpdateDbClusterResources = () =>
             },
             storage: {
               ...dbCluster.spec.engine.storage,
-              size: `${newResources.disk}G`,
+              size: `${newResources.disk}${newResources.diskUnit}`,
             },
           },
           proxy: {

@@ -47,6 +47,7 @@ export const ResourcesDetails = ({
   const memory = dbCluster.spec.engine.resources?.memory || 0;
   const proxyMemory = dbCluster.spec.proxy.resources?.memory || 0;
   const disk = dbCluster.spec.engine.storage.size;
+  const parsedDiskValues = memoryParser(disk.toString());
   const dbType = dbEngineToDbType(dbCluster.spec.engine.type);
   const replicas = dbCluster.spec.engine.replicas.toString();
   const proxies = dbCluster.spec.proxy.replicas.toString();
@@ -62,6 +63,7 @@ export const ResourcesDetails = ({
   > = ({
     cpu,
     disk,
+    diskUnit,
     memory,
     proxyCpu,
     proxyMemory,
@@ -76,6 +78,7 @@ export const ResourcesDetails = ({
         newResources: {
           cpu,
           disk,
+          diskUnit,
           memory,
           proxyCpu,
           proxyMemory,
@@ -147,21 +150,20 @@ export const ResourcesDetails = ({
           onSubmit={onSubmit}
           defaultValues={{
             cpu: cpuParser(cpu.toString() || '0'),
-            disk: memoryParser(disk.toString()),
-            memory: memoryParser(memory.toString()),
+            disk: parsedDiskValues.value,
+            diskUnit: parsedDiskValues.originalUnit,
+            memory: memoryParser(memory.toString()).value,
             proxyCpu: cpuParser(proxyCpu.toString() || '0'),
-            proxyMemory: memoryParser(proxyMemory.toString()),
+            proxyMemory: memoryParser(proxyMemory.toString()).value,
             numberOfNodes,
             numberOfProxies,
             customNrOfNodes: replicas,
             customNrOfProxies: proxies,
             resourceSizePerNode: matchFieldsValueToResourceSize(
-              dbCluster.spec.engine.resources,
-              memoryParser(disk.toString())
+              dbCluster.spec.engine.resources
             ),
             resourceSizePerProxy: matchFieldsValueToResourceSize(
-              dbCluster.spec.proxy.resources,
-              0
+              dbCluster.spec.proxy.resources
             ),
           }}
         />

@@ -7,6 +7,7 @@ export const ResourcesPreviewSection = ({
   customNrOfNodes,
   cpu,
   disk,
+  diskUnit,
   memory,
 }: SectionProps) => {
   if (numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE) {
@@ -35,7 +36,7 @@ export const ResourcesPreviewSection = ({
         }`}
       />
       <PreviewContentText
-        text={`Disk: ${Number.isNaN(parsedDisk) ? '' : `${parsedDisk.toFixed(2)} GB`}`}
+        text={`Disk: ${Number.isNaN(parsedDisk) ? '' : `${parsedDisk.toFixed(2)} ${diskUnit}`}`}
       />
     </>
   );

@@ -33,6 +33,7 @@ type Props = {
   resourceSizePerUnitInputName: string;
   cpuInputName: string;
   diskInputName?: string;
+  diskUnitInputName?: string;
   memoryInputName: string;
   numberOfUnitsInputName: string;
   customNrOfUnitsInputName: string;
@@ -153,6 +154,7 @@ const ResourcesToggles = ({
   resourceSizePerUnitInputName,
   cpuInputName,
   diskInputName = '',
+  diskUnitInputName = '',
   memoryInputName,
   numberOfUnitsInputName,
   customNrOfUnitsInputName,
@@ -169,6 +171,7 @@ const ResourcesToggles = ({
   const cpu: number = watch(cpuInputName);
   const memory: number = watch(memoryInputName);
   const disk: number = watch(diskInputName);
+  const diskUnit: string = watch(diskUnitInputName);
   const numberOfUnits: string = watch(numberOfUnitsInputName);
   const customNrOfUnits: string = watch(customNrOfUnitsInputName);
   const intNumberOfUnits = parseInt(
@@ -353,11 +356,11 @@ const ResourcesToggles = ({
             label="DISK"
             helperText={checkResourceText(
               resourcesInfo?.available?.diskSize,
-              'GB',
+              diskUnit,
               'disk',
               diskCapacityExceeded
             )}
-            endSuffix="GB"
+            endSuffix={diskUnit}
             numberOfUnits={intNumberOfUnits}
           />
         )}
@@ -457,6 +460,7 @@ const ResourcesForm = ({
           resourceSizePerUnitInputName={DbWizardFormFields.resourceSizePerNode}
           cpuInputName={DbWizardFormFields.cpu}
           diskInputName={DbWizardFormFields.disk}
+          diskUnitInputName={DbWizardFormFields.diskUnit}
           memoryInputName={DbWizardFormFields.memory}
           numberOfUnitsInputName={DbWizardFormFields.numberOfNodes}
           customNrOfUnitsInputName={DbWizardFormFields.customNrOfNodes}
