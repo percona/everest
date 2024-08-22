@@ -138,7 +138,7 @@ jobs:
       - name: Run integration tests
         shell: bash
         env:
-          EVEREST_BUCKETS_NAMESPACES_MAP: '[["bucket-1","my-special-place"],["bucket-2","psmdb-only"],["bucket-3","pxc-only"],["bucket-4","pg-only"]]'
+          EVEREST_BUCKETS_NAMESPACES_MAP: '[["bucket-1","everest-ui"],["bucket-2","psmdb-only"],["bucket-3","pxc-only"],["bucket-4","pg-only"]]'
           EVEREST_LOCATION_ACCESS_KEY: "minioadmin"
           EVEREST_LOCATION_SECRET_KEY: "minioadmin"
           EVEREST_LOCATION_REGION: "us-east-1"
