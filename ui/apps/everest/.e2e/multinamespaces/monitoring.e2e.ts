@@ -64,7 +64,7 @@ test.describe('Namespaces: Monitoring availability', () => {
 
     // filling in monitoring modal form
     await page.getByTestId('text-input-name').fill(pxcMonitoringEndpoint);
-    const namespaces = page.getByTestId('text-input-allowed-namespaces');
+    const namespaces = page.getByTestId('text-input-namespace');
     await namespaces.click();
     await page
       .getByRole('option', { name: EVEREST_CI_NAMESPACES.PXC_ONLY })
