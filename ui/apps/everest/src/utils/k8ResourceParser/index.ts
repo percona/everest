@@ -45,10 +45,10 @@ export const memoryParser = (
   value: number;
   originalUnit: kubernetesUnit | '';
 } => {
-  const unitMatch = input.match(/^([0-9]+)([A-Za-z]{1,2})$/);
+  const unitMatch = input.match(/^([0-9.]+)([A-Za-z]{1,2})$/);
 
   if (unitMatch) {
-    const value = parseInt(unitMatch[1], 10);
+    const value = parseFloat(unitMatch[1]);
     // @ts-ignore
     const sourceUnit: kubernetesUnit = unitMatch[2];
     const valueBytes = value * memoryMultipliers[sourceUnit];
@@ -56,26 +56,13 @@ export const memoryParser = (
     return {
       value: targetUnit
         ? valueBytes / memoryMultipliers[targetUnit]
-        : parseInt(input, 10),
+        : parseFloat(input),
       originalUnit: sourceUnit,
     };
   }
 
-  // if (targetUnit && unitMatch) {
-  //   const value = parseInt(unitMatch[1], 10);
-  //   // @ts-ignore
-  //   const sourceUnit: kubernetesUnit = unitMatch[2];
-
-  //   const valueBytes = value * memoryMultipliers[sourceUnit];
-
-  //   return {
-  //     value: valueBytes / memoryMultipliers[targetUnit],
-  //     originalUnit: sourceUnit,
-  //   };
-  // }
-
   return {
-    value: parseInt(input, 10),
+    value: parseFloat(input),
     originalUnit: '',
   };
 };
