@@ -38,18 +38,44 @@ export const cpuParser = (input: string) => {
   return parseFloat(input);
 };
 
-export const memoryParser = (input: string, targetUnit?: kubernetesUnit) => {
+export const memoryParser = (
+  input: string,
+  targetUnit?: kubernetesUnit
+): {
+  value: number;
+  originalUnit: kubernetesUnit | '';
+} => {
   const unitMatch = input.match(/^([0-9]+)([A-Za-z]{1,2})$/);
 
-  if (targetUnit && unitMatch) {
+  if (unitMatch) {
     const value = parseInt(unitMatch[1], 10);
     // @ts-ignore
     const sourceUnit: kubernetesUnit = unitMatch[2];
-
     const valueBytes = value * memoryMultipliers[sourceUnit];
 
-    return valueBytes / memoryMultipliers[targetUnit];
+    return {
+      value: targetUnit
+        ? valueBytes / memoryMultipliers[targetUnit]
+        : parseInt(input, 10),
+      originalUnit: sourceUnit,
+    };
   }
 
-  return parseInt(input, 10);
+  // if (targetUnit && unitMatch) {
+  //   const value = parseInt(unitMatch[1], 10);
+  //   // @ts-ignore
+  //   const sourceUnit: kubernetesUnit = unitMatch[2];
+
+  //   const valueBytes = value * memoryMultipliers[sourceUnit];
+
+  //   return {
+  //     value: valueBytes / memoryMultipliers[targetUnit],
+  //     originalUnit: sourceUnit,
+  //   };
+  // }
+
+  return {
+    value: parseInt(input, 10),
+    originalUnit: '',
+  };
 };

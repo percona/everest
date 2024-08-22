@@ -5,6 +5,7 @@ export const ResourcesPreviewSection = ({
   numberOfNodes,
   cpu,
   disk,
+  diskUnit,
   memory,
 }: SectionProps) => {
   const parsedCPU = Number(cpu) * Number(numberOfNodes);
@@ -23,7 +24,7 @@ export const ResourcesPreviewSection = ({
         }`}
       />
       <PreviewContentText
-        text={`Disk: ${Number.isNaN(parsedDisk) ? '' : `${parsedDisk.toFixed(2)} Gi`}`}
+        text={`Disk: ${Number.isNaN(parsedDisk) ? '' : `${parsedDisk.toFixed(2)} ${diskUnit}`}`}
       />
     </>
   );

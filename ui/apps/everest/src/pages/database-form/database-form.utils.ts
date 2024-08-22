@@ -29,6 +29,9 @@ export const DbClusterPayloadToFormValues = (
   namespace: string
 ): DbWizardType => {
   const backup = dbCluster?.spec?.backup;
+  const diskValues = memoryParser(
+    dbCluster?.spec?.engine?.storage?.size.toString()
+  );
 
   return {
     [DbWizardFormFields.backupsEnabled]: !!backup?.enabled,
@@ -73,14 +76,12 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.cpu]: cpuParser(
       dbCluster?.spec?.engine?.resources?.cpu.toString() || '0'
     ),
-    [DbWizardFormFields.disk]: memoryParser(
-      dbCluster?.spec?.engine?.storage?.size.toString(),
-      'Gi'
-    ),
+    [DbWizardFormFields.disk]: diskValues.value,
+    [DbWizardFormFields.diskUnit]: diskValues.originalUnit,
     [DbWizardFormFields.memory]: memoryParser(
       (dbCluster?.spec?.engine?.resources?.memory || 0).toString(),
       'G'
-    ),
+    ).value,
     [DbWizardFormFields.storageClass]:
       dbCluster?.spec?.engine?.storage?.class || null,
   };
