@@ -21,7 +21,7 @@ import { Table } from '@percona/ui-lib';
 import { MRT_ColumnDef } from 'material-react-table';
 import { DBClusterComponent } from 'shared-types/components.types';
 import StatusField from 'components/status-field';
-import { format, formatDistanceToNowStrict } from 'date-fns';
+import { format, formatDistanceToNowStrict, isValid } from 'date-fns';
 import {
   COMPONENT_STATUS,
   COMPONENT_STATUS_TO_BASE_STATUS,
@@ -64,7 +64,8 @@ const Components = () => {
         accessorKey: 'started',
         Cell: ({ cell }) => {
           const date = new Date(cell.getValue<string>());
-          return date ? (
+
+          return isValid(date) ? (
             <Tooltip
               title={`Started at ${format(date, DATE_FORMAT)}`}
               placement="right"
