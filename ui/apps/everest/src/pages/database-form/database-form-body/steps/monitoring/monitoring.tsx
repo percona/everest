@@ -122,7 +122,7 @@ export const Monitoring = () => {
         pageTitle={Messages.monitoring}
         pageDescription={Messages.caption}
       />
-      {!availableMonitoringInstances?.length && (
+      {!availableMonitoringInstances?.length && !monitoringInstancesLoading && (
         <ActionableAlert
           message={Messages.alertText(selectedNamespace)}
           buttonMessage={Messages.addMonitoringEndpoint}
