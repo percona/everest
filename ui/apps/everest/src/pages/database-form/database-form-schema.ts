@@ -72,6 +72,8 @@ const stepTwoSchema = z
     [DbWizardFormFields.cpu]: resourceToNumber(0.6),
     [DbWizardFormFields.memory]: resourceToNumber(0.512),
     [DbWizardFormFields.disk]: resourceToNumber(1),
+    // we will never input this, but we need it and zod will let it pass
+    [DbWizardFormFields.diskUnit]: z.string(),
     [DbWizardFormFields.resourceSizePerNode]: z.nativeEnum(ResourceSize),
     [DbWizardFormFields.numberOfNodes]: z.string(),
   })
