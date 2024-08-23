@@ -2,7 +2,7 @@ import { Add, Delete, Edit } from '@mui/icons-material';
 import { Button, MenuItem } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { useQueryClient } from '@tanstack/react-query';
-import { ConfirmDialogNamespace } from 'components/confirm-dialog-namespace/confirm-dialog-namespace';
+import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import {
   MONITORING_INSTANCES_QUERY_KEY,
   useCreateMonitoringInstance,
@@ -213,17 +213,17 @@ export const MonitoringEndpoints = () => {
         />
       )}
       {openDeleteDialog && (
-        <ConfirmDialogNamespace
+        <ConfirmDialog
           isOpen={openDeleteDialog}
           selectedId={selectedInstance?.name || ''}
           selectedNamespace={selectedInstance?.namespace || ''}
           closeModal={handleCloseDeleteDialog}
           headerMessage={Messages.deleteDialogHeader}
-          handleConfirm={handleConfirmDelete}
+          handleConfirmNamespace={handleConfirmDelete}
           disabledButtons={removingInstance}
         >
           {Messages.deleteConfirmation(selectedInstance!.name)}
-        </ConfirmDialogNamespace>
+        </ConfirmDialog>
       )}
     </>
   );

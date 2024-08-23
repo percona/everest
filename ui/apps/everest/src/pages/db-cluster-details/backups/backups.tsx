@@ -22,14 +22,12 @@ import { ScheduleModalContext } from './backups.context.ts';
 import { NoStoragesMessage } from './no-storages-message/no-storages-message';
 import { ScheduledBackupModal } from './scheduled-backup-modal/scheduled-backup-modal';
 import { OnDemandBackupModal } from './on-demand-backup-modal/on-demand-backup-modal';
-import { useNamespaces } from 'hooks/api/namespaces/useNamespaces.ts';
 
 export const Backups = () => {
   const { dbClusterName = '', namespace = '' } = useParams();
   const { data: dbCluster } = useDbCluster(dbClusterName, namespace);
 
-  const { data: namespaces = [] } = useNamespaces();
-  const backupStorages = useBackupStorages(namespaces);
+  const backupStorages = useBackupStorages([namespace]);
 
   const isFetching = backupStorages.some(
     (result) => result.queryResult.isLoading

@@ -16,7 +16,6 @@ import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './monitoring.messages.ts';
 import ActionableAlert from 'components/actionable-alert';
-import { useNamespaces } from 'hooks/api/namespaces/useNamespaces.ts';
 import { convertMonitoringInstancesPayloadToTableFormat } from 'pages/settings/monitoring-endpoints/monitoring-endpoints.utils.ts';
 
 export const Monitoring = () => {
@@ -31,8 +30,9 @@ export const Monitoring = () => {
     useCreateMonitoringInstance();
   const { setValue } = useFormContext();
 
-  const { data: namespaces = [] } = useNamespaces();
-  const monitoringInstancesResult = useMonitoringInstancesList(namespaces);
+  const monitoringInstancesResult = useMonitoringInstancesList([
+    selectedNamespace,
+  ]);
 
   const monitoringInstancesLoading = monitoringInstancesResult.some(
     (result) => result.queryResult.isLoading

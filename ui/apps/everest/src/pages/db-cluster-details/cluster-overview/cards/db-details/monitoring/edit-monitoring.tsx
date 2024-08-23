@@ -13,7 +13,6 @@ import { useMonitoringInstancesList } from 'hooks/api/monitoring/useMonitoringIn
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMemo } from 'react';
 import ActionableAlert from 'components/actionable-alert';
-import { useNamespaces } from 'hooks/api/namespaces';
 import { convertMonitoringInstancesPayloadToTableFormat } from 'pages/settings/monitoring-endpoints/monitoring-endpoints.utils';
 
 export const MonitoringEditModal = ({
@@ -31,7 +30,7 @@ export const MonitoringEditModal = ({
   };
 
   const { namespace = '' } = useParams();
-  const { data: namespaces = [] } = useNamespaces();
+  const namespaces = [namespace];
   const monitoringInstancesResult = useMonitoringInstancesList(namespaces);
 
   const monitoringInstancesLoading = monitoringInstancesResult.some(
