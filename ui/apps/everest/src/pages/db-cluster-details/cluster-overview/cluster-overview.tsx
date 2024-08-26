@@ -30,11 +30,6 @@ export const ClusterOverview = () => {
     useDbClusterCredentials(dbClusterName || '', namespace, {
       enabled: !!dbClusterName,
     });
-  const dbType = dbEngineToDbType(dbCluster?.spec.engine.type!);
-
-  if (!dbCluster) {
-    return null;
-  }
 
   return (
     <Stack
@@ -51,27 +46,33 @@ export const ClusterOverview = () => {
       {/* We force ! because while loading no info is shown */}
       <DbDetails
         loading={loadingCluster}
-        type={dbType}
-        name={dbCluster.metadata.name!}
-        namespace={dbCluster.metadata.namespace!}
-        version={dbCluster.spec.engine.version!}
+        type={dbEngineToDbType(dbCluster?.spec.engine.type!)}
+        name={dbCluster?.metadata.name!}
+        namespace={dbCluster?.metadata.namespace!}
+        version={dbCluster?.spec.engine.version!}
         loadingClusterDetails={fetchingClusterDetails}
-        hostname={dbCluster.status?.hostname!}
-        port={dbCluster.status?.port!}
+        hostname={dbCluster?.status?.hostname!}
+        port={dbCluster?.status?.port!}
         username={dbClusterDetails?.username!}
         password={dbClusterDetails?.password!}
         externalAccess={
-          dbCluster.spec.proxy.expose.type === ProxyExposeType.external
+          dbCluster?.spec.proxy.expose.type === ProxyExposeType.external
         }
-        monitoring={dbCluster.spec.monitoring.monitoringConfigName}
-        parameters={!!dbCluster.spec.engine.config} //TODO EVEREST-1210 waits https://perconacorp.slack.com/archives/C0545J2BEJX/p1721309559055999
+        monitoring={dbCluster?.spec.monitoring.monitoringConfigName}
+        parameters={!!dbCluster?.spec.engine.config} //TODO EVEREST-1210 waits https://perconacorp.slack.com/archives/C0545J2BEJX/p1721309559055999
       />
-      <ResourcesDetails loading={loadingCluster} dbCluster={dbCluster} />
+      <ResourcesDetails
+        numberOfNodes={dbCluster?.spec.engine.replicas!}
+        cpu={dbCluster?.spec.engine.resources?.cpu!}
+        memory={dbCluster?.spec.engine.resources?.memory!}
+        disk={dbCluster?.spec.engine.storage.size!}
+        loading={loadingCluster}
+      />
       <BackupsDetails
-        backup={dbCluster.spec.backup!}
-        schedules={dbCluster.spec.backup?.schedules}
-        pitrEnabled={dbCluster.spec.backup?.pitr?.enabled!}
-        pitrStorageName={dbCluster.spec.backup?.pitr?.backupStorageName!}
+        backup={dbCluster?.spec.backup!}
+        schedules={dbCluster?.spec.backup?.schedules}
+        pitrEnabled={dbCluster?.spec.backup?.pitr?.enabled!}
+        pitrStorageName={dbCluster?.spec.backup?.pitr?.backupStorageName!}
         loading={loadingCluster}
       />
     </Stack>

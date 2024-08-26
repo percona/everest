@@ -107,5 +107,3 @@ export type OperatorsUpgradePlan = {
   upgrades: OperatorUpgradeTask[];
   pendingActions: OperatorUpgradePendingAction[];
 };
-
-export type ProxyType = 'mongos' | 'haproxy' | 'proxysql' | 'pgbouncer';

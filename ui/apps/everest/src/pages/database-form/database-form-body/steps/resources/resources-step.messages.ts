@@ -17,4 +17,23 @@ export const Messages = {
   pageTitle: 'Resources',
   pageDescription:
     'Configure the resources your new database will have access to.',
+  labels: {
+    numberOfNodes: 'Nº nodes',
+    resourceSizePerNode: 'Resource size per node',
+    cpu: 'cpu',
+    memory: 'memory',
+    disk: 'disk',
+    estimated: (value: string | number | undefined, units: string) =>
+      value ? `Estimated available: ${value} ${units}` : '',
+  },
+  alerts: {
+    resourcesCapacityExceeding: (
+      fieldName: string,
+      value: number | undefined,
+      units: string
+    ) =>
+      `Your specified ${fieldName} size exceeds the ${
+        value ? `${value} ${units}` : ''
+      } available. Enter a smaller value before continuing.`,
+  },
 };

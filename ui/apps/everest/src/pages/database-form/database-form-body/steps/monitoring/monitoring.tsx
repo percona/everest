@@ -11,7 +11,7 @@ import { EndpointFormType } from 'pages/settings/monitoring-endpoints/createEdit
 import { useFormContext } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
 import { updateDataAfterCreate } from 'utils/generalOptimisticDataUpdate.ts';
-import { DbWizardFormFields } from 'consts.ts';
+import { DbWizardFormFields } from '../../../database-form.types.ts';
 import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './monitoring.messages.ts';

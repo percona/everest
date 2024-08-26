@@ -14,11 +14,8 @@ const ToggleButtonGroupInput = ({
   children,
 }: ToggleButtonGroupInputProps) => {
   const { control: contextControl } = useFormContext();
-  const {
-    sx: toggleButtonGroupSxProp,
-    onChange: toggleButtonGroupOnChange = () => {},
-    ...toggleButtonGroupRestProps
-  } = toggleButtonGroupProps;
+  const { sx: toggleButtonGroupSxProp, ...toggleButtonGroupRestProps } =
+    toggleButtonGroupProps;
   const content = (
     <Controller
       name={name}
@@ -43,7 +40,6 @@ const ToggleButtonGroupInput = ({
           ) => {
             if (value !== null) {
               event.target.value = value;
-              toggleButtonGroupOnChange(event, event.target.value);
               field.onChange(event);
             }
           }}

@@ -18,8 +18,7 @@ import { useLocation } from 'react-router-dom';
 import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { DB_WIZARD_DEFAULTS } from './database-form.constants';
-import { DbWizardMode } from './database-form.types';
-import { DbWizardFormFields } from 'consts.ts';
+import { DbWizardFormFields, DbWizardMode } from './database-form.types';
 import { DbClusterPayloadToFormValues } from './database-form.utils';
 import { DbWizardType } from './database-form-schema.ts';
 export const useDatabasePageDefaultValues = (

@@ -30,7 +30,7 @@ import { useDatabasePageMode } from './useDatabasePageMode';
 import { useDbValidationSchema } from './useDbValidationSchema';
 import DatabaseFormCancelDialog from './database-form-cancel-dialog/index';
 import DatabaseFormBody from './database-form-body';
-import { DbWizardFormFields } from 'consts.ts';
+import { DbWizardFormFields } from './database-form.types';
 import DatabaseFormSideDrawer from './database-form-side-drawer';
 
 export const DatabasePage = () => {
