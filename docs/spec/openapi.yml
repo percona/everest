@@ -2808,6 +2808,33 @@ components:
                   - pgbouncer
                   type: string
               type: object
+            sharding:
+              description: Sharding is the sharding configuration. PSMDB-only
+              properties:
+                configServer:
+                  description: ConfigServer represents the sharding configuration server settings
+                  properties:
+                    replicas:
+                      description: Replicas is the amount of configServers
+                      format: int32
+                      minimum: 1
+                      type: integer
+                  required:
+                    - replicas
+                  type: object
+                enabled:
+                  description: Enabled defines if the sharding is enabled
+                  type: boolean
+                shards:
+                  description: Shards defines the number of shards
+                  format: int32
+                  minimum: 1
+                  type: integer
+              required:
+                - configServer
+                - enabled
+                - shards
+              type: object
           required:
           - engine
           type: object
