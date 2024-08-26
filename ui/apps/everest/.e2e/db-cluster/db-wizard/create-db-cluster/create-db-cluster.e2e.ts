@@ -66,8 +66,6 @@ test.describe('DB Cluster creation', () => {
       request
     );
     storageClasses = storageClassNames;
-
-    // monitoringInstancesList = await getMonitoringInstanceList(request);
   });
 
   test.beforeEach(async ({ page }) => {

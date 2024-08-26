@@ -14,10 +14,6 @@ export const Messages = {
       accessKey: 'Enter Access key',
       secretKey: 'Enter Secret key',
     },
-    helperText: {
-      namespaces:
-        'Select in which namespaces this storage should be available.',
-    },
   },
   deleteDialog: {
     header: 'Delete storage',

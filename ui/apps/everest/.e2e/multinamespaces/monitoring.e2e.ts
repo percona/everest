@@ -79,6 +79,11 @@ test.describe('Namespaces: Monitoring availability', () => {
     await expect(page.getByTestId('monitoring-warning')).not.toBeVisible();
     await expect(page.getByTestId('switch-input-monitoring')).toBeEnabled();
 
-    await deleteMonitoringInstance(request, pxcMonitoringEndpoint, token);
+    await deleteMonitoringInstance(
+      request,
+      EVEREST_CI_NAMESPACES.PXC_ONLY,
+      pxcMonitoringEndpoint,
+      token
+    );
   });
 });

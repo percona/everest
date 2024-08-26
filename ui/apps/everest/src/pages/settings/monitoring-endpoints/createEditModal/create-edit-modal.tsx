@@ -66,10 +66,9 @@ export const CreateEditEndpointModal = ({
             label={Messages.fieldLabels.namespace}
             loading={isNamespacesFetching}
             options={namespaces}
+            disabled={isEditMode}
             isRequired
             textFieldProps={{
-              disabled: isEditMode,
-              helperText: Messages.helperText.namespaces,
               placeholder: Messages.fieldPlaceholders.namespaces,
             }}
           />

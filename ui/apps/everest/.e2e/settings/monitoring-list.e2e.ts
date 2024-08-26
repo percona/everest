@@ -60,9 +60,7 @@ test.describe.serial('Monitoring List', () => {
     await page.getByRole('menuitem', { name: 'Edit' }).click();
 
     await expect(page.getByTestId('text-input-name')).toBeDisabled();
-    const namespaces = page.getByTestId('text-input-namespace');
-    await namespaces.click();
-    await page.getByRole('option').first().click();
+    await expect(page.getByTestId('text-input-namespace')).toBeDisabled();
     await page.getByTestId('text-input-url').fill(MONITORING_URL);
 
     // user can leave the credentials empty
