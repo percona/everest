@@ -19,7 +19,7 @@ export const resourcesStepCheck = async (page: Page) => {
   await expect(page.getByTestId('step-header')).toBeVisible();
   await expect(page.getByTestId('step-description')).toBeVisible();
 
-  await page.getByTestId('toggle-button-large').click();
+  await page.getByTestId('node-resources-toggle-button-large').click();
   await page.getByTestId('text-input-cpu').fill('0.6');
   await page.getByTestId('text-input-memory').fill('1');
   await page.getByTestId('text-input-disk').fill('1');
@@ -27,5 +27,5 @@ export const resourcesStepCheck = async (page: Page) => {
   expect(await page.getByText('x 3 nodes').count()).toBe(3);
   await expect(page.getByTestId('cpu-resource-sum')).toHaveText('= 1.80 CPU');
   await expect(page.getByTestId('memory-resource-sum')).toHaveText('= 3.00 GB');
-  await expect(page.getByTestId('disk-resource-sum')).toHaveText(' = 3.00 GB');
+  await expect(page.getByTestId('disk-resource-sum')).toHaveText(' = 3.00 Gi');
 };

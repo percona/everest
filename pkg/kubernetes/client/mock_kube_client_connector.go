@@ -662,6 +662,36 @@ func (_m *MockKubeClientConnector) GetBackupStorage(ctx context.Context, namespa
 	return r0, r1
 }
 
+// GetCSV provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubeClientConnector) GetCSV(ctx context.Context, namespace string, name string) (*operatorsv1alpha1.ClusterServiceVersion, error) {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCSV")
+	}
+
+	var r0 *operatorsv1alpha1.ClusterServiceVersion
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*operatorsv1alpha1.ClusterServiceVersion, error)); ok {
+		return rf(ctx, namespace, name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *operatorsv1alpha1.ClusterServiceVersion); ok {
+		r0 = rf(ctx, namespace, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*operatorsv1alpha1.ClusterServiceVersion)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetClusterRoleBinding provides a mock function with given fields: ctx, name
 func (_m *MockKubeClientConnector) GetClusterRoleBinding(ctx context.Context, name string) (*rbacv1.ClusterRoleBinding, error) {
 	ret := _m.Called(ctx, name)

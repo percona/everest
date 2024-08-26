@@ -13,38 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DBVersionFields } from 'components/cluster-form/db-version/db-version.types';
-
-export enum DbWizardForm {
-  dbName = 'dbName',
-  dbType = 'dbType',
-  k8sNamespace = 'k8sNamespace',
-  dbEnvironment = 'dbEnvironment',
-  storageClass = 'storageClass',
-  cpu = 'cpu',
-  memory = 'memory',
-  disk = 'disk',
-  numberOfNodes = 'numberOfNodes',
-  resourceSizePerNode = 'resourceSizePerNode',
-  backupsEnabled = 'backupsEnabled',
-  schedules = 'schedules',
-  pitrEnabled = 'pitrEnabled',
-  pitrStorageLocation = 'pitrStorageLocation',
-  externalAccess = 'externalAccess',
-  internetFacing = 'internetFacing',
-  sourceRanges = 'sourceRanges',
-  engineParametersEnabled = 'engineParametersEnabled',
-  engineParameters = 'engineParameters',
-  monitoring = 'monitoring',
-  monitoringInstance = 'monitoringInstance',
-  endpoint = 'endpoint',
-}
-
-export const DbWizardFormFields = {
-  ...DbWizardForm,
-  ...DBVersionFields,
-};
-
 export type DbWizardMode = 'edit' | 'new' | 'restoreFromBackup';
 
 export type StepProps = {

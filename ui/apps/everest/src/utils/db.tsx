@@ -1,5 +1,6 @@
 import { MongoIcon, MySqlIcon, PostgreSqlIcon } from '@percona/ui-lib';
 import { DbType } from '@percona/types';
+import { ProxyType } from 'shared-types/dbEngines.types';
 
 export const dbTypeToIcon = (dbType: DbType) => {
   switch (dbType) {
@@ -26,4 +27,15 @@ export const shortenOperatorName = (name: string) => {
   }
 
   return name;
+};
+
+export const dbTypeToProxyType = (dbType: DbType): ProxyType => {
+  switch (dbType) {
+    case DbType.Mongo:
+      return 'mongos';
+    case DbType.Mysql:
+      return 'haproxy';
+    default:
+      return 'pgbouncer';
+  }
 };

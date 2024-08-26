@@ -2,20 +2,11 @@ import { z } from 'zod';
 import { DbType } from '@percona/types';
 import { IP_REGEX, MAX_DB_CLUSTER_NAME_LENGTH } from '../../consts.ts';
 import { Messages } from './database-form.messages.ts';
-import { ResourceSize } from './database-form-body/steps/resources/resources-step.types.ts';
-import { DbWizardFormFields } from './database-form.types.ts';
+import { DbWizardFormFields } from 'consts.ts';
 import { rfc_123_schema } from 'utils/common-validation.ts';
 import { Messages as ScheduleFormMessages } from 'components/schedule-form-dialog/schedule-form/schedule-form.messages.ts';
+import { resourcesFormSchema } from 'components/cluster-form';
 import { dbVersionSchemaObject } from 'components/cluster-form/db-version/db-version-schema';
-
-const resourceToNumber = (minimum = 0) =>
-  z.union([z.string().nonempty(), z.number()]).pipe(
-    z.coerce
-      .number({
-        invalid_type_error: 'Please enter a valid number',
-      })
-      .min(minimum)
-  );
 
 const basicInfoSchema = z
   .object({
@@ -43,15 +34,7 @@ const basicInfoSchema = z
 // this is needed because we parse step by step
 // so, by default, Zod would leave behind the keys from previous steps
 
-const stepTwoSchema = z
-  .object({
-    [DbWizardFormFields.cpu]: resourceToNumber(0.6),
-    [DbWizardFormFields.memory]: resourceToNumber(0.512),
-    [DbWizardFormFields.disk]: resourceToNumber(1),
-    [DbWizardFormFields.resourceSizePerNode]: z.nativeEnum(ResourceSize),
-    [DbWizardFormFields.numberOfNodes]: z.string(),
-  })
-  .passthrough();
+const stepTwoSchema = resourcesFormSchema(true);
 
 const backupsStepSchema = z
   .object({
