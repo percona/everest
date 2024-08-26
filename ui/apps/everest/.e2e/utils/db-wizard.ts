@@ -98,7 +98,7 @@ export const populateResources = async (
   await expect(page.getByTestId('step-header')).toBeVisible();
   await expect(page.getByTestId('step-description')).toBeVisible();
 
-  await page.getByTestId('toggle-button-large').click();
+  await page.getByTestId('node-resources-toggle-button-large').click();
   await page.getByTestId('text-input-cpu').fill(cpu.toString());
   await page.getByTestId('text-input-memory').fill(memory.toString());
   await page.getByTestId('text-input-disk').fill(disk.toString());

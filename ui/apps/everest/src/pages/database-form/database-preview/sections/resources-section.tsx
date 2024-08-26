@@ -1,20 +1,32 @@
+import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
 import { PreviewContentText } from '../preview-section';
 import { SectionProps } from './section.types';
 
 export const ResourcesPreviewSection = ({
   numberOfNodes,
+  customNrOfNodes,
   cpu,
   disk,
   diskUnit,
   memory,
 }: SectionProps) => {
-  const parsedCPU = Number(cpu) * Number(numberOfNodes);
-  const parsedDisk = Number(disk) * Number(numberOfNodes);
-  const parsedMemory = Number(memory) * Number(numberOfNodes);
+  if (numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE) {
+    numberOfNodes = customNrOfNodes || '';
+  }
+
+  let intNumberOfNodes = Math.max(parseInt(numberOfNodes, 10), 0);
+
+  if (Number.isNaN(intNumberOfNodes)) {
+    intNumberOfNodes = 0;
+  }
+
+  const parsedCPU = Number(cpu) * intNumberOfNodes;
+  const parsedDisk = Number(disk) * intNumberOfNodes;
+  const parsedMemory = Number(memory) * intNumberOfNodes;
 
   return (
     <>
-      <PreviewContentText text={`Nº nodes: ${numberOfNodes}`} />
+      <PreviewContentText text={`Nº nodes: ${intNumberOfNodes}`} />
       <PreviewContentText
         text={`CPU: ${Number.isNaN(parsedCPU) ? '' : `${parsedCPU.toFixed(2)} CPU`}`}
       />

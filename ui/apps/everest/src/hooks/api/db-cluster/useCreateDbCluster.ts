@@ -20,16 +20,17 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
+import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import {
   ClusterCredentials,
   DataSource,
   DbCluster,
   GetDbClusterCredentialsPayload,
-  ProxyExposeType,
 } from 'shared-types/dbCluster.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import cronConverter from 'utils/cron-converter';
+import { getProxySpec } from './utils';
 
 type CreateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -40,6 +41,12 @@ const formValuesToPayloadMapping = (
   dbPayload: DbWizardType,
   backupDataSource?: DataSource
 ): DbCluster => {
+  const numberOfNodes = parseInt(
+    dbPayload.numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
+      ? dbPayload.customNrOfNodes || ''
+      : dbPayload.numberOfNodes,
+    10
+  );
   const dbClusterPayload: DbCluster = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
@@ -74,14 +81,14 @@ const formValuesToPayloadMapping = (
       engine: {
         type: dbTypeToDbEngine(dbPayload.dbType),
         version: dbPayload.dbVersion,
-        replicas: +dbPayload.numberOfNodes,
+        replicas: numberOfNodes,
         resources: {
           cpu: `${dbPayload.cpu}`,
           memory: `${dbPayload.memory}G`,
         },
         storage: {
           class: dbPayload.storageClass!,
-          size: `${dbPayload.disk}Gi`,
+          size: `${dbPayload.disk}${dbPayload.diskUnit}`,
         },
         config: dbPayload.engineParametersEnabled
           ? dbPayload.engineParameters
@@ -92,20 +99,15 @@ const formValuesToPayloadMapping = (
           monitoringConfigName: dbPayload?.monitoringInstance!,
         }),
       },
-      proxy: {
-        replicas: +dbPayload.numberOfNodes,
-        expose: {
-          type: dbPayload.externalAccess
-            ? ProxyExposeType.external
-            : ProxyExposeType.internal,
-          ...(!!dbPayload.externalAccess &&
-            dbPayload.sourceRanges && {
-              ipSourceRanges: dbPayload.sourceRanges.flatMap((source) =>
-                source.sourceRange ? [source.sourceRange] : []
-              ),
-            }),
-        },
-      },
+      proxy: getProxySpec(
+        dbPayload.dbType,
+        dbPayload.numberOfProxies,
+        dbPayload.customNrOfProxies || '',
+        dbPayload.externalAccess,
+        dbPayload.proxyCpu,
+        dbPayload.proxyMemory,
+        dbPayload.sourceRanges || []
+      ),
       ...(backupDataSource?.dbClusterBackupName && {
         dataSource: {
           dbClusterBackupName: backupDataSource.dbClusterBackupName,
