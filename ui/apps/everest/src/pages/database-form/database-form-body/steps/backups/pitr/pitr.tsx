@@ -17,7 +17,7 @@ import { Stack, Typography } from '@mui/material';
 import { Messages } from './pitr.messages';
 import { LabeledContent, SwitchInput } from '@percona/ui-lib';
 import { DbType } from '@percona/types';
-import { DbWizardFormFields } from '../../../../database-form.types';
+import { DbWizardFormFields } from 'consts.ts';
 import { useFormContext } from 'react-hook-form';
 import PitrStorage from './pitr-storage';
 import { useEffect } from 'react';

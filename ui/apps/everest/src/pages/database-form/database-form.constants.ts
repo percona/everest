@@ -14,10 +14,12 @@
 // limitations under the License.
 
 import { DbType } from '@percona/types';
-import { DbWizardFormFields } from './database-form.types';
-import { DEFAULT_SIZES } from './database-form-body/steps/resources/resources-step.const.ts';
-import { ResourceSize } from './database-form-body/steps/resources/resources-step.types.ts';
+import { DbWizardFormFields } from 'consts.ts';
 import { DbWizardType } from './database-form-schema.ts';
+import {
+  DEFAULT_SIZES,
+  ResourceSize,
+} from 'components/cluster-form/resources/constants.ts';
 
 export const DB_WIZARD_DEFAULTS: DbWizardType = {
   // TODO should be changed to true after  https://jira.percona.com/browse/EVEREST-509
@@ -39,11 +41,17 @@ export const DB_WIZARD_DEFAULTS: DbWizardType = {
   [DbWizardFormFields.monitoring]: false,
   [DbWizardFormFields.monitoringInstance]: '',
   [DbWizardFormFields.numberOfNodes]: '1',
+  [DbWizardFormFields.numberOfProxies]: '1',
   [DbWizardFormFields.resourceSizePerNode]: ResourceSize.small,
+  [DbWizardFormFields.resourceSizePerProxy]: ResourceSize.small,
+  [DbWizardFormFields.customNrOfNodes]: '1',
+  [DbWizardFormFields.customNrOfProxies]: '1',
   [DbWizardFormFields.cpu]: DEFAULT_SIZES.small.cpu,
+  [DbWizardFormFields.proxyCpu]: DEFAULT_SIZES.small.cpu,
   [DbWizardFormFields.disk]: DEFAULT_SIZES.small.disk,
   [DbWizardFormFields.diskUnit]: 'Gi',
   [DbWizardFormFields.memory]: DEFAULT_SIZES.small.memory,
+  [DbWizardFormFields.proxyMemory]: DEFAULT_SIZES.small.memory,
 };
 
 export const NODES_DB_TYPE_MAP: Record<DbType, string[]> = {

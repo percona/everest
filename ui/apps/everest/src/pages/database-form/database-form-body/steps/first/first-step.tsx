@@ -32,7 +32,8 @@ import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { useFormContext } from 'react-hook-form';
 import { DbEngineToolStatus } from 'shared-types/dbEngines.types';
 import { DB_WIZARD_DEFAULTS } from '../../../database-form.constants.ts';
-import { DbWizardFormFields, StepProps } from '../../../database-form.types.ts';
+import { StepProps } from '../../../database-form.types.ts';
+import { DbWizardFormFields } from 'consts.ts';
 import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { DEFAULT_NODES } from './first-step.constants.ts';
@@ -158,6 +159,12 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       }
 
       setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[newDbType]);
+      resetField(DbWizardFormFields.numberOfProxies, {
+        keepTouched: false,
+      });
+      setValue(DbWizardFormFields.numberOfProxies, DEFAULT_NODES[newDbType], {
+        shouldTouch: false,
+      });
       updateDbVersions();
     },
     [
@@ -217,8 +224,10 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   }, [clusterInfo]);
 
   useEffect(() => {
-    setDbEngineDataForEngineType();
-  }, [setDbEngineDataForEngineType]);
+    if (!dbEngineData) {
+      setDbEngineDataForEngineType();
+    }
+  }, [dbEngineData, setDbEngineDataForEngineType]);
 
   useEffect(() => {
     const { isTouched: k8sNamespaceTouched } = getFieldState(
