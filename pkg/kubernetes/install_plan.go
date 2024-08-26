@@ -47,7 +47,7 @@ func (k *Kubernetes) getInstallPlanFromSubscription(ctx context.Context, namespa
 // WaitForInstallPlan waits until an install plan for the given operator and version is available.
 func (k *Kubernetes) WaitForInstallPlan(ctx context.Context, namespace, operatorName string, version *goversion.Version) (*olmv1alpha1.InstallPlan, error) {
 	var ip *olmv1alpha1.InstallPlan
-	csvName := fmt.Sprintf("%s.v%s", operatorName, version)
+	csvName := k.CSVNameFromOperator(operatorName, version)
 	err := wait.PollUntilContextCancel(ctx, time.Second, true, func(ctx context.Context) (bool, error) {
 		k.l.Debug("Looking for install plan")
 		ips, err := k.client.ListInstallPlans(ctx, namespace)

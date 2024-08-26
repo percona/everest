@@ -94,6 +94,24 @@ func (_m *MockKubernetesConnector) ApproveInstallPlan(ctx context.Context, names
 	return r0, r1
 }
 
+// CSVNameFromOperator provides a mock function with given fields: operatorName, _a1
+func (_m *MockKubernetesConnector) CSVNameFromOperator(operatorName string, _a1 *version.Version) string {
+	ret := _m.Called(operatorName, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CSVNameFromOperator")
+	}
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(string, *version.Version) string); ok {
+		r0 = rf(operatorName, _a1)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
 // ClusterName provides a mock function with given fields:
 func (_m *MockKubernetesConnector) ClusterName() string {
 	ret := _m.Called()
@@ -1633,6 +1651,24 @@ func (_m *MockKubernetesConnector) UpgradeOperator(ctx context.Context, namespac
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpgradeOperator")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, namespace, name)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// WaitForCSVSucceeded provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubernetesConnector) WaitForCSVSucceeded(ctx context.Context, namespace string, name string) error {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for WaitForCSVSucceeded")
 	}
 
 	var r0 error
