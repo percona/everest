@@ -141,18 +141,6 @@ test.describe('DB Cluster creation', () => {
     await expect(page.getByText('Nº nodes: 3')).toBeVisible();
 
     await resourcesStepCheck(page);
-
-    // Same number of proxies as nodes, as user hasn't changed it
-    await expect(page.getByText('Routers (3)')).toBeVisible();
-    await page.getByTestId('proxies-accordion').getByRole('button').click();
-    await page.getByTestId('toggle-button-routers-1').click();
-    await expect(page.getByText('Routers (1)')).toBeVisible();
-    await page.getByTestId('nodes-accordion').getByRole('button').click();
-    await page.getByTestId('toggle-button-nodes-1').click();
-    await page.getByTestId('toggle-button-nodes-3').click();
-    // After used changed the number of routers, it should no more follow the number of nodes
-    await expect(page.getByText('Routers (1)')).toBeVisible();
-
     await moveForward(page);
 
     await backupsStepCheck(page);
@@ -176,10 +164,7 @@ test.describe('DB Cluster creation', () => {
     // Now we change the number of nodes
     await page.getByTestId('button-edit-preview-resources').click();
     await page.getByTestId('toggle-button-nodes-3').click();
-    await expect(page.getByText('PG Bouncers (3)')).toBeVisible();
     await page.getByTestId('toggle-button-nodes-2').click();
-    // Since we changed DB type, the number of bouncers is reset and will follow the number of nodes
-    await expect(page.getByText('PG Bouncers (2)')).toBeVisible();
     await page.getByTestId('button-edit-preview-basic-information').click();
     // Because 2 nodes is not valid for MongoDB, the default will be picked
     await page.getByTestId('mongodb-toggle-button').click();
@@ -278,7 +263,7 @@ test.describe('DB Cluster creation', () => {
     ).toBeVisible();
 
     await page.getByTestId('toggle-button-nodes-3').click();
-    await page.getByTestId('node-resources-toggle-button-large').click();
+    await page.getByTestId('toggle-button-large').click();
     await page.getByTestId('text-input-disk').fill('150');
     await moveForward(page);
 
