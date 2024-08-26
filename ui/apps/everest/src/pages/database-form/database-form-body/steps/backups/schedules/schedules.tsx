@@ -18,7 +18,7 @@ import EditableItem from 'components/editable-item/editable-item';
 import { LabeledContent } from '@percona/ui-lib';
 import { Messages } from './schedules.messages';
 import { useEffect, useState } from 'react';
-import { DbWizardFormFields } from 'consts.ts';
+import { DbWizardFormFields } from '../../../../database-form.types';
 import { useFormContext } from 'react-hook-form';
 import { Schedule } from 'shared-types/dbCluster.types';
 import {

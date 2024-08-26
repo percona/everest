@@ -19,7 +19,7 @@ import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBacku
 import { useDbBackups } from 'hooks/api/backups/useBackups.ts';
 import { useFormContext } from 'react-hook-form';
 import { getAvailableBackupStoragesForBackups } from 'utils/backups.ts';
-import { DbWizardFormFields } from 'consts.ts';
+import { DbWizardFormFields } from '../../../database-form.types.ts';
 import BackupsActionableAlert from 'components/actionable-alert/backups-actionable-alert';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './backups.messages.ts';
