@@ -1,5 +1,4 @@
-import { TextInput } from '@percona/ui-lib';
-import { AutoCompleteSelectAll } from 'components/auto-complete-select-all/auto-complete-select-all';
+import { AutoCompleteInput, TextInput } from '@percona/ui-lib';
 import { FormDialog } from 'components/form-dialog';
 import TlsAlert from 'components/tls-alert';
 import TlsCheckbox from 'components/tls-checkbox';
@@ -62,14 +61,14 @@ export const CreateEditEndpointModal = ({
               placeholder: Messages.fieldPlaceholders.name,
             }}
           />
-          <AutoCompleteSelectAll
-            name={EndpointFormFields.namespaces}
-            label={Messages.fieldLabels.namespaces}
+          <AutoCompleteInput
+            name={EndpointFormFields.namespace}
+            label={Messages.fieldLabels.namespace}
             loading={isNamespacesFetching}
             options={namespaces}
+            disabled={isEditMode}
             isRequired
             textFieldProps={{
-              helperText: Messages.helperText.namespaces,
               placeholder: Messages.fieldPlaceholders.namespaces,
             }}
           />
