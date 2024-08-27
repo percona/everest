@@ -51,6 +51,7 @@ export const Messages = {
     },
     sharding: {
       invalid: 'Please fill in valid values for sharding',
+      min: (val: number) => `The value cannot be less than ${val}`,
     },
   },
 };

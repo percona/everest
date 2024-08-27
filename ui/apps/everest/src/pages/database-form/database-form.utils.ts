@@ -33,14 +33,10 @@ export const DbClusterPayloadToFormValues = (
     dbCluster?.spec?.engine?.storage?.size.toString()
   );
 
+  const sharding = dbCluster?.spec?.sharding;
+
   return {
-    [DbWizardFormFields.backupsEnabled]: !!backup?.enabled,
-    [DbWizardFormFields.pitrEnabled]: backup?.pitr?.enabled || false,
-    [DbWizardFormFields.pitrStorageLocation]:
-      (backup?.pitr?.enabled && mode === 'new') || mode === 'edit'
-        ? backup?.pitr?.backupStorageName || null
-        : DB_WIZARD_DEFAULTS[DbWizardFormFields.pitrStorageLocation],
-    [DbWizardFormFields.schedules]: backup?.schedules || [],
+    //basic info
     [DbWizardFormFields.k8sNamespace]:
       namespace || DB_WIZARD_DEFAULTS[DbWizardFormFields.k8sNamespace],
     [DbWizardFormFields.dbType]: dbEngineToDbType(
@@ -54,22 +50,17 @@ export const DbClusterPayloadToFormValues = (
           )
         : dbCluster?.metadata?.name,
     [DbWizardFormFields.dbVersion]: dbCluster?.spec?.engine?.version || '',
-    [DbWizardFormFields.externalAccess]:
-      dbCluster?.spec?.proxy?.expose?.type === ProxyExposeType.external,
-    // [DbWizardFormFields.internetFacing]: true,
-    [DbWizardFormFields.engineParametersEnabled]:
-      !!dbCluster?.spec?.engine?.config,
-    [DbWizardFormFields.engineParameters]: dbCluster?.spec?.engine?.config,
-    [DbWizardFormFields.sourceRanges]: dbCluster?.spec?.proxy?.expose
-      ?.ipSourceRanges
-      ? dbCluster?.spec?.proxy?.expose?.ipSourceRanges.map((item) => ({
-          sourceRange: item,
-        }))
-      : [{ sourceRange: '' }],
-    [DbWizardFormFields.monitoring]:
-      !!dbCluster?.spec?.monitoring?.monitoringConfigName,
-    [DbWizardFormFields.monitoringInstance]:
-      dbCluster?.spec?.monitoring?.monitoringConfigName || '',
+    [DbWizardFormFields.sharding]: dbCluster?.spec?.sharding?.enabled || false,
+    [DbWizardFormFields.shardConfigServers]: (
+      sharding?.configServer?.replicas ||
+      (DB_WIZARD_DEFAULTS[DbWizardFormFields.shardConfigServers] as string)
+    ).toString(),
+    [DbWizardFormFields.shardNr]: (
+      sharding?.shards ||
+      (DB_WIZARD_DEFAULTS[DbWizardFormFields.shardNr] as string)
+    ).toString(),
+
+    //resources
     [DbWizardFormFields.numberOfNodes]: `${dbCluster?.spec?.proxy?.replicas}`,
     [DbWizardFormFields.resourceSizePerNode]:
       matchFieldsValueToResourceSize(dbCluster),
@@ -84,5 +75,34 @@ export const DbClusterPayloadToFormValues = (
     ).value,
     [DbWizardFormFields.storageClass]:
       dbCluster?.spec?.engine?.storage?.class || null,
+
+    //backups
+    [DbWizardFormFields.backupsEnabled]: !!backup?.enabled,
+    [DbWizardFormFields.pitrEnabled]: backup?.pitr?.enabled || false,
+    [DbWizardFormFields.pitrStorageLocation]:
+      (backup?.pitr?.enabled && mode === 'new') || mode === 'edit'
+        ? backup?.pitr?.backupStorageName || null
+        : DB_WIZARD_DEFAULTS[DbWizardFormFields.pitrStorageLocation],
+    [DbWizardFormFields.schedules]: backup?.schedules || [],
+
+    //advanced configuration
+    [DbWizardFormFields.externalAccess]:
+      dbCluster?.spec?.proxy?.expose?.type === ProxyExposeType.external,
+    // [DbWizardFormFields.internetFacing]: true,
+    [DbWizardFormFields.engineParametersEnabled]:
+      !!dbCluster?.spec?.engine?.config,
+    [DbWizardFormFields.engineParameters]: dbCluster?.spec?.engine?.config,
+    [DbWizardFormFields.sourceRanges]: dbCluster?.spec?.proxy?.expose
+      ?.ipSourceRanges
+      ? dbCluster?.spec?.proxy?.expose?.ipSourceRanges.map((item) => ({
+          sourceRange: item,
+        }))
+      : [{ sourceRange: '' }],
+
+    //monitoring
+    [DbWizardFormFields.monitoring]:
+      !!dbCluster?.spec?.monitoring?.monitoringConfigName,
+    [DbWizardFormFields.monitoringInstance]:
+      dbCluster?.spec?.monitoring?.monitoringConfigName || '',
   };
 };

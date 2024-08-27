@@ -6,6 +6,7 @@ import { ResourceSize } from './database-form-body/steps/resources/resources-ste
 import { DbWizardFormFields } from './database-form.types.ts';
 import { rfc_123_schema } from 'utils/common-validation.ts';
 import { Messages as ScheduleFormMessages } from 'components/schedule-form-dialog/schedule-form/schedule-form.messages.ts';
+import { DB_WIZARD_DEFAULTS } from './database-form.constants';
 
 const resourceToNumber = (minimum = 0) =>
   z.union([z.string().nonempty(), z.number()]).pipe(
@@ -43,14 +44,28 @@ const basicInfoSchema = z
   .superRefine(({ sharding, shardNr = '', shardConfigServers = '' }, ctx) => {
     if (sharding) {
       const intShardNr = parseInt(shardNr, 10);
+      const intShardNrMin = +(DB_WIZARD_DEFAULTS[
+        DbWizardFormFields.shardNr
+      ] as string);
       const intShardConfigServers = parseInt(shardConfigServers, 10);
+      const intShardConfigServersMin = +(DB_WIZARD_DEFAULTS[
+        DbWizardFormFields.shardConfigServers
+      ] as string);
 
-      if (Number.isNaN(intShardNr) || intShardNr <= 0) {
+      if (Number.isNaN(intShardNr) || intShardNr < 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: Messages.errors.sharding.invalid,
           path: [DbWizardFormFields.shardNr],
         });
+      } else {
+        if (intShardNr < intShardNrMin) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: Messages.errors.sharding.min(intShardNrMin),
+            path: [DbWizardFormFields.shardNr],
+          });
+        }
       }
 
       if (Number.isNaN(intShardConfigServers) || intShardConfigServers <= 0) {
@@ -59,6 +74,14 @@ const basicInfoSchema = z
           message: Messages.errors.sharding.invalid,
           path: [DbWizardFormFields.shardConfigServers],
         });
+      } else {
+        if (intShardConfigServers < intShardConfigServersMin) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: Messages.errors.sharding.min(intShardConfigServersMin),
+            path: [DbWizardFormFields.shardConfigServers],
+          });
+        }
       }
     }
   });
