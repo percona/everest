@@ -64,10 +64,10 @@ setup('Backup storages', async ({ request }) => {
   // ]
   const bucketNamespacesMap = getBucketNamespacesMap();
 
-  bucketNamespacesMap.forEach(async ([bucket, namespaces]) => {
+  bucketNamespacesMap.forEach(async ([bucket, namespace]) => {
     promises.push(
       doBackupCall(() =>
-        request.post('/v1/backup-storages/', {
+        request.post(`/v1/namespaces/${namespace}/backup-storages/`, {
           data: {
             name: bucket,
             description: 'CI test bucket',
@@ -75,7 +75,7 @@ setup('Backup storages', async ({ request }) => {
             bucketName: bucket,
             secretKey: EVEREST_LOCATION_SECRET_KEY,
             accessKey: EVEREST_LOCATION_ACCESS_KEY,
-            allowedNamespaces: namespaces,
+            allowedNamespaces: [],
             url: EVEREST_LOCATION_URL,
             region: EVEREST_LOCATION_REGION,
             verifyTLS: false,
