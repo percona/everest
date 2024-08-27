@@ -183,6 +183,7 @@ func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace
 			containers = append(containers, DatabaseClusterComponentContainer{
 				Name:     &c.Name, //nolint:exportloopref
 				Started:  startedString,
+				Ready:    &c.Ready, //nolint:exportloopref
 				Restarts: pointer.ToInt(int(c.RestartCount)),
 				Status:   &status,
 			})

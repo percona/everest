@@ -81,6 +81,15 @@ jobs:
               exit 1
             fi
           
+            # update IMAGE_TAG_OWNER in the Makefile to point to a correct org
+            if [[ $IS_RC == 1 ]]; then 
+              # if the RC build is being run over a Release build, there will be the "percona" org mentioned in the quickstart file, 
+              # so we should replace the org
+              sed -i "s/IMAGE_TAG_OWNER ?= docker.io\/percona\$/IMAGE_TAG_OWNER ?= docker.io\/perconalab/g" Makefile 
+            else
+              sed -i "s/IMAGE_TAG_OWNER ?= docker.io\/perconalab/IMAGE_TAG_OWNER ?= docker.io\/percona/g" Makefile 
+            fi 
+            
             make init
             make release
 
@@ -170,7 +179,7 @@ jobs:
           echo "::set-output name=image_to_check::$(echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1)"
 
       - name: Operator - run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.19.0
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: ${{ steps.set_operator_image.outputs.image_to_check }}
           format: 'table'
@@ -199,7 +208,7 @@ jobs:
           echo "::set-output name=image_to_check::$(echo "${{ steps.bundle_meta.outputs.tags }}" | head -n 1)"
 
       - name: Operator - Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.19.0
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: ${{ steps.set_operator_bundle_image.outputs.image_to_check }}
           format: 'table'
@@ -310,7 +319,7 @@ jobs:
 
 # TODO: fix the vulnerabilities in main and enable this check
 #      - name: Catalog - run Trivy vulnerability scanner
-#        uses: aquasecurity/trivy-action@0.19.0
+#        uses: aquasecurity/trivy-action@0.24.0
 #        with:
 #          image-ref: ${{ steps.set_catalog_image.outputs.image_to_check }}
 #          format: 'table'
@@ -440,7 +449,7 @@ jobs:
 
 # TODO: fix the vulnerabilities in main and enable this check
 #      - name: Everest - run Trivy vulnerability scanner
-#        uses: aquasecurity/trivy-action@0.19.0
+#        uses: aquasecurity/trivy-action@0.24.0
 #        with:
 #          image-ref: ${{ steps.set_everest_image.outputs.image_to_check }}
 #          format: 'table'

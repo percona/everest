@@ -1,5 +1,5 @@
-import { Add, Delete, Edit } from '@mui/icons-material';
-import { Box, Button, MenuItem } from '@mui/material';
+import { Add } from '@mui/icons-material';
+import { Box, Button } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
@@ -30,6 +30,9 @@ import {
   convertStoragesType,
 } from './storage-locations.utils';
 import { useNamespaces } from 'hooks/api/namespaces';
+import { useGetPermissions } from 'utils/useGetPermissions';
+import TableActionsMenu from '../../../components/table-actions-menu';
+import { StorageLocationsActionButtons } from './storage-locations-menu-actions';
 
 export const StorageLocations = () => {
   const queryClient = useQueryClient();
@@ -93,6 +96,9 @@ export const StorageLocations = () => {
     ],
     []
   );
+
+  const { canCreate } = useGetPermissions({ resource: 'backup-storages' });
+
   const handleOpenCreateModal = () => {
     setSelectedStorageLocation(undefined);
     setOpenCreateEditModal(true);
@@ -185,49 +191,29 @@ export const StorageLocations = () => {
         }}
         columns={columns}
         data={tableData}
-        renderTopToolbarCustomActions={() => (
-          <Button
-            size="small"
-            startIcon={<Add />}
-            data-testid="add-backup-storage"
-            variant="outlined"
-            onClick={handleOpenCreateModal}
-          >
-            {Messages.addStorageLocationButton}
-          </Button>
-        )}
+        renderTopToolbarCustomActions={() =>
+          canCreate && (
+            <Button
+              size="small"
+              startIcon={<Add />}
+              data-testid="add-backup-storage"
+              variant="outlined"
+              onClick={handleOpenCreateModal}
+              sx={{ display: 'flex' }}
+            >
+              {Messages.addStorageLocationButton}
+            </Button>
+          )
+        }
         enableRowActions
-        renderRowActionMenuItems={({ row, closeMenu }) => [
-          <MenuItem
-            key={0}
-            onClick={() => {
-              handleOpenEditModal(row.original);
-              closeMenu();
-            }}
-            sx={{ m: 0, display: 'flex', gap: 1, px: 2, py: '10px' }}
-          >
-            <Edit /> {Messages.edit}
-          </MenuItem>,
-          <MenuItem
-            key={1}
-            onClick={() => {
-              handleDeleteBackup(row.original.name, row.original.namespace);
-              closeMenu();
-            }}
-            sx={{ m: 0, display: 'flex', gap: 1, px: 2, py: '10px' }}
-          >
-            <Delete />
-            {Messages.delete}
-          </MenuItem>,
-          // TODO: uncomment when api is ready
-          // <MenuItem
-          //   key={2}
-          //   onClick={() => {}}
-          //   sx={{ m: 0, display: 'flex', gap: 1 }}
-          // >
-          //   <AutoAwesome /> Set as default
-          // </MenuItem>,
-        ]}
+        renderRowActions={({ row }) => {
+          const menuItems = StorageLocationsActionButtons(
+            row,
+            handleOpenEditModal,
+            handleDeleteBackup
+          );
+          return <TableActionsMenu menuItems={menuItems} />;
+        }}
         renderDetailPanel={({ row }) => (
           <Box
             sx={{

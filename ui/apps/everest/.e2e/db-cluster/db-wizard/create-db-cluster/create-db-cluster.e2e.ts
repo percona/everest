@@ -206,7 +206,7 @@ test.describe('DB Cluster creation', () => {
       addedCluster?.spec.engine.resources?.cpu.toString()
     );
     expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe('1G');
-    expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1G');
+    expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
     expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
     expect(addedCluster?.spec.proxy.replicas).toBe(3);
     // expect(addedCluster?.spec.proxy.expose.ipSourceRanges).toEqual([

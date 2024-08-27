@@ -19,7 +19,10 @@ var errPolicySyntax = errors.New("policy syntax error")
 
 func validatePolicy(enforcer *casbin.Enforcer) error {
 	// check basic policy syntax.
-	policy := enforcer.GetPolicy()
+	policy, err := enforcer.GetPolicy()
+	if err != nil {
+		return err
+	}
 	for _, policy := range policy {
 		if err := validateTerms(policy); err != nil {
 			return errors.Join(errPolicySyntax, err)
@@ -27,7 +30,10 @@ func validatePolicy(enforcer *casbin.Enforcer) error {
 	}
 
 	// ensure that non-existent roles are not used.
-	roles := enforcer.GetAllRoles()
+	roles, err := enforcer.GetAllRoles()
+	if err != nil {
+		return err
+	}
 	if err := checkRoles(roles, policy); err != nil {
 		return errors.Join(errPolicySyntax, err)
 	}
