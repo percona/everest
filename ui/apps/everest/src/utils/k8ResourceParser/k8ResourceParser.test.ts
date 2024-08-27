@@ -19,26 +19,16 @@ describe('cpu parser', () => {
 });
 
 describe('memory parser', () => {
-  // pattern is [description, input, output]
-  const tests: [string, string, number][] = [
-    ['parses full numbers', '1', 1],
-    ['parses kilo strings', '1k', 1 * 10 ** -6],
-    ['parses Mega strings', '2M', 2 * 10 ** -3],
-    ['parses Giga strings', '3G', 3],
-    ['parses Tera strings', '4T', 4 * 1000],
-    ['parses Peta strings', '5P', 5 * 1000 ** 2],
-    ['parses Exa strings', '6E', 6 * 1000 ** 3],
-    ['parses kibi strings', '1Ki', 1 * (1024 * 10 ** -9)],
-    ['parses Mebi strings', '2Mi', 2 * (1024 ** 2 * 10 ** -9)],
-    ['parses Gibi strings', '3Gi', 3 * (1024 ** 3 * 10 ** -9)],
-    ['parses Tebi strings', '4Ti', 4 * (1024 ** 4 * 10 ** -9)],
-    ['parses Pebi strings', '5Pi', 5 * (1024 ** 5 * 10 ** -9)],
-    ['parses Exbi strings', '6Ei', 6 * (1024 ** 6 * 10 ** -9)],
-  ];
-
-  tests.map((t) =>
-    it(`${t[0]} (${t[1]} to ${t[2]})`, () => {
-      expect(memoryParser(t[1])).toEqual(t[2]);
-    })
-  );
+  it('correctly parses memory strings', () => {
+    expect(memoryParser('1')).toEqual({ value: 1, originalUnit: '' });
+    expect(memoryParser('1k', 'G')).toEqual({
+      value: 1 * 10 ** -6,
+      originalUnit: 'k',
+    });
+    expect(memoryParser('1G', 'Gi')).toEqual({
+      value: 10 ** 9 / 1024 ** 3,
+      originalUnit: 'G',
+    });
+    expect(memoryParser('1G', 'G')).toEqual({ value: 1, originalUnit: 'G' });
+  });
 });

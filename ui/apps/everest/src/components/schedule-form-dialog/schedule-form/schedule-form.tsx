@@ -37,7 +37,6 @@ export const ScheduleForm = ({
   autoFillLocation,
   schedules,
   showTypeRadio,
-  hideRetentionCopies,
   disableNameEdit = false,
 }: ScheduleFormProps) => {
   const {
@@ -102,17 +101,15 @@ export const ScheduleForm = ({
         }}
         hideUsedStoragesInSchedules={dbEngine === DbEngineType.POSTGRESQL}
       />
-      {!hideRetentionCopies && (
-        <TextInput
-          name={ScheduleFormFields.retentionCopies}
-          textFieldProps={{
-            type: 'number',
-            label: Messages.retentionCopies.label,
-            helperText: Messages.retentionCopies.helperText,
-          }}
-          isRequired
-        />
-      )}
+      <TextInput
+        name={ScheduleFormFields.retentionCopies}
+        textFieldProps={{
+          type: 'number',
+          label: Messages.retentionCopies.label,
+          helperText: Messages.retentionCopies.helperText,
+        }}
+        isRequired
+      />
       <LabeledContent label={Messages.repeats}>
         <TimeSelection showInfoAlert errorInfoAlert={errorInfoAlert} />
       </LabeledContent>

@@ -532,6 +532,7 @@ type DatabaseClusterBackupList struct {
 // DatabaseClusterComponentContainer defines model for DatabaseClusterComponentContainer.
 type DatabaseClusterComponentContainer struct {
 	Name     *string `json:"name,omitempty"`
+	Ready    *bool   `json:"ready,omitempty"`
 	Restarts *int    `json:"restarts,omitempty"`
 	Started  *string `json:"started,omitempty"`
 	Status   *string `json:"status,omitempty"`
