@@ -41,6 +41,10 @@ type KubernetesConnector interface {
 	// IsBackupStorageUsed checks that a backup storage by provided name is used across k8s cluster.
 	// Optionally you can provide a list of namespaces which shall be checked. If not provided, all namespaces are checked.
 	IsBackupStorageUsed(ctx context.Context, namespace, backupStorageName string, nsList []string) (bool, error)
+	// WaitForCSVSucceeded waits until CSV phase is "succeeded".
+	WaitForCSVSucceeded(ctx context.Context, namespace, name string) error
+	// CSVNameFromOperator returns CSV name based on operator and version.
+	CSVNameFromOperator(operatorName string, version *goversion.Version) string
 	// GetConfigMap returns k8s configmap by provided name and namespace.
 	GetConfigMap(ctx context.Context, name, namespace string) (*corev1.ConfigMap, error)
 	// GetDeployment returns k8s deployment by provided name and namespace.
