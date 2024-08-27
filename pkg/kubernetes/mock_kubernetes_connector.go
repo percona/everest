@@ -1067,9 +1067,9 @@ func (_m *MockKubernetesConnector) InstallPerconaCatalog(ctx context.Context, _a
 	return r0
 }
 
-// IsBackupStorageUsed provides a mock function with given fields: ctx, namespace, backupStorageName, nsList
-func (_m *MockKubernetesConnector) IsBackupStorageUsed(ctx context.Context, namespace string, backupStorageName string, nsList []string) (bool, error) {
-	ret := _m.Called(ctx, namespace, backupStorageName, nsList)
+// IsBackupStorageUsed provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubernetesConnector) IsBackupStorageUsed(ctx context.Context, namespace string, name string) (bool, error) {
+	ret := _m.Called(ctx, namespace, name)
 
 	if len(ret) == 0 {
 		panic("no return value specified for IsBackupStorageUsed")
@@ -1077,17 +1077,17 @@ func (_m *MockKubernetesConnector) IsBackupStorageUsed(ctx context.Context, name
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, []string) (bool, error)); ok {
-		return rf(ctx, namespace, backupStorageName, nsList)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (bool, error)); ok {
+		return rf(ctx, namespace, name)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, []string) bool); ok {
-		r0 = rf(ctx, namespace, backupStorageName, nsList)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
+		r0 = rf(ctx, namespace, name)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, []string) error); ok {
-		r1 = rf(ctx, namespace, backupStorageName, nsList)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, name)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1095,9 +1095,9 @@ func (_m *MockKubernetesConnector) IsBackupStorageUsed(ctx context.Context, name
 	return r0, r1
 }
 
-// IsMonitoringConfigUsed provides a mock function with given fields: ctx, namespace, monitoringConfigName, nsList
-func (_m *MockKubernetesConnector) IsMonitoringConfigUsed(ctx context.Context, namespace string, monitoringConfigName string, nsList []string) (bool, error) {
-	ret := _m.Called(ctx, namespace, monitoringConfigName, nsList)
+// IsMonitoringConfigUsed provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubernetesConnector) IsMonitoringConfigUsed(ctx context.Context, namespace string, name string) (bool, error) {
+	ret := _m.Called(ctx, namespace, name)
 
 	if len(ret) == 0 {
 		panic("no return value specified for IsMonitoringConfigUsed")
@@ -1105,17 +1105,17 @@ func (_m *MockKubernetesConnector) IsMonitoringConfigUsed(ctx context.Context, n
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, []string) (bool, error)); ok {
-		return rf(ctx, namespace, monitoringConfigName, nsList)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (bool, error)); ok {
+		return rf(ctx, namespace, name)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, []string) bool); ok {
-		r0 = rf(ctx, namespace, monitoringConfigName, nsList)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
+		r0 = rf(ctx, namespace, name)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, []string) error); ok {
-		r1 = rf(ctx, namespace, monitoringConfigName, nsList)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, name)
 	} else {
 		r1 = ret.Error(1)
 	}

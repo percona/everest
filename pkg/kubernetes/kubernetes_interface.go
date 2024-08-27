@@ -38,9 +38,11 @@ type KubernetesConnector interface {
 	UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
 	// DeleteBackupStorage returns backup storages by provided name.
 	DeleteBackupStorage(ctx context.Context, namespace, name string) error
-	// IsBackupStorageUsed checks that a backup storage by provided name is used across k8s cluster.
-	// Optionally you can provide a list of namespaces which shall be checked. If not provided, all namespaces are checked.
-	IsBackupStorageUsed(ctx context.Context, namespace, backupStorageName string, nsList []string) (bool, error)
+	// IsBackupStorageUsed checks if a backup storage in a given namespace is used by any clusters
+	// in that namespace.
+	//
+	//nolint:cyclop
+	IsBackupStorageUsed(ctx context.Context, namespace, name string) (bool, error)
 	// WaitForCSVSucceeded waits until CSV phase is "succeeded".
 	WaitForCSVSucceeded(ctx context.Context, namespace, name string) error
 	// CSVNameFromOperator returns CSV name based on operator and version.
@@ -141,9 +143,8 @@ type KubernetesConnector interface {
 	UpdateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) error
 	// DeleteMonitoringConfig returns monitoring configs by provided name.
 	DeleteMonitoringConfig(ctx context.Context, namespace, name string) error
-	// IsMonitoringConfigUsed checks that a backup storage by provided name is used across k8s cluster.
-	// Optionally you can provide a list of namespaces which shall be checked. If not provided, all namespaces are checked.
-	IsMonitoringConfigUsed(ctx context.Context, namespace, monitoringConfigName string, nsList []string) (bool, error)
+	// IsMonitoringConfigUsed checks if a monitoring config is used by any database cluster in the provided namespace.
+	IsMonitoringConfigUsed(ctx context.Context, namespace, name string) (bool, error)
 	// GetMonitoringConfigsBySecretName returns a list of monitoring configs which use
 	// the provided secret name.
 	GetMonitoringConfigsBySecretName(ctx context.Context, namespace, secretName string) ([]*everestv1alpha1.MonitoringConfig, error)
