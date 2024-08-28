@@ -28,7 +28,6 @@ import {
 import { dbEngineToDbType, dbTypeToDbEngine } from '@percona/utils';
 import { useDbEngines } from 'hooks/api/db-engines/useDbEngines';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
-import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { useFormContext } from 'react-hook-form';
 import { DbEngineToolStatus } from 'shared-types/dbEngines.types';
 import { DB_WIZARD_DEFAULTS } from '../../../database-form.constants.ts';
@@ -54,8 +53,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
 
   const { data: clusterInfo, isFetching: clusterInfoFetching } =
     useKubernetesClusterInfo(['wizard-k8-info']);
-  const { data: namespaces = [], isFetching: namespacesFetching } =
-    useNamespaces();
   const dbType: DbType = watch(DbWizardFormFields.dbType);
   const dbVersion: DbType = watch(DbWizardFormFields.dbVersion);
   const dbNamespace = watch(DbWizardFormFields.k8sNamespace);
@@ -220,20 +217,24 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     setDbEngineDataForEngineType();
   }, [setDbEngineDataForEngineType]);
 
+  const { permittedNamespaces, isFetching } = useGetPermittedNamespaces({
+    resource: 'database-clusters',
+  });
+
   useEffect(() => {
     const { isTouched: k8sNamespaceTouched } = getFieldState(
       DbWizardFormFields.k8sNamespace
     );
-    if (!k8sNamespaceTouched && mode === 'new' && namespaces?.length > 0) {
-      setValue(DbWizardFormFields.k8sNamespace, namespaces[0]);
+    if (
+      !k8sNamespaceTouched &&
+      mode === 'new' &&
+      permittedNamespaces?.length > 0
+    ) {
+      setValue(DbWizardFormFields.k8sNamespace, permittedNamespaces[0]);
       trigger(DbWizardFormFields.k8sNamespace);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [namespaces, mode]);
-
-  const permittedNamespaces = useGetPermittedNamespaces({
-    resource: 'database-clusters',
-  });
+  }, [mode, isFetching]);
 
   return (
     <>
@@ -248,7 +249,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           }}
           name={DbWizardFormFields.k8sNamespace}
           label={Messages.labels.k8sNamespace}
-          loading={namespacesFetching}
+          loading={isFetching}
           options={permittedNamespaces || []}
           disabled={
             mode === 'edit' ||

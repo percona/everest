@@ -24,7 +24,7 @@ import { Messages } from './monitoring-endpoints.messages';
 import { useNamespaces } from 'hooks/api/namespaces';
 import { convertMonitoringInstancesPayloadToTableFormat } from './monitoring-endpoints.utils';
 import { MonitoringInstanceTableElement } from './monitoring-endpoints.types';
-import { useGetPermissions } from 'utils/useGetPermissions';
+import { useGetPermittedNamespaces } from 'utils/useGetPermissions';
 import TableActionsMenu from '../../../components/table-actions-menu';
 import { MonitoringActionButtons } from './monitoring-endpoint-menu-actions';
 
@@ -161,7 +161,9 @@ export const MonitoringEndpoints = () => {
     );
   };
 
-  const { canCreate } = useGetPermissions({ resource: 'monitoring-instances' });
+  const { canCreate } = useGetPermittedNamespaces({
+    resource: 'monitoring-instances',
+  });
 
   return (
     <>

@@ -27,6 +27,7 @@ export const ConnectionDetails = ({
   username,
   password,
   port,
+  canReadCredentials,
 }: ConnectionDetailsOverviewCardProps) => {
   return (
     <OverviewSection
@@ -54,14 +55,18 @@ export const ConnectionDetails = ({
         label={Messages.fields.port}
         contentString={`${port}`}
       />
-      <OverviewSectionRow
-        label={Messages.fields.username}
-        contentString={username}
-      />
-      <OverviewSectionRow
-        label={Messages.fields.password}
-        content={<HiddenPasswordToggle showCopy value={password} />}
-      />
+      {canReadCredentials && (
+        <>
+          <OverviewSectionRow
+            label={Messages.fields.username}
+            contentString={username}
+          />
+          <OverviewSectionRow
+            label={Messages.fields.password}
+            content={<HiddenPasswordToggle showCopy value={password} />}
+          />
+        </>
+      )}
       {/*//TODO https://perconadev.atlassian.net/browse/EVEREST-1255 Connection URL*/}
     </OverviewSection>
   );

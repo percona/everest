@@ -36,6 +36,9 @@ export const DbDetails = ({
   monitoring,
   externalAccess,
   parameters,
+  canReadMonitoring,
+  canUpdateMonitoring,
+  canReadCredentials,
 }: DatabaseDetailsOverviewCardProps) => {
   return (
     <OverviewCard
@@ -54,14 +57,22 @@ export const DbDetails = ({
           version={version}
         />
         <ConnectionDetails
+          clusterName={name}
           loading={loading}
           loadingClusterDetails={loadingClusterDetails}
           port={port}
           username={username}
-          hostname={hostname}
           password={password}
+          hostname={hostname}
+          canReadCredentials={canReadCredentials}
         />
-        <MonitoringDetails loading={loading} monitoring={monitoring} />
+        {canReadMonitoring && (
+          <MonitoringDetails
+            loading={loading}
+            monitoring={monitoring}
+            canUpdateMonitoring={canUpdateMonitoring}
+          />
+        )}
         <AdvancedConfiguration
           externalAccess={externalAccess}
           parameters={parameters}

@@ -25,6 +25,7 @@ import { useUpdateDbClusterMonitoring } from 'hooks/api/db-cluster/useUpdateDbCl
 export const MonitoringDetails = ({
   loading,
   monitoring,
+  canUpdateMonitoring,
 }: MonitoringConfigurationOverviewCardProps) => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const { dbCluster } = useContext(DbClusterContext);
@@ -54,7 +55,7 @@ export const MonitoringDetails = ({
           setOpenEditModal(true);
         },
       }}
-      editable={true}
+      editable={canUpdateMonitoring}
     >
       <OverviewSectionRow
         label={Messages.fields.status}
