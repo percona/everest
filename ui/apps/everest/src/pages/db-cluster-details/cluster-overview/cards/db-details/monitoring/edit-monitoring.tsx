@@ -13,6 +13,7 @@ import { useMonitoringInstancesList } from 'hooks/api/monitoring/useMonitoringIn
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMemo } from 'react';
 import ActionableAlert from 'components/actionable-alert';
+import { convertMonitoringInstancesPayloadToTableFormat } from 'pages/settings/monitoring-endpoints/monitoring-endpoints.utils';
 
 export const MonitoringEditModal = ({
   open,
@@ -29,13 +30,23 @@ export const MonitoringEditModal = ({
   };
 
   const { namespace = '' } = useParams();
-  const { data: monitoringInstances, isFetching: monitoringInstancesLoading } =
-    useMonitoringInstancesList();
+  const namespaces = [namespace];
+  const monitoringInstancesResult = useMonitoringInstancesList(namespaces);
+
+  const monitoringInstancesLoading = monitoringInstancesResult.some(
+    (result) => result.queryResult.isLoading
+  );
+
+  const monitoringInstances = useMemo(
+    () =>
+      convertMonitoringInstancesPayloadToTableFormat(monitoringInstancesResult),
+    [monitoringInstancesResult]
+  );
 
   const availableMonitoringInstances = useMemo(
     () =>
-      (monitoringInstances || []).filter((item) =>
-        item.allowedNamespaces.includes(namespace)
+      (monitoringInstances || []).filter(
+        (item) => item.namespace === namespace
       ),
     [monitoringInstances, namespace]
   );

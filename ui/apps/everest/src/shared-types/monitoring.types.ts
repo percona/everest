@@ -2,6 +2,7 @@ export interface MonitoringInstance {
   type: string;
   url: string;
   name: string;
+  namespace: string;
   allowedNamespaces: string[];
   verifyTLS: boolean;
 }
