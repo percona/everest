@@ -18,7 +18,6 @@ import { updateDbClusterFn } from 'api/dbClusterApi';
 import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import cronConverter from 'utils/cron-converter';
-import { DbType } from '@percona/types';
 
 type UpdateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -103,15 +102,15 @@ const formValuesToPayloadOverrides = (
             }),
         },
       },
-      ...(dbPayload.dbType === DbType.Mongo && {
-        sharding: {
-          enabled: dbPayload.sharding,
-          shards: +(dbPayload.shardNr ?? 1),
-          configServer: {
-            replicas: +(dbPayload.shardConfigServers ?? 3),
-          },
-        },
-      }),
+      // ...(dbPayload.dbType === DbType.Mongo && {
+      //   sharding: {
+      //     enabled: dbPayload.sharding,
+      //     shards: +(dbPayload.shardNr ?? 1),
+      //     configServer: {
+      //       replicas: +(dbPayload.shardConfigServers ?? 3),
+      //     },
+      //   },
+      // }),
     },
   };
 };

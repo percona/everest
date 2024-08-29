@@ -348,7 +348,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             disabled: mode === 'edit' || loadingDefaultsForEdition,
           }}
         />
-        {dbType === DbType.Mongo && (
+        {dbType === DbType.Mongo && mode === 'new' && (
           <>
             <Typography variant="sectionHeading" sx={{ mt: 4 }}>
               Shards
@@ -388,6 +388,9 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                   textFieldProps={{
                     label: Messages.labels.numberOfShards,
                     type: 'number',
+                    inputProps: {
+                      min: DB_WIZARD_DEFAULTS[DbWizardFormFields.shardNr],
+                    },
                   }}
                 />
                 <TextInput
@@ -395,6 +398,12 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                   textFieldProps={{
                     label: Messages.labels.numberOfConfigServers,
                     type: 'number',
+                    inputProps: {
+                      step: '2',
+                      min: DB_WIZARD_DEFAULTS[
+                        DbWizardFormFields.shardConfigServers
+                      ],
+                    },
                   }}
                 />
               </>

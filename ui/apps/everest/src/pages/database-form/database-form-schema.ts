@@ -81,6 +81,12 @@ const basicInfoSchema = z
             message: Messages.errors.sharding.min(intShardConfigServersMin),
             path: [DbWizardFormFields.shardConfigServers],
           });
+        } else if (!(intShardConfigServers % 2)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: Messages.errors.sharding.odd,
+            path: [DbWizardFormFields.shardConfigServers],
+          });
         }
       }
     }
