@@ -215,12 +215,16 @@ func (u *Upgrade) Run(ctx context.Context) error {
 					return err
 				}
 			}
-			// RBAC is added in 1.2.x, so if we're upgrading to that version, we need to ensure
-			// that the RBAC configmap is present.
 			if common.CheckConstraint(upgradeEverestTo, "~> 1.2.0") {
+				// RBAC is added in 1.2.x, so if we're upgrading to that version, we need to ensure
+				// that the RBAC configmap is present.
 				skipObjects = slices.DeleteFunc(skipObjects, func(o client.Object) bool {
 					return o.GetName() == common.EverestRBACConfigMapName
 				})
+				// Migrate monitoring-configs and backup-storages.
+				if err := u.migrateSharedResources(ctx); err != nil {
+					return fmt.Errorf("migration of shared resources failed: %w", err)
+				}
 			}
 			// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
 			if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo, skipObjects...); err != nil {

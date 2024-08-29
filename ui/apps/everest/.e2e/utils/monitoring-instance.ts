@@ -48,19 +48,17 @@ export const createMonitoringInstance = async (
 
 export const deleteMonitoringInstance = async (
   request: APIRequestContext,
+  namespace,
   name,
   token: string
 ) => {
-  const response = await request.delete(`/v1/monitoring-instances/${name}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await request.delete(
+    `/v1/namespaces/${namespace}/monitoring-instances/${name}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
   expect(response.ok()).toBeTruthy();
-};
-
-export const getMonitoringInstanceList = async (request) => {
-  const response = await request.get('/v1/monitoring-instances');
-  expect(response.ok()).toBeTruthy();
-  return response.json();
 };

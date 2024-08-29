@@ -7,15 +7,21 @@ export const ConfirmDialog = ({
   isOpen,
   closeModal,
   selectedId,
+  selectedNamespace,
   children: content,
-  handleConfirm,
+  handleConfirm = () => {},
+  handleConfirmNamespace = () => {},
   headerMessage,
   cancelMessage = 'Cancel',
   submitMessage = 'Delete',
   disabledButtons = false,
 }: ConfirmDialogProps) => {
   const onClick = () => {
-    handleConfirm(selectedId);
+    if (selectedNamespace) {
+      handleConfirmNamespace(selectedId, selectedNamespace);
+    } else {
+      handleConfirm(selectedId);
+    }
   };
 
   return (
