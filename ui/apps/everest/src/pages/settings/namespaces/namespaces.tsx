@@ -7,7 +7,7 @@ import { NamespaceInstance } from 'shared-types/namespaces.types';
 import { useDBEnginesForNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { operatorUpgradePlanQueryFn } from 'hooks/api/db-engines';
 import { Messages } from './namespaces.messages';
-import { OperatorCell } from './operatorCell';
+import { OperatorCell } from './OperatorCell';
 
 export const Namespaces = () => {
   const dbEngines = useDBEnginesForNamespaces();
