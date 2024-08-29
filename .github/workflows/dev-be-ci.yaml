@@ -255,7 +255,7 @@ jobs:
           cpus: 2
           memory: 2000m
           addons: registry
-          insecure-registry: 'localhost:5000'
+          insecure-registry: '127.0.0.1:5000'
 
       - name: Expose local registry
         run: |
