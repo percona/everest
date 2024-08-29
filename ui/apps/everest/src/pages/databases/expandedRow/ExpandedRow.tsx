@@ -97,7 +97,7 @@ export const ExpandedRow = ({
           ))}
         />
         <LabelValue label="Port" value={port} />
-        {isPending || isFetching ? (
+        {canRead && (isPending || isFetching) ? (
           <>
             <Skeleton width="300px" />
             <Skeleton width="300px" />
