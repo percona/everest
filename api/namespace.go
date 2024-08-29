@@ -6,6 +6,7 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
+
 	"github.com/percona/everest/pkg/rbac"
 )
 
