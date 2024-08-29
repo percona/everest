@@ -2,8 +2,6 @@ module github.com/percona/everest/tools
 
 go 1.22.6
 
-toolchain go1.22.6
-
 require (
 	github.com/daixiang0/gci v0.13.4
 	github.com/deepmap/oapi-codegen/v2 v2.1.0
