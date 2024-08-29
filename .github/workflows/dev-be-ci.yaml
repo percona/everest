@@ -262,6 +262,7 @@ jobs:
       - name: Patch registry addon image
         run: |
           kubectl get daemonsets.apps -n kube-system registry-proxy -ojson | jq -r '.spec.template.spec.containers[0].image = "gcr.io/google_containers/kube-registry-proxy:0.4"' | kubectl apply -f -
+          kubectl rollout -n kube-system status daemonset/registry-proxy --timeout=120s
 
       - name: Expose local registry
         run: |
