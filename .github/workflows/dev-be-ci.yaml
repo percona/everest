@@ -256,7 +256,6 @@ jobs:
           memory: 2000m
           addons: registry
           insecure-registry: 'localhost:5000'
-          start-args: '--base-image=docker.io/kicbase/stable:v0.0.44'
 
       # This is a temporary workaround to fix the registry-proxy image in the minikube registry.
       # See: https://github.com/kubernetes/minikube/issues/19535
