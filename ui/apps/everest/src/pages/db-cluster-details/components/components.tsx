@@ -25,6 +25,7 @@ import { format, formatDistanceToNowStrict, isValid } from 'date-fns';
 import {
   COMPONENT_STATUS,
   COMPONENT_STATUS_TO_BASE_STATUS,
+  COMPONENT_STATUS_WEIGHT,
 } from './components.constants';
 import ExpandedRow from './expanded-row';
 import { DATE_FORMAT } from 'consts';
@@ -50,6 +51,12 @@ const Components = () => {
             {capitalize(cell?.row?.original?.status)}
           </StatusField>
         ),
+        sortingFn: (rowA, rowB) => {
+          return (
+            COMPONENT_STATUS_WEIGHT[rowA?.original?.status] -
+            COMPONENT_STATUS_WEIGHT[rowB?.original?.status]
+          );
+        },
       },
       {
         header: 'Name',
@@ -91,6 +98,14 @@ const Components = () => {
 
   return (
     <Table
+      initialState={{
+        sorting: [
+          {
+            id: 'status',
+            desc: true,
+          },
+        ],
+      }}
       state={{ isLoading: isFetching && components?.length === 0 }}
       tableName={`${dbClusterName}-components`}
       columns={columns}
