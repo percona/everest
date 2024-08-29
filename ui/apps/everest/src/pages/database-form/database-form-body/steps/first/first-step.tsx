@@ -228,13 +228,14 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     if (
       !k8sNamespaceTouched &&
       mode === 'new' &&
-      permittedNamespaces?.length > 0
+      permittedNamespaces?.length > 0 &&
+      !isFetching
     ) {
       setValue(DbWizardFormFields.k8sNamespace, permittedNamespaces[0]);
       trigger(DbWizardFormFields.k8sNamespace);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, isFetching]);
+  }, [mode, isFetching, permittedNamespaces?.length]);
 
   return (
     <>
