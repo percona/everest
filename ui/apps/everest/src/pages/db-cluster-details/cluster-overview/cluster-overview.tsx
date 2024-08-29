@@ -21,29 +21,15 @@ import { DbDetails, ResourcesDetails } from './cards';
 import { useContext } from 'react';
 import { DbClusterContext } from '../dbCluster.context';
 import { BackupsDetails } from './cards/backups-details';
-import { useGetPermissions } from 'utils/useGetPermissions';
 import { useDbClusterCredentials } from 'hooks/api/db-cluster/useCreateDbCluster';
 
 export const ClusterOverview = () => {
   const { dbClusterName, namespace = '' } = useParams();
-  const { dbCluster, isLoading: loadingCluster } = useContext(DbClusterContext);
-
-  const { canRead: canReadBackups } = useGetPermissions({
-    resource: 'database-cluster-backups',
-    specificResource: dbClusterName,
-    namespace: namespace,
-  });
-  const { canRead: canReadMonitoring, canUpdate: canUpdateMonitoring } =
-    useGetPermissions({
-      resource: 'monitoring-instances',
-      namespace: namespace,
-    });
-
-  const { canRead: canReadCredentials } = useGetPermissions({
-    resource: 'database-cluster-credentials',
-    specificResource: dbClusterName,
-    namespace: namespace,
-  });
+  const {
+    dbCluster,
+    isLoading: loadingCluster,
+    canReadBackups,
+  } = useContext(DbClusterContext);
 
   const { data: dbClusterDetails, isFetching: fetchingClusterDetails } =
     useDbClusterCredentials(dbClusterName || '', namespace, {
@@ -77,9 +63,6 @@ export const ClusterOverview = () => {
         externalAccess={
           dbCluster?.spec.proxy.expose.type === ProxyExposeType.external
         }
-        canReadMonitoring={canReadMonitoring}
-        canUpdateMonitoring={canUpdateMonitoring}
-        canReadCredentials={canReadCredentials}
         monitoring={dbCluster?.spec.monitoring.monitoringConfigName}
         parameters={!!dbCluster?.spec.engine.config} //TODO EVEREST-1210 waits https://perconacorp.slack.com/archives/C0545J2BEJX/p1721309559055999
       />

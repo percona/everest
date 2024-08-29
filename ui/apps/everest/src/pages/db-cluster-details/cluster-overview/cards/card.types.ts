@@ -36,7 +36,6 @@ export type ConnectionDetailsOverviewCardProps = {
   password: string;
   clusterName?: string;
   clusterNamespace?: string;
-  canReadCredentials?: boolean;
 } & OverviewCardProps;
 
 export type AdvancedConfigurationOverviewCardProps = {
@@ -46,8 +45,6 @@ export type AdvancedConfigurationOverviewCardProps = {
 
 export type MonitoringConfigurationOverviewCardProps = {
   monitoring?: string;
-  canReadMonitoring?: boolean;
-  canUpdateMonitoring?: boolean;
 } & OverviewCardProps;
 
 export type DatabaseDetailsOverviewCardProps =

@@ -25,10 +25,9 @@ import { useUpdateDbClusterMonitoring } from 'hooks/api/db-cluster/useUpdateDbCl
 export const MonitoringDetails = ({
   loading,
   monitoring,
-  canUpdateMonitoring,
 }: MonitoringConfigurationOverviewCardProps) => {
   const [openEditModal, setOpenEditModal] = useState(false);
-  const { dbCluster } = useContext(DbClusterContext);
+  const { dbCluster, canUpdateMonitoring } = useContext(DbClusterContext);
   const { mutate: updateDbClusterMonitoring } = useUpdateDbClusterMonitoring();
 
   const handleCloseModal = () => {

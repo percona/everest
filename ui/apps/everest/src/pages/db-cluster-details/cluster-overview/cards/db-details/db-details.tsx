@@ -21,6 +21,8 @@ import { BasicInformationSection } from './basic';
 import { ConnectionDetails } from './connection-details';
 import { MonitoringDetails } from './monitoring/monitoring';
 import { AdvancedConfiguration } from './advanced-configuration';
+import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
+import { useContext } from 'react';
 
 export const DbDetails = ({
   loading,
@@ -36,10 +38,9 @@ export const DbDetails = ({
   monitoring,
   externalAccess,
   parameters,
-  canReadMonitoring,
-  canUpdateMonitoring,
-  canReadCredentials,
 }: DatabaseDetailsOverviewCardProps) => {
+  const { canReadMonitoring } = useContext(DbClusterContext);
+
   return (
     <OverviewCard
       dataTestId="database-details"
@@ -64,14 +65,9 @@ export const DbDetails = ({
           username={username}
           password={password}
           hostname={hostname}
-          canReadCredentials={canReadCredentials}
         />
         {canReadMonitoring && (
-          <MonitoringDetails
-            loading={loading}
-            monitoring={monitoring}
-            canUpdateMonitoring={canUpdateMonitoring}
-          />
+          <MonitoringDetails loading={loading} monitoring={monitoring} />
         )}
         <AdvancedConfiguration
           externalAccess={externalAccess}

@@ -20,6 +20,8 @@ import OverviewSectionRow from '../../overview-section-row';
 import { Box, Typography } from '@mui/material';
 import { CopyToClipboardButton } from '@percona/ui-lib';
 import { HiddenPasswordToggle } from 'components/hidden-row';
+import { useContext } from 'react';
+import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
 
 export const ConnectionDetails = ({
   loading,
@@ -27,8 +29,9 @@ export const ConnectionDetails = ({
   username,
   password,
   port,
-  canReadCredentials,
 }: ConnectionDetailsOverviewCardProps) => {
+  const { canReadCredentials } = useContext(DbClusterContext);
+
   return (
     <OverviewSection
       title={Messages.titles.connectionDetails}
