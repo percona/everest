@@ -1363,7 +1363,7 @@ func TestValidateShardingOnUpdate(t *testing.T) {
 					},
 				},
 			},
-			expected: errChangeConfigServerNumberNotSupported,
+			expected: errChangeCfgSrvNotSupported,
 		},
 		{
 			desc:    "try to change shards",
@@ -1379,7 +1379,7 @@ func TestValidateShardingOnUpdate(t *testing.T) {
 					},
 				},
 			},
-			expected: errChangeShardsNumberNotSupported,
+			expected: errChangeShardsNumNotSupported,
 		},
 		{
 			desc:    "ok",
@@ -1439,7 +1439,7 @@ func TestValidateSharding(t *testing.T) {
 		{
 			desc:     "insufficient configservers",
 			updated:  []byte(`{"spec": {"engine": {"type": "psmdb"}, "sharding": {"enabled": true, "shards": 1,"configServer": {"replicas": 1}}}}`),
-			expected: errInsufficientConfigServersNumber,
+			expected: errInsufficientCfgSrvNumber,
 		},
 		{
 			desc:     "insufficient shards number",
