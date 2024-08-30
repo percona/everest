@@ -19,7 +19,10 @@ import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
 import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
 import { useDbBackups } from 'hooks/api/backups/useBackups';
 import { DbEngineType } from '@percona/types';
-import { useGetPermissions } from 'utils/useGetPermissions';
+import {
+  useGetPermissions,
+  useGetPermittedNamespaces,
+} from 'utils/useGetPermissions';
 
 export const DbActionButton = ({
   dbCluster,
@@ -65,7 +68,9 @@ export const DbActionButton = ({
     dbCluster?.spec.engine.type === DbEngineType.POSTGRESQL;
   const hideCheckbox = !backups.length;
 
-  const { canCreate } = useGetPermissions({ resource: 'database-clusters' });
+  const { canCreate } = useGetPermittedNamespaces({
+    resource: 'database-clusters',
+  });
 
   const { canCreate: canCreateRestore } = useGetPermissions({
     resource: 'database-cluster-restores',

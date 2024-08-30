@@ -10,7 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { BackupStorage } from 'shared-types/backupStorages.types';
 import { updateDataAfterCreate } from 'utils/generalOptimisticDataUpdate';
 import { Messages } from '../backups.messages';
-import { useGetPermissions } from 'utils/useGetPermissions';
+import { useGetPermittedNamespaces } from 'utils/useGetPermissions';
 
 export const NoStoragesMessage = () => {
   const queryClient = useQueryClient();
@@ -37,7 +37,9 @@ export const NoStoragesMessage = () => {
     setOpenCreateEditModal(false);
   };
 
-  const { canCreate } = useGetPermissions({ resource: 'backup-storages' });
+  const { canCreate } = useGetPermittedNamespaces({
+    resource: 'backup-storages',
+  });
   return (
     <Box
       sx={{

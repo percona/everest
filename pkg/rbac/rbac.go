@@ -44,6 +44,7 @@ import (
 
 // Everest API resource names.
 const (
+	ResourceNamespaces              = "namespaces"
 	ResourceDatabaseClusterBackups  = "database-cluster-backups"
 	ResourceDatabaseClusterRestores = "database-cluster-restores"
 )
@@ -212,8 +213,9 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 		}
 		switch resource {
 		case "namespaces":
-			name := c.Param("name")
-			object = name
+			// Always allow this operation to list namespaces,
+			// however, we filter the result based on permission.
+			return true, nil
 		default:
 			namespace := c.Param("namespace")
 			name := c.Param("name")

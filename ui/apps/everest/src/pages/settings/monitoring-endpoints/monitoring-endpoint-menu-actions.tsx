@@ -28,6 +28,7 @@ export const MonitoringActionButtons = (
   const { canUpdate, canDelete } = useGetPermissions({
     resource: 'monitoring-instances',
     specificResource: row.original.name,
+    namespace: row.original.namespace,
   });
   return [
     ...(canUpdate

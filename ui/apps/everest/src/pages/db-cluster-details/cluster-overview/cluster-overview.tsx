@@ -15,17 +15,22 @@
 
 import { Stack } from '@mui/material';
 import { dbEngineToDbType } from '@percona/utils';
-import { useDbClusterCredentials } from 'hooks/api/db-cluster/useCreateDbCluster';
 import { useParams } from 'react-router-dom';
 import { ProxyExposeType } from 'shared-types/dbCluster.types';
 import { DbDetails, ResourcesDetails } from './cards';
 import { useContext } from 'react';
 import { DbClusterContext } from '../dbCluster.context';
 import { BackupsDetails } from './cards/backups-details';
+import { useDbClusterCredentials } from 'hooks/api/db-cluster/useCreateDbCluster';
 
 export const ClusterOverview = () => {
   const { dbClusterName, namespace = '' } = useParams();
-  const { dbCluster, isLoading: loadingCluster } = useContext(DbClusterContext);
+  const {
+    dbCluster,
+    isLoading: loadingCluster,
+    canReadBackups,
+  } = useContext(DbClusterContext);
+
   const { data: dbClusterDetails, isFetching: fetchingClusterDetails } =
     useDbClusterCredentials(dbClusterName || '', namespace, {
       enabled: !!dbClusterName,
@@ -68,13 +73,15 @@ export const ClusterOverview = () => {
         disk={dbCluster?.spec.engine.storage.size!}
         loading={loadingCluster}
       />
-      <BackupsDetails
-        backup={dbCluster?.spec.backup!}
-        schedules={dbCluster?.spec.backup?.schedules}
-        pitrEnabled={dbCluster?.spec.backup?.pitr?.enabled!}
-        pitrStorageName={dbCluster?.spec.backup?.pitr?.backupStorageName!}
-        loading={loadingCluster}
-      />
+      {canReadBackups && (
+        <BackupsDetails
+          backup={dbCluster?.spec.backup!}
+          schedules={dbCluster?.spec.backup?.schedules}
+          pitrEnabled={dbCluster?.spec.backup?.pitr?.enabled!}
+          pitrStorageName={dbCluster?.spec.backup?.pitr?.backupStorageName!}
+          loading={loadingCluster}
+        />
+      )}
     </Stack>
   );
 };
