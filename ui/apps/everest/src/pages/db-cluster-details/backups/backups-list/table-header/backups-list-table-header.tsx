@@ -41,6 +41,7 @@ const BackupListTableHeader = ({
   };
   const { canCreate } = useGetPermissions({
     resource: 'database-cluster-backups',
+    namespace: dbCluster.metadata.namespace,
   });
 
   const { canUpdate: canUpdateDb } = useGetPermissions({

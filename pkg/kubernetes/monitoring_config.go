@@ -53,38 +53,27 @@ func (k *Kubernetes) DeleteMonitoringConfig(ctx context.Context, namespace, name
 	return k.client.DeleteMonitoringConfig(ctx, namespace, name)
 }
 
-// IsMonitoringConfigUsed checks that a backup storage by provided name is used across k8s cluster.
-// Optionally you can provide a list of namespaces which shall be checked. If not provided, all namespaces are checked.
-func (k *Kubernetes) IsMonitoringConfigUsed(ctx context.Context, namespace, monitoringConfigName string, nsList []string) (bool, error) {
-	_, err := k.client.GetMonitoringConfig(ctx, namespace, monitoringConfigName)
+// IsMonitoringConfigUsed checks if a monitoring config is used by any database cluster in the provided namespace.
+func (k *Kubernetes) IsMonitoringConfigUsed(ctx context.Context, namespace, name string) (bool, error) {
+	_, err := k.client.GetMonitoringConfig(ctx, namespace, name)
 	if err != nil {
 		return false, err
-	}
-
-	namespaces := nsList
-	if len(nsList) == 0 {
-		namespaces, err = k.GetDBNamespaces(ctx)
-		if err != nil {
-			return false, err
-		}
 	}
 
 	options := metav1.ListOptions{
 		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
 			MatchLabels: map[string]string{
-				monitoringConfigNameLabel: monitoringConfigName,
+				monitoringConfigNameLabel: name,
 			},
 		}),
 	}
 
-	for _, ns := range namespaces {
-		list, err := k.client.ListDatabaseClusters(ctx, ns, options)
-		if err != nil {
-			return false, err
-		}
-		if len(list.Items) > 0 {
-			return true, nil
-		}
+	list, err := k.client.ListDatabaseClusters(ctx, namespace, options)
+	if err != nil {
+		return false, err
+	}
+	if len(list.Items) > 0 {
+		return true, nil
 	}
 
 	return false, nil

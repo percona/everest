@@ -17,17 +17,18 @@ import { MRT_Row } from 'material-react-table';
 import { MenuItem } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
 import { Messages } from './storage-locations.messages';
-import { BackupStorage } from 'shared-types/backupStorages.types';
+import { BackupStorageTableElement } from './storage-locations.types';
 import { useGetPermissions } from 'utils/useGetPermissions';
 
 export const StorageLocationsActionButtons = (
-  row: MRT_Row<BackupStorage>,
-  handleOpenEditModal: (storageLocation: BackupStorage) => void,
-  handleDeleteBackup: (backupStorageName: string) => void
+  row: MRT_Row<BackupStorageTableElement>,
+  handleOpenEditModal: (storageLocation: BackupStorageTableElement) => void,
+  handleDeleteBackup: (backupStorageName: string, namespace: string) => void
 ) => {
   const { canUpdate, canDelete } = useGetPermissions({
     resource: 'backup-storages',
     specificResource: row.original.name,
+    namespace: row.original.namespace,
   });
 
   return [
@@ -54,7 +55,7 @@ export const StorageLocationsActionButtons = (
           <MenuItem
             key={1}
             onClick={() => {
-              handleDeleteBackup(row.original.name);
+              handleDeleteBackup(row.original.name, row.original.namespace);
             }}
             sx={{
               m: 0,
