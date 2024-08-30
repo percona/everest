@@ -18,10 +18,8 @@ import {
   MenuItem,
   Skeleton,
   Stack,
-  Tooltip,
   Typography,
 } from '@mui/material';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useCallback, useEffect, useState } from 'react';
 import { DbType } from '@percona/types';
 import {
@@ -73,7 +71,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const dbClusterStatus = dbClusterData?.status?.status;
   const disableShardingChange =
     loadingDefaultsForEdition ||
-    (mode === 'edit' &&
+    ((mode === 'edit' || mode === 'restoreFromBackup') &&
       defaultSharding &&
       dbClusterStatus !== DbClusterStatus.paused);
 
@@ -350,7 +348,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             disabled: mode === 'edit' || loadingDefaultsForEdition,
           }}
         />
-        {dbType === DbType.Mongo && mode === 'new' && (
+        {dbType === DbType.Mongo && (
           <>
             <Typography variant="sectionHeading" sx={{ mt: 4 }}>
               Shards
@@ -373,17 +371,17 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                   },
                 }}
               />
-              {disableShardingChange && (
-                <Tooltip
-                  title={Messages.disableShardingTooltip}
-                  arrow
-                  placement="right"
-                >
-                  <InfoOutlinedIcon color="primary" />
-                </Tooltip>
-              )}
+              {/*{disableShardingChange && (*/}
+              {/*  <Tooltip*/}
+              {/*    title={Messages.disableShardingTooltip}*/}
+              {/*    arrow*/}
+              {/*    placement="right"*/}
+              {/*  >*/}
+              {/*    <InfoOutlinedIcon color="primary" />*/}
+              {/*  </Tooltip>*/}
+              {/*)}*/}
             </Stack>
-            {sharding && (
+            {sharding && mode === 'new' && (
               <>
                 <TextInput
                   name={DbWizardFormFields.shardNr}
