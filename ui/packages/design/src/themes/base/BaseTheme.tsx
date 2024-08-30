@@ -700,6 +700,9 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
               '.MuiTypography-root': {
                 ...theme.typography.sectionHeading,
               },
+              '#database-icon, #network-node-icon': {
+                path: { fill: theme.palette.text.primary },
+              },
             },
             '.MuiCardContent': {
               py: 1,

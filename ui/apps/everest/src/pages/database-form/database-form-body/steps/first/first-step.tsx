@@ -381,11 +381,12 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
               {/*  </Tooltip>*/}
               {/*)}*/}
             </Stack>
-            {sharding && mode === 'new' && (
+            {sharding && (
               <>
                 <TextInput
                   name={DbWizardFormFields.shardNr}
                   textFieldProps={{
+                    disabled: mode !== 'new',
                     label: Messages.labels.numberOfShards,
                     type: 'number',
                     inputProps: {
@@ -396,6 +397,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                 <TextInput
                   name={DbWizardFormFields.shardConfigServers}
                   textFieldProps={{
+                    disabled: mode !== 'new',
                     label: Messages.labels.numberOfConfigServers,
                     type: 'number',
                     inputProps: {
