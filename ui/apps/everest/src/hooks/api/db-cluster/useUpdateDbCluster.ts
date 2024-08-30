@@ -102,6 +102,15 @@ const formValuesToPayloadOverrides = (
             }),
         },
       },
+      // ...(dbPayload.dbType === DbType.Mongo && {
+      //   sharding: {
+      //     enabled: dbPayload.sharding,
+      //     shards: +(dbPayload.shardNr ?? 1),
+      //     configServer: {
+      //       replicas: +(dbPayload.shardConfigServers ?? 3),
+      //     },
+      //   },
+      // }),
     },
   };
 };
