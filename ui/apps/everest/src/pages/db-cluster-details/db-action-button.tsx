@@ -3,6 +3,7 @@ import {
   DeleteOutline,
   PauseCircleOutline,
 } from '@mui/icons-material';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
@@ -23,6 +24,7 @@ import {
   useGetPermissions,
   useGetPermittedNamespaces,
 } from 'utils/useGetPermissions';
+import DbStatusDetailsDialog from 'modals/db-status-details-dialog/db-status-details-dialog';
 
 export const DbActionButton = ({
   dbCluster,
@@ -36,6 +38,8 @@ export const DbActionButton = ({
   const { dbClusterName, namespace = '' } = useParams();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openRestoreDbModal, setOpenRestoreDbModal] = useState(false);
+  const [openDbStatusDetailsModal, setOpenDbStatusDetailsModal] =
+    useState(false);
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
   const isOpen = !!anchorEl;
   const restoring = dbCluster.status?.status === DbClusterStatus.restoring;
@@ -77,6 +81,15 @@ export const DbActionButton = ({
     namespace: namespace,
   });
 
+  //TODO: refactoring: move to component ?
+  const sx = {
+    display: 'flex',
+    gap: 1,
+    alignItems: 'center',
+    px: 2,
+    py: '10px',
+  };
+
   return (
     <Box>
       <Button
@@ -106,13 +119,7 @@ export const DbActionButton = ({
               component={Link}
               to="/databases/edit"
               state={{ selectedDbCluster: dbClusterName, namespace }}
-              sx={{
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                px: 2,
-                py: '10px',
-              }}
+              sx={sx}
             >
               <BorderColor fontSize="small" /> {Messages.menuItems.edit}
             </MenuItem>
@@ -125,13 +132,7 @@ export const DbActionButton = ({
                 handleDbRestart(dbCluster);
                 closeMenu();
               }}
-              sx={{
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                px: 2,
-                py: '10px',
-              }}
+              sx={sx}
             >
               <RestartAltIcon /> {Messages.menuItems.restart}
             </MenuItem>
@@ -146,13 +147,7 @@ export const DbActionButton = ({
                 setOpenRestoreDbModal(true);
                 closeMenu();
               }}
-              sx={{
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                px: 2,
-                py: '10px',
-              }}
+              sx={sx}
             >
               <AddIcon /> {Messages.menuItems.createNewDbFromBackup}
             </MenuItem>
@@ -167,17 +162,21 @@ export const DbActionButton = ({
                 setOpenRestoreDbModal(true);
                 closeMenu();
               }}
-              sx={{
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                px: 2,
-                py: '10px',
-              }}
+              sx={sx}
             >
               <KeyboardReturnIcon /> {Messages.menuItems.restoreFromBackup}
             </MenuItem>
           )}
+          <MenuItem
+            key={6}
+            sx={sx}
+            onClick={() => {
+              setOpenDbStatusDetailsModal(true);
+              closeMenu();
+            }}
+          >
+            <VisibilityOutlinedIcon /> {Messages.menuItems.dbStatusDetails}
+          </MenuItem>
           {canUpdate && (
             <MenuItem
               disabled={restoring}
@@ -186,13 +185,7 @@ export const DbActionButton = ({
                 handleDbSuspendOrResumed(dbCluster);
                 closeMenu();
               }}
-              sx={{
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                px: 2,
-                py: '10px',
-              }}
+              sx={sx}
             >
               <PauseCircleOutline />{' '}
               {isPaused(dbCluster)
@@ -208,13 +201,7 @@ export const DbActionButton = ({
                 handleDeleteDbCluster(dbCluster);
                 closeMenu();
               }}
-              sx={{
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                px: 2,
-                py: '10px',
-              }}
+              sx={sx}
             >
               <DeleteOutline /> {Messages.menuItems.delete}
             </MenuItem>
@@ -228,6 +215,13 @@ export const DbActionButton = ({
           isNewClusterMode={isNewClusterMode}
           isOpen={openRestoreDbModal}
           closeModal={() => setOpenRestoreDbModal(false)}
+        />
+      )}
+      {openDbStatusDetailsModal && (
+        <DbStatusDetailsDialog
+          isOpen={openDbStatusDetailsModal}
+          closeModal={() => setOpenDbStatusDetailsModal(false)}
+          dbClusterDetails={dbCluster?.status?.details}
         />
       )}
       {openDeleteDialog && (
