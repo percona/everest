@@ -167,16 +167,18 @@ export const DbActionButton = ({
               <KeyboardReturnIcon /> {Messages.menuItems.restoreFromBackup}
             </MenuItem>
           )}
-          {dbCluster?.status?.details && <MenuItem
-            key={6}
-            sx={sx}
-            onClick={() => {
-              setOpenDbStatusDetailsModal(true);
-              closeMenu();
-            }}
-          >
-            <VisibilityOutlinedIcon /> {Messages.menuItems.dbStatusDetails}
-          </MenuItem>}
+          {dbCluster?.status?.details && (
+            <MenuItem
+              key={6}
+              sx={sx}
+              onClick={() => {
+                setOpenDbStatusDetailsModal(true);
+                closeMenu();
+              }}
+            >
+              <VisibilityOutlinedIcon /> {Messages.menuItems.dbStatusDetails}
+            </MenuItem>
+          )}
           {canUpdate && (
             <MenuItem
               disabled={restoring}
