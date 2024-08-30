@@ -72,6 +72,8 @@ func initInstallFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(install.FlagSkipWizard, false, "Skip installation wizard")
 	cmd.Flags().String(install.FlagVersionMetadataURL, "https://check.percona.com", "URL to retrieve version metadata information from")
 	cmd.Flags().String(install.FlagVersion, "", "Everest version to install. By default the latest version is installed")
+	cmd.Flags().Bool(install.FlagDisableTelemetry, false, "Disable telemetry")
+	cmd.Flags().MarkHidden(install.FlagDisableTelemetry)
 
 	cmd.Flags().Bool(install.FlagOperatorMongoDB, true, "Install MongoDB operator")
 	cmd.Flags().Bool(install.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
@@ -86,6 +88,7 @@ func initInstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(install.FlagNamespaces, cmd.Flags().Lookup(install.FlagNamespaces))                 //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagVersionMetadataURL, cmd.Flags().Lookup(install.FlagVersionMetadataURL)) //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagVersion, cmd.Flags().Lookup(install.FlagVersion))                       //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagDisableTelemetry, cmd.Flags().Lookup(install.FlagDisableTelemetry))     //nolint:errcheck,gosec
 
 	viper.BindPFlag(install.FlagOperatorMongoDB, cmd.Flags().Lookup(install.FlagOperatorMongoDB))             //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagOperatorPostgresql, cmd.Flags().Lookup(install.FlagOperatorPostgresql))       //nolint:errcheck,gosec
