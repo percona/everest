@@ -118,6 +118,7 @@ export interface StatusSpec {
   activeStorage?: string;
   crVersion: string;
   recommendedCRVersion?: string;
+  details?: string;
 }
 
 export interface DbClusterMetadata {
