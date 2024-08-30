@@ -257,13 +257,6 @@ jobs:
           addons: registry
           insecure-registry: 'localhost:5000'
 
-      # This is a temporary workaround to fix the registry-proxy image in the minikube registry.
-      # See: https://github.com/kubernetes/minikube/issues/19535
-      - name: Patch registry addon image
-        run: |
-          kubectl get daemonsets.apps -n kube-system registry-proxy -ojson | jq -r '.spec.template.spec.containers[0].image = "gcr.io/google_containers/kube-registry-proxy:0.4"' | kubectl apply -f -
-          kubectl rollout -n kube-system status daemonset/registry-proxy --timeout=120s
-
       - name: Expose local registry
         run: |
           kubectl port-forward --namespace kube-system service/registry 5000:80 &
