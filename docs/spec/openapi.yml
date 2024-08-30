@@ -3073,6 +3073,9 @@ components:
               description: CRVersion is the observed version of the CR used with
                 the underlying operator.
               type: string
+            details:
+              description: Details provides full status of the upstream cluster as a plain text.
+              type: string
             hostname:
               description: Hostname is the hostname where the cluster can be reached
               type: string

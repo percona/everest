@@ -30,7 +30,7 @@ import {
   convertStoragesType,
 } from './storage-locations.utils';
 import { useNamespaces } from 'hooks/api/namespaces';
-import { useGetPermissions } from 'utils/useGetPermissions';
+import { useGetPermittedNamespaces } from 'utils/useGetPermissions';
 import TableActionsMenu from '../../../components/table-actions-menu';
 import { StorageLocationsActionButtons } from './storage-locations-menu-actions';
 
@@ -97,7 +97,9 @@ export const StorageLocations = () => {
     []
   );
 
-  const { canCreate } = useGetPermissions({ resource: 'backup-storages' });
+  const { canCreate } = useGetPermittedNamespaces({
+    resource: 'backup-storages',
+  });
 
   const handleOpenCreateModal = () => {
     setSelectedStorageLocation(undefined);

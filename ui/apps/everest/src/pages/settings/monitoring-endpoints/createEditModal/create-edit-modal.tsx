@@ -2,7 +2,6 @@ import { AutoCompleteInput, TextInput } from '@percona/ui-lib';
 import { FormDialog } from 'components/form-dialog';
 import TlsAlert from 'components/tls-alert';
 import TlsCheckbox from 'components/tls-checkbox';
-import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { useMemo } from 'react';
 import { Messages } from '../monitoring-endpoints.messages';
 import {
@@ -12,6 +11,7 @@ import {
   endpointDefaultValues,
   getEndpointSchema,
 } from './create-edit-modal.types';
+import { useGetPermittedNamespaces } from 'utils/useGetPermissions';
 
 export const CreateEditEndpointModal = ({
   open,
@@ -21,9 +21,10 @@ export const CreateEditEndpointModal = ({
   selectedEndpoint,
 }: CreateEditEndpointModalProps) => {
   const isEditMode = !!selectedEndpoint;
-  const { data: namespaces = [], isFetching: isNamespacesFetching } =
-    useNamespaces();
 
+  const { permittedNamespaces: namespaces } = useGetPermittedNamespaces({
+    resource: 'monitoring-instances',
+  });
   const endpointSchema = getEndpointSchema(isEditMode);
 
   const defaultValues = useMemo(
@@ -64,7 +65,6 @@ export const CreateEditEndpointModal = ({
           <AutoCompleteInput
             name={EndpointFormFields.namespace}
             label={Messages.fieldLabels.namespace}
-            loading={isNamespacesFetching}
             options={namespaces}
             disabled={isEditMode}
             isRequired
