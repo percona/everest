@@ -167,7 +167,7 @@ export const DbActionButton = ({
               <KeyboardReturnIcon /> {Messages.menuItems.restoreFromBackup}
             </MenuItem>
           )}
-          <MenuItem
+          {dbCluster?.status?.details && <MenuItem
             key={6}
             sx={sx}
             onClick={() => {
@@ -176,7 +176,7 @@ export const DbActionButton = ({
             }}
           >
             <VisibilityOutlinedIcon /> {Messages.menuItems.dbStatusDetails}
-          </MenuItem>
+          </MenuItem>}
           {canUpdate && (
             <MenuItem
               disabled={restoring}
@@ -217,7 +217,7 @@ export const DbActionButton = ({
           closeModal={() => setOpenRestoreDbModal(false)}
         />
       )}
-      {openDbStatusDetailsModal && (
+      {openDbStatusDetailsModal && dbCluster?.status?.details && (
         <DbStatusDetailsDialog
           isOpen={openDbStatusDetailsModal}
           closeModal={() => setOpenDbStatusDetailsModal(false)}
