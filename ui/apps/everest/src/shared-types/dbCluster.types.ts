@@ -92,6 +92,14 @@ export interface Monitoring {
   monitoringConfigName?: string;
 }
 
+export interface Sharding {
+  configServer: {
+    replicas: number;
+  };
+  shards: number;
+  enabled: boolean;
+}
+
 export interface Spec {
   allowUnsafeConfiguration?: boolean;
   backup?: Backup;
@@ -100,6 +108,7 @@ export interface Spec {
   paused?: boolean;
   dataSource?: DataSource;
   monitoring: Monitoring;
+  sharding?: Sharding;
 }
 
 export interface StatusSpec {
@@ -109,6 +118,7 @@ export interface StatusSpec {
   activeStorage?: string;
   crVersion: string;
   recommendedCRVersion?: string;
+  details?: string;
 }
 
 export interface DbClusterMetadata {

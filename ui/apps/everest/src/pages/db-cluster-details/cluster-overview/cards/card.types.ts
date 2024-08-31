@@ -59,6 +59,8 @@ export type ResourcesDetailsOverviewProps = {
   cpu: NonNullable<DbCluster['spec']['engine']['resources']>['cpu'];
   memory: NonNullable<DbCluster['spec']['engine']['resources']>['memory'];
   disk: DbCluster['spec']['engine']['storage']['size'];
+  sharding: DbCluster['spec']['sharding'];
+  dbType: DbType;
 } & OverviewCardProps;
 
 export type BackupsDetailsOverviewCardProps = {
