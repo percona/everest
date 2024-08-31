@@ -75,7 +75,7 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 			defer cancel()
 
-			if err := e.collectMetrics(ctx, e.config.TelemetryURL); err != nil {
+			if err := e.collectMetrics(ctx, *e.config); err != nil {
 				e.l.Errorf("Could not send metrics: %s", err)
 			}
 		}()
