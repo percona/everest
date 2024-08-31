@@ -73,7 +73,7 @@ func initInstallFlags(cmd *cobra.Command) {
 	cmd.Flags().String(install.FlagVersionMetadataURL, "https://check.percona.com", "URL to retrieve version metadata information from")
 	cmd.Flags().String(install.FlagVersion, "", "Everest version to install. By default the latest version is installed")
 	cmd.Flags().Bool(install.FlagDisableTelemetry, false, "Disable telemetry")
-	cmd.Flags().MarkHidden(install.FlagDisableTelemetry)
+	cmd.Flags().MarkHidden(install.FlagDisableTelemetry) //nolint:errcheck,gosec
 
 	cmd.Flags().Bool(install.FlagOperatorMongoDB, true, "Install MongoDB operator")
 	cmd.Flags().Bool(install.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
