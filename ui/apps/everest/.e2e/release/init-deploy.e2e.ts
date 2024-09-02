@@ -129,7 +129,7 @@ test.describe.configure({ retries: 0 });
         // go to db list and check status
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Initializing', 15000);
-        await waitForStatus(page, clusterName, 'Up', 300000);
+        await waitForStatus(page, clusterName, 'Up', 360000);
 
         const response = await request.get(
           `/v1/namespaces/${namespace}/database-clusters`,

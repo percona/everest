@@ -37,6 +37,8 @@ let token: string;
 test.describe.configure({ retries: 0 });
 
 [
+  { db: 'psmdb', size: 3 },
+  { db: 'pxc', size: 3 },
   { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
   test.describe(
