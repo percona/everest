@@ -75,7 +75,7 @@ func (u *Upgrade) migrateBackupStorages(ctx context.Context) error {
 		return err
 	}
 	for _, bs := range backupStorages.Items {
-		for _, ns := range bs.Spec.AllowedNamespaces {
+		for _, ns := range bs.Spec.AllowedNamespaces { //nolint:nolintlint,staticcheck
 			// Check if the namespace exists?
 			if _, err := u.kubeClient.GetNamespace(ctx, ns); err != nil && k8serrors.IsNotFound(err) {
 				continue
