@@ -75,7 +75,7 @@ func (u *Upgrade) migrateBackupStorages(ctx context.Context) error {
 		return err
 	}
 	for _, bs := range backupStorages.Items {
-		for _, ns := range bs.Spec.AllowedNamespaces {
+		for _, ns := range bs.Spec.AllowedNamespaces { //nolint:nolintlint,staticcheck
 			// Check if the namespace exists?
 			if _, err := u.kubeClient.GetNamespace(ctx, ns); err != nil && k8serrors.IsNotFound(err) {
 				continue
@@ -98,7 +98,7 @@ func (u *Upgrade) migrateBackupStorages(ctx context.Context) error {
 				Name:      bs.GetName(),
 				Namespace: ns,
 			}
-			bsClone.Spec.AllowedNamespaces = nil
+			bsClone.Spec.AllowedNamespaces = nil //nolint:nolintlint,staticcheck
 			if err := u.kubeClient.CreateBackupStorage(ctx, bsClone); client.IgnoreAlreadyExists(err) != nil {
 				return fmt.Errorf("cannot create backup storage %s in namespace %s", bsClone.GetName(), ns)
 			}
