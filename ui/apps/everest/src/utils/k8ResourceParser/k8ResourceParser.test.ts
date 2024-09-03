@@ -20,9 +20,15 @@ describe('cpu parser', () => {
 
 describe('memory parser', () => {
   it('correctly parses memory strings', () => {
-    expect(memoryParser('1')).toEqual(1);
-    expect(memoryParser('1k', 'G')).toEqual(1 * 10 ** -6);
-    expect(memoryParser('1G', 'Gi')).toEqual(10 ** 9 / 1024 ** 3);
-    expect(memoryParser('1G', 'G')).toEqual(1);
+    expect(memoryParser('1')).toEqual({ value: 1, originalUnit: '' });
+    expect(memoryParser('1k', 'G')).toEqual({
+      value: 1 * 10 ** -6,
+      originalUnit: 'k',
+    });
+    expect(memoryParser('1G', 'Gi')).toEqual({
+      value: 10 ** 9 / 1024 ** 3,
+      originalUnit: 'G',
+    });
+    expect(memoryParser('1G', 'G')).toEqual({ value: 1, originalUnit: 'G' });
   });
 });

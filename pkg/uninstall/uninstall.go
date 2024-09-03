@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -69,16 +70,24 @@ type Config struct {
 
 // NewUninstall returns a new Uninstall struct.
 func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
-	kubeClient, err := kubernetes.New(c.KubeconfigPath, l)
+	cli := &Uninstall{
+		config: c,
+		l:      l,
+	}
+	if c.Pretty {
+		cli.l = zap.NewNop().Sugar()
+	}
+	kubeClient, err := kubernetes.New(c.KubeconfigPath, cli.l)
 	if err != nil {
+		var u *url.Error
+		if errors.As(err, &u) {
+			l.Error("Could not connect to Kubernetes. " +
+				"Make sure Kubernetes is running and is accessible from this computer/server.")
+		}
 		return nil, err
 	}
 
-	cli := &Uninstall{
-		config:     c,
-		kubeClient: kubeClient,
-		l:          l,
-	}
+	cli.kubeClient = kubeClient
 	return cli, nil
 }
 
@@ -371,6 +380,19 @@ func (u *Uninstall) deleteBackupStorages(ctx context.Context) error {
 		return err
 	}
 
+	// List backup storages in DB namespaces.
+	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx)
+	if err != nil {
+		return err
+	}
+	for _, ns := range dbNamespaces {
+		list, err := u.kubeClient.ListBackupStorages(ctx, ns)
+		if err != nil {
+			return fmt.Errorf("failed to list backup storages in namespace %s: %w", ns, err)
+		}
+		storages.Items = append(storages.Items, list.Items...)
+	}
+
 	if len(storages.Items) == 0 {
 		u.l.Info("All backup storages have been deleted")
 		return nil
@@ -379,7 +401,7 @@ func (u *Uninstall) deleteBackupStorages(ctx context.Context) error {
 	for _, storage := range storages.Items {
 		u.l.Infof("Deleting backup storage '%s'", storage.Name)
 		u.numResourcesDeleted++
-		if err := u.kubeClient.DeleteBackupStorage(ctx, common.SystemNamespace, storage.Name); err != nil {
+		if err := u.kubeClient.DeleteBackupStorage(ctx, storage.GetNamespace(), storage.GetName()); err != nil {
 			return err
 		}
 	}
@@ -387,17 +409,16 @@ func (u *Uninstall) deleteBackupStorages(ctx context.Context) error {
 	// Wait for all backup storages to be deleted, or timeout after 5 minutes.
 	u.l.Infof("Waiting for backup storages to be deleted")
 	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
-		storages, err := u.kubeClient.ListBackupStorages(ctx, common.SystemNamespace)
-		if err != nil {
-			return false, err
-		}
-
-		if len(storages.Items) > 0 {
+		for _, bs := range storages.Items {
+			_, err := u.kubeClient.GetBackupStorage(ctx, bs.GetNamespace(), bs.GetName())
+			if k8serrors.IsNotFound(err) {
+				continue
+			} else if err != nil {
+				return false, err
+			}
 			return false, nil
 		}
-
 		u.l.Info("All backup storages have been deleted")
-
 		return true, nil
 	})
 }
@@ -410,6 +431,18 @@ func (u *Uninstall) deleteMonitoringConfigs(ctx context.Context) error {
 		return err
 	}
 
+	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get DB namespaces: %w", err)
+	}
+	for _, ns := range dbNamespaces {
+		list, err := u.kubeClient.ListMonitoringConfigs(ctx, ns)
+		if err != nil {
+			return fmt.Errorf("failed to list monitoring configs in namespace %s: %w", ns, err)
+		}
+		monitoringConfigs.Items = append(monitoringConfigs.Items, list.Items...)
+	}
+
 	if len(monitoringConfigs.Items) == 0 {
 		u.l.Info("No monitoring configs found")
 		return nil
@@ -418,7 +451,7 @@ func (u *Uninstall) deleteMonitoringConfigs(ctx context.Context) error {
 	for _, config := range monitoringConfigs.Items {
 		u.numResourcesDeleted++
 		u.l.Infof("Deleting monitoring config '%s'", config.Name)
-		if err := u.kubeClient.DeleteMonitoringConfig(ctx, install.MonitoringNamespace, config.Name); err != nil {
+		if err := u.kubeClient.DeleteMonitoringConfig(ctx, config.GetNamespace(), config.GetName()); err != nil {
 			return err
 		}
 	}
@@ -426,17 +459,16 @@ func (u *Uninstall) deleteMonitoringConfigs(ctx context.Context) error {
 	// Wait for all monitoring configs to be deleted, or timeout after 5 minutes.
 	u.l.Infof("Waiting for monitoring configs to be deleted")
 	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
-		monitoringConfigs, err := u.kubeClient.ListMonitoringConfigs(ctx, install.MonitoringNamespace)
-		if err != nil {
-			return false, err
-		}
-
-		if len(monitoringConfigs.Items) > 0 {
+		for _, mc := range monitoringConfigs.Items {
+			_, err := u.kubeClient.GetMonitoringConfig(ctx, mc.GetNamespace(), mc.GetName())
+			if k8serrors.IsNotFound(err) {
+				continue
+			} else if err != nil {
+				return false, err
+			}
 			return false, nil
 		}
-
 		u.l.Info("All monitoring configs have been deleted")
-
 		return true, nil
 	})
 }

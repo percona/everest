@@ -1,4 +1,5 @@
 import { DbEngineType } from '@percona/types';
+import { PG_SLOTS_LIMIT } from 'consts';
 
 export const Messages = {
   deleteDialog: {
@@ -42,4 +43,6 @@ export const Messages = {
   delete: 'Delete',
   restore: 'Restore to this DB',
   restoreToNewDb: 'Create new DB',
+  pgMaximum: (slotsInUse: number) =>
+    `Note: There is a maximum of 3 backup schedules for PostgreSQL. You are using ${slotsInUse} out of ${PG_SLOTS_LIMIT} available storages.`,
 };

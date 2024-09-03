@@ -15,7 +15,6 @@
 
 import { AutoCompleteInput, LabeledContent, TextInput } from '@percona/ui-lib';
 import LogicalPhysicalRadioGroup from 'components/logical-physical-radio-group';
-import { AutoCompleteAutoFill } from '../../auto-complete-auto-fill/auto-complete-auto-fill.tsx';
 import { TimeSelection } from '../../time-selection/time-selection';
 import { Messages } from './schedule-form.messages.ts';
 import {
@@ -28,6 +27,8 @@ import { useContext } from 'react';
 import { ScheduleFormDialogContext } from '../schedule-form-dialog-context/schedule-form-dialog.context';
 import { DbEngineType } from '@percona/types';
 import LinkedAlert from '../../linked-alert';
+import BackupStoragesInput from 'components/backup-storages-input';
+import { dbEngineToDbType } from '@percona/utils';
 
 export const ScheduleForm = ({
   allowScheduleSelection,
@@ -35,10 +36,8 @@ export const ScheduleForm = ({
   disableNameInput,
   autoFillLocation,
   schedules,
-  storageLocationFetching,
-  storageLocationOptions,
   showTypeRadio,
-  hideRetentionCopies,
+  disableNameEdit = false,
 }: ScheduleFormProps) => {
   const {
     formState: { errors },
@@ -46,7 +45,7 @@ export const ScheduleForm = ({
   const schedulesNamesList =
     (schedules && schedules.map((item) => item?.name)) || [];
   const {
-    dbClusterInfo: { dbEngine },
+    dbClusterInfo: { dbEngine, namespace, dbClusterName },
   } = useContext(ScheduleFormDialogContext);
 
   const errorInfoAlert = errors?.root ? (
@@ -77,6 +76,7 @@ export const ScheduleForm = ({
             }}
             options={schedulesNamesList}
             isRequired
+            disabled={disableNameEdit}
           />
         ) : (
           <TextInput
@@ -89,33 +89,27 @@ export const ScheduleForm = ({
           />
         )}
       </LabeledContent>
-      <AutoCompleteAutoFill
-        name={ScheduleFormFields.storageLocation}
-        textFieldProps={{
-          label: Messages.storageLocation.label,
+      <BackupStoragesInput
+        namespace={namespace}
+        dbClusterName={dbClusterName}
+        dbType={dbEngineToDbType(dbEngine)}
+        schedules={schedules}
+        autoFillProps={{
+          isRequired: true,
+          enableFillFirst: autoFillLocation,
+          disabled: disableStorageSelection,
         }}
-        loading={storageLocationFetching}
-        options={storageLocationOptions}
-        autoCompleteProps={{
-          isOptionEqualToValue: (option, value) => option.name === value.name,
-          getOptionLabel: (option) =>
-            typeof option === 'string' ? option : option.name,
+        hideUsedStoragesInSchedules={dbEngine === DbEngineType.POSTGRESQL}
+      />
+      <TextInput
+        name={ScheduleFormFields.retentionCopies}
+        textFieldProps={{
+          type: 'number',
+          label: Messages.retentionCopies.label,
+          helperText: Messages.retentionCopies.helperText,
         }}
         isRequired
-        enableFillFirst={autoFillLocation}
-        disabled={disableStorageSelection}
       />
-      {!hideRetentionCopies && (
-        <TextInput
-          name={ScheduleFormFields.retentionCopies}
-          textFieldProps={{
-            type: 'number',
-            label: Messages.retentionCopies.label,
-            helperText: Messages.retentionCopies.helperText,
-          }}
-          isRequired
-        />
-      )}
       <LabeledContent label={Messages.repeats}>
         <TimeSelection showInfoAlert errorInfoAlert={errorInfoAlert} />
       </LabeledContent>

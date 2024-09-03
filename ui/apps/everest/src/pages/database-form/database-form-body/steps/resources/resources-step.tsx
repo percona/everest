@@ -32,6 +32,7 @@ export const ResourcesStep = () => {
   const cpu: number = watch(DbWizardFormFields.cpu);
   const memory: number = watch(DbWizardFormFields.memory);
   const disk: number = watch(DbWizardFormFields.disk);
+  const diskUnit: string = watch(DbWizardFormFields.diskUnit);
   const dbType: DbType = watch(DbWizardFormFields.dbType);
   const numberOfNodes = watch(DbWizardFormFields.numberOfNodes);
 
@@ -189,11 +190,11 @@ export const ResourcesStep = () => {
             label={Messages.labels.disk.toUpperCase()}
             helperText={checkResourceText(
               resourcesInfo?.available?.diskSize,
-              'Gi',
+              diskUnit,
               Messages.labels.disk,
               diskCapacityExceeded
             )}
-            endSuffix="Gi"
+            endSuffix={diskUnit}
             numberOfNodes={numberOfNodes}
           />
         </Box>

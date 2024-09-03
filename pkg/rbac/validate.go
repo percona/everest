@@ -17,15 +17,12 @@ import (
 // ErrPolicySyntax is returned when a policy has a syntax error.
 var errPolicySyntax = errors.New("policy syntax error")
 
-// ValidatePolicy validates a policy from either Kubernetes or local file.
-func ValidatePolicy(ctx context.Context, k *kubernetes.Kubernetes, filepath string) error {
-	enforcer, err := newKubeOrFileEnforcer(ctx, k, filepath)
-	if err != nil {
-		return errors.Join(errPolicySyntax, err)
-	}
-
+func validatePolicy(enforcer *casbin.Enforcer) error {
 	// check basic policy syntax.
-	policy := enforcer.GetPolicy()
+	policy, err := enforcer.GetPolicy()
+	if err != nil {
+		return err
+	}
 	for _, policy := range policy {
 		if err := validateTerms(policy); err != nil {
 			return errors.Join(errPolicySyntax, err)
@@ -33,7 +30,10 @@ func ValidatePolicy(ctx context.Context, k *kubernetes.Kubernetes, filepath stri
 	}
 
 	// ensure that non-existent roles are not used.
-	roles := enforcer.GetAllRoles()
+	roles, err := enforcer.GetAllRoles()
+	if err != nil {
+		return err
+	}
 	if err := checkRoles(roles, policy); err != nil {
 		return errors.Join(errPolicySyntax, err)
 	}
@@ -43,6 +43,19 @@ func ValidatePolicy(ctx context.Context, k *kubernetes.Kubernetes, filepath stri
 		return errors.Join(errPolicySyntax, err)
 	}
 	return nil
+}
+
+// ValidatePolicy validates a policy from either Kubernetes or local file.
+func ValidatePolicy(
+	ctx context.Context,
+	k *kubernetes.Kubernetes,
+	filepath string,
+) error {
+	enforcer, err := newKubeOrFileEnforcer(ctx, k, filepath)
+	if err != nil {
+		return errors.Join(errPolicySyntax, err)
+	}
+	return validatePolicy(enforcer)
 }
 
 func checkResourceNames(policies [][]string) error {

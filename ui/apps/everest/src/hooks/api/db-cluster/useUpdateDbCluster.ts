@@ -75,7 +75,7 @@ const formValuesToPayloadOverrides = (
         storage: {
           ...dbCluster.spec.engine.storage,
           class: dbPayload.storageClass!,
-          size: `${dbPayload.disk}Gi`,
+          size: `${dbPayload.disk}${dbPayload.diskUnit}`,
         },
         config: dbPayload.engineParametersEnabled
           ? dbPayload.engineParameters
@@ -102,6 +102,15 @@ const formValuesToPayloadOverrides = (
             }),
         },
       },
+      // ...(dbPayload.dbType === DbType.Mongo && {
+      //   sharding: {
+      //     enabled: dbPayload.sharding,
+      //     shards: +(dbPayload.shardNr ?? 1),
+      //     configServer: {
+      //       replicas: +(dbPayload.shardConfigServers ?? 3),
+      //     },
+      //   },
+      // }),
     },
   };
 };
@@ -148,6 +157,32 @@ export const useUpdateDbClusterCrd = () =>
             ...dbCluster.spec.engine,
             crVersion: newCrdVersion,
           },
+        },
+      }),
+  });
+
+export const useUpdateDbClusterMonitoring = () =>
+  useMutation({
+    mutationFn: ({
+      clusterName,
+      namespace,
+      dbCluster,
+      monitoringName,
+    }: {
+      clusterName: string;
+      namespace: string;
+      dbCluster: DbCluster;
+      monitoringName?: string;
+    }) =>
+      updateDbClusterFn(clusterName, namespace, {
+        ...dbCluster,
+        spec: {
+          ...dbCluster.spec,
+          monitoring: monitoringName
+            ? {
+                monitoringConfigName: monitoringName,
+              }
+            : {},
         },
       }),
   });

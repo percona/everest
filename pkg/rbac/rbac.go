@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"net/http"
 	"slices"
 	"strings"
 
@@ -41,6 +42,21 @@ import (
 	"github.com/percona/everest/pkg/session"
 )
 
+// Everest API resource names.
+const (
+	ResourceNamespaces              = "namespaces"
+	ResourceDatabaseClusterBackups  = "database-cluster-backups"
+	ResourceDatabaseClusterRestores = "database-cluster-restores"
+)
+
+// RBAC actions.
+const (
+	ActionCreate = "create"
+	ActionRead   = "read"
+	ActionUpdate = "update"
+	ActionDelete = "delete"
+)
+
 // Setup a new informer that watches our RBAC ConfigMap.
 // This informer reloads the policy whenever the ConfigMap is updated.
 func refreshEnforcerInBackground(
@@ -60,7 +76,10 @@ func refreshEnforcerInBackground(
 			return
 		}
 		if err := enforcer.LoadPolicy(); err != nil {
-			l.Error("failed to load policy", zap.Error(err))
+			panic("invalid policy detected - " + err.Error())
+		}
+		if err := validatePolicy(enforcer); err != nil {
+			panic("invalid policy detected - " + err.Error())
 		}
 	})
 	if inf.Start(ctx, &corev1.ConfigMap{}) != nil {
@@ -93,6 +112,9 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 	enforcer, err := casbin.NewEnforcer(model, adapter, false)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not create casbin enforcer"))
+	}
+	if err := validatePolicy(enforcer); err != nil {
+		return nil, err
 	}
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
 }
@@ -177,11 +199,11 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 	}
 	return func(c echo.Context, user string) (bool, error) {
 		actionMethodMap := map[string]string{
-			"GET":    "read",
-			"POST":   "create",
-			"PUT":    "update",
-			"PATCH":  "update",
-			"DELETE": "delete",
+			http.MethodGet:    ActionRead,
+			http.MethodPost:   ActionCreate,
+			http.MethodPut:    ActionUpdate,
+			http.MethodPatch:  ActionUpdate,
+			http.MethodDelete: ActionDelete,
 		}
 		var resource string
 		var object string
@@ -190,12 +212,10 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 			return false, errors.New("invalid URL")
 		}
 		switch resource {
-		// These resources are not namespaced.
-		case "namespaces",
-			"backup-storages",
-			"monitoring-instances":
-			name := c.Param("name")
-			object = name
+		case "namespaces":
+			// Always allow this operation to list namespaces,
+			// however, we filter the result based on permission.
+			return true, nil
 		default:
 			namespace := c.Param("namespace")
 			name := c.Param("name")

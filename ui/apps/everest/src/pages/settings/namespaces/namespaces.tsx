@@ -1,16 +1,30 @@
-import { Table } from '@percona/ui-lib';
-import { MRT_ColumnDef } from 'material-react-table';
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Table } from '@percona/ui-lib';
+import { Typography } from '@mui/material';
+import { MRT_ColumnDef } from 'material-react-table';
+import { useQueries } from '@tanstack/react-query';
 import { NamespaceInstance } from 'shared-types/namespaces.types';
 import { useDBEnginesForNamespaces } from 'hooks/api/namespaces/useNamespaces';
+import { operatorUpgradePlanQueryFn } from 'hooks/api/db-engines';
 import { Messages } from './namespaces.messages';
+import { OperatorCell } from './OperatorCell';
 
 export const Namespaces = () => {
-  const navigate = useNavigate();
   const dbEngines = useDBEnginesForNamespaces();
-  const namespacesData = dbEngines.map((item) => ({
+  const operatorsUpgradePlan = useQueries({
+    queries: dbEngines.map((item) => ({
+      queryKey: ['operatorUpgradePlan', item.namespace],
+      queryFn: () =>
+        operatorUpgradePlanQueryFn(item.namespace, item.data || []),
+      enabled: dbEngines.every((result) => result.isSuccess),
+    })),
+  });
+
+  const namespacesData: NamespaceInstance[] = dbEngines.map((item, idx) => ({
     name: item.namespace,
+    upgradeAvailable: operatorsUpgradePlan[idx].isSuccess
+      ? operatorsUpgradePlan[idx].data.upgrades.length > 0
+      : false,
     operator: item.isSuccess
       ? item.data?.reduce((prevVal, currVal, idx) => {
           if (idx === 0 || prevVal === '') {
@@ -26,17 +40,27 @@ export const Namespaces = () => {
       : '-',
   }));
 
-  const isFetching = dbEngines.some((result) => result.isLoading);
+  const isFetching =
+    dbEngines.some((result) => result.isLoading) ||
+    operatorsUpgradePlan.some((result) => result.isLoading);
 
   const columns = useMemo<MRT_ColumnDef<NamespaceInstance>[]>(
     () => [
       {
         accessorKey: 'name',
         header: 'Namespace',
+        Cell: ({ cell }) => <Typography>{cell.getValue<string>()}</Typography>,
       },
       {
         accessorKey: 'operator',
         header: 'Operator',
+        Cell: ({ cell, row }) => (
+          <OperatorCell
+            value={cell.getValue<string>()}
+            namespace={row.original.name}
+            upgradeAvailable={row.original.upgradeAvailable}
+          />
+        ),
       },
     ],
     []
@@ -53,14 +77,6 @@ export const Namespaces = () => {
         }}
         columns={columns}
         data={namespacesData}
-        muiTableBodyRowProps={({ row }) => ({
-          onClick: () => {
-            navigate(`/settings/namespaces/${row.original.name}`);
-          },
-          sx: {
-            cursor: 'pointer',
-          },
-        })}
         // enableRowActions
         // renderRowActionMenuItems={({ row, closeMenu }) => [
         //     <MenuItem

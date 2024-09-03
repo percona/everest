@@ -50,12 +50,13 @@ import (
 
 // EverestServer represents the server struct.
 type EverestServer struct {
-	config       *config.EverestConfig
-	l            *zap.SugaredLogger
-	echo         *echo.Echo
-	kubeClient   *kubernetes.Kubernetes
-	sessionMgr   *session.Manager
-	rbacEnforcer *casbin.Enforcer
+	config        *config.EverestConfig
+	l             *zap.SugaredLogger
+	echo          *echo.Echo
+	kubeClient    *kubernetes.Kubernetes
+	sessionMgr    *session.Manager
+	attemptsStore *RateLimiterMemoryStore
+	rbacEnforcer  casbin.IEnforcer
 }
 
 // NewEverestServer creates and configures everest API.
@@ -67,6 +68,8 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 
 	echoServer := echo.New()
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
+	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
+	echoServer.Use(middleware)
 
 	sessMgr, err := session.New(
 		session.WithAccountManager(kubeClient.Accounts()),
@@ -76,11 +79,12 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	}
 
 	e := &EverestServer{
-		config:     c,
-		l:          l,
-		echo:       echoServer,
-		kubeClient: kubeClient,
-		sessionMgr: sessMgr,
+		config:        c,
+		l:             l,
+		echo:          echoServer,
+		kubeClient:    kubeClient,
+		sessionMgr:    sessMgr,
+		attemptsStore: store,
 	}
 
 	if err := e.initHTTPServer(ctx); err != nil {
@@ -297,4 +301,17 @@ func (e *EverestServer) getBodyFromContext(ctx echo.Context, into any) error {
 		return errors.Join(err, errors.New("could not decode body"))
 	}
 	return nil
+}
+
+func sessionRateLimiter(limit int) (echo.MiddlewareFunc, *RateLimiterMemoryStore) {
+	allButSession := func(c echo.Context) bool {
+		return c.Request().Method != echo.POST || c.Request().URL.Path != "/v1/session"
+	}
+	config := echomiddleware.DefaultRateLimiterConfig
+	config.Skipper = allButSession
+	store := NewRateLimiterMemoryStoreWithConfig(RateLimiterMemoryStoreConfig{
+		Rate: rate.Limit(limit),
+	})
+	config.Store = store
+	return echomiddleware.RateLimiterWithConfig(config), store
 }

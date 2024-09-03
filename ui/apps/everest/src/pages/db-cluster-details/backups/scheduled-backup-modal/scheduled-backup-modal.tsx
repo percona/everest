@@ -85,6 +85,7 @@ export const ScheduledBackupModal = () => {
           activeStorage: status?.activeStorage,
           namespace,
           dbEngine: spec?.engine?.type,
+          dbClusterName,
         },
       }}
     >

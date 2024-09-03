@@ -42,7 +42,11 @@ export const DB_WIZARD_DEFAULTS: DbWizardType = {
   [DbWizardFormFields.resourceSizePerNode]: ResourceSize.small,
   [DbWizardFormFields.cpu]: DEFAULT_SIZES.small.cpu,
   [DbWizardFormFields.disk]: DEFAULT_SIZES.small.disk,
+  [DbWizardFormFields.diskUnit]: 'Gi',
   [DbWizardFormFields.memory]: DEFAULT_SIZES.small.memory,
+  [DbWizardFormFields.sharding]: false,
+  [DbWizardFormFields.shardNr]: '1',
+  [DbWizardFormFields.shardConfigServers]: '3',
 };
 
 export const NODES_DB_TYPE_MAP: Record<DbType, string[]> = {

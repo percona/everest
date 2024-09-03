@@ -22,10 +22,15 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/kubernetes/client"
+	"github.com/percona/everest/pkg/rbac"
+	"github.com/percona/everest/pkg/rbac/mocks"
 )
 
 func TestValidateRFC1035(t *testing.T) {
@@ -510,11 +515,19 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 			err = json.Unmarshal(tc.storage, storage)
 			require.NoError(t, err)
 
-			err = validateBackupStoragesFor(
+			k := &kubernetes.Kubernetes{}
+			mockConnector := &client.MockKubeClientConnector{}
+			mockConnector.On("GetBackupStorage", mock.Anything, mock.Anything, mock.Anything).
+				Return(storage, nil)
+			k.WithClient(mockConnector)
+			e := EverestServer{
+				kubeClient: k,
+			}
+
+			err = e.validateBackupStoragesFor(
 				context.Background(),
 				tc.namespace,
 				cluster,
-				func(context.Context, string, string) (*everestv1alpha1.BackupStorage, error) { return storage, nil },
 			)
 			if tc.err == nil {
 				require.NoError(t, err)
@@ -1192,6 +1205,264 @@ func TestValidateDuplicateStorageByUpdate(t *testing.T) {
 			require.NoError(t, err)
 			isDuplicate := validateDuplicateStorageByUpdate(tc.currentStorageName, currentStorage, storages, tc.params)
 			assert.Equal(t, tc.isDuplicate, isDuplicate)
+		})
+	}
+}
+
+func TestValidateBackupSchedulesUpdate(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		desc           string
+		canTakeBackups bool
+		expected       error
+		updated        []byte
+		old            *everestv1alpha1.DatabaseCluster
+	}{
+		{
+			desc:           "schedules not updated and no permission",
+			canTakeBackups: false,
+			updated:        []byte(`{"spec": {"backup": {"schedules": [{"name": "test-1","enabled": true,"backupStorageName": "storage-1","schedule": "0 1 * * *"}]}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns"},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Backup: everestv1alpha1.Backup{
+						Schedules: []everestv1alpha1.BackupSchedule{
+							{
+								Name:              "test-1",
+								Enabled:           true,
+								BackupStorageName: "storage-1",
+								Schedule:          "0 1 * * *",
+							},
+						},
+					},
+				},
+			},
+			expected: nil,
+		},
+		{
+			desc:           "schedules updated and no permission",
+			canTakeBackups: false,
+			updated:        []byte(`{"spec": {"backup": {"schedules": [{"name": "test-1","enabled": true,"backupStorageName": "storage-1","schedule": "0 3 * * *"}]}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns"},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Backup: everestv1alpha1.Backup{
+						Schedules: []everestv1alpha1.BackupSchedule{
+							{
+								Name:              "test-1",
+								Enabled:           true,
+								BackupStorageName: "storage-1",
+								Schedule:          "0 1 * * *",
+							},
+						},
+					},
+				},
+			},
+			expected: errInsufficientPermissions,
+		},
+		{
+			desc:           "schedules updated with permission",
+			canTakeBackups: true,
+			updated:        []byte(`{"spec": {"backup": {"schedules": [{"name": "test-1","enabled": true,"backupStorageName": "storage-1","schedule": "0 3 * * *"}]}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns"},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Backup: everestv1alpha1.Backup{
+						Schedules: []everestv1alpha1.BackupSchedule{
+							{
+								Name:              "test-1",
+								Enabled:           true,
+								BackupStorageName: "storage-1",
+								Schedule:          "0 1 * * *",
+							},
+						},
+					},
+				},
+			},
+			expected: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// Setup mock.
+			e := &EverestServer{}
+			enforcer := &mocks.IEnforcer{}
+			enforcer.On("Enforce",
+				"user", rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, "test-ns/",
+			).Return(tc.canTakeBackups, nil)
+			e.rbacEnforcer = enforcer
+
+			updated := &DatabaseCluster{}
+			err := json.Unmarshal(tc.updated, updated)
+			require.NoError(t, err)
+
+			err = e.validateBackupScheduledUpdate("user", updated, tc.old)
+			assert.ErrorIs(t, err, tc.expected)
+		})
+	}
+}
+
+func TestValidateShardingOnUpdate(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		desc     string
+		expected error
+		updated  []byte
+		old      *everestv1alpha1.DatabaseCluster
+	}{
+		{
+			desc:    "disabled",
+			updated: []byte(`{"spec": {}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: false,
+					},
+				},
+			},
+			expected: nil,
+		},
+		{
+			desc:    "try to disable - no sharding section",
+			updated: []byte(`{"spec": {}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: true,
+					},
+				},
+			},
+			expected: errDisableShardingNotSupported,
+		},
+		{
+			desc:    "try to disable - enabled false",
+			updated: []byte(`{"spec": {"sharding": {"enabled": false}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: true,
+					},
+				},
+			},
+			expected: errDisableShardingNotSupported,
+		},
+		{
+			desc:    "try to change configServers",
+			updated: []byte(`{"spec": {"sharding": {"enabled": true, "shards":3, "configServer": {"replicas": 2}}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: true,
+						ConfigServer: everestv1alpha1.ConfigServer{
+							Replicas: 3,
+						},
+						Shards: 3,
+					},
+				},
+			},
+			expected: errChangeCfgSrvNotSupported,
+		},
+		{
+			desc:    "try to change shards",
+			updated: []byte(`{"spec": {"sharding": {"enabled": true, "shards":5, "configServer": {"replicas": 3}}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: true,
+						ConfigServer: everestv1alpha1.ConfigServer{
+							Replicas: 3,
+						},
+						Shards: 3,
+					},
+				},
+			},
+			expected: errChangeShardsNumNotSupported,
+		},
+		{
+			desc:    "ok",
+			updated: []byte(`{"spec": {"engine": {"type": "psmdb"}, "sharding": {"enabled": true, "shards":5, "configServer": {"replicas": 3}}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: true,
+						ConfigServer: everestv1alpha1.ConfigServer{
+							Replicas: 3,
+						},
+						Shards: 5,
+					},
+				},
+			},
+			expected: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dbc := &DatabaseCluster{}
+			err := json.Unmarshal(tc.updated, dbc)
+			require.NoError(t, err)
+
+			err = validateShardingOnUpdate(dbc, tc.old)
+			assert.ErrorIs(t, err, tc.expected)
+		})
+	}
+}
+
+func TestValidateSharding(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		desc     string
+		expected error
+		updated  []byte
+		old      *everestv1alpha1.DatabaseCluster
+	}{
+		{
+			desc:     "pxc - not supported",
+			updated:  []byte(`{"spec": {"engine": {"type": "pxc"}, "sharding": {"enabled": true}}}`),
+			expected: errShardingIsNotSupported,
+		},
+		{
+			desc:     "pg - not supported",
+			updated:  []byte(`{"spec": {"engine": {"type": "pg"}, "sharding": {"enabled": true}}}`),
+			expected: errShardingIsNotSupported,
+		},
+		{
+			desc:     "even configservers",
+			updated:  []byte(`{"spec": {"engine": {"type": "psmdb"}, "sharding": {"enabled": true, "shards": 1, "configServer": {"replicas": 4}}}}`),
+			expected: errEvenServersNumber,
+		},
+		{
+			desc:     "insufficient configservers",
+			updated:  []byte(`{"spec": {"engine": {"type": "psmdb"}, "sharding": {"enabled": true, "shards": 1,"configServer": {"replicas": 1}}}}`),
+			expected: errInsufficientCfgSrvNumber,
+		},
+		{
+			desc:     "insufficient shards number",
+			updated:  []byte(`{"spec": {"engine": {"type": "psmdb"},"sharding": {"enabled": true, "shards": 0, "configServer": {"replicas": 3}}}}`),
+			expected: errInsufficientShardsNumber,
+		},
+		{
+			desc:     "ok",
+			updated:  []byte(`{"spec": {"engine": {"type": "psmdb"}, "sharding": {"enabled": true, "shards": 1, "configServer": {"replicas": 3}}}}`),
+			expected: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dbc := &DatabaseCluster{}
+			err := json.Unmarshal(tc.updated, dbc)
+			require.NoError(t, err)
+
+			err = validateSharding(*dbc)
+			assert.ErrorIs(t, err, tc.expected)
 		})
 	}
 }

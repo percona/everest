@@ -54,17 +54,10 @@ export const matchFieldsValueToResourceSize = (
     return ResourceSize.custom;
   }
 
-  const size = memoryParser(
-    dbCluster?.spec?.engine?.storage?.size.toString(),
-    'Gi'
-  );
   const memory = memoryParser(resources.memory.toString(), 'G');
 
   const res = Object.values(DEFAULT_SIZES).findIndex(
-    (item) =>
-      item.cpu === Number(resources.cpu) &&
-      item.memory === memory &&
-      item.disk === size
+    (item) => item.cpu === Number(resources.cpu) && item.memory === memory.value
   );
   return res !== -1
     ? (Object.keys(DEFAULT_SIZES)[res] as ResourceSize)
@@ -96,7 +89,7 @@ export const checkResourceText = (
         units
       );
     }
-    return Messages.labels.estimated(processedValue, units);
+    return Messages.labels.estimated(processedValue.toFixed(2), units);
   }
   return '';
 };

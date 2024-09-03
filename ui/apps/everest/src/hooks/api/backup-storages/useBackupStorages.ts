@@ -16,7 +16,10 @@
 import {
   useMutation,
   UseMutationOptions,
+  useQueries,
   useQuery,
+  UseQueryOptions,
+  UseQueryResult,
 } from '@tanstack/react-query';
 import {
   createBackupStorageFn,
@@ -32,11 +35,32 @@ import { PerconaQueryOptions } from 'shared-types/query.types';
 
 export const BACKUP_STORAGES_QUERY_KEY = 'backupStorages';
 
-export const useBackupStorages = () =>
-  useQuery<GetBackupStoragesPayload, unknown, BackupStorage[]>({
-    queryKey: [BACKUP_STORAGES_QUERY_KEY],
-    queryFn: getBackupStoragesFn,
-  });
+export interface BackupStoragesForNamespaceResult {
+  namespace: string;
+  queryResult: UseQueryResult<BackupStorage[], unknown>;
+}
+
+export const useBackupStorages = (namespaces: string[]) => {
+  const queries = namespaces.map<
+    UseQueryOptions<GetBackupStoragesPayload, unknown, BackupStorage[]>
+  >((namespace) => ({
+    queryKey: [BACKUP_STORAGES_QUERY_KEY, namespace],
+    retry: false,
+    queryFn: () => getBackupStoragesFn(namespace),
+    refetchInterval: 5 * 1000,
+  }));
+
+  const queryResults = useQueries({ queries });
+
+  const results: BackupStoragesForNamespaceResult[] = queryResults.map(
+    (item, i) => ({
+      namespace: namespaces[i],
+      queryResult: item,
+    })
+  );
+
+  return results;
+};
 
 export const useBackupStoragesByNamespace = (
   namespace: string,
@@ -48,9 +72,7 @@ export const useBackupStoragesByNamespace = (
 ) =>
   useQuery<GetBackupStoragesPayload, unknown, BackupStorage[]>({
     queryKey: [BACKUP_STORAGES_QUERY_KEY, namespace],
-    queryFn: getBackupStoragesFn,
-    select: (data) =>
-      data.filter((item) => item.allowedNamespaces?.includes(namespace)),
+    queryFn: () => getBackupStoragesFn(namespace),
     ...options,
   });
 
@@ -70,10 +92,21 @@ export const useEditBackupStorage = (
     ...options,
   });
 
+type DeleteBackupStorageArgType = {
+  backupStorageId: string;
+  namespace: string;
+};
+
 export const useDeleteBackupStorage = (
-  options?: UseMutationOptions<unknown, unknown, string, unknown>
+  options?: UseMutationOptions<
+    unknown,
+    unknown,
+    DeleteBackupStorageArgType,
+    unknown
+  >
 ) =>
   useMutation({
-    mutationFn: deleteBackupStorageFn,
+    mutationFn: ({ backupStorageId, namespace }: DeleteBackupStorageArgType) =>
+      deleteBackupStorageFn(backupStorageId, namespace),
     ...options,
   });
