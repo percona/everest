@@ -27,7 +27,7 @@ export const MonitoringDetails = ({
   monitoring,
 }: MonitoringConfigurationOverviewCardProps) => {
   const [openEditModal, setOpenEditModal] = useState(false);
-  const { dbCluster } = useContext(DbClusterContext);
+  const { dbCluster, canUpdateMonitoring } = useContext(DbClusterContext);
   const { mutate: updateDbClusterMonitoring } = useUpdateDbClusterMonitoring();
 
   const handleCloseModal = () => {
@@ -54,7 +54,7 @@ export const MonitoringDetails = ({
           setOpenEditModal(true);
         },
       }}
-      editable={true}
+      editable={canUpdateMonitoring}
     >
       <OverviewSectionRow
         label={Messages.fields.status}
@@ -64,7 +64,7 @@ export const MonitoringDetails = ({
       />
       {monitoring && (
         <OverviewSectionRow
-          label={Messages.fields.username}
+          label={Messages.fields.name}
           contentString={monitoring}
           contentProps={{ sx: { textDecoration: 'underline' } }}
         />

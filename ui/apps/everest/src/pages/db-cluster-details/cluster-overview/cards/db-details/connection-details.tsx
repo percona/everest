@@ -20,6 +20,8 @@ import OverviewSectionRow from '../../overview-section-row';
 import { Box, Typography } from '@mui/material';
 import { CopyToClipboardButton } from '@percona/ui-lib';
 import { HiddenPasswordToggle } from 'components/hidden-row';
+import { useContext } from 'react';
+import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
 
 export const ConnectionDetails = ({
   loading,
@@ -28,6 +30,8 @@ export const ConnectionDetails = ({
   password,
   port,
 }: ConnectionDetailsOverviewCardProps) => {
+  const { canReadCredentials } = useContext(DbClusterContext);
+
   return (
     <OverviewSection
       title={Messages.titles.connectionDetails}
@@ -54,14 +58,18 @@ export const ConnectionDetails = ({
         label={Messages.fields.port}
         contentString={`${port}`}
       />
-      <OverviewSectionRow
-        label={Messages.fields.username}
-        contentString={username}
-      />
-      <OverviewSectionRow
-        label={Messages.fields.password}
-        content={<HiddenPasswordToggle showCopy value={password} />}
-      />
+      {canReadCredentials && (
+        <>
+          <OverviewSectionRow
+            label={Messages.fields.username}
+            contentString={username}
+          />
+          <OverviewSectionRow
+            label={Messages.fields.password}
+            content={<HiddenPasswordToggle showCopy value={password} />}
+          />
+        </>
+      )}
       {/*//TODO https://perconadev.atlassian.net/browse/EVEREST-1255 Connection URL*/}
     </OverviewSection>
   );

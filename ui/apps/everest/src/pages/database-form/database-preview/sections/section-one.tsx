@@ -8,6 +8,9 @@ export const PreviewSectionOne = ({
   dbType,
   storageClass,
   k8sNamespace,
+  sharding,
+  shardNr,
+  shardConfigServers,
 }: SectionProps) => (
   <>
     <PreviewContentText text={`Namespace: ${k8sNamespace}`} />
@@ -15,5 +18,13 @@ export const PreviewSectionOne = ({
     <PreviewContentText text={`Name: ${dbName}`} />
     <PreviewContentText text={`Version: ${dbVersion}`} />
     <PreviewContentText text={`Storage class: ${storageClass ?? ''}`} />
+    {sharding && (
+      <>
+        <PreviewContentText text={`Shards: ${shardNr}`} />
+        <PreviewContentText
+          text={`Configuration servers: ${shardConfigServers}`}
+        />
+      </>
+    )}
   </>
 );

@@ -27,7 +27,10 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import AddIcon from '@mui/icons-material/Add';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
-import { useGetPermissions } from 'utils/useGetPermissions';
+import {
+  useGetPermissions,
+  useGetPermittedNamespaces,
+} from 'utils/useGetPermissions';
 
 export const DbActionButtons = (
   row: MRT_Row<DbClusterTableElement>,
@@ -38,10 +41,14 @@ export const DbActionButtons = (
   isPaused: (dbCluster: DbCluster) => boolean | undefined,
   handleRestoreDbCluster: (dbCluster: DbCluster) => void
 ) => {
-  const { canUpdate, canDelete, canCreate } = useGetPermissions({
+  const { canUpdate, canDelete } = useGetPermissions({
     resource: 'database-clusters',
     specificResource: row.original.databaseName,
     namespace: row.original.namespace,
+  });
+
+  const { canCreate } = useGetPermittedNamespaces({
+    resource: 'database-clusters',
   });
 
   const { canCreate: canCreateRestore } = useGetPermissions({

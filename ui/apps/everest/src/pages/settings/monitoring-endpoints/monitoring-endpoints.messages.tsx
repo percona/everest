@@ -27,7 +27,7 @@ export const Messages = {
   },
   fieldPlaceholders: {
     name: 'Insert Monitoring endpoint display name',
-    namespaces: 'Select namespaces',
+    namespaces: 'Select namespace',
     endpoint: 'Enter endpoint URL',
     user: 'Enter username',
     password: 'Enter password',
