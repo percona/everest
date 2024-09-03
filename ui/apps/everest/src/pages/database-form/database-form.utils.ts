@@ -29,15 +29,14 @@ export const DbClusterPayloadToFormValues = (
   namespace: string
 ): DbWizardType => {
   const backup = dbCluster?.spec?.backup;
+  const diskValues = memoryParser(
+    dbCluster?.spec?.engine?.storage?.size.toString()
+  );
+
+  const sharding = dbCluster?.spec?.sharding;
 
   return {
-    [DbWizardFormFields.backupsEnabled]: !!backup?.enabled,
-    [DbWizardFormFields.pitrEnabled]: backup?.pitr?.enabled || false,
-    [DbWizardFormFields.pitrStorageLocation]:
-      (backup?.pitr?.enabled && mode === 'new') || mode === 'edit'
-        ? backup?.pitr?.backupStorageName || null
-        : DB_WIZARD_DEFAULTS[DbWizardFormFields.pitrStorageLocation],
-    [DbWizardFormFields.schedules]: backup?.schedules || [],
+    //basic info
     [DbWizardFormFields.k8sNamespace]:
       namespace || DB_WIZARD_DEFAULTS[DbWizardFormFields.k8sNamespace],
     [DbWizardFormFields.dbType]: dbEngineToDbType(
@@ -51,6 +50,42 @@ export const DbClusterPayloadToFormValues = (
           )
         : dbCluster?.metadata?.name,
     [DbWizardFormFields.dbVersion]: dbCluster?.spec?.engine?.version || '',
+    [DbWizardFormFields.sharding]: dbCluster?.spec?.sharding?.enabled || false,
+    [DbWizardFormFields.shardConfigServers]: (
+      sharding?.configServer?.replicas ||
+      (DB_WIZARD_DEFAULTS[DbWizardFormFields.shardConfigServers] as string)
+    ).toString(),
+    [DbWizardFormFields.shardNr]: (
+      sharding?.shards ||
+      (DB_WIZARD_DEFAULTS[DbWizardFormFields.shardNr] as string)
+    ).toString(),
+
+    //resources
+    [DbWizardFormFields.numberOfNodes]: `${dbCluster?.spec?.proxy?.replicas}`,
+    [DbWizardFormFields.resourceSizePerNode]:
+      matchFieldsValueToResourceSize(dbCluster),
+    [DbWizardFormFields.cpu]: cpuParser(
+      dbCluster?.spec?.engine?.resources?.cpu.toString() || '0'
+    ),
+    [DbWizardFormFields.disk]: diskValues.value,
+    [DbWizardFormFields.diskUnit]: diskValues.originalUnit,
+    [DbWizardFormFields.memory]: memoryParser(
+      (dbCluster?.spec?.engine?.resources?.memory || 0).toString(),
+      'G'
+    ).value,
+    [DbWizardFormFields.storageClass]:
+      dbCluster?.spec?.engine?.storage?.class || null,
+
+    //backups
+    [DbWizardFormFields.backupsEnabled]: !!backup?.enabled,
+    [DbWizardFormFields.pitrEnabled]: backup?.pitr?.enabled || false,
+    [DbWizardFormFields.pitrStorageLocation]:
+      (backup?.pitr?.enabled && mode === 'new') || mode === 'edit'
+        ? backup?.pitr?.backupStorageName || null
+        : DB_WIZARD_DEFAULTS[DbWizardFormFields.pitrStorageLocation],
+    [DbWizardFormFields.schedules]: backup?.schedules || [],
+
+    //advanced configuration
     [DbWizardFormFields.externalAccess]:
       dbCluster?.spec?.proxy?.expose?.type === ProxyExposeType.external,
     // [DbWizardFormFields.internetFacing]: true,
@@ -63,23 +98,11 @@ export const DbClusterPayloadToFormValues = (
           sourceRange: item,
         }))
       : [{ sourceRange: '' }],
+
+    //monitoring
     [DbWizardFormFields.monitoring]:
       !!dbCluster?.spec?.monitoring?.monitoringConfigName,
     [DbWizardFormFields.monitoringInstance]:
       dbCluster?.spec?.monitoring?.monitoringConfigName || '',
-    [DbWizardFormFields.numberOfNodes]: `${dbCluster?.spec?.proxy?.replicas}`,
-    [DbWizardFormFields.resourceSizePerNode]:
-      matchFieldsValueToResourceSize(dbCluster),
-    [DbWizardFormFields.cpu]: cpuParser(
-      dbCluster?.spec?.engine?.resources?.cpu.toString() || '0'
-    ),
-    [DbWizardFormFields.disk]: memoryParser(
-      dbCluster?.spec?.engine?.storage?.size.toString()
-    ),
-    [DbWizardFormFields.memory]: memoryParser(
-      (dbCluster?.spec?.engine?.resources?.memory || 0).toString()
-    ),
-    [DbWizardFormFields.storageClass]:
-      dbCluster?.spec?.engine?.storage?.class || null,
   };
 };

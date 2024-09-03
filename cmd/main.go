@@ -75,6 +75,7 @@ func main() {
 		// the prod TelemetryURL is set for the release builds during the build time.
 		// The dev TelemetryURL is set only when running `make run-debug`.
 		if c.TelemetryURL != "" {
+			l.Info("Telemetry is running")
 			go server.RunTelemetryJob(tCtx, c)
 		} else {
 			l.Info("Telemetry is not running, the TELEMETRY_URL is not set")

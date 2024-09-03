@@ -13,19 +13,30 @@ export const useGetPermittedNamespaces = ({
 }: {
   resource: string;
 }) => {
-  const permittedNamespaces: string[] = [];
-  const { data: namespaces = [] } = useNamespaces();
+  const { data: namespaces = [], isFetching } = useNamespaces();
 
   const { authorize } = useContext(AuthContext);
 
-  namespaces.forEach((namespace) =>
-    authorize('create', resource, `${namespace}/*`).then((data) => {
-      if (data === true) {
-        permittedNamespaces.push(namespace);
-      }
-    })
-  );
-  return permittedNamespaces;
+  const [permittedNamespaces, setPermittedNamespaces] = useState<string[]>([]);
+
+  useEffect(() => {
+    namespaces.forEach((namespace) =>
+      authorize('create', resource, `${namespace}/*`).then((data) => {
+        if (data === true) {
+          setPermittedNamespaces((oldPermissions) => [
+            ...oldPermissions,
+            namespace,
+          ]);
+        }
+      })
+    );
+  }, [authorize, namespaces, resource]);
+
+  return {
+    permittedNamespaces: [...new Set(permittedNamespaces)],
+    canCreate: permittedNamespaces.length > 0,
+    isFetching: isFetching,
+  };
 };
 
 export const useGetPermissions = ({

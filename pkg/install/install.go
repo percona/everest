@@ -65,6 +65,8 @@ const (
 	FlagVersion = "version"
 	// FlagSkipWizard represents the flag to skip the installation wizard.
 	FlagSkipWizard = "skip-wizard"
+	// FlagDisableTelemetry disables telemetry.
+	FlagDisableTelemetry = "disable-telemetry"
 )
 
 const postInstallMessage = "Everest has been successfully installed!"
@@ -144,6 +146,8 @@ type (
 		VersionMetadataURL string `mapstructure:"version-metadata-url"`
 		// Version defines the version to be installed. If empty, the latest version is installed.
 		Version string `mapstructure:"version"`
+		// DisableTelemetry disables telemetry.
+		DisableTelemetry bool `mapstructure:"disable-telemetry"`
 
 		Operator OperatorConfig
 
@@ -443,6 +447,9 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		if err = o.kubeClient.InstallEverest(ctx, common.SystemNamespace, v); err != nil {
 			return err
 		}
+		if err := o.setEnvs(ctx); err != nil {
+			return err
+		}
 		if err := o.kubeClient.CreateRSAKeyPair(ctx); err != nil {
 			return err
 		}
@@ -465,6 +472,23 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 	}
 
 	return nil
+}
+
+func (o *Install) setEnvs(ctx context.Context) error {
+	if !o.config.DisableTelemetry {
+		return nil
+	}
+
+	everestDeployment, err := o.kubeClient.GetDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
+	if err != nil {
+		return err
+	}
+	everestDeployment.Spec.Template.Spec.Containers[0].Env = append(everestDeployment.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{
+		Name:  "DISABLE_TELEMETRY",
+		Value: "true",
+	})
+	_, err = o.kubeClient.UpdateDeployment(ctx, everestDeployment)
+	return err
 }
 
 func (o *Install) operatorNamesListShortHand() string {

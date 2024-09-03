@@ -1,6 +1,5 @@
 import { Divider, MenuItem } from '@mui/material';
-import { SelectInput, TextInput } from '@percona/ui-lib';
-import { AutoCompleteSelectAll } from 'components/auto-complete-select-all/auto-complete-select-all';
+import { AutoCompleteInput, SelectInput, TextInput } from '@percona/ui-lib';
 import ForcePathCheckbox from 'components/force-path-checkbox';
 import { HiddenInput } from 'components/hidden-input';
 import TlsCheckbox from 'components/tls-checkbox';
@@ -21,6 +20,7 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
       <TextInput
         textFieldProps={{
           placeholder: Messages.createEditModal.placeholders.name,
+          disabled: isEditMode,
         }}
         name={StorageLocationsFields.name}
         label={Messages.name}
@@ -34,15 +34,15 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
         name={StorageLocationsFields.description}
         label={Messages.description}
       />
-      <AutoCompleteSelectAll
-        name={StorageLocationsFields.namespaces}
-        label={Messages.namespaces}
+      <AutoCompleteInput
+        name={StorageLocationsFields.namespace}
+        label={Messages.namespace}
+        disabled={isEditMode}
         loading={isNamespacesFetching}
         options={namespaces}
         isRequired
         textFieldProps={{
-          helperText: Messages.createEditModal.helperText.namespaces,
-          placeholder: Messages.createEditModal.placeholders.namespaces,
+          placeholder: Messages.createEditModal.placeholders.namespace,
         }}
       />
       <Divider sx={{ mt: 4, mb: 2 }} />
@@ -92,6 +92,7 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
         name={StorageLocationsFields.secretKey}
         label={Messages.secretKey}
         placeholder={Messages.createEditModal.placeholders.secretKey}
+        isRequired
       />
       <TlsCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />
       <ForcePathCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />

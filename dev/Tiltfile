@@ -226,6 +226,7 @@ helm_remote('victoria-metrics-operator',
   repo_name='vm',
   repo_url='https://victoriametrics.github.io/helm-charts/',
   namespace=everest_monitoring_namespace,
+  version='0.33.6',
 )
 k8s_yaml(namespace_inject('%s/data/crds/victoriametrics/kube-state-metrics.yaml' % cli_dir, everest_monitoring_namespace))
 k8s_yaml(namespace_inject('%s/data/crds/victoriametrics/crs/vmagent_rbac_account.yaml' % cli_dir, everest_monitoring_namespace))

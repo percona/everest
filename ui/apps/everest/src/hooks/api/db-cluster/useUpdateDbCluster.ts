@@ -75,7 +75,7 @@ const formValuesToPayloadOverrides = (
         storage: {
           ...dbCluster.spec.engine.storage,
           class: dbPayload.storageClass!,
-          size: `${dbPayload.disk}G`,
+          size: `${dbPayload.disk}${dbPayload.diskUnit}`,
         },
         config: dbPayload.engineParametersEnabled
           ? dbPayload.engineParameters
@@ -102,6 +102,15 @@ const formValuesToPayloadOverrides = (
             }),
         },
       },
+      // ...(dbPayload.dbType === DbType.Mongo && {
+      //   sharding: {
+      //     enabled: dbPayload.sharding,
+      //     shards: +(dbPayload.shardNr ?? 1),
+      //     configServer: {
+      //       replicas: +(dbPayload.shardConfigServers ?? 3),
+      //     },
+      //   },
+      // }),
     },
   };
 };

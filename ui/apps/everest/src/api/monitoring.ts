@@ -18,26 +18,32 @@ const filterPmmDataInPayload = (
   return payload;
 };
 
-export const getMonitoringInstancesFn = async () => {
+export const getMonitoringInstancesFn = async (namespace: string) => {
   const response = await api.get<MonitoringInstanceList>(
-    'monitoring-instances'
+    `namespaces/${namespace}/monitoring-instances`
   );
   return response.data;
 };
 
 export const createMonitoringInstanceFn = async (
-  payload: CreateMonitoringInstancePayload
+  payload: CreateMonitoringInstancePayload,
+  namespace: string
 ) => {
   const response = await api.post(
-    'monitoring-instances',
+    `namespaces/${namespace}/monitoring-instances`,
     filterPmmDataInPayload(payload)
   );
 
   return response.data;
 };
 
-export const deleteMonitoringInstanceFn = async (instanceName: string) => {
-  const response = await api.delete(`monitoring-instances/${instanceName}`);
+export const deleteMonitoringInstanceFn = async (
+  instanceName: string,
+  namespace: string
+) => {
+  const response = await api.delete(
+    `namespaces/${namespace}/monitoring-instances/${instanceName}`
+  );
 
   return response.data;
 };
@@ -46,8 +52,10 @@ export const updateMonitoringInstanceFn = async (
   instanceName: string,
   payload: UpdateMonitoringInstancePayload
 ) => {
+  const { namespace } = payload;
+
   const response = await api.patch(
-    `monitoring-instances/${instanceName}`,
+    `namespaces/${namespace}/monitoring-instances/${instanceName}`,
     filterPmmDataInPayload(payload)
   );
 

@@ -92,7 +92,7 @@ func (e *EverestServer) RunTelemetryJob(ctx context.Context, c *config.EverestCo
 			return
 		case <-timer.C:
 			timer.Reset(interval)
-			err = e.collectMetrics(ctx, c.TelemetryURL)
+			err = e.collectMetrics(ctx, *c)
 			if err != nil {
 				e.l.Error(errors.Join(err, errors.New("failed to collect telemetry data")))
 			}
@@ -100,7 +100,10 @@ func (e *EverestServer) RunTelemetryJob(ctx context.Context, c *config.EverestCo
 	}
 }
 
-func (e *EverestServer) collectMetrics(ctx context.Context, url string) error {
+func (e *EverestServer) collectMetrics(ctx context.Context, config config.EverestConfig) error {
+	if config.DisableTelemetry {
+		return nil
+	}
 	everestID, err := e.kubeClient.GetEverestID(ctx)
 	if err != nil {
 		e.l.Error(errors.Join(err, errors.New("failed to get Everest settings")))
@@ -150,5 +153,5 @@ func (e *EverestServer) collectMetrics(ctx context.Context, url string) error {
 		},
 	}
 
-	return e.report(ctx, url, report)
+	return e.report(ctx, config.TelemetryURL, report)
 }
