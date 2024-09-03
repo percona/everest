@@ -1001,6 +1001,11 @@ func (k *Kubernetes) InstallEverest(
 	return nil
 }
 
+// ApplyManifestFile applies a manifest file.
+func (k *Kubernetes) ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...ctrlclient.Object) error {
+	return k.client.ApplyManifestFile(fileBytes, namespace, ignoreObjects...)
+}
+
 func (k *Kubernetes) getManifestData(ctx context.Context, version *goversion.Version) ([]byte, error) {
 	m := everestVersion.ManifestURL(version)
 	k.l.Debugf("Downloading manifest file %s", m)

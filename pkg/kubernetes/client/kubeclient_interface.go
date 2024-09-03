@@ -9,6 +9,7 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	versioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	packagev1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
+	pxcv1 "github.com/percona/percona-xtradb-cluster-operator/pkg/apis/pxc/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -194,6 +195,10 @@ type KubeClientConnector interface {
 	ListPods(ctx context.Context, namespace string, options metav1.ListOptions) (*corev1.PodList, error)
 	// DeletePod deletes a pod by given name in the given namespace.
 	DeletePod(ctx context.Context, namespace, name string) error
+	// ListPXCClusters returns the PXCClusters.
+	ListPXCClusters(ctx context.Context, namespace string) (*pxcv1.PerconaXtraDBClusterList, error)
+	// UpdatePXCCluster updates a PerconaXtraDBCluster.
+	UpdatePXCCluster(ctx context.Context, db *pxcv1.PerconaXtraDBCluster) error
 	// ListSecrets returns secrets.
 	ListSecrets(ctx context.Context, namespace string) (*corev1.SecretList, error)
 	// GetSecret returns secret by name.

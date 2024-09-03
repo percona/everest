@@ -9,6 +9,7 @@ import (
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	versioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	apisoperatorsv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
+	pxcv1 "github.com/percona/percona-xtradb-cluster-operator/pkg/apis/pxc/v1"
 	mock "github.com/stretchr/testify/mock"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -1832,6 +1833,36 @@ func (_m *MockKubeClientConnector) ListObjects(gvk schema.GroupVersionKind, into
 	return r0
 }
 
+// ListPXCClusters provides a mock function with given fields: ctx, namespace
+func (_m *MockKubeClientConnector) ListPXCClusters(ctx context.Context, namespace string) (*pxcv1.PerconaXtraDBClusterList, error) {
+	ret := _m.Called(ctx, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListPXCClusters")
+	}
+
+	var r0 *pxcv1.PerconaXtraDBClusterList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*pxcv1.PerconaXtraDBClusterList, error)); ok {
+		return rf(ctx, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *pxcv1.PerconaXtraDBClusterList); ok {
+		r0 = rf(ctx, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pxcv1.PerconaXtraDBClusterList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListPods provides a mock function with given fields: ctx, namespace, options
 func (_m *MockKubeClientConnector) ListPods(ctx context.Context, namespace string, options metav1.ListOptions) (*v1.PodList, error) {
 	ret := _m.Called(ctx, namespace, options)
@@ -2204,6 +2235,24 @@ func (_m *MockKubeClientConnector) UpdateNamespace(ctx context.Context, namespac
 	}
 
 	return r0, r1
+}
+
+// UpdatePXCCluster provides a mock function with given fields: ctx, db
+func (_m *MockKubeClientConnector) UpdatePXCCluster(ctx context.Context, db *pxcv1.PerconaXtraDBCluster) error {
+	ret := _m.Called(ctx, db)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdatePXCCluster")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *pxcv1.PerconaXtraDBCluster) error); ok {
+		r0 = rf(ctx, db)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // UpdateSecret provides a mock function with given fields: ctx, secret

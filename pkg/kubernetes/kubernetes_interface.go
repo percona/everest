@@ -125,6 +125,8 @@ type KubernetesConnector interface {
 	ApplyObject(obj runtime.Object) error
 	// InstallEverest downloads the manifest file and applies it against provisioned k8s cluster.
 	InstallEverest(ctx context.Context, namespace string, version *goversion.Version, skipObjs ...ctrlclient.Object) error
+	// ApplyManifestFile applies a manifest file.
+	ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...ctrlclient.Object) error
 	// DeleteEverest downloads the manifest file and deletes it from provisioned k8s cluster.
 	DeleteEverest(ctx context.Context, namespace string, version *goversion.Version) error
 	// GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.

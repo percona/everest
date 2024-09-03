@@ -19,8 +19,10 @@ package api
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"slices"
+	"strings"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cenkalti/backoff/v4"
@@ -40,6 +42,11 @@ var (
 	errDBEngineUpgradeUnavailable   = errors.New("provided target version is not available for upgrade")
 	errDBEngineInvalidTargetVersion = errors.New("invalid target version provided for upgrade")
 )
+
+type installPlanUpgrade struct {
+	name       string
+	preInstall []func() error
+}
 
 // ListDatabaseEngines List of the available database engines on the specified namespace.
 func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, namespace string) error {
@@ -349,7 +356,7 @@ func (e *EverestServer) startOperatorUpgrade(ctx context.Context, _, namespace, 
 	}
 
 	// gather install plans to approve.
-	installPlans := []string{}
+	ips := make([]*installPlanUpgrade, 0, len(engines.Items))
 	for _, engine := range engines.Items {
 		nextVer := engine.Status.GetNextUpgradeVersion()
 		if nextVer == "" {
@@ -357,19 +364,38 @@ func (e *EverestServer) startOperatorUpgrade(ctx context.Context, _, namespace, 
 		}
 		for _, pending := range engine.Status.PendingOperatorUpgrades {
 			if pending.TargetVersion == nextVer {
-				installPlans = append(installPlans, pending.InstallPlanRef.Name)
+				ip := &installPlanUpgrade{
+					name: pending.InstallPlanRef.Name,
+				}
+				if engine.Spec.Type == everestv1alpha1.DatabaseEnginePXC && nextVer == "1.15.0" {
+					ip.preInstall = []func() error{
+						func() error {
+							return e.applyPXC114To115Patch(ctx, namespace)
+						},
+					}
+				}
+				ips = append(ips, ip)
 			}
 		}
 	}
 
 	// de-duplicate the list.
-	slices.Sort(installPlans)
-	installPlans = slices.Compact(installPlans)
+	slices.SortFunc(ips, func(a, b *installPlanUpgrade) int {
+		return strings.Compare(a.name, b.name)
+	})
+	ips = slices.CompactFunc(ips, func(a, b *installPlanUpgrade) bool {
+		return strings.EqualFold(a.name, b.name)
+	})
 
 	// approve install plans.
-	for _, plan := range installPlans {
-		if err := backoff.Retry(func() error {
-			_, err := e.kubeClient.ApproveInstallPlan(ctx, namespace, plan)
+	for _, plan := range ips {
+		if err = backoff.Retry(func() error {
+			for _, pre := range plan.preInstall {
+				if err = pre(); err != nil {
+					return err
+				}
+			}
+			_, err = e.kubeClient.ApproveInstallPlan(ctx, namespace, plan.name)
 			return err
 		}, backoff.WithContext(everestAPIConstantBackoff, ctx),
 		); err != nil {
@@ -377,6 +403,59 @@ func (e *EverestServer) startOperatorUpgrade(ctx context.Context, _, namespace, 
 		}
 	}
 	return nil
+}
+
+// applyPXC114To115Patch is due to a bug in PXC operator 1.14 and 1.15.
+// 1-node clusters are restarted without this patch. See K8SPXC-1454.
+func (e *EverestServer) applyPXC114To115Patch(ctx context.Context, namespace string) error {
+	manifestUrls := []string{
+		"https://raw.githubusercontent.com/percona/percona-xtradb-cluster-operator/v1.15.0/deploy/crd.yaml",
+		"https://raw.githubusercontent.com/percona/percona-xtradb-cluster-operator/v1.15.0/deploy/rbac.yaml",
+	}
+
+	l := e.l.With("patch", "applyPXC114To115Patch")
+	l.Info("Running applyPXC114To115Patch")
+	for _, m := range manifestUrls {
+		l.Infof("Applying %s", m)
+		b, err := e.downloadFile(ctx, m)
+		if err != nil {
+			return fmt.Errorf("could not download %s: %w", m, err)
+		}
+		if err = e.kubeClient.ApplyManifestFile(b, namespace); err != nil {
+			return fmt.Errorf("could not apply manifest %s: %w", m, err)
+		}
+	}
+
+	dbs, err := e.kubeClient.ListPXCClusters(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("could not list database clusters: %w", err)
+	}
+	for _, db := range dbs.Items {
+		if db.Spec.PXC.PodSpec.Size != 1 {
+			continue
+		}
+		l.Infof("Changing TLS settings for %s", db.Name)
+		db.Spec.TLS.Enabled = pointer.ToBool(false)
+		db.Spec.Unsafe.TLS = true
+		if err = e.kubeClient.UpdatePXCCluster(ctx, &db); err != nil {
+			return fmt.Errorf("could not update PXC cluster %s: %w", db.Name, err)
+		}
+	}
+
+	return nil
+}
+
+func (e *EverestServer) downloadFile(ctx context.Context, url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close() //nolint:errcheck
+	return io.ReadAll(resp.Body)
 }
 
 func (e *EverestServer) getOperatorUpgradePreflight(

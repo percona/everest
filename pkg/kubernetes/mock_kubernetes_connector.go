@@ -48,6 +48,31 @@ func (_m *MockKubernetesConnector) Accounts() accounts.Interface {
 	return r0
 }
 
+// ApplyManifestFile provides a mock function with given fields: fileBytes, namespace, ignoreObjects
+func (_m *MockKubernetesConnector) ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...client.Object) error {
+	_va := make([]interface{}, len(ignoreObjects))
+	for _i := range ignoreObjects {
+		_va[_i] = ignoreObjects[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, fileBytes, namespace)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ApplyManifestFile")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]byte, string, ...client.Object) error); ok {
+		r0 = rf(fileBytes, namespace, ignoreObjects...)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ApplyObject provides a mock function with given fields: obj
 func (_m *MockKubernetesConnector) ApplyObject(obj runtime.Object) error {
 	ret := _m.Called(obj)

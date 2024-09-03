@@ -13,7 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package client
+// Package kubernetes ...
+package kubernetes
 
-//go:generate ../../../bin/ifacemaker -f backup_storage.go -f configmap.go -f client.go -f cluster_service_version.go -f ctl.go -f database_cluster.go -f database_cluster_backup.go -f database_cluster_restore.go -f database_engine.go -f deployment.go -f install_plan.go -f monitoring.go -f monitoring_config.go -f namespace.go -f olm.go -f node.go -f pod.go -f pxc_cluster.go -f secret.go -f storage.go -f writer -s Client -i KubeClientConnector -p client -o kubeclient_interface.go
-//go:generate ../../../bin/mockery --name=KubeClientConnector --case=snake --inpackage
+import (
+	"context"
+
+	pxcv1 "github.com/percona/percona-xtradb-cluster-operator/pkg/apis/pxc/v1"
+)
+
+// ListPXCClusters returns list of PXC clusters.
+func (k *Kubernetes) ListPXCClusters(ctx context.Context, namespace string) (*pxcv1.PerconaXtraDBClusterList, error) {
+	return k.client.ListPXCClusters(ctx, namespace)
+}
+
+// UpdatePXCCluster updates a PXC cluster.
+func (k *Kubernetes) UpdatePXCCluster(ctx context.Context, db *pxcv1.PerconaXtraDBCluster) error {
+	return k.client.UpdatePXCCluster(ctx, db)
+}
