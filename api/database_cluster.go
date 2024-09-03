@@ -303,9 +303,16 @@ func (e *EverestServer) GetDatabaseClusterPitr(ctx echo.Context, namespace, name
 
 	latestBackup := latestSuccessfulBackup(backups.Items)
 
-	uploadInterval := getDefaultUploadInterval(databaseCluster.Spec.Engine.Type, databaseCluster.Spec.Backup.PITR.UploadIntervalSec)
 	backupTime := latestBackup.Status.CreatedAt.UTC()
-	latest := latestRestorableDate(time.Now(), backupTime, uploadInterval)
+	var latest *time.Time
+	// if there is the LatestRestorableTime set in the CR, use it
+	if latestBackup.Status.LatestRestorableTime != nil {
+		latest = &latestBackup.Status.LatestRestorableTime.Time
+	} else {
+		// otherwise use heuristics based on the UploadInterval
+		uploadInterval := getDefaultUploadInterval(databaseCluster.Spec.Engine.Type, databaseCluster.Spec.Backup.PITR.UploadIntervalSec)
+		latest = latestRestorableDate(time.Now(), backupTime, uploadInterval)
+	}
 
 	response.LatestDate = latest
 	if response.LatestDate != nil {
