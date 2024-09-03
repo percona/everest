@@ -72,7 +72,6 @@ func (u *Upgrade) copySecret(ctx context.Context, secret *corev1.Secret, namespa
 	return nil
 }
 
-//nolint:dupl
 func (u *Upgrade) migrateBackupStorages(ctx context.Context) error {
 	backupStorages, err := u.kubeClient.ListBackupStorages(ctx, common.SystemNamespace)
 	if err != nil {
@@ -127,7 +126,6 @@ func (u *Upgrade) migrateBackupStorages(ctx context.Context) error {
 	return nil
 }
 
-//nolint:dupl
 func (u *Upgrade) migrateMonitoringInstaces(ctx context.Context) error {
 	monitoringConfigs, err := u.kubeClient.ListMonitoringConfigs(ctx, common.MonitoringNamespace)
 	if err != nil {
