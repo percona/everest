@@ -111,6 +111,7 @@ func (u *Upgrade) migrateBackupStorages(ctx context.Context) error {
 		// The purpose of this finalizer is to remove all Secrets linked to this BS, in the DB namespaces.
 		// After this migration, these Secrets are owned by the newly created BackupStorage in the target namespace.
 		finalizers := make([]string, 0, len(bs.GetFinalizers()))
+		u.l.Infof("Initial finalizers=%v", bs.GetFinalizers())
 		for _, f := range bs.GetFinalizers() {
 			if f == backupStorageCleanupFinalizer {
 				continue
@@ -118,6 +119,7 @@ func (u *Upgrade) migrateBackupStorages(ctx context.Context) error {
 			finalizers = append(finalizers, f)
 		}
 		bs.SetFinalizers(finalizers)
+		u.l.Infof("Updated finalizers=%v", finalizers)
 		if err := u.kubeClient.UpdateBackupStorage(ctx, &bs); err != nil {
 			return fmt.Errorf("cannot remove finalizer %s from backup storage %s", backupStorageCleanupFinalizer, bs.Name)
 		}
