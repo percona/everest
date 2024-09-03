@@ -105,7 +105,6 @@ func (u *Upgrade) migrateBackupStorages(ctx context.Context) error {
 			if err := u.kubeClient.CreateBackupStorage(ctx, bsClone); client.IgnoreAlreadyExists(err) != nil {
 				return fmt.Errorf("cannot create backup storage %s in namespace %s", bsClone.GetName(), ns)
 			}
-
 		}
 		// Remove the Secret clean-up finalizer from the original BackupStorage.
 		// The purpose of this finalizer is to remove all Secrets linked to this BS, in the DB namespaces.
