@@ -166,11 +166,11 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 	upgradeSteps := []common.Step{}
 
-	output.Warn("You are about to upgrade Everest to version %s. This operation is irreversible.\n"+
-		"You can read more about the changes in the release notes: %s\n",
+	fmt.Fprintln(os.Stdout, output.Warn("You are about to upgrade Everest to version %s. This operation is irreversible.\n"+
+		"You can read more about the changes in the release notes: %s",
 		upgradeEverestTo,
 		releaseNotesURL,
-	)
+	))
 	var proceed bool
 	qProceed := &survey.Confirm{
 		Message: "Continue?",
