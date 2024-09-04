@@ -92,3 +92,8 @@ func Info(msg string, args ...any) string {
 func Rocket(msg string, args ...any) string {
 	return fmt.Sprintf("🚀 %s\n", fmt.Sprintf(msg, args...))
 }
+
+// Warn prints a message with a warning emoji.
+func Warn(msg string, args ...any) string {
+	return fmt.Sprintf("⚠️ %s\n", fmt.Sprintf(msg, args...))
+}

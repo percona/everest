@@ -26,6 +26,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/AlecAivazis/survey/v2"
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
 	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
@@ -47,6 +48,10 @@ const (
 	contextTimeout    = 5 * time.Minute
 	backoffInterval   = 5 * time.Second
 	backoffMaxRetries = 5
+)
+
+const (
+	releaseNotesURL = "https://docs.percona.com/everest/release-notes/release_notes_index.html"
 )
 
 // list of objects to skip during upgrade.
@@ -160,6 +165,24 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	}
 
 	upgradeSteps := []common.Step{}
+
+	output.Warn("You are about to upgrade Everest to version %s. This operation is irreversible.\n"+
+		"You can read more about the changes in the release notes: %s\n",
+		upgradeEverestTo,
+		releaseNotesURL,
+	)
+	var proceed bool
+	qProceed := &survey.Confirm{
+		Message: "Continue?",
+		Default: false,
+	}
+	if err := survey.AskOne(qProceed, &proceed); err != nil {
+		return err
+	}
+	if !proceed {
+		u.l.Info("Upgrade operation has been canceled")
+		return nil
+	}
 
 	// Start upgrade.
 	upgradeSteps = append(upgradeSteps, common.Step{
