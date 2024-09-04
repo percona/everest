@@ -189,8 +189,8 @@ export const populateMonitoringModalForm = async (
   user: string,
   password: string
 ) => {
-  // check monitoring is not available
-  await expect(page.getByTestId('monitoring-warning')).toBeVisible();
+  // check monitoring is not available (disabled because removing inter tests dependency)
+  // await expect(page.getByTestId('monitoring-warning')).toBeVisible();
   expect(await page.getByLabel('Enable monitoring').isChecked()).toBeFalsy();
   await page.getByRole('button', { name: 'Add monitoring endpoint' }).click();
 

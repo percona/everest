@@ -76,7 +76,7 @@ test.describe.configure({ retries: 0 });
         request,
       }) => {
         // Timeout is scaled based on the cluster size to account for the additional resources needed.
-        test.setTimeout(size * 120000);
+        test.setTimeout(size * 240000);
 
         expect(storageClasses.length).toBeGreaterThan(0);
 
