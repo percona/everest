@@ -121,7 +121,7 @@ export const StorageLocations = () => {
       onSuccess: (updatedLocation) => {
         updateDataAfterEdit(
           queryClient,
-          BACKUP_STORAGES_QUERY_KEY,
+          [BACKUP_STORAGES_QUERY_KEY, data.namespace],
           StorageLocationsFields.name
         )(updatedLocation);
         handleCloseModal();
@@ -132,9 +132,10 @@ export const StorageLocations = () => {
   const handleCreateBackup = (data: BackupStorage) => {
     createBackupStorage(data, {
       onSuccess: (newLocation) => {
-        updateDataAfterCreate(queryClient, [BACKUP_STORAGES_QUERY_KEY])(
-          newLocation
-        );
+        updateDataAfterCreate(queryClient, [
+          BACKUP_STORAGES_QUERY_KEY,
+          data.namespace,
+        ])(newLocation);
         handleCloseModal();
       },
     });
@@ -168,7 +169,7 @@ export const StorageLocations = () => {
         onSuccess: (_, locationName) => {
           updateDataAfterDelete(
             queryClient,
-            BACKUP_STORAGES_QUERY_KEY,
+            [BACKUP_STORAGES_QUERY_KEY, namespace],
             'name'
           )(_, locationName.backupStorageId);
           handleCloseDeleteDialog();

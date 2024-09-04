@@ -11,7 +11,7 @@
     "@faker-js/faker": "^8.4.1",
     "@playwright/test": "^1.46.0",
     "playwright": "^1.44.1",
-    "semver": "^7.6.2",
+    "semver": "^7.6.3",
     "shelljs": "^0.8.5"
   },
   "devDependencies": {

@@ -221,10 +221,6 @@ func (u *Upgrade) Run(ctx context.Context) error {
 				skipObjects = slices.DeleteFunc(skipObjects, func(o client.Object) bool {
 					return o.GetName() == common.EverestRBACConfigMapName
 				})
-				// Migrate monitoring-configs and backup-storages.
-				if err := u.migrateSharedResources(ctx); err != nil {
-					return fmt.Errorf("migration of shared resources failed: %w", err)
-				}
 			}
 			// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
 			if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo, skipObjects...); err != nil {
@@ -259,6 +255,12 @@ func (u *Upgrade) Run(ctx context.Context) error {
 				}
 				if err := u.kubeClient.DeleteSecret(ctx, common.SystemNamespace, "everest-admin-token"); client.IgnoreNotFound(err) != nil {
 					return err
+				}
+			}
+			if common.CheckConstraint(upgradeEverestTo, "~> 1.2.0") {
+				// Migrate monitoring-configs and backup-storages.
+				if err := u.migrateSharedResources(ctx); err != nil {
+					return fmt.Errorf("migration of shared resources failed: %w", err)
 				}
 			}
 			return nil
