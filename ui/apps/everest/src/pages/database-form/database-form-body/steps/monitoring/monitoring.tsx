@@ -84,9 +84,10 @@ export const Monitoring = () => {
       },
       {
         onSuccess: (newInstance) => {
-          updateDataAfterCreate(queryClient, [MONITORING_INSTANCES_QUERY_KEY])(
-            newInstance
-          );
+          updateDataAfterCreate(queryClient, [
+            MONITORING_INSTANCES_QUERY_KEY,
+            newInstance.namespace,
+          ])(newInstance);
           handleCloseModal();
         },
       }

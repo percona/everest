@@ -115,7 +115,7 @@ export const MonitoringEndpoints = () => {
           onSuccess: (updatedInstance) => {
             updateDataAfterEdit(
               queryClient,
-              MONITORING_INSTANCES_QUERY_KEY,
+              [MONITORING_INSTANCES_QUERY_KEY, updatedInstance.namespace],
               'name'
             )(updatedInstance);
             handleCloseModal();
@@ -137,6 +137,7 @@ export const MonitoringEndpoints = () => {
           onSuccess: (newInstance) => {
             updateDataAfterCreate(queryClient, [
               MONITORING_INSTANCES_QUERY_KEY,
+              newInstance.namespace,
             ])(newInstance);
             handleCloseModal();
           },
@@ -152,7 +153,7 @@ export const MonitoringEndpoints = () => {
         onSuccess: (_, locationName) => {
           updateDataAfterDelete(
             queryClient,
-            MONITORING_INSTANCES_QUERY_KEY,
+            [MONITORING_INSTANCES_QUERY_KEY, namespace],
             'name'
           )(_, locationName.instanceName);
           handleCloseDeleteDialog();
