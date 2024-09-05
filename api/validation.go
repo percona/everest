@@ -61,7 +61,7 @@ const (
 	maxNameLength       = 22
 	timeoutS3AccessSec  = 2
 	minShardsNum        = 1
-	minConfigServersNum = 3
+	minConfigServersNum = 1
 )
 
 var (
@@ -112,7 +112,7 @@ var (
 	errInsufficientPermissions       = errors.New("insufficient permissions for performing the operation")
 	errShardingIsNotSupported        = errors.New("sharding is not supported")
 	errInsufficientShardsNumber      = errors.New("shards number should be greater than 0")
-	errInsufficientCfgSrvNumber      = errors.New("sharding: minimum config servers number is 3")
+	errInsufficientCfgSrvNumber      = errors.New("sharding: minimum config servers number is 1")
 	errEvenServersNumber             = errors.New("sharding: config servers number should be odd")
 	errDisableShardingNotSupported   = errors.New("sharding: disable sharding is not supported")
 	errChangeShardsNumNotSupported   = errors.New("sharding: change shards number is not supported")
