@@ -14,6 +14,7 @@
 // limitations under the License.
 import { DbWizardFormFields } from '../../../database-form.types';
 import { ResourceSize } from './resources-step.types';
+import { SHARDING_DEFAULTS } from '../../../database-form.constants';
 
 export const DEFAULT_SIZES = {
   [ResourceSize.small]: {
@@ -31,4 +32,13 @@ export const DEFAULT_SIZES = {
     [DbWizardFormFields.memory]: 32,
     [DbWizardFormFields.disk]: 200,
   },
+};
+
+export const getDefaultShardsNumberByNode = (nodeValue: number) => {
+  if (nodeValue == 1) return SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min;
+  else return '2';
+};
+
+export const getDefaultConfigServers = (nodeValue: number) => {
+  if (nodeValue <= 5) return nodeValue.toString();
 };
