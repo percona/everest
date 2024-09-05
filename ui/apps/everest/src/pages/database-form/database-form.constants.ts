@@ -19,6 +19,16 @@ import { DEFAULT_SIZES } from './database-form-body/steps/resources/resources-st
 import { ResourceSize } from './database-form-body/steps/resources/resources-step.types.ts';
 import { DbWizardType } from './database-form-schema.ts';
 
+export const SHARDING_DEFAULTS = {
+  [DbWizardFormFields.shardConfigServers]: {
+    min: '1',
+    max: '7',
+  },
+  [DbWizardFormFields.shardNr]: {
+    min: '1',
+  },
+};
+
 export const DB_WIZARD_DEFAULTS: DbWizardType = {
   // TODO should be changed to true after  https://jira.percona.com/browse/EVEREST-509
   [DbWizardFormFields.schedules]: [],
@@ -45,8 +55,6 @@ export const DB_WIZARD_DEFAULTS: DbWizardType = {
   [DbWizardFormFields.diskUnit]: 'Gi',
   [DbWizardFormFields.memory]: DEFAULT_SIZES.small.memory,
   [DbWizardFormFields.sharding]: false,
-  [DbWizardFormFields.shardNr]: '1',
-  [DbWizardFormFields.shardConfigServers]: '3',
 };
 
 export const NODES_DB_TYPE_MAP: Record<DbType, string[]> = {
