@@ -10,9 +10,10 @@ const SwitchInput = ({
   labelCaption,
   controllerProps,
   formControlLabelProps,
-  switchFieldProps,
+  switchFieldProps = {},
 }: SwitchInputProps) => {
   const { control: contextControl } = useFormContext();
+  const { onChange, ...restSwitchFieldProps } = switchFieldProps;
   return (
     <FormControlLabel
       label={
@@ -31,6 +32,10 @@ const SwitchInput = ({
           render={({ field }) => (
             <Switch
               {...field}
+              onChange={(e) => {
+                onChange?.(e, e.target.checked);
+                field.onChange(e);
+              }}
               sx={{
                 ...(labelCaption && {
                   alignSelf: 'flex-start',
@@ -39,7 +44,7 @@ const SwitchInput = ({
               }}
               checked={field.value}
               data-testid={`switch-input-${kebabize(name)}`}
-              {...switchFieldProps}
+              {...restSwitchFieldProps}
             />
           )}
           {...controllerProps}

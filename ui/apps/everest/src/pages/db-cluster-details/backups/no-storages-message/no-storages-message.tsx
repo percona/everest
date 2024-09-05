@@ -25,9 +25,10 @@ export const NoStoragesMessage = () => {
   const handleCreateBackup = (data: BackupStorage) => {
     createBackupStorage(data, {
       onSuccess: (newLocation) => {
-        updateDataAfterCreate(queryClient, [BACKUP_STORAGES_QUERY_KEY])(
-          newLocation
-        );
+        updateDataAfterCreate(queryClient, [
+          BACKUP_STORAGES_QUERY_KEY,
+          data.namespace,
+        ])(newLocation);
         handleCloseModal();
       },
     });

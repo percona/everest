@@ -18,6 +18,8 @@ import OverviewSection from '../overview-section';
 import { ResourcesDetailsOverviewProps } from './card.types';
 import OverviewSectionRow from '../overview-section-row';
 import { Messages } from '../cluster-overview.messages';
+import { Stack } from '@mui/material';
+import { DbType } from '@percona/types';
 
 export const ResourcesDetails = ({
   numberOfNodes,
@@ -25,6 +27,8 @@ export const ResourcesDetails = ({
   memory,
   disk,
   loading,
+  dbType,
+  sharding,
 }: ResourcesDetailsOverviewProps) => {
   return (
     <OverviewCard
@@ -40,23 +44,49 @@ export const ResourcesDetails = ({
         // ),
       }}
     >
-      <OverviewSection
-        title={`${numberOfNodes} node${+numberOfNodes > 1 ? 's' : ''}`}
-        loading={loading}
-      >
-        <OverviewSectionRow
-          label={Messages.fields.cpu}
-          contentString={`${cpu}`}
-        />
-        <OverviewSectionRow
-          label={Messages.fields.disk}
-          contentString={`${disk}`}
-        />
-        <OverviewSectionRow
-          label={Messages.fields.memory}
-          contentString={`${memory}`}
-        />
-      </OverviewSection>
+      <Stack gap={3}>
+        {dbType === DbType.Mongo && (
+          <OverviewSection title={'Sharding'} loading={loading}>
+            <OverviewSectionRow
+              label={Messages.fields.status}
+              contentString={
+                sharding?.enabled
+                  ? Messages.fields.enabled
+                  : Messages.fields.disabled
+              }
+            />
+            {sharding?.enabled && (
+              <OverviewSectionRow
+                label={Messages.fields.shards}
+                contentString={sharding?.shards?.toString()}
+              />
+            )}
+            {sharding?.enabled && (
+              <OverviewSectionRow
+                label={Messages.fields.configServers}
+                contentString={sharding?.configServer?.replicas?.toString()}
+              />
+            )}
+          </OverviewSection>
+        )}
+        <OverviewSection
+          title={`${numberOfNodes} node${+numberOfNodes > 1 ? 's' : ''}`}
+          loading={loading}
+        >
+          <OverviewSectionRow
+            label={Messages.fields.cpu}
+            contentString={`${cpu}`}
+          />
+          <OverviewSectionRow
+            label={Messages.fields.disk}
+            contentString={`${disk}`}
+          />
+          <OverviewSectionRow
+            label={Messages.fields.memory}
+            contentString={`${memory}`}
+          />
+        </OverviewSection>
+      </Stack>
     </OverviewCard>
   );
 };

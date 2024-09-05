@@ -71,6 +71,8 @@ export const ClusterOverview = () => {
         cpu={dbCluster?.spec.engine.resources?.cpu!}
         memory={dbCluster?.spec.engine.resources?.memory!}
         disk={dbCluster?.spec.engine.storage.size!}
+        sharding={dbCluster?.spec.sharding}
+        dbType={dbEngineToDbType(dbCluster?.spec.engine.type!)}
         loading={loadingCluster}
       />
       {canReadBackups && (
