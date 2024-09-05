@@ -102,5 +102,5 @@ export const getDefaultShardsNumberByNode = (nodeValue: number) => {
 };
 
 export const getDefaultConfigServers = (nodeValue: number) => {
-  if (nodeValue <= 5) return nodeValue.toString();
+  return nodeValue.toString();
 };
