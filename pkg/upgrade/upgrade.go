@@ -94,6 +94,8 @@ type (
 		VersionMetadataURL string `mapstructure:"version-metadata-url"`
 		// If set, we will print the pretty output.
 		Pretty bool
+		// If set, we will not ask for confirmation.
+		AssumeYes bool `mapstructure:"yes"`
 	}
 
 	// Upgrade struct implements upgrade command.
@@ -166,22 +168,24 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 	upgradeSteps := []common.Step{}
 
-	fmt.Fprintln(os.Stdout, output.Warn("You are about to upgrade Everest to version %s. This operation is irreversible.\n"+
-		"You can read more about the changes in the release notes: %s",
-		upgradeEverestTo,
-		releaseNotesURL,
-	))
-	var proceed bool
-	qProceed := &survey.Confirm{
-		Message: "Continue?",
-		Default: false,
-	}
-	if err := survey.AskOne(qProceed, &proceed); err != nil {
-		return err
-	}
-	if !proceed {
-		u.l.Info("Upgrade operation has been canceled")
-		return nil
+	if !u.config.AssumeYes {
+		fmt.Fprintln(os.Stdout, output.Warn("You are about to upgrade Everest to version %s. This operation is irreversible.\n"+
+			"You can read more about the changes in the release notes: %s",
+			upgradeEverestTo,
+			releaseNotesURL,
+		))
+		var proceed bool
+		qProceed := &survey.Confirm{
+			Message: "Continue?",
+			Default: false,
+		}
+		if err := survey.AskOne(qProceed, &proceed); err != nil {
+			return err
+		}
+		if !proceed {
+			u.l.Info("Upgrade operation has been canceled")
+			return nil
+		}
 	}
 
 	// Start upgrade.
