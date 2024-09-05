@@ -3,7 +3,7 @@ import { QueryClient } from '@tanstack/react-query';
 export const updateDataAfterEdit =
   (
     queryClient: QueryClient,
-    queryKey: string,
+    queryKey: string[],
     identifier: string | undefined = 'id'
   ) =>
   <T extends object>(updatedObject: T) => {
@@ -26,7 +26,7 @@ export const updateDataAfterCreate =
 export const updateDataAfterDelete =
   (
     queryClient: QueryClient,
-    queryKey: string,
+    queryKey: string[],
     identifier: string | undefined = 'id'
   ) =>
   <T extends object>(_: T, objectId: string) => {
