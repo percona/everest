@@ -13,15 +13,13 @@ import { DbWizardFormFields } from '../../../database-form.types.ts';
 import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { ResourceInput } from './resource-input/resource-input.tsx';
-import {
-  DEFAULT_SIZES,
-  getDefaultConfigServers,
-  getDefaultShardsNumberByNode,
-} from './resources-step.const.ts';
+import { DEFAULT_SIZES } from './resources-step.const.ts';
 import { Messages } from './resources-step.messages.ts';
 import { ResourceSize } from './resources-step.types.ts';
 import {
   checkResourceText,
+  getDefaultConfigServers,
+  getDefaultShardsNumberByNode,
   humanizeResourceSizeMap,
 } from './resources-step.utils.ts';
 
