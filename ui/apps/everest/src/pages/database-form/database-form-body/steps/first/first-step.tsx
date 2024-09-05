@@ -67,7 +67,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const dbType: DbType = watch(DbWizardFormFields.dbType);
   const dbVersion: DbType = watch(DbWizardFormFields.dbVersion);
   const dbNamespace = watch(DbWizardFormFields.k8sNamespace);
-  const sharding = watch(DbWizardFormFields.sharding);
   const dbClusterStatus = dbClusterData?.status?.status;
   const disableShardingChange =
     loadingDefaultsForEdition ||
@@ -177,6 +176,9 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         keepError: false,
       });
       resetField(DbWizardFormFields.shardConfigServers, {
+        keepError: false,
+      });
+      resetField(DbWizardFormFields.sharding, {
         keepError: false,
       });
       updateDbVersions();
@@ -381,35 +383,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
               {/*  </Tooltip>*/}
               {/*)}*/}
             </Stack>
-            {sharding && (
-              <>
-                <TextInput
-                  name={DbWizardFormFields.shardNr}
-                  textFieldProps={{
-                    disabled: mode !== 'new',
-                    label: Messages.labels.numberOfShards,
-                    type: 'number',
-                    inputProps: {
-                      min: DB_WIZARD_DEFAULTS[DbWizardFormFields.shardNr],
-                    },
-                  }}
-                />
-                <TextInput
-                  name={DbWizardFormFields.shardConfigServers}
-                  textFieldProps={{
-                    disabled: mode !== 'new',
-                    label: Messages.labels.numberOfConfigServers,
-                    type: 'number',
-                    inputProps: {
-                      step: '2',
-                      min: DB_WIZARD_DEFAULTS[
-                        DbWizardFormFields.shardConfigServers
-                      ],
-                    },
-                  }}
-                />
-              </>
-            )}
           </>
         )}
       </FormGroup>

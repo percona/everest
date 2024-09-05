@@ -18,13 +18,16 @@ export const Messages = {
   pageDescription:
     'Configure the resources your new database will have access to.',
   labels: {
-    numberOfNodes: 'Nº nodes',
+    numberOfNodes: 'Number of nodes per shard',
     resourceSizePerNode: 'Resource size per node',
     cpu: 'cpu',
     memory: 'memory',
     disk: 'disk',
     estimated: (value: string | number | undefined, units: string) =>
       value ? `Estimated available: ${value} ${units}` : '',
+    shardsConfig: 'Shards configuration',
+    numberOfShards: 'Number of shards',
+    numberOfConfigServers: 'Number of configuration servers',
   },
   alerts: {
     resourcesCapacityExceeding: (

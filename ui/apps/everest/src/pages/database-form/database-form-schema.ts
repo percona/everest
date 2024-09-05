@@ -6,7 +6,7 @@ import { ResourceSize } from './database-form-body/steps/resources/resources-ste
 import { DbWizardFormFields } from './database-form.types.ts';
 import { rfc_123_schema } from 'utils/common-validation.ts';
 import { Messages as ScheduleFormMessages } from 'components/schedule-form-dialog/schedule-form/schedule-form.messages.ts';
-import { DB_WIZARD_DEFAULTS } from './database-form.constants';
+import { SHARDING_DEFAULTS } from './database-form.constants';
 
 const resourceToNumber = (minimum = 0) =>
   z.union([z.string().nonempty(), z.number()]).pipe(
@@ -37,20 +37,35 @@ const basicInfoSchema = z
         }
       }),
     [DbWizardFormFields.sharding]: z.boolean(),
+  })
+  .passthrough();
+
+// .passthrough tells Zod to not drop unrecognized keys
+// this is needed because we parse step by step
+// so, by default, Zod would leave behind the keys from previous steps
+
+const stepTwoSchema = z
+  .object({
     [DbWizardFormFields.shardNr]: z.string().optional(),
     [DbWizardFormFields.shardConfigServers]: z.string().optional(),
+    [DbWizardFormFields.cpu]: resourceToNumber(0.6),
+    [DbWizardFormFields.memory]: resourceToNumber(0.512),
+    [DbWizardFormFields.disk]: resourceToNumber(1),
+    // we will never input this, but we need it and zod will let it pass
+    [DbWizardFormFields.diskUnit]: z.string(),
+    [DbWizardFormFields.resourceSizePerNode]: z.nativeEnum(ResourceSize),
+    [DbWizardFormFields.numberOfNodes]: z.string(),
   })
   .passthrough()
   .superRefine(({ sharding, shardNr = '', shardConfigServers = '' }, ctx) => {
     if (sharding) {
       const intShardNr = parseInt(shardNr, 10);
-      const intShardNrMin = +(DB_WIZARD_DEFAULTS[
-        DbWizardFormFields.shardNr
-      ] as string);
+      const intShardNrMin = +SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min;
       const intShardConfigServers = parseInt(shardConfigServers, 10);
-      const intShardConfigServersMin = +(DB_WIZARD_DEFAULTS[
-        DbWizardFormFields.shardConfigServers
-      ] as string);
+      const intShardConfigServersMin =
+        +SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min;
+      const intShardConfigServersMax =
+        +SHARDING_DEFAULTS[DbWizardFormFields.shardConfigServers].max;
 
       if (Number.isNaN(intShardNr) || intShardNr < 0) {
         ctx.addIssue({
@@ -87,26 +102,16 @@ const basicInfoSchema = z
             message: Messages.errors.sharding.odd,
             path: [DbWizardFormFields.shardConfigServers],
           });
+        } else if (intShardConfigServers > intShardConfigServersMax) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: Messages.errors.sharding.max(intShardConfigServersMax),
+            path: [DbWizardFormFields.shardConfigServers],
+          });
         }
       }
     }
   });
-
-// .passthrough tells Zod to not drop unrecognized keys
-// this is needed because we parse step by step
-// so, by default, Zod would leave behind the keys from previous steps
-
-const stepTwoSchema = z
-  .object({
-    [DbWizardFormFields.cpu]: resourceToNumber(0.6),
-    [DbWizardFormFields.memory]: resourceToNumber(0.512),
-    [DbWizardFormFields.disk]: resourceToNumber(1),
-    // we will never input this, but we need it and zod will let it pass
-    [DbWizardFormFields.diskUnit]: z.string(),
-    [DbWizardFormFields.resourceSizePerNode]: z.nativeEnum(ResourceSize),
-    [DbWizardFormFields.numberOfNodes]: z.string(),
-  })
-  .passthrough();
 
 const backupsStepSchema = z
   .object({

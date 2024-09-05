@@ -59,6 +59,10 @@ const Components = () => {
         },
       },
       {
+        header: 'Ready',
+        accessorKey: 'ready',
+      },
+      {
         header: 'Name',
         accessorKey: 'name',
       },
@@ -88,10 +92,6 @@ const Components = () => {
       {
         header: 'Restarts',
         accessorKey: 'restarts',
-      },
-      {
-        header: 'Ready',
-        accessorKey: 'ready',
       },
     ];
   }, []);
