@@ -21,7 +21,10 @@ import { cpuParser, memoryParser } from 'utils/k8ResourceParser';
 import { generateShortUID } from './database-form-body/steps/first/utils.ts';
 import { MAX_DB_CLUSTER_NAME_LENGTH } from 'consts';
 import { DbWizardType } from './database-form-schema.ts';
-import { DB_WIZARD_DEFAULTS } from './database-form.constants.ts';
+import {
+  DB_WIZARD_DEFAULTS,
+  SHARDING_DEFAULTS,
+} from './database-form.constants.ts';
 
 export const DbClusterPayloadToFormValues = (
   dbCluster: DbCluster,
@@ -53,11 +56,10 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.sharding]: dbCluster?.spec?.sharding?.enabled || false,
     [DbWizardFormFields.shardConfigServers]: (
       sharding?.configServer?.replicas ||
-      (DB_WIZARD_DEFAULTS[DbWizardFormFields.shardConfigServers] as string)
+      SHARDING_DEFAULTS[DbWizardFormFields.shardConfigServers].min
     ).toString(),
     [DbWizardFormFields.shardNr]: (
-      sharding?.shards ||
-      (DB_WIZARD_DEFAULTS[DbWizardFormFields.shardNr] as string)
+      sharding?.shards || SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min
     ).toString(),
 
     //resources

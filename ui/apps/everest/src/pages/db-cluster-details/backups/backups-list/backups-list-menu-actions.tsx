@@ -37,18 +37,16 @@ export const BackupActionButtons = (
     namespace: dbCluster.metadata.namespace,
   });
 
-  const { canUpdate: canUpdateDb } = useGetPermissions({
-    resource: 'database-clusters',
-    specificResource: dbCluster.metadata.name,
-    namespace: dbCluster.metadata.namespace,
-  });
-
   const { canCreate: canCreateDb } = useGetPermissions({
     resource: 'database-clusters',
   });
+  const { canCreate: canCreateRestore } = useGetPermissions({
+    resource: 'database-cluster-restores',
+    namespace: dbCluster.metadata.namespace,
+  });
 
   return [
-    ...(canUpdateDb
+    ...(canCreateRestore
       ? [
           <MenuItem
             key={0}
