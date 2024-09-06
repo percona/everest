@@ -23,8 +23,6 @@ export const Messages = {
     dbVersion: 'Database version',
     storageClass: 'Storage class',
     shardedCluster: 'Sharded Cluster',
-    numberOfShards: 'Number of shards',
-    numberOfConfigServers: 'Number of configuration servers',
   },
   placeholders: {
     dbName: 'E.g. postgresql-123',

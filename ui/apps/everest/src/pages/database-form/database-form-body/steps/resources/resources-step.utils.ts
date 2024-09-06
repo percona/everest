@@ -18,6 +18,8 @@ import { DEFAULT_SIZES } from './resources-step.const.ts';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { memoryParser } from 'utils/k8ResourceParser';
 import { Messages } from './resources-step.messages.ts';
+import { SHARDING_DEFAULTS } from '../../../database-form.constants';
+import { DbWizardFormFields } from '../../../database-form.types';
 
 const humanizedResourceSizeMap: Record<ResourceSize, string> = {
   [ResourceSize.small]: 'Small',
@@ -92,4 +94,13 @@ export const checkResourceText = (
     return Messages.labels.estimated(processedValue.toFixed(2), units);
   }
   return '';
+};
+
+export const getDefaultShardsNumberByNode = (nodeValue: number) => {
+  if (nodeValue == 1) return SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min;
+  else return '2';
+};
+
+export const getDefaultConfigServers = (nodeValue: number) => {
+  return nodeValue.toString();
 };
