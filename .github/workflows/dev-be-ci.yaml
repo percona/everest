@@ -336,6 +336,16 @@ jobs:
         run: |
           kubectl -n everest-system patch deployment percona-everest --type strategic --patch-file dev/patch-deployment-image.yaml
           kubectl -n everest-system rollout status deploy/percona-everest --timeout=120s
+          kubectl patch sub everest-operator -n everest-system -p '
+            [{
+                "op": "add",
+                "path": "/spec/config/env/-",
+                "value": {
+                  "name": "PERCONA_VERSION_SERVICE_URL",
+                  "value": "https://check-dev.percona.com/versions/v1"
+                }
+            }]' --type=json
+
 
       - name: Expose Everest API Server
         run: |
@@ -434,6 +444,15 @@ jobs:
         run: |
           make init
           make install-operators
+          kubectl patch sub everest-operator -n everest-system -p '
+            [{
+                "op": "add",
+                "path": "/spec/config/env/-",
+                "value": {
+                  "name": "PERCONA_VERSION_SERVICE_URL",
+                  "value": "https://check-dev.percona.com/versions/v1"
+                }
+            }]' --type=json
           make test-cli
       - name: Attach the report
         if: ${{ always() && steps.cli-tests.outcome != 'skipped' }}
