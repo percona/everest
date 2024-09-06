@@ -75,6 +75,16 @@ jobs:
           --operator.xtradb-cluster \
           --skip-wizard \
           --namespaces everest-ui
+          
+          kubectl patch sub everest-operator -n everest-system -p '
+            [{
+                "op": "add",
+                "path": "/spec/config/env/-",
+                "value": {
+                  "name": "PERCONA_VERSION_SERVICE_URL",
+                  "value": "https://check-dev.percona.com/versions/v1"
+                }
+            }]' --type=json
 
       - name: Adding psmdb namespace
         shell: bash
