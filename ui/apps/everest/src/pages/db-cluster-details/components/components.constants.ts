@@ -22,9 +22,21 @@ export const COMPONENT_STATUS_TO_BASE_STATUS: Record<
 > = {
   [COMPONENT_STATUS.PENDING]: 'pending',
   [COMPONENT_STATUS.FAILED]: 'error',
-  [COMPONENT_STATUS.RUNNING]: 'success',
+  [COMPONENT_STATUS.RUNNING]: 'pending',
   [COMPONENT_STATUS.SUCCEEDED]: 'success',
   [COMPONENT_STATUS.UNKNOWN]: 'unknown',
+};
+
+export const componentStatusToBaseStatus = (
+  ready: string
+): Record<COMPONENT_STATUS, BaseStatus> => {
+  const arr = ready.split('/');
+  if (arr[0] === arr[1]) {
+    return {
+      ...COMPONENT_STATUS_TO_BASE_STATUS,
+      [COMPONENT_STATUS.RUNNING]: 'success',
+    };
+  } else return COMPONENT_STATUS_TO_BASE_STATUS;
 };
 
 export enum CONTAINER_STATUS {
