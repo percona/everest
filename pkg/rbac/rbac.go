@@ -216,6 +216,9 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 		if !ok {
 			return false, errors.New("invalid method")
 		}
+		namespace := c.Param("namespace")
+		name := c.Param("name")
+		object = namespace + "/" + name
 		// Always allowing listing all namespaces.
 		// The result is filtered based on permission.
 		if resource == ResourceNamespaces {
@@ -223,12 +226,9 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 		}
 		// Always allow listing database engines.
 		// The result is filtered based on permission.
-		if resource == ResourceDatabaseEngines && object == "" && action == ActionRead {
+		if resource == ResourceDatabaseEngines && name == "" && action == ActionRead {
 			return true, nil
 		}
-		namespace := c.Param("namespace")
-		name := c.Param("name")
-		object = namespace + "/" + name
 		return enforcer.Enforce(user, resource, action, object)
 	}
 }
