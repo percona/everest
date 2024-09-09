@@ -79,9 +79,9 @@ func (e *EverestServer) proxyKubernetes(
 	reverseProxy.Transport = transport
 	reverseProxy.ErrorHandler = everestErrorHandler(e.l)
 	modifiers := make([]func(*http.Response) error, 0, len(respTransformers)+1)
-	modifiers = append(modifiers, everestResponseModifier(e.l))
+	modifiers = append(modifiers, everestResponseModifier(e.l)) //nolint:bodyclose
 	for _, fn := range respTransformers {
-		modifiers = append(modifiers, func(r *http.Response) error {
+		modifiers = append(modifiers, func(r *http.Response) error { //nolint:bodyclose
 			return runResponseModifier(r, e.l, fn)
 		})
 	}
