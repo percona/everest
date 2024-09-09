@@ -82,7 +82,7 @@ func (e *EverestServer) proxyKubernetes(
 	modifiers = append(modifiers, everestResponseModifier(e.l))
 	for _, fn := range respTransformers {
 		modifiers = append(modifiers, func(r *http.Response) error {
-			return runResponseMofifier(r, e.l, fn)
+			return runResponseModifier(r, e.l, fn)
 		})
 	}
 	reverseProxy.ModifyResponse = func(resp *http.Response) error {
@@ -140,7 +140,7 @@ func transformK8sList(mutate func(l *unstructured.UnstructuredList) error) apiRe
 
 // Runs the provided transform func.
 // Main purpose of this helper is to provide boiler plate for reading/writing to the response object.
-func runResponseMofifier(resp *http.Response, logger *zap.SugaredLogger, transform apiResponseTransformerFn) error {
+func runResponseModifier(resp *http.Response, logger *zap.SugaredLogger, transform apiResponseTransformerFn) error {
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logger.Error(errors.Join(err, errors.New("failed to read response body")))
