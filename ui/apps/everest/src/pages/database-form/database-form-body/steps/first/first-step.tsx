@@ -13,13 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  FormGroup,
-  MenuItem,
-  Skeleton,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { FormGroup, MenuItem, Skeleton } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { DbType } from '@percona/types';
 import {
@@ -27,7 +21,6 @@ import {
   DbToggleCard,
   LabeledContent,
   SelectInput,
-  SwitchInput,
   TextInput,
   ToggleButtonGroupInput,
 } from '@percona/ui-lib';
@@ -48,15 +41,15 @@ import {
 } from './utils.ts';
 import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
 import { useGetPermittedNamespaces } from 'utils/useGetPermissions.ts';
-import { DbClusterStatus } from 'shared-types/dbCluster.types.ts';
+// import { DbClusterStatus } from 'shared-types/dbCluster.types.ts';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
   const {
-    dbClusterData,
+    // dbClusterData,
     defaultValues: {
       [DbWizardFormFields.dbVersion]: defaultDbVersion,
-      [DbWizardFormFields.sharding]: defaultSharding,
+      // [DbWizardFormFields.sharding]: defaultSharding,
     },
   } = useDatabasePageDefaultValues(mode);
   const { watch, setValue, getFieldState, resetField, getValues, trigger } =
@@ -67,12 +60,12 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const dbType: DbType = watch(DbWizardFormFields.dbType);
   const dbVersion: DbType = watch(DbWizardFormFields.dbVersion);
   const dbNamespace = watch(DbWizardFormFields.k8sNamespace);
-  const dbClusterStatus = dbClusterData?.status?.status;
-  const disableShardingChange =
-    loadingDefaultsForEdition ||
-    ((mode === 'edit' || mode === 'restoreFromBackup') &&
-      defaultSharding &&
-      dbClusterStatus !== DbClusterStatus.paused);
+  // const dbClusterStatus = dbClusterData?.status?.status;
+  // const disableShardingChange =
+  //   loadingDefaultsForEdition ||
+  //   ((mode === 'edit' || mode === 'restoreFromBackup') &&
+  //     defaultSharding &&
+  //     dbClusterStatus !== DbClusterStatus.paused);
 
   const { data: dbEngines = [], isFetching: dbEnginesFetching } = useDbEngines(
     dbNamespace,
@@ -350,41 +343,41 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             disabled: mode === 'edit' || loadingDefaultsForEdition,
           }}
         />
-        {dbType === DbType.Mongo && (
-          <>
-            <Typography variant="sectionHeading" sx={{ mt: 4 }}>
-              Shards
-            </Typography>
-            <Stack spacing={1} direction="row" alignItems="center">
-              <SwitchInput
-                label={Messages.labels.shardedCluster}
-                name={DbWizardFormFields.sharding}
-                switchFieldProps={{
-                  disabled: disableShardingChange,
-                  onChange: (e) => {
-                    if (!e.target.checked) {
-                      resetField(DbWizardFormFields.shardNr, {
-                        keepError: false,
-                      });
-                      resetField(DbWizardFormFields.shardConfigServers, {
-                        keepError: false,
-                      });
-                    }
-                  },
-                }}
-              />
-              {/*{disableShardingChange && (*/}
-              {/*  <Tooltip*/}
-              {/*    title={Messages.disableShardingTooltip}*/}
-              {/*    arrow*/}
-              {/*    placement="right"*/}
-              {/*  >*/}
-              {/*    <InfoOutlinedIcon color="primary" />*/}
-              {/*  </Tooltip>*/}
-              {/*)}*/}
-            </Stack>
-          </>
-        )}
+        {/*{dbType === DbType.Mongo && (*/}
+        {/*  <>*/}
+        {/*    <Typography variant="sectionHeading" sx={{ mt: 4 }}>*/}
+        {/*      Shards*/}
+        {/*    </Typography>*/}
+        {/*    <Stack spacing={1} direction="row" alignItems="center">*/}
+        {/*      <SwitchInput*/}
+        {/*        label={Messages.labels.shardedCluster}*/}
+        {/*        name={DbWizardFormFields.sharding}*/}
+        {/*        switchFieldProps={{*/}
+        {/*          disabled: disableShardingChange,*/}
+        {/*          onChange: (e) => {*/}
+        {/*            if (!e.target.checked) {*/}
+        {/*              resetField(DbWizardFormFields.shardNr, {*/}
+        {/*                keepError: false,*/}
+        {/*              });*/}
+        {/*              resetField(DbWizardFormFields.shardConfigServers, {*/}
+        {/*                keepError: false,*/}
+        {/*              });*/}
+        {/*            }*/}
+        {/*          },*/}
+        {/*        }}*/}
+        {/*      />*/}
+        {/*      /!*{disableShardingChange && (*!/*/}
+        {/*      /!*  <Tooltip*!/*/}
+        {/*      /!*    title={Messages.disableShardingTooltip}*!/*/}
+        {/*      /!*    arrow*!/*/}
+        {/*      /!*    placement="right"*!/*/}
+        {/*      /!*  >*!/*/}
+        {/*      /!*    <InfoOutlinedIcon color="primary" />*!/*/}
+        {/*      /!*  </Tooltip>*!/*/}
+        {/*      /!*)}*!/*/}
+        {/*    </Stack>*/}
+        {/*  </>*/}
+        {/*)}*/}
       </FormGroup>
     </>
   );

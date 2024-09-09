@@ -1,7 +1,7 @@
 import { beautifyDbTypeName } from '@percona/utils';
 import { PreviewContentText } from '../preview-section';
 import { SectionProps } from './section.types';
-import { DbType } from '@percona/types';
+// import { DbType } from '@percona/types';
 
 export const PreviewSectionOne = ({
   dbName,
@@ -9,7 +9,7 @@ export const PreviewSectionOne = ({
   dbType,
   storageClass,
   k8sNamespace,
-  sharding,
+  // sharding,
 }: SectionProps) => (
   <>
     <PreviewContentText text={`Namespace: ${k8sNamespace}`} />
@@ -17,10 +17,10 @@ export const PreviewSectionOne = ({
     <PreviewContentText text={`Name: ${dbName}`} />
     <PreviewContentText text={`Version: ${dbVersion}`} />
     <PreviewContentText text={`Storage class: ${storageClass ?? ''}`} />
-    {dbType === DbType.Mongo && (
-      <PreviewContentText
-        text={`Sharding: ${sharding ? 'enabled' : 'disabled'}`}
-      />
-    )}
+    {/*{dbType === DbType.Mongo && (*/}
+    {/*  <PreviewContentText*/}
+    {/*    text={`Sharding: ${sharding ? 'enabled' : 'disabled'}`}*/}
+    {/*  />*/}
+    {/*)}*/}
   </>
 );
