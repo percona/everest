@@ -23,7 +23,7 @@
     "eslint-plugin-playwright": "^1.6.2"
   },
   "dependencies": {
-    "@playwright/test": "^1.46.0",
+    "@playwright/test": "^1.47.0",
     "shelljs": "^0.8.5"
   }
 }
