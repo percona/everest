@@ -32,6 +32,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/rest"
 )
 
@@ -53,7 +54,15 @@ var (
 	}
 )
 
-func (e *EverestServer) proxyKubernetes(ctx echo.Context, namespace, kind, name string) error {
+type apiResponseTransformerFn func(in []byte) ([]byte, error)
+
+func (e *EverestServer) proxyKubernetes(
+	ctx echo.Context,
+	namespace,
+	kind,
+	name string,
+	respTransformers ...apiResponseTransformerFn,
+) error {
 	config := e.kubeClient.Config()
 	reverseProxy := httputil.NewSingleHostReverseProxy(
 		&url.URL{
@@ -69,7 +78,21 @@ func (e *EverestServer) proxyKubernetes(ctx echo.Context, namespace, kind, name 
 	}
 	reverseProxy.Transport = transport
 	reverseProxy.ErrorHandler = everestErrorHandler(e.l)
-	reverseProxy.ModifyResponse = everestResponseModifier(e.l) //nolint:bodyclose
+	modifiers := make([]func(*http.Response) error, 0, len(respTransformers)+1)
+	modifiers = append(modifiers, everestResponseModifier(e.l))
+	for _, fn := range respTransformers {
+		modifiers = append(modifiers, func(r *http.Response) error {
+			return runResponseMofifier(r, e.l, fn)
+		})
+	}
+	reverseProxy.ModifyResponse = func(resp *http.Response) error {
+		for _, fn := range modifiers {
+			if err := fn(resp); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 	req := ctx.Request()
 	// All requests to Everest are protected by authorization.
 	// We need to remove the header, otherwise Kubernetes returns 401 unauthorized response.
@@ -92,6 +115,52 @@ func buildProxiedURL(namespace, kind, name string) string {
 		proxiedURL += fmt.Sprintf("/%s", url.PathEscape(strings.ReplaceAll(name, "/", "")))
 	}
 	return proxiedURL
+}
+
+// transformK8sList runs the provided mutate function on the list.
+// This list is fetched by the proxy.
+// API callers may call this function to modify the list after it is fetched by the proxy and before returning to the client.
+// For example, this can filter out the contents of a list based on the user's permissions.
+func transformK8sList(mutate func(l *unstructured.UnstructuredList) error) apiResponseTransformerFn {
+	return func(in []byte) ([]byte, error) {
+		list := &unstructured.UnstructuredList{}
+		if err := json.Unmarshal(in, list); err != nil {
+			return nil, err
+		}
+		if err := mutate(list); err != nil {
+			return nil, err
+		}
+		out, err := json.Marshal(list)
+		if err != nil {
+			return nil, err
+		}
+		return out, nil
+	}
+}
+
+// Runs the provided transform func.
+// Main purpose of this helper is to provide boiler plate for reading/writing to the response object.
+func runResponseMofifier(resp *http.Response, logger *zap.SugaredLogger, transform apiResponseTransformerFn) error {
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger.Error(errors.Join(err, errors.New("failed to read response body")))
+		return err
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		logger.Error(errors.Join(err, errors.New("failed to close response body")))
+		return err
+	}
+	b, err = transform(b)
+	if err != nil {
+		logger.Error(errors.Join(err, errors.New("failed to transform response body")))
+		return err
+	}
+	body := io.NopCloser(bytes.NewReader(b))
+	resp.Body = body
+	resp.ContentLength = int64(len(b))
+	resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
+	return nil
 }
 
 func everestResponseModifier(logger *zap.SugaredLogger) func(resp *http.Response) error {

@@ -47,6 +47,7 @@ const (
 	ResourceNamespaces              = "namespaces"
 	ResourceDatabaseClusterBackups  = "database-cluster-backups"
 	ResourceDatabaseClusterRestores = "database-cluster-restores"
+	ResourceDatabaseEngines         = "database-engines"
 )
 
 // RBAC actions.
@@ -211,21 +212,23 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 		if !ok {
 			return false, errors.New("invalid URL")
 		}
-		switch resource {
-		case "namespaces":
-			// Always allow this operation to list namespaces,
-			// however, we filter the result based on permission.
-			return true, nil
-		default:
-			namespace := c.Param("namespace")
-			name := c.Param("name")
-			object = namespace + "/" + name
-		}
-
 		action, ok := actionMethodMap[c.Request().Method]
 		if !ok {
 			return false, errors.New("invalid method")
 		}
+		// Always allowing listing all namespaces.
+		// The result is filtered based on permission.
+		if resource == ResourceNamespaces {
+			return true, nil
+		}
+		// Always allow listing database engines.
+		// The result is filtered based on permission.
+		if resource == ResourceDatabaseEngines && object == "" && action == ActionRead {
+			return true, nil
+		}
+		namespace := c.Param("namespace")
+		name := c.Param("name")
+		object = namespace + "/" + name
 		return enforcer.Enforce(user, resource, action, object)
 	}
 }
