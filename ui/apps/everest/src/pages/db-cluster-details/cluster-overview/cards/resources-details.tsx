@@ -19,7 +19,7 @@ import { ResourcesDetailsOverviewProps } from './card.types';
 import OverviewSectionRow from '../overview-section-row';
 import { Messages } from '../cluster-overview.messages';
 import { Stack } from '@mui/material';
-import { DbType } from '@percona/types';
+// import { DbType } from '@percona/types';
 
 export const ResourcesDetails = ({
   numberOfNodes,
@@ -27,8 +27,8 @@ export const ResourcesDetails = ({
   memory,
   disk,
   loading,
-  dbType,
-  sharding,
+  // dbType,
+  // sharding,
 }: ResourcesDetailsOverviewProps) => {
   return (
     <OverviewCard
@@ -45,30 +45,30 @@ export const ResourcesDetails = ({
       }}
     >
       <Stack gap={3}>
-        {dbType === DbType.Mongo && (
-          <OverviewSection title={'Sharding'} loading={loading}>
-            <OverviewSectionRow
-              label={Messages.fields.status}
-              contentString={
-                sharding?.enabled
-                  ? Messages.fields.enabled
-                  : Messages.fields.disabled
-              }
-            />
-            {sharding?.enabled && (
-              <OverviewSectionRow
-                label={Messages.fields.shards}
-                contentString={sharding?.shards?.toString()}
-              />
-            )}
-            {sharding?.enabled && (
-              <OverviewSectionRow
-                label={Messages.fields.configServers}
-                contentString={sharding?.configServer?.replicas?.toString()}
-              />
-            )}
-          </OverviewSection>
-        )}
+        {/*{dbType === DbType.Mongo && (*/}
+        {/*  <OverviewSection title={'Sharding'} loading={loading}>*/}
+        {/*    <OverviewSectionRow*/}
+        {/*      label={Messages.fields.status}*/}
+        {/*      contentString={*/}
+        {/*        sharding?.enabled*/}
+        {/*          ? Messages.fields.enabled*/}
+        {/*          : Messages.fields.disabled*/}
+        {/*      }*/}
+        {/*    />*/}
+        {/*    {sharding?.enabled && (*/}
+        {/*      <OverviewSectionRow*/}
+        {/*        label={Messages.fields.shards}*/}
+        {/*        contentString={sharding?.shards?.toString()}*/}
+        {/*      />*/}
+        {/*    )}*/}
+        {/*    {sharding?.enabled && (*/}
+        {/*      <OverviewSectionRow*/}
+        {/*        label={Messages.fields.configServers}*/}
+        {/*        contentString={sharding?.configServer?.replicas?.toString()}*/}
+        {/*      />*/}
+        {/*    )}*/}
+        {/*  </OverviewSection>*/}
+        {/*)}*/}
         <OverviewSection
           title={`${numberOfNodes} node${+numberOfNodes > 1 ? 's' : ''}`}
           loading={loading}
