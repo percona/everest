@@ -1519,6 +1519,36 @@ func (_m *MockKubernetesConnector) UpdateClusterServiceVersion(ctx context.Conte
 	return r0, r1
 }
 
+// UpdateConfigMap provides a mock function with given fields: ctx, cm
+func (_m *MockKubernetesConnector) UpdateConfigMap(ctx context.Context, cm *v1.ConfigMap) (*v1.ConfigMap, error) {
+	ret := _m.Called(ctx, cm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateConfigMap")
+	}
+
+	var r0 *v1.ConfigMap
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.ConfigMap) (*v1.ConfigMap, error)); ok {
+		return rf(ctx, cm)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.ConfigMap) *v1.ConfigMap); ok {
+		r0 = rf(ctx, cm)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.ConfigMap)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *v1.ConfigMap) error); ok {
+		r1 = rf(ctx, cm)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateDeployment provides a mock function with given fields: ctx, deployment
 func (_m *MockKubernetesConnector) UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error) {
 	ret := _m.Called(ctx, deployment)
