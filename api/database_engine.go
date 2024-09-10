@@ -100,6 +100,12 @@ func (e *EverestServer) GetUpgradePlan(
 	namespace string,
 ) error {
 	ctx := c.Request().Context()
+	user, err := rbac.GetUser(c)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context:" + err.Error()),
+		})
+	}
 	result, err := e.getUpgradePlan(ctx, namespace)
 	if err != nil {
 		e.l.Errorf("Cannot get upgrade plan: %w", err)
@@ -128,17 +134,59 @@ func (e *EverestServer) GetUpgradePlan(
 			}
 		}
 	}
+
+	// Filter response based on RBAC.
+	resp := &UpgradePlan{
+		Upgrades:       pointer.To([]Upgrade{}),
+		PendingActions: pointer.To([]UpgradeTask{}),
+	}
+	for _, u := range *result.Upgrades {
+		if ok, err := e.canGetDatabaseEngine(user, namespace, *u.Name); err != nil {
+			e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
+			return err
+		} else if !ok {
+			continue
+		}
+		*resp.Upgrades = append(*resp.Upgrades, u)
+	}
+	for _, a := range *result.PendingActions {
+		if ok, err := e.canGetDatabaseEngine(user, namespace, *a.Name); err != nil {
+			e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
+			return err
+		} else if !ok {
+			continue
+		}
+		*resp.PendingActions = append(*resp.PendingActions, a)
+	}
 	return c.JSON(http.StatusOK, result)
 }
 
 // ApproveUpgradePlan starts the upgrade of operators in the provided namespace.
 func (e *EverestServer) ApproveUpgradePlan(c echo.Context, namespace string) error {
 	ctx := c.Request().Context()
+	user, err := rbac.GetUser(c)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context:" + err.Error()),
+		})
+	}
 
 	up, err := e.getUpgradePlan(ctx, namespace)
 	if err != nil {
 		e.l.Errorf("Cannot get upgrade plan: %w", err)
 		return err
+	}
+
+	// Ensure we can edit all these engines.
+	for _, upg := range pointer.Get(up.Upgrades) {
+		if ok, err := e.canUpdateDatabaseEngine(user, namespace, *upg.Name); err != nil {
+			e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
+			return err
+		} else if !ok {
+			return c.JSON(http.StatusForbidden, Error{
+				Message: pointer.ToString("You do not have permission to upgrade the database engine"),
+			})
+		}
 	}
 
 	// lock all engines that will be upgraded.
@@ -363,6 +411,18 @@ func (e *EverestServer) canGetDatabaseEngine(user, namespace, name string) (bool
 	ok, err := e.rbacEnforcer.Enforce(
 		user, rbac.ResourceDatabaseEngines,
 		rbac.ActionRead,
+		fmt.Sprintf("%s/%s", namespace, name),
+	)
+	if err != nil {
+		return false, fmt.Errorf("failed to Enforce: %w", err)
+	}
+	return ok, nil
+}
+
+func (e *EverestServer) canUpdateDatabaseEngine(user, namespace, name string) (bool, error) {
+	ok, err := e.rbacEnforcer.Enforce(
+		user, rbac.ResourceDatabaseEngines,
+		rbac.ActionUpdate,
 		fmt.Sprintf("%s/%s", namespace, name),
 	)
 	if err != nil {
