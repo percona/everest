@@ -22,7 +22,6 @@ import { useDbBackups } from 'hooks/api/backups/useBackups';
 import { DbEngineType } from '@percona/types';
 import {
   useGetPermissions,
-  useGetPermittedNamespaces,
 } from 'utils/useGetPermissions';
 import DbStatusDetailsDialog from 'modals/db-status-details-dialog/db-status-details-dialog';
 
@@ -71,10 +70,6 @@ export const DbActionButton = ({
   const disableKeepDataCheckbox =
     dbCluster?.spec.engine.type === DbEngineType.POSTGRESQL;
   const hideCheckbox = !backups.length;
-
-  const { canCreate } = useGetPermittedNamespaces({
-    resource: 'database-clusters',
-  });
 
   const { canCreate: canCreateRestore } = useGetPermissions({
     resource: 'database-cluster-restores',
@@ -137,7 +132,7 @@ export const DbActionButton = ({
               <RestartAltIcon /> {Messages.menuItems.restart}
             </MenuItem>
           )}
-          {canCreate && (
+          {canCreateRestore && (
             <MenuItem
               data-testid={`${dbClusterName}-create-new-db-from-backup`}
               disabled={restoring}
