@@ -27,8 +27,10 @@ import (
 	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/net/context"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/rbac"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
@@ -43,7 +45,27 @@ var (
 
 // ListDatabaseEngines List of the available database engines on the specified namespace.
 func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, namespace string) error {
-	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, "")
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+	rbacListFilter := transformK8sList(func(l *unstructured.UnstructuredList) error {
+		allowed := []unstructured.Unstructured{}
+		for _, obj := range l.Items {
+			if can, err := e.canGetDatabaseEngine(user, namespace, obj.GetName()); err != nil {
+				e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
+				return err
+			} else if !can {
+				continue
+			}
+			allowed = append(allowed, obj)
+		}
+		l.Items = allowed
+		return nil
+	})
+	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, "", rbacListFilter)
 }
 
 // GetDatabaseEngine Get the specified database engine on the specified namespace.
@@ -457,4 +479,17 @@ func canUpgrade(dbs []OperatorUpgradePreflightForDatabase) bool {
 		return pointer.Get(db.PendingTask) != OperatorUpgradePreflightForDatabasePendingTaskReady
 	})
 	return !notReadyExists
+}
+
+// canGetDatabaseEngine checks if the user can get the specified database engine.
+func (e *EverestServer) canGetDatabaseEngine(user, namespace, name string) (bool, error) {
+	ok, err := e.rbacEnforcer.Enforce(
+		user, rbac.ResourceDatabaseEngines,
+		rbac.ActionRead,
+		fmt.Sprintf("%s/%s", namespace, name),
+	)
+	if err != nil {
+		return false, fmt.Errorf("failed to Enforce: %w", err)
+	}
+	return ok, nil
 }
