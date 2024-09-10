@@ -36,6 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/percona/everest/pkg/accounts"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
@@ -261,6 +262,9 @@ func (u *Upgrade) Run(ctx context.Context) error {
 				// Migrate monitoring-configs and backup-storages.
 				if err := u.migrateSharedResources(ctx); err != nil {
 					return fmt.Errorf("migration of shared resources failed: %w", err)
+				}
+				if err := u.bindAllEverestAccountsToAdminRBAC(ctx); err != nil {
+					return fmt.Errorf("binding all accounts to admin role failed: %w", err)
 				}
 			}
 			return nil
@@ -608,5 +612,38 @@ func (u *Upgrade) upgradeEverestOperator(ctx context.Context, installPlanName st
 		return errors.Join(err, fmt.Errorf("csv %s is not in phase succeeded", installPlanName))
 	}
 
+	return nil
+}
+
+// bindAllEverestAccountsToAdminRBAC binds all existing Everest accounts to the default adminrole:role group.
+func (u *Upgrade) bindAllEverestAccountsToAdminRBAC(ctx context.Context) error {
+	// Get RBAC policy.
+	rbacCm, err := u.kubeClient.GetConfigMap(ctx, common.SystemNamespace, common.EverestRBACConfigMapName)
+	if err != nil {
+		return errors.Join(err, errors.New("could not retrieve RBAC configmap"))
+	}
+	policy := rbacCm.Data["policy.csv"]
+	// List all accounts.
+	accountsList, err := u.kubeClient.Accounts().List(ctx)
+	if err != nil {
+		return errors.Join(err, errors.New("could not retrieve accounts"))
+	}
+	// Bind all accounts to the adminrole:role group.
+	policyLineTmpl := "g, %s, adminrole:role"
+	for username, acc := range accountsList {
+		if !acc.HasCapability(accounts.AccountCapabilityLogin) {
+			continue
+		}
+		// admin user is already bound to the adminrole:role group.
+		if username == common.EverestAdminUser {
+			continue
+		}
+		policyLine := fmt.Sprintf(policyLineTmpl, username)
+		policy += "\n" + policyLine
+	}
+	rbacCm.Data["policy.csv"] = policy
+	if _, err := u.kubeClient.UpdateConfigMap(ctx, rbacCm); err != nil {
+		return errors.Join(err, errors.New("could not update RBAC configmap"))
+	}
 	return nil
 }
