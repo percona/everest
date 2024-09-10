@@ -6,14 +6,17 @@ export const OperatorCell = ({
   value,
   namespace,
   upgradeAvailable,
+  operators,
 }: {
   value: string;
   namespace: string;
+  operators: string[];
   upgradeAvailable: boolean;
 }) => {
   const { canUpdate } = useGetPermissions({
     resource: 'database-engines',
     namespace: namespace,
+    specificResource: operators,
   });
   const navigate = useNavigate();
 
