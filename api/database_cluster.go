@@ -380,3 +380,16 @@ func (e *EverestServer) canTakeBackups(user string, object string) (bool, error)
 	}
 	return ok, nil
 }
+
+// canRestore checks if a given user is allowed to restore.
+func (e *EverestServer) canRestore(user string, object string) (bool, error) {
+	ok, err := e.rbacEnforcer.Enforce(
+		user, rbac.ResourceDatabaseClusterRestores,
+		rbac.ActionCreate,
+		object,
+	)
+	if err != nil {
+		return false, fmt.Errorf("failed to Enforce: %w", err)
+	}
+	return ok, nil
+}
