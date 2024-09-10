@@ -135,30 +135,37 @@ func (e *EverestServer) GetUpgradePlan(
 		}
 	}
 
-	// Filter response based on RBAC.
-	resp := &UpgradePlan{
-		Upgrades:       pointer.To([]Upgrade{}),
-		PendingActions: pointer.To([]UpgradeTask{}),
+	if err := e.filterUpgradePlan(user, namespace, result); err != nil {
+		e.l.Errorf("Cannot filter upgrade plan: %w", err)
+		return err
 	}
-	for _, u := range *result.Upgrades {
+	return c.JSON(http.StatusOK, result)
+}
+
+func (e *EverestServer) filterUpgradePlan(user, namespace string, up *UpgradePlan) error {
+	upgrades := pointer.To([]Upgrade{})
+	pendingActions := pointer.To([]UpgradeTask{})
+	for _, u := range *up.Upgrades {
 		if ok, err := e.canGetDatabaseEngine(user, namespace, *u.Name); err != nil {
 			e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
 			return err
 		} else if !ok {
 			continue
 		}
-		*resp.Upgrades = append(*resp.Upgrades, u)
+		*upgrades = append(*upgrades, u)
 	}
-	for _, a := range *result.PendingActions {
+	for _, a := range *up.PendingActions {
 		if ok, err := e.canGetDatabaseEngine(user, namespace, *a.Name); err != nil {
 			e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
 			return err
 		} else if !ok {
 			continue
 		}
-		*resp.PendingActions = append(*resp.PendingActions, a)
+		*pendingActions = append(*pendingActions, a)
 	}
-	return c.JSON(http.StatusOK, result)
+	up.Upgrades = upgrades
+	up.PendingActions = pendingActions
+	return nil
 }
 
 // ApproveUpgradePlan starts the upgrade of operators in the provided namespace.
