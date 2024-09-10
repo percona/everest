@@ -44,8 +44,8 @@ var (
 )
 
 type operatorUpgradePreflight struct {
-	currentVersion string        `json:"currentVersion,omitempty"`
-	databases      []UpgradeTask `json:"databases,omitempty"`
+	currentVersion string
+	databases      []UpgradeTask
 }
 
 // ListDatabaseEngines List of the available database engines on the specified namespace.
@@ -161,7 +161,7 @@ func (e *EverestServer) ApproveUpgradePlan(c echo.Context, namespace string) err
 	}
 
 	// start upgrade process.
-	if err := e.startOperatorUpgradeWithRetry(ctx, "", namespace, ""); err != nil {
+	if err := e.startOperatorUpgradeWithRetry(ctx, namespace); err != nil {
 		e.l.Errorf("Failed to upgrade operators: %w", err)
 		// Upgrade has failed, so we release the lock.
 		if err := e.setLockDBEnginesForUpgrade(ctx, namespace, up, false); err != nil {
@@ -259,19 +259,16 @@ func (e *EverestServer) getDBPostUpgradeTasks(
 
 // startOperatorUpgradeWithRetry wraps the startOperatorUpgrade function with a retry mechanism.
 // This is done to reduce the chances of failures due to resource conflicts.
-//
-// TODO: remove/refactor this once deprecated APIs are removed.
-// There are unused parameters in this function to maintain backward compatibility with deprecated APIs.
-func (e *EverestServer) startOperatorUpgradeWithRetry(ctx context.Context, targetVersion, namespace, name string) error {
+func (e *EverestServer) startOperatorUpgradeWithRetry(ctx context.Context, namespace string) error {
 	return backoff.Retry(func() error {
-		return e.startOperatorUpgrade(ctx, targetVersion, namespace, name)
+		return e.startOperatorUpgrade(ctx, namespace)
 	},
 		backoff.WithContext(everestAPIConstantBackoff, ctx),
 	)
 }
 
 // TODO: remove/refactor this once deprecated APIs are removed.
-func (e *EverestServer) startOperatorUpgrade(ctx context.Context, _, namespace, _ string) error {
+func (e *EverestServer) startOperatorUpgrade(ctx context.Context, namespace string) error {
 	engines, err := e.kubeClient.ListDatabaseEngines(ctx, namespace)
 	if err != nil {
 		return err
