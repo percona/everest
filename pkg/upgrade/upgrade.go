@@ -634,6 +634,10 @@ func (u *Upgrade) bindAllEverestAccountsToAdminRBAC(ctx context.Context) error {
 		if !acc.HasCapability(accounts.AccountCapabilityLogin) {
 			continue
 		}
+		// admin user is already bound to the adminrole:role group.
+		if username == common.EverestAdminUser {
+			continue
+		}
 		policyLine := fmt.Sprintf(policyLineTmpl, username)
 		policy += "\n" + policyLine
 	}
