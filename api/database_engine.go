@@ -203,9 +203,7 @@ func (e *EverestServer) getUpgradePlan(
 		if err != nil {
 			return nil, err
 		}
-		for _, db := range pointer.Get(pf).databases {
-			*result.PendingActions = append(*result.PendingActions, db)
-		}
+		*result.PendingActions = append(*result.PendingActions, pf.databases...)
 	}
 	return result, nil
 }
