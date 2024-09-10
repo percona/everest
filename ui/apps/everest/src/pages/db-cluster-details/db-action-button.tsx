@@ -20,9 +20,7 @@ import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
 import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
 import { useDbBackups } from 'hooks/api/backups/useBackups';
 import { DbEngineType } from '@percona/types';
-import {
-  useGetPermissions,
-} from 'utils/useGetPermissions';
+import { useGetPermissions } from 'utils/useGetPermissions';
 import DbStatusDetailsDialog from 'modals/db-status-details-dialog/db-status-details-dialog';
 
 export const DbActionButton = ({
