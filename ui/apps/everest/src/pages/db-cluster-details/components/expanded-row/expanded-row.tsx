@@ -19,7 +19,7 @@ import { DBClusterComponent } from 'shared-types/components.types';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import {
   CONTAINER_STATUS,
-  CONTAINER_STATUS_TO_BASE_STATUS,
+  containerStatusToBaseStatus,
 } from '../components.constants';
 import StatusField from 'components/status-field';
 import { useMemo } from 'react';
@@ -47,7 +47,7 @@ const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
               alignItems: 'center',
             }}
             status={cell.getValue<CONTAINER_STATUS>()}
-            statusMap={CONTAINER_STATUS_TO_BASE_STATUS}
+            statusMap={containerStatusToBaseStatus(row?.original?.ready)}
           >
             <Typography variant="body2">{row?.original?.name}</Typography>
           </StatusField>
