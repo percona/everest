@@ -69,7 +69,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     setAuthStatus('loggingIn');
     if (mode === 'sso') {
       await signIn();
-      await refetchRBAC()
+      await refetchRBAC();
     } else {
       const { username, password } = manualAuthArgs!;
       setUsername(username);
@@ -77,7 +77,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
         const response = await api.post('/session', { username, password });
         const token = response.data.token; // Assuming the response structure has a token field
         localStorage.setItem('everestToken', token);
-        await refetchRBAC()
+        await refetchRBAC();
         setLoggedInStatus();
       } catch (error) {
         if (error instanceof AxiosError) {
