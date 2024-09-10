@@ -50,7 +50,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   const [authStatus, setAuthStatus] = useState<UserAuthStatus>('unknown');
   const [redirect, setRedirect] = useState<string | null>(null);
 
-  const { data: policies = '' } = useRBACPolicies();
+  const { data: policies, refetch: refetchRBAC } = useRBACPolicies();
   const [username, setUsername] = useState('');
 
   const { signIn, userManager } = useOidcAuth();
@@ -69,6 +69,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     setAuthStatus('loggingIn');
     if (mode === 'sso') {
       await signIn();
+      await refetchRBAC();
     } else {
       const { username, password } = manualAuthArgs!;
       setUsername(username);
@@ -76,6 +77,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
         const response = await api.post('/session', { username, password });
         const token = response.data.token; // Assuming the response structure has a token field
         localStorage.setItem('everestToken', token);
+        await refetchRBAC();
         setLoggedInStatus();
       } catch (error) {
         if (error instanceof AxiosError) {
