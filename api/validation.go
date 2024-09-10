@@ -617,6 +617,16 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 			return errors.Join(errInsufficientPermissions, errors.New("missing permission to take backups"))
 		}
 	}
+	// To be able to create a cluster from a backup (restore backup to new cluster), the user needs to explicitly
+	// have permissions to take restores.
+	sourceBackup := pointer.Get(pointer.Get(pointer.Get(databaseCluster.Spec).DataSource).DbClusterBackupName)
+	if sourceBackup != "" {
+		if can, err := e.canRestore(user, namespace+"/"+sourceBackup); err != nil {
+			return err
+		} else if !can {
+			return errors.Join(errInsufficientPermissions, errors.New("missing permission to restore"))
+		}
+	}
 	return nil
 }
 
