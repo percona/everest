@@ -21,12 +21,16 @@ export const useGetPermittedNamespaces = ({
 
   useEffect(() => {
     namespaces.forEach((namespace) =>
-      authorize('create', resource, `${namespace}/*`).then((data) => {
-        if (data === true) {
-          setPermittedNamespaces((oldPermissions) => [
-            ...oldPermissions,
+      authorize('create', resource, `${namespace}/*`).then((permitted) => {
+        if (permitted === true) {
+          setPermittedNamespaces((oldNamespaces) => [
+            ...oldNamespaces,
             namespace,
           ]);
+        } else {
+          setPermittedNamespaces((oldNamespaces) => {
+            return oldNamespaces.filter((ns) => ns !== namespace);
+          });
         }
       })
     );
@@ -56,37 +60,35 @@ export const useGetPermissions = ({
   const { data: namespaces = [] } = useNamespaces();
 
   useEffect(() => {
-    authorize('read', resource, specificResource).then((data) => {
+    authorize('read', resource, specificResource).then((permitted) => {
       setPermissions((oldPermissions) => ({
         ...oldPermissions,
-        canRead: data,
+        canRead: permitted,
       }));
     });
 
     namespaces.forEach((namespace) =>
-      authorize('create', resource, `${namespace}/*`).then((data) => {
-        if (data === false) {
-          setPermissions((oldPermissions) => ({
-            ...oldPermissions,
-            canCreate: data,
-          }));
-        }
+      authorize('create', resource, `${namespace}/*`).then((permitted) => {
+        setPermissions((oldPermissions) => ({
+          ...oldPermissions,
+          canCreate: permitted,
+        }));
       })
     );
 
     authorize('update', resource, `${namespace}/${specificResource}`).then(
-      (data) => {
+      (permitted) => {
         setPermissions((oldPermissions) => ({
           ...oldPermissions,
-          canUpdate: data,
+          canUpdate: permitted,
         }));
       }
     );
     authorize('delete', resource, `${namespace}/${specificResource}`).then(
-      (data) => {
+      (permitted) => {
         setPermissions((oldPermissions) => ({
           ...oldPermissions,
-          canDelete: data,
+          canDelete: permitted,
         }));
       }
     );
