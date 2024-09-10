@@ -25,22 +25,22 @@ import (
 func TestCanUpgrade(t *testing.T) {
 	t.Parallel()
 	testcases := []struct {
-		input      []OperatorUpgradePreflightForDatabase
+		input      []UpgradeTask
 		canUpgrade bool
 	}{
 		{
-			input: []OperatorUpgradePreflightForDatabase{
-				{PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskReady)},
-				{PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskNotReady)},
-				{PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskRestart)},
+			input: []UpgradeTask{
+				{PendingTask: pointer.To(Ready)},
+				{PendingTask: pointer.To(NotReady)},
+				{PendingTask: pointer.To(Restart)},
 			},
 			canUpgrade: false,
 		},
 		{
-			input: []OperatorUpgradePreflightForDatabase{
-				{PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskReady)},
-				{PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskReady)},
-				{PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskReady)},
+			input: []UpgradeTask{
+				{PendingTask: pointer.To(Ready)},
+				{PendingTask: pointer.To(Ready)},
+				{PendingTask: pointer.To(Ready)},
 			},
 			canUpgrade: true,
 		},
