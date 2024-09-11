@@ -85,7 +85,7 @@ export const populateBasicInformation = async (
  * @param page Page instance
  * @param cpu Requested CPU amount
  * @param memory Requested memory amount in GB
- * @param disk Requested disk size in Gb
+ * @param disk Requested disk size in Gi
  * @param clusterSize Number of nodes in DB cluster
  */
 export const populateResources = async (
@@ -105,7 +105,7 @@ export const populateResources = async (
 
   const expectedCpuText = ` = ${(cpu * clusterSize).toFixed(2)} CPU`;
   const expectedMemoryText = ` = ${(memory * clusterSize).toFixed(2)} GB`;
-  const expectedDiskText = ` = ${(disk * clusterSize).toFixed(2)} GB`;
+  const expectedDiskText = ` = ${(disk * clusterSize).toFixed(2)} Gi`;
 
   let nodesText =
     clusterSize == 1 ? `x ${clusterSize} node` : `x ${clusterSize} nodes`;
