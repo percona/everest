@@ -74,11 +74,7 @@ export const useGetPermissions = ({
       }));
     });
 
-    authorize(
-      'create',
-      resource,
-      namespaces.map((n) => `${n}/*`)
-    ).then((permitted) => {
+    authorize('create', resource, `${namespace}/*`).then((permitted) => {
       setPermissions((oldPermissions) => ({
         ...oldPermissions,
         canCreate: permitted,
