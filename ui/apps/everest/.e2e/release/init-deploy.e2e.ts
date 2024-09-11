@@ -196,7 +196,7 @@ test.describe.configure({ retries: 0 });
       }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 15000);
+        await waitForDelete(page, clusterName, 60000);
         await deleteMonitoringInstance(
           request,
           namespace,
