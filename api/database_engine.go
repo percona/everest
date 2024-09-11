@@ -135,6 +135,16 @@ func (e *EverestServer) GetUpgradePlan(
 		}
 	}
 
+	// ensure the user has access to all db-clusters in this namespace.
+	if ok, err := e.canReadAllDBClusters(user, namespace); err != nil {
+		e.l.Error(errors.Join(err, errors.New("failed to check database-cluster permissions")))
+		return err
+	} else if !ok {
+		return c.JSON(http.StatusForbidden, Error{
+			Message: pointer.ToString("You do not have permission to view the upgrade plan"),
+		})
+	}
+
 	// ensure the user has access to all engines in this upgrade plan.
 	for _, upg := range pointer.Get(result.Upgrades) {
 		if ok, err := e.canGetDatabaseEngine(user, namespace, *upg.Name); err != nil {
@@ -163,6 +173,16 @@ func (e *EverestServer) ApproveUpgradePlan(c echo.Context, namespace string) err
 	if err != nil {
 		e.l.Errorf("Cannot get upgrade plan: %w", err)
 		return err
+	}
+
+	// ensure the user has access to all db-clusters in this namespace.
+	if ok, err := e.canReadAllDBClusters(user, namespace); err != nil {
+		e.l.Error(errors.Join(err, errors.New("failed to check database-cluster permissions")))
+		return err
+	} else if !ok {
+		return c.JSON(http.StatusForbidden, Error{
+			Message: pointer.ToString("You do not have permission to view the upgrade plan"),
+		})
 	}
 
 	// Ensure we can edit all these engines.
@@ -412,6 +432,18 @@ func (e *EverestServer) canUpdateDatabaseEngine(user, namespace, name string) (b
 		user, rbac.ResourceDatabaseEngines,
 		rbac.ActionUpdate,
 		fmt.Sprintf("%s/%s", namespace, name),
+	)
+	if err != nil {
+		return false, fmt.Errorf("failed to Enforce: %w", err)
+	}
+	return ok, nil
+}
+
+func (e *EverestServer) canReadAllDBClusters(user, namespace string) (bool, error) {
+	ok, err := e.rbacEnforcer.Enforce(
+		user, rbac.ResourceDatabaseClusters,
+		rbac.ActionRead,
+		fmt.Sprintf("%s/*", namespace),
 	)
 	if err != nil {
 		return false, fmt.Errorf("failed to Enforce: %w", err)

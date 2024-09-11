@@ -45,6 +45,7 @@ import (
 // Everest API resource names.
 const (
 	ResourceNamespaces              = "namespaces"
+	ResourceDatabaseClusters        = "database-clusters"
 	ResourceDatabaseClusterBackups  = "database-cluster-backups"
 	ResourceDatabaseClusterRestores = "database-cluster-restores"
 	ResourceDatabaseEngines         = "database-engines"
