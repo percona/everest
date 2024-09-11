@@ -135,37 +135,18 @@ func (e *EverestServer) GetUpgradePlan(
 		}
 	}
 
-	if err := e.filterUpgradePlan(user, namespace, result); err != nil {
-		e.l.Errorf("Cannot filter upgrade plan: %w", err)
-		return err
+	// ensure the user has access to all engines in this upgrade plan.
+	for _, upg := range pointer.Get(result.Upgrades) {
+		if ok, err := e.canGetDatabaseEngine(user, namespace, *upg.Name); err != nil {
+			e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
+			return err
+		} else if !ok {
+			// We cannot show this plan, the user does not have permission to one or more engines.
+			result = &UpgradePlan{}
+			break
+		}
 	}
 	return c.JSON(http.StatusOK, result)
-}
-
-func (e *EverestServer) filterUpgradePlan(user, namespace string, up *UpgradePlan) error {
-	upgrades := pointer.To([]Upgrade{})
-	pendingActions := pointer.To([]UpgradeTask{})
-	for _, u := range *up.Upgrades {
-		if ok, err := e.canGetDatabaseEngine(user, namespace, *u.Name); err != nil {
-			e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
-			return err
-		} else if !ok {
-			continue
-		}
-		*upgrades = append(*upgrades, u)
-	}
-	for _, a := range *up.PendingActions {
-		if ok, err := e.canGetDatabaseEngine(user, namespace, *a.Name); err != nil {
-			e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
-			return err
-		} else if !ok {
-			continue
-		}
-		*pendingActions = append(*pendingActions, a)
-	}
-	up.Upgrades = upgrades
-	up.PendingActions = pendingActions
-	return nil
 }
 
 // ApproveUpgradePlan starts the upgrade of operators in the provided namespace.
