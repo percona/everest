@@ -195,7 +195,7 @@ export const populateMonitoringModalForm = async (
   await page.getByRole('button', { name: 'Add monitoring endpoint' }).click();
 
   await page.getByTestId('text-input-name').fill(endpointName);
-  const namespaces = page.getByTestId('text-input-allowed-namespaces');
+  const namespaces = page.getByTestId('text-input-namespace');
   await namespaces.click();
   await page.getByRole('option', { name: namespace }).click();
   await page.getByTestId('text-input-url').fill(url);
