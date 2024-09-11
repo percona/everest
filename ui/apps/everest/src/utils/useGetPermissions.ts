@@ -4,7 +4,7 @@ import { useContext, useEffect, useState } from 'react';
 
 type GetPermissionProps = {
   resource: string;
-  specificResource?: string;
+  specificResource?: string | string[];
   namespace?: string;
 };
 
@@ -59,8 +59,15 @@ export const useGetPermissions = ({
 
   const { data: namespaces = [] } = useNamespaces();
 
+  //TODO refactor these methods and all these Array.isArray
   useEffect(() => {
-    authorize('read', resource, specificResource).then((permitted) => {
+    authorize(
+      'read',
+      resource,
+      Array.isArray(specificResource)
+        ? specificResource.map((r) => `${namespace}/${r}`)
+        : specificResource
+    ).then((permitted) => {
       setPermissions((oldPermissions) => ({
         ...oldPermissions,
         canRead: permitted,
@@ -69,30 +76,40 @@ export const useGetPermissions = ({
 
     namespaces.forEach((namespace) =>
       authorize('create', resource, `${namespace}/*`).then((permitted) => {
-        setPermissions((oldPermissions) => ({
-          ...oldPermissions,
-          canCreate: permitted,
-        }));
+        if (permitted === false) {
+          setPermissions((oldPermissions) => ({
+            ...oldPermissions,
+            canCreate: permitted,
+          }));
+        }
       })
     );
 
-    authorize('update', resource, `${namespace}/${specificResource}`).then(
-      (permitted) => {
-        setPermissions((oldPermissions) => ({
-          ...oldPermissions,
-          canUpdate: permitted,
-        }));
-      }
-    );
-    authorize('delete', resource, `${namespace}/${specificResource}`).then(
-      (permitted) => {
-        setPermissions((oldPermissions) => ({
-          ...oldPermissions,
-          canDelete: permitted,
-        }));
-      }
-    );
-  }, [authorize, namespace, resource, specificResource]);
+    authorize(
+      'update',
+      resource,
+      Array.isArray(specificResource)
+        ? specificResource.map((r) => `${namespace}/${r}`)
+        : `${namespace}/${specificResource}`
+    ).then((permitted) => {
+      setPermissions((oldPermissions) => ({
+        ...oldPermissions,
+        canUpdate: permitted,
+      }));
+    });
+    authorize(
+      'delete',
+      resource,
+      Array.isArray(specificResource)
+        ? specificResource.map((r) => `${namespace}/${r}`)
+        : `${namespace}/${specificResource}`
+    ).then((permitted) => {
+      setPermissions((oldPermissions) => ({
+        ...oldPermissions,
+        canDelete: permitted,
+      }));
+    });
+  }, [authorize, namespace, namespaces, resource, specificResource]);
 
   return permissions;
 };
