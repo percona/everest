@@ -59,8 +59,15 @@ export const useGetPermissions = ({
 
   const { data: namespaces = [] } = useNamespaces();
 
+  //TODO refactor these methods and all these Array.isArray
   useEffect(() => {
-    authorize('read', resource, specificResource).then((permitted) => {
+    authorize(
+      'read',
+      resource,
+      Array.isArray(specificResource)
+        ? specificResource.map((r) => `${namespace}/${r}`)
+        : specificResource
+    ).then((permitted) => {
       setPermissions((oldPermissions) => ({
         ...oldPermissions,
         canRead: permitted,
