@@ -52,7 +52,7 @@ export const useGetPermissions = ({
     canRead: false,
     canUpdate: false,
     canDelete: false,
-    canCreate: true,
+    canCreate: false,
   });
 
   const { authorize } = useContext(AuthContext);
@@ -74,16 +74,16 @@ export const useGetPermissions = ({
       }));
     });
 
-    namespaces.forEach((namespace) =>
-      authorize('create', resource, `${namespace}/*`).then((permitted) => {
-        if (permitted === false) {
-          setPermissions((oldPermissions) => ({
-            ...oldPermissions,
-            canCreate: permitted,
-          }));
-        }
-      })
-    );
+    authorize(
+      'create',
+      resource,
+      namespaces.map((n) => `${n}/*`)
+    ).then((permitted) => {
+      setPermissions((oldPermissions) => ({
+        ...oldPermissions,
+        canCreate: permitted,
+      }));
+    });
 
     authorize(
       'update',
