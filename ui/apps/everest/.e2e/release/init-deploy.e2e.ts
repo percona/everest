@@ -199,8 +199,8 @@ test.describe.configure({ retries: 0 });
         await waitForDelete(page, clusterName, 15000);
         await deleteMonitoringInstance(
           request,
-          monitoringName,
           namespace,
+          monitoringName,
           token
         );
       });
