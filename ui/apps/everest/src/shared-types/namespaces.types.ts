@@ -17,7 +17,8 @@
 export interface NamespaceInstance {
   name: string;
   upgradeAvailable: boolean;
-  operator: string;
+  operators: string[];
+  operatorsDescription: string;
 }
 
 export type GetNamespacesPayload = string[];
