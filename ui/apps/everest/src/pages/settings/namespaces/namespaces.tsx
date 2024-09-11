@@ -25,7 +25,8 @@ export const Namespaces = () => {
     upgradeAvailable: operatorsUpgradePlan[idx].isSuccess
       ? operatorsUpgradePlan[idx].data.upgrades.length > 0
       : false,
-    operator: item.isSuccess
+    operators: item.data?.map((engine) => engine.type) || [],
+    operatorsDescription: item.isSuccess
       ? item.data?.reduce((prevVal, currVal, idx) => {
           if (idx === 0 || prevVal === '') {
             if (currVal?.type && currVal?.operatorVersion) {
@@ -52,13 +53,14 @@ export const Namespaces = () => {
         Cell: ({ cell }) => <Typography>{cell.getValue<string>()}</Typography>,
       },
       {
-        accessorKey: 'operator',
+        accessorKey: 'operatorsDescription',
         header: 'Operator',
         Cell: ({ cell, row }) => (
           <OperatorCell
             value={cell.getValue<string>()}
             namespace={row.original.name}
             upgradeAvailable={row.original.upgradeAvailable}
+            operators={row.original.operators}
           />
         ),
       },
