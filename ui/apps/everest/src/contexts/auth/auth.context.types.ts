@@ -16,7 +16,7 @@ export interface AuthContextProps {
   authorize: (
     action: string,
     resource: string,
-    specificResource?: string
+    specificResource?: string | string[]
   ) => Promise<boolean>;
   isSsoEnabled: boolean;
 }

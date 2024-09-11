@@ -206,14 +206,47 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     authRoutine(savedToken);
   }, [authStatus, silentlyRenewToken, userManager]);
 
-  const authorize = useCallback(
-    async (action: string, resource: string, specificResource?: string) => {
+  const can = useCallback(
+    async (action: string, resource: string, specificResource: string) => {
       const authorizer = new Authorizer('auto', { endpoint: '/' });
       authorizer.user = username;
       await authorizer.initEnforcer(JSON.stringify(policies));
-      return (await authorizer).can(specificResource || '*', action, resource);
+      // Params are inverted because of the way our policies are defined: "sub, res, act, obj" instead of "sub, obj, act"
+      return await authorizer.can(specificResource, action, resource);
     },
-    [username, policies]
+    [policies, username]
+  );
+
+  const cannot = useCallback(
+    async (action: string, resource: string, specificResource: string) => {
+      return !(await can(action, resource, specificResource));
+    },
+    [can]
+  );
+
+  const canAll = useCallback(
+    async (action: string, resource: string, specificResource: string[]) => {
+      for (let i = 0; i < specificResource.length; ++i) {
+        if (await cannot(action, resource, specificResource[i])) {
+          return false;
+        }
+      }
+      return true;
+    },
+    [cannot]
+  );
+
+  const authorize = useCallback(
+    async (
+      action: string,
+      resource: string,
+      specificResource: string | string[] = '*'
+    ) => {
+      return await (Array.isArray(specificResource)
+        ? canAll(action, resource, specificResource)
+        : can(action, resource, specificResource));
+    },
+    [can, canAll]
   );
 
   return (
