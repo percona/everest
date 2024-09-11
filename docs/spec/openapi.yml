@@ -465,8 +465,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-clusters/{name}/backups':
-    x-everest-resource-name: database-clusters
+  '/namespaces/{namespace}/database-clusters/{cluster-name}/backups':
+    x-everest-resource-name: database-cluster-backups
     get:
       tags:
         - Backup
@@ -481,7 +481,7 @@ paths:
           required: true
           schema:
             type: string
-        - name: name
+        - name: cluster-name
           in: path
           description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
           required: true
@@ -506,8 +506,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-clusters/{name}/restores':
-    x-everest-resource-name: database-clusters
+  '/namespaces/{namespace}/database-clusters/{cluster-name}/restores':
+    x-everest-resource-name: database-cluster-restores
     get:
       tags:
         - Restore
@@ -522,7 +522,7 @@ paths:
           required: true
           schema:
             type: string
-        - name: name
+        - name: cluster-name
           in: path
           description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
           required: true
