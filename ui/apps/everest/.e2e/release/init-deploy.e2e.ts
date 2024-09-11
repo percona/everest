@@ -71,6 +71,15 @@ test.describe.configure({ retries: 0 });
         storageClasses = storageClassNames;
       });
 
+      test.afterAll(async ({ request }) => {
+        await deleteMonitoringInstance(
+          request,
+          namespace,
+          monitoringName,
+          token
+        );
+      });
+
       test(`Cluster creation with ${db} and size ${size}`, async ({
         page,
         request,
@@ -193,19 +202,11 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, clusterName, 'Up', 240000);
       });
 
-      test(`Delete cluster with ${db} and size ${size}`, async ({
-        page,
-        request,
-      }) => {
+      test(`Delete cluster with ${db} and size ${size}`, async ({ page }) => {
+        test.setTimeout(60000);
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 60000);
-        await deleteMonitoringInstance(
-          request,
-          namespace,
-          monitoringName,
-          token
-        );
+        await waitForDelete(page, clusterName, 45000);
       });
     }
   );
