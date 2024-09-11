@@ -95,6 +95,8 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 }
 
 // GetUpgradePlan gets the upgrade plan for the given namespace.
+//
+//nolint:funlen
 func (e *EverestServer) GetUpgradePlan(
 	c echo.Context,
 	namespace string,
@@ -160,6 +162,8 @@ func (e *EverestServer) GetUpgradePlan(
 }
 
 // ApproveUpgradePlan starts the upgrade of operators in the provided namespace.
+//
+//nolint:funlen
 func (e *EverestServer) ApproveUpgradePlan(c echo.Context, namespace string) error {
 	ctx := c.Request().Context()
 	user, err := rbac.GetUser(c)
