@@ -54,12 +54,25 @@ const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
         ),
       },
       {
-        header: 'Fake column name',
-        accessorKey: 'name',
-        Cell: () => '',
+        header: 'Ready',
+        accessorKey: 'ready',
+        Cell: ({ cell }) => (
+          <Typography variant="caption" color={theme.palette.text.secondary}>
+            {cell.getValue<boolean>().toString()}
+          </Typography>
+        ),
       },
       {
-        header: 'Fake column type',
+        header: 'Name',
+        accessorKey: 'name',
+        Cell: ({ cell }) => (
+          <Typography variant="caption" color={theme.palette.text.secondary}>
+            {cell.getValue<string>()}
+          </Typography>
+        ),
+      },
+      {
+        header: 'Fake column',
         accessorKey: 'type',
         Cell: () => '',
       },
@@ -96,11 +109,6 @@ const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
             </Typography>
           );
         },
-      },
-      {
-        header: 'Fake column ready',
-        accessorKey: 'ready',
-        Cell: () => '',
       },
     ];
   }, []);
