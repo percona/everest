@@ -22,7 +22,7 @@ kind: Deployment
 metadata:
   labels:
     app: minio
-  name: minio
+  name: minio-deployment
   namespace: minio
 spec:
   replicas: 1
