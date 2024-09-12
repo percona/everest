@@ -383,8 +383,8 @@ func getDefaultUploadInterval(engine everestv1alpha1.Engine, uploadInterval *int
 			return valueOrDefault(uploadInterval, psmdbDefaultUploadInterval)
 		}
 	case everestv1alpha1.DatabaseEnginePostgresql:
-		// latest restorable time appeared in PG 1.4.0
-		if common.CheckConstraint(version, "<1.4.0") {
+		// latest restorable time appeared in PG 2.4.0
+		if common.CheckConstraint(version, "<2.4.0") {
 			return valueOrDefault(uploadInterval, pgDefaultUploadInterval)
 		}
 	}

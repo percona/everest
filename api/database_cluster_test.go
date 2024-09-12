@@ -118,31 +118,31 @@ func TestGetDefaultUploadInterval(t *testing.T) {
 
 		{
 			name:     "old pg, no interval is set",
-			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "1.3.1"},
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "2.3.1"},
 			interval: nil,
 			expected: pgDefaultUploadInterval,
 		},
 		{
 			name:     "old pg, interval is set",
-			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "1.3.1"},
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "2.3.1"},
 			interval: pointer.ToInt(1000),
 			expected: 1000,
 		},
 		{
 			name:     "new pg, no interval is set",
-			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "1.4.0"},
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "2.4.0"},
 			interval: nil,
 			expected: 0,
 		},
 		{
 			name:     "new pg, interval is set",
-			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "1.4.0"},
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "2.4.0"},
 			interval: pointer.ToInt(1000),
 			expected: 0,
 		},
 		{
 			name:     "newer pg",
-			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "1.4.1"},
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "2.4.1"},
 			interval: nil,
 			expected: 0,
 		},
