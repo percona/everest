@@ -27,6 +27,15 @@ export const AuthorizerObservable = Object.freeze({
 });
 
 export type RBACAction = 'read' | 'update' | 'delete' | 'create';
+export type RBACResource =
+  | 'namespaces'
+  | 'database-engines'
+  | 'database-clusters'
+  | 'database-cluster-backups'
+  | 'database-cluster-restores'
+  | 'database-cluster-credentials'
+  | 'backup-storages'
+  | 'monitoring-instances';
 
 const constructAuthorizer = async () => {
   const newAuthorizer = new Authorizer('auto', { endpoint: '/' });
@@ -72,20 +81,20 @@ export const initializeAuthorizerFetchLoop = async (user: string) => {
 
 export const can = async (
   action: RBACAction,
-  resource: string,
+  resource: RBACResource,
   specificResource: string
   // Params are inverted because of the way our policies are defined: "sub, res, act, obj" instead of "sub, obj, act"
 ) => (await getAuthorizer()).can(specificResource, action, resource);
 
 export const cannot = async (
   action: RBACAction,
-  resource: string,
+  resource: RBACResource,
   specificResource: string
 ) => !(await can(action, resource, specificResource));
 
 export const canAll = async (
   action: RBACAction,
-  resource: string,
+  resource: RBACResource,
   specificResource: string[]
 ) => {
   for (let i = 0; i < specificResource.length; ++i) {

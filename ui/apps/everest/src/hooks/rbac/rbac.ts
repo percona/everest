@@ -1,10 +1,16 @@
 // import { useNamespaces } from 'hooks/api/namespaces';
 import { useNamespaces } from 'hooks/api/namespaces';
 import { useCallback, useEffect, useState } from 'react';
-import { can, canAll, RBACAction, AuthorizerObservable } from 'utils/rbac';
+import {
+  can,
+  canAll,
+  RBACAction,
+  AuthorizerObservable,
+  RBACResource,
+} from 'utils/rbac';
 
 export const useRBACPermissions = (
-  resource: string,
+  resource: RBACResource,
   specificResources: string | string[]
 ) => {
   const [permissions, setPermissions] = useState<Record<RBACAction, boolean>>({
@@ -53,7 +59,7 @@ export const useRBACPermissions = (
 };
 
 export const useNamespacePermissionsForResource = (
-  resource: string,
+  resource: RBACResource,
   specificResource = '*'
 ) => {
   const [permissions, setPermissions] = useState<Record<RBACAction, string[]>>({
