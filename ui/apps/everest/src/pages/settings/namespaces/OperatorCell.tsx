@@ -1,6 +1,7 @@
 import { Button, Stack, Typography } from '@mui/material';
+import { useRBACPermissions } from 'hooks/rbac/rbac';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGetPermissions } from 'utils/useGetPermissions';
 
 export const OperatorCell = ({
   value,
@@ -13,11 +14,14 @@ export const OperatorCell = ({
   operators: string[];
   upgradeAvailable: boolean;
 }) => {
-  const { canUpdate, canRead } = useGetPermissions({
-    resource: 'database-engines',
-    namespace: namespace,
-    specificResource: operators,
-  });
+  const operatorsToCheck = useMemo(
+    () => operators.map((operator) => `${namespace}/${operator}`),
+    [namespace, operators]
+  );
+  const { canUpdate, canRead } = useRBACPermissions(
+    'database-engines',
+    operatorsToCheck
+  );
   const navigate = useNavigate();
   const permissionGranted = canUpdate && canRead && !!operators.length;
 

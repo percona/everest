@@ -24,7 +24,7 @@ import { Messages } from './monitoring-endpoints.messages';
 import { useNamespaces } from 'hooks/api/namespaces';
 import { convertMonitoringInstancesPayloadToTableFormat } from './monitoring-endpoints.utils';
 import { MonitoringInstanceTableElement } from './monitoring-endpoints.types';
-import { useGetPermittedNamespaces } from 'utils/useGetPermissions';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import TableActionsMenu from '../../../components/table-actions-menu';
 import { MonitoringActionButtons } from './monitoring-endpoint-menu-actions';
 
@@ -162,9 +162,9 @@ export const MonitoringEndpoints = () => {
     );
   };
 
-  const { canCreate } = useGetPermittedNamespaces({
-    resource: 'monitoring-instances',
-  });
+  const { canCreate } = useNamespacePermissionsForResource(
+    'monitoring-instances'
+  );
 
   return (
     <>
@@ -179,7 +179,7 @@ export const MonitoringEndpoints = () => {
         enableRowActions
         noDataMessage="No monitoring endpoint added"
         renderTopToolbarCustomActions={() =>
-          canCreate && (
+          canCreate.length > 0 && (
             <Button
               size="small"
               startIcon={<Add />}

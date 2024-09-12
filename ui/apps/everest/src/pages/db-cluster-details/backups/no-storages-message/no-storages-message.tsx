@@ -10,7 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { BackupStorage } from 'shared-types/backupStorages.types';
 import { updateDataAfterCreate } from 'utils/generalOptimisticDataUpdate';
 import { Messages } from '../backups.messages';
-import { useGetPermittedNamespaces } from 'utils/useGetPermissions';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 
 export const NoStoragesMessage = () => {
   const queryClient = useQueryClient();
@@ -38,9 +38,7 @@ export const NoStoragesMessage = () => {
     setOpenCreateEditModal(false);
   };
 
-  const { canCreate } = useGetPermittedNamespaces({
-    resource: 'backup-storages',
-  });
+  const { canCreate } = useNamespacePermissionsForResource('backup-storages');
   return (
     <Box
       sx={{
@@ -61,7 +59,7 @@ export const NoStoragesMessage = () => {
         sx={{ my: 4 }}
         variant="contained"
         onClick={() => setOpenCreateEditModal(true)}
-        disabled={!canCreate}
+        disabled={canCreate.length <= 0}
       >
         {Messages.addStorage}
       </Button>

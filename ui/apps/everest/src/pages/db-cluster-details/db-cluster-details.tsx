@@ -14,7 +14,7 @@ import { DBClusterDetailsTabs } from './db-cluster-details.types';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbClusterContext } from './dbCluster.context';
 import { useContext } from 'react';
-import { useGetPermissions } from 'utils/useGetPermissions';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const DbClusterDetails = () => {
   const { dbClusterName = '' } = useParams();
@@ -24,11 +24,10 @@ export const DbClusterDetails = () => {
   const navigate = useNavigate();
   const currentTab = routeMatch?.params?.tabs;
 
-  const { canUpdate, canDelete } = useGetPermissions({
-    resource: 'database-clusters',
-    specificResource: dbCluster?.metadata.name,
-    namespace: dbCluster?.metadata.namespace,
-  });
+  const { canUpdate, canDelete } = useRBACPermissions(
+    'database-clusters',
+    `${dbCluster?.metadata.namespace}/${dbCluster?.metadata.name}`
+  );
 
   if (isLoading) {
     return (

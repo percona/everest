@@ -15,20 +15,19 @@
 
 import { MRT_Row } from 'material-react-table';
 import { MenuItem } from '@mui/material';
-import { useGetPermissions } from 'utils/useGetPermissions.ts';
 import { Restore } from 'shared-types/restores.types';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { useRBACPermissions } from 'hooks/rbac/rbac';
 
 export const RestoreActionButtons = (
   row: MRT_Row<Restore>,
   handleDeleteRestore: (restoreName: string) => void,
   namespace: string
 ) => {
-  const { canDelete } = useGetPermissions({
-    resource: 'database-cluster-restores',
-    specificResource: row.original.name,
-    namespace: namespace,
-  });
+  const { canDelete } = useRBACPermissions(
+    'database-cluster-restores',
+    `${namespace}/${row.original.name}`
+  );
 
   return [
     ...(canDelete
