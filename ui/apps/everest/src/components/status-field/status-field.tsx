@@ -19,6 +19,10 @@ function StatusField<T extends string | number | symbol>({
       direction="row"
       gap={1}
       data-testid={`${dataTestId ? `${dataTestId}-` : ''}status`}
+      sx={{
+        height: 'fit-content',
+        alignItems: 'center',
+      }}
       {...stackProps}
     >
       <MappedIcon {...iconProps} />
