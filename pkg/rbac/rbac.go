@@ -45,8 +45,10 @@ import (
 // Everest API resource names.
 const (
 	ResourceNamespaces              = "namespaces"
+	ResourceDatabaseClusters        = "database-clusters"
 	ResourceDatabaseClusterBackups  = "database-cluster-backups"
 	ResourceDatabaseClusterRestores = "database-cluster-restores"
+	ResourceDatabaseEngines         = "database-engines"
 )
 
 // RBAC actions.
@@ -211,20 +213,22 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 		if !ok {
 			return false, errors.New("invalid URL")
 		}
-		switch resource {
-		case "namespaces":
-			// Always allow this operation to list namespaces,
-			// however, we filter the result based on permission.
-			return true, nil
-		default:
-			namespace := c.Param("namespace")
-			name := c.Param("name")
-			object = namespace + "/" + name
-		}
-
 		action, ok := actionMethodMap[c.Request().Method]
 		if !ok {
 			return false, errors.New("invalid method")
+		}
+		namespace := c.Param("namespace")
+		name := c.Param("name")
+		object = namespace + "/" + name
+		// Always allowing listing all namespaces.
+		// The result is filtered based on permission.
+		if resource == ResourceNamespaces {
+			return true, nil
+		}
+		// Always allow listing database engines.
+		// The result is filtered based on permission.
+		if resource == ResourceDatabaseEngines && name == "" && action == ActionRead {
+			return true, nil
 		}
 		return enforcer.Enforce(user, resource, action, object)
 	}

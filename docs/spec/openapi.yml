@@ -465,8 +465,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-clusters/{name}/backups':
-    x-everest-resource-name: database-clusters
+  '/namespaces/{namespace}/database-clusters/{cluster-name}/backups':
+    x-everest-resource-name: database-cluster-backups
     get:
       tags:
         - Backup
@@ -481,7 +481,7 @@ paths:
           required: true
           schema:
             type: string
-        - name: name
+        - name: cluster-name
           in: path
           description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
           required: true
@@ -506,8 +506,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-clusters/{name}/restores':
-    x-everest-resource-name: database-clusters
+  '/namespaces/{namespace}/database-clusters/{cluster-name}/restores':
+    x-everest-resource-name: database-cluster-restores
     get:
       tags:
         - Restore
@@ -522,7 +522,7 @@ paths:
           required: true
           schema:
             type: string
-        - name: name
+        - name: cluster-name
           in: path
           description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
           required: true
@@ -792,56 +792,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-engines/{name}/operator-version/preflight':
-    x-everest-resource-name: database-engines
-    get:
-      deprecated: true
-      tags:
-        - Operators
-      summary: Upgrade preflight
-      description: |
-        This API gets the results of the preflight checks that must be performed before upgrading a database engine operator.
-
-        *This API is deprecated and will be removed in v1.2.0*
-      operationId: getOperatorUpgradePreflight
-      parameters:
-        - name: namespace
-          in: path
-          description: Name of the namespace
-          required: true
-          schema:
-            type: string
-        - name: name
-          in: path
-          description: Name of the database engine
-          required: true
-          schema:
-            type: string
-        - name: targetVersion
-          in: query
-          description: The target version to upgrade the operator to
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OperatorUpgradePreflight'
-        '400':
-          description: Unsuccessful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines/upgrade-plan':
     x-everest-resource-name: database-engines
     get:
@@ -910,99 +860,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpgradePlanApproval'
-      responses:
-        '200':
-          description: Successful operation
-        '400':
-          description: Unsuccessful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-engines/{name}/operator-version':
-    x-everest-resource-name: database-engines
-    get:
-      deprecated: true
-      tags:
-        - Operators
-      summary: Version info
-      description: |
-        This API gets the version information of the database engine operator specified by the `name` and `namespace`.
-
-        Additionally, if the specified database engine operator was newly upgraded to the specified version, it also returns
-        a list of pending action items that need to be performed before the operator can be considered fully upgraded.
-
-        *This API is deprecated and will be removed in v1.2.0*
-      operationId: getOperatorVersion
-      parameters:
-        - name: namespace
-          in: path
-          description: Name of the namespace
-          required: true
-          schema:
-            type: string
-        - name: name
-          in: path
-          description: Name of the database engine
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OperatorVersion'
-        '400':
-          description: Unsuccessful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-    put:
-      tags:
-        - Operators
-      deprecated: true
-      summary: Upgrade database engine operator
-      description: |
-        This API upgrades the database engine operator specified by the `name` and `namespace`.
-        Before performing the upgrade, the preflight checks must be performed.
-
-        *This API is deprecated and will be removed in v1.2.0*
-      operationId: upgradeDatabaseEngineOperator
-      parameters:
-        - name: namespace
-          in: path
-          description: Name of the namespace
-          required: true
-          schema:
-            type: string
-        - name: name
-          in: path
-          description: Name of the database engine
-          required: true
-          schema:
-            type: string
-      requestBody:
-        description: Request for upgrading the database engine operator
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DatabaseEngineOperatorUpgradeParams'
       responses:
         '200':
           description: Successful operation
