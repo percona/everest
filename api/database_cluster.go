@@ -25,10 +25,12 @@ import (
 	"time"
 
 	"github.com/AlekSi/pointer"
+	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/rbac"
 )
 
@@ -310,8 +312,8 @@ func (e *EverestServer) GetDatabaseClusterPitr(ctx echo.Context, namespace, name
 		latest = &latestBackup.Status.LatestRestorableTime.Time
 	} else {
 		// otherwise use heuristics based on the UploadInterval
-		uploadInterval := getDefaultUploadInterval(databaseCluster.Spec.Engine.Type, databaseCluster.Spec.Backup.PITR.UploadIntervalSec)
-		latest = latestRestorableDate(time.Now(), backupTime, uploadInterval)
+		heuristicsInterval := getDefaultUploadInterval(databaseCluster.Spec.Engine, databaseCluster.Spec.Backup.PITR.UploadIntervalSec)
+		latest = latestRestorableDate(time.Now(), backupTime, heuristicsInterval)
 	}
 
 	response.LatestDate = latest
@@ -324,11 +326,15 @@ func (e *EverestServer) GetDatabaseClusterPitr(ctx echo.Context, namespace, name
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func latestRestorableDate(now, latestBackupTime time.Time, uploadInterval int) *time.Time {
+func latestRestorableDate(now, latestBackupTime time.Time, heuristicsInterval int) *time.Time {
+	// if heuristicsInterval is not set, then no latest restorable date available
+	if heuristicsInterval == 0 {
+		return nil
+	}
 	// delete nanoseconds since they're not accepted by restoration
 	now = now.Truncate(time.Duration(now.Nanosecond()) * time.Nanosecond)
 	// heuristic: latest restorable date is now minus uploadInterval
-	date := now.Add(-time.Duration(uploadInterval) * time.Second).UTC()
+	date := now.Add(-time.Duration(heuristicsInterval) * time.Second).UTC()
 	// not able to restore if after the latest backup passed less than uploadInterval time,
 	// so in that case return nil
 	if latestBackupTime.After(date) {
@@ -360,19 +366,37 @@ func sortFunc(a, b everestv1alpha1.DatabaseClusterBackup) int {
 	return -1
 }
 
-func getDefaultUploadInterval(engineType everestv1alpha1.EngineType, uploadInterval *int) int {
-	if uploadInterval != nil {
-		return *uploadInterval
+func getDefaultUploadInterval(engine everestv1alpha1.Engine, uploadInterval *int) int {
+	version, err := goversion.NewVersion(engine.Version)
+	if err != nil {
+		return 0
 	}
-	switch engineType {
+	switch engine.Type {
 	case everestv1alpha1.DatabaseEnginePXC:
-		return pxcDefaultUploadInterval
+		// latest restorable time appeared in PXC 1.14.0
+		if common.CheckConstraint(version, "<1.14.0") {
+			return valueOrDefault(uploadInterval, pxcDefaultUploadInterval)
+		}
 	case everestv1alpha1.DatabaseEnginePSMDB:
-		return psmdbDefaultUploadInterval
+		// latest restorable time appeared in PSMDB 1.16.0
+		if common.CheckConstraint(version, "<1.16.0") {
+			return valueOrDefault(uploadInterval, psmdbDefaultUploadInterval)
+		}
 	case everestv1alpha1.DatabaseEnginePostgresql:
-		return pgDefaultUploadInterval
+		// latest restorable time appeared in PG 1.4.0
+		if common.CheckConstraint(version, "<1.4.0") {
+			return valueOrDefault(uploadInterval, pgDefaultUploadInterval)
+		}
 	}
+	// for newer versions don't use the heuristics, so return 0 upload interval
 	return 0
+}
+
+func valueOrDefault(value *int, defaultValue int) int {
+	if value == nil {
+		return defaultValue
+	}
+	return *value
 }
 
 // canTakeBackups checks if a given user is allowed to take backups.
