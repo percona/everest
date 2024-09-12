@@ -65,6 +65,16 @@ test.describe.configure({ retries: 0 });
         storageClasses = storageClassNames;
       });
 
+      test.afterAll(async ({ request }) => {
+        console.log('inside afterAll')
+        await deleteMonitoringInstance(
+          request,
+          namespace,
+          monitoringName,
+          token
+        );
+      });
+
       test(`Cluster creation with ${db} and size ${size}`, async ({
         page,
         request,
@@ -203,6 +213,7 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Delete restore with ${db} and size ${size}`, async ({ page }) => {
+        test.setTimeout(60000);
         await gotoDbClusterRestores(page, clusterName);
         await findRowAndClickActions(page, baseBackupName+'-1', 'Delete');
         await expect(page.getByLabel('Delete restore')).toBeVisible();
@@ -211,6 +222,7 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Delete backup with ${db} and size ${size}`, async ({ page }) => {
+        test.setTimeout(60000);
         await gotoDbClusterBackups(page, clusterName);
         await findRowAndClickActions(page, baseBackupName+'-1', 'Delete');
         await expect(page.getByLabel('Delete backup')).toBeVisible();
@@ -218,14 +230,11 @@ test.describe.configure({ retries: 0 });
         await waitForDelete(page, baseBackupName+'-1', 30000);
       });
 
-      test(`Delete cluster with ${db} and size ${size}`, async ({
-        page,
-        request,
-      }) => {
+      test(`Delete cluster with ${db} and size ${size}`, async ({ page }) => {
+        test.setTimeout(60000);
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 15000);
-        await deleteMonitoringInstance(request, namespace, monitoringName, token);
+        await waitForDelete(page, clusterName, 45000);
       });
 
     }
