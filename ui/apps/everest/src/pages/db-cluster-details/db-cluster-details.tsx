@@ -15,6 +15,9 @@ import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbClusterContext } from './dbCluster.context';
 import { useContext } from 'react';
 import { useRBACPermissions } from 'hooks/rbac';
+import { DB_CLUSTER_STATUS_TO_BASE_STATUS } from '../databases/DbClusterView.constants';
+import { beautifyDbClusterStatus } from '../databases/DbClusterView.utils';
+import StatusField from 'components/status-field';
 
 export const DbClusterDetails = () => {
   const { dbClusterName = '' } = useParams();
@@ -53,7 +56,7 @@ export const DbClusterDetails = () => {
       <Box
         sx={{
           display: 'flex',
-          gap: 1,
+          gap: 1.5,
           alignItems: 'center',
           justifyContent: 'flex-start',
           mb: 1,
@@ -64,15 +67,33 @@ export const DbClusterDetails = () => {
           onBackClick={() => navigate('/databases')}
         />
         {/* At this point, loading is done and we either have the cluster or not */}
-        <>
-          {canUpdate || canDelete ? (
-            <DbActionButton
-              dbCluster={dbCluster!}
-              canUpdate={canUpdate}
-              canDelete={canDelete}
-            />
-          ) : undefined}
-        </>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            flex: '1 0 auto',
+            alignItems: 'center',
+          }}
+        >
+          <StatusField
+            dataTestId={dbClusterName}
+            status={dbCluster?.status?.status || DbClusterStatus.unknown}
+            statusMap={DB_CLUSTER_STATUS_TO_BASE_STATUS}
+          >
+            {beautifyDbClusterStatus(
+              dbCluster?.status?.status || DbClusterStatus.unknown
+            )}
+          </StatusField>
+          <>
+            {canUpdate || canDelete ? (
+              <DbActionButton
+                dbCluster={dbCluster!}
+                canUpdate={canUpdate}
+                canDelete={canDelete}
+              />
+            ) : undefined}
+          </>
+        </Box>
       </Box>
       <Box
         sx={{

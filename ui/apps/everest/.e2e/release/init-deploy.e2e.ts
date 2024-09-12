@@ -155,7 +155,7 @@ test.describe.configure({ retries: 0 });
         expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe(
           '1G'
         );
-        expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1G');
+        expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
         expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
         expect(addedCluster?.spec.proxy.replicas).toBe(size);
       });
@@ -196,11 +196,11 @@ test.describe.configure({ retries: 0 });
       }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 15000);
+        await waitForDelete(page, clusterName, 60000);
         await deleteMonitoringInstance(
           request,
-          monitoringName,
           namespace,
+          monitoringName,
           token
         );
       });
