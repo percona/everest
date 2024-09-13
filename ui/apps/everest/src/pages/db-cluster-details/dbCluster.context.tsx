@@ -3,7 +3,7 @@ import React, { createContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { DbClusterContextProps } from './dbCluster.context.types';
-import { useGetPermissions } from 'utils/useGetPermissions';
+import { useRBACPermissions } from 'hooks/rbac/rbac';
 
 export const DbClusterContext = createContext<DbClusterContextProps>({
   dbCluster: {} as DbCluster,
@@ -29,22 +29,16 @@ export const DbClusterContextProvider = ({
     }
   );
 
-  const { canRead: canReadBackups } = useGetPermissions({
-    resource: 'database-cluster-backups',
-    specificResource: dbClusterName,
-    namespace: namespace,
-  });
+  const { canRead: canReadBackups } = useRBACPermissions(
+    'database-cluster-backups',
+    `${namespace}/${dbClusterName}`
+  );
   const { canRead: canReadMonitoring, canUpdate: canUpdateMonitoring } =
-    useGetPermissions({
-      resource: 'monitoring-instances',
-      namespace: namespace,
-    });
-
-  const { canRead: canReadCredentials } = useGetPermissions({
-    resource: 'database-cluster-credentials',
-    specificResource: dbClusterName,
-    namespace: namespace,
-  });
+    useRBACPermissions('monitoring-instances', `${namespace}/*`);
+  const { canRead: canReadCredentials } = useRBACPermissions(
+    'database-cluster-credentials',
+    `${namespace}/${dbClusterName}`
+  );
 
   return (
     <DbClusterContext.Provider

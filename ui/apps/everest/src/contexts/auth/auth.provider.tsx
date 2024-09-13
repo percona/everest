@@ -6,7 +6,6 @@ import {
 } from 'oidc-react';
 import { AxiosError } from 'axios';
 import { jwtDecode } from 'jwt-decode';
-import { Authorizer } from 'casbin.js';
 import {
   api,
   addApiErrorInterceptor,
@@ -24,7 +23,7 @@ import {
   UserAuthStatus,
 } from './auth.context.types';
 import { isAfter } from 'date-fns';
-import { useRBACPolicies } from 'hooks/api/policies/usePolicies';
+import { initializeAuthorizerFetchLoop } from 'utils/rbac';
 
 const Provider = ({
   oidcConfig,
@@ -50,9 +49,6 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   const [authStatus, setAuthStatus] = useState<UserAuthStatus>('unknown');
   const [redirect, setRedirect] = useState<string | null>(null);
 
-  const { data: policies, refetch: refetchRBAC } = useRBACPolicies();
-  const [username, setUsername] = useState('');
-
   const { signIn, userManager } = useOidcAuth();
   const checkAuth = useCallback(async (token: string) => {
     try {
@@ -69,16 +65,13 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     setAuthStatus('loggingIn');
     if (mode === 'sso') {
       await signIn();
-      await refetchRBAC();
     } else {
       const { username, password } = manualAuthArgs!;
-      setUsername(username);
       try {
         const response = await api.post('/session', { username, password });
         const token = response.data.token; // Assuming the response structure has a token field
         localStorage.setItem('everestToken', token);
-        await refetchRBAC();
-        setLoggedInStatus();
+        setLoggedInStatus(username);
       } catch (error) {
         if (error instanceof AxiosError) {
           const errorStatus = error.response?.status;
@@ -117,10 +110,11 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     setRedirect(route);
   };
 
-  const setLoggedInStatus = () => {
+  const setLoggedInStatus = (username: string) => {
     setAuthStatus('loggedIn');
     addApiErrorInterceptor();
     addApiAuthInterceptor();
+    initializeAuthorizerFetchLoop(username);
   };
 
   const setLogoutStatus = useCallback(async () => {
@@ -146,7 +140,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     if (isSsoEnabled) {
       userManager.events.addUserLoaded((user) => {
         localStorage.setItem('everestToken', user.id_token || '');
-        setLoggedInStatus();
+        setLoggedInStatus(user.profile.name || '');
       });
 
       userManager.events.addAccessTokenExpiring(() => {
@@ -171,12 +165,12 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
       const decoded = jwtDecode(token);
       const iss = decoded.iss;
       const exp = decoded.exp;
-      const username = decoded.sub?.substring(0, decoded.sub.indexOf(':'));
-      setUsername(username || '');
+      const username =
+        decoded.sub?.substring(0, decoded.sub.indexOf(':')) || '';
       if (iss === EVEREST_JWT_ISSUER) {
         const isTokenValid = await checkAuth(token);
         if (isTokenValid) {
-          setLoggedInStatus();
+          setLoggedInStatus(username);
         } else {
           setLogoutStatus();
         }
@@ -191,7 +185,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
         if (!user) {
           setLogoutStatus();
         } else {
-          setLoggedInStatus();
+          setLoggedInStatus(username);
           return;
         }
       }
@@ -206,49 +200,6 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     authRoutine(savedToken);
   }, [authStatus, silentlyRenewToken, userManager]);
 
-  const can = useCallback(
-    async (action: string, resource: string, specificResource: string) => {
-      const authorizer = new Authorizer('auto', { endpoint: '/' });
-      authorizer.user = username;
-      await authorizer.initEnforcer(JSON.stringify(policies));
-      // Params are inverted because of the way our policies are defined: "sub, res, act, obj" instead of "sub, obj, act"
-      return await authorizer.can(specificResource, action, resource);
-    },
-    [policies, username]
-  );
-
-  const cannot = useCallback(
-    async (action: string, resource: string, specificResource: string) => {
-      return !(await can(action, resource, specificResource));
-    },
-    [can]
-  );
-
-  const canAll = useCallback(
-    async (action: string, resource: string, specificResource: string[]) => {
-      for (let i = 0; i < specificResource.length; ++i) {
-        if (await cannot(action, resource, specificResource[i])) {
-          return false;
-        }
-      }
-      return true;
-    },
-    [cannot]
-  );
-
-  const authorize = useCallback(
-    async (
-      action: string,
-      resource: string,
-      specificResource: string | string[] = '*'
-    ) => {
-      return await (Array.isArray(specificResource)
-        ? canAll(action, resource, specificResource)
-        : can(action, resource, specificResource));
-    },
-    [can, canAll]
-  );
-
   return (
     <AuthContext.Provider
       value={{
@@ -257,7 +208,6 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
         authStatus,
         redirectRoute: redirect,
         setRedirectRoute,
-        authorize,
         isSsoEnabled,
       }}
     >

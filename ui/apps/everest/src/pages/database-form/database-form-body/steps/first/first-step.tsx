@@ -40,8 +40,7 @@ import {
   generateShortUID,
 } from './utils.ts';
 import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
-import { useGetPermittedNamespaces } from 'utils/useGetPermissions.ts';
-// import { DbClusterStatus } from 'shared-types/dbCluster.types.ts';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
@@ -236,9 +235,8 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     setDbEngineDataForEngineType();
   }, [setDbEngineDataForEngineType]);
 
-  const { permittedNamespaces, isFetching } = useGetPermittedNamespaces({
-    resource: 'database-clusters',
-  });
+  const { canCreate, isFetching } =
+    useNamespacePermissionsForResource('database-clusters');
 
   useEffect(() => {
     const { isTouched: k8sNamespaceTouched } = getFieldState(
@@ -247,14 +245,14 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     if (
       !k8sNamespaceTouched &&
       mode === 'new' &&
-      permittedNamespaces?.length > 0 &&
+      canCreate.length > 0 &&
       !isFetching
     ) {
-      setValue(DbWizardFormFields.k8sNamespace, permittedNamespaces[0]);
+      setValue(DbWizardFormFields.k8sNamespace, canCreate[0]);
       trigger(DbWizardFormFields.k8sNamespace);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, isFetching, permittedNamespaces?.length]);
+  }, [mode, isFetching, canCreate.length]);
 
   return (
     <>
@@ -270,7 +268,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           name={DbWizardFormFields.k8sNamespace}
           label={Messages.labels.k8sNamespace}
           loading={isFetching}
-          options={permittedNamespaces || []}
+          options={canCreate}
           disabled={
             mode === 'edit' ||
             mode === 'restoreFromBackup' ||

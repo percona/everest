@@ -7,7 +7,6 @@ const AuthContext = createContext<AuthContextProps>({
   setRedirectRoute: () => {},
   authStatus: 'unknown',
   redirectRoute: null,
-  authorize: async () => false,
   isSsoEnabled: false,
 });
 
