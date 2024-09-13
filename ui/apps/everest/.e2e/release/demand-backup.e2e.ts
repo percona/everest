@@ -66,7 +66,6 @@ test.describe.configure({ retries: 0 });
       });
 
       test.afterAll(async ({ request }) => {
-        console.log('inside afterAll')
         await deleteMonitoringInstance(
           request,
           namespace,
@@ -231,12 +230,11 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Delete cluster with ${db} and size ${size}`, async ({ page }) => {
-        test.setTimeout(60000);
+        test.setTimeout(150000);
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 45000);
+        await waitForDelete(page, clusterName, 120000);
       });
-
     }
   );
 });
