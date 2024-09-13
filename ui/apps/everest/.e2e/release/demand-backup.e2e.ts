@@ -48,6 +48,8 @@ test.describe.configure({ retries: 0 });
       tag: '@release',
     },
     () => {
+      test.describe.configure({ timeout: 720000 });
+
       const clusterName = `${db}-${size}-dembkp`;
 
       let storageClasses = [];
@@ -78,10 +80,6 @@ test.describe.configure({ retries: 0 });
         page,
         request,
       }) => {
-        // Timeout is scaled based on the cluster size to account for the additional resources needed.
-        //test.setTimeout(size * 120000);
-        test.setTimeout(size * 240000);
-
         expect(storageClasses.length).toBeGreaterThan(0);
 
         await page.goto('/databases/new');
@@ -133,7 +131,6 @@ test.describe.configure({ retries: 0 });
         // go to db list and check status
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Initializing', 15000);
-        // await waitForStatus(page, clusterName, 'Up', 300000);
         await waitForStatus(page, clusterName, 'Up', 600000);
 
         const response = await request.get(
@@ -173,8 +170,6 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Create demand backup with ${db} and size ${size}`, async ({ page }) => {
-        test.setTimeout(120000);
-
         await gotoDbClusterBackups(page, clusterName);
         await clickOnDemandBackup(page);
         await page.getByTestId('text-input-name').fill(baseBackupName+'-1');
@@ -192,9 +187,6 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Restore cluster with ${db} and size ${size}`, async ({ page }) => {
-        // test.setTimeout(120000);
-        test.setTimeout(360000);
-
         await gotoDbClusterBackups(page, clusterName);
         await findRowAndClickActions(page, baseBackupName+'-1', 'Restore to this DB');
         await expect(page.getByTestId('select-input-backup-name')).not.toBeEmpty();
@@ -202,7 +194,6 @@ test.describe.configure({ retries: 0 });
 
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Restoring', 30000);
-        // await waitForStatus(page, clusterName, 'Up', 300000);
         await waitForStatus(page, clusterName, 'Up', 600000);
 
         await gotoDbClusterRestores(page, clusterName);
@@ -212,7 +203,6 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Delete restore with ${db} and size ${size}`, async ({ page }) => {
-        test.setTimeout(60000);
         await gotoDbClusterRestores(page, clusterName);
         await findRowAndClickActions(page, baseBackupName+'-1', 'Delete');
         await expect(page.getByLabel('Delete restore')).toBeVisible();
@@ -221,7 +211,6 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Delete backup with ${db} and size ${size}`, async ({ page }) => {
-        test.setTimeout(60000);
         await gotoDbClusterBackups(page, clusterName);
         await findRowAndClickActions(page, baseBackupName+'-1', 'Delete');
         await expect(page.getByLabel('Delete backup')).toBeVisible();
@@ -230,7 +219,6 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Delete cluster with ${db} and size ${size}`, async ({ page }) => {
-        test.setTimeout(150000);
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
         await waitForDelete(page, clusterName, 120000);

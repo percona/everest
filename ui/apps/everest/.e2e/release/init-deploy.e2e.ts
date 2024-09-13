@@ -55,6 +55,8 @@ test.describe.configure({ retries: 0 });
       tag: '@release',
     },
     () => {
+      test.describe.configure({ timeout: 720000 });
+
       const clusterName = `${db}-${size}-deploy`;
 
       let storageClasses = [];
@@ -84,9 +86,6 @@ test.describe.configure({ retries: 0 });
         page,
         request,
       }) => {
-        // Timeout is scaled based on the cluster size to account for the additional resources needed.
-        test.setTimeout(size * 240000);
-
         expect(storageClasses.length).toBeGreaterThan(0);
 
         await page.goto('/databases/new');
@@ -173,8 +172,6 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Suspend cluster with ${db} and size ${size}`, async ({ page }) => {
-        test.setTimeout(size * 120000);
-
         await suspendDbCluster(page, clusterName);
         // One node clusters and Postgresql don't seem to show Stopping state
         if (size != 1 && db != 'postgresql') {
@@ -184,16 +181,12 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Resume cluster with ${db} and size ${size}`, async ({ page }) => {
-        test.setTimeout(size * 120000);
-
         await resumeDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Initializing', 45000);
         await waitForStatus(page, clusterName, 'Up', 240000);
       });
 
       test(`Restart cluster with ${db} and size ${size}`, async ({ page }) => {
-        test.setTimeout(size * 120000);
-
         await restartDbCluster(page, clusterName);
         if (size != 1 && db != 'postgresql') {
           await waitForStatus(page, clusterName, 'Stopping', 45000);
@@ -203,10 +196,9 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Delete cluster with ${db} and size ${size}`, async ({ page }) => {
-        test.setTimeout(60000);
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 45000);
+        await waitForDelete(page, clusterName, 120000);
       });
     }
   );

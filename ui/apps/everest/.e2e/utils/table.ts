@@ -10,7 +10,7 @@ export const findRowAndClickActions = async (
     .locator('.MuiTableRow-root')
     .filter({ hasText: name })
     .getByTestId('MoreHorizIcon')
-    .click();
+    .click({ timeout: 5000 });
 
   if (nameOfAction) {
     await page.getByRole('menuitem', { name: nameOfAction }).click();
