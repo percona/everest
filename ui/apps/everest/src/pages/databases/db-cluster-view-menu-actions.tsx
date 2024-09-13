@@ -27,10 +27,8 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import AddIcon from '@mui/icons-material/Add';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
-import {
-  useGetPermissions,
-  useGetPermittedNamespaces,
-} from 'utils/useGetPermissions';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const DbActionButtons = (
   row: MRT_Row<DbClusterTableElement>,
@@ -41,20 +39,16 @@ export const DbActionButtons = (
   isPaused: (dbCluster: DbCluster) => boolean | undefined,
   handleRestoreDbCluster: (dbCluster: DbCluster) => void
 ) => {
-  const { canUpdate, canDelete } = useGetPermissions({
-    resource: 'database-clusters',
-    specificResource: row.original.databaseName,
-    namespace: row.original.namespace,
-  });
+  const { canUpdate, canDelete } = useRBACPermissions(
+    'database-clusters',
+    `${row.original.namespace}/${row.original.databaseName}`
+  );
+  const { canCreate: canCreateRestore } = useRBACPermissions(
+    'database-cluster-restores',
+    `${row.original.namespace}/*`
+  );
 
-  const { canCreate } = useGetPermittedNamespaces({
-    resource: 'database-clusters',
-  });
-
-  const { canCreate: canCreateRestore } = useGetPermissions({
-    resource: 'database-cluster-restores',
-    namespace: row.original.namespace,
-  });
+  const { canCreate } = useNamespacePermissionsForResource('database-clusters');
 
   return [
     ...(canUpdate
@@ -96,7 +90,7 @@ export const DbActionButtons = (
           </MenuItem>,
         ]
       : []),
-    ...(canCreate
+    ...(canCreate.length > 0
       ? [
           <MenuItem
             disabled={row.original.status === DbClusterStatus.restoring}

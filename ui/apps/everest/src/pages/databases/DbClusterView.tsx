@@ -39,7 +39,7 @@ import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
 import { LastBackup } from './lastBackup/LastBackup';
 import { useDbBackups } from 'hooks/api/backups/useBackups';
 import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
-import { useGetPermittedNamespaces } from 'utils/useGetPermissions';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import TableActionsMenu from 'components/table-actions-menu';
 import { DbActionButtons } from './db-cluster-view-menu-actions';
 
@@ -73,9 +73,7 @@ export const DbClusterView = () => {
   } = useDbActions();
   const navigate = useNavigate();
 
-  const { canCreate } = useGetPermittedNamespaces({
-    resource: 'database-clusters',
-  });
+  const { canCreate } = useNamespacePermissionsForResource('database-clusters');
   const { data: backups = [] } = useDbBackups(
     selectedDbCluster?.metadata.name!,
     selectedDbCluster?.metadata.namespace!,
@@ -209,7 +207,7 @@ export const DbClusterView = () => {
             },
           })}
           renderTopToolbarCustomActions={() =>
-            canCreate && (
+            canCreate.length > 0 && (
               <Button
                 size="small"
                 startIcon={<AddIcon />}
