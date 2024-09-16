@@ -26,6 +26,7 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
+	casbinutil "github.com/casbin/casbin/v2/util"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -118,7 +119,27 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 	if err := validatePolicy(enforcer); err != nil {
 		return nil, err
 	}
+	enforcer.AddFunction("keyOrGlobMatch", customKeyOrGlobMatch)
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
+}
+
+func customKeyOrGlobMatch(args ...interface{}) (interface{}, error) {
+	key1 := args[0].(string)
+	key2 := args[1].(string)
+
+	if key1 == "*" {
+		key1 = "*/*"
+	}
+	if key2 == "*" {
+		key2 = "*/*"
+	}
+
+	keyMatch := casbinutil.KeyMatch2(key1, key2)
+	globMatch, err := casbinutil.GlobMatch(key1, key2)
+	if err != nil {
+		return false, err
+	}
+	return keyMatch || globMatch, nil
 }
 
 // NewEnforcerFromFilePath creates a new Casbin enforcer with the policy stored at the given filePath.
