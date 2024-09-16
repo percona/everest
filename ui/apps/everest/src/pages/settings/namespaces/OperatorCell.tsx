@@ -23,14 +23,14 @@ export const OperatorCell = ({
     operatorsToCheck
   );
   const navigate = useNavigate();
-  const permissionGranted = canUpdate && canRead && !!operators.length;
 
   return (
     <Stack direction="row" alignItems="center" width="100%">
       <Typography variant="body1">{value}</Typography>
-      {upgradeAvailable && permissionGranted && (
+      {upgradeAvailable && canRead && (
         <Button
           onClick={() => navigate(`/settings/namespaces/${namespace}`)}
+          disabled={!canUpdate}
           sx={{ ml: 'auto' }}
         >
           Upgrade
