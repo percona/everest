@@ -26,6 +26,7 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
+	"github.com/casbin/casbin/v2/persist"
 	casbinutil "github.com/casbin/casbin/v2/util"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
@@ -99,27 +100,43 @@ func getModel() (model.Model, error) {
 	return model.NewModelFromString(string(modelData))
 }
 
-// NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
-func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+func newEnforcer(adapter persist.Adapter, enableLogs bool) (*casbin.Enforcer, error) {
 	model, err := getModel()
 	if err != nil {
 		return nil, err
 	}
+	enf, err := casbin.NewEnforcer(model, adapter, enableLogs)
+	if err != nil {
+		return nil, err
+	}
 
+	if err := validatePolicy(enf); err != nil {
+		return nil, err
+	}
+	enf.AddFunction("customGlobMatch", customGlobMatch)
+	return enf, nil
+}
+
+// NewEnforcerFromFilePath creates a new Casbin enforcer with the policy stored at the given filePath.
+func NewEnforcerFromFilePath(filePath string) (*casbin.Enforcer, error) {
+	adapter, err := fileadapter.New(filePath)
+	if err != nil {
+		return nil, err
+	}
+	return newEnforcer(adapter, false)
+}
+
+// NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
+func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
 	cmReq := types.NamespacedName{
 		Namespace: common.SystemNamespace,
 		Name:      common.EverestRBACConfigMapName,
 	}
 	adapter := configmapadapter.New(l, kubeClient, cmReq)
-
-	enforcer, err := casbin.NewEnforcer(model, adapter, false)
+	enforcer, err := newEnforcer(adapter, true)
 	if err != nil {
-		return nil, errors.Join(err, errors.New("could not create casbin enforcer"))
-	}
-	if err := validatePolicy(enforcer); err != nil {
 		return nil, err
 	}
-	enforcer.AddFunction("customGlobMatch", customGlobMatch)
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
 }
 
@@ -145,19 +162,6 @@ func customGlobMatch(args ...interface{}) (interface{}, error) {
 		return false, err
 	}
 	return globMatch, nil
-}
-
-// NewEnforcerFromFilePath creates a new Casbin enforcer with the policy stored at the given filePath.
-func NewEnforcerFromFilePath(filePath string) (*casbin.Enforcer, error) {
-	model, err := getModel()
-	if err != nil {
-		return nil, err
-	}
-	adapter, err := fileadapter.New(filePath)
-	if err != nil {
-		return nil, err
-	}
-	return casbin.NewEnforcer(model, adapter)
 }
 
 // GetUser extracts the user from the JWT token in the context.
