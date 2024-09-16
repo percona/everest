@@ -36,10 +36,19 @@ import {
   findRowAndClickActions,
 } from '../utils/table';
 import { checkError } from '../utils/generic';
-import { deleteMonitoringInstance, listMonitoringInstances } from '../utils/monitoring-instance';
+import {
+  deleteMonitoringInstance,
+  listMonitoringInstances,
+} from '../utils/monitoring-instance';
 import { clickOnDemandBackup } from '../db-cluster-details/utils';
 
-const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD, SELECT_DB, SELECT_SIZE } = process.env;
+const {
+  MONITORING_URL,
+  MONITORING_USER,
+  MONITORING_PASSWORD,
+  SELECT_DB,
+  SELECT_SIZE,
+} = process.env;
 let token: string;
 
 test.describe.configure({ retries: 0 });
@@ -56,7 +65,11 @@ test.describe.configure({ retries: 0 });
       tag: '@release',
     },
     () => {
-      test.skip(() => (SELECT_DB !== db && !!SELECT_DB) || (SELECT_SIZE !== size.toString() && !!SELECT_SIZE));
+      test.skip(
+        () =>
+          (SELECT_DB !== db && !!SELECT_DB) ||
+          (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
+      );
       test.describe.configure({ timeout: 720000 });
 
       const clusterName = `${db}-${size}-dembkp`;
@@ -79,7 +92,11 @@ test.describe.configure({ retries: 0 });
       test.afterAll(async ({ request }) => {
         // we try to delete all monitoring instances because cluster creation expects that none exist
         // (monitoring instance is added in the form where the warning that none exist is visible)
-        let monitoringInstances = await listMonitoringInstances(request, namespace, token);
+        let monitoringInstances = await listMonitoringInstances(
+          request,
+          namespace,
+          token
+        );
         for (let i = 0; i < monitoringInstances.length; i++) {
           await deleteMonitoringInstance(
             request,

@@ -78,6 +78,6 @@ export const listMonitoringInstances = async (
   );
   expect(response.ok()).toBeTruthy();
 
-  const responseBody = await response.json()
+  const responseBody = await response.json();
   return responseBody;
 };
