@@ -119,11 +119,17 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 	if err := validatePolicy(enforcer); err != nil {
 		return nil, err
 	}
-	enforcer.AddFunction("keyOrGlobMatch", customKeyOrGlobMatch)
+	enforcer.AddFunction("customGlobMatch", customGlobMatch)
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
 }
 
-func customKeyOrGlobMatch(args ...interface{}) (interface{}, error) {
+// To understand why we need this custom globMatch, consider the below policy:
+// ```
+// p, adminrole:role, database-clusters, read, */*
+// ```
+// Given a request `adminrole:role read database-clusters *`, the default globMatch returns false.
+// This custom globMatch acts as a convienence function to convert any `*` to `*/*` before matching.
+func customGlobMatch(args ...interface{}) (interface{}, error) {
 	key1 := args[0].(string)
 	key2 := args[1].(string)
 
@@ -134,12 +140,11 @@ func customKeyOrGlobMatch(args ...interface{}) (interface{}, error) {
 		key2 = "*/*"
 	}
 
-	keyMatch := casbinutil.KeyMatch2(key1, key2)
 	globMatch, err := casbinutil.GlobMatch(key1, key2)
 	if err != nil {
 		return false, err
 	}
-	return keyMatch || globMatch, nil
+	return globMatch, nil
 }
 
 // NewEnforcerFromFilePath creates a new Casbin enforcer with the policy stored at the given filePath.
