@@ -32,7 +32,6 @@ import {
   ToggleButtonGroupInput,
 } from '@percona/ui-lib';
 import { dbEngineToDbType, dbTypeToDbEngine } from '@percona/utils';
-import { useDbEngines } from 'hooks/api/db-engines/useDbEngines';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
 import { useFormContext } from 'react-hook-form';
 import { DbEngineToolStatus } from 'shared-types/dbEngines.types';
@@ -49,6 +48,7 @@ import {
 import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import { DbClusterStatus } from 'shared-types/dbCluster.types.ts';
+import { useDBEnginesForNamespaces } from 'hooks/api/namespaces/useNamespaces.ts';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
@@ -74,10 +74,16 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       defaultSharding &&
       dbClusterStatus !== DbClusterStatus.paused);
 
-  const { data: dbEngines = [], isFetching: dbEnginesFetching } = useDbEngines(
-    dbNamespace,
-    { gcTime: 1000 * 5 }
+  const dbEnginesForNamespaces = useDBEnginesForNamespaces();
+  const dbEnginesFetching = dbEnginesForNamespaces.some(
+    (result) => result.isFetching
   );
+
+  const dbEngines =
+    dbEnginesForNamespaces.find(
+      (dbEngine) => dbEngine.namespace === dbNamespace
+    )?.data || [];
+
   const dbEngine = dbTypeToDbEngine(dbType);
 
   const [dbEngineData, setDbEngineData] = useState(
@@ -246,6 +252,13 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const { canCreate, isFetching } =
     useNamespacePermissionsForResource('database-clusters');
 
+  const filteredNamespaces = canCreate.filter((namespace) => {
+    const dbEnginesForNamespace = dbEnginesForNamespaces.find(
+      (dbEngine) => dbEngine.namespace === namespace
+    );
+    return dbEnginesForNamespace?.data?.length;
+  });
+
   useEffect(() => {
     const { isTouched: k8sNamespaceTouched } = getFieldState(
       DbWizardFormFields.k8sNamespace
@@ -253,14 +266,14 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     if (
       !k8sNamespaceTouched &&
       mode === 'new' &&
-      canCreate.length > 0 &&
+      filteredNamespaces.length > 0 &&
       !isFetching
     ) {
-      setValue(DbWizardFormFields.k8sNamespace, canCreate[0]);
+      setValue(DbWizardFormFields.k8sNamespace, filteredNamespaces[0]);
       trigger(DbWizardFormFields.k8sNamespace);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, isFetching, canCreate.length]);
+  }, [mode, isFetching, filteredNamespaces.length]);
 
   return (
     <>
@@ -276,7 +289,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           name={DbWizardFormFields.k8sNamespace}
           label={Messages.labels.k8sNamespace}
           loading={isFetching}
-          options={canCreate}
+          options={filteredNamespaces}
           disabled={
             mode === 'edit' ||
             mode === 'restoreFromBackup' ||
