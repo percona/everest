@@ -128,10 +128,10 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 // p, adminrole:role, database-clusters, read, */*
 // ```
 // Given a request `adminrole:role read database-clusters *`, the default globMatch returns false.
-// This custom globMatch acts as a convienence function to convert any `*` to `*/*` before matching.
+// This custom globMatch acts as a convenience function to convert any `*` to `*/*` before matching.
 func customGlobMatch(args ...interface{}) (interface{}, error) {
-	key1 := args[0].(string)
-	key2 := args[1].(string)
+	key1 := args[0].(string) //nolint:forcetypeassert
+	key2 := args[1].(string) //nolint:forcetypeassert
 
 	if key1 == "*" {
 		key1 = "*/*"
