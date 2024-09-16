@@ -40,21 +40,31 @@ export interface BackupStoragesForNamespaceResult {
   queryResult: UseQueryResult<BackupStorage[], unknown>;
 }
 
-export const useBackupStorages = (namespaces: string[]) => {
-  const queries = namespaces.map<
+export const useBackupStorages = (
+  queriesParams: Array<{
+    namespace: string;
+    options?: PerconaQueryOptions<
+      GetBackupStoragesPayload,
+      unknown,
+      BackupStorage[]
+    >;
+  }>
+) => {
+  const queries = queriesParams.map<
     UseQueryOptions<GetBackupStoragesPayload, unknown, BackupStorage[]>
-  >((namespace) => ({
+  >(({ namespace, options }) => ({
     queryKey: [BACKUP_STORAGES_QUERY_KEY, namespace],
     retry: false,
     queryFn: () => getBackupStoragesFn(namespace),
     refetchInterval: 5 * 1000,
+    ...options,
   }));
 
   const queryResults = useQueries({ queries });
 
   const results: BackupStoragesForNamespaceResult[] = queryResults.map(
     (item, i) => ({
-      namespace: namespaces[i],
+      namespace: queriesParams[i].namespace,
       queryResult: item,
     })
   );
