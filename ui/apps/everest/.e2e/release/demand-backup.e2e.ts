@@ -14,7 +14,11 @@
 // limitations under the License.
 
 import { expect, test } from '@playwright/test';
-import { deleteDbCluster, gotoDbClusterBackups, gotoDbClusterRestores } from '../utils/db-clusters-list';
+import {
+  deleteDbCluster,
+  gotoDbClusterBackups,
+  gotoDbClusterRestores,
+} from '../utils/db-clusters-list';
 import { getTokenFromLocalStorage } from '../utils/localStorage';
 import { getClusterDetailedInfo } from '../utils/storage-class';
 import {
@@ -26,7 +30,11 @@ import {
   populateMonitoringModalForm,
 } from '../utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '../constants';
-import { waitForStatus, waitForDelete, findRowAndClickActions } from '../utils/table';
+import {
+  waitForStatus,
+  waitForDelete,
+  findRowAndClickActions,
+} from '../utils/table';
 import { checkError } from '../utils/generic';
 import { deleteMonitoringInstance } from '../utils/monitoring-instance';
 import { clickOnDemandBackup } from '../db-cluster-details/utils';
@@ -120,8 +128,10 @@ test.describe.configure({ retries: 0 });
           MONITORING_USER,
           MONITORING_PASSWORD
         );
-        await page.getByTestId('switch-input-monitoring').click()
-        await expect(page.getByTestId('text-input-monitoring-instance')).toHaveValue(monitoringName)
+        await page.getByTestId('switch-input-monitoring').click();
+        await expect(
+          page.getByTestId('text-input-monitoring-instance')
+        ).toHaveValue(monitoringName);
         await submitWizard(page);
 
         await expect(
@@ -169,17 +179,19 @@ test.describe.configure({ retries: 0 });
         // TODO
       });
 
-      test(`Create demand backup with ${db} and size ${size}`, async ({ page }) => {
+      test(`Create demand backup with ${db} and size ${size}`, async ({
+        page,
+      }) => {
         await gotoDbClusterBackups(page, clusterName);
         await clickOnDemandBackup(page);
-        await page.getByTestId('text-input-name').fill(baseBackupName+'-1');
+        await page.getByTestId('text-input-name').fill(baseBackupName + '-1');
         await expect(page.getByTestId('text-input-name')).not.toBeEmpty();
         await expect(
           page.getByTestId('text-input-storage-location')
         ).not.toBeEmpty();
-        await page.getByTestId('form-dialog-create').click()
+        await page.getByTestId('form-dialog-create').click();
 
-        await waitForStatus(page, baseBackupName+'-1', 'Succeeded', 120000);
+        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 120000);
       });
 
       test.skip(`Delete data with ${db} and size ${size}`, async ({ page }) => {
@@ -188,9 +200,15 @@ test.describe.configure({ retries: 0 });
 
       test(`Restore cluster with ${db} and size ${size}`, async ({ page }) => {
         await gotoDbClusterBackups(page, clusterName);
-        await findRowAndClickActions(page, baseBackupName+'-1', 'Restore to this DB');
-        await expect(page.getByTestId('select-input-backup-name')).not.toBeEmpty();
-        await page.getByTestId('form-dialog-restore').click()
+        await findRowAndClickActions(
+          page,
+          baseBackupName + '-1',
+          'Restore to this DB'
+        );
+        await expect(
+          page.getByTestId('select-input-backup-name')
+        ).not.toBeEmpty();
+        await page.getByTestId('form-dialog-restore').click();
 
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Restoring', 30000);
@@ -199,23 +217,23 @@ test.describe.configure({ retries: 0 });
         await gotoDbClusterRestores(page, clusterName);
         // we select based on backup source since restores cannot be named and we don't know
         // in advance what will be the name
-        await waitForStatus(page, baseBackupName+'-1', 'Succeeded', 120000);
+        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 120000);
       });
 
       test(`Delete restore with ${db} and size ${size}`, async ({ page }) => {
         await gotoDbClusterRestores(page, clusterName);
-        await findRowAndClickActions(page, baseBackupName+'-1', 'Delete');
+        await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
         await expect(page.getByLabel('Delete restore')).toBeVisible();
-        await page.getByTestId('confirm-dialog-delete').click()
-        await waitForDelete(page, baseBackupName+'-1', 15000);
+        await page.getByTestId('confirm-dialog-delete').click();
+        await waitForDelete(page, baseBackupName + '-1', 15000);
       });
 
       test(`Delete backup with ${db} and size ${size}`, async ({ page }) => {
         await gotoDbClusterBackups(page, clusterName);
-        await findRowAndClickActions(page, baseBackupName+'-1', 'Delete');
+        await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
         await expect(page.getByLabel('Delete backup')).toBeVisible();
-        await page.getByTestId('form-dialog-delete').click()
-        await waitForDelete(page, baseBackupName+'-1', 30000);
+        await page.getByTestId('form-dialog-delete').click();
+        await waitForDelete(page, baseBackupName + '-1', 30000);
       });
 
       test(`Delete cluster with ${db} and size ${size}`, async ({ page }) => {

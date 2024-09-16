@@ -126,8 +126,10 @@ test.describe.configure({ retries: 0 });
           MONITORING_USER,
           MONITORING_PASSWORD
         );
-        await page.getByTestId('switch-input-monitoring').click()
-        await expect(page.getByTestId('text-input-monitoring-instance')).toHaveValue(monitoringName)
+        await page.getByTestId('switch-input-monitoring').click();
+        await expect(
+          page.getByTestId('text-input-monitoring-instance')
+        ).toHaveValue(monitoringName);
         await submitWizard(page);
 
         await expect(
