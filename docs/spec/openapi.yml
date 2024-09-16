@@ -3034,6 +3034,10 @@ components:
             gaps:
               description: Gaps identifies if there are gaps detected in the PITR logs
               type: boolean
+            latestRestorableTime:
+              description: LatestRestorableTime is the latest time that can be used for PITR restore
+              format: date-time
+              type: string
             state:
               description: State is the DatabaseBackup state.
               type: string
