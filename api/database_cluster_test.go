@@ -6,6 +6,8 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/stretchr/testify/require"
+
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
 func TestLatestRestorableDate(t *testing.T) {
@@ -40,6 +42,115 @@ func TestLatestRestorableDate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			require.Equal(t, tc.expected, latestRestorableDate(tc.now, tc.latestBackupTime, tc.uploadInterval))
+		})
+	}
+}
+
+func TestGetDefaultUploadInterval(t *testing.T) {
+	t.Parallel()
+	type tCase struct {
+		name     string
+		engine   everestv1alpha1.Engine
+		interval *int
+		expected int
+	}
+	cases := []tCase{
+		{
+			name:     "old pxc, no interval is set",
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePXC, Version: "1.13.0"},
+			interval: nil,
+			expected: pxcDefaultUploadInterval,
+		},
+		{
+			name:     "old pxc, interval is set",
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePXC, Version: "1.13.0"},
+			interval: pointer.ToInt(1000),
+			expected: 1000,
+		},
+		{
+			name:     "new pxc, no interval is set",
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePXC, Version: "1.14.0"},
+			interval: nil,
+			expected: 0,
+		},
+		{
+			name:     "new pxc, interval is set",
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePXC, Version: "1.14.0"},
+			interval: pointer.ToInt(1000),
+			expected: 0,
+		},
+		{
+			name:     "newer pxc",
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePXC, Version: "1.15.1"},
+			interval: nil,
+			expected: 0,
+		},
+		{
+			name:     "old psmdb, no interval is set",
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePSMDB, Version: "1.15.0"},
+			interval: nil,
+			expected: psmdbDefaultUploadInterval,
+		},
+		{
+			name:     "old psmdb, interval is set",
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePSMDB, Version: "1.15.0"},
+			interval: pointer.ToInt(1000),
+			expected: 1000,
+		},
+		{
+			name:     "new psmdb, no interval is set",
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePSMDB, Version: "1.16.0"},
+			interval: nil,
+			expected: 0,
+		},
+		{
+			name:     "new psmdb, interval is set",
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePSMDB, Version: "1.16.0"},
+			interval: pointer.ToInt(1000),
+			expected: 0,
+		},
+		{
+			name:     "newer psmdb",
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePSMDB, Version: "1.16.1"},
+			interval: nil,
+			expected: 0,
+		},
+
+		{
+			name:     "old pg, no interval is set",
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "2.3.1"},
+			interval: nil,
+			expected: pgDefaultUploadInterval,
+		},
+		{
+			name:     "old pg, interval is set",
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "2.3.1"},
+			interval: pointer.ToInt(1000),
+			expected: 1000,
+		},
+		{
+			name:     "new pg, no interval is set",
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "2.4.0"},
+			interval: nil,
+			expected: 0,
+		},
+		{
+			name:     "new pg, interval is set",
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "2.4.0"},
+			interval: pointer.ToInt(1000),
+			expected: 0,
+		},
+		{
+			name:     "newer pg",
+			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "2.4.1"},
+			interval: nil,
+			expected: 0,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			require.Equal(t, tc.expected, getDefaultUploadInterval(tc.engine, tc.interval))
 		})
 	}
 }
