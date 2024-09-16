@@ -11,7 +11,7 @@ import {
   endpointDefaultValues,
   getEndpointSchema,
 } from './create-edit-modal.types';
-import { useGetPermittedNamespaces } from 'utils/useGetPermissions';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 
 export const CreateEditEndpointModal = ({
   open,
@@ -22,9 +22,9 @@ export const CreateEditEndpointModal = ({
 }: CreateEditEndpointModalProps) => {
   const isEditMode = !!selectedEndpoint;
 
-  const { permittedNamespaces: namespaces } = useGetPermittedNamespaces({
-    resource: 'monitoring-instances',
-  });
+  const { canCreate } = useNamespacePermissionsForResource(
+    'monitoring-instances'
+  );
   const endpointSchema = getEndpointSchema(isEditMode);
 
   const defaultValues = useMemo(
@@ -65,7 +65,7 @@ export const CreateEditEndpointModal = ({
           <AutoCompleteInput
             name={EndpointFormFields.namespace}
             label={Messages.fieldLabels.namespace}
-            options={namespaces}
+            options={canCreate}
             disabled={isEditMode}
             isRequired
             textFieldProps={{

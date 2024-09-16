@@ -14,7 +14,7 @@ import { DBClusterDetailsTabs } from './db-cluster-details.types';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbClusterContext } from './dbCluster.context';
 import { useContext } from 'react';
-import { useGetPermissions } from 'utils/useGetPermissions';
+import { useRBACPermissions } from 'hooks/rbac';
 import { DB_CLUSTER_STATUS_TO_BASE_STATUS } from '../databases/DbClusterView.constants';
 import { beautifyDbClusterStatus } from '../databases/DbClusterView.utils';
 import StatusField from 'components/status-field';
@@ -27,11 +27,10 @@ export const DbClusterDetails = () => {
   const navigate = useNavigate();
   const currentTab = routeMatch?.params?.tabs;
 
-  const { canUpdate, canDelete } = useGetPermissions({
-    resource: 'database-clusters',
-    specificResource: dbCluster?.metadata.name,
-    namespace: dbCluster?.metadata.namespace,
-  });
+  const { canUpdate, canDelete } = useRBACPermissions(
+    'database-clusters',
+    `${dbCluster?.metadata.namespace}/${dbCluster?.metadata.name}`
+  );
 
   if (isLoading) {
     return (

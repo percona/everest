@@ -18,18 +18,17 @@ import { MenuItem } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
 import { Messages } from './storage-locations.messages';
 import { BackupStorageTableElement } from './storage-locations.types';
-import { useGetPermissions } from 'utils/useGetPermissions';
+import { useRBACPermissions } from 'hooks/rbac/rbac';
 
 export const StorageLocationsActionButtons = (
   row: MRT_Row<BackupStorageTableElement>,
   handleOpenEditModal: (storageLocation: BackupStorageTableElement) => void,
   handleDeleteBackup: (backupStorageName: string, namespace: string) => void
 ) => {
-  const { canUpdate, canDelete } = useGetPermissions({
-    resource: 'backup-storages',
-    specificResource: row.original.name,
-    namespace: row.original.namespace,
-  });
+  const { canUpdate, canDelete } = useRBACPermissions(
+    'backup-storages',
+    `${row.original.namespace}/${row.original.name}`
+  );
 
   return [
     ...(canUpdate

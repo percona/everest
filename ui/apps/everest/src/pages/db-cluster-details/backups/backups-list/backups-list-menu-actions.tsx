@@ -19,9 +19,9 @@ import { Messages } from './backups-list.messages';
 import AddIcon from '@mui/icons-material/Add';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useGetPermissions } from 'utils/useGetPermissions.ts';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { Backup, BackupStatus } from 'shared-types/backups.types';
+import { useRBACPermissions } from 'hooks/rbac/rbac';
 
 export const BackupActionButtons = (
   row: MRT_Row<Backup>,
@@ -31,16 +31,14 @@ export const BackupActionButtons = (
   handleRestoreToNewDbBackup: (backupName: string) => void,
   dbCluster: DbCluster
 ) => {
-  const { canDelete } = useGetPermissions({
-    resource: 'database-cluster-backups',
-    specificResource: row.original.backupStorageName,
-    namespace: dbCluster.metadata.namespace,
-  });
-
-  const { canCreate: canCreateRestore } = useGetPermissions({
-    resource: 'database-cluster-restores',
-    namespace: dbCluster.metadata.namespace,
-  });
+  const { canDelete } = useRBACPermissions(
+    'database-cluster-backups',
+    `${dbCluster.metadata.namespace}/${row.original.backupStorageName}`
+  );
+  const { canCreate: canCreateRestore } = useRBACPermissions(
+    'database-cluster-restores',
+    `${dbCluster.metadata.namespace}/*`
+  );
 
   return [
     ...(canCreateRestore
