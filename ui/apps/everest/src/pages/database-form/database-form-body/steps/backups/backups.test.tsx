@@ -14,6 +14,11 @@ vi.mock('hooks/api/backups/useBackups', () => ({
     isFetching: false,
   }),
 }));
+vi.mock('hooks/rbac', () => ({
+  useRBACPermissions: () => ({
+    canCreate: true,
+  }),
+}));
 
 const queryClient = new QueryClient({
   defaultOptions: {
