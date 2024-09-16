@@ -133,7 +133,7 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 		Name:      common.EverestRBACConfigMapName,
 	}
 	adapter := configmapadapter.New(l, kubeClient, cmReq)
-	enforcer, err := newEnforcer(adapter, true)
+	enforcer, err := newEnforcer(adapter, false)
 	if err != nil {
 		return nil, err
 	}
