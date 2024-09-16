@@ -3,11 +3,14 @@ package fileadapter
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"strings"
 
 	"github.com/casbin/casbin/v2/model"
+	"gopkg.in/yaml.v3"
+	corev1 "k8s.io/api/core/v1"
 
 	rbacutils "github.com/percona/everest/pkg/rbac/utils"
 )
@@ -30,8 +33,26 @@ func New(path string) (*Adapter, error) {
 		return nil, err
 	}
 
+	// Retrieve the policy based on the file extension.
+	var policy string
+	if strings.HasSuffix(path, ".yaml") {
+		cm := corev1.ConfigMap{}
+		if err := yaml.Unmarshal(content, &cm); err != nil {
+			return nil, fmt.Errorf("failed to unmarsal yaml: %w", err)
+		}
+		s, ok := cm.Data["policy.csv"]
+		if !ok {
+			return nil, errors.New("policy.csv not found in ConfigMap")
+		}
+		policy = s
+	} else if strings.HasSuffix(path, ".csv") {
+		policy = string(content)
+	} else {
+		return nil, errors.New("unsupported file format")
+	}
+
 	return &Adapter{
-		content: string(content),
+		content: policy,
 	}, nil
 }
 
