@@ -33,9 +33,9 @@ import {
 import { EVEREST_CI_NAMESPACES } from '../constants';
 import { waitForStatus, waitForDelete } from '../utils/table';
 import { checkError } from '../utils/generic';
-import { deleteMonitoringInstance } from '../utils/monitoring-instance';
+import { deleteMonitoringInstance, listMonitoringInstances } from '../utils/monitoring-instance';
 
-const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
+const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD, SELECT_DB, SELECT_SIZE } = process.env;
 let token: string;
 
 test.describe.configure({ retries: 0 });
@@ -55,6 +55,7 @@ test.describe.configure({ retries: 0 });
       tag: '@release',
     },
     () => {
+      test.skip(() => (SELECT_DB !== db && !!SELECT_DB) || (SELECT_SIZE !== size.toString() && !!SELECT_SIZE));
       test.describe.configure({ timeout: 720000 });
 
       const clusterName = `${db}-${size}-deploy`;
@@ -74,12 +75,17 @@ test.describe.configure({ retries: 0 });
       });
 
       test.afterAll(async ({ request }) => {
-        await deleteMonitoringInstance(
-          request,
-          namespace,
-          monitoringName,
-          token
-        );
+        // we try to delete all monitoring instances because cluster creation expects that none exist
+        // (monitoring instance is added in the form where the warning that none exist is visible)
+        let monitoringInstances = await listMonitoringInstances(request, namespace, token);
+        for (let i = 0; i < monitoringInstances.length; i++) {
+          await deleteMonitoringInstance(
+            request,
+            namespace,
+            monitoringInstances[i].name,
+            token
+          );
+        }
       });
 
       test(`Cluster creation with ${db} and size ${size}`, async ({
