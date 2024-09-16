@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/casbin/casbin/v2/model"
@@ -20,6 +21,11 @@ type Adapter struct {
 	content string
 }
 
+const (
+	extYaml = ".yaml"
+	extCsv  = ".csv"
+)
+
 // New returns a new adapter that reads a policy located at the given path.
 func New(path string) (*Adapter, error) {
 	f, err := os.Open(path) //nolint:gosec
@@ -33,9 +39,10 @@ func New(path string) (*Adapter, error) {
 		return nil, err
 	}
 
-	// Retrieve the policy based on the file extension.
+	// Retrieve the policy based on the file type.
 	var policy string
-	if strings.HasSuffix(path, ".yaml") {
+	switch filepath.Ext(path) {
+	case extYaml:
 		cm := corev1.ConfigMap{}
 		if err := yaml.Unmarshal(content, &cm); err != nil {
 			return nil, fmt.Errorf("failed to unmarsal yaml: %w", err)
@@ -45,9 +52,9 @@ func New(path string) (*Adapter, error) {
 			return nil, errors.New("policy.csv not found in ConfigMap")
 		}
 		policy = s
-	} else if strings.HasSuffix(path, ".csv") {
+	case extCsv:
 		policy = string(content)
-	} else {
+	default:
 		return nil, errors.New("unsupported file format")
 	}
 
