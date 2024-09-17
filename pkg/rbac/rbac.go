@@ -114,11 +114,6 @@ func newEnforcer(adapter persist.Adapter, enableLogs bool) (*casbin.Enforcer, er
 	if err := validatePolicy(enf); err != nil {
 		return nil, err
 	}
-	enf.AddFunction("objectMatch", func(arguments ...interface{}) (interface{}, error) {
-		key1 := arguments[0].(string) //nolint:forcetypeassert
-		key2 := arguments[1].(string) //nolint:forcetypeassert
-		return objectMatch(key1, key2), nil
-	})
 	return enf, nil
 }
 
@@ -143,35 +138,6 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 		return nil, err
 	}
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
-}
-
-// We use a custom defined matcher function since we have use-cases that are not
-// properly handled by the key matchers in the casbin library.
-//
-// For example:
-// - keyMatch("ns-1/obj-1", "*/obj-1") => true.
-// - support both "*" and "*/*" as wildcard.
-func objectMatch(key1, key2 string) bool {
-	key1Parts := strings.Split(key1, "/")
-	key2Parts := strings.Split(key2, "/")
-
-	if key2 == "*" {
-		return true
-	}
-	// Handle the cases where key1 or key2 has different lengths
-	if len(key1Parts) != len(key2Parts) {
-		return false
-	}
-	// Match each part of key1 and key2
-	for i := range key2Parts {
-		if key2Parts[i] == "*" {
-			continue
-		}
-		if key1Parts[i] != key2Parts[i] {
-			return false
-		}
-	}
-	return true
 }
 
 // GetUser extracts the user from the JWT token in the context.
@@ -293,6 +259,12 @@ func Can(ctx context.Context, filePath string, k *kubernetes.Kubernetes, req ...
 		return false, errors.New("expected input of the form [user action resource object]")
 	}
 	user, action, resource, object := req[0], req[1], req[2], req[3]
+	if object == "*" || object == "all" {
+		object = "/"
+		if resource == ResourceNamespaces {
+			object = ""
+		}
+	}
 	enforcer, err := newKubeOrFileEnforcer(ctx, k, filePath)
 	if err != nil {
 		return false, err

@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestValidatePolicy(t *testing.T) {
@@ -288,22 +286,4 @@ func TestCan(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestObjectMatch(t *testing.T) {
-	t.Parallel()
-	assert.True(t, objectMatch("", "*"))
-	assert.True(t, objectMatch("namespace-1/object-1", "*"))
-	assert.True(t, objectMatch("/", "*/*"))
-	assert.True(t, objectMatch("namespace-1/", "namespace-1/*"))
-	assert.True(t, objectMatch("namespace-1/object-1", "namespace-1/*"))
-	assert.False(t, objectMatch("namespace-2/", "namespace-1/*"))
-	assert.False(t, objectMatch("namespace-2/object-1", "namespace-1/*"))
-	assert.True(t, objectMatch("namespace-1/", "*/*"))
-	assert.True(t, objectMatch("namespace-1/object-1", "*/*"))
-	assert.False(t, objectMatch("namespace-1/object-1", "namespace-2/object-1"))
-	assert.False(t, objectMatch("namespace-2/object-2", "namespace-2/object-1"))
-	assert.False(t, objectMatch("namespace-2/object-2", "*/object-1"))
-	assert.True(t, objectMatch("namespace-2/object-1", "*/object-1"))
-	assert.True(t, objectMatch("namespace-2", "*"))
 }
