@@ -28,6 +28,8 @@ import (
 	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/common"
@@ -88,7 +90,43 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 
 // ListDatabaseClusters lists the created database clusters on the specified kubernetes cluster.
 func (e *EverestServer) ListDatabaseClusters(ctx echo.Context, namespace string) error {
-	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, "")
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+
+	// Filter out all DatabaseClusters whose backup-storages are not accessible by the user.
+	rbacFilter := transformK8sList(func(l *unstructured.UnstructuredList) error {
+		allowed := []unstructured.Unstructured{}
+		for _, obj := range l.Items {
+			db := &everestv1alpha1.DatabaseCluster{}
+			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, db); err != nil {
+				e.l.Error(errors.Join(err, errors.New("failed to convert unstructured to DatabaseCluster")))
+				return err
+			}
+			// Check if the user has permissions for all backup-storages in the schedule?
+			allow := true
+			for _, sched := range db.Spec.Backup.Schedules {
+				bsName := sched.BackupStorageName
+				if ok, err := e.canGetBackupStorage(user, namespace, bsName); err != nil {
+					e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+					return err
+				} else if !ok {
+					allow = false
+					break
+				}
+			}
+			if !allow {
+				continue
+			}
+			allowed = append(allowed, obj)
+		}
+		l.Items = allowed
+		return nil
+	})
+	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, "", rbacFilter)
 }
 
 // DeleteDatabaseCluster deletes a database cluster on the specified kubernetes cluster.
@@ -133,6 +171,27 @@ func (e *EverestServer) DeleteDatabaseCluster(
 
 // GetDatabaseCluster retrieves the specified database cluster on the specified kubernetes cluster.
 func (e *EverestServer) GetDatabaseCluster(ctx echo.Context, namespace, name string) error {
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+	db, err := e.kubeClient.GetDatabaseCluster(ctx.Request().Context(), namespace, name)
+	if err != nil {
+		return err
+	}
+	for _, sched := range db.Spec.Backup.Schedules {
+		if ok, err := e.canGetBackupStorage(user, namespace, sched.BackupStorageName); err != nil {
+			e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+			return err
+		} else if !ok {
+			return ctx.JSON(http.StatusForbidden, Error{
+				Message: pointer.ToString(errInsufficientPermissions.Error()),
+			})
+		}
+	}
+	// TODO: duplicate call to Kubernetes, need to figure out how to fix this.
 	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, name)
 }
 
