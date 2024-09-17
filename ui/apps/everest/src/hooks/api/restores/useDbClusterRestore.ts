@@ -24,6 +24,7 @@ import {
   getDbClusterRestores,
 } from 'api/restores';
 import { generateShortUID } from 'pages/database-form/database-form-body/steps/first/utils';
+import { PerconaQueryOptions } from 'shared-types/query.types';
 import { GetRestorePayload, Restore } from 'shared-types/restores.types';
 
 export const RESTORES_QUERY_KEY = 'restores';
@@ -97,7 +98,8 @@ export const useDbClusterRestoreFromPointInTime = (
 
 export const useDbClusterRestores = (
   namespace: string,
-  dbClusterName: string
+  dbClusterName: string,
+  options?: PerconaQueryOptions<GetRestorePayload, unknown, Restore[]>
 ) =>
   useQuery<GetRestorePayload, unknown, Restore[]>({
     queryKey: [RESTORES_QUERY_KEY, namespace, dbClusterName],
@@ -112,6 +114,7 @@ export const useDbClusterRestores = (
         type: item.spec.dataSource.pitr ? 'pitr' : 'full',
         backupSource: item.spec.dataSource.dbClusterBackupName || '',
       })),
+    ...options,
   });
 
 export const useDeleteRestore = (
