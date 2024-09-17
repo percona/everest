@@ -249,6 +249,13 @@ func s3Access(
 		return errors.New("could not read from S3 bucket")
 	}
 
+	_, err = svc.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket: aws.String(bucketName),
+	})
+	if err != nil {
+		return errors.New("could not list objects in S3 bucket")
+	}
+
 	_, err = svc.DeleteObject(&s3.DeleteObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(testKey),
