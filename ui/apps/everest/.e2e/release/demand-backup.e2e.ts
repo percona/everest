@@ -97,7 +97,14 @@ test.describe.configure({ retries: 0 });
           namespace,
           token
         );
-        for (const instance of monitoringInstances) { await deleteMonitoringInstance(request, namespace, instance.name, token); }
+        for (const instance of monitoringInstances) {
+          await deleteMonitoringInstance(
+            request,
+            namespace,
+            instance.name,
+            token
+          );
+        }
       });
 
       test(`Cluster creation with ${db} and size ${size}`, async ({
