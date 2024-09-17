@@ -118,6 +118,15 @@ func (e *EverestServer) ListDatabaseClusters(ctx echo.Context, namespace string)
 					break
 				}
 			}
+			// Check if the user has permission for the backup-storages used by PITR (if any)?
+			if bsName := pointer.Get(db.Spec.Backup.PITR.BackupStorageName); bsName != "" {
+				if ok, err := e.canGetBackupStorage(user, namespace, bsName); err != nil {
+					e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+					return err
+				} else if !ok {
+					allow = false
+				}
+			}
 			// Check if the user has permissions for MonitoringConfig?
 			if mcName := pointer.Get(db.Spec.Monitoring).MonitoringConfigName; mcName != "" {
 				if ok, err := e.canGetMonitoringConfig(user, namespace, mcName); err != nil {
@@ -193,6 +202,17 @@ func (e *EverestServer) GetDatabaseCluster(ctx echo.Context, namespace, name str
 	// Check for backup-storage permissions.
 	for _, sched := range db.Spec.Backup.Schedules {
 		if ok, err := e.canGetBackupStorage(user, namespace, sched.BackupStorageName); err != nil {
+			e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+			return err
+		} else if !ok {
+			return ctx.JSON(http.StatusForbidden, Error{
+				Message: pointer.ToString(errInsufficientPermissions.Error()),
+			})
+		}
+	}
+	// Check if the user has permission for the backup-storages used by PITR (if any)?
+	if bsName := pointer.Get(db.Spec.Backup.PITR.BackupStorageName); bsName != "" {
+		if ok, err := e.canGetBackupStorage(user, namespace, bsName); err != nil {
 			e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
 			return err
 		} else if !ok {
