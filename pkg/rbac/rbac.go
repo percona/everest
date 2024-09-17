@@ -115,9 +115,9 @@ func newEnforcer(adapter persist.Adapter, enableLogs bool) (*casbin.Enforcer, er
 		return nil, err
 	}
 	enf.AddFunction("customKeyMatch", func(arguments ...interface{}) (interface{}, error) {
-		key1 := arguments[0].(string)
-		key2 := arguments[1].(string)
-		return bool(keyMatch(key1, key2)), nil
+		key1 := arguments[0].(string) //nolint:forcetypeassert
+		key2 := arguments[1].(string) //nolint:forcetypeassert
+		return keyMatch(key1, key2), nil
 	})
 	return enf, nil
 }
@@ -149,17 +149,14 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 // properly handled by the key matchers in the casbin library.
 //
 // For example:
-// - keyMatch("ns-1/obj-1", "*/obj-1") => true
-// - support both "*" and "*/*" as wildcard
+// - keyMatch("ns-1/obj-1", "*/obj-1") => true.
+// - support both "*" and "*/*" as wildcard.
 func keyMatch(key1, key2 string) bool {
 	key1Parts := strings.Split(key1, "/")
 	key2Parts := strings.Split(key2, "/")
 
 	if key2 == "*" {
 		return true
-	}
-	if key2 == "*/*" {
-		return len(key1Parts) == 2
 	}
 	// Handle the cases where key1 or key2 has different lengths
 	if len(key1Parts) != len(key2Parts) {
