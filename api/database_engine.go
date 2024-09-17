@@ -59,11 +59,11 @@ func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, namespace string) 
 	rbacListFilter := transformK8sList(func(l *unstructured.UnstructuredList) error {
 		allowed := []unstructured.Unstructured{}
 		for _, obj := range l.Items {
-			if can, err := e.canGetDatabaseEngine(user, namespace, obj.GetName()); err != nil {
+			if err := e.enforceOrErr(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, namespace+"/"+obj.GetName()); err != nil && errors.Is(err, errInsufficientPermissions) {
+				continue
+			} else if err != nil {
 				e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
 				return err
-			} else if !can {
-				continue
 			}
 			allowed = append(allowed, obj)
 		}
@@ -138,24 +138,20 @@ func (e *EverestServer) GetUpgradePlan(
 	}
 
 	// ensure the user has access to all db-clusters in this namespace.
-	if ok, err := e.canReadAllDBClusters(user, namespace); err != nil {
-		e.l.Error(errors.Join(err, errors.New("failed to check database-cluster permissions")))
+	if err := e.enforceOrErr(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, namespace+"/"+"*"); err != nil {
 		return err
-	} else if !ok {
-		return c.JSON(http.StatusForbidden, Error{
-			Message: pointer.ToString("You do not have permission to view the upgrade plan"),
-		})
 	}
 
 	// ensure the user has access to all engines in this upgrade plan.
 	for _, upg := range pointer.Get(result.Upgrades) {
-		if ok, err := e.canGetDatabaseEngine(user, namespace, *upg.Name); err != nil {
-			e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
-			return err
-		} else if !ok {
+		name := *upg.Name
+		if err := e.enforceOrErr(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, namespace+"/"+name); errors.Is(err, errInsufficientPermissions) {
 			// We cannot show this plan, the user does not have permission to one or more engines.
 			result = &UpgradePlan{}
 			break
+		} else if err != nil {
+			e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
+			return err
 		}
 	}
 	return c.JSON(http.StatusOK, result)
@@ -180,24 +176,14 @@ func (e *EverestServer) ApproveUpgradePlan(c echo.Context, namespace string) err
 	}
 
 	// ensure the user has access to all db-clusters in this namespace.
-	if ok, err := e.canReadAllDBClusters(user, namespace); err != nil {
-		e.l.Error(errors.Join(err, errors.New("failed to check database-cluster permissions")))
+	if err := e.enforceOrErr(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, namespace+"/"+"*"); err != nil {
 		return err
-	} else if !ok {
-		return c.JSON(http.StatusForbidden, Error{
-			Message: pointer.ToString("You do not have permission to view the upgrade plan"),
-		})
 	}
 
-	// Ensure we can edit all these engines.
+	// Ensure we can update all these engines.
 	for _, upg := range pointer.Get(up.Upgrades) {
-		if ok, err := e.canUpdateDatabaseEngine(user, namespace, *upg.Name); err != nil {
-			e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
+		if err := e.enforceOrErr(user, rbac.ResourceDatabaseEngines, rbac.ActionUpdate, namespace+"/"+*upg.Name); err != nil {
 			return err
-		} else if !ok {
-			return c.JSON(http.StatusForbidden, Error{
-				Message: pointer.ToString("You do not have permission to upgrade the database engine"),
-			})
 		}
 	}
 
@@ -416,41 +402,4 @@ func canUpgrade(dbs []UpgradeTask) bool {
 		return pointer.Get(db.PendingTask) != Ready
 	})
 	return !notReadyExists
-}
-
-// canGetDatabaseEngine checks if the user can get the specified database engine.
-func (e *EverestServer) canGetDatabaseEngine(user, namespace, name string) (bool, error) {
-	ok, err := e.rbacEnforcer.Enforce(
-		user, rbac.ResourceDatabaseEngines,
-		rbac.ActionRead,
-		fmt.Sprintf("%s/%s", namespace, name),
-	)
-	if err != nil {
-		return false, fmt.Errorf("failed to Enforce: %w", err)
-	}
-	return ok, nil
-}
-
-func (e *EverestServer) canUpdateDatabaseEngine(user, namespace, name string) (bool, error) {
-	ok, err := e.rbacEnforcer.Enforce(
-		user, rbac.ResourceDatabaseEngines,
-		rbac.ActionUpdate,
-		fmt.Sprintf("%s/%s", namespace, name),
-	)
-	if err != nil {
-		return false, fmt.Errorf("failed to Enforce: %w", err)
-	}
-	return ok, nil
-}
-
-func (e *EverestServer) canReadAllDBClusters(user, namespace string) (bool, error) {
-	ok, err := e.rbacEnforcer.Enforce(
-		user, rbac.ResourceDatabaseClusters,
-		rbac.ActionRead,
-		fmt.Sprintf("%s/*", namespace),
-	)
-	if err != nil {
-		return false, fmt.Errorf("failed to Enforce: %w", err)
-	}
-	return ok, nil
 }

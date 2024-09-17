@@ -627,10 +627,8 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 	// have permissions to take backups.
 	schedules := pointer.Get(pointer.Get(pointer.Get(databaseCluster.Spec).Backup).Schedules)
 	if len(schedules) > 0 {
-		if can, err := e.canTakeBackups(user, namespace+"/"); err != nil {
+		if err := e.enforceOrErr(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, namespace+"/"); err != nil {
 			return err
-		} else if !can {
-			return errors.Join(errInsufficientPermissions, errors.New("missing permission to take backups"))
 		}
 	}
 
@@ -1164,10 +1162,8 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 	// If the schedules are updated, we need to check that the user has
 	// permission to create backups in this namespace.
 	if !isSchedulesEqual() {
-		if can, err := e.canTakeBackups(user, oldDB.GetNamespace()+"/"); err != nil {
+		if err := e.enforceOrErr(user, rbac.ResourceDatabaseClusterRestores, rbac.ActionCreate, oldDB.GetNamespace()+"/"); err != nil {
 			return err
-		} else if !can {
-			return errors.Join(errInsufficientPermissions, errors.New("missing permission to take backups"))
 		}
 	}
 	return nil

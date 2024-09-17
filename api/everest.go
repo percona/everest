@@ -220,7 +220,7 @@ func (e *EverestServer) rbacMiddleware(ctx context.Context, basePath string) (ec
 	return casbinmiddleware.MiddlewareWithConfig(casbinmiddleware.Config{
 		Skipper:        skipper,
 		UserGetter:     rbac.GetUser,
-		EnforceHandler: rbac.NewEnforceHandler(basePath, enforcer),
+		EnforceHandler: rbac.NewEnforceHandler(e.l, basePath, enforcer),
 	}), nil
 }
 
@@ -317,10 +317,13 @@ func sessionRateLimiter(limit int) (echo.MiddlewareFunc, *RateLimiterMemoryStore
 }
 
 func (e *EverestServer) errorHandlerChain() echo.HTTPErrorHandler {
-	return e.k8sToAPIErrorHandler(e.echo.DefaultHTTPErrorHandler)
+	h := e.echo.DefaultHTTPErrorHandler
+	h = k8sToAPIErrorHandler(h)
+	h = enforcerErrorHandler(h)
+	return h
 }
 
-func (e *EverestServer) k8sToAPIErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
+func k8sToAPIErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 	return func(err error, c echo.Context) {
 		if k8serrors.IsNotFound(err) {
 			err = &echo.HTTPError{
@@ -329,4 +332,33 @@ func (e *EverestServer) k8sToAPIErrorHandler(next echo.HTTPErrorHandler) echo.HT
 		}
 		next(err, c)
 	}
+}
+
+func enforcerErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
+	return func(err error, c echo.Context) {
+		if errors.Is(err, errInsufficientPermissions) {
+			err = &echo.HTTPError{
+				Code:    http.StatusForbidden,
+				Message: err.Error(),
+			}
+		}
+		next(err, c)
+	}
+}
+
+// enforceOrErr is a wrapper around casbin.Enforce that returns an error if the enforcement fails.
+func (e *EverestServer) enforceOrErr(rvals ...interface{}) error {
+	ok, err := e.rbacEnforcer.Enforce(rvals...)
+	if err != nil {
+		return fmt.Errorf("failed to enforce: %w", err)
+	}
+	if !ok {
+		sub := rvals[0].(string)
+		res := rvals[1].(string)
+		action := rvals[2].(string)
+		obj := rvals[3].(string)
+		e.l.Warnf("Permission denied: [%s %s %s %s]", sub, res, action, obj)
+		return errInsufficientPermissions
+	}
+	return nil
 }

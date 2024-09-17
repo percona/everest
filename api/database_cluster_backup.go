@@ -79,11 +79,10 @@ func (e *EverestServer) ListDatabaseClusterBackups(ctx echo.Context, namespace, 
 				e.l.Error(errors.Join(err, errors.New("failed to convert unstructured to DatabaseClusterBackup")))
 				return err
 			}
-			if can, err := e.canGetBackupStorage(user, namespace, obj.GetName()); err != nil {
-				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
-				return err
-			} else if !can {
+			if err := e.enforceOrErr(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionRead, namespace+"/"+obj.GetName()); err != nil && errors.Is(err, errInsufficientPermissions) {
 				continue
+			} else if err != nil {
+				return err
 			}
 			allowed = append(allowed, obj)
 		}
@@ -177,13 +176,8 @@ func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, namespace, na
 	if err != nil {
 		return errors.Join(err, errors.New("could not get Database Cluster Backup"))
 	}
-	if can, err := e.canGetBackupStorage(user, namespace, bkp.Spec.BackupStorageName); err != nil {
-		e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+	if err := e.enforceOrErr(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionRead, namespace+"/"+bkp.Spec.BackupStorageName); err != nil {
 		return err
-	} else if !can {
-		return ctx.JSON(http.StatusForbidden, Error{
-			Message: pointer.ToString(errInsufficientPermissions.Error()),
-		})
 	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, name)
 }
@@ -217,18 +211,6 @@ func (e *EverestServer) ensureBackupForegroundDeletion(ctx context.Context, back
 	},
 		backoff.WithContext(everestAPIConstantBackoff, ctx),
 	)
-}
-
-func (e *EverestServer) canGetBackupStorage(user, namespace, name string) (bool, error) {
-	ok, err := e.rbacEnforcer.Enforce(
-		user, rbac.ResourceBackupStorages,
-		rbac.ActionRead,
-		fmt.Sprintf("%s/%s", namespace, name),
-	)
-	if err != nil {
-		return false, fmt.Errorf("failed to Enforce: %w", err)
-	}
-	return ok, nil
 }
 
 func (e *EverestServer) canGetDatabaseClusterBackups(user, object string) (bool, error) {

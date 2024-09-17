@@ -64,11 +64,6 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 	}
 
 	if err := e.validateDatabaseClusterOnCreate(ctx, namespace, dbc); err != nil {
-		if errors.Is(err, errInsufficientPermissions) {
-			return ctx.JSON(http.StatusForbidden, Error{
-				Message: pointer.ToString("Cannot perform the operation due to insufficient permissions"),
-			})
-		}
 		return err
 	}
 
@@ -337,9 +332,7 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 
 	if err := e.validateDatabaseClusterOnUpdate(ctx, dbc, oldDB); err != nil {
 		if errors.Is(err, errInsufficientPermissions) {
-			return ctx.JSON(http.StatusForbidden, Error{
-				Message: pointer.ToString("Cannot perform the operation due to insufficient permissions"),
-			})
+			return err
 		}
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
@@ -500,32 +493,6 @@ func valueOrDefault(value *int, defaultValue int) int {
 		return defaultValue
 	}
 	return *value
-}
-
-// canTakeBackups checks if a given user is allowed to take backups.
-func (e *EverestServer) canTakeBackups(user string, object string) (bool, error) {
-	ok, err := e.rbacEnforcer.Enforce(
-		user, rbac.ResourceDatabaseClusterBackups,
-		rbac.ActionCreate,
-		object,
-	)
-	if err != nil {
-		return false, fmt.Errorf("failed to Enforce: %w", err)
-	}
-	return ok, nil
-}
-
-// canRestore checks if a given user is allowed to restore.
-func (e *EverestServer) canRestore(user string, object string) (bool, error) {
-	ok, err := e.rbacEnforcer.Enforce(
-		user, rbac.ResourceDatabaseClusterRestores,
-		rbac.ActionCreate,
-		object,
-	)
-	if err != nil {
-		return false, fmt.Errorf("failed to Enforce: %w", err)
-	}
-	return ok, nil
 }
 
 func (e *EverestServer) canGetDatabaseClusterCredentials(user, object string) (bool, error) {
