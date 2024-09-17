@@ -56,6 +56,13 @@ vi.mock('../../useDatabasePageMode', () => ({
   useDatabasePageMode: () => 'new',
 }));
 
+vi.mock('hooks/rbac', () => ({
+  useRBACPermissions: vi.fn().mockReturnValue({
+    canRead: true,
+    canCreate: true,
+  }),
+}));
+
 const FormProviderWrapper = ({ children }: { children: React.ReactNode }) => {
   const methods = useForm({
     defaultValues: {
