@@ -77,7 +77,6 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
 	}
-	echoServer.HTTPErrorHandler = k8sToEverestErrorHandler(l)
 	e := &EverestServer{
 		config:        c,
 		l:             l,
@@ -86,6 +85,7 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		sessionMgr:    sessMgr,
 		attemptsStore: store,
 	}
+	e.echo.HTTPErrorHandler = e.errorHandlerChain()
 
 	if err := e.initHTTPServer(ctx); err != nil {
 		return e, err
@@ -316,14 +316,17 @@ func sessionRateLimiter(limit int) (echo.MiddlewareFunc, *RateLimiterMemoryStore
 	return echomiddleware.RateLimiterWithConfig(config), store
 }
 
-// convert k8s API errors to HTTP errors.
-func k8sToEverestErrorHandler(l *zap.SugaredLogger) echo.HTTPErrorHandler {
+func (e *EverestServer) errorHandlerChain() echo.HTTPErrorHandler {
+	return e.k8sToAPIErrorHandler(e.echo.DefaultHTTPErrorHandler)
+}
+
+func (e *EverestServer) k8sToAPIErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 	return func(err error, c echo.Context) {
 		if k8serrors.IsNotFound(err) {
-			err := c.JSON(http.StatusNotFound, nil)
-			if err != nil {
-				l.Error(errors.Join(err, errors.New("could not send error response")))
+			err = &echo.HTTPError{
+				Code: http.StatusNotFound,
 			}
 		}
+		next(err, c)
 	}
 }
