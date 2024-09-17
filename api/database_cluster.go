@@ -106,8 +106,8 @@ func (e *EverestServer) ListDatabaseClusters(ctx echo.Context, namespace string)
 				e.l.Error(errors.Join(err, errors.New("failed to convert unstructured to DatabaseCluster")))
 				return err
 			}
-			// Check if the user has permissions for all backup-storages in the schedule?
 			allow := true
+			// Check if the user has permissions for all backup-storages in the schedule?
 			for _, sched := range db.Spec.Backup.Schedules {
 				bsName := sched.BackupStorageName
 				if ok, err := e.canGetBackupStorage(user, namespace, bsName); err != nil {
@@ -116,6 +116,15 @@ func (e *EverestServer) ListDatabaseClusters(ctx echo.Context, namespace string)
 				} else if !ok {
 					allow = false
 					break
+				}
+			}
+			// Check if the user has permissions for MonitoringConfig?
+			if mcName := pointer.Get(db.Spec.Monitoring).MonitoringConfigName; mcName != "" {
+				if ok, err := e.canGetMonitoringConfig(user, namespace, mcName); err != nil {
+					e.l.Error(errors.Join(err, errors.New("failed to check monitoring-config permissions")))
+					return err
+				} else if !ok {
+					allow = false
 				}
 			}
 			if !allow {
@@ -181,9 +190,21 @@ func (e *EverestServer) GetDatabaseCluster(ctx echo.Context, namespace, name str
 	if err != nil {
 		return err
 	}
+	// Check for backup-storage permissions.
 	for _, sched := range db.Spec.Backup.Schedules {
 		if ok, err := e.canGetBackupStorage(user, namespace, sched.BackupStorageName); err != nil {
 			e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+			return err
+		} else if !ok {
+			return ctx.JSON(http.StatusForbidden, Error{
+				Message: pointer.ToString(errInsufficientPermissions.Error()),
+			})
+		}
+	}
+	// Check for monitoring-config permissions.
+	if mcName := pointer.Get(db.Spec.Monitoring).MonitoringConfigName; mcName != "" {
+		if ok, err := e.canGetMonitoringConfig(user, namespace, mcName); err != nil {
+			e.l.Error(errors.Join(err, errors.New("failed to check monitoring-config permissions")))
 			return err
 		} else if !ok {
 			return ctx.JSON(http.StatusForbidden, Error{
