@@ -37,6 +37,7 @@ import (
 	middleware "github.com/oapi-codegen/echo-middleware"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/cmd/config"
@@ -70,7 +71,7 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
 	echoServer.Use(middleware)
-
+	echoServer.HTTPErrorHandler = k8sToEverestErrorHandler
 	sessMgr, err := session.New(
 		session.WithAccountManager(kubeClient.Accounts()),
 	)
@@ -314,4 +315,11 @@ func sessionRateLimiter(limit int) (echo.MiddlewareFunc, *RateLimiterMemoryStore
 	})
 	config.Store = store
 	return echomiddleware.RateLimiterWithConfig(config), store
+}
+
+func k8sToEverestErrorHandler(err error, c echo.Context) {
+	if k8serrors.IsNotFound(err) {
+		c.JSON(http.StatusNotFound, nil)
+		return
+	}
 }
