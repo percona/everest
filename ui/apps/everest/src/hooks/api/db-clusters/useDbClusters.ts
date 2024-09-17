@@ -66,21 +66,27 @@ export const useDbClusters = (
     ...options,
   });
 
-export const useDBClustersForNamespaces = (namespaces: string[]) => {
-  const queries = namespaces.map<
+export const useDBClustersForNamespaces = (
+  queryParams: Array<{
+    namespace: string;
+    options?: PerconaQueryOptions<GetDbClusterPayload, unknown, DbCluster[]>;
+  }>
+) => {
+  const queries = queryParams.map<
     UseQueryOptions<GetDbClusterPayload, unknown, DbCluster[]>
-  >((namespace) => ({
+  >(({ namespace, options }) => ({
     queryKey: [DB_CLUSTERS_QUERY_KEY, namespace],
     retry: false,
     queryFn: () => getDbClustersFn(namespace),
     refetchInterval: 5 * 1000,
     select: dbClustersQuerySelect,
+    ...options,
   }));
 
   const queryResults = useQueries({ queries });
   const results: DbClusterForNamespaceResult[] = queryResults.map(
     (item, i) => ({
-      namespace: namespaces[i],
+      namespace: queryParams[i].namespace,
       queryResult: item,
     })
   );
