@@ -37,6 +37,7 @@ import (
 	middleware "github.com/oapi-codegen/echo-middleware"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/cmd/config"
@@ -70,14 +71,12 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
 	echoServer.Use(middleware)
-
 	sessMgr, err := session.New(
 		session.WithAccountManager(kubeClient.Accounts()),
 	)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
 	}
-
 	e := &EverestServer{
 		config:        c,
 		l:             l,
@@ -86,6 +85,7 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		sessionMgr:    sessMgr,
 		attemptsStore: store,
 	}
+	e.echo.HTTPErrorHandler = e.errorHandlerChain()
 
 	if err := e.initHTTPServer(ctx); err != nil {
 		return e, err
@@ -314,4 +314,19 @@ func sessionRateLimiter(limit int) (echo.MiddlewareFunc, *RateLimiterMemoryStore
 	})
 	config.Store = store
 	return echomiddleware.RateLimiterWithConfig(config), store
+}
+
+func (e *EverestServer) errorHandlerChain() echo.HTTPErrorHandler {
+	return e.k8sToAPIErrorHandler(e.echo.DefaultHTTPErrorHandler)
+}
+
+func (e *EverestServer) k8sToAPIErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
+	return func(err error, c echo.Context) {
+		if k8serrors.IsNotFound(err) {
+			err = &echo.HTTPError{
+				Code: http.StatusNotFound,
+			}
+		}
+		next(err, c)
+	}
 }

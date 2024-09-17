@@ -30,10 +30,13 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/labstack/echo/v4"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/rbac"
 )
 
 const (
@@ -61,7 +64,33 @@ func (e *EverestServer) ListDatabaseClusterBackups(ctx echo.Context, namespace, 
 	path = strings.TrimSuffix(path, name)
 	path = strings.ReplaceAll(path, "database-clusters", "database-cluster-backups")
 	req.URL.Path = path
-	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, "")
+
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+	rbacFilter := transformK8sList(func(l *unstructured.UnstructuredList) error {
+		allowed := []unstructured.Unstructured{}
+		for _, obj := range l.Items {
+			dbbackup := &everestv1alpha1.DatabaseClusterBackup{}
+			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, dbbackup); err != nil {
+				e.l.Error(errors.Join(err, errors.New("failed to convert unstructured to DatabaseClusterBackup")))
+				return err
+			}
+			if can, err := e.canGetBackupStorage(user, namespace, obj.GetName()); err != nil {
+				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+				return err
+			} else if !can {
+				continue
+			}
+			allowed = append(allowed, obj)
+		}
+		l.Items = allowed
+		return nil
+	})
+	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, "", rbacFilter)
 }
 
 // CreateDatabaseClusterBackup creates a database cluster backup on the specified kubernetes cluster.
@@ -138,6 +167,24 @@ func (e *EverestServer) DeleteDatabaseClusterBackup(
 
 // GetDatabaseClusterBackup returns the specified cluster backup on the specified kubernetes cluster.
 func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, namespace, name string) error {
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+	bkp, err := e.kubeClient.GetDatabaseClusterBackup(ctx.Request().Context(), namespace, name)
+	if err != nil {
+		return errors.Join(err, errors.New("could not get Database Cluster Backup"))
+	}
+	if can, err := e.canGetBackupStorage(user, namespace, bkp.Spec.BackupStorageName); err != nil {
+		e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+		return err
+	} else if !can {
+		return ctx.JSON(http.StatusForbidden, Error{
+			Message: pointer.ToString(errInsufficientPermissions.Error()),
+		})
+	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, name)
 }
 
@@ -170,4 +217,16 @@ func (e *EverestServer) ensureBackupForegroundDeletion(ctx context.Context, back
 	},
 		backoff.WithContext(everestAPIConstantBackoff, ctx),
 	)
+}
+
+func (e *EverestServer) canGetBackupStorage(user, namespace, name string) (bool, error) {
+	ok, err := e.rbacEnforcer.Enforce(
+		user, rbac.ResourceBackupStorages,
+		rbac.ActionRead,
+		fmt.Sprintf("%s/%s", namespace, name),
+	)
+	if err != nil {
+		return false, fmt.Errorf("failed to Enforce: %w", err)
+	}
+	return ok, nil
 }

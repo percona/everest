@@ -3,11 +3,15 @@ package fileadapter
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/casbin/casbin/v2/model"
+	"gopkg.in/yaml.v3"
+	corev1 "k8s.io/api/core/v1"
 
 	rbacutils "github.com/percona/everest/pkg/rbac/utils"
 )
@@ -16,6 +20,11 @@ import (
 type Adapter struct {
 	content string
 }
+
+const (
+	extYaml = ".yaml"
+	extCsv  = ".csv"
+)
 
 // New returns a new adapter that reads a policy located at the given path.
 func New(path string) (*Adapter, error) {
@@ -30,8 +39,27 @@ func New(path string) (*Adapter, error) {
 		return nil, err
 	}
 
+	// Retrieve the policy based on the file type.
+	var policy string
+	switch filepath.Ext(path) {
+	case extYaml:
+		cm := corev1.ConfigMap{}
+		if err := yaml.Unmarshal(content, &cm); err != nil {
+			return nil, fmt.Errorf("failed to unmarsal yaml: %w", err)
+		}
+		s, ok := cm.Data["policy.csv"]
+		if !ok {
+			return nil, errors.New("policy.csv not found in ConfigMap")
+		}
+		policy = s
+	case extCsv:
+		policy = string(content)
+	default:
+		return nil, errors.New("unsupported file format")
+	}
+
 	return &Adapter{
-		content: string(content),
+		content: policy,
 	}, nil
 }
 
