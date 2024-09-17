@@ -17,21 +17,30 @@ import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './monitoring.messages.ts';
 import ActionableAlert from 'components/actionable-alert';
 import { convertMonitoringInstancesPayloadToTableFormat } from 'pages/settings/monitoring-endpoints/monitoring-endpoints.utils.ts';
+import { useRBACPermissions } from 'hooks/rbac/rbac.ts';
 
 export const Monitoring = () => {
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
   const queryClient = useQueryClient();
   const { watch, getValues } = useFormContext();
   const monitoring = watch(DbWizardFormFields.monitoring);
-  const selectedNamespace = watch(DbWizardFormFields.k8sNamespace);
-
+  const selectedNamespace: string = watch(DbWizardFormFields.k8sNamespace);
+  const { canRead, canCreate } = useRBACPermissions(
+    'monitoring-instances',
+    `${selectedNamespace}/*`
+  );
   const mode = useDatabasePageMode();
   const { mutate: createMonitoringInstance, isPending: creatingInstance } =
     useCreateMonitoringInstance();
   const { setValue } = useFormContext();
 
   const monitoringInstancesResult = useMonitoringInstancesList([
-    selectedNamespace,
+    {
+      namespace: selectedNamespace,
+      options: {
+        enabled: canRead,
+      },
+    },
   ]);
 
   const monitoringInstancesLoading = monitoringInstancesResult.some(
@@ -123,12 +132,13 @@ export const Monitoring = () => {
         pageTitle={Messages.monitoring}
         pageDescription={Messages.caption}
       />
-      {!availableMonitoringInstances?.length && !monitoringInstancesLoading && (
+      {!availableMonitoringInstances?.length && (
         <ActionableAlert
           message={Messages.alertText(selectedNamespace)}
           buttonMessage={Messages.addMonitoringEndpoint}
           data-testid="monitoring-warning"
           onClick={() => setOpenCreateEditModal(true)}
+          {...(!canCreate && { action: undefined })}
         />
       )}
       <FormGroup sx={{ mt: 2 }}>

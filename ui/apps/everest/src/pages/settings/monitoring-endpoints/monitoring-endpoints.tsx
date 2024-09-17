@@ -34,7 +34,15 @@ export const MonitoringEndpoints = () => {
   const [selectedInstance, setSelectedInstance] =
     useState<MonitoringInstance>();
   const { data: namespaces = [] } = useNamespaces();
-  const monitoringInstances = useMonitoringInstancesList(namespaces);
+  const { canRead } = useNamespacePermissionsForResource(
+    'monitoring-instances'
+  );
+  const monitoringInstances = useMonitoringInstancesList(
+    namespaces.map((ns) => ({
+      namespace: ns,
+      options: { enabled: canRead.includes(ns) },
+    }))
+  );
 
   const monitoringInstancesLoading = monitoringInstances.some(
     (result) => result.queryResult.isLoading
