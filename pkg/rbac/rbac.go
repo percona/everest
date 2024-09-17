@@ -27,7 +27,6 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
 	"github.com/casbin/casbin/v2/persist"
-	casbinutil "github.com/casbin/casbin/v2/util"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -115,7 +114,11 @@ func newEnforcer(adapter persist.Adapter, enableLogs bool) (*casbin.Enforcer, er
 	if err := validatePolicy(enf); err != nil {
 		return nil, err
 	}
-	enf.AddFunction("customGlobMatch", customGlobMatch)
+	enf.AddFunction("customKeyMatch", func(arguments ...interface{}) (interface{}, error) {
+		key1 := arguments[0].(string)
+		key2 := arguments[1].(string)
+		return bool(keyMatch(key1, key2)), nil
+	})
 	return enf, nil
 }
 
@@ -142,28 +145,33 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
 }
 
-// To understand why we need this custom globMatch, consider the below policy:
-// ```
-// p, adminrole:role, database-clusters, read, */*
-// ```
-// Given a request `adminrole:role read database-clusters *`, the default globMatch returns false.
-// This custom globMatch acts as a convenience function to convert any `*` to `*/*` before matching.
-func customGlobMatch(args ...interface{}) (interface{}, error) {
-	key1 := args[0].(string) //nolint:forcetypeassert
-	key2 := args[1].(string) //nolint:forcetypeassert
+// We use a custom defined keyMatch function since we have use-cases that are not covered
+// by the default matchers in the casbin library.
+//
+// For example:
+// - keyMatch("ns-1/obj-1", "*/obj-1") => true
+// - support both "*" and "*/*" as wildcard
+func keyMatch(key1, key2 string) bool {
+	key1Parts := strings.Split(key1, "/")
+	key2Parts := strings.Split(key2, "/")
 
 	if key1 == "*" {
-		key1 = "*/*"
+		return true
 	}
-	if key2 == "*" {
-		key2 = "*/*"
+	if key2 == "*/*" {
+		return len(key1Parts) == 2
 	}
-
-	globMatch, err := casbinutil.GlobMatch(key1, key2)
-	if err != nil {
-		return false, err
+	// Match each part of key1 and key2
+	for i := 0; i < len(key1Parts) && i < len(key2Parts); i++ {
+		if key2Parts[i] != "*" && key1Parts[i] != key2Parts[i] {
+			return false
+		}
 	}
-	return globMatch, nil
+	// Handle the cases where key1 or key2 has different lengths
+	if len(key1Parts) != len(key2Parts) {
+		return false
+	}
+	return true
 }
 
 // GetUser extracts the user from the JWT token in the context.
