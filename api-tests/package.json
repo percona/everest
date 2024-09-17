@@ -9,7 +9,7 @@
     "lint:ts:fix": "eslint --fix .",
     "typecheck": "tsc --noEmit",
     "report": "playwright show-report",
-    "generate-types": "npx openapi-typescript ../docs/spec/openapi.yml --output ./types.ts",
+    "generate-types": "openapi-typescript ../docs/spec/openapi.yml --output ./generated/types.ts",
     "test:api-pxc": "playwright test --config=playwright.config.ts -g '@pxc'"
   },
   "keywords": [],
