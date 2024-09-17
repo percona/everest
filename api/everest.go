@@ -339,7 +339,7 @@ func enforcerErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 		if errors.Is(err, errInsufficientPermissions) {
 			err = &echo.HTTPError{
 				Code:    http.StatusForbidden,
-				Message: err.Error(),
+				Message: errInsufficientPermissions.Error(),
 			}
 		}
 		next(err, c)
@@ -353,10 +353,10 @@ func (e *EverestServer) enforceOrErr(rvals ...interface{}) error {
 		return fmt.Errorf("failed to enforce: %w", err)
 	}
 	if !ok {
-		sub := rvals[0].(string)
-		res := rvals[1].(string)
-		action := rvals[2].(string)
-		obj := rvals[3].(string)
+		sub := rvals[0].(string)    //nolint:forcetypeassert
+		res := rvals[1].(string)    //nolint:forcetypeassert
+		action := rvals[2].(string) //nolint:forcetypeassert
+		obj := rvals[3].(string)    //nolint:forcetypeassert
 		e.l.Warnf("Permission denied: [%s %s %s %s]", sub, res, action, obj)
 		return errInsufficientPermissions
 	}

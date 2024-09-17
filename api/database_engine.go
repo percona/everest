@@ -59,7 +59,7 @@ func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, namespace string) 
 	rbacListFilter := transformK8sList(func(l *unstructured.UnstructuredList) error {
 		allowed := []unstructured.Unstructured{}
 		for _, obj := range l.Items {
-			if err := e.enforceOrErr(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, namespace+"/"+obj.GetName()); err != nil && errors.Is(err, errInsufficientPermissions) {
+			if err := e.enforceOrErr(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, namespace+"/"+obj.GetName()); errors.Is(err, errInsufficientPermissions) {
 				continue
 			} else if err != nil {
 				e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
@@ -95,8 +95,6 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 }
 
 // GetUpgradePlan gets the upgrade plan for the given namespace.
-//
-//nolint:funlen
 func (e *EverestServer) GetUpgradePlan(
 	c echo.Context,
 	namespace string,
@@ -158,8 +156,6 @@ func (e *EverestServer) GetUpgradePlan(
 }
 
 // ApproveUpgradePlan starts the upgrade of operators in the provided namespace.
-//
-//nolint:funlen
 func (e *EverestServer) ApproveUpgradePlan(c echo.Context, namespace string) error {
 	ctx := c.Request().Context()
 	user, err := rbac.GetUser(c)

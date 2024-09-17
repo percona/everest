@@ -79,7 +79,7 @@ func (e *EverestServer) ListDatabaseClusterBackups(ctx echo.Context, namespace, 
 				e.l.Error(errors.Join(err, errors.New("failed to convert unstructured to DatabaseClusterBackup")))
 				return err
 			}
-			if err := e.enforceOrErr(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionRead, namespace+"/"+obj.GetName()); err != nil && errors.Is(err, errInsufficientPermissions) {
+			if err := e.enforceOrErr(user, rbac.ResourceBackupStorages, rbac.ActionRead, namespace+"/"+obj.GetName()); errors.Is(err, errInsufficientPermissions) {
 				continue
 			} else if err != nil {
 				return err
@@ -172,11 +172,13 @@ func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, namespace, na
 			Message: pointer.ToString("Failed to get user from context" + err.Error()),
 		})
 	}
+
+	// Ensure that the user has access to the backup storage used for this backup.
 	bkp, err := e.kubeClient.GetDatabaseClusterBackup(ctx.Request().Context(), namespace, name)
 	if err != nil {
 		return errors.Join(err, errors.New("could not get Database Cluster Backup"))
 	}
-	if err := e.enforceOrErr(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionRead, namespace+"/"+bkp.Spec.BackupStorageName); err != nil {
+	if err := e.enforceOrErr(user, rbac.ResourceBackupStorages, rbac.ActionRead, namespace+"/"+bkp.Spec.BackupStorageName); err != nil {
 		return err
 	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, name)
