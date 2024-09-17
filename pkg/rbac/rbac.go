@@ -26,6 +26,8 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
+	"github.com/casbin/casbin/v2/persist"
+	casbinutil "github.com/casbin/casbin/v2/util"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -44,11 +46,13 @@ import (
 
 // Everest API resource names.
 const (
-	ResourceNamespaces              = "namespaces"
+	ResourceBackupStorages          = "backup-storages"
 	ResourceDatabaseClusters        = "database-clusters"
 	ResourceDatabaseClusterBackups  = "database-cluster-backups"
 	ResourceDatabaseClusterRestores = "database-cluster-restores"
 	ResourceDatabaseEngines         = "database-engines"
+	ResourceMonitoringInstances     = "monitoring-instances"
+	ResourceNamespaces              = "namespaces"
 )
 
 // RBAC actions.
@@ -98,40 +102,68 @@ func getModel() (model.Model, error) {
 	return model.NewModelFromString(string(modelData))
 }
 
-// NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
-func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+func newEnforcer(adapter persist.Adapter, enableLogs bool) (*casbin.Enforcer, error) {
 	model, err := getModel()
 	if err != nil {
 		return nil, err
 	}
+	enf, err := casbin.NewEnforcer(model, adapter, enableLogs)
+	if err != nil {
+		return nil, err
+	}
 
+	if err := validatePolicy(enf); err != nil {
+		return nil, err
+	}
+	enf.AddFunction("customGlobMatch", customGlobMatch)
+	return enf, nil
+}
+
+// NewEnforcerFromFilePath creates a new Casbin enforcer with the policy stored at the given filePath.
+func NewEnforcerFromFilePath(filePath string) (*casbin.Enforcer, error) {
+	adapter, err := fileadapter.New(filePath)
+	if err != nil {
+		return nil, err
+	}
+	return newEnforcer(adapter, false)
+}
+
+// NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
+func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
 	cmReq := types.NamespacedName{
 		Namespace: common.SystemNamespace,
 		Name:      common.EverestRBACConfigMapName,
 	}
 	adapter := configmapadapter.New(l, kubeClient, cmReq)
-
-	enforcer, err := casbin.NewEnforcer(model, adapter, false)
+	enforcer, err := newEnforcer(adapter, false)
 	if err != nil {
-		return nil, errors.Join(err, errors.New("could not create casbin enforcer"))
-	}
-	if err := validatePolicy(enforcer); err != nil {
 		return nil, err
 	}
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
 }
 
-// NewEnforcerFromFilePath creates a new Casbin enforcer with the policy stored at the given filePath.
-func NewEnforcerFromFilePath(filePath string) (*casbin.Enforcer, error) {
-	model, err := getModel()
-	if err != nil {
-		return nil, err
+// To understand why we need this custom globMatch, consider the below policy:
+// ```
+// p, adminrole:role, database-clusters, read, */*
+// ```
+// Given a request `adminrole:role read database-clusters *`, the default globMatch returns false.
+// This custom globMatch acts as a convenience function to convert any `*` to `*/*` before matching.
+func customGlobMatch(args ...interface{}) (interface{}, error) {
+	key1 := args[0].(string) //nolint:forcetypeassert
+	key2 := args[1].(string) //nolint:forcetypeassert
+
+	if key1 == "*" {
+		key1 = "*/*"
 	}
-	adapter, err := fileadapter.New(filePath)
-	if err != nil {
-		return nil, err
+	if key2 == "*" {
+		key2 = "*/*"
 	}
-	return casbin.NewEnforcer(model, adapter)
+
+	globMatch, err := casbinutil.GlobMatch(key1, key2)
+	if err != nil {
+		return false, err
+	}
+	return globMatch, nil
 }
 
 // GetUser extracts the user from the JWT token in the context.
