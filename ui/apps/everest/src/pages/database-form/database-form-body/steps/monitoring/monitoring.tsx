@@ -17,7 +17,7 @@ import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './monitoring.messages.ts';
 import ActionableAlert from 'components/actionable-alert';
 import { convertMonitoringInstancesPayloadToTableFormat } from 'pages/settings/monitoring-endpoints/monitoring-endpoints.utils.ts';
-import { useRBACPermissions } from 'hooks/rbac/rbac.ts';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const Monitoring = () => {
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
