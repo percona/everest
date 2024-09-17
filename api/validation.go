@@ -1162,7 +1162,7 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 	// If the schedules are updated, we need to check that the user has
 	// permission to create backups in this namespace.
 	if !isSchedulesEqual() {
-		if err := e.enforceOrErr(user, rbac.ResourceDatabaseClusterRestores, rbac.ActionCreate, oldDB.GetNamespace()+"/"); err != nil {
+		if err := e.enforceOrErr(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, oldDB.GetNamespace()+"/"); err != nil {
 			return err
 		}
 	}
