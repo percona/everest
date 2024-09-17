@@ -27,7 +27,6 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import AddIcon from '@mui/icons-material/Add';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
-import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import { useRBACPermissions } from 'hooks/rbac';
 
 export const DbActionButtons = (
@@ -39,7 +38,11 @@ export const DbActionButtons = (
   isPaused: (dbCluster: DbCluster) => boolean | undefined,
   handleRestoreDbCluster: (dbCluster: DbCluster) => void
 ) => {
-  const { canUpdate, canDelete } = useRBACPermissions(
+  const {
+    canUpdate,
+    canDelete,
+    canCreate: canCreateClusters,
+  } = useRBACPermissions(
     'database-clusters',
     `${row.original.namespace}/${row.original.databaseName}`
   );
@@ -47,8 +50,13 @@ export const DbActionButtons = (
     'database-cluster-restores',
     `${row.original.namespace}/*`
   );
+  const { canRead: canReadCredentials } = useRBACPermissions(
+    'database-cluster-credentials',
+    `${row.original.namespace}/${row.original.databaseName}`
+  );
 
-  const { canCreate } = useNamespacePermissionsForResource('database-clusters');
+  const canRestore = canCreateRestore && canReadCredentials;
+  const canCreateClusterFromBackup = canRestore && canCreateClusters;
 
   return [
     ...(canUpdate
@@ -90,7 +98,7 @@ export const DbActionButtons = (
           </MenuItem>,
         ]
       : []),
-    ...(canCreate.length > 0
+    ...(canCreateClusterFromBackup
       ? [
           <MenuItem
             disabled={row.original.status === DbClusterStatus.restoring}
@@ -110,12 +118,10 @@ export const DbActionButtons = (
           </MenuItem>,
         ]
       : []),
-    ...(canCreateRestore
+    ...(canRestore
       ? [
           <MenuItem
-            disabled={
-              row.original.status === DbClusterStatus.restoring || !canUpdate
-            }
+            disabled={row.original.status === DbClusterStatus.restoring}
             key={3}
             data-testid={`${row.original?.databaseName}-restore`}
             onClick={() => {
