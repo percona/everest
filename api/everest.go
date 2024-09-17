@@ -71,14 +71,13 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
 	echoServer.Use(middleware)
-	echoServer.HTTPErrorHandler = k8sToEverestErrorHandler
 	sessMgr, err := session.New(
 		session.WithAccountManager(kubeClient.Accounts()),
 	)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
 	}
-
+	echoServer.HTTPErrorHandler = k8sToEverestErrorHandler(l)
 	e := &EverestServer{
 		config:        c,
 		l:             l,
@@ -317,9 +316,14 @@ func sessionRateLimiter(limit int) (echo.MiddlewareFunc, *RateLimiterMemoryStore
 	return echomiddleware.RateLimiterWithConfig(config), store
 }
 
-func k8sToEverestErrorHandler(err error, c echo.Context) {
-	if k8serrors.IsNotFound(err) {
-		c.JSON(http.StatusNotFound, nil)
-		return
+// convert k8s API errors to HTTP errors.
+func k8sToEverestErrorHandler(l *zap.SugaredLogger) echo.HTTPErrorHandler {
+	return func(err error, c echo.Context) {
+		if k8serrors.IsNotFound(err) {
+			err := c.JSON(http.StatusNotFound, nil)
+			if err != nil {
+				l.Error(errors.Join(err, errors.New("could not send error response")))
+			}
+		}
 	}
 }
