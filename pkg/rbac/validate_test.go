@@ -292,6 +292,7 @@ func TestCan(t *testing.T) {
 
 func TestKeyMatch(t *testing.T) {
 	assert.True(t, keyMatch("", "*"))
+	assert.True(t, keyMatch("namespace-1/object-1", "*"))
 	assert.True(t, keyMatch("/", "*/*"))
 	assert.True(t, keyMatch("namespace-1/", "namespace-1/*"))
 	assert.True(t, keyMatch("namespace-1/object-1", "namespace-1/*"))

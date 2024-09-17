@@ -145,8 +145,8 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
 }
 
-// We use a custom defined keyMatch function since we have use-cases that are not covered
-// by the default matchers in the casbin library.
+// We use a custom defined keyMatch function since we have use-cases that are not
+// properly handled by the key matchers in the casbin library.
 //
 // For example:
 // - keyMatch("ns-1/obj-1", "*/obj-1") => true
@@ -155,21 +155,24 @@ func keyMatch(key1, key2 string) bool {
 	key1Parts := strings.Split(key1, "/")
 	key2Parts := strings.Split(key2, "/")
 
-	if key1 == "*" {
+	if key2 == "*" {
 		return true
 	}
 	if key2 == "*/*" {
 		return len(key1Parts) == 2
 	}
-	// Match each part of key1 and key2
-	for i := 0; i < len(key1Parts) && i < len(key2Parts); i++ {
-		if key2Parts[i] != "*" && key1Parts[i] != key2Parts[i] {
-			return false
-		}
-	}
 	// Handle the cases where key1 or key2 has different lengths
 	if len(key1Parts) != len(key2Parts) {
 		return false
+	}
+	// Match each part of key1 and key2
+	for i := range key2Parts {
+		if key2Parts[i] == "*" {
+			continue
+		}
+		if key1Parts[i] != key2Parts[i] {
+			return false
+		}
 	}
 	return true
 }
