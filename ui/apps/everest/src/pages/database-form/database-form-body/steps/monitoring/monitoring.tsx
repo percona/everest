@@ -139,7 +139,7 @@ export const Monitoring = () => {
             disabled: !availableMonitoringInstances?.length,
           }}
         />
-        {monitoring && availableMonitoringInstances?.length && (
+        {monitoring && !!availableMonitoringInstances?.length && (
           <AutoCompleteInput
             name={DbWizardFormFields.monitoringInstance}
             label={Messages.monitoringInstanceLabel}
