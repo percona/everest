@@ -49,6 +49,7 @@ const (
 	ResourceDatabaseClusterBackups  = "database-cluster-backups"
 	ResourceDatabaseClusterRestores = "database-cluster-restores"
 	ResourceDatabaseEngines         = "database-engines"
+	ResourceMonitoringInstances     = "monitoring-instances"
 	ResourceNamespaces              = "namespaces"
 )
 
