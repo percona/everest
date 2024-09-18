@@ -4,7 +4,7 @@ import { Authorizer } from 'casbin.js';
 let authorizer: Authorizer | null = null;
 let username: string = '';
 let policies: RBACPolicies = {
-  enabled: true,
+  enabled: false,
   m: '',
   p: [],
 };
