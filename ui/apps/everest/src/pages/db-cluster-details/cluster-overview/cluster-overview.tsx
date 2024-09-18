@@ -53,8 +53,6 @@ export const ClusterOverview = () => {
   const pitrEnabled =
     dbType === DbEngineType.POSTGRESQL
       ? hasBackupsOrSchedules
-        ? true
-        : false
       : dbCluster?.spec.backup?.pitr?.enabled!;
 
   return (
