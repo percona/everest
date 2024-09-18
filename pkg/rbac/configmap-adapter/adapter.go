@@ -51,9 +51,9 @@ func New(
 }
 
 // Enabled returns true if the enforcer is enabled.
-func (a *Adapter) Enabled() (bool, error) {
+func (a *Adapter) Enabled(ctx context.Context) (bool, error) {
 	cm, err := a.kubeClient.GetConfigMap(
-		context.Background(),
+		ctx,
 		a.namespacedName.Namespace,
 		a.namespacedName.Name,
 	)

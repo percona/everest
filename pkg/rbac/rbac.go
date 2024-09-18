@@ -138,7 +138,7 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 	if err != nil {
 		return nil, err
 	}
-	enabled, err := adapter.Enabled()
+	enabled, err := adapter.Enabled(ctx)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to check if enforcer is enabled"))
 	}
