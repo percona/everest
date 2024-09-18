@@ -3,9 +3,11 @@ import rbac from '/public/static/model.conf?raw';
 
 type RBACPoliciesPayload = {
   permissions: string[][];
+  enabled: boolean;
 };
 
 export type RBACPolicies = {
+  enabled: boolean;
   m: string;
   p: string[][];
 };
@@ -17,6 +19,7 @@ export const getRBACPolicies = async (): Promise<RBACPolicies> => {
   });
 
   return {
+    enabled: response.data.enabled,
     m: rbac,
     p: permissions,
   };
