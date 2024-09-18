@@ -31,6 +31,16 @@ export const DbClusterDetails = () => {
     'database-clusters',
     `${dbCluster?.metadata.namespace}/${dbCluster?.metadata.name}`
   );
+  const { canCreate: canCreateRestore } = useRBACPermissions(
+    'database-cluster-restores',
+    `${dbCluster?.metadata.namespace}/*`
+  );
+
+  const { canRead: canReadCredentials } = useRBACPermissions(
+    'database-cluster-credentials',
+    `${dbCluster?.metadata.namespace}/${dbCluster?.metadata.name}`
+  );
+  const canRestore = canCreateRestore && canReadCredentials;
 
   if (isLoading) {
     return (
@@ -85,7 +95,7 @@ export const DbClusterDetails = () => {
             )}
           </StatusField>
           <>
-            {canUpdate || canDelete ? (
+            {canUpdate || canDelete || canRestore ? (
               <DbActionButton
                 dbCluster={dbCluster!}
                 canUpdate={canUpdate}
