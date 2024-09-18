@@ -293,6 +293,7 @@ func IsEnabled(cm *corev1.ConfigMap) bool {
 	return cm.Data["enabled"] == rbacEnabledValueTrue
 }
 
-func RBACName(args ...string) string {
+// ObjectName returns the a string that represents the name of an object in RBAC format.
+func ObjectName(args ...string) string {
 	return strings.Join(args, "/")
 }

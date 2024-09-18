@@ -293,8 +293,8 @@ func TestCan(t *testing.T) {
 func TestRBACName(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "ns/obj", RBACName("ns", "obj"))
-	assert.Equal(t, "ns/", RBACName("ns", ""))
-	assert.Equal(t, "/", RBACName("", ""))
-	assert.Equal(t, "ns", RBACName("ns"))
+	assert.Equal(t, "ns/obj", ObjectName("ns", "obj"))
+	assert.Equal(t, "ns/", ObjectName("ns", ""))
+	assert.Equal(t, "/", ObjectName("", ""))
+	assert.Equal(t, "ns", ObjectName("ns"))
 }
