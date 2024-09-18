@@ -86,6 +86,8 @@ func refreshEnforcerInBackground(
 		if err := validatePolicy(enforcer); err != nil {
 			panic("invalid policy detected - " + err.Error())
 		}
+		enabled := cm.Data["enabled"] == "true"
+		enforcer.EnableEnforce(enabled)
 	})
 	if inf.Start(ctx, &corev1.ConfigMap{}) != nil {
 		return errors.Join(err, errors.New("failed to watch RBAC ConfigMap"))
@@ -110,7 +112,6 @@ func newEnforcer(adapter persist.Adapter, enableLogs bool) (*casbin.Enforcer, er
 	if err != nil {
 		return nil, err
 	}
-
 	if err := validatePolicy(enf); err != nil {
 		return nil, err
 	}
