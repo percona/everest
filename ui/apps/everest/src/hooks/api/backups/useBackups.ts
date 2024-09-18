@@ -20,6 +20,7 @@ import {
 import { mapBackupState } from 'utils/backups';
 import { BackupFormData } from 'pages/db-cluster-details/backups/on-demand-backup-modal/on-demand-backup-modal.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const BACKUPS_QUERY_KEY = 'backups';
 
@@ -32,8 +33,12 @@ export const useDbBackups = (
   dbClusterName: string,
   namespace: string,
   options?: PerconaQueryOptions<GetBackupsPayload, unknown, Backup[]>
-) =>
-  useQuery<GetBackupsPayload, unknown, Backup[]>({
+) => {
+  const { canRead } = useRBACPermissions(
+    'database-cluster-backups',
+    `${namespace}/${dbClusterName}`
+  );
+  return useQuery<GetBackupsPayload, unknown, Backup[]>({
     queryKey: [BACKUPS_QUERY_KEY, namespace, dbClusterName],
     queryFn: () => getBackupsFn(dbClusterName, namespace),
     select: ({ items = [] }) =>
@@ -48,7 +53,9 @@ export const useDbBackups = (
         })
       ),
     ...options,
+    enabled: !!options?.enabled && canRead,
   });
+};
 
 export const useCreateBackupOnDemand = (
   dbClusterName: string,
