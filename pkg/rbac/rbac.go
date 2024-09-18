@@ -62,6 +62,10 @@ const (
 	ActionDelete = "delete"
 )
 
+const (
+	rbacEnabledValueTrue = "true"
+)
+
 // Setup a new informer that watches our RBAC ConfigMap.
 // This informer reloads the policy whenever the ConfigMap is updated.
 func refreshEnforcerInBackground(
@@ -86,6 +90,7 @@ func refreshEnforcerInBackground(
 		if err := validatePolicy(enforcer); err != nil {
 			panic("invalid policy detected - " + err.Error())
 		}
+		enforcer.EnableEnforce(IsEnabled(cm))
 	})
 	if inf.Start(ctx, &corev1.ConfigMap{}) != nil {
 		return errors.Join(err, errors.New("failed to watch RBAC ConfigMap"))
@@ -110,7 +115,6 @@ func newEnforcer(adapter persist.Adapter, enableLogs bool) (*casbin.Enforcer, er
 	if err != nil {
 		return nil, err
 	}
-
 	if err := validatePolicy(enf); err != nil {
 		return nil, err
 	}
@@ -137,6 +141,11 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 	if err != nil {
 		return nil, err
 	}
+	cm, err := adapter.ConfigMap(ctx)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to get RBAC ConfigMap"))
+	}
+	enforcer.EnableEnforce(IsEnabled(cm))
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
 }
 
@@ -270,4 +279,9 @@ func Can(ctx context.Context, filePath string, k *kubernetes.Kubernetes, req ...
 		return false, err
 	}
 	return enforcer.Enforce(user, resource, action, object)
+}
+
+// IsEnabled returns true if enabled == 'true' in the given ConfigMap.
+func IsEnabled(cm *corev1.ConfigMap) bool {
+	return cm.Data["enabled"] == rbacEnabledValueTrue
 }
