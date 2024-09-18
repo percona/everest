@@ -45,13 +45,14 @@ import (
 
 // Everest API resource names.
 const (
-	ResourceBackupStorages          = "backup-storages"
-	ResourceDatabaseClusters        = "database-clusters"
-	ResourceDatabaseClusterBackups  = "database-cluster-backups"
-	ResourceDatabaseClusterRestores = "database-cluster-restores"
-	ResourceDatabaseEngines         = "database-engines"
-	ResourceMonitoringInstances     = "monitoring-instances"
-	ResourceNamespaces              = "namespaces"
+	ResourceBackupStorages             = "backup-storages"
+	ResourceDatabaseClusters           = "database-clusters"
+	ResourceDatabaseClusterBackups     = "database-cluster-backups"
+	ResourceDatabaseClusterCredentials = "database-cluster-credentials"
+	ResourceDatabaseClusterRestores    = "database-cluster-restores"
+	ResourceDatabaseEngines            = "database-engines"
+	ResourceMonitoringInstances        = "monitoring-instances"
+	ResourceNamespaces                 = "namespaces"
 )
 
 // RBAC actions.
