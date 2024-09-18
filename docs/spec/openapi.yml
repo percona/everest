@@ -1836,13 +1836,14 @@ components:
       properties:
         enabled:
           type: boolean
-          x-go-type-skip-optional-pointer: true
         permissions:
           type: array
           items:
             type: array
             items:
               type: string
+      required:
+        - enabled
     UserCredentials:
       type: object
       properties:
