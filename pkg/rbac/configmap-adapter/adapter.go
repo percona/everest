@@ -23,6 +23,7 @@ import (
 
 	"github.com/casbin/casbin/v2/model"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/percona/everest/pkg/kubernetes"
@@ -50,18 +51,13 @@ func New(
 	}
 }
 
-// Enabled returns true if the enforcer is enabled.
-func (a *Adapter) Enabled(ctx context.Context) (bool, error) {
-	cm, err := a.kubeClient.GetConfigMap(
+// ConfigMap returns the configmap used for RBAC.
+func (a *Adapter) ConfigMap(ctx context.Context) (*corev1.ConfigMap, error) {
+	return a.kubeClient.GetConfigMap(
 		ctx,
 		a.namespacedName.Namespace,
 		a.namespacedName.Name,
 	)
-	if err != nil {
-		return false, errors.Join(err, errors.New("failed to get ConfigMap"))
-	}
-	enabled := cm.Data["enabled"]
-	return enabled == "true", nil
 }
 
 // LoadPolicy loads all policy rules from the storage.
