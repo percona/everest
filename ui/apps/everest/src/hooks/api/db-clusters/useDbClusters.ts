@@ -20,7 +20,10 @@ import {
   UseQueryResult,
 } from '@tanstack/react-query';
 import { getDbClustersFn } from 'api/dbClusterApi';
-import { useNamespacePermissionsForResource } from 'hooks/rbac';
+import {
+  useNamespacePermissionsForResource,
+  useRBACPermissions,
+} from 'hooks/rbac';
 import { DbCluster, GetDbClusterPayload } from 'shared-types/dbCluster.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import cronConverter from 'utils/cron-converter';
@@ -58,14 +61,17 @@ export const dbClustersQuerySelect = ({
 export const useDbClusters = (
   namespace: string,
   options?: PerconaQueryOptions<GetDbClusterPayload, unknown, DbCluster[]>
-) =>
-  useQuery({
+) => {
+  const { canRead } = useRBACPermissions('database-clusters', `${namespace}/*`);
+  return useQuery({
     queryKey: [DB_CLUSTERS_QUERY_KEY],
     queryFn: () => getDbClustersFn(namespace),
     refetchInterval: 5 * 1000,
     select: dbClustersQuerySelect,
     ...options,
+    enabled: !!options?.enabled && canRead,
   });
+};
 
 export const useDBClustersForNamespaces = (
   queryParams: Array<{

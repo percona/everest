@@ -31,6 +31,7 @@ import {
   getOperatorsUpgradePlan,
   upgradeOperator,
 } from 'api/dbEngineApi';
+import { useRBACPermissions } from 'hooks/rbac';
 
 const DB_TYPE_ORDER_MAP: Record<DbEngineType, number> = {
   // Lower is more important
@@ -108,15 +109,17 @@ export const useDbEngines = (
   namespace: string,
   options?: PerconaQueryOptions<GetDbEnginesPayload, unknown, DbEngine[]>,
   retrieveUpgradingEngines = false
-) =>
-  useQuery<GetDbEnginesPayload, unknown, DbEngine[]>({
+) => {
+  const { canRead } = useRBACPermissions('database-engines', `${namespace}/*`);
+  return useQuery<GetDbEnginesPayload, unknown, DbEngine[]>({
     queryKey: [`dbEngines_${namespace}`],
     queryFn: () => getDbEnginesFn(namespace),
     select: (data) => dbEnginesQuerySelect(data, retrieveUpgradingEngines),
-    enabled: !!namespace,
     retry: 2,
     ...options,
+    enabled: !!namespace && !!options?.enabled && canRead,
   });
+};
 
 export const useOperatorUpgrade = (
   namespace: string,
