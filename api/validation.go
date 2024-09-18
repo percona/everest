@@ -627,7 +627,8 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 	// have permissions to take backups.
 	schedules := pointer.Get(pointer.Get(pointer.Get(databaseCluster.Spec).Backup).Schedules)
 	if len(schedules) > 0 {
-		if err := e.enforceOrErr(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, namespace+"/"); err != nil {
+		r := []string{user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, rbac.RBACName(namespace, "")}
+		if err := e.enforceOrErr(r); err != nil {
 			return err
 		}
 	}
@@ -1162,7 +1163,8 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 	// If the schedules are updated, we need to check that the user has
 	// permission to create backups in this namespace.
 	if !isSchedulesEqual() {
-		if err := e.enforceOrErr(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, oldDB.GetNamespace()+"/"); err != nil {
+		r := []string{user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, rbac.RBACName(oldDB.GetNamespace(), "")}
+		if err := e.enforceOrErr(r); err != nil {
 			return err
 		}
 	}

@@ -89,7 +89,8 @@ func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.Da
 	// Check if the user has permissions for all backup-storages in the schedule?
 	for _, sched := range db.Spec.Backup.Schedules {
 		bsName := sched.BackupStorageName
-		if err := e.enforceOrErr(user, rbac.ResourceBackupStorages, rbac.ActionRead, db.GetNamespace()+"/"+bsName); err != nil {
+		r := []string{user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.RBACName(db.GetNamespace(), bsName)}
+		if err := e.enforceOrErr(r); err != nil {
 			if errors.Is(err, errInsufficientPermissions) {
 				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
 			}
@@ -98,7 +99,8 @@ func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.Da
 	}
 	// Check if the user has permission for the backup-storages used by PITR (if any)?
 	if bsName := pointer.Get(db.Spec.Backup.PITR.BackupStorageName); bsName != "" {
-		if err := e.enforceOrErr(user, rbac.ResourceBackupStorages, rbac.ActionRead, db.GetNamespace()+"/"+bsName); err != nil {
+		r := []string{user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.RBACName(db.GetNamespace(), bsName)}
+		if err := e.enforceOrErr(r); err != nil {
 			if errors.Is(err, errInsufficientPermissions) {
 				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
 			}
@@ -107,7 +109,8 @@ func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.Da
 	}
 	// Check if the user has permissions for MonitoringConfig?
 	if mcName := pointer.Get(db.Spec.Monitoring).MonitoringConfigName; mcName != "" {
-		if err := e.enforceOrErr(user, rbac.ResourceMonitoringInstances, rbac.ActionRead, db.GetNamespace()+"/"+mcName); err != nil {
+		r := []string{user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.RBACName(db.GetNamespace(), mcName)}
+		if err := e.enforceOrErr(r); err != nil {
 			if errors.Is(err, errInsufficientPermissions) {
 				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
 			}
