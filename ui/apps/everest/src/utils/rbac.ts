@@ -4,6 +4,7 @@ import { Authorizer } from 'casbin.js';
 let authorizer: Authorizer | null = null;
 let username: string = '';
 let policies: RBACPolicies = {
+  enabled: true,
   m: '',
   p: [],
 };
@@ -51,6 +52,7 @@ const assignPolicies = async () => {
   const newPolicies = await getRBACPolicies();
 
   if (
+    newPolicies.enabled !== policies.enabled ||
     newPolicies.p.length !== policies.p.length ||
     JSON.stringify(newPolicies.p) !== JSON.stringify(policies.p)
   ) {
@@ -83,8 +85,12 @@ export const can = async (
   action: RBACAction,
   resource: RBACResource,
   specificResource: string
+  // When policies are disabled, we allow all actions
   // Params are inverted because of the way our policies are defined: "sub, res, act, obj" instead of "sub, obj, act"
-) => (await getAuthorizer()).can(specificResource, action, resource);
+) =>
+  policies.enabled
+    ? (await getAuthorizer()).can(specificResource, action, resource)
+    : true;
 
 export const cannot = async (
   action: RBACAction,
