@@ -14,13 +14,13 @@
 // limitations under the License.
 import { test, expect } from '@fixtures';
 import { checkError, testsNs } from '@tests/tests/helpers';
-import { DatabaseEngineResponse, DatabaseEnginesResponse } from '@support/types/database-engines';
+import { GetDatabaseEngineResponse, GetDatabaseEnginesResponse } from '@support/types/database-engines';
 
 test('check operators are installed', async ({ request }) => {
   const enginesList = await request.get(`/v1/namespaces/${testsNs}/database-engines`);
 
   await checkError(enginesList);
-  const engines = (await enginesList.json() as DatabaseEnginesResponse).items;
+  const engines = (await enginesList.json() as GetDatabaseEnginesResponse).items;
 
   engines
     .filter((engine) => engine.spec.type !== 'postgresql')
@@ -34,7 +34,7 @@ test('get/edit database engine versions', async ({ request }) => {
 
   await checkError(engineResponse);
 
-  const engineData: DatabaseEngineResponse = await engineResponse.json();
+  const engineData: GetDatabaseEngineResponse = await engineResponse.json();
   const availableVersions = engineData.status.availableVersions;
 
   expect(availableVersions.engine['7.0.12-7'].imageHash).toBe('7f00e19878bd143119772cd5468f1f0f9857dfcd2ae2f814d52ef3fa7cff6899');
@@ -54,5 +54,5 @@ test('get/edit database engine versions', async ({ request }) => {
   engineResponse = await request.get(`/v1/namespaces/${testsNs}/database-engines/percona-server-mongodb-operator`);
   await checkError(engineResponse);
 
-  expect((await engineResponse.json() as DatabaseEngineResponse).spec.allowedVersions).toEqual(allowedVersions);
+  expect((await engineResponse.json() as GetDatabaseEngineResponse).spec.allowedVersions).toEqual(allowedVersions);
 });
