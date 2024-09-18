@@ -36,15 +36,11 @@ import { StorageLocationsActionButtons } from './storage-locations-menu-actions'
 
 export const StorageLocations = () => {
   const queryClient = useQueryClient();
-  const { canCreate, canRead } =
-    useNamespacePermissionsForResource('backup-storages');
+  const { canCreate } = useNamespacePermissionsForResource('backup-storages');
   const { data: namespaces = [] } = useNamespaces();
   const backupStorages = useBackupStorages(
     namespaces.map((namespace) => ({
       namespace: namespace,
-      options: {
-        enabled: canRead.includes(namespace),
-      },
     }))
   );
 

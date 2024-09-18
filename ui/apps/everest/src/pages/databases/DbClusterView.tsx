@@ -64,8 +64,7 @@ export const DbClusterView = () => {
   } = useDbActions();
   const navigate = useNavigate();
 
-  const { canCreate, canRead } =
-    useNamespacePermissionsForResource('database-clusters');
+  const { canCreate } = useNamespacePermissionsForResource('database-clusters');
   const { data: backups = [] } = useDbBackups(
     selectedDbCluster?.metadata.name!,
     selectedDbCluster?.metadata.namespace!,
@@ -81,9 +80,6 @@ export const DbClusterView = () => {
   const dbClustersResults = useDBClustersForNamespaces(
     namespaces.map((ns) => ({
       namespace: ns,
-      options: {
-        enabled: canRead.includes(ns),
-      },
     }))
   );
   const dbClustersLoading = dbClustersResults.some(

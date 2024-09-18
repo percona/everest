@@ -23,6 +23,7 @@ import {
   deleteRestore,
   getDbClusterRestores,
 } from 'api/restores';
+import { useRBACPermissions } from 'hooks/rbac';
 import { generateShortUID } from 'pages/database-form/database-form-body/steps/first/utils';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import { GetRestorePayload, Restore } from 'shared-types/restores.types';
@@ -100,8 +101,12 @@ export const useDbClusterRestores = (
   namespace: string,
   dbClusterName: string,
   options?: PerconaQueryOptions<GetRestorePayload, unknown, Restore[]>
-) =>
-  useQuery<GetRestorePayload, unknown, Restore[]>({
+) => {
+  const { canRead } = useRBACPermissions(
+    'database-cluster-restores',
+    `${namespace}/${dbClusterName}`
+  );
+  return useQuery<GetRestorePayload, unknown, Restore[]>({
     queryKey: [RESTORES_QUERY_KEY, namespace, dbClusterName],
     queryFn: () => getDbClusterRestores(namespace, dbClusterName),
     refetchInterval: 5 * 1000,
@@ -115,7 +120,9 @@ export const useDbClusterRestores = (
         backupSource: item.spec.dataSource.dbClusterBackupName || '',
       })),
     ...options,
+    enabled: !!options?.enabled && canRead,
   });
+};
 
 export const useDeleteRestore = (
   namespace: string,

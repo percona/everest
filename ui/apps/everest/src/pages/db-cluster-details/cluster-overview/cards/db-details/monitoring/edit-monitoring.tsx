@@ -33,7 +33,6 @@ export const MonitoringEditModal = ({
   const monitoringInstancesResult = useMonitoringInstancesList([
     {
       namespace,
-      options: { enabled: true },
     },
   ]);
 

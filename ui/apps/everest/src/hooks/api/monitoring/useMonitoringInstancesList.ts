@@ -25,6 +25,7 @@ import {
   deleteMonitoringInstanceFn,
   updateMonitoringInstanceFn,
 } from 'api/monitoring';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import {
   CreateMonitoringInstancePayload,
   MonitoringInstance,
@@ -55,6 +56,9 @@ export const useMonitoringInstancesList = (
     >;
   }>
 ) => {
+  const { canRead } = useNamespacePermissionsForResource(
+    'monitoring-instances'
+  );
   const queries = queryParams.map<
     UseQueryOptions<MonitoringInstanceList, unknown, MonitoringInstance[]>
   >(({ namespace, options }) => ({
@@ -63,6 +67,7 @@ export const useMonitoringInstancesList = (
     queryFn: () => getMonitoringInstancesFn(namespace),
     refetchInterval: 5 * 1000,
     ...options,
+    enabled: !!options?.enabled && canRead.includes(namespace),
   }));
   const queryResults = useQueries({ queries });
 

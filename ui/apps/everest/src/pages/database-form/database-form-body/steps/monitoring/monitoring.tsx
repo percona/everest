@@ -25,7 +25,7 @@ export const Monitoring = () => {
   const { watch, getValues } = useFormContext();
   const monitoring = watch(DbWizardFormFields.monitoring);
   const selectedNamespace = watch(DbWizardFormFields.k8sNamespace);
-  const { canRead, canCreate } = useRBACPermissions(
+  const { canCreate } = useRBACPermissions(
     'monitoring-instances',
     `${selectedNamespace}/*`
   );
@@ -37,9 +37,6 @@ export const Monitoring = () => {
   const monitoringInstancesResult = useMonitoringInstancesList([
     {
       namespace: selectedNamespace,
-      options: {
-        enabled: canRead,
-      },
     },
   ]);
 

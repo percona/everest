@@ -24,7 +24,6 @@ import { RESTORE_STATUS_TO_BASE_STATUS } from './restores.constants';
 import { useQueryClient } from '@tanstack/react-query';
 import TableActionsMenu from 'components/table-actions-menu';
 import { RestoreActionButtons } from './restores-menu-actions';
-import { useRBACPermissions } from 'hooks/rbac';
 
 const Restores = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -34,13 +33,9 @@ const Restores = () => {
   const { data: pitrData } = useDbClusterPitr(dbClusterName!, namespace, {
     enabled: !!dbClusterName && !!namespace,
   });
-  const { canRead } = useRBACPermissions(
-    'database-cluster-restores',
-    `${namespace}/${dbClusterName}`
-  );
   const { data: restores = [], isLoading: loadingRestores } =
     useDbClusterRestores(namespace, dbClusterName!, {
-      enabled: !!dbClusterName && !!namespace && canRead,
+      enabled: !!dbClusterName && !!namespace,
     });
   const { mutate: deleteRestore, isPending: deletingRestore } =
     useDeleteRestore(namespace);

@@ -27,6 +27,7 @@ import {
   editBackupStorageFn,
   getBackupStoragesFn,
 } from 'api/backupStorage';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import {
   BackupStorage,
   GetBackupStoragesPayload,
@@ -50,15 +51,19 @@ export const useBackupStorages = (
     >;
   }>
 ) => {
+  const { canRead } = useNamespacePermissionsForResource('backup-storages');
   const queries = queriesParams.map<
     UseQueryOptions<GetBackupStoragesPayload, unknown, BackupStorage[]>
-  >(({ namespace, options }) => ({
-    queryKey: [BACKUP_STORAGES_QUERY_KEY, namespace],
-    retry: false,
-    queryFn: () => getBackupStoragesFn(namespace),
-    refetchInterval: 5 * 1000,
-    ...options,
-  }));
+  >(({ namespace, options }) => {
+    return {
+      queryKey: [BACKUP_STORAGES_QUERY_KEY, namespace],
+      retry: false,
+      queryFn: () => getBackupStoragesFn(namespace),
+      refetchInterval: 5 * 1000,
+      ...options,
+      enabled: !!options?.enabled && canRead.includes(namespace),
+    };
+  });
 
   const queryResults = useQueries({ queries });
 
