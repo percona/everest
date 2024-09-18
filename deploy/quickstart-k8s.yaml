@@ -90,6 +90,7 @@ kind: ConfigMap
 metadata:
   name: everest-rbac
 data:
+  enabled: "false"
   policy.csv: |
     p, adminrole:role, namespaces, *, *
     p, adminrole:role, database-engines, *, */*
