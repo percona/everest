@@ -41,17 +41,21 @@ export const useDbBackups = (
   return useQuery<GetBackupsPayload, unknown, Backup[]>({
     queryKey: [BACKUPS_QUERY_KEY, namespace, dbClusterName],
     queryFn: () => getBackupsFn(dbClusterName, namespace),
-    select: ({ items = [] }) =>
-      items.map(
-        ({ metadata: { name }, status, spec: { backupStorageName } }) => ({
-          name,
-          created: status?.created ? new Date(status.created) : null,
-          completed: status?.completed ? new Date(status.completed) : null,
-          state: status ? mapBackupState(status?.state) : BackupStatus.UNKNOWN,
-          dbClusterName,
-          backupStorageName,
-        })
-      ),
+    select: canRead
+      ? ({ items = [] }) =>
+          items.map(
+            ({ metadata: { name }, status, spec: { backupStorageName } }) => ({
+              name,
+              created: status?.created ? new Date(status.created) : null,
+              completed: status?.completed ? new Date(status.completed) : null,
+              state: status
+                ? mapBackupState(status?.state)
+                : BackupStatus.UNKNOWN,
+              dbClusterName,
+              backupStorageName,
+            })
+          )
+      : () => [],
     ...options,
     enabled: (options?.enabled ?? true) && canRead,
   });

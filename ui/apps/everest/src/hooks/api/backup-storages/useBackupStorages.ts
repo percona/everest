@@ -55,13 +55,15 @@ export const useBackupStorages = (
   const queries = queriesParams.map<
     UseQueryOptions<GetBackupStoragesPayload, unknown, BackupStorage[]>
   >(({ namespace, options }) => {
+    const allowed = canRead.includes(namespace);
     return {
       queryKey: [BACKUP_STORAGES_QUERY_KEY, namespace],
       retry: false,
       queryFn: () => getBackupStoragesFn(namespace),
       refetchInterval: 5 * 1000,
+      select: allowed ? undefined : () => [],
       ...options,
-      enabled: (options?.enabled ?? true) && canRead.includes(namespace),
+      enabled: (options?.enabled ?? true) && allowed,
     };
   });
 

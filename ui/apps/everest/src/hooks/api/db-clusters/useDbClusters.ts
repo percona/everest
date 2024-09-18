@@ -67,7 +67,7 @@ export const useDbClusters = (
     queryKey: [DB_CLUSTERS_QUERY_KEY],
     queryFn: () => getDbClustersFn(namespace),
     refetchInterval: 5 * 1000,
-    select: dbClustersQuerySelect,
+    select: canRead ? dbClustersQuerySelect : () => [],
     ...options,
     enabled: (options?.enabled ?? true) && canRead,
   });
@@ -82,15 +82,19 @@ export const useDBClustersForNamespaces = (
   const { canRead } = useNamespacePermissionsForResource('database-clusters');
   const queries = queryParams.map<
     UseQueryOptions<GetDbClusterPayload, unknown, DbCluster[]>
-  >(({ namespace, options }) => ({
-    queryKey: [DB_CLUSTERS_QUERY_KEY, namespace],
-    retry: false,
-    queryFn: () => getDbClustersFn(namespace),
-    refetchInterval: 5 * 1000,
-    select: dbClustersQuerySelect,
-    ...options,
-    enabled: (options?.enabled ?? true) && canRead.includes(namespace),
-  }));
+  >(({ namespace, options }) => {
+    const allowed = canRead.includes(namespace);
+    const enabled = (options?.enabled ?? true) && allowed;
+    return {
+      queryKey: [DB_CLUSTERS_QUERY_KEY, namespace],
+      retry: false,
+      queryFn: () => getDbClustersFn(namespace),
+      refetchInterval: 5 * 1000,
+      select: allowed ? dbClustersQuerySelect : () => [],
+      ...options,
+      enabled,
+    };
+  });
 
   const queryResults = useQueries({ queries });
   const results: DbClusterForNamespaceResult[] = queryResults.map(

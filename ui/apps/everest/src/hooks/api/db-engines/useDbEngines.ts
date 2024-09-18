@@ -114,7 +114,9 @@ export const useDbEngines = (
   return useQuery<GetDbEnginesPayload, unknown, DbEngine[]>({
     queryKey: [`dbEngines_${namespace}`],
     queryFn: () => getDbEnginesFn(namespace),
-    select: (data) => dbEnginesQuerySelect(data, retrieveUpgradingEngines),
+    select: canRead
+      ? (data) => dbEnginesQuerySelect(data, retrieveUpgradingEngines)
+      : () => [],
     retry: 2,
     ...options,
     enabled: !!namespace && (options?.enabled ?? true) && canRead,

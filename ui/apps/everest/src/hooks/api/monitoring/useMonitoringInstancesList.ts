@@ -61,14 +61,18 @@ export const useMonitoringInstancesList = (
   );
   const queries = queryParams.map<
     UseQueryOptions<MonitoringInstanceList, unknown, MonitoringInstance[]>
-  >(({ namespace, options }) => ({
-    queryKey: [MONITORING_INSTANCES_QUERY_KEY, namespace],
-    retry: false,
-    queryFn: () => getMonitoringInstancesFn(namespace),
-    refetchInterval: 5 * 1000,
-    ...options,
-    enabled: (options?.enabled ?? true) && canRead.includes(namespace),
-  }));
+  >(({ namespace, options }) => {
+    const allowed = canRead.includes(namespace);
+    return {
+      queryKey: [MONITORING_INSTANCES_QUERY_KEY, namespace],
+      retry: false,
+      queryFn: () => getMonitoringInstancesFn(namespace),
+      refetchInterval: 5 * 1000,
+      select: allowed ? undefined : () => [],
+      ...options,
+      enabled: (options?.enabled ?? true) && allowed,
+    };
+  });
   const queryResults = useQueries({ queries });
 
   const results: MonitoringInstanceForNamespaceResult[] = queryResults.map(

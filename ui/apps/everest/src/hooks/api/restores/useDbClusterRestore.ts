@@ -110,15 +110,17 @@ export const useDbClusterRestores = (
     queryKey: [RESTORES_QUERY_KEY, namespace, dbClusterName],
     queryFn: () => getDbClusterRestores(namespace, dbClusterName),
     refetchInterval: 5 * 1000,
-    select: (data) =>
-      data.items.map((item) => ({
-        name: item.metadata.name,
-        startTime: item.metadata.creationTimestamp,
-        endTime: item.status.completed,
-        state: item.status.state || 'unknown',
-        type: item.spec.dataSource.pitr ? 'pitr' : 'full',
-        backupSource: item.spec.dataSource.dbClusterBackupName || '',
-      })),
+    select: canRead
+      ? (data) =>
+          data.items.map((item) => ({
+            name: item.metadata.name,
+            startTime: item.metadata.creationTimestamp,
+            endTime: item.status.completed,
+            state: item.status.state || 'unknown',
+            type: item.spec.dataSource.pitr ? 'pitr' : 'full',
+            backupSource: item.spec.dataSource.dbClusterBackupName || '',
+          }))
+      : () => [],
     ...options,
     enabled: (options?.enabled ?? true) && canRead,
   });
