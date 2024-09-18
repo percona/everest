@@ -38,7 +38,9 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/common"
@@ -361,4 +363,13 @@ func (e *EverestServer) enforceOrErr(rvals ...interface{}) error {
 		return errInsufficientPermissions
 	}
 	return nil
+}
+
+func attachK8sTypeMeta(obj client.Object) {
+	gvk, err := apiutil.GVKForObject(obj, scheme.Scheme)
+	if err != nil {
+		// we expect a valid GVK for the object, but since we cannot get it, we should halt the execution.
+		panic(errors.Join(err, errors.New("could not get GVK for object")))
+	}
+	obj.GetObjectKind().SetGroupVersionKind(gvk)
 }

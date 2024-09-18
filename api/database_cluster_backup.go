@@ -48,6 +48,16 @@ const (
 //nolint:gochecknoglobals
 var everestAPIConstantBackoff = backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), maxRetries)
 
+func (e *EverestServer) enforceDBBackupsRBAC(user string, bkp *everestv1alpha1.DatabaseClusterBackup) error {
+	if err := e.enforceOrErr(user, rbac.ResourceBackupStorages, rbac.ActionRead, bkp.GetNamespace()+"/"+bkp.Spec.BackupStorageName); errors.Is(err, errInsufficientPermissions) {
+		if errors.Is(err, errInsufficientPermissions) {
+			e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+		}
+		return err
+	}
+	return nil
+}
+
 // ListDatabaseClusterBackups returns list of the created database cluster backups on the specified kubernetes cluster.
 func (e *EverestServer) ListDatabaseClusterBackups(ctx echo.Context, namespace, name string) error {
 	req := ctx.Request()
@@ -79,7 +89,7 @@ func (e *EverestServer) ListDatabaseClusterBackups(ctx echo.Context, namespace, 
 				e.l.Error(errors.Join(err, errors.New("failed to convert unstructured to DatabaseClusterBackup")))
 				return err
 			}
-			if err := e.enforceOrErr(user, rbac.ResourceBackupStorages, rbac.ActionRead, namespace+"/"+obj.GetName()); errors.Is(err, errInsufficientPermissions) {
+			if err := e.enforceDBBackupsRBAC(user, dbbackup); errors.Is(err, errInsufficientPermissions) {
 				continue
 			} else if err != nil {
 				return err
@@ -178,10 +188,11 @@ func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, namespace, na
 	if err != nil {
 		return errors.Join(err, errors.New("could not get Database Cluster Backup"))
 	}
-	if err := e.enforceOrErr(user, rbac.ResourceBackupStorages, rbac.ActionRead, namespace+"/"+bkp.Spec.BackupStorageName); err != nil {
+	if err := e.enforceDBBackupsRBAC(user, bkp); err != nil {
 		return err
 	}
-	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, name)
+	attachK8sTypeMeta(bkp)
+	return ctx.JSON(http.StatusOK, bkp)
 }
 
 func (e *EverestServer) ensureBackupStorageProtection(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {

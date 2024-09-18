@@ -83,54 +83,38 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 	return err
 }
 
-//nolint:gocognit
-func (e *EverestServer) enforceDatabaseClusterRBAC(user string) func(l *unstructured.UnstructuredList) error {
-	return func(l *unstructured.UnstructuredList) error {
-		allowed := []unstructured.Unstructured{}
-		for _, obj := range l.Items {
-			db := &everestv1alpha1.DatabaseCluster{}
-			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, db); err != nil {
-				e.l.Error(errors.Join(err, errors.New("failed to convert unstructured to DatabaseCluster")))
-				return err
+// enforceDBClusterRBAC checks if the user has permission to read the backup-storage and monitoring-instances associated
+// with the provided DB cluster.
+func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.DatabaseCluster) error {
+	// Check if the user has permissions for all backup-storages in the schedule?
+	for _, sched := range db.Spec.Backup.Schedules {
+		bsName := sched.BackupStorageName
+		if err := e.enforceOrErr(user, rbac.ResourceBackupStorages, rbac.ActionRead, db.GetNamespace()+"/"+bsName); err != nil {
+			if errors.Is(err, errInsufficientPermissions) {
+				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
 			}
-			allow := true
-			// Check if the user has permissions for all backup-storages in the schedule?
-			for _, sched := range db.Spec.Backup.Schedules {
-				bsName := sched.BackupStorageName
-				if ok, err := e.canGetBackupStorage(user, obj.GetNamespace(), bsName); err != nil {
-					e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
-					return err
-				} else if !ok {
-					allow = false
-					break
-				}
-			}
-			// Check if the user has permission for the backup-storages used by PITR (if any)?
-			if bsName := pointer.Get(db.Spec.Backup.PITR.BackupStorageName); bsName != "" {
-				if ok, err := e.canGetBackupStorage(user, obj.GetNamespace(), bsName); err != nil {
-					e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
-					return err
-				} else if !ok {
-					allow = false
-				}
-			}
-			// Check if the user has permissions for MonitoringConfig?
-			if mcName := pointer.Get(db.Spec.Monitoring).MonitoringConfigName; mcName != "" {
-				if ok, err := e.canGetMonitoringConfig(user, obj.GetNamespace(), mcName); err != nil {
-					e.l.Error(errors.Join(err, errors.New("failed to check monitoring-config permissions")))
-					return err
-				} else if !ok {
-					allow = false
-				}
-			}
-			if !allow {
-				continue
-			}
-			allowed = append(allowed, obj)
+			return err
 		}
-		l.Items = allowed
-		return nil
 	}
+	// Check if the user has permission for the backup-storages used by PITR (if any)?
+	if bsName := pointer.Get(db.Spec.Backup.PITR.BackupStorageName); bsName != "" {
+		if err := e.enforceOrErr(user, rbac.ResourceBackupStorages, rbac.ActionRead, db.GetNamespace()+"/"+bsName); err != nil {
+			if errors.Is(err, errInsufficientPermissions) {
+				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+			}
+			return err
+		}
+	}
+	// Check if the user has permissions for MonitoringConfig?
+	if mcName := pointer.Get(db.Spec.Monitoring).MonitoringConfigName; mcName != "" {
+		if err := e.enforceOrErr(user, rbac.ResourceMonitoringInstances, rbac.ActionRead, db.GetNamespace()+"/"+mcName); err != nil {
+			if errors.Is(err, errInsufficientPermissions) {
+				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+			}
+			return err
+		}
+	}
+	return nil
 }
 
 // ListDatabaseClusters lists the created database clusters on the specified kubernetes cluster.
@@ -141,7 +125,24 @@ func (e *EverestServer) ListDatabaseClusters(ctx echo.Context, namespace string)
 			Message: pointer.ToString("Failed to get user from context" + err.Error()),
 		})
 	}
-	rbacFilter := transformK8sList(e.enforceDatabaseClusterRBAC(user))
+	rbacFilter := transformK8sList(func(l *unstructured.UnstructuredList) error {
+		allowed := []unstructured.Unstructured{}
+		for _, obj := range l.Items {
+			db := &everestv1alpha1.DatabaseCluster{}
+			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, db); err != nil {
+				e.l.Error(errors.Join(err, errors.New("failed to convert unstructured to DatabaseCluster")))
+				return err
+			}
+			if err := e.enforceDBClusterRBAC(user, db); errors.Is(err, errInsufficientPermissions) {
+				continue
+			} else if err != nil {
+				return err
+			}
+			allowed = append(allowed, obj)
+		}
+		l.Items = allowed
+		return nil
+	})
 	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, "", rbacFilter)
 }
 
@@ -193,45 +194,17 @@ func (e *EverestServer) GetDatabaseCluster(ctx echo.Context, namespace, name str
 			Message: pointer.ToString("Failed to get user from context" + err.Error()),
 		})
 	}
+
+	// Check all indirect permissions related to the DB cluster.
 	db, err := e.kubeClient.GetDatabaseCluster(ctx.Request().Context(), namespace, name)
 	if err != nil {
 		return err
 	}
-	// Check for backup-storage permissions.
-	for _, sched := range db.Spec.Backup.Schedules {
-		if ok, err := e.canGetBackupStorage(user, namespace, sched.BackupStorageName); err != nil {
-			e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
-			return err
-		} else if !ok {
-			return ctx.JSON(http.StatusForbidden, Error{
-				Message: pointer.ToString(errInsufficientPermissions.Error()),
-			})
-		}
+	if err := e.enforceDBClusterRBAC(user, db); err != nil {
+		return err
 	}
-	// Check if the user has permission for the backup-storages used by PITR (if any)?
-	if bsName := pointer.Get(db.Spec.Backup.PITR.BackupStorageName); bsName != "" {
-		if ok, err := e.canGetBackupStorage(user, namespace, bsName); err != nil {
-			e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
-			return err
-		} else if !ok {
-			return ctx.JSON(http.StatusForbidden, Error{
-				Message: pointer.ToString(errInsufficientPermissions.Error()),
-			})
-		}
-	}
-	// Check for monitoring-config permissions.
-	if mcName := pointer.Get(db.Spec.Monitoring).MonitoringConfigName; mcName != "" {
-		if ok, err := e.canGetMonitoringConfig(user, namespace, mcName); err != nil {
-			e.l.Error(errors.Join(err, errors.New("failed to check monitoring-config permissions")))
-			return err
-		} else if !ok {
-			return ctx.JSON(http.StatusForbidden, Error{
-				Message: pointer.ToString(errInsufficientPermissions.Error()),
-			})
-		}
-	}
-	// TODO: duplicate call to Kubernetes, need to figure out how to fix this.
-	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, name)
+	attachK8sTypeMeta(db)
+	return ctx.JSON(http.StatusOK, db)
 }
 
 // GetDatabaseClusterComponents returns database cluster components.
