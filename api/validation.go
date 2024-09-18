@@ -633,14 +633,34 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 			return errors.Join(errInsufficientPermissions, errors.New("missing permission to take backups"))
 		}
 	}
-	// To be able to create a cluster from a backup (restore backup to new cluster), the user needs to explicitly
-	// have permissions to take restores.
+	// To be able to restore a backup to a new cluster, the following permissions are needed:
+	// - create restores
+	// - read database cluster credentials
 	sourceBackup := pointer.Get(pointer.Get(pointer.Get(databaseCluster.Spec).DataSource).DbClusterBackupName)
 	if sourceBackup != "" {
-		if can, err := e.canRestore(user, namespace+"/"+sourceBackup); err != nil {
+		if can, err := e.canRestore(user, namespace+"/"); err != nil {
 			return err
 		} else if !can {
 			return errors.Join(errInsufficientPermissions, errors.New("missing permission to restore"))
+		}
+
+		// Get the name of the source database cluster.
+		bkp, err := e.kubeClient.GetDatabaseClusterBackup(ctx.Request().Context(), namespace, sourceBackup)
+		if err != nil {
+			return errors.Join(err, errors.New("failed to get database cluster backup"))
+		}
+		srcDB, err := e.kubeClient.GetDatabaseCluster(ctx.Request().Context(), namespace, bkp.Spec.DBClusterName)
+		if err != nil {
+			return errors.Join(err, errors.New("failed to get source database cluster"))
+		}
+
+		if ok, err := e.canGetDatabaseClusterCredentials(user, namespace+"/"+srcDB.GetName()); err != nil {
+			e.l.Error(errors.Join(err, errors.New("failed to check database-cluster-credentials permissions")))
+			return err
+		} else if !ok {
+			return ctx.JSON(http.StatusForbidden, Error{
+				Message: pointer.ToString(errInsufficientPermissions.Error()),
+			})
 		}
 	}
 	return nil
