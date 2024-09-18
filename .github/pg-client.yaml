@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: db-client
+  labels:
+    name: db-client
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pg-client
+  namespace: db-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: pg-client
+  template:
+    metadata:
+      labels:
+        name: pg-client
+    spec:
+      containers:
+        - name: pg-client
+          image: percona/percona-distribution-postgresql:16
+          imagePullPolicy: Always
+          command:
+          - sleep
+          - infinity
