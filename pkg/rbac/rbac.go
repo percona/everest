@@ -27,7 +27,6 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
 	"github.com/casbin/casbin/v2/persist"
-	casbinutil "github.com/casbin/casbin/v2/util"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -51,6 +50,7 @@ const (
 	ResourceDatabaseClusterBackups  = "database-cluster-backups"
 	ResourceDatabaseClusterRestores = "database-cluster-restores"
 	ResourceDatabaseEngines         = "database-engines"
+	ResourceMonitoringInstances     = "monitoring-instances"
 	ResourceNamespaces              = "namespaces"
 )
 
@@ -114,7 +114,6 @@ func newEnforcer(adapter persist.Adapter, enableLogs bool) (*casbin.Enforcer, er
 	if err := validatePolicy(enf); err != nil {
 		return nil, err
 	}
-	enf.AddFunction("customGlobMatch", customGlobMatch)
 	return enf, nil
 }
 
@@ -139,30 +138,6 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 		return nil, err
 	}
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
-}
-
-// To understand why we need this custom globMatch, consider the below policy:
-// ```
-// p, adminrole:role, database-clusters, read, */*
-// ```
-// Given a request `adminrole:role read database-clusters *`, the default globMatch returns false.
-// This custom globMatch acts as a convenience function to convert any `*` to `*/*` before matching.
-func customGlobMatch(args ...interface{}) (interface{}, error) {
-	key1 := args[0].(string) //nolint:forcetypeassert
-	key2 := args[1].(string) //nolint:forcetypeassert
-
-	if key1 == "*" {
-		key1 = "*/*"
-	}
-	if key2 == "*" {
-		key2 = "*/*"
-	}
-
-	globMatch, err := casbinutil.GlobMatch(key1, key2)
-	if err != nil {
-		return false, err
-	}
-	return globMatch, nil
 }
 
 // GetUser extracts the user from the JWT token in the context.
@@ -284,6 +259,12 @@ func Can(ctx context.Context, filePath string, k *kubernetes.Kubernetes, req ...
 		return false, errors.New("expected input of the form [user action resource object]")
 	}
 	user, action, resource, object := req[0], req[1], req[2], req[3]
+	if object == "*" || object == "all" {
+		object = "/"
+		if resource == ResourceNamespaces {
+			object = ""
+		}
+	}
 	enforcer, err := newKubeOrFileEnforcer(ctx, k, filePath)
 	if err != nil {
 		return false, err

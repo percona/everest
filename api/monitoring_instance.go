@@ -29,6 +29,7 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/pmm"
+	"github.com/percona/everest/pkg/rbac"
 )
 
 const (
@@ -321,4 +322,15 @@ func (e *EverestServer) monitoringConfigSecretData(apiKey string) map[string]str
 		"apiKey":   apiKey,
 		"username": "api_key",
 	}
+}
+
+func (e *EverestServer) canGetMonitoringConfig(user, namespace, name string) (bool, error) {
+	ok, err := e.rbacEnforcer.Enforce(
+		user, rbac.ResourceMonitoringInstances,
+		rbac.ActionRead, fmt.Sprintf("%s/%s", namespace, name),
+	)
+	if err != nil {
+		return false, err
+	}
+	return ok, nil
 }

@@ -69,10 +69,23 @@ export const DbActionButton = ({
     dbCluster?.spec.engine.type === DbEngineType.POSTGRESQL;
   const hideCheckbox = !backups.length;
 
+  const { canCreate: canCreateClusters } = useRBACPermissions(
+    'database-clusters',
+    `${dbCluster.metadata.namespace}/*`
+  );
+
   const { canCreate: canCreateRestore } = useRBACPermissions(
     'database-cluster-restores',
     `${namespace}/*`
   );
+
+  const { canRead: canReadCredentials } = useRBACPermissions(
+    'database-cluster-credentials',
+    `${namespace}/${dbClusterName}`
+  );
+
+  const canRestore = canCreateRestore && canReadCredentials;
+  const canCreateClusterFromBackup = canRestore && canCreateClusters;
 
   //TODO: refactoring: move to component ?
   const sx = {
@@ -130,7 +143,7 @@ export const DbActionButton = ({
               <RestartAltIcon /> {Messages.menuItems.restart}
             </MenuItem>
           )}
-          {canCreateRestore && (
+          {canCreateClusterFromBackup && (
             <MenuItem
               data-testid={`${dbClusterName}-create-new-db-from-backup`}
               disabled={restoring}
@@ -145,7 +158,7 @@ export const DbActionButton = ({
               <AddIcon /> {Messages.menuItems.createNewDbFromBackup}
             </MenuItem>
           )}
-          {canCreateRestore && (
+          {canRestore && (
             <MenuItem
               data-testid={`${dbClusterName}-restore`}
               disabled={restoring}
