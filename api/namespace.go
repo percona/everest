@@ -28,8 +28,7 @@ func (e *EverestServer) ListNamespaces(ctx echo.Context) error {
 	// Filter out result based on permission.
 	result := make([]string, 0, len(namespaces))
 	for _, ns := range namespaces {
-		r := []string{user, rbac.ResourceNamespaces, rbac.ActionRead, ns}
-		if err := e.enforceOrErr(r); errors.Is(err, errInsufficientPermissions) {
+		if err := e.enforceOrErr(user, rbac.ResourceNamespaces, rbac.ActionRead, ns); errors.Is(err, errInsufficientPermissions) {
 			continue
 		} else if err != nil {
 			return ctx.JSON(http.StatusInternalServerError, Error{

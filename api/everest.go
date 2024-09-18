@@ -349,17 +349,13 @@ func enforcerErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 }
 
 // enforceOrErr is a wrapper around casbin.Enforce that returns an error if the enforcement fails.
-func (e *EverestServer) enforceOrErr(rvals ...interface{}) error {
-	ok, err := e.rbacEnforcer.Enforce(rvals...)
+func (e *EverestServer) enforceOrErr(subject, resource, action, object string) error {
+	ok, err := e.rbacEnforcer.Enforce(subject, resource, action, object)
 	if err != nil {
 		return fmt.Errorf("failed to enforce: %w", err)
 	}
 	if !ok {
-		sub := rvals[0].(string)    //nolint:forcetypeassert
-		res := rvals[1].(string)    //nolint:forcetypeassert
-		action := rvals[2].(string) //nolint:forcetypeassert
-		obj := rvals[3].(string)    //nolint:forcetypeassert
-		e.l.Warnf("Permission denied: [%s %s %s %s]", sub, res, action, obj)
+		e.l.Warnf("Permission denied: [%s %s %s %s]", subject, resource, action, object)
 		return errInsufficientPermissions
 	}
 	return nil
