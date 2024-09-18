@@ -1834,6 +1834,9 @@ components:
     UserPermissions:
       type: object
       properties:
+        enabled:
+          type: boolean
+          x-go-type-skip-optional-pointer: true
         permissions:
           type: array
           items:
