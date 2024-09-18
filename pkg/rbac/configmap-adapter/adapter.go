@@ -50,6 +50,20 @@ func New(
 	}
 }
 
+// Enabled returns true if the enforcer is enabled.
+func (a *Adapter) Enabled() (bool, error) {
+	cm, err := a.kubeClient.GetConfigMap(
+		context.Background(),
+		a.namespacedName.Namespace,
+		a.namespacedName.Name,
+	)
+	if err != nil {
+		return false, errors.Join(err, errors.New("failed to get ConfigMap"))
+	}
+	enabled := cm.Data["enabled"]
+	return enabled == "true", nil
+}
+
 // LoadPolicy loads all policy rules from the storage.
 func (a *Adapter) LoadPolicy(model model.Model) error {
 	cm, err := a.kubeClient.GetConfigMap(
