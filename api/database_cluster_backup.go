@@ -49,7 +49,7 @@ const (
 var everestAPIConstantBackoff = backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), maxRetries)
 
 func (e *EverestServer) enforceDBBackupsRBAC(user string, bkp *everestv1alpha1.DatabaseClusterBackup) error {
-	if err := e.enforceOrErr(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.RBACName(bkp.GetNamespace(), bkp.Spec.BackupStorageName)); err != nil {
+	if err := e.enforceOrErr(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(bkp.GetNamespace(), bkp.Spec.BackupStorageName)); err != nil {
 		if errors.Is(err, errInsufficientPermissions) {
 			e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
 		}
