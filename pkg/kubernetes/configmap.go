@@ -7,8 +7,8 @@ import (
 )
 
 // GetConfigMap returns k8s configmap by provided name and namespace.
-func (k *Kubernetes) GetConfigMap(ctx context.Context, name, namespace string) (*corev1.ConfigMap, error) {
-	return k.client.GetConfigMap(ctx, name, namespace)
+func (k *Kubernetes) GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error) {
+	return k.client.GetConfigMap(ctx, namespace, name)
 }
 
 // UpdateConfigMap updated the provided config.
