@@ -57,8 +57,7 @@ vi.mock('../../useDatabasePageMode', () => ({
 }));
 
 vi.mock('hooks/rbac', () => ({
-  useRBACPermissions: vi.fn().mockReturnValue({
-    canRead: true,
+  useRBACPermissions: () => ({
     canCreate: true,
   }),
 }));

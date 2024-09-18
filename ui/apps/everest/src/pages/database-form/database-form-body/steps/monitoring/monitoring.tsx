@@ -24,7 +24,7 @@ export const Monitoring = () => {
   const queryClient = useQueryClient();
   const { watch, getValues } = useFormContext();
   const monitoring = watch(DbWizardFormFields.monitoring);
-  const selectedNamespace: string = watch(DbWizardFormFields.k8sNamespace);
+  const selectedNamespace = watch(DbWizardFormFields.k8sNamespace);
   const { canRead, canCreate } = useRBACPermissions(
     'monitoring-instances',
     `${selectedNamespace}/*`
@@ -149,7 +149,7 @@ export const Monitoring = () => {
             disabled: !availableMonitoringInstances?.length,
           }}
         />
-        {monitoring && availableMonitoringInstances?.length && (
+        {monitoring && !!availableMonitoringInstances?.length && (
           <AutoCompleteInput
             name={DbWizardFormFields.monitoringInstance}
             label={Messages.monitoringInstanceLabel}
