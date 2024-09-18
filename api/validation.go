@@ -633,37 +633,49 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 			return errors.Join(errInsufficientPermissions, errors.New("missing permission to take backups"))
 		}
 	}
-	// To be able to restore a backup to a new cluster, the following permissions are needed:
-	// - create restores
-	// - read database cluster credentials
+
+	if ok, err := e.enforceRestoreToNewDBRBAC(ctx.Request().Context(), user, namespace, databaseCluster); err != nil {
+		return err
+	} else if !ok {
+		return errors.Join(errInsufficientPermissions, errors.New("missing permission to take backups"))
+	}
+	return nil
+}
+
+// To be able to restore a backup to a new cluster, the following permissions are needed:
+// - create restores.
+// - read database cluster credentials.
+//
+//nolint:nestif
+func (e *EverestServer) enforceRestoreToNewDBRBAC(
+	ctx context.Context, user, namespace string, databaseCluster *DatabaseCluster,
+) (bool, error) {
 	sourceBackup := pointer.Get(pointer.Get(pointer.Get(databaseCluster.Spec).DataSource).DbClusterBackupName)
 	if sourceBackup != "" {
 		if can, err := e.canRestore(user, namespace+"/"); err != nil {
-			return err
+			return false, err
 		} else if !can {
-			return errors.Join(errInsufficientPermissions, errors.New("missing permission to restore"))
+			return false, nil
 		}
 
 		// Get the name of the source database cluster.
-		bkp, err := e.kubeClient.GetDatabaseClusterBackup(ctx.Request().Context(), namespace, sourceBackup)
+		bkp, err := e.kubeClient.GetDatabaseClusterBackup(ctx, namespace, sourceBackup)
 		if err != nil {
-			return errors.Join(err, errors.New("failed to get database cluster backup"))
+			return false, errors.Join(err, errors.New("failed to get database cluster backup"))
 		}
-		srcDB, err := e.kubeClient.GetDatabaseCluster(ctx.Request().Context(), namespace, bkp.Spec.DBClusterName)
+		srcDB, err := e.kubeClient.GetDatabaseCluster(ctx, namespace, bkp.Spec.DBClusterName)
 		if err != nil {
-			return errors.Join(err, errors.New("failed to get source database cluster"))
+			return false, errors.Join(err, errors.New("failed to get source database cluster"))
 		}
 
 		if ok, err := e.canGetDatabaseClusterCredentials(user, namespace+"/"+srcDB.GetName()); err != nil {
 			e.l.Error(errors.Join(err, errors.New("failed to check database-cluster-credentials permissions")))
-			return err
+			return false, err
 		} else if !ok {
-			return ctx.JSON(http.StatusForbidden, Error{
-				Message: pointer.ToString(errInsufficientPermissions.Error()),
-			})
+			return false, nil
 		}
 	}
-	return nil
+	return true, nil
 }
 
 //nolint:cyclop
