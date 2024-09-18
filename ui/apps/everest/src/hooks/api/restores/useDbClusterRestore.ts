@@ -120,7 +120,7 @@ export const useDbClusterRestores = (
         backupSource: item.spec.dataSource.dbClusterBackupName || '',
       })),
     ...options,
-    enabled: !!options?.enabled && canRead,
+    enabled: (options?.enabled ?? true) && canRead,
   });
 };
 

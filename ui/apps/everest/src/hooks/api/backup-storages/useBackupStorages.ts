@@ -61,7 +61,7 @@ export const useBackupStorages = (
       queryFn: () => getBackupStoragesFn(namespace),
       refetchInterval: 5 * 1000,
       ...options,
-      enabled: !!options?.enabled && canRead.includes(namespace),
+      enabled: (options?.enabled ?? true) && canRead.includes(namespace),
     };
   });
 

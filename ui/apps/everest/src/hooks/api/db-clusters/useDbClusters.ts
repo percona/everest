@@ -69,7 +69,7 @@ export const useDbClusters = (
     refetchInterval: 5 * 1000,
     select: dbClustersQuerySelect,
     ...options,
-    enabled: !!options?.enabled && canRead,
+    enabled: (options?.enabled ?? true) && canRead,
   });
 };
 
@@ -89,7 +89,7 @@ export const useDBClustersForNamespaces = (
     refetchInterval: 5 * 1000,
     select: dbClustersQuerySelect,
     ...options,
-    enabled: !!options?.enabled && canRead.includes(namespace),
+    enabled: (options?.enabled ?? true) && canRead.includes(namespace),
   }));
 
   const queryResults = useQueries({ queries });

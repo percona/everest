@@ -67,7 +67,7 @@ export const useMonitoringInstancesList = (
     queryFn: () => getMonitoringInstancesFn(namespace),
     refetchInterval: 5 * 1000,
     ...options,
-    enabled: !!options?.enabled && canRead.includes(namespace),
+    enabled: (options?.enabled ?? true) && canRead.includes(namespace),
   }));
   const queryResults = useQueries({ queries });
 

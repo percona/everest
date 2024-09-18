@@ -117,7 +117,7 @@ export const useDbEngines = (
     select: (data) => dbEnginesQuerySelect(data, retrieveUpgradingEngines),
     retry: 2,
     ...options,
-    enabled: !!namespace && !!options?.enabled && canRead,
+    enabled: !!namespace && (options?.enabled ?? true) && canRead,
   });
 };
 

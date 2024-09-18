@@ -53,7 +53,7 @@ export const useDbBackups = (
         })
       ),
     ...options,
-    enabled: !!options?.enabled && canRead,
+    enabled: (options?.enabled ?? true) && canRead,
   });
 };
 
