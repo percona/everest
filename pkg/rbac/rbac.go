@@ -292,3 +292,7 @@ func Can(ctx context.Context, filePath string, k *kubernetes.Kubernetes, req ...
 func IsEnabled(cm *corev1.ConfigMap) bool {
 	return cm.Data["enabled"] == rbacEnabledValueTrue
 }
+
+func RBACName(args ...string) string {
+	return strings.Join(args, "/")
+}
