@@ -48,7 +48,7 @@ type KubernetesConnector interface {
 	// CSVNameFromOperator returns CSV name based on operator and version.
 	CSVNameFromOperator(operatorName string, version *goversion.Version) string
 	// GetConfigMap returns k8s configmap by provided name and namespace.
-	GetConfigMap(ctx context.Context, name, namespace string) (*corev1.ConfigMap, error)
+	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
 	// GetDeployment returns k8s deployment by provided name and namespace.
 	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
 	// UpdateDeployment updates a deployment and returns the updated object.
