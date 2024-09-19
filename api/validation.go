@@ -617,19 +617,48 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 			return errors.Join(errInsufficientPermissions, errors.New("missing permission to take backups"))
 		}
 	}
-	// To be able to create a cluster from a backup (restore backup to new cluster), the user needs to explicitly
-	// have permissions to take restores.
-	sourceBackup := pointer.Get(pointer.Get(pointer.Get(databaseCluster.Spec).DataSource).DbClusterBackupName)
-	if sourceBackup != "" {
-		if can, err := e.canRestore(user, namespace+"/"+sourceBackup); err != nil {
-			return err
-		} else if !can {
-			return errors.Join(errInsufficientPermissions, errors.New("missing permission to restore"))
-		}
+
+	if ok, err := e.enforceRestoreToNewDBRBAC(ctx.Request().Context(), user, namespace, databaseCluster); err != nil {
+		return err
+	} else if !ok {
+		return errors.Join(errInsufficientPermissions, errors.New("missing permission to take backups"))
 	}
 	return nil
 }
 
+// To be able to restore a backup to a new cluster, the following permissions are needed:
+// - create restores.
+// - read database cluster credentials.
+func (e *EverestServer) enforceRestoreToNewDBRBAC(
+	ctx context.Context, user, namespace string, databaseCluster *DatabaseCluster,
+) (bool, error) {
+	sourceBackup := pointer.Get(pointer.Get(pointer.Get(databaseCluster.Spec).DataSource).DbClusterBackupName)
+	if sourceBackup == "" {
+		return true, nil
+	}
+
+	if can, err := e.canRestore(user, namespace+"/"); err != nil {
+		return false, err
+	} else if !can {
+		return false, nil
+	}
+
+	// Get the name of the source database cluster.
+	bkp, err := e.kubeClient.GetDatabaseClusterBackup(ctx, namespace, sourceBackup)
+	if err != nil {
+		return false, errors.Join(err, errors.New("failed to get database cluster backup"))
+	}
+	sourceDB := bkp.Spec.DBClusterName
+
+	if ok, err := e.enforceDBRestoreRBAC(user, namespace, sourceBackup, sourceDB); err != nil {
+		return false, err
+	} else if !ok {
+		return false, nil
+	}
+	return true, nil
+}
+
+//nolint:cyclop
 func (e *EverestServer) validateDatabaseClusterCR(
 	ctx echo.Context, namespace string, databaseCluster *DatabaseCluster,
 ) error {
