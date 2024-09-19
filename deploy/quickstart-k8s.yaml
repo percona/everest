@@ -92,6 +92,7 @@ metadata:
 data:
   enabled: "false"
   policy.csv: |
+    g, admin, role:admin
 ---
 apiVersion: apps/v1
 kind: Deployment
