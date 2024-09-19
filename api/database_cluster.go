@@ -89,8 +89,8 @@ func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.Da
 	// Check if the user has permissions for all backup-storages in the schedule?
 	for _, sched := range db.Spec.Backup.Schedules {
 		bsName := sched.BackupStorageName
-		if err := e.enforceOrErr(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), bsName)); err != nil {
-			if errors.Is(err, errInsufficientPermissions) {
+		if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), bsName)); err != nil {
+			if !errors.Is(err, errInsufficientPermissions) {
 				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
 			}
 			return err
@@ -98,8 +98,8 @@ func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.Da
 	}
 	// Check if the user has permission for the backup-storages used by PITR (if any)?
 	if bsName := pointer.Get(db.Spec.Backup.PITR.BackupStorageName); bsName != "" {
-		if err := e.enforceOrErr(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), bsName)); err != nil {
-			if errors.Is(err, errInsufficientPermissions) {
+		if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), bsName)); err != nil {
+			if !errors.Is(err, errInsufficientPermissions) {
 				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
 			}
 			return err
@@ -107,8 +107,8 @@ func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.Da
 	}
 	// Check if the user has permissions for MonitoringConfig?
 	if mcName := pointer.Get(db.Spec.Monitoring).MonitoringConfigName; mcName != "" {
-		if err := e.enforceOrErr(user, rbac.ResourceMonitoringInstances, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), mcName)); err != nil {
-			if errors.Is(err, errInsufficientPermissions) {
+		if err := e.enforce(user, rbac.ResourceMonitoringInstances, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), mcName)); err != nil {
+			if !errors.Is(err, errInsufficientPermissions) {
 				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
 			}
 			return err
@@ -466,16 +466,4 @@ func valueOrDefault(value *int, defaultValue int) int {
 		return defaultValue
 	}
 	return *value
-}
-
-func (e *EverestServer) canGetDatabaseClusterCredentials(user, object string) (bool, error) {
-	ok, err := e.rbacEnforcer.Enforce(
-		user, rbac.ResourceDatabaseClusterCredentials,
-		rbac.ActionRead,
-		object,
-	)
-	if err != nil {
-		return false, fmt.Errorf("failed to Enforce: %w", err)
-	}
-	return ok, nil
 }

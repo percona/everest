@@ -59,7 +59,7 @@ func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, namespace string) 
 	rbacListFilter := transformK8sList(func(l *unstructured.UnstructuredList) error {
 		allowed := []unstructured.Unstructured{}
 		for _, obj := range l.Items {
-			if err := e.enforceOrErr(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, obj.GetName())); errors.Is(err, errInsufficientPermissions) {
+			if err := e.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, obj.GetName())); errors.Is(err, errInsufficientPermissions) {
 				continue
 			} else if err != nil {
 				e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
@@ -136,14 +136,14 @@ func (e *EverestServer) GetUpgradePlan(
 	}
 
 	// ensure the user has access to all db-clusters in this namespace.
-	if err := e.enforceOrErr(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(namespace, "")); err != nil {
+	if err := e.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(namespace, "")); err != nil {
 		return err
 	}
 
 	// ensure the user has access to all engines in this upgrade plan.
 	for _, upg := range pointer.Get(result.Upgrades) {
 		name := *upg.Name
-		if err := e.enforceOrErr(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, name)); errors.Is(err, errInsufficientPermissions) {
+		if err := e.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, name)); errors.Is(err, errInsufficientPermissions) {
 			// We cannot show this plan, the user does not have permission to one or more engines.
 			result = &UpgradePlan{}
 			break
@@ -172,13 +172,13 @@ func (e *EverestServer) ApproveUpgradePlan(c echo.Context, namespace string) err
 	}
 
 	// ensure the user has access to all db-clusters in this namespace.
-	if err := e.enforceOrErr(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(namespace, "")); err != nil {
+	if err := e.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(namespace, "")); err != nil {
 		return err
 	}
 
 	// Ensure we can update all these engines.
 	for _, upg := range pointer.Get(up.Upgrades) {
-		if err := e.enforceOrErr(user, rbac.ResourceDatabaseEngines, rbac.ActionUpdate, rbac.ObjectName(namespace, *upg.Name)); err != nil {
+		if err := e.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionUpdate, rbac.ObjectName(namespace, *upg.Name)); err != nil {
 			return err
 		}
 	}

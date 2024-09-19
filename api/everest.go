@@ -348,8 +348,10 @@ func enforcerErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 	}
 }
 
-// enforceOrErr is a wrapper around casbin.Enforce that returns an error if the enforcement fails.
-func (e *EverestServer) enforceOrErr(subject, resource, action, object string) error {
+// enforce is a wrapper arounf casbin.Enforce that returns an errInsufficientPermissions error when enforce fails.
+// Typically, this error is handled centrally by the Everest server error handler chain, but if needed, the caller should handle
+// it explicitly to differentiate between other errors.
+func (e *EverestServer) enforce(subject, resource, action, object string) error {
 	ok, err := e.rbacEnforcer.Enforce(subject, resource, action, object)
 	if err != nil {
 		return fmt.Errorf("failed to enforce: %w", err)

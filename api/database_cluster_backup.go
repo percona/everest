@@ -49,8 +49,8 @@ const (
 var everestAPIConstantBackoff = backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), maxRetries)
 
 func (e *EverestServer) enforceDBBackupsRBAC(user string, bkp *everestv1alpha1.DatabaseClusterBackup) error {
-	if err := e.enforceOrErr(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(bkp.GetNamespace(), bkp.Spec.BackupStorageName)); err != nil {
-		if errors.Is(err, errInsufficientPermissions) {
+	if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(bkp.GetNamespace(), bkp.Spec.BackupStorageName)); err != nil {
+		if !errors.Is(err, errInsufficientPermissions) {
 			e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
 		}
 		return err
@@ -224,16 +224,4 @@ func (e *EverestServer) ensureBackupForegroundDeletion(ctx context.Context, back
 	},
 		backoff.WithContext(everestAPIConstantBackoff, ctx),
 	)
-}
-
-func (e *EverestServer) canGetDatabaseClusterBackups(user, object string) (bool, error) {
-	ok, err := e.rbacEnforcer.Enforce(
-		user, rbac.ResourceDatabaseClusterBackups,
-		rbac.ActionRead,
-		object,
-	)
-	if err != nil {
-		return false, fmt.Errorf("failed to Enforce: %w", err)
-	}
-	return ok, nil
 }
