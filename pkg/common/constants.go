@@ -49,6 +49,7 @@ const (
 	// EverestJWTPublicKeyFile is the path to the JWT public key.
 	EverestJWTPublicKeyFile = "/etc/jwt/id_rsa.pub"
 
+	// EverestRBACRolePrefix is the prefix for roles.
 	EverestRBACRolePrefix = "role:"
 	// EverestAdminUser is the name of the admin user.
 	EverestAdminUser = "admin"
