@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValidatePolicy(t *testing.T) {
@@ -286,4 +288,13 @@ func TestCan(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRBACName(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "ns/obj", ObjectName("ns", "obj"))
+	assert.Equal(t, "ns/", ObjectName("ns", ""))
+	assert.Equal(t, "/", ObjectName("", ""))
+	assert.Equal(t, "ns", ObjectName("ns"))
 }
