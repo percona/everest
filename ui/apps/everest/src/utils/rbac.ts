@@ -81,6 +81,10 @@ export const initializeAuthorizerFetchLoop = async (user: string) => {
   }, 5000);
 };
 
+export const stopAuthorizerFetchLoop = () => {
+  clearInterval(timeoutId);
+};
+
 export const can = async (
   action: RBACAction,
   resource: RBACResource,
