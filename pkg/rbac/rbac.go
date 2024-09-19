@@ -197,7 +197,7 @@ func loadAdminPolicy(enf casbin.IEnforcer) error {
 		if resource == ResourceNamespaces {
 			object = "*"
 		}
-		if _, err := enf.AddPolicy("admin", resource, action, object); err != nil {
+		if _, err := enf.AddPolicy(adminRoleName, resource, action, object); err != nil {
 			return err
 		}
 	}
