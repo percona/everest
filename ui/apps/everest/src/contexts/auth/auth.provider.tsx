@@ -23,7 +23,10 @@ import {
   UserAuthStatus,
 } from './auth.context.types';
 import { isAfter } from 'date-fns';
-import { initializeAuthorizerFetchLoop } from 'utils/rbac';
+import {
+  initializeAuthorizerFetchLoop,
+  stopAuthorizerFetchLoop,
+} from 'utils/rbac';
 
 const Provider = ({
   oidcConfig,
@@ -124,6 +127,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
       await userManager.clearStaleState();
       await userManager.removeUser();
     }
+    stopAuthorizerFetchLoop();
   }, [userManager]);
 
   const silentlyRenewToken = useCallback(async () => {
