@@ -36,6 +36,8 @@ const (
 	PerconaEverestOperatorDeploymentName = "everest-operator-controller-manager"
 	// EverestContainerNameInDeployment is the name of the Everest container in the deployment.
 	EverestContainerNameInDeployment = "everest"
+	// VictoriaMetricsOperatorName is the name of the VictoriaMetrics operator.
+	VictoriaMetricsOperatorName = "victoriametrics-operator"
 
 	// EverestOperatorName holds the name for Everest operator.
 	EverestOperatorName = "everest-operator"

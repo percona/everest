@@ -82,7 +82,6 @@ type Install struct {
 }
 
 const (
-	vmOperatorName         = "victoriametrics-operator"
 	operatorInstallThreads = 1
 
 	everestServiceAccount                   = "everest-admin"
@@ -358,11 +357,11 @@ func (o *Install) installVMOperator(ctx context.Context) error {
 	if err := o.kubeClient.CreateOperatorGroup(ctx, monitoringOperatorGroup, MonitoringNamespace, []string{}); err != nil {
 		return err
 	}
-	o.l.Infof("Installing %s operator", vmOperatorName)
+	o.l.Infof("Installing %s operator", common.VictoriaMetricsOperatorName)
 
 	params := kubernetes.InstallOperatorRequest{
 		Namespace:              MonitoringNamespace,
-		Name:                   vmOperatorName,
+		Name:                   common.VictoriaMetricsOperatorName,
 		OperatorGroup:          monitoringOperatorGroup,
 		CatalogSource:          catalogSource,
 		CatalogSourceNamespace: kubernetes.OLMNamespace,
@@ -371,10 +370,10 @@ func (o *Install) installVMOperator(ctx context.Context) error {
 	}
 
 	if err := o.kubeClient.InstallOperator(ctx, params); err != nil {
-		o.l.Errorf("failed installing %s operator", vmOperatorName)
+		o.l.Errorf("failed installing %s operator", common.VictoriaMetricsOperatorName)
 		return err
 	}
-	o.l.Infof("%s operator has been installed", vmOperatorName)
+	o.l.Infof("%s operator has been installed", common.VictoriaMetricsOperatorName)
 	return nil
 }
 

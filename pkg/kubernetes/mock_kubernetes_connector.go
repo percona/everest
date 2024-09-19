@@ -1213,6 +1213,36 @@ func (_m *MockKubernetesConnector) ListEngineDeploymentNames(ctx context.Context
 	return r0, r1
 }
 
+// ListInstallPlans provides a mock function with given fields: ctx, namespace
+func (_m *MockKubernetesConnector) ListInstallPlans(ctx context.Context, namespace string) (*operatorsv1alpha1.InstallPlanList, error) {
+	ret := _m.Called(ctx, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListInstallPlans")
+	}
+
+	var r0 *operatorsv1alpha1.InstallPlanList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*operatorsv1alpha1.InstallPlanList, error)); ok {
+		return rf(ctx, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *operatorsv1alpha1.InstallPlanList); ok {
+		r0 = rf(ctx, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*operatorsv1alpha1.InstallPlanList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListMonitoringConfigs provides a mock function with given fields: ctx, namespace
 func (_m *MockKubernetesConnector) ListMonitoringConfigs(ctx context.Context, namespace string) (*v1alpha1.MonitoringConfigList, error) {
 	ret := _m.Called(ctx, namespace)
@@ -1565,6 +1595,36 @@ func (_m *MockKubernetesConnector) UpdateEverestSettings(ctx context.Context, se
 	}
 
 	return r0
+}
+
+// UpdateInstallPlan provides a mock function with given fields: ctx, namespace, installPlan
+func (_m *MockKubernetesConnector) UpdateInstallPlan(ctx context.Context, namespace string, installPlan *operatorsv1alpha1.InstallPlan) (*operatorsv1alpha1.InstallPlan, error) {
+	ret := _m.Called(ctx, namespace, installPlan)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateInstallPlan")
+	}
+
+	var r0 *operatorsv1alpha1.InstallPlan
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, *operatorsv1alpha1.InstallPlan) (*operatorsv1alpha1.InstallPlan, error)); ok {
+		return rf(ctx, namespace, installPlan)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, *operatorsv1alpha1.InstallPlan) *operatorsv1alpha1.InstallPlan); ok {
+		r0 = rf(ctx, namespace, installPlan)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*operatorsv1alpha1.InstallPlan)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, *operatorsv1alpha1.InstallPlan) error); ok {
+		r1 = rf(ctx, namespace, installPlan)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // UpdateMonitoringConfig provides a mock function with given fields: ctx, storage
