@@ -65,6 +65,7 @@ const (
 
 const (
 	rbacEnabledValueTrue = "true"
+	adminRoleName        = "role:admin"
 )
 
 // Setup a new informer that watches our RBAC ConfigMap.
@@ -115,6 +116,9 @@ func newEnforcer(adapter persist.Adapter, enableLogs bool) (*casbin.Enforcer, er
 	enf, err := casbin.NewEnforcer(model, adapter, enableLogs)
 	if err != nil {
 		return nil, err
+	}
+	if err := loadAdminPolicy(enf); err != nil {
+		return nil, errors.Join(err, errors.New("failed to load admin policy"))
 	}
 	if err := validatePolicy(enf); err != nil {
 		return nil, err
@@ -176,6 +180,28 @@ func GetUser(c echo.Context) (string, error) {
 		return strings.Split(subject, ":")[0], nil
 	}
 	return subject, nil
+}
+
+func loadAdminPolicy(enf casbin.IEnforcer) error {
+	paths, _, err := buildPathResourceMap("")
+	if err != nil {
+		return err
+	}
+	resources := make(map[string]struct{})
+	for _, resource := range paths {
+		resources[resource] = struct{}{}
+	}
+	action := "*"
+	for resource := range resources {
+		object := "*/*"
+		if resource == ResourceNamespaces {
+			object = "*"
+		}
+		if _, err := enf.AddPolicy("admin", resource, action, object); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // buildPathResourceMap builds a map of paths to resources and a list of resources.
