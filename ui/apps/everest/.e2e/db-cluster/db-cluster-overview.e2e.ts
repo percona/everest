@@ -41,6 +41,8 @@ test.describe('DB Cluster Overview', async () => {
       })
     ).toBeVisible();
 
+    await expect(page.getByTestId(`${dbClusterName}-status`)).toBeVisible();
+
     await expect(
       page.getByTestId('basic-information-overview-section')
     ).toBeVisible();

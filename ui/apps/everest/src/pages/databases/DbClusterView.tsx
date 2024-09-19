@@ -39,7 +39,7 @@ import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
 import { LastBackup } from './lastBackup/LastBackup';
 import { useDbBackups } from 'hooks/api/backups/useBackups';
 import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
-import { useGetPermittedNamespaces } from 'utils/useGetPermissions';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import TableActionsMenu from 'components/table-actions-menu';
 import { DbActionButtons } from './db-cluster-view-menu-actions';
 
@@ -47,15 +47,6 @@ export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
   const { data: namespaces = [], isLoading: loadingNamespaces } =
     useNamespaces();
-  const dbClustersResults = useDBClustersForNamespaces(namespaces);
-  const dbClustersLoading = dbClustersResults.some(
-    (result) => result.queryResult.isLoading
-  );
-
-  const tableData = useMemo(
-    () => convertDbClusterPayloadToTableFormat(dbClustersResults),
-    [dbClustersResults]
-  );
 
   const { isPending: deletingCluster } = useDeleteDbCluster();
   const {
@@ -73,9 +64,7 @@ export const DbClusterView = () => {
   } = useDbActions();
   const navigate = useNavigate();
 
-  const { canCreate } = useGetPermittedNamespaces({
-    resource: 'database-clusters',
-  });
+  const { canCreate } = useNamespacePermissionsForResource('database-clusters');
   const { data: backups = [] } = useDbBackups(
     selectedDbCluster?.metadata.name!,
     selectedDbCluster?.metadata.namespace!,
@@ -87,6 +76,20 @@ export const DbClusterView = () => {
   const disableKeepDataCheckbox =
     selectedDbCluster?.spec.engine.type === DbEngineType.POSTGRESQL;
   const hideCheckbox = !backups.length;
+
+  const dbClustersResults = useDBClustersForNamespaces(
+    namespaces.map((ns) => ({
+      namespace: ns,
+    }))
+  );
+  const dbClustersLoading = dbClustersResults.some(
+    (result) => result.queryResult.isLoading
+  );
+
+  const tableData = useMemo(
+    () => convertDbClusterPayloadToTableFormat(dbClustersResults),
+    [dbClustersResults]
+  );
 
   const columns = useMemo<MRT_ColumnDef<DbClusterTableElement>[]>(
     () => [
@@ -209,7 +212,7 @@ export const DbClusterView = () => {
             },
           })}
           renderTopToolbarCustomActions={() =>
-            canCreate && (
+            canCreate.length > 0 && (
               <Button
                 size="small"
                 startIcon={<AddIcon />}

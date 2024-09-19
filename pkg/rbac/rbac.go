@@ -26,6 +26,7 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
+	"github.com/casbin/casbin/v2/persist"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -44,11 +45,14 @@ import (
 
 // Everest API resource names.
 const (
-	ResourceNamespaces              = "namespaces"
-	ResourceDatabaseClusters        = "database-clusters"
-	ResourceDatabaseClusterBackups  = "database-cluster-backups"
-	ResourceDatabaseClusterRestores = "database-cluster-restores"
-	ResourceDatabaseEngines         = "database-engines"
+	ResourceBackupStorages             = "backup-storages"
+	ResourceDatabaseClusters           = "database-clusters"
+	ResourceDatabaseClusterBackups     = "database-cluster-backups"
+	ResourceDatabaseClusterCredentials = "database-cluster-credentials"
+	ResourceDatabaseClusterRestores    = "database-cluster-restores"
+	ResourceDatabaseEngines            = "database-engines"
+	ResourceMonitoringInstances        = "monitoring-instances"
+	ResourceNamespaces                 = "namespaces"
 )
 
 // RBAC actions.
@@ -57,6 +61,10 @@ const (
 	ActionRead   = "read"
 	ActionUpdate = "update"
 	ActionDelete = "delete"
+)
+
+const (
+	rbacEnabledValueTrue = "true"
 )
 
 // Setup a new informer that watches our RBAC ConfigMap.
@@ -83,6 +91,7 @@ func refreshEnforcerInBackground(
 		if err := validatePolicy(enforcer); err != nil {
 			panic("invalid policy detected - " + err.Error())
 		}
+		enforcer.EnableEnforce(IsEnabled(cm))
 	})
 	if inf.Start(ctx, &corev1.ConfigMap{}) != nil {
 		return errors.Join(err, errors.New("failed to watch RBAC ConfigMap"))
@@ -98,40 +107,47 @@ func getModel() (model.Model, error) {
 	return model.NewModelFromString(string(modelData))
 }
 
-// NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
-func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+func newEnforcer(adapter persist.Adapter, enableLogs bool) (*casbin.Enforcer, error) {
 	model, err := getModel()
 	if err != nil {
 		return nil, err
 	}
+	enf, err := casbin.NewEnforcer(model, adapter, enableLogs)
+	if err != nil {
+		return nil, err
+	}
+	if err := validatePolicy(enf); err != nil {
+		return nil, err
+	}
+	return enf, nil
+}
 
+// NewEnforcerFromFilePath creates a new Casbin enforcer with the policy stored at the given filePath.
+func NewEnforcerFromFilePath(filePath string) (*casbin.Enforcer, error) {
+	adapter, err := fileadapter.New(filePath)
+	if err != nil {
+		return nil, err
+	}
+	return newEnforcer(adapter, false)
+}
+
+// NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
+func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
 	cmReq := types.NamespacedName{
 		Namespace: common.SystemNamespace,
 		Name:      common.EverestRBACConfigMapName,
 	}
 	adapter := configmapadapter.New(l, kubeClient, cmReq)
-
-	enforcer, err := casbin.NewEnforcer(model, adapter, false)
+	enforcer, err := newEnforcer(adapter, false)
 	if err != nil {
-		return nil, errors.Join(err, errors.New("could not create casbin enforcer"))
-	}
-	if err := validatePolicy(enforcer); err != nil {
 		return nil, err
 	}
+	cm, err := adapter.ConfigMap(ctx)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to get RBAC ConfigMap"))
+	}
+	enforcer.EnableEnforce(IsEnabled(cm))
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
-}
-
-// NewEnforcerFromFilePath creates a new Casbin enforcer with the policy stored at the given filePath.
-func NewEnforcerFromFilePath(filePath string) (*casbin.Enforcer, error) {
-	model, err := getModel()
-	if err != nil {
-		return nil, err
-	}
-	adapter, err := fileadapter.New(filePath)
-	if err != nil {
-		return nil, err
-	}
-	return casbin.NewEnforcer(model, adapter)
 }
 
 // GetUser extracts the user from the JWT token in the context.
@@ -194,7 +210,7 @@ func buildPathResourceMap(basePath string) (map[string]string, []string, error) 
 }
 
 // NewEnforceHandler returns a function that checks if a user is allowed to access a resource.
-func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.Context, user string) (bool, error) {
+func NewEnforceHandler(l *zap.SugaredLogger, basePath string, enforcer *casbin.Enforcer) func(c echo.Context, user string) (bool, error) {
 	pathResourceMap, _, err := buildPathResourceMap(basePath)
 	if err != nil {
 		panic("failed to build path resource map: " + err.Error())
@@ -230,6 +246,12 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 		if resource == ResourceDatabaseEngines && name == "" && action == ActionRead {
 			return true, nil
 		}
+		if ok, err := enforcer.Enforce(user, resource, action, object); err != nil {
+			return false, errors.Join(err, errors.New("failed to enforce policy"))
+		} else if !ok {
+			l.Warnf("Permission denied: [%s %s %s %s]", user, resource, action, object)
+			return false, nil
+		}
 		return enforcer.Enforce(user, resource, action, object)
 	}
 }
@@ -253,9 +275,25 @@ func Can(ctx context.Context, filePath string, k *kubernetes.Kubernetes, req ...
 		return false, errors.New("expected input of the form [user action resource object]")
 	}
 	user, action, resource, object := req[0], req[1], req[2], req[3]
+	if object == "*" || object == "all" {
+		object = "/"
+		if resource == ResourceNamespaces {
+			object = ""
+		}
+	}
 	enforcer, err := newKubeOrFileEnforcer(ctx, k, filePath)
 	if err != nil {
 		return false, err
 	}
 	return enforcer.Enforce(user, resource, action, object)
+}
+
+// IsEnabled returns true if enabled == 'true' in the given ConfigMap.
+func IsEnabled(cm *corev1.ConfigMap) bool {
+	return cm.Data["enabled"] == rbacEnabledValueTrue
+}
+
+// ObjectName returns the a string that represents the name of an object in RBAC format.
+func ObjectName(args ...string) string {
+	return strings.Join(args, "/")
 }

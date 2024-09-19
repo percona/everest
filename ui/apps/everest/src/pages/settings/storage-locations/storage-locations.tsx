@@ -30,15 +30,19 @@ import {
   convertStoragesType,
 } from './storage-locations.utils';
 import { useNamespaces } from 'hooks/api/namespaces';
-import { useGetPermittedNamespaces } from 'utils/useGetPermissions';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import TableActionsMenu from '../../../components/table-actions-menu';
 import { StorageLocationsActionButtons } from './storage-locations-menu-actions';
 
 export const StorageLocations = () => {
   const queryClient = useQueryClient();
-
+  const { canCreate } = useNamespacePermissionsForResource('backup-storages');
   const { data: namespaces = [] } = useNamespaces();
-  const backupStorages = useBackupStorages(namespaces);
+  const backupStorages = useBackupStorages(
+    namespaces.map((namespace) => ({
+      namespace: namespace,
+    }))
+  );
 
   const backupStoragesLoading = backupStorages.some(
     (result) => result.queryResult.isLoading
@@ -96,10 +100,6 @@ export const StorageLocations = () => {
     ],
     []
   );
-
-  const { canCreate } = useGetPermittedNamespaces({
-    resource: 'backup-storages',
-  });
 
   const handleOpenCreateModal = () => {
     setSelectedStorageLocation(undefined);
@@ -195,7 +195,7 @@ export const StorageLocations = () => {
         columns={columns}
         data={tableData}
         renderTopToolbarCustomActions={() =>
-          canCreate && (
+          canCreate.length > 0 && (
             <Button
               size="small"
               startIcon={<Add />}

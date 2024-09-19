@@ -25,12 +25,14 @@ import {
   deleteMonitoringInstanceFn,
   updateMonitoringInstanceFn,
 } from 'api/monitoring';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import {
   CreateMonitoringInstancePayload,
   MonitoringInstance,
   MonitoringInstanceList,
   UpdateMonitoringInstancePayload,
 } from 'shared-types/monitoring.types';
+import { PerconaQueryOptions } from 'shared-types/query.types';
 
 type HookUpdateParam = {
   instanceName: string;
@@ -45,23 +47,37 @@ export interface MonitoringInstanceForNamespaceResult {
 }
 
 export const useMonitoringInstancesList = (
-  namespaces: string[],
-  enabled?: boolean
+  queryParams: Array<{
+    namespace: string;
+    options?: PerconaQueryOptions<
+      MonitoringInstanceList,
+      unknown,
+      MonitoringInstance[]
+    >;
+  }>
 ) => {
-  const queries = namespaces.map<
+  const { canRead } = useNamespacePermissionsForResource(
+    'monitoring-instances'
+  );
+  const queries = queryParams.map<
     UseQueryOptions<MonitoringInstanceList, unknown, MonitoringInstance[]>
-  >((namespace) => ({
-    queryKey: [MONITORING_INSTANCES_QUERY_KEY, namespace],
-    retry: false,
-    queryFn: () => getMonitoringInstancesFn(namespace),
-    refetchInterval: 5 * 1000,
-    enabled,
-  }));
+  >(({ namespace, options }) => {
+    const allowed = canRead.includes(namespace);
+    return {
+      queryKey: [MONITORING_INSTANCES_QUERY_KEY, namespace],
+      retry: false,
+      queryFn: () => getMonitoringInstancesFn(namespace),
+      refetchInterval: 5 * 1000,
+      select: allowed ? undefined : () => [],
+      ...options,
+      enabled: (options?.enabled ?? true) && allowed,
+    };
+  });
   const queryResults = useQueries({ queries });
 
   const results: MonitoringInstanceForNamespaceResult[] = queryResults.map(
     (item, i) => ({
-      namespace: namespaces[i],
+      namespace: queryParams[i].namespace,
       queryResult: item,
     })
   );

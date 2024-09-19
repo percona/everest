@@ -25,10 +25,14 @@ import (
 	"time"
 
 	"github.com/AlekSi/pointer"
+	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/rbac"
 )
 
@@ -60,11 +64,6 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 	}
 
 	if err := e.validateDatabaseClusterOnCreate(ctx, namespace, dbc); err != nil {
-		if errors.Is(err, errInsufficientPermissions) {
-			return ctx.JSON(http.StatusForbidden, Error{
-				Message: pointer.ToString("Cannot perform the operation due to insufficient permissions"),
-			})
-		}
 		return err
 	}
 
@@ -84,9 +83,67 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 	return err
 }
 
+// enforceDBClusterRBAC checks if the user has permission to read the backup-storage and monitoring-instances associated
+// with the provided DB cluster.
+func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.DatabaseCluster) error {
+	// Check if the user has permissions for all backup-storages in the schedule?
+	for _, sched := range db.Spec.Backup.Schedules {
+		bsName := sched.BackupStorageName
+		if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), bsName)); err != nil {
+			if !errors.Is(err, errInsufficientPermissions) {
+				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+			}
+			return err
+		}
+	}
+	// Check if the user has permission for the backup-storages used by PITR (if any)?
+	if bsName := pointer.Get(db.Spec.Backup.PITR.BackupStorageName); bsName != "" {
+		if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), bsName)); err != nil {
+			if !errors.Is(err, errInsufficientPermissions) {
+				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+			}
+			return err
+		}
+	}
+	// Check if the user has permissions for MonitoringConfig?
+	if mcName := pointer.Get(db.Spec.Monitoring).MonitoringConfigName; mcName != "" {
+		if err := e.enforce(user, rbac.ResourceMonitoringInstances, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), mcName)); err != nil {
+			if !errors.Is(err, errInsufficientPermissions) {
+				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+			}
+			return err
+		}
+	}
+	return nil
+}
+
 // ListDatabaseClusters lists the created database clusters on the specified kubernetes cluster.
 func (e *EverestServer) ListDatabaseClusters(ctx echo.Context, namespace string) error {
-	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, "")
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+	rbacFilter := transformK8sList(func(l *unstructured.UnstructuredList) error {
+		allowed := []unstructured.Unstructured{}
+		for _, obj := range l.Items {
+			db := &everestv1alpha1.DatabaseCluster{}
+			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, db); err != nil {
+				e.l.Error(errors.Join(err, errors.New("failed to convert unstructured to DatabaseCluster")))
+				return err
+			}
+			if err := e.enforceDBClusterRBAC(user, db); errors.Is(err, errInsufficientPermissions) {
+				continue
+			} else if err != nil {
+				return err
+			}
+			allowed = append(allowed, obj)
+		}
+		l.Items = allowed
+		return nil
+	})
+	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, "", rbacFilter)
 }
 
 // DeleteDatabaseCluster deletes a database cluster on the specified kubernetes cluster.
@@ -131,7 +188,23 @@ func (e *EverestServer) DeleteDatabaseCluster(
 
 // GetDatabaseCluster retrieves the specified database cluster on the specified kubernetes cluster.
 func (e *EverestServer) GetDatabaseCluster(ctx echo.Context, namespace, name string) error {
-	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, name)
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+
+	// Check all indirect permissions related to the DB cluster.
+	db, err := e.kubeClient.GetDatabaseCluster(ctx.Request().Context(), namespace, name)
+	if err != nil {
+		return err
+	}
+	if err := e.enforceDBClusterRBAC(user, db); err != nil {
+		return err
+	}
+	attachK8sTypeMeta(db)
+	return ctx.JSON(http.StatusOK, db)
 }
 
 // GetDatabaseClusterComponents returns database cluster components.
@@ -232,9 +305,7 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 
 	if err := e.validateDatabaseClusterOnUpdate(ctx, dbc, oldDB); err != nil {
 		if errors.Is(err, errInsufficientPermissions) {
-			return ctx.JSON(http.StatusForbidden, Error{
-				Message: pointer.ToString("Cannot perform the operation due to insufficient permissions"),
-			})
+			return err
 		}
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
@@ -303,9 +374,16 @@ func (e *EverestServer) GetDatabaseClusterPitr(ctx echo.Context, namespace, name
 
 	latestBackup := latestSuccessfulBackup(backups.Items)
 
-	uploadInterval := getDefaultUploadInterval(databaseCluster.Spec.Engine.Type, databaseCluster.Spec.Backup.PITR.UploadIntervalSec)
 	backupTime := latestBackup.Status.CreatedAt.UTC()
-	latest := latestRestorableDate(time.Now(), backupTime, uploadInterval)
+	var latest *time.Time
+	// if there is the LatestRestorableTime set in the CR, use it
+	if latestBackup.Status.LatestRestorableTime != nil {
+		latest = &latestBackup.Status.LatestRestorableTime.Time
+	} else {
+		// otherwise use heuristics based on the UploadInterval
+		heuristicsInterval := getDefaultUploadInterval(databaseCluster.Spec.Engine, databaseCluster.Spec.Backup.PITR.UploadIntervalSec)
+		latest = latestRestorableDate(time.Now(), backupTime, heuristicsInterval)
+	}
 
 	response.LatestDate = latest
 	if response.LatestDate != nil {
@@ -317,11 +395,15 @@ func (e *EverestServer) GetDatabaseClusterPitr(ctx echo.Context, namespace, name
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func latestRestorableDate(now, latestBackupTime time.Time, uploadInterval int) *time.Time {
+func latestRestorableDate(now, latestBackupTime time.Time, heuristicsInterval int) *time.Time {
+	// if heuristicsInterval is not set, then no latest restorable date available
+	if heuristicsInterval == 0 {
+		return nil
+	}
 	// delete nanoseconds since they're not accepted by restoration
 	now = now.Truncate(time.Duration(now.Nanosecond()) * time.Nanosecond)
 	// heuristic: latest restorable date is now minus uploadInterval
-	date := now.Add(-time.Duration(uploadInterval) * time.Second).UTC()
+	date := now.Add(-time.Duration(heuristicsInterval) * time.Second).UTC()
 	// not able to restore if after the latest backup passed less than uploadInterval time,
 	// so in that case return nil
 	if latestBackupTime.After(date) {
@@ -353,43 +435,35 @@ func sortFunc(a, b everestv1alpha1.DatabaseClusterBackup) int {
 	return -1
 }
 
-func getDefaultUploadInterval(engineType everestv1alpha1.EngineType, uploadInterval *int) int {
-	if uploadInterval != nil {
-		return *uploadInterval
+func getDefaultUploadInterval(engine everestv1alpha1.Engine, uploadInterval *int) int {
+	version, err := goversion.NewVersion(engine.Version)
+	if err != nil {
+		return 0
 	}
-	switch engineType {
+	switch engine.Type {
 	case everestv1alpha1.DatabaseEnginePXC:
-		return pxcDefaultUploadInterval
+		// latest restorable time appeared in PXC 1.14.0
+		if common.CheckConstraint(version, "<1.14.0") {
+			return valueOrDefault(uploadInterval, pxcDefaultUploadInterval)
+		}
 	case everestv1alpha1.DatabaseEnginePSMDB:
-		return psmdbDefaultUploadInterval
+		// latest restorable time appeared in PSMDB 1.16.0
+		if common.CheckConstraint(version, "<1.16.0") {
+			return valueOrDefault(uploadInterval, psmdbDefaultUploadInterval)
+		}
 	case everestv1alpha1.DatabaseEnginePostgresql:
-		return pgDefaultUploadInterval
+		// latest restorable time appeared in PG 2.4.0
+		if common.CheckConstraint(version, "<2.4.0") {
+			return valueOrDefault(uploadInterval, pgDefaultUploadInterval)
+		}
 	}
+	// for newer versions don't use the heuristics, so return 0 upload interval
 	return 0
 }
 
-// canTakeBackups checks if a given user is allowed to take backups.
-func (e *EverestServer) canTakeBackups(user string, object string) (bool, error) {
-	ok, err := e.rbacEnforcer.Enforce(
-		user, rbac.ResourceDatabaseClusterBackups,
-		rbac.ActionCreate,
-		object,
-	)
-	if err != nil {
-		return false, fmt.Errorf("failed to Enforce: %w", err)
+func valueOrDefault(value *int, defaultValue int) int {
+	if value == nil {
+		return defaultValue
 	}
-	return ok, nil
-}
-
-// canRestore checks if a given user is allowed to restore.
-func (e *EverestServer) canRestore(user string, object string) (bool, error) {
-	ok, err := e.rbacEnforcer.Enforce(
-		user, rbac.ResourceDatabaseClusterRestores,
-		rbac.ActionCreate,
-		object,
-	)
-	if err != nil {
-		return false, fmt.Errorf("failed to Enforce: %w", err)
-	}
-	return ok, nil
+	return *value
 }

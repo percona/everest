@@ -16,9 +16,8 @@
 import { expect, test } from '@playwright/test';
 import {
   deleteDbCluster,
-  suspendDbCluster,
-  resumeDbCluster,
-  restartDbCluster,
+  gotoDbClusterBackups,
+  gotoDbClusterRestores,
 } from '../utils/db-clusters-list';
 import { getTokenFromLocalStorage } from '../utils/localStorage';
 import { getClusterDetailedInfo } from '../utils/storage-class';
@@ -31,12 +30,17 @@ import {
   populateMonitoringModalForm,
 } from '../utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '../constants';
-import { waitForStatus, waitForDelete } from '../utils/table';
+import {
+  waitForStatus,
+  waitForDelete,
+  findRowAndClickActions,
+} from '../utils/table';
 import { checkError } from '../utils/generic';
 import {
   deleteMonitoringInstance,
   listMonitoringInstances,
 } from '../utils/monitoring-instance';
+import { clickOnDemandBackup } from '../db-cluster-details/utils';
 
 const {
   MONITORING_URL,
@@ -50,17 +54,14 @@ let token: string;
 test.describe.configure({ retries: 0 });
 
 [
-  { db: 'psmdb', size: 1 },
   { db: 'psmdb', size: 3 },
-  { db: 'pxc', size: 1 },
   { db: 'pxc', size: 3 },
-  { db: 'postgresql', size: 1 },
   { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
   test.describe(
-    'Init deploy workflow',
+    'Demand backup workflow',
     {
-      // Create/stop/resume/delete cluster in different configurations
+      // Create cluster, add data, create backup, destroy data and do restore
       tag: '@release',
     },
     () => {
@@ -71,11 +72,12 @@ test.describe.configure({ retries: 0 });
       );
       test.describe.configure({ timeout: 720000 });
 
-      const clusterName = `${db}-${size}-deploy`;
+      const clusterName = `${db}-${size}-dembkp`;
 
       let storageClasses = [];
       let namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
       let monitoringName = `${db}-${size}-pmm`;
+      let baseBackupName = `dembkp-${db}-${size}`;
 
       test.beforeAll(async ({ request }) => {
         token = await getTokenFromLocalStorage();
@@ -162,7 +164,7 @@ test.describe.configure({ retries: 0 });
         // go to db list and check status
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Initializing', 15000);
-        await waitForStatus(page, clusterName, 'Up', 360000);
+        await waitForStatus(page, clusterName, 'Up', 600000);
 
         const response = await request.get(
           `/v1/namespaces/${namespace}/database-clusters`,
@@ -196,28 +198,65 @@ test.describe.configure({ retries: 0 });
         expect(addedCluster?.spec.proxy.replicas).toBe(size);
       });
 
-      test(`Suspend cluster with ${db} and size ${size}`, async ({ page }) => {
-        await suspendDbCluster(page, clusterName);
-        // One node clusters and Postgresql don't seem to show Stopping state
-        if (size != 1 && db != 'postgresql') {
-          await waitForStatus(page, clusterName, 'Stopping', 45000);
-        }
-        await waitForStatus(page, clusterName, 'Paused', 120000);
+      test.skip(`Add data with ${db} and size ${size}`, async ({ page }) => {
+        // TODO
       });
 
-      test(`Resume cluster with ${db} and size ${size}`, async ({ page }) => {
-        await resumeDbCluster(page, clusterName);
-        await waitForStatus(page, clusterName, 'Initializing', 45000);
-        await waitForStatus(page, clusterName, 'Up', 240000);
+      test(`Create demand backup with ${db} and size ${size}`, async ({
+        page,
+      }) => {
+        await gotoDbClusterBackups(page, clusterName);
+        await clickOnDemandBackup(page);
+        await page.getByTestId('text-input-name').fill(baseBackupName + '-1');
+        await expect(page.getByTestId('text-input-name')).not.toBeEmpty();
+        await expect(
+          page.getByTestId('text-input-storage-location')
+        ).not.toBeEmpty();
+        await page.getByTestId('form-dialog-create').click();
+
+        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 120000);
       });
 
-      test(`Restart cluster with ${db} and size ${size}`, async ({ page }) => {
-        await restartDbCluster(page, clusterName);
-        if (size != 1 && db != 'postgresql') {
-          await waitForStatus(page, clusterName, 'Stopping', 45000);
-        }
-        await waitForStatus(page, clusterName, 'Initializing', 60000);
-        await waitForStatus(page, clusterName, 'Up', 240000);
+      test.skip(`Delete data with ${db} and size ${size}`, async ({ page }) => {
+        // TODO
+      });
+
+      test(`Restore cluster with ${db} and size ${size}`, async ({ page }) => {
+        await gotoDbClusterBackups(page, clusterName);
+        await findRowAndClickActions(
+          page,
+          baseBackupName + '-1',
+          'Restore to this DB'
+        );
+        await expect(
+          page.getByTestId('select-input-backup-name')
+        ).not.toBeEmpty();
+        await page.getByTestId('form-dialog-restore').click();
+
+        await page.goto('/databases');
+        await waitForStatus(page, clusterName, 'Restoring', 30000);
+        await waitForStatus(page, clusterName, 'Up', 600000);
+
+        await gotoDbClusterRestores(page, clusterName);
+        // we select based on backup source since restores cannot be named and we don't know
+        // in advance what will be the name
+        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 120000);
+      });
+
+      test(`Delete restore with ${db} and size ${size}`, async ({ page }) => {
+        await gotoDbClusterRestores(page, clusterName);
+        await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
+        await expect(page.getByLabel('Delete restore')).toBeVisible();
+        await page.getByTestId('confirm-dialog-delete').click();
+        await waitForDelete(page, baseBackupName + '-1', 15000);
+      });
+
+      test(`Delete backup with ${db} and size ${size}`, async ({ page }) => {
+        await gotoDbClusterBackups(page, clusterName);
+        await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
+        await expect(page.getByLabel('Delete backup')).toBeVisible();
+        await page.getByTestId('form-dialog-delete').click();
+        await waitForDelete(page, baseBackupName + '-1', 30000);
       });
 
       test(`Delete cluster with ${db} and size ${size}`, async ({ page }) => {
