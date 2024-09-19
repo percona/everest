@@ -23,7 +23,10 @@ import {
   UserAuthStatus,
 } from './auth.context.types';
 import { isAfter } from 'date-fns';
-import { initializeAuthorizerFetchLoop } from 'utils/rbac';
+import {
+  initializeAuthorizerFetchLoop,
+  stopAuthorizerFetchLoop,
+} from 'utils/rbac';
 
 const Provider = ({
   oidcConfig,
@@ -124,6 +127,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
       await userManager.clearStaleState();
       await userManager.removeUser();
     }
+    stopAuthorizerFetchLoop();
   }, [userManager]);
 
   const silentlyRenewToken = useCallback(async () => {
@@ -140,7 +144,8 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     if (isSsoEnabled) {
       userManager.events.addUserLoaded((user) => {
         localStorage.setItem('everestToken', user.id_token || '');
-        setLoggedInStatus(user.profile.name || '');
+        const decoded = jwtDecode(user.id_token || '');
+        setLoggedInStatus(decoded.sub || '');
       });
 
       userManager.events.addAccessTokenExpiring(() => {
@@ -165,10 +170,10 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
       const decoded = jwtDecode(token);
       const iss = decoded.iss;
       const exp = decoded.exp;
-      const username =
-        decoded.sub?.substring(0, decoded.sub.indexOf(':')) || '';
       if (iss === EVEREST_JWT_ISSUER) {
         const isTokenValid = await checkAuth(token);
+        const username =
+          decoded.sub?.substring(0, decoded.sub.indexOf(':')) || '';
         if (isTokenValid) {
           setLoggedInStatus(username);
         } else {
@@ -185,7 +190,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
         if (!user) {
           setLogoutStatus();
         } else {
-          setLoggedInStatus(username);
+          setLoggedInStatus(decoded.sub || '');
           return;
         }
       }
