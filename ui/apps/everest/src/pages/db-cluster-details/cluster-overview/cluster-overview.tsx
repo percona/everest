@@ -22,6 +22,7 @@ import { useContext } from 'react';
 import { DbClusterContext } from '../dbCluster.context';
 import { BackupsDetails } from './cards/backups-details';
 import { useDbClusterCredentials } from 'hooks/api/db-cluster/useCreateDbCluster';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const ClusterOverview = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -30,10 +31,14 @@ export const ClusterOverview = () => {
     isLoading: loadingCluster,
     canReadBackups,
   } = useContext(DbClusterContext);
+  const { canRead } = useRBACPermissions(
+    'database-cluster-credentials',
+    `${namespace}/${dbClusterName}`
+  );
 
   const { data: dbClusterDetails, isFetching: fetchingClusterDetails } =
     useDbClusterCredentials(dbClusterName || '', namespace, {
-      enabled: !!dbClusterName,
+      enabled: !!dbClusterName && canRead,
     });
 
   return (
