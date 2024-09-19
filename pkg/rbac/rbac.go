@@ -65,7 +65,6 @@ const (
 
 const (
 	rbacEnabledValueTrue = "true"
-	adminRoleName        = "role:admin"
 )
 
 // Setup a new informer that watches our RBAC ConfigMap.
@@ -91,6 +90,10 @@ func refreshEnforcerInBackground(
 		}
 		if err := validatePolicy(enforcer); err != nil {
 			panic("invalid policy detected - " + err.Error())
+		}
+		// Calling LoadPolicy() re-writes the entire model, so we need to add back the admin role.
+		if err := loadAdminPolicy(enforcer); err != nil {
+			panic("failed to load admin policy - " + err.Error())
 		}
 		enforcer.EnableEnforce(IsEnabled(cm))
 	})
@@ -183,7 +186,7 @@ func GetUser(c echo.Context) (string, error) {
 }
 
 func loadAdminPolicy(enf casbin.IEnforcer) error {
-	paths, _, err := buildPathResourceMap("")
+	paths, _, err := buildPathResourceMap("") // reads the swagger API definition
 	if err != nil {
 		return err
 	}
@@ -197,7 +200,7 @@ func loadAdminPolicy(enf casbin.IEnforcer) error {
 		if resource == ResourceNamespaces {
 			object = "*"
 		}
-		if _, err := enf.AddPolicy(adminRoleName, resource, action, object); err != nil {
+		if _, err := enf.AddPolicy(common.EverestAdminRole, resource, action, object); err != nil {
 			return err
 		}
 	}
