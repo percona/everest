@@ -627,21 +627,41 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 	// have permissions to take backups.
 	schedules := pointer.Get(pointer.Get(pointer.Get(databaseCluster.Spec).Backup).Schedules)
 	if len(schedules) > 0 {
-		if can, err := e.canTakeBackups(user, namespace+"/"); err != nil {
+		if err := e.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, rbac.ObjectName(namespace, "")); err != nil {
 			return err
-		} else if !can {
-			return errors.Join(errInsufficientPermissions, errors.New("missing permission to take backups"))
 		}
 	}
-	// To be able to create a cluster from a backup (restore backup to new cluster), the user needs to explicitly
-	// have permissions to take restores.
+
+	if err := e.enforceRestoreToNewDBRBAC(ctx.Request().Context(), user, namespace, databaseCluster); err != nil {
+		return err
+	}
+	return nil
+}
+
+// To be able to restore a backup to a new cluster, the following permissions are needed:
+// - create restores.
+// - read database cluster credentials.
+func (e *EverestServer) enforceRestoreToNewDBRBAC(
+	ctx context.Context, user, namespace string, databaseCluster *DatabaseCluster,
+) error {
 	sourceBackup := pointer.Get(pointer.Get(pointer.Get(databaseCluster.Spec).DataSource).DbClusterBackupName)
-	if sourceBackup != "" {
-		if can, err := e.canRestore(user, namespace+"/"+sourceBackup); err != nil {
-			return err
-		} else if !can {
-			return errors.Join(errInsufficientPermissions, errors.New("missing permission to restore"))
-		}
+	if sourceBackup == "" {
+		return nil
+	}
+
+	if err := e.enforce(user, rbac.ResourceDatabaseClusterRestores, rbac.ActionCreate, rbac.ObjectName(namespace, "")); err != nil {
+		return err
+	}
+
+	// Get the name of the source database cluster.
+	bkp, err := e.kubeClient.GetDatabaseClusterBackup(ctx, namespace, sourceBackup)
+	if err != nil {
+		return errors.Join(err, errors.New("failed to get database cluster backup"))
+	}
+	sourceDB := bkp.Spec.DBClusterName
+
+	if err := e.enforceDBRestoreRBAC(user, namespace, sourceBackup, sourceDB); err != nil {
+		return err
 	}
 	return nil
 }
@@ -1136,10 +1156,8 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 	// If the schedules are updated, we need to check that the user has
 	// permission to create backups in this namespace.
 	if !isSchedulesEqual() {
-		if can, err := e.canTakeBackups(user, oldDB.GetNamespace()+"/"); err != nil {
+		if err := e.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, rbac.ObjectName(oldDB.GetNamespace(), "")); err != nil {
 			return err
-		} else if !can {
-			return errors.Join(errInsufficientPermissions, errors.New("missing permission to take backups"))
 		}
 	}
 	return nil
