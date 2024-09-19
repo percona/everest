@@ -1,7 +1,7 @@
 package api
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 
 	"github.com/AlekSi/pointer"
@@ -19,34 +19,23 @@ func (e *EverestServer) ListNamespaces(ctx echo.Context) error {
 			Message: pointer.ToString("Failed to list namespaces"),
 		})
 	}
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
 	// Filter out result based on permission.
 	result := make([]string, 0, len(namespaces))
 	for _, ns := range namespaces {
-		if can, err := e.canReadNamespace(ctx, ns); err != nil {
-			e.l.Error(err)
+		if err := e.enforce(user, rbac.ResourceNamespaces, rbac.ActionRead, ns); errors.Is(err, errInsufficientPermissions) {
+			continue
+		} else if err != nil {
 			return ctx.JSON(http.StatusInternalServerError, Error{
 				Message: pointer.ToString("Failed to check namespace permission"),
 			})
-		} else if can {
-			result = append(result, ns)
 		}
+		result = append(result, ns)
 	}
 	return ctx.JSON(http.StatusOK, result)
-}
-
-// canReadNamespace checks if the user has permission to read the namespace.
-func (e *EverestServer) canReadNamespace(ctx echo.Context, namespace string) (bool, error) {
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return false, fmt.Errorf("failed to GetUser: %w", err)
-	}
-	ok, err := e.rbacEnforcer.Enforce(
-		user, rbac.ResourceNamespaces,
-		rbac.ActionRead,
-		namespace,
-	)
-	if err != nil {
-		return false, fmt.Errorf("failed to Enforce: %w", err)
-	}
-	return ok, nil
 }
