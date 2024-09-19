@@ -8,20 +8,20 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pg-client
+  name: postgresql-client
   namespace: db-client
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: pg-client
+      name: postgresql-client
   template:
     metadata:
       labels:
-        name: pg-client
+        name: postgresql-client
     spec:
       containers:
-        - name: pg-client
+        - name: postgresql-client
           image: percona/percona-distribution-postgresql:16
           imagePullPolicy: Always
           command:
