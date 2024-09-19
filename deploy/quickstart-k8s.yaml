@@ -92,15 +92,7 @@ metadata:
 data:
   enabled: "false"
   policy.csv: |
-    p, admin:role, namespaces, *, *
-    p, admin:role, database-engines, *, */*
-    p, admin:role, database-clusters, *, */*
-    p, admin:role, database-cluster-backups, *, */*
-    p, admin:role, database-cluster-restores, *, */*
-    p, admin:role, database-cluster-credentials, *, */*
-    p, admin:role, backup-storages, *, */*
-    p, admin:role, monitoring-instances, *, */*
-    g, admin, admin:role
+    g, admin, role:admin
 ---
 apiVersion: apps/v1
 kind: Deployment
