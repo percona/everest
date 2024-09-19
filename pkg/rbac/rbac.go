@@ -207,7 +207,7 @@ func buildPathResourceMap(basePath string) (map[string]string, []string, error) 
 }
 
 // NewEnforceHandler returns a function that checks if a user is allowed to access a resource.
-func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.Context, user string) (bool, error) {
+func NewEnforceHandler(l *zap.SugaredLogger, basePath string, enforcer *casbin.Enforcer) func(c echo.Context, user string) (bool, error) {
 	pathResourceMap, _, err := buildPathResourceMap(basePath)
 	if err != nil {
 		panic("failed to build path resource map: " + err.Error())
@@ -243,6 +243,12 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 		if resource == ResourceDatabaseEngines && name == "" && action == ActionRead {
 			return true, nil
 		}
+		if ok, err := enforcer.Enforce(user, resource, action, object); err != nil {
+			return false, errors.Join(err, errors.New("failed to enforce policy"))
+		} else if !ok {
+			l.Warnf("Permission denied: [%s %s %s %s]", user, resource, action, object)
+			return false, nil
+		}
 		return enforcer.Enforce(user, resource, action, object)
 	}
 }
@@ -276,4 +282,9 @@ func Can(ctx context.Context, filePath string, k *kubernetes.Kubernetes, req ...
 // IsEnabled returns true if enabled == 'true' in the given ConfigMap.
 func IsEnabled(cm *corev1.ConfigMap) bool {
 	return cm.Data["enabled"] == rbacEnabledValueTrue
+}
+
+// ObjectName returns the a string that represents the name of an object in RBAC format.
+func ObjectName(args ...string) string {
+	return strings.Join(args, "/")
 }

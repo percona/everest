@@ -17,7 +17,6 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -87,12 +86,8 @@ func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace
 	}
 
 	srcBkp := pointer.Get(pointer.Get(restore.Spec).DataSource.DbClusterBackupName)
-	if ok, err := e.enforceDBRestoreRBAC(user, namespace, srcBkp, dbCluster.GetName()); err != nil {
+	if err := e.enforceDBRestoreRBAC(user, namespace, srcBkp, dbCluster.GetName()); err != nil {
 		return err
-	} else if !ok {
-		return ctx.JSON(http.StatusForbidden, Error{
-			Message: pointer.To(errInsufficientPermissions.Error()),
-		})
 	}
 
 	if dbCluster.Status.Status == everestv1alpha1.AppStateRestoring {
@@ -105,19 +100,14 @@ func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace
 	return e.proxyKubernetes(ctx, namespace, databaseClusterRestoreKind, "")
 }
 
-func (e *EverestServer) enforceDBRestoreRBAC(user, namespace, srcBackupName, dbClusterName string) (bool, error) {
-	if ok, err := e.canGetDatabaseClusterCredentials(user, namespace+"/"+dbClusterName); err != nil {
-		e.l.Error(errors.Join(err, errors.New("failed to check database-cluster-credentials permissions")))
-		return false, err
-	} else if !ok {
-		return false, nil
+func (e *EverestServer) enforceDBRestoreRBAC(user, namespace, srcBackupName, dbClusterName string) error {
+	if err := e.enforce(user, rbac.ResourceDatabaseClusterCredentials, rbac.ActionRead, rbac.ObjectName(namespace, dbClusterName)); err != nil {
+		return err
 	}
-	if ok, err := e.canGetDatabaseClusterBackups(user, namespace+"/"+srcBackupName); err != nil {
-		return false, err
-	} else if !ok {
-		return false, nil
+	if err := e.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionRead, rbac.ObjectName(namespace, srcBackupName)); err != nil {
+		return err
 	}
-	return true, nil
+	return nil
 }
 
 // DeleteDatabaseClusterRestore Delete the specified cluster restore on the specified kubernetes cluster.
