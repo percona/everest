@@ -93,7 +93,6 @@ func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace
 		return ctx.JSON(http.StatusForbidden, Error{
 			Message: pointer.To(errInsufficientPermissions.Error()),
 		})
-
 	}
 
 	if dbCluster.Status.Status == everestv1alpha1.AppStateRestoring {
