@@ -71,6 +71,13 @@ func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace
 		})
 	}
 
+	if err := validateDatabaseClusterRestore(ctx.Request().Context(), namespace, restore, e.kubeClient); err != nil {
+		e.l.Error(err)
+		return ctx.JSON(http.StatusBadRequest, Error{
+			Message: pointer.ToString(err.Error()),
+		})
+	}
+
 	dbCluster, err := e.kubeClient.GetDatabaseCluster(ctx.Request().Context(), namespace, restore.Spec.DbClusterName)
 	if err != nil {
 		e.l.Error(err)
@@ -86,13 +93,6 @@ func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace
 	} else if !ok {
 		return ctx.JSON(http.StatusForbidden, Error{
 			Message: pointer.ToString(errInsufficientPermissions.Error()),
-		})
-	}
-
-	if err := validateDatabaseClusterRestore(ctx.Request().Context(), namespace, restore, e.kubeClient); err != nil {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusBadRequest, Error{
-			Message: pointer.ToString(err.Error()),
 		})
 	}
 
