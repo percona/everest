@@ -79,6 +79,7 @@ func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace
 		})
 	}
 
+	// User requires database-cluster-credentials permissions on this db to create a restore.
 	if ok, err := e.canGetDatabaseClusterCredentials(user, dbCluster.GetNamespace()+"/"+dbCluster.GetName()); err != nil {
 		e.l.Error(errors.Join(err, errors.New("failed to check database-cluster-credentials permissions")))
 		return err

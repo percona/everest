@@ -645,35 +645,32 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 // To be able to restore a backup to a new cluster, the following permissions are needed:
 // - create restores.
 // - read database cluster credentials.
-//
-//nolint:nestif
 func (e *EverestServer) enforceRestoreToNewDBRBAC(
 	ctx context.Context, user, namespace string, databaseCluster *DatabaseCluster,
 ) (bool, error) {
 	sourceBackup := pointer.Get(pointer.Get(pointer.Get(databaseCluster.Spec).DataSource).DbClusterBackupName)
-	if sourceBackup != "" {
-		if can, err := e.canRestore(user, namespace+"/"); err != nil {
-			return false, err
-		} else if !can {
-			return false, nil
-		}
+	if sourceBackup == "" {
+		return true, nil
+	}
 
-		// Get the name of the source database cluster.
-		bkp, err := e.kubeClient.GetDatabaseClusterBackup(ctx, namespace, sourceBackup)
-		if err != nil {
-			return false, errors.Join(err, errors.New("failed to get database cluster backup"))
-		}
-		srcDB, err := e.kubeClient.GetDatabaseCluster(ctx, namespace, bkp.Spec.DBClusterName)
-		if err != nil {
-			return false, errors.Join(err, errors.New("failed to get source database cluster"))
-		}
+	if can, err := e.canRestore(user, namespace+"/"); err != nil {
+		return false, err
+	} else if !can {
+		return false, nil
+	}
 
-		if ok, err := e.canGetDatabaseClusterCredentials(user, namespace+"/"+srcDB.GetName()); err != nil {
-			e.l.Error(errors.Join(err, errors.New("failed to check database-cluster-credentials permissions")))
-			return false, err
-		} else if !ok {
-			return false, nil
-		}
+	// Get the name of the source database cluster.
+	bkp, err := e.kubeClient.GetDatabaseClusterBackup(ctx, namespace, sourceBackup)
+	if err != nil {
+		return false, errors.Join(err, errors.New("failed to get database cluster backup"))
+	}
+	srcDB := bkp.Spec.DBClusterName
+
+	if ok, err := e.canGetDatabaseClusterCredentials(user, namespace+"/"+srcDB); err != nil {
+		e.l.Error(errors.Join(err, errors.New("failed to check database-cluster-credentials permissions")))
+		return false, err
+	} else if !ok {
+		return false, nil
 	}
 	return true, nil
 }
