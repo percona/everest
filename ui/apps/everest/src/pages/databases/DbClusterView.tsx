@@ -47,15 +47,6 @@ export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
   const { data: namespaces = [], isLoading: loadingNamespaces } =
     useNamespaces();
-  const dbClustersResults = useDBClustersForNamespaces(namespaces);
-  const dbClustersLoading = dbClustersResults.some(
-    (result) => result.queryResult.isLoading
-  );
-
-  const tableData = useMemo(
-    () => convertDbClusterPayloadToTableFormat(dbClustersResults),
-    [dbClustersResults]
-  );
 
   const { isPending: deletingCluster } = useDeleteDbCluster();
   const {
@@ -85,6 +76,20 @@ export const DbClusterView = () => {
   const disableKeepDataCheckbox =
     selectedDbCluster?.spec.engine.type === DbEngineType.POSTGRESQL;
   const hideCheckbox = !backups.length;
+
+  const dbClustersResults = useDBClustersForNamespaces(
+    namespaces.map((ns) => ({
+      namespace: ns,
+    }))
+  );
+  const dbClustersLoading = dbClustersResults.some(
+    (result) => result.queryResult.isLoading
+  );
+
+  const tableData = useMemo(
+    () => convertDbClusterPayloadToTableFormat(dbClustersResults),
+    [dbClustersResults]
+  );
 
   const columns = useMemo<MRT_ColumnDef<DbClusterTableElement>[]>(
     () => [

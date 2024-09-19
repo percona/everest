@@ -30,8 +30,11 @@ export const MonitoringEditModal = ({
   };
 
   const { namespace = '' } = useParams();
-  const namespaces = [namespace];
-  const monitoringInstancesResult = useMonitoringInstancesList(namespaces);
+  const monitoringInstancesResult = useMonitoringInstancesList([
+    {
+      namespace,
+    },
+  ]);
 
   const monitoringInstancesLoading = monitoringInstancesResult.some(
     (result) => result.queryResult.isLoading

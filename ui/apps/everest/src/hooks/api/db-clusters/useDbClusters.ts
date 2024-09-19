@@ -20,6 +20,10 @@ import {
   UseQueryResult,
 } from '@tanstack/react-query';
 import { getDbClustersFn } from 'api/dbClusterApi';
+import {
+  useNamespacePermissionsForResource,
+  useRBACPermissions,
+} from 'hooks/rbac';
 import { DbCluster, GetDbClusterPayload } from 'shared-types/dbCluster.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import cronConverter from 'utils/cron-converter';
@@ -57,30 +61,45 @@ export const dbClustersQuerySelect = ({
 export const useDbClusters = (
   namespace: string,
   options?: PerconaQueryOptions<GetDbClusterPayload, unknown, DbCluster[]>
-) =>
-  useQuery({
+) => {
+  const { canRead } = useRBACPermissions('database-clusters', `${namespace}/*`);
+  return useQuery({
     queryKey: [DB_CLUSTERS_QUERY_KEY],
     queryFn: () => getDbClustersFn(namespace),
     refetchInterval: 5 * 1000,
-    select: dbClustersQuerySelect,
+    select: canRead ? dbClustersQuerySelect : () => [],
     ...options,
+    enabled: (options?.enabled ?? true) && canRead,
   });
+};
 
-export const useDBClustersForNamespaces = (namespaces: string[]) => {
-  const queries = namespaces.map<
+export const useDBClustersForNamespaces = (
+  queryParams: Array<{
+    namespace: string;
+    options?: PerconaQueryOptions<GetDbClusterPayload, unknown, DbCluster[]>;
+  }>
+) => {
+  const { canRead } = useNamespacePermissionsForResource('database-clusters');
+  const queries = queryParams.map<
     UseQueryOptions<GetDbClusterPayload, unknown, DbCluster[]>
-  >((namespace) => ({
-    queryKey: [DB_CLUSTERS_QUERY_KEY, namespace],
-    retry: false,
-    queryFn: () => getDbClustersFn(namespace),
-    refetchInterval: 5 * 1000,
-    select: dbClustersQuerySelect,
-  }));
+  >(({ namespace, options }) => {
+    const allowed = canRead.includes(namespace);
+    const enabled = (options?.enabled ?? true) && allowed;
+    return {
+      queryKey: [DB_CLUSTERS_QUERY_KEY, namespace],
+      retry: false,
+      queryFn: () => getDbClustersFn(namespace),
+      refetchInterval: 5 * 1000,
+      select: allowed ? dbClustersQuerySelect : () => [],
+      ...options,
+      enabled,
+    };
+  });
 
   const queryResults = useQueries({ queries });
   const results: DbClusterForNamespaceResult[] = queryResults.map(
     (item, i) => ({
-      namespace: namespaces[i],
+      namespace: queryParams[i].namespace,
       queryResult: item,
     })
   );

@@ -34,7 +34,11 @@ export const MonitoringEndpoints = () => {
   const [selectedInstance, setSelectedInstance] =
     useState<MonitoringInstance>();
   const { data: namespaces = [] } = useNamespaces();
-  const monitoringInstances = useMonitoringInstancesList(namespaces);
+  const monitoringInstances = useMonitoringInstancesList(
+    namespaces.map((ns) => ({
+      namespace: ns,
+    }))
+  );
 
   const monitoringInstancesLoading = monitoringInstances.some(
     (result) => result.queryResult.isLoading
