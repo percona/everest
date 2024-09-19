@@ -9,7 +9,7 @@ import { ScheduleModalContext } from '../../backups.context';
 import ScheduledBackupsList from './scheduled-backups-list';
 import { BackupListTableHeaderProps } from './backups-list-table-header.types';
 import { Messages } from './backups-list-table-header.messages';
-import { useRBACPermissions } from 'hooks/rbac/rbac';
+import { useRBACPermissions } from 'hooks/rbac';
 
 const BackupListTableHeader = ({
   onNowClick,

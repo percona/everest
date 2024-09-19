@@ -21,7 +21,7 @@ import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { Backup, BackupStatus } from 'shared-types/backups.types';
-import { useRBACPermissions } from 'hooks/rbac/rbac';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const BackupActionButtons = (
   row: MRT_Row<Backup>,
