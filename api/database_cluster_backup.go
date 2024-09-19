@@ -230,3 +230,15 @@ func (e *EverestServer) canGetBackupStorage(user, namespace, name string) (bool,
 	}
 	return ok, nil
 }
+
+func (e *EverestServer) canGetDatabaseClusterBackups(user, object string) (bool, error) {
+	ok, err := e.rbacEnforcer.Enforce(
+		user, rbac.ResourceDatabaseClusterBackups,
+		rbac.ActionRead,
+		object,
+	)
+	if err != nil {
+		return false, fmt.Errorf("failed to Enforce: %w", err)
+	}
+	return ok, nil
+}

@@ -664,10 +664,9 @@ func (e *EverestServer) enforceRestoreToNewDBRBAC(
 	if err != nil {
 		return false, errors.Join(err, errors.New("failed to get database cluster backup"))
 	}
-	srcDB := bkp.Spec.DBClusterName
+	sourceDB := bkp.Spec.DBClusterName
 
-	if ok, err := e.canGetDatabaseClusterCredentials(user, namespace+"/"+srcDB); err != nil {
-		e.l.Error(errors.Join(err, errors.New("failed to check database-cluster-credentials permissions")))
+	if ok, err := e.enforceDBRestoreRBAC(user, namespace, sourceBackup, sourceDB); err != nil {
 		return false, err
 	} else if !ok {
 		return false, nil

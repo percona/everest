@@ -86,14 +86,14 @@ func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace
 		})
 	}
 
-	// User requires database-cluster-credentials permissions on this db to create a restore.
-	if ok, err := e.canGetDatabaseClusterCredentials(user, dbCluster.GetNamespace()+"/"+dbCluster.GetName()); err != nil {
-		e.l.Error(errors.Join(err, errors.New("failed to check database-cluster-credentials permissions")))
+	srcBkp := pointer.Get(pointer.Get(restore.Spec).DataSource.DbClusterBackupName)
+	if ok, err := e.enforceDBRestoreRBAC(user, namespace, srcBkp, dbCluster.GetName()); err != nil {
 		return err
 	} else if !ok {
 		return ctx.JSON(http.StatusForbidden, Error{
-			Message: pointer.ToString(errInsufficientPermissions.Error()),
+			Message: pointer.To(errInsufficientPermissions.Error()),
 		})
+
 	}
 
 	if dbCluster.Status.Status == everestv1alpha1.AppStateRestoring {
@@ -104,6 +104,21 @@ func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace
 	}
 
 	return e.proxyKubernetes(ctx, namespace, databaseClusterRestoreKind, "")
+}
+
+func (e *EverestServer) enforceDBRestoreRBAC(user, namespace, srcBackupName, dbClusterName string) (bool, error) {
+	if ok, err := e.canGetDatabaseClusterCredentials(user, namespace+"/"+dbClusterName); err != nil {
+		e.l.Error(errors.Join(err, errors.New("failed to check database-cluster-credentials permissions")))
+		return false, err
+	} else if !ok {
+		return false, nil
+	}
+	if ok, err := e.canGetDatabaseClusterBackups(user, namespace+"/"+srcBackupName); err != nil {
+		return false, err
+	} else if !ok {
+		return false, nil
+	}
+	return true, nil
 }
 
 // DeleteDatabaseClusterRestore Delete the specified cluster restore on the specified kubernetes cluster.
