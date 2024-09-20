@@ -40,11 +40,11 @@ export interface paths {
          *     *Example:*
          *     Assume the following RBAC policy, and users `alice` and `bob`:
          *     ```
-         *     p, admin:role, namespaces, read, *
-         *     p, admin:role, database-engines, *, *\/*
-         *     p, admin:role, database-clusters, *, *\/*
+         *     p, role:dev, namespaces, read, *
+         *     p, role:dev, database-engines, *, *\/*
+         *     p, role:dev, database-clusters, *, *\/*
          *     p, bob, database-clusters, *, *\/*
-         *     g, alice, admin:role
+         *     g, alice, role:dev
          *     ```
          *     The API will return the following permissions for `alice`:
          *     ```
@@ -844,7 +844,7 @@ export interface components {
         };
         NamespaceList: string[];
         UserPermissions: {
-            enabled?: boolean;
+            enabled: boolean;
             permissions?: string[][];
         };
         UserCredentials: {
