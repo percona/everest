@@ -1,4 +1,4 @@
-const { EVEREST_BUCKETS_NAMESPACES_MAP } = process.env;
+const { EVEREST_BUCKETS_NAMESPACES_MAP, EVEREST_DIR, TAG_FOR_UPGRADE } = process.env;
 
 type BucketsNamespaceMap = [string, string[]][];
 
@@ -13,3 +13,6 @@ export enum EVEREST_CI_NAMESPACES {
 
 export const getBucketNamespacesMap = (): BucketsNamespaceMap =>
   JSON.parse(EVEREST_BUCKETS_NAMESPACES_MAP);
+
+export const everestdir = EVEREST_DIR;
+export const everestTagForUpgrade = TAG_FOR_UPGRADE;
