@@ -72,4 +72,5 @@ export type BackupsDetailsOverviewCardProps = {
   pitrStorageName: NonNullable<
     NonNullable<DbCluster['spec']['backup']>['pitr']
   >['backupStorageName'];
+  showStorage: boolean;
 } & OverviewCardProps;

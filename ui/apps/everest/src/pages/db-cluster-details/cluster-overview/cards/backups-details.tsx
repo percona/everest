@@ -31,6 +31,7 @@ export const BackupsDetails = ({
   pitrStorageName,
   backup,
   loading,
+  showStorage = true,
 }: BackupsDetailsOverviewCardProps) => {
   const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
 
@@ -87,11 +88,13 @@ export const BackupsDetails = ({
               pitrEnabled ? Messages.fields.enabled : Messages.fields.disabled
             }
           />
-          <OverviewSectionRow
-            labelProps={{ minWidth: '126px' }}
-            label={Messages.fields.backupStorages}
-            contentString={pitrStorageName}
-          />
+          {showStorage && (
+            <OverviewSectionRow
+              labelProps={{ minWidth: '126px' }}
+              label={Messages.fields.backupStorages}
+              contentString={pitrStorageName}
+            />
+          )}
         </OverviewSection>
       </Stack>
     </OverviewCard>
