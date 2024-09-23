@@ -7,14 +7,21 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 var b = backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second*5), 10)
+
+const (
+	pollInterval = 5 * time.Second
+	pollTimeout  = 5 * time.Minute
+)
 
 // Installer provides methods for installing the Everest helm chart.
 type Installer struct {
@@ -91,4 +98,68 @@ func (i *Installer) ApproveDBNamespacesInstallPlans(ctx context.Context) error {
 
 	}
 	return nil
+}
+
+// DeleteAllDatabaseClusters deletes all database clusters.
+func (i *Installer) DeleteAllDatabaseClusters(ctx context.Context) error {
+	dbs, err := i.getDBs(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get DBs: %w", err)
+	}
+
+	for ns, dbs := range dbs {
+		for _, db := range dbs.Items {
+			i.l.Infof("Deleting database cluster '%s' in namespace '%s'", db.Name, ns)
+			// Delete in foreground.
+			if !db.GetDeletionTimestamp().IsZero() {
+				finalizers := db.GetFinalizers()
+				finalizers = append(finalizers, common.ForegroundDeletionFinalizer)
+				db.SetFinalizers(finalizers)
+				if err := i.kubeclient.PatchDatabaseCluster(&db); err != nil {
+					return errors.Join(errors.New("failed to add foregroundDeletion finalizer"), err)
+				}
+			}
+			if err := i.kubeclient.DeleteDatabaseCluster(ctx, ns, db.Name); err != nil {
+				return err
+			}
+		}
+	}
+	// Wait for all database clusters to be deleted, or timeout after 5 minutes.
+	i.l.Info("Waiting for database clusters to be deleted")
+	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
+		allDBs, err := i.getDBs(ctx)
+		if err != nil {
+			return false, err
+		}
+
+		for _, dbs := range allDBs {
+			if len(dbs.Items) > 0 {
+				return false, nil
+			}
+		}
+		i.l.Info("All database clusters have been deleted")
+		return true, nil
+	})
+}
+
+func (i *Installer) getDBs(ctx context.Context) (map[string]*everestv1alpha1.DatabaseClusterList, error) {
+	allDBs := make(map[string]*everestv1alpha1.DatabaseClusterList)
+	namespaces, err := i.kubeclient.GetDBNamespaces(ctx)
+	if err != nil {
+		// If the system namespace doesn't exist, we assume there are no DBs.
+		if k8serrors.IsNotFound(err) {
+			return allDBs, nil
+		}
+		return nil, err
+	}
+
+	for _, ns := range namespaces {
+		dbs, err := i.kubeclient.ListDatabaseClusters(ctx, ns)
+		if err != nil {
+			return nil, err
+		}
+		allDBs[ns] = dbs
+	}
+
+	return allDBs, nil
 }
