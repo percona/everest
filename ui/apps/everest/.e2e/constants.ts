@@ -1,4 +1,5 @@
-const { EVEREST_BUCKETS_NAMESPACES_MAP, EVEREST_DIR, TAG_FOR_UPGRADE } = process.env;
+const { EVEREST_BUCKETS_NAMESPACES_MAP, EVEREST_DIR, TAG_FOR_UPGRADE } =
+  process.env;
 
 type BucketsNamespaceMap = [string, string[]][];
 
