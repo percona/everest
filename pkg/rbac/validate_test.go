@@ -71,16 +71,16 @@ func TestCheckResourceNames(t *testing.T) {
 	}{
 		{
 			policies: [][]string{
-				{"admin:role", "database-clusters", "create", "*"},
-				{"admin:role", "monitoring-instances", "*", "*"},
+				{"role:admin", "database-clusters", "create", "*"},
+				{"role:admin", "monitoring-instances", "*", "*"},
 			},
 			valid: true,
 		},
 		{
 			policies: [][]string{
-				{"admin:role", "database-clusters", "create", "*"},
-				{"admin:role", "monitoring-instances", "*", "*"},
-				{"admin:role", "does-not-exist", "*", "*"},
+				{"role:admin", "database-clusters", "create", "*"},
+				{"role:admin", "monitoring-instances", "*", "*"},
+				{"role:admin", "does-not-exist", "*", "*"},
 			},
 			valid: false,
 		},
@@ -108,19 +108,19 @@ func TestCheckRoles(t *testing.T) {
 		valid    bool
 	}{
 		{
-			roles: []string{"admin:role", "viewer:role"},
+			roles: []string{"role:admin", "role:viewer"},
 			policies: [][]string{
-				{"admin:role", "database-clusters", "create", "*"},
-				{"admin:role", "monitoring-instances", "*", "*"},
+				{"role:admin", "database-clusters", "create", "*"},
+				{"role:admin", "monitoring-instances", "*", "*"},
 			},
 			valid: true,
 		},
 		{
-			roles: []string{"admin:role", "viewer:role"},
+			roles: []string{"role:admin", "role:viewer"},
 			policies: [][]string{
-				{"admin:role", "database-clusters", "create", "*"},
-				{"admin:role", "monitoring-instances", "*", "*"},
-				{"does-not-exist:role", "monitoring-instances", "*", "*"},
+				{"role:admin", "database-clusters", "create", "*"},
+				{"role:admin", "monitoring-instances", "*", "*"},
+				{"role:does-not-exist", "monitoring-instances", "*", "*"},
 			},
 			valid: false,
 		},
@@ -147,19 +147,19 @@ func TestValidateTerms(t *testing.T) {
 		valid bool
 	}{
 		{
-			terms: []string{"admin:role", "database-clusters", "create", "*"},
+			terms: []string{"role:admin", "database-clusters", "create", "*"},
 			valid: true,
 		},
 		{
-			terms: []string{"admin!!:role", "database-clusters", "create", "*"},
+			terms: []string{"role:admin!!", "database-clusters", "create", "*"},
 			valid: false,
 		},
 		{
-			terms: []string{"admin!!:role", "database clusters", "create", "*"},
+			terms: []string{"role:admin!!", "database clusters", "create", "*"},
 			valid: false,
 		},
 		{
-			terms: []string{"admin!!:role", "", "create", "*"},
+			terms: []string{"role:admin!!", "", "create", "*"},
 			valid: false,
 		},
 	}
