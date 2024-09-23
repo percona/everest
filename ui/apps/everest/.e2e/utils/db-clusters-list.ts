@@ -15,11 +15,13 @@
 
 import { APIRequestContext, expect, Page } from '@playwright/test';
 import { findRowAndClickActions } from './table';
+import {getTokenFromLocalStorage} from "./localStorage";
 
 export const getDBClustersList = async (
-  token: string,
   request: APIRequestContext
 ) => {
+  const token = await getTokenFromLocalStorage();
+
   const response = await request.get('/v1/database-clusters', {
     headers: {
       Authorization: `Bearer ${token}`,

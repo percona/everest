@@ -15,7 +15,7 @@
 import { defineConfig } from '@playwright/test';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { STORAGE_STATE_FILE } from './constants';
+import { STORAGE_STATE_FILE, TIMEOUT } from './constants';
 import 'dotenv/config';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -42,6 +42,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 1,
   /* Opt out of parallel tests on CI. */
   workers: 1,
+  timeout: TIMEOUT.TwentyMinutes,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['github'],

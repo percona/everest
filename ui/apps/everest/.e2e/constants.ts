@@ -17,3 +17,16 @@ export const getBucketNamespacesMap = (): BucketsNamespaceMap =>
 
 export const everestdir = EVEREST_DIR;
 export const everestTagForUpgrade = TAG_FOR_UPGRADE;
+
+const OneMin = 60000;
+
+export enum TIMEOUT {
+  OneMinute = OneMin,
+  ThreeMinutes = 3 * OneMin,
+  FiveMinutes = 5 * OneMin,
+  TenMinutes = 10 * OneMin,
+  FifteenMinutes = 15 * OneMin,
+  TwentyMinutes = 20 * OneMin,
+  ThirtyMinutes = 30 * OneMin,
+  SixtyMinutes = 60 * OneMin,
+}

@@ -1,6 +1,8 @@
-import { test } from '@playwright/test';
+import {expect, test} from '@playwright/test';
 import { createDbClusterFn } from '../utils/db-cluster';
 import { mongoDBCluster, postgresDBCluster, psDBCluster } from './testData';
+import {getDBClustersList} from "../utils/db-clusters-list";
+import {TIMEOUT} from "../constants";
 
 test.describe.configure({ retries: 0 });
 test('Pre upgrade setup', { tag: '@pre-upgrade' }, async ({ request }) => {
@@ -34,4 +36,17 @@ test('Pre upgrade setup', { tag: '@pre-upgrade' }, async ({ request }) => {
     memory: postgresDBCluster.disk,
     externalAccess: postgresDBCluster.externalAccess,
   });
+
+  await expect(async () => {
+    const clusters = await getDBClustersList(request);
+
+    console.log(clusters);
+
+    clusters.map((c) => {
+      expect(c).toMatchObject({ status: { status: 'ready' }});
+    });
+  }).toPass({
+    timeout: TIMEOUT.TenMinutes,
+    intervals: [ TIMEOUT.OneMinute ],
+  })
 });
