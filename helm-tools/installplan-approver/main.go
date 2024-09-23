@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/go-logr/zapr"
-	"go.uber.org/zap"
 	ctrlruntimelog "sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/percona/everest/pkg/kubernetes"
+	helmutils "github.com/percona/everest/helm-tools/utils"
 	"github.com/percona/everest/pkg/kubernetes/helm"
 	"github.com/percona/everest/pkg/logger"
 )
@@ -29,7 +28,7 @@ func main() {
 	ctrlruntimelog.SetLogger(zapr.NewLogger(logger))
 
 	l := logger.Sugar()
-	kubeClient, err := newClient(l)
+	kubeClient, err := helmutils.NewClient(l, kubeconfigPath)
 	if err != nil {
 		l.Fatal(err)
 	}
@@ -51,11 +50,4 @@ func main() {
 		l.Fatalf("Failed to approve the install plan(s) for DB namespaces: %v", err)
 	}
 	l.Info("Installed Everest DB namespaces successfully")
-}
-
-func newClient(l *zap.SugaredLogger) (kubernetes.KubernetesConnector, error) {
-	if kubeconfigPath != "" {
-		return kubernetes.New(kubeconfigPath, l)
-	}
-	return kubernetes.NewInCluster(l)
 }
