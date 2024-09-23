@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"time"
 
 	"github.com/go-logr/zapr"
 	"go.uber.org/zap"
@@ -32,6 +34,23 @@ func main() {
 		l.Fatal(err)
 	}
 	helmInstaller := helm.New(l, kubeClient)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
+	if err := helmInstaller.ApproveEverestMonitoringInstallPlan(ctx); err != nil {
+		l.Fatalf("Failed to approve the install plan for Everest monitoring: %v", err)
+	}
+	l.Info("Installed Everest monitoring successfully")
+
+	if err := helmInstaller.ApproveEverestOperatorInstallPlan(ctx); err != nil {
+		l.Fatalf("Failed to approve the install plan Everest operator: %v", err)
+	}
+	l.Info("Installed Everest operator successfully")
+
+	if err := helmInstaller.ApproveDBNamespacesInstallPlans(ctx); err != nil {
+		l.Fatalf("Failed to approve the install plan(s) for DB namespaces: %v", err)
+	}
+	l.Info("Installed Everest DB namespaces successfully")
 }
 
 func newClient(l *zap.SugaredLogger) (kubernetes.KubernetesConnector, error) {

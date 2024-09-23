@@ -10,7 +10,7 @@ LD_FLAGS_API = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.Pr
 LD_FLAGS_CLI = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl'"
 LD_FLAGS_CLI_TEST = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl' \
 										-X 'github.com/percona/everest/pkg/version.EverestChannelOverride=fast-v0'"
-
+HELM_TOOLS_BIN_DIR = bin/helm-tools
 default: help
 
 help:                   ## Display this help message
@@ -21,10 +21,13 @@ help:                   ## Display this help message
 init:                   ## Install development tools
 	cd tools && go generate -x -tags=tools
 
-build:                ## Build binaries
+helm:
+	cd helm-tools && go generate -x
+
+build:					## Build binaries
 	go build -v $(LD_FLAGS_API) -o bin/everest ./cmd
 
-build-cli:                ## Build binaries
+build-cli:        		## Build binaries
 	go build -tags debug -v $(LD_FLAGS_CLI_TEST) -o bin/everestctl ./cmd/cli
 
 release: FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check.percona.com' -X 'github.com/percona/everest/cmd/config.TelemetryInterval=24h'

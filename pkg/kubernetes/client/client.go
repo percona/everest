@@ -34,6 +34,7 @@ import (
 
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	olmVersioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	packagev1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	packageServerClient "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/client/clientset/versioned"
@@ -301,6 +302,9 @@ func (c *Client) initOperatorClients() error {
 	c.customClientSet = customClient
 	_, err = c.GetServerVersion()
 	if err != nil {
+		return err
+	}
+	if err := olmv1alpha1.SchemeBuilder.AddToScheme(scheme.Scheme); err != nil {
 		return err
 	}
 

@@ -51,12 +51,14 @@ func (k *Kubernetes) WaitForInstallPlan(ctx context.Context, namespace, operator
 	if version != nil {
 		csvName = k.CSVNameFromOperator(operatorName, version)
 	} else {
-		csvKey, err := k.GetSubscriptionCSV(ctx, namespace, operatorName)
+		sub, err := k.client.GetSubscription(ctx, namespace, operatorName)
 		if err != nil {
-			k.l.Error("Failed to get subscription CSV")
-			return nil, err
+			k.l.Errorf("Failed to get subscription %s: %s", operatorName, err)
 		}
-		csvName = csvKey.Name
+		csvName = sub.Status.CurrentCSV
+	}
+	if csvName == "" {
+		return nil, errors.New("csvName is empty, cannot proceed")
 	}
 	err := wait.PollUntilContextCancel(ctx, time.Second, true, func(ctx context.Context) (bool, error) {
 		k.l.Debug("Looking for install plan")
