@@ -1,4 +1,4 @@
-import { everestTagForUpgrade } from '../constants';
+import { everestTagForUpgrade } from "../constants";
 
 export const psDBCluster = {
   name: 'ps-db-cluster',
@@ -33,7 +33,7 @@ export const postgresDBCluster = {
 };
 
 export const expectedEverestUpgradeLog = (tag = everestTagForUpgrade) => {
-  return `✓ Upgrade Operator Lifecycle Manager
+    return `✓ Upgrade Operator Lifecycle Manager
 ✓ Upgrade Percona Catalog
 ✓ Wait for Everest Operator InstallPlan
 ✓ Upgrade Everest API server
