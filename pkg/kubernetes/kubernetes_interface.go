@@ -163,6 +163,8 @@ type KubernetesConnector interface {
 	ListInstallPlans(ctx context.Context, namespace string) (*v1alpha1.InstallPlanList, error)
 	// UpdateInstallPlan updates the existing install plan in the specified namespace.
 	UpdateInstallPlan(ctx context.Context, namespace string, installPlan *v1alpha1.InstallPlan) (*v1alpha1.InstallPlan, error)
+	// GetSubscriptionCSV returns the CSV name and namespace for the given subscription.
+	GetSubscriptionCSV(ctx context.Context, namespace, name string) (types.NamespacedName, error)
 	// OperatorInstalledVersion returns the installed version of operator by name.
 	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
 	// CreateRSAKeyPair creates a new RSA key pair and stores it in a secret.

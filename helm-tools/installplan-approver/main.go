@@ -8,6 +8,7 @@ import (
 	ctrlruntimelog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/kubernetes/helm"
 	"github.com/percona/everest/pkg/logger"
 )
 
@@ -30,6 +31,7 @@ func main() {
 	if err != nil {
 		l.Fatal(err)
 	}
+	helmInstaller := helm.New(l, kubeClient)
 }
 
 func newClient(l *zap.SugaredLogger) (kubernetes.KubernetesConnector, error) {

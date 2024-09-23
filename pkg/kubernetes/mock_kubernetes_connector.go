@@ -988,6 +988,34 @@ func (_m *MockKubernetesConnector) GetServerVersion() (*pkgversion.Info, error) 
 	return r0, r1
 }
 
+// GetSubscriptionCSV provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubernetesConnector) GetSubscriptionCSV(ctx context.Context, namespace string, name string) (types.NamespacedName, error) {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSubscriptionCSV")
+	}
+
+	var r0 types.NamespacedName
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (types.NamespacedName, error)); ok {
+		return rf(ctx, namespace, name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) types.NamespacedName); ok {
+		r0 = rf(ctx, namespace, name)
+	} else {
+		r0 = ret.Get(0).(types.NamespacedName)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // InstallEverest provides a mock function with given fields: ctx, namespace, _a2, skipObjs
 func (_m *MockKubernetesConnector) InstallEverest(ctx context.Context, namespace string, _a2 *version.Version, skipObjs ...client.Object) error {
 	_va := make([]interface{}, len(skipObjs))
