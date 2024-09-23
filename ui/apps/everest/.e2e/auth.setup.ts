@@ -18,7 +18,7 @@ import { STORAGE_STATE_FILE } from './constants';
 const { CI_USER, CI_PASSWORD } = process.env;
 
 setup('Login', async ({ page }) => {
-  page.goto('/login');
+  await page.goto('/login');
   await page.getByTestId('text-input-username').fill(CI_USER);
   await page.getByTestId('text-input-password').fill(CI_PASSWORD);
   await page.getByTestId('login-button').click();
