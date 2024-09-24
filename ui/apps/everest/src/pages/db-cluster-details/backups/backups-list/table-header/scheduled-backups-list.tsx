@@ -10,6 +10,7 @@ import { ScheduleModalContext } from '../../backups.context';
 import { getTimeSelectionPreviewMessage } from 'pages/database-form/database-preview/database.preview.messages';
 import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils';
 import { Messages } from './backups-list-table-header.messages';
+import { useRBACPermissions } from 'hooks/rbac';
 
 const ScheduledBackupsList = ({ canUpdateDb }: { canUpdateDb: boolean }) => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -51,6 +52,12 @@ const ScheduledBackupsList = ({ canUpdateDb }: { canUpdateDb: boolean }) => {
     setSelectedScheduleToModalContext(scheduleName);
     setOpenScheduleModal(true);
   };
+
+  const { canUpdate: canUpdateBackups, canDelete: canDeleteBackups } =
+    useRBACPermissions(
+      'database-cluster-backups',
+      `${dbCluster.metadata.namespace}/${dbCluster.metadata.name}`
+    );
 
   return (
     <Stack
@@ -104,7 +111,7 @@ const ScheduledBackupsList = ({ canUpdateDb }: { canUpdateDb: boolean }) => {
               </Typography>
             </Box>
             <Box display="flex">
-              {canUpdateDb && (
+              {canUpdateDb && canUpdateBackups && (
                 <IconButton
                   color="primary"
                   disabled={!dbCluster.spec.backup?.enabled}
@@ -114,7 +121,7 @@ const ScheduledBackupsList = ({ canUpdateDb }: { canUpdateDb: boolean }) => {
                   <EditOutlinedIcon />
                 </IconButton>
               )}
-              {canUpdateDb && (
+              {canUpdateDb && canDeleteBackups && (
                 <IconButton
                   color="primary"
                   disabled={!dbCluster.spec.backup?.enabled}

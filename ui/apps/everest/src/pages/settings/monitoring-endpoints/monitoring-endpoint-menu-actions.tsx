@@ -17,18 +17,18 @@ import { MRT_Row } from 'material-react-table';
 import { MenuItem } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
 import { Messages } from './monitoring-endpoints.messages';
-import { useGetPermissions } from 'utils/useGetPermissions';
 import { MonitoringInstanceTableElement } from './monitoring-endpoints.types';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const MonitoringActionButtons = (
   row: MRT_Row<MonitoringInstanceTableElement>,
   handleDeleteInstance: (instance: MonitoringInstanceTableElement) => void,
   handleOpenEditModal: (instance: MonitoringInstanceTableElement) => void
 ) => {
-  const { canUpdate, canDelete } = useGetPermissions({
-    resource: 'monitoring-instances',
-    specificResource: row.original.name,
-  });
+  const { canUpdate, canDelete } = useRBACPermissions(
+    'monitoring-instances',
+    `${row.original.namespace}/${row.original.name}`
+  );
   return [
     ...(canUpdate
       ? [

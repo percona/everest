@@ -30,8 +30,11 @@ export const MonitoringEditModal = ({
   };
 
   const { namespace = '' } = useParams();
-  const namespaces = [namespace];
-  const monitoringInstancesResult = useMonitoringInstancesList(namespaces);
+  const monitoringInstancesResult = useMonitoringInstancesList([
+    {
+      namespace,
+    },
+  ]);
 
   const monitoringInstancesLoading = monitoringInstancesResult.some(
     (result) => result.queryResult.isLoading
@@ -81,37 +84,44 @@ export const MonitoringEditModal = ({
         enabled
       )}
     >
-      {!monitoringAvailable && (
-        <ActionableAlert
-          message={Messages.alertText(namespace)}
-          buttonMessage={Messages.addMonitoring}
-          data-testid="monitoring-warning"
-          onClick={() => navigate('/settings/monitoring-endpoints')}
-        />
-      )}
-      {monitoringAvailable && (
+      {({ watch }) => (
         <>
-          <SwitchInput
-            label={Messages.enableMonitoring}
-            name={MonitoringEditDialogFields.monitoringEnabledInput}
-            formControlLabelProps={{
-              sx: {
-                mt: 1,
-              },
-            }}
-          />
-          <AutoCompleteInput
-            name={MonitoringEditDialogFields.monitoringNameInput}
-            label={Messages.monitoringInputLabel}
-            loading={monitoringInstancesLoading}
-            options={monitoringInstancesOptions}
-            autoCompleteProps={{
-              disableClearable: true,
-              renderOption: (props, option) => (
-                <li {...props}>{getInstanceOptionLabel(option)}</li>
-              ),
-            }}
-          />
+          {!monitoringAvailable && (
+            <ActionableAlert
+              message={Messages.alertText(namespace)}
+              buttonMessage={Messages.addMonitoring}
+              data-testid="monitoring-warning"
+              onClick={() => navigate('/settings/monitoring-endpoints')}
+            />
+          )}
+          {monitoringAvailable && (
+            <>
+              <SwitchInput
+                label={Messages.enableMonitoring}
+                name={MonitoringEditDialogFields.monitoringEnabledInput}
+                formControlLabelProps={{
+                  sx: {
+                    mt: 1,
+                  },
+                }}
+              />
+              <AutoCompleteInput
+                name={MonitoringEditDialogFields.monitoringNameInput}
+                label={Messages.monitoringInputLabel}
+                loading={monitoringInstancesLoading}
+                options={monitoringInstancesOptions}
+                autoCompleteProps={{
+                  disableClearable: true,
+                  disabled: !watch(
+                    MonitoringEditDialogFields.monitoringEnabledInput
+                  ),
+                  renderOption: (props, option) => (
+                    <li {...props}>{getInstanceOptionLabel(option)}</li>
+                  ),
+                }}
+              />
+            </>
+          )}
         </>
       )}
     </FormDialog>

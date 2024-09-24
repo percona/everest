@@ -58,8 +58,10 @@ const (
 	pgReposLimit        = 3
 	// We are diverging from the RFC1035 spec in regards to the length of the
 	// name because the PXC operator limits the name of the cluster to 22.
-	maxNameLength      = 22
-	timeoutS3AccessSec = 2
+	maxNameLength       = 22
+	timeoutS3AccessSec  = 2
+	minShardsNum        = 1
+	minConfigServersNum = 1
 )
 
 var (
@@ -108,6 +110,13 @@ var (
 	errDuplicatedBackupStorage       = errors.New("backup storages with the same url, bucket and url are not allowed")
 	errEditBackupStorageInUse        = errors.New("can't edit bucket or region of the backup storage in use")
 	errInsufficientPermissions       = errors.New("insufficient permissions for performing the operation")
+	errShardingIsNotSupported        = errors.New("sharding is not supported")
+	errInsufficientShardsNumber      = errors.New("shards number should be greater than 0")
+	errInsufficientCfgSrvNumber      = errors.New("sharding: minimum config servers number is 1")
+	errEvenServersNumber             = errors.New("sharding: config servers number should be odd")
+	errDisableShardingNotSupported   = errors.New("sharding: disable sharding is not supported")
+	errChangeShardsNumNotSupported   = errors.New("sharding: change shards number is not supported")
+	errChangeCfgSrvNotSupported      = errors.New("sharding: change config server number is not supported")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -238,6 +247,13 @@ func s3Access(
 	if err != nil {
 		l.Error(err)
 		return errors.New("could not read from S3 bucket")
+	}
+
+	_, err = svc.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket: aws.String(bucketName),
+	})
+	if err != nil {
+		return errors.New("could not list objects in S3 bucket")
 	}
 
 	_, err = svc.DeleteObject(&s3.DeleteObjectInput{
@@ -611,15 +627,46 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 	// have permissions to take backups.
 	schedules := pointer.Get(pointer.Get(pointer.Get(databaseCluster.Spec).Backup).Schedules)
 	if len(schedules) > 0 {
-		if can, err := e.canTakeBackups(user, namespace+"/"); err != nil {
+		if err := e.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, rbac.ObjectName(namespace, "")); err != nil {
 			return err
-		} else if !can {
-			return errors.Join(errInsufficientPermissions, errors.New("missing permission to take backups"))
 		}
+	}
+
+	if err := e.enforceRestoreToNewDBRBAC(ctx.Request().Context(), user, namespace, databaseCluster); err != nil {
+		return err
 	}
 	return nil
 }
 
+// To be able to restore a backup to a new cluster, the following permissions are needed:
+// - create restores.
+// - read database cluster credentials.
+func (e *EverestServer) enforceRestoreToNewDBRBAC(
+	ctx context.Context, user, namespace string, databaseCluster *DatabaseCluster,
+) error {
+	sourceBackup := pointer.Get(pointer.Get(pointer.Get(databaseCluster.Spec).DataSource).DbClusterBackupName)
+	if sourceBackup == "" {
+		return nil
+	}
+
+	if err := e.enforce(user, rbac.ResourceDatabaseClusterRestores, rbac.ActionCreate, rbac.ObjectName(namespace, "")); err != nil {
+		return err
+	}
+
+	// Get the name of the source database cluster.
+	bkp, err := e.kubeClient.GetDatabaseClusterBackup(ctx, namespace, sourceBackup)
+	if err != nil {
+		return errors.Join(err, errors.New("failed to get database cluster backup"))
+	}
+	sourceDB := bkp.Spec.DBClusterName
+
+	if err := e.enforceDBRestoreRBAC(user, namespace, sourceBackup, sourceDB); err != nil {
+		return err
+	}
+	return nil
+}
+
+//nolint:cyclop
 func (e *EverestServer) validateDatabaseClusterCR(
 	ctx echo.Context, namespace string, databaseCluster *DatabaseCluster,
 ) error {
@@ -665,7 +712,29 @@ func (e *EverestServer) validateDatabaseClusterCR(
 			return err
 		}
 	}
+	if err := validateSharding(*databaseCluster); err != nil {
+		return err
+	}
 	return validateResourceLimits(databaseCluster)
+}
+
+func validateSharding(dbc DatabaseCluster) error {
+	if dbc.Spec.Sharding == nil || !dbc.Spec.Sharding.Enabled {
+		return nil
+	}
+	if dbc.Spec.Engine.Type != Psmdb {
+		return errShardingIsNotSupported
+	}
+	if dbc.Spec.Sharding.Shards < minShardsNum {
+		return errInsufficientShardsNumber
+	}
+	if dbc.Spec.Sharding.ConfigServer.Replicas < minConfigServersNum {
+		return errInsufficientCfgSrvNumber
+	}
+	if dbc.Spec.Sharding.ConfigServer.Replicas%2 == 0 {
+		return errEvenServersNumber
+	}
+	return nil
 }
 
 func (e *EverestServer) validatePGSchedulesRestrictions(ctx context.Context, newDbc DatabaseCluster) error {
@@ -1087,10 +1156,8 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 	// If the schedules are updated, we need to check that the user has
 	// permission to create backups in this namespace.
 	if !isSchedulesEqual() {
-		if can, err := e.canTakeBackups(user, oldDB.GetNamespace()+"/"); err != nil {
+		if err := e.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, rbac.ObjectName(oldDB.GetNamespace(), "")); err != nil {
 			return err
-		} else if !can {
-			return errors.Join(errInsufficientPermissions, errors.New("missing permission to take backups"))
 		}
 	}
 	return nil
@@ -1118,6 +1185,10 @@ func (e *EverestServer) validateDatabaseClusterOnUpdate(
 		return fmt.Errorf("cannot scale down %d node cluster to 1. The operation is not supported", oldDB.Spec.Engine.Replicas)
 	}
 
+	if err := validateShardingOnUpdate(dbc, oldDB); err != nil {
+		return err
+	}
+
 	user, err := rbac.GetUser(c)
 	if err != nil {
 		return errors.Join(err, errors.New("cannot get user from request context"))
@@ -1126,6 +1197,22 @@ func (e *EverestServer) validateDatabaseClusterOnUpdate(
 		return err
 	}
 	return nil
+}
+
+func validateShardingOnUpdate(dbc *DatabaseCluster, oldDB *everestv1alpha1.DatabaseCluster) error {
+	if oldDB.Spec.Sharding == nil || !oldDB.Spec.Sharding.Enabled {
+		return nil
+	}
+	if dbc.Spec.Sharding == nil || !dbc.Spec.Sharding.Enabled {
+		return errDisableShardingNotSupported
+	}
+	if dbc.Spec.Sharding.Shards != oldDB.Spec.Sharding.Shards {
+		return errChangeShardsNumNotSupported
+	}
+	if dbc.Spec.Sharding.ConfigServer.Replicas != oldDB.Spec.Sharding.ConfigServer.Replicas {
+		return errChangeCfgSrvNotSupported
+	}
+	return validateSharding(*dbc)
 }
 
 func (e *EverestServer) validateDatabaseClusterBackup(ctx context.Context, namespace string, backup *DatabaseClusterBackup) error {

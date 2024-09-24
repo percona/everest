@@ -15,7 +15,7 @@
 
 import { useState } from 'react';
 import { DatabaseIcon, OverviewCard } from '@percona/ui-lib';
-import { Button } from '@mui/material';
+import { Button, Stack } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { useQueryClient } from '@tanstack/react-query';
 import { SubmitHandler } from 'react-hook-form';
@@ -34,10 +34,12 @@ import { ResourcesEditModal } from './resources';
 import { cpuParser, memoryParser } from 'utils/k8ResourceParser';
 import { dbEngineToDbType } from '@percona/utils';
 import { DB_CLUSTER_QUERY, useUpdateDbClusterResources } from 'hooks';
+import { DbType } from '@percona/types';
 
 export const ResourcesDetails = ({
   dbCluster,
   loading,
+  sharding,
 }: ResourcesDetailsOverviewProps) => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const { mutate: updateDbClusterResources } = useUpdateDbClusterResources();
@@ -125,23 +127,49 @@ export const ResourcesDetails = ({
           ),
         }}
       >
-        <OverviewSection
-          title={`${replicas} node${+replicas > 1 ? 's' : ''}`}
-          loading={loading}
-        >
-          <OverviewSectionRow
-            label={Messages.fields.cpu}
-            contentString={`${cpu}`}
-          />
-          <OverviewSectionRow
-            label={Messages.fields.disk}
-            contentString={`${disk}`}
-          />
-          <OverviewSectionRow
-            label={Messages.fields.memory}
-            contentString={`${memory}`}
-          />
-        </OverviewSection>
+        <Stack gap={3}>
+          {dbType === DbType.Mongo && (
+            <OverviewSection title={'Sharding'} loading={loading}>
+              <OverviewSectionRow
+                label={Messages.fields.status}
+                contentString={
+                  sharding?.enabled
+                    ? Messages.fields.enabled
+                    : Messages.fields.disabled
+                }
+              />
+              {sharding?.enabled && (
+                <OverviewSectionRow
+                  label={Messages.fields.shards}
+                  contentString={sharding?.shards?.toString()}
+                />
+              )}
+              {sharding?.enabled && (
+                <OverviewSectionRow
+                  label={Messages.fields.configServers}
+                  contentString={sharding?.configServer?.replicas?.toString()}
+                />
+              )}
+            </OverviewSection>
+          )}
+          <OverviewSection
+            title={`${replicas} node${+replicas > 1 ? 's' : ''}`}
+            loading={loading}
+          >
+            <OverviewSectionRow
+              label={Messages.fields.cpu}
+              contentString={`${cpu}`}
+            />
+            <OverviewSectionRow
+              label={Messages.fields.disk}
+              contentString={`${disk}`}
+            />
+            <OverviewSectionRow
+              label={Messages.fields.memory}
+              contentString={`${memory}`}
+            />
+          </OverviewSection>
+        </Stack>
       </OverviewCard>
       {openEditModal && (
         <ResourcesEditModal

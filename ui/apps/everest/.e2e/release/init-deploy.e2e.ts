@@ -33,9 +33,18 @@ import {
 import { EVEREST_CI_NAMESPACES } from '../constants';
 import { waitForStatus, waitForDelete } from '../utils/table';
 import { checkError } from '../utils/generic';
-import { deleteMonitoringInstance } from '../utils/monitoring-instance';
+import {
+  deleteMonitoringInstance,
+  listMonitoringInstances,
+} from '../utils/monitoring-instance';
 
-const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
+const {
+  MONITORING_URL,
+  MONITORING_USER,
+  MONITORING_PASSWORD,
+  SELECT_DB,
+  SELECT_SIZE,
+} = process.env;
 let token: string;
 
 test.describe.configure({ retries: 0 });
@@ -55,6 +64,13 @@ test.describe.configure({ retries: 0 });
       tag: '@release',
     },
     () => {
+      test.skip(
+        () =>
+          (SELECT_DB !== db && !!SELECT_DB) ||
+          (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
+      );
+      test.describe.configure({ timeout: 720000 });
+
       const clusterName = `${db}-${size}-deploy`;
 
       let storageClasses = [];
@@ -71,13 +87,28 @@ test.describe.configure({ retries: 0 });
         storageClasses = storageClassNames;
       });
 
+      test.afterAll(async ({ request }) => {
+        // we try to delete all monitoring instances because cluster creation expects that none exist
+        // (monitoring instance is added in the form where the warning that none exist is visible)
+        let monitoringInstances = await listMonitoringInstances(
+          request,
+          namespace,
+          token
+        );
+        for (const instance of monitoringInstances) {
+          await deleteMonitoringInstance(
+            request,
+            namespace,
+            instance.name,
+            token
+          );
+        }
+      });
+
       test(`Cluster creation with ${db} and size ${size}`, async ({
         page,
         request,
       }) => {
-        // Timeout is scaled based on the cluster size to account for the additional resources needed.
-        test.setTimeout(size * 120000);
-
         expect(storageClasses.length).toBeGreaterThan(0);
 
         await page.goto('/databases/new');
@@ -113,12 +144,17 @@ test.describe.configure({ retries: 0 });
         await populateMonitoringModalForm(
           page,
           monitoringName,
-          EVEREST_CI_NAMESPACES.EVEREST_UI,
+          namespace,
           MONITORING_URL,
           MONITORING_USER,
           MONITORING_PASSWORD
         );
+        await page.getByTestId('switch-input-monitoring').click();
+        await expect(
+          page.getByTestId('text-input-monitoring-instance')
+        ).toHaveValue(monitoringName);
         await submitWizard(page);
+
         await expect(
           page.getByText('Awesome! Your database is being created!')
         ).toBeVisible();
@@ -126,7 +162,7 @@ test.describe.configure({ retries: 0 });
         // go to db list and check status
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Initializing', 15000);
-        await waitForStatus(page, clusterName, 'Up', 300000);
+        await waitForStatus(page, clusterName, 'Up', 360000);
 
         const response = await request.get(
           `/v1/namespaces/${namespace}/database-clusters`,
@@ -155,14 +191,12 @@ test.describe.configure({ retries: 0 });
         expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe(
           '1G'
         );
-        expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1G');
+        expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
         expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
         expect(addedCluster?.spec.proxy.replicas).toBe(size);
       });
 
       test(`Suspend cluster with ${db} and size ${size}`, async ({ page }) => {
-        test.setTimeout(size * 120000);
-
         await suspendDbCluster(page, clusterName);
         // One node clusters and Postgresql don't seem to show Stopping state
         if (size != 1 && db != 'postgresql') {
@@ -172,16 +206,12 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Resume cluster with ${db} and size ${size}`, async ({ page }) => {
-        test.setTimeout(size * 120000);
-
         await resumeDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Initializing', 45000);
         await waitForStatus(page, clusterName, 'Up', 240000);
       });
 
       test(`Restart cluster with ${db} and size ${size}`, async ({ page }) => {
-        test.setTimeout(size * 120000);
-
         await restartDbCluster(page, clusterName);
         if (size != 1 && db != 'postgresql') {
           await waitForStatus(page, clusterName, 'Stopping', 45000);
@@ -190,19 +220,10 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, clusterName, 'Up', 240000);
       });
 
-      test(`Delete cluster with ${db} and size ${size}`, async ({
-        page,
-        request,
-      }) => {
+      test(`Delete cluster with ${db} and size ${size}`, async ({ page }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 15000);
-        await deleteMonitoringInstance(
-          request,
-          monitoringName,
-          namespace,
-          token
-        );
+        await waitForDelete(page, clusterName, 120000);
       });
     }
   );

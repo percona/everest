@@ -22,7 +22,7 @@ import { ProxyExposeType } from 'shared-types/dbCluster.types';
 import { Messages } from '../dbClusterView.messages';
 import { DbClusterTableElement } from '../dbClusterView.types';
 import { LabelValue } from './LabelValue';
-import { useGetPermissions } from 'utils/useGetPermissions';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const ExpandedRow = ({
   row,
@@ -52,11 +52,10 @@ export const ExpandedRow = ({
     }
   );
 
-  const { canRead } = useGetPermissions({
-    resource: 'database-cluster-credentials',
-    specificResource: databaseName,
-    namespace: namespace,
-  });
+  const { canRead } = useRBACPermissions(
+    'database-cluster-credentials',
+    `${namespace}/${databaseName}`
+  );
 
   return (
     <Box
@@ -97,7 +96,7 @@ export const ExpandedRow = ({
           ))}
         />
         <LabelValue label="Port" value={port} />
-        {isPending || isFetching ? (
+        {canRead && (isPending || isFetching) ? (
           <>
             <Skeleton width="300px" />
             <Skeleton width="300px" />

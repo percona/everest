@@ -37,7 +37,10 @@ import (
 	middleware "github.com/oapi-codegen/echo-middleware"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/common"
@@ -70,14 +73,12 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
 	echoServer.Use(middleware)
-
 	sessMgr, err := session.New(
 		session.WithAccountManager(kubeClient.Accounts()),
 	)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
 	}
-
 	e := &EverestServer{
 		config:        c,
 		l:             l,
@@ -86,6 +87,7 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		sessionMgr:    sessMgr,
 		attemptsStore: store,
 	}
+	e.echo.HTTPErrorHandler = e.errorHandlerChain()
 
 	if err := e.initHTTPServer(ctx); err != nil {
 		return e, err
@@ -220,7 +222,7 @@ func (e *EverestServer) rbacMiddleware(ctx context.Context, basePath string) (ec
 	return casbinmiddleware.MiddlewareWithConfig(casbinmiddleware.Config{
 		Skipper:        skipper,
 		UserGetter:     rbac.GetUser,
-		EnforceHandler: rbac.NewEnforceHandler(basePath, enforcer),
+		EnforceHandler: rbac.NewEnforceHandler(e.l, basePath, enforcer),
 	}), nil
 }
 
@@ -314,4 +316,58 @@ func sessionRateLimiter(limit int) (echo.MiddlewareFunc, *RateLimiterMemoryStore
 	})
 	config.Store = store
 	return echomiddleware.RateLimiterWithConfig(config), store
+}
+
+func (e *EverestServer) errorHandlerChain() echo.HTTPErrorHandler {
+	h := e.echo.DefaultHTTPErrorHandler
+	h = k8sToAPIErrorHandler(h)
+	h = enforcerErrorHandler(h)
+	return h
+}
+
+func k8sToAPIErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
+	return func(err error, c echo.Context) {
+		if k8serrors.IsNotFound(err) {
+			err = &echo.HTTPError{
+				Code: http.StatusNotFound,
+			}
+		}
+		next(err, c)
+	}
+}
+
+func enforcerErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
+	return func(err error, c echo.Context) {
+		if errors.Is(err, errInsufficientPermissions) {
+			err = &echo.HTTPError{
+				Code:    http.StatusForbidden,
+				Message: errInsufficientPermissions.Error(),
+			}
+		}
+		next(err, c)
+	}
+}
+
+// enforce is a wrapper arounf casbin.Enforce that returns an errInsufficientPermissions error when enforce fails.
+// Typically, this error is handled centrally by the Everest server error handler chain, but if needed, the caller should handle
+// it explicitly to differentiate between other errors.
+func (e *EverestServer) enforce(subject, resource, action, object string) error {
+	ok, err := e.rbacEnforcer.Enforce(subject, resource, action, object)
+	if err != nil {
+		return fmt.Errorf("failed to enforce: %w", err)
+	}
+	if !ok {
+		e.l.Warnf("Permission denied: [%s %s %s %s]", subject, resource, action, object)
+		return errInsufficientPermissions
+	}
+	return nil
+}
+
+func attachK8sTypeMeta(obj client.Object) {
+	gvk, err := apiutil.GVKForObject(obj, scheme.Scheme)
+	if err != nil {
+		// we expect a valid GVK for the object, but since we cannot get it, we should halt the execution.
+		panic(errors.Join(err, errors.New("could not get GVK for object")))
+	}
+	obj.GetObjectKind().SetGroupVersionKind(gvk)
 }

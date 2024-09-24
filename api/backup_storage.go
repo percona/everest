@@ -234,7 +234,7 @@ func (e *EverestServer) GetBackupStorage(ctx echo.Context, namespace, name strin
 		BucketName:        s.Spec.Bucket,
 		Region:            s.Spec.Region,
 		Url:               &s.Spec.EndpointURL,
-		AllowedNamespaces: pointer.To(s.Spec.AllowedNamespaces),
+		AllowedNamespaces: pointer.To(s.Spec.AllowedNamespaces), //nolint:staticcheck
 		VerifyTLS:         s.Spec.VerifyTLS,
 		ForcePathStyle:    s.Spec.ForcePathStyle,
 	})
@@ -302,7 +302,7 @@ func (e *EverestServer) UpdateBackupStorage(ctx echo.Context, namespace, name st
 		bs.Spec.Description = *params.Description
 	}
 	if params.AllowedNamespaces != nil {
-		bs.Spec.AllowedNamespaces = *params.AllowedNamespaces
+		bs.Spec.AllowedNamespaces = *params.AllowedNamespaces //nolint:staticcheck
 	}
 	if params.VerifyTLS != nil {
 		bs.Spec.VerifyTLS = params.VerifyTLS
@@ -326,7 +326,7 @@ func (e *EverestServer) UpdateBackupStorage(ctx echo.Context, namespace, name st
 		BucketName:        bs.Spec.Bucket,
 		Region:            bs.Spec.Region,
 		Url:               &bs.Spec.EndpointURL,
-		AllowedNamespaces: pointer.To(bs.Spec.AllowedNamespaces),
+		AllowedNamespaces: pointer.To(bs.Spec.AllowedNamespaces), //nolint:staticcheck
 		VerifyTLS:         bs.Spec.VerifyTLS,
 		ForcePathStyle:    bs.Spec.ForcePathStyle,
 	}

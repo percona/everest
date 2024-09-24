@@ -31,6 +31,7 @@ import {
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import cronConverter from 'utils/cron-converter';
 import { getProxySpec } from './utils';
+import { DbType } from '@percona/types';
 
 type CreateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -108,6 +109,15 @@ const formValuesToPayloadMapping = (
         dbPayload.proxyMemory,
         dbPayload.sourceRanges || []
       ),
+      ...(dbPayload.dbType === DbType.Mongo && {
+        sharding: {
+          enabled: dbPayload.sharding,
+          shards: +(dbPayload.shardNr ?? 1),
+          configServer: {
+            replicas: +(dbPayload.shardConfigServers ?? 3),
+          },
+        },
+      }),
       ...(backupDataSource?.dbClusterBackupName && {
         dataSource: {
           dbClusterBackupName: backupDataSource.dbClusterBackupName,

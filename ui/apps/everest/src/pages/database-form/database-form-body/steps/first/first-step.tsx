@@ -13,22 +13,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FormGroup, MenuItem, Skeleton } from '@mui/material';
+import {
+  FormGroup,
+  MenuItem,
+  Skeleton,
+  Stack,
+  Typography,
+} from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
-
 import { DbType } from '@percona/types';
 import {
   AutoCompleteInput,
   DbToggleCard,
   LabeledContent,
   SelectInput,
+  SwitchInput,
   TextInput,
   ToggleButtonGroupInput,
 } from '@percona/ui-lib';
 import { dbEngineToDbType, dbTypeToDbEngine } from '@percona/utils';
-import { useDbEngines } from 'hooks/api/db-engines/useDbEngines';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
-import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { useFormContext } from 'react-hook-form';
 import { DbEngineToolStatus } from 'shared-types/dbEngines.types';
 import { DB_WIZARD_DEFAULTS } from '../../../database-form.constants.ts';
@@ -43,28 +47,44 @@ import {
   generateShortUID,
 } from './utils.ts';
 import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
-import { useGetPermittedNamespaces } from 'utils/useGetPermissions.ts';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
+import { DbClusterStatus } from 'shared-types/dbCluster.types.ts';
+import { useDBEnginesForNamespaces } from 'hooks/api/namespaces/useNamespaces.ts';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
   const {
-    defaultValues: { [DbWizardFormFields.dbVersion]: defaultDbVersion },
+    dbClusterData,
+    defaultValues: {
+      [DbWizardFormFields.dbVersion]: defaultDbVersion,
+      [DbWizardFormFields.sharding]: defaultSharding,
+    },
   } = useDatabasePageDefaultValues(mode);
-  const { watch, setValue, getFieldState, resetField, getValues, trigger } =
+  const { watch, setValue, getFieldState, resetField, trigger } =
     useFormContext();
 
   const { data: clusterInfo, isFetching: clusterInfoFetching } =
     useKubernetesClusterInfo(['wizard-k8-info']);
-  const { data: namespaces = [], isFetching: namespacesFetching } =
-    useNamespaces();
   const dbType: DbType = watch(DbWizardFormFields.dbType);
   const dbVersion: DbType = watch(DbWizardFormFields.dbVersion);
   const dbNamespace = watch(DbWizardFormFields.k8sNamespace);
+  const dbClusterStatus = dbClusterData?.status?.status;
+  const disableShardingChange =
+    loadingDefaultsForEdition ||
+    ((mode === 'edit' || mode === 'restoreFromBackup') &&
+      defaultSharding &&
+      dbClusterStatus !== DbClusterStatus.paused);
 
-  const { data: dbEngines = [], isFetching: dbEnginesFetching } = useDbEngines(
-    dbNamespace,
-    { gcTime: 1000 * 5 }
+  const dbEnginesForNamespaces = useDBEnginesForNamespaces();
+  const dbEnginesFetching = dbEnginesForNamespaces.some(
+    (result) => result.isFetching
   );
+
+  const dbEngines =
+    dbEnginesForNamespaces.find(
+      (dbEngine) => dbEngine.namespace === dbNamespace
+    )?.data || [];
+
   const dbEngine = dbTypeToDbEngine(dbType);
 
   const [dbEngineData, setDbEngineData] = useState(
@@ -165,17 +185,18 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       setValue(DbWizardFormFields.numberOfProxies, DEFAULT_NODES[newDbType], {
         shouldTouch: false,
       });
+      resetField(DbWizardFormFields.shardNr, {
+        keepError: false,
+      });
+      resetField(DbWizardFormFields.shardConfigServers, {
+        keepError: false,
+      });
+      resetField(DbWizardFormFields.sharding, {
+        keepError: false,
+      });
       updateDbVersions();
     },
-    [
-      getFieldState,
-      resetField,
-      setRandomDbName,
-      mode,
-      updateDbVersions,
-      getValues,
-      setValue,
-    ]
+    [getFieldState, resetField, setRandomDbName, updateDbVersions, setValue]
   );
 
   useEffect(() => {
@@ -229,20 +250,31 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     }
   }, [dbEngineData, setDbEngineDataForEngineType]);
 
+  const { canCreate, isFetching } =
+    useNamespacePermissionsForResource('database-clusters');
+
+  const filteredNamespaces = canCreate.filter((namespace) => {
+    const dbEnginesForNamespace = dbEnginesForNamespaces.find(
+      (dbEngine) => dbEngine.namespace === namespace
+    );
+    return dbEnginesForNamespace?.data?.length;
+  });
+
   useEffect(() => {
     const { isTouched: k8sNamespaceTouched } = getFieldState(
       DbWizardFormFields.k8sNamespace
     );
-    if (!k8sNamespaceTouched && mode === 'new' && namespaces?.length > 0) {
-      setValue(DbWizardFormFields.k8sNamespace, namespaces[0]);
+    if (
+      !k8sNamespaceTouched &&
+      mode === 'new' &&
+      filteredNamespaces.length > 0 &&
+      !isFetching
+    ) {
+      setValue(DbWizardFormFields.k8sNamespace, filteredNamespaces[0]);
       trigger(DbWizardFormFields.k8sNamespace);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [namespaces, mode]);
-
-  const permittedNamespaces = useGetPermittedNamespaces({
-    resource: 'database-clusters',
-  });
+  }, [mode, isFetching, filteredNamespaces.length]);
 
   return (
     <>
@@ -257,8 +289,8 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           }}
           name={DbWizardFormFields.k8sNamespace}
           label={Messages.labels.k8sNamespace}
-          loading={namespacesFetching}
-          options={permittedNamespaces || []}
+          loading={isFetching}
+          options={filteredNamespaces}
           disabled={
             mode === 'edit' ||
             mode === 'restoreFromBackup' ||
@@ -331,6 +363,41 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             disabled: mode === 'edit' || loadingDefaultsForEdition,
           }}
         />
+        {dbType === DbType.Mongo && (
+          <>
+            <Typography variant="sectionHeading" sx={{ mt: 4 }}>
+              Shards
+            </Typography>
+            <Stack spacing={1} direction="row" alignItems="center">
+              <SwitchInput
+                label={Messages.labels.shardedCluster}
+                name={DbWizardFormFields.sharding}
+                switchFieldProps={{
+                  disabled: disableShardingChange,
+                  onChange: (e) => {
+                    if (!e.target.checked) {
+                      resetField(DbWizardFormFields.shardNr, {
+                        keepError: false,
+                      });
+                      resetField(DbWizardFormFields.shardConfigServers, {
+                        keepError: false,
+                      });
+                    }
+                  },
+                }}
+              />
+              {/*{disableShardingChange && (*/}
+              {/*  <Tooltip*/}
+              {/*    title={Messages.disableShardingTooltip}*/}
+              {/*    arrow*/}
+              {/*    placement="right"*/}
+              {/*  >*/}
+              {/*    <InfoOutlinedIcon color="primary" />*/}
+              {/*  </Tooltip>*/}
+              {/*)}*/}
+            </Stack>
+          </>
+        )}
       </FormGroup>
     </>
   );

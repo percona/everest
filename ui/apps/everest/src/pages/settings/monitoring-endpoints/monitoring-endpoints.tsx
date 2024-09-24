@@ -24,7 +24,7 @@ import { Messages } from './monitoring-endpoints.messages';
 import { useNamespaces } from 'hooks/api/namespaces';
 import { convertMonitoringInstancesPayloadToTableFormat } from './monitoring-endpoints.utils';
 import { MonitoringInstanceTableElement } from './monitoring-endpoints.types';
-import { useGetPermissions } from 'utils/useGetPermissions';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import TableActionsMenu from '../../../components/table-actions-menu';
 import { MonitoringActionButtons } from './monitoring-endpoint-menu-actions';
 
@@ -34,7 +34,11 @@ export const MonitoringEndpoints = () => {
   const [selectedInstance, setSelectedInstance] =
     useState<MonitoringInstance>();
   const { data: namespaces = [] } = useNamespaces();
-  const monitoringInstances = useMonitoringInstancesList(namespaces);
+  const monitoringInstances = useMonitoringInstancesList(
+    namespaces.map((ns) => ({
+      namespace: ns,
+    }))
+  );
 
   const monitoringInstancesLoading = monitoringInstances.some(
     (result) => result.queryResult.isLoading
@@ -115,7 +119,7 @@ export const MonitoringEndpoints = () => {
           onSuccess: (updatedInstance) => {
             updateDataAfterEdit(
               queryClient,
-              MONITORING_INSTANCES_QUERY_KEY,
+              [MONITORING_INSTANCES_QUERY_KEY, updatedInstance.namespace],
               'name'
             )(updatedInstance);
             handleCloseModal();
@@ -137,6 +141,7 @@ export const MonitoringEndpoints = () => {
           onSuccess: (newInstance) => {
             updateDataAfterCreate(queryClient, [
               MONITORING_INSTANCES_QUERY_KEY,
+              newInstance.namespace,
             ])(newInstance);
             handleCloseModal();
           },
@@ -152,7 +157,7 @@ export const MonitoringEndpoints = () => {
         onSuccess: (_, locationName) => {
           updateDataAfterDelete(
             queryClient,
-            MONITORING_INSTANCES_QUERY_KEY,
+            [MONITORING_INSTANCES_QUERY_KEY, namespace],
             'name'
           )(_, locationName.instanceName);
           handleCloseDeleteDialog();
@@ -161,7 +166,9 @@ export const MonitoringEndpoints = () => {
     );
   };
 
-  const { canCreate } = useGetPermissions({ resource: 'monitoring-instances' });
+  const { canCreate } = useNamespacePermissionsForResource(
+    'monitoring-instances'
+  );
 
   return (
     <>
@@ -176,7 +183,7 @@ export const MonitoringEndpoints = () => {
         enableRowActions
         noDataMessage="No monitoring endpoint added"
         renderTopToolbarCustomActions={() =>
-          canCreate && (
+          canCreate.length > 0 && (
             <Button
               size="small"
               startIcon={<Add />}

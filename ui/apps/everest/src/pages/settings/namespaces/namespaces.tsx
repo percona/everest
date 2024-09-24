@@ -1,16 +1,15 @@
 import { useMemo } from 'react';
 import { Table } from '@percona/ui-lib';
-import { Button, Stack, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import { MRT_ColumnDef } from 'material-react-table';
 import { useQueries } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import { NamespaceInstance } from 'shared-types/namespaces.types';
 import { useDBEnginesForNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { operatorUpgradePlanQueryFn } from 'hooks/api/db-engines';
 import { Messages } from './namespaces.messages';
+import { OperatorCell } from './OperatorCell';
 
 export const Namespaces = () => {
-  const navigate = useNavigate();
   const dbEngines = useDBEnginesForNamespaces();
   const operatorsUpgradePlan = useQueries({
     queries: dbEngines.map((item) => ({
@@ -26,7 +25,8 @@ export const Namespaces = () => {
     upgradeAvailable: operatorsUpgradePlan[idx].isSuccess
       ? operatorsUpgradePlan[idx].data.upgrades.length > 0
       : false,
-    operator: item.isSuccess
+    operators: item.data?.map((engine) => engine.type) || [],
+    operatorsDescription: item.isSuccess
       ? item.data?.reduce((prevVal, currVal, idx) => {
           if (idx === 0 || prevVal === '') {
             if (currVal?.type && currVal?.operatorVersion) {
@@ -53,26 +53,19 @@ export const Namespaces = () => {
         Cell: ({ cell }) => <Typography>{cell.getValue<string>()}</Typography>,
       },
       {
-        accessorKey: 'operator',
+        accessorKey: 'operatorsDescription',
         header: 'Operator',
         Cell: ({ cell, row }) => (
-          <Stack direction="row" alignItems="center" width="100%">
-            <Typography variant="body1">{cell.getValue<string>()}</Typography>
-            {row.original.upgradeAvailable && (
-              <Button
-                onClick={() =>
-                  navigate(`/settings/namespaces/${row.original.name}`)
-                }
-                sx={{ ml: 'auto' }}
-              >
-                Upgrade
-              </Button>
-            )}
-          </Stack>
+          <OperatorCell
+            value={cell.getValue<string>()}
+            namespace={row.original.name}
+            upgradeAvailable={row.original.upgradeAvailable}
+            operators={row.original.operators}
+          />
         ),
       },
     ],
-    [navigate]
+    []
   );
 
   return (

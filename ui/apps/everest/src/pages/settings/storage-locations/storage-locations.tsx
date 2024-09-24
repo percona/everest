@@ -30,15 +30,19 @@ import {
   convertStoragesType,
 } from './storage-locations.utils';
 import { useNamespaces } from 'hooks/api/namespaces';
-import { useGetPermissions } from 'utils/useGetPermissions';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import TableActionsMenu from '../../../components/table-actions-menu';
 import { StorageLocationsActionButtons } from './storage-locations-menu-actions';
 
 export const StorageLocations = () => {
   const queryClient = useQueryClient();
-
+  const { canCreate } = useNamespacePermissionsForResource('backup-storages');
   const { data: namespaces = [] } = useNamespaces();
-  const backupStorages = useBackupStorages(namespaces);
+  const backupStorages = useBackupStorages(
+    namespaces.map((namespace) => ({
+      namespace: namespace,
+    }))
+  );
 
   const backupStoragesLoading = backupStorages.some(
     (result) => result.queryResult.isLoading
@@ -97,8 +101,6 @@ export const StorageLocations = () => {
     []
   );
 
-  const { canCreate } = useGetPermissions({ resource: 'backup-storages' });
-
   const handleOpenCreateModal = () => {
     setSelectedStorageLocation(undefined);
     setOpenCreateEditModal(true);
@@ -119,7 +121,7 @@ export const StorageLocations = () => {
       onSuccess: (updatedLocation) => {
         updateDataAfterEdit(
           queryClient,
-          BACKUP_STORAGES_QUERY_KEY,
+          [BACKUP_STORAGES_QUERY_KEY, data.namespace],
           StorageLocationsFields.name
         )(updatedLocation);
         handleCloseModal();
@@ -130,9 +132,10 @@ export const StorageLocations = () => {
   const handleCreateBackup = (data: BackupStorage) => {
     createBackupStorage(data, {
       onSuccess: (newLocation) => {
-        updateDataAfterCreate(queryClient, [BACKUP_STORAGES_QUERY_KEY])(
-          newLocation
-        );
+        updateDataAfterCreate(queryClient, [
+          BACKUP_STORAGES_QUERY_KEY,
+          data.namespace,
+        ])(newLocation);
         handleCloseModal();
       },
     });
@@ -166,7 +169,7 @@ export const StorageLocations = () => {
         onSuccess: (_, locationName) => {
           updateDataAfterDelete(
             queryClient,
-            BACKUP_STORAGES_QUERY_KEY,
+            [BACKUP_STORAGES_QUERY_KEY, namespace],
             'name'
           )(_, locationName.backupStorageId);
           handleCloseDeleteDialog();
@@ -192,7 +195,7 @@ export const StorageLocations = () => {
         columns={columns}
         data={tableData}
         renderTopToolbarCustomActions={() =>
-          canCreate && (
+          canCreate.length > 0 && (
             <Button
               size="small"
               startIcon={<Add />}
