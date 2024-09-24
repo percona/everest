@@ -1,3 +1,19 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package helm provides a library of common methods for installing Everest using the Helm chart.
 package helm
 
 import (
@@ -6,7 +22,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -18,8 +33,6 @@ import (
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 )
-
-var b = backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second*5), 10)
 
 const (
 	pollInterval = 5 * time.Second
@@ -47,7 +60,7 @@ func (i *Installer) approveInstallPlanForSubscription(ctx context.Context, subNa
 		return errors.Join(err, errors.New("failed waiting for install plan to be created"))
 	}
 	// Approve the install plan.
-	if err := wait.PollUntilContextCancel(ctx, time.Second*5, true, func(ctx context.Context) (done bool, err error) {
+	if err := wait.PollUntilContextCancel(ctx, time.Second*5, true, func(ctx context.Context) (bool, error) { //nolint:mnd
 		return i.kubeclient.ApproveInstallPlan(ctx, ip.GetNamespace(), ip.GetName())
 	}); err != nil {
 		return fmt.Errorf("failed to approve installplan %s/%s: %w", ip.GetNamespace(), ip.GetName(), err)
@@ -72,12 +85,12 @@ func (i *Installer) ApproveEverestMonitoringInstallPlan(ctx context.Context) err
 	return i.approveInstallPlanForSubscription(ctx, common.MonitoringNamespace, common.VictoriaMetricsOperatorName)
 }
 
-// ApproveEverestMonitoringInstallPlan approves the install plans needed for installing the everest operator.
+// ApproveEverestOperatorInstallPlan approves the install plans needed for installing the everest operator.
 func (i *Installer) ApproveEverestOperatorInstallPlan(ctx context.Context) error {
 	return i.approveInstallPlanForSubscription(ctx, common.SystemNamespace, common.EverestOperatorName)
 }
 
-// ApproveEverestMonitoringInstallPlan approves the install plans needed for installing the DB namespaces.
+// ApproveDBNamespacesInstallPlans approves the install plans needed for installing the DB namespaces.
 func (i *Installer) ApproveDBNamespacesInstallPlans(ctx context.Context) error {
 	dbNamespaces, err := i.kubeclient.GetDBNamespaces(ctx)
 	if err != nil {
@@ -98,7 +111,6 @@ func (i *Installer) ApproveDBNamespacesInstallPlans(ctx context.Context) error {
 				return fmt.Errorf("failed to install operators in namespace '%s': %w", namespace, err)
 			}
 		}
-
 	}
 	return nil
 }
