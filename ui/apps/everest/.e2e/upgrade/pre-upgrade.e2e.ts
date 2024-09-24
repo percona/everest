@@ -5,7 +5,7 @@ import { getDBClustersList } from '../utils/db-clusters-list';
 import { TIMEOUT } from '../constants';
 
 test.describe.configure({ retries: 0 });
-test('Pre upgrade setup', { tag: '@pre-upgrade' }, async ({ request }) => {
+test('Pre upgrade setup', { tag: '@pre-upgrade' }, async ({ page, request }) => {
   await createDbClusterFn(request, {
     dbName: psDBCluster.name,
     dbType: 'mysql',
@@ -37,6 +37,7 @@ test('Pre upgrade setup', { tag: '@pre-upgrade' }, async ({ request }) => {
     externalAccess: postgresDBCluster.externalAccess,
   });
 
+  await page.waitForTimeout(TIMEOUT.TenSeconds)
   const clusters = (await getDBClustersList(request)).items;
   console.log(clusters);
 

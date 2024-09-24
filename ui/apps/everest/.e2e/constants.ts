@@ -21,6 +21,7 @@ export const everestTagForUpgrade = TAG_FOR_UPGRADE;
 const OneMin = 60000;
 
 export enum TIMEOUT {
+  TenSeconds = 10000,
   OneMinute = OneMin,
   ThreeMinutes = 3 * OneMin,
   FiveMinutes = 5 * OneMin,
