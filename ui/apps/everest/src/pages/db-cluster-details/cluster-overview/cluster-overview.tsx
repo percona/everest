@@ -22,6 +22,8 @@ import { useContext } from 'react';
 import { DbClusterContext } from '../dbCluster.context';
 import { BackupsDetails } from './cards/backups-details';
 import { useDbClusterCredentials } from 'hooks/api/db-cluster/useCreateDbCluster';
+import { useDbBackups } from 'hooks/api/backups/useBackups';
+import { DbEngineType } from 'shared-types/dbEngines.types';
 import { useRBACPermissions } from 'hooks/rbac';
 
 export const ClusterOverview = () => {
@@ -36,10 +38,27 @@ export const ClusterOverview = () => {
     `${namespace}/${dbClusterName}`
   );
 
+  const { data: backups = [] } = useDbBackups(
+    dbCluster?.metadata.name!,
+    dbCluster?.metadata.namespace!,
+    {
+      refetchInterval: 10 * 1000,
+    }
+  );
+  const schedules = dbCluster?.spec.backup?.schedules || [];
+
   const { data: dbClusterDetails, isFetching: fetchingClusterDetails } =
     useDbClusterCredentials(dbClusterName || '', namespace, {
       enabled: !!dbClusterName && canRead,
     });
+
+  const hasBackupsOrSchedules = schedules.length > 0 || backups.length > 0;
+  const dbType = dbCluster?.spec.engine.type;
+
+  const pitrEnabled =
+    dbType === DbEngineType.POSTGRESQL
+      ? hasBackupsOrSchedules
+      : dbCluster?.spec.backup?.pitr?.enabled!;
 
   return (
     <Stack
@@ -84,9 +103,10 @@ export const ClusterOverview = () => {
         <BackupsDetails
           backup={dbCluster?.spec.backup!}
           schedules={dbCluster?.spec.backup?.schedules}
-          pitrEnabled={dbCluster?.spec.backup?.pitr?.enabled!}
+          pitrEnabled={pitrEnabled}
           pitrStorageName={dbCluster?.spec.backup?.pitr?.backupStorageName!}
           loading={loadingCluster}
+          showStorage={dbType !== DbEngineType.POSTGRESQL}
         />
       )}
     </Stack>
