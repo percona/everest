@@ -25,6 +25,7 @@ import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './backups.messages.ts';
 import Schedules from './schedules';
 import PITR from './pitr';
+import { useRBACPermissions } from 'hooks/rbac/rbac.ts';
 
 export const Backups = () => {
   const { watch } = useFormContext();
@@ -40,6 +41,10 @@ export const Backups = () => {
   const { data: backups = [] } = useDbBackups(dbName, selectedNamespace, {
     enabled: dbType === DbType.Postresql,
   });
+  const { canCreate } = useRBACPermissions(
+    'database-cluster-backups',
+    `${selectedNamespace}/*`
+  );
   const { storagesToShow } = getAvailableBackupStoragesForBackups(
     backups,
     schedules,
@@ -70,7 +75,10 @@ export const Backups = () => {
             <BackupsActionableAlert namespace={selectedNamespace} />
           )}
           <FormGroup sx={{ mt: 3 }}>
-            <Schedules disableCreateButton={scheduleCreationDisabled} />
+            <Schedules
+              disableCreateButton={scheduleCreationDisabled}
+              hideCreateButton={!canCreate}
+            />
             <PITR />
           </FormGroup>
         </>

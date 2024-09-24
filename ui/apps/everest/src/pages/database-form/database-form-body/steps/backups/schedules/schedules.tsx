@@ -38,9 +38,13 @@ import { PG_SLOTS_LIMIT } from 'consts';
 
 type Props = {
   disableCreateButton?: boolean;
+  hideCreateButton?: boolean;
 };
 
-const Schedules = ({ disableCreateButton = false }: Props) => {
+const Schedules = ({
+  disableCreateButton = false,
+  hideCreateButton = false,
+}: Props) => {
   const { watch, setValue } = useFormContext();
   const dbWizardMode = useDatabasePageMode();
   const {
@@ -105,12 +109,16 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
     <>
       <LabeledContent
         label={Messages.label}
-        actionButtonProps={{
-          disabled: createButtonDisabled,
-          dataTestId: 'create-schedule',
-          buttonText: 'Create backup schedule',
-          onClick: () => handleCreate(),
-        }}
+        actionButtonProps={
+          hideCreateButton
+            ? undefined
+            : {
+                disabled: createButtonDisabled,
+                dataTestId: 'create-schedule',
+                buttonText: 'Create backup schedule',
+                onClick: () => handleCreate(),
+              }
+        }
       >
         <Stack>
           {dbType === DbType.Mongo && (
