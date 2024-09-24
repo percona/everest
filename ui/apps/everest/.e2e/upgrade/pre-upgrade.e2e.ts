@@ -48,7 +48,7 @@ test(
       const clusters = (await getDBClustersList(request)).items;
 
       clusters.map((c) => {
-        expect(c).toMatchObject({ status: { status: 'ready' } });
+        expect(c.status.status).toBe('ready');
       });
     }).toPass({
       timeout: TIMEOUT.TenMinutes,
