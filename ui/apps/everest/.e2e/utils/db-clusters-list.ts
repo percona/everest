@@ -20,11 +20,15 @@ import { getTokenFromLocalStorage } from './localStorage';
 export const getDBClustersList = async (request: APIRequestContext) => {
   const token = await getTokenFromLocalStorage();
 
+  console.log(token);
+
   const response = await request.get('/v1/database-clusters', {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
+
+  expect(response.status()).toBe(200);
 
   expect(response.ok()).toBeTruthy();
   return response.json();
