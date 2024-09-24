@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
@@ -1288,7 +1289,9 @@ func TestValidateBackupSchedulesUpdate(t *testing.T) {
 			t.Parallel()
 
 			// Setup mock.
-			e := &EverestServer{}
+			e := &EverestServer{
+				l: zap.NewNop().Sugar(),
+			}
 			enforcer := &mocks.IEnforcer{}
 			enforcer.On("Enforce",
 				"user", rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, "test-ns/",

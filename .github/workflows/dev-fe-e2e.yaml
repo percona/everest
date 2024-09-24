@@ -18,7 +18,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: pnpm/action-setup@v3
         with:
-          version: 8
+          version: 9.4.0
 
       - name: Use Node
         uses: actions/setup-node@v4
@@ -75,7 +75,7 @@ jobs:
           --operator.xtradb-cluster \
           --skip-wizard \
           --namespaces everest-ui
-          
+
           kubectl patch sub everest-operator -n everest-system -p '
             [{
                 "op": "add",

@@ -45,13 +45,14 @@ import (
 
 // Everest API resource names.
 const (
-	ResourceBackupStorages          = "backup-storages"
-	ResourceDatabaseClusters        = "database-clusters"
-	ResourceDatabaseClusterBackups  = "database-cluster-backups"
-	ResourceDatabaseClusterRestores = "database-cluster-restores"
-	ResourceDatabaseEngines         = "database-engines"
-	ResourceMonitoringInstances     = "monitoring-instances"
-	ResourceNamespaces              = "namespaces"
+	ResourceBackupStorages             = "backup-storages"
+	ResourceDatabaseClusters           = "database-clusters"
+	ResourceDatabaseClusterBackups     = "database-cluster-backups"
+	ResourceDatabaseClusterCredentials = "database-cluster-credentials"
+	ResourceDatabaseClusterRestores    = "database-cluster-restores"
+	ResourceDatabaseEngines            = "database-engines"
+	ResourceMonitoringInstances        = "monitoring-instances"
+	ResourceNamespaces                 = "namespaces"
 )
 
 // RBAC actions.
@@ -60,6 +61,10 @@ const (
 	ActionRead   = "read"
 	ActionUpdate = "update"
 	ActionDelete = "delete"
+)
+
+const (
+	rbacEnabledValueTrue = "true"
 )
 
 // Setup a new informer that watches our RBAC ConfigMap.
@@ -86,6 +91,11 @@ func refreshEnforcerInBackground(
 		if err := validatePolicy(enforcer); err != nil {
 			panic("invalid policy detected - " + err.Error())
 		}
+		// Calling LoadPolicy() re-writes the entire model, so we need to add back the admin role.
+		if err := loadAdminPolicy(enforcer); err != nil {
+			panic("failed to load admin policy - " + err.Error())
+		}
+		enforcer.EnableEnforce(IsEnabled(cm))
 	})
 	if inf.Start(ctx, &corev1.ConfigMap{}) != nil {
 		return errors.Join(err, errors.New("failed to watch RBAC ConfigMap"))
@@ -110,7 +120,9 @@ func newEnforcer(adapter persist.Adapter, enableLogs bool) (*casbin.Enforcer, er
 	if err != nil {
 		return nil, err
 	}
-
+	if err := loadAdminPolicy(enf); err != nil {
+		return nil, errors.Join(err, errors.New("failed to load admin policy"))
+	}
 	if err := validatePolicy(enf); err != nil {
 		return nil, err
 	}
@@ -137,6 +149,11 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 	if err != nil {
 		return nil, err
 	}
+	cm, err := adapter.ConfigMap(ctx)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to get RBAC ConfigMap"))
+	}
+	enforcer.EnableEnforce(IsEnabled(cm))
 	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
 }
 
@@ -166,6 +183,28 @@ func GetUser(c echo.Context) (string, error) {
 		return strings.Split(subject, ":")[0], nil
 	}
 	return subject, nil
+}
+
+func loadAdminPolicy(enf casbin.IEnforcer) error {
+	paths, _, err := buildPathResourceMap("") // reads the swagger API definition
+	if err != nil {
+		return err
+	}
+	resources := make(map[string]struct{})
+	for _, resource := range paths {
+		resources[resource] = struct{}{}
+	}
+	action := "*"
+	for resource := range resources {
+		object := "*/*"
+		if resource == ResourceNamespaces {
+			object = "*"
+		}
+		if _, err := enf.AddPolicy(common.EverestAdminRole, resource, action, object); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // buildPathResourceMap builds a map of paths to resources and a list of resources.
@@ -200,7 +239,7 @@ func buildPathResourceMap(basePath string) (map[string]string, []string, error) 
 }
 
 // NewEnforceHandler returns a function that checks if a user is allowed to access a resource.
-func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.Context, user string) (bool, error) {
+func NewEnforceHandler(l *zap.SugaredLogger, basePath string, enforcer *casbin.Enforcer) func(c echo.Context, user string) (bool, error) {
 	pathResourceMap, _, err := buildPathResourceMap(basePath)
 	if err != nil {
 		panic("failed to build path resource map: " + err.Error())
@@ -236,6 +275,12 @@ func NewEnforceHandler(basePath string, enforcer *casbin.Enforcer) func(c echo.C
 		if resource == ResourceDatabaseEngines && name == "" && action == ActionRead {
 			return true, nil
 		}
+		if ok, err := enforcer.Enforce(user, resource, action, object); err != nil {
+			return false, errors.Join(err, errors.New("failed to enforce policy"))
+		} else if !ok {
+			l.Warnf("Permission denied: [%s %s %s %s]", user, resource, action, object)
+			return false, nil
+		}
 		return enforcer.Enforce(user, resource, action, object)
 	}
 }
@@ -270,4 +315,14 @@ func Can(ctx context.Context, filePath string, k *kubernetes.Kubernetes, req ...
 		return false, err
 	}
 	return enforcer.Enforce(user, resource, action, object)
+}
+
+// IsEnabled returns true if enabled == 'true' in the given ConfigMap.
+func IsEnabled(cm *corev1.ConfigMap) bool {
+	return cm.Data["enabled"] == rbacEnabledValueTrue
+}
+
+// ObjectName returns the a string that represents the name of an object in RBAC format.
+func ObjectName(args ...string) string {
+	return strings.Join(args, "/")
 }

@@ -17,7 +17,7 @@ import { MRT_Row } from 'material-react-table';
 import { MenuItem } from '@mui/material';
 import { Restore } from 'shared-types/restores.types';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useRBACPermissions } from 'hooks/rbac/rbac';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const RestoreActionButtons = (
   row: MRT_Row<Restore>,

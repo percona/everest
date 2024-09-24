@@ -30,9 +30,6 @@ export const addApiErrorInterceptor = () => {
     errorInterceptor = api.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (error.response.status === 403) {
-          return;
-        }
         if (
           error.response &&
           error.response.status >= 400 &&

@@ -11,6 +11,7 @@ import (
 	"github.com/casbin/casbin/v2"
 	"go.uber.org/zap"
 
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -82,7 +83,11 @@ func checkResourceNames(policies [][]string) error {
 func checkRoles(roles []string, policies [][]string) error {
 	for _, policy := range policies {
 		roleName := policy[0]
-		if !strings.HasSuffix(roleName, ":role") {
+		if !strings.HasPrefix(roleName, common.EverestRBACRolePrefix) {
+			continue
+		}
+		if roleName == common.EverestAdminRole {
+			// Its fine to not assign the admin role to any user.
 			continue
 		}
 		if !slices.Contains(roles, roleName) {

@@ -28,5 +28,5 @@ export const Messages = {
     dbName: 'E.g. postgresql-123',
   },
   disableShardingTooltip:
-    'Sharding cannot be disabled unless you pause the cluster',
+    'Sharding cannot be enabled unless PSMDB Operator version >= 1.17.0',
 };

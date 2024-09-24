@@ -48,6 +48,16 @@ const (
 //nolint:gochecknoglobals
 var everestAPIConstantBackoff = backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), maxRetries)
 
+func (e *EverestServer) enforceDBBackupsRBAC(user string, bkp *everestv1alpha1.DatabaseClusterBackup) error {
+	if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(bkp.GetNamespace(), bkp.Spec.BackupStorageName)); err != nil {
+		if !errors.Is(err, errInsufficientPermissions) {
+			e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+		}
+		return err
+	}
+	return nil
+}
+
 // ListDatabaseClusterBackups returns list of the created database cluster backups on the specified kubernetes cluster.
 func (e *EverestServer) ListDatabaseClusterBackups(ctx echo.Context, namespace, name string) error {
 	req := ctx.Request()
@@ -79,11 +89,10 @@ func (e *EverestServer) ListDatabaseClusterBackups(ctx echo.Context, namespace, 
 				e.l.Error(errors.Join(err, errors.New("failed to convert unstructured to DatabaseClusterBackup")))
 				return err
 			}
-			if can, err := e.canGetBackupStorage(user, namespace, obj.GetName()); err != nil {
-				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
-				return err
-			} else if !can {
+			if err := e.enforceDBBackupsRBAC(user, dbbackup); errors.Is(err, errInsufficientPermissions) {
 				continue
+			} else if err != nil {
+				return err
 			}
 			allowed = append(allowed, obj)
 		}
@@ -173,19 +182,17 @@ func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, namespace, na
 			Message: pointer.ToString("Failed to get user from context" + err.Error()),
 		})
 	}
+
+	// Ensure that the user has access to the backup storage used for this backup.
 	bkp, err := e.kubeClient.GetDatabaseClusterBackup(ctx.Request().Context(), namespace, name)
 	if err != nil {
 		return errors.Join(err, errors.New("could not get Database Cluster Backup"))
 	}
-	if can, err := e.canGetBackupStorage(user, namespace, bkp.Spec.BackupStorageName); err != nil {
-		e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+	if err := e.enforceDBBackupsRBAC(user, bkp); err != nil {
 		return err
-	} else if !can {
-		return ctx.JSON(http.StatusForbidden, Error{
-			Message: pointer.ToString(errInsufficientPermissions.Error()),
-		})
 	}
-	return e.proxyKubernetes(ctx, namespace, databaseClusterBackupKind, name)
+	attachK8sTypeMeta(bkp)
+	return ctx.JSON(http.StatusOK, bkp)
 }
 
 func (e *EverestServer) ensureBackupStorageProtection(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
@@ -217,16 +224,4 @@ func (e *EverestServer) ensureBackupForegroundDeletion(ctx context.Context, back
 	},
 		backoff.WithContext(everestAPIConstantBackoff, ctx),
 	)
-}
-
-func (e *EverestServer) canGetBackupStorage(user, namespace, name string) (bool, error) {
-	ok, err := e.rbacEnforcer.Enforce(
-		user, rbac.ResourceBackupStorages,
-		rbac.ActionRead,
-		fmt.Sprintf("%s/%s", namespace, name),
-	)
-	if err != nil {
-		return false, fmt.Errorf("failed to Enforce: %w", err)
-	}
-	return ok, nil
 }

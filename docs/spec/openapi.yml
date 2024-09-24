@@ -83,11 +83,11 @@ paths:
         *Example:*
         Assume the following RBAC policy, and users `alice` and `bob`:
         ```
-        p, adminrole:role, namespaces, read, *
-        p, adminrole:role, database-engines, *, */*
-        p, adminrole:role, database-clusters, *, */*
+        p, role:dev, namespaces, read, *
+        p, role:dev, database-engines, *, */*
+        p, role:dev, database-clusters, *, */*
         p, bob, database-clusters, *, */*
-        g, alice, adminrole:role
+        g, alice, role:dev
         ```
         The API will return the following permissions for `alice`:
         ```
@@ -1834,12 +1834,16 @@ components:
     UserPermissions:
       type: object
       properties:
+        enabled:
+          type: boolean
         permissions:
           type: array
           items:
             type: array
             items:
               type: string
+      required:
+        - enabled
     UserCredentials:
       type: object
       properties:
