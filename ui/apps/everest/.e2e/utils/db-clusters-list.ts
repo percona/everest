@@ -16,18 +16,21 @@
 import { APIRequestContext, expect, Page } from '@playwright/test';
 import { findRowAndClickActions } from './table';
 import { getTokenFromLocalStorage } from './localStorage';
-import { getNamespacesFn } from "./namespaces";
+import { getNamespacesFn } from './namespaces';
 
 export const getDBClustersList = async (request: APIRequestContext) => {
   const token = await getTokenFromLocalStorage();
   const namespaces = await getNamespacesFn(token, request);
   const namespace = namespaces[0];
 
-  const response = await request.get(`/v1/namespaces/${namespace}/database-clusters`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await request.get(
+    `/v1/namespaces/${namespace}/database-clusters`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   expect(response.status()).toBe(200);
 
