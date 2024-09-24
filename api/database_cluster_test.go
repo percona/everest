@@ -182,8 +182,8 @@ func TestConnectionURL(t *testing.T) {
 				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "mongodb-56u-rs0.my-special-place.svc.cluster.local", Port: 27017},
 			},
 			user:     "databaseAdmin",
-			password: "dlfkdfo$%al",
-			expected: "mongodb://databaseAdmin:dlfkdfo%2524%2525al@mongodb-try-rs0-0.mongodb-56u-rs0.my-special-place.svc.cluster.local:27017",
+			password: "azoE4FwvDRVycH83CO",
+			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@mongodb-try-rs0-0.mongodb-56u-rs0.my-special-place.svc.cluster.local:27017",
 		},
 		{
 			name: "non-sharded psmdb 3 node",
@@ -197,8 +197,8 @@ func TestConnectionURL(t *testing.T) {
 				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "mongodb-56u-rs0.my-special-place.svc.cluster.local", Port: 27017},
 			},
 			user:     "databaseAdmin",
-			password: "dlfkdfo$%al",
-			expected: "mongodb://databaseAdmin:dlfkdfo%2524%2525al@mongodb-try-rs0-0.mongodb-56u-rs0.my-special-place.svc.cluster.local:27017,mongodb-try-rs0-1.mongodb-56u-rs0.my-special-place.svc.cluster.local:27017,mongodb-try-rs0-2.mongodb-56u-rs0.my-special-place.svc.cluster.local:27017",
+			password: "azoE4FwvDRVycH83CO",
+			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@mongodb-try-rs0-0.mongodb-56u-rs0.my-special-place.svc.cluster.local:27017,mongodb-try-rs0-1.mongodb-56u-rs0.my-special-place.svc.cluster.local:27017,mongodb-try-rs0-2.mongodb-56u-rs0.my-special-place.svc.cluster.local:27017",
 		},
 		{
 			name:    "sharded psmdb",
@@ -211,8 +211,8 @@ func TestConnectionURL(t *testing.T) {
 				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "mongodb-56u-mongos.my-special-place.svc.cluster.local", Port: 27017},
 			},
 			user:     "databaseAdmin",
-			password: "dlfkdfo$%al",
-			expected: "mongodb://databaseAdmin:dlfkdfo%2524%2525al@mongodb-56u-mongos.my-special-place.svc.cluster.local:27017",
+			password: "azoE4FwvDRVycH83CO",
+			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@mongodb-56u-mongos.my-special-place.svc.cluster.local:27017",
 		},
 		{
 			name:    "pg",
