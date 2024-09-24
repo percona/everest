@@ -29,6 +29,8 @@ import {
   ProxyExposeType,
 } from 'shared-types/dbCluster.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
+import cronConverter from 'utils/cron-converter';
+import { DbType } from '@percona/types';
 
 type CreateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -58,9 +60,17 @@ const formValuesToPayloadMapping = (
                 : dbPayload.pitrStorageLocation!.name,
           },
         }),
-        ...(dbPayload.schedules?.length > 0 && {
-          schedules: dbPayload.schedules,
-        }),
+        schedules:
+          dbPayload.schedules?.length > 0
+            ? dbPayload.schedules.map((schedule) => ({
+                ...schedule,
+                schedule: cronConverter(
+                  schedule.schedule,
+                  Intl.DateTimeFormat().resolvedOptions().timeZone,
+                  'UTC'
+                ),
+              }))
+            : undefined,
       },
       engine: {
         type: dbTypeToDbEngine(dbPayload.dbType),
@@ -72,7 +82,7 @@ const formValuesToPayloadMapping = (
         },
         storage: {
           class: dbPayload.storageClass!,
-          size: `${dbPayload.disk}G`,
+          size: `${dbPayload.disk}Gi`,
         },
         config: dbPayload.engineParametersEnabled
           ? dbPayload.engineParameters
@@ -97,6 +107,15 @@ const formValuesToPayloadMapping = (
             }),
         },
       },
+      ...(dbPayload.dbType === DbType.Mongo && {
+        sharding: {
+          enabled: dbPayload.sharding,
+          shards: +(dbPayload.shardNr ?? 1),
+          configServer: {
+            replicas: +(dbPayload.shardConfigServers ?? 3),
+          },
+        },
+      }),
       ...(backupDataSource?.dbClusterBackupName && {
         dataSource: {
           dbClusterBackupName: backupDataSource.dbClusterBackupName,

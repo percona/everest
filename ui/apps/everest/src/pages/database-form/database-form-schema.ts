@@ -6,12 +6,13 @@ import { ResourceSize } from './database-form-body/steps/resources/resources-ste
 import { DbWizardFormFields } from './database-form.types.ts';
 import { rfc_123_schema } from 'utils/common-validation.ts';
 import { Messages as ScheduleFormMessages } from 'components/schedule-form-dialog/schedule-form/schedule-form.messages.ts';
+import { SHARDING_DEFAULTS } from './database-form.constants';
 
 const resourceToNumber = (minimum = 0) =>
   z.union([z.string().nonempty(), z.number()]).pipe(
     z.coerce
       .number({
-        invalid_type_error: 'Please insert a valid number',
+        invalid_type_error: 'Please enter a valid number',
       })
       .min(minimum)
   );
@@ -35,6 +36,7 @@ const basicInfoSchema = z
           });
         }
       }),
+    [DbWizardFormFields.sharding]: z.boolean(),
   })
   .passthrough();
 
@@ -44,13 +46,72 @@ const basicInfoSchema = z
 
 const stepTwoSchema = z
   .object({
+    [DbWizardFormFields.shardNr]: z.string().optional(),
+    [DbWizardFormFields.shardConfigServers]: z.string().optional(),
     [DbWizardFormFields.cpu]: resourceToNumber(0.6),
     [DbWizardFormFields.memory]: resourceToNumber(0.512),
     [DbWizardFormFields.disk]: resourceToNumber(1),
+    // we will never input this, but we need it and zod will let it pass
+    [DbWizardFormFields.diskUnit]: z.string(),
     [DbWizardFormFields.resourceSizePerNode]: z.nativeEnum(ResourceSize),
     [DbWizardFormFields.numberOfNodes]: z.string(),
   })
-  .passthrough();
+  .passthrough()
+  .superRefine(({ sharding, shardNr = '', shardConfigServers = '' }, ctx) => {
+    if (sharding) {
+      const intShardNr = parseInt(shardNr, 10);
+      const intShardNrMin = +SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min;
+      const intShardConfigServers = parseInt(shardConfigServers, 10);
+      const intShardConfigServersMin =
+        +SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min;
+      const intShardConfigServersMax =
+        +SHARDING_DEFAULTS[DbWizardFormFields.shardConfigServers].max;
+
+      if (Number.isNaN(intShardNr) || intShardNr < 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: Messages.errors.sharding.invalid,
+          path: [DbWizardFormFields.shardNr],
+        });
+      } else {
+        if (intShardNr < intShardNrMin) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: Messages.errors.sharding.min(intShardNrMin),
+            path: [DbWizardFormFields.shardNr],
+          });
+        }
+      }
+
+      if (Number.isNaN(intShardConfigServers) || intShardConfigServers <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: Messages.errors.sharding.invalid,
+          path: [DbWizardFormFields.shardConfigServers],
+        });
+      } else {
+        if (intShardConfigServers < intShardConfigServersMin) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: Messages.errors.sharding.min(intShardConfigServersMin),
+            path: [DbWizardFormFields.shardConfigServers],
+          });
+        } else if (!(intShardConfigServers % 2)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: Messages.errors.sharding.odd,
+            path: [DbWizardFormFields.shardConfigServers],
+          });
+        } else if (intShardConfigServers > intShardConfigServersMax) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: Messages.errors.sharding.max(intShardConfigServersMax),
+            path: [DbWizardFormFields.shardConfigServers],
+          });
+        }
+      }
+    }
+  });
 
 const backupsStepSchema = z
   .object({
@@ -62,11 +123,6 @@ const backupsStepSchema = z
         schedule: z.string(),
       })
     ),
-  })
-  .passthrough();
-
-const pitrStepSchema = z
-  .object({
     [DbWizardFormFields.pitrEnabled]: z.boolean(),
     [DbWizardFormFields.pitrStorageLocation]: z
       .string()
@@ -135,7 +191,6 @@ export const getDBWizardSchema = (activeStep: number) => {
     basicInfoSchema,
     stepTwoSchema,
     backupsStepSchema,
-    pitrStepSchema,
     advancedConfigurationsSchema,
     stepFiveSchema,
   ];
@@ -148,12 +203,10 @@ export type AdvancedConfigurationType = z.infer<
   typeof advancedConfigurationsSchema
 >;
 export type BackupStepType = z.infer<typeof backupsStepSchema>;
-export type PITRStepType = z.infer<typeof pitrStepSchema>;
 export type StepFiveType = z.infer<typeof stepFiveSchema>;
 
 export type DbWizardType = BasicInfoType &
   StepTwoType &
   StepFiveType &
   AdvancedConfigurationType &
-  BackupStepType &
-  PITRStepType;
+  BackupStepType;

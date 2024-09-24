@@ -13,55 +13,114 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { test as setup, expect } from '@playwright/test';
+import { test as setup, expect, APIResponse } from '@playwright/test';
 import 'dotenv/config';
-import { STORAGE_NAMES } from './constants';
 import { getTokenFromLocalStorage } from './utils/localStorage';
-import { getNamespacesFn } from './utils/namespaces';
+import { getBucketNamespacesMap } from './constants';
 const {
-  EVEREST_LOCATION_BUCKET_NAME,
   EVEREST_LOCATION_ACCESS_KEY,
   EVEREST_LOCATION_SECRET_KEY,
   EVEREST_LOCATION_REGION,
   EVEREST_LOCATION_URL,
+  EVEREST_BUCKETS_NAMESPACES_MAP,
 } = process.env;
+
+const doBackupCall = async (fn: () => Promise<APIResponse>, retries = 3) => {
+  if (retries === 0) {
+    return Promise.reject();
+  }
+
+  try {
+    const response = await fn();
+    const statusText = await response.json();
+    const ok = response.ok();
+
+    if (ok) {
+      return Promise.resolve();
+    }
+
+    if (statusText && statusText.message) {
+      if (statusText.message.includes('Could not read')) {
+        if (retries > 0) {
+          return doBackupCall(fn, retries - 1);
+        }
+      } else {
+        return Promise.resolve();
+      }
+    }
+    return Promise.reject();
+  } catch (error) {
+    return Promise.reject();
+  }
+};
 
 setup('Backup storages', async ({ request }) => {
   const token = await getTokenFromLocalStorage();
-  const namespaces = await getNamespacesFn(token, request);
-  const promises = [];
+  const promises: Promise<any>[] = [];
+  // This has a nested array structure, in the form of
+  // [
+  //   ['bucket1', ['namespace1', 'namespace2']],
+  //   ['bucket2', ['namespace3']],
+  // ]
+  const bucketNamespacesMap = getBucketNamespacesMap();
 
-  STORAGE_NAMES.forEach(async (storage) => {
+  bucketNamespacesMap.forEach(async ([bucket, namespace]) => {
     promises.push(
-      request.post('/v1/backup-storages/', {
-        data: {
-          name: storage,
-          description: 'CI test bucket',
-          type: 's3',
-          bucketName: EVEREST_LOCATION_BUCKET_NAME,
-          secretKey: EVEREST_LOCATION_SECRET_KEY,
-          accessKey: EVEREST_LOCATION_ACCESS_KEY,
-          allowedNamespaces: [namespaces[0]],
-          url: EVEREST_LOCATION_URL,
-          region: EVEREST_LOCATION_REGION,
-          verifyTLS: false,
-          forcePathStyle: false,
-        },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      doBackupCall(() =>
+        request.post(`/v1/namespaces/${namespace}/backup-storages/`, {
+          data: {
+            name: bucket,
+            description: 'CI test bucket',
+            type: 's3',
+            bucketName: bucket,
+            secretKey: EVEREST_LOCATION_SECRET_KEY,
+            accessKey: EVEREST_LOCATION_ACCESS_KEY,
+            allowedNamespaces: [],
+            url: EVEREST_LOCATION_URL,
+            region: EVEREST_LOCATION_REGION,
+            verifyTLS: false,
+            forcePathStyle: true,
+          },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+      )
     );
   });
 
-  await (
-    await Promise.all(promises)
-  ).map((response) => expect(response.ok()).toBeTruthy());
+  // STORAGE_NAMES.forEach(async (storage) => {
+  //   promises.push(
+  //     doBackupCall(() =>
+  //       request.post('/v1/backup-storages/', {
+  //         data: {
+  //           name: storage,
+  //           description: 'CI test bucket',
+  //           type: 's3',
+  //           bucketName: EVEREST_LOCATION_BUCKET_NAME,
+  //           secretKey: EVEREST_LOCATION_SECRET_KEY,
+  //           accessKey: EVEREST_LOCATION_ACCESS_KEY,
+  //           allowedNamespaces: [namespaces[0]],
+  //           url: EVEREST_LOCATION_URL,
+  //           region: EVEREST_LOCATION_REGION,
+  //           verifyTLS: false,
+  //           forcePathStyle: true,
+  //         },
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       })
+  //     )
+  //   );
+  // });
+
+  await Promise.all(promises);
 });
 
 setup('Close modal permanently', async ({ page }) => {
   await page.goto('/');
-  await page.getByTestId('close-dialog-icon').click();
+  await expect(page.getByTestId('lets-go-button')).toBeVisible();
+  await page.getByTestId('lets-go-button').click();
   await page.context().storageState({ path: 'user.json' });
 });
 

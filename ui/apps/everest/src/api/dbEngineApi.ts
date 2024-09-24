@@ -12,7 +12,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { GetDbEnginesPayload } from 'shared-types/dbEngines.types';
+import {
+  GetDbEnginesPayload,
+  OperatorsUpgradePlan,
+} from 'shared-types/dbEngines.types';
 import { api } from './api';
 
 export const getDbEnginesFn = async (namespace: string) => {
@@ -22,3 +25,19 @@ export const getDbEnginesFn = async (namespace: string) => {
 
   return response.data;
 };
+
+export const upgradeOperator = async (namespace: string) => {
+  const response = await api.post(
+    `/namespaces/${namespace}/database-engines/upgrade-plan/approval/`,
+    {}
+  );
+
+  return response.data;
+};
+
+export const getOperatorsUpgradePlan = async (namespace: string) =>
+  (
+    await api.get<OperatorsUpgradePlan>(
+      `/namespaces/${namespace}/database-engines/upgrade-plan`
+    )
+  ).data;

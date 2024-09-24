@@ -10,7 +10,7 @@ import { dbEngineToDbType } from '@percona/utils';
 import ActionableAlert from 'components/actionable-alert';
 import { FormDialog } from 'components/form-dialog';
 import { FormDialogProps } from 'components/form-dialog/form-dialog.types';
-import { PITR_DATE_FORMAT } from 'consts';
+import { DATE_FORMAT, PITR_DATE_FORMAT } from 'consts';
 import { format } from 'date-fns';
 import { useDbBackups, useDbClusterPitr } from 'hooks/api/backups/useBackups';
 import {
@@ -145,7 +145,7 @@ const RestoreDbModal = <T extends FieldValues>({
       }}
       submitMessage={isNewClusterMode ? Messages.create : Messages.restore}
     >
-      {({ watch }) => (
+      {({ watch, resetField }) => (
         <LoadableChildren loading={isLoading}>
           <Typography variant="body1">
             {isNewClusterMode ? Messages.subHeadCreate : Messages.subHead}
@@ -172,10 +172,24 @@ const RestoreDbModal = <T extends FieldValues>({
               {
                 label: Messages.fromBackup,
                 value: BackuptypeValues.fromBackup,
+                radioProps: {
+                  onClick: () => {
+                    resetField(RestoreDbFields.pitrBackup, {
+                      keepError: false,
+                    });
+                  },
+                },
               },
               {
                 label: Messages.fromPitr,
                 value: BackuptypeValues.fromPitr,
+                radioProps: {
+                  onClick: () => {
+                    resetField(RestoreDbFields.backupName, {
+                      keepError: false,
+                    });
+                  },
+                },
                 disabled:
                   !!backupName &&
                   pitrData?.latestBackupName !==
@@ -203,7 +217,7 @@ const RestoreDbModal = <T extends FieldValues>({
                 .map((value) => {
                   const valueWithTime = `${
                     value.name
-                  } - ${value.created?.toLocaleString('en-US')}`;
+                  } - ${format(value.created!, DATE_FORMAT)}`;
                   return (
                     <MenuItem key={value.name} value={value.name}>
                       {valueWithTime}

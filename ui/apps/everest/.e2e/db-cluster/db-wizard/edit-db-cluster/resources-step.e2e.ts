@@ -25,7 +25,7 @@ import { moveForward } from '../../../utils/db-wizard';
 test.describe('DB Cluster Editing Resources Step (Mongo)', () => {
   const mongoDBName = 'mongo-db';
 
-  test.beforeEach(async ({ request }) => {
+  test.beforeAll(async ({ request }) => {
     await createDbClusterFn(request, {
       dbName: mongoDBName,
       dbType: DbType.Mongo,
@@ -33,18 +33,24 @@ test.describe('DB Cluster Editing Resources Step (Mongo)', () => {
     });
   });
 
-  test.afterEach(async ({ request }) => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/databases');
+  });
+
+  test.afterAll(async ({ request }) => {
     await deleteDbClusterFn(request, mongoDBName);
   });
 
   test('Show the correct number of nodes during editing', async ({ page }) => {
-    await page.goto('/databases');
     await findDbAndClickActions(page, mongoDBName, 'Edit');
 
+    await expect(
+      page.getByTestId('toggle-button-group-input-db-type')
+    ).toBeVisible();
     // Go to Resources step
     await moveForward(page);
 
-    expect(page.getByTestId('toggle-button-nodes-5')).toBeVisible();
+    await expect(page.getByTestId('toggle-button-nodes-5')).toBeVisible();
     const a = page
       .getByRole('button', { pressed: true })
       .filter({ hasText: '5 nodes' });
@@ -52,7 +58,6 @@ test.describe('DB Cluster Editing Resources Step (Mongo)', () => {
   });
 
   test('Disable disk resize during edition', async ({ page }) => {
-    await page.goto('/databases');
     await findDbAndClickActions(page, mongoDBName, 'Edit');
     await page.getByTestId('button-edit-preview-resources').click();
     await expect(page.getByTestId('text-input-disk')).toBeDisabled();

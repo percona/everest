@@ -4,11 +4,11 @@ config_yaml=read_yaml('config.yaml')
 # Vars
 everest_namespace = 'everest-system'
 everest_monitoring_namespace = 'everest-monitoring'
-pxc_operator_version = os.getenv('PXC_OPERATOR_VERSION', '1.13.0')
+pxc_operator_version = os.getenv('PXC_OPERATOR_VERSION', '1.14.0')
 print('Using PXC operator version: %s' % pxc_operator_version)
 psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.15.0')
 print('Using PSMDB operator version: %s' % psmdb_operator_version)
-pg_operator_version = os.getenv('PG_OPERATOR_VERSION', '2.3.1')
+pg_operator_version = os.getenv('PG_OPERATOR_VERSION', '2.4.1')
 print('Using PG operator version: %s' % pg_operator_version)
 
 # External resources set up
@@ -76,6 +76,12 @@ k8s_resource(
   new_name='namespaces',
 )
 
+for namespace in namespaces:
+  local_resource('update-label-%s' % namespace, 
+  cmd='kubectl label namespace %s --overwrite app.kubernetes.io/managed-by=everest' % namespace, 
+  resource_deps = [
+    'namespaces',
+  ])
 
 #################################
 ## Install DB engine operators ##
@@ -220,6 +226,7 @@ helm_remote('victoria-metrics-operator',
   repo_name='vm',
   repo_url='https://victoriametrics.github.io/helm-charts/',
   namespace=everest_monitoring_namespace,
+  version='0.33.6',
 )
 k8s_yaml(namespace_inject('%s/data/crds/victoriametrics/kube-state-metrics.yaml' % cli_dir, everest_monitoring_namespace))
 k8s_yaml(namespace_inject('%s/data/crds/victoriametrics/crs/vmagent_rbac_account.yaml' % cli_dir, everest_monitoring_namespace))
@@ -260,6 +267,7 @@ k8s_resource(
     'vmauths.operator.victoriametrics.com:customresourcedefinition:%s' % everest_monitoring_namespace,
     'vmclusters.operator.victoriametrics.com:customresourcedefinition:%s' % everest_monitoring_namespace,
     'vmnodescrapes.operator.victoriametrics.com:customresourcedefinition:%s' % everest_monitoring_namespace,
+    'vmscrapeconfigs.operator.victoriametrics.com:customresourcedefinition:%s' % everest_monitoring_namespace,
     'vmpodscrapes.operator.victoriametrics.com:customresourcedefinition:%s' % everest_monitoring_namespace,
     'vmprobes.operator.victoriametrics.com:customresourcedefinition:%s' % everest_monitoring_namespace,
     'vmrules.operator.victoriametrics.com:customresourcedefinition:%s' % everest_monitoring_namespace,
@@ -405,7 +413,9 @@ k8s_resource(
     'everest-admin-role-binding:rolebinding',
     'everest-admin-cluster-role:clusterrole',
     'everest-admin-cluster-role-binding:clusterrolebinding',
-    'everest-admin-token:secret',
+    'everest-jwt:secret',
+    'everest-accounts:secret',
+    'everest-rbac:configmap',
   ],
   new_name='everest',
   port_forwards=8080,

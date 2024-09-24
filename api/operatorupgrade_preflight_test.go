@@ -102,12 +102,12 @@ func TestGetUpgradePreflightChecks(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.NotNil(t, result)
-		assert.Equal(t, operatorVersion, pointer.Get(result.CurrentVersion))
-		assert.Len(t, *result.Databases, 1)
-		dbResult := (*result.Databases)[0]
+		assert.Equal(t, operatorVersion, result.currentVersion)
+		assert.Len(t, result.databases, 1)
+		dbResult := (result.databases)[0]
 		assert.Equal(t, "test-db", pointer.Get(dbResult.Name))
 		assert.Equal(t, UpgradeEngine, pointer.Get(dbResult.PendingTask))
-		assert.Equal(t, "Upgrade DB version to 0.5.0", pointer.Get(dbResult.Message))
+		assert.Equal(t, "Upgrade DB version to 0.5.0 or higher", pointer.Get(dbResult.Message))
 	})
 
 	t.Run("pending CRVersion update", func(t *testing.T) {
@@ -151,9 +151,9 @@ func TestGetUpgradePreflightChecks(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.NotNil(t, result)
-		assert.Equal(t, operatorVersion, pointer.Get(result.CurrentVersion))
-		assert.Len(t, *result.Databases, 1)
-		dbResult := (*result.Databases)[0]
+		assert.Equal(t, operatorVersion, result.currentVersion)
+		assert.Len(t, result.databases, 1)
+		dbResult := (result.databases)[0]
 		assert.Equal(t, "test-db", pointer.Get(dbResult.Name))
 		assert.Equal(t, Restart, pointer.Get(dbResult.PendingTask))
 		assert.Equal(t, "Update CRVersion to "+operatorVersion, pointer.Get(dbResult.Message))
@@ -200,9 +200,9 @@ func TestGetUpgradePreflightChecks(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.NotNil(t, result)
-		assert.Equal(t, operatorVersion, pointer.Get(result.CurrentVersion))
-		assert.Len(t, *result.Databases, 1)
-		dbResult := (*result.Databases)[0]
+		assert.Equal(t, operatorVersion, result.currentVersion)
+		assert.Len(t, result.databases, 1)
+		dbResult := (result.databases)[0]
 		assert.Equal(t, "test-db", pointer.Get(dbResult.Name))
 		assert.Equal(t, dbResult.Message, pointer.ToString("Database is not ready"))
 		assert.Equal(t, NotReady, pointer.Get(dbResult.PendingTask))
@@ -249,9 +249,9 @@ func TestGetUpgradePreflightChecks(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.NotNil(t, result)
-		assert.Equal(t, operatorVersion, pointer.Get(result.CurrentVersion))
-		assert.Len(t, *result.Databases, 1)
-		dbResult := (*result.Databases)[0]
+		assert.Equal(t, operatorVersion, result.currentVersion)
+		assert.Len(t, result.databases, 1)
+		dbResult := (result.databases)[0]
 		assert.Equal(t, "test-db", pointer.Get(dbResult.Name))
 		assert.Equal(t, Ready, pointer.Get(dbResult.PendingTask))
 	})

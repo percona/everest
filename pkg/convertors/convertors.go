@@ -60,7 +60,7 @@ func StrToBytes(memory string) (uint64, error) {
 	//
 	// Support of 'm' unit can be redundant because it's used for CPU limits mostly
 	suffixMapping := map[string]float64{
-		"m":  0.001,
+		"m":  0.001, //nolint:mnd
 		"k":  float64(kiloByte),
 		"Ki": float64(kibiByte),
 		"M":  float64(megaByte),
@@ -107,7 +107,7 @@ func StrToMilliCPU(cpu string) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return uint64(floatCPU * 1000), nil
+	return uint64(floatCPU * 1000), nil //nolint:mnd
 }
 
 // BytesToStr converts integer of bytes to string.

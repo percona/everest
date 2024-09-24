@@ -5,11 +5,12 @@ import { CustomCheckboxProps } from './custom-checkbox.types';
 export const CustomCheckbox = ({
   formControlLabelProps,
   checkboxMessage,
+  disabled = false,
 }: CustomCheckboxProps) => (
   <FormControlLabel
     {...formControlLabelProps}
     label={checkboxMessage}
-    control={<CheckboxInput name="dataCheckbox" />}
+    control={<CheckboxInput disabled={disabled} name="dataCheckbox" />}
   />
 );
 

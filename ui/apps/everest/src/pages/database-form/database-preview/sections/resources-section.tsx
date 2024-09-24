@@ -5,7 +5,11 @@ export const ResourcesPreviewSection = ({
   numberOfNodes,
   cpu,
   disk,
+  diskUnit,
   memory,
+  sharding,
+  shardNr,
+  shardConfigServers,
 }: SectionProps) => {
   const parsedCPU = Number(cpu) * Number(numberOfNodes);
   const parsedDisk = Number(disk) * Number(numberOfNodes);
@@ -13,17 +17,25 @@ export const ResourcesPreviewSection = ({
 
   return (
     <>
-      <PreviewContentText text={`Number of nodes: ${numberOfNodes}`} />
+      {sharding && (
+        <>
+          <PreviewContentText text={`Shards: ${shardNr}`} />
+          <PreviewContentText
+            text={`Configuration servers: ${shardConfigServers}`}
+          />
+        </>
+      )}
+      <PreviewContentText text={`Nº nodes: ${numberOfNodes}`} />
       <PreviewContentText
-        text={`CPU: ${Number.isNaN(parsedCPU) ? '' : `${parsedCPU} CPU`}`}
+        text={`CPU: ${Number.isNaN(parsedCPU) ? '' : `${parsedCPU.toFixed(2)} CPU`}`}
       />
       <PreviewContentText
         text={`Memory: ${
-          Number.isNaN(parsedMemory) ? '' : `${parsedMemory} GB`
+          Number.isNaN(parsedMemory) ? '' : `${parsedMemory.toFixed(2)} GB`
         }`}
       />
       <PreviewContentText
-        text={`Disk: ${Number.isNaN(parsedDisk) ? '' : `${parsedDisk} GB`}`}
+        text={`Disk: ${Number.isNaN(parsedDisk) ? '' : `${parsedDisk.toFixed(2)} ${diskUnit}`}`}
       />
     </>
   );

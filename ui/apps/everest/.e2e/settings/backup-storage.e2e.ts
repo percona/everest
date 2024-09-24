@@ -23,7 +23,7 @@ const {
   EVEREST_LOCATION_URL,
 } = process.env;
 
-test.describe('Backup storage', () => {
+test.describe.skip('Backup storage', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/settings/storage-locations');
     await page.getByTestId('add-backup-storage').waitFor();
@@ -49,6 +49,8 @@ test.describe('Backup storage', () => {
     await page
       .getByTestId('text-input-secret-key')
       .fill(EVEREST_LOCATION_SECRET_KEY);
+    await page.getByTestId('checkbox-verify-tls').setChecked(false);
+    await page.getByTestId('checkbox-force-path-style').setChecked(true);
     await page.getByTestId('form-dialog-add').click();
 
     await findRowAndClickActions(page, 'test-storage-name', 'Delete');

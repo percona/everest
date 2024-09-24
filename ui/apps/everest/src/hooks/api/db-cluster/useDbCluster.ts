@@ -18,6 +18,8 @@ import { DbCluster } from 'shared-types/dbCluster.types';
 
 import { getDbClusterFn } from 'api/dbClusterApi';
 import { PerconaQueryOptions } from 'shared-types/query.types';
+import cronConverter from 'utils/cron-converter';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const DB_CLUSTER_QUERY = 'dbCluster';
 
@@ -25,9 +27,34 @@ export const useDbCluster = (
   dbClusterName: string,
   namespace: string,
   options?: PerconaQueryOptions<DbCluster, unknown, DbCluster>
-) =>
-  useQuery<DbCluster, unknown, DbCluster>({
+) => {
+  const { canRead } = useRBACPermissions(
+    'database-clusters',
+    `${namespace}/${dbClusterName}`
+  );
+  return useQuery<DbCluster, unknown, DbCluster>({
     queryKey: [DB_CLUSTER_QUERY, dbClusterName],
     queryFn: () => getDbClusterFn(dbClusterName, namespace),
+    select: (cluster) => ({
+      ...cluster,
+      spec: {
+        ...cluster.spec,
+        ...(cluster.spec?.backup?.schedules && {
+          backup: {
+            ...cluster.spec.backup,
+            schedules: cluster.spec.backup.schedules.map((schedule) => ({
+              ...schedule,
+              schedule: cronConverter(
+                schedule.schedule,
+                'UTC',
+                Intl.DateTimeFormat().resolvedOptions().timeZone
+              ),
+            })),
+          },
+        }),
+      },
+    }),
     ...options,
+    enabled: options?.enabled && canRead,
   });
+};

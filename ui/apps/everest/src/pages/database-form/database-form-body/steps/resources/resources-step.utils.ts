@@ -18,6 +18,8 @@ import { DEFAULT_SIZES } from './resources-step.const.ts';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { memoryParser } from 'utils/k8ResourceParser';
 import { Messages } from './resources-step.messages.ts';
+import { SHARDING_DEFAULTS } from '../../../database-form.constants';
+import { DbWizardFormFields } from '../../../database-form.types';
 
 const humanizedResourceSizeMap: Record<ResourceSize, string> = {
   [ResourceSize.small]: 'Small',
@@ -54,14 +56,10 @@ export const matchFieldsValueToResourceSize = (
     return ResourceSize.custom;
   }
 
-  const size = memoryParser(dbCluster?.spec?.engine?.storage?.size.toString());
-  const memory = memoryParser(resources.memory.toString());
+  const memory = memoryParser(resources.memory.toString(), 'G');
 
   const res = Object.values(DEFAULT_SIZES).findIndex(
-    (item) =>
-      item.cpu === Number(resources.cpu) &&
-      item.memory === memory &&
-      item.disk === size
+    (item) => item.cpu === Number(resources.cpu) && item.memory === memory.value
   );
   return res !== -1
     ? (Object.keys(DEFAULT_SIZES)[res] as ResourceSize)
@@ -93,7 +91,16 @@ export const checkResourceText = (
         units
       );
     }
-    return Messages.labels.estimated(processedValue, units);
+    return Messages.labels.estimated(processedValue.toFixed(2), units);
   }
   return '';
+};
+
+export const getDefaultShardsNumberByNode = (nodeValue: number) => {
+  if (nodeValue == 1) return SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min;
+  else return '2';
+};
+
+export const getDefaultConfigServers = (nodeValue: number) => {
+  return nodeValue.toString();
 };

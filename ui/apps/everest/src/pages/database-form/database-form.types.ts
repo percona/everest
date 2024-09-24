@@ -23,6 +23,8 @@ export enum DbWizardForm {
   cpu = 'cpu',
   memory = 'memory',
   disk = 'disk',
+  // This is for retrocompatibility reasons, as some users still have Gb as a unit
+  diskUnit = 'diskUnit',
   numberOfNodes = 'numberOfNodes',
   resourceSizePerNode = 'resourceSizePerNode',
   backupsEnabled = 'backupsEnabled',
@@ -37,6 +39,9 @@ export enum DbWizardForm {
   monitoring = 'monitoring',
   monitoringInstance = 'monitoringInstance',
   endpoint = 'endpoint',
+  sharding = 'sharding',
+  shardNr = 'shardNr',
+  shardConfigServers = 'shardConfigServers',
 }
 
 export const DbWizardFormFields = {

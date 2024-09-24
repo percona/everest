@@ -13,13 +13,17 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/percona/everest/cmd/config"
+	"github.com/percona/everest/pkg/version"
 )
 
 const (
 	telemetryProductFamily = "PRODUCT_FAMILY_EVEREST"
+	telemetryVersionKey    = "version"
 
 	// delay the initial metrics to prevent flooding in case of many restarts.
 	initialMetricsDelay = 5 * time.Minute
+
+	numEngineTypes = 3
 )
 
 // Telemetry is the struct for telemetry reports.
@@ -88,7 +92,7 @@ func (e *EverestServer) RunTelemetryJob(ctx context.Context, c *config.EverestCo
 			return
 		case <-timer.C:
 			timer.Reset(interval)
-			err = e.collectMetrics(ctx, c.TelemetryURL)
+			err = e.collectMetrics(ctx, *c)
 			if err != nil {
 				e.l.Error(errors.Join(err, errors.New("failed to collect telemetry data")))
 			}
@@ -96,20 +100,30 @@ func (e *EverestServer) RunTelemetryJob(ctx context.Context, c *config.EverestCo
 	}
 }
 
-func (e *EverestServer) collectMetrics(ctx context.Context, url string) error {
+func (e *EverestServer) collectMetrics(ctx context.Context, config config.EverestConfig) error {
+	if config.DisableTelemetry {
+		return nil
+	}
 	everestID, err := e.kubeClient.GetEverestID(ctx)
 	if err != nil {
 		e.l.Error(errors.Join(err, errors.New("failed to get Everest settings")))
 		return err
 	}
 
-	namespaces, err := e.kubeClient.GetDBNamespaces(ctx, e.kubeClient.Namespace())
+	namespaces, err := e.kubeClient.GetDBNamespaces(ctx)
 	if err != nil {
 		e.l.Error(errors.Join(err, errors.New("failed to get watched namespaces")))
 		return err
 	}
 
-	types := make(map[string]int, 3)
+	types := make(map[string]int, numEngineTypes)
+	metrics := make([]Metric, 0, numEngineTypes+1)
+	// Everest version.
+	metrics = append(metrics, Metric{
+		Key:   telemetryVersionKey,
+		Value: version.Version,
+	})
+
 	for _, ns := range namespaces {
 		clusters, err := e.kubeClient.ListDatabaseClusters(ctx, ns)
 		if err != nil {
@@ -122,9 +136,8 @@ func (e *EverestServer) collectMetrics(ctx context.Context, url string) error {
 		}
 	}
 
-	// key - the engine type, value - the amount of db clusters of that type
-	metrics := make([]Metric, 0, 3)
 	for key, val := range types {
+		// Number of DBs per DB engine.
 		metrics = append(metrics, Metric{key, strconv.Itoa(val)})
 	}
 
@@ -140,5 +153,5 @@ func (e *EverestServer) collectMetrics(ctx context.Context, url string) error {
 		},
 	}
 
-	return e.report(ctx, url, report)
+	return e.report(ctx, config.TelemetryURL, report)
 }

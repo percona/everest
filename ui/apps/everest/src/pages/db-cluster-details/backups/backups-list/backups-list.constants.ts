@@ -6,4 +6,5 @@ export const BACKUP_STATUS_TO_BASE_STATUS: Record<BackupStatus, BaseStatus> = {
   [BackupStatus.FAILED]: 'error',
   [BackupStatus.IN_PROGRESS]: 'pending',
   [BackupStatus.UNKNOWN]: 'unknown',
+  [BackupStatus.DELETING]: 'deleting',
 };

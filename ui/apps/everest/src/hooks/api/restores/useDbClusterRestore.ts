@@ -23,7 +23,9 @@ import {
   deleteRestore,
   getDbClusterRestores,
 } from 'api/restores';
+import { useRBACPermissions } from 'hooks/rbac';
 import { generateShortUID } from 'pages/database-form/database-form-body/steps/first/utils';
+import { PerconaQueryOptions } from 'shared-types/query.types';
 import { GetRestorePayload, Restore } from 'shared-types/restores.types';
 
 export const RESTORES_QUERY_KEY = 'restores';
@@ -97,21 +99,32 @@ export const useDbClusterRestoreFromPointInTime = (
 
 export const useDbClusterRestores = (
   namespace: string,
-  dbClusterName: string
-) =>
-  useQuery<GetRestorePayload, unknown, Restore[]>({
+  dbClusterName: string,
+  options?: PerconaQueryOptions<GetRestorePayload, unknown, Restore[]>
+) => {
+  const { canRead } = useRBACPermissions(
+    'database-cluster-restores',
+    `${namespace}/${dbClusterName}`
+  );
+  return useQuery<GetRestorePayload, unknown, Restore[]>({
     queryKey: [RESTORES_QUERY_KEY, namespace, dbClusterName],
     queryFn: () => getDbClusterRestores(namespace, dbClusterName),
-    select: (data) =>
-      data.items.map((item) => ({
-        name: item.metadata.name,
-        startTime: item.metadata.creationTimestamp,
-        endTime: item.status.completed,
-        state: item.status.state,
-        type: item.spec.dataSource.pitr ? 'pitr' : 'full',
-        backupSource: item.spec.dataSource.dbClusterBackupName || '',
-      })),
+    refetchInterval: 5 * 1000,
+    select: canRead
+      ? (data) =>
+          data.items.map((item) => ({
+            name: item.metadata.name,
+            startTime: item.metadata.creationTimestamp,
+            endTime: item.status.completed,
+            state: item.status.state || 'unknown',
+            type: item.spec.dataSource.pitr ? 'pitr' : 'full',
+            backupSource: item.spec.dataSource.dbClusterBackupName || '',
+          }))
+      : () => [],
+    ...options,
+    enabled: (options?.enabled ?? true) && canRead,
   });
+};
 
 export const useDeleteRestore = (
   namespace: string,

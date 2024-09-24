@@ -32,7 +32,6 @@ export const getDBClustersList = async (
 
 export const findDbAndClickRow = async (page: Page, dbName: string) => {
   const dbRow = page.getByRole('row').filter({ hasText: dbName });
-  page.getByTestId(`${dbName}-status`).filter({ hasText: 'Initializing' });
 
   await dbRow.click();
 };
@@ -54,4 +53,38 @@ export const gotoDbClusterBackups = async (page: Page, clusterName: string) => {
   await page.getByRole('row').filter({ hasText: clusterName }).click();
   await expect(page.getByText('Overview')).toBeVisible();
   await page.getByTestId('backups').click();
+};
+
+export const gotoDbClusterRestores = async (
+  page: Page,
+  clusterName: string
+) => {
+  await page.goto('databases');
+  await page.getByRole('row').filter({ hasText: clusterName }).click();
+  await expect(page.getByText('Overview')).toBeVisible();
+  await page.getByTestId('restores').click();
+};
+
+export const deleteDbCluster = async (page: Page, clusterName: string) => {
+  await page.goto('databases');
+  await findDbAndClickActions(page, clusterName, 'delete', 'Up');
+  await expect(page.getByText('Delete database')).toBeVisible();
+  await expect(page.getByText('Irreversible action')).toBeVisible();
+  await page.getByTestId('text-input-confirm-input').fill(clusterName);
+  await page.getByTestId('form-dialog-delete').click();
+};
+
+export const suspendDbCluster = async (page: Page, clusterName: string) => {
+  await page.goto('databases');
+  await findDbAndClickActions(page, clusterName, 'suspend', 'Up');
+};
+
+export const resumeDbCluster = async (page: Page, clusterName: string) => {
+  await page.goto('databases');
+  await findDbAndClickActions(page, clusterName, 'resume', 'Paused');
+};
+
+export const restartDbCluster = async (page: Page, clusterName: string) => {
+  await page.goto('databases');
+  await findDbAndClickActions(page, clusterName, 'restart', 'Up');
 };

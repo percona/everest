@@ -22,8 +22,11 @@ import {
   gotoDbClusterBackups,
 } from '../utils/db-clusters-list';
 import { storageLocationAutocompleteEmptyValidationCheck } from '../utils/db-wizard';
+import { getBucketNamespacesMap } from '../constants';
+import { waitForInitializingState } from '../utils/table';
 
-test.describe.serial('Schedules List', async () => {
+// TODO uncomment when PATCH method is implemented
+test.describe.skip('Schedules List', async () => {
   let scheduleName = 'test-name';
   const mySQLName = 'schedule-mysql';
 
@@ -33,10 +36,22 @@ test.describe.serial('Schedules List', async () => {
       dbType: 'mysql',
       numberOfNodes: '1',
       backup: {
-        enabled: false,
-        schedules: [],
+        enabled: true,
+        schedules: [
+          {
+            backupStorageName: getBucketNamespacesMap()[0][0],
+            enabled: true,
+            name: 'backup-1',
+            schedule: '0 * * * *',
+          },
+        ],
       },
     });
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/databases');
+    await waitForInitializingState(page, mySQLName);
   });
 
   test.afterAll(async ({ request }) => {
@@ -44,7 +59,6 @@ test.describe.serial('Schedules List', async () => {
   });
 
   test('Create schedule', async ({ page }) => {
-    await page.goto('/databases');
     await findDbAndClickRow(page, mySQLName);
 
     const backupsTab = await page.getByTestId(DBClusterDetailsTabs.backups);
@@ -82,7 +96,20 @@ test.describe.serial('Schedules List', async () => {
 
     expect(page.getByText('Every hour at minute 0')).toBeTruthy();
 
-    expect(page.getByText('1 schedule')).toBeTruthy();
+    expect(page.getByText('2 active schedules')).toBeTruthy();
+  });
+
+  test.skip('Warning should appears for schedule with the same date and storage during create', async ({}) => {
+    //TODO a similar test is written in create.db.wizard, after solving patch problem it's better to duplicate the same for backups page
+  });
+
+  test.skip('Warning should appears for schedule with the same date and storage during edit', async ({}) => {
+    //TODO add a test after solving patch problem
+    // 1. create 2 different hour schedules (n1 with 30 min and n2 with 45min)
+    // 2. open n1 and check warning is not appearing on just open schedule by default, submit shouldn't be disabled
+    // 3. set 45min to n1 and check that the warning has appeared, submit button should be disabled
+    // 4. choose n2 in schedule name field and check that the warning has disappeared, submit shouldn't be disabled
+    // 5. choose 30 min for n2 and check that the warning has appeared, submit button should be disabled
   });
 
   test('Creating schedule with duplicate name shows validation error', async ({
@@ -134,19 +161,19 @@ test.describe.serial('Schedules List', async () => {
         enabled: true,
         schedules: [
           {
-            backupStorageName: 'test-storage-1',
+            backupStorageName: getBucketNamespacesMap()[0][0],
             enabled: true,
             name: 'backup-1',
             schedule: '0 * * * *',
           },
           {
-            backupStorageName: 'test-storage-1',
+            backupStorageName: getBucketNamespacesMap()[0][0],
             enabled: true,
             name: 'backup-2',
             schedule: '0 * * * *',
           },
           {
-            backupStorageName: 'test-storage-1',
+            backupStorageName: getBucketNamespacesMap()[0][0],
             enabled: true,
             name: 'backup-3',
             schedule: '0 * * * *',
@@ -165,17 +192,19 @@ test.describe.serial('Schedules List', async () => {
   });
 
   test('Delete Schedule', async ({ page }) => {
+    // TODO check other schedule time
     await gotoDbClusterBackups(page, mySQLName);
     const scheduledBackupsAccordion =
       await page.getByTestId('scheduled-backups');
     await scheduledBackupsAccordion.click();
 
     const scheduleForDeleteBtn = await page
-      .getByText('Every hour at minute 0-')
-      .getByTestId('delete-schedule-button');
+      .getByTestId('delete-schedule-button')
+      .first();
     await scheduleForDeleteBtn.click();
     await (await page.getByTestId('confirm-dialog-delete')).click();
-    expect(page.getByText('1 schedule')).toBeTruthy();
+    expect(page.getByText('1 active schedule')).toBeTruthy();
+    // TODO check other schedule time is the same as before deletion
   });
 
   test('Edit Schedule', async ({ page }) => {

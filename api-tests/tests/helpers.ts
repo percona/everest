@@ -2,10 +2,10 @@ import {expect, test} from '@playwright/test'
 
 // testPrefix is used to differentiate between several workers
 // running this test to avoid conflicts in instance names
-export const testPrefix = `t${(Math.random() + 1).toString(36).substring(10)}`
+export const testPrefix = ()=> `t${(Math.random() + 1).toString(36).substring(10)}`
 
 export const suffixedName = (name) => {
-  return `${name}-${testPrefix}`
+  return `${name}-${testPrefix()}`
 }
 
 export const checkError = async response => {
@@ -52,34 +52,53 @@ export const createDBCluster = async (request, name) => {
   await checkError(postReq)
 }
 
-export const deleteDBCluster = async (request, name) => {
-  const res = await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${name}`)
+export const deleteDBCluster = async (request, page, name) => {
+  let res = await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${name}`)
 
-  await checkError(res)
+  for (let i = 0; i < 100; i++) {
+    const cluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${name}`)
+    if (cluster.status() == 404) {
+      return;
+    }
+    let data = await cluster.json()
+    data.metadata.finalizers = null
+
+    await request.put(`/v1/namespaces/${testsNs}/database-clusters/${name}`, { data })
+    await page.waitForTimeout(1000)
+  }
 }
 
-export const createBackupStorage = async (request, name) => {
+export const createBackupStorage = async (request, name, namespace) => {
   const storagePayload = {
     type: 's3',
     name,
     url: 'http://custom-url',
     description: 'Dev storage',
-    bucketName: 'percona-test-backup-storage',
+    bucketName: suffixedName('percona-test-backup-storage'),
     region: 'us-east-2',
     accessKey: 'sdfs',
     secretKey: 'sdfsdfsd',
     allowedNamespaces: [testsNs],
   }
 
-  const response = await request.post(`/v1/backup-storages`, { data: storagePayload })
+  const response = await request.post(`/v1/namespaces/${namespace}/backup-storages`, { data: storagePayload })
 
   await checkError(response)
 }
 
-export const deleteBackupStorage = async (request, name) => {
-  const res = await request.delete(`/v1/backup-storages/${name}`)
-
-  await checkError(res)
+export const deleteBackupStorage = async (page, request, name, namespace) => {
+  let res = await request.delete(`/v1/namespaces/${namespace}/backup-storages/${name}`)
+  if (res.ok()) {
+      return;
+  }
+  for (let i = 0; i < 100; i++) {
+    res = await request.delete(`/v1/namespaces/${namespace}/backup-storages/${name}`)
+    if (res.ok()) {
+        break;
+    }
+    await page.waitForTimeout(1000)
+  }
+  checkError(res)
 }
 
 export const createBackup = async (request,  clusterName, backupName, storageName) => {
@@ -102,16 +121,36 @@ export const createBackup = async (request,  clusterName, backupName, storageNam
   await checkError(responseBackup)
 }
 
-export const deleteBackup = async (request, backupName) => {
-  const res = await request.delete(`/v1/namespaces/${testsNs}/database-cluster-backups/${backupName}`)
+export const deleteBackup = async (page, request, name) => {
+  let res = await request.delete(`/v1/namespaces/${testsNs}/database-cluster-backups/${name}`)
+  checkError(res)
+  for (let i = 0; i < 100; i++) {
+    const bkp = await request.get(`/v1/namespaces/${testsNs}/database-cluster-backups/${name}`)
+    if (bkp.status() == 404) {
+      return;
+    }
 
-  await checkError(res)
+    // remove finalizers.
+    let data = await bkp.json()
+    data.metadata.finalizers = null
+    await request.put(`/v1/namespaces/${testsNs}/database-cluster-backups/${name}`, { data })
+
+    await page.waitForTimeout(1000)
+  }
 }
 
 export const deleteRestore = async (request, restoreName) => {
   const res = await request.delete(`/v1/namespaces/${testsNs}/database-cluster-restores/${restoreName}`)
 
   await checkError(res)
+}
+
+export const checkObjectDeletion = async (obj) => {
+  if (obj.status() == 200) {
+    expect((await obj.json()).metadata["deletionTimestamp"]).not.toBe('');
+  } else {
+    expect(obj.status()).toBe(404)
+  }
 }
 
 export const checkClusterDeletion = async (cluster) => {
@@ -123,11 +162,34 @@ export const checkClusterDeletion = async (cluster) => {
 }
 
 export const waitClusterDeletion = async (request, page, clusterName) => {
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 100; i++) {
     const cluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
     if (cluster.status() == 404) {
       break;
     }
     await page.waitForTimeout(1000)
   }
+  const cluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+  expect(cluster.status()).toBe(404)
+}
+
+export const createMonitoringConfig = async (request, name, namespace) => {
+  const miData = {
+    type: 'pmm',
+    name: name,
+    url: 'http://monitoring',
+    allowedNamespaces: [testsNs],
+    pmm: {
+      apiKey: '123',
+    },
+  }
+  let res = await request.post(`/v1/namespaces/${namespace}/monitoring-instances`, { data: miData })
+
+  await checkError(res)
+}
+
+export const deleteMonitoringConfig = async (request, name, namespace) => {
+  let res = await request.delete(`/v1/namespaces/${namespace}/monitoring-instances/${name}`)
+
+  await checkError(res)
 }

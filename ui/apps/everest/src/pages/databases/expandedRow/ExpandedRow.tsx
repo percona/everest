@@ -22,6 +22,7 @@ import { ProxyExposeType } from 'shared-types/dbCluster.types';
 import { Messages } from '../dbClusterView.messages';
 import { DbClusterTableElement } from '../dbClusterView.types';
 import { LabelValue } from './LabelValue';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const ExpandedRow = ({
   row,
@@ -49,6 +50,11 @@ export const ExpandedRow = ({
       staleTime: 10 * (60 * 1000),
       gcTime: 15 * (60 * 1000),
     }
+  );
+
+  const { canRead } = useRBACPermissions(
+    'database-cluster-credentials',
+    `${namespace}/${databaseName}`
   );
 
   return (
@@ -79,19 +85,23 @@ export const ExpandedRow = ({
                 {host}
               </Box>
               <CopyToClipboardButton
-                buttonProps={{ sx: { mt: -1, mb: -1.5 } }}
+                buttonProps={{
+                  sx: { mt: -0.5 },
+                  color: 'primary',
+                  size: 'small',
+                }}
                 textToCopy={host}
               />
             </Box>
           ))}
         />
         <LabelValue label="Port" value={port} />
-        {isPending || isFetching ? (
+        {canRead && (isPending || isFetching) ? (
           <>
             <Skeleton width="300px" />
             <Skeleton width="300px" />
           </>
-        ) : (
+        ) : canRead ? (
           <>
             <LabelValue label="Username" value={data?.username} />
             <LabelValue
@@ -101,7 +111,7 @@ export const ExpandedRow = ({
               }
             />
           </>
-        )}
+        ) : undefined}
       </Box>
       <Box>
         <Typography

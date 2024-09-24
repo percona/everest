@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { StorageType } from 'shared-types/backupStorages.types';
+import { BackupStorage, StorageType } from 'shared-types/backupStorages.types';
 
 export enum StorageLocationsFields {
   name = 'name',
@@ -11,6 +11,7 @@ export enum StorageLocationsFields {
   accessKey = 'accessKey',
   secretKey = 'secretKey',
   namespaces = 'allowedNamespaces',
+  namespace = 'namespace',
   verifyTLS = 'verifyTLS',
   forcePathStyle = 'forcePathStyle',
 }
@@ -24,7 +25,7 @@ export const storageLocationDefaultValues = {
   [StorageLocationsFields.accessKey]: '',
   [StorageLocationsFields.secretKey]: '',
   [StorageLocationsFields.bucketName]: '',
-  [StorageLocationsFields.namespaces]: [],
+  [StorageLocationsFields.namespace]: '',
   [StorageLocationsFields.verifyTLS]: true,
   [StorageLocationsFields.forcePathStyle]: false,
 };
@@ -42,8 +43,7 @@ export const storageLocationEditValues = (
   [StorageLocationsFields.secretKey]: selectedStorageLocationForEdit.secretKey,
   [StorageLocationsFields.bucketName]:
     selectedStorageLocationForEdit.bucketName,
-  [StorageLocationsFields.namespaces]:
-    selectedStorageLocationForEdit.allowedNamespaces || [],
+  [StorageLocationsFields.namespace]: selectedStorageLocationForEdit.namespace,
   [StorageLocationsFields.verifyTLS]: selectedStorageLocationForEdit.verifyTLS,
   [StorageLocationsFields.forcePathStyle]:
     selectedStorageLocationForEdit.forcePathStyle,
@@ -58,9 +58,19 @@ export const storageLocationsSchema = z.object({
   [StorageLocationsFields.region]: z.string().nonempty(),
   [StorageLocationsFields.accessKey]: z.string().nonempty(),
   [StorageLocationsFields.secretKey]: z.string().nonempty(),
-  [StorageLocationsFields.namespaces]: z.array(z.string()).nonempty(),
+  [StorageLocationsFields.namespace]: z.string().nonempty(),
   [StorageLocationsFields.verifyTLS]: z.boolean(),
   [StorageLocationsFields.forcePathStyle]: z.boolean(),
 });
 
 export type BackupStorageType = z.infer<typeof storageLocationsSchema>;
+
+export interface BackupStorageTableElement {
+  name: string;
+  type: StorageType;
+  bucketName: string;
+  url: string;
+  namespace: string;
+  description?: string | undefined;
+  raw: BackupStorage;
+}

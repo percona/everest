@@ -1,11 +1,14 @@
-import { Box, FormGroup } from '@mui/material';
+import { Box, FormGroup, Typography } from '@mui/material';
 import { DbType } from '@percona/types';
-import { ToggleButtonGroupInput, ToggleCard } from '@percona/ui-lib';
+import { TextInput, ToggleButtonGroupInput, ToggleCard } from '@percona/ui-lib';
 import { useKubernetesClusterResourcesInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterResourcesInfo';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
 import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { NODES_DB_TYPE_MAP } from '../../../database-form.constants.ts';
+import {
+  NODES_DB_TYPE_MAP,
+  SHARDING_DEFAULTS,
+} from '../../../database-form.constants.ts';
 import { DbWizardFormFields } from '../../../database-form.types.ts';
 import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
@@ -15,6 +18,8 @@ import { Messages } from './resources-step.messages.ts';
 import { ResourceSize } from './resources-step.types.ts';
 import {
   checkResourceText,
+  getDefaultConfigServers,
+  getDefaultShardsNumberByNode,
   humanizeResourceSizeMap,
 } from './resources-step.utils.ts';
 
@@ -32,8 +37,21 @@ export const ResourcesStep = () => {
   const cpu: number = watch(DbWizardFormFields.cpu);
   const memory: number = watch(DbWizardFormFields.memory);
   const disk: number = watch(DbWizardFormFields.disk);
+  const diskUnit: string = watch(DbWizardFormFields.diskUnit);
   const dbType: DbType = watch(DbWizardFormFields.dbType);
   const numberOfNodes = watch(DbWizardFormFields.numberOfNodes);
+  const sharding = watch(DbWizardFormFields.sharding);
+
+  useEffect(() => {
+    setValue(
+      DbWizardFormFields.shardNr,
+      getDefaultShardsNumberByNode(numberOfNodes)
+    );
+    setValue(
+      DbWizardFormFields.shardConfigServers,
+      getDefaultConfigServers(numberOfNodes)
+    );
+  }, [numberOfNodes]);
 
   const cpuCapacityExceeded = resourcesInfo
     ? cpu * 1000 > resourcesInfo?.available.cpuMillis
@@ -100,7 +118,54 @@ export const ResourcesStep = () => {
         pageTitle={Messages.pageTitle}
         pageDescription={Messages.pageDescription}
       />
-      <FormGroup sx={{ mt: 2 }}>
+      <FormGroup sx={{ mt: 3 }}>
+        {sharding && (
+          <>
+            <Typography variant="sectionHeading">
+              {Messages.labels.shardsConfig}
+            </Typography>
+            <Box
+              sx={{
+                flexDirection: 'row',
+                gap: 2,
+                display: 'flex',
+                '.MuiTextField-root': {
+                  width: '50%',
+                },
+                mb: 3,
+              }}
+            >
+              <TextInput
+                name={DbWizardFormFields.shardNr}
+                textFieldProps={{
+                  disabled: mode !== 'new',
+                  label: Messages.labels.numberOfShards,
+                  type: 'number',
+                  inputProps: {
+                    min: SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min,
+                  },
+                }}
+              />
+              <TextInput
+                name={DbWizardFormFields.shardConfigServers}
+                textFieldProps={{
+                  disabled: mode !== 'new',
+                  label: Messages.labels.numberOfConfigServers,
+                  type: 'number',
+                  inputProps: {
+                    step: '2',
+                    min: SHARDING_DEFAULTS[
+                      DbWizardFormFields.shardConfigServers
+                    ].min,
+                    max: SHARDING_DEFAULTS[
+                      DbWizardFormFields.shardConfigServers
+                    ].max,
+                  },
+                }}
+              />
+            </Box>
+          </>
+        )}
         <ToggleButtonGroupInput
           name={DbWizardFormFields.numberOfNodes}
           label={Messages.labels.numberOfNodes}
@@ -189,11 +254,11 @@ export const ResourcesStep = () => {
             label={Messages.labels.disk.toUpperCase()}
             helperText={checkResourceText(
               resourcesInfo?.available?.diskSize,
-              'GB',
+              diskUnit,
               Messages.labels.disk,
               diskCapacityExceeded
             )}
-            endSuffix="GB"
+            endSuffix={diskUnit}
             numberOfNodes={numberOfNodes}
           />
         </Box>

@@ -26,6 +26,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/rbac"
 )
 
 const (
@@ -53,6 +54,14 @@ func (e *EverestServer) ListDatabaseClusterRestores(ctx echo.Context, namespace,
 
 // CreateDatabaseClusterRestore Create a database cluster restore on the specified kubernetes cluster.
 func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace string) error {
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		e.l.Error(err)
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context: " + err.Error()),
+		})
+	}
+
 	restore := &DatabaseClusterRestore{}
 	if err := e.getBodyFromContext(ctx, restore); err != nil {
 		e.l.Error(err)
@@ -60,12 +69,14 @@ func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace
 			Message: pointer.ToString("Could not get DatabaseClusterRestore from the request body"),
 		})
 	}
+
 	if err := validateDatabaseClusterRestore(ctx.Request().Context(), namespace, restore, e.kubeClient); err != nil {
 		e.l.Error(err)
 		return ctx.JSON(http.StatusBadRequest, Error{
 			Message: pointer.ToString(err.Error()),
 		})
 	}
+
 	dbCluster, err := e.kubeClient.GetDatabaseCluster(ctx.Request().Context(), namespace, restore.Spec.DbClusterName)
 	if err != nil {
 		e.l.Error(err)
@@ -73,6 +84,12 @@ func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace
 			Message: pointer.ToString(err.Error()),
 		})
 	}
+
+	srcBkp := pointer.Get(pointer.Get(restore.Spec).DataSource.DbClusterBackupName)
+	if err := e.enforceDBRestoreRBAC(user, namespace, srcBkp, dbCluster.GetName()); err != nil {
+		return err
+	}
+
 	if dbCluster.Status.Status == everestv1alpha1.AppStateRestoring {
 		e.l.Error("failed creating restore because another one is in progress")
 		return ctx.JSON(http.StatusBadRequest, Error{
@@ -81,6 +98,16 @@ func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace
 	}
 
 	return e.proxyKubernetes(ctx, namespace, databaseClusterRestoreKind, "")
+}
+
+func (e *EverestServer) enforceDBRestoreRBAC(user, namespace, srcBackupName, dbClusterName string) error {
+	if err := e.enforce(user, rbac.ResourceDatabaseClusterCredentials, rbac.ActionRead, rbac.ObjectName(namespace, dbClusterName)); err != nil {
+		return err
+	}
+	if err := e.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionRead, rbac.ObjectName(namespace, srcBackupName)); err != nil {
+		return err
+	}
+	return nil
 }
 
 // DeleteDatabaseClusterRestore Delete the specified cluster restore on the specified kubernetes cluster.

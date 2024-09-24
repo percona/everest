@@ -11,7 +11,9 @@ import (
 
 func newVersionCmd(l *zap.SugaredLogger) *cobra.Command {
 	return &cobra.Command{
-		Use: "version",
+		Use:   "version",
+		Long:  "Print version info",
+		Short: "Print version info",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			outputJSON, err := cmd.Flags().GetBool("json")
 			if err != nil {

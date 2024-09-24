@@ -1,5 +1,5 @@
-import { Add, Delete, Edit } from '@mui/icons-material';
-import { Button, MenuItem } from '@mui/material';
+import { Add } from '@mui/icons-material';
+import { Button } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
@@ -18,17 +18,37 @@ import {
   updateDataAfterDelete,
   updateDataAfterEdit,
 } from 'utils/generalOptimisticDataUpdate';
-import { StorageLocationsFields } from '../storage-locations/storage-locations.types';
 import { CreateEditEndpointModal } from './createEditModal/create-edit-modal';
 import { EndpointFormType } from './createEditModal/create-edit-modal.types';
 import { Messages } from './monitoring-endpoints.messages';
+import { useNamespaces } from 'hooks/api/namespaces';
+import { convertMonitoringInstancesPayloadToTableFormat } from './monitoring-endpoints.utils';
+import { MonitoringInstanceTableElement } from './monitoring-endpoints.types';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
+import TableActionsMenu from '../../../components/table-actions-menu';
+import { MonitoringActionButtons } from './monitoring-endpoint-menu-actions';
 
 export const MonitoringEndpoints = () => {
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedInstance, setSelectedInstance] =
     useState<MonitoringInstance>();
-  const { data: monitoringInstances = [] } = useMonitoringInstancesList();
+  const { data: namespaces = [] } = useNamespaces();
+  const monitoringInstances = useMonitoringInstancesList(
+    namespaces.map((ns) => ({
+      namespace: ns,
+    }))
+  );
+
+  const monitoringInstancesLoading = monitoringInstances.some(
+    (result) => result.queryResult.isLoading
+  );
+
+  const tableData = useMemo(
+    () => convertMonitoringInstancesPayloadToTableFormat(monitoringInstances),
+    [monitoringInstances]
+  );
+
   const { mutate: createMonitoringInstance, isPending: creatingInstance } =
     useCreateMonitoringInstance();
   const { mutate: deleteMonitoringInstance, isPending: removingInstance } =
@@ -36,7 +56,7 @@ export const MonitoringEndpoints = () => {
   const { mutate: updateMonitoringInstance, isPending: updatingInstance } =
     useUpdateMonitoringInstance();
   const queryClient = useQueryClient();
-  const columns = useMemo<MRT_ColumnDef<MonitoringInstance>[]>(
+  const columns = useMemo<MRT_ColumnDef<MonitoringInstanceTableElement>[]>(
     () => [
       {
         accessorKey: 'name',
@@ -47,16 +67,8 @@ export const MonitoringEndpoints = () => {
         header: 'Endpoint',
       },
       {
-        accessorKey: StorageLocationsFields.namespaces,
+        accessorKey: 'namespace',
         header: Messages.namespaces,
-        Cell: ({ cell }) => {
-          const val = cell.getValue<string[]>();
-          if (val) {
-            return val.join(', ');
-          } else {
-            return '-';
-          }
-        },
       },
     ],
     []
@@ -66,8 +78,8 @@ export const MonitoringEndpoints = () => {
     setOpenCreateEditModal(true);
   };
 
-  const handleOpenEditModal = (instance: MonitoringInstance) => {
-    setSelectedInstance(instance);
+  const handleOpenEditModal = (instance: MonitoringInstanceTableElement) => {
+    setSelectedInstance(instance.raw);
     setOpenCreateEditModal(true);
   };
 
@@ -81,14 +93,14 @@ export const MonitoringEndpoints = () => {
     setOpenDeleteDialog(false);
   };
 
-  const handleDeleteInstance = (instance: MonitoringInstance) => {
-    setSelectedInstance(instance);
+  const handleDeleteInstance = (instance: MonitoringInstanceTableElement) => {
+    setSelectedInstance(instance.raw);
     setOpenDeleteDialog(true);
   };
 
   const handleSubmitModal = (
     isEditMode: boolean,
-    { name, url, allowedNamespaces, verifyTLS, ...pmmData }: EndpointFormType
+    { name, url, namespace, verifyTLS, ...pmmData }: EndpointFormType
   ) => {
     if (isEditMode) {
       updateMonitoringInstance(
@@ -97,16 +109,17 @@ export const MonitoringEndpoints = () => {
           payload: {
             url,
             type: 'pmm',
-            allowedNamespaces,
+            namespace,
             verifyTLS,
             pmm: { ...pmmData },
+            allowedNamespaces: [],
           },
         },
         {
           onSuccess: (updatedInstance) => {
             updateDataAfterEdit(
               queryClient,
-              MONITORING_INSTANCES_QUERY_KEY,
+              [MONITORING_INSTANCES_QUERY_KEY, updatedInstance.namespace],
               'name'
             )(updatedInstance);
             handleCloseModal();
@@ -119,14 +132,16 @@ export const MonitoringEndpoints = () => {
           name,
           url,
           type: 'pmm',
-          allowedNamespaces,
+          namespace,
           verifyTLS,
           pmm: { ...pmmData },
+          allowedNamespaces: [],
         },
         {
           onSuccess: (newInstance) => {
             updateDataAfterCreate(queryClient, [
               MONITORING_INSTANCES_QUERY_KEY,
+              newInstance.namespace,
             ])(newInstance);
             handleCloseModal();
           },
@@ -135,60 +150,60 @@ export const MonitoringEndpoints = () => {
     }
   };
 
-  const handleConfirmDelete = (instanceName: string) => {
-    deleteMonitoringInstance(instanceName, {
-      onSuccess: (_, locationName) => {
-        updateDataAfterDelete(
-          queryClient,
-          MONITORING_INSTANCES_QUERY_KEY,
-          'name'
-        )(_, locationName);
-        handleCloseDeleteDialog();
-      },
-    });
+  const handleConfirmDelete = (instanceName: string, namespace: string) => {
+    deleteMonitoringInstance(
+      { instanceName, namespace },
+      {
+        onSuccess: (_, locationName) => {
+          updateDataAfterDelete(
+            queryClient,
+            [MONITORING_INSTANCES_QUERY_KEY, namespace],
+            'name'
+          )(_, locationName.instanceName);
+          handleCloseDeleteDialog();
+        },
+      }
+    );
   };
+
+  const { canCreate } = useNamespacePermissionsForResource(
+    'monitoring-instances'
+  );
 
   return (
     <>
       <Table
         tableName="monitoringEndpoints"
         hideExpandAllIcon
-        data={monitoringInstances}
+        data={tableData}
         columns={columns}
+        state={{
+          isLoading: monitoringInstancesLoading,
+        }}
         enableRowActions
         noDataMessage="No monitoring endpoint added"
-        renderTopToolbarCustomActions={() => (
-          <Button
-            size="small"
-            startIcon={<Add />}
-            data-testid="add-monitoring-endpoint"
-            variant="outlined"
-            onClick={handleOpenCreateModal}
-          >
-            {Messages.add}
-          </Button>
-        )}
-        renderRowActionMenuItems={({ row, closeMenu }) => [
-          <MenuItem
-            key={0}
-            onClick={() => {
-              handleOpenEditModal(row.original);
-              closeMenu();
-            }}
-            sx={{ m: 0, display: 'flex', gap: 1, px: 2, py: '10px' }}
-          >
-            <Edit /> {Messages.edit}
-          </MenuItem>,
-          <MenuItem
-            key={1}
-            onClick={() => {
-              handleDeleteInstance(row.original);
-              closeMenu();
-            }}
-          >
-            <Delete /> {Messages.delete}
-          </MenuItem>,
-        ]}
+        renderTopToolbarCustomActions={() =>
+          canCreate.length > 0 && (
+            <Button
+              size="small"
+              startIcon={<Add />}
+              data-testid="add-monitoring-endpoint"
+              variant="outlined"
+              onClick={handleOpenCreateModal}
+              sx={{ display: 'flex' }}
+            >
+              {Messages.add}
+            </Button>
+          )
+        }
+        renderRowActions={({ row }) => {
+          const menuItems = MonitoringActionButtons(
+            row,
+            handleDeleteInstance,
+            handleOpenEditModal
+          );
+          return <TableActionsMenu menuItems={menuItems} />;
+        }}
       />
       {openCreateEditModal && (
         <CreateEditEndpointModal
@@ -203,9 +218,10 @@ export const MonitoringEndpoints = () => {
         <ConfirmDialog
           isOpen={openDeleteDialog}
           selectedId={selectedInstance?.name || ''}
+          selectedNamespace={selectedInstance?.namespace || ''}
           closeModal={handleCloseDeleteDialog}
           headerMessage={Messages.deleteDialogHeader}
-          handleConfirm={handleConfirmDelete}
+          handleConfirmNamespace={handleConfirmDelete}
           disabledButtons={removingInstance}
         >
           {Messages.deleteConfirmation(selectedInstance!.name)}

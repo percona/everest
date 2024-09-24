@@ -28,6 +28,7 @@ export enum DbClusterStatus {
   ready = 'ready',
   error = 'error',
   restoring = 'restoring',
+  deleting = 'deleting',
 }
 
 export interface Schedule {
@@ -63,6 +64,7 @@ interface Engine {
   replicas: number;
   resources?: Resources;
   storage: Storage;
+  crVersion?: string;
   type: DbEngineType;
   version?: string;
   config?: string;
@@ -90,6 +92,14 @@ export interface Monitoring {
   monitoringConfigName?: string;
 }
 
+export interface Sharding {
+  configServer: {
+    replicas: number;
+  };
+  shards: number;
+  enabled: boolean;
+}
+
 export interface Spec {
   allowUnsafeConfiguration?: boolean;
   backup?: Backup;
@@ -98,6 +108,7 @@ export interface Spec {
   paused?: boolean;
   dataSource?: DataSource;
   monitoring: Monitoring;
+  sharding?: Sharding;
 }
 
 export interface StatusSpec {
@@ -105,6 +116,9 @@ export interface StatusSpec {
   hostname: string;
   port: number;
   activeStorage?: string;
+  crVersion: string;
+  recommendedCRVersion?: string;
+  details?: string;
 }
 
 export interface DbClusterMetadata {

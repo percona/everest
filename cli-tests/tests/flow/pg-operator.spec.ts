@@ -48,7 +48,7 @@ test.describe('Everest CLI install', async () => {
 
     await test.step('run everest install command', async () => {
       const out = await cli.everestExecSkipWizard(
-        `install --operator.mongodb=false --operator.postgresql=true --operator.xtradb-cluster=false --namespaces=everest-operators`,
+        `install -v --operator.mongodb=false --operator.postgresql=true --operator.xtradb-cluster=false --namespaces=everest-operators`,
       );
 
       await out.assertSuccess();
@@ -57,9 +57,29 @@ test.describe('Everest CLI install', async () => {
         'everest-operator operator has been installed',
       ]);
     });
-
     await page.waitForTimeout(10_000);
+    await verifyClusterResources();
 
+    await test.step('run everest install command (pretty))', async () => {
+      const out = await cli.everestExecSkipWizard(
+        `install --operator.mongodb=false --operator.postgresql=true --operator.xtradb-cluster=false --namespaces=everest-operators`,
+      );
+
+      await out.assertSuccess();
+      await out.outContainsNormalizedMany([
+        '✓ Install Operator Lifecycle Manager',
+        '✓ Install Percona OLM Catalog',
+        '✓ Create namespace \'everest-monitoring\'',
+        '✓ Install VictoriaMetrics Operator',
+        '✓ Provision monitoring stack',
+        '✓ Create namespace \'everest-operators\'',
+        '✓ Install operators [pg] in namespace \'everest-operators\'',
+        '✓ Configure RBAC in namespace \'everest-operators\'',
+        '✓ Install Everest Operator',
+        '✓ Install Everest API server',
+      ]);
+    });
+    await page.waitForTimeout(10_000);
     await verifyClusterResources();
 
     await test.step('re-run everest install command', async () => {
@@ -68,7 +88,7 @@ test.describe('Everest CLI install', async () => {
       await operator.assertSuccess();
 
       const out = await cli.everestExecSkipWizard(
-        `install --operator.mongodb=false --operator.postgresql=true --operator.xtradb-cluster=true --namespaces=everest-operators`,
+        `install -v --operator.mongodb=false --operator.postgresql=true --operator.xtradb-cluster=true --namespaces=everest-operators`,
       );
       const restartedOperator = await cli.exec(`kubectl -n everest-system get po | grep everest|awk {'print $1'}`);
       await restartedOperator.assertSuccess();

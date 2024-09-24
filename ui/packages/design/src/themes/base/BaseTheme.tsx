@@ -13,6 +13,7 @@ import {
   ThemeOptions,
 } from '@mui/material';
 import { DatePickerToolbarClassKey } from '@mui/x-date-pickers/DatePicker';
+import { MultiSectionDigitalClockClassKey } from '@mui/x-date-pickers';
 import { outlinedInputClasses } from '@mui/material/OutlinedInput';
 
 declare module '@mui/material/styles' {
@@ -70,15 +71,18 @@ declare module '@mui/material/styles' {
 
   interface ComponentNameToClassKey {
     MuiDateCalendar: DatePickerToolbarClassKey;
+    MuiMultiSectionDigitalClock: MultiSectionDigitalClockClassKey;
   }
 
   interface Components<Theme = unknown> {
     MuiDateCalendar?: {
       styleOverrides?: ComponentsOverrides<Theme>['MuiDateCalendar'];
     };
+    MuiMultiSectionDigitalClock?: {
+      styleOverrides?: ComponentsOverrides<Theme>['MuiMultiSectionDigitalClock'];
+    };
   }
 }
-
 declare module '@mui/material/Typography' {
   interface TypographyPropsVariantOverrides {
     sectionHeading: true;
@@ -88,6 +92,12 @@ declare module '@mui/material/Typography' {
     menuText: true;
     inputText: true;
     inputLabel: true;
+  }
+}
+
+declare module '@mui/material/Paper' {
+  interface PaperPropsVariantOverrides {
+    grey: true;
   }
 }
 
@@ -426,15 +436,14 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
           borderRadius: 128,
           borderWidth: 2,
 
-          '& > svg': {
-            width: 20,
-            height: 20,
-            margin: -3,
+          '.MuiButton-startIcon': {
+            height: 0,
+            alignItems: 'center',
           },
 
           ...(ownerState.variant === 'contained' && {
             ...(ownerState.size === 'large' && {
-              padding: '13px 24px',
+              padding: '12px 24px',
             }),
             ...(ownerState.size === 'medium' && {
               padding: '11px 16px',
@@ -446,23 +455,10 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
 
           ...(ownerState.variant === 'outlined' && {
             ...(ownerState.size === 'large' && {
-              padding: '11px 22px',
+              padding: '12px 22px',
             }),
             ...(ownerState.size === 'medium' && {
-              padding: '9px 14px',
-            }),
-            ...(ownerState.size === 'small' && {
-              padding: '6px 10px',
-            }),
-            borderColor: theme.palette.primary.main,
-          }),
-
-          ...(ownerState.variant === 'text' && {
-            ...(ownerState.size === 'large' && {
-              padding: '13px 22px',
-            }),
-            ...(ownerState.size === 'medium' && {
-              padding: '11px 14px',
+              padding: '11px 16px',
             }),
             ...(ownerState.size === 'small' && {
               padding: '8px 10px',
@@ -470,14 +466,27 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
             borderColor: theme.palette.primary.main,
           }),
 
+          ...(ownerState.variant === 'text' && {
+            ...(ownerState.size === 'large' && {
+              padding: '8px 11px',
+            }),
+            ...(ownerState.size === 'medium' && {
+              padding: '6px 8px',
+            }),
+            ...(ownerState.size === 'small' && {
+              padding: '4px 5px',
+            }),
+            borderColor: theme.palette.primary.main,
+          }),
+
           ...(ownerState.size === 'large' && {
-            fontSize: 16,
+            fontSize: 15,
           }),
           ...(ownerState.size === 'medium' && {
-            fontSize: 16,
+            fontSize: 13,
           }),
           ...(ownerState.size === 'small' && {
-            fontSize: 14,
+            fontSize: 13,
           }),
 
           '&:hover': {
@@ -554,6 +563,15 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
       styleOverrides: {
         root: ({ theme }) => ({
           ...theme.typography.inputText,
+        }),
+      },
+    },
+    MuiFormGroup: {
+      styleOverrides: {
+        root: () => ({
+          '> *:first-child': {
+            marginTop: 0,
+          },
         }),
       },
     },
@@ -667,6 +685,33 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
         }),
       },
     },
+    MuiCard: {
+      variants: [
+        {
+          props: { variant: 'grey' },
+          style: ({ theme }) => ({
+            border: `${theme.palette.dividers?.divider} 1px solid`,
+            '.MuiCardHeader-root': {
+              backgroundColor: theme.palette.surfaces?.elevation0,
+              borderBottomColor: theme.palette.dividers?.divider,
+              borderBottomWidth: 1,
+              borderBottomStyle: 'solid',
+              padding: `${theme.spacing(1.5)} ${theme.spacing(2)}`,
+              '.MuiTypography-root': {
+                ...theme.typography.sectionHeading,
+              },
+              '#database-icon, #network-node-icon': {
+                path: { fill: theme.palette.text.primary },
+              },
+            },
+            '.MuiCardContent': {
+              py: 1,
+              px: 2,
+            },
+          }),
+        },
+      ],
+    },
     MuiDateCalendar: {
       styleOverrides: {
         root: ({ theme }) => ({
@@ -686,6 +731,17 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
           '.MuiPickersDay-root': {
             fontSize: theme.typography.body2.fontSize,
             fontWeight: theme.typography.body2.fontWeight,
+          },
+        }),
+      },
+    },
+    MuiMultiSectionDigitalClock: {
+      styleOverrides: {
+        root: () => ({
+          '.MuiMultiSectionDigitalClockSection-root': {
+            '&::after': {
+              height: 'calc(100% - 40px - 2px)',
+            },
           },
         }),
       },
@@ -723,6 +779,15 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
         filled: ({ theme, ownerState: { color } }) => ({
           // @ts-ignore
           backgroundColor: theme.palette[color]?.surface,
+        }),
+      },
+    },
+    MuiTableHead: {
+      styleOverrides: {
+        root: () => ({
+          '.MuiBadge-overlapCircular': {
+            backgroundColor: 'transparent',
+          },
         }),
       },
     },

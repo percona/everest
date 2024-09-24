@@ -10,8 +10,9 @@ import { ScheduleModalContext } from '../../backups.context';
 import { getTimeSelectionPreviewMessage } from 'pages/database-form/database-preview/database.preview.messages';
 import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils';
 import { Messages } from './backups-list-table-header.messages';
+import { useRBACPermissions } from 'hooks/rbac';
 
-const ScheduledBackupsList = () => {
+const ScheduledBackupsList = ({ canUpdateDb }: { canUpdateDb: boolean }) => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<string>('');
   const queryClient = useQueryClient();
@@ -25,7 +26,6 @@ const ScheduledBackupsList = () => {
     useDeleteSchedule(dbCluster.metadata.name, dbCluster.metadata.namespace);
 
   const schedules = dbCluster.spec?.backup?.schedules || [];
-  const dbType = dbCluster.spec?.engine.type;
 
   const handleDelete = (scheduleName: string) => {
     setSelectedSchedule(scheduleName);
@@ -53,6 +53,12 @@ const ScheduledBackupsList = () => {
     setOpenScheduleModal(true);
   };
 
+  const { canUpdate: canUpdateBackups, canDelete: canDeleteBackups } =
+    useRBACPermissions(
+      'database-cluster-backups',
+      `${dbCluster.metadata.namespace}/${dbCluster.metadata.name}`
+    );
+
   return (
     <Stack
       useFlexGap
@@ -63,9 +69,6 @@ const ScheduledBackupsList = () => {
       p={2}
       mt={2}
     >
-      {dbType === 'postgresql' && (
-        <Typography variant="caption">{Messages.maximumPgSchedules}</Typography>
-      )}
       {schedules.map((item) => (
         <Paper
           key={`schedule-${item?.name}`}
@@ -84,38 +87,50 @@ const ScheduledBackupsList = () => {
               alignItems: 'center',
             }}
           >
-            <Box sx={{ width: '65%' }}>
-              {' '}
-              <Typography variant="body1">
-                {getTimeSelectionPreviewMessage(
-                  getFormValuesFromCronExpression(item.schedule)
-                )}
-              </Typography>
+            <Box sx={{ width: '40%' }}>
+              <Stack>
+                <Typography variant="body1">{item.name}</Typography>
+                <Typography variant="body2">
+                  {getTimeSelectionPreviewMessage(
+                    getFormValuesFromCronExpression(item.schedule)
+                  )}
+                </Typography>
+              </Stack>
             </Box>
             <Box sx={{ width: '30%' }}>
               <Typography variant="body2">
-                {item?.retentionCopies
-                  ? `Retention copies: ${item.retentionCopies}`
-                  : '-'}
+                {`Retention copies: 
+                ${item?.retentionCopies || 'infinite'}`}
+              </Typography>
+            </Box>
+            <Box sx={{ width: '15%' }}>
+              {' '}
+              <Typography variant="body2">
+                {' '}
+                {`Storage: ${item.backupStorageName}`}
               </Typography>
             </Box>
             <Box display="flex">
-              <IconButton
-                color="primary"
-                disabled={!dbCluster.spec.backup?.enabled}
-                onClick={() => handleEdit(item.name)}
-                data-testid="edit-schedule-button"
-              >
-                <EditOutlinedIcon />
-              </IconButton>
-              <IconButton
-                color="primary"
-                disabled={!dbCluster.spec.backup?.enabled}
-                onClick={() => handleDelete(item.name)}
-                data-testid="delete-schedule-button"
-              >
-                <DeleteOutlineOutlinedIcon />
-              </IconButton>
+              {canUpdateDb && canUpdateBackups && (
+                <IconButton
+                  color="primary"
+                  disabled={!dbCluster.spec.backup?.enabled}
+                  onClick={() => handleEdit(item.name)}
+                  data-testid="edit-schedule-button"
+                >
+                  <EditOutlinedIcon />
+                </IconButton>
+              )}
+              {canUpdateDb && canDeleteBackups && (
+                <IconButton
+                  color="primary"
+                  disabled={!dbCluster.spec.backup?.enabled}
+                  onClick={() => handleDelete(item.name)}
+                  data-testid="delete-schedule-button"
+                >
+                  <DeleteOutlineOutlinedIcon />
+                </IconButton>
+              )}
             </Box>
           </Box>
         </Paper>

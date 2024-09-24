@@ -20,8 +20,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
+	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
@@ -38,8 +40,18 @@ type KubeClientConnector interface {
 	ListBackupStorages(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.BackupStorageList, error)
 	// DeleteBackupStorage deletes the backupStorage.
 	DeleteBackupStorage(ctx context.Context, namespace, name string) error
+	// GetConfigMap returns config map by name and namespace.
+	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
+	// CreateConfigMap creates the provided ConfigMap.
+	CreateConfigMap(ctx context.Context, configMap *corev1.ConfigMap) (*corev1.ConfigMap, error)
+	// UpdateConfigMap updates the provided ConfigMap.
+	UpdateConfigMap(ctx context.Context, configMap *corev1.ConfigMap) (*corev1.ConfigMap, error)
 	// Config returns restConfig to the pkg/kubernetes.Kubernetes client.
 	Config() *rest.Config
+	// Clientset returns the k8s clientset.
+	//
+	//nolint:ireturn
+	Clientset() kubernetes.Interface
 	// ClusterName returns the name of the k8s cluster.
 	ClusterName() string
 	// Namespace returns the namespace of the k8s cluster.
@@ -67,7 +79,7 @@ type KubeClientConnector interface {
 	ApplyFile(fileBytes []byte) error
 	// ApplyManifestFile accepts manifest file contents, parses into []runtime.Object
 	// and applies them against the cluster.
-	ApplyManifestFile(fileBytes []byte, namespace string) error
+	ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...client.Object) error
 	// DeleteManifestFile accepts manifest file contents, parses into []runtime.Object
 	// and deletes them from the cluster.
 	DeleteManifestFile(fileBytes []byte, namespace string) error
@@ -77,8 +89,6 @@ type KubeClientConnector interface {
 	GetSubscriptionCSV(ctx context.Context, subKey types.NamespacedName) (types.NamespacedName, error)
 	// DoRolloutWait waits until a deployment has been rolled out susccessfully or there is an error.
 	DoRolloutWait(ctx context.Context, key types.NamespacedName) error
-	// CreateNamespace creates a new namespace.
-	CreateNamespace(name string) error
 	// GetOperatorGroup retrieves an operator group details by namespace and name.
 	GetOperatorGroup(ctx context.Context, namespace, name string) (*v1.OperatorGroup, error)
 	// CreateOperatorGroup creates an operator group to be used as part of a subscription.
@@ -116,6 +126,8 @@ type KubeClientConnector interface {
 	GetService(ctx context.Context, namespace, name string) (*corev1.Service, error)
 	// GetClusterRoleBinding returns cluster role binding by given name.
 	GetClusterRoleBinding(ctx context.Context, name string) (*rbacv1.ClusterRoleBinding, error)
+	// GetCSV retrieves an OLM CSV by namespace and name.
+	GetCSV(ctx context.Context, namespace string, name string) (*v1alpha1.ClusterServiceVersion, error)
 	// ListDatabaseClusters returns list of managed database clusters.
 	ListDatabaseClusters(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterList, error)
 	// GetDatabaseCluster returns database clusters by provided name.
@@ -160,10 +172,16 @@ type KubeClientConnector interface {
 	ListMonitoringConfigs(ctx context.Context, namespace string) (*everestv1alpha1.MonitoringConfigList, error)
 	// DeleteMonitoringConfig deletes the monitoringConfig.
 	DeleteMonitoringConfig(ctx context.Context, namespace, name string) error
+	// CreateNamespace creates the given namespace.
+	CreateNamespace(ctx context.Context, namespace *corev1.Namespace) (*corev1.Namespace, error)
 	// GetNamespace returns a namespace.
 	GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error)
 	// DeleteNamespace deletes a namespace.
 	DeleteNamespace(ctx context.Context, name string) error
+	// ListNamespaces returns a list of namespaces.
+	ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*corev1.NamespaceList, error)
+	// UpdateNamespace updates the given namespace.
+	UpdateNamespace(ctx context.Context, namespace *corev1.Namespace, opts metav1.UpdateOptions) (*corev1.Namespace, error)
 	// OLM returns OLM client set.
 	//
 	//nolint:ireturn

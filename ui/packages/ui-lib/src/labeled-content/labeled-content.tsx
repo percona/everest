@@ -30,22 +30,25 @@ const LabeledContent = ({
     <Stack
       sx={{
         '.MuiTextField-root': {
-          mt: 1.5,
+          mt: actionButtonProps ? 0 : 1.5,
         },
         '.MuiAutocomplete-root': {
           mt: 1.5,
         },
+        mt: 2,
+        ...sx,
       }}
     >
-      <Stack direction="row">
+      <Stack
+        sx={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: actionButtonProps ? 1 : 0.5,
+        }}
+      >
         <Typography
           // @ts-ignore
           variant="sectionHeading"
-          sx={{
-            mt: 3,
-            mb: 0.5,
-            ...sx,
-          }}
           {...typographyProps}
         >
           {label}
@@ -54,11 +57,10 @@ const LabeledContent = ({
         {actionButtonProps && (
           <Button
             variant="text"
-            size="medium"
+            size="small"
             startIcon={<AddIcon />}
             sx={{
               width: 'fit-content',
-              alignSelf: 'end',
               ml: 'auto',
             }}
             data-testid={dataTestId || 'labeled-content-action-button'}

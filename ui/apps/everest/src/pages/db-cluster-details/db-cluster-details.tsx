@@ -1,15 +1,4 @@
-import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
-import {
-  Alert,
-  Box,
-  IconButton,
-  Skeleton,
-  Tab,
-  Tabs,
-  Typography,
-} from '@mui/material';
-import { useDbClusters } from 'hooks/api/db-clusters/useDbClusters';
-import { useEffect, useState } from 'react';
+import { Alert, Box, Skeleton, Tab, Tabs } from '@mui/material';
 import {
   Link,
   Outlet,
@@ -18,31 +7,42 @@ import {
   useParams,
 } from 'react-router-dom';
 import { NoMatch } from '../404/NoMatch';
+import BackNavigationText from 'components/back-navigation-text';
 import { DbActionButton } from './db-action-button';
 import { Messages } from './db-cluster-details.messages';
 import { DBClusterDetailsTabs } from './db-cluster-details.types';
-import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
+import { DbClusterStatus } from 'shared-types/dbCluster.types';
+import { DbClusterContext } from './dbCluster.context';
+import { useContext } from 'react';
+import { useRBACPermissions } from 'hooks/rbac';
+import { DB_CLUSTER_STATUS_TO_BASE_STATUS } from '../databases/DbClusterView.constants';
+import { beautifyDbClusterStatus } from '../databases/DbClusterView.utils';
+import StatusField from 'components/status-field';
 
 export const DbClusterDetails = () => {
-  const { dbClusterName, namespace = '' } = useParams();
-  const [dbCluster, setDbCluster] = useState<DbCluster | null>();
-  const { data = [], isLoading } = useDbClusters(namespace);
+  const { dbClusterName = '' } = useParams();
+
+  const { dbCluster, isLoading } = useContext(DbClusterContext);
   const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
   const navigate = useNavigate();
   const currentTab = routeMatch?.params?.tabs;
 
-  useEffect(() => {
-    if (!isLoading) {
-      const cluster = data.find(
-        (cluster) => cluster.metadata.name === dbClusterName
-      );
+  const { canUpdate, canDelete } = useRBACPermissions(
+    'database-clusters',
+    `${dbCluster?.metadata.namespace}/${dbCluster?.metadata.name}`
+  );
+  const { canCreate: canCreateRestore } = useRBACPermissions(
+    'database-cluster-restores',
+    `${dbCluster?.metadata.namespace}/*`
+  );
 
-      setDbCluster(cluster ? cluster : null);
-    }
-  }, [isLoading, data, dbClusterName]);
+  const { canRead: canReadCredentials } = useRBACPermissions(
+    'database-cluster-credentials',
+    `${dbCluster?.metadata.namespace}/${dbCluster?.metadata.name}`
+  );
+  const canRestore = canCreateRestore && canReadCredentials;
 
-  // Either loading or we're still searching through the array
-  if (isLoading || dbCluster === undefined) {
+  if (isLoading) {
     return (
       <>
         <Skeleton variant="rectangular" />
@@ -56,7 +56,7 @@ export const DbClusterDetails = () => {
   }
 
   // We went through the array and know the cluster is not there. Safe to show 404
-  if (dbCluster === null) {
+  if (!dbCluster) {
     return <NoMatch />;
   }
 
@@ -66,34 +66,50 @@ export const DbClusterDetails = () => {
       <Box
         sx={{
           display: 'flex',
-          gap: 1,
+          gap: 1.5,
           alignItems: 'center',
           justifyContent: 'flex-start',
           mb: 1,
         }}
       >
+        <BackNavigationText
+          text={dbClusterName!}
+          onBackClick={() => navigate('/databases')}
+        />
+        {/* At this point, loading is done and we either have the cluster or not */}
         <Box
           sx={{
             display: 'flex',
-            gap: 1,
+            justifyContent: 'space-between',
+            flex: '1 0 auto',
             alignItems: 'center',
-            mr: 1,
           }}
         >
-          <IconButton onClick={() => navigate('/databases')}>
-            <ArrowBackIosIcon sx={{ pl: '10px' }} fontSize="large" />
-          </IconButton>
-          <Typography variant="h4">{dbClusterName}</Typography>
+          <StatusField
+            dataTestId={dbClusterName}
+            status={dbCluster?.status?.status || DbClusterStatus.unknown}
+            statusMap={DB_CLUSTER_STATUS_TO_BASE_STATUS}
+          >
+            {beautifyDbClusterStatus(
+              dbCluster?.status?.status || DbClusterStatus.unknown
+            )}
+          </StatusField>
+          <>
+            {canUpdate || canDelete || canRestore ? (
+              <DbActionButton
+                dbCluster={dbCluster!}
+                canUpdate={canUpdate}
+                canDelete={canDelete}
+              />
+            ) : undefined}
+          </>
         </Box>
-        {/* At this point, loading is done and we either have the cluster or not */}
-        <DbActionButton dbCluster={dbCluster!} />
       </Box>
       <Box
         sx={{
           borderBottom: 1,
           borderColor: 'divider',
           mb: 1,
-          width: 'fit-content',
         }}
       >
         <Tabs

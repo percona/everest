@@ -25,11 +25,15 @@ build:                ## Build binaries
 	go build -v $(LD_FLAGS_API) -o bin/everest ./cmd
 
 build-cli:                ## Build binaries
-	go build -v $(LD_FLAGS_CLI_TEST) -o bin/everestctl ./cmd/cli
+	go build -tags debug -v $(LD_FLAGS_CLI_TEST) -o bin/everestctl ./cmd/cli
 
 release: FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check.percona.com' -X 'github.com/percona/everest/cmd/config.TelemetryInterval=24h'
 
 release: build  ## Build release version
+
+rc: FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check-dev.percona.com' -X 'github.com/percona/everest/cmd/config.TelemetryInterval=24h'
+
+rc: build  ## Build RC version
 
 release-cli:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v $(LD_FLAGS_CLI) -o ./dist/everestctl-linux-amd64 ./cmd/cli

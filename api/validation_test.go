@@ -22,10 +22,16 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/kubernetes/client"
+	"github.com/percona/everest/pkg/rbac"
+	"github.com/percona/everest/pkg/rbac/mocks"
 )
 
 func TestValidateRFC1035(t *testing.T) {
@@ -421,6 +427,11 @@ func TestValidateBackupSpec(t *testing.T) {
 			err:     errScheduleNoBackupStorageName,
 		},
 		{
+			name:    "errDuplicatedSchedules",
+			cluster: []byte(`{"spec": {"backup": {"enabled": true, "schedules": [{"schedule": "0 0 * * *", "name": "name"}, {"schedule": "0 0 * * *", "name": "otherName"}]}}}`),
+			err:     errDuplicatedSchedules,
+		},
+		{
 			name:    "valid spec",
 			cluster: []byte(`{"spec": {"backup": {"enabled": true, "schedules": [{"enabled": true, "name": "name", "backupStorageName": "some"}]}}}`),
 			err:     nil,
@@ -505,11 +516,19 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 			err = json.Unmarshal(tc.storage, storage)
 			require.NoError(t, err)
 
-			err = validateBackupStoragesFor(
+			k := &kubernetes.Kubernetes{}
+			mockConnector := &client.MockKubeClientConnector{}
+			mockConnector.On("GetBackupStorage", mock.Anything, mock.Anything, mock.Anything).
+				Return(storage, nil)
+			k.WithClient(mockConnector)
+			e := EverestServer{
+				kubeClient: k,
+			}
+
+			err = e.validateBackupStoragesFor(
 				context.Background(),
 				tc.namespace,
 				cluster,
-				func(context.Context, string, string) (*everestv1alpha1.BackupStorage, error) { return storage, nil },
 			)
 			if tc.err == nil {
 				require.NoError(t, err)
@@ -759,12 +778,12 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 			err: nil,
 		},
 		{
-			name:    "error: 3 schedules in one bs and 1 backup in other",
-			cluster: []byte(`{"metaData":{"name":"some","namespace":"ns"},"spec":{"backup":{"schedules":[{"backupStorageName":"bs1"},{"backupStorageName":"bs1"},{"backupStorageName":"bs1"}]}}}`),
+			name:    "error: 3 schedules in different bs and 1 backup in another bs",
+			cluster: []byte(`{"metaData":{"name":"some","namespace":"ns"},"spec":{"backup":{"schedules":[{"backupStorageName":"bs1"},{"backupStorageName":"bs2"},{"backupStorageName":"bs3"}]}}}`),
 			getBackupsFunc: func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error) {
 				return &everestv1alpha1.DatabaseClusterBackupList{
 					Items: []everestv1alpha1.DatabaseClusterBackup{
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"}},
+						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs4"}},
 					},
 				}, nil
 			},
@@ -848,7 +867,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					Items: []everestv1alpha1.DatabaseClusterBackup{},
 				}, nil
 			},
-			err: errTooManyPGSchedules,
+			err: errTooManyPGStorages,
 		},
 		{
 			name:    "error: 2 schedules 2 backups with different storages",
@@ -1002,12 +1021,451 @@ func TestValidateDBEngineUpgrade(t *testing.T) {
 			newVersion: "v8.0.23",
 			err:        nil,
 		},
+		{
+			name:       "major version downgrade",
+			oldVersion: "16.1",
+			newVersion: "15.5",
+			err:        errDBEngineDowngrade,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			err := validateDBEngineVersionUpgrade(tc.newVersion, tc.oldVersion)
 			assert.ErrorIs(t, err, tc.err)
+		})
+	}
+}
+
+func TestCheckStorageDuplicates(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name    string
+		cluster []byte
+		err     error
+	}{
+		{
+			name:    "ok: no schedules no backups",
+			cluster: []byte(`{}`),
+			err:     nil,
+		},
+		{
+			name:    "ok: no duplicated storages",
+			cluster: []byte(`{"spec":{"backup":{"schedules":[{"backupStorageName":"bs1"},{"backupStorageName":"bs2"}]}}}`),
+			err:     nil,
+		},
+		{
+			name:    "error duplicated storage",
+			cluster: []byte(`{"spec":{"backup":{"schedules":[{"backupStorageName":"bs1"},{"backupStorageName":"bs2"},{"backupStorageName":"bs1"}]}}}`),
+			err:     errDuplicatedStoragePG,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			db := &DatabaseCluster{}
+			err := json.Unmarshal(tc.cluster, db)
+			require.NoError(t, err)
+			err = checkStorageDuplicates(*db)
+			if tc.err == nil {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.Equal(t, tc.err.Error(), err.Error())
+		})
+	}
+}
+
+func TestCheckSchedulesChanges(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name       string
+		oldCluster []byte
+		newCluster []byte
+		err        error
+	}{
+		{
+			name:       "ok: no schedules no backups",
+			oldCluster: []byte(`{}`),
+			newCluster: []byte(`{}`),
+			err:        nil,
+		},
+		{
+			name:       "ok: added storage",
+			oldCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A", "backupStorageName":"bs1"}]}}}`),
+			newCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A", "backupStorageName":"bs1"}, {"name":"B", "backupStorageName":"bs2"}]}}}`),
+			err:        nil,
+		},
+		{
+			name:       "ok: deleted storage",
+			oldCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A","backupStorageName":"bs1"},{"name":"B", "backupStorageName":"bs2"}]}}}`),
+			newCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A","backupStorageName":"bs1"}]}}}`),
+			err:        nil,
+		},
+		{
+			name:       "ok: deleted storage and new added",
+			oldCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A", "backupStorageName":"bs1"},{"name": "B", "backupStorageName":"bs2"}]}}}`),
+			newCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A", "backupStorageName":"bs1"},{"name": "C", "backupStorageName":"bs2"}]}}}`),
+			err:        nil,
+		},
+		{
+			name:       "error: edited storage",
+			oldCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A", "backupStorageName":"bs1"},{"name": "B", "backupStorageName":"bs2"}]}}}`),
+			newCluster: []byte(`{"spec":{"backup":{"schedules":[{"name":"A", "backupStorageName":"bs1"},{"name": "B", "backupStorageName":"bs3"}]}}}`),
+			err:        errStorageChangePG,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			newDB := &DatabaseCluster{}
+			err := json.Unmarshal(tc.newCluster, newDB)
+			require.NoError(t, err)
+			oldDB := &everestv1alpha1.DatabaseCluster{}
+			err = json.Unmarshal(tc.oldCluster, oldDB)
+			require.NoError(t, err)
+			err = checkSchedulesChanges(*oldDB, *newDB)
+			if tc.err == nil {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.Equal(t, tc.err.Error(), err.Error())
+		})
+	}
+}
+
+func TestValidateDuplicateStorageByUpdate(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name               string
+		storages           []byte
+		currentStorage     []byte
+		currentStorageName string
+		params             UpdateBackupStorageParams
+		isDuplicate        bool
+	}{
+		{
+			name:               "another storage with the same 3 params",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageB", "bucket": "bucket1", "region": "region1", "endpointURL":"url1" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{Url: pointer.ToString("url1"), BucketName: pointer.ToString("bucket1"), Region: pointer.ToString("region1")},
+			isDuplicate:        true,
+		},
+		{
+			name:               "change of url will lead to duplication",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageB", "bucket": "bucket2", "region": "region2", "endpointURL":"url1" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{Url: pointer.ToString("url1")},
+			isDuplicate:        true,
+		},
+		{
+			name:               "change of bucket will lead to duplication",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageB", "bucket": "bucket1", "region": "region2", "endpointURL":"url2" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{BucketName: pointer.ToString("bucket1")},
+			isDuplicate:        true,
+		},
+		{
+			name:               "change of region will lead to duplication",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageB", "bucket": "bucket2", "region": "region1", "endpointURL":"url2" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{Region: pointer.ToString("region1")},
+			isDuplicate:        true,
+		},
+		{
+			name:               "change of region and bucket will lead to duplication",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageB", "bucket": "bucket1", "region": "region1", "endpointURL":"url2" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{Region: pointer.ToString("region1"), BucketName: pointer.ToString("bucket1")},
+			isDuplicate:        true,
+		},
+		{
+			name:               "no other storages: no duplictation",
+			currentStorage:     []byte(`{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}`),
+			storages:           []byte(`{"items": [{"spec":  {"name": "storageA", "bucket": "bucket2", "region": "region2", "endpointURL":"url2" }}]}`),
+			currentStorageName: "storageA",
+			params:             UpdateBackupStorageParams{Url: pointer.ToString("url1"), BucketName: pointer.ToString("bucket1"), Region: pointer.ToString("region1")},
+			isDuplicate:        false,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			storages := &everestv1alpha1.BackupStorageList{}
+			err := json.Unmarshal(tc.storages, storages)
+			require.NoError(t, err)
+			currentStorage := &everestv1alpha1.BackupStorage{}
+			err = json.Unmarshal(tc.currentStorage, currentStorage)
+			require.NoError(t, err)
+			isDuplicate := validateDuplicateStorageByUpdate(tc.currentStorageName, currentStorage, storages, tc.params)
+			assert.Equal(t, tc.isDuplicate, isDuplicate)
+		})
+	}
+}
+
+func TestValidateBackupSchedulesUpdate(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		desc           string
+		canTakeBackups bool
+		expected       error
+		updated        []byte
+		old            *everestv1alpha1.DatabaseCluster
+	}{
+		{
+			desc:           "schedules not updated and no permission",
+			canTakeBackups: false,
+			updated:        []byte(`{"spec": {"backup": {"schedules": [{"name": "test-1","enabled": true,"backupStorageName": "storage-1","schedule": "0 1 * * *"}]}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns"},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Backup: everestv1alpha1.Backup{
+						Schedules: []everestv1alpha1.BackupSchedule{
+							{
+								Name:              "test-1",
+								Enabled:           true,
+								BackupStorageName: "storage-1",
+								Schedule:          "0 1 * * *",
+							},
+						},
+					},
+				},
+			},
+			expected: nil,
+		},
+		{
+			desc:           "schedules updated and no permission",
+			canTakeBackups: false,
+			updated:        []byte(`{"spec": {"backup": {"schedules": [{"name": "test-1","enabled": true,"backupStorageName": "storage-1","schedule": "0 3 * * *"}]}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns"},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Backup: everestv1alpha1.Backup{
+						Schedules: []everestv1alpha1.BackupSchedule{
+							{
+								Name:              "test-1",
+								Enabled:           true,
+								BackupStorageName: "storage-1",
+								Schedule:          "0 1 * * *",
+							},
+						},
+					},
+				},
+			},
+			expected: errInsufficientPermissions,
+		},
+		{
+			desc:           "schedules updated with permission",
+			canTakeBackups: true,
+			updated:        []byte(`{"spec": {"backup": {"schedules": [{"name": "test-1","enabled": true,"backupStorageName": "storage-1","schedule": "0 3 * * *"}]}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns"},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Backup: everestv1alpha1.Backup{
+						Schedules: []everestv1alpha1.BackupSchedule{
+							{
+								Name:              "test-1",
+								Enabled:           true,
+								BackupStorageName: "storage-1",
+								Schedule:          "0 1 * * *",
+							},
+						},
+					},
+				},
+			},
+			expected: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// Setup mock.
+			e := &EverestServer{
+				l: zap.NewNop().Sugar(),
+			}
+			enforcer := &mocks.IEnforcer{}
+			enforcer.On("Enforce",
+				"user", rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, "test-ns/",
+			).Return(tc.canTakeBackups, nil)
+			e.rbacEnforcer = enforcer
+
+			updated := &DatabaseCluster{}
+			err := json.Unmarshal(tc.updated, updated)
+			require.NoError(t, err)
+
+			err = e.validateBackupScheduledUpdate("user", updated, tc.old)
+			assert.ErrorIs(t, err, tc.expected)
+		})
+	}
+}
+
+func TestValidateShardingOnUpdate(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		desc     string
+		expected error
+		updated  []byte
+		old      *everestv1alpha1.DatabaseCluster
+	}{
+		{
+			desc:    "disabled",
+			updated: []byte(`{"spec": {}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: false,
+					},
+				},
+			},
+			expected: nil,
+		},
+		{
+			desc:    "try to disable - no sharding section",
+			updated: []byte(`{"spec": {}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: true,
+					},
+				},
+			},
+			expected: errDisableShardingNotSupported,
+		},
+		{
+			desc:    "try to disable - enabled false",
+			updated: []byte(`{"spec": {"sharding": {"enabled": false}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: true,
+					},
+				},
+			},
+			expected: errDisableShardingNotSupported,
+		},
+		{
+			desc:    "try to change configServers",
+			updated: []byte(`{"spec": {"sharding": {"enabled": true, "shards":3, "configServer": {"replicas": 2}}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: true,
+						ConfigServer: everestv1alpha1.ConfigServer{
+							Replicas: 3,
+						},
+						Shards: 3,
+					},
+				},
+			},
+			expected: errChangeCfgSrvNotSupported,
+		},
+		{
+			desc:    "try to change shards",
+			updated: []byte(`{"spec": {"sharding": {"enabled": true, "shards":5, "configServer": {"replicas": 3}}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: true,
+						ConfigServer: everestv1alpha1.ConfigServer{
+							Replicas: 3,
+						},
+						Shards: 3,
+					},
+				},
+			},
+			expected: errChangeShardsNumNotSupported,
+		},
+		{
+			desc:    "ok",
+			updated: []byte(`{"spec": {"engine": {"type": "psmdb"}, "sharding": {"enabled": true, "shards":5, "configServer": {"replicas": 3}}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: true,
+						ConfigServer: everestv1alpha1.ConfigServer{
+							Replicas: 3,
+						},
+						Shards: 5,
+					},
+				},
+			},
+			expected: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dbc := &DatabaseCluster{}
+			err := json.Unmarshal(tc.updated, dbc)
+			require.NoError(t, err)
+
+			err = validateShardingOnUpdate(dbc, tc.old)
+			assert.ErrorIs(t, err, tc.expected)
+		})
+	}
+}
+
+func TestValidateSharding(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		desc     string
+		expected error
+		updated  []byte
+		old      *everestv1alpha1.DatabaseCluster
+	}{
+		{
+			desc:     "pxc - not supported",
+			updated:  []byte(`{"spec": {"engine": {"type": "pxc"}, "sharding": {"enabled": true}}}`),
+			expected: errShardingIsNotSupported,
+		},
+		{
+			desc:     "pg - not supported",
+			updated:  []byte(`{"spec": {"engine": {"type": "pg"}, "sharding": {"enabled": true}}}`),
+			expected: errShardingIsNotSupported,
+		},
+		{
+			desc:     "even configservers",
+			updated:  []byte(`{"spec": {"engine": {"type": "psmdb"}, "sharding": {"enabled": true, "shards": 1, "configServer": {"replicas": 4}}}}`),
+			expected: errEvenServersNumber,
+		},
+		{
+			desc:     "insufficient configservers",
+			updated:  []byte(`{"spec": {"engine": {"type": "psmdb"}, "sharding": {"enabled": true, "shards": 1,"configServer": {"replicas": 0}}}}`),
+			expected: errInsufficientCfgSrvNumber,
+		},
+		{
+			desc:     "insufficient shards number",
+			updated:  []byte(`{"spec": {"engine": {"type": "psmdb"},"sharding": {"enabled": true, "shards": 0, "configServer": {"replicas": 3}}}}`),
+			expected: errInsufficientShardsNumber,
+		},
+		{
+			desc:     "ok",
+			updated:  []byte(`{"spec": {"engine": {"type": "psmdb"}, "sharding": {"enabled": true, "shards": 1, "configServer": {"replicas": 3}}}}`),
+			expected: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dbc := &DatabaseCluster{}
+			err := json.Unmarshal(tc.updated, dbc)
+			require.NoError(t, err)
+
+			err = validateSharding(*dbc)
+			assert.ErrorIs(t, err, tc.expected)
 		})
 	}
 }

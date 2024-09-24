@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
+    "lib": [
+      "es2020",
+      "dom"
+    ],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
@@ -16,6 +20,9 @@
       "@helpers/*": [
         "helpers/*"
       ],
+      "@generatedTypes": [
+        "generated/types.ts"
+      ],
       "@root/*": [
         "../*"
       ]
@@ -26,6 +33,7 @@
   ],
   "include": [
     "tests",
+    "support",
     "**.ts"
   ]
 }

@@ -25,6 +25,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -58,6 +59,7 @@ import (
 	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth" // load all auth plugins
@@ -83,6 +85,12 @@ const (
 
 	defaultAPIURIPath  = "/api"
 	defaultAPIsURIPath = "/apis"
+
+	defaultLogLines = 3000
+
+	requestTimeout = 10 * time.Second
+
+	objectsBufferSize = 100
 )
 
 // Each level has 2 spaces for PrefixWriter.
@@ -228,7 +236,7 @@ func NewInCluster() (*Client, error) {
 	}
 	config.QPS = defaultQPSLimit
 	config.Burst = defaultBurstLimit
-	config.Timeout = 10 * time.Second
+	config.Timeout = requestTimeout
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
@@ -247,11 +255,20 @@ func NewInCluster() (*Client, error) {
 		clientset:    clientset,
 		olmClientset: olmClientset,
 		restConfig:   config,
+		rcLock:       &sync.Mutex{},
 		namespace:    string(namespace),
 	}
 
 	err = c.initOperatorClients()
 	return c, err
+}
+
+// NewFromFakeClient returns a Client with a fake (in-memory) clientset.
+// This is used only for unit testing.
+func NewFromFakeClient() *Client {
+	return &Client{
+		clientset: fake.NewSimpleClientset(),
+	}
 }
 
 func (c *Client) kubeClient() (client.Client, error) { //nolint:ireturn,nolintlint
@@ -293,6 +310,13 @@ func (c *Client) initOperatorClients() error {
 // Config returns restConfig to the pkg/kubernetes.Kubernetes client.
 func (c *Client) Config() *rest.Config {
 	return c.restConfig
+}
+
+// Clientset returns the k8s clientset.
+//
+//nolint:ireturn
+func (c *Client) Clientset() kubernetes.Interface {
+	return c.clientset
 }
 
 // ClusterName returns the name of the k8s cluster.
@@ -551,7 +575,7 @@ func (c *Client) marshalKubeConfig(conf *Config) ([]byte, error) {
 
 // GetLogs returns logs for pod.
 func (c *Client) GetLogs(ctx context.Context, pod, container string) (string, error) {
-	defaultLogLines := int64(3000)
+	defaultLogLines := int64(defaultLogLines)
 	options := &corev1.PodLogOptions{}
 	if container != "" {
 		options.Container = container
@@ -631,7 +655,7 @@ func (c *Client) GetEvents(ctx context.Context, name string) (string, error) {
 func tabbedString(f func(io.Writer) error) (string, error) {
 	out := &tabwriter.Writer{}
 	buf := &bytes.Buffer{}
-	out.Init(buf, 0, 8, 2, ' ', 0)
+	out.Init(buf, 0, 8, 2, ' ', 0) //nolint:mnd
 
 	if err := f(out); err != nil {
 		return "", err
@@ -772,13 +796,23 @@ func (c *Client) ApplyFile(fileBytes []byte) error {
 
 // ApplyManifestFile accepts manifest file contents, parses into []runtime.Object
 // and applies them against the cluster.
-func (c *Client) ApplyManifestFile(fileBytes []byte, namespace string) error {
+func (c *Client) ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...client.Object) error {
 	objs, err := c.getObjects(fileBytes)
 	if err != nil {
 		return err
 	}
 	for i := range objs {
 		o := objs[i]
+
+		// Check if this object should be ignored?
+		if slices.ContainsFunc(ignoreObjects, func(ign client.Object) bool {
+			return o.GetKind() == ign.GetObjectKind().GroupVersionKind().Kind &&
+				o.GetName() == ign.GetName() &&
+				ign.GetNamespace() == namespace
+		}) {
+			continue
+		}
+
 		if err := c.applyTemplateCustomization(o, namespace); err != nil {
 			return err
 		}
@@ -882,7 +916,7 @@ func (c *Client) updateClusterRoleBinding(u *unstructured.Unstructured, namespac
 
 func (c *Client) getObjects(f []byte) ([]*unstructured.Unstructured, error) {
 	objs := []*unstructured.Unstructured{}
-	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(f), 100)
+	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(f), objectsBufferSize)
 	var err error
 	for {
 		var rawObj runtime.RawExtension
@@ -1146,21 +1180,6 @@ func (c Client) pollRolloutComplete(ctx context.Context, key types.NamespacedNam
 		return false, nil
 	}
 	return wait.PollUntilContextCancel(ctx, time.Second, true, rolloutComplete)
-}
-
-// CreateNamespace creates a new namespace.
-func (c *Client) CreateNamespace(name string) error {
-	n := &corev1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Namespace",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-	}
-
-	return c.ApplyObject(n)
 }
 
 // GetOperatorGroup retrieves an operator group details by namespace and name.

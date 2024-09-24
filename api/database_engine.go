@@ -18,17 +18,19 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
-	"time"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/net/context"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/rbac"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
@@ -41,9 +43,34 @@ var (
 	errDBEngineInvalidTargetVersion = errors.New("invalid target version provided for upgrade")
 )
 
+type operatorUpgradePreflight struct {
+	currentVersion string
+	databases      []UpgradeTask
+}
+
 // ListDatabaseEngines List of the available database engines on the specified namespace.
 func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, namespace string) error {
-	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, "")
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+	rbacListFilter := transformK8sList(func(l *unstructured.UnstructuredList) error {
+		allowed := []unstructured.Unstructured{}
+		for _, obj := range l.Items {
+			if err := e.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, obj.GetName())); errors.Is(err, errInsufficientPermissions) {
+				continue
+			} else if err != nil {
+				e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
+				return err
+			}
+			allowed = append(allowed, obj)
+		}
+		l.Items = allowed
+		return nil
+	})
+	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, "", rbacListFilter)
 }
 
 // GetDatabaseEngine Get the specified database engine on the specified namespace.
@@ -67,103 +94,263 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 	return e.proxyKubernetes(ctx, namespace, databaseEngineKind, name)
 }
 
-// UpgradeDatabaseEngineOperator upgrades the database engine operator to the specified version.
-func (e *EverestServer) UpgradeDatabaseEngineOperator(ctx echo.Context, namespace string, name string) error {
-	// Parse request body.
-	req := &DatabaseEngineOperatorUpgradeParams{}
-	if err := e.getBodyFromContext(ctx, req); err != nil {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusBadRequest, Error{
-			Message: pointer.ToString(
-				"Could not get DatabaseEngineOperatorUpgradeParams from the request body"),
+// GetUpgradePlan gets the upgrade plan for the given namespace.
+func (e *EverestServer) GetUpgradePlan(
+	c echo.Context,
+	namespace string,
+) error {
+	ctx := c.Request().Context()
+	user, err := rbac.GetUser(c)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context:" + err.Error()),
 		})
 	}
-
-	// Get existing database engine.
-	dbEngine, err := e.kubeClient.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
+	result, err := e.getUpgradePlan(ctx, namespace)
 	if err != nil {
+		e.l.Errorf("Cannot get upgrade plan: %w", err)
 		return err
 	}
 
-	if err := validateOperatorUpgradeVersion(dbEngine.Status.OperatorVersion, req.TargetVersion); err != nil {
-		return ctx.JSON(http.StatusBadRequest, Error{
-			Message: pointer.ToString("Failed to validate operator upgrade version: " + err.Error()),
-		})
-	}
-
-	// Check that this version is available for upgrade.
-	if u := dbEngine.Status.GetPendingUpgrade(req.TargetVersion); u == nil {
-		return errDBEngineUpgradeUnavailable
-	}
-
-	// Set a lock on the namespace.
-	// This lock is released automatically by everest-operator upon the completion of the upgrade.
-	if err := e.kubeClient.SetDatabaseEngineLock(ctx.Request().Context(), namespace, name, true); err != nil {
-		return errors.Join(errors.New("failed to lock namespace"), err)
-	}
-
-	// Validate preflight checks.
-	preflight, err := e.getOperatorUpgradePreflight(ctx.Request().Context(), req.TargetVersion, name, namespace)
-	if err != nil {
-		return err
-	}
-	if !canUpgrade(pointer.Get(preflight.Databases)) {
-		// Release the lock.
-		if err := e.kubeClient.SetDatabaseEngineLock(ctx.Request().Context(), namespace, name, false); err != nil {
-			return errors.Join(err, errors.New("failed to release upgrade lock"))
+	// No upgrades available, so we will check if our clusters are ready for current version.
+	if len(pointer.Get(result.Upgrades)) == 0 {
+		result.PendingActions = pointer.To([]UpgradeTask{})
+		engines, err := e.kubeClient.ListDatabaseEngines(ctx, namespace)
+		if err != nil {
+			return err
 		}
-		return ctx.JSON(http.StatusPreconditionFailed, Error{
+		for _, engine := range engines.Items {
+			tasks, err := e.getDBPostUpgradeTasks(ctx, &engine)
+			if err != nil {
+				e.l.Errorf("Failed to check databases: %w", err)
+				return err
+			}
+			for _, t := range tasks {
+				*result.PendingActions = append(*result.PendingActions, UpgradeTask{
+					Name:        t.Name,
+					PendingTask: t.PendingTask,
+					Message:     t.Message,
+				})
+			}
+		}
+	}
+
+	// ensure the user has access to all db-clusters in this namespace.
+	if err := e.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(namespace, "")); err != nil {
+		return err
+	}
+
+	// ensure the user has access to all engines in this upgrade plan.
+	for _, upg := range pointer.Get(result.Upgrades) {
+		name := *upg.Name
+		if err := e.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, name)); errors.Is(err, errInsufficientPermissions) {
+			// We cannot show this plan, the user does not have permission to one or more engines.
+			result = &UpgradePlan{}
+			break
+		} else if err != nil {
+			e.l.Error(errors.Join(err, errors.New("failed to check database-engine permissions")))
+			return err
+		}
+	}
+	return c.JSON(http.StatusOK, result)
+}
+
+// ApproveUpgradePlan starts the upgrade of operators in the provided namespace.
+func (e *EverestServer) ApproveUpgradePlan(c echo.Context, namespace string) error {
+	ctx := c.Request().Context()
+	user, err := rbac.GetUser(c)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context:" + err.Error()),
+		})
+	}
+
+	up, err := e.getUpgradePlan(ctx, namespace)
+	if err != nil {
+		e.l.Errorf("Cannot get upgrade plan: %w", err)
+		return err
+	}
+
+	// ensure the user has access to all db-clusters in this namespace.
+	if err := e.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(namespace, "")); err != nil {
+		return err
+	}
+
+	// Ensure we can update all these engines.
+	for _, upg := range pointer.Get(up.Upgrades) {
+		if err := e.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionUpdate, rbac.ObjectName(namespace, *upg.Name)); err != nil {
+			return err
+		}
+	}
+
+	// lock all engines that will be upgraded.
+	if err := e.setLockDBEnginesForUpgrade(ctx, namespace, up, true); err != nil {
+		e.l.Errorf("Cannot lock engines: %w", err)
+		return errors.Join(err, errors.New("failed to lock engines"))
+	}
+
+	// Check if we're ready to upgrade?
+	if slices.ContainsFunc(pointer.Get(up.PendingActions), func(task UpgradeTask) bool {
+		return pointer.Get(task.PendingTask) != Ready
+	}) {
+		// Not ready for upgrade, release the lock and return a failured message.
+		if err := e.setLockDBEnginesForUpgrade(ctx, namespace, up, false); err != nil {
+			return errors.Join(err, errors.New("failed to release lock"))
+		}
+		return c.JSON(http.StatusPreconditionFailed, Error{
 			Message: pointer.ToString("One or more database clusters are not ready for upgrade"),
 		})
 	}
-	// Start the operator upgrade process.
-	if err := e.startOperatorUpgradeWithRetry(ctx.Request().Context(), req.TargetVersion, namespace, name); err != nil {
-		// Could not start the upgrade process, unlock the engine and return.
-		if lockErr := e.kubeClient.SetDatabaseEngineLock(ctx.Request().Context(), namespace, name, false); lockErr != nil {
-			err = errors.Join(err, errors.Join(lockErr, errors.New("failed to release upgrade lock")))
+
+	// start upgrade process.
+	if err := e.startOperatorUpgradeWithRetry(ctx, namespace); err != nil {
+		e.l.Errorf("Failed to upgrade operators: %w", err)
+		// Upgrade has failed, so we release the lock.
+		if err := e.setLockDBEnginesForUpgrade(ctx, namespace, up, false); err != nil {
+			e.l.Errorf("Cannot unlock engines: %w", err)
+			return errors.Join(err, errors.New("failed to release lock"))
 		}
 		return err
 	}
 	return nil
 }
 
-// startOperatorUpgradeWithRetry wraps the startOperatorUpgrade function with a retry mechanism.
-// This is done to reduce the chances of failures due to resource conflicts.
-func (e *EverestServer) startOperatorUpgradeWithRetry(ctx context.Context, targetVersion, namespace, name string) error {
-	var b backoff.BackOff
-	b = backoff.NewConstantBackOff(3 * time.Second)
-	b = backoff.WithMaxRetries(b, 5)
-	b = backoff.WithContext(b, ctx)
-	return backoff.Retry(func() error {
-		return e.startOperatorUpgrade(ctx, targetVersion, namespace, name)
-	},
-		b,
-	)
-}
-
-// startOperatorUpgrade starts the operator upgrade process by adding the upgrade annotation to the database engine.
-func (e *EverestServer) startOperatorUpgrade(ctx context.Context, targetVersion, namespace, name string) error {
-	engine, err := e.kubeClient.GetDatabaseEngine(ctx, namespace, name)
-	if err != nil {
-		return err
-	}
-	// Update annotation to start upgrade.
-	annotations := engine.GetAnnotations()
-	if annotations == nil {
-		annotations = make(map[string]string)
-	}
-	annotations[everestv1alpha1.DatabaseOperatorUpgradeAnnotation] = targetVersion
-	engine.SetAnnotations(annotations)
-	_, err = e.kubeClient.UpdateDatabaseEngine(ctx, namespace, engine)
-	return err
-}
-
-func (e *EverestServer) getOperatorUpgradePreflight(ctx context.Context, targetVersion, name, namespace string) (*OperatorUpgradePreflight, error) {
-	// Get existing database engine.
-	engine, err := e.kubeClient.GetDatabaseEngine(ctx, namespace, name)
+func (e *EverestServer) getUpgradePlan(
+	ctx context.Context,
+	namespace string,
+) (*UpgradePlan, error) {
+	engines, err := e.kubeClient.ListDatabaseEngines(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
+
+	result := &UpgradePlan{
+		Upgrades:       pointer.To([]Upgrade{}),
+		PendingActions: pointer.To([]UpgradeTask{}),
+	}
+
+	for _, engine := range engines.Items {
+		nextVersion := engine.Status.GetNextUpgradeVersion()
+		if nextVersion == "" {
+			continue
+		}
+
+		upgrade := &Upgrade{
+			CurrentVersion: pointer.To(engine.Status.OperatorVersion),
+			Name:           pointer.To(engine.GetName()),
+			TargetVersion:  pointer.To(nextVersion),
+		}
+		*result.Upgrades = append(*result.Upgrades, *upgrade)
+		pf, err := e.getOperatorUpgradePreflight(ctx, nextVersion, &engine)
+		if err != nil {
+			return nil, err
+		}
+		*result.PendingActions = append(*result.PendingActions, pf.databases...)
+	}
+	return result, nil
+}
+
+func (e *EverestServer) setLockDBEnginesForUpgrade(
+	ctx context.Context,
+	namespace string,
+	up *UpgradePlan,
+	lock bool,
+) error {
+	return backoff.Retry(func() error {
+		for _, upgrade := range pointer.Get(up.Upgrades) {
+			if err := e.kubeClient.SetDatabaseEngineLock(ctx, namespace, pointer.Get(upgrade.Name), lock); err != nil {
+				return err
+			}
+		}
+		return nil
+	}, backoff.WithContext(everestAPIConstantBackoff, ctx),
+	)
+}
+
+func (e *EverestServer) getDBPostUpgradeTasks(
+	ctx context.Context,
+	engine *everestv1alpha1.DatabaseEngine,
+) ([]UpgradeTask, error) {
+	namespace := engine.GetNamespace()
+	// List all clusters in this namespace.
+	clusters, err := e.kubeClient.ListDatabaseClusters(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check that every cluster is using the recommended CRVersion.
+	checks := []UpgradeTask{}
+	for _, cluster := range clusters.Items {
+		if cluster.Spec.Engine.Type != engine.Spec.Type {
+			continue
+		}
+		check := UpgradeTask{
+			Name: pointer.To(cluster.Name),
+		}
+		check.PendingTask = pointer.To(Ready)
+		if recVer := cluster.Status.RecommendedCRVersion; recVer != nil {
+			check.PendingTask = pointer.To(Restart)
+			check.Message = pointer.To(fmt.Sprintf("Database needs restart to use CRVersion '%s'", *recVer))
+		}
+		checks = append(checks, check)
+	}
+	return checks, nil
+}
+
+// startOperatorUpgradeWithRetry wraps the startOperatorUpgrade function with a retry mechanism.
+// This is done to reduce the chances of failures due to resource conflicts.
+func (e *EverestServer) startOperatorUpgradeWithRetry(ctx context.Context, namespace string) error {
+	return backoff.Retry(func() error {
+		return e.startOperatorUpgrade(ctx, namespace)
+	},
+		backoff.WithContext(everestAPIConstantBackoff, ctx),
+	)
+}
+
+// TODO: remove/refactor this once deprecated APIs are removed.
+func (e *EverestServer) startOperatorUpgrade(ctx context.Context, namespace string) error {
+	engines, err := e.kubeClient.ListDatabaseEngines(ctx, namespace)
+	if err != nil {
+		return err
+	}
+
+	// gather install plans to approve.
+	installPlans := []string{}
+	for _, engine := range engines.Items {
+		nextVer := engine.Status.GetNextUpgradeVersion()
+		if nextVer == "" {
+			continue
+		}
+		for _, pending := range engine.Status.PendingOperatorUpgrades {
+			if pending.TargetVersion == nextVer {
+				installPlans = append(installPlans, pending.InstallPlanRef.Name)
+			}
+		}
+	}
+
+	// de-duplicate the list.
+	slices.Sort(installPlans)
+	installPlans = slices.Compact(installPlans)
+
+	// approve install plans.
+	for _, plan := range installPlans {
+		if err := backoff.Retry(func() error {
+			_, err := e.kubeClient.ApproveInstallPlan(ctx, namespace, plan)
+			return err
+		}, backoff.WithContext(everestAPIConstantBackoff, ctx),
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (e *EverestServer) getOperatorUpgradePreflight(
+	ctx context.Context,
+	targetVersion string,
+	engine *everestv1alpha1.DatabaseEngine,
+) (*operatorUpgradePreflight, error) {
+	namespace := engine.GetNamespace()
 	// Get all database clusters in the namespace.
 	databases, err := e.kubeClient.ListDatabaseClusters(ctx, namespace)
 	if err != nil {
@@ -190,25 +377,6 @@ func (e *EverestServer) getOperatorUpgradePreflight(ctx context.Context, targetV
 	return result, nil
 }
 
-// GetOperatorUpgradePreflight gets the preflight check results for upgrading the specified database engine operator.
-func (e *EverestServer) GetOperatorUpgradePreflight(
-	ctx echo.Context,
-	namespace, name string,
-	params GetOperatorUpgradePreflightParams,
-) error {
-	result, err := e.getOperatorUpgradePreflight(ctx.Request().Context(), params.TargetVersion, name, namespace)
-	if err != nil {
-		code := http.StatusInternalServerError
-		if errors.Is(err, errDBEngineInvalidTargetVersion) {
-			code = http.StatusBadRequest
-		}
-		return ctx.JSON(code, Error{
-			Message: pointer.To(err.Error()),
-		})
-	}
-	return ctx.JSON(http.StatusOK, result)
-}
-
 func validateOperatorUpgradeVersion(currentVersion, targetVersion string) error {
 	targetsv, err := goversion.NewSemver(targetVersion)
 	if err != nil {
@@ -224,9 +392,9 @@ func validateOperatorUpgradeVersion(currentVersion, targetVersion string) error 
 	return nil
 }
 
-func canUpgrade(dbs []OperatorUpgradePreflightForDatabase) bool {
+func canUpgrade(dbs []UpgradeTask) bool {
 	// Check if there is any database that is not ready.
-	notReadyExists := slices.ContainsFunc(dbs, func(db OperatorUpgradePreflightForDatabase) bool {
+	notReadyExists := slices.ContainsFunc(dbs, func(db UpgradeTask) bool {
 		return pointer.Get(db.PendingTask) != Ready
 	})
 	return !notReadyExists

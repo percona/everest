@@ -15,11 +15,12 @@
 
 import { expect, test as setup } from '@playwright/test';
 import { STORAGE_STATE_FILE } from './constants';
-const { EVEREST_K8_TOKEN } = process.env;
+const { CI_USER, CI_PASSWORD } = process.env;
 
 setup('Login', async ({ page }) => {
   page.goto('/login');
-  await page.getByTestId('text-input-token').fill(EVEREST_K8_TOKEN);
+  await page.getByTestId('text-input-username').fill(CI_USER);
+  await page.getByTestId('text-input-password').fill(CI_PASSWORD);
   await page.getByTestId('login-button').click();
   await expect(page.getByText('Create database')).toBeVisible();
 
@@ -28,7 +29,7 @@ setup('Login', async ({ page }) => {
   expect(
     origins.find(
       (origin) =>
-        !!origin.localStorage.find((storage) => storage.name === 'pwd')
+        !!origin.localStorage.find((storage) => storage.name === 'everestToken')
     )
   ).not.toBeUndefined();
   await page.context().storageState({ path: STORAGE_STATE_FILE });

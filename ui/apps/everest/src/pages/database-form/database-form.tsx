@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useBlocker, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Stack, Step, StepLabel } from '@mui/material';
 import { Stepper } from '@percona/ui-lib';
@@ -37,13 +37,17 @@ export const DatabasePage = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [longestAchievedStep, setLongestAchievedStep] = useState(0);
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const { mutate: addDbCluster, isPending: isCreating } = useCreateDbCluster();
   const { mutate: editDbCluster, isPending: isUpdating } = useUpdateDbCluster();
-  const { state } = useLocation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { isDesktop } = useActiveBreakpoint();
   const mode = useDatabasePageMode();
-  const { defaultValues, dbClusterData } = useDatabasePageDefaultValues(mode);
+  const {
+    defaultValues,
+    dbClusterData,
+    isFetching: loadingClusterValues,
+  } = useDatabasePageDefaultValues(mode);
 
   const validationSchema = useDbValidationSchema(activeStep);
 
@@ -62,6 +66,13 @@ export const DatabasePage = () => {
     handleSubmit,
   } = methods;
 
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      isDirty &&
+      !formSubmitted &&
+      currentLocation.pathname !== nextLocation.pathname
+  );
+
   const formHasErrors = Object.values(errors).length > 0;
 
   const onSubmit: SubmitHandler<DbWizardType> = (data) => {
@@ -71,10 +82,10 @@ export const DatabasePage = () => {
           dbPayload: data,
           ...(mode === 'restoreFromBackup' && {
             backupDataSource: {
-              dbClusterBackupName: state?.backupName,
-              ...(state?.pointInTimeDate && {
+              dbClusterBackupName: location.state?.backupName,
+              ...(location.state?.pointInTimeDate && {
                 pitr: {
-                  date: state?.pointInTimeDate,
+                  date: location.state?.pointInTimeDate,
                   type: 'date',
                 },
               }),
@@ -135,6 +146,18 @@ export const DatabasePage = () => {
     setActiveStep(order - 1);
   };
 
+  const handleCloseCancellationModal = () => {
+    if (blocker.state === 'blocked') {
+      blocker.reset();
+    }
+  };
+
+  const proceedNavigation = () => {
+    if (blocker.state === 'blocked') {
+      blocker.proceed();
+    }
+  };
+
   useEffect(() => {
     // We disable the inputs on first step to make sure user doesn't change anything before all data is loaded
     // When users change the inputs, it means all data was loaded and we should't change the defaults anymore at this point
@@ -169,11 +192,12 @@ export const DatabasePage = () => {
             isSubmitting={isCreating || isUpdating}
             hasErrors={formHasErrors}
             onSubmit={handleSubmit(onSubmit)}
-            onCancel={() => setCancelModalOpen(true)}
+            onCancel={() => navigate('/databases')}
             handleNextStep={handleNext}
             handlePreviousStep={handleBack}
           />
           <DatabaseFormSideDrawer
+            disabled={loadingClusterValues}
             activeStep={activeStep}
             longestAchievedStep={longestAchievedStep}
             handleSectionEdit={handleSectionEdit}
@@ -181,8 +205,9 @@ export const DatabasePage = () => {
         </FormProvider>
       </Stack>
       <DatabaseFormCancelDialog
-        open={cancelModalOpen}
-        onClose={() => setCancelModalOpen(false)}
+        open={blocker.state === 'blocked'}
+        onClose={handleCloseCancellationModal}
+        onConfirm={proceedNavigation}
       />
     </>
   );

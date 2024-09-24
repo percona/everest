@@ -18,9 +18,24 @@ import { addFirstScheduleInDBWizard } from '../../db-wizard-utils';
 export const backupsStepCheck = async (page: Page) => {
   await expect(
     page.getByText(
-      'Create a task that takes regular backups of this database, according to the schedule that you specify.'
+      'Create a task that regularly backs up this database according to your specified schedule.'
     )
   ).toBeVisible();
 
+  const enabledPitrCheckbox = page
+    .getByTestId('switch-input-pitr-enabled-label')
+    .getByRole('checkbox');
+
+  await expect(enabledPitrCheckbox).not.toBeChecked();
+
   await addFirstScheduleInDBWizard(page);
+
+  await expect(
+    page.getByText('Point-in-time Recovery', { exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      'PITR provides continuous backups of your database, enabling you to restore it to'
+    )
+  ).toBeVisible();
 };

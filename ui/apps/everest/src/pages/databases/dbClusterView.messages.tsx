@@ -24,10 +24,14 @@ export const Messages = {
     paused: 'Paused',
     unknown: 'Unknown',
     restoring: 'Restoring',
+    deleting: 'Deleting',
   },
   lastBackup: {
     warningTooltip: 'Check your backups page for more info',
     inactive: 'Inactive',
+    scheduled: 'Scheduled',
+    pending: 'Pending',
+    notStarted: 'Not Started',
     seconds: 'sec',
     minutes: 'min',
     hours: 'h',
@@ -41,7 +45,7 @@ export const Messages = {
     cpu: 'CPU',
     memory: 'Memory',
     disk: 'Disk',
-    nodes: 'Number of nodes',
+    nodes: 'Nº nodes',
     externalAccess: 'External Access',
     monitoring: 'Monitoring',
     enabled: 'Enabled',
@@ -55,9 +59,11 @@ export const Messages = {
     resume: 'Resume',
     restoreFromBackup: 'Restore from a backup',
     createNewDbFromBackup: 'Create DB from a backup',
+    dbStatusDetails: 'View DB status details',
   },
   dbCluster: {
-    noData: "You don't have any databases yet. Create one to get started.",
+    noData:
+      'You currently do not have any database cluster. Create one to get started.',
   },
   deleteModal: {
     header: 'Delete database',
@@ -70,7 +76,9 @@ export const Messages = {
     databaseName: 'Database name',
     alertMessage:
       'This action will permanently destroy your database and you will not be able to recover it.',
-    checkboxMessage: 'Delete backups storage data',
+    checkboxMessage: 'Keep backups storage data',
+    disabledCheckboxForPGTooltip:
+      'Backups storage data is kept for PostgreSQL databases.',
     confirmButtom: 'Delete',
   },
   responseMessages: {

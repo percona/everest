@@ -16,7 +16,10 @@
 import {
   useMutation,
   UseMutationOptions,
+  useQueries,
   useQuery,
+  UseQueryOptions,
+  UseQueryResult,
 } from '@tanstack/react-query';
 import {
   createBackupStorageFn,
@@ -24,25 +27,70 @@ import {
   editBackupStorageFn,
   getBackupStoragesFn,
 } from 'api/backupStorage';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import {
   BackupStorage,
   GetBackupStoragesPayload,
 } from 'shared-types/backupStorages.types';
+import { PerconaQueryOptions } from 'shared-types/query.types';
 
 export const BACKUP_STORAGES_QUERY_KEY = 'backupStorages';
 
-export const useBackupStorages = () =>
-  useQuery<GetBackupStoragesPayload, unknown, BackupStorage[]>({
-    queryKey: [BACKUP_STORAGES_QUERY_KEY],
-    queryFn: getBackupStoragesFn,
+export interface BackupStoragesForNamespaceResult {
+  namespace: string;
+  queryResult: UseQueryResult<BackupStorage[], unknown>;
+}
+
+export const useBackupStorages = (
+  queriesParams: Array<{
+    namespace: string;
+    options?: PerconaQueryOptions<
+      GetBackupStoragesPayload,
+      unknown,
+      BackupStorage[]
+    >;
+  }>
+) => {
+  const { canRead } = useNamespacePermissionsForResource('backup-storages');
+  const queries = queriesParams.map<
+    UseQueryOptions<GetBackupStoragesPayload, unknown, BackupStorage[]>
+  >(({ namespace, options }) => {
+    const allowed = canRead.includes(namespace);
+    return {
+      queryKey: [BACKUP_STORAGES_QUERY_KEY, namespace],
+      retry: false,
+      queryFn: () => getBackupStoragesFn(namespace),
+      refetchInterval: 5 * 1000,
+      select: allowed ? undefined : () => [],
+      ...options,
+      enabled: (options?.enabled ?? true) && allowed,
+    };
   });
 
-export const useBackupStoragesByNamespace = (namespace: string) =>
+  const queryResults = useQueries({ queries });
+
+  const results: BackupStoragesForNamespaceResult[] = queryResults.map(
+    (item, i) => ({
+      namespace: queriesParams[i].namespace,
+      queryResult: item,
+    })
+  );
+
+  return results;
+};
+
+export const useBackupStoragesByNamespace = (
+  namespace: string,
+  options?: PerconaQueryOptions<
+    GetBackupStoragesPayload,
+    unknown,
+    BackupStorage[]
+  >
+) =>
   useQuery<GetBackupStoragesPayload, unknown, BackupStorage[]>({
     queryKey: [BACKUP_STORAGES_QUERY_KEY, namespace],
-    queryFn: getBackupStoragesFn,
-    select: (data) =>
-      data.filter((item) => item.allowedNamespaces?.includes(namespace)),
+    queryFn: () => getBackupStoragesFn(namespace),
+    ...options,
   });
 
 export const useCreateBackupStorage = (
@@ -61,10 +109,21 @@ export const useEditBackupStorage = (
     ...options,
   });
 
+type DeleteBackupStorageArgType = {
+  backupStorageId: string;
+  namespace: string;
+};
+
 export const useDeleteBackupStorage = (
-  options?: UseMutationOptions<unknown, unknown, string, unknown>
+  options?: UseMutationOptions<
+    unknown,
+    unknown,
+    DeleteBackupStorageArgType,
+    unknown
+  >
 ) =>
   useMutation({
-    mutationFn: deleteBackupStorageFn,
+    mutationFn: ({ backupStorageId, namespace }: DeleteBackupStorageArgType) =>
+      deleteBackupStorageFn(backupStorageId, namespace),
     ...options,
   });

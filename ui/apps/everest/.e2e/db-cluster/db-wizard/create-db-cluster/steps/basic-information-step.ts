@@ -38,10 +38,11 @@ export const basicInformationStepCheck = async (
 
   const dbVersionOptions = page.getByRole('option');
 
-  engineVersions.psmdb.forEach((version) =>
-    expect(
-      dbVersionOptions.filter({ hasText: new RegExp(`^${version}$`) })
-    ).toBeVisible()
+  engineVersions.psmdb.forEach(
+    async (version) =>
+      await expect(
+        dbVersionOptions.filter({ hasText: new RegExp(`^${version}$`) })
+      ).toBeVisible()
   );
 
   const defaultOption = await page.getByRole('option', { selected: true });
@@ -49,16 +50,17 @@ export const basicInformationStepCheck = async (
     recommendedEngineVersions.psmdb
   );
 
-  await page.getByRole('option').filter({ hasText: '5.0.7-6' }).click();
+  await page.getByRole('option').filter({ hasText: '6.0.4-3' }).click();
   await page.getByTestId('text-input-db-name').fill(clusterName);
   await page.getByTestId('text-input-storage-class').click();
 
   const storageClassOptions = page.getByRole('option');
 
-  storageClasses.forEach((className) =>
-    expect(
-      storageClassOptions.filter({ hasText: new RegExp(`^${className}$`) })
-    ).toBeVisible()
+  storageClasses.forEach(
+    async (className) =>
+      await expect(
+        storageClassOptions.filter({ hasText: new RegExp(`^${className}$`) })
+      ).toBeVisible()
   );
 
   await page.getByRole('option').first().click();

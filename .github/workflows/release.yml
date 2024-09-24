@@ -20,17 +20,16 @@ jobs:
       TOOLS_PATH: "/opt/tools/bin"
       VERSION: ${{ github.event.inputs.version }}
       # version in format "X.Y" which is going to be updated with each patch release
-      FLOATING_TAG: ''
+      FLOATING_TAG: ""
       # branch name in format "release-X.Y"
-      BRANCH_NAME: ''
+      BRANCH_NAME: ""
       # GitHub tag name to use for the RC/Release
-      GH_TAG: ''
+      GH_TAG: ""
       # Shows if this workflow is triggered for RC or Release
       IS_RC: 0
-      ARCH: ''
-      OS: ''
+      ARCH: ""
+      OS: ""
     steps:
-
       - name: Validate input
         run: |
           if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc[1-9][0-9]*)?$ ]]; then
@@ -49,7 +48,6 @@ jobs:
           fi
           echo "ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" >> $GITHUB_ENV
           echo "OS=$(uname | awk '{print tolower($0)}')" >> $GITHUB_ENV
-
 
       - name: Operator - check out
         uses: actions/checkout@v4
@@ -80,7 +78,16 @@ jobs:
               echo "The tag is already present in github. Please create a different RC/Release"
               exit 1
             fi
-          
+
+            # update IMAGE_TAG_OWNER in the Makefile to point to a correct org
+            if [[ $IS_RC == 1 ]]; then 
+              # if the RC build is being run over a Release build, there will be the "percona" org mentioned in the quickstart file, 
+              # so we should replace the org
+              sed -i "s/IMAGE_TAG_OWNER ?= docker.io\/percona\$/IMAGE_TAG_OWNER ?= docker.io\/perconalab/g" Makefile 
+            else
+              sed -i "s/IMAGE_TAG_OWNER ?= docker.io\/perconalab/IMAGE_TAG_OWNER ?= docker.io\/percona/g" Makefile 
+            fi 
+            
             make init
             make release
 
@@ -97,7 +104,6 @@ jobs:
           else
             echo "No need for a new build"
           fi
-
 
       - name: Operator - install operator-sdk
         run: |
@@ -123,10 +129,9 @@ jobs:
           cd everest-operator
           make build manifests bundle
 
-
       - name: Operator - setup Docker meta for everest-operator
         id: operator_meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         # docker/metadata-action action looks more elegant when being triggered by a GH tag,
         # however this workflow can't be triggered by a GH tag since there are some changes need to be done
         # in the codebase prior putting the tag, so the action uses the raw tags
@@ -141,7 +146,7 @@ jobs:
 
       - name: Operator - setup Docker meta for everest-operator-bundle
         id: bundle_meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
             percona/everest-operator-bundle,enable=${{ env.IS_RC == 0 }}
@@ -151,13 +156,13 @@ jobs:
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Operator - build everest-operator image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-operator
           push: false
@@ -170,22 +175,22 @@ jobs:
           echo "::set-output name=image_to_check::$(echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1)"
 
       - name: Operator - run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.19.0
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: ${{ steps.set_operator_image.outputs.image_to_check }}
-          format: 'table'
-          exit-code: '1'
-          severity: 'CRITICAL,HIGH'
+          format: "table"
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
 
       - name: Operator - push everest-operator image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-operator
           push: true
           tags: ${{ steps.operator_meta.outputs.tags }}
 
       - name: Operator - build everest-operator-bundle image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-operator
           push: false
@@ -199,15 +204,15 @@ jobs:
           echo "::set-output name=image_to_check::$(echo "${{ steps.bundle_meta.outputs.tags }}" | head -n 1)"
 
       - name: Operator - Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.19.0
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: ${{ steps.set_operator_bundle_image.outputs.image_to_check }}
-          format: 'table'
-          exit-code: '1'
-          severity: 'CRITICAL,HIGH'
+          format: "table"
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
 
       - name: Operator - push everest-operator-bundle image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-operator
           push: true
@@ -240,36 +245,61 @@ jobs:
             exit 1
           fi
 
+      - name: Catalog - update veneer file
+        run: |
+          cd everest-catalog/tools
+
           # configure userdata for commits
           git config --global user.email "everest-ci@percona.com"
           git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
 
+          if [[ $IS_RC == 1 ]]; then
+            go run . \
+              --veneer-file ../veneer/everest-operator.yaml \
+              --channel fast-v0  \
+              --new-version ${{ env.VERSION }} 
+          else
+            go run . \
+              --veneer-file ../veneer/everest-operator.yaml \
+              --channel stable-v0 \
+              --new-version ${{ env.VERSION }} 
+                      
+            go run . \
+              --veneer-file ../veneer/everest-operator.yaml \
+              --channel fast-v0 \
+              --new-version ${{ env.VERSION }} 
+          fi
+
+          cd ..
+          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.44.0/${OS}-${ARCH}-opm
+          chmod +x /tmp/opm
+          /tmp/opm alpha render-template basic -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
+
           # Check if veneer has the new version listed
-          if ! grep -q "$VERSION" catalog/everest-operator/catalog.yaml; then
+          if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
             echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
-            echo "Update the file manually before running the workflow"
             exit 1
           fi
+
+          git commit -am "CI: add version ${{ env.VERSION }}"
+          git push origin $BRANCH_NAME
 
           git tag $GH_TAG
           git push origin $GH_TAG
 
-
       - name: Catalog - docker meta
         id: catalog_meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
             percona/everest-catalog,enable=${{ env.IS_RC == 0 }}
             perconalab/everest-catalog
           tags: |
             type=raw,value=${{ env.VERSION }}
-            type=raw,value=latest
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
 
-
       - name: Catalog - build image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-catalog
           push: false
@@ -282,17 +312,17 @@ jobs:
           # taking the first tag to check with trivy. Since the build is the same, no need to check the rest of them
           echo "::set-output name=image_to_check::$(echo "${{ steps.catalog_meta.outputs.tags }}" | head -n 1)"
 
-# TODO: fix the vulnerabilities in main and enable this check
-#      - name: Catalog - run Trivy vulnerability scanner
-#        uses: aquasecurity/trivy-action@0.19.0
-#        with:
-#          image-ref: ${{ steps.set_catalog_image.outputs.image_to_check }}
-#          format: 'table'
-#          exit-code: '1'
-#          severity: 'CRITICAL,HIGH'
+      # TODO: fix the vulnerabilities in main and enable this check
+      #      - name: Catalog - run Trivy vulnerability scanner
+      #        uses: aquasecurity/trivy-action@0.24.0
+      #        with:
+      #          image-ref: ${{ steps.set_catalog_image.outputs.image_to_check }}
+      #          format: 'table'
+      #          exit-code: '1'
+      #          severity: 'CRITICAL,HIGH'
 
       - name: Catalog - push image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: everest-catalog
           push: true
@@ -307,7 +337,7 @@ jobs:
       - name: Everest - setup golang
         uses: actions/setup-go@v5
         with:
-          go-version-file: './go.mod'
+          go-version-file: "./go.mod"
 
       - name: Everest - create and update release branch
         run: |
@@ -320,23 +350,28 @@ jobs:
             git push origin $BRANCH_NAME
           fi
           git checkout $BRANCH_NAME
-          
+
           # Update deploy manifest 
-          if [[ $env.IS_RC ]]; then 
+          if [[ $IS_RC == 1 ]]; then 
+            # if the build is being run over dev/RC build, there will be the "perconalab" org mentioned in the quickstart file, 
+            # so we should replace only the version
             sed -i "s/perconalab\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-            sed -i "s/percona\/percona-everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
+            
+            # if the build is being run over a Release build, there will be the "percona" org mentioned in the quickstart file, 
+            # so we should replace both the org and the version
+            sed -i "s/percona\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
           else
-            sed -i "s/perconalab\/everest.*/percona\/percona-everest:$VERSION/g" deploy/quickstart-k8s.yaml
-            sed -i "s/percona\/percona-everest.*/percona\/percona-everest:$VERSION/g" deploy/quickstart-k8s.yaml
+            sed -i "s/perconalab\/everest.*/percona\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
+            sed -i "s/percona\/everest.*/percona\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
           fi 
-          
+
           # Update the operator go module to reference the version tag
           go get github.com/percona/everest-operator@$GH_TAG
           go mod tidy
-          
+
           # Change version in Makefile
           sed -i "s/RELEASE_VERSION ?=.*/RELEASE_VERSION ?= v$VERSION/g" Makefile
-          
+
           # if there is something to commit, commit it and add the tag 
           if [[ -n $(git status --porcelain) ]]; then
             if git tag --list | grep -q "^$GH_TAG$"; then
@@ -350,7 +385,7 @@ jobs:
             # commit and push the updated files
             git commit -a -m "update version tag"
             git push origin $BRANCH_NAME
-          
+
             git tag $GH_TAG
             git push origin $GH_TAG
           fi
@@ -358,13 +393,13 @@ jobs:
       - name: Everest UI - setup pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: 8
+          version: 9.4.0
 
       - name: Everest UI - run with Node 20
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-          cache: 'pnpm'
+          cache: "pnpm"
           cache-dependency-path: ui/pnpm-lock.yaml
 
       - name: Everest UI - build
@@ -375,14 +410,18 @@ jobs:
 
       - name: Everest - build binary
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build
+          if [[ $IS_RC == 1 ]]; then 
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
+          else
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make release
+          fi
 
       - name: Everest - setup docker build metadata
         uses: docker/metadata-action@v5
         id: everest_meta
         with:
           images: |
-            percona/percona-everest,enable=${{ env.IS_RC == 0 }}
+            percona/everest,enable=${{ env.IS_RC == 0 }}
             perconalab/everest
           tags: |
             type=raw,value=${{ env.VERSION }}
@@ -390,7 +429,7 @@ jobs:
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
 
       - name: Everest - build Everest image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: false
@@ -402,18 +441,17 @@ jobs:
           # taking the first tag to check with trivy. Since the build is the same, no need to check the rest of them
           echo "::set-output name=image_to_check::$(echo "${{ steps.everest_meta.outputs.tags }}" | head -n 1)"
 
-
-# TODO: fix the vulnerabilities in main and enable this check
-#      - name: Everest - run Trivy vulnerability scanner
-#        uses: aquasecurity/trivy-action@0.19.0
-#        with:
-#          image-ref: ${{ steps.set_everest_image.outputs.image_to_check }}
-#          format: 'table'
-#          exit-code: '1'
-#          severity: 'CRITICAL,HIGH'
+      # TODO: fix the vulnerabilities in main and enable this check
+      #      - name: Everest - run Trivy vulnerability scanner
+      #        uses: aquasecurity/trivy-action@0.24.0
+      #        with:
+      #          image-ref: ${{ steps.set_everest_image.outputs.image_to_check }}
+      #          format: 'table'
+      #          exit-code: '1'
+      #          severity: 'CRITICAL,HIGH'
 
       - name: Everest - push Everest image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
@@ -424,12 +462,8 @@ jobs:
           make release-cli
 
       - name: CLI - create release with binaries
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           draft: true
           files: |
             dist/*
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-
-

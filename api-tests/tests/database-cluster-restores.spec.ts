@@ -14,16 +14,16 @@
 // limitations under the License.
 import { expect, test } from '@playwright/test'
 import * as th from './helpers'
-import {checkError, testsNs} from "./helpers";
+import {checkError, testsNs, waitClusterDeletion} from "./helpers";
 
 
-test('create/update/delete database cluster restore', async ({ request }) => {
+test('create/update/delete database cluster restore', async ({ request, page }) => {
   const bsName = th.suffixedName('storage')
   const clName = th.suffixedName('cluster')
   const clName2 = th.suffixedName('cluster2')
   const backupName = th.suffixedName('backup')
 
-  await th.createBackupStorage(request, bsName)
+  await th.createBackupStorage(request, bsName, testsNs)
   await th.createDBCluster(request, clName)
   await th.createDBCluster(request, clName2)
   await th.createBackup(request, clName, backupName, bsName)
@@ -77,10 +77,12 @@ test('create/update/delete database cluster restore', async ({ request }) => {
   response = await request.get(`/v1/namespaces/${testsNs}/database-cluster-restores/${restoreName}`)
   expect(response.status()).toBe(404)
 
-  await th.deleteDBCluster(request, clName)
-  await th.deleteDBCluster(request, clName2)
-  await th.deleteBackup(request, backupName)
-  await th.deleteBackupStorage(request, bsName)
+  await th.deleteBackup(page, request, backupName)
+  await th.deleteDBCluster(request, page, clName)
+  await th.deleteDBCluster(request, page, clName2)
+  await waitClusterDeletion(request, page, clName)
+  await waitClusterDeletion(request, page, clName2)
+  await th.deleteBackupStorage(page, request, bsName, testsNs)
 })
 
 test('list restores', async ({ request, page }) => {
@@ -89,14 +91,13 @@ test('list restores', async ({ request, page }) => {
   const clName2 = th.suffixedName('cluster2')
   const backupName = th.suffixedName('backup')
 
-  await th.createBackupStorage(request, bsName)
+  await th.createBackupStorage(request, bsName, testsNs)
   await th.createDBCluster(request, clName1)
   await th.createDBCluster(request, clName2)
   await th.createBackup(request, clName1, backupName, bsName)
 
   const restoreName1 = th.suffixedName('restore1')
   const restoreName2 = th.suffixedName('restore2')
-  const restoreName3 = th.suffixedName('restore3')
 
   const payloads = [
     {
@@ -122,19 +123,6 @@ test('list restores', async ({ request, page }) => {
         dataSource: {
           dbClusterBackupName: backupName,
         },
-        dbClusterName: clName1,
-      },
-    },
-    {
-      apiVersion: 'everest.percona.com/v1alpha1',
-      kind: 'DatabaseClusterRestore',
-      metadata: {
-        name: restoreName3,
-      },
-      spec: {
-        dataSource: {
-          dbClusterBackupName: backupName,
-        },
         dbClusterName: clName2,
       },
     },
@@ -154,7 +142,7 @@ test('list restores', async ({ request, page }) => {
   let response = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clName1}/restores`)
   let result = await response.json()
 
-  expect(result.items).toHaveLength(2)
+  expect(result.items).toHaveLength(1)
 
   response = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clName2}/restores`)
   result = await response.json()
@@ -168,10 +156,12 @@ test('list restores', async ({ request, page }) => {
     expect(response.status()).toBe(404)
   }
 
-  await th.deleteBackup(request, backupName)
-  await th.deleteDBCluster(request, clName1)
-  await th.deleteDBCluster(request, clName2)
-  await th.deleteBackupStorage(request, bsName)
+  await th.deleteBackup(page, request, backupName)
+  await th.deleteDBCluster(request, page, clName1)
+  await th.deleteDBCluster(request, page, clName2)
+  await waitClusterDeletion(request, page, clName1)
+  await waitClusterDeletion(request, page, clName2)
+  await th.deleteBackupStorage(page, request, bsName, testsNs)
 })
 
 test('create restore: validation errors', async ({ request, page }) => {
@@ -179,7 +169,7 @@ test('create restore: validation errors', async ({ request, page }) => {
   const backupName = th.suffixedName('backup')
   const clName = th.suffixedName('cl')
 
-  await th.createBackupStorage(request, bsName)
+  await th.createBackupStorage(request, bsName, testsNs)
   await th.createDBCluster(request, clName)
   await th.createBackup(request, clName, backupName, bsName)
 
@@ -221,7 +211,8 @@ test('create restore: validation errors', async ({ request, page }) => {
   expect(response.status()).toBe(400)
   expect(await response.text()).toContain('{"message":".spec cannot be empty"}')
 
-  await th.deleteBackup(request, backupName)
-  await th.deleteBackupStorage(request, bsName)
-  await th.deleteDBCluster(request, clName)
+  await th.deleteBackup(page, request, backupName)
+  await th.deleteDBCluster(request, page, clName)
+  await waitClusterDeletion(request, page, clName)
+  await th.deleteBackupStorage(page, request, bsName, testsNs)
 })

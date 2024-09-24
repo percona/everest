@@ -17,20 +17,36 @@
 package api
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 	"time"
 
 	"github.com/AlekSi/pointer"
+	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/rbac"
 )
 
 const (
 	databaseClusterKind = "databaseclusters"
+	// PXC default upload interval
+	// https://github.com/percona/percona-xtradb-cluster-operator/blob/25ad952931b3760ba22f082aa827fecb0e48162e/pkg/apis/pxc/v1/pxc_types.go#L938
+	pxcDefaultUploadInterval = 60
+	// PSMDB default upload interval
+	// https://github.com/percona/percona-server-mongodb-operator/blob/98b72fac893eeb8a96e366d49a70d3aaaa4e9ed4/pkg/apis/psmdb/v1/psmdb_defaults.go#L514
+	psmdbDefaultUploadInterval = 600
+	// PG default upload interval
+	// https://github.com/percona/percona-postgresql-operator/blob/82673d4d80aa329b5bd985889121280caad064fb/internal/pgbackrest/postgres.go#L58
+	pgDefaultUploadInterval = 60
 )
 
 // CreateDatabaseCluster creates a new db cluster inside the given k8s cluster.
@@ -47,12 +63,87 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
 
-	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, "")
+	if err := e.validateDatabaseClusterOnCreate(ctx, namespace, dbc); err != nil {
+		return err
+	}
+
+	err := e.proxyKubernetes(ctx, namespace, databaseClusterKind, "")
+	if err == nil {
+		// Collect metrics immediately after a DB cluster has been created.
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+
+			if err := e.collectMetrics(ctx, *e.config); err != nil {
+				e.l.Errorf("Could not send metrics: %s", err)
+			}
+		}()
+	}
+
+	return err
+}
+
+// enforceDBClusterRBAC checks if the user has permission to read the backup-storage and monitoring-instances associated
+// with the provided DB cluster.
+func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.DatabaseCluster) error {
+	// Check if the user has permissions for all backup-storages in the schedule?
+	for _, sched := range db.Spec.Backup.Schedules {
+		bsName := sched.BackupStorageName
+		if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), bsName)); err != nil {
+			if !errors.Is(err, errInsufficientPermissions) {
+				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+			}
+			return err
+		}
+	}
+	// Check if the user has permission for the backup-storages used by PITR (if any)?
+	if bsName := pointer.Get(db.Spec.Backup.PITR.BackupStorageName); bsName != "" {
+		if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), bsName)); err != nil {
+			if !errors.Is(err, errInsufficientPermissions) {
+				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+			}
+			return err
+		}
+	}
+	// Check if the user has permissions for MonitoringConfig?
+	if mcName := pointer.Get(db.Spec.Monitoring).MonitoringConfigName; mcName != "" {
+		if err := e.enforce(user, rbac.ResourceMonitoringInstances, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), mcName)); err != nil {
+			if !errors.Is(err, errInsufficientPermissions) {
+				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+			}
+			return err
+		}
+	}
+	return nil
 }
 
 // ListDatabaseClusters lists the created database clusters on the specified kubernetes cluster.
 func (e *EverestServer) ListDatabaseClusters(ctx echo.Context, namespace string) error {
-	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, "")
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+	rbacFilter := transformK8sList(func(l *unstructured.UnstructuredList) error {
+		allowed := []unstructured.Unstructured{}
+		for _, obj := range l.Items {
+			db := &everestv1alpha1.DatabaseCluster{}
+			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, db); err != nil {
+				e.l.Error(errors.Join(err, errors.New("failed to convert unstructured to DatabaseCluster")))
+				return err
+			}
+			if err := e.enforceDBClusterRBAC(user, db); errors.Is(err, errInsufficientPermissions) {
+				continue
+			} else if err != nil {
+				return err
+			}
+			allowed = append(allowed, obj)
+		}
+		l.Items = allowed
+		return nil
+	})
+	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, "", rbacFilter)
 }
 
 // DeleteDatabaseCluster deletes a database cluster on the specified kubernetes cluster.
@@ -62,22 +153,34 @@ func (e *EverestServer) DeleteDatabaseCluster(
 	params DeleteDatabaseClusterParams,
 ) error {
 	cleanupStorage := pointer.Get(params.CleanupBackupStorage)
-	// If cleanup is required, we add a finalizer to all backup object for this cluster.
-	if cleanupStorage {
-		reqCtx := ctx.Request().Context()
-		backups, err := e.kubeClient.ListDatabaseClusterBackups(reqCtx, namespace, metav1.ListOptions{})
-		if err != nil {
-			return errors.Join(err, errors.New("could not list database backups"))
-		}
-		// Cleanup storage.
+	reqCtx := ctx.Request().Context()
+
+	backups, err := e.kubeClient.ListDatabaseClusterBackups(reqCtx, namespace, metav1.ListOptions{})
+	if err != nil {
+		return errors.Join(err, errors.New("could not list database backups"))
+	}
+
+	if !cleanupStorage {
 		for _, backup := range backups.Items {
 			// Doesn't belong to this cluster, skip.
-			if backup.Spec.DBClusterName != name {
+			if backup.Spec.DBClusterName != name || !backup.GetDeletionTimestamp().IsZero() {
 				continue
 			}
-			if err := e.cleanupBackupStorage(reqCtx, &backup); err != nil { //nolint:gosec // We use Go 1.21+
-				return errors.Join(err, errors.New("could not cleanup backup storage"))
+			if err := e.ensureBackupStorageProtection(reqCtx, &backup); err != nil {
+				return errors.Join(err, errors.New("could not ensure backup storage protection"))
 			}
+		}
+	}
+
+	// Ensure foreground deletion on the Backups,
+	// so that they're visible on the UI while getting deleted.
+	for _, backup := range backups.Items {
+		// Doesn't belong to this cluster, skip.
+		if backup.Spec.DBClusterName != name || !backup.GetDeletionTimestamp().IsZero() {
+			continue
+		}
+		if err := e.ensureBackupForegroundDeletion(reqCtx, &backup); err != nil {
+			return errors.Join(err, errors.New("could not ensure foreground deletion"))
 		}
 	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, name)
@@ -85,7 +188,96 @@ func (e *EverestServer) DeleteDatabaseCluster(
 
 // GetDatabaseCluster retrieves the specified database cluster on the specified kubernetes cluster.
 func (e *EverestServer) GetDatabaseCluster(ctx echo.Context, namespace, name string) error {
-	return e.proxyKubernetes(ctx, namespace, databaseClusterKind, name)
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+
+	// Check all indirect permissions related to the DB cluster.
+	db, err := e.kubeClient.GetDatabaseCluster(ctx.Request().Context(), namespace, name)
+	if err != nil {
+		return err
+	}
+	if err := e.enforceDBClusterRBAC(user, db); err != nil {
+		return err
+	}
+	attachK8sTypeMeta(db)
+	return ctx.JSON(http.StatusOK, db)
+}
+
+// GetDatabaseClusterComponents returns database cluster components.
+//
+//nolint:funlen
+func (e *EverestServer) GetDatabaseClusterComponents(ctx echo.Context, namespace, name string) error {
+	pods, err := e.kubeClient.GetPods(ctx.Request().Context(), namespace, &metav1.LabelSelector{
+		MatchLabels: map[string]string{"app.kubernetes.io/instance": name},
+	})
+	if err != nil {
+		e.l.Error(err)
+		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString("Could not get pods")})
+	}
+
+	res := make([]DatabaseClusterComponent, 0, len(pods.Items))
+	for _, pod := range pods.Items {
+		component := pod.Labels["app.kubernetes.io/component"]
+		if component == "" {
+			continue
+		}
+
+		restarts := 0
+		ready := 0
+		containers := make([]DatabaseClusterComponentContainer, 0, len(pod.Status.ContainerStatuses))
+		for _, c := range pod.Status.ContainerStatuses {
+			restarts += int(c.RestartCount)
+			if c.Ready {
+				ready++
+			}
+			var started time.Time
+			if c.State.Running != nil {
+				started = c.State.Running.StartedAt.Time
+			}
+
+			var status string
+			switch {
+			case c.State.Running != nil:
+				status = "Running"
+			case c.State.Waiting != nil:
+				status = "Waiting"
+			case c.State.Terminated != nil:
+				status = "Terminated"
+			}
+
+			var startedString *string
+			if !started.IsZero() {
+				startedString = pointer.ToString(started.Format(time.RFC3339))
+			}
+			containers = append(containers, DatabaseClusterComponentContainer{
+				Name:     &c.Name, //nolint:exportloopref
+				Started:  startedString,
+				Ready:    &c.Ready, //nolint:exportloopref
+				Restarts: pointer.ToInt(int(c.RestartCount)),
+				Status:   &status,
+			})
+		}
+
+		var started *string
+		if startTime := pod.Status.StartTime; startTime != nil && !startTime.Time.IsZero() {
+			started = pointer.ToString(pod.Status.StartTime.Time.Format(time.RFC3339))
+		}
+		res = append(res, DatabaseClusterComponent{
+			Status:     pointer.ToString(string(pod.Status.Phase)),
+			Name:       &pod.Name, //nolint:exportloopref
+			Type:       &component,
+			Started:    started,
+			Restarts:   pointer.ToInt(restarts),
+			Ready:      pointer.ToString(fmt.Sprintf("%d/%d", ready, len(pod.Status.ContainerStatuses))),
+			Containers: &containers,
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, res)
 }
 
 // UpdateDatabaseCluster replaces the specified database cluster on the specified kubernetes cluster.
@@ -110,7 +302,11 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 	if err != nil {
 		return errors.Join(err, errors.New("could not get old Database Cluster"))
 	}
-	if err := validateDatabaseClusterOnUpdate(dbc, oldDB); err != nil {
+
+	if err := e.validateDatabaseClusterOnUpdate(ctx, dbc, oldDB); err != nil {
+		if errors.Is(err, errInsufficientPermissions) {
+			return err
+		}
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
 	}
 
@@ -176,11 +372,18 @@ func (e *EverestServer) GetDatabaseClusterPitr(ctx echo.Context, namespace, name
 		return ctx.JSON(http.StatusOK, response)
 	}
 
-	latestBackup := latestSuccessfulBackup(backups.Items, databaseCluster.Spec.Engine.Type)
+	latestBackup := latestSuccessfulBackup(backups.Items)
 
-	uploadInterval := getDefaultUploadInterval(databaseCluster.Spec.Engine.Type, databaseCluster.Spec.Backup.PITR.UploadIntervalSec)
 	backupTime := latestBackup.Status.CreatedAt.UTC()
-	latest := latestRestorableDate(time.Now(), backupTime, uploadInterval)
+	var latest *time.Time
+	// if there is the LatestRestorableTime set in the CR, use it
+	if latestBackup.Status.LatestRestorableTime != nil {
+		latest = &latestBackup.Status.LatestRestorableTime.Time
+	} else {
+		// otherwise use heuristics based on the UploadInterval
+		heuristicsInterval := getDefaultUploadInterval(databaseCluster.Spec.Engine, databaseCluster.Spec.Backup.PITR.UploadIntervalSec)
+		latest = latestRestorableDate(time.Now(), backupTime, heuristicsInterval)
+	}
 
 	response.LatestDate = latest
 	if response.LatestDate != nil {
@@ -192,11 +395,15 @@ func (e *EverestServer) GetDatabaseClusterPitr(ctx echo.Context, namespace, name
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func latestRestorableDate(now, latestBackupTime time.Time, uploadInterval int) *time.Time {
+func latestRestorableDate(now, latestBackupTime time.Time, heuristicsInterval int) *time.Time {
+	// if heuristicsInterval is not set, then no latest restorable date available
+	if heuristicsInterval == 0 {
+		return nil
+	}
 	// delete nanoseconds since they're not accepted by restoration
 	now = now.Truncate(time.Duration(now.Nanosecond()) * time.Nanosecond)
 	// heuristic: latest restorable date is now minus uploadInterval
-	date := now.Add(-time.Duration(uploadInterval) * time.Second).UTC()
+	date := now.Add(-time.Duration(heuristicsInterval) * time.Second).UTC()
 	// not able to restore if after the latest backup passed less than uploadInterval time,
 	// so in that case return nil
 	if latestBackupTime.After(date) {
@@ -205,10 +412,10 @@ func latestRestorableDate(now, latestBackupTime time.Time, uploadInterval int) *
 	return &date
 }
 
-func latestSuccessfulBackup(backups []everestv1alpha1.DatabaseClusterBackup, engineType everestv1alpha1.EngineType) *everestv1alpha1.DatabaseClusterBackup {
+func latestSuccessfulBackup(backups []everestv1alpha1.DatabaseClusterBackup) *everestv1alpha1.DatabaseClusterBackup {
 	slices.SortFunc(backups, sortFunc)
 	for _, backup := range backups {
-		if successStatus(backup.Status.State, engineType) {
+		if backup.Status.State == everestv1alpha1.BackupSucceeded {
 			return &backup
 		}
 	}
@@ -228,36 +435,35 @@ func sortFunc(a, b everestv1alpha1.DatabaseClusterBackup) int {
 	return -1
 }
 
-func successStatus(state everestv1alpha1.BackupState, engineType everestv1alpha1.EngineType) bool {
-	var successState string
-	switch engineType {
-	case everestv1alpha1.DatabaseEnginePXC:
-		successState = "Succeeded"
-	case everestv1alpha1.DatabaseEnginePSMDB:
-		successState = "ready"
-	case everestv1alpha1.DatabaseEnginePostgresql:
-		successState = "Succeeded"
+func getDefaultUploadInterval(engine everestv1alpha1.Engine, uploadInterval *int) int {
+	version, err := goversion.NewVersion(engine.Version)
+	if err != nil {
+		return 0
 	}
-	return string(state) == successState
+	switch engine.Type {
+	case everestv1alpha1.DatabaseEnginePXC:
+		// latest restorable time appeared in PXC 1.14.0
+		if common.CheckConstraint(version, "<1.14.0") {
+			return valueOrDefault(uploadInterval, pxcDefaultUploadInterval)
+		}
+	case everestv1alpha1.DatabaseEnginePSMDB:
+		// latest restorable time appeared in PSMDB 1.16.0
+		if common.CheckConstraint(version, "<1.16.0") {
+			return valueOrDefault(uploadInterval, psmdbDefaultUploadInterval)
+		}
+	case everestv1alpha1.DatabaseEnginePostgresql:
+		// latest restorable time appeared in PG 2.4.0
+		if common.CheckConstraint(version, "<2.4.0") {
+			return valueOrDefault(uploadInterval, pgDefaultUploadInterval)
+		}
+	}
+	// for newer versions don't use the heuristics, so return 0 upload interval
+	return 0
 }
 
-func getDefaultUploadInterval(engineType everestv1alpha1.EngineType, uploadInterval *int) int {
-	if uploadInterval != nil {
-		return *uploadInterval
+func valueOrDefault(value *int, defaultValue int) int {
+	if value == nil {
+		return defaultValue
 	}
-	switch engineType {
-	case everestv1alpha1.DatabaseEnginePXC:
-		// PXC default upload interval
-		// https://github.com/percona/percona-xtradb-cluster-operator/blob/25ad952931b3760ba22f082aa827fecb0e48162e/pkg/apis/pxc/v1/pxc_types.go#L938
-		return 60
-	case everestv1alpha1.DatabaseEnginePSMDB:
-		// PSMDB default upload interval
-		// https://github.com/percona/percona-server-mongodb-operator/blob/98b72fac893eeb8a96e366d49a70d3aaaa4e9ed4/pkg/apis/psmdb/v1/psmdb_defaults.go#L514
-		return 600
-	case everestv1alpha1.DatabaseEnginePostgresql:
-		// PG default upload interval
-		// https://github.com/percona/percona-postgresql-operator/blob/82673d4d80aa329b5bd985889121280caad064fb/internal/pgbackrest/postgres.go#L58
-		return 60
-	}
-	return 0
+	return *value
 }

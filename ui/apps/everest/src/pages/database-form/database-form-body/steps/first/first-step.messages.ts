@@ -22,8 +22,11 @@ export const Messages = {
     dbEnvironment: 'Database environment',
     dbVersion: 'Database version',
     storageClass: 'Storage class',
+    shardedCluster: 'Sharded Cluster',
   },
   placeholders: {
     dbName: 'E.g. postgresql-123',
   },
+  disableShardingTooltip:
+    'Sharding cannot be disabled unless you pause the cluster',
 };

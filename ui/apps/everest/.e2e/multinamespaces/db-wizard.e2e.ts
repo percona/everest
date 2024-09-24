@@ -32,6 +32,7 @@ test.describe('Namespaces DB Wizard', () => {
       .getByRole('option', { name: EVEREST_CI_NAMESPACES.PXC_ONLY })
       .click();
 
+    await expect(page.getByTestId('mysql-toggle-button')).toBeVisible();
     // checking and saving fields for pxc
     const dbEnginesButtons = page
       .getByTestId('toggle-button-group-input-db-type')

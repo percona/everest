@@ -9,17 +9,46 @@ import (
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/accounts"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes/client"
 )
 
 // KubernetesConnector ...
 type KubernetesConnector interface {
+	// Accounts returns a new client for managing everest user accounts.
+	//
+	//nolint:ireturn,stylecheck
+	Accounts() accounts.Interface
+	// ListBackupStorages returns list of managed backup storages.
+	ListBackupStorages(ctx context.Context, namespace string) (*everestv1alpha1.BackupStorageList, error)
+	// GetBackupStorage returns backup storages by provided name.
+	GetBackupStorage(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error)
+	// CreateBackupStorage returns backup storages by provided name.
+	CreateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
+	// UpdateBackupStorage returns backup storages by provided name.
+	UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
+	// DeleteBackupStorage returns backup storages by provided name.
+	DeleteBackupStorage(ctx context.Context, namespace, name string) error
+	// IsBackupStorageUsed checks if a backup storage in a given namespace is used by any clusters
+	// in that namespace.
+	//
+	//nolint:cyclop
+	IsBackupStorageUsed(ctx context.Context, namespace, name string) (bool, error)
+	// WaitForCSVSucceeded waits until CSV phase is "succeeded".
+	WaitForCSVSucceeded(ctx context.Context, namespace, name string) error
+	// CSVNameFromOperator returns CSV name based on operator and version.
+	CSVNameFromOperator(operatorName string, version *goversion.Version) string
+	// GetConfigMap returns k8s configmap by provided name and namespace.
+	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
 	// GetDeployment returns k8s deployment by provided name and namespace.
 	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
 	// UpdateDeployment updates a deployment and returns the updated object.
@@ -62,8 +91,6 @@ type KubernetesConnector interface {
 	InstallOLMOperator(ctx context.Context, upgrade bool) error
 	// InstallPerconaCatalog installs percona catalog and ensures that packages are available.
 	InstallPerconaCatalog(ctx context.Context, version *goversion.Version) error
-	// CreateNamespace creates a new namespace.
-	CreateNamespace(name string) error
 	// InstallOperator installs an operator via OLM.
 	InstallOperator(ctx context.Context, req InstallOperatorRequest) error
 	// CreateOperatorGroup creates operator group in the given namespace.
@@ -87,6 +114,8 @@ type KubernetesConnector interface {
 	// ProvisionMonitoring provisions PMM monitoring.
 	ProvisionMonitoring(namespace string) error
 	// RestartOperator restarts the deployment of an operator managed by OLM.
+	//
+	//nolint:funlen
 	RestartOperator(ctx context.Context, name, namespace string) error
 	// RestartDeployment restarts the given deployment.
 	RestartDeployment(ctx context.Context, name, namespace string) error
@@ -95,15 +124,58 @@ type KubernetesConnector interface {
 	// ApplyObject applies object.
 	ApplyObject(obj runtime.Object) error
 	// InstallEverest downloads the manifest file and applies it against provisioned k8s cluster.
-	InstallEverest(ctx context.Context, namespace string, version *goversion.Version) error
+	InstallEverest(ctx context.Context, namespace string, version *goversion.Version, skipObjs ...ctrlclient.Object) error
 	// DeleteEverest downloads the manifest file and deletes it from provisioned k8s cluster.
 	DeleteEverest(ctx context.Context, namespace string, version *goversion.Version) error
 	// GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.
-	GetDBNamespaces(ctx context.Context, namespace string) ([]string, error)
+	GetDBNamespaces(ctx context.Context) ([]string, error)
 	// WaitForRollout waits for rollout of a provided deployment in the provided namespace.
 	WaitForRollout(ctx context.Context, name, namespace string) error
 	// UpdateClusterRoleBinding updates namespaces list for the cluster role by provided name.
 	UpdateClusterRoleBinding(ctx context.Context, name string, namespaces []string) error
+	// ListMonitoringConfigs returns list of managed monitoring configs.
+	ListMonitoringConfigs(ctx context.Context, namespace string) (*everestv1alpha1.MonitoringConfigList, error)
+	// GetMonitoringConfig returns monitoring configs by provided name.
+	GetMonitoringConfig(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error)
+	// CreateMonitoringConfig returns monitoring configs by provided name.
+	CreateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) error
+	// UpdateMonitoringConfig returns monitoring configs by provided name.
+	UpdateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) error
+	// DeleteMonitoringConfig returns monitoring configs by provided name.
+	DeleteMonitoringConfig(ctx context.Context, namespace, name string) error
+	// IsMonitoringConfigUsed checks if a monitoring config is used by any database cluster in the provided namespace.
+	IsMonitoringConfigUsed(ctx context.Context, namespace, name string) (bool, error)
+	// GetMonitoringConfigsBySecretName returns a list of monitoring configs which use
+	// the provided secret name.
+	GetMonitoringConfigsBySecretName(ctx context.Context, namespace, secretName string) ([]*everestv1alpha1.MonitoringConfig, error)
+	// CreateNamespace creates the given namespace.
+	CreateNamespace(ctx context.Context, namespace *corev1.Namespace) error
+	// GetNamespace returns a namespace.
+	GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error)
+	// DeleteNamespace deletes a namespace.
+	DeleteNamespace(ctx context.Context, name string) error
+	// ListNamespaces lists all namespaces.
+	ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*corev1.NamespaceList, error)
+	// UpdateNamespace updates the given namespace.
+	UpdateNamespace(ctx context.Context, namespace *corev1.Namespace, opts metav1.UpdateOptions) (*corev1.Namespace, error)
 	// OperatorInstalledVersion returns the installed version of operator by name.
 	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
+	// CreateRSAKeyPair creates a new RSA key pair and stores it in a secret.
+	CreateRSAKeyPair(ctx context.Context) error
+	// UpdateEverestSettings accepts the full list of Everest settings and updates the settings.
+	UpdateEverestSettings(ctx context.Context, settings common.EverestSettings) error
+	// GetEverestSettings returns Everest settings.
+	GetEverestSettings(ctx context.Context) (common.EverestSettings, error)
+	// ListSecrets returns secret by name.
+	ListSecrets(ctx context.Context, namespace string) (*corev1.SecretList, error)
+	// GetSecret returns a secret by name.
+	GetSecret(ctx context.Context, namespace, name string) (*corev1.Secret, error)
+	// CreateSecret creates a secret.
+	CreateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error)
+	// SetSecret creates or updates an existing secret.
+	SetSecret(secret *corev1.Secret) error
+	// UpdateSecret updates a secret.
+	UpdateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error)
+	// DeleteSecret deletes a secret.
+	DeleteSecret(ctx context.Context, namespace, name string) error
 }

@@ -45,7 +45,7 @@ test.describe('Everest CLI install', async () => {
 
     await test.step('run everest install command', async () => {
       const out = await cli.everestExecSkipWizard(
-        `install --namespaces=everest-all`,
+        `install --namespaces=everest-all -v`,
       );
 
       await out.assertSuccess();
@@ -56,14 +56,34 @@ test.describe('Everest CLI install', async () => {
         'everest-operator operator has been installed',
       ]);
     });
-
     await page.waitForTimeout(10_000);
+    await verifyClusterResources();
 
+    await test.step('run everest install command (pretty))', async () => {
+      const out = await cli.everestExecSkipWizard(
+        `install --namespaces=everest-all`,
+      );
+
+      await out.assertSuccess();
+      await out.outContainsNormalizedMany([
+        '✓ Install Operator Lifecycle Manager',
+        '✓ Install Percona OLM Catalog',
+        '✓ Create namespace \'everest-monitoring\'',
+        '✓ Install VictoriaMetrics Operator',
+        '✓ Provision monitoring stack',
+        '✓ Create namespace \'everest-all\'',
+        '✓ Install operators [pxc, psmdb, pg] in namespace \'everest-all\'',
+        '✓ Configure RBAC in namespace \'everest-all\'',
+        '✓ Install Everest Operator',
+        '✓ Install Everest API server',
+      ]);
+    });
+    await page.waitForTimeout(10_000);
     await verifyClusterResources();
 
     await test.step('uninstall Everest', async () => {
       let out = await cli.everestExec(
-        `uninstall --assume-yes`,
+        `uninstall --assume-yes -v`,
       );
 
       await out.assertSuccess();

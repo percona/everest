@@ -16,6 +16,8 @@ import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './monitoring.messages.ts';
 import ActionableAlert from 'components/actionable-alert';
+import { convertMonitoringInstancesPayloadToTableFormat } from 'pages/settings/monitoring-endpoints/monitoring-endpoints.utils.ts';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const Monitoring = () => {
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
@@ -23,19 +25,35 @@ export const Monitoring = () => {
   const { watch, getValues } = useFormContext();
   const monitoring = watch(DbWizardFormFields.monitoring);
   const selectedNamespace = watch(DbWizardFormFields.k8sNamespace);
-
+  const { canCreate } = useRBACPermissions(
+    'monitoring-instances',
+    `${selectedNamespace}/*`
+  );
   const mode = useDatabasePageMode();
   const { mutate: createMonitoringInstance, isPending: creatingInstance } =
     useCreateMonitoringInstance();
   const { setValue } = useFormContext();
 
-  const { data: monitoringInstances, isFetching: monitoringInstancesLoading } =
-    useMonitoringInstancesList();
+  const monitoringInstancesResult = useMonitoringInstancesList([
+    {
+      namespace: selectedNamespace,
+    },
+  ]);
+
+  const monitoringInstancesLoading = monitoringInstancesResult.some(
+    (result) => result.queryResult.isLoading
+  );
+
+  const monitoringInstances = useMemo(
+    () =>
+      convertMonitoringInstancesPayloadToTableFormat(monitoringInstancesResult),
+    [monitoringInstancesResult]
+  );
 
   const availableMonitoringInstances = useMemo(
     () =>
-      (monitoringInstances || []).filter((item) =>
-        item.allowedNamespaces.includes(selectedNamespace)
+      (monitoringInstances || []).filter(
+        (item) => item.namespace === selectedNamespace
       ),
     [monitoringInstances, selectedNamespace]
   );
@@ -58,22 +76,24 @@ export const Monitoring = () => {
   const handleSubmitModal = (
     // @ts-ignore
     _,
-    { name, url, allowedNamespaces, verifyTLS, ...pmmData }: EndpointFormType
+    { name, url, namespace, verifyTLS, ...pmmData }: EndpointFormType
   ) => {
     createMonitoringInstance(
       {
         name,
         url,
         type: 'pmm',
-        allowedNamespaces,
+        namespace,
+        allowedNamespaces: [],
         verifyTLS,
         pmm: { ...pmmData },
       },
       {
         onSuccess: (newInstance) => {
-          updateDataAfterCreate(queryClient, [MONITORING_INSTANCES_QUERY_KEY])(
-            newInstance
-          );
+          updateDataAfterCreate(queryClient, [
+            MONITORING_INSTANCES_QUERY_KEY,
+            newInstance.namespace,
+          ])(newInstance);
           handleCloseModal();
         },
       }
@@ -115,6 +135,7 @@ export const Monitoring = () => {
           buttonMessage={Messages.addMonitoringEndpoint}
           data-testid="monitoring-warning"
           onClick={() => setOpenCreateEditModal(true)}
+          {...(!canCreate && { action: undefined })}
         />
       )}
       <FormGroup sx={{ mt: 2 }}>
@@ -125,7 +146,7 @@ export const Monitoring = () => {
             disabled: !availableMonitoringInstances?.length,
           }}
         />
-        {monitoring && availableMonitoringInstances?.length && (
+        {monitoring && !!availableMonitoringInstances?.length && (
           <AutoCompleteInput
             name={DbWizardFormFields.monitoringInstance}
             label={Messages.monitoringInstanceLabel}

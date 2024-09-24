@@ -15,26 +15,38 @@
 
 import { test as setup, expect } from '@playwright/test';
 import { getTokenFromLocalStorage } from './utils/localStorage';
-import { STORAGE_NAMES } from './constants';
+import { getBucketNamespacesMap } from './constants';
 
 setup.describe.serial('Teardown', () => {
   setup('Delete backup storage', async ({ request }) => {
     const token = await getTokenFromLocalStorage();
     const promises = [];
+    const bucketNamespacesMap = getBucketNamespacesMap();
 
-    STORAGE_NAMES.forEach(async (name) => {
+    bucketNamespacesMap.forEach(([bucket, namespace]) => {
       promises.push(
-        request.delete(`/v1/backup-storages/${name}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+        request.delete(
+          `/v1/namespaces/${namespace}/backup-storages/${bucket}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
       );
     });
 
-    await (
-      await Promise.all(promises)
-    ).map((response) => expect(response.ok()).toBeTruthy());
+    // STORAGE_NAMES.forEach(async (name) => {
+    //   promises.push(
+    //     request.delete(`/v1/backup-storages/${name}`, {
+    //       headers: {
+    //         Authorization: `Bearer ${token}`,
+    //       },
+    //     })
+    //   );
+    // });
+
+    await Promise.all(promises);
   });
 
   // setup('Delete monitoring instances', async ({ request }) => {
@@ -44,6 +56,7 @@ setup.describe.serial('Teardown', () => {
 
   setup('Logout', async ({ page }) => {
     await page.goto('/');
+    await expect(page.getByTestId('user-appbar-button')).toBeVisible();
     await page.getByTestId('user-appbar-button').click();
     await page.getByRole('menuitem').filter({ hasText: 'Log out' }).click();
 

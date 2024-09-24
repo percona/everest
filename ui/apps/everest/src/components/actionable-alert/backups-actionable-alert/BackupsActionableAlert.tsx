@@ -10,13 +10,14 @@ import {
 import { updateDataAfterCreate } from 'utils/generalOptimisticDataUpdate';
 import { useQueryClient } from '@tanstack/react-query';
 import { BackupStorage } from 'shared-types/backupStorages.types';
+import { useRBACPermissions } from 'hooks/rbac';
 
 const BackupsActionableAlert = ({ namespace }: BackupsActionableAlertProps) => {
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
   const { mutate: createBackupStorage, isPending: creatingBackupStorage } =
     useCreateBackupStorage();
   const queryClient = useQueryClient();
-
+  const { canCreate } = useRBACPermissions('backup-storages', `${namespace}/*`);
   const handleCloseModal = () => {
     setOpenCreateEditModal(false);
   };
@@ -36,10 +37,11 @@ const BackupsActionableAlert = ({ namespace }: BackupsActionableAlertProps) => {
   return (
     <>
       <ActionableAlert
-        message={Messages.noStoragesMessage(namespace)}
+        message={Messages.noStoragesMessage}
         buttonMessage={Messages.addStorage}
         data-testid="no-storage-message"
         onClick={() => setOpenCreateEditModal(true)}
+        {...(!canCreate && { action: undefined })}
       />
       {openCreateEditModal && (
         <CreateEditModalStorage

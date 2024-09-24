@@ -35,7 +35,9 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 		//       ./everestctl upgrade --namespaces=aaa, a
 		// it will return
 		//        Error: unknown command "a" for "everestctl upgrade"
-		Args: cobra.NoArgs,
+		Args:  cobra.NoArgs,
+		Long:  "Upgrade Percona Everest",
+		Short: "Upgrade Percona Everest",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initUpgradeViperFlags(cmd)
 
@@ -44,6 +46,9 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
+			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
+			c.Pretty = !enableLogging
+
 			op, err := upgrade.NewUpgrade(c, l)
 			if err != nil {
 				l.Error(err)
@@ -51,7 +56,7 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 			}
 
 			if err := op.Run(cmd.Context()); err != nil {
-				output.PrintError(err, l)
+				output.PrintError(err, l, !enableLogging)
 				os.Exit(1)
 			}
 		},
@@ -63,14 +68,16 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initUpgradeFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
 	cmd.Flags().String("version-metadata-url", "https://check.percona.com", "URL to retrieve version metadata information from")
+	cmd.Flags().BoolP("logs", "l", false, "If set, logs are printed during the upgrade process")
 }
 
 func initUpgradeViperFlags(cmd *cobra.Command) {
 	viper.BindEnv("kubeconfig")                                                         //nolint:errcheck,gosec
 	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))                     //nolint:errcheck,gosec
 	viper.BindPFlag("version-metadata-url", cmd.Flags().Lookup("version-metadata-url")) //nolint:errcheck,gosec
+	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose"))                           //nolint:errcheck,gosec
+	viper.BindPFlag("json", cmd.Flags().Lookup("json"))                                 //nolint:errcheck,gosec
 }
 
 func parseUpgradeConfig() (*upgrade.Config, error) {

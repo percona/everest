@@ -17,4 +17,5 @@ export const STATUS_TO_ICON: Record<
   pending: PendingIcon,
   paused: PausedIcon,
   unknown: UknownIcon,
+  deleting: PendingIcon,
 };

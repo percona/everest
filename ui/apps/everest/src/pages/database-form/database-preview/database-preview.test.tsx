@@ -37,7 +37,7 @@ describe('DatabasePreview', () => {
     );
 
     expect(screen.getAllByTestId(/^section-*/, { exact: false })).toHaveLength(
-      6
+      5
     );
   });
 
@@ -60,7 +60,7 @@ describe('DatabasePreview', () => {
     expect(screen.getByText('Type: MySQL')).toBeInTheDocument();
     expect(screen.getByText('Version: 1.0.0')).toBeInTheDocument();
 
-    expect(screen.queryByText('Number of nodes: 1')).not.toBeInTheDocument();
+    expect(screen.queryByText('Nº nodes: 1')).not.toBeInTheDocument();
   });
 
   it('should show values from previous steps', () => {
@@ -83,9 +83,9 @@ describe('DatabasePreview', () => {
     expect(screen.getByText('Type: MySQL')).toBeInTheDocument();
     expect(screen.getByText('Version: 1.0.0')).toBeInTheDocument();
 
-    expect(screen.getByText('Number of nodes: 1')).toBeInTheDocument();
-    expect(screen.getByText('CPU: 1 CPU')).toBeInTheDocument();
-    expect(screen.getByText('Disk: 30 GB')).toBeInTheDocument();
+    expect(screen.getByText('Nº nodes: 1')).toBeInTheDocument();
+    expect(screen.getByText('CPU: 1.00 CPU')).toBeInTheDocument();
+    expect(screen.getByText('Disk: 30.00 Gi')).toBeInTheDocument();
   });
 
   it('should get updated form values', async () => {

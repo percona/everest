@@ -5,7 +5,7 @@ import { Messages } from '../monitoring-endpoints.messages';
 
 export enum EndpointFormFields {
   name = 'name',
-  namespaces = 'allowedNamespaces',
+  namespace = 'namespace',
   url = 'url',
   user = 'user',
   password = 'password',
@@ -24,7 +24,7 @@ export const getEndpointSchema = (isEditMode: boolean) =>
   z
     .object({
       [EndpointFormFields.name]: rfc_123_schema('endpoint name'),
-      [EndpointFormFields.namespaces]: z.array(z.string()).nonempty(),
+      [EndpointFormFields.namespace]: z.string().nonempty(),
       [EndpointFormFields.verifyTLS]: z.boolean(),
       [EndpointFormFields.url]: z.string().min(1).url(),
       ...(isEditMode
@@ -54,7 +54,7 @@ export const getEndpointSchema = (isEditMode: boolean) =>
 
 export const endpointDefaultValues = {
   [EndpointFormFields.name]: '',
-  [EndpointFormFields.namespaces]: [],
+  [EndpointFormFields.namespace]: '',
   [EndpointFormFields.url]: '',
   [EndpointFormFields.user]: '',
   [EndpointFormFields.password]: '',

@@ -13,24 +13,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Alert, Box } from '@mui/material';
+import { FormGroup, Box, Skeleton } from '@mui/material';
+import { DbType } from '@percona/types';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages';
+import { useDbBackups } from 'hooks/api/backups/useBackups.ts';
 import { useFormContext } from 'react-hook-form';
+import { getAvailableBackupStoragesForBackups } from 'utils/backups.ts';
 import { DbWizardFormFields } from '../../../database-form.types.ts';
 import BackupsActionableAlert from 'components/actionable-alert/backups-actionable-alert';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './backups.messages.ts';
 import Schedules from './schedules';
+import PITR from './pitr';
 
 export const Backups = () => {
   const { watch } = useFormContext();
 
-  const [selectedNamespace, schedules] = watch([
+  const [selectedNamespace, schedules, dbType, dbName] = watch([
     DbWizardFormFields.k8sNamespace,
     DbWizardFormFields.schedules,
+    DbWizardFormFields.dbType,
+    DbWizardFormFields.dbName,
   ]);
-  const { data: backupStorages = [] } =
+  const { data: backupStorages = [], isLoading } =
     useBackupStoragesByNamespace(selectedNamespace);
+  const { data: backups = [] } = useDbBackups(dbName, selectedNamespace, {
+    enabled: dbType === DbType.Postresql,
+  });
+  const { storagesToShow } = getAvailableBackupStoragesForBackups(
+    backups,
+    schedules,
+    backupStorages,
+    dbType,
+    dbType === DbType.Postresql
+  );
+  const scheduleCreationDisabled =
+    dbType === DbType.Postresql &&
+    storagesToShow.length === 0 &&
+    schedules.length === 0;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -38,19 +58,24 @@ export const Backups = () => {
         pageTitle={Messages.backups}
         pageDescription={Messages.captionBackups}
       />
-      {backupStorages.length > 0 ? (
-        <Schedules />
+      {isLoading ? (
+        <>
+          <Skeleton height="200px" />
+          <Skeleton />
+          <Skeleton />
+        </>
+      ) : backupStorages.length > 0 ? (
+        <>
+          {scheduleCreationDisabled && (
+            <BackupsActionableAlert namespace={selectedNamespace} />
+          )}
+          <FormGroup sx={{ mt: 3 }}>
+            <Schedules disableCreateButton={scheduleCreationDisabled} />
+            <PITR />
+          </FormGroup>
+        </>
       ) : (
         <BackupsActionableAlert namespace={selectedNamespace} />
-      )}
-      {schedules?.length === 0 && (
-        <Alert
-          sx={{ mt: 1 }}
-          severity="info"
-          data-testid="pitr-no-backup-alert"
-        >
-          {Messages.pitrAlert}
-        </Alert>
       )}
     </Box>
   );
