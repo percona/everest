@@ -95,15 +95,15 @@ type KubeClientConnector interface {
 	// CreateOperatorGroup creates an operator group to be used as part of a subscription.
 	CreateOperatorGroup(ctx context.Context, namespace, name string, targetNamespaces []string) (*v1.OperatorGroup, error)
 	// CreateSubscription creates an OLM subscription.
-	CreateSubscription(ctx context.Context, namespace string, subscription *v1alpha1.Subscription) (*v1alpha1.Subscription, error)
+	CreateSubscription(ctx context.Context, namespace string, subscription *olmv1alpha1.Subscription) (*olmv1alpha1.Subscription, error)
 	// UpdateSubscription updates an OLM subscription.
-	UpdateSubscription(ctx context.Context, namespace string, subscription *v1alpha1.Subscription) (*v1alpha1.Subscription, error)
+	UpdateSubscription(ctx context.Context, namespace string, subscription *olmv1alpha1.Subscription) (*olmv1alpha1.Subscription, error)
 	// CreateSubscriptionForCatalog creates an OLM subscription.
-	CreateSubscriptionForCatalog(ctx context.Context, namespace, name, catalogNamespace, catalog, packageName, channel, startingCSV string, approval v1alpha1.Approval) (*v1alpha1.Subscription, error)
+	CreateSubscriptionForCatalog(ctx context.Context, namespace, name, catalogNamespace, catalog, packageName, channel, startingCSV string, approval olmv1alpha1.Approval) (*olmv1alpha1.Subscription, error)
 	// GetSubscription retrieves an OLM subscription by namespace and name.
-	GetSubscription(ctx context.Context, namespace, name string) (*v1alpha1.Subscription, error)
+	GetSubscription(ctx context.Context, namespace, name string) (*olmv1alpha1.Subscription, error)
 	// ListSubscriptions all the subscriptions in the namespace.
-	ListSubscriptions(ctx context.Context, namespace string) (*v1alpha1.SubscriptionList, error)
+	ListSubscriptions(ctx context.Context, namespace string) (*olmv1alpha1.SubscriptionList, error)
 	// DoPackageWait for the package to be available in OLM.
 	DoPackageWait(ctx context.Context, namespace, name string) error
 	// GetPackageManifest returns a package manifest by given name.
@@ -113,11 +113,11 @@ type KubeClientConnector interface {
 	// ListCRs returns a list of CRs.
 	ListCRs(ctx context.Context, namespace string, gvr schema.GroupVersionResource, labelSelector *metav1.LabelSelector) (*unstructured.UnstructuredList, error)
 	// GetClusterServiceVersion retrieve a CSV by namespaced name.
-	GetClusterServiceVersion(ctx context.Context, key types.NamespacedName) (*v1alpha1.ClusterServiceVersion, error)
+	GetClusterServiceVersion(ctx context.Context, key types.NamespacedName) (*olmv1alpha1.ClusterServiceVersion, error)
 	// ListClusterServiceVersion list all CSVs for the given namespace.
-	ListClusterServiceVersion(ctx context.Context, namespace string) (*v1alpha1.ClusterServiceVersionList, error)
+	ListClusterServiceVersion(ctx context.Context, namespace string) (*olmv1alpha1.ClusterServiceVersionList, error)
 	// UpdateClusterServiceVersion updates a CSV and returns the updated CSV.
-	UpdateClusterServiceVersion(ctx context.Context, csv *v1alpha1.ClusterServiceVersion) (*v1alpha1.ClusterServiceVersion, error)
+	UpdateClusterServiceVersion(ctx context.Context, csv *olmv1alpha1.ClusterServiceVersion) (*olmv1alpha1.ClusterServiceVersion, error)
 	// DeleteClusterServiceVersion deletes a CSV by namespaced name.
 	DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error
 	// DeleteFile accepts manifest file contents parses into []runtime.Object
