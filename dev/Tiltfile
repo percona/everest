@@ -6,7 +6,7 @@ everest_namespace = 'everest-system'
 everest_monitoring_namespace = 'everest-monitoring'
 pxc_operator_version = os.getenv('PXC_OPERATOR_VERSION', '1.14.0')
 print('Using PXC operator version: %s' % pxc_operator_version)
-psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.15.0')
+psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.17.0')
 print('Using PSMDB operator version: %s' % psmdb_operator_version)
 pg_operator_version = os.getenv('PG_OPERATOR_VERSION', '2.4.1')
 print('Using PG operator version: %s' % pg_operator_version)
@@ -15,7 +15,9 @@ print('Using PG operator version: %s' % pg_operator_version)
 # uncomment the settings below and insert your k8s context & registry names
 # to get your current context name run `kubectl config view`
 #allow_k8s_contexts("gke_percona-everest_europe-west1-c_everest-dev")
-#default_registry("us-central1-docker.pkg.dev/percona-everest/quickstart-docker-repo")
+allow_k8s_contexts('gke_percona-everest_europe-west1-c_oxana-everest-2')
+allow_k8s_contexts('gke_percona-everest_europe-west1-c_oxana-everest')
+default_registry("us-central1-docker.pkg.dev/percona-everest/quickstart-docker-repo")
 
 
 # Check for required env vars

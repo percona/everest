@@ -21,7 +21,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/AlekSi/pointer"
@@ -364,17 +366,60 @@ func (e *EverestServer) GetDatabaseClusterCredentials(ctx echo.Context, namespac
 	case everestv1alpha1.DatabaseEnginePXC:
 		response.Username = pointer.ToString("root")
 		response.Password = pointer.ToString(string(secret.Data["root"]))
+		response.ConnectionUrl = e.connectionURL(ctx, databaseCluster, *response.Username, *response.Password)
 	case everestv1alpha1.DatabaseEnginePSMDB:
 		response.Username = pointer.ToString(string(secret.Data["MONGODB_DATABASE_ADMIN_USER"]))
 		response.Password = pointer.ToString(string(secret.Data["MONGODB_DATABASE_ADMIN_PASSWORD"]))
+		response.ConnectionUrl = e.connectionURL(ctx, databaseCluster, *response.Username, *response.Password)
 	case everestv1alpha1.DatabaseEnginePostgresql:
 		response.Username = pointer.ToString("postgres")
 		response.Password = pointer.ToString(string(secret.Data["password"]))
+		response.ConnectionUrl = e.connectionURL(ctx, databaseCluster, *response.Username, *response.Password)
 	default:
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString("Unsupported database engine")})
 	}
-
 	return ctx.JSON(http.StatusOK, response)
+}
+
+func (e *EverestServer) connectionURL(ctx echo.Context, db *everestv1alpha1.DatabaseCluster, user, password string) *string {
+	if db.Status.Hostname == "" {
+		return nil
+	}
+	switch db.Spec.Engine.Type {
+	case everestv1alpha1.DatabaseEnginePXC:
+		// TODO: what's with PCX?
+		return nil
+	case everestv1alpha1.DatabaseEnginePSMDB:
+		hosts, err := e.psmdbHosts(ctx.Request().Context(), db)
+		if err != nil {
+			e.l.Error(err)
+			return nil
+		}
+		return pointer.ToString(fmt.Sprintf("mongodb://%s:%s@%s", user, url.QueryEscape(password), hosts))
+	case everestv1alpha1.DatabaseEnginePostgresql:
+		return pointer.ToString(fmt.Sprintf("postgres://%s:%s@%s:%v", user, url.QueryEscape(password), db.Status.Hostname, db.Status.Port))
+	}
+	return nil
+}
+
+func (e *EverestServer) psmdbHosts(ctx context.Context, db *everestv1alpha1.DatabaseCluster) (string, error) {
+	// for sharded clusters use a single entry point (mongos)
+	if db.Spec.Sharding != nil && db.Spec.Sharding.Enabled {
+		return fmt.Sprintf("%s:%v", db.Status.Hostname, db.Status.Port), nil
+	}
+	// for non-sharded clusters use a list of comma-separated hosts from each node
+	pods, err := e.kubeClient.GetPods(ctx, db.Namespace, &metav1.LabelSelector{MatchLabels: map[string]string{
+		"app.kubernetes.io/instance":  db.Name,
+		"app.kubernetes.io/component": "mongod",
+	}})
+	if err != nil {
+		return "", err
+	}
+	var hostPorts []string
+	for _, pod := range pods.Items {
+		hostPorts = append(hostPorts, fmt.Sprintf("%s.%s:%v", pod.Spec.Hostname, db.Status.Hostname, db.Status.Port))
+	}
+	return strings.Join(hostPorts, ","), nil
 }
 
 // GetDatabaseClusterPitr returns the point-in-time recovery related information for the specified database cluster.
