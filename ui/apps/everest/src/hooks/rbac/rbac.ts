@@ -1,4 +1,3 @@
-// import { useNamespaces } from 'hooks/api/namespaces';
 import { useNamespaces } from 'hooks/api/namespaces';
 import { useCallback, useEffect, useState } from 'react';
 import {

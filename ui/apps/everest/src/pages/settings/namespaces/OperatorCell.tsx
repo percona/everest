@@ -1,5 +1,5 @@
 import { Button, Stack, Typography } from '@mui/material';
-import { useRBACPermissions } from 'hooks/rbac/rbac';
+import { useRBACPermissions } from 'hooks/rbac';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 

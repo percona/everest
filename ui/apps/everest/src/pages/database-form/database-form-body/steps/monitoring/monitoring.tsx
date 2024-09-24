@@ -29,14 +29,15 @@ export const Monitoring = () => {
     'monitoring-instances',
     `${selectedNamespace}/*`
   );
-
   const mode = useDatabasePageMode();
   const { mutate: createMonitoringInstance, isPending: creatingInstance } =
     useCreateMonitoringInstance();
   const { setValue } = useFormContext();
 
   const monitoringInstancesResult = useMonitoringInstancesList([
-    selectedNamespace,
+    {
+      namespace: selectedNamespace,
+    },
   ]);
 
   const monitoringInstancesLoading = monitoringInstancesResult.some(
