@@ -184,6 +184,11 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       setValue(DbWizardFormFields.numberOfProxies, DEFAULT_NODES[newDbType], {
         shouldTouch: false,
       });
+      setValue(DbWizardFormFields.shardNr, DB_WIZARD_DEFAULTS.shardNr);
+      setValue(
+        DbWizardFormFields.shardConfigServers,
+        DB_WIZARD_DEFAULTS.shardConfigServers
+      );
       resetField(DbWizardFormFields.shardNr, {
         keepError: false,
       });
