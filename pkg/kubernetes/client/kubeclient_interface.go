@@ -7,6 +7,7 @@ import (
 
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	versioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	packagev1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -155,11 +156,11 @@ type KubeClientConnector interface {
 	// UpdateDeployment updates a deployment and returns the updated object.
 	UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error)
 	// GetInstallPlan retrieves an OLM install plan by namespace and name.
-	GetInstallPlan(ctx context.Context, namespace string, name string) (*v1alpha1.InstallPlan, error)
+	GetInstallPlan(ctx context.Context, namespace string, name string) (*olmv1alpha1.InstallPlan, error)
 	// ListInstallPlans lists install plans.
-	ListInstallPlans(ctx context.Context, namespace string) (*v1alpha1.InstallPlanList, error)
+	ListInstallPlans(ctx context.Context, namespace string) (*olmv1alpha1.InstallPlanList, error)
 	// UpdateInstallPlan updates the existing install plan in the specified namespace.
-	UpdateInstallPlan(ctx context.Context, namespace string, installPlan *v1alpha1.InstallPlan) (*v1alpha1.InstallPlan, error)
+	UpdateInstallPlan(ctx context.Context, namespace string, installPlan *olmv1alpha1.InstallPlan) (*olmv1alpha1.InstallPlan, error)
 	// DeleteAllMonitoringResources deletes all resources related to monitoring from k8s cluster.
 	DeleteAllMonitoringResources(ctx context.Context, namespace string) error
 	// CreateMonitoringConfig creates an monitoringConfig.

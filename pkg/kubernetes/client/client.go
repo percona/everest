@@ -33,7 +33,6 @@ import (
 	"time"
 
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	olmVersioned "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	packagev1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
@@ -956,11 +955,11 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 
 func (c Client) pollCsvPhaseSucceeded(ctx context.Context, key types.NamespacedName, kubeclient client.Client) error {
 	var (
-		curPhase v1alpha1.ClusterServiceVersionPhase
-		newPhase v1alpha1.ClusterServiceVersionPhase
+		curPhase olmv1alpha1.ClusterServiceVersionPhase
+		newPhase olmv1alpha1.ClusterServiceVersionPhase
 	)
 
-	csv := v1alpha1.ClusterServiceVersion{}
+	csv := olmv1alpha1.ClusterServiceVersion{}
 	csvPhaseSucceeded := func(ctx context.Context) (bool, error) {
 		err := kubeclient.Get(ctx, key, &csv)
 		if err != nil {
@@ -976,9 +975,9 @@ func (c Client) pollCsvPhaseSucceeded(ctx context.Context, key types.NamespacedN
 
 		//nolint:exhaustive
 		switch curPhase {
-		case v1alpha1.CSVPhaseFailed:
+		case olmv1alpha1.CSVPhaseFailed:
 			return false, fmt.Errorf("csv failed: reason: %q, message: %q", csv.Status.Reason, csv.Status.Message)
-		case v1alpha1.CSVPhaseSucceeded:
+		case olmv1alpha1.CSVPhaseSucceeded:
 			return true, nil
 		default:
 			return false, nil
@@ -1005,7 +1004,7 @@ func (c Client) GetSubscriptionCSV(ctx context.Context, subKey types.NamespacedN
 	}
 
 	subscriptionInstalledCSV := func(ctx context.Context) (bool, error) {
-		sub := v1alpha1.Subscription{}
+		sub := olmv1alpha1.Subscription{}
 		err := kubeclient.Get(ctx, subKey, &sub)
 		if err != nil {
 			return false, err
@@ -1050,7 +1049,7 @@ func (c *Client) getKubeclient() (client.Client, error) { //nolint:ireturn,nolin
 func (c Client) checkDeploymentErrors(
 	ctx context.Context,
 	key types.NamespacedName,
-	csv v1alpha1.ClusterServiceVersion,
+	csv olmv1alpha1.ClusterServiceVersion,
 ) error {
 	depErrs := deploymentErrors{}
 	if key.Namespace == "" {
@@ -1224,7 +1223,7 @@ func (c *Client) CreateOperatorGroup(ctx context.Context, namespace, name string
 }
 
 // CreateSubscription creates an OLM subscription.
-func (c *Client) CreateSubscription(ctx context.Context, namespace string, subscription *v1alpha1.Subscription) (*v1alpha1.Subscription, error) {
+func (c *Client) CreateSubscription(ctx context.Context, namespace string, subscription *olmv1alpha1.Subscription) (*olmv1alpha1.Subscription, error) {
 	sub, err := c.olmClientset.
 		OperatorsV1alpha1().
 		Subscriptions(namespace).
@@ -1239,7 +1238,7 @@ func (c *Client) CreateSubscription(ctx context.Context, namespace string, subsc
 }
 
 // UpdateSubscription updates an OLM subscription.
-func (c *Client) UpdateSubscription(ctx context.Context, namespace string, subscription *v1alpha1.Subscription) (*v1alpha1.Subscription, error) {
+func (c *Client) UpdateSubscription(ctx context.Context, namespace string, subscription *olmv1alpha1.Subscription) (*olmv1alpha1.Subscription, error) {
 	sub, err := c.olmClientset.
 		OperatorsV1alpha1().
 		Subscriptions(namespace).
@@ -1252,18 +1251,18 @@ func (c *Client) UpdateSubscription(ctx context.Context, namespace string, subsc
 
 // CreateSubscriptionForCatalog creates an OLM subscription.
 func (c *Client) CreateSubscriptionForCatalog(ctx context.Context, namespace, name, catalogNamespace, catalog,
-	packageName, channel, startingCSV string, approval v1alpha1.Approval,
-) (*v1alpha1.Subscription, error) {
-	subscription := &v1alpha1.Subscription{
+	packageName, channel, startingCSV string, approval olmv1alpha1.Approval,
+) (*olmv1alpha1.Subscription, error) {
+	subscription := &olmv1alpha1.Subscription{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       v1alpha1.SubscriptionKind,
-			APIVersion: v1alpha1.SubscriptionCRDAPIVersion,
+			Kind:       olmv1alpha1.SubscriptionKind,
+			APIVersion: olmv1alpha1.SubscriptionCRDAPIVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      name,
 		},
-		Spec: &v1alpha1.SubscriptionSpec{
+		Spec: &olmv1alpha1.SubscriptionSpec{
 			CatalogSource:          catalog,
 			CatalogSourceNamespace: catalogNamespace,
 			Package:                packageName,
@@ -1286,7 +1285,7 @@ func (c *Client) CreateSubscriptionForCatalog(ctx context.Context, namespace, na
 }
 
 // GetSubscription retrieves an OLM subscription by namespace and name.
-func (c *Client) GetSubscription(ctx context.Context, namespace, name string) (*v1alpha1.Subscription, error) {
+func (c *Client) GetSubscription(ctx context.Context, namespace, name string) (*olmv1alpha1.Subscription, error) {
 	c.rcLock.Lock()
 	defer c.rcLock.Unlock()
 
@@ -1294,7 +1293,7 @@ func (c *Client) GetSubscription(ctx context.Context, namespace, name string) (*
 }
 
 // ListSubscriptions all the subscriptions in the namespace.
-func (c *Client) ListSubscriptions(ctx context.Context, namespace string) (*v1alpha1.SubscriptionList, error) {
+func (c *Client) ListSubscriptions(ctx context.Context, namespace string) (*olmv1alpha1.SubscriptionList, error) {
 	c.rcLock.Lock()
 	defer c.rcLock.Unlock()
 
@@ -1358,7 +1357,7 @@ func (c *Client) ListCRs(
 func (c *Client) GetClusterServiceVersion(
 	ctx context.Context,
 	key types.NamespacedName,
-) (*v1alpha1.ClusterServiceVersion, error) {
+) (*olmv1alpha1.ClusterServiceVersion, error) {
 	return c.olmClientset.OperatorsV1alpha1().ClusterServiceVersions(key.Namespace).Get(ctx, key.Name, metav1.GetOptions{})
 }
 
@@ -1366,15 +1365,15 @@ func (c *Client) GetClusterServiceVersion(
 func (c *Client) ListClusterServiceVersion(
 	ctx context.Context,
 	namespace string,
-) (*v1alpha1.ClusterServiceVersionList, error) {
+) (*olmv1alpha1.ClusterServiceVersionList, error) {
 	return c.olmClientset.OperatorsV1alpha1().ClusterServiceVersions(namespace).List(ctx, metav1.ListOptions{})
 }
 
 // UpdateClusterServiceVersion updates a CSV and returns the updated CSV.
 func (c *Client) UpdateClusterServiceVersion(
 	ctx context.Context,
-	csv *v1alpha1.ClusterServiceVersion,
-) (*v1alpha1.ClusterServiceVersion, error) {
+	csv *olmv1alpha1.ClusterServiceVersion,
+) (*olmv1alpha1.ClusterServiceVersion, error) {
 	return c.olmClientset.OperatorsV1alpha1().ClusterServiceVersions(csv.Namespace).Update(ctx, csv, metav1.UpdateOptions{})
 }
 

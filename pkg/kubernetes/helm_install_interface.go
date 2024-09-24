@@ -10,9 +10,9 @@ import (
 type HelmInstaller interface {
 	// ApproveEverestMonitoringInstallPlan approves the install plans needed for installing the monitoring operators.
 	ApproveEverestMonitoringInstallPlan(ctx context.Context) error
-	// ApproveEverestMonitoringInstallPlan approves the install plans needed for installing the everest operator.
+	// ApproveEverestOperatorInstallPlan approves the install plans needed for installing the everest operator.
 	ApproveEverestOperatorInstallPlan(ctx context.Context) error
-	// ApproveEverestMonitoringInstallPlan approves the install plans needed for installing the DB namespaces.
+	// ApproveDBNamespacesInstallPlans approves the install plans needed for installing the DB namespaces.
 	ApproveDBNamespacesInstallPlans(ctx context.Context) error
 	// DeleteOLM deletes the required OLM components.
 	DeleteOLM(ctx context.Context) error
