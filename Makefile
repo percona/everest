@@ -21,10 +21,10 @@ help:                   ## Display this help message
 init:                   ## Install development tools
 	cd tools && go generate -x -tags=tools
 
-helm:
+build-helm-tools: 		## Build binaries for Helm chart hooks.
 	cd helm-tools && go generate -x
 
-build:					## Build binaries
+build: 					## Build binaries 
 	go build -v $(LD_FLAGS_API) -o bin/everest ./cmd
 
 build-cli:        		## Build binaries
