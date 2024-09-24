@@ -15,6 +15,6 @@
 
 package kubernetes
 
-//go:generate ../../bin/ifacemaker -f accounts.go -f backup_storage.go -f cluster_service_version.go -f configmap.go -f deployment.go -f install_plan.go -f kubernetes.go -f monitoring_config.go -f namespace.go -f olm.go -f operator.go -f jwt.go -f oidc.go -f secret.go -s Kubernetes -i KubernetesConnector -p kubernetes -o kubernetes_interface.go
+//go:generate ../../bin/ifacemaker -f accounts.go -f backup_storage.go -f cluster_service_version.go -f configmap.go -f database_cluster.go -f deployment.go -f install_plan.go -f kubernetes.go -f monitoring_config.go -f namespace.go -f olm.go -f operator.go -f jwt.go -f oidc.go -f secret.go -s Kubernetes -i KubernetesConnector -p kubernetes -o kubernetes_interface.go
 //go:generate ../../bin/ifacemaker -f helm/installer.go -s Installer -i HelmInstaller -p kubernetes -o helm_install_interface.go
 //go:generate ../../bin/mockery --name=KubernetesConnector --case=snake --inpackage

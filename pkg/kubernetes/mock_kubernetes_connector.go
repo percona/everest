@@ -168,6 +168,24 @@ func (_m *MockKubernetesConnector) CreateBackupStorage(ctx context.Context, stor
 	return r0
 }
 
+// CreateDatabaseCluster provides a mock function with given fields: cluster
+func (_m *MockKubernetesConnector) CreateDatabaseCluster(cluster *v1alpha1.DatabaseCluster) error {
+	ret := _m.Called(cluster)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateDatabaseCluster")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*v1alpha1.DatabaseCluster) error); ok {
+		r0 = rf(cluster)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CreateMonitoringConfig provides a mock function with given fields: ctx, storage
 func (_m *MockKubernetesConnector) CreateMonitoringConfig(ctx context.Context, storage *v1alpha1.MonitoringConfig) error {
 	ret := _m.Called(ctx, storage)
@@ -335,6 +353,24 @@ func (_m *MockKubernetesConnector) DeleteClusterServiceVersion(ctx context.Conte
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, types.NamespacedName) error); ok {
 		r0 = rf(ctx, key)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteDatabaseCluster provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubernetesConnector) DeleteDatabaseCluster(ctx context.Context, namespace string, name string) error {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteDatabaseCluster")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, namespace, name)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -601,6 +637,36 @@ func (_m *MockKubernetesConnector) GetDBaaSOperatorVersion(ctx context.Context) 
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
 		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetDatabaseCluster provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubernetesConnector) GetDatabaseCluster(ctx context.Context, namespace string, name string) (*v1alpha1.DatabaseCluster, error) {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDatabaseCluster")
+	}
+
+	var r0 *v1alpha1.DatabaseCluster
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v1alpha1.DatabaseCluster, error)); ok {
+		return rf(ctx, namespace, name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v1alpha1.DatabaseCluster); ok {
+		r0 = rf(ctx, namespace, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.DatabaseCluster)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, name)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1211,6 +1277,36 @@ func (_m *MockKubernetesConnector) ListClusterServiceVersion(ctx context.Context
 	return r0, r1
 }
 
+// ListDatabaseClusters provides a mock function with given fields: ctx, namespace
+func (_m *MockKubernetesConnector) ListDatabaseClusters(ctx context.Context, namespace string) (*v1alpha1.DatabaseClusterList, error) {
+	ret := _m.Called(ctx, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListDatabaseClusters")
+	}
+
+	var r0 *v1alpha1.DatabaseClusterList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*v1alpha1.DatabaseClusterList, error)); ok {
+		return rf(ctx, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *v1alpha1.DatabaseClusterList); ok {
+		r0 = rf(ctx, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.DatabaseClusterList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListEngineDeploymentNames provides a mock function with given fields: ctx, namespace
 func (_m *MockKubernetesConnector) ListEngineDeploymentNames(ctx context.Context, namespace string) ([]string, error) {
 	ret := _m.Called(ctx, namespace)
@@ -1437,6 +1533,24 @@ func (_m *MockKubernetesConnector) OperatorInstalledVersion(ctx context.Context,
 	}
 
 	return r0, r1
+}
+
+// PatchDatabaseCluster provides a mock function with given fields: cluster
+func (_m *MockKubernetesConnector) PatchDatabaseCluster(cluster *v1alpha1.DatabaseCluster) error {
+	ret := _m.Called(cluster)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PatchDatabaseCluster")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*v1alpha1.DatabaseCluster) error); ok {
+		r0 = rf(cluster)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // ProvisionMonitoring provides a mock function with given fields: namespace

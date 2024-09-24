@@ -7,13 +7,16 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/kubernetes"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/kubernetes"
 )
 
 var b = backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second*5), 10)
@@ -98,6 +101,29 @@ func (i *Installer) ApproveDBNamespacesInstallPlans(ctx context.Context) error {
 
 	}
 	return nil
+}
+
+// DeleteOLM deletes the required OLM components.
+func (i *Installer) DeleteOLM(ctx context.Context) error {
+	packageServerName := types.NamespacedName{Name: "packageserver", Namespace: kubernetes.OLMNamespace}
+	if err := i.kubeclient.DeleteClusterServiceVersion(ctx, packageServerName); client.IgnoreNotFound(err) != nil {
+		return err
+	}
+
+	// Wait for the packageserver CSV to be deleted, or timeout after 5 minutes.
+	i.l.Infof("Waiting for packageserver CSV to be deleted")
+	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
+		_, err := i.kubeclient.GetClusterServiceVersion(ctx, packageServerName)
+		if err != nil && !k8serrors.IsNotFound(err) {
+			return false, err
+		}
+
+		if err == nil {
+			return false, nil
+		}
+		i.l.Info("Packageserver CSV has been deleted")
+		return true, nil
+	})
 }
 
 // DeleteAllDatabaseClusters deletes all database clusters.

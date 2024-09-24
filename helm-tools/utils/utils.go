@@ -1,8 +1,9 @@
 package helmutils
 
 import (
-	"github.com/percona/everest/pkg/kubernetes"
 	"go.uber.org/zap"
+
+	"github.com/percona/everest/pkg/kubernetes"
 )
 
 // NewClient returns a new Kubernetes client.

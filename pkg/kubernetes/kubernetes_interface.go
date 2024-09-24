@@ -50,6 +50,16 @@ type KubernetesConnector interface {
 	CSVNameFromOperator(operatorName string, version *goversion.Version) string
 	// GetConfigMap returns k8s configmap by provided name and namespace.
 	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
+	// ListDatabaseClusters returns list of managed database clusters.
+	ListDatabaseClusters(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseClusterList, error)
+	// GetDatabaseCluster returns database clusters by provided name.
+	GetDatabaseCluster(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseCluster, error)
+	// CreateDatabaseCluster creates database cluster.
+	CreateDatabaseCluster(cluster *everestv1alpha1.DatabaseCluster) error
+	// PatchDatabaseCluster patches CR of managed Database cluster.
+	PatchDatabaseCluster(cluster *everestv1alpha1.DatabaseCluster) error
+	// DeleteDatabaseCluster deletes database cluster.
+	DeleteDatabaseCluster(ctx context.Context, namespace, name string) error
 	// GetDeployment returns k8s deployment by provided name and namespace.
 	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
 	// UpdateDeployment updates a deployment and returns the updated object.
