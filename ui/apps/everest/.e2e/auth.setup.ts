@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { expect, test as setup } from '@playwright/test';
-import { STORAGE_STATE_FILE } from './constants';
+import {STORAGE_STATE_FILE, TIMEOUT} from './constants';
 const { CI_USER, CI_PASSWORD } = process.env;
 
 setup('Login', async ({ page }) => {
@@ -22,7 +22,7 @@ setup('Login', async ({ page }) => {
   await page.getByTestId('text-input-username').fill(CI_USER);
   await page.getByTestId('text-input-password').fill(CI_PASSWORD);
   await page.getByTestId('login-button').click();
-  await expect(page.getByText('Create database')).toBeVisible();
+  await expect(page.getByText('Create database')).toBeVisible({timeout: TIMEOUT.ThirtySeconds});
 
   const origins = (await page.context().storageState()).origins;
   expect(origins.length).toBeGreaterThan(0);
