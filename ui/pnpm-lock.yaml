@@ -352,6 +352,9 @@ importers:
         specifier: ^7.47.0
         version: 7.52.0(react@18.3.1)
     devDependencies:
+      '@mui/types':
+        specifier: ^7.2.17
+        version: 7.2.17(@types/react@18.3.3)
       '@percona/eslint-config-react':
         specifier: workspace:*
         version: link:../eslint-config-react
@@ -1649,6 +1652,14 @@ packages:
     resolution: {integrity: sha512-MZsBZ4q4HfzBsywtXgM1Ksj6HDThtiwmOKUXH1pKYISI9gAVXCNHNpo7TlGoGrBaYWZTdNoirIN7JsQcQUjmQQ==}
     peerDependencies:
       '@types/react': ^17.0.0 || ^18.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
+  '@mui/types@7.2.17':
+    resolution: {integrity: sha512-oyumoJgB6jDV8JFzRqjBo2daUuHpzDjoO/e3IrRhhHo/FxJlaVhET6mcNrKHUq2E+R+q3ql0qAtvQ4rfWHhAeQ==}
+    peerDependencies:
+      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -7024,6 +7035,10 @@ snapshots:
       '@types/react': 18.3.3
 
   '@mui/types@7.2.14(@types/react@18.3.3)':
+    optionalDependencies:
+      '@types/react': 18.3.3
+
+  '@mui/types@7.2.17(@types/react@18.3.3)':
     optionalDependencies:
       '@types/react': 18.3.3
 
