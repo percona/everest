@@ -15,11 +15,9 @@
 
 import { APIRequestContext, expect, Page } from '@playwright/test';
 import { findRowAndClickActions } from './table';
-import {getTokenFromLocalStorage} from "./localStorage";
+import { getTokenFromLocalStorage } from './localStorage';
 
-export const getDBClustersList = async (
-  request: APIRequestContext
-) => {
+export const getDBClustersList = async (request: APIRequestContext) => {
   const token = await getTokenFromLocalStorage();
 
   const response = await request.get('/v1/database-clusters', {
