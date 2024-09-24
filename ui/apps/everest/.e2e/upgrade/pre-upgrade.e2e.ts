@@ -37,10 +37,11 @@ test('Pre upgrade setup', { tag: '@pre-upgrade' }, async ({ request }) => {
     externalAccess: postgresDBCluster.externalAccess,
   });
 
-  await expect(async () => {
-    const clusters = await getDBClustersList(request);
+  const clusters = (await getDBClustersList(request)).items;
+  console.log(clusters);
 
-    console.log(clusters);
+  await expect(async () => {
+    const clusters = (await getDBClustersList(request)).items;
 
     clusters.map((c) => {
       expect(c).toMatchObject({ status: { status: 'ready' }});
