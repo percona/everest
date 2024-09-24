@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"slices"
@@ -29,6 +30,7 @@ import (
 	"github.com/AlekSi/pointer"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -361,63 +363,72 @@ func (e *EverestServer) GetDatabaseClusterCredentials(ctx echo.Context, namespac
 		e.l.Error(err)
 		return ctx.JSON(http.StatusInternalServerError, Error{Message: pointer.ToString(err.Error())})
 	}
+	c := ctx.Request().Context()
 	response := &DatabaseClusterCredential{}
 	switch databaseCluster.Spec.Engine.Type {
 	case everestv1alpha1.DatabaseEnginePXC:
 		response.Username = pointer.ToString("root")
 		response.Password = pointer.ToString(string(secret.Data["root"]))
-		response.ConnectionUrl = e.connectionURL(ctx, databaseCluster, *response.Username, *response.Password)
+		response.ConnectionUrl = e.connectionURL(c, databaseCluster, *response.Username, *response.Password)
 	case everestv1alpha1.DatabaseEnginePSMDB:
 		response.Username = pointer.ToString(string(secret.Data["MONGODB_DATABASE_ADMIN_USER"]))
 		response.Password = pointer.ToString(string(secret.Data["MONGODB_DATABASE_ADMIN_PASSWORD"]))
-		response.ConnectionUrl = e.connectionURL(ctx, databaseCluster, *response.Username, *response.Password)
+		response.ConnectionUrl = e.connectionURL(c, databaseCluster, *response.Username, *response.Password)
 	case everestv1alpha1.DatabaseEnginePostgresql:
 		response.Username = pointer.ToString("postgres")
 		response.Password = pointer.ToString(string(secret.Data["password"]))
-		response.ConnectionUrl = e.connectionURL(ctx, databaseCluster, *response.Username, *response.Password)
+		response.ConnectionUrl = e.connectionURL(c, databaseCluster, *response.Username, *response.Password)
 	default:
 		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString("Unsupported database engine")})
 	}
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (e *EverestServer) connectionURL(ctx echo.Context, db *everestv1alpha1.DatabaseCluster, user, password string) *string {
+func (e *EverestServer) connectionURL(ctx context.Context, db *everestv1alpha1.DatabaseCluster, user, password string) *string {
 	if db.Status.Hostname == "" {
 		return nil
 	}
+	url := url.URL{User: url.UserPassword(user, url.QueryEscape(password))}
 	switch db.Spec.Engine.Type {
 	case everestv1alpha1.DatabaseEnginePXC:
-		// TODO: what's with PCX?
-		return nil
+		url.Scheme = "jdbc:mysql"
+		url.Host = net.JoinHostPort(db.Status.Hostname, fmt.Sprint(db.Status.Port))
 	case everestv1alpha1.DatabaseEnginePSMDB:
-		hosts, err := e.psmdbHosts(ctx.Request().Context(), db)
+		hosts, err := psmdbHosts(ctx, db, e.kubeClient.GetPods)
 		if err != nil {
 			e.l.Error(err)
 			return nil
 		}
-		return pointer.ToString(fmt.Sprintf("mongodb://%s:%s@%s", user, url.QueryEscape(password), hosts))
+		url.Scheme = "mongodb"
+		url.Host = hosts
 	case everestv1alpha1.DatabaseEnginePostgresql:
-		return pointer.ToString(fmt.Sprintf("postgres://%s:%s@%s:%v", user, url.QueryEscape(password), db.Status.Hostname, db.Status.Port))
+		url.Scheme = "postgres"
+		url.Host = net.JoinHostPort(db.Status.Hostname, fmt.Sprint(db.Status.Port))
 	}
-	return nil
+	return pointer.ToString(url.String())
 }
 
-func (e *EverestServer) psmdbHosts(ctx context.Context, db *everestv1alpha1.DatabaseCluster) (string, error) {
+func psmdbHosts(
+	ctx context.Context,
+	db *everestv1alpha1.DatabaseCluster,
+	getPods func(ctx context.Context, namespace string, labelSelector *metav1.LabelSelector) (*corev1.PodList, error),
+) (string, error) {
 	// for sharded clusters use a single entry point (mongos)
 	if db.Spec.Sharding != nil && db.Spec.Sharding.Enabled {
-		return fmt.Sprintf("%s:%v", db.Status.Hostname, db.Status.Port), nil
+		return net.JoinHostPort(db.Status.Hostname, fmt.Sprint(db.Status.Port)), nil
 	}
 	// for non-sharded clusters use a list of comma-separated hosts from each node
-	pods, err := e.kubeClient.GetPods(ctx, db.Namespace, &metav1.LabelSelector{MatchLabels: map[string]string{
+	pods, err := getPods(ctx, db.Namespace, &metav1.LabelSelector{MatchLabels: map[string]string{
 		"app.kubernetes.io/instance":  db.Name,
 		"app.kubernetes.io/component": "mongod",
 	}})
 	if err != nil {
 		return "", err
 	}
-	var hostPorts []string
+	const maxHosts = 5
+	hostPorts := make([]string, 0, maxHosts)
 	for _, pod := range pods.Items {
-		hostPorts = append(hostPorts, fmt.Sprintf("%s.%s:%v", pod.Spec.Hostname, db.Status.Hostname, db.Status.Port))
+		hostPorts = append(hostPorts, net.JoinHostPort(fmt.Sprintf("%s.%s", pod.Spec.Hostname, db.Status.Hostname), fmt.Sprint(db.Status.Port)))
 	}
 	return strings.Join(hostPorts, ","), nil
 }
