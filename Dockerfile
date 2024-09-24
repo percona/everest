@@ -11,7 +11,7 @@ FROM scratch
 WORKDIR /
 
 COPY ./bin/everest  /everest-api
-COPY ./bin/helm /helm
+COPY ./bin/helm-tools /helm-tools
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 EXPOSE 8080

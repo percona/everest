@@ -10,7 +10,6 @@ LD_FLAGS_API = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.Pr
 LD_FLAGS_CLI = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl'"
 LD_FLAGS_CLI_TEST = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl' \
 										-X 'github.com/percona/everest/pkg/version.EverestChannelOverride=fast-v0'"
-HELM_TOOLS_BIN_DIR = bin/helm-tools
 default: help
 
 help:                   ## Display this help message
