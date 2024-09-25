@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
-	"github.com/percona/everest/helm/cmd/utils"
+	helmcommon "github.com/percona/everest/helm/cmd/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/kubernetes/helm"
 )
@@ -38,7 +38,7 @@ func NewHookCmd(l *zap.SugaredLogger) *cobra.Command {
 		Run: func(cmd *cobra.Command, _ []string) {
 			bindViperFlags(cmd)
 			kubeConfig := viper.GetString("kubeconfig")
-			kubeClient, err := utils.NewClient(l, kubeConfig)
+			kubeClient, err := helmcommon.NewClient(l, kubeConfig)
 			if err != nil {
 				l.Error(err)
 				os.Exit(1)

@@ -1,5 +1,5 @@
-// Package utils provides utility functions for the everest-helm-tools command.
-package utils
+// Package common provides utility functions for the everest-helm-tools command.
+package common
 
 import (
 	"go.uber.org/zap"
