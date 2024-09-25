@@ -200,7 +200,7 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Add data with ${db} and size ${size}`, async ({ page }) => {
-        await prepareTestDB(clusterName,namespace);
+        await prepareTestDB(clusterName, namespace);
       });
 
       test(`Create demand backup with ${db} and size ${size}`, async ({
@@ -219,7 +219,7 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Delete data with ${db} and size ${size}`, async ({ page }) => {
-        await dropTestDB(clusterName,namespace);
+        await dropTestDB(clusterName, namespace);
       });
 
       test(`Restore cluster with ${db} and size ${size}`, async ({ page }) => {
@@ -244,9 +244,11 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 120000);
       });
 
-      test(`Check data after restore with ${db} and size ${size}`, async ({ page }) => {
-        const result = await queryTestDB(clusterName,namespace);
-        switch(db) {
+      test(`Check data after restore with ${db} and size ${size}`, async ({
+        page,
+      }) => {
+        const result = await queryTestDB(clusterName, namespace);
+        switch (db) {
           case 'pxc':
             expect(result.trim()).toBe('1\n2\n3');
             break;
