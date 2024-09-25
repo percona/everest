@@ -1,6 +1,6 @@
 import { DbType } from '@percona/types';
 import { AutoCompleteAutoFill } from 'components/auto-complete-auto-fill/auto-complete-auto-fill';
-import { DbWizardFormFields } from 'pages/database-form/database-form.types';
+import { DbWizardFormFields } from 'consts.ts';
 import { Messages as StorageLocationMessages } from 'components/schedule-form-dialog/schedule-form/schedule-form.messages';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages';
 import { useFormContext } from 'react-hook-form';
