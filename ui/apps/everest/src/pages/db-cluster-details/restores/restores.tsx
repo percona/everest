@@ -34,9 +34,7 @@ const Restores = () => {
     enabled: !!dbClusterName && !!namespace,
   });
   const { data: restores = [], isLoading: loadingRestores } =
-    useDbClusterRestores(namespace, dbClusterName!, {
-      enabled: !!dbClusterName && !!namespace,
-    });
+    useDbClusterRestores(namespace, dbClusterName!);
   const { mutate: deleteRestore, isPending: deletingRestore } =
     useDeleteRestore(namespace);
 

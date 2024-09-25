@@ -18,7 +18,7 @@ import { MenuItem } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
 import { Messages } from './storage-locations.messages';
 import { BackupStorageTableElement } from './storage-locations.types';
-import { useRBACPermissions } from 'hooks/rbac';
+import { useRBACPermissions } from 'hooks/rbac/rbac';
 
 export const StorageLocationsActionButtons = (
   row: MRT_Row<BackupStorageTableElement>,

@@ -22,7 +22,7 @@ import { ProxyExposeType } from 'shared-types/dbCluster.types';
 import { Messages } from '../dbClusterView.messages';
 import { DbClusterTableElement } from '../dbClusterView.types';
 import { LabelValue } from './LabelValue';
-import { useRBACPermissions } from 'hooks/rbac';
+import { useRBACPermissions } from 'hooks/rbac/rbac';
 
 export const ExpandedRow = ({
   row,

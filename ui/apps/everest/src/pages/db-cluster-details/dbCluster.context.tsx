@@ -3,7 +3,7 @@ import React, { createContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { DbClusterContextProps } from './dbCluster.context.types';
-import { useRBACPermissions } from 'hooks/rbac';
+import { useRBACPermissions } from 'hooks/rbac/rbac';
 
 export const DbClusterContext = createContext<DbClusterContextProps>({
   dbCluster: {} as DbCluster,

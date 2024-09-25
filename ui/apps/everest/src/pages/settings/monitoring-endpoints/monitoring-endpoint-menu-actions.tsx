@@ -18,7 +18,7 @@ import { MenuItem } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
 import { Messages } from './monitoring-endpoints.messages';
 import { MonitoringInstanceTableElement } from './monitoring-endpoints.types';
-import { useRBACPermissions } from 'hooks/rbac';
+import { useRBACPermissions } from 'hooks/rbac/rbac';
 
 export const MonitoringActionButtons = (
   row: MRT_Row<MonitoringInstanceTableElement>,

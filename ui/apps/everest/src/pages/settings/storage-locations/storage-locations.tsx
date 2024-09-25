@@ -36,13 +36,9 @@ import { StorageLocationsActionButtons } from './storage-locations-menu-actions'
 
 export const StorageLocations = () => {
   const queryClient = useQueryClient();
-  const { canCreate } = useNamespacePermissionsForResource('backup-storages');
+
   const { data: namespaces = [] } = useNamespaces();
-  const backupStorages = useBackupStorages(
-    namespaces.map((namespace) => ({
-      namespace: namespace,
-    }))
-  );
+  const backupStorages = useBackupStorages(namespaces);
 
   const backupStoragesLoading = backupStorages.some(
     (result) => result.queryResult.isLoading
@@ -100,6 +96,8 @@ export const StorageLocations = () => {
     ],
     []
   );
+
+  const { canCreate } = useNamespacePermissionsForResource('backup-storages');
 
   const handleOpenCreateModal = () => {
     setSelectedStorageLocation(undefined);

@@ -21,7 +21,7 @@ import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
 import { useDbBackups } from 'hooks/api/backups/useBackups';
 import { DbEngineType } from '@percona/types';
 import DbStatusDetailsDialog from 'modals/db-status-details-dialog/db-status-details-dialog';
-import { useRBACPermissions } from 'hooks/rbac';
+import { useRBACPermissions } from 'hooks/rbac/rbac';
 
 export const DbActionButton = ({
   dbCluster,
