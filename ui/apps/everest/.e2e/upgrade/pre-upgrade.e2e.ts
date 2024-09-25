@@ -41,18 +41,28 @@ test(
     });
 
     await page.waitForTimeout(TIMEOUT.TenSeconds);
-    const clusters = (await getDBClustersList(request)).items;
+    let clusters = (await getDBClustersList(request)).items;
     console.log(clusters);
 
-    await expect(async () => {
-      const clusters = (await getDBClustersList(request)).items;
+    await expect.soft(async () => {
+      const dbClusters = (await getDBClustersList(request)).items;
 
-      clusters.map((c) => {
-        expect(c.status.status).toBe('ready');
+        const clustersInfo = dbClusters.map((c) => {
+
+            return { status: c.status.status, name: c.metadata.name };
       });
+
+        clustersInfo.forEach((c) => {
+            expect.soft(c.status, `expecting ${c.name} to have "ready" status`).toBe('ready');
+        });
     }).toPass({
       timeout: TIMEOUT.TenMinutes,
       intervals: [TIMEOUT.OneMinute],
     });
+
+    expect.soft(clusters.length).toBeTruthy();
+
+      clusters = (await getDBClustersList(request)).items;
+      console.log(clusters);
   }
 );
