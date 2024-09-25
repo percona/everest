@@ -52,6 +52,10 @@ export const ClusterOverview = () => {
       enabled: !!dbClusterName && canRead,
     });
 
+  if (!dbCluster) {
+    return null;
+  }
+
   const hasBackupsOrSchedules = schedules.length > 0 || backups.length > 0;
   const dbType = dbCluster?.spec.engine.type;
 
@@ -75,28 +79,24 @@ export const ClusterOverview = () => {
       {/* We force ! because while loading no info is shown */}
       <DbDetails
         loading={loadingCluster}
-        type={dbEngineToDbType(dbCluster?.spec.engine.type!)}
-        name={dbCluster?.metadata.name!}
-        namespace={dbCluster?.metadata.namespace!}
-        version={dbCluster?.spec.engine.version!}
+        type={dbEngineToDbType(dbCluster.spec.engine.type)}
+        name={dbCluster.metadata.name!}
+        namespace={dbCluster.metadata.namespace!}
+        version={dbCluster.spec.engine.version!}
         loadingClusterDetails={fetchingClusterDetails}
-        hostname={dbCluster?.status?.hostname!}
-        port={dbCluster?.status?.port!}
+        hostname={dbCluster.status?.hostname!}
+        port={dbCluster.status?.port!}
         username={dbClusterDetails?.username!}
         password={dbClusterDetails?.password!}
         externalAccess={
-          dbCluster?.spec.proxy.expose.type === ProxyExposeType.external
+          dbCluster.spec.proxy.expose.type === ProxyExposeType.external
         }
         monitoring={dbCluster?.spec.monitoring.monitoringConfigName}
         parameters={!!dbCluster?.spec.engine.config} //TODO EVEREST-1210 waits https://perconacorp.slack.com/archives/C0545J2BEJX/p1721309559055999
       />
       <ResourcesDetails
-        numberOfNodes={dbCluster?.spec.engine.replicas!}
-        cpu={dbCluster?.spec.engine.resources?.cpu!}
-        memory={dbCluster?.spec.engine.resources?.memory!}
-        disk={dbCluster?.spec.engine.storage.size!}
+        dbCluster={dbCluster}
         sharding={dbCluster?.spec.sharding}
-        dbType={dbEngineToDbType(dbCluster?.spec.engine.type!)}
         loading={loadingCluster}
       />
       {canReadBackups && (

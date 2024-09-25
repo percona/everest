@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { DbType } from '@percona/types';
 import { TestWrapper } from 'utils/test';
 import { FirstStep } from './first-step';
-import { DbWizardFormFields } from '../../../database-form.types';
+import { DbWizardFormFields } from 'consts';
 
 vi.mock('./utils', () => ({
   generateShortUID: vi.fn(() => '123'),
