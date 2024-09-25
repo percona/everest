@@ -263,7 +263,7 @@ jobs:
 
       - name: Build Everest API Server
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build-debug build-helm-tools
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build-debug build-helm-tools-cli
 
       - name: Build Everest docker container
         uses: docker/metadata-action@v5
