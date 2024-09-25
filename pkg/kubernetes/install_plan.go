@@ -44,23 +44,38 @@ func (k *Kubernetes) getInstallPlanFromSubscription(ctx context.Context, namespa
 	return ip, err
 }
 
+func (k *Kubernetes) csvNameFromSubscription(ctx context.Context, namespace, name string, version *goversion.Version) (string, error) {
+	if version != nil {
+		return k.CSVNameFromOperator(name, version), nil
+	}
+	csvName := ""
+	if err := wait.PollUntilContextCancel(ctx, pollInterval, true, func(ctx context.Context) (bool, error) {
+		sub, err := k.client.GetSubscription(ctx, namespace, name)
+		if err != nil {
+			return false, fmt.Errorf("could not get subscription %q: %w", name, err)
+		}
+		csvName = sub.Status.CurrentCSV
+		if csvName == "" {
+			return false, nil
+		}
+		return true, nil
+	}); err != nil {
+		return "", errors.New("could not get CSV name")
+	}
+	if csvName == "" {
+		return "", errors.New("csvName is empty, cannot proceed")
+	}
+	return csvName, nil
+}
+
 // WaitForInstallPlan waits until an install plan for the given operator and version is available.
 func (k *Kubernetes) WaitForInstallPlan(ctx context.Context, namespace, operatorName string, version *goversion.Version) (*olmv1alpha1.InstallPlan, error) {
 	var ip *olmv1alpha1.InstallPlan
-	var csvName string
-	if version != nil {
-		csvName = k.CSVNameFromOperator(operatorName, version)
-	} else {
-		sub, err := k.client.GetSubscription(ctx, namespace, operatorName)
-		if err != nil {
-			k.l.Errorf("Failed to get subscription %s: %s", operatorName, err)
-		}
-		csvName = sub.Status.CurrentCSV
+	csvName, err := k.csvNameFromSubscription(ctx, namespace, operatorName, version)
+	if err != nil {
+		return nil, err
 	}
-	if csvName == "" {
-		return nil, errors.New("csvName is empty, cannot proceed")
-	}
-	err := wait.PollUntilContextCancel(ctx, time.Second, true, func(ctx context.Context) (bool, error) {
+	err = wait.PollUntilContextCancel(ctx, time.Second, true, func(ctx context.Context) (bool, error) {
 		k.l.Debug("Looking for install plan")
 		ips, err := k.client.ListInstallPlans(ctx, namespace)
 		if err != nil {
