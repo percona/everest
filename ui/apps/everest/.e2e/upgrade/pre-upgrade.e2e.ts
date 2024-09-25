@@ -9,16 +9,16 @@ test(
   'Pre upgrade setup',
   { tag: '@pre-upgrade' },
   async ({ page, request }) => {
-    await createDbClusterFn(request, {
-      dbName: psDBCluster.name,
-      dbType: 'mysql',
-      numberOfNodes: psDBCluster.numberOfNodes,
-      cpu: psDBCluster.cpu,
-      disk: psDBCluster.disk,
-      memory: psDBCluster.memory,
-      externalAccess: psDBCluster.externalAccess,
-      sourceRanges: psDBCluster.sourceRanges,
-    });
+    // await createDbClusterFn(request, {
+    //   dbName: psDBCluster.name,
+    //   dbType: 'mysql',
+    //   numberOfNodes: psDBCluster.numberOfNodes,
+    //   cpu: psDBCluster.cpu,
+    //   disk: psDBCluster.disk,
+    //   memory: psDBCluster.memory,
+    //   externalAccess: psDBCluster.externalAccess,
+    //   sourceRanges: psDBCluster.sourceRanges,
+    // });
 
     await createDbClusterFn(request, {
       dbName: mongoDBCluster.name,
@@ -44,7 +44,7 @@ test(
     let clusters = (await getDBClustersList(request)).items;
     console.log(clusters);
 
-    await expect.soft(async () => {
+    await expect(async () => {
       const dbClusters = (await getDBClustersList(request)).items;
 
         const clustersInfo = dbClusters.map((c) => {
@@ -53,16 +53,11 @@ test(
       });
 
         clustersInfo.forEach((c) => {
-            expect.soft(c.status, `expecting ${c.name} to have "ready" status`).toBe('ready');
+            expect(c.status, `expecting ${c.name} to have "ready" status`).toBe('ready');
         });
     }).toPass({
       timeout: TIMEOUT.TenMinutes,
       intervals: [TIMEOUT.OneMinute],
     });
-
-    expect.soft(clusters.length).toBeTruthy();
-
-      clusters = (await getDBClustersList(request)).items;
-      console.log(clusters);
   }
 );
