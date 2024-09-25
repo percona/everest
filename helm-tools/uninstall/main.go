@@ -32,12 +32,10 @@ import (
 //nolint:gochecknoglobals
 var (
 	kubeconfigPath string
-	deleteDBs      bool
 )
 
 func initFlags() {
 	flag.StringVar(&kubeconfigPath, "kubeconfig", "", "Path to kubeconfig file")
-	flag.BoolVar(&deleteDBs, "delete-dbs", false, "If set, force deletes all existing DBs in the cluster")
 	flag.Parse()
 }
 
@@ -58,11 +56,19 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute) //nolint:mnd
 	defer cancel()
 
-	if deleteDBs {
-		l.Info("Deleting all existing DBs in the cluster")
-		if err := helmInstaller.DeleteAllDatabaseClusters(ctx); err != nil {
-			l.Fatalf("Failed to delete all existing DBs: %v", err)
-		}
+	l.Info("Deleting all existing DBs in the cluster")
+	if err := helmInstaller.DeleteAllDatabaseClusters(ctx); err != nil {
+		l.Fatalf("Failed to delete all existing DBs: %v", err)
+	}
+
+	l.Info("Deleting all BackupStorages")
+	if err := helmInstaller.DeleteAllBackupStorages(ctx); err != nil {
+		l.Fatalf("Failed to delete all BackupStorages: %v", err)
+	}
+
+	l.Info("Deleting all MonitoringInstances")
+	if err := helmInstaller.DeleteAllMonitoringInstances(ctx); err != nil {
+		l.Fatalf("Failed to delete all MonitoringInstances: %v", err)
 	}
 
 	// Before the OLM namespace is terminated by helm uninstall, we must first

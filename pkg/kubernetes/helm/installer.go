@@ -138,6 +138,76 @@ func (i *Installer) DeleteOLM(ctx context.Context) error {
 	})
 }
 
+// DeleteAllBackupStorages deletes all monitoring instances in the system.
+func (i *Installer) DeleteAllBackupStorages(ctx context.Context) error {
+	namespaces, err := i.kubeclient.GetDBNamespaces(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get DB namespaces: %w", err)
+	}
+	for _, ns := range namespaces {
+		// Delete all backup storages in the namespace.
+		i.l.Infof("Deleting backup storages in namespace '%s'", ns)
+		list, err := i.kubeclient.ListBackupStorages(ctx, ns)
+		if err != nil {
+			return fmt.Errorf("failed to list backup storages in namespace '%s': %w", ns, err)
+		}
+		for _, bs := range list.Items {
+			if err := i.kubeclient.DeleteBackupStorage(ctx, ns, bs.GetName()); err != nil {
+				return fmt.Errorf("failed to delete backup storages '%s' in namespace '%s': %w", bs.GetName(), ns, err)
+			}
+		}
+		// Wait until all are deleted.
+		if err := wait.PollUntilContextCancel(ctx, time.Second*5, true, func(ctx context.Context) (bool, error) { //nolint:mnd
+			list, err := i.kubeclient.ListBackupStorages(ctx, ns)
+			if err != nil {
+				return false, fmt.Errorf("failed to list backup storages in namespace '%s': %w", ns, err)
+			}
+			if len(list.Items) > 0 {
+				return false, nil
+			}
+			return true, nil
+		}); err != nil {
+			return fmt.Errorf("failed to wait for backup storages in namespace '%s' to be deleted: %w", ns, err)
+		}
+	}
+	return nil
+}
+
+// DeleteAllMonitoringInstances deletes all monitoring instances in the system.
+func (i *Installer) DeleteAllMonitoringInstances(ctx context.Context) error {
+	namespaces, err := i.kubeclient.GetDBNamespaces(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get DB namespaces: %w", err)
+	}
+	for _, ns := range namespaces {
+		// Delete all monitoring instances in the namespace.
+		i.l.Infof("Deleting monitoring instances in namespace '%s'", ns)
+		list, err := i.kubeclient.ListMonitoringConfigs(ctx, ns)
+		if err != nil {
+			return fmt.Errorf("failed to list monitoring instances in namespace '%s': %w", ns, err)
+		}
+		for _, mc := range list.Items {
+			if err := i.kubeclient.DeleteMonitoringConfig(ctx, ns, mc.Name); err != nil {
+				return fmt.Errorf("failed to delete monitoring instance '%s' in namespace '%s': %w", mc.GetName(), ns, err)
+			}
+		}
+		// Wait until all are deleted.
+		if err := wait.PollUntilContextCancel(ctx, time.Second*5, true, func(ctx context.Context) (bool, error) { //nolint:mnd
+			list, err := i.kubeclient.ListMonitoringConfigs(ctx, ns)
+			if err != nil {
+				return false, fmt.Errorf("failed to list monitoring instances in namespace '%s': %w", ns, err)
+			}
+			if len(list.Items) > 0 {
+				return false, nil
+			}
+			return true, nil
+		}); err != nil {
+			return fmt.Errorf("failed to wait for monitoring instances in namespace '%s' to be deleted: %w", ns, err)
+		}
+	}
+	return nil
+}
+
 // DeleteAllDatabaseClusters deletes all database clusters.
 func (i *Installer) DeleteAllDatabaseClusters(ctx context.Context) error {
 	dbs, err := i.getDBs(ctx)
@@ -164,7 +234,7 @@ func (i *Installer) DeleteAllDatabaseClusters(ctx context.Context) error {
 	}
 	// Wait for all database clusters to be deleted, or timeout after 5 minutes.
 	i.l.Info("Waiting for database clusters to be deleted")
-	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
+	return wait.PollUntilContextCancel(ctx, pollInterval, false, func(ctx context.Context) (bool, error) {
 		allDBs, err := i.getDBs(ctx)
 		if err != nil {
 			return false, err

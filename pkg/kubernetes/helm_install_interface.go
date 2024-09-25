@@ -16,6 +16,10 @@ type HelmInstaller interface {
 	ApproveDBNamespacesInstallPlans(ctx context.Context) error
 	// DeleteOLM deletes the required OLM components.
 	DeleteOLM(ctx context.Context) error
+	// DeleteAllBackupStorages deletes all monitoring instances in the system.
+	DeleteAllBackupStorages(ctx context.Context) error
+	// DeleteAllMonitoringInstances deletes all monitoring instances in the system.
+	DeleteAllMonitoringInstances(ctx context.Context) error
 	// DeleteAllDatabaseClusters deletes all database clusters.
 	DeleteAllDatabaseClusters(ctx context.Context) error
 }
