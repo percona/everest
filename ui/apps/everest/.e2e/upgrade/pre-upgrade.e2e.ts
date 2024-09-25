@@ -44,25 +44,28 @@ test(
     let clusters = (await getDBClustersList(request)).items;
     console.log(clusters);
 
-    await expect.soft(async () => {
-      const dbClusters = (await getDBClustersList(request)).items;
+    await expect
+      .soft(async () => {
+        const dbClusters = (await getDBClustersList(request)).items;
 
         const clustersInfo = dbClusters.map((c) => {
-
-            return { status: c.status.status, name: c.metadata.name };
-      });
+          return { status: c.status.status, name: c.metadata.name };
+        });
 
         clustersInfo.forEach((c) => {
-            expect.soft(c.status, `expecting ${c.name} to have "ready" status`).toBe('ready');
+          expect
+            .soft(c.status, `expecting ${c.name} to have "ready" status`)
+            .toBe('ready');
         });
-    }).toPass({
-      timeout: TIMEOUT.TenMinutes,
-      intervals: [TIMEOUT.OneMinute],
-    });
+      })
+      .toPass({
+        timeout: TIMEOUT.TenMinutes,
+        intervals: [TIMEOUT.OneMinute],
+      });
 
     expect.soft(clusters.length).toBeTruthy();
 
-      clusters = (await getDBClustersList(request)).items;
-      console.log(clusters);
+    clusters = (await getDBClustersList(request)).items;
+    console.log(clusters);
   }
 );
