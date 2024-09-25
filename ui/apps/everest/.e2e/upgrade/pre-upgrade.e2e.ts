@@ -47,14 +47,15 @@ test(
     await expect(async () => {
       const dbClusters = (await getDBClustersList(request)).items;
 
-        const clustersInfo = dbClusters.map((c) => {
-
-            return { status: c.status.status, name: c.metadata.name };
+      const clustersInfo = dbClusters.map((c) => {
+        return { status: c.status.status, name: c.metadata.name };
       });
 
-        clustersInfo.forEach((c) => {
-            expect(c.status, `expecting ${c.name} to have "ready" status`).toBe('ready');
-        });
+      clustersInfo.forEach((c) => {
+        expect(c.status, `expecting ${c.name} to have "ready" status`).toBe(
+          'ready'
+        );
+      });
     }).toPass({
       timeout: TIMEOUT.TenMinutes,
       intervals: [TIMEOUT.OneMinute],
