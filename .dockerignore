@@ -1,6 +1,6 @@
 **
 !bin/everest
-!bin/helm-tools
+!bin/everest-helm-tools
 !cmd
 !migrations
 !model
