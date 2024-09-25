@@ -14,9 +14,11 @@ export type RBACPolicies = {
 
 export const getRBACPolicies = async (): Promise<RBACPolicies> => {
   const response = await api.get<RBACPoliciesPayload>('permissions');
-  const permissions = response.data.permissions.map((permission: string[]) => {
-    return [...'p', ...permission];
-  });
+  const permissions = (response.data.permissions || []).map(
+    (permission: string[]) => {
+      return [...'p', ...permission];
+    }
+  );
 
   return {
     enabled: response.data.enabled || false,
