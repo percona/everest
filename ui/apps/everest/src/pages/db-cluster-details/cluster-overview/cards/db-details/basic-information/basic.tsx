@@ -23,7 +23,7 @@ import { UpgradeDbVersionModal } from './upgrade-db-version-modal/upgrade-db-ver
 import { useDbVersionsList } from 'components/cluster-form/db-version/useDbVersions';
 import { useUpdateDbClusterVersion } from 'hooks/api/db-cluster/useUpdateDbCluster';
 import { DbClusterContext } from '../../../../dbCluster.context';
-import { DbClusterStatus } from '../../../../../../shared-types/dbCluster.types';
+import { DbClusterStatus } from 'shared-types/dbCluster.types';
 
 export const BasicInformationSection = ({
   loading,
@@ -72,7 +72,7 @@ export const BasicInformationSection = ({
       );
     }
     return false;
-  }, [dbVersionsUpgradeList, version]);
+  }, [dbVersionsUpgradeList,  dbCluster?.status?.status, version]);
 
   return (
     <OverviewSection
