@@ -27,7 +27,7 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import AddIcon from '@mui/icons-material/Add';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
-import { useGetPermissions } from 'utils/useGetPermissions';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const DbActionButtons = (
   row: MRT_Row<DbClusterTableElement>,
@@ -38,16 +38,25 @@ export const DbActionButtons = (
   isPaused: (dbCluster: DbCluster) => boolean | undefined,
   handleRestoreDbCluster: (dbCluster: DbCluster) => void
 ) => {
-  const { canUpdate, canDelete, canCreate } = useGetPermissions({
-    resource: 'database-clusters',
-    specificResource: row.original.databaseName,
-    namespace: row.original.namespace,
-  });
+  const {
+    canUpdate,
+    canDelete,
+    canCreate: canCreateClusters,
+  } = useRBACPermissions(
+    'database-clusters',
+    `${row.original.namespace}/${row.original.databaseName}`
+  );
+  const { canCreate: canCreateRestore } = useRBACPermissions(
+    'database-cluster-restores',
+    `${row.original.namespace}/*`
+  );
+  const { canRead: canReadCredentials } = useRBACPermissions(
+    'database-cluster-credentials',
+    `${row.original.namespace}/${row.original.databaseName}`
+  );
 
-  const { canCreate: canCreateRestore } = useGetPermissions({
-    resource: 'database-cluster-restores',
-    namespace: row.original.namespace,
-  });
+  const canRestore = canCreateRestore && canReadCredentials;
+  const canCreateClusterFromBackup = canRestore && canCreateClusters;
 
   return [
     ...(canUpdate
@@ -89,7 +98,7 @@ export const DbActionButtons = (
           </MenuItem>,
         ]
       : []),
-    ...(canCreate
+    ...(canCreateClusterFromBackup
       ? [
           <MenuItem
             disabled={row.original.status === DbClusterStatus.restoring}
@@ -109,12 +118,10 @@ export const DbActionButtons = (
           </MenuItem>,
         ]
       : []),
-    ...(canCreateRestore
+    ...(canRestore
       ? [
           <MenuItem
-            disabled={
-              row.original.status === DbClusterStatus.restoring || !canUpdate
-            }
+            disabled={row.original.status === DbClusterStatus.restoring}
             key={3}
             data-testid={`${row.original?.databaseName}-restore`}
             onClick={() => {

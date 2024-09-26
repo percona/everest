@@ -1,4 +1,4 @@
-import { BaseStatus } from '../../../components/status-field/status-field.types';
+import { BaseStatus } from 'components/status-field/status-field.types';
 
 export enum COMPONENT_STATUS {
   PENDING = 'Pending',
@@ -7,6 +7,14 @@ export enum COMPONENT_STATUS {
   FAILED = 'Failed',
   UNKNOWN = 'Unknown',
 }
+
+export const COMPONENT_STATUS_WEIGHT = {
+  [COMPONENT_STATUS.PENDING]: 1,
+  [COMPONENT_STATUS.FAILED]: 0,
+  [COMPONENT_STATUS.RUNNING]: 0,
+  [COMPONENT_STATUS.SUCCEEDED]: 0,
+  [COMPONENT_STATUS.UNKNOWN]: 0,
+};
 
 export const COMPONENT_STATUS_TO_BASE_STATUS: Record<
   COMPONENT_STATUS,

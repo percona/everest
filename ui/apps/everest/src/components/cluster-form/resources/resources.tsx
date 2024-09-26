@@ -21,6 +21,7 @@ import {
   humanizedResourceSizeMap,
   NODES_DB_TYPE_MAP,
   ResourceSize,
+  SHARDING_DEFAULTS,
 } from './constants';
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
@@ -393,17 +394,20 @@ const ResourcesForm = ({
   disableDiskInput,
   allowDiskInputUpdate,
   pairProxiesWithNodes,
+  showSharding,
 }: {
   dbType: DbType;
   disableDiskInput?: boolean;
   allowDiskInputUpdate?: boolean;
   pairProxiesWithNodes?: boolean;
+  showSharding?: boolean;
 }) => {
   const [expanded, setExpanded] = useState<'nodes' | 'proxies' | false>(
     'nodes'
   );
   const { watch, getFieldState, setValue } = useFormContext();
   const numberOfNodes: string = watch(DbWizardFormFields.numberOfNodes);
+  const sharding: boolean = watch(DbWizardFormFields.sharding);
   const numberOfProxies: string = watch(DbWizardFormFields.numberOfProxies);
   const customNrOfNodes: string = watch(DbWizardFormFields.customNrOfNodes);
   const customNrOfProxies: string = watch(DbWizardFormFields.customNrOfProxies);
@@ -442,6 +446,49 @@ const ResourcesForm = ({
 
   return (
     <>
+      {!!showSharding && !!sharding && (
+        <>
+          <Typography variant="sectionHeading">Shards configuration</Typography>
+          <Box
+            sx={{
+              flexDirection: 'row',
+              gap: 2,
+              display: 'flex',
+              '.MuiTextField-root': {
+                width: '50%',
+              },
+              mb: 3,
+            }}
+          >
+            <TextInput
+              name={DbWizardFormFields.shardNr}
+              textFieldProps={{
+                label: 'Number of shards',
+                type: 'number',
+                required: true,
+                inputProps: {
+                  min: SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min,
+                },
+              }}
+            />
+            <TextInput
+              name={DbWizardFormFields.shardConfigServers}
+              textFieldProps={{
+                label: 'Number of configuration servers',
+                type: 'number',
+                required: true,
+                inputProps: {
+                  step: '2',
+                  min: SHARDING_DEFAULTS[DbWizardFormFields.shardConfigServers]
+                    .min,
+                  max: SHARDING_DEFAULTS[DbWizardFormFields.shardConfigServers]
+                    .max,
+                },
+              }}
+            />
+          </Box>
+        </>
+      )}
       <Accordion
         expanded={expanded === 'nodes'}
         data-testid="nodes-accordion"

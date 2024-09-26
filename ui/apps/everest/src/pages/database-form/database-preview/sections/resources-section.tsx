@@ -9,6 +9,9 @@ export const ResourcesPreviewSection = ({
   disk,
   diskUnit,
   memory,
+  sharding,
+  shardNr,
+  shardConfigServers,
 }: SectionProps) => {
   if (numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE) {
     numberOfNodes = customNrOfNodes || '';
@@ -27,6 +30,14 @@ export const ResourcesPreviewSection = ({
   return (
     <>
       <PreviewContentText text={`Nº nodes: ${intNumberOfNodes}`} />
+      {sharding && (
+        <>
+          <PreviewContentText text={`Shards: ${shardNr}`} />
+          <PreviewContentText
+            text={`Configuration servers: ${shardConfigServers}`}
+          />
+        </>
+      )}
       <PreviewContentText
         text={`CPU: ${Number.isNaN(parsedCPU) ? '' : `${parsedCPU.toFixed(2)} CPU`}`}
       />

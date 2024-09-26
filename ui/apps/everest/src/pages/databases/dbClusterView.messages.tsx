@@ -59,6 +59,7 @@ export const Messages = {
     resume: 'Resume',
     restoreFromBackup: 'Restore from a backup',
     createNewDbFromBackup: 'Create DB from a backup',
+    dbStatusDetails: 'View DB status details',
   },
   dbCluster: {
     noData:

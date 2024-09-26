@@ -27,6 +27,7 @@ const basicInfoSchema = z
           });
         }
       }),
+    [DbWizardFormFields.sharding]: z.boolean(),
   })
   .passthrough();
 

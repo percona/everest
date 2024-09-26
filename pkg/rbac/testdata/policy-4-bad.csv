@@ -1,5 +1,5 @@
-p, adminrole:role, namespaces, read, *
-p, adminrole:role, database-engines, *, */*
-p, adminrole:role, monitoring-instances, *, */*
-p, notexists:role, monitoring-instances, *, */*
-g, admin, adminrole:role
+p, role:admin, namespaces, read, *
+p, role:admin, database-engines, *, */*
+p, role:admin, monitoring-instances, *, */*
+p, role:notexists, monitoring-instances, *, */*
+g, admin, role:admin

@@ -39,8 +39,8 @@ $ everestctl settings rbac can alice read database-clusters my-namespace/cluster
 # Check if user 'alice' can perform all/any actions on 'cluster-1' in namespace 'my-namespace'
 $ everestctl settings rbac can alice '*' database-clusters my-namespace/cluster-1
 
-# Check if role 'adminrole' can update backup 'prod-backup-1' in namespace 'prod-namespace'
-$ everestctl settings rbac can adminrole:role update database-cluster-backups prod-namespace/prod-backup-1
+# Check if role 'role:admin' can update backup 'prod-backup-1' in namespace 'prod-namespace'
+$ everestctl settings rbac can role:admin update database-cluster-backups prod-namespace/prod-backup-1
 
 # Check if user 'bob' can delete all/any backups in namespace 'prod-namespace'
 $ everestctl settings rbac can bob delete database-cluster-backups prod-namespace/*

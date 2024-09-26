@@ -28,6 +28,7 @@ import {
   CUSTOM_NR_UNITS_INPUT_VALUE,
   matchFieldsValueToResourceSize,
   NODES_DB_TYPE_MAP,
+  SHARDING_DEFAULTS,
 } from 'components/cluster-form';
 
 const replicasToNodes = (replicas: string, dbType: DbType): string => {
@@ -53,14 +54,10 @@ export const DbClusterPayloadToFormValues = (
     dbCluster?.spec?.engine?.storage?.size.toString()
   );
 
+  const sharding = dbCluster?.spec?.sharding;
+
   return {
-    [DbWizardFormFields.backupsEnabled]: !!backup?.enabled,
-    [DbWizardFormFields.pitrEnabled]: backup?.pitr?.enabled || false,
-    [DbWizardFormFields.pitrStorageLocation]:
-      (backup?.pitr?.enabled && mode === 'new') || mode === 'edit'
-        ? backup?.pitr?.backupStorageName || null
-        : DB_WIZARD_DEFAULTS[DbWizardFormFields.pitrStorageLocation],
-    [DbWizardFormFields.schedules]: backup?.schedules || [],
+    //basic info
     [DbWizardFormFields.k8sNamespace]:
       namespace || DB_WIZARD_DEFAULTS[DbWizardFormFields.k8sNamespace],
     [DbWizardFormFields.dbType]: dbEngineToDbType(
@@ -106,6 +103,14 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.resourceSizePerProxy]: matchFieldsValueToResourceSize(
       dbCluster?.spec?.proxy.resources
     ),
+    [DbWizardFormFields.sharding]: dbCluster?.spec?.sharding?.enabled || false,
+    [DbWizardFormFields.shardConfigServers]: (
+      sharding?.configServer?.replicas ||
+      SHARDING_DEFAULTS[DbWizardFormFields.shardConfigServers].min
+    ).toString(),
+    [DbWizardFormFields.shardNr]: (
+      sharding?.shards || SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min
+    ).toString(),
     [DbWizardFormFields.cpu]: cpuParser(
       dbCluster?.spec?.engine?.resources?.cpu.toString() || '0'
     ),
@@ -122,5 +127,14 @@ export const DbClusterPayloadToFormValues = (
     ).value,
     [DbWizardFormFields.storageClass]:
       dbCluster?.spec?.engine?.storage?.class || null,
+
+    //backups
+    [DbWizardFormFields.backupsEnabled]: !!backup?.enabled,
+    [DbWizardFormFields.pitrEnabled]: backup?.pitr?.enabled || false,
+    [DbWizardFormFields.pitrStorageLocation]:
+      (backup?.pitr?.enabled && mode === 'new') || mode === 'edit'
+        ? backup?.pitr?.backupStorageName || null
+        : DB_WIZARD_DEFAULTS[DbWizardFormFields.pitrStorageLocation],
+    [DbWizardFormFields.schedules]: backup?.schedules || [],
   };
 };

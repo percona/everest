@@ -22,6 +22,7 @@ export const ResourcesStep = () => {
         pairProxiesWithNodes={mode !== 'edit'}
         disableDiskInput={mode === 'edit'}
         allowDiskInputUpdate={mode !== 'edit'}
+        showSharding={dbType === DbType.Mongo && mode !== 'edit'}
       />
     </>
   );

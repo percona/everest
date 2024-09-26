@@ -27,7 +27,11 @@ const ResourcesEditModal = ({
       onSubmit={onSubmit}
       defaultValues={defaultValues}
     >
-      <ResourcesForm dbType={dbType} pairProxiesWithNodes={false} />
+      <ResourcesForm
+        dbType={dbType}
+        pairProxiesWithNodes={false}
+        showSharding={false}
+      />
     </FormDialog>
   );
 };

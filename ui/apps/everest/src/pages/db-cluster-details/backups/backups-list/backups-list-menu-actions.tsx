@@ -19,9 +19,9 @@ import { Messages } from './backups-list.messages';
 import AddIcon from '@mui/icons-material/Add';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useGetPermissions } from 'utils/useGetPermissions.ts';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { Backup, BackupStatus } from 'shared-types/backups.types';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const BackupActionButtons = (
   row: MRT_Row<Backup>,
@@ -31,24 +31,28 @@ export const BackupActionButtons = (
   handleRestoreToNewDbBackup: (backupName: string) => void,
   dbCluster: DbCluster
 ) => {
-  const { canDelete } = useGetPermissions({
-    resource: 'database-cluster-backups',
-    specificResource: row.original.backupStorageName,
-    namespace: dbCluster.metadata.namespace,
-  });
+  const { canDelete } = useRBACPermissions(
+    'database-cluster-backups',
+    `${dbCluster.metadata.namespace}/${row.original.backupStorageName}`
+  );
+  const { canCreate: canCreateRestore } = useRBACPermissions(
+    'database-cluster-restores',
+    `${dbCluster.metadata.namespace}/${row.original.dbClusterName}`
+  );
+  const { canCreate: canCreateClusters } = useRBACPermissions(
+    'database-clusters',
+    `${dbCluster.metadata.namespace}/*`
+  );
+  const { canRead: canReadCredentials } = useRBACPermissions(
+    'database-cluster-credentials',
+    `${dbCluster.metadata.namespace}/${row.original.dbClusterName}`
+  );
 
-  const { canUpdate: canUpdateDb } = useGetPermissions({
-    resource: 'database-clusters',
-    specificResource: dbCluster.metadata.name,
-    namespace: dbCluster.metadata.namespace,
-  });
-
-  const { canCreate: canCreateDb } = useGetPermissions({
-    resource: 'database-clusters',
-  });
+  const canRestore = canCreateRestore && canReadCredentials;
+  const canCreateClusterFromBackup = canRestore && canCreateClusters;
 
   return [
-    ...(canUpdateDb
+    ...(canRestore
       ? [
           <MenuItem
             key={0}
@@ -68,7 +72,7 @@ export const BackupActionButtons = (
           </MenuItem>,
         ]
       : []),
-    ...(canCreateDb
+    ...(canCreateClusterFromBackup
       ? [
           <MenuItem
             key={1}

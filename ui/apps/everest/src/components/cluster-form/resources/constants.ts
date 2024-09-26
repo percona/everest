@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { Resources } from 'shared-types/dbCluster.types';
 import { DbWizardFormFields } from 'consts';
 import { memoryParser } from 'utils/k8ResourceParser';
+import { Messages } from './messages';
 
 const resourceToNumber = (minimum = 0) =>
   z.union([z.string().min(1), z.number()]).pipe(
@@ -67,8 +68,20 @@ export const DEFAULT_SIZES = {
   },
 };
 
+export const SHARDING_DEFAULTS = {
+  [DbWizardFormFields.shardConfigServers]: {
+    min: '1',
+    max: '7',
+  },
+  [DbWizardFormFields.shardNr]: {
+    min: '1',
+  },
+};
+
 export const resourcesFormSchema = (passthrough?: boolean) => {
   const objectShape = {
+    [DbWizardFormFields.shardNr]: z.string().optional(),
+    [DbWizardFormFields.shardConfigServers]: z.string().optional(),
     [DbWizardFormFields.cpu]: resourceToNumber(0.6),
     [DbWizardFormFields.memory]: resourceToNumber(0.512),
     [DbWizardFormFields.disk]: resourceToNumber(1),
@@ -91,6 +104,9 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
   return zObject.superRefine(
     (
       {
+        sharding,
+        shardConfigServers,
+        shardNr,
         numberOfNodes,
         numberOfProxies,
         customNrOfNodes = '',
@@ -118,6 +134,61 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
           }
         }
       });
+
+      if (sharding as boolean) {
+        const intShardNr = parseInt(shardNr || '', 10);
+        const intShardNrMin =
+          +SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min;
+        const intShardConfigServers = parseInt(shardConfigServers || '', 10);
+        const intShardConfigServersMin =
+          +SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min;
+        const intShardConfigServersMax =
+          +SHARDING_DEFAULTS[DbWizardFormFields.shardConfigServers].max;
+
+        if (Number.isNaN(intShardNr) || intShardNr < 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: Messages.sharding.invalid,
+            path: [DbWizardFormFields.shardNr],
+          });
+        } else {
+          if (intShardNr < intShardNrMin) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: Messages.sharding.min(intShardNrMin),
+              path: [DbWizardFormFields.shardNr],
+            });
+          }
+        }
+
+        if (Number.isNaN(intShardConfigServers) || intShardConfigServers <= 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: Messages.sharding.invalid,
+            path: [DbWizardFormFields.shardConfigServers],
+          });
+        } else {
+          if (intShardConfigServers < intShardConfigServersMin) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: Messages.sharding.min(intShardConfigServersMin),
+              path: [DbWizardFormFields.shardConfigServers],
+            });
+          } else if (!(intShardConfigServers % 2)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: Messages.sharding.odd,
+              path: [DbWizardFormFields.shardConfigServers],
+            });
+          } else if (intShardConfigServers > intShardConfigServersMax) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: Messages.sharding.max(intShardConfigServersMax),
+              path: [DbWizardFormFields.shardConfigServers],
+            });
+          }
+        }
+      }
     }
   );
 };

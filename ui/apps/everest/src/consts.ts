@@ -76,6 +76,9 @@ export enum DbWizardForm {
   monitoring = 'monitoring',
   monitoringInstance = 'monitoringInstance',
   endpoint = 'endpoint',
+  sharding = 'sharding',
+  shardNr = 'shardNr',
+  shardConfigServers = 'shardConfigServers',
 }
 
 export const DbWizardFormFields = {

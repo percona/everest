@@ -48,7 +48,9 @@ export const Backups = () => {
     dbType === DbType.Postresql
   );
   const scheduleCreationDisabled =
-    dbType === DbType.Postresql && storagesToShow.length === 0;
+    dbType === DbType.Postresql &&
+    storagesToShow.length === 0 &&
+    schedules.length === 0;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>

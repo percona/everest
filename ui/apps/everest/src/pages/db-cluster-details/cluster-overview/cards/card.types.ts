@@ -56,6 +56,7 @@ export type DatabaseDetailsOverviewCardProps =
 
 export type ResourcesDetailsOverviewProps = {
   dbCluster: DbCluster;
+  sharding: DbCluster['spec']['sharding'];
 } & OverviewCardProps;
 
 export type BackupsDetailsOverviewCardProps = {
@@ -67,4 +68,5 @@ export type BackupsDetailsOverviewCardProps = {
   pitrStorageName: NonNullable<
     NonNullable<DbCluster['spec']['backup']>['pitr']
   >['backupStorageName'];
+  showStorage: boolean;
 } & OverviewCardProps;
