@@ -72,7 +72,7 @@ export const BasicInformationSection = ({
       );
     }
     return false;
-  }, [dbVersionsUpgradeList,  dbCluster?.status?.status, version]);
+  }, [dbVersionsUpgradeList, dbCluster?.status?.status, version]);
 
   return (
     <OverviewSection
