@@ -32,7 +32,7 @@ export const postgresDBCluster = {
   externalAccess: true,
 };
 
-export const expectedEverestUpgradeLog = (tag = everestTagForUpgrade) => {
+export const expectedEverestUpgradeLog = (tag = everestTagForUpgrade.replaceAll('v', '')) => {
   return `✓ Upgrade Operator Lifecycle Manager
 ✓ Upgrade Percona Catalog
 ✓ Wait for Everest Operator InstallPlan
