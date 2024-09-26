@@ -15,7 +15,6 @@
 
 import {
   FormGroup,
-  MenuItem,
   Skeleton,
   Stack,
   Tooltip,
@@ -29,7 +28,6 @@ import {
   AutoCompleteInput,
   DbToggleCard,
   LabeledContent,
-  SelectInput,
   SwitchInput,
   TextInput,
   ToggleButtonGroupInput,
