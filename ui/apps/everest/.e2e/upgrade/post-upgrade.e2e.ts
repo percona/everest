@@ -9,6 +9,6 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
     const data = fs.readFileSync(filePath, 'utf8');
 
     const expectedText = expectedEverestUpgradeLog();
-    expect(data).toContain(expectedText);
+    expect(data.trim()).toContain(expectedText);
   });
 });
