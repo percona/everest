@@ -655,7 +655,7 @@ func (o *Install) createNamespace(ctx context.Context, namespace string) error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: namespace,
 			Labels: map[string]string{
-				common.KubernetesManagedByLabel: common.Everest,
+				common.EverestDBNamespaceLabel: "",
 			},
 		},
 	}
