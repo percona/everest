@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"time"
 
+	goversion "github.com/hashicorp/go-version"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -53,9 +54,9 @@ func New(l *zap.SugaredLogger, kubeclient kubernetes.KubernetesConnector) *Insta
 	}
 }
 
-func (i *Installer) approveInstallPlanForSubscription(ctx context.Context, subNamespace, subName string) error {
+func (i *Installer) approveInstallPlanForSubscription(ctx context.Context, subNamespace, subName string, version *goversion.Version) error {
 	// Wait for the install plan to be created.
-	ip, err := i.kubeclient.WaitForInstallPlan(ctx, subNamespace, subName, nil)
+	ip, err := i.kubeclient.WaitForInstallPlan(ctx, subNamespace, subName, version)
 	if err != nil {
 		return errors.Join(err, errors.New("failed waiting for install plan to be created"))
 	}
@@ -82,12 +83,12 @@ func (i *Installer) approveInstallPlanForSubscription(ctx context.Context, subNa
 
 // ApproveEverestMonitoringInstallPlan approves the install plans needed for installing the monitoring operators.
 func (i *Installer) ApproveEverestMonitoringInstallPlan(ctx context.Context) error {
-	return i.approveInstallPlanForSubscription(ctx, common.MonitoringNamespace, common.VictoriaMetricsOperatorName)
+	return i.approveInstallPlanForSubscription(ctx, common.MonitoringNamespace, common.VictoriaMetricsOperatorName, nil)
 }
 
 // ApproveEverestOperatorInstallPlan approves the install plans needed for installing the everest operator.
-func (i *Installer) ApproveEverestOperatorInstallPlan(ctx context.Context) error {
-	return i.approveInstallPlanForSubscription(ctx, common.SystemNamespace, common.EverestOperatorName)
+func (i *Installer) ApproveEverestOperatorInstallPlan(ctx context.Context, version *goversion.Version) error {
+	return i.approveInstallPlanForSubscription(ctx, common.SystemNamespace, common.EverestOperatorName, version)
 }
 
 // ApproveDBNamespacesInstallPlans approves the install plans needed for installing the DB namespaces.
@@ -105,7 +106,7 @@ func (i *Installer) ApproveDBNamespacesInstallPlans(ctx context.Context) error {
 		g, _ := errgroup.WithContext(ctx)
 		for _, sub := range subs.Items {
 			g.Go(func() error {
-				return i.approveInstallPlanForSubscription(ctx, namespace, sub.GetName())
+				return i.approveInstallPlanForSubscription(ctx, namespace, sub.GetName(), nil)
 			})
 			if err := g.Wait(); err != nil {
 				return fmt.Errorf("failed to install operators in namespace '%s': %w", namespace, err)

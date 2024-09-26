@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 
+	goversion "github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -44,24 +45,39 @@ func NewHookCmd(l *zap.SugaredLogger) *cobra.Command {
 				os.Exit(1)
 			}
 
+			v := viper.GetString("version")
+			if v == "" {
+				l.Error("version is required")
+				os.Exit(1)
+			}
+			ver, err := goversion.NewVersion(v)
+			if err != nil {
+				l.Errorf("failed to parse version: %v", err)
+				os.Exit(1)
+			}
 			helmClient := helm.New(l, kubeClient)
-			if err := run(cmd.Context(), l, helmClient); err != nil {
+			if err := run(cmd.Context(), l, helmClient, ver); err != nil {
 				l.Error(err)
 				os.Exit(1)
 			}
 		},
 	}
-
+	cmd.Flags().StringP("version", "v", "", "The version of Everest to install")
 	return cmd
 }
 
-func run(ctx context.Context, l *zap.SugaredLogger, helmInstaller kubernetes.HelmInstaller) error {
+func run(
+	ctx context.Context,
+	l *zap.SugaredLogger,
+	helmInstaller kubernetes.HelmInstaller,
+	v *goversion.Version,
+) error {
 	if err := helmInstaller.ApproveEverestMonitoringInstallPlan(ctx); err != nil {
 		return fmt.Errorf("failed to approve the install plan for Everest monitoring: %w", err)
 	}
 	l.Info("Installed Everest monitoring successfully")
 
-	if err := helmInstaller.ApproveEverestOperatorInstallPlan(ctx); err != nil {
+	if err := helmInstaller.ApproveEverestOperatorInstallPlan(ctx, v); err != nil {
 		return fmt.Errorf("failed to approve the install plan for Everest operator: %w", err)
 	}
 	l.Info("Installed Everest operator successfully")
@@ -75,4 +91,5 @@ func run(ctx context.Context, l *zap.SugaredLogger, helmInstaller kubernetes.Hel
 
 func bindViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
+	viper.BindPFlag("version", cmd.Flags().Lookup("version"))       //nolint:errcheck,gosec
 }
