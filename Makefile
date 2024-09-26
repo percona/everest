@@ -23,7 +23,7 @@ init:                   ## Install development tools
 build-helm-tools-cli: 			## Build the CLI for helm-tools
 	cd helm && go generate -x
 
-build:			  				## Build binaries 
+build: build-helm-tools-cli		## Build binaries 
 	go build -v $(LD_FLAGS_API) -o bin/everest ./cmd
 
 build-cli: build-helm-tools-cli        	## Build binaries 

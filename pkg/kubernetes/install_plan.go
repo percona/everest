@@ -52,7 +52,7 @@ func (k *Kubernetes) csvNameFromSubscription(ctx context.Context, namespace, nam
 	if err := wait.PollUntilContextCancel(ctx, pollInterval, true, func(ctx context.Context) (bool, error) {
 		sub, err := k.client.GetSubscription(ctx, namespace, name)
 		if err != nil {
-			return false, fmt.Errorf("could not get subscription %q: %w", name, err)
+			return false, fmt.Errorf("could not get subscription %s: %w", name, err)
 		}
 		csvName = sub.Status.CurrentCSV
 		if csvName == "" {
@@ -60,7 +60,7 @@ func (k *Kubernetes) csvNameFromSubscription(ctx context.Context, namespace, nam
 		}
 		return true, nil
 	}); err != nil {
-		return "", errors.New("could not get CSV name")
+		return "", fmt.Errorf("could not get CSV name for operator %s: %w", name, err)
 	}
 	if csvName == "" {
 		return "", errors.New("csvName is empty, cannot proceed")

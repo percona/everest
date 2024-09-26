@@ -33,7 +33,9 @@ func NewRootCmd(l *zap.SugaredLogger) *cobra.Command {
 			l.Debug("Debug logging enabled")
 		},
 	}
-	rootCmd.PersistentFlags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
+	rootCmd.PersistentFlags().StringP("kubeconfig", "k", "", "Path to a kubeconfig")
+	rootCmd.PersistentFlags().BoolP("verbose", "v", true, "Enable verbose mode")
+	rootCmd.PersistentFlags().Bool("json", false, "Set output type to JSON")
 
 	rootCmd.AddCommand(newHooksCommand(l))
 	return rootCmd
