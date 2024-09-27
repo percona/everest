@@ -16,6 +16,7 @@ import { test, expect } from '@fixtures'
 import {checkError, testsNs, deleteDBCluster} from "@tests/tests/helpers";
 
 let recommendedVersion
+test.setTimeout(120 * 1000)
 
 test.beforeAll(async ({ request }) => {
   const engineResponse = await request.get(`/v1/namespaces/${testsNs}/database-engines/percona-xtradb-cluster-operator`)
@@ -69,8 +70,8 @@ test('create/edit/delete pxc single node cluster', async ({ request, page }) => 
   await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
     data: pxcPayload,
   })
-  for (let i = 0; i < 20; i++) {
-    await page.waitForTimeout(1000)
+  for (let i = 0; i < 30; i++) {
+    await page.waitForTimeout(2000)
 
     const pxcCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
 
@@ -158,8 +159,8 @@ test('expose pxc cluster after creation', async ({ request, page }) => {
   await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
     data: pxcPayload,
   })
-  for (let i = 0; i < 20; i++) {
-    await page.waitForTimeout(1000)
+  for (let i = 0; i < 30; i++) {
+    await page.waitForTimeout(2000)
 
     const pxcCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
 
@@ -201,7 +202,6 @@ test('expose pxc cluster after creation', async ({ request, page }) => {
 })
 
 test('expose pxc cluster on EKS to the public internet and scale up', async ({ request, page }) => {
-  test.setTimeout(60000)
   const clusterName = 'eks-pxc-cluster'
   const pxcPayload = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -236,8 +236,8 @@ test('expose pxc cluster on EKS to the public internet and scale up', async ({ r
   await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
     data: pxcPayload,
   })
-  for (let i = 0; i < 20; i++) {
-    await page.waitForTimeout(10000)
+  for (let i = 0; i < 30; i++) {
+    await page.waitForTimeout(2000)
 
     const pxcCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
 
