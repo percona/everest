@@ -160,7 +160,7 @@ test('expose pxc cluster after creation', async ({ request, page }) => {
     data: pxcPayload,
   })
   for (let i = 0; i < 30; i++) {
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(4000)
 
     const pxcCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
 
