@@ -1390,7 +1390,7 @@ func validateMetadata(metadata *map[string]interface{}) error {
 	}
 	m := *metadata
 	if _, err := strconv.ParseUint(fmt.Sprint(m["resourceVersion"]), 10, 64); err != nil {
-		return errors.New(fmt.Sprint(metadata))
+		return err
 	}
 	return nil
 }
