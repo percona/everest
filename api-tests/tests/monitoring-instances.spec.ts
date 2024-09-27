@@ -100,7 +100,7 @@ test('list monitoring instances', async ({ request }) => {
   await checkError(response)
   const list = await response.json()
 
-  expect(list.filter((i) => i.name.startsWith(`${testPrefix}`)).length).toBe(3)
+  expect(list.filter((i) => i.name.startsWith(`${prefix}`)).length).toBe(3)
   await deleteInstances(request, prefix)
 })
 
@@ -129,7 +129,7 @@ test('delete monitoring instance', async ({ request }) => {
   await checkError(response)
   let list = await response.json()
 
-  expect(list.filter((i) => i.name.startsWith(`${testPrefix}`)).length).toBe(3)
+  expect(list.filter((i) => i.name.startsWith(`${prefix}`)).length).toBe(3)
 
   response = await request.delete(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
   await checkError(response)
@@ -138,7 +138,7 @@ test('delete monitoring instance', async ({ request }) => {
   await checkError(response)
   list = await response.json()
 
-  expect(list.filter((i) => i.name.startsWith(`${testPrefix}`)).length).toBe(2)
+  expect(list.filter((i) => i.name.startsWith(`${prefix}`)).length).toBe(2)
   await deleteInstances(request, prefix)
 })
 
@@ -310,8 +310,7 @@ async function createInstances(request: APIRequestContext, names: string[]): Pro
   }
 
   const res = []
-
-  for (let i = 1; i <= names.length; i++) {
+  for (let i = 0; i < names.length; i++) {
     data.name = names[i]
     res.push(data.name)
     const response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
