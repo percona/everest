@@ -66,3 +66,17 @@ export const memoryParser = (
     originalUnit: '',
   };
 };
+
+export const getTotalResourcesDetailedString = (
+  value: number,
+  numberOfNodes: number,
+  unit: string
+) => {
+  if (numberOfNodes === 1) {
+    return `${value} ${unit}`;
+  }
+
+  const totalResources = value * numberOfNodes;
+
+  return `${numberOfNodes} x ${value} ${unit} = ${totalResources} ${unit}`;
+};
