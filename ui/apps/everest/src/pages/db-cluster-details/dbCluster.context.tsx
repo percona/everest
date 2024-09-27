@@ -34,7 +34,7 @@ export const DbClusterContextProvider = ({
       refetchInterval: refetchInterval,
     }
   );
-  
+
   const { data: dbCluster, isLoading } = queryResult;
 
   const temporarilyIncreaseInterval = (
