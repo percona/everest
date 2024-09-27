@@ -31,7 +31,11 @@ import { ResourcesDetailsOverviewProps } from './card.types';
 import OverviewSectionRow from '../overview-section-row';
 import { Messages } from '../cluster-overview.messages';
 import { ResourcesEditModal } from './resources';
-import { cpuParser, memoryParser } from 'utils/k8ResourceParser';
+import {
+  cpuParser,
+  getTotalResourcesDetailedString,
+  memoryParser,
+} from 'utils/k8ResourceParser';
 import { dbEngineToDbType } from '@percona/utils';
 import { DB_CLUSTER_QUERY, useUpdateDbClusterResources } from 'hooks';
 import { DbType } from '@percona/types';
@@ -50,6 +54,7 @@ export const ResourcesDetails = ({
   const proxyMemory = dbCluster.spec.proxy.resources?.memory || 0;
   const disk = dbCluster.spec.engine.storage.size;
   const parsedDiskValues = memoryParser(disk.toString());
+  const parsedMemoryValues = memoryParser(memory.toString());
   const dbType = dbEngineToDbType(dbCluster.spec.engine.type);
   const replicas = dbCluster.spec.engine.replicas.toString();
   const proxies = dbCluster.spec.proxy.replicas.toString();
@@ -158,15 +163,27 @@ export const ResourcesDetails = ({
           >
             <OverviewSectionRow
               label={Messages.fields.cpu}
-              contentString={`${cpu}`}
-            />
-            <OverviewSectionRow
-              label={Messages.fields.disk}
-              contentString={`${disk}`}
+              contentString={getTotalResourcesDetailedString(
+                cpuParser(cpu.toString() || '0'),
+                parseInt(replicas, 10),
+                'CPU'
+              )}
             />
             <OverviewSectionRow
               label={Messages.fields.memory}
-              contentString={`${memory}`}
+              contentString={getTotalResourcesDetailedString(
+                parsedMemoryValues.value,
+                parseInt(replicas, 10),
+                parsedMemoryValues.originalUnit
+              )}
+            />
+            <OverviewSectionRow
+              label={Messages.fields.disk}
+              contentString={getTotalResourcesDetailedString(
+                parsedDiskValues.value,
+                parseInt(replicas, 10),
+                parsedDiskValues.originalUnit
+              )}
             />
           </OverviewSection>
         </Stack>
@@ -180,7 +197,7 @@ export const ResourcesDetails = ({
             cpu: cpuParser(cpu.toString() || '0'),
             disk: parsedDiskValues.value,
             diskUnit: parsedDiskValues.originalUnit,
-            memory: memoryParser(memory.toString()).value,
+            memory: parsedMemoryValues.value,
             proxyCpu: cpuParser(proxyCpu.toString() || '0'),
             proxyMemory: memoryParser(proxyMemory.toString()).value,
             numberOfNodes,
