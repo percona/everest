@@ -259,9 +259,7 @@ func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, namespace, na
 	err = e.kubeClient.UpdateMonitoringConfig(c, m)
 	if err != nil {
 		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Failed updating monitoring instance"),
-		})
+		return ctx.JSON(http.StatusInternalServerError, err)
 	}
 
 	return ctx.JSON(http.StatusOK, &MonitoringInstance{
