@@ -31,6 +31,7 @@ export const UpgradeDbVersionModal = ({
   handleSubmitModal,
   version,
   dbVersionsUpgradeList,
+  submitting,
 }: UpgradeModalProps) => {
   const onSubmit: SubmitHandler<UpgradeModalFormType> = ({ dbVersion }) => {
     handleSubmitModal(dbVersion);
@@ -44,6 +45,7 @@ export const UpgradeDbVersionModal = ({
       schema={dbVersionSchema}
       headerMessage={Messages.title}
       onSubmit={onSubmit}
+      submitting={submitting}
       submitMessage={Messages.upgrade}
       defaultValues={upgradeModalDefaultValues(version)}
     >

@@ -24,6 +24,7 @@ import { useDbVersionsList } from 'components/cluster-form/db-version/useDbVersi
 import { useUpdateDbClusterVersion } from 'hooks/api/db-cluster/useUpdateDbCluster';
 import { DbClusterContext } from '../../../../dbCluster.context';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
+import { useEffect } from 'react';
 
 export const BasicInformationSection = ({
   loading,
@@ -36,20 +37,41 @@ export const BasicInformationSection = ({
   const handleCloseModal = () => {
     setOpenEditModal(false);
   };
-  const { dbCluster, refetch } = useContext(DbClusterContext);
-  const { mutateAsync: updateDbClusterVersion, isPending } =
-    useUpdateDbClusterVersion();
+  const { dbCluster /*temporarilyIncreaseInterval*/ } =
+    useContext(DbClusterContext);
+
+  const { mutate: updateDbClusterVersion } = useUpdateDbClusterVersion();
+  const [upgrading, setUpgrading] = useState(false);
 
   const handleSubmit = async (dbVersion: string) => {
-    await updateDbClusterVersion({
-      clusterName: dbCluster!.metadata?.name,
-      namespace: dbCluster!.metadata?.namespace,
-      dbCluster: dbCluster!,
-      dbVersion,
-    });
-    await refetch();
-    handleCloseModal();
+    setUpgrading(true);
+    updateDbClusterVersion(
+      {
+        clusterName: dbCluster!.metadata?.name,
+        namespace: dbCluster!.metadata?.namespace,
+        dbCluster: dbCluster!,
+        dbVersion,
+      },
+      {
+        onSuccess: () => {
+          //if we check initializing status we could remove this string
+          // temporarilyIncreaseInterval(10*1000, 10*1000);
+        },
+        onError: () => {
+          // TODO check if error shows, modal should be opened
+          setUpgrading(false);
+        },
+      }
+    );
   };
+
+  useEffect(() => {
+    // should we close this process if initializing will not added from BE?
+    if (upgrading && dbCluster?.status?.status !== DbClusterStatus.ready) {
+      handleCloseModal();
+      setUpgrading(false);
+    }
+  }, [upgrading, dbCluster?.status?.status]);
 
   const dbVersionsUpgradeList = useDbVersionsList({
     namespace,
@@ -85,7 +107,7 @@ export const BasicInformationSection = ({
               onClick: () => {
                 setOpenEditModal(true);
               },
-              disabled: isPending,
+              disabled: upgrading,
               children: 'Upgrade',
             },
           }
@@ -98,13 +120,14 @@ export const BasicInformationSection = ({
       <OverviewSectionRow label="Name" contentString={name} />
       <OverviewSectionRow label="Namespace" contentString={namespace} />
       <OverviewSectionRow label="Version" contentString={version} />
-      {openEditModal && shouldShowUpgrade && dbVersionsUpgradeList && (
+      {openEditModal && (
         <UpgradeDbVersionModal
           open={openEditModal}
           handleCloseModal={handleCloseModal}
           handleSubmitModal={handleSubmit}
           dbVersionsUpgradeList={dbVersionsUpgradeList}
           version={version}
+          submitting={upgrading}
         />
       )}
     </OverviewSection>

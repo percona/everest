@@ -24,6 +24,7 @@ export interface UpgradeModalProps {
   handleSubmitModal: (dbVersion: string) => void;
   dbVersionsUpgradeList: DbEngine;
   version: string;
+  submitting: boolean;
 }
 
 export const upgradeModalDefaultValues = (dbVersion: string) => ({

@@ -1,5 +1,5 @@
 import { DbCluster } from 'shared-types/dbCluster.types';
-import { QueryObserverResult, RefetchOptions } from '@tanstack/react-query';
+import { QueryObserverResult } from '@tanstack/react-query';
 
 export interface DbClusterContextProps {
   dbCluster?: DbCluster;
@@ -8,7 +8,6 @@ export interface DbClusterContextProps {
   canReadMonitoring: boolean;
   canUpdateMonitoring: boolean;
   canReadCredentials: boolean;
-  refetch: (
-    options?: RefetchOptions
-  ) => Promise<QueryObserverResult<DbCluster, unknown>>;
+  queryResult: QueryObserverResult<DbCluster, unknown>;
+  temporarilyIncreaseInterval: (interval: number, timeoutTime: number) => void;
 }
