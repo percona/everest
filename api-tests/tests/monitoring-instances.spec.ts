@@ -118,7 +118,7 @@ test('get monitoring instance', async ({ request }) => {
   await deleteInstances(request, prefix)
 })
 
-test('delete monitoring instance', async ({ request }) => {
+test('delete monitoring instance', async ({ request, page }) => {
   const prefix = testPrefix()
   const names = genNames(prefix)
   await createInstances(request, names)
@@ -133,6 +133,9 @@ test('delete monitoring instance', async ({ request }) => {
 
   response = await request.delete(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
   await checkError(response)
+
+  // list of the monitoring-instances is not updated immediately, there is some kind of cache
+  await page.waitForTimeout(500)
 
   response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances`)
   await checkError(response)
