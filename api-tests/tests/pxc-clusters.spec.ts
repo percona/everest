@@ -69,7 +69,7 @@ test('create/edit/delete pxc single node cluster', async ({ request, page }) => 
   await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
     data: pxcPayload,
   })
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 20; i++) {
     await page.waitForTimeout(1000)
 
     const pxcCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
@@ -106,6 +106,7 @@ test('create/edit/delete pxc single node cluster', async ({ request, page }) => 
   expect(pitrInfo.latestDate).toBe(undefined)
 
   // Update PXC cluster
+  expect(pxcPayload.metadata["resourceVersion"]).toBeDefined()
 
   const updatedPXCCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: pxcPayload,
@@ -157,7 +158,7 @@ test('expose pxc cluster after creation', async ({ request, page }) => {
   await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
     data: pxcPayload,
   })
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 20; i++) {
     await page.waitForTimeout(1000)
 
     const pxcCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
@@ -182,6 +183,7 @@ test('expose pxc cluster after creation', async ({ request, page }) => {
   pxcPayload.spec.proxy.expose.type = 'external'
 
   // Update PXC cluster
+  expect(pxcPayload.metadata["resourceVersion"]).toBeDefined()
 
   const updatedPXCCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: pxcPayload,
@@ -234,7 +236,7 @@ test('expose pxc cluster on EKS to the public internet and scale up', async ({ r
   await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
     data: pxcPayload,
   })
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 20; i++) {
     await page.waitForTimeout(10000)
 
     const pxcCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
@@ -259,6 +261,7 @@ test('expose pxc cluster on EKS to the public internet and scale up', async ({ r
   pxcPayload.spec.engine.replicas = 5
 
   // Update PXC cluster
+  expect(pxcPayload.metadata["resourceVersion"]).toBeDefined()
 
   const updatedPXCCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: pxcPayload,

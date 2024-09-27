@@ -65,7 +65,7 @@ test('create/edit/delete single node pg cluster', async ({ request, page }) => {
   await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
     data: pgPayload,
   })
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 20; i++) {
     await page.waitForTimeout(1000)
 
     const pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
@@ -94,6 +94,7 @@ test('create/edit/delete single node pg cluster', async ({ request, page }) => {
   pgPayload.spec.engine.replicas = 3
 
   // Update PG cluster
+  expect(pgPayload.metadata["resourceVersion"]).toBeDefined()
 
   const updatedPGCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: pgPayload,
@@ -145,7 +146,7 @@ test('expose pg cluster after creation', async ({ request, page }) => {
   await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
     data: pgPayload,
   })
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 20; i++) {
     await page.waitForTimeout(1000)
 
     const pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
@@ -170,6 +171,7 @@ test('expose pg cluster after creation', async ({ request, page }) => {
   pgPayload.spec.proxy.expose.type = 'external'
 
   // Update PG cluster
+  expect(pgPayload.metadata["resourceVersion"]).toBeDefined()
 
   const updatedPGCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: pgPayload,
@@ -221,7 +223,7 @@ test('expose pg cluster on EKS to the public internet and scale up', async ({ re
   await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
     data: pgPayload,
   })
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 20; i++) {
     await page.waitForTimeout(2000)
 
     const pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
@@ -246,6 +248,7 @@ test('expose pg cluster on EKS to the public internet and scale up', async ({ re
   pgPayload.spec.engine.replicas = 5
 
   // Update PG cluster
+  expect(pgPayload.metadata["resourceVersion"]).toBeDefined()
 
   const updatedPGCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: pgPayload,

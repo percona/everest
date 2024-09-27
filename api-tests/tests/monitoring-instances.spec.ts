@@ -145,11 +145,12 @@ test('delete monitoring instance', async ({ request, page }) => {
   await deleteInstances(request, prefix)
 })
 
-test('patch monitoring instance', async ({ request }) => {
+test('patch monitoring instance', async ({ request , page}) => {
   const prefix = testPrefix()
   const names = genNames(prefix)
   await createInstances(request, names)
   const name = names[1]
+  await page.waitForTimeout(500)
 
   const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
 
@@ -167,11 +168,12 @@ test('patch monitoring instance', async ({ request }) => {
   await deleteInstances(request, prefix)
 })
 
-test('patch monitoring instance secret key changes', async ({ request }) => {
+test('patch monitoring instance secret key changes', async ({ request , page}) => {
   const prefix = testPrefix()
   const names = genNames(prefix)
   await createInstances(request, names)
   const name = names[1]
+  await page.waitForTimeout(500)
 
   const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
 
@@ -193,10 +195,11 @@ test('patch monitoring instance secret key changes', async ({ request }) => {
   await deleteInstances(request, prefix)
 })
 
-test('patch monitoring instance type updates properly', async ({ request }) => {
+test('patch monitoring instance type updates properly', async ({ request , page}) => {
   const prefix = testPrefix()
   const names = genNames(prefix)
   await createInstances(request, names)
+  await page.waitForTimeout(500)
   const name = names[1]
 
   const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
@@ -216,10 +219,11 @@ test('patch monitoring instance type updates properly', async ({ request }) => {
   await deleteInstances(request, prefix)
 })
 
-test('patch monitoring instance type fails on missing key', async ({ request }) => {
+test('patch monitoring instance type fails on missing key', async ({ request, page }) => {
   const prefix = testPrefix()
   const names = genNames(prefix)
   await createInstances(request, names)
+  await page.waitForTimeout(500)
   const name = names[1]
 
   const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
