@@ -1353,6 +1353,26 @@ func TestValidateShardingOnUpdate(t *testing.T) {
 			expected: errDisableShardingNotSupported,
 		},
 		{
+			desc:    "try to enable - if there was no sharding section",
+			updated: []byte(`{"spec": {"sharding": {"enabled": true, "shards":3, "configServer": {"replicas": 2}}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{},
+			},
+			expected: errShardingEnablingNotSupported,
+		},
+		{
+			desc:    "try to enable - if sharding 'enabled' was false",
+			updated: []byte(`{"spec": {"sharding": {"enabled": true, "shards":3, "configServer": {"replicas": 2}}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: false,
+					},
+				},
+			},
+			expected: errShardingEnablingNotSupported,
+		},
+		{
 			desc:    "try to change configServers",
 			updated: []byte(`{"spec": {"sharding": {"enabled": true, "shards":3, "configServer": {"replicas": 2}}}}`),
 			old: &everestv1alpha1.DatabaseCluster{
@@ -1386,7 +1406,7 @@ func TestValidateShardingOnUpdate(t *testing.T) {
 		},
 		{
 			desc:    "ok",
-			updated: []byte(`{"spec": {"engine": {"type": "psmdb"}, "sharding": {"enabled": true, "shards":5, "configServer": {"replicas": 3}}}}`),
+			updated: []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0"}, "sharding": {"enabled": true, "shards":5, "configServer": {"replicas": 3}}}}`),
 			old: &everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Sharding: &everestv1alpha1.Sharding{
@@ -1421,37 +1441,41 @@ func TestValidateSharding(t *testing.T) {
 	cases := []struct {
 		desc     string
 		expected error
-		updated  []byte
-		old      *everestv1alpha1.DatabaseCluster
+		cluster  []byte
 	}{
 		{
+			desc:     "old psmdb version",
+			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.15.0"}, "sharding": {"enabled": true, "shards":5, "configServer": {"replicas": 3}}}}`),
+			expected: errShardingVersion,
+		},
+		{
 			desc:     "pxc - not supported",
-			updated:  []byte(`{"spec": {"engine": {"type": "pxc"}, "sharding": {"enabled": true}}}`),
+			cluster:  []byte(`{"spec": {"engine": {"type": "pxc"}, "sharding": {"enabled": true}}}`),
 			expected: errShardingIsNotSupported,
 		},
 		{
 			desc:     "pg - not supported",
-			updated:  []byte(`{"spec": {"engine": {"type": "pg"}, "sharding": {"enabled": true}}}`),
+			cluster:  []byte(`{"spec": {"engine": {"type": "pg"}, "sharding": {"enabled": true}}}`),
 			expected: errShardingIsNotSupported,
 		},
 		{
 			desc:     "even configservers",
-			updated:  []byte(`{"spec": {"engine": {"type": "psmdb"}, "sharding": {"enabled": true, "shards": 1, "configServer": {"replicas": 4}}}}`),
+			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0"}, "sharding": {"enabled": true, "shards": 1, "configServer": {"replicas": 4}}}}`),
 			expected: errEvenServersNumber,
 		},
 		{
 			desc:     "insufficient configservers",
-			updated:  []byte(`{"spec": {"engine": {"type": "psmdb"}, "sharding": {"enabled": true, "shards": 1,"configServer": {"replicas": 0}}}}`),
+			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0"}, "sharding": {"enabled": true, "shards": 1,"configServer": {"replicas": 0}}}}`),
 			expected: errInsufficientCfgSrvNumber,
 		},
 		{
 			desc:     "insufficient shards number",
-			updated:  []byte(`{"spec": {"engine": {"type": "psmdb"},"sharding": {"enabled": true, "shards": 0, "configServer": {"replicas": 3}}}}`),
+			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0"},"sharding": {"enabled": true, "shards": 0, "configServer": {"replicas": 3}}}}`),
 			expected: errInsufficientShardsNumber,
 		},
 		{
 			desc:     "ok",
-			updated:  []byte(`{"spec": {"engine": {"type": "psmdb"}, "sharding": {"enabled": true, "shards": 1, "configServer": {"replicas": 3}}}}`),
+			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0"}, "sharding": {"enabled": true, "shards": 1, "configServer": {"replicas": 3}}}}`),
 			expected: nil,
 		},
 	}
@@ -1461,7 +1485,7 @@ func TestValidateSharding(t *testing.T) {
 			t.Parallel()
 
 			dbc := &DatabaseCluster{}
-			err := json.Unmarshal(tc.updated, dbc)
+			err := json.Unmarshal(tc.cluster, dbc)
 			require.NoError(t, err)
 
 			err = validateSharding(*dbc)
