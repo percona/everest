@@ -1,6 +1,6 @@
 FILES = $(shell find . -type f -name '*.go')
 
-RELEASE_VERSION ?= v1.2.0-rc7
+RELEASE_VERSION ?= v1.2.0-rc8
 RELEASE_FULLCOMMIT ?= $(shell git rev-parse HEAD)
 
 FLAGS = -X 'github.com/percona/everest/pkg/version.Version=$(RELEASE_VERSION)' \
