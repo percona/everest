@@ -15,10 +15,7 @@
 
 import { expect, test } from '@playwright/test';
 import { DBClusterDetailsTabs } from '../../../../../src/pages/db-cluster-details/db-cluster-details.types';
-import {
-  createDbClusterFn,
-  deleteDbClusterFn,
-} from 'utils/db-cluster';
+import { createDbClusterFn, deleteDbClusterFn } from 'utils/db-cluster';
 import {
   findDbAndClickActions,
   findDbAndClickRow,
@@ -124,7 +121,9 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     await expect(scheduledBackupsAccordion).toBeVisible();
     await scheduledBackupsAccordion.click();
 
-    await expect(await page.getByText('Weekly on Tuesdays at 2:15 AM')).toBeVisible();
+    await expect(
+      await page.getByText('Weekly on Tuesdays at 2:15 AM')
+    ).toBeVisible();
     await page.getByTestId('menu-button').click();
     await page.getByTestId('schedule-menu-item').click();
     await fillScheduleModalForm(page, {

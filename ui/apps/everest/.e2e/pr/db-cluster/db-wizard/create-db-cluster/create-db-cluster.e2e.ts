@@ -40,7 +40,7 @@ import {
 } from '../db-wizard-utils';
 import { findDbAndClickActions } from 'utils/db-clusters-list';
 import { waitForInitializingState } from 'utils/table';
-import { EVEREST_CI_NAMESPACES } from "../../../../constants";
+import { EVEREST_CI_NAMESPACES } from '../../../../constants';
 
 test.describe('DB Cluster creation', () => {
   // IST is UTC+5h30, with or without DST

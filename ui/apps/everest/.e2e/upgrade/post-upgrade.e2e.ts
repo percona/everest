@@ -2,19 +2,23 @@ import { expect, test, request } from '@playwright/test';
 import fs from 'fs';
 import yaml from 'yaml';
 import { everestdir, everestTagForUpgrade, TIMEOUTS } from '../constants';
-import { expectedEverestUpgradeLog, mongoDBCluster, postgresDBCluster } from './testData';
-import { waitForStatus } from "../utils/table";
-import { getTokenFromLocalStorage } from "../utils/localStorage";
-import { getNamespacesFn } from "../utils/namespaces";
-import * as process from "process";
-import { mapper } from "../utils/mapper";
+import {
+  expectedEverestUpgradeLog,
+  mongoDBCluster,
+  postgresDBCluster,
+} from './testData';
+import { waitForStatus } from '../utils/table';
+import { getTokenFromLocalStorage } from '../utils/localStorage';
+import { getNamespacesFn } from '../utils/namespaces';
+import * as process from 'process';
+import { mapper } from '../utils/mapper';
 
 let namespace: string;
 
 test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
   test.beforeAll(async ({ request }) => {
     const token = await getTokenFromLocalStorage();
-    [ namespace ] = await getNamespacesFn(token, request);
+    [namespace] = await getNamespacesFn(token, request);
   });
 
   test('Verify upgrade.log file', async ({ page }) => {
@@ -30,23 +34,33 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
     await page.goto('/databases');
 
     await test.step('verify mongoDB and postgresDB clusters are up', async () => {
-      await waitForStatus(page, mongoDBCluster.name, 'Up', TIMEOUTS.ThirtySeconds);
-      await waitForStatus(page, postgresDBCluster.name, 'Up', TIMEOUTS.ThirtySeconds);
+      await waitForStatus(
+        page,
+        mongoDBCluster.name,
+        'Up',
+        TIMEOUTS.ThirtySeconds
+      );
+      await waitForStatus(
+        page,
+        postgresDBCluster.name,
+        'Up',
+        TIMEOUTS.ThirtySeconds
+      );
     });
   });
 
   test('verify user is able to upgrade operators', async ({ page }) => {
     type OperatorVersions = {
-      name: string,
+      name: string;
       shortName: string;
-      version: string,
-      oldVersion: string,
-    }
+      version: string;
+      oldVersion: string;
+    };
 
     enum Operator {
-        PXC = 'percona-xtradb-cluster-operator',
-        PSMDB = 'percona-server-mongodb-operator',
-        PG = 'percona-postgresql-operator',
+      PXC = 'percona-xtradb-cluster-operator',
+      PSMDB = 'percona-server-mongodb-operator',
+      PG = 'percona-postgresql-operator',
     }
 
     const operatorVersionsVariables = new Map();
@@ -57,8 +71,8 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
     const getOperatorShortName = mapper<Operator>({
       _default: 'unknown',
       [Operator.PXC]: 'pxc',
-        [Operator.PSMDB]: 'psmdb',
-        [Operator.PG]: 'postgresql',
+      [Operator.PSMDB]: 'psmdb',
+      [Operator.PG]: 'postgresql',
     });
 
     const getExpectedOperatorVersions = async () => {
@@ -70,7 +84,9 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
         const yamlContent = await response.text();
         const parsedYaml = yaml.parse(yamlContent);
 
-        const fastBundlesImages = parsedYaml.Fast.Bundles.map(bundle => bundle.Image);
+        const fastBundlesImages = parsedYaml.Fast.Bundles.map(
+          (bundle) => bundle.Image
+        );
         const lastImageTag = fastBundlesImages[fastBundlesImages.length - 1];
 
         const versionMatch = lastImageTag.match(/:(\d+\.\d+\.\d+)/);
@@ -78,7 +94,12 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
         const oldVersion = process.env[operatorVersionsVariables.get(operator)];
 
         if (oldVersion !== version) {
-          allVersions.push({ name: operator, shortName: getOperatorShortName(operator),  version: `v${version}`, oldVersion: `v${oldVersion}` });
+          allVersions.push({
+            name: operator,
+            shortName: getOperatorShortName(operator),
+            version: `v${version}`,
+            oldVersion: `v${oldVersion}`,
+          });
         }
       }
 
@@ -89,34 +110,48 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
 
     await page.goto(`/settings/namespaces/${namespace}`);
 
-    const upgradeOperatorsButton = page.getByRole('button', { name: 'Upgrade Operators' });
+    const upgradeOperatorsButton = page.getByRole('button', {
+      name: 'Upgrade Operators',
+    });
     const upgradeOperatorsModal = page.getByRole('dialog');
 
     await expect(upgradeOperatorsButton).toBeVisible();
 
     for (const operator of operatorsVersions) {
-      await expect(page.getByText(`${operator.shortName} ${operator.oldVersion} (Upgrade available)`)).toBeVisible();
+      await expect(
+        page.getByText(
+          `${operator.shortName} ${operator.oldVersion} (Upgrade available)`
+        )
+      ).toBeVisible();
     }
 
     await upgradeOperatorsButton.click();
     await expect(
-        upgradeOperatorsModal.getByText(
-            `Are you sure you want to upgrade your operators in ${namespace}?`
-        )
+      upgradeOperatorsModal.getByText(
+        `Are you sure you want to upgrade your operators in ${namespace}?`
+      )
     ).toBeVisible();
 
     for (const operatorVersion of operatorsVersions) {
-        await expect(upgradeOperatorsModal.locator('li').filter({
-            hasText: `${operatorVersion.name} ${operatorVersion.oldVersion} will be upgraded to ${operatorVersion.version}`
-        })).toBeVisible();
+      await expect(
+        upgradeOperatorsModal.locator('li').filter({
+          hasText: `${operatorVersion.name} ${operatorVersion.oldVersion} will be upgraded to ${operatorVersion.version}`,
+        })
+      ).toBeVisible();
     }
 
-    await upgradeOperatorsModal.getByRole('button', { name: 'Upgrade' }).click();
+    await upgradeOperatorsModal
+      .getByRole('button', { name: 'Upgrade' })
+      .click();
 
     for (const operator of operatorsVersions) {
       await expect(async () => {
-        await expect(page.getByText(`${operator.shortName} ${operator.version}`, { exact: true })).toBeVisible();
+        await expect(
+          page.getByText(`${operator.shortName} ${operator.version}`, {
+            exact: true,
+          })
+        ).toBeVisible();
       }).toPass({ timeout: TIMEOUTS.ThreeMinutes });
-      }
+    }
   });
 });

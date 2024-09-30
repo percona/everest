@@ -1,9 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { getTokenFromLocalStorage } from 'utils/localStorage';
-import {
-  createDbClusterFn,
-  deleteDbClusterFn,
-} from 'utils/db-cluster';
+import { createDbClusterFn, deleteDbClusterFn } from 'utils/db-cluster';
 import { findDbAndClickActions } from 'utils/db-clusters-list';
 
 test.describe('DB Cluster Editing Basic step', () => {

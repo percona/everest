@@ -14,10 +14,7 @@
 // limitations under the License.
 
 import { expect, test } from '@playwright/test';
-import {
-  createDbClusterFn,
-  deleteDbClusterFn,
-} from 'utils/db-cluster';
+import { createDbClusterFn, deleteDbClusterFn } from 'utils/db-cluster';
 import { findDbAndClickActions } from 'utils/db-clusters-list';
 import { DbType } from '@percona/types';
 import { moveForward } from 'utils/db-wizard';
