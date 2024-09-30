@@ -41,6 +41,7 @@ import {
   listMonitoringInstances,
 } from '../utils/monitoring-instance';
 import { clickOnDemandBackup } from 'pr/db-cluster-details/utils';
+import { prepareTestDB, dropTestDB, queryTestDB } from 'utils/db-cmd-line';
 
 const {
   MONITORING_URL,
@@ -198,8 +199,8 @@ test.describe.configure({ retries: 0 });
         expect(addedCluster?.spec.proxy.replicas).toBe(size);
       });
 
-      test.skip(`Add data with ${db} and size ${size}`, async () => {
-        // TODO
+      test(`Add data with ${db} and size ${size}`, async ({ page }) => {
+        await prepareTestDB(clusterName, namespace);
       });
 
       test(`Create demand backup with ${db} and size ${size}`, async ({
@@ -214,11 +215,11 @@ test.describe.configure({ retries: 0 });
         ).not.toBeEmpty();
         await page.getByTestId('form-dialog-create').click();
 
-        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 120000);
+        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 240000);
       });
 
-      test.skip(`Delete data with ${db} and size ${size}`, async () => {
-        // TODO
+      test(`Delete data with ${db} and size ${size}`, async ({ page }) => {
+        await dropTestDB(clusterName, namespace);
       });
 
       test(`Restore cluster with ${db} and size ${size}`, async ({ page }) => {
@@ -241,6 +242,23 @@ test.describe.configure({ retries: 0 });
         // we select based on backup source since restores cannot be named and we don't know
         // in advance what will be the name
         await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 120000);
+      });
+
+      test(`Check data after restore with ${db} and size ${size}`, async ({
+        page,
+      }) => {
+        const result = await queryTestDB(clusterName, namespace);
+        switch (db) {
+          case 'pxc':
+            expect(result.trim()).toBe('1\n2\n3');
+            break;
+          case 'psmdb':
+            expect(result.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
+            break;
+          case 'postgresql':
+            expect(result.trim()).toBe('1\n 2\n 3');
+            break;
+        }
       });
 
       test(`Delete restore with ${db} and size ${size}`, async ({ page }) => {

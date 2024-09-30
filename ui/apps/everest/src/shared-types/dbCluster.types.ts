@@ -12,7 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { DbEngineType } from './dbEngines.types';
+import { DbEngineType, ProxyType } from './dbEngines.types';
 
 export enum ProxyExposeType {
   internal = 'internal',
@@ -50,7 +50,7 @@ export interface Backup {
   schedules?: Array<Schedule>;
 }
 
-interface Resources {
+export interface Resources {
   cpu: number | string;
   memory: number | string;
 }
@@ -70,12 +70,14 @@ interface Engine {
   config?: string;
 }
 
-interface Proxy {
+export interface Proxy {
   replicas: number;
   expose: {
     type: ProxyExposeType;
     ipSourceRanges?: string[];
   };
+  resources?: Resources;
+  type: ProxyType;
 }
 
 export interface DataSource {

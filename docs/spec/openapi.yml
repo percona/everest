@@ -2164,6 +2164,9 @@ components:
       type: object
       description: kubernetes object
       properties:
+        connectionUrl:
+          type: string
+          example: postgres://user:secret@100.100.100.100:5432
         username:
           type: string
           example: root

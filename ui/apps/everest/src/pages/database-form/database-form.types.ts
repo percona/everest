@@ -13,41 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export enum DbWizardForm {
-  dbName = 'dbName',
-  dbType = 'dbType',
-  k8sNamespace = 'k8sNamespace',
-  dbEnvironment = 'dbEnvironment',
-  dbVersion = 'dbVersion',
-  storageClass = 'storageClass',
-  cpu = 'cpu',
-  memory = 'memory',
-  disk = 'disk',
-  // This is for retrocompatibility reasons, as some users still have Gb as a unit
-  diskUnit = 'diskUnit',
-  numberOfNodes = 'numberOfNodes',
-  resourceSizePerNode = 'resourceSizePerNode',
-  backupsEnabled = 'backupsEnabled',
-  schedules = 'schedules',
-  pitrEnabled = 'pitrEnabled',
-  pitrStorageLocation = 'pitrStorageLocation',
-  externalAccess = 'externalAccess',
-  internetFacing = 'internetFacing',
-  sourceRanges = 'sourceRanges',
-  engineParametersEnabled = 'engineParametersEnabled',
-  engineParameters = 'engineParameters',
-  monitoring = 'monitoring',
-  monitoringInstance = 'monitoringInstance',
-  endpoint = 'endpoint',
-  sharding = 'sharding',
-  shardNr = 'shardNr',
-  shardConfigServers = 'shardConfigServers',
-}
-
-export const DbWizardFormFields = {
-  ...DbWizardForm,
-};
-
 export type DbWizardMode = 'edit' | 'new' | 'restoreFromBackup';
 
 export type StepProps = {

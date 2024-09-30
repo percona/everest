@@ -36,6 +36,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"golang.org/x/mod/semver"
@@ -46,6 +47,7 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/cmd/config"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/rbac"
 )
@@ -115,8 +117,10 @@ var (
 	errInsufficientCfgSrvNumber      = errors.New("sharding: minimum config servers number is 1")
 	errEvenServersNumber             = errors.New("sharding: config servers number should be odd")
 	errDisableShardingNotSupported   = errors.New("sharding: disable sharding is not supported")
+	errShardingEnablingNotSupported  = errors.New("sharding: enable sharding is not supported when editing db cluster")
 	errChangeShardsNumNotSupported   = errors.New("sharding: change shards number is not supported")
 	errChangeCfgSrvNotSupported      = errors.New("sharding: change config server number is not supported")
+	errShardingVersion               = errors.New("sharding is available starting PSMDB 1.17.0")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -725,6 +729,16 @@ func validateSharding(dbc DatabaseCluster) error {
 	if dbc.Spec.Engine.Type != Psmdb {
 		return errShardingIsNotSupported
 	}
+	if dbc.Spec.Engine.Version == nil {
+		return errShardingVersion
+	}
+	version, err := goversion.NewVersion(*dbc.Spec.Engine.Version)
+	if err != nil {
+		return errShardingVersion
+	}
+	if !common.CheckConstraint(version, ">=1.17.0") {
+		return errShardingVersion
+	}
 	if dbc.Spec.Sharding.Shards < minShardsNum {
 		return errInsufficientShardsNumber
 	}
@@ -1201,6 +1215,9 @@ func (e *EverestServer) validateDatabaseClusterOnUpdate(
 
 func validateShardingOnUpdate(dbc *DatabaseCluster, oldDB *everestv1alpha1.DatabaseCluster) error {
 	if oldDB.Spec.Sharding == nil || !oldDB.Spec.Sharding.Enabled {
+		if dbc.Spec.Sharding != nil && dbc.Spec.Sharding.Enabled {
+			return errShardingEnablingNotSupported
+		}
 		return nil
 	}
 	if dbc.Spec.Sharding == nil || !dbc.Spec.Sharding.Enabled {

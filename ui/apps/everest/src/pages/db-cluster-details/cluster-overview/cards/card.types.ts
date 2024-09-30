@@ -55,12 +55,8 @@ export type DatabaseDetailsOverviewCardProps =
     OverviewCardProps;
 
 export type ResourcesDetailsOverviewProps = {
-  numberOfNodes: DbCluster['spec']['engine']['replicas'];
-  cpu: NonNullable<DbCluster['spec']['engine']['resources']>['cpu'];
-  memory: NonNullable<DbCluster['spec']['engine']['resources']>['memory'];
-  disk: DbCluster['spec']['engine']['storage']['size'];
+  dbCluster: DbCluster;
   sharding: DbCluster['spec']['sharding'];
-  dbType: DbType;
 } & OverviewCardProps;
 
 export type BackupsDetailsOverviewCardProps = {
@@ -72,4 +68,5 @@ export type BackupsDetailsOverviewCardProps = {
   pitrStorageName: NonNullable<
     NonNullable<DbCluster['spec']['backup']>['pitr']
   >['backupStorageName'];
+  showStorage: boolean;
 } & OverviewCardProps;
