@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 import { createDbClusterFn } from '../utils/db-cluster';
-import { mongoDBCluster, postgresDBCluster, psDBCluster } from './testData';
+import { mongoDBCluster, postgresDBCluster } from './testData';
 import { getDBClustersList } from '../utils/db-clusters-list';
-import { TIMEOUT } from '../constants';
+import { TIMEOUTS } from '../constants';
 
 test.describe.configure({ retries: 0 });
 test(
@@ -40,8 +40,8 @@ test(
       externalAccess: postgresDBCluster.externalAccess,
     });
 
-    await page.waitForTimeout(TIMEOUT.TenSeconds);
-    let clusters = (await getDBClustersList(request)).items;
+    await page.waitForTimeout(TIMEOUTS.TenSeconds);
+    const clusters = (await getDBClustersList(request)).items;
     console.log(clusters);
 
     await expect(async () => {
@@ -57,8 +57,8 @@ test(
         );
       });
     }).toPass({
-      timeout: TIMEOUT.TenMinutes,
-      intervals: [TIMEOUT.OneMinute],
+      timeout: TIMEOUTS.TenMinutes,
+      intervals: [TIMEOUTS.OneMinute],
     });
   }
 );

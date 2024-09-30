@@ -14,12 +14,14 @@
 // limitations under the License.
 import { defineConfig } from '@playwright/test';
 import path from 'path';
+import { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { STORAGE_STATE_FILE, TIMEOUT } from './constants';
+import { STORAGE_STATE_FILE, TIMEOUTS } from './constants';
 import 'dotenv/config';
 
+// Convert 'import.meta.url' to the equivalent __filename and __dirname
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = dirname(__filename);
 
 /**
  * Read environment variables from file.
@@ -42,7 +44,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 1,
   /* Opt out of parallel tests on CI. */
   workers: 1,
-  timeout: TIMEOUT.TwentyMinutes,
+  timeout: TIMEOUTS.TwentyMinutes,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['github'],
@@ -53,6 +55,7 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: process.env.EVEREST_URL || 'http://localhost:3000',
+    headless: false,
     extraHTTPHeaders: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
@@ -88,12 +91,33 @@ export default defineConfig({
       testMatch: /global\.teardown\.ts/,
     },
     {
-      name: 'Chrome Stable',
+      name: 'pr',
       use: {
         browserName: 'chromium',
         channel: 'chrome',
         storageState: STORAGE_STATE_FILE,
       },
+      testDir: 'pr',
+      dependencies: ['setup'],
+    },
+    {
+      name: 'release',
+      use: {
+        browserName: 'chromium',
+        channel: 'chrome',
+        storageState: STORAGE_STATE_FILE,
+      },
+      testDir: 'release',
+      dependencies: ['setup'],
+    },
+    {
+      name: 'upgrade',
+      use: {
+        browserName: 'chromium',
+        channel: 'chrome',
+        storageState: STORAGE_STATE_FILE,
+      },
+      testDir: 'upgrade',
       dependencies: ['setup'],
     },
   ],

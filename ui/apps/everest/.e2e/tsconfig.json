@@ -2,6 +2,7 @@
   "include": ["./**/*.ts"],
   "exclude": ["./tests-out"],
   "compilerOptions": {
+    "baseUrl": ".",
     "lib": ["es2021", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
     "jsx": "react-jsx",

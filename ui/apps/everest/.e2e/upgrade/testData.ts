@@ -1,6 +1,6 @@
 import { everestTagForUpgrade } from '../constants';
 
-export const psDBCluster = {
+export const pxcDBCluster = {
   name: 'ps-db-cluster',
   numberOfNodes: 1,
   cpu: 0.6,
