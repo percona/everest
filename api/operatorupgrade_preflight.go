@@ -40,14 +40,14 @@ func getUpgradePreflightChecksResult(
 	ctx context.Context,
 	dbs []everestv1alpha1.DatabaseCluster,
 	args upgradePreflightCheckArgs,
-) (*OperatorUpgradePreflight, error) {
+) (*operatorUpgradePreflight, error) {
 	// Check that this version is available for upgrade.
 	if u := args.engine.Status.GetPendingUpgrade(args.targetVersion); u == nil {
 		return nil, errDBEngineUpgradeUnavailable
 	}
 
 	// Perform checks for each given DB.
-	dbResults := make([]OperatorUpgradePreflightForDatabase, 0, len(dbs))
+	dbResults := make([]UpgradeTask, 0, len(dbs))
 	for _, db := range dbs {
 		result, err := getUpgradePreflightCheckResultForDatabase(ctx, db, args)
 		if err != nil {
@@ -64,9 +64,9 @@ func getUpgradePreflightChecksResult(
 		) < 0
 	})
 
-	return &OperatorUpgradePreflight{
-		Databases:      &dbResults,
-		CurrentVersion: pointer.To(args.engine.Status.OperatorVersion),
+	return &operatorUpgradePreflight{
+		databases:      dbResults,
+		currentVersion: args.engine.Status.OperatorVersion,
 	}, nil
 }
 
@@ -74,25 +74,25 @@ func getUpgradePreflightCheckResultForDatabase(
 	ctx context.Context,
 	database everestv1alpha1.DatabaseCluster,
 	args upgradePreflightCheckArgs,
-) (OperatorUpgradePreflightForDatabase, error) {
+) (UpgradeTask, error) {
 	// Check that the database engine is at the desired version.
 	if valid, minReqVer, err := preflightCheckDBEngineVersion(ctx, database, args); err != nil {
-		return OperatorUpgradePreflightForDatabase{},
+		return UpgradeTask{},
 			errors.Join(err, errors.New("failed to validate database engine version for operator upgrade"))
 	} else if !valid {
-		return OperatorUpgradePreflightForDatabase{
+		return UpgradeTask{
 			Name:        pointer.To(database.GetName()),
-			PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskUpgradeEngine),
+			PendingTask: pointer.To(UpgradeEngine),
 			Message: pointer.ToString(
-				fmt.Sprintf("Upgrade DB version to %s", minReqVer)),
+				fmt.Sprintf("Upgrade DB version to %s or higher", minReqVer)),
 		}, nil
 	}
 
 	// Check that DB is at recommended CRVersion.
 	if recCRVersion := database.Status.RecommendedCRVersion; recCRVersion != nil {
-		return OperatorUpgradePreflightForDatabase{
+		return UpgradeTask{
 			Name:        pointer.To(database.GetName()),
-			PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskRestart),
+			PendingTask: pointer.To(Restart),
 			Message: pointer.ToString(
 				fmt.Sprintf("Update CRVersion to %s", *recCRVersion)),
 		}, nil
@@ -100,17 +100,17 @@ func getUpgradePreflightCheckResultForDatabase(
 
 	// Check that DB is running.
 	if database.Status.Status != everestv1alpha1.AppStateReady {
-		return OperatorUpgradePreflightForDatabase{
+		return UpgradeTask{
 			Name:        pointer.To(database.GetName()),
-			PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskNotReady),
+			PendingTask: pointer.To(NotReady),
 			Message:     pointer.ToString("Database is not ready"),
 		}, nil
 	}
 
 	// Database is in desired state for performing operator upgrade.
-	return OperatorUpgradePreflightForDatabase{
+	return UpgradeTask{
 		Name:        pointer.To(database.GetName()),
-		PendingTask: pointer.To(OperatorUpgradePreflightForDatabasePendingTaskReady),
+		PendingTask: pointer.To(Ready),
 	}, nil
 }
 

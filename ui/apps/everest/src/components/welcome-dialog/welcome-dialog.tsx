@@ -3,10 +3,10 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  Link,
+  Stack,
   Typography,
 } from '@mui/material';
-import { DialogTitle } from '@percona/ui-lib';
+import { EverestMainIcon } from '@percona/ui-lib';
 import { useNavigate } from 'react-router-dom';
 import { Messages } from './welcome-dialog.messages';
 
@@ -26,23 +26,18 @@ export const WelcomeDialog = ({
 
   return (
     <Dialog
-      PaperProps={{ sx: { minWidth: '800px' } }}
+      PaperProps={{ sx: { px: 4, pt: 4 } }}
       open={open}
       onClose={closeDialog}
     >
-      <DialogTitle onClose={closeDialog}>{Messages.header}</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexFlow: 'column' }}>
-        <Typography variant="body1" sx={{ marginBottom: 2 }}>
-          {Messages.subHead}
-          <Link
-            href="https://github.com/percona/everest/issues"
-            target="_blank"
-            rel="noopener"
-          >
-            {Messages.githubIssues}
-          </Link>
-          .
-        </Typography>
+        <Stack alignItems="center">
+          <EverestMainIcon sx={{ fontSize: '100px', mb: 2 }} />
+          <Typography variant="h2">{Messages.allSet}</Typography>
+          <Typography variant="h6" textAlign="center">
+            {Messages.start}
+          </Typography>
+        </Stack>
         {/* TODO: uncomment when default settings page is ready */}
         {/* <Divider />
         <Typography variant="subHead1" sx={{ p: '24px 44px 8px 44px' }}>
@@ -73,8 +68,13 @@ export const WelcomeDialog = ({
         </Box> */}
       </DialogContent>
       {/* TODO: remove dialog actions when cards are uncommented */}
-      <DialogActions>
-        <Button onClick={handleRedirectHome} variant="contained" size="large">
+      <DialogActions sx={{ mt: 4 }}>
+        <Button
+          onClick={handleRedirectHome}
+          variant="contained"
+          size="large"
+          data-testid="lets-go-button"
+        >
           {Messages.letsGo}
         </Button>
       </DialogActions>

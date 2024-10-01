@@ -21,10 +21,11 @@ import { Table } from '@percona/ui-lib';
 import { MRT_ColumnDef } from 'material-react-table';
 import { DBClusterComponent } from 'shared-types/components.types';
 import StatusField from 'components/status-field';
-import { format, formatDistanceToNowStrict } from 'date-fns';
+import { format, formatDistanceToNowStrict, isValid } from 'date-fns';
 import {
   COMPONENT_STATUS,
   COMPONENT_STATUS_TO_BASE_STATUS,
+  COMPONENT_STATUS_WEIGHT,
 } from './components.constants';
 import ExpandedRow from './expanded-row';
 import { DATE_FORMAT } from 'consts';
@@ -32,7 +33,7 @@ import { DATE_FORMAT } from 'consts';
 const Components = () => {
   const { dbClusterName, namespace = '' } = useParams();
 
-  const { data: components = [], isFetching } = useDbClusterComponents(
+  const { data: components = [], isLoading } = useDbClusterComponents(
     namespace,
     dbClusterName!
   );
@@ -50,6 +51,16 @@ const Components = () => {
             {capitalize(cell?.row?.original?.status)}
           </StatusField>
         ),
+        sortingFn: (rowA, rowB) => {
+          return (
+            COMPONENT_STATUS_WEIGHT[rowA?.original?.status] -
+            COMPONENT_STATUS_WEIGHT[rowB?.original?.status]
+          );
+        },
+      },
+      {
+        header: 'Ready',
+        accessorKey: 'ready',
       },
       {
         header: 'Name',
@@ -64,7 +75,8 @@ const Components = () => {
         accessorKey: 'started',
         Cell: ({ cell }) => {
           const date = new Date(cell.getValue<string>());
-          return date ? (
+
+          return isValid(date) ? (
             <Tooltip
               title={`Started at ${format(date, DATE_FORMAT)}`}
               placement="right"
@@ -81,16 +93,20 @@ const Components = () => {
         header: 'Restarts',
         accessorKey: 'restarts',
       },
-      {
-        header: 'Ready',
-        accessorKey: 'ready',
-      },
     ];
   }, []);
 
   return (
     <Table
-      state={{ isLoading: isFetching && components?.length === 0 }}
+      initialState={{
+        sorting: [
+          {
+            id: 'status',
+            desc: true,
+          },
+        ],
+      }}
+      state={{ isLoading }}
       tableName={`${dbClusterName}-components`}
       columns={columns}
       data={components}

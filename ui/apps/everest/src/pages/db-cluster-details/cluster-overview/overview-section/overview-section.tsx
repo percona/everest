@@ -1,15 +1,31 @@
-import { Grid, Stack, Typography } from '@mui/material';
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import { Grid, Stack, Typography, Divider, Box, Button } from '@mui/material';
 import { LoadableChildren } from '@percona/ui-lib';
-import {
-  OverviewSectionProps,
-  OverviewSectionTextProps,
-} from './overview-section.types';
+import { OverviewSectionProps } from './overview-section.types';
+import { Messages } from './overview-section.messages';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 
 export const OverviewSection = ({
   title,
   loading,
   children,
   dataTestId,
+  editable,
+  actionButtonProps,
 }: OverviewSectionProps) => (
   <Grid
     item
@@ -19,28 +35,32 @@ export const OverviewSection = ({
     }
   >
     <Stack>
-      <Typography color="text.primary" variant="sectionHeading">
-        {title}
-      </Typography>
-      <LoadableChildren loading={loading}>{children}</LoadableChildren>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="flex-end"
+      >
+        <Typography color="text.primary" variant="sectionHeading">
+          {title}
+        </Typography>
+        {actionButtonProps && (
+          <Button
+            size="small"
+            startIcon={
+              editable ? <EditOutlinedIcon /> : actionButtonProps?.startIcon
+            }
+            {...actionButtonProps}
+          >
+            {editable ? Messages.edit : actionButtonProps?.children}
+          </Button>
+        )}
+      </Stack>
+      <Divider sx={{ mt: 0.25 }} />
+      <LoadableChildren loading={loading}>
+        <Box sx={{ mt: 1 }}>{children}</Box>
+      </LoadableChildren>
     </Stack>
   </Grid>
 );
 
-export const OverviewSectionText = ({
-  children,
-  dataTestId,
-}: OverviewSectionTextProps) => (
-  <Typography
-    color="text.secondary"
-    variant="caption"
-    sx={{ wordBreak: 'break-word' }}
-    data-testid={
-      dataTestId
-        ? `${dataTestId}-overview-section-text`
-        : 'overview-section-text'
-    }
-  >
-    {children}
-  </Typography>
-);
+export default OverviewSection;

@@ -274,7 +274,7 @@ jobs:
             0.0.0
 
       - name: Build and Push everest dev image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
@@ -336,6 +336,16 @@ jobs:
         run: |
           kubectl -n everest-system patch deployment percona-everest --type strategic --patch-file dev/patch-deployment-image.yaml
           kubectl -n everest-system rollout status deploy/percona-everest --timeout=120s
+          kubectl patch sub everest-operator -n everest-system -p '
+            [{
+                "op": "add",
+                "path": "/spec/config/env/-",
+                "value": {
+                  "name": "PERCONA_VERSION_SERVICE_URL",
+                  "value": "https://check-dev.percona.com/versions/v1"
+                }
+            }]' --type=json
+
 
       - name: Expose Everest API Server
         run: |
@@ -345,6 +355,11 @@ jobs:
         run: |
           ./bin/everestctl accounts create -u everest_ci -p password
           echo "API_TOKEN=$(curl --location -s 'localhost:8080/v1/session' --header 'Content-Type: application/json' --data '{"username": "everest_ci","password": "password"}' | jq -r .token)" >> $GITHUB_ENV
+
+      - name: Add CI user to admin role
+        run: |
+          kubectl patch configmap everest-rbac -n everest-system --patch "$(kubectl get configmap everest-rbac -n everest-system -o json | jq '.data["policy.csv"] += "\ng, everest_ci, role:admin"' | jq '{data: { "policy.csv": .data["policy.csv"] } }')"
+          kubectl get configmap everest-rbac -n everest-system -ojsonpath='{.data.policy\.csv}'
 
       - name: Run integration tests
         run: |
@@ -361,7 +376,7 @@ jobs:
           kubectl -n everest-system logs deploy/percona-everest
 
       - name: Everest - run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.19.0
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: "localhost:5000/perconalab/everest:0.0.0"
           format: 'table'
@@ -421,7 +436,7 @@ jobs:
           make init
           make build-cli
       - name: Create KIND cluster
-        uses: helm/kind-action@v1.9.0
+        uses: helm/kind-action@v1.10.0
 
       - name: Run integration tests
         working-directory: cli-tests
@@ -429,6 +444,15 @@ jobs:
         run: |
           make init
           make install-operators
+          kubectl patch sub everest-operator -n everest-system -p '
+            [{
+                "op": "add",
+                "path": "/spec/config/env/-",
+                "value": {
+                  "name": "PERCONA_VERSION_SERVICE_URL",
+                  "value": "https://check-dev.percona.com/versions/v1"
+                }
+            }]' --type=json
           make test-cli
       - name: Attach the report
         if: ${{ always() && steps.cli-tests.outcome != 'skipped' }}

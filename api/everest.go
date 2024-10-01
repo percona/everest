@@ -27,31 +27,39 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/casbin/casbin/v2"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/golang-jwt/jwt/v5"
+	casbinmiddleware "github.com/labstack/echo-contrib/casbin"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 	middleware "github.com/oapi-codegen/echo-middleware"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/oidc"
+	"github.com/percona/everest/pkg/rbac"
 	"github.com/percona/everest/pkg/session"
 	"github.com/percona/everest/public"
 )
 
 // EverestServer represents the server struct.
 type EverestServer struct {
-	config     *config.EverestConfig
-	l          *zap.SugaredLogger
-	echo       *echo.Echo
-	kubeClient *kubernetes.Kubernetes
-	sessionMgr *session.Manager
+	config        *config.EverestConfig
+	l             *zap.SugaredLogger
+	echo          *echo.Echo
+	kubeClient    *kubernetes.Kubernetes
+	sessionMgr    *session.Manager
+	attemptsStore *RateLimiterMemoryStore
+	rbacEnforcer  casbin.IEnforcer
 }
 
 // NewEverestServer creates and configures everest API.
@@ -63,21 +71,23 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 
 	echoServer := echo.New()
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
-
+	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
+	echoServer.Use(middleware)
 	sessMgr, err := session.New(
 		session.WithAccountManager(kubeClient.Accounts()),
 	)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
 	}
-
 	e := &EverestServer{
-		config:     c,
-		l:          l,
-		echo:       echoServer,
-		kubeClient: kubeClient,
-		sessionMgr: sessMgr,
+		config:        c,
+		l:             l,
+		echo:          echoServer,
+		kubeClient:    kubeClient,
+		sessionMgr:    sessMgr,
+		attemptsStore: store,
 	}
+	e.echo.HTTPErrorHandler = e.errorHandlerChain()
 
 	if err := e.initHTTPServer(ctx); err != nil {
 		return e, err
@@ -86,6 +96,8 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 }
 
 // initHTTPServer configures http server for the current EverestServer instance.
+//
+//nolint:funlen
 func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	swagger, err := GetSwagger()
 	if err != nil {
@@ -122,8 +134,9 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 		return errors.Join(err, errors.New("could not get base path"))
 	}
 
-	// Use our validation middleware to check all requests against the OpenAPI schema.
 	apiGroup := e.echo.Group(basePath)
+
+	// Use our validation middleware to check all requests against the OpenAPI schema.
 	apiGroup.Use(middleware.OapiRequestValidatorWithOptions(swagger, &middleware.Options{
 		SilenceServersWarning: true,
 		// This field is required if a security scheme is specified.
@@ -132,12 +145,19 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 			AuthenticationFunc: openapi3filter.NoopAuthenticationFunc,
 		},
 	}))
-
+	// Setup and use JWT middleware.
 	jwtMW, err := e.jwtMiddleWare(ctx)
 	if err != nil {
 		return err
 	}
 	apiGroup.Use(jwtMW)
+
+	// Setup and use RBAC (casbin) middleware.
+	rbacMW, err := e.rbacMiddleware(ctx, basePath)
+	if err != nil {
+		return err
+	}
+	apiGroup.Use(rbacMW)
 
 	apiGroup.Use(e.checkOperatorUpgradeState)
 	RegisterHandlers(apiGroup, e)
@@ -151,7 +171,7 @@ func (e *EverestServer) oidcKeyFn(ctx context.Context) (jwt.Keyfunc, error) {
 		return nil, err
 	}
 	if settings.OIDCConfigRaw == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 	oidcConfig, err := settings.OIDCConfig()
 	if err != nil {
@@ -167,7 +187,16 @@ func (e *EverestServer) newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) 
 	}
 
 	return func(token *jwt.Token) (interface{}, error) {
-		if token.Header["kid"] == session.KeyID {
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			return nil, errors.New("failed to get claims from token")
+		}
+		issuer, err := claims.GetIssuer()
+		if err != nil {
+			return "", errors.Join(err, errors.New("failed to get issuer from claims"))
+		}
+
+		if issuer == session.SessionManagerClaimsIssuer {
 			return e.sessionMgr.KeyFunc()(token)
 		}
 		// XXX: currently we use OIDC only, but once we have multiple protocols supported,
@@ -177,6 +206,24 @@ func (e *EverestServer) newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) 
 		}
 		return nil, errors.New("no key found for token")
 	}, nil
+}
+
+func (e *EverestServer) rbacMiddleware(ctx context.Context, basePath string) (echo.MiddlewareFunc, error) {
+	enforcer, err := rbac.NewEnforcer(ctx, e.kubeClient, e.l)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not create casbin enforcer"))
+	}
+	e.rbacEnforcer = enforcer
+
+	skipper, err := rbac.NewSkipper(basePath)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not create RBAC skipper"))
+	}
+	return casbinmiddleware.MiddlewareWithConfig(casbinmiddleware.Config{
+		Skipper:        skipper,
+		UserGetter:     rbac.GetUser,
+		EnforceHandler: rbac.NewEnforceHandler(e.l, basePath, enforcer),
+	}), nil
 }
 
 func (e *EverestServer) jwtMiddleWare(ctx context.Context) (echo.MiddlewareFunc, error) {
@@ -256,4 +303,71 @@ func (e *EverestServer) getBodyFromContext(ctx echo.Context, into any) error {
 		return errors.Join(err, errors.New("could not decode body"))
 	}
 	return nil
+}
+
+func sessionRateLimiter(limit int) (echo.MiddlewareFunc, *RateLimiterMemoryStore) {
+	allButSession := func(c echo.Context) bool {
+		return c.Request().Method != echo.POST || c.Request().URL.Path != "/v1/session"
+	}
+	config := echomiddleware.DefaultRateLimiterConfig
+	config.Skipper = allButSession
+	store := NewRateLimiterMemoryStoreWithConfig(RateLimiterMemoryStoreConfig{
+		Rate: rate.Limit(limit),
+	})
+	config.Store = store
+	return echomiddleware.RateLimiterWithConfig(config), store
+}
+
+func (e *EverestServer) errorHandlerChain() echo.HTTPErrorHandler {
+	h := e.echo.DefaultHTTPErrorHandler
+	h = k8sToAPIErrorHandler(h)
+	h = enforcerErrorHandler(h)
+	return h
+}
+
+func k8sToAPIErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
+	return func(err error, c echo.Context) {
+		if k8serrors.IsNotFound(err) {
+			err = &echo.HTTPError{
+				Code: http.StatusNotFound,
+			}
+		}
+		next(err, c)
+	}
+}
+
+func enforcerErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
+	return func(err error, c echo.Context) {
+		if errors.Is(err, errInsufficientPermissions) {
+			err = &echo.HTTPError{
+				Code:    http.StatusForbidden,
+				Message: errInsufficientPermissions.Error(),
+			}
+		}
+		next(err, c)
+	}
+}
+
+// enforce is a wrapper arounf casbin.Enforce that returns an errInsufficientPermissions error when enforce fails.
+// Typically, this error is handled centrally by the Everest server error handler chain, but if needed, the caller should handle
+// it explicitly to differentiate between other errors.
+func (e *EverestServer) enforce(subject, resource, action, object string) error {
+	ok, err := e.rbacEnforcer.Enforce(subject, resource, action, object)
+	if err != nil {
+		return fmt.Errorf("failed to enforce: %w", err)
+	}
+	if !ok {
+		e.l.Warnf("Permission denied: [%s %s %s %s]", subject, resource, action, object)
+		return errInsufficientPermissions
+	}
+	return nil
+}
+
+func attachK8sTypeMeta(obj client.Object) {
+	gvk, err := apiutil.GVKForObject(obj, scheme.Scheme)
+	if err != nil {
+		// we expect a valid GVK for the object, but since we cannot get it, we should halt the execution.
+		panic(errors.Join(err, errors.New("could not get GVK for object")))
+	}
+	obj.GetObjectKind().SetGroupVersionKind(gvk)
 }

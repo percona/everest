@@ -45,8 +45,8 @@ func (k *Kubernetes) UpdateDatabaseEngine(ctx context.Context, namespace string,
 func (k *Kubernetes) SetDatabaseEngineLock(ctx context.Context, namespace, name string, locked bool) error {
 	// We wrap this logic into a retry block to reduce the chances of conflicts.
 	var b backoff.BackOff
-	b = backoff.NewConstantBackOff(5 * time.Second)
-	b = backoff.WithMaxRetries(b, 5)
+	b = backoff.NewConstantBackOff(backoffInterval)
+	b = backoff.WithMaxRetries(b, backoffMaxRetries)
 	b = backoff.WithContext(b, ctx)
 	return backoff.Retry(func() error {
 		engine, err := k.client.GetDatabaseEngine(ctx, namespace, name)
@@ -57,7 +57,7 @@ func (k *Kubernetes) SetDatabaseEngineLock(ctx context.Context, namespace, name 
 		if annotations == nil {
 			annotations = make(map[string]string)
 		}
-		annotations[everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation] = "true"
+		annotations[everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation] = time.Now().Format(time.RFC3339)
 		if !locked {
 			delete(annotations, everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation)
 		}

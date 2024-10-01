@@ -14,33 +14,28 @@
 // limitations under the License.
 
 import { expect, test } from '@playwright/test';
-import {
-  createBackupStorageFn,
-  deleteStorageLocationFn,
-} from '../utils/backup-storage';
 import { moveForward } from '../utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '../constants';
-import { getTokenFromLocalStorage } from '../utils/localStorage';
 import { deleteMonitoringInstance } from '../utils/monitoring-instance';
 import { setNamespace } from '../utils/namespaces';
 
 const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 
 test.describe('Namespaces: Monitoring availability', () => {
-  const pxcStorageLocationName = 'storage-location-pxc';
+  // const pxcStorageLocationName = 'storage-location-pxc';
   const pxcMonitoringEndpoint = 'pxc-monitoring';
   let token = '';
 
-  test.beforeAll(async ({ request }) => {
-    token = await getTokenFromLocalStorage();
-    await createBackupStorageFn(request, pxcStorageLocationName, [
-      EVEREST_CI_NAMESPACES.PXC_ONLY,
-    ]);
-  });
+  // test.beforeAll(async ({ request }) => {
+  //   token = await getTokenFromLocalStorage();
+  //   await createBackupStorageFn(request, pxcStorageLocationName, [
+  //     EVEREST_CI_NAMESPACES.PXC_ONLY,
+  //   ]);
+  // });
 
-  test.afterAll(async ({ request }) => {
-    await deleteStorageLocationFn(request, pxcStorageLocationName);
-  });
+  // test.afterAll(async ({ request }) => {
+  //   await deleteStorageLocationFn(request, pxcStorageLocationName);
+  // });
 
   test('Monitoring autocomplete in DB Wizard has only endpoints in selected namespace', async ({
     page,
@@ -69,7 +64,7 @@ test.describe('Namespaces: Monitoring availability', () => {
 
     // filling in monitoring modal form
     await page.getByTestId('text-input-name').fill(pxcMonitoringEndpoint);
-    const namespaces = page.getByTestId('text-input-allowed-namespaces');
+    const namespaces = page.getByTestId('text-input-namespace');
     await namespaces.click();
     await page
       .getByRole('option', { name: EVEREST_CI_NAMESPACES.PXC_ONLY })
@@ -84,6 +79,11 @@ test.describe('Namespaces: Monitoring availability', () => {
     await expect(page.getByTestId('monitoring-warning')).not.toBeVisible();
     await expect(page.getByTestId('switch-input-monitoring')).toBeEnabled();
 
-    await deleteMonitoringInstance(request, pxcMonitoringEndpoint, token);
+    await deleteMonitoringInstance(
+      request,
+      EVEREST_CI_NAMESPACES.PXC_ONLY,
+      pxcMonitoringEndpoint,
+      token
+    );
   });
 });

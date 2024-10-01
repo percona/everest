@@ -1,0 +1,4 @@
+p, role:admin, namespaces, read, *
+p, role:admin, database-engines, *, */*
+p, alice, non-existent-resource, *, */*
+g, admin, role:admin

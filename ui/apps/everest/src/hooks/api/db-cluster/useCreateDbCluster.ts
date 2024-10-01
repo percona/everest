@@ -20,16 +20,18 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
+import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import {
   ClusterCredentials,
   DataSource,
   DbCluster,
   GetDbClusterCredentialsPayload,
-  ProxyExposeType,
 } from 'shared-types/dbCluster.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import cronConverter from 'utils/cron-converter';
+import { getProxySpec } from './utils';
+import { DbType } from '@percona/types';
 
 type CreateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -40,6 +42,12 @@ const formValuesToPayloadMapping = (
   dbPayload: DbWizardType,
   backupDataSource?: DataSource
 ): DbCluster => {
+  const numberOfNodes = parseInt(
+    dbPayload.numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
+      ? dbPayload.customNrOfNodes || ''
+      : dbPayload.numberOfNodes,
+    10
+  );
   const dbClusterPayload: DbCluster = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
@@ -59,28 +67,29 @@ const formValuesToPayloadMapping = (
                 : dbPayload.pitrStorageLocation!.name,
           },
         }),
-        ...(dbPayload.schedules?.length > 0 && {
-          schedules: dbPayload.schedules.map((schedule) => ({
-            ...schedule,
-            schedule: cronConverter(
-              schedule.schedule,
-              Intl.DateTimeFormat().resolvedOptions().timeZone,
-              'UTC'
-            ),
-          })),
-        }),
+        schedules:
+          dbPayload.schedules?.length > 0
+            ? dbPayload.schedules.map((schedule) => ({
+                ...schedule,
+                schedule: cronConverter(
+                  schedule.schedule,
+                  Intl.DateTimeFormat().resolvedOptions().timeZone,
+                  'UTC'
+                ),
+              }))
+            : undefined,
       },
       engine: {
         type: dbTypeToDbEngine(dbPayload.dbType),
         version: dbPayload.dbVersion,
-        replicas: +dbPayload.numberOfNodes,
+        replicas: numberOfNodes,
         resources: {
           cpu: `${dbPayload.cpu}`,
           memory: `${dbPayload.memory}G`,
         },
         storage: {
           class: dbPayload.storageClass!,
-          size: `${dbPayload.disk}G`,
+          size: `${dbPayload.disk}${dbPayload.diskUnit}`,
         },
         config: dbPayload.engineParametersEnabled
           ? dbPayload.engineParameters
@@ -91,20 +100,24 @@ const formValuesToPayloadMapping = (
           monitoringConfigName: dbPayload?.monitoringInstance!,
         }),
       },
-      proxy: {
-        replicas: +dbPayload.numberOfNodes,
-        expose: {
-          type: dbPayload.externalAccess
-            ? ProxyExposeType.external
-            : ProxyExposeType.internal,
-          ...(!!dbPayload.externalAccess &&
-            dbPayload.sourceRanges && {
-              ipSourceRanges: dbPayload.sourceRanges.flatMap((source) =>
-                source.sourceRange ? [source.sourceRange] : []
-              ),
-            }),
+      proxy: getProxySpec(
+        dbPayload.dbType,
+        dbPayload.numberOfProxies,
+        dbPayload.customNrOfProxies || '',
+        dbPayload.externalAccess,
+        dbPayload.proxyCpu,
+        dbPayload.proxyMemory,
+        dbPayload.sourceRanges || []
+      ),
+      ...(dbPayload.dbType === DbType.Mongo && {
+        sharding: {
+          enabled: dbPayload.sharding,
+          shards: +(dbPayload.shardNr ?? 1),
+          configServer: {
+            replicas: +(dbPayload.shardConfigServers ?? 3),
+          },
         },
-      },
+      }),
       ...(backupDataSource?.dbClusterBackupName && {
         dataSource: {
           dbClusterBackupName: backupDataSource.dbClusterBackupName,

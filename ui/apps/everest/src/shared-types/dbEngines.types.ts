@@ -91,13 +91,21 @@ export type DbUpgradePendingTask =
   | 'restart'
   | 'upgradeEngine';
 
-export type OperatorUpgradeDb = {
+export type OperatorUpgradePendingAction = {
   name: string;
   message: string;
   pendingTask: DbUpgradePendingTask;
 };
 
-export type OperatorUpgradePreflightPayload = {
+export type OperatorUpgradeTask = {
+  name: string;
   currentVersion: string;
-  databases?: OperatorUpgradeDb[];
+  targetVersion: string;
 };
+
+export type OperatorsUpgradePlan = {
+  upgrades: OperatorUpgradeTask[];
+  pendingActions: OperatorUpgradePendingAction[];
+};
+
+export type ProxyType = 'mongos' | 'haproxy' | 'proxysql' | 'pgbouncer';

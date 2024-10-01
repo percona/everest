@@ -27,7 +27,7 @@ rules:
     resources: ["databaseclusters", "databaseclusterbackups", "databaseclusterrestores", "backupstorages", "monitoringconfigs"]
     verbs: ["*"]
   - apiGroups: [""]
-    resources: ["secrets", "configmaps"]
+    resources: ["secrets", "configmaps", "namespaces"]
     verbs: ["*"]
   - apiGroups: [""]
     resources: ["nodes", "pods", "persistentvolumes"]
@@ -38,6 +38,9 @@ rules:
   - apiGroups: ["everest.percona.com"]
     resources: ["*"]
     verbs: ["*"]
+  - apiGroups: ["operators.coreos.com"]
+    resources: ["installplans"]
+    verbs: ["get", "list", "update"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -81,6 +84,15 @@ metadata:
 data:
   # username: admin | password: admin
   users.yaml: YWRtaW46CiAgcGFzc3dvcmRIYXNoOiBhZG1pbgogIGVuYWJsZWQ6IHRydWUKICBjYXBhYmlsaXRpZXM6CiAgICAtIGxvZ2lu
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: everest-rbac
+data:
+  enabled: "false"
+  policy.csv: |
+    g, admin, role:admin
 ---
 apiVersion: apps/v1
 kind: Deployment

@@ -7,16 +7,12 @@ export const Messages = {
     placeholders: {
       name: 'Enter storage display name',
       description: 'Enter an optional description',
-      namespaces: 'Select namespaces',
+      namespace: 'Select namespace',
       type: 'Enter bucket name',
-      region: 'Enter regions',
+      region: 'Enter region',
       url: 'Enter URL',
       accessKey: 'Enter Access key',
       secretKey: 'Enter Secret key',
-    },
-    helperText: {
-      namespaces:
-        'Select in which namespaces this storage should be available.',
     },
   },
   deleteDialog: {
@@ -33,7 +29,7 @@ export const Messages = {
   gcs: 'Google Cloud Storage',
   azure: 'Azure Cloud Storage',
   name: 'Name',
-  namespaces: 'Namespaces',
+  namespace: 'Namespace',
   type: 'Type',
   bucketName: 'Bucket Name',
   description: 'Description',

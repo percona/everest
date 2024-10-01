@@ -96,10 +96,22 @@ const (
 	// APIVersionCoreosV1 constant for some API requests.
 	APIVersionCoreosV1 = "operators.coreos.com/v1"
 
-	pollInterval = 1 * time.Second
-	pollDuration = 300 * time.Second
+	pollInterval = 5 * time.Second
+	pollTimeout  = 5 * time.Minute
 
 	deploymentRestartAnnotation = "kubectl.kubernetes.io/restartedAt"
+
+	resourcesBufferSize = 8
+
+	maxRetries    = 3
+	retryInterval = 10 * time.Second
+
+	backoffInterval   = 5 * time.Second
+	backoffMaxRetries = 5
+
+	requestTimeout  = 5 * time.Second
+	maxIdleConns    = 1
+	idleConnTimeout = 10 * time.Second
 )
 
 // ErrEmptyVersionTag Got an empty version tag from GitHub API.
@@ -142,10 +154,10 @@ func New(kubeconfigPath string, l *zap.SugaredLogger) (*Kubernetes, error) {
 		client: client,
 		l:      l.With("component", "kubernetes"),
 		httpClient: &http.Client{
-			Timeout: time.Second * 5,
+			Timeout: requestTimeout,
 			Transport: &http.Transport{
-				MaxIdleConns:    1,
-				IdleConnTimeout: 10 * time.Second,
+				MaxIdleConns:    maxIdleConns,
+				IdleConnTimeout: idleConnTimeout,
 			},
 		},
 		kubeconfig: kubeconfigPath,
@@ -176,10 +188,10 @@ func NewEmpty(l *zap.SugaredLogger) *Kubernetes {
 		client: &client.Client{},
 		l:      l.With("component", "kubernetes"),
 		httpClient: &http.Client{
-			Timeout: time.Second * 5,
+			Timeout: requestTimeout,
 			Transport: &http.Transport{
-				MaxIdleConns:    1,
-				IdleConnTimeout: 10 * time.Second,
+				MaxIdleConns:    maxIdleConns,
+				IdleConnTimeout: idleConnTimeout,
 			},
 		},
 	}
@@ -436,7 +448,7 @@ func (k *Kubernetes) applyResources(ctx context.Context) ([]unstructured.Unstruc
 			return true, nil
 		}
 
-		if err := wait.PollUntilContextTimeout(ctx, time.Second, 10*time.Minute, true, applyFile); err != nil {
+		if err := wait.PollUntilContextTimeout(ctx, time.Second, 10*time.Minute, true, applyFile); err != nil { //nolint:mnd
 			return nil, errors.Join(err, fmt.Errorf("cannot apply %q file", f))
 		}
 
@@ -467,7 +479,7 @@ func (k *Kubernetes) waitForDeploymentRollout(ctx context.Context) error {
 func decodeResources(f []byte) ([]unstructured.Unstructured, error) {
 	var err error
 	objs := []unstructured.Unstructured{}
-	dec := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(f), 8)
+	dec := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(f), resourcesBufferSize)
 	for {
 		var u unstructured.Unstructured
 		err = dec.Decode(&u)
@@ -586,7 +598,22 @@ func (k *Kubernetes) getTargetInstallPlanName(ctx context.Context, subscription 
 	}
 	for _, ip := range ipList.Items {
 		for _, csv := range ip.Spec.ClusterServiceVersionNames {
-			if csv == targetCSV {
+			// If the CSV is the one we are looking for and the InstallPlan is
+			// waiting for approval, we return it.
+			// We introduced this phase check because OLM has a bug where it
+			// sometimes creates duplicate InstallPlans for the same CSV and we
+			// found a few cases where the duplicate InstallPlan wasn't
+			// reconciled correctly and abandoned by OLM. This abandoned
+			// InstallPlan was missing the status field meaning it was also
+			// missing the necessary plan to install the operator. Approving
+			// this InstallPlan would cause the operator to never be installed.
+			// By checking the phase we make sure we will be approving an
+			// InstallPlan that is actually ready to be approved.
+			// See https://github.com/operator-framework/kubectl-operator/issues/13
+			// for more details on a similar issue.
+			// We also need to return the InstallPlan if the Phase is Complete
+			// to ensure the idempotency of the InstallOperator function.
+			if csv == targetCSV && (ip.Status.Phase == olmv1alpha1.InstallPlanPhaseRequiresApproval || ip.Status.Phase == olmv1alpha1.InstallPlanPhaseComplete) {
 				return ip.GetName(), nil
 			}
 		}
@@ -634,7 +661,7 @@ func (k *Kubernetes) InstallOperator(ctx context.Context, req InstallOperatorReq
 		}
 	}
 
-	err = wait.PollUntilContextTimeout(ctx, pollInterval, pollDuration, false, func(ctx context.Context) (bool, error) {
+	err = wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
 		k.l.Debugf("Polling subscription %s/%s", req.Namespace, req.Name)
 		subs, err := k.client.GetSubscription(ctx, req.Namespace, req.Name)
 		if err != nil {
@@ -768,13 +795,13 @@ func (k *Kubernetes) ProvisionMonitoring(namespace string) error {
 			return err
 		}
 		// retry 3 times because applying vmagent spec might take some time.
-		for range 3 {
+		for range maxRetries {
 			k.l.Debugf("Applying file %s", path)
 
 			err = k.client.ApplyManifestFile(file, namespace)
 			if err != nil {
 				k.l.Debugf("%s: retrying after error: %s", path, err)
-				time.Sleep(10 * time.Second)
+				time.Sleep(retryInterval)
 				continue
 			}
 			break
@@ -826,8 +853,8 @@ func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string
 	// Find the operator CSV and add the restart annotation.
 	// We retry this operatation since there may be update conflicts.
 	var b backoff.BackOff
-	b = backoff.NewConstantBackOff(3 * time.Second)
-	b = backoff.WithMaxRetries(b, 5)
+	b = backoff.NewConstantBackOff(backoffInterval)
+	b = backoff.WithMaxRetries(b, backoffMaxRetries)
 	b = backoff.WithContext(b, ctx)
 	if err := backoff.Retry(func() error {
 		csv, err := k.client.GetClusterServiceVersion(ctx, types.NamespacedName{
@@ -855,7 +882,7 @@ func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string
 	}
 
 	// Wait for pods to be ready.
-	return wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
 		deployment, err := k.GetDeployment(ctx, name, namespace)
 		if err != nil {
 			return false, err
@@ -884,8 +911,8 @@ func (k *Kubernetes) RestartDeployment(ctx context.Context, name, namespace stri
 	// Get the Deployment and add restart annotation to pod template.
 	// We retry this operatation since there may be update conflicts.
 	var b backoff.BackOff
-	b = backoff.NewConstantBackOff(3 * time.Second)
-	b = backoff.WithMaxRetries(b, 5)
+	b = backoff.NewConstantBackOff(backoffInterval)
+	b = backoff.WithMaxRetries(b, backoffMaxRetries)
 	b = backoff.WithContext(b, ctx)
 	if err := backoff.Retry(func() error {
 		// Get the deployment.
@@ -910,7 +937,7 @@ func (k *Kubernetes) RestartDeployment(ctx context.Context, name, namespace stri
 		return errors.Join(err, errors.New("cannot add restart annotation to deployment"))
 	}
 	// Wait for pods to be ready.
-	return wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
 		deployment, err := k.GetDeployment(ctx, name, namespace)
 		if err != nil {
 			return false, err
@@ -1005,29 +1032,27 @@ func (k *Kubernetes) DeleteEverest(ctx context.Context, namespace string, versio
 }
 
 // GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.
-func (k *Kubernetes) GetDBNamespaces(ctx context.Context, namespace string) ([]string, error) {
-	deployment, err := k.GetDeployment(ctx, EverestOperatorDeploymentName, namespace)
+func (k *Kubernetes) GetDBNamespaces(ctx context.Context) ([]string, error) {
+	// List all namespaces managed by everest.
+	namespaceList, err := k.ListNamespaces(ctx, metav1.ListOptions{
+		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
+			MatchLabels: map[string]string{
+				common.KubernetesManagedByLabel: common.Everest,
+			},
+		}),
+	})
 	if err != nil {
-		// If the operator is not found, we assume that no namespaces are being watched.
-		if apierrors.IsNotFound(err) {
-			return []string{}, nil
-		}
-		return nil, err
+		return nil, errors.Join(err, errors.New("failed to get watched namespaces"))
 	}
-
-	for _, container := range deployment.Spec.Template.Spec.Containers {
-		if container.Name != everestOperatorContainerName {
+	internalNs := []string{common.SystemNamespace, common.MonitoringNamespace}
+	result := make([]string, 0, len(namespaceList.Items))
+	for _, ns := range namespaceList.Items {
+		if slices.Contains(internalNs, ns.GetName()) {
 			continue
 		}
-		for _, envVar := range container.Env {
-			if envVar.Name != EverestDBNamespacesEnvVar {
-				continue
-			}
-			return strings.Split(envVar.Value, ","), nil
-		}
+		result = append(result, ns.GetName())
 	}
-
-	return nil, errors.New("failed to get watched namespaces")
+	return result, nil
 }
 
 // WaitForRollout waits for rollout of a provided deployment in the provided namespace.

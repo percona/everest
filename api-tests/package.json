@@ -9,21 +9,24 @@
     "lint:ts:fix": "eslint --fix .",
     "typecheck": "tsc --noEmit",
     "report": "playwright show-report",
+    "generate-types": "openapi-typescript ../docs/spec/openapi.yml --output ./generated/types.ts",
     "test:api-pxc": "playwright test --config=playwright.config.ts -g '@pxc'"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@typescript-eslint/parser": "^7.13.0",
+    "@types/node": "^22.5.4",
+    "@typescript-eslint/parser": "^7.16.0",
     "dotenv": "^16.4.5",
     "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^18.0.0",
-    "eslint-plugin-playwright": "^1.6.2"
+    "eslint-plugin-playwright": "^1.6.2",
+    "openapi-typescript": "^7.4.0"
   },
   "dependencies": {
-    "@playwright/test": "^1.44.1",
+    "@playwright/test": "^1.46.0",
     "shelljs": "^0.8.5"
   }
 }

@@ -1,0 +1,29 @@
+p, role:admin, namespaces, read, *
+p, role:admin, database-engines, *, */*
+p, role:admin, database-clusters, *, */*
+p, role:admin, database-cluster-backups, *, */*
+p, role:admin, database-cluster-restores, *, */*
+p, role:admin, backup-storages, *, */*
+p, role:admin, monitoring-instances, *, */*
+
+p, role:readonly, namespaces, read, *
+p, role:readonly, database-engines, read, */*
+p, role:readonly, database-clusters, read, */*
+p, role:readonly, database-cluster-backups, read, */*
+p, role:readonly, database-cluster-restores, read, */*
+p, role:readonly, backup-storages, read, */*
+p, role:readonly, monitoring-instances, read, */*
+
+p, role:devteam, namespaces, *, *
+p, role:devteam, database-engines, *, dev/*
+p, role:devteam, database-clusters, *, dev/*
+p, role:devteam, database-cluster-backups, *, dev/*
+p, role:devteam, database-cluster-restores, *, dev/*
+p, role:devteam, backup-storages, *, */*
+p, role:devteam, monitoring-instances, *, */*
+
+p, alice, database-clusters, create, alice/*
+
+g, admin, role:admin
+g, alice, role:readonly
+g, bob, role:devteam

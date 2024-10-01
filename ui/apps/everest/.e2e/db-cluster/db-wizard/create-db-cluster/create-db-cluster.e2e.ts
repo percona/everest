@@ -43,9 +43,9 @@ import { findDbAndClickActions } from '../../../utils/db-clusters-list';
 import { waitForInitializingState } from '../../../utils/table';
 
 test.describe('DB Cluster creation', () => {
-  // Johannesburg is UTC+2, with ou without DST
+  // IST is UTC+5h30, with or without DST
   test.use({
-    timezoneId: 'Africa/Johannesburg',
+    timezoneId: 'IST',
   });
 
   let engineVersions = {
@@ -66,8 +66,6 @@ test.describe('DB Cluster creation', () => {
       request
     );
     storageClasses = storageClassNames;
-
-    // monitoringInstancesList = await getMonitoringInstanceList(request);
   });
 
   test.beforeEach(async ({ page }) => {
@@ -138,9 +136,21 @@ test.describe('DB Cluster creation', () => {
     dbName = await page.getByTestId('text-input-db-name').inputValue();
 
     await moveForward(page);
-    await expect(page.getByText('Number of nodes: 3')).toBeVisible();
+    await expect(page.getByText('Nº nodes: 3')).toBeVisible();
 
     await resourcesStepCheck(page);
+
+    // Same number of proxies as nodes, as user hasn't changed it
+    await expect(page.getByText('Routers (3)')).toBeVisible();
+    await page.getByTestId('proxies-accordion').getByRole('button').click();
+    await page.getByTestId('toggle-button-routers-1').click();
+    await expect(page.getByText('Routers (1)')).toBeVisible();
+    await page.getByTestId('nodes-accordion').getByRole('button').click();
+    await page.getByTestId('toggle-button-nodes-1').click();
+    await page.getByTestId('toggle-button-nodes-3').click();
+    // After used changed the number of routers, it should no more follow the number of nodes
+    await expect(page.getByText('Routers (1)')).toBeVisible();
+
     await moveForward(page);
 
     await backupsStepCheck(page);
@@ -153,22 +163,25 @@ test.describe('DB Cluster creation', () => {
     // Test the mechanism for default number of nodes
     await page.getByTestId('button-edit-preview-basic-information').click();
     // Here we test that version wasn't reset to default
-    await expect(page.getByText('Version: 5.0.7-6')).toBeVisible();
+    await expect(page.getByText('Version: 6.0.4-3')).toBeVisible();
 
     // Make sure name doesn't change when we go back to first step
     expect(await page.getByTestId('text-input-db-name').inputValue()).toBe(
       dbName
     );
     await page.getByTestId('postgresql-toggle-button').click();
-    await expect(page.getByText('Number of nodes: 2')).toBeVisible();
+    await expect(page.getByText('Nº nodes: 2')).toBeVisible();
     // Now we change the number of nodes
     await page.getByTestId('button-edit-preview-resources').click();
     await page.getByTestId('toggle-button-nodes-3').click();
+    await expect(page.getByText('PG Bouncers (3)')).toBeVisible();
     await page.getByTestId('toggle-button-nodes-2').click();
+    // Since we changed DB type, the number of bouncers is reset and will follow the number of nodes
+    await expect(page.getByText('PG Bouncers (2)')).toBeVisible();
     await page.getByTestId('button-edit-preview-basic-information').click();
     // Because 2 nodes is not valid for MongoDB, the default will be picked
     await page.getByTestId('mongodb-toggle-button').click();
-    await expect(page.getByText('Number of nodes: 3')).toBeVisible();
+    await expect(page.getByText('Nº nodes: 3')).toBeVisible();
     await page.getByTestId('button-edit-preview-backups').click();
 
     await expect(page.getByTestId('radio-option-logical')).not.toBeVisible();
@@ -208,7 +221,7 @@ test.describe('DB Cluster creation', () => {
       addedCluster?.spec.engine.resources?.cpu.toString()
     );
     expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe('1G');
-    expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1G');
+    expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
     expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
     expect(addedCluster?.spec.proxy.replicas).toBe(3);
     // expect(addedCluster?.spec.proxy.expose.ipSourceRanges).toEqual([
@@ -218,8 +231,8 @@ test.describe('DB Cluster creation', () => {
     expect(addedCluster?.spec.engine.storage.class).toBe(storageClasses[0]);
     expect(addedCluster?.spec.backup.schedules[0].retentionCopies).toBe(1);
     // Verify timezone conversion was applied to the schedule cron
-    // Day 10, 1h05 in Johannesburg timezone is day 9, 23h05 UTC
-    expect(addedCluster?.spec.backup.schedules[0].schedule).toBe('5 23 9 * *');
+    // Day 10, 1h05 in IST timezone is day 9, 19h35 UTC
+    expect(addedCluster?.spec.backup.schedules[0].schedule).toBe('35 19 9 * *');
   });
 
   test('PITR should be disabled when backups has no schedules checked', async ({
@@ -233,7 +246,7 @@ test.describe('DB Cluster creation', () => {
     await moveForward(page);
     await moveForward(page);
     await expect(
-      page.getByText('You don’t have any backup schedules yet.')
+      page.getByText('You currently do not have any backup schedules set up.')
     ).toBeVisible();
     const enabledPitrCheckbox = page
       .getByTestId('switch-input-pitr-enabled-label')
@@ -263,7 +276,7 @@ test.describe('DB Cluster creation', () => {
     ).toBeVisible();
 
     await page.getByTestId('toggle-button-nodes-3').click();
-    await page.getByTestId('toggle-button-large').click();
+    await page.getByTestId('node-resources-toggle-button-large').click();
     await page.getByTestId('text-input-disk').fill('150');
     await moveForward(page);
 

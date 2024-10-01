@@ -78,11 +78,14 @@ export const ScheduledBackupModal = () => {
         setSelectedScheduleName,
         openScheduleModal,
         setOpenScheduleModal,
+        externalContext: 'db-details-backups',
         dbClusterInfo: {
           schedules,
+          defaultSchedules: spec?.backup?.schedules,
           activeStorage: status?.activeStorage,
           namespace,
           dbEngine: spec?.engine?.type,
+          dbClusterName,
         },
       }}
     >

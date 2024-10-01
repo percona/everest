@@ -45,7 +45,7 @@ export const Messages = {
     cpu: 'CPU',
     memory: 'Memory',
     disk: 'Disk',
-    nodes: 'Number of nodes',
+    nodes: 'Nº nodes',
     externalAccess: 'External Access',
     monitoring: 'Monitoring',
     enabled: 'Enabled',
@@ -59,9 +59,11 @@ export const Messages = {
     resume: 'Resume',
     restoreFromBackup: 'Restore from a backup',
     createNewDbFromBackup: 'Create DB from a backup',
+    dbStatusDetails: 'View DB status details',
   },
   dbCluster: {
-    noData: "You don't have any databases yet. Create one to get started.",
+    noData:
+      'You currently do not have any database cluster. Create one to get started.',
   },
   deleteModal: {
     header: 'Delete database',

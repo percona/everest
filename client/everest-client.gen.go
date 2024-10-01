@@ -90,27 +90,24 @@ const (
 	MonitoringInstanceUpdateParamsTypePmm MonitoringInstanceUpdateParamsType = "pmm"
 )
 
-// Defines values for OperatorUpgradePreflightForDatabasePendingTask.
+// Defines values for UpgradeTaskPendingTask.
 const (
-	OperatorUpgradePreflightForDatabasePendingTaskNotReady      OperatorUpgradePreflightForDatabasePendingTask = "notReady"
-	OperatorUpgradePreflightForDatabasePendingTaskReady         OperatorUpgradePreflightForDatabasePendingTask = "ready"
-	OperatorUpgradePreflightForDatabasePendingTaskRestart       OperatorUpgradePreflightForDatabasePendingTask = "restart"
-	OperatorUpgradePreflightForDatabasePendingTaskUpgradeEngine OperatorUpgradePreflightForDatabasePendingTask = "upgradeEngine"
-)
-
-// Defines values for OperatorVersionCheckForDatabasePendingTask.
-const (
-	OperatorVersionCheckForDatabasePendingTaskRestart OperatorVersionCheckForDatabasePendingTask = "restart"
+	NotReady      UpgradeTaskPendingTask = "notReady"
+	Ready         UpgradeTaskPendingTask = "ready"
+	Restart       UpgradeTaskPendingTask = "restart"
+	UpgradeEngine UpgradeTaskPendingTask = "upgradeEngine"
 )
 
 // BackupStorage Backup storage information
 type BackupStorage struct {
 	// AllowedNamespaces List of namespaces allowed to use this backup storage
-	AllowedNamespaces []string          `json:"allowedNamespaces"`
+	// Deprecated:
+	AllowedNamespaces *[]string         `json:"allowedNamespaces,omitempty"`
 	BucketName        string            `json:"bucketName"`
 	Description       *string           `json:"description,omitempty"`
 	ForcePathStyle    *bool             `json:"forcePathStyle,omitempty"`
 	Name              string            `json:"name"`
+	Namespace         string            `json:"namespace,omitempty"`
 	Region            string            `json:"region,omitempty"`
 	Type              BackupStorageType `json:"type"`
 	Url               *string           `json:"url,omitempty"`
@@ -128,7 +125,8 @@ type CreateBackupStorageParams struct {
 	AccessKey string `json:"accessKey"`
 
 	// AllowedNamespaces List of namespaces allowed to use this backup storage
-	AllowedNamespaces []string `json:"allowedNamespaces"`
+	// Deprecated:
+	AllowedNamespaces *[]string `json:"allowedNamespaces,omitempty"`
 
 	// BucketName The cloud storage bucket/container name
 	BucketName     string  `json:"bucketName"`
@@ -346,6 +344,21 @@ type DatabaseCluster struct {
 			// Type Type is the proxy type
 			Type *DatabaseClusterSpecProxyType `json:"type,omitempty"`
 		} `json:"proxy,omitempty"`
+
+		// Sharding Sharding is the sharding configuration. PSMDB-only
+		Sharding *struct {
+			// ConfigServer ConfigServer represents the sharding configuration server settings
+			ConfigServer struct {
+				// Replicas Replicas is the amount of configServers
+				Replicas int32 `json:"replicas"`
+			} `json:"configServer"`
+
+			// Enabled Enabled defines if the sharding is enabled
+			Enabled bool `json:"enabled"`
+
+			// Shards Shards defines the number of shards
+			Shards int32 `json:"shards"`
+		} `json:"sharding,omitempty"`
 	} `json:"spec,omitempty"`
 
 	// Status DatabaseClusterStatus defines the observed state of DatabaseCluster.
@@ -355,6 +368,9 @@ type DatabaseCluster struct {
 
 		// CrVersion CRVersion is the observed version of the CR used with the underlying operator.
 		CrVersion *string `json:"crVersion,omitempty"`
+
+		// Details Details provides full status of the upstream cluster as a plain text.
+		Details *string `json:"details,omitempty"`
 
 		// Hostname Hostname is the hostname where the cluster can be reached
 		Hostname *string `json:"hostname,omitempty"`
@@ -502,6 +518,9 @@ type DatabaseClusterBackup struct {
 		// Gaps Gaps identifies if there are gaps detected in the PITR logs
 		Gaps bool `json:"gaps"`
 
+		// LatestRestorableTime LatestRestorableTime is the latest time that can be used for PITR restore
+		LatestRestorableTime *time.Time `json:"latestRestorableTime,omitempty"`
+
 		// State State is the DatabaseBackup state.
 		State *string `json:"state,omitempty"`
 	} `json:"status,omitempty"`
@@ -521,6 +540,7 @@ type DatabaseClusterBackupList struct {
 // DatabaseClusterComponentContainer defines model for DatabaseClusterComponentContainer.
 type DatabaseClusterComponentContainer struct {
 	Name     *string `json:"name,omitempty"`
+	Ready    *bool   `json:"ready,omitempty"`
 	Restarts *int    `json:"restarts,omitempty"`
 	Started  *string `json:"started,omitempty"`
 	Status   *string `json:"status,omitempty"`
@@ -542,8 +562,9 @@ type DatabaseClusterComponent struct {
 
 // DatabaseClusterCredential kubernetes object
 type DatabaseClusterCredential struct {
-	Password *string `json:"password,omitempty"`
-	Username *string `json:"username,omitempty"`
+	ConnectionUrl *string `json:"connectionUrl,omitempty"`
+	Password      *string `json:"password,omitempty"`
+	Username      *string `json:"username,omitempty"`
 }
 
 // DatabaseClusterList DatabaseClusterList is an object that contains the list of the existing database clusters.
@@ -726,12 +747,6 @@ type DatabaseEngineList struct {
 	Metadata *map[string]interface{} `json:"metadata,omitempty"`
 }
 
-// DatabaseEngineOperatorUpgradeParams Database engine operator upgrade parameters
-type DatabaseEngineOperatorUpgradeParams struct {
-	// TargetVersion The version to which the operator should be upgraded
-	TargetVersion string `json:"targetVersion"`
-}
-
 // Error Error response
 type Error struct {
 	Message *string `json:"message,omitempty"`
@@ -769,6 +784,7 @@ type MonitoringInstance = MonitoringInstanceBaseWithName
 // MonitoringInstanceBase Monitoring instance information
 type MonitoringInstanceBase struct {
 	// AllowedNamespaces List of namespaces allowed to use this monitoring instance
+	// Deprecated:
 	AllowedNamespaces *[]string                  `json:"allowedNamespaces,omitempty"`
 	Type              MonitoringInstanceBaseType `json:"type,omitempty"`
 	Url               string                     `json:"url,omitempty"`
@@ -783,12 +799,14 @@ type MonitoringInstanceBaseType string
 // MonitoringInstanceBaseWithName defines model for MonitoringInstanceBaseWithName.
 type MonitoringInstanceBaseWithName struct {
 	// AllowedNamespaces List of namespaces allowed to use this monitoring instance
+	// Deprecated:
 	AllowedNamespaces *[]string `json:"allowedNamespaces,omitempty"`
 
 	// Name A user defined string name of the storage in the DNS name format https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names
-	Name string                             `json:"name,omitempty"`
-	Type MonitoringInstanceBaseWithNameType `json:"type,omitempty"`
-	Url  string                             `json:"url,omitempty"`
+	Name      string                             `json:"name,omitempty"`
+	Namespace string                             `json:"namespace,omitempty"`
+	Type      MonitoringInstanceBaseWithNameType `json:"type,omitempty"`
+	Url       string                             `json:"url,omitempty"`
 
 	// VerifyTLS VerifyTLS is set to ensure TLS/SSL verification.
 	VerifyTLS *bool `json:"verifyTLS,omitempty"`
@@ -800,13 +818,15 @@ type MonitoringInstanceBaseWithNameType string
 // MonitoringInstanceCreateParams defines model for MonitoringInstanceCreateParams.
 type MonitoringInstanceCreateParams struct {
 	// AllowedNamespaces List of namespaces allowed to use this monitoring instance
+	// Deprecated:
 	AllowedNamespaces *[]string `json:"allowedNamespaces,omitempty"`
 
 	// Name A user defined string name of the storage in the DNS name format https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names
-	Name string                             `json:"name,omitempty"`
-	Pmm  *PMMMonitoringInstanceSpec         `json:"pmm,omitempty"`
-	Type MonitoringInstanceCreateParamsType `json:"type,omitempty"`
-	Url  string                             `json:"url,omitempty"`
+	Name      string                             `json:"name,omitempty"`
+	Namespace string                             `json:"namespace,omitempty"`
+	Pmm       *PMMMonitoringInstanceSpec         `json:"pmm,omitempty"`
+	Type      MonitoringInstanceCreateParamsType `json:"type,omitempty"`
+	Url       string                             `json:"url,omitempty"`
 
 	// VerifyTLS VerifyTLS is set to ensure TLS/SSL verification.
 	VerifyTLS *bool `json:"verifyTLS,omitempty"`
@@ -830,6 +850,7 @@ type MonitoringInstancePMM struct {
 // MonitoringInstanceUpdateParams defines model for MonitoringInstanceUpdateParams.
 type MonitoringInstanceUpdateParams struct {
 	// AllowedNamespaces List of namespaces allowed to use this monitoring instance
+	// Deprecated:
 	AllowedNamespaces *[]string                          `json:"allowedNamespaces,omitempty"`
 	Pmm               *PMMMonitoringInstanceSpec         `json:"pmm,omitempty"`
 	Type              MonitoringInstanceUpdateParamsType `json:"type,omitempty"`
@@ -857,48 +878,6 @@ type OIDCConfig struct {
 	IssuerURL string `json:"issuerURL"`
 }
 
-// OperatorUpgradePreflight Operator upgrade preflight check results
-type OperatorUpgradePreflight struct {
-	// CurrentVersion The current operator version
-	CurrentVersion *string                                `json:"currentVersion,omitempty"`
-	Databases      *[]OperatorUpgradePreflightForDatabase `json:"databases,omitempty"`
-}
-
-// OperatorUpgradePreflightForDatabase Operator upgrade preflight check results for a database
-type OperatorUpgradePreflightForDatabase struct {
-	Message *string `json:"message,omitempty"`
-
-	// Name Name of the database cluster
-	Name *string `json:"name,omitempty"`
-
-	// PendingTask Pending task for the database cluster
-	PendingTask *OperatorUpgradePreflightForDatabasePendingTask `json:"pendingTask,omitempty"`
-}
-
-// OperatorUpgradePreflightForDatabasePendingTask Pending task for the database cluster
-type OperatorUpgradePreflightForDatabasePendingTask string
-
-// OperatorVersion Operator version check results
-type OperatorVersion struct {
-	// CurrentVersion The current operator version
-	CurrentVersion *string                            `json:"currentVersion,omitempty"`
-	Databases      *[]OperatorVersionCheckForDatabase `json:"databases,omitempty"`
-}
-
-// OperatorVersionCheckForDatabase Operator version checks for a single database
-type OperatorVersionCheckForDatabase struct {
-	Message *string `json:"message,omitempty"`
-
-	// Name Name of the database cluster
-	Name *string `json:"name,omitempty"`
-
-	// PendingTask Pending task for the database cluster
-	PendingTask *OperatorVersionCheckForDatabasePendingTask `json:"pendingTask,omitempty"`
-}
-
-// OperatorVersionCheckForDatabasePendingTask Pending task for the database cluster
-type OperatorVersionCheckForDatabasePendingTask string
-
 // Settings Everest global settings
 type Settings struct {
 	// OidcConfig Everest OIDC provider configuration
@@ -910,6 +889,7 @@ type UpdateBackupStorageParams struct {
 	AccessKey *string `json:"accessKey,omitempty"`
 
 	// AllowedNamespaces List of namespaces allowed to use this backup storage
+	// Deprecated:
 	AllowedNamespaces *[]string `json:"allowedNamespaces,omitempty"`
 
 	// BucketName The cloud storage bucket/container name
@@ -922,10 +902,51 @@ type UpdateBackupStorageParams struct {
 	VerifyTLS      *bool   `json:"verifyTLS,omitempty"`
 }
 
+// Upgrade defines model for Upgrade.
+type Upgrade struct {
+	// CurrentVersion The current operator version
+	CurrentVersion *string `json:"currentVersion,omitempty"`
+
+	// Name Name of the operator
+	Name *string `json:"name,omitempty"`
+
+	// TargetVersion The next version of the operator to upgrade to.
+	TargetVersion *string `json:"targetVersion,omitempty"`
+}
+
+// UpgradePlan Operators upgrade plan
+type UpgradePlan struct {
+	PendingActions *[]UpgradeTask `json:"pendingActions,omitempty"`
+	Upgrades       *[]Upgrade     `json:"upgrades,omitempty"`
+}
+
+// UpgradePlanApproval This no-op object is used to trigger the operator upgrade in a namespace.
+type UpgradePlanApproval = map[string]interface{}
+
+// UpgradeTask defines model for UpgradeTask.
+type UpgradeTask struct {
+	Message *string `json:"message,omitempty"`
+
+	// Name Name of the database cluster
+	Name *string `json:"name,omitempty"`
+
+	// PendingTask Pending task for the database cluster
+	PendingTask *UpgradeTaskPendingTask `json:"pendingTask,omitempty"`
+}
+
+// UpgradeTaskPendingTask Pending task for the database cluster
+type UpgradeTaskPendingTask string
+
 // UserCredentials defines model for UserCredentials.
 type UserCredentials struct {
 	Password *string `json:"password,omitempty"`
 	Username *string `json:"username,omitempty"`
+}
+
+// UserPermissions defines model for UserPermissions.
+type UserPermissions struct {
+	Enabled     bool        `json:"enabled"`
+	Permissions *[][]string `json:"permissions,omitempty"`
 }
 
 // Version Everest version info
@@ -1028,23 +1049,23 @@ type DeleteDatabaseClusterParams struct {
 	CleanupBackupStorage *bool `form:"cleanupBackupStorage,omitempty" json:"cleanupBackupStorage,omitempty"`
 }
 
-// GetOperatorUpgradePreflightParams defines parameters for GetOperatorUpgradePreflight.
-type GetOperatorUpgradePreflightParams struct {
-	// TargetVersion The target version to upgrade the operator to
-	TargetVersion string `form:"targetVersion" json:"targetVersion"`
-}
+// CreateBackupStorageV0JSONRequestBody defines body for CreateBackupStorageV0 for application/json ContentType.
+type CreateBackupStorageV0JSONRequestBody = CreateBackupStorageParams
+
+// UpdateBackupStorageV0JSONRequestBody defines body for UpdateBackupStorageV0 for application/json ContentType.
+type UpdateBackupStorageV0JSONRequestBody = UpdateBackupStorageParams
+
+// CreateMonitoringInstanceV0JSONRequestBody defines body for CreateMonitoringInstanceV0 for application/json ContentType.
+type CreateMonitoringInstanceV0JSONRequestBody = MonitoringInstanceCreateParams
+
+// UpdateMonitoringInstanceV0JSONRequestBody defines body for UpdateMonitoringInstanceV0 for application/json ContentType.
+type UpdateMonitoringInstanceV0JSONRequestBody = MonitoringInstanceUpdateParams
 
 // CreateBackupStorageJSONRequestBody defines body for CreateBackupStorage for application/json ContentType.
 type CreateBackupStorageJSONRequestBody = CreateBackupStorageParams
 
 // UpdateBackupStorageJSONRequestBody defines body for UpdateBackupStorage for application/json ContentType.
 type UpdateBackupStorageJSONRequestBody = UpdateBackupStorageParams
-
-// CreateMonitoringInstanceJSONRequestBody defines body for CreateMonitoringInstance for application/json ContentType.
-type CreateMonitoringInstanceJSONRequestBody = MonitoringInstanceCreateParams
-
-// UpdateMonitoringInstanceJSONRequestBody defines body for UpdateMonitoringInstance for application/json ContentType.
-type UpdateMonitoringInstanceJSONRequestBody = MonitoringInstanceUpdateParams
 
 // CreateDatabaseClusterBackupJSONRequestBody defines body for CreateDatabaseClusterBackup for application/json ContentType.
 type CreateDatabaseClusterBackupJSONRequestBody = DatabaseClusterBackup
@@ -1061,11 +1082,17 @@ type CreateDatabaseClusterJSONRequestBody = DatabaseCluster
 // UpdateDatabaseClusterJSONRequestBody defines body for UpdateDatabaseCluster for application/json ContentType.
 type UpdateDatabaseClusterJSONRequestBody = DatabaseCluster
 
+// ApproveUpgradePlanJSONRequestBody defines body for ApproveUpgradePlan for application/json ContentType.
+type ApproveUpgradePlanJSONRequestBody = UpgradePlanApproval
+
 // UpdateDatabaseEngineJSONRequestBody defines body for UpdateDatabaseEngine for application/json ContentType.
 type UpdateDatabaseEngineJSONRequestBody = DatabaseEngine
 
-// UpgradeDatabaseEngineOperatorJSONRequestBody defines body for UpgradeDatabaseEngineOperator for application/json ContentType.
-type UpgradeDatabaseEngineOperatorJSONRequestBody = DatabaseEngineOperatorUpgradeParams
+// CreateMonitoringInstanceJSONRequestBody defines body for CreateMonitoringInstance for application/json ContentType.
+type CreateMonitoringInstanceJSONRequestBody = MonitoringInstanceCreateParams
+
+// UpdateMonitoringInstanceJSONRequestBody defines body for UpdateMonitoringInstance for application/json ContentType.
+type UpdateMonitoringInstanceJSONRequestBody = MonitoringInstanceUpdateParams
 
 // CreateSessionJSONRequestBody defines body for CreateSession for application/json ContentType.
 type CreateSessionJSONRequestBody = UserCredentials
@@ -1577,49 +1604,68 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// ListBackupStorages request
-	ListBackupStorages(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListBackupStoragesV0 request
+	ListBackupStoragesV0(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateBackupStorageWithBody request with any body
-	CreateBackupStorageWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// CreateBackupStorageV0WithBody request with any body
+	CreateBackupStorageV0WithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateBackupStorage(ctx context.Context, body CreateBackupStorageJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateBackupStorageV0(ctx context.Context, body CreateBackupStorageV0JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// DeleteBackupStorage request
-	DeleteBackupStorage(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// DeleteBackupStorageV0 request
+	DeleteBackupStorageV0(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetBackupStorage request
-	GetBackupStorage(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetBackupStorageV0 request
+	GetBackupStorageV0(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UpdateBackupStorageWithBody request with any body
-	UpdateBackupStorageWithBody(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// UpdateBackupStorageV0WithBody request with any body
+	UpdateBackupStorageV0WithBody(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateBackupStorage(ctx context.Context, name string, body UpdateBackupStorageJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateBackupStorageV0(ctx context.Context, name string, body UpdateBackupStorageV0JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetKubernetesClusterInfo request
 	GetKubernetesClusterInfo(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListMonitoringInstances request
-	ListMonitoringInstances(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListMonitoringInstancesV0 request
+	ListMonitoringInstancesV0(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateMonitoringInstanceWithBody request with any body
-	CreateMonitoringInstanceWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// CreateMonitoringInstanceV0WithBody request with any body
+	CreateMonitoringInstanceV0WithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateMonitoringInstance(ctx context.Context, body CreateMonitoringInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateMonitoringInstanceV0(ctx context.Context, body CreateMonitoringInstanceV0JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// DeleteMonitoringInstance request
-	DeleteMonitoringInstance(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// DeleteMonitoringInstanceV0 request
+	DeleteMonitoringInstanceV0(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetMonitoringInstance request
-	GetMonitoringInstance(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetMonitoringInstanceV0 request
+	GetMonitoringInstanceV0(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UpdateMonitoringInstanceWithBody request with any body
-	UpdateMonitoringInstanceWithBody(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// UpdateMonitoringInstanceV0WithBody request with any body
+	UpdateMonitoringInstanceV0WithBody(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateMonitoringInstance(ctx context.Context, name string, body UpdateMonitoringInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateMonitoringInstanceV0(ctx context.Context, name string, body UpdateMonitoringInstanceV0JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListNamespaces request
 	ListNamespaces(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListBackupStorages request
+	ListBackupStorages(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateBackupStorageWithBody request with any body
+	CreateBackupStorageWithBody(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateBackupStorage(ctx context.Context, namespace string, body CreateBackupStorageJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteBackupStorage request
+	DeleteBackupStorage(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetBackupStorage request
+	GetBackupStorage(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateBackupStorageWithBody request with any body
+	UpdateBackupStorageWithBody(ctx context.Context, namespace string, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateBackupStorage(ctx context.Context, namespace string, name string, body UpdateBackupStorageJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateDatabaseClusterBackupWithBody request with any body
 	CreateDatabaseClusterBackupWithBody(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1656,6 +1702,12 @@ type ClientInterface interface {
 
 	CreateDatabaseCluster(ctx context.Context, namespace string, body CreateDatabaseClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListDatabaseClusterBackups request
+	ListDatabaseClusterBackups(ctx context.Context, namespace string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListDatabaseClusterRestores request
+	ListDatabaseClusterRestores(ctx context.Context, namespace string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// DeleteDatabaseCluster request
 	DeleteDatabaseCluster(ctx context.Context, namespace string, name string, params *DeleteDatabaseClusterParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -1667,9 +1719,6 @@ type ClientInterface interface {
 
 	UpdateDatabaseCluster(ctx context.Context, namespace string, name string, body UpdateDatabaseClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListDatabaseClusterBackups request
-	ListDatabaseClusterBackups(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// GetDatabaseClusterComponents request
 	GetDatabaseClusterComponents(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -1679,11 +1728,16 @@ type ClientInterface interface {
 	// GetDatabaseClusterPitr request
 	GetDatabaseClusterPitr(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListDatabaseClusterRestores request
-	ListDatabaseClusterRestores(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// ListDatabaseEngines request
 	ListDatabaseEngines(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetUpgradePlan request
+	GetUpgradePlan(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ApproveUpgradePlanWithBody request with any body
+	ApproveUpgradePlanWithBody(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ApproveUpgradePlan(ctx context.Context, namespace string, body ApproveUpgradePlanJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetDatabaseEngine request
 	GetDatabaseEngine(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1693,16 +1747,27 @@ type ClientInterface interface {
 
 	UpdateDatabaseEngine(ctx context.Context, namespace string, name string, body UpdateDatabaseEngineJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOperatorVersion request
-	GetOperatorVersion(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListMonitoringInstances request
+	ListMonitoringInstances(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UpgradeDatabaseEngineOperatorWithBody request with any body
-	UpgradeDatabaseEngineOperatorWithBody(ctx context.Context, namespace string, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// CreateMonitoringInstanceWithBody request with any body
+	CreateMonitoringInstanceWithBody(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpgradeDatabaseEngineOperator(ctx context.Context, namespace string, name string, body UpgradeDatabaseEngineOperatorJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateMonitoringInstance(ctx context.Context, namespace string, body CreateMonitoringInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOperatorUpgradePreflight request
-	GetOperatorUpgradePreflight(ctx context.Context, namespace string, name string, params *GetOperatorUpgradePreflightParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// DeleteMonitoringInstance request
+	DeleteMonitoringInstance(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetMonitoringInstance request
+	GetMonitoringInstance(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateMonitoringInstanceWithBody request with any body
+	UpdateMonitoringInstanceWithBody(ctx context.Context, namespace string, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateMonitoringInstance(ctx context.Context, namespace string, name string, body UpdateMonitoringInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetUserPermissions request
+	GetUserPermissions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetKubernetesClusterResources request
 	GetKubernetesClusterResources(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1719,8 +1784,8 @@ type ClientInterface interface {
 	VersionInfo(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-func (c *Client) ListBackupStorages(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListBackupStoragesRequest(c.Server)
+func (c *Client) ListBackupStoragesV0(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListBackupStoragesV0Request(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -1731,8 +1796,8 @@ func (c *Client) ListBackupStorages(ctx context.Context, reqEditors ...RequestEd
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateBackupStorageWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateBackupStorageRequestWithBody(c.Server, contentType, body)
+func (c *Client) CreateBackupStorageV0WithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateBackupStorageV0RequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1743,8 +1808,8 @@ func (c *Client) CreateBackupStorageWithBody(ctx context.Context, contentType st
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateBackupStorage(ctx context.Context, body CreateBackupStorageJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateBackupStorageRequest(c.Server, body)
+func (c *Client) CreateBackupStorageV0(ctx context.Context, body CreateBackupStorageV0JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateBackupStorageV0Request(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1755,8 +1820,8 @@ func (c *Client) CreateBackupStorage(ctx context.Context, body CreateBackupStora
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteBackupStorage(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteBackupStorageRequest(c.Server, name)
+func (c *Client) DeleteBackupStorageV0(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteBackupStorageV0Request(c.Server, name)
 	if err != nil {
 		return nil, err
 	}
@@ -1767,8 +1832,8 @@ func (c *Client) DeleteBackupStorage(ctx context.Context, name string, reqEditor
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetBackupStorage(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetBackupStorageRequest(c.Server, name)
+func (c *Client) GetBackupStorageV0(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetBackupStorageV0Request(c.Server, name)
 	if err != nil {
 		return nil, err
 	}
@@ -1779,8 +1844,8 @@ func (c *Client) GetBackupStorage(ctx context.Context, name string, reqEditors .
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateBackupStorageWithBody(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateBackupStorageRequestWithBody(c.Server, name, contentType, body)
+func (c *Client) UpdateBackupStorageV0WithBody(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateBackupStorageV0RequestWithBody(c.Server, name, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1791,8 +1856,8 @@ func (c *Client) UpdateBackupStorageWithBody(ctx context.Context, name string, c
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateBackupStorage(ctx context.Context, name string, body UpdateBackupStorageJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateBackupStorageRequest(c.Server, name, body)
+func (c *Client) UpdateBackupStorageV0(ctx context.Context, name string, body UpdateBackupStorageV0JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateBackupStorageV0Request(c.Server, name, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1815,8 +1880,8 @@ func (c *Client) GetKubernetesClusterInfo(ctx context.Context, reqEditors ...Req
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListMonitoringInstances(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListMonitoringInstancesRequest(c.Server)
+func (c *Client) ListMonitoringInstancesV0(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListMonitoringInstancesV0Request(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -1827,8 +1892,8 @@ func (c *Client) ListMonitoringInstances(ctx context.Context, reqEditors ...Requ
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateMonitoringInstanceWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateMonitoringInstanceRequestWithBody(c.Server, contentType, body)
+func (c *Client) CreateMonitoringInstanceV0WithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateMonitoringInstanceV0RequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1839,8 +1904,8 @@ func (c *Client) CreateMonitoringInstanceWithBody(ctx context.Context, contentTy
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateMonitoringInstance(ctx context.Context, body CreateMonitoringInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateMonitoringInstanceRequest(c.Server, body)
+func (c *Client) CreateMonitoringInstanceV0(ctx context.Context, body CreateMonitoringInstanceV0JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateMonitoringInstanceV0Request(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1851,8 +1916,8 @@ func (c *Client) CreateMonitoringInstance(ctx context.Context, body CreateMonito
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteMonitoringInstance(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteMonitoringInstanceRequest(c.Server, name)
+func (c *Client) DeleteMonitoringInstanceV0(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteMonitoringInstanceV0Request(c.Server, name)
 	if err != nil {
 		return nil, err
 	}
@@ -1863,8 +1928,8 @@ func (c *Client) DeleteMonitoringInstance(ctx context.Context, name string, reqE
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetMonitoringInstance(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetMonitoringInstanceRequest(c.Server, name)
+func (c *Client) GetMonitoringInstanceV0(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetMonitoringInstanceV0Request(c.Server, name)
 	if err != nil {
 		return nil, err
 	}
@@ -1875,8 +1940,8 @@ func (c *Client) GetMonitoringInstance(ctx context.Context, name string, reqEdit
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateMonitoringInstanceWithBody(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateMonitoringInstanceRequestWithBody(c.Server, name, contentType, body)
+func (c *Client) UpdateMonitoringInstanceV0WithBody(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateMonitoringInstanceV0RequestWithBody(c.Server, name, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1887,8 +1952,8 @@ func (c *Client) UpdateMonitoringInstanceWithBody(ctx context.Context, name stri
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateMonitoringInstance(ctx context.Context, name string, body UpdateMonitoringInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateMonitoringInstanceRequest(c.Server, name, body)
+func (c *Client) UpdateMonitoringInstanceV0(ctx context.Context, name string, body UpdateMonitoringInstanceV0JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateMonitoringInstanceV0Request(c.Server, name, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1901,6 +1966,90 @@ func (c *Client) UpdateMonitoringInstance(ctx context.Context, name string, body
 
 func (c *Client) ListNamespaces(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListNamespacesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListBackupStorages(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListBackupStoragesRequest(c.Server, namespace)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateBackupStorageWithBody(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateBackupStorageRequestWithBody(c.Server, namespace, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateBackupStorage(ctx context.Context, namespace string, body CreateBackupStorageJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateBackupStorageRequest(c.Server, namespace, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteBackupStorage(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteBackupStorageRequest(c.Server, namespace, name)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetBackupStorage(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetBackupStorageRequest(c.Server, namespace, name)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateBackupStorageWithBody(ctx context.Context, namespace string, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateBackupStorageRequestWithBody(c.Server, namespace, name, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateBackupStorage(ctx context.Context, namespace string, name string, body UpdateBackupStorageJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateBackupStorageRequest(c.Server, namespace, name, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2067,6 +2216,30 @@ func (c *Client) CreateDatabaseCluster(ctx context.Context, namespace string, bo
 	return c.Client.Do(req)
 }
 
+func (c *Client) ListDatabaseClusterBackups(ctx context.Context, namespace string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDatabaseClusterBackupsRequest(c.Server, namespace, clusterName)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListDatabaseClusterRestores(ctx context.Context, namespace string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDatabaseClusterRestoresRequest(c.Server, namespace, clusterName)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) DeleteDatabaseCluster(ctx context.Context, namespace string, name string, params *DeleteDatabaseClusterParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteDatabaseClusterRequest(c.Server, namespace, name, params)
 	if err != nil {
@@ -2115,18 +2288,6 @@ func (c *Client) UpdateDatabaseCluster(ctx context.Context, namespace string, na
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListDatabaseClusterBackups(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListDatabaseClusterBackupsRequest(c.Server, namespace, name)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
 func (c *Client) GetDatabaseClusterComponents(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetDatabaseClusterComponentsRequest(c.Server, namespace, name)
 	if err != nil {
@@ -2163,8 +2324,8 @@ func (c *Client) GetDatabaseClusterPitr(ctx context.Context, namespace string, n
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListDatabaseClusterRestores(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListDatabaseClusterRestoresRequest(c.Server, namespace, name)
+func (c *Client) ListDatabaseEngines(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDatabaseEnginesRequest(c.Server, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -2175,8 +2336,32 @@ func (c *Client) ListDatabaseClusterRestores(ctx context.Context, namespace stri
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListDatabaseEngines(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListDatabaseEnginesRequest(c.Server, namespace)
+func (c *Client) GetUpgradePlan(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetUpgradePlanRequest(c.Server, namespace)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ApproveUpgradePlanWithBody(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewApproveUpgradePlanRequestWithBody(c.Server, namespace, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ApproveUpgradePlan(ctx context.Context, namespace string, body ApproveUpgradePlanJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewApproveUpgradePlanRequest(c.Server, namespace, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2223,8 +2408,8 @@ func (c *Client) UpdateDatabaseEngine(ctx context.Context, namespace string, nam
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOperatorVersion(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOperatorVersionRequest(c.Server, namespace, name)
+func (c *Client) ListMonitoringInstances(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListMonitoringInstancesRequest(c.Server, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -2235,8 +2420,8 @@ func (c *Client) GetOperatorVersion(ctx context.Context, namespace string, name 
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpgradeDatabaseEngineOperatorWithBody(ctx context.Context, namespace string, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpgradeDatabaseEngineOperatorRequestWithBody(c.Server, namespace, name, contentType, body)
+func (c *Client) CreateMonitoringInstanceWithBody(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateMonitoringInstanceRequestWithBody(c.Server, namespace, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2247,8 +2432,8 @@ func (c *Client) UpgradeDatabaseEngineOperatorWithBody(ctx context.Context, name
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpgradeDatabaseEngineOperator(ctx context.Context, namespace string, name string, body UpgradeDatabaseEngineOperatorJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpgradeDatabaseEngineOperatorRequest(c.Server, namespace, name, body)
+func (c *Client) CreateMonitoringInstance(ctx context.Context, namespace string, body CreateMonitoringInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateMonitoringInstanceRequest(c.Server, namespace, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2259,8 +2444,56 @@ func (c *Client) UpgradeDatabaseEngineOperator(ctx context.Context, namespace st
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOperatorUpgradePreflight(ctx context.Context, namespace string, name string, params *GetOperatorUpgradePreflightParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOperatorUpgradePreflightRequest(c.Server, namespace, name, params)
+func (c *Client) DeleteMonitoringInstance(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteMonitoringInstanceRequest(c.Server, namespace, name)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetMonitoringInstance(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetMonitoringInstanceRequest(c.Server, namespace, name)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateMonitoringInstanceWithBody(ctx context.Context, namespace string, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateMonitoringInstanceRequestWithBody(c.Server, namespace, name, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateMonitoringInstance(ctx context.Context, namespace string, name string, body UpdateMonitoringInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateMonitoringInstanceRequest(c.Server, namespace, name, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetUserPermissions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetUserPermissionsRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -2331,8 +2564,8 @@ func (c *Client) VersionInfo(ctx context.Context, reqEditors ...RequestEditorFn)
 	return c.Client.Do(req)
 }
 
-// NewListBackupStoragesRequest generates requests for ListBackupStorages
-func NewListBackupStoragesRequest(server string) (*http.Request, error) {
+// NewListBackupStoragesV0Request generates requests for ListBackupStoragesV0
+func NewListBackupStoragesV0Request(server string) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -2358,19 +2591,19 @@ func NewListBackupStoragesRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewCreateBackupStorageRequest calls the generic CreateBackupStorage builder with application/json body
-func NewCreateBackupStorageRequest(server string, body CreateBackupStorageJSONRequestBody) (*http.Request, error) {
+// NewCreateBackupStorageV0Request calls the generic CreateBackupStorageV0 builder with application/json body
+func NewCreateBackupStorageV0Request(server string, body CreateBackupStorageV0JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateBackupStorageRequestWithBody(server, "application/json", bodyReader)
+	return NewCreateBackupStorageV0RequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewCreateBackupStorageRequestWithBody generates requests for CreateBackupStorage with any type of body
-func NewCreateBackupStorageRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewCreateBackupStorageV0RequestWithBody generates requests for CreateBackupStorageV0 with any type of body
+func NewCreateBackupStorageV0RequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -2398,8 +2631,8 @@ func NewCreateBackupStorageRequestWithBody(server string, contentType string, bo
 	return req, nil
 }
 
-// NewDeleteBackupStorageRequest generates requests for DeleteBackupStorage
-func NewDeleteBackupStorageRequest(server string, name string) (*http.Request, error) {
+// NewDeleteBackupStorageV0Request generates requests for DeleteBackupStorageV0
+func NewDeleteBackupStorageV0Request(server string, name string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -2432,8 +2665,8 @@ func NewDeleteBackupStorageRequest(server string, name string) (*http.Request, e
 	return req, nil
 }
 
-// NewGetBackupStorageRequest generates requests for GetBackupStorage
-func NewGetBackupStorageRequest(server string, name string) (*http.Request, error) {
+// NewGetBackupStorageV0Request generates requests for GetBackupStorageV0
+func NewGetBackupStorageV0Request(server string, name string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -2466,19 +2699,19 @@ func NewGetBackupStorageRequest(server string, name string) (*http.Request, erro
 	return req, nil
 }
 
-// NewUpdateBackupStorageRequest calls the generic UpdateBackupStorage builder with application/json body
-func NewUpdateBackupStorageRequest(server string, name string, body UpdateBackupStorageJSONRequestBody) (*http.Request, error) {
+// NewUpdateBackupStorageV0Request calls the generic UpdateBackupStorageV0 builder with application/json body
+func NewUpdateBackupStorageV0Request(server string, name string, body UpdateBackupStorageV0JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewUpdateBackupStorageRequestWithBody(server, name, "application/json", bodyReader)
+	return NewUpdateBackupStorageV0RequestWithBody(server, name, "application/json", bodyReader)
 }
 
-// NewUpdateBackupStorageRequestWithBody generates requests for UpdateBackupStorage with any type of body
-func NewUpdateBackupStorageRequestWithBody(server string, name string, contentType string, body io.Reader) (*http.Request, error) {
+// NewUpdateBackupStorageV0RequestWithBody generates requests for UpdateBackupStorageV0 with any type of body
+func NewUpdateBackupStorageV0RequestWithBody(server string, name string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -2540,8 +2773,8 @@ func NewGetKubernetesClusterInfoRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewListMonitoringInstancesRequest generates requests for ListMonitoringInstances
-func NewListMonitoringInstancesRequest(server string) (*http.Request, error) {
+// NewListMonitoringInstancesV0Request generates requests for ListMonitoringInstancesV0
+func NewListMonitoringInstancesV0Request(server string) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -2567,19 +2800,19 @@ func NewListMonitoringInstancesRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewCreateMonitoringInstanceRequest calls the generic CreateMonitoringInstance builder with application/json body
-func NewCreateMonitoringInstanceRequest(server string, body CreateMonitoringInstanceJSONRequestBody) (*http.Request, error) {
+// NewCreateMonitoringInstanceV0Request calls the generic CreateMonitoringInstanceV0 builder with application/json body
+func NewCreateMonitoringInstanceV0Request(server string, body CreateMonitoringInstanceV0JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateMonitoringInstanceRequestWithBody(server, "application/json", bodyReader)
+	return NewCreateMonitoringInstanceV0RequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewCreateMonitoringInstanceRequestWithBody generates requests for CreateMonitoringInstance with any type of body
-func NewCreateMonitoringInstanceRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewCreateMonitoringInstanceV0RequestWithBody generates requests for CreateMonitoringInstanceV0 with any type of body
+func NewCreateMonitoringInstanceV0RequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -2607,8 +2840,8 @@ func NewCreateMonitoringInstanceRequestWithBody(server string, contentType strin
 	return req, nil
 }
 
-// NewDeleteMonitoringInstanceRequest generates requests for DeleteMonitoringInstance
-func NewDeleteMonitoringInstanceRequest(server string, name string) (*http.Request, error) {
+// NewDeleteMonitoringInstanceV0Request generates requests for DeleteMonitoringInstanceV0
+func NewDeleteMonitoringInstanceV0Request(server string, name string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -2641,8 +2874,8 @@ func NewDeleteMonitoringInstanceRequest(server string, name string) (*http.Reque
 	return req, nil
 }
 
-// NewGetMonitoringInstanceRequest generates requests for GetMonitoringInstance
-func NewGetMonitoringInstanceRequest(server string, name string) (*http.Request, error) {
+// NewGetMonitoringInstanceV0Request generates requests for GetMonitoringInstanceV0
+func NewGetMonitoringInstanceV0Request(server string, name string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -2675,19 +2908,19 @@ func NewGetMonitoringInstanceRequest(server string, name string) (*http.Request,
 	return req, nil
 }
 
-// NewUpdateMonitoringInstanceRequest calls the generic UpdateMonitoringInstance builder with application/json body
-func NewUpdateMonitoringInstanceRequest(server string, name string, body UpdateMonitoringInstanceJSONRequestBody) (*http.Request, error) {
+// NewUpdateMonitoringInstanceV0Request calls the generic UpdateMonitoringInstanceV0 builder with application/json body
+func NewUpdateMonitoringInstanceV0Request(server string, name string, body UpdateMonitoringInstanceV0JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewUpdateMonitoringInstanceRequestWithBody(server, name, "application/json", bodyReader)
+	return NewUpdateMonitoringInstanceV0RequestWithBody(server, name, "application/json", bodyReader)
 }
 
-// NewUpdateMonitoringInstanceRequestWithBody generates requests for UpdateMonitoringInstance with any type of body
-func NewUpdateMonitoringInstanceRequestWithBody(server string, name string, contentType string, body io.Reader) (*http.Request, error) {
+// NewUpdateMonitoringInstanceV0RequestWithBody generates requests for UpdateMonitoringInstanceV0 with any type of body
+func NewUpdateMonitoringInstanceV0RequestWithBody(server string, name string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -2745,6 +2978,223 @@ func NewListNamespacesRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewListBackupStoragesRequest generates requests for ListBackupStorages
+func NewListBackupStoragesRequest(server string, namespace string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "namespace", runtime.ParamLocationPath, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/namespaces/%s/backup-storages", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateBackupStorageRequest calls the generic CreateBackupStorage builder with application/json body
+func NewCreateBackupStorageRequest(server string, namespace string, body CreateBackupStorageJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateBackupStorageRequestWithBody(server, namespace, "application/json", bodyReader)
+}
+
+// NewCreateBackupStorageRequestWithBody generates requests for CreateBackupStorage with any type of body
+func NewCreateBackupStorageRequestWithBody(server string, namespace string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "namespace", runtime.ParamLocationPath, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/namespaces/%s/backup-storages", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteBackupStorageRequest generates requests for DeleteBackupStorage
+func NewDeleteBackupStorageRequest(server string, namespace string, name string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "namespace", runtime.ParamLocationPath, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/namespaces/%s/backup-storages/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetBackupStorageRequest generates requests for GetBackupStorage
+func NewGetBackupStorageRequest(server string, namespace string, name string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "namespace", runtime.ParamLocationPath, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/namespaces/%s/backup-storages/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateBackupStorageRequest calls the generic UpdateBackupStorage builder with application/json body
+func NewUpdateBackupStorageRequest(server string, namespace string, name string, body UpdateBackupStorageJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateBackupStorageRequestWithBody(server, namespace, name, "application/json", bodyReader)
+}
+
+// NewUpdateBackupStorageRequestWithBody generates requests for UpdateBackupStorage with any type of body
+func NewUpdateBackupStorageRequestWithBody(server string, namespace string, name string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "namespace", runtime.ParamLocationPath, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/namespaces/%s/backup-storages/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -3162,6 +3612,88 @@ func NewCreateDatabaseClusterRequestWithBody(server string, namespace string, co
 	return req, nil
 }
 
+// NewListDatabaseClusterBackupsRequest generates requests for ListDatabaseClusterBackups
+func NewListDatabaseClusterBackupsRequest(server string, namespace string, clusterName string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "namespace", runtime.ParamLocationPath, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "cluster-name", runtime.ParamLocationPath, clusterName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/namespaces/%s/database-clusters/%s/backups", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListDatabaseClusterRestoresRequest generates requests for ListDatabaseClusterRestores
+func NewListDatabaseClusterRestoresRequest(server string, namespace string, clusterName string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "namespace", runtime.ParamLocationPath, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "cluster-name", runtime.ParamLocationPath, clusterName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/namespaces/%s/database-clusters/%s/restores", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewDeleteDatabaseClusterRequest generates requests for DeleteDatabaseCluster
 func NewDeleteDatabaseClusterRequest(server string, namespace string, name string, params *DeleteDatabaseClusterParams) (*http.Request, error) {
 	var err error
@@ -3318,47 +3850,6 @@ func NewUpdateDatabaseClusterRequestWithBody(server string, namespace string, na
 	return req, nil
 }
 
-// NewListDatabaseClusterBackupsRequest generates requests for ListDatabaseClusterBackups
-func NewListDatabaseClusterBackupsRequest(server string, namespace string, name string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "namespace", runtime.ParamLocationPath, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/namespaces/%s/database-clusters/%s/backups", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 // NewGetDatabaseClusterComponentsRequest generates requests for GetDatabaseClusterComponents
 func NewGetDatabaseClusterComponentsRequest(server string, namespace string, name string) (*http.Request, error) {
 	var err error
@@ -3482,47 +3973,6 @@ func NewGetDatabaseClusterPitrRequest(server string, namespace string, name stri
 	return req, nil
 }
 
-// NewListDatabaseClusterRestoresRequest generates requests for ListDatabaseClusterRestores
-func NewListDatabaseClusterRestoresRequest(server string, namespace string, name string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "namespace", runtime.ParamLocationPath, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/namespaces/%s/database-clusters/%s/restores", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 // NewListDatabaseEnginesRequest generates requests for ListDatabaseEngines
 func NewListDatabaseEnginesRequest(server string, namespace string) (*http.Request, error) {
 	var err error
@@ -3553,6 +4003,87 @@ func NewListDatabaseEnginesRequest(server string, namespace string) (*http.Reque
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewGetUpgradePlanRequest generates requests for GetUpgradePlan
+func NewGetUpgradePlanRequest(server string, namespace string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "namespace", runtime.ParamLocationPath, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/namespaces/%s/database-engines/upgrade-plan", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewApproveUpgradePlanRequest calls the generic ApproveUpgradePlan builder with application/json body
+func NewApproveUpgradePlanRequest(server string, namespace string, body ApproveUpgradePlanJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewApproveUpgradePlanRequestWithBody(server, namespace, "application/json", bodyReader)
+}
+
+// NewApproveUpgradePlanRequestWithBody generates requests for ApproveUpgradePlan with any type of body
+func NewApproveUpgradePlanRequestWithBody(server string, namespace string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "namespace", runtime.ParamLocationPath, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/namespaces/%s/database-engines/upgrade-plan/approval", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -3652,8 +4183,8 @@ func NewUpdateDatabaseEngineRequestWithBody(server string, namespace string, nam
 	return req, nil
 }
 
-// NewGetOperatorVersionRequest generates requests for GetOperatorVersion
-func NewGetOperatorVersionRequest(server string, namespace string, name string) (*http.Request, error) {
+// NewListMonitoringInstancesRequest generates requests for ListMonitoringInstances
+func NewListMonitoringInstancesRequest(server string, namespace string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -3663,19 +4194,12 @@ func NewGetOperatorVersionRequest(server string, namespace string, name string) 
 		return nil, err
 	}
 
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
-	if err != nil {
-		return nil, err
-	}
-
 	serverURL, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/namespaces/%s/database-engines/%s/operator-version", pathParam0, pathParam1)
+	operationPath := fmt.Sprintf("/namespaces/%s/monitoring-instances", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -3693,19 +4217,19 @@ func NewGetOperatorVersionRequest(server string, namespace string, name string) 
 	return req, nil
 }
 
-// NewUpgradeDatabaseEngineOperatorRequest calls the generic UpgradeDatabaseEngineOperator builder with application/json body
-func NewUpgradeDatabaseEngineOperatorRequest(server string, namespace string, name string, body UpgradeDatabaseEngineOperatorJSONRequestBody) (*http.Request, error) {
+// NewCreateMonitoringInstanceRequest calls the generic CreateMonitoringInstance builder with application/json body
+func NewCreateMonitoringInstanceRequest(server string, namespace string, body CreateMonitoringInstanceJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewUpgradeDatabaseEngineOperatorRequestWithBody(server, namespace, name, "application/json", bodyReader)
+	return NewCreateMonitoringInstanceRequestWithBody(server, namespace, "application/json", bodyReader)
 }
 
-// NewUpgradeDatabaseEngineOperatorRequestWithBody generates requests for UpgradeDatabaseEngineOperator with any type of body
-func NewUpgradeDatabaseEngineOperatorRequestWithBody(server string, namespace string, name string, contentType string, body io.Reader) (*http.Request, error) {
+// NewCreateMonitoringInstanceRequestWithBody generates requests for CreateMonitoringInstance with any type of body
+func NewCreateMonitoringInstanceRequestWithBody(server string, namespace string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -3715,19 +4239,12 @@ func NewUpgradeDatabaseEngineOperatorRequestWithBody(server string, namespace st
 		return nil, err
 	}
 
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
-	if err != nil {
-		return nil, err
-	}
-
 	serverURL, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/namespaces/%s/database-engines/%s/operator-version", pathParam0, pathParam1)
+	operationPath := fmt.Sprintf("/namespaces/%s/monitoring-instances", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -3737,7 +4254,7 @@ func NewUpgradeDatabaseEngineOperatorRequestWithBody(server string, namespace st
 		return nil, err
 	}
 
-	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -3747,8 +4264,8 @@ func NewUpgradeDatabaseEngineOperatorRequestWithBody(server string, namespace st
 	return req, nil
 }
 
-// NewGetOperatorUpgradePreflightRequest generates requests for GetOperatorUpgradePreflight
-func NewGetOperatorUpgradePreflightRequest(server string, namespace string, name string, params *GetOperatorUpgradePreflightParams) (*http.Request, error) {
+// NewDeleteMonitoringInstanceRequest generates requests for DeleteMonitoringInstance
+func NewDeleteMonitoringInstanceRequest(server string, namespace string, name string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -3770,7 +4287,7 @@ func NewGetOperatorUpgradePreflightRequest(server string, namespace string, name
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/namespaces/%s/database-engines/%s/operator-version/preflight", pathParam0, pathParam1)
+	operationPath := fmt.Sprintf("/namespaces/%s/monitoring-instances/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -3780,22 +4297,126 @@ func NewGetOperatorUpgradePreflightRequest(server string, namespace string, name
 		return nil, err
 	}
 
-	if params != nil {
-		queryValues := queryURL.Query()
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
-		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "targetVersion", runtime.ParamLocationQuery, params.TargetVersion); err != nil {
-			return nil, err
-		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-			return nil, err
-		} else {
-			for k, v := range parsed {
-				for _, v2 := range v {
-					queryValues.Add(k, v2)
-				}
-			}
-		}
+	return req, nil
+}
 
-		queryURL.RawQuery = queryValues.Encode()
+// NewGetMonitoringInstanceRequest generates requests for GetMonitoringInstance
+func NewGetMonitoringInstanceRequest(server string, namespace string, name string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "namespace", runtime.ParamLocationPath, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/namespaces/%s/monitoring-instances/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateMonitoringInstanceRequest calls the generic UpdateMonitoringInstance builder with application/json body
+func NewUpdateMonitoringInstanceRequest(server string, namespace string, name string, body UpdateMonitoringInstanceJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateMonitoringInstanceRequestWithBody(server, namespace, name, "application/json", bodyReader)
+}
+
+// NewUpdateMonitoringInstanceRequestWithBody generates requests for UpdateMonitoringInstance with any type of body
+func NewUpdateMonitoringInstanceRequestWithBody(server string, namespace string, name string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "namespace", runtime.ParamLocationPath, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/namespaces/%s/monitoring-instances/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetUserPermissionsRequest generates requests for GetUserPermissions
+func NewGetUserPermissionsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/permissions")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -3970,49 +4591,68 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// ListBackupStoragesWithResponse request
-	ListBackupStoragesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListBackupStoragesResponse, error)
+	// ListBackupStoragesV0WithResponse request
+	ListBackupStoragesV0WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListBackupStoragesV0Response, error)
 
-	// CreateBackupStorageWithBodyWithResponse request with any body
-	CreateBackupStorageWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateBackupStorageResponse, error)
+	// CreateBackupStorageV0WithBodyWithResponse request with any body
+	CreateBackupStorageV0WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateBackupStorageV0Response, error)
 
-	CreateBackupStorageWithResponse(ctx context.Context, body CreateBackupStorageJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateBackupStorageResponse, error)
+	CreateBackupStorageV0WithResponse(ctx context.Context, body CreateBackupStorageV0JSONRequestBody, reqEditors ...RequestEditorFn) (*CreateBackupStorageV0Response, error)
 
-	// DeleteBackupStorageWithResponse request
-	DeleteBackupStorageWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*DeleteBackupStorageResponse, error)
+	// DeleteBackupStorageV0WithResponse request
+	DeleteBackupStorageV0WithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*DeleteBackupStorageV0Response, error)
 
-	// GetBackupStorageWithResponse request
-	GetBackupStorageWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*GetBackupStorageResponse, error)
+	// GetBackupStorageV0WithResponse request
+	GetBackupStorageV0WithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*GetBackupStorageV0Response, error)
 
-	// UpdateBackupStorageWithBodyWithResponse request with any body
-	UpdateBackupStorageWithBodyWithResponse(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateBackupStorageResponse, error)
+	// UpdateBackupStorageV0WithBodyWithResponse request with any body
+	UpdateBackupStorageV0WithBodyWithResponse(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateBackupStorageV0Response, error)
 
-	UpdateBackupStorageWithResponse(ctx context.Context, name string, body UpdateBackupStorageJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateBackupStorageResponse, error)
+	UpdateBackupStorageV0WithResponse(ctx context.Context, name string, body UpdateBackupStorageV0JSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateBackupStorageV0Response, error)
 
 	// GetKubernetesClusterInfoWithResponse request
 	GetKubernetesClusterInfoWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetKubernetesClusterInfoResponse, error)
 
-	// ListMonitoringInstancesWithResponse request
-	ListMonitoringInstancesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListMonitoringInstancesResponse, error)
+	// ListMonitoringInstancesV0WithResponse request
+	ListMonitoringInstancesV0WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListMonitoringInstancesV0Response, error)
 
-	// CreateMonitoringInstanceWithBodyWithResponse request with any body
-	CreateMonitoringInstanceWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateMonitoringInstanceResponse, error)
+	// CreateMonitoringInstanceV0WithBodyWithResponse request with any body
+	CreateMonitoringInstanceV0WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateMonitoringInstanceV0Response, error)
 
-	CreateMonitoringInstanceWithResponse(ctx context.Context, body CreateMonitoringInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateMonitoringInstanceResponse, error)
+	CreateMonitoringInstanceV0WithResponse(ctx context.Context, body CreateMonitoringInstanceV0JSONRequestBody, reqEditors ...RequestEditorFn) (*CreateMonitoringInstanceV0Response, error)
 
-	// DeleteMonitoringInstanceWithResponse request
-	DeleteMonitoringInstanceWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*DeleteMonitoringInstanceResponse, error)
+	// DeleteMonitoringInstanceV0WithResponse request
+	DeleteMonitoringInstanceV0WithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*DeleteMonitoringInstanceV0Response, error)
 
-	// GetMonitoringInstanceWithResponse request
-	GetMonitoringInstanceWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*GetMonitoringInstanceResponse, error)
+	// GetMonitoringInstanceV0WithResponse request
+	GetMonitoringInstanceV0WithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*GetMonitoringInstanceV0Response, error)
 
-	// UpdateMonitoringInstanceWithBodyWithResponse request with any body
-	UpdateMonitoringInstanceWithBodyWithResponse(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateMonitoringInstanceResponse, error)
+	// UpdateMonitoringInstanceV0WithBodyWithResponse request with any body
+	UpdateMonitoringInstanceV0WithBodyWithResponse(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateMonitoringInstanceV0Response, error)
 
-	UpdateMonitoringInstanceWithResponse(ctx context.Context, name string, body UpdateMonitoringInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateMonitoringInstanceResponse, error)
+	UpdateMonitoringInstanceV0WithResponse(ctx context.Context, name string, body UpdateMonitoringInstanceV0JSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateMonitoringInstanceV0Response, error)
 
 	// ListNamespacesWithResponse request
 	ListNamespacesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListNamespacesResponse, error)
+
+	// ListBackupStoragesWithResponse request
+	ListBackupStoragesWithResponse(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*ListBackupStoragesResponse, error)
+
+	// CreateBackupStorageWithBodyWithResponse request with any body
+	CreateBackupStorageWithBodyWithResponse(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateBackupStorageResponse, error)
+
+	CreateBackupStorageWithResponse(ctx context.Context, namespace string, body CreateBackupStorageJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateBackupStorageResponse, error)
+
+	// DeleteBackupStorageWithResponse request
+	DeleteBackupStorageWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*DeleteBackupStorageResponse, error)
+
+	// GetBackupStorageWithResponse request
+	GetBackupStorageWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*GetBackupStorageResponse, error)
+
+	// UpdateBackupStorageWithBodyWithResponse request with any body
+	UpdateBackupStorageWithBodyWithResponse(ctx context.Context, namespace string, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateBackupStorageResponse, error)
+
+	UpdateBackupStorageWithResponse(ctx context.Context, namespace string, name string, body UpdateBackupStorageJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateBackupStorageResponse, error)
 
 	// CreateDatabaseClusterBackupWithBodyWithResponse request with any body
 	CreateDatabaseClusterBackupWithBodyWithResponse(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDatabaseClusterBackupResponse, error)
@@ -4049,6 +4689,12 @@ type ClientWithResponsesInterface interface {
 
 	CreateDatabaseClusterWithResponse(ctx context.Context, namespace string, body CreateDatabaseClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDatabaseClusterResponse, error)
 
+	// ListDatabaseClusterBackupsWithResponse request
+	ListDatabaseClusterBackupsWithResponse(ctx context.Context, namespace string, clusterName string, reqEditors ...RequestEditorFn) (*ListDatabaseClusterBackupsResponse, error)
+
+	// ListDatabaseClusterRestoresWithResponse request
+	ListDatabaseClusterRestoresWithResponse(ctx context.Context, namespace string, clusterName string, reqEditors ...RequestEditorFn) (*ListDatabaseClusterRestoresResponse, error)
+
 	// DeleteDatabaseClusterWithResponse request
 	DeleteDatabaseClusterWithResponse(ctx context.Context, namespace string, name string, params *DeleteDatabaseClusterParams, reqEditors ...RequestEditorFn) (*DeleteDatabaseClusterResponse, error)
 
@@ -4060,9 +4706,6 @@ type ClientWithResponsesInterface interface {
 
 	UpdateDatabaseClusterWithResponse(ctx context.Context, namespace string, name string, body UpdateDatabaseClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateDatabaseClusterResponse, error)
 
-	// ListDatabaseClusterBackupsWithResponse request
-	ListDatabaseClusterBackupsWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*ListDatabaseClusterBackupsResponse, error)
-
 	// GetDatabaseClusterComponentsWithResponse request
 	GetDatabaseClusterComponentsWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*GetDatabaseClusterComponentsResponse, error)
 
@@ -4072,11 +4715,16 @@ type ClientWithResponsesInterface interface {
 	// GetDatabaseClusterPitrWithResponse request
 	GetDatabaseClusterPitrWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*GetDatabaseClusterPitrResponse, error)
 
-	// ListDatabaseClusterRestoresWithResponse request
-	ListDatabaseClusterRestoresWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*ListDatabaseClusterRestoresResponse, error)
-
 	// ListDatabaseEnginesWithResponse request
 	ListDatabaseEnginesWithResponse(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*ListDatabaseEnginesResponse, error)
+
+	// GetUpgradePlanWithResponse request
+	GetUpgradePlanWithResponse(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*GetUpgradePlanResponse, error)
+
+	// ApproveUpgradePlanWithBodyWithResponse request with any body
+	ApproveUpgradePlanWithBodyWithResponse(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ApproveUpgradePlanResponse, error)
+
+	ApproveUpgradePlanWithResponse(ctx context.Context, namespace string, body ApproveUpgradePlanJSONRequestBody, reqEditors ...RequestEditorFn) (*ApproveUpgradePlanResponse, error)
 
 	// GetDatabaseEngineWithResponse request
 	GetDatabaseEngineWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*GetDatabaseEngineResponse, error)
@@ -4086,16 +4734,27 @@ type ClientWithResponsesInterface interface {
 
 	UpdateDatabaseEngineWithResponse(ctx context.Context, namespace string, name string, body UpdateDatabaseEngineJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateDatabaseEngineResponse, error)
 
-	// GetOperatorVersionWithResponse request
-	GetOperatorVersionWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*GetOperatorVersionResponse, error)
+	// ListMonitoringInstancesWithResponse request
+	ListMonitoringInstancesWithResponse(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*ListMonitoringInstancesResponse, error)
 
-	// UpgradeDatabaseEngineOperatorWithBodyWithResponse request with any body
-	UpgradeDatabaseEngineOperatorWithBodyWithResponse(ctx context.Context, namespace string, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpgradeDatabaseEngineOperatorResponse, error)
+	// CreateMonitoringInstanceWithBodyWithResponse request with any body
+	CreateMonitoringInstanceWithBodyWithResponse(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateMonitoringInstanceResponse, error)
 
-	UpgradeDatabaseEngineOperatorWithResponse(ctx context.Context, namespace string, name string, body UpgradeDatabaseEngineOperatorJSONRequestBody, reqEditors ...RequestEditorFn) (*UpgradeDatabaseEngineOperatorResponse, error)
+	CreateMonitoringInstanceWithResponse(ctx context.Context, namespace string, body CreateMonitoringInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateMonitoringInstanceResponse, error)
 
-	// GetOperatorUpgradePreflightWithResponse request
-	GetOperatorUpgradePreflightWithResponse(ctx context.Context, namespace string, name string, params *GetOperatorUpgradePreflightParams, reqEditors ...RequestEditorFn) (*GetOperatorUpgradePreflightResponse, error)
+	// DeleteMonitoringInstanceWithResponse request
+	DeleteMonitoringInstanceWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*DeleteMonitoringInstanceResponse, error)
+
+	// GetMonitoringInstanceWithResponse request
+	GetMonitoringInstanceWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*GetMonitoringInstanceResponse, error)
+
+	// UpdateMonitoringInstanceWithBodyWithResponse request with any body
+	UpdateMonitoringInstanceWithBodyWithResponse(ctx context.Context, namespace string, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateMonitoringInstanceResponse, error)
+
+	UpdateMonitoringInstanceWithResponse(ctx context.Context, namespace string, name string, body UpdateMonitoringInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateMonitoringInstanceResponse, error)
+
+	// GetUserPermissionsWithResponse request
+	GetUserPermissionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetUserPermissionsResponse, error)
 
 	// GetKubernetesClusterResourcesWithResponse request
 	GetKubernetesClusterResourcesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetKubernetesClusterResourcesResponse, error)
@@ -4110,6 +4769,262 @@ type ClientWithResponsesInterface interface {
 
 	// VersionInfoWithResponse request
 	VersionInfoWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*VersionInfoResponse, error)
+}
+
+type ListBackupStoragesV0Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r ListBackupStoragesV0Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListBackupStoragesV0Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateBackupStorageV0Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateBackupStorageV0Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateBackupStorageV0Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteBackupStorageV0Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteBackupStorageV0Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteBackupStorageV0Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetBackupStorageV0Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetBackupStorageV0Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetBackupStorageV0Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateBackupStorageV0Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateBackupStorageV0Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateBackupStorageV0Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetKubernetesClusterInfoResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *KubernetesClusterInfo
+	JSON400      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r GetKubernetesClusterInfoResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetKubernetesClusterInfoResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListMonitoringInstancesV0Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r ListMonitoringInstancesV0Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListMonitoringInstancesV0Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateMonitoringInstanceV0Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateMonitoringInstanceV0Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateMonitoringInstanceV0Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteMonitoringInstanceV0Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteMonitoringInstanceV0Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteMonitoringInstanceV0Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetMonitoringInstanceV0Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetMonitoringInstanceV0Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetMonitoringInstanceV0Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateMonitoringInstanceV0Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateMonitoringInstanceV0Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateMonitoringInstanceV0Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListNamespacesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *NamespaceList
+}
+
+// Status returns HTTPResponse.Status
+func (r ListNamespacesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListNamespacesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type ListBackupStoragesResponse struct {
@@ -4225,174 +5140,6 @@ func (r UpdateBackupStorageResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r UpdateBackupStorageResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type GetKubernetesClusterInfoResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *KubernetesClusterInfo
-	JSON400      *Error
-	JSON500      *Error
-}
-
-// Status returns HTTPResponse.Status
-func (r GetKubernetesClusterInfoResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetKubernetesClusterInfoResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type ListMonitoringInstancesResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *MonitoringInstancesList
-	JSON400      *Error
-	JSON500      *Error
-}
-
-// Status returns HTTPResponse.Status
-func (r ListMonitoringInstancesResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r ListMonitoringInstancesResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type CreateMonitoringInstanceResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *MonitoringInstance
-	JSON400      *Error
-	JSON500      *Error
-}
-
-// Status returns HTTPResponse.Status
-func (r CreateMonitoringInstanceResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r CreateMonitoringInstanceResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type DeleteMonitoringInstanceResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON400      *Error
-	JSON404      *Error
-	JSON500      *Error
-}
-
-// Status returns HTTPResponse.Status
-func (r DeleteMonitoringInstanceResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r DeleteMonitoringInstanceResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type GetMonitoringInstanceResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *MonitoringInstance
-	JSON400      *Error
-	JSON404      *Error
-	JSON500      *Error
-}
-
-// Status returns HTTPResponse.Status
-func (r GetMonitoringInstanceResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetMonitoringInstanceResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type UpdateMonitoringInstanceResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *MonitoringInstance
-	JSON400      *Error
-	JSON404      *Error
-	JSON500      *Error
-}
-
-// Status returns HTTPResponse.Status
-func (r UpdateMonitoringInstanceResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r UpdateMonitoringInstanceResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type ListNamespacesResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *NamespaceList
-}
-
-// Status returns HTTPResponse.Status
-func (r ListNamespacesResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r ListNamespacesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4622,6 +5369,54 @@ func (r CreateDatabaseClusterResponse) StatusCode() int {
 	return 0
 }
 
+type ListDatabaseClusterBackupsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DatabaseClusterBackupList
+	JSON400      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r ListDatabaseClusterBackupsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListDatabaseClusterBackupsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListDatabaseClusterRestoresResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DatabaseClusterRestoreList
+	JSON400      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r ListDatabaseClusterRestoresResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListDatabaseClusterRestoresResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type DeleteDatabaseClusterResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -4688,30 +5483,6 @@ func (r UpdateDatabaseClusterResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r UpdateDatabaseClusterResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type ListDatabaseClusterBackupsResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *DatabaseClusterBackupList
-	JSON400      *Error
-	JSON500      *Error
-}
-
-// Status returns HTTPResponse.Status
-func (r ListDatabaseClusterBackupsResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r ListDatabaseClusterBackupsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4790,30 +5561,6 @@ func (r GetDatabaseClusterPitrResponse) StatusCode() int {
 	return 0
 }
 
-type ListDatabaseClusterRestoresResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *DatabaseClusterRestoreList
-	JSON400      *Error
-	JSON500      *Error
-}
-
-// Status returns HTTPResponse.Status
-func (r ListDatabaseClusterRestoresResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r ListDatabaseClusterRestoresResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type ListDatabaseEnginesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -4832,6 +5579,53 @@ func (r ListDatabaseEnginesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ListDatabaseEnginesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetUpgradePlanResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *UpgradePlan
+	JSON400      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r GetUpgradePlanResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetUpgradePlanResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ApproveUpgradePlanResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r ApproveUpgradePlanResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ApproveUpgradePlanResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4886,16 +5680,16 @@ func (r UpdateDatabaseEngineResponse) StatusCode() int {
 	return 0
 }
 
-type GetOperatorVersionResponse struct {
+type ListMonitoringInstancesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *OperatorVersion
+	JSON200      *MonitoringInstancesList
 	JSON400      *Error
 	JSON500      *Error
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOperatorVersionResponse) Status() string {
+func (r ListMonitoringInstancesResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -4903,22 +5697,23 @@ func (r GetOperatorVersionResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOperatorVersionResponse) StatusCode() int {
+func (r ListMonitoringInstancesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type UpgradeDatabaseEngineOperatorResponse struct {
+type CreateMonitoringInstanceResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON200      *MonitoringInstance
 	JSON400      *Error
 	JSON500      *Error
 }
 
 // Status returns HTTPResponse.Status
-func (r UpgradeDatabaseEngineOperatorResponse) Status() string {
+func (r CreateMonitoringInstanceResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -4926,23 +5721,23 @@ func (r UpgradeDatabaseEngineOperatorResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r UpgradeDatabaseEngineOperatorResponse) StatusCode() int {
+func (r CreateMonitoringInstanceResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetOperatorUpgradePreflightResponse struct {
+type DeleteMonitoringInstanceResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *OperatorUpgradePreflight
 	JSON400      *Error
+	JSON404      *Error
 	JSON500      *Error
 }
 
 // Status returns HTTPResponse.Status
-func (r GetOperatorUpgradePreflightResponse) Status() string {
+func (r DeleteMonitoringInstanceResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -4950,7 +5745,81 @@ func (r GetOperatorUpgradePreflightResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetOperatorUpgradePreflightResponse) StatusCode() int {
+func (r DeleteMonitoringInstanceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetMonitoringInstanceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *MonitoringInstance
+	JSON400      *Error
+	JSON404      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r GetMonitoringInstanceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetMonitoringInstanceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateMonitoringInstanceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *MonitoringInstance
+	JSON400      *Error
+	JSON404      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateMonitoringInstanceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateMonitoringInstanceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetUserPermissionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *UserPermissions
+	JSON400      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r GetUserPermissionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetUserPermissionsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -5051,65 +5920,65 @@ func (r VersionInfoResponse) StatusCode() int {
 	return 0
 }
 
-// ListBackupStoragesWithResponse request returning *ListBackupStoragesResponse
-func (c *ClientWithResponses) ListBackupStoragesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListBackupStoragesResponse, error) {
-	rsp, err := c.ListBackupStorages(ctx, reqEditors...)
+// ListBackupStoragesV0WithResponse request returning *ListBackupStoragesV0Response
+func (c *ClientWithResponses) ListBackupStoragesV0WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListBackupStoragesV0Response, error) {
+	rsp, err := c.ListBackupStoragesV0(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseListBackupStoragesResponse(rsp)
+	return ParseListBackupStoragesV0Response(rsp)
 }
 
-// CreateBackupStorageWithBodyWithResponse request with arbitrary body returning *CreateBackupStorageResponse
-func (c *ClientWithResponses) CreateBackupStorageWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateBackupStorageResponse, error) {
-	rsp, err := c.CreateBackupStorageWithBody(ctx, contentType, body, reqEditors...)
+// CreateBackupStorageV0WithBodyWithResponse request with arbitrary body returning *CreateBackupStorageV0Response
+func (c *ClientWithResponses) CreateBackupStorageV0WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateBackupStorageV0Response, error) {
+	rsp, err := c.CreateBackupStorageV0WithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateBackupStorageResponse(rsp)
+	return ParseCreateBackupStorageV0Response(rsp)
 }
 
-func (c *ClientWithResponses) CreateBackupStorageWithResponse(ctx context.Context, body CreateBackupStorageJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateBackupStorageResponse, error) {
-	rsp, err := c.CreateBackupStorage(ctx, body, reqEditors...)
+func (c *ClientWithResponses) CreateBackupStorageV0WithResponse(ctx context.Context, body CreateBackupStorageV0JSONRequestBody, reqEditors ...RequestEditorFn) (*CreateBackupStorageV0Response, error) {
+	rsp, err := c.CreateBackupStorageV0(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateBackupStorageResponse(rsp)
+	return ParseCreateBackupStorageV0Response(rsp)
 }
 
-// DeleteBackupStorageWithResponse request returning *DeleteBackupStorageResponse
-func (c *ClientWithResponses) DeleteBackupStorageWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*DeleteBackupStorageResponse, error) {
-	rsp, err := c.DeleteBackupStorage(ctx, name, reqEditors...)
+// DeleteBackupStorageV0WithResponse request returning *DeleteBackupStorageV0Response
+func (c *ClientWithResponses) DeleteBackupStorageV0WithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*DeleteBackupStorageV0Response, error) {
+	rsp, err := c.DeleteBackupStorageV0(ctx, name, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseDeleteBackupStorageResponse(rsp)
+	return ParseDeleteBackupStorageV0Response(rsp)
 }
 
-// GetBackupStorageWithResponse request returning *GetBackupStorageResponse
-func (c *ClientWithResponses) GetBackupStorageWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*GetBackupStorageResponse, error) {
-	rsp, err := c.GetBackupStorage(ctx, name, reqEditors...)
+// GetBackupStorageV0WithResponse request returning *GetBackupStorageV0Response
+func (c *ClientWithResponses) GetBackupStorageV0WithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*GetBackupStorageV0Response, error) {
+	rsp, err := c.GetBackupStorageV0(ctx, name, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetBackupStorageResponse(rsp)
+	return ParseGetBackupStorageV0Response(rsp)
 }
 
-// UpdateBackupStorageWithBodyWithResponse request with arbitrary body returning *UpdateBackupStorageResponse
-func (c *ClientWithResponses) UpdateBackupStorageWithBodyWithResponse(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateBackupStorageResponse, error) {
-	rsp, err := c.UpdateBackupStorageWithBody(ctx, name, contentType, body, reqEditors...)
+// UpdateBackupStorageV0WithBodyWithResponse request with arbitrary body returning *UpdateBackupStorageV0Response
+func (c *ClientWithResponses) UpdateBackupStorageV0WithBodyWithResponse(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateBackupStorageV0Response, error) {
+	rsp, err := c.UpdateBackupStorageV0WithBody(ctx, name, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUpdateBackupStorageResponse(rsp)
+	return ParseUpdateBackupStorageV0Response(rsp)
 }
 
-func (c *ClientWithResponses) UpdateBackupStorageWithResponse(ctx context.Context, name string, body UpdateBackupStorageJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateBackupStorageResponse, error) {
-	rsp, err := c.UpdateBackupStorage(ctx, name, body, reqEditors...)
+func (c *ClientWithResponses) UpdateBackupStorageV0WithResponse(ctx context.Context, name string, body UpdateBackupStorageV0JSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateBackupStorageV0Response, error) {
+	rsp, err := c.UpdateBackupStorageV0(ctx, name, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUpdateBackupStorageResponse(rsp)
+	return ParseUpdateBackupStorageV0Response(rsp)
 }
 
 // GetKubernetesClusterInfoWithResponse request returning *GetKubernetesClusterInfoResponse
@@ -5121,65 +5990,65 @@ func (c *ClientWithResponses) GetKubernetesClusterInfoWithResponse(ctx context.C
 	return ParseGetKubernetesClusterInfoResponse(rsp)
 }
 
-// ListMonitoringInstancesWithResponse request returning *ListMonitoringInstancesResponse
-func (c *ClientWithResponses) ListMonitoringInstancesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListMonitoringInstancesResponse, error) {
-	rsp, err := c.ListMonitoringInstances(ctx, reqEditors...)
+// ListMonitoringInstancesV0WithResponse request returning *ListMonitoringInstancesV0Response
+func (c *ClientWithResponses) ListMonitoringInstancesV0WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListMonitoringInstancesV0Response, error) {
+	rsp, err := c.ListMonitoringInstancesV0(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseListMonitoringInstancesResponse(rsp)
+	return ParseListMonitoringInstancesV0Response(rsp)
 }
 
-// CreateMonitoringInstanceWithBodyWithResponse request with arbitrary body returning *CreateMonitoringInstanceResponse
-func (c *ClientWithResponses) CreateMonitoringInstanceWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateMonitoringInstanceResponse, error) {
-	rsp, err := c.CreateMonitoringInstanceWithBody(ctx, contentType, body, reqEditors...)
+// CreateMonitoringInstanceV0WithBodyWithResponse request with arbitrary body returning *CreateMonitoringInstanceV0Response
+func (c *ClientWithResponses) CreateMonitoringInstanceV0WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateMonitoringInstanceV0Response, error) {
+	rsp, err := c.CreateMonitoringInstanceV0WithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateMonitoringInstanceResponse(rsp)
+	return ParseCreateMonitoringInstanceV0Response(rsp)
 }
 
-func (c *ClientWithResponses) CreateMonitoringInstanceWithResponse(ctx context.Context, body CreateMonitoringInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateMonitoringInstanceResponse, error) {
-	rsp, err := c.CreateMonitoringInstance(ctx, body, reqEditors...)
+func (c *ClientWithResponses) CreateMonitoringInstanceV0WithResponse(ctx context.Context, body CreateMonitoringInstanceV0JSONRequestBody, reqEditors ...RequestEditorFn) (*CreateMonitoringInstanceV0Response, error) {
+	rsp, err := c.CreateMonitoringInstanceV0(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateMonitoringInstanceResponse(rsp)
+	return ParseCreateMonitoringInstanceV0Response(rsp)
 }
 
-// DeleteMonitoringInstanceWithResponse request returning *DeleteMonitoringInstanceResponse
-func (c *ClientWithResponses) DeleteMonitoringInstanceWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*DeleteMonitoringInstanceResponse, error) {
-	rsp, err := c.DeleteMonitoringInstance(ctx, name, reqEditors...)
+// DeleteMonitoringInstanceV0WithResponse request returning *DeleteMonitoringInstanceV0Response
+func (c *ClientWithResponses) DeleteMonitoringInstanceV0WithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*DeleteMonitoringInstanceV0Response, error) {
+	rsp, err := c.DeleteMonitoringInstanceV0(ctx, name, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseDeleteMonitoringInstanceResponse(rsp)
+	return ParseDeleteMonitoringInstanceV0Response(rsp)
 }
 
-// GetMonitoringInstanceWithResponse request returning *GetMonitoringInstanceResponse
-func (c *ClientWithResponses) GetMonitoringInstanceWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*GetMonitoringInstanceResponse, error) {
-	rsp, err := c.GetMonitoringInstance(ctx, name, reqEditors...)
+// GetMonitoringInstanceV0WithResponse request returning *GetMonitoringInstanceV0Response
+func (c *ClientWithResponses) GetMonitoringInstanceV0WithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*GetMonitoringInstanceV0Response, error) {
+	rsp, err := c.GetMonitoringInstanceV0(ctx, name, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetMonitoringInstanceResponse(rsp)
+	return ParseGetMonitoringInstanceV0Response(rsp)
 }
 
-// UpdateMonitoringInstanceWithBodyWithResponse request with arbitrary body returning *UpdateMonitoringInstanceResponse
-func (c *ClientWithResponses) UpdateMonitoringInstanceWithBodyWithResponse(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateMonitoringInstanceResponse, error) {
-	rsp, err := c.UpdateMonitoringInstanceWithBody(ctx, name, contentType, body, reqEditors...)
+// UpdateMonitoringInstanceV0WithBodyWithResponse request with arbitrary body returning *UpdateMonitoringInstanceV0Response
+func (c *ClientWithResponses) UpdateMonitoringInstanceV0WithBodyWithResponse(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateMonitoringInstanceV0Response, error) {
+	rsp, err := c.UpdateMonitoringInstanceV0WithBody(ctx, name, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUpdateMonitoringInstanceResponse(rsp)
+	return ParseUpdateMonitoringInstanceV0Response(rsp)
 }
 
-func (c *ClientWithResponses) UpdateMonitoringInstanceWithResponse(ctx context.Context, name string, body UpdateMonitoringInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateMonitoringInstanceResponse, error) {
-	rsp, err := c.UpdateMonitoringInstance(ctx, name, body, reqEditors...)
+func (c *ClientWithResponses) UpdateMonitoringInstanceV0WithResponse(ctx context.Context, name string, body UpdateMonitoringInstanceV0JSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateMonitoringInstanceV0Response, error) {
+	rsp, err := c.UpdateMonitoringInstanceV0(ctx, name, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUpdateMonitoringInstanceResponse(rsp)
+	return ParseUpdateMonitoringInstanceV0Response(rsp)
 }
 
 // ListNamespacesWithResponse request returning *ListNamespacesResponse
@@ -5189,6 +6058,67 @@ func (c *ClientWithResponses) ListNamespacesWithResponse(ctx context.Context, re
 		return nil, err
 	}
 	return ParseListNamespacesResponse(rsp)
+}
+
+// ListBackupStoragesWithResponse request returning *ListBackupStoragesResponse
+func (c *ClientWithResponses) ListBackupStoragesWithResponse(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*ListBackupStoragesResponse, error) {
+	rsp, err := c.ListBackupStorages(ctx, namespace, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListBackupStoragesResponse(rsp)
+}
+
+// CreateBackupStorageWithBodyWithResponse request with arbitrary body returning *CreateBackupStorageResponse
+func (c *ClientWithResponses) CreateBackupStorageWithBodyWithResponse(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateBackupStorageResponse, error) {
+	rsp, err := c.CreateBackupStorageWithBody(ctx, namespace, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateBackupStorageResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateBackupStorageWithResponse(ctx context.Context, namespace string, body CreateBackupStorageJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateBackupStorageResponse, error) {
+	rsp, err := c.CreateBackupStorage(ctx, namespace, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateBackupStorageResponse(rsp)
+}
+
+// DeleteBackupStorageWithResponse request returning *DeleteBackupStorageResponse
+func (c *ClientWithResponses) DeleteBackupStorageWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*DeleteBackupStorageResponse, error) {
+	rsp, err := c.DeleteBackupStorage(ctx, namespace, name, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteBackupStorageResponse(rsp)
+}
+
+// GetBackupStorageWithResponse request returning *GetBackupStorageResponse
+func (c *ClientWithResponses) GetBackupStorageWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*GetBackupStorageResponse, error) {
+	rsp, err := c.GetBackupStorage(ctx, namespace, name, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetBackupStorageResponse(rsp)
+}
+
+// UpdateBackupStorageWithBodyWithResponse request with arbitrary body returning *UpdateBackupStorageResponse
+func (c *ClientWithResponses) UpdateBackupStorageWithBodyWithResponse(ctx context.Context, namespace string, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateBackupStorageResponse, error) {
+	rsp, err := c.UpdateBackupStorageWithBody(ctx, namespace, name, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateBackupStorageResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateBackupStorageWithResponse(ctx context.Context, namespace string, name string, body UpdateBackupStorageJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateBackupStorageResponse, error) {
+	rsp, err := c.UpdateBackupStorage(ctx, namespace, name, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateBackupStorageResponse(rsp)
 }
 
 // CreateDatabaseClusterBackupWithBodyWithResponse request with arbitrary body returning *CreateDatabaseClusterBackupResponse
@@ -5304,6 +6234,24 @@ func (c *ClientWithResponses) CreateDatabaseClusterWithResponse(ctx context.Cont
 	return ParseCreateDatabaseClusterResponse(rsp)
 }
 
+// ListDatabaseClusterBackupsWithResponse request returning *ListDatabaseClusterBackupsResponse
+func (c *ClientWithResponses) ListDatabaseClusterBackupsWithResponse(ctx context.Context, namespace string, clusterName string, reqEditors ...RequestEditorFn) (*ListDatabaseClusterBackupsResponse, error) {
+	rsp, err := c.ListDatabaseClusterBackups(ctx, namespace, clusterName, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListDatabaseClusterBackupsResponse(rsp)
+}
+
+// ListDatabaseClusterRestoresWithResponse request returning *ListDatabaseClusterRestoresResponse
+func (c *ClientWithResponses) ListDatabaseClusterRestoresWithResponse(ctx context.Context, namespace string, clusterName string, reqEditors ...RequestEditorFn) (*ListDatabaseClusterRestoresResponse, error) {
+	rsp, err := c.ListDatabaseClusterRestores(ctx, namespace, clusterName, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListDatabaseClusterRestoresResponse(rsp)
+}
+
 // DeleteDatabaseClusterWithResponse request returning *DeleteDatabaseClusterResponse
 func (c *ClientWithResponses) DeleteDatabaseClusterWithResponse(ctx context.Context, namespace string, name string, params *DeleteDatabaseClusterParams, reqEditors ...RequestEditorFn) (*DeleteDatabaseClusterResponse, error) {
 	rsp, err := c.DeleteDatabaseCluster(ctx, namespace, name, params, reqEditors...)
@@ -5339,15 +6287,6 @@ func (c *ClientWithResponses) UpdateDatabaseClusterWithResponse(ctx context.Cont
 	return ParseUpdateDatabaseClusterResponse(rsp)
 }
 
-// ListDatabaseClusterBackupsWithResponse request returning *ListDatabaseClusterBackupsResponse
-func (c *ClientWithResponses) ListDatabaseClusterBackupsWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*ListDatabaseClusterBackupsResponse, error) {
-	rsp, err := c.ListDatabaseClusterBackups(ctx, namespace, name, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseListDatabaseClusterBackupsResponse(rsp)
-}
-
 // GetDatabaseClusterComponentsWithResponse request returning *GetDatabaseClusterComponentsResponse
 func (c *ClientWithResponses) GetDatabaseClusterComponentsWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*GetDatabaseClusterComponentsResponse, error) {
 	rsp, err := c.GetDatabaseClusterComponents(ctx, namespace, name, reqEditors...)
@@ -5375,15 +6314,6 @@ func (c *ClientWithResponses) GetDatabaseClusterPitrWithResponse(ctx context.Con
 	return ParseGetDatabaseClusterPitrResponse(rsp)
 }
 
-// ListDatabaseClusterRestoresWithResponse request returning *ListDatabaseClusterRestoresResponse
-func (c *ClientWithResponses) ListDatabaseClusterRestoresWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*ListDatabaseClusterRestoresResponse, error) {
-	rsp, err := c.ListDatabaseClusterRestores(ctx, namespace, name, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseListDatabaseClusterRestoresResponse(rsp)
-}
-
 // ListDatabaseEnginesWithResponse request returning *ListDatabaseEnginesResponse
 func (c *ClientWithResponses) ListDatabaseEnginesWithResponse(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*ListDatabaseEnginesResponse, error) {
 	rsp, err := c.ListDatabaseEngines(ctx, namespace, reqEditors...)
@@ -5391,6 +6321,32 @@ func (c *ClientWithResponses) ListDatabaseEnginesWithResponse(ctx context.Contex
 		return nil, err
 	}
 	return ParseListDatabaseEnginesResponse(rsp)
+}
+
+// GetUpgradePlanWithResponse request returning *GetUpgradePlanResponse
+func (c *ClientWithResponses) GetUpgradePlanWithResponse(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*GetUpgradePlanResponse, error) {
+	rsp, err := c.GetUpgradePlan(ctx, namespace, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetUpgradePlanResponse(rsp)
+}
+
+// ApproveUpgradePlanWithBodyWithResponse request with arbitrary body returning *ApproveUpgradePlanResponse
+func (c *ClientWithResponses) ApproveUpgradePlanWithBodyWithResponse(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ApproveUpgradePlanResponse, error) {
+	rsp, err := c.ApproveUpgradePlanWithBody(ctx, namespace, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApproveUpgradePlanResponse(rsp)
+}
+
+func (c *ClientWithResponses) ApproveUpgradePlanWithResponse(ctx context.Context, namespace string, body ApproveUpgradePlanJSONRequestBody, reqEditors ...RequestEditorFn) (*ApproveUpgradePlanResponse, error) {
+	rsp, err := c.ApproveUpgradePlan(ctx, namespace, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApproveUpgradePlanResponse(rsp)
 }
 
 // GetDatabaseEngineWithResponse request returning *GetDatabaseEngineResponse
@@ -5419,39 +6375,74 @@ func (c *ClientWithResponses) UpdateDatabaseEngineWithResponse(ctx context.Conte
 	return ParseUpdateDatabaseEngineResponse(rsp)
 }
 
-// GetOperatorVersionWithResponse request returning *GetOperatorVersionResponse
-func (c *ClientWithResponses) GetOperatorVersionWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*GetOperatorVersionResponse, error) {
-	rsp, err := c.GetOperatorVersion(ctx, namespace, name, reqEditors...)
+// ListMonitoringInstancesWithResponse request returning *ListMonitoringInstancesResponse
+func (c *ClientWithResponses) ListMonitoringInstancesWithResponse(ctx context.Context, namespace string, reqEditors ...RequestEditorFn) (*ListMonitoringInstancesResponse, error) {
+	rsp, err := c.ListMonitoringInstances(ctx, namespace, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOperatorVersionResponse(rsp)
+	return ParseListMonitoringInstancesResponse(rsp)
 }
 
-// UpgradeDatabaseEngineOperatorWithBodyWithResponse request with arbitrary body returning *UpgradeDatabaseEngineOperatorResponse
-func (c *ClientWithResponses) UpgradeDatabaseEngineOperatorWithBodyWithResponse(ctx context.Context, namespace string, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpgradeDatabaseEngineOperatorResponse, error) {
-	rsp, err := c.UpgradeDatabaseEngineOperatorWithBody(ctx, namespace, name, contentType, body, reqEditors...)
+// CreateMonitoringInstanceWithBodyWithResponse request with arbitrary body returning *CreateMonitoringInstanceResponse
+func (c *ClientWithResponses) CreateMonitoringInstanceWithBodyWithResponse(ctx context.Context, namespace string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateMonitoringInstanceResponse, error) {
+	rsp, err := c.CreateMonitoringInstanceWithBody(ctx, namespace, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUpgradeDatabaseEngineOperatorResponse(rsp)
+	return ParseCreateMonitoringInstanceResponse(rsp)
 }
 
-func (c *ClientWithResponses) UpgradeDatabaseEngineOperatorWithResponse(ctx context.Context, namespace string, name string, body UpgradeDatabaseEngineOperatorJSONRequestBody, reqEditors ...RequestEditorFn) (*UpgradeDatabaseEngineOperatorResponse, error) {
-	rsp, err := c.UpgradeDatabaseEngineOperator(ctx, namespace, name, body, reqEditors...)
+func (c *ClientWithResponses) CreateMonitoringInstanceWithResponse(ctx context.Context, namespace string, body CreateMonitoringInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateMonitoringInstanceResponse, error) {
+	rsp, err := c.CreateMonitoringInstance(ctx, namespace, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUpgradeDatabaseEngineOperatorResponse(rsp)
+	return ParseCreateMonitoringInstanceResponse(rsp)
 }
 
-// GetOperatorUpgradePreflightWithResponse request returning *GetOperatorUpgradePreflightResponse
-func (c *ClientWithResponses) GetOperatorUpgradePreflightWithResponse(ctx context.Context, namespace string, name string, params *GetOperatorUpgradePreflightParams, reqEditors ...RequestEditorFn) (*GetOperatorUpgradePreflightResponse, error) {
-	rsp, err := c.GetOperatorUpgradePreflight(ctx, namespace, name, params, reqEditors...)
+// DeleteMonitoringInstanceWithResponse request returning *DeleteMonitoringInstanceResponse
+func (c *ClientWithResponses) DeleteMonitoringInstanceWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*DeleteMonitoringInstanceResponse, error) {
+	rsp, err := c.DeleteMonitoringInstance(ctx, namespace, name, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetOperatorUpgradePreflightResponse(rsp)
+	return ParseDeleteMonitoringInstanceResponse(rsp)
+}
+
+// GetMonitoringInstanceWithResponse request returning *GetMonitoringInstanceResponse
+func (c *ClientWithResponses) GetMonitoringInstanceWithResponse(ctx context.Context, namespace string, name string, reqEditors ...RequestEditorFn) (*GetMonitoringInstanceResponse, error) {
+	rsp, err := c.GetMonitoringInstance(ctx, namespace, name, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetMonitoringInstanceResponse(rsp)
+}
+
+// UpdateMonitoringInstanceWithBodyWithResponse request with arbitrary body returning *UpdateMonitoringInstanceResponse
+func (c *ClientWithResponses) UpdateMonitoringInstanceWithBodyWithResponse(ctx context.Context, namespace string, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateMonitoringInstanceResponse, error) {
+	rsp, err := c.UpdateMonitoringInstanceWithBody(ctx, namespace, name, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateMonitoringInstanceResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateMonitoringInstanceWithResponse(ctx context.Context, namespace string, name string, body UpdateMonitoringInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateMonitoringInstanceResponse, error) {
+	rsp, err := c.UpdateMonitoringInstance(ctx, namespace, name, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateMonitoringInstanceResponse(rsp)
+}
+
+// GetUserPermissionsWithResponse request returning *GetUserPermissionsResponse
+func (c *ClientWithResponses) GetUserPermissionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetUserPermissionsResponse, error) {
+	rsp, err := c.GetUserPermissions(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetUserPermissionsResponse(rsp)
 }
 
 // GetKubernetesClusterResourcesWithResponse request returning *GetKubernetesClusterResourcesResponse
@@ -5496,6 +6487,231 @@ func (c *ClientWithResponses) VersionInfoWithResponse(ctx context.Context, reqEd
 		return nil, err
 	}
 	return ParseVersionInfoResponse(rsp)
+}
+
+// ParseListBackupStoragesV0Response parses an HTTP response from a ListBackupStoragesV0WithResponse call
+func ParseListBackupStoragesV0Response(rsp *http.Response) (*ListBackupStoragesV0Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListBackupStoragesV0Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseCreateBackupStorageV0Response parses an HTTP response from a CreateBackupStorageV0WithResponse call
+func ParseCreateBackupStorageV0Response(rsp *http.Response) (*CreateBackupStorageV0Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateBackupStorageV0Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseDeleteBackupStorageV0Response parses an HTTP response from a DeleteBackupStorageV0WithResponse call
+func ParseDeleteBackupStorageV0Response(rsp *http.Response) (*DeleteBackupStorageV0Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteBackupStorageV0Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetBackupStorageV0Response parses an HTTP response from a GetBackupStorageV0WithResponse call
+func ParseGetBackupStorageV0Response(rsp *http.Response) (*GetBackupStorageV0Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetBackupStorageV0Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseUpdateBackupStorageV0Response parses an HTTP response from a UpdateBackupStorageV0WithResponse call
+func ParseUpdateBackupStorageV0Response(rsp *http.Response) (*UpdateBackupStorageV0Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateBackupStorageV0Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetKubernetesClusterInfoResponse parses an HTTP response from a GetKubernetesClusterInfoWithResponse call
+func ParseGetKubernetesClusterInfoResponse(rsp *http.Response) (*GetKubernetesClusterInfoResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetKubernetesClusterInfoResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest KubernetesClusterInfo
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListMonitoringInstancesV0Response parses an HTTP response from a ListMonitoringInstancesV0WithResponse call
+func ParseListMonitoringInstancesV0Response(rsp *http.Response) (*ListMonitoringInstancesV0Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListMonitoringInstancesV0Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseCreateMonitoringInstanceV0Response parses an HTTP response from a CreateMonitoringInstanceV0WithResponse call
+func ParseCreateMonitoringInstanceV0Response(rsp *http.Response) (*CreateMonitoringInstanceV0Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateMonitoringInstanceV0Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseDeleteMonitoringInstanceV0Response parses an HTTP response from a DeleteMonitoringInstanceV0WithResponse call
+func ParseDeleteMonitoringInstanceV0Response(rsp *http.Response) (*DeleteMonitoringInstanceV0Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteMonitoringInstanceV0Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetMonitoringInstanceV0Response parses an HTTP response from a GetMonitoringInstanceV0WithResponse call
+func ParseGetMonitoringInstanceV0Response(rsp *http.Response) (*GetMonitoringInstanceV0Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetMonitoringInstanceV0Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseUpdateMonitoringInstanceV0Response parses an HTTP response from a UpdateMonitoringInstanceV0WithResponse call
+func ParseUpdateMonitoringInstanceV0Response(rsp *http.Response) (*UpdateMonitoringInstanceV0Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateMonitoringInstanceV0Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseListNamespacesResponse parses an HTTP response from a ListNamespacesWithResponse call
+func ParseListNamespacesResponse(rsp *http.Response) (*ListNamespacesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListNamespacesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest NamespaceList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+	}
+
+	return response, nil
 }
 
 // ParseListBackupStoragesResponse parses an HTTP response from a ListBackupStoragesWithResponse call
@@ -5686,285 +6902,6 @@ func ParseUpdateBackupStorageResponse(rsp *http.Response) (*UpdateBackupStorageR
 		}
 		response.JSON500 = &dest
 
-	}
-
-	return response, nil
-}
-
-// ParseGetKubernetesClusterInfoResponse parses an HTTP response from a GetKubernetesClusterInfoWithResponse call
-func ParseGetKubernetesClusterInfoResponse(rsp *http.Response) (*GetKubernetesClusterInfoResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetKubernetesClusterInfoResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest KubernetesClusterInfo
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseListMonitoringInstancesResponse parses an HTTP response from a ListMonitoringInstancesWithResponse call
-func ParseListMonitoringInstancesResponse(rsp *http.Response) (*ListMonitoringInstancesResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &ListMonitoringInstancesResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest MonitoringInstancesList
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseCreateMonitoringInstanceResponse parses an HTTP response from a CreateMonitoringInstanceWithResponse call
-func ParseCreateMonitoringInstanceResponse(rsp *http.Response) (*CreateMonitoringInstanceResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &CreateMonitoringInstanceResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest MonitoringInstance
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseDeleteMonitoringInstanceResponse parses an HTTP response from a DeleteMonitoringInstanceWithResponse call
-func ParseDeleteMonitoringInstanceResponse(rsp *http.Response) (*DeleteMonitoringInstanceResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &DeleteMonitoringInstanceResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseGetMonitoringInstanceResponse parses an HTTP response from a GetMonitoringInstanceWithResponse call
-func ParseGetMonitoringInstanceResponse(rsp *http.Response) (*GetMonitoringInstanceResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetMonitoringInstanceResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest MonitoringInstance
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseUpdateMonitoringInstanceResponse parses an HTTP response from a UpdateMonitoringInstanceWithResponse call
-func ParseUpdateMonitoringInstanceResponse(rsp *http.Response) (*UpdateMonitoringInstanceResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &UpdateMonitoringInstanceResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest MonitoringInstance
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseListNamespacesResponse parses an HTTP response from a ListNamespacesWithResponse call
-func ParseListNamespacesResponse(rsp *http.Response) (*ListNamespacesResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &ListNamespacesResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest NamespaceList
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 	}
 
 	return response, nil
@@ -6379,6 +7316,86 @@ func ParseCreateDatabaseClusterResponse(rsp *http.Response) (*CreateDatabaseClus
 	return response, nil
 }
 
+// ParseListDatabaseClusterBackupsResponse parses an HTTP response from a ListDatabaseClusterBackupsWithResponse call
+func ParseListDatabaseClusterBackupsResponse(rsp *http.Response) (*ListDatabaseClusterBackupsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListDatabaseClusterBackupsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DatabaseClusterBackupList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListDatabaseClusterRestoresResponse parses an HTTP response from a ListDatabaseClusterRestoresWithResponse call
+func ParseListDatabaseClusterRestoresResponse(rsp *http.Response) (*ListDatabaseClusterRestoresResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListDatabaseClusterRestoresResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DatabaseClusterRestoreList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseDeleteDatabaseClusterResponse parses an HTTP response from a DeleteDatabaseClusterWithResponse call
 func ParseDeleteDatabaseClusterResponse(rsp *http.Response) (*DeleteDatabaseClusterResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -6475,46 +7492,6 @@ func ParseUpdateDatabaseClusterResponse(rsp *http.Response) (*UpdateDatabaseClus
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest DatabaseCluster
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseListDatabaseClusterBackupsResponse parses an HTTP response from a ListDatabaseClusterBackupsWithResponse call
-func ParseListDatabaseClusterBackupsResponse(rsp *http.Response) (*ListDatabaseClusterBackupsResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &ListDatabaseClusterBackupsResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest DatabaseClusterBackupList
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -6659,22 +7636,22 @@ func ParseGetDatabaseClusterPitrResponse(rsp *http.Response) (*GetDatabaseCluste
 	return response, nil
 }
 
-// ParseListDatabaseClusterRestoresResponse parses an HTTP response from a ListDatabaseClusterRestoresWithResponse call
-func ParseListDatabaseClusterRestoresResponse(rsp *http.Response) (*ListDatabaseClusterRestoresResponse, error) {
+// ParseListDatabaseEnginesResponse parses an HTTP response from a ListDatabaseEnginesWithResponse call
+func ParseListDatabaseEnginesResponse(rsp *http.Response) (*ListDatabaseEnginesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ListDatabaseClusterRestoresResponse{
+	response := &ListDatabaseEnginesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest DatabaseClusterRestoreList
+		var dest DatabaseEngineList
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -6699,27 +7676,60 @@ func ParseListDatabaseClusterRestoresResponse(rsp *http.Response) (*ListDatabase
 	return response, nil
 }
 
-// ParseListDatabaseEnginesResponse parses an HTTP response from a ListDatabaseEnginesWithResponse call
-func ParseListDatabaseEnginesResponse(rsp *http.Response) (*ListDatabaseEnginesResponse, error) {
+// ParseGetUpgradePlanResponse parses an HTTP response from a GetUpgradePlanWithResponse call
+func ParseGetUpgradePlanResponse(rsp *http.Response) (*GetUpgradePlanResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ListDatabaseEnginesResponse{
+	response := &GetUpgradePlanResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest DatabaseEngineList
+		var dest UpgradePlan
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseApproveUpgradePlanResponse parses an HTTP response from a ApproveUpgradePlanWithResponse call
+func ParseApproveUpgradePlanResponse(rsp *http.Response) (*ApproveUpgradePlanResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ApproveUpgradePlanResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest Error
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -6819,22 +7829,22 @@ func ParseUpdateDatabaseEngineResponse(rsp *http.Response) (*UpdateDatabaseEngin
 	return response, nil
 }
 
-// ParseGetOperatorVersionResponse parses an HTTP response from a GetOperatorVersionWithResponse call
-func ParseGetOperatorVersionResponse(rsp *http.Response) (*GetOperatorVersionResponse, error) {
+// ParseListMonitoringInstancesResponse parses an HTTP response from a ListMonitoringInstancesWithResponse call
+func ParseListMonitoringInstancesResponse(rsp *http.Response) (*ListMonitoringInstancesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOperatorVersionResponse{
+	response := &ListMonitoringInstancesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest OperatorVersion
+		var dest MonitoringInstancesList
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -6859,20 +7869,27 @@ func ParseGetOperatorVersionResponse(rsp *http.Response) (*GetOperatorVersionRes
 	return response, nil
 }
 
-// ParseUpgradeDatabaseEngineOperatorResponse parses an HTTP response from a UpgradeDatabaseEngineOperatorWithResponse call
-func ParseUpgradeDatabaseEngineOperatorResponse(rsp *http.Response) (*UpgradeDatabaseEngineOperatorResponse, error) {
+// ParseCreateMonitoringInstanceResponse parses an HTTP response from a CreateMonitoringInstanceWithResponse call
+func ParseCreateMonitoringInstanceResponse(rsp *http.Response) (*CreateMonitoringInstanceResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &UpgradeDatabaseEngineOperatorResponse{
+	response := &CreateMonitoringInstanceResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest MonitoringInstance
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest Error
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -6892,22 +7909,156 @@ func ParseUpgradeDatabaseEngineOperatorResponse(rsp *http.Response) (*UpgradeDat
 	return response, nil
 }
 
-// ParseGetOperatorUpgradePreflightResponse parses an HTTP response from a GetOperatorUpgradePreflightWithResponse call
-func ParseGetOperatorUpgradePreflightResponse(rsp *http.Response) (*GetOperatorUpgradePreflightResponse, error) {
+// ParseDeleteMonitoringInstanceResponse parses an HTTP response from a DeleteMonitoringInstanceWithResponse call
+func ParseDeleteMonitoringInstanceResponse(rsp *http.Response) (*DeleteMonitoringInstanceResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOperatorUpgradePreflightResponse{
+	response := &DeleteMonitoringInstanceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetMonitoringInstanceResponse parses an HTTP response from a GetMonitoringInstanceWithResponse call
+func ParseGetMonitoringInstanceResponse(rsp *http.Response) (*GetMonitoringInstanceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetMonitoringInstanceResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest OperatorUpgradePreflight
+		var dest MonitoringInstance
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateMonitoringInstanceResponse parses an HTTP response from a UpdateMonitoringInstanceWithResponse call
+func ParseUpdateMonitoringInstanceResponse(rsp *http.Response) (*UpdateMonitoringInstanceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateMonitoringInstanceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest MonitoringInstance
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetUserPermissionsResponse parses an HTTP response from a GetUserPermissionsWithResponse call
+func ParseGetUserPermissionsResponse(rsp *http.Response) (*GetUserPermissionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetUserPermissionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UserPermissions
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -7066,162 +8217,184 @@ func ParseVersionInfoResponse(rsp *http.Response) (*VersionInfoResponse, error) 
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
-	"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",
+	"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",
+	"+lBK3bZ9F4++Xn/9/wEAAP//KwgfUtpPAQA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

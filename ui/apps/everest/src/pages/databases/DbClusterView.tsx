@@ -13,15 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  BorderColor,
-  DeleteOutline,
-  PauseCircleOutline,
-} from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
-import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import { Box, Button, MenuItem, Stack } from '@mui/material';
+import { Box, Button, Stack } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import StatusField from 'components/status-field';
 import { useDbActions } from 'hooks/api/db-cluster/useDbActions';
@@ -33,7 +26,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbEngineType } from 'shared-types/dbEngines.types';
-import { useDBClustersForNamespaces } from '../../hooks/api/db-clusters/useDbClusters';
+import { useDBClustersForNamespaces } from 'hooks/api/db-clusters/useDbClusters';
 import { DB_CLUSTER_STATUS_TO_BASE_STATUS } from './DbClusterView.constants';
 import {
   beautifyDbClusterStatus,
@@ -41,42 +34,37 @@ import {
 } from './DbClusterView.utils';
 import { Messages } from './dbClusterView.messages';
 import { DbClusterTableElement } from './dbClusterView.types';
-import { DbTypeIconProvider } from './dbTypeIconProvider/DbTypeIconProvider';
 import { ExpandedRow } from './expandedRow/ExpandedRow';
 import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
 import { LastBackup } from './lastBackup/LastBackup';
 import { useDbBackups } from 'hooks/api/backups/useBackups';
+import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
+import TableActionsMenu from 'components/table-actions-menu';
+import { DbActionButtons } from './db-cluster-view-menu-actions';
 
 export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
   const { data: namespaces = [], isLoading: loadingNamespaces } =
     useNamespaces();
-  const dbClustersResults = useDBClustersForNamespaces(namespaces);
-  const dbClustersLoading = dbClustersResults.some(
-    (result) => result.queryResult.isLoading
-  );
-
-  const tableData = useMemo(
-    () => convertDbClusterPayloadToTableFormat(dbClustersResults),
-    [dbClustersResults]
-  );
 
   const { isPending: deletingCluster } = useDeleteDbCluster();
   const {
     openDeleteDialog,
     openRestoreDialog,
     handleConfirmDelete,
+    handleCloseDeleteDialog,
+    handleCloseRestoreDialog,
+    handleRestoreDbCluster,
     handleDbRestart,
     handleDbSuspendOrResumed,
     handleDeleteDbCluster,
-    handleCloseDeleteDialog,
     isPaused,
-    handleRestoreDbCluster,
-    handleCloseRestoreDialog,
     selectedDbCluster,
   } = useDbActions();
   const navigate = useNavigate();
 
+  const { canCreate } = useNamespacePermissionsForResource('database-clusters');
   const { data: backups = [] } = useDbBackups(
     selectedDbCluster?.metadata.name!,
     selectedDbCluster?.metadata.namespace!,
@@ -88,6 +76,20 @@ export const DbClusterView = () => {
   const disableKeepDataCheckbox =
     selectedDbCluster?.spec.engine.type === DbEngineType.POSTGRESQL;
   const hideCheckbox = !backups.length;
+
+  const dbClustersResults = useDBClustersForNamespaces(
+    namespaces.map((ns) => ({
+      namespace: ns,
+    }))
+  );
+  const dbClustersLoading = dbClustersResults.some(
+    (result) => result.queryResult.isLoading
+  );
+
+  const tableData = useMemo(
+    () => convertDbClusterPayloadToTableFormat(dbClustersResults),
+    [dbClustersResults]
+  );
 
   const columns = useMemo<MRT_ColumnDef<DbClusterTableElement>[]>(
     () => [
@@ -127,7 +129,7 @@ export const DbClusterView = () => {
             alignItems="center"
             gap={1}
           >
-            <DbTypeIconProvider dbType={row.original?.dbType} />
+            {beautifyDbTypeName(dbEngineToDbType(row.original?.dbType))}{' '}
             {row.original?.dbVersion}
           </Stack>
         ),
@@ -145,16 +147,17 @@ export const DbClusterView = () => {
       {
         accessorKey: 'nodes',
         id: 'nodes',
-        header: 'Number of nodes',
+        header: 'Nº nodes',
       },
       {
         accessorKey: 'namespace',
         id: 'namespace',
-        header: 'Namespaces',
+        header: 'Namespace',
       },
       {
         accessorKey: 'monitoringConfigName',
         header: 'Monitoring instance name',
+        minSize: 250,
       },
       // {
       //   accessorKey: 'backupsEnabled',
@@ -181,126 +184,18 @@ export const DbClusterView = () => {
           columns={columns}
           data={tableData}
           enableRowActions
-          renderRowActionMenuItems={({ row, closeMenu }) => [
-            // TODO: finish when design is ready
-            <MenuItem
-              disabled={row.original.status === DbClusterStatus.restoring}
-              key={0}
-              component={Link}
-              to="/databases/edit"
-              state={{
-                selectedDbCluster: row.original.databaseName!,
-                namespace: row.original.namespace,
-              }}
-              sx={{
-                m: 0,
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                px: 2,
-                py: '10px',
-              }}
-            >
-              <BorderColor fontSize="small" /> {Messages.menuItems.edit}
-            </MenuItem>,
-            <MenuItem
-              disabled={row.original.status === DbClusterStatus.restoring}
-              key={2}
-              onClick={() => {
-                handleDbRestart(row.original.raw);
-                closeMenu();
-              }}
-              sx={{
-                m: 0,
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                px: 2,
-                py: '10px',
-              }}
-            >
-              <RestartAltIcon /> {Messages.menuItems.restart}
-            </MenuItem>,
-            <MenuItem
-              disabled={row.original.status === DbClusterStatus.restoring}
-              key={5}
-              onClick={() => {
-                handleRestoreDbCluster(row.original.raw);
-                setIsNewClusterMode(true);
-                closeMenu();
-              }}
-              sx={{
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                px: 2,
-                py: '10px',
-              }}
-            >
-              <AddIcon /> {Messages.menuItems.createNewDbFromBackup}
-            </MenuItem>,
-            <MenuItem
-              disabled={row.original.status === DbClusterStatus.restoring}
-              key={3}
-              data-testid={`${row.original?.databaseName}-restore`}
-              onClick={() => {
-                handleRestoreDbCluster(row.original.raw);
-                setIsNewClusterMode(false);
-                closeMenu();
-              }}
-              sx={{
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                px: 2,
-                py: '10px',
-              }}
-            >
-              <KeyboardReturnIcon /> {Messages.menuItems.restoreFromBackup}
-            </MenuItem>,
-            <MenuItem
-              key={4}
-              disabled={
-                row.original.status === DbClusterStatus.pausing ||
-                row.original.status === DbClusterStatus.restoring
-              }
-              onClick={() => {
-                handleDbSuspendOrResumed(row.original.raw);
-                closeMenu();
-              }}
-              sx={{
-                m: 0,
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                px: 2,
-                py: '10px',
-              }}
-            >
-              <PauseCircleOutline />{' '}
-              {isPaused(row.original.raw)
-                ? Messages.menuItems.resume
-                : Messages.menuItems.suspend}
-            </MenuItem>,
-            <MenuItem
-              data-testid={`${row.original?.databaseName}-delete`}
-              key={1}
-              onClick={() => {
-                handleDeleteDbCluster(row.original.raw);
-                closeMenu();
-              }}
-              sx={{
-                m: 0,
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                px: 2,
-                py: '10px',
-              }}
-            >
-              <DeleteOutline /> {Messages.menuItems.delete}
-            </MenuItem>,
-          ]}
+          renderRowActions={({ row }) => {
+            const menuItems = DbActionButtons(
+              row,
+              setIsNewClusterMode,
+              handleDbRestart,
+              handleDbSuspendOrResumed,
+              handleDeleteDbCluster,
+              isPaused,
+              handleRestoreDbCluster
+            );
+            return <TableActionsMenu menuItems={menuItems} />;
+          }}
           renderDetailPanel={({ row }) => <ExpandedRow row={row} />}
           muiTableBodyRowProps={({ row, isDetailPanel }) => ({
             onClick: () => {
@@ -316,18 +211,21 @@ export const DbClusterView = () => {
               }),
             },
           })}
-          renderTopToolbarCustomActions={() => (
-            <Button
-              size="small"
-              startIcon={<AddIcon />}
-              component={Link}
-              to="/databases/new"
-              variant="contained"
-              data-testid="add-db-cluster-button"
-            >
-              {Messages.createDatabase}
-            </Button>
-          )}
+          renderTopToolbarCustomActions={() =>
+            canCreate.length > 0 && (
+              <Button
+                size="small"
+                startIcon={<AddIcon />}
+                component={Link}
+                to="/databases/new"
+                variant="contained"
+                data-testid="add-db-cluster-button"
+                sx={{ display: 'flex' }}
+              >
+                {Messages.createDatabase}
+              </Button>
+            )
+          }
           hideExpandAllIcon
         />
       </Box>

@@ -16,7 +16,9 @@
 // TODO EVEREST-677
 export interface NamespaceInstance {
   name: string;
-  operator: string;
+  upgradeAvailable: boolean;
+  operators: string[];
+  operatorsDescription: string;
 }
 
 export type GetNamespacesPayload = string[];

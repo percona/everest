@@ -14,14 +14,39 @@
 // limitations under the License.
 
 import { expect, Page } from '@playwright/test';
-import { STORAGE_NAMES } from '../../constants';
+import { getBucketNamespacesMap } from '../../constants';
 import { beautifyDbTypeName } from '@percona/utils';
 import { DbType } from '@percona/types';
 
+type ScheduleTimeOptions = {
+  frequency: 'month' | 'week' | 'day' | 'hour';
+  day?: string;
+  weekDay?:
+    | 'Sundays'
+    | 'Mondays'
+    | 'Tuesdays'
+    | 'Wednesdays'
+    | 'Thursdays'
+    | 'Fridays'
+    | 'Saturdays';
+  amPm?: 'AM' | 'PM';
+  hour?: string;
+  minute?: string;
+};
+
+const defaultTimeOptions: ScheduleTimeOptions = {
+  frequency: 'month',
+  day: '10',
+  amPm: 'AM',
+  hour: '1',
+  minute: '05',
+};
+
 export const addFirstScheduleInDBWizard = async (page: Page) => {
+  const bucketNamespacesMap = getBucketNamespacesMap();
   // checking that we haven't schedules
   await expect(
-    page.getByText('You don’t have any backup schedules yet.')
+    page.getByText('You currently do not have any backup schedules set up.')
   ).toBeVisible();
 
   // creating schedule with schedule modal form dialog
@@ -34,17 +59,20 @@ export const addFirstScheduleInDBWizard = async (page: Page) => {
   ).toBeVisible();
 
   if (await checkDbTypeisVisibleInPreview(page, DbType.Mongo)) {
-    expect(await page.getByText(STORAGE_NAMES[1]).allInnerTexts()).toHaveLength(
-      2
-    );
+    expect(
+      await page.getByText(bucketNamespacesMap[0][0]).allInnerTexts()
+    ).toHaveLength(2);
   } else {
-    await expect(page.getByText(STORAGE_NAMES[1])).toBeVisible();
+    await expect(page.getByText(bucketNamespacesMap[0][0])).toBeVisible();
   }
 };
 
-export const addScheduleInDbWizard = async (page: Page) => {
+export const addScheduleInDbWizard = async (
+  page: Page,
+  timeOptions: ScheduleTimeOptions = defaultTimeOptions
+) => {
   await openCreateScheduleDialogFromDBWizard(page);
-  await fillScheduleModalForm(page);
+  await fillScheduleModalForm(page, timeOptions);
   await page.getByTestId('form-dialog-create').click();
 };
 
@@ -53,7 +81,59 @@ const checkDbTypeisVisibleInPreview = async (page: Page, dbType: DbType) => {
   return (await dbTypeLocator.allInnerTexts())?.length > 0;
 };
 
-export const fillScheduleModalForm = async (page: Page) => {
+const createScheduleFromTimeOptions = async (
+  page: Page,
+  timeOptions: ScheduleTimeOptions
+) => {
+  const { frequency, day, weekDay, amPm, hour, minute } = timeOptions;
+
+  await page.getByTestId('select-selected-time-button').click();
+
+  switch (frequency) {
+    case 'month':
+      await page.getByTestId('month-option').click();
+      await page.getByTestId('select-on-day-button').click();
+      await page.getByTestId(day).click();
+      await page.getByTestId('select-hour-button').click();
+      await page.getByRole('option', { name: hour, exact: true }).click();
+      await page.getByTestId('select-minute-button').click();
+      await page.getByRole('option', { name: minute, exact: true }).click();
+      await page.getByTestId('select-am-pm-button').click();
+      await page.getByRole('option', { name: amPm }).click();
+      break;
+    case 'week':
+      await page.getByTestId('week-option').click();
+      await page.getByTestId('select-week-day-button').click();
+      await page.getByText(weekDay).click();
+      await page.getByTestId('select-hour-button').click();
+      await page.getByRole('option', { name: hour, exact: true }).click();
+      await page.getByTestId('select-minute-button').click();
+      await page.getByRole('option', { name: minute, exact: true }).click();
+      await page.getByTestId('select-am-pm-button').click();
+      await page.getByRole('option', { name: amPm }).click();
+      break;
+    case 'day':
+      await page.getByTestId('day-option').click();
+      await page.getByTestId('select-hour-button').click();
+      await page.getByRole('option', { name: hour, exact: true }).click();
+      await page.getByTestId('select-minute-button').click();
+      await page.getByRole('option', { name: minute, exact: true }).click();
+      await page.getByTestId('select-am-pm-button').click();
+      await page.getByRole('option', { name: amPm }).click();
+      break;
+    case 'hour':
+      await page.getByTestId('hour-option').click();
+      await page.getByTestId('select-minute-button').click();
+      await page.getByRole('option', { name: minute, exact: true }).click();
+      break;
+  }
+};
+
+export const fillScheduleModalForm = async (
+  page: Page,
+  timeOptions: ScheduleTimeOptions = defaultTimeOptions
+) => {
+  const bucketNamespacesMap = getBucketNamespacesMap();
   // TODO can be customizable
   if (await checkDbTypeisVisibleInPreview(page, DbType.Mongo)) {
     await expect(page.getByTestId('radio-option-logical')).toBeChecked();
@@ -66,7 +146,7 @@ export const fillScheduleModalForm = async (page: Page) => {
 
   const storageOptions = page.getByRole('option');
   const testStorage = storageOptions.filter({
-    hasText: STORAGE_NAMES[1],
+    hasText: bucketNamespacesMap[0][0],
   });
   await testStorage.click();
 
@@ -75,16 +155,7 @@ export const fillScheduleModalForm = async (page: Page) => {
 
   await retentionCopiesField.fill('1');
 
-  await page.getByTestId('select-selected-time-button').click();
-  await page.getByTestId('month-option').click();
-  await page.getByTestId('select-on-day-button').click();
-  await page.getByTestId('10').click();
-  await page.getByTestId('select-hour-button').click();
-  await page.getByRole('option', { name: '1', exact: true }).click();
-  await page.getByTestId('select-minute-button').click();
-  await page.getByRole('option', { name: '05' }).click();
-  await page.getByTestId('select-am-pm-button').click();
-  await page.getByRole('option', { name: 'AM' }).click();
+  await createScheduleFromTimeOptions(page, timeOptions);
 };
 
 export const openCreateScheduleDialogFromDBWizard = async (page: Page) => {

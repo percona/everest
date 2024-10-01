@@ -1,5 +1,4 @@
 import type { StorybookConfig } from '@storybook/react-vite';
-
 import { join, dirname } from 'path';
 
 /**

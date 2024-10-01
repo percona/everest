@@ -41,9 +41,11 @@ func MustInitLogger(json bool) *zap.Logger {
 			enc.AppendString(t.UTC().Format("2006-01-02T15:04:05Z0700"))
 		})
 	}
-	if !json {
-		loggerCfg.Encoding = "console"
+	loggerCfg.Encoding = "console"
+	if json {
+		loggerCfg.Encoding = "json"
 	}
+	loggerCfg.DisableStacktrace = true
 
 	logger, err := loggerCfg.Build()
 	if err != nil {

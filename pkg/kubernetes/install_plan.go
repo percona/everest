@@ -17,7 +17,7 @@ func (k *Kubernetes) getInstallPlanFromSubscription(ctx context.Context, namespa
 	var subs *olmv1alpha1.Subscription
 
 	// If the subscription was recently created, the install plan might not be ready yet.
-	err := wait.PollUntilContextTimeout(ctx, pollInterval, pollDuration, false, func(ctx context.Context) (bool, error) {
+	err := wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
 		var err error
 		subs, err = k.client.GetSubscription(ctx, namespace, name)
 		if err != nil {
@@ -47,7 +47,7 @@ func (k *Kubernetes) getInstallPlanFromSubscription(ctx context.Context, namespa
 // WaitForInstallPlan waits until an install plan for the given operator and version is available.
 func (k *Kubernetes) WaitForInstallPlan(ctx context.Context, namespace, operatorName string, version *goversion.Version) (*olmv1alpha1.InstallPlan, error) {
 	var ip *olmv1alpha1.InstallPlan
-	csvName := fmt.Sprintf("%s.v%s", operatorName, version)
+	csvName := k.CSVNameFromOperator(operatorName, version)
 	err := wait.PollUntilContextCancel(ctx, time.Second, true, func(ctx context.Context) (bool, error) {
 		k.l.Debug("Looking for install plan")
 		ips, err := k.client.ListInstallPlans(ctx, namespace)
@@ -59,7 +59,7 @@ func (k *Kubernetes) WaitForInstallPlan(ctx context.Context, namespace, operator
 		for _, i := range ips.Items {
 			for _, csv := range i.Spec.ClusterServiceVersionNames {
 				if csv == csvName {
-					//nolint:gosec,exportloopref
+					//nolint:exportloopref
 					ip = &i
 					k.l.Debugf("Found install plan %s", i.Name)
 					return true, nil
@@ -107,7 +107,7 @@ func (k *Kubernetes) ApproveInstallPlan(ctx context.Context, namespace, installP
 
 // WaitForInstallPlanCompleted waits until install plan phase is "complete".
 func (k *Kubernetes) WaitForInstallPlanCompleted(ctx context.Context, namespace, name string) error {
-	return wait.PollUntilContextTimeout(ctx, time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
 		ip, err := k.client.GetInstallPlan(ctx, namespace, name)
 		if err != nil {
 			k.l.Debugf("Could not retrieve install plan: %s", err)

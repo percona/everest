@@ -15,6 +15,7 @@ import {
   EverestHorizontalIcon,
   EverestMainIcon,
 } from './everest';
+import { DatabaseIcon, NetworkNode } from './other';
 import { GenericErrorIcon } from './generic-error';
 import { NoMatchIcon } from './no-match';
 import {
@@ -82,6 +83,7 @@ const icons = {
     UknownIcon,
     PausedIcon,
   ],
+  other: [DatabaseIcon, NetworkNode],
 };
 
 export const Database: StoryObj<typeof MySqlIcon> = {
@@ -219,6 +221,31 @@ export const Status: StoryObj<typeof ErrorIcon> = {
     return (
       <Stack direction={'column'} rowGap={'2rem'}>
         {icons.status.map((Icon) => (
+          <Stack direction={'row'} alignItems={'center'} columnGap={'2rem'}>
+            <Icon />
+            <Typography variant="body1">{Icon.name}</Typography>
+          </Stack>
+        ))}
+      </Stack>
+    );
+  },
+};
+
+export const Other: StoryObj<typeof DatabaseIcon> = {
+  parameters: {
+    docs: {
+      description: {
+        story: `\`\`\`ts
+        <DatabaseIcon />
+        \`\`\``,
+      },
+    },
+  },
+
+  render: function Render() {
+    return (
+      <Stack direction={'column'} rowGap={'2rem'}>
+        {icons.other.map((Icon) => (
           <Stack direction={'row'} alignItems={'center'} columnGap={'2rem'}>
             <Icon />
             <Typography variant="body1">{Icon.name}</Typography>

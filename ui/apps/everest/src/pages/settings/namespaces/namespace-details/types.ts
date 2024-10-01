@@ -1,20 +1,21 @@
 import { BoxProps } from '@mui/material';
-import { DbEngineType } from '@percona/types';
+import { UseOperatorsUpgradePlanType } from 'hooks/api/db-engines';
 import {
   DbEngine,
-  OperatorUpgradeDb,
-  OperatorUpgradePreflightPayload,
+  OperatorUpgradePendingAction,
+  OperatorUpgradeTask,
 } from 'shared-types/dbEngines.types';
 
 export type UpgradeHeaderProps = {
-  engine: DbEngine;
-  preflightPayload?: OperatorUpgradePreflightPayload;
+  upgradeAvailable: boolean;
+  pendingUpgradeTasks: boolean;
   onUpgrade: () => void;
 } & BoxProps;
 
 export type ClusterStatusTableProps = {
   namespace: string;
-  databases: OperatorUpgradeDb[];
+  pendingActions: OperatorUpgradePendingAction[];
+  dbEngines: DbEngine[];
 };
 
 export type UpgradeModalProps = {
@@ -22,11 +23,9 @@ export type UpgradeModalProps = {
   onClose: () => void;
   onConfirm: () => void;
   namespace: string;
-  dbType: DbEngineType;
-  newVersion: string;
+  operatorsUpgradeTasks: OperatorUpgradeTask[];
 };
 
-export type EngineLowerContentProps = {
-  engine: DbEngine;
-  preflightPayload?: OperatorUpgradePreflightPayload;
+export type OperatorVersionsHeaderProps = {
+  operatorsUpgradePlan: UseOperatorsUpgradePlanType;
 };

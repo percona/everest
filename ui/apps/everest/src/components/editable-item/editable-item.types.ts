@@ -13,12 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { PaperProps } from '@mui/material';
+import { IconButtonProps, PaperProps } from '@mui/material';
 
 export interface EditableItemProps {
   children: React.ReactNode;
-  onEdit?: () => void;
-  onDelete?: () => void;
+  editButtonProps?: IconButtonProps;
+  deleteButtonProps?: IconButtonProps & {
+    tooltipMessage?: string;
+  };
   dataTestId: string;
   paperProps?: PaperProps;
 }

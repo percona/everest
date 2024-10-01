@@ -49,5 +49,11 @@ export const Messages = {
       invalidOption:
         'Invalid option. Please make sure you added a monitoring endpoint and select it from the dropdown',
     },
+    sharding: {
+      invalid: 'Please fill in valid values for sharding',
+      min: (val: number) => `The value cannot be less than ${val}`,
+      max: (val: number) => `The value cannot be more than ${val}`,
+      odd: 'The value cannot be even',
+    },
   },
 };

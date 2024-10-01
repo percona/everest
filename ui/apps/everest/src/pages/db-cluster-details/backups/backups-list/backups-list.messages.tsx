@@ -1,4 +1,5 @@
 import { DbEngineType } from '@percona/types';
+import { PG_SLOTS_LIMIT } from 'consts';
 
 export const Messages = {
   deleteDialog: {
@@ -35,11 +36,13 @@ export const Messages = {
       'Are you sure you want to replicate the selected database? This will create an exact copy of the current instance.',
     submitButton: 'Create',
   },
-  noData: "You don't have any backups yet. Create one to get started.",
+  noData: 'You currently do not have any backups. Create one to get started.',
   createBackup: 'Create backup',
   now: 'Now',
   schedule: 'Schedule',
   delete: 'Delete',
   restore: 'Restore to this DB',
   restoreToNewDb: 'Create new DB',
+  pgMaximum: (slotsInUse: number) =>
+    `Note: There is a maximum of 3 backup schedules for PostgreSQL. You are using ${slotsInUse} out of ${PG_SLOTS_LIMIT} available storages.`,
 };

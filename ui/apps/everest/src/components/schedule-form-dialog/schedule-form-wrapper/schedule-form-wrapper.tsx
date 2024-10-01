@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
 import { useContext, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { DbEngineType } from 'shared-types/dbEngines.types.ts';
@@ -27,12 +26,27 @@ export const ScheduleFormWrapper = () => {
     mode = 'new',
     setSelectedScheduleName,
     dbClusterInfo,
+    externalContext,
   } = useContext(ScheduleFormDialogContext);
-  const { namespace, schedules = [], activeStorage, dbEngine } = dbClusterInfo;
-  const { data: backupStorages = [], isFetching } =
-    useBackupStoragesByNamespace(namespace);
+  const {
+    schedules = [],
+    defaultSchedules = [],
+    activeStorage,
+    dbEngine,
+  } = dbClusterInfo;
 
   const [scheduleName] = watch([ScheduleFormFields.scheduleName]);
+
+  const isJustAddedSchedule = !defaultSchedules.find(
+    (item) => item?.name === scheduleName
+  );
+  const disableStorageSelection =
+    !!activeStorage ||
+    (dbEngine === DbEngineType.POSTGRESQL &&
+      mode === 'edit' &&
+      (externalContext === 'db-details-backups' ||
+        (externalContext === 'db-wizard-edit' && !isJustAddedSchedule)));
+
   const [amPm, hour, minute, onDay, weekDay, selectedTime] = watch([
     ScheduleFormFields.amPm,
     ScheduleFormFields.hour,
@@ -65,13 +79,11 @@ export const ScheduleFormWrapper = () => {
   return (
     <ScheduleForm
       showTypeRadio={dbEngine === DbEngineType.PSMDB}
-      hideRetentionCopies={dbEngine === DbEngineType.POSTGRESQL}
       allowScheduleSelection={mode === 'edit'}
-      disableStorageSelection={!!activeStorage}
+      disableStorageSelection={disableStorageSelection}
       autoFillLocation={mode === 'new'}
+      disableNameEdit={mode === 'edit'}
       schedules={schedules}
-      storageLocationFetching={isFetching}
-      storageLocationOptions={backupStorages}
     />
   );
 };

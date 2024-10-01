@@ -33,6 +33,10 @@ export const basicInformationStepCheck = async (
   expect(await dbEnginesButtons.nth(1).textContent()).toBe('MongoDB');
   expect(await dbEnginesButtons.nth(2).textContent()).toBe('PostgreSQL');
 
+  expect(
+    await page.getByTestId('switch-input-sharding').getByRole('checkbox')
+  ).not.toBeVisible();
+
   await dbEnginesButtons.nth(1).click(); //MongoDB
   await page.getByTestId('select-db-version-button').click();
 
@@ -50,9 +54,12 @@ export const basicInformationStepCheck = async (
     recommendedEngineVersions.psmdb
   );
 
-  await page.getByRole('option').filter({ hasText: '5.0.7-6' }).click();
+  await page.getByRole('option').filter({ hasText: '6.0.4-3' }).click();
   await page.getByTestId('text-input-db-name').fill(clusterName);
   await page.getByTestId('text-input-storage-class').click();
+  expect(
+    await page.getByTestId('switch-input-sharding').getByRole('checkbox')
+  ).not.toBeDisabled();
 
   const storageClassOptions = page.getByRole('option');
 
