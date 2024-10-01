@@ -209,7 +209,7 @@ export const Hover: Story = {
   parameters: {
     pseudo: {
       hover: true,
-    }
+    },
   },
   args: {
     label: 'Hover',
@@ -222,7 +222,7 @@ export const Focus: Story = {
   parameters: {
     pseudo: {
       focus: true,
-    }
+    },
   },
   args: {
     label: 'Focus',
