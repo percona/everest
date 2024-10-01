@@ -91,6 +91,10 @@ func refreshEnforcerInBackground(
 		if err := validatePolicy(enforcer); err != nil {
 			panic("invalid policy detected - " + err.Error())
 		}
+		// Calling LoadPolicy() re-writes the entire model, so we need to add back the admin role.
+		if err := loadAdminPolicy(enforcer); err != nil {
+			panic("failed to load admin policy - " + err.Error())
+		}
 		enforcer.EnableEnforce(IsEnabled(cm))
 	})
 	if inf.Start(ctx, &corev1.ConfigMap{}) != nil {
@@ -115,6 +119,9 @@ func newEnforcer(adapter persist.Adapter, enableLogs bool) (*casbin.Enforcer, er
 	enf, err := casbin.NewEnforcer(model, adapter, enableLogs)
 	if err != nil {
 		return nil, err
+	}
+	if err := loadAdminPolicy(enf); err != nil {
+		return nil, errors.Join(err, errors.New("failed to load admin policy"))
 	}
 	if err := validatePolicy(enf); err != nil {
 		return nil, err
@@ -176,6 +183,28 @@ func GetUser(c echo.Context) (string, error) {
 		return strings.Split(subject, ":")[0], nil
 	}
 	return subject, nil
+}
+
+func loadAdminPolicy(enf casbin.IEnforcer) error {
+	paths, _, err := buildPathResourceMap("") // reads the swagger API definition
+	if err != nil {
+		return err
+	}
+	resources := make(map[string]struct{})
+	for _, resource := range paths {
+		resources[resource] = struct{}{}
+	}
+	action := "*"
+	for resource := range resources {
+		object := "*/*"
+		if resource == ResourceNamespaces {
+			object = "*"
+		}
+		if _, err := enf.AddPolicy(common.EverestAdminRole, resource, action, object); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // buildPathResourceMap builds a map of paths to resources and a list of resources.

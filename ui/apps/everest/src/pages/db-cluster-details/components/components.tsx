@@ -33,7 +33,7 @@ import { DATE_FORMAT } from 'consts';
 const Components = () => {
   const { dbClusterName, namespace = '' } = useParams();
 
-  const { data: components = [], isFetching } = useDbClusterComponents(
+  const { data: components = [], isLoading } = useDbClusterComponents(
     namespace,
     dbClusterName!
   );
@@ -106,7 +106,7 @@ const Components = () => {
           },
         ],
       }}
-      state={{ isLoading: isFetching && components?.length === 0 }}
+      state={{ isLoading }}
       tableName={`${dbClusterName}-components`}
       columns={columns}
       data={components}

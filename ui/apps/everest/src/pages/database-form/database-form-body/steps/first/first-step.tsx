@@ -18,9 +18,12 @@ import {
   MenuItem,
   Skeleton,
   Stack,
+  Tooltip,
   Typography,
 } from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useCallback, useEffect, useState } from 'react';
+import { lt, valid } from 'semver';
 import { DbType } from '@percona/types';
 import {
   AutoCompleteInput,
@@ -36,7 +39,8 @@ import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubern
 import { useFormContext } from 'react-hook-form';
 import { DbEngineToolStatus } from 'shared-types/dbEngines.types';
 import { DB_WIZARD_DEFAULTS } from '../../../database-form.constants.ts';
-import { DbWizardFormFields, StepProps } from '../../../database-form.types.ts';
+import { StepProps } from '../../../database-form.types.ts';
+import { DbWizardFormFields } from 'consts.ts';
 import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { DEFAULT_NODES } from './first-step.constants.ts';
@@ -47,19 +51,14 @@ import {
 } from './utils.ts';
 import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
-import { DbClusterStatus } from 'shared-types/dbCluster.types.ts';
 import { useDBEnginesForNamespaces } from 'hooks/api/namespaces/useNamespaces.ts';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
   const {
-    dbClusterData,
-    defaultValues: {
-      [DbWizardFormFields.dbVersion]: defaultDbVersion,
-      [DbWizardFormFields.sharding]: defaultSharding,
-    },
+    defaultValues: { [DbWizardFormFields.dbVersion]: defaultDbVersion },
   } = useDatabasePageDefaultValues(mode);
-  const { watch, setValue, getFieldState, resetField, getValues, trigger } =
+  const { watch, setValue, getFieldState, resetField, trigger } =
     useFormContext();
 
   const { data: clusterInfo, isFetching: clusterInfoFetching } =
@@ -67,12 +66,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const dbType: DbType = watch(DbWizardFormFields.dbType);
   const dbVersion: DbType = watch(DbWizardFormFields.dbVersion);
   const dbNamespace = watch(DbWizardFormFields.k8sNamespace);
-  const dbClusterStatus = dbClusterData?.status?.status;
-  const disableShardingChange =
-    loadingDefaultsForEdition ||
-    ((mode === 'edit' || mode === 'restoreFromBackup') &&
-      defaultSharding &&
-      dbClusterStatus !== DbClusterStatus.paused);
 
   const dbEnginesForNamespaces = useDBEnginesForNamespaces();
   const dbEnginesFetching = dbEnginesForNamespaces.some(
@@ -89,6 +82,13 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const [dbEngineData, setDbEngineData] = useState(
     dbEngines.find((engine) => engine.type === dbEngine)
   );
+
+  const notSupportedMongoOperatorVersionForSharding =
+    dbType === DbType.Mongo &&
+    !!valid(dbEngineData?.operatorVersion) &&
+    lt(dbEngineData?.operatorVersion || '', '1.17.0');
+  const disableSharding =
+    mode !== 'new' || notSupportedMongoOperatorVersionForSharding;
 
   const setRandomDbName = useCallback(
     (type: DbType) => {
@@ -178,6 +178,17 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       }
 
       setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[newDbType]);
+      resetField(DbWizardFormFields.numberOfProxies, {
+        keepTouched: false,
+      });
+      setValue(DbWizardFormFields.numberOfProxies, DEFAULT_NODES[newDbType], {
+        shouldTouch: false,
+      });
+      setValue(DbWizardFormFields.shardNr, DB_WIZARD_DEFAULTS.shardNr);
+      setValue(
+        DbWizardFormFields.shardConfigServers,
+        DB_WIZARD_DEFAULTS.shardConfigServers
+      );
       resetField(DbWizardFormFields.shardNr, {
         keepError: false,
       });
@@ -189,15 +200,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       });
       updateDbVersions();
     },
-    [
-      getFieldState,
-      resetField,
-      setRandomDbName,
-      mode,
-      updateDbVersions,
-      getValues,
-      setValue,
-    ]
+    [getFieldState, resetField, setRandomDbName, updateDbVersions, setValue]
   );
 
   useEffect(() => {
@@ -246,8 +249,10 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   }, [clusterInfo]);
 
   useEffect(() => {
-    setDbEngineDataForEngineType();
-  }, [setDbEngineDataForEngineType]);
+    if (!dbEngineData) {
+      setDbEngineDataForEngineType();
+    }
+  }, [dbEngineData, setDbEngineDataForEngineType]);
 
   const { canCreate, isFetching } =
     useNamespacePermissionsForResource('database-clusters');
@@ -372,7 +377,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                 label={Messages.labels.shardedCluster}
                 name={DbWizardFormFields.sharding}
                 switchFieldProps={{
-                  disabled: disableShardingChange,
+                  disabled: disableSharding,
                   onChange: (e) => {
                     if (!e.target.checked) {
                       resetField(DbWizardFormFields.shardNr, {
@@ -385,15 +390,15 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                   },
                 }}
               />
-              {/*{disableShardingChange && (*/}
-              {/*  <Tooltip*/}
-              {/*    title={Messages.disableShardingTooltip}*/}
-              {/*    arrow*/}
-              {/*    placement="right"*/}
-              {/*  >*/}
-              {/*    <InfoOutlinedIcon color="primary" />*/}
-              {/*  </Tooltip>*/}
-              {/*)}*/}
+              {notSupportedMongoOperatorVersionForSharding && (
+                <Tooltip
+                  title={Messages.disableShardingTooltip}
+                  arrow
+                  placement="right"
+                >
+                  <InfoOutlinedIcon color="primary" />
+                </Tooltip>
+              )}
             </Stack>
           </>
         )}

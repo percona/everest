@@ -23,6 +23,11 @@ import { Messages } from '../dbClusterView.messages';
 import { DbClusterTableElement } from '../dbClusterView.types';
 import { LabelValue } from './LabelValue';
 import { useRBACPermissions } from 'hooks/rbac';
+import {
+  cpuParser,
+  getTotalResourcesDetailedString,
+  memoryParser,
+} from 'utils/k8ResourceParser';
 
 export const ExpandedRow = ({
   row,
@@ -41,6 +46,23 @@ export const ExpandedRow = ({
     port,
     raw,
   } = row.original;
+  const parsedDiskValues = memoryParser(storage.toString());
+  const parsedMemoryValues = memoryParser(memory.toString());
+  const cpuResourcesStr = getTotalResourcesDetailedString(
+    cpuParser(cpu.toString() || '0'),
+    nodes,
+    'CPU'
+  );
+  const memoryResourcesStr = getTotalResourcesDetailedString(
+    parsedMemoryValues.value,
+    nodes,
+    parsedMemoryValues.originalUnit
+  );
+  const storageResourcesStr = getTotalResourcesDetailedString(
+    parsedDiskValues.value,
+    nodes,
+    parsedDiskValues.originalUnit
+  );
   const isExpanded = row.getIsExpanded();
   const { isPending, isFetching, data } = useDbClusterCredentials(
     databaseName,
@@ -120,10 +142,16 @@ export const ExpandedRow = ({
         >
           {Messages.expandedRow.dbClusterParams}
         </Typography>
-        <LabelValue label={Messages.expandedRow.cpu} value={cpu} />
         <LabelValue label={Messages.expandedRow.nodes} value={nodes} />
-        <LabelValue label={Messages.expandedRow.memory} value={memory} />
-        <LabelValue label={Messages.expandedRow.disk} value={storage} />
+        <LabelValue label={Messages.expandedRow.cpu} value={cpuResourcesStr} />
+        <LabelValue
+          label={Messages.expandedRow.memory}
+          value={memoryResourcesStr}
+        />
+        <LabelValue
+          label={Messages.expandedRow.disk}
+          value={storageResourcesStr}
+        />
         <LabelValue
           label={Messages.expandedRow.externalAccess}
           value={

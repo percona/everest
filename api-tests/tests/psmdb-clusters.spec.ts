@@ -16,7 +16,7 @@ import { test, expect } from '@fixtures'
 import {checkError, deleteDBCluster, testsNs} from "@tests/tests/helpers";
 
 
-test.setTimeout(60 * 1000)
+test.setTimeout(120 * 1000)
 
 test.beforeAll(async ({ request }) => {
   const engineResponse = await request.get(`/v1/namespaces/${testsNs}/database-engines/percona-server-mongodb-operator`)
@@ -57,8 +57,8 @@ test('create/edit/delete single node psmdb cluster', async ({ request, page }) =
   await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
     data: psmdbPayload,
   })
-  for (let i = 0; i < 15; i++) {
-    await page.waitForTimeout(1000)
+  for (let i = 0; i < 30; i++) {
+    await page.waitForTimeout(2000)
 
     const psmdbCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
 
@@ -87,6 +87,7 @@ test('create/edit/delete single node psmdb cluster', async ({ request, page }) =
   psmdbPayload.metadata = result.metadata
 
   // Update PSMDB cluster
+  expect(psmdbPayload.metadata["resourceVersion"]).toBeDefined()
 
   const updatedPSMDBCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: psmdbPayload,
@@ -138,8 +139,8 @@ test('expose psmdb cluster after creation', async ({ request, page }) => {
     data: psmdbPayload,
   })
 
-  for (let i = 0; i < 15; i++) {
-    await page.waitForTimeout(1000)
+  for (let i = 0; i < 30; i++) {
+    await page.waitForTimeout(2000)
 
     const psmdbCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
 
@@ -168,6 +169,7 @@ test('expose psmdb cluster after creation', async ({ request, page }) => {
   psmdbPayload.spec.proxy.expose.type = 'external'
 
   // Update PSMDB cluster
+  expect(psmdbPayload.metadata["resourceVersion"]).toBeDefined()
 
   const updatedPSMDBCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: psmdbPayload,
@@ -219,7 +221,7 @@ test('expose psmdb cluster on EKS to the public internet and scale up', async ({
   await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
     data: psmdbPayload,
   })
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 30; i++) {
     await page.waitForTimeout(2000)
 
     const psmdbCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
@@ -248,6 +250,7 @@ test('expose psmdb cluster on EKS to the public internet and scale up', async ({
   psmdbPayload.metadata = result.metadata
 
   // Update PSMDB cluster
+  expect(psmdbPayload.metadata["resourceVersion"]).toBeDefined()
 
   const updatedPSMDBCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: psmdbPayload,

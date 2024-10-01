@@ -4,9 +4,9 @@ config_yaml=read_yaml('config.yaml')
 # Vars
 everest_namespace = 'everest-system'
 everest_monitoring_namespace = 'everest-monitoring'
-pxc_operator_version = os.getenv('PXC_OPERATOR_VERSION', '1.14.0')
+pxc_operator_version = os.getenv('PXC_OPERATOR_VERSION', '1.15.0')
 print('Using PXC operator version: %s' % pxc_operator_version)
-psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.15.0')
+psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.17.0')
 print('Using PSMDB operator version: %s' % psmdb_operator_version)
 pg_operator_version = os.getenv('PG_OPERATOR_VERSION', '2.4.1')
 print('Using PG operator version: %s' % pg_operator_version)
