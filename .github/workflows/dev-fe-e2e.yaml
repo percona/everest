@@ -137,6 +137,7 @@ jobs:
         run: |
           cd ui
           make init
+          make build
           pnpm --filter "@percona/everest" dev &
 
       - name: Install Chromium for Playwright
