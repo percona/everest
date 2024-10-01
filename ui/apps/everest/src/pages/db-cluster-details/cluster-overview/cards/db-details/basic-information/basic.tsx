@@ -120,7 +120,7 @@ export const BasicInformationSection = ({
       <OverviewSectionRow label="Name" contentString={name} />
       <OverviewSectionRow label="Namespace" contentString={namespace} />
       <OverviewSectionRow label="Version" contentString={version} />
-      {openEditModal && (
+      {openEditModal && dbVersionsUpgradeList && (
         <UpgradeDbVersionModal
           open={openEditModal}
           handleCloseModal={handleCloseModal}
