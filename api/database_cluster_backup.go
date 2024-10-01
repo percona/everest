@@ -111,6 +111,18 @@ func (e *EverestServer) CreateDatabaseClusterBackup(ctx echo.Context, namespace 
 			Message: pointer.ToString("Could not get DatabaseClusterBackup from the request body"),
 		})
 	}
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+	// User should be able to read the specified backup storage.
+	bsName := pointer.Get(dbb.Spec).BackupStorageName
+	if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionCreate, rbac.ObjectName(namespace, bsName)); err != nil {
+		return err
+	}
+
 	// TODO: Improve returns status code in EVEREST-616
 	if err := e.validateDatabaseClusterBackup(ctx.Request().Context(), namespace, dbb); err != nil {
 		e.l.Error(err)
