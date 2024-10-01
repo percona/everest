@@ -1,14 +1,17 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
 	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 
-	"github.com/percona/everest/api/rbac"
+	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/rbac"
 )
 
 // GetUserPermissions returns the permissions for the currently logged in user.
@@ -29,9 +32,21 @@ func (e *EverestServer) GetUserPermissions(c echo.Context) error {
 		e.l.Error(err)
 		return err
 	}
+	result := pointer.To(permissions)
+
+	rbacCM, err := e.getEverestRBACConfigMap(c.Request().Context())
+	if err != nil {
+		e.l.Error("Failed to get Everest RBAC ConfigMap", zap.Error(err))
+		return err
+	}
+	enabled := rbac.IsEnabled(rbacCM)
+	if !enabled {
+		result = nil
+	}
 
 	return c.JSON(http.StatusOK, &UserPermissions{
-		Permissions: pointer.To(permissions),
+		Permissions: result,
+		Enabled:     enabled,
 	})
 }
 
@@ -50,4 +65,12 @@ func (e *EverestServer) resolveRoles(user string, permissions [][]string) error 
 		}
 	}
 	return nil
+}
+
+func (e *EverestServer) getEverestRBACConfigMap(ctx context.Context) (*corev1.ConfigMap, error) {
+	cm, err := e.kubeClient.GetConfigMap(ctx, common.SystemNamespace, common.EverestRBACConfigMapName)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not get Everest RBAC ConfigMap"))
+	}
+	return cm, nil
 }

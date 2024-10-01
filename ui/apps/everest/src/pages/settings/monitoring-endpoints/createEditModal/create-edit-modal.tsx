@@ -1,9 +1,7 @@
-import { TextInput } from '@percona/ui-lib';
-import { AutoCompleteSelectAll } from 'components/auto-complete-select-all/auto-complete-select-all';
+import { AutoCompleteInput, TextInput } from '@percona/ui-lib';
 import { FormDialog } from 'components/form-dialog';
 import TlsAlert from 'components/tls-alert';
 import TlsCheckbox from 'components/tls-checkbox';
-import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { useMemo } from 'react';
 import { Messages } from '../monitoring-endpoints.messages';
 import {
@@ -13,6 +11,7 @@ import {
   endpointDefaultValues,
   getEndpointSchema,
 } from './create-edit-modal.types';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 
 export const CreateEditEndpointModal = ({
   open,
@@ -22,9 +21,10 @@ export const CreateEditEndpointModal = ({
   selectedEndpoint,
 }: CreateEditEndpointModalProps) => {
   const isEditMode = !!selectedEndpoint;
-  const { data: namespaces = [], isFetching: isNamespacesFetching } =
-    useNamespaces();
 
+  const { canCreate } = useNamespacePermissionsForResource(
+    'monitoring-instances'
+  );
   const endpointSchema = getEndpointSchema(isEditMode);
 
   const defaultValues = useMemo(
@@ -62,14 +62,13 @@ export const CreateEditEndpointModal = ({
               placeholder: Messages.fieldPlaceholders.name,
             }}
           />
-          <AutoCompleteSelectAll
-            name={EndpointFormFields.namespaces}
-            label={Messages.fieldLabels.namespaces}
-            loading={isNamespacesFetching}
-            options={namespaces}
+          <AutoCompleteInput
+            name={EndpointFormFields.namespace}
+            label={Messages.fieldLabels.namespace}
+            options={canCreate}
+            disabled={isEditMode}
             isRequired
             textFieldProps={{
-              helperText: Messages.helperText.namespaces,
               placeholder: Messages.fieldPlaceholders.namespaces,
             }}
           />

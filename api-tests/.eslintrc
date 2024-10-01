@@ -26,6 +26,7 @@
         "project": ["./tsconfig.json"]
       },
       "rules": {
+        "@typescript-eslint/no-explicit-any": ["warn"],
         "playwright/no-conditional-in-test": ["off"],
         "@typescript-eslint/no-unsafe-assignment": ["off"],
         "no-continue": ["off"],
@@ -52,7 +53,7 @@
         // Most of the time, we don't want to run multiple promises at the same time in loop
         "no-await-in-loop": "off",
         "max-classes-per-file": "off",
-        "@typescript-eslint/semi": ["error", "never"],
+        "@typescript-eslint/semi": ["error", "always"],
         "arrow-body-style": ["off"],
         // prefer single quotes most of the time
         "quotes": [
@@ -152,7 +153,6 @@
     "no-loop-func": "off",
     "no-trailing-spaces": "off",
     "no-plusplus": "off",
-    "no-extra-semi": "error",
     "no-undef": "off",
     "nonblock-statement-body-position": "error",
     "no-multiple-empty-lines": "error",
@@ -166,7 +166,6 @@
     "prettier/prettier": "off",
     "prefer-spread": "error",
     "space-before-function-paren": "error",
-    "semi": ["error", "never"],
     "space-before-blocks": "error",
     "spaced-comment": "error",
     "space-infix-ops": "error",

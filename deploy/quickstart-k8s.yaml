@@ -38,6 +38,9 @@ rules:
   - apiGroups: ["everest.percona.com"]
     resources: ["*"]
     verbs: ["*"]
+  - apiGroups: ["operators.coreos.com"]
+    resources: ["installplans"]
+    verbs: ["get", "list", "update"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -87,16 +90,9 @@ kind: ConfigMap
 metadata:
   name: everest-rbac
 data:
+  enabled: "false"
   policy.csv: |
-    p, adminrole:role, namespaces, read, *
-    p, adminrole:role, database-engines, *, */*
-    p, adminrole:role, database-clusters, *, */*
-    p, adminrole:role, database-cluster-backups, *, */*
-    p, adminrole:role, database-cluster-restores, *, */*
-    p, adminrole:role, database-clusters-credentials, read, */*
-    p, adminrole:role, backup-storages, *, */*
-    p, adminrole:role, monitoring-instances, *, */*
-    g, admin, adminrole:role
+    g, admin, role:admin
 ---
 apiVersion: apps/v1
 kind: Deployment

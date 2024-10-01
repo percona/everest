@@ -42,3 +42,45 @@ export const MAX_DB_CLUSTER_NAME_LENGTH = 22;
 // export const MAX_RFC_1123_NAME_LENGTH = 63;
 export const MAX_SCHEDULE_NAME_LENGTH = 57;
 export const EVEREST_JWT_ISSUER = 'everest';
+export const PG_SLOTS_LIMIT = 3;
+
+export enum DbWizardForm {
+  dbName = 'dbName',
+  dbType = 'dbType',
+  k8sNamespace = 'k8sNamespace',
+  dbEnvironment = 'dbEnvironment',
+  dbVersion = 'dbVersion',
+  storageClass = 'storageClass',
+  cpu = 'cpu',
+  proxyCpu = 'proxyCpu',
+  memory = 'memory',
+  proxyMemory = 'proxyMemory',
+  disk = 'disk',
+  // This is for retrocompatibility reasons, as some users still have Gb as a unit
+  diskUnit = 'diskUnit',
+  numberOfNodes = 'numberOfNodes',
+  numberOfProxies = 'numberOfProxies',
+  customNrOfNodes = 'customNrOfNodes',
+  customNrOfProxies = 'customNrOfProxies',
+  resourceSizePerNode = 'resourceSizePerNode',
+  resourceSizePerProxy = 'resourceSizePerProxy',
+  backupsEnabled = 'backupsEnabled',
+  schedules = 'schedules',
+  pitrEnabled = 'pitrEnabled',
+  pitrStorageLocation = 'pitrStorageLocation',
+  externalAccess = 'externalAccess',
+  internetFacing = 'internetFacing',
+  sourceRanges = 'sourceRanges',
+  engineParametersEnabled = 'engineParametersEnabled',
+  engineParameters = 'engineParameters',
+  monitoring = 'monitoring',
+  monitoringInstance = 'monitoringInstance',
+  endpoint = 'endpoint',
+  sharding = 'sharding',
+  shardNr = 'shardNr',
+  shardConfigServers = 'shardConfigServers',
+}
+
+export const DbWizardFormFields = {
+  ...DbWizardForm,
+};

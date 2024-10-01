@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -37,6 +38,11 @@ import (
 	"github.com/percona/everest/pkg/install"
 	"github.com/percona/everest/pkg/kubernetes"
 	cliVersion "github.com/percona/everest/pkg/version"
+)
+
+const (
+	pollInterval = 5 * time.Second
+	pollTimeout  = 5 * time.Minute
 )
 
 // Uninstall implements logic for the cluster command.
@@ -64,16 +70,24 @@ type Config struct {
 
 // NewUninstall returns a new Uninstall struct.
 func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
-	kubeClient, err := kubernetes.New(c.KubeconfigPath, l)
+	cli := &Uninstall{
+		config: c,
+		l:      l,
+	}
+	if c.Pretty {
+		cli.l = zap.NewNop().Sugar()
+	}
+	kubeClient, err := kubernetes.New(c.KubeconfigPath, cli.l)
 	if err != nil {
+		var u *url.Error
+		if errors.As(err, &u) {
+			l.Error("Could not connect to Kubernetes. " +
+				"Make sure Kubernetes is running and is accessible from this computer/server.")
+		}
 		return nil, err
 	}
 
-	cli := &Uninstall{
-		config:     c,
-		kubeClient: kubeClient,
-		l:          l,
-	}
+	cli.kubeClient = kubeClient
 	return cli, nil
 }
 
@@ -285,11 +299,7 @@ func (u *Uninstall) deleteDBs(ctx context.Context) error {
 				finalizers := db.GetFinalizers()
 				finalizers = append(finalizers, common.ForegroundDeletionFinalizer)
 				db.SetFinalizers(finalizers)
-				// With the move to go 1.22 it's safe to reuse the same variable, see
-				// https://go.dev/blog/loopvar-preview. However, gosec linter doesn't
-				// like it. Let's disable it for this line until they are updated to
-				// support go 1.22.
-				if err := u.kubeClient.PatchDatabaseCluster(&db); err != nil { //nolint:gosec
+				if err := u.kubeClient.PatchDatabaseCluster(&db); err != nil {
 					return errors.Join(errors.New("failed to add foregroundDeletion finalizer"), err)
 				}
 			}
@@ -301,7 +311,7 @@ func (u *Uninstall) deleteDBs(ctx context.Context) error {
 
 	// Wait for all database clusters to be deleted, or timeout after 5 minutes.
 	u.l.Info("Waiting for database clusters to be deleted")
-	return wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
 		allDBs, err := u.getDBs(ctx)
 		if err != nil {
 			return false, err
@@ -333,7 +343,7 @@ func (u *Uninstall) deleteNamespaces(ctx context.Context, namespaces []string) e
 
 	// Wait for all namespaces to be deleted, or timeout after 5 minutes.
 	u.l.Infof("Waiting for namespace(s) '%s' to be deleted", strings.Join(namespaces, "', '"))
-	return wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
 		for _, ns := range namespaces {
 			_, err := u.kubeClient.GetNamespace(ctx, ns)
 			if err != nil && !k8serrors.IsNotFound(err) {
@@ -370,6 +380,19 @@ func (u *Uninstall) deleteBackupStorages(ctx context.Context) error {
 		return err
 	}
 
+	// List backup storages in DB namespaces.
+	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx)
+	if err != nil {
+		return err
+	}
+	for _, ns := range dbNamespaces {
+		list, err := u.kubeClient.ListBackupStorages(ctx, ns)
+		if err != nil {
+			return fmt.Errorf("failed to list backup storages in namespace %s: %w", ns, err)
+		}
+		storages.Items = append(storages.Items, list.Items...)
+	}
+
 	if len(storages.Items) == 0 {
 		u.l.Info("All backup storages have been deleted")
 		return nil
@@ -378,25 +401,24 @@ func (u *Uninstall) deleteBackupStorages(ctx context.Context) error {
 	for _, storage := range storages.Items {
 		u.l.Infof("Deleting backup storage '%s'", storage.Name)
 		u.numResourcesDeleted++
-		if err := u.kubeClient.DeleteBackupStorage(ctx, common.SystemNamespace, storage.Name); err != nil {
+		if err := u.kubeClient.DeleteBackupStorage(ctx, storage.GetNamespace(), storage.GetName()); err != nil {
 			return err
 		}
 	}
 
 	// Wait for all backup storages to be deleted, or timeout after 5 minutes.
 	u.l.Infof("Waiting for backup storages to be deleted")
-	return wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
-		storages, err := u.kubeClient.ListBackupStorages(ctx, common.SystemNamespace)
-		if err != nil {
-			return false, err
-		}
-
-		if len(storages.Items) > 0 {
+	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
+		for _, bs := range storages.Items {
+			_, err := u.kubeClient.GetBackupStorage(ctx, bs.GetNamespace(), bs.GetName())
+			if k8serrors.IsNotFound(err) {
+				continue
+			} else if err != nil {
+				return false, err
+			}
 			return false, nil
 		}
-
 		u.l.Info("All backup storages have been deleted")
-
 		return true, nil
 	})
 }
@@ -409,6 +431,18 @@ func (u *Uninstall) deleteMonitoringConfigs(ctx context.Context) error {
 		return err
 	}
 
+	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get DB namespaces: %w", err)
+	}
+	for _, ns := range dbNamespaces {
+		list, err := u.kubeClient.ListMonitoringConfigs(ctx, ns)
+		if err != nil {
+			return fmt.Errorf("failed to list monitoring configs in namespace %s: %w", ns, err)
+		}
+		monitoringConfigs.Items = append(monitoringConfigs.Items, list.Items...)
+	}
+
 	if len(monitoringConfigs.Items) == 0 {
 		u.l.Info("No monitoring configs found")
 		return nil
@@ -417,25 +451,24 @@ func (u *Uninstall) deleteMonitoringConfigs(ctx context.Context) error {
 	for _, config := range monitoringConfigs.Items {
 		u.numResourcesDeleted++
 		u.l.Infof("Deleting monitoring config '%s'", config.Name)
-		if err := u.kubeClient.DeleteMonitoringConfig(ctx, install.MonitoringNamespace, config.Name); err != nil {
+		if err := u.kubeClient.DeleteMonitoringConfig(ctx, config.GetNamespace(), config.GetName()); err != nil {
 			return err
 		}
 	}
 
 	// Wait for all monitoring configs to be deleted, or timeout after 5 minutes.
 	u.l.Infof("Waiting for monitoring configs to be deleted")
-	return wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
-		monitoringConfigs, err := u.kubeClient.ListMonitoringConfigs(ctx, install.MonitoringNamespace)
-		if err != nil {
-			return false, err
-		}
-
-		if len(monitoringConfigs.Items) > 0 {
+	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
+		for _, mc := range monitoringConfigs.Items {
+			_, err := u.kubeClient.GetMonitoringConfig(ctx, mc.GetNamespace(), mc.GetName())
+			if k8serrors.IsNotFound(err) {
+				continue
+			} else if err != nil {
+				return false, err
+			}
 			return false, nil
 		}
-
 		u.l.Info("All monitoring configs have been deleted")
-
 		return true, nil
 	})
 }
@@ -448,7 +481,7 @@ func (u *Uninstall) deleteOLM(ctx context.Context) error {
 
 	// Wait for the packageserver CSV to be deleted, or timeout after 5 minutes.
 	u.l.Infof("Waiting for packageserver CSV to be deleted")
-	err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
+	err := wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
 		_, err := u.kubeClient.GetClusterServiceVersion(ctx, packageServerName)
 		if err != nil && !k8serrors.IsNotFound(err) {
 			return false, err

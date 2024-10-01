@@ -14,31 +14,19 @@
 // limitations under the License.
 
 import { test, expect } from '@playwright/test';
-import {
-  createBackupStorageFn,
-  deleteStorageLocationFn,
-} from '../utils/backup-storage';
 import { moveForward } from '../utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '../constants';
 import { createDbClusterFn, deleteDbClusterFn } from '../utils/db-cluster';
 import { findDbAndClickRow } from '../utils/db-clusters-list';
 import { DBClusterDetailsTabs } from '../../src/pages/db-cluster-details/db-cluster-details.types';
 import { openCreateScheduleDialogFromDBWizard } from '../db-cluster/db-wizard/db-wizard-utils';
+import { waitForInitializingState } from '../utils/table';
 
 test.describe.serial('Namespaces: Backup Storage availability', () => {
-  const pxcStorageLocationName = 'storage-location-pxc';
-  const pgStorageLocationName = 'storage-location-pg';
   const pgDbName = 'pg-db';
   const pxcDbName = 'pxc-db';
 
   test.beforeAll(async ({ request }) => {
-    await createBackupStorageFn(request, pxcStorageLocationName, [
-      EVEREST_CI_NAMESPACES.PXC_ONLY,
-    ]);
-    await createBackupStorageFn(request, pgStorageLocationName, [
-      EVEREST_CI_NAMESPACES.PG_ONLY,
-    ]);
-
     await createDbClusterFn(
       request,
       {
@@ -64,8 +52,6 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
   });
 
   test.afterAll(async ({ request }) => {
-    await deleteStorageLocationFn(request, pxcStorageLocationName);
-    await deleteStorageLocationFn(request, pgStorageLocationName);
     await deleteDbClusterFn(request, pgDbName, EVEREST_CI_NAMESPACES.PG_ONLY);
     await deleteDbClusterFn(request, pxcDbName, EVEREST_CI_NAMESPACES.PXC_ONLY);
   });
@@ -98,9 +84,8 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
     );
     await storageLocationAutocomplete.click();
 
-    // common ui-dev backup storage from global-setup with all operators + pxc backup storage with only pxc operator
     expect(await page.getByRole('option').count()).toBe(1);
-    await page.getByRole('option', { name: pxcStorageLocationName }).click();
+    await page.getByRole('option').click();
     await page.getByTestId('form-dialog-create').click();
 
     const pitrCheckbox = page
@@ -112,7 +97,6 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
       'pitr-storage-location-autocomplete'
     );
     await pitrLocationAutocomplete.click();
-    // common ui-dev backup storage from global-setup with all operators + pxc backup storage with only pxc operator
     expect(await page.getByRole('option').count()).toBe(1);
   });
 
@@ -120,6 +104,7 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
     page,
   }) => {
     await page.goto('/databases');
+    await waitForInitializingState(page, pgDbName);
     await findDbAndClickRow(page, pgDbName);
 
     // go to backups tab in db-cluster details
@@ -130,6 +115,7 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
     await page.getByTestId('menu-button').click();
     await page.getByTestId('now-menu-item').click();
     await page.getByTestId('storage-location-autocomplete').click();
+    await expect(page.getByRole('option')).toBeVisible();
     expect(await page.getByRole('option').count()).toBe(1);
   });
 
@@ -147,6 +133,7 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
     await page.getByTestId('menu-button').click();
     await page.getByTestId('schedule-menu-item').click();
     await page.getByTestId('storage-location-autocomplete').click();
+    await expect(page.getByRole('option')).toBeVisible();
     expect(await page.getByRole('option').count()).toBe(1);
   });
 });

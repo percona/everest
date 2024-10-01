@@ -83,14 +83,12 @@ paths:
         *Example:*
         Assume the following RBAC policy, and users `alice` and `bob`:
         ```
-        p, adminrole:role, namespaces, read, *
-        p, adminrole:role, database-engines, *, */*
-        p, adminrole:role, database-clusters, *, */*
+        p, role:dev, namespaces, read, *
+        p, role:dev, database-engines, *, */*
+        p, role:dev, database-clusters, *, */*
         p, bob, database-clusters, *, */*
-
-        g, alice, adminrole:role
+        g, alice, role:dev
         ```
-
         The API will return the following permissions for `alice`:
         ```
         {
@@ -116,7 +114,6 @@ paths:
           ]
         }
         ```
-
         And the following permissions for `bob`:
         ```
         {
@@ -130,7 +127,6 @@ paths:
           ]
         }
         ```
-
       operationId: getUserPermissions
       responses:
         '200':
@@ -152,6 +148,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces':
+    x-everest-resource-name: namespaces
     get:
       tags:
         - General info
@@ -251,6 +248,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters':
+    x-everest-resource-name: database-clusters
     post:
       tags:
         - Database Cluster
@@ -337,6 +335,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}':
+    x-everest-resource-name: database-clusters
     get:
       tags:
         - Database Cluster
@@ -466,7 +465,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-clusters/{name}/backups':
+  '/namespaces/{namespace}/database-clusters/{cluster-name}/backups':
+    x-everest-resource-name: database-cluster-backups
     get:
       tags:
         - Backup
@@ -481,7 +481,7 @@ paths:
           required: true
           schema:
             type: string
-        - name: name
+        - name: cluster-name
           in: path
           description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
           required: true
@@ -506,7 +506,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-clusters/{name}/restores':
+  '/namespaces/{namespace}/database-clusters/{cluster-name}/restores':
+    x-everest-resource-name: database-cluster-restores
     get:
       tags:
         - Restore
@@ -521,7 +522,7 @@ paths:
           required: true
           schema:
             type: string
-        - name: name
+        - name: cluster-name
           in: path
           description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
           required: true
@@ -547,6 +548,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}/credentials':
+    x-everest-resource-name: database-cluster-credentials
     get:
       tags:
         - Database Cluster
@@ -587,6 +589,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}/pitr':
+    x-everest-resource-name: database-clusters
     get:
       tags:
         - Database Cluster
@@ -627,6 +630,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-clusters/{name}/components':
+    x-everest-resource-name: database-clusters
     get:
       tags:
         - Database Cluster
@@ -667,6 +671,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines':
+    x-everest-resource-name: database-engines
     get:
       tags:
         - Database Engine
@@ -701,6 +706,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines/{name}':
+    x-everest-resource-name: database-engines
     get:
       tags:
         - Database Engine
@@ -786,73 +792,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-engines/{name}/operator-version/preflight':
+  '/namespaces/{namespace}/database-engines/upgrade-plan':
+    x-everest-resource-name: database-engines
     get:
       tags:
         - Operators
-      summary: Upgrade preflight
+      summary: Get upgrade plan
       description: |
-        This API gets the results of the preflight checks that must be performed before upgrading a database engine operator.
-      operationId: getOperatorUpgradePreflight
-      parameters:
-        - name: namespace
-          in: path
-          description: Name of the namespace
-          required: true
-          schema:
-            type: string
-        - name: name
-          in: path
-          description: Name of the database engine
-          required: true
-          schema:
-            type: string
-        - name: targetVersion
-          in: query
-          description: The target version to upgrade the operator to
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OperatorUpgradePreflight'
-        '400':
-          description: Unsuccessful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-engines/{name}/operator-version':
-    get:
-      tags:
-        - Operators
-      summary: Version info
-      description: |
-        This API gets the version information of the database engine operator specified by the `name` and `namespace`.
+        This API lists pending operator upgrades in the given namespace.
 
-        Additionally, if the specified database engine operator was newly upgraded to the specified version, it also returns
-        a list of pending action items that need to be performed before the operator can be considered fully upgraded.
-      operationId: getOperatorVersion
+        Additionally, it also returns a list of pending action items that need to be performed 
+        before and after upgrading a database operator.
+
+        Added in v1.1.0, it is recommended to use this API for operator upgrades.
+        The older upgrade APIs are deprecated and will be removed in v1.2.0
+      operationId: getUpgradePlan
       parameters:
         - name: namespace
           in: path
           description: Name of the namespace
-          required: true
-          schema:
-            type: string
-        - name: name
-          in: path
-          description: Name of the database engine
           required: true
           schema:
             type: string
@@ -862,7 +820,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperatorVersion'
+                $ref: '#/components/schemas/UpgradePlan'
         '400':
           description: Unsuccessful operation
           content:
@@ -875,34 +833,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-    put:
+  '/namespaces/{namespace}/database-engines/upgrade-plan/approval':
+    x-everest-resource-name: database-engines
+    post:
       tags:
         - Operators
-      summary: Upgrade database engine operator
+      summary: Upgrade database engine operators
       description: |
-        This API upgrades the database engine operator specified by the `name` and `namespace`.
-        Before performing the upgrade, the preflight checks must be performed.
-      operationId: upgradeDatabaseEngineOperator
+        This API upgrades all database engine operators in the specified namespace.
+
+        Added in v1.1.0, it is recommended to use this API for operator upgrades.
+        The older upgrade APIs are deprecated and will be removed in v1.2.0
+
+      operationId: approveUpgradePlan
       parameters:
         - name: namespace
           in: path
           description: Name of the namespace
-          required: true
-          schema:
-            type: string
-        - name: name
-          in: path
-          description: Name of the database engine
           required: true
           schema:
             type: string
       requestBody:
-        description: Request for upgrading the database engine operator
+        description: Request for upgrading the database engine operators
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DatabaseEngineOperatorUpgradeParams'
+              $ref: '#/components/schemas/UpgradePlanApproval'
       responses:
         '200':
           description: Successful operation
@@ -919,6 +876,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-cluster-restores':
+    x-everest-resource-name: database-cluster-restores
     post:
       tags:
         - Restore
@@ -972,6 +930,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DatabaseClusterRestore'
   '/namespaces/{namespace}/database-cluster-restores/{name}':
+    x-everest-resource-name: database-cluster-restores
     get:
       tags:
         - Restore
@@ -1103,6 +1062,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-cluster-backups':
+    x-everest-resource-name: database-cluster-backups
     post:
       tags:
         - Backup
@@ -1156,6 +1116,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DatabaseClusterBackup'
   '/namespaces/{namespace}/database-cluster-backups/{name}':
+    x-everest-resource-name: database-cluster-backups
     get:
       tags:
         - Backup
@@ -1240,7 +1201,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/backup-storages':
+  '/namespaces/{namespace}/backup-storages':
+    x-everest-resource-name: backup-storages
     post:
       tags:
         - Backup Storage
@@ -1251,25 +1213,42 @@ paths:
         **Examples**:
           ```
           {
-            "name": "s3-storage",
-            "type": "s3",
-            "bucketName": "bucket1",
-            "accessKey": "access_key",
-            "secretKey": "secret_key",
-            "region": "eu-central-1"
+            "metadata": {
+              "name": "s3-storage",
+              "namespace": "everest",
+            },
+            "spec": {
+              "type": "s3",
+              "bucketName": "bucket1",
+              "accessKey": "access_key",
+              "secretKey": "secret_key",
+              "region": "eu-central-1"
+            },
           }
           ```
 
           ```
           {
-            "name": "azure-storage",
-            "type": "azure",
-            "bucketName": "container1",
-            "accessKey": "storage_account_name",
-            "secretKey": "storage_account_key",
+            "metadata": {
+              "name": "azure-storage",
+              "namespace": "everest",
+            },
+            "spec": {
+              "type": "azure",
+              "bucketName": "container1",
+              "accessKey": "storage_account_name",
+              "secretKey": "storage_account_key",
+            },
           }
           ```
       operationId: createBackupStorage
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace of the backup storage
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: Successful operation
@@ -1302,6 +1281,13 @@ paths:
       summary: List backup storages
       description: This API lists all backup storages.
       operationId: listBackupStorages
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace of the backup storage
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: Successful operation
@@ -1321,17 +1307,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/backup-storages/{name}':
+  '/namespaces/{namespace}/backup-storages/{name}':
+    x-everest-resource-name: backup-storages
     get:
       tags:
         - Backup Storage
       summary: Get backup storage
-      description: This API gets the backup storage speciciied by the `name`.
+      description: This API gets the backup storage speciciied by the `name` in the given `namespace`.
       operationId: getBackupStorage
       parameters:
         - name: name
           in: path
           description: Name of the backup storage
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          description: Namespace of the backup storage
           required: true
           schema:
             type: string
@@ -1365,6 +1358,12 @@ paths:
         - name: name
           in: path
           description: Name of the backup storage
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          description: Namespace of the backup storage
           required: true
           schema:
             type: string
@@ -1407,6 +1406,12 @@ paths:
           required: true
           schema:
             type: string
+        - name: namespace
+          in: path
+          description: Namespace of the backup storage
+          required: true
+          schema:
+            type: string
       responses:
         '204':
           description: Successful operation
@@ -1422,7 +1427,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/monitoring-instances':
+  '/namespaces/{namespace}/monitoring-instances':
+    x-everest-resource-name: monitoring-instances
     post:
       tags:
         - Monitoring
@@ -1434,6 +1440,13 @@ paths:
         Based on the `type` the respective key with configuration needs to be set.
         Such as, if `type: pmm`, then `pmm` key needs to be provided with a configuration.
       operationId: createMonitoringInstance
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace of the backup storage
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: Successful operation
@@ -1464,8 +1477,15 @@ paths:
       tags:
         - Monitoring
       summary: List monitoring instances
-      description: This API lists all monitoring instances.
+      description: This API lists all monitoring instances in a given namespace.
       operationId: listMonitoringInstances
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace of the backup storage
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: Successful operation
@@ -1485,7 +1505,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/monitoring-instances/{name}':
+  '/namespaces/{namespace}/monitoring-instances/{name}':
+    x-everest-resource-name: monitoring-instances
     get:
       tags:
         - Monitoring
@@ -1496,6 +1517,12 @@ paths:
         - name: name
           in: path
           description: Name of the Monitoring instance
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          description: Namespace of the Monitoring instance
           required: true
           schema:
             type: string
@@ -1534,6 +1561,12 @@ paths:
         - name: name
           in: path
           description: Name of the monitoring instance
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          description: Namespace of the Monitoring instance
           required: true
           schema:
             type: string
@@ -1582,6 +1615,12 @@ paths:
           required: true
           schema:
             type: string
+        - name: namespace
+          in: path
+          description: Namespace of the Monitoring instance
+          required: true
+          schema:
+            type: string
       responses:
         '204':
           description: Successful operation
@@ -1604,6 +1643,178 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+###################################################################
+# The APIs below are deprecated/discontinues, and shall be removed from 1.3.0.
+# We're keeping them around to inform users about the migration.
+###################################################################
+  '/monitoring-instances':
+    x-everest-resource-name: monitoring-instances
+    deprecated: true
+    post:
+      tags:
+        - Monitoring
+      summary: Create monitoring instance (Deprecated)
+      description: |
+        The use of this API has been discontinued and will be removed in Everest v1.3.0.
+        Please use `POST /namespaces/{namespace}/monitoring-instances` instead to create a new monitoring instance.
+      operationId: createMonitoringInstance_v0
+      requestBody:
+        description: The Monitoring instance object to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonitoringInstanceCreateParams'
+    get:
+      deprecated: true
+      tags:
+        - Monitoring
+      summary: List monitoring instances (Deprecated)
+      description: |
+        The use of this API has been discontinued and will be removed in Everest v1.3.0.
+        Please use `GET /namespaces/{namespace}/monitoring-instances` instead to list monitoring instances.
+      operationId: listMonitoringInstances_v0
+  '/monitoring-instances/{name}':
+    x-everest-resource-name: monitoring-instances
+    get:
+      deprecated: true
+      tags:
+        - Monitoring
+      summary: Get monitoring instance (Deprecated)
+      description: |
+        The use of this API has been discontinued and will be removed in Everest v1.3.0.
+        Please use `GET /namespaces/{namespace}/monitoring-instances/{name}` instead to get a monitoring instance.
+      operationId: getMonitoringInstance_v0
+      parameters:
+        - name: name
+          in: path
+          description: Name of the Monitoring instance
+          required: true
+          schema:
+            type: string
+    patch:
+      deprecated: true
+      tags:
+        - Monitoring
+      summary: Update monitoring instance (Deprecated)
+      description: |
+        The use of this API has been discontinued and will be removed in Everest v1.3.0.
+        Please use `PATCH /namespaces/{namespace}/monitoring-instances/{name}` instead to update a monitoring instance.
+      operationId: updateMonitoringInstance_v0
+      parameters:
+        - name: name
+          in: path
+          description: Name of the monitoring instance
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The monitoring instance object to be updated.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonitoringInstanceUpdateParams'
+    delete:
+      deprecated: true
+      tags:
+        - Monitoring
+      summary: Delete monitoring instnace (Deprecated)
+      description: |
+        The use of this API has been discontinued and will be removed in Everest v1.3.0.
+        Please use `DELETE /namespaces/{namespace}/monitoring-instances/{name}` instead to delete a monitoring instance.
+      operationId: deleteMonitoringInstance_v0
+      parameters:
+        - name: name
+          in: path
+          description: Name of the monitoring instance
+          required: true
+          schema:
+            type: string
+  '/backup-storages':
+    x-everest-resource-name: backup-storages
+    post:
+      deprecated: true
+      tags:
+        - Backup Storage
+      summary: Create backup storage (Deprecated)
+      description: |
+        The use of this API has been discontinued and will be removed in Everest v1.3.0.
+        Please use `POST /namespaces/{namespace}/backup-storages` instead to create a new backup storage.
+      operationId: createBackupStorage_v0
+      requestBody:
+        description: The backup storage object to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBackupStorageParams'
+    get:
+      deprecated: true
+      tags:
+        - Backup Storage
+      summary: List backup storages (Deprecated)
+      description: |
+        The use of this API has been discontinued and will be removed in Everest v1.3.0.
+        Please use `GET /namespaces/{namespace}/backup-storages` instead to list backup storages.
+      operationId: listBackupStorages_v0
+  '/backup-storages/{name}':
+    x-everest-resource-name: backup-storages
+    get:
+      deprecated: true
+      tags:
+        - Backup Storage
+      summary: Get backup storage (Deprecated)
+      description: |
+        The use of this API has been discontinued and will be removed in Everest v1.3.0.
+        Please use `GET /namespaces/{namespace}/backup-storages/{name}` instead to get a backup storage.
+      operationId: getBackupStorage_v0
+      parameters:
+        - name: name
+          in: path
+          description: Name of the backup storage
+          required: true
+          schema:
+            type: string
+    patch:
+      deprecated: true
+      tags:
+        - Backup Storage
+      summary: Update backup storage (Deprecated)
+      description: |
+        The use of this API has been discontinued and will be removed in Everest v1.3.0.
+        Please use `PATCH /namespaces/{namespace}/backup-storages/{name}` instead to update a backup storage.
+      operationId: updateBackupStorage_v0
+      parameters:
+        - name: name
+          in: path
+          description: Name of the backup storage
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The backup storage params. Only the specified fields will be updated.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBackupStorageParams'
+    delete:
+      deprecated: true
+      tags:
+        - Backup Storage
+      summary: Delete backup storage (Deprecated)
+      description: |
+        The use of this API has been discontinued and will be removed in Everest v1.3.0.
+        Please use `DELETE /namespaces/{namespace}/backup-storages/{name}` instead to delete a backup storage.
+      operationId: deleteBackupStorage_v0
+      parameters:
+        - name: name
+          in: path
+          description: Name of the backup storage
+          required: true
+          schema:
+            type: string
 components:
   securitySchemes:
     BearerAuth:
@@ -1623,12 +1834,16 @@ components:
     UserPermissions:
       type: object
       properties:
+        enabled:
+          type: boolean
         permissions:
           type: array
           items:
             type: array
             items:
               type: string
+      required:
+        - enabled
     UserCredentials:
       type: object
       properties:
@@ -1664,6 +1879,7 @@ components:
           type: string
           x-go-type-skip-optional-pointer: true
         allowedNamespaces:
+          deprecated: true
           type: array
           description: List of namespaces allowed to use this backup storage
           items:
@@ -1680,7 +1896,6 @@ components:
         - accessKey
         - secretKey
         - type
-        - allowedNamespaces
       additionalProperties: false
     UpdateBackupStorageParams:
       type: object
@@ -1704,6 +1919,7 @@ components:
         forcePathStyle:
           type: boolean
         allowedNamespaces:
+          deprecated: true
           type: array
           description: List of namespaces allowed to use this backup storage
           items:
@@ -1738,6 +1954,7 @@ components:
             $ref: '#/components/schemas/OperatorVersionCheckForDatabase'
       additionalProperties: false
     OperatorUpgradePreflightForDatabase:
+      deprecated: true
       type: object
       description: Operator upgrade preflight check results for a database
       properties:
@@ -1755,7 +1972,52 @@ components:
             - restart
             - upgradeEngine
       additionalProperties: false
+    UpgradeTask:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the database cluster
+        message:
+          type: string
+        pendingTask:
+          type: string
+          description: Pending task for the database cluster
+          enum:
+            - ready
+            - notReady
+            - restart
+            - upgradeEngine
+    Upgrade:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the operator
+        currentVersion:
+          type: string
+          description: The current operator version
+        targetVersion:
+          type: string
+          description: | 
+            The next version of the operator to upgrade to.
+    UpgradePlan:
+      type: object
+      description: Operators upgrade plan
+      properties:
+        upgrades:
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/Upgrade'
+        pendingActions:
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/UpgradeTask'
+      additionalProperties: false
     OperatorUpgradePreflight:
+      deprecated: true
       type: object
       description: Operator upgrade preflight check results
       properties:
@@ -1777,6 +2039,9 @@ components:
           enum:
             - s3
             - azure
+        namespace:
+          type: string
+          x-go-type-skip-optional-pointer: true
         name:
           type: string
         description:
@@ -1795,6 +2060,7 @@ components:
           default: false
           type: boolean
         allowedNamespaces:
+          deprecated: true
           type: array
           description: List of namespaces allowed to use this backup storage
           items:
@@ -1804,7 +2070,6 @@ components:
         - name
         - bucketName
         - type
-        - allowedNamespaces
     BackupStoragesList:
       type: array
       items:
@@ -1824,6 +2089,7 @@ components:
           minLength: 1
           x-go-type-skip-optional-pointer: true
         allowedNamespaces:
+          deprecated: true
           type: array
           description: List of namespaces allowed to use this monitoring instance
           items:
@@ -1844,6 +2110,9 @@ components:
               description: A user defined string name of the storage in the DNS name format https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names
               x-go-type-skip-optional-pointer: true
               example: pmm-instance
+            namespace:
+              type: string
+              x-go-type-skip-optional-pointer: true
     MonitoringInstancePMM:
       type: object
       properties:
@@ -1872,7 +2141,6 @@ components:
       required:
         - type
         - url
-        - allowedNamespaces
         - name
     MonitoringInstanceUpdateParams:
       description: Monitoring instance update information
@@ -1886,7 +2154,6 @@ components:
       required:
         - type
         - url
-        - allowedNamespaces
         - name
     MonitoringInstancesList:
       type: array
@@ -1897,6 +2164,9 @@ components:
       type: object
       description: kubernetes object
       properties:
+        connectionUrl:
+          type: string
+          example: postgres://user:secret@100.100.100.100:5432
         username:
           type: string
           example: root
@@ -1933,6 +2203,8 @@ components:
           type: string
         started:
           type: string
+        ready:
+          type: boolean
         restarts:
           type: integer
         status:
@@ -2079,7 +2351,13 @@ components:
         metadata:
           type: object
       type: object
+    UpgradePlanApproval:
+      type: object
+      description: |
+        This no-op object is used to trigger the operator upgrade in a namespace.
+      properties: {}
     DatabaseEngineOperatorUpgradeParams:
+      deprecated: true
       type: object
       description: Database engine operator upgrade parameters
       properties:
@@ -2646,6 +2924,33 @@ components:
                   - pgbouncer
                   type: string
               type: object
+            sharding:
+              description: Sharding is the sharding configuration. PSMDB-only
+              properties:
+                configServer:
+                  description: ConfigServer represents the sharding configuration server settings
+                  properties:
+                    replicas:
+                      description: Replicas is the amount of configServers
+                      format: int32
+                      minimum: 1
+                      type: integer
+                  required:
+                    - replicas
+                  type: object
+                enabled:
+                  description: Enabled defines if the sharding is enabled
+                  type: boolean
+                shards:
+                  description: Shards defines the number of shards
+                  format: int32
+                  minimum: 1
+                  type: integer
+              required:
+                - configServer
+                - enabled
+                - shards
+              type: object
           required:
           - engine
           type: object
@@ -2658,6 +2963,9 @@ components:
             crVersion:
               description: CRVersion is the observed version of the CR used with
                 the underlying operator.
+              type: string
+            details:
+              description: Details provides full status of the upstream cluster as a plain text.
               type: string
             hostname:
               description: Hostname is the hostname where the cluster can be reached
@@ -2733,6 +3041,10 @@ components:
             gaps:
               description: Gaps identifies if there are gaps detected in the PITR logs
               type: boolean
+            latestRestorableTime:
+              description: LatestRestorableTime is the latest time that can be used for PITR restore
+              format: date-time
+              type: string
             state:
               description: State is the DatabaseBackup state.
               type: string

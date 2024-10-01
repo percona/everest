@@ -1,6 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { Alert, MenuItem, capitalize } from '@mui/material';
-import { Delete } from '@mui/icons-material';
+import { Alert, capitalize } from '@mui/material';
 import { MRT_ColumnDef } from 'material-react-table';
 import { format } from 'date-fns';
 import { Table } from '@percona/ui-lib';
@@ -23,6 +22,8 @@ import {
 import { useMemo, useState } from 'react';
 import { RESTORE_STATUS_TO_BASE_STATUS } from './restores.constants';
 import { useQueryClient } from '@tanstack/react-query';
+import TableActionsMenu from 'components/table-actions-menu';
+import { RestoreActionButtons } from './restores-menu-actions';
 
 const Restores = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -33,7 +34,9 @@ const Restores = () => {
     enabled: !!dbClusterName && !!namespace,
   });
   const { data: restores = [], isLoading: loadingRestores } =
-    useDbClusterRestores(namespace, dbClusterName!);
+    useDbClusterRestores(namespace, dbClusterName!, {
+      enabled: !!dbClusterName && !!namespace,
+    });
   const { mutate: deleteRestore, isPending: deletingRestore } =
     useDeleteRestore(namespace);
 
@@ -118,19 +121,14 @@ const Restores = () => {
         }}
         noDataMessage="No restores"
         enableRowActions
-        renderRowActionMenuItems={({ row, closeMenu }) => [
-          <MenuItem
-            key={2}
-            onClick={() => {
-              handleDeleteBackup(row.original.name);
-              closeMenu();
-            }}
-            sx={{ m: 0 }}
-          >
-            <Delete />
-            Delete
-          </MenuItem>,
-        ]}
+        renderRowActions={({ row }) => {
+          const menuItems = RestoreActionButtons(
+            row,
+            handleDeleteBackup,
+            namespace
+          );
+          return <TableActionsMenu menuItems={menuItems} />;
+        }}
       />
       {openDeleteDialog && (
         <ConfirmDialog

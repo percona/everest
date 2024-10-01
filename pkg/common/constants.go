@@ -49,8 +49,12 @@ const (
 	// EverestJWTPublicKeyFile is the path to the JWT public key.
 	EverestJWTPublicKeyFile = "/etc/jwt/id_rsa.pub"
 
+	// EverestRBACRolePrefix is the prefix for roles.
+	EverestRBACRolePrefix = "role:"
 	// EverestAdminUser is the name of the admin user.
 	EverestAdminUser = "admin"
+	// EverestAdminRole is the name of the admin role.
+	EverestAdminRole = EverestRBACRolePrefix + "admin"
 
 	// EverestSettingsConfigMapName is the name of the Everest settings ConfigMap.
 	EverestSettingsConfigMapName = "everest-settings"
@@ -62,6 +66,10 @@ const (
 	KubernetesManagedByLabel = "app.kubernetes.io/managed-by"
 	// ForegroundDeletionFinalizer is the finalizer used to delete resources in foreground.
 	ForegroundDeletionFinalizer = "foregroundDeletion"
+
+	// EverestAPIExtnResourceName is the name of the Everest API extension header
+	// that holds the name of the resource being served by an API endpoint.
+	EverestAPIExtnResourceName = "x-everest-resource-name"
 )
 
 // InitialPasswordWarningMessage is the message that is shown to the user after the installation/upgrade,

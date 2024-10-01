@@ -7,21 +7,34 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const mocks = vi.hoisted(() => {
   return {
-    useMonitoringInstancesList: vi.fn().mockReturnValue({
-      data: [
-        {
-          type: 'type1',
-          url: '127.0.0.1',
-          name: 'PMM-local',
-          allowedNamespaces: ['the-dark-side'],
+    useMonitoringInstancesList: vi.fn().mockReturnValue([
+      {
+        namespace: 'the-dark-side',
+        queryResult: {
+          status: 'success',
+          fetchStatus: 'fetching',
+          isPending: false,
+          isSuccess: true,
+          isError: false,
+          isLoading: false,
+          data: [
+            {
+              allowedNamespaces: null,
+              name: 'PMM-local',
+              namespace: 'the-dark-side',
+              type: 'pmm',
+              url: '127.0.0.1',
+              verifyTLS: true,
+            },
+          ],
         },
-      ],
-    }),
+      },
+    ]),
     useCreateMonitoringInstance: vi.fn().mockReturnValue({
       type: 'type1',
       url: '127.0.0.1',
       name: 'PMM-local',
-      allowedNamespaces: ['the-dark-side'],
+      namespace: 'the-dark-side',
     }),
   };
 });
@@ -41,6 +54,12 @@ vi.mock('hooks/api/monitoring/useMonitoringInstancesList', () => ({
 
 vi.mock('../../useDatabasePageMode', () => ({
   useDatabasePageMode: () => 'new',
+}));
+
+vi.mock('hooks/rbac', () => ({
+  useRBACPermissions: () => ({
+    canCreate: true,
+  }),
 }));
 
 const FormProviderWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -95,9 +114,7 @@ describe('Monitoring Step', () => {
   });
 
   it('should disable toggle when no monitoring instances defined', async () => {
-    mocks.useMonitoringInstancesList.mockReturnValue({
-      data: [],
-    });
+    mocks.useMonitoringInstancesList.mockReturnValue([]);
 
     render(
       <QueryClientProvider client={queryClient}>

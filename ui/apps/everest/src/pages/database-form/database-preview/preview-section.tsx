@@ -61,6 +61,7 @@ export const PreviewSection = ({
               top: theme.spacing(-1),
             }}
             color="primary"
+            size="small"
             disabled={disabled}
             onClick={onEditClick}
             data-testid={`button-edit-preview-${kebabize(
@@ -68,7 +69,6 @@ export const PreviewSection = ({
             )}`}
           >
             <EditOutlinedIcon
-              fontSize="small"
               sx={{
                 verticalAlign: 'text-bottom',
               }}

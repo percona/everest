@@ -65,6 +65,8 @@ const (
 	FlagVersion = "version"
 	// FlagSkipWizard represents the flag to skip the installation wizard.
 	FlagSkipWizard = "skip-wizard"
+	// FlagDisableTelemetry disables telemetry.
+	FlagDisableTelemetry = "disable-telemetry"
 )
 
 const postInstallMessage = "Everest has been successfully installed!"
@@ -144,6 +146,8 @@ type (
 		VersionMetadataURL string `mapstructure:"version-metadata-url"`
 		// Version defines the version to be installed. If empty, the latest version is installed.
 		Version string `mapstructure:"version"`
+		// DisableTelemetry disables telemetry.
+		DisableTelemetry bool `mapstructure:"disable-telemetry"`
 
 		Operator OperatorConfig
 
@@ -169,12 +173,15 @@ func NewInstall(c Config, l *zap.SugaredLogger, cmd *cobra.Command) (*Install, e
 		cmd:    cmd,
 		l:      l.With("component", "install"),
 	}
+	if c.Pretty {
+		cli.l = zap.NewNop().Sugar()
+	}
 
 	k, err := kubernetes.New(c.KubeconfigPath, cli.l)
 	if err != nil {
 		var u *url.Error
 		if errors.As(err, &u) {
-			cli.l.Error("Could not connect to Kubernetes. " +
+			l.Error("Could not connect to Kubernetes. " +
 				"Make sure Kubernetes is running and is accessible from this computer/server.")
 		}
 		return nil, err
@@ -205,6 +212,11 @@ func (o *Install) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	if err = o.checkRequirements(latestMeta); err != nil {
+		return err
+	}
+
 	recVer, err := version.RecommendedVersions(latestMeta)
 	if err != nil {
 		return err
@@ -238,6 +250,19 @@ func (o *Install) Run(ctx context.Context) error {
 	if !isAdminSecure {
 		fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage)
 	}
+	return nil
+}
+
+func (o *Install) checkRequirements(meta *versionpb.MetadataVersion) error {
+	supVer, err := common.NewSupportedVersion(meta)
+	if err != nil {
+		return err
+	}
+
+	if err := common.CheckK8sRequirements(supVer, o.l, o.kubeClient); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -422,6 +447,9 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 		if err = o.kubeClient.InstallEverest(ctx, common.SystemNamespace, v); err != nil {
 			return err
 		}
+		if err := o.setEnvs(ctx); err != nil {
+			return err
+		}
 		if err := o.kubeClient.CreateRSAKeyPair(ctx); err != nil {
 			return err
 		}
@@ -444,6 +472,23 @@ func (o *Install) provisionEverest(ctx context.Context, v *goversion.Version) er
 	}
 
 	return nil
+}
+
+func (o *Install) setEnvs(ctx context.Context) error {
+	if !o.config.DisableTelemetry {
+		return nil
+	}
+
+	everestDeployment, err := o.kubeClient.GetDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
+	if err != nil {
+		return err
+	}
+	everestDeployment.Spec.Template.Spec.Containers[0].Env = append(everestDeployment.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{
+		Name:  "DISABLE_TELEMETRY",
+		Value: "true",
+	})
+	_, err = o.kubeClient.UpdateDeployment(ctx, everestDeployment)
+	return err
 }
 
 func (o *Install) operatorNamesListShortHand() string {

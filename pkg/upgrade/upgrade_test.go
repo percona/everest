@@ -184,7 +184,7 @@ func TestUpgrade_canUpgrade(t *testing.T) {
 
 				w.Header().Add("content-type", "application/json")
 				_, err = w.Write(b)
-				require.NoError(t, err)
+				assert.NoError(t, err)
 			}))
 			defer ts.Close()
 

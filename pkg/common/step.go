@@ -11,6 +11,10 @@ import (
 	"github.com/percona/everest/pkg/output"
 )
 
+const (
+	spinnerInterval = 150 * time.Millisecond
+)
+
 // Step is a helper type for organising the steps of long running
 // CLI operations like install, uninstall, upgrades, etc.
 type Step struct {
@@ -28,7 +32,7 @@ func RunStepsWithSpinner(
 ) error {
 	s := spinner.New(
 		spinner.CharSets[9],
-		150*time.Millisecond,
+		spinnerInterval,
 		spinner.WithWriter(out),
 	)
 	for _, step := range steps {
@@ -36,12 +40,12 @@ func RunStepsWithSpinner(
 		s.Start()
 		if err := step.F(ctx); err != nil {
 			s.Stop()
-			fmt.Fprint(out, output.Failure(step.Desc))
+			fmt.Fprint(out, output.Failure(step.Desc)) //nolint:govet
 			fmt.Fprint(out, "\t", err, "\n")
 			return err
 		}
 		s.Stop()
-		fmt.Fprint(out, output.Success(step.Desc))
+		fmt.Fprint(out, output.Success(step.Desc)) //nolint:govet
 	}
 	return nil
 }

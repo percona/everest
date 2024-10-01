@@ -96,10 +96,22 @@ const (
 	// APIVersionCoreosV1 constant for some API requests.
 	APIVersionCoreosV1 = "operators.coreos.com/v1"
 
-	pollInterval = 1 * time.Second
-	pollDuration = 300 * time.Second
+	pollInterval = 5 * time.Second
+	pollTimeout  = 5 * time.Minute
 
 	deploymentRestartAnnotation = "kubectl.kubernetes.io/restartedAt"
+
+	resourcesBufferSize = 8
+
+	maxRetries    = 3
+	retryInterval = 10 * time.Second
+
+	backoffInterval   = 5 * time.Second
+	backoffMaxRetries = 5
+
+	requestTimeout  = 5 * time.Second
+	maxIdleConns    = 1
+	idleConnTimeout = 10 * time.Second
 )
 
 // ErrEmptyVersionTag Got an empty version tag from GitHub API.
@@ -142,10 +154,10 @@ func New(kubeconfigPath string, l *zap.SugaredLogger) (*Kubernetes, error) {
 		client: client,
 		l:      l.With("component", "kubernetes"),
 		httpClient: &http.Client{
-			Timeout: time.Second * 5,
+			Timeout: requestTimeout,
 			Transport: &http.Transport{
-				MaxIdleConns:    1,
-				IdleConnTimeout: 10 * time.Second,
+				MaxIdleConns:    maxIdleConns,
+				IdleConnTimeout: idleConnTimeout,
 			},
 		},
 		kubeconfig: kubeconfigPath,
@@ -176,10 +188,10 @@ func NewEmpty(l *zap.SugaredLogger) *Kubernetes {
 		client: &client.Client{},
 		l:      l.With("component", "kubernetes"),
 		httpClient: &http.Client{
-			Timeout: time.Second * 5,
+			Timeout: requestTimeout,
 			Transport: &http.Transport{
-				MaxIdleConns:    1,
-				IdleConnTimeout: 10 * time.Second,
+				MaxIdleConns:    maxIdleConns,
+				IdleConnTimeout: idleConnTimeout,
 			},
 		},
 	}
@@ -436,7 +448,7 @@ func (k *Kubernetes) applyResources(ctx context.Context) ([]unstructured.Unstruc
 			return true, nil
 		}
 
-		if err := wait.PollUntilContextTimeout(ctx, time.Second, 10*time.Minute, true, applyFile); err != nil {
+		if err := wait.PollUntilContextTimeout(ctx, time.Second, 10*time.Minute, true, applyFile); err != nil { //nolint:mnd
 			return nil, errors.Join(err, fmt.Errorf("cannot apply %q file", f))
 		}
 
@@ -467,7 +479,7 @@ func (k *Kubernetes) waitForDeploymentRollout(ctx context.Context) error {
 func decodeResources(f []byte) ([]unstructured.Unstructured, error) {
 	var err error
 	objs := []unstructured.Unstructured{}
-	dec := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(f), 8)
+	dec := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(f), resourcesBufferSize)
 	for {
 		var u unstructured.Unstructured
 		err = dec.Decode(&u)
@@ -649,7 +661,7 @@ func (k *Kubernetes) InstallOperator(ctx context.Context, req InstallOperatorReq
 		}
 	}
 
-	err = wait.PollUntilContextTimeout(ctx, pollInterval, pollDuration, false, func(ctx context.Context) (bool, error) {
+	err = wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
 		k.l.Debugf("Polling subscription %s/%s", req.Namespace, req.Name)
 		subs, err := k.client.GetSubscription(ctx, req.Namespace, req.Name)
 		if err != nil {
@@ -783,13 +795,13 @@ func (k *Kubernetes) ProvisionMonitoring(namespace string) error {
 			return err
 		}
 		// retry 3 times because applying vmagent spec might take some time.
-		for range 3 {
+		for range maxRetries {
 			k.l.Debugf("Applying file %s", path)
 
 			err = k.client.ApplyManifestFile(file, namespace)
 			if err != nil {
 				k.l.Debugf("%s: retrying after error: %s", path, err)
-				time.Sleep(10 * time.Second)
+				time.Sleep(retryInterval)
 				continue
 			}
 			break
@@ -841,8 +853,8 @@ func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string
 	// Find the operator CSV and add the restart annotation.
 	// We retry this operatation since there may be update conflicts.
 	var b backoff.BackOff
-	b = backoff.NewConstantBackOff(3 * time.Second)
-	b = backoff.WithMaxRetries(b, 5)
+	b = backoff.NewConstantBackOff(backoffInterval)
+	b = backoff.WithMaxRetries(b, backoffMaxRetries)
 	b = backoff.WithContext(b, ctx)
 	if err := backoff.Retry(func() error {
 		csv, err := k.client.GetClusterServiceVersion(ctx, types.NamespacedName{
@@ -870,7 +882,7 @@ func (k *Kubernetes) RestartOperator(ctx context.Context, name, namespace string
 	}
 
 	// Wait for pods to be ready.
-	return wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
 		deployment, err := k.GetDeployment(ctx, name, namespace)
 		if err != nil {
 			return false, err
@@ -899,8 +911,8 @@ func (k *Kubernetes) RestartDeployment(ctx context.Context, name, namespace stri
 	// Get the Deployment and add restart annotation to pod template.
 	// We retry this operatation since there may be update conflicts.
 	var b backoff.BackOff
-	b = backoff.NewConstantBackOff(3 * time.Second)
-	b = backoff.WithMaxRetries(b, 5)
+	b = backoff.NewConstantBackOff(backoffInterval)
+	b = backoff.WithMaxRetries(b, backoffMaxRetries)
 	b = backoff.WithContext(b, ctx)
 	if err := backoff.Retry(func() error {
 		// Get the deployment.
@@ -925,7 +937,7 @@ func (k *Kubernetes) RestartDeployment(ctx context.Context, name, namespace stri
 		return errors.Join(err, errors.New("cannot add restart annotation to deployment"))
 	}
 	// Wait for pods to be ready.
-	return wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
 		deployment, err := k.GetDeployment(ctx, name, namespace)
 		if err != nil {
 			return false, err

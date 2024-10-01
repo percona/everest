@@ -8,6 +8,17 @@ import { Backups } from './backups.tsx';
 
 vi.mock('hooks/api/backup-storages/useBackupStorages');
 vi.mock('hooks/api/db-cluster/useDbCluster');
+vi.mock('hooks/api/backups/useBackups', () => ({
+  useDbBackups: () => ({
+    data: [],
+    isFetching: false,
+  }),
+}));
+vi.mock('hooks/rbac', () => ({
+  useRBACPermissions: () => ({
+    canCreate: true,
+  }),
+}));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +39,7 @@ const FormProviderWrapper = ({ children }: { children: React.ReactNode }) => {
       amPm: 'AM',
       weekDay: 'Monday',
       onDay: 1,
+      schedules: [],
     },
   });
 

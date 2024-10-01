@@ -32,6 +32,10 @@ import (
 	"github.com/percona/everest/pkg/logger"
 )
 
+const (
+	contextTimeout = 10 * time.Second
+)
+
 func main() {
 	logger := logger.MustInitLogger(true)
 	defer logger.Sync() //nolint:errcheck
@@ -71,6 +75,7 @@ func main() {
 		// the prod TelemetryURL is set for the release builds during the build time.
 		// The dev TelemetryURL is set only when running `make run-debug`.
 		if c.TelemetryURL != "" {
+			l.Info("Telemetry is running")
 			go server.RunTelemetryJob(tCtx, c)
 		} else {
 			l.Info("Telemetry is not running, the TELEMETRY_URL is not set")
@@ -82,7 +87,7 @@ func main() {
 	<-quit
 
 	tCancel()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
 	defer cancel()
 	if err := server.Shutdown(ctx); err != nil {
 		l.Error(errors.Join(err, errors.New("could not shut down Everest")))

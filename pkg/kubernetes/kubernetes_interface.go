@@ -28,8 +28,27 @@ type KubernetesConnector interface {
 	//
 	//nolint:ireturn,stylecheck
 	Accounts() accounts.Interface
+	// ListBackupStorages returns list of managed backup storages.
+	ListBackupStorages(ctx context.Context, namespace string) (*everestv1alpha1.BackupStorageList, error)
+	// GetBackupStorage returns backup storages by provided name.
+	GetBackupStorage(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error)
+	// CreateBackupStorage returns backup storages by provided name.
+	CreateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
+	// UpdateBackupStorage returns backup storages by provided name.
+	UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
+	// DeleteBackupStorage returns backup storages by provided name.
+	DeleteBackupStorage(ctx context.Context, namespace, name string) error
+	// IsBackupStorageUsed checks if a backup storage in a given namespace is used by any clusters
+	// in that namespace.
+	//
+	//nolint:cyclop
+	IsBackupStorageUsed(ctx context.Context, namespace, name string) (bool, error)
+	// WaitForCSVSucceeded waits until CSV phase is "succeeded".
+	WaitForCSVSucceeded(ctx context.Context, namespace, name string) error
+	// CSVNameFromOperator returns CSV name based on operator and version.
+	CSVNameFromOperator(operatorName string, version *goversion.Version) string
 	// GetConfigMap returns k8s configmap by provided name and namespace.
-	GetConfigMap(ctx context.Context, name, namespace string) (*corev1.ConfigMap, error)
+	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
 	// GetDeployment returns k8s deployment by provided name and namespace.
 	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
 	// UpdateDeployment updates a deployment and returns the updated object.
@@ -114,6 +133,21 @@ type KubernetesConnector interface {
 	WaitForRollout(ctx context.Context, name, namespace string) error
 	// UpdateClusterRoleBinding updates namespaces list for the cluster role by provided name.
 	UpdateClusterRoleBinding(ctx context.Context, name string, namespaces []string) error
+	// ListMonitoringConfigs returns list of managed monitoring configs.
+	ListMonitoringConfigs(ctx context.Context, namespace string) (*everestv1alpha1.MonitoringConfigList, error)
+	// GetMonitoringConfig returns monitoring configs by provided name.
+	GetMonitoringConfig(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error)
+	// CreateMonitoringConfig returns monitoring configs by provided name.
+	CreateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) error
+	// UpdateMonitoringConfig returns monitoring configs by provided name.
+	UpdateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) error
+	// DeleteMonitoringConfig returns monitoring configs by provided name.
+	DeleteMonitoringConfig(ctx context.Context, namespace, name string) error
+	// IsMonitoringConfigUsed checks if a monitoring config is used by any database cluster in the provided namespace.
+	IsMonitoringConfigUsed(ctx context.Context, namespace, name string) (bool, error)
+	// GetMonitoringConfigsBySecretName returns a list of monitoring configs which use
+	// the provided secret name.
+	GetMonitoringConfigsBySecretName(ctx context.Context, namespace, secretName string) ([]*everestv1alpha1.MonitoringConfig, error)
 	// CreateNamespace creates the given namespace.
 	CreateNamespace(ctx context.Context, namespace *corev1.Namespace) error
 	// GetNamespace returns a namespace.

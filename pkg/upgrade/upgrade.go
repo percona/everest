@@ -23,6 +23,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"slices"
 	"time"
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
@@ -42,6 +43,12 @@ import (
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
+const (
+	contextTimeout    = 5 * time.Minute
+	backoffInterval   = 5 * time.Second
+	backoffMaxRetries = 5
+)
+
 // list of objects to skip during upgrade.
 var skipObjects = []client.Object{ //nolint:gochecknoglobals
 	&corev1.Secret{
@@ -59,6 +66,15 @@ var skipObjects = []client.Object{ //nolint:gochecknoglobals
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      common.EverestAccountsSecretName,
+			Namespace: common.SystemNamespace,
+		},
+	},
+	&corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestRBACConfigMapName,
 			Namespace: common.SystemNamespace,
 		},
 	},
@@ -84,15 +100,6 @@ type (
 		versionService versionservice.Interface
 	}
 
-	supportedVersion struct {
-		catalog       goversion.Constraints
-		cli           goversion.Constraints
-		olm           goversion.Constraints
-		pgOperator    goversion.Constraints
-		pxcOperator   goversion.Constraints
-		psmdbOperator goversion.Constraints
-	}
-
 	requirementsCheck struct {
 		operatorName string
 		constraints  goversion.Constraints
@@ -108,12 +115,15 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 		config: cfg,
 		l:      l.With("component", "upgrade"),
 	}
+	if cfg.Pretty {
+		cli.l = zap.NewNop().Sugar()
+	}
 
 	k, err := kubernetes.New(cfg.KubeconfigPath, cli.l)
 	if err != nil {
 		var u *url.Error
 		if errors.As(err, &u) {
-			cli.l.Error("Could not connect to Kubernetes. " +
+			l.Error("Could not connect to Kubernetes. " +
 				"Make sure Kubernetes is running and is accessible from this computer/server.")
 		}
 		return nil, err
@@ -175,7 +185,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	})
 
 	// Locate the correct install plan.
-	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	ctxTimeout, cancel := context.WithTimeout(ctx, contextTimeout)
 	defer cancel()
 
 	var ip *olmv1alpha1.InstallPlan
@@ -205,6 +215,13 @@ func (u *Upgrade) Run(ctx context.Context) error {
 					return err
 				}
 			}
+			if common.CheckConstraint(upgradeEverestTo, "~> 1.2.0") {
+				// RBAC is added in 1.2.x, so if we're upgrading to that version, we need to ensure
+				// that the RBAC configmap is present.
+				skipObjects = slices.DeleteFunc(skipObjects, func(o client.Object) bool {
+					return o.GetName() == common.EverestRBACConfigMapName
+				})
+			}
 			// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
 			if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo, skipObjects...); err != nil {
 				return err
@@ -216,7 +233,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	upgradeSteps = append(upgradeSteps, common.Step{
 		Desc: "Upgrade Everest Operator",
 		F: func(ctx context.Context) error {
-			if err := u.upgradeEverestOperator(ctx, ip.Name); err != nil {
+			if err := u.upgradeEverestOperator(ctx, ip.Name, upgradeEverestTo); err != nil {
 				return err
 			}
 			return nil
@@ -238,6 +255,12 @@ func (u *Upgrade) Run(ctx context.Context) error {
 				}
 				if err := u.kubeClient.DeleteSecret(ctx, common.SystemNamespace, "everest-admin-token"); client.IgnoreNotFound(err) != nil {
 					return err
+				}
+			}
+			if common.CheckConstraint(upgradeEverestTo, "~> 1.2.0") {
+				// Migrate monitoring-configs and backup-storages.
+				if err := u.migrateSharedResources(ctx); err != nil {
+					return fmt.Errorf("migration of shared resources failed: %w", err)
 				}
 			}
 			return nil
@@ -271,8 +294,8 @@ func (u *Upgrade) ensureManagedByLabelOnDBNamespaces(ctx context.Context) error 
 		// Ensure we add the managed-by label to the namespace.
 		// We should retry this operation since there may be update conflicts.
 		var b backoff.BackOff
-		b = backoff.NewConstantBackOff(5 * time.Second)
-		b = backoff.WithMaxRetries(b, 5)
+		b = backoff.NewConstantBackOff(backoffInterval)
+		b = backoff.WithMaxRetries(b, backoffMaxRetries)
 		b = backoff.WithContext(b, ctx)
 		if err := backoff.Retry(func() error {
 			// Get the namespace.
@@ -447,7 +470,7 @@ func (u *Upgrade) findNextMinorVersion(
 }
 
 func (u *Upgrade) verifyRequirements(ctx context.Context, meta *version.MetadataVersion) error {
-	supVer, err := u.supportedVersion(meta)
+	supVer, err := common.NewSupportedVersion(meta)
 	if err != nil {
 		return err
 	}
@@ -459,32 +482,7 @@ func (u *Upgrade) verifyRequirements(ctx context.Context, meta *version.Metadata
 	return nil
 }
 
-func (u *Upgrade) supportedVersion(meta *version.MetadataVersion) (*supportedVersion, error) {
-	supVer := &supportedVersion{}
-
-	// Parse MetadataVersion into supportedVersion struct.
-	config := map[string]*goversion.Constraints{
-		"cli":           &supVer.cli,
-		"olm":           &supVer.olm,
-		"catalog":       &supVer.catalog,
-		"pgOperator":    &supVer.pgOperator,
-		"pxcOperator":   &supVer.pxcOperator,
-		"psmdbOperator": &supVer.psmdbOperator,
-	}
-	for key, ref := range config {
-		if s, ok := meta.GetSupported()[key]; ok {
-			c, err := goversion.NewConstraint(s)
-			if err != nil {
-				return nil, errors.Join(err, fmt.Errorf("invalid %s constraint %s", key, s))
-			}
-			*ref = c
-		}
-	}
-
-	return supVer, nil
-}
-
-func (u *Upgrade) checkRequirements(ctx context.Context, supVer *supportedVersion) error {
+func (u *Upgrade) checkRequirements(ctx context.Context, supVer *common.SupportedVersion) error {
 	// TODO: olm, catalog to be implemented.
 
 	// cli version check.
@@ -495,27 +493,40 @@ func (u *Upgrade) checkRequirements(ctx context.Context, supVer *supportedVersio
 			return errors.Join(err, fmt.Errorf("invalid cli version %s", cliVersion.Version))
 		}
 
-		if !supVer.cli.Check(cli.Core()) {
+		if !supVer.Cli.Check(cli.Core()) {
 			return fmt.Errorf(
 				"cli version %q does not meet minimum requirements of %q",
-				cli, supVer.cli.String(),
+				cli, supVer.Cli.String(),
 			)
 		}
-		u.l.Debugf("cli version %q meets requirements %q", cli, supVer.cli.String())
+		u.l.Debugf("cli version %q meets requirements %q", cli, supVer.Cli.String())
 	} else {
 		u.l.Debug("cli version is empty")
 	}
 
+	// Kubernetes version check
+	if err := common.CheckK8sRequirements(supVer, u.l, u.kubeClient); err != nil {
+		return err
+	}
+
+	// Operator version check.
+	if err := u.checkOperatorRequirements(ctx, supVer); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *common.SupportedVersion) error {
 	nss, err := u.kubeClient.GetDBNamespaces(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Operator version check.
 	cfg := []requirementsCheck{
-		{common.PXCOperatorName, supVer.pxcOperator},
-		{common.PGOperatorName, supVer.pgOperator},
-		{common.PSMDBOperatorName, supVer.psmdbOperator},
+		{common.PXCOperatorName, supVer.PXCOperator},
+		{common.PGOperatorName, supVer.PGOperator},
+		{common.PSMDBOperatorName, supVer.PSMBDOperator},
 	}
 	for _, ns := range nss {
 		u.l.Infof("Checking operator requirements in namespace %s", ns)
@@ -535,7 +546,7 @@ func (u *Upgrade) checkRequirements(ctx context.Context, supVer *supportedVersio
 			if !c.constraints.Check(v) {
 				return fmt.Errorf(
 					"%s version %q does not meet minimum requirements of %q",
-					c.operatorName, v, supVer.pxcOperator.String(),
+					c.operatorName, v, supVer.PXCOperator.String(),
 				)
 			}
 			u.l.Debugf("Finished requirements check for operator %s", c.operatorName)
@@ -578,7 +589,7 @@ func (u *Upgrade) upgradeOLM(ctx context.Context, recommendedVersion *goversion.
 	return nil
 }
 
-func (u *Upgrade) upgradeEverestOperator(ctx context.Context, installPlanName string) error {
+func (u *Upgrade) upgradeEverestOperator(ctx context.Context, installPlanName string, version *goversion.Version) error {
 	u.l.Infof("Approving install plan %s for Everest operator", installPlanName)
 	done, err := u.kubeClient.ApproveInstallPlan(ctx, common.SystemNamespace, installPlanName)
 	if err != nil || !done {
@@ -588,6 +599,13 @@ func (u *Upgrade) upgradeEverestOperator(ctx context.Context, installPlanName st
 	u.l.Infof("Waiting for install plan installation of Everest operator to finish")
 	if err := u.kubeClient.WaitForInstallPlanCompleted(ctx, common.SystemNamespace, installPlanName); err != nil {
 		return errors.Join(err, fmt.Errorf("install plan %s is not in phase completed", installPlanName))
+	}
+
+	u.l.Infof("Waiting for CSV installation of Everest operator to finish")
+	csvName := u.kubeClient.CSVNameFromOperator(common.EverestOperatorName, version)
+	u.l.Debugf("Everest Operator CSV name: %s", csvName)
+	if err := u.kubeClient.WaitForCSVSucceeded(ctx, common.SystemNamespace, csvName); err != nil {
+		return errors.Join(err, fmt.Errorf("csv %s is not in phase succeeded", installPlanName))
 	}
 
 	return nil

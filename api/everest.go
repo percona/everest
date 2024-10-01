@@ -37,25 +37,29 @@ import (
 	middleware "github.com/oapi-codegen/echo-middleware"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
-	"github.com/percona/everest/api/rbac"
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/oidc"
+	"github.com/percona/everest/pkg/rbac"
 	"github.com/percona/everest/pkg/session"
 	"github.com/percona/everest/public"
 )
 
 // EverestServer represents the server struct.
 type EverestServer struct {
-	config       *config.EverestConfig
-	l            *zap.SugaredLogger
-	echo         *echo.Echo
-	kubeClient   *kubernetes.Kubernetes
-	sessionMgr   *session.Manager
-	rbacEnforcer *casbin.Enforcer
+	config        *config.EverestConfig
+	l             *zap.SugaredLogger
+	echo          *echo.Echo
+	kubeClient    *kubernetes.Kubernetes
+	sessionMgr    *session.Manager
+	attemptsStore *RateLimiterMemoryStore
+	rbacEnforcer  casbin.IEnforcer
 }
 
 // NewEverestServer creates and configures everest API.
@@ -67,21 +71,23 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 
 	echoServer := echo.New()
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
-
+	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
+	echoServer.Use(middleware)
 	sessMgr, err := session.New(
 		session.WithAccountManager(kubeClient.Accounts()),
 	)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
 	}
-
 	e := &EverestServer{
-		config:     c,
-		l:          l,
-		echo:       echoServer,
-		kubeClient: kubeClient,
-		sessionMgr: sessMgr,
+		config:        c,
+		l:             l,
+		echo:          echoServer,
+		kubeClient:    kubeClient,
+		sessionMgr:    sessMgr,
+		attemptsStore: store,
 	}
+	e.echo.HTTPErrorHandler = e.errorHandlerChain()
 
 	if err := e.initHTTPServer(ctx); err != nil {
 		return e, err
@@ -165,7 +171,7 @@ func (e *EverestServer) oidcKeyFn(ctx context.Context) (jwt.Keyfunc, error) {
 		return nil, err
 	}
 	if settings.OIDCConfigRaw == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 	oidcConfig, err := settings.OIDCConfig()
 	if err != nil {
@@ -209,10 +215,14 @@ func (e *EverestServer) rbacMiddleware(ctx context.Context, basePath string) (ec
 	}
 	e.rbacEnforcer = enforcer
 
+	skipper, err := rbac.NewSkipper(basePath)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not create RBAC skipper"))
+	}
 	return casbinmiddleware.MiddlewareWithConfig(casbinmiddleware.Config{
-		Skipper:        rbac.Skipper,
+		Skipper:        skipper,
 		UserGetter:     rbac.GetUser,
-		EnforceHandler: rbac.NewEnforceHandler(basePath, enforcer),
+		EnforceHandler: rbac.NewEnforceHandler(e.l, basePath, enforcer),
 	}), nil
 }
 
@@ -293,4 +303,71 @@ func (e *EverestServer) getBodyFromContext(ctx echo.Context, into any) error {
 		return errors.Join(err, errors.New("could not decode body"))
 	}
 	return nil
+}
+
+func sessionRateLimiter(limit int) (echo.MiddlewareFunc, *RateLimiterMemoryStore) {
+	allButSession := func(c echo.Context) bool {
+		return c.Request().Method != echo.POST || c.Request().URL.Path != "/v1/session"
+	}
+	config := echomiddleware.DefaultRateLimiterConfig
+	config.Skipper = allButSession
+	store := NewRateLimiterMemoryStoreWithConfig(RateLimiterMemoryStoreConfig{
+		Rate: rate.Limit(limit),
+	})
+	config.Store = store
+	return echomiddleware.RateLimiterWithConfig(config), store
+}
+
+func (e *EverestServer) errorHandlerChain() echo.HTTPErrorHandler {
+	h := e.echo.DefaultHTTPErrorHandler
+	h = k8sToAPIErrorHandler(h)
+	h = enforcerErrorHandler(h)
+	return h
+}
+
+func k8sToAPIErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
+	return func(err error, c echo.Context) {
+		if k8serrors.IsNotFound(err) {
+			err = &echo.HTTPError{
+				Code: http.StatusNotFound,
+			}
+		}
+		next(err, c)
+	}
+}
+
+func enforcerErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
+	return func(err error, c echo.Context) {
+		if errors.Is(err, errInsufficientPermissions) {
+			err = &echo.HTTPError{
+				Code:    http.StatusForbidden,
+				Message: errInsufficientPermissions.Error(),
+			}
+		}
+		next(err, c)
+	}
+}
+
+// enforce is a wrapper arounf casbin.Enforce that returns an errInsufficientPermissions error when enforce fails.
+// Typically, this error is handled centrally by the Everest server error handler chain, but if needed, the caller should handle
+// it explicitly to differentiate between other errors.
+func (e *EverestServer) enforce(subject, resource, action, object string) error {
+	ok, err := e.rbacEnforcer.Enforce(subject, resource, action, object)
+	if err != nil {
+		return fmt.Errorf("failed to enforce: %w", err)
+	}
+	if !ok {
+		e.l.Warnf("Permission denied: [%s %s %s %s]", subject, resource, action, object)
+		return errInsufficientPermissions
+	}
+	return nil
+}
+
+func attachK8sTypeMeta(obj client.Object) {
+	gvk, err := apiutil.GVKForObject(obj, scheme.Scheme)
+	if err != nil {
+		// we expect a valid GVK for the object, but since we cannot get it, we should halt the execution.
+		panic(errors.Join(err, errors.New("could not get GVK for object")))
+	}
+	obj.GetObjectKind().SetGroupVersionKind(gvk)
 }

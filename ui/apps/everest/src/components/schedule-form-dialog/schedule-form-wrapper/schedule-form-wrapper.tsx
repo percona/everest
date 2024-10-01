@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
 import { useContext, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { DbEngineType } from 'shared-types/dbEngines.types.ts';
@@ -30,14 +29,11 @@ export const ScheduleFormWrapper = () => {
     externalContext,
   } = useContext(ScheduleFormDialogContext);
   const {
-    namespace,
     schedules = [],
     defaultSchedules = [],
     activeStorage,
     dbEngine,
   } = dbClusterInfo;
-  const { data: backupStorages = [], isFetching } =
-    useBackupStoragesByNamespace(namespace);
 
   const [scheduleName] = watch([ScheduleFormFields.scheduleName]);
 
@@ -83,13 +79,11 @@ export const ScheduleFormWrapper = () => {
   return (
     <ScheduleForm
       showTypeRadio={dbEngine === DbEngineType.PSMDB}
-      hideRetentionCopies={dbEngine === DbEngineType.POSTGRESQL}
       allowScheduleSelection={mode === 'edit'}
       disableStorageSelection={disableStorageSelection}
       autoFillLocation={mode === 'new'}
+      disableNameEdit={mode === 'edit'}
       schedules={schedules}
-      storageLocationFetching={isFetching}
-      storageLocationOptions={backupStorages}
     />
   );
 };

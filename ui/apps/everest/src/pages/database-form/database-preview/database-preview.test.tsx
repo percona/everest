@@ -84,8 +84,8 @@ describe('DatabasePreview', () => {
     expect(screen.getByText('Version: 1.0.0')).toBeInTheDocument();
 
     expect(screen.getByText('Nº nodes: 1')).toBeInTheDocument();
-    expect(screen.getByText('CPU: 1 CPU')).toBeInTheDocument();
-    expect(screen.getByText('Disk: 30 GB')).toBeInTheDocument();
+    expect(screen.getByText('CPU: 1.00 CPU')).toBeInTheDocument();
+    expect(screen.getByText('Disk: 30.00 Gi')).toBeInTheDocument();
   });
 
   it('should get updated form values', async () => {

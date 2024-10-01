@@ -1,0 +1,4 @@
+p, role:admin, namespaces, read, *
+p, role:admin, database-engines, *, */*
+a, role:admin, database-clusters, *, */*
+

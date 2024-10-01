@@ -24,13 +24,14 @@ import {
   DbEngineType,
   EngineToolPayload,
   GetDbEnginesPayload,
-  OperatorUpgradePreflightPayload,
+  OperatorsUpgradePlan,
 } from 'shared-types/dbEngines.types';
 import {
   getDbEnginesFn,
-  getOperatorUpgradePreflight,
+  getOperatorsUpgradePlan,
   upgradeOperator,
 } from 'api/dbEngineApi';
+import { useRBACPermissions } from 'hooks/rbac';
 
 const DB_TYPE_ORDER_MAP: Record<DbEngineType, number> = {
   // Lower is more important
@@ -108,42 +109,64 @@ export const useDbEngines = (
   namespace: string,
   options?: PerconaQueryOptions<GetDbEnginesPayload, unknown, DbEngine[]>,
   retrieveUpgradingEngines = false
-) =>
-  useQuery<GetDbEnginesPayload, unknown, DbEngine[]>({
+) => {
+  const { canRead } = useRBACPermissions('database-engines', `${namespace}/*`);
+  return useQuery<GetDbEnginesPayload, unknown, DbEngine[]>({
     queryKey: [`dbEngines_${namespace}`],
     queryFn: () => getDbEnginesFn(namespace),
-    select: (data) => dbEnginesQuerySelect(data, retrieveUpgradingEngines),
-    enabled: !!namespace,
+    select: canRead
+      ? (data) => dbEnginesQuerySelect(data, retrieveUpgradingEngines)
+      : () => [],
     retry: 2,
     ...options,
+    enabled: !!namespace && (options?.enabled ?? true) && canRead,
   });
-
-export const useDbEngineUpgradePreflight = (
-  namespace: string,
-  dbEngineName: string,
-  targetVersion: string,
-  options?: PerconaQueryOptions<OperatorUpgradePreflightPayload>
-) =>
-  useQuery<OperatorUpgradePreflightPayload>({
-    queryKey: [
-      'dbEngineUpgradePreflight',
-      namespace,
-      dbEngineName,
-      targetVersion,
-    ],
-    queryFn: () =>
-      getOperatorUpgradePreflight(namespace, dbEngineName, targetVersion),
-    ...options,
-  });
+};
 
 export const useOperatorUpgrade = (
   namespace: string,
-  dbEngineName: string,
-  targetVersion: string,
   options?: UseMutationOptions<unknown, unknown, null, unknown>
 ) =>
   useMutation({
-    mutationKey: ['operatorUpgrade', namespace, dbEngineName, targetVersion],
-    mutationFn: () => upgradeOperator(namespace, dbEngineName, targetVersion),
+    mutationKey: ['operatorUpgrade', namespace],
+    mutationFn: () => upgradeOperator(namespace),
+    ...options,
+  });
+
+export type UseOperatorsUpgradePlanType = OperatorsUpgradePlan & {
+  upToDate: Array<{
+    name: string;
+    currentVersion: string;
+  }>;
+};
+
+export const operatorUpgradePlanQueryFn = async (
+  namespace: string,
+  dbEngines: DbEngine[]
+) => {
+  const operatorUpgradePlan = await getOperatorsUpgradePlan(namespace);
+  const operatorsWithUpgrades = operatorUpgradePlan.upgrades.map(
+    (plan) => plan.name
+  );
+
+  return {
+    ...operatorUpgradePlan,
+    upToDate: dbEngines
+      .filter((engine) => !operatorsWithUpgrades.includes(engine.name))
+      .map((engine) => ({
+        name: engine.name,
+        currentVersion: engine.operatorVersion || '',
+      })),
+  };
+};
+
+export const useOperatorsUpgradePlan = (
+  namespace: string,
+  dbEngines: DbEngine[],
+  options?: PerconaQueryOptions<UseOperatorsUpgradePlanType>
+) =>
+  useQuery<UseOperatorsUpgradePlanType>({
+    queryKey: ['operatorUpgradePlan', namespace],
+    queryFn: () => operatorUpgradePlanQueryFn(namespace, dbEngines),
     ...options,
   });

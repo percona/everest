@@ -17,45 +17,54 @@ spec:
     requests:
       storage: 5Gi
 ---
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   labels:
     app: minio
   name: minio
   namespace: minio
 spec:
-  containers:
-  - name: minio
-    image: quay.io/minio/minio:latest
-    command:
-    - /bin/bash
-    - -c
-    args: 
-    - minio server /data --console-address :9090
-    volumeMounts:
-    - mountPath: /data
-      name: minio-data-vol
-    - mountPath: /root/.minio/certs
-      name: minio-cert
-  initContainers:
-  - name: init-minio
-    image: busybox
-    command:
-    - /bin/sh
-    - -c
-    args:
-    - mkdir -p /data/bucket-1 /data/bucket-2 /data/bucket-3
-    volumeMounts:
-    - mountPath: /data
-      name: minio-data-vol
-  volumes:
-    - name: minio-data-vol
-      persistentVolumeClaim:
-       claimName: minio-data
-    - name: minio-cert
-      secret:
-        secretName: minio-cert
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: quay.io/minio/minio:latest
+          command:
+            - /bin/bash
+            - -c
+          args:
+            - minio server /data --console-address :9090
+          volumeMounts:
+            - mountPath: /data
+              name: minio-data-vol
+            - mountPath: /root/.minio/certs
+              name: minio-cert
+      initContainers:
+        - name: init-minio
+          image: busybox
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - mkdir -p /data/bucket-1 /data/bucket-2 /data/bucket-3 /data/bucket-4
+          volumeMounts:
+            - mountPath: /data
+              name: minio-data-vol
+      volumes:
+        - name: minio-data-vol
+          persistentVolumeClaim:
+            claimName: minio-data
+        - name: minio-cert
+          secret:
+            secretName: minio-cert
 ---
 apiVersion: v1
 kind: Service

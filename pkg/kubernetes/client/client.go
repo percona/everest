@@ -85,6 +85,12 @@ const (
 
 	defaultAPIURIPath  = "/api"
 	defaultAPIsURIPath = "/apis"
+
+	defaultLogLines = 3000
+
+	requestTimeout = 10 * time.Second
+
+	objectsBufferSize = 100
 )
 
 // Each level has 2 spaces for PrefixWriter.
@@ -230,7 +236,7 @@ func NewInCluster() (*Client, error) {
 	}
 	config.QPS = defaultQPSLimit
 	config.Burst = defaultBurstLimit
-	config.Timeout = 10 * time.Second
+	config.Timeout = requestTimeout
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
@@ -249,6 +255,7 @@ func NewInCluster() (*Client, error) {
 		clientset:    clientset,
 		olmClientset: olmClientset,
 		restConfig:   config,
+		rcLock:       &sync.Mutex{},
 		namespace:    string(namespace),
 	}
 
@@ -568,7 +575,7 @@ func (c *Client) marshalKubeConfig(conf *Config) ([]byte, error) {
 
 // GetLogs returns logs for pod.
 func (c *Client) GetLogs(ctx context.Context, pod, container string) (string, error) {
-	defaultLogLines := int64(3000)
+	defaultLogLines := int64(defaultLogLines)
 	options := &corev1.PodLogOptions{}
 	if container != "" {
 		options.Container = container
@@ -648,7 +655,7 @@ func (c *Client) GetEvents(ctx context.Context, name string) (string, error) {
 func tabbedString(f func(io.Writer) error) (string, error) {
 	out := &tabwriter.Writer{}
 	buf := &bytes.Buffer{}
-	out.Init(buf, 0, 8, 2, ' ', 0)
+	out.Init(buf, 0, 8, 2, ' ', 0) //nolint:mnd
 
 	if err := f(out); err != nil {
 		return "", err
@@ -909,7 +916,7 @@ func (c *Client) updateClusterRoleBinding(u *unstructured.Unstructured, namespac
 
 func (c *Client) getObjects(f []byte) ([]*unstructured.Unstructured, error) {
 	objs := []*unstructured.Unstructured{}
-	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(f), 100)
+	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(f), objectsBufferSize)
 	var err error
 	for {
 		var rawObj runtime.RawExtension
