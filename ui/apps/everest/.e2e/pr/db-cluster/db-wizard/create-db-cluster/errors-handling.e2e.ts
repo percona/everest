@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { expect, test } from '@playwright/test';
-import { goToStep, moveForward } from 'utils/db-wizard';
+import { goToStep, moveForward } from '@e2e/utils/db-wizard';
 
 test.describe('DB Cluster creation', () => {
   test('Blocking the edit buttons when an error occurs in the form', async ({

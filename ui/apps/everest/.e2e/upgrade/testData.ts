@@ -1,4 +1,4 @@
-import { everestTagForUpgrade } from '../constants';
+import { everestTagForUpgrade } from '@e2e/constants';
 
 export const pxcDBCluster = {
   name: 'ps-db-cluster',

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { getTokenFromLocalStorage } from 'utils/localStorage';
-import { createDbClusterFn, deleteDbClusterFn } from 'utils/db-cluster';
-import { findDbAndClickActions } from 'utils/db-clusters-list';
+import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
+import { findDbAndClickActions } from '@e2e/utils/db-clusters-list';
 
 test.describe('DB Cluster Editing Basic step', () => {
   const mySQLName = 'db-backup-mysql-basic';

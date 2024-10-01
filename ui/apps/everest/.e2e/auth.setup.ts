@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { expect, test as setup } from '@playwright/test';
-import { STORAGE_STATE_FILE, TIMEOUTS } from './constants';
+import { STORAGE_STATE_FILE, TIMEOUTS } from '@e2e/constants';
 const { CI_USER, CI_PASSWORD } = process.env;
 
 setup('Login', async ({ page }) => {

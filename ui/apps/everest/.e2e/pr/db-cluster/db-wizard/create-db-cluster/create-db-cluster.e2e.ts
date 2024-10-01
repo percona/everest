@@ -17,10 +17,10 @@ import { expect, test } from '@playwright/test';
 import {
   getEnginesLatestRecommendedVersions,
   getEnginesVersions,
-} from 'utils/database-engines';
-import { deleteDbClusterFn } from 'utils/db-cluster';
-import { getTokenFromLocalStorage } from 'utils/localStorage';
-import { getClusterDetailedInfo } from 'utils/storage-class';
+} from '@e2e/utils/database-engines';
+import { deleteDbClusterFn } from '@e2e/utils/db-cluster';
+import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
 import { advancedConfigurationStepCheck } from './steps/advanced-configuration-step';
 import { backupsStepCheck } from './steps/backups-step';
 import { basicInformationStepCheck } from './steps/basic-information-step';
@@ -32,15 +32,15 @@ import {
   moveForward,
   setPitrEnabledStatus,
   submitWizard,
-} from 'utils/db-wizard';
+} from '@e2e/utils/db-wizard';
 import {
   addFirstScheduleInDBWizard,
   fillScheduleModalForm,
   openCreateScheduleDialogFromDBWizard,
 } from '../db-wizard-utils';
-import { findDbAndClickActions } from 'utils/db-clusters-list';
-import { waitForInitializingState } from 'utils/table';
-import { EVEREST_CI_NAMESPACES } from '../../../../constants';
+import { findDbAndClickActions } from '@e2e/utils/db-clusters-list';
+import { waitForInitializingState } from '@e2e/utils/table';
+import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 
 test.describe('DB Cluster creation', () => {
   // IST is UTC+5h30, with or without DST
@@ -121,7 +121,6 @@ test.describe('DB Cluster creation', () => {
       namespace,
       request
     );
-    let dbName: string;
 
     expect(storageClasses.length).toBeGreaterThan(0);
 
@@ -133,7 +132,7 @@ test.describe('DB Cluster creation', () => {
       clusterName
     );
 
-    dbName = await page.getByTestId('text-input-db-name').inputValue();
+    const dbName = await page.getByTestId('text-input-db-name').inputValue();
 
     await moveForward(page);
     await expect(page.getByText('Nº nodes: 3')).toBeVisible();

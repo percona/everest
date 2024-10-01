@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { createDbClusterFn } from '../utils/db-cluster';
+import { createDbClusterFn } from '@e2e/utils/db-cluster';
 import { mongoDBCluster, postgresDBCluster } from './testData';
-import { getDBClustersList } from '../utils/db-clusters-list';
-import { TIMEOUTS } from '../constants';
+import { getDBClustersList } from '@e2e/utils/db-clusters-list';
+import { TIMEOUTS } from '@e2e/constants';
 
 test.describe.configure({ retries: 0 });
 test(

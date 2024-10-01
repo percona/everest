@@ -15,22 +15,22 @@
 
 import { expect, test } from '@playwright/test';
 import { DBClusterDetailsTabs } from '../../../../../src/pages/db-cluster-details/db-cluster-details.types';
-import { createDbClusterFn, deleteDbClusterFn } from 'utils/db-cluster';
+import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import {
   findDbAndClickActions,
   findDbAndClickRow,
-} from 'utils/db-clusters-list';
+} from '@e2e/utils/db-clusters-list';
 import {
   checkDbWizardEditSubmitIsAvailableAndClick,
   checkSuccessOfUpdateAndGoToDbClustersList,
 } from './edit-db-cluster.utils';
-import { goToStep, moveForward } from 'utils/db-wizard';
+import { goToStep, moveForward } from '@e2e/utils/db-wizard';
 import {
   addFirstScheduleInDBWizard,
   addScheduleInDbWizard,
   fillScheduleModalForm,
 } from '../db-wizard-utils';
-import { waitForInitializingState } from 'utils/table';
+import { waitForInitializingState } from '@e2e/utils/table';
 
 test.describe.serial('DB Cluster Editing Backups Step', async () => {
   const mySQLName = 'db-backup-mysql';

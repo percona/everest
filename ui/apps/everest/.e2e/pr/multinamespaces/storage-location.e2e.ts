@@ -14,13 +14,13 @@
 // limitations under the License.
 
 import { test, expect } from '@playwright/test';
-import { moveForward } from 'utils/db-wizard';
-import { EVEREST_CI_NAMESPACES } from '../../constants';
-import { createDbClusterFn, deleteDbClusterFn } from 'utils/db-cluster';
-import { findDbAndClickRow } from 'utils/db-clusters-list';
+import { moveForward } from '@e2e/utils/db-wizard';
+import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
+import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
+import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
 import { DBClusterDetailsTabs } from '../../../src/pages/db-cluster-details/db-cluster-details.types';
 import { openCreateScheduleDialogFromDBWizard } from '../db-cluster/db-wizard/db-wizard-utils';
-import { waitForInitializingState } from 'utils/table';
+import { waitForInitializingState } from '@e2e/utils/table';
 
 test.describe.serial('Namespaces: Backup Storage availability', () => {
   const pgDbName = 'pg-db';

@@ -14,10 +14,10 @@
 // limitations under the License.
 
 import { expect, test } from '@playwright/test';
-import { moveForward } from 'utils/db-wizard';
-import { EVEREST_CI_NAMESPACES } from '../../constants';
-import { deleteMonitoringInstance } from 'utils/monitoring-instance';
-import { setNamespace } from 'utils/namespaces';
+import { moveForward } from '@e2e/utils/db-wizard';
+import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
+import { deleteMonitoringInstance } from '@e2e/utils/monitoring-instance';
+import { setNamespace } from '@e2e/utils/namespaces';
 
 const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 

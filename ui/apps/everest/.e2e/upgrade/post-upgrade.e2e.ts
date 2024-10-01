@@ -1,17 +1,17 @@
 import { expect, test, request } from '@playwright/test';
 import fs from 'fs';
 import yaml from 'yaml';
-import { everestdir, everestTagForUpgrade, TIMEOUTS } from '../constants';
+import { everestdir, everestTagForUpgrade, TIMEOUTS } from '@e2e/constants';
 import {
   expectedEverestUpgradeLog,
   mongoDBCluster,
   postgresDBCluster,
 } from './testData';
-import { waitForStatus } from '../utils/table';
-import { getTokenFromLocalStorage } from '../utils/localStorage';
-import { getNamespacesFn } from '../utils/namespaces';
+import { waitForStatus } from '@e2e/utils/table';
+import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getNamespacesFn } from '@e2e/utils/namespaces';
 import * as process from 'process';
-import { mapper } from '../utils/mapper';
+import { mapper } from '@e2e/utils/mapper';
 
 let namespace: string;
 
@@ -21,7 +21,7 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
     [namespace] = await getNamespacesFn(token, request);
   });
 
-  test('Verify upgrade.log file', async ({ page }) => {
+  test('Verify upgrade.log file', async () => {
     const filePath = `${everestdir}/ui/apps/everest/.e2e/upgrade.log`;
     const data = fs.readFileSync(filePath, 'utf8');
 

@@ -14,9 +14,9 @@
 // limitations under the License.
 
 import { test, expect } from '@playwright/test';
-import { getTokenFromLocalStorage } from 'utils/localStorage';
-import { getNamespacesFn } from 'utils/namespaces';
-import { EVEREST_CI_NAMESPACES } from '../../constants';
+import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getNamespacesFn } from '@e2e/utils/namespaces';
+import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 
 test.describe('Namespaces List', () => {
   let namespaces = [];

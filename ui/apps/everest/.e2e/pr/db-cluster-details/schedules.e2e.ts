@@ -14,16 +14,16 @@
 // limitations under the License.
 
 import { expect, test } from '@playwright/test';
-import { createDbClusterFn, deleteDbClusterFn } from 'utils/db-cluster';
+import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import { DBClusterDetailsTabs } from '../../../src/pages/db-cluster-details/db-cluster-details.types';
 import { clickCreateSchedule } from './utils';
 import {
   findDbAndClickRow,
   gotoDbClusterBackups,
-} from 'utils/db-clusters-list';
-import { storageLocationAutocompleteEmptyValidationCheck } from 'utils/db-wizard';
-import { getBucketNamespacesMap } from '../../constants';
-import { waitForInitializingState } from 'utils/table';
+} from '@e2e/utils/db-clusters-list';
+import { storageLocationAutocompleteEmptyValidationCheck } from '@e2e/utils/db-wizard';
+import { getBucketNamespacesMap } from '@e2e/constants';
+import { waitForInitializingState } from '@e2e/utils/table';
 
 // TODO uncomment when PATCH method is implemented
 test.describe.skip('Schedules List', async () => {

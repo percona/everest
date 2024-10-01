@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { createDbClusterFn, deleteDbClusterFn } from 'utils/db-cluster';
-import { EVEREST_CI_NAMESPACES } from '../../constants';
+import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
+import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 
 test.describe('DB Cluster Overview', async () => {
   const dbClusterName = 'cluster-overview-test';

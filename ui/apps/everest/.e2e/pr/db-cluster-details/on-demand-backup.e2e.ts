@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { gotoDbClusterBackups } from 'utils/db-clusters-list';
-import { createDbClusterFn, deleteDbClusterFn } from 'utils/db-cluster';
+import { gotoDbClusterBackups } from '@e2e/utils/db-clusters-list';
+import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import { clickOnDemandBackup } from './utils';
 
 const { EVEREST_BUCKETS_NAMESPACES_MAP } = process.env;

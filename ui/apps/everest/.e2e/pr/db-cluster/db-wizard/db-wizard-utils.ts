@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { expect, Page } from '@playwright/test';
-import { getBucketNamespacesMap } from '../../../constants';
+import { getBucketNamespacesMap } from '@e2e/constants';
 import { beautifyDbTypeName } from '@percona/utils';
 import { DbType } from '@percona/types';
 

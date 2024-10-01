@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { test, expect } from '@playwright/test';
-import { findRowAndClickActions } from 'utils/table';
+import { findRowAndClickActions } from '@e2e/utils/table';
 const {
   EVEREST_LOCATION_BUCKET_NAME,
   EVEREST_LOCATION_ACCESS_KEY,

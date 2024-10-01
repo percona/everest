@@ -14,10 +14,10 @@
 // limitations under the License.
 
 import { expect, test } from '@playwright/test';
-import { createDbClusterFn, deleteDbClusterFn } from 'utils/db-cluster';
-import { findDbAndClickActions } from 'utils/db-clusters-list';
+import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
+import { findDbAndClickActions } from '@e2e/utils/db-clusters-list';
 import { DbType } from '@percona/types';
-import { moveForward } from 'utils/db-wizard';
+import { moveForward } from '@e2e/utils/db-wizard';
 
 test.describe('DB Cluster Editing Resources Step (Mongo)', () => {
   const mongoDBName = 'mongo-db';

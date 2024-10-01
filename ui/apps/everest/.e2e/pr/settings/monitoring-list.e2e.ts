@@ -14,8 +14,8 @@
 // limitations under the License.
 
 import { expect, test } from '@playwright/test';
-import { findRowAndClickActions } from 'utils/table';
-import { EVEREST_CI_NAMESPACES } from '../../constants';
+import { findRowAndClickActions } from '@e2e/utils/table';
+import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 
 test.describe.serial('Monitoring List', () => {

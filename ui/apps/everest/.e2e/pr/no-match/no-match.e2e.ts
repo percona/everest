@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { expect, test } from '@playwright/test';
-import { checkNoMatchPage } from 'utils/no-match';
+import { checkNoMatchPage } from '@e2e/utils/no-match';
 
 test.describe('No match (404) page', () => {
   test('databases page successfully loaded', async ({ page }) => {

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { getTokenFromLocalStorage } from 'utils/localStorage';
-import { getNamespacesFn } from 'utils/namespaces';
+import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getNamespacesFn } from '@e2e/utils/namespaces';
 
 const generateMockEngineData = ({
   pg,

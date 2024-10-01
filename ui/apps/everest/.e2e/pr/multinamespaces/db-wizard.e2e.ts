@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { test, expect } from '@playwright/test';
-import { EVEREST_CI_NAMESPACES } from '../../constants';
+import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 
 test.describe('Namespaces DB Wizard', () => {
   test('Changing of the namespace cause update of dbEngines, dbVersions, dbName', async ({

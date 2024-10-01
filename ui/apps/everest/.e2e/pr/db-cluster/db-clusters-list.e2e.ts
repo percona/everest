@@ -14,8 +14,8 @@
 // limitations under the License.
 
 import { expect, test } from '@playwright/test';
-import { createDbClusterFn } from 'utils/db-cluster';
-import { findDbAndClickActions } from 'utils/db-clusters-list';
+import { createDbClusterFn } from '@e2e/utils/db-cluster';
+import { findDbAndClickActions } from '@e2e/utils/db-clusters-list';
 
 test.describe('DB Cluster List', () => {
   const mySQLName = 'mysql-test-ui';

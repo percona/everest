@@ -14,23 +14,23 @@
 // limitations under the License.
 
 import { expect, test } from '@playwright/test';
-import { createDbClusterFn, deleteDbClusterFn } from 'utils/db-cluster';
+import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import {
   findDbAndClickActions,
   findDbAndClickRow,
-} from 'utils/db-clusters-list';
+} from '@e2e/utils/db-clusters-list';
 import {
   goToStep,
   moveForward,
   storageLocationAutocompleteEmptyValidationCheck,
-} from 'utils/db-wizard';
+} from '@e2e/utils/db-wizard';
 import {
   checkDbWizardEditSubmitIsAvailableAndClick,
   checkSuccessOfUpdateAndGoToDbClustersList,
 } from './edit-db-cluster.utils';
-import { getBucketNamespacesMap } from '../../../../constants';
+import { getBucketNamespacesMap } from '@e2e/constants';
 import { addFirstScheduleInDBWizard } from '../db-wizard-utils';
-import { waitForInitializingState } from 'utils/table';
+import { waitForInitializingState } from '@e2e/utils/table';
 
 test.describe.serial('MySQL PITR editing', async () => {
   const mySQLName = 'db-pitr-mysql';

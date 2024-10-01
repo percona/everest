@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { Page, expect } from '@playwright/test';
-import { testMonitoringName2 } from 'utils/monitoring-instance';
+import { testMonitoringName2 } from '@e2e/utils/monitoring-instance';
 
 export const monitoringStepCheck = async (
   page: Page,

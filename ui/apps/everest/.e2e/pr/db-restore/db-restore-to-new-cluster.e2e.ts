@@ -15,12 +15,12 @@
 
 import { expect, test } from '@playwright/test';
 import { Messages } from '../../../src/modals/restore-db-modal/restore-db-modal.messages';
-import { createDbClusterFn, deleteDbClusterFn } from 'utils/db-cluster';
+import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import {
   findDbAndClickActions,
   findDbAndClickRow,
-} from 'utils/db-clusters-list';
-import { getBucketNamespacesMap } from '../../constants';
+} from '@e2e/utils/db-clusters-list';
+import { getBucketNamespacesMap } from '@e2e/constants';
 
 const dbClusterName = 'restore-to-new-cluster';
 
