@@ -33,7 +33,7 @@ export const postgresDBCluster = {
 };
 
 export const expectedEverestUpgradeLog = (
-  tag = everestTagForUpgrade.replaceAll('v', '')
+  tag = everestTagForUpgrade.replace(/v/g, '')
 ) => {
   return `✓ Upgrade Operator Lifecycle Manager
 ✓ Upgrade Percona Catalog
