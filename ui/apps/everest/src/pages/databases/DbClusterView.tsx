@@ -21,7 +21,6 @@ import { useDbActions } from 'hooks/api/db-cluster/useDbActions';
 import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { useDeleteDbCluster } from 'hooks/api/db-cluster/useDeleteDbCluster';
 import { type MRT_ColumnDef } from 'material-react-table';
-import { RestoreDbModal } from 'modals';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
@@ -35,13 +34,11 @@ import {
 import { Messages } from './dbClusterView.messages';
 import { DbClusterTableElement } from './dbClusterView.types';
 import { ExpandedRow } from './expandedRow/ExpandedRow';
-import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
 import { LastBackup } from './lastBackup/LastBackup';
 import { useDbBackups } from 'hooks/api/backups/useBackups';
 import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
-import TableActionsMenu from 'components/table-actions-menu';
-import { DbActionButtons } from './db-cluster-view-menu-actions';
+import DbActions from 'components/db-actions/db-actions';
 
 export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
@@ -50,10 +47,7 @@ export const DbClusterView = () => {
 
   const { isPending: deletingCluster } = useDeleteDbCluster();
   const {
-    openDeleteDialog,
     openRestoreDialog,
-    handleConfirmDelete,
-    handleCloseDeleteDialog,
     handleCloseRestoreDialog,
     handleRestoreDbCluster,
     handleDbRestart,
@@ -185,20 +179,25 @@ export const DbClusterView = () => {
           data={tableData}
           enableRowActions
           renderRowActions={({ row }) => {
-            const menuItems = DbActionButtons(
-              row,
-              setIsNewClusterMode,
-              handleDbRestart,
-              handleDbSuspendOrResumed,
-              handleDeleteDbCluster,
-              isPaused,
-              handleRestoreDbCluster
+            return (
+              <DbActions
+                dbCluster={row.original.raw}
+                setIsNewClusterMode={setIsNewClusterMode}
+                handleDbRestart={handleDbRestart}
+                handleDbSuspendOrResumed={handleDbSuspendOrResumed}
+                handleDeleteDbCluster={handleDeleteDbCluster}
+                isPaused={isPaused}
+                handleRestoreDbCluster={handleRestoreDbCluster}
+                isNewClusterMode={isNewClusterMode}
+                openRestoreDialog={openRestoreDialog}
+                handleCloseRestoreDialog={handleCloseRestoreDialog}
+              />
             );
-            return <TableActionsMenu menuItems={menuItems} />;
           }}
           renderDetailPanel={({ row }) => <ExpandedRow row={row} />}
           muiTableBodyRowProps={({ row, isDetailPanel }) => ({
             onClick: () => {
+              console.log('row click');
               if (!isDetailPanel) {
                 navigate(
                   `/databases/${row.original.namespace}/${row.original.databaseName}/overview`
@@ -229,7 +228,7 @@ export const DbClusterView = () => {
           hideExpandAllIcon
         />
       </Box>
-      {openRestoreDialog && (
+      {/* {openRestoreDialog && (
         <RestoreDbModal
           dbCluster={selectedDbCluster!}
           namespace={selectedDbCluster?.metadata.namespace || ''}
@@ -260,7 +259,7 @@ export const DbClusterView = () => {
           tooltipText={Messages.deleteModal.disabledCheckboxForPGTooltip}
           hideCheckbox={hideCheckbox}
         />
-      )}
+      )} */}
     </Stack>
   );
 };
