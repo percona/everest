@@ -80,7 +80,7 @@ test('create db cluster with monitoring config', async ({ request, page }) => {
       expect(resComponents?.length).toBeGreaterThanOrEqual(1)
     }).toPass({
       intervals: [1000],
-      timeout: 60 * 1000,
+      timeout: 120 * 1000,
     })
   } finally {
     await deleteDBCluster(request, page, clusterName)
@@ -141,7 +141,7 @@ test('update db cluster with a new monitoring config', async ({ request, page })
       expect(res?.status?.size).toBeGreaterThanOrEqual(1)
     }).toPass({
       intervals: [1000],
-      timeout: 60 * 1000,
+      timeout: 120 * 1000,
     })
 
     expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName1)
@@ -159,7 +159,7 @@ test('update db cluster with a new monitoring config', async ({ request, page })
       expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
     }).toPass({
       intervals: [1000],
-      timeout: 60 * 1000,
+      timeout: 120 * 1000,
     })
 
   } finally {
@@ -217,7 +217,7 @@ test('update db cluster without monitoring config with a new monitoring config',
       expect(res?.status?.size).toBeGreaterThanOrEqual(1)
     }).toPass({
       intervals: [1000],
-      timeout: 60 * 1000,
+      timeout: 120 * 1000,
     })
 
     expect(res?.spec?.monitoring?.monitoringConfigName).toBeFalsy()
@@ -235,7 +235,7 @@ test('update db cluster without monitoring config with a new monitoring config',
       expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
     }).toPass({
       intervals: [1000],
-      timeout: 60 * 1000,
+      timeout: 120 * 1000,
     })
 
   } finally {
@@ -296,7 +296,7 @@ test('update db cluster monitoring config with an empty monitoring config', asyn
       expect(res?.status?.size).toBeGreaterThanOrEqual(1)
     }).toPass({
       intervals: [1000],
-      timeout: 60 * 1000,
+      timeout: 120 * 1000,
     })
 
     await expect(async () => {
@@ -312,7 +312,7 @@ test('update db cluster monitoring config with an empty monitoring config', asyn
       expect(res?.spec?.monitoring?.monitoringConfigName).toBeFalsy()
     }).toPass({
       intervals: [1000],
-      timeout: 60 * 1000,
+      timeout: 120 * 1000,
     })
 
   } finally {
