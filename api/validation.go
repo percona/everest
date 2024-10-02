@@ -121,6 +121,7 @@ var (
 	errChangeShardsNumNotSupported   = errors.New("sharding: change shards number is not supported")
 	errChangeCfgSrvNotSupported      = errors.New("sharding: change config server number is not supported")
 	errShardingVersion               = errors.New("sharding is available starting PSMDB 1.17.0")
+	errEvenEngineReplicas            = errors.New("engine replicas number should be odd")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -693,7 +694,7 @@ func (e *EverestServer) validateDatabaseClusterCR(
 	if err != nil {
 		return err
 	}
-	if err := validateVersion(databaseCluster.Spec.Engine.Version, engine); err != nil {
+	if err := validateEngine(databaseCluster, engine); err != nil {
 		return err
 	}
 	if databaseCluster.Spec.Proxy != nil && databaseCluster.Spec.Proxy.Type != nil {
@@ -854,6 +855,27 @@ func (e *EverestServer) validateBackupStoragesFor( //nolint:cyclop
 		if storage.Spec.Type != everestv1alpha1.BackupStorageTypeS3 {
 			return errPXCPitrS3Only
 		}
+	}
+
+	return nil
+}
+
+func validateEngine(databaseCluster *DatabaseCluster, engine *everestv1alpha1.DatabaseEngine) error {
+	if err := validateVersion(databaseCluster.Spec.Engine.Version, engine); err != nil {
+		return err
+	}
+
+	switch databaseCluster.Spec.Engine.Type {
+	case Pxc:
+		if databaseCluster.Spec.Engine.Replicas != nil && *databaseCluster.Spec.Engine.Replicas%2 == 0 {
+			return errEvenEngineReplicas
+		}
+	case Psmdb:
+		if databaseCluster.Spec.Engine.Replicas != nil && *databaseCluster.Spec.Engine.Replicas%2 == 0 {
+			return errEvenEngineReplicas
+		}
+	case Postgresql:
+		// no restrictions for now
 	}
 
 	return nil
