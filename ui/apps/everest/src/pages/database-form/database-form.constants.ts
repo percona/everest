@@ -17,7 +17,7 @@ import { DbType } from '@percona/types';
 import { DbWizardFormFields } from 'consts.ts';
 import { DbWizardType } from './database-form-schema.ts';
 import {
-  DEFAULT_SIZES,
+  NODES_DEFAULT_SIZES,
   ResourceSize,
 } from 'components/cluster-form/resources/constants.ts';
 
@@ -46,12 +46,12 @@ export const DB_WIZARD_DEFAULTS: DbWizardType = {
   [DbWizardFormFields.resourceSizePerProxy]: ResourceSize.small,
   [DbWizardFormFields.customNrOfNodes]: '1',
   [DbWizardFormFields.customNrOfProxies]: '1',
-  [DbWizardFormFields.cpu]: DEFAULT_SIZES.small.cpu,
-  [DbWizardFormFields.proxyCpu]: DEFAULT_SIZES.small.cpu,
-  [DbWizardFormFields.disk]: DEFAULT_SIZES.small.disk,
+  [DbWizardFormFields.cpu]: NODES_DEFAULT_SIZES.small.cpu,
+  [DbWizardFormFields.proxyCpu]: NODES_DEFAULT_SIZES.small.cpu,
+  [DbWizardFormFields.disk]: NODES_DEFAULT_SIZES.small.disk,
   [DbWizardFormFields.diskUnit]: 'Gi',
-  [DbWizardFormFields.memory]: DEFAULT_SIZES.small.memory,
-  [DbWizardFormFields.proxyMemory]: DEFAULT_SIZES.small.memory,
+  [DbWizardFormFields.memory]: NODES_DEFAULT_SIZES.small.memory,
+  [DbWizardFormFields.proxyMemory]: NODES_DEFAULT_SIZES.small.memory,
   [DbWizardFormFields.sharding]: false,
   [DbWizardFormFields.shardNr]: '1',
   [DbWizardFormFields.shardConfigServers]: '1',

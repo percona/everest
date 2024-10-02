@@ -17,7 +17,7 @@ import { useKubernetesClusterResourcesInfo } from 'hooks/api/kubernetesClusters/
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
 import {
   CUSTOM_NR_UNITS_INPUT_VALUE,
-  DEFAULT_SIZES,
+  NODES_DEFAULT_SIZES,
   humanizedResourceSizeMap,
   NODES_DB_TYPE_MAP,
   ResourceSize,
@@ -194,11 +194,14 @@ const ResourcesToggles = ({
 
   useEffect(() => {
     if (resourceSizePerUnit && resourceSizePerUnit !== ResourceSize.custom) {
-      setValue(cpuInputName, DEFAULT_SIZES[resourceSizePerUnit].cpu);
+      setValue(cpuInputName, NODES_DEFAULT_SIZES[resourceSizePerUnit].cpu);
       if (allowDiskInputUpdate) {
-        setValue(diskInputName, DEFAULT_SIZES[resourceSizePerUnit].disk);
+        setValue(diskInputName, NODES_DEFAULT_SIZES[resourceSizePerUnit].disk);
       }
-      setValue(memoryInputName, DEFAULT_SIZES[resourceSizePerUnit].memory);
+      setValue(
+        memoryInputName,
+        NODES_DEFAULT_SIZES[resourceSizePerUnit].memory
+      );
     }
   }, [resourceSizePerUnit, allowDiskInputUpdate, setValue]);
 
@@ -211,7 +214,7 @@ const ResourcesToggles = ({
   useEffect(() => {
     if (
       resourceSizePerUnit !== ResourceSize.custom &&
-      cpu !== DEFAULT_SIZES[resourceSizePerUnit].cpu
+      cpu !== NODES_DEFAULT_SIZES[resourceSizePerUnit].cpu
     ) {
       setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }
@@ -220,7 +223,7 @@ const ResourcesToggles = ({
   useEffect(() => {
     if (
       resourceSizePerUnit !== ResourceSize.custom &&
-      disk !== DEFAULT_SIZES[resourceSizePerUnit].disk
+      disk !== NODES_DEFAULT_SIZES[resourceSizePerUnit].disk
     ) {
       setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }
@@ -229,7 +232,7 @@ const ResourcesToggles = ({
   useEffect(() => {
     if (
       resourceSizePerUnit !== ResourceSize.custom &&
-      memory !== DEFAULT_SIZES[resourceSizePerUnit].memory
+      memory !== NODES_DEFAULT_SIZES[resourceSizePerUnit].memory
     ) {
       setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }

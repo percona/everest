@@ -22,11 +22,11 @@ export const matchFieldsValueToResourceSize = (
   }
   const memory = memoryParser(resources.memory.toString());
 
-  const res = Object.values(DEFAULT_SIZES).findIndex(
+  const res = Object.values(NODES_DEFAULT_SIZES).findIndex(
     (item) => item.cpu === Number(resources.cpu) && item.memory === memory.value
   );
   return res !== -1
-    ? (Object.keys(DEFAULT_SIZES)[res] as ResourceSize)
+    ? (Object.keys(NODES_DEFAULT_SIZES)[res] as ResourceSize)
     : ResourceSize.custom;
 };
 
@@ -50,7 +50,7 @@ export const humanizedResourceSizeMap: Record<ResourceSize, string> = {
   [ResourceSize.custom]: 'Custom',
 };
 
-export const DEFAULT_SIZES = {
+export const NODES_DEFAULT_SIZES = {
   [ResourceSize.small]: {
     [DbWizardFormFields.cpu]: 1,
     [DbWizardFormFields.memory]: 2,
