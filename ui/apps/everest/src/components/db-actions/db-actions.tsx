@@ -132,7 +132,7 @@ export const DbActions = ({
           </Button>
         ) : (
           <IconButton
-            data-testid="row-actions-menu-button"
+            data-testid="actions-menu-button"
             aria-haspopup="true"
             aria-controls={open ? 'basic-menu' : undefined}
             aria-expanded={open ? 'true' : undefined}
@@ -143,7 +143,7 @@ export const DbActions = ({
         )}
 
         <Menu
-          id="actions-button-menu"
+          id="actions-button"
           anchorEl={anchorEl}
           open={open}
           onClose={closeMenu}
