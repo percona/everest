@@ -24,8 +24,8 @@ import StatusField from 'components/status-field';
 import { format, formatDistanceToNowStrict, isValid } from 'date-fns';
 import {
   COMPONENT_STATUS,
-  COMPONENT_STATUS_TO_BASE_STATUS,
   COMPONENT_STATUS_WEIGHT,
+  componentStatusToBaseStatus,
 } from './components.constants';
 import ExpandedRow from './expanded-row';
 import { DATE_FORMAT } from 'consts';
@@ -43,10 +43,10 @@ const Components = () => {
       {
         header: 'Status',
         accessorKey: 'status',
-        Cell: ({ cell }) => (
+        Cell: ({ cell, row }) => (
           <StatusField
             status={cell.getValue<COMPONENT_STATUS>()}
-            statusMap={COMPONENT_STATUS_TO_BASE_STATUS}
+            statusMap={componentStatusToBaseStatus(row?.original?.ready)}
           >
             {capitalize(cell?.row?.original?.status)}
           </StatusField>
