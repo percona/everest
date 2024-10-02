@@ -49,7 +49,7 @@ const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
             status={cell.getValue<CONTAINER_STATUS>()}
             statusMap={containerStatusToBaseStatus(row?.original?.ready)}
           >
-            <Typography variant="body2">{row?.original?.name}</Typography>
+            <Typography variant="body2">{cell.getValue<CONTAINER_STATUS>()}</Typography>
           </StatusField>
         ),
       },
