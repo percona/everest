@@ -41,7 +41,7 @@ export default defineConfig({
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 1,
+  retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: 1,
   timeout: TIMEOUTS.TwentyMinutes,
@@ -116,6 +116,7 @@ export default defineConfig({
         browserName: 'chromium',
         channel: 'chrome',
         storageState: STORAGE_STATE_FILE,
+        video: 'retain-on-failure',
       },
       testDir: 'upgrade',
       dependencies: ['setup'],
