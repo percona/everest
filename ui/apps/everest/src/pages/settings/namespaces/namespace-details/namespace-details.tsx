@@ -46,7 +46,7 @@ const NamespaceDetails = () => {
     });
   const operatorNamesWithUpgrades = useMemo(
     () =>
-      operatorsUpgradePlan?.upgrades.map(
+      (operatorsUpgradePlan?.upgrades || []).map(
         (upgrade) => `${namespaceName}/${upgrade.name}`
       ) || [],
     [namespaceName, operatorsUpgradePlan]
