@@ -22,19 +22,20 @@ import {
   NODES_DB_TYPE_MAP,
   ResourceSize,
   SHARDING_DEFAULTS,
+  PROXIES_DEFAULT_SIZES,
 } from './constants';
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
 import { getProxyUnitNamesFromDbType } from './utils';
 
+type Resources = Omit<Record<'cpu' | 'memory' | 'disk', number>, 'disk'> &
+  Partial<Pick<Record<'cpu' | 'memory' | 'disk', number>, 'disk'>>;
+
 type Props = {
   unit?: string;
   unitPlural?: string;
   options: string[];
-  sizeOptions: Record<
-    'small' | 'medium' | 'large',
-    Record<'cpu' | 'memory' | 'disk', number>
-  >;
+  sizeOptions: Record<'small' | 'medium' | 'large', Resources>;
   resourceSizePerUnitInputName: string;
   cpuInputName: string;
   diskInputName?: string;
@@ -538,7 +539,7 @@ const ResourcesForm = ({
           unit={proxyUnitNames.singular}
           unitPlural={proxyUnitNames.plural}
           options={NODES_DB_TYPE_MAP[dbType]}
-          sizeOptions={NODES_DEFAULT_SIZES[dbType]}
+          sizeOptions={PROXIES_DEFAULT_SIZES[dbType]}
           resourceSizePerUnitInputName={DbWizardFormFields.resourceSizePerProxy}
           cpuInputName={DbWizardFormFields.proxyCpu}
           memoryInputName={DbWizardFormFields.proxyMemory}

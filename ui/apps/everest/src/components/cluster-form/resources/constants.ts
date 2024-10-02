@@ -105,6 +105,51 @@ export const NODES_DEFAULT_SIZES = {
   },
 };
 
+export const PROXIES_DEFAULT_SIZES = {
+  [DbType.Mysql]: {
+    [ResourceSize.small]: {
+      [DbWizardFormFields.cpu]: 0.2,
+      [DbWizardFormFields.memory]: 0.2,
+    },
+    [ResourceSize.medium]: {
+      [DbWizardFormFields.cpu]: 0.5,
+      [DbWizardFormFields.memory]: 0.8,
+    },
+    [ResourceSize.large]: {
+      [DbWizardFormFields.cpu]: 0.8,
+      [DbWizardFormFields.memory]: 3,
+    },
+  },
+  [DbType.Mongo]: {
+    [ResourceSize.small]: {
+      [DbWizardFormFields.cpu]: 1,
+      [DbWizardFormFields.memory]: 2,
+    },
+    [ResourceSize.medium]: {
+      [DbWizardFormFields.cpu]: 2,
+      [DbWizardFormFields.memory]: 4,
+    },
+    [ResourceSize.large]: {
+      [DbWizardFormFields.cpu]: 4,
+      [DbWizardFormFields.memory]: 16,
+    },
+  },
+  [DbType.Postresql]: {
+    [ResourceSize.small]: {
+      [DbWizardFormFields.cpu]: 1,
+      [DbWizardFormFields.memory]: 0.03,
+    },
+    [ResourceSize.medium]: {
+      [DbWizardFormFields.cpu]: 4,
+      [DbWizardFormFields.memory]: 0.06,
+    },
+    [ResourceSize.large]: {
+      [DbWizardFormFields.cpu]: 8,
+      [DbWizardFormFields.memory]: 0.1,
+    },
+  },
+};
+
 export const SHARDING_DEFAULTS = {
   [DbWizardFormFields.shardConfigServers]: {
     min: '1',
@@ -119,16 +164,16 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
   const objectShape = {
     [DbWizardFormFields.shardNr]: z.string().optional(),
     [DbWizardFormFields.shardConfigServers]: z.string().optional(),
-    [DbWizardFormFields.cpu]: resourceToNumber(0.6),
-    [DbWizardFormFields.memory]: resourceToNumber(0.512),
+    [DbWizardFormFields.cpu]: resourceToNumber(0),
+    [DbWizardFormFields.memory]: resourceToNumber(0),
     [DbWizardFormFields.disk]: resourceToNumber(1),
     // we will never input this, but we need it and zod will let it pass
     [DbWizardFormFields.diskUnit]: z.string(),
     [DbWizardFormFields.resourceSizePerNode]: z.nativeEnum(ResourceSize),
     [DbWizardFormFields.numberOfNodes]: z.string(),
     [DbWizardFormFields.customNrOfNodes]: z.string().optional(),
-    [DbWizardFormFields.proxyCpu]: resourceToNumber(0.6),
-    [DbWizardFormFields.proxyMemory]: resourceToNumber(0.512),
+    [DbWizardFormFields.proxyCpu]: resourceToNumber(0),
+    [DbWizardFormFields.proxyMemory]: resourceToNumber(0),
     [DbWizardFormFields.resourceSizePerProxy]: z.nativeEnum(ResourceSize),
     [DbWizardFormFields.numberOfProxies]: z.string(),
     [DbWizardFormFields.customNrOfProxies]: z.string().optional(),
