@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { useState } from 'react';
-import { Box, Button, IconButton, Menu, MenuItem, Stack } from '@mui/material';
+import { Box, Button, IconButton, Menu, MenuItem } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import {
   BorderColor,
@@ -31,27 +31,14 @@ import { Link } from 'react-router-dom';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { Messages } from './db-actions.messages';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
-import { RestoreDbModal } from 'modals';
-import DbStatusDetailsDialog from 'modals/db-status-details-dialog';
-import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
-import { useDbBackups, useDeleteDbCluster } from 'hooks';
-import { DbEngineType } from '@percona/types';
 
 export const DbActions = ({
   isDetailView = false,
   dbCluster,
-  isNewClusterMode,
   setIsNewClusterMode,
-  openDetailsDialog,
   setOpenDetailsDialog,
-  handleCloseDetailsDialog,
-  openRestoreDialog,
   handleRestoreDbCluster,
-  handleCloseRestoreDialog,
-  openDeleteDialog,
   handleDeleteDbCluster,
-  handleCloseDeleteDialog,
-  handleConfirmDelete,
   handleDbRestart,
   handleDbSuspendOrResumed,
   isPaused,
@@ -91,20 +78,6 @@ export const DbActions = ({
   const canRestore = canCreateRestore && canReadCredentials;
   const canCreateClusterFromBackup = canRestore && canCreateClusters;
 
-  const { isPending: deletingCluster } = useDeleteDbCluster();
-
-  const disableKeepDataCheckbox =
-    dbCluster?.spec.engine.type === DbEngineType.POSTGRESQL;
-  const { data: backups = [] } = useDbBackups(
-    dbCluster?.metadata.name!,
-    dbCluster?.metadata.namespace!,
-    {
-      enabled: !!dbCluster?.metadata.name,
-      refetchInterval: 10 * 1000,
-    }
-  );
-  const hideCheckbox = !backups.length;
-
   const sx = {
     display: 'flex',
     gap: 1,
@@ -114,180 +87,135 @@ export const DbActions = ({
   };
 
   return (
-    <Stack>
-      <Box>
-        {isDetailView ? (
-          <Button
-            id="actions-button"
-            data-testid="actions-button"
-            aria-controls={open ? 'actions-button-menu' : undefined}
-            aria-haspopup="true"
-            aria-expanded={open ? 'true' : undefined}
-            onClick={handleClick}
-            variant="text"
-            size="small"
-            endIcon={<ArrowDropDownIcon />}
-          >
-            Actions
-          </Button>
-        ) : (
-          <IconButton
-            data-testid="actions-menu-button"
-            aria-haspopup="true"
-            aria-controls={open ? 'basic-menu' : undefined}
-            aria-expanded={open ? 'true' : undefined}
-            onClick={handleClick}
-          >
-            <MoreHorizIcon />
-          </IconButton>
-        )}
-
-        <Menu
+    <Box>
+      {isDetailView ? (
+        <Button
           id="actions-button"
-          anchorEl={anchorEl}
-          open={open}
-          onClose={closeMenu}
-          onClick={closeMenu}
-          MenuListProps={{
-            'aria-labelledby': 'row-actions-button',
-          }}
+          data-testid="actions-button"
+          aria-controls={open ? 'actions-button-menu' : undefined}
+          aria-haspopup="true"
+          aria-expanded={open ? 'true' : undefined}
+          onClick={handleClick}
+          variant="text"
+          size="small"
+          endIcon={<ArrowDropDownIcon />}
         >
-          {canUpdate && (
-            <MenuItem
-              disabled={restoring}
-              key={0}
-              component={Link}
-              to="/databases/edit"
-              state={{ selectedDbCluster: dbClusterName, namespace }}
-              sx={sx}
-            >
-              <BorderColor fontSize="small" /> {Messages.menuItems.edit}
-            </MenuItem>
-          )}
-          {canUpdate && (
-            <MenuItem
-              disabled={restoring}
-              key={2}
-              onClick={() => {
-                handleDbRestart(dbCluster);
-              }}
-              sx={sx}
-            >
-              <RestartAltIcon /> {Messages.menuItems.restart}
-            </MenuItem>
-          )}
-          {canCreateClusterFromBackup && (
-            <MenuItem
-              data-testid={`${dbClusterName}-create-new-db-from-backup`}
-              disabled={restoring}
-              key={1}
-              onClick={() => {
-                setIsNewClusterMode(true);
-                handleRestoreDbCluster(dbCluster);
-              }}
-              sx={sx}
-            >
-              <AddIcon /> {Messages.menuItems.createNewDbFromBackup}
-            </MenuItem>
-          )}
-          {canRestore && (
-            <MenuItem
-              data-testid={`${dbClusterName}-restore`}
-              disabled={restoring}
-              key={3}
-              onClick={() => {
-                setIsNewClusterMode(false);
-                handleRestoreDbCluster(dbCluster);
-              }}
-              sx={sx}
-            >
-              <KeyboardReturnIcon /> {Messages.menuItems.restoreFromBackup}
-            </MenuItem>
-          )}
-          {isDetailView &&
-            setOpenDetailsDialog &&
-            dbCluster?.status?.details && (
-              <MenuItem
-                key={6}
-                sx={sx}
-                onClick={() => {
-                  setOpenDetailsDialog(true);
-                }}
-              >
-                <VisibilityOutlinedIcon /> {Messages.menuItems.dbStatusDetails}
-              </MenuItem>
-            )}
-          {canUpdate && (
-            <MenuItem
-              disabled={restoring}
-              key={4}
-              onClick={() => {
-                handleDbSuspendOrResumed(dbCluster);
-              }}
-              sx={sx}
-            >
-              <PauseCircleOutline />{' '}
-              {isPaused(dbCluster)
-                ? Messages.menuItems.resume
-                : Messages.menuItems.suspend}
-            </MenuItem>
-          )}
-          {canDelete && (
-            <MenuItem
-              data-testid={`${dbClusterName}-delete`}
-              key={5}
-              onClick={() => {
-                handleDeleteDbCluster(dbCluster);
-              }}
-              sx={sx}
-            >
-              <DeleteOutline /> {Messages.menuItems.delete}
-            </MenuItem>
-          )}
-        </Menu>
-      </Box>
-      <>
-        {openRestoreDialog && (
-          <RestoreDbModal
-            dbCluster={dbCluster}
-            namespace={dbCluster.metadata.namespace}
-            isNewClusterMode={isNewClusterMode}
-            isOpen={openRestoreDialog}
-            closeModal={handleCloseRestoreDialog}
-          />
+          Actions
+        </Button>
+      ) : (
+        <IconButton
+          data-testid="actions-menu-button"
+          aria-haspopup="true"
+          aria-controls={open ? 'basic-menu' : undefined}
+          aria-expanded={open ? 'true' : undefined}
+          onClick={handleClick}
+        >
+          <MoreHorizIcon />
+        </IconButton>
+      )}
+
+      <Menu
+        id="actions-button"
+        anchorEl={anchorEl}
+        open={open}
+        onClose={closeMenu}
+        onClick={closeMenu}
+        MenuListProps={{
+          'aria-labelledby': 'row-actions-button',
+        }}
+      >
+        {canUpdate && (
+          <MenuItem
+            disabled={restoring}
+            key={0}
+            component={Link}
+            to="/databases/edit"
+            state={{ selectedDbCluster: dbClusterName, namespace }}
+            sx={sx}
+          >
+            <BorderColor fontSize="small" /> {Messages.menuItems.edit}
+          </MenuItem>
         )}
-        {openDetailsDialog && handleCloseDetailsDialog && (
-          <DbStatusDetailsDialog
-            isOpen={openDetailsDialog}
-            closeModal={handleCloseDetailsDialog}
-            dbClusterDetails={dbCluster?.status?.details}
-          />
+        {canUpdate && (
+          <MenuItem
+            disabled={restoring}
+            key={2}
+            onClick={() => {
+              handleDbRestart(dbCluster);
+            }}
+            sx={sx}
+          >
+            <RestartAltIcon /> {Messages.menuItems.restart}
+          </MenuItem>
         )}
-        {openDeleteDialog && (
-          <CustomConfirmDialog
-            inputLabel={Messages.deleteModal.databaseName}
-            inputPlaceholder={Messages.deleteModal.databaseName}
-            isOpen={openDeleteDialog}
-            closeModal={handleCloseDeleteDialog}
-            headerMessage={Messages.deleteModal.header}
-            submitting={deletingCluster}
-            selectedId={dbCluster.metadata.name || ''}
-            handleConfirm={({ dataCheckbox: keepBackupStorageData }) =>
-              handleConfirmDelete(keepBackupStorageData)
-            }
-            alertMessage={Messages.deleteModal.alertMessage}
-            dialogContent={Messages.deleteModal.content(
-              dbCluster.metadata.name
-            )}
-            submitMessage={Messages.deleteModal.confirmButtom}
-            checkboxMessage={Messages.deleteModal.checkboxMessage}
-            disableCheckbox={disableKeepDataCheckbox}
-            tooltipText={Messages.deleteModal.disabledCheckboxForPGTooltip}
-            hideCheckbox={hideCheckbox}
-          />
+        {canCreateClusterFromBackup && (
+          <MenuItem
+            data-testid={`${dbClusterName}-create-new-db-from-backup`}
+            disabled={restoring}
+            key={1}
+            onClick={() => {
+              setIsNewClusterMode(true);
+              handleRestoreDbCluster(dbCluster);
+            }}
+            sx={sx}
+          >
+            <AddIcon /> {Messages.menuItems.createNewDbFromBackup}
+          </MenuItem>
         )}
-      </>
-    </Stack>
+        {canRestore && (
+          <MenuItem
+            data-testid={`${dbClusterName}-restore`}
+            disabled={restoring}
+            key={3}
+            onClick={() => {
+              setIsNewClusterMode(false);
+              handleRestoreDbCluster(dbCluster);
+            }}
+            sx={sx}
+          >
+            <KeyboardReturnIcon /> {Messages.menuItems.restoreFromBackup}
+          </MenuItem>
+        )}
+        {isDetailView && setOpenDetailsDialog && dbCluster?.status?.details && (
+          <MenuItem
+            key={6}
+            sx={sx}
+            onClick={() => {
+              setOpenDetailsDialog(true);
+            }}
+          >
+            <VisibilityOutlinedIcon /> {Messages.menuItems.dbStatusDetails}
+          </MenuItem>
+        )}
+        {canUpdate && (
+          <MenuItem
+            disabled={restoring}
+            key={4}
+            onClick={() => {
+              handleDbSuspendOrResumed(dbCluster);
+            }}
+            sx={sx}
+          >
+            <PauseCircleOutline />{' '}
+            {isPaused(dbCluster)
+              ? Messages.menuItems.resume
+              : Messages.menuItems.suspend}
+          </MenuItem>
+        )}
+        {canDelete && (
+          <MenuItem
+            data-testid={`${dbClusterName}-delete`}
+            key={5}
+            onClick={() => {
+              handleDeleteDbCluster(dbCluster);
+            }}
+            sx={sx}
+          >
+            <DeleteOutline /> {Messages.menuItems.delete}
+          </MenuItem>
+        )}
+      </Menu>
+    </Box>
   );
 };
 

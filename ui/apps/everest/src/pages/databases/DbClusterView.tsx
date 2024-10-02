@@ -37,6 +37,7 @@ import { LastBackup } from './lastBackup/LastBackup';
 import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import DbActions from 'components/db-actions/db-actions';
+import DbActionsModals from 'components/db-actions/db-actions-modals';
 
 export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
@@ -57,6 +58,7 @@ export const DbClusterView = () => {
     openDetailsDialog,
     setOpenDetailsDialog,
     handleCloseDetailsDialog,
+    selectedDbCluster,
   } = useDbActions();
   const navigate = useNavigate();
 
@@ -179,15 +181,7 @@ export const DbClusterView = () => {
                 handleDeleteDbCluster={handleDeleteDbCluster}
                 isPaused={isPaused}
                 handleRestoreDbCluster={handleRestoreDbCluster}
-                isNewClusterMode={isNewClusterMode}
-                openRestoreDialog={openRestoreDialog}
-                handleCloseRestoreDialog={handleCloseRestoreDialog}
-                openDeleteDialog={openDeleteDialog}
-                handleCloseDeleteDialog={handleCloseDeleteDialog}
-                handleConfirmDelete={handleConfirmDelete}
-                openDetailsDialog={openDetailsDialog}
                 setOpenDetailsDialog={setOpenDetailsDialog}
-                handleCloseDetailsDialog={handleCloseDetailsDialog}
               />
             );
           }}
@@ -227,6 +221,17 @@ export const DbClusterView = () => {
           hideExpandAllIcon
         />
       </Box>
+      <DbActionsModals
+        dbCluster={selectedDbCluster!}
+        isNewClusterMode={isNewClusterMode}
+        openRestoreDialog={openRestoreDialog}
+        handleCloseRestoreDialog={handleCloseRestoreDialog}
+        openDeleteDialog={openDeleteDialog}
+        handleCloseDeleteDialog={handleCloseDeleteDialog}
+        handleConfirmDelete={handleConfirmDelete}
+        openDetailsDialog={openDetailsDialog}
+        handleCloseDetailsDialog={handleCloseDetailsDialog}
+      />
     </Stack>
   );
 };

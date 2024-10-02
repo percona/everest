@@ -19,6 +19,7 @@ import StatusField from 'components/status-field';
 import DbActions from 'components/db-actions/db-actions';
 import { useDbActions } from 'hooks';
 import { Messages } from './db-cluster-details.messages';
+import DbActionsModals from 'components/db-actions/db-actions-modals';
 
 export const DbClusterDetails = () => {
   const { dbClusterName = '' } = useParams();
@@ -58,6 +59,7 @@ export const DbClusterDetails = () => {
     openDeleteDialog,
     handleConfirmDelete,
     handleCloseDeleteDialog,
+    selectedDbCluster,
   } = useDbActions();
 
   if (isLoading) {
@@ -117,21 +119,13 @@ export const DbClusterDetails = () => {
               <DbActions
                 isDetailView={true}
                 dbCluster={dbCluster}
-                openDetailsDialog={openDetailsDialog}
-                setOpenDetailsDialog={setOpenDetailsDialog}
-                handleCloseDetailsDialog={handleCloseDetailsDialog}
                 setIsNewClusterMode={setIsNewClusterMode}
+                setOpenDetailsDialog={setOpenDetailsDialog}
                 handleDbRestart={handleDbRestart}
                 handleDbSuspendOrResumed={handleDbSuspendOrResumed}
                 handleDeleteDbCluster={handleDeleteDbCluster}
                 isPaused={isPaused}
                 handleRestoreDbCluster={handleRestoreDbCluster}
-                isNewClusterMode={isNewClusterMode}
-                openRestoreDialog={openRestoreDialog}
-                handleCloseRestoreDialog={handleCloseRestoreDialog}
-                openDeleteDialog={openDeleteDialog}
-                handleCloseDeleteDialog={handleCloseDeleteDialog}
-                handleConfirmDelete={handleConfirmDelete}
               />
             ) : undefined}
           </>
@@ -174,6 +168,18 @@ export const DbClusterDetails = () => {
         </Alert>
       )}
       <Outlet />
+
+      <DbActionsModals
+        dbCluster={selectedDbCluster!}
+        isNewClusterMode={isNewClusterMode}
+        openRestoreDialog={openRestoreDialog}
+        handleCloseRestoreDialog={handleCloseRestoreDialog}
+        openDeleteDialog={openDeleteDialog}
+        handleCloseDeleteDialog={handleCloseDeleteDialog}
+        handleConfirmDelete={handleConfirmDelete}
+        openDetailsDialog={openDetailsDialog}
+        handleCloseDetailsDialog={handleCloseDetailsDialog}
+      />
     </Box>
   );
 };
