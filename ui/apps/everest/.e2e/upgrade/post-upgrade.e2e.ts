@@ -9,7 +9,7 @@ import {
 import { waitForStatus } from '@e2e/utils/table';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
-import { getExpectedOperatorVersions } from "@e2e/upgrade/helper";
+import { getExpectedOperatorVersions } from '@e2e/upgrade/helper';
 
 let namespace: string;
 
@@ -65,9 +65,9 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
     await test.step(`verify "upgrade available" text is present in the header`, async () => {
       for (const operator of operatorsVersions) {
         await expect(
-            page.getByText(
-                `${operator.shortName} ${operator.oldVersion} (Upgrade available)`
-            )
+          page.getByText(
+            `${operator.shortName} ${operator.oldVersion} (Upgrade available)`
+          )
         ).toBeVisible();
       }
     });
@@ -75,31 +75,31 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
     await test.step(`click upgrade button and verify modal contains correct versions and operators`, async () => {
       await upgradeOperatorsButton.click();
       await expect(
-          upgradeOperatorsModal.getByText(
-              `Are you sure you want to upgrade your operators in ${namespace}?`
-          )
+        upgradeOperatorsModal.getByText(
+          `Are you sure you want to upgrade your operators in ${namespace}?`
+        )
       ).toBeVisible();
 
       for (const operatorVersion of operatorsVersions) {
         await expect(
-            upgradeOperatorsModal.locator('li').filter({
-              hasText: `${operatorVersion.name} ${operatorVersion.oldVersion} will be upgraded to ${operatorVersion.version}`,
-            })
+          upgradeOperatorsModal.locator('li').filter({
+            hasText: `${operatorVersion.name} ${operatorVersion.oldVersion} will be upgraded to ${operatorVersion.version}`,
+          })
         ).toBeVisible();
       }
     });
 
     await test.step(`click Upgrade and wait for upgrade success`, async () => {
       await upgradeOperatorsModal
-          .getByRole('button', { name: 'Upgrade' })
-          .click();
+        .getByRole('button', { name: 'Upgrade' })
+        .click();
 
       for (const operator of operatorsVersions) {
         await expect(async () => {
           await expect(
-              page.getByText(`${operator.shortName} ${operator.version}`, {
-                exact: true,
-              })
+            page.getByText(`${operator.shortName} ${operator.version}`, {
+              exact: true,
+            })
           ).toBeVisible();
         }).toPass({ timeout: TIMEOUTS.ThreeMinutes });
       }

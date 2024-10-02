@@ -20,29 +20,29 @@ test(
     //   sourceRanges: psDBCluster.sourceRanges,
     // });
 
-      await test.step('Create DB clusers', async () => {
-          await createDbClusterFn(request, {
-              dbName: mongoDBCluster.name,
-              dbType: 'mongodb',
-              numberOfNodes: mongoDBCluster.numberOfNodes,
-              cpu: mongoDBCluster.cpu,
-              disk: mongoDBCluster.disk,
-              memory: mongoDBCluster.disk,
-              externalAccess: mongoDBCluster.externalAccess,
-          });
-
-          await createDbClusterFn(request, {
-              dbName: postgresDBCluster.name,
-              dbType: 'postgresql',
-              numberOfNodes: postgresDBCluster.numberOfNodes,
-              cpu: postgresDBCluster.cpu,
-              disk: postgresDBCluster.disk,
-              memory: postgresDBCluster.disk,
-              externalAccess: postgresDBCluster.externalAccess,
-          });
-
-          await page.waitForTimeout(TIMEOUTS.TenSeconds);
+    await test.step('Create DB clusers', async () => {
+      await createDbClusterFn(request, {
+        dbName: mongoDBCluster.name,
+        dbType: 'mongodb',
+        numberOfNodes: mongoDBCluster.numberOfNodes,
+        cpu: mongoDBCluster.cpu,
+        disk: mongoDBCluster.disk,
+        memory: mongoDBCluster.disk,
+        externalAccess: mongoDBCluster.externalAccess,
       });
+
+      await createDbClusterFn(request, {
+        dbName: postgresDBCluster.name,
+        dbType: 'postgresql',
+        numberOfNodes: postgresDBCluster.numberOfNodes,
+        cpu: postgresDBCluster.cpu,
+        disk: postgresDBCluster.disk,
+        memory: postgresDBCluster.disk,
+        externalAccess: postgresDBCluster.externalAccess,
+      });
+
+      await page.waitForTimeout(TIMEOUTS.TenSeconds);
+    });
 
     await expect(async () => {
       const dbClusters = (await getDBClustersList(request)).items;
@@ -56,7 +56,7 @@ test(
           'ready'
         );
       });
-    } , 'waiting for db clusters to be "ready"').toPass({
+    }, 'waiting for db clusters to be "ready"').toPass({
       timeout: TIMEOUTS.TenMinutes,
       intervals: [TIMEOUTS.OneMinute],
     });
