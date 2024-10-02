@@ -18,6 +18,7 @@ import { DbWizardFormFields } from 'consts.ts';
 import { DbWizardType } from './database-form-schema.ts';
 import {
   NODES_DEFAULT_SIZES,
+  PROXIES_DEFAULT_SIZES,
   ResourceSize,
 } from 'components/cluster-form/resources/constants.ts';
 
@@ -47,11 +48,11 @@ export const DB_WIZARD_DEFAULTS: DbWizardType = {
   [DbWizardFormFields.customNrOfNodes]: '1',
   [DbWizardFormFields.customNrOfProxies]: '1',
   [DbWizardFormFields.cpu]: NODES_DEFAULT_SIZES.mongodb.small.cpu,
-  [DbWizardFormFields.proxyCpu]: NODES_DEFAULT_SIZES.mongodb.small.cpu,
+  [DbWizardFormFields.proxyCpu]: PROXIES_DEFAULT_SIZES.mongodb.small.cpu,
   [DbWizardFormFields.disk]: NODES_DEFAULT_SIZES.mongodb.small.disk,
   [DbWizardFormFields.diskUnit]: 'Gi',
   [DbWizardFormFields.memory]: NODES_DEFAULT_SIZES.mongodb.small.memory,
-  [DbWizardFormFields.proxyMemory]: NODES_DEFAULT_SIZES.mongodb.small.memory,
+  [DbWizardFormFields.proxyMemory]: PROXIES_DEFAULT_SIZES.mongodb.small.memory,
   [DbWizardFormFields.sharding]: false,
   [DbWizardFormFields.shardNr]: '1',
   [DbWizardFormFields.shardConfigServers]: '1',
