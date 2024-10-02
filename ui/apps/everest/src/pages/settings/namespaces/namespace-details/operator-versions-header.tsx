@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { Divider, Stack, Typography } from '@mui/material';
 import { shortenOperatorName } from 'utils/db';
 import { OperatorVersionsHeaderProps } from './types';
@@ -11,13 +12,13 @@ const Listing = ({
 }) => (
   <>
     {items.map((item, idx) => (
-      <>
+      <Fragment key={item.name}>
         <Typography key={item.name} variant="body1" px={2}>
           {shortenOperatorName(item.name)} v{item.currentVersion}
           {upgradeable ? ' (Upgrade available)' : ''}
         </Typography>
         {idx < items.length - 1 && <Divider flexItem orientation="vertical" />}
-      </>
+      </Fragment>
     ))}
   </>
 );
