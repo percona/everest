@@ -19,7 +19,7 @@ import { DBClusterComponent } from 'shared-types/components.types';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import {
   CONTAINER_STATUS,
-  CONTAINER_STATUS_TO_BASE_STATUS,
+  containerStatusToBaseStatus,
 } from '../components.constants';
 import StatusField from 'components/status-field';
 import { useMemo } from 'react';
@@ -47,19 +47,32 @@ const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
               alignItems: 'center',
             }}
             status={cell.getValue<CONTAINER_STATUS>()}
-            statusMap={CONTAINER_STATUS_TO_BASE_STATUS}
+            statusMap={containerStatusToBaseStatus(row?.original?.ready)}
           >
             <Typography variant="body2">{row?.original?.name}</Typography>
           </StatusField>
         ),
       },
       {
-        header: 'Fake column name',
-        accessorKey: 'name',
-        Cell: () => '',
+        header: 'Ready',
+        accessorKey: 'ready',
+        Cell: ({ cell }) => (
+          <Typography variant="caption" color={theme.palette.text.secondary}>
+            {cell.getValue<boolean>().toString()}
+          </Typography>
+        ),
       },
       {
-        header: 'Fake column type',
+        header: 'Name',
+        accessorKey: 'name',
+        Cell: ({ cell }) => (
+          <Typography variant="caption" color={theme.palette.text.secondary}>
+            {cell.getValue<string>()}
+          </Typography>
+        ),
+      },
+      {
+        header: 'Fake column',
         accessorKey: 'type',
         Cell: () => '',
       },
@@ -96,11 +109,6 @@ const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
             </Typography>
           );
         },
-      },
-      {
-        header: 'Fake column ready',
-        accessorKey: 'ready',
-        Cell: () => '',
       },
     ];
   }, []);
