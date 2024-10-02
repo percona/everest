@@ -2,12 +2,16 @@ import { expect, request, test } from '@playwright/test';
 import fs from 'fs';
 import yaml from 'yaml';
 import { everestdir, everestTagForUpgrade, TIMEOUTS } from '@e2e/constants';
-import { expectedEverestUpgradeLog, mongoDBCluster, postgresDBCluster, } from './testData';
+import {
+  expectedEverestUpgradeLog,
+  mongoDBCluster,
+  postgresDBCluster,
+} from './testData';
 import { waitForStatus } from '@e2e/utils/table';
 import * as process from 'process';
 import { mapper } from '@e2e/utils/mapper';
-import { getTokenFromLocalStorage } from "@e2e/utils/localStorage";
-import { getNamespacesFn } from "@e2e/utils/namespaces";
+import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getNamespacesFn } from '@e2e/utils/namespaces';
 
 let namespace: string;
 
