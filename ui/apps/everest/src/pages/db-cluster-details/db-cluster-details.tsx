@@ -52,7 +52,12 @@ export const DbClusterDetails = () => {
     handleDbSuspendOrResumed,
     handleDeleteDbCluster,
     openDetailsDialog,
+    setOpenDetailsDialog,
+    handleCloseDetailsDialog,
     isPaused,
+    openDeleteDialog,
+    handleConfirmDelete,
+    handleCloseDeleteDialog,
   } = useDbActions();
 
   if (isLoading) {
@@ -113,6 +118,8 @@ export const DbClusterDetails = () => {
                 isDetailView={true}
                 dbCluster={dbCluster}
                 openDetailsDialog={openDetailsDialog}
+                setOpenDetailsDialog={setOpenDetailsDialog}
+                handleCloseDetailsDialog={handleCloseDetailsDialog}
                 setIsNewClusterMode={setIsNewClusterMode}
                 handleDbRestart={handleDbRestart}
                 handleDbSuspendOrResumed={handleDbSuspendOrResumed}
@@ -122,6 +129,9 @@ export const DbClusterDetails = () => {
                 isNewClusterMode={isNewClusterMode}
                 openRestoreDialog={openRestoreDialog}
                 handleCloseRestoreDialog={handleCloseRestoreDialog}
+                openDeleteDialog={openDeleteDialog}
+                handleCloseDeleteDialog={handleCloseDeleteDialog}
+                handleConfirmDelete={handleConfirmDelete}
               />
             ) : undefined}
           </>
