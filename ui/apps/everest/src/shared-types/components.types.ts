@@ -6,6 +6,7 @@ import {
 export interface Container {
   name: string;
   started: string;
+  ready: boolean;
   restarts: number;
   status: CONTAINER_STATUS;
 }
