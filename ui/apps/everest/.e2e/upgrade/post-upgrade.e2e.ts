@@ -45,7 +45,7 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
     });
   });
 
-  test.only('verify user is able to upgrade operators', async ({ page }) => {
+  test('verify user is able to upgrade operators', async ({ page }) => {
     type OperatorVersions = {
       name: string;
       shortName: string;
