@@ -25,7 +25,7 @@ export const Namespaces = () => {
     upgradeAvailable: operatorsUpgradePlan[idx].isSuccess
       ? operatorsUpgradePlan[idx].data.upgrades.length > 0
       : false,
-    operators: item.data?.map((engine) => engine.type) || [],
+    operators: item.data?.map((engine) => engine.name) || [],
     operatorsDescription: item.isSuccess
       ? item.data?.reduce((prevVal, currVal, idx) => {
           if (idx === 0 || prevVal === '') {
