@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import BackNavigationText from 'components/back-navigation-text';
@@ -8,6 +8,7 @@ import {
   useOperatorUpgrade,
   useOperatorsUpgradePlan,
 } from 'hooks/api/db-engines';
+import { useRBACPermissions } from 'hooks/rbac';
 import { NoMatch } from 'pages/404/NoMatch';
 import UpgradeHeader from './upgrade-header';
 import ClusterStatusTable from './cluster-status-table';
@@ -43,8 +44,19 @@ const NamespaceDetails = () => {
       enabled: !!namespace && dbEngines.length > 0,
       refetchInterval: 5 * 1000,
     });
+  const operatorNamesWithUpgrades = useMemo(
+    () =>
+      operatorsUpgradePlan?.upgrades.map(
+        (upgrade) => `${namespaceName}/${upgrade.name}`
+      ) || [],
+    [namespaceName, operatorsUpgradePlan]
+  );
 
   const { mutate: upgradeOperator } = useOperatorUpgrade(namespaceName);
+  const { canUpdate } = useRBACPermissions(
+    'database-engines',
+    operatorNamesWithUpgrades
+  );
 
   const performUpgrade = () => {
     upgradeOperator(null, {
@@ -82,6 +94,7 @@ const NamespaceDetails = () => {
       <UpgradeHeader
         onUpgrade={() => setModalOpen(true)}
         upgradeAvailable={!!operatorsUpgradePlan?.upgrades.length}
+        upgradeAllowed={canUpdate}
         pendingUpgradeTasks={
           !!operatorsUpgradePlan?.pendingActions.some(
             (action) => action.pendingTask !== 'ready'
