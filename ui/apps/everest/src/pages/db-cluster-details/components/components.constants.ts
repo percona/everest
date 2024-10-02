@@ -36,7 +36,8 @@ export const componentStatusToBaseStatus = (
       ...COMPONENT_STATUS_TO_BASE_STATUS,
       [COMPONENT_STATUS.RUNNING]: 'success',
     };
-  } else return COMPONENT_STATUS_TO_BASE_STATUS;
+  }
+  return COMPONENT_STATUS_TO_BASE_STATUS;
 };
 
 export enum CONTAINER_STATUS {
