@@ -56,9 +56,3 @@ export const DB_WIZARD_DEFAULTS: DbWizardType = {
   [DbWizardFormFields.shardNr]: '1',
   [DbWizardFormFields.shardConfigServers]: '1',
 };
-
-export const NODES_DB_TYPE_MAP: Record<DbType, string[]> = {
-  [DbType.Mongo]: ['1', '3', '5'],
-  [DbType.Mysql]: ['1', '3', '5'],
-  [DbType.Postresql]: ['1', '2', '3'],
-};
