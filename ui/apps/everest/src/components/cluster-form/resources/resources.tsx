@@ -31,6 +31,10 @@ type Props = {
   unit?: string;
   unitPlural?: string;
   options: string[];
+  sizeOptions: Record<
+    'small' | 'medium' | 'large',
+    Record<'cpu' | 'memory' | 'disk', number>
+  >;
   resourceSizePerUnitInputName: string;
   cpuInputName: string;
   diskInputName?: string;
@@ -152,6 +156,7 @@ const ResourcesToggles = ({
   unit = 'node',
   unitPlural = `${unit}s`,
   options,
+  sizeOptions,
   resourceSizePerUnitInputName,
   cpuInputName,
   diskInputName = '',
@@ -194,14 +199,11 @@ const ResourcesToggles = ({
 
   useEffect(() => {
     if (resourceSizePerUnit && resourceSizePerUnit !== ResourceSize.custom) {
-      setValue(cpuInputName, NODES_DEFAULT_SIZES[resourceSizePerUnit].cpu);
+      setValue(cpuInputName, sizeOptions[resourceSizePerUnit].cpu);
       if (allowDiskInputUpdate) {
-        setValue(diskInputName, NODES_DEFAULT_SIZES[resourceSizePerUnit].disk);
+        setValue(diskInputName, sizeOptions[resourceSizePerUnit].disk);
       }
-      setValue(
-        memoryInputName,
-        NODES_DEFAULT_SIZES[resourceSizePerUnit].memory
-      );
+      setValue(memoryInputName, sizeOptions[resourceSizePerUnit].memory);
     }
   }, [resourceSizePerUnit, allowDiskInputUpdate, setValue]);
 
@@ -214,7 +216,7 @@ const ResourcesToggles = ({
   useEffect(() => {
     if (
       resourceSizePerUnit !== ResourceSize.custom &&
-      cpu !== NODES_DEFAULT_SIZES[resourceSizePerUnit].cpu
+      cpu !== sizeOptions[resourceSizePerUnit].cpu
     ) {
       setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }
@@ -223,7 +225,7 @@ const ResourcesToggles = ({
   useEffect(() => {
     if (
       resourceSizePerUnit !== ResourceSize.custom &&
-      disk !== NODES_DEFAULT_SIZES[resourceSizePerUnit].disk
+      disk !== sizeOptions[resourceSizePerUnit].disk
     ) {
       setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }
@@ -232,7 +234,7 @@ const ResourcesToggles = ({
   useEffect(() => {
     if (
       resourceSizePerUnit !== ResourceSize.custom &&
-      memory !== NODES_DEFAULT_SIZES[resourceSizePerUnit].memory
+      memory !== sizeOptions[resourceSizePerUnit].memory
     ) {
       setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }
@@ -507,6 +509,7 @@ const ResourcesForm = ({
         <Divider />
         <ResourcesToggles
           options={NODES_DB_TYPE_MAP[dbType]}
+          sizeOptions={NODES_DEFAULT_SIZES[dbType]}
           resourceSizePerUnitInputName={DbWizardFormFields.resourceSizePerNode}
           cpuInputName={DbWizardFormFields.cpu}
           diskInputName={DbWizardFormFields.disk}
@@ -535,6 +538,7 @@ const ResourcesForm = ({
           unit={proxyUnitNames.singular}
           unitPlural={proxyUnitNames.plural}
           options={NODES_DB_TYPE_MAP[dbType]}
+          sizeOptions={NODES_DEFAULT_SIZES[dbType]}
           resourceSizePerUnitInputName={DbWizardFormFields.resourceSizePerProxy}
           cpuInputName={DbWizardFormFields.proxyCpu}
           memoryInputName={DbWizardFormFields.proxyMemory}

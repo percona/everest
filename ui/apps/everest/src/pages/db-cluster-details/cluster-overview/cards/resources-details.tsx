@@ -205,9 +205,11 @@ export const ResourcesDetails = ({
             customNrOfNodes: replicas,
             customNrOfProxies: proxies,
             resourceSizePerNode: matchFieldsValueToResourceSize(
+              dbType,
               dbCluster.spec.engine.resources
             ),
             resourceSizePerProxy: matchFieldsValueToResourceSize(
+              dbType,
               dbCluster.spec.proxy.resources
             ),
           }}

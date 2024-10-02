@@ -15,6 +15,7 @@ const resourceToNumber = (minimum = 0) =>
   );
 
 export const matchFieldsValueToResourceSize = (
+  dbType: DbType,
   resources?: Resources
 ): ResourceSize => {
   if (!resources) {
@@ -22,7 +23,7 @@ export const matchFieldsValueToResourceSize = (
   }
   const memory = memoryParser(resources.memory.toString());
 
-  const res = Object.values(NODES_DEFAULT_SIZES).findIndex(
+  const res = Object.values(NODES_DEFAULT_SIZES[dbType]).findIndex(
     (item) => item.cpu === Number(resources.cpu) && item.memory === memory.value
   );
   return res !== -1
@@ -51,20 +52,56 @@ export const humanizedResourceSizeMap: Record<ResourceSize, string> = {
 };
 
 export const NODES_DEFAULT_SIZES = {
-  [ResourceSize.small]: {
-    [DbWizardFormFields.cpu]: 1,
-    [DbWizardFormFields.memory]: 2,
-    [DbWizardFormFields.disk]: 25,
+  [DbType.Mysql]: {
+    [ResourceSize.small]: {
+      [DbWizardFormFields.cpu]: 1,
+      [DbWizardFormFields.memory]: 2,
+      [DbWizardFormFields.disk]: 25,
+    },
+    [ResourceSize.medium]: {
+      [DbWizardFormFields.cpu]: 4,
+      [DbWizardFormFields.memory]: 8,
+      [DbWizardFormFields.disk]: 100,
+    },
+    [ResourceSize.large]: {
+      [DbWizardFormFields.cpu]: 8,
+      [DbWizardFormFields.memory]: 32,
+      [DbWizardFormFields.disk]: 200,
+    },
   },
-  [ResourceSize.medium]: {
-    [DbWizardFormFields.cpu]: 4,
-    [DbWizardFormFields.memory]: 8,
-    [DbWizardFormFields.disk]: 100,
+  [DbType.Mongo]: {
+    [ResourceSize.small]: {
+      [DbWizardFormFields.cpu]: 1,
+      [DbWizardFormFields.memory]: 4,
+      [DbWizardFormFields.disk]: 25,
+    },
+    [ResourceSize.medium]: {
+      [DbWizardFormFields.cpu]: 4,
+      [DbWizardFormFields.memory]: 8,
+      [DbWizardFormFields.disk]: 100,
+    },
+    [ResourceSize.large]: {
+      [DbWizardFormFields.cpu]: 8,
+      [DbWizardFormFields.memory]: 32,
+      [DbWizardFormFields.disk]: 200,
+    },
   },
-  [ResourceSize.large]: {
-    [DbWizardFormFields.cpu]: 8,
-    [DbWizardFormFields.memory]: 32,
-    [DbWizardFormFields.disk]: 200,
+  [DbType.Postresql]: {
+    [ResourceSize.small]: {
+      [DbWizardFormFields.cpu]: 1,
+      [DbWizardFormFields.memory]: 2,
+      [DbWizardFormFields.disk]: 25,
+    },
+    [ResourceSize.medium]: {
+      [DbWizardFormFields.cpu]: 4,
+      [DbWizardFormFields.memory]: 8,
+      [DbWizardFormFields.disk]: 100,
+    },
+    [ResourceSize.large]: {
+      [DbWizardFormFields.cpu]: 8,
+      [DbWizardFormFields.memory]: 32,
+      [DbWizardFormFields.disk]: 200,
+    },
   },
 };
 
