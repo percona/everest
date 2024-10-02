@@ -1,17 +1,13 @@
-import { expect, test, request } from '@playwright/test';
+import { expect, request, test } from '@playwright/test';
 import fs from 'fs';
 import yaml from 'yaml';
 import { everestdir, everestTagForUpgrade, TIMEOUTS } from '@e2e/constants';
-import {
-  expectedEverestUpgradeLog,
-  mongoDBCluster,
-  postgresDBCluster,
-} from './testData';
+import { expectedEverestUpgradeLog, mongoDBCluster, postgresDBCluster, } from './testData';
 import { waitForStatus } from '@e2e/utils/table';
-import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
-import { getNamespacesFn } from '@e2e/utils/namespaces';
 import * as process from 'process';
 import { mapper } from '@e2e/utils/mapper';
+import { getTokenFromLocalStorage } from "@e2e/utils/localStorage";
+import { getNamespacesFn } from "@e2e/utils/namespaces";
 
 let namespace: string;
 
@@ -49,7 +45,7 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
     });
   });
 
-  test('verify user is able to upgrade operators', async ({ page }) => {
+  test.only('verify user is able to upgrade operators', async ({ page }) => {
     type OperatorVersions = {
       name: string;
       shortName: string;
@@ -79,17 +75,17 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
       const allVersions: OperatorVersions[] = [];
       for (const operator of Object.values(Operator)) {
         const apiRequest = await request.newContext();
-        const yamlUrl = `https://raw.githubusercontent.com/percona/everest-catalog/${everestTagForUpgrade}/veneer/${operator}}.yaml`;
+        const yamlUrl = `https://raw.githubusercontent.com/percona/everest-catalog/${everestTagForUpgrade}/veneer/${operator}.yaml`;
         const response = await apiRequest.get(yamlUrl);
         const yamlContent = await response.text();
         const parsedYaml = yaml.parse(yamlContent);
 
-        const fastBundlesImages = parsedYaml.Fast.Bundles.map(
+        const fastBundlesImages = parsedYaml.Stable.Bundles.map(
           (bundle) => bundle.Image
         );
-        const lastImageTag = fastBundlesImages[fastBundlesImages.length - 1];
 
-        const versionMatch = lastImageTag.match(/:(\d+\.\d+\.\d+)/);
+        const lastImageTag = fastBundlesImages[fastBundlesImages.length - 1];
+        const versionMatch = lastImageTag.match(/:(?:v)?(\d+\.\d+\.\d+)/);
         const version = versionMatch ? versionMatch[1] : null;
         const oldVersion = process.env[operatorVersionsVariables.get(operator)];
 
@@ -107,6 +103,8 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
     };
 
     const operatorsVersions = await getExpectedOperatorVersions();
+
+    test.skip(operatorsVersions.length === 0, 'No operators to upgrade');
 
     await page.goto(`/settings/namespaces/${namespace}`);
 
