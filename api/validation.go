@@ -60,10 +60,11 @@ const (
 	pgReposLimit        = 3
 	// We are diverging from the RFC1035 spec in regards to the length of the
 	// name because the PXC operator limits the name of the cluster to 22.
-	maxNameLength       = 22
-	timeoutS3AccessSec  = 2
-	minShardsNum        = 1
-	minConfigServersNum = 1
+	maxNameLength        = 22
+	timeoutS3AccessSec   = 2
+	minShardsNum         = 1
+	minConfigServersNum  = 1
+	maxPXCEngineReplicas = 5
 )
 
 var (
@@ -122,6 +123,7 @@ var (
 	errChangeCfgSrvNotSupported      = errors.New("sharding: change config server number is not supported")
 	errShardingVersion               = errors.New("sharding is available starting PSMDB 1.17.0")
 	errEvenEngineReplicas            = errors.New("engine replicas number should be odd")
+	errMaxPXCEngineReplicas          = errors.New("max replicas number for MySQL is 5")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -869,6 +871,9 @@ func validateEngine(databaseCluster *DatabaseCluster, engine *everestv1alpha1.Da
 	case Pxc:
 		if databaseCluster.Spec.Engine.Replicas != nil && *databaseCluster.Spec.Engine.Replicas%2 == 0 {
 			return errEvenEngineReplicas
+		}
+		if databaseCluster.Spec.Engine.Replicas != nil && *databaseCluster.Spec.Engine.Replicas > maxPXCEngineReplicas {
+			return errMaxPXCEngineReplicas
 		}
 	case Psmdb:
 		if databaseCluster.Spec.Engine.Replicas != nil && *databaseCluster.Spec.Engine.Replicas%2 == 0 {
