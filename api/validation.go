@@ -60,11 +60,12 @@ const (
 	pgReposLimit        = 3
 	// We are diverging from the RFC1035 spec in regards to the length of the
 	// name because the PXC operator limits the name of the cluster to 22.
-	maxNameLength        = 22
-	timeoutS3AccessSec   = 2
-	minShardsNum         = 1
-	minConfigServersNum  = 1
-	maxPXCEngineReplicas = 5
+	maxNameLength                   = 22
+	timeoutS3AccessSec              = 2
+	minShardsNum                    = 1
+	minConfigServersNumNNodeReplset = 3
+	minConfigServersNum1NodeReplset = 1
+	maxPXCEngineReplicas            = 5
 )
 
 var (
@@ -115,7 +116,8 @@ var (
 	errInsufficientPermissions       = errors.New("insufficient permissions for performing the operation")
 	errShardingIsNotSupported        = errors.New("sharding is not supported")
 	errInsufficientShardsNumber      = errors.New("shards number should be greater than 0")
-	errInsufficientCfgSrvNumber      = errors.New("sharding: minimum config servers number is 1")
+	errInsufficientCfgSrvNumber      = errors.New("sharding: minimum config servers number is 3")
+	errInsufficientCfgSrvNumber1Node = errors.New("sharding: minimum config servers number for 1 node replsets is 1")
 	errEvenServersNumber             = errors.New("sharding: config servers number should be odd")
 	errDisableShardingNotSupported   = errors.New("sharding: disable sharding is not supported")
 	errShardingEnablingNotSupported  = errors.New("sharding: enable sharding is not supported when editing db cluster")
@@ -752,7 +754,10 @@ func validateSharding(dbc DatabaseCluster) error {
 	if dbc.Spec.Sharding.Shards < minShardsNum {
 		return errInsufficientShardsNumber
 	}
-	if dbc.Spec.Sharding.ConfigServer.Replicas < minConfigServersNum {
+	if dbc.Spec.Engine.Replicas != nil && *dbc.Spec.Engine.Replicas == 1 && dbc.Spec.Sharding.ConfigServer.Replicas < minConfigServersNum1NodeReplset {
+		return errInsufficientCfgSrvNumber1Node
+	}
+	if dbc.Spec.Engine.Replicas != nil && *dbc.Spec.Engine.Replicas > 1 && dbc.Spec.Sharding.ConfigServer.Replicas < minConfigServersNumNNodeReplset {
 		return errInsufficientCfgSrvNumber
 	}
 	if dbc.Spec.Sharding.ConfigServer.Replicas%2 == 0 {

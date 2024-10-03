@@ -35,7 +35,7 @@ export const useDbCluster = (
   return useQuery<DbCluster, unknown, DbCluster>({
     queryKey: [DB_CLUSTER_QUERY, dbClusterName],
     queryFn: () => getDbClusterFn(dbClusterName, namespace),
-    select: (cluster) => ({
+    select: (cluster: DbCluster) => ({
       ...cluster,
       spec: {
         ...cluster.spec,

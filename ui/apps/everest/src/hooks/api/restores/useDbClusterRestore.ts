@@ -24,7 +24,7 @@ import {
   getDbClusterRestores,
 } from 'api/restores';
 import { useRBACPermissions } from 'hooks/rbac';
-import { generateShortUID } from 'pages/database-form/database-form-body/steps/first/utils';
+import { generateShortUID } from 'utils/generateShortUID';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import { GetRestorePayload, Restore } from 'shared-types/restores.types';
 

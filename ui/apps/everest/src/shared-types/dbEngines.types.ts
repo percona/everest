@@ -67,7 +67,7 @@ export type GetDbEnginesPayload = {
   }>;
 };
 
-type DbEngineTool = {
+export type DbEngineTool = {
   version: string;
 } & EngineToolPayload;
 
