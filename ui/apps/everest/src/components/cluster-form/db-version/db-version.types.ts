@@ -13,15 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { OperatorUpgradePendingAction } from './dbEngines.types';
-
-// TODO EVEREST-677
-export interface NamespaceInstance {
-  name: string;
-  upgradeAvailable: boolean;
-  operators: string[];
-  pendingActions: OperatorUpgradePendingAction[];
-  operatorsDescription: string;
+export enum DBVersionFields {
+  dbVersion = 'dbVersion',
 }
-
-export type GetNamespacesPayload = string[];

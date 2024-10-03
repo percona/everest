@@ -13,15 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { OperatorUpgradePendingAction } from './dbEngines.types';
+import { LinearProgress, Dialog as MatDialog } from '@mui/material';
+import { DialogProps } from './dialog.types';
 
-// TODO EVEREST-677
-export interface NamespaceInstance {
-  name: string;
-  upgradeAvailable: boolean;
-  operators: string[];
-  pendingActions: OperatorUpgradePendingAction[];
-  operatorsDescription: string;
-}
+const Dialog = ({ loading, children, ...props }: DialogProps) => {
+  return (
+    <MatDialog {...props}>
+      {loading && <LinearProgress></LinearProgress>}
+      {children}
+    </MatDialog>
+  );
+};
 
-export type GetNamespacesPayload = string[];
+export default Dialog;

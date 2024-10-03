@@ -4,6 +4,8 @@ import { useParams } from 'react-router-dom';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { DbClusterContextProps } from './dbCluster.context.types';
 import { useRBACPermissions } from 'hooks/rbac';
+import { useState } from 'react';
+import { QueryObserverResult } from '@tanstack/react-query';
 
 export const DbClusterContext = createContext<DbClusterContextProps>({
   dbCluster: {} as DbCluster,
@@ -12,6 +14,9 @@ export const DbClusterContext = createContext<DbClusterContextProps>({
   canReadMonitoring: false,
   canUpdateMonitoring: false,
   canReadCredentials: false,
+  canUpdateDb: false,
+  temporarilyIncreaseInterval: () => {},
+  queryResult: {} as QueryObserverResult<DbCluster, unknown>,
 });
 
 export const DbClusterContextProvider = ({
@@ -20,14 +25,28 @@ export const DbClusterContextProvider = ({
   children: React.ReactNode;
 }) => {
   const { dbClusterName = '', namespace = '' } = useParams();
-  const { data: dbCluster, isLoading } = useDbCluster(
+  const defaultInterval = 5 * 1000;
+  const [refetchInterval, setRefetchInterval] = useState(defaultInterval);
+  const queryResult: QueryObserverResult<DbCluster, unknown> = useDbCluster(
     dbClusterName,
     namespace,
     {
       enabled: !!namespace && !!dbClusterName,
-      refetchInterval: 5 * 1000,
+      refetchInterval: refetchInterval,
     }
   );
+
+  const { data: dbCluster, isLoading } = queryResult;
+
+  const temporarilyIncreaseInterval = (
+    interval: number,
+    timeoutTime: number
+  ) => {
+    setRefetchInterval(interval);
+    const a = setTimeout(() => {
+      setRefetchInterval(defaultInterval), clearTimeout(a);
+    }, timeoutTime);
+  };
 
   const { canRead: canReadBackups } = useRBACPermissions(
     'database-cluster-backups',
@@ -39,6 +58,10 @@ export const DbClusterContextProvider = ({
     'database-cluster-credentials',
     `${namespace}/${dbClusterName}`
   );
+  const { canUpdate: canUpdateDb } = useRBACPermissions(
+    'database-clusters',
+    `${dbCluster?.metadata.namespace}/${dbCluster?.metadata.name}`
+  );
 
   return (
     <DbClusterContext.Provider
@@ -48,7 +71,10 @@ export const DbClusterContextProvider = ({
         canReadBackups,
         canReadMonitoring,
         canUpdateMonitoring,
+        canUpdateDb,
         canReadCredentials,
+        temporarilyIncreaseInterval,
+        queryResult,
       }}
     >
       {children}

@@ -15,10 +15,10 @@
 
 import { Schedule } from 'shared-types/dbCluster.types.ts';
 import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils.ts';
-import { generateShortUID } from '../../pages/database-form/database-form-body/steps/first/utils';
 import { TIME_SELECTION_DEFAULTS } from '../time-selection/time-selection.constants';
 import { ScheduleFormData } from './schedule-form/schedule-form-schema';
 import { ScheduleFormFields } from './schedule-form/schedule-form.types';
+import { generateShortUID } from 'utils/generateShortUID';
 
 export const scheduleModalDefaultValues = (
   mode: 'new' | 'edit',

@@ -5,6 +5,7 @@ import { Messages } from './messages';
 const UpgradeHeader = ({
   upgradeAvailable,
   pendingUpgradeTasks,
+  upgradeAllowed,
   onUpgrade,
   ...boxProps
 }: UpgradeHeaderProps) => {
@@ -29,7 +30,7 @@ const UpgradeHeader = ({
         size="medium"
         variant="contained"
         onClick={onUpgrade}
-        disabled={pendingUpgradeTasks}
+        disabled={pendingUpgradeTasks || !upgradeAllowed}
       >
         {Messages.upgradeOperators}
       </Button>

@@ -15,6 +15,7 @@ import {
 
 export const useDbActions = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
   const [openRestoreDialog, setOpenRestoreDialog] = useState(false);
   const [selectedDbCluster, setSelectedDbCluster] = useState<DbCluster>();
   const { mutate: deleteDbCluster } = useDeleteDbCluster();
@@ -160,17 +161,24 @@ export const useDbActions = () => {
     setOpenRestoreDialog(false);
   };
 
+  const handleCloseDetailsDialog = () => {
+    setOpenDetailsDialog(false);
+  };
+
   return {
     openDeleteDialog,
     openRestoreDialog,
+    openDetailsDialog,
     handleDbSuspendOrResumed,
     handleDbRestart,
     handleDeleteDbCluster,
     handleConfirmDelete,
     handleCloseDeleteDialog,
+    handleCloseDetailsDialog,
     isPaused,
     handleRestoreDbCluster,
     handleCloseRestoreDialog,
     selectedDbCluster,
+    setOpenDetailsDialog,
   };
 };

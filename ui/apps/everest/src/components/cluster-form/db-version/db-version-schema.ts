@@ -13,15 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { OperatorUpgradePendingAction } from './dbEngines.types';
+import z from 'zod';
+import { DBVersionFields } from './db-version.types';
 
-// TODO EVEREST-677
-export interface NamespaceInstance {
-  name: string;
-  upgradeAvailable: boolean;
-  operators: string[];
-  pendingActions: OperatorUpgradePendingAction[];
-  operatorsDescription: string;
-}
+export const dbVersionSchemaObject = {
+  [DBVersionFields.dbVersion]: z.string().min(1),
+};
 
-export type GetNamespacesPayload = string[];
+export const dbVersionSchema = z.object(dbVersionSchemaObject);

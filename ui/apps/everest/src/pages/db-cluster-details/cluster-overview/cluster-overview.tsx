@@ -32,6 +32,7 @@ export const ClusterOverview = () => {
     dbCluster,
     isLoading: loadingCluster,
     canReadBackups,
+    canUpdateDb,
   } = useContext(DbClusterContext);
   const { canRead } = useRBACPermissions(
     'database-cluster-credentials',
@@ -98,6 +99,7 @@ export const ClusterOverview = () => {
         dbCluster={dbCluster}
         sharding={dbCluster?.spec.sharding}
         loading={loadingCluster}
+        canUpdateDb={canUpdateDb}
       />
       {canReadBackups && (
         <BackupsDetails

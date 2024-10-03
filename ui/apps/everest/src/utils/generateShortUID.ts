@@ -13,15 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { OperatorUpgradePendingAction } from './dbEngines.types';
+export const generateShortUID = (): string => {
+  const firstPart = `000${((Math.random() * 46656) | 0).toString(36)}`.slice(
+    -3
+  );
+  const secondPart = `000${((Math.random() * 46656) | 0).toString(36)}`.slice(
+    -3
+  );
 
-// TODO EVEREST-677
-export interface NamespaceInstance {
-  name: string;
-  upgradeAvailable: boolean;
-  operators: string[];
-  pendingActions: OperatorUpgradePendingAction[];
-  operatorsDescription: string;
-}
-
-export type GetNamespacesPayload = string[];
+  return `${firstPart}${secondPart}`.slice(0, 3);
+};

@@ -185,7 +185,7 @@ func TestValidateCreateDatabaseClusterRequest(t *testing.T) {
 	}
 }
 
-func TestValidateProxy(t *testing.T) {
+func TestValidateProxyType(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
 		name       string
@@ -269,12 +269,51 @@ func TestValidateProxy(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			err := validateProxy(DatabaseClusterSpecEngineType(c.engineType), c.proxyType)
+			err := validateProxyType(DatabaseClusterSpecEngineType(c.engineType), c.proxyType)
 			if c.err == nil {
 				require.NoError(t, err)
 				return
 			}
 			assert.Equal(t, c.err.Error(), err.Error())
+		})
+	}
+}
+
+func TestValidateProxy(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name    string
+		cluster []byte
+		err     error
+	}{
+		{
+			name:    "ok: 3 nodes 2 proxies",
+			cluster: []byte(`{"spec": {"engine": {"type": "pxc", "replicas": 3}, "proxy": {"type": "haproxy", "replicas": 2}}}`),
+			err:     nil,
+		},
+		{
+			name:    "errMinProxyReplicas",
+			cluster: []byte(`{"spec": {"engine": {"type": "pxc", "replicas": 3}, "proxy": {"type": "haproxy", "replicas": 1}}}`),
+			err:     errMinPXCProxyReplicas,
+		},
+		{
+			name:    "ok: 1 node 1 proxy",
+			cluster: []byte(`{"spec": {"engine": {"type": "pxc", "replicas": 1}, "proxy": {"type": "haproxy", "replicas": 1}}}`),
+			err:     nil,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			cluster := &DatabaseCluster{}
+			err := json.Unmarshal(c.cluster, cluster)
+			require.NoError(t, err)
+			err = validateProxy(cluster)
+			if c.err == nil {
+				require.NoError(t, err)
+				return
+			}
+			assert.Equal(t, err.Error(), c.err.Error())
 		})
 	}
 }
@@ -1296,6 +1335,9 @@ func TestValidateBackupSchedulesUpdate(t *testing.T) {
 			enforcer.On("Enforce",
 				"user", rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, "test-ns/",
 			).Return(tc.canTakeBackups, nil)
+			enforcer.On("Enforce",
+				"user", rbac.ResourceBackupStorages, rbac.ActionRead, mock.Anything,
+			).Return(true, nil)
 			e.rbacEnforcer = enforcer
 
 			updated := &DatabaseCluster{}
@@ -1465,8 +1507,13 @@ func TestValidateSharding(t *testing.T) {
 		},
 		{
 			desc:     "insufficient configservers",
-			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0"}, "sharding": {"enabled": true, "shards": 1,"configServer": {"replicas": 0}}}}`),
+			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0", "replicas": 3}, "sharding": {"enabled": true, "shards": 1,"configServer": {"replicas": 1}}}}`),
 			expected: errInsufficientCfgSrvNumber,
+		},
+		{
+			desc:     "insufficient configservers 1 node",
+			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0", "replicas": 1}, "sharding": {"enabled": true, "shards": 1,"configServer": {"replicas": 0}}}}`),
+			expected: errInsufficientCfgSrvNumber1Node,
 		},
 		{
 			desc:     "insufficient shards number",

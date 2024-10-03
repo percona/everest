@@ -11,20 +11,9 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
+
 import { gte, coerce } from 'semver';
 import { DbEngine, DbEngineType } from 'shared-types/dbEngines.types';
-
-// limitations under the License.
-export const generateShortUID = (): string => {
-  const firstPart = `000${((Math.random() * 46656) | 0).toString(36)}`.slice(
-    -3
-  );
-  const secondPart = `000${((Math.random() * 46656) | 0).toString(36)}`.slice(
-    -3
-  );
-
-  return `${firstPart}${secondPart}`.slice(0, 3);
-};
 
 export const filterAvailableDbVersionsForDbEngineEdition = (
   dbEngine: DbEngine,
