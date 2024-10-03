@@ -17,7 +17,7 @@ import z from 'zod';
 import { DBVersionFields } from './db-version.types';
 
 export const dbVersionSchemaObject = {
-  [DBVersionFields.dbVersion]: z.string().nonempty(),
+  [DBVersionFields.dbVersion]: z.string().min(1),
 };
 
 export const dbVersionSchema = z.object(dbVersionSchemaObject);

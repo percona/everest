@@ -57,6 +57,7 @@ export type DatabaseDetailsOverviewCardProps =
 export type ResourcesDetailsOverviewProps = {
   dbCluster: DbCluster;
   sharding: DbCluster['spec']['sharding'];
+  canUpdateDb: boolean;
 } & OverviewCardProps;
 
 export type BackupsDetailsOverviewCardProps = {

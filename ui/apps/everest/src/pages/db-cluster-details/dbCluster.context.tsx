@@ -14,6 +14,7 @@ export const DbClusterContext = createContext<DbClusterContextProps>({
   canReadMonitoring: false,
   canUpdateMonitoring: false,
   canReadCredentials: false,
+  canUpdateDb: false,
   temporarilyIncreaseInterval: () => {},
   queryResult: {} as QueryObserverResult<DbCluster, unknown>,
 });
@@ -57,6 +58,10 @@ export const DbClusterContextProvider = ({
     'database-cluster-credentials',
     `${namespace}/${dbClusterName}`
   );
+  const { canUpdate: canUpdateDb } = useRBACPermissions(
+    'database-clusters',
+    `${dbCluster?.metadata.namespace}/${dbCluster?.metadata.name}`
+  );
 
   return (
     <DbClusterContext.Provider
@@ -66,6 +71,7 @@ export const DbClusterContextProvider = ({
         canReadBackups,
         canReadMonitoring,
         canUpdateMonitoring,
+        canUpdateDb,
         canReadCredentials,
         temporarilyIncreaseInterval,
         queryResult,

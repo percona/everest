@@ -44,6 +44,7 @@ export const ResourcesDetails = ({
   dbCluster,
   loading,
   sharding,
+  canUpdateDb,
 }: ResourcesDetailsOverviewProps) => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const { mutate: updateDbClusterResources } = useUpdateDbClusterResources();
@@ -121,15 +122,17 @@ export const ResourcesDetails = ({
         cardHeaderProps={{
           title: Messages.titles.resources,
           avatar: <DatabaseIcon />,
-          action: (
-            <Button
-              size="small"
-              startIcon={<EditOutlinedIcon />}
-              onClick={() => setOpenEditModal(true)}
-            >
-              Edit
-            </Button>
-          ),
+          ...(canUpdateDb && {
+            action: (
+              <Button
+                size="small"
+                startIcon={<EditOutlinedIcon />}
+                onClick={() => setOpenEditModal(true)}
+              >
+                Edit
+              </Button>
+            ),
+          }),
         }}
       >
         <Stack gap={3}>

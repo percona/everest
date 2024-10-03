@@ -37,10 +37,10 @@ export const BasicInformationSection = ({
   const handleCloseModal = () => {
     setOpenEditModal(false);
   };
-  const { dbCluster /*temporarilyIncreaseInterval*/ } =
-    useContext(DbClusterContext);
+  const { dbCluster, canUpdateDb } = useContext(DbClusterContext);
 
   const { mutate: updateDbClusterVersion } = useUpdateDbClusterVersion();
+
   const [upgrading, setUpgrading] = useState(false);
 
   const handleSubmit = async (dbVersion: string) => {
@@ -53,12 +53,7 @@ export const BasicInformationSection = ({
         dbVersion,
       },
       {
-        onSuccess: () => {
-          //if we check initializing status we could remove this string
-          // temporarilyIncreaseInterval(10*1000, 10*1000);
-        },
         onError: () => {
-          // TODO check if error shows, modal should be opened
           setUpgrading(false);
         },
       }
@@ -66,7 +61,6 @@ export const BasicInformationSection = ({
   };
 
   useEffect(() => {
-    // should we close this process if initializing will not added from BE?
     if (upgrading && dbCluster?.status?.status !== DbClusterStatus.ready) {
       handleCloseModal();
       setUpgrading(false);
@@ -101,7 +95,7 @@ export const BasicInformationSection = ({
       dataTestId="basic-information"
       title={Messages.titles.basicInformation}
       loading={loading}
-      {...(shouldShowUpgrade
+      {...(shouldShowUpgrade && canUpdateDb
         ? {
             actionButtonProps: {
               onClick: () => {
