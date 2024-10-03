@@ -35,7 +35,7 @@ export const useDBEnginesForNamespaces = (retrieveUpgradingEngines = false) => {
   const queries = namespaces.map<
     UseQueryOptions<GetDbEnginesPayload, unknown, DbEngine[]>
   >((namespace) => ({
-    queryKey: [`dbEngines_${namespace}`],
+    queryKey: ['dbEngines', namespace],
     retry: false,
     queryFn: () => getDbEnginesFn(namespace),
     select: (data) => dbEnginesQuerySelect(data, retrieveUpgradingEngines),

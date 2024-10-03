@@ -1296,6 +1296,9 @@ func TestValidateBackupSchedulesUpdate(t *testing.T) {
 			enforcer.On("Enforce",
 				"user", rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, "test-ns/",
 			).Return(tc.canTakeBackups, nil)
+			enforcer.On("Enforce",
+				"user", rbac.ResourceBackupStorages, rbac.ActionRead, mock.Anything,
+			).Return(true, nil)
 			e.rbacEnforcer = enforcer
 
 			updated := &DatabaseCluster{}

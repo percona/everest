@@ -9,6 +9,7 @@ import {
 export type UpgradeHeaderProps = {
   upgradeAvailable: boolean;
   pendingUpgradeTasks: boolean;
+  upgradeAllowed: boolean;
   onUpgrade: () => void;
 } & BoxProps;
 

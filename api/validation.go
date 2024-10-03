@@ -60,10 +60,11 @@ const (
 	pgReposLimit        = 3
 	// We are diverging from the RFC1035 spec in regards to the length of the
 	// name because the PXC operator limits the name of the cluster to 22.
-	maxNameLength       = 22
-	timeoutS3AccessSec  = 2
-	minShardsNum        = 1
-	minConfigServersNum = 1
+	maxNameLength        = 22
+	timeoutS3AccessSec   = 2
+	minShardsNum         = 1
+	minConfigServersNum  = 1
+	maxPXCEngineReplicas = 5
 )
 
 var (
@@ -121,6 +122,8 @@ var (
 	errChangeShardsNumNotSupported   = errors.New("sharding: change shards number is not supported")
 	errChangeCfgSrvNotSupported      = errors.New("sharding: change config server number is not supported")
 	errShardingVersion               = errors.New("sharding is available starting PSMDB 1.17.0")
+	errEvenEngineReplicas            = errors.New("engine replicas number should be odd")
+	errMaxPXCEngineReplicas          = errors.New("max replicas number for MySQL is 5")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -627,12 +630,19 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 	if err != nil {
 		return fmt.Errorf("failed to get user: %w", err)
 	}
-	// To be able to create a cluster with backup schedules, the user needs to explicitly
-	// have permissions to take backups.
 	schedules := pointer.Get(pointer.Get(pointer.Get(databaseCluster.Spec).Backup).Schedules)
 	if len(schedules) > 0 {
+		// To be able to create a cluster with backup schedules, the user needs to explicitly
+		// have permissions to take backups.
 		if err := e.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, rbac.ObjectName(namespace, "")); err != nil {
 			return err
+		}
+		// User should be able to read a backup storage to use it in a backup schedule.
+		for _, sched := range schedules {
+			if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead,
+				rbac.ObjectName(namespace, sched.BackupStorageName)); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -686,7 +696,7 @@ func (e *EverestServer) validateDatabaseClusterCR(
 	if err != nil {
 		return err
 	}
-	if err := validateVersion(databaseCluster.Spec.Engine.Version, engine); err != nil {
+	if err := validateEngine(databaseCluster, engine); err != nil {
 		return err
 	}
 	if databaseCluster.Spec.Proxy != nil && databaseCluster.Spec.Proxy.Type != nil {
@@ -847,6 +857,30 @@ func (e *EverestServer) validateBackupStoragesFor( //nolint:cyclop
 		if storage.Spec.Type != everestv1alpha1.BackupStorageTypeS3 {
 			return errPXCPitrS3Only
 		}
+	}
+
+	return nil
+}
+
+func validateEngine(databaseCluster *DatabaseCluster, engine *everestv1alpha1.DatabaseEngine) error {
+	if err := validateVersion(databaseCluster.Spec.Engine.Version, engine); err != nil {
+		return err
+	}
+
+	switch databaseCluster.Spec.Engine.Type {
+	case Pxc:
+		if databaseCluster.Spec.Engine.Replicas != nil && *databaseCluster.Spec.Engine.Replicas%2 == 0 {
+			return errEvenEngineReplicas
+		}
+		if databaseCluster.Spec.Engine.Replicas != nil && *databaseCluster.Spec.Engine.Replicas > maxPXCEngineReplicas {
+			return errMaxPXCEngineReplicas
+		}
+	case Psmdb:
+		if databaseCluster.Spec.Engine.Replicas != nil && *databaseCluster.Spec.Engine.Replicas%2 == 0 {
+			return errEvenEngineReplicas
+		}
+	case Postgresql:
+		// no restrictions for now
 	}
 
 	return nil
@@ -1133,27 +1167,26 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 	dbc *DatabaseCluster,
 	oldDB *everestv1alpha1.DatabaseCluster,
 ) error {
+	oldSchedules := oldDB.Spec.Backup.Schedules
+	newSchedules := []everestv1alpha1.BackupSchedule{}
+	schedules := pointer.Get(pointer.Get(pointer.Get(dbc.Spec).Backup).Schedules)
+	for _, schedule := range schedules {
+		newSchedules = append(newSchedules, everestv1alpha1.BackupSchedule{
+			Name:              schedule.Name,
+			Enabled:           schedule.Enabled,
+			BackupStorageName: schedule.BackupStorageName,
+			Schedule:          schedule.Schedule,
+			RetentionCopies:   pointer.GetInt32(schedule.RetentionCopies),
+		})
+	}
+	sortFn := func(a, b everestv1alpha1.BackupSchedule) int { return strings.Compare(a.Name, b.Name) }
+	slices.SortFunc(oldSchedules, sortFn)
+	slices.SortFunc(newSchedules, sortFn)
+
 	isSchedulesEqual := func() bool {
-		oldSchedules := oldDB.Spec.Backup.Schedules
-		newSchedules := []everestv1alpha1.BackupSchedule{}
-		schedules := pointer.Get(pointer.Get(pointer.Get(dbc.Spec).Backup).Schedules)
-		for _, schedule := range schedules {
-			newSchedules = append(newSchedules, everestv1alpha1.BackupSchedule{
-				Name:              schedule.Name,
-				Enabled:           schedule.Enabled,
-				BackupStorageName: schedule.BackupStorageName,
-				Schedule:          schedule.Schedule,
-				RetentionCopies:   pointer.GetInt32(schedule.RetentionCopies),
-			})
-		}
 		if len(oldSchedules) != len(newSchedules) {
 			return false
 		}
-		// sort slices by name.
-		sortFn := func(a, b everestv1alpha1.BackupSchedule) int { return strings.Compare(a.Name, b.Name) }
-		slices.SortFunc(oldSchedules, sortFn)
-		slices.SortFunc(newSchedules, sortFn)
-
 		// compare each.
 		for i := range oldSchedules {
 			if oldSchedules[i].Name != newSchedules[i].Name ||
@@ -1171,6 +1204,13 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 	// permission to create backups in this namespace.
 	if !isSchedulesEqual() {
 		if err := e.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, rbac.ObjectName(oldDB.GetNamespace(), "")); err != nil {
+			return err
+		}
+	}
+	// User should be able to read a backup storage to use it in a backup schedule.
+	for _, sched := range newSchedules {
+		if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead,
+			rbac.ObjectName(oldDB.GetNamespace(), sched.BackupStorageName)); err != nil {
 			return err
 		}
 	}
