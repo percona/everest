@@ -1468,8 +1468,13 @@ func TestValidateSharding(t *testing.T) {
 		},
 		{
 			desc:     "insufficient configservers",
-			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0"}, "sharding": {"enabled": true, "shards": 1,"configServer": {"replicas": 0}}}}`),
+			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0", "replicas": 3}, "sharding": {"enabled": true, "shards": 1,"configServer": {"replicas": 1}}}}`),
 			expected: errInsufficientCfgSrvNumber,
+		},
+		{
+			desc:     "insufficient configservers 1 node",
+			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0", "replicas": 1}, "sharding": {"enabled": true, "shards": 1,"configServer": {"replicas": 0}}}}`),
+			expected: errInsufficientCfgSrvNumber1Node,
 		},
 		{
 			desc:     "insufficient shards number",
