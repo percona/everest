@@ -15,10 +15,7 @@ export const OperatorCell = ({
     () => operators.map((operator) => `${name}/${operator}`),
     [name, operators]
   );
-  const { canUpdate, canRead } = useRBACPermissions(
-    'database-engines',
-    operatorsToCheck
-  );
+  const { canRead } = useRBACPermissions('database-engines', operatorsToCheck);
   const navigate = useNavigate();
 
   return (
@@ -27,7 +24,6 @@ export const OperatorCell = ({
       {(upgradeAvailable || pendingActions.length) && canRead && (
         <Button
           onClick={() => navigate(`/settings/namespaces/${name}`)}
-          disabled={!canUpdate}
           sx={{ ml: 'auto' }}
         >
           Upgrade
