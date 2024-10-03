@@ -8,16 +8,18 @@ import {
 } from 'react-router-dom';
 import { NoMatch } from '../404/NoMatch';
 import BackNavigationText from 'components/back-navigation-text';
-import { DbActionButton } from './db-action-button';
-import { Messages } from './db-cluster-details.messages';
 import { DBClusterDetailsTabs } from './db-cluster-details.types';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbClusterContext } from './dbCluster.context';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { useRBACPermissions } from 'hooks/rbac';
 import { DB_CLUSTER_STATUS_TO_BASE_STATUS } from '../databases/DbClusterView.constants';
 import { beautifyDbClusterStatus } from '../databases/DbClusterView.utils';
 import StatusField from 'components/status-field';
+import DbActions from 'components/db-actions/db-actions';
+import { useDbActions } from 'hooks';
+import { Messages } from './db-cluster-details.messages';
+import DbActionsModals from 'components/db-actions/db-actions-modals';
 
 export const DbClusterDetails = () => {
   const { dbClusterName = '' } = useParams();
@@ -41,6 +43,24 @@ export const DbClusterDetails = () => {
     `${dbCluster?.metadata.namespace}/${dbCluster?.metadata.name}`
   );
   const canRestore = canCreateRestore && canReadCredentials;
+
+  const [isNewClusterMode, setIsNewClusterMode] = useState(false);
+  const {
+    openRestoreDialog,
+    handleCloseRestoreDialog,
+    handleRestoreDbCluster,
+    handleDbRestart,
+    handleDbSuspendOrResumed,
+    handleDeleteDbCluster,
+    openDetailsDialog,
+    setOpenDetailsDialog,
+    handleCloseDetailsDialog,
+    isPaused,
+    openDeleteDialog,
+    handleConfirmDelete,
+    handleCloseDeleteDialog,
+    selectedDbCluster,
+  } = useDbActions();
 
   if (isLoading) {
     return (
@@ -96,10 +116,16 @@ export const DbClusterDetails = () => {
           </StatusField>
           <>
             {canUpdate || canDelete || canRestore ? (
-              <DbActionButton
-                dbCluster={dbCluster!}
-                canUpdate={canUpdate}
-                canDelete={canDelete}
+              <DbActions
+                isDetailView={true}
+                dbCluster={dbCluster}
+                setIsNewClusterMode={setIsNewClusterMode}
+                setOpenDetailsDialog={setOpenDetailsDialog}
+                handleDbRestart={handleDbRestart}
+                handleDbSuspendOrResumed={handleDbSuspendOrResumed}
+                handleDeleteDbCluster={handleDeleteDbCluster}
+                isPaused={isPaused}
+                handleRestoreDbCluster={handleRestoreDbCluster}
               />
             ) : undefined}
           </>
@@ -142,6 +168,18 @@ export const DbClusterDetails = () => {
         </Alert>
       )}
       <Outlet />
+
+      <DbActionsModals
+        dbCluster={selectedDbCluster!}
+        isNewClusterMode={isNewClusterMode}
+        openRestoreDialog={openRestoreDialog}
+        handleCloseRestoreDialog={handleCloseRestoreDialog}
+        openDeleteDialog={openDeleteDialog}
+        handleCloseDeleteDialog={handleCloseDeleteDialog}
+        handleConfirmDelete={handleConfirmDelete}
+        openDetailsDialog={openDetailsDialog}
+        handleCloseDetailsDialog={handleCloseDetailsDialog}
+      />
     </Box>
   );
 };
