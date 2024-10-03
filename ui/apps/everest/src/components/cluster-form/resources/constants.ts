@@ -164,8 +164,8 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
   const objectShape = {
     [DbWizardFormFields.shardNr]: z.string().optional(),
     [DbWizardFormFields.shardConfigServers]: z.string().optional(),
-    [DbWizardFormFields.cpu]: resourceToNumber(0),
-    [DbWizardFormFields.memory]: resourceToNumber(0),
+    [DbWizardFormFields.cpu]: resourceToNumber(0.6),
+    [DbWizardFormFields.memory]: resourceToNumber(0.512),
     [DbWizardFormFields.disk]: resourceToNumber(1),
     // we will never input this, but we need it and zod will let it pass
     [DbWizardFormFields.diskUnit]: z.string(),
