@@ -6,6 +6,7 @@ import { DbWizardFormFields } from 'consts.ts';
 import { rfc_123_schema } from 'utils/common-validation.ts';
 import { Messages as ScheduleFormMessages } from 'components/schedule-form-dialog/schedule-form/schedule-form.messages.ts';
 import { resourcesFormSchema } from 'components/cluster-form';
+import { dbVersionSchemaObject } from 'components/cluster-form/db-version/db-version-schema';
 
 const basicInfoSchema = z
   .object({
@@ -14,7 +15,7 @@ const basicInfoSchema = z
       .max(MAX_DB_CLUSTER_NAME_LENGTH, Messages.errors.dbName.tooLong)
       .nonempty(),
     [DbWizardFormFields.k8sNamespace]: z.string().nullable(),
-    [DbWizardFormFields.dbVersion]: z.string().nonempty(),
+    ...dbVersionSchemaObject,
     [DbWizardFormFields.storageClass]: z
       .string()
       .nullable()

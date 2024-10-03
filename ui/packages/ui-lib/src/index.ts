@@ -15,6 +15,9 @@ export { default as DbToggleCard } from './db-toggle-card';
 export * from './stepper';
 export { default as Stepper } from './stepper';
 
+export * from './dialog';
+export { default as Dialog } from './dialog';
+
 export * from './dialog-title';
 export { default as DialogTitle } from './dialog-title';
 

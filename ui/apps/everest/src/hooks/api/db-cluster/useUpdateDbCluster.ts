@@ -178,6 +178,31 @@ export const useUpdateDbClusterCrd = () =>
       }),
   });
 
+export const useUpdateDbClusterVersion = () =>
+  useMutation({
+    mutationFn: ({
+      clusterName,
+      namespace,
+      dbCluster,
+      dbVersion,
+    }: {
+      clusterName: string;
+      namespace: string;
+      dbCluster: DbCluster;
+      dbVersion: string;
+    }) =>
+      updateDbClusterFn(clusterName, namespace, {
+        ...dbCluster,
+        spec: {
+          ...dbCluster.spec,
+          engine: {
+            ...dbCluster.spec.engine,
+            version: dbVersion,
+          },
+        },
+      }),
+  });
+
 export const useUpdateDbClusterMonitoring = () =>
   useMutation({
     mutationFn: ({

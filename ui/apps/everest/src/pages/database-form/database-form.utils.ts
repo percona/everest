@@ -20,10 +20,10 @@ import { DbWizardFormFields } from 'consts.ts';
 import { dbEngineToDbType } from '@percona/utils';
 
 import { cpuParser, memoryParser } from 'utils/k8ResourceParser';
-import { generateShortUID } from './database-form-body/steps/first/utils.ts';
 import { MAX_DB_CLUSTER_NAME_LENGTH } from 'consts';
 import { DbWizardType } from './database-form-schema.ts';
 import { DB_WIZARD_DEFAULTS } from './database-form.constants.ts';
+import { generateShortUID } from 'utils/generateShortUID';
 import {
   CUSTOM_NR_UNITS_INPUT_VALUE,
   matchFieldsValueToResourceSize,
