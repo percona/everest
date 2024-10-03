@@ -27,7 +27,7 @@ export const matchFieldsValueToResourceSize = (
     (item) => item.cpu === Number(resources.cpu) && item.memory === memory.value
   );
   return res !== -1
-    ? (Object.keys(NODES_DEFAULT_SIZES)[res] as ResourceSize)
+    ? (Object.keys(NODES_DEFAULT_SIZES[dbType])[res] as ResourceSize)
     : ResourceSize.custom;
 };
 
