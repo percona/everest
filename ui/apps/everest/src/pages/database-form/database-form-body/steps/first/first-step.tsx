@@ -187,6 +187,20 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       PROXIES_DEFAULT_SIZES[dbType].small.memory
     );
     setValue(DbWizardFormFields.disk, NODES_DEFAULT_SIZES[dbType].small.disk);
+    setValue(DbWizardFormFields.shardNr, DB_WIZARD_DEFAULTS.shardNr);
+    setValue(
+      DbWizardFormFields.shardConfigServers,
+      DB_WIZARD_DEFAULTS.shardConfigServers
+    );
+    resetField(DbWizardFormFields.shardNr, {
+      keepError: false,
+    });
+    resetField(DbWizardFormFields.shardConfigServers, {
+      keepError: false,
+    });
+    resetField(DbWizardFormFields.sharding, {
+      keepError: false,
+    });
   }, []);
 
   const onDbTypeChange = useCallback(
@@ -200,20 +214,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       }
 
       setDefaultsForDbType(newDbType);
-      setValue(DbWizardFormFields.shardNr, DB_WIZARD_DEFAULTS.shardNr);
-      setValue(
-        DbWizardFormFields.shardConfigServers,
-        DB_WIZARD_DEFAULTS.shardConfigServers
-      );
-      resetField(DbWizardFormFields.shardNr, {
-        keepError: false,
-      });
-      resetField(DbWizardFormFields.shardConfigServers, {
-        keepError: false,
-      });
-      resetField(DbWizardFormFields.sharding, {
-        keepError: false,
-      });
       updateDbVersions();
     },
     [getFieldState, resetField, setRandomDbName, updateDbVersions, setValue]
