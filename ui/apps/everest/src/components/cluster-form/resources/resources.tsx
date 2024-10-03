@@ -40,6 +40,7 @@ type Props = {
   customNrOfUnitsInputName: string;
   disableDiskInput?: boolean;
   allowDiskInputUpdate?: boolean;
+  dbType: DbType;
 };
 
 type ResourceInputProps = {
@@ -149,6 +150,7 @@ const ResourceInput = ({
 };
 
 const ResourcesToggles = ({
+  dbType,
   unit = 'node',
   unitPlural = `${unit}s`,
   options,
@@ -260,7 +262,9 @@ const ResourcesToggles = ({
               {`${value} ${+value > 1 ? unitPlural : unit}`}
             </ToggleCard>
           ))}
-          <ToggleCard value={CUSTOM_NR_UNITS_INPUT_VALUE}>Custom</ToggleCard>
+          {dbType !== DbType.Mysql && (
+            <ToggleCard value={CUSTOM_NR_UNITS_INPUT_VALUE}>Cutsom</ToggleCard>
+          )}
         </ToggleButtonGroupInput>
         {numberOfUnits === CUSTOM_NR_UNITS_INPUT_VALUE && (
           <TextInput
@@ -503,6 +507,7 @@ const ResourcesForm = ({
         />
         <Divider />
         <ResourcesToggles
+          dbType={dbType}
           options={NODES_DB_TYPE_MAP[dbType]}
           resourceSizePerUnitInputName={DbWizardFormFields.resourceSizePerNode}
           cpuInputName={DbWizardFormFields.cpu}
@@ -529,6 +534,7 @@ const ResourcesForm = ({
         />
         <Divider />
         <ResourcesToggles
+          dbType={dbType}
           unit={proxyUnitNames.singular}
           unitPlural={proxyUnitNames.plural}
           options={NODES_DB_TYPE_MAP[dbType]}
