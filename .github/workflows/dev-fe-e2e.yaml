@@ -160,7 +160,6 @@ jobs:
           MONITORING_PASSWORD: "admin"
         run: |
           cd ui
-          find packages -maxdepth 2 -type d -ls
           pnpm --filter "@percona/everest" e2e
 
       - name: Archive report

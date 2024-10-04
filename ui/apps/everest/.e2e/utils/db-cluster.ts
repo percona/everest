@@ -113,8 +113,6 @@ export const createDbClusterFn = async (
     },
   };
 
-  console.log(payload);
-
   const response = await request.post(
     `/v1/namespaces/${namespace}/database-clusters`,
     {
