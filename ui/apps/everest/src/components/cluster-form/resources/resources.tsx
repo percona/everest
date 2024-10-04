@@ -26,44 +26,11 @@ import {
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
 import { getProxyUnitNamesFromDbType } from './utils';
-
-type Props = {
-  unit?: string;
-  unitPlural?: string;
-  options: string[];
-  resourceSizePerUnitInputName: string;
-  cpuInputName: string;
-  diskInputName?: string;
-  diskUnitInputName?: string;
-  memoryInputName: string;
-  numberOfUnitsInputName: string;
-  customNrOfUnitsInputName: string;
-  disableDiskInput?: boolean;
-  allowDiskInputUpdate?: boolean;
-};
-
-type ResourceInputProps = {
-  unit: string;
-  unitPlural: string;
-  name: string;
-  label: string;
-  helperText: string;
-  endSuffix: string;
-  numberOfUnits: number;
-  disabled?: boolean;
-};
+import { ResourcesTogglesProps, ResourceInputProps } from './resources.types';
+import { Messages } from './messages';
 
 const humanizeResourceSizeMap = (type: ResourceSize): string =>
   humanizedResourceSizeMap[type];
-
-const resourcesCapacityExceeding = (
-  fieldName: string,
-  value: number | undefined,
-  units: string
-) =>
-  `Your specified ${fieldName} size exceeds the ${
-    value ? `${value.toFixed(2)} ${units}` : ''
-  } available. Enter a smaller value before continuing.`;
 
 const estimated = (value: string | number | undefined, units: string) =>
   value ? `Estimated available: ${value} ${units}` : '';
@@ -85,7 +52,11 @@ const checkResourceText = (
       fieldLabel === 'cpu' ? parsedNumber / 1000 : parsedNumber / 10 ** 9;
 
     if (exceedFlag) {
-      return resourcesCapacityExceeding(fieldLabel, processedValue, units);
+      return Messages.resourcesCapacityExceeding(
+        fieldLabel,
+        processedValue,
+        units
+      );
     }
     return estimated(processedValue.toFixed(2), units);
   }
@@ -149,6 +120,7 @@ const ResourceInput = ({
 };
 
 const ResourcesToggles = ({
+  dbType,
   unit = 'node',
   unitPlural = `${unit}s`,
   options,
@@ -161,7 +133,7 @@ const ResourcesToggles = ({
   customNrOfUnitsInputName,
   disableDiskInput,
   allowDiskInputUpdate,
-}: Props) => {
+}: ResourcesTogglesProps) => {
   const { isMobile, isDesktop } = useActiveBreakpoint();
   const { data: resourcesInfo, isFetching: resourcesInfoLoading } =
     useKubernetesClusterResourcesInfo();
@@ -260,7 +232,11 @@ const ResourcesToggles = ({
               {`${value} ${+value > 1 ? unitPlural : unit}`}
             </ToggleCard>
           ))}
-          <ToggleCard value={CUSTOM_NR_UNITS_INPUT_VALUE}>Custom</ToggleCard>
+          {dbType !== DbType.Mysql && (
+            <ToggleCard value={CUSTOM_NR_UNITS_INPUT_VALUE}>
+              {Messages.customValue}
+            </ToggleCard>
+          )}
         </ToggleButtonGroupInput>
         {numberOfUnits === CUSTOM_NR_UNITS_INPUT_VALUE && (
           <TextInput
@@ -503,6 +479,7 @@ const ResourcesForm = ({
         />
         <Divider />
         <ResourcesToggles
+          dbType={dbType}
           options={NODES_DB_TYPE_MAP[dbType]}
           resourceSizePerUnitInputName={DbWizardFormFields.resourceSizePerNode}
           cpuInputName={DbWizardFormFields.cpu}
@@ -529,6 +506,7 @@ const ResourcesForm = ({
         />
         <Divider />
         <ResourcesToggles
+          dbType={dbType}
           unit={proxyUnitNames.singular}
           unitPlural={proxyUnitNames.plural}
           options={NODES_DB_TYPE_MAP[dbType]}
