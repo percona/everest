@@ -161,7 +161,7 @@ jobs:
         run: |
           cd ui
           find packages -maxdepth 2 -type d -ls
-          pnpm --filter "@percona/everest" e2e --grep-invert @release
+          pnpm --filter "@percona/everest" e2e
 
       - name: Archive report
         if: always()
