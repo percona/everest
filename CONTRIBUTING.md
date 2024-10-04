@@ -11,7 +11,7 @@ You can find the definition of the custom resources in the [Everest operator rep
 
 ### Run everest locally
 0. Prerequisites:
-    - Golang 1.22.x
+    - Golang 1.23.x
     - Make 3.x
     - Docker 20.x
     - Git 2.x
