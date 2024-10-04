@@ -1,6 +1,7 @@
 module github.com/percona/everest/tools
 
-go 1.22.6
+go 1.23
+
 toolchain go1.23.2
 
 require (
