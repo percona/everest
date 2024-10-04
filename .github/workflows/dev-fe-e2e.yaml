@@ -33,7 +33,7 @@ jobs:
       - name: Set up Go release
         uses: percona-platform/setup-go@v4
         with:
-          go-version: 1.22.x
+          go-version: 1.23.x
 
       - name: Set GO_VERSION environment variable
         shell: bash
