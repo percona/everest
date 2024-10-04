@@ -1,6 +1,8 @@
 module github.com/percona/everest/tools
 
-go 1.22.6
+go 1.23
+
+toolchain go1.23.2
 
 require (
 	github.com/daixiang0/gci v0.13.4
@@ -9,7 +11,7 @@ require (
 	github.com/quasilyte/go-consistent v0.6.1
 	github.com/reviewdog/reviewdog v0.20.1
 	github.com/vburenin/ifacemaker v1.2.1
-	github.com/vektra/mockery/v2 v2.44.1
+	github.com/vektra/mockery/v2 v2.46.2
 	golang.org/x/tools v0.24.0
 	mvdan.cc/gofumpt v0.7.0
 )
