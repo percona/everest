@@ -5,7 +5,7 @@ go 1.23
 toolchain go1.23.2
 
 require (
-	github.com/daixiang0/gci v0.13.4
+	github.com/daixiang0/gci v0.13.5
 	github.com/deepmap/oapi-codegen/v2 v2.1.0
 	github.com/golangci/golangci-lint v1.60.2
 	github.com/quasilyte/go-consistent v0.6.1
