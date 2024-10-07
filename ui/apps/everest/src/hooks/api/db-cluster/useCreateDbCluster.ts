@@ -85,7 +85,7 @@ const formValuesToPayloadMapping = (
         replicas: numberOfNodes,
         resources: {
           cpu: `${dbPayload.cpu}`,
-          memory: `${dbPayload.memory}${dbPayload.memoryUnit}`,
+          memory: `${dbPayload.memory}G`,
         },
         storage: {
           class: dbPayload.storageClass!,

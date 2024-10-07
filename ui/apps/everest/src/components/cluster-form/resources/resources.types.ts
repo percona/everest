@@ -12,7 +12,6 @@ export type ResourcesTogglesProps = {
   cpuInputName: string;
   diskInputName?: string;
   diskUnitInputName?: string;
-  memoryUnitInputName?: string;
   memoryInputName: string;
   numberOfUnitsInputName: string;
   customNrOfUnitsInputName: string;

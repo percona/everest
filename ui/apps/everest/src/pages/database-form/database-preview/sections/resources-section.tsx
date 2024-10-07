@@ -8,7 +8,6 @@ export const ResourcesPreviewSection = ({
   cpu,
   disk,
   diskUnit,
-  memoryUnit,
   memory,
   sharding,
   shardNr,
@@ -44,9 +43,7 @@ export const ResourcesPreviewSection = ({
       />
       <PreviewContentText
         text={`Memory: ${
-          Number.isNaN(parsedMemory)
-            ? ''
-            : `${parsedMemory.toFixed(2)} ${memoryUnit}`
+          Number.isNaN(parsedMemory) ? '' : `${parsedMemory.toFixed(2)} GB`
         }`}
       />
       <PreviewContentText
