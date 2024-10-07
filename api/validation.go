@@ -66,6 +66,7 @@ const (
 	minConfigServersNumNNodeReplset = 3
 	minConfigServersNum1NodeReplset = 1
 	maxPXCEngineReplicas            = 5
+	minPXCProxyReplicas             = 2
 )
 
 var (
@@ -126,6 +127,7 @@ var (
 	errShardingVersion               = errors.New("sharding is available starting PSMDB 1.17.0")
 	errEvenEngineReplicas            = errors.New("engine replicas number should be odd")
 	errMaxPXCEngineReplicas          = errors.New("max replicas number for MySQL is 5")
+	errMinPXCProxyReplicas           = errors.New("min replicas number for Proxy is 2")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -642,7 +644,8 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 		// User should be able to read a backup storage to use it in a backup schedule.
 		for _, sched := range schedules {
 			if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead,
-				rbac.ObjectName(namespace, sched.BackupStorageName)); err != nil {
+				rbac.ObjectName(namespace, sched.BackupStorageName),
+			); err != nil {
 				return err
 			}
 		}
@@ -702,7 +705,7 @@ func (e *EverestServer) validateDatabaseClusterCR(
 		return err
 	}
 	if databaseCluster.Spec.Proxy != nil && databaseCluster.Spec.Proxy.Type != nil {
-		if err := validateProxy(databaseCluster.Spec.Engine.Type, string(*databaseCluster.Spec.Proxy.Type)); err != nil {
+		if err := validateProxy(databaseCluster); err != nil {
 			return err
 		}
 	}
@@ -918,7 +921,22 @@ func containsVersion(version string, versions []string) bool {
 	return false
 }
 
-func validateProxy(engineType DatabaseClusterSpecEngineType, proxyType string) error {
+func validateProxy(databaseCluster *DatabaseCluster) error {
+	if err := validateProxyType(databaseCluster.Spec.Engine.Type, string(*databaseCluster.Spec.Proxy.Type)); err != nil {
+		return err
+	}
+
+	if databaseCluster.Spec.Engine.Type == DatabaseClusterSpecEngineType(everestv1alpha1.DatabaseEnginePXC) {
+		if databaseCluster.Spec.Engine.Replicas != nil && *databaseCluster.Spec.Engine.Replicas > 1 &&
+			databaseCluster.Spec.Proxy.Replicas != nil && *databaseCluster.Spec.Proxy.Replicas < minPXCProxyReplicas {
+			return errMinPXCProxyReplicas
+		}
+	}
+
+	return nil
+}
+
+func validateProxyType(engineType DatabaseClusterSpecEngineType, proxyType string) error {
 	if engineType == DatabaseClusterSpecEngineType(everestv1alpha1.DatabaseEnginePXC) {
 		if proxyType != string(everestv1alpha1.ProxyTypeProxySQL) && proxyType != string(everestv1alpha1.ProxyTypeHAProxy) {
 			return errUnsupportedPXCProxy
@@ -1215,7 +1233,8 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 	// User should be able to read a backup storage to use it in a backup schedule.
 	for _, sched := range newSchedules {
 		if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead,
-			rbac.ObjectName(oldDB.GetNamespace(), sched.BackupStorageName)); err != nil {
+			rbac.ObjectName(oldDB.GetNamespace(), sched.BackupStorageName),
+		); err != nil {
 			return err
 		}
 	}

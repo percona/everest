@@ -19,9 +19,9 @@ import {
   suspendDbCluster,
   resumeDbCluster,
   restartDbCluster,
-} from '../utils/db-clusters-list';
-import { getTokenFromLocalStorage } from '../utils/localStorage';
-import { getClusterDetailedInfo } from '../utils/storage-class';
+} from '@e2e/utils/db-clusters-list';
+import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
 import {
   moveForward,
   submitWizard,
@@ -29,14 +29,14 @@ import {
   populateResources,
   populateAdvancedConfig,
   populateMonitoringModalForm,
-} from '../utils/db-wizard';
-import { EVEREST_CI_NAMESPACES } from '../constants';
-import { waitForStatus, waitForDelete } from '../utils/table';
-import { checkError } from '../utils/generic';
+} from '@e2e/utils/db-wizard';
+import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
+import { waitForStatus, waitForDelete } from '@e2e/utils/table';
+import { checkError } from '@e2e/utils/generic';
 import {
   deleteMonitoringInstance,
   listMonitoringInstances,
-} from '../utils/monitoring-instance';
+} from '@e2e/utils/monitoring-instance';
 
 const {
   MONITORING_URL,
@@ -74,8 +74,8 @@ test.describe.configure({ retries: 0 });
       const clusterName = `${db}-${size}-deploy`;
 
       let storageClasses = [];
-      let namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
-      let monitoringName = `${db}-${size}-pmm`;
+      const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
+      const monitoringName = `${db}-${size}-pmm`;
 
       test.beforeAll(async ({ request }) => {
         token = await getTokenFromLocalStorage();
@@ -90,7 +90,7 @@ test.describe.configure({ retries: 0 });
       test.afterAll(async ({ request }) => {
         // we try to delete all monitoring instances because cluster creation expects that none exist
         // (monitoring instance is added in the form where the warning that none exist is visible)
-        let monitoringInstances = await listMonitoringInstances(
+        const monitoringInstances = await listMonitoringInstances(
           request,
           namespace,
           token
