@@ -222,7 +222,7 @@ test.describe('DB Cluster creation', () => {
     expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
     expect(addedCluster?.spec.proxy.replicas).toBe(1);
     expect(addedCluster?.spec.proxy.resources.cpu).toBe('1');
-    expect(addedCluster?.spec.proxy.resources.memory).toBe('2Gi');
+    expect(addedCluster?.spec.proxy.resources.memory).toBe('2G');
     // expect(addedCluster?.spec.proxy.expose.ipSourceRanges).toEqual([
     //   '192.168.1.1/24',
     //   '192.168.1.0',
