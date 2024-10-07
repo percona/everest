@@ -9,7 +9,7 @@ require (
 	github.com/Percona-Lab/percona-version-service v0.0.0-20240311164804-ffbc02387a1b
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/briandowns/spinner v1.23.1
-	github.com/casbin/casbin/v2 v2.98.0
+	github.com/casbin/casbin/v2 v2.100.0
 	github.com/casbin/govaluate v1.2.0
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/fatih/color v1.17.0
@@ -58,6 +58,7 @@ require (
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
+	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
 	github.com/bshuster-repo/logrus-logstash-hook v1.0.0 // indirect
 	github.com/cert-manager/cert-manager v1.15.2 // indirect
 	github.com/creack/pty v1.1.18 // indirect
