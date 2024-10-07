@@ -78,7 +78,7 @@ const formValuesToPayloadOverrides = (
         resources: {
           ...dbCluster.spec.engine.resources,
           cpu: `${dbPayload.cpu}`,
-          memory: `${dbPayload.memory}G`,
+          memory: `${dbPayload.memory}${dbPayload.memoryUnit}`,
         },
         storage: {
           ...dbCluster.spec.engine.storage,
@@ -241,6 +241,8 @@ export const useUpdateDbClusterResources = () =>
         memory: number;
         disk: number;
         diskUnit: string;
+        memoryUnit: string;
+        proxyMemoryUnit: string;
         numberOfNodes: number;
         proxyCpu: number;
         proxyMemory: number;
@@ -256,7 +258,7 @@ export const useUpdateDbClusterResources = () =>
             replicas: newResources.numberOfNodes,
             resources: {
               cpu: `${newResources.cpu}`,
-              memory: `${newResources.memory}G`,
+              memory: `${newResources.memory}${newResources.memoryUnit}`,
             },
             storage: {
               ...dbCluster.spec.engine.storage,
@@ -268,7 +270,7 @@ export const useUpdateDbClusterResources = () =>
             replicas: newResources.numberOfProxies,
             resources: {
               cpu: `${newResources.proxyCpu}`,
-              memory: `${newResources.proxyMemory}G`,
+              memory: `${newResources.proxyMemory}${newResources.proxyMemoryUnit}`,
             },
           },
         },

@@ -131,6 +131,7 @@ const ResourcesToggles = ({
   cpuInputName,
   diskInputName = '',
   diskUnitInputName = '',
+  memoryUnitInputName = '',
   memoryInputName,
   numberOfUnitsInputName,
   customNrOfUnitsInputName,
@@ -148,6 +149,7 @@ const ResourcesToggles = ({
   const memory: number = watch(memoryInputName);
   const disk: number = watch(diskInputName);
   const diskUnit: string = watch(diskUnitInputName);
+  const memoryUnit: string = watch(memoryUnitInputName);
   const numberOfUnits: string = watch(numberOfUnitsInputName);
   const customNrOfUnits: string = watch(customNrOfUnitsInputName);
   const intNumberOfUnits = parseInt(
@@ -320,11 +322,11 @@ const ResourcesToggles = ({
           label="MEMORY"
           helperText={checkResourceText(
             resourcesInfo?.available?.memoryBytes,
-            'GB',
+            memoryUnit,
             'memory',
             memoryCapacityExceeded
           )}
-          endSuffix="GB"
+          endSuffix={memoryUnit}
           numberOfUnits={intNumberOfUnits}
         />
         {diskInputName && (
@@ -489,6 +491,7 @@ const ResourcesForm = ({
           cpuInputName={DbWizardFormFields.cpu}
           diskInputName={DbWizardFormFields.disk}
           diskUnitInputName={DbWizardFormFields.diskUnit}
+          memoryUnitInputName={DbWizardFormFields.memoryUnit}
           memoryInputName={DbWizardFormFields.memory}
           numberOfUnitsInputName={DbWizardFormFields.numberOfNodes}
           customNrOfUnitsInputName={DbWizardFormFields.customNrOfNodes}
@@ -518,6 +521,7 @@ const ResourcesForm = ({
           resourceSizePerUnitInputName={DbWizardFormFields.resourceSizePerProxy}
           cpuInputName={DbWizardFormFields.proxyCpu}
           memoryInputName={DbWizardFormFields.proxyMemory}
+          memoryUnitInputName={DbWizardFormFields.proxyMemoryUnit}
           numberOfUnitsInputName={DbWizardFormFields.numberOfProxies}
           customNrOfUnitsInputName={DbWizardFormFields.customNrOfProxies}
         />

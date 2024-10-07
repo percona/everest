@@ -53,6 +53,12 @@ export const DbClusterPayloadToFormValues = (
   const diskValues = memoryParser(
     dbCluster?.spec?.engine?.storage?.size.toString()
   );
+  const memoryValues = memoryParser(
+    (dbCluster?.spec?.engine?.resources?.memory || 0).toString()
+  );
+  const proxyMemoryValues = memoryParser(
+    (dbCluster?.spec?.proxy?.resources?.memory || 0).toString()
+  );
 
   const sharding = dbCluster?.spec?.sharding;
 
@@ -121,12 +127,10 @@ export const DbClusterPayloadToFormValues = (
     ),
     [DbWizardFormFields.disk]: diskValues.value,
     [DbWizardFormFields.diskUnit]: diskValues.originalUnit,
-    [DbWizardFormFields.memory]: memoryParser(
-      (dbCluster?.spec?.engine?.resources?.memory || 0).toString()
-    ).value,
-    [DbWizardFormFields.proxyMemory]: memoryParser(
-      (dbCluster?.spec?.proxy?.resources?.memory || 0).toString()
-    ).value,
+    [DbWizardFormFields.memoryUnit]: memoryValues.originalUnit,
+    [DbWizardFormFields.memory]: memoryValues.value,
+    [DbWizardFormFields.proxyMemory]: proxyMemoryValues.value,
+    [DbWizardFormFields.proxyMemoryUnit]: proxyMemoryValues.originalUnit,
     [DbWizardFormFields.storageClass]:
       dbCluster?.spec?.engine?.storage?.class || null,
 

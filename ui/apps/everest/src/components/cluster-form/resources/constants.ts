@@ -169,6 +169,8 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
     [DbWizardFormFields.disk]: resourceToNumber(1),
     // we will never input this, but we need it and zod will let it pass
     [DbWizardFormFields.diskUnit]: z.string(),
+    [DbWizardFormFields.memoryUnit]: z.string(),
+    [DbWizardFormFields.proxyMemoryUnit]: z.string(),
     [DbWizardFormFields.resourceSizePerNode]: z.nativeEnum(ResourceSize),
     [DbWizardFormFields.numberOfNodes]: z.string(),
     [DbWizardFormFields.customNrOfNodes]: z.string().optional(),

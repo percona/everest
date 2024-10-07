@@ -51,6 +51,8 @@ export const DB_WIZARD_DEFAULTS: DbWizardType = {
   [DbWizardFormFields.proxyCpu]: PROXIES_DEFAULT_SIZES.mongodb.small.cpu,
   [DbWizardFormFields.disk]: NODES_DEFAULT_SIZES.mongodb.small.disk,
   [DbWizardFormFields.diskUnit]: 'Gi',
+  [DbWizardFormFields.memoryUnit]: 'Gi',
+  [DbWizardFormFields.proxyMemoryUnit]: 'Gi',
   [DbWizardFormFields.memory]: NODES_DEFAULT_SIZES.mongodb.small.memory,
   [DbWizardFormFields.proxyMemory]: PROXIES_DEFAULT_SIZES.mongodb.small.memory,
   [DbWizardFormFields.sharding]: false,
