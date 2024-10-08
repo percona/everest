@@ -17,11 +17,15 @@ export const OperatorCell = ({
   );
   const { canRead } = useRBACPermissions('database-engines', operatorsToCheck);
   const navigate = useNavigate();
+  const somePendingTask =
+    pendingActions.filter(
+      (a) => a.pendingTask === 'restart' || a.pendingTask === 'upgradeEngine'
+    ).length > 0;
 
   return (
     <Stack direction="row" alignItems="center" width="100%">
       <Typography variant="body1">{description}</Typography>
-      {(upgradeAvailable || pendingActions.length) && canRead && (
+      {(upgradeAvailable || somePendingTask) && canRead && (
         <Button
           onClick={() => navigate(`/settings/namespaces/${name}`)}
           sx={{ ml: 'auto' }}
