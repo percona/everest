@@ -53,8 +53,7 @@ export const DB_WIZARD_DEFAULTS: DbWizardType = {
   [DbWizardFormFields.memory]: DEFAULT_SIZES.small.memory,
   [DbWizardFormFields.proxyMemory]: DEFAULT_SIZES.small.memory,
   [DbWizardFormFields.sharding]: false,
-  [DbWizardFormFields.shardNr]: '1',
-  [DbWizardFormFields.shardConfigServers]: '1',
+  [DbWizardFormFields.shardNr]: '2',
 };
 
 export const NODES_DB_TYPE_MAP: Record<DbType, string[]> = {

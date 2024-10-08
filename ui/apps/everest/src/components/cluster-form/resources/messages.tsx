@@ -4,6 +4,10 @@ export const Messages = {
     min: (val: number) => `The value cannot be less than ${val}`,
     max: (val: number) => `The value cannot be more than ${val}`,
     odd: 'The value cannot be even',
+    numberOfShards: '№ of shards',
+    numberOfConfigurationServers: '№ of configuration servers',
+    numberOfConfigServersError:
+      'The number of configuration servers cannot be 1 if the number of database nodes is greater than 1',
   },
   customValue: 'Custom',
   resourcesCapacityExceeding: (

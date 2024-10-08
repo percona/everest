@@ -68,14 +68,16 @@ export const DEFAULT_SIZES = {
   },
 };
 
-export const SHARDING_DEFAULTS = {
-  [DbWizardFormFields.shardConfigServers]: {
-    min: '1',
-    max: '7',
-  },
-  [DbWizardFormFields.shardNr]: {
-    min: '1',
-  },
+export const DEFAULT_CONFIG_SERVERS = ['1', '3', '5', '7'];
+
+export const MIN_NUMBER_OF_SHARDS = '1';
+
+export const getDefaultNumberOfconfigServersByNumberOfNodes = (
+  numberOfNodes: number
+) => {
+  if (DEFAULT_CONFIG_SERVERS.includes(numberOfNodes.toString())) {
+    return numberOfNodes <= 5 ? numberOfNodes.toString() : '7';
+  } else return '7';
 };
 
 export const resourcesFormSchema = (passthrough?: boolean) => {
@@ -137,13 +139,8 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
 
       if (sharding as boolean) {
         const intShardNr = parseInt(shardNr || '', 10);
-        const intShardNrMin =
-          +SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min;
-        const intShardConfigServers = parseInt(shardConfigServers || '', 10);
-        const intShardConfigServersMin =
-          +SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min;
-        const intShardConfigServersMax =
-          +SHARDING_DEFAULTS[DbWizardFormFields.shardConfigServers].max;
+        const intShardNrMin = +MIN_NUMBER_OF_SHARDS;
+        const intShardNrConfigServers = parseInt(shardConfigServers || '', 10);
 
         if (Number.isNaN(intShardNr) || intShardNr < 0) {
           ctx.addIssue({
@@ -161,31 +158,29 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
           }
         }
 
-        if (Number.isNaN(intShardConfigServers) || intShardConfigServers <= 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: Messages.sharding.invalid,
-            path: [DbWizardFormFields.shardConfigServers],
-          });
+        console.log('nOfnodes:',numberOfNodes, ' configServersN:', intShardNrConfigServers);
+        if (
+          !Number.isNaN(numberOfNodes) &&
+          numberOfNodes !== CUSTOM_NR_UNITS_INPUT_VALUE
+        ) {
+          if (intShardNrConfigServers === 1 && +numberOfNodes > 1) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: Messages.sharding.numberOfConfigurationServers,
+              path: [DbWizardFormFields.shardConfigServers],
+            });
+            console.log('setError1');
+          }
         } else {
-          if (intShardConfigServers < intShardConfigServersMin) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: Messages.sharding.min(intShardConfigServersMin),
-              path: [DbWizardFormFields.shardConfigServers],
-            });
-          } else if (!(intShardConfigServers % 2)) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: Messages.sharding.odd,
-              path: [DbWizardFormFields.shardConfigServers],
-            });
-          } else if (intShardConfigServers > intShardConfigServersMax) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: Messages.sharding.max(intShardConfigServersMax),
-              path: [DbWizardFormFields.shardConfigServers],
-            });
+          if (!Number.isNaN(customNrOfNodes)) {
+            if (intShardNrConfigServers === 1 && +numberOfNodes > 1) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: Messages.sharding.numberOfConfigurationServers,
+                path: [DbWizardFormFields.shardConfigServers],
+              });
+              console.log('setError2');
+            }
           }
         }
       }
