@@ -35,6 +35,7 @@ import { PerconaQueryOptions } from 'shared-types/query.types';
 import cronConverter from 'utils/cron-converter';
 import { getProxySpec } from './utils';
 import { DbType } from '@percona/types';
+import { useRBACPermissions } from 'hooks/rbac';
 
 type CreateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -159,9 +160,19 @@ export const useDbClusterCredentials = (
   dbClusterName: string,
   namespace: string,
   options?: PerconaQueryOptions<ClusterCredentials, unknown, ClusterCredentials>
-) =>
-  useQuery<GetDbClusterCredentialsPayload, unknown, ClusterCredentials>({
-    queryKey: [`cluster-credentials-${dbClusterName}`],
+) => {
+  const { canRead: canReadCredentials } = useRBACPermissions(
+    'database-cluster-credentials',
+    `${namespace}/${dbClusterName}`
+  );
+
+  return useQuery<GetDbClusterCredentialsPayload, unknown, ClusterCredentials>({
+    queryKey: ['cluster-credentials', dbClusterName],
     queryFn: () => getDbClusterCredentialsFn(dbClusterName, namespace),
+    select: canReadCredentials
+      ? (creds) => creds
+      : () => ({ username: '', password: '' }),
     ...options,
+    enabled: (options?.enabled ?? true) && canReadCredentials,
   });
+};

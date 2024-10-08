@@ -7,6 +7,7 @@
     "jsx": "react-jsx",
     "types": ["@testing-library/jest-dom", "vitest/globals"],
     "paths": {
+      "@e2e/*": ["./*"],
       "@percona/ui-lib": ["../../../packages/ui-lib/src"],
       "@percona/design": ["../../../packages/design/src"],
       "@percona/types": ["../../../packages/types/src"],
