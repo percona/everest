@@ -41,6 +41,11 @@ import { filterAvailableDbVersionsForDbEngineEdition } from 'components/cluster-
 import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import { useDBEnginesForNamespaces } from 'hooks/api/namespaces/useNamespaces.ts';
+import {
+  NODES_DEFAULT_SIZES,
+  PROXIES_DEFAULT_SIZES,
+  ResourceSize,
+} from 'components/cluster-form';
 import { DbVersion } from 'components/cluster-form/db-version';
 import { generateShortUID } from 'utils/generateShortUID';
 
@@ -157,6 +162,41 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const setDefaultsForDbType = useCallback((dbType: DbType) => {
     setValue(DbWizardFormFields.dbType, dbType);
     setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[dbType]);
+    setValue(DbWizardFormFields.numberOfProxies, DEFAULT_NODES[dbType]);
+    setValue(DbWizardFormFields.resourceSizePerNode, ResourceSize.small);
+    setValue(DbWizardFormFields.resourceSizePerProxy, ResourceSize.small);
+    setValue(DbWizardFormFields.cpu, NODES_DEFAULT_SIZES[dbType].small.cpu);
+    setValue(
+      DbWizardFormFields.proxyCpu,
+      PROXIES_DEFAULT_SIZES[dbType].small.cpu
+    );
+    setValue(
+      DbWizardFormFields.memory,
+      NODES_DEFAULT_SIZES[dbType].small.memory
+    );
+    setValue(
+      DbWizardFormFields.proxyMemory,
+      PROXIES_DEFAULT_SIZES[dbType].small.memory
+    );
+    setValue(DbWizardFormFields.disk, NODES_DEFAULT_SIZES[dbType].small.disk);
+    setValue(DbWizardFormFields.shardNr, DB_WIZARD_DEFAULTS.shardNr);
+    setValue(
+      DbWizardFormFields.shardConfigServers,
+      DB_WIZARD_DEFAULTS.shardConfigServers
+    );
+
+    resetField(DbWizardFormFields.numberOfProxies, {
+      keepTouched: false,
+    });
+    resetField(DbWizardFormFields.shardNr, {
+      keepError: false,
+    });
+    resetField(DbWizardFormFields.shardConfigServers, {
+      keepError: false,
+    });
+    resetField(DbWizardFormFields.sharding, {
+      keepError: false,
+    });
   }, []);
 
   const onDbTypeChange = useCallback(
@@ -169,27 +209,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         setRandomDbName(newDbType);
       }
 
-      setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[newDbType]);
-      resetField(DbWizardFormFields.numberOfProxies, {
-        keepTouched: false,
-      });
-      setValue(DbWizardFormFields.numberOfProxies, DEFAULT_NODES[newDbType], {
-        shouldTouch: false,
-      });
-      setValue(DbWizardFormFields.shardNr, DB_WIZARD_DEFAULTS.shardNr);
-      setValue(
-        DbWizardFormFields.shardConfigServers,
-        DB_WIZARD_DEFAULTS.shardConfigServers
-      );
-      resetField(DbWizardFormFields.shardNr, {
-        keepError: false,
-      });
-      resetField(DbWizardFormFields.shardConfigServers, {
-        keepError: false,
-      });
-      resetField(DbWizardFormFields.sharding, {
-        keepError: false,
-      });
+      setDefaultsForDbType(newDbType);
       updateDbVersions();
     },
     [getFieldState, resetField, setRandomDbName, updateDbVersions, setValue]

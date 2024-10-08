@@ -17,15 +17,17 @@ import { useKubernetesClusterResourcesInfo } from 'hooks/api/kubernetesClusters/
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
 import {
   CUSTOM_NR_UNITS_INPUT_VALUE,
-  DEFAULT_SIZES,
+  NODES_DEFAULT_SIZES,
   humanizedResourceSizeMap,
   NODES_DB_TYPE_MAP,
   ResourceSize,
   SHARDING_DEFAULTS,
+  PROXIES_DEFAULT_SIZES,
 } from './constants';
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
 import { getProxyUnitNamesFromDbType } from './utils';
+
 import { ResourcesTogglesProps, ResourceInputProps } from './resources.types';
 import { Messages } from './messages';
 
@@ -124,6 +126,7 @@ const ResourcesToggles = ({
   unit = 'node',
   unitPlural = `${unit}s`,
   options,
+  sizeOptions,
   resourceSizePerUnitInputName,
   cpuInputName,
   diskInputName = '',
@@ -166,11 +169,11 @@ const ResourcesToggles = ({
 
   useEffect(() => {
     if (resourceSizePerUnit && resourceSizePerUnit !== ResourceSize.custom) {
-      setValue(cpuInputName, DEFAULT_SIZES[resourceSizePerUnit].cpu);
+      setValue(cpuInputName, sizeOptions[resourceSizePerUnit].cpu);
       if (allowDiskInputUpdate) {
-        setValue(diskInputName, DEFAULT_SIZES[resourceSizePerUnit].disk);
+        setValue(diskInputName, sizeOptions[resourceSizePerUnit].disk);
       }
-      setValue(memoryInputName, DEFAULT_SIZES[resourceSizePerUnit].memory);
+      setValue(memoryInputName, sizeOptions[resourceSizePerUnit].memory);
     }
   }, [resourceSizePerUnit, allowDiskInputUpdate, setValue]);
 
@@ -183,7 +186,7 @@ const ResourcesToggles = ({
   useEffect(() => {
     if (
       resourceSizePerUnit !== ResourceSize.custom &&
-      cpu !== DEFAULT_SIZES[resourceSizePerUnit].cpu
+      cpu !== sizeOptions[resourceSizePerUnit].cpu
     ) {
       setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }
@@ -192,7 +195,7 @@ const ResourcesToggles = ({
   useEffect(() => {
     if (
       resourceSizePerUnit !== ResourceSize.custom &&
-      disk !== DEFAULT_SIZES[resourceSizePerUnit].disk
+      disk !== sizeOptions[resourceSizePerUnit].disk
     ) {
       setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }
@@ -201,7 +204,7 @@ const ResourcesToggles = ({
   useEffect(() => {
     if (
       resourceSizePerUnit !== ResourceSize.custom &&
-      memory !== DEFAULT_SIZES[resourceSizePerUnit].memory
+      memory !== sizeOptions[resourceSizePerUnit].memory
     ) {
       setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }
@@ -481,6 +484,7 @@ const ResourcesForm = ({
         <ResourcesToggles
           dbType={dbType}
           options={NODES_DB_TYPE_MAP[dbType]}
+          sizeOptions={NODES_DEFAULT_SIZES[dbType]}
           resourceSizePerUnitInputName={DbWizardFormFields.resourceSizePerNode}
           cpuInputName={DbWizardFormFields.cpu}
           diskInputName={DbWizardFormFields.disk}
@@ -510,6 +514,7 @@ const ResourcesForm = ({
           unit={proxyUnitNames.singular}
           unitPlural={proxyUnitNames.plural}
           options={NODES_DB_TYPE_MAP[dbType]}
+          sizeOptions={PROXIES_DEFAULT_SIZES[dbType]}
           resourceSizePerUnitInputName={DbWizardFormFields.resourceSizePerProxy}
           cpuInputName={DbWizardFormFields.proxyCpu}
           memoryInputName={DbWizardFormFields.proxyMemory}
