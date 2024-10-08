@@ -9,7 +9,7 @@ require (
 	github.com/Percona-Lab/percona-version-service v0.0.0-20240311164804-ffbc02387a1b
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/briandowns/spinner v1.23.1
-	github.com/casbin/casbin/v2 v2.98.0
+	github.com/casbin/casbin/v2 v2.100.0
 	github.com/casbin/govaluate v1.2.0
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/fatih/color v1.17.0
@@ -29,7 +29,7 @@ require (
 	github.com/operator-framework/api v0.26.0
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
 	github.com/percona/everest-operator v0.6.0-dev1.0.20240916093557-e44c8cd8a71d
-	github.com/rodaine/table v1.2.0
+	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
@@ -38,17 +38,17 @@ require (
 	golang.org/x/mod v0.20.0
 	golang.org/x/net v0.28.0
 	golang.org/x/sync v0.8.0
-	golang.org/x/time v0.5.0
+	golang.org/x/time v0.7.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.31.1
-	k8s.io/apiextensions-apiserver v0.30.3
+	k8s.io/apiextensions-apiserver v0.31.1
 	k8s.io/apimachinery v0.31.1
 	k8s.io/cli-runtime v0.31.1
 	k8s.io/client-go v0.31.1
 	k8s.io/kubectl v0.31.1
-	sigs.k8s.io/controller-runtime v0.18.4
+	sigs.k8s.io/controller-runtime v0.19.0
 )
 
 require (
@@ -58,6 +58,7 @@ require (
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
+	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
 	github.com/bshuster-repo/logrus-logstash-hook v1.0.0 // indirect
 	github.com/cert-manager/cert-manager v1.15.2 // indirect
 	github.com/creack/pty v1.1.18 // indirect
@@ -149,8 +150,8 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
-	go.opentelemetry.io/otel v1.27.0 // indirect
-	go.opentelemetry.io/otel/trace v1.27.0 // indirect
+	go.opentelemetry.io/otel v1.28.0 // indirect
+	go.opentelemetry.io/otel/trace v1.28.0 // indirect
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect

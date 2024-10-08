@@ -18,9 +18,9 @@ import {
   deleteDbCluster,
   gotoDbClusterBackups,
   gotoDbClusterRestores,
-} from '../utils/db-clusters-list';
-import { getTokenFromLocalStorage } from '../utils/localStorage';
-import { getClusterDetailedInfo } from '../utils/storage-class';
+} from '@e2e/utils/db-clusters-list';
+import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
 import {
   moveForward,
   submitWizard,
@@ -28,20 +28,20 @@ import {
   populateResources,
   populateAdvancedConfig,
   populateMonitoringModalForm,
-} from '../utils/db-wizard';
-import { EVEREST_CI_NAMESPACES } from '../constants';
+} from '@e2e/utils/db-wizard';
+import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import {
   waitForStatus,
   waitForDelete,
   findRowAndClickActions,
-} from '../utils/table';
-import { checkError } from '../utils/generic';
+} from '@e2e/utils/table';
+import { checkError } from '@e2e/utils/generic';
 import {
   deleteMonitoringInstance,
   listMonitoringInstances,
-} from '../utils/monitoring-instance';
-import { clickOnDemandBackup } from '../db-cluster-details/utils';
-import { prepareTestDB, dropTestDB, queryTestDB } from '../utils/db-cmd-line';
+} from '@e2e/utils/monitoring-instance';
+import { clickOnDemandBackup } from '@e2e/pr/db-cluster-details/utils';
+import { prepareTestDB, dropTestDB, queryTestDB } from '@e2e/utils/db-cmd-line';
 
 const {
   MONITORING_URL,
@@ -76,9 +76,9 @@ test.describe.configure({ retries: 0 });
       const clusterName = `${db}-${size}-dembkp`;
 
       let storageClasses = [];
-      let namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
-      let monitoringName = `${db}-${size}-pmm`;
-      let baseBackupName = `dembkp-${db}-${size}`;
+      const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
+      const monitoringName = `${db}-${size}-pmm`;
+      const baseBackupName = `dembkp-${db}-${size}`;
 
       test.beforeAll(async ({ request }) => {
         token = await getTokenFromLocalStorage();
@@ -93,7 +93,7 @@ test.describe.configure({ retries: 0 });
       test.afterAll(async ({ request }) => {
         // we try to delete all monitoring instances because cluster creation expects that none exist
         // (monitoring instance is added in the form where the warning that none exist is visible)
-        let monitoringInstances = await listMonitoringInstances(
+        const monitoringInstances = await listMonitoringInstances(
           request,
           namespace,
           token
@@ -199,7 +199,7 @@ test.describe.configure({ retries: 0 });
         expect(addedCluster?.spec.proxy.replicas).toBe(size);
       });
 
-      test(`Add data with ${db} and size ${size}`, async ({ page }) => {
+      test(`Add data with ${db} and size ${size}`, async () => {
         await prepareTestDB(clusterName, namespace);
       });
 
@@ -218,7 +218,7 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 240000);
       });
 
-      test(`Delete data with ${db} and size ${size}`, async ({ page }) => {
+      test(`Delete data with ${db} and size ${size}`, async () => {
         await dropTestDB(clusterName, namespace);
       });
 
@@ -244,9 +244,7 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 120000);
       });
 
-      test(`Check data after restore with ${db} and size ${size}`, async ({
-        page,
-      }) => {
+      test(`Check data after restore with ${db} and size ${size}`, async () => {
         const result = await queryTestDB(clusterName, namespace);
         switch (db) {
           case 'pxc':

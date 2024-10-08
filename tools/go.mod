@@ -9,17 +9,17 @@ require (
 	github.com/deepmap/oapi-codegen/v2 v2.1.0
 	github.com/golangci/golangci-lint v1.61.0
 	github.com/quasilyte/go-consistent v0.6.1
-	github.com/reviewdog/reviewdog v0.20.1
+	github.com/reviewdog/reviewdog v0.20.2
 	github.com/vburenin/ifacemaker v1.2.1
 	github.com/vektra/mockery/v2 v2.46.2
-	golang.org/x/tools v0.24.0
+	golang.org/x/tools v0.26.0
 	mvdan.cc/gofumpt v0.7.0
 )
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.2.1 // indirect
 	4d63.com/gochecknoglobals v0.2.1 // indirect
-	code.gitea.io/sdk/gitea v0.18.0 // indirect
+	code.gitea.io/sdk/gitea v0.19.0 // indirect
 	github.com/4meepo/tagalign v1.3.4 // indirect
 	github.com/Abirdcfly/dupword v0.1.1 // indirect
 	github.com/Antonboom/errname v0.1.13 // indirect
@@ -90,7 +90,7 @@ require (
 	github.com/golangci/revgrep v0.5.3 // indirect
 	github.com/golangci/unconvert v0.0.0-20240309020433-c5143eacb3ed // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/go-github/v62 v62.0.0 // indirect
+	github.com/google/go-github/v64 v64.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gordonklaus/ineffassign v0.1.0 // indirect
 	github.com/gostaticanalysis/analysisutil v0.7.1 // indirect
@@ -200,7 +200,7 @@ require (
 	github.com/ultraware/funlen v0.1.0 // indirect
 	github.com/ultraware/whitespace v0.1.1 // indirect
 	github.com/uudashr/gocognit v1.1.3 // indirect
-	github.com/xanzy/go-gitlab v0.106.0 // indirect
+	github.com/xanzy/go-gitlab v0.109.0 // indirect
 	github.com/xen0n/gosmopolitan v1.2.2 // indirect
 	github.com/yagipy/maintidx v1.0.0 // indirect
 	github.com/yeya24/promlinter v0.3.0 // indirect
@@ -212,14 +212,14 @@ require (
 	go.uber.org/automaxprocs v1.5.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/build v0.0.0-20240712162709-0b82a206aadf // indirect
+	golang.org/x/build v0.0.0-20240906172953-ad8de1aafeaf // indirect
 	golang.org/x/crypto v0.27.0 // indirect
 	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e // indirect
 	golang.org/x/exp/typeparams v0.0.0-20240314144324-c7f7c6466f7f // indirect
 	golang.org/x/mod v0.21.0 // indirect
-	golang.org/x/oauth2 v0.22.0 // indirect
+	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/term v0.24.0 // indirect
 	golang.org/x/text v0.18.0 // indirect
 	golang.org/x/time v0.6.0 // indirect

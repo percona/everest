@@ -40,12 +40,12 @@ func RunStepsWithSpinner(
 		s.Start()
 		if err := step.F(ctx); err != nil {
 			s.Stop()
-			fmt.Fprint(out, output.Failure(step.Desc))
+			fmt.Fprint(out, output.Failure(step.Desc)) //nolint:govet
 			fmt.Fprint(out, "\t", err, "\n")
 			return err
 		}
 		s.Stop()
-		fmt.Fprint(out, output.Success(step.Desc))
+		fmt.Fprint(out, output.Success(step.Desc)) //nolint:govet
 	}
 	return nil
 }

@@ -12,7 +12,6 @@ import { DBClusterDetailsTabs } from './db-cluster-details.types';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbClusterContext } from './dbCluster.context';
 import { useContext, useState } from 'react';
-import { useRBACPermissions } from 'hooks/rbac';
 import { DB_CLUSTER_STATUS_TO_BASE_STATUS } from '../databases/DbClusterView.constants';
 import { beautifyDbClusterStatus } from '../databases/DbClusterView.utils';
 import StatusField from 'components/status-field';
@@ -28,21 +27,6 @@ export const DbClusterDetails = () => {
   const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
   const navigate = useNavigate();
   const currentTab = routeMatch?.params?.tabs;
-
-  const { canUpdate, canDelete } = useRBACPermissions(
-    'database-clusters',
-    `${dbCluster?.metadata.namespace}/${dbCluster?.metadata.name}`
-  );
-  const { canCreate: canCreateRestore } = useRBACPermissions(
-    'database-cluster-restores',
-    `${dbCluster?.metadata.namespace}/*`
-  );
-
-  const { canRead: canReadCredentials } = useRBACPermissions(
-    'database-cluster-credentials',
-    `${dbCluster?.metadata.namespace}/${dbCluster?.metadata.name}`
-  );
-  const canRestore = canCreateRestore && canReadCredentials;
 
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
   const {
@@ -114,21 +98,17 @@ export const DbClusterDetails = () => {
               dbCluster?.status?.status || DbClusterStatus.unknown
             )}
           </StatusField>
-          <>
-            {canUpdate || canDelete || canRestore ? (
-              <DbActions
-                isDetailView={true}
-                dbCluster={dbCluster}
-                setIsNewClusterMode={setIsNewClusterMode}
-                setOpenDetailsDialog={setOpenDetailsDialog}
-                handleDbRestart={handleDbRestart}
-                handleDbSuspendOrResumed={handleDbSuspendOrResumed}
-                handleDeleteDbCluster={handleDeleteDbCluster}
-                isPaused={isPaused}
-                handleRestoreDbCluster={handleRestoreDbCluster}
-              />
-            ) : undefined}
-          </>
+          <DbActions
+            isDetailView={true}
+            dbCluster={dbCluster}
+            setIsNewClusterMode={setIsNewClusterMode}
+            setOpenDetailsDialog={setOpenDetailsDialog}
+            handleDbRestart={handleDbRestart}
+            handleDbSuspendOrResumed={handleDbSuspendOrResumed}
+            handleDeleteDbCluster={handleDeleteDbCluster}
+            isPaused={isPaused}
+            handleRestoreDbCluster={handleRestoreDbCluster}
+          />
         </Box>
       </Box>
       <Box

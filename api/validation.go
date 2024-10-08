@@ -644,7 +644,8 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 		// User should be able to read a backup storage to use it in a backup schedule.
 		for _, sched := range schedules {
 			if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead,
-				rbac.ObjectName(namespace, sched.BackupStorageName)); err != nil {
+				rbac.ObjectName(namespace, sched.BackupStorageName),
+			); err != nil {
 				return err
 			}
 		}
@@ -1232,7 +1233,8 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 	// User should be able to read a backup storage to use it in a backup schedule.
 	for _, sched := range newSchedules {
 		if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead,
-			rbac.ObjectName(oldDB.GetNamespace(), sched.BackupStorageName)); err != nil {
+			rbac.ObjectName(oldDB.GetNamespace(), sched.BackupStorageName),
+		); err != nil {
 			return err
 		}
 	}

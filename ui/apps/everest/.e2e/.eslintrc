@@ -1,0 +1,15 @@
+{
+  "extends": ["../.eslintrc.cjs"],
+  "rules": {
+    "no-useless-constructor": ["off"],
+    "@typescript-eslint/no-useless-constructor": ["off"],
+    "lines-between-class-members": "off",
+    "semi": "error",
+    "no-empty-function": "off",
+    "space-before-function-paren": "error",
+    "space-before-blocks": "error",
+    "space-infix-ops": "error",
+    "space-in-parens": "error",
+    "object-curly-spacing": ["error", "always"]
+  }
+}
