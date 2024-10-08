@@ -164,7 +164,7 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
           ' configServersN:',
           intShardNrConfigServers
         );
-        
+
         if (
           !Number.isNaN(numberOfNodes) &&
           numberOfNodes !== CUSTOM_NR_UNITS_INPUT_VALUE
