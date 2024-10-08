@@ -113,6 +113,7 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
         numberOfProxies,
         customNrOfNodes = '',
         customNrOfProxies = '',
+        dbType,
       },
       ctx
     ) => {
@@ -140,7 +141,7 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
       if (sharding as boolean) {
         const intShardNr = parseInt(shardNr || '', 10);
         const intShardNrMin = +MIN_NUMBER_OF_SHARDS;
-        const intShardNrConfigServers = parseInt(shardConfigServers || '', 10);
+        const intShardConfigServers = parseInt(shardConfigServers || '', 10);
 
         if (Number.isNaN(intShardNr) || intShardNr < 0) {
           ctx.addIssue({
@@ -157,12 +158,12 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
             });
           }
         }
-        
+
         if (
           !Number.isNaN(numberOfNodes) &&
           numberOfNodes !== CUSTOM_NR_UNITS_INPUT_VALUE
         ) {
-          if (intShardNrConfigServers === 1 && +numberOfNodes > 1) {
+          if (intShardConfigServers === 1 && +numberOfNodes > 1) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: Messages.sharding.numberOfConfigServersError,
@@ -171,7 +172,7 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
           }
         } else {
           if (!Number.isNaN(customNrOfNodes)) {
-            if (intShardNrConfigServers === 1 && +customNrOfNodes > 1) {
+            if (intShardConfigServers === 1 && +customNrOfNodes > 1) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: Messages.sharding.numberOfConfigServersError,
