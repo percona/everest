@@ -43,10 +43,6 @@ export const DbActions = ({
   handleDbSuspendOrResumed,
   isPaused,
 }: DbActionsProps) => {
-  const { canUpdate, canDelete } = useRBACPermissions(
-    'database-clusters',
-    `${dbCluster.metadata.namespace}/${dbCluster.metadata.name}`
-  );
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const dbClusterName = dbCluster.metadata.name;
@@ -59,6 +55,11 @@ export const DbActions = ({
   const closeMenu = () => {
     setAnchorEl(null);
   };
+
+  const { canUpdate, canDelete } = useRBACPermissions(
+    'database-clusters',
+    `${dbCluster.metadata.namespace}/${dbCluster.metadata.name}`
+  );
 
   const { canCreate: canCreateClusters } = useRBACPermissions(
     'database-clusters',
@@ -77,6 +78,7 @@ export const DbActions = ({
 
   const canRestore = canCreateRestore && canReadCredentials;
   const canCreateClusterFromBackup = canRestore && canCreateClusters;
+  const noActionAvailable = !canUpdate && !canDelete && !canRestore;
 
   const sx = {
     display: 'flex',
@@ -85,6 +87,10 @@ export const DbActions = ({
     px: 2,
     py: '10px',
   };
+
+  if (noActionAvailable) {
+    return null;
+  }
 
   return (
     <Box>
