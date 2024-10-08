@@ -6,6 +6,7 @@ import {
   Box,
   Divider,
   FormGroup,
+  FormHelperText,
   InputAdornment,
   Paper,
   PaperProps,
@@ -423,12 +424,16 @@ const ResourcesForm = ({
   const [expanded, setExpanded] = useState<'nodes' | 'proxies' | false>(
     'nodes'
   );
-  const { watch, getFieldState, setValue, formState } = useFormContext();
+  const { watch, getFieldState, setValue, trigger, clearErrors } =
+    useFormContext();
 
   const numberOfNodes: string = watch(DbWizardFormFields.numberOfNodes);
 
   const sharding: boolean = watch(DbWizardFormFields.sharding);
   const shardConfigServers: number = watch(
+    DbWizardFormFields.shardConfigServers
+  );
+  const { error: shardConfigServersError } = getFieldState(
     DbWizardFormFields.shardConfigServers
   );
 
@@ -480,19 +485,16 @@ const ResourcesForm = ({
           getDefaultNumberOfconfigServersByNumberOfNodes(+numberOfNodes)
         );
       } else {
+        clearErrors(DbWizardFormFields.shardConfigServers);
         setValue(
           DbWizardFormFields.shardConfigServers,
           getDefaultNumberOfconfigServersByNumberOfNodes(+customNrOfNodes)
         );
       }
     }
+
+    trigger(DbWizardFormFields.shardConfigServers);
   }, [setValue, getFieldState, numberOfNodes, customNrOfNodes]);
-
-  const { error } = getFieldState(DbWizardFormFields.shardConfigServers);
-
-  useEffect(() => {
-    console.log(formState.errors, error);
-  }, [formState, error]);
 
   return (
     <>
@@ -572,29 +574,40 @@ const ResourcesForm = ({
             {' '}
             {Messages.sharding.numberOfConfigurationServers}
           </Typography>
-          <ToggleButtonGroupInputRegular
-            name={DbWizardFormFields.shardConfigServers}
-            toggleButtonGroupProps={{
-              size: 'small',
+          <Stack
+            sx={{
+              alignItems: 'flex-end',
             }}
           >
-            {DEFAULT_CONFIG_SERVERS.map((number) => (
-              <ToggleRegularButton
-                sx={{
-                  px: 2,
-                }}
-                key={number}
-                value={number}
-                onClick={() => {
-                  if (number !== shardConfigServers.toString()) {
-                    setValue(DbWizardFormFields.shardConfigServers, number);
-                  }
-                }}
-              >
-                {number}
-              </ToggleRegularButton>
-            ))}
-          </ToggleButtonGroupInputRegular>
+            <ToggleButtonGroupInputRegular
+              name={DbWizardFormFields.shardConfigServers}
+              toggleButtonGroupProps={{
+                size: 'small',
+              }}
+            >
+              {DEFAULT_CONFIG_SERVERS.map((number) => (
+                <ToggleRegularButton
+                  sx={{
+                    px: 2,
+                  }}
+                  key={number}
+                  value={number}
+                  onClick={() => {
+                    if (number !== shardConfigServers.toString()) {
+                      setValue(DbWizardFormFields.shardConfigServers, number);
+                    }
+                  }}
+                >
+                  {number}
+                </ToggleRegularButton>
+              ))}
+            </ToggleButtonGroupInputRegular>
+            {shardConfigServersError && (
+              <FormHelperText error={true}>
+                {shardConfigServersError?.message}
+              </FormHelperText>
+            )}
+          </Stack>
         </CustomPaper>
       )}
     </>

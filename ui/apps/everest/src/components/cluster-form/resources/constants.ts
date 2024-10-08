@@ -158,13 +158,6 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
           }
         }
 
-        console.log(
-          'nOfnodes:',
-          numberOfNodes,
-          ' configServersN:',
-          intShardNrConfigServers
-        );
-        
         if (
           !Number.isNaN(numberOfNodes) &&
           numberOfNodes !== CUSTOM_NR_UNITS_INPUT_VALUE
@@ -172,20 +165,18 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
           if (intShardNrConfigServers === 1 && +numberOfNodes > 1) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: Messages.sharding.numberOfConfigurationServers,
+              message: Messages.sharding.numberOfConfigServersError,
               path: [DbWizardFormFields.shardConfigServers],
             });
-            console.log('setError1');
           }
         } else {
           if (!Number.isNaN(customNrOfNodes)) {
             if (intShardNrConfigServers === 1 && +customNrOfNodes > 1) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: Messages.sharding.numberOfConfigurationServers,
+                message: Messages.sharding.numberOfConfigServersError,
                 path: [DbWizardFormFields.shardConfigServers],
               });
-              console.log('setError2');
             }
           }
         }
