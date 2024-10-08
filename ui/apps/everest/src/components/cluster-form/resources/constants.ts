@@ -111,6 +111,7 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
         numberOfProxies,
         customNrOfNodes = '',
         customNrOfProxies = '',
+        dbType,
       },
       ctx
     ) => {
@@ -134,6 +135,14 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
           }
         }
       });
+
+      if (numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE && dbType===DbType.Mongo && +customNrOfNodes%2===0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'The number of nodes cannot be even',
+          path: [DbWizardFormFields.customNrOfNodes],
+        });
+      }
 
       if (sharding as boolean) {
         const intShardNr = parseInt(shardNr || '', 10);

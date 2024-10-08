@@ -170,6 +170,8 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       }
 
       setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[newDbType]);
+      //needs to avoid keeping even numbers for MongoDb after changing from PG to MongoDb
+      setValue(DbWizardFormFields.customNrOfNodes, DEFAULT_NODES[newDbType]);
       resetField(DbWizardFormFields.numberOfProxies, {
         keepTouched: false,
       });

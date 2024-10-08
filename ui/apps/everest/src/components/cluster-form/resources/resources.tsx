@@ -243,6 +243,10 @@ const ResourcesToggles = ({
             name={customNrOfUnitsInputName}
             textFieldProps={{
               type: 'number',
+              inputProps: {
+                step: dbType!==DbType.Mongo ? 1 : 2,
+                min: 1,
+              },
               sx: {
                 width: `${100 / (options.length + 1)}%`,
                 alignSelf: 'flex-end',
