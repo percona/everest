@@ -102,10 +102,8 @@ export const ExpandedRow = ({
         <LabelValue
           label="Host"
           value={hostName.split(',').map((host) => (
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Box sx={{ whiteSpace: 'nowrap' }} key={host}>
-                {host}
-              </Box>
+            <Box sx={{ display: 'flex', gap: 1 }} key={host}>
+              <Box sx={{ whiteSpace: 'nowrap' }}>{host}</Box>
               <CopyToClipboardButton
                 buttonProps={{
                   sx: { mt: -0.5 },
