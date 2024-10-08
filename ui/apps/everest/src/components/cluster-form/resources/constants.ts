@@ -113,7 +113,6 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
         numberOfProxies,
         customNrOfNodes = '',
         customNrOfProxies = '',
-        dbType,
       },
       ctx
     ) => {
