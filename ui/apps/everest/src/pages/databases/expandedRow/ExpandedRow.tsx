@@ -74,7 +74,7 @@ export const ExpandedRow = ({
     }
   );
 
-  const { canRead } = useRBACPermissions(
+  const { canRead: canReadCredentials } = useRBACPermissions(
     'database-cluster-credentials',
     `${namespace}/${databaseName}`
   );
@@ -118,22 +118,23 @@ export const ExpandedRow = ({
           ))}
         />
         <LabelValue label="Port" value={port} />
-        {canRead && (isPending || isFetching) ? (
-          <>
-            <Skeleton width="300px" />
-            <Skeleton width="300px" />
-          </>
-        ) : canRead ? (
-          <>
-            <LabelValue label="Username" value={data?.username} />
-            <LabelValue
-              label="Password"
-              value={
-                <HiddenPasswordToggle showCopy value={data?.password || ''} />
-              }
-            />
-          </>
-        ) : undefined}
+        {canReadCredentials &&
+          (isPending || isFetching ? (
+            <>
+              <Skeleton width="300px" />
+              <Skeleton width="300px" />
+            </>
+          ) : (
+            <>
+              <LabelValue label="Username" value={data?.username} />
+              <LabelValue
+                label="Password"
+                value={
+                  <HiddenPasswordToggle showCopy value={data?.password || ''} />
+                }
+              />
+            </>
+          ))}
       </Box>
       <Box>
         <Typography
