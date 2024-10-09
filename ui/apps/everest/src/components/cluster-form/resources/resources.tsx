@@ -260,6 +260,7 @@ const ResourcesToggles = ({
                 width: `${100 / (options.length + 1)}%`,
                 alignSelf: 'flex-end',
                 mt: 1,
+                maxHeight: '50px',
               },
             }}
           />
