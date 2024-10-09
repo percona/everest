@@ -127,7 +127,8 @@ export const DbClusterPayloadToFormValues = (
       (dbCluster?.spec?.engine?.resources?.memory || 0).toString()
     ).value,
     [DbWizardFormFields.proxyMemory]: memoryParser(
-      (dbCluster?.spec?.proxy?.resources?.memory || 0).toString()
+      (dbCluster?.spec?.proxy?.resources?.memory || 0).toString(),
+      'G'
     ).value,
     [DbWizardFormFields.storageClass]:
       dbCluster?.spec?.engine?.storage?.class || null,
