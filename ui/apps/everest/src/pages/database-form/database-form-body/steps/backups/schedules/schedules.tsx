@@ -17,7 +17,7 @@ import { Stack, Typography } from '@mui/material';
 import EditableItem from 'components/editable-item/editable-item';
 import { LabeledContent } from '@percona/ui-lib';
 import { Messages } from './schedules.messages';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DbWizardFormFields } from 'consts.ts';
 import { useFormContext } from 'react-hook-form';
 import { Schedule } from 'shared-types/dbCluster.types';
@@ -35,6 +35,7 @@ import { useDatabasePageMode } from '../../../../useDatabasePageMode';
 import { dbWizardToScheduleFormDialogMap } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog-context.types';
 import { useDatabasePageDefaultValues } from '../../../../useDatabaseFormDefaultValues';
 import { PG_SLOTS_LIMIT } from 'consts';
+import { useRBACPermissions } from 'hooks/rbac';
 
 type Props = {
   disableCreateButton?: boolean;
@@ -50,11 +51,21 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
   const [mode, setMode] = useState<'new' | 'edit'>('new');
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');
 
-  const [dbType, k8sNamespace, schedules] = watch([
+  const [dbType, k8sNamespace, formSchedules] = watch([
     DbWizardFormFields.dbType,
     DbWizardFormFields.k8sNamespace,
     DbWizardFormFields.schedules,
   ]);
+
+  const { canCreate, canRead } = useRBACPermissions(
+    'database-cluster-backups',
+    `${k8sNamespace}/${dbName}`
+  );
+
+  const schedules = useMemo(
+    () => (canRead ? formSchedules : []),
+    [canRead, formSchedules]
+  );
 
   const [activeStorage, setActiveStorage] = useState(undefined);
   const createButtonDisabled =
@@ -105,12 +116,16 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
     <>
       <LabeledContent
         label={Messages.label}
-        actionButtonProps={{
-          disabled: createButtonDisabled,
-          dataTestId: 'create-schedule',
-          buttonText: 'Create backup schedule',
-          onClick: () => handleCreate(),
-        }}
+        actionButtonProps={
+          canCreate
+            ? {
+                disabled: createButtonDisabled,
+                dataTestId: 'create-schedule',
+                buttonText: 'Create backup schedule',
+                onClick: () => handleCreate(),
+              }
+            : undefined
+        }
       >
         <Stack>
           {dbType === DbType.Mongo && (

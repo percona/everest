@@ -4,8 +4,11 @@ export { default as Card } from './cards/card';
 export * from './cards/overview-card';
 export { default as OverviewCard } from './cards/overview-card';
 
-export * from './toggle-card';
-export { default as ToggleCard } from './toggle-card';
+export * from './buttons/toggle-card';
+export { default as ToggleCard } from './buttons/toggle-card';
+
+export * from './buttons/toggle-regular-button';
+export { default as ToggleRegularButton } from './buttons/toggle-regular-button';
 
 export * from './icons';
 
@@ -44,6 +47,8 @@ export { default as TextArray } from './form/inputs/text-array';
 
 export * from './form/inputs/toggle-button-group';
 export { default as ToggleButtonGroupInput } from './form/inputs/toggle-button-group';
+export * from './form/inputs/toggle-button-group-regular';
+export { default as ToggleButtonGroupInputRegular } from './form/inputs/toggle-button-group-regular';
 
 export * from './form/inputs/date-time-picker';
 export { default as DateTimePickerInput } from './form/inputs/date-time-picker';
