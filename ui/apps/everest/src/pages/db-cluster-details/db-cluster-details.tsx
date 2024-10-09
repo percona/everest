@@ -8,13 +8,17 @@ import {
 } from 'react-router-dom';
 import { NoMatch } from '../404/NoMatch';
 import BackNavigationText from 'components/back-navigation-text';
-import { DbActionButton } from './db-action-button';
-import { Messages } from './db-cluster-details.messages';
 import { DBClusterDetailsTabs } from './db-cluster-details.types';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbClusterContext } from './dbCluster.context';
-import { useContext } from 'react';
-import { useGetPermissions } from 'utils/useGetPermissions';
+import { useContext, useState } from 'react';
+import { DB_CLUSTER_STATUS_TO_BASE_STATUS } from '../databases/DbClusterView.constants';
+import { beautifyDbClusterStatus } from '../databases/DbClusterView.utils';
+import StatusField from 'components/status-field';
+import DbActions from 'components/db-actions/db-actions';
+import { useDbActions } from 'hooks';
+import { Messages } from './db-cluster-details.messages';
+import DbActionsModals from 'components/db-actions/db-actions-modals';
 
 export const DbClusterDetails = () => {
   const { dbClusterName = '' } = useParams();
@@ -24,11 +28,23 @@ export const DbClusterDetails = () => {
   const navigate = useNavigate();
   const currentTab = routeMatch?.params?.tabs;
 
-  const { canUpdate, canDelete } = useGetPermissions({
-    resource: 'database-clusters',
-    specificResource: dbCluster?.metadata.name,
-    namespace: dbCluster?.metadata.namespace,
-  });
+  const [isNewClusterMode, setIsNewClusterMode] = useState(false);
+  const {
+    openRestoreDialog,
+    handleCloseRestoreDialog,
+    handleRestoreDbCluster,
+    handleDbRestart,
+    handleDbSuspendOrResumed,
+    handleDeleteDbCluster,
+    openDetailsDialog,
+    setOpenDetailsDialog,
+    handleCloseDetailsDialog,
+    isPaused,
+    openDeleteDialog,
+    handleConfirmDelete,
+    handleCloseDeleteDialog,
+    selectedDbCluster,
+  } = useDbActions();
 
   if (isLoading) {
     return (
@@ -54,7 +70,7 @@ export const DbClusterDetails = () => {
       <Box
         sx={{
           display: 'flex',
-          gap: 1,
+          gap: 1.5,
           alignItems: 'center',
           justifyContent: 'flex-start',
           mb: 1,
@@ -65,15 +81,35 @@ export const DbClusterDetails = () => {
           onBackClick={() => navigate('/databases')}
         />
         {/* At this point, loading is done and we either have the cluster or not */}
-        <>
-          {canUpdate || canDelete ? (
-            <DbActionButton
-              dbCluster={dbCluster!}
-              canUpdate={canUpdate}
-              canDelete={canDelete}
-            />
-          ) : undefined}
-        </>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            flex: '1 0 auto',
+            alignItems: 'center',
+          }}
+        >
+          <StatusField
+            dataTestId={dbClusterName}
+            status={dbCluster?.status?.status || DbClusterStatus.unknown}
+            statusMap={DB_CLUSTER_STATUS_TO_BASE_STATUS}
+          >
+            {beautifyDbClusterStatus(
+              dbCluster?.status?.status || DbClusterStatus.unknown
+            )}
+          </StatusField>
+          <DbActions
+            isDetailView={true}
+            dbCluster={dbCluster}
+            setIsNewClusterMode={setIsNewClusterMode}
+            setOpenDetailsDialog={setOpenDetailsDialog}
+            handleDbRestart={handleDbRestart}
+            handleDbSuspendOrResumed={handleDbSuspendOrResumed}
+            handleDeleteDbCluster={handleDeleteDbCluster}
+            isPaused={isPaused}
+            handleRestoreDbCluster={handleRestoreDbCluster}
+          />
+        </Box>
       </Box>
       <Box
         sx={{
@@ -112,6 +148,18 @@ export const DbClusterDetails = () => {
         </Alert>
       )}
       <Outlet />
+
+      <DbActionsModals
+        dbCluster={selectedDbCluster!}
+        isNewClusterMode={isNewClusterMode}
+        openRestoreDialog={openRestoreDialog}
+        handleCloseRestoreDialog={handleCloseRestoreDialog}
+        openDeleteDialog={openDeleteDialog}
+        handleCloseDeleteDialog={handleCloseDeleteDialog}
+        handleConfirmDelete={handleConfirmDelete}
+        openDetailsDialog={openDetailsDialog}
+        handleCloseDetailsDialog={handleCloseDetailsDialog}
+      />
     </Box>
   );
 };

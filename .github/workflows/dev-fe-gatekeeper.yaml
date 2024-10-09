@@ -3,16 +3,16 @@ name: FE CI Gatekeeper
 on:
   push:
     paths:
-      - 'ui/**'
-      - '.github/workflows/dev-fe-gatekeeper.yaml'
-      - '.github/workflows/dev-fe-e2e.yaml'
+      - "ui/**"
+      - ".github/workflows/dev-fe-gatekeeper.yaml"
+      - ".github/workflows/dev-fe-e2e.yaml"
     branches:
       - main
   pull_request:
     paths:
-      - 'ui/**'
-      - '.github/workflows/dev-fe-gatekeeper.yaml'
-      - '.github/workflows/dev-fe-e2e.yaml'
+      - "ui/**"
+      - ".github/workflows/dev-fe-gatekeeper.yaml"
+      - ".github/workflows/dev-fe-e2e.yaml"
     types: [opened, synchronize]
 
 permissions:
@@ -23,7 +23,7 @@ permissions:
   repository-projects: read
 
 env:
-  NODE_OPTIONS: '—-max_old_space_size=4096'
+  NODE_OPTIONS: "—-max_old_space_size=4096"
 
 jobs:
   cache_pnpm:
@@ -38,14 +38,14 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 9.4.0
 
       - name: Use Node
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-          cache: 'pnpm'
-          cache-dependency-path: 'ui/pnpm-lock.yaml'
+          cache: "pnpm"
+          cache-dependency-path: "ui/pnpm-lock.yaml"
 
       - name: Install dependencies
         run: cd ui && make init
@@ -55,7 +55,7 @@ jobs:
     needs: cache_pnpm
     strategy:
       matrix:
-        action: ['lint', 'format', 'test', 'build']
+        action: ["lint", "format", "test", "build"]
     defaults:
       run:
         working-directory: ui
@@ -68,13 +68,13 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 9.4.0
       - name: Use Node
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-          cache: 'pnpm'
-          cache-dependency-path: 'ui/pnpm-lock.yaml'
+          cache: "pnpm"
+          cache-dependency-path: "ui/pnpm-lock.yaml"
 
       - run: make init
 
@@ -104,7 +104,7 @@ jobs:
       - uses: stefanzweifel/git-auto-commit-action@v5
         if: steps.check_changes.outputs.changes == 'true' && github.event_name == 'pull_request'
         with:
-          commit_message: 'chore: lint/format'
+          commit_message: "chore: lint/format"
 
   permission_checks:
     runs-on: ubuntu-20.04
@@ -143,5 +143,5 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           interval: 45
           timeout: 300
-          ignored: 'license/snyk (Percona Github Org), security/snyk (Percona Github Org)'
+          ignored: "license/snyk (Percona Github Org), security/snyk (Percona Github Org)"
           ref: ${{ github.event.pull_request.head.sha || github.sha }}

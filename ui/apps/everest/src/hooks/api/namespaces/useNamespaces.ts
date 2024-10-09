@@ -18,7 +18,7 @@ import { GetNamespacesPayload } from 'shared-types/namespaces.types';
 import { getNamespacesFn } from 'api/namespaces';
 import { dbEnginesQuerySelect } from '../db-engines/useDbEngines';
 import { getDbEnginesFn } from 'api/dbEngineApi';
-import { DbEngine, GetDbEnginesPayload } from 'shared-types/dbEngines.types';
+import { DbEngine } from 'shared-types/dbEngines.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 
 export const NAMESPACES_QUERY_KEY = 'namespace';
@@ -33,12 +33,17 @@ export const useDBEnginesForNamespaces = (retrieveUpgradingEngines = false) => {
   const { data: namespaces = [] } = useNamespaces();
 
   const queries = namespaces.map<
-    UseQueryOptions<GetDbEnginesPayload, unknown, DbEngine[]>
+    UseQueryOptions<DbEngine[], unknown, DbEngine[]>
   >((namespace) => ({
-    queryKey: [`dbEngines_${namespace}`],
+    queryKey: ['dbEngines-multi', namespace],
     retry: false,
-    queryFn: () => getDbEnginesFn(namespace),
-    select: (data) => dbEnginesQuerySelect(data, retrieveUpgradingEngines),
+    // We don't use "select" here so that our cache saves data already formatted
+    // Otherwise, every render from components cause "select" to be called, which means new values on every render
+    queryFn: async () => {
+      const data = await getDbEnginesFn(namespace);
+
+      return dbEnginesQuerySelect(data, retrieveUpgradingEngines);
+    },
   }));
 
   const queryResults = useQueries({

@@ -67,7 +67,7 @@ export type GetDbEnginesPayload = {
   }>;
 };
 
-type DbEngineTool = {
+export type DbEngineTool = {
   version: string;
 } & EngineToolPayload;
 
@@ -107,3 +107,5 @@ export type OperatorsUpgradePlan = {
   upgrades: OperatorUpgradeTask[];
   pendingActions: OperatorUpgradePendingAction[];
 };
+
+export type ProxyType = 'mongos' | 'haproxy' | 'proxysql' | 'pgbouncer';

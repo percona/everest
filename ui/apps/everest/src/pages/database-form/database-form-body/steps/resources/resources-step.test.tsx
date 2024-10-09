@@ -4,11 +4,13 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { DbType } from '@percona/types';
 import { TestWrapper } from 'utils/test';
 import { ResourcesStep } from './resources-step.tsx';
-import { ResourceSize } from './resources-step.types.ts';
-import { DEFAULT_SIZES } from './resources-step.const.ts';
-import { DbWizardFormFields } from '../../../database-form.types.ts';
+import { DbWizardFormFields } from 'consts.ts';
 import { Mock } from 'vitest';
 import { DbWizardType } from '../../../database-form-schema.ts';
+import {
+  NODES_DEFAULT_SIZES,
+  ResourceSize,
+} from 'components/cluster-form/resources/constants.ts';
 
 vi.mock('hooks/api/kubernetesClusters/useSelectedKubernetesCluster');
 vi.mock('hooks/api/kubernetesClusters/useKubernetesClusterResourcesInfo');
@@ -28,10 +30,14 @@ const FormProviderWrapper = ({
     defaultValues: {
       [DbWizardFormFields.dbType]: DbType.Mysql,
       [DbWizardFormFields.numberOfNodes]: '1',
+      [DbWizardFormFields.numberOfProxies]: '1',
       [DbWizardFormFields.resourceSizePerNode]: ResourceSize.small,
-      [DbWizardFormFields.cpu]: DEFAULT_SIZES.small.cpu,
-      [DbWizardFormFields.disk]: DEFAULT_SIZES.small.disk,
-      [DbWizardFormFields.memory]: DEFAULT_SIZES.small.memory,
+      [DbWizardFormFields.resourceSizePerProxy]: ResourceSize.small,
+      [DbWizardFormFields.cpu]: NODES_DEFAULT_SIZES.mysql.small.cpu,
+      [DbWizardFormFields.proxyCpu]: NODES_DEFAULT_SIZES.mysql.small.disk,
+      [DbWizardFormFields.disk]: NODES_DEFAULT_SIZES.mysql.small.disk,
+      [DbWizardFormFields.memory]: NODES_DEFAULT_SIZES.mysql.small.memory,
+      [DbWizardFormFields.proxyMemory]: NODES_DEFAULT_SIZES.mysql.small.memory,
       ...values,
     },
   });
@@ -128,26 +134,40 @@ describe('Resources Step', () => {
     );
 
     expect(screen.getByTestId('text-input-cpu')).toHaveValue(
-      DEFAULT_SIZES[ResourceSize.small][DbWizardFormFields.cpu].toString()
+      NODES_DEFAULT_SIZES.mysql[ResourceSize.small][
+        DbWizardFormFields.cpu
+      ].toString()
     );
     expect(screen.getByTestId('text-input-memory')).toHaveValue(
-      DEFAULT_SIZES[ResourceSize.small][DbWizardFormFields.memory].toString()
+      NODES_DEFAULT_SIZES.mysql[ResourceSize.small][
+        DbWizardFormFields.memory
+      ].toString()
     );
     expect(screen.getByTestId('text-input-disk')).toHaveValue(
-      DEFAULT_SIZES[ResourceSize.small][DbWizardFormFields.disk].toString()
+      NODES_DEFAULT_SIZES.mysql[ResourceSize.small][
+        DbWizardFormFields.disk
+      ].toString()
     );
 
-    const mediumButton = screen.getByTestId('toggle-button-medium');
+    const mediumButton = screen.getByTestId(
+      'node-resources-toggle-button-medium'
+    );
     await waitFor(() => fireEvent.click(mediumButton));
 
     expect(screen.getByTestId('text-input-cpu')).toHaveValue(
-      DEFAULT_SIZES[ResourceSize.medium][DbWizardFormFields.cpu].toString()
+      NODES_DEFAULT_SIZES.mysql[ResourceSize.medium][
+        DbWizardFormFields.cpu
+      ].toString()
     );
     expect(screen.getByTestId('text-input-memory')).toHaveValue(
-      DEFAULT_SIZES[ResourceSize.medium][DbWizardFormFields.memory].toString()
+      NODES_DEFAULT_SIZES.mysql[ResourceSize.medium][
+        DbWizardFormFields.memory
+      ].toString()
     );
     expect(screen.getByTestId('text-input-disk')).toHaveValue(
-      DEFAULT_SIZES[ResourceSize.medium][DbWizardFormFields.disk].toString()
+      NODES_DEFAULT_SIZES.mysql[ResourceSize.medium][
+        DbWizardFormFields.disk
+      ].toString()
     );
   });
 
@@ -165,7 +185,9 @@ describe('Resources Step', () => {
     const cpu = screen.getByTestId('text-input-cpu');
 
     expect(cpu).toHaveValue(
-      DEFAULT_SIZES[ResourceSize.small][DbWizardFormFields.cpu].toString()
+      NODES_DEFAULT_SIZES.mysql[ResourceSize.small][
+        DbWizardFormFields.cpu
+      ].toString()
     );
 
     await waitFor(() => fireEvent.change(cpu, { target: { value: 5 } }));
@@ -191,7 +213,9 @@ describe('Resources Step', () => {
 
     const cpu = screen.getByTestId('text-input-cpu');
     expect(cpu).toHaveValue(
-      DEFAULT_SIZES[ResourceSize.small][DbWizardFormFields.cpu].toString()
+      NODES_DEFAULT_SIZES.mysql[ResourceSize.small][
+        DbWizardFormFields.cpu
+      ].toString()
     );
     expect(
       screen.queryByTestId('resources-exceeding-alert')

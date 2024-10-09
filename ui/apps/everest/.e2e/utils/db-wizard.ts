@@ -85,7 +85,7 @@ export const populateBasicInformation = async (
  * @param page Page instance
  * @param cpu Requested CPU amount
  * @param memory Requested memory amount in GB
- * @param disk Requested disk size in Gb
+ * @param disk Requested disk size in Gi
  * @param clusterSize Number of nodes in DB cluster
  */
 export const populateResources = async (
@@ -98,14 +98,14 @@ export const populateResources = async (
   await expect(page.getByTestId('step-header')).toBeVisible();
   await expect(page.getByTestId('step-description')).toBeVisible();
 
-  await page.getByTestId('toggle-button-large').click();
+  await page.getByTestId('node-resources-toggle-button-large').click();
   await page.getByTestId('text-input-cpu').fill(cpu.toString());
   await page.getByTestId('text-input-memory').fill(memory.toString());
   await page.getByTestId('text-input-disk').fill(disk.toString());
 
   const expectedCpuText = ` = ${(cpu * clusterSize).toFixed(2)} CPU`;
   const expectedMemoryText = ` = ${(memory * clusterSize).toFixed(2)} GB`;
-  const expectedDiskText = ` = ${(disk * clusterSize).toFixed(2)} GB`;
+  const expectedDiskText = ` = ${(disk * clusterSize).toFixed(2)} Gi`;
 
   let nodesText =
     clusterSize == 1 ? `x ${clusterSize} node` : `x ${clusterSize} nodes`;
@@ -195,7 +195,7 @@ export const populateMonitoringModalForm = async (
   await page.getByRole('button', { name: 'Add monitoring endpoint' }).click();
 
   await page.getByTestId('text-input-name').fill(endpointName);
-  const namespaces = page.getByTestId('text-input-allowed-namespaces');
+  const namespaces = page.getByTestId('text-input-namespace');
   await namespaces.click();
   await page.getByRole('option', { name: namespace }).click();
   await page.getByTestId('text-input-url').fill(url);

@@ -22,8 +22,13 @@ export const Messages = {
     dbEnvironment: 'Database environment',
     dbVersion: 'Database version',
     storageClass: 'Storage class',
+    shardedCluster: 'Sharded Cluster',
   },
   placeholders: {
     dbName: 'E.g. postgresql-123',
   },
+  disableShardingTooltip:
+    'Sharding cannot be enabled unless the PSMDB operator version is 1.17.0 or higher',
+  disableShardingInEditMode:
+    'Sharding cannot be enabled/disabled after the database is created',
 };

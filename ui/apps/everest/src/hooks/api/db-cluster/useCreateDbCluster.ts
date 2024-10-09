@@ -20,16 +20,22 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
+import {
+  CUSTOM_NR_UNITS_INPUT_VALUE,
+  MIN_NUMBER_OF_SHARDS,
+} from 'components/cluster-form';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import {
   ClusterCredentials,
   DataSource,
   DbCluster,
   GetDbClusterCredentialsPayload,
-  ProxyExposeType,
 } from 'shared-types/dbCluster.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import cronConverter from 'utils/cron-converter';
+import { getProxySpec } from './utils';
+import { DbType } from '@percona/types';
+import { useRBACPermissions } from 'hooks/rbac';
 
 type CreateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -40,6 +46,12 @@ const formValuesToPayloadMapping = (
   dbPayload: DbWizardType,
   backupDataSource?: DataSource
 ): DbCluster => {
+  const numberOfNodes = parseInt(
+    dbPayload.numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
+      ? dbPayload.customNrOfNodes || ''
+      : dbPayload.numberOfNodes,
+    10
+  );
   const dbClusterPayload: DbCluster = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
@@ -74,14 +86,14 @@ const formValuesToPayloadMapping = (
       engine: {
         type: dbTypeToDbEngine(dbPayload.dbType),
         version: dbPayload.dbVersion,
-        replicas: +dbPayload.numberOfNodes,
+        replicas: numberOfNodes,
         resources: {
           cpu: `${dbPayload.cpu}`,
           memory: `${dbPayload.memory}G`,
         },
         storage: {
           class: dbPayload.storageClass!,
-          size: `${dbPayload.disk}G`,
+          size: `${dbPayload.disk}${dbPayload.diskUnit}`,
         },
         config: dbPayload.engineParametersEnabled
           ? dbPayload.engineParameters
@@ -92,20 +104,24 @@ const formValuesToPayloadMapping = (
           monitoringConfigName: dbPayload?.monitoringInstance!,
         }),
       },
-      proxy: {
-        replicas: +dbPayload.numberOfNodes,
-        expose: {
-          type: dbPayload.externalAccess
-            ? ProxyExposeType.external
-            : ProxyExposeType.internal,
-          ...(!!dbPayload.externalAccess &&
-            dbPayload.sourceRanges && {
-              ipSourceRanges: dbPayload.sourceRanges.flatMap((source) =>
-                source.sourceRange ? [source.sourceRange] : []
-              ),
-            }),
+      proxy: getProxySpec(
+        dbPayload.dbType,
+        dbPayload.numberOfProxies,
+        dbPayload.customNrOfProxies || '',
+        dbPayload.externalAccess,
+        dbPayload.proxyCpu,
+        dbPayload.proxyMemory,
+        dbPayload.sourceRanges || []
+      ),
+      ...(dbPayload.dbType === DbType.Mongo && {
+        sharding: {
+          enabled: dbPayload.sharding,
+          shards: +(dbPayload.shardNr ?? MIN_NUMBER_OF_SHARDS),
+          configServer: {
+            replicas: +(dbPayload.shardConfigServers ?? 3),
+          },
         },
-      },
+      }),
       ...(backupDataSource?.dbClusterBackupName && {
         dataSource: {
           dbClusterBackupName: backupDataSource.dbClusterBackupName,
@@ -144,9 +160,19 @@ export const useDbClusterCredentials = (
   dbClusterName: string,
   namespace: string,
   options?: PerconaQueryOptions<ClusterCredentials, unknown, ClusterCredentials>
-) =>
-  useQuery<GetDbClusterCredentialsPayload, unknown, ClusterCredentials>({
-    queryKey: [`cluster-credentials-${dbClusterName}`],
+) => {
+  const { canRead: canReadCredentials } = useRBACPermissions(
+    'database-cluster-credentials',
+    `${namespace}/${dbClusterName}`
+  );
+
+  return useQuery<GetDbClusterCredentialsPayload, unknown, ClusterCredentials>({
+    queryKey: ['cluster-credentials', dbClusterName],
     queryFn: () => getDbClusterCredentialsFn(dbClusterName, namespace),
+    select: canReadCredentials
+      ? (creds) => creds
+      : () => ({ username: '', password: '' }),
     ...options,
+    enabled: (options?.enabled ?? true) && canReadCredentials,
   });
+};

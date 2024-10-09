@@ -1,4 +1,4 @@
-p, adminrole:role, namespaces, read, *
-p, adminrole:role, database-engines, *, */*
+p, role:admin, namespaces, read, *
+p, role:admin, database-engines, *, */*
 this is a bad policy
 xxxxxxxxxx

@@ -36,6 +36,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"golang.org/x/mod/semver"
@@ -46,6 +47,7 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/cmd/config"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/rbac"
 )
@@ -58,8 +60,13 @@ const (
 	pgReposLimit        = 3
 	// We are diverging from the RFC1035 spec in regards to the length of the
 	// name because the PXC operator limits the name of the cluster to 22.
-	maxNameLength      = 22
-	timeoutS3AccessSec = 2
+	maxNameLength                   = 22
+	timeoutS3AccessSec              = 2
+	minShardsNum                    = 1
+	minConfigServersNumNNodeReplset = 3
+	minConfigServersNum1NodeReplset = 1
+	maxPXCEngineReplicas            = 5
+	minPXCProxyReplicas             = 2
 )
 
 var (
@@ -108,6 +115,19 @@ var (
 	errDuplicatedBackupStorage       = errors.New("backup storages with the same url, bucket and url are not allowed")
 	errEditBackupStorageInUse        = errors.New("can't edit bucket or region of the backup storage in use")
 	errInsufficientPermissions       = errors.New("insufficient permissions for performing the operation")
+	errShardingIsNotSupported        = errors.New("sharding is not supported")
+	errInsufficientShardsNumber      = errors.New("shards number should be greater than 0")
+	errInsufficientCfgSrvNumber      = errors.New("sharding: minimum config servers number is 3")
+	errInsufficientCfgSrvNumber1Node = errors.New("sharding: minimum config servers number for 1 node replsets is 1")
+	errEvenServersNumber             = errors.New("sharding: config servers number should be odd")
+	errDisableShardingNotSupported   = errors.New("sharding: disable sharding is not supported")
+	errShardingEnablingNotSupported  = errors.New("sharding: enable sharding is not supported when editing db cluster")
+	errChangeShardsNumNotSupported   = errors.New("sharding: change shards number is not supported")
+	errChangeCfgSrvNotSupported      = errors.New("sharding: change config server number is not supported")
+	errShardingVersion               = errors.New("sharding is available starting PSMDB 1.17.0")
+	errEvenEngineReplicas            = errors.New("engine replicas number should be odd")
+	errMaxPXCEngineReplicas          = errors.New("max replicas number for MySQL is 5")
+	errMinPXCProxyReplicas           = errors.New("min replicas number for Proxy is 2")
 
 	//nolint:gochecknoglobals
 	operatorEngine = map[everestv1alpha1.EngineType]string{
@@ -240,6 +260,13 @@ func s3Access(
 		return errors.New("could not read from S3 bucket")
 	}
 
+	_, err = svc.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket: aws.String(bucketName),
+	})
+	if err != nil {
+		return errors.New("could not list objects in S3 bucket")
+	}
+
 	_, err = svc.DeleteObject(&s3.DeleteObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(testKey),
@@ -296,23 +323,6 @@ func azureAccess(ctx context.Context, l *zap.SugaredLogger, accountName, account
 	return nil
 }
 
-func validateAllowedNamespaces(allowedNamespaces, namespaces []string) error {
-	for _, allowedNamespace := range allowedNamespaces {
-		found := false
-		for _, namespace := range namespaces {
-			if allowedNamespace == namespace {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return fmt.Errorf("unknown namespace '%s'", allowedNamespace)
-		}
-	}
-
-	return nil
-}
-
 func validateBackupStorageAccess(
 	ctx echo.Context,
 	sType string,
@@ -341,10 +351,12 @@ func validateBackupStorageAccess(
 	return nil
 }
 
-//nolint:funlen,nestif,gocognit,cyclop
+//nolint:funlen,cyclop
 func (e *EverestServer) validateUpdateBackupStorageRequest(
-	ctx echo.Context, backupStorageName string, bs *everestv1alpha1.BackupStorage, secret *corev1.Secret,
-	namespaces []string, l *zap.SugaredLogger,
+	ctx echo.Context,
+	bs *everestv1alpha1.BackupStorage,
+	secret *corev1.Secret,
+	l *zap.SugaredLogger,
 ) (*UpdateBackupStorageParams, error) {
 	var params UpdateBackupStorageParams
 	if err := ctx.Bind(&params); err != nil {
@@ -352,7 +364,7 @@ func (e *EverestServer) validateUpdateBackupStorageRequest(
 	}
 
 	c := ctx.Request().Context()
-	used, err := e.kubeClient.IsBackupStorageUsed(c, e.kubeClient.Namespace(), backupStorageName, nil)
+	used, err := e.kubeClient.IsBackupStorageUsed(c, bs.GetNamespace(), bs.GetName())
 	if err != nil {
 		return nil, err
 	}
@@ -364,7 +376,7 @@ func (e *EverestServer) validateUpdateBackupStorageRequest(
 	if err != nil {
 		return nil, err
 	}
-	if duplicate := validateDuplicateStorageByUpdate(backupStorageName, bs, existingStorages, params); duplicate {
+	if duplicate := validateDuplicateStorageByUpdate(bs.GetName(), bs, existingStorages, params); duplicate {
 		return nil, errDuplicatedBackupStorage
 	}
 
@@ -380,33 +392,6 @@ func (e *EverestServer) validateUpdateBackupStorageRequest(
 	if params.BucketName != nil {
 		if err := validateBucketName(*params.BucketName); err != nil {
 			return nil, err
-		}
-	}
-
-	removedNs := []string{}
-	if params.AllowedNamespaces != nil {
-		if err := validateAllowedNamespaces(*params.AllowedNamespaces, namespaces); err != nil {
-			return nil, err
-		}
-
-		if len(*params.AllowedNamespaces) > 0 {
-			for _, ns := range bs.Spec.AllowedNamespaces {
-				if !slices.Contains(*params.AllowedNamespaces, ns) {
-					removedNs = append(removedNs, ns)
-				}
-			}
-
-			if len(removedNs) > 0 {
-				// Check if backup storage is used in the removed namespaces
-				used, err := e.kubeClient.IsBackupStorageUsed(ctx.Request().Context(), e.kubeClient.Namespace(), backupStorageName, removedNs)
-				if err != nil {
-					return nil, err
-				}
-
-				if used {
-					return nil, errors.New("backup storage cannot be removed because it's used in some namespace")
-				}
-			}
 		}
 	}
 
@@ -492,7 +477,6 @@ func basicStorageParamsAreChanged(bs *everestv1alpha1.BackupStorage, params Upda
 
 func validateCreateBackupStorageRequest(
 	ctx echo.Context,
-	namespaces []string,
 	l *zap.SugaredLogger,
 	existingStorages *everestv1alpha1.BackupStorageList,
 ) (*CreateBackupStorageParams, error) {
@@ -530,10 +514,6 @@ func validateCreateBackupStorageRequest(
 		}
 	}
 
-	if err := validateAllowedNamespaces(params.AllowedNamespaces, namespaces); err != nil {
-		return nil, err
-	}
-
 	// check data access
 	if err := validateStorageAccessByCreate(ctx.Request().Context(), params, l); err != nil {
 		l.Error(err)
@@ -557,10 +537,6 @@ func validateCreateMonitoringInstanceRequest(ctx echo.Context) (*CreateMonitorin
 		return nil, ErrInvalidURL("url")
 	}
 
-	if params.AllowedNamespaces == nil || len(*params.AllowedNamespaces) == 0 {
-		return nil, errors.New("allowedNamespaces is required")
-	}
-
 	switch params.Type {
 	case MonitoringInstanceCreateParamsTypePmm:
 		if params.Pmm == nil {
@@ -577,8 +553,7 @@ func validateCreateMonitoringInstanceRequest(ctx echo.Context) (*CreateMonitorin
 	return &params, nil
 }
 
-//nolint:nestif
-func (e *EverestServer) validateUpdateMonitoringInstanceRequest(ctx echo.Context, mc *everestv1alpha1.MonitoringConfig, monitoringConfigName string) (*UpdateMonitoringInstanceJSONRequestBody, error) {
+func (e *EverestServer) validateUpdateMonitoringInstanceRequest(ctx echo.Context) (*UpdateMonitoringInstanceJSONRequestBody, error) {
 	var params UpdateMonitoringInstanceJSONRequestBody
 	if err := ctx.Bind(&params); err != nil {
 		return nil, err
@@ -588,31 +563,6 @@ func (e *EverestServer) validateUpdateMonitoringInstanceRequest(ctx echo.Context
 		if ok := validateURL(params.Url); !ok {
 			err := ErrInvalidURL("url")
 			return nil, err
-		}
-	}
-
-	if params.AllowedNamespaces != nil && len(*params.AllowedNamespaces) == 0 {
-		return nil, errors.New("allowedNamespaces cannot be empty")
-	}
-
-	if params.AllowedNamespaces != nil && len(*params.AllowedNamespaces) > 0 {
-		removedNs := []string{}
-		for _, ns := range mc.Spec.AllowedNamespaces {
-			if !slices.Contains(*params.AllowedNamespaces, ns) {
-				removedNs = append(removedNs, ns)
-			}
-		}
-
-		if len(removedNs) > 0 {
-			// Check if monitoring config is used in the removed namespaces
-			used, err := e.kubeClient.IsMonitoringConfigUsed(ctx.Request().Context(), MonitoringNamespace, monitoringConfigName, removedNs)
-			if err != nil {
-				return nil, err
-			}
-
-			if used {
-				return nil, errors.New("monitoring config cannot be removed because it's used in some namespace")
-			}
 		}
 	}
 
@@ -684,15 +634,53 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 	if err != nil {
 		return fmt.Errorf("failed to get user: %w", err)
 	}
-	// To be able to create a cluster with backup schedules, the user needs to explicitly
-	// have permissions to take backups.
 	schedules := pointer.Get(pointer.Get(pointer.Get(databaseCluster.Spec).Backup).Schedules)
 	if len(schedules) > 0 {
-		if can, err := e.canTakeBackups(user, namespace+"/"); err != nil {
+		// To be able to create a cluster with backup schedules, the user needs to explicitly
+		// have permissions to take backups.
+		if err := e.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, rbac.ObjectName(namespace, "")); err != nil {
 			return err
-		} else if !can {
-			return errors.Join(errInsufficientPermissions, errors.New("missing permission to take backups"))
 		}
+		// User should be able to read a backup storage to use it in a backup schedule.
+		for _, sched := range schedules {
+			if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead,
+				rbac.ObjectName(namespace, sched.BackupStorageName),
+			); err != nil {
+				return err
+			}
+		}
+	}
+
+	if err := e.enforceRestoreToNewDBRBAC(ctx.Request().Context(), user, namespace, databaseCluster); err != nil {
+		return err
+	}
+	return nil
+}
+
+// To be able to restore a backup to a new cluster, the following permissions are needed:
+// - create restores.
+// - read database cluster credentials.
+func (e *EverestServer) enforceRestoreToNewDBRBAC(
+	ctx context.Context, user, namespace string, databaseCluster *DatabaseCluster,
+) error {
+	sourceBackup := pointer.Get(pointer.Get(pointer.Get(databaseCluster.Spec).DataSource).DbClusterBackupName)
+	if sourceBackup == "" {
+		return nil
+	}
+
+	if err := e.enforce(user, rbac.ResourceDatabaseClusterRestores, rbac.ActionCreate, rbac.ObjectName(namespace, "")); err != nil {
+		return err
+	}
+
+	// Get the name of the source database cluster.
+	bkp, err := e.kubeClient.GetDatabaseClusterBackup(ctx, namespace, sourceBackup)
+	if err != nil {
+		return errors.Join(err, errors.New("failed to get database cluster backup"))
+	}
+	sourceDB := bkp.Spec.DBClusterName
+
+	if err := e.enforceDBRestoreRBAC(user, namespace, sourceBackup, sourceDB); err != nil {
+		return err
 	}
 	return nil
 }
@@ -713,16 +701,11 @@ func (e *EverestServer) validateDatabaseClusterCR(
 	if err != nil {
 		return err
 	}
-	if err := validateVersion(databaseCluster.Spec.Engine.Version, engine); err != nil {
+	if err := validateEngine(databaseCluster, engine); err != nil {
 		return err
 	}
-	if databaseCluster.Spec != nil && databaseCluster.Spec.Monitoring != nil && databaseCluster.Spec.Monitoring.MonitoringConfigName != nil {
-		if _, err := e.validateMonitoringConfigAccess(context.Background(), namespace, *databaseCluster.Spec.Monitoring.MonitoringConfigName); err != nil {
-			return err
-		}
-	}
 	if databaseCluster.Spec.Proxy != nil && databaseCluster.Spec.Proxy.Type != nil {
-		if err := validateProxy(databaseCluster.Spec.Engine.Type, string(*databaseCluster.Spec.Proxy.Type)); err != nil {
+		if err := validateProxy(databaseCluster); err != nil {
 			return err
 		}
 	}
@@ -730,7 +713,7 @@ func (e *EverestServer) validateDatabaseClusterCR(
 		return err
 	}
 
-	if err = validateBackupStoragesFor(ctx.Request().Context(), namespace, databaseCluster, e.validateBackupStoragesAccess); err != nil {
+	if err = e.validateBackupStoragesFor(ctx.Request().Context(), namespace, databaseCluster); err != nil {
 		return err
 	}
 
@@ -748,7 +731,42 @@ func (e *EverestServer) validateDatabaseClusterCR(
 			return err
 		}
 	}
+	if err := validateSharding(*databaseCluster); err != nil {
+		return err
+	}
 	return validateResourceLimits(databaseCluster)
+}
+
+func validateSharding(dbc DatabaseCluster) error {
+	if dbc.Spec.Sharding == nil || !dbc.Spec.Sharding.Enabled {
+		return nil
+	}
+	if dbc.Spec.Engine.Type != Psmdb {
+		return errShardingIsNotSupported
+	}
+	if dbc.Spec.Engine.Version == nil {
+		return errShardingVersion
+	}
+	version, err := goversion.NewVersion(*dbc.Spec.Engine.Version)
+	if err != nil {
+		return errShardingVersion
+	}
+	if !common.CheckConstraint(version, ">=1.17.0") {
+		return errShardingVersion
+	}
+	if dbc.Spec.Sharding.Shards < minShardsNum {
+		return errInsufficientShardsNumber
+	}
+	if dbc.Spec.Engine.Replicas != nil && *dbc.Spec.Engine.Replicas == 1 && dbc.Spec.Sharding.ConfigServer.Replicas < minConfigServersNum1NodeReplset {
+		return errInsufficientCfgSrvNumber1Node
+	}
+	if dbc.Spec.Engine.Replicas != nil && *dbc.Spec.Engine.Replicas > 1 && dbc.Spec.Sharding.ConfigServer.Replicas < minConfigServersNumNNodeReplset {
+		return errInsufficientCfgSrvNumber
+	}
+	if dbc.Spec.Sharding.ConfigServer.Replicas%2 == 0 {
+		return errEvenServersNumber
+	}
+	return nil
 }
 
 func (e *EverestServer) validatePGSchedulesRestrictions(ctx context.Context, newDbc DatabaseCluster) error {
@@ -802,24 +820,17 @@ func checkSchedulesChanges(oldDbc everestv1alpha1.DatabaseCluster, newDbc Databa
 	return checkStorageDuplicates(newDbc)
 }
 
-func validateBackupStoragesFor( //nolint:cyclop
+func (e *EverestServer) validateBackupStoragesFor( //nolint:cyclop
 	ctx context.Context,
 	namespace string,
 	databaseCluster *DatabaseCluster,
-	validateBackupStorageAccessFunc func(context.Context, string, string) (*everestv1alpha1.BackupStorage, error),
 ) error {
 	if databaseCluster.Spec.Backup == nil {
 		return nil
 	}
 	storages := make(map[string]bool)
-	if databaseCluster.Spec.Backup.Schedules != nil {
-		for _, schedule := range *databaseCluster.Spec.Backup.Schedules {
-			_, err := validateBackupStorageAccessFunc(ctx, namespace, schedule.BackupStorageName)
-			if err != nil {
-				return err
-			}
-			storages[schedule.BackupStorageName] = true
-		}
+	for _, schedule := range pointer.Get(databaseCluster.Spec.Backup.Schedules) {
+		storages[schedule.BackupStorageName] = true
 	}
 
 	if databaseCluster.Spec.Engine.Type == DatabaseClusterSpecEngineType(everestv1alpha1.DatabaseEnginePSMDB) {
@@ -846,7 +857,7 @@ func validateBackupStoragesFor( //nolint:cyclop
 		if databaseCluster.Spec.Backup.Pitr.BackupStorageName == nil || *databaseCluster.Spec.Backup.Pitr.BackupStorageName == "" {
 			return errPitrNoBackupStorageName
 		}
-		storage, err := validateBackupStorageAccessFunc(ctx, namespace, *databaseCluster.Spec.Backup.Pitr.BackupStorageName)
+		storage, err := e.kubeClient.GetBackupStorage(ctx, namespace, *databaseCluster.Spec.Backup.Pitr.BackupStorageName)
 		if err != nil {
 			return err
 		}
@@ -859,38 +870,28 @@ func validateBackupStoragesFor( //nolint:cyclop
 	return nil
 }
 
-func (e *EverestServer) validateBackupStoragesAccess(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error) {
-	bs, err := e.kubeClient.GetBackupStorage(ctx, e.kubeClient.Namespace(), name)
-	if k8serrors.IsNotFound(err) {
-		return nil, fmt.Errorf("backup storage %s does not exist", name)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("could not validate backup storage %s", name)
+func validateEngine(databaseCluster *DatabaseCluster, engine *everestv1alpha1.DatabaseEngine) error {
+	if err := validateVersion(databaseCluster.Spec.Engine.Version, engine); err != nil {
+		return err
 	}
 
-	for _, ns := range bs.Spec.AllowedNamespaces {
-		if ns == namespace {
-			return bs, nil
+	switch databaseCluster.Spec.Engine.Type {
+	case Pxc:
+		if databaseCluster.Spec.Engine.Replicas != nil && *databaseCluster.Spec.Engine.Replicas%2 == 0 {
+			return errEvenEngineReplicas
 		}
+		if databaseCluster.Spec.Engine.Replicas != nil && *databaseCluster.Spec.Engine.Replicas > maxPXCEngineReplicas {
+			return errMaxPXCEngineReplicas
+		}
+	case Psmdb:
+		if databaseCluster.Spec.Engine.Replicas != nil && *databaseCluster.Spec.Engine.Replicas%2 == 0 {
+			return errEvenEngineReplicas
+		}
+	case Postgresql:
+		// no restrictions for now
 	}
-	return nil, fmt.Errorf("backup storage %s is not allowed for namespace %s", name, namespace)
-}
 
-func (e *EverestServer) validateMonitoringConfigAccess(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error) {
-	mc, err := e.kubeClient.GetMonitoringConfig(ctx, MonitoringNamespace, name)
-	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return nil, fmt.Errorf("monitoring config %s does not exist", name)
-		}
-		return nil, fmt.Errorf("failed getting monitoring config %s", name)
-	}
-
-	for _, ns := range mc.Spec.AllowedNamespaces {
-		if ns == namespace {
-			return mc, nil
-		}
-	}
-	return nil, fmt.Errorf("monitoring config %s is not allowed for namespace %s", name, namespace)
+	return nil
 }
 
 func validateVersion(version *string, engine *everestv1alpha1.DatabaseEngine) error {
@@ -920,7 +921,22 @@ func containsVersion(version string, versions []string) bool {
 	return false
 }
 
-func validateProxy(engineType DatabaseClusterSpecEngineType, proxyType string) error {
+func validateProxy(databaseCluster *DatabaseCluster) error {
+	if err := validateProxyType(databaseCluster.Spec.Engine.Type, string(*databaseCluster.Spec.Proxy.Type)); err != nil {
+		return err
+	}
+
+	if databaseCluster.Spec.Engine.Type == DatabaseClusterSpecEngineType(everestv1alpha1.DatabaseEnginePXC) {
+		if databaseCluster.Spec.Engine.Replicas != nil && *databaseCluster.Spec.Engine.Replicas > 1 &&
+			databaseCluster.Spec.Proxy.Replicas != nil && *databaseCluster.Spec.Proxy.Replicas < minPXCProxyReplicas {
+			return errMinPXCProxyReplicas
+		}
+	}
+
+	return nil
+}
+
+func validateProxyType(engineType DatabaseClusterSpecEngineType, proxyType string) error {
 	if engineType == DatabaseClusterSpecEngineType(everestv1alpha1.DatabaseEnginePXC) {
 		if proxyType != string(everestv1alpha1.ProxyTypeProxySQL) && proxyType != string(everestv1alpha1.ProxyTypeHAProxy) {
 			return errUnsupportedPXCProxy
@@ -1174,27 +1190,26 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 	dbc *DatabaseCluster,
 	oldDB *everestv1alpha1.DatabaseCluster,
 ) error {
+	oldSchedules := oldDB.Spec.Backup.Schedules
+	newSchedules := []everestv1alpha1.BackupSchedule{}
+	schedules := pointer.Get(pointer.Get(pointer.Get(dbc.Spec).Backup).Schedules)
+	for _, schedule := range schedules {
+		newSchedules = append(newSchedules, everestv1alpha1.BackupSchedule{
+			Name:              schedule.Name,
+			Enabled:           schedule.Enabled,
+			BackupStorageName: schedule.BackupStorageName,
+			Schedule:          schedule.Schedule,
+			RetentionCopies:   pointer.GetInt32(schedule.RetentionCopies),
+		})
+	}
+	sortFn := func(a, b everestv1alpha1.BackupSchedule) int { return strings.Compare(a.Name, b.Name) }
+	slices.SortFunc(oldSchedules, sortFn)
+	slices.SortFunc(newSchedules, sortFn)
+
 	isSchedulesEqual := func() bool {
-		oldSchedules := oldDB.Spec.Backup.Schedules
-		newSchedules := []everestv1alpha1.BackupSchedule{}
-		schedules := pointer.Get(pointer.Get(pointer.Get(dbc.Spec).Backup).Schedules)
-		for _, schedule := range schedules {
-			newSchedules = append(newSchedules, everestv1alpha1.BackupSchedule{
-				Name:              schedule.Name,
-				Enabled:           schedule.Enabled,
-				BackupStorageName: schedule.BackupStorageName,
-				Schedule:          schedule.Schedule,
-				RetentionCopies:   pointer.GetInt32(schedule.RetentionCopies),
-			})
-		}
 		if len(oldSchedules) != len(newSchedules) {
 			return false
 		}
-		// sort slices by name.
-		sortFn := func(a, b everestv1alpha1.BackupSchedule) int { return strings.Compare(a.Name, b.Name) }
-		slices.SortFunc(oldSchedules, sortFn)
-		slices.SortFunc(newSchedules, sortFn)
-
 		// compare each.
 		for i := range oldSchedules {
 			if oldSchedules[i].Name != newSchedules[i].Name ||
@@ -1211,10 +1226,16 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 	// If the schedules are updated, we need to check that the user has
 	// permission to create backups in this namespace.
 	if !isSchedulesEqual() {
-		if can, err := e.canTakeBackups(user, oldDB.GetNamespace()+"/"); err != nil {
+		if err := e.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, rbac.ObjectName(oldDB.GetNamespace(), "")); err != nil {
 			return err
-		} else if !can {
-			return errors.Join(errInsufficientPermissions, errors.New("missing permission to take backups"))
+		}
+	}
+	// User should be able to read a backup storage to use it in a backup schedule.
+	for _, sched := range newSchedules {
+		if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead,
+			rbac.ObjectName(oldDB.GetNamespace(), sched.BackupStorageName),
+		); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -1242,6 +1263,10 @@ func (e *EverestServer) validateDatabaseClusterOnUpdate(
 		return fmt.Errorf("cannot scale down %d node cluster to 1. The operation is not supported", oldDB.Spec.Engine.Replicas)
 	}
 
+	if err := validateShardingOnUpdate(dbc, oldDB); err != nil {
+		return err
+	}
+
 	user, err := rbac.GetUser(c)
 	if err != nil {
 		return errors.Join(err, errors.New("cannot get user from request context"))
@@ -1250,6 +1275,25 @@ func (e *EverestServer) validateDatabaseClusterOnUpdate(
 		return err
 	}
 	return nil
+}
+
+func validateShardingOnUpdate(dbc *DatabaseCluster, oldDB *everestv1alpha1.DatabaseCluster) error {
+	if oldDB.Spec.Sharding == nil || !oldDB.Spec.Sharding.Enabled {
+		if dbc.Spec.Sharding != nil && dbc.Spec.Sharding.Enabled {
+			return errShardingEnablingNotSupported
+		}
+		return nil
+	}
+	if dbc.Spec.Sharding == nil || !dbc.Spec.Sharding.Enabled {
+		return errDisableShardingNotSupported
+	}
+	if dbc.Spec.Sharding.Shards != oldDB.Spec.Sharding.Shards {
+		return errChangeShardsNumNotSupported
+	}
+	if dbc.Spec.Sharding.ConfigServer.Replicas != oldDB.Spec.Sharding.ConfigServer.Replicas {
+		return errChangeCfgSrvNotSupported
+	}
+	return validateSharding(*dbc)
 }
 
 func (e *EverestServer) validateDatabaseClusterBackup(ctx context.Context, namespace string, backup *DatabaseClusterBackup) error {
@@ -1278,11 +1322,6 @@ func (e *EverestServer) validateDatabaseClusterBackup(ctx context.Context, names
 		if k8serrors.IsNotFound(err) {
 			return fmt.Errorf("database cluster %s does not exist", b.Spec.DBClusterName)
 		}
-		return err
-	}
-
-	_, err = e.validateBackupStoragesAccess(ctx, namespace, b.Spec.BackupStorageName)
-	if err != nil {
 		return err
 	}
 
@@ -1364,10 +1403,12 @@ func validateDatabaseClusterRestore(ctx context.Context, namespace string, resto
 		}
 		return err
 	}
-	_, err = kubeClient.GetBackupStorage(ctx, kubeClient.Namespace(), b.Spec.BackupStorageName)
+	_, err = kubeClient.GetBackupStorage(ctx, namespace, b.Spec.BackupStorageName)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			return fmt.Errorf("backup storage %s does not exist", r.Spec.DataSource.BackupSource.BackupStorageName)
+			return fmt.Errorf("backup storage %s does not exist",
+				b.Spec.BackupStorageName,
+			)
 		}
 		return err
 	}

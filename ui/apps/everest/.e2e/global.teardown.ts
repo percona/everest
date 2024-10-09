@@ -23,13 +23,16 @@ setup.describe.serial('Teardown', () => {
     const promises = [];
     const bucketNamespacesMap = getBucketNamespacesMap();
 
-    bucketNamespacesMap.forEach(([bucket]) => {
+    bucketNamespacesMap.forEach(([bucket, namespace]) => {
       promises.push(
-        request.delete(`/v1/backup-storages/${bucket}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+        request.delete(
+          `/v1/namespaces/${namespace}/backup-storages/${bucket}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
       );
     });
 

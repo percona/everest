@@ -14,8 +14,10 @@
 // limitations under the License.
 import {
   UseMutationOptions,
+  UseQueryOptions,
+  UseQueryResult,
   useMutation,
-  useQuery,
+  useQueries,
 } from '@tanstack/react-query';
 import {
   getMonitoringInstancesFn,
@@ -23,12 +25,14 @@ import {
   deleteMonitoringInstanceFn,
   updateMonitoringInstanceFn,
 } from 'api/monitoring';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import {
   CreateMonitoringInstancePayload,
   MonitoringInstance,
   MonitoringInstanceList,
   UpdateMonitoringInstancePayload,
 } from 'shared-types/monitoring.types';
+import { PerconaQueryOptions } from 'shared-types/query.types';
 
 type HookUpdateParam = {
   instanceName: string;
@@ -37,20 +41,49 @@ type HookUpdateParam = {
 
 export const MONITORING_INSTANCES_QUERY_KEY = 'monitoringInstances';
 
-export const useMonitoringInstancesList = (enabled?: boolean) =>
-  useQuery<MonitoringInstanceList>({
-    queryKey: [MONITORING_INSTANCES_QUERY_KEY],
-    queryFn: getMonitoringInstancesFn,
-    enabled,
-  });
+export interface MonitoringInstanceForNamespaceResult {
+  namespace: string;
+  queryResult: UseQueryResult<MonitoringInstance[], unknown>;
+}
 
-export const useMonitoringInstancesListByNamespace = (namespace: string) =>
-  useQuery<MonitoringInstanceList>({
-    queryKey: [MONITORING_INSTANCES_QUERY_KEY, namespace],
-    queryFn: getMonitoringInstancesFn,
-    select: (data) =>
-      data.filter((item) => item.allowedNamespaces?.includes(namespace)),
+export const useMonitoringInstancesList = (
+  queryParams: Array<{
+    namespace: string;
+    options?: PerconaQueryOptions<
+      MonitoringInstanceList,
+      unknown,
+      MonitoringInstance[]
+    >;
+  }>
+) => {
+  const { canRead } = useNamespacePermissionsForResource(
+    'monitoring-instances'
+  );
+  const queries = queryParams.map<
+    UseQueryOptions<MonitoringInstanceList, unknown, MonitoringInstance[]>
+  >(({ namespace, options }) => {
+    const allowed = canRead.includes(namespace);
+    return {
+      queryKey: [MONITORING_INSTANCES_QUERY_KEY, namespace],
+      retry: false,
+      queryFn: () => getMonitoringInstancesFn(namespace),
+      refetchInterval: 5 * 1000,
+      select: allowed ? undefined : () => [],
+      ...options,
+      enabled: (options?.enabled ?? true) && allowed,
+    };
   });
+  const queryResults = useQueries({ queries });
+
+  const results: MonitoringInstanceForNamespaceResult[] = queryResults.map(
+    (item, i) => ({
+      namespace: queryParams[i].namespace,
+      queryResult: item,
+    })
+  );
+
+  return results;
+};
 
 export const useCreateMonitoringInstance = (
   options?: UseMutationOptions<
@@ -61,14 +94,23 @@ export const useCreateMonitoringInstance = (
   >
 ) =>
   useMutation({
-    mutationFn: createMonitoringInstanceFn,
+    mutationFn: (payload: CreateMonitoringInstancePayload) =>
+      createMonitoringInstanceFn(payload, payload.namespace),
     ...options,
   });
 
+type DeleteMonitoringInstanceArgType = {
+  instanceName: string;
+  namespace: string;
+};
+
 export const useDeleteMonitoringInstance = () =>
   useMutation({
-    mutationFn: (instanceName: string) =>
-      deleteMonitoringInstanceFn(instanceName),
+    mutationFn: ({
+      instanceName,
+      namespace,
+    }: DeleteMonitoringInstanceArgType) =>
+      deleteMonitoringInstanceFn(instanceName, namespace),
   });
 
 export const useUpdateMonitoringInstance = (

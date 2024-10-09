@@ -1,14 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Button,
-  Dialog,
   DialogActions,
   DialogContent,
   FormGroup,
   ModalProps,
   Typography,
 } from '@mui/material';
-import { DialogTitle } from '@percona/ui-lib';
+import { DialogTitle, Dialog } from '@percona/ui-lib';
 import { kebabize } from '@percona/utils';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
 import { useMemo } from 'react';
@@ -88,6 +87,7 @@ export const FormDialog = <T extends FieldValues>({
       onClose={handleClose}
       data-testid={dataTestId ? `${dataTestId}-form-dialog` : 'form-dialog'}
       scroll={scroll}
+      loading={submitting}
     >
       <DialogTitle onClose={closeModal}>{headerMessage}</DialogTitle>
       <DialogContent>

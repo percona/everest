@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useBackupStorages } from 'hooks/api/backup-storages/useBackupStorages.ts';
+import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
 import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster.ts';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -26,14 +26,18 @@ import { OnDemandBackupModal } from './on-demand-backup-modal/on-demand-backup-m
 export const Backups = () => {
   const { dbClusterName = '', namespace = '' } = useParams();
   const { data: dbCluster } = useDbCluster(dbClusterName, namespace);
-  const { data: backupStorages = [], isFetching } = useBackupStorages();
+
+  const { data: backupStorages = [], isLoading } =
+    useBackupStoragesByNamespace(namespace);
 
   const [mode, setMode] = useState<'new' | 'edit'>('new');
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
   const [openOnDemandModal, setOpenOnDemandModal] = useState(false);
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');
 
-  if (!dbCluster || isFetching) {
+  const noStorages = !backupStorages.length;
+
+  if (!dbCluster || isLoading) {
     return null;
   }
 
@@ -51,7 +55,7 @@ export const Backups = () => {
         setOpenOnDemandModal,
       }}
     >
-      {backupStorages.length === 0 ? (
+      {noStorages ? (
         <NoStoragesMessage />
       ) : (
         <>

@@ -26,7 +26,7 @@ test.setTimeout(360 * 1000)
 
 test('create db cluster with monitoring config', async ({ request, page }) => {
   const monitoringConfigName1 = suffixedName("m1")
-  await createMonitoringConfig(request, monitoringConfigName1)
+  await createMonitoringConfig(request, monitoringConfigName1, testsNs)
   const clusterName = 'db-monitoring-create'
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -80,19 +80,19 @@ test('create db cluster with monitoring config', async ({ request, page }) => {
       expect(resComponents?.length).toBeGreaterThanOrEqual(1)
     }).toPass({
       intervals: [1000],
-      timeout: 60 * 1000,
+      timeout: 120 * 1000,
     })
   } finally {
     await deleteDBCluster(request, page, clusterName)
-    await deleteMonitoringConfig(request, monitoringConfigName1)
+    await deleteMonitoringConfig(request, monitoringConfigName1, testsNs)
   }
 })
 
 test('update db cluster with a new monitoring config', async ({ request, page }) => {
   const monitoringConfigName1 = suffixedName("m1")
   const monitoringConfigName2 = suffixedName("m2")
-  await createMonitoringConfig(request, monitoringConfigName1)
-  await createMonitoringConfig(request, monitoringConfigName2)
+  await createMonitoringConfig(request, monitoringConfigName1, testsNs)
+  await createMonitoringConfig(request, monitoringConfigName2, testsNs)
   const clusterName = 'dbc-monitoring-put'
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -141,7 +141,7 @@ test('update db cluster with a new monitoring config', async ({ request, page })
       expect(res?.status?.size).toBeGreaterThanOrEqual(1)
     }).toPass({
       intervals: [1000],
-      timeout: 60 * 1000,
+      timeout: 120 * 1000,
     })
 
     expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName1)
@@ -159,20 +159,20 @@ test('update db cluster with a new monitoring config', async ({ request, page })
       expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
     }).toPass({
       intervals: [1000],
-      timeout: 60 * 1000,
+      timeout: 120 * 1000,
     })
 
   } finally {
     await deleteDBCluster(request, page, clusterName)
-    await deleteMonitoringConfig(request, monitoringConfigName1)
-    await deleteMonitoringConfig(request, monitoringConfigName2)
+    await deleteMonitoringConfig(request, monitoringConfigName1, testsNs)
+    await deleteMonitoringConfig(request, monitoringConfigName2, testsNs)
   }
 })
 
 test('update db cluster without monitoring config with a new monitoring config', async ({ request, page }) => {
   const clusterName = 'monitoring-put-empty'
   const monitoringConfigName2 = suffixedName("m2")
-  await createMonitoringConfig(request, monitoringConfigName2)
+  await createMonitoringConfig(request, monitoringConfigName2, testsNs)
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
@@ -217,7 +217,7 @@ test('update db cluster without monitoring config with a new monitoring config',
       expect(res?.status?.size).toBeGreaterThanOrEqual(1)
     }).toPass({
       intervals: [1000],
-      timeout: 60 * 1000,
+      timeout: 120 * 1000,
     })
 
     expect(res?.spec?.monitoring?.monitoringConfigName).toBeFalsy()
@@ -235,19 +235,19 @@ test('update db cluster without monitoring config with a new monitoring config',
       expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
     }).toPass({
       intervals: [1000],
-      timeout: 60 * 1000,
+      timeout: 120 * 1000,
     })
 
   } finally {
     await deleteDBCluster(request, page, clusterName)
     await waitClusterDeletion(request, page, clusterName)
-    await deleteMonitoringConfig(request, monitoringConfigName2)
+    await deleteMonitoringConfig(request, monitoringConfigName2, testsNs)
   }
 })
 
 test('update db cluster monitoring config with an empty monitoring config', async ({ request, page }) => {
   const monitoringConfigName1 = suffixedName("m1")
-  await createMonitoringConfig(request, monitoringConfigName1)
+  await createMonitoringConfig(request, monitoringConfigName1, testsNs)
   const clusterName = 'monit-put-to-empty'
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -296,7 +296,7 @@ test('update db cluster monitoring config with an empty monitoring config', asyn
       expect(res?.status?.size).toBeGreaterThanOrEqual(1)
     }).toPass({
       intervals: [1000],
-      timeout: 60 * 1000,
+      timeout: 120 * 1000,
     })
 
     await expect(async () => {
@@ -312,12 +312,12 @@ test('update db cluster monitoring config with an empty monitoring config', asyn
       expect(res?.spec?.monitoring?.monitoringConfigName).toBeFalsy()
     }).toPass({
       intervals: [1000],
-      timeout: 60 * 1000,
+      timeout: 120 * 1000,
     })
 
   } finally {
     await deleteDBCluster(request, page, clusterName)
     await waitClusterDeletion(request, page, clusterName)
-    await deleteMonitoringConfig(request, monitoringConfigName1)
+    await deleteMonitoringConfig(request, monitoringConfigName1, testsNs)
   }
 })

@@ -22,10 +22,14 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/kubernetes/client"
 	"github.com/percona/everest/pkg/rbac"
 	"github.com/percona/everest/pkg/rbac/mocks"
 )
@@ -181,7 +185,7 @@ func TestValidateCreateDatabaseClusterRequest(t *testing.T) {
 	}
 }
 
-func TestValidateProxy(t *testing.T) {
+func TestValidateProxyType(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
 		name       string
@@ -265,12 +269,51 @@ func TestValidateProxy(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			err := validateProxy(DatabaseClusterSpecEngineType(c.engineType), c.proxyType)
+			err := validateProxyType(DatabaseClusterSpecEngineType(c.engineType), c.proxyType)
 			if c.err == nil {
 				require.NoError(t, err)
 				return
 			}
 			assert.Equal(t, c.err.Error(), err.Error())
+		})
+	}
+}
+
+func TestValidateProxy(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name    string
+		cluster []byte
+		err     error
+	}{
+		{
+			name:    "ok: 3 nodes 2 proxies",
+			cluster: []byte(`{"spec": {"engine": {"type": "pxc", "replicas": 3}, "proxy": {"type": "haproxy", "replicas": 2}}}`),
+			err:     nil,
+		},
+		{
+			name:    "errMinProxyReplicas",
+			cluster: []byte(`{"spec": {"engine": {"type": "pxc", "replicas": 3}, "proxy": {"type": "haproxy", "replicas": 1}}}`),
+			err:     errMinPXCProxyReplicas,
+		},
+		{
+			name:    "ok: 1 node 1 proxy",
+			cluster: []byte(`{"spec": {"engine": {"type": "pxc", "replicas": 1}, "proxy": {"type": "haproxy", "replicas": 1}}}`),
+			err:     nil,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			cluster := &DatabaseCluster{}
+			err := json.Unmarshal(c.cluster, cluster)
+			require.NoError(t, err)
+			err = validateProxy(cluster)
+			if c.err == nil {
+				require.NoError(t, err)
+				return
+			}
+			assert.Equal(t, err.Error(), c.err.Error())
 		})
 	}
 }
@@ -512,11 +555,19 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 			err = json.Unmarshal(tc.storage, storage)
 			require.NoError(t, err)
 
-			err = validateBackupStoragesFor(
+			k := &kubernetes.Kubernetes{}
+			mockConnector := &client.MockKubeClientConnector{}
+			mockConnector.On("GetBackupStorage", mock.Anything, mock.Anything, mock.Anything).
+				Return(storage, nil)
+			k.WithClient(mockConnector)
+			e := EverestServer{
+				kubeClient: k,
+			}
+
+			err = e.validateBackupStoragesFor(
 				context.Background(),
 				tc.namespace,
 				cluster,
-				func(context.Context, string, string) (*everestv1alpha1.BackupStorage, error) { return storage, nil },
 			)
 			if tc.err == nil {
 				require.NoError(t, err)
@@ -1277,11 +1328,16 @@ func TestValidateBackupSchedulesUpdate(t *testing.T) {
 			t.Parallel()
 
 			// Setup mock.
-			e := &EverestServer{}
+			e := &EverestServer{
+				l: zap.NewNop().Sugar(),
+			}
 			enforcer := &mocks.IEnforcer{}
 			enforcer.On("Enforce",
 				"user", rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, "test-ns/",
 			).Return(tc.canTakeBackups, nil)
+			enforcer.On("Enforce",
+				"user", rbac.ResourceBackupStorages, rbac.ActionRead, mock.Anything,
+			).Return(true, nil)
 			e.rbacEnforcer = enforcer
 
 			updated := &DatabaseCluster{}
@@ -1289,6 +1345,197 @@ func TestValidateBackupSchedulesUpdate(t *testing.T) {
 			require.NoError(t, err)
 
 			err = e.validateBackupScheduledUpdate("user", updated, tc.old)
+			assert.ErrorIs(t, err, tc.expected)
+		})
+	}
+}
+
+func TestValidateShardingOnUpdate(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		desc     string
+		expected error
+		updated  []byte
+		old      *everestv1alpha1.DatabaseCluster
+	}{
+		{
+			desc:    "disabled",
+			updated: []byte(`{"spec": {}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: false,
+					},
+				},
+			},
+			expected: nil,
+		},
+		{
+			desc:    "try to disable - no sharding section",
+			updated: []byte(`{"spec": {}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: true,
+					},
+				},
+			},
+			expected: errDisableShardingNotSupported,
+		},
+		{
+			desc:    "try to disable - enabled false",
+			updated: []byte(`{"spec": {"sharding": {"enabled": false}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: true,
+					},
+				},
+			},
+			expected: errDisableShardingNotSupported,
+		},
+		{
+			desc:    "try to enable - if there was no sharding section",
+			updated: []byte(`{"spec": {"sharding": {"enabled": true, "shards":3, "configServer": {"replicas": 2}}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{},
+			},
+			expected: errShardingEnablingNotSupported,
+		},
+		{
+			desc:    "try to enable - if sharding 'enabled' was false",
+			updated: []byte(`{"spec": {"sharding": {"enabled": true, "shards":3, "configServer": {"replicas": 2}}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: false,
+					},
+				},
+			},
+			expected: errShardingEnablingNotSupported,
+		},
+		{
+			desc:    "try to change configServers",
+			updated: []byte(`{"spec": {"sharding": {"enabled": true, "shards":3, "configServer": {"replicas": 2}}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: true,
+						ConfigServer: everestv1alpha1.ConfigServer{
+							Replicas: 3,
+						},
+						Shards: 3,
+					},
+				},
+			},
+			expected: errChangeCfgSrvNotSupported,
+		},
+		{
+			desc:    "try to change shards",
+			updated: []byte(`{"spec": {"sharding": {"enabled": true, "shards":5, "configServer": {"replicas": 3}}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: true,
+						ConfigServer: everestv1alpha1.ConfigServer{
+							Replicas: 3,
+						},
+						Shards: 3,
+					},
+				},
+			},
+			expected: errChangeShardsNumNotSupported,
+		},
+		{
+			desc:    "ok",
+			updated: []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0"}, "sharding": {"enabled": true, "shards":5, "configServer": {"replicas": 3}}}}`),
+			old: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Sharding: &everestv1alpha1.Sharding{
+						Enabled: true,
+						ConfigServer: everestv1alpha1.ConfigServer{
+							Replicas: 3,
+						},
+						Shards: 5,
+					},
+				},
+			},
+			expected: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dbc := &DatabaseCluster{}
+			err := json.Unmarshal(tc.updated, dbc)
+			require.NoError(t, err)
+
+			err = validateShardingOnUpdate(dbc, tc.old)
+			assert.ErrorIs(t, err, tc.expected)
+		})
+	}
+}
+
+func TestValidateSharding(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		desc     string
+		expected error
+		cluster  []byte
+	}{
+		{
+			desc:     "old psmdb version",
+			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.15.0"}, "sharding": {"enabled": true, "shards":5, "configServer": {"replicas": 3}}}}`),
+			expected: errShardingVersion,
+		},
+		{
+			desc:     "pxc - not supported",
+			cluster:  []byte(`{"spec": {"engine": {"type": "pxc"}, "sharding": {"enabled": true}}}`),
+			expected: errShardingIsNotSupported,
+		},
+		{
+			desc:     "pg - not supported",
+			cluster:  []byte(`{"spec": {"engine": {"type": "pg"}, "sharding": {"enabled": true}}}`),
+			expected: errShardingIsNotSupported,
+		},
+		{
+			desc:     "even configservers",
+			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0"}, "sharding": {"enabled": true, "shards": 1, "configServer": {"replicas": 4}}}}`),
+			expected: errEvenServersNumber,
+		},
+		{
+			desc:     "insufficient configservers",
+			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0", "replicas": 3}, "sharding": {"enabled": true, "shards": 1,"configServer": {"replicas": 1}}}}`),
+			expected: errInsufficientCfgSrvNumber,
+		},
+		{
+			desc:     "insufficient configservers 1 node",
+			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0", "replicas": 1}, "sharding": {"enabled": true, "shards": 1,"configServer": {"replicas": 0}}}}`),
+			expected: errInsufficientCfgSrvNumber1Node,
+		},
+		{
+			desc:     "insufficient shards number",
+			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0"},"sharding": {"enabled": true, "shards": 0, "configServer": {"replicas": 3}}}}`),
+			expected: errInsufficientShardsNumber,
+		},
+		{
+			desc:     "ok",
+			cluster:  []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0"}, "sharding": {"enabled": true, "shards": 1, "configServer": {"replicas": 3}}}}`),
+			expected: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dbc := &DatabaseCluster{}
+			err := json.Unmarshal(tc.cluster, dbc)
+			require.NoError(t, err)
+
+			err = validateSharding(*dbc)
 			assert.ErrorIs(t, err, tc.expected)
 		})
 	}

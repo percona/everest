@@ -9,7 +9,7 @@ import { ScheduleModalContext } from '../../backups.context';
 import ScheduledBackupsList from './scheduled-backups-list';
 import { BackupListTableHeaderProps } from './backups-list-table-header.types';
 import { Messages } from './backups-list-table-header.messages';
-import { useGetPermissions } from 'utils/useGetPermissions';
+import { useRBACPermissions } from 'hooks/rbac';
 
 const BackupListTableHeader = ({
   onNowClick,
@@ -39,15 +39,14 @@ const BackupListTableHeader = ({
   const handleShowSchedules = () => {
     setShowSchedules((prev) => !prev);
   };
-  const { canCreate } = useGetPermissions({
-    resource: 'database-cluster-backups',
-  });
-
-  const { canUpdate: canUpdateDb } = useGetPermissions({
-    resource: 'database-clusters',
-    specificResource: dbCluster.metadata.name,
-    namespace: dbCluster.metadata.namespace,
-  });
+  const { canCreate } = useRBACPermissions(
+    'database-cluster-backups',
+    `${dbCluster.metadata.namespace}/${dbCluster.metadata.name}`
+  );
+  const { canUpdate: canUpdateDb } = useRBACPermissions(
+    'database-clusters',
+    `${dbCluster.metadata.namespace}/${dbCluster.metadata.name}`
+  );
 
   return (
     <>

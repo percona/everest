@@ -18,7 +18,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 9.4.0
 
       - name: Use Node
         uses: actions/setup-node@v4
@@ -33,7 +33,7 @@ jobs:
       - name: Set up Go release
         uses: percona-platform/setup-go@v4
         with:
-          go-version: 1.22.x
+          go-version: 1.23.x
 
       - name: Set GO_VERSION environment variable
         shell: bash
@@ -75,6 +75,16 @@ jobs:
           --operator.xtradb-cluster \
           --skip-wizard \
           --namespaces everest-ui
+
+          kubectl patch sub everest-operator -n everest-system -p '
+            [{
+                "op": "add",
+                "path": "/spec/config/env/-",
+                "value": {
+                  "name": "PERCONA_VERSION_SERVICE_URL",
+                  "value": "https://check-dev.percona.com/versions/v1"
+                }
+            }]' --type=json
 
       - name: Adding psmdb namespace
         shell: bash
@@ -127,6 +137,7 @@ jobs:
         run: |
           cd ui
           make init
+          make build
           pnpm --filter "@percona/everest" dev &
 
       - name: Install Chromium for Playwright
@@ -138,7 +149,7 @@ jobs:
       - name: Run integration tests
         shell: bash
         env:
-          EVEREST_BUCKETS_NAMESPACES_MAP: '[["bucket-1",["everest-ui"]],["bucket-2",["psmdb-only"]],["bucket-3",["pxc-only"]],["bucket-4",["pg-only"]]]'
+          EVEREST_BUCKETS_NAMESPACES_MAP: '[["bucket-1","everest-ui"],["bucket-2","psmdb-only"],["bucket-3","pxc-only"],["bucket-4","pg-only"]]'
           EVEREST_LOCATION_ACCESS_KEY: "minioadmin"
           EVEREST_LOCATION_SECRET_KEY: "minioadmin"
           EVEREST_LOCATION_REGION: "us-east-1"
@@ -149,7 +160,7 @@ jobs:
           MONITORING_PASSWORD: "admin"
         run: |
           cd ui
-          pnpm --filter "@percona/everest" e2e --grep-invert @release
+          pnpm --filter "@percona/everest" e2e
 
       - name: Archive report
         if: always()

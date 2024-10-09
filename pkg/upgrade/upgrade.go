@@ -215,9 +215,9 @@ func (u *Upgrade) Run(ctx context.Context) error {
 					return err
 				}
 			}
-			// RBAC is added in 1.2.x, so if we're upgrading to that version, we need to ensure
-			// that the RBAC configmap is present.
 			if common.CheckConstraint(upgradeEverestTo, "~> 1.2.0") {
+				// RBAC is added in 1.2.x, so if we're upgrading to that version, we need to ensure
+				// that the RBAC configmap is present.
 				skipObjects = slices.DeleteFunc(skipObjects, func(o client.Object) bool {
 					return o.GetName() == common.EverestRBACConfigMapName
 				})
@@ -233,7 +233,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	upgradeSteps = append(upgradeSteps, common.Step{
 		Desc: "Upgrade Everest Operator",
 		F: func(ctx context.Context) error {
-			if err := u.upgradeEverestOperator(ctx, ip.Name); err != nil {
+			if err := u.upgradeEverestOperator(ctx, ip.Name, upgradeEverestTo); err != nil {
 				return err
 			}
 			return nil
@@ -255,6 +255,12 @@ func (u *Upgrade) Run(ctx context.Context) error {
 				}
 				if err := u.kubeClient.DeleteSecret(ctx, common.SystemNamespace, "everest-admin-token"); client.IgnoreNotFound(err) != nil {
 					return err
+				}
+			}
+			if common.CheckConstraint(upgradeEverestTo, "~> 1.2.0") {
+				// Migrate monitoring-configs and backup-storages.
+				if err := u.migrateSharedResources(ctx); err != nil {
+					return fmt.Errorf("migration of shared resources failed: %w", err)
 				}
 			}
 			return nil
@@ -583,7 +589,7 @@ func (u *Upgrade) upgradeOLM(ctx context.Context, recommendedVersion *goversion.
 	return nil
 }
 
-func (u *Upgrade) upgradeEverestOperator(ctx context.Context, installPlanName string) error {
+func (u *Upgrade) upgradeEverestOperator(ctx context.Context, installPlanName string, version *goversion.Version) error {
 	u.l.Infof("Approving install plan %s for Everest operator", installPlanName)
 	done, err := u.kubeClient.ApproveInstallPlan(ctx, common.SystemNamespace, installPlanName)
 	if err != nil || !done {
@@ -593,6 +599,13 @@ func (u *Upgrade) upgradeEverestOperator(ctx context.Context, installPlanName st
 	u.l.Infof("Waiting for install plan installation of Everest operator to finish")
 	if err := u.kubeClient.WaitForInstallPlanCompleted(ctx, common.SystemNamespace, installPlanName); err != nil {
 		return errors.Join(err, fmt.Errorf("install plan %s is not in phase completed", installPlanName))
+	}
+
+	u.l.Infof("Waiting for CSV installation of Everest operator to finish")
+	csvName := u.kubeClient.CSVNameFromOperator(common.EverestOperatorName, version)
+	u.l.Debugf("Everest Operator CSV name: %s", csvName)
+	if err := u.kubeClient.WaitForCSVSucceeded(ctx, common.SystemNamespace, csvName); err != nil {
+		return errors.Join(err, fmt.Errorf("csv %s is not in phase succeeded", installPlanName))
 	}
 
 	return nil

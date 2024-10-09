@@ -21,16 +21,38 @@ import {
 } from 'utils/generalOptimisticDataUpdate';
 import { CreateEditModalStorage } from './createEditModal/create-edit-modal';
 import { Messages } from './storage-locations.messages';
-import { StorageLocationsFields } from './storage-locations.types';
-import { convertStoragesType } from './storage-locations.utils';
-import { useGetPermissions } from 'utils/useGetPermissions';
+import {
+  StorageLocationsFields,
+  BackupStorageTableElement,
+} from './storage-locations.types';
+import {
+  convertBackupStoragesPayloadToTableFormat,
+  convertStoragesType,
+} from './storage-locations.utils';
+import { useNamespaces } from 'hooks/api/namespaces';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import TableActionsMenu from '../../../components/table-actions-menu';
 import { StorageLocationsActionButtons } from './storage-locations-menu-actions';
 
 export const StorageLocations = () => {
   const queryClient = useQueryClient();
+  const { canCreate } = useNamespacePermissionsForResource('backup-storages');
+  const { data: namespaces = [] } = useNamespaces();
+  const backupStorages = useBackupStorages(
+    namespaces.map((namespace) => ({
+      namespace: namespace,
+    }))
+  );
 
-  const { data: backupStorages = [], isFetching } = useBackupStorages();
+  const backupStoragesLoading = backupStorages.some(
+    (result) => result.queryResult.isLoading
+  );
+
+  const tableData = useMemo(
+    () => convertBackupStoragesPayloadToTableFormat(backupStorages),
+    [backupStorages]
+  );
+
   const { mutate: createBackupStorage, isPending: creatingBackupStorage } =
     useCreateBackupStorage();
   const { mutate: editBackupStorage, isPending: editingBackupStorage } =
@@ -40,11 +62,13 @@ export const StorageLocations = () => {
 
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
   const [selectedStorageName, setSelectedStorageName] = useState<string>('');
+  const [selectedStorageNamespace, setSelectedStorageNamespace] =
+    useState<string>('');
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedStorageLocation, setSelectedStorageLocation] =
     useState<BackupStorage>();
 
-  const columns = useMemo<MRT_ColumnDef<BackupStorage>[]>(
+  const columns = useMemo<MRT_ColumnDef<BackupStorageTableElement>[]>(
     () => [
       {
         accessorKey: StorageLocationsFields.name,
@@ -60,16 +84,8 @@ export const StorageLocations = () => {
         header: Messages.bucketName,
       },
       {
-        accessorKey: StorageLocationsFields.namespaces,
-        header: Messages.namespaces,
-        Cell: ({ cell }) => {
-          const val = cell.getValue<string[]>();
-          if (val) {
-            return val.join(', ');
-          } else {
-            return '-';
-          }
-        },
+        accessorKey: StorageLocationsFields.namespace,
+        header: Messages.namespace,
       },
       {
         accessorKey: StorageLocationsFields.description,
@@ -85,15 +101,13 @@ export const StorageLocations = () => {
     []
   );
 
-  const { canCreate } = useGetPermissions({ resource: 'backup-storages' });
-
   const handleOpenCreateModal = () => {
     setSelectedStorageLocation(undefined);
     setOpenCreateEditModal(true);
   };
 
-  const handleOpenEditModal = (storageLocation: BackupStorage) => {
-    setSelectedStorageLocation(storageLocation);
+  const handleOpenEditModal = (storageLocation: BackupStorageTableElement) => {
+    setSelectedStorageLocation(storageLocation.raw);
     setOpenCreateEditModal(true);
   };
 
@@ -107,7 +121,7 @@ export const StorageLocations = () => {
       onSuccess: (updatedLocation) => {
         updateDataAfterEdit(
           queryClient,
-          BACKUP_STORAGES_QUERY_KEY,
+          [BACKUP_STORAGES_QUERY_KEY, data.namespace],
           StorageLocationsFields.name
         )(updatedLocation);
         handleCloseModal();
@@ -118,9 +132,10 @@ export const StorageLocations = () => {
   const handleCreateBackup = (data: BackupStorage) => {
     createBackupStorage(data, {
       onSuccess: (newLocation) => {
-        updateDataAfterCreate(queryClient, [BACKUP_STORAGES_QUERY_KEY])(
-          newLocation
-        );
+        updateDataAfterCreate(queryClient, [
+          BACKUP_STORAGES_QUERY_KEY,
+          data.namespace,
+        ])(newLocation);
         handleCloseModal();
       },
     });
@@ -134,8 +149,9 @@ export const StorageLocations = () => {
     }
   };
 
-  const handleDeleteBackup = (backupStorageName: string) => {
+  const handleDeleteBackup = (backupStorageName: string, namespace: string) => {
     setSelectedStorageName(backupStorageName);
+    setSelectedStorageNamespace(namespace);
     setOpenDeleteDialog(true);
   };
 
@@ -143,17 +159,23 @@ export const StorageLocations = () => {
     setOpenDeleteDialog(false);
   };
 
-  const handleConfirmDelete = (backupStorageName: string) => {
-    deleteBackupStorage(backupStorageName, {
-      onSuccess: (_, locationName) => {
-        updateDataAfterDelete(
-          queryClient,
-          BACKUP_STORAGES_QUERY_KEY,
-          'name'
-        )(_, locationName);
-        handleCloseDeleteDialog();
-      },
-    });
+  const handleConfirmDelete = (
+    backupStorageName: string,
+    namespace: string
+  ) => {
+    deleteBackupStorage(
+      { backupStorageId: backupStorageName, namespace: namespace },
+      {
+        onSuccess: (_, locationName) => {
+          updateDataAfterDelete(
+            queryClient,
+            [BACKUP_STORAGES_QUERY_KEY, namespace],
+            'name'
+          )(_, locationName.backupStorageId);
+          handleCloseDeleteDialog();
+        },
+      }
+    );
   };
   return (
     <>
@@ -168,12 +190,12 @@ export const StorageLocations = () => {
             accessKey: false,
             secretKey: false,
           },
-          isLoading: isFetching,
+          isLoading: backupStoragesLoading,
         }}
         columns={columns}
-        data={backupStorages}
+        data={tableData}
         renderTopToolbarCustomActions={() =>
-          canCreate && (
+          canCreate.length > 0 && (
             <Button
               size="small"
               startIcon={<Add />}
@@ -232,9 +254,10 @@ export const StorageLocations = () => {
         <ConfirmDialog
           isOpen={openDeleteDialog}
           selectedId={selectedStorageName}
+          selectedNamespace={selectedStorageNamespace}
           closeModal={handleCloseDeleteDialog}
           headerMessage={Messages.deleteDialog.header}
-          handleConfirm={handleConfirmDelete}
+          handleConfirmNamespace={handleConfirmDelete}
           disabledButtons={deletingBackupStorage}
         >
           {Messages.deleteDialog.content(selectedStorageName)}

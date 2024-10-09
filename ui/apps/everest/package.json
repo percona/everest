@@ -8,7 +8,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "pre-e2e": "rm -rf tests-out test-results && tsc --incremental --noImplicitAny false -p .e2e/tsconfig.json && tsc-alias -p .e2e/tsconfig.json",
-    "e2e": "pnpm pre-e2e && cd .e2e && playwright test",
+    "e2e": "pnpm pre-e2e && cd .e2e && playwright test --project=pr",
+    "e2e:upgrade": "pnpm pre-e2e && cd .e2e && playwright test --project=upgrade",
+    "e2e:release": "pnpm pre-e2e && cd .e2e && playwright test --project=release",
     "build": "tsc --incremental && vite build --emptyOutDir",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --fix",
     "format": "prettier .  --write",
@@ -30,7 +32,7 @@
     "@percona/utils": "workspace:^",
     "@tanstack/react-query": "^5.22.2",
     "@tanstack/react-query-devtools": "^5.24.0",
-    "axios": "^1.6.0",
+    "axios": "^1.7.7",
     "casbin.js": "^0.5.1",
     "cron-parser": "^4.9.0",
     "cron-time-generator": "^2.0.1",
@@ -71,9 +73,10 @@
     "typescript": "^5.2.2",
     "vite": "^4.5.3",
     "vite-tsconfig-paths": "^4.2.1",
-    "vitest": "^0.34.6"
+    "vitest": "^0.34.6",
+    "yaml": "^2.5.1"
   },
   "engines": {
-    "pnpm": "<9.0.0"
+    "pnpm": ">=9.4.0"
   }
 }
