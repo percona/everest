@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
   Accordion,
@@ -8,21 +8,33 @@ import {
   FormGroup,
   FormHelperText,
   InputAdornment,
+  Paper,
+  PaperProps,
   Stack,
+  SxProps,
+  Theme,
   Typography,
   useTheme,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { TextInput, ToggleButtonGroupInput, ToggleCard } from '@percona/ui-lib';
+import {
+  TextInput,
+  ToggleButtonGroupInput,
+  ToggleCard,
+  ToggleRegularButton,
+  ToggleButtonGroupInputRegular,
+} from '@percona/ui-lib';
 import { useKubernetesClusterResourcesInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterResourcesInfo';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
 import {
   CUSTOM_NR_UNITS_INPUT_VALUE,
+  DEFAULT_CONFIG_SERVERS,
   NODES_DEFAULT_SIZES,
+  getDefaultNumberOfconfigServersByNumberOfNodes,
   humanizedResourceSizeMap,
+  MIN_NUMBER_OF_SHARDS,
   NODES_DB_TYPE_MAP,
   ResourceSize,
-  SHARDING_DEFAULTS,
   PROXIES_DEFAULT_SIZES,
 } from './constants';
 import { DbWizardFormFields } from 'consts';
@@ -385,6 +397,36 @@ const CustomAccordionSummary = ({
   );
 };
 
+const CustomPaper = ({
+  children,
+  sx,
+  paperProps,
+}: {
+  children: React.ReactNode;
+  sx?: SxProps<Theme>;
+  paperProps?: Omit<PaperProps, 'sx'>;
+}) => {
+  return (
+    <Paper
+      variant="outlined"
+      sx={{
+        flexDirection: 'row',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        p: 2,
+        '.MuiFormControl-root': {
+          mt: 0,
+        },
+        ...sx,
+      }}
+      {...paperProps}
+    >
+      {children}
+    </Paper>
+  );
+};
+
 const ResourcesForm = ({
   dbType,
   disableDiskInput,
@@ -401,9 +443,19 @@ const ResourcesForm = ({
   const [expanded, setExpanded] = useState<'nodes' | 'proxies' | false>(
     'nodes'
   );
-  const { watch, getFieldState, setValue } = useFormContext();
+  const { watch, getFieldState, setValue, trigger, clearErrors } =
+    useFormContext();
+
   const numberOfNodes: string = watch(DbWizardFormFields.numberOfNodes);
+
   const sharding: boolean = watch(DbWizardFormFields.sharding);
+  const shardConfigServers: number = watch(
+    DbWizardFormFields.shardConfigServers
+  );
+  const { error: shardConfigServersError } = getFieldState(
+    DbWizardFormFields.shardConfigServers
+  );
+
   const numberOfProxies: string = watch(DbWizardFormFields.numberOfProxies);
   const customNrOfNodes: string = watch(DbWizardFormFields.customNrOfNodes);
   const customNrOfProxies: string = watch(DbWizardFormFields.customNrOfProxies);
@@ -441,50 +493,48 @@ const ResourcesForm = ({
     }
   }, [setValue, getFieldState, customNrOfNodes, dbType, numberOfNodes]);
 
+  useEffect(() => {
+    const { isDirty: isConfigServersDirty } = getFieldState(
+      DbWizardFormFields.shardConfigServers
+    );
+
+    if (!isConfigServersDirty) {
+      if (numberOfNodes && numberOfNodes !== CUSTOM_NR_UNITS_INPUT_VALUE) {
+        setValue(
+          DbWizardFormFields.shardConfigServers,
+          getDefaultNumberOfconfigServersByNumberOfNodes(+numberOfNodes)
+        );
+      } else {
+        clearErrors(DbWizardFormFields.shardConfigServers);
+        setValue(
+          DbWizardFormFields.shardConfigServers,
+          getDefaultNumberOfconfigServersByNumberOfNodes(+customNrOfNodes)
+        );
+      }
+    }
+
+    trigger(DbWizardFormFields.shardConfigServers);
+  }, [setValue, getFieldState, numberOfNodes, customNrOfNodes]);
+
   return (
     <>
       {!!showSharding && !!sharding && (
-        <>
-          <Typography variant="sectionHeading">Shards configuration</Typography>
-          <Box
-            sx={{
-              flexDirection: 'row',
-              gap: 2,
-              display: 'flex',
-              '.MuiTextField-root': {
-                width: '50%',
+        <CustomPaper sx={{ mb: 2 }}>
+          <Typography variant="sectionHeading">
+            {' '}
+            {Messages.sharding.numberOfShards}
+          </Typography>
+          <TextInput
+            name={DbWizardFormFields.shardNr}
+            textFieldProps={{
+              type: 'number',
+              required: true,
+              inputProps: {
+                min: MIN_NUMBER_OF_SHARDS,
               },
-              mb: 3,
             }}
-          >
-            <TextInput
-              name={DbWizardFormFields.shardNr}
-              textFieldProps={{
-                label: 'Number of shards',
-                type: 'number',
-                required: true,
-                inputProps: {
-                  min: SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min,
-                },
-              }}
-            />
-            <TextInput
-              name={DbWizardFormFields.shardConfigServers}
-              textFieldProps={{
-                label: 'Number of configuration servers',
-                type: 'number',
-                required: true,
-                inputProps: {
-                  step: '2',
-                  min: SHARDING_DEFAULTS[DbWizardFormFields.shardConfigServers]
-                    .min,
-                  max: SHARDING_DEFAULTS[DbWizardFormFields.shardConfigServers]
-                    .max,
-                },
-              }}
-            />
-          </Box>
-        </>
+          />
+        </CustomPaper>
       )}
       <Accordion
         expanded={expanded === 'nodes'}
@@ -541,6 +591,48 @@ const ResourcesForm = ({
           customNrOfUnitsInputName={DbWizardFormFields.customNrOfProxies}
         />
       </Accordion>
+      {!!showSharding && !!sharding && (
+        <CustomPaper sx={{ mt: 2 }}>
+          <Typography variant="sectionHeading">
+            {' '}
+            {Messages.sharding.numberOfConfigurationServers}
+          </Typography>
+          <Stack
+            sx={{
+              alignItems: 'flex-end',
+            }}
+          >
+            <ToggleButtonGroupInputRegular
+              name={DbWizardFormFields.shardConfigServers}
+              toggleButtonGroupProps={{
+                size: 'small',
+              }}
+            >
+              {DEFAULT_CONFIG_SERVERS.map((number) => (
+                <ToggleRegularButton
+                  sx={{
+                    px: 2,
+                  }}
+                  key={number}
+                  value={number}
+                  onClick={() => {
+                    if (number !== shardConfigServers.toString()) {
+                      setValue(DbWizardFormFields.shardConfigServers, number);
+                    }
+                  }}
+                >
+                  {number}
+                </ToggleRegularButton>
+              ))}
+            </ToggleButtonGroupInputRegular>
+            {shardConfigServersError && (
+              <FormHelperText error={true}>
+                {shardConfigServersError?.message}
+              </FormHelperText>
+            )}
+          </Stack>
+        </CustomPaper>
+      )}
     </>
   );
 };
