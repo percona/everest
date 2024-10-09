@@ -6,6 +6,7 @@ import {
   Box,
   Divider,
   FormGroup,
+  FormHelperText,
   InputAdornment,
   Stack,
   Typography,
@@ -133,11 +134,12 @@ const ResourcesToggles = ({
   customNrOfUnitsInputName,
   disableDiskInput,
   allowDiskInputUpdate,
+  disableCustom = false,
 }: ResourcesTogglesProps) => {
   const { isMobile, isDesktop } = useActiveBreakpoint();
   const { data: resourcesInfo, isFetching: resourcesInfoLoading } =
     useKubernetesClusterResourcesInfo();
-  const { watch, setValue, setError, clearErrors, resetField } =
+  const { watch, setValue, setError, clearErrors, resetField, getFieldState } =
     useFormContext();
 
   const resourceSizePerUnit: ResourceSize = watch(resourceSizePerUnitInputName);
@@ -207,6 +209,10 @@ const ResourcesToggles = ({
     }
   }, [memory, setValue]);
 
+  const { error: proxyFieldError } = getFieldState(
+    DbWizardFormFields.numberOfProxies
+  );
+
   return (
     <FormGroup sx={{ mt: 3 }}>
       <Stack>
@@ -217,7 +223,7 @@ const ResourcesToggles = ({
             onChange: (_, value) => {
               if (value !== CUSTOM_NR_UNITS_INPUT_VALUE) {
                 resetField(customNrOfUnitsInputName, {
-                  keepError: false,
+                  keepError: true,
                 });
               }
             },
@@ -232,7 +238,7 @@ const ResourcesToggles = ({
               {`${value} ${+value > 1 ? unitPlural : unit}`}
             </ToggleCard>
           ))}
-          {dbType !== DbType.Mysql && (
+          {!disableCustom && (
             <ToggleCard value={CUSTOM_NR_UNITS_INPUT_VALUE}>
               {Messages.customValue}
             </ToggleCard>
@@ -244,7 +250,7 @@ const ResourcesToggles = ({
             textFieldProps={{
               type: 'number',
               inputProps: {
-                step: dbType!==DbType.Mongo ? 1 : 2,
+                step: dbType !== DbType.Mongo ? 1 : 2,
                 min: 1,
               },
               sx: {
@@ -255,6 +261,12 @@ const ResourcesToggles = ({
             }}
           />
         )}
+        {proxyFieldError &&
+          numberOfUnitsInputName === DbWizardFormFields.numberOfProxies && (
+            <FormHelperText error={true}>
+              {proxyFieldError?.message}
+            </FormHelperText>
+          )}
       </Stack>
       <ToggleButtonGroupInput
         name={resourceSizePerUnitInputName}
@@ -418,6 +430,7 @@ const ResourcesForm = ({
 
     if (NODES_DB_TYPE_MAP[dbType].includes(numberOfNodes)) {
       setValue(DbWizardFormFields.numberOfProxies, numberOfNodes);
+      setValue(DbWizardFormFields.customNrOfProxies, numberOfNodes);
     } else {
       setValue(DbWizardFormFields.numberOfProxies, CUSTOM_NR_UNITS_INPUT_VALUE);
       setValue(DbWizardFormFields.customNrOfProxies, customNrOfNodes);
@@ -494,6 +507,7 @@ const ResourcesForm = ({
           customNrOfUnitsInputName={DbWizardFormFields.customNrOfNodes}
           disableDiskInput={disableDiskInput}
           allowDiskInputUpdate={allowDiskInputUpdate}
+          disableCustom={dbType === DbType.Mysql}
         />
       </Accordion>
       <Accordion
