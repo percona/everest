@@ -12,7 +12,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { type ToggleCardProps } from './toggle-card.types';
 
-export { default } from './toggle-card';
-export { type ToggleCardProps };
+import { type ToggleRegularButtonProps } from './toggle-regular-button.types';
+
+export { default } from './toggle-regular-button';
+export { type ToggleRegularButtonProps };

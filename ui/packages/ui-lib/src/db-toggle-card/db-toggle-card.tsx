@@ -2,7 +2,7 @@ import { Box, Stack, SvgIconProps, Typography } from '@mui/material';
 import { DbType } from '@percona/types';
 import { humanizeDbType } from './db-toggle-card.utils';
 import type { DbToggleCardProps } from './db-toggle-card.types';
-import ToggleCard from '../toggle-card';
+import ToggleCard from '../buttons/toggle-card';
 import { MongoIcon, MySqlIcon, PostgreSqlIcon } from '../icons';
 
 const iconMap: Record<DbType, (props: SvgIconProps) => React.JSX.Element> = {

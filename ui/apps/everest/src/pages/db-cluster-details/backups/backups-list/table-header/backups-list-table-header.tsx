@@ -41,7 +41,7 @@ const BackupListTableHeader = ({
   };
   const { canCreate } = useRBACPermissions(
     'database-cluster-backups',
-    `${dbCluster.metadata.namespace}/*`
+    `${dbCluster.metadata.namespace}/${dbCluster.metadata.name}`
   );
   const { canUpdate: canUpdateDb } = useRBACPermissions(
     'database-clusters',

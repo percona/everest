@@ -54,6 +54,5 @@ export const DB_WIZARD_DEFAULTS: DbWizardType = {
   [DbWizardFormFields.memory]: NODES_DEFAULT_SIZES.mongodb.small.memory,
   [DbWizardFormFields.proxyMemory]: PROXIES_DEFAULT_SIZES.mongodb.small.memory,
   [DbWizardFormFields.sharding]: false,
-  [DbWizardFormFields.shardNr]: '1',
-  [DbWizardFormFields.shardConfigServers]: '1',
+  [DbWizardFormFields.shardNr]: '2',
 };
