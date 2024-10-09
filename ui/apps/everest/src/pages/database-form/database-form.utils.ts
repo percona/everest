@@ -124,10 +124,12 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.disk]: diskValues.value,
     [DbWizardFormFields.diskUnit]: diskValues.originalUnit,
     [DbWizardFormFields.memory]: memoryParser(
-      (dbCluster?.spec?.engine?.resources?.memory || 0).toString()
+      (dbCluster?.spec?.engine?.resources?.memory || 0).toString(),
+      'G'
     ).value,
     [DbWizardFormFields.proxyMemory]: memoryParser(
-      (dbCluster?.spec?.proxy?.resources?.memory || 0).toString()
+      (dbCluster?.spec?.proxy?.resources?.memory || 0).toString(),
+      'G'
     ).value,
     [DbWizardFormFields.storageClass]:
       dbCluster?.spec?.engine?.storage?.class || null,
