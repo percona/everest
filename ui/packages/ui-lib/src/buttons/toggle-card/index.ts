@@ -13,10 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DbType } from '@percona/types';
-import { ToggleCardProps } from '../buttons/toggle-card';
+import { type ToggleCardProps } from './toggle-card.types';
 
-export type DbToggleCardProps = {
-  value: DbType;
-  lowerContent?: React.ReactNode;
-} & ToggleCardProps;
+export { default } from './toggle-card';
+export { type ToggleCardProps };
