@@ -17,7 +17,7 @@ import { FormGroup, Skeleton, Stack, Tooltip, Typography } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useCallback, useEffect, useState } from 'react';
 import { lt, valid } from 'semver';
-import { DbType } from '@percona/types';
+import { DbEngineType, DbType } from '@percona/types';
 import {
   AutoCompleteInput,
   DbToggleCard,
@@ -81,8 +81,10 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
 
   const notSupportedMongoOperatorVersionForSharding =
     dbType === DbType.Mongo &&
+    dbEngineData?.type !== DbEngineType.PXC &&
     !!valid(dbEngineData?.operatorVersion) &&
     lt(dbEngineData?.operatorVersion || '', '1.17.0');
+
   const disableSharding =
     mode !== 'new' || notSupportedMongoOperatorVersionForSharding;
 
@@ -395,9 +397,19 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                   },
                 }}
               />
-              {notSupportedMongoOperatorVersionForSharding && (
+              {notSupportedMongoOperatorVersionForSharding &&
+                mode !== 'edit' && (
+                  <Tooltip
+                    title={Messages.disableShardingTooltip}
+                    arrow
+                    placement="right"
+                  >
+                    <InfoOutlinedIcon color="primary" />
+                  </Tooltip>
+                )}
+              {mode === 'edit' && (
                 <Tooltip
-                  title={Messages.disableShardingTooltip}
+                  title={Messages.disableShardingInEditMode}
                   arrow
                   placement="right"
                 >

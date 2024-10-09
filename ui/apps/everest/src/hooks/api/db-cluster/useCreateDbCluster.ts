@@ -20,7 +20,10 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
-import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
+import {
+  CUSTOM_NR_UNITS_INPUT_VALUE,
+  MIN_NUMBER_OF_SHARDS,
+} from 'components/cluster-form';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import {
   ClusterCredentials,
@@ -113,7 +116,7 @@ const formValuesToPayloadMapping = (
       ...(dbPayload.dbType === DbType.Mongo && {
         sharding: {
           enabled: dbPayload.sharding,
-          shards: +(dbPayload.shardNr ?? 1),
+          shards: +(dbPayload.shardNr ?? MIN_NUMBER_OF_SHARDS),
           configServer: {
             replicas: +(dbPayload.shardConfigServers ?? 3),
           },
