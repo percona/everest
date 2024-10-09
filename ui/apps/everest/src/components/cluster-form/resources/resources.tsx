@@ -12,6 +12,7 @@ import {
   PaperProps,
   Stack,
   SxProps,
+  Theme,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -40,7 +41,6 @@ import { DbType } from '@percona/types';
 import { getProxyUnitNamesFromDbType } from './utils';
 import { ResourcesTogglesProps, ResourceInputProps } from './resources.types';
 import { Messages } from './messages';
-import { Theme } from '@emotion/react';
 
 const humanizeResourceSizeMap = (type: ResourceSize): string =>
   humanizedResourceSizeMap[type];
