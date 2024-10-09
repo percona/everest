@@ -195,6 +195,7 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
         numberOfProxies,
         customNrOfNodes = '',
         customNrOfProxies = '',
+        dbType,
       },
       ctx
     ) => {
@@ -218,6 +219,45 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
           }
         }
       });
+
+      if (
+        numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE &&
+        dbType === DbType.Mongo &&
+        +customNrOfNodes % 2 === 0
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'The number of nodes cannot be even',
+          path: [DbWizardFormFields.customNrOfNodes],
+        });
+      }
+
+      if (dbType === DbType.Mysql) {
+        const intNrNodes =
+          numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
+            ? customNrOfNodes
+            : numberOfNodes;
+        const intNrProxies =
+          numberOfProxies === CUSTOM_NR_UNITS_INPUT_VALUE
+            ? customNrOfProxies
+            : numberOfProxies;
+
+        if (+intNrNodes > 1 && +intNrProxies === 1) {
+          if (numberOfProxies === CUSTOM_NR_UNITS_INPUT_VALUE) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Number of proxies must be more than 1',
+              path: [DbWizardFormFields.customNrOfProxies],
+            });
+          } else {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Number of proxies must be more than 1',
+              path: [DbWizardFormFields.numberOfProxies],
+            });
+          }
+        }
+      }
 
       if (sharding as boolean) {
         const intShardNr = parseInt(shardNr || '', 10);
