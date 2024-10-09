@@ -15,7 +15,7 @@
 
 import { FormGroup, Skeleton, Stack, Tooltip, Typography } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { lt, valid } from 'semver';
 import { DbEngineType, DbType } from '@percona/types';
 import {
@@ -68,15 +68,18 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     (result) => result.isFetching
   );
 
-  const dbEngines =
-    dbEnginesForNamespaces.find(
-      (dbEngine) => dbEngine.namespace === dbNamespace
-    )?.data || [];
+  const dbEngines = useMemo(
+    () =>
+      dbEnginesForNamespaces.find(
+        (result) => result.namespace === dbNamespace && result.isSuccess
+      )?.data || [],
+    [dbEnginesForNamespaces, dbNamespace]
+  );
 
-  const dbEngine = dbTypeToDbEngine(dbType);
+  const dbEngine = useMemo(() => dbTypeToDbEngine(dbType), [dbType]);
 
   const [dbEngineData, setDbEngineData] = useState(
-    dbEngines.find((engine) => engine.type === dbEngine)
+    dbEngines.find((engine) => engine.type === dbTypeToDbEngine(dbType))
   );
 
   const notSupportedMongoOperatorVersionForSharding =
@@ -100,7 +103,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const setDbEngineDataForEngineType = useCallback(() => {
     //TODO 1234 - edit of dbVersion field should be refactored
     const newEngineData = dbEngines.find((engine) => engine.type === dbEngine);
-
     if (newEngineData && mode === 'edit') {
       const validVersions = filterAvailableDbVersionsForDbEngineEdition(
         newEngineData,
@@ -110,7 +112,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     }
 
     setDbEngineData(newEngineData);
-  }, [dbEngine, dbEngines, defaultDbVersion]);
+  }, [dbEngine, dbEngines, defaultDbVersion, mode]);
 
   const updateDbVersions = useCallback(() => {
     const { isDirty: dbVersionDirty } = getFieldState(
@@ -238,6 +240,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     updateDbVersions();
   }, [
     dbEngines,
+    dbEngine,
     dbType,
     setRandomDbName,
     updateDbVersions,
@@ -263,10 +266,8 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   }, [clusterInfo]);
 
   useEffect(() => {
-    if (!dbEngineData) {
-      setDbEngineDataForEngineType();
-    }
-  }, [dbEngineData, setDbEngineDataForEngineType]);
+    setDbEngineDataForEngineType();
+  }, [setDbEngineDataForEngineType]);
 
   const { canCreate, isFetching } =
     useNamespacePermissionsForResource('database-clusters');
