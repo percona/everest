@@ -216,13 +216,13 @@ test.describe('DB Cluster creation', () => {
     expect(addedCluster).not.toBeUndefined();
     expect(addedCluster?.spec.engine.type).toBe('psmdb');
     expect(addedCluster?.spec.engine.replicas).toBe(3);
-    expect(['600m', '0.6']).toContain(
-      addedCluster?.spec.engine.resources?.cpu.toString()
-    );
-    expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe('1G');
-    expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
+    expect(addedCluster?.spec.engine.resources?.cpu.toString()).toBe('1');
+    expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe('4G');
+    expect(addedCluster?.spec.engine.storage.size.toString()).toBe('25Gi');
     expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
-    expect(addedCluster?.spec.proxy.replicas).toBe(3);
+    expect(addedCluster?.spec.proxy.replicas).toBe(1);
+    expect(addedCluster?.spec.proxy.resources.cpu).toBe('1');
+    expect(addedCluster?.spec.proxy.resources.memory).toBe('2G');
     // expect(addedCluster?.spec.proxy.expose.ipSourceRanges).toEqual([
     //   '192.168.1.1/24',
     //   '192.168.1.0',
