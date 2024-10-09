@@ -154,7 +154,7 @@ const ResourcesToggles = ({
   const { isMobile, isDesktop } = useActiveBreakpoint();
   const { data: resourcesInfo, isFetching: resourcesInfoLoading } =
     useKubernetesClusterResourcesInfo();
-  const { watch, setValue, setError, clearErrors, resetField, getFieldState } =
+  const { watch, setValue, setError, clearErrors, resetField } =
     useFormContext();
 
   const resourceSizePerUnit: ResourceSize = watch(resourceSizePerUnitInputName);
@@ -224,10 +224,6 @@ const ResourcesToggles = ({
     }
   }, [memory, setValue]);
 
-  const { error: proxyFieldError } = getFieldState(
-    DbWizardFormFields.numberOfProxies
-  );
-
   return (
     <FormGroup sx={{ mt: 3 }}>
       <Stack>
@@ -277,12 +273,6 @@ const ResourcesToggles = ({
             }}
           />
         )}
-        {proxyFieldError &&
-          numberOfUnitsInputName === DbWizardFormFields.numberOfProxies && (
-            <FormHelperText error={true}>
-              {proxyFieldError?.message}
-            </FormHelperText>
-          )}
       </Stack>
       <ToggleButtonGroupInput
         name={resourceSizePerUnitInputName}
@@ -469,6 +459,10 @@ const ResourcesForm = ({
       ? customNrOfProxies
       : numberOfProxies;
 
+  const { error: proxyFieldError } = getFieldState(
+    DbWizardFormFields.numberOfProxies
+  );
+
   const handleAccordionChange =
     (panel: 'nodes' | 'proxies') =>
     (_: React.SyntheticEvent, newExpanded: boolean) => {
@@ -590,6 +584,11 @@ const ResourcesForm = ({
           numberOfUnitsInputName={DbWizardFormFields.numberOfProxies}
           customNrOfUnitsInputName={DbWizardFormFields.customNrOfProxies}
         />
+        {proxyFieldError && (
+          <FormHelperText error={true}>
+            {proxyFieldError?.message}
+          </FormHelperText>
+        )}
       </Accordion>
       {!!showSharding && !!sharding && (
         <CustomPaper sx={{ mt: 2 }}>
