@@ -162,7 +162,6 @@ export const SHARDING_DEFAULTS = {
 
 export const resourcesFormSchema = (passthrough?: boolean) => {
   const objectShape = {
-    [DbWizardFormFields.dbType]: z.string().optional(),
     [DbWizardFormFields.shardNr]: z.string().optional(),
     [DbWizardFormFields.shardConfigServers]: z.string().optional(),
     [DbWizardFormFields.cpu]: resourceToNumber(0.6),
