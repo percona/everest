@@ -18,6 +18,7 @@ export type ResourcesTogglesProps = {
   disableDiskInput?: boolean;
   allowDiskInputUpdate?: boolean;
   dbType: DbType;
+  disableCustom?: boolean;
 };
 
 export type ResourceInputProps = {
