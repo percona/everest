@@ -158,7 +158,7 @@ export const getDefaultNumberOfconfigServersByNumberOfNodes = (
   numberOfNodes: number
 ) => {
   if (DEFAULT_CONFIG_SERVERS.includes(numberOfNodes.toString())) {
-    return numberOfNodes <= 5 ? numberOfNodes.toString() : '7';
+    return numberOfNodes.toString();
   } else return '7';
 };
 
