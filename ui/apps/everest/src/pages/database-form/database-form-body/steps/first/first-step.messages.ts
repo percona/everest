@@ -28,5 +28,7 @@ export const Messages = {
     dbName: 'E.g. postgresql-123',
   },
   disableShardingTooltip:
-    'Sharding cannot be enabled unless PSMDB Operator version >= 1.17.0',
+    'Sharding cannot be enabled unless the PSMDB operator version is 1.17.0 or higher',
+  disableShardingInEditMode:
+    'Sharding cannot be enabled/disabled after the database is created',
 };
