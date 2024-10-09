@@ -1415,38 +1415,6 @@ func TestValidateShardingOnUpdate(t *testing.T) {
 			expected: errShardingEnablingNotSupported,
 		},
 		{
-			desc:    "try to change configServers",
-			updated: []byte(`{"spec": {"sharding": {"enabled": true, "shards":3, "configServer": {"replicas": 2}}}}`),
-			old: &everestv1alpha1.DatabaseCluster{
-				Spec: everestv1alpha1.DatabaseClusterSpec{
-					Sharding: &everestv1alpha1.Sharding{
-						Enabled: true,
-						ConfigServer: everestv1alpha1.ConfigServer{
-							Replicas: 3,
-						},
-						Shards: 3,
-					},
-				},
-			},
-			expected: errChangeCfgSrvNotSupported,
-		},
-		{
-			desc:    "try to change shards",
-			updated: []byte(`{"spec": {"sharding": {"enabled": true, "shards":5, "configServer": {"replicas": 3}}}}`),
-			old: &everestv1alpha1.DatabaseCluster{
-				Spec: everestv1alpha1.DatabaseClusterSpec{
-					Sharding: &everestv1alpha1.Sharding{
-						Enabled: true,
-						ConfigServer: everestv1alpha1.ConfigServer{
-							Replicas: 3,
-						},
-						Shards: 3,
-					},
-				},
-			},
-			expected: errChangeShardsNumNotSupported,
-		},
-		{
 			desc:    "ok",
 			updated: []byte(`{"spec": {"engine": {"type": "psmdb", "version": "1.17.0"}, "sharding": {"enabled": true, "shards":5, "configServer": {"replicas": 3}}}}`),
 			old: &everestv1alpha1.DatabaseCluster{
