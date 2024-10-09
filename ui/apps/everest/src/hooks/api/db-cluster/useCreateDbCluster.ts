@@ -20,7 +20,10 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
-import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
+import {
+  CUSTOM_NR_UNITS_INPUT_VALUE,
+  MIN_NUMBER_OF_SHARDS,
+} from 'components/cluster-form';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import {
   ClusterCredentials,
@@ -32,6 +35,7 @@ import { PerconaQueryOptions } from 'shared-types/query.types';
 import cronConverter from 'utils/cron-converter';
 import { getProxySpec } from './utils';
 import { DbType } from '@percona/types';
+import { useRBACPermissions } from 'hooks/rbac';
 
 type CreateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -112,7 +116,7 @@ const formValuesToPayloadMapping = (
       ...(dbPayload.dbType === DbType.Mongo && {
         sharding: {
           enabled: dbPayload.sharding,
-          shards: +(dbPayload.shardNr ?? 1),
+          shards: +(dbPayload.shardNr ?? MIN_NUMBER_OF_SHARDS),
           configServer: {
             replicas: +(dbPayload.shardConfigServers ?? 3),
           },
@@ -156,9 +160,19 @@ export const useDbClusterCredentials = (
   dbClusterName: string,
   namespace: string,
   options?: PerconaQueryOptions<ClusterCredentials, unknown, ClusterCredentials>
-) =>
-  useQuery<GetDbClusterCredentialsPayload, unknown, ClusterCredentials>({
-    queryKey: [`cluster-credentials-${dbClusterName}`],
+) => {
+  const { canRead: canReadCredentials } = useRBACPermissions(
+    'database-cluster-credentials',
+    `${namespace}/${dbClusterName}`
+  );
+
+  return useQuery<GetDbClusterCredentialsPayload, unknown, ClusterCredentials>({
+    queryKey: ['cluster-credentials', dbClusterName],
     queryFn: () => getDbClusterCredentialsFn(dbClusterName, namespace),
+    select: canReadCredentials
+      ? (creds) => creds
+      : () => ({ username: '', password: '' }),
     ...options,
+    enabled: (options?.enabled ?? true) && canReadCredentials,
   });
+};

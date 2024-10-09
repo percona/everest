@@ -1,9 +1,13 @@
 import { DbType } from '@percona/types';
 
+type Resources = Omit<Record<'cpu' | 'memory' | 'disk', number>, 'disk'> &
+  Partial<Pick<Record<'cpu' | 'memory' | 'disk', number>, 'disk'>>;
+
 export type ResourcesTogglesProps = {
   unit?: string;
   unitPlural?: string;
   options: string[];
+  sizeOptions: Record<'small' | 'medium' | 'large', Resources>;
   resourceSizePerUnitInputName: string;
   cpuInputName: string;
   diskInputName?: string;
@@ -14,6 +18,7 @@ export type ResourcesTogglesProps = {
   disableDiskInput?: boolean;
   allowDiskInputUpdate?: boolean;
   dbType: DbType;
+  disableCustom?: boolean;
 };
 
 export type ResourceInputProps = {

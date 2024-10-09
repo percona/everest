@@ -15,6 +15,7 @@ const resourceToNumber = (minimum = 0) =>
   );
 
 export const matchFieldsValueToResourceSize = (
+  dbType: DbType,
   resources?: Resources
 ): ResourceSize => {
   if (!resources) {
@@ -22,11 +23,11 @@ export const matchFieldsValueToResourceSize = (
   }
   const memory = memoryParser(resources.memory.toString());
 
-  const res = Object.values(DEFAULT_SIZES).findIndex(
+  const res = Object.values(NODES_DEFAULT_SIZES[dbType]).findIndex(
     (item) => item.cpu === Number(resources.cpu) && item.memory === memory.value
   );
   return res !== -1
-    ? (Object.keys(DEFAULT_SIZES)[res] as ResourceSize)
+    ? (Object.keys(NODES_DEFAULT_SIZES[dbType])[res] as ResourceSize)
     : ResourceSize.custom;
 };
 
@@ -50,32 +51,115 @@ export const humanizedResourceSizeMap: Record<ResourceSize, string> = {
   [ResourceSize.custom]: 'Custom',
 };
 
-export const DEFAULT_SIZES = {
-  [ResourceSize.small]: {
-    [DbWizardFormFields.cpu]: 1,
-    [DbWizardFormFields.memory]: 2,
-    [DbWizardFormFields.disk]: 25,
+export const NODES_DEFAULT_SIZES = {
+  [DbType.Mysql]: {
+    [ResourceSize.small]: {
+      [DbWizardFormFields.cpu]: 1,
+      [DbWizardFormFields.memory]: 2,
+      [DbWizardFormFields.disk]: 25,
+    },
+    [ResourceSize.medium]: {
+      [DbWizardFormFields.cpu]: 4,
+      [DbWizardFormFields.memory]: 8,
+      [DbWizardFormFields.disk]: 100,
+    },
+    [ResourceSize.large]: {
+      [DbWizardFormFields.cpu]: 8,
+      [DbWizardFormFields.memory]: 32,
+      [DbWizardFormFields.disk]: 200,
+    },
   },
-  [ResourceSize.medium]: {
-    [DbWizardFormFields.cpu]: 4,
-    [DbWizardFormFields.memory]: 8,
-    [DbWizardFormFields.disk]: 100,
+  [DbType.Mongo]: {
+    [ResourceSize.small]: {
+      [DbWizardFormFields.cpu]: 1,
+      [DbWizardFormFields.memory]: 4,
+      [DbWizardFormFields.disk]: 25,
+    },
+    [ResourceSize.medium]: {
+      [DbWizardFormFields.cpu]: 4,
+      [DbWizardFormFields.memory]: 8,
+      [DbWizardFormFields.disk]: 100,
+    },
+    [ResourceSize.large]: {
+      [DbWizardFormFields.cpu]: 8,
+      [DbWizardFormFields.memory]: 32,
+      [DbWizardFormFields.disk]: 200,
+    },
   },
-  [ResourceSize.large]: {
-    [DbWizardFormFields.cpu]: 8,
-    [DbWizardFormFields.memory]: 32,
-    [DbWizardFormFields.disk]: 200,
+  [DbType.Postresql]: {
+    [ResourceSize.small]: {
+      [DbWizardFormFields.cpu]: 1,
+      [DbWizardFormFields.memory]: 2,
+      [DbWizardFormFields.disk]: 25,
+    },
+    [ResourceSize.medium]: {
+      [DbWizardFormFields.cpu]: 4,
+      [DbWizardFormFields.memory]: 8,
+      [DbWizardFormFields.disk]: 100,
+    },
+    [ResourceSize.large]: {
+      [DbWizardFormFields.cpu]: 8,
+      [DbWizardFormFields.memory]: 32,
+      [DbWizardFormFields.disk]: 200,
+    },
   },
 };
 
-export const SHARDING_DEFAULTS = {
-  [DbWizardFormFields.shardConfigServers]: {
-    min: '1',
-    max: '7',
+export const PROXIES_DEFAULT_SIZES = {
+  [DbType.Mysql]: {
+    [ResourceSize.small]: {
+      [DbWizardFormFields.cpu]: 0.2,
+      [DbWizardFormFields.memory]: 0.2,
+    },
+    [ResourceSize.medium]: {
+      [DbWizardFormFields.cpu]: 0.5,
+      [DbWizardFormFields.memory]: 0.8,
+    },
+    [ResourceSize.large]: {
+      [DbWizardFormFields.cpu]: 0.8,
+      [DbWizardFormFields.memory]: 3,
+    },
   },
-  [DbWizardFormFields.shardNr]: {
-    min: '1',
+  [DbType.Mongo]: {
+    [ResourceSize.small]: {
+      [DbWizardFormFields.cpu]: 1,
+      [DbWizardFormFields.memory]: 2,
+    },
+    [ResourceSize.medium]: {
+      [DbWizardFormFields.cpu]: 2,
+      [DbWizardFormFields.memory]: 4,
+    },
+    [ResourceSize.large]: {
+      [DbWizardFormFields.cpu]: 4,
+      [DbWizardFormFields.memory]: 16,
+    },
   },
+  [DbType.Postresql]: {
+    [ResourceSize.small]: {
+      [DbWizardFormFields.cpu]: 1,
+      [DbWizardFormFields.memory]: 0.03,
+    },
+    [ResourceSize.medium]: {
+      [DbWizardFormFields.cpu]: 4,
+      [DbWizardFormFields.memory]: 0.06,
+    },
+    [ResourceSize.large]: {
+      [DbWizardFormFields.cpu]: 8,
+      [DbWizardFormFields.memory]: 0.1,
+    },
+  },
+};
+
+export const DEFAULT_CONFIG_SERVERS = ['1', '3', '5', '7'];
+
+export const MIN_NUMBER_OF_SHARDS = '1';
+
+export const getDefaultNumberOfconfigServersByNumberOfNodes = (
+  numberOfNodes: number
+) => {
+  if (DEFAULT_CONFIG_SERVERS.includes(numberOfNodes.toString())) {
+    return numberOfNodes.toString();
+  } else return '7';
 };
 
 export const resourcesFormSchema = (passthrough?: boolean) => {
@@ -90,8 +174,8 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
     [DbWizardFormFields.resourceSizePerNode]: z.nativeEnum(ResourceSize),
     [DbWizardFormFields.numberOfNodes]: z.string(),
     [DbWizardFormFields.customNrOfNodes]: z.string().optional(),
-    [DbWizardFormFields.proxyCpu]: resourceToNumber(0.6),
-    [DbWizardFormFields.proxyMemory]: resourceToNumber(0.512),
+    [DbWizardFormFields.proxyCpu]: resourceToNumber(0),
+    [DbWizardFormFields.proxyMemory]: resourceToNumber(0),
     [DbWizardFormFields.resourceSizePerProxy]: z.nativeEnum(ResourceSize),
     [DbWizardFormFields.numberOfProxies]: z.string(),
     [DbWizardFormFields.customNrOfProxies]: z.string().optional(),
@@ -111,6 +195,7 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
         numberOfProxies,
         customNrOfNodes = '',
         customNrOfProxies = '',
+        dbType,
       },
       ctx
     ) => {
@@ -135,15 +220,49 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
         }
       });
 
+      if (
+        numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE &&
+        dbType === DbType.Mongo &&
+        +customNrOfNodes % 2 === 0
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'The number of nodes cannot be even',
+          path: [DbWizardFormFields.customNrOfNodes],
+        });
+      }
+
+      if (dbType === DbType.Mysql) {
+        const intNrNodes =
+          numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
+            ? customNrOfNodes
+            : numberOfNodes;
+        const intNrProxies =
+          numberOfProxies === CUSTOM_NR_UNITS_INPUT_VALUE
+            ? customNrOfProxies
+            : numberOfProxies;
+
+        if (+intNrNodes > 1 && +intNrProxies === 1) {
+          if (numberOfProxies === CUSTOM_NR_UNITS_INPUT_VALUE) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Number of proxies must be more than 1',
+              path: [DbWizardFormFields.customNrOfProxies],
+            });
+          } else {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Number of proxies must be more than 1',
+              path: [DbWizardFormFields.numberOfProxies],
+            });
+          }
+        }
+      }
+
       if (sharding as boolean) {
         const intShardNr = parseInt(shardNr || '', 10);
-        const intShardNrMin =
-          +SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min;
+        const intShardNrMin = +MIN_NUMBER_OF_SHARDS;
         const intShardConfigServers = parseInt(shardConfigServers || '', 10);
-        const intShardConfigServersMin =
-          +SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min;
-        const intShardConfigServersMax =
-          +SHARDING_DEFAULTS[DbWizardFormFields.shardConfigServers].max;
 
         if (Number.isNaN(intShardNr) || intShardNr < 0) {
           ctx.addIssue({
@@ -161,31 +280,26 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
           }
         }
 
-        if (Number.isNaN(intShardConfigServers) || intShardConfigServers <= 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: Messages.sharding.invalid,
-            path: [DbWizardFormFields.shardConfigServers],
-          });
+        if (
+          !Number.isNaN(numberOfNodes) &&
+          numberOfNodes !== CUSTOM_NR_UNITS_INPUT_VALUE
+        ) {
+          if (intShardConfigServers === 1 && +numberOfNodes > 1) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: Messages.sharding.numberOfConfigServersError,
+              path: [DbWizardFormFields.shardConfigServers],
+            });
+          }
         } else {
-          if (intShardConfigServers < intShardConfigServersMin) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: Messages.sharding.min(intShardConfigServersMin),
-              path: [DbWizardFormFields.shardConfigServers],
-            });
-          } else if (!(intShardConfigServers % 2)) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: Messages.sharding.odd,
-              path: [DbWizardFormFields.shardConfigServers],
-            });
-          } else if (intShardConfigServers > intShardConfigServersMax) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: Messages.sharding.max(intShardConfigServersMax),
-              path: [DbWizardFormFields.shardConfigServers],
-            });
+          if (!Number.isNaN(customNrOfNodes)) {
+            if (intShardConfigServers === 1 && +customNrOfNodes > 1) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: Messages.sharding.numberOfConfigServersError,
+                path: [DbWizardFormFields.shardConfigServers],
+              });
+            }
           }
         }
       }

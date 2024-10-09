@@ -26,9 +26,9 @@ import { DB_WIZARD_DEFAULTS } from './database-form.constants.ts';
 import { generateShortUID } from 'utils/generateShortUID';
 import {
   CUSTOM_NR_UNITS_INPUT_VALUE,
+  getDefaultNumberOfconfigServersByNumberOfNodes,
   matchFieldsValueToResourceSize,
   NODES_DB_TYPE_MAP,
-  SHARDING_DEFAULTS,
 } from 'components/cluster-form';
 
 const replicasToNodes = (replicas: string, dbType: DbType): string => {
@@ -48,13 +48,17 @@ export const DbClusterPayloadToFormValues = (
   namespace: string
 ): DbWizardType => {
   const backup = dbCluster?.spec?.backup;
-  const replicas = dbCluster?.spec?.proxy?.replicas.toString();
+  const replicas = dbCluster?.spec?.engine?.replicas.toString();
   const proxies = dbCluster?.spec?.proxy?.replicas.toString();
   const diskValues = memoryParser(
     dbCluster?.spec?.engine?.storage?.size.toString()
   );
 
   const sharding = dbCluster?.spec?.sharding;
+  const numberOfNodes = replicasToNodes(
+    replicas,
+    dbEngineToDbType(dbCluster?.spec?.engine?.type)
+  );
 
   return {
     //basic info
@@ -87,10 +91,7 @@ export const DbClusterPayloadToFormValues = (
       !!dbCluster?.spec?.monitoring?.monitoringConfigName,
     [DbWizardFormFields.monitoringInstance]:
       dbCluster?.spec?.monitoring?.monitoringConfigName || '',
-    [DbWizardFormFields.numberOfNodes]: replicasToNodes(
-      replicas,
-      dbEngineToDbType(dbCluster?.spec?.engine?.type)
-    ),
+    [DbWizardFormFields.numberOfNodes]: numberOfNodes,
     [DbWizardFormFields.numberOfProxies]: replicasToNodes(
       proxies,
       dbEngineToDbType(dbCluster?.spec?.engine?.type)
@@ -98,18 +99,21 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.customNrOfNodes]: replicas,
     [DbWizardFormFields.customNrOfProxies]: proxies,
     [DbWizardFormFields.resourceSizePerNode]: matchFieldsValueToResourceSize(
+      dbEngineToDbType(dbCluster?.spec?.engine?.type),
       dbCluster?.spec?.engine?.resources
     ),
     [DbWizardFormFields.resourceSizePerProxy]: matchFieldsValueToResourceSize(
+      dbEngineToDbType(dbCluster?.spec?.engine?.type),
       dbCluster?.spec?.proxy.resources
     ),
     [DbWizardFormFields.sharding]: dbCluster?.spec?.sharding?.enabled || false,
     [DbWizardFormFields.shardConfigServers]: (
       sharding?.configServer?.replicas ||
-      SHARDING_DEFAULTS[DbWizardFormFields.shardConfigServers].min
+      getDefaultNumberOfconfigServersByNumberOfNodes(+numberOfNodes)
     ).toString(),
     [DbWizardFormFields.shardNr]: (
-      sharding?.shards || SHARDING_DEFAULTS[DbWizardFormFields.shardNr].min
+      sharding?.shards ||
+      (DB_WIZARD_DEFAULTS[DbWizardFormFields.shardNr] as string)
     ).toString(),
     [DbWizardFormFields.cpu]: cpuParser(
       dbCluster?.spec?.engine?.resources?.cpu.toString() || '0'

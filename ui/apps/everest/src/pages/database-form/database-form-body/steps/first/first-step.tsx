@@ -15,9 +15,9 @@
 
 import { FormGroup, Skeleton, Stack, Tooltip, Typography } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { lt, valid } from 'semver';
-import { DbType } from '@percona/types';
+import { DbEngineType, DbType } from '@percona/types';
 import {
   AutoCompleteInput,
   DbToggleCard,
@@ -41,6 +41,11 @@ import { filterAvailableDbVersionsForDbEngineEdition } from 'components/cluster-
 import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import { useDBEnginesForNamespaces } from 'hooks/api/namespaces/useNamespaces.ts';
+import {
+  NODES_DEFAULT_SIZES,
+  PROXIES_DEFAULT_SIZES,
+  ResourceSize,
+} from 'components/cluster-form';
 import { DbVersion } from 'components/cluster-form/db-version';
 import { generateShortUID } from 'utils/generateShortUID';
 
@@ -63,21 +68,26 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     (result) => result.isFetching
   );
 
-  const dbEngines =
-    dbEnginesForNamespaces.find(
-      (dbEngine) => dbEngine.namespace === dbNamespace
-    )?.data || [];
+  const dbEngines = useMemo(
+    () =>
+      dbEnginesForNamespaces.find(
+        (result) => result.namespace === dbNamespace && result.isSuccess
+      )?.data || [],
+    [dbEnginesForNamespaces, dbNamespace]
+  );
 
-  const dbEngine = dbTypeToDbEngine(dbType);
+  const dbEngine = useMemo(() => dbTypeToDbEngine(dbType), [dbType]);
 
   const [dbEngineData, setDbEngineData] = useState(
-    dbEngines.find((engine) => engine.type === dbEngine)
+    dbEngines.find((engine) => engine.type === dbTypeToDbEngine(dbType))
   );
 
   const notSupportedMongoOperatorVersionForSharding =
     dbType === DbType.Mongo &&
+    dbEngineData?.type !== DbEngineType.PXC &&
     !!valid(dbEngineData?.operatorVersion) &&
     lt(dbEngineData?.operatorVersion || '', '1.17.0');
+
   const disableSharding =
     mode !== 'new' || notSupportedMongoOperatorVersionForSharding;
 
@@ -93,7 +103,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const setDbEngineDataForEngineType = useCallback(() => {
     //TODO 1234 - edit of dbVersion field should be refactored
     const newEngineData = dbEngines.find((engine) => engine.type === dbEngine);
-
     if (newEngineData && mode === 'edit') {
       const validVersions = filterAvailableDbVersionsForDbEngineEdition(
         newEngineData,
@@ -103,7 +112,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     }
 
     setDbEngineData(newEngineData);
-  }, [dbEngine, dbEngines, defaultDbVersion]);
+  }, [dbEngine, dbEngines, defaultDbVersion, mode]);
 
   const updateDbVersions = useCallback(() => {
     const { isDirty: dbVersionDirty } = getFieldState(
@@ -157,6 +166,42 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const setDefaultsForDbType = useCallback((dbType: DbType) => {
     setValue(DbWizardFormFields.dbType, dbType);
     setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[dbType]);
+    setValue(DbWizardFormFields.customNrOfNodes, DEFAULT_NODES[dbType]);
+    setValue(DbWizardFormFields.numberOfProxies, DEFAULT_NODES[dbType]);
+    setValue(DbWizardFormFields.resourceSizePerNode, ResourceSize.small);
+    setValue(DbWizardFormFields.resourceSizePerProxy, ResourceSize.small);
+    setValue(DbWizardFormFields.cpu, NODES_DEFAULT_SIZES[dbType].small.cpu);
+    setValue(
+      DbWizardFormFields.proxyCpu,
+      PROXIES_DEFAULT_SIZES[dbType].small.cpu
+    );
+    setValue(
+      DbWizardFormFields.memory,
+      NODES_DEFAULT_SIZES[dbType].small.memory
+    );
+    setValue(
+      DbWizardFormFields.proxyMemory,
+      PROXIES_DEFAULT_SIZES[dbType].small.memory
+    );
+    setValue(DbWizardFormFields.disk, NODES_DEFAULT_SIZES[dbType].small.disk);
+    setValue(DbWizardFormFields.shardNr, DB_WIZARD_DEFAULTS.shardNr);
+    setValue(
+      DbWizardFormFields.shardConfigServers,
+      DB_WIZARD_DEFAULTS.shardConfigServers
+    );
+
+    resetField(DbWizardFormFields.numberOfProxies, {
+      keepTouched: false,
+    });
+    resetField(DbWizardFormFields.shardNr, {
+      keepError: false,
+    });
+    resetField(DbWizardFormFields.shardConfigServers, {
+      keepError: false,
+    });
+    resetField(DbWizardFormFields.sharding, {
+      keepError: false,
+    });
   }, []);
 
   const onDbTypeChange = useCallback(
@@ -169,27 +214,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         setRandomDbName(newDbType);
       }
 
-      setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[newDbType]);
-      resetField(DbWizardFormFields.numberOfProxies, {
-        keepTouched: false,
-      });
-      setValue(DbWizardFormFields.numberOfProxies, DEFAULT_NODES[newDbType], {
-        shouldTouch: false,
-      });
-      setValue(DbWizardFormFields.shardNr, DB_WIZARD_DEFAULTS.shardNr);
-      setValue(
-        DbWizardFormFields.shardConfigServers,
-        DB_WIZARD_DEFAULTS.shardConfigServers
-      );
-      resetField(DbWizardFormFields.shardNr, {
-        keepError: false,
-      });
-      resetField(DbWizardFormFields.shardConfigServers, {
-        keepError: false,
-      });
-      resetField(DbWizardFormFields.sharding, {
-        keepError: false,
-      });
+      setDefaultsForDbType(newDbType);
       updateDbVersions();
     },
     [getFieldState, resetField, setRandomDbName, updateDbVersions, setValue]
@@ -216,6 +241,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     updateDbVersions();
   }, [
     dbEngines,
+    dbEngine,
     dbType,
     setRandomDbName,
     updateDbVersions,
@@ -241,10 +267,8 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   }, [clusterInfo]);
 
   useEffect(() => {
-    if (!dbEngineData) {
-      setDbEngineDataForEngineType();
-    }
-  }, [dbEngineData, setDbEngineDataForEngineType]);
+    setDbEngineDataForEngineType();
+  }, [setDbEngineDataForEngineType]);
 
   const { canCreate, isFetching } =
     useNamespacePermissionsForResource('database-clusters');
@@ -375,9 +399,19 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                   },
                 }}
               />
-              {notSupportedMongoOperatorVersionForSharding && (
+              {notSupportedMongoOperatorVersionForSharding &&
+                mode !== 'edit' && (
+                  <Tooltip
+                    title={Messages.disableShardingTooltip}
+                    arrow
+                    placement="right"
+                  >
+                    <InfoOutlinedIcon color="primary" />
+                  </Tooltip>
+                )}
+              {mode === 'edit' && (
                 <Tooltip
-                  title={Messages.disableShardingTooltip}
+                  title={Messages.disableShardingInEditMode}
                   arrow
                   placement="right"
                 >
