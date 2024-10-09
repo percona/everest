@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Box, Button, Divider, Stack, Typography } from '@mui/material';
+import { Box, Button, Divider, Stack, Typography, Link } from '@mui/material';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { Card, EverestMainIcon, TextInput } from '@percona/ui-lib';
 import { AuthContext } from 'contexts/auth';
 import { useContext } from 'react';
@@ -7,6 +8,22 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { Navigate } from 'react-router-dom';
 import { LoginFormType, loginSchema } from './Login.constants';
 import { Messages } from './Login.messages';
+
+const LoginLinkButton = ({
+  icon,
+  text,
+  href,
+}: {
+  icon: React.ReactNode;
+  text: string;
+  href: string;
+}) => {
+  return (
+    <Link target="_blank" rel="noopener" href={href}>
+      <Button startIcon={icon}>{text}</Button>
+    </Link>
+  );
+};
 
 const Login = () => {
   const methods = useForm<LoginFormType>({
@@ -44,6 +61,33 @@ const Login = () => {
           {Messages.welcome}
         </Typography>
         <Typography>{Messages.intro}</Typography>
+        <Stack mt="auto" alignItems="flex-start">
+          <LoginLinkButton
+            icon={<ArrowForwardIcon />}
+            text="Support"
+            href="https://hubs.ly/Q02Rt6pG0"
+          />
+          <LoginLinkButton
+            icon={<ArrowForwardIcon />}
+            text="Quickstart guide"
+            href="https://hubs.ly/Q02Rt6hk0"
+          />
+          <LoginLinkButton
+            icon={<ArrowForwardIcon />}
+            text="Forum"
+            href="https://hubs.ly/Q02Rt6kD0"
+          />
+          <LoginLinkButton
+            icon={<ArrowForwardIcon />}
+            text="K8s Squad program"
+            href="https://hubs.ly/Q02Rt6l60"
+          />
+          <LoginLinkButton
+            icon={<ArrowForwardIcon />}
+            text="Github"
+            href="https://hubs.ly/Q02Rt6np0"
+          />
+        </Stack>
       </Stack>
       <Box
         width="65%"
