@@ -99,9 +99,11 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.customNrOfNodes]: replicas,
     [DbWizardFormFields.customNrOfProxies]: proxies,
     [DbWizardFormFields.resourceSizePerNode]: matchFieldsValueToResourceSize(
+      dbEngineToDbType(dbCluster?.spec?.engine?.type),
       dbCluster?.spec?.engine?.resources
     ),
     [DbWizardFormFields.resourceSizePerProxy]: matchFieldsValueToResourceSize(
+      dbEngineToDbType(dbCluster?.spec?.engine?.type),
       dbCluster?.spec?.proxy.resources
     ),
     [DbWizardFormFields.sharding]: dbCluster?.spec?.sharding?.enabled || false,

@@ -31,6 +31,8 @@ const ResourcesEditModal = ({
         dbType={dbType}
         pairProxiesWithNodes={false}
         showSharding={false}
+        disableDiskInput
+        allowDiskInputUpdate={false}
       />
     </FormDialog>
   );

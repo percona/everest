@@ -8,7 +8,7 @@ import { DbWizardFormFields } from 'consts.ts';
 import { Mock } from 'vitest';
 import { DbWizardType } from '../../../database-form-schema.ts';
 import {
-  DEFAULT_SIZES,
+  NODES_DEFAULT_SIZES,
   ResourceSize,
 } from 'components/cluster-form/resources/constants.ts';
 
@@ -33,11 +33,11 @@ const FormProviderWrapper = ({
       [DbWizardFormFields.numberOfProxies]: '1',
       [DbWizardFormFields.resourceSizePerNode]: ResourceSize.small,
       [DbWizardFormFields.resourceSizePerProxy]: ResourceSize.small,
-      [DbWizardFormFields.cpu]: DEFAULT_SIZES.small.cpu,
-      [DbWizardFormFields.proxyCpu]: DEFAULT_SIZES.small.disk,
-      [DbWizardFormFields.disk]: DEFAULT_SIZES.small.disk,
-      [DbWizardFormFields.memory]: DEFAULT_SIZES.small.memory,
-      [DbWizardFormFields.proxyMemory]: DEFAULT_SIZES.small.memory,
+      [DbWizardFormFields.cpu]: NODES_DEFAULT_SIZES.mysql.small.cpu,
+      [DbWizardFormFields.proxyCpu]: NODES_DEFAULT_SIZES.mysql.small.disk,
+      [DbWizardFormFields.disk]: NODES_DEFAULT_SIZES.mysql.small.disk,
+      [DbWizardFormFields.memory]: NODES_DEFAULT_SIZES.mysql.small.memory,
+      [DbWizardFormFields.proxyMemory]: NODES_DEFAULT_SIZES.mysql.small.memory,
       ...values,
     },
   });
@@ -134,13 +134,19 @@ describe('Resources Step', () => {
     );
 
     expect(screen.getByTestId('text-input-cpu')).toHaveValue(
-      DEFAULT_SIZES[ResourceSize.small][DbWizardFormFields.cpu].toString()
+      NODES_DEFAULT_SIZES.mysql[ResourceSize.small][
+        DbWizardFormFields.cpu
+      ].toString()
     );
     expect(screen.getByTestId('text-input-memory')).toHaveValue(
-      DEFAULT_SIZES[ResourceSize.small][DbWizardFormFields.memory].toString()
+      NODES_DEFAULT_SIZES.mysql[ResourceSize.small][
+        DbWizardFormFields.memory
+      ].toString()
     );
     expect(screen.getByTestId('text-input-disk')).toHaveValue(
-      DEFAULT_SIZES[ResourceSize.small][DbWizardFormFields.disk].toString()
+      NODES_DEFAULT_SIZES.mysql[ResourceSize.small][
+        DbWizardFormFields.disk
+      ].toString()
     );
 
     const mediumButton = screen.getByTestId(
@@ -149,13 +155,19 @@ describe('Resources Step', () => {
     await waitFor(() => fireEvent.click(mediumButton));
 
     expect(screen.getByTestId('text-input-cpu')).toHaveValue(
-      DEFAULT_SIZES[ResourceSize.medium][DbWizardFormFields.cpu].toString()
+      NODES_DEFAULT_SIZES.mysql[ResourceSize.medium][
+        DbWizardFormFields.cpu
+      ].toString()
     );
     expect(screen.getByTestId('text-input-memory')).toHaveValue(
-      DEFAULT_SIZES[ResourceSize.medium][DbWizardFormFields.memory].toString()
+      NODES_DEFAULT_SIZES.mysql[ResourceSize.medium][
+        DbWizardFormFields.memory
+      ].toString()
     );
     expect(screen.getByTestId('text-input-disk')).toHaveValue(
-      DEFAULT_SIZES[ResourceSize.medium][DbWizardFormFields.disk].toString()
+      NODES_DEFAULT_SIZES.mysql[ResourceSize.medium][
+        DbWizardFormFields.disk
+      ].toString()
     );
   });
 
@@ -173,7 +185,9 @@ describe('Resources Step', () => {
     const cpu = screen.getByTestId('text-input-cpu');
 
     expect(cpu).toHaveValue(
-      DEFAULT_SIZES[ResourceSize.small][DbWizardFormFields.cpu].toString()
+      NODES_DEFAULT_SIZES.mysql[ResourceSize.small][
+        DbWizardFormFields.cpu
+      ].toString()
     );
 
     await waitFor(() => fireEvent.change(cpu, { target: { value: 5 } }));
@@ -199,7 +213,9 @@ describe('Resources Step', () => {
 
     const cpu = screen.getByTestId('text-input-cpu');
     expect(cpu).toHaveValue(
-      DEFAULT_SIZES[ResourceSize.small][DbWizardFormFields.cpu].toString()
+      NODES_DEFAULT_SIZES.mysql[ResourceSize.small][
+        DbWizardFormFields.cpu
+      ].toString()
     );
     expect(
       screen.queryByTestId('resources-exceeding-alert')
