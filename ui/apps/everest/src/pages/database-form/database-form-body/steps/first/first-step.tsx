@@ -166,6 +166,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const setDefaultsForDbType = useCallback((dbType: DbType) => {
     setValue(DbWizardFormFields.dbType, dbType);
     setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[dbType]);
+    setValue(DbWizardFormFields.customNrOfNodes, DEFAULT_NODES[dbType]);
     setValue(DbWizardFormFields.numberOfProxies, DEFAULT_NODES[dbType]);
     setValue(DbWizardFormFields.resourceSizePerNode, ResourceSize.small);
     setValue(DbWizardFormFields.resourceSizePerProxy, ResourceSize.small);

@@ -53,6 +53,17 @@ const AppBarHelpIcon = () => {
           color="inherit"
           target="_blank"
           rel="noopener"
+          href="https://hubs.ly/Q02Rt6pG0"
+        >
+          <MenuItem onClick={handleClose}>
+            <Typography variant="menuText">Percona Support</Typography>
+          </MenuItem>
+        </Link>
+        <Link
+          underline="none"
+          color="inherit"
+          target="_blank"
+          rel="noopener"
           href="https://docs.percona.com/everest/"
         >
           <MenuItem onClick={handleClose}>

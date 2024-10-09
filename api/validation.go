@@ -122,8 +122,6 @@ var (
 	errEvenServersNumber             = errors.New("sharding: config servers number should be odd")
 	errDisableShardingNotSupported   = errors.New("sharding: disable sharding is not supported")
 	errShardingEnablingNotSupported  = errors.New("sharding: enable sharding is not supported when editing db cluster")
-	errChangeShardsNumNotSupported   = errors.New("sharding: change shards number is not supported")
-	errChangeCfgSrvNotSupported      = errors.New("sharding: change config server number is not supported")
 	errShardingVersion               = errors.New("sharding is available starting PSMDB 1.17.0")
 	errEvenEngineReplicas            = errors.New("engine replicas number should be odd")
 	errMaxPXCEngineReplicas          = errors.New("max replicas number for MySQL is 5")
@@ -1286,12 +1284,6 @@ func validateShardingOnUpdate(dbc *DatabaseCluster, oldDB *everestv1alpha1.Datab
 	}
 	if dbc.Spec.Sharding == nil || !dbc.Spec.Sharding.Enabled {
 		return errDisableShardingNotSupported
-	}
-	if dbc.Spec.Sharding.Shards != oldDB.Spec.Sharding.Shards {
-		return errChangeShardsNumNotSupported
-	}
-	if dbc.Spec.Sharding.ConfigServer.Replicas != oldDB.Spec.Sharding.ConfigServer.Replicas {
-		return errChangeCfgSrvNotSupported
 	}
 	return validateSharding(*dbc)
 }
