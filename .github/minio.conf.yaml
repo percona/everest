@@ -54,7 +54,7 @@ spec:
             - /bin/sh
             - -c
           args:
-            - mkdir -p /data/bucket-1 /data/bucket-2 /data/bucket-3 /data/bucket-4
+            - mkdir -p /data/bucket-1 /data/bucket-2 /data/bucket-3 /data/bucket-4 /data/bucket-5
           volumeMounts:
             - mountPath: /data
               name: minio-data-vol

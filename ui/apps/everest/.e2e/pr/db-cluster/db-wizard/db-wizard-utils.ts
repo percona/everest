@@ -18,7 +18,7 @@ import { getBucketNamespacesMap } from '@e2e/constants';
 import { beautifyDbTypeName } from '@percona/utils';
 import { DbType } from '@percona/types';
 
-type ScheduleTimeOptions = {
+export type ScheduleTimeOptions = {
   frequency: 'month' | 'week' | 'day' | 'hour';
   day?: string;
   weekDay?:
@@ -51,7 +51,7 @@ export const addFirstScheduleInDBWizard = async (page: Page) => {
 
   // creating schedule with schedule modal form dialog
   await openCreateScheduleDialogFromDBWizard(page);
-  await fillScheduleModalForm(page);
+  await fillScheduleModalForm(page,defaultTimeOptions,null,true,'1');
   await page.getByTestId('form-dialog-create').click();
   // checking created schedule in dbWiard schedules list
   await expect(
@@ -72,7 +72,7 @@ export const addScheduleInDbWizard = async (
   timeOptions: ScheduleTimeOptions = defaultTimeOptions
 ) => {
   await openCreateScheduleDialogFromDBWizard(page);
-  await fillScheduleModalForm(page, timeOptions);
+  await fillScheduleModalForm(page,timeOptions,null,true,'1');
   await page.getByTestId('form-dialog-create').click();
 };
 
@@ -131,29 +131,38 @@ const createScheduleFromTimeOptions = async (
 
 export const fillScheduleModalForm = async (
   page: Page,
-  timeOptions: ScheduleTimeOptions = defaultTimeOptions
+  timeOptions: ScheduleTimeOptions = defaultTimeOptions,
+  scheduleName: string,
+  testStorageOption: boolean = true,
+  retention: string
 ) => {
   const bucketNamespacesMap = getBucketNamespacesMap();
   // TODO can be customizable
   if (await checkDbTypeisVisibleInPreview(page, DbType.Mongo)) {
     await expect(page.getByTestId('radio-option-logical')).toBeChecked();
   }
+
+  if (scheduleName) {
+    await page.getByTestId('text-input-schedule-name').fill(scheduleName);
+  }
   await expect(page.getByTestId('text-input-schedule-name')).not.toBeEmpty();
 
   const storageLocationField = page.getByTestId('text-input-storage-location');
   await expect(storageLocationField).not.toBeEmpty();
-  await storageLocationField.click();
+  if (testStorageOption) {
+    await storageLocationField.click();
 
-  const storageOptions = page.getByRole('option');
-  const testStorage = storageOptions.filter({
-    hasText: bucketNamespacesMap[0][0],
-  });
-  await testStorage.click();
+    const storageOptions = page.getByRole('option');
+    const testStorage = storageOptions.filter({
+      hasText: bucketNamespacesMap[0][0],
+    });
+    await testStorage.click();
+  }
 
   const retentionCopiesField = page.getByTestId('text-input-retention-copies');
   await expect(retentionCopiesField).not.toBeEmpty();
 
-  await retentionCopiesField.fill('1');
+  await retentionCopiesField.fill(retention);
 
   await createScheduleFromTimeOptions(page, timeOptions);
 };

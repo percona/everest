@@ -29,6 +29,7 @@ import {
   populateAdvancedConfig,
   populateMonitoringModalForm,
 } from '@e2e/utils/db-wizard';
+import { fillScheduleModalForm, ScheduleTimeOptions } from '@e2e/pr/db-cluster/db-wizard/db-wizard-utils';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import {
   waitForStatus,
@@ -40,7 +41,7 @@ import {
   deleteMonitoringInstance,
   listMonitoringInstances,
 } from '@e2e/utils/monitoring-instance';
-import { clickOnDemandBackup } from '@e2e/pr/db-cluster-details/utils';
+import { clickCreateSchedule } from '@e2e/pr/db-cluster-details/utils';
 import { prepareTestDB, dropTestDB, queryTestDB } from '@e2e/utils/db-cmd-line';
 
 const {
@@ -54,13 +55,21 @@ let token: string;
 
 test.describe.configure({ retries: 0 });
 
+function getNextScheduleMinute(incrementMinutes: number): string
+{
+  const d: number = new Date().getMinutes();
+  const minute: number = (d + incrementMinutes) % 60;
+
+  return minute.toString();
+}
+
 [
   { db: 'psmdb', size: 3 },
   { db: 'pxc', size: 3 },
   { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
   test.describe(
-    'Demand backup',
+    'Scheduled backup',
     {
       // Create cluster, add data, create backup, destroy data and do restore
       tag: '@release',
@@ -73,12 +82,11 @@ test.describe.configure({ retries: 0 });
       );
       test.describe.configure({ timeout: 720000 });
 
-      const clusterName = `${db}-${size}-dembkp`;
+      const clusterName = `${db}-${size}-schbkp`;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
       const monitoringName = `${db}-${size}-pmm`;
-      const baseBackupName = `dembkp-${db}-${size}`;
 
       test.beforeAll(async ({ request }) => {
         token = await getTokenFromLocalStorage();
@@ -203,19 +211,69 @@ test.describe.configure({ retries: 0 });
         await prepareTestDB(clusterName, namespace);
       });
 
-      test(`Create demand backup with ${db} and size ${size}`, async ({
+      test(`Create backup schedules for ${db} and size ${size}`, async ({
         page,
       }) => {
+        test.setTimeout(30 * 1000);
+        // create first schedule
+        const scheduleMinute1 = getNextScheduleMinute(2);
+        const timeOption1: ScheduleTimeOptions = {
+          frequency: 'hour',
+          day: null,
+          amPm: null,
+          hour: null,
+          minute: scheduleMinute1,
+        };
+
         await gotoDbClusterBackups(page, clusterName);
-        await clickOnDemandBackup(page);
-        await page.getByTestId('text-input-name').fill(baseBackupName + '-1');
-        await expect(page.getByTestId('text-input-name')).not.toBeEmpty();
-        await expect(
-          page.getByTestId('text-input-storage-location')
-        ).not.toBeEmpty();
+        await clickCreateSchedule(page);
+        await fillScheduleModalForm(page,timeOption1,'first-schedule',false,'0');
         await page.getByTestId('form-dialog-create').click();
 
-        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 240000);
+        // create second schedule
+        const scheduleMinute2 = getNextScheduleMinute(3);
+        const timeOption2: ScheduleTimeOptions = {
+          frequency: 'hour',
+          day: null,
+          amPm: null,
+          hour: null,
+          minute: scheduleMinute2,
+        };
+
+        await gotoDbClusterBackups(page, clusterName);
+        await clickCreateSchedule(page);
+        await fillScheduleModalForm(page,timeOption2,'second-schedule',false,'0');
+        await page.getByTestId('form-dialog-create').click();
+        
+        expect(page.getByText(`Every hour at minute ${scheduleMinute1}`)).toBeTruthy();
+        expect(page.getByText(`Every hour at minute ${scheduleMinute2}`)).toBeTruthy();
+        expect(page.getByText('2 active schedules')).toBeTruthy();
+      });
+
+      test(`Wait for two backups to succeeded for ${db} and size ${size}`, async ({ page }) => {
+        await gotoDbClusterBackups(page, clusterName);
+        await expect(page.getByText(`${db}-${size}-schbkp-`)).toHaveCount(2, { timeout: 360000 });
+        await expect(page.getByText('Succeeded')).toHaveCount(2, { timeout: 360000 });
+      });
+
+      test(`Delete schedules for ${db} and size ${size}`, async ({ page }) => {
+        test.setTimeout(30 * 1000);
+
+        await gotoDbClusterBackups(page, clusterName);
+
+        await page.getByTestId('scheduled-backups').click();
+  
+        const scheduleForDeleteBtn = await page.getByTestId('delete-schedule-button').first();
+        await scheduleForDeleteBtn.click();
+        await (page.getByTestId('confirm-dialog-delete')).click();
+        expect(page.getByText('1 active schedule')).toBeTruthy();
+
+        await page.reload();
+        await page.getByTestId('scheduled-backups').click();
+        const scheduleForDeleteBtn2 = await page.getByTestId('delete-schedule-button').first();
+        await scheduleForDeleteBtn2.click();
+        await (page.getByTestId('confirm-dialog-delete')).click();
+        await expect(page.getByText('1 active schedule')).toBeHidden({ timeout: 5000 });
       });
 
       test(`Delete data with ${db} and size ${size}`, async () => {
@@ -224,9 +282,10 @@ test.describe.configure({ retries: 0 });
 
       test(`Restore cluster with ${db} and size ${size}`, async ({ page }) => {
         await gotoDbClusterBackups(page, clusterName);
+        const firstBackup = await page.getByText(`${db}-${size}-schbkp-`).first().textContent();
         await findRowAndClickActions(
           page,
-          baseBackupName + '-1',
+          firstBackup,
           'Restore to this DB'
         );
         await expect(
@@ -241,7 +300,7 @@ test.describe.configure({ retries: 0 });
         await gotoDbClusterRestores(page, clusterName);
         // we select based on backup source since restores cannot be named and we don't know
         // in advance what will be the name
-        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 120000);
+        await waitForStatus(page, firstBackup, 'Succeeded', 120000);
       });
 
       test(`Check data after restore with ${db} and size ${size}`, async () => {
@@ -261,18 +320,26 @@ test.describe.configure({ retries: 0 });
 
       test(`Delete restore with ${db} and size ${size}`, async ({ page }) => {
         await gotoDbClusterRestores(page, clusterName);
-        await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
+        await findRowAndClickActions(page, `${db}-${size}-schbkp-`, 'Delete');
         await expect(page.getByLabel('Delete restore')).toBeVisible();
         await page.getByTestId('confirm-dialog-delete').click();
-        await waitForDelete(page, baseBackupName + '-1', 15000);
+        await waitForDelete(page, `${db}-${size}-schbkp-`, 15000);
       });
 
       test(`Delete backup with ${db} and size ${size}`, async ({ page }) => {
         await gotoDbClusterBackups(page, clusterName);
-        await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
+
+        const firstBackup = await page.getByText(`${db}-${size}-schbkp-`).first().textContent();
+        await findRowAndClickActions(page, firstBackup, 'Delete');
         await expect(page.getByLabel('Delete backup')).toBeVisible();
         await page.getByTestId('form-dialog-delete').click();
-        await waitForDelete(page, baseBackupName + '-1', 30000);
+        await waitForDelete(page, firstBackup, 30000);
+
+        const secondBackup = await page.getByText(`${db}-${size}-schbkp-`).first().textContent();
+        await findRowAndClickActions(page, secondBackup, 'Delete');
+        await expect(page.getByLabel('Delete backup')).toBeVisible();
+        await page.getByTestId('form-dialog-delete').click();
+        await waitForDelete(page, secondBackup, 30000);
       });
 
       test(`Delete cluster with ${db} and size ${size}`, async ({ page }) => {
