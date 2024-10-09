@@ -29,7 +29,10 @@ import {
   populateAdvancedConfig,
   populateMonitoringModalForm,
 } from '@e2e/utils/db-wizard';
-import { fillScheduleModalForm, ScheduleTimeOptions } from '@e2e/pr/db-cluster/db-wizard/db-wizard-utils';
+import {
+  fillScheduleModalForm,
+  ScheduleTimeOptions,
+} from '@e2e/pr/db-cluster/db-wizard/db-wizard-utils';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import {
   waitForStatus,
@@ -55,8 +58,7 @@ let token: string;
 
 test.describe.configure({ retries: 0 });
 
-function getNextScheduleMinute(incrementMinutes: number): string
-{
+function getNextScheduleMinute(incrementMinutes: number): string {
   const d: number = new Date().getMinutes();
   const minute: number = (d + incrementMinutes) % 60;
 
@@ -227,7 +229,13 @@ function getNextScheduleMinute(incrementMinutes: number): string
 
         await gotoDbClusterBackups(page, clusterName);
         await clickCreateSchedule(page);
-        await fillScheduleModalForm(page,timeOption1,'first-schedule',false,'0');
+        await fillScheduleModalForm(
+          page,
+          timeOption1,
+          'first-schedule',
+          false,
+          '0'
+        );
         await page.getByTestId('form-dialog-create').click();
 
         // create second schedule
@@ -242,18 +250,34 @@ function getNextScheduleMinute(incrementMinutes: number): string
 
         await gotoDbClusterBackups(page, clusterName);
         await clickCreateSchedule(page);
-        await fillScheduleModalForm(page,timeOption2,'second-schedule',false,'0');
+        await fillScheduleModalForm(
+          page,
+          timeOption2,
+          'second-schedule',
+          false,
+          '0'
+        );
         await page.getByTestId('form-dialog-create').click();
-        
-        expect(page.getByText(`Every hour at minute ${scheduleMinute1}`)).toBeTruthy();
-        expect(page.getByText(`Every hour at minute ${scheduleMinute2}`)).toBeTruthy();
+
+        expect(
+          page.getByText(`Every hour at minute ${scheduleMinute1}`)
+        ).toBeTruthy();
+        expect(
+          page.getByText(`Every hour at minute ${scheduleMinute2}`)
+        ).toBeTruthy();
         expect(page.getByText('2 active schedules')).toBeTruthy();
       });
 
-      test(`Wait for two backups to succeeded for ${db} and size ${size}`, async ({ page }) => {
+      test(`Wait for two backups to succeeded for ${db} and size ${size}`, async ({
+        page,
+      }) => {
         await gotoDbClusterBackups(page, clusterName);
-        await expect(page.getByText(`${db}-${size}-schbkp-`)).toHaveCount(2, { timeout: 360000 });
-        await expect(page.getByText('Succeeded')).toHaveCount(2, { timeout: 360000 });
+        await expect(page.getByText(`${db}-${size}-schbkp-`)).toHaveCount(2, {
+          timeout: 360000,
+        });
+        await expect(page.getByText('Succeeded')).toHaveCount(2, {
+          timeout: 360000,
+        });
       });
 
       test(`Delete schedules for ${db} and size ${size}`, async ({ page }) => {
@@ -262,18 +286,24 @@ function getNextScheduleMinute(incrementMinutes: number): string
         await gotoDbClusterBackups(page, clusterName);
 
         await page.getByTestId('scheduled-backups').click();
-  
-        const scheduleForDeleteBtn = await page.getByTestId('delete-schedule-button').first();
+
+        const scheduleForDeleteBtn = await page
+          .getByTestId('delete-schedule-button')
+          .first();
         await scheduleForDeleteBtn.click();
-        await (page.getByTestId('confirm-dialog-delete')).click();
+        await page.getByTestId('confirm-dialog-delete').click();
         expect(page.getByText('1 active schedule')).toBeTruthy();
 
         await page.reload();
         await page.getByTestId('scheduled-backups').click();
-        const scheduleForDeleteBtn2 = await page.getByTestId('delete-schedule-button').first();
+        const scheduleForDeleteBtn2 = await page
+          .getByTestId('delete-schedule-button')
+          .first();
         await scheduleForDeleteBtn2.click();
-        await (page.getByTestId('confirm-dialog-delete')).click();
-        await expect(page.getByText('1 active schedule')).toBeHidden({ timeout: 5000 });
+        await page.getByTestId('confirm-dialog-delete').click();
+        await expect(page.getByText('1 active schedule')).toBeHidden({
+          timeout: 5000,
+        });
       });
 
       test(`Delete data with ${db} and size ${size}`, async () => {
@@ -282,12 +312,11 @@ function getNextScheduleMinute(incrementMinutes: number): string
 
       test(`Restore cluster with ${db} and size ${size}`, async ({ page }) => {
         await gotoDbClusterBackups(page, clusterName);
-        const firstBackup = await page.getByText(`${db}-${size}-schbkp-`).first().textContent();
-        await findRowAndClickActions(
-          page,
-          firstBackup,
-          'Restore to this DB'
-        );
+        const firstBackup = await page
+          .getByText(`${db}-${size}-schbkp-`)
+          .first()
+          .textContent();
+        await findRowAndClickActions(page, firstBackup, 'Restore to this DB');
         await expect(
           page.getByTestId('select-input-backup-name')
         ).not.toBeEmpty();
@@ -329,13 +358,19 @@ function getNextScheduleMinute(incrementMinutes: number): string
       test(`Delete backup with ${db} and size ${size}`, async ({ page }) => {
         await gotoDbClusterBackups(page, clusterName);
 
-        const firstBackup = await page.getByText(`${db}-${size}-schbkp-`).first().textContent();
+        const firstBackup = await page
+          .getByText(`${db}-${size}-schbkp-`)
+          .first()
+          .textContent();
         await findRowAndClickActions(page, firstBackup, 'Delete');
         await expect(page.getByLabel('Delete backup')).toBeVisible();
         await page.getByTestId('form-dialog-delete').click();
         await waitForDelete(page, firstBackup, 30000);
 
-        const secondBackup = await page.getByText(`${db}-${size}-schbkp-`).first().textContent();
+        const secondBackup = await page
+          .getByText(`${db}-${size}-schbkp-`)
+          .first()
+          .textContent();
         await findRowAndClickActions(page, secondBackup, 'Delete');
         await expect(page.getByLabel('Delete backup')).toBeVisible();
         await page.getByTestId('form-dialog-delete').click();
