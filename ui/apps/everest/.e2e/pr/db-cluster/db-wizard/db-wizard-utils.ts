@@ -51,7 +51,7 @@ export const addFirstScheduleInDBWizard = async (page: Page) => {
 
   // creating schedule with schedule modal form dialog
   await openCreateScheduleDialogFromDBWizard(page);
-  await fillScheduleModalForm(page, defaultTimeOptions, null, true, '1');
+  await fillScheduleModalForm(page, defaultTimeOptions, undefined, true, '1');
   await page.getByTestId('form-dialog-create').click();
   // checking created schedule in dbWiard schedules list
   await expect(
@@ -72,7 +72,7 @@ export const addScheduleInDbWizard = async (
   timeOptions: ScheduleTimeOptions = defaultTimeOptions
 ) => {
   await openCreateScheduleDialogFromDBWizard(page);
-  await fillScheduleModalForm(page, timeOptions, null, true, '1');
+  await fillScheduleModalForm(page, timeOptions, undefined, true, '1');
   await page.getByTestId('form-dialog-create').click();
 };
 
