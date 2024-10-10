@@ -139,9 +139,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         await test.step('Populate resources', async () => {
           await page
-          .getByRole('button')
-          .getByText(size + ' node')
-          .click();
+            .getByRole('button')
+            .getByText(size + ' node')
+            .click();
 
           await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
           await populateResources(page, 0.6, 1, 1, size);
@@ -380,7 +380,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         await gotoDbClusterBackups(page, clusterName);
 
         await test.step('Delete first backup', async () => {
-            const firstBackup = await page
+          const firstBackup = await page
             .getByText(`${db}-${size}-schbkp-`)
             .first()
             .textContent();
@@ -393,9 +393,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         await test.step('Delete second backup', async () => {
           const secondBackup = await page
-          .getByText(`${db}-${size}-schbkp-`)
-          .first()
-          .textContent();
+            .getByText(`${db}-${size}-schbkp-`)
+            .first()
+            .textContent();
 
           await findRowAndClickActions(page, secondBackup, 'Delete');
           await expect(page.getByLabel('Delete backup')).toBeVisible();
