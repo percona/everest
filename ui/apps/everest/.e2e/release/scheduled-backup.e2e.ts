@@ -73,7 +73,6 @@ function getNextScheduleMinute(incrementMinutes: number): string {
   test.describe(
     'Scheduled backup',
     {
-      // Create cluster, add data, create backup, destroy data and do restore
       tag: '@release',
     },
     () => {
@@ -118,7 +117,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         }
       });
 
-      test(`Cluster creation with ${db} and size ${size}`, async ({
+      test(`Create cluster with ${db} and size ${size}`, async ({
         page,
         request,
       }) => {
@@ -128,85 +127,97 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         await page.getByTestId('toggle-button-group-input-db-type').waitFor();
         await page.getByTestId('select-input-db-version').waitFor();
 
-        // basic info
-        await populateBasicInformation(
-          page,
-          db,
-          storageClasses[0],
-          clusterName
-        );
-        await moveForward(page);
+        await test.step('Populate basic information', async () => {
+          await populateBasicInformation(
+            page,
+            db,
+            storageClasses[0],
+            clusterName
+          );
+          await moveForward(page);
+        });
 
-        // resources
-        await page
+        await test.step('Populate resources', async () => {
+          await page
           .getByRole('button')
           .getByText(size + ' node')
           .click();
-        await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
-        await populateResources(page, 0.6, 1, 1, size);
-        await moveForward(page);
 
-        // backups
-        await moveForward(page);
+          await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
+          await populateResources(page, 0.6, 1, 1, size);
+          await moveForward(page);
+        });
 
-        // advanced
-        await populateAdvancedConfig(page, db, '', true, '');
-        await moveForward(page);
+        await test.step('Populate backups', async () => {
+          await moveForward(page);
+        });
 
-        // monitoring modal form
-        await populateMonitoringModalForm(
-          page,
-          monitoringName,
-          namespace,
-          MONITORING_URL,
-          MONITORING_USER,
-          MONITORING_PASSWORD
-        );
-        await page.getByTestId('switch-input-monitoring').click();
-        await expect(
-          page.getByTestId('text-input-monitoring-instance')
-        ).toHaveValue(monitoringName);
-        await submitWizard(page);
+        await test.step('Populate advanced db config', async () => {
+          await populateAdvancedConfig(page, db, '', true, '');
+          await moveForward(page);
+        });
 
-        await expect(
-          page.getByText('Awesome! Your database is being created!')
-        ).toBeVisible();
+        await test.step('Populate monitoring', async () => {
+          await populateMonitoringModalForm(
+            page,
+            monitoringName,
+            namespace,
+            MONITORING_URL,
+            MONITORING_USER,
+            MONITORING_PASSWORD
+          );
+          await page.getByTestId('switch-input-monitoring').click();
+          await expect(
+            page.getByTestId('text-input-monitoring-instance')
+          ).toHaveValue(monitoringName);
+        });
 
-        // go to db list and check status
-        await page.goto('/databases');
-        await waitForStatus(page, clusterName, 'Initializing', 15000);
-        await waitForStatus(page, clusterName, 'Up', 600000);
+        await test.step('Submit wizard', async () => {
+          await submitWizard(page);
 
-        const response = await request.get(
-          `/v1/namespaces/${namespace}/database-clusters`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+          await expect(
+            page.getByText('Awesome! Your database is being created!')
+          ).toBeVisible();
+        });
 
-        await checkError(response);
+        await test.step('Check db list and status', async () => {
+          await page.goto('/databases');
+          await waitForStatus(page, clusterName, 'Initializing', 15000);
+          await waitForStatus(page, clusterName, 'Up', 600000);
+        });
 
-        // TODO: replace with correct payload typings from GET DB Clusters
-        const { items: clusters } = await response.json();
+        await test.step('Check db cluster k8s object options', async () => {
+          const response = await request.get(
+            `/v1/namespaces/${namespace}/database-clusters`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
 
-        const addedCluster = clusters.find(
-          (cluster) => cluster.metadata.name === clusterName
-        );
+          await checkError(response);
 
-        expect(addedCluster).not.toBeUndefined();
-        expect(addedCluster?.spec.engine.type).toBe(db);
-        expect(addedCluster?.spec.engine.replicas).toBe(size);
-        expect(['600m', '0.6']).toContain(
-          addedCluster?.spec.engine.resources?.cpu.toString()
-        );
-        expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe(
-          '1G'
-        );
-        expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
-        expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
-        expect(addedCluster?.spec.proxy.replicas).toBe(size);
+          // TODO: replace with correct payload typings from GET DB Clusters
+          const { items: clusters } = await response.json();
+
+          const addedCluster = clusters.find(
+            (cluster) => cluster.metadata.name === clusterName
+          );
+
+          expect(addedCluster).not.toBeUndefined();
+          expect(addedCluster?.spec.engine.type).toBe(db);
+          expect(addedCluster?.spec.engine.replicas).toBe(size);
+          expect(['600m', '0.6']).toContain(
+            addedCluster?.spec.engine.resources?.cpu.toString()
+          );
+          expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe(
+            '1G'
+          );
+          expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
+          expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
+          expect(addedCluster?.spec.proxy.replicas).toBe(size);
+        });
       });
 
       test(`Add data with ${db} and size ${size}`, async () => {
@@ -217,7 +228,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         page,
       }) => {
         test.setTimeout(30 * 1000);
-        // create first schedule
+
         const scheduleMinute1 = getNextScheduleMinute(2);
         const timeOption1: ScheduleTimeOptions = {
           frequency: 'hour',
@@ -227,18 +238,19 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           minute: scheduleMinute1,
         };
 
-        await gotoDbClusterBackups(page, clusterName);
-        await clickCreateSchedule(page);
-        await fillScheduleModalForm(
-          page,
-          timeOption1,
-          'first-schedule',
-          false,
-          '0'
-        );
-        await page.getByTestId('form-dialog-create').click();
+        await test.step('Create first schedule', async () => {
+          await gotoDbClusterBackups(page, clusterName);
+          await clickCreateSchedule(page);
+          await fillScheduleModalForm(
+            page,
+            timeOption1,
+            'first-schedule',
+            false,
+            '0'
+          );
+          await page.getByTestId('form-dialog-create').click();
+        });
 
-        // create second schedule
         const scheduleMinute2 = getNextScheduleMinute(3);
         const timeOption2: ScheduleTimeOptions = {
           frequency: 'hour',
@@ -248,24 +260,28 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           minute: scheduleMinute2,
         };
 
-        await gotoDbClusterBackups(page, clusterName);
-        await clickCreateSchedule(page);
-        await fillScheduleModalForm(
-          page,
-          timeOption2,
-          'second-schedule',
-          false,
-          '0'
-        );
-        await page.getByTestId('form-dialog-create').click();
+        await test.step('Create second schedule', async () => {
+          await gotoDbClusterBackups(page, clusterName);
+          await clickCreateSchedule(page);
+          await fillScheduleModalForm(
+            page,
+            timeOption2,
+            'second-schedule',
+            false,
+            '0'
+          );
+          await page.getByTestId('form-dialog-create').click();
+        });
 
-        expect(
-          page.getByText(`Every hour at minute ${scheduleMinute1}`)
-        ).toBeTruthy();
-        expect(
-          page.getByText(`Every hour at minute ${scheduleMinute2}`)
-        ).toBeTruthy();
-        expect(page.getByText('2 active schedules')).toBeTruthy();
+        await test.step('Check schedules text in page', async () => {
+          expect(
+            page.getByText(`Every hour at minute ${scheduleMinute1}`)
+          ).toBeTruthy();
+          expect(
+            page.getByText(`Every hour at minute ${scheduleMinute2}`)
+          ).toBeTruthy();
+          expect(page.getByText('2 active schedules')).toBeTruthy();
+        });
       });
 
       test(`Wait for two backups to succeeded for ${db} and size ${size}`, async ({
@@ -285,24 +301,28 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         await gotoDbClusterBackups(page, clusterName);
 
-        await page.getByTestId('scheduled-backups').click();
+        await test.step('Delete first schedule', async () => {
+          await page.getByTestId('scheduled-backups').click();
 
-        const scheduleForDeleteBtn = await page
-          .getByTestId('delete-schedule-button')
-          .first();
-        await scheduleForDeleteBtn.click();
-        await page.getByTestId('confirm-dialog-delete').click();
-        expect(page.getByText('1 active schedule')).toBeTruthy();
+          const scheduleForDeleteBtn = await page
+            .getByTestId('delete-schedule-button')
+            .first();
+          await scheduleForDeleteBtn.click();
+          await page.getByTestId('confirm-dialog-delete').click();
+          expect(page.getByText('1 active schedule')).toBeTruthy();
+        });
 
-        await page.reload();
-        await page.getByTestId('scheduled-backups').click();
-        const scheduleForDeleteBtn2 = await page
-          .getByTestId('delete-schedule-button')
-          .first();
-        await scheduleForDeleteBtn2.click();
-        await page.getByTestId('confirm-dialog-delete').click();
-        await expect(page.getByText('1 active schedule')).toBeHidden({
-          timeout: 5000,
+        await test.step('Delete second schedule', async () => {
+          await page.reload();
+          await page.getByTestId('scheduled-backups').click();
+          const scheduleForDeleteBtn2 = await page
+            .getByTestId('delete-schedule-button')
+            .first();
+          await scheduleForDeleteBtn2.click();
+          await page.getByTestId('confirm-dialog-delete').click();
+          await expect(page.getByText('1 active schedule')).toBeHidden({
+            timeout: 5000,
+          });
         });
       });
 
@@ -316,6 +336,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           .getByText(`${db}-${size}-schbkp-`)
           .first()
           .textContent();
+
         await findRowAndClickActions(page, firstBackup, 'Restore to this DB');
         await expect(
           page.getByTestId('select-input-backup-name')
@@ -358,23 +379,29 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       test(`Delete backup with ${db} and size ${size}`, async ({ page }) => {
         await gotoDbClusterBackups(page, clusterName);
 
-        const firstBackup = await page
-          .getByText(`${db}-${size}-schbkp-`)
-          .first()
-          .textContent();
-        await findRowAndClickActions(page, firstBackup, 'Delete');
-        await expect(page.getByLabel('Delete backup')).toBeVisible();
-        await page.getByTestId('form-dialog-delete').click();
-        await waitForDelete(page, firstBackup, 30000);
+        await test.step('Delete first backup', async () => {
+            const firstBackup = await page
+            .getByText(`${db}-${size}-schbkp-`)
+            .first()
+            .textContent();
 
-        const secondBackup = await page
+          await findRowAndClickActions(page, firstBackup, 'Delete');
+          await expect(page.getByLabel('Delete backup')).toBeVisible();
+          await page.getByTestId('form-dialog-delete').click();
+          await waitForDelete(page, firstBackup, 30000);
+        });
+
+        await test.step('Delete second backup', async () => {
+          const secondBackup = await page
           .getByText(`${db}-${size}-schbkp-`)
           .first()
           .textContent();
-        await findRowAndClickActions(page, secondBackup, 'Delete');
-        await expect(page.getByLabel('Delete backup')).toBeVisible();
-        await page.getByTestId('form-dialog-delete').click();
-        await waitForDelete(page, secondBackup, 30000);
+
+          await findRowAndClickActions(page, secondBackup, 'Delete');
+          await expect(page.getByLabel('Delete backup')).toBeVisible();
+          await page.getByTestId('form-dialog-delete').click();
+          await waitForDelete(page, secondBackup, 30000);
+        });
       });
 
       test(`Delete cluster with ${db} and size ${size}`, async ({ page }) => {
