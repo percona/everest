@@ -103,7 +103,7 @@ export const DbActions = ({
           aria-expanded={open ? 'true' : undefined}
           onClick={handleClick}
           variant="text"
-          size="small"
+          size="large"
           endIcon={<ArrowDropDownIcon />}
         >
           Actions
