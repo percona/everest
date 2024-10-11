@@ -28,6 +28,8 @@ import {
   getTotalResourcesDetailedString,
   memoryParser,
 } from 'utils/k8ResourceParser';
+import { getProxyUnitNamesFromDbType } from 'components/cluster-form/resources/utils';
+import { dbEngineToDbType } from '@percona/utils';
 
 export const ExpandedRow = ({
   row,
@@ -35,10 +37,14 @@ export const ExpandedRow = ({
   row: MRT_Row<DbClusterTableElement>;
 }) => {
   const {
+    dbType,
     cpu,
     memory,
     storage,
     nodes,
+    proxies,
+    proxyCpu,
+    proxyMemory,
     exposetype,
     namespace,
     databaseName,
@@ -48,15 +54,26 @@ export const ExpandedRow = ({
   } = row.original;
   const parsedDiskValues = memoryParser(storage.toString());
   const parsedMemoryValues = memoryParser(memory.toString());
+  const parsedProxyMemoryValues = memoryParser(proxyMemory.toString());
   const cpuResourcesStr = getTotalResourcesDetailedString(
     cpuParser(cpu.toString() || '0'),
     nodes,
+    'CPU'
+  );
+  const cpuProxyResourcesStr = getTotalResourcesDetailedString(
+    cpuParser(proxyCpu.toString() || '0'),
+    proxies,
     'CPU'
   );
   const memoryResourcesStr = getTotalResourcesDetailedString(
     parsedMemoryValues.value,
     nodes,
     parsedMemoryValues.originalUnit
+  );
+  const memoryProxyResourcesStr = getTotalResourcesDetailedString(
+    parsedProxyMemoryValues.value,
+    proxies,
+    parsedProxyMemoryValues.originalUnit
   );
   const storageResourcesStr = getTotalResourcesDetailedString(
     parsedDiskValues.value,
@@ -150,6 +167,18 @@ export const ExpandedRow = ({
         <LabelValue
           label={Messages.expandedRow.disk}
           value={storageResourcesStr}
+        />
+        <LabelValue
+          label={`Nº ${getProxyUnitNamesFromDbType(dbEngineToDbType(dbType)).plural}`}
+          value={nodes}
+        />
+        <LabelValue
+          label={Messages.expandedRow.cpu}
+          value={cpuProxyResourcesStr}
+        />
+        <LabelValue
+          label={Messages.expandedRow.memory}
+          value={memoryProxyResourcesStr}
         />
         <LabelValue
           label={Messages.expandedRow.externalAccess}
