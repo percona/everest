@@ -605,6 +605,10 @@ const ResourcesForm = ({
               name={DbWizardFormFields.shardConfigServers}
               toggleButtonGroupProps={{
                 size: 'small',
+                onChange: (_, value) => {
+                  setValue(DbWizardFormFields.shardConfigServers, value);
+                  trigger(DbWizardFormFields.shardConfigServers);
+                }
               }}
             >
               {DEFAULT_CONFIG_SERVERS.map((number) => (
@@ -615,7 +619,7 @@ const ResourcesForm = ({
                   key={number}
                   value={number}
                   onClick={() => {
-                    if (number !== shardConfigServers.toString()) {
+                    if (number !== shardConfigServers) {
                       setValue(DbWizardFormFields.shardConfigServers, number);
                     }
                   }}

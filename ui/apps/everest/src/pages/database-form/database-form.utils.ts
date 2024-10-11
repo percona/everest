@@ -110,7 +110,7 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.shardConfigServers]: (
       sharding?.configServer?.replicas ||
       getDefaultNumberOfconfigServersByNumberOfNodes(+numberOfNodes)
-    ).toString(),
+    ),
     [DbWizardFormFields.shardNr]: (
       sharding?.shards ||
       (DB_WIZARD_DEFAULTS[DbWizardFormFields.shardNr] as string)

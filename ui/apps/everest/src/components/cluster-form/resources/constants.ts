@@ -150,22 +150,22 @@ export const PROXIES_DEFAULT_SIZES = {
   },
 };
 
-export const DEFAULT_CONFIG_SERVERS = ['1', '3', '5', '7'];
+export const DEFAULT_CONFIG_SERVERS = [1, 3, 5, 7];
 
 export const MIN_NUMBER_OF_SHARDS = '1';
 
 export const getDefaultNumberOfconfigServersByNumberOfNodes = (
   numberOfNodes: number
 ) => {
-  if (DEFAULT_CONFIG_SERVERS.includes(numberOfNodes.toString())) {
-    return numberOfNodes.toString();
-  } else return '7';
+  if (DEFAULT_CONFIG_SERVERS.includes(numberOfNodes)) {
+    return numberOfNodes;
+  } else return 7;
 };
 
 export const resourcesFormSchema = (passthrough?: boolean) => {
   const objectShape = {
     [DbWizardFormFields.shardNr]: z.string().optional(),
-    [DbWizardFormFields.shardConfigServers]: z.string().optional(),
+    [DbWizardFormFields.shardConfigServers]: z.number().optional(),
     [DbWizardFormFields.cpu]: resourceToNumber(0.6),
     [DbWizardFormFields.memory]: resourceToNumber(0.512),
     [DbWizardFormFields.disk]: resourceToNumber(1),
@@ -262,7 +262,7 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
       if (sharding as boolean) {
         const intShardNr = parseInt(shardNr || '', 10);
         const intShardNrMin = +MIN_NUMBER_OF_SHARDS;
-        const intShardConfigServers = parseInt(shardConfigServers || '', 10);
+        const intShardConfigServers = shardConfigServers;
 
         if (Number.isNaN(intShardNr) || intShardNr < 0) {
           ctx.addIssue({

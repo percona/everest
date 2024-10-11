@@ -42,9 +42,14 @@ const ToggleButtonGroupInput = ({
             value: any
           ) => {
             if (value !== null) {
-              event.target.value = value;
-              toggleButtonGroupOnChange(event, event.target.value);
+              const isNumber = typeof value === 'number';
+              if (isNumber) {
+                event.target.valueAsNumber = value;
+              } else {
+                event.target.value = value;
+              }
               field.onChange(event);
+              toggleButtonGroupOnChange(event, isNumber? event.target.valueAsNumber : event.target.value);
             }
           }}
           {...toggleButtonGroupRestProps}
