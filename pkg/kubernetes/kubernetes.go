@@ -1033,8 +1033,23 @@ func (k *Kubernetes) DeleteEverest(ctx context.Context, namespace string, versio
 
 // GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.
 func (k *Kubernetes) GetDBNamespaces(ctx context.Context) ([]string, error) {
-	// List all namespaces managed by everest.
+	namespaces := []corev1.Namespace{}
+	// List Everest DB namespaces.
 	namespaceList, err := k.ListNamespaces(ctx, metav1.ListOptions{
+		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
+			MatchLabels: map[string]string{
+				common.EverestDBNamespaceLabel: "",
+			},
+		}),
+	})
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to get watched namespaces"))
+	}
+	namespaces = append(namespaces, namespaceList.Items...)
+
+	// Prior to 1.3.0, we used the app.kubernetes.io/managed-by label to identify namespaces managed by Everest.
+	// We still support the use of this label for backwards compatibility.
+	namespaceList, err = k.ListNamespaces(ctx, metav1.ListOptions{
 		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
 			MatchLabels: map[string]string{
 				common.KubernetesManagedByLabel: common.Everest,
@@ -1044,9 +1059,11 @@ func (k *Kubernetes) GetDBNamespaces(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to get watched namespaces"))
 	}
+	namespaces = append(namespaces, namespaceList.Items...)
+
 	internalNs := []string{common.SystemNamespace, common.MonitoringNamespace}
 	result := make([]string, 0, len(namespaceList.Items))
-	for _, ns := range namespaceList.Items {
+	for _, ns := range namespaces {
 		if slices.Contains(internalNs, ns.GetName()) {
 			continue
 		}

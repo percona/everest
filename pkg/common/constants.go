@@ -36,6 +36,8 @@ const (
 	PerconaEverestOperatorDeploymentName = "everest-operator-controller-manager"
 	// EverestContainerNameInDeployment is the name of the Everest container in the deployment.
 	EverestContainerNameInDeployment = "everest"
+	// VictoriaMetricsOperatorName is the name of the VictoriaMetrics operator.
+	VictoriaMetricsOperatorName = "victoriametrics-operator"
 
 	// EverestOperatorName holds the name for Everest operator.
 	EverestOperatorName = "everest-operator"
@@ -66,6 +68,8 @@ const (
 	KubernetesManagedByLabel = "app.kubernetes.io/managed-by"
 	// ForegroundDeletionFinalizer is the finalizer used to delete resources in foreground.
 	ForegroundDeletionFinalizer = "foregroundDeletion"
+	// EverestDBNamespaceLabel is the label used to identify the namespace of the database.
+	EverestDBNamespaceLabel = "everest.percona.com/db-namespace"
 
 	// EverestAPIExtnResourceName is the name of the Everest API extension header
 	// that holds the name of the resource being served by an API endpoint.

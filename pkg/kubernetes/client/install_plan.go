@@ -3,12 +3,12 @@ package client
 import (
 	"context"
 
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // GetInstallPlan retrieves an OLM install plan by namespace and name.
-func (c *Client) GetInstallPlan(ctx context.Context, namespace string, name string) (*v1alpha1.InstallPlan, error) {
+func (c *Client) GetInstallPlan(ctx context.Context, namespace string, name string) (*olmv1alpha1.InstallPlan, error) {
 	c.rcLock.Lock()
 	defer c.rcLock.Unlock()
 
@@ -16,7 +16,7 @@ func (c *Client) GetInstallPlan(ctx context.Context, namespace string, name stri
 }
 
 // ListInstallPlans lists install plans.
-func (c *Client) ListInstallPlans(ctx context.Context, namespace string) (*v1alpha1.InstallPlanList, error) {
+func (c *Client) ListInstallPlans(ctx context.Context, namespace string) (*olmv1alpha1.InstallPlanList, error) {
 	c.rcLock.Lock()
 	defer c.rcLock.Unlock()
 
@@ -27,8 +27,8 @@ func (c *Client) ListInstallPlans(ctx context.Context, namespace string) (*v1alp
 func (c *Client) UpdateInstallPlan(
 	ctx context.Context,
 	namespace string,
-	installPlan *v1alpha1.InstallPlan,
-) (*v1alpha1.InstallPlan, error) {
+	installPlan *olmv1alpha1.InstallPlan,
+) (*olmv1alpha1.InstallPlan, error) {
 	c.rcLock.Lock()
 	defer c.rcLock.Unlock()
 

@@ -6,6 +6,7 @@ import (
 	"context"
 
 	goversion "github.com/hashicorp/go-version"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -49,6 +50,16 @@ type KubernetesConnector interface {
 	CSVNameFromOperator(operatorName string, version *goversion.Version) string
 	// GetConfigMap returns k8s configmap by provided name and namespace.
 	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
+	// ListDatabaseClusters returns list of managed database clusters.
+	ListDatabaseClusters(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseClusterList, error)
+	// GetDatabaseCluster returns database clusters by provided name.
+	GetDatabaseCluster(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseCluster, error)
+	// CreateDatabaseCluster creates database cluster.
+	CreateDatabaseCluster(cluster *everestv1alpha1.DatabaseCluster) error
+	// PatchDatabaseCluster patches CR of managed Database cluster.
+	PatchDatabaseCluster(cluster *everestv1alpha1.DatabaseCluster) error
+	// DeleteDatabaseCluster deletes database cluster.
+	DeleteDatabaseCluster(ctx context.Context, namespace, name string) error
 	// GetDeployment returns k8s deployment by provided name and namespace.
 	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
 	// UpdateDeployment updates a deployment and returns the updated object.
@@ -158,6 +169,12 @@ type KubernetesConnector interface {
 	ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*corev1.NamespaceList, error)
 	// UpdateNamespace updates the given namespace.
 	UpdateNamespace(ctx context.Context, namespace *corev1.Namespace, opts metav1.UpdateOptions) (*corev1.Namespace, error)
+	// ListInstallPlans lists install plans.
+	ListInstallPlans(ctx context.Context, namespace string) (*v1alpha1.InstallPlanList, error)
+	// UpdateInstallPlan updates the existing install plan in the specified namespace.
+	UpdateInstallPlan(ctx context.Context, namespace string, installPlan *v1alpha1.InstallPlan) (*v1alpha1.InstallPlan, error)
+	// GetSubscriptionCSV returns the CSV name and namespace for the given subscription.
+	GetSubscriptionCSV(ctx context.Context, namespace, name string) (types.NamespacedName, error)
 	// OperatorInstalledVersion returns the installed version of operator by name.
 	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
 	// CreateRSAKeyPair creates a new RSA key pair and stores it in a secret.
