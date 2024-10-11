@@ -184,6 +184,45 @@ export const prepareTestDB = async (cluster: string, namespace: string) => {
   }
 };
 
+export const insertMoreTestDB = async (cluster: string, namespace: string) => {
+  const dbType = await getDBType(cluster, namespace);
+
+  switch (dbType) {
+    case 'pxc': {
+      await queryMySQL(
+        cluster,
+        namespace,
+        'INSERT INTO test.t1 VALUES (4),(5),(6);'
+      );
+      const result = await queryTestDB(cluster, namespace);
+      expect(result.trim()).toBe('1\n2\n3\n4\n5\n6');
+      break;
+    }
+    case 'psmdb': {
+      await queryPSMDB(
+        cluster,
+        namespace,
+        'test',
+        'db.t1.insertMany([{ a: 4 }, { a: 5 }, { a: 6 }]);'
+      );
+      const result = await queryTestDB(cluster, namespace);
+      expect(result.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 }, { a: 5 }, { a: 6 } ]');
+      break;
+    }
+    case 'postgresql': {
+      await queryPG(
+        cluster,
+        namespace,
+        'test',
+        'INSERT INTO t1 VALUES (4),(5),(6);'
+      );
+      const result = await queryTestDB(cluster, namespace);
+      expect(result.trim()).toBe('1\n 2\n 3\n 4\n 5\n 6');
+      break;
+    }
+  }
+};
+
 export const dropTestDB = async (cluster: string, namespace: string) => {
   const dbType = await getDBType(cluster, namespace);
 
