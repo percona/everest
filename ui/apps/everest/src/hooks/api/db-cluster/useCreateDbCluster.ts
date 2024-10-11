@@ -111,6 +111,7 @@ const formValuesToPayloadMapping = (
         dbPayload.externalAccess,
         dbPayload.proxyCpu,
         dbPayload.proxyMemory,
+        dbPayload.sharding,
         dbPayload.sourceRanges || []
       ),
       ...(dbPayload.dbType === DbType.Mongo && {

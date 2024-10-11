@@ -33,6 +33,7 @@ const ResourcesEditModal = ({
         showSharding={false}
         disableDiskInput
         allowDiskInputUpdate={false}
+        showProxies={dbType !== DbType.Mongo}
       />
     </FormDialog>
   );
