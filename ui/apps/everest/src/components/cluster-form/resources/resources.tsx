@@ -608,7 +608,7 @@ const ResourcesForm = ({
                 onChange: (_, value) => {
                   setValue(DbWizardFormFields.shardConfigServers, value);
                   trigger(DbWizardFormFields.shardConfigServers);
-                }
+                },
               }}
             >
               {DEFAULT_CONFIG_SERVERS.map((number) => (

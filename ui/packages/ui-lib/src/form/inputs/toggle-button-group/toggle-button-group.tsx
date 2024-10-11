@@ -49,7 +49,10 @@ const ToggleButtonGroupInput = ({
                 event.target.value = value;
               }
               field.onChange(event);
-              toggleButtonGroupOnChange(event, isNumber? event.target.valueAsNumber : event.target.value);
+              toggleButtonGroupOnChange(
+                event,
+                isNumber ? event.target.valueAsNumber : event.target.value
+              );
             }
           }}
           {...toggleButtonGroupRestProps}
