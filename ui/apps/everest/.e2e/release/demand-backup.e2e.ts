@@ -60,7 +60,7 @@ test.describe.configure({ retries: 0 });
   { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
   test.describe(
-    'Demand backup workflow',
+    'Demand backup',
     {
       // Create cluster, add data, create backup, destroy data and do restore
       tag: '@release',
