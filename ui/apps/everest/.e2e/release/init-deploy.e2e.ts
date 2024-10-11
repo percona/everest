@@ -58,7 +58,7 @@ test.describe.configure({ retries: 0 });
   { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
   test.describe(
-    'Init deploy workflow',
+    'Initial deployment',
     {
       // Create/stop/resume/delete cluster in different configurations
       tag: '@release',

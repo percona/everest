@@ -126,12 +126,18 @@ test.describe.serial('DB Cluster Editing Backups Step', async () => {
     ).toBeVisible();
     await page.getByTestId('menu-button').click();
     await page.getByTestId('schedule-menu-item').click();
-    await fillScheduleModalForm(page, {
-      frequency: 'day',
-      hour: '12',
-      minute: '00',
-      amPm: 'AM',
-    });
+    await fillScheduleModalForm(
+      page,
+      {
+        frequency: 'day',
+        hour: '12',
+        minute: '00',
+        amPm: 'AM',
+      },
+      null,
+      true,
+      '1'
+    );
     await page.getByTestId('form-dialog-create').click();
     await expect(await page.getByText('Daily at 12:00 AM')).toBeVisible();
   });
