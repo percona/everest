@@ -189,6 +189,10 @@ test.describe('DB Cluster creation', () => {
     await page.getByTestId('button-edit-preview-basic-information').click();
     // Because 2 nodes is not valid for MongoDB, the default will be picked
     await page.getByTestId('mongodb-toggle-button').click();
+    await page
+      .getByTestId('switch-input-sharding-label')
+      .getByRole('checkbox')
+      .check();
     await expect(page.getByText('Nº nodes: 3')).toBeVisible();
     await page.getByTestId('button-edit-preview-backups').click();
 
