@@ -198,6 +198,7 @@ export const ResourcesDetails = ({
       {openEditModal && (
         <ResourcesEditModal
           dbType={dbType}
+          shardingEnabled={!!sharding?.enabled}
           handleCloseModal={() => setOpenEditModal(false)}
           onSubmit={onSubmit}
           defaultValues={{

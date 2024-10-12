@@ -423,10 +423,10 @@ const ResourcesForm = ({
   allowDiskInputUpdate,
   pairProxiesWithNodes,
   showSharding,
-  showProxies,
+  hideProxies = false,
 }: {
   dbType: DbType;
-  showProxies: boolean;
+  hideProxies?: boolean;
   disableDiskInput?: boolean;
   allowDiskInputUpdate?: boolean;
   pairProxiesWithNodes?: boolean;
@@ -561,7 +561,7 @@ const ResourcesForm = ({
           disableCustom={dbType === DbType.Mysql}
         />
       </Accordion>
-      {!!showProxies && (
+      {!hideProxies && (
         <Accordion
           expanded={expanded === 'proxies'}
           data-testid="proxies-accordion"
