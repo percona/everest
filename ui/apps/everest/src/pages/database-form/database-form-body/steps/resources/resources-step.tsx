@@ -10,6 +10,7 @@ export const ResourcesStep = () => {
   const { watch } = useFormContext();
   const mode = useDatabasePageMode();
   const dbType: DbType = watch(DbWizardFormFields.dbType);
+  const shardingEnabled = watch(DbWizardFormFields.sharding);
 
   return (
     <>
@@ -23,6 +24,7 @@ export const ResourcesStep = () => {
         disableDiskInput={mode === 'edit'}
         allowDiskInputUpdate={mode !== 'edit'}
         showSharding={dbType === DbType.Mongo}
+        hideProxies={dbType === DbType.Mongo && !shardingEnabled}
       />
     </>
   );

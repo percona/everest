@@ -6,6 +6,7 @@ import { FormDialog } from 'components/form-dialog';
 type Props = {
   handleCloseModal: () => void;
   dbType: DbType;
+  shardingEnabled: boolean;
   onSubmit: SubmitHandler<z.infer<ReturnType<typeof resourcesFormSchema>>>;
   defaultValues: z.infer<ReturnType<typeof resourcesFormSchema>>;
 };
@@ -13,6 +14,7 @@ type Props = {
 const ResourcesEditModal = ({
   handleCloseModal,
   dbType,
+  shardingEnabled,
   onSubmit,
   defaultValues,
 }: Props) => {
@@ -33,6 +35,7 @@ const ResourcesEditModal = ({
         showSharding={false}
         disableDiskInput
         allowDiskInputUpdate={false}
+        hideProxies={dbType === DbType.Mongo && !shardingEnabled}
       />
     </FormDialog>
   );

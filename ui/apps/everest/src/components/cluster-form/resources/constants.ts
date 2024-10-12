@@ -162,6 +162,25 @@ export const getDefaultNumberOfconfigServersByNumberOfNodes = (
   } else return '7';
 };
 
+const numberOfResourcesValidator = (
+  numberOfResourcesStr: string,
+  customNrOfResoucesStr: string,
+  fieldPath: string,
+  ctx: z.RefinementCtx
+) => {
+  if (numberOfResourcesStr === CUSTOM_NR_UNITS_INPUT_VALUE) {
+    const intNr = parseInt(customNrOfResoucesStr, 10);
+
+    if (Number.isNaN(intNr) || intNr < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Please enter a valid number',
+        path: [fieldPath],
+      });
+    }
+  }
+};
+
 export const resourcesFormSchema = (passthrough?: boolean) => {
   const objectShape = {
     [DbWizardFormFields.shardNr]: z.string().optional(),
@@ -199,26 +218,21 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
       },
       ctx
     ) => {
-      [
-        [numberOfNodes, customNrOfNodes, DbWizardFormFields.customNrOfNodes],
-        [
-          numberOfProxies,
-          customNrOfProxies,
-          DbWizardFormFields.customNrOfProxies,
-        ],
-      ].forEach(([nr, customNr, path]) => {
-        if (nr === CUSTOM_NR_UNITS_INPUT_VALUE) {
-          const intNr = parseInt(customNr, 10);
+      numberOfResourcesValidator(
+        numberOfNodes,
+        customNrOfNodes,
+        DbWizardFormFields.customNrOfNodes,
+        ctx
+      );
 
-          if (Number.isNaN(intNr) || intNr < 1) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: 'Please enter a valid number',
-              path: [path],
-            });
-          }
-        }
-      });
+      if (dbType !== DbType.Mongo || (dbType === DbType.Mongo && !!sharding)) {
+        numberOfResourcesValidator(
+          numberOfProxies,
+          customNrOfNodes,
+          DbWizardFormFields.customNrOfProxies,
+          ctx
+        );
+      }
 
       if (
         numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE &&
