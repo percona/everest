@@ -16,7 +16,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^22.7.4",
+    "@types/node": "^22.7.5",
     "@typescript-eslint/parser": "^7.18.0",
     "dotenv": "^16.4.5",
     "eslint": "^8.57.1",
