@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { DbType } from '@percona/types';
-import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
+import { DbCluster } from 'shared-types/dbCluster.types';
 import { DbWizardMode } from './database-form.types';
 import { DbWizardFormFields } from 'consts.ts';
 import { dbEngineToDbType } from '@percona/utils';
@@ -30,7 +30,7 @@ import {
   matchFieldsValueToResourceSize,
   NODES_DB_TYPE_MAP,
 } from 'components/cluster-form';
-
+import { advancedConfigurationModalDefaultValues } from 'components/cluster-form/advanced-configuration/advanced-configuration.utils.ts';
 const replicasToNodes = (replicas: string, dbType: DbType): string => {
   const nodeOptions = NODES_DB_TYPE_MAP[dbType];
   const replicasString = replicas.toString();
@@ -75,22 +75,8 @@ export const DbClusterPayloadToFormValues = (
           )
         : dbCluster?.metadata?.name,
     [DbWizardFormFields.dbVersion]: dbCluster?.spec?.engine?.version || '',
-    [DbWizardFormFields.externalAccess]:
-      dbCluster?.spec?.proxy?.expose?.type === ProxyExposeType.external,
-    // [DbWizardFormFields.internetFacing]: true,
-    [DbWizardFormFields.engineParametersEnabled]:
-      !!dbCluster?.spec?.engine?.config,
-    [DbWizardFormFields.engineParameters]: dbCluster?.spec?.engine?.config,
-    [DbWizardFormFields.sourceRanges]: dbCluster?.spec?.proxy?.expose
-      ?.ipSourceRanges
-      ? dbCluster?.spec?.proxy?.expose?.ipSourceRanges.map((item) => ({
-          sourceRange: item,
-        }))
-      : [{ sourceRange: '' }],
-    [DbWizardFormFields.monitoring]:
-      !!dbCluster?.spec?.monitoring?.monitoringConfigName,
-    [DbWizardFormFields.monitoringInstance]:
-      dbCluster?.spec?.monitoring?.monitoringConfigName || '',
+
+    //resources
     [DbWizardFormFields.numberOfNodes]: numberOfNodes,
     [DbWizardFormFields.numberOfProxies]: replicasToNodes(
       proxies,
@@ -142,5 +128,14 @@ export const DbClusterPayloadToFormValues = (
         ? backup?.pitr?.backupStorageName || null
         : DB_WIZARD_DEFAULTS[DbWizardFormFields.pitrStorageLocation],
     [DbWizardFormFields.schedules]: backup?.schedules || [],
+
+    //advanced configuration
+    ...advancedConfigurationModalDefaultValues(dbCluster),
+
+    //monitoring
+    [DbWizardFormFields.monitoring]:
+      !!dbCluster?.spec?.monitoring?.monitoringConfigName,
+    [DbWizardFormFields.monitoringInstance]:
+      dbCluster?.spec?.monitoring?.monitoringConfigName || '',
   };
 };
