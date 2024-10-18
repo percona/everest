@@ -20,6 +20,8 @@ import OverviewSectionRow from '../../../overview-section-row';
 import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
 import { useContext, useState } from 'react';
 import { AdvancedConfigurationEditModal } from './edit-advanced-configuration';
+import { useUpdateDbClusterAdvancedConfiguration } from 'hooks';
+import { AdvancedConfigurationFormType } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema';
 
 export const AdvancedConfiguration = ({
   loading,
@@ -28,27 +30,46 @@ export const AdvancedConfiguration = ({
 }: AdvancedConfigurationOverviewCardProps) => {
   const { canUpdateDb, dbCluster } = useContext(DbClusterContext);
   const [openEditModal, setOpenEditModal] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const { mutate: updateDbClusterAdvancedConfiguration } =
+    useUpdateDbClusterAdvancedConfiguration();
   const handleCloseModal = () => {
     setOpenEditModal(false);
   };
 
-  const handleSubmit = async () => {
-    // setUpgrading(true);
-    // updateDbClusterVersion(
-    //   {
-    //     clusterName: dbCluster!.metadata?.name,
-    //     namespace: dbCluster!.metadata?.namespace,
-    //     dbCluster: dbCluster!,
-    //     dbVersion,
-    //   },
-    //   {
-    //     onError: () => {
-    //       setUpgrading(false);
-    //     },
-    //   }
-    // );
-    console.log('submit');
+  const handleSubmit = async ({
+    externalAccess,
+    sourceRanges,
+    engineParametersEnabled,
+    engineParameters,
+  }: AdvancedConfigurationFormType) => {
+    setUpdating(true);
+    updateDbClusterAdvancedConfiguration(
+      {
+        clusterName: dbCluster!.metadata?.name,
+        namespace: dbCluster!.metadata?.namespace,
+        dbCluster: dbCluster!,
+        externalAccess: externalAccess,
+        sourceRanges: sourceRanges,
+        engineParametersEnabled: engineParametersEnabled,
+        engineParameters: engineParameters,
+      },
+      {
+        onSuccess: () => {
+          handleCloseModal();
+          setUpdating(false);
+        },
+      }
+    );
   };
+
+  // ?
+  // useEffect(() => {
+  //   if (updating && dbCluster?.status?.status !== DbClusterStatus.ready) {
+  //     handleCloseModal();
+  //     setUpdating(false);
+  //   }
+  // }, [updating, dbCluster?.status?.status]);
 
   return (
     <OverviewSection
@@ -62,7 +83,6 @@ export const AdvancedConfiguration = ({
               onClick: () => {
                 setOpenEditModal(true);
               },
-              // disabled: upgrading,
               children: Messages.actions.edit,
             },
           }
@@ -88,6 +108,7 @@ export const AdvancedConfiguration = ({
           handleCloseModal={handleCloseModal}
           handleSubmitModal={handleSubmit}
           dbCluster={dbCluster}
+          submitting={updating}
         />
       )}
     </OverviewSection>
