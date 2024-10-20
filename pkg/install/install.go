@@ -229,7 +229,7 @@ func (o *Install) Run(ctx context.Context) error {
 	o.l.Debugf("Everest latest version available: %s", latest)
 	o.l.Debugf("Everest version information %#v", latestMeta)
 
-	installSteps = append(installSteps, o.provisionOLM(latest)...)
+	// installSteps = append(installSteps, o.provisionOLM(latest)...)
 	installSteps = append(installSteps, o.provisionMonitoringStack()...)
 	installSteps = append(installSteps, o.provisionEverestComponents(latest, recVer)...)
 
@@ -365,7 +365,7 @@ func (o *Install) installVMOperator(ctx context.Context) error {
 		Name:                   vmOperatorName,
 		OperatorGroup:          monitoringOperatorGroup,
 		CatalogSource:          catalogSource,
-		CatalogSourceNamespace: kubernetes.OLMNamespace,
+		CatalogSourceNamespace: "openshift-marketplace",
 		Channel:                vmOperatorChannel,
 		InstallPlanApproval:    v1alpha1.ApprovalManual,
 	}
@@ -759,7 +759,7 @@ func (o *Install) installOperator(ctx context.Context, channel, operatorName, na
 			Name:                   operatorName,
 			OperatorGroup:          systemOperatorGroup,
 			CatalogSource:          catalogSource,
-			CatalogSourceNamespace: kubernetes.OLMNamespace,
+			CatalogSourceNamespace: "openshift-marketplace",
 			Channel:                channel,
 			InstallPlanApproval:    v1alpha1.ApprovalManual,
 			StartingCSV:            startingCSV,
