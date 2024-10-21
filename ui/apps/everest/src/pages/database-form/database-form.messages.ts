@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { INVALID_SOURCE_RANGE_ERROR } from '../../consts';
 import { errorMessages } from 'utils/common-validation';
 
 export const Messages = {
@@ -30,12 +29,6 @@ export const Messages = {
     accept: 'Yes, cancel',
   },
   errors: {
-    sourceRange: {
-      invalid: INVALID_SOURCE_RANGE_ERROR,
-    },
-    engineParameters: {
-      invalid: 'Invalid',
-    },
     endpoint: {
       invalid: 'Invalid URL',
     },

@@ -13,11 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export const Messages = {
-  advanced: 'Advanced Configurations',
-  caption: `
-    Exposing your database to the internet poses severe risks, including unauthorized access, data breaches,
-    theft of sensitive information, data manipulation, compliance violations, legal consequences, and reputational damage.
-    Secure your database with strong controls, encryption, and firewalls. Use secure remote access, regularly back up data, and conduct security audits.
-  `,
-};
+import { AdvancedConfigurationFormType } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema';
+import { DbCluster } from 'shared-types/dbCluster.types';
+
+export interface AdvancedConfigurationModalProps {
+  open: boolean;
+  handleCloseModal: () => void;
+  handleSubmitModal: (props: AdvancedConfigurationFormType) => void;
+  dbCluster: DbCluster;
+  submitting: boolean;
+}
