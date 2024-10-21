@@ -10,6 +10,7 @@ export const getProxySpec = (
   externalAccess: boolean,
   cpu: number,
   memory: number,
+  sharding: boolean,
   sourceRanges?: Array<{ sourceRange?: string }>
 ): Proxy => {
   const proxyNr = parseInt(
@@ -20,11 +21,13 @@ export const getProxySpec = (
   );
   return {
     type: dbTypeToProxyType(dbType),
-    replicas: proxyNr,
-    resources: {
-      cpu: `${cpu}`,
-      memory: `${memory}G`,
-    },
+    ...(!(dbType === DbType.Mongo && !sharding) && {
+      replicas: proxyNr,
+      resources: {
+        cpu: `${cpu}`,
+        memory: `${memory}G`,
+      },
+    }),
     expose: {
       type: externalAccess
         ? ProxyExposeType.external

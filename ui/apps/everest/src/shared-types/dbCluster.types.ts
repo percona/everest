@@ -71,7 +71,7 @@ interface Engine {
 }
 
 export interface Proxy {
-  replicas: number;
+  replicas?: number;
   expose: {
     type: ProxyExposeType;
     ipSourceRanges?: string[];

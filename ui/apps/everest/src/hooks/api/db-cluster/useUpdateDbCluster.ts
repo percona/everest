@@ -104,6 +104,7 @@ const formValuesToPayloadOverrides = (
           dbPayload.externalAccess,
           dbPayload.proxyCpu,
           dbPayload.proxyMemory,
+          dbPayload.sharding,
           dbPayload.sourceRanges || []
         ),
         // replicas: numberOfNodes,
