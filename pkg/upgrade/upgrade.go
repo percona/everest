@@ -87,6 +87,8 @@ type (
 		KubeconfigPath string `mapstructure:"kubeconfig"`
 		// VersionMetadataURL stores hostname to retrieve version metadata information from.
 		VersionMetadataURL string `mapstructure:"version-metadata-url"`
+		// DryRun is set to simulate the upgrade process.
+		DryRun bool `mapstructure:"dry-run"`
 		// If set, we will print the pretty output.
 		Pretty bool
 	}
@@ -98,6 +100,7 @@ type (
 		config         *Config
 		kubeClient     kubernetes.KubernetesConnector
 		versionService versionservice.Interface
+		dryRun         bool
 	}
 
 	requirementsCheck struct {
@@ -128,6 +131,7 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 		}
 		return nil, err
 	}
+	cli.dryRun = cfg.DryRun
 	cli.kubeClient = k
 	cli.versionService = versionservice.New(cfg.VersionMetadataURL)
 	return cli, nil
@@ -157,6 +161,10 @@ func (u *Upgrade) Run(ctx context.Context) error {
 			return nil
 		}
 		return err
+	}
+
+	if u.dryRun {
+		return nil
 	}
 
 	upgradeSteps := []common.Step{}
