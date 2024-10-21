@@ -70,7 +70,7 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 func initUpgradeFlags(cmd *cobra.Command) {
 	cmd.Flags().String("version-metadata-url", "https://check.percona.com", "URL to retrieve version metadata information from")
 	cmd.Flags().BoolP("logs", "l", false, "If set, logs are printed during the upgrade process")
-	cmd.Flags().Bool("dry-run", false, "If set, simulate the upgrade process")
+	cmd.Flags().Bool("dry-run", false, "If set, only executes the pre-upgrade checks")
 }
 
 func initUpgradeViperFlags(cmd *cobra.Command) {

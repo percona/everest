@@ -87,7 +87,7 @@ type (
 		KubeconfigPath string `mapstructure:"kubeconfig"`
 		// VersionMetadataURL stores hostname to retrieve version metadata information from.
 		VersionMetadataURL string `mapstructure:"version-metadata-url"`
-		// DryRun is set to simulate the upgrade process.
+		// DryRun is set if the upgrade process should only perform pre-upgrade checks and not perform the actual upgrade.
 		DryRun bool `mapstructure:"dry-run"`
 		// If set, we will print the pretty output.
 		Pretty bool
