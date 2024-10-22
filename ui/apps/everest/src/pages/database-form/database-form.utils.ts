@@ -93,7 +93,7 @@ export const DbClusterPayloadToFormValues = (
       dbCluster?.spec?.monitoring?.monitoringConfigName || '',
     [DbWizardFormFields.numberOfNodes]: numberOfNodes,
     [DbWizardFormFields.numberOfProxies]: replicasToNodes(
-      proxies,
+      proxies || '',
       dbEngineToDbType(dbCluster?.spec?.engine?.type)
     ),
     [DbWizardFormFields.customNrOfNodes]: replicas,
