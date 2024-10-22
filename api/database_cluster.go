@@ -429,6 +429,9 @@ func (e *EverestServer) GetDatabaseClusterPitr(ctx echo.Context, namespace, name
 	}
 
 	latestBackup := latestSuccessfulBackup(backups.Items)
+	if latestBackup == nil || latestBackup.Status.CreatedAt == nil {
+		return ctx.JSON(http.StatusOK, response)
+	}
 
 	backupTime := latestBackup.Status.CreatedAt.UTC()
 	var latest *time.Time
