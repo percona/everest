@@ -46,8 +46,6 @@ export const DbClusterDetails = () => {
     selectedDbCluster,
   } = useDbActions();
 
-  debugger;
-
   if (isLoading) {
     return (
       <>
