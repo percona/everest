@@ -8,12 +8,11 @@ import (
 	"path"
 	"path/filepath"
 
-	helmcli "helm.sh/helm/v3/pkg/cli"
-
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
+	helmcli "helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/ignore"
 )
 
@@ -163,7 +162,7 @@ func everestctlCacheDir() (string, error) {
 	}
 
 	res := path.Join(cacheDir, "everestctl")
-	err = os.MkdirAll(res, 0755)
+	err = os.MkdirAll(res, 0o755)
 	if err != nil && !os.IsExist(err) {
 		return "", err
 	}

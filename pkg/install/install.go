@@ -27,16 +27,20 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/AlekSi/pointer"
 	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
 	goversion "github.com/hashicorp/go-version"
+	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -78,6 +82,11 @@ const (
 	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
 	// Name of the default Everest chart release.
 	EverestChartReleaseName = "everest-core"
+
+	pollInterval = 5 * time.Second
+	pollTimeout  = 10 * time.Minute
+
+	olmNamespace = kubernetes.OLMNamespace
 )
 
 const postInstallMessage = "Everest has been successfully installed!"
@@ -202,6 +211,10 @@ func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 
 	installSteps := []common.Step{}
 	installSteps = append(installSteps, o.installEverestHelmChart(latest.String()))
+	installSteps = append(installSteps, o.waitForEverestAPI())
+	installSteps = append(installSteps, o.waitForEverestOperator())
+	installSteps = append(installSteps, o.waitForOLM())
+	installSteps = append(installSteps, o.waitForMonitoring())
 
 	// TODO: we need a separate command for provisining DB namespaces.
 	// dbChart, err := helm.ResolveHelmChart(latest.String(), common.EverestDBNamespaceHelmChart, common.PerconaHelmRepoURL, dbChartFs)
@@ -227,6 +240,70 @@ func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 		fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage)
 	}
 	return nil
+}
+
+func (o *Install) waitForMonitoring() common.Step {
+	return common.Step{
+		Desc: "Ensure VictoriaMetrics operator is running",
+		F: func(ctx context.Context) error {
+			channel := "stable-v0"
+			name := "victoriametrics-operator"
+			return o.kubeClient.InstallOperator(ctx, kubernetes.InstallOperatorRequest{
+				Channel:                channel,
+				Name:                   name,
+				Namespace:              common.MonitoringNamespace,
+				CatalogSource:          common.PerconaEverestCatalogName,
+				CatalogSourceNamespace: olmNamespace,
+				OperatorGroup:          common.MonitoringNamespace,
+				InstallPlanApproval:    olmv1alpha1.ApprovalManual,
+			})
+		},
+	}
+}
+
+func (o *Install) waitForOLM() common.Step {
+	return common.Step{
+		Desc: "Ensure OLM is running",
+		F: func(ctx context.Context) error {
+			// Wait for all the Deployments to come up.
+			depls, err := o.kubeClient.ListDeployments(ctx, olmNamespace)
+			if err != nil {
+				return err
+			}
+			for _, depl := range depls.Items {
+				if err := o.kubeClient.WaitForRollout(ctx, depl.GetName(), depl.GetNamespace()); err != nil {
+					return err
+				}
+			}
+			return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
+				cs, err := o.kubeClient.GetCatalogSource(ctx, common.PerconaEverestCatalogName, olmNamespace)
+				if err != nil {
+					return false, err
+				}
+				return pointer.Get(cs.Status.GRPCConnectionState).LastObservedState == "READY", nil
+			})
+		},
+	}
+}
+
+// wait for Everst operator deployment to come up.
+func (o *Install) waitForEverestOperator() common.Step {
+	return common.Step{
+		Desc: "Ensure Everest Operator Deployment is running",
+		F: func(ctx context.Context) error {
+			return o.kubeClient.WaitForRollout(ctx, common.PerconaEverestOperatorDeploymentName, common.SystemNamespace)
+		},
+	}
+}
+
+// wait for Everst API deployment to come up.
+func (o *Install) waitForEverestAPI() common.Step {
+	return common.Step{
+		Desc: "Ensure Everest API Deployment is running",
+		F: func(ctx context.Context) error {
+			return o.kubeClient.WaitForRollout(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
+		},
+	}
 }
 
 func (o *Install) installEverestHelmChart(ver string) common.Step {
@@ -269,9 +346,10 @@ func (o *Install) installChart(chart *chart.Chart, opt chartOptions) error {
 	c.ReleaseName = opt.releaseName
 	c.Namespace = opt.releaseNamespace
 	c.CreateNamespace = opt.createNamespace
+	c.DisableHooks = opt.disableHooks
 	c.IncludeCRDs = true
 	c.TakeOwnership = true
-	c.Atomic = true
+	c.Wait = false
 	_, err = c.Run(chart, nil)
 	if err != nil {
 		return fmt.Errorf("could not install Helm chart: %w", err)

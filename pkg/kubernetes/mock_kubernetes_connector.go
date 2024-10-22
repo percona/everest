@@ -492,6 +492,36 @@ func (_m *MockKubernetesConnector) GetBackupStorage(ctx context.Context, namespa
 	return r0, r1
 }
 
+// GetCatalogSource provides a mock function with given fields: ctx, name, namespace
+func (_m *MockKubernetesConnector) GetCatalogSource(ctx context.Context, name string, namespace string) (*operatorsv1alpha1.CatalogSource, error) {
+	ret := _m.Called(ctx, name, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCatalogSource")
+	}
+
+	var r0 *operatorsv1alpha1.CatalogSource
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*operatorsv1alpha1.CatalogSource, error)); ok {
+		return rf(ctx, name, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *operatorsv1alpha1.CatalogSource); ok {
+		r0 = rf(ctx, name, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*operatorsv1alpha1.CatalogSource)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, name, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetClusterServiceVersion provides a mock function with given fields: ctx, key
 func (_m *MockKubernetesConnector) GetClusterServiceVersion(ctx context.Context, key types.NamespacedName) (*operatorsv1alpha1.ClusterServiceVersion, error) {
 	ret := _m.Called(ctx, key)
@@ -1201,6 +1231,36 @@ func (_m *MockKubernetesConnector) ListClusterServiceVersion(ctx context.Context
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*operatorsv1alpha1.ClusterServiceVersionList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListDeployments provides a mock function with given fields: ctx, namespace
+func (_m *MockKubernetesConnector) ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error) {
+	ret := _m.Called(ctx, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListDeployments")
+	}
+
+	var r0 *appsv1.DeploymentList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*appsv1.DeploymentList, error)); ok {
+		return rf(ctx, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *appsv1.DeploymentList); ok {
+		r0 = rf(ctx, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*appsv1.DeploymentList)
 		}
 	}
 

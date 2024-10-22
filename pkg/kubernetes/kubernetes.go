@@ -392,6 +392,11 @@ func (k *Kubernetes) applyCSVs(ctx context.Context, resources []unstructured.Uns
 	return nil
 }
 
+// GetCatalogSource returns catalog source.
+func (k *Kubernetes) GetCatalogSource(ctx context.Context, name, namespace string) (*olmv1alpha1.CatalogSource, error) {
+	return k.client.OLM().OperatorsV1alpha1().CatalogSources(namespace).Get(ctx, name, metav1.GetOptions{})
+}
+
 // InstallPerconaCatalog installs percona catalog and ensures that packages are available.
 func (k *Kubernetes) InstallPerconaCatalog(ctx context.Context, version *goversion.Version, namespace string) error {
 	if version == nil {
