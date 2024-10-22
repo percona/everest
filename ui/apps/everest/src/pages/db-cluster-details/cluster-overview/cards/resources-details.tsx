@@ -58,7 +58,7 @@ export const ResourcesDetails = ({
   const parsedMemoryValues = memoryParser(memory.toString());
   const dbType = dbEngineToDbType(dbCluster.spec.engine.type);
   const replicas = dbCluster.spec.engine.replicas.toString();
-  const proxies = dbCluster.spec.proxy.replicas.toString();
+  const proxies = dbCluster.spec.proxy.replicas?.toString() || '';
   const numberOfNodes = NODES_DB_TYPE_MAP[dbType].includes(replicas)
     ? replicas
     : CUSTOM_NR_UNITS_INPUT_VALUE;
