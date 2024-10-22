@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/url"
 	"os"
 	"regexp"
@@ -32,14 +33,17 @@ import (
 	goversion "github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/helm"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
-	"github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
@@ -63,6 +67,11 @@ const (
 	FlagSkipWizard = "skip-wizard"
 	// FlagDisableTelemetry disables telemetry.
 	FlagDisableTelemetry = "disable-telemetry"
+
+	// everestDBNamespaceSubChartPath is the path to the everest-db-namespace subchart relative to the main chart.
+	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
+	// Name of the default Everest chart release.
+	EverestChartReleaseName = "everest-core"
 )
 
 const postInstallMessage = "Everest has been successfully installed!"
@@ -114,6 +123,8 @@ type (
 		Version string `mapstructure:"version"`
 		// DisableTelemetry disables telemetry.
 		DisableTelemetry bool `mapstructure:"disable-telemetry"`
+		// ChartDir is the directory where the Helm chart is stored.
+		ChartDir string `mapstructure:"chart-dir"`
 
 		Operator OperatorConfig
 
@@ -167,9 +178,6 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	var err error
-	installSteps := []common.Step{}
-
 	meta, err := o.versionService.GetEverestMetadata(ctx)
 	if err != nil {
 		return errors.Join(err, errors.New("could not fetch version metadata"))
@@ -179,21 +187,17 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	if err = o.checkRequirements(latestMeta); err != nil {
-		return err
-	}
-
-	recVer, err := version.RecommendedVersions(latestMeta)
-	if err != nil {
-		return err
-	}
-	if recVer.EverestOperator == nil {
-		// If there's no recommended version of the operator, install the same version as Everest.
-		recVer.EverestOperator = latest
-	}
-
 	o.l.Debugf("Everest latest version available: %s", latest)
 	o.l.Debugf("Everest version information %#v", latestMeta)
+
+	installSteps := []common.Step{}
+	installSteps = append(installSteps, o.installEverestHelmChart(latest.String()))
+
+	// TODO: we need a separate command for provisining DB namespaces.
+	// dbChart, err := helm.ResolveHelmChart(latest.String(), common.EverestDBNamespaceHelmChart, common.PerconaHelmRepoURL, dbChartFs)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to resolve Everest DB Namespace Helm chart: %w", err)
+	// }
 
 	var out io.Writer = os.Stdout
 	if !o.config.Pretty {
@@ -215,17 +219,64 @@ func (o *Install) Run(ctx context.Context) error {
 	return nil
 }
 
-func (o *Install) checkRequirements(meta *versionpb.MetadataVersion) error {
-	supVer, err := common.NewSupportedVersion(meta)
-	if err != nil {
-		return err
+func (o *Install) installEverestHelmChart(ver string) common.Step {
+	return common.Step{
+		Desc: "Install Everest Helm chart",
+		F: func(ctx context.Context) error {
+			var coreChartFs fs.FS
+			if o.config.ChartDir != "" {
+				coreChartFs = os.DirFS(o.config.ChartDir)
+			}
+			chart, err := helm.ResolveHelmChart(ver, common.EverestHelmChart, common.PerconaHelmRepoURL, coreChartFs)
+			if err != nil {
+				return fmt.Errorf("failed to resolve Everest Helm chart: %w", err)
+			}
+			if err := o.installChart(chart, chartOptions{
+				releaseName:      EverestChartReleaseName,
+				releaseNamespace: common.SystemNamespace,
+				createNamespace:  true,
+				disableHooks:     true,
+			}); err != nil {
+				return err
+			}
+			return nil
+		},
 	}
+}
 
-	if err := common.CheckK8sRequirements(supVer, o.l, o.kubeClient); err != nil {
-		return err
+type chartOptions struct {
+	releaseName, releaseNamespace string
+	disableHooks                  bool
+	createNamespace               bool
+}
+
+func (o *Install) installChart(chart *chart.Chart, opt chartOptions) error {
+	cfg, err := o.newInstallActionConfig()
+	if err != nil {
+		return fmt.Errorf("could not create Helm action configuration: %w", err)
+	}
+	c := action.NewInstall(cfg)
+	c.ReleaseName = opt.releaseName
+	c.Namespace = opt.releaseNamespace
+	c.CreateNamespace = opt.createNamespace
+	c.IncludeCRDs = true
+	c.TakeOwnership = true
+	c.Atomic = true
+	_, err = c.Run(chart, nil)
+	if err != nil {
+		return fmt.Errorf("could not install Helm chart: %w", err)
 	}
 
 	return nil
+}
+
+func (o *Install) newInstallActionConfig() (*action.Configuration, error) {
+	logger := func(_ string, _ ...interface{}) {}
+	cfg := action.Configuration{}
+	if err := cfg.Init(&genericclioptions.ConfigFlags{}, common.SystemNamespace, "", logger); err != nil {
+		return nil, err
+	}
+	return &cfg, nil
 }
 
 func (o *Install) populateConfig() error {
