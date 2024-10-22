@@ -32,8 +32,10 @@ const (
 	MonitoringNamespace = "everest-monitoring"
 	// PerconaEverestDeploymentName stores the name of everest API Server deployment.
 	PerconaEverestDeploymentName = "percona-everest"
+	// PerconaEverestCatalogName is the name of the Everest catalog source.
+	PerconaEverestCatalogName = "everest-catalog"
 	// PerconaEverestOperatorDeploymentName stores the name of everest operator deployment.
-	PerconaEverestOperatorDeploymentName = "everest-operator-controller-manager"
+	PerconaEverestOperatorDeploymentName = "everest-operator"
 	// EverestContainerNameInDeployment is the name of the Everest container in the deployment.
 	EverestContainerNameInDeployment = "everest"
 
