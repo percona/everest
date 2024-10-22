@@ -39,6 +39,7 @@ import {
 import { dbEngineToDbType } from '@percona/utils';
 import { DB_CLUSTER_QUERY, useUpdateDbClusterResources } from 'hooks';
 import { DbType } from '@percona/types';
+import { isProxy } from 'utils/db';
 
 export const ResourcesDetails = ({
   dbCluster,
@@ -58,7 +59,9 @@ export const ResourcesDetails = ({
   const parsedMemoryValues = memoryParser(memory.toString());
   const dbType = dbEngineToDbType(dbCluster.spec.engine.type);
   const replicas = dbCluster.spec.engine.replicas.toString();
-  const proxies = dbCluster.spec.proxy.replicas.toString();
+  const proxies = isProxy(dbCluster.spec.proxy)
+    ? (dbCluster.spec.proxy.replicas || 0).toString()
+    : '';
   const numberOfNodes = NODES_DB_TYPE_MAP[dbType].includes(replicas)
     ? replicas
     : CUSTOM_NR_UNITS_INPUT_VALUE;
@@ -103,6 +106,7 @@ export const ResourcesDetails = ({
             10
           ),
         },
+        sharding: !!sharding?.enabled,
       },
       {
         onSuccess: () => {
@@ -194,6 +198,7 @@ export const ResourcesDetails = ({
       {openEditModal && (
         <ResourcesEditModal
           dbType={dbType}
+          shardingEnabled={!!sharding?.enabled}
           handleCloseModal={() => setOpenEditModal(false)}
           onSubmit={onSubmit}
           defaultValues={{
@@ -213,7 +218,9 @@ export const ResourcesDetails = ({
             ),
             resourceSizePerProxy: matchFieldsValueToResourceSize(
               dbType,
-              dbCluster.spec.proxy.resources
+              isProxy(dbCluster.spec.proxy)
+                ? dbCluster.spec.proxy.resources
+                : undefined
             ),
           }}
         />
