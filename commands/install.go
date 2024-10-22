@@ -76,6 +76,7 @@ func initInstallFlags(cmd *cobra.Command) {
 	cmd.Flags().String(install.FlagVersion, "", "Everest version to install. By default the latest version is installed")
 	cmd.Flags().Bool(install.FlagDisableTelemetry, false, "Disable telemetry")
 	cmd.Flags().MarkHidden(install.FlagDisableTelemetry) //nolint:errcheck,gosec
+	cmd.Flags().String("chart-dir", "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
 
 	cmd.Flags().Bool(install.FlagOperatorMongoDB, true, "Install MongoDB operator")
 	cmd.Flags().Bool(install.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
@@ -97,6 +98,7 @@ func initInstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(install.FlagVersionMetadataURL, cmd.Flags().Lookup(install.FlagVersionMetadataURL)) //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagVersion, cmd.Flags().Lookup(install.FlagVersion))                       //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagDisableTelemetry, cmd.Flags().Lookup(install.FlagDisableTelemetry))     //nolint:errcheck,gosec
+	viper.BindPFlag("chart-dir", cmd.Flags().Lookup("chart-dir"))                                       //nolint:errcheck,gosec
 
 	viper.BindPFlag(install.FlagOperatorMongoDB, cmd.Flags().Lookup(install.FlagOperatorMongoDB))             //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagOperatorPostgresql, cmd.Flags().Lookup(install.FlagOperatorPostgresql))       //nolint:errcheck,gosec

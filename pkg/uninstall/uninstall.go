@@ -35,7 +35,6 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/install"
 	"github.com/percona/everest/pkg/kubernetes"
 	cliVersion "github.com/percona/everest/pkg/version"
 )
@@ -180,9 +179,9 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 	// There are no resources with finalizers in the monitoring namespace, so
 	// we can delete it directly
 	uninstallSteps = append(uninstallSteps, common.Step{
-		Desc: fmt.Sprintf("Delete namespace '%s'", install.MonitoringNamespace),
+		Desc: fmt.Sprintf("Delete namespace '%s'", common.MonitoringNamespace),
 		F: func(ctx context.Context) error {
-			return u.deleteNamespaces(ctx, []string{install.MonitoringNamespace})
+			return u.deleteNamespaces(ctx, []string{common.MonitoringNamespace})
 		},
 	})
 
@@ -456,7 +455,7 @@ func (u *Uninstall) deleteBackupStorages(ctx context.Context) error {
 
 func (u *Uninstall) deleteMonitoringConfigs(ctx context.Context) error {
 	u.l.Info("Trying to delete monitoring configs")
-	monitoringConfigs, err := u.kubeClient.ListMonitoringConfigs(ctx, install.MonitoringNamespace)
+	monitoringConfigs, err := u.kubeClient.ListMonitoringConfigs(ctx, common.MonitoringNamespace)
 	if client.IgnoreNotFound(err) != nil {
 		u.l.Info("No monitoring configs found")
 		return err
