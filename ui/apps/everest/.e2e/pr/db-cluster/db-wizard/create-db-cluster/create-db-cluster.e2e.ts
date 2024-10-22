@@ -139,7 +139,16 @@ test.describe('DB Cluster creation', () => {
 
     await resourcesStepCheck(page);
 
-    // Same number of proxies as nodes, as user hasn't changed it
+    // Sharding off, no routers available
+    await expect(page.getByText('Routers (3)')).not.toBeVisible();
+
+    await moveBack(page);
+    await page
+      .getByTestId('switch-input-sharding-label')
+      .getByRole('checkbox')
+      .check();
+    await moveForward(page);
+
     await expect(page.getByText('Routers (3)')).toBeVisible();
     await page.getByTestId('proxies-accordion').getByRole('button').click();
     await page.getByTestId('toggle-button-routers-1').click();
@@ -180,6 +189,10 @@ test.describe('DB Cluster creation', () => {
     await page.getByTestId('button-edit-preview-basic-information').click();
     // Because 2 nodes is not valid for MongoDB, the default will be picked
     await page.getByTestId('mongodb-toggle-button').click();
+    await page
+      .getByTestId('switch-input-sharding-label')
+      .getByRole('checkbox')
+      .check();
     await expect(page.getByText('Nº nodes: 3')).toBeVisible();
     await page.getByTestId('button-edit-preview-backups').click();
 
