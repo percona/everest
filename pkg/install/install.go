@@ -34,6 +34,11 @@ import (
 	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
 	goversion "github.com/hashicorp/go-version"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/helm"
+	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/output"
+	versionservice "github.com/percona/everest/pkg/version_service"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"helm.sh/helm/v3/pkg/action"
@@ -43,12 +48,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/helm"
-	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/output"
-	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
 const (
@@ -77,6 +76,10 @@ const (
 	FlagSkipOLM = "skip-olm"
 	// FlagDisableTelemetry disables telemetry.
 	FlagDisableTelemetry = "disable-telemetry"
+	// FlagChartDir is the directory where the Helm chart is stored.
+	FlagChartDir = "chart-dir"
+	// FlagChartDir runs the installation in dry-run mode.
+	FlagDryRun = "dry-run"
 
 	// everestDBNamespaceSubChartPath is the path to the everest-db-namespace subchart relative to the main chart.
 	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
@@ -140,6 +143,8 @@ type (
 		DisableTelemetry bool `mapstructure:"disable-telemetry"`
 		// ChartDir is the directory where the Helm chart is stored.
 		ChartDir string `mapstructure:"chart-dir"`
+		// DryRun mode only renders the install manifests.
+		DryRun bool `mapstructure:"dry-run"`
 
 		SkipEnvDetection bool   `mapstructure:"skip-env-detection"`
 		SkipOLM          bool   `mapstructure:"skip-olm"`
@@ -226,12 +231,15 @@ func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 	if !o.config.Pretty {
 		out = io.Discard
 	}
+
+	// Run steps.
 	fmt.Fprintln(out, output.Info("Installing Everest version %s", latest))
 	if err := common.RunStepsWithSpinner(ctx, installSteps, out); err != nil {
 		return err
 	}
 	fmt.Fprint(os.Stdout, "\n", output.Rocket(postInstallMessage))
 
+	// Print message to retrieve admin password
 	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
 	if err != nil {
 		return errors.Join(err, errors.New("could not check if the admin password is secure"))
