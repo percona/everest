@@ -49,7 +49,7 @@ export const DbClusterPayloadToFormValues = (
 ): DbWizardType => {
   const backup = dbCluster?.spec?.backup;
   const replicas = dbCluster?.spec?.engine?.replicas.toString();
-  const proxies = dbCluster?.spec?.proxy?.replicas.toString();
+  const proxies = (dbCluster?.spec?.proxy?.replicas || 0).toString();
   const diskValues = memoryParser(
     dbCluster?.spec?.engine?.storage?.size.toString()
   );

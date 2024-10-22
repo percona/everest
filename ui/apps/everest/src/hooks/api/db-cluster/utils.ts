@@ -10,14 +10,24 @@ export const getProxySpec = (
   externalAccess: boolean,
   cpu: number,
   memory: number,
+  sharding: boolean,
   sourceRanges?: Array<{ sourceRange?: string }>
-): Proxy => {
+): Proxy | Record<string, never> => {
+  console.log('dbType', dbType);
+  console.log('sharding', sharding);
+  if (dbType === DbType.Mongo && !sharding) {
+    console.log('returning empty object');
+    return {};
+  }
   const proxyNr = parseInt(
     numberOfProxies === CUSTOM_NR_UNITS_INPUT_VALUE
       ? customNrOfProxies
       : numberOfProxies,
     10
   );
+  // const showResources =
+  //   dbType !== DbType.Mongo || (dbType === DbType.Mongo && !sharding);
+
   return {
     type: dbTypeToProxyType(dbType),
     replicas: proxyNr,
