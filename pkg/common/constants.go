@@ -70,6 +70,12 @@ const (
 	// EverestAPIExtnResourceName is the name of the Everest API extension header
 	// that holds the name of the resource being served by an API endpoint.
 	EverestAPIExtnResourceName = "x-everest-resource-name"
+	// PerconaHelmRepoURL is the URL of the Percona Helm repository.
+	PerconaHelmRepoURL = "https://percona.github.io/percona-helm-charts/"
+	// EverestHelmChart name is the name of the Everest Helm chart.
+	EverestHelmChart = "everest"
+	// EverestDBNamespaceHelmChart is the name of the Everest DB namespace Helm chart.
+	EverestDBNamespaceHelmChart = "everest-db-namespace"
 )
 
 // InitialPasswordWarningMessage is the message that is shown to the user after the installation/upgrade,
