@@ -77,16 +77,26 @@ type InstallOptions struct {
 	DryRun          bool
 }
 
-// InstallOrUpgrade will upgrade a Helm chart if a release with the given name exists.
-// Otherwise it installs a new release.
-func (m *Manager) InstallOrUpgrade(ctx context.Context, installOpts InstallOptions) error {
-	if _, err := action.NewGet(m.actionsCfg).Run(m.releaseName); err != nil {
+// Install the Helm chart. If the chart is already installed, it will be overwritten.
+func (m *Manager) Install(ctx context.Context, installOpts InstallOptions) error {
+	release, err := action.NewGet(m.actionsCfg).Run(m.releaseName)
+	if err != nil {
+		// Release does not exist, we will create a new installation.
 		if errors.Is(err, driver.ErrReleaseNotFound) {
-			return m.Install(ctx, installOpts)
+			return m.install(ctx, installOpts)
 		}
 		return err
 	}
-	return m.Upgrade(ctx)
+	// Release already exists, we will re-apply the manifests by upgrading.
+	// We're not actually upgrading the chart to a new version here, Helm expects
+	// us to upgrade the chart to the same version in order to re-apply the manifests.
+	u := &Manager{
+		chart:            release.Chart,
+		actionsCfg:       m.actionsCfg,
+		releaseName:      release.Name,
+		releaseNamespace: release.Namespace,
+	}
+	return u.Upgrade(ctx)
 }
 
 // Upgrade the Helm chart managed by the manager.
@@ -102,8 +112,19 @@ func (m *Manager) Upgrade(ctx context.Context) error {
 	return nil
 }
 
-// Install the Helm chart managed by the Manager.
-func (m *Manager) Install(ctx context.Context, o InstallOptions) error {
+// Uninstall a Helm release.
+func (m *Manager) Uninstall(ctx context.Context) error {
+	uninstall := action.NewUninstall(m.actionsCfg)
+	uninstall.DisableHooks = true
+	uninstall.Wait = false
+	uninstall.IgnoreNotFound = true
+	if _, err := uninstall.Run(m.releaseName); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Manager) install(ctx context.Context, o InstallOptions) error {
 	install := action.NewInstall(m.actionsCfg)
 	install.ReleaseName = m.releaseName
 	install.Namespace = m.releaseNamespace
@@ -114,18 +135,6 @@ func (m *Manager) Install(ctx context.Context, o InstallOptions) error {
 
 	if _, err := install.RunWithContext(ctx, m.chart, o.Values); err != nil {
 		return fmt.Errorf("cannot install chart: %w", err)
-	}
-	return nil
-}
-
-// Uninstall a Helm release.
-func (m *Manager) Uninstall(ctx context.Context) error {
-	uninstall := action.NewUninstall(m.actionsCfg)
-	uninstall.DisableHooks = true
-	uninstall.Wait = false
-	uninstall.IgnoreNotFound = true
-	if _, err := uninstall.Run(m.releaseName); err != nil {
-		return err
 	}
 	return nil
 }

@@ -331,7 +331,7 @@ func (o *Install) installEverestHelmChart(ver string) common.Step {
 				return err
 			}
 
-			return h.InstallOrUpgrade(ctx, helm.InstallOptions{
+			return h.Install(ctx, helm.InstallOptions{
 				CreateNamespace: !nsExists,
 				DisableHooks:    true,
 				Values:          nil,
