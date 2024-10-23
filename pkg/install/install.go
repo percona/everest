@@ -41,6 +41,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -325,8 +326,13 @@ func (o *Install) installEverestHelmChart(ver string) common.Step {
 				return fmt.Errorf("could not create Helm manager: %w", err)
 			}
 
+			nsExists, err := o.namespaceExists(ctx, common.SystemNamespace)
+			if err != nil {
+				return err
+			}
+
 			return h.InstallOrUpgrade(ctx, helm.InstallOptions{
-				CreateNamespace: true,
+				CreateNamespace: !nsExists,
 				DisableHooks:    true,
 				Values:          nil,
 			})
@@ -449,6 +455,17 @@ func (o *Install) runEverestWizard() error {
 	o.config.NamespacesList = list
 
 	return nil
+}
+
+func (o *Install) namespaceExists(ctx context.Context, namespace string) (bool, error) {
+	_, err := o.kubeClient.GetNamespace(ctx, namespace)
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("cannot check if namesapce exists: %w", err)
+	}
+	return true, nil
 }
 
 func (o *Install) runInstallWizard() error {
