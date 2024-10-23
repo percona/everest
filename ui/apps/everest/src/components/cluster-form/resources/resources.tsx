@@ -512,6 +512,10 @@ const ResourcesForm = ({
     trigger(DbWizardFormFields.shardConfigServers);
   }, [setValue, getFieldState, numberOfNodes, customNrOfNodes]);
 
+  useEffect(() => {
+    trigger();
+  }, [numberOfNodes, customNrOfNodes]);
+
   return (
     <>
       {!!showSharding && !!sharding && (
@@ -523,6 +527,7 @@ const ResourcesForm = ({
           <TextInput
             name={DbWizardFormFields.shardNr}
             textFieldProps={{
+              sx: { maxWidth: '200px' },
               type: 'number',
               required: true,
               inputProps: {
