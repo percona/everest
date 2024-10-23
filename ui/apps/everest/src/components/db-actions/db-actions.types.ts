@@ -4,7 +4,7 @@ export interface DbActionsProps {
   isDetailView?: boolean;
   dbCluster: DbCluster;
   setIsNewClusterMode: React.Dispatch<React.SetStateAction<boolean>>;
-  setOpenDetailsDialog?: React.Dispatch<React.SetStateAction<boolean>>;
+  handleOpenDbDetailsDialog: (dbCluster: DbCluster) => void;
   handleRestoreDbCluster: (dbCluster: DbCluster) => void;
   handleDeleteDbCluster: (dbCluster: DbCluster) => void;
   handleDbRestart: (dbCluster: DbCluster) => void;
