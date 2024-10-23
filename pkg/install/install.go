@@ -207,11 +207,14 @@ func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 	o.l.Debugf("Everest version information %#v", latestMeta)
 
 	installSteps := []common.Step{}
+	// Install core components.
 	installSteps = append(installSteps, o.installEverestHelmChart(latest.String()))
 	installSteps = append(installSteps, o.waitForEverestAPI())
 	installSteps = append(installSteps, o.waitForEverestOperator())
 	installSteps = append(installSteps, o.waitForOLM())
 	installSteps = append(installSteps, o.waitForMonitoring())
+
+	// Install DB namespaces.
 
 	// TODO: we need a separate command for provisining DB namespaces.
 	// dbChart, err := helm.ResolveHelmChart(latest.String(), common.EverestDBNamespaceHelmChart, common.PerconaHelmRepoURL, dbChartFs)
@@ -311,21 +314,21 @@ func (o *Install) installEverestHelmChart(ver string) common.Step {
 		Desc: "Install Everest Helm chart",
 		F: func(ctx context.Context) error {
 			h, err := helm.New(helm.ChartOptions{
-				Directory: o.config.ChartDir,
-				Version:   ver,
-				URL:       common.PerconaHelmRepoURL,
-				Name:      common.EverestHelmChart,
+				Directory:        o.config.ChartDir,
+				Version:          ver,
+				URL:              common.PerconaHelmRepoURL,
+				Name:             common.EverestHelmChart,
+				ReleaseName:      EverestChartReleaseName,
+				ReleaseNamespace: common.SystemNamespace,
 			})
 			if err != nil {
 				return fmt.Errorf("could not create Helm manager: %w", err)
 			}
 
-			return h.Install(ctx, helm.InstallOptions{
-				ReleaseName:      EverestChartReleaseName,
-				ReleaseNamespace: common.SystemNamespace,
-				CreateNamespace:  true,
-				DisableHooks:     true,
-				Values:           nil,
+			return h.InstallOrUpgrade(ctx, helm.InstallOptions{
+				CreateNamespace: true,
+				DisableHooks:    true,
+				Values:          nil,
 			})
 		},
 	}

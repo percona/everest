@@ -32,8 +32,10 @@ type ChartOptions struct {
 	// URL of the chart repository.
 	URL string
 	// Name of the Helm chart to install.
-	Name             string
-	ReleaseName      string
+	Name string
+	// ReleaseName of the Helm chart to install.
+	ReleaseName string
+	// ReleaseNamespace of the Helm chart to install.
 	ReleaseNamespace string
 }
 
@@ -75,23 +77,28 @@ type InstallOptions struct {
 	DryRun          bool
 }
 
-// Upgrade the Helm chart.
-func (m *Manager) Upgrade(ctx context.Context) error {
-	// Check if the release exists, otherwise we will
-	// install the release and claim ownership of the existing manifests.
-	install := false
-	getter := action.NewGet(m.actionsCfg)
-	if _, err := getter.Run(m.releaseName); err != nil && errors.Is(err, driver.ErrReleaseNotFound) {
-		install = true // upgrade does not exist, we need to install.
-	} else if err != nil {
-		return fmt.Errorf("cannot get release: %w", err)
+// InstallOrUpgrade will upgrade a Helm chart if a release with the given name exists.
+// Otherwise it installs a new release.
+func (m *Manager) InstallOrUpgrade(ctx context.Context, installOpts InstallOptions) error {
+	if _, err := action.NewGet(m.actionsCfg).Run(m.releaseName); err != nil {
+		if errors.Is(err, driver.ErrReleaseNotFound) {
+			return m.Install(ctx, installOpts)
+		}
+		return err
 	}
+	return m.Upgrade(ctx)
+}
 
+// Upgrade the Helm chart managed by the manager.
+func (m *Manager) Upgrade(ctx context.Context) error {
 	upgrade := action.NewUpgrade(m.actionsCfg)
-	upgrade.Install = install
 	upgrade.Namespace = m.releaseNamespace
 	upgrade.TakeOwnership = true
 	upgrade.DisableHooks = true
+
+	if _, err := upgrade.RunWithContext(ctx, m.releaseName, m.chart, nil); err != nil {
+		return fmt.Errorf("cannot upgrade chart: %w", err)
+	}
 	return nil
 }
 
@@ -132,7 +139,7 @@ func newActionsCfg() (*action.Configuration, error) {
 	return &cfg, nil
 }
 
-// LoadFS loads from a FileSystem including embedded FS.
+// LoadFS loads a Helm chart from a filesystem. Works with embedded FS.
 func LoadFS(fsys fs.FS) (*chart.Chart, error) {
 	c := &chart.Chart{}
 	rules := ignore.Empty()
