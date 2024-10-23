@@ -523,6 +523,7 @@ const ResourcesForm = ({
           <TextInput
             name={DbWizardFormFields.shardNr}
             textFieldProps={{
+              sx: { maxWidth: '200px' },
               type: 'number',
               required: true,
               inputProps: {

@@ -246,11 +246,12 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
         });
       }
 
+      const intNrNodes =
+        numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
+          ? customNrOfNodes
+          : numberOfNodes;
+
       if (dbType === DbType.Mysql) {
-        const intNrNodes =
-          numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
-            ? customNrOfNodes
-            : numberOfNodes;
         const intNrProxies =
           numberOfProxies === CUSTOM_NR_UNITS_INPUT_VALUE
             ? customNrOfProxies
@@ -289,6 +290,13 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: Messages.sharding.min(intShardNrMin),
+              path: [DbWizardFormFields.shardNr],
+            });
+          }
+          if (+intNrNodes > 1 && intShardNr < 2) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: Messages.sharding.minForNodes,
               path: [DbWizardFormFields.shardNr],
             });
           }
