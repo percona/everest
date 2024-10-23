@@ -16,6 +16,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	helmcli "helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -31,13 +32,16 @@ type ChartOptions struct {
 	// URL of the chart repository.
 	URL string
 	// Name of the Helm chart to install.
-	Name string
+	Name             string
+	ReleaseName      string
+	ReleaseNamespace string
 }
 
 // Manager manages a Helm chart on Kubernetes.
 type Manager struct {
-	chart      *chart.Chart
-	actionsCfg *action.Configuration
+	chart                         *chart.Chart
+	actionsCfg                    *action.Configuration
+	releaseName, releaseNamespace string
 }
 
 // New returns a new Manager for Helm.
@@ -56,26 +60,46 @@ func New(o ChartOptions) (*Manager, error) {
 		return nil, fmt.Errorf("cannot initialize actions config: %w", err)
 	}
 	return &Manager{
-		chart:      chart,
-		actionsCfg: actionsCfg,
+		chart:            chart,
+		actionsCfg:       actionsCfg,
+		releaseName:      o.ReleaseName,
+		releaseNamespace: o.ReleaseNamespace,
 	}, nil
 }
 
 // InstallOptions provides options for the helm installation.
 type InstallOptions struct {
-	Values           map[string]interface{}
-	ReleaseName      string
-	ReleaseNamespace string
-	CreateNamespace  bool
-	DisableHooks     bool
-	DryRun           bool
+	Values          map[string]interface{}
+	CreateNamespace bool
+	DisableHooks    bool
+	DryRun          bool
+}
+
+// Upgrade the Helm chart.
+func (m *Manager) Upgrade(ctx context.Context) error {
+	// Check if the release exists, otherwise we will
+	// install the release and claim ownership of the existing manifests.
+	install := false
+	getter := action.NewGet(m.actionsCfg)
+	if _, err := getter.Run(m.releaseName); err != nil && errors.Is(err, driver.ErrReleaseNotFound) {
+		install = true // upgrade does not exist, we need to install.
+	} else if err != nil {
+		return fmt.Errorf("cannot get release: %w", err)
+	}
+
+	upgrade := action.NewUpgrade(m.actionsCfg)
+	upgrade.Install = install
+	upgrade.Namespace = m.releaseNamespace
+	upgrade.TakeOwnership = true
+	upgrade.DisableHooks = true
+	return nil
 }
 
 // Install the Helm chart managed by the Manager.
 func (m *Manager) Install(ctx context.Context, o InstallOptions) error {
 	install := action.NewInstall(m.actionsCfg)
-	install.ReleaseName = o.ReleaseName
-	install.Namespace = o.ReleaseNamespace
+	install.ReleaseName = m.releaseName
+	install.Namespace = m.releaseNamespace
 	install.CreateNamespace = o.CreateNamespace
 	install.DryRun = o.DryRun
 	install.DisableHooks = o.DisableHooks
@@ -83,6 +107,18 @@ func (m *Manager) Install(ctx context.Context, o InstallOptions) error {
 
 	if _, err := install.RunWithContext(ctx, m.chart, o.Values); err != nil {
 		return fmt.Errorf("cannot install chart: %w", err)
+	}
+	return nil
+}
+
+// Uninstall a Helm release.
+func (m *Manager) Uninstall(ctx context.Context) error {
+	uninstall := action.NewUninstall(m.actionsCfg)
+	uninstall.DisableHooks = true
+	uninstall.Wait = false
+	uninstall.IgnoreNotFound = true
+	if _, err := uninstall.Run(m.releaseName); err != nil {
+		return err
 	}
 	return nil
 }
