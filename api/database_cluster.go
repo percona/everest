@@ -90,6 +90,13 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 // enforceDBClusterRBAC checks if the user has permission to read the backup-storage and monitoring-instances associated
 // with the provided DB cluster.
 func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.DatabaseCluster) error {
+	// Check if the user has permissions for this DB cluster?
+	if err := e.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), db.GetName())); err != nil {
+		if !errors.Is(err, errInsufficientPermissions) {
+			e.l.Error(errors.Join(err, errors.New("failed to check db-cluster permissions")))
+		}
+		return err
+	}
 	// Check if the user has permissions for all backup-storages in the schedule?
 	for _, sched := range db.Spec.Backup.Schedules {
 		bsName := sched.BackupStorageName
