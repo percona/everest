@@ -56,7 +56,7 @@ export const DbClusterView = () => {
     handleConfirmDelete,
     handleCloseDeleteDialog,
     openDetailsDialog,
-    setOpenDetailsDialog,
+    handleOpenDbDetailsDialog,
     handleCloseDetailsDialog,
     selectedDbCluster,
   } = useDbActions();
@@ -181,7 +181,7 @@ export const DbClusterView = () => {
                 handleDeleteDbCluster={handleDeleteDbCluster}
                 isPaused={isPaused}
                 handleRestoreDbCluster={handleRestoreDbCluster}
-                setOpenDetailsDialog={setOpenDetailsDialog}
+                handleOpenDbDetailsDialog={handleOpenDbDetailsDialog}
               />
             );
           }}

@@ -36,8 +36,8 @@ export const DbActions = ({
   isDetailView = false,
   dbCluster,
   setIsNewClusterMode,
-  setOpenDetailsDialog,
   handleRestoreDbCluster,
+  handleOpenDbDetailsDialog,
   handleDeleteDbCluster,
   handleDbRestart,
   handleDbSuspendOrResumed,
@@ -182,12 +182,12 @@ export const DbActions = ({
             <KeyboardReturnIcon /> {Messages.menuItems.restoreFromBackup}
           </MenuItem>
         )}
-        {isDetailView && setOpenDetailsDialog && dbCluster?.status?.details && (
+        {isDetailView && dbCluster?.status?.details && (
           <MenuItem
             key={6}
             sx={sx}
             onClick={() => {
-              setOpenDetailsDialog(true);
+              handleOpenDbDetailsDialog(dbCluster);
             }}
           >
             <VisibilityOutlinedIcon /> {Messages.menuItems.dbStatusDetails}
