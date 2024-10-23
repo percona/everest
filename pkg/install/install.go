@@ -41,12 +41,9 @@ import (
 	versionservice "github.com/percona/everest/pkg/version_service"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -252,7 +249,7 @@ func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 
 func (o *Install) waitForMonitoring() common.Step {
 	return common.Step{
-		Desc: "Ensure VictoriaMetrics operator is running",
+		Desc: "Check Monitoring components",
 		F: func(ctx context.Context) error {
 			channel := "stable-v0"
 			name := "victoriametrics-operator"
@@ -271,7 +268,7 @@ func (o *Install) waitForMonitoring() common.Step {
 
 func (o *Install) waitForOLM() common.Step {
 	return common.Step{
-		Desc: "Ensure OLM is running",
+		Desc: "Check OLM",
 		F: func(ctx context.Context) error {
 			// Wait for all the Deployments to come up.
 			depls, err := o.kubeClient.ListDeployments(ctx, olmNamespace)
@@ -297,7 +294,7 @@ func (o *Install) waitForOLM() common.Step {
 // wait for Everst operator deployment to come up.
 func (o *Install) waitForEverestOperator() common.Step {
 	return common.Step{
-		Desc: "Ensure Everest Operator Deployment is running",
+		Desc: "Check Everest Operator Deployment",
 		F: func(ctx context.Context) error {
 			return o.kubeClient.WaitForRollout(ctx, common.PerconaEverestOperatorDeploymentName, common.SystemNamespace)
 		},
@@ -307,7 +304,7 @@ func (o *Install) waitForEverestOperator() common.Step {
 // wait for Everst API deployment to come up.
 func (o *Install) waitForEverestAPI() common.Step {
 	return common.Step{
-		Desc: "Ensure Everest API Deployment is running",
+		Desc: "Check Everest API Deployment",
 		F: func(ctx context.Context) error {
 			return o.kubeClient.WaitForRollout(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
 		},
@@ -318,61 +315,30 @@ func (o *Install) installEverestHelmChart(ver string) common.Step {
 	return common.Step{
 		Desc: "Install Everest Helm chart",
 		F: func(ctx context.Context) error {
-			var coreChartFs fs.FS
+			var chartFs fs.FS
 			if o.config.ChartDir != "" {
-				coreChartFs = os.DirFS(o.config.ChartDir)
+				chartFs = os.DirFS(o.config.ChartDir)
 			}
-			chart, err := helm.ResolveHelmChart(ver, common.EverestHelmChart, common.PerconaHelmRepoURL, coreChartFs)
+
+			mgr, err := helm.New(helm.ChartOptions{
+				FS:      chartFs,
+				Version: ver,
+				URL:     common.PerconaHelmRepoURL,
+				Name:    common.EverestHelmChart,
+			})
 			if err != nil {
-				return fmt.Errorf("failed to resolve Everest Helm chart: %w", err)
+				return fmt.Errorf("could not create Helm manager: %w", err)
 			}
-			if err := o.installChart(chart, chartOptions{
-				releaseName:      EverestChartReleaseName,
-				releaseNamespace: common.SystemNamespace,
-				createNamespace:  true,
-				disableHooks:     true,
-			}); err != nil {
-				return err
-			}
-			return nil
+
+			return mgr.Install(ctx, helm.InstallOptions{
+				ReleaseName:      EverestChartReleaseName,
+				ReleaseNamespace: common.SystemNamespace,
+				CreateNamespace:  true,
+				DisableHooks:     true,
+				Values:           nil,
+			})
 		},
 	}
-}
-
-type chartOptions struct {
-	releaseName, releaseNamespace string
-	disableHooks                  bool
-	createNamespace               bool
-}
-
-func (o *Install) installChart(chart *chart.Chart, opt chartOptions) error {
-	cfg, err := o.newInstallActionConfig()
-	if err != nil {
-		return fmt.Errorf("could not create Helm action configuration: %w", err)
-	}
-	c := action.NewInstall(cfg)
-	c.ReleaseName = opt.releaseName
-	c.Namespace = opt.releaseNamespace
-	c.CreateNamespace = opt.createNamespace
-	c.DisableHooks = opt.disableHooks
-	c.IncludeCRDs = true
-	c.TakeOwnership = true
-	c.Wait = false
-	_, err = c.Run(chart, nil)
-	if err != nil {
-		return fmt.Errorf("could not install Helm chart: %w", err)
-	}
-
-	return nil
-}
-
-func (o *Install) newInstallActionConfig() (*action.Configuration, error) {
-	logger := func(_ string, _ ...interface{}) {}
-	cfg := action.Configuration{}
-	if err := cfg.Init(&genericclioptions.ConfigFlags{}, common.SystemNamespace, "", logger); err != nil {
-		return nil, err
-	}
-	return &cfg, nil
 }
 
 func (o *Install) populateConfig() error {
