@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"net/url"
 	"os"
 	"regexp"
@@ -75,8 +74,6 @@ const (
 	FlagDisableTelemetry = "disable-telemetry"
 	// FlagChartDir is the directory where the Helm chart is stored.
 	FlagChartDir = "chart-dir"
-	// FlagChartDir runs the installation in dry-run mode.
-	FlagDryRun = "dry-run"
 
 	// everestDBNamespaceSubChartPath is the path to the everest-db-namespace subchart relative to the main chart.
 	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
@@ -140,8 +137,6 @@ type (
 		DisableTelemetry bool `mapstructure:"disable-telemetry"`
 		// ChartDir is the directory where the Helm chart is stored.
 		ChartDir string `mapstructure:"chart-dir"`
-		// DryRun mode only renders the install manifests.
-		DryRun bool `mapstructure:"dry-run"`
 
 		SkipEnvDetection bool   `mapstructure:"skip-env-detection"`
 		SkipOLM          bool   `mapstructure:"skip-olm"`
@@ -315,22 +310,17 @@ func (o *Install) installEverestHelmChart(ver string) common.Step {
 	return common.Step{
 		Desc: "Install Everest Helm chart",
 		F: func(ctx context.Context) error {
-			var chartFs fs.FS
-			if o.config.ChartDir != "" {
-				chartFs = os.DirFS(o.config.ChartDir)
-			}
-
-			mgr, err := helm.New(helm.ChartOptions{
-				FS:      chartFs,
-				Version: ver,
-				URL:     common.PerconaHelmRepoURL,
-				Name:    common.EverestHelmChart,
+			h, err := helm.New(helm.ChartOptions{
+				Directory: o.config.ChartDir,
+				Version:   ver,
+				URL:       common.PerconaHelmRepoURL,
+				Name:      common.EverestHelmChart,
 			})
 			if err != nil {
 				return fmt.Errorf("could not create Helm manager: %w", err)
 			}
 
-			return mgr.Install(ctx, helm.InstallOptions{
+			return h.Install(ctx, helm.InstallOptions{
 				ReleaseName:      EverestChartReleaseName,
 				ReleaseNamespace: common.SystemNamespace,
 				CreateNamespace:  true,

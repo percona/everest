@@ -23,9 +23,9 @@ var utf8bom = []byte{0xEF, 0xBB, 0xBF}
 
 // ChartOptions are the options for the Helm chart.
 type ChartOptions struct {
-	// FS is the filesystem to use to load the chart.
-	// Can work with embedded filesystems as well.
-	FS fs.FS
+	// Directory to load the Helm chart from.
+	// If set, URL and Name are ignored.
+	Directory string
 	// Version of the helm chart.
 	Version string
 	// URL of the chart repository.
@@ -42,7 +42,11 @@ type Manager struct {
 
 // New returns a new Manager for Helm.
 func New(o ChartOptions) (*Manager, error) {
-	chart, err := resolveHelmChart(o.Version, o.Name, o.URL, o.FS)
+	var chartFS fs.FS
+	if o.Directory != "" {
+		chartFS = os.DirFS(o.Directory)
+	}
+	chart, err := resolveHelmChart(o.Version, o.Name, o.URL, chartFS)
 	if err != nil {
 		return nil, fmt.Errorf("cannot resolve helm chart: %w", err)
 	}
@@ -75,8 +79,6 @@ func (m *Manager) Install(ctx context.Context, o InstallOptions) error {
 	install.CreateNamespace = o.CreateNamespace
 	install.DryRun = o.DryRun
 	install.DisableHooks = o.DisableHooks
-	install.Wait = true
-	install.IncludeCRDs = true
 	install.Wait = false
 
 	if _, err := install.RunWithContext(ctx, m.chart, o.Values); err != nil {
@@ -106,9 +108,7 @@ func LoadFS(fsys fs.FS) (*chart.Chart, error) {
 		rules = r
 	}
 	rules.AddDefaults()
-
 	files := []*loader.BufferedFile{}
-
 	walk := func(path string, d fs.DirEntry, err error) error {
 		if path == "." {
 			// No need to process top level. Avoid bug with helmignore .* matching
