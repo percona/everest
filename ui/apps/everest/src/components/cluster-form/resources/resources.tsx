@@ -512,6 +512,10 @@ const ResourcesForm = ({
     trigger(DbWizardFormFields.shardConfigServers);
   }, [setValue, getFieldState, numberOfNodes, customNrOfNodes]);
 
+  useEffect(() => {
+    trigger();
+  }, [numberOfNodes, customNrOfNodes]);
+
   return (
     <>
       {!!showSharding && !!sharding && (
