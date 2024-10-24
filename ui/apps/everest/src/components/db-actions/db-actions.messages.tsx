@@ -1,6 +1,5 @@
 export const Messages = {
   menuItems: {
-    edit: 'Edit',
     delete: 'Delete',
     restart: 'Restart',
     suspend: 'Suspend',
