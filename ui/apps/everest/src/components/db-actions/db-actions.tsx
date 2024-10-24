@@ -133,18 +133,6 @@ export const DbActions = ({
         {canUpdate && (
           <MenuItem
             disabled={restoring}
-            key={0}
-            component={Link}
-            to="/databases/edit"
-            state={{ selectedDbCluster: dbClusterName, namespace }}
-            sx={sx}
-          >
-            <BorderColor fontSize="small" /> {Messages.menuItems.edit}
-          </MenuItem>
-        )}
-        {canUpdate && (
-          <MenuItem
-            disabled={restoring}
             key={2}
             onClick={() => {
               handleDbRestart(dbCluster);
