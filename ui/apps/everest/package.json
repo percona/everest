@@ -71,7 +71,7 @@
     "prettier": "^3.0.3",
     "tsc-alias": "^1.8.8",
     "typescript": "^5.2.2",
-    "vite": "^4.5.3",
+    "vite": "^4.5.5",
     "vite-tsconfig-paths": "^4.2.1",
     "vitest": "^0.34.6",
     "yaml": "^2.5.1"
