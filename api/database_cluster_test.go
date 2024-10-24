@@ -106,19 +106,19 @@ func TestGetDefaultUploadInterval(t *testing.T) {
 			name:     "new psmdb, no interval is set",
 			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePSMDB, Version: "1.16.0"},
 			interval: nil,
-			expected: 0,
+			expected: psmdbDefaultUploadInterval,
 		},
 		{
 			name:     "new psmdb, interval is set",
 			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePSMDB, Version: "1.16.0"},
 			interval: pointer.ToInt(1000),
-			expected: 0,
+			expected: 1000,
 		},
 		{
 			name:     "newer psmdb",
 			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePSMDB, Version: "1.16.1"},
 			interval: nil,
-			expected: 0,
+			expected: psmdbDefaultUploadInterval,
 		},
 
 		{
