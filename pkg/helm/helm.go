@@ -20,10 +20,11 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-var utf8bom = []byte{0xEF, 0xBB, 0xBF}
-
 // ChartOptions are the options for the Helm chart.
 type ChartOptions struct {
+	// FS is the filesystem to load the Helm chart from.
+	// If set, ignored Directory, URL and Name.
+	FS fs.GlobFS
 	// Directory to load the Helm chart from.
 	// If set, URL and Name are ignored.
 	Directory string
@@ -39,19 +40,23 @@ type ChartOptions struct {
 	ReleaseNamespace string
 }
 
-// Manager manages a Helm chart on Kubernetes.
-type Manager struct {
+// Driver is a wrapper around the Helm package, which provides a
+// simplified interface for managing Helm charts.
+type Driver struct {
 	chart                         *chart.Chart
 	actionsCfg                    *action.Configuration
 	releaseName, releaseNamespace string
 }
 
-// New returns a new Manager for Helm.
-func New(o ChartOptions) (*Manager, error) {
+// New creates a new Helm driver.
+func New(o ChartOptions) (*Driver, error) {
 	var chartFS fs.FS
 	if o.Directory != "" {
 		chartFS = os.DirFS(o.Directory)
+	} else if o.FS != nil {
+		chartFS = o.FS
 	}
+
 	chart, err := resolveHelmChart(o.Version, o.Name, o.URL, chartFS)
 	if err != nil {
 		return nil, fmt.Errorf("cannot resolve helm chart: %w", err)
@@ -61,7 +66,7 @@ func New(o ChartOptions) (*Manager, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot initialize actions config: %w", err)
 	}
-	return &Manager{
+	return &Driver{
 		chart:            chart,
 		actionsCfg:       actionsCfg,
 		releaseName:      o.ReleaseName,
@@ -78,21 +83,26 @@ type InstallOptions struct {
 }
 
 // Install the Helm chart. If the chart is already installed, it will be overwritten.
-func (m *Manager) Install(ctx context.Context, installOpts InstallOptions) error {
-	release, err := action.NewGet(m.actionsCfg).Run(m.releaseName)
+func (d *Driver) Install(ctx context.Context, installOpts InstallOptions) error {
+	release, err := action.NewGet(d.actionsCfg).Run(d.releaseName)
 	if err != nil {
 		// Release does not exist, we will create a new installation.
 		if errors.Is(err, driver.ErrReleaseNotFound) {
-			return m.install(ctx, installOpts)
+			return d.install(ctx, installOpts)
 		}
 		return err
 	}
-	// Release already exists, we will re-apply the manifests by upgrading.
-	// We're not actually upgrading the chart to a new version here, Helm expects
-	// us to upgrade the chart to the same version in order to re-apply the manifests.
-	u := &Manager{
-		chart:            release.Chart,
-		actionsCfg:       m.actionsCfg,
+	// If the release already exists, we will re-apply the manifests using upgrade.
+	// We're not actually upgrading to a new version, but using upgrade to re-apply manifests.
+	// This is how Helm expects us to re-apply manifests.
+	// To prevent accidental version upgrades, we will explictly check that the resolved chart version matches the installed chart version.
+	if d.chart.Metadata.Version != release.Chart.Metadata.Version {
+		return fmt.Errorf("cannot overwrite existing release with a different chart version. Expected %s, got %s",
+			release.Chart.Metadata.Version, d.chart.Metadata.Version)
+	}
+	u := &Driver{
+		chart:            d.chart,
+		actionsCfg:       d.actionsCfg,
 		releaseName:      release.Name,
 		releaseNamespace: release.Namespace,
 	}
@@ -100,40 +110,39 @@ func (m *Manager) Install(ctx context.Context, installOpts InstallOptions) error
 }
 
 // Upgrade the Helm chart managed by the manager.
-func (m *Manager) Upgrade(ctx context.Context) error {
-	upgrade := action.NewUpgrade(m.actionsCfg)
-	upgrade.Namespace = m.releaseNamespace
+func (d *Driver) Upgrade(ctx context.Context) error {
+	upgrade := action.NewUpgrade(d.actionsCfg)
+	upgrade.Namespace = d.releaseNamespace
 	upgrade.TakeOwnership = true
 	upgrade.DisableHooks = true
-
-	if _, err := upgrade.RunWithContext(ctx, m.releaseName, m.chart, nil); err != nil {
+	if _, err := upgrade.RunWithContext(ctx, d.releaseName, d.chart, nil); err != nil {
 		return fmt.Errorf("cannot upgrade chart: %w", err)
 	}
 	return nil
 }
 
 // Uninstall a Helm release.
-func (m *Manager) Uninstall(ctx context.Context) error {
-	uninstall := action.NewUninstall(m.actionsCfg)
+func (d *Driver) Uninstall(ctx context.Context) error {
+	uninstall := action.NewUninstall(d.actionsCfg)
 	uninstall.DisableHooks = true
 	uninstall.Wait = false
 	uninstall.IgnoreNotFound = true
-	if _, err := uninstall.Run(m.releaseName); err != nil {
+	if _, err := uninstall.Run(d.releaseName); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *Manager) install(ctx context.Context, o InstallOptions) error {
-	install := action.NewInstall(m.actionsCfg)
-	install.ReleaseName = m.releaseName
-	install.Namespace = m.releaseNamespace
+func (d *Driver) install(ctx context.Context, o InstallOptions) error {
+	install := action.NewInstall(d.actionsCfg)
+	install.ReleaseName = d.releaseName
+	install.Namespace = d.releaseNamespace
 	install.CreateNamespace = o.CreateNamespace
 	install.DryRun = o.DryRun
 	install.DisableHooks = o.DisableHooks
 	install.Wait = false
 
-	if _, err := install.RunWithContext(ctx, m.chart, o.Values); err != nil {
+	if _, err := install.RunWithContext(ctx, d.chart, o.Values); err != nil {
 		return fmt.Errorf("cannot install chart: %w", err)
 	}
 	return nil
@@ -145,8 +154,11 @@ func newActionsCfg() (*action.Configuration, error) {
 	if err := cfg.Init(&genericclioptions.ConfigFlags{}, common.SystemNamespace, "", logger); err != nil {
 		return nil, err
 	}
+	cfg.Releases.MaxHistory = 3
 	return &cfg, nil
 }
+
+var utf8bom = []byte{0xEF, 0xBB, 0xBF}
 
 // LoadFS loads a Helm chart from a filesystem. Works with embedded FS.
 func LoadFS(fsys fs.FS) (*chart.Chart, error) {

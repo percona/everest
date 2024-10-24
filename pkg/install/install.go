@@ -24,6 +24,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -40,6 +41,7 @@ import (
 	versionservice "github.com/percona/everest/pkg/version_service"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -216,12 +218,10 @@ func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 	installSteps = append(installSteps, o.waitForMonitoring())
 
 	// Install DB namespaces.
-
 	// TODO: we need a separate command for provisining DB namespaces.
-	// dbChart, err := helm.ResolveHelmChart(latest.String(), common.EverestDBNamespaceHelmChart, common.PerconaHelmRepoURL, dbChartFs)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to resolve Everest DB Namespace Helm chart: %w", err)
-	// }
+	for _, ns := range o.config.NamespacesList {
+		installSteps = append(installSteps, o.provisionDBNamespace(latest.String(), ns))
+	}
 
 	var out io.Writer = os.Stdout
 	if !o.config.Pretty {
@@ -244,6 +244,64 @@ func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 		fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage)
 	}
 	return nil
+}
+
+func (o *Install) getDBNamespaceChartValues() map[string]interface{} {
+	vals := map[string]interface{}{}
+	if !o.config.Operator.PXC {
+		vals["pxc"] = false
+	}
+	if !o.config.Operator.PG {
+		vals["pg"] = false
+	}
+	if !o.config.Operator.PSMDB {
+		vals["psmdb"] = false
+	}
+	vals["cleanupOnUninstall"] = false // we will handle the cleanup ourselves
+	if o.config.DisableTelemetry {
+		vals["telemetry"] = false
+	}
+	return vals
+}
+
+func (o *Install) provisionDBNamespace(ver string, namespace string) common.Step {
+	return common.Step{
+		Desc: fmt.Sprintf("Provisioning DB namespace '%s'", namespace),
+		F: func(ctx context.Context) error {
+			if err := o.createNamespace(ctx, namespace); err != nil {
+				return err
+			}
+			chartDir := ""
+			if o.config.ChartDir != "" {
+				chartDir = path.Join(o.config.ChartDir, dbNamespaceSubChartPath)
+			}
+			d, err := helm.New(helm.ChartOptions{
+				Directory:        chartDir,
+				Version:          ver,
+				URL:              common.PerconaHelmRepoURL,
+				Name:             common.EverestDBNamespaceHelmChart,
+				ReleaseName:      namespace,
+				ReleaseNamespace: namespace,
+			})
+			if err != nil {
+				return fmt.Errorf("could not create Helm driver: %w", err)
+			}
+
+			if err := d.Install(ctx, helm.InstallOptions{
+				CreateNamespace: false,
+				DisableHooks:    true,
+				DryRun:          false,
+				Values:          o.getDBNamespaceChartValues(),
+			}); err != nil {
+				return fmt.Errorf("could not install Helm chart: %w", err)
+			}
+
+			if err := o.installDBOperators(ctx, namespace); err != nil {
+				return err
+			}
+			return nil
+		},
+	}
 }
 
 func (o *Install) waitForMonitoring() common.Step {
@@ -314,7 +372,7 @@ func (o *Install) installEverestHelmChart(ver string) common.Step {
 	return common.Step{
 		Desc: "Install Everest Helm chart",
 		F: func(ctx context.Context) error {
-			h, err := helm.New(helm.ChartOptions{
+			d, err := helm.New(helm.ChartOptions{
 				Directory:        o.config.ChartDir,
 				Version:          ver,
 				URL:              common.PerconaHelmRepoURL,
@@ -323,7 +381,7 @@ func (o *Install) installEverestHelmChart(ver string) common.Step {
 				ReleaseNamespace: common.SystemNamespace,
 			})
 			if err != nil {
-				return fmt.Errorf("could not create Helm manager: %w", err)
+				return fmt.Errorf("could not create Helm driver: %w", err)
 			}
 
 			nsExists, err := o.namespaceExists(ctx, common.SystemNamespace)
@@ -331,7 +389,7 @@ func (o *Install) installEverestHelmChart(ver string) common.Step {
 				return err
 			}
 
-			return h.Install(ctx, helm.InstallOptions{
+			return d.Install(ctx, helm.InstallOptions{
 				CreateNamespace: !nsExists,
 				DisableHooks:    true,
 				Values:          nil,
@@ -589,4 +647,45 @@ func validateRFC1035(s string) error {
 	}
 
 	return nil
+}
+
+func (o *Install) installDBOperators(ctx context.Context, namespace string) error {
+	g, gCtx := errgroup.WithContext(ctx)
+	g.SetLimit(operatorInstallThreads)
+
+	if o.config.Operator.PXC {
+		g.Go(o.installOperator(gCtx, common.PXCOperatorName, namespace))
+	}
+	if o.config.Operator.PG {
+		g.Go(o.installOperator(gCtx, common.PGOperatorName, namespace))
+	}
+	if o.config.Operator.PSMDB {
+		g.Go(o.installOperator(gCtx, common.PSMDBOperatorName, namespace))
+	}
+	return g.Wait()
+}
+
+func (o *Install) installOperator(ctx context.Context, operatorName, namespace string) func() error {
+	return func() error {
+		// We check if the context has not been cancelled yet to return early
+		if err := ctx.Err(); err != nil {
+			o.l.Debugf("Cancelled %s operator installation due to context error: %s", operatorName, err)
+			return err
+		}
+
+		o.l.Infof("Installing %s operator", operatorName)
+
+		params := kubernetes.InstallOperatorRequest{
+			Namespace:              namespace,
+			Name:                   operatorName,
+			CatalogSourceNamespace: kubernetes.OLMNamespace,
+		}
+
+		if err := o.kubeClient.InstallOperator(ctx, params); err != nil {
+			o.l.Errorf("failed installing %s operator", operatorName)
+			return err
+		}
+		o.l.Infof("%s operator has been installed", operatorName)
+		return nil
+	}
 }
