@@ -210,7 +210,8 @@ export const useUpdateDbClusterAdvancedConfiguration = () =>
             ...dbCluster.spec.engine,
             config: engineParametersEnabled ? engineParameters : '',
           },
-          proxy: {
+          proxy: 
+          {
             ...dbCluster.spec.proxy,
             expose: {
               type: externalAccess
@@ -223,7 +224,7 @@ export const useUpdateDbClusterAdvancedConfiguration = () =>
                   ),
                 }),
             },
-          },
+          } as Proxy,
         },
       }),
   });
