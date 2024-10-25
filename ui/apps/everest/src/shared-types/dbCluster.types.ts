@@ -71,7 +71,7 @@ interface Engine {
 }
 
 export interface Proxy {
-  replicas: number;
+  replicas?: number;
   expose: {
     type: ProxyExposeType;
     ipSourceRanges?: string[];
@@ -106,7 +106,7 @@ export interface Spec {
   allowUnsafeConfiguration?: boolean;
   backup?: Backup;
   engine: Engine;
-  proxy: Proxy;
+  proxy: Proxy | Record<string, never>;
   paused?: boolean;
   dataSource?: DataSource;
   monitoring: Monitoring;

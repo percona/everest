@@ -90,6 +90,13 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 // enforceDBClusterRBAC checks if the user has permission to read the backup-storage and monitoring-instances associated
 // with the provided DB cluster.
 func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.DatabaseCluster) error {
+	// Check if the user has permissions for this DB cluster?
+	if err := e.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), db.GetName())); err != nil {
+		if !errors.Is(err, errInsufficientPermissions) {
+			e.l.Error(errors.Join(err, errors.New("failed to check db-cluster permissions")))
+		}
+		return err
+	}
 	// Check if the user has permissions for all backup-storages in the schedule?
 	for _, sched := range db.Spec.Backup.Schedules {
 		bsName := sched.BackupStorageName
@@ -429,11 +436,15 @@ func (e *EverestServer) GetDatabaseClusterPitr(ctx echo.Context, namespace, name
 	}
 
 	latestBackup := latestSuccessfulBackup(backups.Items)
+	if latestBackup == nil || latestBackup.Status.CreatedAt == nil {
+		return ctx.JSON(http.StatusOK, response)
+	}
 
 	backupTime := latestBackup.Status.CreatedAt.UTC()
 	var latest *time.Time
 	// if there is the LatestRestorableTime set in the CR, use it
-	if latestBackup.Status.LatestRestorableTime != nil {
+	// except of psmdb which has a bug https://perconadev.atlassian.net/browse/K8SPSMDB-1186
+	if latestBackup.Status.LatestRestorableTime != nil && databaseCluster.Spec.Engine.Type != everestv1alpha1.DatabaseEnginePSMDB {
 		latest = &latestBackup.Status.LatestRestorableTime.Time
 	} else {
 		// otherwise use heuristics based on the UploadInterval
@@ -503,10 +514,9 @@ func getDefaultUploadInterval(engine everestv1alpha1.Engine, uploadInterval *int
 			return valueOrDefault(uploadInterval, pxcDefaultUploadInterval)
 		}
 	case everestv1alpha1.DatabaseEnginePSMDB:
-		// latest restorable time appeared in PSMDB 1.16.0
-		if common.CheckConstraint(version, "<1.16.0") {
-			return valueOrDefault(uploadInterval, psmdbDefaultUploadInterval)
-		}
+		// latest restorable time appeared in PSMDB 1.16.0, however it's not reliable https://perconadev.atlassian.net/browse/K8SPSMDB-1186
+		// so we still use heuristics
+		return valueOrDefault(uploadInterval, psmdbDefaultUploadInterval)
 	case everestv1alpha1.DatabaseEnginePostgresql:
 		// latest restorable time appeared in PG 2.4.0
 		if common.CheckConstraint(version, "<2.4.0") {

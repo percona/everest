@@ -41,7 +41,7 @@ export interface DbClusterTableElement {
   proxies: number;
   hostName: string;
   port?: number;
-  exposetype: ProxyExposeType;
+  exposetype?: ProxyExposeType;
   monitoringConfigName?: string;
   raw: DbCluster;
 }

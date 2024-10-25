@@ -18,6 +18,7 @@ import { DbClusterForNamespaceResult } from '../../hooks/api/db-clusters/useDbCl
 import { Messages } from './dbClusterView.messages';
 import { DbClusterTableElement } from './dbClusterView.types';
 import { Backup, BackupStatus } from 'shared-types/backups.types';
+import { isProxy } from 'utils/db';
 
 const DB_CLUSTER_STATUS_HUMANIFIED: Record<DbClusterStatus, string> = {
   [DbClusterStatus.ready]: Messages.statusProvider.up,
@@ -58,7 +59,9 @@ export const convertDbClusterPayloadToTableFormat = (
           proxyCpu: cluster.spec.proxy.resources?.cpu || '',
           proxyMemory: cluster.spec.proxy.resources?.memory || '',
           hostName: cluster.status ? cluster.status.hostname : '',
-          exposetype: cluster.spec.proxy.expose.type,
+          exposetype: isProxy(cluster.spec.proxy)
+            ? cluster.spec.proxy.expose.type
+            : undefined,
           port: cluster.status?.port,
           monitoringConfigName:
             cluster.spec.monitoring?.monitoringConfigName ?? '',

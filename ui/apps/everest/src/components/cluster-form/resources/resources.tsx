@@ -423,8 +423,10 @@ const ResourcesForm = ({
   allowDiskInputUpdate,
   pairProxiesWithNodes,
   showSharding,
+  hideProxies = false,
 }: {
   dbType: DbType;
+  hideProxies?: boolean;
   disableDiskInput?: boolean;
   allowDiskInputUpdate?: boolean;
   pairProxiesWithNodes?: boolean;
@@ -510,6 +512,10 @@ const ResourcesForm = ({
     trigger(DbWizardFormFields.shardConfigServers);
   }, [setValue, getFieldState, numberOfNodes, customNrOfNodes]);
 
+  useEffect(() => {
+    trigger();
+  }, [numberOfNodes, customNrOfNodes]);
+
   return (
     <>
       {!!showSharding && !!sharding && (
@@ -521,6 +527,7 @@ const ResourcesForm = ({
           <TextInput
             name={DbWizardFormFields.shardNr}
             textFieldProps={{
+              sx: { maxWidth: '200px' },
               type: 'number',
               required: true,
               inputProps: {
@@ -559,37 +566,41 @@ const ResourcesForm = ({
           disableCustom={dbType === DbType.Mysql}
         />
       </Accordion>
-      <Accordion
-        expanded={expanded === 'proxies'}
-        data-testid="proxies-accordion"
-        onChange={handleAccordionChange('proxies')}
-        sx={{
-          px: 2,
-        }}
-      >
-        <CustomAccordionSummary
-          unitPlural={proxyUnitNames.plural}
-          nr={parseInt(proxiesAccordionSummaryNumber, 10)}
-        />
-        <Divider />
-        <ResourcesToggles
-          dbType={dbType}
-          unit={proxyUnitNames.singular}
-          unitPlural={proxyUnitNames.plural}
-          options={NODES_DB_TYPE_MAP[dbType]}
-          sizeOptions={PROXIES_DEFAULT_SIZES[dbType]}
-          resourceSizePerUnitInputName={DbWizardFormFields.resourceSizePerProxy}
-          cpuInputName={DbWizardFormFields.proxyCpu}
-          memoryInputName={DbWizardFormFields.proxyMemory}
-          numberOfUnitsInputName={DbWizardFormFields.numberOfProxies}
-          customNrOfUnitsInputName={DbWizardFormFields.customNrOfProxies}
-        />
-        {proxyFieldError && (
-          <FormHelperText error={true}>
-            {proxyFieldError?.message}
-          </FormHelperText>
-        )}
-      </Accordion>
+      {!hideProxies && (
+        <Accordion
+          expanded={expanded === 'proxies'}
+          data-testid="proxies-accordion"
+          onChange={handleAccordionChange('proxies')}
+          sx={{
+            px: 2,
+          }}
+        >
+          <CustomAccordionSummary
+            unitPlural={proxyUnitNames.plural}
+            nr={parseInt(proxiesAccordionSummaryNumber, 10)}
+          />
+          <Divider />
+          <ResourcesToggles
+            dbType={dbType}
+            unit={proxyUnitNames.singular}
+            unitPlural={proxyUnitNames.plural}
+            options={NODES_DB_TYPE_MAP[dbType]}
+            sizeOptions={PROXIES_DEFAULT_SIZES[dbType]}
+            resourceSizePerUnitInputName={
+              DbWizardFormFields.resourceSizePerProxy
+            }
+            cpuInputName={DbWizardFormFields.proxyCpu}
+            memoryInputName={DbWizardFormFields.proxyMemory}
+            numberOfUnitsInputName={DbWizardFormFields.numberOfProxies}
+            customNrOfUnitsInputName={DbWizardFormFields.customNrOfProxies}
+          />
+          {proxyFieldError && (
+            <FormHelperText error={true}>
+              {proxyFieldError?.message}
+            </FormHelperText>
+          )}
+        </Accordion>
+      )}
       {!!showSharding && !!sharding && (
         <CustomPaper sx={{ mt: 2 }}>
           <Typography variant="sectionHeading">

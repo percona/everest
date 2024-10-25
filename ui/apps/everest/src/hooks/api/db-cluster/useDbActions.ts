@@ -157,6 +157,11 @@ export const useDbActions = () => {
     setOpenRestoreDialog(true);
   };
 
+  const handleOpenDbDetailsDialog = (dbCluster: DbCluster) => {
+    setSelectedDbCluster(dbCluster);
+    setOpenDetailsDialog(true);
+  };
+
   const handleCloseRestoreDialog = () => {
     setOpenRestoreDialog(false);
   };
@@ -173,6 +178,7 @@ export const useDbActions = () => {
     handleDbRestart,
     handleDeleteDbCluster,
     handleConfirmDelete,
+    handleOpenDbDetailsDialog,
     handleCloseDeleteDialog,
     handleCloseDetailsDialog,
     isPaused,
