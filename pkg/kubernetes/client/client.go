@@ -1302,6 +1302,7 @@ func (c *Client) DoPackageWait(ctx context.Context, namespace, name string) erro
 	packageInstalled := func(ctx context.Context) (bool, error) {
 		_, err := c.GetPackageManifest(ctx, namespace, name)
 		if err != nil {
+			c.l.Debugf("Could not get package manifest: %s", err)
 			if apierrors.ReasonForError(err) == metav1.StatusReasonUnknown {
 				return false, err
 			}

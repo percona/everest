@@ -90,7 +90,7 @@ const (
 	managedByKey                 = "everest.percona.com/managed-by"
 
 	// OLMNamespace is the namespace where OLM is installed.
-	OLMNamespace    = "everest-olm"
+	OLMNamespace    = "openshift-marketplace"
 	olmOperatorName = "olm-operator"
 
 	// APIVersionCoreosV1 constant for some API requests.
@@ -352,17 +352,20 @@ func (k *Kubernetes) InstallOLMOperator(ctx context.Context, upgrade bool) error
 		return err
 	}
 
+	k.l.Debug("Waiting for deployment rollout")
 	if err := k.waitForDeploymentRollout(ctx); err != nil {
 		return err
 	}
 
+	k.l.Debug("Applying CSVs")
 	if err := k.applyCSVs(ctx, resources); err != nil {
 		return err
 	}
 
-	if err := k.client.DoRolloutWait(ctx, types.NamespacedName{Namespace: OLMNamespace, Name: "packageserver"}); err != nil {
-		return errors.Join(err, errors.New("error while waiting for deployment rollout"))
-	}
+	// k.l.Debug("Waiting for packageserver deployment")
+	// if err := k.client.DoRolloutWait(ctx, types.NamespacedName{Namespace: OLMNamespace, Name: "packageserver"}); err != nil {
+	// 	return errors.Join(err, errors.New("error while waiting for deployment rollout"))
+	// }
 
 	return nil
 }
@@ -419,15 +422,15 @@ func (k *Kubernetes) InstallPerconaCatalog(ctx context.Context, version *goversi
 	if err := k.client.ApplyFile(data); err != nil {
 		return errors.Join(err, errors.New("cannot apply percona catalog file"))
 	}
-	if err := k.client.DoPackageWait(ctx, OLMNamespace, "everest-operator"); err != nil {
-		return errors.Join(err, errors.New("timeout waiting for package"))
-	}
+	// if err := k.client.DoPackageWait(ctx, OLMNamespace, "everest-operator"); err != nil {
+	// 	return errors.Join(err, errors.New("timeout waiting for package"))
+	// }
 	return nil
 }
 
 func (k *Kubernetes) applyResources(ctx context.Context) ([]unstructured.Unstructured, error) {
 	files := []string{
-		"crds/olm/crds.yaml",
+		// "crds/olm/crds.yaml",
 		"crds/olm/olm.yaml",
 	}
 
@@ -445,6 +448,7 @@ func (k *Kubernetes) applyResources(ctx context.Context) ([]unstructured.Unstruc
 				k.l.Warn(fmt.Errorf("cannot apply %q file. Reapplying it", f))
 				return false, nil
 			}
+			k.l.Debugf("Applied %q file", f)
 			return true, nil
 		}
 

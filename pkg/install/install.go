@@ -229,7 +229,7 @@ func (o *Install) Run(ctx context.Context) error {
 	o.l.Debugf("Everest latest version available: %s", latest)
 	o.l.Debugf("Everest version information %#v", latestMeta)
 
-	installSteps = append(installSteps, o.provisionOLM(latest)...)
+	// installSteps = append(installSteps, o.provisionOLM(latest)...)
 	installSteps = append(installSteps, o.provisionMonitoringStack()...)
 	installSteps = append(installSteps, o.provisionEverestComponents(latest, recVer)...)
 
