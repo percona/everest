@@ -15,7 +15,11 @@
 
 import { UseMutationOptions, useMutation } from '@tanstack/react-query';
 import { updateDbClusterFn } from 'api/dbClusterApi';
-import { DbCluster, ProxyExposeType, Proxy } from 'shared-types/dbCluster.types';
+import {
+  DbCluster,
+  ProxyExposeType,
+  Proxy,
+} from 'shared-types/dbCluster.types';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import cronConverter from 'utils/cron-converter';
 import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
@@ -210,8 +214,7 @@ export const useUpdateDbClusterAdvancedConfiguration = () =>
             ...dbCluster.spec.engine,
             config: engineParametersEnabled ? engineParameters : '',
           },
-          proxy: 
-          {
+          proxy: {
             ...dbCluster.spec.proxy,
             expose: {
               type: externalAccess
