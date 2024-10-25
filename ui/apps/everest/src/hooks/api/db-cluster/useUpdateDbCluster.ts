@@ -15,12 +15,13 @@
 
 import { UseMutationOptions, useMutation } from '@tanstack/react-query';
 import { updateDbClusterFn } from 'api/dbClusterApi';
-import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
+import { DbCluster, ProxyExposeType, Proxy } from 'shared-types/dbCluster.types';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import cronConverter from 'utils/cron-converter';
 import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
 import { getProxySpec } from './utils';
 import { DbType } from '@percona/types';
+import { DbEngineType } from 'shared-types/dbEngines.types';
 
 type UpdateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -95,31 +96,35 @@ const formValuesToPayloadOverrides = (
           monitoringConfigName: dbPayload?.monitoringInstance!,
         }),
       },
-      proxy: {
-        ...dbCluster.spec.proxy,
-        ...getProxySpec(
-          dbPayload.dbType,
-          dbPayload.numberOfProxies,
-          dbPayload.customNrOfProxies || '',
-          dbPayload.externalAccess,
-          dbPayload.proxyCpu,
-          dbPayload.proxyMemory,
-          dbPayload.sourceRanges || []
-        ),
-        // replicas: numberOfNodes,
-        // expose: {
-        //   ...dbCluster.spec.proxy.expose,
-        //   type: dbPayload.externalAccess
-        //     ? ProxyExposeType.external
-        //     : ProxyExposeType.internal,
-        //   ...(!!dbPayload.externalAccess &&
-        //     dbPayload.sourceRanges && {
-        //       ipSourceRanges: dbPayload.sourceRanges.flatMap((source) =>
-        //         source.sourceRange ? [source.sourceRange] : []
-        //       ),
-        //     }),
-        // },
-      },
+      proxy:
+        dbPayload.dbType === DbType.Mongo && !dbPayload.sharding
+          ? {}
+          : {
+              ...dbCluster.spec.proxy,
+              ...getProxySpec(
+                dbPayload.dbType,
+                dbPayload.numberOfProxies,
+                dbPayload.customNrOfProxies || '',
+                dbPayload.externalAccess,
+                dbPayload.proxyCpu,
+                dbPayload.proxyMemory,
+                dbPayload.sharding,
+                dbPayload.sourceRanges || []
+              ),
+              // replicas: numberOfNodes,
+              // expose: {
+              //   ...dbCluster.spec.proxy.expose,
+              //   type: dbPayload.externalAccess
+              //     ? ProxyExposeType.external
+              //     : ProxyExposeType.internal,
+              //   ...(!!dbPayload.externalAccess &&
+              //     dbPayload.sourceRanges && {
+              //       ipSourceRanges: dbPayload.sourceRanges.flatMap((source) =>
+              //         source.sourceRange ? [source.sourceRange] : []
+              //       ),
+              //     }),
+              // },
+            },
       ...(dbPayload.dbType === DbType.Mongo && {
         sharding: {
           enabled: dbPayload.sharding,
@@ -279,6 +284,7 @@ export const useUpdateDbClusterResources = () =>
     mutationFn: ({
       dbCluster,
       newResources,
+      sharding,
     }: {
       dbCluster: DbCluster;
       newResources: {
@@ -291,6 +297,7 @@ export const useUpdateDbClusterResources = () =>
         proxyMemory: number;
         numberOfProxies: number;
       };
+      sharding: boolean;
     }) =>
       updateDbClusterFn(dbCluster.metadata.name, dbCluster.metadata.namespace, {
         ...dbCluster,
@@ -308,14 +315,17 @@ export const useUpdateDbClusterResources = () =>
               size: `${newResources.disk}${newResources.diskUnit}`,
             },
           },
-          proxy: {
-            ...dbCluster.spec.proxy,
-            replicas: newResources.numberOfProxies,
-            resources: {
-              cpu: `${newResources.proxyCpu}`,
-              memory: `${newResources.proxyMemory}G`,
-            },
-          },
+          proxy:
+            dbCluster.spec.engine.type === DbEngineType.PSMDB && !sharding
+              ? {}
+              : ({
+                  ...dbCluster.spec.proxy,
+                  replicas: newResources.numberOfProxies,
+                  resources: {
+                    cpu: `${newResources.proxyCpu}`,
+                    memory: `${newResources.proxyMemory}G`,
+                  },
+                } as Proxy),
         },
       }),
   });

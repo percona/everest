@@ -25,6 +25,7 @@ import { useDbClusterCredentials } from 'hooks/api/db-cluster/useCreateDbCluster
 import { useDbBackups } from 'hooks/api/backups/useBackups';
 import { DbEngineType } from 'shared-types/dbEngines.types';
 import { useRBACPermissions } from 'hooks/rbac';
+import { isProxy } from 'utils/db';
 
 export const ClusterOverview = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -90,6 +91,7 @@ export const ClusterOverview = () => {
         username={dbClusterDetails?.username!}
         password={dbClusterDetails?.password!}
         externalAccess={
+          isProxy(dbCluster.spec.proxy) &&
           dbCluster.spec.proxy.expose.type === ProxyExposeType.external
         }
         monitoring={dbCluster?.spec.monitoring.monitoringConfigName}

@@ -270,9 +270,13 @@ func NewEnforceHandler(l *zap.SugaredLogger, basePath string, enforcer *casbin.E
 		if resource == ResourceNamespaces {
 			return true, nil
 		}
-		// Always allow listing database engines.
-		// The result is filtered based on permission.
-		if resource == ResourceDatabaseEngines && name == "" && action == ActionRead {
+		// Listing the following objects is always allowed here,
+		// since we will filter the output of the list itself based on the permissions.
+		allowedObjectsForListing := []string{
+			ResourceDatabaseClusters,
+			ResourceDatabaseEngines,
+		}
+		if slices.Contains(allowedObjectsForListing, resource) && name == "" && action == ActionRead {
 			return true, nil
 		}
 		if ok, err := enforcer.Enforce(user, resource, action, object); err != nil {
