@@ -17,12 +17,14 @@
 package commands
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
+	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
 	"github.com/percona/everest/pkg/uninstall"
 )
@@ -64,6 +66,12 @@ func newUninstallCmd(l *zap.SugaredLogger) *cobra.Command {
 func initUninstallFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolP("assume-yes", "y", false, "Assume yes to all questions")
 	cmd.Flags().BoolP("force", "f", false, "Force removal in case there are database clusters running")
+
+	cmd.Flags().Bool(uninstall.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
+	cmd.Flags().String(uninstall.FlagCatalogNamespace, kubernetes.OLMNamespace,
+		fmt.Sprintf("Namespace where Everest OLM catalog is installed. Implies --%s", uninstall.FlagSkipEnvDetection),
+	)
+	cmd.Flags().Bool(uninstall.FlagSkipOLM, false, fmt.Sprintf("Skip OLM uninstallation. Implies --%s", uninstall.FlagSkipEnvDetection))
 }
 
 func initUninstallViperFlags(cmd *cobra.Command) {
@@ -73,6 +81,10 @@ func initUninstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag("force", cmd.Flags().Lookup("force"))           //nolint:errcheck,gosec
 	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose"))       //nolint:errcheck,gosec
 	viper.BindPFlag("json", cmd.Flags().Lookup("json"))             //nolint:errcheck,gosec
+
+	viper.BindPFlag(uninstall.FlagSkipEnvDetection, cmd.Flags().Lookup(uninstall.FlagSkipEnvDetection)) //nolint:errcheck,gosec
+	viper.BindPFlag(uninstall.FlagSkipOLM, cmd.Flags().Lookup(uninstall.FlagSkipOLM))                   //nolint:errcheck,gosec
+	viper.BindPFlag(uninstall.FlagCatalogNamespace, cmd.Flags().Lookup(uninstall.FlagCatalogNamespace)) //nolint:errcheck,gosec
 }
 
 func parseClusterConfig() (*uninstall.Config, error) {

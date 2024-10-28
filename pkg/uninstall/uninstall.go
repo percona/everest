@@ -43,6 +43,16 @@ import (
 const (
 	pollInterval = 5 * time.Second
 	pollTimeout  = 5 * time.Minute
+
+	// catalogSource is the name of the catalog source.
+	catalogSource = "everest-catalog"
+
+	// FlagCatalogNamespace is the name of the catalog namespace flag.
+	FlagCatalogNamespace = "catalog-namespace"
+	// FlagSkipEnvDetection is the name of the skip env detection flag.
+	FlagSkipEnvDetection = "skip-env-detection"
+	// FlagSkipOLM is the name of the skip OLM flag.
+	FlagSkipOLM = "skip-olm"
 )
 
 // Uninstall implements logic for the cluster command.
@@ -66,6 +76,10 @@ type Config struct {
 
 	// If set, we will print the pretty output.
 	Pretty bool
+
+	SkipEnvDetection bool   `mapstructure:"skip-env-detection"`
+	SkipOLM          bool   `mapstructure:"skip-olm"`
+	CatalogNamespace string `mapstructure:"catalog-namespace"`
 }
 
 // NewUninstall returns a new Uninstall struct.
@@ -92,12 +106,38 @@ func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
 }
 
 // Run runs the cluster command.
-func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
+func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 	if abort, err := u.runWizard(); err != nil {
 		return err
 	} else if abort {
 		u.l.Info("Exiting")
 		return nil
+	}
+
+	if !u.config.SkipEnvDetection {
+		// Catalog namespace or Skip OLM implies disabled environment detection.
+		if u.config.SkipOLM || u.config.CatalogNamespace != kubernetes.OLMNamespace {
+			u.config.SkipEnvDetection = true
+		}
+	}
+
+	if !u.config.SkipEnvDetection {
+		env, err := u.kubeClient.DetectEnvironment(ctx)
+		if err != nil {
+			return err
+		}
+		u.config.SkipOLM = env.SkipOLM
+		u.config.CatalogNamespace = env.CatalogNamespace
+	}
+
+	if !u.config.SkipEnvDetection {
+		u.l.Info("Detecting Kubernetes environment")
+		env, err := u.kubeClient.DetectEnvironment(ctx)
+		if err != nil {
+			return err
+		}
+		u.config.SkipOLM = env.SkipOLM
+		u.config.CatalogNamespace = env.CatalogNamespace
 	}
 
 	uninstallSteps := []common.Step{}
@@ -172,14 +212,25 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen
 		},
 	})
 
-	// There are no resources with finalizers in the monitoring namespace, so
-	// we can delete it directly
-	uninstallSteps = append(uninstallSteps, common.Step{
-		Desc: "Delete Operator Lifecycle Manager",
-		F: func(ctx context.Context) error {
-			return u.deleteOLM(ctx)
-		},
-	})
+	if u.config.SkipOLM {
+		u.l.Debug("Skipping OLM uninstallation")
+		uninstallSteps = append(uninstallSteps, common.Step{
+			Desc: "Delete Everest Catalog",
+			F: func(ctx context.Context) error {
+				u.l.Info("Deleting Everest catalog")
+				return u.kubeClient.DeleteCatalogSource(ctx, u.config.CatalogNamespace, catalogSource)
+			},
+		})
+	} else {
+		// There are no resources with finalizers in the monitoring namespace, so
+		// we can delete it directly
+		uninstallSteps = append(uninstallSteps, common.Step{
+			Desc: "Delete Operator Lifecycle Manager",
+			F: func(ctx context.Context) error {
+				return u.deleteOLM(ctx, u.config.CatalogNamespace)
+			},
+		})
+	}
 
 	var out io.Writer = os.Stdout
 	if !u.config.Pretty {
@@ -473,8 +524,8 @@ func (u *Uninstall) deleteMonitoringConfigs(ctx context.Context) error {
 	})
 }
 
-func (u *Uninstall) deleteOLM(ctx context.Context) error {
-	packageServerName := types.NamespacedName{Name: "packageserver", Namespace: kubernetes.OLMNamespace}
+func (u *Uninstall) deleteOLM(ctx context.Context, namespace string) error {
+	packageServerName := types.NamespacedName{Name: "packageserver", Namespace: namespace}
 	if err := u.kubeClient.DeleteClusterServiceVersion(ctx, packageServerName); client.IgnoreNotFound(err) != nil {
 		return err
 	}
@@ -499,7 +550,7 @@ func (u *Uninstall) deleteOLM(ctx context.Context) error {
 		return err
 	}
 
-	return u.deleteNamespaces(ctx, []string{kubernetes.OLMNamespace})
+	return u.deleteNamespaces(ctx, []string{namespace})
 }
 
 func (u *Uninstall) uninstallEverest(ctx context.Context) error {
