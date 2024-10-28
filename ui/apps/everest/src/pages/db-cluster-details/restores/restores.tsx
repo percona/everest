@@ -14,6 +14,7 @@ import {
   Restore,
 } from 'shared-types/restores.types';
 import { Messages } from './restores.messages';
+import { Messages as DbDetailsMessages } from '../db-cluster-details.messages';
 import {
   RESTORES_QUERY_KEY,
   useDbClusterRestores,
@@ -104,7 +105,9 @@ const Restores = () => {
 
   return (
     <>
-      {pitrData?.gaps && <Alert severity="error">{Messages.pitrError}</Alert>}
+      {pitrData?.gaps && (
+        <Alert severity="error">{DbDetailsMessages.pitrError}</Alert>
+      )}
       <Table
         state={{ isLoading: loadingRestores }}
         tableName={`${dbClusterName}-restore`}
