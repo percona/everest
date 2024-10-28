@@ -40,6 +40,7 @@ import { dbEngineToDbType } from '@percona/utils';
 import { DB_CLUSTER_QUERY, useUpdateDbClusterResources } from 'hooks';
 import { DbType } from '@percona/types';
 import { isProxy } from 'utils/db';
+import { getProxyUnitNamesFromDbType } from 'components/cluster-form/resources/utils';
 
 export const ResourcesDetails = ({
   dbCluster,
@@ -57,6 +58,7 @@ export const ResourcesDetails = ({
   const disk = dbCluster.spec.engine.storage.size;
   const parsedDiskValues = memoryParser(disk.toString());
   const parsedMemoryValues = memoryParser(memory.toString());
+  const parsedProxyMemoryValues = memoryParser(proxyMemory.toString());
   const dbType = dbEngineToDbType(dbCluster.spec.engine.type);
   const replicas = dbCluster.spec.engine.replicas.toString();
   const proxies = isProxy(dbCluster.spec.proxy)
@@ -190,6 +192,27 @@ export const ResourcesDetails = ({
                 parsedDiskValues.value,
                 parseInt(replicas, 10),
                 parsedDiskValues.originalUnit
+              )}
+            />
+          </OverviewSection>
+          <OverviewSection
+            title={`${proxies} ${getProxyUnitNamesFromDbType(dbEngineToDbType(dbCluster.spec.engine.type))[+proxies > 1 ? 'plural' : 'singular']}`}
+            loading={loading}
+          >
+            <OverviewSectionRow
+              label={Messages.fields.cpu}
+              contentString={getTotalResourcesDetailedString(
+                cpuParser(proxyCpu.toString() || '0'),
+                parseInt(proxies, 10),
+                'CPU'
+              )}
+            />
+            <OverviewSectionRow
+              label={Messages.fields.memory}
+              contentString={getTotalResourcesDetailedString(
+                parsedProxyMemoryValues.value,
+                parseInt(proxies, 10),
+                parsedProxyMemoryValues.originalUnit
               )}
             />
           </OverviewSection>
