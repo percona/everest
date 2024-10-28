@@ -26,9 +26,13 @@ import { AdvancedConfigurationFormType } from 'components/cluster-form/advanced-
 export const AdvancedConfiguration = ({
   loading,
   externalAccess,
-  // parameters,
+  parameters,
 }: AdvancedConfigurationOverviewCardProps) => {
-  const { canUpdateDb, dbCluster } = useContext(DbClusterContext);
+  const {
+    canUpdateDb,
+    dbCluster,
+    queryResult: { refetch },
+  } = useContext(DbClusterContext);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [updating, setUpdating] = useState(false);
   const { mutate: updateDbClusterAdvancedConfiguration } =
@@ -55,21 +59,17 @@ export const AdvancedConfiguration = ({
         engineParameters: engineParameters,
       },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
+          await refetch();
           handleCloseModal();
+          setUpdating(false);
+        },
+        onError: () => {
           setUpdating(false);
         },
       }
     );
   };
-
-  // ?
-  // useEffect(() => {
-  //   if (updating && dbCluster?.status?.status !== DbClusterStatus.ready) {
-  //     handleCloseModal();
-  //     setUpdating(false);
-  //   }
-  // }, [updating, dbCluster?.status?.status]);
 
   return (
     <OverviewSection
@@ -94,13 +94,12 @@ export const AdvancedConfiguration = ({
           externalAccess ? Messages.fields.enabled : Messages.fields.disabled
         }
       />
-      {/*<OverviewSectionRow*/}
-      {/*  label={Messages.fields.parameters}*/}
-      {/*  contentString={*/}
-      {/*    parameters ? Messages.fields.enabled : Messages.fields.disabled*/}
-      {/*  }*/}
-      {/*/>*/}
-      {/*//TODO 1210 waits https://perconacorp.slack.com/archives/C0545J2BEJX/p1721309559055999*/}
+      <OverviewSectionRow
+        label={Messages.fields.parameters}
+        contentString={
+          parameters ? Messages.fields.enabled : Messages.fields.disabled
+        }
+      />
 
       {openEditModal && dbCluster && (
         <AdvancedConfigurationEditModal
