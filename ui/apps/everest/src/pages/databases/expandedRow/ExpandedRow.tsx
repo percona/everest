@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Box, Skeleton, Typography } from '@mui/material';
+import { Box, Divider, Skeleton, Typography } from '@mui/material';
 import { CopyToClipboardButton } from '@percona/ui-lib';
 import { HiddenPasswordToggle } from 'components/hidden-row';
 import { useDbClusterCredentials } from 'hooks/api/db-cluster/useCreateDbCluster';
@@ -168,6 +168,7 @@ export const ExpandedRow = ({
           label={Messages.expandedRow.disk}
           value={storageResourcesStr}
         />
+        <Divider sx={{ margin: '10px 0' }} />
         <LabelValue
           label={`Nº ${getProxyUnitNamesFromDbType(dbEngineToDbType(dbType)).plural}`}
           value={nodes}
@@ -180,6 +181,7 @@ export const ExpandedRow = ({
           label={Messages.expandedRow.memory}
           value={memoryProxyResourcesStr}
         />
+        <Divider sx={{ margin: '10px 0' }} />
         <LabelValue
           label={Messages.expandedRow.externalAccess}
           value={
