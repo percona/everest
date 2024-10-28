@@ -53,6 +53,7 @@ type KubernetesConnector interface {
 	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
 	// UpdateDeployment updates a deployment and returns the updated object.
 	UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error)
+	// DetectEnvironment detects Kubernetes environment.
 	DetectEnvironment(ctx context.Context) (*Environment, error)
 	// WaitForInstallPlan waits until an install plan for the given operator and version is available.
 	WaitForInstallPlan(ctx context.Context, namespace, operatorName string, version *goversion.Version) (*olmv1alpha1.InstallPlan, error)
