@@ -17,6 +17,7 @@
 package commands
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -24,6 +25,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/percona/everest/pkg/install"
+	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
 )
 
@@ -78,6 +80,12 @@ func initInstallFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(install.FlagOperatorMongoDB, true, "Install MongoDB operator")
 	cmd.Flags().Bool(install.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
 	cmd.Flags().Bool(install.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
+
+	cmd.Flags().Bool(install.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
+	cmd.Flags().String(install.FlagCatalogNamespace, kubernetes.OLMNamespace,
+		fmt.Sprintf("Namespace where Everest OLM catalog is installed. Implies --%s", install.FlagSkipEnvDetection),
+	)
+	cmd.Flags().Bool(install.FlagSkipOLM, false, fmt.Sprintf("Skip OLM installation. Implies --%s", install.FlagSkipEnvDetection))
 }
 
 func initInstallViperFlags(cmd *cobra.Command) {
@@ -93,6 +101,11 @@ func initInstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(install.FlagOperatorMongoDB, cmd.Flags().Lookup(install.FlagOperatorMongoDB))             //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagOperatorPostgresql, cmd.Flags().Lookup(install.FlagOperatorPostgresql))       //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagOperatorXtraDBCluster, cmd.Flags().Lookup(install.FlagOperatorXtraDBCluster)) //nolint:errcheck,gosec
-	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose"))                                                 //nolint:errcheck,gosec
-	viper.BindPFlag("json", cmd.Flags().Lookup("json"))                                                       //nolint:errcheck,gosec
+
+	viper.BindPFlag(install.FlagSkipEnvDetection, cmd.Flags().Lookup(install.FlagSkipEnvDetection)) //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagSkipOLM, cmd.Flags().Lookup(install.FlagSkipOLM))                   //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagCatalogNamespace, cmd.Flags().Lookup(install.FlagCatalogNamespace)) //nolint:errcheck,gosec
+
+	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose")) //nolint:errcheck,gosec
+	viper.BindPFlag("json", cmd.Flags().Lookup("json"))       //nolint:errcheck,gosec
 }

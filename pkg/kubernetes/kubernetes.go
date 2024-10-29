@@ -97,7 +97,7 @@ const (
 	APIVersionCoreosV1 = "operators.coreos.com/v1"
 
 	pollInterval = 5 * time.Second
-	pollTimeout  = 5 * time.Minute
+	pollTimeout  = 15 * time.Minute
 
 	deploymentRestartAnnotation = "kubectl.kubernetes.io/restartedAt"
 
@@ -393,7 +393,7 @@ func (k *Kubernetes) applyCSVs(ctx context.Context, resources []unstructured.Uns
 }
 
 // InstallPerconaCatalog installs percona catalog and ensures that packages are available.
-func (k *Kubernetes) InstallPerconaCatalog(ctx context.Context, version *goversion.Version) error {
+func (k *Kubernetes) InstallPerconaCatalog(ctx context.Context, version *goversion.Version, namespace string) error {
 	if version == nil {
 		return errors.New("no version provided for Percona catalog installation")
 	}
@@ -416,10 +416,10 @@ func (k *Kubernetes) InstallPerconaCatalog(ctx context.Context, version *goversi
 		return err
 	}
 
-	if err := k.client.ApplyFile(data); err != nil {
+	if err := k.client.ApplyManifestFile(data, namespace); err != nil {
 		return errors.Join(err, errors.New("cannot apply percona catalog file"))
 	}
-	if err := k.client.DoPackageWait(ctx, OLMNamespace, "everest-operator"); err != nil {
+	if err := k.client.DoPackageWait(ctx, namespace, "everest-operator"); err != nil {
 		return errors.Join(err, errors.New("timeout waiting for package"))
 	}
 	return nil
