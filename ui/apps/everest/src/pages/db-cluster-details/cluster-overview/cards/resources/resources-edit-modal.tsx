@@ -32,7 +32,7 @@ const ResourcesEditModal = ({
       <ResourcesForm
         dbType={dbType}
         pairProxiesWithNodes={false}
-        showSharding={false}
+        showSharding={dbType === DbType.Mongo}
         disableDiskInput
         allowDiskInputUpdate={false}
         hideProxies={dbType === DbType.Mongo && !shardingEnabled}
