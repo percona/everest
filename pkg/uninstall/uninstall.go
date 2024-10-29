@@ -122,15 +122,6 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 	}
 
 	if !u.config.SkipEnvDetection {
-		env, err := u.kubeClient.DetectEnvironment(ctx)
-		if err != nil {
-			return err
-		}
-		u.config.SkipOLM = env.SkipOLM
-		u.config.CatalogNamespace = env.CatalogNamespace
-	}
-
-	if !u.config.SkipEnvDetection {
 		u.l.Info("Detecting Kubernetes environment")
 		env, err := u.kubeClient.DetectEnvironment(ctx)
 		if err != nil {
