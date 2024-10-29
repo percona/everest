@@ -133,17 +133,31 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 		cli.l = zap.NewNop().Sugar()
 	}
 
-	k, err := kubernetes.New(cfg.KubeconfigPath, cli.l)
-	if err != nil {
-		var u *url.Error
-		if errors.As(err, &u) {
-			l.Error("Could not connect to Kubernetes. " +
-				"Make sure Kubernetes is running and is accessible from this computer/server.")
+	// If a KubeConfig is provided, we use it to create a client.
+	// Otherwise, we try to create an in-cluster client, since the upgrade CLI may be used to run
+	// pre-upgrade checks when using Helm (using a chart hook).
+	var kubeClient kubernetes.KubernetesConnector
+	if cfg.KubeconfigPath != "" {
+		k, err := kubernetes.New(cfg.KubeconfigPath, cli.l)
+		if err != nil {
+			var u *url.Error
+			if errors.As(err, &u) {
+				l.Error("Could not connect to Kubernetes. " +
+					"Make sure Kubernetes is running and is accessible from this computer/server.")
+			}
+			return nil, err
 		}
-		return nil, err
+		kubeClient = k
+	} else {
+		k, err := kubernetes.NewInCluster(cli.l)
+		if err != nil {
+			return nil, fmt.Errorf("could not create in-cluster kubernetes client: %w", err)
+		}
+		kubeClient = k
 	}
+
 	cli.dryRun = cfg.DryRun
-	cli.kubeClient = k
+	cli.kubeClient = kubeClient
 	cli.versionService = versionservice.New(cfg.VersionMetadataURL)
 	return cli, nil
 }
@@ -174,6 +188,10 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return err
 	}
 
+	if u.dryRun {
+		return nil
+	}
+
 	if !u.config.SkipEnvDetection {
 		// Catalog namespace or Skip OLM implies disabled environment detection.
 		if u.config.SkipOLM || u.config.CatalogNamespace != kubernetes.OLMNamespace {
@@ -191,10 +209,6 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		}
 		u.config.SkipOLM = env.SkipOLM
 		u.config.CatalogNamespace = env.CatalogNamespace
-	}
-
-	if u.dryRun {
-		return nil
 	}
 
 	upgradeSteps := []common.Step{}
