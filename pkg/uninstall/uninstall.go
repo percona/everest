@@ -213,8 +213,6 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 			},
 		})
 	} else {
-		// There are no resources with finalizers in the monitoring namespace, so
-		// we can delete it directly
 		uninstallSteps = append(uninstallSteps, common.Step{
 			Desc: "Delete Operator Lifecycle Manager",
 			F: func(ctx context.Context) error {
