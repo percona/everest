@@ -40,6 +40,8 @@ type KubeClientConnector interface {
 	ListBackupStorages(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.BackupStorageList, error)
 	// DeleteBackupStorage deletes the backupStorage.
 	DeleteBackupStorage(ctx context.Context, namespace, name string) error
+	// DeleteCatalogSource deletes a catalog source.
+	DeleteCatalogSource(ctx context.Context, namespace string, name string) error
 	// GetConfigMap returns config map by name and namespace.
 	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
 	// CreateConfigMap creates the provided ConfigMap.
