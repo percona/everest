@@ -65,6 +65,12 @@ const (
 	FlagVersion = "version"
 	// FlagSkipWizard represents the flag to skip the installation wizard.
 	FlagSkipWizard = "skip-wizard"
+	// FlagCatalogNamespace is the name of the catalog namespace flag.
+	FlagCatalogNamespace = "catalog-namespace"
+	// FlagSkipEnvDetection is the name of the skip env detection flag.
+	FlagSkipEnvDetection = "skip-env-detection"
+	// FlagSkipOLM is the name of the skip OLM flag.
+	FlagSkipOLM = "skip-olm"
 	// FlagDisableTelemetry disables telemetry.
 	FlagDisableTelemetry = "disable-telemetry"
 )
@@ -149,6 +155,10 @@ type (
 		// DisableTelemetry disables telemetry.
 		DisableTelemetry bool `mapstructure:"disable-telemetry"`
 
+		SkipEnvDetection bool   `mapstructure:"skip-env-detection"`
+		SkipOLM          bool   `mapstructure:"skip-olm"`
+		CatalogNamespace string `mapstructure:"catalog-namespace"`
+
 		Operator OperatorConfig
 
 		// If set, we will print the pretty output.
@@ -192,7 +202,7 @@ func NewInstall(c Config, l *zap.SugaredLogger, cmd *cobra.Command) (*Install, e
 }
 
 // Run runs the operators installation process.
-func (o *Install) Run(ctx context.Context) error {
+func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 	// TODO: we shall probably split this into "install" and "add namespaces"
 	// Otherwise the logic is hard to maintain - we need to make sure not to,
 	// for example, install a different version of operators per namespace, if
@@ -229,7 +239,21 @@ func (o *Install) Run(ctx context.Context) error {
 	o.l.Debugf("Everest latest version available: %s", latest)
 	o.l.Debugf("Everest version information %#v", latestMeta)
 
-	installSteps = append(installSteps, o.provisionOLM(latest)...)
+	if o.config.SkipEnvDetection {
+		o.l.Debug("Skipping Kubernetes environment detection")
+	} else {
+		if err := o.detectEnvironment(ctx); err != nil {
+			return fmt.Errorf("could not detect Kubernetes environment: %w", err)
+		}
+	}
+
+	if o.config.SkipOLM {
+		o.l.Debug("Skipping OLM installation")
+	} else {
+		installSteps = append(installSteps, o.provisionOLM()...)
+	}
+
+	installSteps = append(installSteps, o.installCatalog(latest)...)
 	installSteps = append(installSteps, o.provisionMonitoringStack()...)
 	installSteps = append(installSteps, o.provisionEverestComponents(latest, recVer)...)
 
@@ -281,6 +305,13 @@ func (o *Install) populateConfig() error {
 
 	if !(o.config.Operator.PG || o.config.Operator.PSMDB || o.config.Operator.PXC) {
 		return ErrNoOperatorsSelected
+	}
+
+	if !o.config.SkipEnvDetection {
+		if o.config.CatalogNamespace != kubernetes.OLMNamespace || o.config.SkipOLM {
+			// Catalog namespace or Skip OLM implies disabled environment detection.
+			o.config.SkipEnvDetection = true
+		}
 	}
 
 	return nil
@@ -365,7 +396,7 @@ func (o *Install) installVMOperator(ctx context.Context) error {
 		Name:                   vmOperatorName,
 		OperatorGroup:          monitoringOperatorGroup,
 		CatalogSource:          catalogSource,
-		CatalogSourceNamespace: kubernetes.OLMNamespace,
+		CatalogSourceNamespace: o.config.CatalogNamespace,
 		Channel:                vmOperatorChannel,
 		InstallPlanApproval:    v1alpha1.ApprovalManual,
 	}
@@ -669,7 +700,21 @@ func (o *Install) createNamespace(ctx context.Context, namespace string) error {
 	return nil
 }
 
-func (o *Install) provisionOLM(v *goversion.Version) []common.Step {
+func (o *Install) detectEnvironment(ctx context.Context) error {
+	o.l.Info("Detecting Kubernetes environment")
+	env, err := o.kubeClient.DetectEnvironment(ctx)
+	if err != nil {
+		return err
+	}
+
+	o.l.Infof("Detected %s Kubernetes environment", env.Env)
+	o.config.CatalogNamespace = env.CatalogNamespace
+	o.config.SkipOLM = env.SkipOLM
+
+	return nil
+}
+
+func (o *Install) provisionOLM() []common.Step {
 	result := []common.Step{}
 	result = append(result, common.Step{
 		Desc: "Install Operator Lifecycle Manager",
@@ -685,10 +730,15 @@ func (o *Install) provisionOLM(v *goversion.Version) []common.Step {
 		},
 	})
 
+	return result
+}
+
+func (o *Install) installCatalog(v *goversion.Version) []common.Step {
+	result := []common.Step{}
 	result = append(result, common.Step{
 		Desc: "Install Percona OLM Catalog",
 		F: func(ctx context.Context) error {
-			if err := o.kubeClient.InstallPerconaCatalog(ctx, v); err != nil {
+			if err := o.kubeClient.InstallPerconaCatalog(ctx, v, o.config.CatalogNamespace); err != nil {
 				o.l.Errorf("failed installing OLM catalog: %v", err)
 				return err
 			}
@@ -759,7 +809,7 @@ func (o *Install) installOperator(ctx context.Context, channel, operatorName, na
 			Name:                   operatorName,
 			OperatorGroup:          systemOperatorGroup,
 			CatalogSource:          catalogSource,
-			CatalogSourceNamespace: kubernetes.OLMNamespace,
+			CatalogSourceNamespace: o.config.CatalogNamespace,
 			Channel:                channel,
 			InstallPlanApproval:    v1alpha1.ApprovalManual,
 			StartingCSV:            startingCSV,
