@@ -45,16 +45,17 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
   const { watch, setValue } = useFormContext();
   const dbWizardMode = useDatabasePageMode();
   const {
-    defaultValues: { schedules: defaultDbSchedules, dbName },
+    defaultValues: { schedules: defaultDbSchedules },
   } = useDatabasePageDefaultValues(dbWizardMode);
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
   const [mode, setMode] = useState<'new' | 'edit'>('new');
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');
 
-  const [dbType, k8sNamespace, formSchedules] = watch([
+  const [dbType, k8sNamespace, formSchedules, dbName] = watch([
     DbWizardFormFields.dbType,
     DbWizardFormFields.k8sNamespace,
     DbWizardFormFields.schedules,
+    DbWizardFormFields.dbName,
   ]);
 
   const { canCreate, canRead } = useRBACPermissions(
