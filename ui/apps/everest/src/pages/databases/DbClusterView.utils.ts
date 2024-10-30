@@ -55,6 +55,9 @@ export const convertDbClusterPayloadToTableFormat = (
           memory: cluster.spec.engine.resources?.memory || '',
           storage: cluster.spec.engine.storage.size,
           nodes: cluster.spec.engine.replicas,
+          proxies: cluster.spec.proxy.replicas || 0,
+          proxyCpu: cluster.spec.proxy.resources?.cpu || '',
+          proxyMemory: cluster.spec.proxy.resources?.memory || '',
           hostName: cluster.status ? cluster.status.hostname : '',
           exposetype: isProxy(cluster.spec.proxy)
             ? cluster.spec.proxy.expose.type
