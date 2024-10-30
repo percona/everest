@@ -84,7 +84,7 @@ describe('DatabasePreview', () => {
     expect(screen.getByText('Version: 1.0.0')).toBeInTheDocument();
 
     expect(screen.getByText('Nº nodes: 1')).toBeInTheDocument();
-    expect(screen.getByText('CPU: 1.00 CPU')).toBeInTheDocument();
+    expect(screen.getAllByText('CPU: 1.00 CPU').length).toBeGreaterThan(1);
     expect(screen.getByText('Disk: 30.00 Gi')).toBeInTheDocument();
   });
 
