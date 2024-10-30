@@ -18,7 +18,10 @@ import { updateDbClusterFn } from 'api/dbClusterApi';
 import { DbCluster, Proxy } from 'shared-types/dbCluster.types';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import cronConverter from 'utils/cron-converter';
-import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
+import {
+  CUSTOM_NR_UNITS_INPUT_VALUE,
+  MIN_NUMBER_OF_SHARDS,
+} from 'components/cluster-form';
 import { getProxySpec } from './utils';
 import { DbType } from '@percona/types';
 import { DbEngineType } from 'shared-types/dbEngines.types';
@@ -241,6 +244,8 @@ export const useUpdateDbClusterResources = () =>
       dbCluster,
       newResources,
       sharding,
+      shardConfigServers,
+      shardNr,
     }: {
       dbCluster: DbCluster;
       newResources: {
@@ -253,7 +258,9 @@ export const useUpdateDbClusterResources = () =>
         proxyMemory: number;
         numberOfProxies: number;
       };
-      sharding: boolean;
+      sharding?: boolean;
+      shardConfigServers?: string;
+      shardNr?: string;
     }) =>
       updateDbClusterFn(dbCluster.metadata.name, dbCluster.metadata.namespace, {
         ...dbCluster,
@@ -282,6 +289,16 @@ export const useUpdateDbClusterResources = () =>
                     memory: `${newResources.proxyMemory}G`,
                   },
                 } as Proxy),
+          ...(dbCluster.spec.engine.type === DbEngineType.PSMDB &&
+            sharding && {
+              sharding: {
+                enabled: sharding,
+                shards: +(shardNr ?? MIN_NUMBER_OF_SHARDS),
+                configServer: {
+                  replicas: +(shardConfigServers ?? 3),
+                },
+              },
+            }),
         },
       }),
   });
