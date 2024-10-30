@@ -184,8 +184,6 @@ const numberOfResourcesValidator = (
 export const resourcesFormSchema = (passthrough?: boolean) => {
   const objectShape = {
     [DbWizardFormFields.shardNr]: z.string().optional(),
-    // solves the validation problem in a separate form
-    [DbWizardFormFields.sharding]: z.boolean().optional(),
     [DbWizardFormFields.shardConfigServers]: z.string().optional(),
     [DbWizardFormFields.cpu]: resourceToNumber(0.6),
     [DbWizardFormFields.memory]: resourceToNumber(0.512),
