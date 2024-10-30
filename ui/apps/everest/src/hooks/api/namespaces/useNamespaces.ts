@@ -20,6 +20,7 @@ import { dbEnginesQuerySelect } from '../db-engines/useDbEngines';
 import { getDbEnginesFn } from 'api/dbEngineApi';
 import { DbEngine } from 'shared-types/dbEngines.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
+import { DbEngineType } from '@percona/types';
 
 export const NAMESPACES_QUERY_KEY = 'namespace';
 
@@ -54,6 +55,26 @@ export const useDBEnginesForNamespaces = (retrieveUpgradingEngines = false) => {
     ...item,
   }));
   return results;
+};
+
+export const useAvailableDBEngineTypes = (): {availableDbEngineTypes: {type: DbEngineType, available: boolean}[],availableDbEngineTypesFetching: boolean } => {
+  const dbEnginesForNamespaces = useDBEnginesForNamespaces();
+  const dbEnginesFetching = dbEnginesForNamespaces.some(
+    (result) => result.isFetching
+  );
+
+  let availableDbEngineTypes;
+  const dbEngineTypes = (Object.keys(DbEngineType) as Array<keyof typeof DbEngineType>).map(type => DbEngineType[type]);
+
+  if (!dbEnginesFetching) {
+    availableDbEngineTypes = dbEngineTypes.map((type) => {
+      const findDb = dbEnginesForNamespaces.find((item) => item?.data?.find((dbEngine) => dbEngine?.type === type));
+      return {type: type, available: findDb ? true : false}; //available at least in one namespace
+    });
+  } else {
+    availableDbEngineTypes = dbEngineTypes.map((type) => ({type: type, available: false}));
+  }
+  return {availableDbEngineTypes, availableDbEngineTypesFetching: dbEnginesFetching};
 };
 
 export const useNamespace = (

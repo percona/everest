@@ -38,6 +38,7 @@ import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import DbActions from 'components/db-actions/db-actions';
 import DbActionsModals from 'components/db-actions/db-actions-modals';
+import CreateDbButton from './create-db-button/create-db-button';
 
 export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
@@ -205,17 +206,20 @@ export const DbClusterView = () => {
           })}
           renderTopToolbarCustomActions={() =>
             canCreate.length > 0 && (
-              <Button
-                size="small"
-                startIcon={<AddIcon />}
-                component={Link}
-                to="/databases/new"
-                variant="contained"
-                data-testid="add-db-cluster-button"
-                sx={{ display: 'flex' }}
-              >
-                {Messages.createDatabase}
-              </Button>
+              <>
+                <Button
+                  size="small"
+                  startIcon={<AddIcon />}
+                  component={Link}
+                  to="/databases/new"
+                  variant="contained"
+                  data-testid="add-db-cluster-button"
+                  sx={{ display: 'flex' }}
+                >
+                  {Messages.createDatabase}
+                </Button>
+                <CreateDbButton />
+              </>
             )
           }
           hideExpandAllIcon

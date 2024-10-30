@@ -61,26 +61,23 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     useKubernetesClusterInfo(['wizard-k8-info']);
   const dbType: DbType = watch(DbWizardFormFields.dbType);
   const dbVersion: DbType = watch(DbWizardFormFields.dbVersion);
-  const dbNamespace = watch(DbWizardFormFields.k8sNamespace);
+  // const dbNamespace = watch(DbWizardFormFields.k8sNamespace);
 
-  const dbEnginesForNamespaces = useDBEnginesForNamespaces();
-  const dbEnginesFetching = dbEnginesForNamespaces.some(
-    (result) => result.isFetching
-  );
+  // const dbEnginesForNamespaces = useDBEnginesForNamespaces();
 
-  const dbEngines = useMemo(
-    () =>
-      dbEnginesForNamespaces.find(
-        (result) => result.namespace === dbNamespace && result.isSuccess
-      )?.data || [],
-    [dbEnginesForNamespaces, dbNamespace]
-  );
+  // const dbEngines = useMemo(
+  //   () =>
+  //     dbEnginesForNamespaces.find(
+  //       (result) => result.namespace === dbNamespace && result.isSuccess
+  //     )?.data || [],
+  //   [dbEnginesForNamespaces, dbNamespace]
+  // );
 
   const dbEngine = useMemo(() => dbTypeToDbEngine(dbType), [dbType]);
 
-  const [dbEngineData, setDbEngineData] = useState(
-    dbEngines.find((engine) => engine.type === dbTypeToDbEngine(dbType))
-  );
+  // const [dbEngineData, setDbEngineData] = useState(
+  //   dbEngines.find((engine) => engine.type === dbTypeToDbEngine(dbType))
+  // );
 
   const notSupportedMongoOperatorVersionForSharding =
     dbType === DbType.Mongo &&
@@ -204,21 +201,21 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     });
   }, []);
 
-  const onDbTypeChange = useCallback(
-    (newDbType: DbType) => {
-      const { isDirty: isNameDirty } = getFieldState(DbWizardFormFields.dbName);
+  // const onDbTypeChange = useCallback(
+  //   (newDbType: DbType) => {
+  //     const { isDirty: isNameDirty } = getFieldState(DbWizardFormFields.dbName);
 
-      resetField(DbWizardFormFields.dbVersion);
+  //     resetField(DbWizardFormFields.dbVersion);
 
-      if (!isNameDirty) {
-        setRandomDbName(newDbType);
-      }
+  //     if (!isNameDirty) {
+  //       setRandomDbName(newDbType);
+  //     }
 
-      setDefaultsForDbType(newDbType);
-      updateDbVersions();
-    },
-    [getFieldState, resetField, setRandomDbName, updateDbVersions, setValue]
-  );
+  //     setDefaultsForDbType(newDbType);
+  //     updateDbVersions();
+  //   },
+  //   [getFieldState, resetField, setRandomDbName, updateDbVersions, setValue]
+  // );
 
   useEffect(() => {
     if (mode !== 'new' || dbEngines.length <= 0) {
@@ -323,35 +320,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           }}
         />
 
-        <LabeledContent label={Messages.labels.dbType}>
-          {dbEnginesFetching || !dbEngines.length ? (
-            // This is roughly the height of the buttons
-            <Skeleton height={57} variant="rectangular" />
-          ) : (
-            <ToggleButtonGroupInput
-              name={DbWizardFormFields.dbType}
-              toggleButtonGroupProps={{
-                sx: { mb: 2 },
-              }}
-            >
-              {dbEngines.map(({ type }) => (
-                <DbToggleCard
-                  key={type}
-                  value={dbEngineToDbType(type)}
-                  disabled={
-                    (mode === 'edit' || mode === 'restoreFromBackup') &&
-                    dbType !== dbEngineToDbType(type)
-                  }
-                  onClick={() => {
-                    if (dbEngineToDbType(type) !== dbType) {
-                      onDbTypeChange(dbEngineToDbType(type));
-                    }
-                  }}
-                />
-              ))}
-            </ToggleButtonGroupInput>
-          )}
-        </LabeledContent>
         <TextInput
           name={DbWizardFormFields.dbName}
           label={Messages.labels.dbName}
