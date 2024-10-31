@@ -293,13 +293,6 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
               path: [DbWizardFormFields.shardNr],
             });
           }
-          if (+intNrNodes > 1 && intShardNr < 2) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: Messages.sharding.minForNodes,
-              path: [DbWizardFormFields.shardNr],
-            });
-          }
         }
 
         if (

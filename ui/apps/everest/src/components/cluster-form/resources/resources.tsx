@@ -490,11 +490,11 @@ const ResourcesForm = ({
   }, [setValue, getFieldState, customNrOfNodes, dbType, numberOfNodes]);
 
   useEffect(() => {
-    const { isDirty: isConfigServersDirty } = getFieldState(
+    const { isTouched: isConfigServersTouched } = getFieldState(
       DbWizardFormFields.shardConfigServers
     );
 
-    if (!isConfigServersDirty) {
+    if (!isConfigServersTouched) {
       if (numberOfNodes && numberOfNodes !== CUSTOM_NR_UNITS_INPUT_VALUE) {
         setValue(
           DbWizardFormFields.shardConfigServers,
