@@ -428,10 +428,6 @@ jobs:
             type=raw,value=latest
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
 
-      - name: CLI - build binaries
-        run: |
-          make release-cli
-
       - name: Everest - build Everest image
         uses: docker/build-push-action@v6
         with:
@@ -460,6 +456,10 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.everest_meta.outputs.tags }}
+
+      - name: CLI - build binaries
+        run: |
+          make release-cli
 
       - name: CLI - create release with binaries
         uses: softprops/action-gh-release@v2
