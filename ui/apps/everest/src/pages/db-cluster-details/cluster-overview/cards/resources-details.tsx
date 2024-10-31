@@ -84,6 +84,8 @@ export const ResourcesDetails = ({
     numberOfProxies,
     customNrOfNodes,
     customNrOfProxies,
+    shardConfigServers,
+    shardNr,
   }) => {
     updateDbClusterResources(
       {
@@ -108,7 +110,9 @@ export const ResourcesDetails = ({
             10
           ),
         },
-        sharding: !!sharding?.enabled,
+        sharding: sharding?.enabled,
+        shardConfigServers,
+        shardNr,
       },
       {
         onSuccess: () => {
@@ -231,6 +235,11 @@ export const ResourcesDetails = ({
             memory: memoryParser(memory.toString(), 'G').value,
             proxyCpu: cpuParser(proxyCpu.toString() || '0'),
             proxyMemory: memoryParser(proxyMemory.toString(), 'G').value,
+            sharding: !!sharding?.enabled,
+            ...(!!sharding?.enabled && {
+              shardConfigServers: sharding?.configServer?.replicas.toString(),
+              shardNr: sharding?.shards.toString(),
+            }),
             numberOfNodes,
             numberOfProxies,
             customNrOfNodes: replicas,
