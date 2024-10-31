@@ -1,7 +1,24 @@
 import { DbType } from '@percona/types';
 import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
-import { Proxy, ProxyExposeType } from 'shared-types/dbCluster.types';
+import {
+  Proxy,
+  ProxyExposeConfig,
+  ProxyExposeType,
+} from 'shared-types/dbCluster.types';
 import { dbTypeToProxyType } from 'utils/db';
+
+const getExposteConfig = (
+  externalAccess: boolean,
+  sourceRanges?: Array<{ sourceRange?: string }>
+): ProxyExposeConfig => ({
+  type: externalAccess ? ProxyExposeType.external : ProxyExposeType.internal,
+  ...(!!externalAccess &&
+    sourceRanges && {
+      ipSourceRanges: sourceRanges.flatMap((source) =>
+        source.sourceRange ? [source.sourceRange] : []
+      ),
+    }),
+});
 
 export const getProxySpec = (
   dbType: DbType,
@@ -12,12 +29,11 @@ export const getProxySpec = (
   memory: number,
   sharding: boolean,
   sourceRanges?: Array<{ sourceRange?: string }>
-): Proxy | Record<string, never> => {
-  console.log('dbType', dbType);
-  console.log('sharding', sharding);
+): Proxy | ProxyExposeConfig => {
   if (dbType === DbType.Mongo && !sharding) {
-    console.log('returning empty object');
-    return {};
+    return {
+      expose: getExposteConfig(externalAccess, sourceRanges),
+    } as unknown as ProxyExposeConfig;
   }
   const proxyNr = parseInt(
     numberOfProxies === CUSTOM_NR_UNITS_INPUT_VALUE
@@ -35,16 +51,6 @@ export const getProxySpec = (
       cpu: `${cpu}`,
       memory: `${memory}G`,
     },
-    expose: {
-      type: externalAccess
-        ? ProxyExposeType.external
-        : ProxyExposeType.internal,
-      ...(!!externalAccess &&
-        sourceRanges && {
-          ipSourceRanges: sourceRanges.flatMap((source) =>
-            source.sourceRange ? [source.sourceRange] : []
-          ),
-        }),
-    },
+    expose: getExposteConfig(externalAccess, sourceRanges),
   };
 };

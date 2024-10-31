@@ -70,12 +70,14 @@ interface Engine {
   config?: string;
 }
 
+export interface ProxyExposeConfig {
+  type: ProxyExposeType;
+  ipSourceRanges?: string[];
+}
+
 export interface Proxy {
   replicas?: number;
-  expose: {
-    type: ProxyExposeType;
-    ipSourceRanges?: string[];
-  };
+  expose: ProxyExposeConfig;
   resources?: Resources;
   type: ProxyType;
 }
@@ -106,7 +108,7 @@ export interface Spec {
   allowUnsafeConfiguration?: boolean;
   backup?: Backup;
   engine: Engine;
-  proxy: Proxy | Record<string, never>;
+  proxy: Proxy | ProxyExposeConfig;
   paused?: boolean;
   dataSource?: DataSource;
   monitoring: Monitoring;

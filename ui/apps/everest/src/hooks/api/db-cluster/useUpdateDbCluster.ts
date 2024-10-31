@@ -25,6 +25,7 @@ import {
 import { getProxySpec } from './utils';
 import { DbType } from '@percona/types';
 import { DbEngineType } from 'shared-types/dbEngines.types';
+import { dbEngineToDbType } from '@percona/utils';
 
 type UpdateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -99,35 +100,19 @@ const formValuesToPayloadOverrides = (
           monitoringConfigName: dbPayload?.monitoringInstance!,
         }),
       },
-      proxy:
-        dbPayload.dbType === DbType.Mongo && !dbPayload.sharding
-          ? {}
-          : {
-              ...dbCluster.spec.proxy,
-              ...getProxySpec(
-                dbPayload.dbType,
-                dbPayload.numberOfProxies,
-                dbPayload.customNrOfProxies || '',
-                dbPayload.externalAccess,
-                dbPayload.proxyCpu,
-                dbPayload.proxyMemory,
-                dbPayload.sharding,
-                dbPayload.sourceRanges || []
-              ),
-              // replicas: numberOfNodes,
-              // expose: {
-              //   ...dbCluster.spec.proxy.expose,
-              //   type: dbPayload.externalAccess
-              //     ? ProxyExposeType.external
-              //     : ProxyExposeType.internal,
-              //   ...(!!dbPayload.externalAccess &&
-              //     dbPayload.sourceRanges && {
-              //       ipSourceRanges: dbPayload.sourceRanges.flatMap((source) =>
-              //         source.sourceRange ? [source.sourceRange] : []
-              //       ),
-              //     }),
-              // },
-            },
+      proxy: {
+        ...dbCluster.spec.proxy,
+        ...getProxySpec(
+          dbPayload.dbType,
+          dbPayload.numberOfProxies,
+          dbPayload.customNrOfProxies || '',
+          dbPayload.externalAccess,
+          dbPayload.proxyCpu,
+          dbPayload.proxyMemory,
+          dbPayload.sharding,
+          dbPayload.sourceRanges || []
+        ),
+      },
       ...(dbPayload.dbType === DbType.Mongo && {
         sharding: {
           enabled: dbPayload.sharding,
@@ -278,17 +263,18 @@ export const useUpdateDbClusterResources = () =>
               size: `${newResources.disk}${newResources.diskUnit}`,
             },
           },
-          proxy:
-            dbCluster.spec.engine.type === DbEngineType.PSMDB && !sharding
-              ? {}
-              : ({
-                  ...dbCluster.spec.proxy,
-                  replicas: newResources.numberOfProxies,
-                  resources: {
-                    cpu: `${newResources.proxyCpu}`,
-                    memory: `${newResources.proxyMemory}G`,
-                  },
-                } as Proxy),
+          proxy: getProxySpec(
+            dbEngineToDbType(dbCluster.spec.engine.type),
+            newResources.numberOfProxies.toString(),
+            '',
+            (dbCluster.spec.proxy as Proxy).expose.type === 'external',
+            newResources.proxyCpu,
+            newResources.proxyMemory,
+            !!sharding,
+            ((dbCluster.spec.proxy as Proxy).expose.ipSourceRanges || []).map(
+              (sourceRange) => ({ sourceRange })
+            )
+          ),
           ...(dbCluster.spec.engine.type === DbEngineType.PSMDB &&
             sharding && {
               sharding: {
