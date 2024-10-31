@@ -142,7 +142,8 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 			return nil, fmt.Errorf("could not create in-cluster kubernetes client: %w", err)
 		}
 		kubeClient = k
-	} else {
+	}
+	if cfg.KubeconfigPath != "" {
 		k, err := kubernetes.New(cfg.KubeconfigPath, cli.l)
 		if err != nil {
 			var u *url.Error
@@ -153,6 +154,9 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 			return nil, err
 		}
 		kubeClient = k
+	}
+	if kubeClient == nil {
+		return nil, errors.New("must provide kubeconfig path or run in-cluster")
 	}
 
 	cli.dryRun = cfg.DryRun
