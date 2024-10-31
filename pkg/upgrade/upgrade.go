@@ -92,6 +92,8 @@ type (
 	Config struct {
 		// KubeconfigPath is a path to a kubeconfig
 		KubeconfigPath string `mapstructure:"kubeconfig"`
+		// InCluster is set if the upgrade process should use in-cluster configuration.
+		InCluster bool `mapstructure:"in-cluster"`
 		// VersionMetadataURL stores hostname to retrieve version metadata information from.
 		VersionMetadataURL string `mapstructure:"version-metadata-url"`
 		// DryRun is set if the upgrade process should only perform pre-upgrade checks and not perform the actual upgrade.
@@ -133,11 +135,14 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 		cli.l = zap.NewNop().Sugar()
 	}
 
-	// If a KubeConfig is provided, we use it to create a client.
-	// Otherwise, we try to create an in-cluster client, since the upgrade CLI may be used to run
-	// pre-upgrade checks when using Helm (using a chart hook).
 	var kubeClient kubernetes.KubernetesConnector
-	if cfg.KubeconfigPath != "" {
+	if cfg.InCluster {
+		k, err := kubernetes.NewInCluster(cli.l)
+		if err != nil {
+			return nil, fmt.Errorf("could not create in-cluster kubernetes client: %w", err)
+		}
+		kubeClient = k
+	} else {
 		k, err := kubernetes.New(cfg.KubeconfigPath, cli.l)
 		if err != nil {
 			var u *url.Error
@@ -146,12 +151,6 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 					"Make sure Kubernetes is running and is accessible from this computer/server.")
 			}
 			return nil, err
-		}
-		kubeClient = k
-	} else {
-		k, err := kubernetes.NewInCluster(cli.l)
-		if err != nil {
-			return nil, fmt.Errorf("could not create in-cluster kubernetes client: %w", err)
 		}
 		kubeClient = k
 	}
