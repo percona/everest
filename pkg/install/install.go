@@ -1,4 +1,4 @@
-// everes
+// everest
 // Copyright (C) 2023 Percona LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -81,8 +81,9 @@ const (
 	// FlagChartDir is the directory where the Helm chart is stored.
 	FlagChartDir = "chart-dir"
 	// FlagReporitory is the URL of the Helm repository.
-	FlagRepository = "repository"
-	FlagHelmSet    = "helm-set"
+	FlagRepository      = "repository"
+	FlagHelmSet         = "helm-set"
+	FlagHelmValuesFiles = "helm-values"
 
 	// everestDBNamespaceSubChartPath is the path to the everest-db-namespace subchart relative to the main chart.
 	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
@@ -142,15 +143,13 @@ type (
 		Version string `mapstructure:"version"`
 		// DisableTelemetry disables telemetry.
 		DisableTelemetry bool `mapstructure:"disable-telemetry"`
-
-		SkipEnvDetection bool   `mapstructure:"skip-env-detection"`
-		SkipOLM          bool   `mapstructure:"skip-olm"`
-		CatalogNamespace string `mapstructure:"catalog-namespace"`
-
+		// SkipEnvDetection skips detecting the Kubernetes environment.
+		SkipEnvDetection bool `mapstructure:"skip-env-detection"`
+		// Operator installation configuration.
 		Operator OperatorConfig
-
 		// If set, we will print the pretty output.
 		Pretty bool
+
 		common.HelmOpts
 	}
 
@@ -282,7 +281,7 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) common.Step
 				Directory:        chartDir,
 				Version:          ver,
 				URL:              o.config.RepoURL,
-				Name:             common.EverestDBNamespaceHelmChart,
+				Name:             helm.EverestDBNamespaceChartName,
 				ReleaseName:      namespace,
 				ReleaseNamespace: namespace,
 			})
@@ -379,7 +378,7 @@ func (o *Install) installEverestHelmChart(ver string) common.Step {
 				Directory:        o.config.ChartDir,
 				Version:          ver,
 				URL:              o.config.RepoURL,
-				Name:             common.EverestHelmChart,
+				Name:             helm.EverestChartName,
 				ReleaseName:      common.SystemNamespace,
 				ReleaseNamespace: common.SystemNamespace,
 			})
@@ -452,13 +451,6 @@ func (o *Install) populateConfig() error {
 
 	if !(o.config.Operator.PG || o.config.Operator.PSMDB || o.config.Operator.PXC) {
 		return ErrNoOperatorsSelected
-	}
-
-	if !o.config.SkipEnvDetection {
-		if o.config.CatalogNamespace != kubernetes.OLMNamespace || o.config.SkipOLM {
-			// Catalog namespace or Skip OLM implies disabled environment detection.
-			o.config.SkipEnvDetection = true
-		}
 	}
 
 	return nil

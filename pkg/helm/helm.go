@@ -20,6 +20,15 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
+// Everest Helm chart names.
+const (
+	EverestChartName            = "everest"
+	EverestDBNamespaceChartName = "everest-db-namespace"
+)
+
+// DefaultHelmRepoURL is the default Helm repository URL to download the Everest charts.
+const DefaultHelmRepoURL = "https://percona.github.io/percona-helm-charts/"
+
 // ChartOptions are the options for the Helm chart.
 type ChartOptions struct {
 	// FS is the filesystem to load the Helm chart from.
