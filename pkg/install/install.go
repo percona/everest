@@ -99,6 +99,7 @@ type Install struct {
 	cmd            *cobra.Command
 	kubeClient     *kubernetes.Kubernetes
 	versionService versionservice.Interface
+	helmValues     map[string]interface{}
 }
 
 const operatorInstallThreads = 1
@@ -391,13 +392,29 @@ func (o *Install) installEverestHelmChart(ver string) common.Step {
 				return err
 			}
 
+			if err := o.applyCloudProviderSettings(ctx); err != nil {
+				return err
+			}
+
 			return d.Install(ctx, helm.InstallOptions{
 				CreateNamespace: !nsExists,
 				DisableHooks:    true,
-				Values:          nil,
+				Values:          o.helmValues,
 			})
 		},
 	}
+}
+
+func (o *Install) applyCloudProviderSettings(ctx context.Context) error {
+	env, err := o.kubeClient.DetectEnvironment(ctx)
+	if err != nil {
+		return fmt.Errorf("could not detect environment: %w", err)
+	}
+	switch env.Env {
+	case kubernetes.EnvOpenShift:
+		o.helmValues["compatibility.openshift"] = true
+	}
+	return nil
 }
 
 func (o *Install) populateConfig() error {

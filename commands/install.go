@@ -17,7 +17,6 @@
 package commands
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -26,7 +25,6 @@ import (
 
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/install"
-	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
 )
 
@@ -77,6 +75,7 @@ func initInstallFlags(cmd *cobra.Command) {
 	cmd.Flags().String(install.FlagVersion, "", "Everest version to install. By default the latest version is installed")
 	cmd.Flags().Bool(install.FlagDisableTelemetry, false, "Disable telemetry")
 	cmd.Flags().MarkHidden(install.FlagDisableTelemetry) //nolint:errcheck,gosec
+	cmd.Flags().Bool(install.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
 	cmd.Flags().String(install.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
 	cmd.Flags().String(install.FlagReporitory, common.PerconaHelmRepoURL, "Helm chart repository to download the Everest charts from")
 
@@ -84,11 +83,6 @@ func initInstallFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(install.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
 	cmd.Flags().Bool(install.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
 
-	cmd.Flags().Bool(install.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
-	cmd.Flags().String(install.FlagCatalogNamespace, kubernetes.OLMNamespace,
-		fmt.Sprintf("Namespace where Everest OLM catalog is installed. Implies --%s", install.FlagSkipEnvDetection),
-	)
-	cmd.Flags().Bool(install.FlagSkipOLM, false, fmt.Sprintf("Skip OLM installation. Implies --%s", install.FlagSkipEnvDetection))
 }
 
 func initInstallViperFlags(cmd *cobra.Command) {
@@ -100,16 +94,13 @@ func initInstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(install.FlagVersionMetadataURL, cmd.Flags().Lookup(install.FlagVersionMetadataURL)) //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagVersion, cmd.Flags().Lookup(install.FlagVersion))                       //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagDisableTelemetry, cmd.Flags().Lookup(install.FlagDisableTelemetry))     //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagSkipEnvDetection, cmd.Flags().Lookup(install.FlagSkipEnvDetection))     //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagChartDir, cmd.Flags().Lookup(install.FlagChartDir))                     //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagReporitory, cmd.Flags().Lookup(install.FlagReporitory))                 //nolint:errcheck,gosec
 
 	viper.BindPFlag(install.FlagOperatorMongoDB, cmd.Flags().Lookup(install.FlagOperatorMongoDB))             //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagOperatorPostgresql, cmd.Flags().Lookup(install.FlagOperatorPostgresql))       //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagOperatorXtraDBCluster, cmd.Flags().Lookup(install.FlagOperatorXtraDBCluster)) //nolint:errcheck,gosec
-
-	viper.BindPFlag(install.FlagSkipEnvDetection, cmd.Flags().Lookup(install.FlagSkipEnvDetection)) //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagSkipOLM, cmd.Flags().Lookup(install.FlagSkipOLM))                   //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagCatalogNamespace, cmd.Flags().Lookup(install.FlagCatalogNamespace)) //nolint:errcheck,gosec
 
 	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose")) //nolint:errcheck,gosec
 	viper.BindPFlag("json", cmd.Flags().Lookup("json"))       //nolint:errcheck,gosec
