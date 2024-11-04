@@ -77,11 +77,11 @@ const (
 	FlagDisableTelemetry = "disable-telemetry"
 	// FlagChartDir is the directory where the Helm chart is stored.
 	FlagChartDir = "chart-dir"
+	// FlagReporitory is the URL of the Helm repository.
+	FlagReporitory = "repository"
 
 	// everestDBNamespaceSubChartPath is the path to the everest-db-namespace subchart relative to the main chart.
 	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
-	// Name of the default Everest chart release.
-	EverestChartReleaseName = "everest-core"
 
 	pollInterval = 5 * time.Second
 	pollTimeout  = 10 * time.Minute
@@ -140,6 +140,8 @@ type (
 		DisableTelemetry bool `mapstructure:"disable-telemetry"`
 		// ChartDir is the directory where the Helm chart is stored.
 		ChartDir string `mapstructure:"chart-dir"`
+		// RepoURL is the URL of the Helm repository.
+		RepoURL string `mapstructure:"repository"`
 
 		SkipEnvDetection bool   `mapstructure:"skip-env-detection"`
 		SkipOLM          bool   `mapstructure:"skip-olm"`
@@ -278,7 +280,7 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) common.Step
 			d, err := helm.New(helm.ChartOptions{
 				Directory:        chartDir,
 				Version:          ver,
-				URL:              common.PerconaHelmRepoURL,
+				URL:              o.config.RepoURL,
 				Name:             common.EverestDBNamespaceHelmChart,
 				ReleaseName:      namespace,
 				ReleaseNamespace: namespace,
@@ -375,9 +377,9 @@ func (o *Install) installEverestHelmChart(ver string) common.Step {
 			d, err := helm.New(helm.ChartOptions{
 				Directory:        o.config.ChartDir,
 				Version:          ver,
-				URL:              common.PerconaHelmRepoURL,
+				URL:              o.config.RepoURL,
 				Name:             common.EverestHelmChart,
-				ReleaseName:      EverestChartReleaseName,
+				ReleaseName:      common.SystemNamespace,
 				ReleaseNamespace: common.SystemNamespace,
 			})
 			if err != nil {
