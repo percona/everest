@@ -40,8 +40,7 @@ type ChartOptions struct {
 	ReleaseNamespace string
 }
 
-// Driver is a wrapper around the Helm package, which provides a
-// simplified interface for managing Helm charts.
+// Driver provides a simple interface for managing Everest Helm charts.
 type Driver struct {
 	chart                         *chart.Chart
 	actionsCfg                    *action.Configuration
