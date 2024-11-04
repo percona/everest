@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { APIRequestContext, expect } from '@playwright/test';
-import { dbTypeToDbEngine } from '@percona/utils';
+import { dbTypeToDbEngine, dbTypeToProxyType } from '@percona/utils';
 import { getEnginesVersions } from './database-engines';
 import { getClusterDetailedInfo } from './storage-class';
 import { getTokenFromLocalStorage } from './localStorage';
@@ -93,7 +93,12 @@ export const createDbClusterFn = async (
         // }),
       },
       proxy: {
-        replicas: +(customOptions?.numberOfNodes || 1),
+        type: dbTypeToProxyType(dbType),
+        replicas: +(customOptions?.numberOfProxies || 1),
+        resources: {
+          cpu: `${customOptions?.proxyCpu || 1}`,
+          memory: `${customOptions?.proxyMemory || 1}G`,
+        },
         expose: {
           type: customOptions?.externalAccess ? 'external' : 'internal',
           ...(!!customOptions?.externalAccess &&

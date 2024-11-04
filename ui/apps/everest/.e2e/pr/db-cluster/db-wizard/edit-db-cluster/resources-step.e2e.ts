@@ -27,6 +27,10 @@ test.describe('DB Cluster Editing Resources Step (Mongo)', () => {
       dbName: mongoDBName,
       dbType: DbType.Mongo,
       numberOfNodes: '5',
+      cpu: 1,
+      memory: 4,
+      proxyCpu: 2,
+      proxyMemory: 4,
     });
   });
 
@@ -48,6 +52,13 @@ test.describe('DB Cluster Editing Resources Step (Mongo)', () => {
     await moveForward(page);
 
     await expect(page.getByTestId('toggle-button-nodes-5')).toBeVisible();
+    await expect(
+      page.getByTestId('node-resources-toggle-button-small')
+    ).toHaveAttribute('aria-pressed', 'true');
+    await page.getByTestId('proxies-accordion').click();
+    await expect(
+      page.getByTestId('router-resources-toggle-button-medium')
+    ).toHaveAttribute('aria-pressed', 'true');
     const a = page
       .getByRole('button', { pressed: true })
       .filter({ hasText: '5 nodes' });
