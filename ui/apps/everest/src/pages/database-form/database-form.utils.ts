@@ -29,6 +29,8 @@ import {
   getDefaultNumberOfconfigServersByNumberOfNodes,
   matchFieldsValueToResourceSize,
   NODES_DB_TYPE_MAP,
+  NODES_DEFAULT_SIZES,
+  PROXIES_DEFAULT_SIZES,
 } from 'components/cluster-form';
 
 const replicasToNodes = (replicas: string, dbType: DbType): string => {
@@ -99,11 +101,11 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.customNrOfNodes]: replicas,
     [DbWizardFormFields.customNrOfProxies]: proxies,
     [DbWizardFormFields.resourceSizePerNode]: matchFieldsValueToResourceSize(
-      dbEngineToDbType(dbCluster?.spec?.engine?.type),
+      NODES_DEFAULT_SIZES[dbEngineToDbType(dbCluster?.spec?.engine?.type)],
       dbCluster?.spec?.engine?.resources
     ),
     [DbWizardFormFields.resourceSizePerProxy]: matchFieldsValueToResourceSize(
-      dbEngineToDbType(dbCluster?.spec?.engine?.type),
+      PROXIES_DEFAULT_SIZES[dbEngineToDbType(dbCluster?.spec?.engine?.type)],
       dbCluster?.spec?.proxy.resources
     ),
     [DbWizardFormFields.sharding]: dbCluster?.spec?.sharding?.enabled || false,

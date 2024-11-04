@@ -15,7 +15,10 @@ const resourceToNumber = (minimum = 0) =>
   );
 
 export const matchFieldsValueToResourceSize = (
-  dbType: DbType,
+  sizes: Record<
+    Exclude<ResourceSize, ResourceSize.custom>,
+    Record<'cpu' | 'memory', number>
+  >,
   resources?: Resources
 ): ResourceSize => {
   if (!resources) {
@@ -23,11 +26,11 @@ export const matchFieldsValueToResourceSize = (
   }
   const memory = memoryParser(resources.memory.toString());
 
-  const res = Object.values(NODES_DEFAULT_SIZES[dbType]).findIndex(
+  const res = Object.values(sizes).findIndex(
     (item) => item.cpu === Number(resources.cpu) && item.memory === memory.value
   );
   return res !== -1
-    ? (Object.keys(NODES_DEFAULT_SIZES[dbType])[res] as ResourceSize)
+    ? (Object.keys(sizes)[res] as ResourceSize)
     : ResourceSize.custom;
 };
 

@@ -24,6 +24,8 @@ import {
   CUSTOM_NR_UNITS_INPUT_VALUE,
   matchFieldsValueToResourceSize,
   NODES_DB_TYPE_MAP,
+  NODES_DEFAULT_SIZES,
+  PROXIES_DEFAULT_SIZES,
   resourcesFormSchema,
 } from 'components/cluster-form';
 import OverviewSection from '../overview-section';
@@ -245,11 +247,11 @@ export const ResourcesDetails = ({
             customNrOfNodes: replicas,
             customNrOfProxies: proxies,
             resourceSizePerNode: matchFieldsValueToResourceSize(
-              dbType,
+              NODES_DEFAULT_SIZES[dbType],
               dbCluster.spec.engine.resources
             ),
             resourceSizePerProxy: matchFieldsValueToResourceSize(
-              dbType,
+              PROXIES_DEFAULT_SIZES[dbType],
               isProxy(dbCluster.spec.proxy)
                 ? dbCluster.spec.proxy.resources
                 : undefined
