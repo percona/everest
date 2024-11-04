@@ -52,7 +52,7 @@ export const ExpandedRow = ({
     port,
     raw,
   } = row.original;
-  console.log('row.original', row.original);
+
   const parsedDiskValues = memoryParser(storage.toString());
   const parsedMemoryValues = memoryParser(memory.toString());
   const parsedProxyMemoryValues = memoryParser(proxyMemory.toString());
