@@ -81,9 +81,11 @@ const (
 	FlagDisableTelemetry = "disable-telemetry"
 	// FlagChartDir is the directory where the Helm chart is stored.
 	FlagChartDir = "chart-dir"
-	// FlagReporitory is the URL of the Helm repository.
-	FlagRepository      = "repository"
-	FlagHelmSet         = "helm-set"
+	// FlagRepository is the URL of the Helm repository.
+	FlagRepository = "repository"
+	// FlagHelmSet is the name of the helm-set flag.
+	FlagHelmSet = "helm-set"
+	// FlagHelmValuesFiles is the name of the helm-values flag.
 	FlagHelmValuesFiles = "helm-values"
 
 	// everestDBNamespaceSubChartPath is the path to the everest-db-namespace subchart relative to the main chart.
@@ -151,7 +153,7 @@ type (
 		// If set, we will print the pretty output.
 		Pretty bool
 
-		common.HelmOpts
+		helm.CLIOptions
 	}
 
 	// OperatorConfig identifies which operators shall be installed.
@@ -191,7 +193,7 @@ func NewInstall(c Config, l *zap.SugaredLogger, cmd *cobra.Command) (*Install, e
 }
 
 // Run runs the operators installation process.
-func (o *Install) Run(ctx context.Context) error { //nolint:funlen
+func (o *Install) Run(ctx context.Context) error {
 	// TODO: we shall probably split this into "install" and "add namespaces"
 	// Otherwise the logic is hard to maintain - we need to make sure not to,
 	// for example, install a different version of operators per namespace, if
@@ -250,7 +252,7 @@ func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 }
 
 func (o *Install) getDBNamespaceChartValues() map[string]interface{} {
-	vals := map[string]interface{}{}
+	vals := make(map[string]interface{})
 	if !o.config.Operator.PXC {
 		vals["pxc"] = false
 	}
@@ -407,16 +409,15 @@ func (o *Install) installEverestHelmChart(ver string) common.Step {
 }
 
 func (o *Install) getHelmValues(ctx context.Context) (map[string]interface{}, error) {
-	generatedVals := map[string]interface{}{}
+	generatedVals := make(map[string]interface{})
 
-	// Autofill some values based on the environment.
+	// Detect environment and autofill values.
 	if !o.config.SkipEnvDetection {
 		env, err := o.kubeClient.DetectEnvironment(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("could not detect environment: %w", err)
 		}
-		switch env.Env {
-		case kubernetes.EnvOpenShift:
+		if env.Env == kubernetes.EnvOpenShift {
 			generatedVals["compatibility.openshift"] = true
 		}
 	}
@@ -498,20 +499,6 @@ func (o *Install) latestVersion(meta *versionpb.MetadataResponse) (*goversion.Ve
 	}
 
 	return latest, latestMeta, nil
-}
-
-func (o *Install) operatorNamesListShortHand() string {
-	operators := []string{}
-	if o.config.Operator.PXC {
-		operators = append(operators, "pxc")
-	}
-	if o.config.Operator.PSMDB {
-		operators = append(operators, "psmdb")
-	}
-	if o.config.Operator.PG {
-		operators = append(operators, "pg")
-	}
-	return strings.Join(operators, ", ")
 }
 
 // runWizard runs installation wizard.

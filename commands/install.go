@@ -113,8 +113,8 @@ func initInstallViperFlags(cmd *cobra.Command) {
 
 func bindHelmValues(cfg *install.Config) {
 	setValues := viper.GetStringSlice(install.FlagHelmSet)
-	cfg.HelmOpts.Values.Values = setValues
+	cfg.CLIOptions.Values.Values = setValues
 
 	valuesFiles := viper.GetStringSlice(install.FlagHelmValuesFiles)
-	cfg.HelmOpts.Values.ValueFiles = valuesFiles
+	cfg.CLIOptions.Values.ValueFiles = valuesFiles
 }

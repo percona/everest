@@ -1,25 +1,51 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Package install holds the main logic for installation commands.
+
+// Package helm ...
 package helm
 
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	"helm.sh/helm/pkg/ignore"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	helmcli "helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 
 	"github.com/percona/everest/pkg/common"
 )
+
+// CLIOptions contains common options for the CLI.
+type CLIOptions struct {
+	ChartDir          string
+	RepoURL           string
+	Values            values.Options
+	DBNamespaceValues values.Options
+}
 
 // Everest Helm chart names.
 const (
@@ -104,10 +130,11 @@ func (d *Driver) Install(ctx context.Context, installOpts InstallOptions) error 
 	// If the release already exists, we will re-apply the manifests using upgrade.
 	// We're not actually upgrading to a new version, but using upgrade to re-apply manifests.
 	// This is how Helm expects us to re-apply manifests.
-	// To prevent accidental version upgrades, we will explictly check that the resolved chart version matches the installed chart version.
+	// To prevent accidental version upgrades, we will explicitly check that the resolved chart version matches the installed chart version.
 	if d.chart.Metadata.Version != release.Chart.Metadata.Version {
 		return fmt.Errorf("cannot overwrite existing release with a different chart version. Expected %s, got %s",
-			release.Chart.Metadata.Version, d.chart.Metadata.Version)
+			release.Chart.Metadata.Version, d.chart.Metadata.Version,
+		)
 	}
 	u := &Driver{
 		chart:            d.chart,
@@ -131,7 +158,7 @@ func (d *Driver) Upgrade(ctx context.Context) error {
 }
 
 // Uninstall a Helm release.
-func (d *Driver) Uninstall(ctx context.Context) error {
+func (d *Driver) Uninstall() error {
 	uninstall := action.NewUninstall(d.actionsCfg)
 	uninstall.DisableHooks = true
 	uninstall.Wait = false
@@ -167,9 +194,11 @@ func newActionsCfg() (*action.Configuration, error) {
 	return &cfg, nil
 }
 
-var utf8bom = []byte{0xEF, 0xBB, 0xBF}
+var utf8bom = []byte{0xEF, 0xBB, 0xBF} //nolint:gochecknoglobals
 
 // LoadFS loads a Helm chart from a filesystem. Works with embedded FS.
+//
+//nolint:funlen
 func LoadFS(fsys fs.FS) (*chart.Chart, error) {
 	c := &chart.Chart{}
 	rules := ignore.Empty()
@@ -221,18 +250,16 @@ func LoadFS(fsys fs.FS) (*chart.Chart, error) {
 
 		data, err := fs.ReadFile(fsys, path)
 		if err != nil {
-			return errors.Wrapf(err, "error reading %s", n)
+			return errors.Join(err, fmt.Errorf("cannot read file %s", path))
 		}
 
 		data = bytes.TrimPrefix(data, utf8bom)
-
 		files = append(files, &loader.BufferedFile{Name: n, Data: data})
 		return nil
 	}
 	if err := fs.WalkDir(fsys, ".", walk); err != nil {
 		return c, err
 	}
-
 	return loader.LoadFiles(files)
 }
 
@@ -279,7 +306,7 @@ func newChartFromRemoteWithCache(version, name string, repository string) (*char
 		}
 
 		// Download the chart from remote repository
-		actionConfig := new(action.Configuration)
+		actionConfig := &action.Configuration{}
 		pull := action.NewPullWithOpts(action.WithConfig(actionConfig))
 		pull.Settings = helmcli.New()
 		pull.Version = version
@@ -290,11 +317,11 @@ func newChartFromRemoteWithCache(version, name string, repository string) (*char
 		}
 	}
 
-	f, err := os.Open(file)
+	f, err := os.Open(file) //nolint:gosec
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 	return loader.LoadArchive(f)
 }
 
@@ -305,7 +332,7 @@ func everestctlCacheDir() (string, error) {
 	}
 
 	res := path.Join(cacheDir, "everestctl")
-	err = os.MkdirAll(res, 0o755)
+	err = os.MkdirAll(res, 0o755) //nolint:gosec,mnd
 	if err != nil && !os.IsExist(err) {
 		return "", err
 	}
