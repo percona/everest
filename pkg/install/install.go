@@ -87,6 +87,8 @@ const (
 	FlagHelmSet = "helm-set"
 	// FlagHelmValuesFiles is the name of the helm-values flag.
 	FlagHelmValuesFiles = "helm-values"
+	// FlageHelmDevelop is the name of the devel flag.
+	FlageHelmDevel = "devel"
 
 	// everestDBNamespaceSubChartPath is the path to the everest-db-namespace subchart relative to the main chart.
 	dbNamespaceSubChartPath = "/charts/everest-db-namespace"

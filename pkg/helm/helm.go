@@ -45,6 +45,7 @@ type CLIOptions struct {
 	RepoURL           string
 	Values            values.Options
 	DBNamespaceValues values.Options
+	Devel             bool
 }
 
 // Everest Helm chart names.
@@ -113,8 +114,8 @@ func New(o ChartOptions) (*Driver, error) {
 type InstallOptions struct {
 	Values          map[string]interface{}
 	CreateNamespace bool
-	DisableHooks    bool
 	DryRun          bool
+	Devel           bool
 }
 
 // Install the Helm chart. If the chart is already installed, it will be overwritten.
@@ -142,16 +143,17 @@ func (d *Driver) Install(ctx context.Context, installOpts InstallOptions) error 
 		releaseName:      release.Name,
 		releaseNamespace: release.Namespace,
 	}
-	return u.Upgrade(ctx)
+	return u.Upgrade(ctx, installOpts)
 }
 
 // Upgrade the Helm chart managed by the manager.
-func (d *Driver) Upgrade(ctx context.Context) error {
+func (d *Driver) Upgrade(ctx context.Context, opts InstallOptions) error {
 	upgrade := action.NewUpgrade(d.actionsCfg)
 	upgrade.Namespace = d.releaseNamespace
 	upgrade.TakeOwnership = true
 	upgrade.DisableHooks = true
-	if _, err := upgrade.RunWithContext(ctx, d.releaseName, d.chart, nil); err != nil {
+	upgrade.Devel = opts.Devel
+	if _, err := upgrade.RunWithContext(ctx, d.releaseName, d.chart, opts.Values); err != nil {
 		return fmt.Errorf("cannot upgrade chart: %w", err)
 	}
 	return nil
@@ -175,8 +177,9 @@ func (d *Driver) install(ctx context.Context, o InstallOptions) error {
 	install.Namespace = d.releaseNamespace
 	install.CreateNamespace = o.CreateNamespace
 	install.DryRun = o.DryRun
-	install.DisableHooks = o.DisableHooks
+	install.DisableHooks = true
 	install.Wait = false
+	install.Devel = o.Devel
 
 	if _, err := install.RunWithContext(ctx, d.chart, o.Values); err != nil {
 		return fmt.Errorf("cannot install chart: %w", err)

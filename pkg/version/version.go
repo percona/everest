@@ -18,25 +18,9 @@ package version
 
 import (
 	"encoding/json"
-	"fmt"
-	"regexp"
 	"strings"
 
-	goversion "github.com/hashicorp/go-version"
-
-	"github.com/percona/everest/cmd/config"
-)
-
-const (
-	devCatalogImage     = "docker.io/perconalab/everest-catalog:latest"
-	rcCatalogImage      = "docker.io/perconalab/everest-catalog:%s"
-	releaseCatalogImage = "docker.io/percona/everest-catalog:%s"
-	devManifestURL      = "https://raw.githubusercontent.com/percona/everest/main/deploy/quickstart-k8s.yaml"
-	releaseManifestURL  = "https://raw.githubusercontent.com/percona/everest/v%s/deploy/quickstart-k8s.yaml"
-	debugManifestURL    = "https://raw.githubusercontent.com/percona/everest/%s/deploy/quickstart-k8s.yaml"
-
-	everestOperatorChannelStable = "stable-v0"
-	everestOperatorChannelFast   = "fast-v0"
+	version "github.com/hashicorp/go-version"
 )
 
 var (
@@ -48,75 +32,16 @@ var (
 	FullCommit string //nolint:gochecknoglobals
 	// EverestChannelOverride overrides the default olm channel for Everest operator.
 	EverestChannelOverride string //nolint:gochecknoglobals
-
-	rcSuffix = regexp.MustCompile(`rc\d+$`)
 )
 
-// CatalogImage returns a catalog image name.
-func CatalogImage(v *goversion.Version) string {
-	if isDevVersion(Version) {
-		return devCatalogImage
-	}
-	if EverestChannelOverride != "" {
-		// Channels other than stable are only in dev catalog.
-		return devCatalogImage
-	}
-	if isRC(v) {
-		return fmt.Sprintf(rcCatalogImage, v)
-	}
-	return fmt.Sprintf(releaseCatalogImage, v)
-}
-
-// ManifestURL returns a manifest URL to install Everest.
-func ManifestURL(v *goversion.Version) string {
-	if config.Debug {
-		return fmt.Sprintf(debugManifestURL, FullCommit)
-	}
-	if isDevVersion(Version) {
-		return devManifestURL
-	}
-	return fmt.Sprintf(releaseManifestURL, v)
-}
-
-// CatalogChannel returns a channel for Everest catalog.
-func CatalogChannel() string {
-	if EverestChannelOverride != "" {
-		return EverestChannelOverride
-	}
-	v, err := goversion.NewVersion(Version)
-	if err == nil && isRC(v) {
-		return everestOperatorChannelFast
-	}
-	return everestOperatorChannelStable
-}
-
-func isDevVersion(ver string) bool {
-	if ver == "" {
+// Devel returns true if the version is a development version.
+func Devel() bool {
+	if Version == "" {
 		return true
 	}
-
-	v, err := goversion.NewVersion(ver)
-	if err != nil {
-		panic(err)
-	}
-
-	if v.Prerelease() == "" {
-		return false
-	}
-
-	if isRC(v) {
-		return false
-	}
-
-	if !strings.HasSuffix(v.Prerelease(), "-upgrade-test") {
-		return true
-	}
-
-	return false
-}
-
-func isRC(v *goversion.Version) bool {
-	return rcSuffix.MatchString(v.Prerelease())
+	ver := version.Must(version.NewVersion(Version))
+	devLatestVer := version.Must(version.NewVersion("v0.0.0"))
+	return ver.Prerelease() != "" || ver.Core().Equal(devLatestVer)
 }
 
 // FullVersionInfo returns full version report.

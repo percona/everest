@@ -31,11 +31,9 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	goversion "github.com/hashicorp/go-version"
 	olmv1 "github.com/operator-framework/api/pkg/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
-	yamlv3 "gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -48,13 +46,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
-	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/data"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes/client"
-	everestVersion "github.com/percona/everest/pkg/version"
 )
 
 type (
@@ -395,39 +391,6 @@ func (k *Kubernetes) applyCSVs(ctx context.Context, resources []unstructured.Uns
 // GetCatalogSource returns catalog source.
 func (k *Kubernetes) GetCatalogSource(ctx context.Context, name, namespace string) (*olmv1alpha1.CatalogSource, error) {
 	return k.client.OLM().OperatorsV1alpha1().CatalogSources(namespace).Get(ctx, name, metav1.GetOptions{})
-}
-
-// InstallPerconaCatalog installs percona catalog and ensures that packages are available.
-func (k *Kubernetes) InstallPerconaCatalog(ctx context.Context, version *goversion.Version, namespace string) error {
-	if version == nil {
-		return errors.New("no version provided for Percona catalog installation")
-	}
-
-	data, err := fs.ReadFile(data.OLMCRDs, "crds/olm/everest-catalog.yaml")
-	if err != nil {
-		return errors.Join(err, errors.New("failed to read percona catalog file"))
-	}
-	o := make(map[string]interface{})
-	if err := yamlv3.Unmarshal(data, &o); err != nil {
-		return err
-	}
-
-	k.l.Debugf("Using catalog image %s", everestVersion.CatalogImage(version))
-	if err := unstructured.SetNestedField(o, everestVersion.CatalogImage(version), "spec", "image"); err != nil {
-		return err
-	}
-	data, err = yamlv3.Marshal(o)
-	if err != nil {
-		return err
-	}
-
-	if err := k.client.ApplyManifestFile(data, namespace); err != nil {
-		return errors.Join(err, errors.New("cannot apply percona catalog file"))
-	}
-	if err := k.client.DoPackageWait(ctx, namespace, "everest-operator"); err != nil {
-		return errors.Join(err, errors.New("timeout waiting for package"))
-	}
-	return nil
 }
 
 func (k *Kubernetes) applyResources(ctx context.Context) ([]unstructured.Unstructured, error) {
@@ -975,65 +938,6 @@ func (k *Kubernetes) ListEngineDeploymentNames(ctx context.Context, namespace st
 // ApplyObject applies object.
 func (k *Kubernetes) ApplyObject(obj runtime.Object) error {
 	return k.client.ApplyObject(obj)
-}
-
-// InstallEverest downloads the manifest file and applies it against provisioned k8s cluster.
-func (k *Kubernetes) InstallEverest(
-	ctx context.Context,
-	namespace string,
-	version *goversion.Version,
-	skipObjs ...ctrlclient.Object,
-) error {
-	if version == nil {
-		return errors.New("no version provided for Everest installation")
-	}
-
-	data, err := k.getManifestData(ctx, version)
-	if err != nil {
-		return errors.Join(err, errors.New("failed reading everest manifest file"))
-	}
-
-	k.l.Debug("Applying manifest file")
-	err = k.client.ApplyManifestFile(data, namespace, skipObjs...)
-	if err != nil {
-		return errors.Join(err, errors.New("failed applying manifest file"))
-	}
-
-	k.l.Debug("Waiting for manifest rollout")
-	if err := k.client.DoRolloutWait(ctx, types.NamespacedName{Name: common.PerconaEverestDeploymentName, Namespace: namespace}); err != nil {
-		return errors.Join(err, errors.New("failed waiting for the Everest deployment to be ready"))
-	}
-	return nil
-}
-
-func (k *Kubernetes) getManifestData(ctx context.Context, version *goversion.Version) ([]byte, error) {
-	m := everestVersion.ManifestURL(version)
-	k.l.Debugf("Downloading manifest file %s", m)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, m, nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close() //nolint:errcheck
-	return io.ReadAll(resp.Body)
-}
-
-// DeleteEverest downloads the manifest file and deletes it from provisioned k8s cluster.
-func (k *Kubernetes) DeleteEverest(ctx context.Context, namespace string, version *goversion.Version) error {
-	data, err := k.getManifestData(ctx, version)
-	if err != nil {
-		return errors.Join(err, errors.New("failed downloading Everest manifest file"))
-	}
-
-	err = k.client.DeleteManifestFile(data, namespace)
-	if err != nil {
-		return errors.Join(err, errors.New("failed deleting Everest based on a manifest file"))
-	}
-	return nil
 }
 
 // GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.

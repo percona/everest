@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
-	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/accounts"
@@ -95,8 +94,6 @@ type KubernetesConnector interface {
 	InstallOLMOperator(ctx context.Context, upgrade bool) error
 	// GetCatalogSource returns catalog source.
 	GetCatalogSource(ctx context.Context, name, namespace string) (*olmv1alpha1.CatalogSource, error)
-	// InstallPerconaCatalog installs percona catalog and ensures that packages are available.
-	InstallPerconaCatalog(ctx context.Context, version *goversion.Version, namespace string) error
 	// InstallOperator installs an operator via OLM.
 	InstallOperator(ctx context.Context, req InstallOperatorRequest) error
 	// CreateOperatorGroup creates operator group in the given namespace.
@@ -129,10 +126,6 @@ type KubernetesConnector interface {
 	ListEngineDeploymentNames(ctx context.Context, namespace string) ([]string, error)
 	// ApplyObject applies object.
 	ApplyObject(obj runtime.Object) error
-	// InstallEverest downloads the manifest file and applies it against provisioned k8s cluster.
-	InstallEverest(ctx context.Context, namespace string, version *goversion.Version, skipObjs ...ctrlclient.Object) error
-	// DeleteEverest downloads the manifest file and deletes it from provisioned k8s cluster.
-	DeleteEverest(ctx context.Context, namespace string, version *goversion.Version) error
 	// GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.
 	GetDBNamespaces(ctx context.Context) ([]string, error)
 	// WaitForRollout waits for rollout of a provided deployment in the provided namespace.

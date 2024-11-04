@@ -23,13 +23,11 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"slices"
 	"time"
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
 	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
-	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,37 +53,6 @@ const (
 	// FlagSkipOLM is the name of the skip OLM flag.
 	FlagSkipOLM = "skip-olm"
 )
-
-// list of objects to skip during upgrade.
-var skipObjects = []client.Object{ //nolint:gochecknoglobals
-	&corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind: "Secret",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      common.EverestJWTSecretName,
-			Namespace: common.SystemNamespace,
-		},
-	},
-	&corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind: "Secret",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      common.EverestAccountsSecretName,
-			Namespace: common.SystemNamespace,
-		},
-	},
-	&corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			Kind: "ConfigMap",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      common.EverestRBACConfigMapName,
-			Namespace: common.SystemNamespace,
-		},
-	},
-}
 
 type (
 	// Config defines configuration required for upgrade command.
@@ -181,7 +148,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	}
 
 	// Check prerequisites
-	upgradeEverestTo, recVer, err := u.canUpgrade(ctx, everestVersion)
+	upgradeEverestTo, _, err := u.canUpgrade(ctx, everestVersion)
 	if err != nil {
 		if errors.Is(err, ErrNoUpdateAvailable) {
 			u.l.Info("You're running the latest version of Everest")
@@ -195,109 +162,8 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return nil
 	}
 
-	if !u.config.SkipEnvDetection {
-		// Catalog namespace or Skip OLM implies disabled environment detection.
-		if u.config.SkipOLM || u.config.CatalogNamespace != kubernetes.OLMNamespace {
-			u.config.SkipEnvDetection = true
-		}
-	}
-
-	if u.config.SkipEnvDetection {
-		u.l.Info("Skipping Kubernetes environment detection")
-	} else {
-		u.l.Info("Detecting Kubernetes environment")
-		env, err := u.kubeClient.DetectEnvironment(ctx)
-		if err != nil {
-			return err
-		}
-		u.config.SkipOLM = env.SkipOLM
-		u.config.CatalogNamespace = env.CatalogNamespace
-	}
-
-	upgradeSteps := []common.Step{}
-
-	// Start upgrade.
-	if u.config.SkipOLM {
-		u.l.Infof("Skipping OLM upgrade")
-	} else {
-		upgradeSteps = append(upgradeSteps, common.Step{
-			Desc: "Upgrade Operator Lifecycle Manager",
-			F: func(ctx context.Context) error {
-				return u.upgradeOLM(ctx, recVer.OLM)
-			},
-		})
-	}
-
-	// We cannot use the latest version of catalog yet since
-	// at the time of writing, each catalog version supports only one Everest version.
-	catalogVersion := recVer.Catalog
-	if catalogVersion == nil {
-		u.l.Debugf("Percona catalog version was nil. Changing to %s", upgradeEverestTo)
-		catalogVersion = upgradeEverestTo
-	}
-	upgradeSteps = append(upgradeSteps, common.Step{
-		Desc: "Upgrade Percona Catalog",
-		F: func(ctx context.Context) error {
-			u.l.Infof("Upgrading Percona Catalog to %s", catalogVersion)
-			return u.kubeClient.InstallPerconaCatalog(ctx, catalogVersion, u.config.CatalogNamespace)
-		},
-	})
-
-	// Locate the correct install plan.
-	ctxTimeout, cancel := context.WithTimeout(ctx, contextTimeout)
-	defer cancel()
-
-	var ip *olmv1alpha1.InstallPlan
-	upgradeSteps = append(upgradeSteps, common.Step{
-		Desc: "Wait for Everest Operator InstallPlan",
-		F: func(_ context.Context) error {
-			u.l.Info("Waiting for install plan for Everest operator")
-			var err error
-			ip, err = u.kubeClient.WaitForInstallPlan(
-				ctxTimeout, common.SystemNamespace,
-				common.EverestOperatorName, upgradeEverestTo,
-			)
-			if err != nil {
-				return errors.Join(err, errors.New("could not find install plan"))
-			}
-			return nil
-		},
-	})
-
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
-
-	upgradeSteps = append(upgradeSteps, common.Step{
-		Desc: "Upgrade Everest API server",
-		F: func(ctx context.Context) error {
-			if common.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
-				if err := u.ensureEverestJWTIfNotExists(ctx); err != nil {
-					return err
-				}
-			}
-			if common.CheckConstraint(upgradeEverestTo, "~> 1.2.0") {
-				// RBAC is added in 1.2.x, so if we're upgrading to that version, we need to ensure
-				// that the RBAC configmap is present.
-				skipObjects = slices.DeleteFunc(skipObjects, func(o client.Object) bool {
-					return o.GetName() == common.EverestRBACConfigMapName
-				})
-			}
-			// During upgrades, we will skip re-applying the JWT secret since we do not want it to change.
-			if err := u.kubeClient.InstallEverest(ctx, common.SystemNamespace, upgradeEverestTo, skipObjects...); err != nil {
-				return err
-			}
-			return nil
-		},
-	})
-
-	upgradeSteps = append(upgradeSteps, common.Step{
-		Desc: "Upgrade Everest Operator",
-		F: func(ctx context.Context) error {
-			if err := u.upgradeEverestOperator(ctx, ip.Name, upgradeEverestTo); err != nil {
-				return err
-			}
-			return nil
-		},
-	})
+	upgradeSteps := []common.Step{}
 
 	upgradeSteps = append(upgradeSteps, common.Step{
 		Desc: "Run post-upgrade tasks",
