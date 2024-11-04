@@ -34,6 +34,7 @@ export const DbDetails = ({
   port,
   username,
   password,
+  connectionUrl,
   hostname,
   monitoring,
   externalAccess,
@@ -65,6 +66,7 @@ export const DbDetails = ({
           username={username}
           password={password}
           hostname={hostname}
+          connectionUrl={connectionUrl}
         />
         {canReadMonitoring && (
           <MonitoringDetails loading={loading} monitoring={monitoring} />

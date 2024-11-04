@@ -17,20 +17,24 @@ import { Messages } from '../../cluster-overview.messages';
 import OverviewSection from '../../overview-section';
 import { ConnectionDetailsOverviewCardProps } from '../card.types';
 import OverviewSectionRow from '../../overview-section-row';
-import { Box, Typography } from '@mui/material';
+import { Box, IconButton, TextField, Typography } from '@mui/material';
 import { CopyToClipboardButton } from '@percona/ui-lib';
 import { HiddenPasswordToggle } from 'components/hidden-row';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 
 export const ConnectionDetails = ({
   loading,
   hostname = '',
   username,
   password,
+  connectionUrl,
   port,
 }: ConnectionDetailsOverviewCardProps) => {
   const { canReadCredentials } = useContext(DbClusterContext);
+  const [showUrl, setShowUrl] = useState(false);
 
   return (
     <OverviewSection
@@ -70,7 +74,33 @@ export const ConnectionDetails = ({
           />
         </>
       )}
-      {/*//TODO https://perconadev.atlassian.net/browse/EVEREST-1255 Connection URL*/}
+
+      <TextField
+        label={Messages.fields.connectionUrl}
+        value={connectionUrl}
+        sx={{ maxHeight: '50px', marginTop: '20px', width: '450px' }}
+        type={showUrl ? 'text' : 'password'}
+        InputProps={{
+          endAdornment: (
+            <>
+              <IconButton onClick={() => setShowUrl(!showUrl)}>
+                {showUrl ? (
+                  <VisibilityOutlinedIcon />
+                ) : (
+                  <VisibilityOffOutlinedIcon />
+                )}
+              </IconButton>
+              <CopyToClipboardButton
+                buttonProps={{
+                  sx: { mt: -0.5 },
+                  size: 'small',
+                }}
+                textToCopy={connectionUrl}
+              />
+            </>
+          ),
+        }}
+      />
     </OverviewSection>
   );
 };
