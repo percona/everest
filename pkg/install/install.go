@@ -34,11 +34,6 @@ import (
 	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
 	goversion "github.com/hashicorp/go-version"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/helm"
-	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/output"
-	versionservice "github.com/percona/everest/pkg/version_service"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -50,6 +45,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/helm"
+	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/output"
+	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
 const (

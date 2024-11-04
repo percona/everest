@@ -9,7 +9,6 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/percona/everest/pkg/common"
 	"github.com/pkg/errors"
 	"helm.sh/helm/pkg/ignore"
 	"helm.sh/helm/v3/pkg/action"
@@ -18,6 +17,8 @@ import (
 	helmcli "helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+
+	"github.com/percona/everest/pkg/common"
 )
 
 // Everest Helm chart names.
