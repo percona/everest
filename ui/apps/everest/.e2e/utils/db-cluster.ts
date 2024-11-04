@@ -19,6 +19,7 @@ import { getEnginesVersions } from './database-engines';
 import { getClusterDetailedInfo } from './storage-class';
 import { getTokenFromLocalStorage } from './localStorage';
 import { getNamespacesFn } from './namespaces';
+import { DbType } from '@percona/types';
 
 export const createDbClusterFn = async (
   request: APIRequestContext,
@@ -109,6 +110,16 @@ export const createDbClusterFn = async (
             }),
         },
       },
+      ...(customOptions.sharding &&
+        dbType === DbType.Mongo && {
+          sharding: {
+            enabled: true,
+            shards: customOptions.shards || 1,
+            configServer: {
+              replicas: customOptions.configServerReplicas || 3,
+            },
+          },
+        }),
       // TODO return for backups tests
       // ...(backupDataSource?.dbClusterBackupName && {
       //     dataSource: {

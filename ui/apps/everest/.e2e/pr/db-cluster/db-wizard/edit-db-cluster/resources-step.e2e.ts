@@ -27,6 +27,7 @@ test.describe('DB Cluster Editing Resources Step (Mongo)', () => {
       dbName: mongoDBName,
       dbType: DbType.Mongo,
       numberOfNodes: '5',
+      sharding: true,
       cpu: 1,
       memory: 4,
       proxyCpu: 2,
