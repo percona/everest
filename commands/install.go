@@ -77,7 +77,8 @@ func initInstallFlags(cmd *cobra.Command) {
 	cmd.Flags().MarkHidden(install.FlagDisableTelemetry) //nolint:errcheck,gosec
 	cmd.Flags().Bool(install.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
 	cmd.Flags().String(install.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
-	cmd.Flags().String(install.FlagReporitory, common.PerconaHelmRepoURL, "Helm chart repository to download the Everest charts from")
+	cmd.Flags().String(install.FlagRepository, common.PerconaHelmRepoURL, "Helm chart repository to download the Everest charts from")
+	cmd.Flags().StringSlice(install.FlagHelmSet, []string{}, "Set helm values on the command line (can specify multiple values with commas: key1=val1,key2=val2)")
 
 	cmd.Flags().Bool(install.FlagOperatorMongoDB, true, "Install MongoDB operator")
 	cmd.Flags().Bool(install.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
@@ -96,7 +97,8 @@ func initInstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(install.FlagDisableTelemetry, cmd.Flags().Lookup(install.FlagDisableTelemetry))     //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagSkipEnvDetection, cmd.Flags().Lookup(install.FlagSkipEnvDetection))     //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagChartDir, cmd.Flags().Lookup(install.FlagChartDir))                     //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagReporitory, cmd.Flags().Lookup(install.FlagReporitory))                 //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagRepository, cmd.Flags().Lookup(install.FlagRepository))                 //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagHelmSet, cmd.Flags().Lookup(install.FlagHelmSet))                       //nolint:errcheck,gosec
 
 	viper.BindPFlag(install.FlagOperatorMongoDB, cmd.Flags().Lookup(install.FlagOperatorMongoDB))             //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagOperatorPostgresql, cmd.Flags().Lookup(install.FlagOperatorPostgresql))       //nolint:errcheck,gosec
@@ -104,4 +106,9 @@ func initInstallViperFlags(cmd *cobra.Command) {
 
 	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose")) //nolint:errcheck,gosec
 	viper.BindPFlag("json", cmd.Flags().Lookup("json"))       //nolint:errcheck,gosec
+}
+
+func bindHelmValues(cfg *install.Config) {
+	setValues := viper.GetStringSlice(install.FlagHelmSet)
+	cfg.HelmOpts.Values.Values = setValues
 }

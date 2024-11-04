@@ -1,4 +1,4 @@
-// everest
+// everes
 // Copyright (C) 2023 Percona LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,6 +42,9 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/cli/values"
+	"helm.sh/helm/v3/pkg/getter"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -78,7 +81,8 @@ const (
 	// FlagChartDir is the directory where the Helm chart is stored.
 	FlagChartDir = "chart-dir"
 	// FlagReporitory is the URL of the Helm repository.
-	FlagReporitory = "repository"
+	FlagRepository = "repository"
+	FlagHelmSet    = "helm-set"
 
 	// everestDBNamespaceSubChartPath is the path to the everest-db-namespace subchart relative to the main chart.
 	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
@@ -99,7 +103,6 @@ type Install struct {
 	cmd            *cobra.Command
 	kubeClient     *kubernetes.Kubernetes
 	versionService versionservice.Interface
-	helmValues     map[string]interface{}
 }
 
 const operatorInstallThreads = 1
@@ -139,10 +142,6 @@ type (
 		Version string `mapstructure:"version"`
 		// DisableTelemetry disables telemetry.
 		DisableTelemetry bool `mapstructure:"disable-telemetry"`
-		// ChartDir is the directory where the Helm chart is stored.
-		ChartDir string `mapstructure:"chart-dir"`
-		// RepoURL is the URL of the Helm repository.
-		RepoURL string `mapstructure:"repository"`
 
 		SkipEnvDetection bool   `mapstructure:"skip-env-detection"`
 		SkipOLM          bool   `mapstructure:"skip-olm"`
@@ -152,6 +151,7 @@ type (
 
 		// If set, we will print the pretty output.
 		Pretty bool
+		common.HelmOpts
 	}
 
 	// OperatorConfig identifies which operators shall be installed.
@@ -392,29 +392,49 @@ func (o *Install) installEverestHelmChart(ver string) common.Step {
 				return err
 			}
 
-			if err := o.applyCloudProviderSettings(ctx); err != nil {
-				return err
+			vals, err := o.getHelmValues(ctx)
+			if err != nil {
+				return fmt.Errorf("could not merge values: %w", err)
 			}
 
 			return d.Install(ctx, helm.InstallOptions{
 				CreateNamespace: !nsExists,
 				DisableHooks:    true,
-				Values:          o.helmValues,
+				Values:          vals,
 			})
 		},
 	}
 }
 
-func (o *Install) applyCloudProviderSettings(ctx context.Context) error {
-	env, err := o.kubeClient.DetectEnvironment(ctx)
+func (o *Install) getHelmValues(ctx context.Context) (map[string]interface{}, error) {
+	generatedVals := map[string]interface{}{}
+
+	// Autofill some values based on the environment.
+	if !o.config.SkipEnvDetection {
+		env, err := o.kubeClient.DetectEnvironment(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("could not detect environment: %w", err)
+		}
+		switch env.Env {
+		case kubernetes.EnvOpenShift:
+			generatedVals["compatibility.openshift"] = true
+		}
+	}
+	return mergeValues(o.config.Values, generatedVals)
+}
+
+func mergeValues(userDefinedVals values.Options, vals map[string]interface{}) (map[string]interface{}, error) {
+	merged, err := userDefinedVals.MergeValues(getter.All(cli.New()))
 	if err != nil {
-		return fmt.Errorf("could not detect environment: %w", err)
+		return nil, fmt.Errorf("could not merge values: %w", err)
 	}
-	switch env.Env {
-	case kubernetes.EnvOpenShift:
-		o.helmValues["compatibility.openshift"] = true
+	// User-defined values have higher priority.
+	for k, v := range vals {
+		if _, ok := merged[k]; !ok {
+			merged[k] = v
+		}
 	}
-	return nil
+	return merged, nil
 }
 
 func (o *Install) populateConfig() error {
