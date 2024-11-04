@@ -36,7 +36,6 @@ import (
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
-	cliVersion "github.com/percona/everest/pkg/version"
 )
 
 const (
@@ -158,13 +157,6 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 		Desc: "Delete backup storages",
 		F: func(ctx context.Context) error {
 			return u.deleteBackupStorages(ctx)
-		},
-	})
-
-	uninstallSteps = append(uninstallSteps, common.Step{
-		Desc: "Delete Everest API server",
-		F: func(ctx context.Context) error {
-			return u.uninstallEverest(ctx)
 		},
 	})
 
@@ -530,23 +522,4 @@ func (u *Uninstall) deleteOLM(ctx context.Context, namespace string) error {
 	}
 
 	return u.deleteNamespaces(ctx, []string{namespace})
-}
-
-func (u *Uninstall) uninstallEverest(ctx context.Context) error {
-	u.l.Info("Trying to uninstall Everest Deployment")
-	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
-	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			u.l.Info("Everest Deployment was not found")
-			return nil
-		}
-		return errors.Join(err, errors.New("could not retrieve Everest version"))
-	}
-
-	if err := u.kubeClient.DeleteEverest(ctx, common.SystemNamespace, everestVersion); client.IgnoreNotFound(err) != nil {
-		return err
-	}
-	u.l.Info("Everest Deployment has been deleted")
-	u.numResourcesDeleted++
-	return nil
 }

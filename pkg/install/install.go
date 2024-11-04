@@ -87,7 +87,7 @@ const (
 	FlagHelmSet = "helm-set"
 	// FlagHelmValuesFiles is the name of the helm-values flag.
 	FlagHelmValuesFiles = "helm-values"
-	// FlageHelmDevelop is the name of the devel flag.
+	// FlageHelmDevel is the name of the devel flag.
 	FlageHelmDevel = "devel"
 
 	// everestDBNamespaceSubChartPath is the path to the everest-db-namespace subchart relative to the main chart.
@@ -296,7 +296,6 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) common.Step
 
 			if err := d.Install(ctx, helm.InstallOptions{
 				CreateNamespace: false,
-				DisableHooks:    true,
 				DryRun:          false,
 				Values:          o.getDBNamespaceChartValues(),
 			}); err != nil {
@@ -403,7 +402,6 @@ func (o *Install) installEverestHelmChart(ver string) common.Step {
 
 			return d.Install(ctx, helm.InstallOptions{
 				CreateNamespace: !nsExists,
-				DisableHooks:    true,
 				Values:          vals,
 			})
 		},
