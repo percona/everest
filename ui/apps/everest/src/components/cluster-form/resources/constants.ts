@@ -228,7 +228,7 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
       if (dbType !== DbType.Mongo || (dbType === DbType.Mongo && !!sharding)) {
         numberOfResourcesValidator(
           numberOfProxies,
-          customNrOfNodes,
+          customNrOfProxies,
           DbWizardFormFields.customNrOfProxies,
           ctx
         );
