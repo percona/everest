@@ -28,6 +28,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"go.uber.org/zap"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -35,6 +36,7 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/helm"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -74,10 +76,6 @@ type Config struct {
 
 	// If set, we will print the pretty output.
 	Pretty bool
-
-	SkipEnvDetection bool   `mapstructure:"skip-env-detection"`
-	SkipOLM          bool   `mapstructure:"skip-olm"`
-	CatalogNamespace string `mapstructure:"catalog-namespace"`
 }
 
 // NewUninstall returns a new Uninstall struct.
@@ -98,7 +96,7 @@ func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
 		}
 		return nil, err
 	}
-
+	helm.Init(helm.ChartOptions{})
 	cli.kubeClient = kubeClient
 	return cli, nil
 }
@@ -151,6 +149,14 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 		},
 	})
 
+	// Check if Everest was installed via Helm, and delete the chart.
+	if _, err := helm.DefaultDriver.Get(); errors.Is(err, driver.ErrReleaseNotFound) {
+		u.l.Info("Uninstalling Helm chart")
+	} else if err != nil {
+		return fmt.Errorf("error getting helm release: %w", err)
+	} else {
+		// legacy uninstall ...
+	}
 	// There are no resources with finalizers in the monitoring namespace, so
 	// we can delete it directly
 	uninstallSteps = append(uninstallSteps, common.Step{
@@ -176,24 +182,6 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 			return u.deleteDBNamespaces(ctx)
 		},
 	})
-
-	if u.config.SkipOLM {
-		u.l.Debug("Skipping OLM uninstallation")
-		uninstallSteps = append(uninstallSteps, common.Step{
-			Desc: "Delete Everest Catalog",
-			F: func(ctx context.Context) error {
-				u.l.Info("Deleting Everest catalog")
-				return u.kubeClient.DeleteCatalogSource(ctx, u.config.CatalogNamespace, catalogSource)
-			},
-		})
-	} else {
-		uninstallSteps = append(uninstallSteps, common.Step{
-			Desc: "Delete Operator Lifecycle Manager",
-			F: func(ctx context.Context) error {
-				return u.deleteOLM(ctx, u.config.CatalogNamespace)
-			},
-		})
-	}
 
 	var out io.Writer = os.Stdout
 	if !u.config.Pretty {

@@ -33,6 +33,8 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	helmcli "helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/cli/values"
+	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/releaseutil"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 
@@ -84,6 +86,24 @@ type Driver struct {
 	releaseName, releaseNamespace string
 }
 
+// DefaultDriver is the default pre-defined Helm driver.
+var DefaultDriver *Driver
+
+// Init initializes the default Helm driver.
+func Init(o ChartOptions) {
+	if o.ReleaseName == "" {
+		o.ReleaseName = common.SystemNamespace
+	}
+	if o.ReleaseNamespace == "" {
+		o.ReleaseNamespace = common.SystemNamespace
+	}
+	d, err := New(o)
+	if err != nil {
+		panic(err)
+	}
+	DefaultDriver = d
+}
+
 // New creates a new Helm driver.
 func New(o ChartOptions) (*Driver, error) {
 	var chartFS fs.FS
@@ -118,9 +138,39 @@ type InstallOptions struct {
 	Devel           bool
 }
 
+// Get an installed Helm release.
+func (d *Driver) Get() (*release.Release, error) {
+	return action.NewGet(d.actionsCfg).Run(d.releaseName)
+}
+
+// Manifests returns the Helm chart manifests.
+func (d *Driver) Manifests(uninstall bool) ([]byte, error) {
+	rel, err := d.Get()
+	if err != nil {
+		return nil, fmt.Errorf("cannot get release: %w", err)
+	}
+	manifests := releaseutil.SplitManifests(rel.Manifest)
+	if uninstall {
+		_, files, err := releaseutil.SortManifests(manifests, nil, releaseutil.UninstallOrder)
+		if err != nil {
+			return nil, fmt.Errorf("cannot sort manifests: %w", err)
+		}
+		result := make([]byte, 0, len(files))
+		for _, f := range files {
+			result = append(result, []byte(f.Content)...)
+		}
+		return result, nil
+	}
+	result := make([]byte, 0, len(manifests))
+	for _, f := range manifests {
+		result = append(result, []byte(f)...)
+	}
+	return result, nil
+}
+
 // Install the Helm chart. If the chart is already installed, it will be overwritten.
 func (d *Driver) Install(ctx context.Context, installOpts InstallOptions) error {
-	release, err := action.NewGet(d.actionsCfg).Run(d.releaseName)
+	release, err := d.Get()
 	if err != nil {
 		// Release does not exist, we will create a new installation.
 		if errors.Is(err, driver.ErrReleaseNotFound) {
