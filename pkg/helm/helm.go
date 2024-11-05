@@ -86,7 +86,9 @@ type Driver struct {
 	releaseName, releaseNamespace string
 }
 
-// DefaultDriver is the default pre-defined Helm driver.
+// DefaultDriver is used for installing the Everest chart.
+// Use Init() to initialize it.
+// This is used in the code-base just to reduce some boilerplate.
 var DefaultDriver *Driver
 
 // Init initializes the default Helm driver.
@@ -138,32 +140,45 @@ type InstallOptions struct {
 	Devel           bool
 }
 
+// ReleaseName returns the release name of the Helm chart.
+func (d *Driver) ReleaseName() string {
+	return d.releaseName
+}
+
+// ReleaseNamespace returns the release namespace of the Helm chart.
+func (d *Driver) ReleaseNamespace() string {
+	return d.releaseNamespace
+}
+
 // Get an installed Helm release.
 func (d *Driver) Get() (*release.Release, error) {
 	return action.NewGet(d.actionsCfg).Run(d.releaseName)
 }
 
 // Manifests returns the Helm chart manifests.
-func (d *Driver) Manifests(uninstall bool) ([]byte, error) {
+func (d *Driver) Manifests(uninstall bool) ([]string, error) {
+	// Get the release.
 	rel, err := d.Get()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get release: %w", err)
 	}
+	// Split the manifest into individual files.
 	manifests := releaseutil.SplitManifests(rel.Manifest)
+	// If uninstall is true, sort it in uninstall order.
 	if uninstall {
 		_, files, err := releaseutil.SortManifests(manifests, nil, releaseutil.UninstallOrder)
 		if err != nil {
 			return nil, fmt.Errorf("cannot sort manifests: %w", err)
 		}
-		result := make([]byte, 0, len(files))
+		result := make([]string, 0, len(files))
 		for _, f := range files {
-			result = append(result, []byte(f.Content)...)
+			result = append(result, f.Content)
 		}
 		return result, nil
 	}
-	result := make([]byte, 0, len(manifests))
+	result := make([]string, 0, len(manifests))
 	for _, f := range manifests {
-		result = append(result, []byte(f)...)
+		result = append(result, f)
 	}
 	return result, nil
 }

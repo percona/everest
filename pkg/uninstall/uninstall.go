@@ -57,10 +57,10 @@ const (
 
 // Uninstall implements logic for the cluster command.
 type Uninstall struct {
-	config     Config
-	kubeClient *kubernetes.Kubernetes
-	l          *zap.SugaredLogger
-
+	config      Config
+	kubeClient  *kubernetes.Kubernetes
+	l           *zap.SugaredLogger
+	clusterType kubernetes.ClusterType
 	// keep a count of the number of resources deleted.
 	numResourcesDeleted int32
 }
@@ -73,6 +73,8 @@ type Config struct {
 	AssumeYes bool `mapstructure:"assume-yes"`
 	// Force is true when we shall not prompt for removal.
 	Force bool
+	// SkipEnvDetection skips detecting the Kubernetes environment.
+	SkipEnvDetection bool `mapstructure:"skip-env-detection"`
 
 	// If set, we will print the pretty output.
 	Pretty bool
@@ -108,6 +110,14 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 	} else if abort {
 		u.l.Info("Exiting")
 		return nil
+	}
+
+	if !u.config.SkipEnvDetection {
+		t, err := u.kubeClient.GetClusterType(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to detect cluster type: %w", err)
+		}
+		u.clusterType = t
 	}
 
 	uninstallSteps := []common.Step{}
@@ -151,14 +161,13 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 
 	// Check if Everest was installed via Helm, and delete the chart.
 	if _, err := helm.DefaultDriver.Get(); errors.Is(err, driver.ErrReleaseNotFound) {
-		u.l.Info("Uninstalling Helm chart")
+		u.l.Info("Found Helm release, deleting charts")
 	} else if err != nil {
 		return fmt.Errorf("error getting helm release: %w", err)
 	} else {
 		// legacy uninstall ...
 	}
-	// There are no resources with finalizers in the monitoring namespace, so
-	// we can delete it directly
+
 	uninstallSteps = append(uninstallSteps, common.Step{
 		Desc: fmt.Sprintf("Delete namespace '%s'", common.MonitoringNamespace),
 		F: func(ctx context.Context) error {
@@ -200,6 +209,46 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 	u.l.Infof("Everest has been uninstalled successfully")
 	fmt.Fprintln(out, "Everest has been uninstalled successfully")
 	return nil
+}
+
+// legacy deletion method.
+func (u *Uninstall) deleteManifests(ctx context.Context) []common.Step {
+	return nil
+}
+
+func (u *Uninstall) deleteHelmReleases() []common.Step {
+	steps := []common.Step{}
+	steps = append(steps, common.Step{
+		Desc: fmt.Sprintf("Deleting Helm chart release '%s' in namespace '%s'",
+			helm.DefaultDriver.ReleaseName(), helm.DefaultDriver.ReleaseNamespace()),
+		F: func(ctx context.Context) error {
+			if err := helm.DefaultDriver.Uninstall(); err != nil {
+				return fmt.Errorf("error uninstalling Helm chart: %w", err)
+			}
+			return nil
+		},
+	})
+	namespacesToDelete := []string{common.SystemNamespace, common.MonitoringNamespace}
+	if u.clusterType != kubernetes.ClusterTypeOpenShift {
+		namespacesToDelete = append(namespacesToDelete, kubernetes.OLMNamespace)
+	}
+	for _, ns := range namespacesToDelete {
+		steps = append(steps, common.Step{
+			Desc: fmt.Sprintf("Delete '%s' namespace", ns),
+			F: func(ctx context.Context) error {
+				return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
+					_, err := u.kubeClient.GetNamespace(ctx, ns)
+					if k8serrors.IsNotFound(err) {
+						return true, nil
+					} else if err != nil {
+						return false, err
+					}
+					return false, u.kubeClient.DeleteNamespace(ctx, ns)
+				})
+			},
+		})
+	}
+	return steps
 }
 
 // Run the uninstall wizard.
