@@ -216,9 +216,16 @@ func (o *Install) Run(ctx context.Context) error {
 	o.l.Debugf("Everest latest version available: %s", latest)
 	o.l.Debugf("Everest version information %#v", latestMeta)
 
+	// Initialize Helm driver.
+	helm.Init(helm.ChartOptions{
+		Directory: o.config.ChartDir,
+		URL:       o.config.RepoURL,
+		Version:   latest.String(),
+	})
+
 	installSteps := []common.Step{}
 	// Install core components.
-	installSteps = append(installSteps, o.installEverestHelmChart(latest.String()))
+	installSteps = append(installSteps, o.installEverestHelmChart())
 	installSteps = append(installSteps, o.waitForEverestAPI())
 	installSteps = append(installSteps, o.waitForEverestOperator())
 	installSteps = append(installSteps, o.waitForOLM())
@@ -253,22 +260,19 @@ func (o *Install) Run(ctx context.Context) error {
 	return nil
 }
 
-func (o *Install) getDBNamespaceChartValues() map[string]interface{} {
-	vals := make(map[string]interface{})
-	if !o.config.Operator.PXC {
-		vals["pxc"] = false
+func (o *Install) DBNamespaceInstallValues() values.Options {
+	v := []string{}
+	if o.config.Operator.PXC {
+		v = append(v, "pxc.enabled=true")
 	}
-	if !o.config.Operator.PG {
-		vals["pg"] = false
+	if o.config.Operator.PG {
+		v = append(v, "pg.enabled=true")
 	}
-	if !o.config.Operator.PSMDB {
-		vals["psmdb"] = false
+	if o.config.Operator.PSMDB {
+		v = append(v, "psmdb.enabled=true")
 	}
-	vals["cleanupOnUninstall"] = false // we will handle the cleanup ourselves
-	if o.config.DisableTelemetry {
-		vals["telemetry"] = false
-	}
-	return vals
+	v = append(v, fmt.Sprintf("telemetry=%t", !o.config.DisableTelemetry))
+	return values.Options{Values: v}
 }
 
 func (o *Install) provisionDBNamespace(ver string, namespace string) common.Step {
@@ -293,11 +297,15 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) common.Step
 			if err != nil {
 				return fmt.Errorf("could not create Helm driver: %w", err)
 			}
+			vals, err := o.getHelmValues(ctx, o.DBNamespaceInstallValues())
+			if err != nil {
+				return fmt.Errorf("could not get values: %w", err)
+			}
 
 			if err := d.Install(ctx, helm.InstallOptions{
 				CreateNamespace: false,
 				DryRun:          false,
-				Values:          o.getDBNamespaceChartValues(),
+				Values:          vals,
 			}); err != nil {
 				return fmt.Errorf("could not install Helm chart: %w", err)
 			}
@@ -374,33 +382,21 @@ func (o *Install) waitForEverestAPI() common.Step {
 	}
 }
 
-func (o *Install) installEverestHelmChart(ver string) common.Step {
+func (o *Install) installEverestHelmChart() common.Step {
 	return common.Step{
 		Desc: "Install Everest Helm chart",
 		F: func(ctx context.Context) error {
-			d, err := helm.New(helm.ChartOptions{
-				Directory:        o.config.ChartDir,
-				Version:          ver,
-				URL:              o.config.RepoURL,
-				Name:             helm.EverestChartName,
-				ReleaseName:      common.SystemNamespace,
-				ReleaseNamespace: common.SystemNamespace,
-			})
-			if err != nil {
-				return fmt.Errorf("could not create Helm driver: %w", err)
-			}
-
 			nsExists, err := o.namespaceExists(ctx, common.SystemNamespace)
 			if err != nil {
 				return err
 			}
 
-			vals, err := o.getHelmValues(ctx)
+			vals, err := o.getHelmValues(ctx, o.config.Values)
 			if err != nil {
 				return fmt.Errorf("could not merge values: %w", err)
 			}
 
-			return d.Install(ctx, helm.InstallOptions{
+			return helm.DefaultDriver.Install(ctx, helm.InstallOptions{
 				CreateNamespace: !nsExists,
 				Values:          vals,
 			})
@@ -408,7 +404,7 @@ func (o *Install) installEverestHelmChart(ver string) common.Step {
 	}
 }
 
-func (o *Install) getHelmValues(ctx context.Context) (map[string]interface{}, error) {
+func (o *Install) getHelmValues(ctx context.Context, userVals values.Options) (map[string]interface{}, error) {
 	generatedVals := make(map[string]interface{})
 
 	// Detect environment and autofill values.
@@ -421,7 +417,7 @@ func (o *Install) getHelmValues(ctx context.Context) (map[string]interface{}, er
 			generatedVals["compatibility.openshift"] = true
 		}
 	}
-	return mergeValues(o.config.Values, generatedVals)
+	return mergeValues(userVals, generatedVals)
 }
 
 func mergeValues(userDefinedVals values.Options, vals map[string]interface{}) (map[string]interface{}, error) {

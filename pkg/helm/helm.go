@@ -86,19 +86,16 @@ type Driver struct {
 	releaseName, releaseNamespace string
 }
 
-// DefaultDriver is used for installing the Everest chart.
+// DefaultDriver is used for installing the Everest (core) chart.
 // Use Init() to initialize it.
 // This is used in the code-base just to reduce some boilerplate.
-var DefaultDriver *Driver
+var DefaultDriver = &Driver{}
 
 // Init initializes the default Helm driver.
 func Init(o ChartOptions) {
-	if o.ReleaseName == "" {
-		o.ReleaseName = common.SystemNamespace
-	}
-	if o.ReleaseNamespace == "" {
-		o.ReleaseNamespace = common.SystemNamespace
-	}
+	o.ReleaseName = "everest"
+	o.ReleaseNamespace = common.SystemNamespace
+	o.Name = EverestChartName
 	d, err := New(o)
 	if err != nil {
 		panic(err)

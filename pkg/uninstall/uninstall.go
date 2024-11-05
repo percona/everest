@@ -162,6 +162,11 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 	// Check if Everest was installed via Helm, and delete the chart.
 	if _, err := helm.DefaultDriver.Get(); errors.Is(err, driver.ErrReleaseNotFound) {
 		u.l.Info("Found Helm release, deleting charts")
+		steps, err := u.deleteHelmReleases(ctx)
+		if err != nil {
+			return err
+		}
+		uninstallSteps = append(uninstallSteps, steps...)
 	} else if err != nil {
 		return fmt.Errorf("error getting helm release: %w", err)
 	} else {
@@ -216,8 +221,9 @@ func (u *Uninstall) deleteManifests(ctx context.Context) []common.Step {
 	return nil
 }
 
-func (u *Uninstall) deleteHelmReleases() []common.Step {
+func (u *Uninstall) deleteHelmReleases(ctx context.Context) ([]common.Step, error) {
 	steps := []common.Step{}
+	// Delete core components.
 	steps = append(steps, common.Step{
 		Desc: fmt.Sprintf("Deleting Helm chart release '%s' in namespace '%s'",
 			helm.DefaultDriver.ReleaseName(), helm.DefaultDriver.ReleaseNamespace()),
@@ -228,6 +234,8 @@ func (u *Uninstall) deleteHelmReleases() []common.Step {
 			return nil
 		},
 	})
+
+	// Ensure system namespaces are gone.
 	namespacesToDelete := []string{common.SystemNamespace, common.MonitoringNamespace}
 	if u.clusterType != kubernetes.ClusterTypeOpenShift {
 		namespacesToDelete = append(namespacesToDelete, kubernetes.OLMNamespace)
@@ -248,7 +256,7 @@ func (u *Uninstall) deleteHelmReleases() []common.Step {
 			},
 		})
 	}
-	return steps
+	return steps, nil
 }
 
 // Run the uninstall wizard.
