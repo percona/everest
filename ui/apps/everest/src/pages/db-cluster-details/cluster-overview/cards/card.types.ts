@@ -34,6 +34,7 @@ export type ConnectionDetailsOverviewCardProps = {
   port: number;
   username: string;
   password: string;
+  connectionUrl: string;
   clusterName?: string;
   clusterNamespace?: string;
 } & OverviewCardProps;

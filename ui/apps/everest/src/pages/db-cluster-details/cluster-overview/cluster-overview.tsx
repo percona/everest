@@ -90,6 +90,7 @@ export const ClusterOverview = () => {
         port={dbCluster.status?.port!}
         username={dbClusterDetails?.username!}
         password={dbClusterDetails?.password!}
+        connectionUrl={dbClusterDetails?.connectionUrl!}
         externalAccess={
           isProxy(dbCluster.spec.proxy) &&
           dbCluster.spec.proxy.expose.type === ProxyExposeType.external
