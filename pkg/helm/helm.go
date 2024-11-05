@@ -33,12 +33,15 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	helmcli "helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/cli/values"
+	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/releaseutil"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 
 	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/kubernetes"
+	"helm.sh/helm/v3/pkg/cli"
 )
 
 // CLIOptions contains common options for the CLI.
@@ -402,4 +405,40 @@ func everestctlCacheDir() (string, error) {
 		return "", err
 	}
 	return res, nil
+}
+
+// MustMergeValues panics if MergeValues returns an error.
+func MustMergeValues(userDefined values.Options, vals ...map[string]interface{}) map[string]interface{} {
+	merged, err := MergeValues(userDefined, vals...)
+	if err != nil {
+		panic(err)
+	}
+	return merged
+}
+
+// MergeValues merges the user-provided values with the provided values `vals`
+// If a key exists in both the user-provided values and the provided values, the user-provided value will be used.
+func MergeValues(userDefined values.Options, vals ...map[string]interface{}) (map[string]interface{}, error) {
+	merged, err := userDefined.MergeValues(getter.All(cli.New()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to merge user-defined values: %w", err)
+	}
+	for _, val := range vals {
+		for k, v := range val {
+			if _, ok := merged[k]; !ok {
+				merged[k] = v
+			}
+		}
+	}
+	return merged, nil
+}
+
+// ClusterTypeSpecificValues returns value overrides based on the Kubernetes cluster type.
+func ClusterTypeSpecificValues(ct kubernetes.ClusterType) map[string]interface{} {
+	if ct == kubernetes.ClusterTypeOpenShift {
+		return map[string]interface{}{
+			"compatibility.openshift": true,
+		}
+	}
+	return nil
 }

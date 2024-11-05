@@ -37,9 +37,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
-	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/cli/values"
-	"helm.sh/helm/v3/pkg/getter"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -109,6 +107,7 @@ type Install struct {
 	cmd            *cobra.Command
 	kubeClient     *kubernetes.Kubernetes
 	versionService versionservice.Interface
+	clusterType    kubernetes.ClusterType
 }
 
 const operatorInstallThreads = 1
@@ -204,6 +203,15 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
+	// Deteck Kubernetes environment.
+	if !o.config.SkipEnvDetection {
+		t, err := o.kubeClient.GetClusterType(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to detect cluster type: %w", err)
+		}
+		o.clusterType = t
+	}
+
 	meta, err := o.versionService.GetEverestMetadata(ctx)
 	if err != nil {
 		return errors.Join(err, errors.New("could not fetch version metadata"))
@@ -297,15 +305,16 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) common.Step
 			if err != nil {
 				return fmt.Errorf("could not create Helm driver: %w", err)
 			}
-			vals, err := o.getHelmValues(ctx, o.DBNamespaceInstallValues())
-			if err != nil {
-				return fmt.Errorf("could not get values: %w", err)
-			}
+
+			values := helm.MustMergeValues(
+				o.DBNamespaceInstallValues(),
+				helm.ClusterTypeSpecificValues(o.clusterType),
+			)
 
 			if err := d.Install(ctx, helm.InstallOptions{
 				CreateNamespace: false,
 				DryRun:          false,
-				Values:          vals,
+				Values:          values,
 			}); err != nil {
 				return fmt.Errorf("could not install Helm chart: %w", err)
 			}
@@ -391,47 +400,17 @@ func (o *Install) installEverestHelmChart() common.Step {
 				return err
 			}
 
-			vals, err := o.getHelmValues(ctx, o.config.Values)
-			if err != nil {
-				return fmt.Errorf("could not merge values: %w", err)
-			}
+			values := helm.MustMergeValues(
+				o.config.Values,
+				helm.ClusterTypeSpecificValues(o.clusterType),
+			)
 
 			return helm.DefaultDriver.Install(ctx, helm.InstallOptions{
 				CreateNamespace: !nsExists,
-				Values:          vals,
+				Values:          values,
 			})
 		},
 	}
-}
-
-func (o *Install) getHelmValues(ctx context.Context, userVals values.Options) (map[string]interface{}, error) {
-	generatedVals := make(map[string]interface{})
-
-	// Detect environment and autofill values.
-	if !o.config.SkipEnvDetection {
-		env, err := o.kubeClient.GetClusterType(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("could not detect environment: %w", err)
-		}
-		if env == kubernetes.ClusterTypeOpenShift {
-			generatedVals["compatibility.openshift"] = true
-		}
-	}
-	return mergeValues(userVals, generatedVals)
-}
-
-func mergeValues(userDefinedVals values.Options, vals map[string]interface{}) (map[string]interface{}, error) {
-	merged, err := userDefinedVals.MergeValues(getter.All(cli.New()))
-	if err != nil {
-		return nil, fmt.Errorf("could not merge values: %w", err)
-	}
-	// User-defined values have higher priority.
-	for k, v := range vals {
-		if _, ok := merged[k]; !ok {
-			merged[k] = v
-		}
-	}
-	return merged, nil
 }
 
 func (o *Install) populateConfig() error {
