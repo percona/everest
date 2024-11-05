@@ -140,6 +140,7 @@ export const ResourcesDetails = ({
                 size="small"
                 startIcon={<EditOutlinedIcon />}
                 onClick={() => setOpenEditModal(true)}
+                data-testid="edit-resources-button"
               >
                 Edit
               </Button>

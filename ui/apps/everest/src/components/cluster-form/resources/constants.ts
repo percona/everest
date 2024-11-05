@@ -2,7 +2,7 @@ import { DbType } from '@percona/types';
 import { z } from 'zod';
 import { Resources } from 'shared-types/dbCluster.types';
 import { DbWizardFormFields } from 'consts';
-import { memoryParser } from 'utils/k8ResourceParser';
+import { cpuParser, memoryParser } from 'utils/k8ResourceParser';
 import { Messages } from './messages';
 
 const resourceToNumber = (minimum = 0) =>
@@ -24,11 +24,14 @@ export const matchFieldsValueToResourceSize = (
   if (!resources) {
     return ResourceSize.custom;
   }
-  const memory = memoryParser(resources.memory.toString());
-
-  const res = Object.values(sizes).findIndex(
-    (item) => item.cpu === Number(resources.cpu) && item.memory === memory.value
-  );
+  const memory = memoryParser(resources.memory.toString(), 'G');
+  const res = Object.values(sizes).findIndex((item) => {
+    const sizeParsedMemory = memoryParser(item.memory.toString(), 'G');
+    return (
+      cpuParser(item.cpu.toString()) === cpuParser(resources.cpu.toString()) &&
+      sizeParsedMemory.value === memory.value
+    );
+  });
   return res !== -1
     ? (Object.keys(sizes)[res] as ResourceSize)
     : ResourceSize.custom;
