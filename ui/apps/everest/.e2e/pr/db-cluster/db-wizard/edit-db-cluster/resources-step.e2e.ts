@@ -71,4 +71,28 @@ test.describe('DB Cluster Editing Resources Step (Mongo)', () => {
     await page.getByTestId('button-edit-preview-resources').click();
     await expect(page.getByTestId('text-input-disk')).toBeDisabled();
   });
+
+  test('Show custom resources during editing', async ({ page, request }) => {
+    const dbName = 'mongo-custom-resources';
+    await createDbClusterFn(request, {
+      dbName,
+      dbType: DbType.Mongo,
+      numberOfNodes: '5',
+      sharding: true,
+      cpu: 1,
+      memory: 4,
+      proxyCpu: 3,
+      proxyMemory: 4,
+    });
+    await findDbAndClickActions(page, dbName, 'Edit');
+    await page.getByTestId('button-edit-preview-resources').click();
+    await expect(
+      page.getByTestId('node-resources-toggle-button-small')
+    ).toHaveAttribute('aria-pressed', 'true');
+    await page.getByTestId('proxies-accordion').click();
+    await expect(
+      page.getByTestId('router-resources-toggle-button-custom')
+    ).toHaveAttribute('aria-pressed', 'true');
+    await deleteDbClusterFn(request, dbName);
+  });
 });
