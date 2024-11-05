@@ -66,6 +66,8 @@ const (
 	ClusterTypeMinikube ClusterType = "minikube"
 	// ClusterTypeEKS is for EKS.
 	ClusterTypeEKS ClusterType = "eks"
+	// ClusterTypeGKE is for GKE.
+	ClusterTypeGKE ClusterType = "gke"
 	// ClusterTypeOpenShift is for OpenShift.
 	ClusterTypeOpenShift ClusterType = "openshift"
 	// ClusterTypeGeneric is a generic type.
@@ -256,6 +258,9 @@ func (k *Kubernetes) GetClusterType(ctx context.Context) (ClusterType, error) {
 	for _, storageClass := range storageClasses.Items {
 		if strings.Contains(storageClass.Provisioner, "aws") {
 			return ClusterTypeEKS, nil
+		}
+		if strings.Contains(storageClass.Provisioner, "gke") {
+			return ClusterTypeGKE, nil
 		}
 		if strings.Contains(storageClass.Provisioner, "minikube") ||
 			strings.Contains(storageClass.Provisioner, "kubevirt.io/hostpath-provisioner") ||
