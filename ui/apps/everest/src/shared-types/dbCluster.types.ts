@@ -151,6 +151,7 @@ export type GetDbClusterPayload = {
 export type ClusterCredentials = {
   username: string;
   password: string;
+  connectionUrl?: string;
 };
 
 export type GetDbClusterCredentialsPayload = ClusterCredentials;

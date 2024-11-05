@@ -27,6 +27,7 @@ export const Messages = {
     port: 'Port',
     username: 'Username',
     password: 'Password',
+    connectionUrl: 'Connection URL',
     status: 'Status',
     externalAccess: 'Ext.access',
     parameters: 'Parameters',
