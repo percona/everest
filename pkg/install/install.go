@@ -413,11 +413,11 @@ func (o *Install) getHelmValues(ctx context.Context) (map[string]interface{}, er
 
 	// Detect environment and autofill values.
 	if !o.config.SkipEnvDetection {
-		env, err := o.kubeClient.DetectEnvironment(ctx)
+		env, err := o.kubeClient.GetClusterType(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("could not detect environment: %w", err)
 		}
-		if env.Env == kubernetes.EnvOpenShift {
+		if env == kubernetes.ClusterTypeOpenShift {
 			generatedVals["compatibility.openshift"] = true
 		}
 	}

@@ -413,36 +413,6 @@ func (_m *MockKubernetesConnector) DeleteSecret(ctx context.Context, namespace s
 	return r0
 }
 
-// DetectEnvironment provides a mock function with given fields: ctx
-func (_m *MockKubernetesConnector) DetectEnvironment(ctx context.Context) (*Environment, error) {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DetectEnvironment")
-	}
-
-	var r0 *Environment
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (*Environment, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) *Environment); ok {
-		r0 = rf(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*Environment)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetBackupStorage provides a mock function with given fields: ctx, namespace, name
 func (_m *MockKubernetesConnector) GetBackupStorage(ctx context.Context, namespace string, name string) (*v1alpha1.BackupStorage, error) {
 	ret := _m.Called(ctx, namespace, name)
@@ -610,34 +580,6 @@ func (_m *MockKubernetesConnector) GetDBNamespaces(ctx context.Context) ([]strin
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetDBaaSOperatorVersion provides a mock function with given fields: ctx
-func (_m *MockKubernetesConnector) GetDBaaSOperatorVersion(ctx context.Context) (string, error) {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetDBaaSOperatorVersion")
-	}
-
-	var r0 string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (string, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Get(0).(string)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {

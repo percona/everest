@@ -54,8 +54,6 @@ type KubernetesConnector interface {
 	UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error)
 	// ListDeployments returns a list of deployments in the provided namespace.
 	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
-	// DetectEnvironment detects Kubernetes environment.
-	DetectEnvironment(ctx context.Context) (*Environment, error)
 	// WaitForInstallPlan waits until an install plan for the given operator and version is available.
 	WaitForInstallPlan(ctx context.Context, namespace, operatorName string, version *goversion.Version) (*olmv1alpha1.InstallPlan, error)
 	// ApproveInstallPlan approves an install plan.
@@ -80,8 +78,6 @@ type KubernetesConnector interface {
 	GetPSMDBOperatorVersion(ctx context.Context) (string, error)
 	// GetPXCOperatorVersion parses PXC operator version from operator deployment.
 	GetPXCOperatorVersion(ctx context.Context) (string, error)
-	// GetDBaaSOperatorVersion parses DBaaS operator version from operator deployment.
-	GetDBaaSOperatorVersion(ctx context.Context) (string, error)
 	// CreatePMMSecret creates pmm secret in kubernetes.
 	CreatePMMSecret(namespace, secretName string, secrets map[string][]byte) error
 	// CreateRestore creates a restore.

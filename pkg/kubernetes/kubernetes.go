@@ -36,6 +36,7 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -65,11 +66,10 @@ const (
 	ClusterTypeMinikube ClusterType = "minikube"
 	// ClusterTypeEKS is for EKS.
 	ClusterTypeEKS ClusterType = "eks"
+	// ClusterTypeOpenShift is for OpenShift.
+	ClusterTypeOpenShift ClusterType = "openshift"
 	// ClusterTypeGeneric is a generic type.
 	ClusterTypeGeneric ClusterType = "generic"
-
-	// EverestOperatorDeploymentName is the name of the deployment for everest operator.
-	EverestOperatorDeploymentName = "everest-operator-controller-manager"
 
 	// EverestDBNamespacesEnvVar is the name of the environment variable that
 	// contains the list of monitored namespaces.
@@ -230,8 +230,25 @@ func (k *Kubernetes) GetEverestID(ctx context.Context) (string, error) {
 	return string(namespace.UID), nil
 }
 
+func (k *Kubernetes) isOpenshift(ctx context.Context) (bool, error) {
+	crds, err := k.client.ListCRDs(ctx, &metav1.LabelSelector{})
+	if err != nil {
+		return false, err
+	}
+	return slices.ContainsFunc(crds.Items, func(crd apiextv1.CustomResourceDefinition) bool {
+		return strings.Contains(crd.Spec.Group, "openshift")
+	}), nil
+}
+
 // GetClusterType tries to guess the underlying kubernetes cluster based on storage class.
 func (k *Kubernetes) GetClusterType(ctx context.Context) (ClusterType, error) {
+	if ok, err := k.isOpenshift(ctx); err != nil {
+		return ClusterTypeUnknown, err
+	} else if ok {
+		return ClusterTypeOpenShift, nil
+	}
+
+	// For other types, we will check the storage classes.
 	storageClasses, err := k.client.GetStorageClasses(ctx)
 	if err != nil {
 		return ClusterTypeUnknown, err
@@ -271,11 +288,6 @@ func (k *Kubernetes) GetPSMDBOperatorVersion(ctx context.Context) (string, error
 // GetPXCOperatorVersion parses PXC operator version from operator deployment.
 func (k *Kubernetes) GetPXCOperatorVersion(ctx context.Context) (string, error) {
 	return k.getOperatorVersion(ctx, pxcDeploymentName, pxcOperatorContainerName)
-}
-
-// GetDBaaSOperatorVersion parses DBaaS operator version from operator deployment.
-func (k *Kubernetes) GetDBaaSOperatorVersion(ctx context.Context) (string, error) {
-	return k.getOperatorVersion(ctx, EverestOperatorDeploymentName, everestOperatorContainerName)
 }
 
 // CreatePMMSecret creates pmm secret in kubernetes.
@@ -649,9 +661,6 @@ func (k *Kubernetes) InstallOperator(ctx context.Context, req InstallOperatorReq
 		return err
 	}
 	deploymentName := req.Name
-	if req.Name == "everest-operator" {
-		deploymentName = EverestOperatorDeploymentName
-	}
 	if req.Name == "victoriametrics-operator" {
 		deploymentName = "vm-operator-vm-operator"
 	}

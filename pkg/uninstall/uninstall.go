@@ -112,23 +112,6 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 		return nil
 	}
 
-	if !u.config.SkipEnvDetection {
-		// Catalog namespace or Skip OLM implies disabled environment detection.
-		if u.config.SkipOLM || u.config.CatalogNamespace != kubernetes.OLMNamespace {
-			u.config.SkipEnvDetection = true
-		}
-	}
-
-	if !u.config.SkipEnvDetection {
-		u.l.Info("Detecting Kubernetes environment")
-		env, err := u.kubeClient.DetectEnvironment(ctx)
-		if err != nil {
-			return err
-		}
-		u.config.SkipOLM = env.SkipOLM
-		u.config.CatalogNamespace = env.CatalogNamespace
-	}
-
 	uninstallSteps := []common.Step{}
 	dbsExist, err := u.dbsExist(ctx)
 	if err != nil {
