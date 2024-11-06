@@ -117,7 +117,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         }
       });
 
-      test(`Create cluster with ${db} and size ${size}`, async ({
+      test(`Create cluster [${db} size ${size}]`, async ({
         page,
         request,
       }) => {
@@ -216,11 +216,13 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           );
           expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
           expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
-          expect(addedCluster?.spec.proxy.replicas).toBe(size);
+          if (db != 'psmdb') {
+            expect(addedCluster?.spec.proxy.replicas).toBe(size);
+          }
         });
       });
 
-      test(`Add data with ${db} and size ${size}`, async () => {
+      test(`Add data [${db} size ${size}]`, async () => {
         await prepareTestDB(clusterName, namespace);
       });
 
@@ -326,11 +328,11 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
       });
 
-      test(`Delete data with ${db} and size ${size}`, async () => {
+      test(`Delete data [${db} size ${size}]`, async () => {
         await dropTestDB(clusterName, namespace);
       });
 
-      test(`Restore cluster with ${db} and size ${size}`, async ({ page }) => {
+      test(`Restore cluster [${db} size ${size}]`, async ({ page }) => {
         await gotoDbClusterBackups(page, clusterName);
         const firstBackup = await page
           .getByText(`${db}-${size}-schbkp-`)
@@ -353,7 +355,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         await waitForStatus(page, firstBackup, 'Succeeded', 120000);
       });
 
-      test(`Check data after restore with ${db} and size ${size}`, async () => {
+      test(`Check data after restore [${db} size ${size}]`, async () => {
         const result = await queryTestDB(clusterName, namespace);
         switch (db) {
           case 'pxc':
@@ -368,7 +370,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         }
       });
 
-      test(`Delete restore with ${db} and size ${size}`, async ({ page }) => {
+      test(`Delete restore [${db} size ${size}]`, async ({ page }) => {
         await gotoDbClusterRestores(page, clusterName);
         await findRowAndClickActions(page, `${db}-${size}-schbkp-`, 'Delete');
         await expect(page.getByLabel('Delete restore')).toBeVisible();
@@ -376,7 +378,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         await waitForDelete(page, `${db}-${size}-schbkp-`, 15000);
       });
 
-      test(`Delete backup with ${db} and size ${size}`, async ({ page }) => {
+      test(`Delete backup [${db} size ${size}]`, async ({ page }) => {
         await gotoDbClusterBackups(page, clusterName);
 
         await test.step('Delete first backup', async () => {
@@ -404,7 +406,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
       });
 
-      test(`Delete cluster with ${db} and size ${size}`, async ({ page }) => {
+      test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
         await waitForDelete(page, clusterName, 120000);

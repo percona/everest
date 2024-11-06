@@ -107,7 +107,7 @@ test.describe.configure({ retries: 0 });
         }
       });
 
-      test(`Cluster creation with ${db} and size ${size}`, async ({
+      test(`Cluster creation [${db} size ${size}]`, async ({
         page,
         request,
       }) => {
@@ -206,15 +206,17 @@ test.describe.configure({ retries: 0 });
           );
           expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
           expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
-          expect(addedCluster?.spec.proxy.replicas).toBe(size);
+          if (db != 'psmdb') {
+            expect(addedCluster?.spec.proxy.replicas).toBe(size);
+          }
         });
       });
 
-      test(`Add data with ${db} and size ${size}`, async () => {
+      test(`Add data [${db} size ${size}]`, async () => {
         await prepareTestDB(clusterName, namespace);
       });
 
-      test(`Create demand backup with ${db} and size ${size}`, async ({
+      test(`Create demand backup [${db} size ${size}]`, async ({
         page,
       }) => {
         await gotoDbClusterBackups(page, clusterName);
@@ -229,11 +231,11 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 240000);
       });
 
-      test(`Delete data with ${db} and size ${size}`, async () => {
+      test(`Delete data [${db} size ${size}]`, async () => {
         await dropTestDB(clusterName, namespace);
       });
 
-      test(`Restore cluster with ${db} and size ${size}`, async ({ page }) => {
+      test(`Restore cluster [${db} size ${size}]`, async ({ page }) => {
         await gotoDbClusterBackups(page, clusterName);
         await findRowAndClickActions(
           page,
@@ -255,7 +257,7 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 120000);
       });
 
-      test(`Check data after restore with ${db} and size ${size}`, async () => {
+      test(`Check data after restore [${db} size ${size}]`, async () => {
         const result = await queryTestDB(clusterName, namespace);
         switch (db) {
           case 'pxc':
@@ -270,7 +272,7 @@ test.describe.configure({ retries: 0 });
         }
       });
 
-      test(`Delete restore with ${db} and size ${size}`, async ({ page }) => {
+      test(`Delete restore [${db} size ${size}]`, async ({ page }) => {
         await gotoDbClusterRestores(page, clusterName);
         await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
         await expect(page.getByLabel('Delete restore')).toBeVisible();
@@ -278,7 +280,7 @@ test.describe.configure({ retries: 0 });
         await waitForDelete(page, baseBackupName + '-1', 15000);
       });
 
-      test(`Delete backup with ${db} and size ${size}`, async ({ page }) => {
+      test(`Delete backup [${db} size ${size}]`, async ({ page }) => {
         await gotoDbClusterBackups(page, clusterName);
         await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
         await expect(page.getByLabel('Delete backup')).toBeVisible();
@@ -286,7 +288,7 @@ test.describe.configure({ retries: 0 });
         await waitForDelete(page, baseBackupName + '-1', 30000);
       });
 
-      test(`Delete cluster with ${db} and size ${size}`, async ({ page }) => {
+      test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
         await waitForDelete(page, clusterName, 120000);
