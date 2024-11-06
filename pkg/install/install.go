@@ -236,11 +236,13 @@ func (o *Install) Run(ctx context.Context) error {
 	installSteps = append(installSteps, o.installEverestHelmChart())
 	installSteps = append(installSteps, o.waitForEverestAPI())
 	installSteps = append(installSteps, o.waitForEverestOperator())
-	installSteps = append(installSteps, o.waitForOLM())
+	if o.clusterType != kubernetes.ClusterTypeOpenShift {
+		installSteps = append(installSteps, o.waitForOLM()) // TODO: do not check if OLM install is disabled.
+	}
 	installSteps = append(installSteps, o.waitForMonitoring())
 
 	// Install DB namespaces.
-	// TODO: we need a separate command for provisining DB namespaces.
+	// TODO: we need a separate command for provisioning DB namespaces.
 	for _, ns := range o.config.NamespacesList {
 		installSteps = append(installSteps, o.provisionDBNamespace(latest.String(), ns))
 	}
@@ -350,6 +352,7 @@ func (o *Install) waitForOLM() common.Step {
 	return common.Step{
 		Desc: "Check OLM",
 		F: func(ctx context.Context) error {
+			o.l.Infof("Waiting for OLM to be ready")
 			// Wait for all the Deployments to come up.
 			depls, err := o.kubeClient.ListDeployments(ctx, olmNamespace)
 			if err != nil {
@@ -376,6 +379,7 @@ func (o *Install) waitForEverestOperator() common.Step {
 	return common.Step{
 		Desc: "Check Everest Operator Deployment",
 		F: func(ctx context.Context) error {
+			o.l.Infof("Waiting for Deployment '%s' in namespace '%s'", common.PerconaEverestOperatorDeploymentName, common.SystemNamespace)
 			return o.kubeClient.WaitForRollout(ctx, common.PerconaEverestOperatorDeploymentName, common.SystemNamespace)
 		},
 	}
@@ -386,6 +390,7 @@ func (o *Install) waitForEverestAPI() common.Step {
 	return common.Step{
 		Desc: "Check Everest API Deployment",
 		F: func(ctx context.Context) error {
+			o.l.Infof("Waiting for Deployment '%s' in namespace '%s'", common.PerconaEverestDeploymentName, common.SystemNamespace)
 			return o.kubeClient.WaitForRollout(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
 		},
 	}
@@ -404,7 +409,7 @@ func (o *Install) installEverestHelmChart() common.Step {
 				o.config.Values,
 				helm.ClusterTypeSpecificValues(o.clusterType),
 			)
-
+			o.l.Info("Installing Everest Helm chart")
 			return helm.DefaultDriver.Install(ctx, helm.InstallOptions{
 				CreateNamespace: !nsExists,
 				Values:          values,
