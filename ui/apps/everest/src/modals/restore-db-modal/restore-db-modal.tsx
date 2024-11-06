@@ -237,9 +237,9 @@ const RestoreDbModal = <T extends FieldValues>({
         isNewClusterMode ? Messages.headerMessageCreate : Messages.headerMessage
       }
       schema={schema(
-        pitrData?.earliestDate || new Date(),
-        pitrData?.latestDate || new Date(),
-        !!pitrData?.gaps
+        !!pitrData?.gaps,
+        pitrData?.earliestDate,
+        pitrData?.latestDate
       )}
       submitting={restoringFromBackup || restoringFromPointInTime}
       defaultValues={{ ...defaultValues, backupName: backupName || '' }}
