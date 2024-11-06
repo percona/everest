@@ -1,7 +1,7 @@
 import { DbType } from '@percona/types';
+import { dbTypeToProxyType } from '@percona/utils';
 import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
 import { Proxy, ProxyExposeType } from 'shared-types/dbCluster.types';
-import { dbTypeToProxyType } from 'utils/db';
 
 export const getProxySpec = (
   dbType: DbType,
@@ -13,10 +13,7 @@ export const getProxySpec = (
   sharding: boolean,
   sourceRanges?: Array<{ sourceRange?: string }>
 ): Proxy | Record<string, never> => {
-  console.log('dbType', dbType);
-  console.log('sharding', sharding);
   if (dbType === DbType.Mongo && !sharding) {
-    console.log('returning empty object');
     return {};
   }
   const proxyNr = parseInt(
