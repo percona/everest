@@ -14,11 +14,12 @@
 // limitations under the License.
 
 import { APIRequestContext, expect } from '@playwright/test';
-import { dbTypeToDbEngine } from '@percona/utils';
+import { dbTypeToDbEngine, dbTypeToProxyType } from '@percona/utils';
 import { getEnginesVersions } from './database-engines';
 import { getClusterDetailedInfo } from './storage-class';
 import { getTokenFromLocalStorage } from './localStorage';
 import { getNamespacesFn } from './namespaces';
+import { DbType } from '@percona/types';
 
 export const createDbClusterFn = async (
   request: APIRequestContext,
@@ -93,7 +94,12 @@ export const createDbClusterFn = async (
         // }),
       },
       proxy: {
-        replicas: +(customOptions?.numberOfNodes || 1),
+        type: dbTypeToProxyType(dbType),
+        replicas: +(customOptions?.numberOfProxies || 1),
+        resources: {
+          cpu: `${customOptions?.proxyCpu || 1}`,
+          memory: `${customOptions?.proxyMemory || 1}G`,
+        },
         expose: {
           type: customOptions?.externalAccess ? 'external' : 'internal',
           ...(!!customOptions?.externalAccess &&
@@ -104,6 +110,16 @@ export const createDbClusterFn = async (
             }),
         },
       },
+      ...(customOptions.sharding &&
+        dbType === DbType.Mongo && {
+          sharding: {
+            enabled: true,
+            shards: customOptions.shards || 1,
+            configServer: {
+              replicas: customOptions.configServerReplicas || 3,
+            },
+          },
+        }),
       // TODO return for backups tests
       // ...(backupDataSource?.dbClusterBackupName && {
       //     dataSource: {
