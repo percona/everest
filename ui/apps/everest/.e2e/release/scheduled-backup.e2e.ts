@@ -117,10 +117,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         }
       });
 
-      test(`Create cluster [${db} size ${size}]`, async ({
-        page,
-        request,
-      }) => {
+      test(`Create cluster [${db} size ${size}]`, async ({ page, request }) => {
         expect(storageClasses.length).toBeGreaterThan(0);
 
         await page.goto('/databases/new');

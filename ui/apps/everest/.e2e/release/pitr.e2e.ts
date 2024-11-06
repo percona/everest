@@ -42,7 +42,13 @@ import {
   listMonitoringInstances,
 } from '@e2e/utils/monitoring-instance';
 import { clickOnDemandBackup } from '@e2e/pr/db-cluster-details/utils';
-import { prepareTestDB, dropTestDB, queryTestDB, insertMoreTestDB, pgInsertDummyTestDB } from '@e2e/utils/db-cmd-line';
+import {
+  prepareTestDB,
+  dropTestDB,
+  queryTestDB,
+  insertMoreTestDB,
+  pgInsertDummyTestDB,
+} from '@e2e/utils/db-cmd-line';
 import { addFirstScheduleInDBWizard } from '@e2e/pr/db-cluster/db-wizard/db-wizard-utils';
 
 const {
@@ -54,24 +60,24 @@ const {
 } = process.env;
 
 type pitrTime = {
-  day: string,
-  month: string,
-  year: string,
-  hour: string,
-  minute: string,
-  second: string,
-  ampm: string
+  day: string;
+  month: string;
+  year: string;
+  hour: string;
+  minute: string;
+  second: string;
+  ampm: string;
 };
 
 let token: string;
 let pitrRestoreTime: pitrTime = {
-  day: "",
-  month: "",
-  year: "",
-  hour: "",
-  minute: "",
-  second: "",
-  ampm: ""
+  day: '',
+  month: '',
+  year: '',
+  hour: '',
+  minute: '',
+  second: '',
+  ampm: '',
 };
 
 function getCurrentPITRTime(): pitrTime {
@@ -190,21 +196,20 @@ test.describe.configure({ retries: 0 });
         await test.step('Populate backups, enable PITR', async () => {
           await addFirstScheduleInDBWizard(page);
           const pitrCheckbox = page
-          .getByTestId('switch-input-pitr-enabled')
-          .getByRole('checkbox');
+            .getByTestId('switch-input-pitr-enabled')
+            .getByRole('checkbox');
 
           if (db !== 'postgresql') {
             await expect(pitrCheckbox).not.toBeChecked();
             await pitrCheckbox.setChecked(true);
 
-            if (db === 'pxc'){
+            if (db === 'pxc') {
               const pitrStorageLocation = page.getByTestId(
                 'text-input-pitr-storage-location'
               );
               await expect(pitrStorageLocation).toBeVisible();
               await expect(pitrStorageLocation).not.toBeEmpty();
-            }
-            else {
+            } else {
               await expect(page.getByText('Storage: bucket-1')).toHaveCount(2);
             }
           }
@@ -248,19 +253,24 @@ test.describe.configure({ retries: 0 });
         });
 
         await test.step('Update PSMDB cluster PITR uploadIntervalSec', async () => {
-          if (db !== "psmdb") {
+          if (db !== 'psmdb') {
             return;
           }
-          let psmdbCluster = await request.get(`/v1/namespaces/${namespace}/database-clusters/${clusterName}`);
+          let psmdbCluster = await request.get(
+            `/v1/namespaces/${namespace}/database-clusters/${clusterName}`
+          );
 
           await checkError(psmdbCluster);
-          const psmdbPayload = (await psmdbCluster.json());
+          const psmdbPayload = await psmdbCluster.json();
 
           psmdbPayload.spec.backup.pitr.uploadIntervalSec = 60;
 
-          const updatedPSMDBCluster = await request.put(`/v1/namespaces/${namespace}/database-clusters/${clusterName}`, {
-            data: psmdbPayload,
-          });
+          const updatedPSMDBCluster = await request.put(
+            `/v1/namespaces/${namespace}/database-clusters/${clusterName}`,
+            {
+              data: psmdbPayload,
+            }
+          );
 
           await checkError(updatedPSMDBCluster);
         });
@@ -305,9 +315,7 @@ test.describe.configure({ retries: 0 });
         await prepareTestDB(clusterName, namespace);
       });
 
-      test(`Create demand backup [${db} size ${size}]`, async ({
-        page,
-      }) => {
+      test(`Create demand backup [${db} size ${size}]`, async ({ page }) => {
         await gotoDbClusterBackups(page, clusterName);
         await clickOnDemandBackup(page);
         await page.getByTestId('text-input-name').fill(baseBackupName + '-1');
@@ -325,13 +333,13 @@ test.describe.configure({ retries: 0 });
         pitrRestoreTime = getCurrentPITRTime();
 
         // for PG we need one more transaction to be able to restore to the previous one
-        if (db == "postgresql") {
+        if (db == 'postgresql') {
           pgInsertDummyTestDB(clusterName, namespace);
         }
       });
 
       test(`Wait 1 min for binlogs to be uploaded [${db} size ${size}]`, async () => {
-        const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
+        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
         await delay(65000);
       });
 
@@ -341,21 +349,35 @@ test.describe.configure({ retries: 0 });
 
       test(`Restore cluster [${db} size ${size}]`, async ({ page }) => {
         await page.goto('databases');
-        await findDbAndClickActions(
-          page,
-          clusterName,
-          'Restore from a backup'
-        );
-        await page.getByTestId('radio-option-fromPITR').click({ timeout: 5000 });
-        await expect(page.getByTestId('radio-option-fromPITR')).toBeChecked({ timeout: 5000 });
-        await expect(page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss aa')).toBeVisible({ timeout: 5000 });
-        await expect(page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss aa')).not.toBeEmpty({ timeout: 5000 });
+        await findDbAndClickActions(page, clusterName, 'Restore from a backup');
+        await page
+          .getByTestId('radio-option-fromPITR')
+          .click({ timeout: 5000 });
+        await expect(page.getByTestId('radio-option-fromPITR')).toBeChecked({
+          timeout: 5000,
+        });
+        await expect(
+          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss aa')
+        ).toBeVisible({ timeout: 5000 });
+        await expect(
+          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss aa')
+        ).not.toBeEmpty({ timeout: 5000 });
         await page.getByTestId('CalendarIcon').click({ timeout: 5000 });
-        await page.getByLabel(pitrRestoreTime.hour + ' hours', { exact: true }).click({ timeout: 5000 });
-        await page.getByLabel(pitrRestoreTime.minute + ' minutes', { exact: true }).click({ timeout: 5000 });
-        await page.getByLabel(pitrRestoreTime.second + ' seconds', { exact: true }).click({ timeout: 5000 });
-        await page.getByLabel(pitrRestoreTime.ampm, { exact: true }).click({ timeout: 5000 });
-        await expect(page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss aa')).toHaveValue(getFormattedPITRTime(pitrRestoreTime))
+        await page
+          .getByLabel(pitrRestoreTime.hour + ' hours', { exact: true })
+          .click({ timeout: 5000 });
+        await page
+          .getByLabel(pitrRestoreTime.minute + ' minutes', { exact: true })
+          .click({ timeout: 5000 });
+        await page
+          .getByLabel(pitrRestoreTime.second + ' seconds', { exact: true })
+          .click({ timeout: 5000 });
+        await page
+          .getByLabel(pitrRestoreTime.ampm, { exact: true })
+          .click({ timeout: 5000 });
+        await expect(
+          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss aa')
+        ).toHaveValue(getFormattedPITRTime(pitrRestoreTime));
 
         await page.getByTestId('form-dialog-restore').click({ timeout: 5000 });
 
@@ -374,7 +396,9 @@ test.describe.configure({ retries: 0 });
             expect(result.trim()).toBe('1\n2\n3\n4\n5\n6');
             break;
           case 'psmdb':
-            expect(result.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 }, { a: 5 }, { a: 6 } ]');
+            expect(result.trim()).toBe(
+              '[ { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 }, { a: 5 }, { a: 6 } ]'
+            );
             break;
           case 'postgresql':
             expect(result.trim()).toBe('1\n 2\n 3\n 4\n 5\n 6');

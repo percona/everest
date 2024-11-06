@@ -216,9 +216,7 @@ test.describe.configure({ retries: 0 });
         await prepareTestDB(clusterName, namespace);
       });
 
-      test(`Create demand backup [${db} size ${size}]`, async ({
-        page,
-      }) => {
+      test(`Create demand backup [${db} size ${size}]`, async ({ page }) => {
         await gotoDbClusterBackups(page, clusterName);
         await clickOnDemandBackup(page);
         await page.getByTestId('text-input-name').fill(baseBackupName + '-1');

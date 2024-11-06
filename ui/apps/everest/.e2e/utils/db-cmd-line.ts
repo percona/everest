@@ -206,7 +206,9 @@ export const insertMoreTestDB = async (cluster: string, namespace: string) => {
         'db.t1.insertMany([{ a: 4 }, { a: 5 }, { a: 6 }]);'
       );
       const result = await queryTestDB(cluster, namespace);
-      expect(result.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 }, { a: 5 }, { a: 6 } ]');
+      expect(result.trim()).toBe(
+        '[ { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 }, { a: 5 }, { a: 6 } ]'
+      );
       break;
     }
     case 'postgresql': {
@@ -223,7 +225,10 @@ export const insertMoreTestDB = async (cluster: string, namespace: string) => {
   }
 };
 
-export const pgInsertDummyTestDB = async (cluster: string, namespace: string) => {
+export const pgInsertDummyTestDB = async (
+  cluster: string,
+  namespace: string
+) => {
   await queryPG(
     cluster,
     namespace,
