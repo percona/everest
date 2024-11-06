@@ -52,6 +52,7 @@ export const ExpandedRow = ({
     port,
     raw,
   } = row.original;
+
   const parsedDiskValues = memoryParser(storage.toString());
   const parsedMemoryValues = memoryParser(memory.toString());
   const parsedProxyMemoryValues = memoryParser(proxyMemory.toString());
@@ -169,19 +170,23 @@ export const ExpandedRow = ({
           value={storageResourcesStr}
         />
         <Divider sx={{ margin: '10px 0' }} />
-        <LabelValue
-          label={`Nº ${getProxyUnitNamesFromDbType(dbEngineToDbType(dbType)).plural}`}
-          value={nodes}
-        />
-        <LabelValue
-          label={Messages.expandedRow.cpu}
-          value={cpuProxyResourcesStr}
-        />
-        <LabelValue
-          label={Messages.expandedRow.memory}
-          value={memoryProxyResourcesStr}
-        />
-        <Divider sx={{ margin: '10px 0' }} />
+        {proxies > 0 && (
+          <>
+            <LabelValue
+              label={`Nº ${getProxyUnitNamesFromDbType(dbEngineToDbType(dbType)).plural}`}
+              value={proxies}
+            />
+            <LabelValue
+              label={Messages.expandedRow.cpu}
+              value={cpuProxyResourcesStr}
+            />
+            <LabelValue
+              label={Messages.expandedRow.memory}
+              value={memoryProxyResourcesStr}
+            />
+            <Divider sx={{ margin: '10px 0' }} />
+          </>
+        )}
         <LabelValue
           label={Messages.expandedRow.externalAccess}
           value={

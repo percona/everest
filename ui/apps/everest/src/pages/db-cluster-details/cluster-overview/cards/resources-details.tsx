@@ -54,9 +54,13 @@ export const ResourcesDetails = ({
   const { mutate: updateDbClusterResources } = useUpdateDbClusterResources();
   const queryClient = useQueryClient();
   const cpu = dbCluster.spec.engine.resources?.cpu || 0;
-  const proxyCpu = dbCluster.spec.proxy.resources?.cpu || 0;
+  const proxyCpu = isProxy(dbCluster.spec.proxy)
+    ? dbCluster.spec.proxy.resources?.cpu || 0
+    : 0;
   const memory = dbCluster.spec.engine.resources?.memory || 0;
-  const proxyMemory = dbCluster.spec.proxy.resources?.memory || 0;
+  const proxyMemory = isProxy(dbCluster.spec.proxy)
+    ? dbCluster.spec.proxy.resources?.memory || 0
+    : 0;
   const disk = dbCluster.spec.engine.storage.size;
   const parsedDiskValues = memoryParser(disk.toString());
   const parsedMemoryValues = memoryParser(memory.toString());
@@ -66,10 +70,11 @@ export const ResourcesDetails = ({
   const proxies = isProxy(dbCluster.spec.proxy)
     ? (dbCluster.spec.proxy.replicas || 0).toString()
     : '';
-  const numberOfNodes = NODES_DB_TYPE_MAP[dbType].includes(replicas)
+  const numberOfProxiesInt = parseInt(proxies, 10);
+  const numberOfNodesStr = NODES_DB_TYPE_MAP[dbType].includes(replicas)
     ? replicas
     : CUSTOM_NR_UNITS_INPUT_VALUE;
-  const numberOfProxies = NODES_DB_TYPE_MAP[dbType].includes(proxies)
+  const numberOfProxiesStr = NODES_DB_TYPE_MAP[dbType].includes(proxies)
     ? proxies
     : CUSTOM_NR_UNITS_INPUT_VALUE;
 
@@ -202,27 +207,29 @@ export const ResourcesDetails = ({
               )}
             />
           </OverviewSection>
-          <OverviewSection
-            title={`${proxies} ${getProxyUnitNamesFromDbType(dbEngineToDbType(dbCluster.spec.engine.type))[+proxies > 1 ? 'plural' : 'singular']}`}
-            loading={loading}
-          >
-            <OverviewSectionRow
-              label={Messages.fields.cpu}
-              contentString={getTotalResourcesDetailedString(
-                cpuParser(proxyCpu.toString() || '0'),
-                parseInt(proxies, 10),
-                'CPU'
-              )}
-            />
-            <OverviewSectionRow
-              label={Messages.fields.memory}
-              contentString={getTotalResourcesDetailedString(
-                parsedProxyMemoryValues.value,
-                parseInt(proxies, 10),
-                parsedProxyMemoryValues.originalUnit
-              )}
-            />
-          </OverviewSection>
+          {numberOfProxiesInt > 0 && (
+            <OverviewSection
+              title={`${proxies} ${getProxyUnitNamesFromDbType(dbEngineToDbType(dbCluster.spec.engine.type))[numberOfProxiesInt > 1 ? 'plural' : 'singular']}`}
+              loading={loading}
+            >
+              <OverviewSectionRow
+                label={Messages.fields.cpu}
+                contentString={getTotalResourcesDetailedString(
+                  cpuParser(proxyCpu.toString() || '0'),
+                  parseInt(proxies, 10),
+                  'CPU'
+                )}
+              />
+              <OverviewSectionRow
+                label={Messages.fields.memory}
+                contentString={getTotalResourcesDetailedString(
+                  parsedProxyMemoryValues.value,
+                  parseInt(proxies, 10),
+                  parsedProxyMemoryValues.originalUnit
+                )}
+              />
+            </OverviewSection>
+          )}
         </Stack>
       </OverviewCard>
       {openEditModal && (
@@ -243,8 +250,8 @@ export const ResourcesDetails = ({
               shardConfigServers: sharding?.configServer?.replicas.toString(),
               shardNr: sharding?.shards.toString(),
             }),
-            numberOfNodes,
-            numberOfProxies,
+            numberOfNodes: numberOfNodesStr,
+            numberOfProxies: numberOfProxiesStr,
             customNrOfNodes: replicas,
             customNrOfProxies: proxies,
             resourceSizePerNode: matchFieldsValueToResourceSize(
