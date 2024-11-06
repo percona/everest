@@ -1,6 +1,5 @@
 import { MongoIcon, MySqlIcon, PostgreSqlIcon } from '@percona/ui-lib';
-import { DbType } from '@percona/types';
-import { ProxyType } from 'shared-types/dbEngines.types';
+import { DbType, ProxyType } from '@percona/types';
 import { Proxy, ProxyExposeConfig } from 'shared-types/dbCluster.types';
 
 export const dbTypeToIcon = (dbType: DbType) => {

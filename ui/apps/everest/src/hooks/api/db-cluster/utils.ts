@@ -1,11 +1,11 @@
 import { DbType } from '@percona/types';
+import { dbTypeToProxyType } from '@percona/utils';
 import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
 import {
   Proxy,
   ProxyExposeConfig,
   ProxyExposeType,
 } from 'shared-types/dbCluster.types';
-import { dbTypeToProxyType } from 'utils/db';
 
 const getExposteConfig = (
   externalAccess: boolean,

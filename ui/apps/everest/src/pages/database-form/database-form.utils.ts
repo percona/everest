@@ -30,6 +30,8 @@ import {
   matchFieldsValueToResourceSize,
   NODES_DB_TYPE_MAP,
   ResourceSize,
+  NODES_DEFAULT_SIZES,
+  PROXIES_DEFAULT_SIZES,
 } from 'components/cluster-form';
 import { isProxy } from 'utils/db.tsx';
 
@@ -104,12 +106,14 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.customNrOfNodes]: replicas,
     [DbWizardFormFields.customNrOfProxies]: proxies,
     [DbWizardFormFields.resourceSizePerNode]: matchFieldsValueToResourceSize(
-      dbEngineToDbType(dbCluster?.spec?.engine?.type),
+      NODES_DEFAULT_SIZES[dbEngineToDbType(dbCluster?.spec?.engine?.type)],
       dbCluster?.spec?.engine?.resources
     ),
     [DbWizardFormFields.resourceSizePerProxy]: isProxy(dbCluster?.spec?.proxy)
       ? matchFieldsValueToResourceSize(
-          dbEngineToDbType(dbCluster?.spec?.engine?.type),
+          PROXIES_DEFAULT_SIZES[
+            dbEngineToDbType(dbCluster?.spec?.engine?.type)
+          ],
           dbCluster?.spec?.proxy.resources
         )
       : ResourceSize.small,
