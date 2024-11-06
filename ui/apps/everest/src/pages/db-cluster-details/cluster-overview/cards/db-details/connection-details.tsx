@@ -78,7 +78,8 @@ export const ConnectionDetails = ({
       <TextField
         label={Messages.fields.connectionUrl}
         value={connectionUrl}
-        sx={{ maxHeight: '50px', marginTop: '20px', width: '450px' }}
+        size="small"
+        sx={{ maxHeight: '50px', marginTop: '20px', width: '100%' }}
         type={showUrl ? 'text' : 'password'}
         InputProps={{
           endAdornment: (
