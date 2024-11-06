@@ -46,6 +46,7 @@ export const ExpandedRow = ({
     port,
     raw,
   } = row.original;
+
   const parsedDiskValues = memoryParser(storage.toString());
   const parsedMemoryValues = memoryParser(memory.toString());
   const cpuResourcesStr = getTotalResourcesDetailedString(
