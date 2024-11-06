@@ -223,6 +223,15 @@ export const insertMoreTestDB = async (cluster: string, namespace: string) => {
   }
 };
 
+export const pgInsertDummyTestDB = async (cluster: string, namespace: string) => {
+  await queryPG(
+    cluster,
+    namespace,
+    'test',
+    'INSERT INTO t1 VALUES (7),(8),(9);'
+  );
+};
+
 export const dropTestDB = async (cluster: string, namespace: string) => {
   const dbType = await getDBType(cluster, namespace);
 

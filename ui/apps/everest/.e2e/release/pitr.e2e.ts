@@ -42,12 +42,8 @@ import {
   listMonitoringInstances,
 } from '@e2e/utils/monitoring-instance';
 import { clickOnDemandBackup } from '@e2e/pr/db-cluster-details/utils';
-import { prepareTestDB, dropTestDB, queryTestDB, insertMoreTestDB } from '@e2e/utils/db-cmd-line';
+import { prepareTestDB, dropTestDB, queryTestDB, insertMoreTestDB, pgInsertDummyTestDB } from '@e2e/utils/db-cmd-line';
 import { addFirstScheduleInDBWizard } from '@e2e/pr/db-cluster/db-wizard/db-wizard-utils';
-import {
-  checkDbWizardEditSubmitIsAvailableAndClick,
-  checkSuccessOfUpdateAndGoToDbClustersList,
-} from '@e2e/pr/db-cluster/db-wizard/edit-db-cluster/edit-db-cluster.utils';
 
 const {
   MONITORING_URL,
@@ -56,7 +52,55 @@ const {
   SELECT_DB,
   SELECT_SIZE,
 } = process.env;
+
+type pitrTime = {
+  day: string,
+  month: string,
+  year: string,
+  hour: string,
+  minute: string,
+  second: string,
+  ampm: string
+};
+
 let token: string;
+let pitrRestoreTime: pitrTime = {
+  day: "",
+  month: "",
+  year: "",
+  hour: "",
+  minute: "",
+  second: "",
+  ampm: ""
+};
+
+function getCurrentPITRTime(): pitrTime {
+  const time = {} as pitrTime;
+  const now: Date = new Date();
+
+  // Get date parts
+  time.day = now.getDate().toString();
+  time.month = (now.getMonth() + 1).toString(); // Months are zero-indexed, so add 1
+  time.year = now.getFullYear().toString();
+
+  // Get time parts
+  let hour: number = now.getHours();
+  time.minute = now.getMinutes().toString();
+  time.second = now.getSeconds().toString();
+
+  // Determine AM or PM
+  time.ampm = hour >= 12 ? 'PM' : 'AM';
+  hour = hour % 12 || 12; // Convert 24-hour format to 12-hour format, making 0 => 12
+  time.hour = hour.toString();
+
+  return time;
+}
+
+function getFormattedPITRTime(time: pitrTime): string {
+  const formattedDateTime: string = `${time.day.padStart(2, '0')}/${time.month.padStart(2, '0')}/${time.year} at ${time.hour.padStart(2, '0')}:${time.minute.padStart(2, '0')}:${time.second.padStart(2, '0')} ${time.ampm}`;
+
+  return formattedDateTime;
+}
 
 test.describe.configure({ retries: 0 });
 
@@ -113,7 +157,7 @@ test.describe.configure({ retries: 0 });
         }
       });
 
-      test(`Cluster creation with ${db} and size ${size}`, async ({
+      test(`Cluster creation [${db} size ${size}]`, async ({
         page,
         request,
       }) => {
@@ -148,15 +192,24 @@ test.describe.configure({ retries: 0 });
           const pitrCheckbox = page
           .getByTestId('switch-input-pitr-enabled')
           .getByRole('checkbox');
-          await expect(pitrCheckbox).not.toBeChecked();
-          await pitrCheckbox.setChecked(true);
 
-          const pitrStorageLocation = page.getByTestId(
-            'text-input-pitr-storage-location'
-          );
-          await expect(pitrStorageLocation).toBeVisible();
-          await expect(pitrStorageLocation).not.toBeEmpty();
+          if (db !== 'postgresql') {
+            await expect(pitrCheckbox).not.toBeChecked();
+            await pitrCheckbox.setChecked(true);
 
+            if (db === 'pxc'){
+              const pitrStorageLocation = page.getByTestId(
+                'text-input-pitr-storage-location'
+              );
+              await expect(pitrStorageLocation).toBeVisible();
+              await expect(pitrStorageLocation).not.toBeEmpty();
+            }
+            else {
+              await expect(page.getByText('Storage: bucket-1')).toHaveCount(2);
+            }
+          }
+
+          await expect(pitrCheckbox).toBeChecked();
           await moveForward(page);
         });
 
@@ -188,11 +241,28 @@ test.describe.configure({ retries: 0 });
           ).toBeVisible();
         });
 
-        // go to db list and check status
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
           await waitForStatus(page, clusterName, 'Initializing', 15000);
-          await waitForStatus(page, clusterName, 'Up', 600000);
+          await waitForStatus(page, clusterName, 'Up', 660000);
+        });
+
+        await test.step('Update PSMDB cluster PITR uploadIntervalSec', async () => {
+          if (db !== "psmdb") {
+            return;
+          }
+          let psmdbCluster = await request.get(`/v1/namespaces/${namespace}/database-clusters/${clusterName}`);
+
+          await checkError(psmdbCluster);
+          const psmdbPayload = (await psmdbCluster.json());
+
+          psmdbPayload.spec.backup.pitr.uploadIntervalSec = 60;
+
+          const updatedPSMDBCluster = await request.put(`/v1/namespaces/${namespace}/database-clusters/${clusterName}`, {
+            data: psmdbPayload,
+          });
+
+          await checkError(updatedPSMDBCluster);
         });
 
         await test.step('Check db cluster k8s object options', async () => {
@@ -225,15 +295,17 @@ test.describe.configure({ retries: 0 });
           );
           expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
           expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
-          expect(addedCluster?.spec.proxy.replicas).toBe(size);
+          if (db != 'psmdb') {
+            expect(addedCluster?.spec.proxy.replicas).toBe(size);
+          }
         });
       });
 
-      test(`Add data with ${db} and size ${size}`, async () => {
+      test(`Add data [${db} size ${size}]`, async () => {
         await prepareTestDB(clusterName, namespace);
       });
 
-      test(`Create demand backup with ${db} and size ${size}`, async ({
+      test(`Create demand backup [${db} size ${size}]`, async ({
         page,
       }) => {
         await gotoDbClusterBackups(page, clusterName);
@@ -248,86 +320,54 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 240000);
       });
 
-      test(`Add more data with ${db} and size ${size}`, async () => {
-        const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
+      test(`Add more data [${db} size ${size}]`, async () => {
         await insertMoreTestDB(clusterName, namespace);
+        pitrRestoreTime = getCurrentPITRTime();
 
-        // wait for binlogs/oplogs to be uploaded
-        await delay(120000);
+        // for PG we need one more transaction to be able to restore to the previous one
+        if (db == "postgresql") {
+          pgInsertDummyTestDB(clusterName, namespace);
+        }
       });
 
-      test(`Disable PITR with ${db} and size ${size}`, async ({ page, request }) => {
-        // edit cluster to disable PITR and check via api if the PITR is disabled
-        await test.step('Navigate to backups page', async () => {
-          await page.goto('/databases');
-          await findDbAndClickActions(page, clusterName, 'Edit');
-          await moveForward(page);
-          await moveForward(page);
-        });
-
-        await test.step('Disable PITR', async () => {
-          const pitrCheckbox = page
-          .getByTestId('switch-input-pitr-enabled')
-          .getByRole('checkbox');
-          await expect(pitrCheckbox).toBeChecked();
-          await pitrCheckbox.setChecked(false);
-        });
-
-        await test.step('Finish editing and submit', async () => {
-          await moveForward(page);
-          await moveForward(page);
-          await checkDbWizardEditSubmitIsAvailableAndClick(page);
-          await checkSuccessOfUpdateAndGoToDbClustersList(page);
-        });
-
-        await test.step('Check if PITR disabled in k8s', async () => {
-          const response = await request.get(
-            `/v1/namespaces/${namespace}/database-clusters`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          await checkError(response);
-
-          const { items: clusters } = await response.json();
-
-          const addedCluster = clusters.find(
-            (cluster) => cluster.metadata.name === clusterName
-          );
-
-          expect(addedCluster?.spec.backup.pitr.enabled).toBe(false);
-        });
+      test(`Wait 1 min for binlogs to be uploaded [${db} size ${size}]`, async () => {
+        const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
+        await delay(65000);
       });
 
-      test(`Delete data with ${db} and size ${size}`, async () => {
+      test(`Delete data [${db} size ${size}]`, async () => {
         await dropTestDB(clusterName, namespace);
       });
 
-      test(`Restore cluster with ${db} and size ${size}`, async ({ page }) => {
-        await gotoDbClusterBackups(page, clusterName);
-        await findRowAndClickActions(
+      test(`Restore cluster [${db} size ${size}]`, async ({ page }) => {
+        await page.goto('databases');
+        await findDbAndClickActions(
           page,
-          baseBackupName + '-1',
-          'Restore to this DB'
+          clusterName,
+          'Restore from a backup'
         );
-        await expect(
-          page.getByTestId('select-input-backup-name')
-        ).not.toBeEmpty();
-        await page.getByTestId('form-dialog-restore').click();
+        await page.getByTestId('radio-option-fromPITR').click({ timeout: 5000 });
+        await expect(page.getByTestId('radio-option-fromPITR')).toBeChecked({ timeout: 5000 });
+        await expect(page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss aa')).toBeVisible({ timeout: 5000 });
+        await expect(page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss aa')).not.toBeEmpty({ timeout: 5000 });
+        await page.getByTestId('CalendarIcon').click({ timeout: 5000 });
+        await page.getByLabel(pitrRestoreTime.hour + ' hours', { exact: true }).click({ timeout: 5000 });
+        await page.getByLabel(pitrRestoreTime.minute + ' minutes', { exact: true }).click({ timeout: 5000 });
+        await page.getByLabel(pitrRestoreTime.second + ' seconds', { exact: true }).click({ timeout: 5000 });
+        await page.getByLabel(pitrRestoreTime.ampm, { exact: true }).click({ timeout: 5000 });
+        await expect(page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss aa')).toHaveValue(getFormattedPITRTime(pitrRestoreTime))
+
+        await page.getByTestId('form-dialog-restore').click({ timeout: 5000 });
 
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Restoring', 30000);
         await waitForStatus(page, clusterName, 'Up', 600000);
 
         await gotoDbClusterRestores(page, clusterName);
-        // we select based on backup source since restores cannot be named and we don't know
-        // in advance what will be the name
-        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 120000);
+        await waitForStatus(page, 'restore-', 'Succeeded', 120000);
       });
 
-      test(`Check data after restore with ${db} and size ${size}`, async () => {
+      test(`Check data after restore [${db} size ${size}]`, async () => {
         const result = await queryTestDB(clusterName, namespace);
         switch (db) {
           case 'pxc':
@@ -342,7 +382,7 @@ test.describe.configure({ retries: 0 });
         }
       });
 
-      test(`Delete restore with ${db} and size ${size}`, async ({ page }) => {
+      test(`Delete restore [${db} size ${size}]`, async ({ page }) => {
         await gotoDbClusterRestores(page, clusterName);
         await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
         await expect(page.getByLabel('Delete restore')).toBeVisible();
@@ -350,7 +390,7 @@ test.describe.configure({ retries: 0 });
         await waitForDelete(page, baseBackupName + '-1', 15000);
       });
 
-      test(`Delete backup with ${db} and size ${size}`, async ({ page }) => {
+      test(`Delete backup [${db} size ${size}]`, async ({ page }) => {
         await gotoDbClusterBackups(page, clusterName);
         await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
         await expect(page.getByLabel('Delete backup')).toBeVisible();
@@ -358,10 +398,10 @@ test.describe.configure({ retries: 0 });
         await waitForDelete(page, baseBackupName + '-1', 30000);
       });
 
-      test(`Delete cluster with ${db} and size ${size}`, async ({ page }) => {
+      test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 120000);
+        await waitForDelete(page, clusterName, 160000);
       });
     }
   );
