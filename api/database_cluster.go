@@ -430,7 +430,7 @@ func (e *EverestServer) GetDatabaseClusterPitr(ctx echo.Context, namespace, name
 
 	latestBackup := latestSuccessfulBackup(backups.Items)
 
-	backupTime := latestBackup.Status.CreatedAt.UTC()
+	backupTime := latestBackup.Status.CompletedAt.UTC()
 	var latest *time.Time
 	// if there is the LatestRestorableTime set in the CR, use it
 	// except of psmdb which has a bug https://perconadev.atlassian.net/browse/K8SPSMDB-1186
