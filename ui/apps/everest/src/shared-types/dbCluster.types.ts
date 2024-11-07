@@ -12,7 +12,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { DbEngineType, ProxyType } from './dbEngines.types';
+import { ProxyType } from '@percona/types';
+import { DbEngineType } from './dbEngines.types';
 
 export enum ProxyExposeType {
   internal = 'internal',
@@ -70,12 +71,14 @@ interface Engine {
   config?: string;
 }
 
+export interface ProxyExposeConfig {
+  type: ProxyExposeType;
+  ipSourceRanges?: string[];
+}
+
 export interface Proxy {
   replicas?: number;
-  expose: {
-    type: ProxyExposeType;
-    ipSourceRanges?: string[];
-  };
+  expose: ProxyExposeConfig;
   resources?: Resources;
   type: ProxyType;
 }
@@ -106,7 +109,7 @@ export interface Spec {
   allowUnsafeConfiguration?: boolean;
   backup?: Backup;
   engine: Engine;
-  proxy: Proxy | Record<string, never>;
+  proxy: Proxy | ProxyExposeConfig;
   paused?: boolean;
   dataSource?: DataSource;
   monitoring: Monitoring;
@@ -149,6 +152,7 @@ export type GetDbClusterPayload = {
 export type ClusterCredentials = {
   username: string;
   password: string;
+  connectionUrl?: string;
 };
 
 export type GetDbClusterCredentialsPayload = ClusterCredentials;
