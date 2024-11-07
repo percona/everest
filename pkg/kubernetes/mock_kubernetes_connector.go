@@ -971,24 +971,6 @@ func (_m *MockKubernetesConnector) GetServerVersion() (*pkgversion.Info, error) 
 	return r0, r1
 }
 
-// InstallOLMOperator provides a mock function with given fields: ctx, upgrade
-func (_m *MockKubernetesConnector) InstallOLMOperator(ctx context.Context, upgrade bool) error {
-	ret := _m.Called(ctx, upgrade)
-
-	if len(ret) == 0 {
-		panic("no return value specified for InstallOLMOperator")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, bool) error); ok {
-		r0 = rf(ctx, upgrade)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // InstallOperator provides a mock function with given fields: ctx, req
 func (_m *MockKubernetesConnector) InstallOperator(ctx context.Context, req InstallOperatorRequest) error {
 	ret := _m.Called(ctx, req)
@@ -1349,24 +1331,6 @@ func (_m *MockKubernetesConnector) OperatorInstalledVersion(ctx context.Context,
 	}
 
 	return r0, r1
-}
-
-// ProvisionMonitoring provides a mock function with given fields: namespace
-func (_m *MockKubernetesConnector) ProvisionMonitoring(namespace string) error {
-	ret := _m.Called(namespace)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ProvisionMonitoring")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(namespace)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 // RestartDeployment provides a mock function with given fields: ctx, name, namespace

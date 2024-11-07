@@ -86,8 +86,6 @@ type KubernetesConnector interface {
 	GetLogs(ctx context.Context, containerStatuses []corev1.ContainerStatus, pod, container string) ([]string, error)
 	// GetEvents returns pod's events as a slice of strings.
 	GetEvents(ctx context.Context, pod string) ([]string, error)
-	// InstallOLMOperator installs OLM operator.
-	InstallOLMOperator(ctx context.Context, upgrade bool) error
 	// GetCatalogSource returns catalog source.
 	GetCatalogSource(ctx context.Context, name, namespace string) (*olmv1alpha1.CatalogSource, error)
 	// InstallOperator installs an operator via OLM.
@@ -110,8 +108,6 @@ type KubernetesConnector interface {
 	DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error
 	// DeleteObject deletes an object.
 	DeleteObject(obj runtime.Object) error
-	// ProvisionMonitoring provisions PMM monitoring.
-	ProvisionMonitoring(namespace string) error
 	// RestartOperator restarts the deployment of an operator managed by OLM.
 	//
 	//nolint:funlen

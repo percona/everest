@@ -17,13 +17,9 @@
 package kubernetes
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"io/fs"
-	"log"
 	"net/http"
 	"slices"
 	"sort"
@@ -39,17 +35,13 @@ import (
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	"github.com/percona/everest/data"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes/client"
 )
@@ -352,99 +344,9 @@ func (k *Kubernetes) GetEvents(ctx context.Context, pod string) ([]string, error
 	return lines, nil
 }
 
-// InstallOLMOperator installs OLM operator.
-func (k *Kubernetes) InstallOLMOperator(ctx context.Context, upgrade bool) error {
-	deployment, err := k.client.GetDeployment(ctx, olmOperatorName, OLMNamespace)
-	if err == nil && deployment != nil && deployment.ObjectMeta.Name != "" && !upgrade {
-		k.l.Info("OLM operator is already installed")
-		return nil // already installed
-	}
-
-	resources, err := k.applyResources(ctx)
-	if err != nil {
-		return err
-	}
-
-	if err := k.waitForDeploymentRollout(ctx); err != nil {
-		return err
-	}
-
-	if err := k.applyCSVs(ctx, resources); err != nil {
-		return err
-	}
-
-	if err := k.client.DoRolloutWait(ctx, types.NamespacedName{Namespace: OLMNamespace, Name: "packageserver"}); err != nil {
-		return errors.Join(err, errors.New("error while waiting for deployment rollout"))
-	}
-
-	return nil
-}
-
-func (k *Kubernetes) applyCSVs(ctx context.Context, resources []unstructured.Unstructured) error {
-	subscriptions := filterResources(resources, func(r unstructured.Unstructured) bool {
-		return r.GroupVersionKind() == schema.GroupVersionKind{
-			Group:   olmv1alpha1.GroupName,
-			Version: olmv1alpha1.GroupVersion,
-			Kind:    olmv1alpha1.SubscriptionKind,
-		}
-	})
-
-	for _, sub := range subscriptions {
-		subscriptionKey := types.NamespacedName{Namespace: sub.GetNamespace(), Name: sub.GetName()}
-		log.Printf("Waiting for subscription/%s to install CSV", subscriptionKey.Name)
-		csvKey, err := k.client.GetSubscriptionCSV(ctx, subscriptionKey)
-		if err != nil {
-			return fmt.Errorf("subscription/%s failed to install CSV: %w", subscriptionKey.Name, err)
-		}
-		log.Printf("Waiting for clusterserviceversion/%s to reach 'Succeeded' phase", csvKey.Name)
-		if err := k.client.DoCSVWait(ctx, csvKey); err != nil {
-			return fmt.Errorf("clusterserviceversion/%s failed to reach 'Succeeded' phase", csvKey.Name)
-		}
-	}
-
-	return nil
-}
-
 // GetCatalogSource returns catalog source.
 func (k *Kubernetes) GetCatalogSource(ctx context.Context, name, namespace string) (*olmv1alpha1.CatalogSource, error) {
 	return k.client.OLM().OperatorsV1alpha1().CatalogSources(namespace).Get(ctx, name, metav1.GetOptions{})
-}
-
-func (k *Kubernetes) applyResources(ctx context.Context) ([]unstructured.Unstructured, error) {
-	files := []string{
-		"crds/olm/crds.yaml",
-		"crds/olm/olm.yaml",
-	}
-
-	resources := []unstructured.Unstructured{}
-	for _, f := range files {
-		data, err := fs.ReadFile(data.OLMCRDs, f)
-		if err != nil {
-			return nil, errors.Join(err, fmt.Errorf("failed to read %q file", f))
-		}
-
-		applyFile := func(context.Context) (bool, error) {
-			k.l.Debugf("Applying %q file", f)
-			if err := k.client.ApplyFile(data); err != nil {
-				k.l.Debug(errors.Join(err, fmt.Errorf("cannot apply %q file", f)))
-				k.l.Warn(fmt.Errorf("cannot apply %q file. Reapplying it", f))
-				return false, nil
-			}
-			return true, nil
-		}
-
-		if err := wait.PollUntilContextTimeout(ctx, time.Second, 10*time.Minute, true, applyFile); err != nil { //nolint:mnd
-			return nil, errors.Join(err, fmt.Errorf("cannot apply %q file", f))
-		}
-
-		r, err := decodeResources(data)
-		if err != nil {
-			return nil, errors.Join(err, fmt.Errorf("cannot decode resources in %q", f))
-		}
-		resources = append(resources, r...)
-	}
-
-	return resources, nil
 }
 
 func (k *Kubernetes) waitForDeploymentRollout(ctx context.Context) error {
@@ -459,36 +361,6 @@ func (k *Kubernetes) waitForDeploymentRollout(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func decodeResources(f []byte) ([]unstructured.Unstructured, error) {
-	var err error
-	objs := []unstructured.Unstructured{}
-	dec := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(f), resourcesBufferSize)
-	for {
-		var u unstructured.Unstructured
-		err = dec.Decode(&u)
-		if errors.Is(err, io.EOF) {
-			break
-		} else if err != nil {
-			return nil, err
-		}
-		objs = append(objs, u)
-	}
-
-	return objs, nil
-}
-
-func filterResources(resources []unstructured.Unstructured, filter func(unstructured.
-	Unstructured) bool,
-) []unstructured.Unstructured {
-	filtered := make([]unstructured.Unstructured, 0, len(resources))
-	for _, r := range resources {
-		if filter(r) {
-			filtered = append(filtered, r)
-		}
-	}
-	return filtered
 }
 
 // InstallOperatorRequest holds the fields to make an operator install request.
@@ -767,51 +639,6 @@ func (k *Kubernetes) DeleteClusterServiceVersion(
 // DeleteObject deletes an object.
 func (k *Kubernetes) DeleteObject(obj runtime.Object) error {
 	return k.client.DeleteObject(obj)
-}
-
-// ProvisionMonitoring provisions PMM monitoring.
-func (k *Kubernetes) ProvisionMonitoring(namespace string) error {
-	for _, path := range k.victoriaMetricsCRDFiles() {
-		file, err := data.OLMCRDs.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		// retry 3 times because applying vmagent spec might take some time.
-		for range maxRetries {
-			k.l.Debugf("Applying file %s", path)
-
-			err = k.client.ApplyManifestFile(file, namespace)
-			if err != nil {
-				k.l.Debugf("%s: retrying after error: %s", path, err)
-				time.Sleep(retryInterval)
-				continue
-			}
-			break
-		}
-		if err != nil {
-			return errors.Join(err, fmt.Errorf("cannot apply file: %q", path))
-		}
-	}
-
-	return nil
-}
-
-func (k *Kubernetes) victoriaMetricsCRDFiles() []string {
-	return []string{
-		"crds/victoriametrics/crs/vmagent_rbac_account.yaml",
-		"crds/victoriametrics/crs/vmagent_rbac_role.yaml",
-		"crds/victoriametrics/crs/vmagent_rbac_role_binding.yaml",
-		"crds/victoriametrics/crs/vmnodescrape-cadvisor.yaml",
-		"crds/victoriametrics/crs/vmnodescrape-kubelet.yaml",
-		"crds/victoriametrics/crs/vmpodscrape.yaml",
-		"crds/victoriametrics/kube-state-metrics/service-account.yaml",
-		"crds/victoriametrics/kube-state-metrics/cluster-role.yaml",
-		"crds/victoriametrics/kube-state-metrics/cluster-role-binding.yaml",
-		"crds/victoriametrics/kube-state-metrics/configmap.yaml",
-		"crds/victoriametrics/kube-state-metrics/deployment.yaml",
-		"crds/victoriametrics/kube-state-metrics/service.yaml",
-		"crds/victoriametrics/kube-state-metrics.yaml",
-	}
 }
 
 // RestartOperator restarts the deployment of an operator managed by OLM.
