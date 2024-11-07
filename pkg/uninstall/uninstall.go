@@ -158,16 +158,23 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 		},
 	})
 
-	// Check if Everest was installed via Helm, and delete the chart.
 	chartExists, err := u.helmReleaseExists()
 	if err != nil {
 		return fmt.Errorf("failed to check if Helm release exists: %w", err)
 	}
+
+	uninstallSteps = append(uninstallSteps, common.Step{
+		Desc: "Delete database namespaces",
+		F: func(ctx context.Context) error {
+			return u.deleteDBNamespaces(ctx, chartExists)
+		},
+	})
+
 	if chartExists {
-		u.l.Info("Found Helm release, deleting charts")
-		uninstallSteps = append(uninstallSteps, u.deleteHelmReleases()...)
+		u.l.Info("Found Helm release, deleting chart")
+		uninstallSteps = append(uninstallSteps, u.deleteEverestHelmChart()...)
 	} else {
-		// legacy uninstall ...
+		// Delete manifests.
 	}
 
 	uninstallSteps = append(uninstallSteps, common.Step{
@@ -177,9 +184,6 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 		},
 	})
 
-	// All resources with finalizers in the system namespace (DBCs and
-	// BackupStorages) have already been deleted, so we can delete the
-	// namespace directly
 	uninstallSteps = append(uninstallSteps, common.Step{
 		Desc: fmt.Sprintf("Delete namespace '%s'", common.SystemNamespace),
 		F: func(ctx context.Context) error {
@@ -187,12 +191,21 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 		},
 	})
 
-	uninstallSteps = append(uninstallSteps, common.Step{
-		Desc: "Delete database namespaces",
-		F: func(ctx context.Context) error {
-			return u.deleteDBNamespaces(ctx)
-		},
-	})
+	// If the chart does not exist, it is possible that Everest was installed without Helm.
+	// We need to check if OLM is installed and delete it.
+	if !chartExists {
+		_, err := u.kubeClient.GetNamespace(ctx, kubernetes.OLMNamespace)
+		if err != nil && !k8serrors.IsNotFound(err) {
+			return err
+		} else if err == nil {
+			uninstallSteps = append(uninstallSteps, common.Step{
+				Desc: "Delete OLM",
+				F: func(ctx context.Context) error {
+					return u.deleteOLM(ctx, kubernetes.OLMNamespace)
+				},
+			})
+		}
+	}
 
 	var out io.Writer = os.Stdout
 	if !u.config.Pretty {
@@ -218,7 +231,7 @@ func (u *Uninstall) deleteManifests() []common.Step {
 	return nil
 }
 
-func (u *Uninstall) deleteHelmReleases() []common.Step {
+func (u *Uninstall) deleteEverestHelmChart() []common.Step {
 	steps := []common.Step{}
 	// Delete core components.
 	steps = append(steps, common.Step{
@@ -232,28 +245,6 @@ func (u *Uninstall) deleteHelmReleases() []common.Step {
 			return uninstaller.Uninstall(common.SystemNamespace)
 		},
 	})
-
-	// Ensure system namespaces are gone.
-	namespacesToDelete := []string{common.SystemNamespace, common.MonitoringNamespace}
-	if u.clusterType != kubernetes.ClusterTypeOpenShift {
-		namespacesToDelete = append(namespacesToDelete, kubernetes.OLMNamespace)
-	}
-	for _, ns := range namespacesToDelete {
-		steps = append(steps, common.Step{
-			Desc: fmt.Sprintf("Delete '%s' namespace", ns),
-			F: func(ctx context.Context) error {
-				return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
-					_, err := u.kubeClient.GetNamespace(ctx, ns)
-					if k8serrors.IsNotFound(err) {
-						return true, nil
-					} else if err != nil {
-						return false, err
-					}
-					return false, u.kubeClient.DeleteNamespace(ctx, ns)
-				})
-			},
-		})
-	}
 	return steps
 }
 
@@ -408,7 +399,7 @@ func (u *Uninstall) deleteNamespaces(ctx context.Context, namespaces []string) e
 	})
 }
 
-func (u *Uninstall) deleteDBNamespaces(ctx context.Context) error {
+func (u *Uninstall) deleteDBNamespaces(ctx context.Context, deleteChart bool) error {
 	u.l.Info("Trying to delete database namespaces")
 	namespaces, err := u.kubeClient.GetDBNamespaces(ctx)
 	if err != nil {
@@ -418,7 +409,22 @@ func (u *Uninstall) deleteDBNamespaces(ctx context.Context) error {
 		u.l.Info("No database namespaces found")
 		return nil
 	}
+	if deleteChart {
+		for _, ns := range namespaces {
+			if err := u.deleteDBNamespaceHelmChart(ctx, ns); err != nil {
+				return errors.Join(err, errors.New("failed to deleteDBNamespaceHelmChart"))
+			}
+		}
+	}
 	return u.deleteNamespaces(ctx, namespaces)
+}
+
+func (u *Uninstall) deleteDBNamespaceHelmChart(ctx context.Context, namespace string) error {
+	uninstaller, err := helm.NewUninstaller(namespace, u.config.KubeconfigPath)
+	if err != nil {
+		return err
+	}
+	return uninstaller.Uninstall(namespace)
 }
 
 func (u *Uninstall) deleteBackupStorages(ctx context.Context) error {
