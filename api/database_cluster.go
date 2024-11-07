@@ -87,8 +87,9 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 	return err
 }
 
-// enforceDBClusterRBAC checks if the user has permission to read the backup-storage and monitoring-instances associated
-// with the provided DB cluster.
+// enforceDBClusterRBAC checks if the user has permission to:
+// - read the backup-storage and monitoring-instances associated with the provided DB cluster
+// - access the database engine associated with the DB cluster
 func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.DatabaseCluster) error {
 	// Check if the user has permissions for this DB cluster?
 	if err := e.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), db.GetName())); err != nil {
@@ -124,6 +125,24 @@ func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.Da
 			}
 			return err
 		}
+	}
+	// Check if the user has permissions for database engine?
+	if err := e.enforceDBClusterEngineRBAC(user, db); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *EverestServer) enforceDBClusterEngineRBAC(user string, db *everestv1alpha1.DatabaseCluster) error {
+	engineName, ok := operatorEngine[everestv1alpha1.EngineType(db.Spec.Engine.Type)]
+	if !ok {
+		return errors.New("unsupported database engine")
+	}
+	if err := e.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), engineName)); err != nil {
+		if !errors.Is(err, errInsufficientPermissions) {
+			e.l.Error(errors.Join(err, errors.New("failed to check db-engine permissions")))
+		}
+		return err
 	}
 	return nil
 }
@@ -165,6 +184,24 @@ func (e *EverestServer) DeleteDatabaseCluster(
 ) error {
 	cleanupStorage := pointer.Get(params.CleanupBackupStorage)
 	reqCtx := ctx.Request().Context()
+
+	db, err := e.kubeClient.GetDatabaseCluster(reqCtx, namespace, name)
+	if err != nil {
+		return errors.Join(err, errors.New("could not get Database Cluster"))
+	}
+
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		err = errors.Join(err, errors.New("cannot get user from request context"))
+		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
+	}
+
+	if err := e.enforceDBClusterEngineRBAC(user, db); err != nil {
+		if errors.Is(err, errInsufficientPermissions) {
+			return err
+		}
+		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
+	}
 
 	backups, err := e.kubeClient.ListDatabaseClusterBackups(reqCtx, namespace, metav1.ListOptions{})
 	if err != nil {
@@ -314,7 +351,20 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 		return errors.Join(err, errors.New("could not get old Database Cluster"))
 	}
 
-	if err := e.validateDatabaseClusterOnUpdate(ctx, dbc, oldDB); err != nil {
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		err = errors.Join(err, errors.New("cannot get user from request context"))
+		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
+	}
+
+	if err := e.validateDatabaseClusterOnUpdate(user, dbc, oldDB); err != nil {
+		if errors.Is(err, errInsufficientPermissions) {
+			return err
+		}
+		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
+	}
+
+	if err := e.enforceDBClusterEngineRBAC(user, oldDB); err != nil {
 		if errors.Is(err, errInsufficientPermissions) {
 			return err
 		}

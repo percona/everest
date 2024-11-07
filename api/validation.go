@@ -1240,7 +1240,7 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 }
 
 func (e *EverestServer) validateDatabaseClusterOnUpdate(
-	c echo.Context,
+	user string,
 	dbc *DatabaseCluster,
 	oldDB *everestv1alpha1.DatabaseCluster,
 ) error {
@@ -1265,10 +1265,6 @@ func (e *EverestServer) validateDatabaseClusterOnUpdate(
 		return err
 	}
 
-	user, err := rbac.GetUser(c)
-	if err != nil {
-		return errors.Join(err, errors.New("cannot get user from request context"))
-	}
 	if err := e.validateBackupScheduledUpdate(user, dbc, oldDB); err != nil {
 		return err
 	}
