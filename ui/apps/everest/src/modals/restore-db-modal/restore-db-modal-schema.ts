@@ -1,3 +1,4 @@
+import { isAfter, isBefore, isDate } from 'date-fns';
 import { z } from 'zod';
 
 export enum RestoreDbFields {
@@ -11,16 +12,12 @@ export enum BackuptypeValues {
   fromPitr = 'fromPITR',
 }
 
-export const schema = (minDate: Date, maxDate: Date, gaps: boolean) =>
+export const schema = (gaps: boolean, minDate?: Date, maxDate?: Date) =>
   z
     .object({
       [RestoreDbFields.backupType]: z.nativeEnum(BackuptypeValues),
       [RestoreDbFields.backupName]: z.string().optional(),
-      [RestoreDbFields.pitrBackup]: z
-        .date()
-        .min(minDate)
-        .max(maxDate)
-        .optional(),
+      [RestoreDbFields.pitrBackup]: z.date().optional(),
     })
     .superRefine(({ backupType, backupName, pitrBackup }, ctx) => {
       if (backupType === BackuptypeValues.fromBackup) {
@@ -33,11 +30,24 @@ export const schema = (minDate: Date, maxDate: Date, gaps: boolean) =>
           });
         }
       } else {
+        if (isDate(minDate) && isDate(maxDate) && isDate(pitrBackup)) {
+          if (isAfter(pitrBackup, maxDate) || isBefore(pitrBackup, minDate)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.invalid_date,
+            });
+          }
+        } else {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+          });
+        }
+
         if (gaps) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
           });
         }
+
         if (!pitrBackup) {
           ctx.addIssue({
             code: z.ZodIssueCode.invalid_date,
