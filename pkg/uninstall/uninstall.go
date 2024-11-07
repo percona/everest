@@ -173,8 +173,6 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 	if chartExists {
 		u.l.Info("Found Helm release, deleting chart")
 		uninstallSteps = append(uninstallSteps, u.deleteEverestHelmChart()...)
-	} else {
-		// Delete manifests.
 	}
 
 	uninstallSteps = append(uninstallSteps, common.Step{
@@ -235,9 +233,31 @@ func (u *Uninstall) deleteEverestHelmChart() []common.Step {
 	steps := []common.Step{}
 	// Delete core components.
 	steps = append(steps, common.Step{
-		Desc: fmt.Sprintf("Deleting Helm chart release '%s' in namespace '%s'",
+		Desc: fmt.Sprintf("Delete Helm chart release '%s' in namespace '%s'",
 			common.SystemNamespace, common.SystemNamespace),
 		F: func(ctx context.Context) error {
+			// First delete the CSVs in monitoring namespace, otherwise the deletion of the namespace will be stuck.
+			if err := wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
+				csvs, err := u.kubeClient.ListClusterServiceVersion(ctx, common.MonitoringNamespace)
+				if err != nil {
+					return false, err
+				}
+				if len(csvs.Items) == 0 {
+					return true, nil
+				}
+				for _, csv := range csvs.Items {
+					if err := u.kubeClient.DeleteClusterServiceVersion(ctx, types.NamespacedName{
+						Name:      csv.Name,
+						Namespace: csv.Namespace,
+					}); err != nil {
+						return false, err
+					}
+				}
+				return false, nil
+			}); err != nil {
+				return err
+			}
+			// Delete helm chart.
 			uninstaller, err := helm.NewUninstaller(common.SystemNamespace, u.config.KubeconfigPath)
 			if err != nil {
 				return fmt.Errorf("failed to create Helm uninstaller: %w", err)
