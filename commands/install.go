@@ -48,7 +48,7 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 			if err != nil {
 				os.Exit(1)
 			}
-			bindHelmValues(c)
+			bindHelmOpts(c)
 
 			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
 			c.Pretty = !enableLogging
@@ -113,7 +113,7 @@ func initInstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag("json", cmd.Flags().Lookup("json"))       //nolint:errcheck,gosec
 }
 
-func bindHelmValues(cfg *install.Config) {
+func bindHelmOpts(cfg *install.Config) {
 	cfg.CLIOptions.Values.Values = viper.GetStringSlice(install.FlagHelmSet)
 	cfg.CLIOptions.Values.ValueFiles = viper.GetStringSlice(install.FlagHelmValuesFiles)
 	cfg.CLIOptions.ChartDir = viper.GetString(install.FlagChartDir)
