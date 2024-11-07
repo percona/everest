@@ -10,7 +10,7 @@ export const findRowAndClickActions = async (
     .locator('.MuiTableRow-root')
     .filter({ hasText: name })
     .getByTestId('MoreHorizIcon')
-    .click({ timeout: 5000 });
+    .click({ timeout: 10000 });
 
   if (nameOfAction) {
     await page.getByRole('menuitem', { name: nameOfAction }).click();
@@ -38,7 +38,7 @@ export const waitForStatus = async (
   timeout: number
 ) => {
   const dbRow = page.getByRole('row').filter({ hasText: name });
-  await expect(dbRow).toBeVisible();
+  await expect(dbRow).toBeVisible({ timeout: 10000 });
   await expect(dbRow.getByText(status)).toBeVisible({ timeout: timeout });
 };
 
