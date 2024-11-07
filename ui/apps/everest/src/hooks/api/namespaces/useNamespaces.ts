@@ -134,7 +134,7 @@ export const useDBEnginesForDbEngineTypes = (
           type: type,
           dbEngines: dbEnginesForDbType,
           //available at least in one namespace
-          available: dbEnginesForDbType?.length > 0 ? true : false, 
+          available: dbEnginesForDbType?.length > 0 ? true : false,
         };
       });
     } else {

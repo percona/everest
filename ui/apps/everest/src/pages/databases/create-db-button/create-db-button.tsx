@@ -53,7 +53,7 @@ export const CreateDbButton = () => {
         aria-expanded={open ? 'true' : undefined}
         onClick={handleClick}
         endIcon={<ArrowDropDownIcon />}
-        disabled={availableDbTypes?.length===0} //TODO 1304 ?? should we block button itself during loading? What if no dbEngin
+        disabled={availableDbTypes?.length === 0} //TODO 1304 ?? should we block button itself during loading? What if no dbEngin
       >
         {Messages.createDatabase}
       </Button>

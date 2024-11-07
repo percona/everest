@@ -10,7 +10,7 @@ import { Messages } from './namespaces.messages';
 import { OperatorCell } from './OperatorCell';
 
 export const Namespaces = () => {
-  const {results: dbEngines} = useDBEnginesForNamespaces();
+  const { results: dbEngines } = useDBEnginesForNamespaces();
   const operatorsUpgradePlan = useQueries({
     queries: dbEngines.map((item) => ({
       queryKey: ['operatorUpgradePlan', item.namespace],
