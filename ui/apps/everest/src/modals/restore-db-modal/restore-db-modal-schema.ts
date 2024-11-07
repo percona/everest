@@ -36,12 +36,18 @@ export const schema = (gaps: boolean, minDate?: Date, maxDate?: Date) =>
               code: z.ZodIssueCode.invalid_date,
             });
           }
+        } else {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+          });
         }
+
         if (gaps) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
           });
         }
+
         if (!pitrBackup) {
           ctx.addIssue({
             code: z.ZodIssueCode.invalid_date,
