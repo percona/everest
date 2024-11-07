@@ -266,13 +266,13 @@ func (o *Install) Run(ctx context.Context) error {
 func (o *Install) DBNamespaceInstallValues() values.Options {
 	v := []string{}
 	if o.config.Operator.PXC {
-		v = append(v, "pxc.enabled=true")
+		v = append(v, "pxc=true")
 	}
 	if o.config.Operator.PG {
-		v = append(v, "pg.enabled=true")
+		v = append(v, "pg=true")
 	}
 	if o.config.Operator.PSMDB {
-		v = append(v, "psmdb.enabled=true")
+		v = append(v, "psmdb=true")
 	}
 	v = append(v, fmt.Sprintf("telemetry=%t", !o.config.DisableTelemetry))
 	return values.Options{Values: v}

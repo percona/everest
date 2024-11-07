@@ -14,7 +14,7 @@
 // limitations under the License.
 // Package install holds the main logic for installation commands.
 
-// Package helm ...
+// Package helm contains the logic to install and uninstall Helm charts.
 package helm
 
 import (
