@@ -13,106 +13,90 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useMemo, useState } from 'react';
-import { Box, Button, Menu, MenuItem } from '@mui/material';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import { useState } from 'react';
+import { Box, Button, Menu, MenuItem, Skeleton, Stack } from '@mui/material';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import { Messages } from '../dbClusterView.messages';
-import { DbEngineType, DbType } from '@percona/types';
-import { useAvailableDBEngineTypes } from 'hooks';
+import { useDBEnginesForDbEngineTypes } from 'hooks';
 import { dbEngineToDbType } from '@percona/utils';
 import { humanizeDbType } from '@percona/ui-lib';
+import { Link } from 'react-router-dom';
 
 export const CreateDbButton = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const open = Boolean(anchorEl);
 
+  const [availableDbTypes, availableDbTypesFetching, refetch] =
+    useDBEnginesForDbEngineTypes();
+
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
+    if (!availableDbTypesFetching) {
+      refetch();
+    }
   };
   const closeMenu = () => {
     setAnchorEl(null);
   };
-  // TODO cases:
-  // No one db in all namespaces
-  // No db at all
-  // Loading displaing?
-
-  const {availableDbEngineTypes, availableDbEngineTypesFetching} = useAvailableDBEngineTypes();
-  // const dbEnginesFetching = dbEnginesForNamespaces.some(
-  //   (result) => result.isFetching
-  // );
-
-  // const getAvailableDbEngines = useMemo(()=> {
-  //   const dbEngines = Object.keys(DbEngineType).forEach(item => {
-
-  //   });
-  //   return dbEngines;
-  // },[dbEnginesForNamespaces])
-
-  debugger;
-
-  //TODO
-  //   const nodbAvailable = false;
-
-  // {dbEnginesFetching || !dbEngines.length ? (
-  //     // This is roughly the height of the buttons
-  //     <Skeleton height={57} variant="rectangular" />
-  //   ) : (
-  //     <ToggleButtonGroupInput
-  //       name={DbWizardFormFields.dbType}
-  //       toggleButtonGroupProps={{
-  //         sx: { mb: 2 },
-  //       }}
-  //     >
-  //       {dbEngines.map(({ type }) => (
-  //         <DbToggleCard
-  //           key={type}
-  //           value={dbEngineToDbType(type)}
-  //           disabled={
-  //             (mode === 'edit' || mode === 'restoreFromBackup') &&
-  //             dbType !== dbEngineToDbType(type)
-  //           }
-  //           onClick={() => {
-  //             if (dbEngineToDbType(type) !== dbType) {
-  //               onDbTypeChange(dbEngineToDbType(type));
-  //             }
-  //           }}
-  //         />
-  //       ))}
-  //     </ToggleButtonGroupInput>
-  //   )}
 
   return (
     <Box>
       <Button
-        data-testid="create-db-button"
+        data-testid="add-db-cluster-button"
         size="small"
         variant="contained"
         sx={{ display: 'flex' }}
-        aria-controls={open ? 'create-db-button-menu' : undefined}
+        aria-controls={open ? 'add-db-cluster-button-menu' : undefined}
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
         onClick={handleClick}
         endIcon={<ArrowDropDownIcon />}
+        disabled={availableDbTypes?.length===0} //TODO 1304 ?? should we block button itself during loading? What if no dbEngin
       >
         {Messages.createDatabase}
       </Button>
       <Menu
-        id="create-db-button-menu"
+        id="add-db-cluster-button-menu"
         anchorEl={anchorEl}
         open={open}
         onClose={closeMenu}
         onClick={closeMenu}
         MenuListProps={{
-          'aria-labelledby': 'row-actions-button',
+          'aria-labelledby': 'basic-button',
+          sx: { width: anchorEl && anchorEl.offsetWidth },
         }}
       >
-        {availableDbEngineTypes.map(item => <MenuItem data-testid={item.type} disabled={!item.available} key={item.type} onClick={() => {console.log(item.type)}}>
-          {humanizeDbType(dbEngineToDbType(item.type))}
-        </MenuItem>)}
+        {availableDbTypesFetching ? (
+          <Stack sx={{ gap: '3px' }}>
+            <Skeleton variant="rectangular" height={38} />
+            <Skeleton variant="rectangular" height={38} />
+            <Skeleton variant="rectangular" height={38} />
+          </Stack>
+        ) : (
+          <>
+            {availableDbTypes.map((item) => (
+              <MenuItem
+                data-testid={`add-db-cluster-button-${item.type}`}
+                disabled={!item.available}
+                key={item.type}
+                component={Link}
+                to="/databases/new"
+                sx={{
+                  display: 'flex',
+                  gap: 1,
+                  alignItems: 'center',
+                  px: 2,
+                  py: '10px',
+                }}
+                state={{ selectedDbEngine: item.type }}
+              >
+                {humanizeDbType(dbEngineToDbType(item.type))}
+              </MenuItem>
+            ))}
+          </>
+        )}
       </Menu>
     </Box>
   );

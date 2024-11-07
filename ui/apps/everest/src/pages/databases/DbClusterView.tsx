@@ -13,15 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import AddIcon from '@mui/icons-material/Add';
-import { Box, Button, Stack } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import StatusField from 'components/status-field';
 import { useDbActions } from 'hooks/api/db-cluster/useDbActions';
 import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { type MRT_ColumnDef } from 'material-react-table';
 import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbEngineType } from 'shared-types/dbEngines.types';
 import { useDBClustersForNamespaces } from 'hooks/api/db-clusters/useDbClusters';
@@ -205,22 +204,7 @@ export const DbClusterView = () => {
             },
           })}
           renderTopToolbarCustomActions={() =>
-            canCreate.length > 0 && (
-              <>
-                <Button
-                  size="small"
-                  startIcon={<AddIcon />}
-                  component={Link}
-                  to="/databases/new"
-                  variant="contained"
-                  data-testid="add-db-cluster-button"
-                  sx={{ display: 'flex' }}
-                >
-                  {Messages.createDatabase}
-                </Button>
-                <CreateDbButton />
-              </>
-            )
+            canCreate.length > 0 && <CreateDbButton />
           }
           hideExpandAllIcon
         />

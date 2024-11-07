@@ -21,6 +21,7 @@ import { getDbEnginesFn } from 'api/dbEngineApi';
 import { DbEngine } from 'shared-types/dbEngines.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import { DbEngineType } from '@percona/types';
+import { useCallback, useMemo } from 'react';
 
 export const NAMESPACES_QUERY_KEY = 'namespace';
 
@@ -50,31 +51,102 @@ export const useDBEnginesForNamespaces = (retrieveUpgradingEngines = false) => {
   const queryResults = useQueries({
     queries,
   });
+
+  const refetchAll = useCallback(() => {
+    queryResults.forEach((result) => result.refetch());
+  }, [queryResults]);
+
   const results = queryResults.map((item, i) => ({
     namespace: namespaces[i],
     ...item,
   }));
-  return results;
+  return { results, refetchAll };
 };
 
-export const useAvailableDBEngineTypes = (): {availableDbEngineTypes: {type: DbEngineType, available: boolean}[],availableDbEngineTypesFetching: boolean } => {
-  const dbEnginesForNamespaces = useDBEnginesForNamespaces();
+export interface DbEngineForNamedpaceExpanded {
+  dbEngine?: DbEngine;
+  namespace: string;
+}
+export interface DbEnginesForDbTypeExpanded {
+  type: DbEngineType;
+  available: boolean;
+  dbEngines: DbEngineForNamedpaceExpanded[];
+}
+export const useDBEnginesForDbEngineTypes = (
+  dbEngineType?: DbEngineType
+): [
+  dbEnginesFoDbEngineTypes: DbEnginesForDbTypeExpanded[],
+  dbEnginesFoDbEngineTypesFetching: boolean,
+  refetch: () => void,
+] => {
+  const { results: dbEnginesForNamespaces, refetchAll } =
+    useDBEnginesForNamespaces();
   const dbEnginesFetching = dbEnginesForNamespaces.some(
     (result) => result.isFetching
   );
 
-  let availableDbEngineTypes;
-  const dbEngineTypes = (Object.keys(DbEngineType) as Array<keyof typeof DbEngineType>).map(type => DbEngineType[type]);
+  const dbEngineTypes = useMemo(
+    () =>
+      dbEngineType
+        ? [dbEngineType]
+        : (Object.keys(DbEngineType) as Array<keyof typeof DbEngineType>).map(
+            (type) => DbEngineType[type]
+          ),
+    [DbEngineType]
+  );
 
-  if (!dbEnginesFetching) {
-    availableDbEngineTypes = dbEngineTypes.map((type) => {
-      const findDb = dbEnginesForNamespaces.find((item) => item?.data?.find((dbEngine) => dbEngine?.type === type));
-      return {type: type, available: findDb ? true : false}; //available at least in one namespace
-    });
-  } else {
-    availableDbEngineTypes = dbEngineTypes.map((type) => ({type: type, available: false}));
-  }
-  return {availableDbEngineTypes, availableDbEngineTypesFetching: dbEnginesFetching};
+  const availableDbEngineTypes = useMemo(() => {
+    if (!dbEnginesFetching) {
+      return dbEngineTypes.map((type) => {
+        const dbEnginesForDbType = dbEnginesForNamespaces.reduce(
+          (prevVal, currVal, idx) => {
+            const namespaceHasDbEngineForDbType = currVal.data?.find(
+              (dbEngine) => dbEngine?.type === type
+            );
+            if (idx === 0 || prevVal?.length === 0) {
+              if (namespaceHasDbEngineForDbType) {
+                return [
+                  {
+                    dbEngine: namespaceHasDbEngineForDbType,
+                    namespace: currVal.namespace,
+                  },
+                ];
+              } else {
+                return [];
+              }
+            } else {
+              if (namespaceHasDbEngineForDbType) {
+                return [
+                  ...prevVal,
+                  {
+                    dbEngine: namespaceHasDbEngineForDbType,
+                    namespace: currVal.namespace,
+                  },
+                ];
+              } else {
+                return [...prevVal];
+              }
+            }
+          },
+          <{ dbEngine?: DbEngine; namespace: string }[]>[]
+        );
+        return {
+          type: type,
+          dbEngines: dbEnginesForDbType,
+          //available at least in one namespace
+          available: dbEnginesForDbType?.length > 0 ? true : false, 
+        };
+      });
+    } else {
+      return dbEngineTypes.map((type) => ({
+        type: type,
+        dbEngines: [],
+        available: false,
+      }));
+    }
+  }, [dbEnginesFetching, dbEngineTypes, dbEnginesForNamespaces]);
+
+  return [availableDbEngineTypes, dbEnginesFetching, refetchAll];
 };
 
 export const useNamespace = (
