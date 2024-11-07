@@ -12,7 +12,11 @@ import { FormDialog } from 'components/form-dialog';
 import { FormDialogProps } from 'components/form-dialog/form-dialog.types';
 import { DATE_FORMAT, PITR_DATE_FORMAT } from 'consts';
 import { format } from 'date-fns';
-import { useDbBackups, useDbClusterPitr } from 'hooks/api/backups/useBackups';
+import {
+  BACKUPS_QUERY_KEY,
+  useDbBackups,
+  useDbClusterPitr,
+} from 'hooks/api/backups/useBackups';
 import {
   useDbClusterRestoreFromBackup,
   useDbClusterRestoreFromPointInTime,
@@ -211,9 +215,18 @@ const RestoreDbModal = <T extends FieldValues>({
   backupName?: string;
 }) => {
   const navigate = useNavigate();
+  // we use a different query key for the restore modal to avoid re-renders from "useDbBackups" running in the background
   const { data: backups = [], isLoading } = useDbBackups(
     dbCluster.metadata.name,
-    namespace
+    namespace,
+    {
+      queryKey: [
+        BACKUPS_QUERY_KEY,
+        namespace,
+        dbCluster.metadata.name,
+        'restore-modal',
+      ],
+    }
   );
   const { data: pitrData } = useDbClusterPitr(
     dbCluster.metadata.name,
@@ -237,9 +250,9 @@ const RestoreDbModal = <T extends FieldValues>({
         isNewClusterMode ? Messages.headerMessageCreate : Messages.headerMessage
       }
       schema={schema(
-        pitrData?.earliestDate || new Date(),
-        pitrData?.latestDate || new Date(),
-        !!pitrData?.gaps
+        !!pitrData?.gaps,
+        pitrData?.earliestDate,
+        pitrData?.latestDate
       )}
       submitting={restoringFromBackup || restoringFromPointInTime}
       defaultValues={{ ...defaultValues, backupName: backupName || '' }}
