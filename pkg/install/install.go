@@ -203,7 +203,7 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	// Deteck Kubernetes environment.
+	// Detect Kubernetes environment.
 	if !o.config.SkipEnvDetection {
 		t, err := o.kubeClient.GetClusterType(ctx)
 		if err != nil {
@@ -224,16 +224,9 @@ func (o *Install) Run(ctx context.Context) error {
 	o.l.Debugf("Everest latest version available: %s", latest)
 	o.l.Debugf("Everest version information %#v", latestMeta)
 
-	// Initialize Helm driver.
-	helm.Init(helm.ChartOptions{
-		Directory: o.config.ChartDir,
-		URL:       o.config.RepoURL,
-		Version:   latest.String(),
-	})
-
 	installSteps := []common.Step{}
 	// Install core components.
-	installSteps = append(installSteps, o.installEverestHelmChart())
+	installSteps = append(installSteps, o.installEverestHelmChart(latest.String()))
 	installSteps = append(installSteps, o.waitForEverestAPI())
 	installSteps = append(installSteps, o.waitForEverestOperator())
 	if o.clusterType != kubernetes.ClusterTypeOpenShift {
@@ -296,16 +289,14 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) common.Step
 			if o.config.ChartDir != "" {
 				chartDir = path.Join(o.config.ChartDir, dbNamespaceSubChartPath)
 			}
-			d, err := helm.New(helm.ChartOptions{
-				Directory:        chartDir,
-				Version:          ver,
-				URL:              o.config.RepoURL,
-				Name:             helm.EverestDBNamespaceChartName,
-				ReleaseName:      namespace,
-				ReleaseNamespace: namespace,
+			installer, err := helm.NewInstaller(namespace, o.config.KubeconfigPath, helm.ChartOptions{
+				Directory: chartDir,
+				URL:       o.config.RepoURL,
+				Name:      helm.EverestDBNamespaceChartName,
+				Version:   ver,
 			})
 			if err != nil {
-				return fmt.Errorf("could not create Helm driver: %w", err)
+				return fmt.Errorf("could not create Helm installer: %w", err)
 			}
 
 			values := helm.MustMergeValues(
@@ -313,10 +304,11 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) common.Step
 				helm.ClusterTypeSpecificValues(o.clusterType),
 			)
 
-			if err := d.Install(ctx, helm.InstallOptions{
-				CreateNamespace: false,
-				DryRun:          false,
+			if err := installer.Install(ctx, helm.InstallArgs{
 				Values:          values,
+				CreateNamespace: false,
+				ReleaseName:     helm.EverestDBNamespaceChartName,
+				Devel:           o.config.Devel,
 			}); err != nil {
 				return fmt.Errorf("could not install Helm chart: %w", err)
 			}
@@ -396,10 +388,20 @@ func (o *Install) waitForEverestAPI() common.Step {
 	}
 }
 
-func (o *Install) installEverestHelmChart() common.Step {
+func (o *Install) installEverestHelmChart(version string) common.Step {
 	return common.Step{
 		Desc: "Install Everest Helm chart",
 		F: func(ctx context.Context) error {
+			installer, err := helm.NewInstaller(common.SystemNamespace, o.config.KubeconfigPath, helm.ChartOptions{
+				Directory: o.config.ChartDir,
+				URL:       o.config.RepoURL,
+				Name:      helm.EverestChartName,
+				Version:   version,
+			})
+			if err != nil {
+				return fmt.Errorf("could not create Helm installer: %w", err)
+			}
+
 			nsExists, err := o.namespaceExists(ctx, common.SystemNamespace)
 			if err != nil {
 				return err
@@ -410,9 +412,11 @@ func (o *Install) installEverestHelmChart() common.Step {
 				helm.ClusterTypeSpecificValues(o.clusterType),
 			)
 			o.l.Info("Installing Everest Helm chart")
-			return helm.DefaultDriver.Install(ctx, helm.InstallOptions{
-				CreateNamespace: !nsExists,
+			return installer.Install(ctx, helm.InstallArgs{
 				Values:          values,
+				CreateNamespace: !nsExists,
+				ReleaseName:     common.SystemNamespace,
+				Devel:           o.config.Devel,
 			})
 		},
 	}

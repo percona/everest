@@ -98,7 +98,6 @@ func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
 		}
 		return nil, err
 	}
-	helm.Init(helm.ChartOptions{})
 	cli.kubeClient = kubeClient
 	return cli, nil
 }
@@ -160,15 +159,13 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 	})
 
 	// Check if Everest was installed via Helm, and delete the chart.
-	if _, err := helm.DefaultDriver.Get(); errors.Is(err, driver.ErrReleaseNotFound) {
+	chartExists, err := u.helmReleaseExists()
+	if err != nil {
+		return fmt.Errorf("failed to check if Helm release exists: %w", err)
+	}
+	if chartExists {
 		u.l.Info("Found Helm release, deleting charts")
-		steps, err := u.deleteHelmReleases(ctx)
-		if err != nil {
-			return err
-		}
-		uninstallSteps = append(uninstallSteps, steps...)
-	} else if err != nil {
-		return fmt.Errorf("error getting helm release: %w", err)
+		uninstallSteps = append(uninstallSteps, u.deleteHelmReleases()...)
 	} else {
 		// legacy uninstall ...
 	}
@@ -217,21 +214,22 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 }
 
 // legacy deletion method.
-func (u *Uninstall) deleteManifests(ctx context.Context) []common.Step {
+func (u *Uninstall) deleteManifests() []common.Step {
 	return nil
 }
 
-func (u *Uninstall) deleteHelmReleases(ctx context.Context) ([]common.Step, error) {
+func (u *Uninstall) deleteHelmReleases() []common.Step {
 	steps := []common.Step{}
 	// Delete core components.
 	steps = append(steps, common.Step{
 		Desc: fmt.Sprintf("Deleting Helm chart release '%s' in namespace '%s'",
-			helm.DefaultDriver.ReleaseName(), helm.DefaultDriver.ReleaseNamespace()),
+			common.SystemNamespace, common.SystemNamespace),
 		F: func(ctx context.Context) error {
-			if err := helm.DefaultDriver.Uninstall(); err != nil {
-				return fmt.Errorf("error uninstalling Helm chart: %w", err)
+			uninstaller, err := helm.NewUninstaller(common.SystemNamespace, u.config.KubeconfigPath)
+			if err != nil {
+				return fmt.Errorf("failed to create Helm uninstaller: %w", err)
 			}
-			return nil
+			return uninstaller.Uninstall(common.SystemNamespace)
 		},
 	})
 
@@ -256,7 +254,7 @@ func (u *Uninstall) deleteHelmReleases(ctx context.Context) ([]common.Step, erro
 			},
 		})
 	}
-	return steps, nil
+	return steps
 }
 
 // Run the uninstall wizard.
@@ -550,4 +548,17 @@ func (u *Uninstall) deleteOLM(ctx context.Context, namespace string) error {
 	}
 
 	return u.deleteNamespaces(ctx, []string{namespace})
+}
+
+func (u *Uninstall) helmReleaseExists() (bool, error) {
+	g, err := helm.NewGetter(common.SystemNamespace, u.config.KubeconfigPath)
+	if err != nil {
+		return false, err
+	}
+	if _, err := g.Get(common.SystemNamespace); errors.Is(err, driver.ErrReleaseNotFound) {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	return true, nil
 }
