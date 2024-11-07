@@ -837,6 +837,12 @@ func (k *Kubernetes) UpdateClusterRoleBinding(ctx context.Context, name string, 
 	return nil
 }
 
+// DeleteManifestFile accepts manifest file contents, parses into []runtime.Object
+// and deletes them from the cluster.
+func (k *Kubernetes) DeleteManifestFile(fileBytes []byte, namespace string) error {
+	return k.client.DeleteManifestFile(fileBytes, namespace)
+}
+
 func arrayContains(s []string, e string) bool {
 	for _, a := range s {
 		if a == e {

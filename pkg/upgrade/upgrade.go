@@ -505,11 +505,11 @@ func (u *Upgrade) upgradeOLM(ctx context.Context, recommendedVersion *goversion.
 		u.l.Info("OLM version is supported. No action is required.")
 		return nil
 	}
-	u.l.Info("Upgrading OLM to version %s", recommendedVersion)
-	if err := u.kubeClient.InstallOLMOperator(ctx, true); err != nil {
-		return errors.Join(err, errors.New("could not upgrade OLM"))
-	}
-	u.l.Info("OLM has been upgraded")
+	// u.l.Info("Upgrading OLM to version %s", recommendedVersion)
+	// if err := u.kubeClient.InstallOLMOperator(ctx, true); err != nil {
+	// 	return errors.Join(err, errors.New("could not upgrade OLM"))
+	// }
+	// u.l.Info("OLM has been upgraded")
 
 	return nil
 }

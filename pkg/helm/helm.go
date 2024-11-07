@@ -26,6 +26,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"helm.sh/helm/pkg/ignore"
 	"helm.sh/helm/v3/pkg/action"
@@ -36,6 +37,7 @@ import (
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/releaseutil"
 	// "helm.sh/helm/v3/pkg/releaseutil"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -188,36 +190,34 @@ func (i *Installer) Install(ctx context.Context, args InstallArgs) error {
 	return i.Upgrade(ctx, args)
 }
 
-// // Manifests returns the Helm chart manifests.
-// func (d *Driver) Manifests(uninstall bool) ([]string, error) {
-// 	// Get the release.
-// 	rel, err := d.Get()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("cannot get release: %w", err)
-// 	}
-// 	// Split the manifest into individual files.
-// 	manifests := releaseutil.SplitManifests(rel.Manifest)
-// 	// If uninstall is true, sort it in uninstall order.
-// 	if uninstall {
-// 		_, files, err := releaseutil.SortManifests(manifests, nil, releaseutil.UninstallOrder)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("cannot sort manifests: %w", err)
-// 		}
-// 		result := make([]string, 0, len(files))
-// 		for _, f := range files {
-// 			result = append(result, f.Content)
-// 		}
-// 		return result, nil
-// 	}
-// 	result := make([]string, 0, len(manifests))
-// 	for _, f := range manifests {
-// 		result = append(result, f)
-// 	}
-// 	return result, nil
-// }
+// RenderTemplates renders the Helm chart templates and returns a single YAML file.
+func (i *Installer) RenderTemplates(ctx context.Context, uninstall bool, args InstallArgs) ([]byte, error) {
+	args.DryRun = true
+	rel, err := i.install(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	split := releaseutil.SplitManifests(rel.Manifest)
+	if uninstall {
+		_, files, err := releaseutil.SortManifests(split, nil, releaseutil.UninstallOrder)
+		if err != nil {
+			return nil, fmt.Errorf("cannot sort manifests: %w", err)
+		}
+		split = make(map[string]string)
+		for i, f := range files {
+			split[fmt.Sprintf("manifest-%d", i)] = f.Content
+		}
+	}
+	var builder strings.Builder
+	for _, y := range split {
+		builder.WriteString("\n---\n" + y)
+	}
+	rendered := builder.String()
+	rendered = strings.TrimPrefix(rendered, "\n---\n")
+	return []byte(rendered), nil
+}
 
 // Upgrade the Helm chart managed by the manager.
-// Do not call on Drivers created with NewUninstall.
 func (i *Installer) Upgrade(ctx context.Context, args InstallArgs) error {
 	upgrade := action.NewUpgrade(i.actionsCfg)
 	upgrade.Namespace = i.namespace
@@ -251,6 +251,7 @@ func (i *Installer) install(ctx context.Context, args InstallArgs) (*release.Rel
 	install.DisableHooks = true
 	install.Wait = false
 	install.Devel = args.Devel
+	install.TakeOwnership = true
 
 	return install.RunWithContext(ctx, i.chart, args.Values)
 }

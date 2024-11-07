@@ -341,6 +341,24 @@ func (_m *MockKubernetesConnector) DeleteClusterServiceVersion(ctx context.Conte
 	return r0
 }
 
+// DeleteManifestFile provides a mock function with given fields: fileBytes, namespace
+func (_m *MockKubernetesConnector) DeleteManifestFile(fileBytes []byte, namespace string) error {
+	ret := _m.Called(fileBytes, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteManifestFile")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]byte, string) error); ok {
+		r0 = rf(fileBytes, namespace)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteMonitoringConfig provides a mock function with given fields: ctx, namespace, name
 func (_m *MockKubernetesConnector) DeleteMonitoringConfig(ctx context.Context, namespace string, name string) error {
 	ret := _m.Called(ctx, namespace, name)

@@ -124,6 +124,9 @@ type KubernetesConnector interface {
 	WaitForRollout(ctx context.Context, name, namespace string) error
 	// UpdateClusterRoleBinding updates namespaces list for the cluster role by provided name.
 	UpdateClusterRoleBinding(ctx context.Context, name string, namespaces []string) error
+	// DeleteManifestFile accepts manifest file contents, parses into []runtime.Object
+	// and deletes them from the cluster.
+	DeleteManifestFile(fileBytes []byte, namespace string) error
 	// ListMonitoringConfigs returns list of managed monitoring configs.
 	ListMonitoringConfigs(ctx context.Context, namespace string) (*everestv1alpha1.MonitoringConfigList, error)
 	// GetMonitoringConfig returns monitoring configs by provided name.

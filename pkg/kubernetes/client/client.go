@@ -491,7 +491,7 @@ func (c *Client) DeleteObject(obj runtime.Object) error {
 func deleteObject(helper *resource.Helper, namespace, name string) error {
 	if _, err := helper.Get(namespace, name); err == nil {
 		_, err = helper.Delete(namespace, name)
-		if err != nil {
+		if client.IgnoreNotFound(err) != nil {
 			return err
 		}
 	}
