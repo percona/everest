@@ -93,23 +93,24 @@ pxc_namespaces = [namespace['name'] for namespace in config_yaml['namespaces'] i
 # We keep track of the CRD objects separately from the operator deployment so
 # that we can make the deployment depend on the CRDs to avoid tilt thinking
 # that there are conflicts with multiple CRDs.
-k8s_resource(
-  objects=[
-    # The CRDs don't really get installed in a namespace, but since each
-    # operator install is tied to a namespace, tilt uses a namespace to track
-    # the install so we need to include one object per CRD per namespace.
-    '%s:%s' % (crd, namespace) for namespace in pxc_namespaces for crd in [
-            'perconaxtradbclusterbackups.pxc.percona.com:customresourcedefinition',
-            'perconaxtradbclusterrestores.pxc.percona.com:customresourcedefinition',
-            'perconaxtradbclusters.pxc.percona.com:customresourcedefinition'
-        ]
-  ],
-  resource_deps = [
-    'namespaces',
-  ],
-  new_name='pxc-crds',
-  labels=["db-operators"]
-)
+if pxc_namespaces:
+  k8s_resource(
+    objects=[
+      # The CRDs don't really get installed in a namespace, but since each
+      # operator install is tied to a namespace, tilt uses a namespace to track
+      # the install so we need to include one object per CRD per namespace.
+      '%s:%s' % (crd, namespace) for namespace in pxc_namespaces for crd in [
+              'perconaxtradbclusterbackups.pxc.percona.com:customresourcedefinition',
+              'perconaxtradbclusterrestores.pxc.percona.com:customresourcedefinition',
+              'perconaxtradbclusters.pxc.percona.com:customresourcedefinition'
+          ]
+    ],
+    resource_deps = [
+      'namespaces',
+    ],
+    new_name='pxc-crds',
+    labels=["db-operators"]
+  )
 for namespace in pxc_namespaces:
   k8s_yaml(namespace_inject(pxc_operator_bundle_yaml, namespace))
   k8s_resource(
@@ -133,23 +134,24 @@ psmdb_namespaces = [namespace['name'] for namespace in config_yaml['namespaces']
 # We keep track of the CRD objects separately from the operator deployment so
 # that we can make the deployment depend on the CRDs to avoid tilt thinking
 # that there are conflicts with multiple CRDs.
-k8s_resource(
-  objects=[
-    # The CRDs don't really get installed in a namespace, but since each
-    # operator install is tied to a namespace, tilt uses a namespace to track
-    # the install so we need to include one object per CRD per namespace.
-    '%s:%s' % (crd, namespace) for namespace in psmdb_namespaces for crd in [
-      'perconaservermongodbbackups.psmdb.percona.com:customresourcedefinition',
-      'perconaservermongodbrestores.psmdb.percona.com:customresourcedefinition',
-      'perconaservermongodbs.psmdb.percona.com:customresourcedefinition',
-    ]
-  ],
-  resource_deps = [
-    'namespaces',
-  ],
-  new_name='psmdb-crds',
-  labels=["db-operators"]
-)
+if psmdb_namespaces:
+  k8s_resource(
+    objects=[
+      # The CRDs don't really get installed in a namespace, but since each
+      # operator install is tied to a namespace, tilt uses a namespace to track
+      # the install so we need to include one object per CRD per namespace.
+      '%s:%s' % (crd, namespace) for namespace in psmdb_namespaces for crd in [
+        'perconaservermongodbbackups.psmdb.percona.com:customresourcedefinition',
+        'perconaservermongodbrestores.psmdb.percona.com:customresourcedefinition',
+        'perconaservermongodbs.psmdb.percona.com:customresourcedefinition',
+      ]
+    ],
+    resource_deps = [
+      'namespaces',
+    ],
+    new_name='psmdb-crds',
+    labels=["db-operators"]
+  )
 for namespace in psmdb_namespaces:
   k8s_yaml(namespace_inject(psmdb_operator_bundle_yaml, namespace))
   k8s_resource(
@@ -173,24 +175,25 @@ pg_namespaces = [namespace['name'] for namespace in config_yaml['namespaces'] if
 # We keep track of the CRD objects separately from the operator deployment so
 # that we can make the deployment depend on the CRDs to avoid tilt thinking
 # that there are conflicts with multiple CRDs.
-k8s_resource(
-  objects=[
-    # The CRDs don't really get installed in a namespace, but since each
-    # operator install is tied to a namespace, tilt uses a namespace to track
-    # the install so we need to include one object per CRD per namespace.
-    '%s:%s' % (crd, namespace) for namespace in pg_namespaces for crd in [
-      'perconapgbackups.pgv2.percona.com:customresourcedefinition',
-      'perconapgclusters.pgv2.percona.com:customresourcedefinition',
-      'perconapgrestores.pgv2.percona.com:customresourcedefinition',
-      'postgresclusters.postgres-operator.crunchydata.com:customresourcedefinition',
-    ]
-  ],
-  resource_deps = [
-    'namespaces',
-  ],
-  new_name='pg-crds',
-  labels=["db-operators"]
-)
+if pg_namespaces:
+ k8s_resource(
+   objects=[
+     # The CRDs don't really get installed in a namespace, but since each
+     # operator install is tied to a namespace, tilt uses a namespace to track
+     # the install so we need to include one object per CRD per namespace.
+     '%s:%s' % (crd, namespace) for namespace in pg_namespaces for crd in [
+       'perconapgbackups.pgv2.percona.com:customresourcedefinition',
+       'perconapgclusters.pgv2.percona.com:customresourcedefinition',
+       'perconapgrestores.pgv2.percona.com:customresourcedefinition',
+       'postgresclusters.postgres-operator.crunchydata.com:customresourcedefinition',
+     ]
+   ],
+   resource_deps = [
+     'namespaces',
+   ],
+   new_name='pg-crds',
+   labels=["db-operators"]
+ )
 for namespace in pg_namespaces:
   k8s_yaml(namespace_inject(pg_operator_bundle_yaml, namespace))
   k8s_resource(
