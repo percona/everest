@@ -89,7 +89,7 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 
 // enforceDBClusterRBAC checks if the user has permission to:
 // - read the backup-storage and monitoring-instances associated with the provided DB cluster
-// - access the database engine associated with the DB cluster
+// - access the database engine associated with the DB cluster.
 func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.DatabaseCluster) error {
 	// Check if the user has permissions for this DB cluster?
 	if err := e.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), db.GetName())); err != nil {
@@ -134,7 +134,7 @@ func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.Da
 }
 
 func (e *EverestServer) enforceDBClusterEngineRBAC(user string, db *everestv1alpha1.DatabaseCluster) error {
-	engineName, ok := operatorEngine[everestv1alpha1.EngineType(db.Spec.Engine.Type)]
+	engineName, ok := operatorEngine[db.Spec.Engine.Type]
 	if !ok {
 		return errors.New("unsupported database engine")
 	}
