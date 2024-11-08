@@ -99,11 +99,11 @@ jobs:
         run: |
           kubectl create ns everest-system
           sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:dev/g" percona-version-service/deploy.yaml
-          kubectl apply -f deploy.yaml -n everest-system
+          kubectl apply -f percona-version-service/deploy.yaml -n everest-system
           kubectl wait --for=condition=Ready service/percona-version-service --timeout=300s
           
 
-      - name: Everest - check out 
+      - name: Everest - check out
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.ROBOT_TOKEN }}
