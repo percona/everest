@@ -101,7 +101,7 @@ jobs:
           sed -i "s/perconalab\/version-service:.*/localhost:5000\/perconalab\/version-service:dev/g" percona-version-service/deploy.yaml
           kubectl apply -f percona-version-service/deploy.yaml -n everest-system
           kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service -n everest-system
-          kubectl port-forward svc/percona-version-service 8081:80 -n everest-system
+          kubectl port-forward svc/percona-version-service 8081:80 -n everest-system &
               
 
       - name: Everest - check out
