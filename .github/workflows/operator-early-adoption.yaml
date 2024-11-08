@@ -100,7 +100,7 @@ jobs:
           kubectl create ns everest-system
           sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:dev/g" percona-version-service/deploy.yaml
           kubectl apply -f percona-version-service/deploy.yaml -n everest-system
-
+          kubectl port-forward svc/percona-version-service 8081:80 -n everest-system
               
 
       - name: Everest - check out
@@ -120,7 +120,7 @@ jobs:
           make build-cli
           ./bin/everestctl install -v \
             --version 0.0.0 \
-            --version-metadata-url http://percona-version-service:80 \
+            --version-metadata-url http://percona-version-service:8081 \
             --operator.mongodb \
             --operator.postgresql \
             --operator.xtradb-cluster \
