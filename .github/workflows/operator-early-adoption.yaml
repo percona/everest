@@ -94,12 +94,14 @@ jobs:
 #          push: true
 #          tags: ${{ steps.meta.outputs.tags }}
 
+#         kubectl apply -f <(sed 's/percona\/test:*/percona\/test:dev/g' percona-version-service/deploy.yaml)
+#         kubectl get deployments percona-version-service -o yaml
+
       - name: Apply VS manifest
         run: | 
-#          kubectl apply -f <(sed 's/percona\/test:*/percona\/test:dev/g' percona-version-service/deploy.yaml)
           sed 's/percona\/test:*/percona\/test:dev/g' percona-version-service/deploy.yaml
           cat percona-version-service/deploy.yaml
-          kubectl get deployments percona-version-service -o yaml
+          
 
 
 #      - name: Install development tools
