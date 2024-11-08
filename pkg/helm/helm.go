@@ -66,16 +66,16 @@ const DefaultHelmRepoURL = "https://percona.github.io/percona-helm-charts/"
 
 // ChartOptions are the options for the Helm chart.
 type ChartOptions struct {
-	// FS is the filesystem to load the Helm chart from.
-	// If set, ignores Directory, URL and Name.
-	FS fs.FS
 	// Directory to load the Helm chart from.
-	// If set, URL and Name are ignored.
+	// If set, FS and URL are ignored.
 	Directory string
-	// Version of the helm chart.
-	Version string
-	// URL of the chart repository.
+	// FS is the filesystem to load the Helm chart from.
+	// If set, URL is ignored.
+	FS fs.FS
+	// URL of the repository to pull the chart from.
 	URL string
+	// Version of the helm chart to install.
+	Version string
 	// Name of the Helm chart to install.
 	Name string
 }
@@ -120,10 +120,12 @@ func (g *Getter) Get(releaseName string) (*release.Release, error) {
 // NewInstaller initialises a new Helm chart installer for the given namespace.
 func NewInstaller(namespace, kubeconfigPath string, o ChartOptions) (*Installer, error) {
 	var chartFS fs.FS
-	if o.FS != nil {
-		chartFS = o.FS
-	} else if o.Directory != "" {
+	if o.Directory != "" {
 		chartFS = os.DirFS(o.Directory)
+	} else if o.FS != nil {
+		chartFS = o.FS
+	} else if o.URL == "" {
+		return nil, errors.New("either directory, fs or url must be set")
 	}
 
 	chart, err := resolveHelmChart(o.Version, o.Name, o.URL, chartFS)
