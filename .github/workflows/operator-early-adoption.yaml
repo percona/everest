@@ -100,7 +100,7 @@ jobs:
           kubectl create ns everest-system
           sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:dev/g" percona-version-service/deploy.yaml
           kubectl apply -f percona-version-service/deploy.yaml -n everest-system
-          kubectl wait --for=condition=Ready service/percona-version-service --timeout=300s
+          kubectl wait --for=condition=Ready service/percona-version-service -n everest-system --timeout=300s
           
 
       - name: Everest - check out
