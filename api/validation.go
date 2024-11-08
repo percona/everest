@@ -652,6 +652,15 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 	if err := e.enforceRestoreToNewDBRBAC(ctx.Request().Context(), user, namespace, databaseCluster); err != nil {
 		return err
 	}
+
+	engineName, ok := operatorEngine[everestv1alpha1.EngineType(databaseCluster.Spec.Engine.Type)]
+	if !ok {
+		return errors.New("unsupported database engine")
+	}
+	if err := e.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, engineName)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
