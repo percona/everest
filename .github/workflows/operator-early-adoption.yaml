@@ -26,45 +26,45 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - name: Set up Go release
-        uses: percona-platform/setup-go@v4
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Set GO_VERSION environment variable
-        run: |
-          go version
-          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
-
-      - name: Enable Go modules cache
-        uses: percona-platform/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
-
-      - name: Enable Go build cache
-        uses: percona-platform/cache@v3
-        with:
-          path: ~/.cache/go-build
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
-
-      - name: Start local Kubernetes cluster with the local registry
-        uses: medyagh/setup-minikube@latest
-        id: minikube
-        with:
-          cpus: 2
-          memory: 2000m
-          addons: registry
-          insecure-registry: 'localhost:5000'
-
-      - name: Expose local registry
-        run: |
-          kubectl port-forward --namespace kube-system service/registry 5000:80 &
+#      - name: Set up Go release
+#        uses: percona-platform/setup-go@v4
+#        with:
+#          go-version: ${{ matrix.go-version }}
+#
+#      - name: Set GO_VERSION environment variable
+#        run: |
+#          go version
+#          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
+#
+#      - name: Enable Go modules cache
+#        uses: percona-platform/cache@v3
+#        with:
+#          path: ~/go/pkg/mod
+#          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
+#          restore-keys: |
+#            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
+#
+#      - name: Enable Go build cache
+#        uses: percona-platform/cache@v3
+#        with:
+#          path: ~/.cache/go-build
+#          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
+#          restore-keys: |
+#            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
+#            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
+#
+#      - name: Start local Kubernetes cluster with the local registry
+#        uses: medyagh/setup-minikube@latest
+#        id: minikube
+#        with:
+#          cpus: 2
+#          memory: 2000m
+#          addons: registry
+#          insecure-registry: 'localhost:5000'
+#
+#      - name: Expose local registry
+#        run: |
+#          kubectl port-forward --namespace kube-system service/registry 5000:80 &
 
       - name: VS - checkout
         uses: actions/checkout@v4
@@ -72,32 +72,33 @@ jobs:
           repository: Percona-Lab/percona-version-service
           path: percona-version-service
           token: ${{ secrets.ROBOT_TOKEN }}
-
-      - name: VS - build
-        run: |
-          cd percona-version-service
-          make init
-          
-
-      - name: Build VS docker container
-        uses: docker/metadata-action@v5
-        id: meta
-        with:
-          images: localhost:5000/perconalab/version-service
-          tags:
-            dev
-
-      - name: Build and Push VS dev image
-        uses: docker/build-push-action@v6
-        with:
-          context: percona-version-service
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
+#
+#      - name: VS - build
+#        run: |
+#          cd percona-version-service
+#          make init
+#
+#
+#      - name: Build VS docker container
+#        uses: docker/metadata-action@v5
+#        id: meta
+#        with:
+#          images: localhost:5000/perconalab/version-service
+#          tags:
+#            dev
+#
+#      - name: Build and Push VS dev image
+#        uses: docker/build-push-action@v6
+#        with:
+#          context: percona-version-service
+#          push: true
+#          tags: ${{ steps.meta.outputs.tags }}
 
       - name: Apply VS manifest
         run: | 
           cd percona-version-service
-          kubectl apply -f <(sed 's/percona\/test:*/percona\/test:dev/g' percona-version-service/deploy.yaml)
+          kubectl apply -f <(sed 's/percona\/test:*/percona\/test:dev/g' ./percona-version-service/deploy.yaml)
+          cat ./percona-version-service/deploy.yaml
           kubectl get deployments percona-version-service -o yaml
 
 
