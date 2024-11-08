@@ -36,18 +36,6 @@ jobs:
           go version
           echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
 
-      - name: VS - checkout
-        uses: actions/checkout@v4
-        with:
-          repository: Percona-Lab/percona-version-service
-          path: percona-version-service
-          token: ${{ secrets.ROBOT_TOKEN }}
-
-      - name: Catalog - create release branch
-        run: |
-          cd percona-version-service
-
-
       - name: Enable Go modules cache
         uses: percona-platform/cache@v3
         with:
@@ -65,8 +53,50 @@ jobs:
             ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
             ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
 
-      - name: Download Go modules
-        run: go mod download
+
+
+      - name: VS - checkout
+        uses: actions/checkout@v4
+        with:
+          repository: Percona-Lab/percona-version-service
+          path: percona-version-service
+          token: ${{ secrets.ROBOT_TOKEN }}
+
+      - name: VS - build
+        run: |
+          cd percona-version-service
+          make init
+          make docker-build
+
+      - name: Start local Kubernetes cluster with the local registry
+        uses: medyagh/setup-minikube@latest
+        id: minikube
+        with:
+          cpus: 2
+          memory: 2000m
+          addons: registry
+          insecure-registry: 'localhost:5000'
+
+      - name: Expose local registry
+        run: |
+          kubectl port-forward --namespace kube-system service/registry 5000:80 &
+          
+
+      - name: Build VS docker container
+        uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: localhost:5000/Percona-Lab/percona-version-service
+          tags:
+            dev
+
+      - name: Build and Push VS dev image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
 
 #      - name: Install development tools
 #        run: make init
