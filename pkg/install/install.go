@@ -85,8 +85,6 @@ const (
 	FlagHelmSet = "helm-set"
 	// FlagHelmValuesFiles is the name of the helm-values flag.
 	FlagHelmValuesFiles = "helm-values"
-	// FlageHelmDevel is the name of the devel flag.
-	FlageHelmDevel = "helm-devel"
 
 	// everestDBNamespaceSubChartPath is the path to the everest-db-namespace subchart relative to the main chart.
 	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
@@ -304,6 +302,7 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) common.Step
 				helm.ClusterTypeSpecificValues(o.clusterType),
 			)
 
+			o.l.Infof("Installing DB namespace Helm chart in namespace ", namespace)
 			if err := installer.Install(ctx, helm.InstallArgs{
 				Values:          values,
 				CreateNamespace: false,
@@ -323,7 +322,7 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) common.Step
 
 func (o *Install) waitForMonitoring() common.Step {
 	return common.Step{
-		Desc: "Check Monitoring components",
+		Desc: "Wait for Everest Monitoring",
 		F: func(ctx context.Context) error {
 			channel := "stable-v0"
 			name := "victoriametrics-operator"
@@ -342,7 +341,7 @@ func (o *Install) waitForMonitoring() common.Step {
 
 func (o *Install) waitForOLM() common.Step {
 	return common.Step{
-		Desc: "Check OLM",
+		Desc: "Wait for Operator Lifecycle Manager",
 		F: func(ctx context.Context) error {
 			o.l.Infof("Waiting for OLM to be ready")
 			// Wait for all the Deployments to come up.
@@ -369,7 +368,7 @@ func (o *Install) waitForOLM() common.Step {
 // wait for Everst operator deployment to come up.
 func (o *Install) waitForEverestOperator() common.Step {
 	return common.Step{
-		Desc: "Check Everest Operator Deployment",
+		Desc: "Wait for Everest Operator Deployment",
 		F: func(ctx context.Context) error {
 			o.l.Infof("Waiting for Deployment '%s' in namespace '%s'", common.PerconaEverestOperatorDeploymentName, common.SystemNamespace)
 			return o.kubeClient.WaitForRollout(ctx, common.PerconaEverestOperatorDeploymentName, common.SystemNamespace)
@@ -380,7 +379,7 @@ func (o *Install) waitForEverestOperator() common.Step {
 // wait for Everst API deployment to come up.
 func (o *Install) waitForEverestAPI() common.Step {
 	return common.Step{
-		Desc: "Check Everest API Deployment",
+		Desc: "Wait for Everest API Deployment",
 		F: func(ctx context.Context) error {
 			o.l.Infof("Waiting for Deployment '%s' in namespace '%s'", common.PerconaEverestDeploymentName, common.SystemNamespace)
 			return o.kubeClient.WaitForRollout(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)

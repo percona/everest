@@ -26,6 +26,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"helm.sh/helm/pkg/ignore"
@@ -38,6 +39,7 @@ import (
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/releaseutil"
+
 	// "helm.sh/helm/v3/pkg/releaseutil"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -66,7 +68,7 @@ const DefaultHelmRepoURL = "https://percona.github.io/percona-helm-charts/"
 type ChartOptions struct {
 	// FS is the filesystem to load the Helm chart from.
 	// If set, ignores Directory, URL and Name.
-	FS fs.GlobFS
+	FS fs.FS
 	// Directory to load the Helm chart from.
 	// If set, URL and Name are ignored.
 	Directory string
@@ -188,6 +190,26 @@ func (i *Installer) Install(ctx context.Context, args InstallArgs) error {
 		)
 	}
 	return i.Upgrade(ctx, args)
+}
+
+// FilterYAML filters the given YAML file by the provided paths.
+// Pass the output of RenderTemplates to this function.
+func FilterYAML(file []byte, paths ...string) ([]byte, error) {
+	manifestNameRegex := regexp.MustCompile("# Source: [^/]+/(.+)")
+	split := releaseutil.SplitManifests(string(file))
+	var builder strings.Builder
+	for _, y := range split {
+		for _, p := range paths {
+			submatch := manifestNameRegex.FindStringSubmatch(y)
+			if len(submatch) == 0 || submatch[1] != p {
+				continue
+			}
+			builder.WriteString("\n---\n" + y)
+		}
+	}
+	rendered := builder.String()
+	rendered = strings.TrimPrefix(rendered, "\n---\n")
+	return []byte(rendered), nil
 }
 
 // RenderTemplates renders the Helm chart templates and returns a single YAML file.
@@ -388,7 +410,6 @@ func newChartFromRemoteWithCache(version, name string, repository string) (*char
 		pull.Version = version
 		pull.DestDir = cacheDir
 		pull.RepoURL = repository
-		pull.Devel = true
 		if _, err = pull.Run(name); err != nil {
 			return nil, err
 		}

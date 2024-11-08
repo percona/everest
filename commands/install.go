@@ -26,7 +26,6 @@ import (
 	"github.com/percona/everest/pkg/helm"
 	"github.com/percona/everest/pkg/install"
 	"github.com/percona/everest/pkg/output"
-	"github.com/percona/everest/pkg/version"
 )
 
 func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
@@ -79,7 +78,6 @@ func initInstallFlags(cmd *cobra.Command) {
 	cmd.Flags().MarkHidden(install.FlagDisableTelemetry) //nolint:errcheck,gosec
 	cmd.Flags().Bool(install.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
 
-	cmd.Flags().Bool(install.FlageHelmDevel, version.IsRC(), "Allow using devel versions of the chart")
 	cmd.Flags().String(install.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
 	cmd.Flags().String(install.FlagRepository, helm.DefaultHelmRepoURL, "Helm chart repository to download the Everest charts from")
 	cmd.Flags().StringSlice(install.FlagHelmSet, []string{}, "Set helm values on the command line (can specify multiple values with commas: key1=val1,key2=val2)")
@@ -118,5 +116,4 @@ func bindHelmOpts(cfg *install.Config) {
 	cfg.CLIOptions.Values.ValueFiles = viper.GetStringSlice(install.FlagHelmValuesFiles)
 	cfg.CLIOptions.ChartDir = viper.GetString(install.FlagChartDir)
 	cfg.CLIOptions.RepoURL = viper.GetString(install.FlagRepository)
-	cfg.CLIOptions.Devel = viper.GetBool(install.FlageHelmDevel)
 }

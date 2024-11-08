@@ -204,13 +204,15 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 			})
 		}
 
-		// Since the installation was done using the older CLI installation, we must clean-up the leftover resources.
+		// Since the installation was done using the older CLI installation,
+		// we must clean-up the leftover resources.
 		uninstallSteps = append(uninstallSteps, common.Step{
 			Desc: "Clean-up leftover resources",
 			F: func(ctx context.Context) error {
 				installer, err := helm.NewInstaller(common.SystemNamespace, u.config.KubeconfigPath, helm.ChartOptions{
 					// We use the first ever version of the chart to render the manifests.
-					// The manifests rendered by this version should not really be that different than what was installed.
+					// The manifests rendered by this version should not really be that different
+					// than what was installed.
 					Version: "1.3.0-rc3", // TODO update.
 					URL:     helm.DefaultHelmRepoURL,
 					Name:    helm.EverestChartName,

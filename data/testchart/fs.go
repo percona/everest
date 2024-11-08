@@ -13,12 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package data provides access to embedded data.
-package data
+// Package testchart provides access to embedded data.
+package testchart
 
 import "embed"
 
-// RBAC stores RBAC config in an embedded filesystem.
+// Chart stores test chart in an embedded filesystem.
 //
-//go:embed rbac/*
-var RBAC embed.FS
+//go:embed all:*
+var Chart embed.FS
