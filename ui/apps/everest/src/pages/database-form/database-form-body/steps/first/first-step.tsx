@@ -13,7 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FormGroup, Skeleton, Stack, Tooltip, Typography } from '@mui/material';
+import {
+  Alert,
+  FormGroup,
+  Skeleton,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { lt, valid } from 'semver';
@@ -324,10 +331,9 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         />
 
         <LabeledContent label={Messages.labels.dbType}>
-          {dbEnginesFetching || !dbEngines.length ? (
-            // This is roughly the height of the buttons
+          {dbEnginesFetching ? (
             <Skeleton height={57} variant="rectangular" />
-          ) : (
+          ) : dbEngines.length ? (
             <ToggleButtonGroupInput
               name={DbWizardFormFields.dbType}
               toggleButtonGroupProps={{
@@ -350,6 +356,8 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                 />
               ))}
             </ToggleButtonGroupInput>
+          ) : (
+            <Alert severity="warning">{Messages.noEnginesAvailable}</Alert>
           )}
         </LabeledContent>
         <TextInput
