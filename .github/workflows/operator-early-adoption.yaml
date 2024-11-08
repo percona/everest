@@ -53,21 +53,6 @@ jobs:
             ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
             ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
 
-
-
-      - name: VS - checkout
-        uses: actions/checkout@v4
-        with:
-          repository: Percona-Lab/percona-version-service
-          path: percona-version-service
-          token: ${{ secrets.ROBOT_TOKEN }}
-
-      - name: VS - build
-        run: |
-          cd percona-version-service
-          make init
-          make docker-build
-
       - name: Start local Kubernetes cluster with the local registry
         uses: medyagh/setup-minikube@latest
         id: minikube
@@ -80,6 +65,18 @@ jobs:
       - name: Expose local registry
         run: |
           kubectl port-forward --namespace kube-system service/registry 5000:80 &
+
+      - name: VS - checkout
+        uses: actions/checkout@v4
+        with:
+          repository: Percona-Lab/percona-version-service
+          path: percona-version-service
+          token: ${{ secrets.ROBOT_TOKEN }}
+
+      - name: VS - build
+        run: |
+          cd percona-version-service
+          make init
           
 
       - name: Build VS docker container
@@ -93,7 +90,7 @@ jobs:
       - name: Build and Push VS dev image
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: percona-version-service
           push: true
           tags: ${{ steps.meta.outputs.tags }}
 
