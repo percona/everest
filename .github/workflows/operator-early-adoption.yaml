@@ -121,7 +121,7 @@ jobs:
           make build-cli
           ./bin/everestctl install -v \
             --version 0.0.0 \
-            --version-metadata-url http://percona-version-service:8081 \
+            --version-metadata-url localhost:8081 \
             --operator.mongodb \
             --operator.postgresql \
             --operator.xtradb-cluster \
