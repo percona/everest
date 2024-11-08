@@ -83,7 +83,7 @@ jobs:
         uses: docker/metadata-action@v5
         id: meta
         with:
-          images: localhost:5000/Percona-Lab/percona-version-service
+          images: localhost:5000/perconalab/version-service
           tags:
             dev
 
@@ -93,6 +93,12 @@ jobs:
           context: percona-version-service
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+
+      - name: Apply VS manifest
+        run: | 
+          cd percona-version-service
+          kubectl apply -f <(sed 's/percona\/test:*/percona\/test:dev/g' percona-version-service/deploy.yaml)
+          kubectl get deployments percona-version-service -o yaml
 
 
 #      - name: Install development tools
