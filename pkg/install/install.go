@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/url"
 	"os"
 	"path"
@@ -48,7 +49,9 @@ import (
 	"github.com/percona/everest/pkg/helm"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
+	"github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
+	everesthelmchart "github.com/percona/percona-helm-charts/charts/everest"
 )
 
 const (
@@ -106,6 +109,7 @@ type Install struct {
 	kubeClient     *kubernetes.Kubernetes
 	versionService versionservice.Interface
 	clusterType    kubernetes.ClusterType
+	devChart       fs.FS
 }
 
 const operatorInstallThreads = 1
@@ -222,6 +226,11 @@ func (o *Install) Run(ctx context.Context) error {
 	o.l.Debugf("Everest latest version available: %s", latest)
 	o.l.Debugf("Everest version information %#v", latestMeta)
 
+	if version.IsDev(latest.String()) {
+		o.l.Info("Using dev-latest Helm chart")
+		o.devChart = everesthelmchart.Chart
+	}
+
 	installSteps := []common.Step{}
 	// Install core components.
 	installSteps = append(installSteps, o.installEverestHelmChart(latest.String()))
@@ -287,7 +296,20 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) common.Step
 			if o.config.ChartDir != "" {
 				chartDir = path.Join(o.config.ChartDir, dbNamespaceSubChartPath)
 			}
+
+			// If we're using the dev-latest chart, prepare a FS
+			// for the DB namespace sub-chart.
+			var chartFS fs.FS
+			if o.devChart != nil {
+				sub, err := fs.Sub(o.devChart, path.Join("charts", "everest-db-namespace"))
+				if err != nil {
+					return fmt.Errorf("could not get sub-chart filesystem: %w", err)
+				}
+				chartFS = sub
+			}
+
 			installer, err := helm.NewInstaller(namespace, o.config.KubeconfigPath, helm.ChartOptions{
+				FS:        chartFS,
 				Directory: chartDir,
 				URL:       o.config.RepoURL,
 				Name:      helm.EverestDBNamespaceChartName,
@@ -392,6 +414,7 @@ func (o *Install) installEverestHelmChart(version string) common.Step {
 		Desc: "Install Everest Helm chart",
 		F: func(ctx context.Context) error {
 			installer, err := helm.NewInstaller(common.SystemNamespace, o.config.KubeconfigPath, helm.ChartOptions{
+				FS:        o.devChart,
 				Directory: o.config.ChartDir,
 				URL:       o.config.RepoURL,
 				Name:      helm.EverestChartName,

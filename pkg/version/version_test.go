@@ -32,7 +32,7 @@ func TestIsRC(t *testing.T) {
 		{"v1.3.0-rc2", true},
 	}
 	for _, tc := range testCases {
-		actual := isRC(tc.version)
+		actual := IsRC(tc.version)
 		assert.Equal(t, tc.expected, actual)
 	}
 }

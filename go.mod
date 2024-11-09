@@ -1,6 +1,6 @@
 module github.com/percona/everest
 
-go 1.23
+go 1.23.2
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -175,6 +175,7 @@ require (
 	github.com/operator-framework/operator-registry v1.35.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/percona/percona-backup-mongodb v1.8.1-0.20240516121609-883ad721e7cb // indirect
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241108181652-7732bc5745a2 // indirect
 	github.com/percona/percona-postgresql-operator v0.0.0-20240730163147-6c224023db45 // indirect
 	github.com/percona/percona-server-mongodb-operator v1.17.0 // indirect
 	github.com/percona/percona-xtradb-cluster-operator v1.15.0 // indirect

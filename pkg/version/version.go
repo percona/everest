@@ -34,12 +34,8 @@ var (
 	EverestChannelOverride string //nolint:gochecknoglobals
 )
 
-// IsRC returns true if the version is a release candidate.
-func IsRC() bool {
-	return isRC(Version)
-}
-
-func isRC(v string) bool {
+// IsRC checks if the version is a release candidate.
+func IsRC(v string) bool {
 	if v == "" {
 		return false
 	}
@@ -47,12 +43,8 @@ func isRC(v string) bool {
 	return strings.Contains(ver.Prerelease(), "rc")
 }
 
-// IsDev returns true if the version is a development version.
-func IsDev() bool {
-	return isDev(Version)
-}
-
-func isDev(v string) bool {
+// IsDev checks if the version is a development version.
+func IsDev(v string) bool {
 	if v == "" {
 		return false
 	}
