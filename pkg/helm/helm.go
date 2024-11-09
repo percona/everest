@@ -18,10 +18,10 @@
 package helm
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path"
@@ -29,13 +29,13 @@ import (
 	"regexp"
 	"strings"
 
-	"helm.sh/helm/pkg/ignore"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
 	helmcli "helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/cli/values"
+	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/releaseutil"
@@ -45,7 +45,10 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 
 	"github.com/percona/everest/pkg/kubernetes"
+	everesthelmchart "github.com/percona/percona-helm-charts/charts/everest"
 )
+
+var settings = helmcli.New()
 
 // CLIOptions contains common options for the CLI.
 type CLIOptions struct {
@@ -67,11 +70,8 @@ const DefaultHelmRepoURL = "https://percona.github.io/percona-helm-charts/"
 // ChartOptions are the options for the Helm chart.
 type ChartOptions struct {
 	// Directory to load the Helm chart from.
-	// If set, FS and URL are ignored.
+	// If set, will not pull the chart from the specified URL.
 	Directory string
-	// FS is the filesystem to load the Helm chart from.
-	// If set, URL is ignored.
-	FS fs.FS
 	// URL of the repository to pull the chart from.
 	URL string
 	// Version of the helm chart to install.
@@ -119,16 +119,11 @@ func (g *Getter) Get(releaseName string) (*release.Release, error) {
 
 // NewInstaller initialises a new Helm chart installer for the given namespace.
 func NewInstaller(namespace, kubeconfigPath string, o ChartOptions) (*Installer, error) {
-	var chartFS fs.FS
-	if o.Directory != "" {
-		chartFS = os.DirFS(o.Directory)
-	} else if o.FS != nil {
-		chartFS = o.FS
-	} else if o.URL == "" {
-		return nil, errors.New("either directory, fs or url must be set")
+	if o.Directory == "" && o.URL == "" {
+		return nil, errors.New("either chart directory or URL must be set")
 	}
 
-	chart, err := resolveHelmChart(o.Version, o.Name, o.URL, chartFS)
+	chart, err := resolveHelmChart(o.Version, o.Name, o.URL, o.Directory)
 	if err != nil {
 		return nil, fmt.Errorf("cannot resolve helm chart: %w", err)
 	}
@@ -294,95 +289,22 @@ func newActionsCfg(namespace, kubeconfig string) (*action.Configuration, error) 
 	return &cfg, nil
 }
 
-var utf8bom = []byte{0xEF, 0xBB, 0xBF} //nolint:gochecknoglobals
-
-// LoadFS loads a Helm chart from a filesystem. Works with embedded FS.
-//
-//nolint:funlen
-func LoadFS(fsys fs.FS) (*chart.Chart, error) {
-	c := &chart.Chart{}
-	rules := ignore.Empty()
-	if ifile, err := fsys.Open(ignore.HelmIgnore); err == nil {
-		r, err := ignore.Parse(ifile)
-		if err != nil {
-			return c, err
-		}
-		rules = r
-	}
-	rules.AddDefaults()
-	files := []*loader.BufferedFile{}
-	walk := func(path string, d fs.DirEntry, err error) error {
-		if path == "." {
-			// No need to process top level. Avoid bug with helmignore .* matching
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-
-		fi, err := d.Info()
-		if err != nil {
-			return err
-		}
-
-		// Normalize to / since it will also work on Windows
-		n := filepath.ToSlash(path)
-		if fi.IsDir() {
-			// Directory-based ignore rules should involve skipping the entire
-			// contents of that directory.
-			if rules.Ignore(n, fi) {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-
-		// If a .helmignore file matches, skip this file.
-		if rules.Ignore(n, fi) {
-			return nil
-		}
-
-		// Irregular files include devices, sockets, and other uses of files that
-		// are not regular files. In Go they have a file mode type bit set.
-		// See https://golang.org/pkg/os/#FileMode for examples.
-		if !fi.Mode().IsRegular() {
-			return fmt.Errorf("cannot load irregular file %s as it has file mode type bits set", path)
-		}
-
-		data, err := fs.ReadFile(fsys, path)
-		if err != nil {
-			return errors.Join(err, fmt.Errorf("cannot read file %s", path))
-		}
-
-		data = bytes.TrimPrefix(data, utf8bom)
-		files = append(files, &loader.BufferedFile{Name: n, Data: data})
-		return nil
-	}
-	if err := fs.WalkDir(fsys, ".", walk); err != nil {
-		return c, err
-	}
-	return loader.LoadFiles(files)
-}
-
-func resolveHelmChart(version, chartName, repoURL string, fs fs.FS) (*chart.Chart, error) {
-	if fs != nil {
-		return resolveFS(version, fs)
+func resolveHelmChart(version, chartName, repoURL, dir string) (*chart.Chart, error) {
+	if dir != "" {
+		return resolveDir(dir)
 	}
 	return resolveRepo(version, chartName, repoURL)
 }
 
-func resolveRepo(version, chartName, repoURL string) (*chart.Chart, error) {
-	chart, err := newChartFromRemoteWithCache(version, chartName, repoURL)
-	if err != nil {
+func resolveDir(dir string) (*chart.Chart, error) {
+	if err := buildChartDeps(dir); err != nil {
 		return nil, err
 	}
-	if chart.Metadata.Version != version {
-		return nil, fmt.Errorf("version mismatch: expected %s, got %s", version, chart.Metadata.Version)
-	}
-	return chart, nil
+	return loader.LoadDir(dir)
 }
 
-func resolveFS(version string, fs fs.FS) (*chart.Chart, error) {
-	chart, err := LoadFS(fs)
+func resolveRepo(version, chartName, repoURL string) (*chart.Chart, error) {
+	chart, err := newChartFromRemoteWithCache(version, chartName, repoURL)
 	if err != nil {
 		return nil, err
 	}
@@ -408,7 +330,7 @@ func newChartFromRemoteWithCache(version, name string, repository string) (*char
 		// Download the chart from remote repository
 		actionConfig := &action.Configuration{}
 		pull := action.NewPullWithOpts(action.WithConfig(actionConfig))
-		pull.Settings = helmcli.New()
+		pull.Settings = settings
 		pull.Version = version
 		pull.DestDir = cacheDir
 		pull.RepoURL = repository
@@ -473,4 +395,60 @@ func ClusterTypeSpecificValues(ct kubernetes.ClusterType) map[string]interface{}
 		}
 	}
 	return nil
+}
+
+// Runs `helm dependency build` in the chart directory.
+func buildChartDeps(chartDir string) error {
+	man := &downloader.Manager{
+		Out:              io.Discard,
+		ChartPath:        chartDir,
+		Getters:          getter.All(settings),
+		RepositoryConfig: settings.RepositoryConfig,
+		RepositoryCache:  settings.RepositoryCache,
+	}
+	return man.Build()
+}
+
+// GetDevChartDir returns a temporary directory with the Everest development chart.
+// It copies the chart files from the Percona Helm Charts repository to a temporary directory.
+// Returns the path to the temporary directory containing the chart.
+// The caller is responsible for cleaning up the directory.
+func GetDevChartDir() (string, error) {
+	tmp, err := os.MkdirTemp("", "everest-dev-chart")
+	if err != nil {
+		return "", err
+	}
+	srcFS := everesthelmchart.Chart
+	err = fs.WalkDir(srcFS, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Define the target path in the temporary directory
+		targetPath := filepath.Join(tmp, path)
+
+		if d.IsDir() {
+			// Create directories in the temporary location
+			if err := os.MkdirAll(targetPath, os.ModePerm); err != nil {
+				return err
+			}
+		} else {
+			// Read the file from embed.FS
+			data, err := srcFS.ReadFile(path)
+			if err != nil {
+				return err
+			}
+
+			// Write the file to the target location
+			if err := os.WriteFile(targetPath, data, os.ModePerm); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		os.RemoveAll(tmp) // Clean up if there was an error
+		return "", err
+	}
+	return tmp, nil
 }
