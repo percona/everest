@@ -409,11 +409,11 @@ func buildChartDeps(chartDir string) error {
 	return man.Build()
 }
 
-// GetDevChartDir returns a temporary directory with the Everest development chart.
-// It copies the chart files from the Percona Helm Charts repository to a temporary directory.
-// Returns the path to the temporary directory containing the chart.
+// DevChartDir returns a temporary directory with the Everest Helm chart files
+// from the main branch of the [percona-helm-charts](https://github.com/percona/percona-helm-charts) repository.
+// It copies the files from the exported embed.FS into a temporary directory.
 // The caller is responsible for cleaning up the directory.
-func GetDevChartDir() (string, error) {
+func DevChartDir() (string, error) {
 	tmp, err := os.MkdirTemp("", "everest-dev-chart")
 	if err != nil {
 		return "", err

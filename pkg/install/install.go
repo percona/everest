@@ -224,12 +224,12 @@ func (o *Install) Run(ctx context.Context) error {
 	o.l.Debugf("Everest version information %#v", latestMeta)
 
 	if version.IsDev(latest.String()) {
-		o.l.Info("Using dev-latest Helm chart")
-		chartDir, err := helm.GetDevChartDir()
+		chartDir, err := helm.DevChartDir()
 		if err != nil {
 			return fmt.Errorf("failed to get dev-latest Helm chart: %w", err)
 		}
-		defer os.RemoveAll(chartDir)
+		o.l.Infof("Downloaded dev-latest Helm chart into '%s'", chartDir)
+		defer os.RemoveAll(chartDir) // clean-up on exit.
 		o.config.ChartDir = chartDir
 	}
 
