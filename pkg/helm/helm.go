@@ -40,7 +40,6 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/releaseutil"
 
-	// "helm.sh/helm/v3/pkg/releaseutil"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 
@@ -167,6 +166,7 @@ type InstallArgs struct {
 }
 
 // Install the Helm chart.
+// Calling Install multiple times is idempotent; it will re-apply the manifests using upgrade.
 func (i *Installer) Install(ctx context.Context, args InstallArgs) error {
 	release, err := i.getter.Get(args.ReleaseName)
 	if err != nil {
