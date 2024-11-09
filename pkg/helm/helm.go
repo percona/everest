@@ -19,6 +19,7 @@ package helm
 
 import (
 	"context"
+	"embed"
 	"errors"
 	"fmt"
 	"io"
@@ -29,6 +30,7 @@ import (
 	"regexp"
 	"strings"
 
+	everesthelmchart "github.com/percona/percona-helm-charts/charts/everest"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -39,12 +41,10 @@ import (
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/releaseutil"
-
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 
 	"github.com/percona/everest/pkg/kubernetes"
-	everesthelmchart "github.com/percona/percona-helm-charts/charts/everest"
 )
 
 var settings = helmcli.New()
@@ -304,12 +304,10 @@ func resolveDir(dir string) (*chart.Chart, error) {
 }
 
 func resolveRepo(version, chartName, repoURL string) (*chart.Chart, error) {
+	// Download Helm chart from repo and cache it for later use.
 	chart, err := newChartFromRemoteWithCache(version, chartName, repoURL)
 	if err != nil {
 		return nil, err
-	}
-	if chart.Metadata.Version != version {
-		return nil, fmt.Errorf("version mismatch: expected %s, got %s", version, chart.Metadata.Version)
 	}
 	return chart, nil
 }
@@ -409,6 +407,32 @@ func buildChartDeps(chartDir string) error {
 	return man.Build()
 }
 
+// copies the contents of src embed.FS to the dest directory.
+func copyEmbedFSToDir(src embed.FS, dest string) error {
+	return fs.WalkDir(src, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		targetPath := filepath.Join(dest, path)
+		if d.IsDir() {
+			if err := os.MkdirAll(targetPath, os.ModePerm); err != nil {
+				return err
+			}
+		} else {
+			data, err := src.ReadFile(path)
+			if err != nil {
+				return err
+			}
+
+			if err := os.WriteFile(targetPath, data, os.ModePerm); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 // DevChartDir returns a temporary directory with the Everest Helm chart files
 // from the main branch of the [percona-helm-charts](https://github.com/percona/percona-helm-charts) repository.
 // It copies the files from the exported embed.FS into a temporary directory.
@@ -418,35 +442,7 @@ func DevChartDir() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	srcFS := everesthelmchart.Chart
-	err = fs.WalkDir(srcFS, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// Define the target path in the temporary directory
-		targetPath := filepath.Join(tmp, path)
-
-		if d.IsDir() {
-			// Create directories in the temporary location
-			if err := os.MkdirAll(targetPath, os.ModePerm); err != nil {
-				return err
-			}
-		} else {
-			// Read the file from embed.FS
-			data, err := srcFS.ReadFile(path)
-			if err != nil {
-				return err
-			}
-
-			// Write the file to the target location
-			if err := os.WriteFile(targetPath, data, os.ModePerm); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	if err != nil {
+	if err := copyEmbedFSToDir(everesthelmchart.Chart, tmp); err != nil {
 		os.RemoveAll(tmp) // Clean up if there was an error
 		return "", err
 	}
