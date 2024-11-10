@@ -122,6 +122,10 @@ func NewInstaller(namespace, kubeconfigPath string, o ChartOptions) (*Installer,
 		return nil, errors.New("either chart directory or URL must be set")
 	}
 
+	if o.Version == "" {
+		return nil, errors.New("chart version must be set")
+	}
+
 	chart, err := resolveHelmChart(o.Version, o.Name, o.URL, o.Directory)
 	if err != nil {
 		return nil, fmt.Errorf("cannot resolve helm chart: %w", err)
@@ -189,28 +193,43 @@ func (i *Installer) Install(ctx context.Context, args InstallArgs) error {
 	return i.Upgrade(ctx, args)
 }
 
-// FilterYAML filters the given YAML file by the provided paths.
-// Pass the output of RenderTemplates to this function.
-func FilterYAML(file []byte, paths ...string) ([]byte, error) {
-	manifestNameRegex := regexp.MustCompile("# Source: [^/]+/(.+)")
-	split := releaseutil.SplitManifests(string(file))
-	var builder strings.Builder
-	for _, y := range split {
+// RenderedTemplates is a representation of the rendered templates.
+// It is a single YAML file containing all the rendered templates.
+// The YAML file is separated by `---` between each template.
+type RenderedTemplates []byte
+
+// FilterFiles filters the rendered templates by the provided paths.
+func (t *RenderedTemplates) FilterFiles(paths ...string) map[string]string {
+	files := t.Files()
+	result := make(map[string]string)
+	for name, doc := range files {
 		for _, p := range paths {
-			submatch := manifestNameRegex.FindStringSubmatch(y)
-			if len(submatch) == 0 || submatch[1] != p {
-				continue
+			if strings.Contains(name, p) {
+				result[name] = doc
 			}
-			builder.WriteString("\n---\n" + y)
 		}
 	}
-	rendered := builder.String()
-	rendered = strings.TrimPrefix(rendered, "\n---\n")
-	return []byte(rendered), nil
+	return result
+}
+
+// Files returns the rendered templates as a map of file names to their content.
+func (t RenderedTemplates) Files() map[string]string {
+	sep := regexp.MustCompile("(?:^|\\s*\n)---\\s*")
+	manifestNameRegex := regexp.MustCompile("# Source: [^/]+/(.+)")
+	docs := sep.Split(string(t), -1)
+	result := make(map[string]string)
+	for _, doc := range docs {
+		fileName := manifestNameRegex.FindStringSubmatch(doc)
+		if len(fileName) == 0 || doc == "" {
+			continue
+		}
+		result[fileName[1]] = doc
+	}
+	return result
 }
 
 // RenderTemplates renders the Helm chart templates and returns a single YAML file.
-func (i *Installer) RenderTemplates(ctx context.Context, uninstall bool, args InstallArgs) ([]byte, error) {
+func (i *Installer) RenderTemplates(ctx context.Context, uninstall bool, args InstallArgs) (RenderedTemplates, error) {
 	args.DryRun = true
 	rel, err := i.install(ctx, args)
 	if err != nil {
@@ -291,16 +310,26 @@ func newActionsCfg(namespace, kubeconfig string) (*action.Configuration, error) 
 
 func resolveHelmChart(version, chartName, repoURL, dir string) (*chart.Chart, error) {
 	if dir != "" {
-		return resolveDir(dir)
+		return resolveDir(version, dir)
 	}
 	return resolveRepo(version, chartName, repoURL)
 }
 
-func resolveDir(dir string) (*chart.Chart, error) {
+func resolveDir(version, dir string) (*chart.Chart, error) {
 	if err := buildChartDeps(dir); err != nil {
 		return nil, err
 	}
-	return loader.LoadDir(dir)
+	chart, err := loader.LoadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	// When loading from a directory, ensure that the loaded chart version
+	// matches the specified version.
+	if chart.Metadata.Version != version {
+		return nil, fmt.Errorf("chart version does not match specified version."+
+			"Expected chart version %s, got %s", version, chart.Metadata.Version)
+	}
+	return chart, nil
 }
 
 func resolveRepo(version, chartName, repoURL string) (*chart.Chart, error) {

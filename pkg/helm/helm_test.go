@@ -1,61 +1,40 @@
 package helm
 
-// import (
-// 	"context"
-// 	"strings"
-// 	"testing"
+import (
+	"context"
+	"testing"
 
-// 	"github.com/percona/everest/data/testchart"
-// 	"github.com/stretchr/testify/assert"
-// 	"github.com/stretchr/testify/require"
-// )
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
-// func TestRenderTemplates(t *testing.T) {
-// 	instlr, err := NewInstaller("test-ns", "", ChartOptions{
-// 		FS:      testchart.Chart,
-// 		Version: "0.1.0",
-// 	})
-// 	require.NoError(t, err)
+func TestHelm(t *testing.T) {
+	t.Parallel()
 
-// 	ctx := context.Background()
-// 	filesBytes, err := instlr.RenderTemplates(ctx, false, InstallArgs{
-// 		ReleaseName: "test-release",
-// 	})
-// 	require.NoError(t, err)
+	instlr, err := NewInstaller("test-ns", "", ChartOptions{
+		Directory: "../../data/testchart",
+		Version:   "0.1.0",
+	})
+	require.NoError(t, err)
 
-// 	manifests := strings.Split(string(filesBytes), "---")
-// 	assert.Equal(t, 5, len(manifests))
-// }
+	ctx := context.Background()
+	rendered, err := instlr.RenderTemplates(ctx, false, InstallArgs{
+		ReleaseName: "test-release",
+	})
+	require.NoError(t, err)
 
-// func TestFilterYAML(t *testing.T) {
-// 	instlr, err := NewInstaller("test-ns", "", ChartOptions{
-// 		FS:      testchart.Chart,
-// 		Version: "0.1.0",
-// 	})
-// 	require.NoError(t, err)
+	allFiles := rendered.Files()
+	assert.Len(t, allFiles, 5)
 
-// 	ctx := context.Background()
-// 	filesBytes, err := instlr.RenderTemplates(ctx, false, InstallArgs{
-// 		ReleaseName: "test-release",
-// 	})
-// 	require.NoError(t, err)
+	depls := rendered.FilterFiles("templates/deployment.yaml")
+	assert.Len(t, depls, 1)
 
-// 	filteredBytes, err := FilterYAML(filesBytes, "templates/service.yaml")
-// 	require.NoError(t, err)
-// 	manifests := strings.Split(string(filteredBytes), "---")
-// 	assert.Equal(t, 1, len(manifests))
+	svcs := rendered.FilterFiles("templates/service.yaml")
+	assert.Len(t, svcs, 1)
 
-// 	filteredBytes, err = FilterYAML(filesBytes, "templates/deployment.yaml")
-// 	require.NoError(t, err)
-// 	manifests = strings.Split(string(filteredBytes), "---")
-// 	assert.Equal(t, 1, len(manifests))
+	deplAndSvc := rendered.FilterFiles("templates/deployment.yaml", "templates/service.yaml")
+	assert.Len(t, deplAndSvc, 2)
 
-// 	filteredBytes, err = FilterYAML(filesBytes, "templates/deployment.yaml", "templates/service.yaml")
-// 	require.NoError(t, err)
-// 	manifests = strings.Split(string(filteredBytes), "---")
-// 	assert.Equal(t, 2, len(manifests))
-
-// 	filteredBytes, err = FilterYAML(filesBytes, "templates/doesnotexist.yaml")
-// 	require.NoError(t, err)
-// 	assert.Len(t, filteredBytes, 0)
-// }
+	none := rendered.FilterFiles("templates/doesnotexist.yaml")
+	assert.Len(t, none, 0)
+}
