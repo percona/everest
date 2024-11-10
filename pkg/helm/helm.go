@@ -69,13 +69,15 @@ const DefaultHelmRepoURL = "https://percona.github.io/percona-helm-charts/"
 // ChartOptions are the options for the Helm chart.
 type ChartOptions struct {
 	// Directory to load the Helm chart from.
-	// If set, will not pull the chart from the specified URL.
+	// If set, ignores URL.
 	Directory string
 	// URL of the repository to pull the chart from.
 	URL string
 	// Version of the helm chart to install.
+	// If loading from a directory, needs to match the chart version.
 	Version string
 	// Name of the Helm chart to install.
+	// Required only if pulling from the specified URL.
 	Name string
 }
 
