@@ -13,66 +13,58 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Button, Stack, Typography } from '@mui/material';
+import { Stack, Typography } from '@mui/material';
 import { LabeledContentProps } from './labeled-content.types';
-import AddIcon from '@mui/icons-material/Add';
 
 const LabeledContent = ({
   label,
   caption,
-  children,
+  children: verticalStackChildrenSlot,
   isRequired = false,
-  sx,
-  actionButtonProps,
+  verticalStackSx: verticalSx = {
+    '.MuiTextField-root': {},
+    '.MuiAutocomplete-root': {},
+  },
+  horizontalStackSx: horizontalStackSx,
+  horizontalStackChildrenSlot,
   ...typographyProps
 }: LabeledContentProps) => {
-  const { dataTestId, buttonText, ...buttonProps } = actionButtonProps || {};
+  const {
+    // @ts-expect-error
+    '.MuiTextField-root': textFieldRootSx,
+    // @ts-expect-error
+    '.MuiAutocomplete-root': autocompleteRootSx,
+    ...verticalStackSx
+  } = verticalSx;
   return (
     <Stack
       sx={{
         '.MuiTextField-root': {
-          mt: actionButtonProps ? 0 : 1.5,
+          ...textFieldRootSx,
         },
         '.MuiAutocomplete-root': {
           mt: 1.5,
+          ...autocompleteRootSx,
         },
         mt: 2,
-        ...sx,
+        ...verticalStackSx,
       }}
     >
       <Stack
         sx={{
           flexDirection: 'row',
           alignItems: 'center',
-          marginBottom: actionButtonProps ? 1 : 0.5,
+          ...horizontalStackSx,
         }}
       >
-        <Typography
-          // @ts-ignore
-          variant="sectionHeading"
-          {...typographyProps}
-        >
+        <Typography variant="sectionHeading" {...typographyProps}>
           {label}
           {isRequired && <span>*</span>}
         </Typography>
-        {actionButtonProps && (
-          <Button
-            variant="text"
-            size="small"
-            startIcon={<AddIcon />}
-            sx={{
-              width: 'fit-content',
-              ml: 'auto',
-            }}
-            data-testid={dataTestId || 'labeled-content-action-button'}
-            {...buttonProps}
-          >
-            {buttonText || 'Add new'}
-          </Button>
-        )}
+        {horizontalStackChildrenSlot}
       </Stack>
       {caption && <Typography variant="body2">{caption}</Typography>}
-      {children}
+      {verticalStackChildrenSlot}
     </Stack>
   );
 };

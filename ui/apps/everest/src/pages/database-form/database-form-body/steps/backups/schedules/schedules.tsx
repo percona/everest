@@ -15,7 +15,6 @@
 
 import { Stack, Typography } from '@mui/material';
 import EditableItem from 'components/editable-item/editable-item';
-import { LabeledContent } from '@percona/ui-lib';
 import { Messages } from './schedules.messages';
 import { useEffect, useMemo, useState } from 'react';
 import { DbWizardFormFields } from 'consts.ts';
@@ -31,6 +30,7 @@ import { ScheduleFormDialogContext } from 'components/schedule-form-dialog/sched
 import { ScheduleFormData } from 'components/schedule-form-dialog/schedule-form/schedule-form-schema';
 import { dbTypeToDbEngine } from '@percona/utils';
 import { DbType } from '@percona/types';
+import { ActionableLabeledContent } from '@percona/ui-lib';
 import { useDatabasePageMode } from '../../../../useDatabasePageMode';
 import { dbWizardToScheduleFormDialogMap } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog-context.types';
 import { useDatabasePageDefaultValues } from '../../../../useDatabaseFormDefaultValues';
@@ -115,7 +115,7 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
 
   return (
     <>
-      <LabeledContent
+      <ActionableLabeledContent
         label={Messages.label}
         actionButtonProps={
           canCreate
@@ -162,7 +162,7 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
             />
           )}
         </Stack>
-      </LabeledContent>
+      </ActionableLabeledContent>
       {openScheduleModal && (
         <ScheduleFormDialogContext.Provider
           value={{

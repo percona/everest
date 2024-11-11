@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { lt, valid } from 'semver';
 import { DbEngineType, DbType } from '@percona/types';
 import {
+  ActionableLabeledContent,
   AutoCompleteInput,
   DbToggleCard,
   LabeledContent,
@@ -378,8 +379,9 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         />
         {dbType === DbType.Mongo && (
           <>
-            <LabeledContent
+            <ActionableLabeledContent
               label="Shards"
+              techPreview
               caption="MongoDB shards are partitions of data that distribute load and improve database scalability and performance."
             >
               <Stack spacing={1} direction="row" alignItems="center">
@@ -420,7 +422,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                   </Tooltip>
                 )}
               </Stack>
-            </LabeledContent>
+            </ActionableLabeledContent>
           </>
         )}
       </FormGroup>

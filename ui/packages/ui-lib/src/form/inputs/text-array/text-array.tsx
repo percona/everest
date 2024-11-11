@@ -19,7 +19,7 @@ import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined
 
 import { TextArrayProps } from './text-array.types';
 import TextInput from '../text';
-import LabeledContent from '../../../labeled-content';
+import ActionableLabeledContent from '../../../actionable-labeled-content';
 
 const TextArray = ({
   fieldName,
@@ -43,7 +43,7 @@ const TextArray = ({
 
   return (
     <>
-      <LabeledContent
+      <ActionableLabeledContent
         label={label}
         actionButtonProps={{
           dataTestId: 'add-text-input-button',
@@ -85,7 +85,7 @@ const TextArray = ({
             }}
           />
         ))}
-      </LabeledContent>
+      </ActionableLabeledContent>
     </>
   );
 };

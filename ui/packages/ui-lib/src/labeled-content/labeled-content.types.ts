@@ -13,16 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ButtonProps, TypographyProps } from '@mui/material';
+import { SxProps, Theme, TypographyProps } from '@mui/material';
 
 export type LabeledContentProps = {
   label?: string;
   caption?: string;
-  children?: React.ReactNode;
+  verticalStackChildrenSlot?: React.ReactNode;
+  horizontalStackChildrenSlot?: React.ReactNode;
   isRequired?: boolean;
-  actionButtonProps?: {
-    dataTestId?: string;
-    onClick: () => void;
-    buttonText?: string;
-  } & ButtonProps;
+  verticalStackSx?: SxProps<Theme>;
+  horizontalStackSx?: SxProps<Theme>;
 } & TypographyProps;
