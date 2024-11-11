@@ -37,7 +37,7 @@ export const getParamsPlaceholderFromDbType = (dbType: DbType) => {
       break;
   }
 
-  return dynamicText && `${dynamicText}`;
+  return dynamicText;
 };
 
 export const advancedConfigurationModalDefaultValues = (
