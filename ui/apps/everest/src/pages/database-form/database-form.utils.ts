@@ -35,6 +35,7 @@ import {
 } from 'components/cluster-form';
 import { isProxy } from 'utils/db.tsx';
 import { advancedConfigurationModalDefaultValues } from 'components/cluster-form/advanced-configuration/advanced-configuration.utils.ts';
+
 const replicasToNodes = (replicas: string, dbType: DbType): string => {
   const nodeOptions = NODES_DB_TYPE_MAP[dbType];
   const replicasString = replicas.toString();
