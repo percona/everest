@@ -35,7 +35,6 @@ export const DB_WIZARD_DEFAULTS: DbWizardType = {
   [DbWizardFormFields.storageClass]: '',
   [DbWizardFormFields.k8sNamespace]: null,
   [DbWizardFormFields.externalAccess]: false,
-  // [DbWizardFormFields.internetFacing]: true,
   [DbWizardFormFields.sourceRanges]: [{ sourceRange: '' }],
   [DbWizardFormFields.engineParametersEnabled]: false,
   [DbWizardFormFields.engineParameters]: '',

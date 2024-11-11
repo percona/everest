@@ -21,7 +21,6 @@ import { Messages } from './messages';
 export const advancedConfigurationsSchema = z
   .object({
     [AdvancedConfigurationFields.externalAccess]: z.boolean(),
-    // internetFacing: z.boolean(),
     [AdvancedConfigurationFields.sourceRanges]: z.array(
       z.object({ sourceRange: z.string().optional() })
     ),

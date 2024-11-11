@@ -15,7 +15,6 @@
 
 export enum AdvancedConfigurationFields {
   externalAccess = 'externalAccess',
-  internetFacing = 'internetFacing',
   sourceRanges = 'sourceRanges',
   engineParametersEnabled = 'engineParametersEnabled',
   engineParameters = 'engineParameters',
