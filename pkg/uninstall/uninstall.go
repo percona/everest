@@ -190,8 +190,8 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 	})
 
 	if !chartExists {
-		// If Everest was not installed with a Helm chart, it was installed using the older CLI installation.
-		// The Helm chart installs OLM differently, so we must clean-up OLM using the legacy method.
+		// Older CLI versions did not use Helm and manually created these resources.
+		// So we need to cleanup these resources manually.
 		_, err := u.kubeClient.GetNamespace(ctx, kubernetes.OLMNamespace)
 		if err != nil && !k8serrors.IsNotFound(err) {
 			return err
@@ -204,15 +204,15 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 			})
 		}
 
-		// Since the installation was done using the older CLI installation,
-		// we must clean-up the leftover resources.
+		// Everest was installed without Helm (old method). So we need to check and clean-up leftover resources
+		// which would otherwise be deleted along with the Helm release.
 		uninstallSteps = append(uninstallSteps, common.Step{
 			Desc: "Clean-up leftover resources",
 			F: func(ctx context.Context) error {
 				installer, err := helm.NewInstaller(common.SystemNamespace, u.config.KubeconfigPath, helm.ChartOptions{
-					// We use the first ever version of the chart to render the manifests.
-					// The manifests rendered by this version should not really be that different
-					// than what was installed.
+					// We will render the templates using the first version of the chart to be released.
+					// We don't expect it to lack any manifest that must be deleted.
+					// Moreover, on running `everestctl ugprade`, we will migrate the installation to Helm.
 					Version: "1.3.0-rc3", // TODO update.
 					URL:     helm.DefaultHelmRepoURL,
 					Name:    helm.EverestChartName,

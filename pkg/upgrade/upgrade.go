@@ -30,7 +30,6 @@ import (
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
 	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"go.uber.org/zap"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/storage/driver"
@@ -41,6 +40,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/helm"
 	"github.com/percona/everest/pkg/kubernetes"

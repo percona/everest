@@ -223,7 +223,7 @@ func (o *Install) Run(ctx context.Context) error {
 	o.l.Debugf("Everest latest version available: %s", latest)
 	o.l.Debugf("Everest version information %#v", latestMeta)
 
-	if version.IsDev(latest.String()) {
+	if version.IsDev(latest.String()) && o.config.ChartDir == "" {
 		chartDir, err := helm.DevChartDir()
 		if err != nil {
 			return fmt.Errorf("failed to get dev-latest Helm chart: %w", err)
@@ -244,7 +244,7 @@ func (o *Install) Run(ctx context.Context) error {
 	installSteps = append(installSteps, o.waitForMonitoring())
 
 	// Install DB namespaces.
-	// TODO: we need a separate command for provisioning DB namespaces.
+	// TODO: separate command/API for provisioning DB namespaces.
 	for _, ns := range o.config.NamespacesList {
 		installSteps = append(installSteps, o.provisionDBNamespace(latest.String(), ns))
 	}
