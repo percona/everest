@@ -432,6 +432,36 @@ func (_m *MockKubernetesConnector) DeleteSecret(ctx context.Context, namespace s
 	return r0
 }
 
+// DetectEnvironment provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) DetectEnvironment(ctx context.Context) (*Environment, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DetectEnvironment")
+	}
+
+	var r0 *Environment
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*Environment, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *Environment); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*Environment)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetBackupStorage provides a mock function with given fields: ctx, namespace, name
 func (_m *MockKubernetesConnector) GetBackupStorage(ctx context.Context, namespace string, name string) (*v1alpha1.BackupStorage, error) {
 	ret := _m.Called(ctx, namespace, name)
@@ -1049,17 +1079,17 @@ func (_m *MockKubernetesConnector) InstallOperator(ctx context.Context, req Inst
 	return r0
 }
 
-// InstallPerconaCatalog provides a mock function with given fields: ctx, _a1
-func (_m *MockKubernetesConnector) InstallPerconaCatalog(ctx context.Context, _a1 *version.Version) error {
-	ret := _m.Called(ctx, _a1)
+// InstallPerconaCatalog provides a mock function with given fields: ctx, _a1, namespace
+func (_m *MockKubernetesConnector) InstallPerconaCatalog(ctx context.Context, _a1 *version.Version, namespace string) error {
+	ret := _m.Called(ctx, _a1, namespace)
 
 	if len(ret) == 0 {
 		panic("no return value specified for InstallPerconaCatalog")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *version.Version) error); ok {
-		r0 = rf(ctx, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, *version.Version, string) error); ok {
+		r0 = rf(ctx, _a1, namespace)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -24,6 +24,8 @@ import {
   CUSTOM_NR_UNITS_INPUT_VALUE,
   matchFieldsValueToResourceSize,
   NODES_DB_TYPE_MAP,
+  NODES_DEFAULT_SIZES,
+  PROXIES_DEFAULT_SIZES,
   resourcesFormSchema,
 } from 'components/cluster-form';
 import OverviewSection from '../overview-section';
@@ -40,6 +42,7 @@ import { dbEngineToDbType } from '@percona/utils';
 import { DB_CLUSTER_QUERY, useUpdateDbClusterResources } from 'hooks';
 import { DbType } from '@percona/types';
 import { isProxy } from 'utils/db';
+import { getProxyUnitNamesFromDbType } from 'components/cluster-form/resources/utils';
 
 export const ResourcesDetails = ({
   dbCluster,
@@ -51,21 +54,27 @@ export const ResourcesDetails = ({
   const { mutate: updateDbClusterResources } = useUpdateDbClusterResources();
   const queryClient = useQueryClient();
   const cpu = dbCluster.spec.engine.resources?.cpu || 0;
-  const proxyCpu = dbCluster.spec.proxy.resources?.cpu || 0;
+  const proxyCpu = isProxy(dbCluster.spec.proxy)
+    ? dbCluster.spec.proxy.resources?.cpu || 0
+    : 0;
   const memory = dbCluster.spec.engine.resources?.memory || 0;
-  const proxyMemory = dbCluster.spec.proxy.resources?.memory || 0;
+  const proxyMemory = isProxy(dbCluster.spec.proxy)
+    ? dbCluster.spec.proxy.resources?.memory || 0
+    : 0;
   const disk = dbCluster.spec.engine.storage.size;
   const parsedDiskValues = memoryParser(disk.toString());
   const parsedMemoryValues = memoryParser(memory.toString());
+  const parsedProxyMemoryValues = memoryParser(proxyMemory.toString());
   const dbType = dbEngineToDbType(dbCluster.spec.engine.type);
   const replicas = dbCluster.spec.engine.replicas.toString();
   const proxies = isProxy(dbCluster.spec.proxy)
     ? (dbCluster.spec.proxy.replicas || 0).toString()
     : '';
-  const numberOfNodes = NODES_DB_TYPE_MAP[dbType].includes(replicas)
+  const numberOfProxiesInt = parseInt(proxies, 10);
+  const numberOfNodesStr = NODES_DB_TYPE_MAP[dbType].includes(replicas)
     ? replicas
     : CUSTOM_NR_UNITS_INPUT_VALUE;
-  const numberOfProxies = NODES_DB_TYPE_MAP[dbType].includes(proxies)
+  const numberOfProxiesStr = NODES_DB_TYPE_MAP[dbType].includes(proxies)
     ? proxies
     : CUSTOM_NR_UNITS_INPUT_VALUE;
 
@@ -82,6 +91,8 @@ export const ResourcesDetails = ({
     numberOfProxies,
     customNrOfNodes,
     customNrOfProxies,
+    shardConfigServers,
+    shardNr,
   }) => {
     updateDbClusterResources(
       {
@@ -106,7 +117,9 @@ export const ResourcesDetails = ({
             10
           ),
         },
-        sharding: !!sharding?.enabled,
+        sharding: sharding?.enabled,
+        shardConfigServers,
+        shardNr,
       },
       {
         onSuccess: () => {
@@ -132,6 +145,7 @@ export const ResourcesDetails = ({
                 size="small"
                 startIcon={<EditOutlinedIcon />}
                 onClick={() => setOpenEditModal(true)}
+                data-testid="edit-resources-button"
               >
                 Edit
               </Button>
@@ -193,6 +207,29 @@ export const ResourcesDetails = ({
               )}
             />
           </OverviewSection>
+          {numberOfProxiesInt > 0 && (
+            <OverviewSection
+              title={`${proxies} ${getProxyUnitNamesFromDbType(dbEngineToDbType(dbCluster.spec.engine.type))[numberOfProxiesInt > 1 ? 'plural' : 'singular']}`}
+              loading={loading}
+            >
+              <OverviewSectionRow
+                label={Messages.fields.cpu}
+                contentString={getTotalResourcesDetailedString(
+                  cpuParser(proxyCpu.toString() || '0'),
+                  parseInt(proxies, 10),
+                  'CPU'
+                )}
+              />
+              <OverviewSectionRow
+                label={Messages.fields.memory}
+                contentString={getTotalResourcesDetailedString(
+                  parsedProxyMemoryValues.value,
+                  parseInt(proxies, 10),
+                  parsedProxyMemoryValues.originalUnit
+                )}
+              />
+            </OverviewSection>
+          )}
         </Stack>
       </OverviewCard>
       {openEditModal && (
@@ -208,16 +245,21 @@ export const ResourcesDetails = ({
             memory: memoryParser(memory.toString(), 'G').value,
             proxyCpu: cpuParser(proxyCpu.toString() || '0'),
             proxyMemory: memoryParser(proxyMemory.toString(), 'G').value,
-            numberOfNodes,
-            numberOfProxies,
+            sharding: !!sharding?.enabled,
+            ...(!!sharding?.enabled && {
+              shardConfigServers: sharding?.configServer?.replicas.toString(),
+              shardNr: sharding?.shards.toString(),
+            }),
+            numberOfNodes: numberOfNodesStr,
+            numberOfProxies: numberOfProxiesStr,
             customNrOfNodes: replicas,
             customNrOfProxies: proxies,
             resourceSizePerNode: matchFieldsValueToResourceSize(
-              dbType,
+              NODES_DEFAULT_SIZES[dbType],
               dbCluster.spec.engine.resources
             ),
             resourceSizePerProxy: matchFieldsValueToResourceSize(
-              dbType,
+              PROXIES_DEFAULT_SIZES[dbType],
               isProxy(dbCluster.spec.proxy)
                 ? dbCluster.spec.proxy.resources
                 : undefined

@@ -29,7 +29,11 @@ import {
   getDefaultNumberOfconfigServersByNumberOfNodes,
   matchFieldsValueToResourceSize,
   NODES_DB_TYPE_MAP,
+  ResourceSize,
+  NODES_DEFAULT_SIZES,
+  PROXIES_DEFAULT_SIZES,
 } from 'components/cluster-form';
+import { isProxy } from 'utils/db.tsx';
 import { advancedConfigurationModalDefaultValues } from 'components/cluster-form/advanced-configuration/advanced-configuration.utils.ts';
 const replicasToNodes = (replicas: string, dbType: DbType): string => {
   const nodeOptions = NODES_DB_TYPE_MAP[dbType];
@@ -49,7 +53,9 @@ export const DbClusterPayloadToFormValues = (
 ): DbWizardType => {
   const backup = dbCluster?.spec?.backup;
   const replicas = dbCluster?.spec?.engine?.replicas.toString();
-  const proxies = (dbCluster?.spec?.proxy?.replicas || 0).toString();
+  const proxies = (
+    isProxy(dbCluster?.spec?.proxy) ? dbCluster?.spec?.proxy?.replicas || 0 : 0
+  ).toString();
   const diskValues = memoryParser(
     dbCluster?.spec?.engine?.storage?.size.toString()
   );
@@ -59,6 +65,9 @@ export const DbClusterPayloadToFormValues = (
     replicas,
     dbEngineToDbType(dbCluster?.spec?.engine?.type)
   );
+  const sourceRangesSource = isProxy(dbCluster?.spec?.proxy)
+    ? dbCluster?.spec?.proxy?.expose.ipSourceRanges
+    : dbCluster?.spec?.proxy.ipSourceRanges;
 
   return {
     //basic info
@@ -85,13 +94,17 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.customNrOfNodes]: replicas,
     [DbWizardFormFields.customNrOfProxies]: proxies,
     [DbWizardFormFields.resourceSizePerNode]: matchFieldsValueToResourceSize(
-      dbEngineToDbType(dbCluster?.spec?.engine?.type),
+      NODES_DEFAULT_SIZES[dbEngineToDbType(dbCluster?.spec?.engine?.type)],
       dbCluster?.spec?.engine?.resources
     ),
-    [DbWizardFormFields.resourceSizePerProxy]: matchFieldsValueToResourceSize(
-      dbEngineToDbType(dbCluster?.spec?.engine?.type),
-      dbCluster?.spec?.proxy.resources
-    ),
+    [DbWizardFormFields.resourceSizePerProxy]: isProxy(dbCluster?.spec?.proxy)
+      ? matchFieldsValueToResourceSize(
+          PROXIES_DEFAULT_SIZES[
+            dbEngineToDbType(dbCluster?.spec?.engine?.type)
+          ],
+          dbCluster?.spec?.proxy.resources
+        )
+      : ResourceSize.small,
     [DbWizardFormFields.sharding]: dbCluster?.spec?.sharding?.enabled || false,
     [DbWizardFormFields.shardConfigServers]: (
       sharding?.configServer?.replicas ||
@@ -104,9 +117,9 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.cpu]: cpuParser(
       dbCluster?.spec?.engine?.resources?.cpu.toString() || '0'
     ),
-    [DbWizardFormFields.proxyCpu]: cpuParser(
-      dbCluster?.spec?.proxy?.resources?.cpu.toString() || '0'
-    ),
+    [DbWizardFormFields.proxyCpu]: isProxy(dbCluster?.spec?.proxy)
+      ? cpuParser(dbCluster?.spec?.proxy?.resources?.cpu.toString() || '0')
+      : 0,
     [DbWizardFormFields.disk]: diskValues.value,
     [DbWizardFormFields.diskUnit]: diskValues.originalUnit,
     [DbWizardFormFields.memory]: memoryParser(
@@ -114,7 +127,10 @@ export const DbClusterPayloadToFormValues = (
       'G'
     ).value,
     [DbWizardFormFields.proxyMemory]: memoryParser(
-      (dbCluster?.spec?.proxy?.resources?.memory || 0).toString(),
+      (isProxy(dbCluster?.spec?.proxy)
+        ? dbCluster?.spec?.proxy?.resources?.memory || 0
+        : 0
+      ).toString(),
       'G'
     ).value,
     [DbWizardFormFields.storageClass]:

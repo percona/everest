@@ -194,7 +194,9 @@ const ResourcesToggles = ({
   useEffect(() => {
     if (diskCapacityExceeded) {
       setError(diskInputName, { type: 'custom' });
-    } else clearErrors(diskInputName);
+    } else {
+      clearErrors(diskInputName);
+    }
   }, [diskCapacityExceeded, clearErrors, setError]);
 
   useEffect(() => {
@@ -208,12 +210,13 @@ const ResourcesToggles = ({
 
   useEffect(() => {
     if (
+      allowDiskInputUpdate &&
       resourceSizePerUnit !== ResourceSize.custom &&
       disk !== sizeOptions[resourceSizePerUnit].disk
     ) {
       setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }
-  }, [disk, setValue]);
+  }, [disk, allowDiskInputUpdate, setValue]);
 
   useEffect(() => {
     if (
@@ -487,14 +490,21 @@ const ResourcesForm = ({
       setValue(DbWizardFormFields.numberOfProxies, CUSTOM_NR_UNITS_INPUT_VALUE);
       setValue(DbWizardFormFields.customNrOfProxies, customNrOfNodes);
     }
-  }, [setValue, getFieldState, customNrOfNodes, dbType, numberOfNodes]);
+  }, [
+    setValue,
+    getFieldState,
+    customNrOfNodes,
+    dbType,
+    numberOfNodes,
+    pairProxiesWithNodes,
+  ]);
 
   useEffect(() => {
-    const { isDirty: isConfigServersDirty } = getFieldState(
+    const { isTouched: isConfigServersTouched } = getFieldState(
       DbWizardFormFields.shardConfigServers
     );
 
-    if (!isConfigServersDirty) {
+    if (!isConfigServersTouched) {
       if (numberOfNodes && numberOfNodes !== CUSTOM_NR_UNITS_INPUT_VALUE) {
         setValue(
           DbWizardFormFields.shardConfigServers,
