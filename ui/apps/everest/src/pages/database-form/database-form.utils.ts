@@ -65,9 +65,6 @@ export const DbClusterPayloadToFormValues = (
     replicas,
     dbEngineToDbType(dbCluster?.spec?.engine?.type)
   );
-  const sourceRangesSource = isProxy(dbCluster?.spec?.proxy)
-    ? dbCluster?.spec?.proxy?.expose.ipSourceRanges
-    : dbCluster?.spec?.proxy.ipSourceRanges;
 
   return {
     //basic info

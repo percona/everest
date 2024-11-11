@@ -17,6 +17,7 @@ import { DbType } from '@percona/types';
 import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
 import { AdvancedConfigurationFields } from './advanced-configuration.types';
 import { AdvancedConfigurationFormType } from './advanced-configuration-schema';
+import { isProxy } from 'utils/db';
 
 export const getParamsPlaceholderFromDbType = (dbType: DbType) => {
   let dynamicText = '';
@@ -41,18 +42,23 @@ export const getParamsPlaceholderFromDbType = (dbType: DbType) => {
 
 export const advancedConfigurationModalDefaultValues = (
   dbCluster: DbCluster
-): AdvancedConfigurationFormType => ({
-  [AdvancedConfigurationFields.externalAccess]:
-    dbCluster?.spec?.proxy?.expose?.type === ProxyExposeType.external,
-  // [AdvancedConfigurationFields.internetFacing]: true,
-  [AdvancedConfigurationFields.engineParametersEnabled]:
-    !!dbCluster?.spec?.engine?.config,
-  [AdvancedConfigurationFields.engineParameters]:
-    dbCluster?.spec?.engine?.config,
-  [AdvancedConfigurationFields.sourceRanges]: dbCluster?.spec?.proxy?.expose
-    ?.ipSourceRanges
-    ? dbCluster?.spec?.proxy?.expose?.ipSourceRanges.map((item) => ({
-        sourceRange: item,
-      }))
-    : [{ sourceRange: '' }],
-});
+): AdvancedConfigurationFormType => {
+  const sourceRangesSource = isProxy(dbCluster?.spec?.proxy)
+    ? dbCluster?.spec?.proxy?.expose.ipSourceRanges
+    : dbCluster?.spec?.proxy.ipSourceRanges;
+
+  return {
+    [AdvancedConfigurationFields.externalAccess]: isProxy(
+      dbCluster?.spec?.proxy
+    )
+      ? dbCluster?.spec?.proxy?.expose?.type === ProxyExposeType.external
+      : dbCluster?.spec?.proxy.type === ProxyExposeType.external,
+    [AdvancedConfigurationFields.engineParametersEnabled]:
+      !!dbCluster?.spec?.engine?.config,
+    [AdvancedConfigurationFields.engineParameters]:
+      dbCluster?.spec?.engine?.config,
+    [AdvancedConfigurationFields.sourceRanges]: sourceRangesSource
+      ? sourceRangesSource.map((sourceRange) => ({ sourceRange }))
+      : [{ sourceRange: '' }],
+  };
+};
