@@ -17,6 +17,7 @@ import { ButtonProps, TypographyProps } from '@mui/material';
 
 export type LabeledContentProps = {
   label?: string;
+  caption?: string;
   children?: React.ReactNode;
   isRequired?: boolean;
   actionButtonProps?: {

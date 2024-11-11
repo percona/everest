@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FormGroup, Skeleton, Stack, Tooltip, Typography } from '@mui/material';
+import { FormGroup, Skeleton, Stack, Tooltip } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { lt, valid } from 'semver';
@@ -378,47 +378,49 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         />
         {dbType === DbType.Mongo && (
           <>
-            <Typography variant="sectionHeading" sx={{ mt: 4 }}>
-              Shards
-            </Typography>
-            <Stack spacing={1} direction="row" alignItems="center">
-              <SwitchInput
-                label={Messages.labels.shardedCluster}
-                name={DbWizardFormFields.sharding}
-                switchFieldProps={{
-                  disabled: disableSharding,
-                  onChange: (e) => {
-                    if (!e.target.checked) {
-                      resetField(DbWizardFormFields.shardNr, {
-                        keepError: false,
-                      });
-                      resetField(DbWizardFormFields.shardConfigServers, {
-                        keepError: false,
-                      });
-                    }
-                  },
-                }}
-              />
-              {notSupportedMongoOperatorVersionForSharding &&
-                mode !== 'edit' && (
+            <LabeledContent
+              label="Shards"
+              caption="MongoDB shards are partitions of data that distribute load and improve database scalability and performance."
+            >
+              <Stack spacing={1} direction="row" alignItems="center">
+                <SwitchInput
+                  label={Messages.labels.shardedCluster}
+                  name={DbWizardFormFields.sharding}
+                  switchFieldProps={{
+                    disabled: disableSharding,
+                    onChange: (e) => {
+                      if (!e.target.checked) {
+                        resetField(DbWizardFormFields.shardNr, {
+                          keepError: false,
+                        });
+                        resetField(DbWizardFormFields.shardConfigServers, {
+                          keepError: false,
+                        });
+                      }
+                    },
+                  }}
+                />
+                {notSupportedMongoOperatorVersionForSharding &&
+                  mode !== 'edit' && (
+                    <Tooltip
+                      title={Messages.disableShardingTooltip}
+                      arrow
+                      placement="right"
+                    >
+                      <InfoOutlinedIcon color="primary" />
+                    </Tooltip>
+                  )}
+                {mode === 'edit' && (
                   <Tooltip
-                    title={Messages.disableShardingTooltip}
+                    title={Messages.disableShardingInEditMode}
                     arrow
                     placement="right"
                   >
                     <InfoOutlinedIcon color="primary" />
                   </Tooltip>
                 )}
-              {mode === 'edit' && (
-                <Tooltip
-                  title={Messages.disableShardingInEditMode}
-                  arrow
-                  placement="right"
-                >
-                  <InfoOutlinedIcon color="primary" />
-                </Tooltip>
-              )}
-            </Stack>
+              </Stack>
+            </LabeledContent>
           </>
         )}
       </FormGroup>

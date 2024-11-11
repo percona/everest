@@ -19,6 +19,7 @@ import AddIcon from '@mui/icons-material/Add';
 
 const LabeledContent = ({
   label,
+  caption,
   children,
   isRequired = false,
   sx,
@@ -70,6 +71,7 @@ const LabeledContent = ({
           </Button>
         )}
       </Stack>
+      {caption && <Typography variant="body2">{caption}</Typography>}
       {children}
     </Stack>
   );
