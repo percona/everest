@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DbType } from '@percona/types';
+import { DbEngineType, DbType } from '@percona/types';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { DbWizardMode } from './database-form.types';
 import { DbWizardFormFields } from 'consts.ts';
@@ -136,7 +136,10 @@ export const DbClusterPayloadToFormValues = (
 
     //backups
     [DbWizardFormFields.backupsEnabled]: !!backup?.enabled,
-    [DbWizardFormFields.pitrEnabled]: backup?.pitr?.enabled || false,
+    [DbWizardFormFields.pitrEnabled]:
+      dbCluster?.spec?.engine?.type === DbEngineType.POSTGRESQL
+        ? (backup?.schedules || []).length > 0
+        : backup?.pitr?.enabled || false,
     [DbWizardFormFields.pitrStorageLocation]:
       (backup?.pitr?.enabled && mode === 'new') || mode === 'edit'
         ? backup?.pitr?.backupStorageName || null
