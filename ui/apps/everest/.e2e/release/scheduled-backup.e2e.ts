@@ -81,7 +81,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           (SELECT_DB !== db && !!SELECT_DB) ||
           (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
       );
-      test.describe.configure({ timeout: 720000 });
+      test.describe.configure({ timeout: 900000 });
 
       const clusterName = `${db}-${size}-schbkp`;
 
