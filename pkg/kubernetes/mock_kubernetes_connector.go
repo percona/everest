@@ -449,6 +449,24 @@ func (_m *MockKubernetesConnector) DeleteSecret(ctx context.Context, namespace s
 	return r0
 }
 
+// DeleteSubscription provides a mock function with given fields: ctx, key
+func (_m *MockKubernetesConnector) DeleteSubscription(ctx context.Context, key types.NamespacedName) error {
+	ret := _m.Called(ctx, key)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteSubscription")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, types.NamespacedName) error); ok {
+		r0 = rf(ctx, key)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetBackupStorage provides a mock function with given fields: ctx, namespace, name
 func (_m *MockKubernetesConnector) GetBackupStorage(ctx context.Context, namespace string, name string) (*v1alpha1.BackupStorage, error) {
 	ret := _m.Called(ctx, namespace, name)
@@ -620,6 +638,36 @@ func (_m *MockKubernetesConnector) GetDBNamespaces(ctx context.Context) ([]strin
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
 		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetDatabaseEngine provides a mock function with given fields: ctx, namespace, name
+func (_m *MockKubernetesConnector) GetDatabaseEngine(ctx context.Context, namespace string, name string) (*v1alpha1.DatabaseEngine, error) {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDatabaseEngine")
+	}
+
+	var r0 *v1alpha1.DatabaseEngine
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v1alpha1.DatabaseEngine, error)); ok {
+		return rf(ctx, namespace, name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v1alpha1.DatabaseEngine); ok {
+		r0 = rf(ctx, namespace, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.DatabaseEngine)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, name)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1007,6 +1055,36 @@ func (_m *MockKubernetesConnector) GetServerVersion() (*pkgversion.Info, error) 
 	return r0, r1
 }
 
+// GetSubscription provides a mock function with given fields: ctx, name, namespace
+func (_m *MockKubernetesConnector) GetSubscription(ctx context.Context, name string, namespace string) (*operatorsv1alpha1.Subscription, error) {
+	ret := _m.Called(ctx, name, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSubscription")
+	}
+
+	var r0 *operatorsv1alpha1.Subscription
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*operatorsv1alpha1.Subscription, error)); ok {
+		return rf(ctx, name, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *operatorsv1alpha1.Subscription); ok {
+		r0 = rf(ctx, name, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*operatorsv1alpha1.Subscription)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, name, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // InstallOperator provides a mock function with given fields: ctx, req
 func (_m *MockKubernetesConnector) InstallOperator(ctx context.Context, req InstallOperatorRequest) error {
 	ret := _m.Called(ctx, req)
@@ -1129,6 +1207,36 @@ func (_m *MockKubernetesConnector) ListClusterServiceVersion(ctx context.Context
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*operatorsv1alpha1.ClusterServiceVersionList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListDatabaseEngines provides a mock function with given fields: ctx, namespace
+func (_m *MockKubernetesConnector) ListDatabaseEngines(ctx context.Context, namespace string) (*v1alpha1.DatabaseEngineList, error) {
+	ret := _m.Called(ctx, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListDatabaseEngines")
+	}
+
+	var r0 *v1alpha1.DatabaseEngineList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*v1alpha1.DatabaseEngineList, error)); ok {
+		return rf(ctx, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *v1alpha1.DatabaseEngineList); ok {
+		r0 = rf(ctx, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.DatabaseEngineList)
 		}
 	}
 
@@ -1405,6 +1513,24 @@ func (_m *MockKubernetesConnector) RestartOperator(ctx context.Context, name str
 	return r0
 }
 
+// SetDatabaseEngineLock provides a mock function with given fields: ctx, namespace, name, locked
+func (_m *MockKubernetesConnector) SetDatabaseEngineLock(ctx context.Context, namespace string, name string, locked bool) error {
+	ret := _m.Called(ctx, namespace, name, locked)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetDatabaseEngineLock")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, bool) error); ok {
+		r0 = rf(ctx, namespace, name, locked)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // SetSecret provides a mock function with given fields: secret
 func (_m *MockKubernetesConnector) SetSecret(secret *v1.Secret) error {
 	ret := _m.Called(secret)
@@ -1482,6 +1608,36 @@ func (_m *MockKubernetesConnector) UpdateClusterServiceVersion(ctx context.Conte
 
 	if rf, ok := ret.Get(1).(func(context.Context, *operatorsv1alpha1.ClusterServiceVersion) error); ok {
 		r1 = rf(ctx, csv)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateDatabaseEngine provides a mock function with given fields: ctx, namespace, engine
+func (_m *MockKubernetesConnector) UpdateDatabaseEngine(ctx context.Context, namespace string, engine *v1alpha1.DatabaseEngine) (*v1alpha1.DatabaseEngine, error) {
+	ret := _m.Called(ctx, namespace, engine)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateDatabaseEngine")
+	}
+
+	var r0 *v1alpha1.DatabaseEngine
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, *v1alpha1.DatabaseEngine) (*v1alpha1.DatabaseEngine, error)); ok {
+		return rf(ctx, namespace, engine)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, *v1alpha1.DatabaseEngine) *v1alpha1.DatabaseEngine); ok {
+		r0 = rf(ctx, namespace, engine)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.DatabaseEngine)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, *v1alpha1.DatabaseEngine) error); ok {
+		r1 = rf(ctx, namespace, engine)
 	} else {
 		r1 = ret.Error(1)
 	}

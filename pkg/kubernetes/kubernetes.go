@@ -349,6 +349,11 @@ func (k *Kubernetes) GetCatalogSource(ctx context.Context, name, namespace strin
 	return k.client.OLM().OperatorsV1alpha1().CatalogSources(namespace).Get(ctx, name, metav1.GetOptions{})
 }
 
+// GetSubscription returns subscription.
+func (k *Kubernetes) GetSubscription(ctx context.Context, name, namespace string) (*olmv1alpha1.Subscription, error) {
+	return k.client.OLM().OperatorsV1alpha1().Subscriptions(namespace).Get(ctx, name, metav1.GetOptions{})
+}
+
 func (k *Kubernetes) waitForDeploymentRollout(ctx context.Context) error {
 	if err := k.client.DoRolloutWait(ctx, types.NamespacedName{
 		Namespace: OLMNamespace,
@@ -634,6 +639,14 @@ func (k *Kubernetes) DeleteClusterServiceVersion(
 	key types.NamespacedName,
 ) error {
 	return k.client.DeleteClusterServiceVersion(ctx, key)
+}
+
+// DeleteSubscription deletes a subscription by namespaced name.
+func (k *Kubernetes) DeleteSubscription(
+	ctx context.Context,
+	key types.NamespacedName,
+) error {
+	return k.client.DeleteSubscription(ctx, key)
 }
 
 // DeleteObject deletes an object.

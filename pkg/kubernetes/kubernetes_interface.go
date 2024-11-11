@@ -48,6 +48,15 @@ type KubernetesConnector interface {
 	CSVNameFromOperator(operatorName string, version *goversion.Version) string
 	// GetConfigMap returns k8s configmap by provided name and namespace.
 	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
+	// ListDatabaseEngines returns list of managed database clusters.
+	ListDatabaseEngines(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseEngineList, error)
+	// GetDatabaseEngine returns database clusters by provided name.
+	GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error)
+	// UpdateDatabaseEngine updates the provided database engine.
+	UpdateDatabaseEngine(ctx context.Context, namespace string, engine *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error)
+	// SetDatabaseEngineLock sets the lock on the database engine.
+	// The lock is automatically set to false once everest-operator completes its upgrade.
+	SetDatabaseEngineLock(ctx context.Context, namespace, name string, locked bool) error
 	// GetDeployment returns k8s deployment by provided name and namespace.
 	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
 	// UpdateDeployment updates a deployment and returns the updated object.
@@ -88,6 +97,8 @@ type KubernetesConnector interface {
 	GetEvents(ctx context.Context, pod string) ([]string, error)
 	// GetCatalogSource returns catalog source.
 	GetCatalogSource(ctx context.Context, name, namespace string) (*olmv1alpha1.CatalogSource, error)
+	// GetSubscription returns subscription.
+	GetSubscription(ctx context.Context, name, namespace string) (*olmv1alpha1.Subscription, error)
 	// InstallOperator installs an operator via OLM.
 	InstallOperator(ctx context.Context, req InstallOperatorRequest) error
 	// CreateOperatorGroup creates operator group in the given namespace.
@@ -106,6 +117,8 @@ type KubernetesConnector interface {
 	UpdateClusterServiceVersion(ctx context.Context, csv *olmv1alpha1.ClusterServiceVersion) (*olmv1alpha1.ClusterServiceVersion, error)
 	// DeleteClusterServiceVersion deletes a ClusterServiceVersion.
 	DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error
+	// DeleteSubscription deletes a subscription by namespaced name.
+	DeleteSubscription(ctx context.Context, key types.NamespacedName) error
 	// DeleteObject deletes an object.
 	DeleteObject(obj runtime.Object) error
 	// RestartOperator restarts the deployment of an operator managed by OLM.

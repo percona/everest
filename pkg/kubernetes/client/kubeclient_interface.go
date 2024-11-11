@@ -121,6 +121,8 @@ type KubeClientConnector interface {
 	UpdateClusterServiceVersion(ctx context.Context, csv *v1alpha1.ClusterServiceVersion) (*v1alpha1.ClusterServiceVersion, error)
 	// DeleteClusterServiceVersion deletes a CSV by namespaced name.
 	DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error
+	// DeleteSubscription deletes a subscription by namespaced name.
+	DeleteSubscription(ctx context.Context, key types.NamespacedName) error
 	// DeleteFile accepts manifest file contents parses into []runtime.Object
 	// and deletes them from the cluster.
 	DeleteFile(fileBytes []byte) error

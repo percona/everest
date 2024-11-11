@@ -1382,6 +1382,14 @@ func (c *Client) DeleteClusterServiceVersion(
 	return c.olmClientset.OperatorsV1alpha1().ClusterServiceVersions(key.Namespace).Delete(ctx, key.Name, metav1.DeleteOptions{})
 }
 
+// DeleteSubscription deletes a subscription by namespaced name.
+func (c *Client) DeleteSubscription(
+	ctx context.Context,
+	key types.NamespacedName,
+) error {
+	return c.olmClientset.OperatorsV1alpha1().Subscriptions(key.Namespace).Delete(ctx, key.Name, metav1.DeleteOptions{})
+}
+
 // DeleteFile accepts manifest file contents parses into []runtime.Object
 // and deletes them from the cluster.
 func (c *Client) DeleteFile(fileBytes []byte) error {

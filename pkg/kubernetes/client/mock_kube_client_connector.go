@@ -566,6 +566,24 @@ func (_m *MockKubeClientConnector) DeleteSecret(ctx context.Context, namespace s
 	return r0
 }
 
+// DeleteSubscription provides a mock function with given fields: ctx, key
+func (_m *MockKubeClientConnector) DeleteSubscription(ctx context.Context, key types.NamespacedName) error {
+	ret := _m.Called(ctx, key)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteSubscription")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, types.NamespacedName) error); ok {
+		r0 = rf(ctx, key)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DoCSVWait provides a mock function with given fields: ctx, key
 func (_m *MockKubeClientConnector) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 	ret := _m.Called(ctx, key)
