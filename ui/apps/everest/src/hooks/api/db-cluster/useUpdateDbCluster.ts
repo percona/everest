@@ -15,7 +15,11 @@
 
 import { UseMutationOptions, useMutation } from '@tanstack/react-query';
 import { updateDbClusterFn } from 'api/dbClusterApi';
-import { DbCluster, Proxy } from 'shared-types/dbCluster.types';
+import {
+  DbCluster,
+  ProxyExposeType,
+  Proxy,
+} from 'shared-types/dbCluster.types';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import cronConverter from 'utils/cron-converter';
 import {
@@ -168,6 +172,50 @@ export const useUpdateDbClusterCrd = () =>
             ...dbCluster.spec.engine,
             crVersion: newCrdVersion,
           },
+        },
+      }),
+  });
+export const useUpdateDbClusterAdvancedConfiguration = () =>
+  useMutation({
+    mutationFn: ({
+      clusterName,
+      namespace,
+      dbCluster,
+      externalAccess,
+      sourceRanges,
+      engineParametersEnabled,
+      engineParameters,
+    }: {
+      clusterName: string;
+      namespace: string;
+      dbCluster: DbCluster;
+      externalAccess: boolean;
+      sourceRanges: Array<{ sourceRange?: string }>;
+      engineParametersEnabled: boolean;
+      engineParameters: string | undefined;
+    }) =>
+      updateDbClusterFn(clusterName, namespace, {
+        ...dbCluster,
+        spec: {
+          ...dbCluster.spec,
+          engine: {
+            ...dbCluster.spec.engine,
+            config: engineParametersEnabled ? engineParameters : '',
+          },
+          proxy: {
+            ...dbCluster.spec.proxy,
+            expose: {
+              type: externalAccess
+                ? ProxyExposeType.external
+                : ProxyExposeType.internal,
+              ...(!!externalAccess &&
+                sourceRanges && {
+                  ipSourceRanges: sourceRanges.flatMap((source) =>
+                    source.sourceRange ? [source.sourceRange] : []
+                  ),
+                }),
+            },
+          } as Proxy,
         },
       }),
   });

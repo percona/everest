@@ -1,12 +1,13 @@
 import { z } from 'zod';
 import { DbType } from '@percona/types';
-import { IP_REGEX, MAX_DB_CLUSTER_NAME_LENGTH } from '../../consts.ts';
+import { MAX_DB_CLUSTER_NAME_LENGTH } from '../../consts.ts';
 import { Messages } from './database-form.messages.ts';
 import { DbWizardFormFields } from 'consts.ts';
 import { rfc_123_schema } from 'utils/common-validation.ts';
 import { Messages as ScheduleFormMessages } from 'components/schedule-form-dialog/schedule-form/schedule-form.messages.ts';
 import { resourcesFormSchema } from 'components/cluster-form';
 import { dbVersionSchemaObject } from 'components/cluster-form/db-version/db-version-schema';
+import { advancedConfigurationsSchema } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema.ts';
 
 const basicInfoSchema = z
   .object({
@@ -67,30 +68,6 @@ const backupsStepSchema = z
         message: ScheduleFormMessages.storageLocation.invalidOption,
       });
     }
-  });
-
-const advancedConfigurationsSchema = z
-  .object({
-    [DbWizardFormFields.externalAccess]: z.boolean(),
-    // internetFacing: z.boolean(),
-    [DbWizardFormFields.sourceRanges]: z.array(
-      z.object({ sourceRange: z.string().optional() })
-    ),
-    [DbWizardFormFields.engineParametersEnabled]: z.boolean(),
-    [DbWizardFormFields.engineParameters]: z.string().optional(),
-  })
-  .passthrough()
-  .superRefine(({ sourceRanges }, ctx) => {
-    sourceRanges.forEach(({ sourceRange }, index) => {
-      if (sourceRange && IP_REGEX.exec(sourceRange) === null) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.invalid_string,
-          validation: 'ip',
-          path: [DbWizardFormFields.sourceRanges, index, 'sourceRange'],
-          message: Messages.errors.sourceRange.invalid,
-        });
-      }
-    });
   });
 
 const stepFiveSchema = z

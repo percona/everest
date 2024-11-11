@@ -12,6 +12,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 
+import { AdvancedConfigurationFields } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
+import { DBVersionFields } from 'components/cluster-form/db-version/db-version.types';
 import { BackupStatus } from 'shared-types/backups.types';
 
 // limitations under the License.
@@ -20,7 +22,7 @@ export const IP_REGEX =
 
 export const INVALID_SOURCE_RANGE_ERROR = 'Invalid IP address range';
 export const SOURCE_RANGE_PLACEHOLDER =
-  'Please enter the single IP address or range using netmask (e.g. 192.168.1.1/24)';
+  'Enter IP with netmask (e.g. 192.168.1.1/24)';
 export const DATE_FORMAT = "dd'/'MM'/'yyyy 'at' hh':'mm' 'a";
 export const PITR_DATE_FORMAT = "dd'/'MM'/'yyyy 'at' hh':'mm':'ss' 'a";
 
@@ -49,7 +51,6 @@ export enum DbWizardForm {
   dbType = 'dbType',
   k8sNamespace = 'k8sNamespace',
   dbEnvironment = 'dbEnvironment',
-  dbVersion = 'dbVersion',
   storageClass = 'storageClass',
   cpu = 'cpu',
   proxyCpu = 'proxyCpu',
@@ -68,11 +69,6 @@ export enum DbWizardForm {
   schedules = 'schedules',
   pitrEnabled = 'pitrEnabled',
   pitrStorageLocation = 'pitrStorageLocation',
-  externalAccess = 'externalAccess',
-  internetFacing = 'internetFacing',
-  sourceRanges = 'sourceRanges',
-  engineParametersEnabled = 'engineParametersEnabled',
-  engineParameters = 'engineParameters',
   monitoring = 'monitoring',
   monitoringInstance = 'monitoringInstance',
   endpoint = 'endpoint',
@@ -83,4 +79,6 @@ export enum DbWizardForm {
 
 export const DbWizardFormFields = {
   ...DbWizardForm,
+  ...DBVersionFields,
+  ...AdvancedConfigurationFields,
 };

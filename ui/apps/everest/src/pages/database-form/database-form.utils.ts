@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { DbEngineType, DbType } from '@percona/types';
-import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
+import { DbCluster } from 'shared-types/dbCluster.types';
 import { DbWizardMode } from './database-form.types';
 import { DbWizardFormFields } from 'consts.ts';
 import { dbEngineToDbType } from '@percona/utils';
@@ -34,6 +34,7 @@ import {
   PROXIES_DEFAULT_SIZES,
 } from 'components/cluster-form';
 import { isProxy } from 'utils/db.tsx';
+import { advancedConfigurationModalDefaultValues } from 'components/cluster-form/advanced-configuration/advanced-configuration.utils.ts';
 
 const replicasToNodes = (replicas: string, dbType: DbType): string => {
   const nodeOptions = NODES_DB_TYPE_MAP[dbType];
@@ -65,9 +66,6 @@ export const DbClusterPayloadToFormValues = (
     replicas,
     dbEngineToDbType(dbCluster?.spec?.engine?.type)
   );
-  const sourceRangesSource = isProxy(dbCluster?.spec?.proxy)
-    ? dbCluster?.spec?.proxy?.expose.ipSourceRanges
-    : dbCluster?.spec?.proxy.ipSourceRanges;
 
   return {
     //basic info
@@ -84,20 +82,8 @@ export const DbClusterPayloadToFormValues = (
           )
         : dbCluster?.metadata?.name,
     [DbWizardFormFields.dbVersion]: dbCluster?.spec?.engine?.version || '',
-    [DbWizardFormFields.externalAccess]: isProxy(dbCluster?.spec?.proxy)
-      ? dbCluster?.spec?.proxy?.expose?.type === ProxyExposeType.external
-      : dbCluster?.spec?.proxy.type === ProxyExposeType.external,
-    // [DbWizardFormFields.internetFacing]: true,
-    [DbWizardFormFields.engineParametersEnabled]:
-      !!dbCluster?.spec?.engine?.config,
-    [DbWizardFormFields.engineParameters]: dbCluster?.spec?.engine?.config,
-    [DbWizardFormFields.sourceRanges]: sourceRangesSource
-      ? sourceRangesSource.map((sourceRange) => ({ sourceRange }))
-      : [{ sourceRange: '' }],
-    [DbWizardFormFields.monitoring]:
-      !!dbCluster?.spec?.monitoring?.monitoringConfigName,
-    [DbWizardFormFields.monitoringInstance]:
-      dbCluster?.spec?.monitoring?.monitoringConfigName || '',
+
+    //resources
     [DbWizardFormFields.numberOfNodes]: numberOfNodes,
     [DbWizardFormFields.numberOfProxies]: replicasToNodes(
       proxies,
@@ -159,5 +145,14 @@ export const DbClusterPayloadToFormValues = (
         ? backup?.pitr?.backupStorageName || null
         : DB_WIZARD_DEFAULTS[DbWizardFormFields.pitrStorageLocation],
     [DbWizardFormFields.schedules]: backup?.schedules || [],
+
+    //advanced configuration
+    ...advancedConfigurationModalDefaultValues(dbCluster),
+
+    //monitoring
+    [DbWizardFormFields.monitoring]:
+      !!dbCluster?.spec?.monitoring?.monitoringConfigName,
+    [DbWizardFormFields.monitoringInstance]:
+      dbCluster?.spec?.monitoring?.monitoringConfigName || '',
   };
 };
