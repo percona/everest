@@ -79,6 +79,7 @@ func initInstallFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(install.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
 
 	cmd.Flags().String(install.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
+	cmd.Flags().MarkHidden(install.FlagChartDir) //nolint:errcheck,gosec
 	cmd.Flags().String(install.FlagRepository, helm.DefaultHelmRepoURL, "Helm chart repository to download the Everest charts from")
 	cmd.Flags().StringSlice(install.FlagHelmSet, []string{}, "Set helm values on the command line (can specify multiple values with commas: key1=val1,key2=val2)")
 	cmd.Flags().StringSliceP(install.FlagHelmValuesFiles, "f", []string{}, "Specify values in a YAML file or a URL (can specify multiple)")

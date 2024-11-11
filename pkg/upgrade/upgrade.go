@@ -23,6 +23,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
@@ -31,10 +32,10 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/helm"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
 	cliVersion "github.com/percona/everest/pkg/version"
@@ -67,10 +68,10 @@ type (
 		DryRun bool `mapstructure:"dry-run"`
 		// If set, we will print the pretty output.
 		Pretty bool
+		// SkipEnvDetection skips detecting the Kubernetes environment.
+		SkipEnvDetection bool `mapstructure:"skip-env-detection"`
 
-		SkipEnvDetection bool   `mapstructure:"skip-env-detection"`
-		SkipOLM          bool   `mapstructure:"skip-olm"`
-		CatalogNamespace string `mapstructure:"catalog-namespace"`
+		helm.CLIOptions
 	}
 
 	// Upgrade struct implements upgrade command.
@@ -81,6 +82,8 @@ type (
 		kubeClient     kubernetes.KubernetesConnector
 		versionService versionservice.Interface
 		dryRun         bool
+		clusterType    kubernetes.ClusterType
+		helmInstaller  *helm.Installer
 	}
 
 	requirementsCheck struct {
@@ -162,6 +165,25 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return nil
 	}
 
+	// Detect Kubernetes environment.
+	if !u.config.SkipEnvDetection {
+		t, err := u.kubeClient.GetClusterType(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to detect cluster type: %w", err)
+		}
+		u.clusterType = t
+	}
+
+	installer, err := helm.NewInstaller(common.SystemNamespace, u.config.KubeconfigPath, helm.ChartOptions{
+		URL:     u.config.RepoURL,
+		Name:    helm.EverestChartName,
+		Version: upgradeEverestTo.String(),
+	})
+	if err != nil {
+		return fmt.Errorf("could not create Helm installer: %w", err)
+	}
+	u.helmInstaller = installer
+
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
 	upgradeSteps := []common.Step{}
 
@@ -206,6 +228,45 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (u *Upgrade) upgradeCRDs() common.Step {
+	return common.Step{
+		Desc: "Upgrade CRDs",
+		F: func(ctx context.Context) error {
+			files, err := u.helmInstaller.RenderTemplates(ctx, false, helm.InstallArgs{
+				ReleaseName: common.SystemNamespace,
+			})
+			if err != nil {
+				return fmt.Errorf("could not render Helm templates: %w", err)
+			}
+			crds := files.FilterFiles("crds")
+			bldr := &strings.Builder{}
+			for _, f := range crds {
+				bldr.WriteString(f)
+				bldr.WriteString("\n---\n")
+			}
+			b := strings.Trim(bldr.String(), "\n---\n")
+			return u.kubeClient.ApplyManifestFile([]byte(b), common.SystemNamespace)
+		},
+	}
+}
+
+func (u *Upgrade) upgradeEverestHelmChart() common.Step {
+	return common.Step{
+		Desc: "Upgrade Everest Helm chart",
+		F: func(ctx context.Context) error {
+			values := helm.MustMergeValues(
+				u.config.Values,
+				helm.ClusterTypeSpecificValues(u.clusterType),
+			)
+			u.l.Info("Upgrading Everest Helm chart")
+			return u.helmInstaller.Upgrade(ctx, helm.InstallArgs{
+				Values:      values,
+				ReleaseName: common.SystemNamespace,
+			})
+		},
+	}
 }
 
 // ensureManagedByLabelOnDBNamespaces ensures that all database namespaces have the managed-by label set.
@@ -476,61 +537,6 @@ func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *common.
 			}
 			u.l.Debugf("Finished requirements check for operator %s", c.operatorName)
 		}
-	}
-
-	return nil
-}
-
-func (u *Upgrade) upgradeOLM(ctx context.Context, recommendedVersion *goversion.Version) error {
-	if recommendedVersion == nil {
-		// No need to check for OLM version and upgrade.
-		u.l.Debug("No version provided to upgradeOLM")
-		return nil
-	}
-
-	u.l.Info("Checking OLM version")
-	csv, err := u.kubeClient.GetClusterServiceVersion(ctx, types.NamespacedName{
-		Name:      "packageserver",
-		Namespace: kubernetes.OLMNamespace,
-	})
-	if err != nil {
-		return errors.Join(err, errors.New("could not retrieve Cluster Service Version"))
-	}
-	foundVersion, err := goversion.NewVersion(csv.Spec.Version.String())
-	if err != nil {
-		return err
-	}
-	u.l.Infof("OLM version is %s. Recommended version is %s", foundVersion, recommendedVersion)
-	if !foundVersion.LessThan(recommendedVersion) {
-		u.l.Info("OLM version is supported. No action is required.")
-		return nil
-	}
-	// u.l.Info("Upgrading OLM to version %s", recommendedVersion)
-	// if err := u.kubeClient.InstallOLMOperator(ctx, true); err != nil {
-	// 	return errors.Join(err, errors.New("could not upgrade OLM"))
-	// }
-	// u.l.Info("OLM has been upgraded")
-
-	return nil
-}
-
-func (u *Upgrade) upgradeEverestOperator(ctx context.Context, installPlanName string, version *goversion.Version) error {
-	u.l.Infof("Approving install plan %s for Everest operator", installPlanName)
-	done, err := u.kubeClient.ApproveInstallPlan(ctx, common.SystemNamespace, installPlanName)
-	if err != nil || !done {
-		return errors.Join(err, fmt.Errorf("could not approve install plan %s", installPlanName))
-	}
-
-	u.l.Infof("Waiting for install plan installation of Everest operator to finish")
-	if err := u.kubeClient.WaitForInstallPlanCompleted(ctx, common.SystemNamespace, installPlanName); err != nil {
-		return errors.Join(err, fmt.Errorf("install plan %s is not in phase completed", installPlanName))
-	}
-
-	u.l.Infof("Waiting for CSV installation of Everest operator to finish")
-	csvName := u.kubeClient.CSVNameFromOperator(common.EverestOperatorName, version)
-	u.l.Debugf("Everest Operator CSV name: %s", csvName)
-	if err := u.kubeClient.WaitForCSVSucceeded(ctx, common.SystemNamespace, csvName); err != nil {
-		return errors.Join(err, fmt.Errorf("csv %s is not in phase succeeded", installPlanName))
 	}
 
 	return nil

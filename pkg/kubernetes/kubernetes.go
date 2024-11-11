@@ -781,6 +781,12 @@ func (k *Kubernetes) ApplyObject(obj runtime.Object) error {
 	return k.client.ApplyObject(obj)
 }
 
+// ApplyManifestFile accepts manifest file contents, parses into []runtime.Object
+// and applies them against the cluster.
+func (k *Kubernetes) ApplyManifestFile(files []byte, namespace string) error {
+	return k.client.ApplyManifestFile(files, namespace)
+}
+
 // GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.
 func (k *Kubernetes) GetDBNamespaces(ctx context.Context) ([]string, error) {
 	// List all namespaces managed by everest.

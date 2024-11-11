@@ -118,6 +118,9 @@ type KubernetesConnector interface {
 	ListEngineDeploymentNames(ctx context.Context, namespace string) ([]string, error)
 	// ApplyObject applies object.
 	ApplyObject(obj runtime.Object) error
+	// ApplyManifestFile accepts manifest file contents, parses into []runtime.Object
+	// and applies them against the cluster.
+	ApplyManifestFile(files []byte, namespace string) error
 	// GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.
 	GetDBNamespaces(ctx context.Context) ([]string, error)
 	// WaitForRollout waits for rollout of a provided deployment in the provided namespace.

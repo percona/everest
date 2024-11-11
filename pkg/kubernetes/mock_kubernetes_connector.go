@@ -47,6 +47,24 @@ func (_m *MockKubernetesConnector) Accounts() accounts.Interface {
 	return r0
 }
 
+// ApplyManifestFile provides a mock function with given fields: files, namespace
+func (_m *MockKubernetesConnector) ApplyManifestFile(files []byte, namespace string) error {
+	ret := _m.Called(files, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ApplyManifestFile")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]byte, string) error); ok {
+		r0 = rf(files, namespace)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ApplyObject provides a mock function with given fields: obj
 func (_m *MockKubernetesConnector) ApplyObject(obj runtime.Object) error {
 	ret := _m.Called(obj)
