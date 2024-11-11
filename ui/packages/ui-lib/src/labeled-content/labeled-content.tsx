@@ -40,7 +40,7 @@ const LabeledContent = ({
     <Stack
       sx={{
         '.MuiTextField-root': {
-          mt: 0,
+          mt: 1.5,
           ...textFieldRootSx,
         },
         '.MuiAutocomplete-root': {
