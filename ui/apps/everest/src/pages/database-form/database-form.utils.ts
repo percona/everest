@@ -149,7 +149,7 @@ export const DbClusterPayloadToFormValues = (
       dbCluster?.spec?.engine?.storage?.class || null,
 
     //backups
-    [DbWizardFormFields.backupsEnabled]: !!backup?.enabled,
+    [DbWizardFormFields.backupsEnabled]: (backup?.schedules || []).length > 0,
     [DbWizardFormFields.pitrEnabled]: backup?.pitr?.enabled || false,
     [DbWizardFormFields.pitrStorageLocation]:
       (backup?.pitr?.enabled && mode === 'new') || mode === 'edit'

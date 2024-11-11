@@ -49,7 +49,7 @@ export const convertDbClusterPayloadToTableFormat = (
             : DbClusterStatus.unknown,
           dbType: cluster.spec.engine.type,
           dbVersion: cluster.spec.engine.version || '',
-          backupsEnabled: !!cluster.spec.backup?.enabled,
+          backupsEnabled: (cluster.spec.backup?.schedules || []).length > 0,
           databaseName: cluster.metadata.name,
           cpu: cluster.spec.engine.resources?.cpu || '',
           memory: cluster.spec.engine.resources?.memory || '',
