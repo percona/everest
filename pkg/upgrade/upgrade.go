@@ -23,20 +23,15 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
-	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
 	"go.uber.org/zap"
 	"helm.sh/helm/v3/pkg/cli/values"
-	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/common"
@@ -185,13 +180,6 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		u.clusterType = t
 	}
 
-	upgradeSteps := []common.Step{}
-	if common.CompareVersions(upgradeEverestTo, "1.4.0") < 0 {
-		// legacy upgrade path
-	} else {
-		upgradeSteps = append(upgradeSteps, u.upgradeWithHelm(upgradeEverestTo.String())...)
-	}
-
 	// Initialise installer.
 	installer, err := helm.NewInstaller(common.SystemNamespace, u.config.KubeconfigPath, helm.ChartOptions{
 		URL:     u.config.RepoURL,
@@ -205,39 +193,13 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
 
+	// 1.4.0 was when Helm based installation was added. Versions below that are not managed by helm.
+	u.helmReleaseExists = common.CheckConstraint(everestVersion, ">= 1.4.0")
+
+	upgradeSteps := []common.Step{}
 	upgradeSteps = append(upgradeSteps, u.upgradeCRDs())
 	upgradeSteps = append(upgradeSteps, u.upgradeEverestHelmChart(upgradeEverestTo.String()))
 	upgradeSteps = append(upgradeSteps, install.WaitForEverestSteps(u.l, u.kubeClient, u.clusterType)...)
-
-	// Do not add more steps here. If more tasks are to be added in the future, we will do it as a part of
-	// the Everest API pod startup procerr.
-	// TODO: figure out how to get rid of this step in the future.
-	upgradeSteps = append(upgradeSteps, common.Step{
-		Desc: "Run post-upgrade tasks",
-		F: func(ctx context.Context) error {
-			if common.CompareVersions(upgradeEverestTo, "0.10.1") > 0 {
-				if err := u.ensureEverestAccountsIfNotExists(ctx); err != nil {
-					return err
-				}
-				if err := u.ensureManagedByLabelOnDBNamespaces(ctx); err != nil {
-					return err
-				}
-				if err := u.kubeClient.DeleteSecret(ctx, common.SystemNamespace, "everest-token"); client.IgnoreNotFound(err) != nil {
-					return err
-				}
-				if err := u.kubeClient.DeleteSecret(ctx, common.SystemNamespace, "everest-admin-token"); client.IgnoreNotFound(err) != nil {
-					return err
-				}
-			}
-			if common.CheckConstraint(upgradeEverestTo, "~> 1.2.0") {
-				// Migrate monitoring-configs and backup-storages.
-				if err := u.migrateSharedResources(ctx); err != nil {
-					return fmt.Errorf("migration of shared resources failed: %w", err)
-				}
-			}
-			return nil
-		},
-	})
 
 	if err := common.RunStepsWithSpinner(ctx, upgradeSteps, out); err != nil {
 		return err
@@ -255,14 +217,6 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	return nil
 }
 
-func (u *Upgrade) upgradeWithHelm(curVersion, upgToVersion string) []common.Step {
-	upgradeSteps := []common.Step{}
-	upgradeSteps = append(upgradeSteps, u.upgradeCRDs())
-	upgradeSteps = append(upgradeSteps, u.upgradeEverestHelmChart(upgToVersion))
-	upgradeSteps = append(upgradeSteps, install.WaitForEverestSteps(u.l, u.kubeClient, u.clusterType)...)
-	return upgradeSteps
-}
-
 func (u *Upgrade) upgradeCRDs() common.Step {
 	return common.Step{
 		Desc: "Upgrade CRDs",
@@ -273,14 +227,8 @@ func (u *Upgrade) upgradeCRDs() common.Step {
 			if err != nil {
 				return fmt.Errorf("could not render Helm templates: %w", err)
 			}
-			crds := files.FilterFiles("crds")
-			bldr := &strings.Builder{}
-			for _, f := range crds {
-				bldr.WriteString(f)
-				bldr.WriteString("\n---\n")
-			}
-			b := strings.TrimSuffix(bldr.String(), "\n---\n")
-			return u.kubeClient.ApplyManifestFile([]byte(b), common.SystemNamespace)
+			crds := files.Filter("crds")
+			return u.kubeClient.ApplyManifestFile(crds, common.SystemNamespace)
 		},
 	}
 }
@@ -422,77 +370,6 @@ func (u *Upgrade) cleanupLegacyResources(ctx context.Context) error {
 }
 
 // ensureManagedByLabelOnDBNamespaces ensures that all database namespaces have the managed-by label set.
-func (u *Upgrade) ensureManagedByLabelOnDBNamespaces(ctx context.Context) error {
-	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx)
-	if err != nil {
-		u.l.Error(err)
-		return errors.Join(err, errors.New("could not retrieve database namespaces"))
-	}
-	for _, nsName := range dbNamespaces {
-		// Ensure we add the managed-by label to the namespace.
-		// We should retry this operation since there may be update conflicts.
-		var b backoff.BackOff
-		b = backoff.NewConstantBackOff(backoffInterval)
-		b = backoff.WithMaxRetries(b, backoffMaxRetries)
-		b = backoff.WithContext(b, ctx)
-		if err := backoff.Retry(func() error {
-			// Get the namespace.
-			ns, err := u.kubeClient.GetNamespace(ctx, nsName)
-			if err != nil {
-				return errors.Join(err, fmt.Errorf("could not get namespace '%s'", nsName))
-			}
-			labels := ns.GetLabels()
-			_, found := labels[common.KubernetesManagedByLabel]
-			if found {
-				return nil // label already exists.
-			}
-			if labels == nil {
-				labels = make(map[string]string)
-			}
-			// Set the label.
-			labels[common.KubernetesManagedByLabel] = common.Everest
-			ns.SetLabels(labels)
-			if _, err := u.kubeClient.UpdateNamespace(ctx, ns, metav1.UpdateOptions{}); err != nil {
-				return errors.Join(err, fmt.Errorf("could not update namespace '%s'", nsName))
-			}
-			return nil
-		}, b,
-		); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (u *Upgrade) ensureEverestAccountsIfNotExists(ctx context.Context) error {
-	if _, err := u.kubeClient.GetSecret(ctx, common.SystemNamespace, common.EverestAccountsSecretName); client.IgnoreNotFound(err) != nil {
-		return err
-	} else if err == nil {
-		return nil // Everest accounts already exists.
-	}
-
-	// Create Everest accounts secret.
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      common.EverestAccountsSecretName,
-			Namespace: common.SystemNamespace,
-		},
-	}
-	if _, err := u.kubeClient.CreateSecret(ctx, secret); err != nil {
-		return err
-	}
-	return common.CreateInitialAdminAccount(ctx, u.kubeClient.Accounts())
-}
-
-func (u *Upgrade) ensureEverestJWTIfNotExists(ctx context.Context) error {
-	if _, err := u.kubeClient.GetSecret(ctx, common.SystemNamespace, common.EverestJWTSecretName); client.IgnoreNotFound(err) != nil {
-		return err
-	} else if err == nil {
-		return nil // JWT keys already exist.
-	}
-	return u.kubeClient.CreateRSAKeyPair(ctx)
-}
-
 // canUpgrade checks if there's a new Everest version available and if we can upgrade to it
 // based on minimum requirements.
 func (u *Upgrade) canUpgrade(ctx context.Context, everestVersion *goversion.Version) (*goversion.Version, error) {

@@ -26,15 +26,15 @@ func TestHelm(t *testing.T) {
 	allFiles := rendered.Files()
 	assert.Len(t, allFiles, 5)
 
-	depls := rendered.FilterFiles("templates/deployment.yaml")
+	depls := rendered.Filter("templates/deployment.yaml").Files()
 	assert.Len(t, depls, 1)
 
-	svcs := rendered.FilterFiles("templates/service.yaml")
+	svcs := rendered.Filter("templates/service.yaml").Files()
 	assert.Len(t, svcs, 1)
 
-	deplAndSvc := rendered.FilterFiles("templates/deployment.yaml", "templates/service.yaml")
+	deplAndSvc := rendered.Filter("templates/deployment.yaml", "templates/service.yaml").Files()
 	assert.Len(t, deplAndSvc, 2)
 
-	none := rendered.FilterFiles("templates/doesnotexist.yaml")
+	none := rendered.Filter("templates/doesnotexist.yaml").Files()
 	assert.Empty(t, none, 0)
 }

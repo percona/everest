@@ -188,48 +188,15 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 		},
 	})
 
+	// It is possible to uninstall an older version of Everest using the new version of the CLI.
+	// In 1.4.0, we migrate to a Helm chart for installation. For older versions that were installed without the chart,
+	// we need to clean-up some resources that were changed/removed in the Helm chart.
 	if !chartExists {
-		// Older CLI versions did not use Helm chart.
-		// So we need to cleanup OLM manually.
-		// TODO: Remove this block in the future.
-		_, err := u.kubeClient.GetNamespace(ctx, kubernetes.OLMNamespace)
-		if err != nil && !k8serrors.IsNotFound(err) {
+		steps, err := u.legacyResourcesCleanup(ctx)
+		if err != nil {
 			return err
-		} else if err == nil {
-			uninstallSteps = append(uninstallSteps, common.Step{
-				Desc: "Delete OLM",
-				F: func(ctx context.Context) error {
-					return u.deleteOLM(ctx, kubernetes.OLMNamespace)
-				},
-			})
 		}
-
-		// Everest was installed without Helm (old method). So we need to check and clean-up leftover resources
-		// which would normally be deleted along with the Helm release.
-		// TODO: Remove this block in the future.
-		uninstallSteps = append(uninstallSteps, common.Step{
-			Desc: "Clean-up leftover resources",
-			F: func(ctx context.Context) error {
-				installer, err := helm.NewInstaller(common.SystemNamespace, u.config.KubeconfigPath, helm.ChartOptions{
-					// We will render the templates using the first version of the chart to be released.
-					// We don't expect it to lack any manifest that must be deleted.
-					// Moreover, on running `everestctl upgrade`, we will migrate the installation to Helm.
-					Version: "1.3.0-rc3", // TODO update.
-					URL:     helm.DefaultHelmRepoURL,
-					Name:    helm.EverestChartName,
-				})
-				if err != nil {
-					return fmt.Errorf("failed to create Helm installer: %w", err)
-				}
-				file, err := installer.RenderTemplates(ctx, true, helm.InstallArgs{
-					ReleaseName: common.SystemNamespace,
-				})
-				if err != nil {
-					return err
-				}
-				return u.kubeClient.DeleteManifestFile(file, common.SystemNamespace)
-			},
-		})
+		uninstallSteps = append(uninstallSteps, steps...)
 	}
 
 	var out io.Writer = os.Stdout
@@ -249,6 +216,48 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 	u.l.Infof("Everest has been uninstalled successfully")
 	fmt.Fprintln(out, "Everest has been uninstalled successfully")
 	return nil
+}
+
+func (u *Uninstall) legacyResourcesCleanup(ctx context.Context) ([]common.Step, error) {
+	steps := []common.Step{}
+	// In the legacy installatin, OLM needs to be gracefully deleted, otherwise the namespace will be stuck in Terminating state.
+	_, err := u.kubeClient.GetNamespace(ctx, kubernetes.OLMNamespace)
+	if err != nil && !k8serrors.IsNotFound(err) {
+		return nil, err
+	} else if err == nil {
+		steps = append(steps, common.Step{
+			Desc: "Delete OLM",
+			F: func(ctx context.Context) error {
+				return u.deleteOLM(ctx, kubernetes.OLMNamespace)
+			},
+		})
+	}
+	// The uninstallation does not cover certain resources, such as ClusterRoleBindings, ClusterRoles, etc.
+	// We will render the manifests using the Helm chart and simply delete them.
+	steps = append(steps, common.Step{
+		Desc: "Clean-up leftover resources",
+		F: func(ctx context.Context) error {
+			installer, err := helm.NewInstaller(common.SystemNamespace, u.config.KubeconfigPath, helm.ChartOptions{
+				// We will render the templates using the first known version of the chart.
+				// We don't expect it to lack any manifest that must be deleted.
+				// Moreover, on running `everestctl upgrade`, we will migrate the installation to Helm.
+				Version: "1.3.0-rc3", // TODO update.
+				URL:     helm.DefaultHelmRepoURL,
+				Name:    helm.EverestChartName,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to create Helm installer: %w", err)
+			}
+			file, err := installer.RenderTemplates(ctx, true, helm.InstallArgs{
+				ReleaseName: common.SystemNamespace,
+			})
+			if err != nil {
+				return err
+			}
+			return u.kubeClient.DeleteManifestFile(file, common.SystemNamespace)
+		},
+	})
+	return steps, nil
 }
 
 func (u *Uninstall) deleteEverestHelmChart() []common.Step {

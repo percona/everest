@@ -199,8 +199,16 @@ func (i *Installer) Install(ctx context.Context, args InstallArgs) error {
 // The YAML file is separated by `---` between each template.
 type RenderedTemplates []byte
 
+func fileMapToBytes(files map[string]string) []byte {
+	var builder strings.Builder
+	for _, doc := range files {
+		builder.WriteString(doc + "\n---\n")
+	}
+	return []byte(strings.TrimSuffix(builder.String(), "\n---\n"))
+}
+
 // FilterFiles filters the rendered templates by the provided paths.
-func (t *RenderedTemplates) FilterFiles(paths ...string) map[string]string {
+func (t *RenderedTemplates) Filter(paths ...string) RenderedTemplates {
 	files := t.Files()
 	result := make(map[string]string)
 	for name, doc := range files {
@@ -210,7 +218,7 @@ func (t *RenderedTemplates) FilterFiles(paths ...string) map[string]string {
 			}
 		}
 	}
-	return result
+	return RenderedTemplates(fileMapToBytes(result))
 }
 
 // Files returns the rendered templates as a map of file names to their content.
