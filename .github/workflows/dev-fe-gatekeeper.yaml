@@ -68,7 +68,7 @@ jobs:
 
       - run: make init
 
-      - uses: jacobtomlinson/gha-find-replace@v2
+      - uses: jacobtomlinson/gha-find-replace@v3
         with:
           find: "console.log\\(.*"
           replace: "//"
