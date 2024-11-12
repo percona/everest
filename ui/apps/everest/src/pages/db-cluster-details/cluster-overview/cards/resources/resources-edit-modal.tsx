@@ -25,14 +25,14 @@ const ResourcesEditModal = ({
       closeModal={handleCloseModal}
       headerMessage="Edit Topology"
       submitMessage="Save"
-      schema={resourcesFormSchema()}
+      schema={resourcesFormSchema(true)}
       onSubmit={onSubmit}
       defaultValues={defaultValues}
     >
       <ResourcesForm
         dbType={dbType}
         pairProxiesWithNodes={false}
-        showSharding={false}
+        showSharding={dbType === DbType.Mongo}
         disableDiskInput
         allowDiskInputUpdate={false}
         hideProxies={dbType === DbType.Mongo && !shardingEnabled}

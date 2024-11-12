@@ -13,65 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FormGroup, Stack } from '@mui/material';
-import { SwitchInput, TextInput, TextArray } from '@percona/ui-lib';
 import { useFormContext } from 'react-hook-form';
 import { Messages } from './advanced-configurations.messages.ts';
-import { getParamsPlaceholderFromDbType } from './advanced-configurations.utils.ts';
 
 import { DbWizardFormFields } from 'consts.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
+import AdvancedConfigurationForm from 'components/cluster-form/advanced-configuration/advanced-configuration.tsx';
+import { FormGroup } from '@mui/material';
 
 export const AdvancedConfigurations = () => {
-  const methods = useFormContext();
-  const [externalAccess, engineParametersEnabled, dbType] = methods.watch([
-    DbWizardFormFields.externalAccess,
-    DbWizardFormFields.engineParametersEnabled,
-    DbWizardFormFields.dbType,
-  ]);
+  const { watch } = useFormContext();
+  const dbType = watch(DbWizardFormFields.dbType);
 
   return (
     <>
       <StepHeader pageTitle={Messages.advanced} />
       <FormGroup sx={{ mt: 3 }}>
-        <SwitchInput
-          label={Messages.enableExternalAccess.title}
-          labelCaption={Messages.enableExternalAccess.caption}
-          name={DbWizardFormFields.externalAccess}
-        />
-        {externalAccess && (
-          <Stack sx={{ ml: 6 }}>
-            <TextArray
-              placeholder={Messages.sourceRangePlaceholder}
-              fieldName={DbWizardFormFields.sourceRanges}
-              fieldKey="sourceRange"
-              label={Messages.sourceRange}
-            />
-          </Stack>
-        )}
-        <SwitchInput
-          label={Messages.engineParameters.title}
-          labelCaption={Messages.engineParameters.caption}
-          name={DbWizardFormFields.engineParametersEnabled}
-          formControlLabelProps={{
-            sx: {
-              mt: 1,
-            },
-          }}
-        />
-        {engineParametersEnabled && (
-          <TextInput
-            name={DbWizardFormFields.engineParameters}
-            textFieldProps={{
-              placeholder: getParamsPlaceholderFromDbType(dbType),
-              multiline: true,
-              minRows: 3,
-              sx: {
-                ml: 6,
-              },
-            }}
-          />
-        )}
+        <AdvancedConfigurationForm dbType={dbType} />
       </FormGroup>
     </>
   );

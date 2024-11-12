@@ -19,6 +19,7 @@ import DbActions from 'components/db-actions/db-actions';
 import { useDbActions } from 'hooks';
 import { Messages } from './db-cluster-details.messages';
 import DbActionsModals from 'components/db-actions/db-actions-modals';
+import { useRBACPermissionRoute } from 'hooks/rbac';
 
 export const DbClusterDetails = () => {
   const { dbClusterName = '' } = useParams();
@@ -27,6 +28,15 @@ export const DbClusterDetails = () => {
   const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
   const navigate = useNavigate();
   const currentTab = routeMatch?.params?.tabs;
+  const namespace = routeMatch?.params?.namespace;
+
+  useRBACPermissionRoute([
+    {
+      action: 'read',
+      resource: 'database-clusters',
+      specificResources: [`${namespace}/${dbClusterName}`],
+    },
+  ]);
 
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
   const {

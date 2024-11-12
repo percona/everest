@@ -47,6 +47,13 @@ const (
 	contextTimeout    = 5 * time.Minute
 	backoffInterval   = 5 * time.Second
 	backoffMaxRetries = 5
+
+	// FlagCatalogNamespace is the name of the catalog namespace flag.
+	FlagCatalogNamespace = "catalog-namespace"
+	// FlagSkipEnvDetection is the name of the skip env detection flag.
+	FlagSkipEnvDetection = "skip-env-detection"
+	// FlagSkipOLM is the name of the skip OLM flag.
+	FlagSkipOLM = "skip-olm"
 )
 
 // list of objects to skip during upgrade.
@@ -85,12 +92,18 @@ type (
 	Config struct {
 		// KubeconfigPath is a path to a kubeconfig
 		KubeconfigPath string `mapstructure:"kubeconfig"`
+		// InCluster is set if the upgrade process should use in-cluster configuration.
+		InCluster bool `mapstructure:"in-cluster"`
 		// VersionMetadataURL stores hostname to retrieve version metadata information from.
 		VersionMetadataURL string `mapstructure:"version-metadata-url"`
 		// DryRun is set if the upgrade process should only perform pre-upgrade checks and not perform the actual upgrade.
 		DryRun bool `mapstructure:"dry-run"`
 		// If set, we will print the pretty output.
 		Pretty bool
+
+		SkipEnvDetection bool   `mapstructure:"skip-env-detection"`
+		SkipOLM          bool   `mapstructure:"skip-olm"`
+		CatalogNamespace string `mapstructure:"catalog-namespace"`
 	}
 
 	// Upgrade struct implements upgrade command.
@@ -122,17 +135,32 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 		cli.l = zap.NewNop().Sugar()
 	}
 
-	k, err := kubernetes.New(cfg.KubeconfigPath, cli.l)
-	if err != nil {
-		var u *url.Error
-		if errors.As(err, &u) {
-			l.Error("Could not connect to Kubernetes. " +
-				"Make sure Kubernetes is running and is accessible from this computer/server.")
+	var kubeClient kubernetes.KubernetesConnector
+	if cfg.InCluster {
+		k, err := kubernetes.NewInCluster(cli.l)
+		if err != nil {
+			return nil, fmt.Errorf("could not create in-cluster kubernetes client: %w", err)
 		}
-		return nil, err
+		kubeClient = k
 	}
+	if cfg.KubeconfigPath != "" {
+		k, err := kubernetes.New(cfg.KubeconfigPath, cli.l)
+		if err != nil {
+			var u *url.Error
+			if errors.As(err, &u) {
+				l.Error("Could not connect to Kubernetes. " +
+					"Make sure Kubernetes is running and is accessible from this computer/server.")
+			}
+			return nil, err
+		}
+		kubeClient = k
+	}
+	if kubeClient == nil {
+		return nil, errors.New("must provide kubeconfig path or run in-cluster")
+	}
+
 	cli.dryRun = cfg.DryRun
-	cli.kubeClient = k
+	cli.kubeClient = kubeClient
 	cli.versionService = versionservice.New(cfg.VersionMetadataURL)
 	return cli, nil
 }
@@ -167,15 +195,38 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return nil
 	}
 
+	if !u.config.SkipEnvDetection {
+		// Catalog namespace or Skip OLM implies disabled environment detection.
+		if u.config.SkipOLM || u.config.CatalogNamespace != kubernetes.OLMNamespace {
+			u.config.SkipEnvDetection = true
+		}
+	}
+
+	if u.config.SkipEnvDetection {
+		u.l.Info("Skipping Kubernetes environment detection")
+	} else {
+		u.l.Info("Detecting Kubernetes environment")
+		env, err := u.kubeClient.DetectEnvironment(ctx)
+		if err != nil {
+			return err
+		}
+		u.config.SkipOLM = env.SkipOLM
+		u.config.CatalogNamespace = env.CatalogNamespace
+	}
+
 	upgradeSteps := []common.Step{}
 
 	// Start upgrade.
-	upgradeSteps = append(upgradeSteps, common.Step{
-		Desc: "Upgrade Operator Lifecycle Manager",
-		F: func(ctx context.Context) error {
-			return u.upgradeOLM(ctx, recVer.OLM)
-		},
-	})
+	if u.config.SkipOLM {
+		u.l.Infof("Skipping OLM upgrade")
+	} else {
+		upgradeSteps = append(upgradeSteps, common.Step{
+			Desc: "Upgrade Operator Lifecycle Manager",
+			F: func(ctx context.Context) error {
+				return u.upgradeOLM(ctx, recVer.OLM)
+			},
+		})
+	}
 
 	// We cannot use the latest version of catalog yet since
 	// at the time of writing, each catalog version supports only one Everest version.
@@ -188,7 +239,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		Desc: "Upgrade Percona Catalog",
 		F: func(ctx context.Context) error {
 			u.l.Infof("Upgrading Percona Catalog to %s", catalogVersion)
-			return u.kubeClient.InstallPerconaCatalog(ctx, catalogVersion)
+			return u.kubeClient.InstallPerconaCatalog(ctx, catalogVersion, u.config.CatalogNamespace)
 		},
 	})
 

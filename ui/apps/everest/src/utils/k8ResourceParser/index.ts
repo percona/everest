@@ -78,5 +78,5 @@ export const getTotalResourcesDetailedString = (
 
   const totalResources = value * numberOfNodes;
 
-  return `${numberOfNodes} x ${value} ${unit} = ${totalResources} ${unit}`;
+  return `${numberOfNodes} x ${value} ${unit} = ${totalResources.toFixed(2)} ${unit}`;
 };

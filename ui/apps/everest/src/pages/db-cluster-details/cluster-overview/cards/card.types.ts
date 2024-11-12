@@ -34,6 +34,7 @@ export type ConnectionDetailsOverviewCardProps = {
   port: number;
   username: string;
   password: string;
+  connectionUrl: string;
   clusterName?: string;
   clusterNamespace?: string;
 } & OverviewCardProps;
@@ -70,4 +71,6 @@ export type BackupsDetailsOverviewCardProps = {
     NonNullable<DbCluster['spec']['backup']>['pitr']
   >['backupStorageName'];
   showStorage: boolean;
+  dbClusterName: string;
+  namespace: string;
 } & OverviewCardProps;

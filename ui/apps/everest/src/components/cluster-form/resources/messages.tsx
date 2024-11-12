@@ -2,7 +2,6 @@ export const Messages = {
   sharding: {
     invalid: 'Please fill in valid values for sharding',
     min: (val: number) => `The value cannot be less than ${val}`,
-    minForNodes: 'The minimum number of shards should be 2',
     max: (val: number) => `The value cannot be more than ${val}`,
     odd: 'The value cannot be even',
     numberOfShards: 'Nº of shards',

@@ -12,6 +12,7 @@ export const Messages = {
     schedules: 'Schedules',
     pitr: 'Point-in-time Recovery (PITR)',
     editMonitoring: 'Edit Monitoring',
+    noData: 'You currently do not have any backups. Create one to get started.',
   },
   actions: {
     edit: 'Edit',
@@ -26,6 +27,7 @@ export const Messages = {
     port: 'Port',
     username: 'Username',
     password: 'Password',
+    connectionUrl: 'Connection URL',
     status: 'Status',
     externalAccess: 'Ext.access',
     parameters: 'Parameters',

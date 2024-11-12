@@ -9,7 +9,6 @@ const FormProviderWrapper = ({ children }: { children: React.ReactNode }) => {
     defaultValues: {
       externalAccess: false,
       engineParametersEnabled: false,
-      // internetFacing: false,
       sourceRanges: [
         {
           sourgeRange: '192.168.1.1',

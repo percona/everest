@@ -48,6 +48,7 @@ export const DbActions = ({
   const dbClusterName = dbCluster.metadata.name;
   const namespace = dbCluster.metadata.namespace;
   const restoring = dbCluster.status?.status === DbClusterStatus.restoring;
+  const deleting = dbCluster.status?.status === DbClusterStatus.deleting;
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
@@ -132,7 +133,7 @@ export const DbActions = ({
       >
         {canUpdate && (
           <MenuItem
-            disabled={restoring}
+            disabled={restoring || deleting}
             key={2}
             onClick={() => {
               handleDbRestart(dbCluster);
@@ -145,7 +146,7 @@ export const DbActions = ({
         {canCreateClusterFromBackup && (
           <MenuItem
             data-testid={`${dbClusterName}-create-new-db-from-backup`}
-            disabled={restoring}
+            disabled={restoring || deleting}
             key={1}
             onClick={() => {
               setIsNewClusterMode(true);
@@ -159,7 +160,7 @@ export const DbActions = ({
         {canRestore && (
           <MenuItem
             data-testid={`${dbClusterName}-restore`}
-            disabled={restoring}
+            disabled={restoring || deleting}
             key={3}
             onClick={() => {
               setIsNewClusterMode(false);
@@ -183,7 +184,7 @@ export const DbActions = ({
         )}
         {canUpdate && (
           <MenuItem
-            disabled={restoring}
+            disabled={restoring || deleting}
             key={4}
             onClick={() => {
               handleDbSuspendOrResumed(dbCluster);
@@ -198,6 +199,7 @@ export const DbActions = ({
         )}
         {canDelete && (
           <MenuItem
+            disabled={deleting}
             data-testid={`${dbClusterName}-delete`}
             key={5}
             onClick={() => {
