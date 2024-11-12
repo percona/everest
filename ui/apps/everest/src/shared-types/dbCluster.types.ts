@@ -39,6 +39,10 @@ export interface Schedule {
   schedule: string;
 }
 
+export type ManageableSchedules = Schedule & {
+  canBeManaged: boolean;
+};
+
 export interface PITR {
   enabled: boolean;
   backupStorageName: string;
