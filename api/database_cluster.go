@@ -568,10 +568,9 @@ func getDefaultUploadInterval(engine everestv1alpha1.Engine, uploadInterval *int
 		// so we still use heuristics
 		return valueOrDefault(uploadInterval, psmdbDefaultUploadInterval)
 	case everestv1alpha1.DatabaseEnginePostgresql:
-		// latest restorable time appeared in PG 2.4.0
-		if common.CheckConstraint(version, "<2.4.0") {
-			return valueOrDefault(uploadInterval, pgDefaultUploadInterval)
-		}
+		// latest restorable time appeared in PG 2.4.0, however it's not reliable https://perconadev.atlassian.net/browse/K8SPG-681
+		// so we still use heuristics
+		return valueOrDefault(uploadInterval, pgDefaultUploadInterval)
 	}
 	// for newer versions don't use the heuristics, so return 0 upload interval
 	return 0
