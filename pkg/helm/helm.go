@@ -308,6 +308,8 @@ func newActionsCfg(namespace, kubeconfig string) (*action.Configuration, error) 
 	cfg := action.Configuration{}
 	restClientGetter := genericclioptions.ConfigFlags{}
 	if kubeconfig != "" {
+		home := os.Getenv("HOME")
+		kubeconfig = strings.ReplaceAll(kubeconfig, "~", home)
 		restClientGetter.KubeConfig = &kubeconfig
 	}
 	if err := cfg.Init(&restClientGetter, namespace, "", logger); err != nil {
