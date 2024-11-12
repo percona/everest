@@ -44,9 +44,6 @@ const (
 	pollInterval = 5 * time.Second
 	pollTimeout  = 5 * time.Minute
 
-	// catalogSource is the name of the catalog source.
-	catalogSource = "everest-catalog"
-
 	// FlagCatalogNamespace is the name of the catalog namespace flag.
 	FlagCatalogNamespace = "catalog-namespace"
 	// FlagSkipEnvDetection is the name of the skip env detection flag.
@@ -216,7 +213,7 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 				installer, err := helm.NewInstaller(common.SystemNamespace, u.config.KubeconfigPath, helm.ChartOptions{
 					// We will render the templates using the first version of the chart to be released.
 					// We don't expect it to lack any manifest that must be deleted.
-					// Moreover, on running `everestctl ugprade`, we will migrate the installation to Helm.
+					// Moreover, on running `everestctl upgrade`, we will migrate the installation to Helm.
 					Version: "1.3.0-rc3", // TODO update.
 					URL:     helm.DefaultHelmRepoURL,
 					Name:    helm.EverestChartName,
@@ -254,17 +251,13 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 	return nil
 }
 
-// legacy deletion method.
-func (u *Uninstall) deleteManifests() []common.Step {
-	return nil
-}
-
 func (u *Uninstall) deleteEverestHelmChart() []common.Step {
 	steps := []common.Step{}
 	// Delete core components.
 	steps = append(steps, common.Step{
 		Desc: fmt.Sprintf("Delete Helm chart release '%s' in namespace '%s'",
-			common.SystemNamespace, common.SystemNamespace),
+			common.SystemNamespace, common.SystemNamespace,
+		),
 		F: func(ctx context.Context) error {
 			// First delete the CSVs in monitoring namespace, otherwise the deletion of the namespace will be stuck.
 			if err := wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
@@ -461,7 +454,7 @@ func (u *Uninstall) deleteDBNamespaces(ctx context.Context, deleteChart bool) er
 	}
 	if deleteChart {
 		for _, ns := range namespaces {
-			if err := u.deleteDBNamespaceHelmChart(ctx, ns); err != nil {
+			if err := u.deleteDBNamespaceHelmChart(ns); err != nil {
 				return errors.Join(err, errors.New("failed to deleteDBNamespaceHelmChart"))
 			}
 		}
@@ -469,7 +462,7 @@ func (u *Uninstall) deleteDBNamespaces(ctx context.Context, deleteChart bool) er
 	return u.deleteNamespaces(ctx, namespaces)
 }
 
-func (u *Uninstall) deleteDBNamespaceHelmChart(ctx context.Context, namespace string) error {
+func (u *Uninstall) deleteDBNamespaceHelmChart(namespace string) error {
 	uninstaller, err := helm.NewUninstaller(namespace, u.config.KubeconfigPath)
 	if err != nil {
 		return err

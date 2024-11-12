@@ -31,7 +31,6 @@ import (
 	goversion "github.com/hashicorp/go-version"
 	"go.uber.org/zap"
 	"helm.sh/helm/v3/pkg/cli/values"
-	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -163,7 +162,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	}
 
 	// Check prerequisites
-	upgradeEverestTo, _, err := u.canUpgrade(ctx, everestVersion)
+	upgradeEverestTo, err := u.canUpgrade(ctx, everestVersion)
 	if err != nil {
 		if errors.Is(err, ErrNoUpdateAvailable) {
 			u.l.Info("You're running the latest version of Everest")
@@ -186,6 +185,13 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		u.clusterType = t
 	}
 
+	upgradeSteps := []common.Step{}
+	if common.CompareVersions(upgradeEverestTo, "1.4.0") < 0 {
+		// legacy upgrade path
+	} else {
+		upgradeSteps = append(upgradeSteps, u.upgradeWithHelm(upgradeEverestTo.String())...)
+	}
+
 	// Initialise installer.
 	installer, err := helm.NewInstaller(common.SystemNamespace, u.config.KubeconfigPath, helm.ChartOptions{
 		URL:     u.config.RepoURL,
@@ -197,14 +203,8 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	}
 	u.helmInstaller = installer
 
-	// Check if current installation was done using Helm chart.
-	if err := u.checkExistingHelmRelease(); err != nil {
-		return fmt.Errorf("could not check existing Helm release: %w", err)
-	}
-
 	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
 
-	upgradeSteps := []common.Step{}
 	upgradeSteps = append(upgradeSteps, u.upgradeCRDs())
 	upgradeSteps = append(upgradeSteps, u.upgradeEverestHelmChart(upgradeEverestTo.String()))
 	upgradeSteps = append(upgradeSteps, install.WaitForEverestSteps(u.l, u.kubeClient, u.clusterType)...)
@@ -255,6 +255,14 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	return nil
 }
 
+func (u *Upgrade) upgradeWithHelm(curVersion, upgToVersion string) []common.Step {
+	upgradeSteps := []common.Step{}
+	upgradeSteps = append(upgradeSteps, u.upgradeCRDs())
+	upgradeSteps = append(upgradeSteps, u.upgradeEverestHelmChart(upgToVersion))
+	upgradeSteps = append(upgradeSteps, install.WaitForEverestSteps(u.l, u.kubeClient, u.clusterType)...)
+	return upgradeSteps
+}
+
 func (u *Upgrade) upgradeCRDs() common.Step {
 	return common.Step{
 		Desc: "Upgrade CRDs",
@@ -271,7 +279,7 @@ func (u *Upgrade) upgradeCRDs() common.Step {
 				bldr.WriteString(f)
 				bldr.WriteString("\n---\n")
 			}
-			b := strings.Trim(bldr.String(), "\n---\n")
+			b := strings.TrimSuffix(bldr.String(), "\n---\n")
 			return u.kubeClient.ApplyManifestFile([]byte(b), common.SystemNamespace)
 		},
 	}
@@ -352,7 +360,7 @@ func helmValuesForDBEngines(list *everestv1alpha1.DatabaseEngineList) values.Opt
 		if t == everestv1alpha1.DatabaseEnginePostgresql {
 			t = "pg" // TODO: Helm chart should use postgresql.
 		}
-		vals = append(vals, fmt.Sprintf("%s=%t", dbEngine.Name, dbEngine.Status.State == everestv1alpha1.DBEngineStateInstalled))
+		vals = append(vals, fmt.Sprintf("%s=%t", t, dbEngine.Status.State == everestv1alpha1.DBEngineStateInstalled))
 	}
 	// TODO: figure out how to set telemetry.
 	return values.Options{Values: vals}
@@ -361,8 +369,6 @@ func helmValuesForDBEngines(list *everestv1alpha1.DatabaseEngineList) values.Opt
 // cleanupLegacyResources removes resources that were created as a part of the legacy installation method
 // and no longer exist as a part of the Helm chart.
 func (u *Upgrade) cleanupLegacyResources(ctx context.Context) error {
-	pollInterval := 5 * time.Second
-	pollTimeout := 5 * time.Minute
 	// Delete OLM PackageServer CSV.
 	if err := wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
 		if err := u.kubeClient.DeleteClusterServiceVersion(ctx, types.NamespacedName{
@@ -489,13 +495,13 @@ func (u *Upgrade) ensureEverestJWTIfNotExists(ctx context.Context) error {
 
 // canUpgrade checks if there's a new Everest version available and if we can upgrade to it
 // based on minimum requirements.
-func (u *Upgrade) canUpgrade(ctx context.Context, everestVersion *goversion.Version) (*goversion.Version, *cliVersion.RecommendedVersion, error) {
+func (u *Upgrade) canUpgrade(ctx context.Context, everestVersion *goversion.Version) (*goversion.Version, error) {
 	u.l.Infof("Current Everest version is %s", everestVersion)
 
 	// Determine version to upgrade to.
 	upgradeEverestTo, meta, err := u.versionToUpgradeTo(ctx, everestVersion)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	u.l.Infof("Found available upgrade to Everest version %s", upgradeEverestTo)
@@ -503,15 +509,10 @@ func (u *Upgrade) canUpgrade(ctx context.Context, everestVersion *goversion.Vers
 	// Check requirements.
 	u.l.Infof("Checking requirements for upgrade to Everest %s", upgradeEverestTo)
 	if err := u.verifyRequirements(ctx, meta); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	recVer, err := cliVersion.RecommendedVersions(meta)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return upgradeEverestTo, recVer, nil
+	return upgradeEverestTo, nil
 }
 
 // versionToUpgradeTo returns version to which the current Everest version can be upgraded to.
@@ -685,21 +686,5 @@ func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *common.
 		}
 	}
 
-	return nil
-}
-
-func (u *Upgrade) checkExistingHelmRelease() error {
-	getter, err := helm.NewGetter(common.SystemNamespace, u.config.KubeconfigPath)
-	if err != nil {
-		return fmt.Errorf("could not create Helm getter: %w", err)
-	}
-	_, err = getter.Get(common.SystemNamespace)
-	if err != nil {
-		if !errors.Is(err, driver.ErrReleaseNotFound) {
-			return fmt.Errorf("could not get Helm release: %w", err)
-		}
-		return nil
-	}
-	u.helmReleaseExists = true
 	return nil
 }

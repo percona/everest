@@ -64,7 +64,7 @@ func (k *Kubernetes) getResourcesFromNodes(ctx context.Context, clusterType Clus
 		switch clusterType {
 		case ClusterTypeUnknown:
 			return 0, 0, 0, 0, errors.New("unknown cluster type")
-		case ClusterTypeGeneric, ClusterTypeOpenShift:
+		case ClusterTypeGeneric, ClusterTypeOpenShift, ClusterTypeGKE:
 			// TODO support other cluster types
 			continue
 		case ClusterTypeMinikube:
@@ -201,7 +201,7 @@ func (k *Kubernetes) GetConsumedDiskBytes(
 	switch clusterType {
 	case ClusterTypeUnknown:
 		return 0, errors.New("unknown cluster type")
-	case ClusterTypeGeneric, ClusterTypeOpenShift:
+	case ClusterTypeGeneric, ClusterTypeOpenShift, ClusterTypeGKE:
 		// TODO support other cluster types.
 		return 0, nil
 	case ClusterTypeMinikube:

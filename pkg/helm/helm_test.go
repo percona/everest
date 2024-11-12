@@ -36,5 +36,5 @@ func TestHelm(t *testing.T) {
 	assert.Len(t, deplAndSvc, 2)
 
 	none := rendered.FilterFiles("templates/doesnotexist.yaml")
-	assert.Len(t, none, 0)
+	assert.Empty(t, none, 0)
 }

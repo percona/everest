@@ -193,7 +193,7 @@ func NewInstall(c Config, l *zap.SugaredLogger, cmd *cobra.Command) (*Install, e
 }
 
 // Run runs the operators installation process.
-func (o *Install) Run(ctx context.Context) error {
+func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 	// TODO: we shall probably split this into "install" and "add namespaces"
 	// Otherwise the logic is hard to maintain - we need to make sure not to,
 	// for example, install a different version of operators per namespace, if
@@ -229,7 +229,11 @@ func (o *Install) Run(ctx context.Context) error {
 			return fmt.Errorf("failed to get dev-latest Helm chart: %w", err)
 		}
 		o.l.Infof("Downloaded dev-latest Helm chart into '%s'", chartDir)
-		defer os.RemoveAll(chartDir) // clean-up on exit.
+		defer func() { // clean-up upon exit.
+			if err := os.RemoveAll(chartDir); err != nil {
+				o.l.Warnf("Failed to clean-up dir '%s': %s", chartDir, err)
+			}
+		}()
 		o.config.ChartDir = chartDir
 	}
 
@@ -237,6 +241,7 @@ func (o *Install) Run(ctx context.Context) error {
 	// Install core components.
 	installSteps = append(installSteps, o.installEverestHelmChart(latest.String()))
 	installSteps = append(installSteps, WaitForEverestSteps(o.l, o.kubeClient, o.clusterType)...)
+	installSteps = append(installSteps, o.waitForMonitoring())
 
 	// Install DB namespaces.
 	// TODO: separate command/API for provisioning DB namespaces.
@@ -267,6 +272,7 @@ func (o *Install) Run(ctx context.Context) error {
 	return nil
 }
 
+// WaitForEverestSteps returns the steps to wait for Everest components to be ready.
 func WaitForEverestSteps(l *zap.SugaredLogger, k kubernetes.KubernetesConnector, clusterType kubernetes.ClusterType) []common.Step {
 	steps := []common.Step{}
 	steps = append(steps, common.Step{
@@ -311,7 +317,7 @@ func WaitForEverestSteps(l *zap.SugaredLogger, k kubernetes.KubernetesConnector,
 	return steps
 }
 
-func (o *Install) DBNamespaceInstallValues() values.Options {
+func (o *Install) getDBNamespaceInstallValues() values.Options {
 	v := []string{}
 	if o.config.Operator.PXC {
 		v = append(v, "pxc=true")
@@ -349,7 +355,7 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) common.Step
 			}
 
 			values := helm.MustMergeValues(
-				o.DBNamespaceInstallValues(),
+				o.getDBNamespaceInstallValues(),
 				helm.ClusterTypeSpecificValues(o.clusterType),
 			)
 

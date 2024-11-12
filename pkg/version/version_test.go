@@ -22,6 +22,7 @@ import (
 )
 
 func TestIsRC(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		version  string
 		expected bool

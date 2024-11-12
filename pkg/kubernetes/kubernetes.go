@@ -91,11 +91,6 @@ const (
 
 	deploymentRestartAnnotation = "kubectl.kubernetes.io/restartedAt"
 
-	resourcesBufferSize = 8
-
-	maxRetries    = 3
-	retryInterval = 10 * time.Second
-
 	backoffInterval   = 5 * time.Second
 	backoffMaxRetries = 5
 
@@ -352,20 +347,6 @@ func (k *Kubernetes) GetCatalogSource(ctx context.Context, name, namespace strin
 // GetSubscription returns subscription.
 func (k *Kubernetes) GetSubscription(ctx context.Context, name, namespace string) (*olmv1alpha1.Subscription, error) {
 	return k.client.OLM().OperatorsV1alpha1().Subscriptions(namespace).Get(ctx, name, metav1.GetOptions{})
-}
-
-func (k *Kubernetes) waitForDeploymentRollout(ctx context.Context) error {
-	if err := k.client.DoRolloutWait(ctx, types.NamespacedName{
-		Namespace: OLMNamespace,
-		Name:      olmOperatorName,
-	}); err != nil {
-		return errors.Join(err, errors.New("error while waiting for deployment rollout"))
-	}
-	if err := k.client.DoRolloutWait(ctx, types.NamespacedName{Namespace: OLMNamespace, Name: "catalog-operator"}); err != nil {
-		return errors.Join(err, errors.New("error while waiting for deployment rollout"))
-	}
-
-	return nil
 }
 
 // InstallOperatorRequest holds the fields to make an operator install request.

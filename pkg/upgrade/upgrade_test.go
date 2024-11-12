@@ -202,7 +202,7 @@ func TestUpgrade_canUpgrade(t *testing.T) {
 			everestVersion, err := goversion.NewVersion(tt.everestVersion)
 			require.NoError(t, err)
 
-			upgradeTo, _, err := u.canUpgrade(context.Background(), everestVersion)
+			upgradeTo, err := u.canUpgrade(context.Background(), everestVersion)
 			if err != nil && !errors.Is(err, tt.wantErrIs) {
 				t.Errorf("error = %v, wantErrIs %v", err, tt.wantErrIs)
 				return

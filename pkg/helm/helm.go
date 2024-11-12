@@ -34,7 +34,6 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/cli"
 	helmcli "helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/downloader"
@@ -47,7 +46,7 @@ import (
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
-var settings = helmcli.New()
+var settings = helmcli.New() //nolint:gochecknoglobals
 
 // CLIOptions contains common options for the CLI.
 type CLIOptions struct {
@@ -329,7 +328,8 @@ func resolveDir(version, dir string) (*chart.Chart, error) {
 	// matches the specified version.
 	if chart.Metadata.Version != version {
 		return nil, fmt.Errorf("chart version does not match specified version."+
-			"Expected chart version %s, got %s", version, chart.Metadata.Version)
+			"Expected chart version %s, got %s", version, chart.Metadata.Version,
+		)
 	}
 	return chart, nil
 }
@@ -402,7 +402,7 @@ func MustMergeValues(userDefined values.Options, vals ...map[string]interface{})
 // MergeValues merges the user-provided values with the provided values `vals`
 // If a key exists in both the user-provided values and the provided values, the user-provided value will be used.
 func MergeValues(userDefined values.Options, vals ...map[string]interface{}) (map[string]interface{}, error) {
-	merged, err := userDefined.MergeValues(getter.All(cli.New()))
+	merged, err := userDefined.MergeValues(getter.All(helmcli.New()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to merge user-defined values: %w", err)
 	}
@@ -447,7 +447,7 @@ func copyEmbedFSToDir(src embed.FS, dest string) error {
 
 		targetPath := filepath.Join(dest, path)
 		if d.IsDir() {
-			if err := os.MkdirAll(targetPath, os.ModePerm); err != nil {
+			if err := os.MkdirAll(targetPath, os.ModePerm); err != nil { //nolint:gosec
 				return err
 			}
 		} else {
@@ -456,7 +456,7 @@ func copyEmbedFSToDir(src embed.FS, dest string) error {
 				return err
 			}
 
-			if err := os.WriteFile(targetPath, data, os.ModePerm); err != nil {
+			if err := os.WriteFile(targetPath, data, os.ModePerm); err != nil { //nolint:gosec
 				return err
 			}
 		}
@@ -474,7 +474,9 @@ func DevChartDir() (string, error) {
 		return "", err
 	}
 	if err := copyEmbedFSToDir(everesthelmchart.Chart, tmp); err != nil {
-		os.RemoveAll(tmp) // Clean up if there was an error
+		if removeErr := os.RemoveAll(tmp); removeErr != nil {
+			return "", errors.Join(err, removeErr)
+		}
 		return "", err
 	}
 	return tmp, nil
