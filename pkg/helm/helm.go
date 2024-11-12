@@ -207,7 +207,7 @@ func fileMapToBytes(files map[string]string) []byte {
 	return []byte(strings.TrimSuffix(builder.String(), "\n---\n"))
 }
 
-// FilterFiles filters the rendered templates by the provided paths.
+// Filter the rendered templates by the provided paths.
 func (t *RenderedTemplates) Filter(paths ...string) RenderedTemplates {
 	files := t.Files()
 	result := make(map[string]string)

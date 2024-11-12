@@ -44,10 +44,6 @@ import (
 )
 
 const (
-	contextTimeout    = 5 * time.Minute
-	backoffInterval   = 5 * time.Second
-	backoffMaxRetries = 5
-
 	pollInterval = 5 * time.Second
 	pollTimeout  = 10 * time.Minute
 
@@ -143,7 +139,7 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 
 // Run runs the operators installation process.
 //
-//nolint:funlen,cyclop,gocognit
+//nolint:funlen
 func (u *Upgrade) Run(ctx context.Context) error {
 	// Get Everest version.
 	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)

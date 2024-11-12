@@ -220,7 +220,7 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 
 func (u *Uninstall) legacyResourcesCleanup(ctx context.Context) ([]common.Step, error) {
 	steps := []common.Step{}
-	// In the legacy installatin, OLM needs to be gracefully deleted, otherwise the namespace will be stuck in Terminating state.
+	// In the legacy installation, OLM needs to be gracefully deleted, otherwise the namespace will be stuck in Terminating state.
 	_, err := u.kubeClient.GetNamespace(ctx, kubernetes.OLMNamespace)
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return nil, err

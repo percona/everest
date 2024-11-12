@@ -18,7 +18,8 @@ func TestHelm(t *testing.T) {
 
 	// initialise a mock configuration.
 	cfg := action.Configuration{}
-	cfg.Init(nil, testNs, "memory", nil)
+	err := cfg.Init(nil, testNs, "memory", nil)
+	require.NoError(t, err)
 	cfg.KubeClient = &kubefake.PrintingKubeClient{Out: io.Discard}
 
 	instlr, err := NewInstaller(testNs, "", ChartOptions{
