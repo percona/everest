@@ -163,6 +163,8 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 		return fmt.Errorf("failed to check if Helm release exists: %w", err)
 	}
 
+	// Delete DB namespaces before deleting the everest-system Helm release,
+	// otherwise OLM will be deleted first, and result in the DB namespaces being stuck in Terminating state.
 	uninstallSteps = append(uninstallSteps, common.Step{
 		Desc: "Delete database namespaces",
 		F: func(ctx context.Context) error {
@@ -190,8 +192,9 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 	})
 
 	if !chartExists {
-		// Older CLI versions did not use Helm and manually created these resources.
-		// So we need to cleanup these resources manually.
+		// Older CLI versions did not use Helm chart.
+		// So we need to cleanup OLM manually.
+		// TODO: Remove this block in the future.
 		_, err := u.kubeClient.GetNamespace(ctx, kubernetes.OLMNamespace)
 		if err != nil && !k8serrors.IsNotFound(err) {
 			return err
@@ -205,7 +208,8 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 		}
 
 		// Everest was installed without Helm (old method). So we need to check and clean-up leftover resources
-		// which would otherwise be deleted along with the Helm release.
+		// which would normally be deleted along with the Helm release.
+		// TODO: Remove this block in the future.
 		uninstallSteps = append(uninstallSteps, common.Step{
 			Desc: "Clean-up leftover resources",
 			F: func(ctx context.Context) error {

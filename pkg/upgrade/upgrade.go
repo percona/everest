@@ -26,7 +26,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AlekSi/pointer"
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
 	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
@@ -43,6 +42,7 @@ import (
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/helm"
+	"github.com/percona/everest/pkg/install"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
 	cliVersion "github.com/percona/everest/pkg/version"
@@ -207,12 +207,11 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	upgradeSteps := []common.Step{}
 	upgradeSteps = append(upgradeSteps, u.upgradeCRDs())
 	upgradeSteps = append(upgradeSteps, u.upgradeEverestHelmChart(upgradeEverestTo.String()))
-	upgradeSteps = append(upgradeSteps, u.waitForEverestAPI())
-	upgradeSteps = append(upgradeSteps, u.waitForEverestOperator())
-	if u.clusterType != kubernetes.ClusterTypeOpenShift {
-		upgradeSteps = append(upgradeSteps, u.waitForOLM())
-	}
+	upgradeSteps = append(upgradeSteps, install.WaitForEverestSteps(u.l, u.kubeClient, u.clusterType)...)
 
+	// Do not add more steps here. If more tasks are to be added in the future, we will do it as a part of
+	// the Everest API pod startup procerr.
+	// TODO: figure out how to get rid of this step in the future.
 	upgradeSteps = append(upgradeSteps, common.Step{
 		Desc: "Run post-upgrade tasks",
 		F: func(ctx context.Context) error {
@@ -297,8 +296,8 @@ func (u *Upgrade) upgradeEverestHelmChart(version string) common.Step {
 				return u.helmInstaller.Upgrade(ctx, args)
 			}
 
-			// We're on the legacy installation. Perform migration of the existing resources
-			// to Helm.
+			// We're on the legacy installation.
+			// Perform migration of the existing resources to Helm.
 			u.l.Info("Migrating existing installation to Helm")
 			if err := u.cleanupLegacyResources(ctx); err != nil {
 				return fmt.Errorf("failed to cleanupLegacyResources: %w", err)
@@ -355,7 +354,7 @@ func helmValuesForDBEngines(list *everestv1alpha1.DatabaseEngineList) values.Opt
 		}
 		vals = append(vals, fmt.Sprintf("%s=%t", dbEngine.Name, dbEngine.Status.State == everestv1alpha1.DBEngineStateInstalled))
 	}
-	// todo: figure out how to set telemetry.
+	// TODO: figure out how to set telemetry.
 	return values.Options{Values: vals}
 }
 
@@ -703,52 +702,4 @@ func (u *Upgrade) checkExistingHelmRelease() error {
 	}
 	u.helmReleaseExists = true
 	return nil
-}
-
-func (u *Upgrade) waitForOLM() common.Step {
-	return common.Step{
-		Desc: "Wait for Operator Lifecycle Manager",
-		F: func(ctx context.Context) error {
-			u.l.Infof("Waiting for OLM to be ready")
-			// Wait for all the Deployments to come up.
-			depls, err := u.kubeClient.ListDeployments(ctx, kubernetes.OLMNamespace)
-			if err != nil {
-				return err
-			}
-			for _, depl := range depls.Items {
-				if err := u.kubeClient.WaitForRollout(ctx, depl.GetName(), depl.GetNamespace()); err != nil {
-					return err
-				}
-			}
-			return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
-				cs, err := u.kubeClient.GetCatalogSource(ctx, common.PerconaEverestCatalogName, kubernetes.OLMNamespace)
-				if err != nil {
-					return false, err
-				}
-				return pointer.Get(cs.Status.GRPCConnectionState).LastObservedState == "READY", nil
-			})
-		},
-	}
-}
-
-// wait for Everst operator deployment to come up.
-func (u *Upgrade) waitForEverestOperator() common.Step {
-	return common.Step{
-		Desc: "Wait for Everest Operator Deployment",
-		F: func(ctx context.Context) error {
-			u.l.Infof("Waiting for Deployment '%s' in namespace '%s'", common.PerconaEverestOperatorDeploymentName, common.SystemNamespace)
-			return u.kubeClient.WaitForRollout(ctx, common.PerconaEverestOperatorDeploymentName, common.SystemNamespace)
-		},
-	}
-}
-
-// wait for Everst API deployment to come up.
-func (u *Upgrade) waitForEverestAPI() common.Step {
-	return common.Step{
-		Desc: "Wait for Everest API Deployment",
-		F: func(ctx context.Context) error {
-			u.l.Infof("Waiting for Deployment '%s' in namespace '%s'", common.PerconaEverestDeploymentName, common.SystemNamespace)
-			return u.kubeClient.WaitForRollout(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
-		},
-	}
 }
