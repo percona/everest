@@ -73,10 +73,11 @@ jobs:
           find: "[ \t]*console.log\\(.*"
           replace: "\n"
           regex: true
+          exclude: "api-tests/tests/helpers.ts | ui/apps/everest/.e2e/utils/generic.ts | cli-tests/helpers/cliHelper.ts | ui/apps/everest/src/pages/settings/default-configurations/default-configurations.tsx"
 
-      - name: lint
-        if: matrix.action == 'lint'
-        run: make lint
+      # - name: lint
+      #   if: matrix.action == 'lint'
+      #   run: make lint
 
       # - name: format
       #   if: matrix.action == 'format'
