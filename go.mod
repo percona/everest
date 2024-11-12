@@ -29,6 +29,7 @@ require (
 	github.com/operator-framework/api v0.26.0
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
 	github.com/percona/everest-operator v0.6.0-dev1.0.20240916093557-e44c8cd8a71d
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241108181652-7732bc5745a2
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2
@@ -42,8 +43,6 @@ require (
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
-	gotest.tools v2.2.0+incompatible
-	helm.sh/helm v2.17.0+incompatible
 	helm.sh/helm/v3 v3.16.2
 	k8s.io/api v0.31.1
 	k8s.io/apiextensions-apiserver v0.31.1
@@ -175,7 +174,6 @@ require (
 	github.com/operator-framework/operator-registry v1.35.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/percona/percona-backup-mongodb v1.8.1-0.20240516121609-883ad721e7cb // indirect
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241108181652-7732bc5745a2 // indirect
 	github.com/percona/percona-postgresql-operator v0.0.0-20240730163147-6c224023db45 // indirect
 	github.com/percona/percona-server-mongodb-operator v1.17.0 // indirect
 	github.com/percona/percona-xtradb-cluster-operator v1.15.0 // indirect
