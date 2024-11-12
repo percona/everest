@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chartutil"
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 )
 
@@ -21,6 +22,7 @@ func TestHelm(t *testing.T) {
 	err := cfg.Init(nil, testNs, "memory", nil)
 	require.NoError(t, err)
 	cfg.KubeClient = &kubefake.PrintingKubeClient{Out: io.Discard}
+	cfg.Capabilities = chartutil.DefaultCapabilities
 
 	instlr, err := NewInstaller(testNs, "", ChartOptions{
 		Directory: "../../data/testchart",
