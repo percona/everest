@@ -107,12 +107,11 @@ jobs:
           commit_message: "chore: lint/format"
 
       - uses: jacobtomlinson/gha-find-replace@v2
+        if: steps.check_changes.outputs.changes == 'true' && github.event_name == 'pull_request'
         with:
-          if: steps.check_changes.outputs.changes == 'true' && github.event_name == 'pull_request'
           find: "console.log\\(([^)]+)\\)"
           replace: ""
           regex: true
-          commit_message: "chore: lint/remove_logs"
 
   permission_checks:
     runs-on: ubuntu-20.04
