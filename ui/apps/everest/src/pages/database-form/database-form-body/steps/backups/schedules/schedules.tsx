@@ -58,14 +58,12 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
     DbWizardFormFields.dbName,
   ]);
 
-  const { canCreate, canRead } = useRBACPermissions(
-    'database-cluster-backups',
-    `${k8sNamespace}/${dbName}`
-  );
+  const { canCreate: canCreateBackups, canRead: canReadBackups } =
+    useRBACPermissions('database-cluster-backups', `${k8sNamespace}/${dbName}`);
 
   const schedules = useMemo(
-    () => (canRead ? formSchedules : []),
-    [canRead, formSchedules]
+    () => (canReadBackups ? formSchedules : []),
+    [canReadBackups, formSchedules]
   );
 
   const [activeStorage, setActiveStorage] = useState(undefined);
@@ -118,7 +116,7 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
       <LabeledContent
         label={Messages.label}
         actionButtonProps={
-          canCreate
+          canCreateBackups
             ? {
                 disabled: createButtonDisabled,
                 dataTestId: 'create-schedule',

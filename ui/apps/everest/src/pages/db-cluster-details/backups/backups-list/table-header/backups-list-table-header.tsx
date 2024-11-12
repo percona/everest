@@ -43,6 +43,7 @@ const BackupListTableHeader = ({
     'database-cluster-backups',
     `${dbCluster.metadata.namespace}/${dbCluster.metadata.name}`
   );
+
   const { canUpdate: canUpdateDb } = useRBACPermissions(
     'database-clusters',
     `${dbCluster.metadata.namespace}/${dbCluster.metadata.name}`
@@ -109,39 +110,39 @@ const BackupListTableHeader = ({
               >
                 {Messages.now}
               </MenuItem>,
-              <Box key="schedule">
-                {disableScheduleBackups ? (
-                  <Tooltip
-                    title={
-                      pgLimitExceeded
-                        ? Messages.exceededScheduleBackupsNumber
-                        : Messages.noStoragesAvailable
-                    }
-                    placement="right"
-                    arrow
-                  >
-                    <div>
-                      <MenuItem data-testid="schedule-menu-item" disabled>
-                        {Messages.schedule}
-                      </MenuItem>
-                    </div>
-                  </Tooltip>
-                ) : (
-                  <MenuItem
-                    onClick={() => handleScheduleClick(handleClose)}
-                    data-testid="schedule-menu-item"
-                  >
-                    {Messages.schedule}
-                  </MenuItem>
-                )}
-              </Box>,
+              canUpdateDb && (
+                <Box key="schedule">
+                  {disableScheduleBackups ? (
+                    <Tooltip
+                      title={
+                        pgLimitExceeded
+                          ? Messages.exceededScheduleBackupsNumber
+                          : Messages.noStoragesAvailable
+                      }
+                      placement="right"
+                      arrow
+                    >
+                      <div>
+                        <MenuItem data-testid="schedule-menu-item" disabled>
+                          {Messages.schedule}
+                        </MenuItem>
+                      </div>
+                    </Tooltip>
+                  ) : (
+                    <MenuItem
+                      onClick={() => handleScheduleClick(handleClose)}
+                      data-testid="schedule-menu-item"
+                    >
+                      {Messages.schedule}
+                    </MenuItem>
+                  )}
+                </Box>
+              ),
             ]}
           </MenuButton>
         )}
       </Box>
-      {schedulesNumber > 0 && showSchedules && (
-        <ScheduledBackupsList canUpdateDb={canUpdateDb} />
-      )}
+      {schedulesNumber > 0 && showSchedules && <ScheduledBackupsList />}
     </>
   );
 };
