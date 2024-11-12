@@ -112,6 +112,7 @@ jobs:
           find: "console.log\\(.*"
           replace: ""
           regex: true
+          commit_message: "chore: lint/console"
 
   permission_checks:
     runs-on: ubuntu-20.04
