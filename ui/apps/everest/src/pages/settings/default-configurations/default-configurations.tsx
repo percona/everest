@@ -56,7 +56,7 @@ export const DefaultConfigurations = () => {
   });
 
   const onSubmit: SubmitHandler<DefaultConfigurationsType> = (data) => {
-    console.log(data);
+    //
   };
 
   return (
