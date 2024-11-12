@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
-	goversion "github.com/hashicorp/go-version"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,42 +42,6 @@ func (k *Kubernetes) getInstallPlanFromSubscription(ctx context.Context, namespa
 	return ip, err
 }
 
-// WaitForInstallPlan waits until an install plan for the given operator and version is available.
-func (k *Kubernetes) WaitForInstallPlan(ctx context.Context, namespace, operatorName string, version *goversion.Version) (*olmv1alpha1.InstallPlan, error) {
-	var ip *olmv1alpha1.InstallPlan
-	csvName := k.CSVNameFromOperator(operatorName, version)
-	err := wait.PollUntilContextCancel(ctx, time.Second, true, func(ctx context.Context) (bool, error) {
-		k.l.Debug("Looking for install plan")
-		ips, err := k.client.ListInstallPlans(ctx, namespace)
-		if err != nil {
-			k.l.Debugf("Could not list install plans: %s", err)
-			return false, nil
-		}
-
-		for _, i := range ips.Items {
-			for _, csv := range i.Spec.ClusterServiceVersionNames {
-				if csv == csvName {
-					//nolint:exportloopref
-					ip = &i
-					k.l.Debugf("Found install plan %s", i.Name)
-					return true, nil
-				}
-			}
-		}
-
-		return false, nil
-	})
-	if err != nil {
-		return nil, errors.Join(err, errors.New("could not find install plan"))
-	}
-
-	if ip == nil {
-		return nil, errors.New("install plan is nil")
-	}
-
-	return ip, nil
-}
-
 // ApproveInstallPlan approves an install plan.
 func (k *Kubernetes) ApproveInstallPlan(ctx context.Context, namespace, installPlanName string) (bool, error) {
 	ip, err := k.client.GetInstallPlan(ctx, namespace, installPlanName)
@@ -103,22 +65,4 @@ func (k *Kubernetes) ApproveInstallPlan(ctx context.Context, namespace, installP
 	}
 
 	return true, nil
-}
-
-// WaitForInstallPlanCompleted waits until install plan phase is "complete".
-func (k *Kubernetes) WaitForInstallPlanCompleted(ctx context.Context, namespace, name string) error {
-	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
-		ip, err := k.client.GetInstallPlan(ctx, namespace, name)
-		if err != nil {
-			k.l.Debugf("Could not retrieve install plan: %s", err)
-			return false, nil
-		}
-
-		if ip.Status.Phase != olmv1alpha1.InstallPlanPhaseComplete {
-			k.l.Debugf("Install plan is not completed. Phase: %s", ip.Status.Phase)
-			return false, nil
-		}
-
-		return true, nil
-	})
 }

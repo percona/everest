@@ -5,15 +5,14 @@ package kubernetes
 import (
 	context "context"
 
-	version "github.com/hashicorp/go-version"
+	go_version "github.com/hashicorp/go-version"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	mock "github.com/stretchr/testify/mock"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
 	types "k8s.io/apimachinery/pkg/types"
-	pkgversion "k8s.io/apimachinery/pkg/version"
+	version "k8s.io/apimachinery/pkg/version"
 	rest "k8s.io/client-go/rest"
 
 	v1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
@@ -65,24 +64,6 @@ func (_m *MockKubernetesConnector) ApplyManifestFile(files []byte, namespace str
 	return r0
 }
 
-// ApplyObject provides a mock function with given fields: obj
-func (_m *MockKubernetesConnector) ApplyObject(obj runtime.Object) error {
-	ret := _m.Called(obj)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ApplyObject")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(runtime.Object) error); ok {
-		r0 = rf(obj)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // ApproveInstallPlan provides a mock function with given fields: ctx, namespace, installPlanName
 func (_m *MockKubernetesConnector) ApproveInstallPlan(ctx context.Context, namespace string, installPlanName string) (bool, error) {
 	ret := _m.Called(ctx, namespace, installPlanName)
@@ -109,24 +90,6 @@ func (_m *MockKubernetesConnector) ApproveInstallPlan(ctx context.Context, names
 	}
 
 	return r0, r1
-}
-
-// CSVNameFromOperator provides a mock function with given fields: operatorName, _a1
-func (_m *MockKubernetesConnector) CSVNameFromOperator(operatorName string, _a1 *version.Version) string {
-	ret := _m.Called(operatorName, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CSVNameFromOperator")
-	}
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func(string, *version.Version) string); ok {
-		r0 = rf(operatorName, _a1)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	return r0
 }
 
 // ClusterName provides a mock function with given fields:
@@ -221,42 +184,6 @@ func (_m *MockKubernetesConnector) CreateNamespace(ctx context.Context, namespac
 	return r0
 }
 
-// CreateOperatorGroup provides a mock function with given fields: ctx, name, namespace, targetNamespaces
-func (_m *MockKubernetesConnector) CreateOperatorGroup(ctx context.Context, name string, namespace string, targetNamespaces []string) error {
-	ret := _m.Called(ctx, name, namespace, targetNamespaces)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateOperatorGroup")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, []string) error); ok {
-		r0 = rf(ctx, name, namespace, targetNamespaces)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CreatePMMSecret provides a mock function with given fields: namespace, secretName, secrets
-func (_m *MockKubernetesConnector) CreatePMMSecret(namespace string, secretName string, secrets map[string][]byte) error {
-	ret := _m.Called(namespace, secretName, secrets)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreatePMMSecret")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, map[string][]byte) error); ok {
-		r0 = rf(namespace, secretName, secrets)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // CreateRSAKeyPair provides a mock function with given fields: ctx
 func (_m *MockKubernetesConnector) CreateRSAKeyPair(ctx context.Context) error {
 	ret := _m.Called(ctx)
@@ -268,24 +195,6 @@ func (_m *MockKubernetesConnector) CreateRSAKeyPair(ctx context.Context) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
 		r0 = rf(ctx)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CreateRestore provides a mock function with given fields: restore
-func (_m *MockKubernetesConnector) CreateRestore(restore *v1alpha1.DatabaseClusterRestore) error {
-	ret := _m.Called(restore)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateRestore")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*v1alpha1.DatabaseClusterRestore) error); ok {
-		r0 = rf(restore)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -406,24 +315,6 @@ func (_m *MockKubernetesConnector) DeleteNamespace(ctx context.Context, name str
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
 		r0 = rf(ctx, name)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DeleteObject provides a mock function with given fields: obj
-func (_m *MockKubernetesConnector) DeleteObject(obj runtime.Object) error {
-	ret := _m.Called(obj)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteObject")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(runtime.Object) error); ok {
-		r0 = rf(obj)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -675,34 +566,6 @@ func (_m *MockKubernetesConnector) GetDatabaseEngine(ctx context.Context, namesp
 	return r0, r1
 }
 
-// GetDefaultStorageClassName provides a mock function with given fields: ctx
-func (_m *MockKubernetesConnector) GetDefaultStorageClassName(ctx context.Context) (string, error) {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetDefaultStorageClassName")
-	}
-
-	var r0 string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (string, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetDeployment provides a mock function with given fields: ctx, name, namespace
 func (_m *MockKubernetesConnector) GetDeployment(ctx context.Context, name string, namespace string) (*appsv1.Deployment, error) {
 	ret := _m.Called(ctx, name, namespace)
@@ -726,36 +589,6 @@ func (_m *MockKubernetesConnector) GetDeployment(ctx context.Context, name strin
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
 		r1 = rf(ctx, name, namespace)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetEvents provides a mock function with given fields: ctx, pod
-func (_m *MockKubernetesConnector) GetEvents(ctx context.Context, pod string) ([]string, error) {
-	ret := _m.Called(ctx, pod)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetEvents")
-	}
-
-	var r0 []string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]string, error)); ok {
-		return rf(ctx, pod)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []string); ok {
-		r0 = rf(ctx, pod)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, pod)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -812,36 +645,6 @@ func (_m *MockKubernetesConnector) GetEverestSettings(ctx context.Context) (comm
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
 		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetLogs provides a mock function with given fields: ctx, containerStatuses, pod, container
-func (_m *MockKubernetesConnector) GetLogs(ctx context.Context, containerStatuses []v1.ContainerStatus, pod string, container string) ([]string, error) {
-	ret := _m.Called(ctx, containerStatuses, pod, container)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetLogs")
-	}
-
-	var r0 []string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []v1.ContainerStatus, string, string) ([]string, error)); ok {
-		return rf(ctx, containerStatuses, pod, container)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, []v1.ContainerStatus, string, string) []string); ok {
-		r0 = rf(ctx, containerStatuses, pod, container)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, []v1.ContainerStatus, string, string) error); ok {
-		r1 = rf(ctx, containerStatuses, pod, container)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -939,62 +742,6 @@ func (_m *MockKubernetesConnector) GetNamespace(ctx context.Context, name string
 	return r0, r1
 }
 
-// GetPSMDBOperatorVersion provides a mock function with given fields: ctx
-func (_m *MockKubernetesConnector) GetPSMDBOperatorVersion(ctx context.Context) (string, error) {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetPSMDBOperatorVersion")
-	}
-
-	var r0 string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (string, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetPXCOperatorVersion provides a mock function with given fields: ctx
-func (_m *MockKubernetesConnector) GetPXCOperatorVersion(ctx context.Context) (string, error) {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetPXCOperatorVersion")
-	}
-
-	var r0 string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (string, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetSecret provides a mock function with given fields: ctx, namespace, name
 func (_m *MockKubernetesConnector) GetSecret(ctx context.Context, namespace string, name string) (*v1.Secret, error) {
 	ret := _m.Called(ctx, namespace, name)
@@ -1026,23 +773,23 @@ func (_m *MockKubernetesConnector) GetSecret(ctx context.Context, namespace stri
 }
 
 // GetServerVersion provides a mock function with given fields:
-func (_m *MockKubernetesConnector) GetServerVersion() (*pkgversion.Info, error) {
+func (_m *MockKubernetesConnector) GetServerVersion() (*version.Info, error) {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetServerVersion")
 	}
 
-	var r0 *pkgversion.Info
+	var r0 *version.Info
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (*pkgversion.Info, error)); ok {
+	if rf, ok := ret.Get(0).(func() (*version.Info, error)); ok {
 		return rf()
 	}
-	if rf, ok := ret.Get(0).(func() *pkgversion.Info); ok {
+	if rf, ok := ret.Get(0).(func() *version.Info); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pkgversion.Info)
+			r0 = ret.Get(0).(*version.Info)
 		}
 	}
 
@@ -1279,36 +1026,6 @@ func (_m *MockKubernetesConnector) ListDeployments(ctx context.Context, namespac
 	return r0, r1
 }
 
-// ListEngineDeploymentNames provides a mock function with given fields: ctx, namespace
-func (_m *MockKubernetesConnector) ListEngineDeploymentNames(ctx context.Context, namespace string) ([]string, error) {
-	ret := _m.Called(ctx, namespace)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListEngineDeploymentNames")
-	}
-
-	var r0 []string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]string, error)); ok {
-		return rf(ctx, namespace)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []string); ok {
-		r0 = rf(ctx, namespace)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, namespace)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // ListMonitoringConfigs provides a mock function with given fields: ctx, namespace
 func (_m *MockKubernetesConnector) ListMonitoringConfigs(ctx context.Context, namespace string) (*v1alpha1.MonitoringConfigList, error) {
 	ret := _m.Called(ctx, namespace)
@@ -1399,36 +1116,6 @@ func (_m *MockKubernetesConnector) ListSecrets(ctx context.Context, namespace st
 	return r0, r1
 }
 
-// ListSubscriptions provides a mock function with given fields: ctx, namespace
-func (_m *MockKubernetesConnector) ListSubscriptions(ctx context.Context, namespace string) (*operatorsv1alpha1.SubscriptionList, error) {
-	ret := _m.Called(ctx, namespace)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListSubscriptions")
-	}
-
-	var r0 *operatorsv1alpha1.SubscriptionList
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*operatorsv1alpha1.SubscriptionList, error)); ok {
-		return rf(ctx, namespace)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *operatorsv1alpha1.SubscriptionList); ok {
-		r0 = rf(ctx, namespace)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*operatorsv1alpha1.SubscriptionList)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, namespace)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // Namespace provides a mock function with given fields:
 func (_m *MockKubernetesConnector) Namespace() string {
 	ret := _m.Called()
@@ -1448,23 +1135,23 @@ func (_m *MockKubernetesConnector) Namespace() string {
 }
 
 // OperatorInstalledVersion provides a mock function with given fields: ctx, namespace, name
-func (_m *MockKubernetesConnector) OperatorInstalledVersion(ctx context.Context, namespace string, name string) (*version.Version, error) {
+func (_m *MockKubernetesConnector) OperatorInstalledVersion(ctx context.Context, namespace string, name string) (*go_version.Version, error) {
 	ret := _m.Called(ctx, namespace, name)
 
 	if len(ret) == 0 {
 		panic("no return value specified for OperatorInstalledVersion")
 	}
 
-	var r0 *version.Version
+	var r0 *go_version.Version
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*version.Version, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*go_version.Version, error)); ok {
 		return rf(ctx, namespace, name)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *version.Version); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *go_version.Version); ok {
 		r0 = rf(ctx, namespace, name)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*version.Version)
+			r0 = ret.Get(0).(*go_version.Version)
 		}
 	}
 
@@ -1483,24 +1170,6 @@ func (_m *MockKubernetesConnector) RestartDeployment(ctx context.Context, name s
 
 	if len(ret) == 0 {
 		panic("no return value specified for RestartDeployment")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, name, namespace)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// RestartOperator provides a mock function with given fields: ctx, name, namespace
-func (_m *MockKubernetesConnector) RestartOperator(ctx context.Context, name string, namespace string) error {
-	ret := _m.Called(ctx, name, namespace)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RestartOperator")
 	}
 
 	var r0 error
@@ -1565,54 +1234,6 @@ func (_m *MockKubernetesConnector) UpdateBackupStorage(ctx context.Context, stor
 	}
 
 	return r0
-}
-
-// UpdateClusterRoleBinding provides a mock function with given fields: ctx, name, namespaces
-func (_m *MockKubernetesConnector) UpdateClusterRoleBinding(ctx context.Context, name string, namespaces []string) error {
-	ret := _m.Called(ctx, name, namespaces)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateClusterRoleBinding")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, []string) error); ok {
-		r0 = rf(ctx, name, namespaces)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// UpdateClusterServiceVersion provides a mock function with given fields: ctx, csv
-func (_m *MockKubernetesConnector) UpdateClusterServiceVersion(ctx context.Context, csv *operatorsv1alpha1.ClusterServiceVersion) (*operatorsv1alpha1.ClusterServiceVersion, error) {
-	ret := _m.Called(ctx, csv)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateClusterServiceVersion")
-	}
-
-	var r0 *operatorsv1alpha1.ClusterServiceVersion
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *operatorsv1alpha1.ClusterServiceVersion) (*operatorsv1alpha1.ClusterServiceVersion, error)); ok {
-		return rf(ctx, csv)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *operatorsv1alpha1.ClusterServiceVersion) *operatorsv1alpha1.ClusterServiceVersion); ok {
-		r0 = rf(ctx, csv)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*operatorsv1alpha1.ClusterServiceVersion)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *operatorsv1alpha1.ClusterServiceVersion) error); ok {
-		r1 = rf(ctx, csv)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // UpdateDatabaseEngine provides a mock function with given fields: ctx, namespace, engine
@@ -1777,72 +1398,6 @@ func (_m *MockKubernetesConnector) UpgradeOperator(ctx context.Context, namespac
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpgradeOperator")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, namespace, name)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// WaitForCSVSucceeded provides a mock function with given fields: ctx, namespace, name
-func (_m *MockKubernetesConnector) WaitForCSVSucceeded(ctx context.Context, namespace string, name string) error {
-	ret := _m.Called(ctx, namespace, name)
-
-	if len(ret) == 0 {
-		panic("no return value specified for WaitForCSVSucceeded")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, namespace, name)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// WaitForInstallPlan provides a mock function with given fields: ctx, namespace, operatorName, _a3
-func (_m *MockKubernetesConnector) WaitForInstallPlan(ctx context.Context, namespace string, operatorName string, _a3 *version.Version) (*operatorsv1alpha1.InstallPlan, error) {
-	ret := _m.Called(ctx, namespace, operatorName, _a3)
-
-	if len(ret) == 0 {
-		panic("no return value specified for WaitForInstallPlan")
-	}
-
-	var r0 *operatorsv1alpha1.InstallPlan
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *version.Version) (*operatorsv1alpha1.InstallPlan, error)); ok {
-		return rf(ctx, namespace, operatorName, _a3)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *version.Version) *operatorsv1alpha1.InstallPlan); ok {
-		r0 = rf(ctx, namespace, operatorName, _a3)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*operatorsv1alpha1.InstallPlan)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, *version.Version) error); ok {
-		r1 = rf(ctx, namespace, operatorName, _a3)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// WaitForInstallPlanCompleted provides a mock function with given fields: ctx, namespace, name
-func (_m *MockKubernetesConnector) WaitForInstallPlanCompleted(ctx context.Context, namespace string, name string) error {
-	ret := _m.Called(ctx, namespace, name)
-
-	if len(ret) == 0 {
-		panic("no return value specified for WaitForInstallPlanCompleted")
 	}
 
 	var r0 error

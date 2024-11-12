@@ -10,7 +10,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
@@ -42,10 +41,6 @@ type KubernetesConnector interface {
 	//
 	//nolint:cyclop
 	IsBackupStorageUsed(ctx context.Context, namespace, name string) (bool, error)
-	// WaitForCSVSucceeded waits until CSV phase is "succeeded".
-	WaitForCSVSucceeded(ctx context.Context, namespace, name string) error
-	// CSVNameFromOperator returns CSV name based on operator and version.
-	CSVNameFromOperator(operatorName string, version *goversion.Version) string
 	// GetConfigMap returns k8s configmap by provided name and namespace.
 	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
 	// ListDatabaseEngines returns list of managed database clusters.
@@ -63,12 +58,8 @@ type KubernetesConnector interface {
 	UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error)
 	// ListDeployments returns a list of deployments in the provided namespace.
 	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
-	// WaitForInstallPlan waits until an install plan for the given operator and version is available.
-	WaitForInstallPlan(ctx context.Context, namespace, operatorName string, version *goversion.Version) (*olmv1alpha1.InstallPlan, error)
 	// ApproveInstallPlan approves an install plan.
 	ApproveInstallPlan(ctx context.Context, namespace, installPlanName string) (bool, error)
-	// WaitForInstallPlanCompleted waits until install plan phase is "complete".
-	WaitForInstallPlanCompleted(ctx context.Context, namespace, name string) error
 	// Config returns *rest.Config.
 	Config() *rest.Config
 	// WithClient sets the client connector.
@@ -77,34 +68,16 @@ type KubernetesConnector interface {
 	Namespace() string
 	// ClusterName returns the name of the k8s cluster.
 	ClusterName() string
-	// GetDefaultStorageClassName returns first storageClassName from kubernetes cluster.
-	GetDefaultStorageClassName(ctx context.Context) (string, error)
 	// GetEverestID returns the ID of the namespace where everest is deployed.
 	GetEverestID(ctx context.Context) (string, error)
 	// GetClusterType tries to guess the underlying kubernetes cluster based on storage class.
 	GetClusterType(ctx context.Context) (ClusterType, error)
-	// GetPSMDBOperatorVersion parses PSMDB operator version from operator deployment.
-	GetPSMDBOperatorVersion(ctx context.Context) (string, error)
-	// GetPXCOperatorVersion parses PXC operator version from operator deployment.
-	GetPXCOperatorVersion(ctx context.Context) (string, error)
-	// CreatePMMSecret creates pmm secret in kubernetes.
-	CreatePMMSecret(namespace, secretName string, secrets map[string][]byte) error
-	// CreateRestore creates a restore.
-	CreateRestore(restore *everestv1alpha1.DatabaseClusterRestore) error
-	// GetLogs returns logs.
-	GetLogs(ctx context.Context, containerStatuses []corev1.ContainerStatus, pod, container string) ([]string, error)
-	// GetEvents returns pod's events as a slice of strings.
-	GetEvents(ctx context.Context, pod string) ([]string, error)
 	// GetCatalogSource returns catalog source.
 	GetCatalogSource(ctx context.Context, name, namespace string) (*olmv1alpha1.CatalogSource, error)
 	// GetSubscription returns subscription.
 	GetSubscription(ctx context.Context, name, namespace string) (*olmv1alpha1.Subscription, error)
 	// InstallOperator installs an operator via OLM.
 	InstallOperator(ctx context.Context, req InstallOperatorRequest) error
-	// CreateOperatorGroup creates operator group in the given namespace.
-	CreateOperatorGroup(ctx context.Context, name, namespace string, targetNamespaces []string) error
-	// ListSubscriptions all the subscriptions in the namespace.
-	ListSubscriptions(ctx context.Context, namespace string) (*olmv1alpha1.SubscriptionList, error)
 	// UpgradeOperator upgrades an operator to the next available version.
 	UpgradeOperator(ctx context.Context, namespace, name string) error
 	// GetServerVersion returns server version.
@@ -113,24 +86,12 @@ type KubernetesConnector interface {
 	GetClusterServiceVersion(ctx context.Context, key types.NamespacedName) (*olmv1alpha1.ClusterServiceVersion, error)
 	// ListClusterServiceVersion list all CSVs for the given namespace.
 	ListClusterServiceVersion(ctx context.Context, namespace string) (*olmv1alpha1.ClusterServiceVersionList, error)
-	// UpdateClusterServiceVersion updates a ClusterServiceVersion and returns the updated object.
-	UpdateClusterServiceVersion(ctx context.Context, csv *olmv1alpha1.ClusterServiceVersion) (*olmv1alpha1.ClusterServiceVersion, error)
 	// DeleteClusterServiceVersion deletes a ClusterServiceVersion.
 	DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error
 	// DeleteSubscription deletes a subscription by namespaced name.
 	DeleteSubscription(ctx context.Context, key types.NamespacedName) error
-	// DeleteObject deletes an object.
-	DeleteObject(obj runtime.Object) error
-	// RestartOperator restarts the deployment of an operator managed by OLM.
-	//
-	//nolint:funlen
-	RestartOperator(ctx context.Context, name, namespace string) error
 	// RestartDeployment restarts the given deployment.
 	RestartDeployment(ctx context.Context, name, namespace string) error
-	// ListEngineDeploymentNames returns a string array containing found engine deployments for the Everest.
-	ListEngineDeploymentNames(ctx context.Context, namespace string) ([]string, error)
-	// ApplyObject applies object.
-	ApplyObject(obj runtime.Object) error
 	// ApplyManifestFile accepts manifest file contents, parses into []runtime.Object
 	// and applies them against the cluster.
 	ApplyManifestFile(files []byte, namespace string) error
@@ -138,8 +99,6 @@ type KubernetesConnector interface {
 	GetDBNamespaces(ctx context.Context) ([]string, error)
 	// WaitForRollout waits for rollout of a provided deployment in the provided namespace.
 	WaitForRollout(ctx context.Context, name, namespace string) error
-	// UpdateClusterRoleBinding updates namespaces list for the cluster role by provided name.
-	UpdateClusterRoleBinding(ctx context.Context, name string, namespaces []string) error
 	// DeleteManifestFile accepts manifest file contents, parses into []runtime.Object
 	// and deletes them from the cluster.
 	DeleteManifestFile(fileBytes []byte, namespace string) error
