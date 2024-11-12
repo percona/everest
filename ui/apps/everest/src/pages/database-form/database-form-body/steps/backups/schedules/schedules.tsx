@@ -20,7 +20,7 @@ import { Messages } from './schedules.messages';
 import { useEffect, useState } from 'react';
 import { DbWizardFormFields } from 'consts.ts';
 import { useFormContext } from 'react-hook-form';
-import { ManageableSchedules, Schedule } from 'shared-types/dbCluster.types';
+import { ManageableSchedules } from 'shared-types/dbCluster.types';
 import {
   getSchedulesPayload,
   removeScheduleFromArray,
@@ -158,7 +158,7 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
           {dbType === DbType.Postresql && (
             <Typography variant="caption">{Messages.pg}</Typography>
           )}
-          {schedules.map((item: Schedule) => (
+          {schedules.map((item: ManageableSchedules) => (
             <EditableItem
               key={item.name}
               dataTestId={item.name}
@@ -168,12 +168,20 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
                   storageName={item.backupStorageName}
                 />
               }
-              editButtonProps={{
-                onClick: () => handleEdit(item.name),
-              }}
-              deleteButtonProps={{
-                onClick: () => handleDelete(item.name),
-              }}
+              editButtonProps={
+                item.canBeManaged
+                  ? {
+                      onClick: () => handleEdit(item.name),
+                    }
+                  : undefined
+              }
+              deleteButtonProps={
+                item.canBeManaged
+                  ? {
+                      onClick: () => handleDelete(item.name),
+                    }
+                  : undefined
+              }
             />
           ))}
           {schedules.length === 0 && (
