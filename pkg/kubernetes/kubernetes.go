@@ -30,7 +30,6 @@ import (
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -576,22 +575,4 @@ func (k *Kubernetes) WaitForRollout(ctx context.Context, name, namespace string)
 // and deletes them from the cluster.
 func (k *Kubernetes) DeleteManifestFile(fileBytes []byte, namespace string) error {
 	return k.client.DeleteManifestFile(fileBytes, namespace)
-}
-
-func arrayContains(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
-}
-
-func subjectsContains(s []rbacv1.Subject, n string) bool {
-	for _, a := range s {
-		if a.Namespace == n {
-			return true
-		}
-	}
-	return false
 }
