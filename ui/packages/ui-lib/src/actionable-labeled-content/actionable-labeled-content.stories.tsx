@@ -1,8 +1,8 @@
 import { type Meta, type StoryObj } from '@storybook/react';
 import * as DocBlock from '@storybook/blocks';
 import ActionableLabeledContent, {
-  type Props as ActionableLabeledContentProps,
-} from './ActionableLabeledContent';
+  ActionableLabeledContentProps,
+} from './actionable-labeled-content';
 import { TextField } from '@mui/material';
 
 const meta = {

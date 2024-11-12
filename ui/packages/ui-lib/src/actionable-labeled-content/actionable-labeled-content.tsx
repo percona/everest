@@ -2,7 +2,7 @@ import { Button, ButtonProps, Chip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import LabeledContent, { LabeledContentProps } from '../labeled-content';
 
-export type Props = LabeledContentProps & {
+export type ActionableLabeledContentProps = LabeledContentProps & {
   techPreview?: boolean;
   actionButtonProps?: {
     dataTestId?: string;
@@ -11,13 +11,13 @@ export type Props = LabeledContentProps & {
   } & ButtonProps;
 };
 
-const ActionableLabeledContent = ({
+export const ActionableLabeledContent = ({
   label,
   techPreview,
   content,
   actionButtonProps,
   ...rest
-}: Props) => {
+}: ActionableLabeledContentProps) => {
   const { dataTestId, buttonText, ...buttonProps } = actionButtonProps || {};
 
   return (
