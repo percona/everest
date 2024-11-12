@@ -224,17 +224,11 @@ func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 	o.l.Debugf("Everest version information %#v", latestMeta)
 
 	if version.IsDev(latest.String()) && o.config.ChartDir == "" {
-		chartDir, err := helm.DevChartDir()
+		cleanup, err := o.initDevChart()
 		if err != nil {
-			return fmt.Errorf("failed to get dev-latest Helm chart: %w", err)
+			return err
 		}
-		o.l.Infof("Downloaded dev-latest Helm chart into '%s'", chartDir)
-		defer func() { // clean-up upon exit.
-			if err := os.RemoveAll(chartDir); err != nil {
-				o.l.Warnf("Failed to clean-up dir '%s': %s", chartDir, err)
-			}
-		}()
-		o.config.ChartDir = chartDir
+		defer cleanup()
 	}
 
 	installSteps := []common.Step{}
@@ -270,6 +264,20 @@ func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 		fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage)
 	}
 	return nil
+}
+
+func (o *Install) initDevChart() (func(), error) {
+	chartDir, err := helm.DevChartDir()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get dev-latest Helm chart: %w", err)
+	}
+	o.l.Infof("Downloaded dev-latest Helm chart into '%s'", chartDir)
+	o.config.ChartDir = chartDir
+	return func() {
+		if err := os.RemoveAll(chartDir); err != nil {
+			o.l.Warnf("Failed to clean-up dir '%s': %s", chartDir, err)
+		}
+	}, nil
 }
 
 // WaitForEverestSteps returns the steps to wait for Everest components to be ready.
