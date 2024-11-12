@@ -109,7 +109,7 @@ jobs:
       - uses: jacobtomlinson/gha-find-replace@v2
         if: steps.check_changes.outputs.changes == 'true' && github.event_name == 'pull_request'
         with:
-          find: "console.log\\(([^)]+)\\)"
+          find: "console.log\\(.*"
           replace: ""
           regex: true
 
