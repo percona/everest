@@ -17,7 +17,8 @@ import { expect } from '@playwright/test';
 
 export const checkError = async (response) => {
   if (!response.ok()) {
-    console.log(`${response.url()}: `, await response.json());
+
+
   }
   expect(response.ok()).toBeTruthy();
 };
