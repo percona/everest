@@ -643,6 +643,8 @@ github.com/percona/percona-backup-mongodb v1.8.1-0.20240516121609-883ad721e7cb h
 github.com/percona/percona-backup-mongodb v1.8.1-0.20240516121609-883ad721e7cb/go.mod h1:B7N7Oh3DVxH+04TgvGF1qJn/IBG0ijX+XpIojC+eoe8=
 github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241108181652-7732bc5745a2 h1:2cKAQ4Jc4xTqfQE9GM9IjYMtYwDtw1lbMp/MPVGCY+Q=
 github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241108181652-7732bc5745a2/go.mod h1:j5Ci48Azwb4Xs4XvZQNfleWCn2uyiZywazklxNH1ut4=
+github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241112153911-54af883cb8db h1:ZTO0nvtkepnIjzGm2/9L7eeU9X55gB3+fESD4n5qSEM=
+github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241112153911-54af883cb8db/go.mod h1:j5Ci48Azwb4Xs4XvZQNfleWCn2uyiZywazklxNH1ut4=
 github.com/percona/percona-postgresql-operator v0.0.0-20240730163147-6c224023db45 h1:l1dtbo3vuSPswTIhV3PiH7hH7FC6nXS1QV6Lh4wdYiQ=
 github.com/percona/percona-postgresql-operator v0.0.0-20240730163147-6c224023db45/go.mod h1:6m9fZWUhTLOUGdMy9I3qaoaSpEvRDhb9c41W1hbDYz8=
 github.com/percona/percona-server-mongodb-operator v1.17.0 h1:DyTX62+bLX50ZW63MRSSwhxrPfXrQKV64L48Jeui7yc=
