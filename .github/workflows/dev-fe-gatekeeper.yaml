@@ -106,6 +106,13 @@ jobs:
         with:
           commit_message: "chore: lint/format"
 
+      - uses: jacobtomlinson/gha-find-replace@v2
+        with:
+          find: "console\.log\(([^)]+)\)"
+          replace: ""
+          regex: true
+          commit_message: "chore: lint/remove_logs"
+
   permission_checks:
     runs-on: ubuntu-20.04
     steps:

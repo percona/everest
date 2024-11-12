@@ -19,6 +19,7 @@ const DbStatusDetailsDialog = ({
   closeModal,
   dbClusterDetails,
 }: DbStatusDetailsModalProps) => {
+  console.log('-');
   return (
     <Dialog
       open={isOpen}
