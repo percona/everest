@@ -2,7 +2,7 @@ import { Button, ButtonProps, Chip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import LabeledContent, { LabeledContentProps } from '../labeled-content';
 
-type Props = LabeledContentProps & {
+export type Props = LabeledContentProps & {
   techPreview?: boolean;
   actionButtonProps?: {
     dataTestId?: string;
