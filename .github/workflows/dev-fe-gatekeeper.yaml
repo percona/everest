@@ -98,7 +98,6 @@ jobs:
           git diff --exit-code || echo "::set-output name=changes::true"
 
       - uses: stefanzweifel/git-auto-commit-action@v5
-        if: steps.check_changes.outputs.changes == 'true' && github.event_name == 'pull_request'
         with:
           commit_message: "chore: lint/format"
 
