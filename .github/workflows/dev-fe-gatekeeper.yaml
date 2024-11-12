@@ -2,18 +2,8 @@
 name: FE CI Gatekeeper
 on:
   push:
-    paths:
-      - "ui/**"
-      - ".github/workflows/dev-fe-gatekeeper.yaml"
-      - ".github/workflows/dev-fe-e2e.yaml"
     branches:
-      - main
-  pull_request:
-    paths:
-      - "ui/**"
-      - ".github/workflows/dev-fe-gatekeeper.yaml"
-      - ".github/workflows/dev-fe-e2e.yaml"
-    types: [opened, synchronize]
+      - chore/ui/create-remove-console-job
 
 permissions:
   contents: write
@@ -78,6 +68,12 @@ jobs:
 
       - run: make init
 
+      - uses: jacobtomlinson/gha-find-replace@v2
+        with:
+          find: "console.log\\(.*"
+          replace: "//"
+          regex: true
+
       - name: lint
         if: matrix.action == 'lint'
         run: make lint
@@ -105,14 +101,6 @@ jobs:
         if: steps.check_changes.outputs.changes == 'true' && github.event_name == 'pull_request'
         with:
           commit_message: "chore: lint/format"
-
-      - uses: jacobtomlinson/gha-find-replace@v2
-        if: steps.check_changes.outputs.changes == 'true' && github.event_name == 'pull_request'
-        with:
-          find: "console.log\\(.*"
-          replace: ""
-          regex: true
-          commit_message: "chore: lint/console"
 
   permission_checks:
     runs-on: ubuntu-20.04
