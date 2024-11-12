@@ -4,7 +4,7 @@ import { Box, IconButton, Paper, Stack, Typography } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { useDeleteSchedule } from 'hooks/api/backups/useScheduledBackups';
-import { Schedule } from 'shared-types/dbCluster.types';
+import { ManageableSchedules } from 'shared-types/dbCluster.types';
 import { DB_CLUSTER_QUERY } from 'hooks/api/db-cluster/useDbCluster';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import { ScheduleModalContext } from '../../backups.context';
@@ -12,11 +12,7 @@ import { getTimeSelectionPreviewMessage } from 'pages/database-form/database-pre
 import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils';
 import { Messages } from './backups-list-table-header.messages';
 import { useRBACPermissions } from 'hooks/rbac';
-import { can } from 'utils/rbac';
-
-type ManageableSchedules = Schedule & {
-  canBeManaged: boolean;
-};
+import { transformSchedulesIntoManageableSchedules } from 'utils/db';
 
 const ScheduledBackupsList = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -69,32 +65,15 @@ const ScheduledBackupsList = () => {
   );
 
   useEffect(() => {
-    const transformSchedules = async () => {
-      const transformedSchedules: ManageableSchedules[] = await Promise.all(
-        (dbCluster.spec?.backup?.schedules || []).map(async (schedule) => ({
-          ...schedule,
-          canBeManaged:
-            (await can(
-              'read',
-              'backup-storages',
-              `${dbCluster.metadata.namespace}/${schedule.backupStorageName}`
-            )) &&
-            canCreateBackups &&
-            canUpdateDb,
-        }))
-      );
-
-      setSchedules(transformedSchedules);
-    };
-
-    transformSchedules();
-  }, [
-    canCreateBackups,
-    canUpdateDb,
-    dbCluster.metadata.name,
-    dbCluster.metadata.namespace,
-    dbCluster.spec?.backup?.schedules,
-  ]);
+    transformSchedulesIntoManageableSchedules(
+      dbCluster.spec.backup?.schedules || [],
+      dbCluster.metadata.namespace,
+      canCreateBackups,
+      canUpdateDb
+    ).then((newSchedules) => {
+      setSchedules(newSchedules);
+    });
+  }, [canCreateBackups, canUpdateDb, dbCluster]);
 
   return (
     <Stack

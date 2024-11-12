@@ -17,10 +17,10 @@ import { Stack, Typography } from '@mui/material';
 import EditableItem from 'components/editable-item/editable-item';
 import { LabeledContent } from '@percona/ui-lib';
 import { Messages } from './schedules.messages';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DbWizardFormFields } from 'consts.ts';
 import { useFormContext } from 'react-hook-form';
-import { Schedule } from 'shared-types/dbCluster.types';
+import { ManageableSchedules, Schedule } from 'shared-types/dbCluster.types';
 import {
   getSchedulesPayload,
   removeScheduleFromArray,
@@ -36,6 +36,7 @@ import { dbWizardToScheduleFormDialogMap } from 'components/schedule-form-dialog
 import { useDatabasePageDefaultValues } from '../../../../useDatabaseFormDefaultValues';
 import { PG_SLOTS_LIMIT } from 'consts';
 import { useRBACPermissions } from 'hooks/rbac';
+import { transformSchedulesIntoManageableSchedules } from 'utils/db';
 
 type Props = {
   disableCreateButton?: boolean;
@@ -49,6 +50,7 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
   } = useDatabasePageDefaultValues(dbWizardMode);
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
   const [mode, setMode] = useState<'new' | 'edit'>('new');
+  const [schedules, setSchedules] = useState<ManageableSchedules[]>([]);
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');
 
   const [dbType, k8sNamespace, formSchedules, dbName] = watch([
@@ -60,13 +62,14 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
 
   const { canCreate: canCreateBackups, canRead: canReadBackups } =
     useRBACPermissions('database-cluster-backups', `${k8sNamespace}/${dbName}`);
-
-  const schedules = useMemo(
-    () => (canReadBackups ? formSchedules : []),
-    [canReadBackups, formSchedules]
+  const { canUpdate: canUpdateCluster } = useRBACPermissions(
+    'database-clusters',
+    `${k8sNamespace}/${dbName}`
   );
 
-  const [activeStorage, setActiveStorage] = useState(undefined);
+  const [activeStorage, setActiveStorage] = useState<string | undefined>(
+    undefined
+  );
   const createButtonDisabled =
     disableCreateButton ||
     openScheduleModal ||
@@ -79,6 +82,28 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
       setActiveStorage(undefined);
     }
   }, [schedules, dbType]);
+
+  useEffect(() => {
+    const baseSchedules: ManageableSchedules[] = canReadBackups
+      ? formSchedules
+      : [];
+
+    transformSchedulesIntoManageableSchedules(
+      baseSchedules,
+      k8sNamespace,
+      canCreateBackups,
+      mode === 'new' ? true : canUpdateCluster
+    ).then((newSchedules) => {
+      setSchedules(newSchedules);
+    });
+  }, [
+    canCreateBackups,
+    canReadBackups,
+    canUpdateCluster,
+    formSchedules,
+    k8sNamespace,
+    mode,
+  ]);
 
   const handleDelete = (name: string) => {
     setValue(
