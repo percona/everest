@@ -2,20 +2,32 @@ package helm
 
 import (
 	"context"
+	"io"
 	"testing"
+
+	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"helm.sh/helm/v3/pkg/action"
 )
 
 func TestHelm(t *testing.T) {
 	t.Parallel()
 
-	instlr, err := NewInstaller("test-ns", "", ChartOptions{
+	testNs := "test-ns"
+
+	// initialise a mock configuration.
+	cfg := action.Configuration{}
+	cfg.Init(nil, testNs, "memory", nil)
+	cfg.KubeClient = &kubefake.PrintingKubeClient{Out: io.Discard}
+
+	instlr, err := NewInstaller(testNs, "", ChartOptions{
 		Directory: "../../data/testchart",
 		Version:   "0.1.0",
 	})
 	require.NoError(t, err)
+	instlr.actionsCfg = &cfg
 
 	ctx := context.Background()
 	rendered, err := instlr.RenderTemplates(ctx, false, InstallArgs{
