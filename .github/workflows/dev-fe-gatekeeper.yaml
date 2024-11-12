@@ -70,13 +70,13 @@ jobs:
 
       - uses: jacobtomlinson/gha-find-replace@v3
         with:
-          find: "console.log\\(.*"
-          replace: "//"
+          find: "[ \t]*console.log\\(.*"
+          replace: "\\'\\'"
           regex: true
 
-      # - name: lint
-      #   if: matrix.action == 'lint'
-      #   run: make lint
+      - name: lint
+        if: matrix.action == 'lint'
+        run: make lint
 
       # - name: format
       #   if: matrix.action == 'format'
