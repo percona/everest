@@ -8,15 +8,22 @@ import { useDBEnginesForNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { operatorUpgradePlanQueryFn } from 'hooks/api/db-engines';
 import { Messages } from './namespaces.messages';
 import { OperatorCell } from './OperatorCell';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 
 export const Namespaces = () => {
-  const dbEngines = useDBEnginesForNamespaces();
+  const rawDbEngines = useDBEnginesForNamespaces();
+  const dbEngines = rawDbEngines.filter(
+    (item) => item.data && item.data.length
+  );
+  const { canRead } = useNamespacePermissionsForResource('database-clusters');
   const operatorsUpgradePlan = useQueries({
     queries: dbEngines.map((item) => ({
       queryKey: ['operatorUpgradePlan', item.namespace],
       queryFn: () =>
         operatorUpgradePlanQueryFn(item.namespace, item.data || []),
-      enabled: dbEngines.every((result) => result.isSuccess),
+      enabled:
+        dbEngines.every((result) => result.isSuccess) &&
+        canRead.includes(item.namespace),
     })),
   });
 

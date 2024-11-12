@@ -63,7 +63,9 @@ export const DbClusterView = () => {
   const navigate = useNavigate();
 
   const { canCreate } = useNamespacePermissionsForResource('database-clusters');
+  const { canRead } = useNamespacePermissionsForResource('database-engines');
 
+  const canAddCluster = canCreate.length > 0 && canRead.length > 0;
   const dbClustersResults = useDBClustersForNamespaces(
     namespaces.map((ns) => ({
       namespace: ns,
@@ -204,7 +206,7 @@ export const DbClusterView = () => {
             },
           })}
           renderTopToolbarCustomActions={() =>
-            canCreate.length > 0 && (
+            canAddCluster && (
               <Button
                 size="small"
                 startIcon={<AddIcon />}

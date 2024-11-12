@@ -1,5 +1,6 @@
 import { useNamespaces } from 'hooks/api/namespaces';
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   can,
   canAll,
@@ -131,4 +132,31 @@ export const useNamespacePermissionsForResource = (
     canDelete: permissions.delete,
     isFetching,
   };
+};
+
+export const useRBACPermissionRoute = (
+  permissions: Array<{
+    action: RBACAction;
+    resource: RBACResource;
+    specificResources?: string[];
+  }>
+) => {
+  const navigate = useNavigate();
+
+  const checkPermissions = useCallback(async () => {
+    for (let i = 0; i < permissions.length; i++) {
+      const { action, resource, specificResources = [] } = permissions[i];
+      const allowed = await canAll(action, resource, specificResources);
+      if (!allowed) {
+        navigate('/');
+        return false;
+      }
+    }
+  }, [navigate, permissions]);
+
+  useEffect(() => {
+    checkPermissions();
+  }, [checkPermissions]);
+
+  return true;
 };
