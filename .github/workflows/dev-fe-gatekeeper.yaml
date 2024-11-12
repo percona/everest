@@ -108,7 +108,7 @@ jobs:
 
       - uses: jacobtomlinson/gha-find-replace@v2
         with:
-          find: "console\.log\(([^)]+)\)"
+          find: "console.log\\(([^)]+)\\)"
           replace: ""
           regex: true
           commit_message: "chore: lint/remove_logs"
