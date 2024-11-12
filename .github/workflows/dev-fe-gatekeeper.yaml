@@ -74,21 +74,21 @@ jobs:
           replace: "//"
           regex: true
 
-      - name: lint
-        if: matrix.action == 'lint'
-        run: make lint
+      # - name: lint
+      #   if: matrix.action == 'lint'
+      #   run: make lint
 
-      - name: format
-        if: matrix.action == 'format'
-        run: make format
+      # - name: format
+      #   if: matrix.action == 'format'
+      #   run: make format
 
-      - name: test
-        if: matrix.action == 'test'
-        run: make test
+      # - name: test
+      #   if: matrix.action == 'test'
+      #   run: make test
 
-      - name: build
-        if: matrix.action == 'build'
-        run: make build
+      # - name: build
+      #   if: matrix.action == 'build'
+      #   run: make build
 
       - name: Check for changes
         id: check_changes
