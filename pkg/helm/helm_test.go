@@ -5,11 +5,10 @@ import (
 	"io"
 	"testing"
 
-	kubefake "helm.sh/helm/v3/pkg/kube/fake"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"helm.sh/helm/v3/pkg/action"
+	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 )
 
 func TestHelm(t *testing.T) {
