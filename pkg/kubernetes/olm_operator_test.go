@@ -1,5 +1,3 @@
-// everest
-// Copyright (C) 2023 Percona LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -73,10 +71,11 @@ func TestInstallOlmOperator(t *testing.T) {
 			Group:    "operators.coreos.com",
 			Resource: "subscriptions",
 		}
+		k8sclient.On("DoRolloutWait", ctx, mock.Anything).Return(nil)
 		k8sclient.On("GetSubscription", mock.Anything, subscriptionNamespace, operatorName).Return(&v1alpha1.Subscription{}, apierrors.NewNotFound(groupResource, operatorName)).Once()
 		k8sclient.On(
 			"CreateSubscription",
-			mock.Anything, subscriptionNamespace, mockSubscription,
+			mock.Anything, subscriptionNamespace, mock.IsType(&v1alpha1.Subscription{}),
 		).Return(mockSubscription, nil)
 		k8sclient.On("GetSubscription", mock.Anything, subscriptionNamespace, operatorName).Return(mockSubscription, nil).Once()
 		mockInstallPlan := &v1alpha1.InstallPlan{}
