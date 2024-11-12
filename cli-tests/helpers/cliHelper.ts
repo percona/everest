@@ -31,9 +31,9 @@ export class CliHelper {
       silent: false,
     });
 
-    // if (stdout.length > 0) //
+    // if (stdout.length > 0) console.log(`Out: "${stdout}"`);
 
-    // if (stderr.length > 0) //
+    // if (stderr.length > 0) console.log(`Error: "${stderr}"`);
 
     return new Output(command, code, stdout, stderr);
   }

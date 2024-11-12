@@ -21,7 +21,7 @@ const checkDistEnvVarAndMove = async () => {
       ? envDir
       : path.join(process.cwd(), '../..', envDir);
 
-    //
+    console.log(`Outputting Everest files to: ${outDir}`);
 
     fs.rmSync(outDir, { force: true, recursive: true });
     copyFolderSync('./dist', outDir);
