@@ -70,7 +70,7 @@ test.describe.configure({ retries: 0 });
           (SELECT_DB !== db && !!SELECT_DB) ||
           (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
       );
-      test.describe.configure({ timeout: 900000 });
+      test.describe.configure({ timeout: 720000 });
 
       const clusterName = `${db}-${size}-dembkp`;
 
@@ -226,7 +226,7 @@ test.describe.configure({ retries: 0 });
         ).not.toBeEmpty();
         await page.getByTestId('form-dialog-create').click();
 
-        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 240000);
+        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 300000);
       });
 
       test(`Delete data [${db} size ${size}]`, async () => {
