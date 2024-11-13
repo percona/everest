@@ -507,11 +507,6 @@ func (u *Upgrade) checkRequirements(ctx context.Context, supVer *common.Supporte
 		u.l.Debug("cli version is empty")
 	}
 
-	// Kubernetes version check
-	if err := common.CheckK8sRequirements(supVer, u.l, u.kubeClient); err != nil {
-		return err
-	}
-
 	// Operator version check.
 	if err := u.checkOperatorRequirements(ctx, supVer); err != nil {
 		return err
