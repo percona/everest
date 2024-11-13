@@ -32,6 +32,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlekSi/pointer"
 	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
+	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/spf13/cobra"
@@ -90,8 +91,9 @@ const (
 	// everestDBNamespaceSubChartPath is the path to the everest-db-namespace subchart relative to the main chart.
 	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
 
-	pollInterval = 5 * time.Second
-	pollTimeout  = 10 * time.Minute
+	pollInterval    = 5 * time.Second
+	pollTimeout     = 10 * time.Minute
+	backoffInterval = 5 * time.Second
 
 	olmNamespace = kubernetes.OLMNamespace
 )
@@ -395,15 +397,17 @@ func (o *Install) waitForMonitoring() common.Step {
 		F: func(ctx context.Context) error {
 			channel := "stable-v0"
 			name := "victoriametrics-operator"
-			return o.kubeClient.InstallOperator(ctx, kubernetes.InstallOperatorRequest{
-				Channel:                channel,
-				Name:                   name,
-				Namespace:              common.MonitoringNamespace,
-				CatalogSource:          common.PerconaEverestCatalogName,
-				CatalogSourceNamespace: olmNamespace,
-				OperatorGroup:          common.MonitoringNamespace,
-				InstallPlanApproval:    olmv1alpha1.ApprovalManual,
-			})
+			return backoff.Retry(func() error {
+				return o.kubeClient.InstallOperator(ctx, kubernetes.InstallOperatorRequest{
+					Channel:                channel,
+					Name:                   name,
+					Namespace:              common.MonitoringNamespace,
+					CatalogSource:          common.PerconaEverestCatalogName,
+					CatalogSourceNamespace: olmNamespace,
+					OperatorGroup:          common.MonitoringNamespace,
+					InstallPlanApproval:    olmv1alpha1.ApprovalManual,
+				})
+			}, backoff.NewConstantBackOff(backoffInterval))
 		},
 	}
 }
@@ -703,11 +707,13 @@ func (o *Install) installOperator(ctx context.Context, operatorName, namespace s
 			Name:                   operatorName,
 			CatalogSourceNamespace: kubernetes.OLMNamespace,
 		}
-
-		if err := o.kubeClient.InstallOperator(ctx, params); err != nil {
+		if err := backoff.Retry(func() error {
+			return o.kubeClient.InstallOperator(ctx, params)
+		}, backoff.NewConstantBackOff(backoffInterval)); err != nil {
 			o.l.Errorf("failed installing %s operator", operatorName)
 			return err
 		}
+
 		o.l.Infof("%s operator has been installed", operatorName)
 		return nil
 	}
