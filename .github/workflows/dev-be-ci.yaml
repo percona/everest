@@ -426,15 +426,6 @@ jobs:
         run: |
           make init
           make install-operators
-          kubectl patch sub everest-operator -n everest-system -p '
-            [{
-                "op": "add",
-                "path": "/spec/config/env/-",
-                "value": {
-                  "name": "PERCONA_VERSION_SERVICE_URL",
-                  "value": "https://check-dev.percona.com/versions/v1"
-                }
-            }]' --type=json
           make test-cli
       - name: Attach the report
         if: ${{ always() && steps.cli-tests.outcome != 'skipped' }}
