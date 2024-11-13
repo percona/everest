@@ -401,8 +401,10 @@ func (k *Kubernetes) InstallOperator(ctx context.Context, req InstallOperatorReq
 			return errors.Join(err, errors.New("cannot create a subscription to install the operator"))
 		}
 	} else {
-		_, err := k.client.UpdateSubscription(ctx, req.Namespace, subscription)
-		if err != nil {
+		if err := backoff.Retry(func() error {
+			_, err := k.client.UpdateSubscription(ctx, req.Namespace, subscription)
+			return err
+		}, backoff.WithContext(backoff.NewConstantBackOff(backoffInterval), ctx)); err != nil {
 			return errors.Join(err, errors.New("cannot update a subscription to install the operator"))
 		}
 	}
