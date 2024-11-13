@@ -93,7 +93,7 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
           severity="info"
           sx={{
             width: '100%',
-            height: '50px',
+            height: 'max-content',
             marginTop: 1,
             marginBottom: 1,
           }}
