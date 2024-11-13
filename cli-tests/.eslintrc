@@ -139,7 +139,7 @@
     "linebreak-style": "off",
     "no-array-constructor": "error",
     "no-await-in-loop": "off",
-    "no-console": 1,
+    "no-console": "error",
     "no-confusing-arrow": "error",
     "no-nested-ternary": "warn",
     // "no-underscore-dangle": "error",
