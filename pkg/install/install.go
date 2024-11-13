@@ -300,7 +300,11 @@ func WaitForEverestSteps(l *zap.SugaredLogger, k kubernetes.KubernetesConnector,
 		Desc: "Wait for Everest Operator Deployment",
 		F: func(ctx context.Context) error {
 			l.Infof("Waiting for Deployment '%s' in namespace '%s'", common.PerconaEverestOperatorDeploymentName, common.SystemNamespace)
-			return k.WaitForRollout(ctx, common.PerconaEverestOperatorDeploymentName, common.SystemNamespace)
+			if err := k.WaitForRollout(ctx, common.PerconaEverestOperatorDeploymentName, common.SystemNamespace); err != nil {
+				return err
+			}
+			l.Infof("Deployment '%s' in namespace '%s' is ready", common.PerconaEverestOperatorDeploymentName, common.SystemNamespace)
+			return nil
 		},
 	})
 	if clusterType != kubernetes.ClusterTypeOpenShift {
