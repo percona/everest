@@ -19,7 +19,6 @@ export const NavItem = ({
   onClick,
   ...listItemProps
 }: NavItemProps) => {
-  console.log('🚀 ~ open:', open);
   const navigate = useNavigate();
 
   const redirect = (redirectUrl: string) => {
