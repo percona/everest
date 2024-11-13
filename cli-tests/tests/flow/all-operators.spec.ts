@@ -71,7 +71,7 @@ test.describe('Everest CLI install', async () => {
         '✓ Wait for Everest Operator Deployment',
         '✓ Wait for Operator Lifecycle Manager',
         '✓ Wait for Everest Monitoring',
-        '✓ Provisioning DB namespace \'everest-operators\'',
+        '✓ Provisioning DB namespace \'everest-all\'',
         '🚀 Everest has been successfully installed!',
       ]);
     });
