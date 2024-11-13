@@ -56,6 +56,7 @@ export const DefaultConfigurations = () => {
   });
 
   const onSubmit: SubmitHandler<DefaultConfigurationsType> = (data) => {
+    // eslint-disable-next-line no-console
     console.log(data);
   };
 
