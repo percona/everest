@@ -2,8 +2,18 @@
 name: FE CI Gatekeeper
 on:
   push:
+    paths:
+      - "ui/**"
+      - ".github/workflows/dev-fe-gatekeeper.yaml"
+      - ".github/workflows/dev-fe-e2e.yaml"
     branches:
-      - chore/add-eslint-warning-for-logs
+      - main
+  pull_request:
+    paths:
+      - "ui/**"
+      - ".github/workflows/dev-fe-gatekeeper.yaml"
+      - ".github/workflows/dev-fe-e2e.yaml"
+    types: [opened, synchronize]
 
 permissions:
   contents: write
