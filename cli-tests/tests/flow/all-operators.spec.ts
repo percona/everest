@@ -30,7 +30,7 @@ test.describe('Everest CLI install', async () => {
         const perconaEverestPodsOut = await cli.exec('kubectl get pods --namespace=everest-system');
 
         await perconaEverestPodsOut.outContainsNormalizedMany([
-          'everest-operator-controller-manager',
+          'everest-operator',
         ]);
 
         const out = await cli.exec('kubectl get pods --namespace=everest-all');
