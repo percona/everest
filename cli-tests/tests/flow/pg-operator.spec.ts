@@ -54,7 +54,7 @@ test.describe('Everest CLI install', async () => {
       await out.assertSuccess();
       await out.outErrContainsNormalizedMany([
         'percona-postgresql-operator operator has been installed',
-        'everest-operator operator has been installed',
+        'Deployment \'everest-operator\' in namespace \'everest-system\' is ready',
       ]);
     });
     await page.waitForTimeout(10_000);

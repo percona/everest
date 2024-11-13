@@ -53,7 +53,7 @@ test.describe('Everest CLI install', async () => {
         'percona-xtradb-cluster-operator operator has been installed',
         'percona-server-mongodb-operator operator has been installed',
         'percona-postgresql-operator operator has been installed',
-        'everest-operator operator has been installed',
+        'Deployment \'everest-operator\' in namespace \'everest-system\' is ready',
       ]);
     });
     await page.waitForTimeout(10_000);

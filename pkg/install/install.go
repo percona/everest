@@ -287,7 +287,11 @@ func WaitForEverestSteps(l *zap.SugaredLogger, k kubernetes.KubernetesConnector,
 		Desc: "Wait for Everest API Deployment",
 		F: func(ctx context.Context) error {
 			l.Infof("Waiting for Deployment '%s' in namespace '%s'", common.PerconaEverestDeploymentName, common.SystemNamespace)
-			return k.WaitForRollout(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
+			if err := k.WaitForRollout(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace); err != nil {
+				return err
+			}
+			l.Infof("Deployment '%s' in namespace '%s' is ready", common.PerconaEverestDeploymentName, common.SystemNamespace)
+			return nil
 		},
 	})
 	steps = append(steps, common.Step{
