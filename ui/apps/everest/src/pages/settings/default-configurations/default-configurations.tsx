@@ -1,12 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Stack, Typography } from '@mui/material';
 import { TextArray } from '@percona/ui-lib';
-import {
-  FormProvider,
-  SubmitHandler,
-  useForm,
-  useWatch,
-} from 'react-hook-form';
+import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { SwitchOutlinedBox } from 'components/switch-outlined-box/switch-oulined-box';
 import { TimeSelection } from 'components/time-selection/time-selection';
 import {
@@ -55,15 +50,10 @@ export const DefaultConfigurations = () => {
     ],
   });
 
-  const onSubmit: SubmitHandler<DefaultConfigurationsType> = (data) => {
-    // eslint-disable-next-line no-console
-    console.log(data);
-  };
-
   return (
     <div>
       <FormProvider {...methods}>
-        <form onSubmit={methods.handleSubmit(onSubmit)}>
+        <form>
           <Stack>
             <Typography
               data-testid="default-configurations-info"
@@ -144,12 +134,7 @@ export const DefaultConfigurations = () => {
               <Button onClick={() => {}} variant="text">
                 {Messages.cancel}
               </Button>
-              <Button
-                onClick={methods.handleSubmit(onSubmit)}
-                variant="contained"
-              >
-                {Messages.save}
-              </Button>
+              <Button variant="contained">{Messages.save}</Button>
             </Stack>
           </Stack>
         </form>
