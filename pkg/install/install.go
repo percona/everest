@@ -405,7 +405,8 @@ func (o *Install) waitForMonitoring() common.Step {
 					OperatorGroup:          common.MonitoringNamespace,
 					InstallPlanApproval:    olmv1alpha1.ApprovalManual,
 				})
-			}, backoff.NewConstantBackOff(backoffInterval))
+			}, backoff.NewConstantBackOff(backoffInterval),
+			)
 		},
 	}
 }
@@ -707,7 +708,8 @@ func (o *Install) installOperator(ctx context.Context, operatorName, namespace s
 		}
 		if err := backoff.Retry(func() error {
 			return o.kubeClient.InstallOperator(ctx, params)
-		}, backoff.NewConstantBackOff(backoffInterval)); err != nil {
+		}, backoff.NewConstantBackOff(backoffInterval),
+		); err != nil {
 			o.l.Errorf("failed installing %s operator", operatorName)
 			return err
 		}
