@@ -250,18 +250,13 @@ func NewInCluster() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	apiextClientset, err := apiextv1clientset.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
 
 	c := &Client{
-		clientset:       clientset,
-		olmClientset:    olmClientset,
-		restConfig:      config,
-		rcLock:          &sync.Mutex{},
-		apiextClientset: apiextClientset,
-		namespace:       string(namespace),
+		clientset:    clientset,
+		olmClientset: olmClientset,
+		restConfig:   config,
+		rcLock:       &sync.Mutex{},
+		namespace:    string(namespace),
 	}
 
 	err = c.initOperatorClients()

@@ -30,13 +30,13 @@ import (
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
-	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes/client"
@@ -78,6 +78,8 @@ const (
 	// OLMNamespace is the namespace where OLM is installed.
 	OLMNamespace    = "everest-olm"
 	olmOperatorName = "olm-operator"
+
+	openShiftCatalogNamespace = "openshift-marketplace"
 
 	// APIVersionCoreosV1 constant for some API requests.
 	APIVersionCoreosV1 = "operators.coreos.com/v1"
@@ -204,13 +206,11 @@ func (k *Kubernetes) GetEverestID(ctx context.Context) (string, error) {
 }
 
 func (k *Kubernetes) isOpenshift(ctx context.Context) (bool, error) {
-	crds, err := k.client.ListCRDs(ctx, &metav1.LabelSelector{})
-	if err != nil {
-		return false, err
+	_, err := k.client.GetNamespace(ctx, openShiftCatalogNamespace)
+	if err == nil {
+		return true, nil
 	}
-	return slices.ContainsFunc(crds.Items, func(crd apiextv1.CustomResourceDefinition) bool {
-		return strings.Contains(crd.Spec.Group, "openshift")
-	}), nil
+	return false, ctrlclient.IgnoreNotFound(err)
 }
 
 // GetClusterType tries to guess the underlying kubernetes cluster based on storage class.
