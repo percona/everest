@@ -337,15 +337,9 @@ func WaitForEverestSteps(l *zap.SugaredLogger, k kubernetes.KubernetesConnector,
 
 func (o *Install) getDBNamespaceInstallValues() values.Options {
 	v := []string{}
-	if o.config.Operator.PXC {
-		v = append(v, "pxc=true")
-	}
-	if o.config.Operator.PG {
-		v = append(v, "pg=true")
-	}
-	if o.config.Operator.PSMDB {
-		v = append(v, "psmdb=true")
-	}
+	v = append(v, fmt.Sprintf("pxc=%t", o.config.Operator.PXC))
+	v = append(v, fmt.Sprintf("postgresql=%t", o.config.Operator.PG))
+	v = append(v, fmt.Sprintf("psmdb=%t", o.config.Operator.PSMDB))
 	v = append(v, fmt.Sprintf("telemetry=%t", !o.config.DisableTelemetry))
 	return values.Options{Values: v}
 }
