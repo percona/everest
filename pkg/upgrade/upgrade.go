@@ -301,9 +301,6 @@ func helmValuesForDBEngines(list *everestv1alpha1.DatabaseEngineList) values.Opt
 	vals := []string{}
 	for _, dbEngine := range list.Items {
 		t := dbEngine.Spec.Type
-		if t == everestv1alpha1.DatabaseEnginePostgresql {
-			t = "pg" // TODO: Helm chart should use postgresql.
-		}
 		vals = append(vals, fmt.Sprintf("%s=%t", t, dbEngine.Status.State == everestv1alpha1.DBEngineStateInstalled))
 	}
 	// TODO: figure out how to set telemetry.
