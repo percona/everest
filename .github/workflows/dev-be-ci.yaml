@@ -331,21 +331,9 @@ jobs:
             --operator.xtradb-cluster \
             --skip-wizard \
             --namespaces everest
-
-      - name: Patch Everest Deployment to use the PR image
-        run: |
-          kubectl -n everest-system patch deployment percona-everest --type strategic --patch-file dev/patch-deployment-image.yaml
-          kubectl -n everest-system rollout status deploy/percona-everest --timeout=120s
-          kubectl patch sub everest-operator -n everest-system -p '
-            [{
-                "op": "add",
-                "path": "/spec/config/env/-",
-                "value": {
-                  "name": "PERCONA_VERSION_SERVICE_URL",
-                  "value": "https://check-dev.percona.com/versions/v1"
-                }
-            }]' --type=json
-
+            --helm-set server.image=localhost:5000/perconalab/everest \
+            --helm-set server.apiRequestsRateLimit=200 \
+            --helm-set versionMetadataURL=https://check-dev.percona.com
 
       - name: Expose Everest API Server
         run: |
