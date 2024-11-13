@@ -66,16 +66,13 @@ test.describe('Everest CLI install', async () => {
 
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
-        '✓ Install Operator Lifecycle Manager',
-        '✓ Install Percona OLM Catalog',
-        '✓ Create namespace \'everest-monitoring\'',
-        '✓ Install VictoriaMetrics Operator',
-        '✓ Provision monitoring stack',
-        '✓ Create namespace \'everest-all\'',
-        '✓ Install operators [pxc, psmdb, pg] in namespace \'everest-all\'',
-        '✓ Configure RBAC in namespace \'everest-all\'',
-        '✓ Install Everest Operator',
-        '✓ Install Everest API server',
+        '✓ Install Everest Helm chart',
+        '✓ Wait for Everest API Deployment',
+        '✓ Wait for Everest Operator Deployment',
+        '✓ Wait for Operator Lifecycle Manager',
+        '✓ Wait for Everest Monitoring',
+        '✓ Provisioning DB namespace \'everest-operators\'',
+        '🚀 Everest has been successfully installed!',
       ]);
     });
     await page.waitForTimeout(10_000);
