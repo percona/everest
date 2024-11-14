@@ -12,24 +12,39 @@ import (
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 )
 
-func TestHelm(t *testing.T) {
-	t.Parallel()
-
-	testNs := "test-ns"
-
-	// initialise a mock configuration.
+func getTestActionsConfig(ns string) (*action.Configuration, error) {
 	cfg := action.Configuration{}
-	err := cfg.Init(nil, testNs, "memory", nil)
-	require.NoError(t, err)
+	err := cfg.Init(nil, ns, "memory", nil)
+	if err != nil {
+		return nil, err
+	}
 	cfg.KubeClient = &kubefake.PrintingKubeClient{Out: io.Discard}
 	cfg.Capabilities = chartutil.DefaultCapabilities
+	return &cfg, nil
+}
 
-	instlr, err := NewInstaller(testNs, "", ChartOptions{
+func getTestHelmInstaller() (*Installer, error) {
+	testNs := "test-ns"
+	cfg, err := getTestActionsConfig(testNs)
+	if err != nil {
+		return nil, err
+	}
+	installer, err := NewInstaller(testNs, "", ChartOptions{
 		Directory: "../../data/testchart",
 		Version:   "0.1.0",
 	})
+	if err != nil {
+		return nil, err
+	}
+	installer.actionsCfg = cfg
+	return installer, nil
+}
+
+func TestHelm(t *testing.T) {
+	t.Parallel()
+
+	instlr, err := getTestHelmInstaller()
 	require.NoError(t, err)
-	instlr.actionsCfg = &cfg
 
 	ctx := context.Background()
 	rendered, err := instlr.RenderTemplates(ctx, false, InstallArgs{
@@ -51,4 +66,17 @@ func TestHelm(t *testing.T) {
 
 	none := rendered.Filter("templates/doesnotexist.yaml").Files()
 	assert.Empty(t, none, 0)
+}
+
+func TestGetValueOf(t *testing.T) {
+	t.Parallel()
+
+	instlr, err := getTestHelmInstaller()
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	err = instlr.Install(ctx, InstallArgs{
+		ReleaseName: "test-release",
+	})
+	require.NoError(t, err)
 }

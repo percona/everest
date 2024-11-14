@@ -34,6 +34,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/chartutil"
 	helmcli "helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/downloader"
@@ -84,8 +85,8 @@ type ChartOptions struct {
 type Installer struct {
 	namespace  string
 	chart      *chart.Chart
-	getter     *Getter
 	actionsCfg *action.Configuration
+	*Getter
 }
 
 // Uninstaller uninstalls a Helm chart.
@@ -141,7 +142,7 @@ func NewInstaller(namespace, kubeconfigPath string, o ChartOptions) (*Installer,
 		chart:      chart,
 		namespace:  namespace,
 		actionsCfg: actionsCfg,
-		getter: &Getter{
+		Getter: &Getter{
 			namespace:  namespace,
 			actionsCfg: actionsCfg,
 		},
@@ -173,7 +174,7 @@ type InstallArgs struct {
 // Install the Helm chart.
 // Calling Install multiple times is idempotent; it will re-apply the manifests using upgrade.
 func (i *Installer) Install(ctx context.Context, args InstallArgs) error {
-	release, err := i.getter.Get(args.ReleaseName)
+	release, err := i.Get(args.ReleaseName)
 	if err != nil {
 		// Release does not exist, we will create a new installation.
 		if errors.Is(err, driver.ErrReleaseNotFound) {
@@ -490,4 +491,32 @@ func DevChartDir() (string, error) {
 		return "", err
 	}
 	return tmp, nil
+}
+
+// GetValueOf returns the value of the given key from the chart values.
+func GetValueOf[V any](rel *release.Release, key string) (V, bool, error) {
+	var val V
+	// search in overrides first.
+	if res, ok, err := getValueOf[V](rel.Config, key); err != nil {
+		return val, false, err
+	} else if ok {
+		return res, true, nil
+	}
+	// search in chart default values.
+	return getValueOf[V](rel.Chart.Values, key)
+}
+
+func getValueOf[V any](v chartutil.Values, key string) (V, bool, error) {
+	var val V
+	res, err := v.PathValue(key)
+	if errors.Is(err, chartutil.ErrNoValue{}) {
+		return val, false, nil
+	} else if err != nil {
+		return val, false, err
+	}
+	val, ok := res.(V)
+	if !ok {
+		return val, false, fmt.Errorf("value is not of type %T", val)
+	}
+	return val, true, nil
 }

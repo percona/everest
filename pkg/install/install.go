@@ -94,8 +94,6 @@ const (
 	pollInterval    = 5 * time.Second
 	pollTimeout     = 10 * time.Minute
 	backoffInterval = 5 * time.Second
-
-	olmNamespace = kubernetes.OLMNamespace
 )
 
 const postInstallMessage = "Everest has been successfully installed!"
@@ -285,6 +283,7 @@ func (o *Install) initDevChart() (func(), error) {
 // WaitForEverestSteps returns the steps to wait for Everest components to be ready.
 func WaitForEverestSteps(l *zap.SugaredLogger, k kubernetes.KubernetesConnector, clusterType kubernetes.ClusterType) []common.Step {
 	steps := []common.Step{}
+
 	steps = append(steps, common.Step{
 		Desc: "Wait for Everest API Deployment",
 		F: func(ctx context.Context) error {
@@ -296,6 +295,7 @@ func WaitForEverestSteps(l *zap.SugaredLogger, k kubernetes.KubernetesConnector,
 			return nil
 		},
 	})
+
 	steps = append(steps, common.Step{
 		Desc: "Wait for Everest Operator Deployment",
 		F: func(ctx context.Context) error {
@@ -307,13 +307,14 @@ func WaitForEverestSteps(l *zap.SugaredLogger, k kubernetes.KubernetesConnector,
 			return nil
 		},
 	})
+
 	if clusterType != kubernetes.ClusterTypeOpenShift {
 		steps = append(steps, common.Step{
 			Desc: "Wait for Operator Lifecycle Manager",
 			F: func(ctx context.Context) error {
 				l.Infof("Waiting for OLM to be ready")
 				// Wait for all the Deployments to come up.
-				depls, err := k.ListDeployments(ctx, olmNamespace)
+				depls, err := k.ListDeployments(ctx, kubernetes.OLMNamespace)
 				if err != nil {
 					return err
 				}
@@ -323,7 +324,7 @@ func WaitForEverestSteps(l *zap.SugaredLogger, k kubernetes.KubernetesConnector,
 					}
 				}
 				return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
-					cs, err := k.GetCatalogSource(ctx, common.PerconaEverestCatalogName, olmNamespace)
+					cs, err := k.GetCatalogSource(ctx, common.PerconaEverestCatalogName, kubernetes.OLMNamespace)
 					if err != nil {
 						return false, err
 					}
@@ -401,7 +402,7 @@ func (o *Install) waitForMonitoring() common.Step {
 					Name:                   name,
 					Namespace:              common.MonitoringNamespace,
 					CatalogSource:          common.PerconaEverestCatalogName,
-					CatalogSourceNamespace: olmNamespace,
+					CatalogSourceNamespace: kubernetes.OLMNamespace,
 					OperatorGroup:          common.MonitoringNamespace,
 					InstallPlanApproval:    olmv1alpha1.ApprovalManual,
 				})
