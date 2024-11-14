@@ -31,12 +31,14 @@ import { dbEngineToDbType, dbTypeToDbEngine } from '@percona/utils';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
 import { useFormContext } from 'react-hook-form';
 import { DbEngineToolStatus } from 'shared-types/dbEngines.types';
-import { DB_WIZARD_DEFAULTS } from '../../../database-form.constants.ts';
+import {
+  DB_WIZARD_DEFAULTS,
+  DEFAULT_NODES,
+} from '../../../database-form.constants.ts';
 import { StepProps } from '../../../database-form.types.ts';
 import { DbWizardFormFields } from 'consts.ts';
 import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
-import { DEFAULT_NODES } from './first-step.constants.ts';
 import { Messages } from './first-step.messages.ts';
 import { filterAvailableDbVersionsForDbEngineEdition } from 'components/cluster-form/db-version/utils.ts';
 import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
