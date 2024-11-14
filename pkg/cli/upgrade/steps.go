@@ -4,15 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	"helm.sh/helm/v3/pkg/cli/values"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
+
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/helm"
 	"github.com/percona/everest/pkg/kubernetes"
-	"helm.sh/helm/v3/pkg/cli/values"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 func (u *Upgrade) newStepUpgradeCRDs() steps.Step {

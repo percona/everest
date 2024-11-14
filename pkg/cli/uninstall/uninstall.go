@@ -35,6 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/helm"
 	"github.com/percona/everest/pkg/kubernetes"
@@ -99,6 +100,41 @@ func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
 	return cli, nil
 }
 
+func (u *Uninstall) detectKubernetesEnvironment(ctx context.Context) error {
+	if !u.config.SkipEnvDetection {
+		return nil
+	}
+	clusterType, err := u.kubeClient.GetClusterType(ctx)
+	if err != nil {
+		return err
+	}
+	u.clusterType = clusterType
+	return nil
+}
+
+func (u *Uninstall) prepareUninstallSteps(ctx context.Context) ([]steps.Step, error) {
+	chartExists, err := u.helmReleaseExists()
+	if err != nil {
+		return nil, fmt.Errorf("failed to check if Helm release exists: %w", err)
+	}
+	steps := []steps.Step{
+		u.newStepDeleteDatabaseClusters(),
+		u.newStepDeleteBackupStorages(),
+		u.newStepDeleteMonitoringConfigs(),
+	}
+	steps = append(steps, u.newStepDeleteDBNamespaces(chartExists))
+	if chartExists {
+		steps = append(steps, u.newStepUninstallHelmChart())
+	}
+	steps = append(steps, u.newStepDeleteNamespace(common.MonitoringNamespace))
+	steps = append(steps, u.newStepDeleteNamespace(common.SystemNamespace))
+	if !chartExists {
+		steps = append(steps, u.newStepDeleteOLM())
+		steps = append(steps, u.newStepCleanupLeftovers())
+	}
+	return steps, nil
+}
+
 // Run runs the cluster command.
 func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 	if abort, err := u.runWizard(); err != nil {
@@ -108,15 +144,10 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 		return nil
 	}
 
-	if !u.config.SkipEnvDetection {
-		t, err := u.kubeClient.GetClusterType(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to detect cluster type: %w", err)
-		}
-		u.clusterType = t
+	if err := u.detectKubernetesEnvironment(ctx); err != nil {
+		return fmt.Errorf("failed to detect Kubernetes environment: %w", err)
 	}
 
-	uninstallSteps := []common.Step{}
 	dbsExist, err := u.dbsExist(ctx)
 	if err != nil {
 		return err
@@ -131,72 +162,11 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 			u.l.Info("Can't proceed without deleting database clusters")
 			return nil
 		}
-
-		uninstallSteps = append(uninstallSteps, common.Step{
-			Desc: "Delete database clusters",
-			F: func(ctx context.Context) error {
-				return u.deleteDBs(ctx)
-			},
-		})
 	}
 
-	uninstallSteps = append(uninstallSteps, common.Step{
-		Desc: "Delete backup storages",
-		F: func(ctx context.Context) error {
-			return u.deleteBackupStorages(ctx)
-		},
-	})
-
-	// VMAgent has finalizers, so we need to delete the monitoring configs first
-	uninstallSteps = append(uninstallSteps, common.Step{
-		Desc: "Delete monitoring configs",
-		F: func(ctx context.Context) error {
-			return u.deleteMonitoringConfigs(ctx)
-		},
-	})
-
-	chartExists, err := u.helmReleaseExists()
+	uninstallSteps, err := u.prepareUninstallSteps(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to check if Helm release exists: %w", err)
-	}
-
-	// Delete DB namespaces before deleting the everest-system Helm release,
-	// otherwise OLM will be deleted first, and result in the DB namespaces being stuck in Terminating state.
-	uninstallSteps = append(uninstallSteps, common.Step{
-		Desc: "Delete database namespaces",
-		F: func(ctx context.Context) error {
-			return u.deleteDBNamespaces(ctx, chartExists)
-		},
-	})
-
-	if chartExists {
-		u.l.Info("Found Helm release, deleting chart")
-		uninstallSteps = append(uninstallSteps, u.deleteEverestHelmChart()...)
-	}
-
-	uninstallSteps = append(uninstallSteps, common.Step{
-		Desc: fmt.Sprintf("Delete namespace '%s'", common.MonitoringNamespace),
-		F: func(ctx context.Context) error {
-			return u.deleteNamespaces(ctx, []string{common.MonitoringNamespace})
-		},
-	})
-
-	uninstallSteps = append(uninstallSteps, common.Step{
-		Desc: fmt.Sprintf("Delete namespace '%s'", common.SystemNamespace),
-		F: func(ctx context.Context) error {
-			return u.deleteNamespaces(ctx, []string{common.SystemNamespace})
-		},
-	})
-
-	// It is possible to uninstall an older version of Everest using the new version of the CLI.
-	// In 1.4.0, we migrate to a Helm chart for installation. For older versions that were installed without the chart,
-	// we need to clean-up some resources that were changed/removed in the Helm chart.
-	if !chartExists {
-		steps, err := u.legacyResourcesCleanup(ctx)
-		if err != nil {
-			return err
-		}
-		uninstallSteps = append(uninstallSteps, steps...)
+		return fmt.Errorf("failed to prepare uninstall steps: %w", err)
 	}
 
 	var out io.Writer = os.Stdout
@@ -204,7 +174,7 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 		out = io.Discard
 	}
 
-	if err := common.RunStepsWithSpinner(ctx, uninstallSteps, out); err != nil {
+	if err := steps.RunStepsWithSpinner(ctx, uninstallSteps, out); err != nil {
 		return err
 	}
 
@@ -216,88 +186,6 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 	u.l.Infof("Everest has been uninstalled successfully")
 	fmt.Fprintln(out, "Everest has been uninstalled successfully")
 	return nil
-}
-
-func (u *Uninstall) legacyResourcesCleanup(ctx context.Context) ([]common.Step, error) {
-	steps := []common.Step{}
-	// In the legacy installation, OLM needs to be gracefully deleted, otherwise the namespace will be stuck in Terminating state.
-	_, err := u.kubeClient.GetNamespace(ctx, kubernetes.OLMNamespace)
-	if err != nil && !k8serrors.IsNotFound(err) {
-		return nil, err
-	} else if err == nil {
-		steps = append(steps, common.Step{
-			Desc: "Delete OLM",
-			F: func(ctx context.Context) error {
-				return u.deleteOLM(ctx, kubernetes.OLMNamespace)
-			},
-		})
-	}
-	// The uninstallation does not cover certain resources, such as ClusterRoleBindings, ClusterRoles, etc.
-	// We will render the manifests using the Helm chart and simply delete them.
-	steps = append(steps, common.Step{
-		Desc: "Clean-up leftover resources",
-		F: func(ctx context.Context) error {
-			installer, err := helm.NewInstaller(common.SystemNamespace, u.config.KubeconfigPath, helm.ChartOptions{
-				// We will render the templates using the first known version of the chart.
-				// We don't expect it to lack any manifest that must be deleted.
-				// Moreover, on running `everestctl upgrade`, we will migrate the installation to Helm.
-				Version: "1.3.0-rc3", // TODO update.
-				URL:     helm.DefaultHelmRepoURL,
-				Name:    helm.EverestChartName,
-			})
-			if err != nil {
-				return fmt.Errorf("failed to create Helm installer: %w", err)
-			}
-			file, err := installer.RenderTemplates(ctx, true, helm.InstallArgs{
-				ReleaseName: common.SystemNamespace,
-			})
-			if err != nil {
-				return err
-			}
-			return u.kubeClient.DeleteManifestFile(file, common.SystemNamespace)
-		},
-	})
-	return steps, nil
-}
-
-func (u *Uninstall) deleteEverestHelmChart() []common.Step {
-	steps := []common.Step{}
-	// Delete core components.
-	steps = append(steps, common.Step{
-		Desc: fmt.Sprintf("Delete Helm chart release '%s' in namespace '%s'",
-			common.SystemNamespace, common.SystemNamespace,
-		),
-		F: func(ctx context.Context) error {
-			// First delete the CSVs in monitoring namespace, otherwise the deletion of the namespace will be stuck.
-			if err := wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
-				csvs, err := u.kubeClient.ListClusterServiceVersion(ctx, common.MonitoringNamespace)
-				if err != nil {
-					return false, err
-				}
-				if len(csvs.Items) == 0 {
-					return true, nil
-				}
-				for _, csv := range csvs.Items {
-					if err := u.kubeClient.DeleteClusterServiceVersion(ctx, types.NamespacedName{
-						Name:      csv.Name,
-						Namespace: csv.Namespace,
-					}); err != nil {
-						return false, err
-					}
-				}
-				return false, nil
-			}); err != nil {
-				return err
-			}
-			// Delete helm chart.
-			uninstaller, err := helm.NewUninstaller(common.SystemNamespace, u.config.KubeconfigPath)
-			if err != nil {
-				return fmt.Errorf("failed to create Helm uninstaller: %w", err)
-			}
-			return uninstaller.Uninstall(common.SystemNamespace)
-		},
-	})
-	return steps
 }
 
 // Run the uninstall wizard.

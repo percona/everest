@@ -145,6 +145,9 @@ func (u *Upgrade) getVersionInfo(ctx context.Context, out io.Writer, everestVers
 }
 
 func (u *Upgrade) detectKubernetesEnvironment(ctx context.Context) error {
+	if u.config.SkipEnvDetection {
+		return nil
+	}
 	t, err := u.kubeClient.GetClusterType(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to detect cluster type: %w", err)

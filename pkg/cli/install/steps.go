@@ -7,11 +7,12 @@ import (
 	"github.com/AlekSi/pointer"
 	"github.com/cenkalti/backoff/v4"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"k8s.io/apimachinery/pkg/util/wait"
+
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/helm"
 	"github.com/percona/everest/pkg/kubernetes"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 func (o *Install) newStepInstallEverestHelmChart() steps.Step {
