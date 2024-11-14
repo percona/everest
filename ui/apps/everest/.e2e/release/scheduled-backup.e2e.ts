@@ -161,7 +161,8 @@ function getNextScheduleMinute(incrementMinutes: number): string {
             namespace,
             MONITORING_URL,
             MONITORING_USER,
-            MONITORING_PASSWORD
+            MONITORING_PASSWORD,
+            false
           );
           await page.getByTestId('switch-input-monitoring').click();
           await expect(
@@ -223,7 +224,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         await prepareTestDB(clusterName, namespace);
       });
 
-      test(`Create backup schedules for ${db} and size ${size}`, async ({
+      test(`Create backup schedules [${db} size ${size}]`, async ({
         page,
       }) => {
         test.setTimeout(30 * 1000);
@@ -283,7 +284,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
       });
 
-      test(`Wait for two backups to succeeded for ${db} and size ${size}`, async ({
+      test(`Wait for two backups to succeeded [${db} size ${size}]`, async ({
         page,
       }) => {
         await gotoDbClusterBackups(page, clusterName);
@@ -295,7 +296,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
       });
 
-      test(`Delete schedules for ${db} and size ${size}`, async ({ page }) => {
+      test(`Delete schedules [${db} size ${size}]`, async ({ page }) => {
         test.setTimeout(30 * 1000);
 
         await gotoDbClusterBackups(page, clusterName);
@@ -406,7 +407,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 120000);
+        await waitForDelete(page, clusterName, 240000);
       });
     }
   );

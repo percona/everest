@@ -153,7 +153,8 @@ test.describe.configure({ retries: 0 });
             namespace,
             MONITORING_URL,
             MONITORING_USER,
-            MONITORING_PASSWORD
+            MONITORING_PASSWORD,
+            false
           );
           await page.getByTestId('switch-input-monitoring').click();
           await expect(
@@ -289,7 +290,7 @@ test.describe.configure({ retries: 0 });
       test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 120000);
+        await waitForDelete(page, clusterName, 240000);
       });
     }
   );

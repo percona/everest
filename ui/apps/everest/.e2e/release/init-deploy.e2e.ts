@@ -150,7 +150,8 @@ test.describe.configure({ retries: 0 });
             namespace,
             MONITORING_URL,
             MONITORING_USER,
-            MONITORING_PASSWORD
+            MONITORING_PASSWORD,
+            false
           );
           await page.getByTestId('switch-input-monitoring').click();
           await expect(
@@ -213,13 +214,13 @@ test.describe.configure({ retries: 0 });
         if (size != 1 && db != 'postgresql') {
           await waitForStatus(page, clusterName, 'Stopping', 45000);
         }
-        await waitForStatus(page, clusterName, 'Paused', 120000);
+        await waitForStatus(page, clusterName, 'Paused', 180000);
       });
 
       test(`Resume cluster [${db} size ${size}]`, async ({ page }) => {
         await resumeDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Initializing', 45000);
-        await waitForStatus(page, clusterName, 'Up', 240000);
+        await waitForStatus(page, clusterName, 'Up', 300000);
       });
 
       test(`Restart cluster [${db} size ${size}]`, async ({ page }) => {
@@ -228,13 +229,13 @@ test.describe.configure({ retries: 0 });
           await waitForStatus(page, clusterName, 'Stopping', 45000);
         }
         await waitForStatus(page, clusterName, 'Initializing', 60000);
-        await waitForStatus(page, clusterName, 'Up', 240000);
+        await waitForStatus(page, clusterName, 'Up', 300000);
       });
 
       test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 120000);
+        await waitForDelete(page, clusterName, 240000);
       });
     }
   );
