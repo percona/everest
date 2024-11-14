@@ -493,6 +493,13 @@ const ResourcesForm = ({
     const { isTouched: isConfigServersTouched } = getFieldState(
       DbWizardFormFields.shardConfigServers
     );
+    const { isTouched: isNumberOfNodesTouched } = getFieldState(
+      DbWizardFormFields.numberOfNodes
+    );
+
+    if (!isNumberOfNodesTouched) {
+      return;
+    }
 
     if (!isConfigServersTouched) {
       if (numberOfNodes && numberOfNodes !== CUSTOM_NR_UNITS_INPUT_VALUE) {
@@ -510,11 +517,18 @@ const ResourcesForm = ({
     }
 
     trigger(DbWizardFormFields.shardConfigServers);
-  }, [setValue, getFieldState, numberOfNodes, customNrOfNodes]);
+  }, [
+    setValue,
+    getFieldState,
+    numberOfNodes,
+    customNrOfNodes,
+    trigger,
+    clearErrors,
+  ]);
 
   useEffect(() => {
     trigger();
-  }, [numberOfNodes, customNrOfNodes]);
+  }, [numberOfNodes, customNrOfNodes, trigger]);
 
   return (
     <>
