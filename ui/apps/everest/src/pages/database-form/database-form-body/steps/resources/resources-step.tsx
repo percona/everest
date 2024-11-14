@@ -25,6 +25,7 @@ export const ResourcesStep = () => {
         allowDiskInputUpdate={mode !== 'edit'}
         showSharding={dbType === DbType.Mongo}
         hideProxies={dbType === DbType.Mongo && !shardingEnabled}
+        disableShardingInput={mode === 'restoreFromBackup'}
       />
     </>
   );
