@@ -39,7 +39,7 @@ export const UpgradeDbVersionModal = ({
 
   return (
     <FormDialog
-      dataTestId='upgrade'
+      dataTestId="upgrade"
       size="XL"
       isOpen={open}
       closeModal={handleCloseModal}
