@@ -12,6 +12,7 @@ import (
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/helm"
+	helmutils "github.com/percona/everest/pkg/helm/utils"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -100,7 +101,7 @@ func (o *Install) installEverestHelmChart(ctx context.Context) error {
 		return err
 	}
 
-	values := helm.MustMergeValues(
+	values := helmutils.MustMergeValues(
 		o.config.Values,
 		helm.ClusterTypeSpecificValues(o.clusterType),
 	)

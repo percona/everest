@@ -45,6 +45,7 @@ import (
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/helm"
+	helmutils "github.com/percona/everest/pkg/helm/utils"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
 	"github.com/percona/everest/pkg/version"
@@ -338,7 +339,7 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) steps.Step 
 				return fmt.Errorf("could not create Helm installer: %w", err)
 			}
 
-			values := helm.MustMergeValues(
+			values := helmutils.MustMergeValues(
 				o.getDBNamespaceInstallValues(),
 				helm.ClusterTypeSpecificValues(o.clusterType),
 			)

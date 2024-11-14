@@ -13,6 +13,7 @@ import (
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/helm"
+	helmutils "github.com/percona/everest/pkg/helm/utils"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -73,7 +74,7 @@ func (u *Upgrade) upgradeCustomResourceDefinitions(ctx context.Context) error {
 }
 
 func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
-	values := helm.MustMergeValues(
+	values := helmutils.MustMergeValues(
 		u.config.Values,
 		helm.ClusterTypeSpecificValues(u.clusterType),
 	)
@@ -124,7 +125,7 @@ func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version 
 	if err != nil {
 		return fmt.Errorf("cannot list database engines in namespace %s: %w", namespace, err)
 	}
-	values := helm.MustMergeValues(
+	values := helmutils.MustMergeValues(
 		helmValuesForDBEngines(dbEngines),
 		helm.ClusterTypeSpecificValues(u.clusterType),
 	)

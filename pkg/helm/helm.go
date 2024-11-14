@@ -27,23 +27,21 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	everesthelmchart "github.com/percona/percona-helm-charts/charts/everest"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/chartutil"
 	helmcli "helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/releaseutil"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 
+	helmutils "github.com/percona/everest/pkg/helm/utils"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -195,74 +193,18 @@ func (i *Installer) Install(ctx context.Context, args InstallArgs) error {
 	return i.Upgrade(ctx, args)
 }
 
-// RenderedTemplates is a representation of the rendered templates.
-// It is a single YAML file containing all the rendered templates.
-// The YAML file is separated by `---` between each template.
-type RenderedTemplates []byte
-
-func fileMapToBytes(files map[string]string) []byte {
-	var builder strings.Builder
-	for _, doc := range files {
-		builder.WriteString(doc + "\n---\n")
-	}
-	return []byte(strings.TrimSuffix(builder.String(), "\n---\n"))
-}
-
-// Filter the rendered templates by the provided paths.
-func (t *RenderedTemplates) Filter(paths ...string) RenderedTemplates {
-	files := t.Files()
-	result := make(map[string]string)
-	for name, doc := range files {
-		for _, p := range paths {
-			if strings.Contains(name, p) {
-				result[name] = doc
-			}
-		}
-	}
-	return RenderedTemplates(fileMapToBytes(result))
-}
-
-// Files returns the rendered templates as a map of file names to their content.
-func (t RenderedTemplates) Files() map[string]string {
-	sep := regexp.MustCompile("(?:^|\\s*\n)---\\s*")
-	manifestNameRegex := regexp.MustCompile("# Source: [^/]+/(.+)")
-	docs := sep.Split(string(t), -1)
-	result := make(map[string]string)
-	for _, doc := range docs {
-		fileName := manifestNameRegex.FindStringSubmatch(doc)
-		if len(fileName) == 0 || doc == "" {
-			continue
-		}
-		result[fileName[1]] = doc
-	}
-	return result
-}
-
 // RenderTemplates renders the Helm chart templates and returns a single YAML file.
-func (i *Installer) RenderTemplates(ctx context.Context, uninstall bool, args InstallArgs) (RenderedTemplates, error) {
+func (i *Installer) RenderTemplates(ctx context.Context, uninstall bool, args InstallArgs) (helmutils.RenderedTemplates, error) {
 	args.DryRun = true
 	rel, err := i.install(ctx, args)
 	if err != nil {
 		return nil, err
 	}
-	split := releaseutil.SplitManifests(rel.Manifest)
-	if uninstall {
-		_, files, err := releaseutil.SortManifests(split, nil, releaseutil.UninstallOrder)
-		if err != nil {
-			return nil, fmt.Errorf("cannot sort manifests: %w", err)
-		}
-		split = make(map[string]string)
-		for i, f := range files {
-			split[fmt.Sprintf("manifest-%d", i)] = f.Content
-		}
+	rendered := helmutils.RenderedTemplates{}
+	if err := rendered.FromString(rel.Manifest, uninstall); err != nil {
+		return nil, err
 	}
-	var builder strings.Builder
-	for _, y := range split {
-		builder.WriteString("\n---\n" + y)
-	}
-	rendered := builder.String()
-	rendered = strings.TrimPrefix(rendered, "\n---\n")
-	return []byte(rendered), nil
+	return rendered, nil
 }
 
 // Upgrade the Helm chart managed by the manager.
@@ -401,32 +343,6 @@ func everestctlCacheDir() (string, error) {
 	return res, nil
 }
 
-// MustMergeValues panics if MergeValues returns an error.
-func MustMergeValues(userDefined values.Options, vals ...map[string]interface{}) map[string]interface{} {
-	merged, err := MergeValues(userDefined, vals...)
-	if err != nil {
-		panic(err)
-	}
-	return merged
-}
-
-// MergeValues merges the user-provided values with the provided values `vals`
-// If a key exists in both the user-provided values and the provided values, the user-provided value will be used.
-func MergeValues(userDefined values.Options, vals ...map[string]interface{}) (map[string]interface{}, error) {
-	merged, err := userDefined.MergeValues(getter.All(helmcli.New()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to merge user-defined values: %w", err)
-	}
-	for _, val := range vals {
-		for k, v := range val {
-			if _, ok := merged[k]; !ok {
-				merged[k] = v
-			}
-		}
-	}
-	return merged, nil
-}
-
 // ClusterTypeSpecificValues returns value overrides based on the Kubernetes cluster type.
 func ClusterTypeSpecificValues(ct kubernetes.ClusterType) map[string]interface{} {
 	if ct == kubernetes.ClusterTypeOpenShift {
@@ -491,32 +407,4 @@ func DevChartDir() (string, error) {
 		return "", err
 	}
 	return tmp, nil
-}
-
-// GetValueOf returns the value of the given key from the chart values.
-func GetValueOf[V any](rel *release.Release, key string) (V, bool, error) {
-	var val V
-	// search in overrides first.
-	if res, ok, err := getValueOf[V](rel.Config, key); err != nil {
-		return val, false, err
-	} else if ok {
-		return res, true, nil
-	}
-	// search in chart default values.
-	return getValueOf[V](rel.Chart.Values, key)
-}
-
-func getValueOf[V any](v chartutil.Values, key string) (V, bool, error) {
-	var val V
-	res, err := v.PathValue(key)
-	if errors.As(err, &chartutil.ErrNoValue{}) {
-		return val, false, nil
-	} else if err != nil {
-		return val, false, err
-	}
-	val, ok := res.(V)
-	if !ok {
-		return val, false, fmt.Errorf("value is not of type %T", val)
-	}
-	return val, true, nil
 }
