@@ -137,19 +137,19 @@ func TestGetDefaultUploadInterval(t *testing.T) {
 			name:     "new pg, no interval is set",
 			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "2.4.0"},
 			interval: nil,
-			expected: 0,
+			expected: pgDefaultUploadInterval,
 		},
 		{
 			name:     "new pg, interval is set",
 			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "2.4.0"},
 			interval: pointer.ToInt(1000),
-			expected: 0,
+			expected: 1000,
 		},
 		{
 			name:     "newer pg",
 			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "2.4.1"},
 			interval: nil,
-			expected: 0,
+			expected: pgDefaultUploadInterval,
 		},
 	}
 	for _, tc := range cases {
