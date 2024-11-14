@@ -1,0 +1,147 @@
+import { expect, test } from '@playwright/test';
+import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import {
+  deleteDbCluster,
+  findDbAndClickRow,
+} from '@e2e/utils/db-clusters-list';
+import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
+import {
+  moveForward,
+  submitWizard,
+} from '@e2e/utils/db-wizard';
+import { waitForDelete, waitForStatus } from '@e2e/utils/table';
+
+const {
+  SELECT_DB,
+  SELECT_SIZE,
+} = process.env;
+
+let token: string;
+
+[
+  // { db: 'psmdb', size: 1 },
+  { db: 'pxc', size: 1 },
+  // { db: 'postgresql', size: 1 },
+].forEach(({ db, size }) => {
+  test.describe('Overview page', () => {
+    test.skip(
+      () =>
+        (SELECT_DB !== db && !!SELECT_DB) ||
+        (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
+    );
+    test.describe.configure({ timeout: 900000 });
+
+    const clusterName = `${db}-${size}-upgrade`;
+
+    let storageClasses = [];
+
+    test.beforeAll(async ({ request }) => {
+      token = await getTokenFromLocalStorage();
+
+      const { storageClassNames = [] } = await getClusterDetailedInfo(
+        token,
+        request
+      );
+      storageClasses = storageClassNames;
+    });
+
+    test(`Upgrade ${db} version`, async ({ page, request }) => {
+      expect(storageClasses.length).toBeGreaterThan(0);
+
+      await page.goto('/databases/new');
+
+      await test.step('Populate basic info', async () => {
+        await page.getByTestId('toggle-button-group-input-db-type').waitFor();
+        await page.getByTestId('select-input-db-version').waitFor();
+        await page.getByTestId('select-db-version-button').click();
+        const dbVersionOptions = await page.getByRole('option');
+
+        await dbVersionOptions.first().click();
+        await page.getByTestId('text-input-db-name').fill(clusterName);
+      });
+
+      // go to resources page
+      await moveForward(page);
+
+      await test.step('Populate resources', async () => {
+        await page
+          .getByRole('button')
+          .getByText(size + ' node')
+          .click();
+        await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
+      });
+
+      await test.step('Move forward form with default values', async () => {
+        //go to backups page
+        await moveForward(page);
+        //go to advanced configuration
+        await moveForward(page);
+        //go to monitoring
+        await moveForward(page);
+      });
+
+      await test.step('Submit form', async () => {
+        await submitWizard(page);
+        await expect(
+          page.getByText('Awesome! Your database is being created!')
+        ).toBeVisible();
+      });
+
+      await test.step('Check db list and status', async () => {
+        await page.goto('/databases');
+        await waitForStatus(page, clusterName, 'Initializing', 15000);
+        await waitForStatus(page, clusterName, 'Up', 600000);
+      });
+
+      await findDbAndClickRow(page, clusterName);
+
+      await test.step('Upgrade db on next available version', async () => {
+        //check upgrade btn and open modal
+        const upgradeBtn = page.getByTestId('upgrade-db-btn');
+        await expect(upgradeBtn).toBeVisible();
+        await upgradeBtn.click();
+
+        //populate upgrade version form
+        await page.getByTestId('select-input-db-version').waitFor();
+        await page.getByTestId('select-db-version-button').click();
+        const dbVersionOptionsForUpgrade = await page.getByRole('option');
+        const selectedDbVersionValue = await dbVersionOptionsForUpgrade
+          .nth(1)
+          .innerText();
+
+        await dbVersionOptionsForUpgrade.nth(1).click();
+
+        //submit
+        const upgradeModalBtn = page.getByTestId('form-dialog-upgrade');
+        expect(upgradeModalBtn).not.toBeDisabled();
+        await upgradeModalBtn.click();
+        await expect(page.getByTestId('upgrade-form-dialog')).not.toBeVisible({timeout: 15000});
+
+        //check result
+        await expect(page.getByTestId(`${clusterName}-status`)).toHaveText(
+          'Initializing', {timeout: 15000}
+        );
+        await expect(
+          page
+            .getByTestId('version-overview-section-row')
+            .filter({ hasText: selectedDbVersionValue })
+        ).toBeVisible();
+      });
+
+      // TODO upgrading to last version leads to hiding upgradeButton
+      // TODO list of upgrading versions should have only later versions
+      // TODO upgrade button is hided during initialization
+
+      await test.step('Check db list and status', async () => {
+        await page.goto('/databases');
+        await waitForStatus(page, clusterName, 'Up', 600000);
+      });
+    });
+
+    test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
+      await deleteDbCluster(page, clusterName);
+      await waitForStatus(page, clusterName, 'Deleting', 15000);
+      await waitForDelete(page, clusterName, 160000);
+    });
+  });
+});
