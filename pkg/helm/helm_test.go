@@ -37,6 +37,7 @@ func getTestHelmInstaller() (*Installer, error) {
 		return nil, err
 	}
 	installer.actionsCfg = cfg
+	installer.Getter.actionsCfg = cfg
 	return installer, nil
 }
 
@@ -77,6 +78,39 @@ func TestGetValueOf(t *testing.T) {
 	ctx := context.Background()
 	err = instlr.Install(ctx, InstallArgs{
 		ReleaseName: "test-release",
+		Values: map[string]interface{}{
+			"image": map[string]interface{}{
+				"tag": "override",
+			},
+		},
 	})
 	require.NoError(t, err)
+
+	rel, err := instlr.Get("test-release")
+	assert.NotNil(t, rel)
+	assert.NoError(t, err)
+
+	testCases := []struct {
+		key   string
+		value any
+	}{
+		{key: "image.repository", value: "nginx"},
+		{key: "image.pullPolicy", value: "IfNotPresent"},
+		{key: "service.port", value: float64(80)},
+		{key: "ingress.enabled", value: true},
+		{key: "ingress.enabled", value: true},
+		{key: "does.not.exist", value: nil},
+		{key: "image.tag", value: "override"},
+	}
+
+	for _, tc := range testCases {
+		val, _, err := GetValueOf[any](rel, tc.key)
+		require.NoError(t, err)
+		assert.Equal(t, val, tc.value)
+	}
+
+	val, ok, err := GetValueOf[string](rel, "image.repository")
+	assert.True(t, ok)
+	assert.NoError(t, err)
+	assert.Equal(t, "nginx", val)
 }

@@ -509,7 +509,7 @@ func GetValueOf[V any](rel *release.Release, key string) (V, bool, error) {
 func getValueOf[V any](v chartutil.Values, key string) (V, bool, error) {
 	var val V
 	res, err := v.PathValue(key)
-	if errors.Is(err, chartutil.ErrNoValue{}) {
+	if errors.As(err, &chartutil.ErrNoValue{}) {
 		return val, false, nil
 	} else if err != nil {
 		return val, false, err
