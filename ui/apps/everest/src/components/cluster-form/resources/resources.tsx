@@ -542,6 +542,8 @@ const ResourcesForm = ({
     trigger();
   }, [numberOfNodes, customNrOfNodes, trigger]);
 
+  // TODO test the following:
+  // when in restore mode, the number of shards should be disabled
   return (
     <>
       {!!showSharding && !!sharding && (

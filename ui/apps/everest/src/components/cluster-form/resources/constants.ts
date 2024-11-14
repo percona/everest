@@ -306,6 +306,8 @@ export const resourcesFormSchema = (
             });
           }
 
+          // TODO test the following:
+          // If sharding is enabled, the number of shards cannot be decreased via edit
           if (!allowShardingDescaling && intShardNr < intPreviousSharding) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
