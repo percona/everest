@@ -187,7 +187,10 @@ const numberOfResourcesValidator = (
   }
 };
 
-export const resourcesFormSchema = (passthrough?: boolean) => {
+export const resourcesFormSchema = (
+  defaultValues: Record<string, unknown>,
+  allowShardingDescaling: boolean
+) => {
   const objectShape = {
     [DbWizardFormFields.shardNr]: z.string().optional(),
     [DbWizardFormFields.shardConfigServers]: z.string().optional(),
@@ -206,9 +209,7 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
     [DbWizardFormFields.customNrOfProxies]: z.string().optional(),
   };
 
-  const zObject = passthrough
-    ? z.object(objectShape).passthrough()
-    : z.object(objectShape);
+  const zObject = z.object(objectShape).passthrough();
 
   return zObject.superRefine(
     (
@@ -292,11 +293,24 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
             path: [DbWizardFormFields.shardNr],
           });
         } else {
+          const previousSharding = defaultValues[
+            DbWizardFormFields.shardNr
+          ] as string;
+          const intPreviousSharding = parseInt(previousSharding || '', 10);
+
           if (intShardNr < intShardNrMin) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: Messages.sharding.min(intShardNrMin),
               path: [DbWizardFormFields.shardNr],
+            });
+          }
+
+          if (!allowShardingDescaling && intShardNr < intPreviousSharding) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: [DbWizardFormFields.shardNr],
+              message: Messages.sharding.descaling,
             });
           }
         }
