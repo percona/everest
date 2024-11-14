@@ -5,16 +5,10 @@ import {
   findDbAndClickRow,
 } from '@e2e/utils/db-clusters-list';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
-import {
-  moveForward,
-  submitWizard,
-} from '@e2e/utils/db-wizard';
+import { moveForward, submitWizard } from '@e2e/utils/db-wizard';
 import { waitForDelete, waitForStatus } from '@e2e/utils/table';
 
-const {
-  SELECT_DB,
-  SELECT_SIZE,
-} = process.env;
+const { SELECT_DB, SELECT_SIZE } = process.env;
 
 let token: string;
 
@@ -115,11 +109,14 @@ let token: string;
         const upgradeModalBtn = page.getByTestId('form-dialog-upgrade');
         expect(upgradeModalBtn).not.toBeDisabled();
         await upgradeModalBtn.click();
-        await expect(page.getByTestId('upgrade-form-dialog')).not.toBeVisible({timeout: 15000});
+        await expect(page.getByTestId('upgrade-form-dialog')).not.toBeVisible({
+          timeout: 15000,
+        });
 
         //check result
         await expect(page.getByTestId(`${clusterName}-status`)).toHaveText(
-          'Initializing', {timeout: 15000}
+          'Initializing',
+          { timeout: 15000 }
         );
         await expect(
           page
