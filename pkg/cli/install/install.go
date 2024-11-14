@@ -30,11 +30,9 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/AlekSi/pointer"
 	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
 	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
-	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -42,9 +40,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/helm"
 	"github.com/percona/everest/pkg/kubernetes"
@@ -106,7 +104,10 @@ type Install struct {
 	cmd            *cobra.Command
 	kubeClient     *kubernetes.Kubernetes
 	versionService versionservice.Interface
+
+	// these are set only when Run is called.
 	clusterType    kubernetes.ClusterType
+	installVersion string
 }
 
 const operatorInstallThreads = 1
@@ -192,7 +193,7 @@ func NewInstall(c Config, l *zap.SugaredLogger, cmd *cobra.Command) (*Install, e
 	return cli, nil
 }
 
-// Run runs the operators installation process.
+// Run the Everest installation process.
 func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 	// TODO: we shall probably split this into "install" and "add namespaces"
 	// Otherwise the logic is hard to maintain - we need to make sure not to,
@@ -202,28 +203,15 @@ func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 		return err
 	}
 
-	// Detect Kubernetes environment.
-	if !o.config.SkipEnvDetection {
-		t, err := o.kubeClient.GetClusterType(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to detect cluster type: %w", err)
-		}
-		o.clusterType = t
+	if err := o.detectKubernetesEnvironment(ctx); err != nil {
+		return fmt.Errorf("failed to detect Kubernetes environment: %w", err)
 	}
 
-	meta, err := o.versionService.GetEverestMetadata(ctx)
-	if err != nil {
-		return errors.Join(err, errors.New("could not fetch version metadata"))
-	}
-	latest, latestMeta, err := o.latestVersion(meta)
-	if err != nil {
-		return err
+	if err := o.getVersionInfo(ctx); err != nil {
+		return fmt.Errorf("failed to get Everest version info: %w", err)
 	}
 
-	o.l.Debugf("Everest latest version available: %s", latest)
-	o.l.Debugf("Everest version information %#v", latestMeta)
-
-	if version.IsDev(latest.String()) && o.config.ChartDir == "" {
+	if version.IsDev(o.installVersion) && o.config.ChartDir == "" {
 		cleanup, err := o.initDevChart()
 		if err != nil {
 			return err
@@ -231,16 +219,12 @@ func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 		defer cleanup()
 	}
 
-	installSteps := []common.Step{}
-	// Install core components.
-	installSteps = append(installSteps, o.installEverestHelmChart(latest.String()))
-	installSteps = append(installSteps, WaitForEverestSteps(o.l, o.kubeClient, o.clusterType)...)
-	installSteps = append(installSteps, o.waitForMonitoring())
+	installSteps := o.newInstallSteps()
 
 	// Install DB namespaces.
 	// TODO: separate command/API for provisioning DB namespaces.
 	for _, ns := range o.config.NamespacesList {
-		installSteps = append(installSteps, o.provisionDBNamespace(latest.String(), ns))
+		installSteps = append(installSteps, o.provisionDBNamespace(o.installVersion, ns))
 	}
 
 	var out io.Writer = os.Stdout
@@ -249,21 +233,64 @@ func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 	}
 
 	// Run steps.
-	fmt.Fprintln(out, output.Info("Installing Everest version %s", latest))
-	if err := common.RunStepsWithSpinner(ctx, installSteps, out); err != nil {
+	fmt.Fprintln(out, output.Info("Installing Everest version %s", o.installVersion))
+	if err := steps.RunStepsWithSpinner(ctx, installSteps, out); err != nil {
 		return err
 	}
-	fmt.Fprint(os.Stdout, "\n", output.Rocket(postInstallMessage))
+	o.l.Infof("Everest '%s' has been successfully installed", o.installVersion)
+	return o.printPostInstallMessage(ctx, out)
+}
 
+func (o *Install) printPostInstallMessage(ctx context.Context, out io.Writer) error {
+	fmt.Fprint(out, "\n", output.Rocket(postInstallMessage))
 	// Print message to retrieve admin password
 	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
 	if err != nil {
 		return errors.Join(err, errors.New("could not check if the admin password is secure"))
 	}
 	if !isAdminSecure {
-		fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage)
+		fmt.Fprint(out, "\n", common.InitialPasswordWarningMessage)
 	}
 	return nil
+}
+
+func (o *Install) getVersionInfo(ctx context.Context) error {
+	meta, err := o.versionService.GetEverestMetadata(ctx)
+	if err != nil {
+		return errors.Join(err, errors.New("could not fetch version metadata"))
+	}
+	latest, latestMeta, err := o.latestVersion(meta)
+	if err != nil {
+		return err
+	}
+	o.l.Debugf("Everest latest version available: %s", latest)
+	o.l.Debugf("Everest version information %#v", latestMeta)
+	o.installVersion = latest.String()
+	return nil
+}
+
+func (o *Install) detectKubernetesEnvironment(ctx context.Context) error {
+	if o.config.SkipEnvDetection {
+		return nil
+	}
+	t, err := o.kubeClient.GetClusterType(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to detect cluster type: %w", err)
+	}
+	o.clusterType = t
+	o.l.Infof("Detected Kubernetes environment: %s", t)
+	return nil
+}
+
+func (o *Install) newInstallSteps() []steps.Step {
+	steps := []steps.Step{
+		o.newStepInstallEverestHelmChart(),
+		o.newStepEnsureEverestAPI(),
+		o.newStepEnsureEverestOperator(),
+		o.newStepEnsureEverestOLM(),
+		o.newStepEnsureEverestMonitoring(),
+	}
+	return steps
 }
 
 func (o *Install) initDevChart() (func(), error) {
@@ -280,62 +307,6 @@ func (o *Install) initDevChart() (func(), error) {
 	}, nil
 }
 
-// WaitForEverestSteps returns the steps to wait for Everest components to be ready.
-func WaitForEverestSteps(l *zap.SugaredLogger, k kubernetes.KubernetesConnector, clusterType kubernetes.ClusterType) []common.Step {
-	steps := []common.Step{}
-
-	steps = append(steps, common.Step{
-		Desc: "Wait for Everest API Deployment",
-		F: func(ctx context.Context) error {
-			l.Infof("Waiting for Deployment '%s' in namespace '%s'", common.PerconaEverestDeploymentName, common.SystemNamespace)
-			if err := k.WaitForRollout(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace); err != nil {
-				return err
-			}
-			l.Infof("Deployment '%s' in namespace '%s' is ready", common.PerconaEverestDeploymentName, common.SystemNamespace)
-			return nil
-		},
-	})
-
-	steps = append(steps, common.Step{
-		Desc: "Wait for Everest Operator Deployment",
-		F: func(ctx context.Context) error {
-			l.Infof("Waiting for Deployment '%s' in namespace '%s'", common.PerconaEverestOperatorDeploymentName, common.SystemNamespace)
-			if err := k.WaitForRollout(ctx, common.PerconaEverestOperatorDeploymentName, common.SystemNamespace); err != nil {
-				return err
-			}
-			l.Infof("Deployment '%s' in namespace '%s' is ready", common.PerconaEverestOperatorDeploymentName, common.SystemNamespace)
-			return nil
-		},
-	})
-
-	if clusterType != kubernetes.ClusterTypeOpenShift {
-		steps = append(steps, common.Step{
-			Desc: "Wait for Operator Lifecycle Manager",
-			F: func(ctx context.Context) error {
-				l.Infof("Waiting for OLM to be ready")
-				// Wait for all the Deployments to come up.
-				depls, err := k.ListDeployments(ctx, kubernetes.OLMNamespace)
-				if err != nil {
-					return err
-				}
-				for _, depl := range depls.Items {
-					if err := k.WaitForRollout(ctx, depl.GetName(), depl.GetNamespace()); err != nil {
-						return err
-					}
-				}
-				return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
-					cs, err := k.GetCatalogSource(ctx, common.PerconaEverestCatalogName, kubernetes.OLMNamespace)
-					if err != nil {
-						return false, err
-					}
-					return pointer.Get(cs.Status.GRPCConnectionState).LastObservedState == "READY", nil
-				})
-			},
-		})
-	}
-	return steps
-}
-
 func (o *Install) getDBNamespaceInstallValues() values.Options {
 	v := []string{}
 	v = append(v, fmt.Sprintf("pxc=%t", o.config.Operator.PXC))
@@ -345,8 +316,8 @@ func (o *Install) getDBNamespaceInstallValues() values.Options {
 	return values.Options{Values: v}
 }
 
-func (o *Install) provisionDBNamespace(ver string, namespace string) common.Step {
-	return common.Step{
+func (o *Install) provisionDBNamespace(ver string, namespace string) steps.Step {
+	return steps.Step{
 		Desc: fmt.Sprintf("Provisioning DB namespace '%s'", namespace),
 		F: func(ctx context.Context) error {
 			if err := o.createNamespace(ctx, namespace); err != nil {
@@ -386,62 +357,6 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) common.Step
 				return err
 			}
 			return nil
-		},
-	}
-}
-
-func (o *Install) waitForMonitoring() common.Step {
-	return common.Step{
-		Desc: "Wait for Everest Monitoring",
-		F: func(ctx context.Context) error {
-			channel := "stable-v0"
-			name := "victoriametrics-operator"
-			return backoff.Retry(func() error {
-				return o.kubeClient.InstallOperator(ctx, kubernetes.InstallOperatorRequest{
-					Channel:                channel,
-					Name:                   name,
-					Namespace:              common.MonitoringNamespace,
-					CatalogSource:          common.PerconaEverestCatalogName,
-					CatalogSourceNamespace: kubernetes.OLMNamespace,
-					OperatorGroup:          common.MonitoringNamespace,
-					InstallPlanApproval:    olmv1alpha1.ApprovalManual,
-				})
-			}, backoff.NewConstantBackOff(backoffInterval),
-			)
-		},
-	}
-}
-
-func (o *Install) installEverestHelmChart(version string) common.Step {
-	return common.Step{
-		Desc: "Install Everest Helm chart",
-		F: func(ctx context.Context) error {
-			installer, err := helm.NewInstaller(common.SystemNamespace, o.config.KubeconfigPath, helm.ChartOptions{
-				Directory: o.config.ChartDir,
-				URL:       o.config.RepoURL,
-				Name:      helm.EverestChartName,
-				Version:   version,
-			})
-			if err != nil {
-				return fmt.Errorf("could not create Helm installer: %w", err)
-			}
-
-			nsExists, err := o.namespaceExists(ctx, common.SystemNamespace)
-			if err != nil {
-				return err
-			}
-
-			values := helm.MustMergeValues(
-				o.config.Values,
-				helm.ClusterTypeSpecificValues(o.clusterType),
-			)
-			o.l.Info("Installing Everest Helm chart")
-			return installer.Install(ctx, helm.InstallArgs{
-				Values:          values,
-				CreateNamespace: !nsExists,
-				ReleaseName:     common.SystemNamespace,
-				Devel:           o.config.Devel,
-			})
 		},
 	}
 }

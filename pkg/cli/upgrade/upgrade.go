@@ -28,15 +28,10 @@ import (
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
 	goversion "github.com/hashicorp/go-version"
 	"go.uber.org/zap"
-	"helm.sh/helm/v3/pkg/cli/values"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
 
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/helm"
-	"github.com/percona/everest/pkg/install"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
 	cliVersion "github.com/percona/everest/pkg/version"
@@ -78,14 +73,12 @@ type (
 		kubeClient     kubernetes.KubernetesConnector
 		versionService versionservice.Interface
 		dryRun         bool
-		clusterType    kubernetes.ClusterType
-		helmInstaller  *helm.Installer
 
-		// We use this flag to check if the existing installation of Everest
-		// was done using the Helm chart.
-		// This way we can determine if we need to migrate legacy installations
-		// to the Helm chart.
+		// these are set on calling Run
+		clusterType       kubernetes.ClusterType
 		helmReleaseExists bool
+		upgradeToVersion  string
+		helmInstaller     *helm.Installer
 	}
 
 	requirementsCheck struct {
@@ -137,11 +130,46 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 	return cli, nil
 }
 
+func (u *Upgrade) getVersionInfo(ctx context.Context, out io.Writer, everestVersion *goversion.Version) error {
+	upgradeEverestTo, err := u.canUpgrade(ctx, everestVersion)
+	if err != nil {
+		if errors.Is(err, ErrNoUpdateAvailable) {
+			u.l.Info("You're running the latest version of Everest")
+			fmt.Fprintln(out, "\n", output.Rocket("You're running the latest version of Everest"))
+			return nil
+		}
+		return err
+	}
+	u.upgradeToVersion = upgradeEverestTo.String()
+	return nil
+}
+
+func (u *Upgrade) detectKubernetesEnvironment(ctx context.Context) error {
+	t, err := u.kubeClient.GetClusterType(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to detect cluster type: %w", err)
+	}
+	u.clusterType = t
+	return nil
+}
+
+func (u *Upgrade) initHelmInstaller() error {
+	installer, err := helm.NewInstaller(common.SystemNamespace, u.config.KubeconfigPath, helm.ChartOptions{
+		URL:     u.config.RepoURL,
+		Name:    helm.EverestChartName,
+		Version: u.upgradeToVersion,
+	})
+	if err != nil {
+		return fmt.Errorf("could not create Helm installer: %w", err)
+	}
+	u.helmInstaller = installer
+	return nil
+}
+
 // Run runs the operators installation process.
 //
 //nolint:funlen
 func (u *Upgrade) Run(ctx context.Context) error {
-	// Get Everest version.
 	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
 	if err != nil {
 		return errors.Join(err, errors.New("could not retrieve Everest version"))
@@ -152,14 +180,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		out = io.Discard
 	}
 
-	// Check prerequisites
-	upgradeEverestTo, err := u.canUpgrade(ctx, everestVersion)
-	if err != nil {
-		if errors.Is(err, ErrNoUpdateAvailable) {
-			u.l.Info("You're running the latest version of Everest")
-			fmt.Fprintln(out, "\n", output.Rocket("You're running the latest version of Everest"))
-			return nil
-		}
+	if err := u.getVersionInfo(ctx, out, everestVersion); err != nil {
 		return err
 	}
 
@@ -167,199 +188,45 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return nil
 	}
 
-	// Detect Kubernetes environment.
-	if !u.config.SkipEnvDetection {
-		t, err := u.kubeClient.GetClusterType(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to detect cluster type: %w", err)
-		}
-		u.clusterType = t
+	if err := u.detectKubernetesEnvironment(ctx); err != nil {
+		return fmt.Errorf("could not detect Kubernetes environment: %w", err)
 	}
 
-	// Initialise installer.
-	installer, err := helm.NewInstaller(common.SystemNamespace, u.config.KubeconfigPath, helm.ChartOptions{
-		URL:     u.config.RepoURL,
-		Name:    helm.EverestChartName,
-		Version: upgradeEverestTo.String(),
-	})
-	if err != nil {
-		return fmt.Errorf("could not create Helm installer: %w", err)
+	if err := u.initHelmInstaller(); err != nil {
+		return fmt.Errorf("could not initialize Helm installer: %w", err)
 	}
-	u.helmInstaller = installer
 
-	u.l.Infof("Upgrading Everest to %s in namespace %s", upgradeEverestTo, common.SystemNamespace)
+	u.l.Infof("Upgrading Everest to %s in namespace %s", u.upgradeToVersion, common.SystemNamespace)
 
 	// 1.4.0 was when Helm based installation was added. Versions below that are not managed by helm.
 	u.helmReleaseExists = common.CheckConstraint(everestVersion, ">= 1.4.0")
 
-	upgradeSteps := []common.Step{}
-	upgradeSteps = append(upgradeSteps, u.upgradeCRDs())
-	upgradeSteps = append(upgradeSteps, u.upgradeEverestHelmChart(upgradeEverestTo.String()))
-	upgradeSteps = append(upgradeSteps, install.WaitForEverestSteps(u.l, u.kubeClient, u.clusterType)...)
-
-	if err := common.RunStepsWithSpinner(ctx, upgradeSteps, out); err != nil {
+	upgradeSteps := u.prepareUpgradeSteps()
+	if err := steps.RunStepsWithSpinner(ctx, upgradeSteps, out); err != nil {
 		return err
 	}
 
-	u.l.Infof("Everest has been upgraded to version %s", upgradeEverestTo)
-	fmt.Fprintln(out, "\n", output.Rocket("Everest has been upgraded to version %s", upgradeEverestTo))
+	u.l.Infof("Everest has been upgraded to version %s", u.upgradeToVersion)
+	return u.printPostUpgradeMessage(ctx, out)
+}
 
+func (u *Upgrade) printPostUpgradeMessage(ctx context.Context, out io.Writer) error {
+	fmt.Fprintln(out, "\n", output.Rocket("Everest has been upgraded to version %s", u.upgradeToVersion))
 	if isSecure, err := u.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser); err != nil {
 		return errors.Join(err, errors.New("could not check if the admin password is secure"))
 	} else if !isSecure {
 		fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage)
 	}
-
 	return nil
 }
 
-func (u *Upgrade) upgradeCRDs() common.Step {
-	return common.Step{
-		Desc: "Upgrade CRDs",
-		F: func(ctx context.Context) error {
-			files, err := u.helmInstaller.RenderTemplates(ctx, false, helm.InstallArgs{
-				ReleaseName: common.SystemNamespace,
-			})
-			if err != nil {
-				return fmt.Errorf("could not render Helm templates: %w", err)
-			}
-			crds := files.Filter("crds")
-			return u.kubeClient.ApplyManifestFile(crds, common.SystemNamespace)
-		},
+func (u *Upgrade) prepareUpgradeSteps() []steps.Step {
+	return []steps.Step{
+		u.newStepUpgradeCRDs(),
+		u.newStepUpgradeHelmChart(),
+		u.newStepEnsureEverestAPI(),
+		u.newStepEnsureEverestOperator(),
 	}
-}
-
-func (u *Upgrade) upgradeEverestHelmChart(version string) common.Step {
-	return common.Step{
-		Desc: "Upgrade Everest Helm chart",
-		F: func(ctx context.Context) error {
-			values := helm.MustMergeValues(
-				u.config.Values,
-				helm.ClusterTypeSpecificValues(u.clusterType),
-			)
-			args := helm.InstallArgs{
-				Values:      values,
-				ReleaseName: common.SystemNamespace,
-			}
-
-			// We're already using the Helm chart, directly upgrade and return.
-			if u.helmReleaseExists {
-				u.l.Info("Upgrading Helm chart")
-				return u.helmInstaller.Upgrade(ctx, args)
-			}
-
-			// We're on the legacy installation.
-			// Perform migration of the existing resources to Helm.
-			u.l.Info("Migrating existing installation to Helm")
-			if err := u.cleanupLegacyResources(ctx); err != nil {
-				return fmt.Errorf("failed to cleanupLegacyResources: %w", err)
-			}
-			if err := u.helmInstaller.Install(ctx, args); err != nil {
-				return fmt.Errorf("failed to install Helm chart: %w", err)
-			}
-			dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx)
-			if err != nil {
-				return fmt.Errorf("could not get database namespaces: %w", err)
-			}
-			for _, ns := range dbNamespaces {
-				if err := u.helmAdoptDBNamespaces(ctx, ns, version); err != nil {
-					return fmt.Errorf("could not migrate DB namespace '%s' installation to Helm: %w", ns, err)
-				}
-			}
-			return nil
-		},
-	}
-}
-
-// Creates an installation of the `everest-db-namespace` Helm chart for the given DB namesapce
-// and adopts its resources.
-func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version string) error {
-	installer, err := helm.NewInstaller(namespace, u.config.KubeconfigPath, helm.ChartOptions{
-		URL:     u.config.RepoURL,
-		Name:    helm.EverestDBNamespaceChartName,
-		Version: version,
-	})
-	if err != nil {
-		return fmt.Errorf("could not create Helm installer: %w", err)
-	}
-	dbEngines, err := u.kubeClient.ListDatabaseEngines(ctx, namespace)
-	if err != nil {
-		return fmt.Errorf("cannot list database engines in namespace %s: %w", namespace, err)
-	}
-	values := helm.MustMergeValues(
-		helmValuesForDBEngines(dbEngines),
-		helm.ClusterTypeSpecificValues(u.clusterType),
-	)
-	return installer.Install(ctx, helm.InstallArgs{
-		Values:          values,
-		CreateNamespace: false,
-		ReleaseName:     namespace,
-	})
-}
-
-func helmValuesForDBEngines(list *everestv1alpha1.DatabaseEngineList) values.Options {
-	vals := []string{}
-	for _, dbEngine := range list.Items {
-		t := dbEngine.Spec.Type
-		vals = append(vals, fmt.Sprintf("%s=%t", t, dbEngine.Status.State == everestv1alpha1.DBEngineStateInstalled))
-	}
-	// TODO: figure out how to set telemetry.
-	return values.Options{Values: vals}
-}
-
-// cleanupLegacyResources removes resources that were created as a part of the legacy installation method
-// and no longer exist as a part of the Helm chart.
-func (u *Upgrade) cleanupLegacyResources(ctx context.Context) error {
-	// Delete OLM PackageServer CSV.
-	if err := wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
-		if err := u.kubeClient.DeleteClusterServiceVersion(ctx, types.NamespacedName{
-			Namespace: kubernetes.OLMNamespace,
-			Name:      "packageserver",
-		}); err != nil {
-			if k8serrors.IsNotFound(err) {
-				return true, nil
-			}
-			return false, err
-		}
-		return false, nil
-	}); err != nil {
-		return err
-	}
-
-	// Delete resources related to Everest Operator Subscription.
-	everestOperatorCurrentCSV := ""
-	if err := wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
-		key := types.NamespacedName{Name: "everest-operator", Namespace: common.SystemNamespace}
-		sub, err := u.kubeClient.GetSubscription(ctx, key.Name, key.Namespace)
-		if err != nil {
-			if k8serrors.IsNotFound(err) {
-				return true, nil
-			}
-			return false, err
-		}
-		everestOperatorCurrentCSV = sub.Status.InstalledCSV
-		return false, u.kubeClient.DeleteSubscription(ctx, key)
-	}); err != nil {
-		return err
-	}
-
-	if everestOperatorCurrentCSV != "" {
-		if err := wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
-			if err := u.kubeClient.DeleteClusterServiceVersion(ctx, types.NamespacedName{
-				Namespace: common.SystemNamespace,
-				Name:      everestOperatorCurrentCSV,
-			}); err != nil {
-				if k8serrors.IsNotFound(err) {
-					return true, nil
-				}
-				return false, err
-			}
-			return false, nil
-		}); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // ensureManagedByLabelOnDBNamespaces ensures that all database namespaces have the managed-by label set.
@@ -550,6 +417,5 @@ func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *common.
 			u.l.Debugf("Finished requirements check for operator %s", c.operatorName)
 		}
 	}
-
 	return nil
 }

@@ -1,4 +1,4 @@
-package common
+package steps
 
 import (
 	"context"
@@ -15,8 +15,8 @@ const (
 	spinnerInterval = 150 * time.Millisecond
 )
 
-// Step is a helper type for organising the steps of long running
-// CLI operations like install, uninstall, upgrades, etc.
+// Step provides a way to run a function with a
+// pretty loading spinner animation.
 type Step struct {
 	// Desc is a human readable description of the step.
 	Desc string
