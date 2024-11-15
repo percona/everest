@@ -99,22 +99,13 @@ jobs:
           # create an entry for the new Everest version 
           printf "version: $VERSION\nsupported:\n  cli: '$CLI_PREREQUISITES'\n  kubernetes: '$K8S_PREREQUISITES'" > "sources/metadata/everest/$VERSION.yaml"
       
-      
-
-      - name: Build VS docker container
-        uses: docker/metadata-action@v5
-        id: vs-meta
-        with:
-          images: {{ env.$LOCAL_REGISTRY }}/perconalab/version-service
-          tags:
-            dev
 
       - name: Build and Push VS dev image
         uses: docker/build-push-action@v6
         with:
           context: percona-version-service
           push: true
-          tags: ${{ steps.vs-meta.outputs.tags }}
+          tags: ${{ env.LOCAL_REGISTRY}}/perconalab/version-service:dev
 
 
       - name: Apply VS manifest
