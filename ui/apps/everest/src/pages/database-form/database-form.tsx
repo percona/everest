@@ -49,7 +49,11 @@ export const DatabasePage = () => {
     isFetching: loadingClusterValues,
   } = useDatabasePageDefaultValues(mode);
 
-  const validationSchema = useDbValidationSchema(activeStep);
+  const validationSchema = useDbValidationSchema(
+    activeStep,
+    defaultValues,
+    mode
+  );
 
   const methods = useForm<DbWizardType>({
     mode: 'onChange',
