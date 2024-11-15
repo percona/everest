@@ -25,6 +25,12 @@ jobs:
     continue-on-error: ${{ matrix.may-fail }}
     runs-on: ubuntu-20.04
 
+    env:
+      # VERSION ridiculously higher than any potentially existing
+      VERSION: 0.10000.0
+      CLI_PREREQUISITES: ">= 1.2.0"
+      K8S_PREREQUISITES: ">= 1.27"
+
     steps:
       - name: Set up Go release
         uses: percona-platform/setup-go@v4
@@ -73,11 +79,14 @@ jobs:
           path: percona-version-service
           token: ${{ secrets.ROBOT_TOKEN }}
 
-      - name: VS - build
+      - name: VS - update
         run: |
           cd percona-version-service
           make init
-
+          # create an entry for the new Everest version 
+          echo "version: $VERSION\nsupported:\n  cli: '$CLI_PREREQUISITES'\n  kubernetes: '$K8S_PREREQUISITES'" > "sources/metadata/everest/$VERSION.yaml"
+      
+      
 
       - name: Build VS docker container
         uses: docker/metadata-action@v5
