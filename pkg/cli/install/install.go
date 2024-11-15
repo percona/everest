@@ -108,6 +108,7 @@ type Install struct {
 	// these are set only when Run is called.
 	clusterType    kubernetes.ClusterType
 	installVersion string
+	helmInstaller  *helm.Installer
 }
 
 const operatorInstallThreads = 1
@@ -288,6 +289,7 @@ func (o *Install) newInstallSteps() []steps.Step {
 		o.newStepEnsureEverestAPI(),
 		o.newStepEnsureEverestOperator(),
 		o.newStepEnsureEverestOLM(),
+		o.newStepEnsureCatalogSource(),
 		o.newStepEnsureEverestMonitoring(),
 	}
 	return steps

@@ -77,6 +77,25 @@ func (o *Install) newStepEnsureEverestMonitoring() steps.Step {
 	}
 }
 
+func (o *Install) newStepEnsureCatalogSource() steps.Step {
+	return steps.Step{
+		Desc: "Ensuring Everest CatalogSource is ready",
+		F: func(ctx context.Context) error {
+			return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
+				cs, err := o.helmInstaller.GetEverestCatalogSource()
+				if err != nil {
+					return false, fmt.Errorf("could not get Everest CatalogSource from Helm chart: %w", err)
+				}
+				cs, err = o.kubeClient.GetCatalogSource(ctx, cs.GetName(), cs.GetNamespace())
+				if err != nil {
+					return false, fmt.Errorf("catalog source not found")
+				}
+				return pointer.Get(cs.Status.GRPCConnectionState).LastObservedState == "READY", nil
+			})
+		},
+	}
+}
+
 func (o *Install) waitForDeployment(ctx context.Context, name, namespace string) error {
 	o.l.Infof("Waiting for Deployment '%s' in namespace '%s'", name, namespace)
 	if err := o.kubeClient.WaitForRollout(ctx, name, namespace); err != nil {
@@ -95,7 +114,7 @@ func (o *Install) installEverestHelmChart(ctx context.Context) error {
 		o.config.Values,
 		helm.ClusterTypeSpecificValues(o.clusterType),
 	)
-	installer := helm.Installer{
+	installer := &helm.Installer{
 		ReleaseName:            common.SystemNamespace,
 		ReleaseNamespace:       common.SystemNamespace,
 		Values:                 values,
@@ -109,6 +128,7 @@ func (o *Install) installEverestHelmChart(ctx context.Context) error {
 	}); err != nil {
 		return fmt.Errorf("could not initialize Helm installer: %w", err)
 	}
+	o.helmInstaller = installer
 	o.l.Info("Installing Everest Helm chart")
 	if err := installer.Install(ctx); err != nil {
 		return fmt.Errorf("could not install Helm chart: %w", err)
