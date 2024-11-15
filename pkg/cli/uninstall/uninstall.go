@@ -128,7 +128,7 @@ func (u *Uninstall) Run(ctx context.Context) error {
 		}
 	}
 
-	uninstallSteps, err := u.prepareUninstallSteps()
+	uninstallSteps, err := u.newUninstallSteps()
 	if err != nil {
 		return fmt.Errorf("failed to prepare uninstall steps: %w", err)
 	}
@@ -164,7 +164,7 @@ func (u *Uninstall) detectKubernetesEnvironment(ctx context.Context) error {
 	return nil
 }
 
-func (u *Uninstall) prepareUninstallSteps() ([]steps.Step, error) {
+func (u *Uninstall) newUninstallSteps() ([]steps.Step, error) {
 	chartExists, err := u.helmInstallationExists()
 	if err != nil {
 		return nil, fmt.Errorf("failed to check if Helm release exists: %w", err)
@@ -180,6 +180,7 @@ func (u *Uninstall) prepareUninstallSteps() ([]steps.Step, error) {
 	}
 	steps = append(steps, u.newStepDeleteNamespace(common.MonitoringNamespace))
 	steps = append(steps, u.newStepDeleteNamespace(common.SystemNamespace))
+	steps = append(steps, u.newStepDeleteCRDs())
 	if !chartExists {
 		steps = append(steps, u.newStepDeleteOLM())
 		steps = append(steps, u.newStepCleanupLeftovers())

@@ -6,7 +6,9 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/cli/helm"
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
@@ -83,6 +85,36 @@ func (u *Uninstall) newStepCleanupLeftovers() steps.Step {
 			return u.cleanupLeftovers(ctx)
 		},
 	}
+}
+
+// helm doesn't delete CRDs by default, so we need to handle this manually.
+func (u *Uninstall) newStepDeleteCRDs() steps.Step {
+	return steps.Step{
+		Desc: "Deleting CRDs",
+		F: func(ctx context.Context) error {
+			return u.deleteEverestCRDs(ctx)
+		},
+	}
+}
+
+func (u *Uninstall) deleteEverestCRDs(ctx context.Context) error {
+	crds, err := u.kubeClient.ListCRDs(ctx)
+	if err != nil {
+		return err
+	}
+	everestCRDs := []string{}
+	for _, crd := range crds.Items {
+		if crd.Spec.Group == everestv1alpha1.GroupVersion.Group {
+			everestCRDs = append(everestCRDs, crd.Name)
+		}
+	}
+	for _, crd := range everestCRDs {
+		u.l.Infof("Deleting CRD '%s'", crd)
+		if err := u.kubeClient.DeleteCRD(ctx, crd); client.IgnoreNotFound(err) != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Older versions of Everest (> 1.3.0) were not installed using Helm.

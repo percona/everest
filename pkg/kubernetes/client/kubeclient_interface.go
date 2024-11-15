@@ -111,6 +111,8 @@ type KubeClientConnector interface {
 	GetPackageManifest(ctx context.Context, namespace, name string) (*packagev1.PackageManifest, error)
 	// ListCRDs returns a list of CRDs.
 	ListCRDs(ctx context.Context, labelSelector *metav1.LabelSelector) (*apiextv1.CustomResourceDefinitionList, error)
+	// DeleteCRD deletes a CRD by name.
+	DeleteCRD(ctx context.Context, name string) error
 	// ListCRs returns a list of CRs.
 	ListCRs(ctx context.Context, namespace string, gvr schema.GroupVersionResource, labelSelector *metav1.LabelSelector) (*unstructured.UnstructuredList, error)
 	// GetClusterServiceVersion retrieve a CSV by namespaced name.

@@ -159,6 +159,7 @@ func (i *Installer) install(ctx context.Context) error {
 	install.Wait = false
 	install.TakeOwnership = true
 	install.DisableHooks = true
+	install.IncludeCRDs = true
 
 	rel, err := install.RunWithContext(ctx, i.chart, i.Values)
 	if err != nil {

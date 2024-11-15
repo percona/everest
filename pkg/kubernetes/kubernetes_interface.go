@@ -9,6 +9,7 @@ import (
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
@@ -86,6 +87,10 @@ type KubernetesConnector interface {
 	GetClusterServiceVersion(ctx context.Context, key types.NamespacedName) (*olmv1alpha1.ClusterServiceVersion, error)
 	// ListClusterServiceVersion list all CSVs for the given namespace.
 	ListClusterServiceVersion(ctx context.Context, namespace string) (*olmv1alpha1.ClusterServiceVersionList, error)
+	// ListCRDs lists all CRDs.
+	ListCRDs(ctx context.Context) (*apiextv1.CustomResourceDefinitionList, error)
+	// DeleteCRD deletes a CRD by name.
+	DeleteCRD(ctx context.Context, name string) error
 	// DeleteClusterServiceVersion deletes a ClusterServiceVersion.
 	DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error
 	// DeleteSubscription deletes a subscription by namespaced name.

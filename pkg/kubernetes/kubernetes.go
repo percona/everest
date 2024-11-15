@@ -30,6 +30,7 @@ import (
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -473,6 +474,21 @@ func (k *Kubernetes) ListClusterServiceVersion(
 	namespace string,
 ) (*olmv1alpha1.ClusterServiceVersionList, error) {
 	return k.client.ListClusterServiceVersion(ctx, namespace)
+}
+
+// ListCRDs lists all CRDs.
+func (k *Kubernetes) ListCRDs(
+	ctx context.Context,
+) (*apiextv1.CustomResourceDefinitionList, error) {
+	return k.client.ListCRDs(ctx, &metav1.LabelSelector{})
+}
+
+// DeleteCRD deletes a CRD by name.
+func (k *Kubernetes) DeleteCRD(
+	ctx context.Context,
+	name string,
+) error {
+	return k.client.DeleteCRD(ctx, name)
 }
 
 // DeleteClusterServiceVersion deletes a ClusterServiceVersion.

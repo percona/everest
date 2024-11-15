@@ -23,6 +23,7 @@ func TestHelm_RenderTemplates(t *testing.T) {
 	require.NoError(t, err)
 	cfg.KubeClient = &kubefake.PrintingKubeClient{Out: io.Discard}
 	cfg.Capabilities = chartutil.DefaultCapabilities
+	cfg.Log = func(_ string, _ ...interface{}) {}
 
 	installer := Installer{
 		ReleaseName:      "test-release",
@@ -40,7 +41,7 @@ func TestHelm_RenderTemplates(t *testing.T) {
 	require.NoError(t, err)
 
 	allFiles := rendered.Files()
-	assert.Len(t, allFiles, 5)
+	assert.Len(t, allFiles, 6)
 
 	depls := rendered.Filter("templates/deployment.yaml").Files()
 	assert.Len(t, depls, 1)
@@ -50,6 +51,9 @@ func TestHelm_RenderTemplates(t *testing.T) {
 
 	deplAndSvc := rendered.Filter("templates/deployment.yaml", "templates/service.yaml").Files()
 	assert.Len(t, deplAndSvc, 2)
+
+	crds := rendered.Filter("crds").Files()
+	assert.Len(t, crds, 1)
 
 	none := rendered.Filter("templates/doesnotexist.yaml").Files()
 	assert.Empty(t, none, 0)

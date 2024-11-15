@@ -1335,6 +1335,14 @@ func (c *Client) ListCRDs(
 	return c.apiextClientset.ApiextensionsV1().CustomResourceDefinitions().List(ctx, options)
 }
 
+// DeleteCRD deletes a CRD by name.
+func (c *Client) DeleteCRD(
+	ctx context.Context,
+	name string,
+) error {
+	return c.apiextClientset.ApiextensionsV1().CustomResourceDefinitions().Delete(ctx, name, metav1.DeleteOptions{})
+}
+
 // ListCRs returns a list of CRs.
 func (c *Client) ListCRs(
 	ctx context.Context,

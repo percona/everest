@@ -10,6 +10,7 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	version "k8s.io/apimachinery/pkg/version"
@@ -243,6 +244,24 @@ func (_m *MockKubernetesConnector) DeleteBackupStorage(ctx context.Context, name
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
 		r0 = rf(ctx, namespace, name)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteCRD provides a mock function with given fields: ctx, name
+func (_m *MockKubernetesConnector) DeleteCRD(ctx context.Context, name string) error {
+	ret := _m.Called(ctx, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteCRD")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, name)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -929,6 +948,36 @@ func (_m *MockKubernetesConnector) ListBackupStorages(ctx context.Context, names
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListCRDs provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) ListCRDs(ctx context.Context) (*apiextensionsv1.CustomResourceDefinitionList, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListCRDs")
+	}
+
+	var r0 *apiextensionsv1.CustomResourceDefinitionList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*apiextensionsv1.CustomResourceDefinitionList, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *apiextensionsv1.CustomResourceDefinitionList); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*apiextensionsv1.CustomResourceDefinitionList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
