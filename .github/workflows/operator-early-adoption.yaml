@@ -226,7 +226,7 @@ jobs:
         id: everest_meta
         with:
           images: |
-            $LOCAL_REGISTRY/perconalab/everest
+            {{ env.$LOCAL_REGISTRY }}/perconalab/everest
           tags: |
             type=raw,value=${{ env.VERSION }}
 
