@@ -28,16 +28,15 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"go.uber.org/zap"
-	"helm.sh/helm/v3/pkg/storage/driver"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/cli/helm"
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/helm"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -112,8 +111,8 @@ func (u *Uninstall) detectKubernetesEnvironment(ctx context.Context) error {
 	return nil
 }
 
-func (u *Uninstall) prepareUninstallSteps(ctx context.Context) ([]steps.Step, error) {
-	chartExists, err := u.helmReleaseExists()
+func (u *Uninstall) prepareUninstallSteps() ([]steps.Step, error) {
+	chartExists, err := u.helmInstallationExists()
 	if err != nil {
 		return nil, fmt.Errorf("failed to check if Helm release exists: %w", err)
 	}
@@ -164,7 +163,7 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 		}
 	}
 
-	uninstallSteps, err := u.prepareUninstallSteps(ctx)
+	uninstallSteps, err := u.prepareUninstallSteps()
 	if err != nil {
 		return fmt.Errorf("failed to prepare uninstall steps: %w", err)
 	}
@@ -360,11 +359,14 @@ func (u *Uninstall) deleteDBNamespaces(ctx context.Context, deleteChart bool) er
 }
 
 func (u *Uninstall) deleteDBNamespaceHelmChart(namespace string) error {
-	uninstaller, err := helm.NewUninstaller(namespace, u.config.KubeconfigPath)
+	uninstaller, err := helm.NewUninstaller(namespace, namespace, u.config.KubeconfigPath)
 	if err != nil {
 		return err
 	}
-	return uninstaller.Uninstall(namespace)
+	if _, err := uninstaller.Uninstall(false); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (u *Uninstall) deleteBackupStorages(ctx context.Context) error {
@@ -496,15 +498,10 @@ func (u *Uninstall) deleteOLM(ctx context.Context, namespace string) error {
 	return u.deleteNamespaces(ctx, []string{namespace})
 }
 
-func (u *Uninstall) helmReleaseExists() (bool, error) {
-	g, err := helm.NewGetter(common.SystemNamespace, u.config.KubeconfigPath)
+func (u *Uninstall) helmInstallationExists() (bool, error) {
+	uns, err := helm.NewUninstaller(common.SystemNamespace, common.SystemNamespace, u.config.KubeconfigPath)
 	if err != nil {
 		return false, err
 	}
-	if _, err := g.Get(common.SystemNamespace); errors.Is(err, driver.ErrReleaseNotFound) {
-		return false, nil
-	} else if err != nil {
-		return false, err
-	}
-	return true, nil
+	return uns.Uninstall(true)
 }

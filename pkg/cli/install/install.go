@@ -24,7 +24,6 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -42,10 +41,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/percona/everest/pkg/cli/helm"
+	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/helm"
-	helmutils "github.com/percona/everest/pkg/helm/utils"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
 	"github.com/percona/everest/pkg/version"
@@ -295,7 +294,7 @@ func (o *Install) newInstallSteps() []steps.Step {
 }
 
 func (o *Install) initDevChart() (func(), error) {
-	chartDir, err := helm.DevChartDir()
+	chartDir, err := helmutils.DevChartDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get dev-latest Helm chart: %w", err)
 	}
@@ -315,51 +314,6 @@ func (o *Install) getDBNamespaceInstallValues() values.Options {
 	v = append(v, fmt.Sprintf("psmdb=%t", o.config.Operator.PSMDB))
 	v = append(v, fmt.Sprintf("telemetry=%t", !o.config.DisableTelemetry))
 	return values.Options{Values: v}
-}
-
-func (o *Install) provisionDBNamespace(ver string, namespace string) steps.Step {
-	return steps.Step{
-		Desc: fmt.Sprintf("Provisioning DB namespace '%s'", namespace),
-		F: func(ctx context.Context) error {
-			if err := o.createNamespace(ctx, namespace); err != nil {
-				return err
-			}
-			chartDir := ""
-			if o.config.ChartDir != "" {
-				chartDir = path.Join(o.config.ChartDir, dbNamespaceSubChartPath)
-			}
-
-			installer, err := helm.NewInstaller(namespace, o.config.KubeconfigPath, helm.ChartOptions{
-				Directory: chartDir,
-				URL:       o.config.RepoURL,
-				Name:      helm.EverestDBNamespaceChartName,
-				Version:   ver,
-			})
-			if err != nil {
-				return fmt.Errorf("could not create Helm installer: %w", err)
-			}
-
-			values := helmutils.MustMergeValues(
-				o.getDBNamespaceInstallValues(),
-				helm.ClusterTypeSpecificValues(o.clusterType),
-			)
-
-			o.l.Infof("Installing DB namespace Helm chart in namespace ", namespace)
-			if err := installer.Install(ctx, helm.InstallArgs{
-				Values:          values,
-				CreateNamespace: false,
-				ReleaseName:     helm.EverestDBNamespaceChartName,
-				Devel:           o.config.Devel,
-			}); err != nil {
-				return fmt.Errorf("could not install Helm chart: %w", err)
-			}
-
-			if err := o.installDBOperators(ctx, namespace); err != nil {
-				return err
-			}
-			return nil
-		},
-	}
 }
 
 func (o *Install) populateConfig() error {

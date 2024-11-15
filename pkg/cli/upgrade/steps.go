@@ -10,10 +10,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/cli/helm"
+	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/helm"
-	helmutils "github.com/percona/everest/pkg/helm/utils"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -63,9 +63,7 @@ func (u *Upgrade) waitForDeployment(ctx context.Context, name, namespace string)
 }
 
 func (u *Upgrade) upgradeCustomResourceDefinitions(ctx context.Context) error {
-	files, err := u.helmInstaller.RenderTemplates(ctx, false, helm.InstallArgs{
-		ReleaseName: common.SystemNamespace,
-	})
+	files, err := u.helmInstaller.RenderTemplates(ctx, false)
 	if err != nil {
 		return fmt.Errorf("could not render Helm templates: %w", err)
 	}
@@ -74,19 +72,10 @@ func (u *Upgrade) upgradeCustomResourceDefinitions(ctx context.Context) error {
 }
 
 func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
-	values := helmutils.MustMergeValues(
-		u.config.Values,
-		helm.ClusterTypeSpecificValues(u.clusterType),
-	)
-	args := helm.InstallArgs{
-		Values:      values,
-		ReleaseName: common.SystemNamespace,
-	}
-
 	// We're already using the Helm chart, directly upgrade and return.
 	if u.helmReleaseExists {
 		u.l.Info("Upgrading Helm chart")
-		return u.helmInstaller.Upgrade(ctx, args)
+		return u.helmInstaller.Upgrade(ctx)
 	}
 
 	// We're on the legacy installation.
@@ -95,7 +84,7 @@ func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
 	if err := u.cleanupLegacyResources(ctx); err != nil {
 		return fmt.Errorf("failed to cleanupLegacyResources: %w", err)
 	}
-	if err := u.helmInstaller.Install(ctx, args); err != nil {
+	if err := u.helmInstaller.Install(ctx); err != nil {
 		return fmt.Errorf("failed to install Helm chart: %w", err)
 	}
 	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx)
@@ -113,14 +102,6 @@ func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
 // Creates an installation of the `everest-db-namespace` Helm chart for the given DB namesapce
 // and adopts its resources.
 func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version string) error {
-	installer, err := helm.NewInstaller(namespace, u.config.KubeconfigPath, helm.ChartOptions{
-		URL:     u.config.RepoURL,
-		Name:    helm.EverestDBNamespaceChartName,
-		Version: version,
-	})
-	if err != nil {
-		return fmt.Errorf("could not create Helm installer: %w", err)
-	}
 	dbEngines, err := u.kubeClient.ListDatabaseEngines(ctx, namespace)
 	if err != nil {
 		return fmt.Errorf("cannot list database engines in namespace %s: %w", namespace, err)
@@ -129,11 +110,19 @@ func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version 
 		helmValuesForDBEngines(dbEngines),
 		helm.ClusterTypeSpecificValues(u.clusterType),
 	)
-	return installer.Install(ctx, helm.InstallArgs{
-		Values:          values,
-		CreateNamespace: false,
-		ReleaseName:     namespace,
-	})
+	installer := helm.Installer{
+		ReleaseName:      namespace,
+		ReleaseNamespace: namespace,
+		Values:           values,
+	}
+	if err := installer.Init(u.config.KubeconfigPath, helm.ChartOptions{
+		URL:     u.config.RepoURL,
+		Name:    helm.EverestDBNamespaceChartName,
+		Version: version,
+	}); err != nil {
+		return fmt.Errorf("could not initialize Helm installer: %w", err)
+	}
+	return installer.Install(ctx)
 }
 
 func helmValuesForDBEngines(list *everestv1alpha1.DatabaseEngineList) values.Options {

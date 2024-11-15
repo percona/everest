@@ -1,0 +1,325 @@
+package helm
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"os"
+	"path"
+	"strings"
+
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	helmcli "helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/cli/values"
+	"helm.sh/helm/v3/pkg/downloader"
+	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
+
+	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
+	"github.com/percona/everest/pkg/kubernetes"
+)
+
+var settings = helmcli.New() //nolint:gochecknoglobals
+
+// CLIOptions contains common options for the CLI.
+type CLIOptions struct {
+	ChartDir string
+	RepoURL  string
+	Values   values.Options
+	Devel    bool
+}
+
+// Everest Helm chart names.
+const (
+	EverestChartName            = "everest"
+	EverestDBNamespaceChartName = "everest-db-namespace"
+)
+
+// DefaultHelmRepoURL is the default Helm repository URL to download the Everest charts.
+const DefaultHelmRepoURL = "https://percona.github.io/percona-helm-charts/"
+
+// Installer installs a Helm chart.
+type Installer struct {
+	ReleaseName            string
+	ReleaseNamespace       string
+	Values                 map[string]interface{}
+	CreateReleaseNamespace bool
+	DryRun                 bool
+
+	// internal fields, set only after Init() is called.
+	chart *chart.Chart
+	cfg   *action.Configuration
+
+	// This is set only after Install/Upgrade is called.
+	release *release.Release
+}
+
+// ChartOptions provide the options for loading a Helm chart.
+type ChartOptions struct {
+	// Directory to load the Helm chart from.
+	// If set, ignores URL.
+	Directory string
+	// URL of the repository to pull the chart from.
+	URL string
+	// Version of the helm chart to install.
+	// If loading from a directory, needs to match the chart version.
+	Version string
+	// Name of the Helm chart to install.
+	// Required only if pulling from the specified URL.
+	Name string
+}
+
+// Init initializes the Installer with the specified options.
+func (i *Installer) Init(kubeconfigPath string, o ChartOptions) error {
+	if o.Directory == "" && o.URL == "" {
+		return errors.New("either chart directory or URL must be set")
+	}
+
+	if o.Version == "" {
+		return errors.New("chart version must be set")
+	}
+
+	chart, err := resolveHelmChart(o.Version, o.Name, o.URL, o.Directory)
+	if err != nil {
+		return fmt.Errorf("failed to resolve Helm chart: %w", err)
+	}
+	i.chart = chart
+
+	cfg, err := newActionsCfg(i.ReleaseNamespace, kubeconfigPath)
+	if err != nil {
+		return fmt.Errorf("failed to create Helm action configuration: %w", err)
+	}
+	i.cfg = cfg
+	return nil
+}
+
+// Install the Helm chart.
+// Calling Install multiple times is idempotent; it will re-apply the manifests using upgrade.
+func (i *Installer) Install(ctx context.Context) error {
+	rel, err := action.NewGet(i.cfg).Run(i.ReleaseName)
+	if err != nil {
+		// Release does not exist, install it.
+		if errors.Is(err, driver.ErrReleaseNotFound) {
+			return i.install(ctx)
+		}
+	}
+	// If the release already exists, we will re-apply the manifests using upgrade.
+	// We're not actually upgrading to a new version, but using upgrade to re-apply manifests.
+	// This is how Helm expects us to re-apply manifests.
+	// To prevent accidental version upgrades, we will explicitly check that the resolved chart version matches the installed chart version.
+	if i.chart.Metadata.Version != rel.Chart.Metadata.Version {
+		return fmt.Errorf("cannot overwrite existing release with a different chart version. Expected %s, got %s",
+			rel.Chart.Metadata.Version, i.chart.Metadata.Version,
+		)
+	}
+	return i.Upgrade(ctx)
+}
+
+// RenderTemplates renders the Helm chart templates.
+func (i Installer) RenderTemplates(ctx context.Context, uninstallOrd bool) (helmutils.RenderedTemplates, error) {
+	i.DryRun = true
+	if err := i.Install(ctx); err != nil {
+		return nil, err
+	}
+	rendered := helmutils.RenderedTemplates{}
+	if err := rendered.FromString(i.release.Manifest, uninstallOrd); err != nil {
+		return nil, err
+	}
+	return rendered, nil
+}
+
+func (i *Installer) install(ctx context.Context) error {
+	install := action.NewInstall(i.cfg)
+	install.ReleaseName = i.ReleaseName
+	install.Namespace = i.ReleaseNamespace
+	install.DryRun = i.DryRun
+	install.CreateNamespace = i.CreateReleaseNamespace
+	install.Wait = false
+	install.TakeOwnership = true
+	install.DisableHooks = true
+
+	rel, err := install.RunWithContext(ctx, i.chart, i.Values)
+	if err != nil {
+		return err
+	}
+	i.release = rel
+	return nil
+}
+
+// Upgrade the Helm chart.
+func (i *Installer) Upgrade(ctx context.Context) error {
+	upgrade := action.NewUpgrade(i.cfg)
+	upgrade.Namespace = i.ReleaseNamespace
+	upgrade.TakeOwnership = true
+	upgrade.DisableHooks = true
+
+	rel, err := upgrade.RunWithContext(ctx, i.ReleaseName, i.chart, i.Values)
+	if err != nil {
+		return err
+	}
+	i.release = rel
+	return nil
+}
+
+func resolveHelmChart(version, chartName, repoURL, dir string) (*chart.Chart, error) {
+	if dir != "" {
+		return resolveDir(version, dir)
+	}
+	return resolveRepo(version, chartName, repoURL)
+}
+
+func resolveDir(version, dir string) (*chart.Chart, error) {
+	if err := buildChartDeps(dir); err != nil {
+		return nil, err
+	}
+	chart, err := loader.LoadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	// When loading from a directory, ensure that the loaded chart version
+	// matches the specified version.
+	if chart.Metadata.Version != version {
+		return nil, fmt.Errorf("chart version does not match specified version."+
+			"Expected chart version %s, got %s", version, chart.Metadata.Version,
+		)
+	}
+	return chart, nil
+}
+
+func resolveRepo(version, chartName, repoURL string) (*chart.Chart, error) {
+	// Download Helm chart from repo and cache it for later use.
+	chart, err := newChartFromRemoteWithCache(version, chartName, repoURL)
+	if err != nil {
+		return nil, err
+	}
+	return chart, nil
+}
+
+// newChartFromRemoteWithCache downloads the chart from the remote repository and caches it.
+func newChartFromRemoteWithCache(version, name string, repository string) (*chart.Chart, error) {
+	cacheDir, err := everestctlCacheDir()
+	if err != nil {
+		return nil, err
+	}
+
+	file := path.Join(cacheDir, fmt.Sprintf("%s-%s.tgz", name, version))
+	if _, err = os.Stat(file); err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			return nil, err
+		}
+
+		// Download the chart from remote repository
+		actionConfig := &action.Configuration{}
+		pull := action.NewPullWithOpts(action.WithConfig(actionConfig))
+		pull.Settings = settings
+		pull.Version = version
+		pull.DestDir = cacheDir
+		pull.RepoURL = repository
+		if _, err = pull.Run(name); err != nil {
+			return nil, err
+		}
+	}
+
+	f, err := os.Open(file) //nolint:gosec
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close() //nolint:errcheck
+	return loader.LoadArchive(f)
+}
+
+func everestctlCacheDir() (string, error) {
+	cacheDir, err := os.UserCacheDir()
+	if err != nil {
+		return "", err
+	}
+
+	res := path.Join(cacheDir, "everestctl")
+	err = os.MkdirAll(res, 0o755) //nolint:gosec,mnd
+	if err != nil && !os.IsExist(err) {
+		return "", err
+	}
+	return res, nil
+}
+
+// ClusterTypeSpecificValues returns value overrides based on the Kubernetes cluster type.
+func ClusterTypeSpecificValues(ct kubernetes.ClusterType) map[string]interface{} {
+	if ct == kubernetes.ClusterTypeOpenShift {
+		return map[string]interface{}{
+			"compatibility.openshift": true,
+		}
+	}
+	return nil
+}
+
+// Runs `helm dependency build` in the chart directory.
+func buildChartDeps(chartDir string) error {
+	man := &downloader.Manager{
+		Out:              io.Discard,
+		ChartPath:        chartDir,
+		Getters:          getter.All(settings),
+		RepositoryConfig: settings.RepositoryConfig,
+		RepositoryCache:  settings.RepositoryCache,
+	}
+	return man.Build()
+}
+
+func newActionsCfg(namespace, kubeconfig string) (*action.Configuration, error) {
+	logger := func(_ string, _ ...interface{}) {}
+	cfg := action.Configuration{}
+	restClientGetter := genericclioptions.ConfigFlags{}
+	if kubeconfig != "" {
+		home := os.Getenv("HOME")
+		kubeconfig = strings.ReplaceAll(kubeconfig, "~", home)
+		restClientGetter.KubeConfig = &kubeconfig
+	}
+	if err := cfg.Init(&restClientGetter, namespace, "", logger); err != nil {
+		return nil, err
+	}
+	cfg.Releases.MaxHistory = 3
+	return &cfg, nil
+}
+
+type Uninstaller struct {
+	ReleaseName      string
+	ReleaseNamespace string
+	actionCfg        *action.Configuration
+}
+
+// NewUninstaller creates a new Uninstaller.
+func NewUninstaller(relName, relNamespace, kubeconfigPath string) (*Uninstaller, error) {
+	cfg, err := newActionsCfg(relNamespace, kubeconfigPath)
+	if err != nil {
+		return nil, err
+	}
+	return &Uninstaller{
+		ReleaseName:      relName,
+		ReleaseNamespace: relNamespace,
+		actionCfg:        cfg,
+	}, nil
+}
+
+// Uninstall a Helm release.
+// Returns true if a release was found.
+// If dryRun is set, returns true if a release exists, but doesn't actually uninstall it.
+func (u *Uninstaller) Uninstall(dryRun bool) (bool, error) {
+	uninstall := action.NewUninstall(u.actionCfg)
+	uninstall.DisableHooks = true
+	uninstall.Wait = false
+	uninstall.IgnoreNotFound = true
+	uninstall.DryRun = dryRun
+	resp, err := uninstall.Run(u.ReleaseName)
+	if err != nil {
+		if dryRun && errors.Is(err, driver.ErrReleaseNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return resp != nil && resp.Release != nil, nil
+}

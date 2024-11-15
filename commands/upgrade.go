@@ -23,9 +23,9 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
+	"github.com/percona/everest/pkg/cli/helm"
 	"github.com/percona/everest/pkg/cli/install"
 	"github.com/percona/everest/pkg/cli/upgrade"
-	"github.com/percona/everest/pkg/helm"
 	"github.com/percona/everest/pkg/output"
 )
 

@@ -7,9 +7,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	"github.com/percona/everest/pkg/cli/helm"
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/helm"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -85,25 +85,10 @@ func (u *Uninstall) newStepCleanupLeftovers() steps.Step {
 	}
 }
 
+// todo
 func (u *Uninstall) cleanupLeftovers(ctx context.Context) error {
-	installer, err := helm.NewInstaller(common.SystemNamespace, u.config.KubeconfigPath, helm.ChartOptions{
-		// We will render the templates using the first known version of the chart.
-		// We don't expect it to lack any manifest that must be deleted.
-		// Moreover, on running `everestctl upgrade`, we will migrate the installation to Helm.
-		Version: "1.3.0-rc3", // TODO update.
-		URL:     helm.DefaultHelmRepoURL,
-		Name:    helm.EverestChartName,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create Helm installer: %w", err)
-	}
-	file, err := installer.RenderTemplates(ctx, true, helm.InstallArgs{
-		ReleaseName: common.SystemNamespace,
-	})
-	if err != nil {
-		return err
-	}
-	return u.kubeClient.DeleteManifestFile(file, common.SystemNamespace)
+	// return u.kubeClient.DeleteManifestFile(file, common.SystemNamespace)
+	return nil
 }
 
 func (u *Uninstall) uninstallHelmChart(ctx context.Context) error {
@@ -130,9 +115,13 @@ func (u *Uninstall) uninstallHelmChart(ctx context.Context) error {
 		return err
 	}
 	// Delete helm chart.
-	uninstaller, err := helm.NewUninstaller(common.SystemNamespace, u.config.KubeconfigPath)
+	uninstaller, err := helm.NewUninstaller(common.SystemNamespace, common.SystemNamespace, u.config.KubeconfigPath)
 	if err != nil {
 		return fmt.Errorf("failed to create Helm uninstaller: %w", err)
 	}
-	return uninstaller.Uninstall(common.SystemNamespace)
+	_, err = uninstaller.Uninstall(false)
+	if err != nil {
+		return fmt.Errorf("failed to uninstall Helm chart: %w", err)
+	}
+	return nil
 }

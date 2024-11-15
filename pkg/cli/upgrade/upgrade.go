@@ -29,9 +29,10 @@ import (
 	goversion "github.com/hashicorp/go-version"
 	"go.uber.org/zap"
 
+	"github.com/percona/everest/pkg/cli/helm"
+	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/helm"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
 	cliVersion "github.com/percona/everest/pkg/version"
@@ -157,13 +158,21 @@ func (u *Upgrade) detectKubernetesEnvironment(ctx context.Context) error {
 }
 
 func (u *Upgrade) initHelmInstaller() error {
-	installer, err := helm.NewInstaller(common.SystemNamespace, u.config.KubeconfigPath, helm.ChartOptions{
+	values := helmutils.MustMergeValues(
+		u.config.Values,
+		helm.ClusterTypeSpecificValues(u.clusterType),
+	)
+	installer := &helm.Installer{
+		ReleaseName:      common.SystemNamespace,
+		ReleaseNamespace: common.SystemNamespace,
+		Values:           values,
+	}
+	if err := installer.Init(u.config.KubeconfigPath, helm.ChartOptions{
 		URL:     u.config.RepoURL,
 		Name:    helm.EverestChartName,
 		Version: u.upgradeToVersion,
-	})
-	if err != nil {
-		return fmt.Errorf("could not create Helm installer: %w", err)
+	}); err != nil {
+		return fmt.Errorf("could not initialize Helm installer: %w", err)
 	}
 	u.helmInstaller = installer
 	return nil

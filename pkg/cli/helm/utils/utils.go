@@ -1,10 +1,16 @@
 package utils
 
 import (
+	"embed"
+	"errors"
 	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
+	everesthelmchart "github.com/percona/percona-helm-charts/charts/everest"
 	helmcli "helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/getter"
@@ -101,4 +107,48 @@ func (t RenderedTemplates) Files() map[string]string {
 		result[fileName[1]] = doc
 	}
 	return result
+}
+
+// copies the contents of src embed.FS to the dest directory.
+func copyEmbedFSToDir(src embed.FS, dest string) error {
+	return fs.WalkDir(src, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		targetPath := filepath.Join(dest, path)
+		if d.IsDir() {
+			if err := os.MkdirAll(targetPath, os.ModePerm); err != nil { //nolint:gosec
+				return err
+			}
+		} else {
+			data, err := src.ReadFile(path)
+			if err != nil {
+				return err
+			}
+
+			if err := os.WriteFile(targetPath, data, os.ModePerm); err != nil { //nolint:gosec
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+// DevChartDir returns a temporary directory with the Everest Helm chart files
+// from the main branch of the [percona-helm-charts](https://github.com/percona/percona-helm-charts) repository.
+// It copies the files from the exported embed.FS into a temporary directory.
+// The caller is responsible for cleaning up the directory.
+func DevChartDir() (string, error) {
+	tmp, err := os.MkdirTemp("", "everest-dev-chart")
+	if err != nil {
+		return "", err
+	}
+	if err := copyEmbedFSToDir(everesthelmchart.Chart, tmp); err != nil {
+		if removeErr := os.RemoveAll(tmp); removeErr != nil {
+			return "", errors.Join(err, removeErr)
+		}
+		return "", err
+	}
+	return tmp, nil
 }

@@ -3,16 +3,17 @@ package install
 import (
 	"context"
 	"fmt"
+	"path"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cenkalti/backoff/v4"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	"github.com/percona/everest/pkg/cli/helm"
+	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/helm"
-	helmutils "github.com/percona/everest/pkg/helm/utils"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -86,35 +87,33 @@ func (o *Install) waitForDeployment(ctx context.Context, name, namespace string)
 }
 
 func (o *Install) installEverestHelmChart(ctx context.Context) error {
-	installer, err := helm.NewInstaller(common.SystemNamespace, o.config.KubeconfigPath, helm.ChartOptions{
-		Directory: o.config.ChartDir,
-		URL:       o.config.RepoURL,
-		Name:      helm.EverestChartName,
-		Version:   o.installVersion,
-	})
-	if err != nil {
-		return fmt.Errorf("could not create Helm installer: %w", err)
-	}
-
 	nsExists, err := o.namespaceExists(ctx, common.SystemNamespace)
 	if err != nil {
 		return err
 	}
-
 	values := helmutils.MustMergeValues(
 		o.config.Values,
 		helm.ClusterTypeSpecificValues(o.clusterType),
 	)
-	o.l.Info("Installing Everest Helm chart")
-	if err := installer.Install(ctx, helm.InstallArgs{
-		Values:          values,
-		CreateNamespace: !nsExists,
-		ReleaseName:     common.SystemNamespace,
-		Devel:           o.config.Devel,
+	installer := helm.Installer{
+		ReleaseName:            common.SystemNamespace,
+		ReleaseNamespace:       common.SystemNamespace,
+		Values:                 values,
+		CreateReleaseNamespace: !nsExists,
+	}
+	if err := installer.Init(o.config.KubeconfigPath, helm.ChartOptions{
+		Directory: o.config.ChartDir,
+		URL:       o.config.RepoURL,
+		Name:      helm.EverestChartName,
+		Version:   o.installVersion,
 	}); err != nil {
+		return fmt.Errorf("could not initialize Helm installer: %w", err)
+	}
+	o.l.Info("Installing Everest Helm chart")
+	if err := installer.Install(ctx); err != nil {
 		return fmt.Errorf("could not install Helm chart: %w", err)
 	}
-	return o.postChartInstallSteps(ctx)
+	return nil
 }
 
 // TODO: remove this after we move to the victoria-metrics Helm chart.
@@ -134,4 +133,49 @@ func (o *Install) postChartInstallSteps(ctx context.Context) error {
 		})
 	}, backoff.NewConstantBackOff(backoffInterval),
 	)
+}
+
+func (o *Install) provisionDBNamespace(ver string, namespace string) steps.Step {
+	return steps.Step{
+		Desc: fmt.Sprintf("Provisioning DB namespace '%s'", namespace),
+		F: func(ctx context.Context) error {
+			if err := o.createNamespace(ctx, namespace); err != nil {
+				return err
+			}
+			chartDir := ""
+			if o.config.ChartDir != "" {
+				chartDir = path.Join(o.config.ChartDir, dbNamespaceSubChartPath)
+			}
+
+			values := helmutils.MustMergeValues(
+				o.getDBNamespaceInstallValues(),
+				helm.ClusterTypeSpecificValues(o.clusterType),
+			)
+
+			installer := helm.Installer{
+				ReleaseName:            namespace,
+				ReleaseNamespace:       namespace,
+				Values:                 values,
+				CreateReleaseNamespace: false,
+			}
+			if err := installer.Init(o.config.KubeconfigPath, helm.ChartOptions{
+				Directory: chartDir,
+				URL:       o.config.RepoURL,
+				Name:      helm.EverestDBNamespaceChartName,
+				Version:   ver,
+			}); err != nil {
+				return fmt.Errorf("could not initialize Helm installer: %w", err)
+			}
+
+			o.l.Infof("Installing DB namespace Helm chart in namespace ", namespace)
+			if err := installer.Install(ctx); err != nil {
+				return fmt.Errorf("could not install Helm chart: %w", err)
+			}
+
+			if err := o.installDBOperators(ctx, namespace); err != nil {
+				return err
+			}
+			return nil
+		},
+	}
 }
