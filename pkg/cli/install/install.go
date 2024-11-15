@@ -220,6 +220,10 @@ func (o *Install) Run(ctx context.Context) error { //nolint:funlen
 		defer cleanup()
 	}
 
+	if err := o.prepareHelmInstaller(ctx); err != nil {
+		return err
+	}
+
 	installSteps := o.newInstallSteps()
 
 	// Install DB namespaces.
@@ -267,6 +271,33 @@ func (o *Install) getVersionInfo(ctx context.Context) error {
 	o.l.Debugf("Everest latest version available: %s", latest)
 	o.l.Debugf("Everest version information %#v", latestMeta)
 	o.installVersion = latest.String()
+	return nil
+}
+
+func (o *Install) prepareHelmInstaller(ctx context.Context) error {
+	nsExists, err := o.namespaceExists(ctx, common.SystemNamespace)
+	if err != nil {
+		return err
+	}
+	values := helmutils.MustMergeValues(
+		o.config.Values,
+		helm.ClusterTypeSpecificValues(o.clusterType),
+	)
+	installer := &helm.Installer{
+		ReleaseName:            common.SystemNamespace,
+		ReleaseNamespace:       common.SystemNamespace,
+		Values:                 values,
+		CreateReleaseNamespace: !nsExists,
+	}
+	if err := installer.Init(o.config.KubeconfigPath, helm.ChartOptions{
+		Directory: o.config.ChartDir,
+		URL:       o.config.RepoURL,
+		Name:      helm.EverestChartName,
+		Version:   o.installVersion,
+	}); err != nil {
+		return fmt.Errorf("could not initialize Helm installer: %w", err)
+	}
+	o.helmInstaller = installer
 	return nil
 }
 

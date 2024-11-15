@@ -72,7 +72,7 @@ func (o *Install) newStepEnsureEverestMonitoring() steps.Step {
 	return steps.Step{
 		Desc: "Ensuring monitoring is ready",
 		F: func(ctx context.Context) error {
-			return o.waitForDeployment(ctx, "victoriametrics-operator", common.MonitoringNamespace)
+			return o.installVMOperator(ctx)
 		},
 	}
 }
@@ -106,38 +106,15 @@ func (o *Install) waitForDeployment(ctx context.Context, name, namespace string)
 }
 
 func (o *Install) installEverestHelmChart(ctx context.Context) error {
-	nsExists, err := o.namespaceExists(ctx, common.SystemNamespace)
-	if err != nil {
-		return err
-	}
-	values := helmutils.MustMergeValues(
-		o.config.Values,
-		helm.ClusterTypeSpecificValues(o.clusterType),
-	)
-	installer := &helm.Installer{
-		ReleaseName:            common.SystemNamespace,
-		ReleaseNamespace:       common.SystemNamespace,
-		Values:                 values,
-		CreateReleaseNamespace: !nsExists,
-	}
-	if err := installer.Init(o.config.KubeconfigPath, helm.ChartOptions{
-		Directory: o.config.ChartDir,
-		URL:       o.config.RepoURL,
-		Name:      helm.EverestChartName,
-		Version:   o.installVersion,
-	}); err != nil {
-		return fmt.Errorf("could not initialize Helm installer: %w", err)
-	}
-	o.helmInstaller = installer
 	o.l.Info("Installing Everest Helm chart")
-	if err := installer.Install(ctx); err != nil {
+	if err := o.helmInstaller.Install(ctx); err != nil {
 		return fmt.Errorf("could not install Helm chart: %w", err)
 	}
 	return nil
 }
 
 // TODO: remove this after we move to the victoria-metrics Helm chart.
-func (o *Install) postChartInstallSteps(ctx context.Context) error {
+func (o *Install) installVMOperator(ctx context.Context) error {
 	// Approve Victoriametrics operator install plan.
 	return backoff.Retry(func() error {
 		channel := "stable-v0"
