@@ -99,43 +99,8 @@ func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
 	return cli, nil
 }
 
-func (u *Uninstall) detectKubernetesEnvironment(ctx context.Context) error {
-	if !u.config.SkipEnvDetection {
-		return nil
-	}
-	clusterType, err := u.kubeClient.GetClusterType(ctx)
-	if err != nil {
-		return err
-	}
-	u.clusterType = clusterType
-	return nil
-}
-
-func (u *Uninstall) prepareUninstallSteps() ([]steps.Step, error) {
-	chartExists, err := u.helmInstallationExists()
-	if err != nil {
-		return nil, fmt.Errorf("failed to check if Helm release exists: %w", err)
-	}
-	steps := []steps.Step{
-		u.newStepDeleteDatabaseClusters(),
-		u.newStepDeleteBackupStorages(),
-		u.newStepDeleteMonitoringConfigs(),
-	}
-	steps = append(steps, u.newStepDeleteDBNamespaces(chartExists))
-	if chartExists {
-		steps = append(steps, u.newStepUninstallHelmChart())
-	}
-	steps = append(steps, u.newStepDeleteNamespace(common.MonitoringNamespace))
-	steps = append(steps, u.newStepDeleteNamespace(common.SystemNamespace))
-	if !chartExists {
-		steps = append(steps, u.newStepDeleteOLM())
-		steps = append(steps, u.newStepCleanupLeftovers())
-	}
-	return steps, nil
-}
-
 // Run runs the cluster command.
-func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
+func (u *Uninstall) Run(ctx context.Context) error {
 	if abort, err := u.runWizard(); err != nil {
 		return err
 	} else if abort {
@@ -185,6 +150,41 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 	u.l.Infof("Everest has been uninstalled successfully")
 	fmt.Fprintln(out, "Everest has been uninstalled successfully")
 	return nil
+}
+
+func (u *Uninstall) detectKubernetesEnvironment(ctx context.Context) error {
+	if !u.config.SkipEnvDetection {
+		return nil
+	}
+	clusterType, err := u.kubeClient.GetClusterType(ctx)
+	if err != nil {
+		return err
+	}
+	u.clusterType = clusterType
+	return nil
+}
+
+func (u *Uninstall) prepareUninstallSteps() ([]steps.Step, error) {
+	chartExists, err := u.helmInstallationExists()
+	if err != nil {
+		return nil, fmt.Errorf("failed to check if Helm release exists: %w", err)
+	}
+	steps := []steps.Step{
+		u.newStepDeleteDatabaseClusters(),
+		u.newStepDeleteBackupStorages(),
+		u.newStepDeleteMonitoringConfigs(),
+	}
+	steps = append(steps, u.newStepDeleteDBNamespaces(chartExists))
+	if chartExists {
+		steps = append(steps, u.newStepUninstallHelmChart())
+	}
+	steps = append(steps, u.newStepDeleteNamespace(common.MonitoringNamespace))
+	steps = append(steps, u.newStepDeleteNamespace(common.SystemNamespace))
+	if !chartExists {
+		steps = append(steps, u.newStepDeleteOLM())
+		steps = append(steps, u.newStepCleanupLeftovers())
+	}
+	return steps, nil
 }
 
 // Run the uninstall wizard.

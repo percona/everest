@@ -35,11 +35,11 @@ func (u *Upgrade) newStepUpgradeHelmChart() steps.Step {
 	}
 }
 
-func (o *Upgrade) newStepEnsureEverestOperator() steps.Step {
+func (u *Upgrade) newStepEnsureEverestOperator() steps.Step {
 	return steps.Step{
 		Desc: "Ensuring Everest operator deployment is ready",
 		F: func(ctx context.Context) error {
-			return o.waitForDeployment(ctx, common.PerconaEverestOperatorDeploymentName, common.SystemNamespace)
+			return u.waitForDeployment(ctx, common.PerconaEverestOperatorDeploymentName, common.SystemNamespace)
 		},
 	}
 }

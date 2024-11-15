@@ -131,6 +131,48 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 	return cli, nil
 }
 
+// Run runs the operators installation process.
+func (u *Upgrade) Run(ctx context.Context) error {
+	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
+	if err != nil {
+		return errors.Join(err, errors.New("could not retrieve Everest version"))
+	}
+
+	var out io.Writer = os.Stdout
+	if !u.config.Pretty {
+		out = io.Discard
+	}
+
+	if err := u.getVersionInfo(ctx, out, everestVersion); err != nil {
+		return err
+	}
+
+	if u.dryRun {
+		return nil
+	}
+
+	if err := u.detectKubernetesEnvironment(ctx); err != nil {
+		return fmt.Errorf("could not detect Kubernetes environment: %w", err)
+	}
+
+	if err := u.initHelmInstaller(); err != nil {
+		return fmt.Errorf("could not initialize Helm installer: %w", err)
+	}
+
+	u.l.Infof("Upgrading Everest to %s in namespace %s", u.upgradeToVersion, common.SystemNamespace)
+
+	// 1.4.0 was when Helm based installation was added. Versions below that are not managed by helm.
+	u.helmReleaseExists = common.CheckConstraint(everestVersion, ">= 1.4.0")
+
+	upgradeSteps := u.prepareUpgradeSteps()
+	if err := steps.RunStepsWithSpinner(ctx, upgradeSteps, out); err != nil {
+		return err
+	}
+
+	u.l.Infof("Everest has been upgraded to version %s", u.upgradeToVersion)
+	return u.printPostUpgradeMessage(ctx, out)
+}
+
 func (u *Upgrade) getVersionInfo(ctx context.Context, out io.Writer, everestVersion *goversion.Version) error {
 	upgradeEverestTo, err := u.canUpgrade(ctx, everestVersion)
 	if err != nil {
@@ -176,50 +218,6 @@ func (u *Upgrade) initHelmInstaller() error {
 	}
 	u.helmInstaller = installer
 	return nil
-}
-
-// Run runs the operators installation process.
-//
-//nolint:funlen
-func (u *Upgrade) Run(ctx context.Context) error {
-	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
-	if err != nil {
-		return errors.Join(err, errors.New("could not retrieve Everest version"))
-	}
-
-	var out io.Writer = os.Stdout
-	if !u.config.Pretty {
-		out = io.Discard
-	}
-
-	if err := u.getVersionInfo(ctx, out, everestVersion); err != nil {
-		return err
-	}
-
-	if u.dryRun {
-		return nil
-	}
-
-	if err := u.detectKubernetesEnvironment(ctx); err != nil {
-		return fmt.Errorf("could not detect Kubernetes environment: %w", err)
-	}
-
-	if err := u.initHelmInstaller(); err != nil {
-		return fmt.Errorf("could not initialize Helm installer: %w", err)
-	}
-
-	u.l.Infof("Upgrading Everest to %s in namespace %s", u.upgradeToVersion, common.SystemNamespace)
-
-	// 1.4.0 was when Helm based installation was added. Versions below that are not managed by helm.
-	u.helmReleaseExists = common.CheckConstraint(everestVersion, ">= 1.4.0")
-
-	upgradeSteps := u.prepareUpgradeSteps()
-	if err := steps.RunStepsWithSpinner(ctx, upgradeSteps, out); err != nil {
-		return err
-	}
-
-	u.l.Infof("Everest has been upgraded to version %s", u.upgradeToVersion)
-	return u.printPostUpgradeMessage(ctx, out)
 }
 
 func (u *Upgrade) printPostUpgradeMessage(ctx context.Context, out io.Writer) error {

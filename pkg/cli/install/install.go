@@ -12,7 +12,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// Package install holds the main logic for installation commands.
 
 // Package install ...
 package install
@@ -195,7 +194,7 @@ func NewInstall(c Config, l *zap.SugaredLogger, cmd *cobra.Command) (*Install, e
 }
 
 // Run the Everest installation process.
-func (o *Install) Run(ctx context.Context) error { //nolint:funlen
+func (o *Install) Run(ctx context.Context) error {
 	// TODO: we shall probably split this into "install" and "add namespaces"
 	// Otherwise the logic is hard to maintain - we need to make sure not to,
 	// for example, install a different version of operators per namespace, if
