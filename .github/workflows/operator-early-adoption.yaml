@@ -153,7 +153,7 @@ jobs:
 
       - name: Catalog - docker meta
         uses: docker/metadata-action@v5
-        id: meta
+        id: catalog-meta
         with:
           images: $LOCAL_REGISTRY/perconalab/everest-catalog
           tags:
@@ -164,7 +164,7 @@ jobs:
         with:
           context: everest-catalog
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.catalog-meta.outputs.tags }}
 
 
 
