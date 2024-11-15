@@ -161,7 +161,7 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) steps.Step 
 
 			values := helmutils.MustMergeValues(
 				o.getDBNamespaceInstallValues(),
-				helm.ClusterTypeSpecificValues(o.clusterType),
+				helm.ClusterValues(o.clusterType),
 			)
 
 			installer := helm.Installer{

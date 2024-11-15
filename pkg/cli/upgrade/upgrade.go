@@ -202,7 +202,7 @@ func (u *Upgrade) detectKubernetesEnvironment(ctx context.Context) error {
 func (u *Upgrade) initHelmInstaller() error {
 	values := helmutils.MustMergeValues(
 		u.config.Values,
-		helm.ClusterTypeSpecificValues(u.clusterType),
+		helm.ClusterValues(u.clusterType),
 	)
 	installer := &helm.Installer{
 		ReleaseName:      common.SystemNamespace,

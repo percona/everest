@@ -264,8 +264,8 @@ func everestctlCacheDir() (string, error) {
 	return res, nil
 }
 
-// ClusterTypeSpecificValues returns value overrides based on the Kubernetes cluster type.
-func ClusterTypeSpecificValues(ct kubernetes.ClusterType) map[string]interface{} {
+// ClusterValues returns the value overrides depending on the Kubernetes cluster type.
+func ClusterValues(ct kubernetes.ClusterType) map[string]interface{} {
 	if ct == kubernetes.ClusterTypeOpenShift {
 		return map[string]interface{}{
 			"compatibility.openshift": true,

@@ -108,7 +108,7 @@ func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version 
 	}
 	values := helmutils.MustMergeValues(
 		helmValuesForDBEngines(dbEngines),
-		helm.ClusterTypeSpecificValues(u.clusterType),
+		helm.ClusterValues(u.clusterType),
 	)
 	installer := helm.Installer{
 		ReleaseName:      namespace,

@@ -280,7 +280,7 @@ func (o *Install) prepareHelmInstaller(ctx context.Context) error {
 	}
 	values := helmutils.MustMergeValues(
 		o.config.Values,
-		helm.ClusterTypeSpecificValues(o.clusterType),
+		helm.ClusterValues(o.clusterType),
 	)
 	installer := &helm.Installer{
 		ReleaseName:            common.SystemNamespace,
