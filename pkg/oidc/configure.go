@@ -88,6 +88,10 @@ func (u *OIDC) Run(ctx context.Context) error {
 	// Check if we can connect to the provider.
 	_, err := getProviderConfig(ctx, issuerURL)
 	if err != nil {
+		if errors.Is(err, ErrUnexpectedSatusCode) {
+			u.l.Debug(err)
+			return errors.New("failed to connect with OIDC provider due to incorrect response")
+		}
 		return errors.Join(err, errors.New("failed to connect with OIDC provider"))
 	}
 
