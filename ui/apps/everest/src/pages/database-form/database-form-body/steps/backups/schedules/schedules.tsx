@@ -15,12 +15,11 @@
 
 import { Stack, Typography } from '@mui/material';
 import EditableItem from 'components/editable-item/editable-item';
-import { LabeledContent } from '@percona/ui-lib';
 import { Messages } from './schedules.messages';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DbWizardFormFields } from 'consts.ts';
 import { useFormContext } from 'react-hook-form';
-import { Schedule } from 'shared-types/dbCluster.types';
+import { ManageableSchedules } from 'shared-types/dbCluster.types';
 import {
   getSchedulesPayload,
   removeScheduleFromArray,
@@ -31,11 +30,13 @@ import { ScheduleFormDialogContext } from 'components/schedule-form-dialog/sched
 import { ScheduleFormData } from 'components/schedule-form-dialog/schedule-form/schedule-form-schema';
 import { dbTypeToDbEngine } from '@percona/utils';
 import { DbType } from '@percona/types';
+import { ActionableLabeledContent } from '@percona/ui-lib';
 import { useDatabasePageMode } from '../../../../useDatabasePageMode';
 import { dbWizardToScheduleFormDialogMap } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog-context.types';
 import { useDatabasePageDefaultValues } from '../../../../useDatabaseFormDefaultValues';
 import { PG_SLOTS_LIMIT } from 'consts';
 import { useRBACPermissions } from 'hooks/rbac';
+import { transformSchedulesIntoManageableSchedules } from 'utils/db';
 
 type Props = {
   disableCreateButton?: boolean;
@@ -49,6 +50,7 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
   } = useDatabasePageDefaultValues(dbWizardMode);
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
   const [mode, setMode] = useState<'new' | 'edit'>('new');
+  const [schedules, setSchedules] = useState<ManageableSchedules[]>([]);
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');
 
   const [dbType, k8sNamespace, formSchedules, dbName] = watch([
@@ -58,17 +60,16 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
     DbWizardFormFields.dbName,
   ]);
 
-  const { canCreate, canRead } = useRBACPermissions(
-    'database-cluster-backups',
+  const { canCreate: canCreateBackups, canRead: canReadBackups } =
+    useRBACPermissions('database-cluster-backups', `${k8sNamespace}/${dbName}`);
+  const { canUpdate: canUpdateCluster } = useRBACPermissions(
+    'database-clusters',
     `${k8sNamespace}/${dbName}`
   );
 
-  const schedules = useMemo(
-    () => (canRead ? formSchedules : []),
-    [canRead, formSchedules]
+  const [activeStorage, setActiveStorage] = useState<string | undefined>(
+    undefined
   );
-
-  const [activeStorage, setActiveStorage] = useState(undefined);
   const createButtonDisabled =
     disableCreateButton ||
     openScheduleModal ||
@@ -81,6 +82,28 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
       setActiveStorage(undefined);
     }
   }, [schedules, dbType]);
+
+  useEffect(() => {
+    const baseSchedules: ManageableSchedules[] = canReadBackups
+      ? formSchedules
+      : [];
+
+    transformSchedulesIntoManageableSchedules(
+      baseSchedules,
+      k8sNamespace,
+      canCreateBackups,
+      mode === 'new' ? true : canUpdateCluster
+    ).then((newSchedules) => {
+      setSchedules(newSchedules);
+    });
+  }, [
+    canCreateBackups,
+    canReadBackups,
+    canUpdateCluster,
+    formSchedules,
+    k8sNamespace,
+    mode,
+  ]);
 
   const handleDelete = (name: string) => {
     setValue(
@@ -115,10 +138,10 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
 
   return (
     <>
-      <LabeledContent
+      <ActionableLabeledContent
         label={Messages.label}
         actionButtonProps={
-          canCreate
+          canCreateBackups
             ? {
                 disabled: createButtonDisabled,
                 dataTestId: 'create-schedule',
@@ -135,7 +158,7 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
           {dbType === DbType.Postresql && (
             <Typography variant="caption">{Messages.pg}</Typography>
           )}
-          {schedules.map((item: Schedule) => (
+          {schedules.map((item: ManageableSchedules) => (
             <EditableItem
               key={item.name}
               dataTestId={item.name}
@@ -145,12 +168,20 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
                   storageName={item.backupStorageName}
                 />
               }
-              editButtonProps={{
-                onClick: () => handleEdit(item.name),
-              }}
-              deleteButtonProps={{
-                onClick: () => handleDelete(item.name),
-              }}
+              editButtonProps={
+                item.canBeManaged
+                  ? {
+                      onClick: () => handleEdit(item.name),
+                    }
+                  : undefined
+              }
+              deleteButtonProps={
+                item.canBeManaged
+                  ? {
+                      onClick: () => handleDelete(item.name),
+                    }
+                  : undefined
+              }
             />
           ))}
           {schedules.length === 0 && (
@@ -162,7 +193,7 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
             />
           )}
         </Stack>
-      </LabeledContent>
+      </ActionableLabeledContent>
       {openScheduleModal && (
         <ScheduleFormDialogContext.Provider
           value={{

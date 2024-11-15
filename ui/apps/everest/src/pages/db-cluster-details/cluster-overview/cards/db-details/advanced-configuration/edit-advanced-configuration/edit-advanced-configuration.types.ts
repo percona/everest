@@ -1,4 +1,4 @@
-// percona-everest-frontend-everest-frontend
+// everest
 // Copyright (C) 2023 Percona LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { ToggleButtonGroupProps } from '@mui/material';
-import { LabeledContentProps } from '../../../labeled-content';
-import { UseControllerProps } from 'react-hook-form';
 
-export type ToggleButtonGroupInputProps = {
-  name: string;
-  label?: string;
-  labelProps?: LabeledContentProps;
-  controllerProps?: UseControllerProps;
-  toggleButtonGroupProps?: ToggleButtonGroupProps;
-  children: React.ReactNode;
-};
+import { AdvancedConfigurationFormType } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema';
+import { DbCluster } from 'shared-types/dbCluster.types';
+
+export interface AdvancedConfigurationModalProps {
+  open: boolean;
+  handleCloseModal: () => void;
+  handleSubmitModal: (props: AdvancedConfigurationFormType) => void;
+  dbCluster: DbCluster;
+  submitting: boolean;
+}

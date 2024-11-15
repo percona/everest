@@ -235,7 +235,7 @@ func (u *Uninstall) Run(ctx context.Context) error { //nolint:funlen,cyclop
 		fmt.Fprintln(out, "Everest was not installed")
 		return nil
 	}
-	u.l.Infof("Everest has been uninstalled successfully", u.numResourcesDeleted)
+	u.l.Infof("Everest has been uninstalled successfully")
 	fmt.Fprintln(out, "Everest has been uninstalled successfully")
 	return nil
 }

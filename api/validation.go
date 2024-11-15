@@ -652,6 +652,15 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 	if err := e.enforceRestoreToNewDBRBAC(ctx.Request().Context(), user, namespace, databaseCluster); err != nil {
 		return err
 	}
+
+	engineName, ok := operatorEngine[everestv1alpha1.EngineType(databaseCluster.Spec.Engine.Type)]
+	if !ok {
+		return errors.New("unsupported database engine")
+	}
+	if err := e.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, engineName)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -1240,7 +1249,7 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 }
 
 func (e *EverestServer) validateDatabaseClusterOnUpdate(
-	c echo.Context,
+	user string,
 	dbc *DatabaseCluster,
 	oldDB *everestv1alpha1.DatabaseCluster,
 ) error {
@@ -1265,10 +1274,6 @@ func (e *EverestServer) validateDatabaseClusterOnUpdate(
 		return err
 	}
 
-	user, err := rbac.GetUser(c)
-	if err != nil {
-		return errors.Join(err, errors.New("cannot get user from request context"))
-	}
 	if err := e.validateBackupScheduledUpdate(user, dbc, oldDB); err != nil {
 		return err
 	}

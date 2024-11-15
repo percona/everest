@@ -13,12 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FormGroup, Skeleton, Stack, Tooltip, Typography } from '@mui/material';
+import { Alert, FormGroup, Skeleton, Stack, Tooltip } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { lt, valid } from 'semver';
 import { DbEngineType, DbType } from '@percona/types';
 import {
+  ActionableLabeledContent,
   AutoCompleteInput,
   DbToggleCard,
   LabeledContent,
@@ -30,12 +31,14 @@ import { dbEngineToDbType, dbTypeToDbEngine } from '@percona/utils';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
 import { useFormContext } from 'react-hook-form';
 import { DbEngineToolStatus } from 'shared-types/dbEngines.types';
-import { DB_WIZARD_DEFAULTS } from '../../../database-form.constants.ts';
+import {
+  DB_WIZARD_DEFAULTS,
+  DEFAULT_NODES,
+} from '../../../database-form.constants.ts';
 import { StepProps } from '../../../database-form.types.ts';
 import { DbWizardFormFields } from 'consts.ts';
 import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
-import { DEFAULT_NODES } from './first-step.constants.ts';
 import { Messages } from './first-step.messages.ts';
 import { filterAvailableDbVersionsForDbEngineEdition } from 'components/cluster-form/db-version/utils.ts';
 import { useDatabasePageDefaultValues } from '../../../useDatabaseFormDefaultValues.ts';
@@ -324,10 +327,9 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         />
 
         <LabeledContent label={Messages.labels.dbType}>
-          {dbEnginesFetching || !dbEngines.length ? (
-            // This is roughly the height of the buttons
+          {dbEnginesFetching ? (
             <Skeleton height={57} variant="rectangular" />
-          ) : (
+          ) : dbEngines.length ? (
             <ToggleButtonGroupInput
               name={DbWizardFormFields.dbType}
               toggleButtonGroupProps={{
@@ -350,6 +352,8 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                 />
               ))}
             </ToggleButtonGroupInput>
+          ) : (
+            <Alert severity="warning">{Messages.noEnginesAvailable}</Alert>
           )}
         </LabeledContent>
         <TextInput
@@ -378,47 +382,50 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         />
         {dbType === DbType.Mongo && (
           <>
-            <Typography variant="sectionHeading" sx={{ mt: 4 }}>
-              Shards
-            </Typography>
-            <Stack spacing={1} direction="row" alignItems="center">
-              <SwitchInput
-                label={Messages.labels.shardedCluster}
-                name={DbWizardFormFields.sharding}
-                switchFieldProps={{
-                  disabled: disableSharding,
-                  onChange: (e) => {
-                    if (!e.target.checked) {
-                      resetField(DbWizardFormFields.shardNr, {
-                        keepError: false,
-                      });
-                      resetField(DbWizardFormFields.shardConfigServers, {
-                        keepError: false,
-                      });
-                    }
-                  },
-                }}
-              />
-              {notSupportedMongoOperatorVersionForSharding &&
-                mode !== 'edit' && (
+            <ActionableLabeledContent
+              label="Shards"
+              techPreview
+              caption="MongoDB shards are partitions of data that distribute load and improve database scalability and performance."
+            >
+              <Stack spacing={1} direction="row" alignItems="center">
+                <SwitchInput
+                  label={Messages.labels.shardedCluster}
+                  name={DbWizardFormFields.sharding}
+                  switchFieldProps={{
+                    disabled: disableSharding,
+                    onChange: (e) => {
+                      if (!e.target.checked) {
+                        resetField(DbWizardFormFields.shardNr, {
+                          keepError: false,
+                        });
+                        resetField(DbWizardFormFields.shardConfigServers, {
+                          keepError: false,
+                        });
+                      }
+                    },
+                  }}
+                />
+                {notSupportedMongoOperatorVersionForSharding &&
+                  mode !== 'edit' && (
+                    <Tooltip
+                      title={Messages.disableShardingTooltip}
+                      arrow
+                      placement="right"
+                    >
+                      <InfoOutlinedIcon color="primary" />
+                    </Tooltip>
+                  )}
+                {mode === 'edit' && (
                   <Tooltip
-                    title={Messages.disableShardingTooltip}
+                    title={Messages.disableShardingInEditMode}
                     arrow
                     placement="right"
                   >
                     <InfoOutlinedIcon color="primary" />
                   </Tooltip>
                 )}
-              {mode === 'edit' && (
-                <Tooltip
-                  title={Messages.disableShardingInEditMode}
-                  arrow
-                  placement="right"
-                >
-                  <InfoOutlinedIcon color="primary" />
-                </Tooltip>
-              )}
-            </Stack>
+              </Stack>
+            </ActionableLabeledContent>
           </>
         )}
       </FormGroup>

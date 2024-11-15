@@ -17,15 +17,30 @@ import { useQuery } from '@tanstack/react-query';
 import { DBClusterComponentsList } from 'shared-types/components.types';
 import { getDBClusterComponentsListFn } from '../../../api/dbClusterApi';
 import { DBClusterComponent } from '../../../shared-types/components.types';
+import { useRBACPermissions } from 'hooks/rbac';
+import { PerconaQueryOptions } from 'shared-types/query.types';
 
 export const DB_CLUSTER_COMPONENTS_QUERY_KEY = 'db-cluster-components';
 
 export const useDbClusterComponents = (
   namespace: string,
-  dbClusterName: string
-) =>
-  useQuery<DBClusterComponentsList, unknown, DBClusterComponent[]>({
+  dbClusterName: string,
+  options?: PerconaQueryOptions<
+    DBClusterComponentsList,
+    unknown,
+    DBClusterComponent[]
+  >
+) => {
+  const { canRead } = useRBACPermissions(
+    'database-clusters',
+    `${namespace}/${dbClusterName}`
+  );
+
+  return useQuery<DBClusterComponentsList, unknown, DBClusterComponent[]>({
     queryKey: [DB_CLUSTER_COMPONENTS_QUERY_KEY, namespace, dbClusterName],
     queryFn: () => getDBClusterComponentsListFn(namespace, dbClusterName),
     refetchInterval: 5 * 1000,
+    ...options,
+    enabled: (options?.enabled ?? true) && canRead,
   });
+};
