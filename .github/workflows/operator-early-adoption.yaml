@@ -103,9 +103,9 @@ jobs:
 
       - name: Build VS docker container
         uses: docker/metadata-action@v5
-        id: meta
+        id: vs-meta
         with:
-          images: $LOCAL_REGISTRY/perconalab/version-service
+          images: {{ env.$LOCAL_REGISTRY }}/perconalab/version-service
           tags:
             dev
 
@@ -114,7 +114,7 @@ jobs:
         with:
           context: percona-version-service
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.vs-meta.outputs.tags }}
 
 
       - name: Apply VS manifest
