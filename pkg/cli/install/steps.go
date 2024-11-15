@@ -85,7 +85,7 @@ func (o *Install) newStepEnsureEverestOLM() steps.Step {
 
 func (o *Install) newStepEnsureEverestMonitoring() steps.Step {
 	return steps.Step{
-		Desc: "Ensuring monitoring is ready",
+		Desc: "Ensuring monitoring is installed",
 		F: func(ctx context.Context) error {
 			return o.installVMOperator(ctx)
 		},
