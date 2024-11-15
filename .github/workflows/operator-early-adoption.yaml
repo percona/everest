@@ -79,7 +79,7 @@ jobs:
           cpus: 2
           memory: 2000m
           addons: registry
-          insecure-registry: $LOCAL_REGISTRY
+          insecure-registry: ${{ env.LOCAL_REGISTRY }}
 
       - name: Expose local registry
         run: |
