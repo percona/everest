@@ -181,11 +181,11 @@ func (u *Uninstall) newUninstallSteps() ([]steps.Step, error) {
 	}
 	steps = append(steps, u.newStepDeleteNamespace(common.MonitoringNamespace))
 	steps = append(steps, u.newStepDeleteNamespace(common.SystemNamespace))
-	steps = append(steps, u.newStepDeleteCRDs())
 	if !chartExists {
 		steps = append(steps, u.newStepDeleteOLM())
 		steps = append(steps, u.newStepCleanupLeftovers())
 	}
+	steps = append(steps, u.newStepDeleteCRDs())
 	return steps, nil
 }
 
