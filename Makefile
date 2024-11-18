@@ -10,7 +10,6 @@ LD_FLAGS_API = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.Pr
 LD_FLAGS_CLI = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl'"
 LD_FLAGS_CLI_TEST = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl' \
 										-X 'github.com/percona/everest/pkg/version.EverestChannelOverride=fast-v0'"
-
 default: help
 
 help:                   ## Display this help message
@@ -89,3 +88,6 @@ k8s-macos: k8s          ## Create a local minikube cluster with MacOS specific c
 	minikube addons disable storage-provisioner
 	kubectl delete storageclass standard
 	kubectl apply -f ./dev/kubevirt-hostpath-provisioner.yaml
+
+update-dev-chart:
+	go get -u -v github.com/percona/percona-helm-charts/charts/everest@main
