@@ -427,6 +427,7 @@ const ResourcesForm = ({
   pairProxiesWithNodes,
   showSharding,
   hideProxies = false,
+  disableShardingInput = false,
 }: {
   dbType: DbType;
   hideProxies?: boolean;
@@ -434,6 +435,7 @@ const ResourcesForm = ({
   allowDiskInputUpdate?: boolean;
   pairProxiesWithNodes?: boolean;
   showSharding?: boolean;
+  disableShardingInput?: boolean;
 }) => {
   const [expanded, setExpanded] = useState<'nodes' | 'proxies' | false>(
     'nodes'
@@ -503,6 +505,13 @@ const ResourcesForm = ({
     const { isTouched: isConfigServersTouched } = getFieldState(
       DbWizardFormFields.shardConfigServers
     );
+    const { isTouched: isNumberOfNodesTouched } = getFieldState(
+      DbWizardFormFields.numberOfNodes
+    );
+
+    if (!isNumberOfNodesTouched) {
+      return;
+    }
 
     if (!isConfigServersTouched) {
       if (numberOfNodes && numberOfNodes !== CUSTOM_NR_UNITS_INPUT_VALUE) {
@@ -520,12 +529,21 @@ const ResourcesForm = ({
     }
 
     trigger(DbWizardFormFields.shardConfigServers);
-  }, [setValue, getFieldState, numberOfNodes, customNrOfNodes]);
+  }, [
+    setValue,
+    getFieldState,
+    numberOfNodes,
+    customNrOfNodes,
+    trigger,
+    clearErrors,
+  ]);
 
   useEffect(() => {
     trigger();
-  }, [numberOfNodes, customNrOfNodes]);
+  }, [numberOfNodes, customNrOfNodes, trigger]);
 
+  // TODO test the following:
+  // when in restore mode, the number of shards should be disabled
   return (
     <>
       {!!showSharding && !!sharding && (
@@ -537,6 +555,7 @@ const ResourcesForm = ({
           <TextInput
             name={DbWizardFormFields.shardNr}
             textFieldProps={{
+              disabled: disableShardingInput,
               sx: { maxWidth: '200px' },
               type: 'number',
               required: true,
