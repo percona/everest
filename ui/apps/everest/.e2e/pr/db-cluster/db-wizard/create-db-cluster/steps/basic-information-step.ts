@@ -54,7 +54,7 @@ export const basicInformationStepCheck = async (
     recommendedEngineVersions.psmdb
   );
 
-  await page.getByRole('option').filter({ hasText: '6.0.4-3' }).click();
+  await page.getByRole('option').filter({ hasText: '6.0.9-7' }).click();
   await page.getByTestId('text-input-db-name').fill(clusterName);
   await page.getByTestId('text-input-storage-class').click();
   expect(
