@@ -201,10 +201,11 @@ jobs:
           cd everest-catalog/tools
           go run . \
             --veneer-file ../veneer/everest-operator.yaml \
-            --channel fast-v0  \
+            --channel stable-v0  \
             --new-version ${{ env.VERSION }} \
-            --registry ${{ env.LOCAL_REGISTRY }}
+            --registry ${{ env.LOCAL_REGISTRY }} \
           
+          cd ..
           curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.44.0/${OS}-${ARCH}-opm
           chmod +x /tmp/opm
           /tmp/opm alpha render-template basic -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
