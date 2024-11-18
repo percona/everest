@@ -143,7 +143,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		out = io.Discard
 	}
 
-	if err := u.getVersionInfo(ctx, out, everestVersion); err != nil {
+	if err := u.setVersionInfo(ctx, out, everestVersion); err != nil {
 		return err
 	}
 
@@ -151,20 +151,21 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return nil
 	}
 
-	if err := u.detectKubernetesEnvironment(ctx); err != nil {
+	if err := u.setKubernetesEnv(ctx); err != nil {
 		return fmt.Errorf("could not detect Kubernetes environment: %w", err)
 	}
 
-	if err := u.initHelmInstaller(); err != nil {
+	if err := u.setupHelmInstaller(); err != nil {
 		return fmt.Errorf("could not initialize Helm installer: %w", err)
 	}
 
 	u.l.Infof("Upgrading Everest to %s in namespace %s", u.upgradeToVersion, common.SystemNamespace)
 
-	// 1.4.0 was when Helm based installation was added. Versions below that are not managed by helm.
+	// Helm based installation was added to the CLI in 1.4.0. Versions below that are not managed by helm.
+	// We use this flag to trigger an adoption of the existing installation to Helm chart.
 	u.helmReleaseExists = common.CheckConstraint(everestVersion, ">= 1.4.0")
 
-	upgradeSteps := u.prepareUpgradeSteps()
+	upgradeSteps := u.newUpgradeSteps()
 	if err := steps.RunStepsWithSpinner(ctx, upgradeSteps, out); err != nil {
 		return err
 	}
@@ -173,7 +174,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	return u.printPostUpgradeMessage(ctx, out)
 }
 
-func (u *Upgrade) getVersionInfo(ctx context.Context, out io.Writer, everestVersion *goversion.Version) error {
+func (u *Upgrade) setVersionInfo(ctx context.Context, out io.Writer, everestVersion *goversion.Version) error {
 	upgradeEverestTo, err := u.canUpgrade(ctx, everestVersion)
 	if err != nil {
 		if errors.Is(err, ErrNoUpdateAvailable) {
@@ -187,7 +188,7 @@ func (u *Upgrade) getVersionInfo(ctx context.Context, out io.Writer, everestVers
 	return nil
 }
 
-func (u *Upgrade) detectKubernetesEnvironment(ctx context.Context) error {
+func (u *Upgrade) setKubernetesEnv(ctx context.Context) error {
 	if u.config.SkipEnvDetection {
 		return nil
 	}
@@ -199,7 +200,7 @@ func (u *Upgrade) detectKubernetesEnvironment(ctx context.Context) error {
 	return nil
 }
 
-func (u *Upgrade) initHelmInstaller() error {
+func (u *Upgrade) setupHelmInstaller() error {
 	values := helmutils.MustMergeValues(
 		u.config.Values,
 		helm.ClusterValues(u.clusterType),
@@ -230,7 +231,7 @@ func (u *Upgrade) printPostUpgradeMessage(ctx context.Context, out io.Writer) er
 	return nil
 }
 
-func (u *Upgrade) prepareUpgradeSteps() []steps.Step {
+func (u *Upgrade) newUpgradeSteps() []steps.Step {
 	return []steps.Step{
 		u.newStepUpgradeCRDs(),
 		u.newStepUpgradeHelmChart(),

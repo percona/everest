@@ -108,7 +108,7 @@ func (u *Uninstall) Run(ctx context.Context) error {
 		return nil
 	}
 
-	if err := u.detectKubernetesEnvironment(ctx); err != nil {
+	if err := u.setKubernetesEnv(ctx); err != nil {
 		return fmt.Errorf("failed to detect Kubernetes environment: %w", err)
 	}
 
@@ -152,15 +152,16 @@ func (u *Uninstall) Run(ctx context.Context) error {
 	return nil
 }
 
-func (u *Uninstall) detectKubernetesEnvironment(ctx context.Context) error {
+func (u *Uninstall) setKubernetesEnv(ctx context.Context) error {
 	if !u.config.SkipEnvDetection {
 		return nil
 	}
-	clusterType, err := u.kubeClient.GetClusterType(ctx)
+	t, err := u.kubeClient.GetClusterType(ctx)
 	if err != nil {
 		return err
 	}
-	u.clusterType = clusterType
+	u.clusterType = t
+	u.l.Infof("Detected Kubernetes environment: %s", t)
 	return nil
 }
 

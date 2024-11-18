@@ -203,11 +203,11 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 
-	if err := o.detectKubernetesEnvironment(ctx); err != nil {
+	if err := o.setKubernetesEnv(ctx); err != nil {
 		return fmt.Errorf("failed to detect Kubernetes environment: %w", err)
 	}
 
-	if err := o.getVersionInfo(ctx); err != nil {
+	if err := o.setVersionInfo(ctx); err != nil {
 		return fmt.Errorf("failed to get Everest version info: %w", err)
 	}
 
@@ -219,7 +219,7 @@ func (o *Install) Run(ctx context.Context) error {
 		defer cleanup()
 	}
 
-	if err := o.prepareHelmInstaller(ctx); err != nil {
+	if err := o.setupHelmInstaller(ctx); err != nil {
 		return err
 	}
 
@@ -258,7 +258,7 @@ func (o *Install) printPostInstallMessage(ctx context.Context, out io.Writer) er
 	return nil
 }
 
-func (o *Install) getVersionInfo(ctx context.Context) error {
+func (o *Install) setVersionInfo(ctx context.Context) error {
 	meta, err := o.versionService.GetEverestMetadata(ctx)
 	if err != nil {
 		return errors.Join(err, errors.New("could not fetch version metadata"))
@@ -273,7 +273,7 @@ func (o *Install) getVersionInfo(ctx context.Context) error {
 	return nil
 }
 
-func (o *Install) prepareHelmInstaller(ctx context.Context) error {
+func (o *Install) setupHelmInstaller(ctx context.Context) error {
 	nsExists, err := o.namespaceExists(ctx, common.SystemNamespace)
 	if err != nil {
 		return err
@@ -300,7 +300,7 @@ func (o *Install) prepareHelmInstaller(ctx context.Context) error {
 	return nil
 }
 
-func (o *Install) detectKubernetesEnvironment(ctx context.Context) error {
+func (o *Install) setKubernetesEnv(ctx context.Context) error {
 	if o.config.SkipEnvDetection {
 		return nil
 	}
