@@ -42,6 +42,9 @@ type ProviderConfig struct {
 	Algorithms    []string `json:"id_token_signing_alg_values_supported"`
 }
 
+// ErrUnexpectedSatusCode is returned when HTTP 200 is not returned.
+var ErrUnexpectedSatusCode = fmt.Errorf("unexpected status code")
+
 func getProviderConfig(ctx context.Context, issuer string) (ProviderConfig, error) {
 	wellKnown := strings.TrimSuffix(issuer, "/") + "/.well-known/openid-configuration"
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, wellKnown, nil)
@@ -60,7 +63,7 @@ func getProviderConfig(ctx context.Context, issuer string) (ProviderConfig, erro
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return ProviderConfig{}, fmt.Errorf("%s: %s", resp.Status, body)
+		return ProviderConfig{}, errors.Join(ErrUnexpectedSatusCode, fmt.Errorf("%s: %s", resp.Status, body))
 	}
 
 	var result ProviderConfig
