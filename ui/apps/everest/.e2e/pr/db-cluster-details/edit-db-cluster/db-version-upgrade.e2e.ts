@@ -5,7 +5,7 @@ import {
   findDbAndClickRow,
 } from '@e2e/utils/db-clusters-list';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
-import { moveForward, submitWizard } from '@e2e/utils/db-wizard';
+import { moveForward, populateBasicInformation, submitWizard } from '@e2e/utils/db-wizard';
 import { waitForDelete, waitForStatus } from '@e2e/utils/table';
 
 const { SELECT_DB, SELECT_SIZE } = process.env;
@@ -46,16 +46,21 @@ let token: string;
 
       await test.step('Populate basic info', async () => {
         await page.getByTestId('toggle-button-group-input-db-type').waitFor();
+        await populateBasicInformation(
+          page,
+          db,
+          storageClasses[0],
+          clusterName
+        );
+
         await page.getByTestId('select-input-db-version').waitFor();
         await page.getByTestId('select-db-version-button').click();
         const dbVersionOptions = await page.getByRole('option');
 
         await dbVersionOptions.first().click();
-        await page.getByTestId('text-input-db-name').fill(clusterName);
+        // go to resources page
+        await moveForward(page);
       });
-
-      // go to resources page
-      await moveForward(page);
 
       await test.step('Populate resources', async () => {
         await page
