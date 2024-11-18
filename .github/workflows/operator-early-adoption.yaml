@@ -124,7 +124,7 @@ jobs:
           path: everest-operator
           token: ${{ secrets.ROBOT_TOKEN }}
 
-      - name: Operator - create release branch
+      - name: Operator - update version
         run: |
           cd everest-operator
 
@@ -202,7 +202,7 @@ jobs:
           go run . \
             --veneer-file ../veneer/everest-operator.yaml \
             --channel fast-v0  \
-            --new-version ${{ env.VERSION }} 
+            --new-version ${{ env.VERSION }} \
             --registry ${{ env.LOCAL_REGISTRY }}
           
           curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.44.0/${OS}-${ARCH}-opm
@@ -252,7 +252,7 @@ jobs:
           # Change version in Makefile
           sed -i "s/RELEASE_VERSION ?=.*/RELEASE_VERSION ?= v$VERSION/g" Makefile
           
-          # Change release manifest link: use local url
+          # Change release manifest link: use local path to file
           sed -i "s/https:\/\/raw.githubusercontent.com\/percona\/everest\/v%s\///g" pkg/version/version.go
           
           # Change release catalog image link: use LOCAL_REGISTRY
