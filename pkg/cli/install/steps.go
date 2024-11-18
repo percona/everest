@@ -72,13 +72,7 @@ func (o *Install) newStepEnsureEverestOLM() steps.Step {
 					return err
 				}
 			}
-			return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
-				cs, err := o.kubeClient.GetCatalogSource(ctx, common.PerconaEverestCatalogName, kubernetes.OLMNamespace)
-				if err != nil {
-					return false, err
-				}
-				return pointer.Get(cs.Status.GRPCConnectionState).LastObservedState == "READY", nil
-			})
+			return nil
 		},
 	}
 }
@@ -96,11 +90,11 @@ func (o *Install) newStepEnsureCatalogSource() steps.Step {
 	return steps.Step{
 		Desc: "Ensuring Everest CatalogSource is ready",
 		F: func(ctx context.Context) error {
+			cs, err := o.helmInstaller.GetEverestCatalogSource()
+			if err != nil {
+				return fmt.Errorf("could not get Everest CatalogSource from Helm chart: %w", err)
+			}
 			return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
-				cs, err := o.helmInstaller.GetEverestCatalogSource()
-				if err != nil {
-					return false, fmt.Errorf("could not get Everest CatalogSource from Helm chart: %w", err)
-				}
 				cs, err = o.kubeClient.GetCatalogSource(ctx, cs.GetName(), cs.GetNamespace())
 				if err != nil {
 					return false, fmt.Errorf("catalog source not found")
