@@ -83,6 +83,11 @@ jobs:
           go clean -testcache
           make test-crosscover
 
+      - name: Check that dev Helm chart is up-to-date
+        run: |
+          make update-dev-chart
+          git diff --exit-code
+
       - name: Check that there are no source code changes
         run: |
           # Break job if any files were changed during its run (code generation, etc), except go.sum.
