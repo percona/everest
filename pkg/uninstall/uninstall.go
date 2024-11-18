@@ -335,7 +335,7 @@ func (u *Uninstall) deleteDBs(ctx context.Context) error {
 			u.numResourcesDeleted++
 			u.l.Infof("Deleting database cluster '%s' in namespace '%s'", db.Name, ns)
 			// Delete in foreground.
-			if !db.GetDeletionTimestamp().IsZero() {
+			if db.GetDeletionTimestamp().IsZero() {
 				finalizers := db.GetFinalizers()
 				finalizers = append(finalizers, common.ForegroundDeletionFinalizer)
 				db.SetFinalizers(finalizers)
