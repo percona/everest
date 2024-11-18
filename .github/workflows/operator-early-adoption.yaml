@@ -1,5 +1,5 @@
 ---
-name: Custom build
+name: API CI
 on:
   push:
     branches:
@@ -43,7 +43,7 @@ jobs:
         run: |
           echo "ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" >> $GITHUB_ENV
           echo "OS=$(uname | awk '{print tolower($0)}')" >> $GITHUB_ENV
-          echo "LOCAL_REGISTRY=https://localhost:$LOCAL_REGISTRY_PORT/v2" >> $GITHUB_ENV
+          echo "LOCAL_REGISTRY=localhost:$LOCAL_REGISTRY_PORT" >> $GITHUB_ENV
           echo "VS_URL=localhost:$VS_PORT" >> $GITHUB_ENV
 
       - name: Set up Go release
@@ -79,26 +79,12 @@ jobs:
         with:
           cpus: 2
           memory: 2000m
-
-      - name: Everest - check out
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.ROBOT_TOKEN }}
-
-
-      - name: Deploy registry
-        run: |
-          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.1/cert-manager.yaml
-          # install the tool to check the availability
-          go install github.com/cert-manager/cmctl/v2@latest
-          #check availability
-          cmctl check api --wait=2m
-          kubectl apply -f ./.github/registry.yaml --namespace kube-system
+          addons: registry
+          registry: ${{ env.LOCAL_REGISTRY }}
 
       - name: Expose local registry
         run: |
           kubectl port-forward --namespace kube-system service/registry $LOCAL_REGISTRY_PORT:80 &
-
 
       - name: VS - checkout
         uses: actions/checkout@v4
