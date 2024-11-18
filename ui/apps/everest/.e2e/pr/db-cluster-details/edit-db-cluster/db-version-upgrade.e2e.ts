@@ -5,7 +5,11 @@ import {
   findDbAndClickRow,
 } from '@e2e/utils/db-clusters-list';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
-import { moveForward, populateBasicInformation, submitWizard } from '@e2e/utils/db-wizard';
+import {
+  moveForward,
+  populateBasicInformation,
+  submitWizard,
+} from '@e2e/utils/db-wizard';
 import { waitForDelete, waitForStatus } from '@e2e/utils/table';
 
 const { SELECT_DB, SELECT_SIZE } = process.env;

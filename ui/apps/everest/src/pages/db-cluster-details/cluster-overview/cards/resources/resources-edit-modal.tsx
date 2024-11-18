@@ -20,7 +20,7 @@ const ResourcesEditModal = ({
 }: Props) => {
   return (
     <FormDialog
-      dataTestId='edit-resources'
+      dataTestId="edit-resources"
       size="XXXL"
       isOpen
       closeModal={handleCloseModal}
