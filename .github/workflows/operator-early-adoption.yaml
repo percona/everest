@@ -36,6 +36,7 @@ jobs:
       LOCAL_REGISTRY: ""
       ARCH: ""
       OS: ""
+      TOOLS_PATH: "/opt/tools/bin"
 
     steps:
       - name: Set environment variables
@@ -190,6 +191,7 @@ jobs:
       - name: Catalog - checkout
         uses: actions/checkout@v4
         with:
+          ref: EVEREST-1563-variable-registry   # !!! remove this line once merged
           repository: percona/everest-catalog
           path: everest-catalog
           token: ${{ secrets.ROBOT_TOKEN }}
@@ -201,10 +203,7 @@ jobs:
             --veneer-file ../veneer/everest-operator.yaml \
             --channel fast-v0  \
             --new-version ${{ env.VERSION }} 
-
-          cd ..
-          # replace docker.io to local registry
-          sed -i "s/docker.io/$LOCAL_REGISTRY/g" veneer/everest-operator.yaml 
+            --registry ${{ env.LOCAL_REGISTRY }}
           
           curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.44.0/${OS}-${ARCH}-opm
           chmod +x /tmp/opm
