@@ -28,7 +28,10 @@ import {
 import { getBucketNamespacesMap } from '@e2e/constants';
 
 import { waitForInitializingState } from '@e2e/utils/table';
-import { checkDbWizardEditSubmitIsAvailableAndClick, checkSuccessOfUpdateAndGoToDbClustersList } from '@e2e/pr/db-cluster-details/edit-db-cluster/edit-db-cluster.utils';
+import {
+  checkDbWizardEditSubmitIsAvailableAndClick,
+  checkSuccessOfUpdateAndGoToDbClustersList,
+} from '@e2e/pr/db-cluster-details/edit-db-cluster/edit-db-cluster.utils';
 import { addFirstScheduleInDBWizard } from '@e2e/pr/db-cluster/db-wizard/db-wizard-utils';
 
 test.describe.serial('MySQL PITR editing', async () => {

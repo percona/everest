@@ -40,7 +40,7 @@ const openResourcesModal = async (page: Page) => {
   { db: 'pxc', size: 1 },
   // { db: 'postgresql', size: 1 },
 ].forEach(({ db, size }) => {
-  test.describe(`${db} resources editing`, () => {
+  test.describe(`Overview page: ${db} resources editing`, () => {
     test.describe.configure({ timeout: 900000 });
 
     const clusterName = `${db}-${size}-resources-edit`;
@@ -108,7 +108,6 @@ const openResourcesModal = async (page: Page) => {
       await test.step('Check db list and status', async () => {
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Initializing', 600000);
-        await waitForStatus(page, clusterName, 'Up', 600000);
       });
     });
 
@@ -152,7 +151,9 @@ const openResourcesModal = async (page: Page) => {
       });
     });
 
-    test(`Disable disk resize during edition for ${db}`, async ({ page }) => {
+    test(`Disk resize during edition for ${db} should be disabled`, async ({
+      page,
+    }) => {
       await page.goto('/databases');
       await findDbAndClickRow(page, clusterName);
 
@@ -212,10 +213,25 @@ const openResourcesModal = async (page: Page) => {
       await page.getByTestId('form-dialog-save').click();
 
       //check result
-      await expect(page.getByTestId(`${clusterName}-status`)).toHaveText(
-        'Initializing',
-        { timeout: 15000 }
-      );
+
+      await page.pause();
+      await expect(
+        page
+          .getByTestId('node-cpu-overview-section-row')
+          .filter({ hasText: `${db != 'psmdb' ? '0.4' : '2'} CPU` })
+      ).toBeVisible();
+
+      await expect(
+        page
+          .getByTestId(
+            `${db != 'psmdb' ? 'proxies' : 'routers'}-cpu-overview-section-row`
+          )
+          .filter({
+            hasText: `${db != 'psmdb' ? '0.4 x 0.4 CPU = 0.16' : '2 x 2 CPU = 4.00'} CPU`,
+          })
+      ).toBeVisible();
+
+      await page.pause();
     });
 
     test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {

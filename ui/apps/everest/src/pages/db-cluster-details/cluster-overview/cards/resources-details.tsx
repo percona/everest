@@ -183,6 +183,7 @@ export const ResourcesDetails = ({
             loading={loading}
           >
             <OverviewSectionRow
+              dataTestId="node-cpu"
               label={Messages.fields.cpu}
               contentString={getTotalResourcesDetailedString(
                 cpuParser(cpu.toString() || '0'),
@@ -213,6 +214,7 @@ export const ResourcesDetails = ({
               loading={loading}
             >
               <OverviewSectionRow
+                dataTestId={`${getProxyUnitNamesFromDbType(dbEngineToDbType(dbCluster.spec.engine.type))[numberOfProxiesInt > 1 ? 'plural' : 'singular']}-cpu`}
                 label={Messages.fields.cpu}
                 contentString={getTotalResourcesDetailedString(
                   cpuParser(proxyCpu.toString() || '0'),
