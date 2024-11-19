@@ -23,7 +23,8 @@ init:                   ## Install development tools
 build:                ## Build binaries
 	go build -v $(LD_FLAGS_API) -o bin/everest ./cmd
 
-build-cli:                ## Build binaries
+build-cli: init                ## Build binaries
+	$(MAKE) charts
 	go build -tags debug -v $(LD_FLAGS_CLI_TEST) -o bin/everestctl ./cmd/cli
 
 release: FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check.percona.com' -X 'github.com/percona/everest/cmd/config.TelemetryInterval=24h'
@@ -88,6 +89,12 @@ k8s-macos: k8s          ## Create a local minikube cluster with MacOS specific c
 	minikube addons disable storage-provisioner
 	kubectl delete storageclass standard
 	kubectl apply -f ./dev/kubevirt-hostpath-provisioner.yaml
+
+HELM := bin/helm
+charts: $(HELM)         ## Install Helm charts
+	$(HELM) repo add prometheus-community https://prometheus-community.github.io/helm-charts
+	$(HELM) repo add percona https://percona.github.io/percona-helm-charts/
+	$(HELM) repo update
 
 update-dev-chart:
 	go get -u -v github.com/percona/percona-helm-charts/charts/everest@main
