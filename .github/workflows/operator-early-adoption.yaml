@@ -128,8 +128,9 @@ jobs:
         run: |
           cd everest-operator
 
-          # update version in the Makefile
-          sed -i "s/^VERSION ?=.*/VERSION ?= $VERSION/g" Makefile
+          # !!!! (delete this) update version in the Makefile
+          # sed -i "s/^VERSION ?=.*/VERSION ?= $VERSION/g" Makefile
+          # sed -i "s/docker.io\/perconalab/$LOCAL_REGISTRY\/perconalab/g" Makefile
 
       - name: Operator - install operator-sdk
         run: |
@@ -208,7 +209,7 @@ jobs:
           cd ..
           curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.44.0/${OS}-${ARCH}-opm
           chmod +x /tmp/opm
-          /tmp/opm alpha render-template basic -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
+          /tmp/opm alpha render-template basic --skip-tls-verify -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml 
 
           # Check if veneer has the new version listed
           if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
