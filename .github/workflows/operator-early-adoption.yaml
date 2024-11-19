@@ -213,9 +213,9 @@ jobs:
       - name: Catalog - Build and Push image
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: everest-catalog
           push: true
-          tags: ${{ env.LOCAL_REGISTRY}}/perconalab/everest-catalog:${{ env.VERSION }}
+          tags: perconalab/everest-catalog:0.0.0
           file: everest-catalog.Dockerfile
 
 
