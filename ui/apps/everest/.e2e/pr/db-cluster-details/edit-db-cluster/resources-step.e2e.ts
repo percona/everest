@@ -40,7 +40,7 @@ const openResourcesModal = async (page: Page) => {
   { db: 'pxc', size: 1 },
   // { db: 'postgresql', size: 1 },
 ].forEach(({ db, size }) => {
-  test.describe('Overview page resources edit', () => {
+  test.describe(`Overview page resources edit for ${db} with ${size} node]`, () => {
     test.describe.configure({ timeout: 900000 });
 
     const clusterName = `${db}-${size}-resources-edit`;
@@ -183,26 +183,36 @@ const openResourcesModal = async (page: Page) => {
 
       //TODO can be better customizable between different dbTypes
       await page.getByTestId('proxies-accordion').click();
-        await test.step(`Set custom number of ${db != 'psmdb' ? 'proxies' : 'routers'}`, async () => {
-          await page.getByTestId(`toggle-button-${db != 'psmdb' ? 'proxies' : 'routers'}-custom`).click();
-          await page.getByTestId('text-input-custom-nr-of-proxies').fill('2');
-        });
-      
+      await test.step(`Set custom number of ${db != 'psmdb' ? 'proxies' : 'routers'}`, async () => {
+        await page
+          .getByTestId(
+            `toggle-button-${db != 'psmdb' ? 'proxies' : 'routers'}-custom`
+          )
+          .click();
+        await page.getByTestId('text-input-custom-nr-of-proxies').fill('2');
+      });
+
       await test.step(`Set custom resources size per ${db != 'psmdb' ? 'proxies' : 'routers'}`, async () => {
         await expect(
-          page.getByTestId(`${db != 'psmdb' ? 'proxy': 'router'}-resources-toggle-button-custom`)
+          page.getByTestId(
+            `${db != 'psmdb' ? 'proxy' : 'router'}-resources-toggle-button-custom`
+          )
         ).toHaveAttribute('aria-pressed', 'false');
-        page.getByTestId('text-input-proxy-cpu').fill(`${db != 'psmdb' ? '0.4': '2'}`);
+        page
+          .getByTestId('text-input-proxy-cpu')
+          .fill(`${db != 'psmdb' ? '0.4' : '2'}`);
         await expect(
-          page.getByTestId(`${db != 'psmdb' ? 'proxy': 'router'}-resources-toggle-button-custom`)
+          page.getByTestId(
+            `${db != 'psmdb' ? 'proxy' : 'router'}-resources-toggle-button-custom`
+          )
         ).toHaveAttribute('aria-pressed', 'true');
       });
 
       expect(page.getByTestId('form-dialog-save')).not.toBeDisabled();
       await page.getByTestId('form-dialog-save').click();
 
-       //check result
-       await expect(page.getByTestId(`${clusterName}-status`)).toHaveText(
+      //check result
+      await expect(page.getByTestId(`${clusterName}-status`)).toHaveText(
         'Initializing',
         { timeout: 15000 }
       );
