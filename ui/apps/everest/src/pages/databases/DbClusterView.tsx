@@ -38,6 +38,7 @@ import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import DbActions from 'components/db-actions/db-actions';
 import DbActionsModals from 'components/db-actions/db-actions-modals';
+import { EmptyState } from './emptyState/emptyState';
 
 export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
@@ -168,7 +169,7 @@ export const DbClusterView = () => {
       <Box sx={{ width: '100%' }}>
         <Table
           tableName="dbClusterView"
-          noDataMessage={Messages.dbCluster.noData}
+          emptyState={<EmptyState />}
           state={{ isLoading: dbClustersLoading || loadingNamespaces }}
           columns={columns}
           data={tableData}

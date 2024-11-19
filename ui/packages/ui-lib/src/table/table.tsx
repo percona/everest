@@ -3,7 +3,7 @@ import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrow
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
-import { Alert } from '@mui/material';
+import { Alert, Box } from '@mui/material';
 import { MaterialReactTable, MRT_VisibilityState } from 'material-react-table';
 import { useEffect } from 'react';
 import { ICONS_OPACITY } from './table.constants';
@@ -23,6 +23,7 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
     tableName,
     state,
     initialState,
+    emptyState,
     ...rest
   } = props;
   const [columnVisibility, setColumnVisibility] =
@@ -89,20 +90,36 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
   return (
     <MaterialReactTable
       renderEmptyRowsFallback={({ table: { getPreFilteredRowModel } }) => (
-        <Alert
-          severity="info"
-          sx={{
-            width: '100%',
-            height: '50px',
-            marginTop: 1,
-            marginBottom: 1,
-          }}
-        >
+        <>
           {/* This means there was data before filtering, so we show the message of empty filtering result */}
-          {getPreFilteredRowModel().rows.length > 0
-            ? emptyFilterResultsMessage
-            : noDataMessage}
-        </Alert>
+          {getPreFilteredRowModel().rows.length > 0 ? (
+            <Alert
+              severity="info"
+              sx={{
+                width: '100%',
+                height: '50px',
+                marginTop: 1,
+                marginBottom: 1,
+              }}
+            >
+              {emptyFilterResultsMessage}
+            </Alert>
+          ) : emptyState ? (
+            <Box>{emptyState}</Box>
+          ) : (
+            <Alert
+              severity="info"
+              sx={{
+                width: '100%',
+                height: '50px',
+                marginTop: 1,
+                marginBottom: 1,
+              }}
+            >
+              {noDataMessage}
+            </Alert>
+          )}
+        </>
       )}
       layoutMode="grid"
       enablePagination={data.length > 10}
