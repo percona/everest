@@ -38,34 +38,6 @@ export const WelcomeDialog = ({
             {Messages.start}
           </Typography>
         </Stack>
-        {/* TODO: uncomment when default settings page is ready */}
-        {/* <Divider />
-        <Typography variant="subHead1" sx={{ p: '24px 44px 8px 44px' }}>
-          {Messages.subHead2}
-        </Typography>
-        <Box
-          sx={{
-            display: 'flex',
-            gap: '12px',
-            justifyContent: 'center',
-            px: '44px',
-          }}
-        >
-          <CardLink
-            Icon={AddCircleOutlineIcon}
-            action={Messages.card1.header}
-            description={Messages.card1.description}
-            link="/databases/new"
-            handleCloseModal={closeDialog}
-          />
-          <CardLink
-            Icon={SettingsOutlinedIcon}
-            action={Messages.card2.header}
-            description={Messages.card2.description}
-            link="/settings"
-            handleCloseModal={closeDialog}
-          />
-        </Box> */}
       </DialogContent>
       {/* TODO: remove dialog actions when cards are uncommented */}
       <DialogActions sx={{ mt: 4 }}>
