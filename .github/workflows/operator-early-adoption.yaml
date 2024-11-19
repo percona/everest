@@ -246,12 +246,22 @@ jobs:
             exit 1
           fi
 
-      - name: Catalog - Build and Push image
+      - name: Catalog - setup Docker meta for everest-catalog
+        id: catalog_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.LOCAL_REGISTRY }}/perconalab/everest-operator-bundle
+          tags: |
+            type=raw,value=${{ env.VERSION }}
+            type=raw,value=latest
+
+      - name: Catalog - push everest-catalog image
         uses: docker/build-push-action@v6
         with:
           context: everest-catalog
           push: true
-          tags: ${{ env.LOCAL_REGISTRY}}/perconalab/everest-catalog:${{ env.VERSION }}
+          tags: ${{ steps.catalog_meta.outputs.tags }}
           file: everest-catalog/everest-catalog.Dockerfile
 
 
