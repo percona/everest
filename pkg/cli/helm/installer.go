@@ -137,6 +137,14 @@ func (i *Installer) Install(ctx context.Context) error {
 	return i.Upgrade(ctx)
 }
 
+// GetRelease gets the installed Helm release.
+func (i *Installer) GetRelease() (*release.Release, error) {
+	if i.release == nil {
+		return nil, errors.New("chart not installed")
+	}
+	return i.release, nil
+}
+
 // RenderTemplates renders the Helm chart templates.
 func (i Installer) RenderTemplates(ctx context.Context, uninstallOrd bool) (helmutils.RenderedTemplates, error) {
 	i.DryRun = true

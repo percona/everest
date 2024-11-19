@@ -26,11 +26,14 @@ import (
 	"regexp"
 	"strings"
 
+	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	everesthelmchart "github.com/percona/percona-helm-charts/charts/everest"
 	helmcli "helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/releaseutil"
+	"sigs.k8s.io/yaml"
 )
 
 // MustMergeValues panics if MergeValues returns an error.
@@ -167,4 +170,22 @@ func DevChartDir() (string, error) {
 		return "", err
 	}
 	return tmp, nil
+}
+
+// GetEverestCatalogSource gets the Everest catalog source from the provided release.
+func GetEverestCatalogSource(rel *release.Release) (*olmv1alpha1.CatalogSource, error) {
+	rendered := RenderedTemplates{}
+	if err := rendered.FromString(rel.Manifest, false); err != nil {
+		return nil, fmt.Errorf("failed to parse rendered templates: %w", err)
+	}
+	file := rendered.Filter("everest-catalogsource.yaml")
+	if len(file.Files()) > 1 {
+		return nil, errors.New("invalid filter: more than one catalog source found")
+	}
+
+	cs := &olmv1alpha1.CatalogSource{}
+	if err := yaml.Unmarshal(file, cs); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal catalog source: %w", err)
+	}
+	return cs, nil
 }

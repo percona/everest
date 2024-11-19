@@ -90,7 +90,11 @@ func (o *Install) newStepEnsureCatalogSource() steps.Step {
 	return steps.Step{
 		Desc: "Ensuring Everest CatalogSource is ready",
 		F: func(ctx context.Context) error {
-			cs, err := o.helmInstaller.GetEverestCatalogSource()
+			rel, err := o.helmInstaller.GetRelease()
+			if err != nil {
+				return fmt.Errorf("could not get Helm release: %w", err)
+			}
+			cs, err := helmutils.GetEverestCatalogSource(rel)
 			if err != nil {
 				return fmt.Errorf("could not get Everest CatalogSource from Helm chart: %w", err)
 			}
