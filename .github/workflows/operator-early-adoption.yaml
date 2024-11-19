@@ -245,6 +245,8 @@ jobs:
             echo "catalog/${UPSTREAM_REPO}/catalog.yaml does not include the version $IMAGE"
             exit 1
           fi
+          
+          git diff
 
       - name: Catalog - setup Docker meta for everest-catalog
         id: catalog_meta
