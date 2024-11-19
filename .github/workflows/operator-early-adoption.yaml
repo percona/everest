@@ -44,7 +44,7 @@ jobs:
           echo "ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" >> $GITHUB_ENV
           echo "OS=$(uname | awk '{print tolower($0)}')" >> $GITHUB_ENV
           echo "LOCAL_REGISTRY=localhost:$LOCAL_REGISTRY_PORT" >> $GITHUB_ENV
-          echo "VS_URL=localhost:$VS_PORT" >> $GITHUB_ENV
+          echo "VS_URL=http://localhost:$VS_PORT" >> $GITHUB_ENV
 
       - name: Set up Go release
         uses: percona-platform/setup-go@v4
