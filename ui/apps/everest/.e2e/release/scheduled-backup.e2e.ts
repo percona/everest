@@ -224,9 +224,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         await prepareTestDB(clusterName, namespace);
       });
 
-      test(`Create backup schedules [${db} size ${size}]`, async ({
-        page,
-      }) => {
+      test(`Create backup schedules [${db} size ${size}]`, async ({ page }) => {
         test.setTimeout(30 * 1000);
 
         const scheduleMinute1 = getNextScheduleMinute(2);
