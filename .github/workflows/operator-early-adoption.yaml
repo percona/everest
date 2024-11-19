@@ -205,6 +205,7 @@ jobs:
             --channel fast-v0  \
             --new-version ${{ env.VERSION }} \
             --registry ${{ env.LOCAL_REGISTRY }} \
+            --test-repo \
           
           cd ..
           curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.44.0/${OS}-${ARCH}-opm
