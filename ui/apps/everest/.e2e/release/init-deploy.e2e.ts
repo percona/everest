@@ -209,6 +209,7 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Suspend cluster [${db} size ${size}]`, async ({ page }) => {
+        await waitForStatus(page, clusterName, 'Up', 5000);
         await suspendDbCluster(page, clusterName);
         // One node clusters and Postgresql don't seem to show Stopping state
         if (size != 1 && db != 'postgresql') {
@@ -218,12 +219,14 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Resume cluster [${db} size ${size}]`, async ({ page }) => {
+        await waitForStatus(page, clusterName, 'Paused', 5000);
         await resumeDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Initializing', 45000);
         await waitForStatus(page, clusterName, 'Up', 300000);
       });
 
       test(`Restart cluster [${db} size ${size}]`, async ({ page }) => {
+        await waitForStatus(page, clusterName, 'Up', 5000);
         await restartDbCluster(page, clusterName);
         if (size != 1 && db != 'postgresql') {
           await waitForStatus(page, clusterName, 'Stopping', 45000);
@@ -233,6 +236,7 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
+        await waitForStatus(page, clusterName, 'Up', 5000);
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
         await waitForDelete(page, clusterName, 240000);
