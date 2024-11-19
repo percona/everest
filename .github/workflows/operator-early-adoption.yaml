@@ -237,6 +237,7 @@ jobs:
             echo "catalog/${UPSTREAM_REPO}/catalog.yaml does not include the version $IMAGE"
             exit 1
           fi
+          git add .
           git status
       - name: Catalog - Build and Push image
         uses: docker/build-push-action@v6
