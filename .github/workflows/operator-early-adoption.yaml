@@ -210,22 +210,13 @@ jobs:
             exit 1
           fi
 
-      - name: Catalog - docker meta
-        uses: docker/metadata-action@v5
-        id: catalog-meta
-        with:
-          images: ${{ env.LOCAL_REGISTRY }}/perconalab/everest-catalog
-          tags:
-            type=raw,value=${{ env.VERSION }}
-
       - name: Catalog - Build and Push image
         uses: docker/build-push-action@v6
         with:
           context: everest-catalog
           push: true
-          tags: ${{ steps.catalog-meta.outputs.tags }}
+          tags: ${{ env.LOCAL_REGISTRY}}/perconalab/everest-catalog:${{ env.VERSION }}
           file: everest-catalog.Dockerfile
-
 
 
       - name: Everest - check out
