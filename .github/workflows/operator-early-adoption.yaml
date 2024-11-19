@@ -113,6 +113,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Percona-Lab/percona-version-service
+          ref: $ {{ env.VS_BRANCH }}
           path: percona-version-service
           token: ${{ secrets.ROBOT_TOKEN }}
 
