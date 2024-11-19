@@ -27,7 +27,7 @@ jobs:
 
     env:
       # VERSION ridiculously higher than any potentially existing
-      VERSION: 0.10000.0
+      VERSION: 1.10000.0
       CLI_PREREQUISITES: ">= 1.2.0"
       K8S_PREREQUISITES: ">= 1.27"
       VS_PORT: 8081
@@ -202,7 +202,7 @@ jobs:
           cd everest-catalog/tools
           go run . \
             --veneer-file ../veneer/everest-operator.yaml \
-            --channel stable-v0  \
+            --channel fast-v0  \
             --new-version ${{ env.VERSION }} \
             --registry ${{ env.LOCAL_REGISTRY }} \
           
