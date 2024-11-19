@@ -50,8 +50,9 @@ jobs:
       ARCH: ""
       OS: ""
       TOOLS_PATH: "/opt/tools/bin"
-      UPSTREAM_REPO: ${{ github.event.inputs.upstream }}
-      IMAGE: ${{ github.event.inputs.image }}
+      # UPSTREAM_REPO: ${{ github.event.inputs.upstream }}
+      UPSTREAM_REPO: "percona-xtradb-cluster-operator"
+      IMAGE: "docker.io/percona/percona-xtradb-cluster-operator:1.15.1-community-bundle"
 
     steps:
       - name: Set environment variables
