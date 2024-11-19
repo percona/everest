@@ -21,6 +21,7 @@ const checkDistEnvVarAndMove = async () => {
       ? envDir
       : path.join(process.cwd(), '../..', envDir);
 
+    // eslint-disable-next-line no-console
     console.log(`Outputting Everest files to: ${outDir}`);
 
     fs.rmSync(outDir, { force: true, recursive: true });

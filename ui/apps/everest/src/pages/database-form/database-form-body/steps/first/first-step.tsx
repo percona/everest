@@ -106,7 +106,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const setDbEngineDataForEngineType = useCallback(() => {
     //TODO 1234 - edit of dbVersion field should be refactored
     const newEngineData = dbEngines.find((engine) => engine.type === dbEngine);
-    if (newEngineData && mode === 'edit') {
+    if (newEngineData && mode !== 'new') {
       const validVersions = filterAvailableDbVersionsForDbEngineEdition(
         newEngineData,
         defaultDbVersion
@@ -136,10 +136,9 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       ((mode === 'edit' || mode === 'restoreFromBackup') && !dbVersion) ||
       mode === 'new'
     ) {
-      const recommendedVersion = dbEngineData.availableVersions.engine
-        .slice()
-        .reverse()
-        .find((version) => version.status === DbEngineToolStatus.RECOMMENDED);
+      const recommendedVersion = dbEngineData.availableVersions.engine.find(
+        (version) => version.status === DbEngineToolStatus.RECOMMENDED
+      );
 
       setValue(
         DbWizardFormFields.dbVersion,
