@@ -111,13 +111,18 @@ export const useDbClusterPitr = (
     unknown,
     DatabaseClusterPitr | undefined
   >
-) =>
-  useQuery<
+) => {
+  const { canRead } = useRBACPermissions(
+    'database-clusters',
+    `${namespace}/${dbClusterName}`
+  );
+
+  return useQuery<
     DatabaseClusterPitrPayload,
     unknown,
     DatabaseClusterPitr | undefined
   >({
-    queryKey: [`${dbClusterName}-pitr`],
+    queryKey: [dbClusterName, 'pitr'],
     queryFn: () => getPitrFn(dbClusterName, namespace),
     select: (pitrData) => {
       const { earliestDate, latestDate, latestBackupName, gaps } = pitrData;
@@ -138,4 +143,6 @@ export const useDbClusterPitr = (
       };
     },
     ...options,
+    enabled: (options?.enabled ?? true) && canRead,
   });
+};

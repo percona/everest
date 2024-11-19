@@ -1,9 +1,10 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Box, IconButton, Paper, Stack, Typography } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { useDeleteSchedule } from 'hooks/api/backups/useScheduledBackups';
+import { ManageableSchedules } from 'shared-types/dbCluster.types';
 import { DB_CLUSTER_QUERY } from 'hooks/api/db-cluster/useDbCluster';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import { ScheduleModalContext } from '../../backups.context';
@@ -11,8 +12,9 @@ import { getTimeSelectionPreviewMessage } from 'pages/database-form/database-pre
 import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils';
 import { Messages } from './backups-list-table-header.messages';
 import { useRBACPermissions } from 'hooks/rbac';
+import { transformSchedulesIntoManageableSchedules } from 'utils/db';
 
-const ScheduledBackupsList = ({ canUpdateDb }: { canUpdateDb: boolean }) => {
+const ScheduledBackupsList = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<string>('');
   const queryClient = useQueryClient();
@@ -24,8 +26,7 @@ const ScheduledBackupsList = ({ canUpdateDb }: { canUpdateDb: boolean }) => {
   } = useContext(ScheduleModalContext);
   const { mutate: deleteSchedule, isPending: deletingSchedule } =
     useDeleteSchedule(dbCluster.metadata.name, dbCluster.metadata.namespace);
-
-  const schedules = dbCluster.spec?.backup?.schedules || [];
+  const [schedules, setSchedules] = useState<ManageableSchedules[]>([]);
 
   const handleDelete = (scheduleName: string) => {
     setSelectedSchedule(scheduleName);
@@ -53,11 +54,26 @@ const ScheduledBackupsList = ({ canUpdateDb }: { canUpdateDb: boolean }) => {
     setOpenScheduleModal(true);
   };
 
-  const { canUpdate: canUpdateBackups, canDelete: canDeleteBackups } =
-    useRBACPermissions(
-      'database-cluster-backups',
-      `${dbCluster.metadata.namespace}/${dbCluster.metadata.name}`
-    );
+  const { canUpdate: canUpdateDb } = useRBACPermissions(
+    'database-clusters',
+    `${dbCluster.metadata.namespace}/${dbCluster.metadata.name}`
+  );
+
+  const { canCreate: canCreateBackups } = useRBACPermissions(
+    'database-cluster-backups',
+    `${dbCluster.metadata.namespace}/${dbCluster.metadata.name}`
+  );
+
+  useEffect(() => {
+    transformSchedulesIntoManageableSchedules(
+      dbCluster.spec.backup?.schedules || [],
+      dbCluster.metadata.namespace,
+      canCreateBackups,
+      canUpdateDb
+    ).then((newSchedules) => {
+      setSchedules(newSchedules);
+    });
+  }, [canCreateBackups, canUpdateDb, dbCluster]);
 
   return (
     <Stack
@@ -111,23 +127,23 @@ const ScheduledBackupsList = ({ canUpdateDb }: { canUpdateDb: boolean }) => {
               </Typography>
             </Box>
             <Box display="flex">
-              {canUpdateDb && canUpdateBackups && (
-                <IconButton
-                  color="primary"
-                  onClick={() => handleEdit(item.name)}
-                  data-testid="edit-schedule-button"
-                >
-                  <EditOutlinedIcon />
-                </IconButton>
-              )}
-              {canUpdateDb && canDeleteBackups && (
-                <IconButton
-                  color="primary"
-                  onClick={() => handleDelete(item.name)}
-                  data-testid="delete-schedule-button"
-                >
-                  <DeleteOutlineOutlinedIcon />
-                </IconButton>
+              {item.canBeManaged && (
+                <>
+                  <IconButton
+                    color="primary"
+                    onClick={() => handleEdit(item.name)}
+                    data-testid="edit-schedule-button"
+                  >
+                    <EditOutlinedIcon />
+                  </IconButton>
+                  <IconButton
+                    color="primary"
+                    onClick={() => handleDelete(item.name)}
+                    data-testid="delete-schedule-button"
+                  >
+                    <DeleteOutlineOutlinedIcon />
+                  </IconButton>
+                </>
               )}
             </Box>
           </Box>

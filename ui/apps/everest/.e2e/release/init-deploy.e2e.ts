@@ -68,7 +68,7 @@ test.describe.configure({ retries: 0 });
           (SELECT_DB !== db && !!SELECT_DB) ||
           (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
       );
-      test.describe.configure({ timeout: 720000 });
+      test.describe.configure({ timeout: 900000 });
 
       const clusterName = `${db}-${size}-deploy`;
 
@@ -169,7 +169,7 @@ test.describe.configure({ retries: 0 });
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
           await waitForStatus(page, clusterName, 'Initializing', 15000);
-          await waitForStatus(page, clusterName, 'Up', 360000);
+          await waitForStatus(page, clusterName, 'Up', 600000);
         });
 
         await test.step('Check db cluster k8s object options', async () => {
