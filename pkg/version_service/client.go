@@ -67,6 +67,7 @@ func New(url string) Interface { //nolint:ireturn
 	return &versionServiceClient{url: url}
 }
 
+//nolint:gochecknoglobals
 var defaultUnmarshal = protojson.UnmarshalOptions{
 	// We must ignore any unknown fields in the response, since new fields
 	// may be added after this binary has been built and compiled.
