@@ -251,7 +251,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ env.LOCAL_REGISTRY }}/perconalab/everest-operator-bundle
+            ${{ env.LOCAL_REGISTRY }}/perconalab/everest-catalog
           tags: |
             type=raw,value=${{ env.VERSION }}
             type=raw,value=latest
