@@ -5,6 +5,7 @@ on:
     inputs:
       vs_branch:
         required: true
+        default: main
         description: "Version Service branch with the new build to checkout"
       image:
         required: true
@@ -58,8 +59,7 @@ jobs:
       UPSTREAM_REPO: "percona-xtradb-cluster-operator"
       # IMAGE: ${{ github.event.inputs.image }}
       IMAGE: "docker.io/percona/percona-xtradb-cluster-operator:1.15.1-community-bundle"
-      # VS_BRANCH: ${{ github.event.inputs.vs_branch }}
-      VS_BRANCH: "main"
+      VS_BRANCH: ${{ github.event.inputs.vs_branch }}
 
     steps:
       - name: Set environment variables
@@ -226,7 +226,7 @@ jobs:
           cd ..
           curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.44.0/${OS}-${ARCH}-opm
           chmod +x /tmp/opm
-          /tmp/opm alpha render-template basic --skip-tls-verify -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
+          /tmp/opm alpha render-template basic --skip-tls -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
 
           # Check if catalog has the new version listed
           if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
@@ -238,7 +238,7 @@ jobs:
           yq e ".Stable.Bundles += {\"Image\": \"$IMAGE\"}" veneer/${UPSTREAM_REPO}.yaml > temp.yaml && mv temp.yaml veneer/${UPSTREAM_REPO}.yaml
 
           # Generate upstream catalog
-          /tmp/opm alpha render-template semver -o yaml < veneer/${UPSTREAM_REPO}.yaml > catalog/${UPSTREAM_REPO}/catalog.yaml --skip-tls-verify
+          /tmp/opm alpha render-template semver --skip-tls -o yaml < veneer/${UPSTREAM_REPO}.yaml > catalog/${UPSTREAM_REPO}/catalog.yaml 
 
           # Check if upstream catalog has the new image listed
           if ! grep -q "$IMAGE$" catalog/${UPSTREAM_REPO}/catalog.yaml; then
