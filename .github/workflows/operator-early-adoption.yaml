@@ -216,8 +216,8 @@ jobs:
           #  --test-repo \
 
           cd ..
-          #curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.44.0/${OS}-${ARCH}-opm
-          #chmod +x /tmp/opm
+          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.44.0/${OS}-${ARCH}-opm
+          chmod +x /tmp/opm
           #/tmp/opm alpha render-template basic --skip-tls-verify -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
 
           # Check if catalog has the new version listed
