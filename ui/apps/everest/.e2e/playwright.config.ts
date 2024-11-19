@@ -105,6 +105,7 @@ export default defineConfig({
         browserName: 'chromium',
         channel: 'chrome',
         storageState: STORAGE_STATE_FILE,
+        actionTimeout: 10000,
       },
       testDir: 'release',
       dependencies: ['setup'],
