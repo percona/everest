@@ -227,7 +227,7 @@ jobs:
           #fi
           
           # Add a new record to the upstream veneer
-          yq e '.Stable.Bundles += {"Image": "${IMAGE}"}' veneer/${UPSTREAM_REPO}.yaml > temp.yaml && mv temp.yaml veneer/${UPSTREAM_REPO}.yaml
+          yq e '.Stable.Bundles += {"Image": "$IMAGE"}' veneer/${UPSTREAM_REPO}.yaml > temp.yaml && mv temp.yaml veneer/${UPSTREAM_REPO}.yaml
           
           # Generate upstream catalog
           /tmp/opm alpha render-template semver -o yaml < veneer/${UPSTREAM_REPO}.yaml > catalog/${UPSTREAM_REPO}/catalog.yaml --skip-tls-verify
