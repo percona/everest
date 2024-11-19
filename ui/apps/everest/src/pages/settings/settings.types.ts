@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 export enum SettingsTabs {
-  // defaultConfigurations = 'default-configurations',
   storageLocations = 'storage-locations',
   monitoringEndpoints = 'monitoring-endpoints',
   namespaces = 'namespaces',
@@ -21,7 +20,6 @@ export enum SettingsTabs {
 }
 
 export const settingsTabsMui: Record<SettingsTabs, number> = {
-  // [SettingsTabs.defaultConfigurations]: 0,
   [SettingsTabs.storageLocations]: 1,
   [SettingsTabs.monitoringEndpoints]: 2,
   [SettingsTabs.namespaces]: 3,
