@@ -40,7 +40,7 @@ const openResourcesModal = async (page: Page) => {
   { db: 'pxc', size: 1 },
   // { db: 'postgresql', size: 1 },
 ].forEach(({ db, size }) => {
-  test.describe(`Overview page resources edit for ${db} with ${size} node]`, () => {
+  test.describe(`${db} resources editing`, () => {
     test.describe.configure({ timeout: 900000 });
 
     const clusterName = `${db}-${size}-resources-edit`;

@@ -56,7 +56,7 @@ let token: string;
         await page.getByTestId('select-db-version-button').click();
         const dbVersionOptions = await page.getByRole('option');
 
-        await dbVersionOptions.first().click();
+        await dbVersionOptions.last().click();
         // go to resources page
         await moveForward(page);
       });
@@ -94,6 +94,7 @@ let token: string;
       await findDbAndClickRow(page, clusterName);
 
       await test.step('Upgrade db on next available version', async () => {
+        await page.pause();
         //check upgrade btn and open modal
         const upgradeBtn = page.getByTestId('upgrade-db-btn');
         await expect(upgradeBtn).toBeVisible();
@@ -104,10 +105,10 @@ let token: string;
         await page.getByTestId('select-db-version-button').click();
         const dbVersionOptionsForUpgrade = await page.getByRole('option');
         const selectedDbVersionValue = await dbVersionOptionsForUpgrade
-          .nth(1)
+          .nth(2)
           .innerText();
 
-        await dbVersionOptionsForUpgrade.nth(1).click();
+        await dbVersionOptionsForUpgrade.nth(2).click();
 
         //submit
         const upgradeModalBtn = page.getByTestId('form-dialog-upgrade');
