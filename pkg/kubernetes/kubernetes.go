@@ -409,19 +409,29 @@ func (k *Kubernetes) InstallPerconaCatalog(ctx context.Context, version *goversi
 
 	k.l.Debugf("Using catalog image %s", everestVersion.CatalogImage(version))
 	if err := unstructured.SetNestedField(o, everestVersion.CatalogImage(version), "spec", "image"); err != nil {
+		k.l.Debugf("!!! 1")
 		return err
 	}
+	k.l.Debugf("!!! 2")
+
 	data, err = yamlv3.Marshal(o)
 	if err != nil {
+		k.l.Debugf("!!! 4")
+
 		return err
 	}
+	k.l.Debugf("!!! 5 %s", string(data))
 
 	if err := k.client.ApplyManifestFile(data, namespace); err != nil {
+		k.l.Debugf("!!! 6")
 		return errors.Join(err, errors.New("cannot apply percona catalog file"))
 	}
+	k.l.Debugf("!!! 7")
 	if err := k.client.DoPackageWait(ctx, namespace, "everest-operator"); err != nil {
+		k.l.Debugf("!!! 8")
 		return errors.Join(err, errors.New("timeout waiting for package"))
 	}
+	k.l.Debugf("!!! 9")
 	return nil
 }
 
