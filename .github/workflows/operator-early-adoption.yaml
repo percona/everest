@@ -124,14 +124,6 @@ jobs:
           path: everest-operator
           token: ${{ secrets.ROBOT_TOKEN }}
 
-      - name: Operator - update version
-        run: |
-          cd everest-operator
-
-          # !!!! (delete this) update version in the Makefile
-          # sed -i "s/^VERSION ?=.*/VERSION ?= $VERSION/g" Makefile
-          # sed -i "s/docker.io\/perconalab/$LOCAL_REGISTRY\/perconalab/g" Makefile
-
       - name: Operator - install operator-sdk
         run: |
           mkdir -p $TOOLS_PATH
@@ -222,7 +214,7 @@ jobs:
         uses: docker/metadata-action@v5
         id: catalog-meta
         with:
-          images: $LOCAL_REGISTRY/perconalab/everest-catalog
+          images: ${{ env.LOCAL_REGISTRY }}/perconalab/everest-catalog
           tags:
             type=raw,value=${{ env.VERSION }}
 
