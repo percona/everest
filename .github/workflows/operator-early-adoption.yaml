@@ -207,7 +207,7 @@ jobs:
 
       - name: Catalog - update veneer file
         run: |
-          #cd everest-catalog/tools
+          cd everest-catalog/tools
           #go run . \
           #  --veneer-file ../veneer/everest-operator.yaml \
           #  --channel fast-v0  \
@@ -215,7 +215,7 @@ jobs:
           #  --registry ${{ env.LOCAL_REGISTRY }} \
           #  --test-repo \
 
-          #cd ..
+          cd ..
           #curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.44.0/${OS}-${ARCH}-opm
           #chmod +x /tmp/opm
           #/tmp/opm alpha render-template basic --skip-tls-verify -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
