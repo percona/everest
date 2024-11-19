@@ -22,11 +22,6 @@ let token: string;
   // { db: 'postgresql', size: 1 },
 ].forEach(({ db, size }) => {
   test.describe('Overview page', () => {
-    test.skip(
-      () =>
-        (SELECT_DB !== db && !!SELECT_DB) ||
-        (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
-    );
     test.describe.configure({ timeout: 900000 });
 
     const clusterName = `${db}-${size}-upgrade`;

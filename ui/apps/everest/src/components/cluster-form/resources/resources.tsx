@@ -253,7 +253,10 @@ const ResourcesToggles = ({
             </ToggleCard>
           ))}
           {!disableCustom && (
-            <ToggleCard value={CUSTOM_NR_UNITS_INPUT_VALUE}>
+            <ToggleCard
+              value={CUSTOM_NR_UNITS_INPUT_VALUE}
+              data-testid={`toggle-button-${unitPlural}-custom`}
+            >
               {Messages.customValue}
             </ToggleCard>
           )}
@@ -649,6 +652,7 @@ const ResourcesForm = ({
             >
               {DEFAULT_CONFIG_SERVERS.map((number) => (
                 <ToggleRegularButton
+                  dataTestId={`shard-config-servers-${number}`}
                   sx={{
                     px: 2,
                   }}
