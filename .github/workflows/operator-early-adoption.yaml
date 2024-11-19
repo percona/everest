@@ -224,6 +224,7 @@ jobs:
           context: everest-catalog
           push: true
           tags: ${{ steps.catalog-meta.outputs.tags }}
+          file: everest-catalog.Dockerfile
 
 
 
