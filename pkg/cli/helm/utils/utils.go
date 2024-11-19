@@ -163,6 +163,9 @@ func DevChartDir() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	// We need to copy the contents of the embed.FS to the temporary directory
+	// so that we're able to use the Helm SDK to build the chart dependencies.
+	// Currently Helm SDK does not support reading a chart from embed.FS to build dependencies.
 	if err := copyEmbedFSToDir(everesthelmchart.Chart, tmp); err != nil {
 		if removeErr := os.RemoveAll(tmp); removeErr != nil {
 			return "", errors.Join(err, removeErr)
