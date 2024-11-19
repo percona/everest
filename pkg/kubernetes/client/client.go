@@ -1309,7 +1309,7 @@ func (c *Client) DoPackageWait(ctx context.Context, namespace, name string) erro
 		}
 		return true, nil
 	}
-	return wait.PollUntilContextCancel(ctx, time.Second, true, packageInstalled)
+	return wait.PollUntilContextCancel(ctx, time.Minute, true, packageInstalled)
 }
 
 // GetPackageManifest returns a package manifest by given name.
