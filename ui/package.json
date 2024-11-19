@@ -22,7 +22,11 @@
     "overrides": {
       "react-is": "^18.2.0",
       "body-parser": "^1.20.3",
-      "path-to-regexp": "^0.1.10"
+      "path-to-regexp": "^0.1.10",
+      "casbin.js>axios": "0.28.0",
+      "casbin.js>babel-loader": "9.2.1",
+      "babel-loader>webpack": "5.94.0",
+      "webpack": "5.94.0"
     }
   }
 }

@@ -28,7 +28,7 @@ export const NoStoragesMessage = () => {
         updateDataAfterCreate(queryClient, [
           BACKUP_STORAGES_QUERY_KEY,
           data.namespace,
-        ])(newLocation);
+        ])(newLocation as BackupStorage);
         handleCloseModal();
       },
     });
