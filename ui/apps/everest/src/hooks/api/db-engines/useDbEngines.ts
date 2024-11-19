@@ -31,6 +31,7 @@ import {
   getOperatorsUpgradePlan,
   upgradeOperator,
 } from 'api/dbEngineApi';
+import { rcompare, coerce } from 'semver';
 
 const DB_TYPE_ORDER_MAP: Record<DbEngineType, number> = {
   // Lower is more important
@@ -86,7 +87,17 @@ export const dbEnginesQuerySelect = (
 
           const tool: Record<string, EngineToolPayload> =
             availableVersions[toolName];
-          const versions = Object.keys(tool);
+          const versions = Object.keys(tool).sort((a, b) => {
+            const coercedAVersion = coerce(a);
+            const coercedBVersion = coerce(b);
+
+            if (coercedAVersion && coercedBVersion) {
+              return rcompare(coercedAVersion, coercedBVersion);
+            }
+
+            // This fallback does not return 100% correct results, but hopefully semver should sort it without problems
+            return b.localeCompare(a);
+          });
 
           versions.forEach((version) => {
             result.availableVersions[toolName].push({
