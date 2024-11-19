@@ -106,7 +106,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const setDbEngineDataForEngineType = useCallback(() => {
     //TODO 1234 - edit of dbVersion field should be refactored
     const newEngineData = dbEngines.find((engine) => engine.type === dbEngine);
-    if (newEngineData && mode === 'edit') {
+    if (newEngineData && mode !== 'new') {
       const validVersions = filterAvailableDbVersionsForDbEngineEdition(
         newEngineData,
         defaultDbVersion
