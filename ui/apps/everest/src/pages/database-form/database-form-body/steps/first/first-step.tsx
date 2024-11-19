@@ -136,10 +136,9 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       ((mode === 'edit' || mode === 'restoreFromBackup') && !dbVersion) ||
       mode === 'new'
     ) {
-      const recommendedVersion = dbEngineData.availableVersions.engine
-        .slice()
-        .reverse()
-        .find((version) => version.status === DbEngineToolStatus.RECOMMENDED);
+      const recommendedVersion = dbEngineData.availableVersions.engine.find(
+        (version) => version.status === DbEngineToolStatus.RECOMMENDED
+      );
 
       setValue(
         DbWizardFormFields.dbVersion,
