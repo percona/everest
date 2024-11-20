@@ -33,7 +33,8 @@ export const useDbActions = () => {
     suspendDbCluster(
       { shouldBePaused, dbCluster },
       {
-        onSuccess: (updatedObject: DbCluster) => {
+        onSuccess: (data) => {
+          const updatedObject = data as DbCluster;
           queryClient.setQueryData<GetDbClusterPayload | undefined>(
             [DB_CLUSTERS_QUERY_KEY, updatedObject.metadata.namespace],
             (oldData) => {
@@ -69,7 +70,8 @@ export const useDbActions = () => {
     restartDbCluster(
       { dbCluster },
       {
-        onSuccess: (updatedObject: DbCluster) => {
+        onSuccess: (data) => {
+          const updatedObject = data as DbCluster;
           queryClient.setQueryData<GetDbClusterPayload | undefined>(
             [DB_CLUSTERS_QUERY_KEY, updatedObject.metadata.namespace],
             (oldData) => {
