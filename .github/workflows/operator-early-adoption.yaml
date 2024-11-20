@@ -49,6 +49,7 @@ jobs:
       K8S_PREREQUISITES: ">= 1.27"
       VS_PORT: 8081
       VS_URL: ""
+      LOCAL_REGISTRY_PORT: 5000
       LOCAL_REGISTRY: ""
       ARCH: ""
       OS: ""
@@ -65,6 +66,7 @@ jobs:
         run: |
           echo "ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" >> $GITHUB_ENV
           echo "OS=$(uname | awk '{print tolower($0)}')" >> $GITHUB_ENV
+          echo "LOCAL_REGISTRY=localhost:$LOCAL_REGISTRY_PORT" >> $GITHUB_ENV
           echo "VS_URL=http://localhost:$VS_PORT" >> $GITHUB_ENV
 
       - name: Set up Go release
@@ -101,11 +103,11 @@ jobs:
           cpus: 2
           memory: 2000m
           addons: registry
+          insecure-registry: ${{ env.LOCAL_REGISTRY }}
 
       - name: Expose local registry
         run: |
-          echo "LOCAL_REGISTRY=$(minikube ip):5000">> $GITHUB_ENV
-          kubectl port-forward --namespace kube-system service/registry 5000:80 &
+          kubectl port-forward --namespace kube-system service/registry $LOCAL_REGISTRY_PORT:80 &
 
       - name: VS - checkout
         uses: actions/checkout@v4
@@ -128,13 +130,13 @@ jobs:
         with:
           context: percona-version-service
           push: true
-          tags: localhost:5000/perconalab/version-service:dev
+          tags: ${{ env.LOCAL_REGISTRY}}/perconalab/version-service:dev
 
 
       - name: Apply VS manifest
         run: |
           kubectl create ns everest-system
-          sed -i "s/perconalab\/version-service:.*/localhost:5000\/perconalab\/version-service:dev/g" percona-version-service/deploy.yaml
+          sed -i "s/perconalab\/version-service:.*/$LOCAL_REGISTRY\/perconalab\/version-service:dev/g" percona-version-service/deploy.yaml
           kubectl apply -f percona-version-service/deploy.yaml -n everest-system
           kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service -n everest-system
           kubectl port-forward svc/percona-version-service $VS_PORT:80 -n everest-system &
