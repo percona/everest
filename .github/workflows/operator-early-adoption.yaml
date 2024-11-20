@@ -69,15 +69,15 @@ jobs:
           echo "LOCAL_REGISTRY=localhost:$LOCAL_REGISTRY_PORT" >> $GITHUB_ENV
           echo "VS_URL=http://localhost:$VS_PORT" >> $GITHUB_ENV
 
-      - name: Set up Go release
-        uses: percona-platform/setup-go@v4
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Set GO_VERSION environment variable
-        run: |
-          go version
-          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
+#      - name: Set up Go release
+#        uses: percona-platform/setup-go@v4
+#        with:
+#          go-version: ${{ matrix.go-version }}
+#
+#      - name: Set GO_VERSION environment variable
+#        run: |
+#          go version
+#          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
 #
 #      - name: Enable Go modules cache
 #        uses: percona-platform/cache@v3
@@ -96,21 +96,27 @@ jobs:
 #            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
 #            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
 
-      - name: Start local Kubernetes cluster with the local registry
-        uses: medyagh/setup-minikube@latest
-        id: minikube
+#      - name: Start local Kubernetes cluster with the local registry
+#        uses: medyagh/setup-minikube@latest
+#        id: minikube
+#        with:
+#          cpus: 2
+#          memory: 2000m
+
+      - name: Everest - check out
+        uses: actions/checkout@v4
         with:
-          cpus: 2
-          memory: 2000m
+          token: ${{ secrets.ROBOT_TOKEN }}
+          ref: EVEREST-1563-operator-early-adoption # !!! delete before merge
 
       - name: Deploy registry
         run: |
-          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.1/cert-manager.yaml
-          # install the tool to check the availability
-          go install github.com/cert-manager/cmctl/v2@latest
-          #check availability
-          cmctl check api --wait=2m
-          kubectl apply -f ./.github/registry.yaml --namespace kube-system
+#          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.1/cert-manager.yaml
+#          # install the tool to check the availability
+#          go install github.com/cert-manager/cmctl/v2@latest
+#          #check availability
+#          cmctl check api --wait=2m
+          kubectl apply -f .github/registry.yaml --namespace kube-system
 
       - name: Expose local registry
         run: |
