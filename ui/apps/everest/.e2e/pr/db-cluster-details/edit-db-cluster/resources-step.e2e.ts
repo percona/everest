@@ -218,7 +218,7 @@ const openResourcesModal = async (page: Page) => {
       await expect(
         page
           .getByTestId('node-cpu-overview-section-row')
-          .filter({ hasText: `${db != 'psmdb' ? '0.4' : '2'} CPU` })
+          .filter({ hasText: '2 CPU' })
       ).toBeVisible();
 
       await expect(
@@ -227,7 +227,7 @@ const openResourcesModal = async (page: Page) => {
             `${db != 'psmdb' ? 'proxies' : 'routers'}-cpu-overview-section-row`
           )
           .filter({
-            hasText: `${db != 'psmdb' ? '0.4 x 0.4 CPU = 0.16' : '2 x 2 CPU = 4.00'} CPU`,
+            hasText: `${db != 'psmdb' ? '2 x 0.4 CPU = 0.80' : '2 x 2 CPU = 4.00'} CPU`,
           })
       ).toBeVisible();
 
