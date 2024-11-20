@@ -231,6 +231,7 @@ func (c *Client) setup() error {
 // NewInCluster creates a client using incluster authentication.
 func NewInCluster() (*Client, error) {
 	config, err := rest.InClusterConfig()
+	config.TLSClientConfig.Insecure = true
 	if err != nil {
 		return nil, err
 	}
