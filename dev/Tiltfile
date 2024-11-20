@@ -198,11 +198,6 @@ for namespace in pg_namespaces:
   k8s_yaml(namespace_inject(pg_operator_bundle_yaml, namespace))
   k8s_resource(
     workload='percona-postgresql-operator%s' % (':deployment:' + namespace if len(pg_namespaces) > 1 else ''),
-    objects=[
-      'percona-postgresql-operator:serviceaccount:%s' % namespace,
-      'percona-postgresql-operator:role:%s' % namespace,
-      'service-account-percona-postgresql-operator:rolebinding:%s' % namespace,
-    ],
     resource_deps = [
       'namespaces',
       'pg-crds',
