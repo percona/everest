@@ -108,7 +108,7 @@ jobs:
         with:
           token: ${{ secrets.ROBOT_TOKEN }}
           ref: EVEREST-1563-operator-early-adoption # !!! delete before merge
-
+          
       - name: Deploy registry
         run: |
 #          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.1/cert-manager.yaml
