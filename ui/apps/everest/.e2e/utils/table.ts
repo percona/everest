@@ -39,7 +39,7 @@ export const waitForStatus = async (
 ) => {
   const dbRow = page.getByRole('row').filter({ hasText: name });
   await expect(dbRow).toBeVisible({ timeout: 10000 });
-  await expect(dbRow.getByTestId(`${name}-status`)).toHaveText(status, {
+  await expect(dbRow.getByText(status, { exact: true })).toBeVisible({
     timeout: timeout,
   });
 };
