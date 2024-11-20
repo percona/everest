@@ -116,7 +116,7 @@ jobs:
           #go install github.com/cert-manager/cmctl/v2@latest
           #check availability
           #cmctl check api --wait=2m
-          kubectl apply -f .github/registry.yaml --namespace kube-system
+          kubectl apply -f .github/secure-registry.yaml --namespace kube-system
 
       - name: Expose local registry
         run: |
