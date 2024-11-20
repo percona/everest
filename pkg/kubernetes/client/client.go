@@ -188,6 +188,7 @@ func NewFromKubeConfig(kubeconfig string, l *zap.SugaredLogger) (*Client, error)
 
 	config.QPS = defaultQPSLimit
 	config.Burst = defaultBurstLimit
+	config.TLSClientConfig.Insecure = true
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
@@ -237,6 +238,7 @@ func NewInCluster() (*Client, error) {
 	config.QPS = defaultQPSLimit
 	config.Burst = defaultBurstLimit
 	config.Timeout = requestTimeout
+	config.TLSClientConfig.Insecure = true
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
