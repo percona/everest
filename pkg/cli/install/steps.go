@@ -68,7 +68,7 @@ func (o *Install) newStepEnsureEverestOLM() steps.Step {
 				return err
 			}
 			for _, depl := range depls.Items {
-				if err := o.kubeClient.WaitForRollout(ctx, depl.GetName(), depl.GetNamespace()); err != nil {
+				if err := o.waitForDeployment(ctx, depl.GetName(), depl.GetNamespace()); err != nil {
 					return err
 				}
 			}

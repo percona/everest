@@ -91,9 +91,11 @@ const (
 	pollInterval    = 5 * time.Second
 	pollTimeout     = 10 * time.Minute
 	backoffInterval = 5 * time.Second
-)
 
-const postInstallMessage = "Everest has been successfully installed!"
+	operatorInstallThreads = 1
+
+	postInstallMessage = "Everest has been successfully installed!"
+)
 
 // Install implements the main logic for commands.
 type Install struct {
@@ -109,8 +111,6 @@ type Install struct {
 	installVersion string
 	helmInstaller  *helm.Installer
 }
-
-const operatorInstallThreads = 1
 
 //nolint:gochecknoglobals
 var (
