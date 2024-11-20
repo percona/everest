@@ -30,7 +30,7 @@ export const scheduleModalDefaultValues = (
     const formValues = getFormValuesFromCronExpression(schedule);
     return {
       [ScheduleFormFields.scheduleName]: name || '',
-      [ScheduleFormFields.storageLocation]: { name: backupStorageName } || null,
+      [ScheduleFormFields.storageLocation]: { name: backupStorageName },
       [ScheduleFormFields.retentionCopies]: retentionCopies?.toString() || '0',
       ...formValues,
     };

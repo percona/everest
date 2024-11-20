@@ -28,7 +28,7 @@ const BackupsActionableAlert = ({ namespace }: BackupsActionableAlertProps) => {
         updateDataAfterCreate(queryClient, [
           BACKUP_STORAGES_QUERY_KEY,
           namespace,
-        ])(newLocation);
+        ])(newLocation as BackupStorage);
         handleCloseModal();
       },
     });

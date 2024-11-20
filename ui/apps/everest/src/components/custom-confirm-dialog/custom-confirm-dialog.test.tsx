@@ -37,8 +37,8 @@ describe('ConfirmFormDialog', () => {
             submitMessage="submit"
             alertMessage="alert"
             checkboxMessage="checkbox"
-            closeModal={vi.fn}
-            handleConfirm={vi.fn}
+            closeModal={vi.fn()}
+            handleConfirm={vi.fn()}
             selectedId={selectedId}
             isOpen
             headerMessage="Delete database"
@@ -65,8 +65,8 @@ describe('ConfirmFormDialog', () => {
             submitMessage="submit"
             alertMessage="alert"
             checkboxMessage="checkbox"
-            closeModal={vi.fn}
-            handleConfirm={vi.fn}
+            closeModal={vi.fn()}
+            handleConfirm={vi.fn()}
             selectedId={selectedId}
             validationMode="onTouched"
             isOpen
