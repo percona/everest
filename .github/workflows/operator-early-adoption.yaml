@@ -114,7 +114,7 @@ jobs:
           kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.1/cert-manager.yaml
           # install the tool to check the availability
           go install github.com/cert-manager/cmctl/v2@latest
-          check availability
+          # check availability
           cmctl check api --wait=2m
           kubectl apply -f .github/secure-registry.yaml --namespace kube-system
 
