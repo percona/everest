@@ -16,7 +16,7 @@
     "build-storybook": "turbo run build-storybook"
   },
   "dependencies": {
-    "@changesets/cli": "^2.27.1"
+    "@changesets/cli": "^2.27.9"
   },
   "pnpm": {
     "overrides": {
@@ -26,7 +26,8 @@
       "casbin.js>axios": "0.28.0",
       "casbin.js>babel-loader": "9.2.1",
       "babel-loader>webpack": "5.94.0",
-      "webpack": "5.94.0"
+      "webpack": "5.94.0",
+      "cross-spawn": "6.0.6"
     }
   }
 }
