@@ -188,7 +188,6 @@ func NewFromKubeConfig(kubeconfig string, l *zap.SugaredLogger) (*Client, error)
 
 	config.QPS = defaultQPSLimit
 	config.Burst = defaultBurstLimit
-	config.TLSClientConfig.Insecure = true
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
@@ -232,7 +231,6 @@ func (c *Client) setup() error {
 // NewInCluster creates a client using incluster authentication.
 func NewInCluster() (*Client, error) {
 	config, err := rest.InClusterConfig()
-	config.TLSClientConfig.Insecure = true
 	if err != nil {
 		return nil, err
 	}
