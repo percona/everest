@@ -143,7 +143,12 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		out = io.Discard
 	}
 
-	if err := u.setVersionInfo(ctx, out, everestVersion); err != nil {
+	if err := u.setVersionInfo(ctx, everestVersion); err != nil {
+		if errors.Is(err, ErrNoUpdateAvailable) {
+			u.l.Info("You're running the latest version of Everest")
+			fmt.Fprintln(out, "\n", output.Rocket("You're running the latest version of Everest"))
+			return nil
+		}
 		return err
 	}
 
@@ -174,14 +179,9 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	return u.printPostUpgradeMessage(ctx, out)
 }
 
-func (u *Upgrade) setVersionInfo(ctx context.Context, out io.Writer, everestVersion *goversion.Version) error {
+func (u *Upgrade) setVersionInfo(ctx context.Context, everestVersion *goversion.Version) error {
 	upgradeEverestTo, err := u.canUpgrade(ctx, everestVersion)
 	if err != nil {
-		if errors.Is(err, ErrNoUpdateAvailable) {
-			u.l.Info("You're running the latest version of Everest")
-			fmt.Fprintln(out, "\n", output.Rocket("You're running the latest version of Everest"))
-			return nil
-		}
 		return err
 	}
 	u.upgradeToVersion = upgradeEverestTo.String()
