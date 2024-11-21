@@ -133,6 +133,12 @@ export const BackupsDetails = ({
                 pageSize: 5,
                 pageIndex: 0,
               },
+              sorting: [
+                {
+                  id: 'created',
+                  desc: true,
+                },
+              ],
             }}
             tableName="backupList"
             noDataMessage={Messages.titles.noData}
