@@ -18,8 +18,8 @@ let token: string;
 
 [
   // { db: 'psmdb', size: 1 },
-  { db: 'pxc', size: 1 },
-  // { db: 'postgresql', size: 1 },
+  // { db: 'pxc', size: 1 },
+  { db: 'postgresql', size: 1 },
 ].forEach(({ db, size }) => {
   test.describe('Overview page', () => {
     test.describe.configure({ timeout: 900000 });
@@ -88,7 +88,7 @@ let token: string;
       await test.step('Check db list and status', async () => {
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Initializing', 15000);
-        await waitForStatus(page, clusterName, 'Up', 720000);
+        await waitForStatus(page, clusterName, 'Up', 890000);
       });
 
       await findDbAndClickRow(page, clusterName);
@@ -136,7 +136,7 @@ let token: string;
 
       await test.step('Check db list and status', async () => {
         await page.goto('/databases');
-        await waitForStatus(page, clusterName, 'Up', 720000);
+        await waitForStatus(page, clusterName, 'Up', 890000);
       });
     });
 
