@@ -21,8 +21,6 @@ import (
 	"path"
 
 	"github.com/AlekSi/pointer"
-	"github.com/cenkalti/backoff/v4"
-	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/percona/everest/pkg/cli/helm"
@@ -79,9 +77,12 @@ func (o *Install) newStepEnsureEverestOLM() steps.Step {
 
 func (o *Install) newStepEnsureEverestMonitoring() steps.Step {
 	return steps.Step{
-		Desc: "Ensuring monitoring is installed",
+		Desc: "Ensuring monitoring stack is ready",
 		F: func(ctx context.Context) error {
-			return o.installVMOperator(ctx)
+			if err := o.waitForDeployment(ctx, common.VictoriaMetricsOperatorDeploymentName, common.MonitoringNamespace); err != nil {
+				return err
+			}
+			return o.waitForDeployment(ctx, common.KubeStateMetricsDeploymentName, common.MonitoringNamespace)
 		},
 	}
 }
@@ -124,25 +125,6 @@ func (o *Install) installEverestHelmChart(ctx context.Context) error {
 		return fmt.Errorf("could not install Helm chart: %w", err)
 	}
 	return nil
-}
-
-// TODO: remove this after we move to the victoria-metrics Helm chart.
-func (o *Install) installVMOperator(ctx context.Context) error {
-	// Approve Victoriametrics operator install plan.
-	return backoff.Retry(func() error {
-		channel := "stable-v0"
-		name := "victoriametrics-operator"
-		return o.kubeClient.InstallOperator(ctx, kubernetes.InstallOperatorRequest{
-			Channel:                channel,
-			Name:                   name,
-			Namespace:              common.MonitoringNamespace,
-			CatalogSource:          common.PerconaEverestCatalogName,
-			CatalogSourceNamespace: kubernetes.OLMNamespace,
-			OperatorGroup:          common.MonitoringNamespace,
-			InstallPlanApproval:    olmv1alpha1.ApprovalManual,
-		})
-	}, backoff.NewConstantBackOff(backoffInterval),
-	)
 }
 
 func (o *Install) provisionDBNamespace(ver string, namespace string) steps.Step {
