@@ -102,7 +102,7 @@ func (o *Install) newStepEnsureCatalogSource() steps.Step {
 			return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
 				cs, err = o.kubeClient.GetCatalogSource(ctx, cs.GetName(), cs.GetNamespace())
 				if err != nil {
-					return false, fmt.Errorf("catalog source not found")
+					return false, fmt.Errorf("cannot get CatalogSource: %w", err)
 				}
 				return pointer.Get(cs.Status.GRPCConnectionState).LastObservedState == "READY", nil
 			})
