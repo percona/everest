@@ -374,12 +374,12 @@ func (u *Upgrade) checkRequirements(ctx context.Context, supVer *common.Supporte
 			return errors.Join(err, fmt.Errorf("invalid cli version %s", cliVersion.Version))
 		}
 
-		// if !supVer.Cli.Check(cli.Core()) {
-		// 	return fmt.Errorf(
-		// 		"cli version %q does not meet minimum requirements of %q",
-		// 		cli, supVer.Cli.String(),
-		// 	)
-		// }
+		if !supVer.Cli.Check(cli.Core()) {
+			return fmt.Errorf(
+				"cli version %q does not meet minimum requirements of %q",
+				cli, supVer.Cli.String(),
+			)
+		}
 		u.l.Debugf("cli version %q meets requirements %q", cli, supVer.Cli.String())
 	} else {
 		u.l.Debug("cli version is empty")
