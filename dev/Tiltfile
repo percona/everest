@@ -65,6 +65,12 @@ local('[ -x %s/bin/kustomize ] || make -C %s kustomize' % (operator_dir, operato
 
 # Ensure frontend repo is initialized
 local('make -C %s init' % (frontend_dir), quiet=True)
+# Ensure backend repo is initialized
+local('make -C %s init' % (backend_dir), quiet=True)
+
+# Build helm dependencies
+local('make -C %s deps' % (everest_chart_dir), quiet=True)
+
 
 # Create namespaces
 load('ext://namespace', 'namespace_create', 'namespace_inject')
