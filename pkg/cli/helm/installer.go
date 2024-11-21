@@ -123,6 +123,7 @@ func (i *Installer) Install(ctx context.Context) error {
 		if errors.Is(err, driver.ErrReleaseNotFound) {
 			return i.install(ctx)
 		}
+		return err
 	}
 	// If the release already exists, we will re-apply the manifests using upgrade.
 	// We're not actually upgrading to a new version, but using upgrade to re-apply manifests.
