@@ -68,10 +68,11 @@ test.describe('Everest CLI install', async () => {
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
         '✓ Install Everest Helm chart',
-        '✓ Wait for Everest API Deployment',
-        '✓ Wait for Everest Operator Deployment',
-        '✓ Wait for Operator Lifecycle Manager',
-        '✓ Wait for Everest Monitoring',
+        '✓ Ensuring Everest API deployment is ready',
+        '✓ Ensuring Everest operator deployment is ready',
+        '✓ Ensuring OLM components are ready',
+        '✓ Ensuring Everest CatalogSource is ready',
+        '✓ Ensuring monitoring stack is ready',
         '✓ Provisioning DB namespace \'everest-operators\'',
         '🚀 Everest has been successfully installed!',
       ]);
