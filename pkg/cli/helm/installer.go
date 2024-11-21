@@ -65,7 +65,6 @@ type Installer struct {
 	ReleaseNamespace       string
 	Values                 map[string]interface{}
 	CreateReleaseNamespace bool
-	DryRun                 bool
 
 	// internal fields, set only after Init() is called.
 	chart *chart.Chart
@@ -147,27 +146,42 @@ func (i *Installer) GetRelease() (*release.Release, error) {
 
 // RenderTemplates renders the Helm chart templates.
 func (i Installer) RenderTemplates(ctx context.Context, uninstallOrd bool) (helmutils.RenderedTemplates, error) {
-	i.DryRun = true
-	if err := i.Install(ctx); err != nil {
-		return nil, err
+	templates, err := i.renderTemplates(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render templates: %w", err)
 	}
 	rendered := helmutils.RenderedTemplates{}
-	if err := rendered.FromString(i.release.Manifest, uninstallOrd); err != nil {
+	if err := rendered.FromString(templates, uninstallOrd); err != nil {
 		return nil, err
 	}
 	return rendered, nil
+}
+
+func (i *Installer) renderTemplates(ctx context.Context) (string, error) {
+	install := action.NewInstall(i.cfg)
+	install.ReleaseName = i.ReleaseName
+	install.Namespace = i.ReleaseNamespace
+	install.CreateNamespace = i.CreateReleaseNamespace
+	install.Wait = false
+	install.DisableHooks = true
+	install.IncludeCRDs = true
+	install.DryRun = true
+
+	rel, err := install.RunWithContext(ctx, i.chart, i.Values)
+	if err != nil {
+		return "", err
+	}
+	return rel.Manifest, nil
 }
 
 func (i *Installer) install(ctx context.Context) error {
 	install := action.NewInstall(i.cfg)
 	install.ReleaseName = i.ReleaseName
 	install.Namespace = i.ReleaseNamespace
-	install.DryRun = i.DryRun
 	install.CreateNamespace = i.CreateReleaseNamespace
 	install.Wait = false
 	install.TakeOwnership = true
 	install.DisableHooks = true
-	install.IncludeCRDs = true
 
 	rel, err := install.RunWithContext(ctx, i.chart, i.Values)
 	if err != nil {
