@@ -49,7 +49,7 @@ gcloud auth configure-docker <REGISTRY_REGION>-docker.pkg.dev
 
 
 ### 2. Run tilt
-1. Set the path to the local git repo for [everest-operator](https://github.com/percona/everest-operator)
+1. Set the following environment variables:
 ```sh
 export EVEREST_OPERATOR_DIR=/path/to/everest-operator
 export EVEREST_CHART_DIR=/path/to/percona-helm-charts/charts/everest
