@@ -67,7 +67,7 @@ test.describe('Everest CLI install', async () => {
 
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
-        '✓ Install Everest Helm chart',
+        '✓ Installing Everest Helm chart',
         '✓ Ensuring Everest API deployment is ready',
         '✓ Ensuring Everest operator deployment is ready',
         '✓ Ensuring OLM components are ready',
