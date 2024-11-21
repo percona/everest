@@ -23,17 +23,11 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
-	"strings"
 
-	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	everesthelmchart "github.com/percona/percona-helm-charts/charts/everest"
 	helmcli "helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/getter"
-	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/releaseutil"
-	"sigs.k8s.io/yaml"
 )
 
 // MustMergeValues panics if MergeValues returns an error.
@@ -60,72 +54,6 @@ func MergeValues(userDefined values.Options, vals ...map[string]interface{}) (ma
 		}
 	}
 	return merged, nil
-}
-
-// RenderedTemplates is a representation of the rendered templates.
-// It is a single YAML file containing all the rendered templates.
-// The YAML file is separated by `---` between each template.
-type RenderedTemplates []byte
-
-// FromString parses the provided manifest and sets the rendered templates.
-func (t *RenderedTemplates) FromString(manifest string, uninstallOrd bool) error {
-	split := releaseutil.SplitManifests(manifest)
-	if uninstallOrd {
-		_, files, err := releaseutil.SortManifests(split, nil, releaseutil.UninstallOrder)
-		if err != nil {
-			return fmt.Errorf("cannot sort manifests: %w", err)
-		}
-		split = make(map[string]string)
-		for i, f := range files {
-			split[fmt.Sprintf("manifest-%d", i)] = f.Content
-		}
-	}
-	var builder strings.Builder
-	for _, y := range split {
-		builder.WriteString("\n---\n" + y)
-	}
-	rendered := builder.String()
-	rendered = strings.TrimPrefix(rendered, "\n---\n")
-	*t = []byte(rendered)
-	return nil
-}
-
-func fileMapToBytes(files map[string]string) []byte {
-	var builder strings.Builder
-	for _, doc := range files {
-		builder.WriteString(doc + "\n---\n")
-	}
-	return []byte(strings.TrimSuffix(builder.String(), "\n---\n"))
-}
-
-// Filter the rendered templates by the provided paths.
-func (t *RenderedTemplates) Filter(paths ...string) RenderedTemplates {
-	files := t.Files()
-	result := make(map[string]string)
-	for name, doc := range files {
-		for _, p := range paths {
-			if strings.Contains(name, p) {
-				result[name] = doc
-			}
-		}
-	}
-	return RenderedTemplates(fileMapToBytes(result))
-}
-
-// Files returns the rendered templates as a map of file names to their content.
-func (t RenderedTemplates) Files() map[string]string {
-	sep := regexp.MustCompile("(?:^|\\s*\n)---\\s*")
-	manifestNameRegex := regexp.MustCompile("# Source: [^/]+/(.+)")
-	docs := sep.Split(string(t), -1)
-	result := make(map[string]string)
-	for _, doc := range docs {
-		fileName := manifestNameRegex.FindStringSubmatch(doc)
-		if len(fileName) == 0 || doc == "" {
-			continue
-		}
-		result[fileName[1]] = doc
-	}
-	return result
 }
 
 // copies the contents of src embed.FS to the dest directory.
@@ -175,20 +103,11 @@ func DevChartDir() (string, error) {
 	return tmp, nil
 }
 
-// GetEverestCatalogSource gets the Everest catalog source from the provided release.
-func GetEverestCatalogSource(rel *release.Release) (*olmv1alpha1.CatalogSource, error) {
-	rendered := RenderedTemplates{}
-	if err := rendered.FromString(rel.Manifest, false); err != nil {
-		return nil, fmt.Errorf("failed to parse rendered templates: %w", err)
+func StringsToBytes(strs []string) []byte {
+	var res []byte
+	for _, s := range strs {
+		b := []byte(s)
+		res = append(res, b...)
 	}
-	file := rendered.Filter("everest-catalogsource.yaml")
-	if len(file.Files()) > 1 {
-		return nil, errors.New("invalid filter: more than one catalog source found")
-	}
-
-	cs := &olmv1alpha1.CatalogSource{}
-	if err := yaml.Unmarshal(file, cs); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal catalog source: %w", err)
-	}
-	return cs, nil
+	return res
 }

@@ -36,8 +36,6 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-
-	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
 )
 
 var settings = helmcli.New() //nolint:gochecknoglobals
@@ -113,6 +111,17 @@ func (i *Installer) Init(kubeconfigPath string, o ChartOptions) error {
 	return nil
 }
 
+// Render returns a TemplateRenderer to render the Helm chart.
+func (i *Installer) Render() *TemplateRenderer {
+	return &TemplateRenderer{
+		chart:        i.chart,
+		cfg:          i.cfg,
+		relName:      i.ReleaseName,
+		relNamespace: i.ReleaseNamespace,
+		values:       i.Values,
+	}
+}
+
 // Install the Helm chart.
 // Calling Install multiple times is idempotent; it will re-apply the manifests using upgrade.
 func (i *Installer) Install(ctx context.Context) error {
@@ -142,36 +151,6 @@ func (i *Installer) GetRelease() (*release.Release, error) {
 		return nil, errors.New("chart not installed")
 	}
 	return i.release, nil
-}
-
-// RenderTemplates renders the Helm chart templates.
-func (i Installer) RenderTemplates(ctx context.Context, uninstallOrd bool) (helmutils.RenderedTemplates, error) {
-	templates, err := i.renderTemplates(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to render templates: %w", err)
-	}
-	rendered := helmutils.RenderedTemplates{}
-	if err := rendered.FromString(templates, uninstallOrd); err != nil {
-		return nil, err
-	}
-	return rendered, nil
-}
-
-func (i *Installer) renderTemplates(ctx context.Context) (string, error) {
-	install := action.NewInstall(i.cfg)
-	install.ReleaseName = i.ReleaseName
-	install.Namespace = i.ReleaseNamespace
-	install.CreateNamespace = i.CreateReleaseNamespace
-	install.Wait = false
-	install.DisableHooks = true
-	install.IncludeCRDs = true
-	install.DryRun = true
-
-	rel, err := install.RunWithContext(ctx, i.chart, i.Values)
-	if err != nil {
-		return "", err
-	}
-	return rel.Manifest, nil
 }
 
 func (i *Installer) install(ctx context.Context) error {

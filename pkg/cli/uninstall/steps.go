@@ -127,17 +127,17 @@ func (u *Uninstall) cleanupLeftovers(ctx context.Context) error {
 		ReleaseNamespace: common.SystemNamespace,
 	}
 	if err := installer.Init(u.config.KubeconfigPath, helm.ChartOptions{
-		Version: "1.3.0-rc5",
+		Version: "1.3.0-rc5", // todo
 		URL:     helm.DefaultHelmRepoURL,
 		Name:    helm.EverestChartName,
 	}); err != nil {
 		return fmt.Errorf("failed to initialize Helm installer: %w", err)
 	}
-	file, err := installer.RenderTemplates(ctx, true)
+	files, err := installer.Render().GetAllManifests(ctx, true)
 	if err != nil {
 		return fmt.Errorf("failed to render Helm templates: %w", err)
 	}
-	return u.kubeClient.DeleteManifestFile(file, common.SystemNamespace)
+	return u.kubeClient.DeleteManifestFile([]byte(files), common.SystemNamespace)
 }
 
 func (u *Uninstall) uninstallHelmChart(ctx context.Context) error {

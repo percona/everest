@@ -37,24 +37,18 @@ func TestHelm_RenderTemplates(t *testing.T) {
 	installer.cfg = &cfg
 
 	ctx := context.Background()
-	rendered, err := installer.RenderTemplates(ctx, false)
+
+	renderer := installer.Render()
+
+	allFiles, err := renderer.GetAllManifests(ctx, false)
 	require.NoError(t, err)
+	assert.Len(t, splitYaml(allFiles), 7)
 
-	allFiles := rendered.Files()
-	assert.Len(t, allFiles, 6)
+	allFiles, err = renderer.GetAllManifests(ctx, true)
+	require.NoError(t, err)
+	assert.Len(t, splitYaml(allFiles), 7)
 
-	depls := rendered.Filter("templates/deployment.yaml").Files()
-	assert.Len(t, depls, 1)
-
-	svcs := rendered.Filter("templates/service.yaml").Files()
-	assert.Len(t, svcs, 1)
-
-	deplAndSvc := rendered.Filter("templates/deployment.yaml", "templates/service.yaml").Files()
-	assert.Len(t, deplAndSvc, 2)
-
-	crds := rendered.Filter("crds").Files()
-	assert.Len(t, crds, 1)
-
-	none := rendered.Filter("templates/doesnotexist.yaml").Files()
-	assert.Empty(t, none, 0)
+	crds, err := renderer.GetCRDs(ctx)
+	require.NoError(t, err)
+	assert.Len(t, crds, 2)
 }

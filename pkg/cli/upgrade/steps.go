@@ -64,12 +64,11 @@ func (u *Upgrade) waitForDeployment(ctx context.Context, name, namespace string)
 }
 
 func (u *Upgrade) upgradeCustomResourceDefinitions(ctx context.Context) error {
-	files, err := u.helmInstaller.RenderTemplates(ctx, false)
+	crdStrs, err := u.helmInstaller.Render().GetCRDs(ctx)
 	if err != nil {
-		return fmt.Errorf("could not render Helm templates: %w", err)
+		return fmt.Errorf("could not get CRDs: %w", err)
 	}
-	crds := files.Filter("crds")
-	return u.kubeClient.ApplyManifestFile(crds, common.SystemNamespace)
+	return u.kubeClient.ApplyManifestFile(helmutils.StringsToBytes(crdStrs), common.SystemNamespace)
 }
 
 func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
