@@ -10,7 +10,7 @@ type EverestValues struct {
 
 // NewEverestValues returns the values to be used in the Helm chart.
 func NewEverestValues(v EverestValues) map[string]interface{} {
-	values := map[string]interface{}{}
+	values := make(map[string]interface{})
 	if v.ClusterType == kubernetes.ClusterTypeOpenShift {
 		values["compatibility.openshift"] = true
 	}
