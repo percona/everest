@@ -243,6 +243,7 @@ everest_yaml = helm(
         'createMonitoringResources=false',
         'monitoring.crds.enabled=true',
         'monitoring.crds.plain=false',
+        'server.initialAdminPassword=admin',
     ],
 )
 # we don't need the catalog source
@@ -431,6 +432,7 @@ k8s_resource(
     resource_deps = [
       'everest-namespace',
     ],
+    port_forwards=8080,
     new_name='everest-server-deploy',
     labels=["everest"]
 )
