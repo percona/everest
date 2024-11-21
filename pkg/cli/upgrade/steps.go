@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/AlekSi/pointer"
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/cli/helm"
 	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
@@ -50,6 +51,25 @@ func (u *Upgrade) newStepEnsureEverestAPI() steps.Step {
 		Desc: "Ensuring Everest API deployment is ready",
 		F: func(ctx context.Context) error {
 			return u.waitForDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
+		},
+	}
+}
+
+func (u *Upgrade) newStepEnsureCatalogSource() steps.Step {
+	return steps.Step{
+		Desc: "Ensuring Everest CatalogSource is ready",
+		F: func(ctx context.Context) error {
+			catalogNs, err := u.helmInstaller.Render().GetEverestCatalogNamespace(ctx)
+			if err != nil {
+				return fmt.Errorf("could not get Everest CatalogSource namespace: %w", err)
+			}
+			return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
+				cs, err := u.kubeClient.GetCatalogSource(ctx, common.PerconaEverestCatalogName, catalogNs)
+				if err != nil {
+					return false, fmt.Errorf("cannot get CatalogSource: %w", err)
+				}
+				return pointer.Get(cs.Status.GRPCConnectionState).LastObservedState == "READY", nil
+			})
 		},
 	}
 }
