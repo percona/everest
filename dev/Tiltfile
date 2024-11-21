@@ -59,6 +59,12 @@ if not os.path.exists(everest_chart_dir):
   fail('Chart dir does not exist: %s' % everest_chart_dir)
 print('Using chart dir: %s' % everest_chart_dir)
 
+watch_settings(
+    ignore=[
+        '%s/**/*.tgz' % everest_chart_dir,
+        '%s/**/*tmpcharts*' % everest_chart_dir,
+    ]
+)
 
 # Ensure operator's kustomize is installed
 local('[ -x %s/bin/kustomize ] || make -C %s kustomize' % (operator_dir, operator_dir), quiet=True)
@@ -69,7 +75,7 @@ local('make -C %s init' % (frontend_dir), quiet=True)
 local('make -C %s init' % (backend_dir), quiet=True)
 
 # Build helm dependencies
-local('make -C %s deps' % (everest_chart_dir), quiet=True)
+local('HELM=%s/bin/helm make -C %s deps' % (backend_dir, everest_chart_dir), quiet=True)
 
 
 # Create namespaces
@@ -217,6 +223,11 @@ for namespace in pg_namespaces:
   k8s_yaml(namespace_inject(pg_operator_bundle_yaml, namespace))
   k8s_resource(
     workload='percona-postgresql-operator%s' % (':deployment:' + namespace if len(pg_namespaces) > 1 else ''),
+    objects=[
+      'percona-postgresql-operator:serviceaccount:%s' % namespace,
+      'percona-postgresql-operator:role:%s' % namespace,
+      'percona-postgresql-operator:rolebinding:%s' % namespace,
+    ],
     resource_deps = [
       'namespaces',
       'pg-crds',
