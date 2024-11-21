@@ -157,10 +157,10 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) steps.Step 
 				chartDir = path.Join(o.config.ChartDir, dbNamespaceSubChartPath)
 			}
 
-			values := helmutils.MustMergeValues(
-				o.getDBNamespaceInstallValues(),
-				helm.ClusterValues(o.clusterType),
-			)
+			overrides := helm.NewEverestValues(helm.EverestValues{
+				ClusterType: o.clusterType,
+			})
+			values := helmutils.MustMergeValues(o.getDBNamespaceInstallValues(), overrides)
 
 			installer := helm.Installer{
 				ReleaseName:            namespace,

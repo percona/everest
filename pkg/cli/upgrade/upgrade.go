@@ -201,10 +201,11 @@ func (u *Upgrade) setKubernetesEnv(ctx context.Context) error {
 }
 
 func (u *Upgrade) setupHelmInstaller() error {
-	values := helmutils.MustMergeValues(
-		u.config.Values,
-		helm.ClusterValues(u.clusterType),
-	)
+	overrides := helm.NewEverestValues(helm.EverestValues{
+		ClusterType:        u.clusterType,
+		VersionMetadataURL: u.config.VersionMetadataURL,
+	})
+	values := helmutils.MustMergeValues(u.config.Values, overrides)
 	installer := &helm.Installer{
 		ReleaseName:      common.SystemNamespace,
 		ReleaseNamespace: common.SystemNamespace,

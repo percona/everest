@@ -278,10 +278,11 @@ func (o *Install) setupHelmInstaller(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	values := helmutils.MustMergeValues(
-		o.config.Values,
-		helm.ClusterValues(o.clusterType),
-	)
+	overrides := helm.NewEverestValues(helm.EverestValues{
+		ClusterType:        o.clusterType,
+		VersionMetadataURL: o.config.VersionMetadataURL,
+	})
+	values := helmutils.MustMergeValues(o.config.Values, overrides)
 	installer := &helm.Installer{
 		ReleaseName:            common.SystemNamespace,
 		ReleaseNamespace:       common.SystemNamespace,

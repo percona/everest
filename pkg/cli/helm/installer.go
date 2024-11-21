@@ -38,7 +38,6 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 
 	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
-	"github.com/percona/everest/pkg/kubernetes"
 )
 
 var settings = helmcli.New() //nolint:gochecknoglobals
@@ -271,16 +270,6 @@ func everestctlCacheDir() (string, error) {
 		return "", err
 	}
 	return res, nil
-}
-
-// ClusterValues returns the value overrides depending on the Kubernetes cluster type.
-func ClusterValues(ct kubernetes.ClusterType) map[string]interface{} {
-	if ct == kubernetes.ClusterTypeOpenShift {
-		return map[string]interface{}{
-			"compatibility.openshift": true,
-		}
-	}
-	return nil
 }
 
 // Runs `helm dependency build` in the chart directory.
