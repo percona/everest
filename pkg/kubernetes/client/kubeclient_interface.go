@@ -158,6 +158,8 @@ type KubeClientConnector interface {
 	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
 	// UpdateDeployment updates a deployment and returns the updated object.
 	UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error)
+	// DeleteDeployment deletes a deployment.
+	DeleteDeployment(ctx context.Context, name, namespace string) error
 	// GetInstallPlan retrieves an OLM install plan by namespace and name.
 	GetInstallPlan(ctx context.Context, namespace string, name string) (*v1alpha1.InstallPlan, error)
 	// ListInstallPlans lists install plans.

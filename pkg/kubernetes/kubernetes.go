@@ -428,10 +428,6 @@ func (k *Kubernetes) InstallOperator(ctx context.Context, req InstallOperatorReq
 		return err
 	}
 	deploymentName := req.Name
-	if req.Name == "victoriametrics-operator" {
-		deploymentName = "vm-operator-vm-operator"
-	}
-
 	k.l.Debugf("Waiting for deployment rollout %s/%s", req.Namespace, deploymentName)
 
 	return k.client.DoRolloutWait(ctx, types.NamespacedName{Namespace: req.Namespace, Name: deploymentName})

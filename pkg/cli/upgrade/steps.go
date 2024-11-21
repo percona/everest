@@ -8,6 +8,7 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/cli/helm"
@@ -156,27 +157,41 @@ func (u *Upgrade) cleanupLegacyResources(ctx context.Context) error {
 	}
 
 	// Delete resources related to Everest Operator Subscription.
-	everestOperatorCurrentCSV := ""
+	if err := deleteOLMOperator(ctx, u.kubeClient, common.EverestOperatorName, common.SystemNamespace); err != nil {
+		return fmt.Errorf("could not delete Everest operator: %w", err)
+	}
+	// Delete resources related to victoria metrics operator Subscription.
+	if err := deleteOLMOperator(ctx, u.kubeClient, "victoriametrics-operator", common.MonitoringNamespace); err != nil {
+		return fmt.Errorf("could not delete victoria metrics operator: %w", err)
+	}
+	if err := u.kubeClient.DeleteDeployment(ctx, "percona-everest", common.SystemNamespace); client.IgnoreNotFound(err) != nil {
+		return fmt.Errorf("could not delete percona-everest deployment: %w", err)
+	}
+	return nil
+}
+
+// deleteOLMOperator deletes the subscription and current installed CSV.
+func deleteOLMOperator(ctx context.Context, k kubernetes.KubernetesConnector, subscription, namespace string) error {
+	currentCSV := ""
 	if err := wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
-		key := types.NamespacedName{Name: "everest-operator", Namespace: common.SystemNamespace}
-		sub, err := u.kubeClient.GetSubscription(ctx, key.Name, key.Namespace)
+		key := types.NamespacedName{Name: subscription, Namespace: namespace}
+		sub, err := k.GetSubscription(ctx, key.Name, key.Namespace)
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
 				return true, nil
 			}
 			return false, err
 		}
-		everestOperatorCurrentCSV = sub.Status.InstalledCSV
-		return false, u.kubeClient.DeleteSubscription(ctx, key)
+		currentCSV = sub.Status.InstalledCSV
+		return false, k.DeleteSubscription(ctx, key)
 	}); err != nil {
 		return err
 	}
-
-	if everestOperatorCurrentCSV != "" {
+	if currentCSV != "" {
 		if err := wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
-			if err := u.kubeClient.DeleteClusterServiceVersion(ctx, types.NamespacedName{
-				Namespace: common.SystemNamespace,
-				Name:      everestOperatorCurrentCSV,
+			if err := k.DeleteClusterServiceVersion(ctx, types.NamespacedName{
+				Namespace: namespace,
+				Name:      currentCSV,
 			}); err != nil {
 				if k8serrors.IsNotFound(err) {
 					return true, nil

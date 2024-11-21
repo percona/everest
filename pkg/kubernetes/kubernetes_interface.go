@@ -59,6 +59,8 @@ type KubernetesConnector interface {
 	UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error)
 	// ListDeployments returns a list of deployments in the provided namespace.
 	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
+	// DeleteDeployment deletes a deployment by provided name and namespace.
+	DeleteDeployment(ctx context.Context, name, namespace string) error
 	// ApproveInstallPlan approves an install plan.
 	ApproveInstallPlan(ctx context.Context, namespace, installPlanName string) (bool, error)
 	// Config returns *rest.Config.
