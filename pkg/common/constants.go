@@ -31,7 +31,7 @@ const (
 	// MonitoringNamespace is the namespace where monitoring configs are created.
 	MonitoringNamespace = "everest-monitoring"
 	// PerconaEverestDeploymentName stores the name of everest API Server deployment.
-	PerconaEverestDeploymentName = "percona-everest"
+	PerconaEverestDeploymentName = "everest-server"
 	// PerconaEverestCatalogName is the name of the Everest catalog source.
 	PerconaEverestCatalogName = "everest-catalog"
 	// PerconaEverestOperatorDeploymentName stores the name of everest operator deployment.
