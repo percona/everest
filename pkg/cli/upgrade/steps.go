@@ -106,7 +106,7 @@ func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version 
 	if err != nil {
 		return fmt.Errorf("cannot list database engines in namespace %s: %w", namespace, err)
 	}
-	overrides := helm.NewEverestValues(helm.EverestValues{
+	overrides := helm.NewValues(helm.Values{
 		ClusterType:        u.clusterType,
 		VersionMetadataURL: u.config.VersionMetadataURL,
 	})

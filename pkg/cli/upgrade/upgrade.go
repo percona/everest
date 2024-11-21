@@ -201,7 +201,7 @@ func (u *Upgrade) setKubernetesEnv(ctx context.Context) error {
 }
 
 func (u *Upgrade) setupHelmInstaller() error {
-	overrides := helm.NewEverestValues(helm.EverestValues{
+	overrides := helm.NewValues(helm.Values{
 		ClusterType:        u.clusterType,
 		VersionMetadataURL: u.config.VersionMetadataURL,
 	})

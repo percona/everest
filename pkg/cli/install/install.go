@@ -278,7 +278,7 @@ func (o *Install) setupHelmInstaller(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	overrides := helm.NewEverestValues(helm.EverestValues{
+	overrides := helm.NewValues(helm.Values{
 		ClusterType:        o.clusterType,
 		VersionMetadataURL: o.config.VersionMetadataURL,
 	})
