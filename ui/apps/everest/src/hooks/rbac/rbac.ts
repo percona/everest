@@ -77,7 +77,7 @@ export const useNamespacePermissionsForResource = (
       create: [],
       delete: [],
     };
-    const permissionsPromisesArr: Promise<boolean>[] = [];
+    const permissionsPromisesArr: Promise<void>[] = [];
 
     for (const namespace of namespaces) {
       ['read', 'update', 'delete', 'create'].forEach((action) => {
@@ -90,8 +90,6 @@ export const useNamespacePermissionsForResource = (
             if (canDo) {
               newPermissions[action as RBACAction].push(namespace);
             }
-
-            return canDo;
           })
         );
       });
