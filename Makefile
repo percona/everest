@@ -94,6 +94,7 @@ HELM := bin/helm
 charts: $(HELM)         ## Install Helm charts
 	$(HELM) repo add prometheus-community https://prometheus-community.github.io/helm-charts
 	$(HELM) repo add percona https://percona.github.io/percona-helm-charts/
+	$(HELM) repo add vm https://victoriametrics.github.io/helm-charts
 	$(HELM) repo update
 
 update-dev-chart:
