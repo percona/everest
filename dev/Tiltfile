@@ -196,7 +196,9 @@ if pg_namespaces:
        'perconapgrestores.pgv2.percona.com:customresourcedefinition',
        'postgresclusters.postgres-operator.crunchydata.com:customresourcedefinition',
        'crunchybridgeclusters.postgres-operator.crunchydata.com:customresourcedefinition',
-       'perconapgupgrades.pgv2.percona.com:customresourcedefinition'
+       'perconapgupgrades.pgv2.percona.com:customresourcedefinition',
+       'pgadmins.postgres-operator.crunchydata.com:customresourcedefinition',
+       'pgupgrades.postgres-operator.crunchydata.com:customresourcedefinition'
      ]
    ],
    resource_deps = [
@@ -229,17 +231,6 @@ for namespace in pg_namespaces:
 # First apply the CRDs since we will not apply them in the helm chart.
 everest_crds = kustomize('%s/config/crd' % operator_dir)
 k8s_yaml(everest_crds)
-k8s_resource(
-    objects=[
-        'backupstorages.everest.percona.com:customresourcedefinition',
-        'databaseclusterbackups.everest.percona.com:customresourcedefinition',
-        'databaseclusterrestores.everest.percona.com:customresourcedefinition',
-        'databaseclusters.everest.percona.com:customresourcedefinition',
-        'databaseengines.everest.percona.com:customresourcedefinition',
-        'monitoringconfigs.everest.percona.com:customresourcedefinition',
-    ],
-    new_name='everest-crds'
-)
 
 everest_yaml = helm(
     everest_chart_dir,
@@ -257,44 +248,11 @@ everest_yaml = helm(
 # we don't need the catalog source
 everest_catalog_source_yaml, everest_yaml = filter_yaml(everest_yaml, kind='CatalogSource', name='everest-catalog')
 k8s_yaml(everest_yaml)
-k8s_resource(
-    workload='percona-everest',
-    objects=[
-    'everest-accounts:secret:%s' % everest_namespace,
-    'everest-jwt:secret:%s' % everest_namespace,
-    'everest-rbac:configmap:%s' % everest_namespace,
-    'everest-settings:configmap:%s' % everest_namespace,
-    'everest-admin-role:role:%s' % everest_namespace,
-    'everest-admin-cluster-role:clusterrole',
-    'everest-admin-cluster-role-binding:clusterrolebinding',
-    'everest-admin:serviceaccount:%s' % everest_namespace,
-    'everest-admin-role-binding:rolebinding'
-    ],
-    resource_deps = [
-      'everest-namespace',
-    ],
-    new_name='everest-server-deploy'
-)
-k8s_resource(
-    workload='everest-operator',
-    objects=[
-    'everest-operator-controller-manager:serviceaccount:%s' % everest_namespace,
-    'everest-operator-leader-election-role:role:%s' % everest_namespace,
-    'everest-operator-local:rolebinding:%s' % everest_namespace,
-    'everest-operator-metrics-reader:clusterrole',
-    'everest-operator-proxy-role:clusterrole',
-    'everest-operator-proxy-rolebinding:clusterrolebinding',
-    'everest-operator-manager-role:clusterrole',
-    'everest-operator-leader-election-rolebinding:rolebinding',
-    'everest-operator-manager-rolebinding:clusterrolebinding'
 
-    ],
-    resource_deps = [
-      'everest-namespace',
-      'everest-crds',
-    ],
-    new_name='everest-operator-deploy'
-)
+#################################
+####### Monitoring stack ########
+#################################
+
 k8s_resource(
   objects=[
     '%s:namespace' % everest_monitoring_namespace
@@ -312,10 +270,10 @@ k8s_resource(
     resource_deps = [
       'everest-monitoring-namespace',
     ],
-    new_name='kube-state-metrics-deploy'
+    new_name='kube-state-metrics-deploy',
+    labels=["everest-monitoring"]
 )
 k8s_resource(
-    workload='vm-operator',
     objects = [
         'vlogs.operator.victoriametrics.com:customresourcedefinition',
         'vmagents.operator.victoriametrics.com:customresourcedefinition',
@@ -333,6 +291,14 @@ k8s_resource(
         'vmsingles.operator.victoriametrics.com:customresourcedefinition',
         'vmstaticscrapes.operator.victoriametrics.com:customresourcedefinition',
         'vmusers.operator.victoriametrics.com:customresourcedefinition',
+
+    ],
+    new_name='vm-crds',
+    labels=["everest-monitoring"]
+)
+k8s_resource(
+    workload='vm-operator',
+    objects = [
         'vm-operator:serviceaccount',
         'vm-operator:role',
         'vm-operator:clusterrole',
@@ -344,8 +310,10 @@ k8s_resource(
     ],
     resource_deps = [
       'everest-monitoring-namespace',
+      'vm-crds',
     ],
-    new_name='vm-operator-deploy'
+    new_name='vm-operator-deploy',
+    labels=["everest-monitoring"]
 )
 
 ################################
@@ -374,11 +342,45 @@ load('ext://restart_process', 'docker_build_with_restart')
 docker_build_with_restart('perconalab/everest-operator',
   context='%s' % operator_dir,
   dockerfile='./everest-operator.Dockerfile',
-  entrypoint='/home/tilt/manager --system-namespace=% --monitoring-namespace=%' % (everest_namespace, everest_monitoring_namespace),
+  entrypoint='/home/tilt/manager --system-namespace=%s --monitoring-namespace=%s' % (everest_namespace, everest_monitoring_namespace),
   only=['%s/bin/manager' % operator_dir],
   live_update=[
     sync('%s/bin/manager' % operator_dir, '/home/tilt/manager'),
   ]
+)
+
+k8s_resource(
+    objects=[
+        'backupstorages.everest.percona.com:customresourcedefinition',
+        'databaseclusterbackups.everest.percona.com:customresourcedefinition',
+        'databaseclusterrestores.everest.percona.com:customresourcedefinition',
+        'databaseclusters.everest.percona.com:customresourcedefinition',
+        'databaseengines.everest.percona.com:customresourcedefinition',
+        'monitoringconfigs.everest.percona.com:customresourcedefinition',
+    ],
+    new_name='everest-crds',
+    labels=["everest-operator"]
+)
+k8s_resource(
+    workload='everest-operator',
+    objects=[
+    'everest-operator-controller-manager:serviceaccount:%s' % everest_namespace,
+    'everest-operator-leader-election-role:role:%s' % everest_namespace,
+    'everest-operator-local:rolebinding:%s' % everest_namespace,
+    'everest-operator-metrics-reader:clusterrole',
+    'everest-operator-proxy-role:clusterrole',
+    'everest-operator-proxy-rolebinding:clusterrolebinding',
+    'everest-operator-manager-role:clusterrole',
+    'everest-operator-leader-election-rolebinding:rolebinding',
+    'everest-operator-manager-rolebinding:clusterrolebinding'
+
+    ],
+    resource_deps = [
+      'everest-namespace',
+      'everest-crds',
+    ],
+    new_name='everest-operator-deploy',
+    labels=["everest-operator"]
 )
 
 #################################
@@ -411,4 +413,24 @@ docker_build_with_restart('perconalab/everest',
   live_update=[
     sync('%s/bin/everest' % backend_dir, '/home/tilt/everest-api'),
   ]
+)
+
+k8s_resource(
+    workload='percona-everest',
+    objects=[
+    'everest-accounts:secret:%s' % everest_namespace,
+    'everest-jwt:secret:%s' % everest_namespace,
+    'everest-rbac:configmap:%s' % everest_namespace,
+    'everest-settings:configmap:%s' % everest_namespace,
+    'everest-admin-role:role:%s' % everest_namespace,
+    'everest-admin-cluster-role:clusterrole',
+    'everest-admin-cluster-role-binding:clusterrolebinding',
+    'everest-admin:serviceaccount:%s' % everest_namespace,
+    'everest-admin-role-binding:rolebinding'
+    ],
+    resource_deps = [
+      'everest-namespace',
+    ],
+    new_name='everest-server-deploy',
+    labels=["everest"]
 )
