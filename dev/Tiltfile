@@ -374,7 +374,7 @@ load('ext://restart_process', 'docker_build_with_restart')
 docker_build_with_restart('perconalab/everest-operator',
   context='%s' % operator_dir,
   dockerfile='./everest-operator.Dockerfile',
-  entrypoint='/home/tilt/manager --system-namespace=everest-system --monitoring-namespace=everest-monitoring',
+  entrypoint='/home/tilt/manager --system-namespace=% --monitoring-namespace=%' % (everest_namespace, everest_monitoring_namespace),
   only=['%s/bin/manager' % operator_dir],
   live_update=[
     sync('%s/bin/manager' % operator_dir, '/home/tilt/manager'),
