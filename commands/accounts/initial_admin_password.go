@@ -31,9 +31,10 @@ func NewInitialAdminPasswdCommand(l *zap.SugaredLogger) *cobra.Command {
 			k, err := kubernetes.New(kubeconfigPath, l)
 			if err != nil {
 				var u *url.Error
-				if errors.As(err, &u) {
-					l.Error("Could not connect to Kubernetes. " +
-						"Make sure Kubernetes is running and is accessible from this computer/server.")
+				l.Error("Could not connect to Kubernetes. " +
+					"Make sure Kubernetes is running and is accessible from this computer/server.")
+				if !errors.As(err, &u) {
+					l.Error(err)
 				}
 				os.Exit(1)
 			}

@@ -6,9 +6,9 @@ everest_namespace = 'everest-system'
 everest_monitoring_namespace = 'everest-monitoring'
 pxc_operator_version = os.getenv('PXC_OPERATOR_VERSION', '1.15.0')
 print('Using PXC operator version: %s' % pxc_operator_version)
-psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.17.0')
+psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.18.0')
 print('Using PSMDB operator version: %s' % psmdb_operator_version)
-pg_operator_version = os.getenv('PG_OPERATOR_VERSION', '2.4.1')
+pg_operator_version = os.getenv('PG_OPERATOR_VERSION', '2.5.0')
 print('Using PG operator version: %s' % pg_operator_version)
 
 # External resources set up
@@ -211,11 +211,6 @@ for namespace in pg_namespaces:
   k8s_yaml(namespace_inject(pg_operator_bundle_yaml, namespace))
   k8s_resource(
     workload='percona-postgresql-operator%s' % (':deployment:' + namespace if len(pg_namespaces) > 1 else ''),
-    objects=[
-      'percona-postgresql-operator:serviceaccount:%s' % namespace,
-      'percona-postgresql-operator:role:%s' % namespace,
-      'service-account-percona-postgresql-operator:rolebinding:%s' % namespace,
-    ],
     resource_deps = [
       'namespaces',
       'pg-crds',
