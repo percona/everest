@@ -74,17 +74,8 @@ jobs:
           --operator.postgresql \
           --operator.xtradb-cluster \
           --skip-wizard \
-          --namespaces everest-ui
-
-          kubectl patch sub everest-operator -n everest-system -p '
-            [{
-                "op": "add",
-                "path": "/spec/config/env/-",
-                "value": {
-                  "name": "PERCONA_VERSION_SERVICE_URL",
-                  "value": "https://check-dev.percona.com/versions/v1"
-                }
-            }]' --type=json
+          --namespaces everest-ui \
+          --helm-set versionMetadataURL=https://check-dev.percona.com
 
       - name: Adding psmdb namespace
         shell: bash
@@ -96,7 +87,8 @@ jobs:
           --operator.postgresql=false \
           --operator.xtradb-cluster=false \
           --skip-wizard \
-          --namespaces psmdb-only
+          --namespaces psmdb-only \
+          --helm-set versionMetadataURL=https://check-dev.percona.com
 
       - name: Adding pxc namespace
         shell: bash
@@ -108,7 +100,8 @@ jobs:
           --operator.postgresql=false \
           --operator.xtradb-cluster \
           --skip-wizard \
-          --namespaces pxc-only
+          --namespaces pxc-only \
+          --helm-set versionMetadataURL=https://check-dev.percona.com
 
       - name: Adding pg namespace
         shell: bash
@@ -120,7 +113,8 @@ jobs:
           --operator.postgresql \
           --operator.xtradb-cluster=false \
           --skip-wizard \
-          --namespaces pg-only
+          --namespaces pg-only \
+          --helm-set versionMetadataURL=https://check-dev.percona.com
 
       - name: Get Everest admin password
         shell: bash
