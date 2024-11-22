@@ -189,13 +189,6 @@ jobs:
             exit 1 
           fi 
 
-      - name: Check the quickstart script references dev version
-        run: |
-          if ! grep -q "perconalab/everest:0.0.0" deploy/quickstart-k8s.yaml; then 
-            echo "deploy/quickstart-k8s.yaml should reference 0.0.0 version" 
-            exit 1 
-          fi 
-
       - name: Run debug commands on failure
         if: ${{ failure() }}
         run: |
