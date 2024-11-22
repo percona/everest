@@ -92,7 +92,7 @@ export const queryMySQL = async (
   const clientPod = await getDBClientPod('mysql', 'db-client');
 
   try {
-    const command = `kubectl exec --namespace db-client ${clientPod} -- bash -c "HOME=/tmp mysqlsh root@${host} -p'${password}' --sql --quiet-start=2 -e '${query}' | tail -n +2"`;
+    const command = `kubectl exec --namespace db-client ${clientPod} -- mysqlsh root@${host} -p'${password}' --sql --quiet-start=2 -e '${query}' | tail -n +2`;
     const output = execSync(command).toString();
     return output;
   } catch (error) {
@@ -112,7 +112,7 @@ export const queryPSMDB = async (
   const clientPod = await getDBClientPod('psmdb', 'db-client');
 
   try {
-    const command = `kubectl exec --namespace db-client ${clientPod} -- bash -c 'HOME=/tmp mongosh "mongodb://backup:${password}@${host}/${db}?authSource=admin&replicaSet=rs0" --eval "${query}"'`;
+    const command = `kubectl exec --namespace db-client ${clientPod} -- mongosh "mongodb://backup:${password}@${host}/${db}?authSource=admin&replicaSet=rs0" --eval "${query}"`;
     const output = execSync(command).toString();
     return output;
   } catch (error) {
