@@ -77,6 +77,11 @@ jobs:
         uses: percona-platform/setup-go@v4
         with:
           go-version: ${{ matrix.go-version }}
+
+      - name: Print message
+        run: |
+          echo "::notice title=Feature Build Created::The $VERSION feature build has been created."
+
 #
 #      - name: Set GO_VERSION environment variable
 #        run: |
