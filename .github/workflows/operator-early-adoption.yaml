@@ -314,7 +314,6 @@ jobs:
       - name: Provision Everest using CLI
         shell: bash
         run: |
-          make init
           make build-cli
           ./bin/everestctl install -v \
             --version $VERSION \
