@@ -160,14 +160,7 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) steps.Step 
 			}
 
 			o.l.Infof("Installing DB namespace Helm chart in namespace ", namespace)
-			if err := installer.Install(ctx); err != nil {
-				return fmt.Errorf("could not install Helm chart: %w", err)
-			}
-
-			if err := o.installDBOperators(ctx, namespace); err != nil {
-				return err
-			}
-			return nil
+			return installer.Install(ctx)
 		},
 	}
 }

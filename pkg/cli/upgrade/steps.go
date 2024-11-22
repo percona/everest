@@ -128,11 +128,6 @@ func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
 	return nil
 }
 
-const (
-	helmReleaseNameAnnot      = "meta.helm.sh/release-name"
-	helmReleaseNamespaceAnnot = "meta.helm.sh/release-namespace"
-)
-
 // Creates an installation of the `everest-db-namespace` Helm chart for the given DB namesapce
 // and adopts its resources.
 func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version string) error {

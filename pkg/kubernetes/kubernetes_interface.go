@@ -81,10 +81,6 @@ type KubernetesConnector interface {
 	DeleteCatalogSource(ctx context.Context, name, namespace string) error
 	// GetSubscription returns subscription.
 	GetSubscription(ctx context.Context, name, namespace string) (*olmv1alpha1.Subscription, error)
-	// InstallOperator installs an operator via OLM.
-	InstallOperator(ctx context.Context, req InstallOperatorRequest) error
-	// UpgradeOperator upgrades an operator to the next available version.
-	UpgradeOperator(ctx context.Context, namespace, name string) error
 	// GetServerVersion returns server version.
 	GetServerVersion() (*version.Info, error)
 	// GetClusterServiceVersion retrieves a ClusterServiceVersion by namespaced name.

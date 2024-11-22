@@ -887,24 +887,6 @@ func (_m *MockKubernetesConnector) GetSubscription(ctx context.Context, name str
 	return r0, r1
 }
 
-// InstallOperator provides a mock function with given fields: ctx, req
-func (_m *MockKubernetesConnector) InstallOperator(ctx context.Context, req InstallOperatorRequest) error {
-	ret := _m.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for InstallOperator")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, InstallOperatorRequest) error); ok {
-		r0 = rf(ctx, req)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // IsBackupStorageUsed provides a mock function with given fields: ctx, namespace, name
 func (_m *MockKubernetesConnector) IsBackupStorageUsed(ctx context.Context, namespace string, name string) (bool, error) {
 	ret := _m.Called(ctx, namespace, name)
@@ -1475,24 +1457,6 @@ func (_m *MockKubernetesConnector) UpdateSecret(ctx context.Context, secret *v1.
 	}
 
 	return r0, r1
-}
-
-// UpgradeOperator provides a mock function with given fields: ctx, namespace, name
-func (_m *MockKubernetesConnector) UpgradeOperator(ctx context.Context, namespace string, name string) error {
-	ret := _m.Called(ctx, namespace, name)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpgradeOperator")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, namespace, name)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 // WaitForRollout provides a mock function with given fields: ctx, name, namespace

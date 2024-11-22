@@ -19,7 +19,6 @@ package kubernetes
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"slices"
 	"sort"
@@ -29,9 +28,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
-	corev1 "k8s.io/api/core/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -299,161 +296,6 @@ func mergeNamespacesEnvVar(str1, str2 string) string {
 	sort.Strings(namespaces)
 
 	return strings.Join(namespaces, ",")
-}
-
-func mergeSubscriptionConfig(sub *olmv1alpha1.SubscriptionConfig, cfg *olmv1alpha1.SubscriptionConfig) *olmv1alpha1.SubscriptionConfig {
-	if sub == nil {
-		sub = &olmv1alpha1.SubscriptionConfig{Env: []corev1.EnvVar{}}
-	}
-
-	if cfg == nil {
-		return sub
-	}
-
-	for _, e := range cfg.Env {
-		found := false
-		for i, se := range sub.Env {
-			if e.Name == se.Name {
-				found = true
-				// If the environment variable is not the namespaces, just override it
-				if e.Name != EverestDBNamespacesEnvVar {
-					sub.Env[i].Value = e.Value
-					break
-				}
-
-				// Merge the namespaces
-				sub.Env[i].Value = mergeNamespacesEnvVar(se.Value, e.Value)
-
-				break
-			}
-		}
-		if !found {
-			sub.Env = append(sub.Env, e)
-		}
-	}
-
-	return sub
-}
-
-func (k *Kubernetes) getTargetInstallPlanName(ctx context.Context, subscription *olmv1alpha1.Subscription, req InstallOperatorRequest) (string, error) {
-	targetCSV := req.StartingCSV
-	if subscription.Status.InstalledCSV != "" {
-		targetCSV = subscription.Status.InstalledCSV
-	}
-	if targetCSV == "" {
-		// We don't know yet which CSV we want, so we will use the one specified in the subscription.
-		return subscription.Status.InstallPlanRef.Name, nil
-	}
-	ipList, err := k.client.ListInstallPlans(ctx, req.Namespace)
-	if err != nil {
-		return "", err
-	}
-	for _, ip := range ipList.Items {
-		for _, csv := range ip.Spec.ClusterServiceVersionNames {
-			// If the CSV is the one we are looking for and the InstallPlan is
-			// waiting for approval, we return it.
-			// We introduced this phase check because OLM has a bug where it
-			// sometimes creates duplicate InstallPlans for the same CSV and we
-			// found a few cases where the duplicate InstallPlan wasn't
-			// reconciled correctly and abandoned by OLM. This abandoned
-			// InstallPlan was missing the status field meaning it was also
-			// missing the necessary plan to install the operator. Approving
-			// this InstallPlan would cause the operator to never be installed.
-			// By checking the phase we make sure we will be approving an
-			// InstallPlan that is actually ready to be approved.
-			// See https://github.com/operator-framework/kubectl-operator/issues/13
-			// for more details on a similar issue.
-			// We also need to return the InstallPlan if the Phase is Complete
-			// to ensure the idempotency of the InstallOperator function.
-			if csv == targetCSV && (ip.Status.Phase == olmv1alpha1.InstallPlanPhaseRequiresApproval || ip.Status.Phase == olmv1alpha1.InstallPlanPhaseComplete) {
-				return ip.GetName(), nil
-			}
-		}
-	}
-	return "", fmt.Errorf("cannot find InstallPlan for CSV: %s", targetCSV)
-}
-
-// InstallOperator installs an operator via OLM.
-func (k *Kubernetes) InstallOperator(ctx context.Context, req InstallOperatorRequest) error { //nolint:funlen
-	subscription, err := k.client.GetSubscription(ctx, req.Namespace, req.Name)
-	if err != nil && !apierrors.IsNotFound(err) {
-		return errors.Join(err, errors.New("cannot get subscription"))
-	}
-	if apierrors.IsNotFound(err) {
-		subscription = &olmv1alpha1.Subscription{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       olmv1alpha1.SubscriptionKind,
-				APIVersion: olmv1alpha1.SubscriptionCRDAPIVersion,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: req.Namespace,
-				Name:      req.Name,
-			},
-			Spec: &olmv1alpha1.SubscriptionSpec{
-				CatalogSource:          req.CatalogSource,
-				CatalogSourceNamespace: req.CatalogSourceNamespace,
-				Package:                req.Name,
-				Channel:                req.Channel,
-				StartingCSV:            req.StartingCSV,
-				InstallPlanApproval:    req.InstallPlanApproval,
-			},
-		}
-	}
-
-	subscription.Spec.Config = mergeSubscriptionConfig(subscription.Spec.Config, req.SubscriptionConfig)
-	if apierrors.IsNotFound(err) {
-		_, err := k.client.CreateSubscription(ctx, req.Namespace, subscription)
-		if err != nil {
-			return errors.Join(err, errors.New("cannot create a subscription to install the operator"))
-		}
-	} else {
-		_, err := k.client.UpdateSubscription(ctx, req.Namespace, subscription)
-		if err != nil {
-			return errors.Join(err, errors.New("cannot update a subscription to install the operator"))
-		}
-	}
-
-	err = wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
-		k.l.Debugf("Polling subscription %s/%s", req.Namespace, req.Name)
-		subs, err := k.client.GetSubscription(ctx, req.Namespace, req.Name)
-		if err != nil {
-			return false, errors.Join(err, fmt.Errorf("cannot get an install plan for the operator subscription: %q", req.Name))
-		}
-		if subs == nil || subs.Status.InstallPlanRef == nil {
-			return false, nil
-		}
-
-		installPlanName, err := k.getTargetInstallPlanName(ctx, subs, req)
-		if err != nil {
-			return false, err
-		}
-		return k.ApproveInstallPlan(ctx, req.Namespace, installPlanName)
-	})
-	if err != nil {
-		return err
-	}
-	deploymentName := req.Name
-	k.l.Debugf("Waiting for deployment rollout %s/%s", req.Namespace, deploymentName)
-
-	return k.client.DoRolloutWait(ctx, types.NamespacedName{Namespace: req.Namespace, Name: deploymentName})
-}
-
-// UpgradeOperator upgrades an operator to the next available version.
-func (k *Kubernetes) UpgradeOperator(ctx context.Context, namespace, name string) error {
-	ip, err := k.getInstallPlanFromSubscription(ctx, namespace, name)
-	if err != nil {
-		return err
-	}
-
-	if ip.Spec.Approved {
-		return nil // There are no upgrades.
-	}
-
-	ip.Spec.Approved = true
-
-	_, err = k.client.UpdateInstallPlan(ctx, namespace, ip)
-
-	return err
 }
 
 // GetServerVersion returns server version.

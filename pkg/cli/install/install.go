@@ -29,11 +29,9 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
-	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
 	"helm.sh/helm/v3/pkg/cli/values"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -91,8 +89,6 @@ const (
 	pollInterval    = 5 * time.Second
 	pollTimeout     = 10 * time.Minute
 	backoffInterval = 5 * time.Second
-
-	operatorInstallThreads = 1
 
 	postInstallMessage = "Everest has been successfully installed!"
 )
@@ -577,48 +573,4 @@ func validateRFC1035(s string) error {
 	}
 
 	return nil
-}
-
-func (o *Install) installDBOperators(ctx context.Context, namespace string) error {
-	g, gCtx := errgroup.WithContext(ctx)
-	g.SetLimit(operatorInstallThreads)
-
-	if o.config.Operator.PXC {
-		g.Go(o.installOperator(gCtx, common.PXCOperatorName, namespace))
-	}
-	if o.config.Operator.PG {
-		g.Go(o.installOperator(gCtx, common.PGOperatorName, namespace))
-	}
-	if o.config.Operator.PSMDB {
-		g.Go(o.installOperator(gCtx, common.PSMDBOperatorName, namespace))
-	}
-	return g.Wait()
-}
-
-func (o *Install) installOperator(ctx context.Context, operatorName, namespace string) func() error {
-	return func() error {
-		// We check if the context has not been cancelled yet to return early
-		if err := ctx.Err(); err != nil {
-			o.l.Debugf("Cancelled %s operator installation due to context error: %s", operatorName, err)
-			return err
-		}
-
-		o.l.Infof("Installing %s operator", operatorName)
-
-		params := kubernetes.InstallOperatorRequest{
-			Namespace:              namespace,
-			Name:                   operatorName,
-			CatalogSourceNamespace: kubernetes.OLMNamespace,
-		}
-		if err := backoff.Retry(func() error {
-			return o.kubeClient.InstallOperator(ctx, params)
-		}, backoff.NewConstantBackOff(backoffInterval),
-		); err != nil {
-			o.l.Errorf("failed installing %s operator", operatorName)
-			return err
-		}
-
-		o.l.Infof("%s operator has been installed", operatorName)
-		return nil
-	}
 }
