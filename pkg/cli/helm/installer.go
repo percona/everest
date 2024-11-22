@@ -203,6 +203,7 @@ func (i *Installer) install(ctx context.Context) error {
 		return err
 	}
 	i.release = rel
+	fmt.Println(rel.Manifest)
 	return nil
 }
 
@@ -211,12 +212,14 @@ func (i *Installer) Upgrade(ctx context.Context) error {
 	upgrade := action.NewUpgrade(i.cfg)
 	upgrade.Namespace = i.ReleaseNamespace
 	upgrade.TakeOwnership = true
+	upgrade.DisableHooks = true
 
 	rel, err := upgrade.RunWithContext(ctx, i.ReleaseName, i.chart, i.Values)
 	if err != nil {
 		return err
 	}
 	i.release = rel
+	fmt.Println(rel.Manifest)
 	return nil
 }
 
