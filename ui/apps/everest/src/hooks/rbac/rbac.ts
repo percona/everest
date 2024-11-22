@@ -77,45 +77,25 @@ export const useNamespacePermissionsForResource = (
       create: [],
       delete: [],
     };
+    const permissionsPromisesArr: Promise<void>[] = [];
 
-    namespaces.forEach(async (namespace) => {
-      const canRead = await can(
-        'read',
-        resource,
-        `${namespace}/${specificResource}`
-      );
-      const canUpdate = await can(
-        'update',
-        resource,
-        `${namespace}/${specificResource}`
-      );
-      const canDelete = await can(
-        'delete',
-        resource,
-        `${namespace}/${specificResource}`
-      );
-      const canCreate = await can(
-        'create',
-        resource,
-        `${namespace}/${specificResource}`
-      );
+    for (const namespace of namespaces) {
+      ['read', 'update', 'delete', 'create'].forEach((action) => {
+        permissionsPromisesArr.push(
+          can(
+            action as RBACAction,
+            resource,
+            `${namespace}/${specificResource}`
+          ).then((canDo) => {
+            if (canDo) {
+              newPermissions[action as RBACAction].push(namespace);
+            }
+          })
+        );
+      });
+    }
 
-      if (canRead) {
-        newPermissions.read.push(namespace);
-      }
-
-      if (canUpdate) {
-        newPermissions.update.push(namespace);
-      }
-
-      if (canDelete) {
-        newPermissions.delete.push(namespace);
-      }
-
-      if (canCreate) {
-        newPermissions.create.push(namespace);
-      }
-    });
+    await Promise.all(permissionsPromisesArr);
 
     setPermissions(newPermissions);
   }, [namespaces, resource, specificResource]);
