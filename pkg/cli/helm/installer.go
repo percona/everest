@@ -120,6 +120,8 @@ func (i *Installer) RenderTemplates(ctx context.Context) (RenderedTemplate, erro
 	if i.release != nil {
 		return newRenderedTemplate(i.release.Manifest), nil
 	}
+
+	// create a new actions configuration so that it does not accidentally interfere with the actual installation.
 	cfg, err := newActionsCfg(i.ReleaseNamespace, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Helm action configuration: %w", err)
