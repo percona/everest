@@ -44,7 +44,7 @@ jobs:
 
     env:
       # VERSION constant higher than any potentially existing
-      VERSION: 1.10000.0
+      VERSION: 1.10000.0-rc20241121101830
       CLI_PREREQUISITES: ">= 1.2.0"
       K8S_PREREQUISITES: ">= 1.27"
       VS_PORT: 8081
@@ -105,7 +105,7 @@ jobs:
           addons: registry
           insecure-registry: "localhost:5000"
 
-      - name: Expose local registry
+      - name: Expose local registry # !!! remove local registry, keeping it for now to push VS images
         run: |
           kubectl port-forward --namespace kube-system service/registry $LOCAL_REGISTRY_PORT:80 &
 
@@ -140,6 +140,12 @@ jobs:
           kubectl apply -f percona-version-service/deploy.yaml -n everest-system
           kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service -n everest-system
           kubectl port-forward svc/percona-version-service $VS_PORT:80 -n everest-system &
+
+      - name: Login to GitHub Container Registry  # !!! move above, prior VS chagnes
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Operator - check out
         uses: actions/checkout@v4
@@ -177,7 +183,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ env.LOCAL_REGISTRY }}/perconalab/everest-operator
+            perconalab/everest-operator
           tags: |
             type=raw,value=${{ env.VERSION }}
 
@@ -186,7 +192,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ env.LOCAL_REGISTRY }}/perconalab/everest-operator-bundle
+            perconalab/everest-operator-bundle
           tags: |
             type=raw,value=${{ env.VERSION }}
 
@@ -208,7 +214,6 @@ jobs:
       - name: Catalog - checkout
         uses: actions/checkout@v4
         with:
-          ref: EVEREST-1563-variable-registry   # !!! remove this line once merged
           repository: percona/everest-catalog
           path: everest-catalog
           token: ${{ secrets.ROBOT_TOKEN }}
@@ -220,7 +225,6 @@ jobs:
             --veneer-file ../veneer/everest-operator.yaml \
             --channel fast-v0  \
             --new-version ${{ env.VERSION }} \
-            --registry ${{ env.LOCAL_REGISTRY }} \
             --test-repo \
 
           cd ..
@@ -253,7 +257,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ env.LOCAL_REGISTRY }}/perconalab/everest-catalog
+            perconalab/everest-catalog
           tags: |
             type=raw,value=${{ env.VERSION }}
             type=raw,value=latest
@@ -282,17 +286,14 @@ jobs:
       - name: Everest - update sources
         run: |
           # Update deploy manifest
-          sed -i "s/perconalab\/everest.*/$LOCAL_REGISTRY\/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-          sed -i "s/percona\/everest.*/$LOCAL_REGISTRY\/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
+          sed -i "s/perconalab\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
+          sed -i "s/percona\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
 
           # Change version in Makefile
           sed -i "s/RELEASE_VERSION ?=.*/RELEASE_VERSION ?= v$VERSION/g" Makefile
 
-          # Change release manifest link: use local path to file
+          # Change release manifest link: use local path to the manifest file in version.go
           sed -i "s/https:\/\/raw.githubusercontent.com\/percona\/everest\/v%s\///g" pkg/version/version.go
-
-          # Change release catalog image link: use LOCAL_REGISTRY
-          sed -i "s/docker.io/$LOCAL_REGISTRY/g" pkg/version/version.go
 
           git status
       - name: Everest UI - setup pnpm
@@ -326,7 +327,7 @@ jobs:
         with:
           context: .
           push: true
-          tags:  ${{ env.LOCAL_REGISTRY }}/perconalab/everest:${{ env.VERSION }}
+          tags:  perconalab/everest:${{ env.VERSION }}
 
       - name: Provision Everest using CLI
         shell: bash
