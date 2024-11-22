@@ -43,37 +43,38 @@ jobs:
     runs-on: ubuntu-20.04
 
     env:
-      VERSION: ""
+      TOOLS_PATH: "/opt/tools/bin"
+      # IMAGE: ${{ github.event.inputs.image }}
+      IMAGE: "docker.io/percona/percona-xtradb-cluster-operator:1.15.1-community-bundle"
+      # !!! revert to using inputs
+      # UPSTREAM_REPO: ${{ github.event.inputs.upstream }}
+      VS_BRANCH: ${{ github.event.inputs.vs_branch }}
+      UPSTREAM_REPO: "percona-xtradb-cluster-operator"
       CLI_PREREQUISITES: ">= 1.2.0"
       K8S_PREREQUISITES: ">= 1.27"
       VS_PORT: 8081
-      VS_URL: ""
       ARCH: ""
       OS: ""
-      TOOLS_PATH: "/opt/tools/bin"
-      # !!! revert to using inputs
-      # UPSTREAM_REPO: ${{ github.event.inputs.upstream }}
-      UPSTREAM_REPO: "percona-xtradb-cluster-operator"
-      # IMAGE: ${{ github.event.inputs.image }}
-      IMAGE: "docker.io/percona/percona-xtradb-cluster-operator:1.15.1-community-bundle"
-      VS_BRANCH: ${{ github.event.inputs.vs_branch }}
+      VERSION: ""
+      VS_URL: ""
       VS_TAG: ""
-      TIMESTAMP: "$(date +'%Y%m%d%H%M%S')"
-      AAA: "1.10000.0-rc${TIMESTAMP}"
-      BBB: "everest-test${env.TIMESTAMP}"
 
     steps:
       - name: Set environment variables
         run: |
-          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
           echo "ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" >> $GITHUB_ENV
           echo "OS=$(uname | awk '{print tolower($0)}')" >> $GITHUB_ENV
           echo "VS_URL=http://localhost:$VS_PORT" >> $GITHUB_ENV
+          
+          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
           echo "VERSION=1.10000.0-rc$TIMESTAMP" >> $GITHUB_ENV
           echo "VS_TAG=everest-test$TIMESTAMP" >> $GITHUB_ENV
-          
-      
 
+      - name: output
+        run: |
+          echo "::notice title=Feature Build Created::The $VERSION feature build has been created.\n Version Service Image $VS_TAG"
+
+#
 #      - name: Set up Go release
 #        uses: percona-platform/setup-go@v4
 #        with:
@@ -130,15 +131,6 @@ jobs:
 #          context: percona-version-service
 #          push: true
 #          tags: perconalab/version-service:${{ env.VERSION }}
-#
-#
-#      - name: Apply VS manifest
-#        run: |
-#          kubectl create ns everest-system
-#          sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:everest-test$TIMESTAMP/g" percona-version-service/deploy.yaml
-#          kubectl apply -f percona-version-service/deploy.yaml -n everest-system
-#          kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service -n everest-system
-#          kubectl port-forward svc/percona-version-service $VS_PORT:80 -n everest-system &
 #
 #      - name: Operator - check out
 #        uses: actions/checkout@v4
@@ -319,24 +311,32 @@ jobs:
 #          push: true
 #          tags:  perconalab/everest:${{ env.VERSION }}
 #
-#      - name: Start local Kubernetes cluster
+#      - name: Everest checks - Start local Kubernetes cluster
 #        uses: medyagh/setup-minikube@latest
 #        id: minikube
 #        with:
 #          cpus: 2
 #          memory: 2000m
-
-      - name: Check the Feature build can be installed successfully
-        shell: bash
-        run: |
-          #make feature-build-cli
-          #./bin/everestctl install -v \
-          #  --version $VERSION \
-          #  --version-metadata-url $VS_URL \
-          #  --operator.mongodb \
-          #  --operator.postgresql \
-          #  --operator.xtradb-cluster \
-          #  --skip-wizard \
-          #  --namespaces everest
-          
-          echo "::notice title=Feature Build Created::The $VERSION feature build has been created."
+#
+#      - name: Everest checks - run VS locally
+#        run: |
+#          kubectl create ns everest-system
+#          sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_TAG/g" percona-version-service/deploy.yaml
+#          kubectl apply -f percona-version-service/deploy.yaml -n everest-system
+#          kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service -n everest-system
+#          kubectl port-forward svc/percona-version-service $VS_PORT:80 -n everest-system &
+#
+#      - name: Everest checks - install feature build
+#        shell: bash
+#        run: |
+#          make feature-build-cli
+#          ./bin/everestctl install -v \
+#            --version $VERSION \
+#            --version-metadata-url $VS_URL \
+#            --operator.mongodb \
+#            --operator.postgresql \
+#            --operator.xtradb-cluster \
+#            --skip-wizard \
+#            --namespaces everest
+#
+#          echo "::notice title=Feature Build Created::The $VERSION feature build has been created."
