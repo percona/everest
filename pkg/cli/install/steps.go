@@ -96,6 +96,9 @@ func (o *Install) newStepEnsureCatalogSource() steps.Step {
 				return fmt.Errorf("could not get Everest CatalogSource namespace: %w", err)
 			}
 			catalogNs, err := manifests.GetEverestCatalogNamespace()
+			if err != nil {
+				return fmt.Errorf("could not get Everest CatalogSource namespace: %w", err)
+			}
 			return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
 				cs, err := o.kubeClient.GetCatalogSource(ctx, common.PerconaEverestCatalogName, catalogNs)
 				if err != nil {

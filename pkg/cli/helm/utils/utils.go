@@ -104,6 +104,7 @@ func DevChartDir() (string, error) {
 	return tmp, nil
 }
 
+// YAMLStringsToBytes converts a slice of YAML strings to a single byte slice.
 func YAMLStringsToBytes(strs []string) []byte {
 	var builder strings.Builder
 	for _, s := range strs {

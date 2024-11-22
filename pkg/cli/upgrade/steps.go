@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/AlekSi/pointer"
 	"helm.sh/helm/v3/pkg/cli/values"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/AlekSi/pointer"
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/cli/helm"
 	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
@@ -64,6 +64,9 @@ func (u *Upgrade) newStepEnsureCatalogSource() steps.Step {
 				return fmt.Errorf("could not render Helm templates: %w", err)
 			}
 			catalogNs, err := manifest.GetEverestCatalogNamespace()
+			if err != nil {
+				return fmt.Errorf("could not get Everest CatalogSource namespace: %w", err)
+			}
 			return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
 				cs, err := u.kubeClient.GetCatalogSource(ctx, common.PerconaEverestCatalogName, catalogNs)
 				if err != nil {
