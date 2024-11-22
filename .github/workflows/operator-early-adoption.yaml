@@ -242,7 +242,6 @@ jobs:
             perconalab/everest-catalog
           tags: |
             type=raw,value=${{ env.VERSION }}
-            type=raw,value=latest
 
       - name: Catalog - push everest-catalog image
         uses: docker/build-push-action@v6
