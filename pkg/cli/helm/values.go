@@ -11,6 +11,10 @@ type Values struct {
 // NewValues creates a map of values that can be used to render the Helm chart.
 func NewValues(v Values) map[string]interface{} {
 	values := make(map[string]interface{})
+	// The upgrade checks hook uses the CLI, so no need to run this.
+	// We will run the checks in the CLI anyway before running the upgrade.
+	values["upgrade.preflightChecks"] = false
+
 	if v.ClusterType == kubernetes.ClusterTypeOpenShift {
 		values["compatibility.openshift"] = true
 	}

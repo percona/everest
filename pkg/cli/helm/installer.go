@@ -196,9 +196,7 @@ func (i *Installer) install(ctx context.Context) error {
 	install.ReleaseName = i.ReleaseName
 	install.Namespace = i.ReleaseNamespace
 	install.CreateNamespace = i.CreateReleaseNamespace
-	install.Wait = false
 	install.TakeOwnership = true
-	install.DisableHooks = true
 
 	rel, err := install.RunWithContext(ctx, i.chart, i.Values)
 	if err != nil {
@@ -213,7 +211,6 @@ func (i *Installer) Upgrade(ctx context.Context) error {
 	upgrade := action.NewUpgrade(i.cfg)
 	upgrade.Namespace = i.ReleaseNamespace
 	upgrade.TakeOwnership = true
-	upgrade.DisableHooks = true
 
 	rel, err := upgrade.RunWithContext(ctx, i.ReleaseName, i.chart, i.Values)
 	if err != nil {
