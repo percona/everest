@@ -171,6 +171,9 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	u.helmReleaseExists = common.CheckConstraint(everestVersion, ">= 1.4.0")
 
 	upgradeSteps := u.newUpgradeSteps()
+
+	// Run steps.
+	fmt.Fprintln(out, output.Info("Upgrading Everest to version %s", u.upgradeToVersion))
 	if err := steps.RunStepsWithSpinner(ctx, upgradeSteps, out); err != nil {
 		return err
 	}
