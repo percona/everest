@@ -288,7 +288,6 @@ jobs:
           # Change release manifest link: use local path to the manifest file in version.go
           sed -i "s/https:\/\/raw.githubusercontent.com\/percona\/everest\/v%s\///g" pkg/version/version.go
 
-          git status
       - name: Everest UI - setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -325,7 +324,7 @@ jobs:
       - name: Provision Everest using CLI
         shell: bash
         run: |
-          make build-cli
+          go build -o bin/everestctl ./cmd/cli
           ./bin/everestctl install -v \
             --version $VERSION \
             --version-metadata-url $VS_URL \
