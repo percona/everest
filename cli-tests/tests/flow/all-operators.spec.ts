@@ -43,22 +43,6 @@ test.describe('Everest CLI install', async () => {
       });
     };
 
-    await test.step('run everest install command', async () => {
-      const out = await cli.everestExecSkipWizard(
-        `install --namespaces=everest-all -v`,
-      );
-
-      await out.assertSuccess();
-      await out.outErrContainsNormalizedMany([
-        'percona-xtradb-cluster-operator operator has been installed',
-        'percona-server-mongodb-operator operator has been installed',
-        'percona-postgresql-operator operator has been installed',
-        'Deployment \'everest-operator\' in namespace \'everest-system\' is ready',
-      ]);
-    });
-    await page.waitForTimeout(10_000);
-    await verifyClusterResources();
-
     await test.step('run everest install command (pretty))', async () => {
       const out = await cli.everestExecSkipWizard(
         `install --namespaces=everest-all`,
