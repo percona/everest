@@ -112,6 +112,7 @@ func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
 	if err := u.cleanupLegacyResources(ctx); err != nil {
 		return fmt.Errorf("failed to cleanupLegacyResources: %w", err)
 	}
+	// Helm will not adopt custom resources, so we do this manually.
 	if err := u.helmInstaller.Install(ctx); err != nil {
 		return fmt.Errorf("failed to install Helm chart: %w", err)
 	}
@@ -126,6 +127,11 @@ func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
 	}
 	return nil
 }
+
+const (
+	helmReleaseNameAnnot      = "meta.helm.sh/release-name"
+	helmReleaseNamespaceAnnot = "meta.helm.sh/release-namespace"
+)
 
 // Creates an installation of the `everest-db-namespace` Helm chart for the given DB namesapce
 // and adopts its resources.
@@ -193,6 +199,11 @@ func (u *Upgrade) cleanupLegacyResources(ctx context.Context) error {
 	}
 	if err := u.kubeClient.DeleteDeployment(ctx, "percona-everest", common.SystemNamespace); client.IgnoreNotFound(err) != nil {
 		return fmt.Errorf("could not delete percona-everest deployment: %w", err)
+	}
+	// Delete Everest Catalog.
+	// This is not a legacy resource, but we need to delete it so that Helm creates a new one.
+	if err := u.kubeClient.DeleteCatalogSource(ctx, common.PerconaEverestCatalogName, kubernetes.OLMNamespace); client.IgnoreNotFound(err) != nil {
+		return fmt.Errorf("could not delete Everest CatalogSource: %w", err)
 	}
 	return nil
 }

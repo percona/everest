@@ -269,6 +269,24 @@ func (_m *MockKubernetesConnector) DeleteCRD(ctx context.Context, name string) e
 	return r0
 }
 
+// DeleteCatalogSource provides a mock function with given fields: ctx, name, namespace
+func (_m *MockKubernetesConnector) DeleteCatalogSource(ctx context.Context, name string, namespace string) error {
+	ret := _m.Called(ctx, name, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteCatalogSource")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, name, namespace)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteClusterServiceVersion provides a mock function with given fields: ctx, key
 func (_m *MockKubernetesConnector) DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error {
 	ret := _m.Called(ctx, key)

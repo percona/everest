@@ -77,6 +77,8 @@ type KubernetesConnector interface {
 	GetClusterType(ctx context.Context) (ClusterType, error)
 	// GetCatalogSource returns catalog source.
 	GetCatalogSource(ctx context.Context, name, namespace string) (*olmv1alpha1.CatalogSource, error)
+	// DeleteCatalogSource deletes catalog source.
+	DeleteCatalogSource(ctx context.Context, name, namespace string) error
 	// GetSubscription returns subscription.
 	GetSubscription(ctx context.Context, name, namespace string) (*olmv1alpha1.Subscription, error)
 	// InstallOperator installs an operator via OLM.

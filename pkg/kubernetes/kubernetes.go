@@ -248,6 +248,11 @@ func (k *Kubernetes) GetCatalogSource(ctx context.Context, name, namespace strin
 	return k.client.OLM().OperatorsV1alpha1().CatalogSources(namespace).Get(ctx, name, metav1.GetOptions{})
 }
 
+// DeleteCatalogSource deletes catalog source.
+func (k *Kubernetes) DeleteCatalogSource(ctx context.Context, name, namespace string) error {
+	return k.client.OLM().OperatorsV1alpha1().CatalogSources(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+}
+
 // GetSubscription returns subscription.
 func (k *Kubernetes) GetSubscription(ctx context.Context, name, namespace string) (*olmv1alpha1.Subscription, error) {
 	return k.client.OLM().OperatorsV1alpha1().Subscriptions(namespace).Get(ctx, name, metav1.GetOptions{})
