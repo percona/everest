@@ -72,7 +72,7 @@ jobs:
 
       - name: output
         run: |
-          echo "::notice title=Feature Build Created::The $VERSION feature build has been created.\n Version Service Image $VS_TAG"
+          echo "::notice title=Feature Build $VERSION is Created::Version Service Image is $VS_TAG"
 
 #
 #      - name: Set up Go release
