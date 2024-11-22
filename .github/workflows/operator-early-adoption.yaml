@@ -85,12 +85,12 @@ jobs:
         with:
           cpus: 2
           memory: 2000m
-          addons: registry
-          insecure-registry: "localhost:5000"
 
-      - name: Expose local registry # !!! remove local registry, keeping it for now to push VS images
-        run: |
-          kubectl port-forward --namespace kube-system service/registry $LOCAL_REGISTRY_PORT:80 &
+      - name: Login to GitHub Container Registry  # !!! move above, prior VS chagnes
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: VS - checkout
         uses: actions/checkout@v4
@@ -113,22 +113,17 @@ jobs:
         with:
           context: percona-version-service
           push: true
-          tags: ${{ env.LOCAL_REGISTRY}}/perconalab/version-service:dev
+          tags: perconalab/everest-catalog:test  # !!! change tag and repo
 
 
       - name: Apply VS manifest
         run: |
           kubectl create ns everest-system
-          sed -i "s/perconalab\/version-service:.*/$LOCAL_REGISTRY\/perconalab\/version-service:dev/g" percona-version-service/deploy.yaml
+          # !!! change tag and repo
+          sed -i "s/perconalab\/version-service:.*/perconalab\/everest-catalog:test/g" percona-version-service/deploy.yaml
           kubectl apply -f percona-version-service/deploy.yaml -n everest-system
           kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service -n everest-system
           kubectl port-forward svc/percona-version-service $VS_PORT:80 -n everest-system &
-
-      - name: Login to GitHub Container Registry  # !!! move above, prior VS chagnes
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Operator - check out
         uses: actions/checkout@v4
