@@ -41,11 +41,11 @@ spec:
             - /bin/bash
             - -c
           args:
-            - minio server /data --console-address :9090
+            - minio server /data --certs-dir /tmp/.minio/certs --console-address :9090
           volumeMounts:
             - mountPath: /data
               name: minio-data-vol
-            - mountPath: /root/.minio/certs
+            - mountPath: /tmp/.minio/certs
               name: minio-cert
       initContainers:
         - name: init-minio
