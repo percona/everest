@@ -112,6 +112,10 @@ func (i *Installer) Init(kubeconfigPath string, o ChartOptions) error {
 	return nil
 }
 
+// RenderTemplates renders the Helm templates from the provided chart.
+// If the chart has been installed, it returns the rendered templates from the installed release.
+// If the chart has not been installed, it returns the rendered templates from a dry-run install.
+// In the latter case, the installation step does not talk to the kube-apiserver. So Helm functions like `lookup` will not work.
 func (i *Installer) RenderTemplates(ctx context.Context) (RenderedTemplate, error) {
 	if i.release != nil {
 		return newRenderedTemplate(i.release.Manifest), nil

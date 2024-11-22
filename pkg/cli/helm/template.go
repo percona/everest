@@ -11,12 +11,15 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+// RenderedTemplate represents a Helm template that has been rendered using RenderTemplate()
+// It is a slice of strings, where each string is a YAML document.
 type RenderedTemplate []string
 
 func newRenderedTemplate(y string) RenderedTemplate {
 	return splitYaml(y)
 }
 
+// Strings returns the RenderedTemplate as a slice of strings
 func (t *RenderedTemplate) Strings() []string {
 	if t == nil {
 		return []string{}
@@ -24,10 +27,12 @@ func (t *RenderedTemplate) Strings() []string {
 	return []string(*t)
 }
 
+// GetCRDs returns the CRDs in the RenderedTemplate
 func (t *RenderedTemplate) GetCRDs() ([]string, error) {
 	return t.filter("crds")
 }
 
+// GetCRDs returns the CRDs in the RenderedTemplate
 func (r *RenderedTemplate) GetEverestCatalogNamespace() (string, error) {
 	objs, err := r.filter("everest-catalogsource.yaml")
 	if err != nil {
@@ -44,6 +49,7 @@ func (r *RenderedTemplate) GetEverestCatalogNamespace() (string, error) {
 	return cs.GetNamespace(), nil
 }
 
+// GetUninstallManifests returns the uninstall manifests in the RenderedTemplate
 func (t *RenderedTemplate) GetUninstallManifests() (RenderedTemplate, error) {
 	combined := strings.Join(t.Strings(), "\n---\n")
 	split := releaseutil.SplitManifests(combined)
@@ -77,6 +83,7 @@ func (t *RenderedTemplate) filter(path string) (RenderedTemplate, error) {
 	return RenderedTemplate(result), nil
 }
 
+// split the given yaml into separate documents
 func splitYaml(y string) []string {
 	res := []string{}
 	// Making sure that any extra whitespace in YAML stream doesn't interfere in splitting documents correctly.
@@ -104,6 +111,7 @@ func isYamlEmpty(y string) bool {
 			continue
 		}
 
+		// We want to skip files that have only comments
 		if strings.HasPrefix(line, "#") {
 			continue
 		}
