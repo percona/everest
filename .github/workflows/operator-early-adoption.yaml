@@ -43,14 +43,11 @@ jobs:
     runs-on: ubuntu-20.04
 
     env:
-      # VERSION constant higher than any potentially existing
-      VERSION: 1.10000.0-rc20241121125600
+      VERSION: ""
       CLI_PREREQUISITES: ">= 1.2.0"
       K8S_PREREQUISITES: ">= 1.27"
       VS_PORT: 8081
       VS_URL: ""
-      LOCAL_REGISTRY_PORT: 5000
-      LOCAL_REGISTRY: ""
       ARCH: ""
       OS: ""
       TOOLS_PATH: "/opt/tools/bin"
@@ -72,10 +69,9 @@ jobs:
         run: |
           echo "ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" >> $GITHUB_ENV
           echo "OS=$(uname | awk '{print tolower($0)}')" >> $GITHUB_ENV
-          echo "LOCAL_REGISTRY=localhost:$LOCAL_REGISTRY_PORT" >> $GITHUB_ENV
           echo "VS_URL=http://localhost:$VS_PORT" >> $GITHUB_ENV
           echo "TIMESTAMP=${{ steps.date.outputs.date }}" >> $GITHUB_ENV
-
+          echo "VERSION=1.10000.0-rc${{ steps.date.outputs.date }}" >> $GITHUB_ENV
 
       - name: Set up Go release
         uses: percona-platform/setup-go@v4
