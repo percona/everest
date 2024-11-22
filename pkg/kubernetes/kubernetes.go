@@ -407,6 +407,8 @@ func (k *Kubernetes) InstallPerconaCatalog(ctx context.Context, version *goversi
 		return err
 	}
 
+	k.l.Debugf("Initial version %s", version.String())
+	k.l.Debugf("Initial version %s", everestVersion.EverestChannelOverride)
 	k.l.Debugf("Using catalog image %s", everestVersion.CatalogImage(version))
 	if err := unstructured.SetNestedField(o, everestVersion.CatalogImage(version), "spec", "image"); err != nil {
 		return err

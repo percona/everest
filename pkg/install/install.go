@@ -725,7 +725,6 @@ func (o *Install) provisionOLM() []common.Step {
 				return err
 			}
 			o.l.Info("OLM has been installed")
-			o.l.Info("Installing Percona OLM Catalog")
 			return nil
 		},
 	})
@@ -738,6 +737,7 @@ func (o *Install) installCatalog(v *goversion.Version) []common.Step {
 	result = append(result, common.Step{
 		Desc: "Install Percona OLM Catalog",
 		F: func(ctx context.Context) error {
+			o.l.Info("Installing Percona OLM Catalog")
 			if err := o.kubeClient.InstallPerconaCatalog(ctx, v, o.config.CatalogNamespace); err != nil {
 				o.l.Errorf("failed installing OLM catalog: %v", err)
 				return err
