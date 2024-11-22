@@ -183,6 +183,7 @@ const ModalContent = ({
 
           {!pitrData?.gaps && (
             <DateTimePickerInput
+              ampm={false}
               views={['year', 'month', 'day', 'hours', 'minutes', 'seconds']}
               timeSteps={{ hours: 1, minutes: 1, seconds: 1 }}
               disableFuture
