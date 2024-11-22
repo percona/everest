@@ -334,7 +334,7 @@ jobs:
 
       - name: Expose Everest API Server
         run: |
-          kubectl port-forward --namespace everest-system deployment/percona-everest 8080:8080 &
+          kubectl port-forward --namespace everest-system deployment/everest-server 8080:8080 &
 
       - name: Create Everest test user
         run: |
@@ -358,7 +358,7 @@ jobs:
           kubectl -n everest-system describe pods
           kubectl -n everest-monitoring describe pods
           kubectl -n everest describe pods
-          kubectl -n everest-system logs deploy/percona-everest
+          kubectl -n everest-system logs deploy/everest-server
 
 
 
