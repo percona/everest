@@ -44,7 +44,7 @@ jobs:
 
     env:
       # VERSION constant higher than any potentially existing
-      VERSION: 1.10000.0-rc20241121101830
+      VERSION: 1.10000.0-rc20241121125600
       CLI_PREREQUISITES: ">= 1.2.0"
       K8S_PREREQUISITES: ">= 1.27"
       VS_PORT: 8081
