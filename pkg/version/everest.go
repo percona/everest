@@ -42,7 +42,7 @@ func EverestVersionFromDeployment(ctx context.Context, dg deploymentGetter) (*go
 	}
 
 	// If the deployment is not found, try to get it with the legacy name.
-	if dep == nil {
+	if dep == nil || dep.GetCreationTimestamp().Time.IsZero() {
 		dep, err = dg.GetDeployment(ctx, common.PerconaEverestDeploymentNameLegacy, common.SystemNamespace)
 		if err != nil {
 			return nil, err
