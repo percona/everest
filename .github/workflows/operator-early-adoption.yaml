@@ -59,15 +59,10 @@ jobs:
       VS_BRANCH: ${{ github.event.inputs.vs_branch }}
       VS_TAG: ""
       TIMESTAMP: "$(date +'%Y%m%d%H%M%S')"
-      AAA: "1.10000.0-rc${{ env.TIMESTAMP }}"
-      BBB: "everest-test${{ env.TIMESTAMP }}"
+      AAA: "1.10000.0-rc${TIMESTAMP}"
+      BBB: "everest-test${env.TIMESTAMP}"
 
     steps:
-      - name: Get current date
-        id: date
-        run: |
-          echo "date=$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
-
       - name: Set environment variables
         run: |
           TIMESTAMP=$(date +'%Y%m%d%H%M%S')
