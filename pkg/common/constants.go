@@ -32,6 +32,9 @@ const (
 	MonitoringNamespace = "everest-monitoring"
 	// PerconaEverestDeploymentName stores the name of everest API Server deployment.
 	PerconaEverestDeploymentName = "everest-server"
+	// PerconaEverestDeploymentNameLegacy stores the legacy name (> 1.4.0) of everest API Server deployment.
+	// This is kept only for backward compatibility.
+	PerconaEverestDeploymentNameLegacy = "percona-everest"
 	// PerconaEverestCatalogName is the name of the Everest catalog source.
 	PerconaEverestCatalogName = "everest-catalog"
 	// PerconaEverestOperatorDeploymentName stores the name of everest operator deployment.
