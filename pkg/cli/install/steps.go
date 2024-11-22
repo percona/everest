@@ -91,10 +91,11 @@ func (o *Install) newStepEnsureCatalogSource() steps.Step {
 	return steps.Step{
 		Desc: "Ensuring Everest CatalogSource is ready",
 		F: func(ctx context.Context) error {
-			catalogNs, err := o.helmInstaller.Render().GetEverestCatalogNamespace(ctx)
+			manifests, err := o.helmInstaller.RenderTemplates(ctx)
 			if err != nil {
 				return fmt.Errorf("could not get Everest CatalogSource namespace: %w", err)
 			}
+			catalogNs, err := manifests.GetEverestCatalogNamespace()
 			return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
 				cs, err := o.kubeClient.GetCatalogSource(ctx, common.PerconaEverestCatalogName, catalogNs)
 				if err != nil {

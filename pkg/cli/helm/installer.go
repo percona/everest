@@ -29,6 +29,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/chartutil"
 	helmcli "helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/downloader"
@@ -111,15 +112,46 @@ func (i *Installer) Init(kubeconfigPath string, o ChartOptions) error {
 	return nil
 }
 
-// Render returns a TemplateRenderer to render the Helm chart.
-func (i *Installer) Render() *TemplateRenderer {
-	return &TemplateRenderer{
-		chart:        i.chart,
-		cfg:          i.cfg,
-		relName:      i.ReleaseName,
-		relNamespace: i.ReleaseNamespace,
-		values:       i.Values,
+func (i *Installer) RenderTemplates(ctx context.Context) (RenderedTemplate, error) {
+	if i.release != nil {
+		return newRenderedTemplate(i.release.Manifest), nil
 	}
+	cfg, err := newActionsCfg(i.ReleaseNamespace, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Helm action configuration: %w", err)
+	}
+
+	rel, err := installDryRun(ctx, cfg, i.chart, i.ReleaseName, i.ReleaseNamespace, i.Values)
+	if err != nil {
+		return nil, err
+	}
+	return newRenderedTemplate(rel.Manifest), nil
+}
+
+func installDryRun(
+	ctx context.Context,
+	cfg *action.Configuration,
+	chart *chart.Chart,
+	releaseName, releaseNamespace string,
+	values map[string]interface{},
+) (*release.Release, error) {
+	install := action.NewInstall(cfg)
+	install.ReleaseName = releaseName
+	install.Namespace = releaseNamespace
+	install.CreateNamespace = true
+	install.Wait = false
+	install.DisableHooks = true
+	install.DryRun = true
+	install.ClientOnly = true
+	install.Replace = true
+	install.IncludeCRDs = true
+
+	parsedKubeVersion, err := chartutil.ParseKubeVersion("1.30.0")
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse kube version: %w", err)
+	}
+	install.KubeVersion = parsedKubeVersion
+	return install.RunWithContext(ctx, chart, values)
 }
 
 // Install the Helm chart.

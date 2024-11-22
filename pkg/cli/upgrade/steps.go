@@ -59,10 +59,11 @@ func (u *Upgrade) newStepEnsureCatalogSource() steps.Step {
 	return steps.Step{
 		Desc: "Ensuring Everest CatalogSource is ready",
 		F: func(ctx context.Context) error {
-			catalogNs, err := u.helmInstaller.Render().GetEverestCatalogNamespace(ctx)
+			manifest, err := u.helmInstaller.RenderTemplates(ctx)
 			if err != nil {
-				return fmt.Errorf("could not get Everest CatalogSource namespace: %w", err)
+				return fmt.Errorf("could not render Helm templates: %w", err)
 			}
+			catalogNs, err := manifest.GetEverestCatalogNamespace()
 			return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
 				cs, err := u.kubeClient.GetCatalogSource(ctx, common.PerconaEverestCatalogName, catalogNs)
 				if err != nil {
@@ -84,11 +85,15 @@ func (u *Upgrade) waitForDeployment(ctx context.Context, name, namespace string)
 }
 
 func (u *Upgrade) upgradeCustomResourceDefinitions(ctx context.Context) error {
-	crdStrs, err := u.helmInstaller.Render().GetCRDs(ctx)
+	manifests, err := u.helmInstaller.RenderTemplates(ctx)
+	if err != nil {
+		return fmt.Errorf("could not render Helm templates: %w", err)
+	}
+	crds, err := manifests.GetCRDs()
 	if err != nil {
 		return fmt.Errorf("could not get CRDs: %w", err)
 	}
-	return u.kubeClient.ApplyManifestFile(helmutils.StringsToBytes(crdStrs), common.SystemNamespace)
+	return u.kubeClient.ApplyManifestFile(helmutils.YAMLStringsToBytes(crds), common.SystemNamespace)
 }
 
 func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {

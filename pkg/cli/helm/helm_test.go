@@ -38,17 +38,18 @@ func TestHelm_RenderTemplates(t *testing.T) {
 
 	ctx := context.Background()
 
-	renderer := installer.Render()
-
-	allFiles, err := renderer.GetAllManifests(ctx, false)
+	rendered, err := installer.RenderTemplates(ctx)
 	require.NoError(t, err)
-	assert.Len(t, splitYaml(allFiles), 7)
 
-	allFiles, err = renderer.GetAllManifests(ctx, true)
+	allFiles := rendered.Strings()
 	require.NoError(t, err)
-	assert.Len(t, splitYaml(allFiles), 7)
+	assert.Len(t, allFiles, 7)
 
-	crds, err := renderer.GetCRDs(ctx)
+	allFiles, err = rendered.GetUninstallManifests()
+	require.NoError(t, err)
+	assert.Len(t, allFiles, 7)
+
+	crds, err := rendered.GetCRDs()
 	require.NoError(t, err)
 	assert.Len(t, crds, 2)
 }

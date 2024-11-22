@@ -1,31 +1,35 @@
 package helm
 
 import (
-	"context"
+	"bufio"
 	"fmt"
 	"regexp"
 	"strings"
 
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/releaseutil"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 )
 
-type TemplateRenderer struct {
-	chart                 *chart.Chart
-	cfg                   *action.Configuration
-	relName, relNamespace string
-	values                map[string]interface{}
+type RenderedTemplate []string
+
+func newRenderedTemplate(y string) RenderedTemplate {
+	return splitYaml(y)
 }
 
-func (r *TemplateRenderer) GetCRDs(ctx context.Context) ([]string, error) {
-	return r.filterRender(ctx, "crds")
+func (t *RenderedTemplate) Strings() []string {
+	if t == nil {
+		return []string{}
+	}
+	return []string(*t)
 }
 
-func (r *TemplateRenderer) GetEverestCatalogNamespace(ctx context.Context) (string, error) {
-	objs, err := r.filterRender(ctx, "everest-catalogsource.yaml")
+func (t *RenderedTemplate) GetCRDs() ([]string, error) {
+	return t.filter("crds")
+}
+
+func (r *RenderedTemplate) GetEverestCatalogNamespace() (string, error) {
+	objs, err := r.filter("everest-catalogsource.yaml")
 	if err != nil {
 		return "", err
 	}
@@ -40,71 +44,37 @@ func (r *TemplateRenderer) GetEverestCatalogNamespace(ctx context.Context) (stri
 	return cs.GetNamespace(), nil
 }
 
-func (r *TemplateRenderer) GetAllManifests(ctx context.Context, uninstall bool) (string, error) {
-	if uninstall {
-		return r.renderUninstall(ctx)
-	}
-	return r.renderTemplates(ctx)
-}
-
-func (r *TemplateRenderer) renderUninstall(ctx context.Context) (string, error) {
-	manifests, err := r.renderTemplates(ctx)
-	if err != nil {
-		return "", err
-	}
-	split := releaseutil.SplitManifests(manifests)
+func (t *RenderedTemplate) GetUninstallManifests() (RenderedTemplate, error) {
+	combined := strings.Join(t.Strings(), "\n---\n")
+	split := releaseutil.SplitManifests(combined)
 	_, files, err := releaseutil.SortManifests(split, nil, releaseutil.UninstallOrder)
 	if err != nil {
-		return "", err
+		return RenderedTemplate{}, fmt.Errorf("failed to sort manifests: %w", err)
 	}
-	var builder strings.Builder
-	for _, file := range files {
-		builder.WriteString(file.Content + "\n---\n")
-	}
-	y := builder.String()
-	y = strings.TrimSuffix(y, "\n---\n")
-	return y, nil
-}
-
-func (r *TemplateRenderer) renderTemplates(ctx context.Context) (string, error) {
-	install := action.NewInstall(r.cfg)
-	install.ReleaseName = r.relName
-	install.Namespace = r.relNamespace
-	install.DisableHooks = true
-	install.IncludeCRDs = true
-	install.DryRun = true
-	install.Replace = true
-
-	rel, err := install.RunWithContext(ctx, r.chart, r.values)
-	if err != nil {
-		return "", err
-	}
-	return rel.Manifest, nil
-}
-
-func (r *TemplateRenderer) filterRender(ctx context.Context, path string) ([]string, error) {
-	manifests, err := r.renderTemplates(ctx)
-	if err != nil {
-		return nil, err
-	}
-	split := splitYaml(manifests)
 	result := []string{}
+	for _, file := range files {
+		result = append(result, file.Content)
+	}
+	return RenderedTemplate(result), nil
+}
 
+func (t *RenderedTemplate) filter(path string) (RenderedTemplate, error) {
 	sourcePathRegex := regexp.MustCompile("# Source: [^/]+/(.+)")
 	sourcePath := ""
-	for _, doc := range split {
+	result := []string{}
+	for _, doc := range t.Strings() {
 		match := sourcePathRegex.FindStringSubmatch(doc)
 		if len(match) > 0 {
 			sourcePath = match[1]
 		}
 		if sourcePath == "" {
-			return nil, fmt.Errorf("cannot determine source path for manifest")
+			return RenderedTemplate{}, fmt.Errorf("cannot determine source path for manifest")
 		}
 		if strings.Contains(sourcePath, path) {
 			result = append(result, doc)
 		}
 	}
-	return result, nil
+	return RenderedTemplate(result), nil
 }
 
 func splitYaml(y string) []string {
@@ -114,7 +84,7 @@ func splitYaml(y string) []string {
 	sep := regexp.MustCompile("(?:^|\\s*\n)---\\s*")
 	docs := sep.Split(bigFileTmp, -1)
 	for _, d := range docs {
-		if d == "" {
+		if isYamlEmpty(d) {
 			continue
 		}
 
@@ -122,4 +92,27 @@ func splitYaml(y string) []string {
 		res = append(res, d)
 	}
 	return res
+}
+
+func isYamlEmpty(y string) bool {
+	scanner := bufio.NewScanner(strings.NewReader(y))
+	empty := true
+
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		empty = false
+		break
+	}
+
+	if err := scanner.Err(); err != nil {
+		empty = false
+	}
+	return empty
 }

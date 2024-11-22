@@ -23,6 +23,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	everesthelmchart "github.com/percona/percona-helm-charts/charts/everest"
 	helmcli "helm.sh/helm/v3/pkg/cli"
@@ -103,11 +104,12 @@ func DevChartDir() (string, error) {
 	return tmp, nil
 }
 
-func StringsToBytes(strs []string) []byte {
-	var res []byte
+func YAMLStringsToBytes(strs []string) []byte {
+	var builder strings.Builder
 	for _, s := range strs {
-		b := []byte(s)
-		res = append(res, b...)
+		builder.WriteString(s + "\n---\n")
 	}
-	return res
+	s := builder.String()
+	s = strings.TrimSuffix(s, "\n---\n")
+	return []byte(s)
 }

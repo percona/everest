@@ -10,6 +10,7 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/cli/helm"
+	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
@@ -133,11 +134,11 @@ func (u *Uninstall) cleanupLeftovers(ctx context.Context) error {
 	}); err != nil {
 		return fmt.Errorf("failed to initialize Helm installer: %w", err)
 	}
-	files, err := installer.Render().GetAllManifests(ctx, true)
+	manifests, err := installer.RenderTemplates(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to render Helm templates: %w", err)
 	}
-	return u.kubeClient.DeleteManifestFile([]byte(files), common.SystemNamespace)
+	return u.kubeClient.DeleteManifestFile(helmutils.YAMLStringsToBytes(manifests), common.SystemNamespace)
 }
 
 func (u *Uninstall) uninstallHelmChart(ctx context.Context) error {
