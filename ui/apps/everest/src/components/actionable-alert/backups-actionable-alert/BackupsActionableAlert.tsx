@@ -49,6 +49,7 @@ const BackupsActionableAlert = ({ namespace }: BackupsActionableAlertProps) => {
           handleCloseModal={handleCloseModal}
           handleSubmitModal={handleSubmit}
           isLoading={creatingBackupStorage}
+          prefillNamespace={namespace}
         />
       )}
     </>
