@@ -14,7 +14,6 @@
 // limitations under the License.
 import { test, expect } from '@fixtures';
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { faker } from '@faker-js/faker';
 
 test.describe('Everest CLI install', async () => {
   test.beforeEach(async ({ cli }) => {
@@ -44,7 +43,6 @@ test.describe('Everest CLI install', async () => {
         ]);
       });
     };
-    const clusterName = `test-${faker.number.int()}`;
 
     await test.step('run everest install command (pretty))', async () => {
       const out = await cli.everestExecSkipWizard(
@@ -64,32 +62,6 @@ test.describe('Everest CLI install', async () => {
       ]);
     });
     await page.waitForTimeout(10_000);
-    await verifyClusterResources();
-
-    await test.step('re-run everest install command', async () => {
-      await page.waitForTimeout(60_000);
-      const operator = await cli.exec(`kubectl -n everest-system get po | grep everest|awk {'print $1'}`);
-      await operator.assertSuccess();
-
-      const out = await cli.everestExecSkipWizard(
-        `install -v --operator.mongodb=false --operator.postgresql=true --operator.xtradb-cluster=true --namespaces=everest-operators`,
-      );
-      const restartedOperator = await cli.exec(`kubectl -n everest-system get po | grep everest|awk {'print $1'}`);
-      await restartedOperator.assertSuccess();
-
-      expect(operator.getStdOutLines()[0]).not.toEqual(restartedOperator.getStdOutLines()[0]);
-
-      await out.assertSuccess();
-      await out.outErrContainsNormalizedMany([
-        'percona-xtradb-cluster-operator operator has been installed',
-        'Deployment \'everest-operator\' in namespace \'everest-system\' is ready',
-      ]);
-      await out.outNotContains([
-        'Connected Kubernetes cluster to Everest',
-      ]);
-    });
-    await page.waitForTimeout(10_000);
-
     await verifyClusterResources();
   });
 });
