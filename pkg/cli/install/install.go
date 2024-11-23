@@ -338,6 +338,7 @@ func (o *Install) initDevChart() (func(), error) {
 
 func (o *Install) getDBNamespaceInstallValues() values.Options {
 	v := []string{}
+	v = append(v, "cleanupOnUninstall=false") // uninstall command will do the clean-up on its own.
 	v = append(v, fmt.Sprintf("pxc=%t", o.config.Operator.PXC))
 	v = append(v, fmt.Sprintf("postgresql=%t", o.config.Operator.PG))
 	v = append(v, fmt.Sprintf("psmdb=%t", o.config.Operator.PSMDB))

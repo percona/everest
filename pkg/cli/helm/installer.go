@@ -203,7 +203,6 @@ func (i *Installer) install(ctx context.Context) error {
 		return err
 	}
 	i.release = rel
-	fmt.Println(rel.Manifest)
 	return nil
 }
 
@@ -219,7 +218,6 @@ func (i *Installer) Upgrade(ctx context.Context) error {
 		return err
 	}
 	i.release = rel
-	fmt.Println(rel.Manifest)
 	return nil
 }
 
@@ -357,10 +355,10 @@ func NewUninstaller(relName, relNamespace, kubeconfigPath string) (*Uninstaller,
 // If dryRun is set, returns true if a release exists, but doesn't actually uninstall it.
 func (u *Uninstaller) Uninstall(dryRun bool) (bool, error) {
 	uninstall := action.NewUninstall(u.actionCfg)
-	uninstall.DisableHooks = true
 	uninstall.Wait = false
 	uninstall.IgnoreNotFound = true
 	uninstall.DryRun = dryRun
+
 	resp, err := uninstall.Run(u.ReleaseName)
 	if err != nil {
 		if dryRun && errors.Is(err, driver.ErrReleaseNotFound) {
