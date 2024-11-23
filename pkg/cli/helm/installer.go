@@ -211,7 +211,6 @@ func (i *Installer) Upgrade(ctx context.Context) error {
 	upgrade := action.NewUpgrade(i.cfg)
 	upgrade.Namespace = i.ReleaseNamespace
 	upgrade.TakeOwnership = true
-	upgrade.DisableHooks = true
 
 	rel, err := upgrade.RunWithContext(ctx, i.ReleaseName, i.chart, i.Values)
 	if err != nil {

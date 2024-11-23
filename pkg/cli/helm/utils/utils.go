@@ -29,32 +29,60 @@ import (
 	helmcli "helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/strvals"
 )
 
-// MustMergeValues panics if MergeValues returns an error.
-func MustMergeValues(userDefined values.Options, vals ...map[string]interface{}) map[string]interface{} {
-	merged, err := MergeValues(userDefined, vals...)
-	if err != nil {
-		panic(err)
+// MergeVals merges all values from flag options ('helmFlagOpts') and
+// auto-generated helm options based on environment ('helmMapOpts'),
+// and returns a single map with all of these options merged.
+// 'helmMapOpts' can be nil.
+func MergeVals(
+	helmFlagOpts values.Options,
+	helmMapOpts map[string]string,
+) (map[string]interface{}, error) {
+	// Create helm values from helmMapOpts
+	helmOpts := make([]string, 0, len(helmMapOpts))
+	for k, v := range helmMapOpts {
+		helmOpts = append(helmOpts, fmt.Sprintf("%s=%s", k, v))
 	}
-	return merged
+
+	helmOptsStr := strings.Join(helmOpts, ",")
+
+	helmValues := make(map[string]interface{})
+	err := strvals.ParseInto(helmOptsStr, helmValues)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing helm options %q: %w", helmOptsStr, err)
+	}
+
+	// Get the user-defined helm options passed by flag
+	p := getter.All(helmcli.New())
+	userVals, err := helmFlagOpts.MergeValues(p)
+	if err != nil {
+		return nil, err
+	}
+
+	// User-defined helm options will overwrite the default helm options.
+	return mergeMaps(helmValues, userVals), nil
 }
 
-// MergeValues merges the user-provided values with the provided values `vals`
-// If a key exists in both the user-provided values and the provided values, the user-provided value will be used.
-func MergeValues(userDefined values.Options, vals ...map[string]interface{}) (map[string]interface{}, error) {
-	merged, err := userDefined.MergeValues(getter.All(helmcli.New()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to merge user-defined values: %w", err)
+// Merge maps recursively merges the values of b into a copy of a, preferring the values from b.
+func mergeMaps(a, b map[string]interface{}) map[string]interface{} {
+	out := make(map[string]interface{}, len(a))
+	for k, v := range a {
+		out[k] = v
 	}
-	for _, val := range vals {
-		for k, v := range val {
-			if _, ok := merged[k]; !ok {
-				merged[k] = v
+	for k, v := range b {
+		if v, ok := v.(map[string]interface{}); ok {
+			if bv, ok := out[k]; ok {
+				if bv, ok := bv.(map[string]interface{}); ok {
+					out[k] = mergeMaps(bv, v)
+					continue
+				}
 			}
 		}
+		out[k] = v
 	}
-	return merged, nil
+	return out
 }
 
 // copies the contents of src embed.FS to the dest directory.

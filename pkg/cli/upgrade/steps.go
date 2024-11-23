@@ -17,6 +17,7 @@ import (
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
+	. "github.com/percona/everest/pkg/utils/must" //nolint:revive,stylecheck
 )
 
 func (u *Upgrade) newStepUpgradeCRDs() steps.Step {
@@ -139,7 +140,7 @@ func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version 
 		ClusterType:        u.clusterType,
 		VersionMetadataURL: u.config.VersionMetadataURL,
 	})
-	values := helmutils.MustMergeValues(helmValuesForDBEngines(dbEngines), overrides)
+	values := Must(helmutils.MergeVals(helmValuesForDBEngines(dbEngines), overrides))
 	installer := helm.Installer{
 		ReleaseName:      namespace,
 		ReleaseNamespace: namespace,

@@ -53,6 +53,8 @@ require (
 	sigs.k8s.io/yaml v1.4.0
 )
 
+require github.com/ghodss/yaml v1.0.0 // indirect
+
 require (
 	dario.cat/mergo v1.0.1 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
@@ -229,6 +231,7 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	k8s.io/apiserver v0.31.1 // indirect
 	k8s.io/component-base v0.31.1 // indirect
+	k8s.io/helm v2.17.0+incompatible
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240430033511-f0e62f92d13f // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect

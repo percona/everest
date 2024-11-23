@@ -35,6 +35,7 @@ import (
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
+	. "github.com/percona/everest/pkg/utils/must" //nolint:revive,stylecheck
 	cliVersion "github.com/percona/everest/pkg/version"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
@@ -208,7 +209,7 @@ func (u *Upgrade) setupHelmInstaller() error {
 		ClusterType:        u.clusterType,
 		VersionMetadataURL: u.config.VersionMetadataURL,
 	})
-	values := helmutils.MustMergeValues(u.config.Values, overrides)
+	values := Must(helmutils.MergeVals(u.config.Values, overrides))
 	installer := &helm.Installer{
 		ReleaseName:      common.SystemNamespace,
 		ReleaseNamespace: common.SystemNamespace,

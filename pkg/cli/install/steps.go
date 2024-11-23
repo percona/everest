@@ -28,6 +28,7 @@ import (
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
+	. "github.com/percona/everest/pkg/utils/must" //nolint:revive,stylecheck
 )
 
 func (o *Install) newStepInstallEverestHelmChart() steps.Step {
@@ -138,11 +139,10 @@ func (o *Install) provisionDBNamespace(ver string, namespace string) steps.Step 
 			if o.config.ChartDir != "" {
 				chartDir = path.Join(o.config.ChartDir, dbNamespaceSubChartPath)
 			}
-
 			overrides := helm.NewValues(helm.Values{
 				ClusterType: o.clusterType,
 			})
-			values := helmutils.MustMergeValues(o.getDBNamespaceInstallValues(), overrides)
+			values := Must(helmutils.MergeVals(o.getDBNamespaceInstallValues(), overrides))
 
 			installer := helm.Installer{
 				ReleaseName:            namespace,
