@@ -23,8 +23,8 @@ export const IP_REGEX =
 export const INVALID_SOURCE_RANGE_ERROR = 'Invalid IP address range';
 export const SOURCE_RANGE_PLACEHOLDER =
   'Enter IP with netmask (e.g. 192.168.1.1/24)';
-export const DATE_FORMAT = "dd'/'MM'/'yyyy 'at' hh':'mm' 'a";
-export const PITR_DATE_FORMAT = "dd'/'MM'/'yyyy 'at' hh':'mm':'ss' 'a";
+export const DATE_FORMAT = "dd'/'MM'/'yyyy 'at' HH':'mm";
+export const PITR_DATE_FORMAT = "dd'/'MM'/'yyyy 'at' HH':'mm':'ss";
 
 export const BACKUP_STATE_TO_STATUS: Record<string, BackupStatus> = {
   Starting: BackupStatus.IN_PROGRESS,
