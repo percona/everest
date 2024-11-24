@@ -29,7 +29,7 @@ require (
 	github.com/operator-framework/api v0.26.0
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
 	github.com/percona/everest-operator v0.6.0-dev1.0.20240916093557-e44c8cd8a71d
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241122134126-f1ec54216ff5
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241124092823-288fc5f86792
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2
