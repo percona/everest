@@ -572,6 +572,7 @@ const ResourcesForm = ({
         onChange={handleAccordionChange('nodes')}
         sx={{
           px: 2,
+          backgroundColor: 'transparent',
         }}
       >
         <CustomAccordionSummary
@@ -602,6 +603,7 @@ const ResourcesForm = ({
           onChange={handleAccordionChange('proxies')}
           sx={{
             px: 2,
+            backgroundColor: 'transparent',
           }}
         >
           <CustomAccordionSummary
