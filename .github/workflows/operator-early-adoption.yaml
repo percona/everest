@@ -82,7 +82,10 @@ jobs:
       CLI_PREREQUISITES: ">= 1.2.0"
       # CLI_PREREQUISITES: ${{ github.event.inputs.cli_prerequisites }}
 
+      # !!! revert before merge to using inputs
       K8S_PREREQUISITES: ">= 1.27"
+      # K8S_PREREQUISITES: ${{ github.event.inputs.k8s_prerequisites }}
+
       VS_PORT: 8081
       ARCH: ""
       OS: ""
