@@ -107,7 +107,7 @@ const openResourcesModal = async (page: Page) => {
 
       await test.step('Check db list and status', async () => {
         await page.goto('/databases');
-        await waitForStatus(page, clusterName, 'Initializing', 600000);
+        await waitForStatus(page, clusterName, 'Initializing', 15000);
       });
     });
 
