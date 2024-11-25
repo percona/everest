@@ -97,5 +97,6 @@ charts: $(HELM)         ## Install Helm charts
 	$(HELM) repo add vm https://victoriametrics.github.io/helm-charts
 	$(HELM) repo update
 
+CHART_BRANCH ?= main
 update-dev-chart:
-	GOPROXY=direct go get -u -v github.com/percona/percona-helm-charts/charts/everest@main
+	GOPROXY=direct go get -u -v github.com/percona/percona-helm-charts/charts/everest@$(CHART_BRANCH)
