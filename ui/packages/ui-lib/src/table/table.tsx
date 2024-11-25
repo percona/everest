@@ -9,6 +9,21 @@ import { useEffect } from 'react';
 import { ICONS_OPACITY } from './table.constants';
 import { TableProps } from './table.types';
 import usePersistentColumnVisibility from './usePersistentColumnVisibility';
+
+const noDataAlertWithMessage = (message?: string) => (
+  <Alert
+    severity="info"
+    sx={{
+      width: '100%',
+      height: '50px',
+      marginTop: 1,
+      marginBottom: 1,
+    }}
+  >
+    {message}
+  </Alert>
+);
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function Table<T extends Record<string, any>>(props: TableProps<T>) {
   const {
@@ -93,31 +108,11 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
         <>
           {/* This means there was data before filtering, so we show the message of empty filtering result */}
           {getPreFilteredRowModel().rows.length > 0 ? (
-            <Alert
-              severity="info"
-              sx={{
-                width: '100%',
-                height: '50px',
-                marginTop: 1,
-                marginBottom: 1,
-              }}
-            >
-              {emptyFilterResultsMessage}
-            </Alert>
+            noDataAlertWithMessage(emptyFilterResultsMessage)
           ) : emptyState ? (
             <Box>{emptyState}</Box>
           ) : (
-            <Alert
-              severity="info"
-              sx={{
-                width: '100%',
-                height: '50px',
-                marginTop: 1,
-                marginBottom: 1,
-              }}
-            >
-              {noDataMessage}
-            </Alert>
+            noDataAlertWithMessage(noDataMessage)
           )}
         </>
       )}
