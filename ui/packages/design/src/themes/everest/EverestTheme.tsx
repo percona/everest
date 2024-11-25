@@ -97,6 +97,13 @@ const everestThemeOptions = (mode: PaletteMode): ThemeOptions => {
           }),
         },
       },
+      MuiAccordion: {
+        styleOverrides: {
+          root: () => ({
+            backgroundColor: 'transparent',
+          }),
+        },
+      },
     },
   };
 
