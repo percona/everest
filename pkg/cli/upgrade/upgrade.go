@@ -162,7 +162,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 		return fmt.Errorf("could not detect Kubernetes environment: %w", err)
 	}
 
-	if err := u.setupHelmInstaller(); err != nil {
+	if err := u.setupHelmInstaller(ctx); err != nil {
 		return fmt.Errorf("could not initialize Helm installer: %w", err)
 	}
 
@@ -205,7 +205,7 @@ func (u *Upgrade) setKubernetesEnv(ctx context.Context) error {
 	return nil
 }
 
-func (u *Upgrade) setupHelmInstaller() error {
+func (u *Upgrade) setupHelmInstaller(ctx context.Context) error {
 	overrides := helm.NewValues(helm.Values{
 		ClusterType:        u.clusterType,
 		VersionMetadataURL: u.config.VersionMetadataURL,
@@ -216,10 +216,10 @@ func (u *Upgrade) setupHelmInstaller() error {
 	// Normally, the Helm chart will include these ConfigMaps and Secrets only during installation and exclude them from upgrades.
 	// However, when upgrading to 1.4.0, we create a new release to migrate the existing installation to Helm.
 	// In this case, we need to ensure that the existing configs and secrets are preserved.
-	if err := u.applyConfigMapValues(context.Background()); err != nil {
+	if err := u.applyConfigMapValues(ctx); err != nil {
 		return fmt.Errorf("could not build values from configmaps: %w", err)
 	}
-	if err := u.applySecretValues(context.Background()); err != nil {
+	if err := u.applySecretValues(ctx); err != nil {
 		return fmt.Errorf("could not build values from secrets: %w", err)
 	}
 
