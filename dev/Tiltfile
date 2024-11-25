@@ -429,7 +429,7 @@ docker_build_with_restart('perconalab/everest',
 )
 
 k8s_resource(
-    workload='percona-everest',
+    workload='everest-server',
     objects=[
     'everest-accounts:secret:%s' % everest_namespace,
     'everest-jwt:secret:%s' % everest_namespace,
