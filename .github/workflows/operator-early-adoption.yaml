@@ -3,24 +3,41 @@ name: Custom build
 on:
   workflow_dispatch:
     inputs:
+      everest_branch:
+        required: false
+        default: main
+        description: "Everest branch with the new build to checkout"
+      everest_operator_branch:
+        required: false
+        default: main
+        description: "Everest operator branch with the new build to checkout"
       vs_branch:
-        required: true
+        required: false
         default: main
         description: "Version Service branch with the new build to checkout"
-      image:
-        required: true
-        description: "Full name of the upstream image to test"
-      upstream:
+      upstream_operator:
         type: choice
-        description: "The upstream operator"
-        required: true
+        description: "The upstream operator to upgrade"
+        required: false
         options:
+          - ""
           - percona-xtradb-cluster-operator
           - percona-server-mongodb-operator
           - percona-postgresql-operator
-#  push: # !!! remove before merge
-#    branches:
-#      - EVEREST-1563-operator-early-adoption
+      upstream_operator_bundle_image:
+        required: false
+        description: "Full name of the upstream bundle image to test"
+      cli_prerequisites:
+        required: false
+        description: "Prerequisites for CLI to add to the VS"
+        default: ">= 1.2.0"
+      k8s_prerequisites:
+        required: false
+        description: "Prerequisites for k8s version to add to the VS"
+        default: ">= 1.27"
+  push: # !!! remove before merge
+    branches:
+      - EVEREST-1563-operator-early-adoption
 
 permissions:
   contents: read
@@ -44,13 +61,27 @@ jobs:
 
     env:
       TOOLS_PATH: "/opt/tools/bin"
-      # IMAGE: ${{ github.event.inputs.image }}
-      IMAGE: "docker.io/percona/percona-xtradb-cluster-operator:1.15.1-community-bundle"
-      # !!! revert to using inputs
-      # UPSTREAM_REPO: ${{ github.event.inputs.upstream }}
+
       VS_BRANCH: ${{ github.event.inputs.vs_branch }}
+
+      # !!! revert before merge to using inputs
+      #EVEREST_BRANCH: ${{ github.event.inputs.everest_branch }}
+      EVEREST_BRANCH: "EVEREST-1563-operator-early-adoption"
+
+      EVEREST_OPERATOR_BRANCH: ${{ github.event.inputs.everest_operator_branch }}
+
+      # !!! revert before merge to using inputs
+      # IMAGE: ${{ github.event.inputs.upstream_operator_bundle_image }}
+      IMAGE: "docker.io/percona/percona-xtradb-cluster-operator:1.15.1-community-bundle"
+
+      # !!! revert before merge to using inputs
+      # UPSTREAM_REPO: ${{ github.event.inputs.upstream-operator }}
       UPSTREAM_REPO: "percona-xtradb-cluster-operator"
+
+      # !!! revert before merge to using inputs
       CLI_PREREQUISITES: ">= 1.2.0"
+      # CLI_PREREQUISITES: ${{ github.event.inputs.cli_prerequisites }}
+
       K8S_PREREQUISITES: ">= 1.27"
       VS_PORT: 8081
       ARCH: ""
@@ -66,7 +97,9 @@ jobs:
           echo "OS=$(uname | awk '{print tolower($0)}')" >> $GITHUB_ENV
           echo "VS_URL=http://localhost:$VS_PORT" >> $GITHUB_ENV
           
-          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
+          # !!! revert before merge
+          # TIMESTAMP=$(date +'%Y%m%d%H%M%S')
+          TIMESTAMP="20241125120500"
           echo "VERSION=1.10000.0-rc$TIMESTAMP" >> $GITHUB_ENV
           echo "VS_TAG=everest-test$TIMESTAMP" >> $GITHUB_ENV
 
@@ -132,6 +165,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: percona/everest-operator
+          ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
           path: everest-operator
           token: ${{ secrets.ROBOT_TOKEN }}
 
@@ -217,19 +251,22 @@ jobs:
             echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
             exit 1
           fi
-
-          # Add a new record to the upstream veneer
-          yq e ".Stable.Bundles += {\"Image\": \"$IMAGE\"}" veneer/${UPSTREAM_REPO}.yaml > temp.yaml && mv temp.yaml veneer/${UPSTREAM_REPO}.yaml
-
-          # Generate upstream catalog
-          /tmp/opm alpha render-template semver --skip-tls -o yaml < veneer/${UPSTREAM_REPO}.yaml > catalog/${UPSTREAM_REPO}/catalog.yaml
-
-          # Check if upstream catalog has the new image listed
-          if ! grep -q "$IMAGE$" catalog/${UPSTREAM_REPO}/catalog.yaml; then
-            echo "catalog/${UPSTREAM_REPO}/catalog.yaml does not include the version $IMAGE"
-            exit 1
+          
+          # If the feature build contains upstream upgrades
+          if [ -n "$UPSTREAM_REPO" ]; then
+            # Add a new record to the upstream veneer
+            yq e ".Stable.Bundles += {\"Image\": \"$IMAGE\"}" veneer/${UPSTREAM_REPO}.yaml > temp.yaml && mv temp.yaml veneer/${UPSTREAM_REPO}.yaml
+          
+            # Generate upstream catalog
+            /tmp/opm alpha render-template semver --skip-tls -o yaml < veneer/${UPSTREAM_REPO}.yaml > catalog/${UPSTREAM_REPO}/catalog.yaml
+          
+            # Check if upstream catalog has the new image listed
+            if ! grep -q "$IMAGE$" catalog/${UPSTREAM_REPO}/catalog.yaml; then
+              echo "catalog/${UPSTREAM_REPO}/catalog.yaml does not include the version $IMAGE"
+              exit 1
+            fi
           fi
-
+          
           git diff
 
       - name: Catalog - setup Docker meta for everest-catalog
@@ -254,7 +291,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.ROBOT_TOKEN }}
-          ref: EVEREST-1563-operator-early-adoption # !!! delete before merge
+          ref: ${{ env.EVEREST_BRANCH }}
 
       - name: Everest - setup golang
         uses: actions/setup-go@v5
