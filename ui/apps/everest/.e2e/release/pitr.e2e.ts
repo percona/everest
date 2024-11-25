@@ -358,10 +358,10 @@ test.describe.configure({ retries: 0 });
           timeout: 5000,
         });
         await expect(
-          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss aa')
+          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
         ).toBeVisible({ timeout: 5000 });
         await expect(
-          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss aa')
+          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
         ).not.toBeEmpty({ timeout: 5000 });
         await page.getByTestId('CalendarIcon').click({ timeout: 5000 });
         await page
@@ -377,7 +377,7 @@ test.describe.configure({ retries: 0 });
           .getByLabel(pitrRestoreTime.ampm, { exact: true })
           .click({ timeout: 5000 });
         await expect(
-          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss aa')
+          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
         ).toHaveValue(getFormattedPITRTime(pitrRestoreTime));
 
         await page.getByTestId('form-dialog-restore').click({ timeout: 5000 });

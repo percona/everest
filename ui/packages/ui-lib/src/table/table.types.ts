@@ -17,8 +17,9 @@ import { type MaterialReactTableProps } from 'material-react-table';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface TableProps<T extends Record<string, any>>
   extends MaterialReactTableProps<T> {
-  noDataMessage: string;
+  noDataMessage?: string;
   emptyFilterResultsMessage?: string;
   hideExpandAllIcon?: boolean;
   tableName: string;
+  emptyState?: React.ReactNode;
 }

@@ -18,6 +18,7 @@ import {
 import { DatabaseIcon, NetworkNode } from './other';
 import { GenericErrorIcon } from './generic-error';
 import { NoMatchIcon } from './no-match';
+import { EmptyStateIcon } from './empty-state';
 import {
   ErrorIcon,
   PausedIcon,
@@ -74,6 +75,8 @@ const icons = {
   genericError: [GenericErrorIcon],
 
   noMatch: [NoMatchIcon],
+
+  emptyState: [EmptyStateIcon],
 
   status: [
     ErrorIcon,
@@ -198,6 +201,31 @@ export const NoMatch: StoryObj<typeof NoMatchIcon> = {
         {icons.noMatch.map((Icon) => (
           <Stack direction={'row'} alignItems={'center'} columnGap={'2rem'}>
             <Icon h="128px" w="128px" />
+            <Typography variant="body1">{Icon.name}</Typography>
+          </Stack>
+        ))}
+      </Stack>
+    );
+  },
+};
+
+export const EmptyState: StoryObj<typeof EmptyStateIcon> = {
+  parameters: {
+    docs: {
+      description: {
+        story: `\`\`\`ts
+        <EmptyState />
+        \`\`\``,
+      },
+    },
+  },
+
+  render: function Render() {
+    return (
+      <Stack direction={'column'} rowGap={'2rem'}>
+        {icons.emptyState.map((Icon) => (
+          <Stack direction={'row'} alignItems={'center'} columnGap={'2rem'}>
+            <Icon h="60px" w="60px" />
             <Typography variant="body1">{Icon.name}</Typography>
           </Stack>
         ))}

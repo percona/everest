@@ -411,24 +411,29 @@ func (e *EverestServer) connectionURL(ctx context.Context, db *everestv1alpha1.D
 	if db.Status.Hostname == "" {
 		return nil
 	}
-	url := url.URL{User: url.UserPassword(user, url.QueryEscape(password))}
+	var url string
+	defaultHost := net.JoinHostPort(db.Status.Hostname, fmt.Sprint(db.Status.Port))
 	switch db.Spec.Engine.Type {
 	case everestv1alpha1.DatabaseEnginePXC:
-		url.Scheme = "jdbc:mysql"
-		url.Host = net.JoinHostPort(db.Status.Hostname, fmt.Sprint(db.Status.Port))
+		url = queryEscapedURL("jdbc:mysql", user, password, defaultHost)
 	case everestv1alpha1.DatabaseEnginePSMDB:
 		hosts, err := psmdbHosts(ctx, db, e.kubeClient.GetPods)
 		if err != nil {
 			e.l.Error(err)
 			return nil
 		}
-		url.Scheme = "mongodb"
-		url.Host = hosts
+		url = queryEscapedURL("mongodb", user, password, hosts)
 	case everestv1alpha1.DatabaseEnginePostgresql:
-		url.Scheme = "postgres"
-		url.Host = net.JoinHostPort(db.Status.Hostname, fmt.Sprint(db.Status.Port))
+		url = queryEscapedURL("postgres", user, password, defaultHost)
 	}
-	return pointer.ToString(url.String())
+	return pointer.ToString(url)
+}
+
+// Using own format instead of url.URL bc it uses the password encoding policy which does not encode char like ','
+// however such char may appear in the db passwords.
+func queryEscapedURL(scheme, user, password, hosts string) string {
+	format := "%s://%s:%s@%s"
+	return fmt.Sprintf(format, scheme, user, url.QueryEscape(password), hosts)
 }
 
 func psmdbHosts(
