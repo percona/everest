@@ -192,6 +192,14 @@ func NewInstall(c Config, l *zap.SugaredLogger, cmd *cobra.Command) (*Install, e
 
 // Run the Everest installation process.
 func (o *Install) Run(ctx context.Context) error {
+	// Do not continue if Everst is already installed.
+	installedVersion, err := version.EverestVersionFromDeployment(ctx, o.kubeClient)
+	if client.IgnoreNotFound(err) != nil {
+		return errors.Join(err, errors.New("cannot check if Everest is already installed"))
+	} else if err == nil {
+		return fmt.Errorf("Everest is already installed. Version: %s", installedVersion)
+	}
+
 	// TODO: we shall probably split this into "install" and "add namespaces"
 	// Otherwise the logic is hard to maintain - we need to make sure not to,
 	// for example, install a different version of operators per namespace, if
