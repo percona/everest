@@ -23,8 +23,7 @@ init:                   ## Install development tools
 build:                ## Build binaries
 	go build -v $(LD_FLAGS_API) -o bin/everest ./cmd
 
-build-cli: init                ## Build binaries
-	$(MAKE) charts
+build-cli: init charts                ## Build binaries
 	go build -tags debug -v $(LD_FLAGS_CLI_TEST) -o bin/everestctl ./cmd/cli
 
 release: FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check.percona.com' -X 'github.com/percona/everest/cmd/config.TelemetryInterval=24h'
