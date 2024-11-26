@@ -207,7 +207,8 @@ export const DbClusterView = () => {
             },
           })}
           renderTopToolbarCustomActions={() =>
-            canAddCluster && (
+            canAddCluster &&
+            tableData.length > 0 && (
               <Button
                 size="small"
                 startIcon={<AddIcon />}

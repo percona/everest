@@ -1,6 +1,7 @@
 const EmptyStateIcon = ({ w, h }: { w: string; h: string }) => {
   return (
     <svg
+      id="empty-state-icon"
       width={w}
       height={h}
       viewBox="0 0 66 62"
