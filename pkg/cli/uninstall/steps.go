@@ -63,7 +63,7 @@ func (u *Uninstall) newStepDeleteDBNamespaces(helmUninstall bool) steps.Step {
 
 func (u *Uninstall) newStepDeleteNamespace(ns string) steps.Step {
 	return steps.Step{
-		Desc: fmt.Sprintf("Deleting namespace %s", ns),
+		Desc: fmt.Sprintf("Deleting namespace '%s'", ns),
 		F: func(ctx context.Context) error {
 			return u.deleteNamespaces(ctx, []string{ns})
 		},
