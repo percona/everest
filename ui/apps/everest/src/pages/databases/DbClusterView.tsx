@@ -37,6 +37,7 @@ import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import DbActions from 'components/db-actions/db-actions';
 import DbActionsModals from 'components/db-actions/db-actions-modals';
+import { EmptyState } from './emptyState/emptyState';
 import CreateDbButton from './create-db-button/create-db-button';
 
 export const DbClusterView = () => {
@@ -63,7 +64,9 @@ export const DbClusterView = () => {
   const navigate = useNavigate();
 
   const { canCreate } = useNamespacePermissionsForResource('database-clusters');
+  const { canRead } = useNamespacePermissionsForResource('database-engines');
 
+  const canAddCluster = canCreate.length > 0 && canRead.length > 0;
   const dbClustersResults = useDBClustersForNamespaces(
     namespaces.map((ns) => ({
       namespace: ns,
@@ -166,7 +169,7 @@ export const DbClusterView = () => {
       <Box sx={{ width: '100%' }}>
         <Table
           tableName="dbClusterView"
-          noDataMessage={Messages.dbCluster.noData}
+          emptyState={<EmptyState />}
           state={{ isLoading: dbClustersLoading || loadingNamespaces }}
           columns={columns}
           data={tableData}
@@ -204,7 +207,7 @@ export const DbClusterView = () => {
             },
           })}
           renderTopToolbarCustomActions={() =>
-            canCreate.length > 0 && <CreateDbButton />
+            canAddCluster && <CreateDbButton />
           }
           hideExpandAllIcon
         />

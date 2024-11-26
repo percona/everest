@@ -137,19 +137,19 @@ func TestGetDefaultUploadInterval(t *testing.T) {
 			name:     "new pg, no interval is set",
 			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "2.4.0"},
 			interval: nil,
-			expected: 0,
+			expected: pgDefaultUploadInterval,
 		},
 		{
 			name:     "new pg, interval is set",
 			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "2.4.0"},
 			interval: pointer.ToInt(1000),
-			expected: 0,
+			expected: 1000,
 		},
 		{
 			name:     "newer pg",
 			engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql, Version: "2.4.1"},
 			interval: nil,
-			expected: 0,
+			expected: pgDefaultUploadInterval,
 		},
 	}
 	for _, tc := range cases {
@@ -223,7 +223,7 @@ func TestConnectionURL(t *testing.T) {
 			},
 			user:     "postgres",
 			password: "55aBDedMF;So|C?^3x|h.dDC",
-			expected: "postgres://postgres:55aBDedMF%253BSo%257CC%253F%255E3x%257Ch.dDC@postgresql-a5d-pgbouncer.everest.svc:5432",
+			expected: "postgres://postgres:55aBDedMF%3BSo%7CC%3F%5E3x%7Ch.dDC@postgresql-a5d-pgbouncer.everest.svc:5432",
 		},
 		{
 			name:    "pxc",
@@ -234,7 +234,7 @@ func TestConnectionURL(t *testing.T) {
 			},
 			user:     "root",
 			password: ",0#3PdCIc=9CS(do2",
-			expected: "jdbc:mysql://root:%252C0%25233PdCIc%253D9CS%2528do2@mysql-29o-haproxy.everest:3306",
+			expected: "jdbc:mysql://root:%2C0%233PdCIc%3D9CS%28do2@mysql-29o-haproxy.everest:3306",
 		},
 	}
 

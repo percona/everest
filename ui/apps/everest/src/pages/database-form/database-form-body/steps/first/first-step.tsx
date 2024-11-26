@@ -13,22 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FormGroup, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, FormGroup, Stack, Tooltip } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useCallback, useEffect, useMemo } from 'react';
 import { lt, valid } from 'semver';
 import { DbType } from '@percona/types';
-import { AutoCompleteInput, SwitchInput, TextInput } from '@percona/ui-lib';
-import { dbTypeToDbEngine } from '@percona/utils';
+import {
+  ActionableLabeledContent,
+  AutoCompleteInput,
+  SwitchInput,
+  TextInput,
+} from '@percona/ui-lib';
+import { dbEngineToDbType, dbTypeToDbEngine } from '@percona/utils';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
 import { useFormContext } from 'react-hook-form';
 import { DbEngineToolStatus } from 'shared-types/dbEngines.types';
-import { DB_WIZARD_DEFAULTS } from '../../../database-form.constants.ts';
+import {
+  DB_WIZARD_DEFAULTS,
+  DEFAULT_NODES,
+} from '../../../database-form.constants.ts';
 import { StepProps } from '../../../database-form.types.ts';
 import { DbWizardFormFields } from 'consts.ts';
 import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
-import { DEFAULT_NODES } from './first-step.constants.ts';
 import { Messages } from './first-step.messages.ts';
 import { filterAvailableDbVersionsForDbEngineEdition } from 'components/cluster-form/db-version/utils.ts';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
@@ -158,10 +165,9 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       ((mode === 'edit' || mode === 'restoreFromBackup') && !dbVersion) ||
       mode === 'new'
     ) {
-      const recommendedVersion = dbEngineData.availableVersions.engine
-        .slice()
-        .reverse()
-        .find((version) => version.status === DbEngineToolStatus.RECOMMENDED);
+      const recommendedVersion = dbEngineData.availableVersions.engine.find(
+        (version) => version.status === DbEngineToolStatus.RECOMMENDED
+      );
 
       setValue(
         DbWizardFormFields.dbVersion,
@@ -277,49 +283,52 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           }}
         />
         {dbType === DbType.Mongo && (
-          <>
-            <Typography variant="sectionHeading" sx={{ mt: 4 }}>
-              Shards
-            </Typography>
-            <Stack spacing={1} direction="row" alignItems="center">
-              <SwitchInput
-                label={Messages.labels.shardedCluster}
-                name={DbWizardFormFields.sharding}
-                switchFieldProps={{
-                  disabled: disableSharding,
-                  onChange: (e) => {
-                    if (!e.target.checked) {
-                      resetField(DbWizardFormFields.shardNr, {
-                        keepError: false,
-                      });
-                      resetField(DbWizardFormFields.shardConfigServers, {
-                        keepError: false,
-                      });
-                    }
-                  },
-                }}
-              />
-              {notSupportedMongoOperatorVersionForSharding &&
-                mode !== 'edit' && (
+          <Box sx={{ marginY: '30px' }}>
+            <ActionableLabeledContent
+              label="Shards"
+              techPreview
+              caption="MongoDB shards are partitions of data that distribute load and improve database scalability and performance."
+            >
+              <Stack spacing={1} direction="row" alignItems="center">
+                <SwitchInput
+                  label={Messages.labels.shardedCluster}
+                  name={DbWizardFormFields.sharding}
+                  switchFieldProps={{
+                    disabled: disableSharding,
+                    onChange: (e) => {
+                      if (!e.target.checked) {
+                        resetField(DbWizardFormFields.shardNr, {
+                          keepError: false,
+                        });
+                        resetField(DbWizardFormFields.shardConfigServers, {
+                          keepError: false,
+                        });
+                      }
+                    },
+                  }}
+                />
+                {notSupportedMongoOperatorVersionForSharding &&
+                  mode !== 'edit' && (
+                    <Tooltip
+                      title={Messages.disableShardingTooltip}
+                      arrow
+                      placement="right"
+                    >
+                      <InfoOutlinedIcon color="primary" />
+                    </Tooltip>
+                  )}
+                {mode === 'edit' && (
                   <Tooltip
-                    title={Messages.disableShardingTooltip}
+                    title={Messages.disableShardingInEditMode}
                     arrow
                     placement="right"
                   >
                     <InfoOutlinedIcon color="primary" />
                   </Tooltip>
                 )}
-              {mode === 'edit' && (
-                <Tooltip
-                  title={Messages.disableShardingInEditMode}
-                  arrow
-                  placement="right"
-                >
-                  <InfoOutlinedIcon color="primary" />
-                </Tooltip>
-              )}
-            </Stack>
-          </>
+              </Stack>
+            </ActionableLabeledContent>
+          </Box>
         )}
       </FormGroup>
     </>

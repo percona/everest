@@ -9,3 +9,5 @@ export { NoMatchIcon } from './no-match';
 export * from './generic-error';
 
 export * from './status';
+
+export * from './empty-state';

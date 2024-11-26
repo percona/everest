@@ -44,7 +44,6 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: 1,
-  timeout: TIMEOUTS.TwentyMinutes,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['github'],
@@ -106,6 +105,7 @@ export default defineConfig({
         browserName: 'chromium',
         channel: 'chrome',
         storageState: STORAGE_STATE_FILE,
+        actionTimeout: 10000,
       },
       testDir: 'release',
       dependencies: ['setup'],

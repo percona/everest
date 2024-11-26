@@ -123,7 +123,7 @@ export const StorageLocations = () => {
           queryClient,
           [BACKUP_STORAGES_QUERY_KEY, data.namespace],
           StorageLocationsFields.name
-        )(updatedLocation);
+        )(updatedLocation as BackupStorage);
         handleCloseModal();
       },
     });
@@ -135,7 +135,7 @@ export const StorageLocations = () => {
         updateDataAfterCreate(queryClient, [
           BACKUP_STORAGES_QUERY_KEY,
           data.namespace,
-        ])(newLocation);
+        ])(newLocation as BackupStorage);
         handleCloseModal();
       },
     });
@@ -171,7 +171,7 @@ export const StorageLocations = () => {
             queryClient,
             [BACKUP_STORAGES_QUERY_KEY, namespace],
             'name'
-          )(_, locationName.backupStorageId);
+          )(_ as object, locationName.backupStorageId);
           handleCloseDeleteDialog();
         },
       }

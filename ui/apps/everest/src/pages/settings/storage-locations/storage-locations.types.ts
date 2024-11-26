@@ -16,7 +16,7 @@ export enum StorageLocationsFields {
   forcePathStyle = 'forcePathStyle',
 }
 
-export const storageLocationDefaultValues = {
+export const storageLocationDefaultValues = (namespace: string) => ({
   [StorageLocationsFields.name]: '',
   [StorageLocationsFields.type]: StorageType.S3,
   [StorageLocationsFields.url]: '',
@@ -25,10 +25,10 @@ export const storageLocationDefaultValues = {
   [StorageLocationsFields.accessKey]: '',
   [StorageLocationsFields.secretKey]: '',
   [StorageLocationsFields.bucketName]: '',
-  [StorageLocationsFields.namespace]: '',
+  [StorageLocationsFields.namespace]: namespace,
   [StorageLocationsFields.verifyTLS]: true,
   [StorageLocationsFields.forcePathStyle]: false,
-};
+});
 
 export const storageLocationEditValues = (
   selectedStorageLocationForEdit: BackupStorageType

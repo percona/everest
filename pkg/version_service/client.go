@@ -67,6 +67,14 @@ func New(url string) Interface { //nolint:ireturn
 	return &versionServiceClient{url: url}
 }
 
+//nolint:gochecknoglobals
+var defaultUnmarshal = protojson.UnmarshalOptions{
+	// We must ignore any unknown fields in the response, since new fields
+	// may be added after this binary has been built and compiled.
+	// Without this field, unmashalling would always fail if the API is updated.
+	DiscardUnknown: true,
+}
+
 // GetSupportedEngineVersions returns a list of supported versions for a given operator and version.
 func (c *versionServiceClient) GetSupportedEngineVersions(ctx context.Context, operator, version string) ([]string, error) {
 	p, err := url.Parse(c.url)
@@ -92,7 +100,7 @@ func (c *versionServiceClient) GetSupportedEngineVersions(ctx context.Context, o
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not read version response"))
 	}
-	if err := protojson.Unmarshal(b, response); err != nil {
+	if err := defaultUnmarshal.Unmarshal(b, response); err != nil {
 		return nil, errors.Join(err, errors.New("could not decode version response"))
 	}
 

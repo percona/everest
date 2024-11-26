@@ -87,8 +87,9 @@ func (e *EverestServer) CreateDatabaseCluster(ctx echo.Context, namespace string
 	return err
 }
 
-// enforceDBClusterRBAC checks if the user has permission to read the backup-storage and monitoring-instances associated
-// with the provided DB cluster.
+// enforceDBClusterRBAC checks if the user has permission to:
+// - read the backup-storage and monitoring-instances associated with the provided DB cluster
+// - access the database engine associated with the DB cluster.
 func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.DatabaseCluster) error {
 	// Check if the user has permissions for this DB cluster?
 	if err := e.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), db.GetName())); err != nil {
@@ -124,6 +125,24 @@ func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.Da
 			}
 			return err
 		}
+	}
+	// Check if the user has permissions for database engine?
+	if err := e.enforceDBClusterEngineRBAC(user, db); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *EverestServer) enforceDBClusterEngineRBAC(user string, db *everestv1alpha1.DatabaseCluster) error {
+	engineName, ok := operatorEngine[db.Spec.Engine.Type]
+	if !ok {
+		return errors.New("unsupported database engine")
+	}
+	if err := e.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), engineName)); err != nil {
+		if !errors.Is(err, errInsufficientPermissions) {
+			e.l.Error(errors.Join(err, errors.New("failed to check db-engine permissions")))
+		}
+		return err
 	}
 	return nil
 }
@@ -165,6 +184,24 @@ func (e *EverestServer) DeleteDatabaseCluster(
 ) error {
 	cleanupStorage := pointer.Get(params.CleanupBackupStorage)
 	reqCtx := ctx.Request().Context()
+
+	db, err := e.kubeClient.GetDatabaseCluster(reqCtx, namespace, name)
+	if err != nil {
+		return errors.Join(err, errors.New("could not get Database Cluster"))
+	}
+
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		err = errors.Join(err, errors.New("cannot get user from request context"))
+		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
+	}
+
+	if err := e.enforceDBClusterEngineRBAC(user, db); err != nil {
+		if errors.Is(err, errInsufficientPermissions) {
+			return err
+		}
+		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
+	}
 
 	backups, err := e.kubeClient.ListDatabaseClusterBackups(reqCtx, namespace, metav1.ListOptions{})
 	if err != nil {
@@ -314,7 +351,20 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 		return errors.Join(err, errors.New("could not get old Database Cluster"))
 	}
 
-	if err := e.validateDatabaseClusterOnUpdate(ctx, dbc, oldDB); err != nil {
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		err = errors.Join(err, errors.New("cannot get user from request context"))
+		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
+	}
+
+	if err := e.validateDatabaseClusterOnUpdate(user, dbc, oldDB); err != nil {
+		if errors.Is(err, errInsufficientPermissions) {
+			return err
+		}
+		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
+	}
+
+	if err := e.enforceDBClusterEngineRBAC(user, oldDB); err != nil {
 		if errors.Is(err, errInsufficientPermissions) {
 			return err
 		}
@@ -361,24 +411,29 @@ func (e *EverestServer) connectionURL(ctx context.Context, db *everestv1alpha1.D
 	if db.Status.Hostname == "" {
 		return nil
 	}
-	url := url.URL{User: url.UserPassword(user, url.QueryEscape(password))}
+	var url string
+	defaultHost := net.JoinHostPort(db.Status.Hostname, fmt.Sprint(db.Status.Port))
 	switch db.Spec.Engine.Type {
 	case everestv1alpha1.DatabaseEnginePXC:
-		url.Scheme = "jdbc:mysql"
-		url.Host = net.JoinHostPort(db.Status.Hostname, fmt.Sprint(db.Status.Port))
+		url = queryEscapedURL("jdbc:mysql", user, password, defaultHost)
 	case everestv1alpha1.DatabaseEnginePSMDB:
 		hosts, err := psmdbHosts(ctx, db, e.kubeClient.GetPods)
 		if err != nil {
 			e.l.Error(err)
 			return nil
 		}
-		url.Scheme = "mongodb"
-		url.Host = hosts
+		url = queryEscapedURL("mongodb", user, password, hosts)
 	case everestv1alpha1.DatabaseEnginePostgresql:
-		url.Scheme = "postgres"
-		url.Host = net.JoinHostPort(db.Status.Hostname, fmt.Sprint(db.Status.Port))
+		url = queryEscapedURL("postgres", user, password, defaultHost)
 	}
-	return pointer.ToString(url.String())
+	return pointer.ToString(url)
+}
+
+// Using own format instead of url.URL bc it uses the password encoding policy which does not encode char like ','
+// however such char may appear in the db passwords.
+func queryEscapedURL(scheme, user, password, hosts string) string {
+	format := "%s://%s:%s@%s"
+	return fmt.Sprintf(format, scheme, user, url.QueryEscape(password), hosts)
 }
 
 func psmdbHosts(
@@ -518,10 +573,9 @@ func getDefaultUploadInterval(engine everestv1alpha1.Engine, uploadInterval *int
 		// so we still use heuristics
 		return valueOrDefault(uploadInterval, psmdbDefaultUploadInterval)
 	case everestv1alpha1.DatabaseEnginePostgresql:
-		// latest restorable time appeared in PG 2.4.0
-		if common.CheckConstraint(version, "<2.4.0") {
-			return valueOrDefault(uploadInterval, pgDefaultUploadInterval)
-		}
+		// latest restorable time appeared in PG 2.4.0, however it's not reliable https://perconadev.atlassian.net/browse/K8SPG-681
+		// so we still use heuristics
+		return valueOrDefault(uploadInterval, pgDefaultUploadInterval)
 	}
 	// for newer versions don't use the heuristics, so return 0 upload interval
 	return 0
