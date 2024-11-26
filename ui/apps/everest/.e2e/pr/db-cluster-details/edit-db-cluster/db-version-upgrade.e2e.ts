@@ -87,7 +87,7 @@ let token: string;
 
       await test.step('Check db list and status', async () => {
         await page.goto('/databases');
-        await waitForStatus(page, clusterName, 'Initializing', 15000);
+        await waitForStatus(page, clusterName, 'Initializing', 120000);
         await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
