@@ -491,7 +491,7 @@ func (c *Client) DeleteObject(obj runtime.Object) error {
 func deleteObject(helper *resource.Helper, namespace, name string) error {
 	if _, err := helper.Get(namespace, name); err == nil {
 		_, err = helper.Delete(namespace, name)
-		if err != nil {
+		if client.IgnoreNotFound(err) != nil {
 			return err
 		}
 	}
@@ -1335,6 +1335,14 @@ func (c *Client) ListCRDs(
 	return c.apiextClientset.ApiextensionsV1().CustomResourceDefinitions().List(ctx, options)
 }
 
+// DeleteCRD deletes a CRD by name.
+func (c *Client) DeleteCRD(
+	ctx context.Context,
+	name string,
+) error {
+	return c.apiextClientset.ApiextensionsV1().CustomResourceDefinitions().Delete(ctx, name, metav1.DeleteOptions{})
+}
+
 // ListCRs returns a list of CRs.
 func (c *Client) ListCRs(
 	ctx context.Context,
@@ -1380,6 +1388,14 @@ func (c *Client) DeleteClusterServiceVersion(
 	key types.NamespacedName,
 ) error {
 	return c.olmClientset.OperatorsV1alpha1().ClusterServiceVersions(key.Namespace).Delete(ctx, key.Name, metav1.DeleteOptions{})
+}
+
+// DeleteSubscription deletes a subscription by namespaced name.
+func (c *Client) DeleteSubscription(
+	ctx context.Context,
+	key types.NamespacedName,
+) error {
+	return c.olmClientset.OperatorsV1alpha1().Subscriptions(key.Namespace).Delete(ctx, key.Name, metav1.DeleteOptions{})
 }
 
 // DeleteFile accepts manifest file contents parses into []runtime.Object
