@@ -15,6 +15,11 @@ func NewValues(v Values) map[string]string {
 	// no need to re-run them during the upgrade.
 	values["upgrade.preflightChecks"] = "false"
 
+	// No need to deploy the default DB namespace with the helm chart.
+	// We will create it separately so that we're able to provide its
+	// details as a separate step and also to avoid any potential issues.
+	values["dbNamespace.enabled"] = "false"
+
 	if v.ClusterType == kubernetes.ClusterTypeOpenShift {
 		values["compatibility.openshift"] = "true"
 	}
