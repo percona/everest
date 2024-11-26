@@ -172,4 +172,5 @@ jobs:
 
       # Enable Tmate debug ssh session
       - name: "Setup tmate session"
+        if: always()
         uses: "percona/gh-action-action-tmate@v3"
