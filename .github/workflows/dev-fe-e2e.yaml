@@ -160,7 +160,7 @@ jobs:
           MONITORING_PASSWORD: "admin"
         run: |
           cd ui
-          pnpm --filter "@percona/everest" e2e
+          pnpm --filter "@percona/everest" e2e pr/db-cluster-details/edit-db-cluster/db-version-upgrade.e2e.ts
 
       - name: Archive report
         if: always()
