@@ -87,7 +87,8 @@ let token: string;
 
       await test.step('Check db list and status', async () => {
         await page.goto('/databases');
-        //await waitForStatus(page, clusterName, 'Initializing', 120000);
+        // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
+        // await waitForStatus(page, clusterName, 'Initializing', 15000);
         await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
