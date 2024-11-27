@@ -37,6 +37,9 @@ type KubernetesConnector interface {
 	UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
 	// DeleteBackupStorage returns backup storages by provided name.
 	DeleteBackupStorage(ctx context.Context, namespace, name string) error
+	// DeleteBackupStorages deletes all backup storages in provided namespace.
+	// This function will wait until all storages are deleted.
+	DeleteBackupStorages(ctx context.Context, namespace string) error
 	// IsBackupStorageUsed checks if a backup storage in a given namespace is used by any clusters
 	// in that namespace.
 	//
@@ -117,6 +120,9 @@ type KubernetesConnector interface {
 	UpdateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) error
 	// DeleteMonitoringConfig returns monitoring configs by provided name.
 	DeleteMonitoringConfig(ctx context.Context, namespace, name string) error
+	// DeleteMonitoringConfigs deletes all monitoring configs in provided namespace.
+	// This function will wait until all configs are deleted.
+	DeleteMonitoringConfigs(ctx context.Context, namespace string) error
 	// IsMonitoringConfigUsed checks if a monitoring config is used by any database cluster in the provided namespace.
 	IsMonitoringConfigUsed(ctx context.Context, namespace, name string) (bool, error)
 	// GetMonitoringConfigsBySecretName returns a list of monitoring configs which use

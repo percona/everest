@@ -30,5 +30,6 @@ func newNamespacesCommand(l *zap.SugaredLogger) *cobra.Command {
 		Short: "Managed Everest database namespaces",
 	}
 	cmd.AddCommand(namespaces.NewAddCommand(l))
+	cmd.AddCommand(namespaces.NewRemoveCommand(l))
 	return cmd
 }

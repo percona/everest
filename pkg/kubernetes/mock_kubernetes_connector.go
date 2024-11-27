@@ -251,6 +251,24 @@ func (_m *MockKubernetesConnector) DeleteBackupStorage(ctx context.Context, name
 	return r0
 }
 
+// DeleteBackupStorages provides a mock function with given fields: ctx, namespace
+func (_m *MockKubernetesConnector) DeleteBackupStorages(ctx context.Context, namespace string) error {
+	ret := _m.Called(ctx, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteBackupStorages")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, namespace)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteCRD provides a mock function with given fields: ctx, name
 func (_m *MockKubernetesConnector) DeleteCRD(ctx context.Context, name string) error {
 	ret := _m.Called(ctx, name)
@@ -352,6 +370,24 @@ func (_m *MockKubernetesConnector) DeleteMonitoringConfig(ctx context.Context, n
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
 		r0 = rf(ctx, namespace, name)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteMonitoringConfigs provides a mock function with given fields: ctx, namespace
+func (_m *MockKubernetesConnector) DeleteMonitoringConfigs(ctx context.Context, namespace string) error {
+	ret := _m.Called(ctx, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteMonitoringConfigs")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, namespace)
 	} else {
 		r0 = ret.Error(0)
 	}

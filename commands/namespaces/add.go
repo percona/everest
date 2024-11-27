@@ -1,4 +1,4 @@
-// Package namespaces provides the namespaces command.
+// Package namespaces provides the namespaces CLI command.
 package namespaces
 
 import (
