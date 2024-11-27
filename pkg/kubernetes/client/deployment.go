@@ -27,3 +27,8 @@ func (c *Client) ListDeployments(ctx context.Context, namespace string) (*appsv1
 func (c *Client) UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error) {
 	return c.clientset.AppsV1().Deployments(deployment.GetNamespace()).Update(ctx, deployment, metav1.UpdateOptions{})
 }
+
+// DeleteDeployment deletes a deployment.
+func (c *Client) DeleteDeployment(ctx context.Context, name, namespace string) error {
+	return c.clientset.AppsV1().Deployments(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+}

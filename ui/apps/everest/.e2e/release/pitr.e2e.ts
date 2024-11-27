@@ -66,7 +66,6 @@ type pitrTime = {
   hour: string;
   minute: string;
   second: string;
-  ampm: string;
 };
 
 let token: string;
@@ -77,7 +76,6 @@ let pitrRestoreTime: pitrTime = {
   hour: '',
   minute: '',
   second: '',
-  ampm: '',
 };
 
 function getCurrentPITRTime(): pitrTime {
@@ -90,20 +88,15 @@ function getCurrentPITRTime(): pitrTime {
   time.year = now.getFullYear().toString();
 
   // Get time parts
-  let hour: number = now.getHours();
+  time.hour = now.getHours().toString();
   time.minute = now.getMinutes().toString();
   time.second = now.getSeconds().toString();
-
-  // Determine AM or PM
-  time.ampm = hour >= 12 ? 'PM' : 'AM';
-  hour = hour % 12 || 12; // Convert 24-hour format to 12-hour format, making 0 => 12
-  time.hour = hour.toString();
 
   return time;
 }
 
 function getFormattedPITRTime(time: pitrTime): string {
-  const formattedDateTime: string = `${time.day.padStart(2, '0')}/${time.month.padStart(2, '0')}/${time.year} at ${time.hour.padStart(2, '0')}:${time.minute.padStart(2, '0')}:${time.second.padStart(2, '0')} ${time.ampm}`;
+  const formattedDateTime: string = `${time.day.padStart(2, '0')}/${time.month.padStart(2, '0')}/${time.year} at ${time.hour.padStart(2, '0')}:${time.minute.padStart(2, '0')}:${time.second.padStart(2, '0')}`;
 
   return formattedDateTime;
 }
@@ -372,9 +365,6 @@ test.describe.configure({ retries: 0 });
           .click({ timeout: 5000 });
         await page
           .getByLabel(pitrRestoreTime.second + ' seconds', { exact: true })
-          .click({ timeout: 5000 });
-        await page
-          .getByLabel(pitrRestoreTime.ampm, { exact: true })
           .click({ timeout: 5000 });
         await expect(
           page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')

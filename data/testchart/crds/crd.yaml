@@ -1,0 +1,84 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: databases.example.com
+spec:
+  group: example.com
+  names:
+    kind: Database
+    listKind: DatabaseList
+    plural: databases
+    singular: database
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                engine:
+                  type: string
+                  description: Type of the database engine (e.g., MySQL, PostgreSQL).
+                version:
+                  type: string
+                  description: Version of the database engine.
+                storageSize:
+                  type: string
+                  description: Amount of storage allocated for the database.
+              required:
+                - engine
+                - version
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  description: Current phase of the database (e.g., Pending, Running).
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: storages.example.com
+spec:
+  group: example.com
+  names:
+    kind: Storage
+    listKind: StorageList
+    plural: storages
+    singular: storages
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                engine:
+                  type: string
+                  description: Type of the database engine (e.g., MySQL, PostgreSQL).
+                version:
+                  type: string
+                  description: Version of the database engine.
+                storageSize:
+                  type: string
+                  description: Amount of storage allocated for the database.
+              required:
+                - engine
+                - version
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  description: Current phase of the database (e.g., Pending, Running).
+
