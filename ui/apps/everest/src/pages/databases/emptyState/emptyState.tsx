@@ -7,10 +7,9 @@ import {
   useTheme,
 } from '@mui/material';
 import HelpIcon from '@mui/icons-material/Help';
-import AddIcon from '@mui/icons-material/Add';
 import { EmptyStateIcon } from '@percona/ui-lib';
-import { Link as MUILink } from 'react-router-dom';
 import { Messages } from './emptyState.messages';
+import CreateDbButton from '../create-db-button/create-db-button';
 
 const centeredContainerStyle = {
   display: 'flex',
@@ -34,17 +33,8 @@ export const EmptyState = () => {
           <Typography>{Messages.noDbClusters}</Typography>
           <Typography> {Messages.createToStart}</Typography>
         </Box>
-
-        <Button // TODO refactor with new component when #811 is merged
-          size="small"
-          startIcon={<AddIcon />}
-          component={MUILink}
-          to="/databases/new"
-          variant="contained"
-          data-testid="add-db-cluster-button"
-        >
-          {Messages.create}
-        </Button>
+        {/* // TODO refactor with new component when #811 is merged*/}
+        <CreateDbButton />
         <Divider sx={{ width: '30%', marginTop: '10px' }} />
         <Link target="_blank" rel="noopener" href="https://hubs.ly/Q02Rt6pG0">
           <Button
