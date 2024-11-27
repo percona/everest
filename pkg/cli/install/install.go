@@ -217,7 +217,7 @@ func (o *Install) Run(ctx context.Context) error {
 	}
 
 	if version.IsDev(o.installVersion) && o.config.ChartDir == "" {
-		cleanup, err := o.initDevChart()
+		cleanup, err := helmutils.SetupEverestDevChart(o.l, &o.config.ChartDir)
 		if err != nil {
 			return err
 		}
@@ -329,20 +329,6 @@ func (o *Install) newInstallSteps() []steps.Step {
 		o.newStepEnsureEverestMonitoring(),
 	}
 	return steps
-}
-
-func (o *Install) initDevChart() (func(), error) {
-	chartDir, err := helmutils.DevChartDir()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get dev-latest Helm chart: %w", err)
-	}
-	o.l.Infof("Downloaded dev-latest Helm chart into '%s'", chartDir)
-	o.config.ChartDir = chartDir
-	return func() {
-		if err := os.RemoveAll(chartDir); err != nil {
-			o.l.Warnf("Failed to clean-up dir '%s': %s", chartDir, err)
-		}
-	}, nil
 }
 
 func (o *Install) getDBNamespaceInstallValues() values.Options {

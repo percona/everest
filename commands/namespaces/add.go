@@ -86,6 +86,10 @@ func initAddViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag("helm-set", cmd.Flags().Lookup("helm-set"))
 	viper.BindPFlag("helm-values", cmd.Flags().Lookup("helm-values"))
 
+	viper.BindPFlag("operator.mongodb", cmd.Flags().Lookup("operator.mongodb"))
+	viper.BindPFlag("operator.postgresql", cmd.Flags().Lookup("operator.postgresql"))
+	viper.BindPFlag("operator.xtradb-cluster", cmd.Flags().Lookup("operator.xtradb-cluster"))
+
 	viper.BindEnv("kubeconfig")                                     //nolint:errcheck,gosec
 	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
 	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose"))       //nolint:errcheck,gosec

@@ -17,11 +17,11 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/percona/everest/pkg/cli/helm"
-	"github.com/percona/everest/pkg/cli/helm/utils"
+	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/utils/must"
+	. "github.com/percona/everest/pkg/utils/must"
 	"github.com/percona/everest/pkg/version"
 )
 
@@ -75,12 +75,6 @@ func NewNamespaceAdd(c NamespaceAddConfig, l *zap.SugaredLogger) (*NamespaceAdde
 type NamespaceAddConfig struct {
 	// Namespaces to install.
 	Namespaces string `mapstructure:"namespaces"`
-	// PG is set if PostgreSQL operator should be installed.
-	PG bool `mapstructure:"operator.postgresql"`
-	// PXC is set if Percona XtraDB Cluster operator should be installed.
-	PXC bool `mapstructure:"operator.xtradb-cluster"`
-	// PSMDB is set if Percona Server for MongoDB operator should be installed.
-	PSMDB bool `mapstructure:"operator.mongodb"`
 	// SkipWizard is set if the wizard should be skipped.
 	SkipWizard bool `mapstructure:"skip-wizard"`
 	// KubeconfigPath is the path to the kubeconfig file.
@@ -90,6 +84,8 @@ type NamespaceAddConfig struct {
 	// TakeOwnership of an existing namespace.
 	TakeOwnership bool `mapstructure:"take-ownership"`
 
+	Operator OperatorConfig
+
 	// Pretty print the output.
 	Pretty bool
 	// Update the Helm chart in the namespace.
@@ -98,6 +94,16 @@ type NamespaceAddConfig struct {
 
 	helm.CLIOptions
 	namespaceList []string
+}
+
+// OperatorConfig identifies which operators shall be installed.
+type OperatorConfig struct {
+	// PG stores if PostgresSQL shall be installed.
+	PG bool `mapstructure:"postgresql"`
+	// PSMDB stores if MongoDB shall be installed.
+	PSMDB bool `mapstructure:"mongodb"`
+	// PXC stores if XtraDB Cluster shall be installed.
+	PXC bool `mapstructure:"xtradb-cluster"`
 }
 
 // NamespaceAdder provides the functionality to add namespaces.
@@ -114,15 +120,23 @@ func (n *NamespaceAdder) Run(ctx context.Context) error {
 	if err != nil {
 		return errors.Join(err, errors.New("failed to get Everest version"))
 	}
+	ver := everestVersion.String()
 
 	// This command uses Helm chart to install the namespace.
 	// Versions below 1.4.0 are not using helm, so user needs to upgrade first.
 	if common.CheckConstraint(everestVersion.String(), "< 1.4.0") &&
-		!version.IsDev(everestVersion.String()) { // allowed in development
+		!version.IsDev(ver) { // allowed in development
 		return errors.New("operation not supported for this version of Everest")
 	}
 
 	installSteps := []steps.Step{}
+	if version.IsDev(ver) && n.cfg.ChartDir == "" {
+		cleanup, err := helmutils.SetupEverestDevChart(n.l, &n.cfg.ChartDir)
+		if err != nil {
+			return err
+		}
+		defer cleanup()
+	}
 
 	for _, namespace := range n.cfg.namespaceList {
 		installSteps = append(installSteps, n.newStepInstallNamespace(everestVersion.String(), namespace))
@@ -142,9 +156,9 @@ func (n *NamespaceAdder) Run(ctx context.Context) error {
 func (n *NamespaceAdder) getValues() values.Options {
 	v := []string{}
 	v = append(v, "cleanupOnUninstall=false") // uninstall command will do the clean-up on its own.
-	v = append(v, fmt.Sprintf("pxc=%t", n.cfg.PXC))
-	v = append(v, fmt.Sprintf("postgresql=%t", n.cfg.PG))
-	v = append(v, fmt.Sprintf("psmdb=%t", n.cfg.PSMDB))
+	v = append(v, fmt.Sprintf("pxc=%t", n.cfg.Operator.PXC))
+	v = append(v, fmt.Sprintf("postgresql=%t", n.cfg.Operator.PG))
+	v = append(v, fmt.Sprintf("psmdb=%t", n.cfg.Operator.PSMDB))
 	v = append(v, fmt.Sprintf("telemetry=%t", !n.cfg.DisableTelemetry))
 	return values.Options{Values: v}
 }
@@ -176,7 +190,7 @@ func (n *NamespaceAdder) provisionDBNamespace(
 	if n.cfg.ChartDir != "" {
 		chartDir = path.Join(n.cfg.ChartDir, dbNamespaceSubChartPath)
 	}
-	values := must.Must(utils.MergeVals(n.getValues(), nil))
+	values := Must(helmutils.MergeVals(n.getValues(), nil))
 	installer := helm.Installer{
 		ReleaseName:            namespace,
 		ReleaseNamespace:       namespace,
@@ -247,9 +261,9 @@ func (cfg *NamespaceAddConfig) populateOperators() error {
 		label    string
 		boolFlag *bool
 	}{
-		{"MySQL", &cfg.PXC},
-		{"MongoDB", &cfg.PSMDB},
-		{"PostgreSQL", &cfg.PG},
+		{"MySQL", &cfg.Operator.PXC},
+		{"MongoDB", &cfg.Operator.PSMDB},
+		{"PostgreSQL", &cfg.Operator.PG},
 	}
 	operatorLabels := make([]string, 0, len(operatorOpts))
 	for _, v := range operatorOpts {
