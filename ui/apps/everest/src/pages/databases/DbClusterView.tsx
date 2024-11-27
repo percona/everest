@@ -29,7 +29,6 @@ import {
   beautifyDbClusterStatus,
   convertDbClusterPayloadToTableFormat,
 } from './DbClusterView.utils';
-import { Messages } from './dbClusterView.messages';
 import { DbClusterTableElement } from './dbClusterView.types';
 import { ExpandedRow } from './expandedRow/ExpandedRow';
 import { LastBackup } from './lastBackup/LastBackup';

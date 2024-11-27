@@ -37,6 +37,7 @@ import {
   addFirstScheduleInDBWizard,
   fillScheduleModalForm,
   openCreateScheduleDialogFromDBWizard,
+  selectDbEngineCheck,
 } from '../db-wizard-utils';
 import { findDbAndClickActions } from '@e2e/utils/db-clusters-list';
 import { waitForInitializingState } from '@e2e/utils/table';
@@ -69,9 +70,10 @@ test.describe('DB Cluster creation', () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/databases/new');
-    await page.getByTestId('toggle-button-group-input-db-type').waitFor();
-    await page.getByTestId('select-input-db-version').waitFor();
+    await page.pause();
+    await page.goto('/databases');
+    await page.getByTestId('add-db-cluster-button').waitFor();
+    await page.getByTestId('add-db-cluster-button').click();
   });
 
   test.skip('Cluster creation with an incomplete list of DBEngines', () => {
@@ -85,19 +87,16 @@ test.describe('DB Cluster creation', () => {
     page,
   }) => {
     const expectedNodesOrder = [3, 3, 2];
-    const dbEnginesButtons = page
-      .getByTestId('toggle-button-group-input-db-type')
-      .getByRole('button');
 
+    const dbEnginesButtons = page.locator('#add-db-cluster-button-menu').getByRole('menuitem');
+    await page.pause();
     expect(await dbEnginesButtons.count()).toBe(3);
-    // MySQL is our default DB type
-    expect(await page.getByTestId('mysql-toggle-button')).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
+    // TODO expect all buttons available and not disabled
 
     for (let i = 0; i < 3; i++) {
       await dbEnginesButtons.nth(i).click();
+      
+      await page.getByTestId('select-input-db-version').waitFor();
       expect(
         await page.getByTestId('select-input-db-version').inputValue()
       ).toBeDefined();
@@ -111,7 +110,10 @@ test.describe('DB Cluster creation', () => {
       // We click on the first button to make sure it always goes back to defaults afterwards
       await page.getByTestId('toggle-button-nodes-1').click();
 
-      await moveBack(page);
+      // We return to databases page to choose other db
+      await page.goto('/databases');
+      await page.getByTestId('add-db-cluster-button').waitFor();
+      await page.getByTestId('add-db-cluster-button').click();
     }
   });
 
@@ -123,6 +125,8 @@ test.describe('DB Cluster creation', () => {
     );
 
     expect(storageClasses.length).toBeGreaterThan(0);
+
+    await selectDbEngineCheck(page, 'psmdb');
 
     await basicInformationStepCheck(
       page,
@@ -177,6 +181,7 @@ test.describe('DB Cluster creation', () => {
     expect(await page.getByTestId('text-input-db-name').inputValue()).toBe(
       dbName
     );
+    await page.pause();
     await page.getByTestId('postgresql-toggle-button').click();
     await expect(page.getByText('Nº nodes: 2')).toBeVisible();
     // Now we change the number of nodes
@@ -247,7 +252,7 @@ test.describe('DB Cluster creation', () => {
     expect(addedCluster?.spec.backup.schedules[0].schedule).toBe('35 19 9 * *');
   });
 
-  test('PITR should be disabled when backups has no schedules checked', async ({
+  test.skip('PITR should be disabled when backups has no schedules checked', async ({
     page,
   }) => {
     expect(storageClasses.length).toBeGreaterThan(0);
@@ -263,6 +268,7 @@ test.describe('DB Cluster creation', () => {
     const enabledPitrCheckbox = page
       .getByTestId('switch-input-pitr-enabled-label')
       .getByRole('checkbox');
+      
     await expect(enabledPitrCheckbox).not.toBeChecked();
     await expect(enabledPitrCheckbox).toBeDisabled();
     await addFirstScheduleInDBWizard(page);

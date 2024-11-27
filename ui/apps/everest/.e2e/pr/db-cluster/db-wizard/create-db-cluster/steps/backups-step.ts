@@ -21,6 +21,7 @@ export const backupsStepCheck = async (page: Page) => {
       'Create a task that regularly backs up this database according to your specified schedule.'
     )
   ).toBeVisible();
+  await page.pause();
 
   const enabledPitrCheckbox = page
     .getByTestId('switch-input-pitr-enabled-label')
@@ -33,6 +34,7 @@ export const backupsStepCheck = async (page: Page) => {
   await expect(
     page.getByText('Point-in-time Recovery', { exact: true })
   ).toBeVisible();
+  
   await expect(
     page.getByText(
       'PITR provides continuous backups of your database, enabling you to restore it to'
