@@ -149,203 +149,204 @@ jobs:
           path: percona-version-service
           token: ${{ secrets.ROBOT_TOKEN }}
 
-      - name: VS - update
-        run: |
-          cd percona-version-service
-          make init
-          # create an entry for the new Everest version
-          printf "version: $VERSION\nsupported:\n  cli: '$CLI_PREREQUISITES'\n  kubernetes: '$K8S_PREREQUISITES'" > "sources/metadata/everest/$VERSION.yaml"
-
-
-      - name: Build and Push VS dev image
-        uses: docker/build-push-action@v6
-        with:
-          context: percona-version-service
-          push: true
-          tags: perconalab/version-service:${{ env.VERSION }}
-
-      - name: Operator - check out
-        uses: actions/checkout@v4
-        with:
-          repository: percona/everest-operator
-          ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
-          path: everest-operator
-          token: ${{ secrets.ROBOT_TOKEN }}
-
-      - name: Operator - install operator-sdk
-        run: |
-          mkdir -p $TOOLS_PATH
-          echo $TOOLS_PATH >> $GITHUB_PATH
-
-          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.25.2
-          curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
-
-          gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E
-
-          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt
-          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt.asc
-          gpg -u "Operator SDK (release) <cncf-operator-sdk@cncf.io>" --verify checksums.txt.asc
-
-          grep operator-sdk_${OS}_${ARCH} checksums.txt | sha256sum -c -
-
-          chmod +x operator-sdk_${OS}_${ARCH}
-          mv operator-sdk_${OS}_${ARCH} $TOOLS_PATH/operator-sdk
-
-      - name: Operator - build and bundle
-        run: |
-          cd everest-operator
-          make build manifests bundle
-
-      - name: Operator - setup Docker meta for everest-operator
-        id: operator_meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            perconalab/everest-operator
-          tags: |
-            type=raw,value=${{ env.VERSION }}
-
-      - name: Operator - setup Docker meta for everest-operator-bundle
-        id: bundle_meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            perconalab/everest-operator-bundle
-          tags: |
-            type=raw,value=${{ env.VERSION }}
-
-      - name: Operator - push everest-operator image
-        uses: docker/build-push-action@v6
-        with:
-          context: everest-operator
-          push: true
-          tags: ${{ steps.operator_meta.outputs.tags }}
-
-      - name: Operator - push everest-operator-bundle image
-        uses: docker/build-push-action@v6
-        with:
-          context: everest-operator
-          push: true
-          tags: ${{ steps.bundle_meta.outputs.tags }}
-          file: everest-operator/bundle.Dockerfile
-
-      - name: Catalog - checkout
-        uses: actions/checkout@v4
-        with:
-          repository: percona/everest-catalog
-          path: everest-catalog
-          token: ${{ secrets.ROBOT_TOKEN }}
-
-      - name: Catalog - update veneer file
-        run: |
-          cd everest-catalog/tools
-          go run . \
-            --veneer-file ../veneer/everest-operator.yaml \
-            --channel fast-v0  \
-            --new-version ${{ env.VERSION }} \
-
-          cd ..
-          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.44.0/${OS}-${ARCH}-opm
-          chmod +x /tmp/opm
-          /tmp/opm alpha render-template basic --skip-tls -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
-
-          # Check if catalog has the new version listed
-          if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
-            echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
-            exit 1
-          fi
-          
-          # If the feature build contains upstream upgrades
-          if [ -n "$UPSTREAM_REPO" ]; then
-            # Add a new record to the upstream veneer
-            yq e ".Stable.Bundles += {\"Image\": \"$IMAGE\"}" veneer/${UPSTREAM_REPO}.yaml > temp.yaml && mv temp.yaml veneer/${UPSTREAM_REPO}.yaml
-          
-            # Generate upstream catalog
-            /tmp/opm alpha render-template semver --skip-tls -o yaml < veneer/${UPSTREAM_REPO}.yaml > catalog/${UPSTREAM_REPO}/catalog.yaml
-          
-            # Check if upstream catalog has the new image listed
-            if ! grep -q "$IMAGE$" catalog/${UPSTREAM_REPO}/catalog.yaml; then
-              echo "catalog/${UPSTREAM_REPO}/catalog.yaml does not include the version $IMAGE"
-              exit 1
-            fi
-          fi
-          
-          git diff
-
-      - name: Catalog - setup Docker meta for everest-catalog
-        id: catalog_meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            perconalab/everest-catalog
-          tags: |
-            type=raw,value=${{ env.VERSION }}
-
-      - name: Catalog - push everest-catalog image
-        uses: docker/build-push-action@v6
-        with:
-          context: everest-catalog
-          push: true
-          tags: ${{ steps.catalog_meta.outputs.tags }}
-          file: everest-catalog/everest-catalog.Dockerfile
-
-
+#      - name: VS - update
+#        run: |
+#          cd percona-version-service
+#          make init
+#          # create an entry for the new Everest version
+#          printf "version: $VERSION\nsupported:\n  cli: '$CLI_PREREQUISITES'\n  kubernetes: '$K8S_PREREQUISITES'" > "sources/metadata/everest/$VERSION.yaml"
+#
+#
+#      - name: Build and Push VS dev image
+#        uses: docker/build-push-action@v6
+#        with:
+#          context: percona-version-service
+#          push: true
+#          tags: perconalab/version-service:${{ env.VERSION }}
+#
+#      - name: Operator - check out
+#        uses: actions/checkout@v4
+#        with:
+#          repository: percona/everest-operator
+#          ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
+#          path: everest-operator
+#          token: ${{ secrets.ROBOT_TOKEN }}
+#
+#      - name: Operator - install operator-sdk
+#        run: |
+#          mkdir -p $TOOLS_PATH
+#          echo $TOOLS_PATH >> $GITHUB_PATH
+#
+#          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.25.2
+#          curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
+#
+#          gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E
+#
+#          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt
+#          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt.asc
+#          gpg -u "Operator SDK (release) <cncf-operator-sdk@cncf.io>" --verify checksums.txt.asc
+#
+#          grep operator-sdk_${OS}_${ARCH} checksums.txt | sha256sum -c -
+#
+#          chmod +x operator-sdk_${OS}_${ARCH}
+#          mv operator-sdk_${OS}_${ARCH} $TOOLS_PATH/operator-sdk
+#
+#      - name: Operator - build and bundle
+#        run: |
+#          cd everest-operator
+#          make build manifests bundle
+#
+#      - name: Operator - setup Docker meta for everest-operator
+#        id: operator_meta
+#        uses: docker/metadata-action@v5
+#        with:
+#          images: |
+#            perconalab/everest-operator
+#          tags: |
+#            type=raw,value=${{ env.VERSION }}
+#
+#      - name: Operator - setup Docker meta for everest-operator-bundle
+#        id: bundle_meta
+#        uses: docker/metadata-action@v5
+#        with:
+#          images: |
+#            perconalab/everest-operator-bundle
+#          tags: |
+#            type=raw,value=${{ env.VERSION }}
+#
+#      - name: Operator - push everest-operator image
+#        uses: docker/build-push-action@v6
+#        with:
+#          context: everest-operator
+#          push: true
+#          tags: ${{ steps.operator_meta.outputs.tags }}
+#
+#      - name: Operator - push everest-operator-bundle image
+#        uses: docker/build-push-action@v6
+#        with:
+#          context: everest-operator
+#          push: true
+#          tags: ${{ steps.bundle_meta.outputs.tags }}
+#          file: everest-operator/bundle.Dockerfile
+#
+#      - name: Catalog - checkout
+#        uses: actions/checkout@v4
+#        with:
+#          repository: percona/everest-catalog
+#          path: everest-catalog
+#          token: ${{ secrets.ROBOT_TOKEN }}
+#
+#      - name: Catalog - update veneer file
+#        run: |
+#          cd everest-catalog/tools
+#          go run . \
+#            --veneer-file ../veneer/everest-operator.yaml \
+#            --channel fast-v0  \
+#            --new-version ${{ env.VERSION }} \
+#
+#          cd ..
+#          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.44.0/${OS}-${ARCH}-opm
+#          chmod +x /tmp/opm
+#          /tmp/opm alpha render-template basic --skip-tls -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
+#
+#          # Check if catalog has the new version listed
+#          if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
+#            echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
+#            exit 1
+#          fi
+#
+#          # If the feature build contains upstream upgrades
+#          if [ -n "$UPSTREAM_REPO" ]; then
+#            # Add a new record to the upstream veneer
+#            yq e ".Stable.Bundles += {\"Image\": \"$IMAGE\"}" veneer/${UPSTREAM_REPO}.yaml > temp.yaml && mv temp.yaml veneer/${UPSTREAM_REPO}.yaml
+#
+#            # Generate upstream catalog
+#            /tmp/opm alpha render-template semver --skip-tls -o yaml < veneer/${UPSTREAM_REPO}.yaml > catalog/${UPSTREAM_REPO}/catalog.yaml
+#
+#            # Check if upstream catalog has the new image listed
+#            if ! grep -q "$IMAGE$" catalog/${UPSTREAM_REPO}/catalog.yaml; then
+#              echo "catalog/${UPSTREAM_REPO}/catalog.yaml does not include the version $IMAGE"
+#              exit 1
+#            fi
+#          fi
+#
+#          git diff
+#
+#      - name: Catalog - setup Docker meta for everest-catalog
+#        id: catalog_meta
+#        uses: docker/metadata-action@v5
+#        with:
+#          images: |
+#            perconalab/everest-catalog
+#          tags: |
+#            type=raw,value=${{ env.VERSION }}
+#
+#      - name: Catalog - push everest-catalog image
+#        uses: docker/build-push-action@v6
+#        with:
+#          context: everest-catalog
+#          push: true
+#          tags: ${{ steps.catalog_meta.outputs.tags }}
+#          file: everest-catalog/everest-catalog.Dockerfile
+#
+#
       - name: Everest - check out
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.ROBOT_TOKEN }}
           ref: ${{ env.EVEREST_BRANCH }}
-
-      - name: Everest - setup golang
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: "./go.mod"
-
-      - name: Everest UI - setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.4.0
-
-      - name: Everest UI - run with Node 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
-          cache: "pnpm"
-          cache-dependency-path: ui/pnpm-lock.yaml
-
-      - name: Everest UI - build
-        run: |
-          cd ui
-          pnpm install
-          EVEREST_OUT_DIR=${GITHUB_WORKSPACE}/public/dist/ pnpm build
-
-      - name: Everest - build binary
-        run: |
-          if [[ $IS_RC == 1 ]]; then
-            RELEASE_VERSION=${VERSION} CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
-          else
-            RELEASE_VERSION=${VERSION} CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make release
-          fi
-
-      - name: Everest - push Everest image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags:  perconalab/everest:${{ env.VERSION }}
-
-      - name: Everest checks - Start local Kubernetes cluster
-        uses: medyagh/setup-minikube@latest
-        id: minikube
-        with:
-          cpus: 2
-          memory: 2000m
+#
+#      - name: Everest - setup golang
+#        uses: actions/setup-go@v5
+#        with:
+#          go-version-file: "./go.mod"
+#
+#      - name: Everest UI - setup pnpm
+#        uses: pnpm/action-setup@v4
+#        with:
+#          version: 9.4.0
+#
+#      - name: Everest UI - run with Node 20
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: 20.x
+#          cache: "pnpm"
+#          cache-dependency-path: ui/pnpm-lock.yaml
+#
+#      - name: Everest UI - build
+#        run: |
+#          cd ui
+#          pnpm install
+#          EVEREST_OUT_DIR=${GITHUB_WORKSPACE}/public/dist/ pnpm build
+#
+#      - name: Everest - build binary
+#        run: |
+#          if [[ $IS_RC == 1 ]]; then
+#            RELEASE_VERSION=${VERSION} CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
+#          else
+#            RELEASE_VERSION=${VERSION} CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make release
+#          fi
+#
+#      - name: Everest - push Everest image
+#        uses: docker/build-push-action@v6
+#        with:
+#          context: .
+#          push: true
+#          tags:  perconalab/everest:${{ env.VERSION }}
+#
+#      - name: Everest checks - Start local Kubernetes cluster
+#        uses: medyagh/setup-minikube@latest
+#        id: minikube
+#        with:
+#          cpus: 2
+#          memory: 2000m
 
       - name: Everest checks - run VS locally
         run: |
-          kubectl create ns everest-system
+          ls
+          pwd
           sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_TAG/g" percona-version-service/deploy.yaml
-          kubectl apply -f percona-version-service/deploy.yaml -n everest-system
+          kubectl apply -f percona-version-service/deploy.yaml 
           kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service -n everest-system
           kubectl port-forward svc/percona-version-service $VS_PORT:80 -n everest-system &
 
