@@ -37,6 +37,7 @@ export type ConnectionDetailsOverviewCardProps = {
   connectionUrl: string;
   clusterName?: string;
   clusterNamespace?: string;
+  type: DbType;
 } & OverviewCardProps;
 
 export type AdvancedConfigurationOverviewCardProps = {
