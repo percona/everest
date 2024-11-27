@@ -1,4 +1,11 @@
-import { Box, Button, Divider, Link, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Divider,
+  Link,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import HelpIcon from '@mui/icons-material/Help';
 import AddIcon from '@mui/icons-material/Add';
 import { EmptyStateIcon } from '@percona/ui-lib';
@@ -12,6 +19,7 @@ const centeredContainerStyle = {
 };
 
 export const EmptyState = () => {
+  const theme = useTheme();
   return (
     <>
       <Box
@@ -39,7 +47,19 @@ export const EmptyState = () => {
         </Button>
         <Divider sx={{ width: '30%', marginTop: '10px' }} />
         <Link target="_blank" rel="noopener" href="https://hubs.ly/Q02Rt6pG0">
-          <Button startIcon={<HelpIcon />}> {Messages.contactSupport}</Button>
+          <Button
+            startIcon={
+              <HelpIcon
+                sx={{
+                  color: theme.palette.background.paper,
+                  backgroundColor: theme.palette.primary.main,
+                  borderRadius: '10px',
+                }}
+              />
+            }
+          >
+            {Messages.contactSupport}
+          </Button>
         </Link>
       </Box>
     </>
