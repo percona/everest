@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	"github.com/percona/everest/commands/settings"
+	"github.com/percona/everest/commands/namespaces"
 )
 
 func newNamespacesCommand(l *zap.SugaredLogger) *cobra.Command {
@@ -29,7 +29,6 @@ func newNamespacesCommand(l *zap.SugaredLogger) *cobra.Command {
 		Long:  "Managed Everest database namespaces",
 		Short: "Managed Everest database namespaces",
 	}
-	cmd.AddCommand(settings.NewOIDCCmd(l))
-	cmd.AddCommand(settings.NewRBACCmd(l))
+	cmd.AddCommand(namespaces.NewAddCommand(l))
 	return cmd
 }
