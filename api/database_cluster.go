@@ -121,7 +121,7 @@ func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.Da
 	if mcName := pointer.Get(db.Spec.Monitoring).MonitoringConfigName; mcName != "" {
 		if err := e.enforce(user, rbac.ResourceMonitoringInstances, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), mcName)); err != nil {
 			if !errors.Is(err, errInsufficientPermissions) {
-				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+				e.l.Error(errors.Join(err, errors.New("failed to check monitoring-instance permissions")))
 			}
 			return err
 		}
