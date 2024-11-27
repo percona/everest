@@ -164,8 +164,12 @@ func (n *NamespaceAdder) getValues() values.Options {
 }
 
 func (n *NamespaceAdder) newStepInstallNamespace(version, namespace string) steps.Step {
+	action := "Installing"
+	if n.cfg.Update {
+		action = "Updating"
+	}
 	return steps.Step{
-		Desc: fmt.Sprintf("Installing namespace '%s'", namespace),
+		Desc: fmt.Sprintf("%s namespace '%s'", action, namespace),
 		F: func(ctx context.Context) error {
 			return n.provisionDBNamespace(ctx, version, namespace)
 		},
@@ -177,12 +181,19 @@ func (n *NamespaceAdder) provisionDBNamespace(
 	version string,
 	namespace string,
 ) error {
-	nsExists, err := n.namespaceExists(ctx, namespace)
+	nsExists, ownedByEverest, err := n.namespaceExists(ctx, namespace)
 	if err != nil {
 		return err
 	}
 
-	if nsExists && !(n.cfg.Update && n.cfg.TakeOwnership) {
+	if n.cfg.Update {
+		if !nsExists {
+			return fmt.Errorf("namespace (%s) does not exist", namespace)
+		}
+		if !ownedByEverest {
+			return fmt.Errorf("namespace (%s) is not managed by Everest", namespace)
+		}
+	} else if nsExists && !n.cfg.TakeOwnership {
 		return fmt.Errorf("namespace (%s) already exists", namespace)
 	}
 
@@ -209,15 +220,19 @@ func (n *NamespaceAdder) provisionDBNamespace(
 	return installer.Install(ctx)
 }
 
-func (n *NamespaceAdder) namespaceExists(ctx context.Context, namespace string) (bool, error) {
-	_, err := n.kubeClient.GetNamespace(ctx, namespace)
+func (n *NamespaceAdder) namespaceExists(ctx context.Context, namespace string) (bool, bool, error) {
+	ns, err := n.kubeClient.GetNamespace(ctx, namespace)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			return false, nil
+			return false, false, nil
 		}
-		return false, fmt.Errorf("cannot check if namesapce exists: %w", err)
+		return false, false, fmt.Errorf("cannot check if namesapce exists: %w", err)
 	}
-	return true, nil
+	ownedByEverest := false
+	if val, ok := ns.GetLabels()[common.KubernetesManagedByLabel]; ok && val == common.Everest {
+		ownedByEverest = true
+	}
+	return true, ownedByEverest, nil
 }
 
 // Populate the configuration with the required values.

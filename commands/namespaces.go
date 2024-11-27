@@ -31,5 +31,6 @@ func newNamespacesCommand(l *zap.SugaredLogger) *cobra.Command {
 	}
 	cmd.AddCommand(namespaces.NewAddCommand(l))
 	cmd.AddCommand(namespaces.NewRemoveCommand(l))
+	cmd.AddCommand(namespaces.NewUpdateCommand(l))
 	return cmd
 }

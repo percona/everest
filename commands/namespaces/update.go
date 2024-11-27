@@ -15,13 +15,12 @@ import (
 	"github.com/percona/everest/pkg/output"
 )
 
-// NewAddCommand returns a new command to add a new namespace.
-func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
+func NewUpdateCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "add",
-		Long:    "Add a new namespace",
-		Short:   "Add a new namespace",
-		Example: `everestctl namespaces add [NAMESPACE] [FLAGS]`,
+		Use:     "update",
+		Long:    "Update an existing Everest namespace",
+		Short:   "Update an existing Everest namespace",
+		Example: `everestctl update add [NAMESPACE] [FLAGS]`,
 		Run: func(cmd *cobra.Command, args []string) {
 			initAddViperFlags(cmd)
 			c := &namespaces.NamespaceAddConfig{}
@@ -31,6 +30,7 @@ func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 				return
 			}
 			bindInstallHelmOpts(c)
+			c.Update = true
 
 			if len(args) != 1 {
 				output.PrintError(fmt.Errorf("invalid number of arguments: expected 1, got %d", len(args)), l, true)
@@ -65,11 +65,10 @@ func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 	return cmd
 }
 
-func initAddFlags(cmd *cobra.Command) {
+func initUpdateFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(cli.FlagDisableTelemetry, false, "Disable telemetry")
 	cmd.Flags().MarkHidden(cli.FlagDisableTelemetry) //nolint:errcheck,gosec
 	cmd.Flags().Bool(cli.FlagSkipWizard, false, "Skip installation wizard")
-	cmd.Flags().Bool("take-ownership", false, "Take ownership of existing namespaces")
 
 	cmd.Flags().String(helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
 	cmd.Flags().MarkHidden(helm.FlagChartDir) //nolint:errcheck,gosec
@@ -82,10 +81,9 @@ func initAddFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(cli.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
 }
 
-func initAddViperFlags(cmd *cobra.Command) {
+func initUpdateViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(cli.FlagSkipWizard, cmd.Flags().Lookup(cli.FlagSkipWizard))             //nolint:errcheck,gosec
 	viper.BindPFlag(cli.FlagDisableTelemetry, cmd.Flags().Lookup(cli.FlagDisableTelemetry)) //nolint:errcheck,gosec
-	viper.BindPFlag("take-ownership", cmd.Flags().Lookup("take-ownership"))                 //nolint:errcheck,gosec
 
 	viper.BindPFlag(helm.FlagChartDir, cmd.Flags().Lookup(helm.FlagChartDir))     //nolint:errcheck,gosec
 	viper.BindPFlag(helm.FlagRepository, cmd.Flags().Lookup(helm.FlagRepository)) //nolint:errcheck,gosec
@@ -100,11 +98,4 @@ func initAddViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(cli.FlagKubeconfig, cmd.Flags().Lookup(cli.FlagKubeconfig)) //nolint:errcheck,gosec
 	viper.BindPFlag(cli.FlagVerbose, cmd.Flags().Lookup(cli.FlagVerbose))       //nolint:errcheck,gosec
 	viper.BindPFlag("json", cmd.Flags().Lookup("json"))                         //nolint:errcheck,gosec
-}
-
-func bindInstallHelmOpts(cfg *namespaces.NamespaceAddConfig) {
-	cfg.CLIOptions.Values.Values = viper.GetStringSlice(helm.FlagHelmSet)
-	cfg.CLIOptions.Values.ValueFiles = viper.GetStringSlice(helm.FlagHelmValues)
-	cfg.CLIOptions.ChartDir = viper.GetString(helm.FlagChartDir)
-	cfg.CLIOptions.RepoURL = viper.GetString(helm.FlagRepository)
 }
