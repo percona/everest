@@ -18,7 +18,7 @@ let token: string;
 
 [
   { db: 'psmdb', size: 1 },
-  // { db: 'pxc', size: 1 },
+  { db: 'pxc', size: 1 },
   // { db: 'postgresql', size: 1 },
 ].forEach(({ db, size }) => {
   test.describe('Overview page', () => {
@@ -88,7 +88,9 @@ let token: string;
       await test.step('Check db list and status', async () => {
         await page.goto('/databases');
         // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
-        // await waitForStatus(page, clusterName, 'Initializing', 15000);
+        if (db !== 'psmdb') {
+          await waitForStatus(page, clusterName, 'Initializing', 15000);
+        }
         await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
