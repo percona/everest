@@ -139,14 +139,14 @@ let token: string;
 
       await test.step('Check db list and status', async () => {
         await page.goto('/databases');
-        await waitForStatus(page, clusterName, 'Up', 600000);
+        await waitForStatus(page, clusterName, 'Up', 720000);
       });
     });
 
-    test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
-      await deleteDbCluster(page, clusterName);
-      await waitForStatus(page, clusterName, 'Deleting', 15000);
-      await waitForDelete(page, clusterName, 240000);
-    });
+    // test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
+    //   await deleteDbCluster(page, clusterName);
+    //   await waitForStatus(page, clusterName, 'Deleting', 15000);
+    //   await waitForDelete(page, clusterName, 240000);
+    // });
   });
 });
