@@ -141,13 +141,21 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: VS - checkout
+      - name: Helm - checkout
         uses: actions/checkout@v4
         with:
-          repository: Percona-Lab/percona-version-service
-          ref: ${{ env.VS_BRANCH }}
-          path: percona-version-service
+          repository: percona/percona-helm-charts
+          path: percona-helm-charts
           token: ${{ secrets.ROBOT_TOKEN }}
+
+#      - name: VS - checkout
+#        uses: actions/checkout@v4
+#        with:
+#          repository: Percona-Lab/percona-version-service
+#          ref: ${{ env.VS_BRANCH }}
+#          path: percona-version-service
+#          token: ${{ secrets.ROBOT_TOKEN }}
+
 
 #      - name: VS - update
 #        run: |
@@ -164,21 +172,23 @@ jobs:
 #          push: true
 #          tags: perconalab/version-service:${{ env.VS_TAG }}
 
-      - name: Everest checks - Start local Kubernetes cluster
-        uses: medyagh/setup-minikube@latest
-        id: minikube
-        with:
-          cpus: 2
-          memory: 2000m
 
-      - name: Run VS locally
-        run: |
-          sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_TAG/g" percona-version-service/deploy.yaml
-          kubectl apply -f percona-version-service/deploy.yaml 
-          kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service
-          kubectl get svc/percona-version-service -o yaml 
-          kubectl get po -A -o yaml 
-          kubectl port-forward svc/percona-version-service $VS_PORT:80 &
+
+#      - name: Start local Kubernetes cluster
+#        uses: medyagh/setup-minikube@latest
+#        id: minikube
+#        with:
+#          cpus: 2
+#          memory: 2000m
+#
+#      - name: Run VS locally
+#        run: |
+#          sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_TAG/g" percona-version-service/deploy.yaml
+#          kubectl apply -f percona-version-service/deploy.yaml
+#          kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service
+#          kubectl get svc/percona-version-service -o yaml
+#          kubectl get po -A -o yaml
+#          kubectl port-forward svc/percona-version-service $VS_PORT:80 &
 
 #
 #      - name: Operator - check out
@@ -307,11 +317,11 @@ jobs:
 #          file: everest-catalog/everest-catalog.Dockerfile
 #
 #
-      - name: Everest - check out
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.ROBOT_TOKEN }}
-          ref: ${{ env.EVEREST_BRANCH }}
+#      - name: Everest - check out
+#        uses: actions/checkout@v4
+#        with:
+#          token: ${{ secrets.ROBOT_TOKEN }}
+#          ref: ${{ env.EVEREST_BRANCH }}
 #
 #      - name: Everest - setup golang
 #        uses: actions/setup-go@v5
@@ -351,20 +361,20 @@ jobs:
 #          push: true
 #          tags:  perconalab/everest:${{ env.VERSION }}
 #
-
-
-
-      - name: Everest checks - install feature build
-        shell: bash
-        run: |
-          make feature-build-cli
-          ./bin/everestctl install -v \
-            --version $VERSION \
-            --version-metadata-url $VS_URL \
-            --operator.mongodb \
-            --operator.postgresql \
-            --operator.xtradb-cluster \
-            --skip-wizard \
-            --namespaces everest
-
-          echo "::notice title=Feature Build $VERSION is Created::Version Service Image: $VS_TAG"
+#
+#
+#
+#      - name: Everest checks - install feature build
+#        shell: bash
+#        run: |
+#          make feature-build-cli
+#          ./bin/everestctl install -v \
+#            --version $VERSION \
+#            --version-metadata-url $VS_URL \
+#            --operator.mongodb \
+#            --operator.postgresql \
+#            --operator.xtradb-cluster \
+#            --skip-wizard \
+#            --namespaces everest
+#
+#          echo "::notice title=Feature Build $VERSION is Created::Version Service Image: $VS_TAG"
