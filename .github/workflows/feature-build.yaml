@@ -168,8 +168,8 @@ jobs:
         run: |
           sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_TAG/g" percona-version-service/deploy.yaml
           kubectl apply -f percona-version-service/deploy.yaml 
-          kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service -n everest-system
-          kubectl port-forward svc/percona-version-service $VS_PORT:80 -n everest-system &
+          kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service
+          kubectl port-forward svc/percona-version-service $VS_PORT:80 &
 #
 #      - name: Operator - check out
 #        uses: actions/checkout@v4
