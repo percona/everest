@@ -301,19 +301,6 @@ jobs:
         with:
           go-version-file: "./go.mod"
 
-
-      - name: Everest - update sources
-        run: |
-          # Update deploy manifest
-          sed -i "s/perconalab\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-          sed -i "s/percona\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-
-          # Change version in Makefile
-          sed -i "s/RELEASE_VERSION ?=.*/RELEASE_VERSION ?= v$VERSION/g" Makefile
-
-          # Change release manifest link: use local path to the manifest file in version.go
-          sed -i "s/https:\/\/raw.githubusercontent.com\/percona\/everest\/v%s\///g" pkg/version/version.go
-
       - name: Everest UI - setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -335,9 +322,9 @@ jobs:
       - name: Everest - build binary
         run: |
           if [[ $IS_RC == 1 ]]; then
-            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
+            RELEASE_VERSION=${VERSION} CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
           else
-            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make release
+            RELEASE_VERSION=${VERSION} CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make release
           fi
 
       - name: Everest - push Everest image
