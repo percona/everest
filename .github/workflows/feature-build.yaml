@@ -149,24 +149,25 @@ jobs:
           path: percona-version-service
           token: ${{ secrets.ROBOT_TOKEN }}
 
-      - name: VS - update
-        run: |
-          cd percona-version-service
-          make init
-          # create an entry for the new Everest version
-          printf "version: $VERSION\nsupported:\n  cli: '$CLI_PREREQUISITES'\n  kubernetes: '$K8S_PREREQUISITES'" > "sources/metadata/everest/$VERSION.yaml"
-
-
-      - name: Build and Push VS dev image
-        uses: docker/build-push-action@v6
-        with:
-          context: percona-version-service
-          push: true
-          tags: perconalab/version-service:${{ env.VS_TAG }}
+#      - name: VS - update
+#        run: |
+#          cd percona-version-service
+#          make init
+#          # create an entry for the new Everest version
+#          printf "version: $VERSION\nsupported:\n  cli: '$CLI_PREREQUISITES'\n  kubernetes: '$K8S_PREREQUISITES'" > "sources/metadata/everest/$VERSION.yaml"
+#
+#
+#      - name: Build and Push VS dev image
+#        uses: docker/build-push-action@v6
+#        with:
+#          context: percona-version-service
+#          push: true
+#          tags: perconalab/version-service:${{ env.VS_TAG }}
 
       - name: Run VS locally
         run: |
           sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_TAG/g" percona-version-service/deploy.yaml
+          cat percona-version-service/deploy.yaml
           echo "--- 1"
           kubectl apply -f percona-version-service/deploy.yaml 
           echo "--- 2"
