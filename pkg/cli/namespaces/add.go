@@ -1,3 +1,4 @@
+// Package namespaces provides the functionality to manage namespaces.
 package namespaces
 
 import (
@@ -21,7 +22,7 @@ import (
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
-	. "github.com/percona/everest/pkg/utils/must"
+	. "github.com/percona/everest/pkg/utils/must" //nolint:revive,stylecheck
 	"github.com/percona/everest/pkg/version"
 )
 
@@ -29,6 +30,7 @@ const (
 	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
 )
 
+//nolint:gochecknoglobals
 var (
 	// ErrNSReserved appears when some of the provided names are forbidden to use.
 	ErrNSReserved = func(ns string) error {
@@ -44,6 +46,7 @@ var (
 	ErrNoOperatorsSelected = errors.New("no operators selected for installation. Minimum one operator must be selected")
 )
 
+// NewNamespaceAdd returns a new CLI operation to add namespaces.
 func NewNamespaceAdd(c NamespaceAddConfig, l *zap.SugaredLogger) (*NamespaceAdder, error) {
 	n := &NamespaceAdder{
 		cfg: c,
@@ -103,10 +106,9 @@ type OperatorConfig struct {
 
 // NamespaceAdder provides the functionality to add namespaces.
 type NamespaceAdder struct {
-	l             *zap.SugaredLogger
-	cfg           NamespaceAddConfig
-	kubeClient    *kubernetes.Kubernetes
-	helmInstaller *helm.Installer
+	l          *zap.SugaredLogger
+	cfg        NamespaceAddConfig
+	kubeClient *kubernetes.Kubernetes
 }
 
 // Run namespace add operation.
@@ -114,7 +116,7 @@ func (n *NamespaceAdder) Run(ctx context.Context) error {
 	everestVersion, err := version.EverestVersionFromDeployment(ctx, n.kubeClient)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			return errors.New("Everest is not installed in the cluster")
+			return errors.New("everest is not installed in the cluster")
 		}
 		return errors.Join(err, errors.New("failed to get Everest version"))
 	}

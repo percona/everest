@@ -69,6 +69,7 @@ type Install struct {
 	helmInstaller  *helm.Installer
 }
 
+// Config holds the configuration for the install command.
 type Config struct {
 	// KubeconfigPath is a path to a kubeconfig
 	KubeconfigPath string `mapstructure:"kubeconfig"`
@@ -124,7 +125,7 @@ func (o *Install) Run(ctx context.Context) error {
 	if client.IgnoreNotFound(err) != nil {
 		return errors.Join(err, errors.New("cannot check if Everest is already installed"))
 	} else if err == nil {
-		return fmt.Errorf("Everest is already installed. Version: %s", installedVersion)
+		return fmt.Errorf("everest is already installed. Version: %s", installedVersion)
 	}
 
 	dbInstallStep, err := o.installDBNamespacesStep()

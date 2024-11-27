@@ -1,3 +1,4 @@
+// Package namespaces provides the namespaces command.
 package namespaces
 
 import (
@@ -17,12 +18,13 @@ const (
 	defaultDBNamespaces = "everest"
 )
 
+// NewAddCommand returns a new command to add a new namespace.
 func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add",
 		Long:  "Add a new namespace",
 		Short: "Add a new namespace",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			initAddViperFlags(cmd)
 			c := &namespaces.NamespaceAddConfig{}
 			err := viper.Unmarshal(c)
@@ -63,7 +65,7 @@ func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 func initAddFlags(cmd *cobra.Command) {
 	cmd.Flags().String(cli.FlagNamespaces, defaultDBNamespaces, "Comma-separated namespaces list namespaces where databases will be created")
 	cmd.Flags().Bool(cli.FlagDisableTelemetry, false, "Disable telemetry")
-	cmd.Flags().MarkHidden(cli.FlagDisableTelemetry)
+	cmd.Flags().MarkHidden(cli.FlagDisableTelemetry) //nolint:errcheck,gosec
 	cmd.Flags().Bool(cli.FlagSkipWizard, false, "Skip installation wizard")
 	cmd.Flags().Bool("take-ownership", false, "Take ownership of existing namespaces")
 
@@ -79,21 +81,21 @@ func initAddFlags(cmd *cobra.Command) {
 }
 
 func initAddViperFlags(cmd *cobra.Command) {
-	viper.BindPFlag(cli.FlagSkipWizard, cmd.Flags().Lookup(cli.FlagSkipWizard)) //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagNamespaces, cmd.Flags().Lookup(cli.FlagNamespaces)) //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagVersionMetadataURL, cmd.Flags().Lookup(cli.FlagVersionMetadataURL))
-	viper.BindPFlag(cli.FlagVersion, cmd.Flags().Lookup(cli.FlagVersion))
-	viper.BindPFlag(cli.FlagDisableTelemetry, cmd.Flags().Lookup(cli.FlagDisableTelemetry)) //nolint:errcheck,gosec
-	viper.BindPFlag("take-ownership", cmd.Flags().Lookup("take-ownership"))
+	viper.BindPFlag(cli.FlagSkipWizard, cmd.Flags().Lookup(cli.FlagSkipWizard))                 //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagNamespaces, cmd.Flags().Lookup(cli.FlagNamespaces))                 //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagVersionMetadataURL, cmd.Flags().Lookup(cli.FlagVersionMetadataURL)) //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagVersion, cmd.Flags().Lookup(cli.FlagVersion))                       //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagDisableTelemetry, cmd.Flags().Lookup(cli.FlagDisableTelemetry))     //nolint:errcheck,gosec
+	viper.BindPFlag("take-ownership", cmd.Flags().Lookup("take-ownership"))                     //nolint:errcheck,gosec
 
-	viper.BindPFlag(helm.FlagChartDir, cmd.Flags().Lookup(helm.FlagChartDir)) //nolint:errcheck,gosec
-	viper.BindPFlag(helm.FlagRepository, cmd.Flags().Lookup(helm.FlagRepository))
-	viper.BindPFlag(helm.FlagHelmSet, cmd.Flags().Lookup(helm.FlagHelmSet))
-	viper.BindPFlag(helm.FlagHelmValues, cmd.Flags().Lookup(helm.FlagHelmValues))
+	viper.BindPFlag(helm.FlagChartDir, cmd.Flags().Lookup(helm.FlagChartDir))     //nolint:errcheck,gosec
+	viper.BindPFlag(helm.FlagRepository, cmd.Flags().Lookup(helm.FlagRepository)) //nolint:errcheck,gosec
+	viper.BindPFlag(helm.FlagHelmSet, cmd.Flags().Lookup(helm.FlagHelmSet))       //nolint:errcheck,gosec
+	viper.BindPFlag(helm.FlagHelmValues, cmd.Flags().Lookup(helm.FlagHelmValues)) //nolint:errcheck,gosec
 
-	viper.BindPFlag(cli.FlagOperatorMongoDB, cmd.Flags().Lookup("operator.mongodb"))
-	viper.BindPFlag(cli.FlagOperatorPostgresql, cmd.Flags().Lookup("operator.postgresql"))
-	viper.BindPFlag(cli.FlagOperatorXtraDBCluster, cmd.Flags().Lookup("operator.xtradb-cluster"))
+	viper.BindPFlag(cli.FlagOperatorMongoDB, cmd.Flags().Lookup("operator.mongodb"))              //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagOperatorPostgresql, cmd.Flags().Lookup("operator.postgresql"))        //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagOperatorXtraDBCluster, cmd.Flags().Lookup("operator.xtradb-cluster")) //nolint:errcheck,gosec
 
 	viper.BindEnv(cli.FlagKubeconfig)                                           //nolint:errcheck,gosec
 	viper.BindPFlag(cli.FlagKubeconfig, cmd.Flags().Lookup(cli.FlagKubeconfig)) //nolint:errcheck,gosec
