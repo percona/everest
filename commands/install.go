@@ -71,7 +71,7 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initInstallFlags(cmd *cobra.Command) {
-	cmd.Flags().String(cli.FlagNamespaces, install.DefaultEverestNamespace, "Comma-separated namespaces list Percona Everest can manage")
+	cmd.Flags().String(cli.FlagNamespaces, "", "Comma-separated namespaces list Percona Everest can manage")
 	cmd.Flags().Bool(cli.FlagSkipWizard, false, "Skip installation wizard")
 	cmd.Flags().String(cli.FlagVersionMetadataURL, "https://check.percona.com", "URL to retrieve version metadata information from")
 	cmd.Flags().String(cli.FlagVersion, "", "Everest version to install. By default the latest version is installed")

@@ -26,15 +26,10 @@ import (
 )
 
 const (
-	// DefaultEverestNamespace is the default namespace managed by everest Everest.
-	DefaultEverestNamespace = "everest"
-
 	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
 )
 
 var (
-	// ErrNSEmpty appears when the provided list of the namespaces is considered empty.
-	ErrNSEmpty = errors.New("namespace list is empty. Specify at least one namespace")
 	// ErrNSReserved appears when some of the provided names are forbidden to use.
 	ErrNSReserved = func(ns string) error {
 		return fmt.Errorf("'%s' namespace is reserved for Everest internals. Please specify another namespace", ns)
@@ -93,7 +88,7 @@ type NamespaceAddConfig struct {
 	Update bool
 
 	helm.CLIOptions
-	namespaceList []string
+	NamespaceList []string
 }
 
 // OperatorConfig identifies which operators shall be installed.
@@ -141,7 +136,7 @@ func (n *NamespaceAdder) Run(ctx context.Context) error {
 		defer cleanup()
 	}
 
-	for _, namespace := range n.cfg.namespaceList {
+	for _, namespace := range n.cfg.NamespaceList {
 		installSteps = append(installSteps, n.newStepInstallNamespace(everestVersion.String(), namespace))
 	}
 
@@ -229,7 +224,7 @@ func (cfg *NamespaceAddConfig) Populate(askNamespaces, askOperators bool) error 
 		return err
 	}
 
-	if askOperators {
+	if askOperators && len(cfg.NamespaceList) > 0 && !cfg.SkipWizard {
 		if err := cfg.populateOperators(); err != nil {
 			return err
 		}
@@ -241,10 +236,10 @@ func (cfg *NamespaceAddConfig) Populate(askNamespaces, askOperators bool) error 
 func (cfg *NamespaceAddConfig) populateNamespaces(wizard bool) error {
 	var namespaces string
 	// no namespaces provided, ask the user
-	if wizard {
+	if wizard && !cfg.SkipWizard {
 		pNamespace := &survey.Input{
 			Message: "Namespaces managed by Everest [comma separated]",
-			Default: DefaultEverestNamespace,
+			Default: cfg.Namespaces,
 		}
 		if err := survey.AskOne(pNamespace, &namespaces); err != nil {
 			return err
@@ -255,7 +250,7 @@ func (cfg *NamespaceAddConfig) populateNamespaces(wizard bool) error {
 	if err != nil {
 		return err
 	}
-	cfg.namespaceList = list
+	cfg.NamespaceList = list
 	return nil
 }
 
@@ -292,7 +287,7 @@ func (cfg *NamespaceAddConfig) populateOperators() error {
 		return err
 	}
 
-	if len(opIndexes) == 0 {
+	if len(opIndexes) == 0 && len(cfg.NamespaceList) > 0 {
 		return ErrNoOperatorsSelected
 	}
 
@@ -335,9 +330,6 @@ func ValidateNamespaces(str string) ([]string, error) {
 		list = append(list, k)
 	}
 
-	if len(list) == 0 {
-		return nil, ErrNSEmpty
-	}
 	return list, nil
 }
 

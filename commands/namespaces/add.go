@@ -13,6 +13,10 @@ import (
 	"github.com/percona/everest/pkg/output"
 )
 
+const (
+	defaultDBNamespaces = "everest"
+)
+
 func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add",
@@ -57,7 +61,7 @@ func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initAddFlags(cmd *cobra.Command) {
-	cmd.Flags().String(cli.FlagNamespaces, "", "Comma-separated namespaces list namespaces where databases will be created")
+	cmd.Flags().String(cli.FlagNamespaces, defaultDBNamespaces, "Comma-separated namespaces list namespaces where databases will be created")
 	cmd.Flags().Bool(cli.FlagDisableTelemetry, false, "Disable telemetry")
 	cmd.Flags().MarkHidden(cli.FlagDisableTelemetry)
 	cmd.Flags().Bool(cli.FlagSkipWizard, false, "Skip installation wizard")
