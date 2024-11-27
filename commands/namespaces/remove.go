@@ -2,7 +2,7 @@
 package namespaces
 
 import (
-	"errors"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -19,7 +19,7 @@ func NewRemoveCommand(l *zap.SugaredLogger) *cobra.Command {
 		Use:     "remove",
 		Long:    "Remove an existing namespace",
 		Short:   "Remove an existing namespace",
-		Example: `everest namespaces remove [NAMESPACE] [FLAGS]`,
+		Example: `everestctl namespaces remove [NAMESPACE] [FLAGS]`,
 		Run: func(cmd *cobra.Command, args []string) {
 			initRemoveViperFlags(cmd)
 			c := &namespaces.NamespaceRemoveConfig{}
@@ -29,9 +29,11 @@ func NewRemoveCommand(l *zap.SugaredLogger) *cobra.Command {
 				return
 			}
 
-			if len(args) == 0 {
-				output.PrintError(errors.New("no namespace specified"), l, true)
+			if len(args) != 1 {
+				output.PrintError(fmt.Errorf("invalid number of arguments: expected 1, got %d", len(args)), l, true)
+				os.Exit(1)
 			}
+
 			namespace := args[0]
 			c.Namespaces = []string{namespace}
 
