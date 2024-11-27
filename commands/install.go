@@ -99,10 +99,11 @@ func initInstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(install.FlagVersion, cmd.Flags().Lookup(install.FlagVersion))                       //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagDisableTelemetry, cmd.Flags().Lookup(install.FlagDisableTelemetry))     //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagSkipEnvDetection, cmd.Flags().Lookup(install.FlagSkipEnvDetection))     //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagChartDir, cmd.Flags().Lookup(install.FlagChartDir))                     //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagRepository, cmd.Flags().Lookup(install.FlagRepository))                 //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagHelmSet, cmd.Flags().Lookup(install.FlagHelmSet))                       //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagHelmValuesFiles, cmd.Flags().Lookup(install.FlagHelmValuesFiles))       //nolint:errcheck,gosec
+
+	viper.BindPFlag(install.FlagChartDir, cmd.Flags().Lookup(install.FlagChartDir))               //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagRepository, cmd.Flags().Lookup(install.FlagRepository))           //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagHelmSet, cmd.Flags().Lookup(install.FlagHelmSet))                 //nolint:errcheck,gosec
+	viper.BindPFlag(install.FlagHelmValuesFiles, cmd.Flags().Lookup(install.FlagHelmValuesFiles)) //nolint:errcheck,gosec
 
 	viper.BindPFlag(install.FlagOperatorMongoDB, cmd.Flags().Lookup(install.FlagOperatorMongoDB))             //nolint:errcheck,gosec
 	viper.BindPFlag(install.FlagOperatorPostgresql, cmd.Flags().Lookup(install.FlagOperatorPostgresql))       //nolint:errcheck,gosec

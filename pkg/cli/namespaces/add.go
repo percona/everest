@@ -8,20 +8,45 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"regexp"
+	"strings"
+
+	"github.com/AlecAivazis/survey/v2"
+	"go.uber.org/zap"
+	"helm.sh/helm/v3/pkg/cli/values"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/percona/everest/pkg/cli/helm"
 	"github.com/percona/everest/pkg/cli/helm/utils"
 	"github.com/percona/everest/pkg/cli/steps"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/utils/must"
 	"github.com/percona/everest/pkg/version"
-	"go.uber.org/zap"
-	"helm.sh/helm/v3/pkg/cli/values"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
+	// DefaultEverestNamespace is the default namespace managed by everest Everest.
+	DefaultEverestNamespace = "everest"
+
 	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
+)
+
+var (
+	// ErrNSEmpty appears when the provided list of the namespaces is considered empty.
+	ErrNSEmpty = errors.New("namespace list is empty. Specify at least one namespace")
+	// ErrNSReserved appears when some of the provided names are forbidden to use.
+	ErrNSReserved = func(ns string) error {
+		return fmt.Errorf("'%s' namespace is reserved for Everest internals. Please specify another namespace", ns)
+	}
+	// ErrNameNotRFC1035Compatible appears when some of the provided names are not RFC1035 compatible.
+	ErrNameNotRFC1035Compatible = func(fieldName string) error {
+		return fmt.Errorf(`'%s' is not RFC 1035 compatible. The name should contain only lowercase alphanumeric characters or '-', start with an alphabetic character, end with an alphanumeric character`,
+			fieldName,
+		)
+	}
+	// ErrNoOperatorsSelected appears when no operators are selected for installation.
+	ErrNoOperatorsSelected = errors.New("no operators selected for installation. Minimum one operator must be selected")
 )
 
 func NewNamespaceAdd(c NamespaceAddConfig, l *zap.SugaredLogger) (*NamespaceAdder, error) {
@@ -46,20 +71,36 @@ func NewNamespaceAdd(c NamespaceAddConfig, l *zap.SugaredLogger) (*NamespaceAdde
 	return n, nil
 }
 
+// NamespaceAddConfig is the configuration for adding namespaces.
 type NamespaceAddConfig struct {
-	Namespace        string
-	PG               bool
-	PXC              bool
-	PSMDB            bool
-	SkipWizard       bool
-	KubeconfigPath   string
-	DisableTelemetry bool
-	Pretty           bool
-	TakeOwnership    bool
-	Update           bool
+	// Namespaces to install.
+	Namespaces string `mapstructure:"namespaces"`
+	// PG is set if PostgreSQL operator should be installed.
+	PG bool `mapstructure:"operator.postgresql"`
+	// PXC is set if Percona XtraDB Cluster operator should be installed.
+	PXC bool `mapstructure:"operator.xtradb-cluster"`
+	// PSMDB is set if Percona Server for MongoDB operator should be installed.
+	PSMDB bool `mapstructure:"operator.mongodb"`
+	// SkipWizard is set if the wizard should be skipped.
+	SkipWizard bool `mapstructure:"skip-wizard"`
+	// KubeconfigPath is the path to the kubeconfig file.
+	KubeconfigPath string `mapstructure:"kubeconfig"`
+	// DisableTelemetry is set if telemetry should be disabled.
+	DisableTelemetry bool `mapstructure:"disable-telemetry"`
+	// TakeOwnership of an existing namespace.
+	TakeOwnership bool `mapstructure:"take-ownership"`
+
+	// Pretty print the output.
+	Pretty bool
+	// Update the Helm chart in the namespace.
+	// This is an internal flag and should not be exposed to the user.
+	Update bool
+
 	helm.CLIOptions
+	namespaceList []string
 }
 
+// NamespaceAdder provides the functionality to add namespaces.
 type NamespaceAdder struct {
 	l             *zap.SugaredLogger
 	cfg           NamespaceAddConfig
@@ -67,16 +108,24 @@ type NamespaceAdder struct {
 	helmInstaller *helm.Installer
 }
 
-// Run namespace add.
+// Run namespace add operation.
 func (n *NamespaceAdder) Run(ctx context.Context) error {
 	everestVersion, err := version.EverestVersionFromDeployment(ctx, n.kubeClient)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to get Everest version"))
 	}
 
-	namespace := n.cfg.Namespace
-	installSteps := []steps.Step{
-		n.newStepInstallNamespace(everestVersion.String(), namespace),
+	// This command uses Helm chart to install the namespace.
+	// Versions below 1.4.0 are not using helm, so user needs to upgrade first.
+	if common.CheckConstraint(everestVersion.String(), "< 1.4.0") &&
+		!version.IsDev(everestVersion.String()) { // allowed in development
+		return errors.New("operation not supported for this version of Everest")
+	}
+
+	installSteps := []steps.Step{}
+
+	for _, namespace := range n.cfg.namespaceList {
+		installSteps = append(installSteps, n.newStepInstallNamespace(everestVersion.String(), namespace))
 	}
 
 	var out io.Writer = os.Stdout
@@ -155,4 +204,135 @@ func (n *NamespaceAdder) namespaceExists(ctx context.Context, namespace string) 
 		return false, fmt.Errorf("cannot check if namesapce exists: %w", err)
 	}
 	return true, nil
+}
+
+// Populate the configuration with the required values.
+func (cfg *NamespaceAddConfig) Populate(askNamespaces, askOperators bool) error {
+	if askNamespaces {
+		if err := cfg.populateNamespaces(); err != nil {
+			return err
+		}
+	}
+
+	if askOperators {
+		if err := cfg.populateOperators(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (cfg *NamespaceAddConfig) populateNamespaces() error {
+	namespaces := cfg.Namespaces
+	// no namespaces provided, ask the user
+	if namespaces == "" {
+		pNamespace := &survey.Input{
+			Message: "Namespaces managed by Everest [comma separated]",
+			Default: DefaultEverestNamespace,
+		}
+		if err := survey.AskOne(pNamespace, &namespaces); err != nil {
+			return err
+		}
+	}
+
+	list, err := ValidateNamespaces(namespaces)
+	if err != nil {
+		return err
+	}
+	cfg.namespaceList = list
+	return nil
+}
+
+func (cfg *NamespaceAddConfig) populateOperators() error {
+	operatorOpts := []struct {
+		label    string
+		boolFlag *bool
+	}{
+		{"MySQL", &cfg.PXC},
+		{"MongoDB", &cfg.PSMDB},
+		{"PostgreSQL", &cfg.PG},
+	}
+	operatorLabels := make([]string, 0, len(operatorOpts))
+	for _, v := range operatorOpts {
+		operatorLabels = append(operatorLabels, v.label)
+	}
+	operatorDefaults := make([]string, 0, len(operatorOpts))
+	for _, v := range operatorOpts {
+		if *v.boolFlag {
+			operatorDefaults = append(operatorDefaults, v.label)
+		}
+	}
+
+	pOps := &survey.MultiSelect{
+		Message: "Which operators do you want to install?",
+		Default: operatorDefaults,
+		Options: operatorLabels,
+	}
+	opIndexes := []int{}
+	if err := survey.AskOne(
+		pOps,
+		&opIndexes,
+	); err != nil {
+		return err
+	}
+
+	if len(opIndexes) == 0 {
+		return ErrNoOperatorsSelected
+	}
+
+	// We reset all flags to false so we select only
+	// the ones which the user selected in the multiselect.
+	for _, op := range operatorOpts {
+		*op.boolFlag = false
+	}
+
+	for _, i := range opIndexes {
+		*operatorOpts[i].boolFlag = true
+	}
+
+	return nil
+}
+
+// ValidateNamespaces validates a comma-separated namespaces string.
+func ValidateNamespaces(str string) ([]string, error) {
+	nsList := strings.Split(str, ",")
+	m := make(map[string]struct{})
+	for _, ns := range nsList {
+		ns = strings.TrimSpace(ns)
+		if ns == "" {
+			continue
+		}
+
+		if ns == common.SystemNamespace || ns == common.MonitoringNamespace || ns == kubernetes.OLMNamespace {
+			return nil, ErrNSReserved(ns)
+		}
+
+		if err := validateRFC1035(ns); err != nil {
+			return nil, err
+		}
+
+		m[ns] = struct{}{}
+	}
+
+	list := make([]string, 0, len(m))
+	for k := range m {
+		list = append(list, k)
+	}
+
+	if len(list) == 0 {
+		return nil, ErrNSEmpty
+	}
+	return list, nil
+}
+
+// validates names to be RFC-1035 compatible  https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
+func validateRFC1035(s string) error {
+	rfc1035Regex := "^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$"
+	re := regexp.MustCompile(rfc1035Regex)
+	if !re.MatchString(s) {
+		return ErrNameNotRFC1035Compatible(s)
+	}
+
+	return nil
 }
