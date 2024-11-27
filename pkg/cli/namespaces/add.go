@@ -181,7 +181,7 @@ func (n *NamespaceAdder) provisionDBNamespace(
 		ReleaseName:            namespace,
 		ReleaseNamespace:       namespace,
 		Values:                 values,
-		CreateReleaseNamespace: nsExists,
+		CreateReleaseNamespace: !nsExists,
 	}
 	if err := installer.Init(n.cfg.KubeconfigPath, helm.ChartOptions{
 		Directory: chartDir,
@@ -208,10 +208,8 @@ func (n *NamespaceAdder) namespaceExists(ctx context.Context, namespace string) 
 
 // Populate the configuration with the required values.
 func (cfg *NamespaceAddConfig) Populate(askNamespaces, askOperators bool) error {
-	if askNamespaces {
-		if err := cfg.populateNamespaces(); err != nil {
-			return err
-		}
+	if err := cfg.populateNamespaces(askNamespaces); err != nil {
+		return err
 	}
 
 	if askOperators {
@@ -223,10 +221,10 @@ func (cfg *NamespaceAddConfig) Populate(askNamespaces, askOperators bool) error 
 	return nil
 }
 
-func (cfg *NamespaceAddConfig) populateNamespaces() error {
-	namespaces := cfg.Namespaces
+func (cfg *NamespaceAddConfig) populateNamespaces(wizard bool) error {
+	var namespaces string
 	// no namespaces provided, ask the user
-	if namespaces == "" {
+	if wizard {
 		pNamespace := &survey.Input{
 			Message: "Namespaces managed by Everest [comma separated]",
 			Default: DefaultEverestNamespace,

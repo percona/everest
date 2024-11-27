@@ -30,10 +30,10 @@ func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
 			c.Pretty = !enableLogging
 
-			askNamespaces := cmd.Flags().Lookup("namespaces").Changed
-			askOperators := cmd.Flags().Lookup("operator.mongodb").Changed ||
+			askNamespaces := !cmd.Flags().Lookup("namespaces").Changed
+			askOperators := !(cmd.Flags().Lookup("operator.mongodb").Changed ||
 				cmd.Flags().Lookup("operator.postgresql").Changed ||
-				cmd.Flags().Lookup("operator.xtradb-cluster").Changed
+				cmd.Flags().Lookup("operator.xtradb-cluster").Changed)
 
 			if err := c.Populate(askNamespaces, askOperators); err != nil {
 				output.PrintError(err, l, !enableLogging)
@@ -42,7 +42,7 @@ func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 
 			op, err := namespaces.NewNamespaceAdd(*c, l)
 			if err != nil {
-				l.Error(err)
+				output.PrintError(err, l, !enableLogging)
 				return
 			}
 			if err := op.Run(cmd.Context()); err != nil {
