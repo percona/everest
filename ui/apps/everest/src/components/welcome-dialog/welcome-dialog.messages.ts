@@ -8,10 +8,5 @@ export const Messages = {
     description: `Define the structure, set access controls, and start organizing
     your information efficiently.`,
   },
-  card2: {
-    header: 'Set default configurations',
-    description: `Customize settings and ensure that your database operates
-    optimally from the get-go.`,
-  },
   letsGo: "Let's go",
 };

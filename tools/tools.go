@@ -26,6 +26,7 @@ import (
 	_ "github.com/vburenin/ifacemaker"
 	_ "github.com/vektra/mockery/v2"
 	_ "golang.org/x/tools/cmd/goimports"
+	_ "helm.sh/helm/v3/cmd/helm"
 	_ "mvdan.cc/gofumpt"
 )
 
@@ -38,3 +39,4 @@ import (
 //go:generate go build -o ../bin/goimports golang.org/x/tools/cmd/goimports
 //go:generate go build -o ../bin/ifacemaker github.com/vburenin/ifacemaker
 //go:generate go build -o ../bin/mockery github.com/vektra/mockery/v2
+//go:generate go build -o ../bin/helm helm.sh/helm/v3/cmd/helm

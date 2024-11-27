@@ -29,3 +29,6 @@ spec:
           command:
           - sleep
           - infinity
+          env:
+          - name: HOME
+            value: /tmp

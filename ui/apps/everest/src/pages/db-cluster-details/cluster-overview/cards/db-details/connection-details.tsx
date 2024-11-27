@@ -101,6 +101,7 @@ export const ConnectionDetails = ({
             </>
           ),
         }}
+        InputLabelProps={{ shrink: true }}
       />
     </OverviewSection>
   );

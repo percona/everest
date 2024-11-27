@@ -31,11 +31,20 @@ const (
 	// MonitoringNamespace is the namespace where monitoring configs are created.
 	MonitoringNamespace = "everest-monitoring"
 	// PerconaEverestDeploymentName stores the name of everest API Server deployment.
-	PerconaEverestDeploymentName = "percona-everest"
+	PerconaEverestDeploymentName = "everest-server"
+	// PerconaEverestDeploymentNameLegacy stores the legacy name (> 1.4.0) of everest API Server deployment.
+	// This is kept only for backward compatibility.
+	PerconaEverestDeploymentNameLegacy = "percona-everest"
+	// PerconaEverestCatalogName is the name of the Everest catalog source.
+	PerconaEverestCatalogName = "everest-catalog"
 	// PerconaEverestOperatorDeploymentName stores the name of everest operator deployment.
-	PerconaEverestOperatorDeploymentName = "everest-operator-controller-manager"
+	PerconaEverestOperatorDeploymentName = "everest-operator"
 	// EverestContainerNameInDeployment is the name of the Everest container in the deployment.
 	EverestContainerNameInDeployment = "everest"
+	// VictoriaMetricsOperatorDeploymentName stores the name of VictoriaMetrics operator deployment.
+	VictoriaMetricsOperatorDeploymentName = "vm-operator"
+	// KubeStateMetricsDeploymentName stores the name of kube-state-metrics deployment.
+	KubeStateMetricsDeploymentName = "kube-state-metrics"
 
 	// EverestOperatorName holds the name for Everest operator.
 	EverestOperatorName = "everest-operator"

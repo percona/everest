@@ -40,7 +40,7 @@ test('create db cluster with monitoring config', async ({ request, page }) => {
         monitoringConfigName: monitoringConfigName1,
       },
       engine: {
-        type: 'psmdb',
+        type: 'pxc',
         replicas: 1,
         storage: {
           size: '4G',
@@ -51,7 +51,7 @@ test('create db cluster with monitoring config', async ({ request, page }) => {
         },
       },
       proxy: {
-        type: 'mongos',
+        type: 'haproxy',
         replicas: 1,
         expose: {
           type: 'internal',
@@ -106,7 +106,7 @@ test('update db cluster with a new monitoring config', async ({ request, page })
         monitoringConfigName: monitoringConfigName1,
       },
       engine: {
-        type: 'psmdb',
+        type: 'pxc',
         replicas: 1,
         storage: {
           size: '4G',
@@ -117,7 +117,7 @@ test('update db cluster with a new monitoring config', async ({ request, page })
         },
       },
       proxy: {
-        type: 'mongos',
+        type: 'haproxy',
         replicas: 1,
         expose: {
           type: 'internal',
@@ -182,7 +182,7 @@ test('update db cluster without monitoring config with a new monitoring config',
     },
     spec: {
       engine: {
-        type: 'psmdb',
+        type: 'pxc',
         replicas: 1,
         storage: {
           size: '4G',
@@ -193,7 +193,7 @@ test('update db cluster without monitoring config with a new monitoring config',
         },
       },
       proxy: {
-        type: 'mongos',
+        type: 'haproxy',
         replicas: 1,
         expose: {
           type: 'internal',
@@ -261,7 +261,7 @@ test('update db cluster monitoring config with an empty monitoring config', asyn
         monitoringConfigName: monitoringConfigName1,
       },
       engine: {
-        type: 'psmdb',
+        type: 'pxc',
         replicas: 1,
         storage: {
           size: '4G',
@@ -272,7 +272,7 @@ test('update db cluster monitoring config with an empty monitoring config', asyn
         },
       },
       proxy: {
-        type: 'mongos',
+        type: 'haproxy',
         replicas: 1,
         expose: {
           type: 'internal',

@@ -6,8 +6,6 @@ import (
 
 	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
 	goversion "github.com/hashicorp/go-version"
-	"go.uber.org/zap"
-	k8sVersion "k8s.io/apimachinery/pkg/version"
 )
 
 // SupportedVersion provides a list of contraints per component.
@@ -23,10 +21,6 @@ type SupportedVersion struct {
 
 type version interface {
 	string | *goversion.Version
-}
-
-type serverVersionGetter interface {
-	GetServerVersion() (*k8sVersion.Info, error)
 }
 
 // CompareVersions compares two versions.
@@ -102,31 +96,4 @@ func NewSupportedVersion(meta *versionpb.MetadataVersion) (*SupportedVersion, er
 	}
 
 	return supVer, nil
-}
-
-// CheckK8sRequirements checks Kubernetes requirements.
-func CheckK8sRequirements(supVer *SupportedVersion, l *zap.SugaredLogger, kubeClient serverVersionGetter) error {
-	if len(supVer.Kubernetes) > 0 {
-		l.Info("Checking Kubernetes version requirements")
-		k8sVersionInfo, err := kubeClient.GetServerVersion()
-		if err != nil {
-			return errors.Join(err, errors.New("could not retrieve Kubernetes version"))
-		}
-
-		k8sVersion, err := goversion.NewVersion(k8sVersionInfo.GitVersion)
-		if err != nil {
-			return fmt.Errorf("invalid Kubernetes version %s: %w", k8sVersionInfo.GitVersion, err)
-		}
-
-		if !supVer.Kubernetes.Check(k8sVersion.Core()) {
-			return fmt.Errorf(
-				"kubernetes version %q does not meet minimum requirements of %q",
-				k8sVersion.String(), supVer.Kubernetes.String(),
-			)
-		}
-
-		l.Debugf("Finished requirements check for Kubernetes version")
-	}
-
-	return nil
 }

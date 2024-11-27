@@ -69,8 +69,8 @@
     "storybook-addon-pseudo-states": "^3.1.1",
     "tslib": "^2.6.2",
     "typescript": "^5.2.2",
-    "vite": "^4.5.3",
-    "vitest": "^0.34.6"
+    "vite": "^5.4.11",
+    "vitest": "^2.1.5"
   },
   "peerDependencies": {
     "@emotion/react": "^11.11.1",

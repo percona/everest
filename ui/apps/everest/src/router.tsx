@@ -84,10 +84,6 @@ const router = createBrowserRouter([
         path: 'settings',
         element: <Settings />,
         children: [
-          // {
-          //   path: SettingsTabs.defaultConfigurations,
-          //   element: <DefaultConfigurations />,
-          // },
           {
             path: SettingsTabs.storageLocations,
             element: <StorageLocations />,

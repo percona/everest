@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Alert, FormGroup, Skeleton, Stack, Tooltip } from '@mui/material';
+import { Alert, Box, FormGroup, Skeleton, Stack, Tooltip } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { lt, valid } from 'semver';
@@ -106,7 +106,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const setDbEngineDataForEngineType = useCallback(() => {
     //TODO 1234 - edit of dbVersion field should be refactored
     const newEngineData = dbEngines.find((engine) => engine.type === dbEngine);
-    if (newEngineData && mode === 'edit') {
+    if (newEngineData && mode !== 'new') {
       const validVersions = filterAvailableDbVersionsForDbEngineEdition(
         newEngineData,
         defaultDbVersion
@@ -136,10 +136,9 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       ((mode === 'edit' || mode === 'restoreFromBackup') && !dbVersion) ||
       mode === 'new'
     ) {
-      const recommendedVersion = dbEngineData.availableVersions.engine
-        .slice()
-        .reverse()
-        .find((version) => version.status === DbEngineToolStatus.RECOMMENDED);
+      const recommendedVersion = dbEngineData.availableVersions.engine.find(
+        (version) => version.status === DbEngineToolStatus.RECOMMENDED
+      );
 
       setValue(
         DbWizardFormFields.dbVersion,
@@ -381,7 +380,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           }}
         />
         {dbType === DbType.Mongo && (
-          <>
+          <Box sx={{ marginY: '30px' }}>
             <ActionableLabeledContent
               label="Shards"
               techPreview
@@ -426,7 +425,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                 )}
               </Stack>
             </ActionableLabeledContent>
-          </>
+          </Box>
         )}
       </FormGroup>
     </>

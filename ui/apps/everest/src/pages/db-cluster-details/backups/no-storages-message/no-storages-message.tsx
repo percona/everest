@@ -1,5 +1,6 @@
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { Box, Button, Typography } from '@mui/material';
+import { useParams } from 'react-router-dom';
 import {
   BACKUP_STORAGES_QUERY_KEY,
   useCreateBackupStorage,
@@ -14,6 +15,7 @@ import { useNamespacePermissionsForResource } from 'hooks/rbac';
 
 export const NoStoragesMessage = () => {
   const queryClient = useQueryClient();
+  const { namespace = '' } = useParams();
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
   const { mutate: createBackupStorage, isPending: creatingBackupStorage } =
     useCreateBackupStorage();
@@ -28,7 +30,7 @@ export const NoStoragesMessage = () => {
         updateDataAfterCreate(queryClient, [
           BACKUP_STORAGES_QUERY_KEY,
           data.namespace,
-        ])(newLocation);
+        ])(newLocation as BackupStorage);
         handleCloseModal();
       },
     });
@@ -69,6 +71,7 @@ export const NoStoragesMessage = () => {
           handleCloseModal={handleCloseModal}
           handleSubmitModal={handleSubmit}
           isLoading={creatingBackupStorage}
+          prefillNamespace={namespace}
         />
       )}
     </Box>
