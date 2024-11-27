@@ -164,19 +164,22 @@ jobs:
 #          push: true
 #          tags: perconalab/version-service:${{ env.VS_TAG }}
 
+      - name: Everest checks - Start local Kubernetes cluster
+        uses: medyagh/setup-minikube@latest
+        id: minikube
+        with:
+          cpus: 2
+          memory: 2000m
+
       - name: Run VS locally
         run: |
           sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_TAG/g" percona-version-service/deploy.yaml
-          cat percona-version-service/deploy.yaml
-          echo "--- 1"
           kubectl apply -f percona-version-service/deploy.yaml 
-          echo "--- 2"
           kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service
-          echo "--- 3"
           kubectl get svc/percona-version-service -o yaml 
           kubectl get po -A -o yaml 
           kubectl port-forward svc/percona-version-service $VS_PORT:80 &
-          echo "--- 4"
+
 #
 #      - name: Operator - check out
 #        uses: actions/checkout@v4
@@ -348,12 +351,7 @@ jobs:
 #          push: true
 #          tags:  perconalab/everest:${{ env.VERSION }}
 #
-#      - name: Everest checks - Start local Kubernetes cluster
-#        uses: medyagh/setup-minikube@latest
-#        id: minikube
-#        with:
-#          cpus: 2
-#          memory: 2000m
+
 
 
       - name: Everest checks - install feature build
