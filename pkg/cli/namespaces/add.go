@@ -118,6 +118,9 @@ type NamespaceAdder struct {
 func (n *NamespaceAdder) Run(ctx context.Context) error {
 	everestVersion, err := version.EverestVersionFromDeployment(ctx, n.kubeClient)
 	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return errors.New("Everest is not installed in the cluster")
+		}
 		return errors.Join(err, errors.New("failed to get Everest version"))
 	}
 	ver := everestVersion.String()

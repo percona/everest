@@ -53,37 +53,6 @@ const (
 	// DefaultEverestNamespace is the default namespace managed by everest Everest.
 	DefaultEverestNamespace = "everest"
 
-	// FlagOperatorPostgresql represents the pg operator flag.
-	FlagOperatorPostgresql = "operator.postgresql"
-	// FlagOperatorXtraDBCluster represents the pxc operator flag.
-	FlagOperatorXtraDBCluster = "operator.xtradb-cluster"
-	// FlagOperatorMongoDB represents the psmdb operator flag.
-	FlagOperatorMongoDB = "operator.mongodb"
-	// FlagNamespaces represents the namespaces flag.
-	FlagNamespaces = "namespaces"
-	// FlagVersionMetadataURL represents the version service url flag.
-	FlagVersionMetadataURL = "version-metadata-url"
-	// FlagVersion represents the version flag.
-	FlagVersion = "version"
-	// FlagSkipWizard represents the flag to skip the installation wizard.
-	FlagSkipWizard = "skip-wizard"
-	// FlagCatalogNamespace is the name of the catalog namespace flag.
-	FlagCatalogNamespace = "catalog-namespace"
-	// FlagSkipEnvDetection is the name of the skip env detection flag.
-	FlagSkipEnvDetection = "skip-env-detection"
-	// FlagSkipOLM is the name of the skip OLM flag.
-	FlagSkipOLM = "skip-olm"
-	// FlagDisableTelemetry disables telemetry.
-	FlagDisableTelemetry = "disable-telemetry"
-	// FlagChartDir is the directory where the Helm chart is stored.
-	FlagChartDir = "chart-dir"
-	// FlagRepository is the URL of the Helm repository.
-	FlagRepository = "repository"
-	// FlagHelmSet is the name of the helm-set flag.
-	FlagHelmSet = "helm-set"
-	// FlagHelmValuesFiles is the name of the helm-values flag.
-	FlagHelmValuesFiles = "helm-values"
-
 	// everestDBNamespaceSubChartPath is the path to the everest-db-namespace subchart relative to the main chart.
 	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
 
