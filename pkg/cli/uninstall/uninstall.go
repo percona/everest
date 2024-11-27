@@ -54,8 +54,6 @@ type Uninstall struct {
 	kubeClient  *kubernetes.Kubernetes
 	l           *zap.SugaredLogger
 	clusterType kubernetes.ClusterType
-	// keep a count of the number of resources deleted.
-	numResourcesDeleted int32
 }
 
 // Config stores configuration for the Uninstall command.
@@ -160,11 +158,6 @@ func (u *Uninstall) Run(ctx context.Context) error {
 		return err
 	}
 
-	if u.numResourcesDeleted == 0 {
-		u.l.Infof("Everest was not installed")
-		fmt.Fprintln(out, "Everest was not installed")
-		return nil
-	}
 	u.l.Infof("Everest has been uninstalled successfully")
 	fmt.Fprintln(out, "Everest has been uninstalled successfully")
 	return nil

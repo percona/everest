@@ -236,7 +236,7 @@ func (cfg *NamespaceAddConfig) Populate(askNamespaces, askOperators bool) error 
 }
 
 func (cfg *NamespaceAddConfig) populateNamespaces(wizard bool) error {
-	var namespaces string
+	namespaces := cfg.Namespaces
 	// no namespaces provided, ask the user
 	if wizard && !cfg.SkipWizard {
 		pNamespace := &survey.Input{

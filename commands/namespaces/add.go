@@ -15,10 +15,6 @@ import (
 	"github.com/percona/everest/pkg/output"
 )
 
-const (
-	defaultDBNamespaces = "everest"
-)
-
 // NewAddCommand returns a new command to add a new namespace.
 func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
@@ -45,12 +41,11 @@ func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
 			c.Pretty = !enableLogging
 
-			askNamespaces := !cmd.Flags().Lookup("namespaces").Changed
 			askOperators := !(cmd.Flags().Lookup("operator.mongodb").Changed ||
 				cmd.Flags().Lookup("operator.postgresql").Changed ||
 				cmd.Flags().Lookup("operator.xtradb-cluster").Changed)
 
-			if err := c.Populate(askNamespaces, askOperators); err != nil {
+			if err := c.Populate(false, askOperators); err != nil {
 				output.PrintError(err, l, !enableLogging)
 				os.Exit(1)
 			}
@@ -71,7 +66,6 @@ func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initAddFlags(cmd *cobra.Command) {
-	cmd.Flags().String(cli.FlagNamespaces, defaultDBNamespaces, "Comma-separated namespaces list namespaces where databases will be created")
 	cmd.Flags().Bool(cli.FlagDisableTelemetry, false, "Disable telemetry")
 	cmd.Flags().MarkHidden(cli.FlagDisableTelemetry) //nolint:errcheck,gosec
 	cmd.Flags().Bool(cli.FlagSkipWizard, false, "Skip installation wizard")
@@ -90,7 +84,6 @@ func initAddFlags(cmd *cobra.Command) {
 
 func initAddViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(cli.FlagSkipWizard, cmd.Flags().Lookup(cli.FlagSkipWizard))                 //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagNamespaces, cmd.Flags().Lookup(cli.FlagNamespaces))                 //nolint:errcheck,gosec
 	viper.BindPFlag(cli.FlagVersionMetadataURL, cmd.Flags().Lookup(cli.FlagVersionMetadataURL)) //nolint:errcheck,gosec
 	viper.BindPFlag(cli.FlagVersion, cmd.Flags().Lookup(cli.FlagVersion))                       //nolint:errcheck,gosec
 	viper.BindPFlag(cli.FlagDisableTelemetry, cmd.Flags().Lookup(cli.FlagDisableTelemetry))     //nolint:errcheck,gosec
