@@ -17,6 +17,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -24,6 +25,8 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/rbac"
@@ -49,7 +52,33 @@ func (e *EverestServer) ListDatabaseClusterRestores(ctx echo.Context, namespace,
 	path = strings.TrimSuffix(path, name)
 	path = strings.ReplaceAll(path, "database-clusters", "database-cluster-restores")
 	req.URL.Path = path
-	return e.proxyKubernetes(ctx, namespace, databaseClusterRestoreKind, "")
+
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+	rbacFilter := transformK8sList(func(l *unstructured.UnstructuredList) error {
+		allowed := []unstructured.Unstructured{}
+		for _, obj := range l.Items {
+			restore := &everestv1alpha1.DatabaseClusterRestore{}
+			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, restore); err != nil {
+				e.l.Error(errors.Join(err, errors.New("failed to convert unstructured to DatabaseClusterRestore")))
+				return err
+			}
+			if err := e.enforceDBClusterRestoreRBAC(user, restore); errors.Is(err, errInsufficientPermissions) {
+				continue
+			} else if err != nil {
+				return err
+			}
+			allowed = append(allowed, obj)
+		}
+		l.Items = allowed
+		return nil
+	})
+
+	return e.proxyKubernetes(ctx, namespace, databaseClusterRestoreKind, "", rbacFilter)
 }
 
 // CreateDatabaseClusterRestore Create a database cluster restore on the specified kubernetes cluster.
@@ -139,4 +168,16 @@ func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, namespace
 		})
 	}
 	return e.proxyKubernetes(ctx, namespace, databaseClusterRestoreKind, name)
+}
+
+func (e *EverestServer) enforceDBClusterRestoreRBAC(user string, restore *everestv1alpha1.DatabaseClusterRestore) error {
+	err := e.enforce(user, rbac.ResourceDatabaseClusterRestores, rbac.ActionRead,
+		rbac.ObjectName(restore.GetNamespace(), restore.Spec.DBClusterName))
+	if err != nil {
+		if !errors.Is(err, errInsufficientPermissions) {
+			e.l.Error(errors.Join(err, errors.New("failed to check restore permissions")))
+		}
+		return err
+	}
+	return nil
 }
