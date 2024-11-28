@@ -20,6 +20,7 @@ import (
 	"github.com/percona/everest/pkg/cli/helm"
 	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
 	"github.com/percona/everest/pkg/cli/steps"
+	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	. "github.com/percona/everest/pkg/utils/must" //nolint:revive,stylecheck
@@ -27,6 +28,7 @@ import (
 )
 
 const (
+	// Path to the everest-db-namespace subchart, relative to the main chart.
 	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
 )
 
@@ -86,12 +88,16 @@ type NamespaceAddConfig struct {
 
 	// Pretty print the output.
 	Pretty bool
-	// Update the Helm chart in the namespace.
-	// This is an internal flag and should not be exposed to the user.
+
+	// Update is set if the existing namespace needs to be updated.
+	// This flag is set internally only, so that the add functionality may
+	// be re-used for updating the namespace as well.
 	Update bool
+	// NamespaceList is a list of namespaces to install.
+	// This is populated internally after validating the Namespaces field.:
+	NamespaceList []string
 
 	helm.CLIOptions
-	NamespaceList []string
 }
 
 // OperatorConfig identifies which operators shall be installed.
@@ -113,20 +119,9 @@ type NamespaceAdder struct {
 
 // Run namespace add operation.
 func (n *NamespaceAdder) Run(ctx context.Context) error {
-	everestVersion, err := version.EverestVersionFromDeployment(ctx, n.kubeClient)
+	ver, err := cliutils.CheckHelmInstallation(ctx, n.kubeClient)
 	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return errors.New("everest is not installed in the cluster")
-		}
-		return errors.Join(err, errors.New("failed to get Everest version"))
-	}
-	ver := everestVersion.String()
-
-	// This command uses Helm chart to install the namespace.
-	// Versions below 1.4.0 are not using helm, so user needs to upgrade first.
-	if common.CheckConstraint(everestVersion.String(), "< 1.4.0") &&
-		!version.IsDev(ver) { // allowed in development
-		return errors.New("operation not supported for this version of Everest")
+		return err
 	}
 
 	installSteps := []steps.Step{}
@@ -139,7 +134,8 @@ func (n *NamespaceAdder) Run(ctx context.Context) error {
 	}
 
 	for _, namespace := range n.cfg.NamespaceList {
-		installSteps = append(installSteps, n.newStepInstallNamespace(everestVersion.String(), namespace))
+		installSteps = append(installSteps,
+			n.newStepInstallNamespace(ver, namespace))
 	}
 
 	var out io.Writer = os.Stdout
