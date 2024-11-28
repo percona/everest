@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/version"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // CheckHelmInstallation ensures that the current installation was done using Helm chart.

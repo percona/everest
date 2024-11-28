@@ -114,7 +114,6 @@ func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
 	}
 	// Upgrade the main chart.
 	return u.helmInstaller.Upgrade(ctx, helm.UpgradeOptions{})
-
 }
 
 func (u *Upgrade) upgradeEverestDBNamespaceHelmCharts(ctx context.Context) error {
