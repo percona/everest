@@ -250,6 +250,7 @@ everest_yaml = helm(
     namespace=everest_namespace,
     skip_crds=True,
     set=[
+        'dbNamespace.enabled=false',
         'upgrade.preflightChecks=false',
         'olm.install=false',
         'createMonitoringResources=false',
