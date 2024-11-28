@@ -172,7 +172,7 @@ jobs:
       - name: Operator - build and bundle
         run: |
           cd everest-operator
-          git checkout -b $VERSION
+          git checkout -b v$VERSION
           make build manifests bundle 
           
           # configure userdata for commits
@@ -182,7 +182,7 @@ jobs:
           # commit and push the updated files
           git commit -a -m "operator manifests"
           # to build crds in helm, the remote ref with the version name should exist
-          git push origin $VERSION
+          git push origin v$VERSION
 
       - name: Helm - checkout
         uses: actions/checkout@v4
