@@ -34,6 +34,8 @@ const (
 
 //nolint:gochecknoglobals
 var (
+	// ErrNSEmpty appears when the provided list of the namespaces is considered empty.
+	ErrNSEmpty = errors.New("namespace list is empty. Specify at least one namespace")
 	// ErrNSReserved appears when some of the provided names are forbidden to use.
 	ErrNSReserved = func(ns string) error {
 		return fmt.Errorf("'%s' namespace is reserved for Everest internals. Please specify another namespace", ns)
@@ -343,6 +345,9 @@ func ValidateNamespaces(str string) ([]string, error) {
 	list := make([]string, 0, len(m))
 	for k := range m {
 		list = append(list, k)
+	}
+	if len(list) == 0 {
+		return nil, ErrNSEmpty
 	}
 
 	return list, nil

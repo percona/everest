@@ -177,11 +177,13 @@ func (o *Install) installDBNamespacesStep() (*steps.Step, error) {
 	askOperators := !(o.cmd.Flags().Lookup(cli.FlagOperatorMongoDB).Changed ||
 		o.cmd.Flags().Lookup(cli.FlagOperatorPostgresql).Changed ||
 		o.cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster).Changed)
+
 	if err := o.config.Populate(askNamespaces, askOperators); err != nil {
+		// not specifying a namespace in this context is allowed.
+		if errors.Is(err, namespaces.ErrNSEmpty) {
+			return nil, nil //nolint:nilnil
+		}
 		return nil, errors.Join(err, errors.New("namespaces configuration error"))
-	}
-	if len(o.config.NamespaceList) == 0 {
-		return nil, nil //nolint:nilnil
 	}
 
 	i, err := namespaces.NewNamespaceAdd(o.config.NamespaceAddConfig, zap.NewNop().Sugar())
