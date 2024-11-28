@@ -104,11 +104,15 @@ func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
 	// We're already using the Helm chart, directly upgrade and return.
 	if u.helmReleaseExists {
 		u.l.Info("Upgrading Helm chart")
-		return u.helmInstaller.Upgrade(ctx)
+		return u.helmInstaller.Upgrade(ctx, helm.UpgradeOptions{})
 	}
 
 	// We're on the legacy installation.
 	// Perform migration of the existing resources to Helm.
+	return u.migrateLegacyInstallationToHelm(ctx)
+}
+
+func (u *Upgrade) migrateLegacyInstallationToHelm(ctx context.Context) error {
 	u.l.Info("Migrating existing installation to Helm")
 	if err := u.cleanupLegacyResources(ctx); err != nil {
 		return fmt.Errorf("failed to cleanupLegacyResources: %w", err)
