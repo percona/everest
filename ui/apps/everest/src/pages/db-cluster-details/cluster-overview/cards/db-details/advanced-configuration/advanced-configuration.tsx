@@ -22,6 +22,7 @@ import { useContext, useState } from 'react';
 import { AdvancedConfigurationEditModal } from './edit-advanced-configuration';
 import { useUpdateDbClusterAdvancedConfiguration } from 'hooks';
 import { AdvancedConfigurationFormType } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema';
+import { DbClusterStatus } from 'shared-types/dbCluster.types';
 
 export const AdvancedConfiguration = ({
   loading,
@@ -40,6 +41,11 @@ export const AdvancedConfiguration = ({
   const handleCloseModal = () => {
     setOpenEditModal(false);
   };
+  const restoringOrDeleting = [
+    DbClusterStatus.restoring,
+    DbClusterStatus.deleting,
+  ].includes(dbCluster?.status?.status!);
+  const editable = canUpdateDb && !restoringOrDeleting;
 
   const handleSubmit = async ({
     externalAccess,
@@ -76,7 +82,7 @@ export const AdvancedConfiguration = ({
       title={Messages.titles.advancedConfiguration}
       loading={loading}
       dataTestId="advanced-configuration"
-      editable={canUpdateDb}
+      editable={editable}
       {...(canUpdateDb
         ? {
             actionButtonProps: {

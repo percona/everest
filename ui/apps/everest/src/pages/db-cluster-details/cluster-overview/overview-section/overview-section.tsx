@@ -46,12 +46,11 @@ export const OverviewSection = ({
         {actionButtonProps && (
           <Button
             size="small"
-            startIcon={
-              editable ? <EditOutlinedIcon /> : actionButtonProps?.startIcon
-            }
+            disabled={!editable}
+            startIcon={<EditOutlinedIcon />}
             {...actionButtonProps}
           >
-            {editable ? Messages.edit : actionButtonProps?.children}
+            {Messages.edit}
           </Button>
         )}
       </Stack>
