@@ -148,6 +148,14 @@ jobs:
           path: percona-helm-charts
           token: ${{ secrets.ROBOT_TOKEN }}
 
+      - name: Helm - build
+        run: |
+          cd percona-helm-charts/charts/everest
+          CRD_VERSION=v${{ env.VERSION }} make crds-gen
+          make release-dev
+
+
+
 #      - name: VS - checkout
 #        uses: actions/checkout@v4
 #        with:
@@ -364,17 +372,18 @@ jobs:
 #
 #
 #
-#      - name: Everest checks - install feature build
-#        shell: bash
-#        run: |
-#          make feature-build-cli
-#          ./bin/everestctl install -v \
-#            --version $VERSION \
-#            --version-metadata-url $VS_URL \
-#            --operator.mongodb \
-#            --operator.postgresql \
-#            --operator.xtradb-cluster \
-#            --skip-wizard \
-#            --namespaces everest
-#
-#          echo "::notice title=Feature Build $VERSION is Created::Version Service Image: $VS_TAG"
+      - name: Everest checks - install feature build
+        shell: bash
+        run: |
+          make feature-build-cli
+          ./bin/everestctl install -v \
+            --chart-dir $GITHUB_WORKSPACE/percona-helm-charts/charts/everest
+            --version $VERSION \
+            --version-metadata-url $VS_URL \
+            --operator.mongodb \
+            --operator.postgresql \
+            --operator.xtradb-cluster \
+            --skip-wizard \
+            --namespaces everest
+
+          echo "::notice title=Feature Build $VERSION is Created::Version Service Image: $VS_TAG"
