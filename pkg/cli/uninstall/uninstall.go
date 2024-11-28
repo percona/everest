@@ -27,13 +27,12 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"go.uber.org/zap"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/percona/everest/pkg/cli/namespaces"
 	"github.com/percona/everest/pkg/cli/steps"
+	"github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/version"
 )
 
 const (
@@ -96,20 +95,11 @@ func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
 
 // Run runs the cluster command.
 func (u *Uninstall) Run(ctx context.Context) error {
-	// Get the installed version of Everest.
-	everestVersion, err := version.EverestVersionFromDeployment(ctx, u.kubeClient)
+	// This command expects a Helm based installation. Otherwise, we stop here.
+	// Older versions must use an older version of the CLI.
+	_, err := utils.CheckHelmInstallation(ctx, u.kubeClient)
 	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return errors.New("everest is not installed in the cluster")
-		}
-		return errors.Join(err, errors.New("failed to get Everest version"))
-	}
-	ver := everestVersion.String()
-
-	// This command assumes Helm based installation, which was introduced in 1.4.0
-	if common.CheckConstraint(everestVersion.String(), "< 1.4.0") &&
-		!version.IsDev(ver) { // allowed in development
-		return errors.New("operation not supported for this version of Everest")
+		return err
 	}
 
 	if abort, err := u.runWizard(); err != nil {

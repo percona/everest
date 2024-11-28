@@ -9,13 +9,11 @@ import (
 	"os"
 
 	"go.uber.org/zap"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/percona/everest/pkg/cli/helm"
 	"github.com/percona/everest/pkg/cli/steps"
-	"github.com/percona/everest/pkg/common"
+	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/version"
 )
 
 // NamespaceRemoveConfig is the configuration for the namespace removal operation.
@@ -65,19 +63,10 @@ func NewNamespaceRemove(c NamespaceRemoveConfig, l *zap.SugaredLogger) (*Namespa
 
 // Run the namespace removal operation.
 func (r *NamespaceRemover) Run(ctx context.Context) error {
-	everestVersion, err := version.EverestVersionFromDeployment(ctx, r.kubeClient)
+	// This command expects a Helm based installation (< 1.4.0)
+	_, err := cliutils.CheckHelmInstallation(ctx, r.kubeClient)
 	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return errors.New("everest is not installed in the cluster")
-		}
-		return errors.Join(err, errors.New("failed to get Everest version"))
-	}
-	ver := everestVersion.String()
-
-	// This command assumes Helm based installation, which was introduced in 1.4.0
-	if common.CheckConstraint(everestVersion.String(), "< 1.4.0") &&
-		!version.IsDev(ver) { // allowed in development
-		return errors.New("operation not supported for this version of Everest")
+		return err
 	}
 
 	dbsExist, err := r.kubeClient.DatabasesExist(ctx, r.config.Namespaces...)

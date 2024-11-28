@@ -119,6 +119,7 @@ type NamespaceAdder struct {
 
 // Run namespace add operation.
 func (n *NamespaceAdder) Run(ctx context.Context) error {
+	// This command expects a Helm based installation (< 1.4.0)
 	ver, err := cliutils.CheckHelmInstallation(ctx, n.kubeClient)
 	if err != nil {
 		return err
