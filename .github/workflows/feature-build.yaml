@@ -201,12 +201,6 @@ jobs:
           make release-dev
           mkdir ${GITHUB_WORKSPACE}/helm
           cp -rvf ./* ${GITHUB_WORKSPACE}/helm/
-      - name: Upload Helm Chart
-        uses: actions/upload-artifact@v3
-        with:
-          name: helm-chart
-          path: ${GITHUB_WORKSPACE}/helm
-
 
 
       - name: VS - checkout
@@ -348,6 +342,7 @@ jobs:
       - name: Everest - check out
         uses: actions/checkout@v4
         with:
+          path: ./api
           token: ${{ secrets.ROBOT_TOKEN }}
           ref: ${{ env.EVEREST_BRANCH }}
       #
@@ -393,19 +388,17 @@ jobs:
       #
       #
 
-      - name: Everest checks - install feature build
-        uses: actions/download-artifact@v3
-        with:
-          name: helm-chart
-          path: helm
 
       - name: Everest checks - install feature build
         shell: bash
         run: |
+          cp -rf ${GITHUB_WORKSPACE}/helm/* ${GITHUB_WORKSPACE}/api
+          cd ${GITHUB_WORKSPACE}/api
+          
           RELEASE_VERSION=$VERSION_TAG make feature-build-cli
           
           ./bin/everestctl install -v \
-            --chart-dir ./helm
+            --chart-dir ./
             --version $VERSION \
             --version-metadata-url $VS_URL \
             --operator.mongodb \
