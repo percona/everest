@@ -21,7 +21,6 @@ export const backupsStepCheck = async (page: Page) => {
       'Create a task that regularly backs up this database according to your specified schedule.'
     )
   ).toBeVisible();
-  await page.pause();
 
   const enabledPitrCheckbox = page
     .getByTestId('switch-input-pitr-enabled-label')

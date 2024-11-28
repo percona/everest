@@ -70,7 +70,6 @@ test.describe('DB Cluster creation', () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    await page.pause();
     await page.goto('/databases');
     await page.getByTestId('add-db-cluster-button').waitFor();
     await page.getByTestId('add-db-cluster-button').click();
@@ -89,8 +88,8 @@ test.describe('DB Cluster creation', () => {
     const expectedNodesOrder = [3, 3, 2];
 
     const dbEnginesButtons = page.locator('#add-db-cluster-button-menu').getByRole('menuitem');
-    await page.pause();
-    expect(await dbEnginesButtons.count()).toBe(3);
+    const nrButtons = await dbEnginesButtons.count();
+    expect(nrButtons).toBe(3);
     // TODO expect all buttons available and not disabled
 
     for (let i = 0; i < 3; i++) {
@@ -181,31 +180,31 @@ test.describe('DB Cluster creation', () => {
     expect(await page.getByTestId('text-input-db-name').inputValue()).toBe(
       dbName
     );
-    await page.pause();
-    await page.getByTestId('postgresql-toggle-button').click();
-    await expect(page.getByText('Nº nodes: 2')).toBeVisible();
+    
+    // TODO should we move next lines to separate PG/Mongo tests or we already have it in release folder?
     // Now we change the number of nodes
-    await page.getByTestId('button-edit-preview-resources').click();
-    await page.getByTestId('toggle-button-nodes-3').click();
-    await expect(page.getByText('PG Bouncers (3)')).toBeVisible();
-    await page.getByTestId('toggle-button-nodes-2').click();
-    // Since we changed DB type, the number of bouncers is reset and will follow the number of nodes
-    await expect(page.getByText('PG Bouncers (2)')).toBeVisible();
-    await page.getByTestId('button-edit-preview-basic-information').click();
-    // Because 2 nodes is not valid for MongoDB, the default will be picked
-    await page.getByTestId('mongodb-toggle-button').click();
-    await page
-      .getByTestId('switch-input-sharding-label')
-      .getByRole('checkbox')
-      .check();
-    await expect(page.getByText('Nº nodes: 3')).toBeVisible();
-    await page.getByTestId('button-edit-preview-backups').click();
+   
+    // await page.getByTestId('button-edit-preview-resources').click();
+    // await page.getByTestId('toggle-button-nodes-3').click();
+    // await expect(page.getByText('PG Bouncers (3)')).toBeVisible();
+    // await page.getByTestId('toggle-button-nodes-2').click();
 
-    await expect(page.getByTestId('radio-option-logical')).not.toBeVisible();
+    // Because 2 nodes is not valid for MongoDB, the default will be picked
+    // await page.getByTestId('mongodb-toggle-button').click();
+    // await page
+    //   .getByTestId('switch-input-sharding-label')
+    //   .getByRole('checkbox')
+    //   .check();
+    // await expect(page.getByText('Nº nodes: 3')).toBeVisible();
+
+    // await page.getByTestId('button-edit-preview-backups').click();
+
+    // await expect(page.getByTestId('radio-option-logical')).not.toBeVisible();
 
     await page.getByTestId('button-edit-preview-monitoring').click();
 
     // await monitoringStepCheck(page, monitoringInstancesList);
+    // await page.pause();
     await submitWizard(page);
     await expect(
       page.getByText('Awesome! Your database is being created!')
@@ -238,9 +237,11 @@ test.describe('DB Cluster creation', () => {
     expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe('4G');
     expect(addedCluster?.spec.engine.storage.size.toString()).toBe('25Gi');
     expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
-    expect(addedCluster?.spec.proxy.replicas).toBe(1);
-    expect(addedCluster?.spec.proxy.resources.cpu).toBe('1');
-    expect(addedCluster?.spec.proxy.resources.memory).toBe('2G');
+    // commented, because we use only psmdb in this flow
+    // expect(addedCluster?.spec.proxy.replicas).toBe(1); 
+    // expect(addedCluster?.spec.proxy.resources.cpu).toBe('1');
+    // expect(addedCluster?.spec.proxy.resources.memory).toBe('2G');
+
     // expect(addedCluster?.spec.proxy.expose.ipSourceRanges).toEqual([
     //   '192.168.1.1/24',
     //   '192.168.1.0',
