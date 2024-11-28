@@ -33,7 +33,7 @@ export const backupsStepCheck = async (page: Page) => {
   await expect(
     page.getByText('Point-in-time Recovery', { exact: true })
   ).toBeVisible();
-  
+
   await expect(
     page.getByText(
       'PITR provides continuous backups of your database, enabling you to restore it to'

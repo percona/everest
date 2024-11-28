@@ -174,16 +174,24 @@ export const openCreateScheduleDialogFromDBWizard = async (page: Page) => {
   ).toBeVisible();
 };
 
-export const selectDbEngineCheck = async(
+export const selectDbEngineCheck = async (
   page: Page,
-  dbType: 'pxc' | 'psmdb' | 'postgresql',
+  dbType: 'pxc' | 'psmdb' | 'postgresql'
 ) => {
-  const dbEnginesButtons = page.locator('#add-db-cluster-button-menu').getByRole('menuitem');
+  const dbEnginesButtons = page
+    .locator('#add-db-cluster-button-menu')
+    .getByRole('menuitem');
   const nrButtons = await dbEnginesButtons.count();
   expect(nrButtons).toBe(3);
-  expect(await page.getByTestId('add-db-cluster-button-psmdb').textContent()).toBe('MongoDB');
-  expect(await page.getByTestId('add-db-cluster-button-pxc').textContent()).toBe('MySQL');
-  expect(await page.getByTestId('add-db-cluster-button-postgresql').textContent()).toBe('PostgreSQL');
+  expect(
+    await page.getByTestId('add-db-cluster-button-psmdb').textContent()
+  ).toBe('MongoDB');
+  expect(
+    await page.getByTestId('add-db-cluster-button-pxc').textContent()
+  ).toBe('MySQL');
+  expect(
+    await page.getByTestId('add-db-cluster-button-postgresql').textContent()
+  ).toBe('PostgreSQL');
 
   await page.getByTestId(`add-db-cluster-button-${dbType}`).click();
-}
+};

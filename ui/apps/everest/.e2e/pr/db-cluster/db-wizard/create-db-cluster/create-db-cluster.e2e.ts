@@ -87,14 +87,16 @@ test.describe('DB Cluster creation', () => {
   }) => {
     const expectedNodesOrder = [3, 3, 2];
 
-    const dbEnginesButtons = page.locator('#add-db-cluster-button-menu').getByRole('menuitem');
+    const dbEnginesButtons = page
+      .locator('#add-db-cluster-button-menu')
+      .getByRole('menuitem');
     const nrButtons = await dbEnginesButtons.count();
     expect(nrButtons).toBe(3);
     // TODO expect all buttons available and not disabled
 
     for (let i = 0; i < 3; i++) {
       await dbEnginesButtons.nth(i).click();
-      
+
       await page.getByTestId('select-input-db-version').waitFor();
       expect(
         await page.getByTestId('select-input-db-version').inputValue()
@@ -180,10 +182,10 @@ test.describe('DB Cluster creation', () => {
     expect(await page.getByTestId('text-input-db-name').inputValue()).toBe(
       dbName
     );
-    
+
     // TODO should we move next lines to separate PG/Mongo tests or we already have it in release folder?
     // Now we change the number of nodes
-   
+
     // await page.getByTestId('button-edit-preview-resources').click();
     // await page.getByTestId('toggle-button-nodes-3').click();
     // await expect(page.getByText('PG Bouncers (3)')).toBeVisible();
@@ -238,7 +240,7 @@ test.describe('DB Cluster creation', () => {
     expect(addedCluster?.spec.engine.storage.size.toString()).toBe('25Gi');
     expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
     // commented, because we use only psmdb in this flow
-    // expect(addedCluster?.spec.proxy.replicas).toBe(1); 
+    // expect(addedCluster?.spec.proxy.replicas).toBe(1);
     // expect(addedCluster?.spec.proxy.resources.cpu).toBe('1');
     // expect(addedCluster?.spec.proxy.resources.memory).toBe('2G');
 
@@ -269,7 +271,7 @@ test.describe('DB Cluster creation', () => {
     const enabledPitrCheckbox = page
       .getByTestId('switch-input-pitr-enabled-label')
       .getByRole('checkbox');
-      
+
     await expect(enabledPitrCheckbox).not.toBeChecked();
     await expect(enabledPitrCheckbox).toBeDisabled();
     await addFirstScheduleInDBWizard(page);
