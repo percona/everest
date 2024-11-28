@@ -398,18 +398,6 @@ jobs:
         with:
           name: helm-chart
           path: helm
-        shell: bash
-        run: |
-          ./bin/everestctl install -v \
-            --chart-dir ./helm
-            --version $VERSION \
-            --version-metadata-url $VS_URL \
-            --operator.mongodb \
-            --operator.postgresql \
-            --operator.xtradb-cluster \
-            --skip-wizard \
-            --namespaces everest
-          
 
       - name: Everest checks - install feature build
         shell: bash
@@ -417,7 +405,7 @@ jobs:
           RELEASE_VERSION=$VERSION_TAG make feature-build-cli
           
           ./bin/everestctl install -v \
-            --chart-dir $GITHUB_WORKSPACE/helm
+            --chart-dir ./helm
             --version $VERSION \
             --version-metadata-url $VS_URL \
             --operator.mongodb \
