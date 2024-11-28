@@ -27,12 +27,12 @@ func TestCheckHelmInstallation(t *testing.T) {
 			wantErr:        false,
 		},
 		{
-			everestVersion: "1.3.0",
-			wantErr:        true,
+			everestVersion: "1.4.0-rc3",
+			wantErr:        false,
 		},
 		{
-			everestVersion: "1.4.0-dev",
-			wantErr:        false,
+			everestVersion: "1.3.0",
+			wantErr:        true,
 		},
 		{
 			everestVersion: "0.0.0",
@@ -45,7 +45,8 @@ func TestCheckHelmInstallation(t *testing.T) {
 		mockCall := c.On("GetDeployment",
 			mock.Anything,
 			mock.Anything,
-			mock.Anything).
+			mock.Anything,
+		).
 			Return(getDeployment(tc.everestVersion), nil)
 
 		v, err := CheckHelmInstallation(ctx, c)

@@ -73,7 +73,7 @@ func (k *Kubernetes) DeleteDatabaseCluster(ctx context.Context, namespace, name 
 }
 
 // DatabasesExist checks if databases exist in provided at least one of the provided namespaces.
-// If namespaces are not provided, it checks in all namespaces
+// If namespaces are not provided, it checks in all namespaces.
 func (k *Kubernetes) DatabasesExist(ctx context.Context, namespaces ...string) (bool, error) {
 	all, err := k.getAllDatabases(ctx)
 	if err != nil {

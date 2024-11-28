@@ -14,6 +14,7 @@ import (
 	"github.com/percona/everest/pkg/output"
 )
 
+// NewRemoveCommand returns a new command to remove an existing namespace.
 func NewRemoveCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "remove",

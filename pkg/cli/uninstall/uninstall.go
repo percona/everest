@@ -134,10 +134,7 @@ func (u *Uninstall) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to get database namespaces: %w", err)
 	}
 
-	uninstallSteps, err := u.newUninstallSteps(dbNamespaces)
-	if err != nil {
-		return fmt.Errorf("failed to prepare uninstall steps: %w", err)
-	}
+	uninstallSteps := u.newUninstallSteps(dbNamespaces)
 
 	var out io.Writer = os.Stdout
 	if !u.config.Pretty {
@@ -166,7 +163,7 @@ func (u *Uninstall) setKubernetesEnv(ctx context.Context) error {
 	return nil
 }
 
-func (u *Uninstall) newUninstallSteps(dbNamespaces []string) ([]steps.Step, error) {
+func (u *Uninstall) newUninstallSteps(dbNamespaces []string) []steps.Step {
 	steps := []steps.Step{}
 
 	for _, ns := range dbNamespaces {
@@ -176,7 +173,7 @@ func (u *Uninstall) newUninstallSteps(dbNamespaces []string) ([]steps.Step, erro
 	steps = append(steps, u.newStepDeleteNamespace(common.MonitoringNamespace))
 	steps = append(steps, u.newStepDeleteNamespace(common.SystemNamespace))
 	steps = append(steps, u.newStepDeleteCRDs())
-	return steps, nil
+	return steps
 }
 
 // Run the uninstall wizard.

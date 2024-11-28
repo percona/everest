@@ -136,7 +136,8 @@ func (n *NamespaceAdder) Run(ctx context.Context) error {
 
 	for _, namespace := range n.cfg.NamespaceList {
 		installSteps = append(installSteps,
-			n.newStepInstallNamespace(ver, namespace))
+			n.newStepInstallNamespace(ver, namespace),
+		)
 	}
 
 	var out io.Writer = os.Stdout

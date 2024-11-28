@@ -15,6 +15,7 @@ import (
 	"github.com/percona/everest/pkg/output"
 )
 
+// NewUpdateCommand returns a new command to update an existing namespace.
 func NewUpdateCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "update",
@@ -22,7 +23,7 @@ func NewUpdateCommand(l *zap.SugaredLogger) *cobra.Command {
 		Short:   "Update an existing Everest namespace",
 		Example: `everestctl update add [NAMESPACE] [FLAGS]`,
 		Run: func(cmd *cobra.Command, args []string) {
-			initAddViperFlags(cmd)
+			initUpdateViperFlags(cmd)
 			c := &namespaces.NamespaceAddConfig{}
 			err := viper.Unmarshal(c)
 			if err != nil {
@@ -61,7 +62,7 @@ func NewUpdateCommand(l *zap.SugaredLogger) *cobra.Command {
 			}
 		},
 	}
-	initAddFlags(cmd)
+	initUpdateFlags(cmd)
 	return cmd
 }
 

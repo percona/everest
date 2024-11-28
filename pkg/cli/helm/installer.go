@@ -206,6 +206,7 @@ func (i *Installer) install(ctx context.Context) error {
 	return nil
 }
 
+// UpgradeOptions provide options for upgrading a Helm chart.
 type UpgradeOptions struct {
 	DisableHooks bool
 	ReuseValues  bool
