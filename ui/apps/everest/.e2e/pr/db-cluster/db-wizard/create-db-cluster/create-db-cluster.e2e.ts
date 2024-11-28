@@ -229,7 +229,7 @@ test.describe('DB Cluster creation', () => {
       (cluster) => cluster.metadata.name === clusterName
     );
 
-    await deleteDbClusterFn(request, addedCluster?.metadata.name, namespace);
+    // await deleteDbClusterFn(request, addedCluster?.metadata.name, namespace);
     //TODO: Add check for PITR ones backend is ready
 
     expect(addedCluster).not.toBeUndefined();
