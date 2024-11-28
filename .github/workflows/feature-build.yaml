@@ -172,8 +172,16 @@ jobs:
       - name: Operator - build and bundle
         run: |
           cd everest-operator
+          git checkout -b $VERSION
           # make build manifests bundle # !!! uncomment
-          git tag $VERSION
+          
+          # configure userdata for commits
+          git config --global user.email "everest-ci@percona.com"
+          git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+
+          # commit and push the updated files
+          git commit -a -m "operator manifests"
+          git push origin $VERSION
 
       - name: Helm - checkout
         uses: actions/checkout@v4
@@ -185,7 +193,7 @@ jobs:
       - name: Helm - build
         run: |
           cd percona-helm-charts/charts/everest
-          EVEREST_REPO_URL="" CRD_DIR=everest-operator/config/crd CRD_VERSION=v${{ env.VERSION }} make crds-gen
+          CRD_DIR=everest-operator/config/crd CRD_VERSION=v${{ env.VERSION }} make crds-gen
           make release-dev
 
 
