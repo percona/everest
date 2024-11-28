@@ -37,6 +37,8 @@ const (
 )
 
 // ListDatabaseClusterRestores List of the created database cluster restores on the specified kubernetes cluster.
+//
+//nolint:dupl
 func (e *EverestServer) ListDatabaseClusterRestores(ctx echo.Context, namespace, name string) error {
 	req := ctx.Request()
 	if err := validateRFC1035(name, "name"); err != nil {
@@ -176,7 +178,8 @@ func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, namespace
 
 func (e *EverestServer) enforceDBClusterListRestoreRBAC(user string, restore *everestv1alpha1.DatabaseClusterRestore) error {
 	err := e.enforce(user, rbac.ResourceDatabaseClusterRestores, rbac.ActionRead,
-		rbac.ObjectName(restore.GetNamespace(), restore.Spec.DBClusterName))
+		rbac.ObjectName(restore.GetNamespace(), restore.Spec.DBClusterName),
+	)
 	if err != nil {
 		if !errors.Is(err, errInsufficientPermissions) {
 			e.l.Error(errors.Join(err, errors.New("failed to check restore permissions")))
