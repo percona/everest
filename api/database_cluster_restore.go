@@ -67,7 +67,7 @@ func (e *EverestServer) ListDatabaseClusterRestores(ctx echo.Context, namespace,
 				e.l.Error(errors.Join(err, errors.New("failed to convert unstructured to DatabaseClusterRestore")))
 				return err
 			}
-			if err := e.enforceDBClusterRestoreRBAC(user, restore); errors.Is(err, errInsufficientPermissions) {
+			if err := e.enforceDBClusterListRestoreRBAC(user, restore); errors.Is(err, errInsufficientPermissions) {
 				continue
 			} else if err != nil {
 				return err
@@ -136,6 +136,10 @@ func (e *EverestServer) enforceDBRestoreRBAC(user, namespace, srcBackupName, dbC
 	if err := e.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionRead, rbac.ObjectName(namespace, srcBackupName)); err != nil {
 		return err
 	}
+
+	if err := e.enforce(user, rbac.ResourceDatabaseClusterRestores, rbac.ActionRead, rbac.ObjectName(namespace, dbClusterName)); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -170,7 +174,7 @@ func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, namespace
 	return e.proxyKubernetes(ctx, namespace, databaseClusterRestoreKind, name)
 }
 
-func (e *EverestServer) enforceDBClusterRestoreRBAC(user string, restore *everestv1alpha1.DatabaseClusterRestore) error {
+func (e *EverestServer) enforceDBClusterListRestoreRBAC(user string, restore *everestv1alpha1.DatabaseClusterRestore) error {
 	err := e.enforce(user, rbac.ResourceDatabaseClusterRestores, rbac.ActionRead,
 		rbac.ObjectName(restore.GetNamespace(), restore.Spec.DBClusterName))
 	if err != nil {
