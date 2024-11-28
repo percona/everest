@@ -393,6 +393,8 @@ jobs:
         shell: bash
         run: |
           cp -rf ${GITHUB_WORKSPACE}/helm/* ${GITHUB_WORKSPACE}/api
+          pwd
+          ls
           cd ${GITHUB_WORKSPACE}/api
           
           RELEASE_VERSION=$VERSION_TAG make feature-build-cli
