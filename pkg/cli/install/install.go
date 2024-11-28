@@ -191,7 +191,7 @@ func (o *Install) installDBNamespacesStep() (*steps.Step, error) {
 		return nil, err
 	}
 	return &steps.Step{
-		Desc: fmt.Sprintf("Installing namespaces (%s)", strings.Join(o.config.NamespaceList, ", ")),
+		Desc: fmt.Sprintf("Provisioning database namespaces (%s)", strings.Join(o.config.NamespaceList, ", ")),
 		F: func(ctx context.Context) error {
 			return i.Run(ctx)
 		},
