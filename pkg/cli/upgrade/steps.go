@@ -193,7 +193,16 @@ func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version 
 	}); err != nil {
 		return fmt.Errorf("could not initialize Helm installer: %w", err)
 	}
-	return installer.Install(ctx)
+	if err := installer.Install(ctx); err != nil {
+		return fmt.Errorf("could not install Helm chart: %w", err)
+	}
+	// This Upgrade is a no-op, howeverer, it is needed so that the existing Subscriptions and OperatorGroup in
+	// this namespace are correctly adopted by the Helm release.
+	// Running Install() first is needed to ensure that the release is created, but it does not adopt resources.
+	return installer.Upgrade(ctx, helm.UpgradeOptions{
+		DisableHooks: true,
+		ReuseValues:  true,
+	})
 }
 
 func helmValuesForDBEngines(list *everestv1alpha1.DatabaseEngineList) values.Options {
@@ -202,6 +211,7 @@ func helmValuesForDBEngines(list *everestv1alpha1.DatabaseEngineList) values.Opt
 		t := dbEngine.Spec.Type
 		vals = append(vals, fmt.Sprintf("%s=%t", t, dbEngine.Status.State == everestv1alpha1.DBEngineStateInstalled))
 	}
+	vals = append(vals, "cleanupOnUninstall=false") // uninstall command will do the clean-up on its own.
 	// TODO: figure out how to set telemetry.
 	return values.Options{Values: vals}
 }
