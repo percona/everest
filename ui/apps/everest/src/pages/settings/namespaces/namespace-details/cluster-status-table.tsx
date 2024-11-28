@@ -212,6 +212,9 @@ const ClusterStatusTable = ({
               <Button
                 data-testid="update-db-button"
                 onClick={() => onDbClick(row.original)}
+                sx={{
+                  lineHeight: '20px',
+                }}
               >
                 {message}
               </Button>
