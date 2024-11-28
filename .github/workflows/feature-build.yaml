@@ -142,13 +142,13 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
 
-      - name: Operator - check out
-        uses: actions/checkout@v4
-        with:
-          repository: percona/everest-operator
-          ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
-          path: everest-operator
-          token: ${{ secrets.ROBOT_TOKEN }}
+#      - name: Operator - check out
+#        uses: actions/checkout@v4
+#        with:
+#          repository: percona/everest-operator
+#          ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
+#          path: everest-operator
+#          token: ${{ secrets.ROBOT_TOKEN }}
 #
 #      - name: Operator - install operator-sdk
 #        run: |
@@ -169,20 +169,20 @@ jobs:
 #          chmod +x operator-sdk_${OS}_${ARCH}
 #          mv operator-sdk_${OS}_${ARCH} $TOOLS_PATH/operator-sdk
 #
-      - name: Operator - build and bundle
-        run: |
-          cd everest-operator
-          git checkout -b v$VERSION
-          make build manifests bundle 
-          
-          # configure userdata for commits
-          git config --global user.email "everest-ci@percona.com"
-          git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
-
-          # commit and push the updated files
-          git commit -a -m "operator manifests"
-          # to build crds in helm, the remote ref with the version name should exist
-          git push origin v$VERSION
+#      - name: Operator - build and bundle
+#        run: |
+#          cd everest-operator
+#          git checkout -b v$VERSION
+#          make build manifests bundle
+#
+#          # configure userdata for commits
+#          git config --global user.email "everest-ci@percona.com"
+#          git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+#
+#          # commit and push the updated files
+#          git commit -a -m "operator manifests"
+#          # to build crds in helm, the remote ref with the version name should exist
+#          git push origin v$VERSION
 
       - name: Helm - checkout
         uses: actions/checkout@v4
@@ -388,6 +388,7 @@ jobs:
       - name: Everest checks - install feature build
         shell: bash
         run: |
+          cd $GITHUB_WORKSPACE
           make feature-build-cli
           ./bin/everestctl install -v \
             --chart-dir $GITHUB_WORKSPACE/percona-helm-charts/charts/everest
