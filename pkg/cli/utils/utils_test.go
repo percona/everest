@@ -46,15 +46,15 @@ func TestCheckHelmInstallation(t *testing.T) {
 			mock.Anything,
 			mock.Anything).
 			Return(getDeployment(tc.everestVersion), nil)
-		defer mockCall.Unset()
 
 		v, err := CheckHelmInstallation(ctx, c)
-		assert.Equal(t, tc.everestVersion, v)
 		if tc.wantErr {
 			require.Error(t, err)
 		} else {
 			require.NoError(t, err)
+			assert.Equal(t, tc.everestVersion, v)
 		}
+		mockCall.Unset()
 	}
 }
 
