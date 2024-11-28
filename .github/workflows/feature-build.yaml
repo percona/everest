@@ -338,11 +338,11 @@ jobs:
 #          file: everest-catalog/everest-catalog.Dockerfile
 #
 #
-#      - name: Everest - check out
-#        uses: actions/checkout@v4
-#        with:
-#          token: ${{ secrets.ROBOT_TOKEN }}
-#          ref: ${{ env.EVEREST_BRANCH }}
+      - name: Everest - check out
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.ROBOT_TOKEN }}
+          ref: ${{ env.EVEREST_BRANCH }}
 #
 #      - name: Everest - setup golang
 #        uses: actions/setup-go@v5
@@ -388,7 +388,6 @@ jobs:
       - name: Everest checks - install feature build
         shell: bash
         run: |
-          cd $GITHUB_WORKSPACE
           make feature-build-cli
           ./bin/everestctl install -v \
             --chart-dir $GITHUB_WORKSPACE/percona-helm-charts/charts/everest
