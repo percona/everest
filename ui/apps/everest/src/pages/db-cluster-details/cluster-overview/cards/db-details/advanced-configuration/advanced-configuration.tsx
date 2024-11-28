@@ -22,6 +22,7 @@ import { useContext, useState } from 'react';
 import { AdvancedConfigurationEditModal } from './edit-advanced-configuration';
 import { useUpdateDbClusterAdvancedConfiguration } from 'hooks';
 import { AdvancedConfigurationFormType } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema';
+import { DbClusterStatus } from 'shared-types/dbCluster.types';
 
 export const AdvancedConfiguration = ({
   loading,
@@ -33,6 +34,8 @@ export const AdvancedConfiguration = ({
     dbCluster,
     queryResult: { refetch },
   } = useContext(DbClusterContext);
+  const restoring = dbCluster?.status?.status === DbClusterStatus.restoring;
+  const deleting = dbCluster?.status?.status === DbClusterStatus.deleting;
   const [openEditModal, setOpenEditModal] = useState(false);
   const [updating, setUpdating] = useState(false);
   const { mutate: updateDbClusterAdvancedConfiguration } =
@@ -76,7 +79,7 @@ export const AdvancedConfiguration = ({
       title={Messages.titles.advancedConfiguration}
       loading={loading}
       dataTestId="advanced-configuration"
-      editable={canUpdateDb}
+      editable={canUpdateDb && !restoring && !deleting}
       {...(canUpdateDb
         ? {
             actionButtonProps: {

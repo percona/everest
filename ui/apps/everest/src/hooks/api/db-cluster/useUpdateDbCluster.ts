@@ -361,3 +361,38 @@ export const useUpdateDbClusterEngine = () =>
         },
       }),
   });
+
+export const useUpdateDbClusterPITR = () =>
+  useMutation({
+    mutationFn: ({
+      clusterName,
+      namespace,
+      dbCluster,
+      enabled,
+      backupStorageName,
+    }: {
+      clusterName: string;
+      namespace: string;
+      dbCluster: DbCluster;
+      enabled: boolean;
+      backupStorageName: string | { name: string };
+    }) =>
+      updateDbClusterFn(clusterName, namespace, {
+        ...dbCluster,
+        spec: {
+          ...dbCluster.spec,
+          backup: {
+            ...dbCluster.spec.backup!,
+            pitr: enabled
+              ? {
+                  backupStorageName:
+                    typeof backupStorageName === 'string'
+                      ? backupStorageName
+                      : backupStorageName!.name,
+                  enabled: true,
+                }
+              : { enabled: false, backupStorageName: '' },
+          },
+        },
+      }),
+  });
