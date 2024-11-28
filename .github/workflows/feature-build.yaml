@@ -142,13 +142,13 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
 
-#      - name: Operator - check out
-#        uses: actions/checkout@v4
-#        with:
-#          repository: percona/everest-operator
-#          ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
-#          path: everest-operator
-#          token: ${{ secrets.ROBOT_TOKEN }}
+      - name: Operator - check out
+        uses: actions/checkout@v4
+        with:
+          repository: percona/everest-operator
+          ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
+          path: everest-operator
+          token: ${{ secrets.ROBOT_TOKEN }}
 #
 #      - name: Operator - install operator-sdk
 #        run: |
@@ -169,11 +169,11 @@ jobs:
 #          chmod +x operator-sdk_${OS}_${ARCH}
 #          mv operator-sdk_${OS}_${ARCH} $TOOLS_PATH/operator-sdk
 #
-#      - name: Operator - build and bundle
-#        run: |
-#          cd everest-operator
-#          make build manifests bundle
-#          git tag $VERSION
+      - name: Operator - build and bundle
+        run: |
+          cd everest-operator
+          # make build manifests bundle # !!! uncomment
+          git tag $VERSION
 
       - name: Helm - checkout
         uses: actions/checkout@v4
