@@ -101,15 +101,52 @@ func (u *Upgrade) upgradeCustomResourceDefinitions(ctx context.Context) error {
 }
 
 func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
-	// We're already using the Helm chart, directly upgrade and return.
-	if u.helmReleaseExists {
-		u.l.Info("Upgrading Helm chart")
-		return u.helmInstaller.Upgrade(ctx, helm.UpgradeOptions{})
+	if !u.helmReleaseExists {
+		// We're on the legacy installation.
+		// Perform migration of the existing resources to Helm.
+		return u.migrateLegacyInstallationToHelm(ctx)
 	}
 
-	// We're on the legacy installation.
-	// Perform migration of the existing resources to Helm.
-	return u.migrateLegacyInstallationToHelm(ctx)
+	// First upgrade DB namespaces.
+	// This upgrade is no-op, it just updates the version metadata in helm.
+	if err := u.upgradeEverestDBNamespaceHelmCharts(ctx); err != nil {
+		return fmt.Errorf("could not upgrade DB namespaces Helm charts: %w", err)
+	}
+	// Upgrade the main chart.
+	return u.helmInstaller.Upgrade(ctx, helm.UpgradeOptions{})
+
+}
+
+func (u *Upgrade) upgradeEverestDBNamespaceHelmCharts(ctx context.Context) error {
+	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx)
+	if err != nil {
+		return fmt.Errorf("could not get database namespaces: %w", err)
+	}
+	for _, ns := range dbNamespaces {
+		if err := u.upgradeEverestDBNamespaceHelmChart(ctx, ns); err != nil {
+			return fmt.Errorf("could not upgrade DB namespace '%s' Helm chart: %w", ns, err)
+		}
+	}
+	return nil
+}
+
+func (u *Upgrade) upgradeEverestDBNamespaceHelmChart(ctx context.Context, namespace string) error {
+	installer := helm.Installer{
+		ReleaseName:      namespace,
+		ReleaseNamespace: namespace,
+	}
+	if err := installer.Init(u.config.KubeconfigPath, helm.ChartOptions{
+		URL:     u.config.RepoURL,
+		Name:    helm.EverestDBNamespaceChartName,
+		Version: u.upgradeToVersion,
+	}); err != nil {
+		return fmt.Errorf("could not initialize Helm installer: %w", err)
+	}
+
+	return installer.Upgrade(ctx, helm.UpgradeOptions{
+		DisableHooks: true,
+		ReuseValues:  true,
+	})
 }
 
 func (u *Upgrade) migrateLegacyInstallationToHelm(ctx context.Context) error {
