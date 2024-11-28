@@ -979,6 +979,24 @@ func (_m *MockKubernetesConnector) IsMonitoringConfigUsed(ctx context.Context, n
 	return r0, r1
 }
 
+// Kubeconfig provides a mock function with given fields:
+func (_m *MockKubernetesConnector) Kubeconfig() string {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Kubeconfig")
+	}
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
 // ListBackupStorages provides a mock function with given fields: ctx, namespace
 func (_m *MockKubernetesConnector) ListBackupStorages(ctx context.Context, namespace string) (*v1alpha1.BackupStorageList, error) {
 	ret := _m.Called(ctx, namespace)

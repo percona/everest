@@ -66,6 +66,8 @@ type KubernetesConnector interface {
 	DeleteDeployment(ctx context.Context, name, namespace string) error
 	// ApproveInstallPlan approves an install plan.
 	ApproveInstallPlan(ctx context.Context, namespace, installPlanName string) (bool, error)
+	// Kubeconfig returns the path to the kubeconfig.
+	Kubeconfig() string
 	// Config returns *rest.Config.
 	Config() *rest.Config
 	// WithClient sets the client connector.
