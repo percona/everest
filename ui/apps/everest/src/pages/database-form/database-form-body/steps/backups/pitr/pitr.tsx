@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { Stack, Typography } from '@mui/material';
-import { Messages } from './pitr.messages';
+import { Messages } from 'pages/common/pitr.messages';
 import { LabeledContent, SwitchInput } from '@percona/ui-lib';
 import { DbType } from '@percona/types';
 import { DbWizardFormFields } from 'consts.ts';
