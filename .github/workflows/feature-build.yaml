@@ -230,20 +230,20 @@ jobs:
 
 
 
-      - name: Start local Kubernetes cluster
-        uses: medyagh/setup-minikube@latest
-        id: minikube
-        with:
-          cpus: 2
-          memory: 2000m
-
-      - name: Run VS locally
-        run: |
-          cd percona-version-service
-          sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_TAG/g" deploy.yaml
-          kubectl apply -f deploy.yaml
-          kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service
-          kubectl port-forward svc/percona-version-service $VS_PORT:80 &
+#      - name: Start local Kubernetes cluster
+#        uses: medyagh/setup-minikube@latest
+#        id: minikube
+#        with:
+#          cpus: 2
+#          memory: 2000m
+#
+#      - name: Run VS locally
+#        run: |
+#          cd percona-version-service
+#          sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_TAG/g" deploy.yaml
+#          kubectl apply -f deploy.yaml
+#          kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service
+#          kubectl port-forward svc/percona-version-service $VS_PORT:80 &
 
       #
       #      - name: Operator - setup Docker meta for everest-operator
@@ -394,6 +394,9 @@ jobs:
         run: |
           RELEASE_VERSION=$VERSION_TAG make feature-build-cli
           echo "-----"
+          cd $GITHUB_WORKSPACE/helm
+          ls
+          
           ./bin/everestctl install -v \
             --chart-dir $GITHUB_WORKSPACE/helm/charts/everest
             --version $VERSION \
