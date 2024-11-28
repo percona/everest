@@ -30,8 +30,12 @@ export const MonitoringDetails = ({
   const [openEditModal, setOpenEditModal] = useState(false);
   const { dbCluster, canUpdateDb, canUpdateMonitoring } =
     useContext(DbClusterContext);
-  const restoring = dbCluster?.status?.status === DbClusterStatus.restoring;
-  const deleting = dbCluster?.status?.status === DbClusterStatus.deleting;
+  const restoringOrDeleting = [
+    DbClusterStatus.restoring,
+    DbClusterStatus.deleting,
+  ].includes(dbCluster?.status?.status!);
+  const editable = canUpdateDb && !restoringOrDeleting && canUpdateMonitoring;
+
   const { mutate: updateDbClusterMonitoring } = useUpdateDbClusterMonitoring();
 
   const handleCloseModal = () => {
@@ -58,7 +62,7 @@ export const MonitoringDetails = ({
           setOpenEditModal(true);
         },
       }}
-      editable={canUpdateDb && !restoring && !deleting && canUpdateMonitoring}
+      editable={editable}
     >
       <OverviewSectionRow
         label={Messages.fields.status}

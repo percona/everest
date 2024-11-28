@@ -48,8 +48,11 @@ export const BackupsDetails = ({
   showStorage = true,
 }: BackupsDetailsOverviewCardProps) => {
   const { canUpdateDb, dbCluster } = useContext(DbClusterContext);
-  const restoring = dbCluster?.status?.status === DbClusterStatus.restoring;
-  const deleting = dbCluster?.status?.status === DbClusterStatus.deleting;
+  const restoringOrDeleting = [
+    DbClusterStatus.restoring,
+    DbClusterStatus.deleting,
+  ].includes(dbCluster?.status?.status!);
+  const editable = canUpdateDb && !restoringOrDeleting;
   const [openEditModal, setOpenEditModal] = useState(false);
   const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
   const { data: backups = [] } = useDbBackups(dbClusterName!, namespace!, {
@@ -200,7 +203,7 @@ export const BackupsDetails = ({
               setOpenEditModal(true);
             },
           }}
-          editable={canUpdateDb && !restoring && !deleting}
+          editable={editable}
         >
           {/*// TODO EVEREST-1066 the width of the columns on the layouts in different places is limited by a different number (but not by the content), a discussion with Design is required*/}
           <OverviewSectionRow
