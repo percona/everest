@@ -185,7 +185,7 @@ jobs:
       - name: Helm - build
         run: |
           cd percona-helm-charts/charts/everest
-          EVEREST_REPO_URL=${{GITHUB_WORKSPACE}}/everest-operator CRD_VERSION=v${{ env.VERSION }} make crds-gen
+          EVEREST_REPO_URL=$GITHUB_WORKSPACE/everest-operator CRD_VERSION=v${{ env.VERSION }} make crds-gen
           make release-dev
 
 
