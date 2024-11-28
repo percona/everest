@@ -141,6 +141,40 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+
+      - name: Operator - check out
+        uses: actions/checkout@v4
+        with:
+          repository: percona/everest-operator
+          ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
+          path: everest-operator
+          token: ${{ secrets.ROBOT_TOKEN }}
+
+      - name: Operator - install operator-sdk
+        run: |
+          mkdir -p $TOOLS_PATH
+          echo $TOOLS_PATH >> $GITHUB_PATH
+
+          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.25.2
+          curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
+
+          gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E
+
+          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt
+          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt.asc
+          gpg -u "Operator SDK (release) <cncf-operator-sdk@cncf.io>" --verify checksums.txt.asc
+
+          grep operator-sdk_${OS}_${ARCH} checksums.txt | sha256sum -c -
+
+          chmod +x operator-sdk_${OS}_${ARCH}
+          mv operator-sdk_${OS}_${ARCH} $TOOLS_PATH/operator-sdk
+
+      - name: Operator - build and bundle
+        run: |
+          cd everest-operator
+          make build manifests bundle
+          git tag $VERSION
+
       - name: Helm - checkout
         uses: actions/checkout@v4
         with:
@@ -151,7 +185,7 @@ jobs:
       - name: Helm - build
         run: |
           cd percona-helm-charts/charts/everest
-          CRD_VERSION=v${{ env.VERSION }} make crds-gen
+          EVEREST_REPO_URL=${{GITHUB_WORKSPACE}}/everest-operator CRD_VERSION=v${{ env.VERSION }} make crds-gen
           make release-dev
 
 
@@ -199,37 +233,7 @@ jobs:
 #          kubectl port-forward svc/percona-version-service $VS_PORT:80 &
 
 #
-#      - name: Operator - check out
-#        uses: actions/checkout@v4
-#        with:
-#          repository: percona/everest-operator
-#          ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
-#          path: everest-operator
-#          token: ${{ secrets.ROBOT_TOKEN }}
-#
-#      - name: Operator - install operator-sdk
-#        run: |
-#          mkdir -p $TOOLS_PATH
-#          echo $TOOLS_PATH >> $GITHUB_PATH
-#
-#          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.25.2
-#          curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
-#
-#          gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E
-#
-#          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt
-#          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt.asc
-#          gpg -u "Operator SDK (release) <cncf-operator-sdk@cncf.io>" --verify checksums.txt.asc
-#
-#          grep operator-sdk_${OS}_${ARCH} checksums.txt | sha256sum -c -
-#
-#          chmod +x operator-sdk_${OS}_${ARCH}
-#          mv operator-sdk_${OS}_${ARCH} $TOOLS_PATH/operator-sdk
-#
-#      - name: Operator - build and bundle
-#        run: |
-#          cd everest-operator
-#          make build manifests bundle
+
 #
 #      - name: Operator - setup Docker meta for everest-operator
 #        id: operator_meta
