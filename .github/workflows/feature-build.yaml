@@ -387,7 +387,7 @@ jobs:
       - name: Everest checks - install feature build
         shell: bash
         run: |
-          make feature-build-cli
+          RELEASE_VERSION=$VERSION make feature-build-cli
           ./bin/everestctl install -v \
             --chart-dir $GITHUB_WORKSPACE/percona-helm-charts/charts/everest
             --version $VERSION \
