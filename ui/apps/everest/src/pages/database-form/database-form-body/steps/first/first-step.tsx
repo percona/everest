@@ -24,7 +24,7 @@ import {
   SwitchInput,
   TextInput,
 } from '@percona/ui-lib';
-import { dbEngineToDbType, dbTypeToDbEngine } from '@percona/utils';
+import { dbTypeToDbEngine } from '@percona/utils';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
 import { useFormContext } from 'react-hook-form';
 import { DbEngineToolStatus } from 'shared-types/dbEngines.types';
