@@ -173,7 +173,7 @@ jobs:
         run: |
           cd everest-operator
           git checkout -b $VERSION
-          # make build manifests bundle # !!! uncomment
+          make build manifests bundle 
           
           # configure userdata for commits
           git config --global user.email "everest-ci@percona.com"
@@ -181,6 +181,7 @@ jobs:
 
           # commit and push the updated files
           git commit -a -m "operator manifests"
+          # to build crds in helm, the remote ref with the version name should exist
           git push origin $VERSION
 
       - name: Helm - checkout
