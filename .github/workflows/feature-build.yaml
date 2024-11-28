@@ -194,7 +194,7 @@ jobs:
       - name: Helm - build
         run: |
           cd percona-helm-charts/charts/everest
-          CRD_DIR=everest-operator/config/crd CRD_VERSION=v${{ env.VERSION }} make crds-gen
+          CRD_VERSION=v${{ env.VERSION }} make crds-gen
           make release-dev
 
 
