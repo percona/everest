@@ -145,13 +145,13 @@ jobs:
 #          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
 
-      #      - name: Operator - check out
-      #        uses: actions/checkout@v4
-      #        with:
-      #          repository: percona/everest-operator
-      #          ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
-      #          path: everest-operator
-      #          token: ${{ secrets.ROBOT_TOKEN }}
+      - name: Operator - check out
+        uses: actions/checkout@v4
+        with:
+          repository: percona/everest-operator
+          ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
+          path: everest-operator
+          token: ${{ secrets.ROBOT_TOKEN }}
       #
       #      - name: Operator - install operator-sdk
       #        run: |
@@ -172,20 +172,21 @@ jobs:
       #          chmod +x operator-sdk_${OS}_${ARCH}
       #          mv operator-sdk_${OS}_${ARCH} $TOOLS_PATH/operator-sdk
       #
-      #      - name: Operator - build and bundle
-      #        run: |
-      #          cd everest-operator
-      #          git checkout -b $VERSION_TAG
-      #          make build manifests bundle
-      #
-      #          # configure userdata for commits
-      #          git config --global user.email "everest-ci@percona.com"
-      #          git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
-      #
-      #          # commit and push the updated files
-      #          git commit -a -m "operator manifests"
-      #          # to build crds in helm, the remote ref with the version name should exist
-      #          git push origin $VERSION_TAG
+      - name: Operator - build and bundle
+        run: |
+          cd everest-operator
+          git checkout -b $VERSION_TAG
+          make build manifests bundle
+
+          # configure userdata for commits
+          git config --global user.email "everest-ci@percona.com"
+          git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+
+          # commit and push the updated files
+          git commit -a -m "operator manifests"
+          # to build crds in helm, the remote ref with the version name should exist
+          git push origin $VERSION_TAG
+          
 
       - name: Helm - checkout
         uses: actions/checkout@v4
@@ -208,6 +209,19 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           path: helm.tar.gz
+
+      - name: Operator - check out again
+        uses: actions/checkout@v4
+        with:
+          repository: percona/everest-operator
+          ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
+          path: everest-operator
+          token: ${{ secrets.ROBOT_TOKEN }}
+
+      - name: Operator - build and bundle
+        run: |
+          cd everest-operator
+          git push -d origin $VERSION_TAG
 
 
 #      - name: VS - checkout
