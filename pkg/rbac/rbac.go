@@ -275,6 +275,8 @@ func NewEnforceHandler(l *zap.SugaredLogger, basePath string, enforcer *casbin.E
 		allowedObjectsForListing := []string{
 			ResourceDatabaseClusters,
 			ResourceDatabaseEngines,
+			ResourceBackupStorages,
+			ResourceMonitoringInstances,
 		}
 		if slices.Contains(allowedObjectsForListing, resource) && name == "" && action == ActionRead {
 			return true, nil

@@ -311,20 +311,6 @@ jobs:
           fi
           git checkout $BRANCH_NAME
 
-          # Update deploy manifest 
-          if [[ $IS_RC == 1 ]]; then 
-            # if the build is being run over dev/RC build, there will be the "perconalab" org mentioned in the quickstart file, 
-            # so we should replace only the version
-            sed -i "s/perconalab\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-            
-            # if the build is being run over a Release build, there will be the "percona" org mentioned in the quickstart file, 
-            # so we should replace both the org and the version
-            sed -i "s/percona\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-          else
-            sed -i "s/perconalab\/everest.*/percona\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-            sed -i "s/percona\/everest.*/percona\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-          fi 
-
           # Update the operator go module to reference the version tag
           go get github.com/percona/everest-operator@$GH_TAG
           go mod tidy
