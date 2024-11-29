@@ -72,8 +72,8 @@ test.describe('Everest CLI install', async () => {
     await verifyEverestSystem();
     
     await test.step('create database namespace', async () => {
-      const out = await cli.everestExecSkipWizard(
-        `namespaces add everest --operator.mongodb=false --operator.postgresql=false --operator.xtradb-cluster=true`,
+      const out = await cli.everestExecNamespacesSkipWizard(
+        `add everest --operator.mongodb=false --operator.postgresql=false --operator.xtradb-cluster=true`,
       );
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
@@ -85,8 +85,8 @@ test.describe('Everest CLI install', async () => {
     await verifyOperators('everest', ['percona-xtradb-cluster-operator']);
 
     await test.step('create database namespace again (fail))', async () => {
-      const out = await cli.everestExecSkipWizard(
-        `namespaces add everest --operator.mongodb=false --operator.postgresql=false --operator.xtradb-cluster=true`,
+      const out = await cli.everestExecNamespacesSkipWizard(
+        `add everest --operator.mongodb=false --operator.postgresql=false --operator.xtradb-cluster=true`,
       );
       await out.outErrContainsNormalizedMany([
           '× namespace (everest) already exists',
@@ -97,8 +97,8 @@ test.describe('Everest CLI install', async () => {
     await verifyOperators('everest', ['percona-xtradb-cluster-operator']);
 
     await test.step('update database namespace', async () => {
-      const out = await cli.everestExecSkipWizard(
-        `namespaces update everest --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true`,
+      const out = await cli.everestExecNamespacesSkipWizard(
+        `update everest --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true`,
       );
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
@@ -114,8 +114,8 @@ test.describe('Everest CLI install', async () => {
     ]);
 
     await test.step('remove database namespace', async () => {
-      const out = await cli.everestExecSkipWizard(
-        `namespaces remove everest`,
+      const out = await cli.everestExecNamespacesSkipWizard(
+        `remove everest`,
       );
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
