@@ -207,13 +207,14 @@ jobs:
           CRD_VERSION=${{ env.VERSION_TAG }} make crds-gen
           make release-dev
 
-      - name: Helm - Upload artefacts
-        uses: "actions/upload-artifact@v4"
-        with:
-          name: "helm"
-          path: |
-            ${{ env.GITHUB_WORKSPACE }}/percona-helm-charts/charts/everest
+      - name: Helm - Create tar.gz archive
+        run: |
+          tar -czvf helm.tar.gz percona-helm-charts/charts/everest 
 
+      - name: Helm - Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: helm.tar.gz
 
       - name: Operator - check out again
         uses: actions/checkout@v4
