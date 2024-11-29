@@ -132,7 +132,7 @@ test.describe('Everest CLI install', async () => {
       let out = await cli.exec(`kubectl create namespace existing-ns`);
       await out.assertSuccess();
 
-      out = await cli.everestExecNamespaces(
+      out = await cli.everestExecNamespacesSkipWizard(
         `add existing-ns --take-ownership`,
       );
       await out.assertSuccess();
