@@ -1,10 +1,11 @@
-package api
+package server
 
 import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 
+	. "github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/version"
 )
 

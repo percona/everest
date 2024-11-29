@@ -14,7 +14,7 @@
 // limitations under the License.
 
 // Package api ...
-package api
+package server
 
 import (
 	"errors"
@@ -26,6 +26,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
+	. "github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/accounts"
 	"github.com/percona/everest/pkg/common"
 )

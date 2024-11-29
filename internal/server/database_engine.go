@@ -14,7 +14,7 @@
 // limitations under the License.
 
 // Package api ...
-package api
+package server
 
 import (
 	"errors"
@@ -26,6 +26,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
+	. "github.com/percona/everest/api"
 	"golang.org/x/net/context"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 

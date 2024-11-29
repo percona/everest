@@ -14,7 +14,7 @@
 // limitations under the License.
 
 // Package api ...
-package api
+package server
 
 import (
 	"errors"
@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	. "github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/rbac"
 )
 

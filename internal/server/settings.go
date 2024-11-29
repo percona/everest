@@ -1,10 +1,11 @@
-package api
+package server
 
 import (
 	"net/http"
 
 	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
+	. "github.com/percona/everest/api"
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 

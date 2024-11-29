@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package api
+package server
 
 import (
 	"bytes"
@@ -46,6 +46,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	. "github.com/percona/everest/api"
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
@@ -420,21 +421,21 @@ func (e *EverestServer) validateUpdateBackupStorageRequest(
 	return &params, nil
 }
 
-func (params *UpdateBackupStorageParams) regionOrDefault(defaultRegion string) string {
+func regionOrDefault(params *UpdateBackupStorageParams, defaultRegion string) string {
 	if params.Region != nil {
 		return *params.Region
 	}
 	return defaultRegion
 }
 
-func (params *UpdateBackupStorageParams) bucketNameOrDefault(defaultBucketName string) string {
+func bucketNameOrDefault(params *UpdateBackupStorageParams, defaultBucketName string) string {
 	if params.BucketName != nil {
 		return *params.BucketName
 	}
 	return defaultBucketName
 }
 
-func (params *UpdateBackupStorageParams) urlOrDefault(defaultURL string) string {
+func urlOrDefault(params *UpdateBackupStorageParams, defaultURL string) string {
 	if params.Url != nil {
 		return *params.Url
 	}
@@ -448,9 +449,9 @@ func validateDuplicateStorageByUpdate(
 	params UpdateBackupStorageParams,
 ) bool {
 	// Construct the combined key for comparison
-	toCompare := params.regionOrDefault(currentStorage.Spec.Region) +
-		params.bucketNameOrDefault(currentStorage.Spec.Bucket) +
-		params.urlOrDefault(currentStorage.Spec.EndpointURL)
+	toCompare := regionOrDefault(&params, currentStorage.Spec.Region) +
+		bucketNameOrDefault(&params, currentStorage.Spec.Bucket) +
+		urlOrDefault(&params, currentStorage.Spec.EndpointURL)
 
 	for _, s := range existingStorages.Items {
 		if s.Name == currentStorageName {
