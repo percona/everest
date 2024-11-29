@@ -206,7 +206,7 @@ jobs:
           tar -czvf helm.tar.gz percona-helm-charts/charts/everest 
 
       - name: Helm - Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: helm.tar.gz
 
@@ -218,10 +218,11 @@ jobs:
           path: everest-operator
           token: ${{ secrets.ROBOT_TOKEN }}
 
-      - name: Operator - build and bundle
+      - name: Operator - delete the feature build branch
         run: |
           cd everest-operator
           git push -d origin $VERSION_TAG
+          echo "::notice title=Feature Build $VERSION is Created::Version Service Image: $VS_TAG"
 
 
 #      - name: VS - checkout
