@@ -65,7 +65,7 @@ test.describe('Everest CLI install', async () => {
         `install`,
       );
       await out.assertSuccess();
-      await out.outContainsNormalizedMany([
+      await out.outErrContainsNormalizedMany([
           '× everest is already installed',
       ]);
     });
@@ -90,7 +90,7 @@ test.describe('Everest CLI install', async () => {
         `namespaces add everest --operator.mongodb=false --operator.postgresql=false --operator.xtradb-cluster=true`,
       );
       await out.assertSuccess();
-      await out.outContainsNormalizedMany([
+      await out.outErrContainsNormalizedMany([
           '× namespace (everest) already exists',
       ]);
     });
