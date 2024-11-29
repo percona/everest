@@ -1,4 +1,4 @@
-package api
+package server
 
 import (
 	"net/http"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
+	. "github.com/percona/everest/api"
 	storagev1 "k8s.io/api/storage/v1"
 )
 

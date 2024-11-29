@@ -14,7 +14,7 @@
 // limitations under the License.
 
 // Package api ...
-package api
+package server
 
 import (
 	"errors"
@@ -22,6 +22,7 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
+	. "github.com/percona/everest/api"
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/percona/everest/pkg/kubernetes"

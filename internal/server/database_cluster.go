@@ -14,7 +14,7 @@
 // limitations under the License.
 
 // Package api ...
-package api
+package server
 
 import (
 	"context"
@@ -30,6 +30,7 @@ import (
 	"github.com/AlekSi/pointer"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
+	. "github.com/percona/everest/api"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"

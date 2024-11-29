@@ -14,9 +14,7 @@
 // limitations under the License.
 
 // Package api contains the API server implementation.
-package api
-
-//go:generate ../bin/oapi-codegen --config=server.cfg.yml  ../docs/spec/openapi.yml
+package server
 
 import (
 	"context"
@@ -42,6 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
+	. "github.com/percona/everest/api"
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"

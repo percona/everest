@@ -14,7 +14,7 @@
 // limitations under the License.
 
 // Package api ...
-package api
+package server
 
 import (
 	"context"
@@ -27,6 +27,7 @@ import (
 	goversion "github.com/hashicorp/go-version"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	. "github.com/percona/everest/api"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
 
