@@ -143,7 +143,7 @@ func SetupEverestDevChart(l *zap.SugaredLogger, path *string) (func(), error) {
 	if err != nil {
 		return nil, fmt.Errorf("error setting up Everest dev chart: %w", err)
 	}
-	l.Info("Copied dev chart to '%s' ", der)
+	l.Infof("Copied dev chart to '%s' ", der)
 	*path = der
 	return func() {
 		if err := os.RemoveAll(der); err != nil {
