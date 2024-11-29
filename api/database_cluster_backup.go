@@ -59,8 +59,6 @@ func (e *EverestServer) enforceDBBackupsRBAC(user string, bkp *everestv1alpha1.D
 }
 
 // ListDatabaseClusterBackups returns list of the created database cluster backups on the specified kubernetes cluster.
-//
-//nolint:dupl
 func (e *EverestServer) ListDatabaseClusterBackups(ctx echo.Context, namespace, name string) error {
 	req := ctx.Request()
 	if err := validateRFC1035(name, "name"); err != nil {

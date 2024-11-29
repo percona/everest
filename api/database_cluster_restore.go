@@ -37,8 +37,6 @@ const (
 )
 
 // ListDatabaseClusterRestores List of the created database cluster restores on the specified kubernetes cluster.
-//
-//nolint:dupl
 func (e *EverestServer) ListDatabaseClusterRestores(ctx echo.Context, namespace, name string) error {
 	req := ctx.Request()
 	if err := validateRFC1035(name, "name"); err != nil {
