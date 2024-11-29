@@ -114,7 +114,7 @@ test.describe('Everest CLI install', async () => {
     ]);
 
     await test.step('remove database namespace', async () => {
-      const out = await cli.everestExecNamespacesSkipWizard(
+      const out = await cli.everestExecNamespaces(
         `remove everest`,
       );
       await out.assertSuccess();

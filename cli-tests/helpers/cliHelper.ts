@@ -86,8 +86,15 @@ export class CliHelper {
 
   async everestExecNamespacesSkipWizard(command: string) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return test.step(`Run "${command}" command with --skip-wizard`, async () => {
+    return test.step(`Run "namespaces ${command}" command with --skip-wizard`, async () => {
       return this.execute(`${this.pathToBinary} namespaces ${command} --skip-wizard`);
+    });
+  }
+
+  async everestExecNamespaces(command: string) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return test.step(`Run "namespaces ${command}" command`, async () => {
+      return this.execute(`${this.pathToBinary} namespaces ${command}`);
     });
   }
 
