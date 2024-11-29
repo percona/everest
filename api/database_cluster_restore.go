@@ -69,7 +69,7 @@ func (e *EverestServer) ListDatabaseClusterRestores(ctx echo.Context, namespace,
 				e.l.Error(errors.Join(err, errors.New("failed to convert unstructured to DatabaseClusterRestore")))
 				return err
 			}
-			if err := e.enforceDBClusterListRestoreRBAC(user, restore); errors.Is(err, errInsufficientPermissions) {
+			if err := e.enforceDBClusterListRestoreRBAC(user, restore, rbac.ActionRead); errors.Is(err, errInsufficientPermissions) {
 				continue
 			} else if err != nil {
 				return err
@@ -159,7 +159,7 @@ func (e *EverestServer) DeleteDatabaseClusterRestore(ctx echo.Context, namespace
 		return err
 	}
 
-	if err = e.enforceDBClusterListRestoreRBAC(user, rs); err != nil {
+	if err = e.enforceDBClusterListRestoreRBAC(user, rs, rbac.ActionDelete); err != nil {
 		return err
 	}
 
@@ -179,7 +179,7 @@ func (e *EverestServer) GetDatabaseClusterRestore(ctx echo.Context, namespace, n
 	if err != nil {
 		return err
 	}
-	if err = e.enforceDBClusterListRestoreRBAC(user, rs); err != nil {
+	if err = e.enforceDBClusterListRestoreRBAC(user, rs, rbac.ActionRead); err != nil {
 		return err
 	}
 
@@ -201,7 +201,7 @@ func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, namespace
 		return err
 	}
 
-	if err = e.enforceDBClusterListRestoreRBAC(user, rs); err != nil {
+	if err = e.enforceDBClusterListRestoreRBAC(user, rs, rbac.ActionUpdate); err != nil {
 		return err
 	}
 
@@ -225,10 +225,8 @@ func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, namespace
 	return e.proxyKubernetes(ctx, namespace, databaseClusterRestoreKind, name)
 }
 
-func (e *EverestServer) enforceDBClusterListRestoreRBAC(user string, restore *everestv1alpha1.DatabaseClusterRestore) error {
-	err := e.enforce(user, rbac.ResourceDatabaseClusterRestores, rbac.ActionRead,
-		rbac.ObjectName(restore.GetNamespace(), restore.Spec.DBClusterName),
-	)
+func (e *EverestServer) enforceDBClusterListRestoreRBAC(user string, restore *everestv1alpha1.DatabaseClusterRestore, action string) error {
+	err := e.enforce(user, rbac.ResourceDatabaseClusterRestores, action, rbac.ObjectName(restore.GetNamespace(), restore.Spec.DBClusterName))
 	if err != nil {
 		if !errors.Is(err, errInsufficientPermissions) {
 			e.l.Error(errors.Join(err, errors.New("failed to check restore permissions")))
