@@ -10,13 +10,13 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/percona/everest/pkg/cli/helm"
 	"github.com/percona/everest/pkg/cli/steps"
 	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/kubernetes"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
