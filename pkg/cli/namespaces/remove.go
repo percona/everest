@@ -7,13 +7,21 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"time"
 
 	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/percona/everest/pkg/cli/helm"
 	"github.com/percona/everest/pkg/cli/steps"
 	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/kubernetes"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+)
+
+const (
+	pollInterval = 5 * time.Second
+	pollTimeout  = 5 * time.Minute
 )
 
 // NamespaceRemoveConfig is the configuration for the namespace removal operation.
@@ -123,10 +131,25 @@ func NewRemoveNamespaceSteps(namespace string, keepNs bool, k *kubernetes.Kubern
 					return errors.Join(err, errors.New("failed to uninstall helm chart"))
 				}
 				if !keepNs {
-					return k.DeleteNamespace(ctx, namespace)
+					if err := k.DeleteNamespace(ctx, namespace); err != nil {
+						return err
+					}
+					return ensureNamespaceGone(ctx, namespace, k)
 				}
 				return nil
 			},
 		},
 	}
+}
+
+func ensureNamespaceGone(ctx context.Context, namespace string, k *kubernetes.Kubernetes) error {
+	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
+		_, err := k.GetNamespace(ctx, namespace)
+		if err != nil && k8serrors.IsNotFound(err) {
+			return true, nil
+		} else if err != nil {
+			return false, err
+		}
+		return false, nil
+	})
 }
