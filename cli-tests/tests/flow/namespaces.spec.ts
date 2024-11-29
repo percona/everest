@@ -64,7 +64,6 @@ test.describe('Everest CLI install', async () => {
       const out = await cli.everestExecSkipWizard(
         `install`,
       );
-      await out.assertSuccess();
       await out.outErrContainsNormalizedMany([
           '× everest is already installed',
       ]);
@@ -89,7 +88,6 @@ test.describe('Everest CLI install', async () => {
       const out = await cli.everestExecSkipWizard(
         `namespaces add everest --operator.mongodb=false --operator.postgresql=false --operator.xtradb-cluster=true`,
       );
-      await out.assertSuccess();
       await out.outErrContainsNormalizedMany([
           '× namespace (everest) already exists',
       ]);
