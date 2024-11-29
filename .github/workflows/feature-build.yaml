@@ -212,12 +212,8 @@ jobs:
         with:
           name: "helm"
           path: |
-            ~/percona-helm-charts/charts/everest
+            ${{ GITHUB_WORKSPACE}}/percona-helm-charts/charts/everest
 
-      - name: Helm - Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          path: helm.tar.gz
 
       - name: Operator - check out again
         uses: actions/checkout@v4
