@@ -212,7 +212,7 @@ jobs:
         with:
           name: "helm"
           path: |
-            ${{ GITHUB_WORKSPACE }}/percona-helm-charts/charts/everest
+            ${{ env.GITHUB_WORKSPACE }}/percona-helm-charts/charts/everest
 
 
       - name: Operator - check out again
