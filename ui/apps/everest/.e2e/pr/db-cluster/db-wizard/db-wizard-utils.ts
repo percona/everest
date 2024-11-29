@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { expect, Page } from '@playwright/test';
+import { expect, Locator, Page } from '@playwright/test';
 import { getBucketNamespacesMap } from '@e2e/constants';
 import { beautifyDbTypeName } from '@percona/utils';
 import { DbType } from '@percona/types';
@@ -174,15 +174,35 @@ export const openCreateScheduleDialogFromDBWizard = async (page: Page) => {
   ).toBeVisible();
 };
 
-export const selectDbEngineCheck = async (
+export const clickAddDbClusterBtn = async (page: Page) => {
+  await page.getByTestId('add-db-cluster-button').waitFor();
+  await page.getByTestId('add-db-cluster-button').click();
+};
+
+export const checkAmountOfDbEngines = async (page: Page): Promise<Locator> => {
+  await clickAddDbClusterBtn(page);
+  await page
+    .getByTestId('add-db-cluster-button-menu')
+    .getByRole('menuitem')
+    .first()
+    .waitFor();
+  const dbEnginesButtons = page
+    .getByTestId('add-db-cluster-button-menu')
+    .getByRole('menuitem');
+  expect(await dbEnginesButtons.count()).toBe(3);
+  return dbEnginesButtons;
+};
+
+export const selectDbEngine = async (
   page: Page,
   dbType: 'pxc' | 'psmdb' | 'postgresql'
 ) => {
-  const dbEnginesButtons = page
-    .locator('#add-db-cluster-button-menu')
-    .getByRole('menuitem');
-  const nrButtons = await dbEnginesButtons.count();
-  expect(nrButtons).toBe(3);
+  await clickAddDbClusterBtn(page);
+  await page
+    .getByTestId('add-db-cluster-button-menu')
+    .getByRole('menuitem')
+    .first()
+    .waitFor();
   expect(
     await page.getByTestId('add-db-cluster-button-psmdb').textContent()
   ).toBe('MongoDB');

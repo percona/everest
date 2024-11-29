@@ -35,9 +35,10 @@ import {
 } from '@e2e/utils/db-wizard';
 import {
   addFirstScheduleInDBWizard,
+  checkAmountOfDbEngines,
   fillScheduleModalForm,
   openCreateScheduleDialogFromDBWizard,
-  selectDbEngineCheck,
+  selectDbEngine,
 } from '../db-wizard-utils';
 import { findDbAndClickActions } from '@e2e/utils/db-clusters-list';
 import { waitForInitializingState } from '@e2e/utils/table';
@@ -71,8 +72,6 @@ test.describe('DB Cluster creation', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/databases');
-    await page.getByTestId('add-db-cluster-button').waitFor();
-    await page.getByTestId('add-db-cluster-button').click();
   });
 
   test.skip('Cluster creation with an incomplete list of DBEngines', () => {
@@ -86,12 +85,8 @@ test.describe('DB Cluster creation', () => {
     page,
   }) => {
     const expectedNodesOrder = [3, 3, 2];
-
-    const dbEnginesButtons = page
-      .locator('#add-db-cluster-button-menu')
-      .getByRole('menuitem');
-    const nrButtons = await dbEnginesButtons.count();
-    expect(nrButtons).toBe(3);
+    const dbEnginesButtons = await checkAmountOfDbEngines(page);
+    expect(await dbEnginesButtons.count()).toBe(3);
     // TODO expect all buttons available and not disabled
 
     for (let i = 0; i < 3; i++) {
@@ -126,8 +121,7 @@ test.describe('DB Cluster creation', () => {
     );
 
     expect(storageClasses.length).toBeGreaterThan(0);
-
-    await selectDbEngineCheck(page, 'psmdb');
+    await selectDbEngine(page, 'psmdb');
 
     await basicInformationStepCheck(
       page,
@@ -206,7 +200,6 @@ test.describe('DB Cluster creation', () => {
     await page.getByTestId('button-edit-preview-monitoring').click();
 
     // await monitoringStepCheck(page, monitoringInstancesList);
-    // await page.pause();
     await submitWizard(page);
     await expect(
       page.getByText('Awesome! Your database is being created!')
@@ -228,8 +221,7 @@ test.describe('DB Cluster creation', () => {
     const addedCluster = clusters.find(
       (cluster) => cluster.metadata.name === clusterName
     );
-
-    // await deleteDbClusterFn(request, addedCluster?.metadata.name, namespace);
+    await deleteDbClusterFn(request, addedCluster?.metadata.name, namespace);
     //TODO: Add check for PITR ones backend is ready
 
     expect(addedCluster).not.toBeUndefined();
@@ -239,7 +231,7 @@ test.describe('DB Cluster creation', () => {
     expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe('4G');
     expect(addedCluster?.spec.engine.storage.size.toString()).toBe('25Gi');
     expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
-    // commented, because we use only psmdb in this flow
+    // TODO commented, because we use only psmdb in this test
     // expect(addedCluster?.spec.proxy.replicas).toBe(1);
     // expect(addedCluster?.spec.proxy.resources.cpu).toBe('1');
     // expect(addedCluster?.spec.proxy.resources.memory).toBe('2G');
@@ -255,15 +247,15 @@ test.describe('DB Cluster creation', () => {
     expect(addedCluster?.spec.backup.schedules[0].schedule).toBe('35 19 9 * *');
   });
 
-  test.skip('PITR should be disabled when backups has no schedules checked', async ({
+  test('PITR should be disabled when backups has no schedules checked', async ({
     page,
   }) => {
     expect(storageClasses.length).toBeGreaterThan(0);
 
-    const mySQLButton = page.getByTestId('mysql-toggle-button');
-    await mySQLButton.click();
-
+    await selectDbEngine(page, 'pxc');
+    // go to resources page
     await moveForward(page);
+    // go to backups page
     await moveForward(page);
     await expect(
       page.getByText('You currently do not have any backup schedules set up.')
@@ -385,20 +377,18 @@ test.describe('DB Cluster creation', () => {
   test('Warning should appears for schedule with the same date and storage', async ({
     page,
   }) => {
-    await page.goto('/databases');
-    await page.getByTestId('add-db-cluster-button').click();
-    await expect(
-      page.getByTestId('toggle-button-group-input-db-type')
-    ).toBeVisible();
+    expect(storageClasses.length).toBeGreaterThan(0);
+    await selectDbEngine(page, 'psmdb');
 
     // Resources Step
     await moveForward(page);
     // Backups step
     await moveForward(page);
+
     await addFirstScheduleInDBWizard(page);
     await openCreateScheduleDialogFromDBWizard(page);
     await expect(page.getByTestId('same-schedule-warning')).not.toBeVisible();
-    await fillScheduleModalForm(page, undefined, undefined, true, '1');
+    await fillScheduleModalForm(page, undefined, undefined, false, '1');
     await expect(page.getByTestId('same-schedule-warning')).toBeVisible();
   });
 });

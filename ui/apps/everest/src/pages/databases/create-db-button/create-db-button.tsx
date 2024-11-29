@@ -58,7 +58,7 @@ export const CreateDbButton = () => {
         {Messages.createDatabase}
       </Button>
       <Menu
-        id="add-db-cluster-button-menu"
+        data-testid="add-db-cluster-button-menu"
         anchorEl={anchorEl}
         open={open}
         onClose={closeMenu}
