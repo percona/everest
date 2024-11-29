@@ -147,16 +147,64 @@ func (e *EverestServer) enforceDBRestoreRBAC(user, namespace, srcBackupName, dbC
 
 // DeleteDatabaseClusterRestore Delete the specified cluster restore on the specified kubernetes cluster.
 func (e *EverestServer) DeleteDatabaseClusterRestore(ctx echo.Context, namespace, name string) error {
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+
+	rs, err := e.kubeClient.GetDatabaseClusterRestore(ctx.Request().Context(), namespace, name)
+	if err != nil {
+		return err
+	}
+
+	if err = e.enforceDBClusterListRestoreRBAC(user, rs); err != nil {
+		return err
+	}
+
 	return e.proxyKubernetes(ctx, namespace, databaseClusterRestoreKind, name)
 }
 
 // GetDatabaseClusterRestore Returns the specified cluster restore on the specified kubernetes cluster.
 func (e *EverestServer) GetDatabaseClusterRestore(ctx echo.Context, namespace, name string) error {
-	return e.proxyKubernetes(ctx, namespace, databaseClusterRestoreKind, name)
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+
+	rs, err := e.kubeClient.GetDatabaseClusterRestore(ctx.Request().Context(), namespace, name)
+	if err != nil {
+		return err
+	}
+	if err = e.enforceDBClusterListRestoreRBAC(user, rs); err != nil {
+		return err
+	}
+
+	attachK8sTypeMeta(rs)
+	return ctx.JSON(http.StatusOK, rs)
 }
 
 // UpdateDatabaseClusterRestore Replace the specified cluster restore on the specified kubernetes cluster.
 func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, namespace, name string) error {
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+
+	rs, err := e.kubeClient.GetDatabaseClusterRestore(ctx.Request().Context(), namespace, name)
+	if err != nil {
+		return err
+	}
+
+	if err = e.enforceDBClusterListRestoreRBAC(user, rs); err != nil {
+		return err
+	}
+
 	restore := &DatabaseClusterRestore{}
 	if err := e.getBodyFromContext(ctx, restore); err != nil {
 		e.l.Error(err)
@@ -173,6 +221,7 @@ func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, namespace
 			Message: pointer.ToString(err.Error()),
 		})
 	}
+
 	return e.proxyKubernetes(ctx, namespace, databaseClusterRestoreKind, name)
 }
 
