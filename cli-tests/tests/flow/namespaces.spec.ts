@@ -127,6 +127,45 @@ test.describe('Everest CLI install', async () => {
     });
     await page.waitForTimeout(10_000);
     await verifyEverestSystem();
+
+    await test.step('create database namespace with --take-ownership', async () => {
+      let out = await cli.exec(`kubectl create namespace existing-ns`);
+      await out.assertSuccess();
+
+      out = await cli.everestExecNamespaces(
+        `add existing-ns --take-ownership`,
+      );
+      await out.assertSuccess();
+      await out.outContainsNormalizedMany([
+      '✓ Installing namespace \'existing-ns\'',
+      ]);
+    });
+    await page.waitForTimeout(10_000);
+    await verifyEverestSystem();
+
+    await test.step('remove database namespace with --keep-namespace', async () => {
+      let out = await cli.everestExecNamespaces(
+        `remove existing-ns --keep-namespace`,
+      );
+      await out.assertSuccess();
+      await out.outContainsNormalizedMany([
+          '✓ Deleting database clusters in namespace \'everest\'',
+          '✓ Deleting backup storages in namespace \'everest\'',
+          '✓ Deleting monitoring instances in namespace \'everest\'',
+      ]);
+      await out.outNotContains([
+          '✓ Deleting namespace \'everest\'',
+      ]);
+      out = await cli.exec(`kubectl get ns`);
+      await out.assertSuccess();
+      await out.outContainsNormalizedMany([
+          'existing-ns',
+      ]);
+
+    });
+    await page.waitForTimeout(10_000);
+    await verifyEverestSystem();
+
   });
 });
 
