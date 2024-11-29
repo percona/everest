@@ -114,7 +114,7 @@ test.describe('Everest CLI install', async () => {
     ]);
 
     await test.step('remove database namespace', async () => {
-      const out = await cli.everestExecNamespaces(
+      let out = await cli.everestExecNamespaces(
         `remove everest`,
       );
       await out.assertSuccess();
@@ -123,6 +123,11 @@ test.describe('Everest CLI install', async () => {
           '✓ Deleting backup storages in namespace \'everest\'',
           '✓ Deleting monitoring instances in namespace \'everest\'',
           '✓ Deleting namespace \'everest\'',
+      ]);
+
+      out = await cli.exec(`kubectl get namespace everest`);
+      await out.outErrContainsNormalizedMany([
+        'Error from server (NotFound): namespaces "everest" not found',
       ]);
     });
     await page.waitForTimeout(10_000);
@@ -152,11 +157,10 @@ test.describe('Everest CLI install', async () => {
           '✓ Deleting database clusters in namespace \'existing-ns\'',
           '✓ Deleting backup storages in namespace \'existing-ns\'',
           '✓ Deleting monitoring instances in namespace \'existing-ns\'',
-      ]);
-      await out.outNotContains([
           '✓ Deleting namespace \'existing-ns\'',
       ]);
-      out = await cli.exec(`kubectl get ns`);
+
+      out = await cli.exec(`kubectl get namespace existing-ns`);
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
           'existing-ns',
