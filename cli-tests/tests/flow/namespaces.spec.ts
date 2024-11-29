@@ -149,12 +149,12 @@ test.describe('Everest CLI install', async () => {
       );
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
-          '✓ Deleting database clusters in namespace \'everest\'',
-          '✓ Deleting backup storages in namespace \'everest\'',
-          '✓ Deleting monitoring instances in namespace \'everest\'',
+          '✓ Deleting database clusters in namespace \'existing-ns\'',
+          '✓ Deleting backup storages in namespace \'existing-ns\'',
+          '✓ Deleting monitoring instances in namespace \'existing-ns\'',
       ]);
       await out.outNotContains([
-          '✓ Deleting namespace \'everest\'',
+          '✓ Deleting namespace \'existing-ns\'',
       ]);
       out = await cli.exec(`kubectl get ns`);
       await out.assertSuccess();
