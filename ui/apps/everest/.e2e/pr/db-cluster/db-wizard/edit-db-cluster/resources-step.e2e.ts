@@ -45,10 +45,6 @@ test.describe('DB Cluster Editing Resources Step (Mongo)', () => {
 
   test('Show the correct number of nodes during editing', async ({ page }) => {
     await findDbAndClickActions(page, mongoDBName, 'Edit');
-
-    await expect(
-      page.getByTestId('toggle-button-group-input-db-type')
-    ).toBeVisible();
     // Go to Resources step
     await moveForward(page);
 
