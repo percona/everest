@@ -121,28 +121,28 @@ jobs:
           go version
           echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
 
-      - name: Enable Go modules cache
-        uses: percona-platform/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
-
-      - name: Enable Go build cache
-        uses: percona-platform/cache@v3
-        with:
-          path: ~/.cache/go-build
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+#      - name: Enable Go modules cache
+#        uses: percona-platform/cache@v3
+#        with:
+#          path: ~/go/pkg/mod
+#          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
+#          restore-keys: |
+#            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
+#
+#      - name: Enable Go build cache
+#        uses: percona-platform/cache@v3
+#        with:
+#          path: ~/.cache/go-build
+#          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
+#          restore-keys: |
+#            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
+#            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
+#
+#      - name: Login to GitHub Container Registry
+#        uses: docker/login-action@v3
+#        with:
+#          username: ${{ secrets.DOCKERHUB_USERNAME }}
+#          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
 
       #      - name: Operator - check out
@@ -199,17 +199,24 @@ jobs:
           cd percona-helm-charts/charts/everest
           CRD_VERSION=${{ env.VERSION_TAG }} make crds-gen
           make release-dev
-          mkdir ${GITHUB_WORKSPACE}/helm
-          cp -rvf ./* ${GITHUB_WORKSPACE}/helm/
 
+      - name: Helm - Create tar.gz archive
+        run: |
+          tar -czvf helm.tar.gz charts/everest 
 
-      - name: VS - checkout
-        uses: actions/checkout@v4
+      - name: Helm - Upload artifact
+        uses: actions/upload-artifact@v3
         with:
-          repository: Percona-Lab/percona-version-service
-          ref: ${{ env.VS_BRANCH }}
-          path: percona-version-service
-          token: ${{ secrets.ROBOT_TOKEN }}
+          path: helm.tar.gz
+
+
+#      - name: VS - checkout
+#        uses: actions/checkout@v4
+#        with:
+#          repository: Percona-Lab/percona-version-service
+#          ref: ${{ env.VS_BRANCH }}
+#          path: percona-version-service
+#          token: ${{ secrets.ROBOT_TOKEN }}
 
 
       #      - name: VS - update
@@ -226,24 +233,6 @@ jobs:
       #          context: percona-version-service
       #          push: true
       #          tags: perconalab/version-service:${{ env.VS_TAG }}
-
-
-
-#      - name: Start local Kubernetes cluster
-#        uses: medyagh/setup-minikube@latest
-#        id: minikube
-#        with:
-#          cpus: 2
-#          memory: 2000m
-#
-#      - name: Run VS locally
-#        run: |
-#          cd percona-version-service
-#          sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_TAG/g" deploy.yaml
-#          kubectl apply -f deploy.yaml
-#          kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service
-#          kubectl port-forward svc/percona-version-service $VS_PORT:80 &
-
       #
       #      - name: Operator - setup Docker meta for everest-operator
       #        id: operator_meta
@@ -339,12 +328,12 @@ jobs:
       #          file: everest-catalog/everest-catalog.Dockerfile
       #
       #
-      - name: Everest - check out
-        uses: actions/checkout@v4
-        with:
-          path: ./api
-          token: ${{ secrets.ROBOT_TOKEN }}
-          ref: ${{ env.EVEREST_BRANCH }}
+#      - name: Everest - check out
+#        uses: actions/checkout@v4
+#        with:
+#          path: ./api
+#          token: ${{ secrets.ROBOT_TOKEN }}
+#          ref: ${{ env.EVEREST_BRANCH }}
       #
       #      - name: Everest - setup golang
       #        uses: actions/setup-go@v5
@@ -389,24 +378,4 @@ jobs:
       #
 
 
-      - name: Everest checks - install feature build
-        shell: bash
-        run: |
-          cp -rf ${GITHUB_WORKSPACE}/helm/* ${GITHUB_WORKSPACE}/api
-          pwd
-          ls
-          cd ${GITHUB_WORKSPACE}/api
-          
-          RELEASE_VERSION=$VERSION_TAG make feature-build-cli
-          
-          ./bin/everestctl install -v \
-            --chart-dir ./
-            --version $VERSION \
-            --version-metadata-url $VS_URL \
-            --operator.mongodb \
-            --operator.postgresql \
-            --operator.xtradb-cluster \
-            --skip-wizard \
-            --namespaces everest
 
-          echo "::notice title=Feature Build $VERSION is Created::Version Service Image: $VS_TAG"
