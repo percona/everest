@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"path"
 	"slices"
 
 	"github.com/casbin/casbin/v2"
@@ -276,7 +277,12 @@ func newSkipperFunc() (echomiddleware.Skipper, error) {
 
 // Start starts everest server.
 func (e *EverestServer) Start() error {
-	return e.echo.Start(fmt.Sprintf("0.0.0.0:%d", e.config.HTTPPort))
+	if e.config.TLSCertsPath != "" {
+		tlsKeyPath := path.Join(e.config.TLSCertsPath, "tls.key")
+		tlsCertPath := path.Join(e.config.TLSCertsPath, "tls.crt")
+		return e.echo.StartTLS(fmt.Sprintf("0.0.0.0:%d", e.config.ListenPort), tlsCertPath, tlsKeyPath)
+	}
+	return e.echo.Start(fmt.Sprintf("0.0.0.0:%d", e.config.ListenPort))
 }
 
 // Shutdown gracefully stops the Everest server.
