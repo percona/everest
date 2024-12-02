@@ -42,10 +42,8 @@ import {
 } from '@e2e/utils/monitoring-instance';
 import { clickOnDemandBackup } from '@e2e/pr/db-cluster-details/utils';
 import {
-  getDBHost,
-  getPSMDBPassword,
-  getDBClientPod,
   queryPSMDB,
+  configureMongoDBSharding,
   prepareTestDB,
   dropTestDB,
   queryTestDB,
@@ -145,13 +143,6 @@ test.describe(
 
       await moveForward(page); // Move forward after activating sharding
 
-      // Step to set number of shards
-      await test.step('Set number of shards', async () => {
-        const shardsInput = await page.getByTestId('text-input-shard-nr');
-        await expect(shardsInput).toBeVisible();
-        await shardsInput.fill('2');
-        await expect(shardsInput).toHaveValue('2');
-      });
       await test.step('Populate resources', async () => {
         await page
           .getByRole('button')
@@ -159,6 +150,15 @@ test.describe(
           .click();
         await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
         await populateResources(page, 0.6, 1, 1, size);
+        // await moveForward(page);
+      });
+
+      // Step to set number of shards
+      await test.step('Set number of shards', async () => {
+        const shardsInput = await page.getByTestId('text-input-shard-nr');
+        await expect(shardsInput).toBeVisible();
+        await shardsInput.fill('3');
+        await expect(shardsInput).toHaveValue('3');
         await moveForward(page);
       });
 
@@ -239,84 +239,8 @@ test.describe(
     });
 
     // Add MongoDB-specific configuration
-    test(`Setup MongoDB-specific configuration [${db} size ${size}]`, async () => {
-      if (db === 'psmdb') {
-        // Step 1: Create a test collection
-        await queryPSMDB(
-          clusterName,
-          namespace,
-          'test',
-          'db.testCollection.createIndex({ _id: 1 });'
-        );
-
-        // Step 2: Insert data into the test collection
-        await queryPSMDB(
-          clusterName,
-          namespace,
-          'test',
-          'db.testCollection.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }]);'
-        );
-
-        // Step 3: Enable sharding for the database
-        await queryPSMDB(
-          clusterName,
-          namespace,
-          'admin',
-          'sh.enableSharding("test");'
-        );
-
-        // Step 4: Shard the collection
-        await queryPSMDB(
-          clusterName,
-          namespace,
-          'admin',
-          'sh.shardCollection("test.testCollection", { _id: 1 });'
-        );
-
-        // Step 5: Adjust chunk size
-        await queryPSMDB(
-          clusterName,
-          namespace,
-          'admin',
-          'db.settings.update({ _id: "chunksize" }, { $set: { value: 32 } }, true);'
-        );
-      }
-    });
-
-    //  Veify Sharding Insersion
-    test(`Verify data insertion and sharding for testCollection [${db} size ${size}]`, async () => {
-      if (db === 'psmdb') {
-        // Step 1: Verify data insertion
-        const queryResult = await queryPSMDB(
-          clusterName,
-          namespace,
-          'test',
-          'db.testCollection.find().toArray();'
-        );
-        const documents = JSON.parse(queryResult);
-
-        // Validate the inserted data
-        expect(documents).toEqual([{ a: 1 }, { a: 2 }, { a: 3 }]);
-        console.log('Data verification successful: ', documents);
-
-        // Step 2: Verify sharding status
-        const shardStatus = await queryPSMDB(
-          clusterName,
-          namespace,
-          'admin',
-          'sh.status();'
-        );
-
-        // Validate the sharding configuration
-        expect(shardStatus).toContain('test'); // Database 'test' is sharded
-        expect(shardStatus).toContain('test.testCollection'); // Collection 'testCollection' is sharded
-        expect(shardStatus).toContain('_id'); // Shard key is '_id'
-        console.log('Sharding verification successful: \n', shardStatus);
-      }
-    });
-
-    test(`Add data [${db} size ${size}]`, async () => {
-      await prepareTestDB(clusterName, namespace);
+    test(`Setup MongoDB-specific sharding [${db} size ${size}]`, async () => {
+      await configureMongoDBSharding(clusterName, namespace);
     });
 
     test(`Create demand backup [${db} size ${size}]`, async ({ page }) => {
