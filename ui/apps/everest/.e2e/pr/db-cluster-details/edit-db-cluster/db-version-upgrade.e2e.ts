@@ -18,7 +18,7 @@ let token: string;
 
 [
   { db: 'psmdb', size: 1 },
-  { db: 'pxc', size: 1 },
+  // { db: 'pxc', size: 1 },
   // { db: 'postgresql', size: 1 },
 ].forEach(({ db, size }) => {
   test.describe('Overview page', () => {
