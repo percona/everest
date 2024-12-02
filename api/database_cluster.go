@@ -444,7 +444,12 @@ func psmdbHosts(
 	if db.Spec.Sharding != nil && db.Spec.Sharding.Enabled {
 		return net.JoinHostPort(db.Status.Hostname, fmt.Sprint(db.Status.Port)), nil
 	}
-	// for non-sharded clusters use a list of comma-separated hosts from each node
+	// for non-sharded exposed clusters the host field contains all the needed information about hosts
+	if db.Spec.Proxy.Expose.Type == everestv1alpha1.ExposeTypeExternal {
+		return db.Status.Hostname, nil
+	}
+
+	// for non-sharded internal clusters use a list of comma-separated host:port pairs from each node
 	pods, err := getPods(ctx, db.Namespace, &metav1.LabelSelector{MatchLabels: map[string]string{
 		"app.kubernetes.io/instance":  db.Name,
 		"app.kubernetes.io/component": "mongod",
