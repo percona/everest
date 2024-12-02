@@ -43,6 +43,7 @@ import {
 import { clickOnDemandBackup } from '@e2e/pr/db-cluster-details/utils';
 import {
   queryPSMDB,
+  prepareMongoDBTestDB,
   configureMongoDBSharding,
   prepareTestDB,
   dropTestDB,
@@ -236,6 +237,11 @@ test.describe(
           expect(addedCluster?.spec.proxy.replicas).toBe(size);
         }
       });
+    });
+
+    // Add data in MondoDB
+    test(`Add data [${db} size ${size}]`, async () => {
+      await prepareMongoDBTestDB(clusterName, namespace);
     });
 
     // Add MongoDB-specific configuration
