@@ -81,22 +81,22 @@ export const useNamespacePermissionsForResource = (
     const permissionsPromisesArr: Promise<void>[] = [];
 
     if (namespaces) {
-    for (const namespace of namespaces) {
-      ['read', 'update', 'delete', 'create'].forEach((action) => {
-        permissionsPromisesArr.push(
-          can(
-            action as RBACAction,
-            resource,
-            `${namespace}/${specificResource}`
-          ).then((canDo) => {
-            if (canDo) {
-              newPermissions[action as RBACAction].push(namespace);
-            }
-          })
-        );
-      });
+      for (const namespace of namespaces) {
+        ['read', 'update', 'delete', 'create'].forEach((action) => {
+          permissionsPromisesArr.push(
+            can(
+              action as RBACAction,
+              resource,
+              `${namespace}/${specificResource}`
+            ).then((canDo) => {
+              if (canDo) {
+                newPermissions[action as RBACAction].push(namespace);
+              }
+            })
+          );
+        });
+      }
     }
-  }
     await Promise.all(permissionsPromisesArr);
     setPermissions(newPermissions);
   }, [namespaces, resource, specificResource]);
