@@ -131,7 +131,9 @@ test.describe(
 
       // Step to activate Sharding
       await test.step('Activate sharding', async () => {
-        const shardingCheckbox = await page.$('input[name="sharding"]');
+        const shardingCheckbox = page
+          .getByTestId('switch-input-sharding')
+          .getByRole('checkbox');
         const isChecked = await shardingCheckbox?.isChecked();
         if (!isChecked) {
           if (shardingCheckbox) {
@@ -145,9 +147,8 @@ test.describe(
 
       // Step to set number of shards
       await test.step('Set number of shards', async () => {
-        const shardsInput = await page.$(
-          'input[data-testid="text-input-shard-nr"]'
-        );
+        const shardsInput = await page.getByTestId('text-input-shard-nr');
+        await expect(shardsInput).toBeVisible();
         await shardsInput.fill('2');
         await expect(shardsInput).toHaveValue('2');
       });
