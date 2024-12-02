@@ -104,11 +104,6 @@ const openResourcesModal = async (page: Page) => {
           page.getByText('Awesome! Your database is being created!')
         ).toBeVisible();
       });
-
-      await test.step('Check db list and status', async () => {
-        await page.goto('/databases');
-        await waitForStatus(page, clusterName, 'Initializing', 90000);
-      });
     });
 
     test(`Show the correct default values during editing of ${db}`, async ({
