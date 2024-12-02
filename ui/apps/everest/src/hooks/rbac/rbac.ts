@@ -68,7 +68,8 @@ export const useNamespacePermissionsForResource = (
     create: [],
     delete: [],
   });
-  const { data: namespaces = [], isFetching } = useNamespaces();
+
+  const { data: namespaces, isFetching } = useNamespaces();
 
   const checkPermissions = useCallback(async () => {
     const newPermissions: Record<RBACAction, string[]> = {
@@ -79,6 +80,7 @@ export const useNamespacePermissionsForResource = (
     };
     const permissionsPromisesArr: Promise<void>[] = [];
 
+    if (namespaces) {
     for (const namespace of namespaces) {
       ['read', 'update', 'delete', 'create'].forEach((action) => {
         permissionsPromisesArr.push(
@@ -94,9 +96,8 @@ export const useNamespacePermissionsForResource = (
         );
       });
     }
-
+  }
     await Promise.all(permissionsPromisesArr);
-
     setPermissions(newPermissions);
   }, [namespaces, resource, specificResource]);
 
