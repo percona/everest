@@ -11,11 +11,13 @@ import (
 
 	"go.uber.org/zap"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/percona/everest/pkg/cli/helm"
 	"github.com/percona/everest/pkg/cli/steps"
 	cliutils "github.com/percona/everest/pkg/cli/utils"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -130,16 +132,32 @@ func NewRemoveNamespaceSteps(namespace string, keepNs bool, k *kubernetes.Kubern
 				if _, err := u.Uninstall(false); err != nil {
 					return errors.Join(err, errors.New("failed to uninstall helm chart"))
 				}
-				if !keepNs {
-					if err := k.DeleteNamespace(ctx, namespace); err != nil {
-						return err
-					}
-					return ensureNamespaceGone(ctx, namespace, k)
+				if keepNs {
+					// keep the namespace, but remove the Everest label
+					return removeEverestLabelFromNamespace(ctx, k, namespace)
 				}
-				return nil
+				if err := k.DeleteNamespace(ctx, namespace); err != nil {
+					return err
+				}
+				return ensureNamespaceGone(ctx, namespace, k)
 			},
 		},
 	}
+}
+
+func removeEverestLabelFromNamespace(ctx context.Context, k *kubernetes.Kubernetes, namespace string) error {
+	ns, err := k.GetNamespace(ctx, namespace)
+	if err != nil {
+		return err
+	}
+	if !isManagedByEverest(ns) {
+		return nil
+	}
+	labels := ns.GetLabels()
+	delete(labels, common.KubernetesManagedByLabel)
+	ns.SetLabels(labels)
+	_, err = k.UpdateNamespace(ctx, ns, v1.UpdateOptions{})
+	return err
 }
 
 func ensureNamespaceGone(ctx context.Context, namespace string, k *kubernetes.Kubernetes) error {

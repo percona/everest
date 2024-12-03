@@ -15,6 +15,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"go.uber.org/zap"
 	"helm.sh/helm/v3/pkg/cli/values"
+	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/percona/everest/pkg/cli/helm"
@@ -228,11 +229,12 @@ func (n *NamespaceAdder) namespaceExists(ctx context.Context, namespace string) 
 		}
 		return false, false, fmt.Errorf("cannot check if namesapce exists: %w", err)
 	}
-	ownedByEverest := false
-	if val, ok := ns.GetLabels()[common.KubernetesManagedByLabel]; ok && val == common.Everest {
-		ownedByEverest = true
-	}
-	return true, ownedByEverest, nil
+	return true, isManagedByEverest(ns), nil
+}
+
+func isManagedByEverest(ns *v1.Namespace) bool {
+	val, ok := ns.GetLabels()[common.KubernetesManagedByLabel]
+	return ok && val == common.Everest
 }
 
 // Populate the configuration with the required values.
