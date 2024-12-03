@@ -56,7 +56,7 @@ test.describe('Everest CLI install', async () => {
         '✓ Ensuring OLM components are ready',
         '✓ Ensuring Everest CatalogSource is ready',
         '✓ Ensuring monitoring stack is ready',
-        '✓ Provisioning DB namespace \'everest-all\'',
+        '✓ Provisioning database namespaces (everest-all)',
         '🚀 Everest has been successfully installed!',
       ]);
     });
