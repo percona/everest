@@ -37,8 +37,6 @@ const (
 	FlagSkipWizard = "skip-wizard"
 	// FlagSkipEnvDetection is the name of the skip env detection flag.
 	FlagSkipEnvDetection = "skip-env-detection"
-	// FlagSkipOLM is the name of the skip OLM flag.
-	FlagSkipOLM = "skip-olm"
 	// FlagDisableTelemetry disables telemetry.
 	FlagDisableTelemetry = "disable-telemetry"
 )
