@@ -25,6 +25,9 @@ test-pg-operator:       ## Run pg operator flow tests. Requires minikube install
 test-pxc-operator:       ## Run pxc operator flow tests. Requires minikube installed and /etc/hosts updated
 	npx playwright test tests/flow/pxc-operator.spec.ts
 
+test-namespaces:
+	npx playwright test tests/flow/namespaces.spec.ts
+
 lint:               ## Run linter typescript checks
 	npm run lint:ts && npm run typecheck && echo 'Lint OK'
 
