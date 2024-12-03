@@ -20,6 +20,8 @@ import (
 	"context"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
@@ -51,6 +53,26 @@ func (k *Kubernetes) UpdateMonitoringConfig(ctx context.Context, storage *everes
 // DeleteMonitoringConfig returns monitoring configs by provided name.
 func (k *Kubernetes) DeleteMonitoringConfig(ctx context.Context, namespace, name string) error {
 	return k.client.DeleteMonitoringConfig(ctx, namespace, name)
+}
+
+// DeleteMonitoringConfigs deletes all monitoring configs in provided namespace.
+// This function will wait until all configs are deleted.
+func (k *Kubernetes) DeleteMonitoringConfigs(ctx context.Context, namespace string) error {
+	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
+		list, err := k.ListMonitoringConfigs(ctx, namespace)
+		if err != nil {
+			return false, err
+		}
+		if len(list.Items) == 0 {
+			return true, nil
+		}
+		for _, storage := range list.Items {
+			if err := k.DeleteMonitoringConfig(ctx, storage.GetNamespace(), storage.GetName()); ctrlclient.IgnoreNotFound(err) != nil {
+				return false, err
+			}
+		}
+		return false, nil
+	})
 }
 
 // IsMonitoringConfigUsed checks if a monitoring config is used by any database cluster in the provided namespace.

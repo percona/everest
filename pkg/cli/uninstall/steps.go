@@ -4,44 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/cli/helm"
-	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/kubernetes"
 )
-
-func (u *Uninstall) newStepDeleteDatabaseClusters() steps.Step {
-	return steps.Step{
-		Desc: "Deleting database clusters",
-		F: func(ctx context.Context) error {
-			return u.deleteDBs(ctx)
-		},
-	}
-}
-
-func (u *Uninstall) newStepDeleteBackupStorages() steps.Step {
-	return steps.Step{
-		Desc: "Deleting backup storages",
-		F: func(ctx context.Context) error {
-			return u.deleteBackupStorages(ctx)
-		},
-	}
-}
-
-func (u *Uninstall) newStepDeleteMonitoringConfigs() steps.Step {
-	return steps.Step{
-		Desc: "Deleting monitoring configs",
-		F: func(ctx context.Context) error {
-			return u.deleteMonitoringConfigs(ctx)
-		},
-	}
-}
 
 func (u *Uninstall) newStepUninstallHelmChart() steps.Step {
 	return steps.Step{
@@ -52,38 +24,20 @@ func (u *Uninstall) newStepUninstallHelmChart() steps.Step {
 	}
 }
 
-func (u *Uninstall) newStepDeleteDBNamespaces(helmUninstall bool) steps.Step {
-	return steps.Step{
-		Desc: "Deleting database namespaces",
-		F: func(ctx context.Context) error {
-			return u.deleteDBNamespaces(ctx, helmUninstall)
-		},
-	}
-}
-
 func (u *Uninstall) newStepDeleteNamespace(ns string) steps.Step {
 	return steps.Step{
-		Desc: fmt.Sprintf("Deleting namespace %s", ns),
+		Desc: fmt.Sprintf("Deleting namespace '%s'", ns),
 		F: func(ctx context.Context) error {
-			return u.deleteNamespaces(ctx, []string{ns})
-		},
-	}
-}
-
-func (u *Uninstall) newStepDeleteOLM() steps.Step {
-	return steps.Step{
-		Desc: "Deleting OLM",
-		F: func(ctx context.Context) error {
-			return u.deleteOLM(ctx, kubernetes.OLMNamespace)
-		},
-	}
-}
-
-func (u *Uninstall) newStepCleanupLeftovers() steps.Step {
-	return steps.Step{
-		Desc: "Cleaning up leftovers",
-		F: func(ctx context.Context) error {
-			return u.cleanupLeftovers(ctx)
+			return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
+				err := u.kubeClient.DeleteNamespace(ctx, ns)
+				if err != nil {
+					if k8serrors.IsNotFound(err) {
+						return true, nil
+					}
+					return false, err
+				}
+				return false, nil
+			})
 		},
 	}
 }
@@ -116,29 +70,6 @@ func (u *Uninstall) deleteEverestCRDs(ctx context.Context) error {
 		}
 	}
 	return nil
-}
-
-// Older versions of Everest (> 1.3.0) were not installed using Helm.
-// So we need to render the manifests using the Helm chart and delete them using the kube client.
-// Note that the uninstallation process takes care of most resources, but cluster-scoped resources like CRDs and ClusterRoles are
-// not deleted without this step.
-func (u *Uninstall) cleanupLeftovers(ctx context.Context) error {
-	installer := helm.Installer{
-		ReleaseName:      common.SystemNamespace,
-		ReleaseNamespace: common.SystemNamespace,
-	}
-	if err := installer.Init(u.config.KubeconfigPath, helm.ChartOptions{
-		Version: "1.3.0-rc5", // todo
-		URL:     helm.DefaultHelmRepoURL,
-		Name:    helm.EverestChartName,
-	}); err != nil {
-		return fmt.Errorf("failed to initialize Helm installer: %w", err)
-	}
-	manifests, err := installer.RenderTemplates(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to render Helm templates: %w", err)
-	}
-	return u.kubeClient.DeleteManifestFile(helmutils.YAMLStringsToBytes(manifests), common.SystemNamespace)
 }
 
 func (u *Uninstall) uninstallHelmChart(ctx context.Context) error {
