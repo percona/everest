@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	everesthelmchart "github.com/percona/percona-helm-charts/charts/everest"
+	"go.uber.org/zap"
 	helmcli "helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/getter"
@@ -111,11 +112,11 @@ func copyEmbedFSToDir(src embed.FS, dest string) error {
 	})
 }
 
-// DevChartDir returns a temporary directory with the Everest Helm chart files
+// Returns a temporary directory with the Everest Helm chart files
 // from the main branch of the [percona-helm-charts](https://github.com/percona/percona-helm-charts) repository.
 // It copies the files from the exported embed.FS into a temporary directory.
 // The caller is responsible for cleaning up the directory.
-func DevChartDir() (string, error) {
+func devChart() (string, error) {
 	tmp, err := os.MkdirTemp("", "everest-dev-chart")
 	if err != nil {
 		return "", err
@@ -130,6 +131,25 @@ func DevChartDir() (string, error) {
 		return "", err
 	}
 	return tmp, nil
+}
+
+// SetupEverestDevChart sets up the development chart for Everest.
+// Returns a clean-up function that should be called when the chart is no longer needed.
+func SetupEverestDevChart(l *zap.SugaredLogger, path *string) (func(), error) {
+	if path == nil {
+		return nil, fmt.Errorf("path is nil")
+	}
+	der, err := devChart()
+	if err != nil {
+		return nil, fmt.Errorf("error setting up Everest dev chart: %w", err)
+	}
+	l.Infof("Copied dev chart to '%s' ", der)
+	*path = der
+	return func() {
+		if err := os.RemoveAll(der); err != nil {
+			l.Error("Error removing dev chart directory: %v", err)
+		}
+	}, nil
 }
 
 // YAMLStringsToBytes converts a slice of YAML strings to a single byte slice.
