@@ -107,6 +107,11 @@ type Kubernetes struct {
 	kubeconfig string
 }
 
+// Kubeconfig returns the path to the kubeconfig.
+func (k *Kubernetes) Kubeconfig() string {
+	return k.kubeconfig
+}
+
 // NodeSummaryNode holds information about Node inside Node's summary.
 type NodeSummaryNode struct {
 	FileSystem NodeFileSystemSummary `json:"fs,omitempty"`

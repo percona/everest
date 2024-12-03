@@ -20,6 +20,8 @@ import (
 	"context"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
@@ -47,6 +49,26 @@ func (k *Kubernetes) UpdateBackupStorage(ctx context.Context, storage *everestv1
 // DeleteBackupStorage returns backup storages by provided name.
 func (k *Kubernetes) DeleteBackupStorage(ctx context.Context, namespace, name string) error {
 	return k.client.DeleteBackupStorage(ctx, namespace, name)
+}
+
+// DeleteBackupStorages deletes all backup storages in provided namespace.
+// This function will wait until all storages are deleted.
+func (k *Kubernetes) DeleteBackupStorages(ctx context.Context, namespace string) error {
+	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
+		list, err := k.ListBackupStorages(ctx, namespace)
+		if err != nil {
+			return false, err
+		}
+		if len(list.Items) == 0 {
+			return true, nil
+		}
+		for _, storage := range list.Items {
+			if err := k.DeleteBackupStorage(ctx, storage.GetNamespace(), storage.GetName()); ctrlclient.IgnoreNotFound(err) != nil {
+				return false, err
+			}
+		}
+		return false, nil
+	})
 }
 
 // IsBackupStorageUsed checks if a backup storage in a given namespace is used by any clusters
