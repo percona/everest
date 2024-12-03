@@ -22,11 +22,12 @@ import { useRBACPermissions } from 'hooks/rbac';
 export const RestoreActionButtons = (
   row: MRT_Row<Restore>,
   handleDeleteRestore: (restoreName: string) => void,
-  namespace: string
+  namespace: string,
+  dbClusterName: string
 ) => {
   const { canDelete } = useRBACPermissions(
     'database-cluster-restores',
-    `${namespace}/${row.original.name}`
+    `${namespace}/${dbClusterName}`
   );
 
   return [
