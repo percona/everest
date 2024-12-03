@@ -119,7 +119,7 @@ func (e *EverestServer) CreateDatabaseClusterBackup(ctx echo.Context, namespace 
 	}
 	// User should be able to read the specified backup storage.
 	bsName := pointer.Get(dbb.Spec).BackupStorageName
-	if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionCreate, rbac.ObjectName(namespace, bsName)); err != nil {
+	if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(namespace, bsName)); err != nil {
 		return err
 	}
 
