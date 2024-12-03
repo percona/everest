@@ -382,8 +382,8 @@ k8s_resource(
     'everest-operator-leader-election-role:role:%s' % everest_namespace,
     'everest-operator-local:rolebinding:%s' % everest_namespace,
     'everest-operator-metrics-reader:clusterrole',
-    'everest-operator-proxy-role:clusterrole',
-    'everest-operator-proxy-rolebinding:clusterrolebinding',
+    'everest-operator-metrics-auth-role:clusterrole',
+    'everest-operator-metrics-auth-rolebinding:clusterrolebinding',
     'everest-operator-manager-role:clusterrole',
     'everest-operator-leader-election-rolebinding:rolebinding',
     'everest-operator-manager-rolebinding:clusterrolebinding'
