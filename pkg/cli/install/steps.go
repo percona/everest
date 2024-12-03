@@ -18,17 +18,13 @@ package install
 import (
 	"context"
 	"fmt"
-	"path"
 
 	"github.com/AlekSi/pointer"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/percona/everest/pkg/cli/helm"
-	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
-	. "github.com/percona/everest/pkg/utils/must" //nolint:revive,stylecheck
 )
 
 func (o *Install) newStepInstallEverestHelmChart() steps.Step {
@@ -126,41 +122,4 @@ func (o *Install) installEverestHelmChart(ctx context.Context) error {
 		return fmt.Errorf("could not install Helm chart: %w", err)
 	}
 	return nil
-}
-
-func (o *Install) provisionDBNamespace(ver string, namespace string) steps.Step {
-	return steps.Step{
-		Desc: fmt.Sprintf("Provisioning DB namespace '%s'", namespace),
-		F: func(ctx context.Context) error {
-			if err := o.createNamespace(ctx, namespace); err != nil {
-				return err
-			}
-			chartDir := ""
-			if o.config.ChartDir != "" {
-				chartDir = path.Join(o.config.ChartDir, dbNamespaceSubChartPath)
-			}
-			overrides := helm.NewValues(helm.Values{
-				ClusterType: o.clusterType,
-			})
-			values := Must(helmutils.MergeVals(o.getDBNamespaceInstallValues(), overrides))
-
-			installer := helm.Installer{
-				ReleaseName:            namespace,
-				ReleaseNamespace:       namespace,
-				Values:                 values,
-				CreateReleaseNamespace: false,
-			}
-			if err := installer.Init(o.config.KubeconfigPath, helm.ChartOptions{
-				Directory: chartDir,
-				URL:       o.config.RepoURL,
-				Name:      helm.EverestDBNamespaceChartName,
-				Version:   ver,
-			}); err != nil {
-				return fmt.Errorf("could not initialize Helm installer: %w", err)
-			}
-
-			o.l.Infof("Installing DB namespace Helm chart in namespace ", namespace)
-			return installer.Install(ctx)
-		},
-	}
 }
