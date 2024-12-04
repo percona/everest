@@ -33,7 +33,7 @@ export const BackupActionButtons = (
 ) => {
   const { canDelete } = useRBACPermissions(
     'database-cluster-backups',
-    `${dbCluster.metadata.namespace}/${row.original.backupStorageName}`
+    `${dbCluster.metadata.namespace}/${row.original.dbClusterName}`
   );
   const { canCreate: canCreateRestore } = useRBACPermissions(
     'database-cluster-restores',
