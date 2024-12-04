@@ -41,7 +41,7 @@ const openPitrEditModal = async (page: Page) => {
   expect(page.getByTestId('edit-pitr-form-dialog')).toBeVisible();
 };
 
-test.skip('MySQL PITR editing', async () => {
+test.describe.serial('MySQL PITR editing', async () => {
   const mySQLName = 'db-pitr-mysql';
 
   test.beforeAll(async ({ request }) => {
