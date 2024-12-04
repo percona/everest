@@ -15,13 +15,14 @@
 
 import { expect, test } from '@playwright/test';
 import { goToStep, moveForward } from '@e2e/utils/db-wizard';
+import { selectDbEngine } from '../db-wizard-utils';
 
 test.describe('DB Cluster creation', () => {
   test('Blocking the edit buttons when an error occurs in the form', async ({
     page,
   }) => {
     await page.goto('/databases');
-    await page.getByTestId('add-db-cluster-button').click();
+    await selectDbEngine(page, 'pxc');
 
     // Resources Step
     await moveForward(page);
