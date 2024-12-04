@@ -33,7 +33,6 @@ export const EmptyState = () => {
           <Typography>{Messages.noDbClusters}</Typography>
           <Typography> {Messages.createToStart}</Typography>
         </Box>
-        {/* // TODO refactor with new component when #811 is merged*/}
         <CreateDbButton />
         <Divider sx={{ width: '30%', marginTop: '10px' }} />
         <Link target="_blank" rel="noopener" href="https://hubs.ly/Q02Rt6pG0">

@@ -75,7 +75,7 @@ export const CreateDbButton = () => {
             <Skeleton variant="rectangular" height={38} />
           </Stack>
         ) : (
-          <>
+          <Box>
             {availableDbTypes.map((item) => (
               <MenuItem
                 data-testid={`add-db-cluster-button-${item.type}`}
@@ -95,7 +95,7 @@ export const CreateDbButton = () => {
                 {humanizeDbType(dbEngineToDbType(item.type))}
               </MenuItem>
             ))}
-          </>
+          </Box>
         )}
       </Menu>
     </Box>
