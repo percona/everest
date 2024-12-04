@@ -5,10 +5,7 @@ import {
   findDbAndClickRow,
 } from '@e2e/utils/db-clusters-list';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
-import {
-  moveForward,
-  submitWizard,
-} from '@e2e/utils/db-wizard';
+import { moveForward, submitWizard } from '@e2e/utils/db-wizard';
 import { waitForStatus } from '@e2e/utils/table';
 import { selectDbEngine } from '@e2e/pr/db-cluster/db-wizard/db-wizard-utils';
 
