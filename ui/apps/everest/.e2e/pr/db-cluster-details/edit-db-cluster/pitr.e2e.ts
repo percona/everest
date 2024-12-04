@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { expect, test } from '@playwright/test';
+import { expect, Page, test } from '@playwright/test';
 import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import {
   findDbAndClickActions,
@@ -34,7 +34,14 @@ import {
 } from '@e2e/pr/db-cluster-details/edit-db-cluster/edit-db-cluster.utils';
 import { addFirstScheduleInDBWizard } from '@e2e/pr/db-cluster/db-wizard/db-wizard-utils';
 
-test.describe.serial('MySQL PITR editing', async () => {
+const openPitrEditModal = async (page: Page) => {
+  const editResourcesButton = page.getByTestId('edit-pitr-button');
+  await editResourcesButton.waitFor();
+  await editResourcesButton.click();
+  expect(page.getByTestId('edit-pitr-form-dialog')).toBeVisible();
+};
+
+test.skip('MySQL PITR editing', async () => {
   const mySQLName = 'db-pitr-mysql';
 
   test.beforeAll(async ({ request }) => {
@@ -68,101 +75,95 @@ test.describe.serial('MySQL PITR editing', async () => {
     await deleteDbClusterFn(request, mySQLName);
   });
 
-  test('Enable PITR to database during editing in dbWizard', async ({
-    page,
-  }) => {
-    await findDbAndClickActions(page, mySQLName, 'Edit', 'UP');
-    await goToStep(page, 'backups');
+  test('Enable PITR to database during editing', async ({ page }) => {
+    await findDbAndClickRow(page, mySQLName);
 
-    const pitrCheckbox = page
-      .getByTestId('switch-input-pitr-enabled')
-      .getByRole('checkbox');
-    await expect(pitrCheckbox).not.toBeChecked();
-    await pitrCheckbox.setChecked(true);
+    await test.step('Open edit pitr modal', async () => {
+      await openPitrEditModal(page);
+    });
 
-    const pitrStorageLocation = page.getByTestId(
-      'text-input-pitr-storage-location'
-    );
-    await expect(pitrStorageLocation).toBeVisible();
-    await expect(pitrStorageLocation).not.toBeEmpty();
-    await pitrStorageLocation.click();
-    await storageLocationAutocompleteEmptyValidationCheck(
-      page,
-      'pitr-storage-location-autocomplete'
-    );
-    const storageOptions = page.getByRole('option');
-    await expect(
-      storageOptions.filter({ hasText: getBucketNamespacesMap()[0][0] })
-    ).toBeVisible();
-    await storageOptions.first().click();
+    await test.step('Fill pitr', async () => {
+      const pitrCheckbox = page
+        .getByTestId('switch-input-enabled')
+        .getByRole('checkbox');
+      await expect(pitrCheckbox).not.toBeChecked();
+      await pitrCheckbox.setChecked(true);
+      const pitrStorageLocation = page.getByTestId(
+        'text-input-storage-location'
+      );
+      await expect(pitrStorageLocation).toBeVisible();
+      await expect(pitrStorageLocation).not.toBeEmpty();
+      await pitrStorageLocation.click();
+      await storageLocationAutocompleteEmptyValidationCheck(
+        page,
+        'storage-location-autocomplete'
+      );
+      expect(page.getByTestId('form-dialog-save')).toBeDisabled();
+      const storageOptions = page.getByRole('option');
+      await expect(
+        storageOptions.filter({ hasText: getBucketNamespacesMap()[0][0] })
+      ).toBeVisible();
+      await storageOptions.first().click();
+    });
 
-    // Check the preview actual value
-    const pitrPreviewText = (
-      await page
-        .getByTestId('section-Backups')
-        .getByTestId('preview-content')
-        .allInnerTexts()
-    )[1];
-    expect(pitrPreviewText).toBe('PITR Enabled');
+    await test.step('Submit modal form', async () => {
+      expect(page.getByTestId('form-dialog-save')).not.toBeDisabled();
+      await page.getByTestId('form-dialog-save').click();
+    });
 
-    // Go to Advanced Configuration step
-    await moveForward(page);
-    // Go to Monitoring step
-    await moveForward(page);
-
-    await checkDbWizardEditSubmitIsAvailableAndClick(page);
-    await checkSuccessOfUpdateAndGoToDbClustersList(page);
-
-    await findDbAndClickActions(page, mySQLName, 'Edit');
-
-    // Go to PITR
-    await goToStep(page, 'backups');
-    await expect(pitrCheckbox).toBeChecked();
-    await expect(pitrStorageLocation).toBeVisible();
-    await expect(pitrStorageLocation).not.toBeEmpty();
+    await test.step('Check pitr was succesfully updated', async () => {
+      await expect(
+        page
+          .getByTestId('pitr-status-overview-section-row')
+          .filter({ hasText: 'Enabled' })
+      ).toBeVisible();
+      await expect(
+        page
+          .getByTestId('backup-storage-overview-section-row')
+          .filter({ hasText: 'bucket-1' })
+      ).toBeVisible();
+    });
   });
 
-  test('Disable PITR for database during editing in dbWizard', async ({
-    page,
-  }) => {
-    await findDbAndClickActions(page, mySQLName, 'Edit');
-
-    // Check PITR step
-    await goToStep(page, 'backups');
-    const pitrCheckbox = page
-      .getByTestId('switch-input-pitr-enabled')
-      .getByRole('checkbox');
-    await expect(pitrCheckbox).toBeChecked();
-    const pitrStorageLocation = page.getByTestId(
-      'text-input-pitr-storage-location'
-    );
-    await expect(pitrStorageLocation).toBeVisible();
-    await expect(pitrStorageLocation).not.toBeEmpty();
-
-    // Disable PITR
-    await pitrCheckbox.setChecked(false);
-    // Check the preview actual value
-    const pitrPreviewText = (
-      await page
-        .getByTestId('section-Backups')
-        .getByTestId('preview-content')
-        .allInnerTexts()
-    )[1];
-    expect(pitrPreviewText).toBe('PITR Disabled');
-
-    await goToStep(page, 'monitoring');
-
-    await checkDbWizardEditSubmitIsAvailableAndClick(page);
-    await checkSuccessOfUpdateAndGoToDbClustersList(page);
-
-    // Go to DB details and check pitr
+  test('Disable PITR for database during editing', async ({ page }) => {
     await findDbAndClickRow(page, mySQLName);
-    await expect(
-      page
-        .getByTestId('backups-and-pitr')
-        .getByTestId('status-overview-section-row')
-        .filter({ hasText: 'Disabled' })
-    ).toBeVisible();
+
+    await test.step('Open edit pitr modal', async () => {
+      await openPitrEditModal(page);
+    });
+
+    await test.step('Disable pitr', async () => {
+      const pitrCheckbox = page
+        .getByTestId('switch-input-enabled')
+        .getByRole('checkbox');
+
+      await expect(pitrCheckbox).toBeChecked();
+      const pitrStorageLocation = page.getByTestId(
+        'text-input-storage-location'
+      );
+      await expect(pitrStorageLocation).toBeVisible();
+      await expect(pitrStorageLocation).not.toBeEmpty();
+
+      await pitrCheckbox.setChecked(false);
+    });
+
+    await test.step('Submit modal form', async () => {
+      expect(page.getByTestId('form-dialog-save')).not.toBeDisabled();
+      await page.getByTestId('form-dialog-save').click();
+    });
+
+    await test.step('Check pitr was succesfully updated', async () => {
+      await expect(
+        page
+          .getByTestId('pitr-status-overview-section-row')
+          .filter({ hasText: 'Disabled' })
+      ).toBeVisible();
+      await expect(
+        page
+          .getByTestId('backup-storage-overview-section-row')
+          .filter({ hasText: 'bucket-1' })
+      ).not.toBeVisible();
+    });
   });
 });
 

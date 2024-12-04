@@ -63,6 +63,7 @@ export const PitrEditModal = ({
   return (
     <FormDialog
       size="XL"
+      dataTestId="edit-pitr"
       isOpen={open}
       closeModal={handleCloseModal}
       schema={pitrEditDialogPropsSchema()}
