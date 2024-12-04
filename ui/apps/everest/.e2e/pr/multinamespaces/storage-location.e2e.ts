@@ -19,7 +19,10 @@ import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
 import { DBClusterDetailsTabs } from '../../../src/pages/db-cluster-details/db-cluster-details.types';
-import { openCreateScheduleDialogFromDBWizard } from '../db-cluster/db-wizard/db-wizard-utils';
+import {
+  openCreateScheduleDialogFromDBWizard,
+  selectDbEngine,
+} from '../db-cluster/db-wizard/db-wizard-utils';
 import { waitForInitializingState } from '@e2e/utils/table';
 
 test.describe.serial('Namespaces: Backup Storage availability', () => {
@@ -60,8 +63,7 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
     page,
   }) => {
     await page.goto('/databases');
-    const button = page.getByTestId('add-db-cluster-button');
-    await button.click();
+    await selectDbEngine(page, 'pxc');
 
     // setting everest-pxc namespace
     const namespacesAutocomplete = page.getByTestId(
@@ -71,7 +73,6 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
     await page
       .getByRole('option', { name: EVEREST_CI_NAMESPACES.PXC_ONLY })
       .click();
-    await expect(page.getByTestId('mysql-toggle-button')).toBeVisible();
 
     // Resources Step
     await moveForward(page);

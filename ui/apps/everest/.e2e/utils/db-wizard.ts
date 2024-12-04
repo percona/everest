@@ -50,6 +50,13 @@ export const submitWizard = async (page: Page) => {
   await expect(page.getByTestId('db-wizard-goto-db-clusters')).toBeVisible();
 };
 
+export const cancelWizard = async (page: Page) => {
+  await page.getByTestId('db-wizard-cancel-button').click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByText('Yes, cancel').click();
+  await page.waitForURL('**/databases');
+};
+
 export const goToLastAndSubmit = async (page: Page) => {
   await goToStep(page, 'monitoring');
   await submitWizard(page);
