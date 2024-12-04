@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -38,6 +37,7 @@ import (
 	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
 	"github.com/percona/everest/pkg/cli/namespaces"
 	"github.com/percona/everest/pkg/cli/steps"
+	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
@@ -104,13 +104,8 @@ func NewInstall(c Config, l *zap.SugaredLogger, cmd *cobra.Command) (*Install, e
 	c.NamespaceAddConfig.DisableTelemetry = c.DisableTelemetry
 	cli.config = c
 
-	k, err := kubernetes.New(c.KubeconfigPath, cli.l)
+	k, err := cliutils.NewKubeclient(cli.l, c.KubeconfigPath)
 	if err != nil {
-		var u *url.Error
-		if errors.As(err, &u) {
-			l.Error("Could not connect to Kubernetes. " +
-				"Make sure Kubernetes is running and is accessible from this computer/server.")
-		}
 		return nil, err
 	}
 	cli.kubeClient = k
@@ -128,7 +123,7 @@ func (o *Install) Run(ctx context.Context) error {
 		return fmt.Errorf("everest is already installed. Version: %s", installedVersion)
 	}
 
-	dbInstallStep, err := o.installDBNamespacesStep()
+	dbInstallStep, err := o.installDBNamespacesStep(ctx)
 	if err != nil {
 		return fmt.Errorf("could not create db install step: %w", err)
 	}
@@ -172,13 +167,13 @@ func (o *Install) Run(ctx context.Context) error {
 	return o.printPostInstallMessage(ctx, out)
 }
 
-func (o *Install) installDBNamespacesStep() (*steps.Step, error) {
+func (o *Install) installDBNamespacesStep(ctx context.Context) (*steps.Step, error) {
 	askNamespaces := !o.cmd.Flags().Lookup(cli.FlagNamespaces).Changed
 	askOperators := !(o.cmd.Flags().Lookup(cli.FlagOperatorMongoDB).Changed ||
 		o.cmd.Flags().Lookup(cli.FlagOperatorPostgresql).Changed ||
 		o.cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster).Changed)
 
-	if err := o.config.Populate(askNamespaces, askOperators); err != nil {
+	if err := o.config.Populate(ctx, askNamespaces, askOperators); err != nil {
 		// not specifying a namespace in this context is allowed.
 		if errors.Is(err, namespaces.ErrNSEmpty) {
 			return nil, nil //nolint:nilnil

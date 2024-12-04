@@ -46,7 +46,7 @@ func NewUpdateCommand(l *zap.SugaredLogger) *cobra.Command {
 				cmd.Flags().Lookup("operator.postgresql").Changed ||
 				cmd.Flags().Lookup("operator.xtradb-cluster").Changed)
 
-			if err := c.Populate(false, askOperators); err != nil {
+			if err := c.Populate(cmd.Context(), false, askOperators); err != nil {
 				output.PrintError(err, l, !enableLogging)
 				os.Exit(1)
 			}

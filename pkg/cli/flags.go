@@ -39,4 +39,6 @@ const (
 	FlagSkipEnvDetection = "skip-env-detection"
 	// FlagDisableTelemetry disables telemetry.
 	FlagDisableTelemetry = "disable-telemetry"
+	// FlagTakeNamespaceOwnership is the name of the take-ownership flag.
+	FlagTakeNamespaceOwnership = "take-ownership"
 )
