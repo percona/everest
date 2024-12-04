@@ -63,8 +63,8 @@ func (h *rbacHandler) ListDatabaseClusters(ctx context.Context, user, namespace 
 
 	result := []api.DatabaseCluster{}
 	for _, cluster := range *clusterList.Items {
-		name := "" // todo
-		if err := h.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(namespace, name)); errors.Is(err, ErrInsufficientPermissions) {
+		db := &everestv1alpha1.DatabaseCluster{} //todo
+		if err := h.enforceDBClusterRead(user, db); errors.Is(err, ErrInsufficientPermissions) {
 			continue
 		} else if err != nil {
 			return nil, fmt.Errorf("enforce failed: %w", err)
@@ -143,38 +143,13 @@ func (h *rbacHandler) UpdateDatabaseCluster(ctx context.Context, user, namespace
 }
 
 func (h *rbacHandler) GetDatabaseCluster(ctx context.Context, user, namespace, name string) (*api.DatabaseCluster, error) {
-	if err := h.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(namespace, name)); err != nil {
-		return nil, err
-	}
-
 	result, err := h.next.GetDatabaseCluster(ctx, user, namespace, name)
 	if err != nil {
 		return nil, err
 	}
-
 	db := &everestv1alpha1.DatabaseCluster{} //todo
-	// Check if the user has permissions for all backup-storages in the schedule?
-	for _, sched := range db.Spec.Backup.Schedules {
-		bsName := sched.BackupStorageName
-		if err := h.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), bsName)); err != nil {
-			return nil, err
-		}
-	}
-	// Check if the user has permission for the backup-storages used by PITR (if any)?
-	if bsName := pointer.Get(db.Spec.Backup.PITR.BackupStorageName); bsName != "" {
-		if err := h.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), bsName)); err != nil {
-			return nil, err
-		}
-	}
-	// Check if the user has permissions for MonitoringConfig?
-	if mcName := pointer.Get(db.Spec.Monitoring).MonitoringConfigName; mcName != "" {
-		if err := h.enforce(user, rbac.ResourceMonitoringInstances, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), mcName)); err != nil {
-			return nil, err
-		}
-	}
 
-	engineName := "" // todo
-	if err := h.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, engineName)); err != nil {
+	if err := h.enforceDBClusterRead(user, db); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -202,4 +177,38 @@ func (h *rbacHandler) GetDatabaseClusterPitr(ctx context.Context, user, namespac
 		return nil, err
 	}
 	return h.next.GetDatabaseClusterPitr(ctx, user, namespace, name)
+}
+
+func (h *rbacHandler) enforceDBClusterRead(user string, db *everestv1alpha1.DatabaseCluster) error {
+	name := db.GetName()
+	namespace := db.GetNamespace()
+	if err := h.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(namespace, name)); err != nil {
+		return err
+	}
+
+	// Check if the user has permissions for all backup-storages in the schedule?
+	for _, sched := range db.Spec.Backup.Schedules {
+		bsName := sched.BackupStorageName
+		if err := h.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(namespace, bsName)); err != nil {
+			return err
+		}
+	}
+	// Check if the user has permission for the backup-storages used by PITR (if any)?
+	if bsName := pointer.Get(db.Spec.Backup.PITR.BackupStorageName); bsName != "" {
+		if err := h.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(namespace, bsName)); err != nil {
+			return err
+		}
+	}
+	// Check if the user has permissions for MonitoringConfig?
+	if mcName := pointer.Get(db.Spec.Monitoring).MonitoringConfigName; mcName != "" {
+		if err := h.enforce(user, rbac.ResourceMonitoringInstances, rbac.ActionRead, rbac.ObjectName(namespace, mcName)); err != nil {
+			return err
+		}
+	}
+
+	engineName := "" // todo
+	if err := h.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, engineName)); err != nil {
+		return err
+	}
+	return nil
 }
