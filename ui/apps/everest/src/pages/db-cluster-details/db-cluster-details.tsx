@@ -158,7 +158,6 @@ export const DbClusterDetails = () => {
         </Alert>
       )}
       <Outlet />
-
       <DbActionsModals
         dbCluster={selectedDbCluster!}
         isNewClusterMode={isNewClusterMode}
