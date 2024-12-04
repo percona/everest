@@ -15,24 +15,10 @@
 
 import { expect, Page, test } from '@playwright/test';
 import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
-import {
-  findDbAndClickActions,
-  findDbAndClickRow,
-} from '@e2e/utils/db-clusters-list';
-import {
-  goToStep,
-  moveForward,
-  storageLocationAutocompleteEmptyValidationCheck,
-} from '@e2e/utils/db-wizard';
-
+import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
+import { storageLocationAutocompleteEmptyValidationCheck } from '@e2e/utils/db-wizard';
 import { getBucketNamespacesMap } from '@e2e/constants';
-
 import { waitForInitializingState } from '@e2e/utils/table';
-import {
-  checkDbWizardEditSubmitIsAvailableAndClick,
-  checkSuccessOfUpdateAndGoToDbClustersList,
-} from '@e2e/pr/db-cluster-details/edit-db-cluster/edit-db-cluster.utils';
-import { addFirstScheduleInDBWizard } from '@e2e/pr/db-cluster/db-wizard/db-wizard-utils';
 
 const openPitrEditModal = async (page: Page) => {
   const editResourcesButton = page.getByTestId('edit-pitr-button');
@@ -178,6 +164,17 @@ test.describe.serial('MongoDb PITR editing', async () => {
       cpu: 1,
       disk: 1,
       memory: 1,
+      backup: {
+        enabled: true,
+        schedules: [
+          {
+            backupStorageName: getBucketNamespacesMap()[0][0],
+            enabled: true,
+            name: 'backup-1',
+            schedule: '0 * * * *',
+          },
+        ],
+      },
     });
   });
 
@@ -190,60 +187,41 @@ test.describe.serial('MongoDb PITR editing', async () => {
     await waitForInitializingState(page, psmdbName);
   });
 
-  test('Enable PITR to database during editing in dbWizard', async ({
-    page,
-  }) => {
-    await page.goto('/databases');
-    await findDbAndClickActions(page, psmdbName, 'Edit', 'UP');
-    await goToStep(page, 'backups');
+  test('Enable PITR to database during editing', async ({ page }) => {
+    await findDbAndClickRow(page, psmdbName);
 
-    const pitrCheckbox = page
-      .getByTestId('switch-input-pitr-enabled')
-      .getByRole('checkbox');
-    await expect(pitrCheckbox).not.toBeChecked();
-    await expect(pitrCheckbox).toBeDisabled();
-    await addFirstScheduleInDBWizard(page);
-    await expect(pitrCheckbox).not.toBeDisabled();
-    await expect(
-      page
-        .getByTestId('switch-input-pitr-enabled-label')
-        .getByText(`Storage: ${getBucketNamespacesMap()[0][0]}`)
-    ).toBeVisible();
+    await test.step('Open edit pitr modal', async () => {
+      await openPitrEditModal(page);
+    });
 
-    // TODO move to schedules part
-    // MongoDB could create schedules only with the one of storages, so for not first schedules storage should be disabled
-    await expect(
-      page.getByText(
-        'The backup storage you select for your first backup schedule will be used for al'
-      )
-    ).toBeVisible();
-    await page.getByTestId('create-schedule').click();
-    const scheduleStorageLocation = page.getByTestId(
-      'text-input-storage-location'
-    );
-    await expect(scheduleStorageLocation).toBeDisabled();
-    await expect(scheduleStorageLocation).not.toBeEmpty();
-    await page.getByTestId('close-dialog-icon').click();
+    await test.step('Fill pitr', async () => {
+      const pitrCheckbox = page
+        .getByTestId('switch-input-enabled')
+        .getByRole('checkbox');
+      await expect(pitrCheckbox).not.toBeChecked();
+      await pitrCheckbox.setChecked(true);
+      const pitrStorageLocation = page.getByTestId(
+        'text-input-storage-location'
+      );
+      await expect(pitrStorageLocation).not.toBeVisible();
+    });
 
-    // Enable pitr
-    await pitrCheckbox.setChecked(true);
-    await expect(pitrCheckbox).toBeChecked();
+    await test.step('Submit modal form', async () => {
+      expect(page.getByTestId('form-dialog-save')).not.toBeDisabled();
+      await page.getByTestId('form-dialog-save').click();
+    });
 
-    // Check the preview actual value
-    const pitrPreviewText = (
-      await page
-        .getByTestId('section-Backups')
-        .getByTestId('preview-content')
-        .allInnerTexts()
-    )[1];
-    expect(pitrPreviewText).toBe('PITR Enabled');
-
-    await goToStep(page, 'monitoring');
-    await checkDbWizardEditSubmitIsAvailableAndClick(page);
-    await checkSuccessOfUpdateAndGoToDbClustersList(page);
-
-    await findDbAndClickActions(page, psmdbName, 'Edit');
-    await goToStep(page, 'backups');
-    await expect(pitrCheckbox).toBeChecked();
+    await test.step('Check pitr was succesfully updated', async () => {
+      await expect(
+        page
+          .getByTestId('pitr-status-overview-section-row')
+          .filter({ hasText: 'Enabled' })
+      ).toBeVisible();
+      await expect(
+        page
+          .getByTestId('backup-storage-overview-section-row')
+          .filter({ hasText: 'bucket-1' })
+      ).toBeVisible();
+    });
   });
 });
