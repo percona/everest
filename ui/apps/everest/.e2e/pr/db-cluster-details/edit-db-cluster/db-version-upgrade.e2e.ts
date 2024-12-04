@@ -17,7 +17,7 @@ let token: string;
   // { db: 'postgresql', size: 1 },
 ].forEach(
   ({ db, size }: { db: 'pxc' | 'psmdb' | 'postgresql'; size: number }) => {
-    test.describe.skip('Overview page', () => {
+    test.describe('Overview page', () => {
       test.describe.configure({ timeout: 900000 });
 
       const clusterName = `${db}-${size}-upgrade`;
