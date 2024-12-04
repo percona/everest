@@ -286,7 +286,7 @@ func NewEnforceHandler(l *zap.SugaredLogger, basePath string, enforcer *casbin.E
 }
 
 func isAllowedRBAC(name, action, resource string) bool {
-	// Allow creating a restore without a name.
+	// Allow creating objects without a name.
 	// RBAC is enforced in the individual methods.
 	allowedObjectsForCreateWithoutName := []string{
 		ResourceDatabaseClusterRestores,
