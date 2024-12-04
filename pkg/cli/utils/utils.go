@@ -4,7 +4,9 @@ package utils
 import (
 	"context"
 	"errors"
+	"net/url"
 
+	"go.uber.org/zap"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/percona/everest/pkg/common"
@@ -31,4 +33,17 @@ func CheckHelmInstallation(ctx context.Context, client kubernetes.KubernetesConn
 		return "", errors.New("operation not supported for this version of Everest")
 	}
 	return ver, nil
+}
+
+func NewKubeclient(l *zap.SugaredLogger, kubeconfigPath string) (kubernetes.KubernetesConnector, error) {
+	k, err := kubernetes.New(kubeconfigPath, l)
+	if err != nil {
+		var u *url.Error
+		if errors.As(err, &u) {
+			l.Error("Could not connect to Kubernetes. " +
+				"Make sure Kubernetes is running and is accessible from this computer/server.")
+		}
+		return nil, err
+	}
+	return k, nil
 }

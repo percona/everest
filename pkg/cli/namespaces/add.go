@@ -177,27 +177,42 @@ func (n *NamespaceAdder) newStepInstallNamespace(version, namespace string) step
 	}
 }
 
-func (n *NamespaceAdder) provisionDBNamespace(
+func (cfg *NamespaceAddConfig) validateNamespaceOwnership(
 	ctx context.Context,
-	version string,
-	namespace string,
-) error {
-	nsExists, ownedByEverest, err := n.namespaceExists(ctx, namespace)
+	namespace string) error {
+	k, err := cliutils.NewKubeclient(zap.NewNop().Sugar(), cfg.KubeconfigPath)
 	if err != nil {
 		return err
 	}
 
-	if n.cfg.Update {
+	nsExists, ownedByEverest, err := namespaceExists(ctx, namespace, k)
+	if err != nil {
+		return err
+	}
+
+	if cfg.Update {
 		if !nsExists {
 			return fmt.Errorf("namespace (%s) does not exist", namespace)
 		}
 		if !ownedByEverest {
 			return fmt.Errorf("namespace (%s) is not managed by Everest", namespace)
 		}
-	} else if nsExists && !n.cfg.TakeOwnership {
+	} else if nsExists && !cfg.TakeOwnership {
 		return fmt.Errorf("namespace (%s) already exists", namespace)
 	}
 
+	return nil
+}
+
+func (n *NamespaceAdder) provisionDBNamespace(
+	ctx context.Context,
+	version string,
+	namespace string,
+) error {
+	nsExists, _, err := namespaceExists(ctx, namespace, n.kubeClient)
+	if err != nil {
+		return err
+	}
 	chartDir := ""
 	if n.cfg.ChartDir != "" {
 		chartDir = path.Join(n.cfg.ChartDir, dbNamespaceSubChartPath)
@@ -221,8 +236,8 @@ func (n *NamespaceAdder) provisionDBNamespace(
 	return installer.Install(ctx)
 }
 
-func (n *NamespaceAdder) namespaceExists(ctx context.Context, namespace string) (bool, bool, error) {
-	ns, err := n.kubeClient.GetNamespace(ctx, namespace)
+func namespaceExists(ctx context.Context, namespace string, k kubernetes.KubernetesConnector) (bool, bool, error) {
+	ns, err := k.GetNamespace(ctx, namespace)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return false, false, nil
@@ -241,6 +256,12 @@ func isManagedByEverest(ns *v1.Namespace) bool {
 func (cfg *NamespaceAddConfig) Populate(askNamespaces, askOperators bool) error {
 	if err := cfg.populateNamespaces(askNamespaces); err != nil {
 		return err
+	}
+
+	for _, ns := range cfg.NamespaceList {
+		if err := cfg.validateNamespaceOwnership(context.Background(), ns); err != nil {
+			return fmt.Errorf("namespace ownership validation failed: %w", err)
+		}
 	}
 
 	if askOperators && len(cfg.NamespaceList) > 0 && !cfg.SkipWizard {
