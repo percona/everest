@@ -660,7 +660,9 @@ const ResourcesForm = ({
                   value={number}
                   onClick={() => {
                     if (number !== shardConfigServers.toString()) {
-                      setValue(DbWizardFormFields.shardConfigServers, number);
+                      setValue(DbWizardFormFields.shardConfigServers, number, {
+                        shouldValidate: true,
+                      });
                     }
                   }}
                 >
@@ -669,7 +671,10 @@ const ResourcesForm = ({
               ))}
             </ToggleButtonGroupInputRegular>
             {shardConfigServersError && (
-              <FormHelperText error={true}>
+              <FormHelperText
+                data-testid="shard-config-servers-error"
+                error={true}
+              >
                 {shardConfigServersError?.message}
               </FormHelperText>
             )}
