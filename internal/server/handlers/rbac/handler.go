@@ -16,9 +16,10 @@ import (
 var ErrInsufficientPermissions = errors.New("insufficient permissions for performing the operation")
 
 type rbacHandler struct {
-	enforcer casbin.IEnforcer
-	log      *zap.SugaredLogger
-	next     handlers.Handler
+	enforcer   casbin.IEnforcer
+	log        *zap.SugaredLogger
+	kubeClient *kubernetes.Kubernetes
+	next       handlers.Handler
 }
 
 // New returns a new RBAC handler.

@@ -27,7 +27,7 @@ type Handler interface {
 
 // DatabaseClusterHandler provides methods for handling operations on database clusters.
 type DatabaseClusterHandler interface {
-	CreateDatabaseCluster(ctx context.Context, user string, req *api.DatabaseCluster) error
+	CreateDatabaseCluster(ctx context.Context, user, namespace string, req *api.DatabaseCluster) error
 	ListDatabaseClusters(ctx context.Context, user, namespace string) (*api.DatabaseClusterList, error)
 	DeleteDatabaseCluster(ctx context.Context, user, namespace, name string, req *api.DeleteDatabaseClusterParams) error
 	UpdateDatabaseCluster(ctx context.Context, user string, req *api.DatabaseCluster) error

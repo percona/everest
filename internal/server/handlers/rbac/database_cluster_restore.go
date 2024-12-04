@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/percona/everest/api"
+	"github.com/percona/everest/pkg/rbac"
 )
 
 func (h *rbacHandler) ListDatabaseClusterRestores(ctx context.Context, user, namespace string) (*api.DatabaseClusterRestoreList, error) {
@@ -23,5 +24,18 @@ func (h *rbacHandler) GetDatabaseClusterRestore(ctx context.Context, user, names
 }
 
 func (h *rbacHandler) UpdateDatabaseClusterRestore(ctx context.Context, user string, req *api.DatabaseClusterRestore) error {
+	return nil
+}
+
+func (h *rbacHandler) enforceDBRestore(user, namespace, clusterName string) error {
+	if err := h.enforce(user, rbac.ResourceDatabaseClusterCredentials, rbac.ActionRead, rbac.ObjectName(namespace, clusterName)); err != nil {
+		return err
+	}
+	if err := h.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionRead, rbac.ObjectName(namespace, clusterName)); err != nil {
+		return err
+	}
+	if err := h.enforce(user, rbac.ResourceDatabaseClusterRestores, rbac.ActionRead, rbac.ObjectName(namespace, clusterName)); err != nil {
+		return err
+	}
 	return nil
 }
