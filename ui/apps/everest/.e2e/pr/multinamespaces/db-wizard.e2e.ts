@@ -15,60 +15,63 @@
 
 import { test, expect } from '@playwright/test';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
+import {
+  checkAmountOfDbEngines,
+  selectDbEngine,
+} from '../db-cluster/db-wizard/db-wizard-utils';
+import { cancelWizard } from '@e2e/utils/db-wizard';
+import { DbEngineType } from '@percona/types';
 
 test.describe('Namespaces DB Wizard', () => {
-  test('Changing of the namespace cause update of dbEngines, dbVersions, dbName', async ({
+  test('First step contains only namespaces related to the selected db ', async ({
     page,
   }) => {
     await page.goto('/databases');
-    const button = page.getByTestId('add-db-cluster-button');
-    await button.click();
+    for (let i = 0; i < 3; i++) {
+      await page.pause();
+      const dbEnginesButtons = await checkAmountOfDbEngines(page);
+      expect(await dbEnginesButtons.count()).toBe(3);
+      const dbEngineType = (
+        await dbEnginesButtons.nth(i).getAttribute('data-testid')
+      )?.split('-')[4];
+      await dbEnginesButtons.nth(i).click();
+      await page.getByTestId('k8s-namespace-autocomplete').click();
 
-    // setting everest-pxc namespace
-    const namespacesList = page.getByTestId('k8s-namespace-autocomplete');
-    await namespacesList.click();
+      expect(
+        page.getByRole('option', { name: EVEREST_CI_NAMESPACES.EVEREST_UI })
+      ).toBeVisible();
+      const dbOnlyNamespace = page.getByRole('option', {
+        name: `${dbEngineType === DbEngineType.POSTGRESQL ? 'pg' : dbEngineType}-only`,
+      });
+      expect(dbOnlyNamespace).toBeVisible();
+      expect(await page.getByRole('option').count()).toBe(2);
 
-    await page
-      .getByRole('option', { name: EVEREST_CI_NAMESPACES.PXC_ONLY })
-      .click();
+      await dbOnlyNamespace.click();
 
-    await expect(page.getByTestId('mysql-toggle-button')).toBeVisible();
-    // checking and saving fields for pxc
-    const dbEnginesButtons = page
-      .getByTestId('toggle-button-group-input-db-type')
-      .getByRole('button');
-    expect(await dbEnginesButtons.count()).toBe(1);
-    await expect(page.getByTestId('mysql-toggle-button')).toBeVisible();
-    await expect(page.getByTestId('mongodb-toggle-button')).not.toBeVisible();
-    await expect(
-      page.getByTestId('postgresql-toggle-button')
-    ).not.toBeVisible();
-    await expect(page.getByTestId('text-input-db-name')).toHaveValue(
-      /.*mysql.*/
-    );
+      switch (dbEngineType) {
+        case 'pxc': {
+          await expect(page.getByTestId('text-input-db-name')).toHaveValue(
+            /.*mysql.*/
+          );
+          break;
+        }
+        case 'postgresql': {
+          await expect(page.getByTestId('text-input-db-name')).toHaveValue(
+            /.*postgresql.*/
+          );
+          break;
+        }
+        case 'psmdb': {
+          await expect(page.getByTestId('text-input-db-name')).toHaveValue(
+            /.*mongodb.*/
+          );
+          break;
+        }
+        default:
+          break;
+      }
 
-    const dbVersion = await page
-      .getByTestId('select-input-db-version')
-      .inputValue();
-
-    //changing namespace to everest-psmdb
-    await namespacesList.click();
-    await page
-      .getByRole('option', { name: EVEREST_CI_NAMESPACES.PSMDB_ONLY })
-      .click();
-
-    // checking changes of all fields
-    await expect(page.getByTestId('mongodb-toggle-button')).toBeVisible();
-    await expect(
-      page.getByTestId('postgresql-toggle-button')
-    ).not.toBeVisible();
-    await expect(page.getByTestId('mysql-toggle-button')).not.toBeVisible();
-    await expect(page.getByTestId('text-input-db-name')).toHaveValue(
-      /.*mongodb.*/
-    );
-
-    expect(
-      await page.getByTestId('select-input-db-version').inputValue()
-    ).not.toBe(dbVersion);
+      await cancelWizard(page);
+    }
   });
 });
