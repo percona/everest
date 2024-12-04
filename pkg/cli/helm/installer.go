@@ -180,7 +180,7 @@ func (i *Installer) Install(ctx context.Context) error {
 			rel.Chart.Metadata.Version, i.chart.Metadata.Version,
 		)
 	}
-	return i.Upgrade(ctx)
+	return i.Upgrade(ctx, UpgradeOptions{})
 }
 
 // GetRelease gets the installed Helm release.
@@ -206,11 +206,19 @@ func (i *Installer) install(ctx context.Context) error {
 	return nil
 }
 
+// UpgradeOptions provide options for upgrading a Helm chart.
+type UpgradeOptions struct {
+	DisableHooks bool
+	ReuseValues  bool
+}
+
 // Upgrade the Helm chart.
-func (i *Installer) Upgrade(ctx context.Context) error {
+func (i *Installer) Upgrade(ctx context.Context, opts UpgradeOptions) error {
 	upgrade := action.NewUpgrade(i.cfg)
 	upgrade.Namespace = i.ReleaseNamespace
 	upgrade.TakeOwnership = true
+	upgrade.ReuseValues = opts.ReuseValues
+	upgrade.DisableHooks = opts.DisableHooks
 
 	rel, err := upgrade.RunWithContext(ctx, i.ReleaseName, i.chart, i.Values)
 	if err != nil {

@@ -110,7 +110,7 @@ jobs:
           mkdir -p $TOOLS_PATH
           echo $TOOLS_PATH >> $GITHUB_PATH
 
-          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.25.2
+          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.38.0
           curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
 
           gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E

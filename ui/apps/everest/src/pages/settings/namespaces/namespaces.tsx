@@ -11,8 +11,8 @@ import { OperatorCell } from './OperatorCell';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 
 export const Namespaces = () => {
-  const rawDbEngines = useDBEnginesForNamespaces();
-  const dbEngines = rawDbEngines.filter(
+  const { results: rawDbEngines } = useDBEnginesForNamespaces();
+  const dbEngines = rawDbEngines?.filter(
     (item) => item.data && item.data.length
   );
   const { canRead } = useNamespacePermissionsForResource('database-clusters');
