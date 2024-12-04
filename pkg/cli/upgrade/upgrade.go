@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"time"
 
@@ -33,6 +32,7 @@ import (
 	"github.com/percona/everest/pkg/cli/helm"
 	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
 	"github.com/percona/everest/pkg/cli/steps"
+	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
@@ -112,13 +112,8 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 		kubeClient = k
 	}
 	if cfg.KubeconfigPath != "" {
-		k, err := kubernetes.New(cfg.KubeconfigPath, cli.l)
+		k, err := cliutils.NewKubeclient(cli.l, cfg.KubeconfigPath)
 		if err != nil {
-			var u *url.Error
-			if errors.As(err, &u) {
-				l.Error("Could not connect to Kubernetes. " +
-					"Make sure Kubernetes is running and is accessible from this computer/server.")
-			}
 			return nil, err
 		}
 		kubeClient = k

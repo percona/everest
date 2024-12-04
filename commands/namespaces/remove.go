@@ -2,6 +2,7 @@
 package namespaces
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -13,6 +14,8 @@ import (
 	"github.com/percona/everest/pkg/cli/namespaces"
 	"github.com/percona/everest/pkg/output"
 )
+
+const forceUninstallHint = "HINT: use --force to remove the namespace and all its resources"
 
 // NewRemoveCommand returns a new command to remove an existing namespace.
 func NewRemoveCommand(l *zap.SugaredLogger) *cobra.Command {
@@ -48,6 +51,9 @@ func NewRemoveCommand(l *zap.SugaredLogger) *cobra.Command {
 			}
 
 			if err := op.Run(cmd.Context()); err != nil {
+				if errors.Is(err, namespaces.ErrNamespaceNotEmpty) {
+					err = fmt.Errorf("%w. %s", err, forceUninstallHint)
+				}
 				output.PrintError(err, l, !enableLogging)
 				os.Exit(1)
 			}

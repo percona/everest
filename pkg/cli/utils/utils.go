@@ -35,7 +35,8 @@ func CheckHelmInstallation(ctx context.Context, client kubernetes.KubernetesConn
 	return ver, nil
 }
 
-func NewKubeclient(l *zap.SugaredLogger, kubeconfigPath string) (kubernetes.KubernetesConnector, error) {
+// NewKubeclient creates a new Kubernetes client.
+func NewKubeclient(l *zap.SugaredLogger, kubeconfigPath string) (*kubernetes.Kubernetes, error) {
 	k, err := kubernetes.New(kubeconfigPath, l)
 	if err != nil {
 		var u *url.Error

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"path"
 	"regexp"
@@ -61,13 +60,8 @@ func NewNamespaceAdd(c NamespaceAddConfig, l *zap.SugaredLogger) (*NamespaceAdde
 		n.l = zap.NewNop().Sugar()
 	}
 
-	k, err := kubernetes.New(c.KubeconfigPath, n.l)
+	k, err := cliutils.NewKubeclient(n.l, c.KubeconfigPath)
 	if err != nil {
-		var u *url.Error
-		if errors.As(err, &u) {
-			l.Error("Could not connect to Kubernetes. " +
-				"Make sure Kubernetes is running and is accessible from this computer/server.")
-		}
 		return nil, err
 	}
 	n.kubeClient = k
@@ -177,9 +171,19 @@ func (n *NamespaceAdder) newStepInstallNamespace(version, namespace string) step
 	}
 }
 
+var (
+	// ErrNsDoesNotExist appears when the namespace does not exist.
+	ErrNsDoesNotExist = errors.New("namespace does not exist")
+	// ErrNamespaceNotManagedByEverest appears when the namespace is not managed by Everest.
+	ErrNamespaceNotManagedByEverest = errors.New("namespace is not managed by Everest")
+	// ErrNamespaceAlreadyExists appears when the namespace already exists.
+	ErrNamespaceAlreadyExists = errors.New("namespace already exists")
+)
+
 func (cfg *NamespaceAddConfig) validateNamespaceOwnership(
 	ctx context.Context,
-	namespace string) error {
+	namespace string,
+) error {
 	k, err := cliutils.NewKubeclient(zap.NewNop().Sugar(), cfg.KubeconfigPath)
 	if err != nil {
 		return err
@@ -192,13 +196,13 @@ func (cfg *NamespaceAddConfig) validateNamespaceOwnership(
 
 	if cfg.Update {
 		if !nsExists {
-			return fmt.Errorf("namespace (%s) does not exist", namespace)
+			return ErrNsDoesNotExist
 		}
 		if !ownedByEverest {
-			return fmt.Errorf("namespace (%s) is not managed by Everest", namespace)
+			return ErrNamespaceNotManagedByEverest
 		}
 	} else if nsExists && !cfg.TakeOwnership {
-		return fmt.Errorf("namespace (%s) already exists", namespace)
+		return ErrNamespaceAlreadyExists
 	}
 
 	return nil
@@ -253,14 +257,14 @@ func isManagedByEverest(ns *v1.Namespace) bool {
 }
 
 // Populate the configuration with the required values.
-func (cfg *NamespaceAddConfig) Populate(askNamespaces, askOperators bool) error {
+func (cfg *NamespaceAddConfig) Populate(ctx context.Context, askNamespaces, askOperators bool) error {
 	if err := cfg.populateNamespaces(askNamespaces); err != nil {
 		return err
 	}
 
 	for _, ns := range cfg.NamespaceList {
-		if err := cfg.validateNamespaceOwnership(context.Background(), ns); err != nil {
-			return fmt.Errorf("namespace ownership validation failed: %w", err)
+		if err := cfg.validateNamespaceOwnership(ctx, ns); err != nil {
+			return fmt.Errorf("invalid namespace (%s): %w", ns, err)
 		}
 	}
 
