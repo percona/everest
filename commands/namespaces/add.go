@@ -17,7 +17,7 @@ import (
 )
 
 //nolint:gochecknoglobals
-var takeOwnershipHintMessage = fmt.Sprintf("HINT: set '%s' flag to use existing namespaces", cli.FlagTakeNamespaceOwnership)
+var takeOwnershipHintMessage = fmt.Sprintf("HINT: set '--%s' flag to use existing namespaces", cli.FlagTakeNamespaceOwnership)
 
 // NewAddCommand returns a new command to add a new namespace.
 func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {

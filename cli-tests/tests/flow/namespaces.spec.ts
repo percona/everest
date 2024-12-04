@@ -89,7 +89,7 @@ test.describe('Everest CLI install', async () => {
         `add everest --operator.mongodb=false --operator.postgresql=false --operator.xtradb-cluster=true`,
       );
       await out.outErrContainsNormalizedMany([
-          '× namespace (everest) already exists',
+          '× namespace (everest) already exists. HINT: set \'--take-ownership\' flag to use existing namespaces',
       ]);
     });
     await page.waitForTimeout(10_000);
