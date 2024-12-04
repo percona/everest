@@ -114,8 +114,7 @@ func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace
 		})
 	}
 
-	srcBkp := pointer.Get(pointer.Get(restore.Spec).DataSource.DbClusterBackupName)
-	if err := e.enforceDBRestoreRBAC(user, namespace, srcBkp, dbCluster.GetName()); err != nil {
+	if err := e.enforceDBRestoreRBAC(user, namespace, dbCluster.GetName()); err != nil {
 		return err
 	}
 
@@ -129,11 +128,11 @@ func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace
 	return e.proxyKubernetes(ctx, namespace, databaseClusterRestoreKind, "")
 }
 
-func (e *EverestServer) enforceDBRestoreRBAC(user, namespace, srcBackupName, dbClusterName string) error {
+func (e *EverestServer) enforceDBRestoreRBAC(user, namespace, dbClusterName string) error {
 	if err := e.enforce(user, rbac.ResourceDatabaseClusterCredentials, rbac.ActionRead, rbac.ObjectName(namespace, dbClusterName)); err != nil {
 		return err
 	}
-	if err := e.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionRead, rbac.ObjectName(namespace, srcBackupName)); err != nil {
+	if err := e.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionRead, rbac.ObjectName(namespace, dbClusterName)); err != nil {
 		return err
 	}
 
