@@ -270,11 +270,17 @@ func NewEnforceHandler(l *zap.SugaredLogger, basePath string, enforcer *casbin.E
 		if resource == ResourceNamespaces {
 			return true, nil
 		}
+
 		// Allow creating a restore without a name.
 		// RBAC is enforced in the individual methods.
-		if resource == ResourceDatabaseClusterRestores && name == "" && action == ActionCreate {
+		allowedObjectsForCreateWithoutName := []string{
+			ResourceDatabaseClusterRestores,
+			ResourceDatabaseClusterBackups,
+		}
+		if name == "" && action == ActionCreate && slices.Contains(allowedObjectsForCreateWithoutName, resource) {
 			return true, nil
 		}
+
 		// Listing the following objects is always allowed here,
 		// since we will filter the output of the list itself based on the permissions.
 		allowedObjectsForListing := []string{
@@ -283,6 +289,7 @@ func NewEnforceHandler(l *zap.SugaredLogger, basePath string, enforcer *casbin.E
 			ResourceBackupStorages,
 			ResourceMonitoringInstances,
 			ResourceDatabaseClusterRestores,
+			ResourceDatabaseClusterBackups,
 		}
 		if slices.Contains(allowedObjectsForListing, resource) && name == "" && action == ActionRead {
 			return true, nil
