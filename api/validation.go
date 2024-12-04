@@ -686,7 +686,7 @@ func (e *EverestServer) enforceRestoreToNewDBRBAC(
 	}
 	sourceDB := bkp.Spec.DBClusterName
 
-	if err := e.enforceDBRestoreRBAC(user, namespace, sourceBackup, sourceDB); err != nil {
+	if err := e.enforceDBRestoreRBAC(user, namespace, sourceDB); err != nil {
 		return err
 	}
 	return nil
