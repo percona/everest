@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
 )
 
@@ -27,11 +28,11 @@ type Handler interface {
 
 // DatabaseClusterHandler provides methods for handling operations on database clusters.
 type DatabaseClusterHandler interface {
-	CreateDatabaseCluster(ctx context.Context, user, namespace string, req *api.DatabaseCluster) error
-	ListDatabaseClusters(ctx context.Context, user, namespace string) (*api.DatabaseClusterList, error)
-	DeleteDatabaseCluster(ctx context.Context, user, namespace, name string, req *api.DeleteDatabaseClusterParams) error
-	UpdateDatabaseCluster(ctx context.Context, user string, req *api.DatabaseCluster) error
-	GetDatabaseCluster(ctx context.Context, user, namespace, name string) (*api.DatabaseCluster, error)
+	CreateDatabaseCluster(ctx context.Context, user string, req *everestv1alpha1.DatabaseCluster) error
+	ListDatabaseClusters(ctx context.Context, user, namespace string) (*everestv1alpha1.DatabaseClusterList, error)
+	DeleteDatabaseCluster(ctx context.Context, user, namespace, name string, delReq *api.DeleteDatabaseClusterParams) error
+	UpdateDatabaseCluster(ctx context.Context, user string, req *everestv1alpha1.DatabaseCluster) error
+	GetDatabaseCluster(ctx context.Context, user, namespace, name string) (*everestv1alpha1.DatabaseCluster, error)
 	GetDatabaseClusterCredentials(ctx context.Context, user, namespace, name string) (*api.DatabaseClusterCredential, error)
 	GetDatabaseClusterComponents(ctx context.Context, user, namespace, name string) (*api.DatabaseClusterComponents, error)
 	GetDatabaseClusterPitr(ctx context.Context, user, namespace, name string) (*api.DatabaseClusterPitr, error)
@@ -39,44 +40,44 @@ type DatabaseClusterHandler interface {
 
 // DatabaseClusterBackupHandler provides methods for handling operations on database cluster backups.
 type DatabaseClusterBackupHandler interface {
-	ListDatabaseClusterBackups(ctx context.Context, user, namespace string) (*api.DatabaseClusterBackupList, error)
-	CreateDatabaseClusterBackup(ctx context.Context, user, req *api.DatabaseClusterBackup) error
+	GetDatabaseClusterBackup(ctx context.Context, user, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error)
+	ListDatabaseClusterBackups(ctx context.Context, user, namespace string) (*everestv1alpha1.DatabaseClusterBackupList, error)
+	CreateDatabaseClusterBackup(ctx context.Context, user string, req *everestv1alpha1.DatabaseClusterBackup) error
 	DeleteDatabaseClusterBackup(ctx context.Context, user, namespace, name string) error
-	GetDatabaseClusterBackup(ctx context.Context, user, namespace, name string) (*api.DatabaseClusterBackup, error)
 }
 
 // DatabaseClusterRestoreHandler provides methods for handling operations on database cluster restores.
 type DatabaseClusterRestoreHandler interface {
-	ListDatabaseClusterRestores(ctx context.Context, user, namespace string) (*api.DatabaseClusterRestoreList, error)
-	CreateDatabaseClusterRestore(ctx context.Context, user, req *api.DatabaseClusterRestore) error
+	GetDatabaseClusterRestore(ctx context.Context, user, namespace, name string) (*everestv1alpha1.DatabaseClusterRestore, error)
+	ListDatabaseClusterRestores(ctx context.Context, user, namespace string) (*everestv1alpha1.DatabaseClusterRestoreList, error)
+	CreateDatabaseClusterRestore(ctx context.Context, user string, req *everestv1alpha1.DatabaseClusterRestore) error
 	DeleteDatabaseClusterRestore(ctx context.Context, user, namespace, name string) error
-	GetDatabaseClusterRestore(ctx context.Context, user, namespace, name string) (*api.DatabaseClusterRestore, error)
-	UpdateDatabaseClusterRestore(ctx context.Context, user string, req *api.DatabaseClusterRestore) error
+	UpdateDatabaseClusterRestore(ctx context.Context, user string, req *everestv1alpha1.DatabaseClusterRestore) error
 }
 
 // DatabaseEngineHandler provides methods for handling operations on database engines.
 type DatabaseEngineHandler interface {
-	ListDatabaseEngines(ctx context.Context, user, namespace string) (*api.DatabaseEngineList, error)
-	GetDatabaseEngine(ctx context.Context, user, namespace, name string) (*api.DatabaseEngine, error)
-	UpdateDatabaseEngine(ctx context.Context, user string, req *api.DatabaseEngine) error
+	ListDatabaseEngines(ctx context.Context, user, namespace string) (*everestv1alpha1.DatabaseEngineList, error)
+	GetDatabaseEngine(ctx context.Context, user, namespace, name string) (*everestv1alpha1.DatabaseEngine, error)
+	UpdateDatabaseEngine(ctx context.Context, user string, req *everestv1alpha1.DatabaseEngine) error
 	GetUpgradePlan(ctx context.Context, user, namespace, name string) (*api.UpgradePlan, error)
 	ApproveUpgradePlan(ctx context.Context, user, namespace string) error
 }
 
 // BackupStorageHandler provides methods for handling operations on backup storages.
 type BackupStorageHandler interface {
-	ListBackupStorages(ctx context.Context, user, namespace string) ([]*api.BackupStorage, error)
-	GetBackupStorage(ctx context.Context, user, namespace, name string) (*api.BackupStorage, error)
-	CreateBackupStorage(ctx context.Context, user string, req *api.BackupStorage) error
-	UpdateBackupStorage(ctx context.Context, user string, req *api.BackupStorage) error
+	ListBackupStorages(ctx context.Context, user, namespace string) (*everestv1alpha1.BackupStorageList, error)
+	GetBackupStorage(ctx context.Context, user, namespace, name string) (*everestv1alpha1.BackupStorage, error)
+	CreateBackupStorage(ctx context.Context, user string, req *everestv1alpha1.BackupStorage) error
+	UpdateBackupStorage(ctx context.Context, user string, req *everestv1alpha1.BackupStorage) error
 	DeleteBackupStorage(ctx context.Context, user, namespace, name string) error
 }
 
 // MonitoringInstanceHandler provides methods for handling operations on monitoring instances.
 type MonitoringInstanceHandler interface {
-	CreateMonitoringInstance(ctx context.Context, user string, req *api.MonitoringInstance) error
-	ListMonitoringInstances(ctx context.Context, user, namespaces string) ([]*api.MonitoringInstance, error)
-	GetMonitoringInstance(ctx context.Context, user, namespace, name string) (*api.MonitoringInstance, error)
-	UpdateMonitoringInstance(ctx context.Context, user string, req *api.MonitoringInstance) error
+	CreateMonitoringInstance(ctx context.Context, user string, req *everestv1alpha1.MonitoringConfig) error
+	ListMonitoringInstances(ctx context.Context, user, namespaces string) (*everestv1alpha1.MonitoringConfigList, error)
+	GetMonitoringInstance(ctx context.Context, user, namespace, name string) (*everestv1alpha1.MonitoringConfig, error)
+	UpdateMonitoringInstance(ctx context.Context, user string, req *everestv1alpha1.MonitoringConfig) error
 	DeleteMonitoringInstance(ctx context.Context, user, namespace, name string) error
 }

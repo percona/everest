@@ -3,22 +3,22 @@ package rbac
 import (
 	"context"
 
-	"github.com/percona/everest/api"
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
-func (h *rbacHandler) ListBackupStorages(ctx context.Context, user, namespace string) ([]*api.BackupStorage, error) {
+func (h *rbacHandler) ListBackupStorages(ctx context.Context, user, namespace string) (*everestv1alpha1.BackupStorageList, error) {
 	return nil, nil
 }
 
-func (h *rbacHandler) GetBackupStorage(ctx context.Context, user, namespace, name string) (*api.BackupStorage, error) {
+func (h *rbacHandler) GetBackupStorage(ctx context.Context, user, namespace, name string) (*everestv1alpha1.BackupStorage, error) {
 	return nil, nil
 }
 
-func (h *rbacHandler) CreateBackupStorage(ctx context.Context, user string, req *api.BackupStorage) error {
+func (h *rbacHandler) CreateBackupStorage(ctx context.Context, user string, req *everestv1alpha1.BackupStorage) error {
 	return nil
 }
 
-func (h *rbacHandler) UpdateBackupStorage(ctx context.Context, user string, req *api.BackupStorage) error {
+func (h *rbacHandler) UpdateBackupStorage(ctx context.Context, user string, req *everestv1alpha1.BackupStorage) error {
 	return nil
 }
 
