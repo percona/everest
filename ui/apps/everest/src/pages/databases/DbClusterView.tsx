@@ -13,15 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import AddIcon from '@mui/icons-material/Add';
-import { Box, Button, Stack } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import StatusField from 'components/status-field';
 import { useDbActions } from 'hooks/api/db-cluster/useDbActions';
 import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { type MRT_ColumnDef } from 'material-react-table';
 import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbEngineType } from 'shared-types/dbEngines.types';
 import { useDBClustersForNamespaces } from 'hooks/api/db-clusters/useDbClusters';
@@ -30,7 +29,6 @@ import {
   beautifyDbClusterStatus,
   convertDbClusterPayloadToTableFormat,
 } from './DbClusterView.utils';
-import { Messages } from './dbClusterView.messages';
 import { DbClusterTableElement } from './dbClusterView.types';
 import { ExpandedRow } from './expandedRow/ExpandedRow';
 import { LastBackup } from './lastBackup/LastBackup';
@@ -39,6 +37,7 @@ import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import DbActions from 'components/db-actions/db-actions';
 import DbActionsModals from 'components/db-actions/db-actions-modals';
 import { EmptyState } from './emptyState/emptyState';
+import CreateDbButton from './create-db-button/create-db-button';
 
 export const DbClusterView = () => {
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
@@ -207,20 +206,7 @@ export const DbClusterView = () => {
             },
           })}
           renderTopToolbarCustomActions={() =>
-            canAddCluster &&
-            tableData.length > 0 && (
-              <Button
-                size="small"
-                startIcon={<AddIcon />}
-                component={Link}
-                to="/databases/new"
-                variant="contained"
-                data-testid="add-db-cluster-button"
-                sx={{ display: 'flex' }}
-              >
-                {Messages.createDatabase}
-              </Button>
-            )
+            canAddCluster && tableData.length > 0 && <CreateDbButton />
           }
           hideExpandAllIcon
         />

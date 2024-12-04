@@ -22,6 +22,18 @@ import { DbWizardMode } from './database-form.types';
 import { DbWizardFormFields } from 'consts.ts';
 import { DbClusterPayloadToFormValues } from './database-form.utils';
 import { DbWizardType } from './database-form-schema.ts';
+import { dbEngineToDbType } from '@percona/utils';
+import { DbType } from '@percona/types';
+import { generateShortUID } from 'utils/generateShortUID.ts';
+
+const getNewDbDefaults = (dbType: DbType) => {
+  return {
+    ...DB_WIZARD_DEFAULTS,
+    dbType: dbType,
+    [DbWizardFormFields.dbName]: `${dbType}-${generateShortUID()}`,
+  };
+};
+
 export const useDatabasePageDefaultValues = (
   mode: DbWizardMode
 ): {
@@ -46,7 +58,7 @@ export const useDatabasePageDefaultValues = (
   const [defaultValues, setDefaultValues] = useState<DbWizardType>(
     // @ts-ignore
     mode === 'new'
-      ? DB_WIZARD_DEFAULTS
+      ? getNewDbDefaults(dbEngineToDbType(state?.selectedDbEngine))
       : dbClusterRequestStatus === 'success'
         ? DbClusterPayloadToFormValues(dbCluster, mode, namespace)
         : { ...DB_WIZARD_DEFAULTS, [DbWizardFormFields.dbVersion]: '' }
