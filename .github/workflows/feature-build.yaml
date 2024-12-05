@@ -35,9 +35,6 @@ on:
         required: false
         description: "How many days the artifacts will be stored in GitHub"
         default: 30
-  push:
-    branches:
-      - early-adoption-test
 
 permissions:
   contents: read
@@ -62,23 +59,12 @@ jobs:
     env:
       TOOLS_PATH: "/opt/tools/bin"
       ARTIFACTS_RETENTION_DAYS: ${{ github.event.inputs.artifacts_retention_days }}
-
       VS_BRANCH: ${{ github.event.inputs.vs_branch }}
       HELM_BRANCH: ${{ github.event.inputs.helm_branch }}
-
-      # !!! revert before merge to using inputs
-      #EVEREST_BRANCH: ${{ github.event.inputs.everest_branch }}
-      EVEREST_BRANCH: "EVEREST-1563-operator-early-adoption"
-
+      EVEREST_BRANCH: ${{ github.event.inputs.everest_branch }}
       EVEREST_OPERATOR_BRANCH: ${{ github.event.inputs.everest_operator_branch }}
-
-      # !!! revert before merge to using inputs
-      # IMAGE: ${{ github.event.inputs.upstream_operator_bundle_image }}
-      IMAGE: "docker.io/percona/percona-xtradb-cluster-operator:1.15.1-community-bundle"
-
-      # !!! revert before merge to using inputs
-      # UPSTREAM_REPO: ${{ github.event.inputs.upstream-operator }}
-      UPSTREAM_REPO: "percona-xtradb-cluster-operator"
+      IMAGE: ${{ github.event.inputs.upstream_operator_bundle_image }}
+      UPSTREAM_REPO: ${{ github.event.inputs.upstream-operator }}
 
       VS_PORT: 8081
       ARCH: ""
@@ -102,8 +88,6 @@ jobs:
           echo "OS=$(uname | awk '{print tolower($0)}')" >> $GITHUB_ENV
           echo "VS_URL=http://localhost:$VS_PORT" >> $GITHUB_ENV
           
-          # !!! revert before merge
-          # TIMESTAMP=$(date +'%Y%m%d%H%M%S')
           TIMESTAMP="20241125120500"
           V="1.10000.0-rc$TIMESTAMP"
           echo "VERSION=$V" >> $GITHUB_ENV
