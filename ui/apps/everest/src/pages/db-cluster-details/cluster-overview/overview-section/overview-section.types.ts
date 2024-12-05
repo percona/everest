@@ -7,4 +7,5 @@ export type OverviewSectionProps = {
   dataTestId?: string;
   actionButtonProps?: ButtonProps;
   editable?: boolean;
+  disabledEditTooltipText?: string;
 } & LoadableChildrenProps;
