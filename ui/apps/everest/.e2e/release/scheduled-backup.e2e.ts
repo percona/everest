@@ -120,16 +120,19 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       test(`Create cluster [${db} size ${size}]`, async ({ page, request }) => {
         expect(storageClasses.length).toBeGreaterThan(0);
 
-        await page.goto('/databases/new');
-        await page.getByTestId('toggle-button-group-input-db-type').waitFor();
-        await page.getByTestId('select-input-db-version').waitFor();
+        await page.goto('/databases');
+        await page.getByTestId('add-db-cluster-button').waitFor();
+        await page.getByTestId('add-db-cluster-button').click();
+        await page.getByTestId(`add-db-cluster-button-${db}`).click();
 
         await test.step('Populate basic information', async () => {
           await populateBasicInformation(
             page,
+            namespace,
+            clusterName,
             db,
             storageClasses[0],
-            clusterName
+            false
           );
           await moveForward(page);
         });
