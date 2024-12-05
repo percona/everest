@@ -120,34 +120,34 @@ export const useDbActions = (dbCluster: DbCluster) => {
       },
       {
         onSuccess: (_, variables) => {
-          // queryClient.setQueryData<GetDbClusterPayload | undefined>(
-          //   [DB_CLUSTERS_QUERY_KEY, variables.namespace],
-          //   (oldData) => {
-          //     if (!oldData) {
-          //       return undefined;
-          //     }
+          queryClient.setQueryData<GetDbClusterPayload | undefined>(
+            [DB_CLUSTERS_QUERY_KEY, variables.namespace],
+            (oldData) => {
+              if (!oldData) {
+                return undefined;
+              }
 
-          //     return {
-          //       ...oldData,
-          //       items: oldData.items.map((item) => {
-          //         if (item.metadata.name === variables.dbClusterName) {
-          //           return {
-          //             ...item,
-          //             status: {
-          //               ...item.status,
-          //               crVersion: item.status?.crVersion || '',
-          //               hostname: item.status?.hostname || '',
-          //               port: item.status?.port || 0,
-          //               status: DbClusterStatus.deleting,
-          //             },
-          //           };
-          //         }
+              return {
+                ...oldData,
+                items: oldData.items.map((item) => {
+                  if (item.metadata.name === variables.dbClusterName) {
+                    return {
+                      ...item,
+                      status: {
+                        ...item.status,
+                        crVersion: item.status?.crVersion || '',
+                        hostname: item.status?.hostname || '',
+                        port: item.status?.port || 0,
+                        status: DbClusterStatus.deleting,
+                      },
+                    };
+                  }
 
-          //         return item;
-          //       }),
-          //     };
-          //   }
-          // );
+                  return item;
+                }),
+              };
+            }
+          );
           queryClient.setQueryData<DbCluster>(
             [DB_CLUSTER_QUERY, dbCluster.metadata.name],
             (oldData) => {

@@ -5,7 +5,8 @@ import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbClusterContextProps } from './dbCluster.context.types';
 import { useRBACPermissions } from 'hooks/rbac';
 import { useState } from 'react';
-import { QueryObserverResult } from '@tanstack/react-query';
+import { QueryObserverResult, useQueryClient } from '@tanstack/react-query';
+import { DB_CLUSTERS_QUERY_KEY } from 'hooks';
 
 export const DbClusterContext = createContext<DbClusterContextProps>({
   dbCluster: {} as DbCluster,
@@ -30,6 +31,7 @@ export const DbClusterContextProvider = ({
   const [refetchInterval, setRefetchInterval] = useState(defaultInterval);
   const [clusterDeleted, setClusterDeleted] = useState(false);
   const isDeleting = useRef(false);
+  const queryClient = useQueryClient();
   const queryResult: QueryObserverResult<DbCluster, unknown> = useDbCluster(
     dbClusterName,
     namespace,
@@ -77,8 +79,14 @@ export const DbClusterContextProvider = ({
 
     if (isDeleting.current === true && isError) {
       setClusterDeleted(true);
+      queryClient.invalidateQueries({
+        queryKey: [DB_CLUSTERS_QUERY_KEY, namespace],
+      });
+      queryClient.refetchQueries({
+        queryKey: [DB_CLUSTERS_QUERY_KEY, namespace],
+      });
     }
-  }, [dbCluster?.status, isError]);
+  }, [dbCluster?.status, isError, namespace, queryClient]);
 
   return (
     <DbClusterContext.Provider
