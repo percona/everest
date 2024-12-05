@@ -64,7 +64,7 @@ jobs:
       EVEREST_BRANCH: ${{ github.event.inputs.everest_branch }}
       EVEREST_OPERATOR_BRANCH: ${{ github.event.inputs.everest_operator_branch }}
       IMAGE: ${{ github.event.inputs.upstream_operator_bundle_image }}
-      UPSTREAM_REPO: ${{ github.event.inputs.upstream-operator }}
+      UPSTREAM_OPERATOR: ${{ github.event.inputs.upstream_operator }}
 
       VS_PORT: 8081
       ARCH: ""
@@ -287,16 +287,16 @@ jobs:
           fi
 
           # If the feature build contains upstream upgrades
-          if [ -n "$UPSTREAM_REPO" ]; then
+          if [ -n "$UPSTREAM_OPERATOR" ]; then
             # Add a new record to the upstream veneer
-            yq e ".Stable.Bundles += {\"Image\": \"$IMAGE\"}" veneer/${UPSTREAM_REPO}.yaml > temp.yaml && mv temp.yaml veneer/${UPSTREAM_REPO}.yaml
+            yq e ".Stable.Bundles += {\"Image\": \"$IMAGE\"}" veneer/${UPSTREAM_OPERATOR}.yaml > temp.yaml && mv temp.yaml veneer/${UPSTREAM_OPERATOR}.yaml
 
             # Generate upstream catalog
-            /tmp/opm alpha render-template semver --skip-tls -o yaml < veneer/${UPSTREAM_REPO}.yaml > catalog/${UPSTREAM_REPO}/catalog.yaml
+            /tmp/opm alpha render-template semver --skip-tls -o yaml < veneer/${UPSTREAM_OPERATOR}.yaml > catalog/${UPSTREAM_OPERATOR}/catalog.yaml
 
             # Check if upstream catalog has the new image listed
-            if ! grep -q "$IMAGE$" catalog/${UPSTREAM_REPO}/catalog.yaml; then
-              echo "catalog/${UPSTREAM_REPO}/catalog.yaml does not include the version $IMAGE"
+            if ! grep -q "$IMAGE$" catalog/${UPSTREAM_OPERATOR}/catalog.yaml; then
+              echo "catalog/${UPSTREAM_OPERATOR}/catalog.yaml does not include the version $IMAGE"
               exit 1
             fi
           fi
