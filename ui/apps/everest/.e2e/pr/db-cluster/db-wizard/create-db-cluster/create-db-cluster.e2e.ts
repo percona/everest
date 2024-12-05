@@ -35,8 +35,10 @@ import {
 } from '@e2e/utils/db-wizard';
 import {
   addFirstScheduleInDBWizard,
+  checkAmountOfDbEngines,
   fillScheduleModalForm,
   openCreateScheduleDialogFromDBWizard,
+  selectDbEngine,
 } from '../db-wizard-utils';
 import { findDbAndClickActions } from '@e2e/utils/db-clusters-list';
 import { waitForInitializingState } from '@e2e/utils/table';
@@ -69,9 +71,7 @@ test.describe('DB Cluster creation', () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/databases/new');
-    await page.getByTestId('toggle-button-group-input-db-type').waitFor();
-    await page.getByTestId('select-input-db-version').waitFor();
+    await page.goto('/databases');
   });
 
   test.skip('Cluster creation with an incomplete list of DBEngines', () => {
@@ -85,19 +85,14 @@ test.describe('DB Cluster creation', () => {
     page,
   }) => {
     const expectedNodesOrder = [3, 3, 2];
-    const dbEnginesButtons = page
-      .getByTestId('toggle-button-group-input-db-type')
-      .getByRole('button');
-
+    const dbEnginesButtons = await checkAmountOfDbEngines(page);
     expect(await dbEnginesButtons.count()).toBe(3);
-    // MySQL is our default DB type
-    expect(await page.getByTestId('mysql-toggle-button')).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
+    // TODO expect all buttons available and not disabled
 
     for (let i = 0; i < 3; i++) {
       await dbEnginesButtons.nth(i).click();
+
+      await page.getByTestId('select-input-db-version').waitFor();
       expect(
         await page.getByTestId('select-input-db-version').inputValue()
       ).toBeDefined();
@@ -111,7 +106,10 @@ test.describe('DB Cluster creation', () => {
       // We click on the first button to make sure it always goes back to defaults afterwards
       await page.getByTestId('toggle-button-nodes-1').click();
 
-      await moveBack(page);
+      // We return to databases page to choose other db
+      await page.goto('/databases');
+      await page.getByTestId('add-db-cluster-button').waitFor();
+      await page.getByTestId('add-db-cluster-button').click();
     }
   });
 
@@ -123,6 +121,7 @@ test.describe('DB Cluster creation', () => {
     );
 
     expect(storageClasses.length).toBeGreaterThan(0);
+    await selectDbEngine(page, 'psmdb');
 
     await basicInformationStepCheck(
       page,
@@ -177,26 +176,26 @@ test.describe('DB Cluster creation', () => {
     expect(await page.getByTestId('text-input-db-name').inputValue()).toBe(
       dbName
     );
-    await page.getByTestId('postgresql-toggle-button').click();
-    await expect(page.getByText('Nº nodes: 2')).toBeVisible();
-    // Now we change the number of nodes
-    await page.getByTestId('button-edit-preview-resources').click();
-    await page.getByTestId('toggle-button-nodes-3').click();
-    await expect(page.getByText('PG Bouncers (3)')).toBeVisible();
-    await page.getByTestId('toggle-button-nodes-2').click();
-    // Since we changed DB type, the number of bouncers is reset and will follow the number of nodes
-    await expect(page.getByText('PG Bouncers (2)')).toBeVisible();
-    await page.getByTestId('button-edit-preview-basic-information').click();
-    // Because 2 nodes is not valid for MongoDB, the default will be picked
-    await page.getByTestId('mongodb-toggle-button').click();
-    await page
-      .getByTestId('switch-input-sharding-label')
-      .getByRole('checkbox')
-      .check();
-    await expect(page.getByText('Nº nodes: 3')).toBeVisible();
-    await page.getByTestId('button-edit-preview-backups').click();
 
-    await expect(page.getByTestId('radio-option-logical')).not.toBeVisible();
+    // TODO should we move next lines to separate PG/Mongo tests or we already have it in release folder?
+    // Now we change the number of nodes
+
+    // await page.getByTestId('button-edit-preview-resources').click();
+    // await page.getByTestId('toggle-button-nodes-3').click();
+    // await expect(page.getByText('PG Bouncers (3)')).toBeVisible();
+    // await page.getByTestId('toggle-button-nodes-2').click();
+
+    // Because 2 nodes is not valid for MongoDB, the default will be picked
+    // await page.getByTestId('mongodb-toggle-button').click();
+    // await page
+    //   .getByTestId('switch-input-sharding-label')
+    //   .getByRole('checkbox')
+    //   .check();
+    // await expect(page.getByText('Nº nodes: 3')).toBeVisible();
+
+    // await page.getByTestId('button-edit-preview-backups').click();
+
+    // await expect(page.getByTestId('radio-option-logical')).not.toBeVisible();
 
     await page.getByTestId('button-edit-preview-monitoring').click();
 
@@ -222,7 +221,6 @@ test.describe('DB Cluster creation', () => {
     const addedCluster = clusters.find(
       (cluster) => cluster.metadata.name === clusterName
     );
-
     await deleteDbClusterFn(request, addedCluster?.metadata.name, namespace);
     //TODO: Add check for PITR ones backend is ready
 
@@ -233,9 +231,11 @@ test.describe('DB Cluster creation', () => {
     expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe('4G');
     expect(addedCluster?.spec.engine.storage.size.toString()).toBe('25Gi');
     expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
-    expect(addedCluster?.spec.proxy.replicas).toBe(1);
-    expect(addedCluster?.spec.proxy.resources.cpu).toBe('1');
-    expect(addedCluster?.spec.proxy.resources.memory).toBe('2G');
+    // TODO commented, because we use only psmdb in this test
+    // expect(addedCluster?.spec.proxy.replicas).toBe(1);
+    // expect(addedCluster?.spec.proxy.resources.cpu).toBe('1');
+    // expect(addedCluster?.spec.proxy.resources.memory).toBe('2G');
+
     // expect(addedCluster?.spec.proxy.expose.ipSourceRanges).toEqual([
     //   '192.168.1.1/24',
     //   '192.168.1.0',
@@ -252,10 +252,10 @@ test.describe('DB Cluster creation', () => {
   }) => {
     expect(storageClasses.length).toBeGreaterThan(0);
 
-    const mySQLButton = page.getByTestId('mysql-toggle-button');
-    await mySQLButton.click();
-
+    await selectDbEngine(page, 'pxc');
+    // go to resources page
     await moveForward(page);
+    // go to backups page
     await moveForward(page);
     await expect(
       page.getByText('You currently do not have any backup schedules set up.')
@@ -263,6 +263,7 @@ test.describe('DB Cluster creation', () => {
     const enabledPitrCheckbox = page
       .getByTestId('switch-input-pitr-enabled-label')
       .getByRole('checkbox');
+
     await expect(enabledPitrCheckbox).not.toBeChecked();
     await expect(enabledPitrCheckbox).toBeDisabled();
     await addFirstScheduleInDBWizard(page);
@@ -376,20 +377,54 @@ test.describe('DB Cluster creation', () => {
   test('Warning should appears for schedule with the same date and storage', async ({
     page,
   }) => {
-    await page.goto('/databases');
-    await page.getByTestId('add-db-cluster-button').click();
-    await expect(
-      page.getByTestId('toggle-button-group-input-db-type')
-    ).toBeVisible();
+    expect(storageClasses.length).toBeGreaterThan(0);
+    await selectDbEngine(page, 'psmdb');
 
     // Resources Step
     await moveForward(page);
     // Backups step
     await moveForward(page);
+
     await addFirstScheduleInDBWizard(page);
     await openCreateScheduleDialogFromDBWizard(page);
     await expect(page.getByTestId('same-schedule-warning')).not.toBeVisible();
-    await fillScheduleModalForm(page, undefined, undefined, true, '1');
+    await fillScheduleModalForm(page, undefined, undefined, false, '1');
     await expect(page.getByTestId('same-schedule-warning')).toBeVisible();
+  });
+
+  test('Mongo with sharding should not pass multinode cluster creation if config servers = 1', async ({
+    page,
+  }) => {
+    expect(storageClasses.length).toBeGreaterThan(0);
+    await selectDbEngine(page, 'psmdb');
+
+    await page.getByTestId('switch-input-sharding').click();
+    await moveForward(page);
+
+    await expect(page.getByTestId(`toggle-button-routers-3`)).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+
+    await expect(page.getByTestId('shard-config-servers-3')).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+
+    await page.getByTestId('shard-config-servers-1').click();
+    expect(page.getByTestId('shard-config-servers-error')).toBeVisible();
+    expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
+
+    await page.getByTestId('toggle-button-nodes-1').click();
+    expect(page.getByTestId('shard-config-servers-error')).not.toBeVisible();
+    expect(page.getByTestId('db-wizard-continue-button')).not.toBeDisabled();
+
+    await page.getByTestId('toggle-button-nodes-3').click();
+    expect(page.getByTestId('shard-config-servers-error')).toBeVisible();
+    expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
+
+    await page.getByTestId('shard-config-servers-3').click();
+    expect(page.getByTestId('shard-config-servers-error')).not.toBeVisible();
+    expect(page.getByTestId('db-wizard-continue-button')).not.toBeDisabled();
   });
 });

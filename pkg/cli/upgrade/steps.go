@@ -101,14 +101,54 @@ func (u *Upgrade) upgradeCustomResourceDefinitions(ctx context.Context) error {
 }
 
 func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
-	// We're already using the Helm chart, directly upgrade and return.
-	if u.helmReleaseExists {
-		u.l.Info("Upgrading Helm chart")
-		return u.helmInstaller.Upgrade(ctx)
+	if !u.helmReleaseExists {
+		// We're on the legacy installation.
+		// Perform migration of the existing resources to Helm.
+		return u.migrateLegacyInstallationToHelm(ctx)
 	}
 
-	// We're on the legacy installation.
-	// Perform migration of the existing resources to Helm.
+	// First upgrade DB namespaces.
+	// This upgrade is no-op, it just updates the version metadata in helm.
+	if err := u.upgradeEverestDBNamespaceHelmCharts(ctx); err != nil {
+		return fmt.Errorf("could not upgrade DB namespaces Helm charts: %w", err)
+	}
+	// Upgrade the main chart.
+	return u.helmInstaller.Upgrade(ctx, helm.UpgradeOptions{})
+}
+
+func (u *Upgrade) upgradeEverestDBNamespaceHelmCharts(ctx context.Context) error {
+	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx)
+	if err != nil {
+		return fmt.Errorf("could not get database namespaces: %w", err)
+	}
+	for _, ns := range dbNamespaces {
+		if err := u.upgradeEverestDBNamespaceHelmChart(ctx, ns); err != nil {
+			return fmt.Errorf("could not upgrade DB namespace '%s' Helm chart: %w", ns, err)
+		}
+	}
+	return nil
+}
+
+func (u *Upgrade) upgradeEverestDBNamespaceHelmChart(ctx context.Context, namespace string) error {
+	installer := helm.Installer{
+		ReleaseName:      namespace,
+		ReleaseNamespace: namespace,
+	}
+	if err := installer.Init(u.config.KubeconfigPath, helm.ChartOptions{
+		URL:     u.config.RepoURL,
+		Name:    helm.EverestDBNamespaceChartName,
+		Version: u.upgradeToVersion,
+	}); err != nil {
+		return fmt.Errorf("could not initialize Helm installer: %w", err)
+	}
+
+	return installer.Upgrade(ctx, helm.UpgradeOptions{
+		DisableHooks: true,
+		ReuseValues:  true,
+	})
+}
+
+func (u *Upgrade) migrateLegacyInstallationToHelm(ctx context.Context) error {
 	u.l.Info("Migrating existing installation to Helm")
 	if err := u.cleanupLegacyResources(ctx); err != nil {
 		return fmt.Errorf("failed to cleanupLegacyResources: %w", err)
@@ -152,7 +192,16 @@ func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version 
 	}); err != nil {
 		return fmt.Errorf("could not initialize Helm installer: %w", err)
 	}
-	return installer.Install(ctx)
+	if err := installer.Install(ctx); err != nil {
+		return fmt.Errorf("could not install Helm chart: %w", err)
+	}
+	// This Upgrade is a no-op, howeverer, it is needed so that the existing Subscriptions and OperatorGroup in
+	// this namespace are correctly adopted by the Helm release.
+	// Running Install() first is needed to ensure that the release is created, but it does not adopt resources.
+	return installer.Upgrade(ctx, helm.UpgradeOptions{
+		DisableHooks: true,
+		ReuseValues:  true,
+	})
 }
 
 func helmValuesForDBEngines(list *everestv1alpha1.DatabaseEngineList) values.Options {
@@ -161,6 +210,7 @@ func helmValuesForDBEngines(list *everestv1alpha1.DatabaseEngineList) values.Opt
 		t := dbEngine.Spec.Type
 		vals = append(vals, fmt.Sprintf("%s=%t", t, dbEngine.Status.State == everestv1alpha1.DBEngineStateInstalled))
 	}
+	vals = append(vals, "cleanupOnUninstall=false") // uninstall command will do the clean-up on its own.
 	// TODO: figure out how to set telemetry.
 	return values.Options{Values: vals}
 }

@@ -346,8 +346,8 @@ local_resource(
 # Build the Everest operator manager locally to take advantage of the go cache
 local_resource(
   'operator-build',
-  'make -C %s fmt; CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -C %s -o ./bin/manager ./main.go' % (operator_dir, operator_dir),
-  deps=['%s/api' % operator_dir, '%s/controllers' % operator_dir, '%s/main.go' % operator_dir],
+  'make -C %s fmt; CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -C %s -o ./bin/manager ./cmd/main.go' % (operator_dir, operator_dir),
+  deps=['%s/api' % operator_dir, '%s/controllers' % operator_dir, '%s/cmd/main.go' % operator_dir],
   labels=["everest-operator"]
 )
 
@@ -382,8 +382,8 @@ k8s_resource(
     'everest-operator-leader-election-role:role:%s' % everest_namespace,
     'everest-operator-local:rolebinding:%s' % everest_namespace,
     'everest-operator-metrics-reader:clusterrole',
-    'everest-operator-proxy-role:clusterrole',
-    'everest-operator-proxy-rolebinding:clusterrolebinding',
+    'everest-operator-metrics-auth-role:clusterrole',
+    'everest-operator-metrics-auth-rolebinding:clusterrolebinding',
     'everest-operator-manager-role:clusterrole',
     'everest-operator-leader-election-rolebinding:rolebinding',
     'everest-operator-manager-rolebinding:clusterrolebinding'

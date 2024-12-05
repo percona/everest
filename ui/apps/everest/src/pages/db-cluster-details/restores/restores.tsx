@@ -128,7 +128,8 @@ const Restores = () => {
           const menuItems = RestoreActionButtons(
             row,
             handleDeleteBackup,
-            namespace
+            namespace,
+            dbClusterName!
           );
           return <TableActionsMenu menuItems={menuItems} />;
         }}

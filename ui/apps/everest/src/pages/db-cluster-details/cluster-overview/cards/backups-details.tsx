@@ -36,6 +36,8 @@ import { format } from 'date-fns';
 import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { PitrEditModal } from './pitr-details/edit-pitr';
+import { dbEngineToDbType } from '@percona/utils';
+import { DbType } from '@percona/types';
 
 export const BackupsDetails = ({
   dbClusterName,
@@ -53,6 +55,11 @@ export const BackupsDetails = ({
     DbClusterStatus.deleting,
   ].includes(dbCluster?.status?.status!);
   const editable = canUpdateDb && !restoringOrDeleting;
+
+  const dbType = dbEngineToDbType(dbCluster!.spec.engine.type);
+  const backupsEnabled = (schedules || []).length > 0;
+  const pitrDisabled = !backupsEnabled || dbType === DbType.Postresql;
+
   const [openEditModal, setOpenEditModal] = useState(false);
   const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
   const { data: backups = [] } = useDbBackups(dbClusterName!, namespace!, {
@@ -202,11 +209,14 @@ export const BackupsDetails = ({
             onClick: () => {
               setOpenEditModal(true);
             },
+            'data-testid': 'edit-pitr-button',
           }}
-          editable={editable}
+          editable={editable && !pitrDisabled}
+          disabledEditTooltipText={Messages.titles.createScheduleToEnable}
         >
           {/*// TODO EVEREST-1066 the width of the columns on the layouts in different places is limited by a different number (but not by the content), a discussion with Design is required*/}
           <OverviewSectionRow
+            dataTestId="pitr-status"
             labelProps={{ minWidth: '126px' }}
             label={Messages.fields.status}
             contentString={
@@ -215,6 +225,7 @@ export const BackupsDetails = ({
           />
           {showStorage && (
             <OverviewSectionRow
+              dataTestId="backup-storage"
               labelProps={{ minWidth: '126px' }}
               label={Messages.fields.backupStorages}
               contentString={pitrStorageName}
