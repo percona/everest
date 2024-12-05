@@ -75,12 +75,14 @@ export const populateBasicInformation = async (
   clusterName: string,
   dbType: string,
   storageClass: string,
-  mongoSharding: boolean = false,
+  mongoSharding: boolean = false
 ) => {
   if (namespace) {
     await page.getByTestId('k8s-namespace-autocomplete').click();
     await page.getByRole('option', { name: namespace }).click();
-    await expect(page.getByTestId('text-input-k8s-namespace')).toHaveValue(namespace);
+    await expect(page.getByTestId('text-input-k8s-namespace')).toHaveValue(
+      namespace
+    );
   }
 
   await page.getByTestId('text-input-db-name').fill(clusterName);
