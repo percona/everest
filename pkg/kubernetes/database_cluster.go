@@ -49,7 +49,10 @@ func (k *Kubernetes) DeleteDatabaseClusters(ctx context.Context, namespace strin
 	}
 	if list != nil && len(list.Items) > 0 {
 		// We increase the timeout if there's too many DB clusters.
-		timeout = pollTimeout * time.Duration(len(list.Items)/dbsCountTimeoutMultiply)
+		newTimeout := pollTimeout * time.Duration(len(list.Items)/dbsCountTimeoutMultiply)
+		if newTimeout > timeout {
+			timeout = newTimeout
+		}
 	}
 
 	k.l.Debugf("Setting DB cluster removal timeout to %s", timeout)
