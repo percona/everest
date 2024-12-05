@@ -245,6 +245,7 @@ export const ResourcesDetails = ({
           handleCloseModal={() => setOpenEditModal(false)}
           onSubmit={onSubmit}
           defaultValues={{
+            dbType,
             cpu: cpuParser(cpu.toString() || '0'),
             disk: parsedDiskValues.value,
             diskUnit: parsedDiskValues.originalUnit,

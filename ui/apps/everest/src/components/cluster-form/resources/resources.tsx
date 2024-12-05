@@ -543,7 +543,7 @@ const ResourcesForm = ({
 
   useEffect(() => {
     trigger();
-  }, [numberOfNodes, customNrOfNodes, trigger]);
+  }, [numberOfNodes, customNrOfNodes, trigger, numberOfProxies]);
 
   // TODO test the following:
   // when in restore mode, the number of shards should be disabled

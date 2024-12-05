@@ -395,9 +395,6 @@ test.describe('DB Cluster creation', () => {
   test('Mongo with sharding should not pass multinode cluster creation if config servers = 1', async ({
     page,
   }) => {
-    await page.pause();
-    const clusterName = 'mongo-one-config-server';
-
     expect(storageClasses.length).toBeGreaterThan(0);
     await selectDbEngine(page, 'psmdb');
 
