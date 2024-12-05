@@ -71,18 +71,28 @@ export const goToLastAndSubmit = async (page: Page) => {
  */
 export const populateBasicInformation = async (
   page: Page,
+  namespace: string,
+  clusterName: string,
   dbType: string,
   storageClass: string,
-  clusterName: string
+  mongoSharding: boolean = false,
 ) => {
+  if (namespace) {
+    await page.getByTestId('k8s-namespace-autocomplete').click();
+    await page.getByRole('option', { name: namespace }).click();
+    await expect(page.getByTestId('text-input-k8s-namespace')).toHaveValue(namespace);
+  }
+
   await page.getByTestId('text-input-db-name').fill(clusterName);
 
-  if (dbType == 'psmdb') {
-    await page.getByTestId('mongodb-toggle-button').click();
-  } else if (dbType == 'pxc') {
-    await page.getByTestId('mysql-toggle-button').click();
-  } else if (dbType == 'postgresql') {
-    await page.getByTestId('postgresql-toggle-button').click();
+  if (dbType === 'psmdb') {
+    await expect(page.getByText('Sharded Cluster')).toBeVisible();
+    await expect(page.getByTestId('switch-input-sharding')).toBeVisible();
+
+    if (mongoSharding) {
+      await page.getByTestId('switch-input-sharding').click();
+      await expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
+    }
   }
 };
 
