@@ -209,12 +209,14 @@ export const BackupsDetails = ({
             onClick: () => {
               setOpenEditModal(true);
             },
+            'data-testid': 'edit-pitr-button',
           }}
           editable={editable && !pitrDisabled}
           disabledEditTooltipText={Messages.titles.createScheduleToEnable}
         >
           {/*// TODO EVEREST-1066 the width of the columns on the layouts in different places is limited by a different number (but not by the content), a discussion with Design is required*/}
           <OverviewSectionRow
+            dataTestId="pitr-status"
             labelProps={{ minWidth: '126px' }}
             label={Messages.fields.status}
             contentString={
@@ -223,6 +225,7 @@ export const BackupsDetails = ({
           />
           {showStorage && (
             <OverviewSectionRow
+              dataTestId="backup-storage"
               labelProps={{ minWidth: '126px' }}
               label={Messages.fields.backupStorages}
               contentString={pitrStorageName}

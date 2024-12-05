@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { storageLocationScheduleFormSchema } from 'components/schedule-form-dialog/schedule-form/schedule-form-schema';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { z } from 'zod';
 
@@ -32,14 +33,7 @@ export const pitrEditDialogDefaultValues = (
 export const pitrEditDialogPropsSchema = () =>
   z.object({
     [PitrEditFields.enabled]: z.boolean(),
-    [PitrEditFields.storageLocation]: z
-      .string()
-      .or(
-        z.object({
-          name: z.string(),
-        })
-      )
-      .nullable(),
+    ...storageLocationScheduleFormSchema('pitr'),
   });
 
 export interface PitrEditModalProps {

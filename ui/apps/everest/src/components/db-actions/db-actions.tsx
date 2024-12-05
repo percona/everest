@@ -16,18 +16,13 @@
 import { useState } from 'react';
 import { Box, Button, IconButton, Menu, MenuItem } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import {
-  BorderColor,
-  PauseCircleOutline,
-  DeleteOutline,
-} from '@mui/icons-material';
+import { PauseCircleOutline, DeleteOutline } from '@mui/icons-material';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { DbActionsProps } from './db-actions.types';
 import { useRBACPermissions } from 'hooks/rbac';
-import { Link } from 'react-router-dom';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { Messages } from './db-actions.messages';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
@@ -131,18 +126,6 @@ export const DbActions = ({
           'aria-labelledby': 'row-actions-button',
         }}
       >
-        {canUpdate && (
-          <MenuItem
-            disabled={restoring || deleting}
-            key={0}
-            component={Link}
-            to="/databases/edit"
-            state={{ selectedDbCluster: dbClusterName, namespace }}
-            sx={sx}
-          >
-            <BorderColor fontSize="small" /> {Messages.menuItems.edit}
-          </MenuItem>
-        )}
         {canUpdate && (
           <MenuItem
             disabled={restoring || deleting}
