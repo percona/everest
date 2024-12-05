@@ -18,6 +18,7 @@ package kubernetes
 
 import (
 	"context"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -25,6 +26,8 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
+
+const dbsCountTimeoutMultiply = 3
 
 // ListDatabaseClusters returns list of managed database clusters.
 func (k *Kubernetes) ListDatabaseClusters(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
@@ -39,7 +42,19 @@ func (k *Kubernetes) GetDatabaseCluster(ctx context.Context, namespace, name str
 // DeleteDatabaseClusters deletes all database clusters in provided namespace.
 // This function will wait until all clusters are deleted.
 func (k *Kubernetes) DeleteDatabaseClusters(ctx context.Context, namespace string) error {
-	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
+	timeout := pollTimeout
+	list, err := k.ListDatabaseClusters(ctx, namespace)
+	if err != nil {
+		k.l.Debugf("Could not list db clusters: %s", err)
+	}
+	if list != nil && len(list.Items) > 0 {
+		// We increase the timeout if there's too many DB clusters.
+		timeout = pollTimeout * time.Duration(len(list.Items)/dbsCountTimeoutMultiply)
+	}
+
+	k.l.Debugf("Setting DB cluster removal timeout to %s", timeout)
+
+	return wait.PollUntilContextTimeout(ctx, pollInterval, timeout, true, func(ctx context.Context) (bool, error) {
 		list, err := k.ListDatabaseClusters(ctx, namespace)
 		if err != nil {
 			return false, err
