@@ -1,7 +1,7 @@
 import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
-import React, { createContext } from 'react';
+import React, { createContext, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { DbCluster } from 'shared-types/dbCluster.types';
+import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbClusterContextProps } from './dbCluster.context.types';
 import { useRBACPermissions } from 'hooks/rbac';
 import { useState } from 'react';
@@ -15,6 +15,7 @@ export const DbClusterContext = createContext<DbClusterContextProps>({
   canUpdateMonitoring: false,
   canReadCredentials: false,
   canUpdateDb: false,
+  clusterDeleted: false,
   temporarilyIncreaseInterval: () => {},
   queryResult: {} as QueryObserverResult<DbCluster, unknown>,
 });
@@ -27,16 +28,19 @@ export const DbClusterContextProvider = ({
   const { dbClusterName = '', namespace = '' } = useParams();
   const defaultInterval = 5 * 1000;
   const [refetchInterval, setRefetchInterval] = useState(defaultInterval);
+  const [clusterDeleted, setClusterDeleted] = useState(false);
+  const isDeleting = useRef(false);
   const queryResult: QueryObserverResult<DbCluster, unknown> = useDbCluster(
     dbClusterName,
     namespace,
     {
-      enabled: !!namespace && !!dbClusterName,
+      enabled: !!namespace && !!dbClusterName && !clusterDeleted,
       refetchInterval: refetchInterval,
+      retry: false,
     }
   );
 
-  const { data: dbCluster, isLoading } = queryResult;
+  const { data: dbCluster, isLoading, isError } = queryResult;
 
   const temporarilyIncreaseInterval = (
     interval: number,
@@ -63,6 +67,19 @@ export const DbClusterContextProvider = ({
     `${dbCluster?.metadata.namespace}/${dbCluster?.metadata.name}`
   );
 
+  useEffect(() => {
+    if (
+      dbCluster?.status &&
+      dbCluster?.status.status === DbClusterStatus.deleting
+    ) {
+      isDeleting.current = true;
+    }
+
+    if (isDeleting.current === true && isError) {
+      setClusterDeleted(true);
+    }
+  }, [dbCluster?.status, isError]);
+
   return (
     <DbClusterContext.Provider
       value={{
@@ -73,6 +90,7 @@ export const DbClusterContextProvider = ({
         canUpdateMonitoring,
         canUpdateDb,
         canReadCredentials,
+        clusterDeleted,
         temporarilyIncreaseInterval,
         queryResult,
       }}
