@@ -27,8 +27,11 @@ export const EmptyStateNamespaces = () => {
           variant="contained"
           sx={{ display: 'flex' }}
           onClick={() => {
-            // TODO: change link when it's ready
-            window.open('https://hubs.ly/Q02Rt6pG0', '_blank', 'noopener');
+            window.open(
+              'https://docs.percona.com/everest/administer/manage_namespaces.html',
+              '_blank',
+              'noopener'
+            );
           }}
           endIcon={<ArrowOutward />}
         >
