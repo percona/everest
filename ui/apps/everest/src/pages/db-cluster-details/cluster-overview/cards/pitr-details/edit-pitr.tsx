@@ -47,8 +47,6 @@ export const PitrEditModal = ({
 
   const backupStorageName = dbCluster.spec.backup?.pitr?.backupStorageName;
 
-  const pitrDisabled = !backupsEnabled || dbType === DbType.Postresql;
-
   const onSubmit: SubmitHandler<PitrEditModalFormType> = ({
     enabled,
     storageLocation,
@@ -82,9 +80,6 @@ export const PitrEditModal = ({
           dbType,
           schedules[0]?.backupStorageName || ''
         )}
-        switchFieldProps={{
-          disabled: pitrDisabled,
-        }}
         formControlLabelProps={{
           sx: {
             mt: 1,

@@ -9,6 +9,7 @@ import { operatorUpgradePlanQueryFn } from 'hooks/api/db-engines';
 import { Messages } from './namespaces.messages';
 import { OperatorCell } from './OperatorCell';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
+import { EmptyStateNamespaces } from 'pages/common/empty-state/namespaces';
 
 export const Namespaces = () => {
   const { results: rawDbEngines } = useDBEnginesForNamespaces();
@@ -81,6 +82,7 @@ export const Namespaces = () => {
       <Table
         tableName="namespaces"
         noDataMessage={Messages.noDataMessage}
+        emptyState={<EmptyStateNamespaces />}
         hideExpandAllIcon
         state={{
           isLoading: isFetching,
