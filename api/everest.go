@@ -56,7 +56,8 @@ type EverestServer struct {
 	config        *config.EverestConfig
 	l             *zap.SugaredLogger
 	echo          *echo.Echo
-	kubeClient    *kubernetes.Kubernetes
+	k8sProxier    k8sProxier
+	kubeClient    kubernetes.KubernetesConnector
 	sessionMgr    *session.Manager
 	attemptsStore *RateLimiterMemoryStore
 	rbacEnforcer  casbin.IEnforcer
@@ -80,9 +81,13 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
 	}
 	e := &EverestServer{
-		config:        c,
-		l:             l,
-		echo:          echoServer,
+		config: c,
+		l:      l,
+		echo:   echoServer,
+		k8sProxier: &k8sProxy{
+			kubeClient: kubeClient,
+			l:          l,
+		},
 		kubeClient:    kubeClient,
 		sessionMgr:    sessMgr,
 		attemptsStore: store,

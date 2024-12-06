@@ -71,7 +71,7 @@ const (
 // This informer reloads the policy whenever the ConfigMap is updated.
 func refreshEnforcerInBackground(
 	ctx context.Context,
-	kubeClient *kubernetes.Kubernetes,
+	kubeClient kubernetes.KubernetesConnector,
 	enforcer *casbin.Enforcer,
 	l *zap.SugaredLogger,
 ) error {
@@ -139,7 +139,7 @@ func NewEnforcerFromFilePath(filePath string) (*casbin.Enforcer, error) {
 }
 
 // NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
-func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+func NewEnforcer(ctx context.Context, kubeClient kubernetes.KubernetesConnector, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
 	cmReq := types.NamespacedName{
 		Namespace: common.SystemNamespace,
 		Name:      common.EverestRBACConfigMapName,

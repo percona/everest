@@ -1334,7 +1334,7 @@ func (e *EverestServer) validateDatabaseClusterBackup(ctx context.Context, names
 	return nil
 }
 
-func validatePGReposForBackup(ctx context.Context, db everestv1alpha1.DatabaseCluster, kubeClient *kubernetes.Kubernetes, newBackup everestv1alpha1.DatabaseClusterBackup) error {
+func validatePGReposForBackup(ctx context.Context, db everestv1alpha1.DatabaseCluster, kubeClient kubernetes.KubernetesConnector, newBackup everestv1alpha1.DatabaseClusterBackup) error {
 	if db.Spec.Engine.Type != everestv1alpha1.DatabaseEnginePostgresql {
 		return nil
 	}
@@ -1365,7 +1365,7 @@ func validatePGReposForBackup(ctx context.Context, db everestv1alpha1.DatabaseCl
 	return nil
 }
 
-func validateDatabaseClusterRestore(ctx context.Context, namespace string, restore *DatabaseClusterRestore, kubeClient *kubernetes.Kubernetes) error {
+func validateDatabaseClusterRestore(ctx context.Context, namespace string, restore *DatabaseClusterRestore, kubeClient kubernetes.KubernetesConnector) error {
 	if restore == nil {
 		return errors.New("restore cannot be empty")
 	}

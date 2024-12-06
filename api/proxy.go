@@ -34,6 +34,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/rest"
+
+	"github.com/percona/everest/pkg/kubernetes"
 )
 
 var (
@@ -56,14 +58,32 @@ var (
 
 type apiResponseTransformerFn func(in []byte) ([]byte, error)
 
+type k8sProxy struct {
+	kubeClient *kubernetes.Kubernetes
+	l          *zap.SugaredLogger
+}
+
+type k8sProxier interface {
+	proxyKubernetes(
+		ctx echo.Context, namespace, kind, name string,
+		respTransformers ...apiResponseTransformerFn,
+	) error
+}
+
+var _ k8sProxier = &k8sProxy{} // Check interface.
+
 func (e *EverestServer) proxyKubernetes(
-	ctx echo.Context,
-	namespace,
-	kind,
-	name string,
+	ctx echo.Context, namespace, kind, name string,
 	respTransformers ...apiResponseTransformerFn,
 ) error {
-	config := e.kubeClient.Config()
+	return e.k8sProxier.proxyKubernetes(ctx, namespace, kind, name, respTransformers...)
+}
+
+func (k *k8sProxy) proxyKubernetes(
+	ctx echo.Context, namespace, kind, name string,
+	respTransformers ...apiResponseTransformerFn,
+) error {
+	config := k.kubeClient.Config()
 	reverseProxy := httputil.NewSingleHostReverseProxy(
 		&url.URL{
 			Host:   strings.TrimPrefix(config.Host, "https://"),
@@ -71,21 +91,35 @@ func (e *EverestServer) proxyKubernetes(
 		})
 	transport, err := rest.TransportFor(config)
 	if err != nil {
-		e.l.Error(err)
+		k.l.Error(err)
 		return ctx.JSON(http.StatusBadRequest, Error{
 			Message: pointer.ToString("Could not create REST transport"),
 		})
 	}
 	reverseProxy.Transport = transport
-	reverseProxy.ErrorHandler = everestErrorHandler(e.l)
+	reverseProxy.ErrorHandler = everestErrorHandler(k.l)
+	reverseProxy.ModifyResponse = modifiersFn(k.l, respTransformers...)
+	req := ctx.Request()
+	// All requests to Everest are protected by authorization.
+	// We need to remove the header, otherwise Kubernetes returns 401 unauthorized response.
+	req.Header.Del("Authorization")
+	if namespace == "" {
+		namespace = k.kubeClient.Namespace()
+	}
+	req.URL.Path = buildProxiedURL(namespace, kind, name)
+	reverseProxy.ServeHTTP(ctx.Response(), req)
+	return nil
+}
+
+func modifiersFn(l *zap.SugaredLogger, respTransformers ...apiResponseTransformerFn) func(resp *http.Response) error {
 	modifiers := make([]func(*http.Response) error, 0, len(respTransformers)+1)
-	modifiers = append(modifiers, everestResponseModifier(e.l)) //nolint:bodyclose
+	modifiers = append(modifiers, everestResponseModifier(l)) //nolint:bodyclose
 	for _, fn := range respTransformers {
 		modifiers = append(modifiers, func(r *http.Response) error { //nolint:bodyclose
-			return runResponseModifier(r, e.l, fn)
+			return runResponseModifier(r, l, fn)
 		})
 	}
-	reverseProxy.ModifyResponse = func(resp *http.Response) error {
+	return func(resp *http.Response) error {
 		for _, fn := range modifiers {
 			if err := fn(resp); err != nil {
 				return err
@@ -93,16 +127,6 @@ func (e *EverestServer) proxyKubernetes(
 		}
 		return nil
 	}
-	req := ctx.Request()
-	// All requests to Everest are protected by authorization.
-	// We need to remove the header, otherwise Kubernetes returns 401 unauthorized response.
-	req.Header.Del("Authorization")
-	if namespace == "" {
-		namespace = e.kubeClient.Namespace()
-	}
-	req.URL.Path = buildProxiedURL(namespace, kind, name)
-	reverseProxy.ServeHTTP(ctx.Response(), req)
-	return nil
 }
 
 func buildProxiedURL(namespace, kind, name string) string {

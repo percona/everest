@@ -13,6 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rbac
+package api
 
-//go:generate ../../bin/mockery --name=IEnforcer --case=snake --srcpkg=github.com/casbin/casbin/v2 --with-expecter=true
+//go:generate ../bin/mockery --name=k8sProxier --case=snake --inpackage --with-expecter=true

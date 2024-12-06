@@ -15,5 +15,5 @@
 
 package kubernetes
 
-//go:generate ../../bin/ifacemaker -f accounts.go -f backup_storage.go -f configmap.go -f database_engine.go -f deployment.go -f install_plan.go -f kubernetes.go -f monitoring_config.go -f namespace.go -f operator.go -f jwt.go -f oidc.go -f secret.go -s Kubernetes -i KubernetesConnector -p kubernetes -o kubernetes_interface.go
-//go:generate ../../bin/mockery --name=KubernetesConnector --case=snake --inpackage
+//go:generate ../../bin/ifacemaker -f accounts.go -f backup_storage.go -f configmap.go -f container.go -f database_cluster_backup.go -f database_cluster_restore.go -f database_cluster.go -f database_engine.go -f deployment.go -f install_plan.go -f jwt.go -f kubernetes.go -f monitoring_config.go -f namespace.go -f node.go -f oidc.go -f operator.go -f pod.go -f resources.go -f role.go -f secret.go -f service_account.go -f storage.go -s Kubernetes -i KubernetesConnector -p kubernetes -o kubernetes_interface.go
+//go:generate ../../bin/mockery --name=KubernetesConnector --case=snake --inpackage --with-expecter=true

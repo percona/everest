@@ -33,7 +33,7 @@ import (
 // Adapter is the ConfigMap adapter for Casbin.
 // It can load policy from ConfigMap and save policy to ConfigMap.
 type Adapter struct {
-	kubeClient     *kubernetes.Kubernetes
+	kubeClient     kubernetes.KubernetesConnector
 	namespacedName types.NamespacedName
 	l              *zap.SugaredLogger
 }
@@ -41,7 +41,7 @@ type Adapter struct {
 // New constructs a new adapter that manages a policy inside a ConfigMap.
 func New(
 	l *zap.SugaredLogger,
-	kubeClient *kubernetes.Kubernetes,
+	kubeClient kubernetes.KubernetesConnector,
 	namespacedName types.NamespacedName,
 ) *Adapter {
 	return &Adapter{
