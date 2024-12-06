@@ -14,6 +14,8 @@ import { getExpectedOperatorVersions } from '@e2e/upgrade/helper';
 let namespace: string;
 
 test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
+  test.describe.configure({ timeout: 720000 });
+
   test.beforeAll(async ({ request }) => {
     const token = await getTokenFromLocalStorage();
     [namespace] = await getNamespacesFn(token, request);

@@ -1,26 +1,28 @@
 import { expect, test } from '@playwright/test';
 import { createDbClusterFn } from '@e2e/utils/db-cluster';
-import { mongoDBCluster, postgresDBCluster } from './testData';
+import { pxcDBCluster, mongoDBCluster, postgresDBCluster } from './testData';
 import { getDBClustersList } from '@e2e/utils/db-clusters-list';
 import { TIMEOUTS } from '@e2e/constants';
 
 test.describe.configure({ retries: 0 });
+test.describe.configure({ timeout: 720000 });
+
 test(
   'Pre upgrade setup',
   { tag: '@pre-upgrade' },
   async ({ page, request }) => {
-    // await createDbClusterFn(request, {
-    //   dbName: psDBCluster.name,
-    //   dbType: 'mysql',
-    //   numberOfNodes: psDBCluster.numberOfNodes,
-    //   cpu: psDBCluster.cpu,
-    //   disk: psDBCluster.disk,
-    //   memory: psDBCluster.memory,
-    //   externalAccess: psDBCluster.externalAccess,
-    //   sourceRanges: psDBCluster.sourceRanges,
-    // });
+    await test.step('Create DB clusters', async () => {
+      await createDbClusterFn(request, {
+        dbName: pxcDBCluster.name,
+        dbType: 'mysql',
+        numberOfNodes: pxcDBCluster.numberOfNodes,
+        cpu: pxcDBCluster.cpu,
+        disk: pxcDBCluster.disk,
+        memory: pxcDBCluster.memory,
+        externalAccess: pxcDBCluster.externalAccess,
+        //sourceRanges: pxcDBCluster.sourceRanges,
+      });
 
-    await test.step('Create DB clusers', async () => {
       await createDbClusterFn(request, {
         dbName: mongoDBCluster.name,
         dbType: 'mongodb',
