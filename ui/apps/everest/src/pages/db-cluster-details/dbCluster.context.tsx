@@ -71,7 +71,6 @@ export const DbClusterContextProvider = ({
   );
 
   useEffect(() => {
-    const axiosError = error as AxiosError;
     if (
       dbCluster?.status &&
       dbCluster?.status.status === DbClusterStatus.deleting
@@ -80,6 +79,7 @@ export const DbClusterContextProvider = ({
     }
 
     if (isDeleting.current === true && error) {
+      const axiosError = error as AxiosError;
       const errorStatus = axiosError.response ? axiosError.response.status : 0;
       setClusterDeleted(errorStatus === 404);
       queryClient.invalidateQueries({
