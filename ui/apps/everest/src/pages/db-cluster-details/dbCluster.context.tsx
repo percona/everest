@@ -7,6 +7,7 @@ import { useRBACPermissions } from 'hooks/rbac';
 import { useState } from 'react';
 import { QueryObserverResult, useQueryClient } from '@tanstack/react-query';
 import { DB_CLUSTERS_QUERY_KEY } from 'hooks';
+import { AxiosError } from 'axios';
 
 export const DbClusterContext = createContext<DbClusterContextProps>({
   dbCluster: {} as DbCluster,
@@ -42,7 +43,7 @@ export const DbClusterContextProvider = ({
     }
   );
 
-  const { data: dbCluster, isLoading, isError } = queryResult;
+  const { data: dbCluster, isLoading, error } = queryResult;
 
   const temporarilyIncreaseInterval = (
     interval: number,
@@ -77,8 +78,9 @@ export const DbClusterContextProvider = ({
       isDeleting.current = true;
     }
 
-    if (isDeleting.current === true && isError) {
-      setClusterDeleted(true);
+    if (isDeleting.current === true && error) {
+      const errorStatus = (error as AxiosError).response?.status;
+      setClusterDeleted(errorStatus === 404);
       queryClient.invalidateQueries({
         queryKey: [DB_CLUSTERS_QUERY_KEY, namespace],
       });
@@ -86,7 +88,7 @@ export const DbClusterContextProvider = ({
         queryKey: [DB_CLUSTERS_QUERY_KEY, namespace],
       });
     }
-  }, [dbCluster?.status, isError, namespace, queryClient]);
+  }, [dbCluster?.status, error, namespace, queryClient]);
 
   return (
     <DbClusterContext.Provider
