@@ -145,8 +145,8 @@ export const DbClusterDetails = () => {
         <Dialog open>
           <DialogTitle>Database deleted</DialogTitle>
           <DialogContent>
-            The database {dbClusterName} has been deleted successfully. This
-            action is irreversible, and all associated data is permanently
+            The database <b>{dbClusterName}</b> has been deleted successfully.
+            This action is irreversible, and all associated data is permanently
             removed.
           </DialogContent>
           <DialogActions>
