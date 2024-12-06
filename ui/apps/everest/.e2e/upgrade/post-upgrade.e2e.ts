@@ -14,13 +14,15 @@ import { getExpectedOperatorVersions } from '@e2e/upgrade/helper';
 let namespace: string;
 
 test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
+  test.describe.configure({ timeout: TIMEOUTS.FifteenMinutes });
+
   test.beforeAll(async ({ request }) => {
     const token = await getTokenFromLocalStorage();
     [namespace] = await getNamespacesFn(token, request);
   });
 
   test('Verify upgrade.log file', async () => {
-    const filePath = `${everestdir}/ui/apps/everest/.e2e/upgrade.log`;
+    const filePath = `/tmp/everest-upgrade.log`;
     const data = fs.readFileSync(filePath, 'utf8');
 
     const expectedText = expectedEverestUpgradeLog();
