@@ -1,15 +1,4 @@
-import {
-  Alert,
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Skeleton,
-  Tab,
-  Tabs,
-} from '@mui/material';
+import { Alert, Box, Skeleton, Tab, Tabs } from '@mui/material';
 import {
   Link,
   Outlet,
@@ -29,6 +18,7 @@ import StatusField from 'components/status-field';
 import DbActions from 'components/db-actions/db-actions';
 import { Messages } from './db-cluster-details.messages';
 import { useRBACPermissionRoute } from 'hooks/rbac';
+import DeletedDbDialog from './deleted-db-dialog';
 
 export const DbClusterDetails = () => {
   const { dbClusterName = '' } = useParams();
@@ -141,21 +131,7 @@ export const DbClusterDetails = () => {
         )}
         <Outlet />
       </Box>
-      {clusterDeleted && (
-        <Dialog open>
-          <DialogTitle>Database deleted</DialogTitle>
-          <DialogContent>
-            The database <b>{dbClusterName}</b> has been deleted successfully.
-            This action is irreversible, and all associated data is permanently
-            removed.
-          </DialogContent>
-          <DialogActions>
-            <Button variant="contained" onClick={() => navigate('/databases')}>
-              Go to DB list
-            </Button>
-          </DialogActions>
-        </Dialog>
-      )}
+      {clusterDeleted && <DeletedDbDialog dbClusterName={dbClusterName} />}
     </>
   );
 };
