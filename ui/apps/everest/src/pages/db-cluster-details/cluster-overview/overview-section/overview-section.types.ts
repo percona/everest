@@ -9,4 +9,5 @@ export type OverviewSectionProps = {
     'data-testid'?: string;
   };
   editable?: boolean;
+  disabledEditTooltipText?: string;
 } & LoadableChildrenProps;

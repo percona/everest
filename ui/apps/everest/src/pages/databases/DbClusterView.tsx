@@ -34,8 +34,9 @@ import { LastBackup } from './lastBackup/LastBackup';
 import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import DbActions from 'components/db-actions/db-actions';
-import { EmptyState } from './emptyState/emptyState';
 import CreateDbButton from './create-db-button/create-db-button';
+import { EmptyStateDatabases } from 'pages/common/empty-state/databases';
+import { EmptyStateNamespaces } from 'pages/common/empty-state/namespaces';
 
 export const DbClusterView = () => {
   const { data: namespaces = [], isLoading: loadingNamespaces } =
@@ -149,7 +150,13 @@ export const DbClusterView = () => {
       <Box sx={{ width: '100%' }}>
         <Table
           tableName="dbClusterView"
-          emptyState={<EmptyState />}
+          emptyState={
+            namespaces.length > 0 ? (
+              <EmptyStateDatabases />
+            ) : (
+              <EmptyStateNamespaces />
+            )
+          }
           state={{ isLoading: dbClustersLoading || loadingNamespaces }}
           columns={columns}
           data={tableData}
