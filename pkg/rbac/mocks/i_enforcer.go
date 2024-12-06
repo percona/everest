@@ -16,9 +16,46 @@ type IEnforcer struct {
 	mock.Mock
 }
 
+type IEnforcer_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *IEnforcer) EXPECT() *IEnforcer_Expecter {
+	return &IEnforcer_Expecter{mock: &_m.Mock}
+}
+
 // AddFunction provides a mock function with given fields: name, function
 func (_m *IEnforcer) AddFunction(name string, function govaluate.ExpressionFunction) {
 	_m.Called(name, function)
+}
+
+// IEnforcer_AddFunction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddFunction'
+type IEnforcer_AddFunction_Call struct {
+	*mock.Call
+}
+
+// AddFunction is a helper method to define mock.On call
+//   - name string
+//   - function govaluate.ExpressionFunction
+func (_e *IEnforcer_Expecter) AddFunction(name interface{}, function interface{}) *IEnforcer_AddFunction_Call {
+	return &IEnforcer_AddFunction_Call{Call: _e.mock.On("AddFunction", name, function)}
+}
+
+func (_c *IEnforcer_AddFunction_Call) Run(run func(name string, function govaluate.ExpressionFunction)) *IEnforcer_AddFunction_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(govaluate.ExpressionFunction))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddFunction_Call) Return() *IEnforcer_AddFunction_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *IEnforcer_AddFunction_Call) RunAndReturn(run func(string, govaluate.ExpressionFunction)) *IEnforcer_AddFunction_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // AddGroupingPolicies provides a mock function with given fields: rules
@@ -49,6 +86,34 @@ func (_m *IEnforcer) AddGroupingPolicies(rules [][]string) (bool, error) {
 	return r0, r1
 }
 
+// IEnforcer_AddGroupingPolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddGroupingPolicies'
+type IEnforcer_AddGroupingPolicies_Call struct {
+	*mock.Call
+}
+
+// AddGroupingPolicies is a helper method to define mock.On call
+//   - rules [][]string
+func (_e *IEnforcer_Expecter) AddGroupingPolicies(rules interface{}) *IEnforcer_AddGroupingPolicies_Call {
+	return &IEnforcer_AddGroupingPolicies_Call{Call: _e.mock.On("AddGroupingPolicies", rules)}
+}
+
+func (_c *IEnforcer_AddGroupingPolicies_Call) Run(run func(rules [][]string)) *IEnforcer_AddGroupingPolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddGroupingPolicies_Call) Return(_a0 bool, _a1 error) *IEnforcer_AddGroupingPolicies_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_AddGroupingPolicies_Call) RunAndReturn(run func([][]string) (bool, error)) *IEnforcer_AddGroupingPolicies_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddGroupingPoliciesEx provides a mock function with given fields: rules
 func (_m *IEnforcer) AddGroupingPoliciesEx(rules [][]string) (bool, error) {
 	ret := _m.Called(rules)
@@ -75,6 +140,34 @@ func (_m *IEnforcer) AddGroupingPoliciesEx(rules [][]string) (bool, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_AddGroupingPoliciesEx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddGroupingPoliciesEx'
+type IEnforcer_AddGroupingPoliciesEx_Call struct {
+	*mock.Call
+}
+
+// AddGroupingPoliciesEx is a helper method to define mock.On call
+//   - rules [][]string
+func (_e *IEnforcer_Expecter) AddGroupingPoliciesEx(rules interface{}) *IEnforcer_AddGroupingPoliciesEx_Call {
+	return &IEnforcer_AddGroupingPoliciesEx_Call{Call: _e.mock.On("AddGroupingPoliciesEx", rules)}
+}
+
+func (_c *IEnforcer_AddGroupingPoliciesEx_Call) Run(run func(rules [][]string)) *IEnforcer_AddGroupingPoliciesEx_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddGroupingPoliciesEx_Call) Return(_a0 bool, _a1 error) *IEnforcer_AddGroupingPoliciesEx_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_AddGroupingPoliciesEx_Call) RunAndReturn(run func([][]string) (bool, error)) *IEnforcer_AddGroupingPoliciesEx_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // AddGroupingPolicy provides a mock function with given fields: params
@@ -107,6 +200,41 @@ func (_m *IEnforcer) AddGroupingPolicy(params ...interface{}) (bool, error) {
 	return r0, r1
 }
 
+// IEnforcer_AddGroupingPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddGroupingPolicy'
+type IEnforcer_AddGroupingPolicy_Call struct {
+	*mock.Call
+}
+
+// AddGroupingPolicy is a helper method to define mock.On call
+//   - params ...interface{}
+func (_e *IEnforcer_Expecter) AddGroupingPolicy(params ...interface{}) *IEnforcer_AddGroupingPolicy_Call {
+	return &IEnforcer_AddGroupingPolicy_Call{Call: _e.mock.On("AddGroupingPolicy",
+		append([]interface{}{}, params...)...)}
+}
+
+func (_c *IEnforcer_AddGroupingPolicy_Call) Run(run func(params ...interface{})) *IEnforcer_AddGroupingPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddGroupingPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_AddGroupingPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_AddGroupingPolicy_Call) RunAndReturn(run func(...interface{}) (bool, error)) *IEnforcer_AddGroupingPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddNamedGroupingPolicies provides a mock function with given fields: ptype, rules
 func (_m *IEnforcer) AddNamedGroupingPolicies(ptype string, rules [][]string) (bool, error) {
 	ret := _m.Called(ptype, rules)
@@ -135,6 +263,35 @@ func (_m *IEnforcer) AddNamedGroupingPolicies(ptype string, rules [][]string) (b
 	return r0, r1
 }
 
+// IEnforcer_AddNamedGroupingPolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddNamedGroupingPolicies'
+type IEnforcer_AddNamedGroupingPolicies_Call struct {
+	*mock.Call
+}
+
+// AddNamedGroupingPolicies is a helper method to define mock.On call
+//   - ptype string
+//   - rules [][]string
+func (_e *IEnforcer_Expecter) AddNamedGroupingPolicies(ptype interface{}, rules interface{}) *IEnforcer_AddNamedGroupingPolicies_Call {
+	return &IEnforcer_AddNamedGroupingPolicies_Call{Call: _e.mock.On("AddNamedGroupingPolicies", ptype, rules)}
+}
+
+func (_c *IEnforcer_AddNamedGroupingPolicies_Call) Run(run func(ptype string, rules [][]string)) *IEnforcer_AddNamedGroupingPolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddNamedGroupingPolicies_Call) Return(_a0 bool, _a1 error) *IEnforcer_AddNamedGroupingPolicies_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_AddNamedGroupingPolicies_Call) RunAndReturn(run func(string, [][]string) (bool, error)) *IEnforcer_AddNamedGroupingPolicies_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddNamedGroupingPoliciesEx provides a mock function with given fields: ptype, rules
 func (_m *IEnforcer) AddNamedGroupingPoliciesEx(ptype string, rules [][]string) (bool, error) {
 	ret := _m.Called(ptype, rules)
@@ -161,6 +318,35 @@ func (_m *IEnforcer) AddNamedGroupingPoliciesEx(ptype string, rules [][]string) 
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_AddNamedGroupingPoliciesEx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddNamedGroupingPoliciesEx'
+type IEnforcer_AddNamedGroupingPoliciesEx_Call struct {
+	*mock.Call
+}
+
+// AddNamedGroupingPoliciesEx is a helper method to define mock.On call
+//   - ptype string
+//   - rules [][]string
+func (_e *IEnforcer_Expecter) AddNamedGroupingPoliciesEx(ptype interface{}, rules interface{}) *IEnforcer_AddNamedGroupingPoliciesEx_Call {
+	return &IEnforcer_AddNamedGroupingPoliciesEx_Call{Call: _e.mock.On("AddNamedGroupingPoliciesEx", ptype, rules)}
+}
+
+func (_c *IEnforcer_AddNamedGroupingPoliciesEx_Call) Run(run func(ptype string, rules [][]string)) *IEnforcer_AddNamedGroupingPoliciesEx_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddNamedGroupingPoliciesEx_Call) Return(_a0 bool, _a1 error) *IEnforcer_AddNamedGroupingPoliciesEx_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_AddNamedGroupingPoliciesEx_Call) RunAndReturn(run func(string, [][]string) (bool, error)) *IEnforcer_AddNamedGroupingPoliciesEx_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // AddNamedGroupingPolicy provides a mock function with given fields: ptype, params
@@ -194,6 +380,42 @@ func (_m *IEnforcer) AddNamedGroupingPolicy(ptype string, params ...interface{})
 	return r0, r1
 }
 
+// IEnforcer_AddNamedGroupingPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddNamedGroupingPolicy'
+type IEnforcer_AddNamedGroupingPolicy_Call struct {
+	*mock.Call
+}
+
+// AddNamedGroupingPolicy is a helper method to define mock.On call
+//   - ptype string
+//   - params ...interface{}
+func (_e *IEnforcer_Expecter) AddNamedGroupingPolicy(ptype interface{}, params ...interface{}) *IEnforcer_AddNamedGroupingPolicy_Call {
+	return &IEnforcer_AddNamedGroupingPolicy_Call{Call: _e.mock.On("AddNamedGroupingPolicy",
+		append([]interface{}{ptype}, params...)...)}
+}
+
+func (_c *IEnforcer_AddNamedGroupingPolicy_Call) Run(run func(ptype string, params ...interface{})) *IEnforcer_AddNamedGroupingPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddNamedGroupingPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_AddNamedGroupingPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_AddNamedGroupingPolicy_Call) RunAndReturn(run func(string, ...interface{}) (bool, error)) *IEnforcer_AddNamedGroupingPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddNamedPolicies provides a mock function with given fields: ptype, rules
 func (_m *IEnforcer) AddNamedPolicies(ptype string, rules [][]string) (bool, error) {
 	ret := _m.Called(ptype, rules)
@@ -222,6 +444,35 @@ func (_m *IEnforcer) AddNamedPolicies(ptype string, rules [][]string) (bool, err
 	return r0, r1
 }
 
+// IEnforcer_AddNamedPolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddNamedPolicies'
+type IEnforcer_AddNamedPolicies_Call struct {
+	*mock.Call
+}
+
+// AddNamedPolicies is a helper method to define mock.On call
+//   - ptype string
+//   - rules [][]string
+func (_e *IEnforcer_Expecter) AddNamedPolicies(ptype interface{}, rules interface{}) *IEnforcer_AddNamedPolicies_Call {
+	return &IEnforcer_AddNamedPolicies_Call{Call: _e.mock.On("AddNamedPolicies", ptype, rules)}
+}
+
+func (_c *IEnforcer_AddNamedPolicies_Call) Run(run func(ptype string, rules [][]string)) *IEnforcer_AddNamedPolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddNamedPolicies_Call) Return(_a0 bool, _a1 error) *IEnforcer_AddNamedPolicies_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_AddNamedPolicies_Call) RunAndReturn(run func(string, [][]string) (bool, error)) *IEnforcer_AddNamedPolicies_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddNamedPoliciesEx provides a mock function with given fields: ptype, rules
 func (_m *IEnforcer) AddNamedPoliciesEx(ptype string, rules [][]string) (bool, error) {
 	ret := _m.Called(ptype, rules)
@@ -248,6 +499,35 @@ func (_m *IEnforcer) AddNamedPoliciesEx(ptype string, rules [][]string) (bool, e
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_AddNamedPoliciesEx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddNamedPoliciesEx'
+type IEnforcer_AddNamedPoliciesEx_Call struct {
+	*mock.Call
+}
+
+// AddNamedPoliciesEx is a helper method to define mock.On call
+//   - ptype string
+//   - rules [][]string
+func (_e *IEnforcer_Expecter) AddNamedPoliciesEx(ptype interface{}, rules interface{}) *IEnforcer_AddNamedPoliciesEx_Call {
+	return &IEnforcer_AddNamedPoliciesEx_Call{Call: _e.mock.On("AddNamedPoliciesEx", ptype, rules)}
+}
+
+func (_c *IEnforcer_AddNamedPoliciesEx_Call) Run(run func(ptype string, rules [][]string)) *IEnforcer_AddNamedPoliciesEx_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddNamedPoliciesEx_Call) Return(_a0 bool, _a1 error) *IEnforcer_AddNamedPoliciesEx_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_AddNamedPoliciesEx_Call) RunAndReturn(run func(string, [][]string) (bool, error)) *IEnforcer_AddNamedPoliciesEx_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // AddNamedPolicy provides a mock function with given fields: ptype, params
@@ -279,6 +559,42 @@ func (_m *IEnforcer) AddNamedPolicy(ptype string, params ...interface{}) (bool, 
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_AddNamedPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddNamedPolicy'
+type IEnforcer_AddNamedPolicy_Call struct {
+	*mock.Call
+}
+
+// AddNamedPolicy is a helper method to define mock.On call
+//   - ptype string
+//   - params ...interface{}
+func (_e *IEnforcer_Expecter) AddNamedPolicy(ptype interface{}, params ...interface{}) *IEnforcer_AddNamedPolicy_Call {
+	return &IEnforcer_AddNamedPolicy_Call{Call: _e.mock.On("AddNamedPolicy",
+		append([]interface{}{ptype}, params...)...)}
+}
+
+func (_c *IEnforcer_AddNamedPolicy_Call) Run(run func(ptype string, params ...interface{})) *IEnforcer_AddNamedPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddNamedPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_AddNamedPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_AddNamedPolicy_Call) RunAndReturn(run func(string, ...interface{}) (bool, error)) *IEnforcer_AddNamedPolicy_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // AddPermissionForUser provides a mock function with given fields: user, permission
@@ -316,6 +632,42 @@ func (_m *IEnforcer) AddPermissionForUser(user string, permission ...string) (bo
 	return r0, r1
 }
 
+// IEnforcer_AddPermissionForUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddPermissionForUser'
+type IEnforcer_AddPermissionForUser_Call struct {
+	*mock.Call
+}
+
+// AddPermissionForUser is a helper method to define mock.On call
+//   - user string
+//   - permission ...string
+func (_e *IEnforcer_Expecter) AddPermissionForUser(user interface{}, permission ...interface{}) *IEnforcer_AddPermissionForUser_Call {
+	return &IEnforcer_AddPermissionForUser_Call{Call: _e.mock.On("AddPermissionForUser",
+		append([]interface{}{user}, permission...)...)}
+}
+
+func (_c *IEnforcer_AddPermissionForUser_Call) Run(run func(user string, permission ...string)) *IEnforcer_AddPermissionForUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddPermissionForUser_Call) Return(_a0 bool, _a1 error) *IEnforcer_AddPermissionForUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_AddPermissionForUser_Call) RunAndReturn(run func(string, ...string) (bool, error)) *IEnforcer_AddPermissionForUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddPermissionsForUser provides a mock function with given fields: user, permissions
 func (_m *IEnforcer) AddPermissionsForUser(user string, permissions ...[]string) (bool, error) {
 	_va := make([]interface{}, len(permissions))
@@ -351,6 +703,42 @@ func (_m *IEnforcer) AddPermissionsForUser(user string, permissions ...[]string)
 	return r0, r1
 }
 
+// IEnforcer_AddPermissionsForUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddPermissionsForUser'
+type IEnforcer_AddPermissionsForUser_Call struct {
+	*mock.Call
+}
+
+// AddPermissionsForUser is a helper method to define mock.On call
+//   - user string
+//   - permissions ...[]string
+func (_e *IEnforcer_Expecter) AddPermissionsForUser(user interface{}, permissions ...interface{}) *IEnforcer_AddPermissionsForUser_Call {
+	return &IEnforcer_AddPermissionsForUser_Call{Call: _e.mock.On("AddPermissionsForUser",
+		append([]interface{}{user}, permissions...)...)}
+}
+
+func (_c *IEnforcer_AddPermissionsForUser_Call) Run(run func(user string, permissions ...[]string)) *IEnforcer_AddPermissionsForUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([][]string, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.([]string)
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddPermissionsForUser_Call) Return(_a0 bool, _a1 error) *IEnforcer_AddPermissionsForUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_AddPermissionsForUser_Call) RunAndReturn(run func(string, ...[]string) (bool, error)) *IEnforcer_AddPermissionsForUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddPolicies provides a mock function with given fields: rules
 func (_m *IEnforcer) AddPolicies(rules [][]string) (bool, error) {
 	ret := _m.Called(rules)
@@ -377,6 +765,34 @@ func (_m *IEnforcer) AddPolicies(rules [][]string) (bool, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_AddPolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddPolicies'
+type IEnforcer_AddPolicies_Call struct {
+	*mock.Call
+}
+
+// AddPolicies is a helper method to define mock.On call
+//   - rules [][]string
+func (_e *IEnforcer_Expecter) AddPolicies(rules interface{}) *IEnforcer_AddPolicies_Call {
+	return &IEnforcer_AddPolicies_Call{Call: _e.mock.On("AddPolicies", rules)}
+}
+
+func (_c *IEnforcer_AddPolicies_Call) Run(run func(rules [][]string)) *IEnforcer_AddPolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddPolicies_Call) Return(_a0 bool, _a1 error) *IEnforcer_AddPolicies_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_AddPolicies_Call) RunAndReturn(run func([][]string) (bool, error)) *IEnforcer_AddPolicies_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // AddPoliciesEx provides a mock function with given fields: rules
@@ -407,6 +823,34 @@ func (_m *IEnforcer) AddPoliciesEx(rules [][]string) (bool, error) {
 	return r0, r1
 }
 
+// IEnforcer_AddPoliciesEx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddPoliciesEx'
+type IEnforcer_AddPoliciesEx_Call struct {
+	*mock.Call
+}
+
+// AddPoliciesEx is a helper method to define mock.On call
+//   - rules [][]string
+func (_e *IEnforcer_Expecter) AddPoliciesEx(rules interface{}) *IEnforcer_AddPoliciesEx_Call {
+	return &IEnforcer_AddPoliciesEx_Call{Call: _e.mock.On("AddPoliciesEx", rules)}
+}
+
+func (_c *IEnforcer_AddPoliciesEx_Call) Run(run func(rules [][]string)) *IEnforcer_AddPoliciesEx_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddPoliciesEx_Call) Return(_a0 bool, _a1 error) *IEnforcer_AddPoliciesEx_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_AddPoliciesEx_Call) RunAndReturn(run func([][]string) (bool, error)) *IEnforcer_AddPoliciesEx_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddPolicy provides a mock function with given fields: params
 func (_m *IEnforcer) AddPolicy(params ...interface{}) (bool, error) {
 	var _ca []interface{}
@@ -435,6 +879,41 @@ func (_m *IEnforcer) AddPolicy(params ...interface{}) (bool, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_AddPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddPolicy'
+type IEnforcer_AddPolicy_Call struct {
+	*mock.Call
+}
+
+// AddPolicy is a helper method to define mock.On call
+//   - params ...interface{}
+func (_e *IEnforcer_Expecter) AddPolicy(params ...interface{}) *IEnforcer_AddPolicy_Call {
+	return &IEnforcer_AddPolicy_Call{Call: _e.mock.On("AddPolicy",
+		append([]interface{}{}, params...)...)}
+}
+
+func (_c *IEnforcer_AddPolicy_Call) Run(run func(params ...interface{})) *IEnforcer_AddPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_AddPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_AddPolicy_Call) RunAndReturn(run func(...interface{}) (bool, error)) *IEnforcer_AddPolicy_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // AddRoleForUser provides a mock function with given fields: user, role, domain
@@ -472,6 +951,43 @@ func (_m *IEnforcer) AddRoleForUser(user string, role string, domain ...string) 
 	return r0, r1
 }
 
+// IEnforcer_AddRoleForUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddRoleForUser'
+type IEnforcer_AddRoleForUser_Call struct {
+	*mock.Call
+}
+
+// AddRoleForUser is a helper method to define mock.On call
+//   - user string
+//   - role string
+//   - domain ...string
+func (_e *IEnforcer_Expecter) AddRoleForUser(user interface{}, role interface{}, domain ...interface{}) *IEnforcer_AddRoleForUser_Call {
+	return &IEnforcer_AddRoleForUser_Call{Call: _e.mock.On("AddRoleForUser",
+		append([]interface{}{user, role}, domain...)...)}
+}
+
+func (_c *IEnforcer_AddRoleForUser_Call) Run(run func(user string, role string, domain ...string)) *IEnforcer_AddRoleForUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), args[1].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddRoleForUser_Call) Return(_a0 bool, _a1 error) *IEnforcer_AddRoleForUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_AddRoleForUser_Call) RunAndReturn(run func(string, string, ...string) (bool, error)) *IEnforcer_AddRoleForUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddRoleForUserInDomain provides a mock function with given fields: user, role, domain
 func (_m *IEnforcer) AddRoleForUserInDomain(user string, role string, domain string) (bool, error) {
 	ret := _m.Called(user, role, domain)
@@ -498,6 +1014,36 @@ func (_m *IEnforcer) AddRoleForUserInDomain(user string, role string, domain str
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_AddRoleForUserInDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddRoleForUserInDomain'
+type IEnforcer_AddRoleForUserInDomain_Call struct {
+	*mock.Call
+}
+
+// AddRoleForUserInDomain is a helper method to define mock.On call
+//   - user string
+//   - role string
+//   - domain string
+func (_e *IEnforcer_Expecter) AddRoleForUserInDomain(user interface{}, role interface{}, domain interface{}) *IEnforcer_AddRoleForUserInDomain_Call {
+	return &IEnforcer_AddRoleForUserInDomain_Call{Call: _e.mock.On("AddRoleForUserInDomain", user, role, domain)}
+}
+
+func (_c *IEnforcer_AddRoleForUserInDomain_Call) Run(run func(user string, role string, domain string)) *IEnforcer_AddRoleForUserInDomain_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_AddRoleForUserInDomain_Call) Return(_a0 bool, _a1 error) *IEnforcer_AddRoleForUserInDomain_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_AddRoleForUserInDomain_Call) RunAndReturn(run func(string, string, string) (bool, error)) *IEnforcer_AddRoleForUserInDomain_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // BatchEnforce provides a mock function with given fields: requests
@@ -530,6 +1076,34 @@ func (_m *IEnforcer) BatchEnforce(requests [][]interface{}) ([]bool, error) {
 	return r0, r1
 }
 
+// IEnforcer_BatchEnforce_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BatchEnforce'
+type IEnforcer_BatchEnforce_Call struct {
+	*mock.Call
+}
+
+// BatchEnforce is a helper method to define mock.On call
+//   - requests [][]interface{}
+func (_e *IEnforcer_Expecter) BatchEnforce(requests interface{}) *IEnforcer_BatchEnforce_Call {
+	return &IEnforcer_BatchEnforce_Call{Call: _e.mock.On("BatchEnforce", requests)}
+}
+
+func (_c *IEnforcer_BatchEnforce_Call) Run(run func(requests [][]interface{})) *IEnforcer_BatchEnforce_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([][]interface{}))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_BatchEnforce_Call) Return(_a0 []bool, _a1 error) *IEnforcer_BatchEnforce_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_BatchEnforce_Call) RunAndReturn(run func([][]interface{}) ([]bool, error)) *IEnforcer_BatchEnforce_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // BatchEnforceWithMatcher provides a mock function with given fields: matcher, requests
 func (_m *IEnforcer) BatchEnforceWithMatcher(matcher string, requests [][]interface{}) ([]bool, error) {
 	ret := _m.Called(matcher, requests)
@@ -560,6 +1134,35 @@ func (_m *IEnforcer) BatchEnforceWithMatcher(matcher string, requests [][]interf
 	return r0, r1
 }
 
+// IEnforcer_BatchEnforceWithMatcher_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BatchEnforceWithMatcher'
+type IEnforcer_BatchEnforceWithMatcher_Call struct {
+	*mock.Call
+}
+
+// BatchEnforceWithMatcher is a helper method to define mock.On call
+//   - matcher string
+//   - requests [][]interface{}
+func (_e *IEnforcer_Expecter) BatchEnforceWithMatcher(matcher interface{}, requests interface{}) *IEnforcer_BatchEnforceWithMatcher_Call {
+	return &IEnforcer_BatchEnforceWithMatcher_Call{Call: _e.mock.On("BatchEnforceWithMatcher", matcher, requests)}
+}
+
+func (_c *IEnforcer_BatchEnforceWithMatcher_Call) Run(run func(matcher string, requests [][]interface{})) *IEnforcer_BatchEnforceWithMatcher_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].([][]interface{}))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_BatchEnforceWithMatcher_Call) Return(_a0 []bool, _a1 error) *IEnforcer_BatchEnforceWithMatcher_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_BatchEnforceWithMatcher_Call) RunAndReturn(run func(string, [][]interface{}) ([]bool, error)) *IEnforcer_BatchEnforceWithMatcher_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // BuildRoleLinks provides a mock function with given fields:
 func (_m *IEnforcer) BuildRoleLinks() error {
 	ret := _m.Called()
@@ -578,9 +1181,63 @@ func (_m *IEnforcer) BuildRoleLinks() error {
 	return r0
 }
 
+// IEnforcer_BuildRoleLinks_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BuildRoleLinks'
+type IEnforcer_BuildRoleLinks_Call struct {
+	*mock.Call
+}
+
+// BuildRoleLinks is a helper method to define mock.On call
+func (_e *IEnforcer_Expecter) BuildRoleLinks() *IEnforcer_BuildRoleLinks_Call {
+	return &IEnforcer_BuildRoleLinks_Call{Call: _e.mock.On("BuildRoleLinks")}
+}
+
+func (_c *IEnforcer_BuildRoleLinks_Call) Run(run func()) *IEnforcer_BuildRoleLinks_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *IEnforcer_BuildRoleLinks_Call) Return(_a0 error) *IEnforcer_BuildRoleLinks_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_BuildRoleLinks_Call) RunAndReturn(run func() error) *IEnforcer_BuildRoleLinks_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ClearPolicy provides a mock function with given fields:
 func (_m *IEnforcer) ClearPolicy() {
 	_m.Called()
+}
+
+// IEnforcer_ClearPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ClearPolicy'
+type IEnforcer_ClearPolicy_Call struct {
+	*mock.Call
+}
+
+// ClearPolicy is a helper method to define mock.On call
+func (_e *IEnforcer_Expecter) ClearPolicy() *IEnforcer_ClearPolicy_Call {
+	return &IEnforcer_ClearPolicy_Call{Call: _e.mock.On("ClearPolicy")}
+}
+
+func (_c *IEnforcer_ClearPolicy_Call) Run(run func()) *IEnforcer_ClearPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *IEnforcer_ClearPolicy_Call) Return() *IEnforcer_ClearPolicy_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *IEnforcer_ClearPolicy_Call) RunAndReturn(run func()) *IEnforcer_ClearPolicy_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // DeleteAllUsersByDomain provides a mock function with given fields: domain
@@ -609,6 +1266,34 @@ func (_m *IEnforcer) DeleteAllUsersByDomain(domain string) (bool, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_DeleteAllUsersByDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAllUsersByDomain'
+type IEnforcer_DeleteAllUsersByDomain_Call struct {
+	*mock.Call
+}
+
+// DeleteAllUsersByDomain is a helper method to define mock.On call
+//   - domain string
+func (_e *IEnforcer_Expecter) DeleteAllUsersByDomain(domain interface{}) *IEnforcer_DeleteAllUsersByDomain_Call {
+	return &IEnforcer_DeleteAllUsersByDomain_Call{Call: _e.mock.On("DeleteAllUsersByDomain", domain)}
+}
+
+func (_c *IEnforcer_DeleteAllUsersByDomain_Call) Run(run func(domain string)) *IEnforcer_DeleteAllUsersByDomain_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_DeleteAllUsersByDomain_Call) Return(_a0 bool, _a1 error) *IEnforcer_DeleteAllUsersByDomain_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_DeleteAllUsersByDomain_Call) RunAndReturn(run func(string) (bool, error)) *IEnforcer_DeleteAllUsersByDomain_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // DeleteDomains provides a mock function with given fields: domains
@@ -645,6 +1330,41 @@ func (_m *IEnforcer) DeleteDomains(domains ...string) (bool, error) {
 	return r0, r1
 }
 
+// IEnforcer_DeleteDomains_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteDomains'
+type IEnforcer_DeleteDomains_Call struct {
+	*mock.Call
+}
+
+// DeleteDomains is a helper method to define mock.On call
+//   - domains ...string
+func (_e *IEnforcer_Expecter) DeleteDomains(domains ...interface{}) *IEnforcer_DeleteDomains_Call {
+	return &IEnforcer_DeleteDomains_Call{Call: _e.mock.On("DeleteDomains",
+		append([]interface{}{}, domains...)...)}
+}
+
+func (_c *IEnforcer_DeleteDomains_Call) Run(run func(domains ...string)) *IEnforcer_DeleteDomains_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_DeleteDomains_Call) Return(_a0 bool, _a1 error) *IEnforcer_DeleteDomains_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_DeleteDomains_Call) RunAndReturn(run func(...string) (bool, error)) *IEnforcer_DeleteDomains_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeletePermission provides a mock function with given fields: permission
 func (_m *IEnforcer) DeletePermission(permission ...string) (bool, error) {
 	_va := make([]interface{}, len(permission))
@@ -677,6 +1397,41 @@ func (_m *IEnforcer) DeletePermission(permission ...string) (bool, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_DeletePermission_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeletePermission'
+type IEnforcer_DeletePermission_Call struct {
+	*mock.Call
+}
+
+// DeletePermission is a helper method to define mock.On call
+//   - permission ...string
+func (_e *IEnforcer_Expecter) DeletePermission(permission ...interface{}) *IEnforcer_DeletePermission_Call {
+	return &IEnforcer_DeletePermission_Call{Call: _e.mock.On("DeletePermission",
+		append([]interface{}{}, permission...)...)}
+}
+
+func (_c *IEnforcer_DeletePermission_Call) Run(run func(permission ...string)) *IEnforcer_DeletePermission_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_DeletePermission_Call) Return(_a0 bool, _a1 error) *IEnforcer_DeletePermission_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_DeletePermission_Call) RunAndReturn(run func(...string) (bool, error)) *IEnforcer_DeletePermission_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // DeletePermissionForUser provides a mock function with given fields: user, permission
@@ -714,6 +1469,42 @@ func (_m *IEnforcer) DeletePermissionForUser(user string, permission ...string) 
 	return r0, r1
 }
 
+// IEnforcer_DeletePermissionForUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeletePermissionForUser'
+type IEnforcer_DeletePermissionForUser_Call struct {
+	*mock.Call
+}
+
+// DeletePermissionForUser is a helper method to define mock.On call
+//   - user string
+//   - permission ...string
+func (_e *IEnforcer_Expecter) DeletePermissionForUser(user interface{}, permission ...interface{}) *IEnforcer_DeletePermissionForUser_Call {
+	return &IEnforcer_DeletePermissionForUser_Call{Call: _e.mock.On("DeletePermissionForUser",
+		append([]interface{}{user}, permission...)...)}
+}
+
+func (_c *IEnforcer_DeletePermissionForUser_Call) Run(run func(user string, permission ...string)) *IEnforcer_DeletePermissionForUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_DeletePermissionForUser_Call) Return(_a0 bool, _a1 error) *IEnforcer_DeletePermissionForUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_DeletePermissionForUser_Call) RunAndReturn(run func(string, ...string) (bool, error)) *IEnforcer_DeletePermissionForUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeletePermissionsForUser provides a mock function with given fields: user
 func (_m *IEnforcer) DeletePermissionsForUser(user string) (bool, error) {
 	ret := _m.Called(user)
@@ -742,6 +1533,34 @@ func (_m *IEnforcer) DeletePermissionsForUser(user string) (bool, error) {
 	return r0, r1
 }
 
+// IEnforcer_DeletePermissionsForUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeletePermissionsForUser'
+type IEnforcer_DeletePermissionsForUser_Call struct {
+	*mock.Call
+}
+
+// DeletePermissionsForUser is a helper method to define mock.On call
+//   - user string
+func (_e *IEnforcer_Expecter) DeletePermissionsForUser(user interface{}) *IEnforcer_DeletePermissionsForUser_Call {
+	return &IEnforcer_DeletePermissionsForUser_Call{Call: _e.mock.On("DeletePermissionsForUser", user)}
+}
+
+func (_c *IEnforcer_DeletePermissionsForUser_Call) Run(run func(user string)) *IEnforcer_DeletePermissionsForUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_DeletePermissionsForUser_Call) Return(_a0 bool, _a1 error) *IEnforcer_DeletePermissionsForUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_DeletePermissionsForUser_Call) RunAndReturn(run func(string) (bool, error)) *IEnforcer_DeletePermissionsForUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteRole provides a mock function with given fields: role
 func (_m *IEnforcer) DeleteRole(role string) (bool, error) {
 	ret := _m.Called(role)
@@ -768,6 +1587,34 @@ func (_m *IEnforcer) DeleteRole(role string) (bool, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_DeleteRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteRole'
+type IEnforcer_DeleteRole_Call struct {
+	*mock.Call
+}
+
+// DeleteRole is a helper method to define mock.On call
+//   - role string
+func (_e *IEnforcer_Expecter) DeleteRole(role interface{}) *IEnforcer_DeleteRole_Call {
+	return &IEnforcer_DeleteRole_Call{Call: _e.mock.On("DeleteRole", role)}
+}
+
+func (_c *IEnforcer_DeleteRole_Call) Run(run func(role string)) *IEnforcer_DeleteRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_DeleteRole_Call) Return(_a0 bool, _a1 error) *IEnforcer_DeleteRole_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_DeleteRole_Call) RunAndReturn(run func(string) (bool, error)) *IEnforcer_DeleteRole_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // DeleteRoleForUser provides a mock function with given fields: user, role, domain
@@ -805,6 +1652,43 @@ func (_m *IEnforcer) DeleteRoleForUser(user string, role string, domain ...strin
 	return r0, r1
 }
 
+// IEnforcer_DeleteRoleForUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteRoleForUser'
+type IEnforcer_DeleteRoleForUser_Call struct {
+	*mock.Call
+}
+
+// DeleteRoleForUser is a helper method to define mock.On call
+//   - user string
+//   - role string
+//   - domain ...string
+func (_e *IEnforcer_Expecter) DeleteRoleForUser(user interface{}, role interface{}, domain ...interface{}) *IEnforcer_DeleteRoleForUser_Call {
+	return &IEnforcer_DeleteRoleForUser_Call{Call: _e.mock.On("DeleteRoleForUser",
+		append([]interface{}{user, role}, domain...)...)}
+}
+
+func (_c *IEnforcer_DeleteRoleForUser_Call) Run(run func(user string, role string, domain ...string)) *IEnforcer_DeleteRoleForUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), args[1].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_DeleteRoleForUser_Call) Return(_a0 bool, _a1 error) *IEnforcer_DeleteRoleForUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_DeleteRoleForUser_Call) RunAndReturn(run func(string, string, ...string) (bool, error)) *IEnforcer_DeleteRoleForUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteRoleForUserInDomain provides a mock function with given fields: user, role, domain
 func (_m *IEnforcer) DeleteRoleForUserInDomain(user string, role string, domain string) (bool, error) {
 	ret := _m.Called(user, role, domain)
@@ -831,6 +1715,36 @@ func (_m *IEnforcer) DeleteRoleForUserInDomain(user string, role string, domain 
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_DeleteRoleForUserInDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteRoleForUserInDomain'
+type IEnforcer_DeleteRoleForUserInDomain_Call struct {
+	*mock.Call
+}
+
+// DeleteRoleForUserInDomain is a helper method to define mock.On call
+//   - user string
+//   - role string
+//   - domain string
+func (_e *IEnforcer_Expecter) DeleteRoleForUserInDomain(user interface{}, role interface{}, domain interface{}) *IEnforcer_DeleteRoleForUserInDomain_Call {
+	return &IEnforcer_DeleteRoleForUserInDomain_Call{Call: _e.mock.On("DeleteRoleForUserInDomain", user, role, domain)}
+}
+
+func (_c *IEnforcer_DeleteRoleForUserInDomain_Call) Run(run func(user string, role string, domain string)) *IEnforcer_DeleteRoleForUserInDomain_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_DeleteRoleForUserInDomain_Call) Return(_a0 bool, _a1 error) *IEnforcer_DeleteRoleForUserInDomain_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_DeleteRoleForUserInDomain_Call) RunAndReturn(run func(string, string, string) (bool, error)) *IEnforcer_DeleteRoleForUserInDomain_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // DeleteRolesForUser provides a mock function with given fields: user, domain
@@ -868,6 +1782,42 @@ func (_m *IEnforcer) DeleteRolesForUser(user string, domain ...string) (bool, er
 	return r0, r1
 }
 
+// IEnforcer_DeleteRolesForUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteRolesForUser'
+type IEnforcer_DeleteRolesForUser_Call struct {
+	*mock.Call
+}
+
+// DeleteRolesForUser is a helper method to define mock.On call
+//   - user string
+//   - domain ...string
+func (_e *IEnforcer_Expecter) DeleteRolesForUser(user interface{}, domain ...interface{}) *IEnforcer_DeleteRolesForUser_Call {
+	return &IEnforcer_DeleteRolesForUser_Call{Call: _e.mock.On("DeleteRolesForUser",
+		append([]interface{}{user}, domain...)...)}
+}
+
+func (_c *IEnforcer_DeleteRolesForUser_Call) Run(run func(user string, domain ...string)) *IEnforcer_DeleteRolesForUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_DeleteRolesForUser_Call) Return(_a0 bool, _a1 error) *IEnforcer_DeleteRolesForUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_DeleteRolesForUser_Call) RunAndReturn(run func(string, ...string) (bool, error)) *IEnforcer_DeleteRolesForUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteRolesForUserInDomain provides a mock function with given fields: user, domain
 func (_m *IEnforcer) DeleteRolesForUserInDomain(user string, domain string) (bool, error) {
 	ret := _m.Called(user, domain)
@@ -894,6 +1844,35 @@ func (_m *IEnforcer) DeleteRolesForUserInDomain(user string, domain string) (boo
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_DeleteRolesForUserInDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteRolesForUserInDomain'
+type IEnforcer_DeleteRolesForUserInDomain_Call struct {
+	*mock.Call
+}
+
+// DeleteRolesForUserInDomain is a helper method to define mock.On call
+//   - user string
+//   - domain string
+func (_e *IEnforcer_Expecter) DeleteRolesForUserInDomain(user interface{}, domain interface{}) *IEnforcer_DeleteRolesForUserInDomain_Call {
+	return &IEnforcer_DeleteRolesForUserInDomain_Call{Call: _e.mock.On("DeleteRolesForUserInDomain", user, domain)}
+}
+
+func (_c *IEnforcer_DeleteRolesForUserInDomain_Call) Run(run func(user string, domain string)) *IEnforcer_DeleteRolesForUserInDomain_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_DeleteRolesForUserInDomain_Call) Return(_a0 bool, _a1 error) *IEnforcer_DeleteRolesForUserInDomain_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_DeleteRolesForUserInDomain_Call) RunAndReturn(run func(string, string) (bool, error)) *IEnforcer_DeleteRolesForUserInDomain_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // DeleteUser provides a mock function with given fields: user
@@ -924,9 +1903,65 @@ func (_m *IEnforcer) DeleteUser(user string) (bool, error) {
 	return r0, r1
 }
 
+// IEnforcer_DeleteUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteUser'
+type IEnforcer_DeleteUser_Call struct {
+	*mock.Call
+}
+
+// DeleteUser is a helper method to define mock.On call
+//   - user string
+func (_e *IEnforcer_Expecter) DeleteUser(user interface{}) *IEnforcer_DeleteUser_Call {
+	return &IEnforcer_DeleteUser_Call{Call: _e.mock.On("DeleteUser", user)}
+}
+
+func (_c *IEnforcer_DeleteUser_Call) Run(run func(user string)) *IEnforcer_DeleteUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_DeleteUser_Call) Return(_a0 bool, _a1 error) *IEnforcer_DeleteUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_DeleteUser_Call) RunAndReturn(run func(string) (bool, error)) *IEnforcer_DeleteUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // EnableAutoBuildRoleLinks provides a mock function with given fields: autoBuildRoleLinks
 func (_m *IEnforcer) EnableAutoBuildRoleLinks(autoBuildRoleLinks bool) {
 	_m.Called(autoBuildRoleLinks)
+}
+
+// IEnforcer_EnableAutoBuildRoleLinks_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnableAutoBuildRoleLinks'
+type IEnforcer_EnableAutoBuildRoleLinks_Call struct {
+	*mock.Call
+}
+
+// EnableAutoBuildRoleLinks is a helper method to define mock.On call
+//   - autoBuildRoleLinks bool
+func (_e *IEnforcer_Expecter) EnableAutoBuildRoleLinks(autoBuildRoleLinks interface{}) *IEnforcer_EnableAutoBuildRoleLinks_Call {
+	return &IEnforcer_EnableAutoBuildRoleLinks_Call{Call: _e.mock.On("EnableAutoBuildRoleLinks", autoBuildRoleLinks)}
+}
+
+func (_c *IEnforcer_EnableAutoBuildRoleLinks_Call) Run(run func(autoBuildRoleLinks bool)) *IEnforcer_EnableAutoBuildRoleLinks_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(bool))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_EnableAutoBuildRoleLinks_Call) Return() *IEnforcer_EnableAutoBuildRoleLinks_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *IEnforcer_EnableAutoBuildRoleLinks_Call) RunAndReturn(run func(bool)) *IEnforcer_EnableAutoBuildRoleLinks_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // EnableAutoNotifyWatcher provides a mock function with given fields: enable
@@ -934,9 +1969,65 @@ func (_m *IEnforcer) EnableAutoNotifyWatcher(enable bool) {
 	_m.Called(enable)
 }
 
+// IEnforcer_EnableAutoNotifyWatcher_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnableAutoNotifyWatcher'
+type IEnforcer_EnableAutoNotifyWatcher_Call struct {
+	*mock.Call
+}
+
+// EnableAutoNotifyWatcher is a helper method to define mock.On call
+//   - enable bool
+func (_e *IEnforcer_Expecter) EnableAutoNotifyWatcher(enable interface{}) *IEnforcer_EnableAutoNotifyWatcher_Call {
+	return &IEnforcer_EnableAutoNotifyWatcher_Call{Call: _e.mock.On("EnableAutoNotifyWatcher", enable)}
+}
+
+func (_c *IEnforcer_EnableAutoNotifyWatcher_Call) Run(run func(enable bool)) *IEnforcer_EnableAutoNotifyWatcher_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(bool))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_EnableAutoNotifyWatcher_Call) Return() *IEnforcer_EnableAutoNotifyWatcher_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *IEnforcer_EnableAutoNotifyWatcher_Call) RunAndReturn(run func(bool)) *IEnforcer_EnableAutoNotifyWatcher_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // EnableAutoSave provides a mock function with given fields: autoSave
 func (_m *IEnforcer) EnableAutoSave(autoSave bool) {
 	_m.Called(autoSave)
+}
+
+// IEnforcer_EnableAutoSave_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnableAutoSave'
+type IEnforcer_EnableAutoSave_Call struct {
+	*mock.Call
+}
+
+// EnableAutoSave is a helper method to define mock.On call
+//   - autoSave bool
+func (_e *IEnforcer_Expecter) EnableAutoSave(autoSave interface{}) *IEnforcer_EnableAutoSave_Call {
+	return &IEnforcer_EnableAutoSave_Call{Call: _e.mock.On("EnableAutoSave", autoSave)}
+}
+
+func (_c *IEnforcer_EnableAutoSave_Call) Run(run func(autoSave bool)) *IEnforcer_EnableAutoSave_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(bool))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_EnableAutoSave_Call) Return() *IEnforcer_EnableAutoSave_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *IEnforcer_EnableAutoSave_Call) RunAndReturn(run func(bool)) *IEnforcer_EnableAutoSave_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // EnableEnforce provides a mock function with given fields: enable
@@ -944,9 +2035,65 @@ func (_m *IEnforcer) EnableEnforce(enable bool) {
 	_m.Called(enable)
 }
 
+// IEnforcer_EnableEnforce_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnableEnforce'
+type IEnforcer_EnableEnforce_Call struct {
+	*mock.Call
+}
+
+// EnableEnforce is a helper method to define mock.On call
+//   - enable bool
+func (_e *IEnforcer_Expecter) EnableEnforce(enable interface{}) *IEnforcer_EnableEnforce_Call {
+	return &IEnforcer_EnableEnforce_Call{Call: _e.mock.On("EnableEnforce", enable)}
+}
+
+func (_c *IEnforcer_EnableEnforce_Call) Run(run func(enable bool)) *IEnforcer_EnableEnforce_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(bool))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_EnableEnforce_Call) Return() *IEnforcer_EnableEnforce_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *IEnforcer_EnableEnforce_Call) RunAndReturn(run func(bool)) *IEnforcer_EnableEnforce_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // EnableLog provides a mock function with given fields: enable
 func (_m *IEnforcer) EnableLog(enable bool) {
 	_m.Called(enable)
+}
+
+// IEnforcer_EnableLog_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnableLog'
+type IEnforcer_EnableLog_Call struct {
+	*mock.Call
+}
+
+// EnableLog is a helper method to define mock.On call
+//   - enable bool
+func (_e *IEnforcer_Expecter) EnableLog(enable interface{}) *IEnforcer_EnableLog_Call {
+	return &IEnforcer_EnableLog_Call{Call: _e.mock.On("EnableLog", enable)}
+}
+
+func (_c *IEnforcer_EnableLog_Call) Run(run func(enable bool)) *IEnforcer_EnableLog_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(bool))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_EnableLog_Call) Return() *IEnforcer_EnableLog_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *IEnforcer_EnableLog_Call) RunAndReturn(run func(bool)) *IEnforcer_EnableLog_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // Enforce provides a mock function with given fields: rvals
@@ -977,6 +2124,41 @@ func (_m *IEnforcer) Enforce(rvals ...interface{}) (bool, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_Enforce_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Enforce'
+type IEnforcer_Enforce_Call struct {
+	*mock.Call
+}
+
+// Enforce is a helper method to define mock.On call
+//   - rvals ...interface{}
+func (_e *IEnforcer_Expecter) Enforce(rvals ...interface{}) *IEnforcer_Enforce_Call {
+	return &IEnforcer_Enforce_Call{Call: _e.mock.On("Enforce",
+		append([]interface{}{}, rvals...)...)}
+}
+
+func (_c *IEnforcer_Enforce_Call) Run(run func(rvals ...interface{})) *IEnforcer_Enforce_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_Enforce_Call) Return(_a0 bool, _a1 error) *IEnforcer_Enforce_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_Enforce_Call) RunAndReturn(run func(...interface{}) (bool, error)) *IEnforcer_Enforce_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // EnforceEx provides a mock function with given fields: rvals
@@ -1016,6 +2198,41 @@ func (_m *IEnforcer) EnforceEx(rvals ...interface{}) (bool, []string, error) {
 	}
 
 	return r0, r1, r2
+}
+
+// IEnforcer_EnforceEx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnforceEx'
+type IEnforcer_EnforceEx_Call struct {
+	*mock.Call
+}
+
+// EnforceEx is a helper method to define mock.On call
+//   - rvals ...interface{}
+func (_e *IEnforcer_Expecter) EnforceEx(rvals ...interface{}) *IEnforcer_EnforceEx_Call {
+	return &IEnforcer_EnforceEx_Call{Call: _e.mock.On("EnforceEx",
+		append([]interface{}{}, rvals...)...)}
+}
+
+func (_c *IEnforcer_EnforceEx_Call) Run(run func(rvals ...interface{})) *IEnforcer_EnforceEx_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_EnforceEx_Call) Return(_a0 bool, _a1 []string, _a2 error) *IEnforcer_EnforceEx_Call {
+	_c.Call.Return(_a0, _a1, _a2)
+	return _c
+}
+
+func (_c *IEnforcer_EnforceEx_Call) RunAndReturn(run func(...interface{}) (bool, []string, error)) *IEnforcer_EnforceEx_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // EnforceExWithMatcher provides a mock function with given fields: matcher, rvals
@@ -1058,6 +2275,42 @@ func (_m *IEnforcer) EnforceExWithMatcher(matcher string, rvals ...interface{}) 
 	return r0, r1, r2
 }
 
+// IEnforcer_EnforceExWithMatcher_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnforceExWithMatcher'
+type IEnforcer_EnforceExWithMatcher_Call struct {
+	*mock.Call
+}
+
+// EnforceExWithMatcher is a helper method to define mock.On call
+//   - matcher string
+//   - rvals ...interface{}
+func (_e *IEnforcer_Expecter) EnforceExWithMatcher(matcher interface{}, rvals ...interface{}) *IEnforcer_EnforceExWithMatcher_Call {
+	return &IEnforcer_EnforceExWithMatcher_Call{Call: _e.mock.On("EnforceExWithMatcher",
+		append([]interface{}{matcher}, rvals...)...)}
+}
+
+func (_c *IEnforcer_EnforceExWithMatcher_Call) Run(run func(matcher string, rvals ...interface{})) *IEnforcer_EnforceExWithMatcher_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_EnforceExWithMatcher_Call) Return(_a0 bool, _a1 []string, _a2 error) *IEnforcer_EnforceExWithMatcher_Call {
+	_c.Call.Return(_a0, _a1, _a2)
+	return _c
+}
+
+func (_c *IEnforcer_EnforceExWithMatcher_Call) RunAndReturn(run func(string, ...interface{}) (bool, []string, error)) *IEnforcer_EnforceExWithMatcher_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // EnforceWithMatcher provides a mock function with given fields: matcher, rvals
 func (_m *IEnforcer) EnforceWithMatcher(matcher string, rvals ...interface{}) (bool, error) {
 	var _ca []interface{}
@@ -1089,6 +2342,42 @@ func (_m *IEnforcer) EnforceWithMatcher(matcher string, rvals ...interface{}) (b
 	return r0, r1
 }
 
+// IEnforcer_EnforceWithMatcher_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnforceWithMatcher'
+type IEnforcer_EnforceWithMatcher_Call struct {
+	*mock.Call
+}
+
+// EnforceWithMatcher is a helper method to define mock.On call
+//   - matcher string
+//   - rvals ...interface{}
+func (_e *IEnforcer_Expecter) EnforceWithMatcher(matcher interface{}, rvals ...interface{}) *IEnforcer_EnforceWithMatcher_Call {
+	return &IEnforcer_EnforceWithMatcher_Call{Call: _e.mock.On("EnforceWithMatcher",
+		append([]interface{}{matcher}, rvals...)...)}
+}
+
+func (_c *IEnforcer_EnforceWithMatcher_Call) Run(run func(matcher string, rvals ...interface{})) *IEnforcer_EnforceWithMatcher_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_EnforceWithMatcher_Call) Return(_a0 bool, _a1 error) *IEnforcer_EnforceWithMatcher_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_EnforceWithMatcher_Call) RunAndReturn(run func(string, ...interface{}) (bool, error)) *IEnforcer_EnforceWithMatcher_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAdapter provides a mock function with given fields:
 func (_m *IEnforcer) GetAdapter() persist.Adapter {
 	ret := _m.Called()
@@ -1107,6 +2396,33 @@ func (_m *IEnforcer) GetAdapter() persist.Adapter {
 	}
 
 	return r0
+}
+
+// IEnforcer_GetAdapter_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAdapter'
+type IEnforcer_GetAdapter_Call struct {
+	*mock.Call
+}
+
+// GetAdapter is a helper method to define mock.On call
+func (_e *IEnforcer_Expecter) GetAdapter() *IEnforcer_GetAdapter_Call {
+	return &IEnforcer_GetAdapter_Call{Call: _e.mock.On("GetAdapter")}
+}
+
+func (_c *IEnforcer_GetAdapter_Call) Run(run func()) *IEnforcer_GetAdapter_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetAdapter_Call) Return(_a0 persist.Adapter) *IEnforcer_GetAdapter_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_GetAdapter_Call) RunAndReturn(run func() persist.Adapter) *IEnforcer_GetAdapter_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetAllActions provides a mock function with given fields:
@@ -1139,6 +2455,33 @@ func (_m *IEnforcer) GetAllActions() ([]string, error) {
 	return r0, r1
 }
 
+// IEnforcer_GetAllActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllActions'
+type IEnforcer_GetAllActions_Call struct {
+	*mock.Call
+}
+
+// GetAllActions is a helper method to define mock.On call
+func (_e *IEnforcer_Expecter) GetAllActions() *IEnforcer_GetAllActions_Call {
+	return &IEnforcer_GetAllActions_Call{Call: _e.mock.On("GetAllActions")}
+}
+
+func (_c *IEnforcer_GetAllActions_Call) Run(run func()) *IEnforcer_GetAllActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetAllActions_Call) Return(_a0 []string, _a1 error) *IEnforcer_GetAllActions_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetAllActions_Call) RunAndReturn(run func() ([]string, error)) *IEnforcer_GetAllActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAllDomains provides a mock function with given fields:
 func (_m *IEnforcer) GetAllDomains() ([]string, error) {
 	ret := _m.Called()
@@ -1167,6 +2510,33 @@ func (_m *IEnforcer) GetAllDomains() ([]string, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_GetAllDomains_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllDomains'
+type IEnforcer_GetAllDomains_Call struct {
+	*mock.Call
+}
+
+// GetAllDomains is a helper method to define mock.On call
+func (_e *IEnforcer_Expecter) GetAllDomains() *IEnforcer_GetAllDomains_Call {
+	return &IEnforcer_GetAllDomains_Call{Call: _e.mock.On("GetAllDomains")}
+}
+
+func (_c *IEnforcer_GetAllDomains_Call) Run(run func()) *IEnforcer_GetAllDomains_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetAllDomains_Call) Return(_a0 []string, _a1 error) *IEnforcer_GetAllDomains_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetAllDomains_Call) RunAndReturn(run func() ([]string, error)) *IEnforcer_GetAllDomains_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetAllNamedActions provides a mock function with given fields: ptype
@@ -1199,6 +2569,34 @@ func (_m *IEnforcer) GetAllNamedActions(ptype string) ([]string, error) {
 	return r0, r1
 }
 
+// IEnforcer_GetAllNamedActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllNamedActions'
+type IEnforcer_GetAllNamedActions_Call struct {
+	*mock.Call
+}
+
+// GetAllNamedActions is a helper method to define mock.On call
+//   - ptype string
+func (_e *IEnforcer_Expecter) GetAllNamedActions(ptype interface{}) *IEnforcer_GetAllNamedActions_Call {
+	return &IEnforcer_GetAllNamedActions_Call{Call: _e.mock.On("GetAllNamedActions", ptype)}
+}
+
+func (_c *IEnforcer_GetAllNamedActions_Call) Run(run func(ptype string)) *IEnforcer_GetAllNamedActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetAllNamedActions_Call) Return(_a0 []string, _a1 error) *IEnforcer_GetAllNamedActions_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetAllNamedActions_Call) RunAndReturn(run func(string) ([]string, error)) *IEnforcer_GetAllNamedActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAllNamedObjects provides a mock function with given fields: ptype
 func (_m *IEnforcer) GetAllNamedObjects(ptype string) ([]string, error) {
 	ret := _m.Called(ptype)
@@ -1227,6 +2625,34 @@ func (_m *IEnforcer) GetAllNamedObjects(ptype string) ([]string, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_GetAllNamedObjects_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllNamedObjects'
+type IEnforcer_GetAllNamedObjects_Call struct {
+	*mock.Call
+}
+
+// GetAllNamedObjects is a helper method to define mock.On call
+//   - ptype string
+func (_e *IEnforcer_Expecter) GetAllNamedObjects(ptype interface{}) *IEnforcer_GetAllNamedObjects_Call {
+	return &IEnforcer_GetAllNamedObjects_Call{Call: _e.mock.On("GetAllNamedObjects", ptype)}
+}
+
+func (_c *IEnforcer_GetAllNamedObjects_Call) Run(run func(ptype string)) *IEnforcer_GetAllNamedObjects_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetAllNamedObjects_Call) Return(_a0 []string, _a1 error) *IEnforcer_GetAllNamedObjects_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetAllNamedObjects_Call) RunAndReturn(run func(string) ([]string, error)) *IEnforcer_GetAllNamedObjects_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetAllNamedRoles provides a mock function with given fields: ptype
@@ -1259,6 +2685,34 @@ func (_m *IEnforcer) GetAllNamedRoles(ptype string) ([]string, error) {
 	return r0, r1
 }
 
+// IEnforcer_GetAllNamedRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllNamedRoles'
+type IEnforcer_GetAllNamedRoles_Call struct {
+	*mock.Call
+}
+
+// GetAllNamedRoles is a helper method to define mock.On call
+//   - ptype string
+func (_e *IEnforcer_Expecter) GetAllNamedRoles(ptype interface{}) *IEnforcer_GetAllNamedRoles_Call {
+	return &IEnforcer_GetAllNamedRoles_Call{Call: _e.mock.On("GetAllNamedRoles", ptype)}
+}
+
+func (_c *IEnforcer_GetAllNamedRoles_Call) Run(run func(ptype string)) *IEnforcer_GetAllNamedRoles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetAllNamedRoles_Call) Return(_a0 []string, _a1 error) *IEnforcer_GetAllNamedRoles_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetAllNamedRoles_Call) RunAndReturn(run func(string) ([]string, error)) *IEnforcer_GetAllNamedRoles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAllNamedSubjects provides a mock function with given fields: ptype
 func (_m *IEnforcer) GetAllNamedSubjects(ptype string) ([]string, error) {
 	ret := _m.Called(ptype)
@@ -1287,6 +2741,34 @@ func (_m *IEnforcer) GetAllNamedSubjects(ptype string) ([]string, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_GetAllNamedSubjects_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllNamedSubjects'
+type IEnforcer_GetAllNamedSubjects_Call struct {
+	*mock.Call
+}
+
+// GetAllNamedSubjects is a helper method to define mock.On call
+//   - ptype string
+func (_e *IEnforcer_Expecter) GetAllNamedSubjects(ptype interface{}) *IEnforcer_GetAllNamedSubjects_Call {
+	return &IEnforcer_GetAllNamedSubjects_Call{Call: _e.mock.On("GetAllNamedSubjects", ptype)}
+}
+
+func (_c *IEnforcer_GetAllNamedSubjects_Call) Run(run func(ptype string)) *IEnforcer_GetAllNamedSubjects_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetAllNamedSubjects_Call) Return(_a0 []string, _a1 error) *IEnforcer_GetAllNamedSubjects_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetAllNamedSubjects_Call) RunAndReturn(run func(string) ([]string, error)) *IEnforcer_GetAllNamedSubjects_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetAllObjects provides a mock function with given fields:
@@ -1319,6 +2801,33 @@ func (_m *IEnforcer) GetAllObjects() ([]string, error) {
 	return r0, r1
 }
 
+// IEnforcer_GetAllObjects_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllObjects'
+type IEnforcer_GetAllObjects_Call struct {
+	*mock.Call
+}
+
+// GetAllObjects is a helper method to define mock.On call
+func (_e *IEnforcer_Expecter) GetAllObjects() *IEnforcer_GetAllObjects_Call {
+	return &IEnforcer_GetAllObjects_Call{Call: _e.mock.On("GetAllObjects")}
+}
+
+func (_c *IEnforcer_GetAllObjects_Call) Run(run func()) *IEnforcer_GetAllObjects_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetAllObjects_Call) Return(_a0 []string, _a1 error) *IEnforcer_GetAllObjects_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetAllObjects_Call) RunAndReturn(run func() ([]string, error)) *IEnforcer_GetAllObjects_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAllRoles provides a mock function with given fields:
 func (_m *IEnforcer) GetAllRoles() ([]string, error) {
 	ret := _m.Called()
@@ -1347,6 +2856,33 @@ func (_m *IEnforcer) GetAllRoles() ([]string, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_GetAllRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllRoles'
+type IEnforcer_GetAllRoles_Call struct {
+	*mock.Call
+}
+
+// GetAllRoles is a helper method to define mock.On call
+func (_e *IEnforcer_Expecter) GetAllRoles() *IEnforcer_GetAllRoles_Call {
+	return &IEnforcer_GetAllRoles_Call{Call: _e.mock.On("GetAllRoles")}
+}
+
+func (_c *IEnforcer_GetAllRoles_Call) Run(run func()) *IEnforcer_GetAllRoles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetAllRoles_Call) Return(_a0 []string, _a1 error) *IEnforcer_GetAllRoles_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetAllRoles_Call) RunAndReturn(run func() ([]string, error)) *IEnforcer_GetAllRoles_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetAllRolesByDomain provides a mock function with given fields: domain
@@ -1379,6 +2915,34 @@ func (_m *IEnforcer) GetAllRolesByDomain(domain string) ([]string, error) {
 	return r0, r1
 }
 
+// IEnforcer_GetAllRolesByDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllRolesByDomain'
+type IEnforcer_GetAllRolesByDomain_Call struct {
+	*mock.Call
+}
+
+// GetAllRolesByDomain is a helper method to define mock.On call
+//   - domain string
+func (_e *IEnforcer_Expecter) GetAllRolesByDomain(domain interface{}) *IEnforcer_GetAllRolesByDomain_Call {
+	return &IEnforcer_GetAllRolesByDomain_Call{Call: _e.mock.On("GetAllRolesByDomain", domain)}
+}
+
+func (_c *IEnforcer_GetAllRolesByDomain_Call) Run(run func(domain string)) *IEnforcer_GetAllRolesByDomain_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetAllRolesByDomain_Call) Return(_a0 []string, _a1 error) *IEnforcer_GetAllRolesByDomain_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetAllRolesByDomain_Call) RunAndReturn(run func(string) ([]string, error)) *IEnforcer_GetAllRolesByDomain_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAllSubjects provides a mock function with given fields:
 func (_m *IEnforcer) GetAllSubjects() ([]string, error) {
 	ret := _m.Called()
@@ -1409,6 +2973,33 @@ func (_m *IEnforcer) GetAllSubjects() ([]string, error) {
 	return r0, r1
 }
 
+// IEnforcer_GetAllSubjects_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllSubjects'
+type IEnforcer_GetAllSubjects_Call struct {
+	*mock.Call
+}
+
+// GetAllSubjects is a helper method to define mock.On call
+func (_e *IEnforcer_Expecter) GetAllSubjects() *IEnforcer_GetAllSubjects_Call {
+	return &IEnforcer_GetAllSubjects_Call{Call: _e.mock.On("GetAllSubjects")}
+}
+
+func (_c *IEnforcer_GetAllSubjects_Call) Run(run func()) *IEnforcer_GetAllSubjects_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetAllSubjects_Call) Return(_a0 []string, _a1 error) *IEnforcer_GetAllSubjects_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetAllSubjects_Call) RunAndReturn(run func() ([]string, error)) *IEnforcer_GetAllSubjects_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAllUsersByDomain provides a mock function with given fields: domain
 func (_m *IEnforcer) GetAllUsersByDomain(domain string) ([]string, error) {
 	ret := _m.Called(domain)
@@ -1437,6 +3028,34 @@ func (_m *IEnforcer) GetAllUsersByDomain(domain string) ([]string, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_GetAllUsersByDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllUsersByDomain'
+type IEnforcer_GetAllUsersByDomain_Call struct {
+	*mock.Call
+}
+
+// GetAllUsersByDomain is a helper method to define mock.On call
+//   - domain string
+func (_e *IEnforcer_Expecter) GetAllUsersByDomain(domain interface{}) *IEnforcer_GetAllUsersByDomain_Call {
+	return &IEnforcer_GetAllUsersByDomain_Call{Call: _e.mock.On("GetAllUsersByDomain", domain)}
+}
+
+func (_c *IEnforcer_GetAllUsersByDomain_Call) Run(run func(domain string)) *IEnforcer_GetAllUsersByDomain_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetAllUsersByDomain_Call) Return(_a0 []string, _a1 error) *IEnforcer_GetAllUsersByDomain_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetAllUsersByDomain_Call) RunAndReturn(run func(string) ([]string, error)) *IEnforcer_GetAllUsersByDomain_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetFilteredGroupingPolicy provides a mock function with given fields: fieldIndex, fieldValues
@@ -1476,6 +3095,42 @@ func (_m *IEnforcer) GetFilteredGroupingPolicy(fieldIndex int, fieldValues ...st
 	return r0, r1
 }
 
+// IEnforcer_GetFilteredGroupingPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetFilteredGroupingPolicy'
+type IEnforcer_GetFilteredGroupingPolicy_Call struct {
+	*mock.Call
+}
+
+// GetFilteredGroupingPolicy is a helper method to define mock.On call
+//   - fieldIndex int
+//   - fieldValues ...string
+func (_e *IEnforcer_Expecter) GetFilteredGroupingPolicy(fieldIndex interface{}, fieldValues ...interface{}) *IEnforcer_GetFilteredGroupingPolicy_Call {
+	return &IEnforcer_GetFilteredGroupingPolicy_Call{Call: _e.mock.On("GetFilteredGroupingPolicy",
+		append([]interface{}{fieldIndex}, fieldValues...)...)}
+}
+
+func (_c *IEnforcer_GetFilteredGroupingPolicy_Call) Run(run func(fieldIndex int, fieldValues ...string)) *IEnforcer_GetFilteredGroupingPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(int), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetFilteredGroupingPolicy_Call) Return(_a0 [][]string, _a1 error) *IEnforcer_GetFilteredGroupingPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetFilteredGroupingPolicy_Call) RunAndReturn(run func(int, ...string) ([][]string, error)) *IEnforcer_GetFilteredGroupingPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetFilteredNamedGroupingPolicy provides a mock function with given fields: ptype, fieldIndex, fieldValues
 func (_m *IEnforcer) GetFilteredNamedGroupingPolicy(ptype string, fieldIndex int, fieldValues ...string) ([][]string, error) {
 	_va := make([]interface{}, len(fieldValues))
@@ -1511,6 +3166,43 @@ func (_m *IEnforcer) GetFilteredNamedGroupingPolicy(ptype string, fieldIndex int
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_GetFilteredNamedGroupingPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetFilteredNamedGroupingPolicy'
+type IEnforcer_GetFilteredNamedGroupingPolicy_Call struct {
+	*mock.Call
+}
+
+// GetFilteredNamedGroupingPolicy is a helper method to define mock.On call
+//   - ptype string
+//   - fieldIndex int
+//   - fieldValues ...string
+func (_e *IEnforcer_Expecter) GetFilteredNamedGroupingPolicy(ptype interface{}, fieldIndex interface{}, fieldValues ...interface{}) *IEnforcer_GetFilteredNamedGroupingPolicy_Call {
+	return &IEnforcer_GetFilteredNamedGroupingPolicy_Call{Call: _e.mock.On("GetFilteredNamedGroupingPolicy",
+		append([]interface{}{ptype, fieldIndex}, fieldValues...)...)}
+}
+
+func (_c *IEnforcer_GetFilteredNamedGroupingPolicy_Call) Run(run func(ptype string, fieldIndex int, fieldValues ...string)) *IEnforcer_GetFilteredNamedGroupingPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), args[1].(int), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetFilteredNamedGroupingPolicy_Call) Return(_a0 [][]string, _a1 error) *IEnforcer_GetFilteredNamedGroupingPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetFilteredNamedGroupingPolicy_Call) RunAndReturn(run func(string, int, ...string) ([][]string, error)) *IEnforcer_GetFilteredNamedGroupingPolicy_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetFilteredNamedPolicy provides a mock function with given fields: ptype, fieldIndex, fieldValues
@@ -1550,6 +3242,43 @@ func (_m *IEnforcer) GetFilteredNamedPolicy(ptype string, fieldIndex int, fieldV
 	return r0, r1
 }
 
+// IEnforcer_GetFilteredNamedPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetFilteredNamedPolicy'
+type IEnforcer_GetFilteredNamedPolicy_Call struct {
+	*mock.Call
+}
+
+// GetFilteredNamedPolicy is a helper method to define mock.On call
+//   - ptype string
+//   - fieldIndex int
+//   - fieldValues ...string
+func (_e *IEnforcer_Expecter) GetFilteredNamedPolicy(ptype interface{}, fieldIndex interface{}, fieldValues ...interface{}) *IEnforcer_GetFilteredNamedPolicy_Call {
+	return &IEnforcer_GetFilteredNamedPolicy_Call{Call: _e.mock.On("GetFilteredNamedPolicy",
+		append([]interface{}{ptype, fieldIndex}, fieldValues...)...)}
+}
+
+func (_c *IEnforcer_GetFilteredNamedPolicy_Call) Run(run func(ptype string, fieldIndex int, fieldValues ...string)) *IEnforcer_GetFilteredNamedPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), args[1].(int), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetFilteredNamedPolicy_Call) Return(_a0 [][]string, _a1 error) *IEnforcer_GetFilteredNamedPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetFilteredNamedPolicy_Call) RunAndReturn(run func(string, int, ...string) ([][]string, error)) *IEnforcer_GetFilteredNamedPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetFilteredPolicy provides a mock function with given fields: fieldIndex, fieldValues
 func (_m *IEnforcer) GetFilteredPolicy(fieldIndex int, fieldValues ...string) ([][]string, error) {
 	_va := make([]interface{}, len(fieldValues))
@@ -1587,6 +3316,42 @@ func (_m *IEnforcer) GetFilteredPolicy(fieldIndex int, fieldValues ...string) ([
 	return r0, r1
 }
 
+// IEnforcer_GetFilteredPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetFilteredPolicy'
+type IEnforcer_GetFilteredPolicy_Call struct {
+	*mock.Call
+}
+
+// GetFilteredPolicy is a helper method to define mock.On call
+//   - fieldIndex int
+//   - fieldValues ...string
+func (_e *IEnforcer_Expecter) GetFilteredPolicy(fieldIndex interface{}, fieldValues ...interface{}) *IEnforcer_GetFilteredPolicy_Call {
+	return &IEnforcer_GetFilteredPolicy_Call{Call: _e.mock.On("GetFilteredPolicy",
+		append([]interface{}{fieldIndex}, fieldValues...)...)}
+}
+
+func (_c *IEnforcer_GetFilteredPolicy_Call) Run(run func(fieldIndex int, fieldValues ...string)) *IEnforcer_GetFilteredPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(int), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetFilteredPolicy_Call) Return(_a0 [][]string, _a1 error) *IEnforcer_GetFilteredPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetFilteredPolicy_Call) RunAndReturn(run func(int, ...string) ([][]string, error)) *IEnforcer_GetFilteredPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetGroupingPolicy provides a mock function with given fields:
 func (_m *IEnforcer) GetGroupingPolicy() ([][]string, error) {
 	ret := _m.Called()
@@ -1615,6 +3380,33 @@ func (_m *IEnforcer) GetGroupingPolicy() ([][]string, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_GetGroupingPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetGroupingPolicy'
+type IEnforcer_GetGroupingPolicy_Call struct {
+	*mock.Call
+}
+
+// GetGroupingPolicy is a helper method to define mock.On call
+func (_e *IEnforcer_Expecter) GetGroupingPolicy() *IEnforcer_GetGroupingPolicy_Call {
+	return &IEnforcer_GetGroupingPolicy_Call{Call: _e.mock.On("GetGroupingPolicy")}
+}
+
+func (_c *IEnforcer_GetGroupingPolicy_Call) Run(run func()) *IEnforcer_GetGroupingPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetGroupingPolicy_Call) Return(_a0 [][]string, _a1 error) *IEnforcer_GetGroupingPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetGroupingPolicy_Call) RunAndReturn(run func() ([][]string, error)) *IEnforcer_GetGroupingPolicy_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetImplicitPermissionsForUser provides a mock function with given fields: user, domain
@@ -1654,6 +3446,42 @@ func (_m *IEnforcer) GetImplicitPermissionsForUser(user string, domain ...string
 	return r0, r1
 }
 
+// IEnforcer_GetImplicitPermissionsForUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetImplicitPermissionsForUser'
+type IEnforcer_GetImplicitPermissionsForUser_Call struct {
+	*mock.Call
+}
+
+// GetImplicitPermissionsForUser is a helper method to define mock.On call
+//   - user string
+//   - domain ...string
+func (_e *IEnforcer_Expecter) GetImplicitPermissionsForUser(user interface{}, domain ...interface{}) *IEnforcer_GetImplicitPermissionsForUser_Call {
+	return &IEnforcer_GetImplicitPermissionsForUser_Call{Call: _e.mock.On("GetImplicitPermissionsForUser",
+		append([]interface{}{user}, domain...)...)}
+}
+
+func (_c *IEnforcer_GetImplicitPermissionsForUser_Call) Run(run func(user string, domain ...string)) *IEnforcer_GetImplicitPermissionsForUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetImplicitPermissionsForUser_Call) Return(_a0 [][]string, _a1 error) *IEnforcer_GetImplicitPermissionsForUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetImplicitPermissionsForUser_Call) RunAndReturn(run func(string, ...string) ([][]string, error)) *IEnforcer_GetImplicitPermissionsForUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetImplicitRolesForUser provides a mock function with given fields: name, domain
 func (_m *IEnforcer) GetImplicitRolesForUser(name string, domain ...string) ([]string, error) {
 	_va := make([]interface{}, len(domain))
@@ -1689,6 +3517,42 @@ func (_m *IEnforcer) GetImplicitRolesForUser(name string, domain ...string) ([]s
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_GetImplicitRolesForUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetImplicitRolesForUser'
+type IEnforcer_GetImplicitRolesForUser_Call struct {
+	*mock.Call
+}
+
+// GetImplicitRolesForUser is a helper method to define mock.On call
+//   - name string
+//   - domain ...string
+func (_e *IEnforcer_Expecter) GetImplicitRolesForUser(name interface{}, domain ...interface{}) *IEnforcer_GetImplicitRolesForUser_Call {
+	return &IEnforcer_GetImplicitRolesForUser_Call{Call: _e.mock.On("GetImplicitRolesForUser",
+		append([]interface{}{name}, domain...)...)}
+}
+
+func (_c *IEnforcer_GetImplicitRolesForUser_Call) Run(run func(name string, domain ...string)) *IEnforcer_GetImplicitRolesForUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetImplicitRolesForUser_Call) Return(_a0 []string, _a1 error) *IEnforcer_GetImplicitRolesForUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetImplicitRolesForUser_Call) RunAndReturn(run func(string, ...string) ([]string, error)) *IEnforcer_GetImplicitRolesForUser_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetImplicitUsersForPermission provides a mock function with given fields: permission
@@ -1727,6 +3591,41 @@ func (_m *IEnforcer) GetImplicitUsersForPermission(permission ...string) ([]stri
 	return r0, r1
 }
 
+// IEnforcer_GetImplicitUsersForPermission_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetImplicitUsersForPermission'
+type IEnforcer_GetImplicitUsersForPermission_Call struct {
+	*mock.Call
+}
+
+// GetImplicitUsersForPermission is a helper method to define mock.On call
+//   - permission ...string
+func (_e *IEnforcer_Expecter) GetImplicitUsersForPermission(permission ...interface{}) *IEnforcer_GetImplicitUsersForPermission_Call {
+	return &IEnforcer_GetImplicitUsersForPermission_Call{Call: _e.mock.On("GetImplicitUsersForPermission",
+		append([]interface{}{}, permission...)...)}
+}
+
+func (_c *IEnforcer_GetImplicitUsersForPermission_Call) Run(run func(permission ...string)) *IEnforcer_GetImplicitUsersForPermission_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetImplicitUsersForPermission_Call) Return(_a0 []string, _a1 error) *IEnforcer_GetImplicitUsersForPermission_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetImplicitUsersForPermission_Call) RunAndReturn(run func(...string) ([]string, error)) *IEnforcer_GetImplicitUsersForPermission_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetModel provides a mock function with given fields:
 func (_m *IEnforcer) GetModel() model.Model {
 	ret := _m.Called()
@@ -1745,6 +3644,33 @@ func (_m *IEnforcer) GetModel() model.Model {
 	}
 
 	return r0
+}
+
+// IEnforcer_GetModel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetModel'
+type IEnforcer_GetModel_Call struct {
+	*mock.Call
+}
+
+// GetModel is a helper method to define mock.On call
+func (_e *IEnforcer_Expecter) GetModel() *IEnforcer_GetModel_Call {
+	return &IEnforcer_GetModel_Call{Call: _e.mock.On("GetModel")}
+}
+
+func (_c *IEnforcer_GetModel_Call) Run(run func()) *IEnforcer_GetModel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetModel_Call) Return(_a0 model.Model) *IEnforcer_GetModel_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_GetModel_Call) RunAndReturn(run func() model.Model) *IEnforcer_GetModel_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetNamedGroupingPolicy provides a mock function with given fields: ptype
@@ -1777,6 +3703,34 @@ func (_m *IEnforcer) GetNamedGroupingPolicy(ptype string) ([][]string, error) {
 	return r0, r1
 }
 
+// IEnforcer_GetNamedGroupingPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetNamedGroupingPolicy'
+type IEnforcer_GetNamedGroupingPolicy_Call struct {
+	*mock.Call
+}
+
+// GetNamedGroupingPolicy is a helper method to define mock.On call
+//   - ptype string
+func (_e *IEnforcer_Expecter) GetNamedGroupingPolicy(ptype interface{}) *IEnforcer_GetNamedGroupingPolicy_Call {
+	return &IEnforcer_GetNamedGroupingPolicy_Call{Call: _e.mock.On("GetNamedGroupingPolicy", ptype)}
+}
+
+func (_c *IEnforcer_GetNamedGroupingPolicy_Call) Run(run func(ptype string)) *IEnforcer_GetNamedGroupingPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetNamedGroupingPolicy_Call) Return(_a0 [][]string, _a1 error) *IEnforcer_GetNamedGroupingPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetNamedGroupingPolicy_Call) RunAndReturn(run func(string) ([][]string, error)) *IEnforcer_GetNamedGroupingPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetNamedPolicy provides a mock function with given fields: ptype
 func (_m *IEnforcer) GetNamedPolicy(ptype string) ([][]string, error) {
 	ret := _m.Called(ptype)
@@ -1805,6 +3759,34 @@ func (_m *IEnforcer) GetNamedPolicy(ptype string) ([][]string, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_GetNamedPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetNamedPolicy'
+type IEnforcer_GetNamedPolicy_Call struct {
+	*mock.Call
+}
+
+// GetNamedPolicy is a helper method to define mock.On call
+//   - ptype string
+func (_e *IEnforcer_Expecter) GetNamedPolicy(ptype interface{}) *IEnforcer_GetNamedPolicy_Call {
+	return &IEnforcer_GetNamedPolicy_Call{Call: _e.mock.On("GetNamedPolicy", ptype)}
+}
+
+func (_c *IEnforcer_GetNamedPolicy_Call) Run(run func(ptype string)) *IEnforcer_GetNamedPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetNamedPolicy_Call) Return(_a0 [][]string, _a1 error) *IEnforcer_GetNamedPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetNamedPolicy_Call) RunAndReturn(run func(string) ([][]string, error)) *IEnforcer_GetNamedPolicy_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetPermissionsForUser provides a mock function with given fields: user, domain
@@ -1844,6 +3826,42 @@ func (_m *IEnforcer) GetPermissionsForUser(user string, domain ...string) ([][]s
 	return r0, r1
 }
 
+// IEnforcer_GetPermissionsForUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPermissionsForUser'
+type IEnforcer_GetPermissionsForUser_Call struct {
+	*mock.Call
+}
+
+// GetPermissionsForUser is a helper method to define mock.On call
+//   - user string
+//   - domain ...string
+func (_e *IEnforcer_Expecter) GetPermissionsForUser(user interface{}, domain ...interface{}) *IEnforcer_GetPermissionsForUser_Call {
+	return &IEnforcer_GetPermissionsForUser_Call{Call: _e.mock.On("GetPermissionsForUser",
+		append([]interface{}{user}, domain...)...)}
+}
+
+func (_c *IEnforcer_GetPermissionsForUser_Call) Run(run func(user string, domain ...string)) *IEnforcer_GetPermissionsForUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetPermissionsForUser_Call) Return(_a0 [][]string, _a1 error) *IEnforcer_GetPermissionsForUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetPermissionsForUser_Call) RunAndReturn(run func(string, ...string) ([][]string, error)) *IEnforcer_GetPermissionsForUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetPermissionsForUserInDomain provides a mock function with given fields: user, domain
 func (_m *IEnforcer) GetPermissionsForUserInDomain(user string, domain string) [][]string {
 	ret := _m.Called(user, domain)
@@ -1862,6 +3880,35 @@ func (_m *IEnforcer) GetPermissionsForUserInDomain(user string, domain string) [
 	}
 
 	return r0
+}
+
+// IEnforcer_GetPermissionsForUserInDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPermissionsForUserInDomain'
+type IEnforcer_GetPermissionsForUserInDomain_Call struct {
+	*mock.Call
+}
+
+// GetPermissionsForUserInDomain is a helper method to define mock.On call
+//   - user string
+//   - domain string
+func (_e *IEnforcer_Expecter) GetPermissionsForUserInDomain(user interface{}, domain interface{}) *IEnforcer_GetPermissionsForUserInDomain_Call {
+	return &IEnforcer_GetPermissionsForUserInDomain_Call{Call: _e.mock.On("GetPermissionsForUserInDomain", user, domain)}
+}
+
+func (_c *IEnforcer_GetPermissionsForUserInDomain_Call) Run(run func(user string, domain string)) *IEnforcer_GetPermissionsForUserInDomain_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetPermissionsForUserInDomain_Call) Return(_a0 [][]string) *IEnforcer_GetPermissionsForUserInDomain_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_GetPermissionsForUserInDomain_Call) RunAndReturn(run func(string, string) [][]string) *IEnforcer_GetPermissionsForUserInDomain_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetPolicy provides a mock function with given fields:
@@ -1894,6 +3941,33 @@ func (_m *IEnforcer) GetPolicy() ([][]string, error) {
 	return r0, r1
 }
 
+// IEnforcer_GetPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPolicy'
+type IEnforcer_GetPolicy_Call struct {
+	*mock.Call
+}
+
+// GetPolicy is a helper method to define mock.On call
+func (_e *IEnforcer_Expecter) GetPolicy() *IEnforcer_GetPolicy_Call {
+	return &IEnforcer_GetPolicy_Call{Call: _e.mock.On("GetPolicy")}
+}
+
+func (_c *IEnforcer_GetPolicy_Call) Run(run func()) *IEnforcer_GetPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetPolicy_Call) Return(_a0 [][]string, _a1 error) *IEnforcer_GetPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetPolicy_Call) RunAndReturn(run func() ([][]string, error)) *IEnforcer_GetPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetRoleManager provides a mock function with given fields:
 func (_m *IEnforcer) GetRoleManager() rbac.RoleManager {
 	ret := _m.Called()
@@ -1912,6 +3986,33 @@ func (_m *IEnforcer) GetRoleManager() rbac.RoleManager {
 	}
 
 	return r0
+}
+
+// IEnforcer_GetRoleManager_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRoleManager'
+type IEnforcer_GetRoleManager_Call struct {
+	*mock.Call
+}
+
+// GetRoleManager is a helper method to define mock.On call
+func (_e *IEnforcer_Expecter) GetRoleManager() *IEnforcer_GetRoleManager_Call {
+	return &IEnforcer_GetRoleManager_Call{Call: _e.mock.On("GetRoleManager")}
+}
+
+func (_c *IEnforcer_GetRoleManager_Call) Run(run func()) *IEnforcer_GetRoleManager_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetRoleManager_Call) Return(_a0 rbac.RoleManager) *IEnforcer_GetRoleManager_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_GetRoleManager_Call) RunAndReturn(run func() rbac.RoleManager) *IEnforcer_GetRoleManager_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetRolesForUser provides a mock function with given fields: name, domain
@@ -1951,6 +4052,42 @@ func (_m *IEnforcer) GetRolesForUser(name string, domain ...string) ([]string, e
 	return r0, r1
 }
 
+// IEnforcer_GetRolesForUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRolesForUser'
+type IEnforcer_GetRolesForUser_Call struct {
+	*mock.Call
+}
+
+// GetRolesForUser is a helper method to define mock.On call
+//   - name string
+//   - domain ...string
+func (_e *IEnforcer_Expecter) GetRolesForUser(name interface{}, domain ...interface{}) *IEnforcer_GetRolesForUser_Call {
+	return &IEnforcer_GetRolesForUser_Call{Call: _e.mock.On("GetRolesForUser",
+		append([]interface{}{name}, domain...)...)}
+}
+
+func (_c *IEnforcer_GetRolesForUser_Call) Run(run func(name string, domain ...string)) *IEnforcer_GetRolesForUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetRolesForUser_Call) Return(_a0 []string, _a1 error) *IEnforcer_GetRolesForUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetRolesForUser_Call) RunAndReturn(run func(string, ...string) ([]string, error)) *IEnforcer_GetRolesForUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetRolesForUserInDomain provides a mock function with given fields: name, domain
 func (_m *IEnforcer) GetRolesForUserInDomain(name string, domain string) []string {
 	ret := _m.Called(name, domain)
@@ -1969,6 +4106,35 @@ func (_m *IEnforcer) GetRolesForUserInDomain(name string, domain string) []strin
 	}
 
 	return r0
+}
+
+// IEnforcer_GetRolesForUserInDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRolesForUserInDomain'
+type IEnforcer_GetRolesForUserInDomain_Call struct {
+	*mock.Call
+}
+
+// GetRolesForUserInDomain is a helper method to define mock.On call
+//   - name string
+//   - domain string
+func (_e *IEnforcer_Expecter) GetRolesForUserInDomain(name interface{}, domain interface{}) *IEnforcer_GetRolesForUserInDomain_Call {
+	return &IEnforcer_GetRolesForUserInDomain_Call{Call: _e.mock.On("GetRolesForUserInDomain", name, domain)}
+}
+
+func (_c *IEnforcer_GetRolesForUserInDomain_Call) Run(run func(name string, domain string)) *IEnforcer_GetRolesForUserInDomain_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetRolesForUserInDomain_Call) Return(_a0 []string) *IEnforcer_GetRolesForUserInDomain_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_GetRolesForUserInDomain_Call) RunAndReturn(run func(string, string) []string) *IEnforcer_GetRolesForUserInDomain_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetUsersForRole provides a mock function with given fields: name, domain
@@ -2008,6 +4174,42 @@ func (_m *IEnforcer) GetUsersForRole(name string, domain ...string) ([]string, e
 	return r0, r1
 }
 
+// IEnforcer_GetUsersForRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUsersForRole'
+type IEnforcer_GetUsersForRole_Call struct {
+	*mock.Call
+}
+
+// GetUsersForRole is a helper method to define mock.On call
+//   - name string
+//   - domain ...string
+func (_e *IEnforcer_Expecter) GetUsersForRole(name interface{}, domain ...interface{}) *IEnforcer_GetUsersForRole_Call {
+	return &IEnforcer_GetUsersForRole_Call{Call: _e.mock.On("GetUsersForRole",
+		append([]interface{}{name}, domain...)...)}
+}
+
+func (_c *IEnforcer_GetUsersForRole_Call) Run(run func(name string, domain ...string)) *IEnforcer_GetUsersForRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetUsersForRole_Call) Return(_a0 []string, _a1 error) *IEnforcer_GetUsersForRole_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_GetUsersForRole_Call) RunAndReturn(run func(string, ...string) ([]string, error)) *IEnforcer_GetUsersForRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetUsersForRoleInDomain provides a mock function with given fields: name, domain
 func (_m *IEnforcer) GetUsersForRoleInDomain(name string, domain string) []string {
 	ret := _m.Called(name, domain)
@@ -2026,6 +4228,35 @@ func (_m *IEnforcer) GetUsersForRoleInDomain(name string, domain string) []strin
 	}
 
 	return r0
+}
+
+// IEnforcer_GetUsersForRoleInDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUsersForRoleInDomain'
+type IEnforcer_GetUsersForRoleInDomain_Call struct {
+	*mock.Call
+}
+
+// GetUsersForRoleInDomain is a helper method to define mock.On call
+//   - name string
+//   - domain string
+func (_e *IEnforcer_Expecter) GetUsersForRoleInDomain(name interface{}, domain interface{}) *IEnforcer_GetUsersForRoleInDomain_Call {
+	return &IEnforcer_GetUsersForRoleInDomain_Call{Call: _e.mock.On("GetUsersForRoleInDomain", name, domain)}
+}
+
+func (_c *IEnforcer_GetUsersForRoleInDomain_Call) Run(run func(name string, domain string)) *IEnforcer_GetUsersForRoleInDomain_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_GetUsersForRoleInDomain_Call) Return(_a0 []string) *IEnforcer_GetUsersForRoleInDomain_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_GetUsersForRoleInDomain_Call) RunAndReturn(run func(string, string) []string) *IEnforcer_GetUsersForRoleInDomain_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // HasGroupingPolicy provides a mock function with given fields: params
@@ -2056,6 +4287,41 @@ func (_m *IEnforcer) HasGroupingPolicy(params ...interface{}) (bool, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_HasGroupingPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasGroupingPolicy'
+type IEnforcer_HasGroupingPolicy_Call struct {
+	*mock.Call
+}
+
+// HasGroupingPolicy is a helper method to define mock.On call
+//   - params ...interface{}
+func (_e *IEnforcer_Expecter) HasGroupingPolicy(params ...interface{}) *IEnforcer_HasGroupingPolicy_Call {
+	return &IEnforcer_HasGroupingPolicy_Call{Call: _e.mock.On("HasGroupingPolicy",
+		append([]interface{}{}, params...)...)}
+}
+
+func (_c *IEnforcer_HasGroupingPolicy_Call) Run(run func(params ...interface{})) *IEnforcer_HasGroupingPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_HasGroupingPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_HasGroupingPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_HasGroupingPolicy_Call) RunAndReturn(run func(...interface{}) (bool, error)) *IEnforcer_HasGroupingPolicy_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // HasNamedGroupingPolicy provides a mock function with given fields: ptype, params
@@ -2089,6 +4355,42 @@ func (_m *IEnforcer) HasNamedGroupingPolicy(ptype string, params ...interface{})
 	return r0, r1
 }
 
+// IEnforcer_HasNamedGroupingPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasNamedGroupingPolicy'
+type IEnforcer_HasNamedGroupingPolicy_Call struct {
+	*mock.Call
+}
+
+// HasNamedGroupingPolicy is a helper method to define mock.On call
+//   - ptype string
+//   - params ...interface{}
+func (_e *IEnforcer_Expecter) HasNamedGroupingPolicy(ptype interface{}, params ...interface{}) *IEnforcer_HasNamedGroupingPolicy_Call {
+	return &IEnforcer_HasNamedGroupingPolicy_Call{Call: _e.mock.On("HasNamedGroupingPolicy",
+		append([]interface{}{ptype}, params...)...)}
+}
+
+func (_c *IEnforcer_HasNamedGroupingPolicy_Call) Run(run func(ptype string, params ...interface{})) *IEnforcer_HasNamedGroupingPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_HasNamedGroupingPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_HasNamedGroupingPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_HasNamedGroupingPolicy_Call) RunAndReturn(run func(string, ...interface{}) (bool, error)) *IEnforcer_HasNamedGroupingPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // HasNamedPolicy provides a mock function with given fields: ptype, params
 func (_m *IEnforcer) HasNamedPolicy(ptype string, params ...interface{}) (bool, error) {
 	var _ca []interface{}
@@ -2118,6 +4420,42 @@ func (_m *IEnforcer) HasNamedPolicy(ptype string, params ...interface{}) (bool, 
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_HasNamedPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasNamedPolicy'
+type IEnforcer_HasNamedPolicy_Call struct {
+	*mock.Call
+}
+
+// HasNamedPolicy is a helper method to define mock.On call
+//   - ptype string
+//   - params ...interface{}
+func (_e *IEnforcer_Expecter) HasNamedPolicy(ptype interface{}, params ...interface{}) *IEnforcer_HasNamedPolicy_Call {
+	return &IEnforcer_HasNamedPolicy_Call{Call: _e.mock.On("HasNamedPolicy",
+		append([]interface{}{ptype}, params...)...)}
+}
+
+func (_c *IEnforcer_HasNamedPolicy_Call) Run(run func(ptype string, params ...interface{})) *IEnforcer_HasNamedPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_HasNamedPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_HasNamedPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_HasNamedPolicy_Call) RunAndReturn(run func(string, ...interface{}) (bool, error)) *IEnforcer_HasNamedPolicy_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // HasPermissionForUser provides a mock function with given fields: user, permission
@@ -2155,6 +4493,42 @@ func (_m *IEnforcer) HasPermissionForUser(user string, permission ...string) (bo
 	return r0, r1
 }
 
+// IEnforcer_HasPermissionForUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasPermissionForUser'
+type IEnforcer_HasPermissionForUser_Call struct {
+	*mock.Call
+}
+
+// HasPermissionForUser is a helper method to define mock.On call
+//   - user string
+//   - permission ...string
+func (_e *IEnforcer_Expecter) HasPermissionForUser(user interface{}, permission ...interface{}) *IEnforcer_HasPermissionForUser_Call {
+	return &IEnforcer_HasPermissionForUser_Call{Call: _e.mock.On("HasPermissionForUser",
+		append([]interface{}{user}, permission...)...)}
+}
+
+func (_c *IEnforcer_HasPermissionForUser_Call) Run(run func(user string, permission ...string)) *IEnforcer_HasPermissionForUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_HasPermissionForUser_Call) Return(_a0 bool, _a1 error) *IEnforcer_HasPermissionForUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_HasPermissionForUser_Call) RunAndReturn(run func(string, ...string) (bool, error)) *IEnforcer_HasPermissionForUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // HasPolicy provides a mock function with given fields: params
 func (_m *IEnforcer) HasPolicy(params ...interface{}) (bool, error) {
 	var _ca []interface{}
@@ -2183,6 +4557,41 @@ func (_m *IEnforcer) HasPolicy(params ...interface{}) (bool, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_HasPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasPolicy'
+type IEnforcer_HasPolicy_Call struct {
+	*mock.Call
+}
+
+// HasPolicy is a helper method to define mock.On call
+//   - params ...interface{}
+func (_e *IEnforcer_Expecter) HasPolicy(params ...interface{}) *IEnforcer_HasPolicy_Call {
+	return &IEnforcer_HasPolicy_Call{Call: _e.mock.On("HasPolicy",
+		append([]interface{}{}, params...)...)}
+}
+
+func (_c *IEnforcer_HasPolicy_Call) Run(run func(params ...interface{})) *IEnforcer_HasPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_HasPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_HasPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_HasPolicy_Call) RunAndReturn(run func(...interface{}) (bool, error)) *IEnforcer_HasPolicy_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // HasRoleForUser provides a mock function with given fields: name, role, domain
@@ -2220,6 +4629,43 @@ func (_m *IEnforcer) HasRoleForUser(name string, role string, domain ...string) 
 	return r0, r1
 }
 
+// IEnforcer_HasRoleForUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasRoleForUser'
+type IEnforcer_HasRoleForUser_Call struct {
+	*mock.Call
+}
+
+// HasRoleForUser is a helper method to define mock.On call
+//   - name string
+//   - role string
+//   - domain ...string
+func (_e *IEnforcer_Expecter) HasRoleForUser(name interface{}, role interface{}, domain ...interface{}) *IEnforcer_HasRoleForUser_Call {
+	return &IEnforcer_HasRoleForUser_Call{Call: _e.mock.On("HasRoleForUser",
+		append([]interface{}{name, role}, domain...)...)}
+}
+
+func (_c *IEnforcer_HasRoleForUser_Call) Run(run func(name string, role string, domain ...string)) *IEnforcer_HasRoleForUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), args[1].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_HasRoleForUser_Call) Return(_a0 bool, _a1 error) *IEnforcer_HasRoleForUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_HasRoleForUser_Call) RunAndReturn(run func(string, string, ...string) (bool, error)) *IEnforcer_HasRoleForUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // InitWithAdapter provides a mock function with given fields: modelPath, adapter
 func (_m *IEnforcer) InitWithAdapter(modelPath string, adapter persist.Adapter) error {
 	ret := _m.Called(modelPath, adapter)
@@ -2236,6 +4682,35 @@ func (_m *IEnforcer) InitWithAdapter(modelPath string, adapter persist.Adapter) 
 	}
 
 	return r0
+}
+
+// IEnforcer_InitWithAdapter_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InitWithAdapter'
+type IEnforcer_InitWithAdapter_Call struct {
+	*mock.Call
+}
+
+// InitWithAdapter is a helper method to define mock.On call
+//   - modelPath string
+//   - adapter persist.Adapter
+func (_e *IEnforcer_Expecter) InitWithAdapter(modelPath interface{}, adapter interface{}) *IEnforcer_InitWithAdapter_Call {
+	return &IEnforcer_InitWithAdapter_Call{Call: _e.mock.On("InitWithAdapter", modelPath, adapter)}
+}
+
+func (_c *IEnforcer_InitWithAdapter_Call) Run(run func(modelPath string, adapter persist.Adapter)) *IEnforcer_InitWithAdapter_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(persist.Adapter))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_InitWithAdapter_Call) Return(_a0 error) *IEnforcer_InitWithAdapter_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_InitWithAdapter_Call) RunAndReturn(run func(string, persist.Adapter) error) *IEnforcer_InitWithAdapter_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // InitWithFile provides a mock function with given fields: modelPath, policyPath
@@ -2256,6 +4731,35 @@ func (_m *IEnforcer) InitWithFile(modelPath string, policyPath string) error {
 	return r0
 }
 
+// IEnforcer_InitWithFile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InitWithFile'
+type IEnforcer_InitWithFile_Call struct {
+	*mock.Call
+}
+
+// InitWithFile is a helper method to define mock.On call
+//   - modelPath string
+//   - policyPath string
+func (_e *IEnforcer_Expecter) InitWithFile(modelPath interface{}, policyPath interface{}) *IEnforcer_InitWithFile_Call {
+	return &IEnforcer_InitWithFile_Call{Call: _e.mock.On("InitWithFile", modelPath, policyPath)}
+}
+
+func (_c *IEnforcer_InitWithFile_Call) Run(run func(modelPath string, policyPath string)) *IEnforcer_InitWithFile_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_InitWithFile_Call) Return(_a0 error) *IEnforcer_InitWithFile_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_InitWithFile_Call) RunAndReturn(run func(string, string) error) *IEnforcer_InitWithFile_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // InitWithModelAndAdapter provides a mock function with given fields: m, adapter
 func (_m *IEnforcer) InitWithModelAndAdapter(m model.Model, adapter persist.Adapter) error {
 	ret := _m.Called(m, adapter)
@@ -2272,6 +4776,35 @@ func (_m *IEnforcer) InitWithModelAndAdapter(m model.Model, adapter persist.Adap
 	}
 
 	return r0
+}
+
+// IEnforcer_InitWithModelAndAdapter_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InitWithModelAndAdapter'
+type IEnforcer_InitWithModelAndAdapter_Call struct {
+	*mock.Call
+}
+
+// InitWithModelAndAdapter is a helper method to define mock.On call
+//   - m model.Model
+//   - adapter persist.Adapter
+func (_e *IEnforcer_Expecter) InitWithModelAndAdapter(m interface{}, adapter interface{}) *IEnforcer_InitWithModelAndAdapter_Call {
+	return &IEnforcer_InitWithModelAndAdapter_Call{Call: _e.mock.On("InitWithModelAndAdapter", m, adapter)}
+}
+
+func (_c *IEnforcer_InitWithModelAndAdapter_Call) Run(run func(m model.Model, adapter persist.Adapter)) *IEnforcer_InitWithModelAndAdapter_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(model.Model), args[1].(persist.Adapter))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_InitWithModelAndAdapter_Call) Return(_a0 error) *IEnforcer_InitWithModelAndAdapter_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_InitWithModelAndAdapter_Call) RunAndReturn(run func(model.Model, persist.Adapter) error) *IEnforcer_InitWithModelAndAdapter_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // IsFiltered provides a mock function with given fields:
@@ -2292,6 +4825,33 @@ func (_m *IEnforcer) IsFiltered() bool {
 	return r0
 }
 
+// IEnforcer_IsFiltered_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsFiltered'
+type IEnforcer_IsFiltered_Call struct {
+	*mock.Call
+}
+
+// IsFiltered is a helper method to define mock.On call
+func (_e *IEnforcer_Expecter) IsFiltered() *IEnforcer_IsFiltered_Call {
+	return &IEnforcer_IsFiltered_Call{Call: _e.mock.On("IsFiltered")}
+}
+
+func (_c *IEnforcer_IsFiltered_Call) Run(run func()) *IEnforcer_IsFiltered_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *IEnforcer_IsFiltered_Call) Return(_a0 bool) *IEnforcer_IsFiltered_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_IsFiltered_Call) RunAndReturn(run func() bool) *IEnforcer_IsFiltered_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // LoadFilteredPolicy provides a mock function with given fields: filter
 func (_m *IEnforcer) LoadFilteredPolicy(filter interface{}) error {
 	ret := _m.Called(filter)
@@ -2308,6 +4868,34 @@ func (_m *IEnforcer) LoadFilteredPolicy(filter interface{}) error {
 	}
 
 	return r0
+}
+
+// IEnforcer_LoadFilteredPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LoadFilteredPolicy'
+type IEnforcer_LoadFilteredPolicy_Call struct {
+	*mock.Call
+}
+
+// LoadFilteredPolicy is a helper method to define mock.On call
+//   - filter interface{}
+func (_e *IEnforcer_Expecter) LoadFilteredPolicy(filter interface{}) *IEnforcer_LoadFilteredPolicy_Call {
+	return &IEnforcer_LoadFilteredPolicy_Call{Call: _e.mock.On("LoadFilteredPolicy", filter)}
+}
+
+func (_c *IEnforcer_LoadFilteredPolicy_Call) Run(run func(filter interface{})) *IEnforcer_LoadFilteredPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(interface{}))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_LoadFilteredPolicy_Call) Return(_a0 error) *IEnforcer_LoadFilteredPolicy_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_LoadFilteredPolicy_Call) RunAndReturn(run func(interface{}) error) *IEnforcer_LoadFilteredPolicy_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // LoadIncrementalFilteredPolicy provides a mock function with given fields: filter
@@ -2328,6 +4916,34 @@ func (_m *IEnforcer) LoadIncrementalFilteredPolicy(filter interface{}) error {
 	return r0
 }
 
+// IEnforcer_LoadIncrementalFilteredPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LoadIncrementalFilteredPolicy'
+type IEnforcer_LoadIncrementalFilteredPolicy_Call struct {
+	*mock.Call
+}
+
+// LoadIncrementalFilteredPolicy is a helper method to define mock.On call
+//   - filter interface{}
+func (_e *IEnforcer_Expecter) LoadIncrementalFilteredPolicy(filter interface{}) *IEnforcer_LoadIncrementalFilteredPolicy_Call {
+	return &IEnforcer_LoadIncrementalFilteredPolicy_Call{Call: _e.mock.On("LoadIncrementalFilteredPolicy", filter)}
+}
+
+func (_c *IEnforcer_LoadIncrementalFilteredPolicy_Call) Run(run func(filter interface{})) *IEnforcer_LoadIncrementalFilteredPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(interface{}))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_LoadIncrementalFilteredPolicy_Call) Return(_a0 error) *IEnforcer_LoadIncrementalFilteredPolicy_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_LoadIncrementalFilteredPolicy_Call) RunAndReturn(run func(interface{}) error) *IEnforcer_LoadIncrementalFilteredPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // LoadModel provides a mock function with given fields:
 func (_m *IEnforcer) LoadModel() error {
 	ret := _m.Called()
@@ -2346,6 +4962,33 @@ func (_m *IEnforcer) LoadModel() error {
 	return r0
 }
 
+// IEnforcer_LoadModel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LoadModel'
+type IEnforcer_LoadModel_Call struct {
+	*mock.Call
+}
+
+// LoadModel is a helper method to define mock.On call
+func (_e *IEnforcer_Expecter) LoadModel() *IEnforcer_LoadModel_Call {
+	return &IEnforcer_LoadModel_Call{Call: _e.mock.On("LoadModel")}
+}
+
+func (_c *IEnforcer_LoadModel_Call) Run(run func()) *IEnforcer_LoadModel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *IEnforcer_LoadModel_Call) Return(_a0 error) *IEnforcer_LoadModel_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_LoadModel_Call) RunAndReturn(run func() error) *IEnforcer_LoadModel_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // LoadPolicy provides a mock function with given fields:
 func (_m *IEnforcer) LoadPolicy() error {
 	ret := _m.Called()
@@ -2362,6 +5005,33 @@ func (_m *IEnforcer) LoadPolicy() error {
 	}
 
 	return r0
+}
+
+// IEnforcer_LoadPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LoadPolicy'
+type IEnforcer_LoadPolicy_Call struct {
+	*mock.Call
+}
+
+// LoadPolicy is a helper method to define mock.On call
+func (_e *IEnforcer_Expecter) LoadPolicy() *IEnforcer_LoadPolicy_Call {
+	return &IEnforcer_LoadPolicy_Call{Call: _e.mock.On("LoadPolicy")}
+}
+
+func (_c *IEnforcer_LoadPolicy_Call) Run(run func()) *IEnforcer_LoadPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *IEnforcer_LoadPolicy_Call) Return(_a0 error) *IEnforcer_LoadPolicy_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_LoadPolicy_Call) RunAndReturn(run func() error) *IEnforcer_LoadPolicy_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // RemoveFilteredGroupingPolicy provides a mock function with given fields: fieldIndex, fieldValues
@@ -2399,6 +5069,42 @@ func (_m *IEnforcer) RemoveFilteredGroupingPolicy(fieldIndex int, fieldValues ..
 	return r0, r1
 }
 
+// IEnforcer_RemoveFilteredGroupingPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveFilteredGroupingPolicy'
+type IEnforcer_RemoveFilteredGroupingPolicy_Call struct {
+	*mock.Call
+}
+
+// RemoveFilteredGroupingPolicy is a helper method to define mock.On call
+//   - fieldIndex int
+//   - fieldValues ...string
+func (_e *IEnforcer_Expecter) RemoveFilteredGroupingPolicy(fieldIndex interface{}, fieldValues ...interface{}) *IEnforcer_RemoveFilteredGroupingPolicy_Call {
+	return &IEnforcer_RemoveFilteredGroupingPolicy_Call{Call: _e.mock.On("RemoveFilteredGroupingPolicy",
+		append([]interface{}{fieldIndex}, fieldValues...)...)}
+}
+
+func (_c *IEnforcer_RemoveFilteredGroupingPolicy_Call) Run(run func(fieldIndex int, fieldValues ...string)) *IEnforcer_RemoveFilteredGroupingPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(int), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_RemoveFilteredGroupingPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_RemoveFilteredGroupingPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_RemoveFilteredGroupingPolicy_Call) RunAndReturn(run func(int, ...string) (bool, error)) *IEnforcer_RemoveFilteredGroupingPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RemoveFilteredNamedGroupingPolicy provides a mock function with given fields: ptype, fieldIndex, fieldValues
 func (_m *IEnforcer) RemoveFilteredNamedGroupingPolicy(ptype string, fieldIndex int, fieldValues ...string) (bool, error) {
 	_va := make([]interface{}, len(fieldValues))
@@ -2432,6 +5138,43 @@ func (_m *IEnforcer) RemoveFilteredNamedGroupingPolicy(ptype string, fieldIndex 
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_RemoveFilteredNamedGroupingPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveFilteredNamedGroupingPolicy'
+type IEnforcer_RemoveFilteredNamedGroupingPolicy_Call struct {
+	*mock.Call
+}
+
+// RemoveFilteredNamedGroupingPolicy is a helper method to define mock.On call
+//   - ptype string
+//   - fieldIndex int
+//   - fieldValues ...string
+func (_e *IEnforcer_Expecter) RemoveFilteredNamedGroupingPolicy(ptype interface{}, fieldIndex interface{}, fieldValues ...interface{}) *IEnforcer_RemoveFilteredNamedGroupingPolicy_Call {
+	return &IEnforcer_RemoveFilteredNamedGroupingPolicy_Call{Call: _e.mock.On("RemoveFilteredNamedGroupingPolicy",
+		append([]interface{}{ptype, fieldIndex}, fieldValues...)...)}
+}
+
+func (_c *IEnforcer_RemoveFilteredNamedGroupingPolicy_Call) Run(run func(ptype string, fieldIndex int, fieldValues ...string)) *IEnforcer_RemoveFilteredNamedGroupingPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), args[1].(int), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_RemoveFilteredNamedGroupingPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_RemoveFilteredNamedGroupingPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_RemoveFilteredNamedGroupingPolicy_Call) RunAndReturn(run func(string, int, ...string) (bool, error)) *IEnforcer_RemoveFilteredNamedGroupingPolicy_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // RemoveFilteredNamedPolicy provides a mock function with given fields: ptype, fieldIndex, fieldValues
@@ -2469,6 +5212,43 @@ func (_m *IEnforcer) RemoveFilteredNamedPolicy(ptype string, fieldIndex int, fie
 	return r0, r1
 }
 
+// IEnforcer_RemoveFilteredNamedPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveFilteredNamedPolicy'
+type IEnforcer_RemoveFilteredNamedPolicy_Call struct {
+	*mock.Call
+}
+
+// RemoveFilteredNamedPolicy is a helper method to define mock.On call
+//   - ptype string
+//   - fieldIndex int
+//   - fieldValues ...string
+func (_e *IEnforcer_Expecter) RemoveFilteredNamedPolicy(ptype interface{}, fieldIndex interface{}, fieldValues ...interface{}) *IEnforcer_RemoveFilteredNamedPolicy_Call {
+	return &IEnforcer_RemoveFilteredNamedPolicy_Call{Call: _e.mock.On("RemoveFilteredNamedPolicy",
+		append([]interface{}{ptype, fieldIndex}, fieldValues...)...)}
+}
+
+func (_c *IEnforcer_RemoveFilteredNamedPolicy_Call) Run(run func(ptype string, fieldIndex int, fieldValues ...string)) *IEnforcer_RemoveFilteredNamedPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), args[1].(int), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_RemoveFilteredNamedPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_RemoveFilteredNamedPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_RemoveFilteredNamedPolicy_Call) RunAndReturn(run func(string, int, ...string) (bool, error)) *IEnforcer_RemoveFilteredNamedPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RemoveFilteredPolicy provides a mock function with given fields: fieldIndex, fieldValues
 func (_m *IEnforcer) RemoveFilteredPolicy(fieldIndex int, fieldValues ...string) (bool, error) {
 	_va := make([]interface{}, len(fieldValues))
@@ -2504,6 +5284,42 @@ func (_m *IEnforcer) RemoveFilteredPolicy(fieldIndex int, fieldValues ...string)
 	return r0, r1
 }
 
+// IEnforcer_RemoveFilteredPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveFilteredPolicy'
+type IEnforcer_RemoveFilteredPolicy_Call struct {
+	*mock.Call
+}
+
+// RemoveFilteredPolicy is a helper method to define mock.On call
+//   - fieldIndex int
+//   - fieldValues ...string
+func (_e *IEnforcer_Expecter) RemoveFilteredPolicy(fieldIndex interface{}, fieldValues ...interface{}) *IEnforcer_RemoveFilteredPolicy_Call {
+	return &IEnforcer_RemoveFilteredPolicy_Call{Call: _e.mock.On("RemoveFilteredPolicy",
+		append([]interface{}{fieldIndex}, fieldValues...)...)}
+}
+
+func (_c *IEnforcer_RemoveFilteredPolicy_Call) Run(run func(fieldIndex int, fieldValues ...string)) *IEnforcer_RemoveFilteredPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(int), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_RemoveFilteredPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_RemoveFilteredPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_RemoveFilteredPolicy_Call) RunAndReturn(run func(int, ...string) (bool, error)) *IEnforcer_RemoveFilteredPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RemoveGroupingPolicies provides a mock function with given fields: rules
 func (_m *IEnforcer) RemoveGroupingPolicies(rules [][]string) (bool, error) {
 	ret := _m.Called(rules)
@@ -2530,6 +5346,34 @@ func (_m *IEnforcer) RemoveGroupingPolicies(rules [][]string) (bool, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_RemoveGroupingPolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveGroupingPolicies'
+type IEnforcer_RemoveGroupingPolicies_Call struct {
+	*mock.Call
+}
+
+// RemoveGroupingPolicies is a helper method to define mock.On call
+//   - rules [][]string
+func (_e *IEnforcer_Expecter) RemoveGroupingPolicies(rules interface{}) *IEnforcer_RemoveGroupingPolicies_Call {
+	return &IEnforcer_RemoveGroupingPolicies_Call{Call: _e.mock.On("RemoveGroupingPolicies", rules)}
+}
+
+func (_c *IEnforcer_RemoveGroupingPolicies_Call) Run(run func(rules [][]string)) *IEnforcer_RemoveGroupingPolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_RemoveGroupingPolicies_Call) Return(_a0 bool, _a1 error) *IEnforcer_RemoveGroupingPolicies_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_RemoveGroupingPolicies_Call) RunAndReturn(run func([][]string) (bool, error)) *IEnforcer_RemoveGroupingPolicies_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // RemoveGroupingPolicy provides a mock function with given fields: params
@@ -2562,6 +5406,41 @@ func (_m *IEnforcer) RemoveGroupingPolicy(params ...interface{}) (bool, error) {
 	return r0, r1
 }
 
+// IEnforcer_RemoveGroupingPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveGroupingPolicy'
+type IEnforcer_RemoveGroupingPolicy_Call struct {
+	*mock.Call
+}
+
+// RemoveGroupingPolicy is a helper method to define mock.On call
+//   - params ...interface{}
+func (_e *IEnforcer_Expecter) RemoveGroupingPolicy(params ...interface{}) *IEnforcer_RemoveGroupingPolicy_Call {
+	return &IEnforcer_RemoveGroupingPolicy_Call{Call: _e.mock.On("RemoveGroupingPolicy",
+		append([]interface{}{}, params...)...)}
+}
+
+func (_c *IEnforcer_RemoveGroupingPolicy_Call) Run(run func(params ...interface{})) *IEnforcer_RemoveGroupingPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_RemoveGroupingPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_RemoveGroupingPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_RemoveGroupingPolicy_Call) RunAndReturn(run func(...interface{}) (bool, error)) *IEnforcer_RemoveGroupingPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RemoveNamedGroupingPolicies provides a mock function with given fields: ptype, rules
 func (_m *IEnforcer) RemoveNamedGroupingPolicies(ptype string, rules [][]string) (bool, error) {
 	ret := _m.Called(ptype, rules)
@@ -2588,6 +5467,35 @@ func (_m *IEnforcer) RemoveNamedGroupingPolicies(ptype string, rules [][]string)
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_RemoveNamedGroupingPolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveNamedGroupingPolicies'
+type IEnforcer_RemoveNamedGroupingPolicies_Call struct {
+	*mock.Call
+}
+
+// RemoveNamedGroupingPolicies is a helper method to define mock.On call
+//   - ptype string
+//   - rules [][]string
+func (_e *IEnforcer_Expecter) RemoveNamedGroupingPolicies(ptype interface{}, rules interface{}) *IEnforcer_RemoveNamedGroupingPolicies_Call {
+	return &IEnforcer_RemoveNamedGroupingPolicies_Call{Call: _e.mock.On("RemoveNamedGroupingPolicies", ptype, rules)}
+}
+
+func (_c *IEnforcer_RemoveNamedGroupingPolicies_Call) Run(run func(ptype string, rules [][]string)) *IEnforcer_RemoveNamedGroupingPolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_RemoveNamedGroupingPolicies_Call) Return(_a0 bool, _a1 error) *IEnforcer_RemoveNamedGroupingPolicies_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_RemoveNamedGroupingPolicies_Call) RunAndReturn(run func(string, [][]string) (bool, error)) *IEnforcer_RemoveNamedGroupingPolicies_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // RemoveNamedGroupingPolicy provides a mock function with given fields: ptype, params
@@ -2621,6 +5529,42 @@ func (_m *IEnforcer) RemoveNamedGroupingPolicy(ptype string, params ...interface
 	return r0, r1
 }
 
+// IEnforcer_RemoveNamedGroupingPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveNamedGroupingPolicy'
+type IEnforcer_RemoveNamedGroupingPolicy_Call struct {
+	*mock.Call
+}
+
+// RemoveNamedGroupingPolicy is a helper method to define mock.On call
+//   - ptype string
+//   - params ...interface{}
+func (_e *IEnforcer_Expecter) RemoveNamedGroupingPolicy(ptype interface{}, params ...interface{}) *IEnforcer_RemoveNamedGroupingPolicy_Call {
+	return &IEnforcer_RemoveNamedGroupingPolicy_Call{Call: _e.mock.On("RemoveNamedGroupingPolicy",
+		append([]interface{}{ptype}, params...)...)}
+}
+
+func (_c *IEnforcer_RemoveNamedGroupingPolicy_Call) Run(run func(ptype string, params ...interface{})) *IEnforcer_RemoveNamedGroupingPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_RemoveNamedGroupingPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_RemoveNamedGroupingPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_RemoveNamedGroupingPolicy_Call) RunAndReturn(run func(string, ...interface{}) (bool, error)) *IEnforcer_RemoveNamedGroupingPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RemoveNamedPolicies provides a mock function with given fields: ptype, rules
 func (_m *IEnforcer) RemoveNamedPolicies(ptype string, rules [][]string) (bool, error) {
 	ret := _m.Called(ptype, rules)
@@ -2647,6 +5591,35 @@ func (_m *IEnforcer) RemoveNamedPolicies(ptype string, rules [][]string) (bool, 
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_RemoveNamedPolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveNamedPolicies'
+type IEnforcer_RemoveNamedPolicies_Call struct {
+	*mock.Call
+}
+
+// RemoveNamedPolicies is a helper method to define mock.On call
+//   - ptype string
+//   - rules [][]string
+func (_e *IEnforcer_Expecter) RemoveNamedPolicies(ptype interface{}, rules interface{}) *IEnforcer_RemoveNamedPolicies_Call {
+	return &IEnforcer_RemoveNamedPolicies_Call{Call: _e.mock.On("RemoveNamedPolicies", ptype, rules)}
+}
+
+func (_c *IEnforcer_RemoveNamedPolicies_Call) Run(run func(ptype string, rules [][]string)) *IEnforcer_RemoveNamedPolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_RemoveNamedPolicies_Call) Return(_a0 bool, _a1 error) *IEnforcer_RemoveNamedPolicies_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_RemoveNamedPolicies_Call) RunAndReturn(run func(string, [][]string) (bool, error)) *IEnforcer_RemoveNamedPolicies_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // RemoveNamedPolicy provides a mock function with given fields: ptype, params
@@ -2680,6 +5653,42 @@ func (_m *IEnforcer) RemoveNamedPolicy(ptype string, params ...interface{}) (boo
 	return r0, r1
 }
 
+// IEnforcer_RemoveNamedPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveNamedPolicy'
+type IEnforcer_RemoveNamedPolicy_Call struct {
+	*mock.Call
+}
+
+// RemoveNamedPolicy is a helper method to define mock.On call
+//   - ptype string
+//   - params ...interface{}
+func (_e *IEnforcer_Expecter) RemoveNamedPolicy(ptype interface{}, params ...interface{}) *IEnforcer_RemoveNamedPolicy_Call {
+	return &IEnforcer_RemoveNamedPolicy_Call{Call: _e.mock.On("RemoveNamedPolicy",
+		append([]interface{}{ptype}, params...)...)}
+}
+
+func (_c *IEnforcer_RemoveNamedPolicy_Call) Run(run func(ptype string, params ...interface{})) *IEnforcer_RemoveNamedPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_RemoveNamedPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_RemoveNamedPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_RemoveNamedPolicy_Call) RunAndReturn(run func(string, ...interface{}) (bool, error)) *IEnforcer_RemoveNamedPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RemovePolicies provides a mock function with given fields: rules
 func (_m *IEnforcer) RemovePolicies(rules [][]string) (bool, error) {
 	ret := _m.Called(rules)
@@ -2706,6 +5715,34 @@ func (_m *IEnforcer) RemovePolicies(rules [][]string) (bool, error) {
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_RemovePolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemovePolicies'
+type IEnforcer_RemovePolicies_Call struct {
+	*mock.Call
+}
+
+// RemovePolicies is a helper method to define mock.On call
+//   - rules [][]string
+func (_e *IEnforcer_Expecter) RemovePolicies(rules interface{}) *IEnforcer_RemovePolicies_Call {
+	return &IEnforcer_RemovePolicies_Call{Call: _e.mock.On("RemovePolicies", rules)}
+}
+
+func (_c *IEnforcer_RemovePolicies_Call) Run(run func(rules [][]string)) *IEnforcer_RemovePolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_RemovePolicies_Call) Return(_a0 bool, _a1 error) *IEnforcer_RemovePolicies_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_RemovePolicies_Call) RunAndReturn(run func([][]string) (bool, error)) *IEnforcer_RemovePolicies_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // RemovePolicy provides a mock function with given fields: params
@@ -2738,6 +5775,41 @@ func (_m *IEnforcer) RemovePolicy(params ...interface{}) (bool, error) {
 	return r0, r1
 }
 
+// IEnforcer_RemovePolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemovePolicy'
+type IEnforcer_RemovePolicy_Call struct {
+	*mock.Call
+}
+
+// RemovePolicy is a helper method to define mock.On call
+//   - params ...interface{}
+func (_e *IEnforcer_Expecter) RemovePolicy(params ...interface{}) *IEnforcer_RemovePolicy_Call {
+	return &IEnforcer_RemovePolicy_Call{Call: _e.mock.On("RemovePolicy",
+		append([]interface{}{}, params...)...)}
+}
+
+func (_c *IEnforcer_RemovePolicy_Call) Run(run func(params ...interface{})) *IEnforcer_RemovePolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_RemovePolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_RemovePolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_RemovePolicy_Call) RunAndReturn(run func(...interface{}) (bool, error)) *IEnforcer_RemovePolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SavePolicy provides a mock function with given fields:
 func (_m *IEnforcer) SavePolicy() error {
 	ret := _m.Called()
@@ -2754,6 +5826,33 @@ func (_m *IEnforcer) SavePolicy() error {
 	}
 
 	return r0
+}
+
+// IEnforcer_SavePolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SavePolicy'
+type IEnforcer_SavePolicy_Call struct {
+	*mock.Call
+}
+
+// SavePolicy is a helper method to define mock.On call
+func (_e *IEnforcer_Expecter) SavePolicy() *IEnforcer_SavePolicy_Call {
+	return &IEnforcer_SavePolicy_Call{Call: _e.mock.On("SavePolicy")}
+}
+
+func (_c *IEnforcer_SavePolicy_Call) Run(run func()) *IEnforcer_SavePolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *IEnforcer_SavePolicy_Call) Return(_a0 error) *IEnforcer_SavePolicy_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_SavePolicy_Call) RunAndReturn(run func() error) *IEnforcer_SavePolicy_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // SelfAddPolicies provides a mock function with given fields: sec, ptype, rules
@@ -2784,6 +5883,36 @@ func (_m *IEnforcer) SelfAddPolicies(sec string, ptype string, rules [][]string)
 	return r0, r1
 }
 
+// IEnforcer_SelfAddPolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelfAddPolicies'
+type IEnforcer_SelfAddPolicies_Call struct {
+	*mock.Call
+}
+
+// SelfAddPolicies is a helper method to define mock.On call
+//   - sec string
+//   - ptype string
+//   - rules [][]string
+func (_e *IEnforcer_Expecter) SelfAddPolicies(sec interface{}, ptype interface{}, rules interface{}) *IEnforcer_SelfAddPolicies_Call {
+	return &IEnforcer_SelfAddPolicies_Call{Call: _e.mock.On("SelfAddPolicies", sec, ptype, rules)}
+}
+
+func (_c *IEnforcer_SelfAddPolicies_Call) Run(run func(sec string, ptype string, rules [][]string)) *IEnforcer_SelfAddPolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_SelfAddPolicies_Call) Return(_a0 bool, _a1 error) *IEnforcer_SelfAddPolicies_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_SelfAddPolicies_Call) RunAndReturn(run func(string, string, [][]string) (bool, error)) *IEnforcer_SelfAddPolicies_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SelfAddPoliciesEx provides a mock function with given fields: sec, ptype, rules
 func (_m *IEnforcer) SelfAddPoliciesEx(sec string, ptype string, rules [][]string) (bool, error) {
 	ret := _m.Called(sec, ptype, rules)
@@ -2812,6 +5941,36 @@ func (_m *IEnforcer) SelfAddPoliciesEx(sec string, ptype string, rules [][]strin
 	return r0, r1
 }
 
+// IEnforcer_SelfAddPoliciesEx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelfAddPoliciesEx'
+type IEnforcer_SelfAddPoliciesEx_Call struct {
+	*mock.Call
+}
+
+// SelfAddPoliciesEx is a helper method to define mock.On call
+//   - sec string
+//   - ptype string
+//   - rules [][]string
+func (_e *IEnforcer_Expecter) SelfAddPoliciesEx(sec interface{}, ptype interface{}, rules interface{}) *IEnforcer_SelfAddPoliciesEx_Call {
+	return &IEnforcer_SelfAddPoliciesEx_Call{Call: _e.mock.On("SelfAddPoliciesEx", sec, ptype, rules)}
+}
+
+func (_c *IEnforcer_SelfAddPoliciesEx_Call) Run(run func(sec string, ptype string, rules [][]string)) *IEnforcer_SelfAddPoliciesEx_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_SelfAddPoliciesEx_Call) Return(_a0 bool, _a1 error) *IEnforcer_SelfAddPoliciesEx_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_SelfAddPoliciesEx_Call) RunAndReturn(run func(string, string, [][]string) (bool, error)) *IEnforcer_SelfAddPoliciesEx_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SelfAddPolicy provides a mock function with given fields: sec, ptype, rule
 func (_m *IEnforcer) SelfAddPolicy(sec string, ptype string, rule []string) (bool, error) {
 	ret := _m.Called(sec, ptype, rule)
@@ -2838,6 +5997,36 @@ func (_m *IEnforcer) SelfAddPolicy(sec string, ptype string, rule []string) (boo
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_SelfAddPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelfAddPolicy'
+type IEnforcer_SelfAddPolicy_Call struct {
+	*mock.Call
+}
+
+// SelfAddPolicy is a helper method to define mock.On call
+//   - sec string
+//   - ptype string
+//   - rule []string
+func (_e *IEnforcer_Expecter) SelfAddPolicy(sec interface{}, ptype interface{}, rule interface{}) *IEnforcer_SelfAddPolicy_Call {
+	return &IEnforcer_SelfAddPolicy_Call{Call: _e.mock.On("SelfAddPolicy", sec, ptype, rule)}
+}
+
+func (_c *IEnforcer_SelfAddPolicy_Call) Run(run func(sec string, ptype string, rule []string)) *IEnforcer_SelfAddPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].([]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_SelfAddPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_SelfAddPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_SelfAddPolicy_Call) RunAndReturn(run func(string, string, []string) (bool, error)) *IEnforcer_SelfAddPolicy_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // SelfRemoveFilteredPolicy provides a mock function with given fields: sec, ptype, fieldIndex, fieldValues
@@ -2875,6 +6064,44 @@ func (_m *IEnforcer) SelfRemoveFilteredPolicy(sec string, ptype string, fieldInd
 	return r0, r1
 }
 
+// IEnforcer_SelfRemoveFilteredPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelfRemoveFilteredPolicy'
+type IEnforcer_SelfRemoveFilteredPolicy_Call struct {
+	*mock.Call
+}
+
+// SelfRemoveFilteredPolicy is a helper method to define mock.On call
+//   - sec string
+//   - ptype string
+//   - fieldIndex int
+//   - fieldValues ...string
+func (_e *IEnforcer_Expecter) SelfRemoveFilteredPolicy(sec interface{}, ptype interface{}, fieldIndex interface{}, fieldValues ...interface{}) *IEnforcer_SelfRemoveFilteredPolicy_Call {
+	return &IEnforcer_SelfRemoveFilteredPolicy_Call{Call: _e.mock.On("SelfRemoveFilteredPolicy",
+		append([]interface{}{sec, ptype, fieldIndex}, fieldValues...)...)}
+}
+
+func (_c *IEnforcer_SelfRemoveFilteredPolicy_Call) Run(run func(sec string, ptype string, fieldIndex int, fieldValues ...string)) *IEnforcer_SelfRemoveFilteredPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-3)
+		for i, a := range args[3:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(string), args[1].(string), args[2].(int), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_SelfRemoveFilteredPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_SelfRemoveFilteredPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_SelfRemoveFilteredPolicy_Call) RunAndReturn(run func(string, string, int, ...string) (bool, error)) *IEnforcer_SelfRemoveFilteredPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SelfRemovePolicies provides a mock function with given fields: sec, ptype, rules
 func (_m *IEnforcer) SelfRemovePolicies(sec string, ptype string, rules [][]string) (bool, error) {
 	ret := _m.Called(sec, ptype, rules)
@@ -2901,6 +6128,36 @@ func (_m *IEnforcer) SelfRemovePolicies(sec string, ptype string, rules [][]stri
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_SelfRemovePolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelfRemovePolicies'
+type IEnforcer_SelfRemovePolicies_Call struct {
+	*mock.Call
+}
+
+// SelfRemovePolicies is a helper method to define mock.On call
+//   - sec string
+//   - ptype string
+//   - rules [][]string
+func (_e *IEnforcer_Expecter) SelfRemovePolicies(sec interface{}, ptype interface{}, rules interface{}) *IEnforcer_SelfRemovePolicies_Call {
+	return &IEnforcer_SelfRemovePolicies_Call{Call: _e.mock.On("SelfRemovePolicies", sec, ptype, rules)}
+}
+
+func (_c *IEnforcer_SelfRemovePolicies_Call) Run(run func(sec string, ptype string, rules [][]string)) *IEnforcer_SelfRemovePolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_SelfRemovePolicies_Call) Return(_a0 bool, _a1 error) *IEnforcer_SelfRemovePolicies_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_SelfRemovePolicies_Call) RunAndReturn(run func(string, string, [][]string) (bool, error)) *IEnforcer_SelfRemovePolicies_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // SelfRemovePolicy provides a mock function with given fields: sec, ptype, rule
@@ -2931,6 +6188,36 @@ func (_m *IEnforcer) SelfRemovePolicy(sec string, ptype string, rule []string) (
 	return r0, r1
 }
 
+// IEnforcer_SelfRemovePolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelfRemovePolicy'
+type IEnforcer_SelfRemovePolicy_Call struct {
+	*mock.Call
+}
+
+// SelfRemovePolicy is a helper method to define mock.On call
+//   - sec string
+//   - ptype string
+//   - rule []string
+func (_e *IEnforcer_Expecter) SelfRemovePolicy(sec interface{}, ptype interface{}, rule interface{}) *IEnforcer_SelfRemovePolicy_Call {
+	return &IEnforcer_SelfRemovePolicy_Call{Call: _e.mock.On("SelfRemovePolicy", sec, ptype, rule)}
+}
+
+func (_c *IEnforcer_SelfRemovePolicy_Call) Run(run func(sec string, ptype string, rule []string)) *IEnforcer_SelfRemovePolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].([]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_SelfRemovePolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_SelfRemovePolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_SelfRemovePolicy_Call) RunAndReturn(run func(string, string, []string) (bool, error)) *IEnforcer_SelfRemovePolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SelfUpdatePolicies provides a mock function with given fields: sec, ptype, oldRules, newRules
 func (_m *IEnforcer) SelfUpdatePolicies(sec string, ptype string, oldRules [][]string, newRules [][]string) (bool, error) {
 	ret := _m.Called(sec, ptype, oldRules, newRules)
@@ -2957,6 +6244,37 @@ func (_m *IEnforcer) SelfUpdatePolicies(sec string, ptype string, oldRules [][]s
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_SelfUpdatePolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelfUpdatePolicies'
+type IEnforcer_SelfUpdatePolicies_Call struct {
+	*mock.Call
+}
+
+// SelfUpdatePolicies is a helper method to define mock.On call
+//   - sec string
+//   - ptype string
+//   - oldRules [][]string
+//   - newRules [][]string
+func (_e *IEnforcer_Expecter) SelfUpdatePolicies(sec interface{}, ptype interface{}, oldRules interface{}, newRules interface{}) *IEnforcer_SelfUpdatePolicies_Call {
+	return &IEnforcer_SelfUpdatePolicies_Call{Call: _e.mock.On("SelfUpdatePolicies", sec, ptype, oldRules, newRules)}
+}
+
+func (_c *IEnforcer_SelfUpdatePolicies_Call) Run(run func(sec string, ptype string, oldRules [][]string, newRules [][]string)) *IEnforcer_SelfUpdatePolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].([][]string), args[3].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_SelfUpdatePolicies_Call) Return(_a0 bool, _a1 error) *IEnforcer_SelfUpdatePolicies_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_SelfUpdatePolicies_Call) RunAndReturn(run func(string, string, [][]string, [][]string) (bool, error)) *IEnforcer_SelfUpdatePolicies_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // SelfUpdatePolicy provides a mock function with given fields: sec, ptype, oldRule, newRule
@@ -2987,9 +6305,68 @@ func (_m *IEnforcer) SelfUpdatePolicy(sec string, ptype string, oldRule []string
 	return r0, r1
 }
 
+// IEnforcer_SelfUpdatePolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelfUpdatePolicy'
+type IEnforcer_SelfUpdatePolicy_Call struct {
+	*mock.Call
+}
+
+// SelfUpdatePolicy is a helper method to define mock.On call
+//   - sec string
+//   - ptype string
+//   - oldRule []string
+//   - newRule []string
+func (_e *IEnforcer_Expecter) SelfUpdatePolicy(sec interface{}, ptype interface{}, oldRule interface{}, newRule interface{}) *IEnforcer_SelfUpdatePolicy_Call {
+	return &IEnforcer_SelfUpdatePolicy_Call{Call: _e.mock.On("SelfUpdatePolicy", sec, ptype, oldRule, newRule)}
+}
+
+func (_c *IEnforcer_SelfUpdatePolicy_Call) Run(run func(sec string, ptype string, oldRule []string, newRule []string)) *IEnforcer_SelfUpdatePolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].([]string), args[3].([]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_SelfUpdatePolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_SelfUpdatePolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_SelfUpdatePolicy_Call) RunAndReturn(run func(string, string, []string, []string) (bool, error)) *IEnforcer_SelfUpdatePolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SetAdapter provides a mock function with given fields: adapter
 func (_m *IEnforcer) SetAdapter(adapter persist.Adapter) {
 	_m.Called(adapter)
+}
+
+// IEnforcer_SetAdapter_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetAdapter'
+type IEnforcer_SetAdapter_Call struct {
+	*mock.Call
+}
+
+// SetAdapter is a helper method to define mock.On call
+//   - adapter persist.Adapter
+func (_e *IEnforcer_Expecter) SetAdapter(adapter interface{}) *IEnforcer_SetAdapter_Call {
+	return &IEnforcer_SetAdapter_Call{Call: _e.mock.On("SetAdapter", adapter)}
+}
+
+func (_c *IEnforcer_SetAdapter_Call) Run(run func(adapter persist.Adapter)) *IEnforcer_SetAdapter_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(persist.Adapter))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_SetAdapter_Call) Return() *IEnforcer_SetAdapter_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *IEnforcer_SetAdapter_Call) RunAndReturn(run func(persist.Adapter)) *IEnforcer_SetAdapter_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // SetEffector provides a mock function with given fields: eft
@@ -2997,14 +6374,98 @@ func (_m *IEnforcer) SetEffector(eft effector.Effector) {
 	_m.Called(eft)
 }
 
+// IEnforcer_SetEffector_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetEffector'
+type IEnforcer_SetEffector_Call struct {
+	*mock.Call
+}
+
+// SetEffector is a helper method to define mock.On call
+//   - eft effector.Effector
+func (_e *IEnforcer_Expecter) SetEffector(eft interface{}) *IEnforcer_SetEffector_Call {
+	return &IEnforcer_SetEffector_Call{Call: _e.mock.On("SetEffector", eft)}
+}
+
+func (_c *IEnforcer_SetEffector_Call) Run(run func(eft effector.Effector)) *IEnforcer_SetEffector_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(effector.Effector))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_SetEffector_Call) Return() *IEnforcer_SetEffector_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *IEnforcer_SetEffector_Call) RunAndReturn(run func(effector.Effector)) *IEnforcer_SetEffector_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SetModel provides a mock function with given fields: m
 func (_m *IEnforcer) SetModel(m model.Model) {
 	_m.Called(m)
 }
 
+// IEnforcer_SetModel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetModel'
+type IEnforcer_SetModel_Call struct {
+	*mock.Call
+}
+
+// SetModel is a helper method to define mock.On call
+//   - m model.Model
+func (_e *IEnforcer_Expecter) SetModel(m interface{}) *IEnforcer_SetModel_Call {
+	return &IEnforcer_SetModel_Call{Call: _e.mock.On("SetModel", m)}
+}
+
+func (_c *IEnforcer_SetModel_Call) Run(run func(m model.Model)) *IEnforcer_SetModel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(model.Model))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_SetModel_Call) Return() *IEnforcer_SetModel_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *IEnforcer_SetModel_Call) RunAndReturn(run func(model.Model)) *IEnforcer_SetModel_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SetRoleManager provides a mock function with given fields: rm
 func (_m *IEnforcer) SetRoleManager(rm rbac.RoleManager) {
 	_m.Called(rm)
+}
+
+// IEnforcer_SetRoleManager_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetRoleManager'
+type IEnforcer_SetRoleManager_Call struct {
+	*mock.Call
+}
+
+// SetRoleManager is a helper method to define mock.On call
+//   - rm rbac.RoleManager
+func (_e *IEnforcer_Expecter) SetRoleManager(rm interface{}) *IEnforcer_SetRoleManager_Call {
+	return &IEnforcer_SetRoleManager_Call{Call: _e.mock.On("SetRoleManager", rm)}
+}
+
+func (_c *IEnforcer_SetRoleManager_Call) Run(run func(rm rbac.RoleManager)) *IEnforcer_SetRoleManager_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(rbac.RoleManager))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_SetRoleManager_Call) Return() *IEnforcer_SetRoleManager_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *IEnforcer_SetRoleManager_Call) RunAndReturn(run func(rbac.RoleManager)) *IEnforcer_SetRoleManager_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // SetWatcher provides a mock function with given fields: watcher
@@ -3023,6 +6484,34 @@ func (_m *IEnforcer) SetWatcher(watcher persist.Watcher) error {
 	}
 
 	return r0
+}
+
+// IEnforcer_SetWatcher_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetWatcher'
+type IEnforcer_SetWatcher_Call struct {
+	*mock.Call
+}
+
+// SetWatcher is a helper method to define mock.On call
+//   - watcher persist.Watcher
+func (_e *IEnforcer_Expecter) SetWatcher(watcher interface{}) *IEnforcer_SetWatcher_Call {
+	return &IEnforcer_SetWatcher_Call{Call: _e.mock.On("SetWatcher", watcher)}
+}
+
+func (_c *IEnforcer_SetWatcher_Call) Run(run func(watcher persist.Watcher)) *IEnforcer_SetWatcher_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(persist.Watcher))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_SetWatcher_Call) Return(_a0 error) *IEnforcer_SetWatcher_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IEnforcer_SetWatcher_Call) RunAndReturn(run func(persist.Watcher) error) *IEnforcer_SetWatcher_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // UpdateFilteredPolicies provides a mock function with given fields: newPolicies, fieldIndex, fieldValues
@@ -3060,6 +6549,43 @@ func (_m *IEnforcer) UpdateFilteredPolicies(newPolicies [][]string, fieldIndex i
 	return r0, r1
 }
 
+// IEnforcer_UpdateFilteredPolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateFilteredPolicies'
+type IEnforcer_UpdateFilteredPolicies_Call struct {
+	*mock.Call
+}
+
+// UpdateFilteredPolicies is a helper method to define mock.On call
+//   - newPolicies [][]string
+//   - fieldIndex int
+//   - fieldValues ...string
+func (_e *IEnforcer_Expecter) UpdateFilteredPolicies(newPolicies interface{}, fieldIndex interface{}, fieldValues ...interface{}) *IEnforcer_UpdateFilteredPolicies_Call {
+	return &IEnforcer_UpdateFilteredPolicies_Call{Call: _e.mock.On("UpdateFilteredPolicies",
+		append([]interface{}{newPolicies, fieldIndex}, fieldValues...)...)}
+}
+
+func (_c *IEnforcer_UpdateFilteredPolicies_Call) Run(run func(newPolicies [][]string, fieldIndex int, fieldValues ...string)) *IEnforcer_UpdateFilteredPolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]string, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].([][]string), args[1].(int), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *IEnforcer_UpdateFilteredPolicies_Call) Return(_a0 bool, _a1 error) *IEnforcer_UpdateFilteredPolicies_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_UpdateFilteredPolicies_Call) RunAndReturn(run func([][]string, int, ...string) (bool, error)) *IEnforcer_UpdateFilteredPolicies_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateGroupingPolicies provides a mock function with given fields: oldRules, newRules
 func (_m *IEnforcer) UpdateGroupingPolicies(oldRules [][]string, newRules [][]string) (bool, error) {
 	ret := _m.Called(oldRules, newRules)
@@ -3086,6 +6612,35 @@ func (_m *IEnforcer) UpdateGroupingPolicies(oldRules [][]string, newRules [][]st
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_UpdateGroupingPolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateGroupingPolicies'
+type IEnforcer_UpdateGroupingPolicies_Call struct {
+	*mock.Call
+}
+
+// UpdateGroupingPolicies is a helper method to define mock.On call
+//   - oldRules [][]string
+//   - newRules [][]string
+func (_e *IEnforcer_Expecter) UpdateGroupingPolicies(oldRules interface{}, newRules interface{}) *IEnforcer_UpdateGroupingPolicies_Call {
+	return &IEnforcer_UpdateGroupingPolicies_Call{Call: _e.mock.On("UpdateGroupingPolicies", oldRules, newRules)}
+}
+
+func (_c *IEnforcer_UpdateGroupingPolicies_Call) Run(run func(oldRules [][]string, newRules [][]string)) *IEnforcer_UpdateGroupingPolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([][]string), args[1].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_UpdateGroupingPolicies_Call) Return(_a0 bool, _a1 error) *IEnforcer_UpdateGroupingPolicies_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_UpdateGroupingPolicies_Call) RunAndReturn(run func([][]string, [][]string) (bool, error)) *IEnforcer_UpdateGroupingPolicies_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // UpdateGroupingPolicy provides a mock function with given fields: oldRule, newRule
@@ -3116,6 +6671,35 @@ func (_m *IEnforcer) UpdateGroupingPolicy(oldRule []string, newRule []string) (b
 	return r0, r1
 }
 
+// IEnforcer_UpdateGroupingPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateGroupingPolicy'
+type IEnforcer_UpdateGroupingPolicy_Call struct {
+	*mock.Call
+}
+
+// UpdateGroupingPolicy is a helper method to define mock.On call
+//   - oldRule []string
+//   - newRule []string
+func (_e *IEnforcer_Expecter) UpdateGroupingPolicy(oldRule interface{}, newRule interface{}) *IEnforcer_UpdateGroupingPolicy_Call {
+	return &IEnforcer_UpdateGroupingPolicy_Call{Call: _e.mock.On("UpdateGroupingPolicy", oldRule, newRule)}
+}
+
+func (_c *IEnforcer_UpdateGroupingPolicy_Call) Run(run func(oldRule []string, newRule []string)) *IEnforcer_UpdateGroupingPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]string), args[1].([]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_UpdateGroupingPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_UpdateGroupingPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_UpdateGroupingPolicy_Call) RunAndReturn(run func([]string, []string) (bool, error)) *IEnforcer_UpdateGroupingPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateNamedGroupingPolicies provides a mock function with given fields: ptype, oldRules, newRules
 func (_m *IEnforcer) UpdateNamedGroupingPolicies(ptype string, oldRules [][]string, newRules [][]string) (bool, error) {
 	ret := _m.Called(ptype, oldRules, newRules)
@@ -3142,6 +6726,36 @@ func (_m *IEnforcer) UpdateNamedGroupingPolicies(ptype string, oldRules [][]stri
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_UpdateNamedGroupingPolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateNamedGroupingPolicies'
+type IEnforcer_UpdateNamedGroupingPolicies_Call struct {
+	*mock.Call
+}
+
+// UpdateNamedGroupingPolicies is a helper method to define mock.On call
+//   - ptype string
+//   - oldRules [][]string
+//   - newRules [][]string
+func (_e *IEnforcer_Expecter) UpdateNamedGroupingPolicies(ptype interface{}, oldRules interface{}, newRules interface{}) *IEnforcer_UpdateNamedGroupingPolicies_Call {
+	return &IEnforcer_UpdateNamedGroupingPolicies_Call{Call: _e.mock.On("UpdateNamedGroupingPolicies", ptype, oldRules, newRules)}
+}
+
+func (_c *IEnforcer_UpdateNamedGroupingPolicies_Call) Run(run func(ptype string, oldRules [][]string, newRules [][]string)) *IEnforcer_UpdateNamedGroupingPolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].([][]string), args[2].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_UpdateNamedGroupingPolicies_Call) Return(_a0 bool, _a1 error) *IEnforcer_UpdateNamedGroupingPolicies_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_UpdateNamedGroupingPolicies_Call) RunAndReturn(run func(string, [][]string, [][]string) (bool, error)) *IEnforcer_UpdateNamedGroupingPolicies_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // UpdateNamedGroupingPolicy provides a mock function with given fields: ptype, oldRule, newRule
@@ -3172,6 +6786,36 @@ func (_m *IEnforcer) UpdateNamedGroupingPolicy(ptype string, oldRule []string, n
 	return r0, r1
 }
 
+// IEnforcer_UpdateNamedGroupingPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateNamedGroupingPolicy'
+type IEnforcer_UpdateNamedGroupingPolicy_Call struct {
+	*mock.Call
+}
+
+// UpdateNamedGroupingPolicy is a helper method to define mock.On call
+//   - ptype string
+//   - oldRule []string
+//   - newRule []string
+func (_e *IEnforcer_Expecter) UpdateNamedGroupingPolicy(ptype interface{}, oldRule interface{}, newRule interface{}) *IEnforcer_UpdateNamedGroupingPolicy_Call {
+	return &IEnforcer_UpdateNamedGroupingPolicy_Call{Call: _e.mock.On("UpdateNamedGroupingPolicy", ptype, oldRule, newRule)}
+}
+
+func (_c *IEnforcer_UpdateNamedGroupingPolicy_Call) Run(run func(ptype string, oldRule []string, newRule []string)) *IEnforcer_UpdateNamedGroupingPolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].([]string), args[2].([]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_UpdateNamedGroupingPolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_UpdateNamedGroupingPolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_UpdateNamedGroupingPolicy_Call) RunAndReturn(run func(string, []string, []string) (bool, error)) *IEnforcer_UpdateNamedGroupingPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdatePolicies provides a mock function with given fields: oldPolicies, newPolicies
 func (_m *IEnforcer) UpdatePolicies(oldPolicies [][]string, newPolicies [][]string) (bool, error) {
 	ret := _m.Called(oldPolicies, newPolicies)
@@ -3200,6 +6844,35 @@ func (_m *IEnforcer) UpdatePolicies(oldPolicies [][]string, newPolicies [][]stri
 	return r0, r1
 }
 
+// IEnforcer_UpdatePolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdatePolicies'
+type IEnforcer_UpdatePolicies_Call struct {
+	*mock.Call
+}
+
+// UpdatePolicies is a helper method to define mock.On call
+//   - oldPolicies [][]string
+//   - newPolicies [][]string
+func (_e *IEnforcer_Expecter) UpdatePolicies(oldPolicies interface{}, newPolicies interface{}) *IEnforcer_UpdatePolicies_Call {
+	return &IEnforcer_UpdatePolicies_Call{Call: _e.mock.On("UpdatePolicies", oldPolicies, newPolicies)}
+}
+
+func (_c *IEnforcer_UpdatePolicies_Call) Run(run func(oldPolicies [][]string, newPolicies [][]string)) *IEnforcer_UpdatePolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([][]string), args[1].([][]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_UpdatePolicies_Call) Return(_a0 bool, _a1 error) *IEnforcer_UpdatePolicies_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_UpdatePolicies_Call) RunAndReturn(run func([][]string, [][]string) (bool, error)) *IEnforcer_UpdatePolicies_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdatePolicy provides a mock function with given fields: oldPolicy, newPolicy
 func (_m *IEnforcer) UpdatePolicy(oldPolicy []string, newPolicy []string) (bool, error) {
 	ret := _m.Called(oldPolicy, newPolicy)
@@ -3226,6 +6899,35 @@ func (_m *IEnforcer) UpdatePolicy(oldPolicy []string, newPolicy []string) (bool,
 	}
 
 	return r0, r1
+}
+
+// IEnforcer_UpdatePolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdatePolicy'
+type IEnforcer_UpdatePolicy_Call struct {
+	*mock.Call
+}
+
+// UpdatePolicy is a helper method to define mock.On call
+//   - oldPolicy []string
+//   - newPolicy []string
+func (_e *IEnforcer_Expecter) UpdatePolicy(oldPolicy interface{}, newPolicy interface{}) *IEnforcer_UpdatePolicy_Call {
+	return &IEnforcer_UpdatePolicy_Call{Call: _e.mock.On("UpdatePolicy", oldPolicy, newPolicy)}
+}
+
+func (_c *IEnforcer_UpdatePolicy_Call) Run(run func(oldPolicy []string, newPolicy []string)) *IEnforcer_UpdatePolicy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]string), args[1].([]string))
+	})
+	return _c
+}
+
+func (_c *IEnforcer_UpdatePolicy_Call) Return(_a0 bool, _a1 error) *IEnforcer_UpdatePolicy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEnforcer_UpdatePolicy_Call) RunAndReturn(run func([]string, []string) (bool, error)) *IEnforcer_UpdatePolicy_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewIEnforcer creates a new instance of IEnforcer. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
