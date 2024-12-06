@@ -264,3 +264,71 @@ test('expose psmdb cluster on EKS to the public internet and scale up', async ({
 
   await deleteDBCluster(request, page, clusterName)
 })
+
+test('sharded psmdb cluster', async ({ request, page }) => {
+  const clusterName = 'sharding-psmdb'
+  const psmdbPayload = {
+    apiVersion: 'everest.percona.com/v1alpha1',
+    kind: 'DatabaseCluster',
+    metadata: {
+      name: clusterName,
+      namespace: testsNs,
+    },
+    spec: {
+      sharding: {
+        enabled: true,
+        shards: 2,
+        configServer: {
+          replicas: 1,
+        },
+      },
+      engine: {
+        version: '7.0.14-8',
+        type: 'psmdb',
+        replicas: 1,
+        storage: {
+          size: '25G',
+        },
+        resources: {
+          cpu: '1',
+          memory: '1G',
+        },
+      },
+      proxy: {
+        type: 'mongos', // HAProxy is the default option. However using proxySQL is available
+        replicas: 1,
+        expose: {
+          type: 'internal',
+        },
+      },
+    },
+  }
+
+  const created = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
+    data: psmdbPayload,
+  })
+  await checkError(created)
+
+  for (let i = 0; i < 30; i++) {
+    await page.waitForTimeout(5000)
+
+    const psmdbCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+
+    await checkError(psmdbCluster)
+
+    const result = (await psmdbCluster.json())
+
+    // waiting for 4 components to be ready (1 node * 2 shards + 1 configservers + 1 mongos)
+    if (typeof result.status === 'undefined' || typeof result.status.size === 'undefined' || result.status.size !== 4 || result.status.ready !== 4) {
+      continue
+    }
+
+    expect(result.metadata.name).toBe(clusterName)
+    expect(result.spec).toMatchObject(psmdbPayload.spec)
+    expect(result.status.status).toBe('ready')
+
+    break
+  }
+
+  await deleteDBCluster(request, page, clusterName)
+})
