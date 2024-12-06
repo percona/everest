@@ -27,8 +27,6 @@ import (
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
-const dbsCountTimeoutMultiply = 3
-
 // ListDatabaseClusters returns list of managed database clusters.
 func (k *Kubernetes) ListDatabaseClusters(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
 	return k.client.ListDatabaseClusters(ctx, namespace, metav1.ListOptions{})
@@ -49,6 +47,7 @@ func (k *Kubernetes) DeleteDatabaseClusters(ctx context.Context, namespace strin
 	}
 	if list != nil && len(list.Items) > 0 {
 		// We increase the timeout if there's too many DB clusters.
+		const dbsCountTimeoutMultiply = 3
 		newTimeout := pollTimeout * time.Duration(len(list.Items)/dbsCountTimeoutMultiply)
 		if newTimeout > timeout {
 			timeout = newTimeout
