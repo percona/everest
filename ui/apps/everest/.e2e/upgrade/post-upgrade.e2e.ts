@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test';
 import fs from 'fs';
-import { everestdir, TIMEOUTS } from '@e2e/constants';
+import { TIMEOUTS } from '@e2e/constants';
 import {
   expectedEverestUpgradeLog,
   mongoDBCluster,
   postgresDBCluster,
+  pxcDBCluster
 } from './testData';
 import { waitForStatus } from '@e2e/utils/table';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
@@ -14,13 +15,15 @@ import { getExpectedOperatorVersions } from '@e2e/upgrade/helper';
 let namespace: string;
 
 test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
+  test.describe.configure({ timeout: TIMEOUTS.FifteenMinutes });
+
   test.beforeAll(async ({ request }) => {
     const token = await getTokenFromLocalStorage();
     [namespace] = await getNamespacesFn(token, request);
   });
 
   test('Verify upgrade.log file', async () => {
-    const filePath = `${everestdir}/ui/apps/everest/.e2e/upgrade.log`;
+    const filePath = `/tmp/everest-upgrade.log`;
     const data = fs.readFileSync(filePath, 'utf8');
 
     const expectedText = expectedEverestUpgradeLog();
@@ -28,26 +31,16 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
   });
 
   test('Verify DB clusters are running', async ({ page }) => {
-    // go to db list and check status
     await page.goto('/databases');
 
-    await test.step('verify mongoDB and postgresDB clusters are up', async () => {
-      await waitForStatus(
-        page,
-        mongoDBCluster.name,
-        'Up',
-        TIMEOUTS.ThirtySeconds
-      );
-      await waitForStatus(
-        page,
-        postgresDBCluster.name,
-        'Up',
-        TIMEOUTS.ThirtySeconds
-      );
+    await test.step('Verify MongoDB and Postgresql clusters are up', async () => {
+      await waitForStatus(page, mongoDBCluster.name, 'Up', TIMEOUTS.ThirtySeconds);
+      await waitForStatus(page, postgresDBCluster.name, 'Up', TIMEOUTS.ThirtySeconds);
+      await waitForStatus(page, pxcDBCluster.name, 'Up', TIMEOUTS.ThirtySeconds);
     });
   });
 
-  test('verify user is able to upgrade operators', async ({ page }) => {
+  test('Verify user is able to upgrade operators', async ({ page }) => {
     const upgradeOperatorsButton = page.getByRole('button', {
       name: 'Upgrade Operators',
     });
@@ -62,7 +55,7 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
       await expect(upgradeOperatorsButton).toBeVisible();
     });
 
-    await test.step(`verify "upgrade available" text is present in the header`, async () => {
+    await test.step(`Verify "upgrade available" text is present in the header`, async () => {
       for (const operator of operatorsVersions) {
         await expect(
           page.getByText(
@@ -72,7 +65,7 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
       }
     });
 
-    await test.step(`click upgrade button and verify modal contains correct versions and operators`, async () => {
+    await test.step(`Click upgrade button and verify modal contains correct versions and operators`, async () => {
       await upgradeOperatorsButton.click();
       await expect(
         upgradeOperatorsModal.getByText(
@@ -89,7 +82,98 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
       }
     });
 
-    await test.step(`click Upgrade and wait for upgrade success`, async () => {
+    await test.step(`Click Upgrade and wait for upgrade success`, async () => {
+      await upgradeOperatorsModal
+        .getByRole('button', { name: 'Upgrade' })
+        .click();
+
+      for (const operator of operatorsVersions) {
+        await expect(async () => {
+          await expect(
+            page.getByText(`${operator.shortName} ${operator.version}`, {
+              exact: true,
+            })
+          ).toBeVisible();
+        }).toPass({ timeout: TIMEOUTS.ThreeMinutes });
+      }
+    });
+
+    await test.step(`Verify CRD upgrade is available`, async () => {
+      await upgradeOperatorsModal
+        .getByRole('button', { name: 'Upgrade' })
+        .click();
+
+      for (const operator of operatorsVersions) {
+        await expect(async () => {
+          await expect(
+            page.getByText(`${operator.shortName} ${operator.version}`, {
+              exact: true,
+            })
+          ).toBeVisible();
+        }).toPass({ timeout: TIMEOUTS.ThreeMinutes });
+      }
+    });
+
+    await test.step(`Upgrade CRD for each database`, async () => {
+      await upgradeOperatorsModal
+        .getByRole('button', { name: 'Upgrade' })
+        .click();
+
+      for (const operator of operatorsVersions) {
+        await expect(async () => {
+          await expect(
+            page.getByText(`${operator.shortName} ${operator.version}`, {
+              exact: true,
+            })
+          ).toBeVisible();
+        }).toPass({ timeout: TIMEOUTS.ThreeMinutes });
+      }
+    });
+  });
+
+  test('Verify user is able to upgrade databases', async ({ page }) => {
+    const upgradeOperatorsButton = page.getByRole('button', {
+      name: 'Upgrade Operators',
+    });
+    const upgradeOperatorsModal = page.getByRole('dialog');
+
+    const operatorsVersions = await getExpectedOperatorVersions();
+
+    test.skip(operatorsVersions.length === 0, 'No operators to upgrade');
+
+    await test.step(`open ${namespace} namespace settings`, async () => {
+      await page.goto(`/settings/namespaces/${namespace}`);
+      await expect(upgradeOperatorsButton).toBeVisible();
+    });
+
+    await test.step(`Verify "upgrade available" text is present in the header`, async () => {
+      for (const operator of operatorsVersions) {
+        await expect(
+          page.getByText(
+            `${operator.shortName} ${operator.oldVersion} (Upgrade available)`
+          )
+        ).toBeVisible();
+      }
+    });
+
+    await test.step(`Click upgrade button and verify modal contains correct versions and operators`, async () => {
+      await upgradeOperatorsButton.click();
+      await expect(
+        upgradeOperatorsModal.getByText(
+          `Are you sure you want to upgrade your operators in ${namespace}?`
+        )
+      ).toBeVisible();
+
+      for (const operatorVersion of operatorsVersions) {
+        await expect(
+          upgradeOperatorsModal.locator('li').filter({
+            hasText: `${operatorVersion.name} ${operatorVersion.oldVersion} will be upgraded to ${operatorVersion.version}`,
+          })
+        ).toBeVisible();
+      }
+    });
+
+    await test.step(`Click Upgrade and wait for upgrade success`, async () => {
       await upgradeOperatorsModal
         .getByRole('button', { name: 'Upgrade' })
         .click();
