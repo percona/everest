@@ -16,10 +16,9 @@
 import { Box, Stack } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import StatusField from 'components/status-field';
-import { useDbActions } from 'hooks/api/db-cluster/useDbActions';
 import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
 import { type MRT_ColumnDef } from 'material-react-table';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbEngineType } from 'shared-types/dbEngines.types';
@@ -35,31 +34,14 @@ import { LastBackup } from './lastBackup/LastBackup';
 import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import DbActions from 'components/db-actions/db-actions';
-import DbActionsModals from 'components/db-actions/db-actions-modals';
-import { EmptyState } from './emptyState/emptyState';
 import CreateDbButton from './create-db-button/create-db-button';
+import { EmptyStateDatabases } from 'pages/common/empty-state/databases';
+import { EmptyStateNamespaces } from 'pages/common/empty-state/namespaces';
 
 export const DbClusterView = () => {
-  const [isNewClusterMode, setIsNewClusterMode] = useState(false);
   const { data: namespaces = [], isLoading: loadingNamespaces } =
     useNamespaces();
 
-  const {
-    openRestoreDialog,
-    handleCloseRestoreDialog,
-    handleRestoreDbCluster,
-    handleDbRestart,
-    handleDbSuspendOrResumed,
-    handleDeleteDbCluster,
-    isPaused,
-    openDeleteDialog,
-    handleConfirmDelete,
-    handleCloseDeleteDialog,
-    openDetailsDialog,
-    handleOpenDbDetailsDialog,
-    handleCloseDetailsDialog,
-    selectedDbCluster,
-  } = useDbActions();
   const navigate = useNavigate();
 
   const { canCreate } = useNamespacePermissionsForResource('database-clusters');
@@ -168,24 +150,19 @@ export const DbClusterView = () => {
       <Box sx={{ width: '100%' }}>
         <Table
           tableName="dbClusterView"
-          emptyState={<EmptyState />}
+          emptyState={
+            namespaces.length > 0 ? (
+              <EmptyStateDatabases />
+            ) : (
+              <EmptyStateNamespaces />
+            )
+          }
           state={{ isLoading: dbClustersLoading || loadingNamespaces }}
           columns={columns}
           data={tableData}
           enableRowActions
           renderRowActions={({ row }) => {
-            return (
-              <DbActions
-                dbCluster={row.original.raw}
-                setIsNewClusterMode={setIsNewClusterMode}
-                handleDbRestart={handleDbRestart}
-                handleDbSuspendOrResumed={handleDbSuspendOrResumed}
-                handleDeleteDbCluster={handleDeleteDbCluster}
-                isPaused={isPaused}
-                handleRestoreDbCluster={handleRestoreDbCluster}
-                handleOpenDbDetailsDialog={handleOpenDbDetailsDialog}
-              />
-            );
+            return <DbActions dbCluster={row.original.raw} />;
           }}
           renderDetailPanel={({ row }) => <ExpandedRow row={row} />}
           muiTableBodyRowProps={({ row, isDetailPanel }) => ({
@@ -211,17 +188,6 @@ export const DbClusterView = () => {
           hideExpandAllIcon
         />
       </Box>
-      <DbActionsModals
-        dbCluster={selectedDbCluster!}
-        isNewClusterMode={isNewClusterMode}
-        openRestoreDialog={openRestoreDialog}
-        handleCloseRestoreDialog={handleCloseRestoreDialog}
-        openDeleteDialog={openDeleteDialog}
-        handleCloseDeleteDialog={handleCloseDeleteDialog}
-        handleConfirmDelete={handleConfirmDelete}
-        openDetailsDialog={openDetailsDialog}
-        handleCloseDetailsDialog={handleCloseDetailsDialog}
-      />
     </Stack>
   );
 };

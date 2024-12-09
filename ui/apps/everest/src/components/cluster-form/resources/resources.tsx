@@ -253,7 +253,10 @@ const ResourcesToggles = ({
             </ToggleCard>
           ))}
           {!disableCustom && (
-            <ToggleCard value={CUSTOM_NR_UNITS_INPUT_VALUE}>
+            <ToggleCard
+              value={CUSTOM_NR_UNITS_INPUT_VALUE}
+              data-testid={`toggle-button-${unitPlural}-custom`}
+            >
               {Messages.customValue}
             </ToggleCard>
           )}
@@ -540,7 +543,7 @@ const ResourcesForm = ({
 
   useEffect(() => {
     trigger();
-  }, [numberOfNodes, customNrOfNodes, trigger]);
+  }, [numberOfNodes, customNrOfNodes, trigger, numberOfProxies]);
 
   // TODO test the following:
   // when in restore mode, the number of shards should be disabled
@@ -649,6 +652,7 @@ const ResourcesForm = ({
             >
               {DEFAULT_CONFIG_SERVERS.map((number) => (
                 <ToggleRegularButton
+                  dataTestId={`shard-config-servers-${number}`}
                   sx={{
                     px: 2,
                   }}
@@ -656,7 +660,9 @@ const ResourcesForm = ({
                   value={number}
                   onClick={() => {
                     if (number !== shardConfigServers.toString()) {
-                      setValue(DbWizardFormFields.shardConfigServers, number);
+                      setValue(DbWizardFormFields.shardConfigServers, number, {
+                        shouldValidate: true,
+                      });
                     }
                   }}
                 >
@@ -665,7 +671,10 @@ const ResourcesForm = ({
               ))}
             </ToggleButtonGroupInputRegular>
             {shardConfigServersError && (
-              <FormHelperText error={true}>
+              <FormHelperText
+                data-testid="shard-config-servers-error"
+                error={true}
+              >
                 {shardConfigServersError?.message}
               </FormHelperText>
             )}

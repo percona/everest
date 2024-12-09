@@ -7,4 +7,5 @@ export interface OverviewSectionRowProps {
   contentString?: string;
   content?: ReactNode;
   contentProps?: TypographyProps;
+  dataTestId?: string;
 }

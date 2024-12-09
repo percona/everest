@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"time"
 
@@ -58,18 +57,16 @@ func NewNamespaceRemove(c NamespaceRemoveConfig, l *zap.SugaredLogger) (*Namespa
 		n.l = zap.NewNop().Sugar()
 	}
 
-	k, err := kubernetes.New(c.KubeconfigPath, n.l)
+	k, err := cliutils.NewKubeclient(n.l, n.config.KubeconfigPath)
 	if err != nil {
-		var u *url.Error
-		if errors.As(err, &u) {
-			l.Error("Could not connect to Kubernetes. " +
-				"Make sure Kubernetes is running and is accessible from this computer/server.")
-		}
 		return nil, err
 	}
 	n.kubeClient = k
 	return n, nil
 }
+
+// ErrNamespaceNotEmpty is returned when the namespace is not empty.
+var ErrNamespaceNotEmpty = errors.New("cannot remove namespace with running database clusters")
 
 // Run the namespace removal operation.
 func (r *NamespaceRemover) Run(ctx context.Context) error {
@@ -85,7 +82,7 @@ func (r *NamespaceRemover) Run(ctx context.Context) error {
 	}
 
 	if dbsExist && !r.config.Force {
-		return errors.New("databases exist in the namespaces. Please remove them first or use --force")
+		return ErrNamespaceNotEmpty
 	}
 
 	removalSteps := []steps.Step{}

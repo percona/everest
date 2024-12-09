@@ -54,6 +54,7 @@ linters:
     - wsl              # too many empty lines makes methods too long
     - perfsprint       # keep the format for consistency
     - execinquery      # deprecated
+    - gomoddirectives  # we have been forced to use a replacement for k8s.io/client-go, see https://github.com/percona/everest/pull/901
 
 issues:
   exclude-use-default: false

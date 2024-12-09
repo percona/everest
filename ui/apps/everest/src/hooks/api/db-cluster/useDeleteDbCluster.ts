@@ -16,12 +16,13 @@
 import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { deleteDbClusterFn } from 'api/dbClusterApi';
 
-type DeleteDbClusterArgType = {
+export type DeleteDbClusterArgType = {
   dbClusterName: string;
   namespace: string;
   cleanupBackupStorage: boolean;
 };
 export const useDeleteDbCluster = (
+  dbClusterName: string,
   options?: UseMutationOptions<
     unknown,
     unknown,
@@ -30,11 +31,8 @@ export const useDeleteDbCluster = (
   >
 ) =>
   useMutation({
-    mutationFn: ({
-      dbClusterName,
-      namespace,
-      cleanupBackupStorage,
-    }: DeleteDbClusterArgType) =>
+    mutationKey: ['deleteDbCluster', dbClusterName],
+    mutationFn: ({ namespace, cleanupBackupStorage }: DeleteDbClusterArgType) =>
       deleteDbClusterFn(dbClusterName, namespace, cleanupBackupStorage),
     ...options,
   });

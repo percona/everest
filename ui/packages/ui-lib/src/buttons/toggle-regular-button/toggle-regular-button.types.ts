@@ -17,4 +17,5 @@ import { ToggleButtonProps } from '@mui/material';
 
 export type ToggleRegularButtonProps = {
   children?: React.ReactNode;
+  dataTestId?: string;
 } & ToggleButtonProps;

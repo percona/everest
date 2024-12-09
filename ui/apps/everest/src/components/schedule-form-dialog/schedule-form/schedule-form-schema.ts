@@ -31,8 +31,9 @@ export const storageLocationZodObject = z
     })
   )
   .nullable();
+
 export const storageLocationScheduleFormSchema = (
-  mode: 'dbWizard' | 'scheduledBackups'
+  mode: 'dbWizard' | 'scheduledBackups' | 'pitr'
 ) => {
   return {
     [ScheduleFormFields.storageLocation]: storageLocationZodObject.superRefine(

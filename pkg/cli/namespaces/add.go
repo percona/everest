@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"path"
 	"regexp"
@@ -61,13 +60,8 @@ func NewNamespaceAdd(c NamespaceAddConfig, l *zap.SugaredLogger) (*NamespaceAdde
 		n.l = zap.NewNop().Sugar()
 	}
 
-	k, err := kubernetes.New(c.KubeconfigPath, n.l)
+	k, err := cliutils.NewKubeclient(n.l, c.KubeconfigPath)
 	if err != nil {
-		var u *url.Error
-		if errors.As(err, &u) {
-			l.Error("Could not connect to Kubernetes. " +
-				"Make sure Kubernetes is running and is accessible from this computer/server.")
-		}
 		return nil, err
 	}
 	n.kubeClient = k
@@ -177,27 +171,52 @@ func (n *NamespaceAdder) newStepInstallNamespace(version, namespace string) step
 	}
 }
 
+var (
+	// ErrNsDoesNotExist appears when the namespace does not exist.
+	ErrNsDoesNotExist = errors.New("namespace does not exist")
+	// ErrNamespaceNotManagedByEverest appears when the namespace is not managed by Everest.
+	ErrNamespaceNotManagedByEverest = errors.New("namespace is not managed by Everest")
+	// ErrNamespaceAlreadyExists appears when the namespace already exists.
+	ErrNamespaceAlreadyExists = errors.New("namespace already exists")
+)
+
+func (cfg *NamespaceAddConfig) validateNamespaceOwnership(
+	ctx context.Context,
+	namespace string,
+) error {
+	k, err := cliutils.NewKubeclient(zap.NewNop().Sugar(), cfg.KubeconfigPath)
+	if err != nil {
+		return err
+	}
+
+	nsExists, ownedByEverest, err := namespaceExists(ctx, namespace, k)
+	if err != nil {
+		return err
+	}
+
+	if cfg.Update {
+		if !nsExists {
+			return ErrNsDoesNotExist
+		}
+		if !ownedByEverest {
+			return ErrNamespaceNotManagedByEverest
+		}
+	} else if nsExists && !cfg.TakeOwnership {
+		return ErrNamespaceAlreadyExists
+	}
+
+	return nil
+}
+
 func (n *NamespaceAdder) provisionDBNamespace(
 	ctx context.Context,
 	version string,
 	namespace string,
 ) error {
-	nsExists, ownedByEverest, err := n.namespaceExists(ctx, namespace)
+	nsExists, _, err := namespaceExists(ctx, namespace, n.kubeClient)
 	if err != nil {
 		return err
 	}
-
-	if n.cfg.Update {
-		if !nsExists {
-			return fmt.Errorf("namespace (%s) does not exist", namespace)
-		}
-		if !ownedByEverest {
-			return fmt.Errorf("namespace (%s) is not managed by Everest", namespace)
-		}
-	} else if nsExists && !n.cfg.TakeOwnership {
-		return fmt.Errorf("namespace (%s) already exists", namespace)
-	}
-
 	chartDir := ""
 	if n.cfg.ChartDir != "" {
 		chartDir = path.Join(n.cfg.ChartDir, dbNamespaceSubChartPath)
@@ -221,8 +240,8 @@ func (n *NamespaceAdder) provisionDBNamespace(
 	return installer.Install(ctx)
 }
 
-func (n *NamespaceAdder) namespaceExists(ctx context.Context, namespace string) (bool, bool, error) {
-	ns, err := n.kubeClient.GetNamespace(ctx, namespace)
+func namespaceExists(ctx context.Context, namespace string, k kubernetes.KubernetesConnector) (bool, bool, error) {
+	ns, err := k.GetNamespace(ctx, namespace)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return false, false, nil
@@ -238,9 +257,15 @@ func isManagedByEverest(ns *v1.Namespace) bool {
 }
 
 // Populate the configuration with the required values.
-func (cfg *NamespaceAddConfig) Populate(askNamespaces, askOperators bool) error {
+func (cfg *NamespaceAddConfig) Populate(ctx context.Context, askNamespaces, askOperators bool) error {
 	if err := cfg.populateNamespaces(askNamespaces); err != nil {
 		return err
+	}
+
+	for _, ns := range cfg.NamespaceList {
+		if err := cfg.validateNamespaceOwnership(ctx, ns); err != nil {
+			return fmt.Errorf("invalid namespace (%s): %w", ns, err)
+		}
 	}
 
 	if askOperators && len(cfg.NamespaceList) > 0 && !cfg.SkipWizard {

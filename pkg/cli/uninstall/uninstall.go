@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"time"
 
@@ -30,7 +29,7 @@ import (
 
 	"github.com/percona/everest/pkg/cli/namespaces"
 	"github.com/percona/everest/pkg/cli/steps"
-	"github.com/percona/everest/pkg/cli/utils"
+	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 )
@@ -80,13 +79,8 @@ func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
 		cli.l = zap.NewNop().Sugar()
 	}
 
-	kubeClient, err := kubernetes.New(c.KubeconfigPath, cli.l)
+	kubeClient, err := cliutils.NewKubeclient(cli.l, c.KubeconfigPath)
 	if err != nil {
-		var u *url.Error
-		if errors.As(err, &u) {
-			l.Error("Could not connect to Kubernetes. " +
-				"Make sure Kubernetes is running and is accessible from this computer/server.")
-		}
 		return nil, err
 	}
 	cli.kubeClient = kubeClient
@@ -97,7 +91,7 @@ func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
 func (u *Uninstall) Run(ctx context.Context) error {
 	// This command expects a Helm based installation. Otherwise, we stop here.
 	// Older versions must use an older version of the CLI.
-	_, err := utils.CheckHelmInstallation(ctx, u.kubeClient)
+	_, err := cliutils.CheckHelmInstallation(ctx, u.kubeClient)
 	if err != nil {
 		return err
 	}

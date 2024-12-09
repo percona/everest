@@ -2,6 +2,7 @@
 package namespaces
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -14,6 +15,9 @@ import (
 	"github.com/percona/everest/pkg/cli/namespaces"
 	"github.com/percona/everest/pkg/output"
 )
+
+//nolint:gochecknoglobals
+var takeOwnershipHintMessage = fmt.Sprintf("HINT: set '--%s' flag to use existing namespaces", cli.FlagTakeNamespaceOwnership)
 
 // NewAddCommand returns a new command to add a new namespace.
 func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
@@ -45,7 +49,10 @@ func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 				cmd.Flags().Lookup("operator.postgresql").Changed ||
 				cmd.Flags().Lookup("operator.xtradb-cluster").Changed)
 
-			if err := c.Populate(false, askOperators); err != nil {
+			if err := c.Populate(cmd.Context(), false, askOperators); err != nil {
+				if errors.Is(err, namespaces.ErrNamespaceAlreadyExists) {
+					err = fmt.Errorf("%w. %s", err, takeOwnershipHintMessage)
+				}
 				output.PrintError(err, l, !enableLogging)
 				os.Exit(1)
 			}
@@ -69,7 +76,7 @@ func initAddFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(cli.FlagDisableTelemetry, false, "Disable telemetry")
 	cmd.Flags().MarkHidden(cli.FlagDisableTelemetry) //nolint:errcheck,gosec
 	cmd.Flags().Bool(cli.FlagSkipWizard, false, "Skip installation wizard")
-	cmd.Flags().Bool("take-ownership", false, "Take ownership of existing namespaces")
+	cmd.Flags().Bool(cli.FlagTakeNamespaceOwnership, false, "If the specified namespace already exists, take ownership of it")
 
 	cmd.Flags().String(helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
 	cmd.Flags().MarkHidden(helm.FlagChartDir) //nolint:errcheck,gosec
@@ -83,9 +90,9 @@ func initAddFlags(cmd *cobra.Command) {
 }
 
 func initAddViperFlags(cmd *cobra.Command) {
-	viper.BindPFlag(cli.FlagSkipWizard, cmd.Flags().Lookup(cli.FlagSkipWizard))             //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagDisableTelemetry, cmd.Flags().Lookup(cli.FlagDisableTelemetry)) //nolint:errcheck,gosec
-	viper.BindPFlag("take-ownership", cmd.Flags().Lookup("take-ownership"))                 //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagSkipWizard, cmd.Flags().Lookup(cli.FlagSkipWizard))                         //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagDisableTelemetry, cmd.Flags().Lookup(cli.FlagDisableTelemetry))             //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagTakeNamespaceOwnership, cmd.Flags().Lookup(cli.FlagTakeNamespaceOwnership)) //nolint:errcheck,gosec
 
 	viper.BindPFlag(helm.FlagChartDir, cmd.Flags().Lookup(helm.FlagChartDir))     //nolint:errcheck,gosec
 	viper.BindPFlag(helm.FlagRepository, cmd.Flags().Lookup(helm.FlagRepository)) //nolint:errcheck,gosec

@@ -103,6 +103,7 @@ export const BasicInformationSection = ({
               },
               disabled: upgrading,
               children: 'Upgrade',
+              'data-testid': 'upgrade-db-btn',
             },
           }
         : undefined)}
