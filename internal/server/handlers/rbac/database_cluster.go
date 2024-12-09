@@ -10,6 +10,7 @@ import (
 	"github.com/AlekSi/pointer"
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/rbac"
 )
 
@@ -82,10 +83,14 @@ func (h *rbacHandler) ListDatabaseClusters(ctx context.Context, user, namespace 
 }
 
 func (h *rbacHandler) DeleteDatabaseCluster(ctx context.Context, user, namespace, name string, req *api.DeleteDatabaseClusterParams) error {
+	db, err := h.next.GetDatabaseCluster(ctx, user, namespace, name)
+	if err != nil {
+		return fmt.Errorf("GetDatabaseCluster failed: %w", err)
+	}
 	if err := h.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionDelete, rbac.ObjectName(namespace, name)); err != nil {
 		return err
 	}
-	engineName := "" // todo
+	engineName := common.OperatorTypeToName[db.Spec.Engine.Type]
 	if err := h.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, engineName)); err != nil {
 		return err
 	}
@@ -98,7 +103,7 @@ func (h *rbacHandler) UpdateDatabaseCluster(ctx context.Context, user string, db
 	if err := h.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionUpdate, rbac.ObjectName(namespace, name)); err != nil {
 		return err
 	}
-	engineName := "" // todo
+	engineName := common.OperatorTypeToName[db.Spec.Engine.Type]
 	if err := h.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, engineName)); err != nil {
 		return err
 	}
@@ -212,7 +217,7 @@ func (h *rbacHandler) enforceDBClusterRead(user string, db *everestv1alpha1.Data
 		}
 	}
 
-	engineName := "" // todo
+	engineName := common.OperatorTypeToName[db.Spec.Engine.Type]
 	if err := h.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, engineName)); err != nil {
 		return err
 	}

@@ -68,8 +68,8 @@ type DatabaseEngineHandler interface {
 type BackupStorageHandler interface {
 	ListBackupStorages(ctx context.Context, user, namespace string) (*everestv1alpha1.BackupStorageList, error)
 	GetBackupStorage(ctx context.Context, user, namespace, name string) (*everestv1alpha1.BackupStorage, error)
-	CreateBackupStorage(ctx context.Context, user string, req *everestv1alpha1.BackupStorage) error
-	UpdateBackupStorage(ctx context.Context, user string, req *everestv1alpha1.BackupStorage) error
+	CreateBackupStorage(ctx context.Context, user, namespace string, req *api.CreateBackupStorageParams) error
+	UpdateBackupStorage(ctx context.Context, user, name, namespace string, req *api.UpdateBackupStorageParams) error
 	DeleteBackupStorage(ctx context.Context, user, namespace, name string) error
 }
 

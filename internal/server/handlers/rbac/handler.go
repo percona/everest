@@ -9,6 +9,7 @@ import (
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/internal/server/handlers"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/rbac"
 	"go.uber.org/zap"
 )
 
@@ -25,10 +26,18 @@ type rbacHandler struct {
 func New(
 	ctx context.Context,
 	log *zap.SugaredLogger,
-	kubeClient kubernetes.KubernetesConnector,
+	kubeClient *kubernetes.Kubernetes,
 ) (handlers.Handler, error) {
+	enf, err := rbac.NewEnforcer(ctx, kubeClient, log)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create enforcer: %w", err)
+	}
+	l := log.With("handler", "rbac")
 	// todo
-	return &rbacHandler{}, nil
+	return &rbacHandler{
+		enforcer: enf,
+		log:      l,
+	}, nil
 }
 
 // SetNext sets the next handler to call in the chain.
