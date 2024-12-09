@@ -19,8 +19,9 @@ import (
 	"testing"
 
 	"github.com/AlekSi/pointer"
-	. "github.com/percona/everest/api"
 	"github.com/stretchr/testify/assert"
+
+	. "github.com/percona/everest/api"
 )
 
 func TestCanUpgrade(t *testing.T) {

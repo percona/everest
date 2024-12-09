@@ -36,16 +36,16 @@ func (h *rbacHandler) GetBackupStorage(ctx context.Context, user, namespace, nam
 	return h.next.GetBackupStorage(ctx, user, namespace, name)
 }
 
-func (h *rbacHandler) CreateBackupStorage(ctx context.Context, user, namespace string, req *api.CreateBackupStorageParams) error {
+func (h *rbacHandler) CreateBackupStorage(ctx context.Context, user, namespace string, req *api.CreateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
 	if err := h.enforce(user, rbac.ResourceBackupStorages, rbac.ActionCreate, rbac.ObjectName(namespace, req.Name)); err != nil {
-		return err
+		return nil, err
 	}
 	return h.next.CreateBackupStorage(ctx, user, namespace, req)
 }
 
-func (h *rbacHandler) UpdateBackupStorage(ctx context.Context, user, namespace, name string, req *api.UpdateBackupStorageParams) error {
+func (h *rbacHandler) UpdateBackupStorage(ctx context.Context, user, namespace, name string, req *api.UpdateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
 	if err := h.enforce(user, rbac.ResourceBackupStorages, rbac.ActionUpdate, rbac.ObjectName(namespace, name)); err != nil {
-		return err
+		return nil, err
 	}
 	return h.next.UpdateBackupStorage(ctx, user, namespace, name, req)
 }

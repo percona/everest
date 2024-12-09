@@ -16,7 +16,6 @@
 package server
 
 import (
-	. "github.com/percona/everest/api"
 	"net/http"
 	"slices"
 	"strings"
@@ -25,6 +24,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	. "github.com/percona/everest/api"
 )
 
 func (e *EverestServer) shouldAllowRequestDuringEngineUpgrade(c echo.Context) (bool, error) {

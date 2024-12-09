@@ -15,8 +15,8 @@ func (h *k8sHandler) GetDatabaseEngine(ctx context.Context, user, namespace, nam
 	return h.kubeClient.GetDatabaseEngine(ctx, namespace, name)
 }
 
-func (h *k8sHandler) UpdateDatabaseEngine(ctx context.Context, user string, req *everestv1alpha1.DatabaseEngine) error {
-	return nil
+func (h *k8sHandler) UpdateDatabaseEngine(ctx context.Context, user string, req *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
+	return nil, nil
 }
 
 func (h *k8sHandler) GetUpgradePlan(ctx context.Context, user, namespace string) (*api.UpgradePlan, error) {

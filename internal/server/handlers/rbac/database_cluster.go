@@ -8,32 +8,33 @@ import (
 	"strings"
 
 	"github.com/AlekSi/pointer"
+
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/rbac"
 )
 
-func (h *rbacHandler) CreateDatabaseCluster(ctx context.Context, user string, db *everestv1alpha1.DatabaseCluster) error {
+func (h *rbacHandler) CreateDatabaseCluster(ctx context.Context, user string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
 	name := db.GetName()
 	namespace := db.GetNamespace()
 	object := rbac.ObjectName(namespace, name)
 	if err := h.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionCreate, object); err != nil {
-		return err
+		return nil, err
 	}
 	schedules := db.Spec.Backup.Schedules
 	if len(schedules) > 0 {
 		// To create a cluster with backup schedules, the user needs to explicitly have permissions to take backups.
 		if err := h.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate,
 			rbac.ObjectName(namespace, "")); err != nil {
-			return err
+			return nil, err
 		}
 		// User should be able to read a backup storage to use it in a backup schedule.
 		for _, sched := range schedules {
 			if err := h.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead,
 				rbac.ObjectName(namespace, sched.BackupStorageName),
 			); err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
@@ -43,17 +44,17 @@ func (h *rbacHandler) CreateDatabaseCluster(ctx context.Context, user string, db
 		sourceBackup := dataSrc.DBClusterBackupName
 		if err := h.enforce(user, rbac.ResourceDatabaseClusterRestores,
 			rbac.ActionCreate, rbac.ObjectName(namespace, "")); err != nil {
-			return err
+			return nil, err
 		}
 		// Get the name of the source database cluster.
 		bkp, err := h.next.GetDatabaseClusterBackup(ctx, user, namespace, sourceBackup)
 		if err != nil {
-			return errors.Join(err, errors.New("failed to get database cluster backup"))
+			return nil, errors.Join(err, errors.New("failed to get database cluster backup"))
 		}
 		sourceDB := bkp.Spec.DBClusterName
 
 		if err := h.enforceDBRestore(user, namespace, sourceDB); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	return h.next.CreateDatabaseCluster(ctx, user, db)
@@ -97,20 +98,20 @@ func (h *rbacHandler) DeleteDatabaseCluster(ctx context.Context, user, namespace
 	return h.next.DeleteDatabaseCluster(ctx, user, namespace, name, req)
 }
 
-func (h *rbacHandler) UpdateDatabaseCluster(ctx context.Context, user string, db *everestv1alpha1.DatabaseCluster) error {
+func (h *rbacHandler) UpdateDatabaseCluster(ctx context.Context, user string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
 	name := db.GetName()
 	namespace := db.GetNamespace()
 	if err := h.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionUpdate, rbac.ObjectName(namespace, name)); err != nil {
-		return err
+		return nil, err
 	}
 	engineName := common.OperatorTypeToName[db.Spec.Engine.Type]
 	if err := h.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, engineName)); err != nil {
-		return err
+		return nil, err
 	}
 
 	oldDB, err := h.next.GetDatabaseCluster(ctx, user, namespace, name)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	oldSched := oldDB.Spec.Backup.Schedules
 	updatedSched := db.Spec.Backup.Schedules
@@ -138,7 +139,7 @@ func (h *rbacHandler) UpdateDatabaseCluster(ctx context.Context, user string, db
 	// If shedules are updated, user should have permissions to create a backup.
 	if !isSchedEqual() {
 		if err := h.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, rbac.ObjectName(oldDB.GetNamespace(), "")); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -147,11 +148,10 @@ func (h *rbacHandler) UpdateDatabaseCluster(ctx context.Context, user string, db
 		if err := h.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead,
 			rbac.ObjectName(oldDB.GetNamespace(), sched.BackupStorageName),
 		); err != nil {
-			return err
+			return nil, err
 		}
 	}
-
-	return nil
+	return nil, err
 }
 
 func (h *rbacHandler) GetDatabaseCluster(ctx context.Context, user, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
@@ -176,7 +176,7 @@ func (h *rbacHandler) GetDatabaseClusterCredentials(ctx context.Context, user, n
 	return h.next.GetDatabaseClusterCredentials(ctx, user, namespace, name)
 }
 
-func (h *rbacHandler) GetDatabaseClusterComponents(ctx context.Context, user, namespace, name string) (*api.DatabaseClusterComponents, error) {
+func (h *rbacHandler) GetDatabaseClusterComponents(ctx context.Context, user, namespace, name string) ([]api.DatabaseClusterComponent, error) {
 	if err := h.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(namespace, name)); err != nil {
 		return nil, err
 	}

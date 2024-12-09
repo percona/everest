@@ -124,7 +124,7 @@ func (e *EverestServer) createMonitoringK8sResources(
 			return fmt.Errorf("failed creating secret in the Kubernetes cluster")
 		}
 	}
-	err := e.kubeClient.CreateMonitoringConfig(c, &everestv1alpha1.MonitoringConfig{
+	_, err := e.kubeClient.CreateMonitoringConfig(c, &everestv1alpha1.MonitoringConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      params.Name,
 			Namespace: namespace,
@@ -285,7 +285,7 @@ func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, namespace, na
 	if params.VerifyTLS != nil {
 		m.Spec.VerifyTLS = params.VerifyTLS
 	}
-	err = e.kubeClient.UpdateMonitoringConfig(c, m)
+	_, err = e.kubeClient.UpdateMonitoringConfig(c, m)
 	if err != nil {
 		e.l.Error(err)
 		return ctx.JSON(http.StatusInternalServerError, Error{

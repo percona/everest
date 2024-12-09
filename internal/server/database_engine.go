@@ -26,11 +26,11 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
-	. "github.com/percona/everest/api"
 	"golang.org/x/net/context"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	. "github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/rbac"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )

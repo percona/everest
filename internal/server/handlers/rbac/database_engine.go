@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/AlekSi/pointer"
+
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/rbac"
@@ -35,9 +36,9 @@ func (h *rbacHandler) GetDatabaseEngine(ctx context.Context, user, namespace, na
 	return h.next.GetDatabaseEngine(ctx, user, namespace, name)
 }
 
-func (h *rbacHandler) UpdateDatabaseEngine(ctx context.Context, user string, req *everestv1alpha1.DatabaseEngine) error {
+func (h *rbacHandler) UpdateDatabaseEngine(ctx context.Context, user string, req *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
 	if err := h.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionUpdate, rbac.ObjectName(req.GetNamespace(), req.GetName())); err != nil {
-		return err
+		return nil, err
 	}
 	return h.next.UpdateDatabaseEngine(ctx, user, req)
 }

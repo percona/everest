@@ -6,11 +6,12 @@ import (
 	"fmt"
 
 	"github.com/casbin/casbin/v2"
+	"go.uber.org/zap"
+
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/internal/server/handlers"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/rbac"
-	"go.uber.org/zap"
 )
 
 // ErrInsufficientPermissions is returned when the user does not have sufficient permissions to perform the operation.

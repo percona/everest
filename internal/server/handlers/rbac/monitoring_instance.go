@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/rbac"
 )
 
@@ -26,11 +27,11 @@ func (h *rbacHandler) ListMonitoringInstances(ctx context.Context, user, namespa
 	return list, nil
 }
 
-func (h *rbacHandler) CreateMonitoringInstance(ctx context.Context, user string, req *everestv1alpha1.MonitoringConfig) error {
-	if err := h.enforce(user, rbac.ResourceMonitoringInstances, rbac.ActionCreate, rbac.ObjectName(req.GetNamespace(), req.GetName())); err != nil {
-		return err
+func (h *rbacHandler) CreateMonitoringInstance(ctx context.Context, user, namespace string, req *api.CreateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
+	if err := h.enforce(user, rbac.ResourceMonitoringInstances, rbac.ActionCreate, rbac.ObjectName(namespace, req.Name)); err != nil {
+		return nil, err
 	}
-	return h.next.CreateMonitoringInstance(ctx, user, req)
+	return h.next.CreateMonitoringInstance(ctx, user, namespace, req)
 }
 
 func (h *rbacHandler) DeleteMonitoringInstance(ctx context.Context, user, namespace, name string) error {
@@ -47,9 +48,9 @@ func (h *rbacHandler) GetMonitoringInstance(ctx context.Context, user, namespace
 	return h.next.GetMonitoringInstance(ctx, user, namespace, name)
 }
 
-func (h *rbacHandler) UpdateMonitoringInstance(ctx context.Context, user string, req *everestv1alpha1.MonitoringConfig) error {
-	if err := h.enforce(user, rbac.ResourceMonitoringInstances, rbac.ActionUpdate, rbac.ObjectName(req.GetNamespace(), req.GetName())); err != nil {
-		return err
+func (h *rbacHandler) UpdateMonitoringInstance(ctx context.Context, user, namespace, name string, req *api.UpdateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
+	if err := h.enforce(user, rbac.ResourceMonitoringInstances, rbac.ActionUpdate, rbac.ObjectName(namespace, name)); err != nil {
+		return nil, err
 	}
-	return h.next.UpdateMonitoringInstance(ctx, user, req)
+	return h.next.UpdateMonitoringInstance(ctx, user, namespace, name, req)
 }

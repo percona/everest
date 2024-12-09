@@ -30,13 +30,13 @@ import (
 	"github.com/AlekSi/pointer"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/labstack/echo/v4"
-	. "github.com/percona/everest/api"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	. "github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/rbac"
 )

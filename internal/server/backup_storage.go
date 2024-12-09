@@ -163,7 +163,7 @@ func (e *EverestServer) CreateBackupStorage(ctx echo.Context, namespace string) 
 	if params.Description != nil {
 		bs.Spec.Description = *params.Description
 	}
-	err = e.kubeClient.CreateBackupStorage(c, bs)
+	_, err = e.kubeClient.CreateBackupStorage(c, bs)
 	if err != nil {
 		e.l.Error(err)
 		// TODO: Move this logic to the operator
@@ -340,7 +340,7 @@ func (e *EverestServer) UpdateBackupStorage(ctx echo.Context, namespace, name st
 		bs.Spec.ForcePathStyle = params.ForcePathStyle
 	}
 
-	err = e.kubeClient.UpdateBackupStorage(c, bs)
+	_, err = e.kubeClient.UpdateBackupStorage(c, bs)
 	if err != nil {
 		e.l.Error(err)
 		return ctx.JSON(http.StatusInternalServerError, Error{

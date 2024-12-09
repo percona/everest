@@ -9,8 +9,8 @@ import (
 	"github.com/percona/everest/pkg/rbac"
 )
 
-func (h *rbacHandler) ListDatabaseClusterRestores(ctx context.Context, user, namespace string) (*everestv1alpha1.DatabaseClusterRestoreList, error) {
-	list, err := h.next.ListDatabaseClusterRestores(ctx, user, namespace)
+func (h *rbacHandler) ListDatabaseClusterRestores(ctx context.Context, user, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterRestoreList, error) {
+	list, err := h.next.ListDatabaseClusterRestores(ctx, user, namespace, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -29,14 +29,14 @@ func (h *rbacHandler) ListDatabaseClusterRestores(ctx context.Context, user, nam
 	return list, nil
 }
 
-func (h *rbacHandler) CreateDatabaseClusterRestore(ctx context.Context, user string, req *everestv1alpha1.DatabaseClusterRestore) error {
+func (h *rbacHandler) CreateDatabaseClusterRestore(ctx context.Context, user string, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
 	clusterName := req.Spec.DBClusterName
 	namespace := req.GetNamespace()
 	if err := h.enforce(user, rbac.ResourceDatabaseClusterRestores, rbac.ActionCreate, rbac.ObjectName(namespace, clusterName)); err != nil {
-		return err
+		return nil, err
 	}
 	if err := h.enforceDBRestore(user, namespace, clusterName); err != nil {
-		return err
+		return nil, err
 	}
 	return h.next.CreateDatabaseClusterRestore(ctx, user, req)
 }
@@ -65,11 +65,11 @@ func (h *rbacHandler) GetDatabaseClusterRestore(ctx context.Context, user, names
 	return restore, nil
 }
 
-func (h *rbacHandler) UpdateDatabaseClusterRestore(ctx context.Context, user string, req *everestv1alpha1.DatabaseClusterRestore) error {
+func (h *rbacHandler) UpdateDatabaseClusterRestore(ctx context.Context, user string, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
 	clusterName := req.Spec.DBClusterName
 	namespace := req.GetNamespace()
 	if err := h.enforce(user, rbac.ResourceDatabaseClusterRestores, rbac.ActionUpdate, rbac.ObjectName(namespace, clusterName)); err != nil {
-		return err
+		return nil, err
 	}
 	return h.next.UpdateDatabaseClusterRestore(ctx, user, req)
 }

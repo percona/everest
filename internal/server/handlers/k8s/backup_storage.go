@@ -6,11 +6,12 @@ import (
 	"fmt"
 
 	"github.com/AlekSi/pointer"
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	"github.com/percona/everest/api"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/api"
 )
 
 func (h *k8sHandler) ListBackupStorages(ctx context.Context, user, namespace string) (*everestv1alpha1.BackupStorageList, error) {
@@ -21,13 +22,13 @@ func (h *k8sHandler) GetBackupStorage(ctx context.Context, user, namespace, name
 	return h.kubeClient.GetBackupStorage(ctx, namespace, name)
 }
 
-func (h *k8sHandler) CreateBackupStorage(ctx context.Context, user, namespace string, req *api.CreateBackupStorageParams) error {
+func (h *k8sHandler) CreateBackupStorage(ctx context.Context, user, namespace string, req *api.CreateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
 	bs, err := h.GetBackupStorage(ctx, user, namespace, req.Name)
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to get backup storage: %w", err)
+		return nil, fmt.Errorf("failed to get backup storage: %w", err)
 	}
 	if bs != nil && bs.GetName() != "" {
-		return fmt.Errorf("backup storage %s already exists", req.Name)
+		return nil, fmt.Errorf("backup storage %s already exists", req.Name)
 	}
 
 	secret := &corev1.Secret{
@@ -41,10 +42,10 @@ func (h *k8sHandler) CreateBackupStorage(ctx context.Context, user, namespace st
 	_, err = h.kubeClient.CreateSecret(ctx, secret)
 	if k8serrors.IsAlreadyExists(err) {
 		if _, err := h.kubeClient.UpdateSecret(ctx, secret); err != nil {
-			return fmt.Errorf("failed to update secret: %w", err)
+			return nil, fmt.Errorf("failed to update secret: %w", err)
 		}
 	} else if err != nil {
-		return fmt.Errorf("failed to create secret: %w", err)
+		return nil, fmt.Errorf("failed to create secret: %w", err)
 	}
 	bs = &everestv1alpha1.BackupStorage{
 		ObjectMeta: metav1.ObjectMeta{
@@ -67,20 +68,20 @@ func (h *k8sHandler) CreateBackupStorage(ctx context.Context, user, namespace st
 	if req.Description != nil {
 		bs.Spec.Description = *req.Description
 	}
-	err = h.kubeClient.CreateBackupStorage(ctx, bs)
+	updated, err := h.kubeClient.CreateBackupStorage(ctx, bs)
 	if err != nil {
 		// TODO: Move this logic to the operator
 		dErr := h.kubeClient.DeleteSecret(ctx, namespace, req.Name)
 		if dErr != nil {
-			return errors.Join(err, dErr)
+			return nil, errors.Join(err, dErr)
 		}
-		return fmt.Errorf("failed to create backup storage: %w", err)
+		return nil, fmt.Errorf("failed to create backup storage: %w", err)
 	}
 
-	return h.kubeClient.CreateBackupStorage(ctx, bs)
+	return updated, nil
 }
 
-func (h *k8sHandler) UpdateBackupStorage(ctx context.Context, user, namespace, name string, req *api.UpdateBackupStorageParams) error {
+func (h *k8sHandler) UpdateBackupStorage(ctx context.Context, user, namespace, name string, req *api.UpdateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
 	if req.AccessKey != nil || req.SecretKey != nil {
 		_, err := h.kubeClient.UpdateSecret(ctx, &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -90,12 +91,12 @@ func (h *k8sHandler) UpdateBackupStorage(ctx context.Context, user, namespace, n
 			StringData: backupSecretData(pointer.GetString(req.SecretKey), pointer.GetString(req.AccessKey)),
 		})
 		if err != nil {
-			return fmt.Errorf("failed to update secret: %w", err)
+			return nil, fmt.Errorf("failed to update secret: %w", err)
 		}
 	}
 	bs, err := h.kubeClient.GetBackupStorage(ctx, namespace, name)
 	if err != nil {
-		return fmt.Errorf("failed to get backup storage: %w", err)
+		return nil, fmt.Errorf("failed to get backup storage: %w", err)
 	}
 	if req.BucketName != nil {
 		bs.Spec.Bucket = *req.BucketName

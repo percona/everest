@@ -5,8 +5,9 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
-	. "github.com/percona/everest/api"
 	"k8s.io/apimachinery/pkg/api/errors"
+
+	. "github.com/percona/everest/api"
 )
 
 // GetSettings returns the Everest global settings.
