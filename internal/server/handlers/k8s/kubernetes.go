@@ -40,7 +40,7 @@ func (h *k8sHandler) GetKubernetesClusterResources(ctx context.Context) (*api.Ku
 	return res, nil
 }
 
-func (h *k8sHandler) GetKubernetesClusterInfo(ctx context.Context, user string) (*api.KubernetesClusterInfo, error) {
+func (h *k8sHandler) GetKubernetesClusterInfo(ctx context.Context) (*api.KubernetesClusterInfo, error) {
 	clusterType, err := h.kubeClient.GetClusterType(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetClusterType: %w", err)

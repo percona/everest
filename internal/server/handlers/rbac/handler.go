@@ -63,10 +63,14 @@ func (h *rbacHandler) enforce(
 	return nil
 }
 
-func (h *rbacHandler) GetKubernetesClusterInfo(ctx context.Context, user string) (*api.KubernetesClusterInfo, error) {
-	return nil, nil
+func (h *rbacHandler) GetKubernetesClusterResources(ctx context.Context) (*api.KubernetesClusterResources, error) {
+	return h.next.GetKubernetesClusterResources(ctx)
+}
+
+func (h *rbacHandler) GetKubernetesClusterInfo(ctx context.Context) (*api.KubernetesClusterInfo, error) {
+	return h.next.GetKubernetesClusterInfo(ctx)
 }
 
 func (h *rbacHandler) GetUserPermissions(ctx context.Context, user string) (*api.UserPermissions, error) {
-	return nil, nil
+	return h.next.GetUserPermissions(ctx, user)
 }
