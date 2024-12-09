@@ -60,7 +60,7 @@ type DatabaseEngineHandler interface {
 	ListDatabaseEngines(ctx context.Context, user, namespace string) (*everestv1alpha1.DatabaseEngineList, error)
 	GetDatabaseEngine(ctx context.Context, user, namespace, name string) (*everestv1alpha1.DatabaseEngine, error)
 	UpdateDatabaseEngine(ctx context.Context, user string, req *everestv1alpha1.DatabaseEngine) error
-	GetUpgradePlan(ctx context.Context, user, namespace, name string) (*api.UpgradePlan, error)
+	GetUpgradePlan(ctx context.Context, user, namespace string) (*api.UpgradePlan, error)
 	ApproveUpgradePlan(ctx context.Context, user, namespace string) error
 }
 

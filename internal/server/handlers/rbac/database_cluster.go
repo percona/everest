@@ -22,9 +22,9 @@ func (h *rbacHandler) CreateDatabaseCluster(ctx context.Context, user string, db
 	}
 	schedules := db.Spec.Backup.Schedules
 	if len(schedules) > 0 {
-		// To be able to create a cluster with backup schedules, the user needs to explicitly
-		// have permissions to take backups.
-		if err := h.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, rbac.ObjectName(namespace, "")); err != nil {
+		// To create a cluster with backup schedules, the user needs to explicitly have permissions to take backups.
+		if err := h.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate,
+			rbac.ObjectName(namespace, "")); err != nil {
 			return err
 		}
 		// User should be able to read a backup storage to use it in a backup schedule.
@@ -40,11 +40,12 @@ func (h *rbacHandler) CreateDatabaseCluster(ctx context.Context, user string, db
 	// Check permissions for creating a cluster from a backup.
 	if dataSrc := db.Spec.DataSource; dataSrc != nil && dataSrc.DBClusterBackupName != "" {
 		sourceBackup := dataSrc.DBClusterBackupName
-		if err := h.enforce(user, rbac.ResourceDatabaseClusterRestores, rbac.ActionCreate, rbac.ObjectName(namespace, "")); err != nil {
+		if err := h.enforce(user, rbac.ResourceDatabaseClusterRestores,
+			rbac.ActionCreate, rbac.ObjectName(namespace, "")); err != nil {
 			return err
 		}
 		// Get the name of the source database cluster.
-		bkp, err := h.kubeClient.GetDatabaseClusterBackup(ctx, namespace, sourceBackup)
+		bkp, err := h.next.GetDatabaseClusterBackup(ctx, user, namespace, sourceBackup)
 		if err != nil {
 			return errors.Join(err, errors.New("failed to get database cluster backup"))
 		}
@@ -102,7 +103,7 @@ func (h *rbacHandler) UpdateDatabaseCluster(ctx context.Context, user string, db
 		return err
 	}
 
-	oldDB, err := h.kubeClient.GetDatabaseCluster(ctx, namespace, name)
+	oldDB, err := h.next.GetDatabaseCluster(ctx, user, namespace, name)
 	if err != nil {
 		return err
 	}

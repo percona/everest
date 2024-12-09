@@ -28,19 +28,25 @@ func (h *rbacHandler) ListDatabaseClusterBackups(ctx context.Context, user, name
 }
 
 func (h *rbacHandler) CreateDatabaseClusterBackup(ctx context.Context, user string, req *everestv1alpha1.DatabaseClusterBackup) error {
-	if err := h.enforceDBBackupRead(user, req); err != nil {
+	clusterName := req.Spec.DBClusterName
+	bsName := req.Spec.BackupStorageName
+	namespace := req.GetNamespace()
+	if err := h.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(namespace, bsName)); err != nil {
 		return err
+	}
+	if err := h.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, rbac.ObjectName(namespace, clusterName)); err != nil {
+		return nil
 	}
 	return h.next.CreateDatabaseClusterBackup(ctx, user, req)
 }
 
 func (h *rbacHandler) DeleteDatabaseClusterBackup(ctx context.Context, user, namespace, name string) error {
-	backup, err := h.kubeClient.GetDatabaseClusterBackup(ctx, namespace, name)
+	backup, err := h.next.GetDatabaseClusterBackup(ctx, user, namespace, name)
 	if err != nil {
 		return fmt.Errorf("GetDatabaseClusterBackup failed: %w", err)
 	}
 	clusterName := backup.Spec.DBClusterName
-	if err := h.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionRead, rbac.ObjectName(namespace, clusterName)); err != nil {
+	if err := h.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionDelete, rbac.ObjectName(namespace, clusterName)); err != nil {
 		return nil
 	}
 	return h.next.DeleteDatabaseClusterBackup(ctx, user, namespace, name)
