@@ -1393,9 +1393,9 @@ func (_m *MockKubernetesConnector) UpdateBackupStorage(ctx context.Context, stor
 	return r0, r1
 }
 
-// UpdateDatabaseEngine provides a mock function with given fields: ctx, namespace, engine
-func (_m *MockKubernetesConnector) UpdateDatabaseEngine(ctx context.Context, namespace string, engine *v1alpha1.DatabaseEngine) (*v1alpha1.DatabaseEngine, error) {
-	ret := _m.Called(ctx, namespace, engine)
+// UpdateDatabaseEngine provides a mock function with given fields: ctx, engine
+func (_m *MockKubernetesConnector) UpdateDatabaseEngine(ctx context.Context, engine *v1alpha1.DatabaseEngine) (*v1alpha1.DatabaseEngine, error) {
+	ret := _m.Called(ctx, engine)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateDatabaseEngine")
@@ -1403,19 +1403,19 @@ func (_m *MockKubernetesConnector) UpdateDatabaseEngine(ctx context.Context, nam
 
 	var r0 *v1alpha1.DatabaseEngine
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, *v1alpha1.DatabaseEngine) (*v1alpha1.DatabaseEngine, error)); ok {
-		return rf(ctx, namespace, engine)
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.DatabaseEngine) (*v1alpha1.DatabaseEngine, error)); ok {
+		return rf(ctx, engine)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, *v1alpha1.DatabaseEngine) *v1alpha1.DatabaseEngine); ok {
-		r0 = rf(ctx, namespace, engine)
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.DatabaseEngine) *v1alpha1.DatabaseEngine); ok {
+		r0 = rf(ctx, engine)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*v1alpha1.DatabaseEngine)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, *v1alpha1.DatabaseEngine) error); ok {
-		r1 = rf(ctx, namespace, engine)
+	if rf, ok := ret.Get(1).(func(context.Context, *v1alpha1.DatabaseEngine) error); ok {
+		r1 = rf(ctx, engine)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -52,7 +52,7 @@ type KubernetesConnector interface {
 	// GetDatabaseEngine returns database clusters by provided name.
 	GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error)
 	// UpdateDatabaseEngine updates the provided database engine.
-	UpdateDatabaseEngine(ctx context.Context, namespace string, engine *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error)
+	UpdateDatabaseEngine(ctx context.Context, engine *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error)
 	// SetDatabaseEngineLock sets the lock on the database engine.
 	// The lock is automatically set to false once everest-operator completes its upgrade.
 	SetDatabaseEngineLock(ctx context.Context, namespace, name string, locked bool) error
