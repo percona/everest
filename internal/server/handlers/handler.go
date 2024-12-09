@@ -22,6 +22,7 @@ type Handler interface {
 	BackupStorageHandler
 	MonitoringInstanceHandler
 
+	GetKubernetesClusterResources(ctx context.Context) (*api.KubernetesClusterResources, error)
 	GetKubernetesClusterInfo(ctx context.Context, user string) (*api.KubernetesClusterInfo, error)
 	GetUserPermissions(ctx context.Context, user string) (*api.UserPermissions, error)
 }

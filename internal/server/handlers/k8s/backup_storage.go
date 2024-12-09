@@ -1,4 +1,4 @@
-package rbac
+package k8s
 
 import (
 	"context"

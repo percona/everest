@@ -1,4 +1,4 @@
-package rbac
+package k8s
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"github.com/AlekSi/pointer"
 	"github.com/cenkalti/backoff"
 	goversion "github.com/hashicorp/go-version"
+
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
 	versionservice "github.com/percona/everest/pkg/version_service"
