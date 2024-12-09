@@ -32,9 +32,9 @@ type KubernetesConnector interface {
 	// GetBackupStorage returns backup storages by provided name.
 	GetBackupStorage(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error)
 	// CreateBackupStorage returns backup storages by provided name.
-	CreateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
+	CreateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) (*everestv1alpha1.BackupStorage, error)
 	// UpdateBackupStorage returns backup storages by provided name.
-	UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
+	UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) (*everestv1alpha1.BackupStorage, error)
 	// DeleteBackupStorage returns backup storages by provided name.
 	DeleteBackupStorage(ctx context.Context, namespace, name string) error
 	// DeleteBackupStorages deletes all backup storages in provided namespace.
@@ -117,9 +117,9 @@ type KubernetesConnector interface {
 	// GetMonitoringConfig returns monitoring configs by provided name.
 	GetMonitoringConfig(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error)
 	// CreateMonitoringConfig returns monitoring configs by provided name.
-	CreateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) error
+	CreateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error)
 	// UpdateMonitoringConfig returns monitoring configs by provided name.
-	UpdateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) error
+	UpdateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error)
 	// DeleteMonitoringConfig returns monitoring configs by provided name.
 	DeleteMonitoringConfig(ctx context.Context, namespace, name string) error
 	// DeleteMonitoringConfigs deletes all monitoring configs in provided namespace.

@@ -50,6 +50,62 @@ type DBClusterRestoreInterface interface {
 	List(ctx context.Context, opts metav1.ListOptions) (*everestv1alpha1.DatabaseClusterRestoreList, error)
 	Get(ctx context.Context, name string, options metav1.GetOptions) (*everestv1alpha1.DatabaseClusterRestore, error)
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Create(ctx context.Context, restore *everestv1alpha1.DatabaseClusterRestore, opts metav1.CreateOptions) (*everestv1alpha1.DatabaseClusterRestore, error)
+	Update(ctx context.Context, restore *everestv1alpha1.DatabaseClusterRestore, opts metav1.UpdateOptions) (*everestv1alpha1.DatabaseClusterRestore, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+}
+
+// Create creates a resource.
+func (c *dbClusterRestoreClient) Create(
+	ctx context.Context,
+	restore *everestv1alpha1.DatabaseClusterRestore,
+	opts metav1.CreateOptions,
+) (*everestv1alpha1.DatabaseClusterRestore, error) {
+	result := &everestv1alpha1.DatabaseClusterRestore{}
+	err := c.restClient.
+		Post().
+		Namespace(c.namespace).
+		Resource(dbClusterRestoresAPIKind).
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Body(restore).
+		Do(ctx).
+		Into(result)
+	return result, err
+}
+
+// Update updates a resource.
+func (c *dbClusterRestoreClient) Update(
+	ctx context.Context,
+	restore *everestv1alpha1.DatabaseClusterRestore,
+	opts metav1.UpdateOptions,
+) (*everestv1alpha1.DatabaseClusterRestore, error) {
+	result := &everestv1alpha1.DatabaseClusterRestore{}
+	err := c.restClient.
+		Put().
+		Namespace(c.namespace).
+		Resource(dbClusterRestoresAPIKind).
+		Name(restore.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Body(restore).
+		Do(ctx).
+		Into(result)
+	return result, err
+}
+
+// Delete deletes a resource.
+func (c *dbClusterRestoreClient) Delete(
+	ctx context.Context,
+	name string,
+	opts metav1.DeleteOptions,
+) error {
+	return c.restClient.
+		Delete().
+		Namespace(c.namespace).
+		Resource(dbClusterRestoresAPIKind).
+		Name(name).
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Do(ctx).
+		Error()
 }
 
 // List lists database cluster restores based on opts.
