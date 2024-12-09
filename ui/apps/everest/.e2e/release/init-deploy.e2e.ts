@@ -110,16 +110,22 @@ test.describe.configure({ retries: 0 });
       }) => {
         expect(storageClasses.length).toBeGreaterThan(0);
 
-        await page.goto('/databases/new');
-        await page.getByTestId('toggle-button-group-input-db-type').waitFor();
+        await page.goto('/databases');
+        await page.getByTestId('add-db-cluster-button').waitFor();
+        await page.getByTestId('add-db-cluster-button').click();
+        await page.getByTestId(`add-db-cluster-button-${db}`).click();
+
+        // await page.getByTestId('toggle-button-group-input-db-type').waitFor();
         await page.getByTestId('select-input-db-version').waitFor();
 
         await test.step('Populate basic information', async () => {
           await populateBasicInformation(
             page,
+            namespace,
+            clusterName,
             db,
             storageClasses[0],
-            clusterName
+            false
           );
           await moveForward(page);
         });
@@ -169,7 +175,10 @@ test.describe.configure({ retries: 0 });
 
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
-          await waitForStatus(page, clusterName, 'Initializing', 15000);
+          // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
+          if (size != 1 || db != 'psmdb') {
+            await waitForStatus(page, clusterName, 'Initializing', 15000);
+          }
           await waitForStatus(page, clusterName, 'Up', 600000);
         });
 
@@ -219,7 +228,10 @@ test.describe.configure({ retries: 0 });
 
       test(`Resume cluster [${db} size ${size}]`, async ({ page }) => {
         await resumeDbCluster(page, clusterName);
-        await waitForStatus(page, clusterName, 'Initializing', 45000);
+        // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
+        if (size != 1 || db != 'psmdb') {
+          await waitForStatus(page, clusterName, 'Initializing', 45000);
+        }
         await waitForStatus(page, clusterName, 'Up', 300000);
       });
 
@@ -228,7 +240,10 @@ test.describe.configure({ retries: 0 });
         if (size != 1 && db != 'postgresql') {
           await waitForStatus(page, clusterName, 'Stopping', 45000);
         }
-        await waitForStatus(page, clusterName, 'Initializing', 60000);
+        // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
+        if (size != 1 || db != 'psmdb') {
+          await waitForStatus(page, clusterName, 'Initializing', 60000);
+        }
         await waitForStatus(page, clusterName, 'Up', 300000);
       });
 

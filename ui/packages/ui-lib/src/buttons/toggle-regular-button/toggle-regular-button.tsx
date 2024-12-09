@@ -4,12 +4,14 @@ import { ToggleRegularButtonProps } from './toggle-regular-button.types';
 const ToggleRegularButton = ({
   children,
   sx,
+  dataTestId,
   ...props
 }: ToggleRegularButtonProps) => {
   const theme = useTheme();
 
   return (
     <ToggleButton
+      data-testid={dataTestId ?? 'toggle-button-group-btn'}
       disableRipple
       sx={{
         backgroundColor: 'background.default',

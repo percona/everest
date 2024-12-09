@@ -48,13 +48,21 @@ const (
 //nolint:gochecknoglobals
 var everestAPIConstantBackoff = backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), maxRetries)
 
-func (e *EverestServer) enforceDBBackupsRBAC(user string, bkp *everestv1alpha1.DatabaseClusterBackup) error {
-	if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(bkp.GetNamespace(), bkp.Spec.BackupStorageName)); err != nil {
+func (e *EverestServer) enforceDBBackupsRBAC(user string, namespace, backupStorageName, dbClusterName, action string) error {
+	if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(namespace, backupStorageName)); err != nil {
 		if !errors.Is(err, errInsufficientPermissions) {
 			e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
 		}
 		return err
 	}
+
+	if err := e.enforce(user, rbac.ResourceDatabaseClusterBackups, action, rbac.ObjectName(namespace, dbClusterName)); err != nil {
+		if !errors.Is(err, errInsufficientPermissions) {
+			e.l.Error(errors.Join(err, errors.New("failed to check backup permissions")))
+		}
+		return err
+	}
+
 	return nil
 }
 
@@ -89,7 +97,7 @@ func (e *EverestServer) ListDatabaseClusterBackups(ctx echo.Context, namespace, 
 				e.l.Error(errors.Join(err, errors.New("failed to convert unstructured to DatabaseClusterBackup")))
 				return err
 			}
-			if err := e.enforceDBBackupsRBAC(user, dbbackup); errors.Is(err, errInsufficientPermissions) {
+			if err := e.enforceDBBackupsRBAC(user, dbbackup.GetNamespace(), dbbackup.GetName(), dbbackup.Spec.DBClusterName, rbac.ActionRead); errors.Is(err, errInsufficientPermissions) {
 				continue
 			} else if err != nil {
 				return err
@@ -117,9 +125,9 @@ func (e *EverestServer) CreateDatabaseClusterBackup(ctx echo.Context, namespace 
 			Message: pointer.ToString("Failed to get user from context" + err.Error()),
 		})
 	}
-	// User should be able to read the specified backup storage.
+
 	bsName := pointer.Get(dbb.Spec).BackupStorageName
-	if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(namespace, bsName)); err != nil {
+	if err := e.enforceDBBackupsRBAC(user, namespace, bsName, dbb.Spec.DbClusterName, rbac.ActionCreate); err != nil {
 		return err
 	}
 
@@ -174,6 +182,16 @@ func (e *EverestServer) DeleteDatabaseClusterBackup(
 		return errors.Join(err, errors.New("could not get Database Cluster"))
 	}
 
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+	if err := e.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionDelete, rbac.ObjectName(namespace, backup.Spec.DBClusterName)); err != nil {
+		return err
+	}
+
 	if !cleanupStorage {
 		if err := e.ensureBackupStorageProtection(reqCtx, backup); err != nil {
 			return errors.Join(err, errors.New("could not ensure backup storage protection"))
@@ -200,7 +218,7 @@ func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, namespace, na
 	if err != nil {
 		return errors.Join(err, errors.New("could not get Database Cluster Backup"))
 	}
-	if err := e.enforceDBBackupsRBAC(user, bkp); err != nil {
+	if err := e.enforceDBBackupsRBAC(user, namespace, bkp.GetName(), bkp.Spec.DBClusterName, rbac.ActionRead); err != nil {
 		return err
 	}
 	attachK8sTypeMeta(bkp)
