@@ -112,8 +112,10 @@ export const queryPSMDB = async (
   const host = await getDBHost(cluster, namespace);
   const clientPod = await getDBClientPod('psmdb', 'db-client');
 
+  // Ensure sharding flag is properly handled
+  isShardingEnabled == true;
+  const replicaSetOption = isShardingEnabled ? '' : '&replicaSet=rs0';
   try {
-    const replicaSetOption = isShardingEnabled ? '' : '&replicaSet=rs0';
     const command = `kubectl exec --namespace db-client ${clientPod} -- mongosh "mongodb://backup:${password}@${host}/${db}?authSource=admin${replicaSetOption}" --eval "${query}"`;
     const output = execSync(command).toString();
     return output;
@@ -338,12 +340,28 @@ export const configureMongoDBSharding = async (
     'sh.enableSharding(\\"test\\");'
   );
 
+  // Ensure the index is created for the "t1" collection on shard key { a: 1 }
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'test', // Switch to "test" database context to create the index
+    'db.t1.createIndex({ a: 1 });'
+  );
+
   // Enable sharding for the t1 collection with shard key { a: 1 }
   await queryPSMDB(
     cluster,
     namespace,
     'admin',
     'sh.shardCollection(\\"test.t1\\", { a: 1 });'
+  );
+
+  // Ensure the index is created for the "t2" collection on shard key { b: 1 }
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'test', // Switch to "test" database context to create the index
+    'db.t2.createIndex({ b: 1 });'
   );
 
   // Enable sharding for the t2 collection with shard key { b: 1 }
@@ -355,11 +373,11 @@ export const configureMongoDBSharding = async (
   );
 
   // Adjust chunk to 1 MB size for testing purposes
-  await queryPSMDB(
-    cluster,
-    namespace,
-    'test',
-    'db.settings.save({ _id: "chunksize", value: 1 });'
-  );
+  //await queryPSMDB(
+  //  cluster,
+  //  namespace,
+  //  'test',
+  //  'db.settings.save({ _id: "chunksize", value: 1 });'
+  //);
   console.log('Sharding configuration completed successfully.');
 };

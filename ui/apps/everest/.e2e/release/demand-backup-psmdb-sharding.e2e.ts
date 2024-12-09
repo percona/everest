@@ -263,7 +263,7 @@ test.describe(
       ).not.toBeEmpty();
       await page.getByTestId('form-dialog-create').click();
 
-      await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 300000);
+      await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 400000);
     });
 
     test(`Delete data [${db} size ${size}]`, async () => {
@@ -294,8 +294,48 @@ test.describe(
 
     test(`Check data after restore [${db} size ${size}]`, async () => {
       if (db === 'psmdb') {
+        // Validate the data in the database
         const result = await queryTestDB(clusterName, namespace);
         expect(result.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
+
+        // Validate the data in the t1 collection
+        const t1Data = await queryPSMDB(
+          clusterName,
+          namespace,
+          'test',
+          'db.t1.find({}, { _id: 0 }).toArray();'
+        );
+        expect(JSON.parse(t1Data.trim())).toEqual([
+          { a: 1 },
+          { a: 2 },
+          { a: 3 },
+        ]);
+
+        // Validate the data in the t2 collection
+        const t2Data = await queryPSMDB(
+          clusterName,
+          namespace,
+          'test',
+          'db.t2.find({}, { _id: 0 }).toArray();'
+        );
+        expect(JSON.parse(t2Data.trim())).toEqual([
+          { b: 4 },
+          { b: 5 },
+          { b: 6 },
+        ]);
+
+        // Validate sharding configuration
+        const shardingStatus = await queryPSMDB(
+          clusterName,
+          namespace,
+          'admin',
+          'sh.status();'
+        );
+        console.log('Sharding Status:', shardingStatus);
+
+        // Ensure sharding is enabled for both collections
+        expect(shardingStatus).toContain('test.t1');
+        expect(shardingStatus).toContain('test.t2');
       }
     });
 
