@@ -16,16 +16,18 @@ var ErrInsufficientPermissions = errors.New("insufficient permissions for perfor
 
 // k8sHandler is usually the last handler in the chain, so it does not have a next handler.
 type k8sHandler struct {
-	kubeClient *kubernetes.Kubernetes
-	log        *zap.SugaredLogger
+	kubeClient        *kubernetes.Kubernetes
+	log               *zap.SugaredLogger
+	versionServiceURL string
 }
 
 // New returns a new RBAC handler.
-func New(log *zap.SugaredLogger, kubeClient *kubernetes.Kubernetes) handlers.Handler {
+func New(log *zap.SugaredLogger, kubeClient *kubernetes.Kubernetes, vsURL string) handlers.Handler {
 	l := log.With("handler", "k8s")
 	return &k8sHandler{
-		kubeClient: kubeClient,
-		log:        l,
+		kubeClient:        kubeClient,
+		log:               l,
+		versionServiceURL: vsURL,
 	}
 }
 
