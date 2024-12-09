@@ -15,6 +15,7 @@
 
 import { execSync } from 'child_process';
 import { expect } from '@playwright/test';
+import { isShardingEnabled } from '../release/demand-backup-psmdb-sharding.e2e';
 
 export const getDBHost = async (cluster: string, namespace: string) => {
   try {
@@ -112,7 +113,8 @@ export const queryPSMDB = async (
   const clientPod = await getDBClientPod('psmdb', 'db-client');
 
   try {
-    const command = `kubectl exec --namespace db-client ${clientPod} -- mongosh "mongodb://backup:${password}@${host}/${db}?authSource=admin&replicaSet=rs0" --eval "${query}"`;
+    const replicaSetOption = isShardingEnabled ? '' : '&replicaSet=rs0';
+    const command = `kubectl exec --namespace db-client ${clientPod} -- mongosh "mongodb://backup:${password}@${host}/${db}?authSource=admin${replicaSetOption}" --eval "${query}"`;
     const output = execSync(command).toString();
     return output;
   } catch (error) {
@@ -299,12 +301,11 @@ export const prepareMongoDBTestDB = async (
   cluster: string,
   namespace: string
 ) => {
-  console.log('Preparing test database for MongoDB...');
-  const dbType = await getDBType(cluster, namespace);
   // Drop the existing test database, if any
   await dropTestDB(cluster, namespace);
 
   // Insert test data into the first collection (t1)
+  console.log('Preparing test database for MongoDB...');
   await queryPSMDB(
     cluster,
     namespace,
@@ -330,31 +331,35 @@ export const configureMongoDBSharding = async (
   console.log('Configuring sharding...');
 
   // Enable sharding for the database
-  await queryPSMDB(cluster, namespace, 'test', 'sh.enableSharding("test");');
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'admin',
+    'sh.enableSharding(\\"test\\");'
+  );
 
   // Enable sharding for the t1 collection with shard key { a: 1 }
   await queryPSMDB(
     cluster,
     namespace,
-    'test',
-    'sh.shardCollection("test.t1", { a: 1 });'
+    'admin',
+    'sh.shardCollection(\\"test.t1\\", { a: 1 });'
   );
 
   // Enable sharding for the t2 collection with shard key { b: 1 }
   await queryPSMDB(
     cluster,
     namespace,
-    'test',
-    'sh.shardCollection("test.t2", { b: 1 });'
+    'admin',
+    'sh.shardCollection(\\"test.t2\\", { b: 1 });'
   );
 
-  // Adjust chunk size for testing purposes
+  // Adjust chunk to 1 MB size for testing purposes
   await queryPSMDB(
     cluster,
     namespace,
     'test',
     'db.settings.save({ _id: "chunksize", value: 1 });'
   );
-
   console.log('Sharding configuration completed successfully.');
 };

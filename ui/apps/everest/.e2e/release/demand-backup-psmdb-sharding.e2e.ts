@@ -50,6 +50,8 @@ import {
   queryTestDB,
 } from '@e2e/utils/db-cmd-line';
 
+export let isShardingEnabled = false;
+
 const {
   MONITORING_URL,
   MONITORING_USER,
@@ -65,7 +67,7 @@ const size = 3;
 test.describe.configure({ retries: 0 });
 
 test.describe(
-  'Demand backup',
+  'Demand backup psmdb',
   {
     tag: '@release',
   },
@@ -129,6 +131,7 @@ test.describe(
       });
 
       // Step to activate Sharding
+
       await test.step('Activate sharding', async () => {
         const shardingCheckbox = page
           .getByTestId('switch-input-sharding')
@@ -136,6 +139,7 @@ test.describe(
         const isChecked = await shardingCheckbox?.isChecked();
         if (!isChecked) {
           if (shardingCheckbox) {
+            isShardingEnabled = true;
             await shardingCheckbox.click();
           }
         }
