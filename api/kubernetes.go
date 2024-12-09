@@ -57,7 +57,7 @@ func (e *EverestServer) GetKubernetesClusterResources(ctx echo.Context) error {
 }
 
 func (e *EverestServer) calculateClusterResources(
-	ctx echo.Context, kubeClient *kubernetes.Kubernetes, clusterType kubernetes.ClusterType,
+	ctx echo.Context, kubeClient kubernetes.KubernetesConnector, clusterType kubernetes.ClusterType,
 	volumes *corev1.PersistentVolumeList,
 ) (*KubernetesClusterResources, error) {
 	allCPUMillis, allMemoryBytes, allDiskBytes, err := kubeClient.GetAllClusterResources(

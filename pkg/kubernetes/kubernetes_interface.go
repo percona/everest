@@ -9,6 +9,8 @@ import (
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbac "k8s.io/api/rbac/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -47,6 +49,30 @@ type KubernetesConnector interface {
 	IsBackupStorageUsed(ctx context.Context, namespace, name string) (bool, error)
 	// GetConfigMap returns k8s configmap by provided name and namespace.
 	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
+	// GetDatabaseClusterBackup returns database cluster backup by name.
+	GetDatabaseClusterBackup(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error)
+	// ListDatabaseClusterBackups returns database cluster backups.
+	ListDatabaseClusterBackups(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error)
+	// UpdateDatabaseClusterBackup updates database cluster backup.
+	UpdateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error)
+	// GetDatabaseClusterRestore returns database cluster restore by name.
+	GetDatabaseClusterRestore(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterRestore, error)
+	// ListDatabaseClusterRestores returns database cluster restores.
+	ListDatabaseClusterRestores(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterRestoreList, error)
+	// ListDatabaseClusters returns list of managed database clusters.
+	ListDatabaseClusters(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseClusterList, error)
+	// GetDatabaseCluster returns database clusters by provided name.
+	GetDatabaseCluster(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseCluster, error)
+	// DeleteDatabaseClusters deletes all database clusters in provided namespace.
+	// This function will wait until all clusters are deleted.
+	DeleteDatabaseClusters(ctx context.Context, namespace string) error
+	// PatchDatabaseCluster patches CR of managed Database cluster.
+	PatchDatabaseCluster(cluster *everestv1alpha1.DatabaseCluster) error
+	// DeleteDatabaseCluster deletes database cluster.
+	DeleteDatabaseCluster(ctx context.Context, namespace, name string) error
+	// DatabasesExist checks if databases exist in provided at least one of the provided namespaces.
+	// If namespaces are not provided, it checks in all namespaces.
+	DatabasesExist(ctx context.Context, namespaces ...string) (bool, error)
 	// ListDatabaseEngines returns list of managed database clusters.
 	ListDatabaseEngines(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseEngineList, error)
 	// GetDatabaseEngine returns database clusters by provided name.
@@ -66,6 +92,8 @@ type KubernetesConnector interface {
 	DeleteDeployment(ctx context.Context, name, namespace string) error
 	// ApproveInstallPlan approves an install plan.
 	ApproveInstallPlan(ctx context.Context, namespace, installPlanName string) (bool, error)
+	// CreateRSAKeyPair creates a new RSA key pair and stores it in a secret.
+	CreateRSAKeyPair(ctx context.Context) error
 	// Kubeconfig returns the path to the kubeconfig.
 	Kubeconfig() string
 	// Config returns *rest.Config.
@@ -140,14 +168,31 @@ type KubernetesConnector interface {
 	ListNamespaces(ctx context.Context, opts metav1.ListOptions) (*corev1.NamespaceList, error)
 	// UpdateNamespace updates the given namespace.
 	UpdateNamespace(ctx context.Context, namespace *corev1.Namespace, opts metav1.UpdateOptions) (*corev1.Namespace, error)
-	// OperatorInstalledVersion returns the installed version of operator by name.
-	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
-	// CreateRSAKeyPair creates a new RSA key pair and stores it in a secret.
-	CreateRSAKeyPair(ctx context.Context) error
+	// GetWorkerNodes returns list of cluster workers nodes.
+	GetWorkerNodes(ctx context.Context) ([]corev1.Node, error)
 	// UpdateEverestSettings accepts the full list of Everest settings and updates the settings.
 	UpdateEverestSettings(ctx context.Context, settings common.EverestSettings) error
 	// GetEverestSettings returns Everest settings.
 	GetEverestSettings(ctx context.Context) (common.EverestSettings, error)
+	// OperatorInstalledVersion returns the installed version of operator by name.
+	OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error)
+	// GetPods returns list of pods.
+	GetPods(ctx context.Context, namespace string, labelSelector *metav1.LabelSelector) (*corev1.PodList, error)
+	// GetAllClusterResources goes through all cluster nodes and sums their allocatable resources.
+	GetAllClusterResources(ctx context.Context, clusterType ClusterType, volumes *corev1.PersistentVolumeList) (uint64, uint64, uint64, error)
+	// GetConsumedCPUAndMemory returns consumed CPU and Memory in given namespace. If namespace
+	// is empty, it tries to get them from all namespaces.
+	GetConsumedCPUAndMemory(ctx context.Context, namespace string) (cpuMillis uint64, memoryBytes uint64, err error)
+	// GetConsumedDiskBytes returns consumed bytes. The strategy differs based on k8s cluster type.
+	GetConsumedDiskBytes(_ context.Context, clusterType ClusterType, volumes *corev1.PersistentVolumeList) (uint64, error)
+	// CreateRole creates a new role.
+	CreateRole(namespace, name string, rules []rbac.PolicyRule) error
+	// CreateRoleBinding binds a role to a service account.
+	CreateRoleBinding(namespace, name, roleName, serviceAccountName string) error
+	// CreateClusterRole creates a new cluster role.
+	CreateClusterRole(name string, rules []rbac.PolicyRule) error
+	// CreateClusterRoleBinding binds a cluster role to a service account.
+	CreateClusterRoleBinding(namespace, name, roleName, serviceAccountName string) error
 	// ListSecrets returns secret by name.
 	ListSecrets(ctx context.Context, namespace string) (*corev1.SecretList, error)
 	// GetSecret returns a secret by name.
@@ -160,4 +205,12 @@ type KubernetesConnector interface {
 	UpdateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error)
 	// DeleteSecret deletes a secret.
 	DeleteSecret(ctx context.Context, namespace, name string) error
+	// CreateServiceAccount creates a new service account.
+	CreateServiceAccount(name, namespace string) error
+	// CreateServiceAccountToken creates a new secret with service account token.
+	CreateServiceAccountToken(serviceAccountName, secretName, namespace string) error
+	// GetPersistentVolumes returns list of persistent volumes.
+	GetPersistentVolumes(ctx context.Context) (*corev1.PersistentVolumeList, error)
+	// GetStorageClasses returns list of storage classes.
+	GetStorageClasses(ctx context.Context) (*storagev1.StorageClassList, error)
 }
