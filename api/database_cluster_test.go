@@ -186,7 +186,7 @@ func TestConnectionURL(t *testing.T) {
 			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@mongodb-try-rs0-0.mongodb-56u-rs0.my-special-place.svc.cluster.local:27017",
 		},
 		{
-			name: "non-sharded psmdb 3 node",
+			name: "non-sharded psmdb, 3 node, external access disabled",
 			podList: corev1.PodList{Items: []corev1.Pod{
 				{Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-0"}},
 				{Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-1"}},
@@ -201,7 +201,44 @@ func TestConnectionURL(t *testing.T) {
 			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@mongodb-try-rs0-0.mongodb-56u-rs0.my-special-place.svc.cluster.local:27017,mongodb-try-rs0-1.mongodb-56u-rs0.my-special-place.svc.cluster.local:27017,mongodb-try-rs0-2.mongodb-56u-rs0.my-special-place.svc.cluster.local:27017",
 		},
 		{
-			name:    "sharded psmdb",
+			name: "non-sharded psmdb, 3 node, external access enabled",
+			podList: corev1.PodList{Items: []corev1.Pod{
+				{Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-0"}},
+				{Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-1"}},
+				{Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-2"}},
+			}},
+			db: everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePSMDB},
+					Proxy:  everestv1alpha1.Proxy{Expose: everestv1alpha1.Expose{Type: "external"}},
+				},
+				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "34.34.163.11:27017,34.79.177.123:27017,35.195.153.1:27017", Port: 27017},
+			},
+			user:     "databaseAdmin",
+			password: "azoE4FwvDRVycH83CO",
+			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@34.34.163.11:27017,34.79.177.123:27017,35.195.153.1:27017",
+		},
+		{
+			name: "sharded psmdb, 3 node, external access enabled",
+			podList: corev1.PodList{Items: []corev1.Pod{
+				{Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-0"}},
+				{Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-1"}},
+				{Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-2"}},
+			}},
+			db: everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePSMDB},
+					Sharding: &everestv1alpha1.Sharding{Enabled: true},
+					Proxy:    everestv1alpha1.Proxy{Expose: everestv1alpha1.Expose{Type: "external"}},
+				},
+				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "34.34.163.11", Port: 27017},
+			},
+			user:     "databaseAdmin",
+			password: "azoE4FwvDRVycH83CO",
+			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@34.34.163.11:27017",
+		},
+		{
+			name:    "sharded psmdb, external access disabled",
 			podList: corev1.PodList{Items: []corev1.Pod{}},
 			db: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
