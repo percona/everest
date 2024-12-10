@@ -322,9 +322,23 @@ func sessionRateLimiter(limit int) (echo.MiddlewareFunc, *RateLimiterMemoryStore
 
 func (e *EverestServer) errorHandlerChain() echo.HTTPErrorHandler {
 	h := e.echo.DefaultHTTPErrorHandler
+	h = defaultErrorHandler(h)
 	h = k8sToAPIErrorHandler(h)
 	h = enforcerErrorHandler(h)
 	return h
+}
+
+func defaultErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
+	return func(err error, c echo.Context) {
+		target := &echo.HTTPError{}
+		if !errors.As(err, &target) {
+			err = &echo.HTTPError{
+				Code:    http.StatusInternalServerError,
+				Message: err.Error(),
+			}
+		}
+		next(err, c)
+	}
 }
 
 func k8sToAPIErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
