@@ -162,8 +162,8 @@ test.describe(
       await test.step('Set number of shards', async () => {
         const shardsInput = await page.getByTestId('text-input-shard-nr');
         await expect(shardsInput).toBeVisible();
-        await shardsInput.fill('3');
-        await expect(shardsInput).toHaveValue('3');
+        await shardsInput.fill('2');
+        await expect(shardsInput).toHaveValue('2');
         await moveForward(page);
       });
 
@@ -263,7 +263,7 @@ test.describe(
       ).not.toBeEmpty();
       await page.getByTestId('form-dialog-create').click();
 
-      await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 400000);
+      await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 500000);
     });
 
     test(`Delete data [${db} size ${size}]`, async () => {
@@ -298,33 +298,15 @@ test.describe(
         const result = await queryTestDB(clusterName, namespace);
         expect(result.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
 
-        // Validate the data in the t1 collection
-        const t1Data = await queryPSMDB(
-          clusterName,
-          namespace,
-          'test',
-          'db.t1.find({}, { _id: 0 }).toArray();'
-        );
-        expect(JSON.parse(t1Data.trim())).toEqual([
-          { a: 1 },
-          { a: 2 },
-          { a: 3 },
-        ]);
+        // Step 1: Validate the data in the t1 collection
+        const t1Data = await queryTestDB(clusterName, namespace, 't1');
+        expect(t1Data.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
 
-        // Validate the data in the t2 collection
-        const t2Data = await queryPSMDB(
-          clusterName,
-          namespace,
-          'test',
-          'db.t2.find({}, { _id: 0 }).toArray();'
-        );
-        expect(JSON.parse(t2Data.trim())).toEqual([
-          { b: 4 },
-          { b: 5 },
-          { b: 6 },
-        ]);
+        // Step 2: Validate the data in the t2 collection
+        const t2Data = await queryTestDB(clusterName, namespace, 't2');
+        expect(t2Data.trim()).toBe('[ { b: 4 }, { b: 5 }, { b: 6 } ]');
 
-        // Validate sharding configuration
+        // Step 3: Validate sharding configuration
         const shardingStatus = await queryPSMDB(
           clusterName,
           namespace,

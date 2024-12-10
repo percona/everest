@@ -273,9 +273,17 @@ export const dropTestDB = async (cluster: string, namespace: string) => {
   }
 };
 
-export const queryTestDB = async (cluster: string, namespace: string) => {
+export const queryTestDB = async (
+  cluster: string,
+  namespace: string,
+  collection: string = 't1' // Default to collection `t1`
+) => {
   const dbType = await getDBType(cluster, namespace);
   let result: string;
+
+  if (!collection) {
+    throw new Error('Collection name is required for queryTestDB');
+  }
 
   switch (dbType) {
     case 'pxc': {
@@ -287,7 +295,7 @@ export const queryTestDB = async (cluster: string, namespace: string) => {
         cluster,
         namespace,
         'test',
-        'db.t1.find({},{_id: 0}).sort({a: 1});'
+        'db.${collection}.find({},{_id: 0}).sort({a: 1}).toArray();'
       );
       break;
     }
