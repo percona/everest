@@ -16,177 +16,63 @@
 package server
 
 import (
-	"context"
-	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/AlekSi/pointer"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	corev1 "k8s.io/api/core/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	. "github.com/percona/everest/api"
-	"github.com/percona/everest/pkg/pmm"
+	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/rbac"
-)
-
-const (
-	// MonitoringNamespace is the namespace where monitoring configs are created.
-	MonitoringNamespace = "everest-monitoring"
 )
 
 // CreateMonitoringInstance creates a new monitoring instance.
 func (e *EverestServer) CreateMonitoringInstance(ctx echo.Context, namespace string) error {
-	params, err := validateCreateMonitoringInstanceRequest(ctx)
-	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
-	}
-	c := ctx.Request().Context()
-	m, err := e.kubeClient.GetMonitoringConfig(c, namespace, params.Name)
-	if err != nil && !k8serrors.IsNotFound(err) {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Could not get monitoring instance"),
-		})
-	}
-	// TODO: Change the design of operator's structs so they return nil struct so
-	// if s != nil passes
-	if m != nil && m.Name != "" {
-		err = fmt.Errorf("monitoring instance %s already exists in namespace %s", params.Name, namespace)
-		e.l.Error(err)
-		return ctx.JSON(http.StatusConflict, Error{Message: pointer.ToString(err.Error())})
-	}
-
-	apiKey, err := e.getPMMApiKey(c, params)
-	if err != nil {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Could not create an API key in PMM"),
-		})
-	}
-
-	if err := e.createMonitoringK8sResources(c, namespace, params, apiKey); err != nil {
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString(err.Error()),
-		})
-	}
-
-	result := MonitoringInstance{
-		Type:              MonitoringInstanceBaseWithNameType(params.Type),
-		Name:              params.Name,
-		Namespace:         namespace,
-		Url:               params.Url,
-		AllowedNamespaces: params.AllowedNamespaces,
-		VerifyTLS:         params.VerifyTLS,
-	}
-
-	return ctx.JSON(http.StatusOK, result)
-}
-
-func (e *EverestServer) getPMMApiKey(ctx context.Context, params *CreateMonitoringInstanceJSONRequestBody) (string, error) {
-	if params.Pmm != nil && params.Pmm.ApiKey != "" {
-		return params.Pmm.ApiKey, nil
-	}
-
-	e.l.Debug("Getting PMM API key by username and password")
-	skipVerifyTLS := !pointer.Get(params.VerifyTLS)
-	return pmm.CreatePMMApiKey(
-		ctx, params.Url, fmt.Sprintf("everest-%s-%s", params.Name, uuid.NewString()),
-		params.Pmm.User, params.Pmm.Password,
-		skipVerifyTLS,
-	)
-}
-
-func (e *EverestServer) createMonitoringK8sResources(
-	c context.Context, namespace string, params *CreateMonitoringInstanceJSONRequestBody, apiKey string,
-) error {
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      params.Name,
-			Namespace: namespace,
-		},
-		Type:       corev1.SecretTypeOpaque,
-		StringData: e.monitoringConfigSecretData(apiKey),
-	}
-	if _, err := e.kubeClient.CreateSecret(c, secret); err != nil {
-		if k8serrors.IsAlreadyExists(err) {
-			_, err = e.kubeClient.UpdateSecret(c, secret)
-			if err != nil {
-				e.l.Error(err)
-				return fmt.Errorf("could not update k8s secret %s", params.Name)
-			}
-		} else {
-			e.l.Error(err)
-			return fmt.Errorf("failed creating secret in the Kubernetes cluster")
-		}
-	}
-	_, err := e.kubeClient.CreateMonitoringConfig(c, &everestv1alpha1.MonitoringConfig{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      params.Name,
-			Namespace: namespace,
-		},
-		Spec: everestv1alpha1.MonitoringConfigSpec{
-			Type: everestv1alpha1.MonitoringType(params.Type),
-			PMM: everestv1alpha1.PMMConfig{
-				URL: params.Url,
-			},
-			CredentialsSecretName: params.Name,
-			VerifyTLS:             params.VerifyTLS,
-		},
-	})
-	if err != nil {
-		e.l.Error(err)
-		if dErr := e.kubeClient.DeleteSecret(c, namespace, params.Name); dErr != nil {
-			return fmt.Errorf("failed cleaning up the secret because failed creating monitoring instance")
-		}
-		return fmt.Errorf("failed creating monitoring instance")
-	}
-
-	return nil
-}
-
-// enforceMonitoringConfigRBAC checks if the user has permissions to read the monitoring config.
-func (e *EverestServer) enforceMonitoringConfigRBAC(user string, mc everestv1alpha1.MonitoringConfig) error {
-	// Check if the user has permissions for this monitoring config.
-	if err := e.enforce(user, rbac.ResourceMonitoringInstances, rbac.ActionRead, rbac.ObjectName(mc.GetNamespace(), mc.GetName())); err != nil {
-		if !errors.Is(err, errInsufficientPermissions) {
-			e.l.Error(errors.Join(err, errors.New("failed to check monitoring-instance permissions")))
-		}
+	var params api.CreateMonitoringInstanceJSONRequestBody
+	if err := ctx.Bind(&params); err != nil {
 		return err
 	}
 
-	return nil
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, api.Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+
+	created, err := e.handler.CreateMonitoringInstance(ctx.Request().Context(), user, namespace, &params)
+	if err != nil {
+		return err
+	}
+
+	result := api.MonitoringInstance{
+		Type:              api.MonitoringInstanceBaseWithNameType(params.Type),
+		Name:              created.GetName(),
+		Namespace:         created.GetNamespace(),
+		Url:               created.Spec.PMM.URL,
+		AllowedNamespaces: pointer.To(created.Spec.AllowedNamespaces),
+		VerifyTLS:         created.Spec.VerifyTLS,
+	}
+	return ctx.JSON(http.StatusOK, result)
 }
 
 // ListMonitoringInstances lists all monitoring instances.
 func (e *EverestServer) ListMonitoringInstances(ctx echo.Context, namespace string) error {
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, Error{
+		return ctx.JSON(http.StatusInternalServerError, api.Error{
 			Message: pointer.ToString("Failed to get user from context" + err.Error()),
 		})
 	}
 
-	mcList, err := e.kubeClient.ListMonitoringConfigs(ctx.Request().Context(), namespace)
+	mcList, err := e.handler.ListMonitoringInstances(ctx.Request().Context(), user, namespace)
 	if err != nil {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{Message: pointer.ToString("Could not get a list of monitoring instances")})
+		return err
 	}
 
-	result := make([]*MonitoringInstance, 0, len(mcList.Items))
+	result := make([]*api.MonitoringInstance, 0, len(mcList.Items))
 	for _, mc := range mcList.Items {
-		if err := e.enforceMonitoringConfigRBAC(user, mc); errors.Is(err, errInsufficientPermissions) {
-			continue
-		} else if err != nil {
-			return err
-		}
-
-		result = append(result, &MonitoringInstance{
-			Type:      MonitoringInstanceBaseWithNameType(mc.Spec.Type),
+		result = append(result, &api.MonitoringInstance{
+			Type:      api.MonitoringInstanceBaseWithNameType(mc.Spec.Type),
 			Name:      mc.GetName(),
 			Namespace: mc.GetNamespace(),
 			Url:       mc.Spec.PMM.URL,
@@ -200,19 +86,20 @@ func (e *EverestServer) ListMonitoringInstances(ctx echo.Context, namespace stri
 
 // GetMonitoringInstance retrieves a monitoring instance.
 func (e *EverestServer) GetMonitoringInstance(ctx echo.Context, namespace, name string) error {
-	m, err := e.kubeClient.GetMonitoringConfig(ctx.Request().Context(), namespace, name)
+	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return ctx.JSON(http.StatusNotFound, Error{
-				Message: pointer.ToString("Monitoring instance is not found"),
-			})
-		}
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{Message: pointer.ToString("Could not get a list of monitoring instances")})
+		return ctx.JSON(http.StatusInternalServerError, api.Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
 	}
 
-	return ctx.JSON(http.StatusOK, &MonitoringInstance{
-		Type:              MonitoringInstanceBaseWithNameType(m.Spec.Type),
+	m, err := e.handler.GetMonitoringInstance(ctx.Request().Context(), user, namespace, name)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, &api.MonitoringInstance{
+		Type:              api.MonitoringInstanceBaseWithNameType(m.Spec.Type),
 		Name:              m.GetName(),
 		Namespace:         m.GetNamespace(),
 		Url:               m.Spec.PMM.URL,
@@ -223,131 +110,46 @@ func (e *EverestServer) GetMonitoringInstance(ctx echo.Context, namespace, name 
 
 // UpdateMonitoringInstance updates a monitoring instance based on the provided fields.
 func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, namespace, name string) error { //nolint:funlen,cyclop
-	c := ctx.Request().Context()
-	m, err := e.kubeClient.GetMonitoringConfig(c, namespace, name)
+	var params api.UpdateMonitoringInstanceJSONRequestBody
+	if err := ctx.Bind(&params); err != nil {
+		return err
+	}
+
+	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return ctx.JSON(http.StatusNotFound, Error{
-				Message: pointer.ToString("Monitoring instance is not found"),
-			})
-		}
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Failed getting monitoring instance"),
+		return ctx.JSON(http.StatusInternalServerError, api.Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
 		})
 	}
 
-	params, err := e.validateUpdateMonitoringInstanceRequest(ctx)
+	created, err := e.handler.UpdateMonitoringInstance(ctx.Request().Context(), user, namespace, name, &params)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
+		return err
 	}
 
-	var apiKey string
-	if params.Pmm != nil && params.Pmm.ApiKey != "" {
-		apiKey = params.Pmm.ApiKey
+	result := api.MonitoringInstance{
+		Type:              api.MonitoringInstanceBaseWithNameType(params.Type),
+		Name:              created.GetName(),
+		Namespace:         created.GetNamespace(),
+		Url:               created.Spec.PMM.URL,
+		AllowedNamespaces: pointer.To(created.Spec.AllowedNamespaces),
+		VerifyTLS:         created.Spec.VerifyTLS,
 	}
-	skipVerifyTLS := !pointer.Get(params.VerifyTLS)
-	if params.Pmm != nil && params.Pmm.User != "" && params.Pmm.Password != "" {
-		apiKey, err = pmm.CreatePMMApiKey(
-			c, params.Url, fmt.Sprintf("everest-%s-%s", name, uuid.NewString()),
-			params.Pmm.User, params.Pmm.Password,
-			skipVerifyTLS,
-		)
-		if err != nil {
-			e.l.Error(err)
-			return ctx.JSON(http.StatusInternalServerError, Error{
-				Message: pointer.ToString("Could not create an API key in PMM"),
-			})
-		}
-	}
-	if apiKey != "" {
-		_, err = e.kubeClient.UpdateSecret(c, &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: namespace,
-			},
-			Type:       corev1.SecretTypeOpaque,
-			StringData: e.monitoringConfigSecretData(apiKey),
-		})
-		if err != nil {
-			e.l.Error(err)
-			return ctx.JSON(http.StatusInternalServerError, Error{
-				Message: pointer.ToString(fmt.Sprintf("Could not update k8s secret %s", name)),
-			})
-		}
-	}
-	if params.Url != "" {
-		m.Spec.PMM.URL = params.Url
-	}
-	if params.AllowedNamespaces != nil {
-		m.Spec.AllowedNamespaces = *params.AllowedNamespaces
-	}
-	if params.VerifyTLS != nil {
-		m.Spec.VerifyTLS = params.VerifyTLS
-	}
-	_, err = e.kubeClient.UpdateMonitoringConfig(c, m)
-	if err != nil {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Failed updating monitoring instance"),
-		})
-	}
-
-	return ctx.JSON(http.StatusOK, &MonitoringInstance{
-		Type:              MonitoringInstanceBaseWithNameType(m.Spec.Type),
-		Name:              m.GetName(),
-		Namespace:         m.GetNamespace(),
-		Url:               m.Spec.PMM.URL,
-		AllowedNamespaces: &m.Spec.AllowedNamespaces,
-		VerifyTLS:         m.Spec.VerifyTLS,
-	})
+	return ctx.JSON(http.StatusOK, result)
 }
 
 // DeleteMonitoringInstance deletes a monitoring instance.
 func (e *EverestServer) DeleteMonitoringInstance(ctx echo.Context, namespace, name string) error {
-	used, err := e.kubeClient.IsMonitoringConfigUsed(ctx.Request().Context(), namespace, name)
+	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return ctx.JSON(http.StatusNotFound, Error{
-				Message: pointer.ToString("Monitoring instance is not found"),
-			})
-		}
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Failed to check the monitoring instance is used"),
+		return ctx.JSON(http.StatusInternalServerError, api.Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
 		})
 	}
-	if used {
-		return ctx.JSON(http.StatusBadRequest, Error{
-			Message: pointer.ToString(fmt.Sprintf("Monitoring instance %s is used", name)),
-		})
-	}
-	if err := e.kubeClient.DeleteMonitoringConfig(ctx.Request().Context(), namespace, name); err != nil {
-		if k8serrors.IsNotFound(err) {
-			return ctx.JSON(http.StatusNotFound, Error{
-				Message: pointer.ToString("Monitoring instance is not found"),
-			})
-		}
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Failed to get monitoring instance"),
-		})
-	}
-	if err := e.kubeClient.DeleteSecret(ctx.Request().Context(), namespace, name); err != nil {
-		if k8serrors.IsNotFound(err) {
-			return ctx.NoContent(http.StatusNoContent)
-		}
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Failed deleting monitoring instance"),
-		})
-	}
-	return ctx.NoContent(http.StatusNoContent)
-}
 
-func (e *EverestServer) monitoringConfigSecretData(apiKey string) map[string]string {
-	return map[string]string{
-		"apiKey":   apiKey,
-		"username": "api_key",
+	if err := e.handler.DeleteMonitoringInstance(ctx.Request().Context(), user, namespace, name); err != nil {
+		return err
 	}
+
+	return ctx.NoContent(http.StatusNoContent)
 }

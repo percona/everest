@@ -15,6 +15,7 @@ type Handler interface {
 	// SetNext sets the next handler to call in the chain.
 	SetNext(h Handler)
 
+	NamespacesHandler
 	DatabaseClusterHandler
 	DatabaseClusterBackupHandler
 	DatabaseClusterRestoreHandler
@@ -37,6 +38,11 @@ type DatabaseClusterHandler interface {
 	GetDatabaseClusterCredentials(ctx context.Context, user, namespace, name string) (*api.DatabaseClusterCredential, error)
 	GetDatabaseClusterComponents(ctx context.Context, user, namespace, name string) ([]api.DatabaseClusterComponent, error)
 	GetDatabaseClusterPitr(ctx context.Context, user, namespace, name string) (*api.DatabaseClusterPitr, error)
+}
+
+// NamespacesHandler provides methods for handling operations on namespaces.
+type NamespacesHandler interface {
+	ListNamespaces(ctx context.Context, user string) ([]string, error)
 }
 
 // DatabaseClusterBackupHandler provides methods for handling operations on database cluster backups.

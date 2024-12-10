@@ -8,7 +8,9 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/percona/everest/api"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/rbac"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 )
@@ -53,9 +55,15 @@ func (h *k8sHandler) GetKubernetesClusterInfo(ctx context.Context) (*api.Kuberne
 	return &api.KubernetesClusterInfo{ClusterType: string(clusterType), StorageClassNames: classNames}, nil
 }
 
-func (k *k8sHandler) GetUserPermissions(ctx context.Context, user string) (*api.UserPermissions, error) {
-	// not handled by k8s
-	return nil, nil
+func (h *k8sHandler) GetUserPermissions(ctx context.Context, user string) (*api.UserPermissions, error) {
+	cm, err := h.kubeClient.GetConfigMap(ctx, common.SystemNamespace, common.EverestRBACConfigMapName)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not get Everest RBAC ConfigMap"))
+	}
+	enabled := rbac.IsEnabled(cm)
+	return &api.UserPermissions{
+		Enabled: enabled,
+	}, nil
 }
 
 func storageClasses(storagesList *storagev1.StorageClassList) []string {

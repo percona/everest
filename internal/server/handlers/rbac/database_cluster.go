@@ -67,17 +67,13 @@ func (h *rbacHandler) ListDatabaseClusters(ctx context.Context, user, namespace 
 	}
 
 	result := []everestv1alpha1.DatabaseCluster{}
-	for _, cluster := range clusterList.Items {
-		db, err := api.IntoCR[everestv1alpha1.DatabaseCluster](cluster)
-		if err != nil {
-			return nil, fmt.Errorf("conversion error: %w", err)
-		}
-		if err := h.enforceDBClusterRead(user, db); errors.Is(err, ErrInsufficientPermissions) {
+	for _, db := range clusterList.Items {
+		if err := h.enforceDBClusterRead(user, &db); errors.Is(err, ErrInsufficientPermissions) {
 			continue
 		} else if err != nil {
 			return nil, fmt.Errorf("enforce failed: %w", err)
 		}
-		result = append(result, cluster)
+		result = append(result, db)
 	}
 	clusterList.Items = result
 	return clusterList, nil

@@ -340,10 +340,10 @@ func k8sToAPIErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 
 func enforcerErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 	return func(err error, c echo.Context) {
-		if errors.Is(err, errInsufficientPermissions) {
+		if errors.Is(err, rbachandler.ErrInsufficientPermissions) {
 			err = &echo.HTTPError{
 				Code:    http.StatusForbidden,
-				Message: errInsufficientPermissions.Error(),
+				Message: rbachandler.ErrInsufficientPermissions.Error(),
 			}
 		}
 		next(err, c)
