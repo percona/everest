@@ -1,12 +1,9 @@
 // Package fileadapter provides a file adapter for Casbin.
-package fileadapter
+package readeradapter
 
 import (
 	"errors"
-	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/casbin/casbin/v2/model"
@@ -16,46 +13,35 @@ import (
 	rbacutils "github.com/percona/everest/pkg/rbac/utils"
 )
 
-// Adapter is the file adapter for Casbin.
+// Adapter reads a policy from an io.Reader source.
 type Adapter struct {
 	content string
 }
 
-const (
-	extYaml = ".yaml"
-	extCsv  = ".csv"
-)
+func tryUnmarshalFromYAML(content []byte) (bool, string) {
+	cm := corev1.ConfigMap{}
+	if err := yaml.Unmarshal(content, &cm); err != nil {
+		return false, ""
+	}
+	s, ok := cm.Data["policy.csv"]
+	if !ok {
+		return false, ""
+	}
+	return true, s
+}
 
-// New returns a new adapter that reads a policy located at the given path.
-func New(path string) (*Adapter, error) {
-	f, err := os.Open(path) //nolint:gosec
+// New returns a new adapter that reads from the given io.Reader.
+func New(in io.Reader) (*Adapter, error) {
+	content, err := io.ReadAll(in)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close() //nolint:errcheck
 
-	content, err := io.ReadAll(f)
-	if err != nil {
-		return nil, err
-	}
-
-	// Retrieve the policy based on the file type.
 	var policy string
-	switch filepath.Ext(path) {
-	case extYaml:
-		cm := corev1.ConfigMap{}
-		if err := yaml.Unmarshal(content, &cm); err != nil {
-			return nil, fmt.Errorf("failed to unmarsal yaml: %w", err)
-		}
-		s, ok := cm.Data["policy.csv"]
-		if !ok {
-			return nil, errors.New("policy.csv not found in ConfigMap")
-		}
+	if ok, s := tryUnmarshalFromYAML(content); ok {
 		policy = s
-	case extCsv:
+	} else {
 		policy = string(content)
-	default:
-		return nil, errors.New("unsupported file format")
 	}
 
 	return &Adapter{

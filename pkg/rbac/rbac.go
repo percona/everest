@@ -21,6 +21,7 @@ import (
 	"errors"
 	"io/fs"
 	"net/http"
+	"os"
 	"slices"
 	"strings"
 
@@ -39,7 +40,7 @@ import (
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/kubernetes/informer"
 	configmapadapter "github.com/percona/everest/pkg/rbac/configmap-adapter"
-	"github.com/percona/everest/pkg/rbac/fileadapter"
+	readeradapter "github.com/percona/everest/pkg/rbac/io-reader-adapter"
 	"github.com/percona/everest/pkg/session"
 )
 
@@ -131,7 +132,12 @@ func newEnforcer(adapter persist.Adapter, enableLogs bool) (*casbin.Enforcer, er
 
 // NewEnforcerFromFilePath creates a new Casbin enforcer with the policy stored at the given filePath.
 func NewEnforcerFromFilePath(filePath string) (*casbin.Enforcer, error) {
-	adapter, err := fileadapter.New(filePath)
+	f, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	adapter, err := readeradapter.New(f)
 	if err != nil {
 		return nil, err
 	}
