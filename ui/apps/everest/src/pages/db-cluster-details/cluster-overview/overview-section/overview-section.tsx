@@ -53,7 +53,7 @@ export const OverviewSection = ({
           {title}
         </Typography>
         {actionButtonProps && (
-          <Tooltip title={disabledEditTooltipText}>
+          <Tooltip title={!editable ? disabledEditTooltipText : ''}>
             <Box>
               <Button
                 size="small"
