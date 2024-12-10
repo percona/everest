@@ -298,15 +298,14 @@ test.describe(
         const result = await queryTestDB(clusterName, namespace);
         expect(result.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
 
-        // Step 1: Validate the data in the t1 collection
+        // Validate the data in the t1 and t2
         const t1Data = await queryTestDB(clusterName, namespace, 't1');
         expect(t1Data.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
 
-        // Step 2: Validate the data in the t2 collection
         const t2Data = await queryTestDB(clusterName, namespace, 't2');
         expect(t2Data.trim()).toBe('[ { b: 4 }, { b: 5 }, { b: 6 } ]');
 
-        // Step 3: Validate sharding configuration
+        // Validate sharding
         const shardingStatus = await queryPSMDB(
           clusterName,
           namespace,
@@ -315,7 +314,6 @@ test.describe(
         );
         console.log('Sharding Status:', shardingStatus);
 
-        // Ensure sharding is enabled for both collections
         expect(shardingStatus).toContain('test.t1');
         expect(shardingStatus).toContain('test.t2');
       }

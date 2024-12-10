@@ -312,23 +312,21 @@ export const prepareMongoDBTestDB = async (
   cluster: string,
   namespace: string
 ) => {
-  // Drop the existing test database, if any
   await dropTestDB(cluster, namespace);
 
-  // Insert test data into the first collection (t1)
+  // Insert test data into the collection t1 and t2
   console.log('Preparing test database for MongoDB...');
   await queryPSMDB(
     cluster,
     namespace,
-    'test', // Database name
+    'test',
     'db.t1.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }]);'
   );
 
-  // Insert test data into the second collection (t2)
   await queryPSMDB(
     cluster,
     namespace,
-    'test', // Database name
+    'test',
     'db.t2.insertMany([{ b: 4 }, { b: 5 }, { b: 6 }]);'
   );
 
@@ -349,15 +347,9 @@ export const configureMongoDBSharding = async (
     'sh.enableSharding(\\"test\\");'
   );
 
-  // Ensure the index is created for the "t1" collection on shard key { a: 1 }
-  await queryPSMDB(
-    cluster,
-    namespace,
-    'test', // Switch to "test" database context to create the index
-    'db.t1.createIndex({ a: 1 });'
-  );
+  // Sets up indexes and sharding for t1 and t2 collections.
+  await queryPSMDB(cluster, namespace, 'test', 'db.t1.createIndex({ a: 1 });');
 
-  // Enable sharding for the t1 collection with shard key { a: 1 }
   await queryPSMDB(
     cluster,
     namespace,
@@ -365,15 +357,8 @@ export const configureMongoDBSharding = async (
     'sh.shardCollection(\\"test.t1\\", { a: 1 });'
   );
 
-  // Ensure the index is created for the "t2" collection on shard key { b: 1 }
-  await queryPSMDB(
-    cluster,
-    namespace,
-    'test', // Switch to "test" database context to create the index
-    'db.t2.createIndex({ b: 1 });'
-  );
+  await queryPSMDB(cluster, namespace, 'test', 'db.t2.createIndex({ b: 1 });');
 
-  // Enable sharding for the t2 collection with shard key { b: 1 }
   await queryPSMDB(
     cluster,
     namespace,
@@ -381,12 +366,5 @@ export const configureMongoDBSharding = async (
     'sh.shardCollection(\\"test.t2\\", { b: 1 });'
   );
 
-  // Adjust chunk to 1 MB size for testing purposes
-  //await queryPSMDB(
-  //  cluster,
-  //  namespace,
-  //  'test',
-  //  'db.settings.save({ _id: "chunksize", value: 1 });'
-  //);
   console.log('Sharding configuration completed successfully.');
 };
