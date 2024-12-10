@@ -24,6 +24,7 @@ func (h *rbacHandler) ListDatabaseEngines(ctx context.Context, user, namespace s
 		} else if err != nil {
 			return nil, fmt.Errorf("enforce failed: %w", err)
 		}
+		filtered = append(filtered, dbengine)
 	}
 	list.Items = filtered
 	return list, nil

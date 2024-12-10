@@ -22,6 +22,7 @@ func (h *rbacHandler) ListMonitoringInstances(ctx context.Context, user, namespa
 		} else if err != nil {
 			return nil, fmt.Errorf("enforce failed: %w", err)
 		}
+		filtered = append(filtered, mon)
 	}
 	list.Items = filtered
 	return list, nil

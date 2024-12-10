@@ -82,7 +82,7 @@ func (c *dbClusterClient) Update(
 	result := &everestv1alpha1.DatabaseCluster{}
 	err := c.restClient.
 		Put().
-		Namespace(c.namespace).
+		Namespace(c.namespace).Name(cluster.GetName()).
 		Resource(dbClustersAPIKind).
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(cluster).

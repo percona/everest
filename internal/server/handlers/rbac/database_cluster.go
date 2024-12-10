@@ -147,7 +147,7 @@ func (h *rbacHandler) UpdateDatabaseCluster(ctx context.Context, user string, db
 			return nil, err
 		}
 	}
-	return nil, err
+	return h.next.UpdateDatabaseCluster(ctx, user, db)
 }
 
 func (h *rbacHandler) GetDatabaseCluster(ctx context.Context, user, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
