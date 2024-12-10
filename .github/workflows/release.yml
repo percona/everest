@@ -28,13 +28,15 @@ jobs:
       ARCH: ""
       OS: ""
     steps:
-      - name: Trigger workflow in repo A
-        run: |
-            curl -X POST \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: token ${{ secrets.ROBOT_TOKEN }}" \
-              -d '{"ref": "main"}' \
-              https://github.com/percona/percona-helm-charts/actions/workflows/everest-release.yaml/dispatches
+
+      - name: Trigger dispatch in ${{ github.head_ref }} branch
+        uses: percona/gh-action-workflow-dispatch@v1
+        continue-on-error: true
+        id: branch_dispatch
+        with:
+          workflow: everest-release.yaml
+          token: ${{ secrets.ROBOT_TOKEN }}
+          repo: percona/percona-helm-charts
 
 
 #      - name: Validate input
