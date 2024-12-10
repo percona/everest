@@ -24,6 +24,7 @@ import { useContext, useState } from 'react';
 import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+import { DbType } from '@percona/types';
 
 export const ConnectionDetails = ({
   loading,
@@ -32,6 +33,7 @@ export const ConnectionDetails = ({
   password,
   connectionUrl,
   port,
+  type,
 }: ConnectionDetailsOverviewCardProps) => {
   const { canReadCredentials } = useContext(DbClusterContext);
   const [showUrl, setShowUrl] = useState(false);
@@ -75,33 +77,36 @@ export const ConnectionDetails = ({
         </>
       )}
 
-      <TextField
-        label={Messages.fields.connectionUrl}
-        value={connectionUrl}
-        size="small"
-        sx={{ maxHeight: '50px', marginTop: '20px', width: '100%' }}
-        type={showUrl ? 'text' : 'password'}
-        InputProps={{
-          endAdornment: (
-            <>
-              <IconButton onClick={() => setShowUrl(!showUrl)}>
-                {showUrl ? (
-                  <VisibilityOutlinedIcon />
-                ) : (
-                  <VisibilityOffOutlinedIcon />
-                )}
-              </IconButton>
-              <CopyToClipboardButton
-                buttonProps={{
-                  sx: { mt: -0.5 },
-                  size: 'small',
-                }}
-                textToCopy={connectionUrl}
-              />
-            </>
-          ),
-        }}
-      />
+      {type !== DbType.Mysql && (
+        <TextField
+          label={Messages.fields.connectionUrl}
+          value={connectionUrl}
+          size="small"
+          sx={{ maxHeight: '50px', marginTop: '20px', width: '100%' }}
+          type={showUrl ? 'text' : 'password'}
+          InputProps={{
+            endAdornment: (
+              <>
+                <IconButton onClick={() => setShowUrl(!showUrl)}>
+                  {showUrl ? (
+                    <VisibilityOutlinedIcon />
+                  ) : (
+                    <VisibilityOffOutlinedIcon />
+                  )}
+                </IconButton>
+                <CopyToClipboardButton
+                  buttonProps={{
+                    sx: { mt: -0.5 },
+                    size: 'small',
+                  }}
+                  textToCopy={connectionUrl}
+                />
+              </>
+            ),
+          }}
+          InputLabelProps={{ shrink: true }}
+        />
+      )}
     </OverviewSection>
   );
 };

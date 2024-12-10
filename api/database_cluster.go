@@ -121,7 +121,7 @@ func (e *EverestServer) enforceDBClusterRBAC(user string, db *everestv1alpha1.Da
 	if mcName := pointer.Get(db.Spec.Monitoring).MonitoringConfigName; mcName != "" {
 		if err := e.enforce(user, rbac.ResourceMonitoringInstances, rbac.ActionRead, rbac.ObjectName(db.GetNamespace(), mcName)); err != nil {
 			if !errors.Is(err, errInsufficientPermissions) {
-				e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+				e.l.Error(errors.Join(err, errors.New("failed to check monitoring-instance permissions")))
 			}
 			return err
 		}
@@ -392,7 +392,6 @@ func (e *EverestServer) GetDatabaseClusterCredentials(ctx echo.Context, namespac
 	case everestv1alpha1.DatabaseEnginePXC:
 		response.Username = pointer.ToString("root")
 		response.Password = pointer.ToString(string(secret.Data["root"]))
-		response.ConnectionUrl = e.connectionURL(c, databaseCluster, *response.Username, *response.Password)
 	case everestv1alpha1.DatabaseEnginePSMDB:
 		response.Username = pointer.ToString(string(secret.Data["MONGODB_DATABASE_ADMIN_USER"]))
 		response.Password = pointer.ToString(string(secret.Data["MONGODB_DATABASE_ADMIN_PASSWORD"]))
@@ -411,24 +410,29 @@ func (e *EverestServer) connectionURL(ctx context.Context, db *everestv1alpha1.D
 	if db.Status.Hostname == "" {
 		return nil
 	}
-	url := url.URL{User: url.UserPassword(user, url.QueryEscape(password))}
+	var url string
+	defaultHost := net.JoinHostPort(db.Status.Hostname, fmt.Sprint(db.Status.Port))
 	switch db.Spec.Engine.Type {
 	case everestv1alpha1.DatabaseEnginePXC:
-		url.Scheme = "jdbc:mysql"
-		url.Host = net.JoinHostPort(db.Status.Hostname, fmt.Sprint(db.Status.Port))
+		url = queryEscapedURL("jdbc:mysql", user, password, defaultHost)
 	case everestv1alpha1.DatabaseEnginePSMDB:
 		hosts, err := psmdbHosts(ctx, db, e.kubeClient.GetPods)
 		if err != nil {
 			e.l.Error(err)
 			return nil
 		}
-		url.Scheme = "mongodb"
-		url.Host = hosts
+		url = queryEscapedURL("mongodb", user, password, hosts)
 	case everestv1alpha1.DatabaseEnginePostgresql:
-		url.Scheme = "postgres"
-		url.Host = net.JoinHostPort(db.Status.Hostname, fmt.Sprint(db.Status.Port))
+		url = queryEscapedURL("postgres", user, password, defaultHost)
 	}
-	return pointer.ToString(url.String())
+	return pointer.ToString(url)
+}
+
+// Using own format instead of url.URL bc it uses the password encoding policy which does not encode char like ','
+// however such char may appear in the db passwords.
+func queryEscapedURL(scheme, user, password, hosts string) string {
+	format := "%s://%s:%s@%s"
+	return fmt.Sprintf(format, scheme, user, url.QueryEscape(password), hosts)
 }
 
 func psmdbHosts(
@@ -440,7 +444,12 @@ func psmdbHosts(
 	if db.Spec.Sharding != nil && db.Spec.Sharding.Enabled {
 		return net.JoinHostPort(db.Status.Hostname, fmt.Sprint(db.Status.Port)), nil
 	}
-	// for non-sharded clusters use a list of comma-separated hosts from each node
+	// for non-sharded exposed clusters the host field contains all the needed information about hosts
+	if db.Spec.Proxy.Expose.Type == everestv1alpha1.ExposeTypeExternal {
+		return db.Status.Hostname, nil
+	}
+
+	// for non-sharded internal clusters use a list of comma-separated host:port pairs from each node
 	pods, err := getPods(ctx, db.Namespace, &metav1.LabelSelector{MatchLabels: map[string]string{
 		"app.kubernetes.io/instance":  db.Name,
 		"app.kubernetes.io/component": "mongod",

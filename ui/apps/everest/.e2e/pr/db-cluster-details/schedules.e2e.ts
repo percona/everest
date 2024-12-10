@@ -240,3 +240,18 @@ test.describe.skip('Schedules List', async () => {
     expect(page.getByText('Weekly on Fridays at 6:08 PM')).toBeTruthy();
   });
 });
+
+// TODO move to schedules part
+// MongoDB could create schedules only with the one of storages, so for not first schedules storage should be disabled
+// await expect(
+//   page.getByText(
+//     'The backup storage you select for your first backup schedule will be used for al'
+//   )
+// ).toBeVisible();
+// await page.getByTestId('create-schedule').click();
+// const scheduleStorageLocation = page.getByTestId(
+//   'text-input-storage-location'
+// );
+// await expect(scheduleStorageLocation).toBeDisabled();
+// await expect(scheduleStorageLocation).not.toBeEmpty();
+// await page.getByTestId('close-dialog-icon').click();

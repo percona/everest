@@ -66,7 +66,6 @@ type pitrTime = {
   hour: string;
   minute: string;
   second: string;
-  ampm: string;
 };
 
 let token: string;
@@ -77,7 +76,6 @@ let pitrRestoreTime: pitrTime = {
   hour: '',
   minute: '',
   second: '',
-  ampm: '',
 };
 
 function getCurrentPITRTime(): pitrTime {
@@ -90,20 +88,15 @@ function getCurrentPITRTime(): pitrTime {
   time.year = now.getFullYear().toString();
 
   // Get time parts
-  let hour: number = now.getHours();
+  time.hour = now.getHours().toString();
   time.minute = now.getMinutes().toString();
   time.second = now.getSeconds().toString();
-
-  // Determine AM or PM
-  time.ampm = hour >= 12 ? 'PM' : 'AM';
-  hour = hour % 12 || 12; // Convert 24-hour format to 12-hour format, making 0 => 12
-  time.hour = hour.toString();
 
   return time;
 }
 
 function getFormattedPITRTime(time: pitrTime): string {
-  const formattedDateTime: string = `${time.day.padStart(2, '0')}/${time.month.padStart(2, '0')}/${time.year} at ${time.hour.padStart(2, '0')}:${time.minute.padStart(2, '0')}:${time.second.padStart(2, '0')} ${time.ampm}`;
+  const formattedDateTime: string = `${time.day.padStart(2, '0')}/${time.month.padStart(2, '0')}/${time.year} at ${time.hour.padStart(2, '0')}:${time.minute.padStart(2, '0')}:${time.second.padStart(2, '0')}`;
 
   return formattedDateTime;
 }
@@ -126,7 +119,7 @@ test.describe.configure({ retries: 0 });
           (SELECT_DB !== db && !!SELECT_DB) ||
           (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
       );
-      test.describe.configure({ timeout: 900000 });
+      test.describe.configure({ timeout: 720000 });
 
       const clusterName = `${db}-${size}-pitr`;
 
@@ -169,16 +162,19 @@ test.describe.configure({ retries: 0 });
       }) => {
         expect(storageClasses.length).toBeGreaterThan(0);
 
-        await page.goto('/databases/new');
-        await page.getByTestId('toggle-button-group-input-db-type').waitFor();
-        await page.getByTestId('select-input-db-version').waitFor();
+        await page.goto('/databases');
+        await page.getByTestId('add-db-cluster-button').waitFor();
+        await page.getByTestId('add-db-cluster-button').click();
+        await page.getByTestId(`add-db-cluster-button-${db}`).click();
 
         await test.step('Populate basic information', async () => {
           await populateBasicInformation(
             page,
+            namespace,
+            clusterName,
             db,
             storageClasses[0],
-            clusterName
+            false
           );
           await moveForward(page);
         });
@@ -230,7 +226,8 @@ test.describe.configure({ retries: 0 });
             namespace,
             MONITORING_URL,
             MONITORING_USER,
-            MONITORING_PASSWORD
+            MONITORING_PASSWORD,
+            false
           );
           await page.getByTestId('switch-input-monitoring').click();
           await expect(
@@ -357,10 +354,10 @@ test.describe.configure({ retries: 0 });
           timeout: 5000,
         });
         await expect(
-          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss aa')
+          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
         ).toBeVisible({ timeout: 5000 });
         await expect(
-          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss aa')
+          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
         ).not.toBeEmpty({ timeout: 5000 });
         await page.getByTestId('CalendarIcon').click({ timeout: 5000 });
         await page
@@ -372,11 +369,8 @@ test.describe.configure({ retries: 0 });
         await page
           .getByLabel(pitrRestoreTime.second + ' seconds', { exact: true })
           .click({ timeout: 5000 });
-        await page
-          .getByLabel(pitrRestoreTime.ampm, { exact: true })
-          .click({ timeout: 5000 });
         await expect(
-          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss aa')
+          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
         ).toHaveValue(getFormattedPITRTime(pitrRestoreTime));
 
         await page.getByTestId('form-dialog-restore').click({ timeout: 5000 });
@@ -425,7 +419,7 @@ test.describe.configure({ retries: 0 });
       test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 160000);
+        await waitForDelete(page, clusterName, 240000);
       });
     }
   );

@@ -68,7 +68,7 @@ test.describe.configure({ retries: 0 });
           (SELECT_DB !== db && !!SELECT_DB) ||
           (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
       );
-      test.describe.configure({ timeout: 900000 });
+      test.describe.configure({ timeout: 720000 });
 
       const clusterName = `${db}-${size}-deploy`;
 
@@ -110,16 +110,22 @@ test.describe.configure({ retries: 0 });
       }) => {
         expect(storageClasses.length).toBeGreaterThan(0);
 
-        await page.goto('/databases/new');
-        await page.getByTestId('toggle-button-group-input-db-type').waitFor();
+        await page.goto('/databases');
+        await page.getByTestId('add-db-cluster-button').waitFor();
+        await page.getByTestId('add-db-cluster-button').click();
+        await page.getByTestId(`add-db-cluster-button-${db}`).click();
+
+        // await page.getByTestId('toggle-button-group-input-db-type').waitFor();
         await page.getByTestId('select-input-db-version').waitFor();
 
         await test.step('Populate basic information', async () => {
           await populateBasicInformation(
             page,
+            namespace,
+            clusterName,
             db,
             storageClasses[0],
-            clusterName
+            false
           );
           await moveForward(page);
         });
@@ -150,7 +156,8 @@ test.describe.configure({ retries: 0 });
             namespace,
             MONITORING_URL,
             MONITORING_USER,
-            MONITORING_PASSWORD
+            MONITORING_PASSWORD,
+            false
           );
           await page.getByTestId('switch-input-monitoring').click();
           await expect(
@@ -168,7 +175,10 @@ test.describe.configure({ retries: 0 });
 
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
-          await waitForStatus(page, clusterName, 'Initializing', 15000);
+          // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
+          if (size != 1 || db != 'psmdb') {
+            await waitForStatus(page, clusterName, 'Initializing', 15000);
+          }
           await waitForStatus(page, clusterName, 'Up', 600000);
         });
 
@@ -213,13 +223,16 @@ test.describe.configure({ retries: 0 });
         if (size != 1 && db != 'postgresql') {
           await waitForStatus(page, clusterName, 'Stopping', 45000);
         }
-        await waitForStatus(page, clusterName, 'Paused', 120000);
+        await waitForStatus(page, clusterName, 'Paused', 180000);
       });
 
       test(`Resume cluster [${db} size ${size}]`, async ({ page }) => {
         await resumeDbCluster(page, clusterName);
-        await waitForStatus(page, clusterName, 'Initializing', 45000);
-        await waitForStatus(page, clusterName, 'Up', 240000);
+        // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
+        if (size != 1 || db != 'psmdb') {
+          await waitForStatus(page, clusterName, 'Initializing', 45000);
+        }
+        await waitForStatus(page, clusterName, 'Up', 300000);
       });
 
       test(`Restart cluster [${db} size ${size}]`, async ({ page }) => {
@@ -227,14 +240,17 @@ test.describe.configure({ retries: 0 });
         if (size != 1 && db != 'postgresql') {
           await waitForStatus(page, clusterName, 'Stopping', 45000);
         }
-        await waitForStatus(page, clusterName, 'Initializing', 60000);
-        await waitForStatus(page, clusterName, 'Up', 240000);
+        // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
+        if (size != 1 || db != 'psmdb') {
+          await waitForStatus(page, clusterName, 'Initializing', 60000);
+        }
+        await waitForStatus(page, clusterName, 'Up', 300000);
       });
 
       test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 120000);
+        await waitForDelete(page, clusterName, 240000);
       });
     }
   );

@@ -24,9 +24,9 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
+	"github.com/percona/everest/pkg/cli/uninstall"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/output"
-	"github.com/percona/everest/pkg/uninstall"
 )
 
 // newUninstallCmd returns a new uninstall command.

@@ -13,6 +13,7 @@ export const Messages = {
     pitr: 'Point-in-time Recovery (PITR)',
     editMonitoring: 'Edit Monitoring',
     noData: 'You currently do not have any backups. Create one to get started.',
+    createScheduleToEnable: 'Create a schedule first to enable PITR.',
   },
   actions: {
     edit: 'Edit',

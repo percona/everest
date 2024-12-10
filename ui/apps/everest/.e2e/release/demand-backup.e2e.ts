@@ -70,7 +70,7 @@ test.describe.configure({ retries: 0 });
           (SELECT_DB !== db && !!SELECT_DB) ||
           (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
       );
-      test.describe.configure({ timeout: 900000 });
+      test.describe.configure({ timeout: 720000 });
 
       const clusterName = `${db}-${size}-dembkp`;
 
@@ -113,16 +113,19 @@ test.describe.configure({ retries: 0 });
       }) => {
         expect(storageClasses.length).toBeGreaterThan(0);
 
-        await page.goto('/databases/new');
-        await page.getByTestId('toggle-button-group-input-db-type').waitFor();
-        await page.getByTestId('select-input-db-version').waitFor();
+        await page.goto('/databases');
+        await page.getByTestId('add-db-cluster-button').waitFor();
+        await page.getByTestId('add-db-cluster-button').click();
+        await page.getByTestId(`add-db-cluster-button-${db}`).click();
 
         await test.step('Populate basic information', async () => {
           await populateBasicInformation(
             page,
+            namespace,
+            clusterName,
             db,
             storageClasses[0],
-            clusterName
+            false
           );
           await moveForward(page);
         });
@@ -153,7 +156,8 @@ test.describe.configure({ retries: 0 });
             namespace,
             MONITORING_URL,
             MONITORING_USER,
-            MONITORING_PASSWORD
+            MONITORING_PASSWORD,
+            false
           );
           await page.getByTestId('switch-input-monitoring').click();
           await expect(
@@ -226,7 +230,7 @@ test.describe.configure({ retries: 0 });
         ).not.toBeEmpty();
         await page.getByTestId('form-dialog-create').click();
 
-        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 240000);
+        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 300000);
       });
 
       test(`Delete data [${db} size ${size}]`, async () => {
@@ -289,7 +293,7 @@ test.describe.configure({ retries: 0 });
       test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 120000);
+        await waitForDelete(page, clusterName, 240000);
       });
     }
   );

@@ -45,6 +45,7 @@ func NewRootCmd(l *zap.SugaredLogger) *cobra.Command {
 	rootCmd.AddCommand(newUninstallCmd(l))
 	rootCmd.AddCommand(newAccountsCmd(l))
 	rootCmd.AddCommand(newSettingsCommand(l))
+	rootCmd.AddCommand(newNamespacesCommand(l))
 
 	return rootCmd
 }

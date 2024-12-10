@@ -19,6 +19,7 @@ export const CreateEditModalStorage = ({
   handleSubmitModal,
   selectedStorageLocation,
   isLoading = false,
+  prefillNamespace = '',
 }: CreateEditModalStorageProps) => {
   const isEditMode = !!selectedStorageLocation;
   const schema = useMemo(
@@ -36,8 +37,8 @@ export const CreateEditModalStorage = ({
     () =>
       selectedStorageLocation
         ? storageLocationEditValues(selectedStorageLocation)
-        : storageLocationDefaultValues,
-    [selectedStorageLocation]
+        : storageLocationDefaultValues(prefillNamespace),
+    [prefillNamespace, selectedStorageLocation]
   );
 
   const onSubmit: SubmitHandler<BackupStorage> = (data) => {

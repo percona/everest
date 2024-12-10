@@ -63,64 +63,55 @@ jobs:
           url=$(kubectl get svc/monitoring-service -o json | jq -r '.spec.clusterIP')
           echo -n "MONITORING_URL=http://$url" >> $GITHUB_ENV
 
-      - name: Run Provisioning
+      - name: Build CLI
         shell: bash
         run: |
           make build-cli
+
+      - name: Install Everest
+        shell: bash
+        run: |
           ./bin/everestctl install -v \
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
+          --skip-wizard \
+
+      - name: Add everest-ui namespace
+        shell: bash
+        run: |
+          make build-cli
+          ./bin/everestctl namespaces add everest-ui -v \
           --operator.mongodb \
           --operator.postgresql \
           --operator.xtradb-cluster \
-          --skip-wizard \
-          --namespaces everest-ui
-
-          kubectl patch sub everest-operator -n everest-system -p '
-            [{
-                "op": "add",
-                "path": "/spec/config/env/-",
-                "value": {
-                  "name": "PERCONA_VERSION_SERVICE_URL",
-                  "value": "https://check-dev.percona.com/versions/v1"
-                }
-            }]' --type=json
+          --skip-wizard
 
       - name: Adding psmdb namespace
         shell: bash
         run: |
-          ./bin/everestctl install -v \
-          --version 0.0.0 \
-          --version-metadata-url https://check-dev.percona.com \
+          ./bin/everestctl namespaces add psmdb-only -v \
           --operator.mongodb \
           --operator.postgresql=false \
           --operator.xtradb-cluster=false \
-          --skip-wizard \
-          --namespaces psmdb-only
+          --skip-wizard
 
       - name: Adding pxc namespace
         shell: bash
         run: |
-          ./bin/everestctl install -v \
-          --version 0.0.0 \
-          --version-metadata-url https://check-dev.percona.com \
+          ./bin/everestctl namespaces add pxc-only -v \
           --operator.mongodb=false \
           --operator.postgresql=false \
           --operator.xtradb-cluster \
-          --skip-wizard \
-          --namespaces pxc-only
+          --skip-wizard
 
       - name: Adding pg namespace
         shell: bash
         run: |
-          ./bin/everestctl install -v \
-          --version 0.0.0 \
-          --version-metadata-url https://check-dev.percona.com \
+          ./bin/everestctl namespaces add pg-only -v \
           --operator.mongodb=false \
           --operator.postgresql \
           --operator.xtradb-cluster=false \
-          --skip-wizard \
-          --namespaces pg-only
+          --skip-wizard
 
       - name: Get Everest admin password
         shell: bash
@@ -130,7 +121,7 @@ jobs:
       - name: Expose Everest API Server
         shell: bash
         run: |
-          kubectl port-forward -n everest-system deployment/percona-everest 8080:8080 &
+          kubectl port-forward -n everest-system deployment/everest-server 8080:8080 &
 
       - name: Run Everest
         shell: bash

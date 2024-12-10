@@ -17,15 +17,15 @@
 package commands
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
-	"github.com/percona/everest/pkg/install"
-	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/cli"
+	"github.com/percona/everest/pkg/cli/helm"
+	"github.com/percona/everest/pkg/cli/install"
 	"github.com/percona/everest/pkg/output"
 )
 
@@ -39,7 +39,7 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 		//        Error: unknown command "a" for "everestctl install"
 		Args:    cobra.NoArgs,
 		Example: "everestctl install --namespaces dev,staging,prod --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard",
-		Long:    "Install Percona Everest",
+		Long:    "Install Percona Everest Helm chart",
 		Short:   "Install Percona Everest",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initInstallViperFlags(cmd)
@@ -48,6 +48,7 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 			if err != nil {
 				os.Exit(1)
 			}
+			bindInstallHelmOpts(c)
 
 			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
 			c.Pretty = !enableLogging
@@ -70,42 +71,52 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initInstallFlags(cmd *cobra.Command) {
-	cmd.Flags().String(install.FlagNamespaces, install.DefaultEverestNamespace, "Comma-separated namespaces list Percona Everest can manage")
-	cmd.Flags().Bool(install.FlagSkipWizard, false, "Skip installation wizard")
-	cmd.Flags().String(install.FlagVersionMetadataURL, "https://check.percona.com", "URL to retrieve version metadata information from")
-	cmd.Flags().String(install.FlagVersion, "", "Everest version to install. By default the latest version is installed")
-	cmd.Flags().Bool(install.FlagDisableTelemetry, false, "Disable telemetry")
-	cmd.Flags().MarkHidden(install.FlagDisableTelemetry) //nolint:errcheck,gosec
+	cmd.Flags().String(cli.FlagNamespaces, "", "Comma-separated namespaces list Percona Everest can manage")
+	cmd.Flags().Bool(cli.FlagSkipWizard, false, "Skip installation wizard")
+	cmd.Flags().String(cli.FlagVersionMetadataURL, "https://check.percona.com", "URL to retrieve version metadata information from")
+	cmd.Flags().String(cli.FlagVersion, "", "Everest version to install. By default the latest version is installed")
+	cmd.Flags().Bool(cli.FlagDisableTelemetry, false, "Disable telemetry")
+	cmd.Flags().MarkHidden(cli.FlagDisableTelemetry) //nolint:errcheck,gosec
+	cmd.Flags().Bool(cli.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
 
-	cmd.Flags().Bool(install.FlagOperatorMongoDB, true, "Install MongoDB operator")
-	cmd.Flags().Bool(install.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
-	cmd.Flags().Bool(install.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
+	cmd.Flags().String(helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
+	cmd.Flags().MarkHidden(helm.FlagChartDir) //nolint:errcheck,gosec
+	cmd.Flags().String(helm.FlagRepository, helm.DefaultHelmRepoURL, "Helm chart repository to download the Everest charts from")
+	cmd.Flags().StringSlice(helm.FlagHelmSet, []string{}, "Set helm values on the command line (can specify multiple values with commas: key1=val1,key2=val2)")
+	cmd.Flags().StringSliceP(helm.FlagHelmValues, "f", []string{}, "Specify values in a YAML file or a URL (can specify multiple)")
 
-	cmd.Flags().Bool(install.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
-	cmd.Flags().String(install.FlagCatalogNamespace, kubernetes.OLMNamespace,
-		fmt.Sprintf("Namespace where Everest OLM catalog is installed. Implies --%s", install.FlagSkipEnvDetection),
-	)
-	cmd.Flags().Bool(install.FlagSkipOLM, false, fmt.Sprintf("Skip OLM installation. Implies --%s", install.FlagSkipEnvDetection))
+	cmd.Flags().Bool(cli.FlagOperatorMongoDB, true, "Install MongoDB operator")
+	cmd.Flags().Bool(cli.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
+	cmd.Flags().Bool(cli.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
 }
 
 func initInstallViperFlags(cmd *cobra.Command) {
-	viper.BindPFlag(install.FlagSkipWizard, cmd.Flags().Lookup(install.FlagSkipWizard)) //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagSkipWizard, cmd.Flags().Lookup(cli.FlagSkipWizard)) //nolint:errcheck,gosec
 
-	viper.BindEnv("kubeconfig")                                                                         //nolint:errcheck,gosec
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))                                     //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagNamespaces, cmd.Flags().Lookup(install.FlagNamespaces))                 //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagVersionMetadataURL, cmd.Flags().Lookup(install.FlagVersionMetadataURL)) //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagVersion, cmd.Flags().Lookup(install.FlagVersion))                       //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagDisableTelemetry, cmd.Flags().Lookup(install.FlagDisableTelemetry))     //nolint:errcheck,gosec
+	viper.BindEnv(cli.FlagKubeconfig)                                                           //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagKubeconfig, cmd.Flags().Lookup(cli.FlagKubeconfig))                 //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagNamespaces, cmd.Flags().Lookup(cli.FlagNamespaces))                 //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagVersionMetadataURL, cmd.Flags().Lookup(cli.FlagVersionMetadataURL)) //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagVersion, cmd.Flags().Lookup(cli.FlagVersion))                       //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagDisableTelemetry, cmd.Flags().Lookup(cli.FlagDisableTelemetry))     //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagSkipEnvDetection, cmd.Flags().Lookup(cli.FlagSkipEnvDetection))     //nolint:errcheck,gosec
 
-	viper.BindPFlag(install.FlagOperatorMongoDB, cmd.Flags().Lookup(install.FlagOperatorMongoDB))             //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagOperatorPostgresql, cmd.Flags().Lookup(install.FlagOperatorPostgresql))       //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagOperatorXtraDBCluster, cmd.Flags().Lookup(install.FlagOperatorXtraDBCluster)) //nolint:errcheck,gosec
+	viper.BindPFlag(helm.FlagChartDir, cmd.Flags().Lookup(helm.FlagChartDir))     //nolint:errcheck,gosec
+	viper.BindPFlag(helm.FlagRepository, cmd.Flags().Lookup(helm.FlagRepository)) //nolint:errcheck,gosec
+	viper.BindPFlag(helm.FlagHelmSet, cmd.Flags().Lookup(helm.FlagHelmSet))       //nolint:errcheck,gosec
+	viper.BindPFlag(helm.FlagHelmValues, cmd.Flags().Lookup(helm.FlagHelmValues)) //nolint:errcheck,gosec
 
-	viper.BindPFlag(install.FlagSkipEnvDetection, cmd.Flags().Lookup(install.FlagSkipEnvDetection)) //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagSkipOLM, cmd.Flags().Lookup(install.FlagSkipOLM))                   //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagCatalogNamespace, cmd.Flags().Lookup(install.FlagCatalogNamespace)) //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagOperatorMongoDB, cmd.Flags().Lookup(cli.FlagOperatorMongoDB))             //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagOperatorPostgresql, cmd.Flags().Lookup(cli.FlagOperatorPostgresql))       //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagOperatorXtraDBCluster, cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster)) //nolint:errcheck,gosec
 
-	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose")) //nolint:errcheck,gosec
-	viper.BindPFlag("json", cmd.Flags().Lookup("json"))       //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagVerbose, cmd.Flags().Lookup(cli.FlagVerbose)) //nolint:errcheck,gosec
+	viper.BindPFlag("json", cmd.Flags().Lookup("json"))                   //nolint:errcheck,gosec
+}
+
+func bindInstallHelmOpts(cfg *install.Config) {
+	cfg.CLIOptions.Values.Values = viper.GetStringSlice(helm.FlagHelmSet)
+	cfg.CLIOptions.Values.ValueFiles = viper.GetStringSlice(helm.FlagHelmValues)
+	cfg.CLIOptions.ChartDir = viper.GetString(helm.FlagChartDir)
+	cfg.CLIOptions.RepoURL = viper.GetString(helm.FlagRepository)
 }

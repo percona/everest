@@ -404,6 +404,24 @@ func (_m *MockKubeClientConnector) DeleteBackupStorage(ctx context.Context, name
 	return r0
 }
 
+// DeleteCRD provides a mock function with given fields: ctx, name
+func (_m *MockKubeClientConnector) DeleteCRD(ctx context.Context, name string) error {
+	ret := _m.Called(ctx, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteCRD")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, name)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteCatalogSource provides a mock function with given fields: ctx, namespace, name
 func (_m *MockKubeClientConnector) DeleteCatalogSource(ctx context.Context, namespace string, name string) error {
 	ret := _m.Called(ctx, namespace, name)
@@ -433,6 +451,24 @@ func (_m *MockKubeClientConnector) DeleteClusterServiceVersion(ctx context.Conte
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, types.NamespacedName) error); ok {
 		r0 = rf(ctx, key)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteDeployment provides a mock function with given fields: ctx, name, namespace
+func (_m *MockKubeClientConnector) DeleteDeployment(ctx context.Context, name string, namespace string) error {
+	ret := _m.Called(ctx, name, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteDeployment")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, name, namespace)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -566,6 +602,24 @@ func (_m *MockKubeClientConnector) DeleteSecret(ctx context.Context, namespace s
 	return r0
 }
 
+// DeleteSubscription provides a mock function with given fields: ctx, key
+func (_m *MockKubeClientConnector) DeleteSubscription(ctx context.Context, key types.NamespacedName) error {
+	ret := _m.Called(ctx, key)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteSubscription")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, types.NamespacedName) error); ok {
+		r0 = rf(ctx, key)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DoCSVWait provides a mock function with given fields: ctx, key
 func (_m *MockKubeClientConnector) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 	ret := _m.Called(ctx, key)
@@ -668,36 +722,6 @@ func (_m *MockKubeClientConnector) GetBackupStorage(ctx context.Context, namespa
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*v1alpha1.BackupStorage)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, namespace, name)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetCSV provides a mock function with given fields: ctx, namespace, name
-func (_m *MockKubeClientConnector) GetCSV(ctx context.Context, namespace string, name string) (*operatorsv1alpha1.ClusterServiceVersion, error) {
-	ret := _m.Called(ctx, namespace, name)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetCSV")
-	}
-
-	var r0 *operatorsv1alpha1.ClusterServiceVersion
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*operatorsv1alpha1.ClusterServiceVersion, error)); ok {
-		return rf(ctx, namespace, name)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *operatorsv1alpha1.ClusterServiceVersion); ok {
-		r0 = rf(ctx, namespace, name)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*operatorsv1alpha1.ClusterServiceVersion)
 		}
 	}
 

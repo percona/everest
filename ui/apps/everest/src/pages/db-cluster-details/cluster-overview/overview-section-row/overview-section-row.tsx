@@ -23,8 +23,12 @@ export const OverviewSectionRow = ({
   contentString,
   content,
   contentProps,
+  dataTestId,
 }: OverviewSectionRowProps) => (
-  <Grid container data-testid={`${kebabize(label)}-overview-section-row`}>
+  <Grid
+    container
+    data-testid={`${dataTestId ?? kebabize(label)}-overview-section-row`}
+  >
     <Grid item xs={3} minWidth="90px" {...labelProps}>
       <Typography variant="body2" sx={{ fontWeight: '700' }}>
         {label}

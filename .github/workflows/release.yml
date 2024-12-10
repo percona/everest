@@ -110,7 +110,7 @@ jobs:
           mkdir -p $TOOLS_PATH
           echo $TOOLS_PATH >> $GITHUB_PATH
 
-          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.25.2
+          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.38.0
           curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
 
           gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E
@@ -310,20 +310,6 @@ jobs:
             git push origin $BRANCH_NAME
           fi
           git checkout $BRANCH_NAME
-
-          # Update deploy manifest 
-          if [[ $IS_RC == 1 ]]; then 
-            # if the build is being run over dev/RC build, there will be the "perconalab" org mentioned in the quickstart file, 
-            # so we should replace only the version
-            sed -i "s/perconalab\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-            
-            # if the build is being run over a Release build, there will be the "percona" org mentioned in the quickstart file, 
-            # so we should replace both the org and the version
-            sed -i "s/percona\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-          else
-            sed -i "s/perconalab\/everest.*/percona\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-            sed -i "s/percona\/everest.*/percona\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-          fi 
 
           # Update the operator go module to reference the version tag
           go get github.com/percona/everest-operator@$GH_TAG

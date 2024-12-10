@@ -9,12 +9,11 @@ import (
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
-	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/accounts"
@@ -38,29 +37,37 @@ type KubernetesConnector interface {
 	UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
 	// DeleteBackupStorage returns backup storages by provided name.
 	DeleteBackupStorage(ctx context.Context, namespace, name string) error
+	// DeleteBackupStorages deletes all backup storages in provided namespace.
+	// This function will wait until all storages are deleted.
+	DeleteBackupStorages(ctx context.Context, namespace string) error
 	// IsBackupStorageUsed checks if a backup storage in a given namespace is used by any clusters
 	// in that namespace.
 	//
 	//nolint:cyclop
 	IsBackupStorageUsed(ctx context.Context, namespace, name string) (bool, error)
-	// WaitForCSVSucceeded waits until CSV phase is "succeeded".
-	WaitForCSVSucceeded(ctx context.Context, namespace, name string) error
-	// CSVNameFromOperator returns CSV name based on operator and version.
-	CSVNameFromOperator(operatorName string, version *goversion.Version) string
 	// GetConfigMap returns k8s configmap by provided name and namespace.
 	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
+	// ListDatabaseEngines returns list of managed database clusters.
+	ListDatabaseEngines(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseEngineList, error)
+	// GetDatabaseEngine returns database clusters by provided name.
+	GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error)
+	// UpdateDatabaseEngine updates the provided database engine.
+	UpdateDatabaseEngine(ctx context.Context, namespace string, engine *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error)
+	// SetDatabaseEngineLock sets the lock on the database engine.
+	// The lock is automatically set to false once everest-operator completes its upgrade.
+	SetDatabaseEngineLock(ctx context.Context, namespace, name string, locked bool) error
 	// GetDeployment returns k8s deployment by provided name and namespace.
 	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
 	// UpdateDeployment updates a deployment and returns the updated object.
 	UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error)
-	// DetectEnvironment detects Kubernetes environment.
-	DetectEnvironment(ctx context.Context) (*Environment, error)
-	// WaitForInstallPlan waits until an install plan for the given operator and version is available.
-	WaitForInstallPlan(ctx context.Context, namespace, operatorName string, version *goversion.Version) (*olmv1alpha1.InstallPlan, error)
+	// ListDeployments returns a list of deployments in the provided namespace.
+	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
+	// DeleteDeployment deletes a deployment by provided name and namespace.
+	DeleteDeployment(ctx context.Context, name, namespace string) error
 	// ApproveInstallPlan approves an install plan.
 	ApproveInstallPlan(ctx context.Context, namespace, installPlanName string) (bool, error)
-	// WaitForInstallPlanCompleted waits until install plan phase is "complete".
-	WaitForInstallPlanCompleted(ctx context.Context, namespace, name string) error
+	// Kubeconfig returns the path to the kubeconfig.
+	Kubeconfig() string
 	// Config returns *rest.Config.
 	Config() *rest.Config
 	// WithClient sets the client connector.
@@ -69,72 +76,42 @@ type KubernetesConnector interface {
 	Namespace() string
 	// ClusterName returns the name of the k8s cluster.
 	ClusterName() string
-	// GetDefaultStorageClassName returns first storageClassName from kubernetes cluster.
-	GetDefaultStorageClassName(ctx context.Context) (string, error)
 	// GetEverestID returns the ID of the namespace where everest is deployed.
 	GetEverestID(ctx context.Context) (string, error)
 	// GetClusterType tries to guess the underlying kubernetes cluster based on storage class.
 	GetClusterType(ctx context.Context) (ClusterType, error)
-	// GetPSMDBOperatorVersion parses PSMDB operator version from operator deployment.
-	GetPSMDBOperatorVersion(ctx context.Context) (string, error)
-	// GetPXCOperatorVersion parses PXC operator version from operator deployment.
-	GetPXCOperatorVersion(ctx context.Context) (string, error)
-	// GetDBaaSOperatorVersion parses DBaaS operator version from operator deployment.
-	GetDBaaSOperatorVersion(ctx context.Context) (string, error)
-	// CreatePMMSecret creates pmm secret in kubernetes.
-	CreatePMMSecret(namespace, secretName string, secrets map[string][]byte) error
-	// CreateRestore creates a restore.
-	CreateRestore(restore *everestv1alpha1.DatabaseClusterRestore) error
-	// GetLogs returns logs.
-	GetLogs(ctx context.Context, containerStatuses []corev1.ContainerStatus, pod, container string) ([]string, error)
-	// GetEvents returns pod's events as a slice of strings.
-	GetEvents(ctx context.Context, pod string) ([]string, error)
-	// InstallOLMOperator installs OLM operator.
-	InstallOLMOperator(ctx context.Context, upgrade bool) error
-	// InstallPerconaCatalog installs percona catalog and ensures that packages are available.
-	InstallPerconaCatalog(ctx context.Context, version *goversion.Version, namespace string) error
-	// InstallOperator installs an operator via OLM.
-	InstallOperator(ctx context.Context, req InstallOperatorRequest) error
-	// CreateOperatorGroup creates operator group in the given namespace.
-	CreateOperatorGroup(ctx context.Context, name, namespace string, targetNamespaces []string) error
-	// ListSubscriptions all the subscriptions in the namespace.
-	ListSubscriptions(ctx context.Context, namespace string) (*olmv1alpha1.SubscriptionList, error)
-	// UpgradeOperator upgrades an operator to the next available version.
-	UpgradeOperator(ctx context.Context, namespace, name string) error
+	// GetCatalogSource returns catalog source.
+	GetCatalogSource(ctx context.Context, name, namespace string) (*olmv1alpha1.CatalogSource, error)
+	// DeleteCatalogSource deletes catalog source.
+	DeleteCatalogSource(ctx context.Context, name, namespace string) error
+	// GetSubscription returns subscription.
+	GetSubscription(ctx context.Context, name, namespace string) (*olmv1alpha1.Subscription, error)
 	// GetServerVersion returns server version.
 	GetServerVersion() (*version.Info, error)
 	// GetClusterServiceVersion retrieves a ClusterServiceVersion by namespaced name.
 	GetClusterServiceVersion(ctx context.Context, key types.NamespacedName) (*olmv1alpha1.ClusterServiceVersion, error)
 	// ListClusterServiceVersion list all CSVs for the given namespace.
 	ListClusterServiceVersion(ctx context.Context, namespace string) (*olmv1alpha1.ClusterServiceVersionList, error)
-	// UpdateClusterServiceVersion updates a ClusterServiceVersion and returns the updated object.
-	UpdateClusterServiceVersion(ctx context.Context, csv *olmv1alpha1.ClusterServiceVersion) (*olmv1alpha1.ClusterServiceVersion, error)
+	// ListCRDs lists all CRDs.
+	ListCRDs(ctx context.Context) (*apiextv1.CustomResourceDefinitionList, error)
+	// DeleteCRD deletes a CRD by name.
+	DeleteCRD(ctx context.Context, name string) error
 	// DeleteClusterServiceVersion deletes a ClusterServiceVersion.
 	DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error
-	// DeleteObject deletes an object.
-	DeleteObject(obj runtime.Object) error
-	// ProvisionMonitoring provisions PMM monitoring.
-	ProvisionMonitoring(namespace string) error
-	// RestartOperator restarts the deployment of an operator managed by OLM.
-	//
-	//nolint:funlen
-	RestartOperator(ctx context.Context, name, namespace string) error
+	// DeleteSubscription deletes a subscription by namespaced name.
+	DeleteSubscription(ctx context.Context, key types.NamespacedName) error
 	// RestartDeployment restarts the given deployment.
 	RestartDeployment(ctx context.Context, name, namespace string) error
-	// ListEngineDeploymentNames returns a string array containing found engine deployments for the Everest.
-	ListEngineDeploymentNames(ctx context.Context, namespace string) ([]string, error)
-	// ApplyObject applies object.
-	ApplyObject(obj runtime.Object) error
-	// InstallEverest downloads the manifest file and applies it against provisioned k8s cluster.
-	InstallEverest(ctx context.Context, namespace string, version *goversion.Version, skipObjs ...ctrlclient.Object) error
-	// DeleteEverest downloads the manifest file and deletes it from provisioned k8s cluster.
-	DeleteEverest(ctx context.Context, namespace string, version *goversion.Version) error
+	// ApplyManifestFile accepts manifest file contents, parses into []runtime.Object
+	// and applies them against the cluster.
+	ApplyManifestFile(files []byte, namespace string) error
 	// GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.
 	GetDBNamespaces(ctx context.Context) ([]string, error)
 	// WaitForRollout waits for rollout of a provided deployment in the provided namespace.
 	WaitForRollout(ctx context.Context, name, namespace string) error
-	// UpdateClusterRoleBinding updates namespaces list for the cluster role by provided name.
-	UpdateClusterRoleBinding(ctx context.Context, name string, namespaces []string) error
+	// DeleteManifestFile accepts manifest file contents, parses into []runtime.Object
+	// and deletes them from the cluster.
+	DeleteManifestFile(fileBytes []byte, namespace string) error
 	// ListMonitoringConfigs returns list of managed monitoring configs.
 	ListMonitoringConfigs(ctx context.Context, namespace string) (*everestv1alpha1.MonitoringConfigList, error)
 	// GetMonitoringConfig returns monitoring configs by provided name.
@@ -145,6 +122,9 @@ type KubernetesConnector interface {
 	UpdateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) error
 	// DeleteMonitoringConfig returns monitoring configs by provided name.
 	DeleteMonitoringConfig(ctx context.Context, namespace, name string) error
+	// DeleteMonitoringConfigs deletes all monitoring configs in provided namespace.
+	// This function will wait until all configs are deleted.
+	DeleteMonitoringConfigs(ctx context.Context, namespace string) error
 	// IsMonitoringConfigUsed checks if a monitoring config is used by any database cluster in the provided namespace.
 	IsMonitoringConfigUsed(ctx context.Context, namespace, name string) (bool, error)
 	// GetMonitoringConfigsBySecretName returns a list of monitoring configs which use

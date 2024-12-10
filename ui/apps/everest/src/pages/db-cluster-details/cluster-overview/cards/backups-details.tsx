@@ -24,15 +24,20 @@ import { DBClusterDetailsTabs } from '../../db-cluster-details.types';
 import OverviewSectionText from '../overview-section-text/overview-section-text';
 import { getTimeSelectionPreviewMessage } from '../../../database-form/database-preview/database.preview.messages';
 import { getFormValuesFromCronExpression } from '../../../../components/time-selection/time-selection.utils';
-import { useDbBackups } from 'hooks';
+import { useDbBackups, useUpdateDbClusterPITR } from 'hooks';
 import { Table } from '@percona/ui-lib';
 import { Backup, BackupStatus } from 'shared-types/backups.types';
 import { BACKUP_STATUS_TO_BASE_STATUS } from 'pages/db-cluster-details/backups/backups-list/backups-list.constants';
 import StatusField from 'components/status-field';
-import { useMemo } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
 import { DATE_FORMAT } from 'consts';
 import { format } from 'date-fns';
+import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
+import { DbClusterStatus } from 'shared-types/dbCluster.types';
+import { PitrEditModal } from './pitr-details/edit-pitr';
+import { dbEngineToDbType } from '@percona/utils';
+import { DbType } from '@percona/types';
 
 export const BackupsDetails = ({
   dbClusterName,
@@ -44,10 +49,38 @@ export const BackupsDetails = ({
   loading,
   showStorage = true,
 }: BackupsDetailsOverviewCardProps) => {
+  const { canUpdateDb, dbCluster } = useContext(DbClusterContext);
+  const restoringOrDeleting = [
+    DbClusterStatus.restoring,
+    DbClusterStatus.deleting,
+  ].includes(dbCluster?.status?.status!);
+  const editable = canUpdateDb && !restoringOrDeleting;
+
+  const dbType = dbEngineToDbType(dbCluster!.spec.engine.type);
+  const backupsEnabled = (schedules || []).length > 0;
+  const pitrDisabled = !backupsEnabled || dbType === DbType.Postresql;
+
+  const [openEditModal, setOpenEditModal] = useState(false);
   const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
   const { data: backups = [] } = useDbBackups(dbClusterName!, namespace!, {
     refetchInterval: 10 * 1000,
   });
+  const { mutate: updatePITR } = useUpdateDbClusterPITR();
+
+  const handleCloseModal = () => {
+    setOpenEditModal(false);
+  };
+
+  const handleSubmit = (enabled: boolean, backupStorageName: string) => {
+    updatePITR({
+      clusterName: dbCluster!.metadata?.name,
+      namespace: dbCluster!.metadata?.namespace,
+      dbCluster: dbCluster!,
+      enabled: enabled,
+      backupStorageName: backupStorageName,
+    });
+    handleCloseModal();
+  };
 
   const columns = useMemo<MRT_ColumnDef<Backup>[]>(
     () => [
@@ -134,6 +167,12 @@ export const BackupsDetails = ({
                 pageSize: 5,
                 pageIndex: 0,
               },
+              sorting: [
+                {
+                  id: 'created',
+                  desc: true,
+                },
+              ],
             }}
             tableName="backupList"
             noDataMessage={Messages.titles.noData}
@@ -166,9 +205,18 @@ export const BackupsDetails = ({
           dataTestId="pitr"
           title={Messages.titles.pitr}
           loading={loading}
+          actionButtonProps={{
+            onClick: () => {
+              setOpenEditModal(true);
+            },
+            'data-testid': 'edit-pitr-button',
+          }}
+          editable={editable && !pitrDisabled}
+          disabledEditTooltipText={Messages.titles.createScheduleToEnable}
         >
           {/*// TODO EVEREST-1066 the width of the columns on the layouts in different places is limited by a different number (but not by the content), a discussion with Design is required*/}
           <OverviewSectionRow
+            dataTestId="pitr-status"
             labelProps={{ minWidth: '126px' }}
             label={Messages.fields.status}
             contentString={
@@ -177,9 +225,18 @@ export const BackupsDetails = ({
           />
           {showStorage && (
             <OverviewSectionRow
+              dataTestId="backup-storage"
               labelProps={{ minWidth: '126px' }}
               label={Messages.fields.backupStorages}
               contentString={pitrStorageName}
+            />
+          )}
+          {openEditModal && (
+            <PitrEditModal
+              dbCluster={dbCluster!}
+              open={openEditModal}
+              handleCloseModal={handleCloseModal}
+              handleSubmitModal={handleSubmit}
             />
           )}
         </OverviewSection>

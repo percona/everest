@@ -17,7 +17,7 @@ import { Messages } from './db-actions.messages';
 import { RestoreDbModal } from 'modals';
 import DbStatusDetailsDialog from 'modals/db-status-details-dialog';
 import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
-import { useDbBackups, useDeleteDbCluster } from 'hooks';
+import { useDbBackups } from 'hooks';
 import { DbEngineType } from '@percona/types';
 import { DbActionsModalsProps } from './db-actions-modals.types';
 
@@ -31,9 +31,8 @@ export const DbActionsModals = ({
   openDeleteDialog,
   handleCloseDeleteDialog,
   handleConfirmDelete,
+  deleteMutation: { isPending: deletingCluster },
 }: DbActionsModalsProps) => {
-  const { isPending: deletingCluster } = useDeleteDbCluster();
-
   const disableKeepDataCheckbox =
     dbCluster?.spec.engine.type === DbEngineType.POSTGRESQL;
   const { data: backups = [] } = useDbBackups(
