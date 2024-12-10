@@ -15,10 +15,7 @@
 
 import { test, expect } from '@playwright/test';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
-import {
-  checkAmountOfDbEngines,
-  selectDbEngine,
-} from '../db-cluster/db-wizard/db-wizard-utils';
+import { checkAmountOfDbEngines } from '../db-cluster/db-wizard/db-wizard-utils';
 import { cancelWizard } from '@e2e/utils/db-wizard';
 import { DbEngineType } from '@percona/types';
 
@@ -28,7 +25,6 @@ test.describe('Namespaces DB Wizard', () => {
   }) => {
     await page.goto('/databases');
     for (let i = 0; i < 3; i++) {
-      await page.pause();
       const dbEnginesButtons = await checkAmountOfDbEngines(page);
       expect(await dbEnginesButtons.count()).toBe(3);
       const dbEngineType = (
