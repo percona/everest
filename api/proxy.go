@@ -18,6 +18,7 @@ package api
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -141,7 +142,26 @@ func transformK8sList(mutate func(l *unstructured.UnstructuredList) error) apiRe
 // Runs the provided transform func.
 // Main purpose of this helper is to provide boiler plate for reading/writing to the response object.
 func runResponseModifier(resp *http.Response, logger *zap.SugaredLogger, transform apiResponseTransformerFn) error {
-	b, err := io.ReadAll(resp.Body)
+	var err error
+
+	// Determine the reader based on gzip encoding
+	var r io.Reader
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		gzipReader, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			logger.Error(errors.Join(err, errors.New("failed to create gzip reader")))
+			return err
+		}
+		defer func() {
+			if err := gzipReader.Close(); err != nil {
+				logger.Error(errors.Join(err, errors.New("failed to close gzip reader")))
+			}
+		}()
+		r = gzipReader
+	} else {
+		r = resp.Body
+	}
+	b, err := io.ReadAll(r)
 	if err != nil {
 		logger.Error(errors.Join(err, errors.New("failed to read response body")))
 		return err
@@ -156,10 +176,24 @@ func runResponseModifier(resp *http.Response, logger *zap.SugaredLogger, transfo
 		logger.Error(errors.Join(err, errors.New("failed to transform response body")))
 		return err
 	}
-	body := io.NopCloser(bytes.NewReader(b))
-	resp.Body = body
-	resp.ContentLength = int64(len(b))
-	resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
+	// If the original response was gzipped, gzip the transformed body again
+	var buffer bytes.Buffer
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		gzipWriter := gzip.NewWriter(&buffer)
+		if _, err := gzipWriter.Write(b); err != nil {
+			logger.Error(errors.Join(err, errors.New("failed to write gzipped response body")))
+			return err
+		}
+		if err := gzipWriter.Close(); err != nil {
+			logger.Error(errors.Join(err, errors.New("failed to close gzip writer")))
+			return err
+		}
+	} else {
+		buffer.Write(b)
+	}
+	resp.Body = io.NopCloser(&buffer)
+	resp.ContentLength = int64(buffer.Len())
+	resp.Header.Set("Content-Length", strconv.Itoa(buffer.Len()))
 	return nil
 }
 

@@ -41,7 +41,10 @@ export const deleteBackupFn = async (
 
 export const getPitrFn = async (dbClusterName: string, namespace: string) => {
   const response = await api.get<DatabaseClusterPitrPayload>(
-    `/namespaces/${namespace}/database-clusters/${dbClusterName}/pitr`
+    `/namespaces/${namespace}/database-clusters/${dbClusterName}/pitr`,
+    {
+      disableNotifications: true,
+    }
   );
 
   return response.data;

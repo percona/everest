@@ -65,7 +65,10 @@ export const getDbClusterFn = async (
   namespace: string
 ) => {
   const response = await api.get<DbCluster>(
-    `namespaces/${namespace}/database-clusters/${dbClusterName}`
+    `namespaces/${namespace}/database-clusters/${dbClusterName}`,
+    {
+      disableNotifications: true,
+    }
   );
   return response.data;
 };
