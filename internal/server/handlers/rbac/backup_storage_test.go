@@ -19,15 +19,11 @@ func TestRBAC_BackupStorage(t *testing.T) {
 	t.Parallel()
 
 	t.Run("ListBackupStorages", func(t *testing.T) {
-		policy := "p, admin, backup-storages, read, default/backup-storage-1"
-		enf, err := rbac.NewIOReaderEnforcer(strings.NewReader(policy))
-		require.NoError(t, err)
-
+		t.Parallel()
 		next := handlers.MockHandler{}
 		h := &rbacHandler{
-			next:     &next,
-			enforcer: enf,
-			log:      zap.NewNop().Sugar(),
+			next: &next,
+			log:  zap.NewNop().Sugar(),
 		}
 
 		next.On("ListBackupStorages",
@@ -58,11 +54,103 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			},
 			nil,
 		)
+
+		testCases := []struct {
+			policy string
+			outLen int
+		}{
+			{
+				policy: newPolicy(
+					"p, role:test, backup-storages, read, default/backup-storage-1",
+					"g, test-user, role:test",
+				),
+				outLen: 1,
+			},
+			{
+				policy: newPolicy(
+					"p, role:test, backup-storages, read, default/*",
+					"g, test-user, role:test",
+				),
+				outLen: 1,
+			},
+			{
+				policy: newPolicy(),
+				outLen: 0,
+			},
+		}
+
+		var err error
 		ctx := context.Background()
-		list, err := h.ListBackupStorages(ctx, "admin", "default")
-		require.NoError(t, err)
-		assert.Len(t, list.Items, 1)
-		assert.Equal(t, "backup-storage-1", list.Items[0].GetName())
-		assert.Equal(t, "default", list.Items[0].GetNamespace())
+		for _, tc := range testCases {
+			h.enforcer, err = rbac.NewIOReaderEnforcer(strings.NewReader(tc.policy))
+			require.NoError(t, err)
+
+			list, err := h.ListBackupStorages(ctx, "test-user", "default")
+			require.NoError(t, err)
+			assert.Len(t, list.Items, tc.outLen)
+		}
 	})
+
+	t.Run("GetBackupStorage", func(t *testing.T) {
+		t.Parallel()
+		next := handlers.MockHandler{}
+		h := &rbacHandler{
+			next: &next,
+			log:  zap.NewNop().Sugar(),
+		}
+		next.On("GetBackupStorage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
+			&everestv1alpha1.BackupStorage{}, nil,
+		)
+
+		testCases := []struct {
+			policy  string
+			wantErr error
+		}{
+			{
+				policy: newPolicy(
+					"p, role:test, backup-storages, *, */*",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				policy: newPolicy(
+					"p, role:test, backup-storages, *, default/*",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				policy: newPolicy(
+					"p, role:test, backup-storages, read, default/*",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				policy: newPolicy(
+					"p, role:test, backup-storages, read, default/inaccessible-storage",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				policy: newPolicy(
+					"p, role:test, backup-storages, read, kube-system/*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+		}
+
+		var err error
+		for _, tc := range testCases {
+			h.enforcer, err = rbac.NewIOReaderEnforcer(strings.NewReader(tc.policy))
+			require.NoError(t, err)
+
+			_, err := h.GetBackupStorage(context.Background(), "test-user", "default", "backup-storage-1")
+			assert.ErrorIs(t, err, tc.wantErr)
+		}
+	})
+}
+
+func newPolicy(lines ...string) string {
+	return strings.Join(lines, "\n")
 }
