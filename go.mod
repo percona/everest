@@ -37,14 +37,14 @@ require (
 	github.com/operator-framework/api v0.27.0
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
 	github.com/percona/everest-operator v0.6.0-dev1.0.20241203113640-8dd4a9d32733
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241203113649-9b16ea7e1d46
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241210074949-833deeb939c2
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.29.0
-	golang.org/x/mod v0.21.0
+	golang.org/x/mod v0.22.0
 	golang.org/x/net v0.31.0
 	golang.org/x/time v0.7.0
 	google.golang.org/protobuf v1.34.2
