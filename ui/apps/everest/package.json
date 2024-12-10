@@ -54,7 +54,7 @@
   "devDependencies": {
     "@percona/eslint-config-react": "workspace:*",
     "@percona/prettier-config": "workspace:*",
-    "@playwright/test": "^1.39.0",
+    "@playwright/test": "^1.49.1",
     "@testing-library/jest-dom": "^6.1.4",
     "@testing-library/react": "^14.0.0",
     "@types/css-mediaquery": "^0.1.3",
