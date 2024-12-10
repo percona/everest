@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/percona/everest-operator/api/v1alpha1"
 )
 
 func TestIntoCR(t *testing.T) {
