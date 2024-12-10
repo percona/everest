@@ -291,11 +291,12 @@ export const queryTestDB = async (
       break;
     }
     case 'psmdb': {
+      const sortField = collection === 't1' ? 'a' : 'b';
       result = await queryPSMDB(
         cluster,
         namespace,
         'test',
-        'db.${collection}.find({},{_id: 0}).sort({a: 1}).toArray();'
+        `db.${collection}.find({},{_id: 0}).sort({${sortField}: 1}).toArray();`
       );
       break;
     }
