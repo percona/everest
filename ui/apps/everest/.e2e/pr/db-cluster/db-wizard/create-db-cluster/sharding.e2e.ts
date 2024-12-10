@@ -75,8 +75,6 @@ test.describe('DB Cluster creation', () => {
   test('Sharding is not reset to default when returning to the previous step of the form in dbWizard', async ({
     page,
   }) => {
-    await page.pause();
-
     expect(storageClasses.length).toBeGreaterThan(0);
     await selectDbEngine(page, 'psmdb');
 
