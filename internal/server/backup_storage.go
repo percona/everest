@@ -16,61 +16,36 @@
 package server
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
-	corev1 "k8s.io/api/core/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	. "github.com/percona/everest/api"
+	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/rbac"
 )
 
-// enforceBackupStorageRBAC checks if the user has permissions to read the backup storage.
-func (e *EverestServer) enforceBackupStorageRBAC(user string, bs everestv1alpha1.BackupStorage) error {
-	// Check if the user has permissions for this Backup Storage?
-	if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(bs.GetNamespace(), bs.GetName())); err != nil {
-		if !errors.Is(err, errInsufficientPermissions) {
-			e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
-		}
-		return err
-	}
-
-	return nil
-}
-
 // ListBackupStorages lists backup storages.
-func (e *EverestServer) ListBackupStorages(ctx echo.Context, namespace string) error {
-	user, err := rbac.GetUser(ctx)
+func (e *EverestServer) ListBackupStorages(c echo.Context, namespace string) error {
+	user, err := rbac.GetUser(c)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, Error{
+		return c.JSON(http.StatusInternalServerError, api.Error{
 			Message: pointer.ToString("Failed to get user from context" + err.Error()),
 		})
 	}
 
-	backupList, err := e.kubeClient.ListBackupStorages(ctx.Request().Context(), namespace)
+	ctx := c.Request().Context()
+	list, err := e.handler.ListBackupStorages(ctx, user, namespace)
 	if err != nil {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Could not list backup storages"),
+		return c.JSON(http.StatusInternalServerError, api.Error{
+			Message: pointer.ToString("Failed to list backup storages" + err.Error()),
 		})
 	}
 
-	result := make([]BackupStorage, 0, len(backupList.Items))
-	for _, s := range backupList.Items {
-		if err := e.enforceBackupStorageRBAC(user, s); errors.Is(err, errInsufficientPermissions) {
-			continue
-		} else if err != nil {
-			return err
-		}
-
-		result = append(result, BackupStorage{
-			Type:      BackupStorageType(s.Spec.Type),
+	result := make([]api.BackupStorage, 0, len(list.Items))
+	for _, s := range list.Items {
+		result = append(result, api.BackupStorage{
+			Type:      api.BackupStorageType(s.Spec.Type),
 			Name:      s.GetName(),
 			Namespace: s.GetNamespace(),
 			//nolint:exportloopref
@@ -83,282 +58,76 @@ func (e *EverestServer) ListBackupStorages(ctx echo.Context, namespace string) e
 			ForcePathStyle: s.Spec.ForcePathStyle,
 		})
 	}
-
-	return ctx.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, result)
 }
 
 // CreateBackupStorage creates a new backup storage object.
-func (e *EverestServer) CreateBackupStorage(ctx echo.Context, namespace string) error { //nolint:funlen
-	c := ctx.Request().Context()
-	existingStorages, err := e.kubeClient.ListBackupStorages(c, namespace)
+func (e *EverestServer) CreateBackupStorage(c echo.Context, namespace string) error { //nolint:funlen
+	user, err := rbac.GetUser(c)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Failed getting existing backup storages"),
+		return c.JSON(http.StatusInternalServerError, api.Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
 		})
 	}
-
-	params, err := validateCreateBackupStorageRequest(ctx, e.l, existingStorages)
+	ctx := c.Request().Context()
+	req := api.CreateBackupStorageParams{}
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+	result, err := e.handler.CreateBackupStorage(ctx, user, namespace, &req)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
+		return err
 	}
-	s, err := e.kubeClient.GetBackupStorage(c, namespace, params.Name)
-	if err != nil && !k8serrors.IsNotFound(err) {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Failed getting a backup storage from the Kubernetes cluster"),
-		})
-	}
-	// TODO: Change the design of operator's structs so they return nil struct so
-	// if s != nil passes
-	if s != nil && s.Name != "" {
-		return ctx.JSON(http.StatusConflict, Error{
-			Message: pointer.ToString(fmt.Sprintf("Backup storage %s already exists in namespace %s", params.Name, namespace)),
-		})
-	}
-
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      params.Name,
-			Namespace: namespace,
-		},
-		Type:       corev1.SecretTypeOpaque,
-		StringData: e.backupSecretData(params.SecretKey, params.AccessKey),
-	}
-
-	_, err = e.kubeClient.CreateSecret(c, secret)
-	if err != nil {
-		if k8serrors.IsAlreadyExists(err) {
-			_, err = e.kubeClient.UpdateSecret(c, secret)
-			if err != nil {
-				e.l.Error(err)
-				return ctx.JSON(http.StatusInternalServerError, Error{
-					Message: pointer.ToString(fmt.Sprintf("Failed updating the secret %s for backup storage", params.Name)),
-				})
-			}
-		} else {
-			e.l.Error(err)
-			return ctx.JSON(http.StatusInternalServerError, Error{
-				Message: pointer.ToString("Failed creating a secret for the backup storage"),
-			})
-		}
-	}
-	bs := &everestv1alpha1.BackupStorage{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      params.Name,
-			Namespace: namespace,
-		},
-		Spec: everestv1alpha1.BackupStorageSpec{
-			Type:                  everestv1alpha1.BackupStorageType(params.Type),
-			Bucket:                params.BucketName,
-			Region:                params.Region,
-			CredentialsSecretName: params.Name,
-			AllowedNamespaces:     pointer.Get(params.AllowedNamespaces),
-			VerifyTLS:             params.VerifyTLS,
-			ForcePathStyle:        params.ForcePathStyle,
-		},
-	}
-	if params.Url != nil {
-		bs.Spec.EndpointURL = *params.Url
-	}
-	if params.Description != nil {
-		bs.Spec.Description = *params.Description
-	}
-	_, err = e.kubeClient.CreateBackupStorage(c, bs)
-	if err != nil {
-		e.l.Error(err)
-		// TODO: Move this logic to the operator
-		dErr := e.kubeClient.DeleteSecret(c, namespace, params.Name)
-		if dErr != nil {
-			return ctx.JSON(http.StatusInternalServerError, Error{
-				Message: pointer.ToString("Failed cleaning up secret for a backup storage"),
-			})
-		}
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Failed creating backup storage"),
-		})
-	}
-	result := BackupStorage{
-		Type:              BackupStorageType(params.Type),
-		Name:              params.Name,
-		Namespace:         namespace,
-		Description:       params.Description,
-		BucketName:        params.BucketName,
-		Region:            params.Region,
-		Url:               params.Url,
-		AllowedNamespaces: params.AllowedNamespaces,
-		VerifyTLS:         params.VerifyTLS,
-		ForcePathStyle:    params.ForcePathStyle,
-	}
-
-	return ctx.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusCreated, result)
 }
 
 // DeleteBackupStorage deletes the specified backup storage.
-func (e *EverestServer) DeleteBackupStorage(ctx echo.Context, namespace, name string) error {
-	used, err := e.kubeClient.IsBackupStorageUsed(ctx.Request().Context(), namespace, name)
+func (e *EverestServer) DeleteBackupStorage(c echo.Context, namespace, name string) error {
+	user, err := rbac.GetUser(c)
 	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return ctx.JSON(http.StatusNotFound, Error{
-				Message: pointer.ToString("Backup storage is not found"),
-			})
-		}
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Failed to check the backup storage is used"),
+		return c.JSON(http.StatusInternalServerError, api.Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
 		})
 	}
-	if used {
-		return ctx.JSON(http.StatusBadRequest, Error{
-			Message: pointer.ToString(fmt.Sprintf("Backup storage %s is in use", name)),
-		})
+	ctx := c.Request().Context()
+	if err := e.handler.DeleteBackupStorage(ctx, user, namespace, name); err != nil {
+		return err
 	}
-	if err := e.kubeClient.DeleteBackupStorage(ctx.Request().Context(), namespace, name); err != nil {
-		if k8serrors.IsNotFound(err) {
-			return ctx.NoContent(http.StatusNoContent)
-		}
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Failed to delete a backup storage"),
-		})
-	}
-	if err := e.kubeClient.DeleteSecret(ctx.Request().Context(), namespace, name); err != nil {
-		if k8serrors.IsNotFound(err) {
-			return ctx.NoContent(http.StatusNoContent)
-		}
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Failed to delete a secret for backup storage"),
-		})
-	}
-
-	return ctx.NoContent(http.StatusNoContent)
-}
-
-func (e *EverestServer) backupSecretData(secretKey, accessKey string) map[string]string {
-	return map[string]string{
-		"AWS_SECRET_ACCESS_KEY": secretKey,
-		"AWS_ACCESS_KEY_ID":     accessKey,
-	}
+	return c.NoContent(http.StatusNoContent)
 }
 
 // GetBackupStorage retrieves the specified backup storage.
-func (e *EverestServer) GetBackupStorage(ctx echo.Context, namespace, name string) error {
-	s, err := e.kubeClient.GetBackupStorage(ctx.Request().Context(), namespace, name)
+func (e *EverestServer) GetBackupStorage(c echo.Context, namespace, name string) error {
+	user, err := rbac.GetUser(c)
 	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return ctx.JSON(http.StatusNotFound, Error{
-				Message: pointer.ToString("Backup storage is not found"),
-			})
-		}
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Failed getting backup storage"),
+		return c.JSON(http.StatusInternalServerError, api.Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
 		})
 	}
-	return ctx.JSON(http.StatusOK, BackupStorage{
-		Type:              BackupStorageType(s.Spec.Type),
-		Name:              s.GetName(),
-		Namespace:         s.GetNamespace(),
-		Description:       &s.Spec.Description,
-		BucketName:        s.Spec.Bucket,
-		Region:            s.Spec.Region,
-		Url:               &s.Spec.EndpointURL,
-		AllowedNamespaces: pointer.To(s.Spec.AllowedNamespaces), //nolint:staticcheck
-		VerifyTLS:         s.Spec.VerifyTLS,
-		ForcePathStyle:    s.Spec.ForcePathStyle,
-	})
+	ctx := c.Request().Context()
+	result, err := e.handler.GetBackupStorage(ctx, user, namespace, name)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, result)
 }
 
 // UpdateBackupStorage updates of the specified backup storage.
-func (e *EverestServer) UpdateBackupStorage(ctx echo.Context, namespace, name string) error { //nolint:funlen,cyclop
-	c := ctx.Request().Context()
-	bs, err := e.kubeClient.GetBackupStorage(c, namespace, name)
+func (e *EverestServer) UpdateBackupStorage(c echo.Context, namespace, name string) error { //nolint:funlen,cyclop
+	user, err := rbac.GetUser(c)
 	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return ctx.JSON(http.StatusNotFound, Error{
-				Message: pointer.ToString("Backup storage is not found"),
-			})
-		}
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Failed getting backup storage"),
+		return c.JSON(http.StatusInternalServerError, api.Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
 		})
 	}
-
-	secret, err := e.kubeClient.GetSecret(c, namespace, name)
+	ctx := c.Request().Context()
+	req := api.UpdateBackupStorageParams{}
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+	result, err := e.handler.UpdateBackupStorage(ctx, user, namespace, name, &req)
 	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return ctx.JSON(http.StatusNotFound, Error{
-				Message: pointer.ToString("Secret is not found"),
-			})
-		}
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Failed getting secret"),
-		})
+		return err
 	}
-
-	params, err := e.validateUpdateBackupStorageRequest(ctx, bs, secret, e.l)
-	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, Error{Message: pointer.ToString(err.Error())})
-	}
-	if params.AccessKey != nil && params.SecretKey != nil {
-		_, err = e.kubeClient.UpdateSecret(c, &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: namespace,
-			},
-			Type:       corev1.SecretTypeOpaque,
-			StringData: e.backupSecretData(*params.SecretKey, *params.AccessKey),
-		})
-		if err != nil {
-			e.l.Error(err)
-			return ctx.JSON(http.StatusInternalServerError, Error{
-				Message: pointer.ToString(fmt.Sprintf("Failed updating the secret %s", name)),
-			})
-		}
-	}
-	if params.BucketName != nil {
-		bs.Spec.Bucket = *params.BucketName
-	}
-	if params.Region != nil {
-		bs.Spec.Region = *params.Region
-	}
-	if params.Url != nil {
-		bs.Spec.EndpointURL = *params.Url
-	}
-	if params.Description != nil {
-		bs.Spec.Description = *params.Description
-	}
-	if params.AllowedNamespaces != nil {
-		bs.Spec.AllowedNamespaces = *params.AllowedNamespaces //nolint:staticcheck
-	}
-	if params.VerifyTLS != nil {
-		bs.Spec.VerifyTLS = params.VerifyTLS
-	}
-	if params.ForcePathStyle != nil {
-		bs.Spec.ForcePathStyle = params.ForcePathStyle
-	}
-
-	_, err = e.kubeClient.UpdateBackupStorage(c, bs)
-	if err != nil {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, Error{
-			Message: pointer.ToString("Failed updating backup storage"),
-		})
-	}
-	result := BackupStorage{
-		Type:              BackupStorageType(bs.Spec.Type),
-		Name:              bs.GetName(),
-		Namespace:         bs.GetNamespace(),
-		Description:       params.Description,
-		BucketName:        bs.Spec.Bucket,
-		Region:            bs.Spec.Region,
-		Url:               &bs.Spec.EndpointURL,
-		AllowedNamespaces: pointer.To(bs.Spec.AllowedNamespaces), //nolint:staticcheck
-		VerifyTLS:         bs.Spec.VerifyTLS,
-		ForcePathStyle:    bs.Spec.ForcePathStyle,
-	}
-
-	return ctx.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, result)
 }

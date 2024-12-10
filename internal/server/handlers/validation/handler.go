@@ -1,4 +1,4 @@
-package rbac
+package validation
 
 import (
 	"context"
@@ -21,7 +21,6 @@ type validateHandler struct {
 
 // New returns a new RBAC handler.
 func New(
-	ctx context.Context,
 	log *zap.SugaredLogger,
 	kubeClient *kubernetes.Kubernetes,
 ) handlers.Handler {

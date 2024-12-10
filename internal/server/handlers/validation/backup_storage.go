@@ -1,4 +1,4 @@
-package rbac
+package validation
 
 import (
 	"bytes"
