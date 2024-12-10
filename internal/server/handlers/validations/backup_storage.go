@@ -43,7 +43,7 @@ func (h *validateHandler) CreateBackupStorage(ctx context.Context, user, namespa
 		return nil, fmt.Errorf("failed to ListBackupStorages: %w", err)
 	}
 	if err := validateCreateBackupStorageRequest(ctx, h.log, req, existing); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, errors.Join(errInvalidRequest, err)
 	}
 	return h.next.CreateBackupStorage(ctx, user, namespace, req)
 }
@@ -58,7 +58,7 @@ func (h *validateHandler) UpdateBackupStorage(ctx context.Context, user, namespa
 		return nil, fmt.Errorf("failed to GetSecret: %w", err)
 	}
 	if err := h.validateUpdateBackupStorageRequest(ctx, h.log, req, bs, secret); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, errors.Join(errInvalidRequest, err)
 	}
 	return h.next.UpdateBackupStorage(ctx, user, namespace, name, req)
 }
@@ -73,7 +73,6 @@ func validateCreateBackupStorageRequest(
 	params *api.CreateBackupStorageParams,
 	existingStorages *everestv1alpha1.BackupStorageList,
 ) error {
-
 	for _, storage := range existingStorages.Items {
 		if storage.Spec.Region == params.Region &&
 			storage.Spec.EndpointURL == pointer.GetString(params.Url) &&

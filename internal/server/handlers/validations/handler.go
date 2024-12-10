@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"errors"
 
 	"go.uber.org/zap"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/percona/everest/internal/server/handlers"
 	"github.com/percona/everest/pkg/kubernetes"
 )
+
+var errInvalidRequest = errors.New("invalid request")
 
 type validateHandler struct {
 	log        *zap.SugaredLogger

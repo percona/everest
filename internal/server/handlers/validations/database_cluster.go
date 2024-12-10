@@ -27,11 +27,8 @@ const (
 )
 
 func (h *validateHandler) CreateDatabaseCluster(ctx context.Context, user string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
-	if err := validateMetadata(db); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
-	}
 	if err := h.validateDatabaseClusterCR(ctx, db.GetNamespace(), db); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, errors.Join(errInvalidRequest, err)
 	}
 	return h.next.CreateDatabaseCluster(ctx, user, db)
 }
@@ -45,11 +42,8 @@ func (h *validateHandler) DeleteDatabaseCluster(ctx context.Context, user, names
 }
 
 func (h *validateHandler) UpdateDatabaseCluster(ctx context.Context, user string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
-	if err := validateMetadata(db); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
-	}
 	if err := h.validateDatabaseClusterCR(ctx, db.GetNamespace(), db); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, errors.Join(errInvalidRequest, err)
 	}
 
 	current, err := h.kubeClient.GetDatabaseCluster(ctx, db.GetNamespace(), db.GetName())
@@ -57,7 +51,7 @@ func (h *validateHandler) UpdateDatabaseCluster(ctx context.Context, user string
 		return nil, fmt.Errorf("failed to GetDatabaseCluster: %w", err)
 	}
 	if err := h.validateDatabaseClusterOnUpdate(db, current); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, errors.Join(errInvalidRequest, err)
 	}
 	return h.next.UpdateDatabaseCluster(ctx, user, db)
 }
@@ -84,6 +78,9 @@ func (h *validateHandler) validateDatabaseClusterCR(
 	namespace string,
 	databaseCluster *everestv1alpha1.DatabaseCluster,
 ) error {
+	if err := validateMetadata(databaseCluster); err != nil {
+		return err
+	}
 	if err := validateCreateDatabaseClusterRequest(databaseCluster); err != nil {
 		return err
 	}
@@ -113,7 +110,7 @@ func (h *validateHandler) validateDatabaseClusterCR(
 	}
 
 	if databaseCluster.Spec.DataSource != nil {
-		if err := validateDBDataSource(databaseCluster); err != nil {
+		if err := validateDataSource(databaseCluster.Spec.DataSource); err != nil {
 			return err
 		}
 	}
@@ -357,8 +354,7 @@ func (h *validateHandler) validateBackupStoragesFor( //nolint:cyclop
 	return nil
 }
 
-func validateDBDataSource(db *everestv1alpha1.DatabaseCluster) error {
-	dataSource := db.Spec.DataSource
+func validateDataSource(dataSource *everestv1alpha1.DataSource) error {
 	if dataSource == nil {
 		return nil
 	}
