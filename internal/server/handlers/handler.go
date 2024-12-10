@@ -1,5 +1,7 @@
 package handlers
 
+//go:generate ../../../bin/mockery --name=Handler --case=snake --inpackage
+
 import (
 	"context"
 

@@ -5,8 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
 func (h *validateHandler) ListDatabaseClusterRestores(ctx context.Context, user, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterRestoreList, error) {
@@ -37,7 +38,8 @@ func (h *validateHandler) UpdateDatabaseClusterRestore(ctx context.Context, user
 
 func (h *validateHandler) validateDatabaseClusterRestore(
 	ctx context.Context,
-	restore *everestv1alpha1.DatabaseClusterRestore) error {
+	restore *everestv1alpha1.DatabaseClusterRestore,
+) error {
 	if restore == nil {
 		return errors.New("restore cannot be empty")
 	}

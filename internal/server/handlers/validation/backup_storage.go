@@ -17,11 +17,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
+
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/cmd/config"
-	"go.uber.org/zap"
-	corev1 "k8s.io/api/core/v1"
 )
 
 const (

@@ -5,10 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	"github.com/percona/everest/api"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/api"
 )
 
 func (h *validateHandler) ListDatabaseClusterBackups(ctx context.Context, user, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterBackupList, error) {
@@ -64,7 +65,8 @@ func (h *validateHandler) validateDatabaseClusterBackup(ctx context.Context, bac
 func (h *validateHandler) validatePGReposForBackup(
 	ctx context.Context,
 	db *everestv1alpha1.DatabaseCluster,
-	newBackup *everestv1alpha1.DatabaseClusterBackup) error {
+	newBackup *everestv1alpha1.DatabaseClusterBackup,
+) error {
 	if db.Spec.Engine.Type != everestv1alpha1.DatabaseEnginePostgresql {
 		return nil
 	}

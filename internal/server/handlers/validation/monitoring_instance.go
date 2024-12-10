@@ -58,7 +58,6 @@ func validateCreateMonitoringInstanceRequest(params *api.CreateMonitoringInstanc
 }
 
 func validateUpdateMonitoringInstanceRequest(params *api.UpdateMonitoringInstanceJSONRequestBody) error {
-
 	if params.Url != "" {
 		if ok := validateURL(params.Url); !ok {
 			err := ErrInvalidURL("url")

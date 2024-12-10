@@ -8,12 +8,13 @@ import (
 	"time"
 
 	goversion "github.com/hashicorp/go-version"
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	"github.com/percona/everest/api"
-	"github.com/percona/everest/pkg/common"
 	"golang.org/x/mod/semver"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/api"
+	"github.com/percona/everest/pkg/common"
 )
 
 const (
@@ -169,7 +170,6 @@ func validateCreateDatabaseClusterRequest(dbc *everestv1alpha1.DatabaseCluster) 
 	if dbc.GetName() == "" {
 	}
 	if dbc.GetNamespace() == "" {
-
 	}
 	return validateRFC1035(dbc.GetName(), "metadata.name")
 }
@@ -441,7 +441,8 @@ func checkSchedulesChanges(oldDbc, newDbc *everestv1alpha1.DatabaseCluster) erro
 func validatePGReposForAPIDB(
 	ctx context.Context,
 	dbc *everestv1alpha1.DatabaseCluster,
-	getBackupsFunc func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error)) error {
+	getBackupsFunc func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error),
+) error {
 	if len(dbc.Spec.Backup.Schedules) == 0 {
 		return nil
 	}
