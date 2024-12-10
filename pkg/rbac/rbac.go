@@ -19,6 +19,7 @@ package rbac
 import (
 	"context"
 	"errors"
+	"io"
 	"io/fs"
 	"net/http"
 	"os"
@@ -137,7 +138,12 @@ func NewEnforcerFromFilePath(filePath string) (*casbin.Enforcer, error) {
 		return nil, err
 	}
 	defer f.Close()
-	adapter, err := readeradapter.New(f)
+	return NewIOReaderEnforcer(f)
+}
+
+// NewEnforcerFromReader creates a new Casbin enforcer with the policy stored in the given reader.
+func NewIOReaderEnforcer(r io.Reader) (*casbin.Enforcer, error) {
+	adapter, err := readeradapter.New(r)
 	if err != nil {
 		return nil, err
 	}

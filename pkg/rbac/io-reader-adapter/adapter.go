@@ -49,6 +49,11 @@ func New(in io.Reader) (*Adapter, error) {
 	}, nil
 }
 
+// SetContent sets the content of the adapter.
+func (a *Adapter) SetContent(content string) {
+	a.content = content
+}
+
 // LoadPolicy loads all policy rules from the storage.
 func (a *Adapter) LoadPolicy(model model.Model) error {
 	strs := strings.Split(a.content, "\n")

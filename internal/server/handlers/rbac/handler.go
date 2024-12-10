@@ -53,7 +53,7 @@ func (h *rbacHandler) enforce(
 	action,
 	object string,
 ) error {
-	ok, err := h.enforcer.Enforce("alice", "data1", "read")
+	ok, err := h.enforcer.Enforce(subject, resource, action, object)
 	if err != nil {
 		return fmt.Errorf("enforce error: %w", err)
 	}
