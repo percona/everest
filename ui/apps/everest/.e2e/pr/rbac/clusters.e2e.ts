@@ -14,7 +14,47 @@ test.describe('Clusters RBAC', () => {
     namespace = namespaces[0];
   });
 
-  test('should allow cluster creation', async ({ page }) => {
+  test('should allow cluster creation when there are already clusters', async ({
+    page,
+  }) => {
+    await mockEngines(page, namespace);
+    await mockRbacPermissions(page, [
+      [user, 'namespaces', 'read', namespace],
+      [user, 'database-engines', '*', `${namespace}/*`],
+      [user, 'database-clusters', '*', `${namespace}/*`],
+    ]);
+    await page.route(
+      `/v1/namespaces/${namespace}/database-clusters`,
+      async (route) => {
+        await route.fulfill({
+          json: {
+            items: [
+              {
+                metadata: {
+                  name: 'cluster-1',
+                  namespace,
+                },
+                spec: {
+                  databaseName: 'db-1',
+                  engine: {
+                    type: 'pxc',
+                    storage: {
+                      size: '1Gi',
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        });
+      }
+    );
+    await page.goto('/databases');
+    await expect(page.getByText('Create database')).toBeVisible();
+    await expect(page.getByText('Create database')).not.toBeDisabled();
+  });
+
+  test('should allow cluster creation from empty table', async ({ page }) => {
     await mockEngines(page, namespace);
     await mockRbacPermissions(page, [
       [user, 'namespaces', 'read', namespace],
@@ -26,7 +66,48 @@ test.describe('Clusters RBAC', () => {
     await expect(page.getByText('Create database')).not.toBeDisabled();
   });
 
-  test('should not allow cluster creation', async ({ page }) => {
+  test('should not allow cluster creation when there are already clusters', async ({
+    page,
+  }) => {
+    await mockEngines(page, namespace);
+    await page.route(
+      `/v1/namespaces/${namespace}/database-clusters`,
+      async (route) => {
+        await route.fulfill({
+          json: {
+            items: [
+              {
+                metadata: {
+                  name: 'cluster-1',
+                  namespace,
+                },
+                spec: {
+                  databaseName: 'db-1',
+                  engine: {
+                    type: 'pxc',
+                    storage: {
+                      size: '1Gi',
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        });
+      }
+    );
+    await mockRbacPermissions(page, [
+      [user, 'namespaces', 'read', namespace],
+      [user, 'database-engines', '*', `${namespace}/*`],
+      [user, 'database-clusters', 'read', `${namespace}/*`],
+    ]);
+    await page.goto('/databases');
+    await expect(page.getByText('Create database')).not.toBeVisible();
+  });
+
+  test('should not allow cluster creation from empty table', async ({
+    page,
+  }) => {
     await mockEngines(page, namespace);
     await mockRbacPermissions(page, [
       [user, 'namespaces', 'read', namespace],
