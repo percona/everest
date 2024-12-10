@@ -3,7 +3,7 @@ module github.com/percona/everest
 go 1.23.2
 
 replace (
-	github.com/containerd/containerd => github.com/containerd/containerd v1.7.13
+	github.com/containerd/containerd v1.7.12 => github.com/containerd/containerd v1.7.13
 	k8s.io/api => k8s.io/api v0.31.1
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.31.1
 	k8s.io/apimachinery => k8s.io/apimachinery v0.31.1
