@@ -57,7 +57,6 @@ func (e *EverestServer) GetDatabaseEngine(ctx echo.Context, namespace, name stri
 		return err
 	}
 	return ctx.JSON(http.StatusOK, result)
-
 }
 
 // UpdateDatabaseEngine Update the specified database engine on the specified namespace.
