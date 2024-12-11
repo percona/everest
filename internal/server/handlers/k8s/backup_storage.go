@@ -32,7 +32,8 @@ func (h *k8sHandler) CreateBackupStorage(ctx context.Context, user, namespace st
 		return nil, k8serrors.NewAlreadyExists(schema.GroupResource{
 			Group:    everestv1alpha1.GroupVersion.Group,
 			Resource: "backupstorages",
-		}, req.Name)
+		}, req.Name,
+		)
 	}
 
 	secret := &corev1.Secret{

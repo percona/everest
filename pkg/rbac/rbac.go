@@ -21,7 +21,6 @@ import (
 	"errors"
 	"io"
 	"io/fs"
-	"net/http"
 	"os"
 	"slices"
 	"strings"
@@ -248,53 +247,6 @@ func buildPathResourceMap(basePath string) (map[string]string, []string, error) 
 		skipPaths = append(skipPaths, parsedPath)
 	}
 	return resourceMap, skipPaths, nil
-}
-
-// NewEnforceHandler returns a function that checks if a user is allowed to access a resource.
-func NewEnforceHandler(l *zap.SugaredLogger, basePath string, enforcer *casbin.Enforcer) func(c echo.Context, user string) (bool, error) {
-	pathResourceMap, _, err := buildPathResourceMap(basePath)
-	if err != nil {
-		panic("failed to build path resource map: " + err.Error())
-	}
-	return func(c echo.Context, user string) (bool, error) {
-		actionMethodMap := map[string]string{
-			http.MethodGet:    ActionRead,
-			http.MethodPost:   ActionCreate,
-			http.MethodPut:    ActionUpdate,
-			http.MethodPatch:  ActionUpdate,
-			http.MethodDelete: ActionDelete,
-		}
-		var resource string
-		var object string
-		resource, ok := pathResourceMap[c.Path()]
-		if !ok {
-			return false, errors.New("invalid URL")
-		}
-		action, ok := actionMethodMap[c.Request().Method]
-		if !ok {
-			return false, errors.New("invalid method")
-		}
-		namespace := c.Param("namespace")
-		name := c.Param("name")
-		object = namespace + "/" + name
-		// Always allowing listing all namespaces.
-		// The result is filtered based on permission.
-		if resource == ResourceNamespaces {
-			return true, nil
-		}
-
-		if isAllowedRBAC(name, action, resource) {
-			return true, nil
-		}
-
-		if ok, err := enforcer.Enforce(user, resource, action, object); err != nil {
-			return false, errors.Join(err, errors.New("failed to enforce policy"))
-		} else if !ok {
-			l.Warnf("Permission denied: [%s %s %s %s]", user, resource, action, object)
-			return false, nil
-		}
-		return enforcer.Enforce(user, resource, action, object)
-	}
 }
 
 func isAllowedRBAC(name, action, resource string) bool {
