@@ -1,3 +1,4 @@
+// Package validation provides the validation handler.
 package validation
 
 import (
@@ -20,6 +21,8 @@ type validateHandler struct {
 }
 
 // New returns a new RBAC handler.
+//
+//nolint:ireturn
 func New(
 	log *zap.SugaredLogger,
 	kubeClient *kubernetes.Kubernetes,

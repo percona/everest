@@ -48,7 +48,7 @@ func (h *rbacHandler) DeleteDatabaseClusterBackup(ctx context.Context, user, nam
 	}
 	clusterName := backup.Spec.DBClusterName
 	if err := h.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionDelete, rbac.ObjectName(namespace, clusterName)); err != nil {
-		return nil
+		return err
 	}
 	return h.next.DeleteDatabaseClusterBackup(ctx, user, namespace, name, req)
 }
@@ -72,7 +72,7 @@ func (h *rbacHandler) enforceDBBackupRead(user string, dbbackup *everestv1alpha1
 		return err
 	}
 	if err := h.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionRead, rbac.ObjectName(namespace, clusterName)); err != nil {
-		return nil
+		return err
 	}
 	return nil
 }

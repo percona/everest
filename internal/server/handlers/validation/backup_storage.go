@@ -321,7 +321,7 @@ func basicStorageParamsAreChanged(bs *everestv1alpha1.BackupStorage, params *api
 	return false
 }
 
-//nolint:funlen,cyclop
+//nolint:funlen
 func (h *validateHandler) validateUpdateBackupStorageRequest(
 	ctx context.Context,
 	l *zap.SugaredLogger,

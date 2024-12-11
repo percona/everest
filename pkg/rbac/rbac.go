@@ -133,15 +133,15 @@ func newEnforcer(adapter persist.Adapter, enableLogs bool) (*casbin.Enforcer, er
 
 // NewEnforcerFromFilePath creates a new Casbin enforcer with the policy stored at the given filePath.
 func NewEnforcerFromFilePath(filePath string) (*casbin.Enforcer, error) {
-	f, err := os.Open(filePath)
+	f, err := os.Open(filePath) //nolint:gosec
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 	return NewIOReaderEnforcer(f)
 }
 
-// NewEnforcerFromReader creates a new Casbin enforcer with the policy stored in the given reader.
+// NewIOReaderEnforcer creates a new Casbin enforcer with the policy stored in the given io.Reader.
 func NewIOReaderEnforcer(r io.Reader) (*casbin.Enforcer, error) {
 	adapter, err := readeradapter.New(r)
 	if err != nil {

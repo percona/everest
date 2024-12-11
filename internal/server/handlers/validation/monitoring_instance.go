@@ -29,6 +29,9 @@ func (h *validateHandler) GetMonitoringInstance(ctx context.Context, user, names
 }
 
 func (h *validateHandler) UpdateMonitoringInstance(ctx context.Context, user, namespace, name string, req *api.UpdateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
+	if err := validateUpdateMonitoringInstanceRequest(req); err != nil {
+		return nil, errors.Join(errInvalidRequest, err)
+	}
 	return h.next.UpdateMonitoringInstance(ctx, user, namespace, name, req)
 }
 

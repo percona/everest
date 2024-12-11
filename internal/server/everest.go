@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package api contains the API server implementation.
+// Package server contains the API server implementation.
 package server
 
 import (
@@ -34,11 +34,9 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
-	. "github.com/percona/everest/api"
+	"github.com/percona/everest/api"
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/internal/server/handlers"
 	k8shandler "github.com/percona/everest/internal/server/handlers/k8s"
@@ -102,10 +100,8 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 }
 
 // initHTTPServer configures http server for the current EverestServer instance.
-//
-//nolint:funlen
 func (e *EverestServer) initHTTPServer(ctx context.Context) error {
-	swagger, err := GetSwagger()
+	swagger, err := api.GetSwagger()
 	if err != nil {
 		return err
 	}
@@ -159,11 +155,12 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	apiGroup.Use(jwtMW)
 
 	apiGroup.Use(e.checkOperatorUpgradeState)
-	RegisterHandlers(apiGroup, e)
+	api.RegisterHandlers(apiGroup, e)
 
 	return nil
 }
 
+//nolint:ireturn
 func newHandlerChain(
 	ctx context.Context,
 	log *zap.SugaredLogger,
@@ -249,7 +246,7 @@ func (e *EverestServer) jwtMiddleWare(ctx context.Context) (echo.MiddlewareFunc,
 }
 
 func newSkipperFunc() (echomiddleware.Skipper, error) {
-	swagger, err := GetSwagger()
+	swagger, err := api.GetSwagger()
 	if err != nil {
 		return nil, err
 	}
@@ -362,13 +359,4 @@ func enforcerErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 		}
 		next(err, c)
 	}
-}
-
-func attachK8sTypeMeta(obj client.Object) {
-	gvk, err := apiutil.GVKForObject(obj, scheme.Scheme)
-	if err != nil {
-		// we expect a valid GVK for the object, but since we cannot get it, we should halt the execution.
-		panic(errors.Join(err, errors.New("could not get GVK for object")))
-	}
-	obj.GetObjectKind().SetGroupVersionKind(gvk)
 }

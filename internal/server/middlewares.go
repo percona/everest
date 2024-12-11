@@ -24,7 +24,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	. "github.com/percona/everest/api"
+	"github.com/percona/everest/api"
 )
 
 func (e *EverestServer) shouldAllowRequestDuringEngineUpgrade(c echo.Context) (bool, error) {
@@ -77,7 +77,7 @@ func (e *EverestServer) checkOperatorUpgradeState(next echo.HandlerFunc) echo.Ha
 			e.l.Error(err)
 			return err
 		} else if !allow {
-			return c.JSON(http.StatusPreconditionFailed, Error{
+			return c.JSON(http.StatusPreconditionFailed, api.Error{
 				Message: pointer.ToString("Cannot perform this operation while the operator is upgrading"),
 			})
 		}

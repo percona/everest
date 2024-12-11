@@ -18,7 +18,8 @@ func (h *rbacHandler) ListBackupStorages(ctx context.Context, user, namespace st
 	filtered := []everestv1alpha1.BackupStorage{}
 	for _, bs := range list.Items {
 		if err := h.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead,
-			rbac.ObjectName(namespace, bs.GetName())); errors.Is(err, ErrInsufficientPermissions) {
+			rbac.ObjectName(namespace, bs.GetName()),
+		); errors.Is(err, ErrInsufficientPermissions) {
 			continue
 		} else if err != nil {
 			return nil, fmt.Errorf("enforce failed: %w", err)

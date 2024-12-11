@@ -18,7 +18,8 @@ func (h *rbacHandler) ListDatabaseClusterRestores(ctx context.Context, user, nam
 	for _, dbbrestore := range list.Items {
 		clusterName := dbbrestore.Spec.DBClusterName
 		if err := h.enforce(user, rbac.ResourceDatabaseClusterRestores,
-			rbac.ActionRead, rbac.ObjectName(namespace, clusterName)); errors.Is(err, ErrInsufficientPermissions) {
+			rbac.ActionRead, rbac.ObjectName(namespace, clusterName),
+		); errors.Is(err, ErrInsufficientPermissions) {
 			continue
 		} else if err != nil {
 			return nil, err

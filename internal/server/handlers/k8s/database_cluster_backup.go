@@ -16,7 +16,7 @@ const (
 	databaseClusterNameLabel = "clusterName"
 )
 
-func (h *k8sHandler) ListDatabaseClusterBackups(ctx context.Context, user, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterBackupList, error) {
+func (h *k8sHandler) ListDatabaseClusterBackups(ctx context.Context, _, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterBackupList, error) {
 	return h.kubeClient.ListDatabaseClusterBackups(ctx, namespace, metav1.ListOptions{
 		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
 			MatchLabels: map[string]string{
@@ -26,7 +26,7 @@ func (h *k8sHandler) ListDatabaseClusterBackups(ctx context.Context, user, names
 	})
 }
 
-func (h *k8sHandler) CreateDatabaseClusterBackup(ctx context.Context, user string, req *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
+func (h *k8sHandler) CreateDatabaseClusterBackup(ctx context.Context, _ string, req *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
 	if ok, err := h.ensureNoBackupsRunningForCluster(ctx, req.Spec.DBClusterName, req.GetNamespace()); err != nil {
 		return nil, errors.Join(err, errors.New("could not check if backups are running"))
 	} else if !ok {
@@ -35,7 +35,7 @@ func (h *k8sHandler) CreateDatabaseClusterBackup(ctx context.Context, user strin
 	return h.kubeClient.CreateDatabaseClusterBackup(ctx, req)
 }
 
-func (h *k8sHandler) DeleteDatabaseClusterBackup(ctx context.Context, user, namespace, name string, req *api.DeleteDatabaseClusterBackupParams) error {
+func (h *k8sHandler) DeleteDatabaseClusterBackup(ctx context.Context, _, namespace, name string, req *api.DeleteDatabaseClusterBackupParams) error {
 	cleanupStorage := pointer.Get(req.CleanupBackupStorage)
 	backup, err := h.kubeClient.GetDatabaseClusterBackup(ctx, namespace, name)
 	if err != nil {
@@ -53,7 +53,7 @@ func (h *k8sHandler) DeleteDatabaseClusterBackup(ctx context.Context, user, name
 	return h.kubeClient.DeleteDatabaseClusterBackup(ctx, namespace, name)
 }
 
-func (h *k8sHandler) GetDatabaseClusterBackup(ctx context.Context, user, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error) {
+func (h *k8sHandler) GetDatabaseClusterBackup(ctx context.Context, _, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error) {
 	return h.kubeClient.GetDatabaseClusterBackup(ctx, namespace, name)
 }
 

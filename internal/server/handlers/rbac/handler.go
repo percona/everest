@@ -1,3 +1,4 @@
+// Package rbac provides the RBAC handler.
 package rbac
 
 import (
@@ -25,6 +26,8 @@ type rbacHandler struct {
 }
 
 // New returns a new RBAC handler.
+//
+//nolint:ireturn
 func New(
 	ctx context.Context,
 	log *zap.SugaredLogger,

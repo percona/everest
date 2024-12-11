@@ -1,3 +1,4 @@
+// Package handlers contains the interface and types for the Everest API handlers.
 package handlers
 
 //go:generate ../../../bin/mockery --name=Handler --case=snake --inpackage
@@ -13,6 +14,8 @@ import (
 // Each implementation of a handler is responsible for handling a specific set of operations (e.g, request validation, RBAC, KubeAPI, etc.).
 // Handlers may be chained together using the SetNext() method to form a chain of responsibility.
 // Each Handler implementation is individually responsible for calling the next handler in the chain.
+//
+//nolint:interfacebloat
 type Handler interface {
 	// SetNext sets the next handler to call in the chain.
 	SetNext(h Handler)

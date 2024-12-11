@@ -86,7 +86,7 @@ func (h *validateHandler) validateDatabaseClusterCR(
 		return err
 	}
 
-	engineName, ok := common.OperatorTypeToName[everestv1alpha1.EngineType(databaseCluster.Spec.Engine.Type)]
+	engineName, ok := common.OperatorTypeToName[databaseCluster.Spec.Engine.Type]
 	if !ok {
 		return errors.New("unsupported database engine")
 	}
@@ -167,10 +167,6 @@ func validateSharding(dbc *everestv1alpha1.DatabaseCluster) error {
 }
 
 func validateCreateDatabaseClusterRequest(dbc *everestv1alpha1.DatabaseCluster) error {
-	if dbc.GetName() == "" {
-	}
-	if dbc.GetNamespace() == "" {
-	}
 	return validateRFC1035(dbc.GetName(), "metadata.name")
 }
 
@@ -259,7 +255,8 @@ func validateBackupSpec(cluster *everestv1alpha1.DatabaseCluster) error {
 	if !cluster.Spec.Backup.Enabled {
 		return nil
 	}
-	if cluster.Spec.Backup.Schedules == nil || len(cluster.Spec.Backup.Schedules) == 0 {
+
+	if len(cluster.Spec.Backup.Schedules) == 0 {
 		return errNoSchedules
 	}
 
@@ -306,7 +303,7 @@ func checkDuplicateSchedules(schedules []everestv1alpha1.BackupSchedule) error {
 	return nil
 }
 
-func (h *validateHandler) validateBackupStoragesFor( //nolint:cyclop
+func (h *validateHandler) validateBackupStoragesFor(
 	ctx context.Context,
 	namespace string,
 	databaseCluster *everestv1alpha1.DatabaseCluster,
@@ -529,10 +526,10 @@ func validateStorageSize(cluster *everestv1alpha1.DatabaseCluster) error {
 
 func validateMetadata(obj metav1.Object) error {
 	if obj.GetNamespace() == "" {
-		return errDBCNamespaceEmpty
+		return errEmptyNamespace
 	}
 	if obj.GetName() == "" {
-		return errDBCNameEmpty
+		return errEmptyName
 	}
 	return nil
 }

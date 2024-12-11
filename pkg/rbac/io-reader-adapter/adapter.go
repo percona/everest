@@ -1,4 +1,4 @@
-// Package fileadapter provides a file adapter for Casbin.
+// Package readeradapter provides a Casbin adapter for reading policy from an io.Reader source.
 package readeradapter
 
 import (

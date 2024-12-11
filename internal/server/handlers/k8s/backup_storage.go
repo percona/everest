@@ -14,11 +14,11 @@ import (
 	"github.com/percona/everest/api"
 )
 
-func (h *k8sHandler) ListBackupStorages(ctx context.Context, user, namespace string) (*everestv1alpha1.BackupStorageList, error) {
+func (h *k8sHandler) ListBackupStorages(ctx context.Context, _, namespace string) (*everestv1alpha1.BackupStorageList, error) {
 	return h.kubeClient.ListBackupStorages(ctx, namespace)
 }
 
-func (h *k8sHandler) GetBackupStorage(ctx context.Context, user, namespace, name string) (*everestv1alpha1.BackupStorage, error) {
+func (h *k8sHandler) GetBackupStorage(ctx context.Context, _, namespace, name string) (*everestv1alpha1.BackupStorage, error) {
 	return h.kubeClient.GetBackupStorage(ctx, namespace, name)
 }
 
@@ -81,7 +81,7 @@ func (h *k8sHandler) CreateBackupStorage(ctx context.Context, user, namespace st
 	return updated, nil
 }
 
-func (h *k8sHandler) UpdateBackupStorage(ctx context.Context, user, namespace, name string, req *api.UpdateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
+func (h *k8sHandler) UpdateBackupStorage(ctx context.Context, _, namespace, name string, req *api.UpdateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
 	if req.AccessKey != nil || req.SecretKey != nil {
 		_, err := h.kubeClient.UpdateSecret(ctx, &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -122,7 +122,7 @@ func (h *k8sHandler) UpdateBackupStorage(ctx context.Context, user, namespace, n
 	return h.kubeClient.UpdateBackupStorage(ctx, bs)
 }
 
-func (h *k8sHandler) DeleteBackupStorage(ctx context.Context, user, namespace, name string) error {
+func (h *k8sHandler) DeleteBackupStorage(ctx context.Context, _, namespace, name string) error {
 	used, err := h.kubeClient.IsBackupStorageUsed(ctx, namespace, name)
 	if err != nil {
 		return fmt.Errorf("failed to check if backup storage is used: %w", err)

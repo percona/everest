@@ -15,6 +15,8 @@ type k8sHandler struct {
 }
 
 // New returns a new RBAC handler.
+//
+//nolint:ireturn
 func New(log *zap.SugaredLogger, kubeClient *kubernetes.Kubernetes, vsURL string) handlers.Handler {
 	l := log.With("handler", "k8s")
 	return &k8sHandler{
@@ -25,4 +27,4 @@ func New(log *zap.SugaredLogger, kubeClient *kubernetes.Kubernetes, vsURL string
 }
 
 // SetNext sets the next handler to call in the chain.
-func (h *k8sHandler) SetNext(next handlers.Handler) {}
+func (h *k8sHandler) SetNext(_ handlers.Handler) {}

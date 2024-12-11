@@ -26,7 +26,8 @@ func (h *rbacHandler) CreateDatabaseCluster(ctx context.Context, user string, db
 	if len(schedules) > 0 {
 		// To create a cluster with backup schedules, the user needs to explicitly have permissions to take backups.
 		if err := h.enforce(user, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate,
-			rbac.ObjectName(namespace, "")); err != nil {
+			rbac.ObjectName(namespace, ""),
+		); err != nil {
 			return nil, err
 		}
 		// User should be able to read a backup storage to use it in a backup schedule.
@@ -43,7 +44,8 @@ func (h *rbacHandler) CreateDatabaseCluster(ctx context.Context, user string, db
 	if dataSrc := db.Spec.DataSource; dataSrc != nil && dataSrc.DBClusterBackupName != "" {
 		sourceBackup := dataSrc.DBClusterBackupName
 		if err := h.enforce(user, rbac.ResourceDatabaseClusterRestores,
-			rbac.ActionCreate, rbac.ObjectName(namespace, "")); err != nil {
+			rbac.ActionCreate, rbac.ObjectName(namespace, ""),
+		); err != nil {
 			return nil, err
 		}
 		// Get the name of the source database cluster.

@@ -12,13 +12,7 @@ var (
 	minCPUQuantity     = resource.MustParse("600m") //nolint:gochecknoglobals
 	minMemQuantity     = resource.MustParse("512M") //nolint:gochecknoglobals
 
-	errDBCEmptyMetadata              = errors.New("databaseCluster's Metadata should not be empty")
-	errDBCNameEmpty                  = errors.New("databaseCluster's metadata.name should not be empty")
-	errDBCNamespaceEmpty             = errors.New("databaseCluster's metadata.namespace should not be empty")
-	errDBCNameWrongFormat            = errors.New("databaseCluster's metadata.name should be a string")
-	errDBCNamespaceWrongFormat       = errors.New("databaseCluster's metadata.namespace should be a string")
 	errNotEnoughMemory               = fmt.Errorf("memory limits should be above %s", minMemQuantity.String())
-	errInt64NotSupported             = errors.New("specifying resources using int64 data type is not supported. Please use string format for that")
 	errNotEnoughCPU                  = fmt.Errorf("CPU limits should be above %s", minCPUQuantity.String())
 	errNotEnoughDiskSize             = fmt.Errorf("storage size should be above %s", minStorageQuantity.String())
 	errUnsupportedPXCProxy           = errors.New("you can use either HAProxy or Proxy SQL for PXC clusters")
@@ -38,11 +32,8 @@ var (
 	errDataSourceWrongDateFormat     = errors.New("failed to parse .Spec.DataSource.Pitr.Date as 2006-01-02T15:04:05Z")
 	errDataSourceNoBackupStorageName = errors.New("'backupStorageName' should be specified in .Spec.DataSource.BackupSource")
 	errDataSourceNoPath              = errors.New("'path' should be specified in .Spec.DataSource.BackupSource")
-	errIncorrectDataSourceStruct     = errors.New("incorrect data source struct")
 	errUnsupportedPitrType           = errors.New("the given point-in-time recovery type is not supported")
 	errTooManyPGStorages             = fmt.Errorf("only %d different storages are allowed in a PostgreSQL cluster", pgReposLimit)
-	errNoMetadata                    = fmt.Errorf("no metadata provided")
-	errInvalidResourceVersion        = fmt.Errorf("invalid 'resourceVersion' value")
 	errInvalidBucketName             = fmt.Errorf("invalid bucketName")
 	errInvalidVersion                = errors.New("invalid database engine version provided")
 	errDBEngineMajorVersionUpgrade   = errors.New("database engine cannot be upgraded to a major version")
@@ -52,7 +43,6 @@ var (
 	errStorageChangePG               = errors.New("the existing postgres schedules can't change their storage")
 	errDuplicatedBackupStorage       = errors.New("backup storages with the same url, bucket and url are not allowed")
 	errEditBackupStorageInUse        = errors.New("can't edit bucket or region of the backup storage in use")
-	errInsufficientPermissions       = errors.New("insufficient permissions for performing the operation")
 	errShardingIsNotSupported        = errors.New("sharding is not supported")
 	errInsufficientShardsNumber      = errors.New("shards number should be greater than 0")
 	errInsufficientCfgSrvNumber      = errors.New("sharding: minimum config servers number is 3")
@@ -64,6 +54,8 @@ var (
 	errEvenEngineReplicas            = errors.New("engine replicas number should be odd")
 	errMaxPXCEngineReplicas          = errors.New("max replicas number for MySQL is 5")
 	errMinPXCProxyReplicas           = errors.New("min replicas number for Proxy is 2")
+	errEmptyName                     = errors.New("name cannot be empty")
+	errEmptyNamespace                = errors.New("namespace cannot be empty")
 )
 
 // ErrUpdateStorageNotSupported appears when trying to update a storage of a type that is not supported.

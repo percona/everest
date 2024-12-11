@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func (h *k8sHandler) ListNamespaces(ctx context.Context, user string) ([]string, error) {
+func (h *k8sHandler) ListNamespaces(ctx context.Context, _ string) ([]string, error) {
 	result, err := h.kubeClient.GetDBNamespaces(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetDBNamespaces: %w", err)

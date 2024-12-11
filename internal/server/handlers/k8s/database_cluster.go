@@ -34,15 +34,15 @@ const (
 	pgDefaultUploadInterval = 60
 )
 
-func (h *k8sHandler) CreateDatabaseCluster(ctx context.Context, user string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
+func (h *k8sHandler) CreateDatabaseCluster(ctx context.Context, _ string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
 	return h.kubeClient.CreateDatabaseCluster(ctx, db)
 }
 
-func (h *k8sHandler) ListDatabaseClusters(ctx context.Context, user, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
+func (h *k8sHandler) ListDatabaseClusters(ctx context.Context, _, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
 	return h.kubeClient.ListDatabaseClusters(ctx, namespace)
 }
 
-func (h *k8sHandler) DeleteDatabaseCluster(ctx context.Context, user, namespace, name string, req *api.DeleteDatabaseClusterParams) error {
+func (h *k8sHandler) DeleteDatabaseCluster(ctx context.Context, _, namespace, name string, req *api.DeleteDatabaseClusterParams) error {
 	cleanupStorage := pointer.Get(req.CleanupBackupStorage)
 
 	backups, err := h.kubeClient.ListDatabaseClusterBackups(ctx, namespace, metav1.ListOptions{})
@@ -76,15 +76,15 @@ func (h *k8sHandler) DeleteDatabaseCluster(ctx context.Context, user, namespace,
 	return h.kubeClient.DeleteDatabaseCluster(ctx, namespace, name)
 }
 
-func (h *k8sHandler) UpdateDatabaseCluster(ctx context.Context, user string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
+func (h *k8sHandler) UpdateDatabaseCluster(ctx context.Context, _ string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
 	return h.kubeClient.UpdateDatabaseCluster(ctx, db)
 }
 
-func (h *k8sHandler) GetDatabaseCluster(ctx context.Context, user, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
+func (h *k8sHandler) GetDatabaseCluster(ctx context.Context, _, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
 	return h.kubeClient.GetDatabaseCluster(ctx, namespace, name)
 }
 
-func (h *k8sHandler) GetDatabaseClusterCredentials(ctx context.Context, user, namespace, name string) (*api.DatabaseClusterCredential, error) {
+func (h *k8sHandler) GetDatabaseClusterCredentials(ctx context.Context, _, namespace, name string) (*api.DatabaseClusterCredential, error) {
 	databaseCluster, err := h.kubeClient.GetDatabaseCluster(ctx, namespace, name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get database cluster %s/%s: %w", namespace, name, err)
@@ -112,7 +112,8 @@ func (h *k8sHandler) GetDatabaseClusterCredentials(ctx context.Context, user, na
 	return response, nil
 }
 
-func (h *k8sHandler) GetDatabaseClusterComponents(ctx context.Context, user, namespace, name string) ([]api.DatabaseClusterComponent, error) {
+//nolint:funlen
+func (h *k8sHandler) GetDatabaseClusterComponents(ctx context.Context, _, namespace, name string) ([]api.DatabaseClusterComponent, error) {
 	pods, err := h.kubeClient.GetPods(ctx, namespace, &metav1.LabelSelector{
 		MatchLabels: map[string]string{"app.kubernetes.io/instance": name},
 	})
@@ -180,7 +181,7 @@ func (h *k8sHandler) GetDatabaseClusterComponents(ctx context.Context, user, nam
 	return res, nil
 }
 
-func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, user, namespace, name string) (*api.DatabaseClusterPitr, error) {
+func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, _, namespace, name string) (*api.DatabaseClusterPitr, error) {
 	databaseCluster, err := h.kubeClient.GetDatabaseCluster(ctx, namespace, name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get database cluster %s/%s: %w", namespace, name, err)
@@ -233,7 +234,7 @@ func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, user, namespace
 }
 
 //nolint:gochecknoglobals
-var everestAPIConstantBackoff = backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), 10)
+var everestAPIConstantBackoff = backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), 10) //nolint:mnd
 
 func (h *k8sHandler) ensureBackupStorageProtection(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
 	// We wrap this logic in a retry loop to reduce the chances of resource conflicts.

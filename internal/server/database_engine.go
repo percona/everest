@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package api ...
+// Package server contains the API server implementation.
 package server
 
 import (
@@ -60,6 +60,8 @@ func (e *EverestServer) GetDatabaseEngine(ctx echo.Context, namespace, name stri
 }
 
 // UpdateDatabaseEngine Update the specified database engine on the specified namespace.
+//
+//nolint:dupl
 func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name string) error {
 	dbe := &everestv1alpha1.DatabaseEngine{}
 	if err := e.getBodyFromContext(ctx, dbe); err != nil {
@@ -69,6 +71,7 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 		})
 	}
 	dbe.SetNamespace(namespace)
+	dbe.SetName(name)
 
 	user, err := rbac.GetUser(ctx)
 	if err != nil {

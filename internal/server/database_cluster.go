@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package api ...
+// Package server contains the API server implementation.
 package server
 
 import (
@@ -50,17 +50,16 @@ func (e *EverestServer) CreateDatabaseCluster(c echo.Context, namespace string) 
 	result, err := e.handler.CreateDatabaseCluster(c.Request().Context(), user, dbc)
 	if err != nil {
 		return err
-	} else {
-		// Collect metrics immediately after a DB cluster has been created.
-		go func() {
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-			defer cancel()
-
-			if err := e.collectMetrics(ctx, *e.config); err != nil {
-				e.l.Errorf("Could not send metrics: %s", err)
-			}
-		}()
 	}
+	// Collect metrics immediately after a DB cluster has been created.
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+
+		if err := e.collectMetrics(ctx, *e.config); err != nil {
+			e.l.Errorf("Could not send metrics: %s", err)
+		}
+	}()
 	return c.JSON(http.StatusCreated, result)
 }
 
@@ -128,6 +127,8 @@ func (e *EverestServer) GetDatabaseClusterComponents(c echo.Context, namespace, 
 }
 
 // UpdateDatabaseCluster replaces the specified database cluster on the specified kubernetes cluster.
+//
+//nolint:dupl
 func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name string) error {
 	dbc := &everestv1alpha1.DatabaseCluster{}
 	if err := e.getBodyFromContext(ctx, dbc); err != nil {
@@ -137,6 +138,7 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 		})
 	}
 	dbc.SetNamespace(namespace)
+	dbc.SetName(name)
 
 	user, err := rbac.GetUser(ctx)
 	if err != nil {

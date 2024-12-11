@@ -1,3 +1,6 @@
+// Package client contains the client for the custom resources.
+//
+//nolint:dupl
 package client
 
 import (

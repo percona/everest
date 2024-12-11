@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package api ...
+// Package server contains the API server implementation.
 package server
 
 import (

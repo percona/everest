@@ -109,7 +109,7 @@ func (e *EverestServer) GetMonitoringInstance(ctx echo.Context, namespace, name 
 }
 
 // UpdateMonitoringInstance updates a monitoring instance based on the provided fields.
-func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, namespace, name string) error { //nolint:funlen,cyclop
+func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, namespace, name string) error {
 	var params api.UpdateMonitoringInstanceJSONRequestBody
 	if err := ctx.Bind(&params); err != nil {
 		return err

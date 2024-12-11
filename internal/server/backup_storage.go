@@ -62,7 +62,7 @@ func (e *EverestServer) ListBackupStorages(c echo.Context, namespace string) err
 }
 
 // CreateBackupStorage creates a new backup storage object.
-func (e *EverestServer) CreateBackupStorage(c echo.Context, namespace string) error { //nolint:funlen
+func (e *EverestServer) CreateBackupStorage(c echo.Context, namespace string) error {
 	user, err := rbac.GetUser(c)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, api.Error{
@@ -113,7 +113,7 @@ func (e *EverestServer) GetBackupStorage(c echo.Context, namespace, name string)
 }
 
 // UpdateBackupStorage updates of the specified backup storage.
-func (e *EverestServer) UpdateBackupStorage(c echo.Context, namespace, name string) error { //nolint:funlen,cyclop
+func (e *EverestServer) UpdateBackupStorage(c echo.Context, namespace, name string) error {
 	user, err := rbac.GetUser(c)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, api.Error{

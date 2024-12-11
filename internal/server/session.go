@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package api ...
+// Package server ...
 package server
 
 import (
@@ -26,7 +26,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
-	. "github.com/percona/everest/api"
+	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/accounts"
 	"github.com/percona/everest/pkg/common"
 )
@@ -38,7 +38,7 @@ const (
 
 // CreateSession creates a new session.
 func (e *EverestServer) CreateSession(ctx echo.Context) error {
-	var params UserCredentials
+	var params api.UserCredentials
 	if err := ctx.Bind(&params); err != nil {
 		return err
 	}
@@ -74,19 +74,19 @@ func (e *EverestServer) CreateSession(ctx echo.Context) error {
 func sessionErrToHTTPRes(ctx echo.Context, err error) error {
 	if errors.Is(err, accounts.ErrAccountNotFound) ||
 		errors.Is(err, accounts.ErrIncorrectPassword) {
-		return ctx.JSON(http.StatusUnauthorized, Error{
+		return ctx.JSON(http.StatusUnauthorized, api.Error{
 			Message: pointer.To("Incorrect username or password provided"),
 		})
 	}
 
 	if errors.Is(err, accounts.ErrAccountDisabled) {
-		return ctx.JSON(http.StatusForbidden, Error{
+		return ctx.JSON(http.StatusForbidden, api.Error{
 			Message: pointer.To("User account is disabled"),
 		})
 	}
 
 	if errors.Is(err, accounts.ErrInsufficientCapabilities) {
-		return ctx.JSON(http.StatusForbidden, Error{
+		return ctx.JSON(http.StatusForbidden, api.Error{
 			Message: pointer.To("User account lacks required capabilities"),
 		})
 	}

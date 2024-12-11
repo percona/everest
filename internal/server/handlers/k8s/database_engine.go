@@ -22,19 +22,19 @@ var (
 	errDBEngineInvalidTargetVersion = errors.New("invalid target version provided for upgrade")
 )
 
-func (h *k8sHandler) ListDatabaseEngines(ctx context.Context, user, namespace string) (*everestv1alpha1.DatabaseEngineList, error) {
+func (h *k8sHandler) ListDatabaseEngines(ctx context.Context, _, namespace string) (*everestv1alpha1.DatabaseEngineList, error) {
 	return h.kubeClient.ListDatabaseEngines(ctx, namespace)
 }
 
-func (h *k8sHandler) GetDatabaseEngine(ctx context.Context, user, namespace, name string) (*everestv1alpha1.DatabaseEngine, error) {
+func (h *k8sHandler) GetDatabaseEngine(ctx context.Context, _, namespace, name string) (*everestv1alpha1.DatabaseEngine, error) {
 	return h.kubeClient.GetDatabaseEngine(ctx, namespace, name)
 }
 
-func (h *k8sHandler) UpdateDatabaseEngine(ctx context.Context, user string, req *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
+func (h *k8sHandler) UpdateDatabaseEngine(ctx context.Context, _ string, req *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
 	return h.kubeClient.UpdateDatabaseEngine(ctx, req)
 }
 
-func (h *k8sHandler) GetUpgradePlan(ctx context.Context, user, namespace string) (*api.UpgradePlan, error) {
+func (h *k8sHandler) GetUpgradePlan(ctx context.Context, _, namespace string) (*api.UpgradePlan, error) {
 	result, err := h.getUpgradePlan(ctx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to getUpgradePlan: %w", err)
@@ -63,7 +63,7 @@ func (h *k8sHandler) GetUpgradePlan(ctx context.Context, user, namespace string)
 	return result, nil
 }
 
-func (h *k8sHandler) ApproveUpgradePlan(ctx context.Context, user, namespace string) error {
+func (h *k8sHandler) ApproveUpgradePlan(ctx context.Context, _, namespace string) error {
 	up, err := h.getUpgradePlan(ctx, namespace)
 	if err != nil {
 		return err
@@ -80,7 +80,7 @@ func (h *k8sHandler) ApproveUpgradePlan(ctx context.Context, user, namespace str
 		if err := h.setLockDBEnginesForUpgrade(ctx, namespace, up, false); err != nil {
 			return errors.Join(err, errors.New("failed to release lock"))
 		}
-		return errors.New("One or more database clusters are not ready for upgrade")
+		return errors.New("one or more database clusters are not ready for upgrade")
 	}
 	// start upgrade process.
 	if err := h.startOperatorUpgradeWithRetry(ctx, namespace); err != nil {
