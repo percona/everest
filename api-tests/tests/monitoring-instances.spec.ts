@@ -135,7 +135,7 @@ test('delete monitoring instance', async ({ request, page }) => {
   await checkError(response)
 
   // list of the monitoring-instances is not updated immediately, there is some kind of cache
-  await page.waitForTimeout(500)
+  await page.waitForTimeout(1000)
 
   response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances`)
   await checkError(response)

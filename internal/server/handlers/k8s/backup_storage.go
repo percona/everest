@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
@@ -28,7 +29,10 @@ func (h *k8sHandler) CreateBackupStorage(ctx context.Context, user, namespace st
 		return nil, fmt.Errorf("failed to get backup storage: %w", err)
 	}
 	if bs != nil && bs.GetName() != "" {
-		return nil, fmt.Errorf("backup storage %s already exists", req.Name)
+		return nil, k8serrors.NewAlreadyExists(schema.GroupResource{
+			Group:    everestv1alpha1.GroupVersion.Group,
+			Resource: "backupstorages",
+		}, req.Name)
 	}
 
 	secret := &corev1.Secret{

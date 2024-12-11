@@ -44,19 +44,9 @@ func (e *EverestServer) ListBackupStorages(c echo.Context, namespace string) err
 
 	result := make([]api.BackupStorage, 0, len(list.Items))
 	for _, s := range list.Items {
-		result = append(result, api.BackupStorage{
-			Type:      api.BackupStorageType(s.Spec.Type),
-			Name:      s.GetName(),
-			Namespace: s.GetNamespace(),
-			//nolint:exportloopref
-			Description: &s.Spec.Description,
-			BucketName:  s.Spec.Bucket,
-			Region:      s.Spec.Region,
-			//nolint:exportloopref
-			Url:            &s.Spec.EndpointURL,
-			VerifyTLS:      s.Spec.VerifyTLS,
-			ForcePathStyle: s.Spec.ForcePathStyle,
-		})
+		out := &api.BackupStorage{}
+		out.FromCR(&s)
+		result = append(result, *out)
 	}
 	return c.JSON(http.StatusOK, result)
 }
@@ -78,7 +68,9 @@ func (e *EverestServer) CreateBackupStorage(c echo.Context, namespace string) er
 	if err != nil {
 		return err
 	}
-	return c.JSON(http.StatusCreated, result)
+	out := &api.BackupStorage{}
+	out.FromCR(result)
+	return c.JSON(http.StatusCreated, out)
 }
 
 // DeleteBackupStorage deletes the specified backup storage.
@@ -109,7 +101,10 @@ func (e *EverestServer) GetBackupStorage(c echo.Context, namespace, name string)
 	if err != nil {
 		return err
 	}
-	return c.JSON(http.StatusOK, result)
+
+	out := &api.BackupStorage{}
+	out.FromCR(result)
+	return c.JSON(http.StatusOK, out)
 }
 
 // UpdateBackupStorage updates of the specified backup storage.
@@ -129,5 +124,7 @@ func (e *EverestServer) UpdateBackupStorage(c echo.Context, namespace, name stri
 	if err != nil {
 		return err
 	}
-	return c.JSON(http.StatusOK, result)
+	out := &api.BackupStorage{}
+	out.FromCR(result)
+	return c.JSON(http.StatusOK, out)
 }

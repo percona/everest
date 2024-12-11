@@ -332,6 +332,10 @@ func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 			err = &echo.HTTPError{
 				Code: http.StatusNotFound,
 			}
+		case k8serrors.IsAlreadyExists(err):
+			err = &echo.HTTPError{
+				Code: http.StatusConflict,
+			}
 		case errors.Is(err, rbachandler.ErrInsufficientPermissions):
 			err = &echo.HTTPError{
 				Code:    http.StatusForbidden,

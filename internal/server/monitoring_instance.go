@@ -44,15 +44,9 @@ func (e *EverestServer) CreateMonitoringInstance(ctx echo.Context, namespace str
 		return err
 	}
 
-	result := api.MonitoringInstance{
-		Type:              api.MonitoringInstanceBaseWithNameType(params.Type),
-		Name:              created.GetName(),
-		Namespace:         created.GetNamespace(),
-		Url:               created.Spec.PMM.URL,
-		AllowedNamespaces: pointer.To(created.Spec.AllowedNamespaces),
-		VerifyTLS:         created.Spec.VerifyTLS,
-	}
-	return ctx.JSON(http.StatusOK, result)
+	out := &api.MonitoringInstance{}
+	out.FromCR(created)
+	return ctx.JSON(http.StatusOK, out)
 }
 
 // ListMonitoringInstances lists all monitoring instances.
@@ -71,15 +65,9 @@ func (e *EverestServer) ListMonitoringInstances(ctx echo.Context, namespace stri
 
 	result := make([]*api.MonitoringInstance, 0, len(mcList.Items))
 	for _, mc := range mcList.Items {
-		result = append(result, &api.MonitoringInstance{
-			Type:      api.MonitoringInstanceBaseWithNameType(mc.Spec.Type),
-			Name:      mc.GetName(),
-			Namespace: mc.GetNamespace(),
-			Url:       mc.Spec.PMM.URL,
-			//nolint:exportloopref
-			AllowedNamespaces: &mc.Spec.AllowedNamespaces,
-			VerifyTLS:         mc.Spec.VerifyTLS,
-		})
+		out := &api.MonitoringInstance{}
+		out.FromCR(&mc)
+		result = append(result, out)
 	}
 	return ctx.JSON(http.StatusOK, result)
 }
@@ -98,14 +86,9 @@ func (e *EverestServer) GetMonitoringInstance(ctx echo.Context, namespace, name 
 		return err
 	}
 
-	return ctx.JSON(http.StatusOK, &api.MonitoringInstance{
-		Type:              api.MonitoringInstanceBaseWithNameType(m.Spec.Type),
-		Name:              m.GetName(),
-		Namespace:         m.GetNamespace(),
-		Url:               m.Spec.PMM.URL,
-		AllowedNamespaces: &m.Spec.AllowedNamespaces,
-		VerifyTLS:         m.Spec.VerifyTLS,
-	})
+	out := &api.MonitoringInstance{}
+	out.FromCR(m)
+	return ctx.JSON(http.StatusOK, out)
 }
 
 // UpdateMonitoringInstance updates a monitoring instance based on the provided fields.
@@ -127,15 +110,9 @@ func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, namespace, na
 		return err
 	}
 
-	result := api.MonitoringInstance{
-		Type:              api.MonitoringInstanceBaseWithNameType(params.Type),
-		Name:              created.GetName(),
-		Namespace:         created.GetNamespace(),
-		Url:               created.Spec.PMM.URL,
-		AllowedNamespaces: pointer.To(created.Spec.AllowedNamespaces),
-		VerifyTLS:         created.Spec.VerifyTLS,
-	}
-	return ctx.JSON(http.StatusOK, result)
+	out := &api.MonitoringInstance{}
+	out.FromCR(created)
+	return ctx.JSON(http.StatusOK, out)
 }
 
 // DeleteMonitoringInstance deletes a monitoring instance.
