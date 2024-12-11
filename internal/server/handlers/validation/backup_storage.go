@@ -44,7 +44,7 @@ func (h *validateHandler) CreateBackupStorage(ctx context.Context, user, namespa
 		return nil, fmt.Errorf("failed to ListBackupStorages: %w", err)
 	}
 	if err := validateCreateBackupStorageRequest(ctx, h.log, req, existing); err != nil {
-		return nil, errors.Join(errInvalidRequest, err)
+		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 	return h.next.CreateBackupStorage(ctx, user, namespace, req)
 }
@@ -59,7 +59,7 @@ func (h *validateHandler) UpdateBackupStorage(ctx context.Context, user, namespa
 		return nil, fmt.Errorf("failed to GetSecret: %w", err)
 	}
 	if err := h.validateUpdateBackupStorageRequest(ctx, h.log, req, bs, secret); err != nil {
-		return nil, errors.Join(errInvalidRequest, err)
+		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 	return h.next.UpdateBackupStorage(ctx, user, namespace, name, req)
 }

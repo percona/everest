@@ -18,7 +18,7 @@ func (h *validateHandler) GetDatabaseEngine(ctx context.Context, user, namespace
 
 func (h *validateHandler) UpdateDatabaseEngine(ctx context.Context, user string, req *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
 	if err := validateMetadata(req); err != nil {
-		return nil, errors.Join(errInvalidRequest, err)
+		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 	return h.next.UpdateDatabaseEngine(ctx, user, req)
 }

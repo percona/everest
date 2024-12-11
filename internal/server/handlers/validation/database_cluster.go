@@ -29,7 +29,7 @@ const (
 
 func (h *validateHandler) CreateDatabaseCluster(ctx context.Context, user string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
 	if err := h.validateDatabaseClusterCR(ctx, db.GetNamespace(), db); err != nil {
-		return nil, errors.Join(errInvalidRequest, err)
+		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 	return h.next.CreateDatabaseCluster(ctx, user, db)
 }
@@ -44,7 +44,7 @@ func (h *validateHandler) DeleteDatabaseCluster(ctx context.Context, user, names
 
 func (h *validateHandler) UpdateDatabaseCluster(ctx context.Context, user string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
 	if err := h.validateDatabaseClusterCR(ctx, db.GetNamespace(), db); err != nil {
-		return nil, errors.Join(errInvalidRequest, err)
+		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 
 	current, err := h.kubeClient.GetDatabaseCluster(ctx, db.GetNamespace(), db.GetName())
@@ -52,7 +52,7 @@ func (h *validateHandler) UpdateDatabaseCluster(ctx context.Context, user string
 		return nil, fmt.Errorf("failed to GetDatabaseCluster: %w", err)
 	}
 	if err := h.validateDatabaseClusterOnUpdate(db, current); err != nil {
-		return nil, errors.Join(errInvalidRequest, err)
+		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 	return h.next.UpdateDatabaseCluster(ctx, user, db)
 }

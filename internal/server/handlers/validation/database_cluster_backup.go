@@ -18,7 +18,7 @@ func (h *validateHandler) ListDatabaseClusterBackups(ctx context.Context, user, 
 
 func (h *validateHandler) CreateDatabaseClusterBackup(ctx context.Context, user string, req *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
 	if err := h.validateDatabaseClusterBackup(ctx, req); err != nil {
-		return nil, errors.Join(errInvalidRequest, err)
+		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 	return h.next.CreateDatabaseClusterBackup(ctx, user, req)
 }

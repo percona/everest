@@ -8,6 +8,9 @@ import (
 )
 
 var (
+	// ErrInvalidRequest is an error that appears when the request is invalid.
+	ErrInvalidRequest = errors.New("invalid request")
+
 	minStorageQuantity = resource.MustParse("1G")   //nolint:gochecknoglobals
 	minCPUQuantity     = resource.MustParse("600m") //nolint:gochecknoglobals
 	minMemQuantity     = resource.MustParse("512M") //nolint:gochecknoglobals

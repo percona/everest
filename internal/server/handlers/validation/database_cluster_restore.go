@@ -16,7 +16,7 @@ func (h *validateHandler) ListDatabaseClusterRestores(ctx context.Context, user,
 
 func (h *validateHandler) CreateDatabaseClusterRestore(ctx context.Context, user string, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
 	if err := h.validateDatabaseClusterRestore(ctx, req); err != nil {
-		return nil, errors.Join(errInvalidRequest, err)
+		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 	return h.next.CreateDatabaseClusterRestore(ctx, user, req)
 }
@@ -31,7 +31,7 @@ func (h *validateHandler) GetDatabaseClusterRestore(ctx context.Context, user, n
 
 func (h *validateHandler) UpdateDatabaseClusterRestore(ctx context.Context, user string, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
 	if err := h.validateDatabaseClusterRestore(ctx, req); err != nil {
-		return nil, errors.Join(errInvalidRequest, err)
+		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 	return h.next.UpdateDatabaseClusterRestore(ctx, user, req)
 }
