@@ -239,7 +239,7 @@ test('patch monitoring instance type fails on missing key', async ({ request, pa
 
   const getJson = await updated.json()
 
-  expect(getJson.message).toMatch('Pmm key is required')
+  expect(getJson.message).toMatch('pmm key is required')
   await deleteInstances(request, prefix)
 })
 
