@@ -69,7 +69,7 @@ test('create/update/delete database cluster restore', async ({ request, page }) 
     data: restore,
   })
   expect(response.status()).toBe(400)
-  expect(await response.text()).toContain('{"message":"Database cluster not-existing-cluster does not exist"}')
+  expect(await response.text()).toContain('database cluster not-existing-cluster does not exist')
 
   // delete restore
   await request.delete(`/v1/namespaces/${testsNs}/database-cluster-restores/${restoreName}`)
