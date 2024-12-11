@@ -4,19 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/percona/everest/pkg/common"
 	"io"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"time"
 
 	"go.uber.org/zap"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/percona/everest/pkg/cli/helm"
 	"github.com/percona/everest/pkg/cli/steps"
 	cliutils "github.com/percona/everest/pkg/cli/utils"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -160,7 +160,6 @@ func removeEverestLabelFromNamespace(ctx context.Context, k *kubernetes.Kubernet
 		}
 		return true, err
 	})
-
 }
 
 func ensureNamespaceGone(ctx context.Context, namespace string, k *kubernetes.Kubernetes) error {
