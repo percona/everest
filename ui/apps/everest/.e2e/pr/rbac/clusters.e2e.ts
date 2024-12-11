@@ -1,9 +1,33 @@
-import { expect, test } from '@playwright/test';
+import { expect, Page, test } from '@playwright/test';
 import { mockEngines, mockRbacPermissions } from './utils';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
 
 const { CI_USER: user } = process.env;
+const mockClusters = (page: Page, namespace: string) =>
+  page.route(`/v1/namespaces/${namespace}/database-clusters`, async (route) => {
+    await route.fulfill({
+      json: {
+        items: [
+          {
+            metadata: {
+              name: 'cluster-1',
+              namespace,
+            },
+            spec: {
+              databaseName: 'db-1',
+              engine: {
+                type: 'pxc',
+                storage: {
+                  size: '1Gi',
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
+  });
 
 test.describe('Clusters RBAC', () => {
   let namespace = '';
@@ -23,32 +47,7 @@ test.describe('Clusters RBAC', () => {
       [user, 'database-engines', '*', `${namespace}/*`],
       [user, 'database-clusters', '*', `${namespace}/*`],
     ]);
-    await page.route(
-      `/v1/namespaces/${namespace}/database-clusters`,
-      async (route) => {
-        await route.fulfill({
-          json: {
-            items: [
-              {
-                metadata: {
-                  name: 'cluster-1',
-                  namespace,
-                },
-                spec: {
-                  databaseName: 'db-1',
-                  engine: {
-                    type: 'pxc',
-                    storage: {
-                      size: '1Gi',
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        });
-      }
-    );
+    await mockClusters(page, namespace);
     await page.goto('/databases');
     await expect(page.getByText('Create database')).toBeVisible();
     await expect(page.getByText('Create database')).not.toBeDisabled();
@@ -70,32 +69,7 @@ test.describe('Clusters RBAC', () => {
     page,
   }) => {
     await mockEngines(page, namespace);
-    await page.route(
-      `/v1/namespaces/${namespace}/database-clusters`,
-      async (route) => {
-        await route.fulfill({
-          json: {
-            items: [
-              {
-                metadata: {
-                  name: 'cluster-1',
-                  namespace,
-                },
-                spec: {
-                  databaseName: 'db-1',
-                  engine: {
-                    type: 'pxc',
-                    storage: {
-                      size: '1Gi',
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        });
-      }
-    );
+    await mockClusters(page, namespace);
     await mockRbacPermissions(page, [
       [user, 'namespaces', 'read', namespace],
       [user, 'database-engines', '*', `${namespace}/*`],
