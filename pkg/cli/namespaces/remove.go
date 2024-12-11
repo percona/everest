@@ -143,18 +143,23 @@ func NewRemoveNamespaceSteps(namespace string, keepNs bool, k *kubernetes.Kubern
 }
 
 func removeEverestLabelFromNamespace(ctx context.Context, k *kubernetes.Kubernetes, namespace string) error {
-	ns, err := k.GetNamespace(ctx, namespace)
-	if err != nil {
-		return err
-	}
-	if !isManagedByEverest(ns) {
-		return nil
-	}
-	labels := ns.GetLabels()
-	delete(labels, common.KubernetesManagedByLabel)
-	ns.SetLabels(labels)
-	_, err = k.UpdateNamespace(ctx, ns, v1.UpdateOptions{})
-	return err
+	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
+		ns, err := k.GetNamespace(ctx, namespace)
+		if err != nil {
+			return true, err
+		}
+		if !isManagedByEverest(ns) {
+			return true, nil
+		}
+		labels := ns.GetLabels()
+		delete(labels, common.KubernetesManagedByLabel)
+		ns.SetLabels(labels)
+		_, err = k.UpdateNamespace(ctx, ns, v1.UpdateOptions{})
+		if err != nil && k8serrors.IsConflict(err) {
+			return false, nil
+		}
+		return true, err
+	})
 }
 
 func ensureNamespaceGone(ctx context.Context, namespace string, k *kubernetes.Kubernetes) error {
