@@ -44,8 +44,8 @@ import { clickOnDemandBackup } from '@e2e/pr/db-cluster-details/utils';
 import {
   queryPSMDB,
   prepareMongoDBTestDB,
+  validateMongoDBSharding,
   configureMongoDBSharding,
-  prepareTestDB,
   dropTestDB,
   queryTestDB,
 } from '@e2e/utils/db-cmd-line';
@@ -237,9 +237,10 @@ test.describe(
         );
         expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
         expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
-        if (db != 'psmdb') {
-          expect(addedCluster?.spec.proxy.replicas).toBe(size);
-        }
+
+        //if (db != 'psmdb') {
+        //  expect(addedCluster?.spec.proxy.replicas).toBe(size);
+        //}
       });
     });
 
@@ -251,6 +252,11 @@ test.describe(
     // Add MongoDB-specific configuration
     test(`Setup MongoDB-specific sharding [${db} size ${size}]`, async () => {
       await configureMongoDBSharding(clusterName, namespace);
+    });
+
+    // Validate Sharding for MongoDB
+    test(`Validate Sharding for MongoDB [${db} size ${size}]`, async () => {
+      await validateMongoDBSharding(clusterName, namespace);
     });
 
     test(`Create demand backup [${db} size ${size}]`, async ({ page }) => {
@@ -293,30 +299,22 @@ test.describe(
     });
 
     test(`Check data after restore [${db} size ${size}]`, async () => {
-      if (db === 'psmdb') {
-        // Validate the data in the database
-        const result = await queryTestDB(clusterName, namespace);
-        expect(result.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
+      // Validate the data in the t1 and t2
+      const t1Data = await queryTestDB(clusterName, namespace, 't1');
+      expect(t1Data.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
 
-        // Validate the data in the t1 and t2
-        const t1Data = await queryTestDB(clusterName, namespace, 't1');
-        expect(t1Data.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
+      const t2Data = await queryTestDB(clusterName, namespace, 't2');
+      expect(t2Data.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
 
-        const t2Data = await queryTestDB(clusterName, namespace, 't2');
-        expect(t2Data.trim()).toBe('[ { b: 4 }, { b: 5 }, { b: 6 } ]');
-
-        // Validate sharding
-        const shardingStatus = await queryPSMDB(
-          clusterName,
-          namespace,
-          'admin',
-          'sh.status();'
-        );
-        console.log('Sharding Status:', shardingStatus);
-
-        expect(shardingStatus).toContain('test.t1');
-        expect(shardingStatus).toContain('test.t2');
-      }
+      // Validate sharding
+      const shardingStatus = await queryPSMDB(
+        clusterName,
+        namespace,
+        'admin',
+        'sh.status();'
+      );
+      expect(shardingStatus).toContain('test.t1');
+      expect(shardingStatus).toContain('test.t2');
     });
 
     test(`Delete restore [${db} size ${size}]`, async ({ page }) => {

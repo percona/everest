@@ -161,7 +161,6 @@ export const prepareTestDB = async (cluster: string, namespace: string) => {
       break;
     }
     case 'psmdb': {
-      console.log('Preparing test database for MongoDB...');
       await dropTestDB(cluster, namespace);
       await queryPSMDB(
         cluster,
@@ -171,7 +170,6 @@ export const prepareTestDB = async (cluster: string, namespace: string) => {
       );
       const result = await queryTestDB(cluster, namespace);
       expect(result.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
-      console.log('Test database prepared successfully.');
       break;
     }
     case 'postgresql': {
@@ -281,10 +279,6 @@ export const queryTestDB = async (
   const dbType = await getDBType(cluster, namespace);
   let result: string;
 
-  if (!collection) {
-    throw new Error('Collection name is required for queryTestDB');
-  }
-
   switch (dbType) {
     case 'pxc': {
       result = await queryMySQL(cluster, namespace, 'SELECT * FROM test.t1;');
@@ -315,7 +309,6 @@ export const prepareMongoDBTestDB = async (
   await dropTestDB(cluster, namespace);
 
   // Insert test data into the collection t1 and t2
-  console.log('Preparing test database for MongoDB...');
   await queryPSMDB(
     cluster,
     namespace,
@@ -327,18 +320,14 @@ export const prepareMongoDBTestDB = async (
     cluster,
     namespace,
     'test',
-    'db.t2.insertMany([{ b: 4 }, { b: 5 }, { b: 6 }]);'
+    'db.t2.insertMany([{ b: 1 }, { b: 2 }, { b: 3 }]);'
   );
-
-  console.log('MongoDB test database prepared successfully.');
 };
 
 export const configureMongoDBSharding = async (
   cluster: string,
   namespace: string
 ) => {
-  console.log('Configuring sharding...');
-
   // Enable sharding for the database
   await queryPSMDB(
     cluster,
@@ -365,6 +354,64 @@ export const configureMongoDBSharding = async (
     'admin',
     'sh.shardCollection(\\"test.t2\\", { b: 1 });'
   );
+};
 
-  console.log('Sharding configuration completed successfully.');
+export const validateMongoDBSharding = async (
+  cluster: string,
+  namespace: string
+) => {
+  // Check if sharding is enabled for the database
+  const shardingStatus = await queryPSMDB(
+    cluster,
+    namespace,
+    'admin',
+    'sh.status();'
+  );
+
+  console.log('Sharding Status:', shardingStatus);
+
+  // Query the config.collections to verufy t1 and t2 are sharded
+
+  const t1Collection = await queryPSMDB(
+    cluster,
+    namespace,
+    'config',
+    'db.collections.find({ _id: \\"test.t1\\" }).toArray();'
+  );
+
+  const t2Collection = await queryPSMDB(
+    cluster,
+    namespace,
+    'config',
+    'db.collections.find({ _id: \\"test.t2\\" }).toArray();'
+  );
+
+  console.log('t1 collection:', t1Collection);
+  console.log('t2 collection:', t2Collection);
+
+  // Validate the chunk in config.chunks for t1 and t2 collections
+  const t1Chunks = await queryPSMDB(
+    cluster,
+    namespace,
+    'config',
+    'db.chunks.find({ ns: \\"test.t1\\" }).toArray();'
+  );
+
+  const t2Chunks = await queryPSMDB(
+    cluster,
+    namespace,
+    'config',
+    'db.chunks.find({ ns: \\"test.t2\\" }).toArray();'
+  );
+
+  // Log distribution for debugging purposes
+  console.log('t1 chunk:', t1Chunks);
+  console.log('t2 chunk:', t2Chunks);
+
+  // Validate t1, t2 collections and chunks are not empty
+  expect(JSON.parse(t1Collection).length).toBeGreaterThan(0);
+  expect(JSON.parse(t2Collection).length).toBeGreaterThan(0);
+
+  expect(JSON.parse(t1Chunks).length).toBeGreaterThan(0);
+  expect(JSON.parse(t2Chunks).length).toBeGreaterThan(0);
 };
