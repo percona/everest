@@ -1495,8 +1495,8 @@ github.com/cockroachdb/datadriven v1.0.2/go.mod h1:a9RdTaap04u637JoCzcUoIcDmvwSU
 github.com/containerd/cgroups v1.1.0 h1:v8rEWFl6EoqHB+swVNjVoCJE8o3jX7e8nqBGPLaDFBM=
 github.com/containerd/cgroups/v3 v3.0.2 h1:f5WFqIVSgo5IZmtTT3qVBo6TzI1ON6sycSBKkymb9L0=
 github.com/containerd/cgroups/v3 v3.0.2/go.mod h1:JUgITrzdFqp42uI2ryGA+ge0ap/nxzYgkGmIcetmErE=
-github.com/containerd/containerd v1.7.12 h1:+KQsnv4VnzyxWcfO9mlxxELaoztsDEjOuCMPAuPqgU0=
-github.com/containerd/containerd v1.7.12/go.mod h1:/5OMpE1p0ylxtEUGY8kuCYkDRzJm9NO1TFMWjUpdevk=
+github.com/containerd/containerd v1.7.13 h1:wPYKIeGMN8vaggSKuV1X0wZulpMz4CrgEsZdaCyB6Is=
+github.com/containerd/containerd v1.7.13/go.mod h1:zT3up6yTRfEUa6+GsITYIJNgSVL9NQ4x4h1RPzk0Wu4=
 github.com/containerd/continuity v0.4.2 h1:v3y/4Yz5jwnvqPKJJ+7Wf93fyWoCB3F5EclWG023MDM=
 github.com/containerd/continuity v0.4.2/go.mod h1:F6PTNCKepoxEaXLQp3wDAjygEnImnZ/7o4JzpodfroQ=
 github.com/containerd/log v0.1.0 h1:TCJt7ioM2cr/tfR8GPbGf9/VRAX8D2B4PjzCpfX540I=
@@ -2218,8 +2218,8 @@ github.com/percona/everest-operator v0.6.0-dev1.0.20241203113640-8dd4a9d32733 h1
 github.com/percona/everest-operator v0.6.0-dev1.0.20241203113640-8dd4a9d32733/go.mod h1:FTKcDBn/1BHKNDnocKBAWH2mG3BYyD6yLXtoS58o1BM=
 github.com/percona/percona-backup-mongodb v1.8.1-0.20241002124601-957ac501f939 h1:OggdqSzqe9pO3A4GaRlrLwZXS3zEQ84O4+7Jm9cg74s=
 github.com/percona/percona-backup-mongodb v1.8.1-0.20241002124601-957ac501f939/go.mod h1:KhIlTT4wR2mIkMvDtEFerr9zaADJorL7UThSztzxBaY=
-github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241210074949-833deeb939c2 h1:xKAGPHF7hWaP8N3flwE8CrzWOK+CBMagZc8eSTkUXik=
-github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241210074949-833deeb939c2/go.mod h1:j5Ci48Azwb4Xs4XvZQNfleWCn2uyiZywazklxNH1ut4=
+github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241210090829-99bc46df4c07 h1:CQBhe63tvPTVSFTK24b3coxa5jZfhyuW+1huuG9ml3c=
+github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241210090829-99bc46df4c07/go.mod h1:j5Ci48Azwb4Xs4XvZQNfleWCn2uyiZywazklxNH1ut4=
 github.com/percona/percona-postgresql-operator v0.0.0-20241007204305-35d61aa5aebd h1:9RCUfPUxbdXuL/247r77DJmRSowDzA2xzZC9FpuLuUw=
 github.com/percona/percona-postgresql-operator v0.0.0-20241007204305-35d61aa5aebd/go.mod h1:ICbLstSO4zhYo+SFSciIWO9rLHQg29GJ1335L0tfhR0=
 github.com/percona/percona-server-mongodb-operator v1.18.0 h1:inRWonCOTacD++D/tvyFXVUqKx7f2OQzz8w1NyT3cAI=
