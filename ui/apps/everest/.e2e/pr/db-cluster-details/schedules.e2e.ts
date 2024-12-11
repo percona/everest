@@ -84,7 +84,6 @@ test.describe('Schedules List', async () => {
     await page.getByTestId('backups').click();
     await page.getByTestId('scheduled-backups').click();
 
-    await page.pause();
     expect(page.getByTestId('schedule-30 * * * *-text')).toHaveText(
       'Every hour at minute 30'
     );
