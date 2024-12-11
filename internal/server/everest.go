@@ -325,7 +325,9 @@ func (e *EverestServer) errorHandlerChain() echo.HTTPErrorHandler {
 
 func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 	return func(err error, c echo.Context) {
+		echoErrTarget := &echo.HTTPError{}
 		switch {
+		case errors.As(err, &echoErrTarget):
 		case k8serrors.IsNotFound(err):
 			err = &echo.HTTPError{
 				Code: http.StatusNotFound,
