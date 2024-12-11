@@ -24,11 +24,17 @@ import {
 import { storageLocationAutocompleteEmptyValidationCheck } from '@e2e/utils/db-wizard';
 import { getBucketNamespacesMap } from '@e2e/constants';
 import { waitForInitializingState } from '@e2e/utils/table';
+const { EVEREST_BUCKETS_NAMESPACES_MAP } = process.env;
 
 // TODO uncomment when PATCH method is implemented
-test.describe.skip('Schedules List', async () => {
+test.describe('Schedules List', async () => {
   const scheduleName = 'test-name';
   const mySQLName = 'schedule-mysql';
+
+  // IST is UTC+5h30, with or without DST
+  test.use({
+    timezoneId: 'IST',
+  });
 
   test.beforeAll(async ({ request }) => {
     await createDbClusterFn(request, {
@@ -39,7 +45,7 @@ test.describe.skip('Schedules List', async () => {
         enabled: true,
         schedules: [
           {
-            backupStorageName: getBucketNamespacesMap()[0][0],
+            backupStorageName: JSON.parse(EVEREST_BUCKETS_NAMESPACES_MAP)[0][0],
             enabled: true,
             name: 'backup-1',
             schedule: '0 * * * *',
@@ -58,7 +64,33 @@ test.describe.skip('Schedules List', async () => {
     await deleteDbClusterFn(request, mySQLName);
   });
 
-  test('Create schedule', async ({ page }) => {
+  test('Editing cluster resources does not affect on schedules time zone', async ({
+    page,
+  }) => {
+    await findDbAndClickRow(page, mySQLName);
+    expect(page.getByTestId('overview-section-text')).toHaveText(
+      'Every hour at minute 30'
+    );
+
+    //check resources editing
+    expect(page.getByTestId('edit-resources-button')).toBeVisible();
+    await page.getByTestId('edit-resources-button').click();
+    expect(page.getByTestId('edit-resources-form-dialog')).toBeVisible();
+    await page.getByTestId('form-dialog-save').click();
+    expect(page.getByTestId('overview-section-text')).toHaveText(
+      'Every hour at minute 30'
+    );
+
+    await page.getByTestId('backups').click();
+    await page.getByTestId('scheduled-backups').click();
+
+    await page.pause();
+    expect(page.getByTestId('schedule-30 * * * *-text')).toHaveText(
+      'Every hour at minute 30'
+    );
+  });
+
+  test.skip('Create schedule', async ({ page }) => {
     await findDbAndClickRow(page, mySQLName);
 
     const backupsTab = await page.getByTestId(DBClusterDetailsTabs.backups);
@@ -149,7 +181,7 @@ test.describe.skip('Schedules List', async () => {
     expect(page.getByText('2 active schedules')).toBeTruthy();
   });
 
-  test('PostgreSQL db cannot have more than 3 active backup schedules', async ({
+  test.skip('PostgreSQL db cannot have more than 3 active backup schedules', async ({
     page,
     request,
   }) => {

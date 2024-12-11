@@ -48,6 +48,7 @@ export const AdvancedConfigurationEditModal = ({
 
   return (
     <FormDialog
+      dataTestId="edit-advanced-configuration"
       size="XL"
       isOpen={open}
       closeModal={handleCloseModal}
