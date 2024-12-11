@@ -21,7 +21,7 @@ func (h *k8sHandler) ListDatabaseClusterRestores(ctx context.Context, _, namespa
 }
 
 func (h *k8sHandler) CreateDatabaseClusterRestore(ctx context.Context, _ string, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
-	dbCluster, err := h.kubeClient.GetDatabaseCluster(ctx, req.Spec.DBClusterName, req.GetNamespace())
+	dbCluster, err := h.kubeClient.GetDatabaseCluster(ctx, req.GetNamespace(), req.Spec.DBClusterName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetDatabaseCluster: %w", err)
 	}
