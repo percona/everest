@@ -72,6 +72,7 @@ export const MonitoringEditModal = ({
 
   return (
     <FormDialog
+      dataTestId="edit-monitoring"
       size="XL"
       isOpen={open}
       closeModal={handleCloseModal}
