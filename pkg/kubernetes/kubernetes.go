@@ -63,16 +63,6 @@ const (
 	// contains the list of monitored namespaces.
 	EverestDBNamespacesEnvVar = "DB_NAMESPACES"
 
-	pxcDeploymentName            = "percona-xtradb-cluster-operator"
-	psmdbDeploymentName          = "percona-server-mongodb-operator"
-	postgresDeploymentName       = "percona-postgresql-operator"
-	psmdbOperatorContainerName   = "percona-server-mongodb-operator"
-	pxcOperatorContainerName     = "percona-xtradb-cluster-operator"
-	everestOperatorContainerName = "manager"
-	databaseClusterKind          = "DatabaseCluster"
-	databaseClusterAPIVersion    = "everest.percona.com/v1alpha1"
-	managedByKey                 = "everest.percona.com/managed-by"
-
 	// OLMNamespace is the namespace where OLM is installed.
 	OLMNamespace    = "everest-olm"
 	olmOperatorName = "olm-operator"

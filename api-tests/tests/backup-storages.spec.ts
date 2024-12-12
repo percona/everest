@@ -212,7 +212,7 @@ test('create backup storage failures', async ({request}) => {
                 secretKey: 'ssdssdssdssd',
                 allowedNamespaces: [testsNs]
             },
-            errorText: 'Region is required',
+            errorText: 'region is required',
         },
         {
             payload: {

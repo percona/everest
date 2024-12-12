@@ -37,3 +37,13 @@ func (k *Kubernetes) ListDatabaseClusterBackups(ctx context.Context, namespace s
 func (k *Kubernetes) UpdateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
 	return k.client.UpdateDatabaseClusterBackup(ctx, backup)
 }
+
+// DeleteDatabaseClusterBackup deletes database cluster backup.
+func (k *Kubernetes) DeleteDatabaseClusterBackup(ctx context.Context, namespace, name string) error {
+	return k.client.DeleteDatabaseClusterBackup(ctx, namespace, name)
+}
+
+// CreateDatabaseClusterBackup creates database cluster backup.
+func (k *Kubernetes) CreateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
+	return k.client.CreateDatabaseClusterBackup(ctx, backup.GetNamespace(), backup)
+}

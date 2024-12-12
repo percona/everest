@@ -16,6 +16,8 @@
 // Package common holds common constants used across Everest.
 package common
 
+import everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
 const (
 	// Everest ...
 	Everest = "everest"
@@ -80,6 +82,15 @@ const (
 	// that holds the name of the resource being served by an API endpoint.
 	EverestAPIExtnResourceName = "x-everest-resource-name"
 )
+
+// OperatorTypeToName maps the engine type to the operator name.
+//
+//nolint:gochecknoglobals
+var OperatorTypeToName = map[everestv1alpha1.EngineType]string{
+	everestv1alpha1.DatabaseEnginePXC:        PXCOperatorName,
+	everestv1alpha1.DatabaseEnginePSMDB:      PSMDBOperatorName,
+	everestv1alpha1.DatabaseEnginePostgresql: PGOperatorName,
+}
 
 // InitialPasswordWarningMessage is the message that is shown to the user after the installation/upgrade,
 // regarding insecure admin password.
