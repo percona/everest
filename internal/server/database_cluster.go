@@ -18,10 +18,10 @@ package server
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
-	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
@@ -29,28 +29,30 @@ import (
 	"github.com/percona/everest/pkg/rbac"
 )
 
+var (
+	errFailedToGetUser         = errors.New("failed to get user from context")
+	errFailedToReadRequestBody = errors.New("failed to read request body")
+)
+
 // CreateDatabaseCluster creates a new db cluster inside the given k8s cluster.
 func (e *EverestServer) CreateDatabaseCluster(c echo.Context, namespace string) error {
 	dbc := &everestv1alpha1.DatabaseCluster{}
 	if err := e.getBodyFromContext(c, dbc); err != nil {
-		e.l.Error(err)
-		return c.JSON(http.StatusBadRequest, api.Error{
-			Message: pointer.ToString("Could not get DatabaseCluster from the request body"),
-		})
+		return errors.Join(errFailedToReadRequestBody, err)
 	}
 	dbc.SetNamespace(namespace)
 
 	user, err := rbac.GetUser(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 
 	result, err := e.handler.CreateDatabaseCluster(c.Request().Context(), user, dbc)
 	if err != nil {
+		e.l.Errorf("CreateDatabaseCluster failed: %w", err)
 		return err
 	}
+
 	// Collect metrics immediately after a DB cluster has been created.
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
@@ -67,12 +69,11 @@ func (e *EverestServer) CreateDatabaseCluster(c echo.Context, namespace string) 
 func (e *EverestServer) ListDatabaseClusters(ctx echo.Context, namespace string) error {
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 	list, err := e.handler.ListDatabaseClusters(ctx.Request().Context(), user, namespace)
 	if err != nil {
+		e.l.Errorf("ListDatabaseClusters failed: %w", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, list)
@@ -86,11 +87,10 @@ func (e *EverestServer) DeleteDatabaseCluster(
 ) error {
 	user, err := rbac.GetUser(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 	if err := e.handler.DeleteDatabaseCluster(c.Request().Context(), user, namespace, name, &params); err != nil {
+		e.l.Errorf("DeleteDatabaseCluster failed: %w", err)
 		return err
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -100,12 +100,12 @@ func (e *EverestServer) DeleteDatabaseCluster(
 func (e *EverestServer) GetDatabaseCluster(c echo.Context, namespace, name string) error {
 	user, err := rbac.GetUser(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
+
 	result, err := e.handler.GetDatabaseCluster(c.Request().Context(), user, namespace, name)
 	if err != nil {
+		e.l.Errorf("GetDatabaseCluster failed: %w", err)
 		return err
 	}
 	return c.JSON(http.StatusOK, result)
@@ -115,12 +115,11 @@ func (e *EverestServer) GetDatabaseCluster(c echo.Context, namespace, name strin
 func (e *EverestServer) GetDatabaseClusterComponents(c echo.Context, namespace, name string) error {
 	user, err := rbac.GetUser(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 	result, err := e.handler.GetDatabaseClusterComponents(c.Request().Context(), user, namespace, name)
 	if err != nil {
+		e.l.Errorf("GetDatabaseClusterComponents failed: %w", err)
 		return err
 	}
 	return c.JSON(http.StatusOK, result)
@@ -132,23 +131,19 @@ func (e *EverestServer) GetDatabaseClusterComponents(c echo.Context, namespace, 
 func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name string) error {
 	dbc := &everestv1alpha1.DatabaseCluster{}
 	if err := e.getBodyFromContext(ctx, dbc); err != nil {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusBadRequest, api.Error{
-			Message: pointer.ToString("Could not get DatabaseCluster from the request body"),
-		})
+		return errors.Join(errFailedToReadRequestBody, err)
 	}
 	dbc.SetNamespace(namespace)
 	dbc.SetName(name)
 
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 
 	result, err := e.handler.UpdateDatabaseCluster(ctx.Request().Context(), user, dbc)
 	if err != nil {
+		e.l.Errorf("UpdateDatabaseCluster failed: %w", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, result)
@@ -158,12 +153,11 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 func (e *EverestServer) GetDatabaseClusterCredentials(c echo.Context, namespace, name string) error {
 	user, err := rbac.GetUser(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 	result, err := e.handler.GetDatabaseClusterCredentials(c.Request().Context(), user, namespace, name)
 	if err != nil {
+		e.l.Errorf("GetDatabaseClusterCredentials failed: %w", err)
 		return err
 	}
 	return c.JSON(http.StatusOK, result)
@@ -173,12 +167,11 @@ func (e *EverestServer) GetDatabaseClusterCredentials(c echo.Context, namespace,
 func (e *EverestServer) GetDatabaseClusterPitr(c echo.Context, namespace, name string) error {
 	user, err := rbac.GetUser(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 	result, err := e.handler.GetDatabaseClusterPitr(c.Request().Context(), user, namespace, name)
 	if err != nil {
+		e.l.Errorf("GetDatabaseClusterPitr failed: %w", err)
 		return err
 	}
 	return c.JSON(http.StatusOK, result)

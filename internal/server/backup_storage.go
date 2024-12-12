@@ -16,9 +16,9 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 
-	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
 
 	"github.com/percona/everest/api"
@@ -29,17 +29,14 @@ import (
 func (e *EverestServer) ListBackupStorages(c echo.Context, namespace string) error {
 	user, err := rbac.GetUser(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 
 	ctx := c.Request().Context()
 	list, err := e.handler.ListBackupStorages(ctx, user, namespace)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to list backup storages" + err.Error()),
-		})
+		e.l.Errorf("ListBackupStorages failed: %w", err)
+		return err
 	}
 
 	result := make([]api.BackupStorage, 0, len(list.Items))
@@ -55,17 +52,16 @@ func (e *EverestServer) ListBackupStorages(c echo.Context, namespace string) err
 func (e *EverestServer) CreateBackupStorage(c echo.Context, namespace string) error {
 	user, err := rbac.GetUser(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 	ctx := c.Request().Context()
 	req := api.CreateBackupStorageParams{}
 	if err := c.Bind(&req); err != nil {
-		return err
+		return errors.Join(errFailedToReadRequestBody, err)
 	}
 	result, err := e.handler.CreateBackupStorage(ctx, user, namespace, &req)
 	if err != nil {
+		e.l.Errorf("CreateBackupStorage failed: %w", err)
 		return err
 	}
 	out := &api.BackupStorage{}
@@ -77,12 +73,11 @@ func (e *EverestServer) CreateBackupStorage(c echo.Context, namespace string) er
 func (e *EverestServer) DeleteBackupStorage(c echo.Context, namespace, name string) error {
 	user, err := rbac.GetUser(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 	ctx := c.Request().Context()
 	if err := e.handler.DeleteBackupStorage(ctx, user, namespace, name); err != nil {
+		e.l.Errorf("DeleteBackupStorage failed: %w", err)
 		return err
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -92,13 +87,12 @@ func (e *EverestServer) DeleteBackupStorage(c echo.Context, namespace, name stri
 func (e *EverestServer) GetBackupStorage(c echo.Context, namespace, name string) error {
 	user, err := rbac.GetUser(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 	ctx := c.Request().Context()
 	result, err := e.handler.GetBackupStorage(ctx, user, namespace, name)
 	if err != nil {
+		e.l.Errorf("GetBackupStorage failed: %w", err)
 		return err
 	}
 
@@ -111,17 +105,16 @@ func (e *EverestServer) GetBackupStorage(c echo.Context, namespace, name string)
 func (e *EverestServer) UpdateBackupStorage(c echo.Context, namespace, name string) error {
 	user, err := rbac.GetUser(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 	ctx := c.Request().Context()
 	req := api.UpdateBackupStorageParams{}
 	if err := c.Bind(&req); err != nil {
-		return err
+		return errors.Join(errFailedToReadRequestBody, err)
 	}
 	result, err := e.handler.UpdateBackupStorage(ctx, user, namespace, name, &req)
 	if err != nil {
+		e.l.Errorf("UpdateBackupStorage failed: %w", err)
 		return err
 	}
 	out := &api.BackupStorage{}

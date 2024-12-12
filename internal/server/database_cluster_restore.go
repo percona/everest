@@ -17,13 +17,12 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 
-	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/rbac"
 )
 
@@ -31,13 +30,12 @@ import (
 func (e *EverestServer) ListDatabaseClusterRestores(ctx echo.Context, namespace, name string) error {
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 
 	result, err := e.handler.ListDatabaseClusterRestores(ctx.Request().Context(), user, namespace, name)
 	if err != nil {
+		e.l.Errorf("ListDatabaseClusterRestores failed: %w", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, result)
@@ -47,23 +45,18 @@ func (e *EverestServer) ListDatabaseClusterRestores(ctx echo.Context, namespace,
 func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace string) error {
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context: " + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 
 	restore := &everestv1alpha1.DatabaseClusterRestore{}
 	if err := e.getBodyFromContext(ctx, restore); err != nil {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusBadRequest, api.Error{
-			Message: pointer.ToString("Could not get DatabaseClusterRestore from the request body"),
-		})
+		return errors.Join(errFailedToReadRequestBody, err)
 	}
 	restore.SetNamespace(namespace)
 
 	result, err := e.handler.CreateDatabaseClusterRestore(ctx.Request().Context(), user, restore)
 	if err != nil {
+		e.l.Errorf("CreateDatabaseClusterRestore failed: %w", err)
 		return err
 	}
 	return ctx.JSON(http.StatusCreated, result)
@@ -73,11 +66,10 @@ func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace
 func (e *EverestServer) DeleteDatabaseClusterRestore(ctx echo.Context, namespace, name string) error {
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 	if err := e.handler.DeleteDatabaseClusterRestore(ctx.Request().Context(), user, namespace, name); err != nil {
+		e.l.Errorf("DeleteDatabaseClusterRestore failed: %w", err)
 		return err
 	}
 	return ctx.NoContent(http.StatusNoContent)
@@ -87,13 +79,12 @@ func (e *EverestServer) DeleteDatabaseClusterRestore(ctx echo.Context, namespace
 func (e *EverestServer) GetDatabaseClusterRestore(ctx echo.Context, namespace, name string) error {
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 
 	rs, err := e.handler.GetDatabaseClusterRestore(ctx.Request().Context(), user, namespace, name)
 	if err != nil {
+		e.l.Errorf("GetDatabaseClusterRestore failed: %w", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, rs)
@@ -103,23 +94,19 @@ func (e *EverestServer) GetDatabaseClusterRestore(ctx echo.Context, namespace, n
 func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, namespace, name string) error {
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 
 	restore := &everestv1alpha1.DatabaseClusterRestore{}
 	if err := e.getBodyFromContext(ctx, restore); err != nil {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusBadRequest, api.Error{
-			Message: pointer.ToString("Could not get DatabaseClusterRestore from the request body"),
-		})
+		return errors.Join(errFailedToReadRequestBody, err)
 	}
 	restore.SetNamespace(namespace)
 	restore.SetName(name)
 
 	result, err := e.handler.UpdateDatabaseClusterRestore(ctx.Request().Context(), user, restore)
 	if err != nil {
+		e.l.Errorf("UpdateDatabaseClusterRestore failed: %w", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, result)

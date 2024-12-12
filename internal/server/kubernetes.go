@@ -26,6 +26,7 @@ import (
 func (e *EverestServer) GetKubernetesClusterResources(ctx echo.Context) error {
 	resources, err := e.handler.GetKubernetesClusterResources(ctx.Request().Context())
 	if err != nil {
+		e.l.Errorf("GetKubernetesClusterResources failed: %w", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, resources)

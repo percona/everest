@@ -17,13 +17,12 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 
-	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/rbac"
 )
 
@@ -31,13 +30,12 @@ import (
 func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, namespace string) error {
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 
 	result, err := e.handler.ListDatabaseEngines(ctx.Request().Context(), user, namespace)
 	if err != nil {
+		e.l.Errorf("ListDatabaseEngines failed: %w", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, result)
@@ -47,13 +45,12 @@ func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, namespace string) 
 func (e *EverestServer) GetDatabaseEngine(ctx echo.Context, namespace, name string) error {
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 
 	result, err := e.handler.GetDatabaseEngine(ctx.Request().Context(), user, namespace, name)
 	if err != nil {
+		e.l.Errorf("GetDatabaseEngine failed: %w", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, result)
@@ -65,23 +62,19 @@ func (e *EverestServer) GetDatabaseEngine(ctx echo.Context, namespace, name stri
 func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name string) error {
 	dbe := &everestv1alpha1.DatabaseEngine{}
 	if err := e.getBodyFromContext(ctx, dbe); err != nil {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusBadRequest, api.Error{
-			Message: pointer.ToString("Could not get DatabaseEngine from the request body"),
-		})
+		return errors.Join(errFailedToReadRequestBody, err)
 	}
 	dbe.SetNamespace(namespace)
 	dbe.SetName(name)
 
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 
 	result, err := e.handler.UpdateDatabaseEngine(ctx.Request().Context(), user, dbe)
 	if err != nil {
+		e.l.Errorf("UpdateDatabaseEngine failed: %w", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, result)
@@ -94,13 +87,12 @@ func (e *EverestServer) GetUpgradePlan(
 ) error {
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 
 	result, err := e.handler.GetUpgradePlan(ctx.Request().Context(), user, namespace)
 	if err != nil {
+		e.l.Errorf("GetUpgradePlan failed: %w", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, result)
@@ -110,11 +102,10 @@ func (e *EverestServer) GetUpgradePlan(
 func (e *EverestServer) ApproveUpgradePlan(ctx echo.Context, namespace string) error {
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 	if err := e.handler.ApproveUpgradePlan(ctx.Request().Context(), user, namespace); err != nil {
+		e.l.Errorf("ApproveUpgradePlan failed: %w", err)
 		return err
 	}
 	return nil

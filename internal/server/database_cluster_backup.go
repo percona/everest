@@ -17,9 +17,9 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 
-	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
@@ -31,13 +31,12 @@ import (
 func (e *EverestServer) ListDatabaseClusterBackups(c echo.Context, namespace, name string) error {
 	user, err := rbac.GetUser(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 
 	result, err := e.handler.ListDatabaseClusterBackups(c.Request().Context(), user, namespace, name)
 	if err != nil {
+		e.l.Errorf("ListDatabaseClusterBackups failed: %w", err)
 		return err
 	}
 	return c.JSON(http.StatusOK, result)
@@ -47,22 +46,18 @@ func (e *EverestServer) ListDatabaseClusterBackups(c echo.Context, namespace, na
 func (e *EverestServer) CreateDatabaseClusterBackup(ctx echo.Context, namespace string) error {
 	dbb := &everestv1alpha1.DatabaseClusterBackup{}
 	if err := e.getBodyFromContext(ctx, dbb); err != nil {
-		e.l.Error(err)
-		return ctx.JSON(http.StatusBadRequest, api.Error{
-			Message: pointer.ToString("Could not get DatabaseClusterBackup from the request body"),
-		})
+		return errors.Join(errFailedToReadRequestBody, err)
 	}
 	dbb.SetNamespace(namespace)
 
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 
 	result, err := e.handler.CreateDatabaseClusterBackup(ctx.Request().Context(), user, dbb)
 	if err != nil {
+		e.l.Errorf("CreateDatabaseClusterBackup failed: %w", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, result)
@@ -76,12 +71,11 @@ func (e *EverestServer) DeleteDatabaseClusterBackup(
 ) error {
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 
 	if err := e.handler.DeleteDatabaseClusterBackup(ctx.Request().Context(), user, namespace, name, &params); err != nil {
+		e.l.Errorf("DeleteDatabaseClusterBackup failed: %w", err)
 		return err
 	}
 	return ctx.NoContent(http.StatusNoContent)
@@ -91,13 +85,12 @@ func (e *EverestServer) DeleteDatabaseClusterBackup(
 func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, namespace, name string) error {
 	user, err := rbac.GetUser(ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
+		return errors.Join(errFailedToGetUser, err)
 	}
 
 	result, err := e.handler.GetDatabaseClusterBackup(ctx.Request().Context(), user, namespace, name)
 	if err != nil {
+		e.l.Errorf("GetDatabaseClusterBackup failed: %w", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, result)

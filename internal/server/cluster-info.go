@@ -10,6 +10,7 @@ import (
 func (e *EverestServer) GetKubernetesClusterInfo(ctx echo.Context) error {
 	result, err := e.handler.GetKubernetesClusterInfo(ctx.Request().Context())
 	if err != nil {
+		e.l.Errorf("GetKubernetesClusterInfo failed: %w", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, result)
