@@ -3,6 +3,7 @@ module github.com/percona/everest
 go 1.23.2
 
 replace (
+	github.com/containerd/containerd v1.7.12 => github.com/containerd/containerd v1.7.13
 	k8s.io/api => k8s.io/api v0.31.1
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.31.1
 	k8s.io/apimachinery => k8s.io/apimachinery v0.31.1
@@ -37,7 +38,7 @@ require (
 	github.com/operator-framework/api v0.27.0
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
 	github.com/percona/everest-operator v0.6.0-dev1.0.20241203113640-8dd4a9d32733
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241210090829-99bc46df4c07
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241212080834-15af0000d42a
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2

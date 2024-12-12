@@ -157,7 +157,7 @@ test.describe('Everest CLI install', async () => {
           '✓ Deleting database clusters in namespace \'existing-ns\'',
           '✓ Deleting backup storages in namespace \'existing-ns\'',
           '✓ Deleting monitoring instances in namespace \'existing-ns\'',
-          '✓ Deleting namespace \'existing-ns\'',
+          '✓ Deleting resources from namespace \'existing-ns\'',
       ]);
 
       out = await cli.exec(`kubectl get namespace existing-ns`);
