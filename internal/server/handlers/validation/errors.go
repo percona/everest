@@ -44,7 +44,7 @@ var (
 	errDuplicatedSchedules           = errors.New("duplicated backup schedules are not allowed")
 	errDuplicatedStoragePG           = errors.New("postgres clusters can't use the same storage for the different schedules")
 	errStorageChangePG               = errors.New("the existing postgres schedules can't change their storage")
-	errDuplicatedBackupStorage       = errors.New("backup storages with the same url, bucket and url are not allowed")
+	errDuplicatedBackupStorage       = errors.New("backup storages with the same url, bucket and region are not allowed")
 	errEditBackupStorageInUse        = errors.New("can't edit bucket or region of the backup storage in use")
 	errShardingIsNotSupported        = errors.New("sharding is not supported")
 	errInsufficientShardsNumber      = errors.New("shards number should be greater than 0")
