@@ -13,142 +13,42 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { UseMutationOptions, useMutation } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { updateDbClusterFn } from 'api/dbClusterApi';
 import {
   DbCluster,
   ProxyExposeType,
   Proxy,
 } from 'shared-types/dbCluster.types';
-import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
-import cronConverter from 'utils/cron-converter';
-import {
-  CUSTOM_NR_UNITS_INPUT_VALUE,
-  MIN_NUMBER_OF_SHARDS,
-} from 'components/cluster-form';
+import { MIN_NUMBER_OF_SHARDS } from 'components/cluster-form';
 import { getProxySpec } from './utils';
-import { DbType } from '@percona/types';
 import { DbEngineType } from 'shared-types/dbEngines.types';
 import { dbEngineToDbType } from '@percona/utils';
+import cronConverter from 'utils/cron-converter';
 
-type UpdateDbClusterArgType = {
-  dbPayload: DbWizardType;
-  dbCluster: DbCluster;
-};
-
-const formValuesToPayloadOverrides = (
-  dbPayload: DbWizardType,
+export const updateDbCluster = (
+  clusterName: string,
+  namespace: string,
   dbCluster: DbCluster
-): DbCluster => {
-  const numberOfNodes = parseInt(
-    dbPayload.numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
-      ? dbPayload.customNrOfNodes || ''
-      : dbPayload.numberOfNodes,
-    10
-  );
-  let pitrBackupStorageName = '';
-
-  if (dbPayload.pitrEnabled) {
-    pitrBackupStorageName =
-      typeof dbPayload.pitrStorageLocation === 'string'
-        ? dbPayload.pitrStorageLocation
-        : dbPayload.pitrStorageLocation!.name;
-  }
-
-  return {
-    apiVersion: 'everest.percona.com/v1alpha1',
-    kind: 'DatabaseCluster',
-    metadata: dbCluster.metadata,
+) =>
+  updateDbClusterFn(clusterName, namespace, {
+    ...dbCluster,
     spec: {
       ...dbCluster?.spec,
-      backup: {
-        ...dbCluster?.spec?.backup,
-        enabled: dbPayload.schedules?.length > 0,
-        pitr: {
-          ...dbCluster?.spec?.backup?.pitr,
-          enabled: dbPayload.pitrEnabled,
-          backupStorageName: pitrBackupStorageName,
-        },
-        schedules:
-          dbPayload.schedules.length > 0
-            ? dbPayload.schedules.map((schedule) => ({
-                ...schedule,
-                schedule: cronConverter(
-                  schedule.schedule,
-                  Intl.DateTimeFormat().resolvedOptions().timeZone,
-                  'UTC'
-                ),
-              }))
-            : undefined,
-      },
-      engine: {
-        ...dbCluster.spec.engine,
-        version: dbPayload.dbVersion,
-        replicas: numberOfNodes,
-        resources: {
-          ...dbCluster.spec.engine.resources,
-          cpu: `${dbPayload.cpu}`,
-          memory: `${dbPayload.memory}G`,
-        },
-        storage: {
-          ...dbCluster.spec.engine.storage,
-          class: dbPayload.storageClass!,
-          size: `${dbPayload.disk}${dbPayload.diskUnit}`,
-        },
-        config: dbPayload.engineParametersEnabled
-          ? dbPayload.engineParameters
-          : '',
-      },
-      monitoring: {
-        ...(!!dbPayload.monitoring && {
-          monitoringConfigName: dbPayload?.monitoringInstance!,
-        }),
-      },
-      proxy: {
-        ...dbCluster.spec.proxy,
-        ...getProxySpec(
-          dbPayload.dbType,
-          dbPayload.numberOfProxies,
-          dbPayload.customNrOfProxies || '',
-          dbPayload.externalAccess,
-          dbPayload.proxyCpu,
-          dbPayload.proxyMemory,
-          dbPayload.sharding,
-          dbPayload.sourceRanges || []
-        ),
-      },
-      ...(dbPayload.dbType === DbType.Mongo && {
-        sharding: {
-          enabled: dbPayload.sharding,
-          shards: +(dbPayload.shardNr ?? 1),
-          configServer: {
-            replicas: +(dbPayload.shardConfigServers ?? 3),
-          },
+      ...(dbCluster?.spec?.backup?.schedules && {
+        backup: {
+          ...dbCluster?.spec?.backup,
+          schedules: dbCluster?.spec?.backup?.schedules.map((schedule) => ({
+            ...schedule,
+            schedule: cronConverter(
+              schedule.schedule,
+              'UTC',
+              Intl.DateTimeFormat().resolvedOptions().timeZone
+            ),
+          })),
         },
       }),
     },
-  };
-};
-
-export const useUpdateDbCluster = (
-  options?: UseMutationOptions<
-    unknown,
-    unknown,
-    UpdateDbClusterArgType,
-    unknown
-  >
-) =>
-  useMutation({
-    mutationFn: ({ dbPayload, dbCluster }: UpdateDbClusterArgType) => {
-      const dbClusterName = dbCluster?.metadata?.name;
-      const payload = formValuesToPayloadOverrides(dbPayload, dbCluster);
-      return updateDbClusterFn(
-        dbClusterName,
-        dbPayload.k8sNamespace || '',
-        payload
-      );
-    },
-    ...options,
   });
 
 export const useUpdateDbClusterCrd = () =>
@@ -164,7 +64,7 @@ export const useUpdateDbClusterCrd = () =>
       dbCluster: DbCluster;
       newCrdVersion: string;
     }) =>
-      updateDbClusterFn(clusterName, namespace, {
+      updateDbCluster(clusterName, namespace, {
         ...dbCluster,
         spec: {
           ...dbCluster.spec,
@@ -194,7 +94,7 @@ export const useUpdateDbClusterAdvancedConfiguration = () =>
       engineParametersEnabled: boolean;
       engineParameters: string | undefined;
     }) =>
-      updateDbClusterFn(clusterName, namespace, {
+      updateDbCluster(clusterName, namespace, {
         ...dbCluster,
         spec: {
           ...dbCluster.spec,
@@ -233,7 +133,7 @@ export const useUpdateDbClusterVersion = () =>
       dbCluster: DbCluster;
       dbVersion: string;
     }) =>
-      updateDbClusterFn(clusterName, namespace, {
+      updateDbCluster(clusterName, namespace, {
         ...dbCluster,
         spec: {
           ...dbCluster.spec,
@@ -258,7 +158,7 @@ export const useUpdateDbClusterMonitoring = () =>
       dbCluster: DbCluster;
       monitoringName?: string;
     }) =>
-      updateDbClusterFn(clusterName, namespace, {
+      updateDbCluster(clusterName, namespace, {
         ...dbCluster,
         spec: {
           ...dbCluster.spec,
@@ -295,7 +195,7 @@ export const useUpdateDbClusterResources = () =>
       shardConfigServers?: string;
       shardNr?: string;
     }) =>
-      updateDbClusterFn(dbCluster.metadata.name, dbCluster.metadata.namespace, {
+      updateDbCluster(dbCluster.metadata.name, dbCluster.metadata.namespace, {
         ...dbCluster,
         spec: {
           ...dbCluster.spec,
@@ -350,7 +250,7 @@ export const useUpdateDbClusterEngine = () =>
       dbCluster: DbCluster;
       newEngineVersion: string;
     }) =>
-      updateDbClusterFn(clusterName, namespace, {
+      updateDbCluster(clusterName, namespace, {
         ...dbCluster,
         spec: {
           ...dbCluster.spec,
@@ -377,7 +277,7 @@ export const useUpdateDbClusterPITR = () =>
       enabled: boolean;
       backupStorageName: string | { name: string };
     }) =>
-      updateDbClusterFn(clusterName, namespace, {
+      updateDbCluster(clusterName, namespace, {
         ...dbCluster,
         spec: {
           ...dbCluster.spec,
