@@ -26,6 +26,7 @@
   "dependencies": {
     "@fontsource/poppins": "^5.0.8",
     "@fontsource/roboto": "^5.0.8",
+    "@fontsource/roboto-mono": "^5.1.0",
     "@mui/utils": "^5.14.15"
   },
   "devDependencies": {

@@ -32,6 +32,7 @@ export const CodeCopyBlock = ({
           alignItems: 'center',
           pt: 0,
         },
+        fontFamily: '"Roboto Mono", "Helvetica", "Arial", "sans-serif"',
       }}
       action={
         <CopyToClipboardButton

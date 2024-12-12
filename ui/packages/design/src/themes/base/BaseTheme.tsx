@@ -6,6 +6,8 @@ import '@fontsource/roboto/700.css';
 import '@fontsource/poppins/400.css';
 import '@fontsource/poppins/500.css';
 import '@fontsource/poppins/600.css';
+
+import '@fontsource/roboto-mono/400.css';
 import {
   ComponentsOverrides,
   createTheme,
