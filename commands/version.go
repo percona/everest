@@ -58,7 +58,7 @@ func newVersionCmd(l *zap.SugaredLogger) *cobra.Command {
 				}
 				sv := "[NOT INSTALLED]"
 				if ev != nil {
-					sv = ev.String()
+					sv = fmt.Sprintf("v%s", ev.String())
 				}
 				v.ServerVersion = &sv
 			}
