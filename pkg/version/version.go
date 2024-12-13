@@ -58,7 +58,7 @@ type Info struct {
 	ProjectName   string  `json:"projectName"`
 	Version       string  `json:"version"`
 	FullCommit    string  `json:"fullCommit"`
-	ServerVersion *string `json:"serverVersion"`
+	ServerVersion *string `json:"serverVersion,omitempty"`
 }
 
 // String returns the string representation of the version information.
