@@ -236,7 +236,7 @@ test.describe('Sharding (psmdb)', () => {
     );
   });
 
-  test.skip('Sharding is not reset to default when returning to the previous step of the form in dbWizard', async ({
+  test('Sharding is not reset to default when returning to the previous step of the form in dbWizard', async ({
     page,
   }) => {
     expect(storageClasses.length).toBeGreaterThan(0);
