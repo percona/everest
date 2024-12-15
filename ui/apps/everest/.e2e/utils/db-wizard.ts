@@ -57,6 +57,18 @@ export const cancelWizard = async (page: Page) => {
   await page.waitForURL('**/databases');
 };
 
+export const goToLastStepByStepAndSubmit = async (page: Page) => {
+  let createDbVisible = false;
+  while (!createDbVisible) {
+    await moveForward(page);
+    const a = await page.getByTestId('db-wizard-submit-button').isVisible();
+    if (a) {
+      createDbVisible = true;
+    }
+  }
+  await submitWizard(page);
+};
+
 export const goToLastAndSubmit = async (page: Page) => {
   await goToStep(page, 'monitoring');
   await submitWizard(page);
