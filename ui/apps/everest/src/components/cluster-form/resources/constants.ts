@@ -165,7 +165,9 @@ export const getDefaultNumberOfconfigServersByNumberOfNodes = (
 ) => {
   if (DEFAULT_CONFIG_SERVERS.includes(numberOfNodes)) {
     return numberOfNodes;
-  } else return 7;
+  } else {
+    return 7;
+  }
 };
 
 const numberOfResourcesValidator = (
