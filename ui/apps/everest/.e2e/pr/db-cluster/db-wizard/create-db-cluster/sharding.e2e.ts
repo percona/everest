@@ -39,7 +39,7 @@ test.describe('Sharding (psmdb)', () => {
     await page.goto('/databases');
   });
 
-  test.skip('Sharding toggle is presented for MongoDb during creation of database', async ({
+  test('Sharding toggle is presented for MongoDb during creation of database', async ({
     page,
   }) => {
     expect(storageClasses.length).toBeGreaterThan(0);
@@ -52,7 +52,7 @@ test.describe('Sharding (psmdb)', () => {
     expect(shardingToggle).toHaveValue('false');
   });
 
-  test.skip('Config servers and Nº of shards is presented if sharding is enabled', async ({
+  test('Config servers and Nº of shards is presented if sharding is enabled', async ({
     page,
   }) => {
     expect(storageClasses.length).toBeGreaterThan(0);
@@ -98,7 +98,7 @@ test.describe('Sharding (psmdb)', () => {
     ).not.toBeVisible();
   });
 
-  test.skip('Sharding should be correctly displayed on the overview page', async ({
+  test('Sharding should be correctly displayed on the overview page', async ({
     page,
   }) => {
     const dbName = 'sharding-psmdb';
@@ -130,7 +130,7 @@ test.describe('Sharding (psmdb)', () => {
     await deleteDbCluster(page, dbName);
   });
 
-  test.skip('Mongo with sharding should not pass multinode cluster creation if config servers = 1', async ({
+  test('Mongo with sharding should not pass multinode cluster creation if config servers = 1', async ({
     page,
   }) => {
     expect(storageClasses.length).toBeGreaterThan(0);
