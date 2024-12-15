@@ -90,12 +90,13 @@ export const ClusterOverview = () => {
         port={dbCluster.status?.port!}
         username={dbClusterDetails?.username!}
         password={dbClusterDetails?.password!}
+        connectionUrl={dbClusterDetails?.connectionUrl!}
         externalAccess={
           isProxy(dbCluster.spec.proxy) &&
           dbCluster.spec.proxy.expose.type === ProxyExposeType.external
         }
         monitoring={dbCluster?.spec.monitoring.monitoringConfigName}
-        parameters={!!dbCluster?.spec.engine.config} //TODO EVEREST-1210 waits https://perconacorp.slack.com/archives/C0545J2BEJX/p1721309559055999
+        parameters={!!dbCluster?.spec.engine.config}
       />
       <ResourcesDetails
         dbCluster={dbCluster}
@@ -106,6 +107,8 @@ export const ClusterOverview = () => {
       {canReadBackups && (
         <BackupsDetails
           backup={dbCluster?.spec.backup!}
+          dbClusterName={dbCluster?.metadata.name}
+          namespace={dbCluster?.metadata.namespace}
           schedules={dbCluster?.spec.backup?.schedules}
           pitrEnabled={pitrEnabled}
           pitrStorageName={dbCluster?.spec.backup?.pitr?.backupStorageName!}

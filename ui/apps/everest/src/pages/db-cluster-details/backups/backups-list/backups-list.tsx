@@ -21,10 +21,11 @@ import { format } from 'date-fns';
 import {
   BACKUPS_QUERY_KEY,
   useDbBackups,
+  useDbClusterPitr,
   useDeleteBackup,
 } from 'hooks/api/backups/useBackups';
 import { MRT_ColumnDef } from 'material-react-table';
-import { Typography } from '@mui/material';
+import { Alert, Typography } from '@mui/material';
 import { RestoreDbModal } from 'modals/index.ts';
 import { useContext, useMemo, useState } from 'react';
 import { Backup, BackupStatus } from 'shared-types/backups.types';
@@ -32,6 +33,7 @@ import { DbClusterStatus } from 'shared-types/dbCluster.types.ts';
 import { ScheduleModalContext } from '../backups.context.ts';
 import { BACKUP_STATUS_TO_BASE_STATUS } from './backups-list.constants';
 import { Messages } from './backups-list.messages';
+import { Messages as DbDetailsMessages } from '../../db-cluster-details.messages';
 import BackupListTableHeader from './table-header';
 import { CustomConfirmDialog } from 'components/custom-confirm-dialog/custom-confirm-dialog.tsx';
 import { DbEngineType } from '@percona/types';
@@ -62,6 +64,13 @@ export const BackupsList = () => {
     dbCluster.metadata.namespace,
     {
       refetchInterval: 10 * 1000,
+    }
+  );
+  const { data: pitrData } = useDbClusterPitr(
+    dbCluster.metadata.name!,
+    dbCluster.metadata.namespace,
+    {
+      enabled: !!dbCluster.metadata.name && !!dbCluster.metadata.namespace,
     }
   );
   const { data: backupStorages = [] } = useBackupStoragesByNamespace(
@@ -187,6 +196,9 @@ export const BackupsList = () => {
 
   return (
     <>
+      {pitrData?.gaps && (
+        <Alert severity="error">{DbDetailsMessages.pitrError}</Alert>
+      )}
       {dbType === DbEngineType.POSTGRESQL && (
         <Typography variant="body2" mt={2} px={1}>
           {Messages.pgMaximum(uniqueStoragesInUse.length)}

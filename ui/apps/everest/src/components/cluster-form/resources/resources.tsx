@@ -194,7 +194,9 @@ const ResourcesToggles = ({
   useEffect(() => {
     if (diskCapacityExceeded) {
       setError(diskInputName, { type: 'custom' });
-    } else clearErrors(diskInputName);
+    } else {
+      clearErrors(diskInputName);
+    }
   }, [diskCapacityExceeded, clearErrors, setError]);
 
   useEffect(() => {
@@ -208,12 +210,13 @@ const ResourcesToggles = ({
 
   useEffect(() => {
     if (
+      allowDiskInputUpdate &&
       resourceSizePerUnit !== ResourceSize.custom &&
       disk !== sizeOptions[resourceSizePerUnit].disk
     ) {
       setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }
-  }, [disk, setValue]);
+  }, [disk, allowDiskInputUpdate, setValue]);
 
   useEffect(() => {
     if (
@@ -250,7 +253,10 @@ const ResourcesToggles = ({
             </ToggleCard>
           ))}
           {!disableCustom && (
-            <ToggleCard value={CUSTOM_NR_UNITS_INPUT_VALUE}>
+            <ToggleCard
+              value={CUSTOM_NR_UNITS_INPUT_VALUE}
+              data-testid={`toggle-button-${unitPlural}-custom`}
+            >
               {Messages.customValue}
             </ToggleCard>
           )}
@@ -424,6 +430,7 @@ const ResourcesForm = ({
   pairProxiesWithNodes,
   showSharding,
   hideProxies = false,
+  disableShardingInput = false,
 }: {
   dbType: DbType;
   hideProxies?: boolean;
@@ -431,6 +438,7 @@ const ResourcesForm = ({
   allowDiskInputUpdate?: boolean;
   pairProxiesWithNodes?: boolean;
   showSharding?: boolean;
+  disableShardingInput?: boolean;
 }) => {
   const [expanded, setExpanded] = useState<'nodes' | 'proxies' | false>(
     'nodes'
@@ -487,14 +495,28 @@ const ResourcesForm = ({
       setValue(DbWizardFormFields.numberOfProxies, CUSTOM_NR_UNITS_INPUT_VALUE);
       setValue(DbWizardFormFields.customNrOfProxies, customNrOfNodes);
     }
-  }, [setValue, getFieldState, customNrOfNodes, dbType, numberOfNodes]);
+  }, [
+    setValue,
+    getFieldState,
+    customNrOfNodes,
+    dbType,
+    numberOfNodes,
+    pairProxiesWithNodes,
+  ]);
 
   useEffect(() => {
-    const { isDirty: isConfigServersDirty } = getFieldState(
+    const { isTouched: isConfigServersTouched } = getFieldState(
       DbWizardFormFields.shardConfigServers
     );
+    const { isTouched: isNumberOfNodesTouched } = getFieldState(
+      DbWizardFormFields.numberOfNodes
+    );
 
-    if (!isConfigServersDirty) {
+    if (!isNumberOfNodesTouched) {
+      return;
+    }
+
+    if (!isConfigServersTouched) {
       if (numberOfNodes && numberOfNodes !== CUSTOM_NR_UNITS_INPUT_VALUE) {
         setValue(
           DbWizardFormFields.shardConfigServers,
@@ -510,8 +532,21 @@ const ResourcesForm = ({
     }
 
     trigger(DbWizardFormFields.shardConfigServers);
-  }, [setValue, getFieldState, numberOfNodes, customNrOfNodes]);
+  }, [
+    setValue,
+    getFieldState,
+    numberOfNodes,
+    customNrOfNodes,
+    trigger,
+    clearErrors,
+  ]);
 
+  useEffect(() => {
+    trigger();
+  }, [numberOfNodes, customNrOfNodes, trigger, numberOfProxies]);
+
+  // TODO test the following:
+  // when in restore mode, the number of shards should be disabled
   return (
     <>
       {!!showSharding && !!sharding && (
@@ -523,6 +558,8 @@ const ResourcesForm = ({
           <TextInput
             name={DbWizardFormFields.shardNr}
             textFieldProps={{
+              disabled: disableShardingInput,
+              sx: { maxWidth: '200px' },
               type: 'number',
               required: true,
               inputProps: {
@@ -619,6 +656,7 @@ const ResourcesForm = ({
             >
               {DEFAULT_CONFIG_SERVERS.map((number) => (
                 <ToggleRegularButton
+                  dataTestId={`shard-config-servers-${number}`}
                   sx={{
                     px: 2,
                   }}
@@ -626,7 +664,9 @@ const ResourcesForm = ({
                   value={number}
                   onClick={() => {
                     if (number !== shardConfigServers) {
-                      setValue(DbWizardFormFields.shardConfigServers, number);
+                      setValue(DbWizardFormFields.shardConfigServers, number, {
+                        shouldValidate: true,
+                      });
                     }
                   }}
                 >
@@ -635,7 +675,10 @@ const ResourcesForm = ({
               ))}
             </ToggleButtonGroupInputRegular>
             {shardConfigServersError && (
-              <FormHelperText error={true}>
+              <FormHelperText
+                data-testid="shard-config-servers-error"
+                error={true}
+              >
                 {shardConfigServersError?.message}
               </FormHelperText>
             )}

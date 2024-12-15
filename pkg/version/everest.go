@@ -24,6 +24,7 @@ import (
 	goversion "github.com/hashicorp/go-version"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
 )
@@ -35,8 +36,17 @@ type deploymentGetter interface {
 // EverestVersionFromDeployment returns Everest version from the k8s deployment resource.
 func EverestVersionFromDeployment(ctx context.Context, dg deploymentGetter) (*goversion.Version, error) {
 	dep, err := dg.GetDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
-	if err != nil {
+	// Ignore not found error, we will try again with legacy name.
+	if client.IgnoreNotFound(err) != nil {
 		return nil, err
+	}
+
+	// If the deployment is not found, try to get it with the legacy name.
+	if dep == nil || dep.GetCreationTimestamp().Time.IsZero() {
+		dep, err = dg.GetDeployment(ctx, common.PerconaEverestDeploymentNameLegacy, common.SystemNamespace)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var container *corev1.Container

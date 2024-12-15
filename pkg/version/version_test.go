@@ -1,83 +1,56 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package version
 
 import (
-	"fmt"
 	"testing"
 
-	goversion "github.com/hashicorp/go-version"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestCatalogImage(t *testing.T) {
+func TestIsRC(t *testing.T) {
 	t.Parallel()
-	Version = "v0.3.0"
-	v, err := goversion.NewVersion(Version)
-	require.NoError(t, err)
-	assert.Equal(t, fmt.Sprintf(releaseCatalogImage, v.String()), CatalogImage(v))
-
-	Version = "v0.3.0-1-asd-dirty"
-	v, err = goversion.NewVersion(Version)
-	require.NoError(t, err)
-	assert.Equal(t, devCatalogImage, CatalogImage(v))
-
-	Version = "0.3.0-37-gf1f07f6"
-	v, err = goversion.NewVersion(Version)
-	require.NoError(t, err)
-	assert.Equal(t, devCatalogImage, CatalogImage(v))
+	testCases := []struct {
+		version  string
+		expected bool
+	}{
+		{"v0.3.0", false},
+		{"v0.3.0-xx", false},
+		{"v0.3.0-rc1", true},
+		{"v1.3.0-rc2", true},
+	}
+	for _, tc := range testCases {
+		actual := IsRC(tc.version)
+		assert.Equal(t, tc.expected, actual)
+	}
 }
 
-func TestVersion_devVersion(t *testing.T) {
+func TestIsDev(t *testing.T) {
 	t.Parallel()
-
-	testcases := []struct {
-		name      string
-		version   string
-		expectDev bool
+	testCases := []struct {
+		version  string
+		expected bool
 	}{
-		{
-			name:      "public version",
-			version:   "1.0.0",
-			expectDev: false,
-		},
-		{
-			name:      "rc version",
-			version:   "1.0.0-rc2",
-			expectDev: false,
-		},
-		{
-			name:      "empty version",
-			version:   "",
-			expectDev: true,
-		},
-		{
-			name:      "upgrade-test version",
-			version:   "1.0.0-hash-upgrade-test",
-			expectDev: false,
-		},
-		{
-			name:      "dev version",
-			version:   "1.0.0-any-suffix",
-			expectDev: true,
-		},
-		{
-			name:      "dev-latest version",
-			version:   "0.0.0-hash",
-			expectDev: true,
-		},
+		{"v0.0.0", true},
+		{"v0.0.0-cf34bt", true},
+		{"v0.3.0-rc1", false},
+		{"v0.3.0", false},
 	}
-
-	for _, tt := range testcases {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			dev := isDevVersion(tt.version)
-			assert.Equal(t, tt.expectDev, dev)
-
-			if tt.version != "" {
-				dev := isDevVersion("v" + tt.version)
-				assert.Equal(t, tt.expectDev, dev)
-			}
-		})
+	for _, tc := range testCases {
+		actual := IsDev(tc.version)
+		assert.Equal(t, tc.expected, actual)
 	}
 }

@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
+import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
 
 test.describe('DB Cluster Overview', async () => {
   const dbClusterName = 'cluster-overview-test';
@@ -10,9 +11,10 @@ test.describe('DB Cluster Overview', async () => {
       dbName: dbClusterName,
       dbType: 'mysql',
       numberOfNodes: '1',
-      cpu: 0.6,
-      disk: 1,
-      memory: 1,
+      cpu: 1,
+      memory: 2,
+      proxyCpu: 0.5,
+      proxyMemory: 0.8,
       externalAccess: true,
       sourceRanges: [
         {
@@ -31,9 +33,7 @@ test.describe('DB Cluster Overview', async () => {
   });
 
   test('Overview information', async ({ page }) => {
-    const row = await page.getByText(dbClusterName);
-
-    await row.click();
+    await findDbAndClickRow(page, dbClusterName);
 
     await expect(
       page.getByRole('heading', {
@@ -77,6 +77,18 @@ test.describe('DB Cluster Overview', async () => {
         .getByTestId('ext.access-overview-section-row')
         .filter({ hasText: 'Enabled' })
     ).toBeVisible();
+  });
+
+  test('Show the correct resources during editing', async ({ page }) => {
+    await findDbAndClickRow(page, dbClusterName);
+    await page.getByTestId('edit-resources-button').click();
+    await expect(
+      page.getByTestId('node-resources-toggle-button-small')
+    ).toHaveAttribute('aria-pressed', 'true');
+    await page.getByTestId('proxies-accordion').click();
+    await expect(
+      page.getByTestId('proxy-resources-toggle-button-medium')
+    ).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('Delete Action', async ({ page, request }) => {

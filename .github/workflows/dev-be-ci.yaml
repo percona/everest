@@ -169,6 +169,10 @@ jobs:
         run: |
           bin/golangci-lint run --new --out-format=line-number | env REVIEWDOG_GITHUB_API_TOKEN=${{ secrets.GITHUB_TOKEN }} bin/reviewdog -f=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=true
       
+      - name: Check that dev Helm chart is up-to-date
+        run: |
+          make update-dev-chart
+          git diff --exit-code
 
       - name: Check that there are no source code changes
         run: |
@@ -182,13 +186,6 @@ jobs:
         run: |
           if ! grep -q "RELEASE_VERSION ?= v0.0.0" Makefile; then 
             echo "default RELEASE_VERSION in Makefile should be 0.0.0" 
-            exit 1 
-          fi 
-
-      - name: Check the quickstart script references dev version
-        run: |
-          if ! grep -q "perconalab/everest:0.0.0" deploy/quickstart-k8s.yaml; then 
-            echo "deploy/quickstart-k8s.yaml should reference 0.0.0 version" 
             exit 1 
           fi 
 
@@ -330,26 +327,14 @@ jobs:
             --operator.postgresql \
             --operator.xtradb-cluster \
             --skip-wizard \
-            --namespaces everest
-
-      - name: Patch Everest Deployment to use the PR image
-        run: |
-          kubectl -n everest-system patch deployment percona-everest --type strategic --patch-file dev/patch-deployment-image.yaml
-          kubectl -n everest-system rollout status deploy/percona-everest --timeout=120s
-          kubectl patch sub everest-operator -n everest-system -p '
-            [{
-                "op": "add",
-                "path": "/spec/config/env/-",
-                "value": {
-                  "name": "PERCONA_VERSION_SERVICE_URL",
-                  "value": "https://check-dev.percona.com/versions/v1"
-                }
-            }]' --type=json
-
+            --namespaces everest \
+            --helm-set server.image=localhost:5000/perconalab/everest \
+            --helm-set server.apiRequestsRateLimit=200 \
+            --helm-set versionMetadataURL=https://check-dev.percona.com
 
       - name: Expose Everest API Server
         run: |
-          kubectl port-forward --namespace everest-system deployment/percona-everest 8080:8080 &
+          kubectl port-forward --namespace everest-system deployment/everest-server 8080:8080 &
 
       - name: Create Everest test user
         run: |
@@ -373,14 +358,8 @@ jobs:
           kubectl -n everest-system describe pods
           kubectl -n everest-monitoring describe pods
           kubectl -n everest describe pods
-          kubectl -n everest-system logs deploy/percona-everest
+          kubectl -n everest-system logs deploy/everest-server
 
-      - name: Everest - run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: "localhost:5000/perconalab/everest:0.0.0"
-          format: 'table'
-          severity: 'CRITICAL,HIGH'
 
 
 
@@ -444,15 +423,6 @@ jobs:
         run: |
           make init
           make install-operators
-          kubectl patch sub everest-operator -n everest-system -p '
-            [{
-                "op": "add",
-                "path": "/spec/config/env/-",
-                "value": {
-                  "name": "PERCONA_VERSION_SERVICE_URL",
-                  "value": "https://check-dev.percona.com/versions/v1"
-                }
-            }]' --type=json
           make test-cli
       - name: Attach the report
         if: ${{ always() && steps.cli-tests.outcome != 'skipped' }}
@@ -470,7 +440,8 @@ jobs:
           'test-all-operators',
           'test-mongo-operator',
           'test-pg-operator',
-          'test-pxc-operator'
+          'test-pxc-operator',
+          'test-namespaces'
         ]
     name: CLI tests
     uses: ./.github/workflows/cli-tests.yml

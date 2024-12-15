@@ -4,8 +4,8 @@ import LabeledContent from '../../../labeled-content';
 import { Controller, useFormContext } from 'react-hook-form';
 import { ToggleButtonGroupInputProps } from './toggle-button-group.types';
 
+// TODO remove control prop from all inputs. We should just use useFormContext
 const ToggleButtonGroupInput = ({
-  control,
   name,
   label,
   controllerProps,
@@ -13,7 +13,7 @@ const ToggleButtonGroupInput = ({
   toggleButtonGroupProps = {},
   children,
 }: ToggleButtonGroupInputProps) => {
-  const { control: contextControl } = useFormContext();
+  const { control, setValue } = useFormContext();
   const {
     sx: toggleButtonGroupSxProp,
     onChange: toggleButtonGroupOnChange = () => {},
@@ -22,7 +22,7 @@ const ToggleButtonGroupInput = ({
   const content = (
     <Controller
       name={name}
-      control={control ?? contextControl}
+      control={control}
       render={({ field }) => (
         <ToggleButtonGroup
           {...field}
@@ -48,11 +48,12 @@ const ToggleButtonGroupInput = ({
               } else {
                 event.target.value = value;
               }
-              field.onChange(event);
+            
               toggleButtonGroupOnChange(
                 event,
                 isNumber ? event.target.valueAsNumber : event.target.value
               );
+              setValue(name, value, { shouldTouch: true });
             }
           }}
           {...toggleButtonGroupRestProps}

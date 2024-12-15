@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Box, Skeleton, Typography } from '@mui/material';
+import { Box, Divider, Skeleton, Typography } from '@mui/material';
 import { CopyToClipboardButton } from '@percona/ui-lib';
 import { HiddenPasswordToggle } from 'components/hidden-row';
 import { useDbClusterCredentials } from 'hooks/api/db-cluster/useCreateDbCluster';
@@ -28,6 +28,8 @@ import {
   getTotalResourcesDetailedString,
   memoryParser,
 } from 'utils/k8ResourceParser';
+import { getProxyUnitNamesFromDbType } from 'components/cluster-form/resources/utils';
+import { dbEngineToDbType } from '@percona/utils';
 
 export const ExpandedRow = ({
   row,
@@ -35,10 +37,14 @@ export const ExpandedRow = ({
   row: MRT_Row<DbClusterTableElement>;
 }) => {
   const {
+    dbType,
     cpu,
     memory,
     storage,
     nodes,
+    proxies,
+    proxyCpu,
+    proxyMemory,
     exposetype,
     namespace,
     databaseName,
@@ -46,17 +52,29 @@ export const ExpandedRow = ({
     port,
     raw,
   } = row.original;
+
   const parsedDiskValues = memoryParser(storage.toString());
   const parsedMemoryValues = memoryParser(memory.toString());
+  const parsedProxyMemoryValues = memoryParser(proxyMemory.toString());
   const cpuResourcesStr = getTotalResourcesDetailedString(
     cpuParser(cpu.toString() || '0'),
     nodes,
+    'CPU'
+  );
+  const cpuProxyResourcesStr = getTotalResourcesDetailedString(
+    cpuParser(proxyCpu.toString() || '0'),
+    proxies,
     'CPU'
   );
   const memoryResourcesStr = getTotalResourcesDetailedString(
     parsedMemoryValues.value,
     nodes,
     parsedMemoryValues.originalUnit
+  );
+  const memoryProxyResourcesStr = getTotalResourcesDetailedString(
+    parsedProxyMemoryValues.value,
+    proxies,
+    parsedProxyMemoryValues.originalUnit
   );
   const storageResourcesStr = getTotalResourcesDetailedString(
     parsedDiskValues.value,
@@ -151,6 +169,24 @@ export const ExpandedRow = ({
           label={Messages.expandedRow.disk}
           value={storageResourcesStr}
         />
+        <Divider sx={{ margin: '10px 0' }} />
+        {proxies > 0 && (
+          <>
+            <LabelValue
+              label={`Nº ${getProxyUnitNamesFromDbType(dbEngineToDbType(dbType)).plural}`}
+              value={proxies}
+            />
+            <LabelValue
+              label={Messages.expandedRow.cpu}
+              value={cpuProxyResourcesStr}
+            />
+            <LabelValue
+              label={Messages.expandedRow.memory}
+              value={memoryProxyResourcesStr}
+            />
+            <Divider sx={{ margin: '10px 0' }} />
+          </>
+        )}
         <LabelValue
           label={Messages.expandedRow.externalAccess}
           value={

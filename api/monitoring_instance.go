@@ -17,6 +17,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -29,6 +30,7 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/pmm"
+	"github.com/percona/everest/pkg/rbac"
 )
 
 const (
@@ -146,8 +148,28 @@ func (e *EverestServer) createMonitoringK8sResources(
 	return nil
 }
 
+// enforceMonitoringConfigRBAC checks if the user has permissions to read the monitoring config.
+func (e *EverestServer) enforceMonitoringConfigRBAC(user string, mc everestv1alpha1.MonitoringConfig) error {
+	// Check if the user has permissions for this monitoring config.
+	if err := e.enforce(user, rbac.ResourceMonitoringInstances, rbac.ActionRead, rbac.ObjectName(mc.GetNamespace(), mc.GetName())); err != nil {
+		if !errors.Is(err, errInsufficientPermissions) {
+			e.l.Error(errors.Join(err, errors.New("failed to check monitoring-instance permissions")))
+		}
+		return err
+	}
+
+	return nil
+}
+
 // ListMonitoringInstances lists all monitoring instances.
 func (e *EverestServer) ListMonitoringInstances(ctx echo.Context, namespace string) error {
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+
 	mcList, err := e.kubeClient.ListMonitoringConfigs(ctx.Request().Context(), namespace)
 	if err != nil {
 		e.l.Error(err)
@@ -156,6 +178,12 @@ func (e *EverestServer) ListMonitoringInstances(ctx echo.Context, namespace stri
 
 	result := make([]*MonitoringInstance, 0, len(mcList.Items))
 	for _, mc := range mcList.Items {
+		if err := e.enforceMonitoringConfigRBAC(user, mc); errors.Is(err, errInsufficientPermissions) {
+			continue
+		} else if err != nil {
+			return err
+		}
+
 		result = append(result, &MonitoringInstance{
 			Type:      MonitoringInstanceBaseWithNameType(mc.Spec.Type),
 			Name:      mc.GetName(),

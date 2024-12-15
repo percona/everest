@@ -2,7 +2,7 @@ import { DbType } from '@percona/types';
 import { z } from 'zod';
 import { Resources } from 'shared-types/dbCluster.types';
 import { DbWizardFormFields } from 'consts';
-import { memoryParser } from 'utils/k8ResourceParser';
+import { cpuParser, memoryParser } from 'utils/k8ResourceParser';
 import { Messages } from './messages';
 
 const resourceToNumber = (minimum = 0) =>
@@ -15,19 +15,25 @@ const resourceToNumber = (minimum = 0) =>
   );
 
 export const matchFieldsValueToResourceSize = (
-  dbType: DbType,
+  sizes: Record<
+    Exclude<ResourceSize, ResourceSize.custom>,
+    Record<'cpu' | 'memory', number>
+  >,
   resources?: Resources
 ): ResourceSize => {
   if (!resources) {
     return ResourceSize.custom;
   }
-  const memory = memoryParser(resources.memory.toString());
-
-  const res = Object.values(NODES_DEFAULT_SIZES[dbType]).findIndex(
-    (item) => item.cpu === Number(resources.cpu) && item.memory === memory.value
-  );
+  const memory = memoryParser(resources.memory.toString(), 'G');
+  const res = Object.values(sizes).findIndex((item) => {
+    const sizeParsedMemory = memoryParser(item.memory.toString(), 'G');
+    return (
+      cpuParser(item.cpu.toString()) === cpuParser(resources.cpu.toString()) &&
+      sizeParsedMemory.value === memory.value
+    );
+  });
   return res !== -1
-    ? (Object.keys(NODES_DEFAULT_SIZES[dbType])[res] as ResourceSize)
+    ? (Object.keys(sizes)[res] as ResourceSize)
     : ResourceSize.custom;
 };
 
@@ -181,7 +187,10 @@ const numberOfResourcesValidator = (
   }
 };
 
-export const resourcesFormSchema = (passthrough?: boolean) => {
+export const resourcesFormSchema = (
+  defaultValues: Record<string, unknown>,
+  allowShardingDescaling: boolean
+) => {
   const objectShape = {
     [DbWizardFormFields.shardNr]: z.string().optional(),
     [DbWizardFormFields.shardConfigServers]: z.number().optional(),
@@ -200,9 +209,7 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
     [DbWizardFormFields.customNrOfProxies]: z.string().optional(),
   };
 
-  const zObject = passthrough
-    ? z.object(objectShape).passthrough()
-    : z.object(objectShape);
+  const zObject = z.object(objectShape).passthrough();
 
   return zObject.superRefine(
     (
@@ -228,7 +235,7 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
       if (dbType !== DbType.Mongo || (dbType === DbType.Mongo && !!sharding)) {
         numberOfResourcesValidator(
           numberOfProxies,
-          customNrOfNodes,
+          customNrOfProxies,
           DbWizardFormFields.customNrOfProxies,
           ctx
         );
@@ -246,11 +253,12 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
         });
       }
 
+      const intNrNodes =
+        numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
+          ? customNrOfNodes
+          : numberOfNodes;
+
       if (dbType === DbType.Mysql) {
-        const intNrNodes =
-          numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
-            ? customNrOfNodes
-            : numberOfNodes;
         const intNrProxies =
           numberOfProxies === CUSTOM_NR_UNITS_INPUT_VALUE
             ? customNrOfProxies
@@ -285,11 +293,26 @@ export const resourcesFormSchema = (passthrough?: boolean) => {
             path: [DbWizardFormFields.shardNr],
           });
         } else {
+          const previousSharding = defaultValues[
+            DbWizardFormFields.shardNr
+          ] as string;
+          const intPreviousSharding = parseInt(previousSharding || '', 10);
+
           if (intShardNr < intShardNrMin) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: Messages.sharding.min(intShardNrMin),
               path: [DbWizardFormFields.shardNr],
+            });
+          }
+
+          // TODO test the following:
+          // If sharding is enabled, the number of shards cannot be decreased via edit
+          if (!allowShardingDescaling && intShardNr < intPreviousSharding) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: [DbWizardFormFields.shardNr],
+              message: Messages.sharding.descaling,
             });
           }
         }

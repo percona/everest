@@ -6,6 +6,8 @@ import '@fontsource/roboto/700.css';
 import '@fontsource/poppins/400.css';
 import '@fontsource/poppins/500.css';
 import '@fontsource/poppins/600.css';
+
+import '@fontsource/roboto-mono/400.css';
 import {
   ComponentsOverrides,
   createTheme,
@@ -787,6 +789,21 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
         root: () => ({
           '.MuiBadge-overlapCircular': {
             backgroundColor: 'transparent',
+          },
+        }),
+      },
+    },
+
+    MuiTableBody: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          '#empty-state-icon': {
+            path: {
+              // complex selector we need in order to provide dark theme style for this icon, instead of having a separate one
+              '&:not(:nth-child(n+8)), &:last-child': {
+                stroke: theme.palette.text.primary,
+              },
+            },
           },
         }),
       },

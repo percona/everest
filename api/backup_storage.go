@@ -16,6 +16,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -26,10 +27,31 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/rbac"
 )
+
+// enforceBackupStorageRBAC checks if the user has permissions to read the backup storage.
+func (e *EverestServer) enforceBackupStorageRBAC(user string, bs everestv1alpha1.BackupStorage) error {
+	// Check if the user has permissions for this Backup Storage?
+	if err := e.enforce(user, rbac.ResourceBackupStorages, rbac.ActionRead, rbac.ObjectName(bs.GetNamespace(), bs.GetName())); err != nil {
+		if !errors.Is(err, errInsufficientPermissions) {
+			e.l.Error(errors.Join(err, errors.New("failed to check backup-storage permissions")))
+		}
+		return err
+	}
+
+	return nil
+}
 
 // ListBackupStorages lists backup storages.
 func (e *EverestServer) ListBackupStorages(ctx echo.Context, namespace string) error {
+	user, err := rbac.GetUser(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{
+			Message: pointer.ToString("Failed to get user from context" + err.Error()),
+		})
+	}
+
 	backupList, err := e.kubeClient.ListBackupStorages(ctx.Request().Context(), namespace)
 	if err != nil {
 		e.l.Error(err)
@@ -40,6 +62,12 @@ func (e *EverestServer) ListBackupStorages(ctx echo.Context, namespace string) e
 
 	result := make([]BackupStorage, 0, len(backupList.Items))
 	for _, s := range backupList.Items {
+		if err := e.enforceBackupStorageRBAC(user, s); errors.Is(err, errInsufficientPermissions) {
+			continue
+		} else if err != nil {
+			return err
+		}
+
 		result = append(result, BackupStorage{
 			Type:      BackupStorageType(s.Spec.Type),
 			Name:      s.GetName(),

@@ -18,6 +18,7 @@ import { moveForward } from '@e2e/utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import { deleteMonitoringInstance } from '@e2e/utils/monitoring-instance';
 import { setNamespace } from '@e2e/utils/namespaces';
+import { selectDbEngine } from '../db-cluster/db-wizard/db-wizard-utils';
 
 const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 
@@ -42,8 +43,7 @@ test.describe('Namespaces: Monitoring availability', () => {
     request,
   }) => {
     await page.goto('/databases');
-    const button = page.getByTestId('add-db-cluster-button');
-    await button.click();
+    await selectDbEngine(page, 'pxc');
 
     // setting everest-pxc namespace
     await setNamespace(page, EVEREST_CI_NAMESPACES.PXC_ONLY);

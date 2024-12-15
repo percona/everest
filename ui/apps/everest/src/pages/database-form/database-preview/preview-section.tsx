@@ -85,6 +85,7 @@ export const PreviewSection = ({
 export const PreviewContentText = ({
   text,
   dataTestId,
+  ...typographyProps
 }: PreviewContentTextProps) => (
   <Typography
     variant="caption"
@@ -92,6 +93,7 @@ export const PreviewContentText = ({
     data-testid={
       dataTestId ? `${dataTestId}-preview-content` : 'preview-content'
     }
+    {...typographyProps}
   >
     {text}
   </Typography>

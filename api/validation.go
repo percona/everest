@@ -112,7 +112,7 @@ var (
 	errDuplicatedSchedules           = errors.New("duplicated backup schedules are not allowed")
 	errDuplicatedStoragePG           = errors.New("postgres clusters can't use the same storage for the different schedules")
 	errStorageChangePG               = errors.New("the existing postgres schedules can't change their storage")
-	errDuplicatedBackupStorage       = errors.New("backup storages with the same url, bucket and url are not allowed")
+	errDuplicatedBackupStorage       = errors.New("backup storages with the same url, bucket and region are not allowed")
 	errEditBackupStorageInUse        = errors.New("can't edit bucket or region of the backup storage in use")
 	errInsufficientPermissions       = errors.New("insufficient permissions for performing the operation")
 	errShardingIsNotSupported        = errors.New("sharding is not supported")
@@ -652,6 +652,15 @@ func (e *EverestServer) validateDatabaseClusterOnCreate(
 	if err := e.enforceRestoreToNewDBRBAC(ctx.Request().Context(), user, namespace, databaseCluster); err != nil {
 		return err
 	}
+
+	engineName, ok := operatorEngine[everestv1alpha1.EngineType(databaseCluster.Spec.Engine.Type)]
+	if !ok {
+		return errors.New("unsupported database engine")
+	}
+	if err := e.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, engineName)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -677,7 +686,7 @@ func (e *EverestServer) enforceRestoreToNewDBRBAC(
 	}
 	sourceDB := bkp.Spec.DBClusterName
 
-	if err := e.enforceDBRestoreRBAC(user, namespace, sourceBackup, sourceDB); err != nil {
+	if err := e.enforceDBRestoreRBAC(user, namespace, sourceDB); err != nil {
 		return err
 	}
 	return nil
@@ -1240,7 +1249,7 @@ func (e *EverestServer) validateBackupScheduledUpdate(
 }
 
 func (e *EverestServer) validateDatabaseClusterOnUpdate(
-	c echo.Context,
+	user string,
 	dbc *DatabaseCluster,
 	oldDB *everestv1alpha1.DatabaseCluster,
 ) error {
@@ -1265,10 +1274,6 @@ func (e *EverestServer) validateDatabaseClusterOnUpdate(
 		return err
 	}
 
-	user, err := rbac.GetUser(c)
-	if err != nil {
-		return errors.Join(err, errors.New("cannot get user from request context"))
-	}
 	if err := e.validateBackupScheduledUpdate(user, dbc, oldDB); err != nil {
 		return err
 	}

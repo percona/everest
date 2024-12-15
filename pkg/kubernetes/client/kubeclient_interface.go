@@ -40,6 +40,8 @@ type KubeClientConnector interface {
 	ListBackupStorages(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.BackupStorageList, error)
 	// DeleteBackupStorage deletes the backupStorage.
 	DeleteBackupStorage(ctx context.Context, namespace, name string) error
+	// DeleteCatalogSource deletes a catalog source.
+	DeleteCatalogSource(ctx context.Context, namespace string, name string) error
 	// GetConfigMap returns config map by name and namespace.
 	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
 	// CreateConfigMap creates the provided ConfigMap.
@@ -109,6 +111,8 @@ type KubeClientConnector interface {
 	GetPackageManifest(ctx context.Context, namespace, name string) (*packagev1.PackageManifest, error)
 	// ListCRDs returns a list of CRDs.
 	ListCRDs(ctx context.Context, labelSelector *metav1.LabelSelector) (*apiextv1.CustomResourceDefinitionList, error)
+	// DeleteCRD deletes a CRD by name.
+	DeleteCRD(ctx context.Context, name string) error
 	// ListCRs returns a list of CRs.
 	ListCRs(ctx context.Context, namespace string, gvr schema.GroupVersionResource, labelSelector *metav1.LabelSelector) (*unstructured.UnstructuredList, error)
 	// GetClusterServiceVersion retrieve a CSV by namespaced name.
@@ -119,6 +123,8 @@ type KubeClientConnector interface {
 	UpdateClusterServiceVersion(ctx context.Context, csv *v1alpha1.ClusterServiceVersion) (*v1alpha1.ClusterServiceVersion, error)
 	// DeleteClusterServiceVersion deletes a CSV by namespaced name.
 	DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error
+	// DeleteSubscription deletes a subscription by namespaced name.
+	DeleteSubscription(ctx context.Context, key types.NamespacedName) error
 	// DeleteFile accepts manifest file contents parses into []runtime.Object
 	// and deletes them from the cluster.
 	DeleteFile(fileBytes []byte) error
@@ -126,8 +132,6 @@ type KubeClientConnector interface {
 	GetService(ctx context.Context, namespace, name string) (*corev1.Service, error)
 	// GetClusterRoleBinding returns cluster role binding by given name.
 	GetClusterRoleBinding(ctx context.Context, name string) (*rbacv1.ClusterRoleBinding, error)
-	// GetCSV retrieves an OLM CSV by namespace and name.
-	GetCSV(ctx context.Context, namespace string, name string) (*v1alpha1.ClusterServiceVersion, error)
 	// ListDatabaseClusters returns list of managed database clusters.
 	ListDatabaseClusters(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterList, error)
 	// GetDatabaseCluster returns database clusters by provided name.
@@ -154,6 +158,8 @@ type KubeClientConnector interface {
 	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
 	// UpdateDeployment updates a deployment and returns the updated object.
 	UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error)
+	// DeleteDeployment deletes a deployment.
+	DeleteDeployment(ctx context.Context, name, namespace string) error
 	// GetInstallPlan retrieves an OLM install plan by namespace and name.
 	GetInstallPlan(ctx context.Context, namespace string, name string) (*v1alpha1.InstallPlan, error)
 	// ListInstallPlans lists install plans.

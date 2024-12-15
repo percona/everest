@@ -110,7 +110,7 @@ jobs:
           mkdir -p $TOOLS_PATH
           echo $TOOLS_PATH >> $GITHUB_PATH
 
-          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.25.2
+          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.38.0
           curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
 
           gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E
@@ -168,19 +168,6 @@ jobs:
           push: false
           tags: ${{ steps.operator_meta.outputs.tags }}
 
-      - name: Operator - set everest-operator image to scan
-        id: set_operator_image
-        run: |
-          # taking the first tag to check with trivy. Since the build is the same, no need to check the rest of them
-          echo "::set-output name=image_to_check::$(echo "${{ steps.operator_meta.outputs.tags }}" | head -n 1)"
-
-      - name: Operator - run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: ${{ steps.set_operator_image.outputs.image_to_check }}
-          format: "table"
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
 
       - name: Operator - push everest-operator image
         uses: docker/build-push-action@v6
@@ -197,19 +184,6 @@ jobs:
           tags: ${{ steps.bundle_meta.outputs.tags }}
           file: everest-operator/bundle.Dockerfile
 
-      - name: Operator - set everest-operator-bundle image to scan
-        id: set_operator_bundle_image
-        run: |
-          # taking the first tag to check with trivy. Since the build is the same, no need to check the rest of them
-          echo "::set-output name=image_to_check::$(echo "${{ steps.bundle_meta.outputs.tags }}" | head -n 1)"
-
-      - name: Operator - Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: ${{ steps.set_operator_bundle_image.outputs.image_to_check }}
-          format: "table"
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
 
       - name: Operator - push everest-operator-bundle image
         uses: docker/build-push-action@v6
@@ -306,20 +280,6 @@ jobs:
           tags: ${{ steps.catalog_meta.outputs.tags }}
           file: everest-catalog/everest-catalog.Dockerfile
 
-      - name: Catalog - set catalog image to scan
-        id: set_catalog_image
-        run: |
-          # taking the first tag to check with trivy. Since the build is the same, no need to check the rest of them
-          echo "::set-output name=image_to_check::$(echo "${{ steps.catalog_meta.outputs.tags }}" | head -n 1)"
-
-      # TODO: fix the vulnerabilities in main and enable this check
-      #      - name: Catalog - run Trivy vulnerability scanner
-      #        uses: aquasecurity/trivy-action@0.24.0
-      #        with:
-      #          image-ref: ${{ steps.set_catalog_image.outputs.image_to_check }}
-      #          format: 'table'
-      #          exit-code: '1'
-      #          severity: 'CRITICAL,HIGH'
 
       - name: Catalog - push image
         uses: docker/build-push-action@v6
@@ -350,20 +310,6 @@ jobs:
             git push origin $BRANCH_NAME
           fi
           git checkout $BRANCH_NAME
-
-          # Update deploy manifest 
-          if [[ $IS_RC == 1 ]]; then 
-            # if the build is being run over dev/RC build, there will be the "perconalab" org mentioned in the quickstart file, 
-            # so we should replace only the version
-            sed -i "s/perconalab\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-            
-            # if the build is being run over a Release build, there will be the "percona" org mentioned in the quickstart file, 
-            # so we should replace both the org and the version
-            sed -i "s/percona\/everest.*/perconalab\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-          else
-            sed -i "s/perconalab\/everest.*/percona\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-            sed -i "s/percona\/everest.*/percona\/everest:$VERSION/g" deploy/quickstart-k8s.yaml
-          fi 
 
           # Update the operator go module to reference the version tag
           go get github.com/percona/everest-operator@$GH_TAG
@@ -435,20 +381,6 @@ jobs:
           push: false
           tags: ${{ steps.everest_meta.outputs.tags }}
 
-      - name: Everest - set everest image to scan
-        id: set_everest_image
-        run: |
-          # taking the first tag to check with trivy. Since the build is the same, no need to check the rest of them
-          echo "::set-output name=image_to_check::$(echo "${{ steps.everest_meta.outputs.tags }}" | head -n 1)"
-
-      # TODO: fix the vulnerabilities in main and enable this check
-      #      - name: Everest - run Trivy vulnerability scanner
-      #        uses: aquasecurity/trivy-action@0.24.0
-      #        with:
-      #          image-ref: ${{ steps.set_everest_image.outputs.image_to_check }}
-      #          format: 'table'
-      #          exit-code: '1'
-      #          severity: 'CRITICAL,HIGH'
 
       - name: Everest - push Everest image
         uses: docker/build-push-action@v6

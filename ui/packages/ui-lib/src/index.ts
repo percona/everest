@@ -71,3 +71,6 @@ export { default as Table } from './table';
 export { default as CopyToClipboardButton } from './buttons/copy-to-clipboard-button';
 
 export { default as NotistackMuiSnackbar } from './notistack-mui-snackbar';
+
+export * from './actionable-labeled-content';
+export { default as ActionableLabeledContent } from './actionable-labeled-content';

@@ -65,7 +65,7 @@ const Login = () => {
           <LoginLinkButton
             icon={<ArrowForwardIcon />}
             text="Support"
-            href="https://hubs.ly/Q02Rt6pG0"
+            href="https://hubs.ly/Q02YRLsL0"
           />
           <LoginLinkButton
             icon={<ArrowForwardIcon />}
@@ -120,6 +120,7 @@ const Login = () => {
                   <TextInput
                     textFieldProps={{
                       type: 'text',
+                      autoFocus: true,
                       label: Messages.username,
                       fullWidth: true,
                       sx: { mb: 2 },

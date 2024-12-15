@@ -12,7 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { StackProps } from '@mui/material';
+import { StackProps, TypographyProps } from '@mui/material';
 
 export type DatabasePreviewProps = {
   // zero indexed
@@ -35,4 +35,4 @@ export type PreviewSectionProps = {
 export type PreviewContentTextProps = {
   text: string;
   dataTestId?: string;
-};
+} & TypographyProps;

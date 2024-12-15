@@ -12,13 +12,14 @@ import {
   DbClusterStatus,
   GetDbClusterPayload,
 } from 'shared-types/dbCluster.types';
+import { DB_CLUSTER_QUERY } from './useDbCluster';
 
-export const useDbActions = () => {
+export const useDbActions = (dbCluster: DbCluster) => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
   const [openRestoreDialog, setOpenRestoreDialog] = useState(false);
-  const [selectedDbCluster, setSelectedDbCluster] = useState<DbCluster>();
-  const { mutate: deleteDbCluster } = useDeleteDbCluster();
+  const deleteMutation = useDeleteDbCluster(dbCluster.metadata.name);
+  const { mutate: deleteDbCluster } = deleteMutation;
   const { mutate: suspendDbCluster } = usePausedDbCluster();
   const { mutate: restartDbCluster } = useRestartDbCluster();
   const navigate = useNavigate();
@@ -27,13 +28,13 @@ export const useDbActions = () => {
   const isPaused = (dbCluster: DbCluster) => dbCluster.spec.paused;
 
   const handleDbSuspendOrResumed = (dbCluster: DbCluster) => {
-    setSelectedDbCluster(dbCluster);
     const shouldBePaused = !isPaused(dbCluster);
 
     suspendDbCluster(
       { shouldBePaused, dbCluster },
       {
-        onSuccess: (updatedObject: DbCluster) => {
+        onSuccess: (data) => {
+          const updatedObject = data as DbCluster;
           queryClient.setQueryData<GetDbClusterPayload | undefined>(
             [DB_CLUSTERS_QUERY_KEY, updatedObject.metadata.namespace],
             (oldData) => {
@@ -65,11 +66,11 @@ export const useDbActions = () => {
   };
 
   const handleDbRestart = (dbCluster: DbCluster) => {
-    setSelectedDbCluster(dbCluster);
     restartDbCluster(
       { dbCluster },
       {
-        onSuccess: (updatedObject: DbCluster) => {
+        onSuccess: (data) => {
+          const updatedObject = data as DbCluster;
           queryClient.setQueryData<GetDbClusterPayload | undefined>(
             [DB_CLUSTERS_QUERY_KEY, updatedObject.metadata.namespace],
             (oldData) => {
@@ -95,8 +96,7 @@ export const useDbActions = () => {
     );
   };
 
-  const handleDeleteDbCluster = (dbCluster: DbCluster) => {
-    setSelectedDbCluster(dbCluster);
+  const handleDeleteDbCluster = () => {
     setOpenDeleteDialog(true);
   };
 
@@ -114,8 +114,8 @@ export const useDbActions = () => {
   ) => {
     deleteDbCluster(
       {
-        dbClusterName: selectedDbCluster!.metadata.name,
-        namespace: selectedDbCluster!.metadata.namespace,
+        dbClusterName: dbCluster.metadata.name,
+        namespace: dbCluster.metadata.namespace,
         cleanupBackupStorage: !keepBackupStorageData,
       },
       {
@@ -129,20 +129,41 @@ export const useDbActions = () => {
 
               return {
                 ...oldData,
-                items: oldData.items.map((item) =>
-                  item.metadata.name === variables.dbClusterName
-                    ? {
-                        ...item,
-                        status: {
-                          ...item.status,
-                          crVersion: item.status?.crVersion || '',
-                          hostname: item.status?.hostname || '',
-                          port: item.status?.port || 0,
-                          status: DbClusterStatus.deleting,
-                        },
-                      }
-                    : item
-                ),
+                items: oldData.items.map((item) => {
+                  if (item.metadata.name === variables.dbClusterName) {
+                    return {
+                      ...item,
+                      status: {
+                        ...item.status,
+                        crVersion: item.status?.crVersion || '',
+                        hostname: item.status?.hostname || '',
+                        port: item.status?.port || 0,
+                        status: DbClusterStatus.deleting,
+                      },
+                    };
+                  }
+
+                  return item;
+                }),
+              };
+            }
+          );
+          queryClient.setQueryData<DbCluster>(
+            [DB_CLUSTER_QUERY, dbCluster.metadata.name],
+            (oldData) => {
+              if (!oldData) {
+                return undefined;
+              }
+
+              return {
+                ...oldData,
+                status: {
+                  ...oldData.status,
+                  hostname: oldData.status?.hostname || '',
+                  port: oldData.status?.port || 0,
+                  crVersion: oldData.status?.crVersion || '',
+                  status: DbClusterStatus.deleting,
+                },
               };
             }
           );
@@ -152,9 +173,12 @@ export const useDbActions = () => {
     );
   };
 
-  const handleRestoreDbCluster = (dbCluster: DbCluster) => {
-    setSelectedDbCluster(dbCluster);
+  const handleRestoreDbCluster = () => {
     setOpenRestoreDialog(true);
+  };
+
+  const handleOpenDbDetailsDialog = () => {
+    setOpenDetailsDialog(true);
   };
 
   const handleCloseRestoreDialog = () => {
@@ -173,12 +197,13 @@ export const useDbActions = () => {
     handleDbRestart,
     handleDeleteDbCluster,
     handleConfirmDelete,
+    handleOpenDbDetailsDialog,
     handleCloseDeleteDialog,
     handleCloseDetailsDialog,
     isPaused,
     handleRestoreDbCluster,
     handleCloseRestoreDialog,
-    selectedDbCluster,
     setOpenDetailsDialog,
+    deleteMutation,
   };
 };

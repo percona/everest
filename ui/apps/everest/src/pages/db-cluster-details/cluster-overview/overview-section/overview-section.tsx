@@ -13,7 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Grid, Stack, Typography, Divider, Box, Button } from '@mui/material';
+import {
+  Grid,
+  Stack,
+  Typography,
+  Divider,
+  Box,
+  Button,
+  Tooltip,
+} from '@mui/material';
 import { LoadableChildren } from '@percona/ui-lib';
 import { OverviewSectionProps } from './overview-section.types';
 import { Messages } from './overview-section.messages';
@@ -26,6 +34,7 @@ export const OverviewSection = ({
   dataTestId,
   editable,
   actionButtonProps,
+  disabledEditTooltipText = '',
 }: OverviewSectionProps) => (
   <Grid
     item
@@ -44,15 +53,18 @@ export const OverviewSection = ({
           {title}
         </Typography>
         {actionButtonProps && (
-          <Button
-            size="small"
-            startIcon={
-              editable ? <EditOutlinedIcon /> : actionButtonProps?.startIcon
-            }
-            {...actionButtonProps}
-          >
-            {editable ? Messages.edit : actionButtonProps?.children}
-          </Button>
+          <Tooltip title={!editable ? disabledEditTooltipText : ''}>
+            <Box>
+              <Button
+                size="small"
+                disabled={!editable}
+                startIcon={<EditOutlinedIcon />}
+                {...actionButtonProps}
+              >
+                {Messages.edit}
+              </Button>
+            </Box>
+          </Tooltip>
         )}
       </Stack>
       <Divider sx={{ mt: 0.25 }} />
