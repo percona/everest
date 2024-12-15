@@ -48,7 +48,7 @@ const ToggleButtonGroupInput = ({
               } else {
                 event.target.value = value;
               }
-            
+
               toggleButtonGroupOnChange(
                 event,
                 isNumber ? event.target.valueAsNumber : event.target.value
