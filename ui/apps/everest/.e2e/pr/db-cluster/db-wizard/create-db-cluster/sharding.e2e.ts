@@ -13,6 +13,7 @@ import {
   deleteDbCluster,
   findDbAndClickRow,
 } from '@e2e/utils/db-clusters-list';
+import { waitForDelete } from '@e2e/utils/table';
 
 test.describe('Sharding (psmdb)', () => {
   let engineVersions = {
@@ -101,6 +102,7 @@ test.describe('Sharding (psmdb)', () => {
   test('Sharding should be correctly displayed on the overview page', async ({
     page,
   }) => {
+    test.setTimeout(300 * 1000);
     const dbName = 'sharding-psmdb';
     expect(storageClasses.length).toBeGreaterThan(0);
     await selectDbEngine(page, 'psmdb');
@@ -128,6 +130,7 @@ test.describe('Sharding (psmdb)', () => {
     ).toBeVisible();
 
     await deleteDbCluster(page, dbName);
+    await waitForDelete(page, dbName, 240000);
   });
 
   test('Mongo with sharding should not pass multinode cluster creation if config servers = 1', async ({
