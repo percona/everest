@@ -24,7 +24,7 @@ export const PreviewSection = ({
 
   return (
     <Stack
-      data-testid={`section-${title}`}
+      data-testid={`section-${kebabize(title).replaceAll(' ', '')}`}
       sx={{
         pl: 3,
         pt: 1,
