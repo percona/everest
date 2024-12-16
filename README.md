@@ -118,6 +118,14 @@ To install and provision Percona Everest to Kubernetes:
 
     Now, you can open your browser and create databases in Percona Everest.
 
+# Need help?
+
+**Commercial Support**  | **Community Support** |
+:-: | :-: |
+| <br/>Percona offers expert cloud-native support and services to simplify your database management, featuring 24/7 assistance, consulting, managed services, and training designed to maximize your cloud database operations.<br/><br/>  | <br/>Connect with our engineers and fellow users for general questions, troubleshooting, and sharing feedback and ideas.<br/><br/>  | 
+| **[Get Percona Support](https://hubs.ly/Q02YRLsL0)** | **[Visit our Forum](https://forums.percona.com/c/percona-everest/81)** |
+
+
 # Contributing
 
 We believe that community is the backbone of Percona Everest. That's why we always welcome and encourage you to actively contribute and help us enhance Percona Everest.

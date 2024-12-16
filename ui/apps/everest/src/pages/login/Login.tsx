@@ -120,6 +120,7 @@ const Login = () => {
                   <TextInput
                     textFieldProps={{
                       type: 'text',
+                      autoFocus: true,
                       label: Messages.username,
                       fullWidth: true,
                       sx: { mb: 2 },
