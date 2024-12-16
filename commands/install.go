@@ -39,8 +39,8 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 		//        Error: unknown command "a" for "everestctl install"
 		Args:    cobra.NoArgs,
 		Example: "everestctl install --namespaces dev,staging,prod --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard",
-		Long:    "Install Percona Everest Helm chart",
-		Short:   "Install Percona Everest",
+		Long:    "Install Percona Everest using Helm",
+		Short:   "Install Percona Everest using Helm",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initInstallViperFlags(cmd)
 			c := &install.Config{}
@@ -48,7 +48,7 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 			if err != nil {
 				os.Exit(1)
 			}
-			bindInstallHelmOpts(c)
+			c.CLIOptions.BindViperFlags()
 
 			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
 			c.Pretty = !enableLogging
@@ -112,11 +112,4 @@ func initInstallViperFlags(cmd *cobra.Command) {
 
 	viper.BindPFlag(cli.FlagVerbose, cmd.Flags().Lookup(cli.FlagVerbose)) //nolint:errcheck,gosec
 	viper.BindPFlag("json", cmd.Flags().Lookup("json"))                   //nolint:errcheck,gosec
-}
-
-func bindInstallHelmOpts(cfg *install.Config) {
-	cfg.CLIOptions.Values.Values = viper.GetStringSlice(helm.FlagHelmSet)
-	cfg.CLIOptions.Values.ValueFiles = viper.GetStringSlice(helm.FlagHelmValues)
-	cfg.CLIOptions.ChartDir = viper.GetString(helm.FlagChartDir)
-	cfg.CLIOptions.RepoURL = viper.GetString(helm.FlagRepository)
 }
