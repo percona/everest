@@ -8,7 +8,7 @@ install-operators:  ## Install operators to k8s
 		--version-metadata-url https://check-dev.percona.com \
 		--namespaces percona-everest-operators \
 		--skip-wizard \
-		--helm-set versionMetadataURL=https://check-dev.percona.com
+		--helm.set versionMetadataURL=https://check-dev.percona.com
 
 test-cli:           ## Run all tests
 	npx playwright test --project=cli

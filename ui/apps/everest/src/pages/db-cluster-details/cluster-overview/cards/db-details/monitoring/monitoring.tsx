@@ -61,6 +61,7 @@ export const MonitoringDetails = ({
         onClick: () => {
           setOpenEditModal(true);
         },
+        'data-testid': 'edit-monitoring-db-btn',
       }}
       editable={editable}
     >
