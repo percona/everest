@@ -161,6 +161,7 @@ export const ResourcesDetails = ({
           {dbType === DbType.Mongo && (
             <OverviewSection title={'Sharding'} loading={loading}>
               <OverviewSectionRow
+                dataTestId="sharding-status"
                 label={Messages.fields.status}
                 contentString={
                   sharding?.enabled
@@ -170,12 +171,14 @@ export const ResourcesDetails = ({
               />
               {sharding?.enabled && (
                 <OverviewSectionRow
+                  dataTestId="number-of-shards"
                   label={Messages.fields.shards}
                   contentString={sharding?.shards?.toString()}
                 />
               )}
               {sharding?.enabled && (
                 <OverviewSectionRow
+                  dataTestId="config-servers"
                   label={Messages.fields.configServers}
                   contentString={sharding?.configServer?.replicas?.toString()}
                 />
