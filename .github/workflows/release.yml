@@ -37,6 +37,8 @@ jobs:
           workflow: everest-release.yaml
           token: ${{ secrets.ROBOT_TOKEN }}
           repo: percona/percona-helm-charts
+          ref: main
+
 
 
 #      - name: Validate input
