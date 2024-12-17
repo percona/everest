@@ -13,30 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { APIRequestContext, expect, Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 import { findRowAndClickActions } from './table';
-import { getTokenFromLocalStorage } from './localStorage';
-import { getNamespacesFn } from './namespaces';
-
-export const getDBClustersList = async (request: APIRequestContext) => {
-  const token = await getTokenFromLocalStorage();
-  const namespaces = await getNamespacesFn(token, request);
-  const namespace = namespaces[0];
-
-  const response = await request.get(
-    `/v1/namespaces/${namespace}/database-clusters`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
-  expect(response.status()).toBe(200);
-
-  expect(response.ok()).toBeTruthy();
-  return response.json();
-};
 
 export const findDbAndClickRow = async (page: Page, dbName: string) => {
   const dbRow = page.getByRole('row').filter({ hasText: dbName });

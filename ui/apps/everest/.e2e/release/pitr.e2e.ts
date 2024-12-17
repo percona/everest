@@ -36,7 +36,6 @@ import {
   waitForDelete,
   findRowAndClickActions,
 } from '@e2e/utils/table';
-import { checkError } from '@e2e/utils/generic';
 import {
   deleteMonitoringInstance,
   listMonitoringInstances,
@@ -50,6 +49,7 @@ import {
   pgInsertDummyTestDB,
 } from '@e2e/utils/db-cmd-line';
 import { addFirstScheduleInDBWizard } from '@e2e/pr/db-cluster/db-wizard/db-wizard-utils';
+import { getDBCluster, updateDBCluster } from '@e2e/utils/generic';
 
 const {
   MONITORING_URL,
@@ -253,42 +253,14 @@ test.describe.configure({ retries: 0 });
           if (db !== 'psmdb') {
             return;
           }
-          let psmdbCluster = await request.get(
-            `/v1/namespaces/${namespace}/database-clusters/${clusterName}`
-          );
 
-          await checkError(psmdbCluster);
-          const psmdbPayload = await psmdbCluster.json();
-
+          const psmdbPayload = await getDBCluster(clusterName,EVEREST_CI_NAMESPACES.EVEREST_UI,request,token);
           psmdbPayload.spec.backup.pitr.uploadIntervalSec = 60;
-
-          const updatedPSMDBCluster = await request.put(
-            `/v1/namespaces/${namespace}/database-clusters/${clusterName}`,
-            {
-              data: psmdbPayload,
-            }
-          );
-
-          await checkError(updatedPSMDBCluster);
+          await updateDBCluster(clusterName,EVEREST_CI_NAMESPACES.EVEREST_UI,psmdbPayload,request);
         });
 
         await test.step('Check db cluster k8s object options', async () => {
-          const response = await request.get(
-            `/v1/namespaces/${namespace}/database-clusters`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          await checkError(response);
-
-          // TODO: replace with correct payload typings from GET DB Clusters
-          const { items: clusters } = await response.json();
-
-          const addedCluster = clusters.find(
-            (cluster) => cluster.metadata.name === clusterName
-          );
+          const addedCluster = await getDBCluster(clusterName,EVEREST_CI_NAMESPACES.EVEREST_UI,request,token);
 
           expect(addedCluster?.spec.backup.pitr.enabled).toBe(true);
           expect(addedCluster).not.toBeUndefined();
