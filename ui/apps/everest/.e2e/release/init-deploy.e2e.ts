@@ -32,11 +32,11 @@ import {
 } from '@e2e/utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import { waitForStatus, waitForDelete } from '@e2e/utils/table';
-import { checkError } from '@e2e/utils/generic';
 import {
   deleteMonitoringInstance,
   listMonitoringInstances,
 } from '@e2e/utils/monitoring-instance';
+import { getDBCluster } from '@e2e/utils/generic';
 
 const {
   MONITORING_URL,
@@ -183,36 +183,20 @@ test.describe.configure({ retries: 0 });
         });
 
         await test.step('Check db cluster k8s object options', async () => {
-          const response = await request.get(
-            `/v1/namespaces/${namespace}/database-clusters`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          await checkError(response);
+          const addedCluster = await getDBCluster(clusterName,EVEREST_CI_NAMESPACES.EVEREST_UI,request,token);
 
-          // TODO: replace with correct payload typings from GET DB Clusters
-          const { items: clusters } = await response.json();
-
-          const addedCluster = clusters.find(
-            (cluster) => cluster.metadata.name === clusterName
-          );
-
-          expect(addedCluster).not.toBeUndefined();
-          expect(addedCluster?.spec.engine.type).toBe(db);
-          expect(addedCluster?.spec.engine.replicas).toBe(size);
+          expect(addedCluster.spec.engine.type).toBe(db);
+          expect(addedCluster.spec.engine.replicas).toBe(size);
           expect(['600m', '0.6']).toContain(
-            addedCluster?.spec.engine.resources?.cpu.toString()
+            addedCluster.spec.engine.resources?.cpu.toString()
           );
-          expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe(
+          expect(addedCluster.spec.engine.resources?.memory.toString()).toBe(
             '1G'
           );
-          expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
-          expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
+          expect(addedCluster.spec.engine.storage.size.toString()).toBe('1Gi');
+          expect(addedCluster.spec.proxy.expose.type).toBe('internal');
           if (db != 'psmdb') {
-            expect(addedCluster?.spec.proxy.replicas).toBe(size);
+            expect(addedCluster.spec.proxy.replicas).toBe(size);
           }
         });
       });

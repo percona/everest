@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { createDbClusterFn } from '@e2e/utils/db-cluster';
 import { pxcDBCluster, mongoDBCluster, postgresDBCluster } from './testData';
-import { getDBClustersList } from '@e2e/utils/db-clusters-list';
+import { getDBClustersList } from '@e2e/utils/generic';
 import { TIMEOUTS } from '@e2e/constants';
+import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
+import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 
 test.describe.configure({ retries: 0 });
 test.describe.configure({ timeout: TIMEOUTS.FifteenMinutes });
@@ -48,8 +50,10 @@ test(
       await page.waitForTimeout(TIMEOUTS.TenSeconds);
     });
 
+    const token = await getTokenFromLocalStorage();
+
     await expect(async () => {
-      const dbClusters = (await getDBClustersList(request)).items;
+      const dbClusters = (await getDBClustersList(EVEREST_CI_NAMESPACES.EVEREST_UI, request, token)).items;
 
       const clustersInfo = dbClusters.map((c) => {
         return { status: c.status.status, name: c.metadata.name };
