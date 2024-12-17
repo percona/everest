@@ -29,7 +29,7 @@ jobs:
       OS: ""
     steps:
 
-      - name: Trigger dispatch in ${{ github.head_ref }} branch
+      - name: Trigger dispatch branch
         uses: percona/gh-action-workflow-dispatch@v1
         continue-on-error: true
         id: branch_dispatch
