@@ -1261,6 +1261,36 @@ func (_m *MockKubernetesConnector) ListSecrets(ctx context.Context, namespace st
 	return r0, r1
 }
 
+// ListSubscriptions provides a mock function with given fields: ctx, namespace
+func (_m *MockKubernetesConnector) ListSubscriptions(ctx context.Context, namespace string) (*operatorsv1alpha1.SubscriptionList, error) {
+	ret := _m.Called(ctx, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListSubscriptions")
+	}
+
+	var r0 *operatorsv1alpha1.SubscriptionList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*operatorsv1alpha1.SubscriptionList, error)); ok {
+		return rf(ctx, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *operatorsv1alpha1.SubscriptionList); ok {
+		r0 = rf(ctx, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*operatorsv1alpha1.SubscriptionList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Namespace provides a mock function with given fields:
 func (_m *MockKubernetesConnector) Namespace() string {
 	ret := _m.Called()

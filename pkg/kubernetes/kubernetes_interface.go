@@ -86,6 +86,8 @@ type KubernetesConnector interface {
 	DeleteCatalogSource(ctx context.Context, name, namespace string) error
 	// GetSubscription returns subscription.
 	GetSubscription(ctx context.Context, name, namespace string) (*olmv1alpha1.Subscription, error)
+	// ListSubscriptions lists subscriptions.
+	ListSubscriptions(ctx context.Context, namespace string) (*olmv1alpha1.SubscriptionList, error)
 	// GetServerVersion returns server version.
 	GetServerVersion() (*version.Info, error)
 	// GetClusterServiceVersion retrieves a ClusterServiceVersion by namespaced name.
