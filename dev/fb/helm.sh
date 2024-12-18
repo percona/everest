@@ -6,12 +6,19 @@ elif [[ -z "$HELM_PATH" ]]; then
     exit 1
 fi
 
+if [[ -z "${VS_IMAGE+set}" ]]; then
+  echo "Error: VS_IMAGE environment variable is not set." >&2
+  exit 1
+elif [[ -z "$VS_IMAGE" ]]; then
+    echo "Error: VS_IMAGE environment variable is empty." >&2
+    exit 1
+fi
+
 # deploy VS and get it's internal IP
-wget https://raw.githubusercontent.com/exampleuser/myscripts/feature-branch/my_script.sh -O vs.sh
+curl -O https://raw.githubusercontent.com/percona/everest/EVEREST-1563-bash-scripts/dev/fb/vs.sh vs.sh
 chmod +x vs.sh
 
-SERVICE_IP=$(bash "vs.sh")
-echo $SERVICE_IP
+SERVICE_IP=$(bash ./vs.sh)
 
 # run everest installation with helm
-#helm install everest-core "$HELM_PATH/charts/everest" --namespace=everest-system --create-namespace --set versionMetadataURL=http://$SERVICE_IP --timeout=10m --devel
+helm install everest-core "$HELM_PATH/charts/everest" --namespace=everest-system --create-namespace --set versionMetadataURL=http://$SERVICE_IP --timeout=10m --devel

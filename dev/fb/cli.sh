@@ -22,7 +22,13 @@ elif [[ -z "$HELM_PATH" ]]; then
     exit 1
 fi
 
-
+if [[ -z "${EVEREST_CTL_PATH+set}" ]]; then
+  echo "Error: EVEREST_CTL_PATH environment variable is not set." >&2
+  exit 1
+elif [[ -z "$EVEREST_CTL_PATH" ]]; then
+    echo "Error: EVEREST_CTL_PATH environment variable is empty. Please add the absolute path to your everestctl binary to the EVEREST_CTL_PATH environment variable." >&2
+    exit 1
+fi
 
 curl https://raw.githubusercontent.com/Percona-Lab/percona-version-service/main/deploy.yaml  > vs_deploy.yaml
 
