@@ -143,14 +143,14 @@ func (n *NamespaceAdder) Run(ctx context.Context) error {
 
 	// validate operators for each namespace.
 	for _, namespace := range n.cfg.NamespaceList {
-		err := n.validateOperators(ctx, namespace)
+		err := n.validateNamespace(ctx, namespace)
 		if errors.Is(err, errCannotRemoveOperators) {
 			msg := "Removal of an installed operator is not supported. Proceeding without removal."
 			output.Warn(msg)
 			n.l.Warn(msg)
 			break
 		} else if err != nil {
-			return fmt.Errorf("operator validation failed: %w", err)
+			return fmt.Errorf("namespace validation error: %w", err)
 		}
 	}
 
@@ -195,6 +195,8 @@ var (
 	ErrNamespaceNotManagedByEverest = errors.New("namespace is not managed by Everest")
 	// ErrNamespaceAlreadyExists appears when the namespace already exists.
 	ErrNamespaceAlreadyExists = errors.New("namespace already exists")
+	// ErrNamespaceAlreadyOwned appears when the namespace is already owned by Everest.
+	ErrNamespaceAlreadyOwned = errors.New("namespace already exists and managed by Everest")
 )
 
 func (cfg *NamespaceAddConfig) validateNamespaceOwnership(
@@ -218,8 +220,13 @@ func (cfg *NamespaceAddConfig) validateNamespaceOwnership(
 		if !ownedByEverest {
 			return ErrNamespaceNotManagedByEverest
 		}
-	} else if nsExists && !cfg.TakeOwnership {
+		return nil
+	}
+	if nsExists && !cfg.TakeOwnership {
 		return ErrNamespaceAlreadyExists
+	}
+	if nsExists && ownedByEverest {
+		return ErrNamespaceAlreadyOwned
 	}
 
 	return nil
@@ -257,7 +264,12 @@ func (n *NamespaceAdder) provisionDBNamespace(
 	return installer.Install(ctx)
 }
 
-func namespaceExists(ctx context.Context, namespace string, k kubernetes.KubernetesConnector) (bool, bool, error) {
+// Returns: [exists, managedByEverest, error]
+func namespaceExists(
+	ctx context.Context,
+	namespace string,
+	k kubernetes.KubernetesConnector,
+) (bool, bool, error) {
 	ns, err := k.GetNamespace(ctx, namespace)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
@@ -408,19 +420,24 @@ func validateRFC1035(s string) error {
 	return nil
 }
 
-func (n *NamespaceAdder) validateOperators(
+func (n *NamespaceAdder) validateNamespace(
 	ctx context.Context,
 	namespace string,
 ) error {
 	if n.cfg.Update {
-		subscriptions, err := n.kubeClient.ListSubscriptions(ctx, namespace)
-		if err != nil {
-			return fmt.Errorf("cannot list subscriptions: %w", err)
-		}
-		if !ensureNoOperatorsRemoved(subscriptions.Items,
-			n.cfg.Operator.PG, n.cfg.Operator.PXC, n.cfg.Operator.PSMDB) {
-			return errCannotRemoveOperators
-		}
+		return n.validateNamespaceUpdate(ctx, namespace)
+	}
+	return nil
+}
+
+func (n *NamespaceAdder) validateNamespaceUpdate(ctx context.Context, namespace string) error {
+	subscriptions, err := n.kubeClient.ListSubscriptions(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("cannot list subscriptions: %w", err)
+	}
+	if !ensureNoOperatorsRemoved(subscriptions.Items,
+		n.cfg.Operator.PG, n.cfg.Operator.PXC, n.cfg.Operator.PSMDB) {
+		return errCannotRemoveOperators
 	}
 	return nil
 }

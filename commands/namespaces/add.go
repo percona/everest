@@ -17,7 +17,10 @@ import (
 )
 
 //nolint:gochecknoglobals
-var takeOwnershipHintMessage = fmt.Sprintf("HINT: set '--%s' flag to use existing namespaces", cli.FlagTakeNamespaceOwnership)
+var (
+	takeOwnershipHintMessage = fmt.Sprintf("HINT: set '--%s' flag to use existing namespaces", cli.FlagTakeNamespaceOwnership)
+	updateHindMessage        = "HINT: use 'everestctl namespaces update' to update the namespace"
+)
 
 // NewAddCommand returns a new command to add a new namespace.
 func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
@@ -52,6 +55,9 @@ func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 			if err := c.Populate(cmd.Context(), false, askOperators); err != nil {
 				if errors.Is(err, namespaces.ErrNamespaceAlreadyExists) {
 					err = fmt.Errorf("%w. %s", err, takeOwnershipHintMessage)
+				}
+				if errors.Is(err, namespaces.ErrNamespaceAlreadyOwned) {
+					err = fmt.Errorf("%w. %s", err, updateHindMessage)
 				}
 				output.PrintError(err, l, !enableLogging)
 				os.Exit(1)
