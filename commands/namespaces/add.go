@@ -19,7 +19,7 @@ import (
 //nolint:gochecknoglobals
 var (
 	takeOwnershipHintMessage = fmt.Sprintf("HINT: set '--%s' flag to use existing namespaces", cli.FlagTakeNamespaceOwnership)
-	updateHindMessage        = "HINT: use 'everestctl namespaces update' to update the namespace"
+	updateHintMessage        = "HINT: use 'everestctl namespaces update' to update the namespace"
 )
 
 // NewAddCommand returns a new command to add a new namespace.
