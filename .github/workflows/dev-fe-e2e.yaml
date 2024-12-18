@@ -160,8 +160,3 @@ jobs:
           name: playwright-report
           path: ui/apps/everest/.e2e/playwright-report/
           overwrite: true
-
-      # Enable Tmate debug ssh session on demand
-      - name: "Setup tmate session"
-        uses: "percona/gh-action-action-tmate@v3"
-        if: ${{ always() }}
