@@ -15,6 +15,7 @@
 
 import { execSync } from 'child_process';
 import { expect } from '@playwright/test';
+import { isShardingEnabled } from '../release/demand-backup-psmdb-sharding.e2e';
 
 export const getDBHost = async (cluster: string, namespace: string) => {
   try {
@@ -111,8 +112,11 @@ export const queryPSMDB = async (
   const host = await getDBHost(cluster, namespace);
   const clientPod = await getDBClientPod('psmdb', 'db-client');
 
+  // Ensure sharding flag is properly handled
+  isShardingEnabled == true;
+  const replicaSetOption = isShardingEnabled ? '' : '&replicaSet=rs0';
   try {
-    const command = `kubectl exec --namespace db-client ${clientPod} -- mongosh "mongodb://backup:${password}@${host}/${db}?authSource=admin&replicaSet=rs0" --eval "${query}"`;
+    const command = `kubectl exec --namespace db-client ${clientPod} -- mongosh "mongodb://backup:${password}@${host}/${db}?authSource=admin${replicaSetOption}" --eval "${query}"`;
     const output = execSync(command).toString();
     return output;
   } catch (error) {
@@ -267,7 +271,11 @@ export const dropTestDB = async (cluster: string, namespace: string) => {
   }
 };
 
-export const queryTestDB = async (cluster: string, namespace: string) => {
+export const queryTestDB = async (
+  cluster: string,
+  namespace: string,
+  collection: string = 't1' // Default to collection `t1`
+) => {
   const dbType = await getDBType(cluster, namespace);
   let result: string;
 
@@ -277,11 +285,12 @@ export const queryTestDB = async (cluster: string, namespace: string) => {
       break;
     }
     case 'psmdb': {
+      const sortField = collection === 't1' ? 'a' : 'b';
       result = await queryPSMDB(
         cluster,
         namespace,
         'test',
-        'db.t1.find({},{_id: 0}).sort({a: 1});'
+        `db.${collection}.find({},{_id: 0}).sort({${sortField}: 1}).toArray();`
       );
       break;
     }
@@ -291,4 +300,184 @@ export const queryTestDB = async (cluster: string, namespace: string) => {
     }
   }
   return result;
+};
+
+export const prepareMongoDBTestDB = async (
+  cluster: string,
+  namespace: string
+) => {
+  await dropTestDB(cluster, namespace);
+
+  // Insert test data into the collection t1 and t2
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'test',
+    'db.t1.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }]);'
+  );
+
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'test',
+    'db.t2.insertMany([{ b: 1 }, { b: 2 }, { b: 3 }]);'
+  );
+};
+
+export const configureMongoDBSharding = async (
+  cluster: string,
+  namespace: string
+) => {
+  // Enable sharding for the database
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'admin',
+    'sh.enableSharding(\\"test\\");'
+  );
+
+  // Shard t1
+  await queryPSMDB(cluster, namespace, 'test', 'db.t1.createIndex({ a: 1 });');
+
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'admin',
+    'sh.shardCollection(\\"test.t1\\", { a: 1 });'
+  );
+
+  // Manually split chunks for t1
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'admin',
+    'sh.splitAt(\\"test.t1\\", { a: 2 });'
+  );
+
+  // Move chunks for t1
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'admin',
+    'sh.moveChunk(\\"test.t1\\", { a: 2 }, \\"rs1\\");'
+  );
+
+  // Shard t2
+  await queryPSMDB(cluster, namespace, 'test', 'db.t2.createIndex({ b: 1 });');
+
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'admin',
+    'sh.shardCollection(\\"test.t2\\", { b: 1 });'
+  );
+
+  // Manually split chunks for t2
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'admin',
+    'sh.splitAt(\\"test.t2\\", { b: 2 });'
+  );
+
+  // Move chunks for t2
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'admin',
+    'sh.moveChunk(\\"test.t2\\", { b: 2 }, \\"rs1\\");'
+  );
+};
+
+export const validateMongoDBSharding = async (
+  cluster: string,
+  namespace: string
+) => {
+  // Collection t1
+  // Fetch UUID for test.t1
+  const t1CollectionString = await queryPSMDB(
+    cluster,
+    namespace,
+    'config',
+    'db.collections.find({ _id: \\"test.t1\\" });'
+  );
+
+  // Parse string to valid JavaScript object t1Collection
+  const t1Collection = eval(
+    t1CollectionString.replace(/ObjectId|ISODate|UUID|Timestamp/g, '')
+  );
+
+  // Extract uuid of test.t1 collection
+  const t1UUID = t1Collection[0]?.uuid;
+
+  // Fetch chunks for test.t1 using UUID
+  const t1query = `db.chunks.aggregate([
+    { \\$match: { uuid: UUID(\\"${t1UUID}\\") } },
+    { \\$group: { _id: \\"\\$shard\\" } }
+  ]).toArray();`;
+
+  const t1result = await queryPSMDB(cluster, namespace, 'config', t1query);
+
+  // Preprocess the string to make it valid JSON
+  const t1sanitizedResult = t1result
+    .replace(/_id/g, '"_id"')
+    .replace(/'/g, '"');
+
+  // Parse the string to convert it into a JavaScript array
+  const t1chunks = JSON.parse(t1sanitizedResult);
+
+  // Extract the shard IDs (rs0 and rs1)
+  const t1shardIds = t1chunks.map((chunk: { _id: string }) => chunk._id);
+
+  // Check if specific shard IDs exist
+  const t1hasRs0 = t1shardIds.includes('rs0');
+  const t1hasRs1 = t1shardIds.includes('rs1');
+
+  // Assert that both shards are present
+  expect(t1hasRs0).toBe(true);
+  expect(t1hasRs1).toBe(true);
+
+  // Collection t2
+  // Fetch UUID for test.t2
+  const t2CollectionString = await queryPSMDB(
+    cluster,
+    namespace,
+    'config',
+    'db.collections.find({ _id: \\"test.t2\\" });'
+  );
+
+  // Parse string to valid JavaScript object t2Collection
+  const t2Collection = eval(
+    t2CollectionString.replace(/ObjectId|ISODate|UUID|Timestamp/g, '')
+  );
+
+  // Extract uuid of test.t2 collection
+  const t2UUID = t2Collection[0]?.uuid;
+
+  // Fetch chunks for test.2 using UUID
+  const t2query = `db.chunks.aggregate([
+    { \\$match: { uuid: UUID(\\"${t2UUID}\\") } },
+    { \\$group: { _id: \\"\\$shard\\" } }
+  ]).toArray();`;
+
+  const t2result = await queryPSMDB(cluster, namespace, 'config', t2query);
+
+  // Preprocess the string to make it valid JSON
+  const t2sanitizedResult = t2result
+    .replace(/_id/g, '"_id"')
+    .replace(/'/g, '"');
+
+  // Parse the string to convert it into a JavaScript array
+  const t2chunks = JSON.parse(t2sanitizedResult);
+
+  // Extract the shard IDs (rs0 and rs1)
+  const t2shardIds = t2chunks.map((chunk: { _id: string }) => chunk._id);
+
+  // Check if specific shard IDs exist
+  const t2hasRs0 = t2shardIds.includes('rs0');
+  const t2hasRs1 = t2shardIds.includes('rs1');
+
+  // Assert that both shards are present
+  expect(t2hasRs0).toBe(true);
+  expect(t2hasRs1).toBe(true);
 };
