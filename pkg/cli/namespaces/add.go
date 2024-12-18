@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
 	"helm.sh/helm/v3/pkg/cli/values"
 	v1 "k8s.io/api/core/v1"
@@ -23,6 +24,7 @@ import (
 	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/output"
 	. "github.com/percona/everest/pkg/utils/must" //nolint:revive,stylecheck
 	"github.com/percona/everest/pkg/version"
 )
@@ -48,6 +50,8 @@ var (
 	}
 	// ErrNoOperatorsSelected appears when no operators are selected for installation.
 	ErrNoOperatorsSelected = errors.New("no operators selected for installation. Minimum one operator must be selected")
+
+	errCannotRemoveOperators = errors.New("cannot remove operators")
 )
 
 // NewNamespaceAdd returns a new CLI operation to add namespaces.
@@ -131,6 +135,19 @@ func (n *NamespaceAdder) Run(ctx context.Context) error {
 		defer cleanup()
 	}
 
+	// validate operators for each namespace.
+	for _, namespace := range n.cfg.NamespaceList {
+		err := n.validateNamespace(ctx, namespace)
+		if errors.Is(err, errCannotRemoveOperators) {
+			msg := "Removal of an installed operator is not supported. Proceeding without removal."
+			fmt.Fprint(os.Stdout, output.Warn(msg)) //nolint:govet
+			n.l.Warn(msg)
+			break
+		} else if err != nil {
+			return fmt.Errorf("namespace validation error: %w", err)
+		}
+	}
+
 	for _, namespace := range n.cfg.NamespaceList {
 		installSteps = append(installSteps,
 			n.newStepInstallNamespace(ver, namespace),
@@ -178,6 +195,8 @@ var (
 	ErrNamespaceNotManagedByEverest = errors.New("namespace is not managed by Everest")
 	// ErrNamespaceAlreadyExists appears when the namespace already exists.
 	ErrNamespaceAlreadyExists = errors.New("namespace already exists")
+	// ErrNamespaceAlreadyOwned appears when the namespace is already owned by Everest.
+	ErrNamespaceAlreadyOwned = errors.New("namespace already exists and is managed by Everest")
 )
 
 func (cfg *NamespaceAddConfig) validateNamespaceOwnership(
@@ -201,8 +220,13 @@ func (cfg *NamespaceAddConfig) validateNamespaceOwnership(
 		if !ownedByEverest {
 			return ErrNamespaceNotManagedByEverest
 		}
-	} else if nsExists && !cfg.TakeOwnership {
+		return nil
+	}
+	if nsExists && !cfg.TakeOwnership {
 		return ErrNamespaceAlreadyExists
+	}
+	if nsExists && ownedByEverest {
+		return ErrNamespaceAlreadyOwned
 	}
 
 	return nil
@@ -240,7 +264,12 @@ func (n *NamespaceAdder) provisionDBNamespace(
 	return installer.Install(ctx)
 }
 
-func namespaceExists(ctx context.Context, namespace string, k kubernetes.KubernetesConnector) (bool, bool, error) {
+// Returns: [exists, managedByEverest, error].
+func namespaceExists(
+	ctx context.Context,
+	namespace string,
+	k kubernetes.KubernetesConnector,
+) (bool, bool, error) {
 	ns, err := k.GetNamespace(ctx, namespace)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
@@ -389,4 +418,52 @@ func validateRFC1035(s string) error {
 	}
 
 	return nil
+}
+
+func (n *NamespaceAdder) validateNamespace(
+	ctx context.Context,
+	namespace string,
+) error {
+	if n.cfg.Update {
+		return n.validateNamespaceUpdate(ctx, namespace)
+	}
+	return nil
+}
+
+func (n *NamespaceAdder) validateNamespaceUpdate(ctx context.Context, namespace string) error {
+	subscriptions, err := n.kubeClient.ListSubscriptions(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("cannot list subscriptions: %w", err)
+	}
+	if !ensureNoOperatorsRemoved(subscriptions.Items,
+		n.cfg.Operator.PG, n.cfg.Operator.PXC, n.cfg.Operator.PSMDB,
+	) {
+		return errCannotRemoveOperators
+	}
+	return nil
+}
+
+func ensureNoOperatorsRemoved(
+	subscriptions []olmv1alpha1.Subscription,
+	installPG, installPXC, installPSMDB bool,
+) bool {
+	for _, subscription := range subscriptions {
+		switch subscription.GetName() {
+		case common.PGOperatorName:
+			if !installPG {
+				return false
+			}
+		case common.PSMDBOperatorName:
+			if !installPSMDB {
+				return false
+			}
+		case common.PXCOperatorName:
+			if !installPXC {
+				return false
+			}
+		default:
+			continue
+		}
+	}
+	return true
 }
