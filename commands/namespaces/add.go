@@ -57,7 +57,7 @@ func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 					err = fmt.Errorf("%w. %s", err, takeOwnershipHintMessage)
 				}
 				if errors.Is(err, namespaces.ErrNamespaceAlreadyOwned) {
-					err = fmt.Errorf("%w. %s", err, updateHindMessage)
+					err = fmt.Errorf("%w. %s", err, updateHintMessage)
 				}
 				output.PrintError(err, l, !enableLogging)
 				os.Exit(1)
