@@ -36,7 +36,7 @@ import {
   deleteMonitoringInstance,
   listMonitoringInstances,
 } from '@e2e/utils/monitoring-instance';
-import { getDBCluster } from '@e2e/utils/generic';
+import { getDbClusterAPI } from '@e2e/utils/db-cluster';
 
 const {
   MONITORING_URL,
@@ -183,7 +183,7 @@ test.describe.configure({ retries: 0 });
         });
 
         await test.step('Check db cluster k8s object options', async () => {
-          const addedCluster = await getDBCluster(clusterName,EVEREST_CI_NAMESPACES.EVEREST_UI,request,token);
+          const addedCluster = await getDbClusterAPI(clusterName, EVEREST_CI_NAMESPACES.EVEREST_UI, request, token);
 
           expect(addedCluster.spec.engine.type).toBe(db);
           expect(addedCluster.spec.engine.replicas).toBe(size);
