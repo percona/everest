@@ -4,30 +4,62 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - EVEREST-1563-bash-scripts
+      - main
 
-
+env:
+  NODE_OPTIONS: "--max_old_space_size=4096"
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      VERSION: 1.10000.0-rc20241217095910
-      VS_TAG: everest-test20241217095910
     steps:
-      - name: Info
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          ref: "main"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.4.0
+
+      - name: Run with Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: "pnpm"
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Build Everest Frontend app
         run: |
-          printf "To install FB using helm:\n\
-          1. Download the 'helm' artifact below.\n\
-          2. Navigate to \`/everest/dev/fb directory\`.\n\
-          3. Run the command:\n\`\`\`VS_IMAGE=$VS_TAG HELM_PATH=<path_to_your_helmchart> sh helm.sh\`\`\`\n\
-              \nexample:\n\`\`\`VS_IMAGE=everest-test20241217095910 HELM_PATH=/Users/oxana/Downloads/percona-helm-charts sh helm.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
-          
-          printf "____________________\n" >> "$GITHUB_STEP_SUMMARY"
-          
-          printf "To install FB using CLI:\n\
-          1. Download the 'helm' artifact below.\n\
-          2. Download a CLI build from artifacts below.\n\
-          3. Navigate to \`/everest/dev/fb\` directory.\n\
-          4. Run the command:\n\`\`\`VS_IMAGE=$VS_TAG VERSION=$VERSION EVEREST_CTL_PATH=<path_to_everestctl> HELM_PATH=<path_to_your_helmchart>  sh cli.sh\`\`\`\n\
-              \nexample:\n\`\`\`VS_IMAGE=everest-test20241217095910 VERSION=1.10000.0-rc20241217095910 HELM_PATH=/Users/oxana/Downloads/percona-helm-charts EVEREST_CTL_PATH=/Users/oxana/Downloads/everestctl-darwin-arm64 sh cli.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+          cd ui
+          pnpm install
+          EVEREST_OUT_DIR=${GITHUB_WORKSPACE}/public/dist/ pnpm build
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "./go.mod"
+
+      - name: Build Everest
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build
+
+      - name: Setup docker build metadata
+        uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: perconalab/everest
+          tags: 0.0.0
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push everest dev image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
