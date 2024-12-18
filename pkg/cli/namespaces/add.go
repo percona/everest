@@ -140,7 +140,7 @@ func (n *NamespaceAdder) Run(ctx context.Context) error {
 		err := n.validateNamespace(ctx, namespace)
 		if errors.Is(err, errCannotRemoveOperators) {
 			msg := "Removal of an installed operator is not supported. Proceeding without removal."
-			fmt.Fprintf(os.Stdout, output.Warn(msg))
+			fmt.Fprint(os.Stdout, output.Warn(msg)) //nolint:govet
 			n.l.Warn(msg)
 			break
 		} else if err != nil {
