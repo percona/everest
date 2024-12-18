@@ -18,10 +18,10 @@ fi
 sed -i "$sed_i_option" "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_IMAGE/g" vs_deploy.yaml
 
 # deploy VS
-kubectl apply -f vs_deploy.yaml
+kubectl apply -f vs_deploy.yaml > /dev/null
 
 # wait until the VS is ready
-kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service
+kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service > /dev/null
 
 # get the internal IP of the VS
 echo "$(kubectl get service percona-version-service -o jsonpath='{.spec.clusterIP}')"
