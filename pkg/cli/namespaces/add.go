@@ -196,7 +196,7 @@ var (
 	// ErrNamespaceAlreadyExists appears when the namespace already exists.
 	ErrNamespaceAlreadyExists = errors.New("namespace already exists")
 	// ErrNamespaceAlreadyOwned appears when the namespace is already owned by Everest.
-	ErrNamespaceAlreadyOwned = errors.New("namespace already exists and managed by Everest")
+	ErrNamespaceAlreadyOwned = errors.New("namespace already exists and is managed by Everest")
 )
 
 func (cfg *NamespaceAddConfig) validateNamespaceOwnership(
