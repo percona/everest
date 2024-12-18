@@ -135,23 +135,23 @@ func (n *NamespaceAdder) Run(ctx context.Context) error {
 		defer cleanup()
 	}
 
-	for _, namespace := range n.cfg.NamespaceList {
-		installSteps = append(installSteps,
-			n.newStepInstallNamespace(ver, namespace),
-		)
-	}
-
 	// validate operators for each namespace.
 	for _, namespace := range n.cfg.NamespaceList {
 		err := n.validateNamespace(ctx, namespace)
 		if errors.Is(err, errCannotRemoveOperators) {
 			msg := "Removal of an installed operator is not supported. Proceeding without removal."
-			output.Warn(msg) //nolint:govet
+			fmt.Fprintf(os.Stdout, output.Warn(msg))
 			n.l.Warn(msg)
 			break
 		} else if err != nil {
 			return fmt.Errorf("namespace validation error: %w", err)
 		}
+	}
+
+	for _, namespace := range n.cfg.NamespaceList {
+		installSteps = append(installSteps,
+			n.newStepInstallNamespace(ver, namespace),
+		)
 	}
 
 	var out io.Writer = os.Stdout
