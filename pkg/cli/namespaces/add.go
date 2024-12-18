@@ -146,7 +146,7 @@ func (n *NamespaceAdder) Run(ctx context.Context) error {
 		err := n.validateNamespace(ctx, namespace)
 		if errors.Is(err, errCannotRemoveOperators) {
 			msg := "Removal of an installed operator is not supported. Proceeding without removal."
-			output.Warn(msg)
+			output.Warn(msg) //nolint:govet
 			n.l.Warn(msg)
 			break
 		} else if err != nil {
@@ -264,7 +264,7 @@ func (n *NamespaceAdder) provisionDBNamespace(
 	return installer.Install(ctx)
 }
 
-// Returns: [exists, managedByEverest, error]
+// Returns: [exists, managedByEverest, error].
 func namespaceExists(
 	ctx context.Context,
 	namespace string,
@@ -436,7 +436,8 @@ func (n *NamespaceAdder) validateNamespaceUpdate(ctx context.Context, namespace 
 		return fmt.Errorf("cannot list subscriptions: %w", err)
 	}
 	if !ensureNoOperatorsRemoved(subscriptions.Items,
-		n.cfg.Operator.PG, n.cfg.Operator.PXC, n.cfg.Operator.PSMDB) {
+		n.cfg.Operator.PG, n.cfg.Operator.PXC, n.cfg.Operator.PSMDB,
+	) {
 		return errCannotRemoveOperators
 	}
 	return nil
