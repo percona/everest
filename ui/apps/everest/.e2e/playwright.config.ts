@@ -117,6 +117,7 @@ export default defineConfig({
         channel: 'chrome',
         storageState: STORAGE_STATE_FILE,
         video: 'retain-on-failure',
+        actionTimeout: 10000,
       },
       testDir: 'upgrade',
       dependencies: ['setup'],
