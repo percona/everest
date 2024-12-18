@@ -222,9 +222,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     resetField(DbWizardFormFields.shardConfigServers, {
       keepError: false,
     });
-    resetField(DbWizardFormFields.sharding, {
-      keepError: false,
-    });
   }, []);
 
   useEffect(() => {

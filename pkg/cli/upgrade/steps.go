@@ -113,7 +113,11 @@ func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
 		return fmt.Errorf("could not upgrade DB namespaces Helm charts: %w", err)
 	}
 	// Upgrade the main chart.
-	return u.helmInstaller.Upgrade(ctx, helm.UpgradeOptions{})
+	return u.helmInstaller.Upgrade(ctx, helm.UpgradeOptions{
+		ReuseValues:          u.config.ReuseValues,
+		ResetValues:          u.config.ResetValues,
+		ResetThenReuseValues: u.config.ResetThenReuseValues,
+	})
 }
 
 func (u *Upgrade) upgradeEverestDBNamespaceHelmCharts(ctx context.Context) error {

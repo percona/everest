@@ -260,6 +260,11 @@ func (k *Kubernetes) GetSubscription(ctx context.Context, name, namespace string
 	return k.client.OLM().OperatorsV1alpha1().Subscriptions(namespace).Get(ctx, name, metav1.GetOptions{})
 }
 
+// ListSubscriptions lists subscriptions.
+func (k *Kubernetes) ListSubscriptions(ctx context.Context, namespace string) (*olmv1alpha1.SubscriptionList, error) {
+	return k.client.OLM().OperatorsV1alpha1().Subscriptions(namespace).List(ctx, metav1.ListOptions{})
+}
+
 // InstallOperatorRequest holds the fields to make an operator install request.
 type InstallOperatorRequest struct {
 	Namespace              string

@@ -1,9 +1,23 @@
-import { Box, Button, Divider, Typography } from '@mui/material';
+import { Box, Button, Divider, Stack, Typography } from '@mui/material';
 import { EmptyStateIcon } from '@percona/ui-lib';
 import { Messages } from './messages';
 import { ArrowOutward } from '@mui/icons-material';
 import { centeredContainerStyle } from '../utils';
 import { ContactSupportLink } from '../ContactSupportLink';
+import { CodeCopyBlock } from 'components/code-copy-block/code-copy-block';
+
+const CommandInstructions = ({
+  message,
+  command,
+}: {
+  message: string;
+  command: string;
+}) => (
+  <Stack mt={3} maxWidth="350px">
+    <Typography variant="body2">{message}</Typography>
+    <CodeCopyBlock message={command} />
+  </Stack>
+);
 
 export const EmptyStateNamespaces = () => {
   return (
@@ -19,7 +33,14 @@ export const EmptyStateNamespaces = () => {
         <Box sx={centeredContainerStyle}>
           <Typography>{Messages.noNamespaces}</Typography>
           <Typography> {Messages.createToStart}</Typography>
-          <Typography> {Messages.command}</Typography>
+          <CommandInstructions
+            message="If you are using CLI, run the following command:"
+            command="everestctl namespaces add <NAMESPACE>"
+          />
+          <CommandInstructions
+            message="If you are using Helm, run the following command:"
+            command="helm install everest percona/everest-db-namespace --create-namespace --namespace <NAMESPACE>"
+          />
         </Box>
         <Button
           data-testid="learn-more-button"

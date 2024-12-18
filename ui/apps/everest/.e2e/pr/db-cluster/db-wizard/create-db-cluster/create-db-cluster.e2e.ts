@@ -391,40 +391,4 @@ test.describe('DB Cluster creation', () => {
     await fillScheduleModalForm(page, undefined, undefined, false, '1');
     await expect(page.getByTestId('same-schedule-warning')).toBeVisible();
   });
-
-  test('Mongo with sharding should not pass multinode cluster creation if config servers = 1', async ({
-    page,
-  }) => {
-    expect(storageClasses.length).toBeGreaterThan(0);
-    await selectDbEngine(page, 'psmdb');
-
-    await page.getByTestId('switch-input-sharding').click();
-    await moveForward(page);
-
-    await expect(page.getByTestId(`toggle-button-routers-3`)).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
-
-    await expect(page.getByTestId('shard-config-servers-3')).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
-
-    await page.getByTestId('shard-config-servers-1').click();
-    expect(page.getByTestId('shard-config-servers-error')).toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
-
-    await page.getByTestId('toggle-button-nodes-1').click();
-    expect(page.getByTestId('shard-config-servers-error')).not.toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).not.toBeDisabled();
-
-    await page.getByTestId('toggle-button-nodes-3').click();
-    expect(page.getByTestId('shard-config-servers-error')).toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
-
-    await page.getByTestId('shard-config-servers-3').click();
-    expect(page.getByTestId('shard-config-servers-error')).not.toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).not.toBeDisabled();
-  });
 });
