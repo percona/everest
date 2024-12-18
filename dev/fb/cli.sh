@@ -31,8 +31,7 @@ elif [[ -z "$EVEREST_CTL_PATH" ]]; then
 fi
 
 # deploy VS and get it's internal IP
-# !!! change ref to main before merging
-curl -O https://raw.githubusercontent.com/percona/everest/EVEREST-1563-bash-scripts/dev/fb/vs.sh vs.sh > /dev/null
+curl -O https://raw.githubusercontent.com/percona/everest/main/dev/fb/vs.sh vs.sh > /dev/null
 chmod +x vs.sh
 SERVICE_IP=$(bash ./vs.sh)
 
