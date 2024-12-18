@@ -30,28 +30,13 @@ elif [[ -z "$EVEREST_CTL_PATH" ]]; then
     exit 1
 fi
 
-curl https://raw.githubusercontent.com/Percona-Lab/percona-version-service/main/deploy.yaml  > vs_deploy.yaml
-
-# Determine the sed -i option based on the system
-if [[ "$(uname)" == "Darwin" ]]; then
-  sed_i_option="''"
-else
-  sed_i_option=""
-fi
-# use FB VS image in the VS configuration
-sed -i "$sed_i_option" "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_IMAGE/g" vs_deploy.yaml
-
-# deploy VS
-kubectl apply -f vs_deploy.yaml
-
-# wait until the VS is ready
-kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/percona-version-service
-
-# get the internal IP of the VS
-SERVICE_IP=`kubectl get service percona-version-service -o jsonpath='{.spec.clusterIP}'`
+# deploy VS and get it's internal IP
+# !!! change ref to main before merging
+curl -O https://raw.githubusercontent.com/percona/everest/EVEREST-1563-bash-scripts/dev/fb/vs.sh vs.sh > /dev/null
+chmod +x vs.sh
+SERVICE_IP=$(bash ./vs.sh)
 
 kubectl port-forward svc/percona-version-service 8081:80 &
 
 # run everest installation with everest CLI
-EVEREST_CTL_PATH="/Users/oxanagrishchenko/Downloads/everestctl-1.10000.0-rc20241217095910"
 $EVEREST_CTL_PATH install --chart-dir "$HELM_PATH/charts/everest" --version $VERSION --version-metadata-url http://localhost:8081  --operator.xtradb-cluster --operator.mongodb --operator.postgresql --skip-wizard --namespaces everest -v --helm.set "versionMetadataURL=http://$SERVICE_IP"
