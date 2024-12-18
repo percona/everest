@@ -183,18 +183,18 @@ test.describe.configure({ retries: 0 });
         await test.step('Check db cluster k8s object options', async () => {
           const addedCluster = await getDbClusterAPI(clusterName, EVEREST_CI_NAMESPACES.EVEREST_UI, request, token);
 
-          expect(addedCluster.spec.engine.type).toBe(db);
-          expect(addedCluster.spec.engine.replicas).toBe(size);
+          expect(addedCluster?.spec.engine.type).toBe(db);
+          expect(addedCluster?.spec.engine.replicas).toBe(size);
           expect(['600m', '0.6']).toContain(
-            addedCluster.spec.engine.resources?.cpu.toString()
+            addedCluster?.spec.engine.resources?.cpu.toString()
           );
-          expect(addedCluster.spec.engine.resources?.memory.toString()).toBe(
+          expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe(
             '1G'
           );
-          expect(addedCluster.spec.engine.storage.size.toString()).toBe('1Gi');
-          expect(addedCluster.spec.proxy.expose.type).toBe('internal');
+          expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
+          expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
           if (db != 'psmdb') {
-            expect(addedCluster.spec.proxy.replicas).toBe(size);
+            expect(addedCluster?.spec.proxy.replicas).toBe(size);
           }
         });
       });

@@ -5,6 +5,7 @@ import { getDbClustersListAPI } from '@e2e/utils/db-clusters-list';
 import { TIMEOUTS } from '@e2e/constants';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { prepareTestDB } from '@e2e/utils/db-cmd-line';
 
 test.describe.configure({ retries: 0 });
 test.describe.configure({ timeout: TIMEOUTS.FifteenMinutes });
@@ -13,6 +14,8 @@ test(
   'Pre upgrade setup',
   { tag: '@pre-upgrade' },
   async ({ page, request }) => {
+    const token = await getTokenFromLocalStorage();
+
     await test.step('Create DB clusters', async () => {
       await createDbClusterFn(request, {
         dbName: pxcDBCluster.name,
@@ -50,23 +53,35 @@ test(
       await page.waitForTimeout(TIMEOUTS.TenSeconds);
     });
 
-    const token = await getTokenFromLocalStorage();
+    await test.step('Wait for databases to become ready', async () => {
+      await expect(async () => {
+        const dbClusters = (await getDbClustersListAPI(EVEREST_CI_NAMESPACES.EVEREST_UI, request, token)).items;
 
-    await expect(async () => {
+        const clustersInfo = dbClusters.map((c) => {
+          return { status: c.status.status, name: c.metadata.name };
+        });
+
+        clustersInfo.forEach((c) => {
+          expect(c.status, `expecting ${c.name} to have "ready" status`).toBe(
+            'ready'
+          );
+        });
+      }, 'waiting for db clusters to be "ready"').toPass({
+        timeout: TIMEOUTS.TenMinutes,
+        intervals: [TIMEOUTS.OneMinute],
+      });
+    });
+
+    await test.step('Add data to databases', async () => {
       const dbClusters = (await getDbClustersListAPI(EVEREST_CI_NAMESPACES.EVEREST_UI, request, token)).items;
 
       const clustersInfo = dbClusters.map((c) => {
-        return { status: c.status.status, name: c.metadata.name };
+        return { status: c.status.status, name: c.metadata.name, namespace: c.metadata.namespace };
       });
 
       clustersInfo.forEach((c) => {
-        expect(c.status, `expecting ${c.name} to have "ready" status`).toBe(
-          'ready'
-        );
+        prepareTestDB(c.name, c.namespace);
       });
-    }, 'waiting for db clusters to be "ready"').toPass({
-      timeout: TIMEOUTS.TenMinutes,
-      intervals: [TIMEOUTS.OneMinute],
     });
   }
 );

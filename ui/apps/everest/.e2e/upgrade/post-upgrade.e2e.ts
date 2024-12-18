@@ -7,19 +7,21 @@ import {
   postgresDBCluster,
   pxcDBCluster
 } from './testData';
-import { waitForStatus } from '@e2e/utils/table';
+import { waitForStatus, waitForDelete } from '@e2e/utils/table';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
 import { getExpectedOperatorVersions } from '@e2e/upgrade/helper';
 import { getDbAvailableUpgradeVersionK8S } from '@e2e/utils/db-cluster'
-import cluster from 'cluster';
-import { getDbClustersListAPI } from '@e2e/utils/db-clusters-list';
+import { deleteDbCluster, getDbClustersListAPI } from '@e2e/utils/db-clusters-list';
+import { queryTestDB } from '@e2e/utils/db-cmd-line';
 
 let namespace: string;
 let token: string;
 let upgradeClustersInfo: {
   name: string;
+  namespace: string;
   dbType: string;
+  currentVersion: string;
   upgradeVersion: string | null;
 }[] = [];
 
@@ -31,122 +33,113 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
     [namespace] = await getNamespacesFn(token, request);
   });
 
-  // test('Verify upgrade.log file', async () => {
-  //   const filePath = `/tmp/everest-upgrade.log`;
-  //   const data = fs.readFileSync(filePath, 'utf8');
+  test('Verify upgrade.log file', async () => {
+    const filePath = `/tmp/everest-upgrade.log`;
+    const data = fs.readFileSync(filePath, 'utf8');
 
-  //   const expectedText = expectedEverestUpgradeLog();
-  //   expect(data.trim()).toContain(expectedText);
-  // });
+    const expectedText = expectedEverestUpgradeLog();
+    expect(data.trim()).toContain(expectedText);
+  });
 
-  // test('Verify DB clusters are running', async ({ page }) => {
-  //   await page.goto('/databases');
+  test('Verify DB clusters are running', async ({ page }) => {
+    await page.goto('/databases');
 
-  //   await test.step('Verify MongoDB and Postgresql clusters are up', async () => {
-  //     await waitForStatus(page, mongoDBCluster.name, 'Up', TIMEOUTS.ThirtySeconds);
-  //     await waitForStatus(page, postgresDBCluster.name, 'Up', TIMEOUTS.ThirtySeconds);
-  //     await waitForStatus(page, pxcDBCluster.name, 'Up', TIMEOUTS.ThirtySeconds);
-  //   });
-  // });
+    await test.step('Verify clusters are up', async () => {
+      await waitForStatus(page, mongoDBCluster.name, 'Up', TIMEOUTS.ThirtySeconds);
+      await waitForStatus(page, postgresDBCluster.name, 'Up', TIMEOUTS.ThirtySeconds);
+      await waitForStatus(page, pxcDBCluster.name, 'Up', TIMEOUTS.ThirtySeconds);
+    });
+  });
 
-  // test('Verify user is able to upgrade operators', async ({ page }) => {
-  //   const upgradeOperatorsButton = page.getByRole('button', {
-  //     name: 'Upgrade Operators',
-  //   });
-  //   const upgradeOperatorsModal = page.getByRole('dialog');
+  test('Verify operators upgrade', async ({ page }) => {
+    const upgradeOperatorsButton = page.getByRole('button', {
+      name: 'Upgrade Operators',
+    });
+    const upgradeOperatorsModal = page.getByRole('dialog');
+    const operatorsVersions = await getExpectedOperatorVersions();
 
-  //   const operatorsVersions = await getExpectedOperatorVersions();
+    test.skip(operatorsVersions.length === 0, 'No operators to upgrade');
 
-  //   test.skip(operatorsVersions.length === 0, 'No operators to upgrade');
+    await test.step(`Open ${namespace} namespace settings`, async () => {
+      await page.goto(`/settings/namespaces/${namespace}`);
+      await expect(upgradeOperatorsButton).toBeVisible();
+    });
 
-  //   await test.step(`open ${namespace} namespace settings`, async () => {
-  //     await page.goto(`/settings/namespaces/${namespace}`);
-  //     await expect(upgradeOperatorsButton).toBeVisible();
-  //   });
+    await test.step(`Verify "upgrade available" text is present in the header`, async () => {
+      for (const operator of operatorsVersions) {
+        await expect(
+          page.getByText(
+            `${operator.shortName} ${operator.oldVersion} (Upgrade available)`
+          )
+        ).toBeVisible();
+      }
+    });
 
-  //   await test.step(`Verify "upgrade available" text is present in the header`, async () => {
-  //     for (const operator of operatorsVersions) {
-  //       await expect(
-  //         page.getByText(
-  //           `${operator.shortName} ${operator.oldVersion} (Upgrade available)`
-  //         )
-  //       ).toBeVisible();
-  //     }
-  //   });
+    await test.step(`Click upgrade button and verify modal contains correct versions and operators`, async () => {
+      await upgradeOperatorsButton.click();
+      await expect(
+        upgradeOperatorsModal.getByText(
+          `Are you sure you want to upgrade your operators in ${namespace}?`
+        )
+      ).toBeVisible();
 
-  //   await test.step(`Click upgrade button and verify modal contains correct versions and operators`, async () => {
-  //     await upgradeOperatorsButton.click();
-  //     await expect(
-  //       upgradeOperatorsModal.getByText(
-  //         `Are you sure you want to upgrade your operators in ${namespace}?`
-  //       )
-  //     ).toBeVisible();
+      for (const operatorVersion of operatorsVersions) {
+        await expect(
+          upgradeOperatorsModal.locator('li').filter({
+            hasText: `${operatorVersion.name} ${operatorVersion.oldVersion} will be upgraded to ${operatorVersion.version}`,
+          })
+        ).toBeVisible();
+      }
+    });
 
-  //     for (const operatorVersion of operatorsVersions) {
-  //       await expect(
-  //         upgradeOperatorsModal.locator('li').filter({
-  //           hasText: `${operatorVersion.name} ${operatorVersion.oldVersion} will be upgraded to ${operatorVersion.version}`,
-  //         })
-  //       ).toBeVisible();
-  //     }
-  //   });
+    await test.step(`Click Upgrade and wait for upgrade success`, async () => {
+      await upgradeOperatorsModal
+        .getByRole('button', { name: 'Upgrade' })
+        .click();
 
-  //   await test.step(`Click Upgrade and wait for upgrade success`, async () => {
-  //     await upgradeOperatorsModal
-  //       .getByRole('button', { name: 'Upgrade' })
-  //       .click();
+      for (const operator of operatorsVersions) {
+        await expect(async () => {
+          await expect(
+            page.getByText(`${operator.shortName} ${operator.version}`, {
+              exact: true,
+            })
+          ).toBeVisible();
+        }).toPass({ timeout: TIMEOUTS.ThreeMinutes });
+      }
+    });
 
-  //     for (const operator of operatorsVersions) {
-  //       await expect(async () => {
-  //         await expect(
-  //           page.getByText(`${operator.shortName} ${operator.version}`, {
-  //             exact: true,
-  //           })
-  //         ).toBeVisible();
-  //       }).toPass({ timeout: TIMEOUTS.ThreeMinutes });
-  //     }
-  //   });
+    for (const operator of operatorsVersions) {
+      await test.step(`Upgrade CR version for [${operator.shortName}]`, async () => {
+        await page.goto(`/settings/namespaces/${namespace}`);
+        await waitForStatus(page, `${operator.shortName}-db-cluster`, 'Up', TIMEOUTS.ThirtySeconds);
 
-  //   await test.step(`Verify CRD upgrade is available`, async () => {
-  //     for (const operator of operatorsVersions) {
-  //       await expect(async () => {
-  //         await expect(
-  //           page.getByText(`Database needs restart to use CRVersion '${operator.version}'`, {
-  //             exact: true,
-  //           })
-  //         ).toBeVisible();
-  //       }).toPass({ timeout: TIMEOUTS.ThreeMinutes });
-  //     }
-  //   });
+        await page
+        .getByRole('button', { name: `Database needs restart to use CRVersion '${operator.version.replace('v','')}'` })
+        .click();
 
-  //   await test.step(`Upgrade CRD for each database`, async () => {
-  //     for (const operator of operatorsVersions) {
-  //       const upgradeCRDModal = page.getByRole('dialog');
+        const upgradeCRDModal = page.getByRole('dialog');
 
-  //       await upgradeCRDModal
-  //       .getByRole('button', { name: `Database needs restart to use CRVersion '${operator.version}'` })
-  //       .click();
+        await expect(
+          upgradeCRDModal.getByText(
+            `Are you sure you want to upgrade your CRD (Custom Resource Definition) to version ${operator.version.replace('v','')} in ${operator.shortName}-db-cluster cluster?`
+          )
+        ).toBeVisible();
 
-  //       await expect(
-  //         upgradeCRDModal.getByText(
-  //           `Are you sure you want to upgrade your CRD (Custom Resource Definition) to version ${operator.version} in ${operator.shortName}-db-cluster cluster`
-  //         )
-  //       ).toBeVisible();
+        await upgradeCRDModal.getByRole('button', { name: 'Upgrade' }).click();
 
-  //       await upgradeCRDModal.getByRole('button', { name: 'Upgrade' }).click();
-  //     }
+        await waitForStatus(page, `${operator.shortName}-db-cluster`, 'Initializing', TIMEOUTS.ThreeMinutes);
+        await waitForStatus(page, `${operator.shortName}-db-cluster`, 'Up', TIMEOUTS.ThreeMinutes);
+      });
+    }
+  });
 
-  //     for (const operator of operatorsVersions) {
-  //       await waitForStatus(page, `${operator.shortName}-db-cluster`, 'Up', TIMEOUTS.ThreeMinutes);
-  //     }
-  //   });
-  // });
+  test('Verify databases upgrade', async ({ page, request }) => {
+    await page.goto('/databases');
 
-  test('Verify user is able to upgrade databases', async ({ page, request }) => {
     const dbClusters = (await getDbClustersListAPI(EVEREST_CI_NAMESPACES.EVEREST_UI, request, token)).items;
 
     upgradeClustersInfo = dbClusters.map((c) => {
-      return { name: c.metadata.name, dbType: c.spec.engine.type };
+      return { name: c.metadata.name, namespace: c.metadata.namespace, dbType: c.spec.engine.type, currentVersion: c.spec.engine.version };
     });
 
     for (const c of upgradeClustersInfo) {
@@ -156,52 +149,67 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
 
     test.skip(upgradeCount === 0, 'No databases to upgrade');
 
-    // await test.step(`open ${namespace} namespace settings`, async () => {
-    //   await page.goto(`/settings/namespaces/${namespace}`);
-    //   await expect(upgradeOperatorsButton).toBeVisible();
-    // });
+    for (const c of upgradeClustersInfo.filter((item) => item.upgradeVersion !== null)) {
+      await test.step(`Upgrade ${c.name} database`, async () => {
+        await page.goto(`/databases/${c.namespace}/${c.name}/overview`);
+        await page.getByTestId('upgrade-db-btn').click();
+        const upgradeDbVersionModal = page.getByRole('dialog');
 
-    // await test.step(`Verify "upgrade available" text is present in the header`, async () => {
-    //   for (const operator of operatorsVersions) {
-    //     await expect(
-    //       page.getByText(
-    //         `${operator.shortName} ${operator.oldVersion} (Upgrade available)`
-    //       )
-    //     ).toBeVisible();
-    //   }
-    // });
+        await expect(upgradeDbVersionModal.getByText(`Upgrade DB version`)).toBeVisible();
+        await upgradeDbVersionModal.getByTestId('select-db-version-button').click();
+        await page.getByRole('option', { name: `${c.upgradeVersion}` }).click();
 
-    // await test.step(`Click upgrade button and verify modal contains correct versions and operators`, async () => {
-    //   await upgradeOperatorsButton.click();
-    //   await expect(
-    //     upgradeOperatorsModal.getByText(
-    //       `Are you sure you want to upgrade your operators in ${namespace}?`
-    //     )
-    //   ).toBeVisible();
+        await upgradeDbVersionModal.getByTestId('form-dialog-upgrade').click();
+      });
 
-    //   for (const operatorVersion of operatorsVersions) {
-    //     await expect(
-    //       upgradeOperatorsModal.locator('li').filter({
-    //         hasText: `${operatorVersion.name} ${operatorVersion.oldVersion} will be upgraded to ${operatorVersion.version}`,
-    //       })
-    //     ).toBeVisible();
-    //   }
-    // });
+      await test.step(`Wait for database [${c.name}] status after upgrade`, async () => {
+        await page.goto('/databases');
+        await waitForStatus(page, `${c.name}`, 'Initializing', TIMEOUTS.ThreeMinutes);
+        await waitForStatus(page, `${c.name}`, 'Up', TIMEOUTS.ThreeMinutes);
+      });
+    }
 
-    // await test.step(`Click Upgrade and wait for upgrade success`, async () => {
-    //   await upgradeOperatorsModal
-    //     .getByRole('button', { name: 'Upgrade' })
-    //     .click();
+    await test.step(`Check databases were upgraded`, async () => {
+      await page.goto('/databases');
 
-    //   for (const operator of operatorsVersions) {
-    //     await expect(async () => {
-    //       await expect(
-    //         page.getByText(`${operator.shortName} ${operator.version}`, {
-    //           exact: true,
-    //         })
-    //       ).toBeVisible();
-    //     }).toPass({ timeout: TIMEOUTS.ThreeMinutes });
-    //   }
-    // });
+      for (const c of upgradeClustersInfo) {
+        let tech: string = '';
+
+        switch(c.dbType){
+          case 'pxc': { tech = 'MySQL'; break; }
+          case 'psmdb': { tech = 'MongoDB'; break; }
+          case 'postgresql': { tech = 'PostgreSQL'; break; }
+        }
+
+        const version = c.upgradeVersion === null ? c.currentVersion : c.upgradeVersion;
+        await expect(page.getByRole('row').filter({ hasText: `${c.name}` })).toContainText(`${tech} ${version}`);
+      }
+    });
+  });
+
+  test(`Check data after upgrade`, async ({ page }) => {
+    for (const c of upgradeClustersInfo) {
+      const result = await queryTestDB(c.name, c.namespace);
+
+      switch (c.dbType) {
+        case 'pxc':
+          expect(result.trim()).toBe('1\n2\n3');
+          break;
+        case 'psmdb':
+          expect(result.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
+          break;
+        case 'postgresql':
+          expect(result.trim()).toBe('1\n 2\n 3');
+          break;
+      }
+    }
+  });
+
+  test(`Delete clusters`, async ({ page }) => {
+    for (const c of upgradeClustersInfo) {
+      await deleteDbCluster(page, c.name);
+      await waitForStatus(page, c.name, 'Deleting', TIMEOUTS.FifteenSeconds);
+      await waitForDelete(page, c.name, TIMEOUTS.FiveMinutes);
+    }
   });
 });

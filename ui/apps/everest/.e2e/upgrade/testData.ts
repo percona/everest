@@ -37,7 +37,7 @@ export const postgresDBCluster = {
 export const expectedEverestUpgradeLog = (
   tag = everestTagForUpgrade.replace(/v/g, '')
 ) => {
-  return `ℹ️ Upgrading Everest to version ${tag}
+  return `ℹ️  Upgrading Everest to version ${tag}
 
 ✓ Upgrading Custom Resource Definitions
 ✓ Upgrading Helm chart
