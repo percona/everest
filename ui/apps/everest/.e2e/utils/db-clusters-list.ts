@@ -13,8 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { expect, Page } from '@playwright/test';
+import { APIRequestContext, expect, Page } from '@playwright/test';
 import { findRowAndClickActions } from './table';
+import { checkError } from '@e2e/utils/generic';
+
+export const getDbClustersListAPI = async (namespace: string, request: APIRequestContext, token: string) => {
+  const response = await request.get(
+    `/v1/namespaces/${namespace}/database-clusters`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  await checkError(response);
+
+  return response.json();
+};
 
 export const findDbAndClickRow = async (page: Page, dbName: string) => {
   const dbRow = page.getByRole('row').filter({ hasText: dbName });
