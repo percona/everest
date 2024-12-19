@@ -90,6 +90,7 @@ export const AdvancedConfiguration = ({
                 setOpenEditModal(true);
               },
               children: Messages.actions.edit,
+              'data-testid': 'edit-advanced-configuration-button',
             },
           }
         : undefined)}

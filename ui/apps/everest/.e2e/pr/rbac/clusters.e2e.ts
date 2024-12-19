@@ -28,6 +28,41 @@ const mockClusters = (page: Page, namespace: string) =>
       },
     });
   });
+const mockCluster = (page: Page, namespace: string, clusterName: string) =>
+  page.route(
+    `/v1/namespaces/${namespace}/database-clusters/${clusterName}`,
+    async (route) => {
+      await route.fulfill({
+        json: {
+          metadata: {
+            name: CLUSTER_NAME,
+            namespace,
+          },
+          spec: {
+            engine: {
+              type: 'pxc',
+              replicas: 1,
+              resources: {
+                cpu: '1',
+                memory: '1G',
+              },
+              storage: {
+                size: '1Gi',
+              },
+            },
+            proxy: {
+              replicas: 1,
+              resources: {
+                cpu: '200m',
+                memory: '200M',
+              },
+            },
+            monitoring: {},
+          },
+        },
+      });
+    }
+  );
 
 test.describe('Clusters RBAC', () => {
   let namespace = '';
@@ -95,6 +130,7 @@ test.describe('Clusters RBAC', () => {
   test('visible actions', async ({ page }) => {
     await mockEngines(page, namespace);
     await mockClusters(page, namespace);
+    await mockCluster(page, namespace, CLUSTER_NAME);
     await mockRbacPermissions(page, [
       [user, 'namespaces', 'read', namespace],
       [user, 'database-engines', '*', `${namespace}/*`],
@@ -105,6 +141,16 @@ test.describe('Clusters RBAC', () => {
     await expect(page.getByText('Delete')).toBeVisible();
     await expect(page.getByText('Suspend')).toBeVisible();
     await expect(page.getByText('Restart')).toBeVisible();
+
+    await page.goto(`/databases/${namespace}/${CLUSTER_NAME}`);
+    await expect(
+      page.getByTestId('edit-advanced-configuration-button')
+    ).toBeVisible();
+    await expect(
+      page.getByTestId('edit-advanced-configuration-button')
+    ).not.toBeDisabled();
+    await expect(page.getByTestId('edit-resources-button')).toBeVisible();
+    await expect(page.getByTestId('edit-resources-button')).not.toBeDisabled();
   });
 
   test('not visible actions', async ({ page }) => {
