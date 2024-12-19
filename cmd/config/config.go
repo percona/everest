@@ -39,9 +39,9 @@ var (
 
 // EverestConfig stores the configuration for the application.
 type EverestConfig struct {
-	DSN      string `default:"postgres://admin:pwd@127.0.0.1:5432/postgres?sslmode=disable" envconfig:"DSN"`
-	HTTPPort int    `default:"8080" envconfig:"HTTP_PORT"`
-	Verbose  bool   `default:"false" envconfig:"VERBOSE"`
+	DSN        string `default:"postgres://admin:pwd@127.0.0.1:5432/postgres?sslmode=disable" envconfig:"DSN"`
+	ListenPort int    `default:"8080" envconfig:"PORT"`
+	Verbose    bool   `default:"false" envconfig:"VERBOSE"`
 	// TelemetryURL Everest telemetry endpoint.
 	TelemetryURL string `envconfig:"TELEMETRY_URL"`
 	// TelemetryInterval Everest telemetry sending frequency.
@@ -54,6 +54,8 @@ type EverestConfig struct {
 	CreateSessionRateLimit int `default:"1" envconfig:"CREATE_SESSION_RATE_LIMIT"`
 	// VersionServiceURL contains the URL of the version service.
 	VersionServiceURL string `default:"https://check.percona.com" envconfig:"VERSION_SERVICE_URL"`
+	// TLSCertsPath contains the path to the directory with the TLS certificates.
+	TLSCertsPath string `envconfig:"TLS_CERTS_PATH"`
 }
 
 // ParseConfig parses env vars and fills EverestConfig.
