@@ -36,8 +36,8 @@ func (k *Kubernetes) GetDatabaseEngine(ctx context.Context, namespace, name stri
 }
 
 // UpdateDatabaseEngine updates the provided database engine.
-func (k *Kubernetes) UpdateDatabaseEngine(ctx context.Context, namespace string, engine *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
-	return k.client.UpdateDatabaseEngine(ctx, namespace, engine)
+func (k *Kubernetes) UpdateDatabaseEngine(ctx context.Context, engine *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
+	return k.client.UpdateDatabaseEngine(ctx, engine.GetNamespace(), engine)
 }
 
 // SetDatabaseEngineLock sets the lock on the database engine.
