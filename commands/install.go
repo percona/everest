@@ -50,9 +50,12 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 			}
 			c.CLIOptions.BindViperFlags()
 
-			if c.Namespaces != "" && c.SkipDBNamespace {
-				l.Error("Cannot use both --namespaces and --skip-db-namespace flags together")
-				os.Exit(1)
+			if c.SkipDBNamespace {
+				if cmd.Flags().Lookup(cli.FlagNamespaces).Changed {
+					l.Errorf("cannot set both --%s and --%s", cli.FlagInstallSkipDBNamespace, cli.FlagNamespaces)
+					os.Exit(1)
+				}
+				c.Namespaces = ""
 			}
 
 			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
@@ -76,7 +79,7 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initInstallFlags(cmd *cobra.Command) {
-	cmd.Flags().String(cli.FlagNamespaces, "", "Comma-separated namespaces list Percona Everest can manage")
+	cmd.Flags().String(cli.FlagNamespaces, install.DefaultDBNamespaceName, "Comma-separated namespaces list Percona Everest can manage")
 	cmd.Flags().Bool(cli.FlagSkipWizard, false, "Skip installation wizard")
 	cmd.Flags().String(cli.FlagVersionMetadataURL, "https://check.percona.com", "URL to retrieve version metadata information from")
 	cmd.Flags().String(cli.FlagVersion, "", "Everest version to install. By default the latest version is installed")

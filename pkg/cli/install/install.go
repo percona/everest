@@ -52,6 +52,8 @@ const (
 	backoffInterval = 5 * time.Second
 
 	postInstallMessage = "Everest has been successfully installed!"
+
+	DefaultDBNamespaceName = "everest"
 )
 
 // Install implements the main logic for commands.
@@ -83,7 +85,7 @@ type Config struct {
 	SkipEnvDetection bool `mapstructure:"skip-env-detection"`
 	// If set, we will print the pretty output.
 	Pretty bool
-
+	// SkipDBNamespace is set if the installation should skip provisioning database.
 	SkipDBNamespace bool `mapstructure:"skip-db-namespace"`
 
 	helm.CLIOptions
@@ -176,7 +178,7 @@ func (o *Install) installDBNamespacesStep(ctx context.Context) (*steps.Step, err
 		o.cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster).Changed)
 
 	if askNamespaces {
-		o.config.Namespaces = "everest"
+		o.config.Namespaces = DefaultDBNamespaceName
 	}
 
 	if err := o.config.Populate(ctx, askNamespaces, askOperators); err != nil {
