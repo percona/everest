@@ -18,6 +18,7 @@ import (
 	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/output"
 )
 
 const (
@@ -87,6 +88,15 @@ func (r *NamespaceRemover) Run(ctx context.Context) error {
 
 	removalSteps := []steps.Step{}
 	for _, ns := range r.config.Namespaces {
+		// Check that the namespace exists.
+		_, err := r.kubeClient.GetNamespace(ctx, ns)
+		if k8serrors.IsNotFound(err) {
+			r.l.Infof("Namespace '%s' does not exist", ns)
+			fmt.Fprint(os.Stdout, output.Warn("Namespace (%s) does not exist, skipping..", ns))
+			continue
+		} else if err != nil {
+			return errors.Join(err, errors.New("failed to get namespace"))
+		}
 		removalSteps = append(removalSteps, NewRemoveNamespaceSteps(ns, r.config.KeepNamespace, r.kubeClient)...)
 	}
 
