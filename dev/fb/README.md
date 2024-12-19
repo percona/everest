@@ -1,5 +1,10 @@
 ### This directory holds scripts that help to run Everest Feature Builds (FB)
 
+The scripts:
+- `vs.sh` - deploys VS and returns its internal IP. In common case, this script should not be run manually, it's being run by other two scripts.
+- `helm.sh` - runs `vs.sh` under the hood and then runs Everest helm installation.
+- `cli.sh` - runs `vs.sh` under the hood, exposes VS with port-forwarding and then runs Everest cli installation.
+
 #### Prerequisites:
 1. Download the artifacts you need (helm, cli) from the FB pipeline
 2. Navigate to `the everest/dev/fb` directory
