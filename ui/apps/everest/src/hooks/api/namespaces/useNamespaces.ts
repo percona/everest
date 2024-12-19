@@ -95,7 +95,7 @@ export const useDBEnginesForDbEngineTypes = (
         : (Object.keys(DbEngineType) as Array<keyof typeof DbEngineType>).map(
             (type) => DbEngineType[type]
           ),
-    [DbEngineType]
+    [dbEngineType]
   );
 
   const availableDbEngineTypes = useMemo(() => {

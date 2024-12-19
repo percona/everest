@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Button, Menu, MenuItem, Skeleton, Stack } from '@mui/material';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import { Messages } from '../dbClusterView.messages';
@@ -24,6 +24,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 export const CreateDbButton = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [showDropdownButton, setShowDropdownButton] = useState(false);
 
   const open = Boolean(anchorEl);
 
@@ -50,23 +51,40 @@ export const CreateDbButton = () => {
     setAnchorEl(null);
   };
 
+  useEffect(() => {
+    if (availableDbTypesFetching) {
+      setTimeout(() => {
+        setShowDropdownButton(true);
+      }, 500);
+    } else {
+      setShowDropdownButton(false);
+    }
+  }, [availableDbTypesFetching]);
+
+  const buttonStyle = { display: 'flex', minHeight: '34px', width: '165px' };
+
   return (
     <Box>
-      <Button
-        data-testid="add-db-cluster-button"
-        size="small"
-        variant="contained"
-        sx={{ display: 'flex' }}
-        aria-controls={open ? 'add-db-cluster-button-menu' : undefined}
-        aria-haspopup="true"
-        aria-expanded={open ? 'true' : undefined}
-        onClick={handleClick}
-        endIcon={availableEngines.length > 1 ? <ArrowDropDownIcon /> : null}
-        disabled={availableDbTypes?.length === 0} //TODO 1304 ?? should we block button itself during loading? What if no dbEngin
-      >
-        {Messages.createDatabase}
-      </Button>
-      {availableEngines.length > 1 && (
+      {!showDropdownButton ? (
+        <Button size="small" variant="contained" disabled sx={buttonStyle}>
+          {Messages.loading}
+        </Button>
+      ) : (
+        <Button
+          data-testid="add-db-cluster-button"
+          size="small"
+          variant="contained"
+          sx={buttonStyle}
+          aria-controls={open ? 'add-db-cluster-button-menu' : undefined}
+          aria-haspopup="true"
+          aria-expanded={open ? 'true' : undefined}
+          onClick={handleClick}
+          endIcon={availableEngines.length > 1 && <ArrowDropDownIcon />}
+        >
+          {Messages.createDatabase}
+        </Button>
+      )}
+      {showDropdownButton && availableEngines.length > 1 && (
         <Menu
           data-testid="add-db-cluster-button-menu"
           anchorEl={anchorEl}
