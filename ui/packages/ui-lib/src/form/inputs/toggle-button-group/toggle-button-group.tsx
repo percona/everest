@@ -42,7 +42,17 @@ const ToggleButtonGroupInput = ({
             value: any
           ) => {
             if (value !== null) {
-              toggleButtonGroupOnChange(event, event.target.value);
+              const isNumber = typeof value === 'number';
+              if (isNumber) {
+                event.target.valueAsNumber = value;
+              } else {
+                event.target.value = value;
+              }
+
+              toggleButtonGroupOnChange(
+                event,
+                isNumber ? event.target.valueAsNumber : event.target.value
+              );
               setValue(name, value, { shouldTouch: true });
             }
           }}
