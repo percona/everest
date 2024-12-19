@@ -56,12 +56,18 @@ export const CreateDbButton = () => {
         data-testid="add-db-cluster-button"
         size="small"
         variant="contained"
-        sx={{ display: 'flex' }}
+        sx={{ display: 'flex', minHeight: '34px', width: '165px' }}
         aria-controls={open ? 'add-db-cluster-button-menu' : undefined}
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
         onClick={handleClick}
-        endIcon={availableEngines.length > 1 ? <ArrowDropDownIcon /> : null}
+        endIcon={
+          availableDbTypesFetching ? (
+            <ArrowDropDownIcon sx={{ color: 'transparent' }} />
+          ) : (
+            availableEngines.length > 1 && <ArrowDropDownIcon />
+          )
+        }
         disabled={availableDbTypes?.length === 0} //TODO 1304 ?? should we block button itself during loading? What if no dbEngin
       >
         {Messages.createDatabase}
