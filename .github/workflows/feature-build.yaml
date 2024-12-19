@@ -1,5 +1,5 @@
 ---
-name: Custom build
+name: Feature build
 on:
   workflow_dispatch:
     inputs:
@@ -79,6 +79,11 @@ jobs:
         run: |
           if [[ ! "$ARTIFACTS_RETENTION_DAYS" =~ ^[0-9]+$ ]]; then
             echo "Wrong artifacts_retention_days format. Use an integer number. 0 means default GitHub repo settings."
+            exit 1
+          fi
+          
+          if [[ -z "$UPSTREAM_OPERATOR" && ! -z "$UPSTREAM_OPERATOR_IMAGE" ]] || [[ ! -z "$UPSTREAM_OPERATOR" && -z "$UPSTREAM_OPERATOR_IMAGE" ]]; then
+            echo "upstream_operator and upstream_operator_bundle_image should both be either empty or non-empty."
             exit 1
           fi
 
