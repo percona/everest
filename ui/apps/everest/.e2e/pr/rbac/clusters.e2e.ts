@@ -1,10 +1,16 @@
 import { expect, Page, test } from '@playwright/test';
-import { mockEngines, mockRbacPermissions } from './utils';
+import { mockEngines } from './utils';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
+import {
+  saveOldRBACPermissions,
+  restoreOldRBACPermissions,
+  setRBACPermissions,
+} from '@e2e/utils/rbac-cmd-line';
 
 const { CI_USER: user } = process.env;
 const CLUSTER_NAME = 'cluster-1';
+let oldRbacPermissions: string;
 const mockClusters = (page: Page, namespace: string) =>
   page.route(`/v1/namespaces/${namespace}/database-clusters`, async (route) => {
     await route.fulfill({
@@ -69,16 +75,21 @@ test.describe('Clusters RBAC', () => {
 
   test.beforeAll(async ({ request }) => {
     const token = await getTokenFromLocalStorage();
+    oldRbacPermissions = await saveOldRBACPermissions();
     const namespaces = await getNamespacesFn(token, request);
     namespace = namespaces[0];
   });
 
+  test.afterAll(async () => {
+    await restoreOldRBACPermissions();
+  });
+
   test('permitted cluster creation with present clusters', async ({ page }) => {
     await mockEngines(page, namespace);
-    await mockRbacPermissions(page, [
-      [user, 'namespaces', 'read', namespace],
-      [user, 'database-engines', '*', `${namespace}/*`],
-      [user, 'database-clusters', '*', `${namespace}/*`],
+    await setRBACPermissions(user, [
+      ['namespaces', 'read', namespace],
+      ['database-engines', '*', `${namespace}/*`],
+      ['database-clusters', '*', `${namespace}/*`],
     ]);
     await mockClusters(page, namespace);
     await page.goto('/databases');
@@ -90,10 +101,10 @@ test.describe('Clusters RBAC', () => {
     page,
   }) => {
     await mockEngines(page, namespace);
-    await mockRbacPermissions(page, [
-      [user, 'namespaces', 'read', namespace],
-      [user, 'database-engines', '*', `${namespace}/*`],
-      [user, 'database-clusters', '*', `${namespace}/*`],
+    await setRBACPermissions(user, [
+      ['namespaces', 'read', namespace],
+      ['database-engines', '*', `${namespace}/*`],
+      ['database-clusters', '*', `${namespace}/*`],
     ]);
     await page.goto('/databases');
     await expect(page.getByText('Create database')).toBeVisible();
@@ -105,10 +116,10 @@ test.describe('Clusters RBAC', () => {
   }) => {
     await mockEngines(page, namespace);
     await mockClusters(page, namespace);
-    await mockRbacPermissions(page, [
-      [user, 'namespaces', 'read', namespace],
-      [user, 'database-engines', '*', `${namespace}/*`],
-      [user, 'database-clusters', 'read', `${namespace}/*`],
+    await setRBACPermissions(user, [
+      ['namespaces', 'read', namespace],
+      ['database-engines', '*', `${namespace}/*`],
+      ['database-clusters', 'read', `${namespace}/*`],
     ]);
     await page.goto('/databases');
     await expect(page.getByText('Create database')).not.toBeVisible();
@@ -118,10 +129,10 @@ test.describe('Clusters RBAC', () => {
     page,
   }) => {
     await mockEngines(page, namespace);
-    await mockRbacPermissions(page, [
-      [user, 'namespaces', 'read', namespace],
-      [user, 'database-engines', '*', `${namespace}/*`],
-      [user, 'database-clusters', 'read', `${namespace}/*`],
+    await setRBACPermissions(user, [
+      ['namespaces', 'read', namespace],
+      ['database-engines', '*', `${namespace}/*`],
+      ['database-clusters', 'read', `${namespace}/*`],
     ]);
     await page.goto('/databases');
     await expect(page.getByText('Create database')).not.toBeVisible();
@@ -131,10 +142,10 @@ test.describe('Clusters RBAC', () => {
     await mockEngines(page, namespace);
     await mockClusters(page, namespace);
     await mockCluster(page, namespace, CLUSTER_NAME);
-    await mockRbacPermissions(page, [
-      [user, 'namespaces', 'read', namespace],
-      [user, 'database-engines', '*', `${namespace}/*`],
-      [user, 'database-clusters', '*', `${namespace}/${CLUSTER_NAME}`],
+    await setRBACPermissions(user, [
+      ['namespaces', 'read', namespace],
+      ['database-engines', '*', `${namespace}/*`],
+      ['database-clusters', '*', `${namespace}/${CLUSTER_NAME}`],
     ]);
     await page.goto('/databases');
     await page.getByTestId('actions-menu-button').click();
@@ -156,10 +167,10 @@ test.describe('Clusters RBAC', () => {
   test('not visible actions', async ({ page }) => {
     await mockEngines(page, namespace);
     await mockClusters(page, namespace);
-    await mockRbacPermissions(page, [
-      [user, 'namespaces', 'read', namespace],
-      [user, 'database-engines', '*', `${namespace}/*`],
-      [user, 'database-clusters', 'read', `${namespace}/${CLUSTER_NAME}`],
+    await setRBACPermissions(user, [
+      ['namespaces', 'read', namespace],
+      ['database-engines', '*', `${namespace}/*`],
+      ['database-clusters', 'read', `${namespace}/${CLUSTER_NAME}`],
     ]);
     await page.goto('/databases');
     await expect(page.getByTestId('actions-menu-button')).not.toBeVisible();
