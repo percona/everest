@@ -50,6 +50,11 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 			}
 			c.CLIOptions.BindViperFlags()
 
+			if c.Namespaces != "" && c.SkipDBNamespace {
+				l.Error("Cannot use both --namespaces and --skip-db-namespace flags together")
+				os.Exit(1)
+			}
+
 			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
 			c.Pretty = !enableLogging
 
@@ -78,6 +83,7 @@ func initInstallFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(cli.FlagDisableTelemetry, false, "Disable telemetry")
 	cmd.Flags().MarkHidden(cli.FlagDisableTelemetry) //nolint:errcheck,gosec
 	cmd.Flags().Bool(cli.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
+	cmd.Flags().Bool(cli.FlagInstallSkipDBNamespace, false, "Skip creating a database namespace with install")
 
 	cmd.Flags().String(helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
 	cmd.Flags().MarkHidden(helm.FlagChartDir) //nolint:errcheck,gosec
@@ -93,13 +99,14 @@ func initInstallFlags(cmd *cobra.Command) {
 func initInstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(cli.FlagSkipWizard, cmd.Flags().Lookup(cli.FlagSkipWizard)) //nolint:errcheck,gosec
 
-	viper.BindEnv(cli.FlagKubeconfig)                                                           //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagKubeconfig, cmd.Flags().Lookup(cli.FlagKubeconfig))                 //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagNamespaces, cmd.Flags().Lookup(cli.FlagNamespaces))                 //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagVersionMetadataURL, cmd.Flags().Lookup(cli.FlagVersionMetadataURL)) //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagVersion, cmd.Flags().Lookup(cli.FlagVersion))                       //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagDisableTelemetry, cmd.Flags().Lookup(cli.FlagDisableTelemetry))     //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagSkipEnvDetection, cmd.Flags().Lookup(cli.FlagSkipEnvDetection))     //nolint:errcheck,gosec
+	viper.BindEnv(cli.FlagKubeconfig)                                                                   //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagKubeconfig, cmd.Flags().Lookup(cli.FlagKubeconfig))                         //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagNamespaces, cmd.Flags().Lookup(cli.FlagNamespaces))                         //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagVersionMetadataURL, cmd.Flags().Lookup(cli.FlagVersionMetadataURL))         //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagVersion, cmd.Flags().Lookup(cli.FlagVersion))                               //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagDisableTelemetry, cmd.Flags().Lookup(cli.FlagDisableTelemetry))             //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagSkipEnvDetection, cmd.Flags().Lookup(cli.FlagSkipEnvDetection))             //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagInstallSkipDBNamespace, cmd.Flags().Lookup(cli.FlagInstallSkipDBNamespace)) //nolint:errcheck,gosec
 
 	viper.BindPFlag(helm.FlagChartDir, cmd.Flags().Lookup(helm.FlagChartDir))     //nolint:errcheck,gosec
 	viper.BindPFlag(helm.FlagRepository, cmd.Flags().Lookup(helm.FlagRepository)) //nolint:errcheck,gosec

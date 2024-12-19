@@ -41,4 +41,7 @@ const (
 	FlagDisableTelemetry = "disable-telemetry"
 	// FlagTakeNamespaceOwnership is the name of the take-ownership flag.
 	FlagTakeNamespaceOwnership = "take-ownership"
+	// FlagInstallSkipDBNamespace is the name of the skip-db-namespace flag.
+	// TODO
+	FlagInstallSkipDBNamespace = "skip-db-namespace"
 )

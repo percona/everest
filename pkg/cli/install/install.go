@@ -84,6 +84,8 @@ type Config struct {
 	// If set, we will print the pretty output.
 	Pretty bool
 
+	SkipDBNamespace bool `mapstructure:"skip-db-namespace"`
+
 	helm.CLIOptions
 	namespaces.NamespaceAddConfig `mapstructure:",squash"`
 }
@@ -168,10 +170,14 @@ func (o *Install) Run(ctx context.Context) error {
 }
 
 func (o *Install) installDBNamespacesStep(ctx context.Context) (*steps.Step, error) {
-	askNamespaces := !o.cmd.Flags().Lookup(cli.FlagNamespaces).Changed
+	askNamespaces := !(o.cmd.Flags().Lookup(cli.FlagNamespaces).Changed || o.config.SkipDBNamespace)
 	askOperators := !(o.cmd.Flags().Lookup(cli.FlagOperatorMongoDB).Changed ||
 		o.cmd.Flags().Lookup(cli.FlagOperatorPostgresql).Changed ||
 		o.cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster).Changed)
+
+	if askNamespaces {
+		o.config.Namespaces = "everest"
+	}
 
 	if err := o.config.Populate(ctx, askNamespaces, askOperators); err != nil {
 		// not specifying a namespace in this context is allowed.
