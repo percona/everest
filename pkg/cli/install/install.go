@@ -26,6 +26,7 @@ import (
 	"time"
 
 	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
+	"github.com/fatih/color"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -50,8 +51,6 @@ const (
 	pollInterval    = 5 * time.Second
 	pollTimeout     = 10 * time.Minute
 	backoffInterval = 5 * time.Second
-
-	postInstallMessage = "Everest has been successfully installed!"
 )
 
 // Install implements the main logic for commands.
@@ -164,7 +163,8 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 	o.l.Infof("Everest '%s' has been successfully installed", o.installVersion)
-	return o.printPostInstallMessage(ctx, out)
+	o.printPostInstallMessage(out)
+	return nil
 }
 
 func (o *Install) installDBNamespacesStep(ctx context.Context) (*steps.Step, error) {
@@ -193,17 +193,28 @@ func (o *Install) installDBNamespacesStep(ctx context.Context) (*steps.Step, err
 	}, nil
 }
 
-func (o *Install) printPostInstallMessage(ctx context.Context, out io.Writer) error {
-	fmt.Fprint(out, "\n", output.Rocket(postInstallMessage))
-	// Print message to retrieve admin password
-	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
-	if err != nil {
-		return errors.Join(err, errors.New("could not check if the admin password is secure"))
+var bold = color.New(color.Bold).SprintFunc()
+
+func (o *Install) printPostInstallMessage(out io.Writer) {
+	message := "\n" + output.Rocket("Thank you for installing Everest (v%s)!\n", o.installVersion)
+	message += "Follow the steps below to get started:\n\n"
+
+	if len(o.config.NamespaceList) == 0 {
+		message += bold("PROVISION A NAMESPACE FOR YOUR DATABASE:\n\n")
+		message += "Install a namespace for your databases using the following command:\n\n"
+		message += "\teverestctl namespaces add [NAMESPACE]"
 	}
-	if !isAdminSecure {
-		fmt.Fprint(out, "\n", common.InitialPasswordWarningMessage)
-	}
-	return nil
+	message += "\n\n"
+
+	message += bold("RETRIEVE THE INITIAL ADMIN PASSWORD:\n\n")
+	message += common.InitialPasswordWarningMessage + "\n\n"
+
+	message += bold("ACCESS THE EVEREST UI:\n\n")
+	message += "To access the web UI, set up port-forwarding and visit http://localhost:8080 in your browser:\n\n"
+	message += "\tkubectl port-forward -n everest-system svc/everest-server 8080:80"
+	message += "\n"
+
+	fmt.Fprint(out, message)
 }
 
 func (o *Install) setVersionInfo(ctx context.Context) error {
