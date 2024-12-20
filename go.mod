@@ -6,7 +6,6 @@ replace (
 	github.com/containerd/containerd v1.7.12 => github.com/containerd/containerd v1.7.13
 	k8s.io/api => k8s.io/api v0.31.1
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.31.1
-	k8s.io/apimachinery => k8s.io/apimachinery v0.31.1
 	k8s.io/client-go => k8s.io/client-go v0.31.1
 	k8s.io/component-base => k8s.io/component-base v0.31.1
 )
