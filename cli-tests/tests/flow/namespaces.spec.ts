@@ -43,7 +43,7 @@ test.describe('Everest CLI install', async () => {
 
     await test.step('run everest install (no database namespace))', async () => {
       const out = await cli.everestExecSkipWizard(
-        `install`,
+        `install --skip-db-namespace`,
       );
 
       await out.assertSuccess();
