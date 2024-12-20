@@ -48,7 +48,7 @@ func (k *Kubernetes) DeleteDatabaseClusters(ctx context.Context, namespace strin
 			return true, nil
 		}
 		for _, cluster := range list.Items {
-			if err := k.DeleteDatabaseCluster(ctx, cluster.GetNamespace(), cluster.GetName()); err != nil {
+			if err := k.DeleteDatabaseCluster(ctx, cluster.GetNamespace(), cluster.GetName()); ctrlclient.IgnoreNotFound(err) != nil {
 				return false, err
 			}
 		}
