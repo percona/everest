@@ -167,6 +167,7 @@ test.describe('Clusters RBAC', () => {
   test('not visible actions', async ({ page }) => {
     await mockEngines(page, namespace);
     await mockClusters(page, namespace);
+    await mockCluster(page, namespace, CLUSTER_NAME);
     await setRBACPermissions(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
@@ -174,5 +175,10 @@ test.describe('Clusters RBAC', () => {
     ]);
     await page.goto('/databases');
     await expect(page.getByTestId('actions-menu-button')).not.toBeVisible();
+    await page.goto(`/databases/${namespace}/${CLUSTER_NAME}`);
+    await expect(
+      page.getByTestId('edit-advanced-configuration-button')
+    ).not.toBeVisible();
+    await expect(page.getByTestId('edit-resources-button')).toBeDisabled();
   });
 });
