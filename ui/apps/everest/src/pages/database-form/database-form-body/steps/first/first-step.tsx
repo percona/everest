@@ -78,7 +78,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       .filter((item) => item.namespace === dbNamespace)
       .map((item) => item.dbEngine);
     const dbEngine = dbEnginesArray ? dbEnginesArray[0] : undefined;
-    if (mode === 'edit' && dbEngine) {
+    if (mode !== 'new' && dbEngine) {
       const validVersions = filterAvailableDbVersionsForDbEngineEdition(
         dbEngine,
         defaultDbVersion

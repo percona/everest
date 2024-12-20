@@ -23,9 +23,16 @@ interface DbVersionProps {
   selectInputProps?: Omit<SelectInputProps, 'name'>;
   availableVersions: DbEngineTool[] | undefined;
 }
-export const DbVersion = ({ availableVersions }: DbVersionProps) => {
+export const DbVersion = ({
+  availableVersions,
+  selectInputProps,
+}: DbVersionProps) => {
   return (
-    <SelectInput name={DBVersionFields.dbVersion} label={Messages.dbVersion}>
+    <SelectInput
+      name={DBVersionFields.dbVersion}
+      label={Messages.dbVersion}
+      {...selectInputProps}
+    >
       {availableVersions &&
         availableVersions.map((version) => (
           <MenuItem value={version.version} key={version.version}>
