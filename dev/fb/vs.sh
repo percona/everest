@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if [[ -z "$VS_IMAGE" ]]; then
+    echo "Error: VS_IMAGE environment variable is empty." >&2
+    exit 1
+fi
+
 curl https://raw.githubusercontent.com/Percona-Lab/percona-version-service/main/deploy.yaml  > vs_deploy.yaml
 
 # Determine the sed -i option based on the system
