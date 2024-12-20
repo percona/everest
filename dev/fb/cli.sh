@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 if [[ -z "${VS_IMAGE+set}" ]]; then
   echo "Error: VS_IMAGE environment variable is not set." >&2
   exit 1
