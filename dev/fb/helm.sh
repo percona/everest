@@ -17,10 +17,7 @@ elif [[ -z "$VS_IMAGE" ]]; then
 fi
 
 # deploy VS and get it's internal IP
-curl -O https://raw.githubusercontent.com/percona/everest/main/dev/fb/vs.sh vs.sh > /dev/null
-chmod +x vs.sh
-
-SERVICE_IP=$(bash ./vs.sh)
+SERVICE_IP=$(curl -sfL https://raw.githubusercontent.com/percona/everest/main/dev/fb/vs.sh | bash -s)
 
 # run everest installation with helm
 helm install everest-core "$HELM_PATH/charts/everest" --namespace=everest-system --create-namespace --set versionMetadataURL="http://$SERVICE_IP" --timeout=10m --devel
