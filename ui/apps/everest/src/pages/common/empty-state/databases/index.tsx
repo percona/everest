@@ -5,7 +5,11 @@ import CreateDbButton from 'pages/databases/create-db-button/create-db-button';
 import { centeredContainerStyle } from '../utils';
 import { ContactSupportLink } from '../ContactSupportLink';
 
-export const EmptyStateDatabases = () => {
+export const EmptyStateDatabases = ({
+  showCreationButton,
+}: {
+  showCreationButton: boolean;
+}) => {
   return (
     <>
       <Box
@@ -20,7 +24,7 @@ export const EmptyStateDatabases = () => {
           <Typography>{Messages.noDbClusters}</Typography>
           <Typography> {Messages.createToStart}</Typography>
         </Box>
-        <CreateDbButton />
+        {showCreationButton && <CreateDbButton />}
         <Divider sx={{ width: '30%', marginTop: '10px' }} />
         <ContactSupportLink msg={Messages.contactSupport} />
       </Box>

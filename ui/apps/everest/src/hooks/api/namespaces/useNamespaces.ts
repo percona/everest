@@ -20,7 +20,6 @@ import { dbEnginesQuerySelect } from '../db-engines/useDbEngines';
 import { getDbEnginesFn } from 'api/dbEngineApi';
 import { DbEngine } from 'shared-types/dbEngines.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
-import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import { DbEngineType } from '@percona/types';
 import { useCallback, useMemo } from 'react';
 
@@ -34,7 +33,6 @@ export const useNamespaces = () =>
 
 export const useDBEnginesForNamespaces = (retrieveUpgradingEngines = false) => {
   const { data: namespaces = [] } = useNamespaces();
-  const { canRead } = useNamespacePermissionsForResource('database-engines');
 
   const queries = namespaces.map<
     UseQueryOptions<DbEngine[], unknown, DbEngine[]>
@@ -48,7 +46,6 @@ export const useDBEnginesForNamespaces = (retrieveUpgradingEngines = false) => {
 
       return dbEnginesQuerySelect(data, retrieveUpgradingEngines);
     },
-    enabled: canRead.includes(namespace),
   }));
 
   const queryResults = useQueries({

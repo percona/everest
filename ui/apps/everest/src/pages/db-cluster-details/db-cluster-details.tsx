@@ -1,6 +1,7 @@
 import { Alert, Box, Skeleton, Tab, Tabs } from '@mui/material';
 import {
   Link,
+  Navigate,
   Outlet,
   useMatch,
   useNavigate,
@@ -20,14 +21,17 @@ import { Messages } from './db-cluster-details.messages';
 import { useRBACPermissionRoute } from 'hooks/rbac';
 import DeletedDbDialog from './deleted-db-dialog';
 
-export const DbClusterDetails = () => {
-  const { dbClusterName = '' } = useParams();
-
-  const { dbCluster, isLoading, clusterDeleted } = useContext(DbClusterContext);
-  const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
+const WithPermissionDetails = ({
+  namespace,
+  dbClusterName,
+  tab,
+}: {
+  namespace: string;
+  dbClusterName: string;
+  tab: string;
+}) => {
+  const { dbCluster, clusterDeleted } = useContext(DbClusterContext);
   const navigate = useNavigate();
-  const currentTab = routeMatch?.params?.tabs;
-  const namespace = routeMatch?.params?.namespace;
 
   useRBACPermissionRoute([
     {
@@ -37,25 +41,6 @@ export const DbClusterDetails = () => {
     },
   ]);
 
-  if (isLoading) {
-    return (
-      <>
-        <Skeleton variant="rectangular" />
-        <Skeleton variant="rectangular" />
-        <Skeleton />
-        <Skeleton />
-        <Skeleton />
-        <Skeleton variant="rectangular" />
-      </>
-    );
-  }
-
-  // We went through the array and know the cluster is not there. Safe to show 404
-  if (!dbCluster) {
-    return <NoMatch />;
-  }
-
-  // All clear, show the cluster data
   return (
     <>
       <Box sx={{ width: '100%' }}>
@@ -90,7 +75,7 @@ export const DbClusterDetails = () => {
                 dbCluster?.status?.status || DbClusterStatus.unknown
               )}
             </StatusField>
-            <DbActions isDetailView={true} dbCluster={dbCluster} />
+            <DbActions isDetailView={true} dbCluster={dbCluster!} />
           </Box>
         </Box>
         <Box
@@ -101,7 +86,7 @@ export const DbClusterDetails = () => {
           }}
         >
           <Tabs
-            value={currentTab}
+            value={tab}
             variant="scrollable"
             allowScrollButtonsMobile
             aria-label="nav tabs"
@@ -124,7 +109,7 @@ export const DbClusterDetails = () => {
             ))}
           </Tabs>
         </Box>
-        {dbCluster.status?.status === DbClusterStatus.restoring && (
+        {dbCluster!.status?.status === DbClusterStatus.restoring && (
           <Alert severity="warning" sx={{ my: 1 }}>
             {Messages.restoringDb}
           </Alert>
@@ -133,5 +118,45 @@ export const DbClusterDetails = () => {
       </Box>
       {clusterDeleted && <DeletedDbDialog dbClusterName={dbClusterName} />}
     </>
+  );
+};
+
+export const DbClusterDetails = () => {
+  const { dbClusterName = '' } = useParams();
+
+  const { dbCluster, isLoading } = useContext(DbClusterContext);
+  const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
+  const currentTab = routeMatch?.params?.tabs;
+  const namespace = routeMatch?.params?.namespace;
+
+  if (!currentTab) {
+    return <Navigate to={DBClusterDetailsTabs.overview} replace />;
+  }
+
+  if (isLoading) {
+    return (
+      <>
+        <Skeleton variant="rectangular" />
+        <Skeleton variant="rectangular" />
+        <Skeleton />
+        <Skeleton />
+        <Skeleton />
+        <Skeleton variant="rectangular" />
+      </>
+    );
+  }
+
+  // We went through the array and know the cluster is not there. Safe to show 404
+  if (!dbCluster) {
+    return <NoMatch />;
+  }
+
+  // All clear, show the cluster data
+  return (
+    <WithPermissionDetails
+      namespace={namespace!}
+      dbClusterName={dbClusterName}
+      tab={currentTab}
+    />
   );
 };
