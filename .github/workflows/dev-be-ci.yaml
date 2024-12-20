@@ -327,6 +327,7 @@ jobs:
             --operator.postgresql \
             --operator.xtradb-cluster \
             --skip-wizard \
+            --skip-db-namespace \
             --namespaces everest \
             --helm.set server.image=localhost:5000/perconalab/everest \
             --helm.set server.apiRequestsRateLimit=200 \
