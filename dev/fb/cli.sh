@@ -35,7 +35,7 @@ fi
 # deploy VS and get it's internal IP
 curl -O https://raw.githubusercontent.com/percona/everest/main/dev/fb/vs.sh vs.sh > /dev/null
 chmod +x vs.sh
-SERVICE_IP=$(bash ./vs.sh)
+SERVICE_IP=$(curl -sfL https://raw.githubusercontent.com/percona/everest/main/dev/fb/vs.sh | bash -s)
 
 kubectl port-forward svc/percona-version-service 8081:80 &
 
