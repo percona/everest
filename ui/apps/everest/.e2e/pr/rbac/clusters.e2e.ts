@@ -75,7 +75,7 @@ test.describe('Clusters RBAC', () => {
 
   test.beforeAll(async ({ request }) => {
     const token = await getTokenFromLocalStorage();
-    oldRbacPermissions = await saveOldRBACPermissions();
+    await saveOldRBACPermissions();
     const namespaces = await getNamespacesFn(token, request);
     namespace = namespaces[0];
   });

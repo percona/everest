@@ -3,27 +3,14 @@ import { execSync } from 'child_process';
 const OLD_RBAC_FILE = 'old_rbac_permissions';
 
 export const saveOldRBACPermissions = async () => {
-  try {
-    const command = `kubectl get configmap everest-rbac --namespace everest-system -o jsonpath="{.data}" > ${OLD_RBAC_FILE}`;
-    const output = execSync(command).toString();
-    return output;
-  } catch (error) {
-    console.error(`Error executing command: ${error}`);
-    throw error;
-  }
+  const command = `kubectl get configmap everest-rbac --namespace everest-system -o jsonpath="{.data}" > ${OLD_RBAC_FILE}`;
+  execSync(command).toString();
 };
 
 export const restoreOldRBACPermissions = async () => {
-  try {
-    const oldRbacFileContent = execSync(`cat ${OLD_RBAC_FILE}`).toString();
-    console.log(`oldRbacFileContent: ${oldRbacFileContent}`);
-    const command = `kubectl patch configmap/everest-rbac --namespace everest-system --type merge -p '{"data":${oldRbacFileContent}}'`;
-    const output = execSync(command).toString();
-    return output;
-  } catch (error) {
-    console.error(`Error executing command: ${error}`);
-    throw error;
-  }
+  const oldRbacFileContent = execSync(`cat ${OLD_RBAC_FILE}`).toString();
+  const command = `kubectl patch configmap/everest-rbac --namespace everest-system --type merge -p '{"data":${oldRbacFileContent}}'`;
+  execSync(command).toString();
 };
 
 export const setRBACPermissions = async (
