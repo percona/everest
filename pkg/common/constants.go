@@ -83,12 +83,7 @@ const (
 
 // InitialPasswordWarningMessage is the message that is shown to the user after the installation/upgrade,
 // regarding insecure admin password.
-const InitialPasswordWarningMessage = `To view the password for the 'admin' user, run the following command:
-
-everestctl accounts initial-admin-password
-
-
-IMPORTANT: This password is NOT stored in a hashed format. To secure it, update the password using the following command:
-
-everestctl accounts set-password --username admin
-`
+const InitialPasswordWarningMessage = "Run the following command to get the initial admin password:\n\n" +
+	"\teverestctl accounts initial-admin-password\n\n" +
+	"NOTE: The initial password is stored in plain text. For security, change it immediately using the following command:\n\n" +
+	"\teverestctl accounts set-password --username admin"
