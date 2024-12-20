@@ -26,6 +26,7 @@ import (
 	"time"
 
 	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
+	"github.com/fatih/color"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -51,7 +52,8 @@ const (
 	pollTimeout     = 10 * time.Minute
 	backoffInterval = 5 * time.Second
 
-	postInstallMessage = "Everest has been successfully installed!"
+	// DefaultDBNamespaceName is the name of the default DB namespace during installation.
+	DefaultDBNamespaceName = "everest"
 )
 
 // Install implements the main logic for commands.
@@ -83,6 +85,8 @@ type Config struct {
 	SkipEnvDetection bool `mapstructure:"skip-env-detection"`
 	// If set, we will print the pretty output.
 	Pretty bool
+	// SkipDBNamespace is set if the installation should skip provisioning database.
+	SkipDBNamespace bool `mapstructure:"skip-db-namespace"`
 
 	helm.CLIOptions
 	namespaces.NamespaceAddConfig `mapstructure:",squash"`
@@ -164,14 +168,19 @@ func (o *Install) Run(ctx context.Context) error {
 		return err
 	}
 	o.l.Infof("Everest '%s' has been successfully installed", o.installVersion)
-	return o.printPostInstallMessage(ctx, out)
+	o.printPostInstallMessage(out)
+	return nil
 }
 
 func (o *Install) installDBNamespacesStep(ctx context.Context) (*steps.Step, error) {
-	askNamespaces := !o.cmd.Flags().Lookup(cli.FlagNamespaces).Changed
+	askNamespaces := !(o.cmd.Flags().Lookup(cli.FlagNamespaces).Changed || o.config.SkipDBNamespace)
 	askOperators := !(o.cmd.Flags().Lookup(cli.FlagOperatorMongoDB).Changed ||
 		o.cmd.Flags().Lookup(cli.FlagOperatorPostgresql).Changed ||
 		o.cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster).Changed)
+
+	if askNamespaces {
+		o.config.Namespaces = DefaultDBNamespaceName
+	}
 
 	if err := o.config.Populate(ctx, askNamespaces, askOperators); err != nil {
 		// not specifying a namespace in this context is allowed.
@@ -193,17 +202,29 @@ func (o *Install) installDBNamespacesStep(ctx context.Context) (*steps.Step, err
 	}, nil
 }
 
-func (o *Install) printPostInstallMessage(ctx context.Context, out io.Writer) error {
-	fmt.Fprint(out, "\n", output.Rocket(postInstallMessage))
-	// Print message to retrieve admin password
-	isAdminSecure, err := o.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser)
-	if err != nil {
-		return errors.Join(err, errors.New("could not check if the admin password is secure"))
+//nolint:gochecknoglobals
+var bold = color.New(color.Bold).SprintFunc()
+
+func (o *Install) printPostInstallMessage(out io.Writer) {
+	message := "\n" + output.Rocket("Thank you for installing Everest (v%s)!\n", o.installVersion)
+	message += "Follow the steps below to get started:\n\n"
+
+	if len(o.config.NamespaceList) == 0 {
+		message += bold("PROVISION A NAMESPACE FOR YOUR DATABASE:\n\n")
+		message += "Install a namespace for your databases using the following command:\n\n"
+		message += "\teverestctl namespaces add [NAMESPACE]"
+		message += "\n\n"
 	}
-	if !isAdminSecure {
-		fmt.Fprint(out, "\n", common.InitialPasswordWarningMessage)
-	}
-	return nil
+
+	message += bold("RETRIEVE THE INITIAL ADMIN PASSWORD:\n\n")
+	message += common.InitialPasswordWarningMessage + "\n\n"
+
+	message += bold("ACCESS THE EVEREST UI:\n\n")
+	message += "To access the web UI, set up port-forwarding and visit http://localhost:8080 in your browser:\n\n"
+	message += "\tkubectl port-forward -n everest-system svc/everest-server 8080:80"
+	message += "\n"
+
+	fmt.Fprint(out, message)
 }
 
 func (o *Install) setVersionInfo(ctx context.Context) error {

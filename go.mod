@@ -21,7 +21,7 @@ require (
 	github.com/casbin/casbin/v2 v2.100.0
 	github.com/casbin/govaluate v1.2.0
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/fatih/color v1.17.0
+	github.com/fatih/color v1.18.0
 	github.com/getkin/kin-openapi v0.127.0
 	github.com/go-logr/zapr v1.3.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
@@ -38,7 +38,7 @@ require (
 	github.com/operator-framework/api v0.27.0
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
 	github.com/percona/everest-operator v0.6.0-dev1.0.20241203113640-8dd4a9d32733
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241218102153-1844495296a6
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241220144602-ed5f74ec7b75
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2
