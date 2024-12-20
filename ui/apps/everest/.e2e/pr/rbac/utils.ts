@@ -2,6 +2,7 @@ import { Page } from '@playwright/test';
 
 export const MOCK_CLUSTER_NAME = 'cluster-1';
 export const MOCK_BACKUP_NAME = 'backup-1';
+export const MOCK_STORAGE_NAME = 'storage-1';
 
 export const mockEngines = async (page: Page, namespace: string) =>
   page.route(`/v1/namespaces/${namespace}/database-engines`, async (route) => {
@@ -124,3 +125,19 @@ export const mockBackups = (page: Page, namespace: string) =>
       });
     }
   );
+
+export const mockStorages = (page: Page, namespace: string) =>
+  page.route(`/v1/namespaces/${namespace}/backup-storages`, async (route) => {
+    await route.fulfill({
+      json: [
+        {
+          bucketName: 'bucket-1',
+          name: MOCK_STORAGE_NAME,
+          namespace,
+          region: 'us-east-1',
+          type: 's3',
+          url: 's3://bucket-1',
+        },
+      ],
+    });
+  });
