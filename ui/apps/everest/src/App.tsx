@@ -23,7 +23,9 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  const [configs, setConfigs] = useState<EverestConfig | undefined | null>(undefined);
+  const [configs, setConfigs] = useState<EverestConfig | undefined | null>(
+    undefined
+  );
 
   useEffect(() => {
     const loadConfigs = async () => {
