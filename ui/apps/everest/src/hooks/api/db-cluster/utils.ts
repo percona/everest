@@ -28,7 +28,8 @@ export const getProxySpec = (
   cpu: number,
   memory: number,
   sharding: boolean,
-  sourceRanges?: Array<{ sourceRange?: string }>
+  sourceRanges?: Array<{ sourceRange?: string }>,
+  proxyRules?: any
 ): Proxy | ProxyExposeConfig => {
   if (dbType === DbType.Mongo && !sharding) {
     return {
@@ -52,5 +53,6 @@ export const getProxySpec = (
       memory: `${memory}G`,
     },
     expose: getExposteConfig(externalAccess, sourceRanges),
+    // affinity: affinityRulesToDbPayload(proxyRules),
   };
 };
