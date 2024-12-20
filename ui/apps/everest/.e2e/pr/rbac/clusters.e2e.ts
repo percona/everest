@@ -10,7 +10,6 @@ import {
 
 const { CI_USER: user } = process.env;
 const CLUSTER_NAME = 'cluster-1';
-let oldRbacPermissions: string;
 const mockClusters = (page: Page, namespace: string) =>
   page.route(`/v1/namespaces/${namespace}/database-clusters`, async (route) => {
     await route.fulfill({
