@@ -53,6 +53,7 @@ const (
 
 	postInstallMessage = "Everest has been successfully installed!"
 
+	// DefaultDBNamespaceName is the name of the default DB namespace during installation.
 	DefaultDBNamespaceName = "everest"
 )
 
