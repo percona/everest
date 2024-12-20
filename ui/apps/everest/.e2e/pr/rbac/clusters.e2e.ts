@@ -1,5 +1,10 @@
-import { expect, Page, test } from '@playwright/test';
-import { mockEngines } from './utils';
+import { expect, test } from '@playwright/test';
+import {
+  mockCluster,
+  mockEngines,
+  MOCK_CLUSTER_NAME,
+  mockClusters,
+} from './utils';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
 import {
@@ -9,65 +14,6 @@ import {
 } from '@e2e/utils/rbac-cmd-line';
 
 const { CI_USER: user } = process.env;
-const CLUSTER_NAME = 'cluster-1';
-const mockClusters = (page: Page, namespace: string) =>
-  page.route(`/v1/namespaces/${namespace}/database-clusters`, async (route) => {
-    await route.fulfill({
-      json: {
-        items: [
-          {
-            metadata: {
-              name: CLUSTER_NAME,
-              namespace,
-            },
-            spec: {
-              engine: {
-                type: 'pxc',
-                storage: {
-                  size: '1Gi',
-                },
-              },
-            },
-          },
-        ],
-      },
-    });
-  });
-const mockCluster = (page: Page, namespace: string, clusterName: string) =>
-  page.route(
-    `/v1/namespaces/${namespace}/database-clusters/${clusterName}`,
-    async (route) => {
-      await route.fulfill({
-        json: {
-          metadata: {
-            name: CLUSTER_NAME,
-            namespace,
-          },
-          spec: {
-            engine: {
-              type: 'pxc',
-              replicas: 1,
-              resources: {
-                cpu: '1',
-                memory: '1G',
-              },
-              storage: {
-                size: '1Gi',
-              },
-            },
-            proxy: {
-              replicas: 1,
-              resources: {
-                cpu: '200m',
-                memory: '200M',
-              },
-            },
-            monitoring: {},
-          },
-        },
-      });
-    }
-  );
 
 test.describe('Clusters RBAC', () => {
   let namespace = '';
@@ -140,11 +86,11 @@ test.describe('Clusters RBAC', () => {
   test('visible actions', async ({ page }) => {
     await mockEngines(page, namespace);
     await mockClusters(page, namespace);
-    await mockCluster(page, namespace, CLUSTER_NAME);
+    await mockCluster(page, namespace);
     await setRBACPermissions(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
-      ['database-clusters', '*', `${namespace}/${CLUSTER_NAME}`],
+      ['database-clusters', '*', `${namespace}/${MOCK_CLUSTER_NAME}`],
     ]);
     await page.goto('/databases');
     await page.getByTestId('actions-menu-button').click();
@@ -152,7 +98,7 @@ test.describe('Clusters RBAC', () => {
     await expect(page.getByText('Suspend')).toBeVisible();
     await expect(page.getByText('Restart')).toBeVisible();
 
-    await page.goto(`/databases/${namespace}/${CLUSTER_NAME}`);
+    await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}`);
     await expect(
       page.getByTestId('edit-advanced-configuration-button')
     ).toBeVisible();
@@ -166,15 +112,15 @@ test.describe('Clusters RBAC', () => {
   test('not visible actions', async ({ page }) => {
     await mockEngines(page, namespace);
     await mockClusters(page, namespace);
-    await mockCluster(page, namespace, CLUSTER_NAME);
+    await mockCluster(page, namespace);
     await setRBACPermissions(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
-      ['database-clusters', 'read', `${namespace}/${CLUSTER_NAME}`],
+      ['database-clusters', 'read', `${namespace}/${MOCK_CLUSTER_NAME}`],
     ]);
     await page.goto('/databases');
     await expect(page.getByTestId('actions-menu-button')).not.toBeVisible();
-    await page.goto(`/databases/${namespace}/${CLUSTER_NAME}`);
+    await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}`);
     await expect(
       page.getByTestId('edit-advanced-configuration-button')
     ).not.toBeVisible();
