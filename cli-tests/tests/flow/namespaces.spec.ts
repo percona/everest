@@ -43,7 +43,7 @@ test.describe('Everest CLI install', async () => {
 
     await test.step('run everest install (no database namespace))', async () => {
       const out = await cli.everestExecSkipWizard(
-        `install`,
+        `install --skip-db-namespace`,
       );
 
       await out.assertSuccess();
@@ -157,7 +157,7 @@ test.describe('Everest CLI install', async () => {
           '✓ Deleting database clusters in namespace \'existing-ns\'',
           '✓ Deleting backup storages in namespace \'existing-ns\'',
           '✓ Deleting monitoring instances in namespace \'existing-ns\'',
-          '✓ Deleting namespace \'existing-ns\'',
+          '✓ Deleting resources from namespace \'existing-ns\'',
       ]);
 
       out = await cli.exec(`kubectl get namespace existing-ns`);

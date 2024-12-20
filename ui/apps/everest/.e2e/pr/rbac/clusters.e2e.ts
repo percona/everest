@@ -100,10 +100,10 @@ test.describe('Clusters RBAC', () => {
 
     await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}`);
     await expect(
-      page.getByTestId('edit-advanced-configuration-button')
+      page.getByTestId('edit-advanced-configuration-db-btn')
     ).toBeVisible();
     await expect(
-      page.getByTestId('edit-advanced-configuration-button')
+      page.getByTestId('edit-advanced-configuration-db-btn')
     ).not.toBeDisabled();
     await expect(page.getByTestId('edit-resources-button')).toBeVisible();
     await expect(page.getByTestId('edit-resources-button')).not.toBeDisabled();
@@ -122,7 +122,7 @@ test.describe('Clusters RBAC', () => {
     await expect(page.getByTestId('actions-menu-button')).not.toBeVisible();
     await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}`);
     await expect(
-      page.getByTestId('edit-advanced-configuration-button')
+      page.getByTestId('edit-advanced-configuration-db-btn')
     ).not.toBeVisible();
     await expect(page.getByTestId('edit-resources-button')).toBeDisabled();
   });

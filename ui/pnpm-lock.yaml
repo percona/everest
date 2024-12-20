@@ -206,6 +206,9 @@ importers:
       '@fontsource/roboto':
         specifier: ^5.0.8
         version: 5.1.0
+      '@fontsource/roboto-mono':
+        specifier: ^5.1.0
+        version: 5.1.0
       '@mui/material':
         specifier: ^5.14.14
         version: 5.16.7(@emotion/react@11.13.3(@types/react@18.3.12)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.12)(react@18.3.1))(@types/react@18.3.12)(react@18.3.1))(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1418,6 +1421,9 @@ packages:
 
   '@fontsource/poppins@5.1.0':
     resolution: {integrity: sha512-tpLXlnNi2fwQjiipvuj4uNFHCdoLA8izRsKdoexZuEzjx0r/g1aKLf4ta6lFgF7L+/+AFdmaXFlUwwvmDzYH+g==}
+
+  '@fontsource/roboto-mono@5.1.0':
+    resolution: {integrity: sha512-7lIxTeanF2XrwAIukUrOUvO9veGkQiG7L7vizMxVjl+lrTwS4GAYyOvziyGZ6/3kU80K3lGd/FnWrmoTud0V6A==}
 
   '@fontsource/roboto@5.1.0':
     resolution: {integrity: sha512-cFRRC1s6RqPygeZ8Uw/acwVHqih8Czjt6Q0MwoUoDe9U3m4dH1HmNDRBZyqlMSFwgNAUKgFImncKdmDHyKpwdg==}
@@ -5867,6 +5873,8 @@ snapshots:
   '@eslint/js@8.57.1': {}
 
   '@fontsource/poppins@5.1.0': {}
+
+  '@fontsource/roboto-mono@5.1.0': {}
 
   '@fontsource/roboto@5.1.0': {}
 

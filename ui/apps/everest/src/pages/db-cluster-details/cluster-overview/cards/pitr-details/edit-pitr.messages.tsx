@@ -8,4 +8,6 @@ export const Messages = {
     cancel: 'Cancel',
   },
   enablePITR: 'Enable PITR',
+  firstStorageWillBeUsed:
+    'The backup storage created for the initial schedule will be used for all subsequent schedules and PITR.',
 };

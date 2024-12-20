@@ -18,6 +18,7 @@ import (
 	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/output"
 )
 
 const (
@@ -87,6 +88,15 @@ func (r *NamespaceRemover) Run(ctx context.Context) error {
 
 	removalSteps := []steps.Step{}
 	for _, ns := range r.config.Namespaces {
+		// Check that the namespace exists.
+		_, err := r.kubeClient.GetNamespace(ctx, ns)
+		if k8serrors.IsNotFound(err) {
+			r.l.Infof("Namespace '%s' does not exist", ns)
+			fmt.Fprint(os.Stdout, output.Warn("Namespace (%s) does not exist, skipping..", ns))
+			continue
+		} else if err != nil {
+			return errors.Join(err, errors.New("failed to get namespace"))
+		}
 		removalSteps = append(removalSteps, NewRemoveNamespaceSteps(ns, r.config.KeepNamespace, r.kubeClient)...)
 	}
 
@@ -100,7 +110,7 @@ func (r *NamespaceRemover) Run(ctx context.Context) error {
 
 // NewRemoveNamespaceSteps returns the steps to remove a namespace.
 func NewRemoveNamespaceSteps(namespace string, keepNs bool, k *kubernetes.Kubernetes) []steps.Step {
-	return []steps.Step{
+	removeSteps := []steps.Step{
 		{
 			Desc: fmt.Sprintf("Deleting database clusters in namespace '%s'", namespace),
 			F: func(ctx context.Context) error {
@@ -119,27 +129,32 @@ func NewRemoveNamespaceSteps(namespace string, keepNs bool, k *kubernetes.Kubern
 				return k.DeleteMonitoringConfigs(ctx, namespace)
 			},
 		},
-		{
-			Desc: fmt.Sprintf("Deleting namespace '%s'", namespace),
-			F: func(ctx context.Context) error {
-				u, err := helm.NewUninstaller(namespace, namespace, k.Kubeconfig())
-				if err != nil {
-					return errors.Join(err, errors.New("failed to create helm uninstaller"))
-				}
-				if _, err := u.Uninstall(false); err != nil {
-					return errors.Join(err, errors.New("failed to uninstall helm chart"))
-				}
-				if keepNs {
-					// keep the namespace, but remove the Everest label
-					return removeEverestLabelFromNamespace(ctx, k, namespace)
-				}
-				if err := k.DeleteNamespace(ctx, namespace); err != nil {
-					return err
-				}
-				return ensureNamespaceGone(ctx, namespace, k)
-			},
-		},
 	}
+	nsStepDesc := fmt.Sprintf("Deleting namespace '%s'", namespace)
+	if keepNs {
+		nsStepDesc = fmt.Sprintf("Deleting resources from namespace '%s'", namespace)
+	}
+	removeSteps = append(removeSteps, steps.Step{
+		Desc: nsStepDesc,
+		F: func(ctx context.Context) error {
+			u, err := helm.NewUninstaller(namespace, namespace, k.Kubeconfig())
+			if err != nil {
+				return errors.Join(err, errors.New("failed to create helm uninstaller"))
+			}
+			if _, err := u.Uninstall(false); err != nil {
+				return errors.Join(err, errors.New("failed to uninstall helm chart"))
+			}
+			if keepNs {
+				// keep the namespace, but remove the Everest label
+				return removeEverestLabelFromNamespace(ctx, k, namespace)
+			}
+			if err := k.DeleteNamespace(ctx, namespace); err != nil {
+				return err
+			}
+			return ensureNamespaceGone(ctx, namespace, k)
+		},
+	})
+	return removeSteps
 }
 
 func removeEverestLabelFromNamespace(ctx context.Context, k *kubernetes.Kubernetes, namespace string) error {
