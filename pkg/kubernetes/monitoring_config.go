@@ -41,12 +41,12 @@ func (k *Kubernetes) GetMonitoringConfig(ctx context.Context, namespace, name st
 }
 
 // CreateMonitoringConfig returns monitoring configs by provided name.
-func (k *Kubernetes) CreateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) error {
+func (k *Kubernetes) CreateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error) {
 	return k.client.CreateMonitoringConfig(ctx, storage)
 }
 
 // UpdateMonitoringConfig returns monitoring configs by provided name.
-func (k *Kubernetes) UpdateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) error {
+func (k *Kubernetes) UpdateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error) {
 	return k.client.UpdateMonitoringConfig(ctx, storage)
 }
 
