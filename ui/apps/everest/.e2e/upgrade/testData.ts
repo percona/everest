@@ -1,46 +1,49 @@
 import { everestTagForUpgrade } from '@e2e/constants';
 
 export const pxcDBCluster = {
-  name: 'ps-db-cluster',
-  numberOfNodes: 1,
+  name: 'pxc-db-cluster',
+  numberOfNodes: 3,
+  numberOfProxies: 2,
   cpu: 0.6,
-  disk: 1,
+  disk: 5,
   memory: 1,
-  externalAccess: true,
-  sourceRanges: [
-    {
-      sourceRange: 'http://192.168.1.1',
-    },
-  ],
+  externalAccess: false,
+  //  sourceRanges: [
+  //    {
+  //      sourceRange: 'http://192.168.1.1',
+  //    },
+  //  ],
 };
 
 export const mongoDBCluster = {
-  name: 'mongo-db-cluster',
+  name: 'psmdb-db-cluster',
   numberOfNodes: 3,
-  cpu: 1,
-  disk: 1,
+  cpu: 0.6,
+  disk: 5,
   memory: 1,
-  externalAccess: true,
+  externalAccess: false,
 };
 
 export const postgresDBCluster = {
-  name: 'postgres-db-cluster',
-  numberOfNodes: 1,
-  cpu: 1,
-  disk: 1,
+  name: 'postgresql-db-cluster',
+  numberOfNodes: 3,
+  numberOfProxies: 2,
+  cpu: 0.6,
+  disk: 5,
   memory: 1,
-  externalAccess: true,
+  externalAccess: false,
 };
 
 export const expectedEverestUpgradeLog = (
   tag = everestTagForUpgrade.replace(/v/g, '')
 ) => {
-  return `✓ Upgrade Operator Lifecycle Manager
-✓ Upgrade Percona Catalog
-✓ Wait for Everest Operator InstallPlan
-✓ Upgrade Everest API server
-✓ Upgrade Everest Operator
-✓ Run post-upgrade tasks
+  return `ℹ️  Upgrading Everest to version ${tag}
+
+✓ Upgrading Custom Resource Definitions
+✓ Upgrading Helm chart
+✓ Ensuring Everest API deployment is ready
+✓ Ensuring Everest operator deployment is ready
+✓ Ensuring Everest CatalogSource is ready
 
  🚀 Everest has been upgraded to version ${tag}
 
