@@ -20,7 +20,7 @@ require (
 	github.com/casbin/casbin/v2 v2.100.0
 	github.com/casbin/govaluate v1.2.0
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/fatih/color v1.17.0
+	github.com/fatih/color v1.18.0
 	github.com/getkin/kin-openapi v0.127.0
 	github.com/go-logr/zapr v1.3.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
