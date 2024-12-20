@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 if [[ -z "${HELM_PATH+set}" ]]; then
   echo "Error: HELM_PATH environment variable is not set." >&2
   exit 1
