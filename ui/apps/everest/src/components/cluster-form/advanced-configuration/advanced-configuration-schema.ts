@@ -27,6 +27,7 @@ export const advancedConfigurationsSchema = () =>
       ),
       [AdvancedConfigurationFields.engineParametersEnabled]: z.boolean(),
       [AdvancedConfigurationFields.engineParameters]: z.string().optional(),
+      [AdvancedConfigurationFields.affinityRules]: z.array(z.any()).optional(), //z.object(any)), <<-- figure out type
     })
     .passthrough()
     .superRefine(({ sourceRanges }, ctx) => {

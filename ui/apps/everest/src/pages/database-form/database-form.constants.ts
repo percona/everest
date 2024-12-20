@@ -22,6 +22,11 @@ import {
   PROXIES_DEFAULT_SIZES,
   ResourceSize,
 } from 'components/cluster-form/resources/constants.ts';
+import {
+  AffinityComponent,
+  AffinityType,
+  AffinityPriority,
+} from 'components/cluster-form/advanced-configuration/advanced-configuration.types.ts';
 
 export const DEFAULT_NODES: Record<DbType, string> = {
   [DbType.Mongo]: '3',
@@ -65,4 +70,29 @@ export const DB_WIZARD_DEFAULTS: DbWizardType = {
     getDefaultNumberOfconfigServersByNumberOfNodes(
       parseInt(DEFAULT_NODES[DbType.Mongo], 10)
     ),
+  [DbWizardFormFields.affinityRules]: [
+    {
+      component: AffinityComponent.DbNode,
+      type: AffinityType.PodAntiAffinity,
+      priority: AffinityPriority.Preferred,
+      weight: 1,
+      topologyKey: 'kubernetes.io/hostname',
+    },
+
+    {
+      component: AffinityComponent.Proxy,
+      type: AffinityType.PodAntiAffinity,
+      priority: AffinityPriority.Preferred,
+      weight: 1,
+      topologyKey: 'kubernetes.io/hostname',
+    },
+    {
+      component: AffinityComponent.ConfigServer,
+      type: AffinityType.PodAntiAffinity,
+      priority: AffinityPriority.Preferred,
+      weight: 1,
+      topologyKey: 'kubernetes.io/hostname',
+      key: 'abc',
+    },
+  ],
 };

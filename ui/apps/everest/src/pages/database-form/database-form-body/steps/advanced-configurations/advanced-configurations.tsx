@@ -29,7 +29,7 @@ export const AdvancedConfigurations = () => {
     <>
       <StepHeader pageTitle={Messages.advanced} />
       <FormGroup sx={{ mt: 3 }}>
-        <AdvancedConfigurationForm dbType={dbType} />
+        <AdvancedConfigurationForm showAffinity dbType={dbType} />
       </FormGroup>
     </>
   );

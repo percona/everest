@@ -60,5 +60,7 @@ export const advancedConfigurationModalDefaultValues = (
     [AdvancedConfigurationFields.sourceRanges]: sourceRangesSource
       ? sourceRangesSource.map((sourceRange) => ({ sourceRange }))
       : [{ sourceRange: '' }],
+    [AdvancedConfigurationFields.affinityRules]: [],
+    // TODO: for now empty list, has to be loaded from dbCluster when edit from Components page is implemented
   };
 };

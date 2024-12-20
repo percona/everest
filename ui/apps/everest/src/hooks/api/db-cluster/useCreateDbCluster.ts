@@ -20,10 +20,15 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
+import { affinityRulesToDbPayload } from 'components/affinity/affinity-utils';
 import {
   CUSTOM_NR_UNITS_INPUT_VALUE,
   MIN_NUMBER_OF_SHARDS,
 } from 'components/cluster-form';
+import {
+  AffinityComponent,
+  AffinityRule,
+} from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import {
   ClusterCredentials,
@@ -46,6 +51,21 @@ const formValuesToPayloadMapping = (
   dbPayload: DbWizardType,
   backupDataSource?: DataSource
 ): DbCluster => {
+  const affinityRules = dbPayload.affinityRules || [];
+
+  const proxy = affinityRules.filter(
+    (rule: AffinityRule) => rule.component === AffinityComponent.Proxy
+  );
+  const dbNode = affinityRules.filter(
+    (rule: AffinityRule) => rule.component === AffinityComponent.DbNode
+  );
+  const configServers = affinityRules.filter(
+    (rule: AffinityRule) => rule.component === AffinityComponent.ConfigServer
+  );
+  const dbNodeRules = affinityRulesToDbPayload(dbNode);
+  const proxyRules = affinityRulesToDbPayload(proxy);
+  const configServerRules =
+    configServers.length > 0 ? affinityRulesToDbPayload(configServers) : {};
   const numberOfNodes = parseInt(
     dbPayload.numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
       ? dbPayload.customNrOfNodes || ''
@@ -98,6 +118,7 @@ const formValuesToPayloadMapping = (
         config: dbPayload.engineParametersEnabled
           ? dbPayload.engineParameters
           : '',
+        affinity: dbNodeRules,
       },
       monitoring: {
         ...(!!dbPayload.monitoring && {
@@ -112,7 +133,8 @@ const formValuesToPayloadMapping = (
         dbPayload.proxyCpu,
         dbPayload.proxyMemory,
         dbPayload.sharding,
-        dbPayload.sourceRanges || []
+        dbPayload.sourceRanges || [],
+        proxyRules
       ),
       ...(dbPayload.dbType === DbType.Mongo && {
         sharding: {
@@ -120,6 +142,7 @@ const formValuesToPayloadMapping = (
           shards: +(dbPayload.shardNr ?? MIN_NUMBER_OF_SHARDS),
           configServer: {
             replicas: +(dbPayload.shardConfigServers ?? 3),
+            affinity: configServerRules,
           },
         },
       }),

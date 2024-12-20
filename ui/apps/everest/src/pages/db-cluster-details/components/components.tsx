@@ -13,22 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useParams } from 'react-router-dom';
-import { useDbClusterComponents } from 'hooks/api/db-cluster/useDbClusterComponents';
-import { useMemo } from 'react';
-import { capitalize, Tooltip } from '@mui/material';
+import { Box, capitalize, Tooltip } from '@mui/material';
 import { Table } from '@percona/ui-lib';
-import { MRT_ColumnDef } from 'material-react-table';
-import { DBClusterComponent } from 'shared-types/components.types';
 import StatusField from 'components/status-field';
+import { DATE_FORMAT } from 'consts';
 import { format, formatDistanceToNowStrict, isValid } from 'date-fns';
+import { useDbClusterComponents } from 'hooks/api/db-cluster/useDbClusterComponents';
+import { MRT_ColumnDef } from 'material-react-table';
+import { useMemo } from 'react';
+import { useParams } from 'react-router-dom';
+import { DBClusterComponent } from 'shared-types/components.types';
 import {
   COMPONENT_STATUS,
   COMPONENT_STATUS_WEIGHT,
   componentStatusToBaseStatus,
 } from './components.constants';
 import ExpandedRow from './expanded-row';
-import { DATE_FORMAT } from 'consts';
 
 const Components = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -97,31 +97,42 @@ const Components = () => {
   }, []);
 
   return (
-    <Table
-      initialState={{
-        sorting: [
-          {
-            id: 'status',
-            desc: true,
-          },
-        ],
-      }}
-      state={{ isLoading }}
-      tableName={`${dbClusterName}-components`}
-      columns={columns}
-      data={components}
-      noDataMessage={'No components'}
-      renderDetailPanel={({ row }) => <ExpandedRow row={row} />}
-      muiTableDetailPanelProps={{
-        sx: {
-          padding: 0,
-          width: '100%',
-          '.MuiCollapse-root': {
+    <>
+      <Table
+        initialState={{
+          sorting: [
+            {
+              id: 'status',
+              desc: true,
+            },
+          ],
+        }}
+        state={{ isLoading }}
+        tableName={`${dbClusterName}-components`}
+        columns={columns}
+        data={components}
+        noDataMessage={'No components'}
+        renderDetailPanel={({ row }) => <ExpandedRow row={row} />}
+        muiTableDetailPanelProps={{
+          sx: {
+            padding: 0,
             width: '100%',
+            '.MuiCollapse-root': {
+              width: '100%',
+            },
           },
-        },
-      }}
-    />
+        }}
+      />
+      <Box>
+        {/* <AffinityListView
+          affinityRules={[]}
+          handleDelete={() => console.log('delete')}
+          handleSubmit={() => console.log('submit')}
+          mode={'new'}
+          setMode={() => {}}
+        /> */}
+      </Box>
+    </>
   );
 };
 
