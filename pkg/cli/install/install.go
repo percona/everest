@@ -193,6 +193,7 @@ func (o *Install) installDBNamespacesStep(ctx context.Context) (*steps.Step, err
 	}, nil
 }
 
+//nolint:gochecknoglobals
 var bold = color.New(color.Bold).SprintFunc()
 
 func (o *Install) printPostInstallMessage(out io.Writer) {
@@ -203,8 +204,8 @@ func (o *Install) printPostInstallMessage(out io.Writer) {
 		message += bold("PROVISION A NAMESPACE FOR YOUR DATABASE:\n\n")
 		message += "Install a namespace for your databases using the following command:\n\n"
 		message += "\teverestctl namespaces add [NAMESPACE]"
+		message += "\n\n"
 	}
-	message += "\n\n"
 
 	message += bold("RETRIEVE THE INITIAL ADMIN PASSWORD:\n\n")
 	message += common.InitialPasswordWarningMessage + "\n\n"
