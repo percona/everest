@@ -17,7 +17,11 @@ import { APIRequestContext, expect, Page } from '@playwright/test';
 import { findRowAndClickActions } from './table';
 import { checkError } from '@e2e/utils/generic';
 
-export const getDbClustersListAPI = async (namespace: string, request: APIRequestContext, token: string) => {
+export const getDbClustersListAPI = async (
+  namespace: string,
+  request: APIRequestContext,
+  token: string
+) => {
   const response = await request.get(
     `/v1/namespaces/${namespace}/database-clusters`,
     {

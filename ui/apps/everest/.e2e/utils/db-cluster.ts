@@ -163,7 +163,12 @@ export const deleteDbClusterFn = async (
   expect(deleteResponse.ok()).toBeTruthy();
 };
 
-export const getDbClusterAPI = async (clusterName: string, namespace: string, request: APIRequestContext, token: string) => {
+export const getDbClusterAPI = async (
+  clusterName: string,
+  namespace: string,
+  request: APIRequestContext,
+  token: string
+) => {
   const response = await request.get(
     `/v1/namespaces/${namespace}/database-clusters/${clusterName}`,
     {
@@ -177,7 +182,13 @@ export const getDbClusterAPI = async (clusterName: string, namespace: string, re
   return response.json();
 };
 
-export const updateDbClusterAPI = async (clusterName: string, namespace: string, payload: object, request: APIRequestContext, token: string) => {
+export const updateDbClusterAPI = async (
+  clusterName: string,
+  namespace: string,
+  payload: object,
+  request: APIRequestContext,
+  token: string
+) => {
   const updatedCluster = await request.put(
     `/v1/namespaces/${namespace}/database-clusters/${clusterName}`,
     {
@@ -190,41 +201,57 @@ export const updateDbClusterAPI = async (clusterName: string, namespace: string,
   await checkError(updatedCluster);
 };
 
-export const getDbAvailableUpgradeVersionK8S = async (clusterName: string, namespace: string, request: APIRequestContext, token: string) => {
+export const getDbAvailableUpgradeVersionK8S = async (
+  clusterName: string,
+  namespace: string,
+  request: APIRequestContext,
+  token: string
+) => {
   const cluster = await getDbClusterAPI(clusterName, namespace, request, token);
   const dbCurrentVersion = cluster.spec.engine.version;
   const dbSplitVersion = dbCurrentVersion.split('.');
   const dbType = cluster.spec.engine.type;
   const crVersion = cluster.status.crVersion;
 
-  const dbOperatorName = dbType === "postgresql" ? "pg-operator" : dbType+'-operator';
+  const dbOperatorName =
+    dbType === 'postgresql' ? 'pg-operator' : dbType + '-operator';
 
   const versionServiceURL = await getVersionServiceURL();
-  const dbMajorVersion = dbType === "postgresql" ? dbSplitVersion[0] : dbSplitVersion[0]+'.'+dbSplitVersion[1];
+  const dbMajorVersion =
+    dbType === 'postgresql'
+      ? dbSplitVersion[0]
+      : dbSplitVersion[0] + '.' + dbSplitVersion[1];
 
   try {
-    const response = await (await request.get(versionServiceURL+`/versions/v1/${dbOperatorName}/${crVersion}/${dbMajorVersion}-latest`)).json();
+    const response = await (
+      await request.get(
+        versionServiceURL +
+          `/versions/v1/${dbOperatorName}/${crVersion}/${dbMajorVersion}-latest`
+      )
+    ).json();
 
     // Navigate to the versions array
     const versions = response?.versions;
     if (!Array.isArray(versions)) return null;
 
     // Find the first item in the versions array
-    const dbOperator = versions.find((item: any) => item.product === `${dbOperatorName}`);
+    const dbOperator = versions.find(
+      (item: any) => item.product === `${dbOperatorName}`
+    );
     if (!dbOperator) return null;
 
     // Access the matrix -> mongod/pxc/postgresql key
-    const vsKey = dbType === "psmdb" ? "mongod" : dbType;
+    const vsKey = dbType === 'psmdb' ? 'mongod' : dbType;
     const vsDatabase = dbOperator?.matrix?.[vsKey];
 
-    if (!vsDatabase || typeof vsDatabase !== "object") return null;
+    if (!vsDatabase || typeof vsDatabase !== 'object') return null;
 
     // Get the first key in the mongod/pxc/postgresql object (e.g., "7.0.14-8")
     const dbUpgradeVersion = Object.keys(vsDatabase)[0];
 
     return dbUpgradeVersion === dbCurrentVersion ? null : dbUpgradeVersion;
   } catch (error) {
-    console.error("Error extracting database version:", error);
+    console.error('Error extracting database version:', error);
     return null;
   }
 };

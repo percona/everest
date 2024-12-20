@@ -55,7 +55,13 @@ test(
 
     await test.step('Wait for databases to become ready', async () => {
       await expect(async () => {
-        const dbClusters = (await getDbClustersListAPI(EVEREST_CI_NAMESPACES.EVEREST_UI, request, token)).items;
+        const dbClusters = (
+          await getDbClustersListAPI(
+            EVEREST_CI_NAMESPACES.EVEREST_UI,
+            request,
+            token
+          )
+        ).items;
 
         const clustersInfo = dbClusters.map((c) => {
           return { status: c.status.status, name: c.metadata.name };
@@ -73,10 +79,20 @@ test(
     });
 
     await test.step('Add data to databases', async () => {
-      const dbClusters = (await getDbClustersListAPI(EVEREST_CI_NAMESPACES.EVEREST_UI, request, token)).items;
+      const dbClusters = (
+        await getDbClustersListAPI(
+          EVEREST_CI_NAMESPACES.EVEREST_UI,
+          request,
+          token
+        )
+      ).items;
 
       const clustersInfo = dbClusters.map((c) => {
-        return { status: c.status.status, name: c.metadata.name, namespace: c.metadata.namespace };
+        return {
+          status: c.status.status,
+          name: c.metadata.name,
+          namespace: c.metadata.namespace,
+        };
       });
 
       clustersInfo.forEach((c) => {

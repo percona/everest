@@ -8,11 +8,11 @@ export const pxcDBCluster = {
   disk: 5,
   memory: 1,
   externalAccess: false,
-//  sourceRanges: [
-//    {
-//      sourceRange: 'http://192.168.1.1',
-//    },
-//  ],
+  //  sourceRanges: [
+  //    {
+  //      sourceRange: 'http://192.168.1.1',
+  //    },
+  //  ],
 };
 
 export const mongoDBCluster = {

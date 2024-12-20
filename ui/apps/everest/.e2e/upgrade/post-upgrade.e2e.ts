@@ -5,14 +5,17 @@ import {
   expectedEverestUpgradeLog,
   mongoDBCluster,
   postgresDBCluster,
-  pxcDBCluster
+  pxcDBCluster,
 } from './testData';
 import { waitForStatus, waitForDelete } from '@e2e/utils/table';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
 import { getExpectedOperatorVersions } from '@e2e/upgrade/helper';
-import { getDbAvailableUpgradeVersionK8S } from '@e2e/utils/db-cluster'
-import { deleteDbCluster, getDbClustersListAPI } from '@e2e/utils/db-clusters-list';
+import { getDbAvailableUpgradeVersionK8S } from '@e2e/utils/db-cluster';
+import {
+  deleteDbCluster,
+  getDbClustersListAPI,
+} from '@e2e/utils/db-clusters-list';
 import { queryTestDB } from '@e2e/utils/db-cmd-line';
 
 let namespace: string;
@@ -45,9 +48,24 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
     await page.goto('/databases');
 
     await test.step('Verify clusters are up', async () => {
-      await waitForStatus(page, mongoDBCluster.name, 'Up', TIMEOUTS.ThirtySeconds);
-      await waitForStatus(page, postgresDBCluster.name, 'Up', TIMEOUTS.ThirtySeconds);
-      await waitForStatus(page, pxcDBCluster.name, 'Up', TIMEOUTS.ThirtySeconds);
+      await waitForStatus(
+        page,
+        mongoDBCluster.name,
+        'Up',
+        TIMEOUTS.ThirtySeconds
+      );
+      await waitForStatus(
+        page,
+        postgresDBCluster.name,
+        'Up',
+        TIMEOUTS.ThirtySeconds
+      );
+      await waitForStatus(
+        page,
+        pxcDBCluster.name,
+        'Up',
+        TIMEOUTS.ThirtySeconds
+      );
     });
   });
 
@@ -111,24 +129,41 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
     for (const operator of operatorsVersions) {
       await test.step(`Upgrade CR version for [${operator.shortName}]`, async () => {
         await page.goto(`/settings/namespaces/${namespace}`);
-        await waitForStatus(page, `${operator.shortName}-db-cluster`, 'Up', TIMEOUTS.ThirtySeconds);
+        await waitForStatus(
+          page,
+          `${operator.shortName}-db-cluster`,
+          'Up',
+          TIMEOUTS.ThirtySeconds
+        );
 
         await page
-        .getByRole('button', { name: `Database needs restart to use CRVersion '${operator.version.replace('v','')}'` })
-        .click();
+          .getByRole('button', {
+            name: `Database needs restart to use CRVersion '${operator.version.replace('v', '')}'`,
+          })
+          .click();
 
         const upgradeCRDModal = page.getByRole('dialog');
 
         await expect(
           upgradeCRDModal.getByText(
-            `Are you sure you want to upgrade your CRD (Custom Resource Definition) to version ${operator.version.replace('v','')} in ${operator.shortName}-db-cluster cluster?`
+            `Are you sure you want to upgrade your CRD (Custom Resource Definition) to version ${operator.version.replace('v', '')} in ${operator.shortName}-db-cluster cluster?`
           )
         ).toBeVisible();
 
         await upgradeCRDModal.getByRole('button', { name: 'Upgrade' }).click();
 
-        await waitForStatus(page, `${operator.shortName}-db-cluster`, 'Initializing', TIMEOUTS.ThreeMinutes);
-        await waitForStatus(page, `${operator.shortName}-db-cluster`, 'Up', TIMEOUTS.ThreeMinutes);
+        await waitForStatus(
+          page,
+          `${operator.shortName}-db-cluster`,
+          'Initializing',
+          TIMEOUTS.ThreeMinutes
+        );
+        await waitForStatus(
+          page,
+          `${operator.shortName}-db-cluster`,
+          'Up',
+          TIMEOUTS.ThreeMinutes
+        );
       });
     }
   });
@@ -136,27 +171,51 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
   test('Verify databases upgrade', async ({ page, request }) => {
     await page.goto('/databases');
 
-    const dbClusters = (await getDbClustersListAPI(EVEREST_CI_NAMESPACES.EVEREST_UI, request, token)).items;
+    const dbClusters = (
+      await getDbClustersListAPI(
+        EVEREST_CI_NAMESPACES.EVEREST_UI,
+        request,
+        token
+      )
+    ).items;
 
     upgradeClustersInfo = dbClusters.map((c) => {
-      return { name: c.metadata.name, namespace: c.metadata.namespace, dbType: c.spec.engine.type, currentVersion: c.spec.engine.version };
+      return {
+        name: c.metadata.name,
+        namespace: c.metadata.namespace,
+        dbType: c.spec.engine.type,
+        currentVersion: c.spec.engine.version,
+      };
     });
 
     for (const c of upgradeClustersInfo) {
-      c.upgradeVersion = await getDbAvailableUpgradeVersionK8S(`${c.dbType}-db-cluster`, EVEREST_CI_NAMESPACES.EVEREST_UI, request, token);
+      c.upgradeVersion = await getDbAvailableUpgradeVersionK8S(
+        `${c.dbType}-db-cluster`,
+        EVEREST_CI_NAMESPACES.EVEREST_UI,
+        request,
+        token
+      );
     }
-    const upgradeCount = upgradeClustersInfo.filter((item) => item.upgradeVersion !== null).length;
+    const upgradeCount = upgradeClustersInfo.filter(
+      (item) => item.upgradeVersion !== null
+    ).length;
 
     test.skip(upgradeCount === 0, 'No databases to upgrade');
 
-    for (const c of upgradeClustersInfo.filter((item) => item.upgradeVersion !== null)) {
+    for (const c of upgradeClustersInfo.filter(
+      (item) => item.upgradeVersion !== null
+    )) {
       await test.step(`Upgrade ${c.name} database`, async () => {
         await page.goto(`/databases/${c.namespace}/${c.name}/overview`);
         await page.getByTestId('upgrade-db-btn').click();
         const upgradeDbVersionModal = page.getByRole('dialog');
 
-        await expect(upgradeDbVersionModal.getByText(`Upgrade DB version`)).toBeVisible();
-        await upgradeDbVersionModal.getByTestId('select-db-version-button').click();
+        await expect(
+          upgradeDbVersionModal.getByText(`Upgrade DB version`)
+        ).toBeVisible();
+        await upgradeDbVersionModal
+          .getByTestId('select-db-version-button')
+          .click();
         await page.getByRole('option', { name: `${c.upgradeVersion}` }).click();
 
         await upgradeDbVersionModal.getByTestId('form-dialog-upgrade').click();
@@ -164,7 +223,12 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
 
       await test.step(`Wait for database [${c.name}] status after upgrade`, async () => {
         await page.goto('/databases');
-        await waitForStatus(page, `${c.name}`, 'Initializing', TIMEOUTS.ThreeMinutes);
+        await waitForStatus(
+          page,
+          `${c.name}`,
+          'Initializing',
+          TIMEOUTS.ThreeMinutes
+        );
         await waitForStatus(page, `${c.name}`, 'Up', TIMEOUTS.ThreeMinutes);
       });
     }
@@ -175,14 +239,26 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
       for (const c of upgradeClustersInfo) {
         let tech: string = '';
 
-        switch(c.dbType){
-          case 'pxc': { tech = 'MySQL'; break; }
-          case 'psmdb': { tech = 'MongoDB'; break; }
-          case 'postgresql': { tech = 'PostgreSQL'; break; }
+        switch (c.dbType) {
+          case 'pxc': {
+            tech = 'MySQL';
+            break;
+          }
+          case 'psmdb': {
+            tech = 'MongoDB';
+            break;
+          }
+          case 'postgresql': {
+            tech = 'PostgreSQL';
+            break;
+          }
         }
 
-        const version = c.upgradeVersion === null ? c.currentVersion : c.upgradeVersion;
-        await expect(page.getByRole('row').filter({ hasText: `${c.name}` })).toContainText(`${tech} ${version}`);
+        const version =
+          c.upgradeVersion === null ? c.currentVersion : c.upgradeVersion;
+        await expect(
+          page.getByRole('row').filter({ hasText: `${c.name}` })
+        ).toContainText(`${tech} ${version}`);
       }
     });
   });

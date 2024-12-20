@@ -254,13 +254,29 @@ test.describe.configure({ retries: 0 });
             return;
           }
 
-          const psmdbCluster = await getDbClusterAPI(clusterName, EVEREST_CI_NAMESPACES.EVEREST_UI, request, token);
+          const psmdbCluster = await getDbClusterAPI(
+            clusterName,
+            EVEREST_CI_NAMESPACES.EVEREST_UI,
+            request,
+            token
+          );
           psmdbCluster.spec.backup.pitr.uploadIntervalSec = 60;
-          await updateDbClusterAPI(clusterName, EVEREST_CI_NAMESPACES.EVEREST_UI, psmdbCluster, request, token);
+          await updateDbClusterAPI(
+            clusterName,
+            EVEREST_CI_NAMESPACES.EVEREST_UI,
+            psmdbCluster,
+            request,
+            token
+          );
         });
 
         await test.step('Check db cluster k8s object options', async () => {
-          const addedCluster = await getDbClusterAPI(clusterName, EVEREST_CI_NAMESPACES.EVEREST_UI, request, token);
+          const addedCluster = await getDbClusterAPI(
+            clusterName,
+            EVEREST_CI_NAMESPACES.EVEREST_UI,
+            request,
+            token
+          );
 
           expect(addedCluster?.spec.backup.pitr.enabled).toBe(true);
           expect(addedCluster?.spec.engine.type).toBe(db);

@@ -183,7 +183,12 @@ test.describe.configure({ retries: 0 });
         });
 
         await test.step('Check db cluster k8s object options', async () => {
-          const addedCluster = await getDbClusterAPI(clusterName, EVEREST_CI_NAMESPACES.EVEREST_UI, request, token);
+          const addedCluster = await getDbClusterAPI(
+            clusterName,
+            EVEREST_CI_NAMESPACES.EVEREST_UI,
+            request,
+            token
+          );
 
           expect(addedCluster?.spec.engine.type).toBe(db);
           expect(addedCluster?.spec.engine.replicas).toBe(size);
