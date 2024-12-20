@@ -75,6 +75,7 @@ jobs:
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
           --skip-wizard \
+          --skip-db-namespace
 
       - name: Add everest-ui namespace
         shell: bash
