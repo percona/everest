@@ -1,0 +1,3282 @@
+Release "everest" has been upgraded. Happy Helming!
+NAME: everest
+LAST DEPLOYED: Wed Dec 18 16:56:22 2024
+NAMESPACE: everest-system
+STATUS: pending-upgrade
+REVISION: 2
+TEST SUITE: None
+HOOKS:
+---
+# Source: everest/charts/dbNamespace/templates/hooks.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: everest-helm-pre-delete-hook
+  namespace: a1
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+---
+# Source: everest/charts/dbNamespace/templates/hooks.yaml
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: everest-operators-installer
+  namespace: a1
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+---
+# Source: everest/charts/dbNamespace/templates/hooks.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: everest-helm-pre-delete-db-resource-cleanup
+  namespace: a1
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    "helm.sh/hook-weight": "-1"
+---
+# Source: everest/templates/hooks.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: everest-helm-pre-upgrade-hook
+  namespace: everest-system
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+---
+# Source: everest/templates/hooks.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: everest-helm-pre-upgrade-hook
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs:
+      - list
+  - apiGroups:
+      - operators.coreos.com
+    resources:
+      - subscriptions
+      - clusterserviceversions
+    verbs:
+      - get
+      - list
+---
+# Source: everest/templates/hooks.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: everest-helm-pre-upgrade-hook
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: everest-helm-pre-upgrade-hook
+subjects:
+  - kind: ServiceAccount
+    name: everest-helm-pre-upgrade-hook
+    namespace: everest-system
+---
+# Source: everest/charts/dbNamespace/templates/hooks.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: everest-helm-pre-delete-hook
+  namespace: a1
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+rules:
+  - apiGroups:
+      - operators.coreos.com
+    resources:
+      - clusterserviceversions
+    verbs:
+      - delete
+      - list
+---
+# Source: everest/charts/dbNamespace/templates/hooks.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: everest-operators-installer
+  namespace: a1
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+  - apiGroups:
+      - operators.coreos.com
+    resources:
+      - installplans
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - operators.coreos.com
+    resources:
+      - subscriptions
+      - clusterserviceversions
+    verbs:
+      - get
+      - list
+      - watch
+---
+# Source: everest/charts/dbNamespace/templates/hooks.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: everest-helm-pre-delete-db-resource-cleanup
+  namespace: a1
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    "helm.sh/hook-weight": "-1"
+rules:
+  - apiGroups:
+      - everest.percona.com
+    resources:
+      - databaseclusters
+      - backupstorages
+      - monitoringconfigs
+    verbs:
+      - get
+      - delete
+      - list
+      - watch
+---
+# Source: everest/templates/hooks.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: everest-helm-pre-upgrade-hook
+  namespace: everest-system
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+rules:
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - get
+---
+# Source: everest/charts/dbNamespace/templates/hooks.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: everest-helm-pre-delete-hook
+  namespace: a1
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: everest-helm-pre-delete-hook
+subjects:
+  - kind: ServiceAccount
+    name: everest-helm-pre-delete-hook
+    namespace: a1
+---
+# Source: everest/charts/dbNamespace/templates/hooks.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: everest-operators-installer
+  namespace: a1
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: everest-operators-installer
+subjects:
+  - kind: ServiceAccount
+    name: everest-operators-installer
+    namespace: a1
+---
+# Source: everest/charts/dbNamespace/templates/hooks.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: everest-helm-pre-delete-db-resource-cleanup
+  namespace: a1
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    "helm.sh/hook-weight": "-1"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: everest-helm-pre-delete-db-resource-cleanup
+subjects:
+  - kind: ServiceAccount
+    name: everest-helm-pre-delete-db-resource-cleanup
+    namespace: a1
+---
+# Source: everest/templates/hooks.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: everest-helm-pre-upgrade-hook
+  namespace: everest-system
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: everest-helm-pre-upgrade-hook
+subjects:
+  - kind: ServiceAccount
+    name: everest-helm-pre-upgrade-hook
+    namespace: everest-system
+---
+# Source: everest/charts/dbNamespace/templates/hooks.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: everest-helm-pre-delete-hook-227893
+  namespace: a1
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    spec:
+      containers:
+        - image: bitnami/kubectl:latest
+          name: everest-helm-pre-delete-hook
+          command:
+            - /bin/sh
+            - -c
+            - |
+              kubectl delete csv -n a1 --all --wait
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      serviceAccount: everest-helm-pre-delete-hook
+      serviceAccountName: everest-helm-pre-delete-hook
+      terminationGracePeriodSeconds: 30
+---
+# Source: everest/charts/dbNamespace/templates/hooks.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: everest-operators-installer
+  namespace: a1
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    spec:
+      containers:
+        - image: bitnami/kubectl:latest
+          name: everest-operators-installer
+          command:
+            - /bin/sh
+            - -c
+            - |
+              kubectl label namespace a1 app.kubernetes.io/managed-by=everest --overwrite
+              subs=$(kubectl -n a1 get subscription -o jsonpath='{.items[*].metadata.name}')
+              for sub in $subs
+              do
+                # We do not want to touch already installed operators, otherwise bad things can happen.
+                installedCSV=$(kubectl -n a1 get sub $sub -o jsonpath='{.status.installedCSV}')
+                if [ "$installedCSV" != "" ]; then
+                  echo "Operator $sub already installed. Skip..."
+                  continue
+                fi
+
+                echo "Waiting for InstallPlan to be created for Subscription $sub"
+                kubectl wait --for=jsonpath='.status.installplan.name' sub/$sub -n a1 --timeout=600s
+                
+                ip=$(kubectl -n a1 get sub $sub -o jsonpath='{.status.installplan.name}')
+                echo "InstallPlan $ip created for Subscription $sub"
+
+                echo "Approving InstallPlan $ip"
+                kubectl -n a1 patch installplan $ip --type='json' -p='[{"op": "replace", "path": "/spec/approved", "value": true}]'
+
+                echo "Waiting for InstallPlan to be complete $ip"
+                kubectl wait --for=jsonpath='.status.phase'=Complete installplan/$ip -n a1 --timeout=600s
+
+                csv=$(kubectl get sub $sub -n a1 -o jsonpath='{.status.installedCSV}')
+
+                echo "Waiting for CSV $csv to succeed"
+                kubectl wait --for=jsonpath='.status.phase'=Succeeded csv/$csv -n a1 --timeout=600s
+              done
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      serviceAccount: everest-operators-installer
+      serviceAccountName: everest-operators-installer
+      terminationGracePeriodSeconds: 30
+---
+# Source: everest/charts/dbNamespace/templates/hooks.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: everest-helm-pre-delete-db-resource-cleanup-053972
+  namespace: a1
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    "helm.sh/hook-weight": "-1"
+spec:
+  template:
+    spec:
+      containers:
+        - image: bitnami/kubectl:latest
+          name: everest-helm-pre-delete-db-resource-cleanup
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              echo "Deleting DatabaseClusters"
+              kubectl delete databaseclusters -n a1 --all --wait
+              
+              echo "Deleting BackupStorages"
+              kubectl delete backupstorages -n a1 --all --wait
+                
+              echo "Deleting MonitoringConfigs"
+              kubectl delete monitoringconfigs -n a1 --all --wait
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      serviceAccount: everest-helm-pre-delete-db-resource-cleanup
+      serviceAccountName: everest-helm-pre-delete-db-resource-cleanup
+      terminationGracePeriodSeconds: 30
+---
+# Source: everest/templates/hooks.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: everest-helm-pre-upgrade-hook-246500
+  namespace: everest-system
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    spec:
+      containers:
+        - image: alpine:3.20
+          name: everest-helm-pre-upgrade-hook
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+              ARCH=$(uname -m)
+
+              # Map ARCH to match available builds
+              if [ "$ARCH" = "x86_64" ]; then
+                  ARCH="amd64"
+              elif [ "$ARCH" = "aarch64" ]; then
+                  ARCH="arm64"
+              else
+                  echo "Unsupported architecture: $ARCH"
+                  exit 1
+              fi
+
+              VERSION=1.4.0-rc1
+              apk add --no-cache --quiet curl
+              curl -sSL -o everestctl https://github.com/percona/everest/releases/download/v${VERSION}/everestctl-${OS}-${ARCH}
+              chmod -R 777 ./everestctl
+              
+              echo "Checking requirements for upgrade to version ${VERSION}"
+              ./everestctl upgrade --in-cluster --dry-run --version-metadata-url=https://check-dev.percona.com --kubeconfig=""
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      terminationGracePeriodSeconds: 30
+      serviceAccount: everest-helm-pre-upgrade-hook
+      serviceAccountName: everest-helm-pre-upgrade-hook
+MANIFEST:
+---
+# Source: everest/charts/dbNamespace/templates/namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: a1
+  labels:
+    app.kubernetes.io/managed-by: everest
+---
+# Source: everest/templates/everest-olm/namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: everest-olm
+---
+# Source: everest/templates/monitoring-namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: everest-monitoring
+---
+# Source: everest/charts/kube-state-metrics/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+automountServiceAccountToken: true
+metadata:
+  labels:    
+    helm.sh/chart: kube-state-metrics-5.27.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: kube-state-metrics
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/version: "2.14.0"
+    everest.percona.com/type: monitoring
+  name: kube-state-metrics
+  namespace: everest-monitoring
+---
+# Source: everest/charts/monitoring/templates/service_account.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vm-operator
+  namespace: everest-monitoring
+  labels: 
+    app.kubernetes.io/instance: everest
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: monitoring
+    app.kubernetes.io/version: v0.49.0
+    helm.sh/chart: monitoring-0.37.0
+---
+# Source: everest/templates/everest-olm/serviceaccount.yaml
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: olm-operator-serviceaccount
+  namespace: everest-olm
+---
+# Source: everest/templates/everest-operator/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: everest-operator-controller-manager
+  namespace: everest-system
+---
+# Source: everest/templates/everest-server/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: everest-admin
+  namespace: everest-system
+---
+# Source: everest/templates/everest-olm/packageserver.apiservice.yaml
+apiVersion: v1
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURxVENDQXBHZ0F3SUJBZ0lSQUtnMlhuN0lwb0FRWkR3bzQ4eXFQL0l3RFFZSktvWklodmNOQVFFTEJRQXcKSURFZU1Cd0dBMVVFQXhNVmNHRmphMkZuWlhObGNuWmxjaTF6WlhKMmFXTmxNQjRYRFRJME1USXhPREV4TWpZeQpNbG9YRFRNME1USXhOakV4TWpZeU1sb3dNREV1TUN3R0ExVUVBeE1sY0dGamEyRm5aWE5sY25abGNpMXpaWEoyCmFXTmxMbVYyWlhKbGMzUXRiMnh0TG5OMll6Q0NBU0l3RFFZSktvWklodmNOQVFFQkJRQURnZ0VQQURDQ0FRb0MKZ2dFQkFOdytDOWZDRlpxdmFvRzZGT1J0S054TkFYUmNuZGt2Y09BK0FaSDJPZ0pzNEpIczN3dENhYlZZcDBUcAphdDY1SGkvMG1kNUtVaTdRemwreG9TTm4xUFBxWnk0VmdaTm5ub3RhRWNUZEh6d0IzYzVNNFpjU1JJcUx2UjJECkJ6ejRLWGw4OW1Mbm5pRmxrUGFqQ2FZSGx0cEhJVXVPd25DYUpncktlVFpTbGQ2dklZNzNpNmQzeUViL0dLMzIKSVdWdjU3dm5TS0RYY0cyTW80eThOWWQ4Mk1oWHkyNzhvVklzUkF6NDhPcTlmdWpHdkhaK2xMWlprMEFyNFh4bwpTenFSek9LQXlpVm5HYWptZkpHeERwMVFxT1ZpSGZKNGY0ZlN4MUl5NWV5ZkZ3T05hSnJoL1BEM1MyeVRxLzhlCkZ4d3JMMHg3N0J5M0k2NW9RYm9uOUxvVjVkY0NBd0VBQWFPQnpUQ0J5akFPQmdOVkhROEJBZjhFQkFNQ0JhQXcKSFFZRFZSMGxCQll3RkFZSUt3WUJCUVVIQXdFR0NDc0dBUVVGQndNQ01Bd0dBMVVkRXdFQi93UUNNQUF3SHdZRApWUjBqQkJnd0ZvQVVObGdRdytNZk9RUWxJczE5UG1YcEZOdHFGNG93YWdZRFZSMFJCR013WVlJVmNHRmphMkZuClpYTmxjblpsY2kxelpYSjJhV05sZ2lGd1lXTnJZV2RsYzJWeWRtVnlMWE5sY25acFkyVXVaWFpsY21WemRDMXYKYkcyQ0pYQmhZMnRoWjJWelpYSjJaWEl0YzJWeWRtbGpaUzVsZG1WeVpYTjBMVzlzYlM1emRtTXdEUVlKS29aSQpodmNOQVFFTEJRQURnZ0VCQUpEYmcxUEZVZHgveEhsbkd4U1o1dE1sT0RjVWtZMHl4LzNGSlFIVmRXQ2tpNjFECkxyN05mRkg3cGNJSXViVS9TNHhBd0FqR29OUGlDTjR1dGdyR211T3lIYWdWUUQ0RHJrU2ZHZ0lrOXdHVllZeTcKSmVNM3ppVEFyRjBUcVlXRzJ3U0xWTUEyRmNnYlFMd2JPaWJIUnlTZjdwTXBEZDJwdGxyVlZWK00vVElxVC9seQpTYzE4MEVIUVozczhuSVBKc1ZXQnJrbVVSYlVNOHMvZTducE1mcm1waEhvVERoRjhneVFuL3NyU25ldFJHdUZDCk5INy9tZ2xrM2hDYkFPNVNzakdZNnBRQ05xL3Q2ZHpSVTFMN0VMOGVEMmRzNjJHcEIxU21iQ1VzUUNhTlliNXoKTzdTNGI5WE8zbnY5aFUwZk5ZcEZzdWpNU3RYS2l3L2xneWZzQmRZPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  tls.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBM0Q0TDE4SVZtcTlxZ2JvVTVHMG8zRTBCZEZ5ZDJTOXc0RDRCa2ZZNkFtemdrZXpmCkMwSnB0VmluUk9scTNya2VML1NaM2twU0x0RE9YN0doSTJmVTgrcG5MaFdCazJlZWkxb1J4TjBmUEFIZHpremgKbHhKRWlvdTlIWU1IUFBncGVYejJZdWVlSVdXUTlxTUpwZ2VXMmtjaFM0N0NjSm9tQ3NwNU5sS1YzcThoanZlTApwM2ZJUnY4WXJmWWhaVy9udStkSW9OZHdiWXlqakx3MWgzell5RmZMYnZ5aFVpeEVEUGp3NnIxKzZNYThkbjZVCnRsbVRRQ3ZoZkdoTE9wSE00b0RLSldjWnFPWjhrYkVPblZDbzVXSWQ4bmgvaDlMSFVqTGw3SjhYQTQxb211SDgKOFBkTGJKT3IveDRYSENzdlRIdnNITGNqcm1oQnVpZjB1aFhsMXdJREFRQUJBb0lCQVFDbTAzRFJDN2lscFAzKwpLZCt0YjJvbUJVWjJ4N2poVEdncDA0NEk3QVBnMW12ODNQbk9ZNDRDeVpaYVFweXEvSG43UlVKUCtPZnJna3J3CmZYSmJpVWpyUWNES1RZd0xCZEE0S2crUG1SY1JzekE2Rms1Q3lwbVVnR2pOcy9TRm9FeDZNOGZGL3ovdWVDcW8KUjdNRlNuWmYvTVVob0k5MEQ2K0ZPUDA3d3E2M0wzVldPUGhGUGUvc0tzMkx1VHhlZmRwMXovQjE1VUUveWFragpKL2pTRFJ6YzFUL0lUS281aDFvSTh4Mzc0S1RVMm9Oc3hsWFFxZGhEeUcwWEg2VmZaNVQ0TnJVVHNLVFlOYnliCjBpN0swejA2cVUxSnVacTlnTWUrZVd3SFBxTFp4djd4UmtVN3JqdGFoZEZ6MFJGNDZxamZWY1NDenNVT0NiZXgKeHhUY2Evc3hBb0dCQU9jTTZOSGRYWkVkd1VUUkRISVQ5Ym1ZajRESnVwT1BDbmFJdmFlSXIxU2x1NDBRNDEvdQp5TElITngwN0Zsd2Z4Y2l2OWR4Rnk1UE02NkVDM2NZOGhxQWd0aWtJbllBdXlZcVJ3Y2tXVTJDeVQyWXZjbDloCjd6eHVXbkVrKzdSMFJqQUJRQkJLWVFndmtPVEhvQjJvcUV5bk1qQTFSNXh0ZnJDMmdSUG1FOUNEQW9HQkFQUUcKWEtvNWl0NGNYYmd3TENnMzlheGU5eFkvTzRVYWNBVEpraTFJUWlQeTAyRFd1aU52a21CN3lHbWlVRmRZM1ZqdgorZkZkOEovWHZ0d3lEL1VlZkhDSHhIbkRXT1c1RGpQZHdzT2hKOHVoSG44YVFQdjdZS3lNUm1PTllkY0t5WTJ3Ckh1cFI3d1N1VXJOSU1BRmg5TmdZT09Sc2wxU0dvVWN3dXMwaG11MGRBb0dCQU5OTjJ4OFRkQjdqTjMzWU1hbWkKMTNlRkxyaDV4VWh0NlFPK3lyUU5MVXdjeGdtZENGVVQ3RGZrb1dMNlJ0aTV0Z2h6NUVZdkRwOTlLWUYzUFp1dQpmdkN5K2VWTkc3Mi9ERkxPT292TS96UFAzdzExRndSa2JJYTM1YjdVTTk0MCtIdXVxUWc4L2NDZXY4UjdUTlBUCkN4Z1BVTGNHQXhmc2k1RFJWL3I2eitSQkFvR0JBT2Z5S0NBeEE3cnM4WFFDYmVab2tsNmVBWFFtOUZjbTh2VEoKOStTTXV6bGFOT3JtRHhWaGxwdVk3THpqYUVRdUZtN1Q0eG8yTldKcGVtUG9QZHk2ZG9PcnVPZ1g4eWFmeUUwcQphMWJ4bGxicU5ZZVFsOVlyY1E5eFlmSjhUMVJNVDVvYW5yZ1Eyd1R6QVc2aG5lZWlpVXpoY1NwRndXMjViaEN4CjA4enBOVTVOQW9HQVVyZHAwSlNDaUFiVWEzVmZwMWdMbW5LNkpWZEFQVVI3U0RENkZJQVlNRTNUaFhlSWs2S2oKVno3T2ovQm54c2Jtd2p3Vk9xcjlQamVDRFdhWkVqb1MzVVBxV0E3eUdqTnRJSWtoUVJXUWlicVQ3bG91QWQxNwpLR1pvQTNZcWxoUE8wYk13RVVEbkhkSnYzbVdUNEQ2ME5lZDNJcW52VG9OSzZycmRqYnlqaWxnPQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+kind: Secret
+metadata:
+  name: packageserver-service-cert
+  namespace: everest-olm
+type: kubernetes.io/tls
+---
+# Source: everest/templates/ksm-customresourcestate-cm.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: customresource-config-ksm
+  namespace: everest-monitoring
+data:
+  config: |
+    kind: CustomResourceStateMetrics
+    spec:
+      resources:
+        - groupVersionKind:
+            group: pxc.percona.com
+            version: v1
+            kind: PerconaXtraDBCluster
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_pxc
+          metrics:
+            - name: info
+              help: "Information of PXC cluster on k8s"
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    version:
+                    - spec
+                    - crVersion
+            - name: pitr_enabled
+              help: "PITR enabled"
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                  - spec
+                  - backup
+                  - pitr
+                  - enabled
+            - name: status_state
+              help: "PXC state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - unknown
+                  - ready
+                  - initializing
+                  - error
+                  - paused
+            - name: status_pxc_replicas
+              help: "PXC Replica Status"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - pxc
+                  - size
+            - name: status_pxc_replicas_ready
+              help: "Number of ready PXC replicas"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - pxc
+                  - ready
+            - name: status_haproxy_replicas
+              help: "HAProxy Replica Status"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - haproxy
+                  - size
+            - name: status_haproxy_replicas_ready
+              help: "Number of ready HAProxy replicas"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - haproxy
+                  - ready
+            - name: status_proxysql_replicas
+              help: "ProxySQL Replica Status"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - proxysql
+                  - size
+            - name: status_proxysql_replicas_ready
+              help: "Number of ready ProxySQL replicas"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - proxysql
+                  - ready
+
+        - groupVersionKind:
+            group: pxc.percona.com
+            version: v1
+            kind: PerconaXtraDBClusterBackup
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_pxc_backup
+          metrics:
+            - name: info
+              help: "Information of PXC cluster on k8s"
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    cluster:
+                    - spec
+                    - pxcCluster
+                    storage:
+                    - spec
+                    - storageName
+            - name: status_state
+              help: "PXC Backup state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - Starting
+                  - Running
+                  - Failed
+                  - Succeeded
+            - name: status_completed
+              help: "Time when PXC Backup was completed"
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                  - status
+                  - completed
+
+        - groupVersionKind:
+            group: pxc.percona.com
+            version: v1
+            kind: PerconaXtraDBClusterRestore
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_pxc_restore
+          metrics:
+            - name: info
+              help: "Information of PXC cluster on k8s"
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    cluster:
+                    - spec
+                    - pxcCluster
+                    backup:
+                    - spec
+                    - backupName
+            - name: status_state
+              help: "PXC Restore state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - Starting
+                  - "Stopping Cluster"
+                  - Restoring
+                  - "Starting Cluster"
+                  - "Point-in-time recovering"
+                  - Failed
+                  - Succeeded
+            - name: status_completed
+              help: "Time when PXC Restore was completed"
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                  - status
+                  - completed
+        - groupVersionKind:         
+            group: psmdb.percona.com
+            version: v1
+            kind: PerconaServerMongoDB 
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_psmdb
+          metrics:
+            - name: info
+              help: "Information of PSMDB cluster"
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    version:
+                    - spec
+                    - crVersion
+            - name: pitr_enabled
+              help: "PITR enabled"
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                  - spec
+                  - backup
+                  - pitr
+                  - enabled
+            - name: sharding_enabled
+              help: "Sharding enabled"
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                  - spec
+                  - sharding
+                  - enabled
+            - name: status_state
+              help: "PSMDB state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - stopping
+                  - ready
+                  - initializing
+                  - error
+                  - paused
+            - name: status_mongos
+              help: "Mongos state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - mongos
+                  - status
+                  list:
+                  - stopping
+                  - ready
+                  - initializing
+                  - error
+                  - paused
+            - name: status_mongos_replicas
+              help: "Mongos Replica Status"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - mongos
+                  - size
+            - name: status_mongos_replicas_ready
+              help: "Mongos Replica Ready"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - mongos
+                  - ready
+        - groupVersionKind:
+            group: psmdb.percona.com
+            version: v1
+            kind: PerconaServerMongoDBBackup
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_psmdb_backup
+          metrics:
+            - name: info
+              help: "Information of PSMDB Backup"
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    cluster:
+                    - spec
+                    - clusterName
+                    storage:
+                    - spec
+                    - storageName
+            - name: status_state
+              help: "PSMDB Backup state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - waiting
+                  - requested
+                  - rejected
+                  - running
+                  - error
+                  - ready
+            - name: type
+              help: "PSMDB Backup Type Physical/Logical/Incremental"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: type
+                  path:
+                  - status
+                  - type
+                  list:
+                  - physical
+                  - incremental
+                  - logical
+            - name: status_start
+              help: "PSMDB Backup Start Time"
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                  - status
+                  - start
+            - name: status_completed
+              help: "PSMDB Backup Completed Time"
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                  - status
+                  - completed
+        - groupVersionKind:
+            group: psmdb.percona.com
+            version: v1
+            kind: PerconaServerMongoDBRestore
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_psmdb_restore
+          metrics:
+            - name: info
+              help: "Information of PSMDB Restore"
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    cluster:
+                    - spec
+                    - clusterName
+                    storage:
+                    - spec
+                    - backupName
+            - name: status_state
+              help: "PSMDB Restore state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - waiting
+                  - requested
+                  - rejected
+                  - running
+                  - error
+                  - ready
+            - name: status_completed
+              help: "PSMDB Restore Completed Time"
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                  - status
+                  - completed
+        - groupVersionKind:
+            group: pgv2.percona.com
+            version: v2
+            kind: PerconaPGCluster
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_pg
+          metrics:
+            - name: info
+              help: "Information of PG cluster"
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    version:
+                    - spec
+                    - crVersion
+                    postgresVersion:
+                    - spec
+                    - postgresVersion
+            - name: status_state
+              help: "PG state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - stopping
+                  - ready
+                  - initializing
+                  - error
+                  - paused
+            - name: status_pgbouncer_replicas
+              help: "PG Bouncer Replica Status"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - pgbouncer
+                  - size
+            - name: status_pgbouncer_replicas_ready
+              help: "PG Bouncer Replica in Ready State"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - pgbouncer
+                  - ready
+            - name: status_postgres_replicas
+              help: "Postgres Replica Status"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - postgres
+                  - size
+            - name: status_postgres_replicas_ready
+              help: "Postgres Replica in Ready State"
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                  - status
+                  - postgres
+                  - ready
+        - groupVersionKind:
+            group: pgv2.percona.com
+            version: v2
+            kind: PerconaPGBackup
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_pg_backup
+          metrics:
+            - name: info
+              help: "Information of PG backup "
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    cluster:
+                    - spec
+                    - pgCluster
+                    repo:
+                    - spec
+                    - repoName
+            - name: status_state
+              help: "PG Backup state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - Starting
+                  - Running
+                  - Failed
+                  - Succeeded
+        - groupVersionKind:
+            group: pgv2.percona.com
+            version: v2
+            kind: PerconaPGRestore
+          labelsFromPath:
+            name:
+            - metadata
+            - name
+            namespace:
+            - metadata
+            - namespace
+          metricNamePrefix: kube_pg_restore
+          metrics:
+            - name: info
+              help: "Information of PG restore"
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    cluster:
+                    - spec
+                    - pgCluster
+                    repo:
+                    - spec
+                    - repoName
+            - name: status_state
+              help: "PG Restore state"
+              each:
+                type: StateSet
+                stateSet:
+                  labelName: state
+                  path:
+                  - status
+                  - state
+                  list:
+                  - Starting
+                  - Running
+                  - Failed
+                  - Succeeded
+---
+# Source: everest/charts/kube-state-metrics/templates/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:    
+    helm.sh/chart: kube-state-metrics-5.27.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: kube-state-metrics
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/version: "2.14.0"
+    everest.percona.com/type: monitoring
+  name: kube-state-metrics
+rules:
+
+- apiGroups: ["certificates.k8s.io"]
+  resources:
+  - certificatesigningrequests
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - configmaps
+  verbs: ["list", "watch"]
+
+- apiGroups: ["batch"]
+  resources:
+  - cronjobs
+  verbs: ["list", "watch"]
+
+- apiGroups: ["extensions", "apps"]
+  resources:
+  - daemonsets
+  verbs: ["list", "watch"]
+
+- apiGroups: ["extensions", "apps"]
+  resources:
+  - deployments
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - endpoints
+  verbs: ["list", "watch"]
+
+- apiGroups: ["autoscaling"]
+  resources:
+  - horizontalpodautoscalers
+  verbs: ["list", "watch"]
+
+- apiGroups: ["extensions", "networking.k8s.io"]
+  resources:
+  - ingresses
+  verbs: ["list", "watch"]
+
+- apiGroups: ["batch"]
+  resources:
+  - jobs
+  verbs: ["list", "watch"]
+
+- apiGroups: ["coordination.k8s.io"]
+  resources:
+  - leases
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - limitranges
+  verbs: ["list", "watch"]
+
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources:
+    - mutatingwebhookconfigurations
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - namespaces
+  verbs: ["list", "watch"]
+
+- apiGroups: ["networking.k8s.io"]
+  resources:
+  - networkpolicies
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - nodes
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - persistentvolumeclaims
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - persistentvolumes
+  verbs: ["list", "watch"]
+
+- apiGroups: ["policy"]
+  resources:
+    - poddisruptionbudgets
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - pods
+  verbs: ["list", "watch"]
+
+- apiGroups: ["extensions", "apps"]
+  resources:
+  - replicasets
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - replicationcontrollers
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - resourcequotas
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - secrets
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - services
+  verbs: ["list", "watch"]
+
+- apiGroups: ["apps"]
+  resources:
+  - statefulsets
+  verbs: ["list", "watch"]
+
+- apiGroups: ["storage.k8s.io"]
+  resources:
+    - storageclasses
+  verbs: ["list", "watch"]
+
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources:
+    - validatingwebhookconfigurations
+  verbs: ["list", "watch"]
+
+- apiGroups: ["storage.k8s.io"]
+  resources:
+    - volumeattachments
+  verbs: ["list", "watch"]
+---
+# Source: everest/charts/monitoring/templates/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: vm-operator
+  labels: 
+    app.kubernetes.io/instance: everest
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: monitoring
+    app.kubernetes.io/version: v0.49.0
+    helm.sh/chart: monitoring-0.37.0
+rules:
+- nonResourceURLs:
+  - /metrics
+  - /metrics/resources
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - configmaps/finalizers
+  - endpoints
+  - events
+  - persistentvolumeclaims
+  - persistentvolumeclaims/finalizers
+  - pods
+  - secrets
+  - secrets/finalizers
+  - services
+  - services/finalizers
+  - serviceaccounts
+  - serviceaccounts/finalizers
+  verbs:
+  - "*"
+- apiGroups:
+  - ""
+  resources:
+  - configmaps/status
+  - nodes
+  - nodes/proxy
+  - nodes/metrics
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - deployments/finalizers
+  - replicasets
+  - statefulsets
+  - statefulsets/finalizers
+  - statefulsets/status
+  verbs:
+  - "*"
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - "*"
+  verbs:
+  - "*"
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterrolebindings
+  - clusterrolebindings/finalizers
+  - clusterroles
+  - clusterroles/finalizers
+  - roles
+  - rolebindings
+  verbs:
+  - "*"
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - storageclasses
+  verbs:
+  - list
+  - get
+  - watch
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+  - poddisruptionbudgets/finalizers
+  verbs:
+  - "*"
+- apiGroups:
+  - route.openshift.io
+  - image.openshift.io
+  resources:
+  - routers/metrics
+  - registry/metrics
+  verbs:
+  - get
+- apiGroups:
+  - autoscaling
+  verbs:
+  - "*"
+  resources:
+  - horizontalpodautoscalers
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  - ingresses/finalizers
+  verbs:
+  - "*"
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - discovery.k8s.io
+  resources:
+  - endpointslices
+  verbs:
+  - list
+  - watch
+  - get
+- apiGroups:
+  - operator.victoriametrics.com
+  resources:
+  - vlogs
+  - vlogs/finalizers
+  - vlogs/status
+  - vmagents
+  - vmagents/finalizers
+  - vmagents/status
+  - vmalertmanagerconfigs
+  - vmalertmanagerconfigs/finalizers
+  - vmalertmanagerconfigs/status
+  - vmalertmanagers
+  - vmalertmanagers/finalizers
+  - vmalertmanagers/status
+  - vmalerts
+  - vmalerts/finalizers
+  - vmalerts/status
+  - vmauths
+  - vmauths/finalizers
+  - vmauths/status
+  - vmclusters
+  - vmclusters/finalizers
+  - vmclusters/status
+  - vmnodescrapes
+  - vmnodescrapes/finalizers
+  - vmnodescrapes/status
+  - vmpodscrapes
+  - vmpodscrapes/finalizers
+  - vmpodscrapes/status
+  - vmprobes
+  - vmprobes/finalizers
+  - vmprobes/status
+  - vmrules
+  - vmrules/finalizers
+  - vmrules/status
+  - vmscrapeconfigs
+  - vmscrapeconfigs/finalizers
+  - vmscrapeconfigs/status
+  - vmservicescrapes
+  - vmservicescrapes/finalizers
+  - vmservicescrapes/status
+  - vmsingles
+  - vmsingles/finalizers
+  - vmsingles/status
+  - vmstaticscrapes
+  - vmstaticscrapes/finalizers
+  - vmstaticscrapes/status
+  - vmusers
+  - vmusers/finalizers
+  - vmusers/status
+  verbs:
+  - '*'
+---
+# Source: everest/charts/monitoring/templates/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: victoriametrics:admin
+  labels:
+    app.kubernetes.io/instance: everest
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: monitoring
+    app.kubernetes.io/version: v0.49.0
+    helm.sh/chart: monitoring-0.37.0
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+rules: 
+  - apiGroups:
+    - operator.victoriametrics.com
+    resources:
+    - vlogs
+    - vlogs/finalizers
+    - vlogs/status
+    - vmagents
+    - vmagents/finalizers
+    - vmagents/status
+    - vmalertmanagerconfigs
+    - vmalertmanagerconfigs/finalizers
+    - vmalertmanagerconfigs/status
+    - vmalertmanagers
+    - vmalertmanagers/finalizers
+    - vmalertmanagers/status
+    - vmalerts
+    - vmalerts/finalizers
+    - vmalerts/status
+    - vmauths
+    - vmauths/finalizers
+    - vmauths/status
+    - vmclusters
+    - vmclusters/finalizers
+    - vmclusters/status
+    - vmnodescrapes
+    - vmnodescrapes/finalizers
+    - vmnodescrapes/status
+    - vmpodscrapes
+    - vmpodscrapes/finalizers
+    - vmpodscrapes/status
+    - vmprobes
+    - vmprobes/finalizers
+    - vmprobes/status
+    - vmrules
+    - vmrules/finalizers
+    - vmrules/status
+    - vmscrapeconfigs
+    - vmscrapeconfigs/finalizers
+    - vmscrapeconfigs/status
+    - vmservicescrapes
+    - vmservicescrapes/finalizers
+    - vmservicescrapes/status
+    - vmsingles
+    - vmsingles/finalizers
+    - vmsingles/status
+    - vmstaticscrapes
+    - vmstaticscrapes/finalizers
+    - vmstaticscrapes/status
+    - vmusers
+    - vmusers/finalizers
+    - vmusers/status
+    verbs:
+    - '*'
+---
+# Source: everest/charts/monitoring/templates/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: victoriametrics:view
+  labels:
+    app.kubernetes.io/instance: everest
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: monitoring
+    app.kubernetes.io/version: v0.49.0
+    helm.sh/chart: monitoring-0.37.0
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+rules: 
+  - apiGroups:
+    - operator.victoriametrics.com
+    resources:
+    - vlogs
+    - vlogs/finalizers
+    - vlogs/status
+    - vmagents
+    - vmagents/finalizers
+    - vmagents/status
+    - vmalertmanagerconfigs
+    - vmalertmanagerconfigs/finalizers
+    - vmalertmanagerconfigs/status
+    - vmalertmanagers
+    - vmalertmanagers/finalizers
+    - vmalertmanagers/status
+    - vmalerts
+    - vmalerts/finalizers
+    - vmalerts/status
+    - vmauths
+    - vmauths/finalizers
+    - vmauths/status
+    - vmclusters
+    - vmclusters/finalizers
+    - vmclusters/status
+    - vmnodescrapes
+    - vmnodescrapes/finalizers
+    - vmnodescrapes/status
+    - vmpodscrapes
+    - vmpodscrapes/finalizers
+    - vmpodscrapes/status
+    - vmprobes
+    - vmprobes/finalizers
+    - vmprobes/status
+    - vmrules
+    - vmrules/finalizers
+    - vmrules/status
+    - vmscrapeconfigs
+    - vmscrapeconfigs/finalizers
+    - vmscrapeconfigs/status
+    - vmservicescrapes
+    - vmservicescrapes/finalizers
+    - vmservicescrapes/status
+    - vmsingles
+    - vmsingles/finalizers
+    - vmsingles/status
+    - vmstaticscrapes
+    - vmstaticscrapes/finalizers
+    - vmstaticscrapes/status
+    - vmusers
+    - vmusers/finalizers
+    - vmusers/status
+    verbs:
+    - get
+    - list
+    - watch
+---
+# Source: everest/templates/everest-olm/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system:controller:operator-lifecycle-manager
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+- nonResourceURLs: ["*"]
+  verbs: ["*"]
+---
+# Source: everest/templates/everest-olm/clusterrole.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: aggregate-olm-edit
+  labels:
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+    rbac.authorization.k8s.io/aggregate-to-edit: "true"
+rules:
+- apiGroups: ["operators.coreos.com"]
+  resources: ["subscriptions"]
+  verbs: ["create", "update", "patch", "delete"]
+- apiGroups: ["operators.coreos.com"]
+  resources: ["clusterserviceversions", "catalogsources", "installplans", "subscriptions"]
+  verbs: ["delete"]
+---
+# Source: everest/templates/everest-olm/clusterrole.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: aggregate-olm-view
+  labels:
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+    rbac.authorization.k8s.io/aggregate-to-edit: "true"
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+rules:
+- apiGroups: ["operators.coreos.com"]
+  resources: ["clusterserviceversions", "catalogsources", "installplans", "subscriptions", "operatorgroups"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["packages.operators.coreos.com"]
+  resources: ["packagemanifests", "packagemanifests/icon"]
+  verbs: ["get", "list", "watch"]
+---
+# Source: everest/templates/everest-olm/packageserver.rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: packageserver-clusterrole
+rules:
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - list
+  - get
+  - watch
+- apiGroups:
+  - operators.coreos.com
+  resources:
+  - catalogsources
+  verbs:
+  - list
+  - get
+  - watch
+- apiGroups:
+  - packages.operators.coreos.com
+  resources:
+  - packagemanifests
+  verbs: ["*"]
+---
+# Source: everest/templates/everest-operator/backupstorage-editor.clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: everest-operator-backupstorage-editor-role
+rules:
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - backupstorages
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - backupstorages/status
+  verbs:
+  - get
+---
+# Source: everest/templates/everest-operator/backupstorage-viewer.clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: everest-operator-backupstorage-viewer-role
+rules:
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - backupstorages
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - backupstorages/status
+  verbs:
+  - get
+---
+# Source: everest/templates/everest-operator/databasecluster-editor.clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: everest-operator-databasecluster-editor-role
+rules:
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - databaseclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - databaseclusters/status
+  verbs:
+  - get
+---
+# Source: everest/templates/everest-operator/databasecluster-viewer.clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: everest-operator-databasecluster-viewer-role
+rules:
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - databaseclusters
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - databaseclusters/status
+  verbs:
+  - get
+---
+# Source: everest/templates/everest-operator/databaseclusterbackup-editor.clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: everest-operator-databaseclusterbackup-editor-role
+rules:
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - databaseclusterbackups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - databaseclusterbackups/status
+  verbs:
+  - get
+---
+# Source: everest/templates/everest-operator/databaseclusterbackup-viewer.clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: everest-operator-databaseclusterbackup-viewer-role
+rules:
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - databaseclusterbackups
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - databaseclusterbackups/status
+  verbs:
+  - get
+---
+# Source: everest/templates/everest-operator/databaseclusterrestore-editor.clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: everest-operator-databaseclusterrestore-editor-role
+rules:
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - databaseclusterrestores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - databaseclusterrestores/status
+  verbs:
+  - get
+---
+# Source: everest/templates/everest-operator/databaseclusterrestore-viewer.clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: everest-operator-databaseclusterrestore-viewer-role
+rules:
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - databaseclusterrestores
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - databaseclusterrestores/status
+  verbs:
+  - get
+---
+# Source: everest/templates/everest-operator/databaseengine-editor.clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: everest-operator-databaseengine-editor-role
+rules:
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - databaseengines
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - databaseengines/status
+  verbs:
+  - get
+---
+# Source: everest/templates/everest-operator/databaseengine-viewer.clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: everest-operator-databaseengine-viewer-role
+rules:
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - databaseengines
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - databaseengines/status
+  verbs:
+  - get
+---
+# Source: everest/templates/everest-operator/manager.clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: everest-operator-manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - backupstorages
+  - databaseclusterbackups
+  - databaseclusterrestores
+  - databaseclusters
+  - databaseengines
+  - monitoringconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - backupstorages/finalizers
+  - databaseclusterbackups/finalizers
+  - databaseclusterrestores/finalizers
+  - databaseclusters/finalizers
+  - databaseengines/finalizers
+  - monitoringconfigs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - backupstorages/status
+  - databaseclusterbackups/status
+  - databaseclusterrestores/status
+  - databaseclusters/status
+  - databaseengines/status
+  - monitoringconfigs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - operator.victoriametrics.com
+  resources:
+  - vmagents
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - operators.coreos.com
+  resources:
+  - clusterserviceversions
+  - installplans
+  verbs:
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - operators.coreos.com
+  resources:
+  - subscriptions
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - pgv2.percona.com
+  resources:
+  - perconapgbackups
+  - perconapgclusters
+  - perconapgrestores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - psmdb.percona.com
+  resources:
+  - perconaservermongodbbackups
+  - perconaservermongodbrestores
+  - perconaservermongodbs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - pxc.percona.com
+  resources:
+  - perconaxtradbclusterbackups
+  - perconaxtradbclusterrestores
+  - perconaxtradbclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - storageclasses
+  verbs:
+  - get
+  - list
+  - watch
+---
+# Source: everest/templates/everest-operator/metrics-auth.clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: everest-operator-metrics-auth-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+# Source: everest/templates/everest-operator/metricsreader.clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+  name: everest-operator-metrics-reader
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+---
+# Source: everest/templates/everest-operator/monitoringconfig-editor.clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: everest-operator-monitoringconfig-editor-role
+rules:
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - monitoringconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - monitoringconfigs/status
+  verbs:
+  - get
+---
+# Source: everest/templates/everest-operator/monitoringconfig-viewer.clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: everest-operator-monitoringconfig-viewer-role
+rules:
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - monitoringconfigs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - everest.percona.com
+  resources:
+  - monitoringconfigs/status
+  verbs:
+  - get
+---
+# Source: everest/templates/everest-server/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: everest-admin-cluster-role
+rules:
+  - apiGroups: ["everest.percona.com"]
+    resources: ["databaseengines"]
+    verbs: ["get", "list", "update"]
+  - apiGroups: ["everest.percona.com"]
+    resources: ["databaseclusters", "databaseclusterbackups", "databaseclusterrestores", "backupstorages", "monitoringconfigs"]
+    verbs: ["*"]
+  - apiGroups: [""]
+    resources: ["secrets", "configmaps", "namespaces"]
+    verbs: ["*"]
+  - apiGroups: [""]
+    resources: ["nodes", "pods", "persistentvolumes"]
+    verbs: ["get", "list"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["list"]
+  - apiGroups: ["everest.percona.com"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["operators.coreos.com"]
+    resources: ["installplans"]
+    verbs: ["get", "list", "update"]
+---
+# Source: everest/charts/kube-state-metrics/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:    
+    helm.sh/chart: kube-state-metrics-5.27.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: kube-state-metrics
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/version: "2.14.0"
+    everest.percona.com/type: monitoring
+  name: kube-state-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kube-state-metrics
+subjects:
+- kind: ServiceAccount
+  name: kube-state-metrics
+  namespace: everest-monitoring
+---
+# Source: everest/charts/monitoring/templates/crb.yaml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: vm-operator
+  labels: 
+    app.kubernetes.io/instance: everest
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: monitoring
+    app.kubernetes.io/version: v0.49.0
+    helm.sh/chart: monitoring-0.37.0
+subjects:
+- kind: ServiceAccount
+  name: vm-operator
+  namespace: everest-monitoring
+roleRef:
+  kind: ClusterRole
+  name: vm-operator
+  apiGroup: rbac.authorization.k8s.io
+---
+# Source: everest/templates/everest-olm/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: olm-operator-binding-olm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:controller:operator-lifecycle-manager
+subjects:
+- kind: ServiceAccount
+  namespace: everest-olm
+  name: olm-operator-serviceaccount
+---
+# Source: everest/templates/everest-olm/packageserver.rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: packageserver-clusterrolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: packageserver-clusterrole
+subjects:
+- kind: ServiceAccount
+  name: olm-operator-serviceaccount
+  namespace: everest-olm
+---
+# Source: everest/templates/everest-operator/manager.clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: everest-operator-manager-rolebinding
+subjects:
+- kind: ServiceAccount
+  name: everest-operator-controller-manager
+  namespace: everest-system
+roleRef:
+  kind: ClusterRole
+  name: everest-operator-manager-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# Source: everest/templates/everest-operator/metrics-auth.clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: everest-operator-metrics-auth-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: everest-operator-metrics-auth-role
+subjects:
+- kind: ServiceAccount
+  name: everest-operator-controller-manager
+  namespace: everest-system
+---
+# Source: everest/templates/everest-server/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: everest-admin-cluster-role-binding
+roleRef:
+  kind: "ClusterRole"
+  apiGroup: "rbac.authorization.k8s.io"
+  name: everest-admin-cluster-role
+subjects:
+  - kind: "ServiceAccount"
+    name: everest-admin
+    namespace: everest-system
+---
+# Source: everest/charts/monitoring/templates/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: vm-operator
+  labels: 
+    app.kubernetes.io/instance: everest
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: monitoring
+    app.kubernetes.io/version: v0.49.0
+    helm.sh/chart: monitoring-0.37.0
+  namespace: everest-monitoring
+rules:
+- apiGroups:
+  - coordination.k8s.io
+  verbs:
+  - create
+  - get
+  - update
+  resources:
+  - leases
+---
+# Source: everest/templates/everest-operator/leaderelection.role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: everest-operator-leader-election-role
+  namespace: everest-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+  - patch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+# Source: everest/templates/everest-server/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: everest-admin-role
+  namespace: everest-system
+rules:
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get"]
+---
+# Source: everest/charts/monitoring/templates/rb.yaml
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: vm-operator
+  namespace: everest-monitoring
+  labels: 
+    app.kubernetes.io/instance: everest
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: monitoring
+    app.kubernetes.io/version: v0.49.0
+    helm.sh/chart: monitoring-0.37.0
+subjects:
+- kind: ServiceAccount
+  name: vm-operator
+  namespace: everest-monitoring
+roleRef:
+  kind: Role
+  name: vm-operator
+  apiGroup: rbac.authorization.k8s.io
+---
+# Source: everest/templates/everest-operator/leaderelection.rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: everest-operator-leader-election-rolebinding
+  namespace: everest-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: everest-operator-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: everest-operator-controller-manager
+  namespace: everest-system
+---
+# Source: everest/templates/everest-operator/rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: everest-operator-local
+  namespace: everest-system
+subjects:
+- kind: ServiceAccount
+  name: everest-operator
+  namespace: everest-system
+roleRef:
+  kind: Role
+  name: everest-operator
+  apiGroup: rbac.authorization.k8s.io
+---
+# Source: everest/templates/everest-server/rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: everest-admin-role-binding
+  namespace: everest-system
+roleRef:
+  kind: "Role"
+  apiGroup: "rbac.authorization.k8s.io"
+  name: everest-admin-role
+subjects:
+  - kind: "ServiceAccount"
+    name: everest-admin
+---
+# Source: everest/charts/kube-state-metrics/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-state-metrics
+  namespace: everest-monitoring
+  labels:    
+    helm.sh/chart: kube-state-metrics-5.27.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: kube-state-metrics
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/version: "2.14.0"
+    everest.percona.com/type: monitoring
+  annotations:
+    prometheus.io/scrape: 'true'
+spec:
+  type: "ClusterIP"
+  ports:
+  - name: "http"
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+  
+  selector:    
+    app.kubernetes.io/name: kube-state-metrics
+---
+# Source: everest/charts/monitoring/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: everest-monitoring
+  labels: 
+    app.kubernetes.io/instance: everest
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: monitoring
+    app.kubernetes.io/version: v0.49.0
+    helm.sh/chart: monitoring-0.37.0
+  name: vm-operator
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+    - name: webhook
+      port: 9443
+      targetPort: webhook
+  selector: 
+    app.kubernetes.io/instance: everest
+    app.kubernetes.io/name: monitoring
+---
+# Source: everest/templates/everest-olm/packageserver.service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: packageserver-service
+  namespace: everest-olm
+spec:
+  internalTrafficPolicy: Cluster
+  ports:
+  - name: "5443"
+    port: 5443
+    protocol: TCP
+    targetPort: 5443
+  selector:
+    app: packageserver
+  type: ClusterIP
+---
+# Source: everest/templates/everest-operator/metrics.service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: everest-operator-metrics-service
+  namespace: everest-system
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: https
+    port: 8443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    app: everest-operator
+  sessionAffinity: None
+  type: ClusterIP
+---
+# Source: everest/templates/everest-server/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: everest
+  namespace: everest-system
+  labels:
+    app.kubernetes.io/name: everest
+    app.kubernetes.io/component: everest
+spec:
+  selector:
+    app.kubernetes.io/name: everest-server
+    app.kubernetes.io/component: everest-server
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 8080
+---
+# Source: everest/charts/kube-state-metrics/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-state-metrics
+  namespace: everest-monitoring
+  labels:    
+    helm.sh/chart: kube-state-metrics-5.27.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: kube-state-metrics
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/version: "2.14.0"
+    everest.percona.com/type: monitoring
+spec:
+  selector:
+    matchLabels:      
+      app.kubernetes.io/name: kube-state-metrics
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  revisionHistoryLimit: 10
+  template:
+    metadata:
+      labels:        
+        helm.sh/chart: kube-state-metrics-5.27.0
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: metrics
+        app.kubernetes.io/part-of: kube-state-metrics
+        app.kubernetes.io/name: kube-state-metrics
+        app.kubernetes.io/version: "2.14.0"
+        everest.percona.com/type: monitoring
+    spec:
+      automountServiceAccountToken: true
+      hostNetwork: false
+      serviceAccountName: kube-state-metrics
+      securityContext:
+        fsGroup: 65534
+        runAsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: kube-state-metrics
+        args:
+        - --custom-resource-state-config-file=/etc/customresourcestate/config
+        - --port=8080
+        - --resources=certificatesigningrequests,configmaps,cronjobs,daemonsets,deployments,endpoints,horizontalpodautoscalers,ingresses,jobs,leases,limitranges,mutatingwebhookconfigurations,namespaces,networkpolicies,nodes,persistentvolumeclaims,persistentvolumes,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets,storageclasses,validatingwebhookconfigurations,volumeattachments
+        - --metric-labels-allowlist=pods=[app.kubernetes.io/component,app.kubernetes.io/instance,app.kubernetes.io/managed-by,app.kubernetes.io/name,app.kubernetes.io/part-of],persistentvolumeclaims=[app.kubernetes.io/component,app.kubernetes.io/instance,app.kubernetes.io/managed-by,app.kubernetes.io/name,app.kubernetes.io/part-of],jobs=[app.kubernetes.io/component,app.kubernetes.io/instance,app.kubernetes.io/managed-by,app.kubernetes.io/name,app.kubernetes.io/part-of]
+        volumeMounts:
+        - mountPath: /etc/customresourcestate
+          name: customresourcestate-config
+          readOnly: true
+        imagePullPolicy: IfNotPresent
+        image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.14.0
+        ports:
+        - containerPort: 8080
+          name: "http"
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            httpHeaders:
+            path: /livez
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            httpHeaders:
+            path: /readyz
+            port: 8081
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources:
+          {}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+      volumes:
+        - configMap:
+            name: customresource-config-ksm
+          name: customresourcestate-config
+---
+# Source: everest/charts/monitoring/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vm-operator
+  namespace: everest-monitoring
+  labels: 
+    app.kubernetes.io/instance: everest
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: monitoring
+    app.kubernetes.io/version: v0.49.0
+    helm.sh/chart: monitoring-0.37.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app.kubernetes.io/instance: everest
+      app.kubernetes.io/name: monitoring
+  template:
+    metadata:
+      labels: 
+        app.kubernetes.io/instance: everest
+        app.kubernetes.io/name: monitoring
+    spec:
+      securityContext: 
+        {}
+      serviceAccountName: vm-operator
+      containers:
+        - name: operator
+          image: victoriametrics/operator:v0.49.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: monitoring
+            - name: VM_ENABLEDPROMETHEUSCONVERTEROWNERREFERENCES
+              value: "false"
+          args:
+            - --zap-log-level=info
+            - --leader-elect
+            - --health-probe-bind-address=:8081
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: probe
+              containerPort: 8081
+              protocol: TCP
+            - name: webhook
+              containerPort: 9443
+              protocol: TCP
+          readinessProbe: 
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: probe
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            timeoutSeconds: 5
+          livenessProbe: 
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            tcpSocket:
+              port: probe
+            timeoutSeconds: 5
+          volumeMounts:
+          resources: 
+            {}
+          securityContext: 
+            {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+---
+# Source: everest/templates/everest-olm/catalog-operator.deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-operator
+  namespace: everest-olm
+  labels:
+    app: catalog-operator
+spec:
+  strategy:
+    type: RollingUpdate
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog-operator
+  template:
+    metadata:
+      labels:
+        app: catalog-operator
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: olm-operator-serviceaccount
+      containers:
+        - name: catalog-operator
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ "ALL" ]
+          command:
+          - /bin/catalog
+          args:
+          - '--namespace'
+          - everest-olm
+          - --configmapServerImage=quay.io/operator-framework/configmap-operator-registry:latest
+          - --util-image
+          - quay.io/operator-framework/olm@sha256:1b6002156f568d722c29138575733591037c24b4bfabc67946f268ce4752c3e6
+          - --set-workload-user-id=true
+          image: quay.io/operator-framework/olm@sha256:1b6002156f568d722c29138575733591037c24b4bfabc67946f268ce4752c3e6 
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: metrics
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+              scheme: HTTP
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+              scheme: HTTP
+          terminationMessagePolicy: FallbackToLogsOnError
+          resources:
+            requests:
+              cpu: 10m
+              memory: 80Mi
+      nodeSelector:
+        kubernetes.io/os: linux
+---
+# Source: everest/templates/everest-olm/olm-operator.deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: olm-operator
+  namespace: everest-olm
+  labels:
+    app: olm-operator
+spec:
+  strategy:
+    type: RollingUpdate
+  replicas: 1
+  selector:
+    matchLabels:
+      app: olm-operator
+  template:
+    metadata:
+      labels:
+        app: olm-operator
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: olm-operator-serviceaccount
+      containers:
+        - name: olm-operator
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ "ALL" ]
+          command:
+          - /bin/olm
+          args:
+          - --namespace
+          - $(OPERATOR_NAMESPACE)
+          - --writeStatusName
+          - ""
+          image: quay.io/operator-framework/olm@sha256:1b6002156f568d722c29138575733591037c24b4bfabc67946f268ce4752c3e6
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: metrics
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+              scheme: HTTP
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+              scheme: HTTP
+          terminationMessagePolicy: FallbackToLogsOnError
+          env:
+          - name: OPERATOR_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: OPERATOR_NAME
+            value: olm-operator
+          resources:
+            requests:
+              cpu: 10m
+              memory: 160Mi
+      nodeSelector:
+        kubernetes.io/os: linux
+---
+# Source: everest/templates/everest-olm/packageserver.deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: packageserver
+  namespace: everest-olm
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 2
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: packageserver
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: packageserver
+    spec:
+      containers:
+      - command:
+        - /bin/package-server
+        - -v=4
+        - --secure-port
+        - "5443"
+        - --global-namespace
+        - everest-olm
+        env:
+        - name: OPERATOR_CONDITION_NAME
+          value: packageserver
+        image: quay.io/operator-framework/olm@sha256:1b6002156f568d722c29138575733591037c24b4bfabc67946f268ce4752c3e6
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: 5443
+            scheme: HTTPS
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: packageserver
+        ports:
+        - containerPort: 5443
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: 5443
+            scheme: HTTPS
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 10m
+            memory: 50Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: FallbackToLogsOnError
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmpfs
+        - mountPath: /apiserver.local.config/certificates
+          name: apiservice-cert
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: webhook-cert
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/os: linux
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccount: olm-operator-serviceaccount
+      serviceAccountName: olm-operator-serviceaccount
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir: {}
+        name: tmpfs
+      - name: apiservice-cert
+        secret:
+          defaultMode: 420
+          items:
+          - key: tls.crt
+            path: apiserver.crt
+          - key: tls.key
+            path: apiserver.key
+          secretName: packageserver-service-cert
+      - name: webhook-cert
+        secret:
+          defaultMode: 420
+          items:
+          - key: tls.crt
+            path: tls.crt
+          - key: tls.key
+            path: tls.key
+          secretName: packageserver-service-cert
+---
+# Source: everest/templates/everest-operator/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: everest-operator
+  namespace: everest-system
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: everest-operator
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: everest-operator
+    spec:
+      containers:
+      - args:
+        - --leader-elect
+        - --metrics-bind-address=:8443
+        - --health-probe-bind-address=:8081
+        - --monitoring-namespace=everest-monitoring
+        - --system-namespace=everest-system
+        command:
+        - /manager
+        image: perconalab/everest-operator:1.4.0-rc1
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: 8081
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: manager
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readyz
+            port: 8081
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources: 
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 5m
+            memory: 64Mi
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: PERCONA_VERSION_SERVICE_URL
+          value: https://check-dev.percona.com/versions/v1
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        runAsNonRoot: true
+      serviceAccount: everest-operator-controller-manager
+      serviceAccountName: everest-operator-controller-manager
+      terminationGracePeriodSeconds: 10
+---
+# Source: everest/templates/everest-server/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: everest-server
+  namespace: everest-system
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: everest-server
+      app.kubernetes.io/component: everest-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: everest-server
+        app.kubernetes.io/component: everest-server
+    spec:
+      serviceAccountName: everest-admin
+      automountServiceAccountToken: true
+      volumes:
+      - name: jwt-secret
+        secret:
+          secretName: everest-jwt
+      containers:
+        - name: everest
+          image: perconalab/everest:1.4.0-rc1
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 300
+            periodSeconds: 15
+          resources: 
+            limits:
+              cpu: 200m
+              memory: 500Mi
+            requests:
+              cpu: 100m
+              memory: 20Mi
+          volumeMounts:
+          - name: jwt-secret
+            mountPath: /etc/jwt
+          env:
+          - name: API_REQUESTS_RATE_LIMIT
+            value: "100"
+          - name: VERSION_SERVICE_URL
+            value: https://check-dev.percona.com
+---
+# Source: everest/templates/everest-olm/packageserver.apiservice.yaml
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1.packages.operators.coreos.com
+  annotations:
+spec:
+  caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURMRENDQWhTZ0F3SUJBZ0lSQU9VS3pFaWZnMWJQYkhFelpkWDgvNTh3RFFZSktvWklodmNOQVFFTEJRQXcKSURFZU1Cd0dBMVVFQXhNVmNHRmphMkZuWlhObGNuWmxjaTF6WlhKMmFXTmxNQjRYRFRJME1USXhPREV4TWpZeQpNbG9YRFRNME1USXhOakV4TWpZeU1sb3dJREVlTUJ3R0ExVUVBeE1WY0dGamEyRm5aWE5sY25abGNpMXpaWEoyCmFXTmxNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQXNXaFhxSUlxT2F6ZE4veFUKd2R3V1A4ZGlUTFdsMHBhL21rY0p3OUNJbFdLYXBmU1dFTTczRHROeG9mMEVrbXZJWHB5eEVQLzg1M2VBUkh4OQpMeEloa25PZkZDdlJ2bVd1TSsxR0xVaVQwZEYyNFRwVzArME9wRFJPTzdLeDhmaXMvaE94WXBTbUhwdC9jZ1NJClM1OVc2OW1DRU5TTnl4MEEydVZyNEJuUFRkYzhaYmFtUVN3N2IraHdHNTZ6VXhhbFJmQ3ByYndraWJZRlEva1MKWFFpVlRIQ2N0aFIramxRQ2N5V0xyRjlmUzduSDFTZmtCYkhadUJLaWNSQzFRekhUNVM5VTBRRkdFYWtyaGg2MQpyNlRvNHd0aldJeWlOUU1YMSthTTMxdGpXSjZaVmJEQzJLQ1IzSzJWOEY4RGdVdkRVeFdydkkzaVdxQi9qNllTCnljdlY2d0lEQVFBQm8yRXdYekFPQmdOVkhROEJBZjhFQkFNQ0FxUXdIUVlEVlIwbEJCWXdGQVlJS3dZQkJRVUgKQXdFR0NDc0dBUVVGQndNQ01BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZEWllFTVBqSHprRQpKU0xOZlQ1bDZSVGJhaGVLTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCQVFBV1Z2b3NRRUxpTXhSK0FyeUdJS25QCmdmSWlNUktlaG1JRXlKMFoxbm5nOTdUV2Q0UGhBQTR1Yko3cllMNFliUUZScVcyVnRqNE40QmVVNzZmZW5xTzQKK3BZWERTSWxvN3Y3YUR2NHRjOGozK3dIcU1xWHo0VnNzR00weHBiclRtMFdMcTc2bG9pWWRmODN0WkJuM3RrbAp3MkVNcEluZGVVc20wK1BPclhGR0EyTlpUVzcxdVpTSHpQdEN1aXkwRzd1MHI3b2pQWjdYYzJGa0N1VUtQRWJ0Cm9UeFhlSlI4TW0yY0VoNTBCelBNdVZiWUpKSkZlUW84dndTaFdwdHQ1Tno2OEhqS0Q1U0M2azVKS1R1d1htZ2MKU1JvMHo5cnpGWTJrTkJIdDFjd2tGUUIvdzNuSExXcEhaQWJ2YW9qaDdBWlNMYUFBYnhLaTM0clc5YUVQSVo0SwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  group: packages.operators.coreos.com
+  groupPriorityMinimum: 2000
+  version: v1
+  versionPriority: 800
+  service:
+    name: packageserver-service
+    namespace: everest-olm
+    port: 5443
+---
+# Source: everest/templates/everest-catalogsource.yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: everest-catalog
+  namespace: everest-olm
+spec:
+  displayName: Everest Catalog
+  grpcPodConfig:
+    securityContextConfig: restricted
+  image: perconalab/everest-catalog:1.4.0-rc1
+  publisher: Percona
+  sourceType: grpc
+  updateStrategy:
+    registryPoll:
+      interval: 45m
+---
+# Source: everest/templates/everest-olm/olmconfig.yaml
+apiVersion: operators.coreos.com/v1
+kind: OLMConfig
+metadata:
+  name: cluster
+---
+# Source: everest/charts/dbNamespace/templates/operatorgroup.yaml
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: everest-databases
+  namespace: a1
+spec:
+  targetNamespaces:
+  - a1 
+  upgradeStrategy: Default
+---
+# Source: everest/charts/dbNamespace/templates/pg.subscription.yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: percona-postgresql-operator
+  namespace: a1
+spec:
+  channel: stable-v2
+  installPlanApproval: Manual
+  name: percona-postgresql-operator
+  source: everest-catalog
+  sourceNamespace: everest-olm
+  config:
+    env:
+    - name: DISABLE_TELEMETRY
+      value: "true"
+---
+# Source: everest/charts/dbNamespace/templates/psmdb.subscription.yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: percona-server-mongodb-operator
+  namespace: a1
+spec:
+  channel: stable-v1
+  installPlanApproval: Manual
+  name: percona-server-mongodb-operator
+  source: everest-catalog
+  sourceNamespace: everest-olm
+  config:
+    env:
+    - name: DISABLE_TELEMETRY
+      value: "true"
+---
+# Source: everest/charts/dbNamespace/templates/pxc.subscription.yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: percona-xtradb-cluster-operator
+  namespace: a1
+spec:
+  channel: stable-v1
+  installPlanApproval: Manual
+  name: percona-xtradb-cluster-operator
+  source: everest-catalog
+  sourceNamespace: everest-olm
+  config:
+    env:
+    - name: DISABLE_TELEMETRY
+      value: "true"
+---
+# Source: everest/templates/monitoring-resources.yaml
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMNodeScrape
+metadata:
+  name: pmm-vm-cadvisor-metrics
+  namespace: everest-monitoring
+  labels:
+    app.kubernetes.io/managed-by: everest
+    everest.percona.com/type: monitoring
+spec:
+  scheme: "https"
+  interval: "10s"
+  honorLabels: true
+  scrapeTimeout: "2s"
+  selector: {}
+  tlsConfig:
+    insecureSkipVerify: true
+    caFile: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+  bearerTokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token"
+  relabelConfigs:
+    - action: labelmap
+      regex: __meta_kubernetes_node_label_(.+)
+    - targetLabel: __address__
+      replacement: kubernetes.default.svc:443
+    - sourceLabels: [__meta_kubernetes_node_name]
+      regex: (.+)
+      targetLabel: __metrics_path__
+      replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
+  metricRelabelConfigs:
+  - action: labeldrop
+    regex: cloud_google_com.*
+  - source_labels:
+    - namespace
+    - pod
+    target_label: node_name
+    regex: (.+);(.+)
+    replacement: $1-$2
+---
+# Source: everest/templates/monitoring-resources.yaml
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMNodeScrape
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: everest
+    everest.percona.com/type: monitoring
+  name: pmm-vm-kubelet-metrics
+  namespace: everest-monitoring
+spec:
+  bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+  honorLabels: true
+  interval: 30s
+  metricRelabelConfigs:
+  - action: labeldrop
+    regex: (uid)
+  - action: labeldrop
+    regex: (id|name)
+  - action: drop
+    regex: (rest_client_request_duration_seconds_bucket|rest_client_request_duration_seconds_sum|rest_client_request_duration_seconds_count)
+    source_labels:
+    - __name__
+  - action: labeldrop
+    regex: cloud_google_com.*
+  relabelConfigs:
+  - action: labelmap
+    regex: __meta_kubernetes_node_label_(.+)
+  - sourceLabels:
+    - __metrics_path__
+    targetLabel: metrics_path
+  - replacement: kubelet
+    targetLabel: job
+  scheme: https
+  scrapeTimeout: 5s
+  tlsConfig:
+    caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    insecureSkipVerify: true
+---
+# Source: everest/templates/monitoring-resources.yaml
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: pmm-vm-pod-scrape
+  namespace: everest-monitoring
+  labels:
+    app.kubernetes.io/managed-by: everest
+    everest.percona.com/type: monitoring
+spec:
+  podMetricsEndpoints:
+    - port: metrics
+      scheme: http
+  selector:
+    matchLabels:
+      monitored-by: vm-operator
+---
+# Source: everest/templates/monitoring-resources.yaml
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: kube-state-metrics
+  namespace: everest-monitoring
+  labels:
+    app.kubernetes.io/managed-by: everest
+    everest.percona.com/type: monitoring
+spec:
+  jobLabel: app.kubernetes.io/name
+  namespaceSelector: {}
+  endpoints:
+    - scheme: http
+      port: http
+      honorLabels: true
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kube-state-metrics
+
+NOTES:
+Everest has been successfully upgraded to version 1.4.0-rc1!
