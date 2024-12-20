@@ -62,7 +62,7 @@ test.describe('DB Cluster Restore to the new cluster', () => {
     ).toBeVisible();
   });
 
-  test.only('DB cluster detail restore action', async ({ page }) => {
+  test('DB cluster detail restore action', async ({ page }) => {
     await page.route(
       '/v1/namespaces/**/database-clusters/**/backups',
       async (route) => {
