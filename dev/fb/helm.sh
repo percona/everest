@@ -23,4 +23,4 @@ chmod +x vs.sh
 SERVICE_IP=$(bash ./vs.sh)
 
 # run everest installation with helm
-helm install everest-core "$HELM_PATH/charts/everest" --namespace=everest-system --create-namespace --set versionMetadataURL=http://$SERVICE_IP --timeout=10m --devel
+helm install everest-core "$HELM_PATH/charts/everest" --namespace=everest-system --create-namespace --set versionMetadataURL="http://$SERVICE_IP" --timeout=10m --devel
