@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 curl https://raw.githubusercontent.com/Percona-Lab/percona-version-service/main/deploy.yaml  > vs_deploy.yaml
 
 # Determine the sed -i option based on the system
