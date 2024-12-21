@@ -190,9 +190,10 @@ func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version 
 		Values:           values,
 	}
 	if err := installer.Init(u.config.KubeconfigPath, helm.ChartOptions{
-		URL:     u.config.RepoURL,
-		Name:    helm.EverestDBNamespaceChartName,
-		Version: version,
+		URL:       u.config.RepoURL,
+		Directory: u.config.ChartDir,
+		Name:      helm.EverestDBNamespaceChartName,
+		Version:   version,
 	}); err != nil {
 		return fmt.Errorf("could not initialize Helm installer: %w", err)
 	}
