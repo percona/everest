@@ -19,7 +19,7 @@ export const moveForward = async (page: Page) => {
   await expect(
     page.getByTestId('db-wizard-continue-button')
   ).not.toBeDisabled();
-  page.getByTestId('db-wizard-continue-button').click();
+  await page.getByTestId('db-wizard-continue-button').click();
 };
 
 export const moveBack = (page: Page) =>

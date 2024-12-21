@@ -3,6 +3,7 @@ import { Page } from '@playwright/test';
 export const MOCK_CLUSTER_NAME = 'cluster-1';
 export const MOCK_BACKUP_NAME = 'backup-1';
 export const MOCK_STORAGE_NAME = 'storage-1';
+export const MOCK_SCHEDULE_NAME = 'schedule-1';
 
 export const mockEngines = async (page: Page, namespace: string) =>
   page.route(`/v1/namespaces/${namespace}/database-engines`, async (route) => {
@@ -90,6 +91,17 @@ export const mockCluster = (page: Page, namespace: string) =>
                 cpu: '200m',
                 memory: '200M',
               },
+            },
+            backup: {
+              enabled: true,
+              schedules: [
+                {
+                  enabled: true,
+                  schedule: '0 0 * * *',
+                  backupStorageName: MOCK_STORAGE_NAME,
+                  name: MOCK_SCHEDULE_NAME,
+                },
+              ],
             },
             monitoring: {},
           },
