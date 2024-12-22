@@ -3,7 +3,7 @@ import { getNamespacesFn } from '@e2e/utils/namespaces';
 import {
   saveOldRBACPermissions,
   restoreOldRBACPermissions,
-  setRBACPermissions,
+  setRBACPermissionsK8S,
 } from '@e2e/utils/rbac-cmd-line';
 import { expect, test } from '@playwright/test';
 import { moveForward } from '@e2e/utils/db-wizard';
@@ -32,7 +32,7 @@ test.describe('Schedules RBAC', () => {
   });
 
   test('Schedule creation from wizard', async ({ page }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['database-clusters', 'read', `${namespace}/*`],
@@ -58,7 +58,7 @@ test.describe('Schedules RBAC', () => {
   test('Hide schedule button from wizard when not allowed to create backups', async ({
     page,
   }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['database-clusters', 'read', `${namespace}/*`],
@@ -81,7 +81,7 @@ test.describe('Schedules RBAC', () => {
   });
 
   test('Schedule creation from DB details', async ({ page }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['database-clusters', 'read', `${namespace}/*`],
@@ -106,7 +106,7 @@ test.describe('Schedules RBAC', () => {
   test('Hide schedule button from DB details when not allowed to create backups', async ({
     page,
   }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['database-clusters', 'read', `${namespace}/*`],
@@ -128,7 +128,7 @@ test.describe('Schedules RBAC', () => {
   test('Hide schedule button from DB details when not allowed to update DB', async ({
     page,
   }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['database-clusters', 'read', `${namespace}/*`],

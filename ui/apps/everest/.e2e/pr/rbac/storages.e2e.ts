@@ -3,7 +3,7 @@ import { getNamespacesFn } from '@e2e/utils/namespaces';
 import {
   restoreOldRBACPermissions,
   saveOldRBACPermissions,
-  setRBACPermissions,
+  setRBACPermissionsK8S,
 } from '@e2e/utils/rbac-cmd-line';
 import { expect, test } from '@playwright/test';
 import { MOCK_STORAGE_NAME, mockStorages } from './utils';
@@ -24,7 +24,7 @@ test.describe('Backup Storages RBAC', () => {
   });
 
   test('Show Backup Storages', async ({ page }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['backup-storages', 'read', `${namespace}/${MOCK_STORAGE_NAME}`],
     ]);
@@ -35,7 +35,7 @@ test.describe('Backup Storages RBAC', () => {
   });
 
   test('Hide Backup Storages when no namespaces allowed', async ({ page }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['backup-storages', 'read', `${namespace}/${MOCK_STORAGE_NAME}`],
     ]);
     await mockStorages(page, namespace);
@@ -45,14 +45,14 @@ test.describe('Backup Storages RBAC', () => {
   });
 
   test('Hide Backup Storages when no storage allowed', async ({ page }) => {
-    await setRBACPermissions(user, [['namespaces', 'read', namespace]]);
+    await setRBACPermissionsK8S(user, [['namespaces', 'read', namespace]]);
     await mockStorages(page, namespace);
     await page.goto('/settings/storage-locations');
     await expect(page.getByText(MOCK_STORAGE_NAME)).not.toBeVisible();
   });
 
   test('Create Backup Storages', async ({ page }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['backup-storages', 'read', `${namespace}/${MOCK_STORAGE_NAME}`],
       ['backup-storages', 'create', `${namespace}/*`],
@@ -66,7 +66,7 @@ test.describe('Backup Storages RBAC', () => {
   test('Hide create Backup Storages button when no namespace available', async ({
     page,
   }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['backup-storages', 'read', `${namespace}/${MOCK_STORAGE_NAME}`],
       ['backup-storages', 'create', `${namespace}/*`],
     ]);

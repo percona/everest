@@ -4,7 +4,7 @@ import { getNamespacesFn } from '@e2e/utils/namespaces';
 import {
   restoreOldRBACPermissions,
   saveOldRBACPermissions,
-  setRBACPermissions,
+  setRBACPermissionsK8S,
 } from '@e2e/utils/rbac-cmd-line';
 
 const { CI_USER: user } = process.env;
@@ -26,7 +26,7 @@ test.describe('Namespaces RBAC', () => {
   test('should show upgrade button when there is permission to update DB engines', async ({
     page,
   }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespaces[0]],
       ['database-engines', '*', `${namespaces[0]}/*`],
       ['database-clusters', '*', `${namespaces[0]}/*`],
@@ -91,7 +91,7 @@ test.describe('Namespaces RBAC', () => {
   test('should disable upgrade button when there is no permission to update DB engines', async ({
     page,
   }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespaces[0]],
       ['database-engines', 'read', `${namespaces[0]}/*`],
       ['database-clusters', '*', `${namespaces[0]}/*`],

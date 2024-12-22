@@ -3,7 +3,7 @@ import { getNamespacesFn } from '@e2e/utils/namespaces';
 import {
   restoreOldRBACPermissions,
   saveOldRBACPermissions,
-  setRBACPermissions,
+  setRBACPermissionsK8S,
 } from '@e2e/utils/rbac-cmd-line';
 import { expect, test } from '@playwright/test';
 import { MOCK_CLUSTER_NAME, mockBackups, mockClusters } from './utils';
@@ -24,7 +24,7 @@ test.describe('Backups RBAC', () => {
   });
 
   test('Hide Backups', async ({ page }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['backup-storages', '*', `${namespace}/*`],
@@ -39,7 +39,7 @@ test.describe('Backups RBAC', () => {
   });
 
   test('Show Backups', async ({ page }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['backup-storages', '*', `${namespace}/*`],
@@ -56,7 +56,7 @@ test.describe('Backups RBAC', () => {
   });
 
   test('Delete backup', async ({ page }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['backup-storages', '*', `${namespace}/*`],
@@ -79,7 +79,7 @@ test.describe('Backups RBAC', () => {
   });
 
   test('Create on-demand backup', async ({ page }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['backup-storages', '*', `${namespace}/*`],
@@ -100,7 +100,7 @@ test.describe('Backups RBAC', () => {
   });
 
   test('Create scheduled backup', async ({ page }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['backup-storages', '*', `${namespace}/*`],

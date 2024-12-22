@@ -3,7 +3,7 @@ import { getNamespacesFn } from '@e2e/utils/namespaces';
 import {
   restoreOldRBACPermissions,
   saveOldRBACPermissions,
-  setRBACPermissions,
+  setRBACPermissionsK8S,
 } from '@e2e/utils/rbac-cmd-line';
 import { expect, test } from '@playwright/test';
 import { MOCK_CLUSTER_NAME, mockBackups, mockClusters } from './utils';
@@ -24,7 +24,7 @@ test.describe('Restores RBAC', () => {
   });
 
   test('Restore to same DB', async ({ page }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', 'read', `${namespace}/*`],
       ['backup-storages', 'read', `${namespace}/*`],
@@ -46,7 +46,7 @@ test.describe('Restores RBAC', () => {
   });
 
   test('Create DB from backup', async ({ page }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', 'read', `${namespace}/*`],
       ['database-clusters', 'read', `${namespace}/${MOCK_CLUSTER_NAME}`],
@@ -80,7 +80,7 @@ test.describe('Restores RBAC', () => {
     test(`Hide Restore to same DB if "${permissionToRemove}" permission is removed`, async ({
       page,
     }) => {
-      await setRBACPermissions(
+      await setRBACPermissionsK8S(
         user,
         //@ts-expect-error
         [
@@ -124,7 +124,7 @@ test.describe('Restores RBAC', () => {
     test(`Hide Create DB from backup if "${permissionToRemove}" permission is removed`, async ({
       page,
     }) => {
-      await setRBACPermissions(
+      await setRBACPermissionsK8S(
         user,
         //@ts-expect-error
         [
@@ -158,7 +158,7 @@ test.describe('Restores RBAC', () => {
   test('Hide Create DB from backup if DB has schedules and not allowed to create backups', async ({
     page,
   }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', 'read', `${namespace}/*`],
       ['database-clusters', 'read', `${namespace}/${MOCK_CLUSTER_NAME}`],
@@ -184,7 +184,7 @@ test.describe('Restores RBAC', () => {
   test('Show Create DB from backup if DB has no schedules, even if not allowed to create backups', async ({
     page,
   }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', 'read', `${namespace}/*`],
       ['database-clusters', 'read', `${namespace}/${MOCK_CLUSTER_NAME}`],
@@ -211,7 +211,7 @@ test.describe('Restores RBAC', () => {
   test('Hide Create DB from backup if DB has monitoring enabled and not allowed to read monitoring', async ({
     page,
   }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', 'read', `${namespace}/*`],
       ['database-clusters', 'read', `${namespace}/${MOCK_CLUSTER_NAME}`],
@@ -241,7 +241,7 @@ test.describe('Restores RBAC', () => {
   test('Show Create DB from backup if DB has monitoring disabled, even if not allowed to read monitoring', async ({
     page,
   }) => {
-    await setRBACPermissions(user, [
+    await setRBACPermissionsK8S(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', 'read', `${namespace}/*`],
       ['database-clusters', 'read', `${namespace}/${MOCK_CLUSTER_NAME}`],

@@ -13,7 +13,7 @@ export const restoreOldRBACPermissions = async () => {
   execSync(command).toString();
 };
 
-export const setRBACPermissions = async (
+export const setRBACPermissionsK8S = async (
   user: string,
   permissions: [string, string, string][] = []
 ) => {
