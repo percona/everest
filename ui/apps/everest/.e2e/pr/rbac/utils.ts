@@ -56,6 +56,17 @@ export const mockClusters = (page: Page, namespace: string) =>
                   size: '1Gi',
                 },
               },
+              backup: {
+                enabled: true,
+                schedules: [
+                  {
+                    enabled: true,
+                    schedule: '0 0 * * *',
+                    backupStorageName: MOCK_STORAGE_NAME,
+                    name: MOCK_SCHEDULE_NAME,
+                  },
+                ],
+              },
             },
           },
         ],
