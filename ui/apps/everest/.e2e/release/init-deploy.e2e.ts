@@ -32,11 +32,11 @@ import {
 } from '@e2e/utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import { waitForStatus, waitForDelete } from '@e2e/utils/table';
-import { checkError } from '@e2e/utils/generic';
 import {
   deleteMonitoringInstance,
   listMonitoringInstances,
 } from '@e2e/utils/monitoring-instance';
+import { getDbClusterAPI } from '@e2e/utils/db-cluster';
 
 const {
   MONITORING_URL,
@@ -183,24 +183,13 @@ test.describe.configure({ retries: 0 });
         });
 
         await test.step('Check db cluster k8s object options', async () => {
-          const response = await request.get(
-            `/v1/namespaces/${namespace}/database-clusters`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          await checkError(response);
-
-          // TODO: replace with correct payload typings from GET DB Clusters
-          const { items: clusters } = await response.json();
-
-          const addedCluster = clusters.find(
-            (cluster) => cluster.metadata.name === clusterName
+          const addedCluster = await getDbClusterAPI(
+            clusterName,
+            EVEREST_CI_NAMESPACES.EVEREST_UI,
+            request,
+            token
           );
 
-          expect(addedCluster).not.toBeUndefined();
           expect(addedCluster?.spec.engine.type).toBe(db);
           expect(addedCluster?.spec.engine.replicas).toBe(size);
           expect(['600m', '0.6']).toContain(
