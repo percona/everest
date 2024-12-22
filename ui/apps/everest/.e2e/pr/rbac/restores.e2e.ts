@@ -59,6 +59,7 @@ test.describe('Restores RBAC', () => {
       ['database-clusters', 'create', `${namespace}/*`],
       ['backup-storages', 'read', `${namespace}/*`],
       ['database-cluster-backups', '*', `${namespace}/${MOCK_CLUSTER_NAME}`],
+      ['monitoring-instances', '*', `${namespace}/${MOCK_CLUSTER_NAME}`],
       ['database-cluster-restores', 'create', `${namespace}/*`],
       [
         'database-cluster-credentials',
@@ -161,5 +162,122 @@ test.describe('Restores RBAC', () => {
       await page.getByTestId('actions-menu-button').click();
       await expect(page.getByText('Create DB from a backup')).not.toBeVisible();
     });
+  });
+
+  test('Hide Create DB from backup if DB has schedules and not allowed to create backups', async ({
+    page,
+  }) => {
+    await setRBACPermissions(user, [
+      ['namespaces', 'read', namespace],
+      ['database-engines', 'read', `${namespace}/*`],
+      ['database-clusters', 'read', `${namespace}/${MOCK_CLUSTER_NAME}`],
+      ['database-clusters', 'create', `${namespace}/*`],
+      ['backup-storages', 'read', `${namespace}/*`],
+      ['database-cluster-backups', 'read', `${namespace}/${MOCK_CLUSTER_NAME}`],
+      ['database-cluster-restores', 'create', `${namespace}/*`],
+      [
+        'database-cluster-credentials',
+        'read',
+        `${namespace}/${MOCK_CLUSTER_NAME}`,
+      ],
+    ]);
+    await mockCluster(page, namespace);
+    await mockClusters(page, namespace);
+    await mockBackups(page, namespace);
+    await page.goto('/databases');
+
+    await expect(page.getByText(MOCK_CLUSTER_NAME)).toBeVisible();
+    await page.getByTestId('actions-menu-button').click();
+    await expect(page.getByText('Create DB from a backup')).not.toBeVisible();
+  });
+
+  test('Show Create DB from backup if DB has no schedules, even if not allowed to create backups', async ({
+    page,
+  }) => {
+    await setRBACPermissions(user, [
+      ['namespaces', 'read', namespace],
+      ['database-engines', 'read', `${namespace}/*`],
+      ['database-clusters', 'read', `${namespace}/${MOCK_CLUSTER_NAME}`],
+      ['database-clusters', 'create', `${namespace}/*`],
+      ['backup-storages', 'read', `${namespace}/*`],
+      ['database-cluster-backups', 'read', `${namespace}/${MOCK_CLUSTER_NAME}`],
+      ['monitoring-instances', 'read', `${namespace}/${MOCK_CLUSTER_NAME}`],
+      ['database-cluster-restores', 'create', `${namespace}/*`],
+      [
+        'database-cluster-credentials',
+        'read',
+        `${namespace}/${MOCK_CLUSTER_NAME}`,
+      ],
+    ]);
+    await mockCluster(page, namespace, { enableSchedules: false });
+    await mockClusters(page, namespace, { enableSchedules: false });
+    await mockBackups(page, namespace);
+    await page.goto('/databases');
+
+    await expect(page.getByText(MOCK_CLUSTER_NAME)).toBeVisible();
+    await page.getByTestId('actions-menu-button').click();
+    await expect(page.getByText('Create DB from a backup')).toBeVisible();
+  });
+
+  test('Hide Create DB from backup if DB has monitoring enabled and not allowed to read monitoring', async ({
+    page,
+  }) => {
+    await setRBACPermissions(user, [
+      ['namespaces', 'read', namespace],
+      ['database-engines', 'read', `${namespace}/*`],
+      ['database-clusters', 'read', `${namespace}/${MOCK_CLUSTER_NAME}`],
+      ['database-clusters', 'create', `${namespace}/*`],
+      ['backup-storages', 'read', `${namespace}/*`],
+      [
+        'database-cluster-backups',
+        'create',
+        `${namespace}/${MOCK_CLUSTER_NAME}`,
+      ],
+      ['database-cluster-restores', 'create', `${namespace}/*`],
+      [
+        'database-cluster-credentials',
+        'read',
+        `${namespace}/${MOCK_CLUSTER_NAME}`,
+      ],
+    ]);
+    await mockCluster(page, namespace);
+    await mockClusters(page, namespace);
+    await mockBackups(page, namespace);
+    await page.goto('/databases');
+
+    await expect(page.getByText(MOCK_CLUSTER_NAME)).toBeVisible();
+    await page.getByTestId('actions-menu-button').click();
+    await expect(page.getByText('Create DB from a backup')).not.toBeVisible();
+  });
+
+  test('Show Create DB from backup if DB has monitoring disabled, even if not allowed to read monitoring', async ({
+    page,
+  }) => {
+    await setRBACPermissions(user, [
+      ['namespaces', 'read', namespace],
+      ['database-engines', 'read', `${namespace}/*`],
+      ['database-clusters', 'read', `${namespace}/${MOCK_CLUSTER_NAME}`],
+      ['database-clusters', 'create', `${namespace}/*`],
+      ['backup-storages', 'read', `${namespace}/*`],
+      [
+        'database-cluster-backups',
+        'create',
+        `${namespace}/${MOCK_CLUSTER_NAME}`,
+      ],
+      ['database-cluster-restores', 'create', `${namespace}/*`],
+      [
+        'database-cluster-credentials',
+        'read',
+        `${namespace}/${MOCK_CLUSTER_NAME}`,
+      ],
+    ]);
+    await mockCluster(page, namespace, { enableMonitoring: false });
+    await mockClusters(page, namespace, { enableMonitoring: false });
+    await mockBackups(page, namespace);
+    await page.goto('/databases');
+
+    await expect(page.getByText(MOCK_CLUSTER_NAME)).toBeVisible();
+    await page.getByTestId('actions-menu-button').click();
+    await expect(page.getByText('Create DB from a backup')).toBeVisible();
   });
 });

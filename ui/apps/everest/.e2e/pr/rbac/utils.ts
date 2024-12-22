@@ -1,9 +1,63 @@
 import { Page } from '@playwright/test';
 
+type ClusterConfigOptions = {
+  enableSchedules?: boolean;
+  enableMonitoring?: boolean;
+};
+
 export const MOCK_CLUSTER_NAME = 'cluster-1';
 export const MOCK_BACKUP_NAME = 'backup-1';
 export const MOCK_STORAGE_NAME = 'storage-1';
 export const MOCK_SCHEDULE_NAME = 'schedule-1';
+export const MOCK_MONITORING_CONFIG_NAME = 'monitoring-1';
+
+const DEFAULT_CLUSTER_CONFIG_OPTIONS: ClusterConfigOptions = {
+  enableMonitoring: true,
+  enableSchedules: true,
+};
+
+const getClusterConfig = (
+  namespace: string,
+  options?: ClusterConfigOptions
+) => {
+  const mergedOptions: ClusterConfigOptions = {
+    ...DEFAULT_CLUSTER_CONFIG_OPTIONS,
+    ...options,
+  };
+
+  return {
+    metadata: {
+      name: MOCK_CLUSTER_NAME,
+      namespace,
+    },
+    spec: {
+      engine: {
+        type: 'pxc',
+        storage: {
+          size: '1Gi',
+        },
+      },
+      backup: {
+        enabled: !!mergedOptions.enableSchedules,
+        ...(mergedOptions.enableSchedules && {
+          schedules: [
+            {
+              enabled: true,
+              schedule: '0 0 * * *',
+              backupStorageName: MOCK_STORAGE_NAME,
+              name: MOCK_SCHEDULE_NAME,
+            },
+          ],
+        }),
+      },
+      ...(mergedOptions.enableMonitoring && {
+        monitoring: {
+          monitoringConfigName: MOCK_MONITORING_CONFIG_NAME,
+        },
+      }),
+    },
+  };
+};
 
 export const mockEngines = async (page: Page, namespace: string) =>
   page.route(`/v1/namespaces/${namespace}/database-engines`, async (route) => {
@@ -39,84 +93,29 @@ export const mockEngines = async (page: Page, namespace: string) =>
     });
   });
 
-export const mockClusters = (page: Page, namespace: string) =>
+export const mockClusters = (
+  page: Page,
+  namespace: string,
+  options?: ClusterConfigOptions
+) =>
   page.route(`/v1/namespaces/${namespace}/database-clusters`, async (route) => {
     await route.fulfill({
       json: {
-        items: [
-          {
-            metadata: {
-              name: MOCK_CLUSTER_NAME,
-              namespace,
-            },
-            spec: {
-              engine: {
-                type: 'pxc',
-                storage: {
-                  size: '1Gi',
-                },
-              },
-              backup: {
-                enabled: true,
-                schedules: [
-                  {
-                    enabled: true,
-                    schedule: '0 0 * * *',
-                    backupStorageName: MOCK_STORAGE_NAME,
-                    name: MOCK_SCHEDULE_NAME,
-                  },
-                ],
-              },
-            },
-          },
-        ],
+        items: [getClusterConfig(namespace, options)],
       },
     });
   });
 
-export const mockCluster = (page: Page, namespace: string) =>
+export const mockCluster = (
+  page: Page,
+  namespace: string,
+  options?: ClusterConfigOptions
+) =>
   page.route(
     `/v1/namespaces/${namespace}/database-clusters/${MOCK_CLUSTER_NAME}`,
     async (route) => {
       await route.fulfill({
-        json: {
-          metadata: {
-            name: MOCK_CLUSTER_NAME,
-            namespace,
-          },
-          spec: {
-            engine: {
-              type: 'pxc',
-              replicas: 1,
-              resources: {
-                cpu: '1',
-                memory: '1G',
-              },
-              storage: {
-                size: '1Gi',
-              },
-            },
-            proxy: {
-              replicas: 1,
-              resources: {
-                cpu: '200m',
-                memory: '200M',
-              },
-            },
-            backup: {
-              enabled: true,
-              schedules: [
-                {
-                  enabled: true,
-                  schedule: '0 0 * * *',
-                  backupStorageName: MOCK_STORAGE_NAME,
-                  name: MOCK_SCHEDULE_NAME,
-                },
-              ],
-            },
-            monitoring: {},
-          },
-        },
+        json: getClusterConfig(namespace, options),
       });
     }
   );
