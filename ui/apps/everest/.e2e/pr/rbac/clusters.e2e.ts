@@ -1,10 +1,5 @@
 import { expect, test } from '@playwright/test';
-import {
-  mockCluster,
-  mockEngines,
-  MOCK_CLUSTER_NAME,
-  mockClusters,
-} from './utils';
+import { mockEngines, MOCK_CLUSTER_NAME, mockClusters } from './utils';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
 import {
@@ -86,7 +81,6 @@ test.describe('Clusters RBAC', () => {
   test('visible actions', async ({ page }) => {
     await mockEngines(page, namespace);
     await mockClusters(page, namespace);
-    await mockCluster(page, namespace);
     await setRBACPermissions(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
@@ -112,7 +106,6 @@ test.describe('Clusters RBAC', () => {
   test('not visible actions', async ({ page }) => {
     await mockEngines(page, namespace);
     await mockClusters(page, namespace);
-    await mockCluster(page, namespace);
     await setRBACPermissions(user, [
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],

@@ -6,7 +6,7 @@ import {
   setRBACPermissions,
 } from '@e2e/utils/rbac-cmd-line';
 import { expect, test } from '@playwright/test';
-import { MOCK_CLUSTER_NAME, mockBackups, mockCluster } from './utils';
+import { MOCK_CLUSTER_NAME, mockBackups, mockClusters } from './utils';
 
 const { CI_USER: user } = process.env;
 
@@ -30,7 +30,7 @@ test.describe('Backups RBAC', () => {
       ['backup-storages', '*', `${namespace}/*`],
       ['database-clusters', '*', `${namespace}/*`],
     ]);
-    await mockCluster(page, namespace);
+    await mockClusters(page, namespace);
     await mockBackups(page, namespace);
     await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}/backups`);
     await expect(page.getByRole('table')).toBeVisible();
@@ -46,7 +46,7 @@ test.describe('Backups RBAC', () => {
       ['database-clusters', '*', `${namespace}/*`],
       ['database-cluster-backups', 'read', `${namespace}/${MOCK_CLUSTER_NAME}`],
     ]);
-    await mockCluster(page, namespace);
+    await mockClusters(page, namespace);
     await mockBackups(page, namespace);
     await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}/backups`);
     await expect(page.getByRole('table')).toBeVisible();
@@ -68,7 +68,7 @@ test.describe('Backups RBAC', () => {
         `${namespace}/${MOCK_CLUSTER_NAME}`,
       ],
     ]);
-    await mockCluster(page, namespace);
+    await mockClusters(page, namespace);
     await mockBackups(page, namespace);
     await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}/backups`);
     await expect(page.getByTestId('row-actions-menu-button')).toBeVisible();
@@ -90,7 +90,7 @@ test.describe('Backups RBAC', () => {
         `${namespace}/${MOCK_CLUSTER_NAME}`,
       ],
     ]);
-    await mockCluster(page, namespace);
+    await mockClusters(page, namespace);
     await mockBackups(page, namespace);
     await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}/backups`);
     await expect(page.getByTestId('menu-button')).toBeVisible();
@@ -112,7 +112,7 @@ test.describe('Backups RBAC', () => {
         `${namespace}/${MOCK_CLUSTER_NAME}`,
       ],
     ]);
-    await mockCluster(page, namespace);
+    await mockClusters(page, namespace);
     await mockBackups(page, namespace);
     await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}/backups`);
     await expect(page.getByTestId('menu-button')).toBeVisible();

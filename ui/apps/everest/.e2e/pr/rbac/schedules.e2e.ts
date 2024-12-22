@@ -6,13 +6,11 @@ import {
   setRBACPermissions,
 } from '@e2e/utils/rbac-cmd-line';
 import { expect, test } from '@playwright/test';
-import { selectDbEngine } from '../db-cluster/db-wizard/db-wizard-utils';
 import { moveForward } from '@e2e/utils/db-wizard';
 import {
   MOCK_CLUSTER_NAME,
   MOCK_SCHEDULE_NAME,
   mockBackups,
-  mockCluster,
   mockClusters,
   mockEngines,
   mockStorages,
@@ -45,7 +43,6 @@ test.describe('Schedules RBAC', () => {
     await mockEngines(page, namespace);
     await mockStorages(page, namespace);
     await mockClusters(page, namespace);
-    await mockCluster(page, namespace);
     await page.goto('/databases');
     await page.getByTestId('add-db-cluster-button').click();
     await expect(
@@ -71,7 +68,6 @@ test.describe('Schedules RBAC', () => {
     await mockEngines(page, namespace);
     await mockStorages(page, namespace);
     await mockClusters(page, namespace);
-    await mockCluster(page, namespace);
     await page.goto('/databases');
     await page.getByTestId('add-db-cluster-button').click();
     await expect(
@@ -96,7 +92,6 @@ test.describe('Schedules RBAC', () => {
     await mockEngines(page, namespace);
     await mockStorages(page, namespace);
     await mockClusters(page, namespace);
-    await mockCluster(page, namespace);
     await mockBackups(page, namespace);
     await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}/backups`);
     await page.getByText('Create backup').click();
@@ -121,7 +116,6 @@ test.describe('Schedules RBAC', () => {
     await mockEngines(page, namespace);
     await mockStorages(page, namespace);
     await mockClusters(page, namespace);
-    await mockCluster(page, namespace);
     await mockBackups(page, namespace);
     await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}/backups`);
     await expect(page.getByText('Overview')).toBeVisible();
@@ -144,7 +138,6 @@ test.describe('Schedules RBAC', () => {
     await mockEngines(page, namespace);
     await mockStorages(page, namespace);
     await mockClusters(page, namespace);
-    await mockCluster(page, namespace);
     await mockBackups(page, namespace);
     await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}/backups`);
     await page.getByText('Create backup').click();

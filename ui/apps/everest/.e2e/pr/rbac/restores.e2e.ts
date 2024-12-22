@@ -6,12 +6,7 @@ import {
   setRBACPermissions,
 } from '@e2e/utils/rbac-cmd-line';
 import { expect, test } from '@playwright/test';
-import {
-  MOCK_CLUSTER_NAME,
-  mockBackups,
-  mockCluster,
-  mockClusters,
-} from './utils';
+import { MOCK_CLUSTER_NAME, mockBackups, mockClusters } from './utils';
 
 const { CI_USER: user } = process.env;
 
@@ -42,7 +37,6 @@ test.describe('Restores RBAC', () => {
         `${namespace}/${MOCK_CLUSTER_NAME}`,
       ],
     ]);
-    await mockCluster(page, namespace);
     await mockClusters(page, namespace);
     await mockBackups(page, namespace);
     await page.goto('/databases');
@@ -67,7 +61,6 @@ test.describe('Restores RBAC', () => {
         `${namespace}/${MOCK_CLUSTER_NAME}`,
       ],
     ]);
-    await mockCluster(page, namespace);
     await mockClusters(page, namespace);
     await mockBackups(page, namespace);
     await page.goto('/databases');
@@ -108,7 +101,6 @@ test.describe('Restores RBAC', () => {
           ],
         ].filter(([permission]) => permission !== permissionToRemove)
       );
-      await mockCluster(page, namespace);
       await mockClusters(page, namespace);
       await mockBackups(page, namespace);
       await page.goto('/databases');
@@ -154,7 +146,6 @@ test.describe('Restores RBAC', () => {
           ],
         ].filter(([permission]) => permission !== permissionToRemove)
       );
-      await mockCluster(page, namespace);
       await mockClusters(page, namespace);
       await mockBackups(page, namespace);
       await page.goto('/databases');
@@ -181,7 +172,6 @@ test.describe('Restores RBAC', () => {
         `${namespace}/${MOCK_CLUSTER_NAME}`,
       ],
     ]);
-    await mockCluster(page, namespace);
     await mockClusters(page, namespace);
     await mockBackups(page, namespace);
     await page.goto('/databases');
@@ -209,7 +199,6 @@ test.describe('Restores RBAC', () => {
         `${namespace}/${MOCK_CLUSTER_NAME}`,
       ],
     ]);
-    await mockCluster(page, namespace, { enableSchedules: false });
     await mockClusters(page, namespace, { enableSchedules: false });
     await mockBackups(page, namespace);
     await page.goto('/databases');
@@ -240,7 +229,6 @@ test.describe('Restores RBAC', () => {
         `${namespace}/${MOCK_CLUSTER_NAME}`,
       ],
     ]);
-    await mockCluster(page, namespace);
     await mockClusters(page, namespace);
     await mockBackups(page, namespace);
     await page.goto('/databases');
@@ -271,7 +259,6 @@ test.describe('Restores RBAC', () => {
         `${namespace}/${MOCK_CLUSTER_NAME}`,
       ],
     ]);
-    await mockCluster(page, namespace, { enableMonitoring: false });
     await mockClusters(page, namespace, { enableMonitoring: false });
     await mockBackups(page, namespace);
     await page.goto('/databases');

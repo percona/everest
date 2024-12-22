@@ -32,9 +32,21 @@ const getClusterConfig = (
     },
     spec: {
       engine: {
+        replicas: 1,
         type: 'pxc',
         storage: {
           size: '1Gi',
+        },
+        resources: {
+          cpu: '1',
+          memory: '1Gi',
+        },
+      },
+      proxy: {
+        replicas: 1,
+        resources: {
+          cpu: '1',
+          memory: '1Gi',
         },
       },
       backup: {
@@ -93,25 +105,19 @@ export const mockEngines = async (page: Page, namespace: string) =>
     });
   });
 
-export const mockClusters = (
+export const mockClusters = async (
   page: Page,
   namespace: string,
   options?: ClusterConfigOptions
-) =>
-  page.route(`/v1/namespaces/${namespace}/database-clusters`, async (route) => {
-    await route.fulfill({
-      json: {
-        items: [getClusterConfig(namespace, options)],
-      },
-    });
-  });
+) => {
+  await page.route(
+    `/v1/namespaces/${namespace}/database-clusters/${MOCK_CLUSTER_NAME}/pitr`,
+    async (route) => {
+      await route.fulfill({});
+    }
+  );
 
-export const mockCluster = (
-  page: Page,
-  namespace: string,
-  options?: ClusterConfigOptions
-) =>
-  page.route(
+  await page.route(
     `/v1/namespaces/${namespace}/database-clusters/${MOCK_CLUSTER_NAME}`,
     async (route) => {
       await route.fulfill({
@@ -119,6 +125,18 @@ export const mockCluster = (
       });
     }
   );
+
+  await page.route(
+    `/v1/namespaces/${namespace}/database-clusters`,
+    async (route) => {
+      await route.fulfill({
+        json: {
+          items: [getClusterConfig(namespace, options)],
+        },
+      });
+    }
+  );
+};
 
 export const mockBackups = (page: Page, namespace: string) =>
   page.route(
