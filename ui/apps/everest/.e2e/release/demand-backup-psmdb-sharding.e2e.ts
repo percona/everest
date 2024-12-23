@@ -308,15 +308,16 @@ test.describe(
       const t2Data = await queryTestDB(clusterName, namespace, 't2');
       expect(t2Data.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
 
-      // Validate sharding
-      const shardingStatus = await queryPSMDB(
-        clusterName,
-        namespace,
-        'admin',
-        'sh.status();'
-      );
-      expect(shardingStatus).toContain('test.t1');
-      expect(shardingStatus).toContain('test.t2');
+      await test.step('Validate sharding', async () => {
+        const shardingStatus = await queryPSMDB(
+          clusterName,
+          namespace,
+          'admin',
+          'sh.status();'
+        );
+        expect(shardingStatus).toContain('test.t1');
+        expect(shardingStatus).toContain('test.t2');
+      });
     });
 
     test(`Delete restore [${db} size ${size}]`, async ({ page }) => {
