@@ -1,10 +1,6 @@
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
-import {
-  saveOldRBACPermissions,
-  restoreOldRBACPermissions,
-  setRBACPermissionsK8S,
-} from '@e2e/utils/rbac-cmd-line';
+import { setRBACPermissionsK8S } from '@e2e/utils/rbac-cmd-line';
 import { expect, test } from '@playwright/test';
 import { moveForward } from '@e2e/utils/db-wizard';
 import {
@@ -22,13 +18,8 @@ test.describe('Schedules RBAC', () => {
   let namespace = '';
   test.beforeAll(async ({ request }) => {
     const token = await getTokenFromLocalStorage();
-    await saveOldRBACPermissions();
     const namespaces = await getNamespacesFn(token, request);
     namespace = namespaces[0];
-  });
-
-  test.afterAll(async () => {
-    await restoreOldRBACPermissions();
   });
 
   test('Schedule creation from wizard', async ({ page }) => {

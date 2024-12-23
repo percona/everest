@@ -1,12 +1,13 @@
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
-import {
-  restoreOldRBACPermissions,
-  saveOldRBACPermissions,
-  setRBACPermissionsK8S,
-} from '@e2e/utils/rbac-cmd-line';
+import { setRBACPermissionsK8S } from '@e2e/utils/rbac-cmd-line';
 import { expect, test } from '@playwright/test';
-import { MOCK_CLUSTER_NAME, mockBackups, mockClusters } from './utils';
+import {
+  MOCK_CLUSTER_NAME,
+  mockBackups,
+  mockClusters,
+  mockStorages,
+} from './utils';
 
 const { CI_USER: user } = process.env;
 
@@ -14,13 +15,8 @@ test.describe('Backups RBAC', () => {
   let namespace = '';
   test.beforeAll(async ({ request }) => {
     const token = await getTokenFromLocalStorage();
-    await saveOldRBACPermissions();
     const namespaces = await getNamespacesFn(token, request);
     namespace = namespaces[0];
-  });
-
-  test.afterAll(async () => {
-    await restoreOldRBACPermissions();
   });
 
   test('Hide Backups', async ({ page }) => {
@@ -32,6 +28,7 @@ test.describe('Backups RBAC', () => {
     ]);
     await mockClusters(page, namespace);
     await mockBackups(page, namespace);
+    await mockStorages(page, namespace);
     await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}/backups`);
     await expect(page.getByRole('table')).toBeVisible();
     const rows = page.locator('.MuiTableRow-root:not(.MuiTableRow-head)');
@@ -48,6 +45,7 @@ test.describe('Backups RBAC', () => {
     ]);
     await mockClusters(page, namespace);
     await mockBackups(page, namespace);
+    await mockStorages(page, namespace);
     await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}/backups`);
     await expect(page.getByRole('table')).toBeVisible();
     await expect(page.getByTestId('row-actions-menu-button')).not.toBeVisible();
@@ -70,6 +68,7 @@ test.describe('Backups RBAC', () => {
     ]);
     await mockClusters(page, namespace);
     await mockBackups(page, namespace);
+    await mockStorages(page, namespace);
     await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}/backups`);
     await expect(page.getByTestId('row-actions-menu-button')).toBeVisible();
     await page.getByTestId('row-actions-menu-button').click();
@@ -92,6 +91,7 @@ test.describe('Backups RBAC', () => {
     ]);
     await mockClusters(page, namespace);
     await mockBackups(page, namespace);
+    await mockStorages(page, namespace);
     await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}/backups`);
     await expect(page.getByTestId('menu-button')).toBeVisible();
     await page.getByText('Create backup').click();
@@ -114,6 +114,7 @@ test.describe('Backups RBAC', () => {
     ]);
     await mockClusters(page, namespace);
     await mockBackups(page, namespace);
+    await mockStorages(page, namespace);
     await page.goto(`/databases/${namespace}/${MOCK_CLUSTER_NAME}/backups`);
     await expect(page.getByTestId('menu-button')).toBeVisible();
     await page.getByText('Create backup').click();

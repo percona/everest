@@ -1,11 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
-import {
-  restoreOldRBACPermissions,
-  saveOldRBACPermissions,
-  setRBACPermissionsK8S,
-} from '@e2e/utils/rbac-cmd-line';
+import { setRBACPermissionsK8S } from '@e2e/utils/rbac-cmd-line';
 
 const { CI_USER: user } = process.env;
 
@@ -14,13 +10,8 @@ test.describe('Namespaces RBAC', () => {
   let namespaces = [];
 
   test.beforeAll(async ({ request }) => {
-    await saveOldRBACPermissions();
     const token = await getTokenFromLocalStorage();
     namespaces = await getNamespacesFn(token, request);
-  });
-
-  test.afterAll(async () => {
-    await restoreOldRBACPermissions();
   });
 
   test('should show upgrade button when there is permission to update DB engines', async ({

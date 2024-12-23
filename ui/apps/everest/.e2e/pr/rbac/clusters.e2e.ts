@@ -2,11 +2,7 @@ import { expect, test } from '@playwright/test';
 import { mockEngines, MOCK_CLUSTER_NAME, mockClusters } from './utils';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
-import {
-  saveOldRBACPermissions,
-  restoreOldRBACPermissions,
-  setRBACPermissionsK8S,
-} from '@e2e/utils/rbac-cmd-line';
+import { setRBACPermissionsK8S } from '@e2e/utils/rbac-cmd-line';
 
 const { CI_USER: user } = process.env;
 
@@ -15,13 +11,8 @@ test.describe('Clusters RBAC', () => {
 
   test.beforeAll(async ({ request }) => {
     const token = await getTokenFromLocalStorage();
-    await saveOldRBACPermissions();
     const namespaces = await getNamespacesFn(token, request);
     namespace = namespaces[0];
-  });
-
-  test.afterAll(async () => {
-    await restoreOldRBACPermissions();
   });
 
   test('permitted cluster creation with present clusters', async ({ page }) => {
