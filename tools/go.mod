@@ -13,7 +13,7 @@ require (
 	github.com/vburenin/ifacemaker v1.2.1
 	github.com/vektra/mockery/v2 v2.46.2
 	golang.org/x/tools v0.28.0
-	helm.sh/helm/v3 v3.16.3
+	helm.sh/helm/v3 v3.16.4
 	mvdan.cc/gofumpt v0.7.0
 )
 
@@ -314,16 +314,16 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.5.1 // indirect
-	k8s.io/api v0.31.1 // indirect
-	k8s.io/apiextensions-apiserver v0.31.1 // indirect
-	k8s.io/apimachinery v0.31.1 // indirect
-	k8s.io/apiserver v0.31.1 // indirect
-	k8s.io/cli-runtime v0.31.1 // indirect
-	k8s.io/client-go v0.31.1 // indirect
-	k8s.io/component-base v0.31.1 // indirect
+	k8s.io/api v0.31.3 // indirect
+	k8s.io/apiextensions-apiserver v0.31.3 // indirect
+	k8s.io/apimachinery v0.31.3 // indirect
+	k8s.io/apiserver v0.31.3 // indirect
+	k8s.io/cli-runtime v0.31.3 // indirect
+	k8s.io/client-go v0.31.3 // indirect
+	k8s.io/component-base v0.31.3 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
-	k8s.io/kubectl v0.31.1 // indirect
+	k8s.io/kubectl v0.31.3 // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
 	mvdan.cc/unparam v0.0.0-20240528143540-8a5130ca722f // indirect
 	oras.land/oras-go v1.2.5 // indirect
