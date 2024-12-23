@@ -67,13 +67,13 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      testDir: '.',
       name: 'auth',
+      testDir: '.',
       testMatch: /auth.setup\.ts/,
     },
     {
-      testDir: '.',
       name: 'setup',
+      testDir: './setup',
       testMatch: /global.setup\.ts/,
       teardown: 'teardown',
       use: {
@@ -82,12 +82,36 @@ export default defineConfig({
       dependencies: ['auth'],
     },
     {
-      testDir: '.',
       name: 'teardown',
+      testDir: './teardown',
       use: {
         storageState: STORAGE_STATE_FILE,
       },
       testMatch: /global\.teardown\.ts/,
+    },
+    {
+      name: 'rbac-setup',
+      testDir: './setup',
+      testMatch: /rbac.setup\.ts/,
+      teardown: 'rbac-teardown',
+      use: {
+        storageState: STORAGE_STATE_FILE,
+      },
+    },
+    {
+      name: 'rbac-teardown',
+      testDir: './teardown',
+      testMatch: /rbac\.teardown\.ts/,
+    },
+    {
+      name: 'rbac',
+      use: {
+        browserName: 'chromium',
+        channel: 'chrome',
+        storageState: STORAGE_STATE_FILE,
+      },
+      testDir: './pr/rbac',
+      dependencies: ['auth', 'setup', 'rbac-setup'],
     },
     {
       name: 'pr',
@@ -97,7 +121,8 @@ export default defineConfig({
         storageState: STORAGE_STATE_FILE,
       },
       testDir: 'pr',
-      dependencies: ['setup'],
+      testIgnore: ['pr/rbac/**/*'],
+      dependencies: ['setup', 'rbac'],
     },
     {
       name: 'release',

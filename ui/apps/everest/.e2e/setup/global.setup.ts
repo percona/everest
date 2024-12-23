@@ -15,9 +15,8 @@
 
 import { test as setup, expect, APIResponse } from '@playwright/test';
 import 'dotenv/config';
-import { getTokenFromLocalStorage } from './utils/localStorage';
-import { getBucketNamespacesMap } from './constants';
-import { saveOldRBACPermissions } from './utils/rbac-cmd-line';
+import { getTokenFromLocalStorage } from '../utils/localStorage';
+import { getBucketNamespacesMap } from '../constants';
 const {
   EVEREST_LOCATION_ACCESS_KEY,
   EVEREST_LOCATION_SECRET_KEY,
@@ -53,10 +52,6 @@ const doBackupCall = async (fn: () => Promise<APIResponse>, retries = 3) => {
     return Promise.reject();
   }
 };
-
-setup('Save old RBAC permissions', async () => {
-  await saveOldRBACPermissions();
-});
 
 setup('Backup storages', async ({ request }) => {
   const token = await getTokenFromLocalStorage();

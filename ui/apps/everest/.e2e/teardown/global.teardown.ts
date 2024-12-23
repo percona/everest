@@ -14,9 +14,8 @@
 // limitations under the License.
 
 import { test as setup, expect } from '@playwright/test';
-import { getTokenFromLocalStorage } from './utils/localStorage';
-import { getBucketNamespacesMap } from './constants';
-import { restoreOldRBACPermissions } from './utils/rbac-cmd-line';
+import { getTokenFromLocalStorage } from '../utils/localStorage';
+import { getBucketNamespacesMap } from '../constants';
 
 setup.describe.serial('Teardown', () => {
   setup('Delete backup storage', async ({ request }) => {
@@ -62,9 +61,5 @@ setup.describe.serial('Teardown', () => {
     await page.getByRole('menuitem').filter({ hasText: 'Log out' }).click();
 
     await expect(page.getByTestId('login-button')).toBeVisible();
-  });
-
-  setup('Restore old RBAC permissions', async () => {
-    await restoreOldRBACPermissions();
   });
 });
