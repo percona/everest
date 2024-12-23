@@ -152,7 +152,7 @@ export const DbClusterView = () => {
           tableName="dbClusterView"
           emptyState={
             namespaces.length > 0 ? (
-              <EmptyStateDatabases />
+              <EmptyStateDatabases showCreationButton={canAddCluster} />
             ) : (
               <EmptyStateNamespaces />
             )
