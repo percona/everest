@@ -3,6 +3,7 @@ package upgrade
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/AlekSi/pointer"
 	"helm.sh/helm/v3/pkg/cli/values"
@@ -189,9 +190,14 @@ func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version 
 		ReleaseNamespace: common.SystemNamespace,
 		Values:           values,
 	}
+
+	var directory string
+	if u.config.ChartDir != "" {
+		directory = filepath.Join(u.config.ChartDir, "charts/everest-db-namespace")
+	}
 	if err := installer.Init(u.config.KubeconfigPath, helm.ChartOptions{
 		URL:       u.config.RepoURL,
-		Directory: u.config.ChartDir,
+		Directory: directory,
 		Name:      helm.EverestDBNamespaceChartName,
 		Version:   version,
 	}); err != nil {
