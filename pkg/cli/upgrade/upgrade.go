@@ -225,9 +225,10 @@ func (u *Upgrade) setupHelmInstaller(ctx context.Context) error {
 		Values:           values,
 	}
 	if err := installer.Init(u.config.KubeconfigPath, helm.ChartOptions{
-		URL:     u.config.RepoURL,
-		Name:    helm.EverestChartName,
-		Version: u.upgradeToVersion,
+		URL:       u.config.RepoURL,
+		Directory: u.config.ChartDir,
+		Name:      helm.EverestChartName,
+		Version:   u.upgradeToVersion,
 	}); err != nil {
 		return fmt.Errorf("could not initialize Helm installer: %w", err)
 	}
