@@ -186,8 +186,8 @@ func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version 
 	})
 	values := Must(helmutils.MergeVals(helmValuesForDBEngines(dbEngines), overrides))
 	installer := helm.Installer{
-		ReleaseName:      common.SystemNamespace,
-		ReleaseNamespace: common.SystemNamespace,
+		ReleaseName:      namespace,
+		ReleaseNamespace: namespace,
 		Values:           values,
 	}
 
