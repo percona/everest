@@ -26,4 +26,4 @@ SERVICE_IP=$(curl -sfL https://raw.githubusercontent.com/percona/everest/main/de
 kubectl port-forward svc/percona-version-service 8081:80 &
 
 # run everest installation with everest CLI
-"$EVEREST_CTL_PATH" install --chart-dir "$HELM_PATH/charts/everest" --version "$VERSION" --version-metadata-url http://localhost:8081  --operator.xtradb-cluster --operator.mongodb --operator.postgresql --skip-wizard --namespaces everest -v --helm.set "versionMetadataURL=http://$SERVICE_IP"
+"$EVEREST_CTL_PATH" install --chart-dir "$HELM_PATH/charts/everest" --version "$VERSION" --version-metadata-url http://localhost:8081  --operator.xtradb-cluster --operator.mongodb --operator.postgresql --skip-wizard --namespaces everest-ui -v --helm.set "versionMetadataURL=http://$SERVICE_IP"
