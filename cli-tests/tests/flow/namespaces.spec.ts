@@ -43,7 +43,7 @@ test.describe('Everest CLI install', async () => {
 
     await test.step('run everest install (no database namespace))', async () => {
       const out = await cli.everestExecSkipWizard(
-        `install`,
+        `install --skip-db-namespace`,
       );
 
       await out.assertSuccess();
@@ -54,7 +54,7 @@ test.describe('Everest CLI install', async () => {
         '✓ Ensuring OLM components are ready',
         '✓ Ensuring Everest CatalogSource is ready',
         '✓ Ensuring monitoring stack is ready',
-        '🚀 Everest has been successfully installed!',
+        'Thank you for installing Everest',
       ]);
     });
     await page.waitForTimeout(10_000);
