@@ -21,10 +21,12 @@ import { useDBEnginesForDbEngineTypes } from 'hooks';
 import { dbEngineToDbType } from '@percona/utils';
 import { humanizeDbType } from '@percona/ui-lib';
 import { Link, useNavigate } from 'react-router-dom';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 
 export const CreateDbButton = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [showDropdownButton, setShowDropdownButton] = useState(false);
+  const { canCreate } = useNamespacePermissionsForResource('database-clusters');
 
   const open = Boolean(anchorEl);
 
@@ -33,7 +35,11 @@ export const CreateDbButton = () => {
       refetchInterval: 30 * 1000,
     });
 
-  const availableEngines = availableDbTypes.filter((item) => !!item.available);
+  const availableEngines = availableDbTypes.filter(
+    (item) =>
+      !!item.available &&
+      item.dbEngines.some((engine) => canCreate.includes(engine.namespace))
+  );
   const navigate = useNavigate();
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
