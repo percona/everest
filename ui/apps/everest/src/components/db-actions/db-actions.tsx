@@ -56,6 +56,12 @@ export const DbActions = ({
   const namespace = dbCluster.metadata.namespace;
   const restoring = dbCluster.status?.status === DbClusterStatus.restoring;
   const deleting = dbCluster.status?.status === DbClusterStatus.deleting;
+  const hasSchedules = !!(
+    dbCluster.spec.backup && (dbCluster.spec.backup.schedules || []).length > 0
+  );
+  const monitoringEnabled = !!(
+    dbCluster.spec.monitoring && dbCluster.spec.monitoring.monitoringConfigName
+  );
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
@@ -84,9 +90,28 @@ export const DbActions = ({
     `${namespace}/${dbClusterName}`
   );
 
+  const { canCreate: canCreateBackups } = useRBACPermissions(
+    'database-cluster-backups',
+    `${namespace}/${dbClusterName}`
+  );
+
+  const { canRead: canReadMonitoring } = useRBACPermissions(
+    'monitoring-instances',
+    `${namespace}/${dbClusterName}`
+  );
+
   const canRestore = canCreateRestore && canReadCredentials;
-  const canCreateClusterFromBackup = canRestore && canCreateClusters;
   const noActionAvailable = !canUpdate && !canDelete && !canRestore;
+  let canCreateClusterFromBackup = canRestore && canCreateClusters;
+
+  if (hasSchedules) {
+    canCreateClusterFromBackup = canCreateClusterFromBackup && canCreateBackups;
+  }
+
+  if (monitoringEnabled) {
+    canCreateClusterFromBackup =
+      canCreateClusterFromBackup && canReadMonitoring;
+  }
 
   const sx = {
     display: 'flex',

@@ -15,14 +15,13 @@
 
 import { test as setup, expect, APIResponse } from '@playwright/test';
 import 'dotenv/config';
-import { getTokenFromLocalStorage } from './utils/localStorage';
-import { getBucketNamespacesMap } from './constants';
+import { getTokenFromLocalStorage } from '../utils/localStorage';
+import { getBucketNamespacesMap } from '../constants';
 const {
   EVEREST_LOCATION_ACCESS_KEY,
   EVEREST_LOCATION_SECRET_KEY,
   EVEREST_LOCATION_REGION,
   EVEREST_LOCATION_URL,
-  EVEREST_BUCKETS_NAMESPACES_MAP,
 } = process.env;
 
 const doBackupCall = async (fn: () => Promise<APIResponse>, retries = 3) => {
