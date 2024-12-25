@@ -14,33 +14,38 @@
 // limitations under the License.
 
 import { useEffect, useState } from 'react';
-import { Box, Button, Menu, MenuItem, Skeleton, Stack } from '@mui/material';
+import { Box, Button, Menu, MenuItem } from '@mui/material';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import { Messages } from '../dbClusterView.messages';
 import { useDBEnginesForDbEngineTypes } from 'hooks';
 import { dbEngineToDbType } from '@percona/utils';
 import { humanizeDbType } from '@percona/ui-lib';
 import { Link, useNavigate } from 'react-router-dom';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 
 export const CreateDbButton = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [showDropdownButton, setShowDropdownButton] = useState(false);
+  const { canCreate } = useNamespacePermissionsForResource('database-clusters');
 
   const open = Boolean(anchorEl);
 
-  const [availableDbTypes, availableDbTypesFetching, refetch] =
-    useDBEnginesForDbEngineTypes();
+  const [availableDbTypes, availableDbTypesFetching] =
+    useDBEnginesForDbEngineTypes(undefined, {
+      refetchInterval: 30 * 1000,
+    });
 
-  const availableEngines = availableDbTypes.filter((item) => !!item.available);
+  const availableEngines = availableDbTypes.filter(
+    (item) =>
+      !!item.available &&
+      item.dbEngines.some((engine) => canCreate.includes(engine.namespace))
+  );
   const navigate = useNavigate();
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (availableEngines.length > 1) {
       event.stopPropagation();
       setAnchorEl(event.currentTarget);
-      if (!availableDbTypesFetching) {
-        refetch();
-      }
     } else {
       navigate('/databases/new', {
         state: { selectedDbEngine: availableEngines[0].type },
@@ -53,11 +58,11 @@ export const CreateDbButton = () => {
 
   useEffect(() => {
     if (availableDbTypesFetching) {
+      setShowDropdownButton(false);
+    } else {
       setTimeout(() => {
         setShowDropdownButton(true);
-      }, 500);
-    } else {
-      setShowDropdownButton(false);
+      }, 300);
     }
   }, [availableDbTypesFetching]);
 
@@ -65,11 +70,7 @@ export const CreateDbButton = () => {
 
   return (
     <Box>
-      {!showDropdownButton ? (
-        <Button size="small" variant="contained" disabled sx={buttonStyle}>
-          {Messages.loading}
-        </Button>
-      ) : (
+      {showDropdownButton ? (
         <Button
           data-testid="add-db-cluster-button"
           size="small"
@@ -83,8 +84,12 @@ export const CreateDbButton = () => {
         >
           {Messages.createDatabase}
         </Button>
+      ) : (
+        <Button disabled size="small" variant="contained" sx={buttonStyle}>
+          {Messages.loading}
+        </Button>
       )}
-      {showDropdownButton && availableEngines.length > 1 && (
+      {availableEngines.length > 1 && (
         <Menu
           data-testid="add-db-cluster-button-menu"
           anchorEl={anchorEl}
@@ -96,13 +101,7 @@ export const CreateDbButton = () => {
             sx: { width: anchorEl && anchorEl.offsetWidth },
           }}
         >
-          {availableDbTypesFetching ? (
-            <Stack sx={{ gap: '3px' }}>
-              <Skeleton variant="rectangular" height={38} />
-              <Skeleton variant="rectangular" height={38} />
-              <Skeleton variant="rectangular" height={38} />
-            </Stack>
-          ) : (
+          {
             <Box>
               {availableDbTypes.map((item) => (
                 <MenuItem
@@ -124,7 +123,7 @@ export const CreateDbButton = () => {
                 </MenuItem>
               ))}
             </Box>
-          )}
+          }
         </Menu>
       )}
     </Box>
