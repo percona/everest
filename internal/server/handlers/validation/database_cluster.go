@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	goversion "github.com/hashicorp/go-version"
 	"golang.org/x/mod/semver"
@@ -295,10 +294,11 @@ func validatePitrSpec(cluster *everestv1alpha1.DatabaseCluster) error {
 func checkDuplicateSchedules(schedules []everestv1alpha1.BackupSchedule) error {
 	unique := make(map[string]struct{})
 	for _, schedule := range schedules {
-		if _, ok := unique[schedule.Schedule]; ok {
+		key := schedule.Schedule
+		if _, ok := unique[key]; ok {
 			return errDuplicatedSchedules
 		}
-		unique[schedule.Name] = struct{}{}
+		unique[key] = struct{}{}
 	}
 	return nil
 }
@@ -376,7 +376,7 @@ func validateDataSource(dataSource *everestv1alpha1.DataSource) error {
 				return errDataSourceNoPitrDateSpecified
 			}
 
-			if _, err := time.Parse(dateFormat, dataSource.PITR.Date.String()); err != nil {
+			if dataSource.PITR.Date.IsZero() {
 				return errDataSourceWrongDateFormat
 			}
 		} else {
