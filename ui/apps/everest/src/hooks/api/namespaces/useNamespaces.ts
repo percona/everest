@@ -32,8 +32,12 @@ export const useNamespaces = () =>
     queryFn: getNamespacesFn,
   });
 
-export const useDBEnginesForNamespaces = (retrieveUpgradingEngines = false) => {
-  const { data: namespaces = [] } = useNamespaces();
+export const useDBEnginesForNamespaces = (
+  retrieveUpgradingEngines = false,
+  options?: PerconaQueryOptions<DbEngine[], unknown, DbEngine[]>
+) => {
+  const { data: namespaces = [], isFetching: fetchingNamespaces } =
+    useNamespaces();
   const { canRead } = useNamespacePermissionsForResource('database-engines');
 
   const queries = namespaces.map<
@@ -49,6 +53,7 @@ export const useDBEnginesForNamespaces = (retrieveUpgradingEngines = false) => {
       return dbEnginesQuerySelect(data, retrieveUpgradingEngines);
     },
     enabled: canRead.includes(namespace),
+    ...options,
   }));
 
   const queryResults = useQueries({
@@ -63,7 +68,7 @@ export const useDBEnginesForNamespaces = (retrieveUpgradingEngines = false) => {
     namespace: namespaces[i],
     ...item,
   }));
-  return { results, refetchAll };
+  return { results, refetchAll, fetchingNamespaces };
 };
 
 export interface DbEngineForNamedpaceExpanded {
@@ -76,16 +81,20 @@ export interface DbEnginesForDbTypeExpanded {
   dbEngines: DbEngineForNamedpaceExpanded[];
 }
 export const useDBEnginesForDbEngineTypes = (
-  dbEngineType?: DbEngineType
+  dbEngineType?: DbEngineType,
+  options?: PerconaQueryOptions<DbEngine[], unknown, DbEngine[]>
 ): [
   dbEnginesFoDbEngineTypes: DbEnginesForDbTypeExpanded[],
   dbEnginesFoDbEngineTypesFetching: boolean,
   refetch: () => void,
 ] => {
-  const { results: dbEnginesForNamespaces, refetchAll } =
-    useDBEnginesForNamespaces();
+  const {
+    results: dbEnginesForNamespaces,
+    refetchAll,
+    fetchingNamespaces,
+  } = useDBEnginesForNamespaces(false, options);
   const dbEnginesFetching = dbEnginesForNamespaces.some(
-    (result) => result.isFetching
+    (result) => result.isLoading || fetchingNamespaces
   );
 
   const dbEngineTypes = useMemo(
@@ -95,7 +104,7 @@ export const useDBEnginesForDbEngineTypes = (
         : (Object.keys(DbEngineType) as Array<keyof typeof DbEngineType>).map(
             (type) => DbEngineType[type]
           ),
-    [DbEngineType]
+    [dbEngineType]
   );
 
   const availableDbEngineTypes = useMemo(() => {

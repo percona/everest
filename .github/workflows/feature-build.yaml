@@ -13,7 +13,7 @@ on:
         description: "Everest operator branch with the feature to checkout"
       vs_branch:
         required: false
-        default: main
+        default: production
         description: "Version Service branch with the feature to checkout"
       helm_branch:
         required: false
@@ -350,8 +350,8 @@ jobs:
 
       - name: Everest - build binary
         run: |
-          RELEASE_VERSION=${VERSION} CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
-          RELEASE_VERSION=${VERSION} make release-cli
+          RELEASE_VERSION=${VERSION_TAG} CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
+          RELEASE_VERSION=${VERSION_TAG} make release-cli
 
       - name: Upload CLI artefacts
         uses: actions/upload-artifact@v4
@@ -424,5 +424,19 @@ jobs:
 
       - name: Info
         run: |
-          echo "::notice title=Feature Build $VERSION is created"
+          printf "To install FB using helm:\n\
+          1. Download the 'helm' artifact below.\n\
+          2. Navigate to \`/everest/dev/fb directory\`.\n\
+          3. Run the command:\n\`\`\`VS_IMAGE=$VS_TAG HELM_PATH=<path_to_your_helmchart> sh helm.sh\`\`\`\n\
+              \nexample:\n\`\`\`VS_IMAGE=everest-test20241217095910 HELM_PATH=/Users/oxana/Downloads/percona-helm-charts sh helm.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+          
+          printf "____________________\n" >> "$GITHUB_STEP_SUMMARY"
+          
+          printf "To install FB using CLI:\n\
+          1. Download the 'helm' artifact below.\n\
+          2. Download a CLI build from artifacts below.\n\
+          3. Navigate to \`/everest/dev/fb\` directory.\n\
+          4. Run the command:\n\`\`\`VS_IMAGE=$VS_TAG VERSION=$VERSION EVEREST_CTL_PATH=<path_to_everestctl> HELM_PATH=<path_to_your_helmchart>  sh cli.sh\`\`\`\n\
+              \nexample:\n\`\`\`VS_IMAGE=everest-test20241217095910 VERSION=1.10000.0-rc20241217095910 HELM_PATH=/Users/oxana/Downloads/percona-helm-charts EVEREST_CTL_PATH=/Users/oxana/Downloads/everestctl-darwin-arm64 sh cli.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+
 
