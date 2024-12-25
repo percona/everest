@@ -14,4 +14,4 @@ fi
 SERVICE_IP=$(curl -sfL https://raw.githubusercontent.com/percona/everest/main/dev/fb/vs.sh | bash -s)
 
 # run everest installation with helm
-helm install everest-core "$HELM_PATH/charts/everest" --namespace=everest-system --set versionMetadataURL="http://$SERVICE_IP" --timeout=10m --devel
+helm install everest-core "$HELM_PATH/charts/everest" --namespace=everest-system --create-namespace --set versionMetadataURL="http://$SERVICE_IP" --timeout=10m --devel
