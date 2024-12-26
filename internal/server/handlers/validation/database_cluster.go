@@ -440,10 +440,6 @@ func validatePGReposForAPIDB(
 	dbc *everestv1alpha1.DatabaseCluster,
 	getBackupsFunc func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error),
 ) error {
-	if len(dbc.Spec.Backup.Schedules) == 0 {
-		return nil
-	}
-
 	bs := make(map[string]bool)
 	for _, shed := range dbc.Spec.Backup.Schedules {
 		bs[shed.BackupStorageName] = true
