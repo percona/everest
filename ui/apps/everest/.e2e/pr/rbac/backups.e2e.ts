@@ -9,18 +9,17 @@ import {
   mockStorages,
 } from './utils';
 
-const { CI_USER: user } = process.env;
-
 test.describe('Backups RBAC', () => {
   let namespace = '';
   test.beforeAll(async ({ request }) => {
     const token = await getTokenFromLocalStorage();
     const namespaces = await getNamespacesFn(token, request);
     namespace = namespaces[0];
+    console.log('Namespace:', namespace);
   });
 
   test('Hide Backups', async ({ page }) => {
-    await setRBACPermissionsK8S(user, [
+    await setRBACPermissionsK8S([
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['backup-storages', '*', `${namespace}/*`],
@@ -36,7 +35,7 @@ test.describe('Backups RBAC', () => {
   });
 
   test('Show Backups', async ({ page }) => {
-    await setRBACPermissionsK8S(user, [
+    await setRBACPermissionsK8S([
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['backup-storages', '*', `${namespace}/*`],
@@ -54,7 +53,7 @@ test.describe('Backups RBAC', () => {
   });
 
   test('Delete backup', async ({ page }) => {
-    await setRBACPermissionsK8S(user, [
+    await setRBACPermissionsK8S([
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['backup-storages', '*', `${namespace}/*`],
@@ -78,7 +77,7 @@ test.describe('Backups RBAC', () => {
   });
 
   test('Create on-demand backup', async ({ page }) => {
-    await setRBACPermissionsK8S(user, [
+    await setRBACPermissionsK8S([
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['backup-storages', '*', `${namespace}/*`],
@@ -100,7 +99,7 @@ test.describe('Backups RBAC', () => {
   });
 
   test('Create scheduled backup', async ({ page }) => {
-    await setRBACPermissionsK8S(user, [
+    await setRBACPermissionsK8S([
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['backup-storages', '*', `${namespace}/*`],

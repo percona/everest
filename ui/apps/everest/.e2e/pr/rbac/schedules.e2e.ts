@@ -23,7 +23,7 @@ test.describe('Schedules RBAC', () => {
   });
 
   test('Schedule creation from wizard', async ({ page }) => {
-    await setRBACPermissionsK8S(user, [
+    await setRBACPermissionsK8S([
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['database-clusters', 'read', `${namespace}/*`],
@@ -49,7 +49,7 @@ test.describe('Schedules RBAC', () => {
   test('Hide schedule button from wizard when not allowed to create backups', async ({
     page,
   }) => {
-    await setRBACPermissionsK8S(user, [
+    await setRBACPermissionsK8S([
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['database-clusters', 'read', `${namespace}/*`],
@@ -72,7 +72,7 @@ test.describe('Schedules RBAC', () => {
   });
 
   test('Schedule creation from DB details', async ({ page }) => {
-    await setRBACPermissionsK8S(user, [
+    await setRBACPermissionsK8S([
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['database-clusters', 'read', `${namespace}/*`],
@@ -97,7 +97,7 @@ test.describe('Schedules RBAC', () => {
   test('Hide schedule button from DB details when not allowed to create backups', async ({
     page,
   }) => {
-    await setRBACPermissionsK8S(user, [
+    await setRBACPermissionsK8S([
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['database-clusters', 'read', `${namespace}/*`],
@@ -119,7 +119,7 @@ test.describe('Schedules RBAC', () => {
   test('Hide schedule button from DB details when not allowed to update DB', async ({
     page,
   }) => {
-    await setRBACPermissionsK8S(user, [
+    await setRBACPermissionsK8S([
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
       ['database-clusters', 'read', `${namespace}/*`],

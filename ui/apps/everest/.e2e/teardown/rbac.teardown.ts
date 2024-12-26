@@ -1,6 +1,8 @@
 import { restoreOldRBACPermissions } from '@e2e/utils/rbac-cmd-line';
-import { test as setup, expect } from '@playwright/test';
+import { switchUser } from '@e2e/utils/user';
+import { test as setup } from '@playwright/test';
 
-setup('Restore old RBAC permissions', async () => {
+setup('RBAC teardown', async ({ page }) => {
+  await switchUser(page, process.env.CI_USER, process.env.CI_PASSWORD);
   await restoreOldRBACPermissions();
 });

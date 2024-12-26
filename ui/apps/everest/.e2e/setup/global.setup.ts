@@ -17,6 +17,7 @@ import { test as setup, expect, APIResponse } from '@playwright/test';
 import 'dotenv/config';
 import { getTokenFromLocalStorage } from '../utils/localStorage';
 import { getBucketNamespacesMap } from '../constants';
+import { saveOldRBACPermissions } from '@e2e/utils/rbac-cmd-line';
 const {
   EVEREST_LOCATION_ACCESS_KEY,
   EVEREST_LOCATION_SECRET_KEY,
@@ -121,6 +122,10 @@ setup('Close modal permanently', async ({ page }) => {
   await expect(page.getByTestId('lets-go-button')).toBeVisible();
   await page.getByTestId('lets-go-button').click();
   await page.context().storageState({ path: 'user.json' });
+});
+
+setup('Save old RBAC permissions', async ({ request }) => {
+  await saveOldRBACPermissions();
 });
 
 // setup('Monitoring setup', async ({ request }) => {
