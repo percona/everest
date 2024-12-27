@@ -428,7 +428,7 @@ jobs:
           1. Download the 'helm' artifact below.\n\
           2. Navigate to \`/everest/dev/fb directory\`.\n\
           3. Run the command:\n\`\`\`VS_IMAGE=$VS_TAG HELM_PATH=<path_to_your_helmchart> sh helm.sh\`\`\`\n\
-              \nexample:\n\`\`\`VS_IMAGE=everest-test20241217095910 HELM_PATH=/Users/oxana/Downloads/percona-helm-charts sh helm.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+              \nexample:\n\`\`\`VS_IMAGE=$VS_TAG HELM_PATH=/Users/oxana/Downloads/percona-helm-charts sh helm.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
           
           printf "____________________\n" >> "$GITHUB_STEP_SUMMARY"
           
@@ -437,6 +437,6 @@ jobs:
           2. Download a CLI build from artifacts below.\n\
           3. Navigate to \`/everest/dev/fb\` directory.\n\
           4. Run the command:\n\`\`\`VS_IMAGE=$VS_TAG VERSION=$VERSION EVEREST_CTL_PATH=<path_to_everestctl> HELM_PATH=<path_to_your_helmchart>  sh cli.sh\`\`\`\n\
-              \nexample:\n\`\`\`VS_IMAGE=everest-test20241217095910 VERSION=1.10000.0-rc20241217095910 HELM_PATH=/Users/oxana/Downloads/percona-helm-charts EVEREST_CTL_PATH=/Users/oxana/Downloads/everestctl-darwin-arm64 sh cli.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+              \nexample:\n\`\`\`VS_IMAGE=$VS_TAG VERSION=$VERSION HELM_PATH=/Users/oxana/Downloads/percona-helm-charts EVEREST_CTL_PATH=/Users/oxana/Downloads/everestctl-darwin-arm64 sh cli.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
 
 
