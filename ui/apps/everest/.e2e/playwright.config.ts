@@ -92,8 +92,6 @@ export default defineConfig({
     {
       name: 'pr',
       use: {
-        browserName: 'chromium',
-        channel: 'chrome',
         storageState: STORAGE_STATE_FILE,
       },
       testDir: 'pr',
@@ -102,8 +100,6 @@ export default defineConfig({
     {
       name: 'release',
       use: {
-        browserName: 'chromium',
-        channel: 'chrome',
         storageState: STORAGE_STATE_FILE,
         actionTimeout: 10000,
       },
@@ -113,8 +109,6 @@ export default defineConfig({
     {
       name: 'upgrade',
       use: {
-        browserName: 'chromium',
-        channel: 'chrome',
         storageState: STORAGE_STATE_FILE,
         video: 'retain-on-failure',
         actionTimeout: 10000,
