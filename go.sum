@@ -2214,9 +2214,8 @@ github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/9
 github.com/pelletier/go-toml v1.7.0/go.mod h1:vwGMzjaWMwyfHwgIBhI2YUM4fB6nL6lVAvS1LBMMhTE=
 github.com/pelletier/go-toml/v2 v2.1.0 h1:FnwAJ4oYMvbT/34k9zzHuZNrhlz48GB3/s6at6/MHO4=
 github.com/pelletier/go-toml/v2 v2.1.0/go.mod h1:tJU2Z3ZkXwnxa4DPO899bsyIoywizdUvyaeZurnPPDc=
-github.com/percona/everest-operator v0.6.0-dev1.0.20241203113640-8dd4a9d32733/go.mod h1:FTKcDBn/1BHKNDnocKBAWH2mG3BYyD6yLXtoS58o1BM=
-github.com/percona/everest-operator v1.4.0-rc4 h1:wsF6cIZIsB7dX3T86W9bKGHx+mY1xk6x0Ev+CuMxmt8=
-github.com/percona/everest-operator v1.4.0-rc4/go.mod h1:FTKcDBn/1BHKNDnocKBAWH2mG3BYyD6yLXtoS58o1BM=
+github.com/percona/everest-operator v1.4.0-rc5 h1:hrjiKS3N/yFtAFj4KRIsGERmt44OASps/cabwK98MKw=
+github.com/percona/everest-operator v1.4.0-rc5/go.mod h1:FTKcDBn/1BHKNDnocKBAWH2mG3BYyD6yLXtoS58o1BM=
 github.com/percona/percona-backup-mongodb v1.8.1-0.20241002124601-957ac501f939 h1:OggdqSzqe9pO3A4GaRlrLwZXS3zEQ84O4+7Jm9cg74s=
 github.com/percona/percona-backup-mongodb v1.8.1-0.20241002124601-957ac501f939/go.mod h1:KhIlTT4wR2mIkMvDtEFerr9zaADJorL7UThSztzxBaY=
 github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241226165327-04f582fcfc45 h1:StEj7V4VEGrgKZRWCpRHg45IogTNOxkWinpnegqgCv8=
