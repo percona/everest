@@ -123,7 +123,7 @@ To install and provision Percona Everest to Kubernetes:
 **Commercial Support**  | **Community Support** |
 :-: | :-: |
 | <br/>Percona offers expert cloud-native support and services to simplify your database management, featuring 24/7 assistance, consulting, managed services, and training designed to maximize your cloud database operations.<br/><br/>  | <br/>Connect with our engineers and fellow users for general questions, troubleshooting, and sharing feedback and ideas.<br/><br/>  | 
-| **[Get Percona Support](https://hubs.ly/Q02YRLsL0)** | **[Visit our Forum](https://forums.percona.com/c/percona-everest/81)** |
+| **[Get Percona Support](https://hubs.ly/Q02ZTH8-0)** | **[Visit our Forum](https://forums.percona.com/c/percona-everest/81)** |
 
 
 # Contributing

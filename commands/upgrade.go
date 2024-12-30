@@ -74,6 +74,8 @@ func initUpgradeFlags(cmd *cobra.Command) {
 	cmd.Flags().String(cli.FlagVersionMetadataURL, "https://check.percona.com", "URL to retrieve version metadata information from")
 	cmd.Flags().Bool(cli.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
 
+	cmd.Flags().String(helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
+	cmd.Flags().MarkHidden(helm.FlagChartDir) //nolint:errcheck,gosec
 	cmd.Flags().String(helm.FlagRepository, helm.DefaultHelmRepoURL, "Helm chart repository to download the Everest charts from")
 	cmd.Flags().StringSlice(helm.FlagHelmSet, []string{}, "Set helm values on the command line (can specify multiple values with commas: key1=val1,key2=val2)")
 	cmd.Flags().StringSliceP(helm.FlagHelmValues, "f", []string{}, "Specify values in a YAML file or a URL (can specify multiple)")
@@ -97,6 +99,7 @@ func initUpgradeViperFlags(cmd *cobra.Command) {
 
 	viper.BindPFlag(upgrade.FlagSkipEnvDetection, cmd.Flags().Lookup(upgrade.FlagSkipEnvDetection)) //nolint:errcheck,gosec
 
+	viper.BindPFlag(helm.FlagChartDir, cmd.Flags().Lookup(helm.FlagChartDir))                                 //nolint:errcheck,gosec
 	viper.BindPFlag(helm.FlagRepository, cmd.Flags().Lookup(helm.FlagRepository))                             //nolint:errcheck,gosec
 	viper.BindPFlag(helm.FlagHelmSet, cmd.Flags().Lookup(helm.FlagHelmSet))                                   //nolint:errcheck,gosec
 	viper.BindPFlag(helm.FlagHelmValues, cmd.Flags().Lookup(helm.FlagHelmValues))                             //nolint:errcheck,gosec
