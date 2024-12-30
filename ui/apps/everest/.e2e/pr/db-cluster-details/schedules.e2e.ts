@@ -84,7 +84,7 @@ test.describe('Schedules List', async () => {
     await page.getByTestId('backups').click();
     await page.getByTestId('scheduled-backups').click();
 
-    expect(page.getByTestId('schedule-30 * * * *-text')).toHaveText(
+    expect(page.getByTestId('schedule-0 0 * * *-text')).toHaveText(
       'Daily at 12:00 AM'
     );
   });
