@@ -42,8 +42,8 @@ export const updateDbCluster = (
             ...schedule,
             schedule: cronConverter(
               schedule.schedule,
-              'UTC',
-              Intl.DateTimeFormat().resolvedOptions().timeZone
+              Intl.DateTimeFormat().resolvedOptions().timeZone,
+              'UTC'
             ),
           })),
         },
