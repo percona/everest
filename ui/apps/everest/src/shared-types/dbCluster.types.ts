@@ -73,6 +73,7 @@ interface Engine {
   type: DbEngineType;
   version?: string;
   config?: string;
+  affinity?: unknown;
 }
 
 export interface ProxyExposeConfig {
@@ -85,6 +86,7 @@ export interface Proxy {
   expose: ProxyExposeConfig;
   resources?: Resources;
   type: ProxyType;
+  affinity?: unknown;
 }
 
 export interface DataSource {
@@ -104,12 +106,14 @@ export interface Monitoring {
 export interface Sharding {
   configServer: {
     replicas: number;
+    affinity?: unknown;
   };
   shards: number;
   enabled: boolean;
 }
 
 export interface Spec {
+  affinity?: unknown;
   allowUnsafeConfiguration?: boolean;
   backup?: Backup;
   engine: Engine;
