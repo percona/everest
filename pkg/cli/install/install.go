@@ -221,7 +221,7 @@ func (o *Install) printPostInstallMessage(out io.Writer) {
 
 	message += bold("ACCESS THE EVEREST UI:\n\n")
 	message += "To access the web UI, set up port-forwarding and visit http://localhost:8080 in your browser:\n\n"
-	message += "\tkubectl port-forward -n everest-system svc/everest-server 8080:80"
+	message += "\tkubectl port-forward -n everest-system svc/everest 8080:8080"
 	message += "\n"
 
 	fmt.Fprint(out, message)
