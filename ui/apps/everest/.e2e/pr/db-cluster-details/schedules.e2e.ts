@@ -48,7 +48,7 @@ test.describe('Schedules List', async () => {
             backupStorageName: JSON.parse(EVEREST_BUCKETS_NAMESPACES_MAP)[0][0],
             enabled: true,
             name: 'backup-1',
-            schedule: '0 0 * * *',
+            schedule: '30 18 * * *',
           },
         ],
       },
