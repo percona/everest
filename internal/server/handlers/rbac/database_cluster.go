@@ -22,6 +22,12 @@ func (h *rbacHandler) CreateDatabaseCluster(ctx context.Context, user string, db
 	if err := h.enforce(user, rbac.ResourceDatabaseClusters, rbac.ActionCreate, object); err != nil {
 		return nil, err
 	}
+
+	engineName := common.OperatorTypeToName[db.Spec.Engine.Type]
+	if err := h.enforce(user, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, engineName)); err != nil {
+		return nil, err
+	}
+
 	schedules := db.Spec.Backup.Schedules
 	if len(schedules) > 0 {
 		// To create a cluster with backup schedules, the user needs to explicitly have permissions to take backups.
