@@ -24,7 +24,7 @@ func New(
 	log *zap.SugaredLogger,
 	kubeClient *kubernetes.Kubernetes,
 ) handlers.Handler {
-	l := log.With("validator", "rbac")
+	l := log.With("handler", "validator")
 	return &validateHandler{
 		log:        l,
 		kubeClient: kubeClient,
