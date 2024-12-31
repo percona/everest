@@ -164,7 +164,6 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				}
 				_, err = h.GetBackupStorage(context.Background(), "test-user", "default", "backup-storage-1")
 				assert.ErrorIs(t, err, tc.wantErr)
-
 			})
 		}
 	})
