@@ -129,6 +129,8 @@ jobs:
     secrets:
       CI_USER: everestadmin
       CI_PASSWORD: everestadmin
+      RBAC_USER: rbac_user
+      RBAC_PASSWORD: rbac-e2e-test
 
   merge-gatekeeper:
     needs: [CI_checks, permission_checks, E2E_tests_workflow]

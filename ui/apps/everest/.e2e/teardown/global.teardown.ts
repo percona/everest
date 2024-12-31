@@ -14,8 +14,8 @@
 // limitations under the License.
 
 import { test as setup, expect } from '@playwright/test';
-import { getTokenFromLocalStorage } from './utils/localStorage';
-import { getBucketNamespacesMap } from './constants';
+import { getTokenFromLocalStorage } from '../utils/localStorage';
+import { getBucketNamespacesMap } from '../constants';
 
 setup.describe.serial('Teardown', () => {
   setup('Delete backup storage', async ({ request }) => {

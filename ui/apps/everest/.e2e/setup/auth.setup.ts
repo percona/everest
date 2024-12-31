@@ -22,7 +22,7 @@ setup('Login', async ({ page }) => {
   await page.getByTestId('text-input-username').fill(CI_USER);
   await page.getByTestId('text-input-password').fill(CI_PASSWORD);
   await page.getByTestId('login-button').click();
-  await expect(page.getByText('Create database')).toBeVisible({
+  await expect(page.getByTestId('user-appbar-button')).toBeVisible({
     timeout: TIMEOUTS.ThirtySeconds,
   });
 

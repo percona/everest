@@ -20,9 +20,9 @@ import { dbEnginesQuerySelect } from '../db-engines/useDbEngines';
 import { getDbEnginesFn } from 'api/dbEngineApi';
 import { DbEngine } from 'shared-types/dbEngines.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
-import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import { DbEngineType } from '@percona/types';
 import { useCallback, useMemo } from 'react';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 
 export const NAMESPACES_QUERY_KEY = 'namespace';
 

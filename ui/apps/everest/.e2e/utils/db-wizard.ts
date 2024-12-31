@@ -15,8 +15,12 @@ export const storageLocationAutocompleteEmptyValidationCheck = async (
   ).toBeVisible();
 };
 
-export const moveForward = (page: Page) =>
-  page.getByTestId('db-wizard-continue-button').click();
+export const moveForward = async (page: Page) => {
+  await expect(
+    page.getByTestId('db-wizard-continue-button')
+  ).not.toBeDisabled();
+  await page.getByTestId('db-wizard-continue-button').click();
+};
 
 export const moveBack = (page: Page) =>
   page.getByTestId('db-wizard-previous-button').click();
