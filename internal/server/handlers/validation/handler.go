@@ -2,11 +2,8 @@
 package validation
 
 import (
-	"context"
-
 	"go.uber.org/zap"
 
-	"github.com/percona/everest/api"
 	"github.com/percona/everest/internal/server/handlers"
 	"github.com/percona/everest/pkg/kubernetes"
 )
@@ -34,16 +31,4 @@ func New(
 // SetNext sets the next handler to call in the chain.
 func (h *validateHandler) SetNext(next handlers.Handler) {
 	h.next = next
-}
-
-func (h *validateHandler) GetKubernetesClusterResources(ctx context.Context) (*api.KubernetesClusterResources, error) {
-	return h.next.GetKubernetesClusterResources(ctx)
-}
-
-func (h *validateHandler) GetKubernetesClusterInfo(ctx context.Context) (*api.KubernetesClusterInfo, error) {
-	return h.next.GetKubernetesClusterInfo(ctx)
-}
-
-func (h *validateHandler) GetUserPermissions(ctx context.Context, user string) (*api.UserPermissions, error) {
-	return h.next.GetUserPermissions(ctx, user)
 }
