@@ -23,14 +23,14 @@ func (h *validateHandler) CreateMonitoringInstance(ctx context.Context, user, na
 	switch req.Type {
 	case api.MonitoringInstanceCreateParamsTypePmm:
 		if req.Pmm == nil {
-			return nil, fmt.Errorf("pmm key is required for type %s", req.Type)
+			return nil, errors.Join(ErrInvalidRequest, fmt.Errorf("pmm key is required for type %s", req.Type))
 		}
 
 		if req.Pmm.ApiKey == "" && (req.Pmm.User == "" || req.Pmm.Password == "") {
-			return nil, errors.New("pmm.apiKey or pmm.user with pmm.password fields are required")
+			return nil, errors.Join(ErrInvalidRequest, errors.New("pmm.apiKey or pmm.user with pmm.password fields are required"))
 		}
 	default:
-		return nil, fmt.Errorf("monitoring type %s is not supported", req.Type)
+		return nil, errors.Join(ErrInvalidRequest, fmt.Errorf("monitoring type %s is not supported", req.Type))
 	}
 	return h.next.CreateMonitoringInstance(ctx, user, namespace, req)
 }
@@ -47,7 +47,7 @@ func (h *validateHandler) UpdateMonitoringInstance(ctx context.Context, user, na
 	if req.Url != "" {
 		if ok := validateURL(req.Url); !ok {
 			err := ErrInvalidURL("url")
-			return nil, err
+			return nil, errors.Join(ErrInvalidRequest, err)
 		}
 	}
 
@@ -55,10 +55,10 @@ func (h *validateHandler) UpdateMonitoringInstance(ctx context.Context, user, na
 	case "": // nothing to do.
 	case api.MonitoringInstanceUpdateParamsTypePmm:
 		if req.Pmm == nil {
-			return nil, fmt.Errorf("pmm key is required for type %s", req.Type)
+			return nil, errors.Join(ErrInvalidRequest, fmt.Errorf("pmm key is required for type %s", req.Type))
 		}
 	default:
-		return nil, errors.New("this monitoring type is not supported")
+		return nil, errors.Join(ErrInvalidRequest, fmt.Errorf("monitoring type %s is not supported", req.Type))
 	}
 	return h.next.UpdateMonitoringInstance(ctx, user, namespace, name, req)
 }
