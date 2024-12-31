@@ -36,7 +36,6 @@ func New(
 		return nil, fmt.Errorf("failed to create enforcer: %w", err)
 	}
 	l := log.With("handler", "rbac")
-	// todo
 	return &rbacHandler{
 		enforcer: enf,
 		log:      l,
