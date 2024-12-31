@@ -16,15 +16,13 @@
 import { Box, Stack } from '@mui/material';
 import { DbType } from '@percona/types';
 import { SwitchInput, TextArray, TextInput } from '@percona/ui-lib';
-import { AffinityFormData } from 'components/affinity/affinity-form-dialog/affinity-form/affinity-form.types';
-import { getAffinityPayload } from 'components/affinity/affinity-form-dialog/affinity-form/affinity-form.utils';
-import { AffinityListView } from 'components/affinity/affinity-list-view/affinity-list.view';
+import { AffinityFormData } from 'components/cluster-form/affinity/affinity-form-dialog/affinity-form/affinity-form.types';
+import { getAffinityPayload } from 'components/cluster-form/affinity/affinity-form-dialog/affinity-form/affinity-form.utils';
+import { AffinityListView } from 'components/cluster-form/affinity/affinity-list-view/affinity-list.view';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import {
-  AdvancedConfigurationFields,
-  AffinityRule,
-} from './advanced-configuration.types';
+import { AffinityRule } from 'shared-types/affinity.types';
+import { AdvancedConfigurationFields } from './advanced-configuration.types';
 import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
 import { Messages } from './messages';
 import { DbWizardForm } from 'consts';

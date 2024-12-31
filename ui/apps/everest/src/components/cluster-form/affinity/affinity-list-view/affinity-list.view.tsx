@@ -7,7 +7,7 @@ import {
   AffinityPriority,
   AffinityPriorityValue,
   AffinityRule,
-} from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
+} from 'shared-types/affinity.types';
 import EditableItem from 'components/editable-item';
 import { useState } from 'react';
 import { AffinityFormDialog } from '../affinity-form-dialog/affinity-form-dialog';

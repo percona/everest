@@ -26,7 +26,7 @@ import {
   AffinityComponent,
   AffinityType,
   AffinityPriority,
-} from 'components/cluster-form/advanced-configuration/advanced-configuration.types.ts';
+} from 'shared-types/affinity.types';
 
 export const DEFAULT_NODES: Record<DbType, string> = {
   [DbType.Mongo]: '3',

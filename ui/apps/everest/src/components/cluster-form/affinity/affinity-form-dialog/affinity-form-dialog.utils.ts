@@ -3,11 +3,11 @@ import {
   AffinityPriority,
   AffinityRule,
   AffinityType,
-} from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
+} from 'shared-types/affinity.types';
 import {
   AffinityFormData,
   AffinityFormFields,
-} from 'components/affinity/affinity-form-dialog/affinity-form/affinity-form.types';
+} from 'components/cluster-form/affinity/affinity-form-dialog/affinity-form/affinity-form.types';
 
 export const affinityModalDefaultValues = (
   mode: 'new' | 'edit',

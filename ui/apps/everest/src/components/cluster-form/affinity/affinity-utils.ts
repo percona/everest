@@ -4,7 +4,7 @@ import {
   AffinityPriority,
   AffinityRule,
   AffinityType,
-} from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
+} from 'shared-types/affinity.types';
 
 export const availableComponentsType = (
   dbType: DbType,

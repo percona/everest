@@ -20,15 +20,12 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
-import { affinityRulesToDbPayload } from 'components/affinity/affinity-utils';
+import { affinityRulesToDbPayload } from 'components/cluster-form/affinity/affinity-utils';
 import {
   CUSTOM_NR_UNITS_INPUT_VALUE,
   MIN_NUMBER_OF_SHARDS,
 } from 'components/cluster-form';
-import {
-  AffinityComponent,
-  AffinityRule,
-} from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
+import { AffinityComponent, AffinityRule } from 'shared-types/affinity.types';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import {
   ClusterCredentials,

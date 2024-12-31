@@ -1,5 +1,5 @@
 import { Stack, Typography } from '@mui/material';
-import { AffinityRule } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
+import { AffinityRule } from 'shared-types/affinity.types';
 
 const showRuleProperty = (prop: string | undefined) => {
   return prop ? ` | ${prop}` : '';
