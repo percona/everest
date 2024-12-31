@@ -41,7 +41,7 @@ import (
 	"github.com/percona/everest/internal/server/handlers"
 	k8shandler "github.com/percona/everest/internal/server/handlers/k8s"
 	rbachandler "github.com/percona/everest/internal/server/handlers/rbac"
-	"github.com/percona/everest/internal/server/handlers/validation"
+	valhandler "github.com/percona/everest/internal/server/handlers/validation"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/oidc"
@@ -173,7 +173,7 @@ func newHandlerChain(
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not create rbac handler"))
 	}
-	validation := validation.New(log, kubeClient)
+	validation := valhandler.New(log, kubeClient)
 
 	// Chain handlers.
 	// validation -> rbac -> k8s
@@ -341,7 +341,7 @@ func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 				Code:    http.StatusForbidden,
 				Message: rbachandler.ErrInsufficientPermissions.Error(),
 			}
-		case errors.Is(err, validation.ErrInvalidRequest),
+		case errors.Is(err, valhandler.ErrInvalidRequest),
 			errors.Is(err, errFailedToReadRequestBody):
 			err = &echo.HTTPError{
 				Code:    http.StatusBadRequest,
