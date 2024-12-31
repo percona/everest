@@ -22,10 +22,6 @@ func TestRBAC_BackupStorage(t *testing.T) {
 	t.Run("ListBackupStorages", func(t *testing.T) {
 		t.Parallel()
 		next := handlers.MockHandler{}
-		h := &rbacHandler{
-			next: &next,
-			log:  zap.NewNop().Sugar(),
-		}
 
 		next.On("ListBackupStorages",
 			mock.Anything,
@@ -58,10 +54,12 @@ func TestRBAC_BackupStorage(t *testing.T) {
 		)
 
 		testCases := []struct {
+			desc   string
 			policy string
 			outLen int
 		}{
 			{
+				desc: "read-only for backup-storage-1 in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, default/backup-storage-1",
 					"g, test-user, role:test",
@@ -69,64 +67,74 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				outLen: 1,
 			},
 			{
+				desc: "read-only for all in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, default/*",
 					"g, test-user, role:test",
 				),
-				outLen: 1,
+				outLen: 3,
 			},
 			{
+				desc:   "no policy",
 				policy: newPolicy(),
 				outLen: 0,
 			},
 		}
 
-		var err error
 		ctx := context.Background()
 		for _, tc := range testCases {
-			h.enforcer, err = rbac.NewIOReaderEnforcer(strings.NewReader(tc.policy))
-			require.NoError(t, err)
+			t.Run(tc.desc, func(t *testing.T) {
+				t.Parallel()
+				e, err := rbac.NewIOReaderEnforcer(strings.NewReader(tc.policy))
+				h := &rbacHandler{
+					next:     &next,
+					log:      zap.NewNop().Sugar(),
+					enforcer: e,
+				}
+				require.NoError(t, err)
 
-			list, err := h.ListBackupStorages(ctx, "test-user", "default")
-			require.NoError(t, err)
-			assert.Len(t, list.Items, tc.outLen)
+				list, err := h.ListBackupStorages(ctx, "test-user", "default")
+				require.NoError(t, err)
+				assert.Len(t, list.Items, tc.outLen)
+			})
 		}
 	})
 
 	t.Run("GetBackupStorage", func(t *testing.T) {
 		t.Parallel()
 		next := handlers.MockHandler{}
-		h := &rbacHandler{
-			next: &next,
-			log:  zap.NewNop().Sugar(),
-		}
 		next.On("GetBackupStorage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
 			&everestv1alpha1.BackupStorage{}, nil,
 		)
 
 		testCases := []struct {
+			desc    string
 			policy  string
 			wantErr error
 		}{
 			{
+				desc: "all actions for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, *, */*",
 					"g, test-user, role:test",
 				),
 			},
 			{
+				desc: "all actions for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, *, default/*",
 					"g, test-user, role:test",
 				),
 			},
 			{
+				desc: "read-only for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, default/*",
 					"g, test-user, role:test",
 				),
 			},
 			{
+				desc: "read-only for 'inaccessible-storage' in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, default/inaccessible-storage",
 					"g, test-user, role:test",
@@ -134,6 +142,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
+				desc: "read-only for all backupstorages in kube-system namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, kube-system/*",
 					"g, test-user, role:test",
@@ -142,13 +151,21 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			},
 		}
 
-		var err error
 		for _, tc := range testCases {
-			h.enforcer, err = rbac.NewIOReaderEnforcer(strings.NewReader(tc.policy))
-			require.NoError(t, err)
+			t.Run(tc.desc, func(t *testing.T) {
+				t.Parallel()
+				e, err := rbac.NewIOReaderEnforcer(strings.NewReader(tc.policy))
+				require.NoError(t, err)
 
-			_, err := h.GetBackupStorage(context.Background(), "test-user", "default", "backup-storage-1")
-			assert.ErrorIs(t, err, tc.wantErr)
+				h := &rbacHandler{
+					next:     &next,
+					log:      zap.NewNop().Sugar(),
+					enforcer: e,
+				}
+				_, err = h.GetBackupStorage(context.Background(), "test-user", "default", "backup-storage-1")
+				assert.ErrorIs(t, err, tc.wantErr)
+
+			})
 		}
 	})
 }
