@@ -48,7 +48,7 @@ test.describe('Schedules List', async () => {
             backupStorageName: JSON.parse(EVEREST_BUCKETS_NAMESPACES_MAP)[0][0],
             enabled: true,
             name: 'backup-1',
-            schedule: '0 * * * *',
+            schedule: '30 18 * * *',
           },
         ],
       },
@@ -69,7 +69,7 @@ test.describe('Schedules List', async () => {
   }) => {
     await findDbAndClickRow(page, mySQLName);
     expect(page.getByTestId('overview-section-text')).toHaveText(
-      'Every hour at minute 30'
+      'Daily at 12:00 AM'
     );
 
     //check resources editing
@@ -78,14 +78,14 @@ test.describe('Schedules List', async () => {
     expect(page.getByTestId('edit-resources-form-dialog')).toBeVisible();
     await page.getByTestId('form-dialog-save').click();
     expect(page.getByTestId('overview-section-text')).toHaveText(
-      'Every hour at minute 30'
+      'Daily at 12:00 AM'
     );
 
     await page.getByTestId('backups').click();
     await page.getByTestId('scheduled-backups').click();
 
-    expect(page.getByTestId('schedule-30 * * * *-text')).toHaveText(
-      'Every hour at minute 30'
+    expect(page.getByTestId('schedule-0 0 * * *-text')).toHaveText(
+      'Daily at 12:00 AM'
     );
   });
 
