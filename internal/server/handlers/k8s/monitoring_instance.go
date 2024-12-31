@@ -35,7 +35,17 @@ func (h *k8sHandler) CreateMonitoringInstance(ctx context.Context, _, namespace 
 }
 
 func (h *k8sHandler) DeleteMonitoringInstance(ctx context.Context, _, namespace, name string) error {
-	return h.kubeClient.DeleteMonitoringConfig(ctx, namespace, name)
+	used, err := h.kubeClient.IsMonitoringConfigUsed(ctx, namespace, name)
+	if err != nil {
+		return err
+	}
+	if used {
+		return fmt.Errorf("monitoring instance '%s' in namespace '%s' is in use", name, namespace)
+	}
+	if err := h.kubeClient.DeleteMonitoringConfig(ctx, namespace, name); err != nil {
+		return err
+	}
+	return h.kubeClient.DeleteSecret(ctx, namespace, name)
 }
 
 func (h *k8sHandler) GetMonitoringInstance(ctx context.Context, _, namespace, name string) (*everestv1alpha1.MonitoringConfig, error) {
