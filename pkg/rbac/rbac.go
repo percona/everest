@@ -72,7 +72,7 @@ const (
 // This informer reloads the policy whenever the ConfigMap is updated.
 func refreshEnforcerInBackground(
 	ctx context.Context,
-	kubeClient *kubernetes.Kubernetes,
+	kubeClient kubernetes.KubernetesConnector,
 	enforcer *casbin.Enforcer,
 	l *zap.SugaredLogger,
 ) error {
@@ -149,8 +149,17 @@ func NewIOReaderEnforcer(r io.Reader) (*casbin.Enforcer, error) {
 	return newEnforcer(adapter, false)
 }
 
+// NewEnforcerWithRefresh creates a new enforcer that refreshes the policy whenever the ConfigMap is updated.
+func NewEnforcerWithRefresh(ctx context.Context, kubeClient kubernetes.KubernetesConnector, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+	enf, err := NewEnforcer(ctx, kubeClient, l)
+	if err != nil {
+		return nil, err
+	}
+	return enf, refreshEnforcerInBackground(ctx, kubeClient, enf, l)
+}
+
 // NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
-func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+func NewEnforcer(ctx context.Context, kubeClient kubernetes.KubernetesConnector, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
 	cmReq := types.NamespacedName{
 		Namespace: common.SystemNamespace,
 		Name:      common.EverestRBACConfigMapName,
@@ -165,7 +174,7 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 		return nil, errors.Join(err, errors.New("failed to get RBAC ConfigMap"))
 	}
 	enforcer.EnableEnforce(IsEnabled(cm))
-	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
+	return enforcer, nil
 }
 
 // GetUser extracts the user from the JWT token in the context.

@@ -9,20 +9,20 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/internal/server/handlers"
+	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/rbac"
 )
 
 func TestRBAC_BackupStorage(t *testing.T) {
 	t.Parallel()
 
-	t.Run("ListBackupStorages", func(t *testing.T) {
-		t.Parallel()
+	data := func() *handlers.MockHandler {
 		next := handlers.MockHandler{}
-
 		next.On("ListBackupStorages",
 			mock.Anything,
 			mock.Anything,
@@ -52,6 +52,11 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			},
 			nil,
 		)
+		return &next
+	}
+
+	t.Run("ListBackupStorages", func(t *testing.T) {
+		t.Parallel()
 
 		testCases := []struct {
 			desc   string
@@ -65,6 +70,15 @@ func TestRBAC_BackupStorage(t *testing.T) {
 					"g, test-user, role:test",
 				),
 				outLen: 1,
+			},
+			{
+				desc: "read-only for backup-storage-1 and backup-storage-2 only in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, read, default/backup-storage-1",
+					"p, role:test, backup-storages, read, default/backup-storage-2",
+					"g, test-user, role:test",
+				),
+				outLen: 2,
 			},
 			{
 				desc: "read-only for all in default namespace",
@@ -85,13 +99,16 @@ func TestRBAC_BackupStorage(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
-				e, err := rbac.NewIOReaderEnforcer(strings.NewReader(tc.policy))
-				h := &rbacHandler{
-					next:     &next,
-					log:      zap.NewNop().Sugar(),
-					enforcer: e,
-				}
+				k8sMock := newConfigMapMock(tc.policy)
+				enf, err := rbac.NewEnforcer(ctx, k8sMock, zap.NewNop().Sugar())
 				require.NoError(t, err)
+				next := data()
+
+				h := &rbacHandler{
+					next:     next,
+					log:      zap.NewNop().Sugar(),
+					enforcer: enf,
+				}
 
 				list, err := h.ListBackupStorages(ctx, "test-user", "default")
 				require.NoError(t, err)
@@ -102,10 +119,14 @@ func TestRBAC_BackupStorage(t *testing.T) {
 
 	t.Run("GetBackupStorage", func(t *testing.T) {
 		t.Parallel()
-		next := handlers.MockHandler{}
-		next.On("GetBackupStorage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
-			&everestv1alpha1.BackupStorage{}, nil,
-		)
+
+		data := func() *handlers.MockHandler {
+			next := handlers.MockHandler{}
+			next.On("GetBackupStorage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
+				&everestv1alpha1.BackupStorage{}, nil,
+			)
+			return &next
+		}
 
 		testCases := []struct {
 			desc    string
@@ -151,16 +172,20 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			},
 		}
 
+		ctx := context.Background()
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
-				e, err := rbac.NewIOReaderEnforcer(strings.NewReader(tc.policy))
+				k8sMock := newConfigMapMock(tc.policy)
+				enf, err := rbac.NewEnforcer(ctx, k8sMock, zap.NewNop().Sugar())
 				require.NoError(t, err)
 
+				next := data()
+
 				h := &rbacHandler{
-					next:     &next,
+					next:     next,
 					log:      zap.NewNop().Sugar(),
-					enforcer: e,
+					enforcer: enf,
 				}
 				_, err = h.GetBackupStorage(context.Background(), "test-user", "default", "backup-storage-1")
 				assert.ErrorIs(t, err, tc.wantErr)
@@ -169,6 +194,21 @@ func TestRBAC_BackupStorage(t *testing.T) {
 	})
 }
 
+func newConfigMapMock(policy string) *kubernetes.MockKubernetesConnector {
+	k8sMock := &kubernetes.MockKubernetesConnector{}
+	k8sMock.On("GetConfigMap", mock.Anything, mock.Anything, mock.Anything).Return(newConfigMapPolicy(policy), nil)
+	return k8sMock
+}
+
 func newPolicy(lines ...string) string {
 	return strings.Join(lines, "\n")
+}
+
+func newConfigMapPolicy(policy string) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		Data: map[string]string{
+			"enabled":    "true",
+			"policy.csv": policy,
+		},
+	}
 }

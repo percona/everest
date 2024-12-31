@@ -31,7 +31,7 @@ func New(
 	log *zap.SugaredLogger,
 	kubeClient *kubernetes.Kubernetes,
 ) (handlers.Handler, error) {
-	enf, err := rbac.NewEnforcer(ctx, kubeClient, log)
+	enf, err := rbac.NewEnforcerWithRefresh(ctx, kubeClient, log)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create enforcer: %w", err)
 	}
