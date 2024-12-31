@@ -168,18 +168,18 @@ func newHandlerChain(
 	vsURL string,
 ) (handlers.Handler, error) {
 	// Initialise handlers.
-	k8s := k8shandler.New(log, kubeClient, vsURL)
+	k8sH := k8shandler.New(log, kubeClient, vsURL)
 	rbacH, err := rbachandler.New(ctx, log, kubeClient)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not create rbac handler"))
 	}
-	validation := valhandler.New(log, kubeClient)
+	valH := valhandler.New(log, kubeClient)
 
 	// Chain handlers.
 	// validation -> rbac -> k8s
-	validation.SetNext(rbacH)
-	rbacH.SetNext(k8s)
-	return validation, nil
+	valH.SetNext(rbacH)
+	rbacH.SetNext(k8sH)
+	return valH, nil
 }
 
 func (e *EverestServer) oidcKeyFn(ctx context.Context) (jwt.Keyfunc, error) {
