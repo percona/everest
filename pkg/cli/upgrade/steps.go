@@ -205,6 +205,7 @@ func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version 
 	return installer.Upgrade(ctx, helm.UpgradeOptions{
 		DisableHooks: true,
 		ReuseValues:  true,
+		Force:        true, // since the version is not changing, we want to ensure that new manifests are still applied.
 	})
 }
 

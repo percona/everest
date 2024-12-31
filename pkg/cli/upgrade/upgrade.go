@@ -240,7 +240,7 @@ func (u *Upgrade) printPostUpgradeMessage(ctx context.Context, out io.Writer) er
 	if isSecure, err := u.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser); err != nil {
 		return errors.Join(err, errors.New("could not check if the admin password is secure"))
 	} else if !isSecure {
-		fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage)
+		fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage, "\n")
 	}
 	return nil
 }
