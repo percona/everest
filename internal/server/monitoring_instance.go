@@ -105,13 +105,13 @@ func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, namespace, na
 		})
 	}
 
-	created, err := e.handler.UpdateMonitoringInstance(ctx.Request().Context(), user, namespace, name, &params)
+	updated, err := e.handler.UpdateMonitoringInstance(ctx.Request().Context(), user, namespace, name, &params)
 	if err != nil {
 		return err
 	}
 
 	out := &api.MonitoringInstance{}
-	out.FromCR(created)
+	out.FromCR(updated)
 	return ctx.JSON(http.StatusOK, out)
 }
 

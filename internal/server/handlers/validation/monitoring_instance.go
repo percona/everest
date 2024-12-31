@@ -52,8 +52,7 @@ func (h *validateHandler) UpdateMonitoringInstance(ctx context.Context, user, na
 	}
 
 	switch req.Type {
-	case "":
-		return nil, nil
+	case "": // nothing to do.
 	case api.MonitoringInstanceUpdateParamsTypePmm:
 		if req.Pmm == nil {
 			return nil, fmt.Errorf("pmm key is required for type %s", req.Type)
@@ -61,6 +60,5 @@ func (h *validateHandler) UpdateMonitoringInstance(ctx context.Context, user, na
 	default:
 		return nil, errors.New("this monitoring type is not supported")
 	}
-
 	return h.next.UpdateMonitoringInstance(ctx, user, namespace, name, req)
 }
