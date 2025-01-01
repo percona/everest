@@ -19,7 +19,11 @@ func (h *rbacHandler) GetKubernetesClusterInfo(ctx context.Context) (*api.Kubern
 	return h.next.GetKubernetesClusterInfo(ctx)
 }
 
-func (h *rbacHandler) GetUserPermissions(ctx context.Context, user string) (*api.UserPermissions, error) {
+func (h *rbacHandler) GetUserPermissions(ctx context.Context) (*api.UserPermissions, error) {
+	user, err := h.userGetter(ctx)
+	if err != nil {
+		return nil, err
+	}
 	perms, err := h.enforcer.GetImplicitPermissionsForUser(user)
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetImplicitPermissionsForUser: %w", err)
@@ -30,7 +34,7 @@ func (h *rbacHandler) GetUserPermissions(ctx context.Context, user string) (*api
 	}
 	result := pointer.To(perms)
 
-	nextRes, err := h.next.GetUserPermissions(ctx, user)
+	nextRes, err := h.next.GetUserPermissions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetUserPermissions: %w", err)
 	}

@@ -24,17 +24,11 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
-	"github.com/percona/everest/pkg/rbac"
 )
 
 // ListDatabaseClusterBackups returns list of the created database cluster backups on the specified kubernetes cluster.
 func (e *EverestServer) ListDatabaseClusterBackups(c echo.Context, namespace, name string) error {
-	user, err := rbac.GetUser(c)
-	if err != nil {
-		return errors.Join(errFailedToGetUser, err)
-	}
-
-	result, err := e.handler.ListDatabaseClusterBackups(c.Request().Context(), user, namespace, name)
+	result, err := e.handler.ListDatabaseClusterBackups(c.Request().Context(), namespace, name)
 	if err != nil {
 		e.l.Errorf("ListDatabaseClusterBackups failed: %w", err)
 		return err
@@ -50,12 +44,7 @@ func (e *EverestServer) CreateDatabaseClusterBackup(ctx echo.Context, namespace 
 	}
 	dbb.SetNamespace(namespace)
 
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return errors.Join(errFailedToGetUser, err)
-	}
-
-	result, err := e.handler.CreateDatabaseClusterBackup(ctx.Request().Context(), user, dbb)
+	result, err := e.handler.CreateDatabaseClusterBackup(ctx.Request().Context(), dbb)
 	if err != nil {
 		e.l.Errorf("CreateDatabaseClusterBackup failed: %w", err)
 		return err
@@ -69,12 +58,7 @@ func (e *EverestServer) DeleteDatabaseClusterBackup(
 	namespace, name string,
 	params api.DeleteDatabaseClusterBackupParams,
 ) error {
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return errors.Join(errFailedToGetUser, err)
-	}
-
-	if err := e.handler.DeleteDatabaseClusterBackup(ctx.Request().Context(), user, namespace, name, &params); err != nil {
+	if err := e.handler.DeleteDatabaseClusterBackup(ctx.Request().Context(), namespace, name, &params); err != nil {
 		e.l.Errorf("DeleteDatabaseClusterBackup failed: %w", err)
 		return err
 	}
@@ -83,12 +67,7 @@ func (e *EverestServer) DeleteDatabaseClusterBackup(
 
 // GetDatabaseClusterBackup returns the specified cluster backup on the specified kubernetes cluster.
 func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, namespace, name string) error {
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return errors.Join(errFailedToGetUser, err)
-	}
-
-	result, err := e.handler.GetDatabaseClusterBackup(ctx.Request().Context(), user, namespace, name)
+	result, err := e.handler.GetDatabaseClusterBackup(ctx.Request().Context(), namespace, name)
 	if err != nil {
 		e.l.Errorf("GetDatabaseClusterBackup failed: %w", err)
 		return err

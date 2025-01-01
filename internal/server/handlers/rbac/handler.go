@@ -18,9 +18,10 @@ import (
 var ErrInsufficientPermissions = errors.New("insufficient permissions for performing the operation")
 
 type rbacHandler struct {
-	enforcer casbin.IEnforcer
-	log      *zap.SugaredLogger
-	next     handlers.Handler
+	enforcer   casbin.IEnforcer
+	log        *zap.SugaredLogger
+	next       handlers.Handler
+	userGetter func(ctx context.Context) (string, error)
 }
 
 // New returns a new RBAC handler.
@@ -37,8 +38,9 @@ func New(
 	}
 	l := log.With("handler", "rbac")
 	return &rbacHandler{
-		enforcer: enf,
-		log:      l,
+		enforcer:   enf,
+		log:        l,
+		userGetter: rbac.GetUser,
 	}, nil
 }
 
@@ -48,11 +50,15 @@ func (h *rbacHandler) SetNext(next handlers.Handler) {
 }
 
 func (h *rbacHandler) enforce(
-	subject,
+	ctx context.Context,
 	resource,
 	action,
 	object string,
 ) error {
+	subject, err := h.userGetter(ctx)
+	if err != nil {
+		return err
+	}
 	ok, err := h.enforcer.Enforce(subject, resource, action, object)
 	if err != nil {
 		return fmt.Errorf("enforce error: %w", err)

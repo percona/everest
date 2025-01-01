@@ -77,6 +77,8 @@ const (
 	KubernetesManagedByLabel = "app.kubernetes.io/managed-by"
 	// ForegroundDeletionFinalizer is the finalizer used to delete resources in foreground.
 	ForegroundDeletionFinalizer = "foregroundDeletion"
+	// UserCtxKey is the key used to store the user in the context.
+	UserCtxKey = "user"
 
 	// EverestAPIExtnResourceName is the name of the Everest API extension header
 	// that holds the name of the resource being served by an API endpoint.

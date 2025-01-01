@@ -178,8 +178,8 @@ func NewEnforcer(ctx context.Context, kubeClient kubernetes.KubernetesConnector,
 }
 
 // GetUser extracts the user from the JWT token in the context.
-func GetUser(c echo.Context) (string, error) {
-	token, ok := c.Get("user").(*jwt.Token) // by default token is stored under `user` key
+func GetUser(ctx context.Context) (string, error) {
+	token, ok := ctx.Value(common.UserCtxKey).(*jwt.Token)
 	if !ok {
 		return "", errors.New("failed to get token from context")
 	}

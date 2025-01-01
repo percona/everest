@@ -18,11 +18,9 @@ package server
 import (
 	"net/http"
 
-	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
 
 	"github.com/percona/everest/api"
-	"github.com/percona/everest/pkg/rbac"
 )
 
 // CreateMonitoringInstance creates a new monitoring instance.
@@ -32,14 +30,7 @@ func (e *EverestServer) CreateMonitoringInstance(ctx echo.Context, namespace str
 		return err
 	}
 
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
-	}
-
-	created, err := e.handler.CreateMonitoringInstance(ctx.Request().Context(), user, namespace, &params)
+	created, err := e.handler.CreateMonitoringInstance(ctx.Request().Context(), namespace, &params)
 	if err != nil {
 		return err
 	}
@@ -51,14 +42,7 @@ func (e *EverestServer) CreateMonitoringInstance(ctx echo.Context, namespace str
 
 // ListMonitoringInstances lists all monitoring instances.
 func (e *EverestServer) ListMonitoringInstances(ctx echo.Context, namespace string) error {
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
-	}
-
-	mcList, err := e.handler.ListMonitoringInstances(ctx.Request().Context(), user, namespace)
+	mcList, err := e.handler.ListMonitoringInstances(ctx.Request().Context(), namespace)
 	if err != nil {
 		return err
 	}
@@ -74,14 +58,7 @@ func (e *EverestServer) ListMonitoringInstances(ctx echo.Context, namespace stri
 
 // GetMonitoringInstance retrieves a monitoring instance.
 func (e *EverestServer) GetMonitoringInstance(ctx echo.Context, namespace, name string) error {
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
-	}
-
-	m, err := e.handler.GetMonitoringInstance(ctx.Request().Context(), user, namespace, name)
+	m, err := e.handler.GetMonitoringInstance(ctx.Request().Context(), namespace, name)
 	if err != nil {
 		return err
 	}
@@ -98,14 +75,7 @@ func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, namespace, na
 		return err
 	}
 
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
-	}
-
-	updated, err := e.handler.UpdateMonitoringInstance(ctx.Request().Context(), user, namespace, name, &params)
+	updated, err := e.handler.UpdateMonitoringInstance(ctx.Request().Context(), namespace, name, &params)
 	if err != nil {
 		return err
 	}
@@ -117,14 +87,7 @@ func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, namespace, na
 
 // DeleteMonitoringInstance deletes a monitoring instance.
 func (e *EverestServer) DeleteMonitoringInstance(ctx echo.Context, namespace, name string) error {
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, api.Error{
-			Message: pointer.ToString("Failed to get user from context" + err.Error()),
-		})
-	}
-
-	if err := e.handler.DeleteMonitoringInstance(ctx.Request().Context(), user, namespace, name); err != nil {
+	if err := e.handler.DeleteMonitoringInstance(ctx.Request().Context(), namespace, name); err != nil {
 		return err
 	}
 

@@ -242,6 +242,15 @@ func (e *EverestServer) jwtMiddleWare(ctx context.Context) (echo.MiddlewareFunc,
 		Skipper:     skipper,
 		TokenLookup: tokenLookup,
 		KeyFunc:     keyFunc,
+		ContextKey:  common.UserCtxKey,
+		SuccessHandler: func(c echo.Context) {
+			// The user key exists only in the echo.Context object.
+			// We will copy it to the context.Context as well.
+			ctx := c.Request().Context()
+			newCtx := context.WithValue(ctx, common.UserCtxKey, c.Get(common.UserCtxKey))
+			newReq := c.Request().WithContext(newCtx)
+			c.SetRequest(newReq)
+		},
 	}), nil
 }
 

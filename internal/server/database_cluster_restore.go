@@ -23,17 +23,11 @@ import (
 	"github.com/labstack/echo/v4"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	"github.com/percona/everest/pkg/rbac"
 )
 
 // ListDatabaseClusterRestores List of the created database cluster restores on the specified kubernetes cluster.
 func (e *EverestServer) ListDatabaseClusterRestores(ctx echo.Context, namespace, name string) error {
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return errors.Join(errFailedToGetUser, err)
-	}
-
-	result, err := e.handler.ListDatabaseClusterRestores(ctx.Request().Context(), user, namespace, name)
+	result, err := e.handler.ListDatabaseClusterRestores(ctx.Request().Context(), namespace, name)
 	if err != nil {
 		e.l.Errorf("ListDatabaseClusterRestores failed: %w", err)
 		return err
@@ -43,18 +37,13 @@ func (e *EverestServer) ListDatabaseClusterRestores(ctx echo.Context, namespace,
 
 // CreateDatabaseClusterRestore Create a database cluster restore on the specified kubernetes cluster.
 func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace string) error {
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return errors.Join(errFailedToGetUser, err)
-	}
-
 	restore := &everestv1alpha1.DatabaseClusterRestore{}
 	if err := e.getBodyFromContext(ctx, restore); err != nil {
 		return errors.Join(errFailedToReadRequestBody, err)
 	}
 	restore.SetNamespace(namespace)
 
-	result, err := e.handler.CreateDatabaseClusterRestore(ctx.Request().Context(), user, restore)
+	result, err := e.handler.CreateDatabaseClusterRestore(ctx.Request().Context(), restore)
 	if err != nil {
 		e.l.Errorf("CreateDatabaseClusterRestore failed: %w", err)
 		return err
@@ -64,11 +53,7 @@ func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace
 
 // DeleteDatabaseClusterRestore Delete the specified cluster restore on the specified kubernetes cluster.
 func (e *EverestServer) DeleteDatabaseClusterRestore(ctx echo.Context, namespace, name string) error {
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return errors.Join(errFailedToGetUser, err)
-	}
-	if err := e.handler.DeleteDatabaseClusterRestore(ctx.Request().Context(), user, namespace, name); err != nil {
+	if err := e.handler.DeleteDatabaseClusterRestore(ctx.Request().Context(), namespace, name); err != nil {
 		e.l.Errorf("DeleteDatabaseClusterRestore failed: %w", err)
 		return err
 	}
@@ -77,12 +62,7 @@ func (e *EverestServer) DeleteDatabaseClusterRestore(ctx echo.Context, namespace
 
 // GetDatabaseClusterRestore Returns the specified cluster restore on the specified kubernetes cluster.
 func (e *EverestServer) GetDatabaseClusterRestore(ctx echo.Context, namespace, name string) error {
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return errors.Join(errFailedToGetUser, err)
-	}
-
-	rs, err := e.handler.GetDatabaseClusterRestore(ctx.Request().Context(), user, namespace, name)
+	rs, err := e.handler.GetDatabaseClusterRestore(ctx.Request().Context(), namespace, name)
 	if err != nil {
 		e.l.Errorf("GetDatabaseClusterRestore failed: %w", err)
 		return err
@@ -92,11 +72,6 @@ func (e *EverestServer) GetDatabaseClusterRestore(ctx echo.Context, namespace, n
 
 // UpdateDatabaseClusterRestore Replace the specified cluster restore on the specified kubernetes cluster.
 func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, namespace, name string) error {
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return errors.Join(errFailedToGetUser, err)
-	}
-
 	restore := &everestv1alpha1.DatabaseClusterRestore{}
 	if err := e.getBodyFromContext(ctx, restore); err != nil {
 		return errors.Join(errFailedToReadRequestBody, err)
@@ -104,7 +79,7 @@ func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, namespace
 	restore.SetNamespace(namespace)
 	restore.SetName(name)
 
-	result, err := e.handler.UpdateDatabaseClusterRestore(ctx.Request().Context(), user, restore)
+	result, err := e.handler.UpdateDatabaseClusterRestore(ctx.Request().Context(), restore)
 	if err != nil {
 		e.l.Errorf("UpdateDatabaseClusterRestore failed: %w", err)
 		return err

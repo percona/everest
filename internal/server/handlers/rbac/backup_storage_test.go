@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -14,6 +15,7 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/internal/server/handlers"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/rbac"
 )
@@ -24,7 +26,6 @@ func TestRBAC_BackupStorage(t *testing.T) {
 	data := func() *handlers.MockHandler {
 		next := handlers.MockHandler{}
 		next.On("ListBackupStorages",
-			mock.Anything,
 			mock.Anything,
 			mock.Anything,
 		).Return(
@@ -105,12 +106,13 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				next := data()
 
 				h := &rbacHandler{
-					next:     next,
-					log:      zap.NewNop().Sugar(),
-					enforcer: enf,
+					next:       next,
+					log:        zap.NewNop().Sugar(),
+					enforcer:   enf,
+					userGetter: testUserGetter,
 				}
 
-				list, err := h.ListBackupStorages(ctx, "test-user", "default")
+				list, err := h.ListBackupStorages(ctx, "default")
 				require.NoError(t, err)
 				assert.Len(t, list.Items, tc.outLen)
 			})
@@ -172,7 +174,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			},
 		}
 
-		ctx := context.Background()
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, "test-user")
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -183,11 +185,12 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				next := data()
 
 				h := &rbacHandler{
-					next:     next,
-					log:      zap.NewNop().Sugar(),
-					enforcer: enf,
+					next:       next,
+					log:        zap.NewNop().Sugar(),
+					enforcer:   enf,
+					userGetter: testUserGetter,
 				}
-				_, err = h.GetBackupStorage(context.Background(), "test-user", "default", "backup-storage-1")
+				_, err = h.GetBackupStorage(context.Background(), "default", "backup-storage-1")
 				assert.ErrorIs(t, err, tc.wantErr)
 			})
 		}
@@ -211,4 +214,12 @@ func newConfigMapPolicy(policy string) *corev1.ConfigMap {
 			"policy.csv": policy,
 		},
 	}
+}
+
+func testUserGetter(ctx context.Context) (string, error) {
+	user, ok := ctx.Value(common.UserCtxKey).(string)
+	if !ok {
+		return "", errors.New("user not found in context")
+	}
+	return user, nil
 }

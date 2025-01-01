@@ -23,17 +23,11 @@ import (
 	"github.com/labstack/echo/v4"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	"github.com/percona/everest/pkg/rbac"
 )
 
 // ListDatabaseEngines List of the available database engines on the specified namespace.
 func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, namespace string) error {
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return errors.Join(errFailedToGetUser, err)
-	}
-
-	result, err := e.handler.ListDatabaseEngines(ctx.Request().Context(), user, namespace)
+	result, err := e.handler.ListDatabaseEngines(ctx.Request().Context(), namespace)
 	if err != nil {
 		e.l.Errorf("ListDatabaseEngines failed: %w", err)
 		return err
@@ -43,12 +37,7 @@ func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, namespace string) 
 
 // GetDatabaseEngine Get the specified database engine on the specified namespace.
 func (e *EverestServer) GetDatabaseEngine(ctx echo.Context, namespace, name string) error {
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return errors.Join(errFailedToGetUser, err)
-	}
-
-	result, err := e.handler.GetDatabaseEngine(ctx.Request().Context(), user, namespace, name)
+	result, err := e.handler.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
 	if err != nil {
 		e.l.Errorf("GetDatabaseEngine failed: %w", err)
 		return err
@@ -67,12 +56,7 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 	dbe.SetNamespace(namespace)
 	dbe.SetName(name)
 
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return errors.Join(errFailedToGetUser, err)
-	}
-
-	result, err := e.handler.UpdateDatabaseEngine(ctx.Request().Context(), user, dbe)
+	result, err := e.handler.UpdateDatabaseEngine(ctx.Request().Context(), dbe)
 	if err != nil {
 		e.l.Errorf("UpdateDatabaseEngine failed: %w", err)
 		return err
@@ -85,12 +69,7 @@ func (e *EverestServer) GetUpgradePlan(
 	ctx echo.Context,
 	namespace string,
 ) error {
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return errors.Join(errFailedToGetUser, err)
-	}
-
-	result, err := e.handler.GetUpgradePlan(ctx.Request().Context(), user, namespace)
+	result, err := e.handler.GetUpgradePlan(ctx.Request().Context(), namespace)
 	if err != nil {
 		e.l.Errorf("GetUpgradePlan failed: %w", err)
 		return err
@@ -100,11 +79,7 @@ func (e *EverestServer) GetUpgradePlan(
 
 // ApproveUpgradePlan starts the upgrade of operators in the provided namespace.
 func (e *EverestServer) ApproveUpgradePlan(ctx echo.Context, namespace string) error {
-	user, err := rbac.GetUser(ctx)
-	if err != nil {
-		return errors.Join(errFailedToGetUser, err)
-	}
-	if err := e.handler.ApproveUpgradePlan(ctx.Request().Context(), user, namespace); err != nil {
+	if err := e.handler.ApproveUpgradePlan(ctx.Request().Context(), namespace); err != nil {
 		e.l.Errorf("ApproveUpgradePlan failed: %w", err)
 		return err
 	}

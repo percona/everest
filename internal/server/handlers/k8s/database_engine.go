@@ -22,19 +22,19 @@ var (
 	errDBEngineInvalidTargetVersion = errors.New("invalid target version provided for upgrade")
 )
 
-func (h *k8sHandler) ListDatabaseEngines(ctx context.Context, _, namespace string) (*everestv1alpha1.DatabaseEngineList, error) {
+func (h *k8sHandler) ListDatabaseEngines(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseEngineList, error) {
 	return h.kubeClient.ListDatabaseEngines(ctx, namespace)
 }
 
-func (h *k8sHandler) GetDatabaseEngine(ctx context.Context, _, namespace, name string) (*everestv1alpha1.DatabaseEngine, error) {
+func (h *k8sHandler) GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error) {
 	return h.kubeClient.GetDatabaseEngine(ctx, namespace, name)
 }
 
-func (h *k8sHandler) UpdateDatabaseEngine(ctx context.Context, _ string, req *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
+func (h *k8sHandler) UpdateDatabaseEngine(ctx context.Context, req *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
 	return h.kubeClient.UpdateDatabaseEngine(ctx, req)
 }
 
-func (h *k8sHandler) GetUpgradePlan(ctx context.Context, _, namespace string) (*api.UpgradePlan, error) {
+func (h *k8sHandler) GetUpgradePlan(ctx context.Context, namespace string) (*api.UpgradePlan, error) {
 	result, err := h.getUpgradePlan(ctx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to getUpgradePlan: %w", err)
@@ -63,7 +63,7 @@ func (h *k8sHandler) GetUpgradePlan(ctx context.Context, _, namespace string) (*
 	return result, nil
 }
 
-func (h *k8sHandler) ApproveUpgradePlan(ctx context.Context, _, namespace string) error {
+func (h *k8sHandler) ApproveUpgradePlan(ctx context.Context, namespace string) error {
 	up, err := h.getUpgradePlan(ctx, namespace)
 	if err != nil {
 		return err

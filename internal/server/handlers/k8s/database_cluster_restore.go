@@ -10,7 +10,7 @@ import (
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
-func (h *k8sHandler) ListDatabaseClusterRestores(ctx context.Context, _, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterRestoreList, error) {
+func (h *k8sHandler) ListDatabaseClusterRestores(ctx context.Context, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterRestoreList, error) {
 	return h.kubeClient.ListDatabaseClusterRestores(ctx, namespace, metav1.ListOptions{
 		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
 			MatchLabels: map[string]string{
@@ -20,7 +20,7 @@ func (h *k8sHandler) ListDatabaseClusterRestores(ctx context.Context, _, namespa
 	})
 }
 
-func (h *k8sHandler) CreateDatabaseClusterRestore(ctx context.Context, _ string, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
+func (h *k8sHandler) CreateDatabaseClusterRestore(ctx context.Context, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
 	dbCluster, err := h.kubeClient.GetDatabaseCluster(ctx, req.GetNamespace(), req.Spec.DBClusterName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetDatabaseCluster: %w", err)
@@ -31,14 +31,14 @@ func (h *k8sHandler) CreateDatabaseClusterRestore(ctx context.Context, _ string,
 	return h.kubeClient.CreateDatabaseClusterRestore(ctx, req)
 }
 
-func (h *k8sHandler) DeleteDatabaseClusterRestore(ctx context.Context, _, namespace, name string) error {
+func (h *k8sHandler) DeleteDatabaseClusterRestore(ctx context.Context, namespace, name string) error {
 	return h.kubeClient.DeleteDatabaseClusterRestore(ctx, namespace, name)
 }
 
-func (h *k8sHandler) GetDatabaseClusterRestore(ctx context.Context, _, namespace, name string) (*everestv1alpha1.DatabaseClusterRestore, error) {
+func (h *k8sHandler) GetDatabaseClusterRestore(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterRestore, error) {
 	return h.kubeClient.GetDatabaseClusterRestore(ctx, namespace, name)
 }
 
-func (h *k8sHandler) UpdateDatabaseClusterRestore(ctx context.Context, _ string, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
+func (h *k8sHandler) UpdateDatabaseClusterRestore(ctx context.Context, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
 	return h.kubeClient.UpdateDatabaseClusterRestore(ctx, req)
 }

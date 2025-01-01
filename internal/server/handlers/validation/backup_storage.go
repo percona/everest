@@ -30,15 +30,15 @@ const (
 	timeoutS3AccessSec = 2
 )
 
-func (h *validateHandler) ListBackupStorages(ctx context.Context, user, namespace string) (*everestv1alpha1.BackupStorageList, error) {
-	return h.next.ListBackupStorages(ctx, user, namespace)
+func (h *validateHandler) ListBackupStorages(ctx context.Context, namespace string) (*everestv1alpha1.BackupStorageList, error) {
+	return h.next.ListBackupStorages(ctx, namespace)
 }
 
-func (h *validateHandler) GetBackupStorage(ctx context.Context, user, namespace, name string) (*everestv1alpha1.BackupStorage, error) {
-	return h.next.GetBackupStorage(ctx, user, namespace, name)
+func (h *validateHandler) GetBackupStorage(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error) {
+	return h.next.GetBackupStorage(ctx, namespace, name)
 }
 
-func (h *validateHandler) CreateBackupStorage(ctx context.Context, user, namespace string, req *api.CreateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
+func (h *validateHandler) CreateBackupStorage(ctx context.Context, namespace string, req *api.CreateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
 	existing, err := h.kubeClient.ListBackupStorages(ctx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to ListBackupStorages: %w", err)
@@ -46,10 +46,10 @@ func (h *validateHandler) CreateBackupStorage(ctx context.Context, user, namespa
 	if err := validateCreateBackupStorageRequest(ctx, h.log, req, existing); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
-	return h.next.CreateBackupStorage(ctx, user, namespace, req)
+	return h.next.CreateBackupStorage(ctx, namespace, req)
 }
 
-func (h *validateHandler) UpdateBackupStorage(ctx context.Context, user, namespace, name string, req *api.UpdateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
+func (h *validateHandler) UpdateBackupStorage(ctx context.Context, namespace, name string, req *api.UpdateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
 	bs, err := h.kubeClient.GetBackupStorage(ctx, namespace, name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetBackupStorage: %w", err)
@@ -61,11 +61,11 @@ func (h *validateHandler) UpdateBackupStorage(ctx context.Context, user, namespa
 	if err := h.validateUpdateBackupStorageRequest(ctx, h.log, req, bs, secret); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
-	return h.next.UpdateBackupStorage(ctx, user, namespace, name, req)
+	return h.next.UpdateBackupStorage(ctx, namespace, name, req)
 }
 
-func (h *validateHandler) DeleteBackupStorage(ctx context.Context, user, namespace, name string) error {
-	return h.next.DeleteBackupStorage(ctx, user, namespace, name)
+func (h *validateHandler) DeleteBackupStorage(ctx context.Context, namespace, name string) error {
+	return h.next.DeleteBackupStorage(ctx, namespace, name)
 }
 
 func validateCreateBackupStorageRequest(

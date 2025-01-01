@@ -15,11 +15,11 @@ import (
 	"github.com/percona/everest/pkg/pmm"
 )
 
-func (h *k8sHandler) ListMonitoringInstances(ctx context.Context, _, namespace string) (*everestv1alpha1.MonitoringConfigList, error) {
+func (h *k8sHandler) ListMonitoringInstances(ctx context.Context, namespace string) (*everestv1alpha1.MonitoringConfigList, error) {
 	return h.kubeClient.ListMonitoringConfigs(ctx, namespace)
 }
 
-func (h *k8sHandler) CreateMonitoringInstance(ctx context.Context, _, namespace string, req *api.CreateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
+func (h *k8sHandler) CreateMonitoringInstance(ctx context.Context, namespace string, req *api.CreateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
 	m, err := h.kubeClient.GetMonitoringConfig(ctx, namespace, req.Name)
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return nil, err
@@ -34,7 +34,7 @@ func (h *k8sHandler) CreateMonitoringInstance(ctx context.Context, _, namespace 
 	return h.createMonitoringK8sResources(ctx, namespace, req, apiKey)
 }
 
-func (h *k8sHandler) DeleteMonitoringInstance(ctx context.Context, _, namespace, name string) error {
+func (h *k8sHandler) DeleteMonitoringInstance(ctx context.Context, namespace, name string) error {
 	used, err := h.kubeClient.IsMonitoringConfigUsed(ctx, namespace, name)
 	if err != nil {
 		return err
@@ -48,11 +48,11 @@ func (h *k8sHandler) DeleteMonitoringInstance(ctx context.Context, _, namespace,
 	return h.kubeClient.DeleteSecret(ctx, namespace, name)
 }
 
-func (h *k8sHandler) GetMonitoringInstance(ctx context.Context, _, namespace, name string) (*everestv1alpha1.MonitoringConfig, error) {
+func (h *k8sHandler) GetMonitoringInstance(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error) {
 	return h.kubeClient.GetMonitoringConfig(ctx, namespace, name)
 }
 
-func (h *k8sHandler) UpdateMonitoringInstance(ctx context.Context, _, namespace, name string, req *api.UpdateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
+func (h *k8sHandler) UpdateMonitoringInstance(ctx context.Context, namespace, name string, req *api.UpdateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
 	m, err := h.kubeClient.GetMonitoringConfig(ctx, namespace, name)
 	if err != nil {
 		return nil, err

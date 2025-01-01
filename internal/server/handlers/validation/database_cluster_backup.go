@@ -12,23 +12,23 @@ import (
 	"github.com/percona/everest/api"
 )
 
-func (h *validateHandler) ListDatabaseClusterBackups(ctx context.Context, user, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-	return h.next.ListDatabaseClusterBackups(ctx, user, namespace, clusterName)
+func (h *validateHandler) ListDatabaseClusterBackups(ctx context.Context, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterBackupList, error) {
+	return h.next.ListDatabaseClusterBackups(ctx, namespace, clusterName)
 }
 
-func (h *validateHandler) CreateDatabaseClusterBackup(ctx context.Context, user string, req *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
+func (h *validateHandler) CreateDatabaseClusterBackup(ctx context.Context, req *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
 	if err := h.validateDatabaseClusterBackup(ctx, req); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
-	return h.next.CreateDatabaseClusterBackup(ctx, user, req)
+	return h.next.CreateDatabaseClusterBackup(ctx, req)
 }
 
-func (h *validateHandler) DeleteDatabaseClusterBackup(ctx context.Context, user, namespace, name string, req *api.DeleteDatabaseClusterBackupParams) error {
-	return h.next.DeleteDatabaseClusterBackup(ctx, user, namespace, name, req)
+func (h *validateHandler) DeleteDatabaseClusterBackup(ctx context.Context, namespace, name string, req *api.DeleteDatabaseClusterBackupParams) error {
+	return h.next.DeleteDatabaseClusterBackup(ctx, namespace, name, req)
 }
 
-func (h *validateHandler) GetDatabaseClusterBackup(ctx context.Context, user, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error) {
-	return h.next.GetDatabaseClusterBackup(ctx, user, namespace, name)
+func (h *validateHandler) GetDatabaseClusterBackup(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error) {
+	return h.next.GetDatabaseClusterBackup(ctx, namespace, name)
 }
 
 func (h *validateHandler) validateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {

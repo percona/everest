@@ -34,15 +34,15 @@ const (
 	pgDefaultUploadInterval = 60
 )
 
-func (h *k8sHandler) CreateDatabaseCluster(ctx context.Context, _ string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
+func (h *k8sHandler) CreateDatabaseCluster(ctx context.Context, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
 	return h.kubeClient.CreateDatabaseCluster(ctx, db)
 }
 
-func (h *k8sHandler) ListDatabaseClusters(ctx context.Context, _, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
+func (h *k8sHandler) ListDatabaseClusters(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
 	return h.kubeClient.ListDatabaseClusters(ctx, namespace)
 }
 
-func (h *k8sHandler) DeleteDatabaseCluster(ctx context.Context, _, namespace, name string, req *api.DeleteDatabaseClusterParams) error {
+func (h *k8sHandler) DeleteDatabaseCluster(ctx context.Context, namespace, name string, req *api.DeleteDatabaseClusterParams) error {
 	cleanupStorage := pointer.Get(req.CleanupBackupStorage)
 
 	backups, err := h.kubeClient.ListDatabaseClusterBackups(ctx, namespace, metav1.ListOptions{})
@@ -76,15 +76,15 @@ func (h *k8sHandler) DeleteDatabaseCluster(ctx context.Context, _, namespace, na
 	return h.kubeClient.DeleteDatabaseCluster(ctx, namespace, name)
 }
 
-func (h *k8sHandler) UpdateDatabaseCluster(ctx context.Context, _ string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
+func (h *k8sHandler) UpdateDatabaseCluster(ctx context.Context, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
 	return h.kubeClient.UpdateDatabaseCluster(ctx, db)
 }
 
-func (h *k8sHandler) GetDatabaseCluster(ctx context.Context, _, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
+func (h *k8sHandler) GetDatabaseCluster(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
 	return h.kubeClient.GetDatabaseCluster(ctx, namespace, name)
 }
 
-func (h *k8sHandler) GetDatabaseClusterCredentials(ctx context.Context, _, namespace, name string) (*api.DatabaseClusterCredential, error) {
+func (h *k8sHandler) GetDatabaseClusterCredentials(ctx context.Context, namespace, name string) (*api.DatabaseClusterCredential, error) {
 	databaseCluster, err := h.kubeClient.GetDatabaseCluster(ctx, namespace, name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get database cluster %s/%s: %w", namespace, name, err)
@@ -113,7 +113,7 @@ func (h *k8sHandler) GetDatabaseClusterCredentials(ctx context.Context, _, names
 }
 
 //nolint:funlen
-func (h *k8sHandler) GetDatabaseClusterComponents(ctx context.Context, _, namespace, name string) ([]api.DatabaseClusterComponent, error) {
+func (h *k8sHandler) GetDatabaseClusterComponents(ctx context.Context, namespace, name string) ([]api.DatabaseClusterComponent, error) {
 	pods, err := h.kubeClient.GetPods(ctx, namespace, &metav1.LabelSelector{
 		MatchLabels: map[string]string{"app.kubernetes.io/instance": name},
 	})
@@ -181,7 +181,7 @@ func (h *k8sHandler) GetDatabaseClusterComponents(ctx context.Context, _, namesp
 	return res, nil
 }
 
-func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, _, namespace, name string) (*api.DatabaseClusterPitr, error) {
+func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, namespace, name string) (*api.DatabaseClusterPitr, error) {
 	databaseCluster, err := h.kubeClient.GetDatabaseCluster(ctx, namespace, name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get database cluster %s/%s: %w", namespace, name, err)

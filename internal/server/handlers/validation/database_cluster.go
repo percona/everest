@@ -26,22 +26,22 @@ const (
 	pgReposLimit                    = 3
 )
 
-func (h *validateHandler) CreateDatabaseCluster(ctx context.Context, user string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
+func (h *validateHandler) CreateDatabaseCluster(ctx context.Context, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
 	if err := h.validateDatabaseClusterCR(ctx, db.GetNamespace(), db); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
-	return h.next.CreateDatabaseCluster(ctx, user, db)
+	return h.next.CreateDatabaseCluster(ctx, db)
 }
 
-func (h *validateHandler) ListDatabaseClusters(ctx context.Context, user, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
-	return h.next.ListDatabaseClusters(ctx, user, namespace)
+func (h *validateHandler) ListDatabaseClusters(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
+	return h.next.ListDatabaseClusters(ctx, namespace)
 }
 
-func (h *validateHandler) DeleteDatabaseCluster(ctx context.Context, user, namespace, name string, req *api.DeleteDatabaseClusterParams) error {
-	return h.next.DeleteDatabaseCluster(ctx, user, namespace, name, req)
+func (h *validateHandler) DeleteDatabaseCluster(ctx context.Context, namespace, name string, req *api.DeleteDatabaseClusterParams) error {
+	return h.next.DeleteDatabaseCluster(ctx, namespace, name, req)
 }
 
-func (h *validateHandler) UpdateDatabaseCluster(ctx context.Context, user string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
+func (h *validateHandler) UpdateDatabaseCluster(ctx context.Context, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
 	if err := h.validateDatabaseClusterCR(ctx, db.GetNamespace(), db); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
@@ -53,23 +53,23 @@ func (h *validateHandler) UpdateDatabaseCluster(ctx context.Context, user string
 	if err := h.validateDatabaseClusterOnUpdate(db, current); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
-	return h.next.UpdateDatabaseCluster(ctx, user, db)
+	return h.next.UpdateDatabaseCluster(ctx, db)
 }
 
-func (h *validateHandler) GetDatabaseCluster(ctx context.Context, user, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
-	return h.next.GetDatabaseCluster(ctx, user, namespace, name)
+func (h *validateHandler) GetDatabaseCluster(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
+	return h.next.GetDatabaseCluster(ctx, namespace, name)
 }
 
-func (h *validateHandler) GetDatabaseClusterCredentials(ctx context.Context, user, namespace, name string) (*api.DatabaseClusterCredential, error) {
-	return h.next.GetDatabaseClusterCredentials(ctx, user, namespace, name)
+func (h *validateHandler) GetDatabaseClusterCredentials(ctx context.Context, namespace, name string) (*api.DatabaseClusterCredential, error) {
+	return h.next.GetDatabaseClusterCredentials(ctx, namespace, name)
 }
 
-func (h *validateHandler) GetDatabaseClusterComponents(ctx context.Context, user, namespace, name string) ([]api.DatabaseClusterComponent, error) {
-	return h.next.GetDatabaseClusterComponents(ctx, user, namespace, name)
+func (h *validateHandler) GetDatabaseClusterComponents(ctx context.Context, namespace, name string) ([]api.DatabaseClusterComponent, error) {
+	return h.next.GetDatabaseClusterComponents(ctx, namespace, name)
 }
 
-func (h *validateHandler) GetDatabaseClusterPitr(ctx context.Context, user, namespace, name string) (*api.DatabaseClusterPitr, error) {
-	return h.next.GetDatabaseClusterPitr(ctx, user, namespace, name)
+func (h *validateHandler) GetDatabaseClusterPitr(ctx context.Context, namespace, name string) (*api.DatabaseClusterPitr, error) {
+	return h.next.GetDatabaseClusterPitr(ctx, namespace, name)
 }
 
 //nolint:cyclop
