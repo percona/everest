@@ -96,7 +96,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			},
 		}
 
-		ctx := context.Background()
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, "test-user")
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
