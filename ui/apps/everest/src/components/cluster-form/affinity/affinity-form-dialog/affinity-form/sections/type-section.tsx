@@ -25,7 +25,7 @@ const RuleTypeSection = ({
     <Typography variant="sectionHeading" sx={{ marginTop: '20px' }}>
       Rule type
     </Typography>
-    <Box sx={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+    <Box sx={{ display: 'flex', gap: '20px' }}>
       <ComponentInput
         disabled={disableComponent}
         components={availableComponentsType(dbType, isShardingEnabled)}

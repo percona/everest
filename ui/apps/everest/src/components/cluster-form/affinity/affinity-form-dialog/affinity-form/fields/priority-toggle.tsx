@@ -10,7 +10,12 @@ const PriorityToggle = () => (
     name={AffinityFormFields.priority}
     toggleButtonGroupProps={{
       size: 'small',
-      sx: { height: '30px', width: '160px', marginTop: '20px' },
+      sx: {
+        height: '30px',
+        width: '160px',
+        marginTop: '20px',
+        alignSelf: 'center',
+      },
     }}
   >
     {Object.values(AffinityPriority).map((value) => (

@@ -22,7 +22,7 @@ const RuleDetailsSection = ({
     <Typography variant="sectionHeading" sx={{ marginTop: '20px' }}>
       Rule details
     </Typography>
-    <Box sx={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+    <Box sx={{ display: 'flex', gap: '20px' }}>
       <TopologyKeyInput />
       <KeyInput />
       <OperatorInput disabled={disableOperator} />
