@@ -9,7 +9,7 @@ import {
   AffinityRule,
 } from 'shared-types/affinity.types';
 import EditableItem from 'components/editable-item';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { AffinityFormDialog } from '../affinity-form-dialog/affinity-form-dialog';
 import { AffinityFormDialogContext } from '../affinity-form-dialog/affinity-form-dialog-context/affinity-form-context';
 import { AffinityFormData } from '../affinity-form-dialog/affinity-form/affinity-form.types';
@@ -73,7 +73,7 @@ export const AffinityListView = ({
               (rule) => rule.component === component
             );
             return (
-              <>
+              <Fragment key={component}>
                 {hasRules && (
                   <Typography
                     variant="sectionHeading"
@@ -84,10 +84,11 @@ export const AffinityListView = ({
                 )}
                 <Stack>
                   {affinityRules.map((rule, idx) => (
-                    <>
+                    <Fragment
+                      key={`${rule.component}-${rule.priority}-${rule.type}`}
+                    >
                       {rule.component === component && (
                         <EditableItem
-                          key={idx}
                           children={<AffinityItem rule={rule} />}
                           editButtonProps={{
                             onClick: () => handleEdit(idx),
@@ -99,10 +100,10 @@ export const AffinityListView = ({
                           endText={`${AffinityPriorityValue[rule.priority as AffinityPriority]} ${rule.priority === AffinityPriority.Preferred && !!rule.weight ? `- ${rule.weight}` : ''}`}
                         />
                       )}
-                    </>
+                    </Fragment>
                   ))}
                 </Stack>
-              </>
+              </Fragment>
             );
           }
         )}

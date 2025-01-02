@@ -1,7 +1,7 @@
 export type AffinityRule = {
-  component: string;
-  type: string;
-  priority: string;
+  component: AffinityComponent;
+  type: AffinityType;
+  priority: AffinityPriority;
   weight?: number;
   topologyKey?: string;
   key?: string;
@@ -33,10 +33,10 @@ export enum AffinityPriority {
 }
 
 export enum AffinityOperator {
-  In = 'in',
-  NotIn = 'notIn',
-  Exists = 'exists',
-  DoesNotExist = 'doesNotExist',
+  In = 'In',
+  NotIn = 'NotIn',
+  Exists = 'Exists',
+  DoesNotExist = 'DoesNotExist',
 }
 
 export const AffinityComponentValue: Record<AffinityComponent, string> = {

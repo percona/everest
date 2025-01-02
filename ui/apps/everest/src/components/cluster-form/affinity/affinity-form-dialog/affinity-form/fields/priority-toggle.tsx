@@ -25,5 +25,4 @@ const PriorityToggle = () => (
     ))}
   </ToggleButtonGroupInput>
 );
-
 export default PriorityToggle;

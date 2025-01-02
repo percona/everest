@@ -28,10 +28,10 @@ export const affinityModalDefaultValues = (
       [AffinityFormFields.component]: component,
       [AffinityFormFields.type]: type,
       [AffinityFormFields.priority]: priority,
-      [AffinityFormFields.weight]: weight || 1,
+      [AffinityFormFields.weight]: parseInt(weight?.toString() || '1', 10),
       [AffinityFormFields.topologyKey]: topologyKey || '',
       [AffinityFormFields.key]: key || '',
-      [AffinityFormFields.operator]: operator,
+      [AffinityFormFields.operator]: operator || '',
       [AffinityFormFields.values]: values,
     };
   }
@@ -41,5 +41,8 @@ export const affinityModalDefaultValues = (
     [AffinityFormFields.priority]: AffinityPriority.Preferred,
     [AffinityFormFields.weight]: 1,
     [AffinityFormFields.topologyKey]: 'kubernetes.io/hostname',
+    [AffinityFormFields.key]: '',
+    [AffinityFormFields.operator]: '',
+    [AffinityFormFields.values]: '',
   };
 };

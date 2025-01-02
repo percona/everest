@@ -1,4 +1,5 @@
-import z from 'zod';
+import { capitalize } from '@mui/material';
+import z, { IssueData } from 'zod';
 
 const tooLongErrorMessage = (fieldName: string) =>
   `The ${fieldName} name is too long`;
@@ -28,3 +29,34 @@ export const rfc_123_schema = (fieldName: string) =>
     .regex(doesNotEndWithDash, errorMessages.doesNotEndWithDash)
     .regex(doesNotStartWithDash, errorMessages.doesNotStartWithDash)
     .trim();
+
+type PerconaCustomZodIssueOptions = Partial<Pick<IssueData, 'code'>> &
+  Omit<IssueData, 'code'>;
+
+const getPerconaZodCustomIssuePath = (field: string | string[]) =>
+  Array.isArray(field) ? field : [field];
+
+export const PerconaZodCustomIssue = {
+  required: (
+    field: string,
+    fieldLabel: string = capitalize(field),
+    options?: PerconaCustomZodIssueOptions
+  ): IssueData => ({
+    path: getPerconaZodCustomIssuePath(field),
+    message: `${fieldLabel} is required`,
+    ...options,
+    code: z.ZodIssueCode.custom,
+  }),
+  between: (
+    field: string,
+    min: number,
+    max: number,
+    fieldLabel: string = field,
+    options?: PerconaCustomZodIssueOptions
+  ): IssueData => ({
+    path: getPerconaZodCustomIssuePath(field),
+    message: `${fieldLabel} must be between ${min} and ${max}`,
+    ...options,
+    code: z.ZodIssueCode.custom,
+  }),
+};

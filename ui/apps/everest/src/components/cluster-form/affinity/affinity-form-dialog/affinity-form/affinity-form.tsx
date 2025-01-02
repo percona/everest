@@ -15,7 +15,7 @@
 
 import { ArrowOutward } from '@mui/icons-material';
 import { Box, Button, Typography } from '@mui/material';
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { AffinityPriority } from 'shared-types/affinity.types';
 import { Messages } from '../../../advanced-configuration/affinity/affinity-form.messages';
 import { AffinityFormDialogContext } from '../affinity-form-dialog-context/affinity-form-context';
@@ -29,12 +29,23 @@ export const AffinityForm = () => {
     dbType,
     isShardingEnabled,
   } = useContext(AffinityFormDialogContext);
-  const { watch } = useFormContext();
-  const [operator, key, priority] = watch([
+  const { watch, resetField, trigger } = useFormContext();
+  const [operator, key, priority, type] = watch([
     AffinityFormFields.operator,
     AffinityFormFields.key,
     AffinityFormFields.priority,
+    AffinityFormFields.type,
   ]);
+
+  useEffect(() => {
+    resetField(AffinityFormFields.weight, {
+      keepError: false,
+    });
+  }, [priority, resetField]);
+
+  useEffect(() => {
+    trigger();
+  }, [type, trigger]);
 
   return (
     <>

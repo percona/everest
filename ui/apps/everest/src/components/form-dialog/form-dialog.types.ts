@@ -7,13 +7,13 @@ import {
   UseFormReturn,
   ValidationMode,
 } from 'react-hook-form';
-import { ZodEffects, ZodObject, ZodRawShape } from 'zod';
+import { z, ZodTypeDef } from 'zod';
 
 export interface FormDialogProps<T extends FieldValues> {
   isOpen: boolean;
   closeModal: () => void;
   headerMessage: string;
-  schema: ZodEffects<ZodObject<ZodRawShape>> | ZodObject<ZodRawShape>;
+  schema: z.Schema<unknown, ZodTypeDef>;
   defaultValues?: DefaultValues<T>;
   values?: T;
   onSubmit: (data: T) => void;

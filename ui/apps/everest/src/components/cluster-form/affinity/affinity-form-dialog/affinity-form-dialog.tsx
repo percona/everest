@@ -28,7 +28,7 @@ export const AffinityFormDialog = () => {
 
   return (
     <FormDialog
-      schema={affinityFormSchema()}
+      schema={affinityFormSchema}
       isOpen={!!openAffinityModal}
       closeModal={handleClose}
       headerMessage={mode === 'new' ? Messages.addRule : Messages.editRule}
