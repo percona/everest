@@ -10,10 +10,9 @@ import {
 } from 'components/cluster-form/affinity/affinity-form-dialog/affinity-form/affinity-form.types';
 
 export const affinityModalDefaultValues = (
-  mode: 'new' | 'edit',
   selectedRule?: AffinityRule
 ): AffinityFormData => {
-  if (mode === 'edit' && selectedRule) {
+  if (selectedRule) {
     const {
       component,
       type,

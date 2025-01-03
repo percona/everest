@@ -4,11 +4,9 @@ import { DbType } from '@percona/types';
 
 export const AffinityFormDialogContext =
   createContext<AffinityFormDialogContextType>({
-    mode: 'new',
-    setMode: () => {},
     handleSubmit: () => {},
     handleClose: () => {},
-    selectedAffinityId: -1,
+    selectedAffinityId: null,
     setOpenAffinityModal: () => {},
     openAffinityModal: false,
     affinityRules: [],

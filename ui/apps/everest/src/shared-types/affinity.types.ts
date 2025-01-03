@@ -7,6 +7,8 @@ export type AffinityRule = {
   key?: string;
   operator?: string;
   values?: string;
+  // uid is used to uniquely identify the rule on the client side
+  uid: string;
 };
 
 type AffinityComponentType = keyof typeof AffinityComponent;

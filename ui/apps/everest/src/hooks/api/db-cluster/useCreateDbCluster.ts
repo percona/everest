@@ -115,7 +115,7 @@ const formValuesToPayloadMapping = (
         config: dbPayload.engineParametersEnabled
           ? dbPayload.engineParameters
           : '',
-        affinity: dbNodeRules,
+        // affinity: dbNodeRules,
       },
       monitoring: {
         ...(!!dbPayload.monitoring && {
@@ -130,8 +130,8 @@ const formValuesToPayloadMapping = (
         dbPayload.proxyCpu,
         dbPayload.proxyMemory,
         dbPayload.sharding,
-        dbPayload.sourceRanges || [],
-        proxyRules
+        dbPayload.sourceRanges || []
+        // proxyRules
       ),
       ...(dbPayload.dbType === DbType.Mongo && {
         sharding: {
@@ -139,7 +139,7 @@ const formValuesToPayloadMapping = (
           shards: +(dbPayload.shardNr ?? MIN_NUMBER_OF_SHARDS),
           configServer: {
             replicas: +(dbPayload.shardConfigServers ?? 3),
-            affinity: configServerRules,
+            // affinity: configServerRules,
           },
         },
       }),

@@ -16,16 +16,14 @@
 import { Box, Stack } from '@mui/material';
 import { DbType } from '@percona/types';
 import { SwitchInput, TextArray, TextInput } from '@percona/ui-lib';
-import { AffinityFormData } from 'components/cluster-form/affinity/affinity-form-dialog/affinity-form/affinity-form.types';
-import { getAffinityPayload } from 'components/cluster-form/affinity/affinity-form-dialog/affinity-form/affinity-form.utils';
 import { AffinityListView } from 'components/cluster-form/affinity/affinity-list-view/affinity-list.view';
-import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { AffinityRule } from 'shared-types/affinity.types';
 import { AdvancedConfigurationFields } from './advanced-configuration.types';
 import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
 import { Messages } from './messages';
 import { DbWizardForm } from 'consts';
+import { AffinityRule } from 'shared-types/affinity.types';
+import { useCallback } from 'react';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -37,9 +35,6 @@ export const AdvancedConfigurationForm = ({
   showAffinity = false,
 }: AdvancedConfigurationFormProps) => {
   const { watch, setValue } = useFormContext();
-  const [mode, setMode] = useState<'new' | 'edit'>('new');
-
-  const [affinityRules, setAffinityRules] = useState<AffinityRule[]>([]);
 
   const [
     externalAccess,
@@ -53,29 +48,15 @@ export const AdvancedConfigurationForm = ({
     DbWizardForm.sharding,
   ]);
 
-  const handleDelete = (idx: number) => {
-    setValue(
-      AdvancedConfigurationFields.affinityRules,
-      affinityRules.filter((_, i) => i !== idx)
-    );
-  };
-
-  const handleSubmit = (data: AffinityFormData, selectedAffinityId: number) => {
-    if (selectedAffinityId < 0) {
-      setValue(AdvancedConfigurationFields.affinityRules, [
-        ...affinityRules,
-        getAffinityPayload(data),
-      ]);
-    } else {
-      const newAffinityRules = [...affinityRules];
-      (newAffinityRules[selectedAffinityId] = getAffinityPayload(data)),
-        setValue(AdvancedConfigurationFields.affinityRules, newAffinityRules);
-    }
-  };
-
-  useEffect(() => {
-    setAffinityRules(formAffinityRules);
-  }, [formAffinityRules, mode]);
+  const onRulesChange = useCallback(
+    (newRules: AffinityRule[]) => {
+      setValue(AdvancedConfigurationFields.affinityRules, newRules, {
+        shouldTouch: true,
+        shouldDirty: true,
+      });
+    },
+    [setValue]
+  );
 
   return (
     <>
@@ -88,11 +69,8 @@ export const AdvancedConfigurationForm = ({
           }}
         >
           <AffinityListView
-            mode={mode}
-            setMode={setMode}
-            affinityRules={affinityRules}
-            handleDelete={handleDelete}
-            handleSubmit={handleSubmit}
+            initialRules={formAffinityRules}
+            onRulesChange={onRulesChange}
             dbType={dbType}
             isShardingEnabled={isShardingEnabled}
           />

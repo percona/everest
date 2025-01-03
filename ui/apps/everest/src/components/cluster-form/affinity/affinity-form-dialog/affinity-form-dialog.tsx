@@ -8,7 +8,6 @@ import { useContext, useMemo } from 'react';
 
 export const AffinityFormDialog = () => {
   const {
-    mode,
     openAffinityModal,
     handleClose,
     handleSubmit,
@@ -16,28 +15,30 @@ export const AffinityFormDialog = () => {
     selectedAffinityId,
   } = useContext(AffinityFormDialogContext);
 
+  const isEditing = selectedAffinityId !== null;
+
   const selectedAffinityRule = useMemo(() => {
-    if (mode === 'edit') {
+    if (isEditing) {
       return affinityRules.find((_, idx) => idx === selectedAffinityId);
     }
-  }, [affinityRules, mode, selectedAffinityId]);
+  }, [affinityRules, isEditing, selectedAffinityId]);
 
   const values = useMemo(() => {
-    return affinityModalDefaultValues(mode, selectedAffinityRule);
-  }, [mode, selectedAffinityRule]);
+    return affinityModalDefaultValues(selectedAffinityRule);
+  }, [selectedAffinityRule]);
 
   return (
     <FormDialog
       schema={affinityFormSchema}
       isOpen={!!openAffinityModal}
       closeModal={handleClose}
-      headerMessage={mode === 'new' ? Messages.addRule : Messages.editRule}
+      headerMessage={isEditing ? Messages.editRule : Messages.addRule}
       onSubmit={handleSubmit}
-      submitMessage={mode === 'new' ? Messages.addRule : Messages.editRule}
-      {...(mode === 'edit' && { values })}
+      submitMessage={isEditing ? Messages.editRule : Messages.addRule}
+      {...(isEditing && { values })}
       defaultValues={values}
       size="XXL"
-      dataTestId={`${mode}-affinity-form`}
+      dataTestId={`affinity-form`}
     >
       <AffinityForm />
     </FormDialog>

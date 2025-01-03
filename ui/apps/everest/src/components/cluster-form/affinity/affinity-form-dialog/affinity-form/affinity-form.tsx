@@ -24,11 +24,9 @@ import { useFormContext } from 'react-hook-form';
 import { RuleDetailsSection, RuleTypeSection } from './sections';
 
 export const AffinityForm = () => {
-  const {
-    mode = 'new',
-    dbType,
-    isShardingEnabled,
-  } = useContext(AffinityFormDialogContext);
+  const { dbType, isShardingEnabled, selectedAffinityId } = useContext(
+    AffinityFormDialogContext
+  );
   const { watch, resetField, trigger } = useFormContext();
   const [operator, key, priority, type] = watch([
     AffinityFormFields.operator,
@@ -72,7 +70,7 @@ export const AffinityForm = () => {
       <RuleTypeSection
         dbType={dbType}
         isShardingEnabled={isShardingEnabled}
-        disableComponent={mode === 'edit'}
+        disableComponent={selectedAffinityId !== null}
         showWeight={priority === AffinityPriority.Preferred}
       />
       <RuleDetailsSection

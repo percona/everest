@@ -9,41 +9,39 @@ import {
   AffinityRule,
 } from 'shared-types/affinity.types';
 import EditableItem from 'components/editable-item';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { AffinityFormDialog } from '../affinity-form-dialog/affinity-form-dialog';
 import { AffinityFormDialogContext } from '../affinity-form-dialog/affinity-form-dialog-context/affinity-form-context';
 import { AffinityFormData } from '../affinity-form-dialog/affinity-form/affinity-form.types';
 import { availableComponentsType } from '../affinity-utils';
 import { AffinityItem } from './affinity-item';
+import { convertFormDataToAffinityRule } from '../affinity-form-dialog/affinity-form/affinity-form.utils';
 
 export const AffinityListView = ({
-  mode,
-  setMode,
-  affinityRules,
-  handleDelete,
-  handleSubmit,
+  onRulesChange,
   dbType,
+  initialRules = [],
   isShardingEnabled = false,
 }: {
-  mode: 'new' | 'edit';
-  setMode: React.Dispatch<React.SetStateAction<'new' | 'edit'>>;
-  affinityRules: AffinityRule[];
-  handleDelete: (idx: number) => void;
-  handleSubmit: (data: AffinityFormData, selectedAffinityId: number) => void;
+  initialRules?: AffinityRule[];
+  onRulesChange: (newRules: AffinityRule[]) => void;
   dbType: DbType;
   isShardingEnabled?: boolean;
 }) => {
-  const [selectedAffinityId, setSelectedAffinityId] = useState<number>(-1);
+  const [selectedAffinityId, setSelectedAffinityId] = useState<number | null>(
+    null
+  );
   const [openAffinityModal, setOpenAffinityModal] = useState(false);
+  const [rules, setRules] = useState<AffinityRule[]>(initialRules);
+
+  useEffect(() => onRulesChange(rules), [rules, onRulesChange]);
 
   const handleCreate = () => {
-    setMode('new');
     setOpenAffinityModal(true);
   };
 
   const handleEdit = (idx: number) => {
     setSelectedAffinityId(idx);
-    setMode('edit');
     setOpenAffinityModal(true);
   };
 
@@ -51,9 +49,23 @@ export const AffinityListView = ({
     setOpenAffinityModal(false);
   };
 
+  const handleDelete = (idx: number) => {
+    setRules((oldRules) => oldRules.filter((_, i) => i !== idx));
+  };
+
   const onSubmit = (data: AffinityFormData) => {
-    handleSubmit(data, selectedAffinityId);
-    setSelectedAffinityId(-1);
+    setRules((oldRules) => {
+      let newRules: AffinityRule[] = [];
+      const addedRule = convertFormDataToAffinityRule(data);
+      if (selectedAffinityId === null) {
+        newRules = [...oldRules, addedRule];
+      } else {
+        newRules = [...oldRules];
+        newRules[selectedAffinityId] = addedRule;
+      }
+      return newRules;
+    });
+    setSelectedAffinityId(null);
     setOpenAffinityModal(false);
   };
 
@@ -69,7 +81,7 @@ export const AffinityListView = ({
       >
         {availableComponentsType(dbType, isShardingEnabled).map(
           (component: AffinityComponent) => {
-            const hasRules = (affinityRules || []).find(
+            const hasRules = (rules || []).find(
               (rule) => rule.component === component
             );
             return (
@@ -83,10 +95,8 @@ export const AffinityListView = ({
                   </Typography>
                 )}
                 <Stack>
-                  {affinityRules.map((rule, idx) => (
-                    <Fragment
-                      key={`${rule.component}-${rule.priority}-${rule.type}`}
-                    >
+                  {rules.map((rule, idx) => (
+                    <Fragment key={rule.uid}>
                       {rule.component === component && (
                         <EditableItem
                           children={<AffinityItem rule={rule} />}
@@ -112,14 +122,12 @@ export const AffinityListView = ({
       {openAffinityModal && (
         <AffinityFormDialogContext.Provider
           value={{
-            mode,
-            setMode,
             selectedAffinityId,
             handleSubmit: onSubmit,
             handleClose,
             setOpenAffinityModal,
             openAffinityModal,
-            affinityRules,
+            affinityRules: rules,
             dbType,
             isShardingEnabled,
           }}
