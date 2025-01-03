@@ -53,23 +53,32 @@ func IsDev(v string) bool {
 	return ver.Core().Equal(devLatestVer)
 }
 
-// FullVersionInfo returns full version report.
-func FullVersionInfo() string {
+// Info represents the version information.
+type Info struct {
+	ProjectName   string  `json:"projectName"`
+	Version       string  `json:"version"`
+	FullCommit    string  `json:"fullCommit"`
+	ServerVersion *string `json:"serverVersion,omitempty"`
+}
+
+// String returns the string representation of the version information.
+func (v Info) String() string {
 	out := []string{
-		"ProjectName: " + ProjectName,
-		"Version: " + Version,
-		"FullCommit: " + FullCommit,
+		"ProjectName: " + v.ProjectName,
+		"Version: " + v.Version,
+		"FullCommit: " + v.FullCommit,
+	}
+	if v.ServerVersion != nil {
+		out = append(out, "ServerVersion: "+*v.ServerVersion)
 	}
 	return strings.Join(out, "\n")
 }
 
-// FullVersionJSON returns version info as JSON.
-func FullVersionJSON() (string, error) {
-	res := map[string]string{
-		"projectName": ProjectName,
-		"version":     Version,
-		"fullCommit":  FullCommit,
+// JSONString returns the JSON representation of the version information.
+func (v Info) JSONString() string {
+	data, err := json.Marshal(v)
+	if err != nil {
+		panic(err)
 	}
-	data, err := json.Marshal(res)
-	return string(data), err
+	return string(data)
 }

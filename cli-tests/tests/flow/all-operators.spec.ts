@@ -57,7 +57,7 @@ test.describe('Everest CLI install', async () => {
         '✓ Ensuring Everest CatalogSource is ready',
         '✓ Ensuring monitoring stack is ready',
         '✓ Provisioning database namespaces (everest-all)',
-        '🚀 Everest has been successfully installed!',
+        'Thank you for installing Everest',
       ]);
     });
     await page.waitForTimeout(10_000);

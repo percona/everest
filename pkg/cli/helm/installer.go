@@ -228,6 +228,7 @@ type UpgradeOptions struct {
 	ReuseValues          bool
 	ResetValues          bool
 	ResetThenReuseValues bool
+	Force                bool
 }
 
 // Upgrade the Helm chart.
@@ -239,6 +240,7 @@ func (i *Installer) Upgrade(ctx context.Context, opts UpgradeOptions) error {
 	upgrade.ResetValues = opts.ResetValues
 	upgrade.ResetThenReuseValues = opts.ResetThenReuseValues
 	upgrade.DisableHooks = opts.DisableHooks
+	upgrade.Force = opts.Force
 
 	rel, err := upgrade.RunWithContext(ctx, i.ReleaseName, i.chart, i.Values)
 	if err != nil {
