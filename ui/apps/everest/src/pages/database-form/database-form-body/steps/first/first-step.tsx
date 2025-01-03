@@ -47,6 +47,8 @@ import {
 import { DbVersion } from 'components/cluster-form/db-version';
 import { useDBEnginesForDbEngineTypes } from 'hooks/index.ts';
 import { useDatabasePageDefaultValues } from 'pages/database-form/useDatabaseFormDefaultValues.ts';
+import { AffinityRule } from 'shared-types/affinity.types.ts';
+import { filterOutUnavailableAffinityRulesForMongo } from 'pages/database-form/database-form.utils.ts';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
@@ -54,7 +56,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const {
     defaultValues: { [DbWizardFormFields.dbVersion]: defaultDbVersion },
   } = useDatabasePageDefaultValues(mode);
-  const { watch, setValue, getFieldState, resetField, trigger } =
+  const { watch, setValue, getFieldState, resetField, trigger, getValues } =
     useFormContext();
 
   const { data: clusterInfo, isFetching: clusterInfoFetching } =
@@ -224,6 +226,26 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     });
   }, []);
 
+  const onShardingToggleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!e.target.checked) {
+        resetField(DbWizardFormFields.shardNr, {
+          keepError: false,
+        });
+        resetField(DbWizardFormFields.shardConfigServers, {
+          keepError: false,
+        });
+      }
+      const rules: AffinityRule[] = getValues(DbWizardFormFields.affinityRules);
+      const filteredRules = filterOutUnavailableAffinityRulesForMongo(
+        rules,
+        e.target.checked
+      );
+      setValue(DbWizardFormFields.affinityRules, filteredRules);
+    },
+    [getValues, resetField, setValue]
+  );
+
   useEffect(() => {
     setDefaultsForDbType(dbType);
   }, [dbType, setDefaultsForDbType]);
@@ -292,16 +314,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                   name={DbWizardFormFields.sharding}
                   switchFieldProps={{
                     disabled: disableSharding,
-                    onChange: (e) => {
-                      if (!e.target.checked) {
-                        resetField(DbWizardFormFields.shardNr, {
-                          keepError: false,
-                        });
-                        resetField(DbWizardFormFields.shardConfigServers, {
-                          keepError: false,
-                        });
-                      }
-                    },
+                    onChange: onShardingToggleChange,
                   }}
                 />
                 {notSupportedMongoOperatorVersionForSharding &&

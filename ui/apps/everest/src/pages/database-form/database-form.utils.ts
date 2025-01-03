@@ -35,6 +35,10 @@ import {
 } from 'components/cluster-form';
 import { isProxy } from 'utils/db.tsx';
 import { advancedConfigurationModalDefaultValues } from 'components/cluster-form/advanced-configuration/advanced-configuration.utils.ts';
+import {
+  AffinityComponent,
+  AffinityRule,
+} from 'shared-types/affinity.types.ts';
 
 const replicasToNodes = (replicas: string, dbType: DbType): string => {
   const nodeOptions = NODES_DB_TYPE_MAP[dbType];
@@ -156,3 +160,11 @@ export const DbClusterPayloadToFormValues = (
       dbCluster?.spec?.monitoring?.monitoringConfigName || '',
   };
 };
+
+export const filterOutUnavailableAffinityRulesForMongo = (
+  rules: AffinityRule[],
+  sharding: boolean
+) =>
+  rules.filter((rule) =>
+    sharding ? true : rule.component === AffinityComponent.DbNode
+  );
