@@ -10,6 +10,7 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
@@ -73,7 +74,7 @@ func (h *k8sHandler) CreateBackupStorage(ctx context.Context, namespace string, 
 	if req.Description != nil {
 		bs.Spec.Description = *req.Description
 	}
-	updated, err := h.kubeClient.CreateBackupStorage(ctx, bs)
+	created, err := h.kubeClient.CreateBackupStorage(ctx, bs)
 	if err != nil {
 		// TODO: Move this logic to the operator
 		dErr := h.kubeClient.DeleteSecret(ctx, namespace, req.Name)
@@ -83,7 +84,7 @@ func (h *k8sHandler) CreateBackupStorage(ctx context.Context, namespace string, 
 		return nil, fmt.Errorf("failed to create backup storage: %w", err)
 	}
 
-	return updated, nil
+	return created, nil
 }
 
 func (h *k8sHandler) UpdateBackupStorage(ctx context.Context, namespace, name string, req *api.UpdateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
@@ -133,12 +134,12 @@ func (h *k8sHandler) DeleteBackupStorage(ctx context.Context, namespace, name st
 		return fmt.Errorf("failed to check if backup storage is used: %w", err)
 	}
 	if used {
-		return errors.New("backup storage is in use")
+		return fmt.Errorf("backup storage '%s' in namespace '%s' is in use", name, namespace)
 	}
-	if err := h.kubeClient.DeleteBackupStorage(ctx, namespace, name); err != nil {
+	if err := h.kubeClient.DeleteBackupStorage(ctx, namespace, name); client.IgnoreNotFound(err) != nil {
 		return fmt.Errorf("failed to delete backup storage: %w", err)
 	}
-	if err := h.kubeClient.DeleteSecret(ctx, namespace, name); err != nil {
+	if err := h.kubeClient.DeleteSecret(ctx, namespace, name); client.IgnoreNotFound(err) != nil {
 		return fmt.Errorf("failed to delete secret: %w", err)
 	}
 	return nil

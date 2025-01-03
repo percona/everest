@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
@@ -25,7 +26,11 @@ func (h *k8sHandler) CreateMonitoringInstance(ctx context.Context, namespace str
 		return nil, err
 	}
 	if m != nil && m.GetName() != "" {
-		return nil, fmt.Errorf("monitoring instance with name %s already exists", req.Name)
+		return nil, k8serrors.NewAlreadyExists(schema.GroupResource{
+			Group:    everestv1alpha1.GroupVersion.Group,
+			Resource: "monitoringconfigs",
+		}, req.Name,
+		)
 	}
 	apiKey, err := h.getPMMApiKey(ctx, req)
 	if err != nil {
