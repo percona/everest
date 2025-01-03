@@ -69,7 +69,7 @@ test('create/update/delete database cluster restore', async ({ request, page }) 
     data: restore,
   })
   expect(response.status()).toBe(400)
-  expect(await response.text()).toContain('{"message":"Database cluster not-existing-cluster does not exist"}')
+  expect(await response.text()).toContain('database cluster not-existing-cluster does not exist')
 
   // delete restore
   await request.delete(`/v1/namespaces/${testsNs}/database-cluster-restores/${restoreName}`)
@@ -194,7 +194,7 @@ test('create restore: validation errors', async ({ request, page }) => {
   })
 
   expect(response.status()).toBe(400)
-  expect(await response.text()).toContain('{"message":"Database cluster not-existing-cluster does not exist"}')
+  expect(await response.text()).toContain('database cluster not-existing-cluster does not exist')
 
   // empty spec
   const payloadEmptySpec = {
@@ -209,7 +209,7 @@ test('create restore: validation errors', async ({ request, page }) => {
     data: payloadEmptySpec,
   })
   expect(response.status()).toBe(400)
-  expect(await response.text()).toContain('{"message":".spec cannot be empty"}')
+  expect(await response.text()).toContain('spec.dataSource.dbClusterBackupName cannot be empty')
 
   await th.deleteBackup(page, request, backupName)
   await th.deleteDBCluster(request, page, clName)

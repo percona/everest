@@ -25,15 +25,13 @@ import (
 )
 
 // CreateMonitoringConfig creates an monitoringConfig.
-func (c *Client) CreateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) error {
-	_, err := c.customClientSet.MonitoringConfig(config.Namespace).Create(ctx, config, metav1.CreateOptions{})
-	return err
+func (c *Client) CreateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error) {
+	return c.customClientSet.MonitoringConfig(config.Namespace).Create(ctx, config, metav1.CreateOptions{})
 }
 
 // UpdateMonitoringConfig updates an monitoringConfig.
-func (c *Client) UpdateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) error {
-	_, err := c.customClientSet.MonitoringConfig(config.Namespace).Update(ctx, config, metav1.UpdateOptions{})
-	return err
+func (c *Client) UpdateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error) {
+	return c.customClientSet.MonitoringConfig(config.Namespace).Update(ctx, config, metav1.UpdateOptions{})
 }
 
 // GetMonitoringConfig returns the monitoringConfig.

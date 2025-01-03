@@ -77,7 +77,7 @@ test('dbcluster not found', async ({ request, page }) => {
   })
 
   expect(response.status()).toBe(400)
-  expect(await response.text()).toContain('{"message":"Database cluster not-existing-cluster does not exist"}')
+  expect(await response.text()).toContain('database cluster not-existing-cluster does not exist')
 
   await th.deleteBackupStorage(page, request, bsName, testsNs)
 })
