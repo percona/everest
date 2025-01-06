@@ -208,4 +208,102 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("UpdateDatabaseCluster", func(t *testing.T) {
+		testCases := []struct {
+			desc    string
+			wantErr error
+			policy  string
+		}{
+			{
+				desc:    "missing update permission for database-cluster",
+				policy:  newPolicy(), // no policy
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "missing read permission for database-engine",
+				policy: newPolicy(
+					"p, role:test, database-clusters, update, default/test-cluster",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "missing create permission for database-cluster-backups (schedules updated)",
+				policy: newPolicy(
+					"p, role:test, database-clusters, update, default/test-cluster",
+					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "missing read permission for backup-storages",
+				policy: newPolicy(
+					"p, role:test, database-clusters, update, default/test-cluster",
+					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
+					"p, role:test, database-cluster-backups, create, default/*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "success",
+				policy: newPolicy(
+					"p, role:test, database-clusters, update, default/test-cluster",
+					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
+					"p, role:test, database-cluster-backups, create, default/*",
+					"p, role:test, backup-storages, read, default/test-backup-storage",
+					"g, test-user, role:test",
+				),
+			},
+		}
+
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, "test-user")
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				t.Parallel()
+				k8sMock := newConfigMapMock(tc.policy)
+				enf, err := rbac.NewEnforcer(ctx, k8sMock, zap.NewNop().Sugar())
+				require.NoError(t, err)
+
+				next := &handlers.MockHandler{}
+				next.On("GetDatabaseCluster", mock.Anything, mock.Anything, mock.Anything).
+					Return(&everestv1alpha1.DatabaseCluster{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-cluster",
+							Namespace: "default",
+						},
+					}, nil)
+				next.On("UpdateDatabaseCluster", mock.Anything, mock.Anything).
+					Return(&everestv1alpha1.DatabaseCluster{}, nil)
+
+				h := &rbacHandler{
+					next:       next,
+					enforcer:   enf,
+					log:        zap.NewNop().Sugar(),
+					userGetter: testUserGetter,
+				}
+				_, err = h.UpdateDatabaseCluster(ctx, &everestv1alpha1.DatabaseCluster{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cluster",
+						Namespace: "default",
+					},
+					Spec: everestv1alpha1.DatabaseClusterSpec{
+						Engine: everestv1alpha1.Engine{
+							Type: everestv1alpha1.DatabaseEnginePXC,
+						},
+						Backup: everestv1alpha1.Backup{
+							Schedules: []everestv1alpha1.BackupSchedule{
+								{
+									BackupStorageName: "test-backup-storage",
+								},
+							},
+						},
+					},
+				})
+				assert.ErrorIs(t, err, tc.wantErr)
+			})
+		}
+	})
 }
