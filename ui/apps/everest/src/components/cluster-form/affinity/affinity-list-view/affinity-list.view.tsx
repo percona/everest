@@ -1,4 +1,4 @@
-import { Stack, Typography } from '@mui/material';
+import { Box, BoxProps, Stack, Typography } from '@mui/material';
 import { DbType } from '@percona/types';
 import { ActionableLabeledContent } from '@percona/ui-lib';
 import {
@@ -22,17 +22,20 @@ export const AffinityListView = ({
   dbType,
   initialRules = [],
   isShardingEnabled = false,
+  boxProps = { sx: {} },
 }: {
   initialRules?: AffinityRule[];
   onRulesChange: (newRules: AffinityRule[]) => void;
   dbType: DbType;
   isShardingEnabled?: boolean;
+  boxProps?: BoxProps;
 }) => {
   const [selectedAffinityId, setSelectedAffinityId] = useState<number | null>(
     null
   );
   const [openAffinityModal, setOpenAffinityModal] = useState(false);
   const [rules, setRules] = useState<AffinityRule[]>(initialRules);
+  const { sx: boxSx, ...rest } = boxProps;
 
   useEffect(() => onRulesChange(rules), [rules, onRulesChange]);
 
@@ -70,7 +73,15 @@ export const AffinityListView = ({
   };
 
   return (
-    <>
+    <Box
+      sx={{
+        marginBottom: '15px',
+        border: '1px solid #2C323E40',
+        padding: '10px',
+        ...boxSx,
+      }}
+      {...rest}
+    >
       <ActionableLabeledContent
         label="Affinity"
         actionButtonProps={{
@@ -135,6 +146,6 @@ export const AffinityListView = ({
           <AffinityFormDialog />
         </AffinityFormDialogContext.Provider>
       )}
-    </>
+    </Box>
   );
 };

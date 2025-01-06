@@ -13,14 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Box, capitalize, Tooltip } from '@mui/material';
+import { capitalize, Tooltip } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import StatusField from 'components/status-field';
 import { DATE_FORMAT } from 'consts';
 import { format, formatDistanceToNowStrict, isValid } from 'date-fns';
 import { useDbClusterComponents } from 'hooks/api/db-cluster/useDbClusterComponents';
 import { MRT_ColumnDef } from 'material-react-table';
-import { useMemo } from 'react';
+import { useCallback, useContext, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { DBClusterComponent } from 'shared-types/components.types';
 import {
@@ -29,6 +29,11 @@ import {
   componentStatusToBaseStatus,
 } from './components.constants';
 import ExpandedRow from './expanded-row';
+import { AffinityListView } from 'components/cluster-form/affinity/affinity-list-view/affinity-list.view';
+import { AffinityRule } from 'shared-types/affinity.types';
+import { DbClusterContext } from '../dbCluster.context';
+import { dbPayloadToAffinityRules } from 'components/cluster-form/affinity/affinity-utils';
+import { dbEngineToDbType } from '@percona/utils';
 
 const Components = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -37,6 +42,7 @@ const Components = () => {
     namespace,
     dbClusterName!
   );
+  const { dbCluster } = useContext(DbClusterContext);
 
   const columns = useMemo<MRT_ColumnDef<DBClusterComponent>[]>(() => {
     return [
@@ -95,6 +101,14 @@ const Components = () => {
       },
     ];
   }, []);
+  const affinityRules = useMemo(
+    () => dbPayloadToAffinityRules(dbCluster!),
+    [dbCluster]
+  );
+
+  const onRulesChange = useCallback((newRules: AffinityRule[]) => {
+    console.log(newRules);
+  }, []);
 
   return (
     <>
@@ -123,15 +137,13 @@ const Components = () => {
           },
         }}
       />
-      <Box>
-        {/* <AffinityListView
-          affinityRules={[]}
-          handleDelete={() => console.log('delete')}
-          handleSubmit={() => console.log('submit')}
-          mode={'new'}
-          setMode={() => {}}
-        /> */}
-      </Box>
+      <AffinityListView
+        initialRules={affinityRules}
+        onRulesChange={onRulesChange}
+        dbType={dbEngineToDbType(dbCluster!.spec.engine.type)}
+        isShardingEnabled={!!dbCluster!.spec.sharding?.enabled}
+        boxProps={{ sx: { mt: 3 } }}
+      />
     </>
   );
 };

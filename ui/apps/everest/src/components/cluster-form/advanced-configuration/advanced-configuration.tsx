@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Box, Stack } from '@mui/material';
+import { Stack } from '@mui/material';
 import { DbType } from '@percona/types';
 import { SwitchInput, TextArray, TextInput } from '@percona/ui-lib';
 import { AffinityListView } from 'components/cluster-form/affinity/affinity-list-view/affinity-list.view';
@@ -61,20 +61,12 @@ export const AdvancedConfigurationForm = ({
   return (
     <>
       {showAffinity && (
-        <Box
-          sx={{
-            marginBottom: '15px',
-            border: '1px solid #2C323E40',
-            padding: '10px',
-          }}
-        >
-          <AffinityListView
-            initialRules={formAffinityRules}
-            onRulesChange={onRulesChange}
-            dbType={dbType}
-            isShardingEnabled={isShardingEnabled}
-          />
-        </Box>
+        <AffinityListView
+          initialRules={formAffinityRules}
+          onRulesChange={onRulesChange}
+          dbType={dbType}
+          isShardingEnabled={isShardingEnabled}
+        />
       )}
       <SwitchInput
         label={Messages.enableExternalAccess.title}
