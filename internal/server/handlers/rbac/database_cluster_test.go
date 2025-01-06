@@ -24,7 +24,6 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 			desc    string
 			wantErr error
 			policy  string
-			mocks   func(h *handlers.MockHandler)
 		}{
 			{
 				desc:    "missing create permission for database-cluster",
@@ -84,14 +83,6 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"g, test-user, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
-				mocks: func(h *handlers.MockHandler) {
-					h.On("GetDatabaseClusterBackup", mock.Anything, mock.Anything, mock.Anything).Return(
-						&everestv1alpha1.DatabaseClusterBackup{
-							Spec: everestv1alpha1.DatabaseClusterBackupSpec{
-								DBClusterName: "source-cluster",
-							},
-						}, nil)
-				},
 			},
 			{
 				desc: "missing database-cluster-credentials permissions on source cluster",
@@ -104,14 +95,6 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"g, test-user, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
-				mocks: func(h *handlers.MockHandler) {
-					h.On("GetDatabaseClusterBackup", mock.Anything, mock.Anything, mock.Anything).Return(
-						&everestv1alpha1.DatabaseClusterBackup{
-							Spec: everestv1alpha1.DatabaseClusterBackupSpec{
-								DBClusterName: "source-cluster",
-							},
-						}, nil)
-				},
 			},
 			{
 				desc: "missing read database-cluster-backups permissions on source cluster",
@@ -125,14 +108,6 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"g, test-user, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
-				mocks: func(h *handlers.MockHandler) {
-					h.On("GetDatabaseClusterBackup", mock.Anything, mock.Anything, mock.Anything).Return(
-						&everestv1alpha1.DatabaseClusterBackup{
-							Spec: everestv1alpha1.DatabaseClusterBackupSpec{
-								DBClusterName: "source-cluster",
-							},
-						}, nil)
-				},
 			},
 			{
 				desc: "missing read database-cluster-restores permissions on source cluster",
@@ -147,14 +122,6 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"g, test-user, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
-				mocks: func(h *handlers.MockHandler) {
-					h.On("GetDatabaseClusterBackup", mock.Anything, mock.Anything, mock.Anything).Return(
-						&everestv1alpha1.DatabaseClusterBackup{
-							Spec: everestv1alpha1.DatabaseClusterBackupSpec{
-								DBClusterName: "source-cluster",
-							},
-						}, nil)
-				},
 			},
 			{
 				desc: "success",
@@ -169,14 +136,6 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
 					"g, test-user, role:test",
 				),
-				mocks: func(h *handlers.MockHandler) {
-					h.On("GetDatabaseClusterBackup", mock.Anything, mock.Anything, mock.Anything).Return(
-						&everestv1alpha1.DatabaseClusterBackup{
-							Spec: everestv1alpha1.DatabaseClusterBackupSpec{
-								DBClusterName: "source-cluster",
-							},
-						}, nil)
-				},
 			},
 			{
 				desc: "success (wildcards)",
@@ -191,28 +150,12 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-restores, read, default/*",
 					"g, test-user, role:test",
 				),
-				mocks: func(h *handlers.MockHandler) {
-					h.On("GetDatabaseClusterBackup", mock.Anything, mock.Anything, mock.Anything).Return(
-						&everestv1alpha1.DatabaseClusterBackup{
-							Spec: everestv1alpha1.DatabaseClusterBackupSpec{
-								DBClusterName: "source-cluster",
-							},
-						}, nil)
-				},
 			},
 			{
 				desc: "success (admin)",
 				policy: newPolicy(
 					"g, test-user, role:admin",
 				),
-				mocks: func(h *handlers.MockHandler) {
-					h.On("GetDatabaseClusterBackup", mock.Anything, mock.Anything, mock.Anything).Return(
-						&everestv1alpha1.DatabaseClusterBackup{
-							Spec: everestv1alpha1.DatabaseClusterBackupSpec{
-								DBClusterName: "source-cluster",
-							},
-						}, nil)
-				},
 			},
 		}
 
@@ -225,9 +168,12 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 				require.NoError(t, err)
 
 				next := &handlers.MockHandler{}
-				if tc.mocks != nil {
-					tc.mocks(next)
-				}
+				next.On("GetDatabaseClusterBackup", mock.Anything, mock.Anything, mock.Anything).Return(
+					&everestv1alpha1.DatabaseClusterBackup{
+						Spec: everestv1alpha1.DatabaseClusterBackupSpec{
+							DBClusterName: "source-cluster",
+						},
+					}, nil)
 				next.On("CreateDatabaseCluster", mock.Anything, mock.Anything).
 					Return(&everestv1alpha1.DatabaseCluster{}, nil)
 
