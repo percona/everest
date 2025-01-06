@@ -16,6 +16,8 @@ import {
   RequiredNodeSchedulingTerm,
   RequiredPodSchedulingTerm,
 } from 'shared-types/affinity.types';
+import { DbCluster, Proxy } from 'shared-types/dbCluster.types';
+import { generateShortUID } from 'utils/generateShortUID';
 
 type AffinityRulesPayloadMap = {
   [AffinityType.NodeAffinity]: {
@@ -181,4 +183,134 @@ export const affinityRulesToDbPayload = (
       podAntiAffinity,
     }),
   };
+};
+
+export const dbPayloadToAffinityRules = (
+  dbCluster: DbCluster
+): AffinityRule[] => {
+  const rules: AffinityRule[] = [];
+  const {
+    spec: {
+      engine = { affinity: {} as Affinity },
+      proxy = { affinity: {} as Affinity },
+      sharding = { configServer: { affinity: {} as Affinity } },
+    },
+  } = dbCluster;
+  const { affinity: engineAffinity } = engine;
+  const { affinity: proxyAffinity } = proxy as Proxy;
+  const { affinity: configServerAffinity } = sharding.configServer;
+  const allAffinities = [
+    {
+      affinityObject: engineAffinity,
+      component: AffinityComponent.DbNode,
+    },
+    {
+      affinityObject: proxyAffinity,
+      component: AffinityComponent.Proxy,
+    },
+    {
+      affinityObject: configServerAffinity,
+      component: AffinityComponent.ConfigServer,
+    },
+  ];
+
+  allAffinities.forEach(({ affinityObject, component }) => {
+    if (affinityObject && Object.keys(affinityObject).length) {
+      const { nodeAffinity, podAffinity, podAntiAffinity } = affinityObject;
+
+      if (nodeAffinity) {
+        const {
+          preferredDuringSchedulingIgnoredDuringExecution = [],
+          requiredDuringSchedulingIgnoredDuringExecution = {
+            nodeSelectorTerms: [],
+          },
+        } = nodeAffinity;
+
+        preferredDuringSchedulingIgnoredDuringExecution.forEach(
+          ({ preference = { matchExpressions: [] }, weight }) => {
+            rules.push({
+              component,
+              type: AffinityType.NodeAffinity,
+              priority: AffinityPriority.Preferred,
+              uid: generateShortUID(),
+              weight,
+              ...(preference.matchExpressions.length > 0 && {
+                key: preference.matchExpressions[0].key,
+                operator: preference.matchExpressions[0].operator,
+                values: preference.matchExpressions[0].values?.join(','),
+              }),
+            });
+          }
+        );
+
+        requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms.forEach(
+          ({ matchExpressions = [] }) => {
+            rules.push({
+              component,
+              type: AffinityType.NodeAffinity,
+              priority: AffinityPriority.Required,
+              uid: generateShortUID(),
+              ...(matchExpressions.length > 0 && {
+                key: matchExpressions[0].key,
+                operator: matchExpressions[0].operator,
+                values: matchExpressions[0].values?.join(','),
+              }),
+            });
+          }
+        );
+      }
+
+      [podAffinity, podAntiAffinity].forEach((affinity) => {
+        if (affinity) {
+          const affinityType =
+            affinity === podAffinity
+              ? AffinityType.PodAffinity
+              : AffinityType.PodAntiAffinity;
+          const {
+            preferredDuringSchedulingIgnoredDuringExecution = [],
+            requiredDuringSchedulingIgnoredDuringExecution = [],
+          } = affinity;
+          preferredDuringSchedulingIgnoredDuringExecution.forEach(
+            ({ weight, podAffinityTerm }) => {
+              const { topologyKey, labelSelector = { matchExpressions: [] } } =
+                podAffinityTerm;
+
+              rules.push({
+                component,
+                type: affinityType,
+                priority: AffinityPriority.Preferred,
+                uid: generateShortUID(),
+                weight,
+                topologyKey,
+                ...(labelSelector.matchExpressions.length > 0 && {
+                  key: labelSelector.matchExpressions[0].key,
+                  operator: labelSelector.matchExpressions[0].operator,
+                  values: labelSelector.matchExpressions[0].values?.join(','),
+                }),
+              });
+            }
+          );
+
+          requiredDuringSchedulingIgnoredDuringExecution.forEach(
+            ({ topologyKey, labelSelector = { matchExpressions: [] } }) => {
+              rules.push({
+                component,
+                type: affinityType,
+                priority: AffinityPriority.Required,
+                uid: generateShortUID(),
+                topologyKey,
+                ...(labelSelector.matchExpressions.length > 0 && {
+                  key: labelSelector.matchExpressions[0].key,
+                  operator: labelSelector.matchExpressions[0].operator,
+                  values: labelSelector.matchExpressions[0].values?.join(','),
+                }),
+              });
+            }
+          );
+        }
+      });
+    }
+  });
+
+  return rules;
 };

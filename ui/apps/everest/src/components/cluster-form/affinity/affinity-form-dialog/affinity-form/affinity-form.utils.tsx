@@ -1,6 +1,6 @@
 import { generateShortUID } from 'utils/generateShortUID';
 import { AffinityFormData, AffinityFormFields } from './affinity-form.types';
-import { AffinityRule } from 'shared-types/affinity.types';
+import { AffinityOperator, AffinityRule } from 'shared-types/affinity.types';
 
 export const convertFormDataToAffinityRule = (
   data: AffinityFormData
@@ -12,7 +12,7 @@ export const convertFormDataToAffinityRule = (
     key: data[AffinityFormFields.key],
     topologyKey: data[AffinityFormFields.topologyKey],
     weight: data[AffinityFormFields.weight],
-    operator: data[AffinityFormFields.operator],
+    operator: data[AffinityFormFields.operator] as AffinityOperator,
     values: data[AffinityFormFields.values],
     uid: generateShortUID(),
   };

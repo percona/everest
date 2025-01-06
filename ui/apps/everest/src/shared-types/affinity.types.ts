@@ -111,13 +111,10 @@ export type PodAffinity = {
 };
 
 export type PodAntiAffinity = PodAffinity;
-export type Affinity =
-  | {
-      nodeAffinity?: NodeAffinity;
-    }
-  | {
-      podAffinity?: PodAffinity;
-    }
-  | {
-      podAntiAffinity?: PodAntiAffinity;
-    };
+export type Affinity = {
+  nodeAffinity?: NodeAffinity;
+} & {
+  podAffinity?: PodAffinity;
+} & {
+  podAntiAffinity?: PodAntiAffinity;
+};
