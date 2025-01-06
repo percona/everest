@@ -31,7 +31,11 @@ const baseSchema = z.object({
   [AffinityFormFields.topologyKey]: z.string().optional(),
   [AffinityFormFields.key]: z.string().optional(),
   [AffinityFormFields.operator]: z.enum(keys).optional(),
-  [AffinityFormFields.values]: z.string().optional(),
+  [AffinityFormFields.values]: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/\s/g, ''))
+    .optional(),
 });
 
 const checkValuesPresenceForOperator = (

@@ -1,10 +1,33 @@
 import { DbType } from '@percona/types';
 import {
+  Affinity,
   AffinityComponent,
+  AffinityMatchExpression,
+  AffinityOperator,
   AffinityPriority,
   AffinityRule,
   AffinityType,
+  NodeAffinity,
+  PodAffinity,
+  PodAffinityTerm,
+  PodAntiAffinity,
+  PreferredNodeSchedulingTerm,
+  PreferredPodSchedulingTerm,
+  RequiredNodeSchedulingTerm,
+  RequiredPodSchedulingTerm,
 } from 'shared-types/affinity.types';
+
+type AffinityRulesPayloadMap = {
+  [AffinityType.NodeAffinity]: {
+    preferred: PreferredNodeSchedulingTerm[];
+    required: RequiredNodeSchedulingTerm;
+  };
+} & {
+  [key in AffinityType.PodAffinity | AffinityType.PodAntiAffinity]: {
+    preferred: PreferredPodSchedulingTerm[];
+    required: RequiredPodSchedulingTerm;
+  };
+};
 
 export const availableComponentsType = (
   dbType: DbType,
@@ -21,214 +44,141 @@ export const availableComponentsType = (
     : [AffinityComponent.DbNode, AffinityComponent.Proxy];
 };
 
-export const affinityRulesToDbPayload = (affinityRules: AffinityRule[]) => {
-  let nodeRequired: {
-      key: string;
-      operator: string;
-      values?: string[];
-    }[] = [],
-    nodePreferred: {
-      preference: {
-        matchExpressions: {
-          key: string;
-          operator: string;
-          values?: string[];
-        }[];
-      };
-      weight?: number;
-    }[] = [],
-    podRequired: {
+export const affinityRulesToDbPayload = (
+  affinityRules: AffinityRule[]
+): Affinity => {
+  const generatePodAffinityTerm = (
+    topologyKey: string,
+    operator: AffinityOperator,
+    values: string[],
+    key?: string
+  ): PodAffinityTerm => ({
+    topologyKey: topologyKey!,
+    ...(key && {
       labelSelector: {
-        matchExpressions: {
-          key: string;
-          operator: string;
-          values?: string[];
-        }[];
-      };
-      topologyKey: string;
-    }[] = [],
-    podPreferred: {
-      podAffinityTerm: {
-        labelSelector: {
-          matchExpressions: {
-            key: string;
-            operator: string;
-            values?: string[];
-          }[];
-        };
-        topologyKey: string;
-      };
-      weight: number;
-    }[] = [],
-    podAntiRequired: {
-      labelSelector: {
-        matchExpressions: {
-          key: string;
-          operator: string;
-          values?: string[];
-        }[];
-      };
-      topologyKey: string;
-    }[] = [],
-    podAntiPreferred: {
-      podAffinityTerm: {
-        labelSelector: {
-          matchExpressions: {
-            key: string;
-            operator: string;
-            values?: string[];
-          }[];
-        };
-        topologyKey: string;
-      };
-      weight: number;
-    }[] = [];
-
-  affinityRules.forEach((rule) => {
-    const { values } = rule;
-    const valuesList = values ? values.split(',') : [];
-
-    const required = rule.priority === AffinityPriority.Required;
-
-    switch (rule.type) {
-      case AffinityType.NodeAffinity: {
-        const { key, operator, values } = rule;
-
-        if (required) {
-          nodeRequired = [
-            ...nodeRequired!,
-            {
-              key: key!,
-              operator: operator!,
-              values: values?.split(',') || [],
-            },
-          ];
-        } else {
-          const weight = rule.weight;
-          nodePreferred = [
-            ...nodePreferred!,
-            {
-              weight: weight!,
-              preference: {
-                matchExpressions: [
-                  {
-                    key: key!,
-                    operator: operator!,
-                    values: values?.split(',') || [],
-                  },
-                ],
-              },
-            },
-          ];
-        }
-        break;
-      }
-
-      case AffinityType.PodAffinity: {
-        const { key, operator, topologyKey } = rule;
-
-        if (required) {
-          podRequired = [
-            ...podRequired!,
-            {
-              labelSelector: {
-                matchExpressions: [
-                  {
-                    key: key!,
-                    operator: operator!,
-                    values: valuesList,
-                  },
-                ],
-              },
-              topologyKey: topologyKey!,
-            },
-          ];
-        } else {
-          const weight = rule.weight;
-          podPreferred = [
-            ...podPreferred!,
-            {
-              podAffinityTerm: {
-                labelSelector: {
-                  matchExpressions: [
-                    {
-                      key: key!,
-                      operator: operator!,
-                      values: valuesList,
-                    },
-                  ],
-                },
-                topologyKey: topologyKey!,
-              },
-              weight: weight!,
-            },
-          ];
-        }
-        break;
-      }
-
-      case AffinityType.PodAntiAffinity: {
-        const { key, operator, topologyKey } = rule;
-
-        if (required) {
-          podAntiRequired = [
-            ...podAntiRequired!,
-            {
-              labelSelector: {
-                matchExpressions: [
-                  {
-                    key: key!,
-                    operator: operator!,
-                    values: valuesList,
-                  },
-                ],
-              },
-              topologyKey: topologyKey!,
-            },
-          ];
-        } else {
-          const weight = rule.weight;
-          podAntiPreferred = [
-            ...podAntiPreferred!,
-            {
-              podAffinityTerm: {
-                labelSelector: {
-                  matchExpressions: [
-                    {
-                      key: key!,
-                      operator: operator!,
-                      values: valuesList,
-                    },
-                  ],
-                },
-                topologyKey: topologyKey!,
-              },
-              weight: weight!,
-            },
-          ];
-        }
-      }
-    }
-  });
-
-  return {
-    nodeAffinity: {
-      requiredDuringSchedulingIgnoredDuringExecution: {
-        nodeSelectorTerms: [
+        matchExpressions: [
           {
-            matchExpressions: [...nodeRequired],
+            key,
+            operator: operator!,
+            ...(values.length > 0 && {
+              values,
+            }),
           },
         ],
       },
-      preferredDuringSchedulingIgnoredDuringExecution: [...nodePreferred],
+    }),
+  });
+  const map: AffinityRulesPayloadMap = {
+    [AffinityType.NodeAffinity]: {
+      preferred: [],
+      required: { nodeSelectorTerms: [] },
     },
-    podAffinity: {
-      preferredDuringSchedulingIgnoredDuringExecution: [...podPreferred],
-      requiredDuringSchedulingIgnoredDuringExecution: [...podRequired],
+    [AffinityType.PodAffinity]: {
+      preferred: [],
+      required: [],
     },
-    podAntiAffinity: {
-      preferredDuringSchedulingIgnoredDuringExecution: [...podAntiPreferred],
-      requiredDuringSchedulingIgnoredDuringExecution: [...podAntiRequired],
+    [AffinityType.PodAntiAffinity]: {
+      preferred: [],
+      required: [],
     },
+  };
+
+  affinityRules.forEach((rule) => {
+    const { values = '', type, weight, key, operator, topologyKey } = rule;
+    const valuesList = values.split(',');
+
+    const required = rule.priority === AffinityPriority.Required;
+
+    switch (type) {
+      case AffinityType.NodeAffinity: {
+        const matchExpressions: AffinityMatchExpression[] = [
+          {
+            key: key!,
+            operator: operator!,
+            ...([AffinityOperator.In, AffinityOperator.NotIn].includes(
+              operator!
+            ) && {
+              values: valuesList,
+            }),
+          },
+        ];
+
+        if (required) {
+          map[AffinityType.NodeAffinity].required.nodeSelectorTerms.push({
+            matchExpressions,
+          });
+        } else {
+          map[AffinityType.NodeAffinity].preferred.push({
+            weight: weight!,
+            preference: {
+              matchExpressions,
+            },
+          });
+        }
+        break;
+      }
+
+      case AffinityType.PodAntiAffinity:
+      case AffinityType.PodAffinity: {
+        const podAffinityTerm = generatePodAffinityTerm(
+          topologyKey!,
+          operator!,
+          valuesList,
+          key
+        );
+        if (required) {
+          map[type].required.push(podAffinityTerm);
+        } else {
+          map[type].preferred.push({
+            weight: weight!,
+            podAffinityTerm,
+          });
+        }
+        break;
+      }
+    }
+  });
+  const nodeAffinity: NodeAffinity = {
+    ...(map[AffinityType.NodeAffinity].preferred.length > 0 && {
+      preferredDuringSchedulingIgnoredDuringExecution:
+        map[AffinityType.NodeAffinity].preferred,
+    }),
+    ...(map[AffinityType.NodeAffinity].required.nodeSelectorTerms.length >
+      0 && {
+      requiredDuringSchedulingIgnoredDuringExecution:
+        map[AffinityType.NodeAffinity].required,
+    }),
+  };
+  const podAffinity: PodAffinity = {
+    ...(map[AffinityType.PodAffinity].preferred.length > 0 && {
+      preferredDuringSchedulingIgnoredDuringExecution:
+        map[AffinityType.PodAffinity].preferred,
+    }),
+    ...(map[AffinityType.PodAffinity].required.length > 0 && {
+      requiredDuringSchedulingIgnoredDuringExecution:
+        map[AffinityType.PodAffinity].required,
+    }),
+  };
+  const podAntiAffinity: PodAntiAffinity = {
+    ...(map[AffinityType.PodAntiAffinity].preferred.length > 0 && {
+      preferredDuringSchedulingIgnoredDuringExecution:
+        map[AffinityType.PodAntiAffinity].preferred,
+    }),
+    ...(map[AffinityType.PodAntiAffinity].required.length > 0 && {
+      requiredDuringSchedulingIgnoredDuringExecution:
+        map[AffinityType.PodAntiAffinity].required,
+    }),
+  };
+
+  return {
+    ...(Object.keys(nodeAffinity).length > 0 && {
+      nodeAffinity,
+    }),
+    ...(Object.keys(podAffinity).length > 0 && {
+      podAffinity,
+    }),
+    ...(Object.keys(podAntiAffinity).length > 0 && {
+      podAntiAffinity,
+    }),
   };
 };

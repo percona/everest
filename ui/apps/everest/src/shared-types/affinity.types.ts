@@ -5,7 +5,7 @@ export type AffinityRule = {
   weight?: number;
   topologyKey?: string;
   key?: string;
-  operator?: string;
+  operator?: AffinityOperator;
   values?: string;
   // uid is used to uniquely identify the rule on the client side
   uid: string;
@@ -64,3 +64,60 @@ export const AffinityPriorityValue: Record<AffinityPriority, string> = {
   [AffinityPriority.Preferred]: 'Preferred',
   [AffinityPriority.Required]: 'Required',
 };
+
+export type AffinityMatchExpression = {
+  key: string;
+  operator: AffinityOperator;
+  values?: string[];
+};
+
+type NodeAffinityPreference = {
+  matchExpressions: AffinityMatchExpression[];
+};
+
+type NodeSelectorTerm = NodeAffinityPreference;
+
+export type PodAffinityTerm = {
+  labelSelector?: {
+    matchExpressions: AffinityMatchExpression[];
+  };
+  topologyKey: string;
+};
+
+export type PreferredNodeSchedulingTerm = {
+  preference: NodeAffinityPreference;
+  weight: number;
+};
+
+export type PreferredPodSchedulingTerm = {
+  weight: number;
+  podAffinityTerm: PodAffinityTerm;
+};
+
+export type RequiredNodeSchedulingTerm = {
+  nodeSelectorTerms: NodeSelectorTerm[];
+};
+
+export type RequiredPodSchedulingTerm = PodAffinityTerm[];
+
+export type NodeAffinity = {
+  preferredDuringSchedulingIgnoredDuringExecution?: PreferredNodeSchedulingTerm[];
+  requiredDuringSchedulingIgnoredDuringExecution?: RequiredNodeSchedulingTerm;
+};
+
+export type PodAffinity = {
+  preferredDuringSchedulingIgnoredDuringExecution?: PreferredPodSchedulingTerm[];
+  requiredDuringSchedulingIgnoredDuringExecution?: RequiredPodSchedulingTerm;
+};
+
+export type PodAntiAffinity = PodAffinity;
+export type Affinity =
+  | {
+      nodeAffinity?: NodeAffinity;
+    }
+  | {
+      podAffinity?: PodAffinity;
+    }
+  | {
+      podAntiAffinity?: PodAntiAffinity;
+    };
