@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/percona/everest/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -191,6 +192,462 @@ func TestRBAC_BackupStorage(t *testing.T) {
 					userGetter: testUserGetter,
 				}
 				_, err = h.GetBackupStorage(ctx, "default", "backup-storage-1")
+				assert.ErrorIs(t, err, tc.wantErr)
+			})
+		}
+	})
+
+	t.Run("CreateBackupStorage", func(t *testing.T) {
+		t.Parallel()
+		next := func() *handlers.MockHandler {
+			next := handlers.MockHandler{}
+			next.On("CreateBackupStorage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
+				&everestv1alpha1.BackupStorage{}, nil,
+			)
+			return &next
+		}
+
+		testCases := []struct {
+			desc    string
+			policy  string
+			wantErr error
+		}{
+			{
+				desc: "all actions for all backupstorages in all namespaces",
+				policy: newPolicy(
+					"p, role:test, backup-storages, *, */*",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "all actions for all backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, *, default/*",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "all actions for 'backup-storage-1' in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, *, default/backup-storage-1",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "create only action for all backupstorages in all namespaces",
+				policy: newPolicy(
+					"p, role:test, backup-storages, create, */*",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "create only action for all backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, create, default/*",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "create only action for 'backup-storage-1' in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, create, default/backup-storage-1",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "update only action for all backupstorages in all namespaces",
+				policy: newPolicy(
+					"p, role:test, backup-storages, update, */*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "update only action for all backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, update, default/*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "update only action for some backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, update, default/some",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "read only action for all backupstorages in all namespaces",
+				policy: newPolicy(
+					"p, role:test, backup-storages, read, */*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "read only action for all backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, read, default/*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "read only action for some backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, read, default/some",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "delete only action for all backupstorages in all namespaces",
+				policy: newPolicy(
+					"p, role:test, backup-storages, delete, */*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "delete only action for all backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, delete, default/*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "delete only action for some backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, delete, default/some",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+		}
+
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, "test-user")
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				t.Parallel()
+				k8sMock := newConfigMapMock(tc.policy)
+				enf, err := rbac.NewEnforcer(ctx, k8sMock, zap.NewNop().Sugar())
+				require.NoError(t, err)
+				next := next()
+
+				h := &rbacHandler{
+					next:       next,
+					log:        zap.NewNop().Sugar(),
+					enforcer:   enf,
+					userGetter: testUserGetter,
+				}
+				_, err = h.CreateBackupStorage(ctx, "default", &api.CreateBackupStorageParams{
+					Name: "backup-storage-1",
+				})
+				assert.ErrorIs(t, err, tc.wantErr)
+			})
+		}
+	})
+
+	t.Run("UpdateBackupStorage", func(t *testing.T) {
+		t.Parallel()
+		next := func() *handlers.MockHandler {
+			next := handlers.MockHandler{}
+			next.On("UpdateBackupStorage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
+				&everestv1alpha1.BackupStorage{}, nil,
+			)
+			return &next
+		}
+
+		testCases := []struct {
+			desc    string
+			policy  string
+			wantErr error
+		}{
+			{
+				desc: "all actions for all backupstorages in all namespaces",
+				policy: newPolicy(
+					"p, role:test, backup-storages, *, */*",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "all actions for all backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, *, default/*",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "all actions for 'backup-storage-1' in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, *, default/backup-storage-1",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "update only action for all backupstorages in all namespaces",
+				policy: newPolicy(
+					"p, role:test, backup-storages, update, */*",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "update only action for all backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, update, default/*",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "update only action for 'backup-storage-1' in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, update, default/backup-storage-1",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "read only action for all backupstorages in all namespaces",
+				policy: newPolicy(
+					"p, role:test, backup-storages, read, */*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "read only action for all backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, read, default/*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "read only action for some backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, read, default/some",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "create only action for all backupstorages in all namespaces",
+				policy: newPolicy(
+					"p, role:test, backup-storages, create, */*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "create only action for all backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, create, default/*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "create only action for some backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, create, default/some",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "delete only action for all backupstorages in all namespaces",
+				policy: newPolicy(
+					"p, role:test, backup-storages, delete, */*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "delete only action for all backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, delete, default/*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "delete only action for some backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, delete, default/some",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+		}
+
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, "test-user")
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				t.Parallel()
+				k8sMock := newConfigMapMock(tc.policy)
+				enf, err := rbac.NewEnforcer(ctx, k8sMock, zap.NewNop().Sugar())
+				require.NoError(t, err)
+				next := next()
+
+				h := &rbacHandler{
+					next:       next,
+					log:        zap.NewNop().Sugar(),
+					enforcer:   enf,
+					userGetter: testUserGetter,
+				}
+				_, err = h.UpdateBackupStorage(ctx, "default", "backup-storage-1", &api.UpdateBackupStorageParams{})
+				assert.ErrorIs(t, err, tc.wantErr)
+			})
+		}
+	})
+
+	t.Run("DeleteBackupStorage", func(t *testing.T) {
+		t.Parallel()
+		next := func() *handlers.MockHandler {
+			next := handlers.MockHandler{}
+			next.On("DeleteBackupStorage", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			return &next
+		}
+
+		testCases := []struct {
+			desc    string
+			policy  string
+			wantErr error
+		}{
+			{
+				desc: "all actions for all backupstorages in all namespaces",
+				policy: newPolicy(
+					"p, role:test, backup-storages, *, */*",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "all actions for all backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, *, default/*",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "all actions for 'backup-storage-1' in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, *, default/backup-storage-1",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "delete only action for all backupstorages in all namespaces",
+				policy: newPolicy(
+					"p, role:test, backup-storages, delete, */*",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "delete only action for all backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, delete, default/*",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "delete only action for some backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, delete, default/backup-storage-1",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "update only action for all backupstorages in all namespaces",
+				policy: newPolicy(
+					"p, role:test, backup-storages, update, */*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "update only action for all backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, update, default/*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "update only action for 'backup-storage-1' in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, update, default/backup-storage-1",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "read only action for all backupstorages in all namespaces",
+				policy: newPolicy(
+					"p, role:test, backup-storages, read, */*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "read only action for all backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, read, default/*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "read only action for some backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, read, default/some",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "create only action for all backupstorages in all namespaces",
+				policy: newPolicy(
+					"p, role:test, backup-storages, create, */*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "create only action for all backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, create, default/*",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "create only action for some backupstorages in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, create, default/some",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+		}
+
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, "test-user")
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				t.Parallel()
+				k8sMock := newConfigMapMock(tc.policy)
+				enf, err := rbac.NewEnforcer(ctx, k8sMock, zap.NewNop().Sugar())
+				require.NoError(t, err)
+				next := next()
+
+				h := &rbacHandler{
+					next:       next,
+					log:        zap.NewNop().Sugar(),
+					enforcer:   enf,
+					userGetter: testUserGetter,
+				}
+				err = h.DeleteBackupStorage(ctx, "default", "backup-storage-1")
 				assert.ErrorIs(t, err, tc.wantErr)
 			})
 		}
