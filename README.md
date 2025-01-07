@@ -32,14 +32,14 @@ Helm is the recommended installation method for Percona Everest as it simplifies
 
 ### Steps to Install
 
-1. Add the Percona Helm repository:
+1. **Add the Percona Helm repository:**
 
 ```bash
 helm repo add percona https://percona.github.io/percona-helm-charts/
 helm repo update
 ```
 
-2. Install the Percona Everest Helm Chart:
+2. **Install the Percona Everest Helm Chart:**
 
 ```bash
 helm install everest-core percona/everest \
@@ -47,7 +47,7 @@ helm install everest-core percona/everest \
 --create-namespace
 ```
 
-3. Retrieve Admin Credentials:
+3. **Retrieve Admin Credentials:**
 
 ```bash
 kubectl get secret everest-accounts -n everest-system -o jsonpath='{.data.users\.yaml}' | base64 --decode | yq '.admin.passwordHash'
@@ -56,9 +56,9 @@ kubectl get secret everest-accounts -n everest-system -o jsonpath='{.data.users\
 - Default username: **admin**
 - You can set a different default admin password by using the server.initialAdminPassword parameter during installation.
 
-4. Access the Percona Everest UI:
+4. **Access the Percona Everest UI:**
 
-By default, Everest is not exposed via an external IP. Use one of the following options:
+   By default, Everest is not exposed via an external IP. Use one of the following options:
 
 - Port Forwarding:
 
