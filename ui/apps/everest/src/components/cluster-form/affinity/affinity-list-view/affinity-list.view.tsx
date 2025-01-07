@@ -16,6 +16,7 @@ import { AffinityFormData } from '../affinity-form-dialog/affinity-form/affinity
 import { availableComponentsType } from '../affinity-utils';
 import { AffinityItem } from './affinity-item';
 import { convertFormDataToAffinityRule } from '../affinity-form-dialog/affinity-form/affinity-form.utils';
+import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 
 export const AffinityListView = ({
   onRulesChange,
@@ -36,6 +37,7 @@ export const AffinityListView = ({
     null
   );
   const [openAffinityModal, setOpenAffinityModal] = useState(false);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [rules, setRules] = useState<AffinityRule[]>(initialRules);
   const { sx: boxSx, ...rest } = boxProps;
 
@@ -52,9 +54,15 @@ export const AffinityListView = ({
     setOpenAffinityModal(false);
   };
 
-  const handleDelete = (ruleUid: string) => {
-    const newRules = rules.filter(({ uid }) => uid !== ruleUid);
+  const onDeleteClick = (ruleUid: string) => {
+    setSelectedAffinityUid(ruleUid);
+    setOpenDeleteModal(true);
+  };
+
+  const handleDelete = () => {
+    const newRules = rules.filter(({ uid }) => uid !== selectedAffinityUid);
     updateRules(newRules);
+    setOpenDeleteModal(false);
   };
 
   const onSubmit = (data: AffinityFormData) => {
@@ -129,7 +137,7 @@ export const AffinityListView = ({
                           }}
                           deleteButtonProps={{
                             disabled: disableActions,
-                            onClick: () => handleDelete(rule.uid),
+                            onClick: () => onDeleteClick(rule.uid),
                           }}
                           dataTestId={'affinity-rule-editable-item'}
                           endText={`${AffinityPriorityValue[rule.priority as AffinityPriority]} ${rule.priority === AffinityPriority.Preferred && !!rule.weight ? `- ${rule.weight}` : ''}`}
@@ -144,22 +152,29 @@ export const AffinityListView = ({
         )}
       </ActionableLabeledContent>
 
-      {openAffinityModal && (
-        <AffinityFormDialogContext.Provider
-          value={{
-            selectedAffinityUid,
-            handleSubmit: onSubmit,
-            handleClose,
-            setOpenAffinityModal,
-            openAffinityModal,
-            affinityRules: rules,
-            dbType,
-            isShardingEnabled,
-          }}
-        >
-          <AffinityFormDialog />
-        </AffinityFormDialogContext.Provider>
-      )}
+      <AffinityFormDialogContext.Provider
+        value={{
+          selectedAffinityUid,
+          handleSubmit: onSubmit,
+          handleClose,
+          setOpenAffinityModal,
+          openAffinityModal,
+          affinityRules: rules,
+          dbType,
+          isShardingEnabled,
+        }}
+      >
+        {openAffinityModal && <AffinityFormDialog />}
+      </AffinityFormDialogContext.Provider>
+      <ConfirmDialog
+        isOpen={openDeleteModal}
+        selectedId={selectedAffinityUid!}
+        handleConfirm={handleDelete}
+        closeModal={() => setOpenDeleteModal(false)}
+        headerMessage="Delete affinity rule"
+      >
+        Are you sure you want to delete this affinity rule?
+      </ConfirmDialog>
     </Box>
   );
 };
