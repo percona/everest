@@ -17,6 +17,7 @@ import { availableComponentsType } from '../affinity-utils';
 import { AffinityItem } from './affinity-item';
 import { convertFormDataToAffinityRule } from '../affinity-form-dialog/affinity-form/affinity-form.utils';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
+import RoundedBox from 'components/rounded-box';
 
 export const AffinityListView = ({
   onRulesChange,
@@ -92,11 +93,8 @@ export const AffinityListView = ({
   };
 
   return (
-    <Box
+    <RoundedBox
       sx={{
-        marginBottom: '15px',
-        border: '1px solid #2C323E40',
-        padding: '10px',
         ...boxSx,
       }}
       {...rest}
@@ -108,6 +106,9 @@ export const AffinityListView = ({
           buttonText: 'Create affinity rule',
           onClick: () => handleCreate(),
           disabled: disableActions,
+        }}
+        verticalStackSx={{
+          mt: 0,
         }}
       >
         {availableComponentsType(dbType, isShardingEnabled).map(
@@ -175,6 +176,6 @@ export const AffinityListView = ({
       >
         Are you sure you want to delete this affinity rule?
       </ConfirmDialog>
-    </Box>
+    </RoundedBox>
   );
 };

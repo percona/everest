@@ -24,6 +24,7 @@ import { Messages } from './messages';
 import { DbWizardForm } from 'consts';
 import { AffinityRule } from 'shared-types/affinity.types';
 import { useCallback } from 'react';
+import RoundedBox from 'components/rounded-box';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -68,44 +69,48 @@ export const AdvancedConfigurationForm = ({
           isShardingEnabled={isShardingEnabled}
         />
       )}
-      <SwitchInput
-        label={Messages.enableExternalAccess.title}
-        labelCaption={Messages.enableExternalAccess.caption}
-        name={AdvancedConfigurationFields.externalAccess}
-      />
-      {externalAccess && (
-        <Stack sx={{ ml: 6 }}>
-          <TextArray
-            placeholder={Messages.sourceRangePlaceholder}
-            fieldName={AdvancedConfigurationFields.sourceRanges}
-            fieldKey="sourceRange"
-            label={Messages.sourceRange}
-          />
-        </Stack>
-      )}
-      <SwitchInput
-        label={Messages.engineParameters.title}
-        labelCaption={Messages.engineParameters.caption}
-        name={AdvancedConfigurationFields.engineParametersEnabled}
-        formControlLabelProps={{
-          sx: {
-            mt: 1,
-          },
-        }}
-      />
-      {engineParametersEnabled && (
-        <TextInput
-          name={AdvancedConfigurationFields.engineParameters}
-          textFieldProps={{
-            placeholder: getParamsPlaceholderFromDbType(dbType),
-            multiline: true,
-            minRows: 3,
+      <RoundedBox>
+        <SwitchInput
+          label={Messages.enableExternalAccess.title}
+          labelCaption={Messages.enableExternalAccess.caption}
+          name={AdvancedConfigurationFields.externalAccess}
+        />
+        {externalAccess && (
+          <Stack sx={{ ml: 6 }}>
+            <TextArray
+              placeholder={Messages.sourceRangePlaceholder}
+              fieldName={AdvancedConfigurationFields.sourceRanges}
+              fieldKey="sourceRange"
+              label={Messages.sourceRange}
+            />
+          </Stack>
+        )}
+      </RoundedBox>
+      <RoundedBox>
+        <SwitchInput
+          label={Messages.engineParameters.title}
+          labelCaption={Messages.engineParameters.caption}
+          name={AdvancedConfigurationFields.engineParametersEnabled}
+          formControlLabelProps={{
             sx: {
-              ml: 6,
+              mt: 1,
             },
           }}
         />
-      )}
+        {engineParametersEnabled && (
+          <TextInput
+            name={AdvancedConfigurationFields.engineParameters}
+            textFieldProps={{
+              placeholder: getParamsPlaceholderFromDbType(dbType),
+              multiline: true,
+              minRows: 3,
+              sx: {
+                ml: 6,
+              },
+            }}
+          />
+        )}
+      </RoundedBox>
     </>
   );
 };
