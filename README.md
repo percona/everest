@@ -4,7 +4,7 @@
 
 [Percona Everest](https://docs.percona.com/everest/index.html) is an open source cloud-native database platform that helps developers deploy code faster, scale deployments rapidly, and reduce database administration overhead while regaining control over their data, database configuration, and DBaaS costs.
 
-Here’s why you should try Percona Everest:
+Why you should try Percona Everest:
 
 - Launch database instance with just a few clicks
 - Enable your team to develop faster and reduce time to market
@@ -14,7 +14,7 @@ Here’s why you should try Percona Everest:
 - Automate backups
 - Ensure data security
 
-If you'd like to get a complete understanding of the features offered by Percona Everest, click on this [link](https://percona.community/projects/everest/).
+[Discover all the features and capabilities of Percona Everest](<(https://percona.community/projects/everest/)>) and see how it can transform your database management experience.
 
 ## Documentation
 
@@ -23,14 +23,15 @@ Also, visit our [Storybook](https://percona.github.io/everest/) to check documen
 
 ## Installation
 
-Install Percona Everest Using Helm (Recommended)
+Install **Percona Everest** Using Helm (Recommended)
 
 Helm is the recommended installation method for Percona Everest as it simplifies deployment and resource management in Kubernetes environments.
-Prerequisites
+
+### Prerequisites
 
 Ensure you have a Kubernetes cluster set up (e.g., Amazon EKS, Google GKE). Install Helm on your local machine: [Helm Installation Guide](https://helm.sh/docs/intro/install/).
 
-Steps to Install
+### Steps to Install
 
 1. Add the Percona Helm repository:
 
@@ -52,11 +53,11 @@ helm install everest-core percona/everest \
 
 - Port Forwarding:
 
-```bash
-kubectl port-forward svc/everest 8080:8080 -n everest-system
-```
+  ```bash
+  kubectl port-forward svc/everest 8080:8080 -n everest-system
+  ```
 
-Access the UI at http://127.0.0.1:8080.
+  Access the UI at http://127.0.0.1:8080.
 
 - LoadBalancer (Optional):
 
