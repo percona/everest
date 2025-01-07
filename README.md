@@ -74,7 +74,7 @@ kubectl get secret everest-accounts -n everest-system -o jsonpath='{.data.users\
 
 ```
 
-- Default username: admin
+- Default username: **admin**
 - Change the password for security using the server.
 - You can set a different default admin password by using the server.initialAdminPassword parameter during installation.
 
@@ -82,11 +82,11 @@ kubectl get secret everest-accounts -n everest-system -o jsonpath='{.data.users\
 
 If you prefer using the CLI for installation, follow these steps.
 
-> Note:
-
-    Google Container Registry (GCR) is scheduled to be deprecated and will officially shut down on March 18, 2025. All versions of Percona Everest prior to 1.4.0 depend on images hosted on GCR. After the shutdown date, downloading those images will fail.
-
-    We strongly recommend upgrading to Percona Everest version 1.4.0 as soon as possible. For more details, refer to the [Container Registry Deprecation Documentation](https://cloud.google.com/artifact-registry/docs/transition/prepare-gcr-shutdown)
+> **Note**:
+>
+> Google Container Registry (GCR) is scheduled to be deprecated and will officially shut down on March 18, 2025. All versions of Percona Everest prior to 1.4.0 depend on images hosted on GCR. After the shutdown date, downloading those images will fail.
+>
+> We strongly recommend upgrading to Percona Everest version 1.4.0 as soon as possible. For more details, refer to the [Container Registry Deprecation Documentation](https://cloud.google.com/artifact-registry/docs/transition/prepare-gcr-shutdown)
 
 ### Prerequisites
 
@@ -98,7 +98,7 @@ If you prefer using the CLI for installation, follow these steps.
   kubectl get nodes
   ```
 
-- Ensure your kubeconfig file is located in the default path `~/.kube/config`. If not, set the path using the following command:
+- Ensure your `kubeconfig` file is located in the default path `~/.kube/config`. If not, set the path using the following command:
 
   ```bash
   export KUBECONFIG=~/.kube/config
@@ -111,35 +111,36 @@ Starting from version **1.4.0**, `everestctl` uses the Helm chart to install Per
 - `--helm.set` for individual parameters.
 - `--helm.values` to provide a values file.
 
-1. Download the Everest CLI:
+  1.\*\* Download the Everest CLI:
 
-   **Linux and WSL**
+  **Linux and WSL**
 
-   ```sh
-   curl -sSL -o everestctl-linux-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-linux-amd64
-   sudo install -m 555 everestctl-linux-amd64 /usr/local/bin/everestctl
-   rm everestctl-linux-amd64
-   ```
+  ```sh
+  curl -sSL -o everestctl-linux-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-linux-amd64
+  sudo install -m 555 everestctl-linux-amd64 /usr/local/bin/everestctl
+  rm everestctl-linux-amd64
+  ```
 
-   **macOS (Apple Silicon)**
+  **macOS (Apple Silicon)**
 
-   ```sh
-   curl -sSL -o everestctl-darwin-arm64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-arm64
-   sudo install -m 555 everestctl-darwin-arm64 /usr/local/bin/everestctl
-   rm everestctl-darwin-arm64
+  ```sh
+  curl -sSL -o everestctl-darwin-arm64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-arm64
+  sudo install -m 555 everestctl-darwin-arm64 /usr/local/bin/everestctl
+  rm everestctl-darwin-arm64
 
-   ```
+  ```
 
-   **macOS (Intel CPU)**
+  **macOS (Intel CPU)**
 
-   ```sh
-   curl -sSL -o everestctl-darwin-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-amd64
-   sudo install -m 555 everestctl-darwin-amd64 /usr/local/bin/everestctl
-   rm everestctl-darwin-amd64
+  ```sh
+  curl -sSL -o everestctl-darwin-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-amd64
+  sudo install -m 555 everestctl-darwin-amd64 /usr/local/bin/everestctl
+  rm everestctl-darwin-amd64
 
-   ```
+  ```
 
 2. Install Percona Everest Using the Wizard:
+
    Run the following command and specify the namespaces for Everest to manage:
 
    ```sh
@@ -153,6 +154,7 @@ Starting from version **1.4.0**, `everestctl` uses the Helm chart to install Per
    ```
 
 3. Install Percona Everest in Headless Mode:
+
    Run the following command to set namespaces and database operators during installation:
 
    ```bash
@@ -169,7 +171,7 @@ Starting from version **1.4.0**, `everestctl` uses the Helm chart to install Per
 
 5. Access the Everest UI:
 
-Use one of the following methods to access the UI:
+   Use one of the following methods to access the UI:
 
 - Port Forwarding:
 
@@ -177,7 +179,7 @@ Use one of the following methods to access the UI:
   kubectl port-forward svc/everest 8080:8080 -n everest-system
   ```
 
-Open the UI at http://127.0.0.1:8080.
+  Open the UI at http://127.0.0.1:8080.
 
 - LoadBalancer (Optional):
 
