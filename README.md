@@ -47,7 +47,17 @@ helm install everest-core percona/everest \
 --create-namespace
 ```
 
-3. Access the Percona Everest UI:
+3. Retrieve Admin Credentials:
+
+   ```bash
+   kubectl get secret everest-accounts -n everest-system -o jsonpath='{.data.users\.yaml}' | base64 --decode | yq '.admin.passwordHash'
+   ```
+
+   - Default username: **admin**
+   - Change the password for security using the server.
+   - You can set a different default admin password by using the server.initialAdminPassword parameter during installation.
+
+4. Access the Percona Everest UI:
    By default, Everest is not exposed via an external IP. Use one of the following options:
 
 - Port Forwarding:
@@ -57,26 +67,6 @@ helm install everest-core percona/everest \
   ```
 
   Access the UI at http://127.0.0.1:8080.
-
-- LoadBalancer (Optional):
-
-  ```bash
-  kubectl patch svc/everest -n everest-system -p '{"spec": {"type": "LoadBalancer"}}'
-  kubectl get svc/everest -n everest-system
-  ```
-
-  Retrieve the external IP from the kubectl get svc command output.
-
-4. Retrieve Admin Credentials:
-
-```bash
-kubectl get secret everest-accounts -n everest-system -o jsonpath='{.data.users\.yaml}' | base64 --decode | yq '.admin.passwordHash'
-
-```
-
-- Default username: **admin**
-- Change the password for security using the server.
-- You can set a different default admin password by using the server.initialAdminPassword parameter during installation.
 
 ## Install Percona Everest using CLI
 
@@ -98,6 +88,8 @@ If you prefer using the CLI for installation, follow these steps.
   kubectl get nodes
   ```
 
+````
+
 - Ensure your `kubeconfig` file is located in the default path `~/.kube/config`. If not, set the path using the following command:
 
   ```bash
@@ -111,33 +103,33 @@ Starting from version **1.4.0**, `everestctl` uses the Helm chart to install Per
 - `--helm.set` for individual parameters.
 - `--helm.values` to provide a values file.
 
-  1.\*\* Download the Everest CLI:
+1. Download the Everest CLI:
 
-  **Linux and WSL**
+   **Linux and WSL**
 
-  ```sh
-  curl -sSL -o everestctl-linux-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-linux-amd64
-  sudo install -m 555 everestctl-linux-amd64 /usr/local/bin/everestctl
-  rm everestctl-linux-amd64
-  ```
+   ```sh
+   curl -sSL -o everestctl-linux-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-linux-amd64
+   sudo install -m 555 everestctl-linux-amd64 /usr/local/bin/everestctl
+   rm everestctl-linux-amd64
+   ```
 
-  **macOS (Apple Silicon)**
+   **macOS (Apple Silicon)**
 
-  ```sh
-  curl -sSL -o everestctl-darwin-arm64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-arm64
-  sudo install -m 555 everestctl-darwin-arm64 /usr/local/bin/everestctl
-  rm everestctl-darwin-arm64
+   ```sh
+   curl -sSL -o everestctl-darwin-arm64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-arm64
+   sudo install -m 555 everestctl-darwin-arm64 /usr/local/bin/everestctl
+   rm everestctl-darwin-arm64
 
-  ```
+   ```
 
-  **macOS (Intel CPU)**
+   **macOS (Intel CPU)**
 
-  ```sh
-  curl -sSL -o everestctl-darwin-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-amd64
-  sudo install -m 555 everestctl-darwin-amd64 /usr/local/bin/everestctl
-  rm everestctl-darwin-amd64
+   ```sh
+   curl -sSL -o everestctl-darwin-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-amd64
+   sudo install -m 555 everestctl-darwin-amd64 /usr/local/bin/everestctl
+   rm everestctl-darwin-amd64
 
-  ```
+   ```
 
 2. Install Percona Everest Using the Wizard:
 
@@ -209,3 +201,4 @@ We value your thoughts and opinions and we would be thrilled to hear from you! J
 If you find a bug in Percona Everest, submit a report to that project's [JIRA](https://perconadev.atlassian.net/jira/software/c/projects/EVEREST/boards/65) issue tracker or [create a GitHub issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/creating-an-issue#creating-an-issue-from-a-repository) in this repository.
 
 Learn more about submitting bugs, new features ideas and improvements in the [documentation](https://docs.percona.com/everest/contribute.html).
+````
