@@ -68,6 +68,8 @@ kubectl port-forward svc/everest 8080:8080 -n everest-system
 
 Access the UI at http://127.0.0.1:8080.
 
+For more information about our Helm charts, visit the official [Percona Everest Helm Charts repository](https://github.com/percona/percona-helm-charts/tree/main/charts/everest).
+
 ## Install Percona Everest using CLI
 
 > **Note**:
