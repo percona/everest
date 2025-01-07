@@ -49,23 +49,24 @@ helm install everest-core percona/everest \
 
 3. Retrieve Admin Credentials:
 
-   ```bash
-   kubectl get secret everest-accounts -n everest-system -o jsonpath='{.data.users\.yaml}' | base64 --decode | yq '.admin.passwordHash'
-   ```
+```bash
+kubectl get secret everest-accounts -n everest-system -o jsonpath='{.data.users\.yaml}' | base64 --decode | yq '.admin.passwordHash'
+```
 
-   - Default username: **admin**
-   - You can set a different default admin password by using the server.initialAdminPassword parameter during installation.
+- Default username: **admin**
+- You can set a different default admin password by using the server.initialAdminPassword parameter during installation.
 
 4. Access the Percona Everest UI:
-   By default, Everest is not exposed via an external IP. Use one of the following options:
+
+By default, Everest is not exposed via an external IP. Use one of the following options:
 
 - Port Forwarding:
 
-  ```bash
-  kubectl port-forward svc/everest 8080:8080 -n everest-system
-  ```
+```bash
+kubectl port-forward svc/everest 8080:8080 -n everest-system
+```
 
-  Access the UI at http://127.0.0.1:8080.
+Access the UI at http://127.0.0.1:8080.
 
 ## Install Percona Everest using CLI
 
