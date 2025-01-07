@@ -5,15 +5,16 @@ import (
 	"slices"
 	"testing"
 
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	"github.com/percona/everest/internal/server/handlers"
-	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/rbac"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/internal/server/handlers"
+	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/rbac"
 )
 
 func TestRBAC_DatabaseClusterRestore(t *testing.T) {
