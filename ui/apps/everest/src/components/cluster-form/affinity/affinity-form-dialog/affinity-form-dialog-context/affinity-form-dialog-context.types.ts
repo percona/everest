@@ -5,7 +5,7 @@ import { DbType } from '@percona/types';
 export type AffinityFormDialogContextType = {
   handleSubmit: (data: AffinityFormData) => void;
   handleClose: () => void;
-  selectedAffinityId: number | null;
+  selectedAffinityUid: string | null;
   setOpenAffinityModal: React.Dispatch<React.SetStateAction<boolean>>;
   openAffinityModal: boolean;
   affinityRules: AffinityRule[];

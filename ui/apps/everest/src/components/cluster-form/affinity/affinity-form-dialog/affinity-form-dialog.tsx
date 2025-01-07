@@ -12,16 +12,16 @@ export const AffinityFormDialog = () => {
     handleClose,
     handleSubmit,
     affinityRules,
-    selectedAffinityId,
+    selectedAffinityUid,
   } = useContext(AffinityFormDialogContext);
 
-  const isEditing = selectedAffinityId !== null;
+  const isEditing = selectedAffinityUid !== null;
 
   const selectedAffinityRule = useMemo(() => {
     if (isEditing) {
-      return affinityRules.find((_, idx) => idx === selectedAffinityId);
+      return affinityRules.find(({ uid }) => uid === selectedAffinityUid);
     }
-  }, [affinityRules, isEditing, selectedAffinityId]);
+  }, [affinityRules, isEditing, selectedAffinityUid]);
 
   const values = useMemo(() => {
     return affinityModalDefaultValues(selectedAffinityRule);

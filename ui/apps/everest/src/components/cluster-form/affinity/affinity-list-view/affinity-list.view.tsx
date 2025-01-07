@@ -9,7 +9,7 @@ import {
   AffinityRule,
 } from 'shared-types/affinity.types';
 import EditableItem from 'components/editable-item';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { AffinityFormDialog } from '../affinity-form-dialog/affinity-form-dialog';
 import { AffinityFormDialogContext } from '../affinity-form-dialog/affinity-form-dialog-context/affinity-form-context';
 import { AffinityFormData } from '../affinity-form-dialog/affinity-form/affinity-form.types';
@@ -22,29 +22,29 @@ export const AffinityListView = ({
   dbType,
   initialRules = [],
   isShardingEnabled = false,
+  disableActions = false,
   boxProps = { sx: {} },
 }: {
   initialRules?: AffinityRule[];
   onRulesChange: (newRules: AffinityRule[]) => void;
   dbType: DbType;
   isShardingEnabled?: boolean;
+  disableActions?: boolean;
   boxProps?: BoxProps;
 }) => {
-  const [selectedAffinityId, setSelectedAffinityId] = useState<number | null>(
+  const [selectedAffinityUid, setSelectedAffinityUid] = useState<string | null>(
     null
   );
   const [openAffinityModal, setOpenAffinityModal] = useState(false);
   const [rules, setRules] = useState<AffinityRule[]>(initialRules);
   const { sx: boxSx, ...rest } = boxProps;
 
-  useEffect(() => onRulesChange(rules), [rules, onRulesChange]);
-
   const handleCreate = () => {
     setOpenAffinityModal(true);
   };
 
-  const handleEdit = (idx: number) => {
-    setSelectedAffinityId(idx);
+  const handleEdit = (uid: string) => {
+    setSelectedAffinityUid(uid);
     setOpenAffinityModal(true);
   };
 
@@ -52,24 +52,35 @@ export const AffinityListView = ({
     setOpenAffinityModal(false);
   };
 
-  const handleDelete = (idx: number) => {
-    setRules((oldRules) => oldRules.filter((_, i) => i !== idx));
+  const handleDelete = (ruleUid: string) => {
+    const newRules = rules.filter(({ uid }) => uid !== ruleUid);
+    updateRules(newRules);
   };
 
   const onSubmit = (data: AffinityFormData) => {
-    setRules((oldRules) => {
-      let newRules: AffinityRule[] = [];
-      const addedRule = convertFormDataToAffinityRule(data);
-      if (selectedAffinityId === null) {
-        newRules = [...oldRules, addedRule];
-      } else {
-        newRules = [...oldRules];
-        newRules[selectedAffinityId] = addedRule;
+    let newRules: AffinityRule[] = [];
+    const addedRule = convertFormDataToAffinityRule(data);
+
+    if (selectedAffinityUid === null) {
+      newRules = [...rules, addedRule];
+    } else {
+      newRules = [...rules];
+      const ruleIdx = newRules.findIndex(
+        ({ uid }) => uid === selectedAffinityUid
+      );
+
+      if (ruleIdx !== -1) {
+        newRules[ruleIdx] = addedRule;
       }
-      return newRules;
-    });
-    setSelectedAffinityId(null);
+    }
+    updateRules(newRules);
+    setSelectedAffinityUid(null);
     setOpenAffinityModal(false);
+  };
+
+  const updateRules = (newRules: AffinityRule[]) => {
+    setRules(newRules);
+    onRulesChange(newRules);
   };
 
   return (
@@ -88,6 +99,7 @@ export const AffinityListView = ({
           dataTestId: 'create-affinity',
           buttonText: 'Create affinity rule',
           onClick: () => handleCreate(),
+          disabled: disableActions,
         }}
       >
         {availableComponentsType(dbType, isShardingEnabled).map(
@@ -106,16 +118,18 @@ export const AffinityListView = ({
                   </Typography>
                 )}
                 <Stack>
-                  {rules.map((rule, idx) => (
+                  {rules.map((rule) => (
                     <Fragment key={rule.uid}>
                       {rule.component === component && (
                         <EditableItem
                           children={<AffinityItem rule={rule} />}
                           editButtonProps={{
-                            onClick: () => handleEdit(idx),
+                            disabled: disableActions,
+                            onClick: () => handleEdit(rule.uid),
                           }}
                           deleteButtonProps={{
-                            onClick: () => handleDelete(idx),
+                            disabled: disableActions,
+                            onClick: () => handleDelete(rule.uid),
                           }}
                           dataTestId={'affinity-rule-editable-item'}
                           endText={`${AffinityPriorityValue[rule.priority as AffinityPriority]} ${rule.priority === AffinityPriority.Preferred && !!rule.weight ? `- ${rule.weight}` : ''}`}
@@ -133,7 +147,7 @@ export const AffinityListView = ({
       {openAffinityModal && (
         <AffinityFormDialogContext.Provider
           value={{
-            selectedAffinityId,
+            selectedAffinityUid,
             handleSubmit: onSubmit,
             handleClose,
             setOpenAffinityModal,

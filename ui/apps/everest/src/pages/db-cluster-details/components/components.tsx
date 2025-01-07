@@ -20,7 +20,7 @@ import { DATE_FORMAT } from 'consts';
 import { format, formatDistanceToNowStrict, isValid } from 'date-fns';
 import { useDbClusterComponents } from 'hooks/api/db-cluster/useDbClusterComponents';
 import { MRT_ColumnDef } from 'material-react-table';
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { DBClusterComponent } from 'shared-types/components.types';
 import {
@@ -34,15 +34,22 @@ import { AffinityRule } from 'shared-types/affinity.types';
 import { DbClusterContext } from '../dbCluster.context';
 import { dbPayloadToAffinityRules } from 'components/cluster-form/affinity/affinity-utils';
 import { dbEngineToDbType } from '@percona/utils';
+import { DB_CLUSTER_QUERY, useUpdateDbClusterAffinityRules } from 'hooks';
+import { useQueryClient } from '@tanstack/react-query';
 
 const Components = () => {
   const { dbClusterName, namespace = '' } = useParams();
+  const [updatingAffinityRules, setUpdatingAffinityRules] = useState(false);
 
   const { data: components = [], isLoading } = useDbClusterComponents(
     namespace,
     dbClusterName!
   );
+  const { mutate: updateDbClusterAffinityRules } =
+    useUpdateDbClusterAffinityRules();
   const { dbCluster } = useContext(DbClusterContext);
+  const queryClient = useQueryClient();
+  console.log('dbCluster', dbCluster);
 
   const columns = useMemo<MRT_ColumnDef<DBClusterComponent>[]>(() => {
     return [
@@ -106,9 +113,29 @@ const Components = () => {
     [dbCluster]
   );
 
-  const onRulesChange = useCallback((newRules: AffinityRule[]) => {
-    console.log(newRules);
-  }, []);
+  const onRulesChange = useCallback(
+    (newRules: AffinityRule[]) => {
+      console.log('newRules', newRules);
+      setUpdatingAffinityRules(true);
+      updateDbClusterAffinityRules(
+        {
+          dbCluster: dbCluster!,
+          clusterName: dbCluster!.metadata.name,
+          namespace: dbCluster!.metadata.namespace,
+          affinityRules: newRules,
+        },
+        {
+          onSuccess: (data) => {
+            queryClient.setQueryData([DB_CLUSTER_QUERY, dbClusterName], data);
+            console.log('onSuccess', data);
+            setUpdatingAffinityRules(false);
+          },
+          onError: () => setUpdatingAffinityRules(false),
+        }
+      );
+    },
+    [dbCluster, dbClusterName, queryClient, updateDbClusterAffinityRules]
+  );
 
   return (
     <>
@@ -142,6 +169,7 @@ const Components = () => {
         onRulesChange={onRulesChange}
         dbType={dbEngineToDbType(dbCluster!.spec.engine.type)}
         isShardingEnabled={!!dbCluster!.spec.sharding?.enabled}
+        disableActions={updatingAffinityRules}
         boxProps={{ sx: { mt: 3 } }}
       />
     </>

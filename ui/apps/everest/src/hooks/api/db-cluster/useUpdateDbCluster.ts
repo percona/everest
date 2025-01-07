@@ -13,25 +13,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { updateDbClusterFn } from 'api/dbClusterApi';
 import {
   DbCluster,
   ProxyExposeType,
   Proxy,
+  Spec,
 } from 'shared-types/dbCluster.types';
 import { MIN_NUMBER_OF_SHARDS } from 'components/cluster-form';
 import { getProxySpec } from './utils';
 import { DbEngineType } from 'shared-types/dbEngines.types';
 import { dbEngineToDbType } from '@percona/utils';
 import cronConverter from 'utils/cron-converter';
+import { AffinityComponent, AffinityRule } from 'shared-types/affinity.types';
+import { affinityRulesToDbPayload } from 'components/cluster-form/affinity/affinity-utils';
 
 export const updateDbCluster = (
   clusterName: string,
   namespace: string,
   dbCluster: DbCluster
-) =>
-  updateDbClusterFn(clusterName, namespace, {
+) => {
+  const { metadata } = dbCluster;
+
+  // delete metadata.creationTimestamp;
+  // delete metadata.resourceVersion;
+  // delete metadata.uid;
+
+  return updateDbClusterFn(clusterName, namespace, {
     ...dbCluster,
     spec: {
       ...dbCluster?.spec,
@@ -50,6 +59,7 @@ export const updateDbCluster = (
       }),
     },
   });
+};
 
 export const useUpdateDbClusterCrd = () =>
   useMutation({
@@ -295,4 +305,62 @@ export const useUpdateDbClusterPITR = () =>
           },
         },
       }),
+  });
+
+type UpdateDbClusterAffinityRulesArgType = {
+  clusterName: string;
+  namespace: string;
+  dbCluster: DbCluster;
+  affinityRules: AffinityRule[];
+};
+export const useUpdateDbClusterAffinityRules = (
+  options?: UseMutationOptions<
+    DbCluster,
+    unknown,
+    UpdateDbClusterAffinityRulesArgType,
+    unknown
+  >
+) =>
+  useMutation({
+    mutationFn: ({
+      clusterName,
+      namespace,
+      dbCluster,
+      affinityRules,
+    }: UpdateDbClusterAffinityRulesArgType) => {
+      return updateDbCluster(clusterName, namespace, {
+        ...dbCluster,
+        spec: {
+          ...dbCluster.spec,
+          engine: {
+            ...dbCluster.spec.engine,
+            affinity: affinityRulesToDbPayload(
+              affinityRules.filter(
+                (r) => r.component === AffinityComponent.DbNode
+              )
+            ),
+          },
+          proxy: {
+            ...dbCluster.spec.proxy,
+            affinity: affinityRulesToDbPayload(
+              affinityRules.filter(
+                (r) => r.component === AffinityComponent.Proxy
+              )
+            ),
+          } as Proxy,
+          sharding: {
+            ...dbCluster.spec.sharding,
+            configServer: {
+              ...dbCluster.spec.sharding?.configServer,
+              affinity: affinityRulesToDbPayload(
+                affinityRules.filter(
+                  (r) => r.component === AffinityComponent.ConfigServer
+                )
+              ),
+            },
+          },
+        } as Spec,
+      });
+    },
+    ...options,
   });

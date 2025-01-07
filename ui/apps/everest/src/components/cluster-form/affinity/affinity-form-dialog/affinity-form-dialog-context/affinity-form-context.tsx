@@ -6,7 +6,7 @@ export const AffinityFormDialogContext =
   createContext<AffinityFormDialogContextType>({
     handleSubmit: () => {},
     handleClose: () => {},
-    selectedAffinityId: null,
+    selectedAffinityUid: null,
     setOpenAffinityModal: () => {},
     openAffinityModal: false,
     affinityRules: [],
