@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -60,6 +61,7 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 			desc   string
 			policy string
 			outLen int
+			assert func(*everestv1alpha1.MonitoringConfigList) bool
 		}{
 			{
 				desc: "read-only for monitoring-instance-1 in default namespace",
@@ -67,7 +69,12 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 					"p, role:test, monitoring-instances, read, default/monitoring-instance-1",
 					"g, test-user, role:test",
 				),
-				outLen: 1,
+				assert: func(list *everestv1alpha1.MonitoringConfigList) bool {
+					return len(list.Items) == 1 &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.MonitoringConfig) bool {
+							return bs.GetName() == "monitoring-instance-1"
+						})
+				},
 			},
 			{
 				desc: "read-only for monitoring-instance-1 and monitoring-instance-2 only in default namespace",
@@ -76,7 +83,15 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 					"p, role:test, monitoring-instances, read, default/monitoring-instance-2",
 					"g, test-user, role:test",
 				),
-				outLen: 2,
+				assert: func(list *everestv1alpha1.MonitoringConfigList) bool {
+					return len(list.Items) == 2 &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.MonitoringConfig) bool {
+							return bs.GetName() == "monitoring-instance-1"
+						}) &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.MonitoringConfig) bool {
+							return bs.GetName() == "monitoring-instance-2"
+						})
+				},
 			},
 			{
 				desc: "read-only for all in default namespace",
@@ -84,7 +99,18 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 					"p, role:test, monitoring-instances, read, default/*",
 					"g, test-user, role:test",
 				),
-				outLen: 3,
+				assert: func(list *everestv1alpha1.MonitoringConfigList) bool {
+					return len(list.Items) == 3 &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.MonitoringConfig) bool {
+							return bs.GetName() == "monitoring-instance-1"
+						}) &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.MonitoringConfig) bool {
+							return bs.GetName() == "monitoring-instance-2"
+						}) &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.MonitoringConfig) bool {
+							return bs.GetName() == "monitoring-instance-3"
+						})
+				},
 			},
 			{
 				desc: "read-only for all in all namespaces",
@@ -92,12 +118,44 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 					"p, role:test, monitoring-instances, read, */*",
 					"g, test-user, role:test",
 				),
-				outLen: 3,
+				assert: func(list *everestv1alpha1.MonitoringConfigList) bool {
+					return len(list.Items) == 3 &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.MonitoringConfig) bool {
+							return bs.GetName() == "monitoring-instance-1"
+						}) &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.MonitoringConfig) bool {
+							return bs.GetName() == "monitoring-instance-2"
+						}) &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.MonitoringConfig) bool {
+							return bs.GetName() == "monitoring-instance-3"
+						})
+				},
+			},
+			{
+				desc: "admin",
+				policy: newPolicy(
+					"g, test-user, role:admin",
+				),
+				assert: func(list *everestv1alpha1.MonitoringConfigList) bool {
+					return len(list.Items) == 3 &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.MonitoringConfig) bool {
+							return bs.GetName() == "monitoring-instance-1"
+						}) &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.MonitoringConfig) bool {
+							return bs.GetName() == "monitoring-instance-2"
+						}) &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.MonitoringConfig) bool {
+							return bs.GetName() == "monitoring-instance-3"
+						})
+				},
 			},
 			{
 				desc:   "no policy",
 				policy: newPolicy(),
 				outLen: 0,
+				assert: func(list *everestv1alpha1.MonitoringConfigList) bool {
+					return len(list.Items) == 0
+				},
 			},
 		}
 
@@ -119,7 +177,9 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 
 				list, err := h.ListMonitoringInstances(ctx, "default")
 				require.NoError(t, err)
-				assert.Len(t, list.Items, tc.outLen)
+				assert.Condition(t, func() bool {
+					return tc.assert(list)
+				})
 			})
 		}
 	})
@@ -140,6 +200,12 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 			policy  string
 			wantErr error
 		}{
+			{
+				desc: "admin",
+				policy: newPolicy(
+					"g, test-user, role:admin",
+				),
+			},
 			{
 				desc: "all actions for all monitoring-instances in all namespaces",
 				policy: newPolicy(
@@ -216,6 +282,12 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 			policy  string
 			wantErr error
 		}{
+			{
+				desc: "admin",
+				policy: newPolicy(
+					"g, test-user, role:admin",
+				),
+			},
 			{
 				desc: "all actions for all monitoring-instances in all namespaces",
 				policy: newPolicy(
@@ -371,6 +443,12 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 			wantErr error
 		}{
 			{
+				desc: "admin",
+				policy: newPolicy(
+					"g, test-user, role:admin",
+				),
+			},
+			{
 				desc: "all actions for all monitoring-instances in all namespaces",
 				policy: newPolicy(
 					"p, role:test, monitoring-instances, *, */*",
@@ -520,6 +598,12 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 			policy  string
 			wantErr error
 		}{
+			{
+				desc: "admin",
+				policy: newPolicy(
+					"g, test-user, role:admin",
+				),
+			},
 			{
 				desc: "all actions for all monitoring-instances in all namespaces",
 				policy: newPolicy(

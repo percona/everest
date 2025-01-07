@@ -704,7 +704,6 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage-3",
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-3",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-3",
-					// "p, role:test, database-engines, read, default/percona-server-mongodb-operator",
 
 					"g, test-user, role:test",
 				),

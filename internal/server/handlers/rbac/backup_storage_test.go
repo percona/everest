@@ -3,6 +3,7 @@ package rbac
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
@@ -63,7 +64,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 		testCases := []struct {
 			desc   string
 			policy string
-			outLen int
+			assert func(list *everestv1alpha1.BackupStorageList) bool
 		}{
 			{
 				desc: "read-only for backup-storage-1 in default namespace",
@@ -71,7 +72,12 @@ func TestRBAC_BackupStorage(t *testing.T) {
 					"p, role:test, backup-storages, read, default/backup-storage-1",
 					"g, test-user, role:test",
 				),
-				outLen: 1,
+				assert: func(list *everestv1alpha1.BackupStorageList) bool {
+					return len(list.Items) == 1 &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.BackupStorage) bool {
+							return bs.GetName() == "backup-storage-1"
+						})
+				},
 			},
 			{
 				desc: "read-only for backup-storage-1 and backup-storage-2 only in default namespace",
@@ -80,7 +86,15 @@ func TestRBAC_BackupStorage(t *testing.T) {
 					"p, role:test, backup-storages, read, default/backup-storage-2",
 					"g, test-user, role:test",
 				),
-				outLen: 2,
+				assert: func(list *everestv1alpha1.BackupStorageList) bool {
+					return len(list.Items) == 2 &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.BackupStorage) bool {
+							return bs.GetName() == "backup-storage-1"
+						}) &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.BackupStorage) bool {
+							return bs.GetName() == "backup-storage-2"
+						})
+				},
 			},
 			{
 				desc: "read-only for all in default namespace",
@@ -88,12 +102,43 @@ func TestRBAC_BackupStorage(t *testing.T) {
 					"p, role:test, backup-storages, read, default/*",
 					"g, test-user, role:test",
 				),
-				outLen: 3,
+				assert: func(list *everestv1alpha1.BackupStorageList) bool {
+					return len(list.Items) == 3 &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.BackupStorage) bool {
+							return bs.GetName() == "backup-storage-1"
+						}) &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.BackupStorage) bool {
+							return bs.GetName() == "backup-storage-2"
+						}) &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.BackupStorage) bool {
+							return bs.GetName() == "backup-storage-3"
+						})
+				},
+			},
+			{
+				desc: "admin",
+				policy: newPolicy(
+					"g, test-user, role:admin",
+				),
+				assert: func(list *everestv1alpha1.BackupStorageList) bool {
+					return len(list.Items) == 3 &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.BackupStorage) bool {
+							return bs.GetName() == "backup-storage-1"
+						}) &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.BackupStorage) bool {
+							return bs.GetName() == "backup-storage-2"
+						}) &&
+						slices.ContainsFunc(list.Items, func(bs everestv1alpha1.BackupStorage) bool {
+							return bs.GetName() == "backup-storage-3"
+						})
+				},
 			},
 			{
 				desc:   "no policy",
 				policy: newPolicy(),
-				outLen: 0,
+				assert: func(list *everestv1alpha1.BackupStorageList) bool {
+					return len(list.Items) == 0
+				},
 			},
 		}
 
@@ -115,7 +160,9 @@ func TestRBAC_BackupStorage(t *testing.T) {
 
 				list, err := h.ListBackupStorages(ctx, "default")
 				require.NoError(t, err)
-				assert.Len(t, list.Items, tc.outLen)
+				assert.Condition(t, func() bool {
+					return tc.assert(list)
+				})
 			})
 		}
 	})
@@ -136,6 +183,12 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			policy  string
 			wantErr error
 		}{
+			{
+				desc: "admin",
+				policy: newPolicy(
+					"g, test-user, role:admin",
+				),
+			},
 			{
 				desc: "all actions for all backupstorages in all namespaces",
 				policy: newPolicy(
@@ -212,6 +265,12 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			policy  string
 			wantErr error
 		}{
+			{
+				desc: "admin",
+				policy: newPolicy(
+					"g, test-user, role:admin",
+				),
+			},
 			{
 				desc: "all actions for all backupstorages in all namespaces",
 				policy: newPolicy(
@@ -367,6 +426,12 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			wantErr error
 		}{
 			{
+				desc: "admin",
+				policy: newPolicy(
+					"g, test-user, role:admin",
+				),
+			},
+			{
 				desc: "all actions for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, *, */*",
@@ -516,6 +581,12 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			policy  string
 			wantErr error
 		}{
+			{
+				desc: "admin",
+				policy: newPolicy(
+					"g, test-user, role:admin",
+				),
+			},
 			{
 				desc: "all actions for all backupstorages in all namespaces",
 				policy: newPolicy(
