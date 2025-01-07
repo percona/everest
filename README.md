@@ -21,110 +21,175 @@ If you'd like to get a complete understanding of the features offered by Percona
 For comprehensive information about Percona Everest, see the [documentation](https://docs.percona.com/everest/index.html).
 Also, visit our [Storybook](https://percona.github.io/everest/) to check documentation for our UI components (under development).
 
-# Installation
+## Installation
 
-Ready to try out Percona Everest? Check the [Quickstart install](https://docs.percona.com/everest/quickstart-guide/quick-install.html) section for easy-to-follow steps. 
+Install Percona Everest Using Helm (Recommended)
 
-## Prerequisites
+Helm is the recommended installation method for Percona Everest as it simplifies deployment and resource management in Kubernetes environments.
+Prerequisites
 
-Before getting started with Percona Everest, do the following:
+Ensure you have a Kubernetes cluster set up (e.g., Amazon EKS, Google GKE). Install Helm on your local machine: [Helm Installation Guide](https://helm.sh/docs/intro/install/).
 
-1. Set up a Kubernetes cluster. 
+Steps to Install
 
-    Percona Everest assists with installing all the necessary operators and required packages, but does not deploy a Kubernetes cluster.
+1. Add the Percona Helm repository:
 
-    We recommend setting up Percona Everest on the [Amazon Elastic Kubernetes Service (EKS)](https://docs.percona.com/everest/quickstart-guide/eks.html) or [Google Kubernetes Engine (GKE)](https://docs.percona.com/everest/quickstart-guide/gke.html).
+```bash
+helm repo add percona https://percona.github.io/percona-helm-charts/
+helm repo update
+```
 
-2. Verify that you have access to the Kubernetes cluster that you want to use with Everest. By default, Everest uses the kubeconfig file available under `~/.kube/config`. 
+2. Install the Percona Everest Helm Chart:
 
-    To verify access to the Kubernetes cluster, run the following command:
-   
-    ```sh 
-    kubectl get nodes
-    ```
+```bash
+helm install everest-core percona/everest \
+--namespace everest-system \
+--create-namespace
+```
 
-## Install Percona Everest
+3. Access the Percona Everest UI:
+   By default, Everest is not exposed via an external IP. Use one of the following options:
 
-To install and provision Percona Everest to Kubernetes:
+- Port Forwarding:
 
+```bash
+kubectl port-forward svc/everest 8080:8080 -n everest-system
+```
 
-1. Install the latest version of the Everest CLI by running the following commands:
+Access the UI at http://127.0.0.1:8080.
 
-    **Linux and WSL**
-        
-    ```sh
-    curl -sSL -o everestctl-linux-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-linux-amd64
-    sudo install -m 555 everestctl-linux-amd64 /usr/local/bin/everestctl
-    rm everestctl-linux-amd64
-    ```
+- LoadBalancer (Optional):
 
-    **macOS (Apple Silicon)**
+```bash
+kubectl patch svc/everest -n everest-system -p '{"spec": {"type": "LoadBalancer"}}'
+kubectl get svc/everest -n everest-system
+```
 
-    ```sh
-    curl -sSL -o everestctl-darwin-arm64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-arm64
-    sudo install -m 555 everestctl-darwin-arm64 /usr/local/bin/everestctl
-    rm everestctl-darwin-arm64
-    ```
+Retrieve the external IP from the kubectl get svc command output.
 
-    **macOS (Intel CPU)**
+4. Retrieve Admin Credentials:
 
-    ```sh
-    curl -sSL -o everestctl-darwin-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-amd64
-    sudo install -m 555 everestctl-darwin-amd64 /usr/local/bin/everestctl
-    rm everestctl-darwin-amd64
-    ```
+```bash
+kubectl get secret everest-accounts -n everest-system -o jsonpath='{.data.users\.yaml}' | base64 --decode | yq '.admin.passwordHash'
 
-2. Install Everest and provision the Kubernetes cluster using one of the following commands:
+```
 
-    ```sh
-    everestctl install
-    ```
+- Default username: admin
+- Change the password for security using the server.initialAdminPassword parameter during installation.
 
-    Enter the specific names for the namespaces you want Everest to manage, separating each name with a comma.
+## Install Percona Everest using CLI
 
-    **Note**: Make sure that you enter at least one namespace.
+If you prefer using the CLI for installation, follow these steps.
 
-    Alternatively, you can set multiple namepaces in the headless mode:
+> Note: Google Container Registry (GCR) is scheduled to be deprecated and will officially shut down on March 18, 2025. All versions of Percona Everest prior to 1.4.0 depend on images hosted on GCR. After the shutdown date, downloading those images will fail.
+> We strongly recommend upgrading to Percona Everest version 1.4.0 as soon as possible.
+> For more details, refer to the [Container Registry Deprecation Documentation](https://cloud.google.com/artifact-registry/docs/transition/prepare-gcr-shutdown)
 
-      ```sh
-      everestctl install --namespaces <namespace-name1>,<namespace-name2> --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard
-      ```
-    
-    Replace `<namespace-name>` with the desired name for your namespace.
+Prerequisites
 
-    **Note**: Ensure that you copy the authorization token displayed on the terminal in this step. You will need this token to log in to the Percona Everest UI.    
+-Ensure you have a Kubernetes cluster set up (e.g., Amazon EKS, Google GKE).
 
-3. Access the Everest UI/API using one of the following options for exposing it, as Everest is not exposed with an external IP by default:
+- Verify access to your Kubernetes cluster:
 
-    * Run the following command to use `Kubectl port-forwarding` for connecting to Everest without exposing the service.
+```bash
+kubectl get nodes
+```
 
-        ```sh
-        kubectl port-forward svc/everest 8080:8080 -n everest-system
-        ``` 
+- Ensure your kubeconfig file is located in the default path `~/.kube/config`. If not, set the path using the following command:
 
-    * Use the following command to change the Everest service type to `LoadBalancer`:
-                    
-      ```sh
-      kubectl patch svc/everest -n everest-system -p '{"spec": {"type": "LoadBalancer"}}'
-      ```
+```bash
+export KUBECONFIG=~/.kube/config
+```
 
-4. Retrieve the external IP address for the Everest service. This is the address where you can then launch Everest at the end of the installation procedure. In this example, the external IP address used is the default `127.0.0.1`:  
-                
-    ```sh 
-    kubectl get svc/everest -n everest-system
-    ```
-                  
-5. The Percona Everest app will be available at http://127.0.0.1:8080.
+Steps to Install
 
-    Now, you can open your browser and create databases in Percona Everest.
+Starting from version 1.4.0, everestctl uses the Helm chart to install Percona Everest. You can configure chart parameters using:
+
+- --helm.set for individual parameters.
+- --helm.values to provide a values file.
+
+1. Download the Everest CLI:
+
+   **Linux and WSL**
+
+   ```sh
+   curl -sSL -o everestctl-linux-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-linux-amd64
+   sudo install -m 555 everestctl-linux-amd64 /usr/local/bin/everestctl
+   rm everestctl-linux-amd64
+   ```
+
+   **macOS (Apple Silicon)**
+
+   ```sh
+   curl -sSL -o everestctl-darwin-arm64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-arm64
+   sudo install -m 555 everestctl-darwin-arm64 /usr/local/bin/everestctl
+   rm everestctl-darwin-arm64
+
+   ```
+
+   **macOS (Intel CPU)**
+
+   ```sh
+   curl -sSL -o everestctl-darwin-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-amd64
+   sudo install -m 555 everestctl-darwin-amd64 /usr/local/bin/everestctl
+   rm everestctl-darwin-amd64
+
+   ```
+
+2. Install Percona Everest Using the Wizard:
+   Run the following command and specify the namespaces for Everest to manage:
+
+   ```sh
+   everestctl install
+   ```
+
+   If you skip adding namespaces, you can add them later:
+
+```bash
+everestctl namespaces add <NAMESPACE>
+
+```
+
+3. Install Percona Everest in Headless Mode:
+   Run the following command to set namespaces and database operators during installation:
+
+```bash
+everestctl install --namespaces <namespace-name1>,<namespace-name2> --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard
+
+```
+
+4. Access Admin Credentials:
+   Retrieve the generated admin password:
+
+```bash
+everestctl accounts initial-admin-password
+
+```
+
+5. Access the Everest UI:
+
+Use one of the following methods to access the UI:
+
+- Port Forwarding:
+
+```bash
+kubectl port-forward svc/everest 8080:8080 -n everest-system
+```
+
+Open the UI at http://127.0.0.1:8080.
+
+- LoadBalancer (Optional):
+
+```bash
+kubectl patch svc/everest -n everest-system -p '{"spec": {"type": "LoadBalancer"}}'
+```
 
 # Need help?
 
-**Commercial Support**  | **Community Support** |
-:-: | :-: |
-| <br/>Percona offers expert cloud-native support and services to simplify your database management, featuring 24/7 assistance, consulting, managed services, and training designed to maximize your cloud database operations.<br/><br/>  | <br/>Connect with our engineers and fellow users for general questions, troubleshooting, and sharing feedback and ideas.<br/><br/>  | 
-| **[Get Percona Support](https://hubs.ly/Q02ZTH8-0)** | **[Visit our Forum](https://forums.percona.com/c/percona-everest/81)** |
-
+|                                                                                                         **Commercial Support**                                                                                                          |                                                       **Community Support**                                                        |
+| :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------: |
+| <br/>Percona offers expert cloud-native support and services to simplify your database management, featuring 24/7 assistance, consulting, managed services, and training designed to maximize your cloud database operations.<br/><br/> | <br/>Connect with our engineers and fellow users for general questions, troubleshooting, and sharing feedback and ideas.<br/><br/> |
+|                                                                                          **[Get Percona Support](https://hubs.ly/Q02ZTH8-0)**                                                                                           |                               **[Visit our Forum](https://forums.percona.com/c/percona-everest/81)**                               |
 
 # Contributing
 
@@ -136,13 +201,8 @@ See the [Contribution Guide](https://github.com/percona/everest/blob/main/CONTRI
 
 We value your thoughts and opinions and we would be thrilled to hear from you! Join us on [Forum](https://forums.percona.com/c/percona-everest) to ask questions, share your feedback, and spark creative ideas with our community.
 
-
 # Submitting Bug Reports
 
-If you find a bug in Percona Everest, submit a report to that project's [JIRA](https://perconadev.atlassian.net/jira/software/c/projects/EVEREST/boards/65) issue tracker or [create a GitHub issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/creating-an-issue#creating-an-issue-from-a-repository) in this repository. 
+If you find a bug in Percona Everest, submit a report to that project's [JIRA](https://perconadev.atlassian.net/jira/software/c/projects/EVEREST/boards/65) issue tracker or [create a GitHub issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/creating-an-issue#creating-an-issue-from-a-repository) in this repository.
 
 Learn more about submitting bugs, new features ideas and improvements in the [documentation](https://docs.percona.com/everest/contribute.html).
-
-   
-
-
