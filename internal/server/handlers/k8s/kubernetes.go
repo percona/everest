@@ -10,6 +10,7 @@ import (
 	"github.com/AlekSi/pointer"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/common"
@@ -65,6 +66,23 @@ func (h *k8sHandler) GetUserPermissions(ctx context.Context) (*api.UserPermissio
 	enabled := rbac.IsEnabled(cm)
 	return &api.UserPermissions{
 		Enabled: enabled,
+	}, nil
+}
+
+func (h *k8sHandler) GetSettings(ctx context.Context) (*api.Settings, error) {
+	settings, err := h.kubeClient.GetEverestSettings(ctx)
+	if err != nil && !k8serrors.IsNotFound(err) {
+		return nil, err
+	}
+	config, err := settings.OIDCConfig()
+	if err != nil {
+		return nil, err
+	}
+	return &api.Settings{
+		OidcConfig: api.OIDCConfig{
+			ClientId:  config.ClientID,
+			IssuerURL: config.IssuerURL,
+		},
 	}, nil
 }
 

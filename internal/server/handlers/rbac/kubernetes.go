@@ -19,6 +19,10 @@ func (h *rbacHandler) GetKubernetesClusterInfo(ctx context.Context) (*api.Kubern
 	return h.next.GetKubernetesClusterInfo(ctx)
 }
 
+func (h *rbacHandler) GetSettings(ctx context.Context) (*api.Settings, error) {
+	return h.next.GetSettings(ctx)
+}
+
 func (h *rbacHandler) GetUserPermissions(ctx context.Context) (*api.UserPermissions, error) {
 	user, err := h.userGetter(ctx)
 	if err != nil {

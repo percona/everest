@@ -18,3 +18,7 @@ func (h *validateHandler) GetKubernetesClusterInfo(ctx context.Context) (*api.Ku
 func (h *validateHandler) GetUserPermissions(ctx context.Context) (*api.UserPermissions, error) {
 	return h.next.GetUserPermissions(ctx)
 }
+
+func (h *validateHandler) GetSettings(ctx context.Context) (*api.Settings, error) {
+	return h.next.GetSettings(ctx)
+}

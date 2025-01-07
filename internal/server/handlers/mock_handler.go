@@ -604,6 +604,36 @@ func (_m *MockHandler) GetMonitoringInstance(ctx context.Context, namespace stri
 	return r0, r1
 }
 
+// GetSettings provides a mock function with given fields: ctx
+func (_m *MockHandler) GetSettings(ctx context.Context) (*api.Settings, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSettings")
+	}
+
+	var r0 *api.Settings
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*api.Settings, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *api.Settings); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*api.Settings)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetUpgradePlan provides a mock function with given fields: ctx, namespace
 func (_m *MockHandler) GetUpgradePlan(ctx context.Context, namespace string) (*api.UpgradePlan, error) {
 	ret := _m.Called(ctx, namespace)
