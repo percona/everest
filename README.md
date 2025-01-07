@@ -21,9 +21,7 @@ Why you should try Percona Everest:
 For comprehensive information about Percona Everest, see the [documentation](https://docs.percona.com/everest/index.html).
 Also, visit our [Storybook](https://percona.github.io/everest/) to check documentation for our UI components (under development).
 
-## Installation
-
-Install **Percona Everest** Using Helm (Recommended)
+## Install Percona Everest Using Helm (Recommended)
 
 Helm is the recommended installation method for Percona Everest as it simplifies deployment and resource management in Kubernetes environments.
 
