@@ -54,7 +54,6 @@ helm install everest-core percona/everest \
    ```
 
    - Default username: **admin**
-   - Change the password for security using the server.
    - You can set a different default admin password by using the server.initialAdminPassword parameter during installation.
 
 4. Access the Percona Everest UI:
@@ -87,8 +86,6 @@ If you prefer using the CLI for installation, follow these steps.
   ```bash
   kubectl get nodes
   ```
-
-````
 
 - Ensure your `kubeconfig` file is located in the default path `~/.kube/config`. If not, set the path using the following command:
 
@@ -201,4 +198,7 @@ We value your thoughts and opinions and we would be thrilled to hear from you! J
 If you find a bug in Percona Everest, submit a report to that project's [JIRA](https://perconadev.atlassian.net/jira/software/c/projects/EVEREST/boards/65) issue tracker or [create a GitHub issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/creating-an-issue#creating-an-issue-from-a-repository) in this repository.
 
 Learn more about submitting bugs, new features ideas and improvements in the [documentation](https://docs.percona.com/everest/contribute.html).
-````
+
+```
+
+```
