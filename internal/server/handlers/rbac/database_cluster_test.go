@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/api"
 	"github.com/percona/everest/internal/server/handlers"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/rbac"
@@ -830,6 +831,257 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 				assert.Condition(t, func() bool {
 					return tc.assert(res)
 				})
+			})
+		}
+	})
+
+	t.Run("DeleteDatabaseCluster", func(t *testing.T) {
+		testCases := []struct {
+			desc    string
+			wantErr error
+			policy  string
+		}{
+			{
+				desc: "admin",
+				policy: newPolicy(
+					"g, test-user, role:admin",
+				),
+			},
+			{
+				desc: "success",
+				policy: newPolicy(
+					"p, role:test, database-clusters, delete, default/test-cluster",
+					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "missing delete permission for database-cluster",
+				policy: newPolicy(
+					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "missing read permission for database-engine",
+				policy: newPolicy(
+					"p, role:test, database-clusters, delete, default/test-cluster",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+		}
+
+		next := func() *handlers.MockHandler {
+			h := &handlers.MockHandler{}
+			h.On("DeleteDatabaseCluster", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			h.On("GetDatabaseCluster", mock.Anything, mock.Anything, mock.Anything).Return(
+				&everestv1alpha1.DatabaseCluster{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cluster",
+						Namespace: "default",
+					},
+					Spec: everestv1alpha1.DatabaseClusterSpec{
+						Engine: everestv1alpha1.Engine{
+							Type: everestv1alpha1.DatabaseEnginePXC,
+						},
+					},
+				},
+				nil,
+			)
+			return h
+		}
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, "test-user")
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				t.Parallel()
+				k8sMock := newConfigMapMock(tc.policy)
+				enf, err := rbac.NewEnforcer(ctx, k8sMock, zap.NewNop().Sugar())
+				require.NoError(t, err)
+
+				h := &rbacHandler{
+					next:       next(),
+					enforcer:   enf,
+					log:        zap.NewNop().Sugar(),
+					userGetter: testUserGetter,
+				}
+				err = h.DeleteDatabaseCluster(ctx, "default", "test-cluster", &api.DeleteDatabaseClusterParams{})
+				assert.ErrorIs(t, err, tc.wantErr)
+			})
+		}
+	})
+
+	t.Run("GetDatabaseClusterCredentials", func(t *testing.T) {
+		testCases := []struct {
+			desc    string
+			wantErr error
+			policy  string
+		}{
+			{
+				desc: "admin",
+				policy: newPolicy(
+					"g, test-user, role:admin",
+				),
+			},
+			{
+				desc: "success",
+				policy: newPolicy(
+					"p, role:test, database-clusters, read, default/test-cluster",
+					"p, role:test, database-cluster-credentials, read, default/test-cluster",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "missing read permission for database-cluster",
+				policy: newPolicy(
+					"p, role:test, database-cluster-credentials, read, default/test-cluster",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "missing read permission for database-cluster-credentials",
+				policy: newPolicy(
+					"p, role:test, database-clusters, read, default/test-cluster",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+		}
+
+		next := func() *handlers.MockHandler {
+			h := &handlers.MockHandler{}
+			h.On("GetDatabaseClusterCredentials", mock.Anything, mock.Anything, mock.Anything).Return(
+				&api.DatabaseClusterCredential{}, nil)
+			return h
+		}
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, "test-user")
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				t.Parallel()
+				k8sMock := newConfigMapMock(tc.policy)
+				enf, err := rbac.NewEnforcer(ctx, k8sMock, zap.NewNop().Sugar())
+				require.NoError(t, err)
+
+				h := &rbacHandler{
+					next:       next(),
+					enforcer:   enf,
+					log:        zap.NewNop().Sugar(),
+					userGetter: testUserGetter,
+				}
+				_, err = h.GetDatabaseClusterCredentials(ctx, "default", "test-cluster")
+				assert.ErrorIs(t, err, tc.wantErr)
+			})
+		}
+	})
+
+	t.Run("GetDatabaseClusterComponents", func(t *testing.T) {
+		testCases := []struct {
+			desc    string
+			wantErr error
+			policy  string
+		}{
+			{
+				desc: "admin",
+				policy: newPolicy(
+					"g, test-user, role:admin",
+				),
+			},
+			{
+				desc: "success",
+				policy: newPolicy(
+					"p, role:test, database-clusters, read, default/test-cluster",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "missing read permission for database-cluster",
+				policy: newPolicy(
+					"p, role:test, database-cluster-credentials, read, default/test-cluster",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+		}
+
+		next := func() *handlers.MockHandler {
+			h := &handlers.MockHandler{}
+			h.On("GetDatabaseClusterComponents", mock.Anything, mock.Anything, mock.Anything).Return(
+				[]api.DatabaseClusterComponent{}, nil)
+			return h
+		}
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, "test-user")
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				t.Parallel()
+				k8sMock := newConfigMapMock(tc.policy)
+				enf, err := rbac.NewEnforcer(ctx, k8sMock, zap.NewNop().Sugar())
+				require.NoError(t, err)
+
+				h := &rbacHandler{
+					next:       next(),
+					enforcer:   enf,
+					log:        zap.NewNop().Sugar(),
+					userGetter: testUserGetter,
+				}
+				_, err = h.GetDatabaseClusterComponents(ctx, "default", "test-cluster")
+				assert.ErrorIs(t, err, tc.wantErr)
+			})
+		}
+	})
+
+	t.Run("GetDatabaseClusterPitr", func(t *testing.T) {
+		testCases := []struct {
+			desc    string
+			wantErr error
+			policy  string
+		}{
+			{
+				desc: "admin",
+				policy: newPolicy(
+					"g, test-user, role:admin",
+				),
+			},
+			{
+				desc: "success",
+				policy: newPolicy(
+					"p, role:test, database-clusters, read, default/test-cluster",
+					"g, test-user, role:test",
+				),
+			},
+			{
+				desc: "missing read permission for database-cluster",
+				policy: newPolicy(
+					"p, role:test, database-cluster-credentials, read, default/test-cluster",
+					"g, test-user, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+		}
+
+		next := func() *handlers.MockHandler {
+			h := &handlers.MockHandler{}
+			h.On("GetDatabaseClusterPitr", mock.Anything, mock.Anything, mock.Anything).Return(
+				&api.DatabaseClusterPitr{}, nil)
+			return h
+		}
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, "test-user")
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				t.Parallel()
+				k8sMock := newConfigMapMock(tc.policy)
+				enf, err := rbac.NewEnforcer(ctx, k8sMock, zap.NewNop().Sugar())
+				require.NoError(t, err)
+
+				h := &rbacHandler{
+					next:       next(),
+					enforcer:   enf,
+					log:        zap.NewNop().Sugar(),
+					userGetter: testUserGetter,
+				}
+				_, err = h.GetDatabaseClusterPitr(ctx, "default", "test-cluster")
+				assert.ErrorIs(t, err, tc.wantErr)
 			})
 		}
 	})
