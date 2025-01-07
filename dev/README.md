@@ -15,7 +15,8 @@ Build and runtime logs can be easily accessed using tilt's web UI.
 1. Install [k3d](https://k3d.io)
 
 2. Install [tilt.dev](https://docs.tilt.dev/install.html)
-
+NOTE: for MacOS tilt needs to have installed and runing `docker-desktop` tool. This is not required and can be skiped since we use `k3d` instead.
+ 
 3. Clone [everest-operator](https://github.com/percona/everest-operator).
 
 4. Clone [percona-helm-charts](https://github.com/percona/percona-helm-charts).
@@ -51,8 +52,8 @@ gcloud auth configure-docker <REGISTRY_REGION>-docker.pkg.dev
 ### 2. Run tilt
 1. Set the following environment variables:
 ```sh
-export EVEREST_OPERATOR_DIR=/path/to/everest-operator
-export EVEREST_CHART_DIR=/path/to/percona-helm-charts/charts/everest
+export EVEREST_OPERATOR_DIR=</path/to/everest-operator>
+export EVEREST_CHART_DIR=</path/to/percona-helm-charts>/charts/everest
 ```
 
 2. (Optional) If you want to test a specific version of a given DB operator you can set the following environment variables
