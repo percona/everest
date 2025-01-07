@@ -70,8 +70,6 @@ Access the UI at http://127.0.0.1:8080.
 
 ## Install Percona Everest using CLI
 
-If you prefer using the CLI for installation, follow these steps.
-
 > **Note**:
 >
 > Google Container Registry (GCR) is scheduled to be deprecated and will officially shut down on March 18, 2025. All versions of Percona Everest prior to 1.4.0 depend on images hosted on GCR. After the shutdown date, downloading those images will fail.
@@ -101,9 +99,9 @@ Starting from version **1.4.0**, `everestctl` uses the Helm chart to install Per
 - `--helm.set` for individual parameters.
 - `--helm.values` to provide a values file.
 
-1. Download the Everest CLI:
+1. **Download the Everest CLI:**
 
-   **Linux and WSL**
+   Linux and WSL
 
    ```sh
    curl -sSL -o everestctl-linux-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-linux-amd64
@@ -111,7 +109,7 @@ Starting from version **1.4.0**, `everestctl` uses the Helm chart to install Per
    rm everestctl-linux-amd64
    ```
 
-   **macOS (Apple Silicon)**
+   macOS (Apple Silicon)
 
    ```sh
    curl -sSL -o everestctl-darwin-arm64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-arm64
@@ -120,7 +118,7 @@ Starting from version **1.4.0**, `everestctl` uses the Helm chart to install Per
 
    ```
 
-   **macOS (Intel CPU)**
+   macOS (Intel CPU)
 
    ```sh
    curl -sSL -o everestctl-darwin-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-amd64
@@ -129,7 +127,7 @@ Starting from version **1.4.0**, `everestctl` uses the Helm chart to install Per
 
    ```
 
-2. Install Percona Everest Using the Wizard:
+2. **Install Percona Everest Using the Wizard:**
 
    Run the following command and specify the namespaces for Everest to manage:
 
@@ -143,7 +141,7 @@ Starting from version **1.4.0**, `everestctl` uses the Helm chart to install Per
    everestctl namespaces add <NAMESPACE>
    ```
 
-3. Install Percona Everest in Headless Mode:
+3. **Install Percona Everest in Headless Mode:**
 
    Run the following command to set namespaces and database operators during installation:
 
@@ -151,7 +149,7 @@ Starting from version **1.4.0**, `everestctl` uses the Helm chart to install Per
    everestctl install --namespaces <namespace-name1>,<namespace-name2> --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard
    ```
 
-4. Access Admin Credentials:
+4. **Access Admin Credentials:**
 
    Retrieve the generated admin password:
 
@@ -159,7 +157,7 @@ Starting from version **1.4.0**, `everestctl` uses the Helm chart to install Per
    everestctl accounts initial-admin-password
    ```
 
-5. Access the Everest UI:
+5. **Access the Everest UI:**
 
    Use one of the following methods to access the UI:
 
