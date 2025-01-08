@@ -39,8 +39,8 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 		//        Error: unknown command "a" for "everestctl install"
 		Args:    cobra.NoArgs,
 		Example: "everestctl install --namespaces dev,staging,prod --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard",
-		Long:    "Install Percona Everest Helm chart",
-		Short:   "Install Percona Everest",
+		Long:    "Install Percona Everest using Helm",
+		Short:   "Install Percona Everest using Helm",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initInstallViperFlags(cmd)
 			c := &install.Config{}
@@ -48,7 +48,15 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 			if err != nil {
 				os.Exit(1)
 			}
-			bindInstallHelmOpts(c)
+			c.CLIOptions.BindViperFlags()
+
+			if c.SkipDBNamespace {
+				if cmd.Flags().Lookup(cli.FlagNamespaces).Changed {
+					l.Errorf("cannot set both --%s and --%s", cli.FlagInstallSkipDBNamespace, cli.FlagNamespaces)
+					os.Exit(1)
+				}
+				c.Namespaces = ""
+			}
 
 			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
 			c.Pretty = !enableLogging
@@ -71,13 +79,14 @@ func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initInstallFlags(cmd *cobra.Command) {
-	cmd.Flags().String(cli.FlagNamespaces, "", "Comma-separated namespaces list Percona Everest can manage")
+	cmd.Flags().String(cli.FlagNamespaces, install.DefaultDBNamespaceName, "Comma-separated namespaces list Percona Everest can manage")
 	cmd.Flags().Bool(cli.FlagSkipWizard, false, "Skip installation wizard")
 	cmd.Flags().String(cli.FlagVersionMetadataURL, "https://check.percona.com", "URL to retrieve version metadata information from")
 	cmd.Flags().String(cli.FlagVersion, "", "Everest version to install. By default the latest version is installed")
 	cmd.Flags().Bool(cli.FlagDisableTelemetry, false, "Disable telemetry")
 	cmd.Flags().MarkHidden(cli.FlagDisableTelemetry) //nolint:errcheck,gosec
 	cmd.Flags().Bool(cli.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
+	cmd.Flags().Bool(cli.FlagInstallSkipDBNamespace, false, "Skip creating a database namespace with install")
 
 	cmd.Flags().String(helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
 	cmd.Flags().MarkHidden(helm.FlagChartDir) //nolint:errcheck,gosec
@@ -93,13 +102,14 @@ func initInstallFlags(cmd *cobra.Command) {
 func initInstallViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(cli.FlagSkipWizard, cmd.Flags().Lookup(cli.FlagSkipWizard)) //nolint:errcheck,gosec
 
-	viper.BindEnv(cli.FlagKubeconfig)                                                           //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagKubeconfig, cmd.Flags().Lookup(cli.FlagKubeconfig))                 //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagNamespaces, cmd.Flags().Lookup(cli.FlagNamespaces))                 //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagVersionMetadataURL, cmd.Flags().Lookup(cli.FlagVersionMetadataURL)) //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagVersion, cmd.Flags().Lookup(cli.FlagVersion))                       //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagDisableTelemetry, cmd.Flags().Lookup(cli.FlagDisableTelemetry))     //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagSkipEnvDetection, cmd.Flags().Lookup(cli.FlagSkipEnvDetection))     //nolint:errcheck,gosec
+	viper.BindEnv(cli.FlagKubeconfig)                                                                   //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagKubeconfig, cmd.Flags().Lookup(cli.FlagKubeconfig))                         //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagNamespaces, cmd.Flags().Lookup(cli.FlagNamespaces))                         //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagVersionMetadataURL, cmd.Flags().Lookup(cli.FlagVersionMetadataURL))         //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagVersion, cmd.Flags().Lookup(cli.FlagVersion))                               //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagDisableTelemetry, cmd.Flags().Lookup(cli.FlagDisableTelemetry))             //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagSkipEnvDetection, cmd.Flags().Lookup(cli.FlagSkipEnvDetection))             //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagInstallSkipDBNamespace, cmd.Flags().Lookup(cli.FlagInstallSkipDBNamespace)) //nolint:errcheck,gosec
 
 	viper.BindPFlag(helm.FlagChartDir, cmd.Flags().Lookup(helm.FlagChartDir))     //nolint:errcheck,gosec
 	viper.BindPFlag(helm.FlagRepository, cmd.Flags().Lookup(helm.FlagRepository)) //nolint:errcheck,gosec
@@ -112,11 +122,4 @@ func initInstallViperFlags(cmd *cobra.Command) {
 
 	viper.BindPFlag(cli.FlagVerbose, cmd.Flags().Lookup(cli.FlagVerbose)) //nolint:errcheck,gosec
 	viper.BindPFlag("json", cmd.Flags().Lookup("json"))                   //nolint:errcheck,gosec
-}
-
-func bindInstallHelmOpts(cfg *install.Config) {
-	cfg.CLIOptions.Values.Values = viper.GetStringSlice(helm.FlagHelmSet)
-	cfg.CLIOptions.Values.ValueFiles = viper.GetStringSlice(helm.FlagHelmValues)
-	cfg.CLIOptions.ChartDir = viper.GetString(helm.FlagChartDir)
-	cfg.CLIOptions.RepoURL = viper.GetString(helm.FlagRepository)
 }

@@ -225,9 +225,10 @@ func (u *Upgrade) setupHelmInstaller(ctx context.Context) error {
 		Values:           values,
 	}
 	if err := installer.Init(u.config.KubeconfigPath, helm.ChartOptions{
-		URL:     u.config.RepoURL,
-		Name:    helm.EverestChartName,
-		Version: u.upgradeToVersion,
+		URL:       u.config.RepoURL,
+		Directory: u.config.ChartDir,
+		Name:      helm.EverestChartName,
+		Version:   u.upgradeToVersion,
 	}); err != nil {
 		return fmt.Errorf("could not initialize Helm installer: %w", err)
 	}
@@ -240,7 +241,7 @@ func (u *Upgrade) printPostUpgradeMessage(ctx context.Context, out io.Writer) er
 	if isSecure, err := u.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser); err != nil {
 		return errors.Join(err, errors.New("could not check if the admin password is secure"))
 	} else if !isSecure {
-		fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage)
+		fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage, "\n")
 	}
 	return nil
 }

@@ -16,6 +16,8 @@
 // Package common holds common constants used across Everest.
 package common
 
+import everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
 const (
 	// Everest ...
 	Everest = "everest"
@@ -75,20 +77,26 @@ const (
 	KubernetesManagedByLabel = "app.kubernetes.io/managed-by"
 	// ForegroundDeletionFinalizer is the finalizer used to delete resources in foreground.
 	ForegroundDeletionFinalizer = "foregroundDeletion"
+	// UserCtxKey is the key used to store the user in the context.
+	UserCtxKey = "user"
 
 	// EverestAPIExtnResourceName is the name of the Everest API extension header
 	// that holds the name of the resource being served by an API endpoint.
 	EverestAPIExtnResourceName = "x-everest-resource-name"
 )
 
+// OperatorTypeToName maps the engine type to the operator name.
+//
+//nolint:gochecknoglobals
+var OperatorTypeToName = map[everestv1alpha1.EngineType]string{
+	everestv1alpha1.DatabaseEnginePXC:        PXCOperatorName,
+	everestv1alpha1.DatabaseEnginePSMDB:      PSMDBOperatorName,
+	everestv1alpha1.DatabaseEnginePostgresql: PGOperatorName,
+}
+
 // InitialPasswordWarningMessage is the message that is shown to the user after the installation/upgrade,
 // regarding insecure admin password.
-const InitialPasswordWarningMessage = `To view the password for the 'admin' user, run the following command:
-
-everestctl accounts initial-admin-password
-
-
-IMPORTANT: This password is NOT stored in a hashed format. To secure it, update the password using the following command:
-
-everestctl accounts set-password --username admin
-`
+const InitialPasswordWarningMessage = "Run the following command to get the initial admin password:\n\n" +
+	"\teverestctl accounts initial-admin-password\n\n" +
+	"NOTE: The initial password is stored in plain text. For security, change it immediately using the following command:\n\n" +
+	"\teverestctl accounts set-password --username admin"

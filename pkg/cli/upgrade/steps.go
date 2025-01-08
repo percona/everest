@@ -3,6 +3,7 @@ package upgrade
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/AlekSi/pointer"
 	"helm.sh/helm/v3/pkg/cli/values"
@@ -113,7 +114,11 @@ func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
 		return fmt.Errorf("could not upgrade DB namespaces Helm charts: %w", err)
 	}
 	// Upgrade the main chart.
-	return u.helmInstaller.Upgrade(ctx, helm.UpgradeOptions{})
+	return u.helmInstaller.Upgrade(ctx, helm.UpgradeOptions{
+		ReuseValues:          u.config.ReuseValues,
+		ResetValues:          u.config.ResetValues,
+		ResetThenReuseValues: u.config.ResetThenReuseValues,
+	})
 }
 
 func (u *Upgrade) upgradeEverestDBNamespaceHelmCharts(ctx context.Context) error {
@@ -185,10 +190,16 @@ func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version 
 		ReleaseNamespace: namespace,
 		Values:           values,
 	}
+
+	var directory string
+	if u.config.ChartDir != "" {
+		directory = filepath.Join(u.config.ChartDir, "charts/everest-db-namespace")
+	}
 	if err := installer.Init(u.config.KubeconfigPath, helm.ChartOptions{
-		URL:     u.config.RepoURL,
-		Name:    helm.EverestDBNamespaceChartName,
-		Version: version,
+		URL:       u.config.RepoURL,
+		Directory: directory,
+		Name:      helm.EverestDBNamespaceChartName,
+		Version:   version,
 	}); err != nil {
 		return fmt.Errorf("could not initialize Helm installer: %w", err)
 	}
@@ -201,6 +212,7 @@ func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version 
 	return installer.Upgrade(ctx, helm.UpgradeOptions{
 		DisableHooks: true,
 		ReuseValues:  true,
+		Force:        true, // since the version is not changing, we want to ensure that new manifests are still applied.
 	})
 }
 

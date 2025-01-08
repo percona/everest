@@ -29,6 +29,7 @@ import { DbType } from '@percona/types';
 import PitrStorage from './pitr-storage';
 import { Messages as PITRMessages } from 'pages/common/pitr.messages';
 import { Messages } from './edit-pitr.messages';
+import { Typography } from '@mui/material';
 
 export const PitrEditModal = ({
   open,
@@ -73,6 +74,11 @@ export const PitrEditModal = ({
         backupStorageName
       )}
     >
+      {dbType === DbType.Mongo && (
+        <Typography variant="body2">
+          {Messages.firstStorageWillBeUsed}
+        </Typography>
+      )}
       <SwitchInput
         label={Messages.enablePITR}
         name={PitrEditFields.enabled}

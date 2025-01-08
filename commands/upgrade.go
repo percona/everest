@@ -38,8 +38,8 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 		// it will return
 		//        Error: unknown command "a" for "everestctl upgrade"
 		Args:  cobra.NoArgs,
-		Long:  "Upgrade Percona Everest",
-		Short: "Upgrade Percona Everest",
+		Long:  "Upgrade Percona Everest using Helm",
+		Short: "Upgrade Percona Everest using Helm",
 		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
 			initUpgradeViperFlags(cmd)
 
@@ -47,7 +47,7 @@ func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
 			if err != nil {
 				os.Exit(1)
 			}
-			bindUpgradeHelmOpts(c)
+			c.CLIOptions.BindViperFlags()
 
 			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
 			c.Pretty = !enableLogging
@@ -74,9 +74,14 @@ func initUpgradeFlags(cmd *cobra.Command) {
 	cmd.Flags().String(cli.FlagVersionMetadataURL, "https://check.percona.com", "URL to retrieve version metadata information from")
 	cmd.Flags().Bool(cli.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
 
+	cmd.Flags().String(helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
+	cmd.Flags().MarkHidden(helm.FlagChartDir) //nolint:errcheck,gosec
 	cmd.Flags().String(helm.FlagRepository, helm.DefaultHelmRepoURL, "Helm chart repository to download the Everest charts from")
 	cmd.Flags().StringSlice(helm.FlagHelmSet, []string{}, "Set helm values on the command line (can specify multiple values with commas: key1=val1,key2=val2)")
 	cmd.Flags().StringSliceP(helm.FlagHelmValues, "f", []string{}, "Specify values in a YAML file or a URL (can specify multiple)")
+	cmd.Flags().Bool(helm.FlagHelmReuseValues, false, "Reuse the last release's values and merge in any overrides from the command line via --helm.set and -f")
+	cmd.Flags().Bool(helm.FlagHelmResetValues, false, "Reset the values to the ones built into the chart")
+	cmd.Flags().Bool(helm.FlagHelmResetThenReuseValues, false, "Reset the values to the ones built into the chart, apply the last release's values and merge in any overrides from the command line via --set and -f.")
 
 	cmd.Flags().BoolP("logs", "l", false, "If set, logs are printed during the upgrade process")
 	cmd.Flags().Bool("dry-run", false, "If set, only executes the pre-upgrade checks")
@@ -94,19 +99,17 @@ func initUpgradeViperFlags(cmd *cobra.Command) {
 
 	viper.BindPFlag(upgrade.FlagSkipEnvDetection, cmd.Flags().Lookup(upgrade.FlagSkipEnvDetection)) //nolint:errcheck,gosec
 
-	viper.BindPFlag(helm.FlagRepository, cmd.Flags().Lookup(helm.FlagRepository)) //nolint:errcheck,gosec
-	viper.BindPFlag(helm.FlagHelmSet, cmd.Flags().Lookup(helm.FlagHelmSet))       //nolint:errcheck,gosec
-	viper.BindPFlag(helm.FlagHelmValues, cmd.Flags().Lookup(helm.FlagHelmValues)) //nolint:errcheck,gosec
+	viper.BindPFlag(helm.FlagChartDir, cmd.Flags().Lookup(helm.FlagChartDir))                                 //nolint:errcheck,gosec
+	viper.BindPFlag(helm.FlagRepository, cmd.Flags().Lookup(helm.FlagRepository))                             //nolint:errcheck,gosec
+	viper.BindPFlag(helm.FlagHelmSet, cmd.Flags().Lookup(helm.FlagHelmSet))                                   //nolint:errcheck,gosec
+	viper.BindPFlag(helm.FlagHelmValues, cmd.Flags().Lookup(helm.FlagHelmValues))                             //nolint:errcheck,gosec
+	viper.BindPFlag(helm.FlagHelmReuseValues, cmd.Flags().Lookup(helm.FlagHelmReuseValues))                   //nolint:errcheck,gosec
+	viper.BindPFlag(helm.FlagHelmResetValues, cmd.Flags().Lookup(helm.FlagHelmResetValues))                   //nolint:errcheck,gosec
+	viper.BindPFlag(helm.FlagHelmResetThenReuseValues, cmd.Flags().Lookup(helm.FlagHelmResetThenReuseValues)) //nolint:errcheck,gosec
 }
 
 func parseUpgradeConfig() (*upgrade.Config, error) {
 	c := &upgrade.Config{}
 	err := viper.Unmarshal(c)
 	return c, err
-}
-
-func bindUpgradeHelmOpts(cfg *upgrade.Config) {
-	cfg.CLIOptions.Values.Values = viper.GetStringSlice(helm.FlagHelmSet)
-	cfg.CLIOptions.Values.ValueFiles = viper.GetStringSlice(helm.FlagHelmValues)
-	cfg.CLIOptions.RepoURL = viper.GetString(helm.FlagRepository)
 }

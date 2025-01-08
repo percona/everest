@@ -63,16 +63,6 @@ const (
 	// contains the list of monitored namespaces.
 	EverestDBNamespacesEnvVar = "DB_NAMESPACES"
 
-	pxcDeploymentName            = "percona-xtradb-cluster-operator"
-	psmdbDeploymentName          = "percona-server-mongodb-operator"
-	postgresDeploymentName       = "percona-postgresql-operator"
-	psmdbOperatorContainerName   = "percona-server-mongodb-operator"
-	pxcOperatorContainerName     = "percona-xtradb-cluster-operator"
-	everestOperatorContainerName = "manager"
-	databaseClusterKind          = "DatabaseCluster"
-	databaseClusterAPIVersion    = "everest.percona.com/v1alpha1"
-	managedByKey                 = "everest.percona.com/managed-by"
-
 	// OLMNamespace is the namespace where OLM is installed.
 	OLMNamespace    = "everest-olm"
 	olmOperatorName = "olm-operator"
@@ -258,6 +248,11 @@ func (k *Kubernetes) DeleteCatalogSource(ctx context.Context, name, namespace st
 // GetSubscription returns subscription.
 func (k *Kubernetes) GetSubscription(ctx context.Context, name, namespace string) (*olmv1alpha1.Subscription, error) {
 	return k.client.OLM().OperatorsV1alpha1().Subscriptions(namespace).Get(ctx, name, metav1.GetOptions{})
+}
+
+// ListSubscriptions lists subscriptions.
+func (k *Kubernetes) ListSubscriptions(ctx context.Context, namespace string) (*olmv1alpha1.SubscriptionList, error) {
+	return k.client.OLM().OperatorsV1alpha1().Subscriptions(namespace).List(ctx, metav1.ListOptions{})
 }
 
 // InstallOperatorRequest holds the fields to make an operator install request.

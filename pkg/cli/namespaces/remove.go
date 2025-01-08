@@ -18,6 +18,7 @@ import (
 	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/output"
 )
 
 const (
@@ -87,6 +88,16 @@ func (r *NamespaceRemover) Run(ctx context.Context) error {
 
 	removalSteps := []steps.Step{}
 	for _, ns := range r.config.Namespaces {
+		// Check that the namespace exists.
+		exists, managedByEverest, err := namespaceExists(ctx, ns, r.kubeClient)
+		if err != nil {
+			return errors.Join(err, errors.New("failed to check if namespace exists"))
+		}
+		if !exists || !managedByEverest {
+			r.l.Infof("Namespace '%s' does not exist or not managed by Everest", ns)
+			fmt.Fprint(os.Stdout, output.Warn("Namespace (%s) does not exist or not managed by Everest, skipping..", ns))
+			continue
+		}
 		removalSteps = append(removalSteps, NewRemoveNamespaceSteps(ns, r.config.KeepNamespace, r.kubeClient)...)
 	}
 

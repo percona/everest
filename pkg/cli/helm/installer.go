@@ -26,6 +26,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/spf13/viper"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -43,10 +44,25 @@ var settings = helmcli.New() //nolint:gochecknoglobals
 
 // CLIOptions contains common options for the CLI.
 type CLIOptions struct {
-	ChartDir string
-	RepoURL  string
-	Values   values.Options
-	Devel    bool
+	ChartDir             string
+	RepoURL              string
+	Values               values.Options
+	Devel                bool
+	ReuseValues          bool
+	ResetValues          bool
+	ResetThenReuseValues bool
+}
+
+// BindViperFlags parses the CLI flags from Viper and binds them to the CLI options.
+func (o *CLIOptions) BindViperFlags() {
+	o.Values.Values = viper.GetStringSlice(FlagHelmSet)
+	o.Values.ValueFiles = viper.GetStringSlice(FlagHelmValues)
+	o.ChartDir = viper.GetString(FlagChartDir)
+	o.RepoURL = viper.GetString(FlagRepository)
+	o.RepoURL = viper.GetString(FlagRepository)
+	o.ReuseValues = viper.GetBool(FlagHelmReuseValues)
+	o.ResetValues = viper.GetBool(FlagHelmResetValues)
+	o.ResetThenReuseValues = viper.GetBool(FlagHelmResetThenReuseValues)
 }
 
 // Everest Helm chart names.
@@ -208,8 +224,11 @@ func (i *Installer) install(ctx context.Context) error {
 
 // UpgradeOptions provide options for upgrading a Helm chart.
 type UpgradeOptions struct {
-	DisableHooks bool
-	ReuseValues  bool
+	DisableHooks         bool
+	ReuseValues          bool
+	ResetValues          bool
+	ResetThenReuseValues bool
+	Force                bool
 }
 
 // Upgrade the Helm chart.
@@ -218,7 +237,10 @@ func (i *Installer) Upgrade(ctx context.Context, opts UpgradeOptions) error {
 	upgrade.Namespace = i.ReleaseNamespace
 	upgrade.TakeOwnership = true
 	upgrade.ReuseValues = opts.ReuseValues
+	upgrade.ResetValues = opts.ResetValues
+	upgrade.ResetThenReuseValues = opts.ResetThenReuseValues
 	upgrade.DisableHooks = opts.DisableHooks
+	upgrade.Force = opts.Force
 
 	rel, err := upgrade.RunWithContext(ctx, i.ReleaseName, i.chart, i.Values)
 	if err != nil {

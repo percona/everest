@@ -132,39 +132,63 @@ func (_m *MockKubernetesConnector) Config() *rest.Config {
 }
 
 // CreateBackupStorage provides a mock function with given fields: ctx, storage
-func (_m *MockKubernetesConnector) CreateBackupStorage(ctx context.Context, storage *v1alpha1.BackupStorage) error {
+func (_m *MockKubernetesConnector) CreateBackupStorage(ctx context.Context, storage *v1alpha1.BackupStorage) (*v1alpha1.BackupStorage, error) {
 	ret := _m.Called(ctx, storage)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateBackupStorage")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.BackupStorage) error); ok {
+	var r0 *v1alpha1.BackupStorage
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.BackupStorage) (*v1alpha1.BackupStorage, error)); ok {
+		return rf(ctx, storage)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.BackupStorage) *v1alpha1.BackupStorage); ok {
 		r0 = rf(ctx, storage)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.BackupStorage)
+		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, *v1alpha1.BackupStorage) error); ok {
+		r1 = rf(ctx, storage)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // CreateMonitoringConfig provides a mock function with given fields: ctx, storage
-func (_m *MockKubernetesConnector) CreateMonitoringConfig(ctx context.Context, storage *v1alpha1.MonitoringConfig) error {
+func (_m *MockKubernetesConnector) CreateMonitoringConfig(ctx context.Context, storage *v1alpha1.MonitoringConfig) (*v1alpha1.MonitoringConfig, error) {
 	ret := _m.Called(ctx, storage)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateMonitoringConfig")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.MonitoringConfig) error); ok {
+	var r0 *v1alpha1.MonitoringConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.MonitoringConfig) (*v1alpha1.MonitoringConfig, error)); ok {
+		return rf(ctx, storage)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.MonitoringConfig) *v1alpha1.MonitoringConfig); ok {
 		r0 = rf(ctx, storage)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.MonitoringConfig)
+		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, *v1alpha1.MonitoringConfig) error); ok {
+		r1 = rf(ctx, storage)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // CreateNamespace provides a mock function with given fields: ctx, namespace
@@ -1237,6 +1261,36 @@ func (_m *MockKubernetesConnector) ListSecrets(ctx context.Context, namespace st
 	return r0, r1
 }
 
+// ListSubscriptions provides a mock function with given fields: ctx, namespace
+func (_m *MockKubernetesConnector) ListSubscriptions(ctx context.Context, namespace string) (*operatorsv1alpha1.SubscriptionList, error) {
+	ret := _m.Called(ctx, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListSubscriptions")
+	}
+
+	var r0 *operatorsv1alpha1.SubscriptionList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*operatorsv1alpha1.SubscriptionList, error)); ok {
+		return rf(ctx, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *operatorsv1alpha1.SubscriptionList); ok {
+		r0 = rf(ctx, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*operatorsv1alpha1.SubscriptionList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Namespace provides a mock function with given fields:
 func (_m *MockKubernetesConnector) Namespace() string {
 	ret := _m.Called()
@@ -1340,26 +1394,38 @@ func (_m *MockKubernetesConnector) SetSecret(secret *v1.Secret) error {
 }
 
 // UpdateBackupStorage provides a mock function with given fields: ctx, storage
-func (_m *MockKubernetesConnector) UpdateBackupStorage(ctx context.Context, storage *v1alpha1.BackupStorage) error {
+func (_m *MockKubernetesConnector) UpdateBackupStorage(ctx context.Context, storage *v1alpha1.BackupStorage) (*v1alpha1.BackupStorage, error) {
 	ret := _m.Called(ctx, storage)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateBackupStorage")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.BackupStorage) error); ok {
+	var r0 *v1alpha1.BackupStorage
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.BackupStorage) (*v1alpha1.BackupStorage, error)); ok {
+		return rf(ctx, storage)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.BackupStorage) *v1alpha1.BackupStorage); ok {
 		r0 = rf(ctx, storage)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.BackupStorage)
+		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, *v1alpha1.BackupStorage) error); ok {
+		r1 = rf(ctx, storage)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
-// UpdateDatabaseEngine provides a mock function with given fields: ctx, namespace, engine
-func (_m *MockKubernetesConnector) UpdateDatabaseEngine(ctx context.Context, namespace string, engine *v1alpha1.DatabaseEngine) (*v1alpha1.DatabaseEngine, error) {
-	ret := _m.Called(ctx, namespace, engine)
+// UpdateDatabaseEngine provides a mock function with given fields: ctx, engine
+func (_m *MockKubernetesConnector) UpdateDatabaseEngine(ctx context.Context, engine *v1alpha1.DatabaseEngine) (*v1alpha1.DatabaseEngine, error) {
+	ret := _m.Called(ctx, engine)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateDatabaseEngine")
@@ -1367,19 +1433,19 @@ func (_m *MockKubernetesConnector) UpdateDatabaseEngine(ctx context.Context, nam
 
 	var r0 *v1alpha1.DatabaseEngine
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, *v1alpha1.DatabaseEngine) (*v1alpha1.DatabaseEngine, error)); ok {
-		return rf(ctx, namespace, engine)
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.DatabaseEngine) (*v1alpha1.DatabaseEngine, error)); ok {
+		return rf(ctx, engine)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, *v1alpha1.DatabaseEngine) *v1alpha1.DatabaseEngine); ok {
-		r0 = rf(ctx, namespace, engine)
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.DatabaseEngine) *v1alpha1.DatabaseEngine); ok {
+		r0 = rf(ctx, engine)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*v1alpha1.DatabaseEngine)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, *v1alpha1.DatabaseEngine) error); ok {
-		r1 = rf(ctx, namespace, engine)
+	if rf, ok := ret.Get(1).(func(context.Context, *v1alpha1.DatabaseEngine) error); ok {
+		r1 = rf(ctx, engine)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1436,21 +1502,33 @@ func (_m *MockKubernetesConnector) UpdateEverestSettings(ctx context.Context, se
 }
 
 // UpdateMonitoringConfig provides a mock function with given fields: ctx, storage
-func (_m *MockKubernetesConnector) UpdateMonitoringConfig(ctx context.Context, storage *v1alpha1.MonitoringConfig) error {
+func (_m *MockKubernetesConnector) UpdateMonitoringConfig(ctx context.Context, storage *v1alpha1.MonitoringConfig) (*v1alpha1.MonitoringConfig, error) {
 	ret := _m.Called(ctx, storage)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateMonitoringConfig")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.MonitoringConfig) error); ok {
+	var r0 *v1alpha1.MonitoringConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.MonitoringConfig) (*v1alpha1.MonitoringConfig, error)); ok {
+		return rf(ctx, storage)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.MonitoringConfig) *v1alpha1.MonitoringConfig); ok {
 		r0 = rf(ctx, storage)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.MonitoringConfig)
+		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, *v1alpha1.MonitoringConfig) error); ok {
+		r1 = rf(ctx, storage)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // UpdateNamespace provides a mock function with given fields: ctx, namespace, opts
