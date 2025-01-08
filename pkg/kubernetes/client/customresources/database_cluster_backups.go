@@ -49,6 +49,36 @@ type DBClusterBackupInterface interface {
 	Get(ctx context.Context, name string, options metav1.GetOptions) (*everestv1alpha1.DatabaseClusterBackup, error)
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
 	Update(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup, opts metav1.UpdateOptions) (*everestv1alpha1.DatabaseClusterBackup, error)
+	Create(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup, opts metav1.CreateOptions) (*everestv1alpha1.DatabaseClusterBackup, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+}
+
+// Delete deletes a resource.
+func (c *dbClusterBackupClient) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
+	return c.restClient.
+		Delete().Name(name).
+		Namespace(c.namespace).
+		Resource(dbClusterBackupsAPIKind).
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Do(ctx).Error()
+}
+
+// Create creates a resource.
+func (c *dbClusterBackupClient) Create(
+	ctx context.Context,
+	backup *everestv1alpha1.DatabaseClusterBackup,
+	opts metav1.CreateOptions,
+) (*everestv1alpha1.DatabaseClusterBackup, error) {
+	result := &everestv1alpha1.DatabaseClusterBackup{}
+	err := c.restClient.
+		Post().
+		Namespace(c.namespace).
+		Resource(dbClusterBackupsAPIKind).
+		Body(backup).
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Do(ctx).
+		Into(result)
+	return result, err
 }
 
 // List lists database cluster backups based on opts.

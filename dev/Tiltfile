@@ -405,7 +405,7 @@ k8s_resource(
 local_resource(
   'backend-build',
   'CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make -C %s build' % backend_dir,
-  deps=['%s/api' % backend_dir, '%s/cmd' % backend_dir, '%s/pkg' % backend_dir, '%s/public' % backend_dir],
+  deps=['%s/api' % backend_dir, '%s/cmd' % backend_dir, '%s/pkg' % backend_dir, '%s/public' % backend_dir, '%s/internal' % backend_dir],
   labels=["everest"]
 )
 

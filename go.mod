@@ -20,6 +20,7 @@ require (
 	github.com/briandowns/spinner v1.23.1
 	github.com/casbin/casbin/v2 v2.100.0
 	github.com/casbin/govaluate v1.2.0
+	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/fatih/color v1.18.0
 	github.com/getkin/kin-openapi v0.128.0
@@ -28,7 +29,6 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-version v1.7.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/labstack/echo-contrib v0.17.1
 	github.com/labstack/echo-jwt/v4 v4.2.0
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/lestrrat-go/jwx/v2 v2.1.1
@@ -38,7 +38,7 @@ require (
 	github.com/operator-framework/api v0.27.0
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
 	github.com/percona/everest-operator v0.6.0-dev1.0.20241203113640-8dd4a9d32733
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20241226165327-04f582fcfc45
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250107141114-3bddcb584b81
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2
@@ -46,7 +46,6 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.31.0
 	golang.org/x/mod v0.22.0
-	golang.org/x/net v0.33.0
 	golang.org/x/time v0.7.0
 	google.golang.org/protobuf v1.36.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -226,6 +225,7 @@ require (
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
+	golang.org/x/net v0.31.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
