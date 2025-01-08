@@ -70,7 +70,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "read-only for backup-storage-1 in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, default/backup-storage-1",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				assert: func(list *everestv1alpha1.BackupStorageList) bool {
 					return len(list.Items) == 1 &&
@@ -84,7 +84,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, default/backup-storage-1",
 					"p, role:test, backup-storages, read, default/backup-storage-2",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				assert: func(list *everestv1alpha1.BackupStorageList) bool {
 					return len(list.Items) == 2 &&
@@ -100,7 +100,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "read-only for all in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				assert: func(list *everestv1alpha1.BackupStorageList) bool {
 					return len(list.Items) == 3 &&
@@ -118,7 +118,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			{
 				desc: "admin",
 				policy: newPolicy(
-					"g, test-user, role:admin",
+					"g, bob, role:admin",
 				),
 				assert: func(list *everestv1alpha1.BackupStorageList) bool {
 					return len(list.Items) == 3 &&
@@ -142,7 +142,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "test-user")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -186,35 +186,35 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			{
 				desc: "admin",
 				policy: newPolicy(
-					"g, test-user, role:admin",
+					"g, bob, role:admin",
 				),
 			},
 			{
 				desc: "all actions for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, *, */*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "all actions for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, *, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "read-only for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "read-only for 'inaccessible-storage' in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, default/inaccessible-storage",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -222,13 +222,13 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "read-only for all backupstorages in kube-system namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, kube-system/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "test-user")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -268,56 +268,56 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			{
 				desc: "admin",
 				policy: newPolicy(
-					"g, test-user, role:admin",
+					"g, bob, role:admin",
 				),
 			},
 			{
 				desc: "all actions for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, *, */*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "all actions for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, *, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "all actions for 'backup-storage-1' in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, *, default/backup-storage-1",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "create only action for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, create, */*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "create only action for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, create, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "create only action for 'backup-storage-1' in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, create, default/backup-storage-1",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "update only action for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, update, */*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -325,7 +325,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "update only action for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, update, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -333,7 +333,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "update only action for some backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, update, default/some",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -341,7 +341,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "read only action for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, */*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -349,7 +349,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "read only action for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -357,7 +357,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "read only action for some backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, default/some",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -365,7 +365,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "delete only action for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, delete, */*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -373,7 +373,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "delete only action for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, delete, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -381,13 +381,13 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "delete only action for some backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, delete, default/some",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "test-user")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -428,56 +428,56 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			{
 				desc: "admin",
 				policy: newPolicy(
-					"g, test-user, role:admin",
+					"g, bob, role:admin",
 				),
 			},
 			{
 				desc: "all actions for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, *, */*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "all actions for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, *, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "all actions for 'backup-storage-1' in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, *, default/backup-storage-1",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "update only action for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, update, */*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "update only action for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, update, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "update only action for 'backup-storage-1' in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, update, default/backup-storage-1",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "read only action for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, */*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -485,7 +485,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "read only action for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -493,7 +493,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "read only action for some backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, default/some",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -501,7 +501,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "create only action for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, create, */*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -509,7 +509,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "create only action for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, create, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -517,7 +517,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "create only action for some backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, create, default/some",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -525,7 +525,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "delete only action for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, delete, */*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -533,7 +533,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "delete only action for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, delete, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -541,13 +541,13 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "delete only action for some backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, delete, default/some",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "test-user")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -584,56 +584,56 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			{
 				desc: "admin",
 				policy: newPolicy(
-					"g, test-user, role:admin",
+					"g, bob, role:admin",
 				),
 			},
 			{
 				desc: "all actions for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, *, */*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "all actions for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, *, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "all actions for 'backup-storage-1' in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, *, default/backup-storage-1",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "delete only action for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, delete, */*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "delete only action for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, delete, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "delete only action for some backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, delete, default/backup-storage-1",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "update only action for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, update, */*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -641,7 +641,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "update only action for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, update, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -649,7 +649,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "update only action for 'backup-storage-1' in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, update, default/backup-storage-1",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -657,7 +657,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "read only action for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, */*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -665,7 +665,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "read only action for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -673,7 +673,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "read only action for some backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, default/some",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -681,7 +681,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "create only action for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, create, */*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -689,7 +689,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "create only action for all backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, create, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -697,13 +697,13 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				desc: "create only action for some backupstorages in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, create, default/some",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "test-user")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
