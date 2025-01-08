@@ -77,10 +77,6 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
 	}
-	h, err := newHandlerChain(ctx, l, kubeClient, c.VersionServiceURL)
-	if err != nil {
-		return nil, err
-	}
 
 	e := &EverestServer{
 		config:        c,
@@ -89,9 +85,12 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		kubeClient:    kubeClient,
 		sessionMgr:    sessMgr,
 		attemptsStore: store,
-		handler:       h,
 	}
 	e.echo.HTTPErrorHandler = e.errorHandlerChain()
+
+	if err := e.setupHandlers(ctx, l, kubeClient, c.VersionServiceURL); err != nil {
+		return nil, err
+	}
 
 	if err := e.initHTTPServer(ctx); err != nil {
 		return e, err
@@ -160,26 +159,38 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	return nil
 }
 
-//nolint:ireturn
-func newHandlerChain(
+func (e *EverestServer) setupHandlers(
 	ctx context.Context,
 	log *zap.SugaredLogger,
 	kubeClient *kubernetes.Kubernetes,
 	vsURL string,
-) (handlers.Handler, error) {
-	// Initialise handlers.
+) error {
 	k8sH := k8shandler.New(log, kubeClient, vsURL)
+	valH := valhandler.New(log, kubeClient)
 	rbacH, err := rbachandler.New(ctx, log, kubeClient)
 	if err != nil {
-		return nil, errors.Join(err, errors.New("could not create rbac handler"))
+		return errors.Join(err, errors.New("could not create rbac handler"))
 	}
-	valH := valhandler.New(log, kubeClient)
+	e.setHandlers(valH, rbacH, k8sH)
+	return nil
+}
 
-	// Chain handlers.
-	// validation -> rbac -> k8s
-	valH.SetNext(rbacH)
-	rbacH.SetNext(k8sH)
-	return valH, nil
+func (e *EverestServer) setHandlers(hs ...handlers.Handler) {
+	e.handler = newHandlerChain(hs...)
+}
+
+// newHandlerChain chains the handlers in the order they are provided.
+func newHandlerChain(hs ...handlers.Handler) handlers.Handler { //nolint:ireturn
+	if len(hs) == 0 {
+		panic("expected at least one handler")
+	}
+	if len(hs) == 1 {
+		return hs[0]
+	}
+	for i := 0; i < len(hs)-1; i++ {
+		hs[i].SetNext(hs[i+1])
+	}
+	return hs[0]
 }
 
 func (e *EverestServer) oidcKeyFn(ctx context.Context) (jwt.Keyfunc, error) {
