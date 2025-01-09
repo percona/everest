@@ -1,16 +1,13 @@
 import {
+  AffinityRule,
   Affinity,
   AffinityComponent,
-  AffinityOperator,
-  AffinityPriority,
-  AffinityRule,
   AffinityType,
+  AffinityPriority,
+  AffinityOperator,
 } from 'shared-types/affinity.types';
-import {
-  affinityRulesToDbPayload,
-  dbPayloadToAffinityRules,
-} from './affinity-utils';
 import { DbCluster } from 'shared-types/dbCluster.types';
+import { affinityRulesToDbPayload, dbPayloadToAffinityRules } from './db';
 
 describe('affinityRulesToDbPayload', () => {
   const tests: [string, AffinityRule[], Affinity][] = [

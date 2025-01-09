@@ -1,4 +1,4 @@
-import { Box, BoxProps, Stack, Typography } from '@mui/material';
+import { BoxProps, Stack, Typography } from '@mui/material';
 import { DbType } from '@percona/types';
 import { ActionableLabeledContent } from '@percona/ui-lib';
 import {
@@ -9,7 +9,7 @@ import {
   AffinityRule,
 } from 'shared-types/affinity.types';
 import EditableItem from 'components/editable-item';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { AffinityFormDialog } from '../affinity-form-dialog/affinity-form-dialog';
 import { AffinityFormDialogContext } from '../affinity-form-dialog/affinity-form-dialog-context/affinity-form-context';
 import { AffinityFormData } from '../affinity-form-dialog/affinity-form/affinity-form.types';
@@ -23,11 +23,14 @@ export const AffinityListView = ({
   onRulesChange,
   dbType,
   initialRules = [],
+  rules,
   isShardingEnabled = false,
   disableActions = false,
   boxProps = { sx: {} },
 }: {
   initialRules?: AffinityRule[];
+  // 'rules' make this component controlled
+  rules?: AffinityRule[];
   onRulesChange: (newRules: AffinityRule[]) => void;
   dbType: DbType;
   isShardingEnabled?: boolean;
@@ -39,8 +42,10 @@ export const AffinityListView = ({
   );
   const [openAffinityModal, setOpenAffinityModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [rules, setRules] = useState<AffinityRule[]>(initialRules);
+  const [internalRules, setInternalRules] =
+    useState<AffinityRule[]>(initialRules);
   const { sx: boxSx, ...rest } = boxProps;
+  const controlled = rules !== undefined;
 
   const handleCreate = () => {
     setOpenAffinityModal(true);
@@ -61,7 +66,9 @@ export const AffinityListView = ({
   };
 
   const handleDelete = () => {
-    const newRules = rules.filter(({ uid }) => uid !== selectedAffinityUid);
+    const newRules = internalRules.filter(
+      ({ uid }) => uid !== selectedAffinityUid
+    );
     updateRules(newRules);
     setOpenDeleteModal(false);
   };
@@ -71,9 +78,9 @@ export const AffinityListView = ({
     const addedRule = convertFormDataToAffinityRule(data);
 
     if (selectedAffinityUid === null) {
-      newRules = [...rules, addedRule];
+      newRules = [...internalRules, addedRule];
     } else {
-      newRules = [...rules];
+      newRules = [...internalRules];
       const ruleIdx = newRules.findIndex(
         ({ uid }) => uid === selectedAffinityUid
       );
@@ -83,14 +90,28 @@ export const AffinityListView = ({
       }
     }
     updateRules(newRules);
-    setSelectedAffinityUid(null);
     setOpenAffinityModal(false);
   };
 
   const updateRules = (newRules: AffinityRule[]) => {
-    setRules(newRules);
+    setSelectedAffinityUid(null);
     onRulesChange(newRules);
+
+    if (!controlled) {
+      setInternalRules(newRules);
+    }
   };
+
+  const closeModal = () => {
+    setSelectedAffinityUid(null);
+    setOpenDeleteModal(false);
+  };
+
+  useEffect(() => {
+    if (rules && Array.isArray(rules)) {
+      setInternalRules(rules);
+    }
+  }, [rules]);
 
   return (
     <RoundedBox
@@ -110,10 +131,13 @@ export const AffinityListView = ({
         verticalStackSx={{
           mt: 0,
         }}
+        horizontalStackSx={{
+          mb: 0,
+        }}
       >
         {availableComponentsType(dbType, isShardingEnabled).map(
           (component: AffinityComponent) => {
-            const hasRules = (rules || []).find(
+            const hasRules = (internalRules || []).find(
               (rule) => rule.component === component
             );
             return (
@@ -127,7 +151,7 @@ export const AffinityListView = ({
                   </Typography>
                 )}
                 <Stack>
-                  {rules.map((rule) => (
+                  {internalRules.map((rule) => (
                     <Fragment key={rule.uid}>
                       {rule.component === component && (
                         <EditableItem
@@ -160,7 +184,7 @@ export const AffinityListView = ({
           handleClose,
           setOpenAffinityModal,
           openAffinityModal,
-          affinityRules: rules,
+          affinityRules: internalRules,
           dbType,
           isShardingEnabled,
         }}
@@ -171,7 +195,7 @@ export const AffinityListView = ({
         isOpen={openDeleteModal}
         selectedId={selectedAffinityUid!}
         handleConfirm={handleDelete}
-        closeModal={() => setOpenDeleteModal(false)}
+        closeModal={closeModal}
         headerMessage="Delete affinity rule"
       >
         Are you sure you want to delete this affinity rule?

@@ -30,12 +30,14 @@ import {
 } from './components.constants';
 import ExpandedRow from './expanded-row';
 import { AffinityListView } from 'components/cluster-form/affinity/affinity-list-view/affinity-list.view';
-import { AffinityRule } from 'shared-types/affinity.types';
+import { AffinityComponent, AffinityRule } from 'shared-types/affinity.types';
 import { DbClusterContext } from '../dbCluster.context';
-import { dbPayloadToAffinityRules } from 'components/cluster-form/affinity/affinity-utils';
+import {
+  changeDbClusterAffinityRules,
+  dbPayloadToAffinityRules,
+} from 'utils/db';
 import { dbEngineToDbType } from '@percona/utils';
-import { DB_CLUSTER_QUERY, useUpdateDbClusterAffinityRules } from 'hooks';
-import { useQueryClient } from '@tanstack/react-query';
+import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 
 const Components = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -45,12 +47,13 @@ const Components = () => {
     namespace,
     dbClusterName!
   );
-  const { mutate: updateDbClusterAffinityRules } =
-    useUpdateDbClusterAffinityRules();
   const { dbCluster } = useContext(DbClusterContext);
-  const queryClient = useQueryClient();
-  console.log('dbCluster', dbCluster);
-
+  const { mutate: update } = useUpdateDbClusterWithConflictRetry(dbCluster!, {
+    onSuccess: () => {
+      setUpdatingAffinityRules(false);
+    },
+    onError: () => setUpdatingAffinityRules(false),
+  });
   const columns = useMemo<MRT_ColumnDef<DBClusterComponent>[]>(() => {
     return [
       {
@@ -115,26 +118,28 @@ const Components = () => {
 
   const onRulesChange = useCallback(
     (newRules: AffinityRule[]) => {
-      console.log('newRules', newRules);
+      // const filteredRules: [AffinityRule[], AffinityRule[], AffinityRule[]] = [
+      //   [],
+      //   [],
+      //   [],
+      // ];
+      const filteredRules: Record<AffinityComponent, AffinityRule[]> = {
+        [AffinityComponent.DbNode]: [],
+        [AffinityComponent.Proxy]: [],
+        [AffinityComponent.ConfigServer]: [],
+      };
       setUpdatingAffinityRules(true);
-      updateDbClusterAffinityRules(
-        {
-          dbCluster: dbCluster!,
-          clusterName: dbCluster!.metadata.name,
-          namespace: dbCluster!.metadata.namespace,
-          affinityRules: newRules,
-        },
-        {
-          onSuccess: (data) => {
-            queryClient.setQueryData([DB_CLUSTER_QUERY, dbClusterName], data);
-            console.log('onSuccess', data);
-            setUpdatingAffinityRules(false);
-          },
-          onError: () => setUpdatingAffinityRules(false),
-        }
-      );
+
+      newRules.forEach((rule) => {
+        filteredRules[rule.component].push(rule);
+      });
+      update({
+        dbCluster: changeDbClusterAffinityRules(dbCluster!, newRules),
+        clusterName: dbCluster!.metadata.name,
+        namespace: dbCluster!.metadata.namespace,
+      });
     },
-    [dbCluster, dbClusterName, queryClient, updateDbClusterAffinityRules]
+    [dbCluster, update]
   );
 
   return (
@@ -165,7 +170,7 @@ const Components = () => {
         }}
       />
       <AffinityListView
-        initialRules={affinityRules}
+        rules={affinityRules}
         onRulesChange={onRulesChange}
         dbType={dbEngineToDbType(dbCluster!.spec.engine.type)}
         isShardingEnabled={!!dbCluster!.spec.sharding?.enabled}

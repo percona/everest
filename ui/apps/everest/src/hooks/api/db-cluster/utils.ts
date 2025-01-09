@@ -1,6 +1,7 @@
 import { DbType } from '@percona/types';
 import { dbTypeToProxyType } from '@percona/utils';
 import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
+import { Affinity } from 'shared-types/affinity.types';
 import {
   Proxy,
   ProxyExposeConfig,
@@ -29,7 +30,7 @@ export const getProxySpec = (
   memory: number,
   sharding: boolean,
   sourceRanges?: Array<{ sourceRange?: string }>,
-  proxyRules?: any
+  proxyAffinityRules?: Affinity
 ): Proxy | ProxyExposeConfig => {
   if (dbType === DbType.Mongo && !sharding) {
     return {
@@ -53,6 +54,6 @@ export const getProxySpec = (
       memory: `${memory}G`,
     },
     expose: getExposteConfig(externalAccess, sourceRanges),
-    // affinity: affinityRulesToDbPayload(proxyRules),
+    affinity: proxyAffinityRules,
   };
 };

@@ -17,6 +17,7 @@ export const ActionableLabeledContent = ({
   content,
   actionButtonProps,
   verticalStackSx,
+  horizontalStackSx,
   ...rest
 }: ActionableLabeledContentProps) => {
   const { dataTestId, buttonText, ...buttonProps } = actionButtonProps || {};
@@ -33,6 +34,7 @@ export const ActionableLabeledContent = ({
       }}
       horizontalStackSx={{
         marginBottom: actionButtonProps ? 1 : 0.5,
+        ...horizontalStackSx,
       }}
       horizontalStackChildrenSlot={
         <>
