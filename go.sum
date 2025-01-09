@@ -2230,7 +2230,7 @@ github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250107141114-3bdd
 github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250107141114-3bddcb584b81/go.mod h1:j5Ci48Azwb4Xs4XvZQNfleWCn2uyiZywazklxNH1ut4=
 github.com/percona/percona-postgresql-operator v0.0.0-20241007204305-35d61aa5aebd h1:9RCUfPUxbdXuL/247r77DJmRSowDzA2xzZC9FpuLuUw=
 github.com/percona/percona-postgresql-operator v0.0.0-20241007204305-35d61aa5aebd/go.mod h1:ICbLstSO4zhYo+SFSciIWO9rLHQg29GJ1335L0tfhR0=
-github.com/percona/percona-server-mongodb-operator v1.18.0 h1:7oEEISKDbOj5cW7vpgBwyg32ynkGc1g7vnL+BLfgBSI=
+github.com/percona/percona-server-mongodb-operator v1.18.0 h1:inRWonCOTacD++D/tvyFXVUqKx7f2OQzz8w1NyT3cAI=
 github.com/percona/percona-server-mongodb-operator v1.18.0/go.mod h1:MWBsK5fpmsQPeudfHP16XtX6tb9cPJmBpMHAQ/xcbvo=
 github.com/percona/percona-xtradb-cluster-operator v1.15.0 h1:Dc2VXVCXushIG39TrX1qzX6COEf5iqunr+dZ1IVjoos=
 github.com/percona/percona-xtradb-cluster-operator v1.15.0/go.mod h1:uxYXkp7kxc2G4RVxxLU83UT/HqWZgjyAC1p8VEDZqDg=
