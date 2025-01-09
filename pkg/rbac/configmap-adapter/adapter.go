@@ -26,14 +26,17 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/percona/everest/pkg/kubernetes"
 	rbacutils "github.com/percona/everest/pkg/rbac/utils"
 )
+
+type k8s interface {
+	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
+}
 
 // Adapter is the ConfigMap adapter for Casbin.
 // It can load policy from ConfigMap and save policy to ConfigMap.
 type Adapter struct {
-	kubeClient     *kubernetes.Kubernetes
+	kubeClient     k8s
 	namespacedName types.NamespacedName
 	l              *zap.SugaredLogger
 }
@@ -41,7 +44,7 @@ type Adapter struct {
 // New constructs a new adapter that manages a policy inside a ConfigMap.
 func New(
 	l *zap.SugaredLogger,
-	kubeClient *kubernetes.Kubernetes,
+	kubeClient k8s,
 	namespacedName types.NamespacedName,
 ) *Adapter {
 	return &Adapter{

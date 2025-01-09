@@ -1,0 +1,169 @@
+package k8s
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/AlekSi/pointer"
+	"github.com/google/uuid"
+	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/api"
+	"github.com/percona/everest/pkg/pmm"
+)
+
+func (h *k8sHandler) ListMonitoringInstances(ctx context.Context, namespace string) (*everestv1alpha1.MonitoringConfigList, error) {
+	return h.kubeClient.ListMonitoringConfigs(ctx, namespace)
+}
+
+func (h *k8sHandler) CreateMonitoringInstance(ctx context.Context, namespace string, req *api.CreateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
+	m, err := h.kubeClient.GetMonitoringConfig(ctx, namespace, req.Name)
+	if err != nil && !k8serrors.IsNotFound(err) {
+		return nil, err
+	}
+	if m != nil && m.GetName() != "" {
+		return nil, k8serrors.NewAlreadyExists(schema.GroupResource{
+			Group:    everestv1alpha1.GroupVersion.Group,
+			Resource: "monitoringconfigs",
+		}, req.Name,
+		)
+	}
+	apiKey, err := h.getPMMApiKey(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return h.createMonitoringK8sResources(ctx, namespace, req, apiKey)
+}
+
+func (h *k8sHandler) DeleteMonitoringInstance(ctx context.Context, namespace, name string) error {
+	used, err := h.kubeClient.IsMonitoringConfigUsed(ctx, namespace, name)
+	if err != nil {
+		return err
+	}
+	if used {
+		return fmt.Errorf("monitoring instance '%s' in namespace '%s' is in use", name, namespace)
+	}
+	if err := h.kubeClient.DeleteMonitoringConfig(ctx, namespace, name); err != nil {
+		return err
+	}
+	return h.kubeClient.DeleteSecret(ctx, namespace, name)
+}
+
+func (h *k8sHandler) GetMonitoringInstance(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error) {
+	return h.kubeClient.GetMonitoringConfig(ctx, namespace, name)
+}
+
+func (h *k8sHandler) UpdateMonitoringInstance(ctx context.Context, namespace, name string, req *api.UpdateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
+	m, err := h.kubeClient.GetMonitoringConfig(ctx, namespace, name)
+	if err != nil {
+		return nil, err
+	}
+	var apiKey string
+	if req.Pmm != nil && req.Pmm.ApiKey != "" {
+		apiKey = req.Pmm.ApiKey
+	}
+	skipVerifyTLS := !pointer.Get(req.VerifyTLS)
+	if req.Pmm != nil && req.Pmm.User != "" && req.Pmm.Password != "" {
+		apiKey, err = pmm.CreatePMMApiKey(
+			ctx, req.Url, fmt.Sprintf("everest-%s-%s", name, uuid.NewString()),
+			req.Pmm.User, req.Pmm.Password,
+			skipVerifyTLS,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if apiKey != "" {
+		_, err := h.kubeClient.UpdateSecret(ctx, &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: namespace,
+			},
+			Type:       corev1.SecretTypeOpaque,
+			StringData: h.monitoringConfigSecretData(apiKey),
+		})
+		if err != nil {
+			return nil, fmt.Errorf("could not update k8s secret %s", name)
+		}
+	}
+	if req.Url != "" {
+		m.Spec.PMM.URL = req.Url
+	}
+	if req.AllowedNamespaces != nil {
+		m.Spec.AllowedNamespaces = *req.AllowedNamespaces
+	}
+	if req.VerifyTLS != nil {
+		m.Spec.VerifyTLS = req.VerifyTLS
+	}
+	return h.kubeClient.UpdateMonitoringConfig(ctx, m)
+}
+
+func (h *k8sHandler) getPMMApiKey(ctx context.Context, params *api.CreateMonitoringInstanceJSONRequestBody) (string, error) {
+	if params.Pmm != nil && params.Pmm.ApiKey != "" {
+		return params.Pmm.ApiKey, nil
+	}
+
+	h.log.Debug("Getting PMM API key by username and password")
+	skipVerifyTLS := !pointer.Get(params.VerifyTLS)
+	return pmm.CreatePMMApiKey(
+		ctx, params.Url, fmt.Sprintf("everest-%s-%s", params.Name, uuid.NewString()),
+		params.Pmm.User, params.Pmm.Password,
+		skipVerifyTLS,
+	)
+}
+
+func (h *k8sHandler) createMonitoringK8sResources(
+	c context.Context, namespace string, params *api.CreateMonitoringInstanceJSONRequestBody, apiKey string,
+) (*everestv1alpha1.MonitoringConfig, error) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      params.Name,
+			Namespace: namespace,
+		},
+		Type:       corev1.SecretTypeOpaque,
+		StringData: h.monitoringConfigSecretData(apiKey),
+	}
+	if _, err := h.kubeClient.CreateSecret(c, secret); err != nil {
+		if k8serrors.IsAlreadyExists(err) {
+			_, err = h.kubeClient.UpdateSecret(c, secret)
+			if err != nil {
+				return nil, fmt.Errorf("could not update k8s secret %s", params.Name)
+			}
+		} else {
+			return nil, fmt.Errorf("failed creating secret in the Kubernetes cluster")
+		}
+	}
+	created, err := h.kubeClient.CreateMonitoringConfig(c, &everestv1alpha1.MonitoringConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      params.Name,
+			Namespace: namespace,
+		},
+		Spec: everestv1alpha1.MonitoringConfigSpec{
+			Type: everestv1alpha1.MonitoringType(params.Type),
+			PMM: everestv1alpha1.PMMConfig{
+				URL: params.Url,
+			},
+			CredentialsSecretName: params.Name,
+			VerifyTLS:             params.VerifyTLS,
+		},
+	})
+	if err != nil {
+		if dErr := h.kubeClient.DeleteSecret(c, namespace, params.Name); dErr != nil {
+			return nil, fmt.Errorf("failed cleaning up the secret because failed creating monitoring instance")
+		}
+		return nil, fmt.Errorf("failed creating monitoring instance")
+	}
+
+	return created, nil
+}
+
+func (h *k8sHandler) monitoringConfigSecretData(apiKey string) map[string]string {
+	return map[string]string{
+		"apiKey":   apiKey,
+		"username": "api_key",
+	}
+}

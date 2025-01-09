@@ -32,9 +32,9 @@ type KubernetesConnector interface {
 	// GetBackupStorage returns backup storages by provided name.
 	GetBackupStorage(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error)
 	// CreateBackupStorage returns backup storages by provided name.
-	CreateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
+	CreateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) (*everestv1alpha1.BackupStorage, error)
 	// UpdateBackupStorage returns backup storages by provided name.
-	UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
+	UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) (*everestv1alpha1.BackupStorage, error)
 	// DeleteBackupStorage returns backup storages by provided name.
 	DeleteBackupStorage(ctx context.Context, namespace, name string) error
 	// DeleteBackupStorages deletes all backup storages in provided namespace.
@@ -52,7 +52,7 @@ type KubernetesConnector interface {
 	// GetDatabaseEngine returns database clusters by provided name.
 	GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error)
 	// UpdateDatabaseEngine updates the provided database engine.
-	UpdateDatabaseEngine(ctx context.Context, namespace string, engine *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error)
+	UpdateDatabaseEngine(ctx context.Context, engine *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error)
 	// SetDatabaseEngineLock sets the lock on the database engine.
 	// The lock is automatically set to false once everest-operator completes its upgrade.
 	SetDatabaseEngineLock(ctx context.Context, namespace, name string, locked bool) error
@@ -119,9 +119,9 @@ type KubernetesConnector interface {
 	// GetMonitoringConfig returns monitoring configs by provided name.
 	GetMonitoringConfig(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error)
 	// CreateMonitoringConfig returns monitoring configs by provided name.
-	CreateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) error
+	CreateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error)
 	// UpdateMonitoringConfig returns monitoring configs by provided name.
-	UpdateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) error
+	UpdateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error)
 	// DeleteMonitoringConfig returns monitoring configs by provided name.
 	DeleteMonitoringConfig(ctx context.Context, namespace, name string) error
 	// DeleteMonitoringConfigs deletes all monitoring configs in provided namespace.
