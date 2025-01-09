@@ -18,6 +18,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -43,6 +44,7 @@ import (
 	k8shandler "github.com/percona/everest/internal/server/handlers/k8s"
 	rbachandler "github.com/percona/everest/internal/server/handlers/rbac"
 	valhandler "github.com/percona/everest/internal/server/handlers/validation"
+	"github.com/percona/everest/pkg/certwatcher"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/oidc"
@@ -295,13 +297,34 @@ func newSkipperFunc() (echomiddleware.Skipper, error) {
 }
 
 // Start starts everest server.
-func (e *EverestServer) Start() error {
+func (e *EverestServer) Start(ctx context.Context) error {
+	addr := fmt.Sprintf("0.0.0.0:%d", e.config.ListenPort)
 	if e.config.TLSCertsPath != "" {
-		tlsKeyPath := path.Join(e.config.TLSCertsPath, "tls.key")
-		tlsCertPath := path.Join(e.config.TLSCertsPath, "tls.crt")
-		return e.echo.StartTLS(fmt.Sprintf("0.0.0.0:%d", e.config.ListenPort), tlsCertPath, tlsKeyPath)
+		return e.startHTTPS(ctx, addr)
 	}
-	return e.echo.Start(fmt.Sprintf("0.0.0.0:%d", e.config.ListenPort))
+	return e.echo.Start(addr)
+}
+
+func (e *EverestServer) startHTTPS(ctx context.Context, addr string) error {
+	tlsKeyPath := path.Join(e.config.TLSCertsPath, "tls.key")
+	tlsCertPath := path.Join(e.config.TLSCertsPath, "tls.crt")
+
+	watcher, err := certwatcher.New(e.l, tlsCertPath, tlsKeyPath)
+	if err != nil {
+		return fmt.Errorf("failed to create cert watcher: %w", err)
+	}
+	if err := watcher.Start(ctx); err != nil {
+		return fmt.Errorf("failed to start cert watcher: %w", err)
+	}
+
+	e.echo.TLSServer = &http.Server{
+		Addr: addr,
+		TLSConfig: &tls.Config{
+			// server periodically calls GetCertificate and reloads the certificate.
+			GetCertificate: watcher.GetCertificate,
+		},
+	}
+	return e.echo.StartServer(e.echo.TLSServer)
 }
 
 // Shutdown gracefully stops the Everest server.
