@@ -55,6 +55,7 @@ type EverestConfig struct {
 	// VersionServiceURL contains the URL of the version service.
 	VersionServiceURL string `default:"https://check.percona.com" envconfig:"VERSION_SERVICE_URL"`
 	// TLSCertsPath contains the path to the directory with the TLS certificates.
+	// Setting this will enable HTTPS on ListenPort.
 	TLSCertsPath string `envconfig:"TLS_CERTS_PATH"`
 }
 
