@@ -64,8 +64,8 @@ func NewRemoveCommand(l *zap.SugaredLogger) *cobra.Command {
 }
 
 func initRemoveFlags(cmd *cobra.Command) {
-	cmd.Flags().Bool("keep-namespace", false, "If set, preserves the Kubernetes namespace but removes all Everest-managed resources from it")
-	cmd.Flags().Bool("force", false, "If set, forcefully deletes database clusters in the namespace if there are any")
+	cmd.Flags().Bool("keep-namespace", false, "If set, preserves the Kubernetes namespace but removes all resources managed by Everest")
+	cmd.Flags().Bool("force", false, "If set, forcefully deletes database clusters in the namespace (if any)")
 }
 
 func initRemoveViperFlags(cmd *cobra.Command) {
