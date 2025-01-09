@@ -72,11 +72,6 @@ For more information about our Helm charts, visit the official [Percona Everest 
 
 ## Install Percona Everest using CLI
 
-> **Note**:
->
-> Google Container Registry (GCR) is scheduled to be deprecated and will officially shut down on March 18, 2025. All versions of Percona Everest prior to 1.4.0 depend on images hosted on GCR. After the shutdown date, downloading those images will fail.
->
-> We strongly recommend upgrading to Percona Everest version 1.4.0 as soon as possible. For more details, refer to the [Container Registry Deprecation Documentation](https://cloud.google.com/artifact-registry/docs/transition/prepare-gcr-shutdown)
 
 ### Prerequisites
 
