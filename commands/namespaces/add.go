@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -28,7 +29,7 @@ func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 		Use:     "add",
 		Long:    "Add a new namespace",
 		Short:   "Add a new namespace",
-		Example: `everestctl namespaces add [NAMESPACE] [FLAGS]`,
+		Example: `everestctl namespaces add ns-1 --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard`,
 		Run: func(cmd *cobra.Command, args []string) {
 			initAddViperFlags(cmd)
 			c := &namespaces.NamespaceAddConfig{}
@@ -39,11 +40,29 @@ func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 			}
 			bindInstallHelmOpts(c)
 
-			if len(args) != 1 {
-				output.PrintError(fmt.Errorf("invalid number of arguments: expected 1, got %d", len(args)), l, true)
+			if len(args) == 1 {
+				// user provided namespace name
+				c.Namespaces = args[0]
+			} else if c.SkipWizard {
+				// user didn't provide namespace name, but we can't ask him to provide it
+				output.PrintError(namespaces.ErrNamespaceIsMissed, l, true)
 				os.Exit(1)
+			} else {
+				// ask user to provide namespace name
+				var resp string
+				q := &survey.Input{Message: "Enter namespace name"}
+				if err = survey.AskOne(q, &resp); err != nil {
+					output.PrintError(err, l, true)
+					os.Exit(1)
+				}
+
+				if resp == "" {
+					// user didn't provide namespace name
+					output.PrintError(namespaces.ErrNamespaceIsMissed, l, true)
+					os.Exit(1)
+				}
+				c.Namespaces = resp
 			}
-			c.Namespaces = args[0]
 
 			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
 			c.Pretty = !enableLogging
