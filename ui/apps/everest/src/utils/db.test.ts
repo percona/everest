@@ -10,8 +10,8 @@ import { DbCluster } from 'shared-types/dbCluster.types';
 import { affinityRulesToDbPayload, dbPayloadToAffinityRules } from './db';
 
 describe('affinityRulesToDbPayload', () => {
-  const tests: [string, AffinityRule[], Affinity][] = [
-    ['empty', [], {}],
+  const tests: [string, AffinityRule[], Affinity | undefined][] = [
+    ['empty', [], undefined],
     [
       'single required node affinity',
       [
