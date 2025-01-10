@@ -25,10 +25,11 @@ var (
 // NewAddCommand returns a new command to add a new namespace.
 func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "add",
+		Use:     "add [flags] namespace",
 		Long:    "Add a new namespace",
 		Short:   "Add a new namespace",
-		Example: `everestctl namespaces add [NAMESPACE] [FLAGS]`,
+		Example: `everestctl namespaces add --operator.mongodb=true --skip-wizard ns-1,ns-2`,
+		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			initAddViperFlags(cmd)
 			c := &namespaces.NamespaceAddConfig{}
@@ -39,12 +40,7 @@ func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 			}
 			bindInstallHelmOpts(c)
 
-			if len(args) != 1 {
-				output.PrintError(fmt.Errorf("invalid number of arguments: expected 1, got %d", len(args)), l, true)
-				os.Exit(1)
-			}
 			c.Namespaces = args[0]
-
 			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
 			c.Pretty = !enableLogging
 
