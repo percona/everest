@@ -314,6 +314,14 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				),
 			},
 			{
+				desc: "create only action for some in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, create, default/some",
+					"g, bob, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
 				desc: "update only action for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, update, */*",
@@ -330,9 +338,9 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
-				desc: "update only action for some backupstorages in default namespace",
+				desc: "update only action for 'backup-storage-1' in default namespace",
 				policy: newPolicy(
-					"p, role:test, backup-storages, update, default/some",
+					"p, role:test, backup-storages, update, default/backup-storage-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -354,9 +362,9 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
-				desc: "read only action for some backupstorages in default namespace",
+				desc: "read only action for 'backup-storage-1' in default namespace",
 				policy: newPolicy(
-					"p, role:test, backup-storages, read, default/some",
+					"p, role:test, backup-storages, read, default/backup-storage-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -378,9 +386,9 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
-				desc: "delete only action for some backupstorages in default namespace",
+				desc: "delete only action for 'backup-storage-1' in default namespace",
 				policy: newPolicy(
-					"p, role:test, backup-storages, delete, default/some",
+					"p, role:test, backup-storages, delete, default/backup-storage-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -474,6 +482,14 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				),
 			},
 			{
+				desc: "update only action for some in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, update, default/some",
+					"g, bob, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
 				desc: "read only action for all backupstorages in all namespaces",
 				policy: newPolicy(
 					"p, role:test, backup-storages, read, */*",
@@ -514,9 +530,9 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
-				desc: "create only action for some backupstorages in default namespace",
+				desc: "create only action for 'backup-storage-1' in default namespace",
 				policy: newPolicy(
-					"p, role:test, backup-storages, create, default/some",
+					"p, role:test, backup-storages, create, default/backup-storage-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -538,9 +554,9 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
-				desc: "delete only action for some backupstorages in default namespace",
+				desc: "delete only action for 'backup-storage-1' in default namespace",
 				policy: newPolicy(
-					"p, role:test, backup-storages, delete, default/some",
+					"p, role:test, backup-storages, delete, default/backup-storage-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -623,9 +639,16 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				),
 			},
 			{
-				desc: "delete only action for some backupstorages in default namespace",
+				desc: "delete only action for 'backup-storage-1' in default namespace",
 				policy: newPolicy(
 					"p, role:test, backup-storages, delete, default/backup-storage-1",
+					"g, bob, role:test",
+				),
+			},
+			{
+				desc: "delete only action for some in default namespace",
+				policy: newPolicy(
+					"p, role:test, backup-storages, delete, default/some",
 					"g, bob, role:test",
 				),
 			},
@@ -670,9 +693,9 @@ func TestRBAC_BackupStorage(t *testing.T) {
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
-				desc: "read only action for some backupstorages in default namespace",
+				desc: "read only action for 'backup-storage-1' in default namespace",
 				policy: newPolicy(
-					"p, role:test, backup-storages, read, default/some",
+					"p, role:test, backup-storages, read, default/backup-storage-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,

@@ -179,6 +179,16 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 				},
 			},
 			{
+				desc: "read all in kube-system namespace",
+				policy: newPolicy(
+					"p, role:test, database-engines, read, kube-system/*",
+					"g, bob, role:test",
+				),
+				assert: func(list *everestv1alpha1.DatabaseEngineList) bool {
+					return len(list.Items) == 0
+				},
+			},
+			{
 				desc: "no policy",
 				policy: newPolicy(
 					"g, bob, role:test",

@@ -331,6 +331,14 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 				),
 			},
 			{
+				desc: "create only action for some in default namespace",
+				policy: newPolicy(
+					"p, role:test, monitoring-instances, create, default/some",
+					"g, bob, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
 				desc: "update only action for all monitoring-instances in all namespaces",
 				policy: newPolicy(
 					"p, role:test, monitoring-instances, update, */*",
@@ -347,9 +355,9 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
-				desc: "update only action for some monitoring-instances in default namespace",
+				desc: "update only action for 'monitoring-instance-1' in default namespace",
 				policy: newPolicy(
-					"p, role:test, monitoring-instances, update, default/some",
+					"p, role:test, monitoring-instances, update, default/monitoring-instance-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -371,9 +379,9 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
-				desc: "read only action for some monitoring-instances in default namespace",
+				desc: "read only action for 'monitoring-instance-1' in default namespace",
 				policy: newPolicy(
-					"p, role:test, monitoring-instances, read, default/some",
+					"p, role:test, monitoring-instances, read, default/monitoring-instance-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -395,9 +403,9 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
-				desc: "delete only action for some monitoring-instances in default namespace",
+				desc: "delete only action for 'monitoring-instance-1' in default namespace",
 				policy: newPolicy(
-					"p, role:test, monitoring-instances, delete, default/some",
+					"p, role:test, monitoring-instances, delete, default/monitoring-instance-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -491,6 +499,14 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 				),
 			},
 			{
+				desc: "update only action for some in default namespace",
+				policy: newPolicy(
+					"p, role:test, monitoring-instances, update, default/some",
+					"g, bob, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
 				desc: "read only action for all monitoring-instances in all namespaces",
 				policy: newPolicy(
 					"p, role:test, monitoring-instances, read, */*",
@@ -507,9 +523,9 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
-				desc: "read only action for some monitoring-instances in default namespace",
+				desc: "read only action for 'monitoring-instance-1' in default namespace",
 				policy: newPolicy(
-					"p, role:test, monitoring-instances, read, default/some",
+					"p, role:test, monitoring-instances, read, default/monitoring-instance-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -531,9 +547,9 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
-				desc: "create only action for some monitoring-instances in default namespace",
+				desc: "create only action for 'monitoring-instance-1' in default namespace",
 				policy: newPolicy(
-					"p, role:test, monitoring-instances, create, default/some",
+					"p, role:test, monitoring-instances, create, default/monitoring-instance-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -555,9 +571,9 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
-				desc: "delete only action for some monitoring-instances in default namespace",
+				desc: "delete only action for 'monitoring-instance-1' in default namespace",
 				policy: newPolicy(
-					"p, role:test, monitoring-instances, delete, default/some",
+					"p, role:test, monitoring-instances, delete, default/montoring-instance-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -640,11 +656,19 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 				),
 			},
 			{
-				desc: "delete only action for some monitoring-instances in default namespace",
+				desc: "delete only action for 'monitoring-instance-1' in default namespace",
 				policy: newPolicy(
 					"p, role:test, monitoring-instances, delete, default/monitoring-instance-1",
 					"g, bob, role:test",
 				),
+			},
+			{
+				desc: "delete only action some in default namespace",
+				policy: newPolicy(
+					"p, role:test, monitoring-instances, delete, default/some",
+					"g, bob, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
 			},
 			{
 				desc: "update only action for all monitoring-instances in all namespaces",
@@ -687,9 +711,9 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
-				desc: "read only action for some monitoring-instances in default namespace",
+				desc: "read only action for 'monitoring-instance-1' in default namespace",
 				policy: newPolicy(
-					"p, role:test, monitoring-instances, read, default/some",
+					"p, role:test, monitoring-instances, read, default/monitoring-instance-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -711,9 +735,9 @@ func TestRBAC_MonitoringInstance(t *testing.T) {
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
-				desc: "create only action for some monitoring-instances in default namespace",
+				desc: "create only action for 'monitoring-instance-1' in default namespace",
 				policy: newPolicy(
-					"p, role:test, monitoring-instances, create, default/some",
+					"p, role:test, monitoring-instances, create, default/monitoring-instance-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
