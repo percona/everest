@@ -15,14 +15,14 @@
 
 import { test as setup, expect, APIResponse } from '@playwright/test';
 import 'dotenv/config';
-import { getTokenFromLocalStorage } from './utils/localStorage';
-import { getBucketNamespacesMap } from './constants';
+import { getTokenFromLocalStorage } from '../utils/localStorage';
+import { getBucketNamespacesMap } from '../constants';
+import { saveOldRBACPermissions } from '@e2e/utils/rbac-cmd-line';
 const {
   EVEREST_LOCATION_ACCESS_KEY,
   EVEREST_LOCATION_SECRET_KEY,
   EVEREST_LOCATION_REGION,
   EVEREST_LOCATION_URL,
-  EVEREST_BUCKETS_NAMESPACES_MAP,
 } = process.env;
 
 const doBackupCall = async (fn: () => Promise<APIResponse>, retries = 3) => {
@@ -122,6 +122,10 @@ setup('Close modal permanently', async ({ page }) => {
   await expect(page.getByTestId('lets-go-button')).toBeVisible();
   await page.getByTestId('lets-go-button').click();
   await page.context().storageState({ path: 'user.json' });
+});
+
+setup('Save old RBAC permissions', async ({ request }) => {
+  await saveOldRBACPermissions();
 });
 
 // setup('Monitoring setup', async ({ request }) => {

@@ -8,7 +8,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "pre-e2e": "rm -rf tests-out test-results && tsc --incremental --noImplicitAny false -p .e2e/tsconfig.json && tsc-alias -p .e2e/tsconfig.json",
-    "e2e": "pnpm pre-e2e && cd .e2e && playwright test --project=pr",
+    "e2e": "node ./setup-e2e-rbac-user.js && pnpm pre-e2e && cd .e2e && playwright test --project=pr",
     "e2e:upgrade": "pnpm pre-e2e && cd .e2e && playwright test --project=upgrade",
     "e2e:release": "pnpm pre-e2e && cd .e2e && playwright test --project=release",
     "build": "tsc --incremental && vite build --emptyOutDir",
@@ -54,7 +54,7 @@
   "devDependencies": {
     "@percona/eslint-config-react": "workspace:*",
     "@percona/prettier-config": "workspace:*",
-    "@playwright/test": "^1.39.0",
+    "@playwright/test": "^1.49.1",
     "@testing-library/jest-dom": "^6.1.4",
     "@testing-library/react": "^14.0.0",
     "@types/css-mediaquery": "^0.1.3",
