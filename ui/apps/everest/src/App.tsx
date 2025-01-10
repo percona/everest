@@ -76,6 +76,7 @@ const App = () => {
                 responseType: 'code',
                 autoSignIn: false,
                 automaticSilentRenew: false,
+                loadUserInfo: false,
               }}
             >
               <DrawerContextProvider>

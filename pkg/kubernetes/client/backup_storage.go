@@ -25,15 +25,13 @@ import (
 )
 
 // CreateBackupStorage creates an backupStorage.
-func (c *Client) CreateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error {
-	_, err := c.customClientSet.BackupStorage(storage.Namespace).Create(ctx, storage, metav1.CreateOptions{})
-	return err
+func (c *Client) CreateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) (*everestv1alpha1.BackupStorage, error) {
+	return c.customClientSet.BackupStorage(storage.Namespace).Create(ctx, storage, metav1.CreateOptions{})
 }
 
 // UpdateBackupStorage updates an backupStorage.
-func (c *Client) UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error {
-	_, err := c.customClientSet.BackupStorage(storage.Namespace).Update(ctx, storage, metav1.UpdateOptions{})
-	return err
+func (c *Client) UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) (*everestv1alpha1.BackupStorage, error) {
+	return c.customClientSet.BackupStorage(storage.Namespace).Update(ctx, storage, metav1.UpdateOptions{})
 }
 
 // GetBackupStorage returns the backupStorage.

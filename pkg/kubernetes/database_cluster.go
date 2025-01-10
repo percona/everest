@@ -37,6 +37,21 @@ func (k *Kubernetes) GetDatabaseCluster(ctx context.Context, namespace, name str
 	return k.client.GetDatabaseCluster(ctx, namespace, name)
 }
 
+// DeleteDatabaseCluster deletes database cluster.
+func (k *Kubernetes) DeleteDatabaseCluster(ctx context.Context, namespace, name string) error {
+	return k.client.DeleteDatabaseCluster(ctx, namespace, name)
+}
+
+// CreateDatabaseCluster creates database cluster.
+func (k *Kubernetes) CreateDatabaseCluster(ctx context.Context, cluster *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
+	return k.client.CreateDatabaseCluster(ctx, cluster.GetNamespace(), cluster)
+}
+
+// UpdateDatabaseCluster updates database cluster.
+func (k *Kubernetes) UpdateDatabaseCluster(ctx context.Context, cluster *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
+	return k.client.UpdateDatabaseCluster(ctx, cluster.GetNamespace(), cluster)
+}
+
 // DeleteDatabaseClusters deletes all database clusters in provided namespace.
 // This function will wait until all clusters are deleted.
 func (k *Kubernetes) DeleteDatabaseClusters(ctx context.Context, namespace string) error {
@@ -65,7 +80,7 @@ func (k *Kubernetes) DeleteDatabaseClusters(ctx context.Context, namespace strin
 			return true, nil
 		}
 		for _, cluster := range list.Items {
-			if err := k.DeleteDatabaseCluster(ctx, cluster.GetNamespace(), cluster.GetName()); err != nil {
+			if err := k.DeleteDatabaseCluster(ctx, cluster.GetNamespace(), cluster.GetName()); ctrlclient.IgnoreNotFound(err) != nil {
 				return false, err
 			}
 		}
@@ -76,17 +91,6 @@ func (k *Kubernetes) DeleteDatabaseClusters(ctx context.Context, namespace strin
 // PatchDatabaseCluster patches CR of managed Database cluster.
 func (k *Kubernetes) PatchDatabaseCluster(cluster *everestv1alpha1.DatabaseCluster) error {
 	return k.client.ApplyObject(cluster)
-}
-
-// DeleteDatabaseCluster deletes database cluster.
-func (k *Kubernetes) DeleteDatabaseCluster(ctx context.Context, namespace, name string) error {
-	cluster, err := k.client.GetDatabaseCluster(ctx, namespace, name)
-	if err != nil {
-		return err
-	}
-	cluster.TypeMeta.APIVersion = databaseClusterAPIVersion
-	cluster.TypeMeta.Kind = databaseClusterKind
-	return k.client.DeleteObject(cluster)
 }
 
 // DatabasesExist checks if databases exist in provided at least one of the provided namespaces.

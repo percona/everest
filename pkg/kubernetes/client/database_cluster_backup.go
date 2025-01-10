@@ -22,3 +22,13 @@ func (c *Client) GetDatabaseClusterBackup(ctx context.Context, namespace, name s
 func (c *Client) UpdateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
 	return c.customClientSet.DBClusterBackups(backup.GetNamespace()).Update(ctx, backup, metav1.UpdateOptions{})
 }
+
+// CreateDatabaseClusterBackup creates a new database cluster backup.
+func (c *Client) CreateDatabaseClusterBackup(ctx context.Context, namespace string, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
+	return c.customClientSet.DBClusterBackups(namespace).Create(ctx, backup, metav1.CreateOptions{})
+}
+
+// DeleteDatabaseClusterBackup deletes a database cluster backup.
+func (c *Client) DeleteDatabaseClusterBackup(ctx context.Context, namespace, name string) error {
+	return c.customClientSet.DBClusterBackups(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+}
