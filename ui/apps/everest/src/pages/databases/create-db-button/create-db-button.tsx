@@ -68,7 +68,7 @@ export const CreateDbButton = () => {
 
   const buttonStyle = { display: 'flex', minHeight: '34px', width: '165px' };
 
-  return (
+  return availableEngines.length > 0 ? (
     <Box>
       {showDropdownButton ? (
         <Button
@@ -127,7 +127,7 @@ export const CreateDbButton = () => {
         </Menu>
       )}
     </Box>
-  );
+  ) : null;
 };
 
 export default CreateDbButton;
