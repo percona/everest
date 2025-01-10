@@ -3,8 +3,6 @@ import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
 import { setRBACPermissionsK8S } from '@e2e/utils/rbac-cmd-line';
 
-const { CI_USER: user } = process.env;
-
 // Namespaces, engines and DBs are already filtered by the API according to permissions, so here we test the UI
 test.describe('Namespaces RBAC', () => {
   let namespaces = [];
