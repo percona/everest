@@ -22,7 +22,6 @@ import { DbEngine } from 'shared-types/dbEngines.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import { DbEngineType } from '@percona/types';
 import { useCallback, useMemo } from 'react';
-import { useNamespacePermissionsForResource } from 'hooks/rbac';
 
 export const NAMESPACES_QUERY_KEY = 'namespace';
 
