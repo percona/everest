@@ -651,6 +651,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 					"p, role:test, backup-storages, delete, default/some",
 					"g, bob, role:test",
 				),
+				wantErr: ErrInsufficientPermissions,
 			},
 			{
 				desc: "update only action for all backupstorages in all namespaces",
