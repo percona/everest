@@ -38,7 +38,6 @@ export const useDBEnginesForNamespaces = (
 ) => {
   const { data: namespaces = [], isFetching: fetchingNamespaces } =
     useNamespaces();
-  const { canRead } = useNamespacePermissionsForResource('database-engines');
 
   const queries = namespaces.map<
     UseQueryOptions<DbEngine[], unknown, DbEngine[]>
@@ -52,7 +51,6 @@ export const useDBEnginesForNamespaces = (
 
       return dbEnginesQuerySelect(data, retrieveUpgradingEngines);
     },
-    enabled: canRead.includes(namespace),
     ...options,
   }));
 

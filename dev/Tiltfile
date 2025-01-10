@@ -347,7 +347,7 @@ local_resource(
 local_resource(
   'operator-build',
   'make -C %s fmt; CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -C %s -o ./bin/manager ./cmd/main.go' % (operator_dir, operator_dir),
-  deps=['%s/api' % operator_dir, '%s/controllers' % operator_dir, '%s/cmd/main.go' % operator_dir],
+  deps=['%s/api' % operator_dir, '%s/internal' % operator_dir, '%s/cmd/main.go' % operator_dir],
   labels=["everest-operator"]
 )
 
