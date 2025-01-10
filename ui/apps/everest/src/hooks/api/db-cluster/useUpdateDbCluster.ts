@@ -192,7 +192,7 @@ export const useUpdateDbClusterResources = () =>
         numberOfProxies: number;
       };
       sharding?: boolean;
-      shardConfigServers?: string;
+      shardConfigServers?: number;
       shardNr?: string;
     }) =>
       updateDbCluster(dbCluster.metadata.name, dbCluster.metadata.namespace, {
@@ -229,7 +229,7 @@ export const useUpdateDbClusterResources = () =>
                 enabled: sharding,
                 shards: +(shardNr ?? MIN_NUMBER_OF_SHARDS),
                 configServer: {
-                  replicas: +(shardConfigServers ?? 3),
+                  replicas: shardConfigServers ?? 3,
                 },
               },
             }),
