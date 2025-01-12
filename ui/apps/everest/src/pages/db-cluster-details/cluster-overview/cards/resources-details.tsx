@@ -257,7 +257,7 @@ export const ResourcesDetails = ({
             proxyMemory: memoryParser(proxyMemory.toString(), 'G').value,
             sharding: !!sharding?.enabled,
             ...(!!sharding?.enabled && {
-              shardConfigServers: sharding?.configServer?.replicas.toString(),
+              shardConfigServers: sharding?.configServer?.replicas,
               shardNr: sharding?.shards.toString(),
             }),
             numberOfNodes: numberOfNodesStr,
