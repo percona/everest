@@ -118,11 +118,6 @@ const Components = () => {
 
   const onRulesChange = useCallback(
     (newRules: AffinityRule[]) => {
-      // const filteredRules: [AffinityRule[], AffinityRule[], AffinityRule[]] = [
-      //   [],
-      //   [],
-      //   [],
-      // ];
       const filteredRules: Record<AffinityComponent, AffinityRule[]> = {
         [AffinityComponent.DbNode]: [],
         [AffinityComponent.Proxy]: [],
