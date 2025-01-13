@@ -127,13 +127,13 @@ func (o *Install) Run(ctx context.Context) error {
 		return fmt.Errorf("everest is already installed. Version: %s", installedVersion)
 	}
 
+	if err := o.setKubernetesEnv(ctx); err != nil {
+		return fmt.Errorf("failed to detect Kubernetes environment: %w", err)
+	}
+
 	dbInstallStep, err := o.installDBNamespacesStep(ctx)
 	if err != nil {
 		return fmt.Errorf("could not create db install step: %w", err)
-	}
-
-	if err := o.setKubernetesEnv(ctx); err != nil {
-		return fmt.Errorf("failed to detect Kubernetes environment: %w", err)
 	}
 
 	if err := o.setVersionInfo(ctx); err != nil {
@@ -189,7 +189,10 @@ func (o *Install) installDBNamespacesStep(ctx context.Context) (*steps.Step, err
 		}
 		return nil, errors.Join(err, errors.New("namespaces configuration error"))
 	}
-
+	o.config.NamespaceAddConfig.ClusterType = o.clusterType
+	if o.clusterType != "" || o.config.SkipEnvDetection {
+		o.config.NamespaceAddConfig.SkipEnvDetection = true
+	}
 	i, err := namespaces.NewNamespaceAdd(o.config.NamespaceAddConfig, zap.NewNop().Sugar())
 	if err != nil {
 		return nil, err
@@ -221,7 +224,7 @@ func (o *Install) printPostInstallMessage(out io.Writer) {
 
 	message += bold("ACCESS THE EVEREST UI:\n\n")
 	message += "To access the web UI, set up port-forwarding and visit http://localhost:8080 in your browser:\n\n"
-	message += "\tkubectl port-forward -n everest-system svc/everest-server 8080:80"
+	message += "\tkubectl port-forward -n everest-system svc/everest 8080:8080"
 	message += "\n"
 
 	fmt.Fprint(out, message)

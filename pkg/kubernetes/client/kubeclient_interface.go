@@ -31,9 +31,9 @@ import (
 // KubeClientConnector ...
 type KubeClientConnector interface {
 	// CreateBackupStorage creates an backupStorage.
-	CreateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
+	CreateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) (*everestv1alpha1.BackupStorage, error)
 	// UpdateBackupStorage updates an backupStorage.
-	UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
+	UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) (*everestv1alpha1.BackupStorage, error)
 	// GetBackupStorage returns the backupStorage.
 	GetBackupStorage(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error)
 	// ListBackupStorages returns the backupStorage.
@@ -136,16 +136,32 @@ type KubeClientConnector interface {
 	ListDatabaseClusters(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterList, error)
 	// GetDatabaseCluster returns database clusters by provided name.
 	GetDatabaseCluster(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseCluster, error)
+	// CreateDatabaseCluster creates a new database cluster.
+	CreateDatabaseCluster(ctx context.Context, namespace string, cluster *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error)
+	// UpdateDatabaseCluster updates a database cluster.
+	UpdateDatabaseCluster(ctx context.Context, namespace string, cluster *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error)
+	// DeleteDatabaseCluster deletes a database cluster.
+	DeleteDatabaseCluster(ctx context.Context, namespace, name string) error
 	// ListDatabaseClusterBackups returns list of managed database cluster backups.
 	ListDatabaseClusterBackups(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error)
 	// GetDatabaseClusterBackup returns database cluster backups by provided name.
 	GetDatabaseClusterBackup(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error)
 	// UpdateDatabaseClusterBackup updates the provided database cluster backup.
 	UpdateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error)
+	// CreateDatabaseClusterBackup creates a new database cluster backup.
+	CreateDatabaseClusterBackup(ctx context.Context, namespace string, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error)
+	// DeleteDatabaseClusterBackup deletes a database cluster backup.
+	DeleteDatabaseClusterBackup(ctx context.Context, namespace, name string) error
 	// ListDatabaseClusterRestores returns list of managed database clusters.
 	ListDatabaseClusterRestores(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterRestoreList, error)
 	// GetDatabaseClusterRestore returns database clusters by provided name.
 	GetDatabaseClusterRestore(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterRestore, error)
+	// CreateDatabaseClusterRestore creates a new database cluster.
+	CreateDatabaseClusterRestore(ctx context.Context, namespace string, restore *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error)
+	// UpdateDatabaseClusterRestore updates a database cluster.
+	UpdateDatabaseClusterRestore(ctx context.Context, namespace string, restore *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error)
+	// DeleteDatabaseClusterRestore deletes a database cluster.
+	DeleteDatabaseClusterRestore(ctx context.Context, namespace, name string) error
 	// ListDatabaseEngines returns list of managed database clusters.
 	ListDatabaseEngines(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseEngineList, error)
 	// GetDatabaseEngine returns database clusters by provided name.
@@ -169,9 +185,9 @@ type KubeClientConnector interface {
 	// DeleteAllMonitoringResources deletes all resources related to monitoring from k8s cluster.
 	DeleteAllMonitoringResources(ctx context.Context, namespace string) error
 	// CreateMonitoringConfig creates an monitoringConfig.
-	CreateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) error
+	CreateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error)
 	// UpdateMonitoringConfig updates an monitoringConfig.
-	UpdateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) error
+	UpdateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error)
 	// GetMonitoringConfig returns the monitoringConfig.
 	GetMonitoringConfig(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error)
 	// ListMonitoringConfigs returns the monitoringConfig.

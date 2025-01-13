@@ -32,3 +32,18 @@ func (k *Kubernetes) GetDatabaseClusterRestore(ctx context.Context, namespace, n
 func (k *Kubernetes) ListDatabaseClusterRestores(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterRestoreList, error) {
 	return k.client.ListDatabaseClusterRestores(ctx, namespace, options)
 }
+
+// UpdateDatabaseClusterRestore updates database cluster restore.
+func (k *Kubernetes) UpdateDatabaseClusterRestore(ctx context.Context, restore *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
+	return k.client.UpdateDatabaseClusterRestore(ctx, restore.GetNamespace(), restore)
+}
+
+// DeleteDatabaseClusterRestore deletes database cluster restore.
+func (k *Kubernetes) DeleteDatabaseClusterRestore(ctx context.Context, namespace, name string) error {
+	return k.client.DeleteDatabaseClusterRestore(ctx, namespace, name)
+}
+
+// CreateDatabaseClusterRestore creates database cluster restore.
+func (k *Kubernetes) CreateDatabaseClusterRestore(ctx context.Context, restore *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
+	return k.client.CreateDatabaseClusterRestore(ctx, restore.GetNamespace(), restore)
+}

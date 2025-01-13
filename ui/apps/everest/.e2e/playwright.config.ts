@@ -16,7 +16,7 @@ import { defineConfig } from '@playwright/test';
 import path from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { STORAGE_STATE_FILE, TIMEOUTS } from './constants';
+import { STORAGE_STATE_FILE } from './constants';
 import 'dotenv/config';
 
 // Convert 'import.meta.url' to the equivalent __filename and __dirname
@@ -67,13 +67,13 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      testDir: '.',
       name: 'auth',
+      testDir: './setup',
       testMatch: /auth.setup\.ts/,
     },
     {
-      testDir: '.',
       name: 'setup',
+      testDir: './setup',
       testMatch: /global.setup\.ts/,
       teardown: 'teardown',
       use: {
@@ -82,28 +82,53 @@ export default defineConfig({
       dependencies: ['auth'],
     },
     {
-      testDir: '.',
       name: 'teardown',
+      testDir: './teardown',
       use: {
         storageState: STORAGE_STATE_FILE,
       },
       testMatch: /global\.teardown\.ts/,
     },
     {
-      name: 'pr',
+      name: 'rbac-setup',
+      testDir: './setup',
+      testMatch: /rbac.setup\.ts/,
+      use: {
+        storageState: STORAGE_STATE_FILE,
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'rbac',
       use: {
         browserName: 'chromium',
         channel: 'chrome',
         storageState: STORAGE_STATE_FILE,
       },
+      testDir: './pr/rbac',
+      dependencies: ['setup', 'rbac-setup'],
+    },
+    {
+      name: 'rbac-teardown',
+      testDir: './teardown',
+      testMatch: /rbac\.teardown\.ts/,
+      use: {
+        storageState: STORAGE_STATE_FILE,
+      },
+      dependencies: ['rbac'],
+    },
+    {
+      name: 'pr',
+      use: {
+        storageState: STORAGE_STATE_FILE,
+      },
       testDir: 'pr',
-      dependencies: ['setup'],
+      testIgnore: ['pr/rbac/**/*'],
+      dependencies: ['setup', 'rbac', 'rbac-teardown'],
     },
     {
       name: 'release',
       use: {
-        browserName: 'chromium',
-        channel: 'chrome',
         storageState: STORAGE_STATE_FILE,
         actionTimeout: 10000,
       },
@@ -113,8 +138,6 @@ export default defineConfig({
     {
       name: 'upgrade',
       use: {
-        browserName: 'chromium',
-        channel: 'chrome',
         storageState: STORAGE_STATE_FILE,
         video: 'retain-on-failure',
         actionTimeout: 10000,

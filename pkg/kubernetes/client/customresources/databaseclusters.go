@@ -13,8 +13,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-//nolint:dupl
 package customresources
 
 import (
@@ -50,6 +48,61 @@ type DBClusterInterface interface {
 	List(ctx context.Context, opts metav1.ListOptions) (*everestv1alpha1.DatabaseClusterList, error)
 	Get(ctx context.Context, name string, options metav1.GetOptions) (*everestv1alpha1.DatabaseCluster, error)
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Update(ctx context.Context, cluster *everestv1alpha1.DatabaseCluster, opts metav1.UpdateOptions) (*everestv1alpha1.DatabaseCluster, error)
+	Create(ctx context.Context, cluster *everestv1alpha1.DatabaseCluster, opts metav1.CreateOptions) (*everestv1alpha1.DatabaseCluster, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+}
+
+// Create creates a resource.
+func (c *dbClusterClient) Create(
+	ctx context.Context,
+	cluster *everestv1alpha1.DatabaseCluster,
+	opts metav1.CreateOptions,
+) (*everestv1alpha1.DatabaseCluster, error) {
+	result := &everestv1alpha1.DatabaseCluster{}
+	err := c.restClient.
+		Post().
+		Namespace(c.namespace).
+		Resource(dbClustersAPIKind).
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Body(cluster).
+		Do(ctx).
+		Into(result)
+	return result, err
+}
+
+// Update creates a resource.
+func (c *dbClusterClient) Update(
+	ctx context.Context,
+	cluster *everestv1alpha1.DatabaseCluster,
+	opts metav1.UpdateOptions,
+) (*everestv1alpha1.DatabaseCluster, error) {
+	result := &everestv1alpha1.DatabaseCluster{}
+	err := c.restClient.
+		Put().
+		Namespace(c.namespace).Name(cluster.GetName()).
+		Resource(dbClustersAPIKind).
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Body(cluster).
+		Do(ctx).
+		Into(result)
+	return result, err
+}
+
+// Delete creates a resource.
+func (c *dbClusterClient) Delete(
+	ctx context.Context,
+	name string,
+	opts metav1.DeleteOptions,
+) error {
+	return c.restClient.
+		Delete().
+		Namespace(c.namespace).
+		Resource(dbClustersAPIKind).
+		Name(name).
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Do(ctx).
+		Error()
 }
 
 // List lists database clusters based on opts.
