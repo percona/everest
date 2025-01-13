@@ -300,12 +300,61 @@ func TestRBAC_DatabaseClusterRestore(t *testing.T) {
 				desc: "success",
 				policy: newPolicy(
 					"p, role:test, database-cluster-restores, update, default/cluster1",
+					"p, role:test, database-cluster-credentials, read, default/cluster1",
+					"p, role:test, database-cluster-backups, read, default/cluster1",
+					"p, role:test, database-cluster-restores, read, default/cluster1",
 					"g, bob, role:test",
 				),
 			},
 			{
-				desc:    "missing update permission for database-cluster-restores on 'cluster1'",
-				policy:  newPolicy(),
+				desc: "missing update permission for database-cluster-restores on 'cluster1'",
+				policy: newPolicy(
+					"p, role:test, database-cluster-credentials, read, default/cluster1",
+					"p, role:test, database-cluster-backups, read, default/cluster1",
+					"p, role:test, database-cluster-restores, read, default/cluster1",
+					"g, bob, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "has create permission for database-cluster-restores on 'cluster1'",
+				policy: newPolicy(
+					"p, role:test, database-cluster-restores, create, default/cluster1",
+					"p, role:test, database-cluster-credentials, read, default/cluster1",
+					"p, role:test, database-cluster-backups, read, default/cluster1",
+					"p, role:test, database-cluster-restores, read, default/cluster1",
+					"g, bob, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "missing read permission for database-cluster-credentials on 'cluster1'",
+				policy: newPolicy(
+					"p, role:test, database-cluster-restores, update, default/cluster1",
+					"p, role:test, database-cluster-backups, read, default/cluster1",
+					"p, role:test, database-cluster-restores, read, default/cluster1",
+					"g, bob, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "missing read permission for database-cluster-backups on 'cluster1'",
+				policy: newPolicy(
+					"p, role:test, database-cluster-restores, update, default/cluster1",
+					"p, role:test, database-cluster-credentials, read, default/cluster1",
+					"p, role:test, database-cluster-restores, read, default/cluster1",
+					"g, bob, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "missing read permission for database-cluster-restores on 'cluster1'",
+				policy: newPolicy(
+					"p, role:test, database-cluster-restores, update, default/cluster1",
+					"p, role:test, database-cluster-credentials, read, default/cluster1",
+					"p, role:test, database-cluster-backups, read, default/cluster1",
+					"g, bob, role:test",
+				),
 				wantErr: ErrInsufficientPermissions,
 			},
 		}
