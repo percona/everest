@@ -22,6 +22,7 @@ func NewValues(v Values) map[string]string {
 
 	if v.ClusterType == kubernetes.ClusterTypeOpenShift {
 		values["compatibility.openshift"] = "true"
+		values["kube-state-metrics.enabled"] = "false"
 	}
 	if v.VersionMetadataURL != "" {
 		values["versionMetadataURL"] = v.VersionMetadataURL

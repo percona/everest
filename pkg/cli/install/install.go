@@ -127,13 +127,13 @@ func (o *Install) Run(ctx context.Context) error {
 		return fmt.Errorf("everest is already installed. Version: %s", installedVersion)
 	}
 
+	if err := o.setKubernetesEnv(ctx); err != nil {
+		return fmt.Errorf("failed to detect Kubernetes environment: %w", err)
+	}
+
 	dbInstallStep, err := o.installDBNamespacesStep(ctx)
 	if err != nil {
 		return fmt.Errorf("could not create db install step: %w", err)
-	}
-
-	if err := o.setKubernetesEnv(ctx); err != nil {
-		return fmt.Errorf("failed to detect Kubernetes environment: %w", err)
 	}
 
 	if err := o.setVersionInfo(ctx); err != nil {
@@ -189,7 +189,10 @@ func (o *Install) installDBNamespacesStep(ctx context.Context) (*steps.Step, err
 		}
 		return nil, errors.Join(err, errors.New("namespaces configuration error"))
 	}
-
+	o.config.NamespaceAddConfig.ClusterType = o.clusterType
+	if o.clusterType != "" || o.config.SkipEnvDetection {
+		o.config.NamespaceAddConfig.SkipEnvDetection = true
+	}
 	i, err := namespaces.NewNamespaceAdd(o.config.NamespaceAddConfig, zap.NewNop().Sugar())
 	if err != nil {
 		return nil, err
