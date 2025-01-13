@@ -19,7 +19,7 @@ require (
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/briandowns/spinner v1.23.1
 	github.com/casbin/casbin/v2 v2.100.0
-	github.com/casbin/govaluate v1.2.0
+	github.com/casbin/govaluate v1.3.0
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/fatih/color v1.18.0
