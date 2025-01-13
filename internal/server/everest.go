@@ -70,6 +70,11 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		return nil, errors.Join(err, errors.New("failed creating Kubernetes client"))
 	}
 
+	if c.HTTPPort != 0 && c.ListenPort == 0 {
+		l.Warn("HTTP_PORT is deprecated, use PORT instead")
+		c.ListenPort = c.HTTPPort
+	}
+
 	echoServer := echo.New()
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
