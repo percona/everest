@@ -36,12 +36,12 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.27.0
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20241203113640-8dd4a9d32733
+	github.com/percona/everest-operator v0.6.0-dev1.0.20250113123726-4cc036806715
 	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250110112031-3c1a20d6f2f6
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.31.0
 	golang.org/x/mod v0.22.0
@@ -56,7 +56,7 @@ require (
 	k8s.io/cli-runtime v0.31.3
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/kubectl v0.31.3
-	sigs.k8s.io/controller-runtime v0.19.3
+	sigs.k8s.io/controller-runtime v0.19.4
 	sigs.k8s.io/yaml v1.4.0
 )
 
@@ -176,7 +176,7 @@ require (
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
-	github.com/onsi/gomega v1.36.1 // indirect
+	github.com/onsi/gomega v1.36.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/operator-framework/operator-registry v1.35.0 // indirect
@@ -184,7 +184,7 @@ require (
 	github.com/percona/percona-backup-mongodb v1.8.1-0.20241002124601-957ac501f939 // indirect
 	github.com/percona/percona-postgresql-operator v0.0.0-20241007204305-35d61aa5aebd // indirect
 	github.com/percona/percona-server-mongodb-operator v1.18.0 // indirect
-	github.com/percona/percona-xtradb-cluster-operator v1.16.0 // indirect
+	github.com/percona/percona-xtradb-cluster-operator v1.16.1 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
@@ -224,7 +224,7 @@ require (
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
-	golang.org/x/net v0.31.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
