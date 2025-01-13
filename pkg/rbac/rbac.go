@@ -258,34 +258,6 @@ func buildPathResourceMap(basePath string) (map[string]string, []string, error) 
 	return resourceMap, skipPaths, nil
 }
 
-func isAllowedRBAC(name, action, resource string) bool {
-	// Allow creating objects without a name.
-	// RBAC is enforced in the individual methods.
-	allowedObjectsForCreateWithoutName := []string{
-		ResourceDatabaseClusterRestores,
-		ResourceDatabaseClusterBackups,
-	}
-	if name == "" && action == ActionCreate && slices.Contains(allowedObjectsForCreateWithoutName, resource) {
-		return true
-	}
-
-	// Listing the following objects is always allowed here,
-	// since we will filter the output of the list itself based on the permissions.
-	allowedObjectsForListing := []string{
-		ResourceDatabaseClusters,
-		ResourceDatabaseEngines,
-		ResourceBackupStorages,
-		ResourceMonitoringInstances,
-		ResourceDatabaseClusterRestores,
-		ResourceDatabaseClusterBackups,
-	}
-	if slices.Contains(allowedObjectsForListing, resource) && name == "" && action == ActionRead {
-		return true
-	}
-
-	return false
-}
-
 // NewSkipper returns a new function that checks if a given request should be skipped
 // from RBAC checks.
 func NewSkipper(basePath string) (func(echo.Context) bool, error) {

@@ -30,9 +30,9 @@ func (h *rbacHandler) CreateDatabaseCluster(ctx context.Context, db *everestv1al
 
 	schedules := db.Spec.Backup.Schedules
 	if len(schedules) > 0 {
-		// To create a cluster with backup schedules, the user needs to explicitly have permissions to take backups.
+		// To create a cluster with backup schedules, the user needs to explicitly have permissions to take backups for this cluster.
 		if err := h.enforce(ctx, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate,
-			rbac.ObjectName(namespace, ""),
+			rbac.ObjectName(namespace, db.GetName()),
 		); err != nil {
 			return nil, err
 		}
@@ -50,7 +50,7 @@ func (h *rbacHandler) CreateDatabaseCluster(ctx context.Context, db *everestv1al
 	if dataSrc := db.Spec.DataSource; dataSrc != nil && dataSrc.DBClusterBackupName != "" {
 		sourceBackup := dataSrc.DBClusterBackupName
 		if err := h.enforce(ctx, rbac.ResourceDatabaseClusterRestores,
-			rbac.ActionCreate, rbac.ObjectName(namespace, ""),
+			rbac.ActionCreate, rbac.ObjectName(namespace, db.GetName()),
 		); err != nil {
 			return nil, err
 		}
@@ -140,9 +140,9 @@ func (h *rbacHandler) UpdateDatabaseCluster(ctx context.Context, db *everestv1al
 		return true
 	}
 
-	// If shedules are updated, user should have permissions to create a backup.
+	// If shedules are updated, user should have permissions to create a backup for this cluster.
 	if !isSchedEqual() {
-		if err := h.enforce(ctx, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, rbac.ObjectName(oldDB.GetNamespace(), "")); err != nil {
+		if err := h.enforce(ctx, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, rbac.ObjectName(oldDB.GetNamespace(), db.GetName())); err != nil {
 			return nil, err
 		}
 	}
