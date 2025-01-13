@@ -79,7 +79,12 @@ func (o *Install) newStepEnsureEverestMonitoring() steps.Step {
 			if err := o.waitForDeployment(ctx, common.VictoriaMetricsOperatorDeploymentName, common.MonitoringNamespace); err != nil {
 				return err
 			}
-			return o.waitForDeployment(ctx, common.KubeStateMetricsDeploymentName, common.MonitoringNamespace)
+			if o.clusterType != kubernetes.ClusterTypeOpenShift {
+				if err := o.waitForDeployment(ctx, common.KubeStateMetricsDeploymentName, common.MonitoringNamespace); err != nil {
+					return err
+				}
+			}
+			return nil
 		},
 	}
 }

@@ -69,6 +69,8 @@ func NewNamespaceAdd(c NamespaceAddConfig, l *zap.SugaredLogger) (*NamespaceAdde
 		return nil, err
 	}
 	n.kubeClient = k
+	n.clusterType = c.ClusterType
+	n.skipEnvDetection = c.SkipEnvDetection
 	return n, nil
 }
 
@@ -84,6 +86,8 @@ type NamespaceAddConfig struct {
 	DisableTelemetry bool `mapstructure:"disable-telemetry"`
 	// TakeOwnership of an existing namespace.
 	TakeOwnership bool `mapstructure:"take-ownership"`
+	// SkipEnvDetection skips detecting the Kubernetes environment.
+	SkipEnvDetection bool `mapstructure:"skip-env-detection"`
 
 	Operator OperatorConfig
 
@@ -98,6 +102,7 @@ type NamespaceAddConfig struct {
 	// This is populated internally after validating the Namespaces field.:
 	NamespaceList []string
 
+	ClusterType kubernetes.ClusterType
 	helm.CLIOptions
 }
 
@@ -113,9 +118,11 @@ type OperatorConfig struct {
 
 // NamespaceAdder provides the functionality to add namespaces.
 type NamespaceAdder struct {
-	l          *zap.SugaredLogger
-	cfg        NamespaceAddConfig
-	kubeClient *kubernetes.Kubernetes
+	l                *zap.SugaredLogger
+	cfg              NamespaceAddConfig
+	kubeClient       *kubernetes.Kubernetes
+	clusterType      kubernetes.ClusterType
+	skipEnvDetection bool
 }
 
 // Run namespace add operation.
@@ -124,6 +131,12 @@ func (n *NamespaceAdder) Run(ctx context.Context) error {
 	ver, err := cliutils.CheckHelmInstallation(ctx, n.kubeClient)
 	if err != nil {
 		return err
+	}
+
+	if !n.skipEnvDetection {
+		if err := n.setKubernetesEnv(ctx); err != nil {
+			return err
+		}
 	}
 
 	installSteps := []steps.Step{}
@@ -165,6 +178,19 @@ func (n *NamespaceAdder) Run(ctx context.Context) error {
 	return nil
 }
 
+func (n *NamespaceAdder) setKubernetesEnv(ctx context.Context) error {
+	if n.skipEnvDetection {
+		return nil
+	}
+	t, err := n.kubeClient.GetClusterType(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to detect cluster type: %w", err)
+	}
+	n.clusterType = t
+	n.l.Infof("Detected Kubernetes environment: %s", t)
+	return nil
+}
+
 func (n *NamespaceAdder) getValues() values.Options {
 	v := []string{}
 	v = append(v, "cleanupOnUninstall=false") // uninstall command will do the clean-up on its own.
@@ -172,6 +198,10 @@ func (n *NamespaceAdder) getValues() values.Options {
 	v = append(v, fmt.Sprintf("postgresql=%t", n.cfg.Operator.PG))
 	v = append(v, fmt.Sprintf("psmdb=%t", n.cfg.Operator.PSMDB))
 	v = append(v, fmt.Sprintf("telemetry=%t", !n.cfg.DisableTelemetry))
+
+	if n.clusterType == kubernetes.ClusterTypeOpenShift {
+		v = append(v, "compatibility.openshift=true")
+	}
 	return values.Options{Values: v}
 }
 
