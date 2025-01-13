@@ -376,7 +376,7 @@ export const useUpdateDbClusterWithConflictRetry = (
 
         if (timeDiff > UPDATE_RETRY_TIMEOUT_MS) {
           enqueueSnackbar(
-            'There is a conflict with the current object definition',
+            'There is a conflict with the current object definition.',
             {
               variant: 'error',
             }
@@ -404,9 +404,12 @@ export const useUpdateDbClusterWithConflictRetry = (
                   },
                 });
               } else {
-                enqueueSnackbar('The object de', {
-                  variant: 'error',
-                });
+                enqueueSnackbar(
+                  'The object definition has been changed somewhere else. Please re-apply your changes.',
+                  {
+                    variant: 'error',
+                  }
+                );
                 ownOnError?.(error, vars, ctx);
                 watchStartTime.current = null;
                 resolve();
