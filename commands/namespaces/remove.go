@@ -21,8 +21,8 @@ const forceUninstallHint = "HINT: use --force to remove the namespace and all it
 func NewRemoveCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "remove [flags] NAMESPACES",
-		Long:    "Remove an existing and managed by Everest namespaces",
-		Short:   "Remove an existing and managed by Everest namespaces",
+		Long:    "Remove existing and managed by Everest namespaces",
+		Short:   "Remove existing and managed by Everest namespaces",
 		Example: `everestctl namespaces remove --keep-namespace --force ns-1,ns-2`,
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
