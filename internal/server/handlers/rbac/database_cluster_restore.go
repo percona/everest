@@ -72,6 +72,9 @@ func (h *rbacHandler) UpdateDatabaseClusterRestore(ctx context.Context, req *eve
 	if err := h.enforce(ctx, rbac.ResourceDatabaseClusterRestores, rbac.ActionUpdate, rbac.ObjectName(namespace, clusterName)); err != nil {
 		return nil, err
 	}
+	if err := h.enforceDBRestore(ctx, namespace, clusterName); err != nil {
+		return nil, err
+	}
 	return h.next.UpdateDatabaseClusterRestore(ctx, req)
 }
 
