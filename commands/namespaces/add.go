@@ -25,7 +25,7 @@ var (
 // NewAddCommand returns a new command to add a new namespace.
 func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "add [flags] namespace",
+		Use:     "add [flags] NAMESPACES",
 		Long:    "Add a new namespace",
 		Short:   "Add a new namespace",
 		Example: `everestctl namespaces add --operator.mongodb=true --operator.postgresql=false --operator.xtradb-cluster=false --skip-wizard ns-1,ns-2`,
