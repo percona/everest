@@ -83,6 +83,7 @@ func initAddFlags(cmd *cobra.Command) {
 	cmd.Flags().MarkHidden(cli.FlagDisableTelemetry) //nolint:errcheck,gosec
 	cmd.Flags().Bool(cli.FlagSkipWizard, false, "Skip installation wizard")
 	cmd.Flags().Bool(cli.FlagTakeNamespaceOwnership, false, "If the specified namespace already exists, take ownership of it")
+	cmd.Flags().Bool(cli.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
 
 	cmd.Flags().String(helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
 	cmd.Flags().MarkHidden(helm.FlagChartDir) //nolint:errcheck,gosec
@@ -99,6 +100,7 @@ func initAddViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(cli.FlagSkipWizard, cmd.Flags().Lookup(cli.FlagSkipWizard))                         //nolint:errcheck,gosec
 	viper.BindPFlag(cli.FlagDisableTelemetry, cmd.Flags().Lookup(cli.FlagDisableTelemetry))             //nolint:errcheck,gosec
 	viper.BindPFlag(cli.FlagTakeNamespaceOwnership, cmd.Flags().Lookup(cli.FlagTakeNamespaceOwnership)) //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagSkipEnvDetection, cmd.Flags().Lookup(cli.FlagSkipEnvDetection))             //nolint:errcheck,gosec
 
 	viper.BindPFlag(helm.FlagChartDir, cmd.Flags().Lookup(helm.FlagChartDir))     //nolint:errcheck,gosec
 	viper.BindPFlag(helm.FlagRepository, cmd.Flags().Lookup(helm.FlagRepository)) //nolint:errcheck,gosec
