@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"path"
 
 	"go.uber.org/zap"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -13,6 +14,17 @@ import (
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/version"
 )
+
+const (
+	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
+)
+
+func DBNamespaceSubChartPath(dir string) string {
+	if dir == "" {
+		return ""
+	}
+	return path.Join(dir, dbNamespaceSubChartPath)
+}
 
 // CheckHelmInstallation ensures that the current installation was done using Helm chart.
 // Returns the version of Everest installed in the cluster.
