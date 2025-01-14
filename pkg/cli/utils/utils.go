@@ -19,6 +19,7 @@ const (
 	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
 )
 
+// DBNamespaceSubChartPath returns the path to the everest-db-namespace sub-chart.
 func DBNamespaceSubChartPath(dir string) string {
 	if dir == "" {
 		return ""
