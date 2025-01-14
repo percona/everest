@@ -16,7 +16,7 @@
 import { useParams } from 'react-router-dom';
 import { useDbClusterComponents } from 'hooks/api/db-cluster/useDbClusterComponents';
 import { useMemo } from 'react';
-import { capitalize, Tooltip } from '@mui/material';
+import { Box, capitalize, Tooltip } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { MRT_ColumnDef } from 'material-react-table';
 import { DBClusterComponent } from 'shared-types/components.types';
@@ -29,6 +29,8 @@ import {
 } from './components.constants';
 import ExpandedRow from './expanded-row';
 import { DATE_FORMAT } from 'consts';
+import ComponentsDiagramView from './diagram-view/components-diagram-view';
+import { ReactFlowProvider } from '@xyflow/react';
 
 const Components = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -97,32 +99,39 @@ const Components = () => {
   }, []);
 
   return (
-    <Table
-      initialState={{
-        sorting: [
-          {
-            id: 'status',
-            desc: true,
-          },
-        ],
-      }}
-      state={{ isLoading }}
-      tableName={`${dbClusterName}-components`}
-      columns={columns}
-      data={components}
-      noDataMessage={'No components'}
-      renderDetailPanel={({ row }) => <ExpandedRow row={row} />}
-      muiTableDetailPanelProps={{
-        sx: {
-          padding: 0,
-          width: '100%',
-          '.MuiCollapse-root': {
-            width: '100%',
-          },
-        },
-      }}
-    />
+    <Box height="500px">
+      <ReactFlowProvider>
+        <ComponentsDiagramView />
+      </ReactFlowProvider>
+    </Box>
   );
+  // return (
+  //   <Table
+  //     initialState={{
+  //       sorting: [
+  //         {
+  //           id: 'status',
+  //           desc: true,
+  //         },
+  //       ],
+  //     }}
+  //     state={{ isLoading }}
+  //     tableName={`${dbClusterName}-components`}
+  //     columns={columns}
+  //     data={components}
+  //     noDataMessage={'No components'}
+  //     renderDetailPanel={({ row }) => <ExpandedRow row={row} />}
+  //     muiTableDetailPanelProps={{
+  //       sx: {
+  //         padding: 0,
+  //         width: '100%',
+  //         '.MuiCollapse-root': {
+  //           width: '100%',
+  //         },
+  //       },
+  //     }}
+  //   />
+  // );
 };
 
 export default Components;
