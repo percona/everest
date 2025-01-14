@@ -101,7 +101,7 @@ const Components = () => {
   return (
     <Box height="500px">
       <ReactFlowProvider>
-        <ComponentsDiagramView />
+        <ComponentsDiagramView components={components} />
       </ReactFlowProvider>
     </Box>
   );

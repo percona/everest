@@ -10,76 +10,46 @@ import {
   Edge,
   Node,
   NodeProps,
+  useReactFlow,
+  useOnViewportChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { MouseEvent, useCallback, useMemo, useState } from 'react';
+import { MouseEvent, useCallback, useEffect, useMemo, useRef } from 'react';
+import { DBClusterComponent } from 'shared-types/components.types';
+
+const COMPONENT_NODE_WIDTH = 280;
+const CONTAINER_NODE_WIDTH = 200;
 
 type CustomNodeData = Node<{
-  selected: boolean;
+  selected?: boolean;
+  visible?: boolean;
+  parentId?: string;
 }>;
 
-const initialNodes: CustomNodeData[] = [
-  {
-    id: '1',
-    type: 'componentNode',
-    position: { x: 0, y: 0 },
-    data: { selected: false },
-  },
-  {
-    id: '2',
-    type: 'componentNode',
-    position: { x: 300, y: 0 },
-    data: { selected: false },
-  },
-  {
-    id: '3',
-    type: 'componentNode',
-    position: { x: 600, y: 0 },
-    data: { selected: false },
-  },
-  {
-    id: '4',
-    type: 'containerNode',
-    position: { x: 0, y: 300 },
-    data: { selected: false },
-  },
-  {
-    id: '5',
-    type: 'containerNode',
-    position: { x: 300, y: 300 },
-    data: { selected: false },
-  },
-  {
-    id: '6',
-    type: 'containerNode',
-    position: { x: 600, y: 300 },
-    data: { selected: false },
-  },
-  {
-    id: '7',
-    type: 'containerNode',
-    position: { x: 900, y: 300 },
-    data: { selected: false },
-  },
-];
-const initialEdges: Edge[] = [
-  { id: 'e2-4', source: '2', target: '4', type: 'smoothstep' },
-  { id: 'e2-5', source: '2', target: '5', type: 'smoothstep' },
-  { id: 'e2-6', source: '2', target: '6', type: 'smoothstep' },
-  { id: 'e2-7', source: '2', target: '7', type: 'smoothstep' },
-];
+type CustomEdgeData = Edge<{
+  visible?: boolean;
+}>;
 
-const selectNode = (nodes: CustomNodeData[], id: string) => {
-  return nodes.map((node) => {
-    return {
-      ...node,
-      data: {
-        ...node.data,
-        selected: node.id === id,
-      },
-    };
-  });
-};
+const selectNode = (
+  nodes: CustomNodeData[],
+  edges: CustomEdgeData[],
+  id: string
+) => ({
+  nodes: nodes.map((node) => ({
+    ...node,
+    data: {
+      ...node.data,
+      selected: node.id === id,
+      visible:
+        node.type === 'componentNode' ||
+        (node.type === 'containerNode' && node.data?.parentId === id),
+    },
+  })),
+  edges: edges.map((edge) => ({
+    ...edge,
+    data: { ...edge.data, visible: edge.source === id || edge.target === id },
+  })),
+});
 
 const ComponentNode = ({ data }: NodeProps<CustomNodeData>) => {
   return (
@@ -125,7 +95,6 @@ const ContainerNode = () => (
         borderRadius: '4px',
         borderColor: 'divider',
         p: 2,
-        minWidth: '200px',
       }}
     >
       <Stack direction={'row'}>
@@ -142,22 +111,125 @@ const ContainerNode = () => (
   </Paper>
 );
 
-const ComponentsDiagramView = () => {
-  const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+const getNodesAndEdgesFromDbClusterComponents = (
+  components: DBClusterComponent[],
+  selectedNode?: string
+) => {
+  const nodeComponents: CustomNodeData[] = [];
+  const edgeComponents: CustomEdgeData[] = [];
+
+  components.forEach(({ name, containers }, idx) => {
+    const nodeIsSelected = selectedNode ? selectedNode === name : idx === 0;
+    const singleChild = containers.length === 1;
+    nodeComponents.push({
+      id: name,
+      type: 'componentNode',
+      width: COMPONENT_NODE_WIDTH,
+      position: { x: 300 * idx, y: 0 },
+      data: { selected: nodeIsSelected, visible: true },
+    });
+
+    containers.forEach((container, idx) => {
+      nodeComponents.push({
+        id: `${name}/${container.name}`,
+        type: 'containerNode',
+        width: CONTAINER_NODE_WIDTH,
+        // When there's only one child, draw it right below the parent component, to avoid edge curves
+        position: {
+          x: singleChild
+            ? COMPONENT_NODE_WIDTH / 2 - CONTAINER_NODE_WIDTH / 2
+            : 300 * idx,
+          y: 300,
+        },
+        data: {
+          visible: nodeIsSelected,
+          parentId: name,
+        },
+      });
+
+      edgeComponents.push({
+        id: `e${name}-${container.name}`,
+        source: name,
+        target: `${name}/${container.name}`,
+        type: 'smoothstep',
+        data: {
+          visible: nodeIsSelected,
+        },
+      });
+    });
+  });
+
+  return { nodeComponents, edgeComponents };
+};
+
+const filterOutInvisibleNodesAndEdges = (
+  nodeComponents: CustomNodeData[],
+  edgeComponents: CustomEdgeData[]
+) => ({
+  nodeComponents: nodeComponents.filter((node) => node.data.visible),
+  edgeComponents: edgeComponents.filter((edge) => edge.data?.visible),
+});
+
+const ComponentsDiagramView = ({
+  components,
+}: {
+  components: DBClusterComponent[];
+}) => {
+  const originalNodes = useRef<CustomNodeData[]>([]);
+  const originalEdges = useRef<CustomEdgeData[]>([]);
+  const selectedNode = useRef<string>();
+  const viewportChanged = useRef(false);
+  const { nodeComponents, edgeComponents } = useMemo(
+    () => getNodesAndEdgesFromDbClusterComponents(components),
+    [components]
+  );
+  const [nodes, setNodes] = useNodesState(nodeComponents);
+  const [edges, setEdges] = useEdgesState(edgeComponents);
+  const { fitView } = useReactFlow();
   const nodeTypes = useMemo(
     () => ({ componentNode: ComponentNode, containerNode: ContainerNode }),
     []
   );
 
-  const handleNodeClick = useCallback(
-    (event: MouseEvent, node: CustomNodeData) => {
-      const newNodes = selectNode(nodes, node.id);
-      setNodes(newNodes);
+  useOnViewportChange({
+    onChange: () => {
+      viewportChanged.current = true;
     },
-    [nodes, setNodes]
+  });
+
+  const handleNodeClick = useCallback(
+    (_: MouseEvent, node: CustomNodeData) => {
+      selectedNode.current = node.id;
+      const { nodes: updatedNodes, edges: updatedEdges } = selectNode(
+        originalNodes.current,
+        originalEdges.current,
+        node.id
+      );
+      const { nodeComponents: visibleNodes, edgeComponents: visibleEdges } =
+        filterOutInvisibleNodesAndEdges(updatedNodes, updatedEdges);
+      setNodes(visibleNodes);
+      setEdges(visibleEdges);
+    },
+    [setEdges, setNodes]
   );
+
+  const onNodesChange = useCallback(() => {
+    if (!viewportChanged.current) {
+      fitView();
+      viewportChanged.current = false;
+    }
+  }, [fitView]);
+
+  useEffect(() => {
+    const { nodeComponents, edgeComponents } =
+      getNodesAndEdgesFromDbClusterComponents(components, selectedNode.current);
+    originalNodes.current = nodeComponents;
+    originalEdges.current = edgeComponents;
+    const { nodeComponents: visibleNodes, edgeComponents: visibleEdges } =
+      filterOutInvisibleNodesAndEdges(nodeComponents, edgeComponents);
+    setNodes(visibleNodes);
+    setEdges(visibleEdges);
+  }, [components, setEdges, setNodes]);
 
   return (
     <>
@@ -165,8 +237,8 @@ const ComponentsDiagramView = () => {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
-        fitView
         onNodeClick={handleNodeClick}
+        onNodesChange={onNodesChange}
       >
         <Controls />
       </ReactFlow>
