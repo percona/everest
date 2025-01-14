@@ -1,4 +1,4 @@
-import { Chip, Stack, Typography } from '@mui/material';
+import { Chip, Paper, Stack, Typography } from '@mui/material';
 import { SuccessIcon } from '@percona/ui-lib';
 import {
   ReactFlow,
@@ -8,52 +8,58 @@ import {
   Handle,
   Position,
   Edge,
+  Node,
+  NodeProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useMemo } from 'react';
+import { MouseEvent, useCallback, useMemo, useState } from 'react';
 
-const initialNodes = [
+type CustomNodeData = Node<{
+  selected: boolean;
+}>;
+
+const initialNodes: CustomNodeData[] = [
   {
     id: '1',
     type: 'componentNode',
     position: { x: 0, y: 0 },
-    data: { label: '1' },
+    data: { selected: false },
   },
   {
     id: '2',
     type: 'componentNode',
     position: { x: 300, y: 0 },
-    data: { label: '2' },
+    data: { selected: false },
   },
   {
     id: '3',
     type: 'componentNode',
     position: { x: 600, y: 0 },
-    data: { label: '3' },
+    data: { selected: false },
   },
   {
     id: '4',
     type: 'containerNode',
     position: { x: 0, y: 300 },
-    data: { label: '4' },
+    data: { selected: false },
   },
   {
     id: '5',
     type: 'containerNode',
     position: { x: 300, y: 300 },
-    data: { label: '5' },
+    data: { selected: false },
   },
   {
     id: '6',
     type: 'containerNode',
     position: { x: 600, y: 300 },
-    data: { label: '6' },
+    data: { selected: false },
   },
   {
     id: '7',
     type: 'containerNode',
     position: { x: 900, y: 300 },
-    data: { label: '7' },
+    data: { selected: false },
   },
 ];
 const initialEdges: Edge[] = [
@@ -63,9 +69,21 @@ const initialEdges: Edge[] = [
   { id: 'e2-7', source: '2', target: '7', type: 'smoothstep' },
 ];
 
-const ComponentNode = ({ data }) => {
+const selectNode = (nodes: CustomNodeData[], id: string) => {
+  return nodes.map((node) => {
+    return {
+      ...node,
+      data: {
+        ...node.data,
+        selected: node.id === id,
+      },
+    };
+  });
+};
+
+const ComponentNode = ({ data }: NodeProps<CustomNodeData>) => {
   return (
-    <>
+    <Paper elevation={data.selected ? 4 : 0}>
       <Stack
         sx={{
           border: '1px solid',
@@ -94,12 +112,12 @@ const ComponentNode = ({ data }) => {
         <Chip label="DB Node" sx={{ alignSelf: 'flex-start', mt: 1 }} />
       </Stack>
       <Handle type="source" position={Position.Bottom} />
-    </>
+    </Paper>
   );
 };
 
 const ContainerNode = () => (
-  <>
+  <Paper elevation={0}>
     <Handle type="target" position={Position.Top} />
     <Stack
       sx={{
@@ -121,10 +139,11 @@ const ContainerNode = () => (
       </Stack>
       <Typography variant="body1"> </Typography>
     </Stack>
-  </>
+  </Paper>
 );
 
 const ComponentsDiagramView = () => {
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const nodeTypes = useMemo(
@@ -132,9 +151,23 @@ const ComponentsDiagramView = () => {
     []
   );
 
+  const handleNodeClick = useCallback(
+    (event: MouseEvent, node: CustomNodeData) => {
+      const newNodes = selectNode(nodes, node.id);
+      setNodes(newNodes);
+    },
+    [nodes, setNodes]
+  );
+
   return (
     <>
-      <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        fitView
+        onNodeClick={handleNodeClick}
+      >
         <Controls />
       </ReactFlow>
     </>
