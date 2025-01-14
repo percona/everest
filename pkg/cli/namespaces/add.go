@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"regexp"
 	"strings"
 
@@ -27,11 +26,6 @@ import (
 	"github.com/percona/everest/pkg/output"
 	. "github.com/percona/everest/pkg/utils/must" //nolint:revive,stylecheck
 	"github.com/percona/everest/pkg/version"
-)
-
-const (
-	// Path to the everest-db-namespace subchart, relative to the main chart.
-	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
 )
 
 //nolint:gochecknoglobals
@@ -271,10 +265,6 @@ func (n *NamespaceAdder) provisionDBNamespace(
 	if err != nil {
 		return err
 	}
-	chartDir := ""
-	if n.cfg.ChartDir != "" {
-		chartDir = path.Join(n.cfg.ChartDir, dbNamespaceSubChartPath)
-	}
 	values := Must(helmutils.MergeVals(n.getValues(), nil))
 	installer := helm.Installer{
 		ReleaseName:            namespace,
@@ -283,7 +273,7 @@ func (n *NamespaceAdder) provisionDBNamespace(
 		CreateReleaseNamespace: !nsExists,
 	}
 	if err := installer.Init(n.cfg.KubeconfigPath, helm.ChartOptions{
-		Directory: chartDir,
+		Directory: cliutils.DBNamespaceSubChartPath(n.cfg.ChartDir),
 		URL:       n.cfg.RepoURL,
 		Name:      helm.EverestDBNamespaceChartName,
 		Version:   version,
