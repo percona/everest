@@ -2,7 +2,6 @@
 package namespaces
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -18,10 +17,11 @@ import (
 // NewUpdateCommand returns a new command to update an existing namespace.
 func NewUpdateCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "update",
-		Long:    "Update an existing Everest namespace",
-		Short:   "Update an existing Everest namespace",
-		Example: `everestctl update add [NAMESPACE] [FLAGS]`,
+		Use:     "update [flags] NAMESPACES",
+		Long:    "Add database operator to existing namespace managed by Everest",
+		Short:   "Add database operator to existing namespace managed by Everest",
+		Example: `everestctl namespaces update --operator.mongodb=true --skip-wizard ns-1,ns-2`,
+		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			initUpdateViperFlags(cmd)
 			c := &namespaces.NamespaceAddConfig{}
@@ -33,10 +33,6 @@ func NewUpdateCommand(l *zap.SugaredLogger) *cobra.Command {
 			bindInstallHelmOpts(c)
 			c.Update = true
 
-			if len(args) != 1 {
-				output.PrintError(fmt.Errorf("invalid number of arguments: expected 1, got %d", len(args)), l, true)
-				os.Exit(1)
-			}
 			c.Namespaces = args[0]
 
 			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
