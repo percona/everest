@@ -1,5 +1,4 @@
-import { Chip, Paper, Stack, Typography } from '@mui/material';
-import { SuccessIcon } from '@percona/ui-lib';
+import { capitalize, Chip, Paper, Stack, Typography } from '@mui/material';
 import {
   ReactFlow,
   Controls,
@@ -14,16 +13,23 @@ import {
   useOnViewportChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import StatusField from 'components/status-field';
 import { MouseEvent, useCallback, useEffect, useMemo, useRef } from 'react';
-import { DBClusterComponent } from 'shared-types/components.types';
+import { Container, DBClusterComponent } from 'shared-types/components.types';
+import {
+  componentStatusToBaseStatus,
+  containerStatusToBaseStatus,
+} from '../components.constants';
+import { formatDistanceToNowStrict } from 'date-fns';
 
 const COMPONENT_NODE_WIDTH = 280;
-const CONTAINER_NODE_WIDTH = 200;
+const CONTAINER_NODE_WIDTH = 230;
 
-type CustomNodeData = Node<{
+type CustomNodeData<T = DBClusterComponent | Container> = Node<{
   selected?: boolean;
   visible?: boolean;
   parentId?: string;
+  componentData: T;
 }>;
 
 type CustomEdgeData = Edge<{
@@ -51,9 +57,14 @@ const selectNode = (
   })),
 });
 
-const ComponentNode = ({ data }: NodeProps<CustomNodeData>) => {
+const ComponentNode = ({
+  data: {
+    selected,
+    componentData: { name, status, ready, type, restarts, started },
+  },
+}: NodeProps<CustomNodeData<DBClusterComponent>>) => {
   return (
-    <Paper elevation={data.selected ? 4 : 0}>
+    <Paper elevation={selected ? 4 : 0}>
       <Stack
         sx={{
           border: '1px solid',
@@ -62,31 +73,35 @@ const ComponentNode = ({ data }: NodeProps<CustomNodeData>) => {
           p: 2,
         }}
       >
-        <Stack direction={'row'}>
-          <SuccessIcon />
-          <Typography variant="body2" ml={1}>
-            <b>Running</b>
-          </Typography>
+        <Stack direction={'row'} alignItems={'center'}>
+          <StatusField
+            status={status}
+            statusMap={componentStatusToBaseStatus(ready)}
+          >
+            <b>{capitalize(status)}</b>
+          </StatusField>
           <Typography ml={'auto'} variant="body1">
-            3/3 Ready
+            {ready} Ready
           </Typography>
         </Stack>
         <Stack mt={2}>
-          <Typography variant="body1">
-            postgresql-d2q-instance-bxwn-0
-          </Typography>
+          <Typography variant="body1">{name}</Typography>
           <Typography variant="body2" color="text.secondary">
-            12 min | 3 restarts
+            {formatDistanceToNowStrict(new Date(started))} | {restarts} restarts
           </Typography>
         </Stack>
-        <Chip label="DB Node" sx={{ alignSelf: 'flex-start', mt: 1 }} />
+        <Chip label={type} sx={{ alignSelf: 'flex-start', mt: 1 }} />
       </Stack>
       <Handle type="source" position={Position.Bottom} />
     </Paper>
   );
 };
 
-const ContainerNode = () => (
+const ContainerNode = ({
+  data: {
+    componentData: { status, ready },
+  },
+}: NodeProps<CustomNodeData<Container>>) => (
   <Paper elevation={0}>
     <Handle type="target" position={Position.Top} />
     <Stack
@@ -97,13 +112,18 @@ const ContainerNode = () => (
         p: 2,
       }}
     >
-      <Stack direction={'row'}>
-        <SuccessIcon />
-        <Typography variant="body2" ml={1}>
-          <b>Running</b>
-        </Typography>
+      <Stack direction={'row'} alignItems={'center'}>
+        <StatusField
+          iconProps={{
+            size: 'small',
+          }}
+          status={status}
+          statusMap={containerStatusToBaseStatus(ready)}
+        >
+          <b>{status}</b>
+        </StatusField>
         <Typography ml={'auto'} variant="body1">
-          3/3 Ready
+          {ready ? 'Ready' : 'Not Ready'}
         </Typography>
       </Stack>
       <Typography variant="body1"> </Typography>
@@ -118,7 +138,8 @@ const getNodesAndEdgesFromDbClusterComponents = (
   const nodeComponents: CustomNodeData[] = [];
   const edgeComponents: CustomEdgeData[] = [];
 
-  components.forEach(({ name, containers }, idx) => {
+  components.forEach((clusterComponent, idx) => {
+    const { containers, name } = clusterComponent;
     const nodeIsSelected = selectedNode ? selectedNode === name : idx === 0;
     const singleChild = containers.length === 1;
     nodeComponents.push({
@@ -126,7 +147,11 @@ const getNodesAndEdgesFromDbClusterComponents = (
       type: 'componentNode',
       width: COMPONENT_NODE_WIDTH,
       position: { x: 300 * idx, y: 0 },
-      data: { selected: nodeIsSelected, visible: true },
+      data: {
+        selected: nodeIsSelected,
+        visible: true,
+        componentData: clusterComponent,
+      },
     });
 
     containers.forEach((container, idx) => {
@@ -144,6 +169,7 @@ const getNodesAndEdgesFromDbClusterComponents = (
         data: {
           visible: nodeIsSelected,
           parentId: name,
+          componentData: container,
         },
       });
 
@@ -239,6 +265,7 @@ const ComponentsDiagramView = ({
         nodeTypes={nodeTypes}
         onNodeClick={handleNodeClick}
         onNodesChange={onNodesChange}
+        maxZoom={1}
       >
         <Controls />
       </ReactFlow>
