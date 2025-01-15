@@ -62,6 +62,8 @@ export interface TimeSelectionProps {
   errorInfoAlert?: ReactNode;
   sx?: SxProps<Theme>;
   sxTimeFields?: SxProps<Theme>;
+  shouldRestrictSelectableHours?: boolean;
+  editMode?: boolean;
 }
 
 export type TimeProps = {
