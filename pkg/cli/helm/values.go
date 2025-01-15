@@ -22,7 +22,8 @@ func NewValues(v Values) map[string]string {
 
 	if v.ClusterType == kubernetes.ClusterTypeOpenShift {
 		values["compatibility.openshift"] = "true"
-		values["kube-state-metrics.enabled"] = "false" // openshift comes pre-installed with kube-state-metrics
+		values["kube-state-metrics.rbac.create"] = "false"
+		values["kube-state-metrics.securityContext.enabled"] = "false"
 	}
 	if v.VersionMetadataURL != "" {
 		values["versionMetadataURL"] = v.VersionMetadataURL
