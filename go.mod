@@ -4,11 +4,11 @@ go 1.23.2
 
 replace (
 	github.com/containerd/containerd v1.7.12 => github.com/containerd/containerd v1.7.13
-	k8s.io/api => k8s.io/api v0.31.1
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.31.1
-	k8s.io/apimachinery => k8s.io/apimachinery v0.31.1
-	k8s.io/client-go => k8s.io/client-go v0.31.1
-	k8s.io/component-base => k8s.io/component-base v0.31.1
+	k8s.io/api => k8s.io/api v0.32.0
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.32.0
+	k8s.io/apimachinery => k8s.io/apimachinery v0.32.0
+	k8s.io/client-go => k8s.io/client-go v0.32.0
+	k8s.io/component-base => k8s.io/component-base v0.32.0
 )
 
 require (
@@ -52,7 +52,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.16.4
 	k8s.io/api v0.32.0
-	k8s.io/apiextensions-apiserver v0.31.3
+	k8s.io/apiextensions-apiserver v0.32.0
 	k8s.io/apimachinery v0.32.0
 	k8s.io/cli-runtime v0.32.0
 	k8s.io/client-go v12.0.0+incompatible
@@ -62,6 +62,7 @@ require (
 )
 
 require (
+	cel.dev/expr v0.18.0 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
@@ -119,11 +120,10 @@ require (
 	github.com/goccy/go-json v0.10.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
-	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.0.1 // indirect
-	github.com/google/cel-go v0.20.1 // indirect
+	github.com/google/cel-go v0.22.0 // indirect
 	github.com/google/gnostic-models v0.6.9-0.20230804172637-c7be7c783f49 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
@@ -139,7 +139,6 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/hcl v1.0.1-vault-5 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
-	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/invopop/yaml v0.3.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.1-0.20220621161143-b0104c826a24 // indirect
@@ -236,7 +235,7 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	k8s.io/apiserver v0.31.3 // indirect
+	k8s.io/apiserver v0.32.0 // indirect
 	k8s.io/component-base v0.32.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // indirect
