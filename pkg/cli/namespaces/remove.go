@@ -18,13 +18,15 @@ import (
 	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/output"
 )
 
 const (
 	pollInterval = 5 * time.Second
 	pollTimeout  = 5 * time.Minute
 )
+
+// ErrNamespaceNotEmpty is returned when the namespace is not empty.
+var ErrNamespaceNotEmpty = errors.New("cannot remove namespace with running database clusters")
 
 // NamespaceRemoveConfig is the configuration for the namespace removal operation.
 type NamespaceRemoveConfig struct {
@@ -37,8 +39,76 @@ type NamespaceRemoveConfig struct {
 	// If set, we will print the pretty output.
 	Pretty bool
 
-	// Namespaces (DB Namespaces) to remove
-	Namespaces []string
+	// Namespaces (DB Namespaces) passed by user to remove.
+	Namespaces string
+	// NamespaceList is a list of namespaces to remove.
+	// This is populated internally after validating the Namespaces field.:
+	NamespaceList []string
+}
+
+// Populate the configuration with the required values.
+func (cfg *NamespaceRemoveConfig) Populate(ctx context.Context) error {
+	if err := cfg.populateNamespaces(); err != nil {
+		return err
+	}
+
+	for _, ns := range cfg.NamespaceList {
+		if err := cfg.validateNamespaceOwnership(ctx, ns); err != nil {
+			return fmt.Errorf("invalid namespace (%s): %w", ns, err)
+		}
+
+		if err := cfg.validateDatabasesAbsent(ctx, ns); err != nil {
+			return fmt.Errorf("invalid namespace (%s): %w", ns, err)
+		}
+	}
+	return nil
+}
+
+func (cfg *NamespaceRemoveConfig) populateNamespaces() error {
+	namespaces := cfg.Namespaces
+	list, err := ValidateNamespaces(namespaces)
+	if err != nil {
+		return err
+	}
+	cfg.NamespaceList = list
+	return nil
+}
+
+func (cfg *NamespaceRemoveConfig) validateNamespaceOwnership(ctx context.Context, namespace string) error {
+	k, err := cliutils.NewKubeclient(zap.NewNop().Sugar(), cfg.KubeconfigPath)
+	if err != nil {
+		return err
+	}
+
+	nsExists, ownedByEverest, err := namespaceExists(ctx, namespace, k)
+	if err != nil {
+		return err
+	}
+
+	if !nsExists {
+		return ErrNsDoesNotExist
+	}
+	if !ownedByEverest {
+		return ErrNamespaceNotManagedByEverest
+	}
+	return nil
+}
+
+func (cfg *NamespaceRemoveConfig) validateDatabasesAbsent(ctx context.Context, namespace string) error {
+	k, err := cliutils.NewKubeclient(zap.NewNop().Sugar(), cfg.KubeconfigPath)
+	if err != nil {
+		return err
+	}
+
+	dbsExist, err := k.DatabasesExist(ctx, namespace)
+	if err != nil {
+		return errors.Join(err, errors.New("failed to check if databases exist"))
+	}
+
+	if dbsExist && !cfg.Force {
+		return ErrNamespaceNotEmpty
+	}
+	return nil
 }
 
 // NamespaceRemover is the CLI operation to remove namespaces.
@@ -66,9 +136,6 @@ func NewNamespaceRemove(c NamespaceRemoveConfig, l *zap.SugaredLogger) (*Namespa
 	return n, nil
 }
 
-// ErrNamespaceNotEmpty is returned when the namespace is not empty.
-var ErrNamespaceNotEmpty = errors.New("cannot remove namespace with running database clusters")
-
 // Run the namespace removal operation.
 func (r *NamespaceRemover) Run(ctx context.Context) error {
 	// This command expects a Helm based installation (< 1.4.0)
@@ -77,27 +144,8 @@ func (r *NamespaceRemover) Run(ctx context.Context) error {
 		return err
 	}
 
-	dbsExist, err := r.kubeClient.DatabasesExist(ctx, r.config.Namespaces...)
-	if err != nil {
-		return errors.Join(err, errors.New("failed to check if databases exist"))
-	}
-
-	if dbsExist && !r.config.Force {
-		return ErrNamespaceNotEmpty
-	}
-
-	removalSteps := []steps.Step{}
-	for _, ns := range r.config.Namespaces {
-		// Check that the namespace exists.
-		exists, managedByEverest, err := namespaceExists(ctx, ns, r.kubeClient)
-		if err != nil {
-			return errors.Join(err, errors.New("failed to check if namespace exists"))
-		}
-		if !exists || !managedByEverest {
-			r.l.Infof("Namespace '%s' does not exist or not managed by Everest", ns)
-			fmt.Fprint(os.Stdout, output.Warn("Namespace (%s) does not exist or not managed by Everest, skipping..", ns))
-			continue
-		}
+	var removalSteps []steps.Step
+	for _, ns := range r.config.NamespaceList {
 		removalSteps = append(removalSteps, NewRemoveNamespaceSteps(ns, r.config.KeepNamespace, r.kubeClient)...)
 	}
 
