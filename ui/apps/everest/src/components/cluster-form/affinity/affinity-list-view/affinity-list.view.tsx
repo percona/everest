@@ -57,6 +57,7 @@ export const AffinityListView = ({
   };
 
   const handleClose = () => {
+    setSelectedAffinityUid(null);
     setOpenAffinityModal(false);
   };
 
