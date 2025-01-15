@@ -39,7 +39,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
@@ -53,13 +53,13 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-credentials, read, default/*",
 					"p, role:test, database-cluster-backups, read, default/*",
 					"p, role:test, database-cluster-restores, read, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "success (admin)",
 				policy: newPolicy(
-					"g, test-user, role:admin",
+					"g, bob, role:admin",
 				),
 			},
 			{
@@ -78,7 +78,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -93,7 +93,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -107,7 +107,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -121,7 +121,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -135,7 +135,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -149,7 +149,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -163,7 +163,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-restores, create, default/*",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -177,7 +177,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-restores, create, default/*",
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -191,13 +191,13 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-restores, create, default/*",
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "test-user"})
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -260,13 +260,13 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
 					"p, role:test, database-cluster-backups, create, default/*",
 					"p, role:test, backup-storages, read, default/test-backup-storage",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "success (admin)",
 				policy: newPolicy(
-					"g, test-user, role:admin",
+					"g, bob, role:admin",
 				),
 			},
 			{
@@ -280,7 +280,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-clusters, update, default/test-cluster",
 					"p, role:test, database-cluster-backups, create, default/*",
 					"p, role:test, backup-storages, read, default/test-backup-storage",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -290,7 +290,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-clusters, update, default/test-cluster",
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
 					"p, role:test, backup-storages, read, default/test-backup-storage",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -300,13 +300,13 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-clusters, update, default/test-cluster",
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
 					"p, role:test, database-cluster-backups, create, default/*",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "test-user"})
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -363,7 +363,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 			{
 				desc: "success (admin)",
 				policy: newPolicy(
-					"g, test-user, role:admin",
+					"g, bob, role:admin",
 				),
 			},
 			{
@@ -374,7 +374,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance",
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
@@ -384,7 +384,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance",
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -395,7 +395,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance",
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -406,7 +406,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance",
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -417,7 +417,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage",
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr",
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -428,13 +428,13 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage",
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "test-user"})
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -593,7 +593,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-3",
 					"p, role:test, database-engines, read, default/percona-server-mongodb-operator",
 
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				assert: func(res *everestv1alpha1.DatabaseClusterList) bool {
 					mustContain := []string{"test-cluster-1", "test-cluster-2", "test-cluster-3"}
@@ -610,7 +610,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 			{
 				desc: "admin",
 				policy: newPolicy(
-					"g, test-user, role:admin",
+					"g, bob, role:admin",
 				),
 				assert: func(res *everestv1alpha1.DatabaseClusterList) bool {
 					mustContain := []string{"test-cluster-1", "test-cluster-2", "test-cluster-3"}
@@ -644,7 +644,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-3",
 					"p, role:test, database-engines, read, default/percona-server-mongodb-operator",
 
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				assert: func(res *everestv1alpha1.DatabaseClusterList) bool {
 					if slices.ContainsFunc(res.Items, func(item everestv1alpha1.DatabaseCluster) bool {
@@ -675,7 +675,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-3",
 					"p, role:test, database-engines, read, default/percona-server-mongodb-operator",
 
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				assert: func(res *everestv1alpha1.DatabaseClusterList) bool {
 					if slices.ContainsFunc(res.Items, func(item everestv1alpha1.DatabaseCluster) bool {
@@ -706,7 +706,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-3",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-3",
 
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				assert: func(res *everestv1alpha1.DatabaseClusterList) bool {
 					if slices.ContainsFunc(res.Items, func(item everestv1alpha1.DatabaseCluster) bool {
@@ -737,7 +737,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-3",
 					"p, role:test, database-engines, read, default/percona-server-mongodb-operator",
 
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				assert: func(res *everestv1alpha1.DatabaseClusterList) bool {
 					if slices.ContainsFunc(res.Items, func(item everestv1alpha1.DatabaseCluster) bool {
@@ -768,7 +768,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-3",
 					"p, role:test, database-engines, read, default/percona-server-mongodb-operator",
 
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				assert: func(res *everestv1alpha1.DatabaseClusterList) bool {
 					if slices.ContainsFunc(res.Items, func(item everestv1alpha1.DatabaseCluster) bool {
@@ -799,7 +799,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-3",
 					"p, role:test, database-engines, read, default/percona-server-mongodb-operator",
 
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				assert: func(res *everestv1alpha1.DatabaseClusterList) bool {
 					if slices.ContainsFunc(res.Items, func(item everestv1alpha1.DatabaseCluster) bool {
@@ -812,7 +812,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "test-user"})
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -844,7 +844,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 			{
 				desc: "admin",
 				policy: newPolicy(
-					"g, test-user, role:admin",
+					"g, bob, role:admin",
 				),
 			},
 			{
@@ -852,14 +852,14 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 				policy: newPolicy(
 					"p, role:test, database-clusters, delete, default/test-cluster",
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "missing delete permission for database-cluster",
 				policy: newPolicy(
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -867,7 +867,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 				desc: "missing read permission for database-engine",
 				policy: newPolicy(
 					"p, role:test, database-clusters, delete, default/test-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -892,7 +892,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 			)
 			return h
 		}
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "test-user"})
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -921,7 +921,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 			{
 				desc: "admin",
 				policy: newPolicy(
-					"g, test-user, role:admin",
+					"g, bob, role:admin",
 				),
 			},
 			{
@@ -929,14 +929,14 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 				policy: newPolicy(
 					"p, role:test, database-clusters, read, default/test-cluster",
 					"p, role:test, database-cluster-credentials, read, default/test-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "missing read permission for database-cluster",
 				policy: newPolicy(
 					"p, role:test, database-cluster-credentials, read, default/test-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -944,7 +944,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 				desc: "missing read permission for database-cluster-credentials",
 				policy: newPolicy(
 					"p, role:test, database-clusters, read, default/test-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -956,7 +956,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 				&api.DatabaseClusterCredential{}, nil)
 			return h
 		}
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "test-user"})
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -985,21 +985,21 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 			{
 				desc: "admin",
 				policy: newPolicy(
-					"g, test-user, role:admin",
+					"g, bob, role:admin",
 				),
 			},
 			{
 				desc: "success",
 				policy: newPolicy(
 					"p, role:test, database-clusters, read, default/test-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "missing read permission for database-cluster",
 				policy: newPolicy(
 					"p, role:test, database-cluster-credentials, read, default/test-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -1011,7 +1011,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 				[]api.DatabaseClusterComponent{}, nil)
 			return h
 		}
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "test-user"})
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -1040,21 +1040,21 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 			{
 				desc: "admin",
 				policy: newPolicy(
-					"g, test-user, role:admin",
+					"g, bob, role:admin",
 				),
 			},
 			{
 				desc: "success",
 				policy: newPolicy(
 					"p, role:test, database-clusters, read, default/test-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 			},
 			{
 				desc: "missing read permission for database-cluster",
 				policy: newPolicy(
 					"p, role:test, database-cluster-credentials, read, default/test-cluster",
-					"g, test-user, role:test",
+					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
@@ -1066,7 +1066,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 				&api.DatabaseClusterPitr{}, nil)
 			return h
 		}
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "test-user"})
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
