@@ -3,7 +3,6 @@ package upgrade
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 
 	"github.com/AlekSi/pointer"
 	"helm.sh/helm/v3/pkg/cli/values"
@@ -16,6 +15,7 @@ import (
 	"github.com/percona/everest/pkg/cli/helm"
 	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
 	"github.com/percona/everest/pkg/cli/steps"
+	"github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	. "github.com/percona/everest/pkg/utils/must" //nolint:revive,stylecheck
@@ -140,9 +140,10 @@ func (u *Upgrade) upgradeEverestDBNamespaceHelmChart(ctx context.Context, namesp
 		ReleaseNamespace: namespace,
 	}
 	if err := installer.Init(u.config.KubeconfigPath, helm.ChartOptions{
-		URL:     u.config.RepoURL,
-		Name:    helm.EverestDBNamespaceChartName,
-		Version: u.upgradeToVersion,
+		URL:       u.config.RepoURL,
+		Directory: utils.DBNamespaceSubChartPath(u.config.ChartDir),
+		Name:      helm.EverestDBNamespaceChartName,
+		Version:   u.upgradeToVersion,
 	}); err != nil {
 		return fmt.Errorf("could not initialize Helm installer: %w", err)
 	}
@@ -191,13 +192,9 @@ func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version 
 		Values:           values,
 	}
 
-	var directory string
-	if u.config.ChartDir != "" {
-		directory = filepath.Join(u.config.ChartDir, "charts/everest-db-namespace")
-	}
 	if err := installer.Init(u.config.KubeconfigPath, helm.ChartOptions{
 		URL:       u.config.RepoURL,
-		Directory: directory,
+		Directory: utils.DBNamespaceSubChartPath(u.config.ChartDir),
 		Name:      helm.EverestDBNamespaceChartName,
 		Version:   version,
 	}); err != nil {
