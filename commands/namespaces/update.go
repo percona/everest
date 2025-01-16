@@ -2,6 +2,8 @@
 package namespaces
 
 import (
+	"errors"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -43,6 +45,12 @@ func NewUpdateCommand(l *zap.SugaredLogger) *cobra.Command {
 				cmd.Flags().Lookup("operator.xtradb-cluster").Changed)
 
 			if err := c.Populate(cmd.Context(), false, askOperators); err != nil {
+				if errors.Is(err, namespaces.ErrNamespaceNotManagedByEverest) {
+					err = fmt.Errorf("%w. HINT: use 'everestctl namespaces add --%s %s' first to make namespace managed by Everest",
+						err,
+						cli.FlagTakeNamespaceOwnership,
+						c.Namespaces)
+				}
 				output.PrintError(err, l, !enableLogging)
 				os.Exit(1)
 			}
