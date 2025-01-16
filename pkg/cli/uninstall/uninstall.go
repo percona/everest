@@ -37,13 +37,6 @@ import (
 const (
 	pollInterval = 5 * time.Second
 	pollTimeout  = 5 * time.Minute
-
-	// FlagCatalogNamespace is the name of the catalog namespace flag.
-	FlagCatalogNamespace = "catalog-namespace"
-	// FlagSkipEnvDetection is the name of the skip env detection flag.
-	FlagSkipEnvDetection = "skip-env-detection"
-	// FlagSkipOLM is the name of the skip OLM flag.
-	FlagSkipOLM = "skip-olm"
 )
 
 // Uninstall implements logic for the cluster command.
@@ -57,14 +50,13 @@ type Uninstall struct {
 // Config stores configuration for the Uninstall command.
 type Config struct {
 	// KubeconfigPath is a path to a kubeconfig
-	KubeconfigPath string `mapstructure:"kubeconfig"`
+	KubeconfigPath string
 	// AssumeYes is true when all questions can be skipped.
-	AssumeYes bool `mapstructure:"assume-yes"`
+	AssumeYes bool
 	// Force is true when we shall not prompt for removal.
 	Force bool
 	// SkipEnvDetection skips detecting the Kubernetes environment.
-	SkipEnvDetection bool `mapstructure:"skip-env-detection"`
-
+	SkipEnvDetection bool
 	// If set, we will print the pretty output.
 	Pretty bool
 }

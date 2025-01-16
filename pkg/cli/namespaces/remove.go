@@ -1,3 +1,19 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package namespaces provides the functionality to manage namespaces.
 package namespaces
 
 import (
@@ -18,7 +34,6 @@ import (
 	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/output"
 )
 
 const (
@@ -29,16 +44,41 @@ const (
 // NamespaceRemoveConfig is the configuration for the namespace removal operation.
 type NamespaceRemoveConfig struct {
 	// KubeconfigPath is a path to a kubeconfig
-	KubeconfigPath string `mapstructure:"kubeconfig"`
+	KubeconfigPath string
 	// Force delete a namespace by deleting databases in it.
-	Force bool `mapstructure:"force"`
+	Force bool
 	// If set, we will keep the namespace
-	KeepNamespace bool `mapstructure:"keep-namespace"`
+	KeepNamespace bool
 	// If set, we will print the pretty output.
 	Pretty bool
 
-	// Namespaces (DB Namespaces) to remove
-	Namespaces []string
+	// Namespaces (DB Namespaces managed by Everest) to remove
+	Namespaces string
+	// NamespaceList is a list of namespaces to remove.
+	// This is populated internally after validating the Namespaces field.:
+	NamespaceList []string
+}
+
+// populate the configuration with the required values.
+func (cfg *NamespaceRemoveConfig) populate(ctx context.Context, kubeClient *kubernetes.Kubernetes) error {
+	nsList, err := ValidateNamespaces(cfg.Namespaces)
+	if err != nil {
+		return err
+	}
+
+	for _, ns := range nsList {
+		// Check that the namespace exists.
+		exists, managedByEverest, err := namespaceExists(ctx, ns, kubeClient)
+		if err != nil {
+			return errors.Join(err, errors.New("failed to check if namespace exists"))
+		}
+		if !exists || !managedByEverest {
+			return errors.New(fmt.Sprintf("namespace '%s' does not exist or not managed by Everest", ns))
+		}
+	}
+
+	cfg.NamespaceList = nsList
+	return nil
 }
 
 // NamespaceRemover is the CLI operation to remove namespaces.
@@ -77,7 +117,11 @@ func (r *NamespaceRemover) Run(ctx context.Context) error {
 		return err
 	}
 
-	dbsExist, err := r.kubeClient.DatabasesExist(ctx, r.config.Namespaces...)
+	if err := r.config.populate(ctx, r.kubeClient); err != nil {
+		return err
+	}
+
+	dbsExist, err := r.kubeClient.DatabasesExist(ctx, r.config.NamespaceList...)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to check if databases exist"))
 	}
@@ -86,18 +130,8 @@ func (r *NamespaceRemover) Run(ctx context.Context) error {
 		return ErrNamespaceNotEmpty
 	}
 
-	removalSteps := []steps.Step{}
-	for _, ns := range r.config.Namespaces {
-		// Check that the namespace exists.
-		exists, managedByEverest, err := namespaceExists(ctx, ns, r.kubeClient)
-		if err != nil {
-			return errors.Join(err, errors.New("failed to check if namespace exists"))
-		}
-		if !exists || !managedByEverest {
-			r.l.Infof("Namespace '%s' does not exist or not managed by Everest", ns)
-			fmt.Fprint(os.Stdout, output.Warn("Namespace (%s) does not exist or not managed by Everest, skipping..", ns))
-			continue
-		}
+	var removalSteps []steps.Step
+	for _, ns := range r.config.NamespaceList {
 		removalSteps = append(removalSteps, NewRemoveNamespaceSteps(ns, r.config.KeepNamespace, r.kubeClient)...)
 	}
 
