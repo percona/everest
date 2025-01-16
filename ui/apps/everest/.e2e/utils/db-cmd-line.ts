@@ -15,7 +15,7 @@
 
 import { execSync } from 'child_process';
 import { expect } from '@playwright/test';
-import { isShardingEnabled } from '../release/demand-backup-psmdb-sharding.e2e';
+import { isShardingEnabled } from '../release/psmdb-sharding.e2e';
 
 export const getDBHost = async (cluster: string, namespace: string) => {
   try {
