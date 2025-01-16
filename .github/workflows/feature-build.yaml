@@ -427,8 +427,8 @@ jobs:
           printf "To install FB using helm:\n\
           1. Download the 'helm' artifact below.\n\
           2. Navigate to \`/everest/dev/fb directory\`.\n\
-          3. Run the command:\n\`\`\`VS_IMAGE=$VS_TAG HELM_PATH=<path_to_your_helmchart> sh helm.sh\`\`\`\n\
-              \nexample:\n\`\`\`VS_IMAGE=$VS_TAG HELM_PATH=/Users/oxana/Downloads/percona-helm-charts sh helm.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+          3. Run the command:\n\`\`\`VS_IMAGE=$VS_TAG HELM_PATH=<path_to_your_helmchart> bash helm.sh\`\`\`\n\
+              \nexample:\n\`\`\`VS_IMAGE=$VS_TAG HELM_PATH=/Users/oxana/Downloads/percona-helm-charts bash helm.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
           
           printf "____________________\n" >> "$GITHUB_STEP_SUMMARY"
           
@@ -436,7 +436,13 @@ jobs:
           1. Download the 'helm' artifact below.\n\
           2. Download a CLI build from artifacts below.\n\
           3. Navigate to \`/everest/dev/fb\` directory.\n\
-          4. Run the command:\n\`\`\`VS_IMAGE=$VS_TAG VERSION=$VERSION EVEREST_CTL_PATH=<path_to_everestctl> HELM_PATH=<path_to_your_helmchart>  sh cli.sh\`\`\`\n\
-              \nexample:\n\`\`\`VS_IMAGE=$VS_TAG VERSION=$VERSION HELM_PATH=/Users/oxana/Downloads/percona-helm-charts EVEREST_CTL_PATH=/Users/oxana/Downloads/everestctl-darwin-arm64 sh cli.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+          4. Run the command:\n\`\`\`VS_IMAGE=$VS_TAG VERSION=$VERSION EVEREST_CTL_PATH=<path_to_everestctl> HELM_PATH=<path_to_your_helmchart> bash cli.sh\`\`\`\n\
+              \nexample:\n\`\`\`VS_IMAGE=$VS_TAG VERSION=$VERSION HELM_PATH=/Users/oxana/Downloads/percona-helm-charts EVEREST_CTL_PATH=/Users/oxana/Downloads/everestctl-darwin-arm64 bash cli.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
 
+
+          printf "____________________\n" >> "$GITHUB_STEP_SUMMARY"
+          
+          printf "To clean up the environment after a FB:\n\
+          1. Delete VS: \`kubectl delete deployment percona-version-service && kubectl delete svc percona-version-service\`\n\
+          2. Uninstall Everest using the FB everestctl build: \`<path_to_everestctl> uninstall --assume-yes --force\` \n" >> "$GITHUB_STEP_SUMMARY"
 
