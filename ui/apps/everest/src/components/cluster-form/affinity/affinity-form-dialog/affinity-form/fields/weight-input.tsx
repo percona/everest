@@ -5,7 +5,7 @@ const WeightInput = () => (
   <TextInput
     name={AffinityFormFields.weight}
     textFieldProps={{
-      helperText: '0 - 100',
+      helperText: '1 - 100',
       type: 'number',
       sx: {
         width: '213px',
