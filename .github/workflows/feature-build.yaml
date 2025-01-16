@@ -440,3 +440,9 @@ jobs:
               \nexample:\n\`\`\`VS_IMAGE=$VS_TAG VERSION=$VERSION HELM_PATH=/Users/oxana/Downloads/percona-helm-charts EVEREST_CTL_PATH=/Users/oxana/Downloads/everestctl-darwin-arm64 bash cli.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
 
 
+          printf "____________________\n" >> "$GITHUB_STEP_SUMMARY"
+          
+          printf "To clean up the environment after a FB:\n\
+          1. Delete VS: \`kubectl delete deployment percona-version-service && kubectl delete svc percona-version-service\`\n\
+          2. Uninstall Everest using the FB everestctl build: \`<path_to_everestctl> uninstall --assume-yes --force\` \n" >> "$GITHUB_STEP_SUMMARY"
+
