@@ -20,6 +20,8 @@ import { Drawer } from '../drawer/Drawer';
 import { WelcomeDialog } from '../welcome-dialog/welcome-dialog';
 import { Messages } from './Main.messages';
 import LoadingPageSkeleton from 'components/loading-page-skeleton/LoadingPageSkeleton';
+import UpgradeEverestReloadDialog from 'modals/upgrade-reload-everest-dialog';
+import { UpgradeEverestContext } from 'contexts/upgrade-everest';
 
 export const Main = () => {
   const theme = useTheme();
@@ -28,6 +30,11 @@ export const Main = () => {
     true
   );
   const { activeBreakpoint } = useContext(DrawerContext);
+  const {
+    currentVersion: currentEverestVersion,
+    openReloadDialog,
+    setOpenReloadDialog,
+  } = useContext(UpgradeEverestContext);
   const { isFetching, isError, refetch } = useKubernetesClusterInfo([
     'initial-k8-info',
   ]);
@@ -86,6 +93,11 @@ export const Main = () => {
                 closeDialog={handleCloseWelcomeDialog}
               />
             )}
+            <UpgradeEverestReloadDialog
+              isOpen={openReloadDialog}
+              closeModal={() => setOpenReloadDialog(false)}
+              version={currentEverestVersion || ''}
+            />
           </Box>
         </Box>
       </ErrorBoundary>

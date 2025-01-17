@@ -7,5 +7,6 @@ export const useVersion = (options?: PerconaQueryOptions<EverestVersion>) =>
   useQuery({
     queryKey: ['everest-version'],
     queryFn: getVersionFn,
+    refetchInterval: 5000,
     ...options,
   });
