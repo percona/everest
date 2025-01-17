@@ -25,10 +25,11 @@ var (
 // NewAddCommand returns a new command to add a new namespace.
 func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "add",
+		Use:     "add [flags] NAMESPACES",
 		Long:    "Add a new namespace",
 		Short:   "Add a new namespace",
-		Example: `everestctl namespaces add [NAMESPACE] [FLAGS]`,
+		Example: `everestctl namespaces add --operator.mongodb=true --operator.postgresql=false --operator.xtradb-cluster=false --skip-wizard ns-1,ns-2`,
+		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			initAddViperFlags(cmd)
 			c := &namespaces.NamespaceAddConfig{}
@@ -39,12 +40,7 @@ func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
 			}
 			bindInstallHelmOpts(c)
 
-			if len(args) != 1 {
-				output.PrintError(fmt.Errorf("invalid number of arguments: expected 1, got %d", len(args)), l, true)
-				os.Exit(1)
-			}
 			c.Namespaces = args[0]
-
 			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
 			c.Pretty = !enableLogging
 
@@ -83,6 +79,7 @@ func initAddFlags(cmd *cobra.Command) {
 	cmd.Flags().MarkHidden(cli.FlagDisableTelemetry) //nolint:errcheck,gosec
 	cmd.Flags().Bool(cli.FlagSkipWizard, false, "Skip installation wizard")
 	cmd.Flags().Bool(cli.FlagTakeNamespaceOwnership, false, "If the specified namespace already exists, take ownership of it")
+	cmd.Flags().Bool(cli.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
 
 	cmd.Flags().String(helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
 	cmd.Flags().MarkHidden(helm.FlagChartDir) //nolint:errcheck,gosec
@@ -99,6 +96,7 @@ func initAddViperFlags(cmd *cobra.Command) {
 	viper.BindPFlag(cli.FlagSkipWizard, cmd.Flags().Lookup(cli.FlagSkipWizard))                         //nolint:errcheck,gosec
 	viper.BindPFlag(cli.FlagDisableTelemetry, cmd.Flags().Lookup(cli.FlagDisableTelemetry))             //nolint:errcheck,gosec
 	viper.BindPFlag(cli.FlagTakeNamespaceOwnership, cmd.Flags().Lookup(cli.FlagTakeNamespaceOwnership)) //nolint:errcheck,gosec
+	viper.BindPFlag(cli.FlagSkipEnvDetection, cmd.Flags().Lookup(cli.FlagSkipEnvDetection))             //nolint:errcheck,gosec
 
 	viper.BindPFlag(helm.FlagChartDir, cmd.Flags().Lookup(helm.FlagChartDir))     //nolint:errcheck,gosec
 	viper.BindPFlag(helm.FlagRepository, cmd.Flags().Lookup(helm.FlagRepository)) //nolint:errcheck,gosec
