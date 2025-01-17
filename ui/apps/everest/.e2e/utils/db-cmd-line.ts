@@ -328,7 +328,10 @@ export const configureMongoDBSharding = async (
   cluster: string,
   namespace: string
 ) => {
+  console.log('Starting MongoDB sharding configuration...');
+
   // Enable sharding for the database
+
   await queryPSMDB(
     cluster,
     namespace,
@@ -347,6 +350,7 @@ export const configureMongoDBSharding = async (
   );
 
   // Manually split chunks for t1
+
   await queryPSMDB(
     cluster,
     namespace,
@@ -355,6 +359,12 @@ export const configureMongoDBSharding = async (
   );
 
   // Move chunks for t1
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'admin',
+    'sh.moveChunk(\\"test.t1\\", { a: MinKey }, \\"rs0\\");'
+  );
   await queryPSMDB(
     cluster,
     namespace,
@@ -371,7 +381,6 @@ export const configureMongoDBSharding = async (
     'admin',
     'sh.shardCollection(\\"test.t2\\", { b: 1 });'
   );
-
   // Manually split chunks for t2
   await queryPSMDB(
     cluster,
@@ -379,20 +388,28 @@ export const configureMongoDBSharding = async (
     'admin',
     'sh.splitAt(\\"test.t2\\", { b: 2 });'
   );
-
   // Move chunks for t2
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'admin',
+    'sh.moveChunk(\\"test.t2\\", { b: MinKey }, \\"rs0\\");'
+  );
+
   await queryPSMDB(
     cluster,
     namespace,
     'admin',
     'sh.moveChunk(\\"test.t2\\", { b: 2 }, \\"rs1\\");'
   );
+  console.log('MongoDB sharding configuration completed successfully.');
 };
 
 export const validateMongoDBSharding = async (
   cluster: string,
   namespace: string
 ) => {
+  console.log('Validating MongoDB sharding...');
   // Collection t1
   // Fetch UUID for test.t1
   const t1CollectionString = await queryPSMDB(
@@ -403,12 +420,16 @@ export const validateMongoDBSharding = async (
   );
 
   // Parse string to valid JavaScript object t1Collection
+  console.log('t1 Collection String:', t1CollectionString);
   const t1Collection = eval(
     t1CollectionString.replace(/ObjectId|ISODate|UUID|Timestamp/g, '')
   );
 
   // Extract uuid of test.t1 collection
   const t1UUID = t1Collection[0]?.uuid;
+  console.log('t1 UUID:', t1UUID);
+
+  console.log('Fetching chunks for collection t1...');
 
   // Fetch chunks for test.t1 using UUID
   const t1query = `db.chunks.aggregate([
@@ -417,6 +438,7 @@ export const validateMongoDBSharding = async (
   ]).toArray();`;
 
   const t1result = await queryPSMDB(cluster, namespace, 'config', t1query);
+  console.log('t1 Chunks Result:', t1result);
 
   // Preprocess the string to make it valid JSON
   const t1sanitizedResult = t1result
@@ -425,15 +447,22 @@ export const validateMongoDBSharding = async (
 
   // Parse the string to convert it into a JavaScript array
   const t1chunks = JSON.parse(t1sanitizedResult);
+  console.log('t1 Chunks:', t1chunks);
 
   // Extract the shard IDs (rs0 and rs1)
   const t1shardIds = t1chunks.map((chunk: { _id: string }) => chunk._id);
+  console.log('t1 Shard IDs:', t1shardIds);
 
   // Check if specific shard IDs exist
   const t1hasRs0 = t1shardIds.includes('rs0');
   const t1hasRs1 = t1shardIds.includes('rs1');
 
   // Assert that both shards are present
+
+  // Log results of shard existence checks
+  console.log('Does t1 have shard rs0?:', t1hasRs0);
+  console.log('Does t1 have shard rs1?:', t1hasRs1);
+
   expect(t1hasRs0).toBe(true);
   expect(t1hasRs1).toBe(true);
 
@@ -445,7 +474,7 @@ export const validateMongoDBSharding = async (
     'config',
     'db.collections.find({ _id: \\"test.t2\\" });'
   );
-
+  console.log('t2 Collection String:', t2CollectionString);
   // Parse string to valid JavaScript object t2Collection
   const t2Collection = eval(
     t2CollectionString.replace(/ObjectId|ISODate|UUID|Timestamp/g, '')
@@ -453,6 +482,9 @@ export const validateMongoDBSharding = async (
 
   // Extract uuid of test.t2 collection
   const t2UUID = t2Collection[0]?.uuid;
+  console.log('t2 UUID:', t2UUID);
+
+  console.log('Fetching chunks for collection t2...');
 
   // Fetch chunks for test.2 using UUID
   const t2query = `db.chunks.aggregate([
@@ -461,6 +493,7 @@ export const validateMongoDBSharding = async (
   ]).toArray();`;
 
   const t2result = await queryPSMDB(cluster, namespace, 'config', t2query);
+  console.log('t2 Chunks Result:', t2result);
 
   // Preprocess the string to make it valid JSON
   const t2sanitizedResult = t2result
@@ -474,10 +507,13 @@ export const validateMongoDBSharding = async (
   const t2shardIds = t2chunks.map((chunk: { _id: string }) => chunk._id);
 
   // Check if specific shard IDs exist
+  console.log('t2 Shard IDs:', t2shardIds);
   const t2hasRs0 = t2shardIds.includes('rs0');
   const t2hasRs1 = t2shardIds.includes('rs1');
 
   // Assert that both shards are present
+  console.log('t2 Shard IDs:', t2shardIds);
   expect(t2hasRs0).toBe(true);
   expect(t2hasRs1).toBe(true);
+  console.log('MongoDB sharding validation complete.');
 };

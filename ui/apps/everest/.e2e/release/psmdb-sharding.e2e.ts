@@ -35,7 +35,6 @@ import {
   waitForDelete,
   findRowAndClickActions,
 } from '@e2e/utils/table';
-import { checkError } from '@e2e/utils/generic';
 import {
   deleteMonitoringInstance,
   listMonitoringInstances,
@@ -49,6 +48,7 @@ import {
   dropTestDB,
   queryTestDB,
 } from '@e2e/utils/db-cmd-line';
+import { getDbClusterAPI } from '@e2e/utils/db-cluster';
 
 export let isShardingEnabled = false;
 
@@ -157,7 +157,7 @@ test.describe(
           .click();
         await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
         await populateResources(page, 0.6, 1, 1, size);
-        // await moveForward(page);
+        //await moveForward(page);
       });
 
       // Step to set number of shards
@@ -166,6 +166,20 @@ test.describe(
         await expect(shardsInput).toBeVisible();
         await shardsInput.fill('2');
         await expect(shardsInput).toHaveValue('2');
+        //await moveForward(page);
+      });
+
+      // Step N Config Servers
+      await test.step('Set number of config servers', async () => {
+        const configServerButton = await page.getByTestId(
+          'shard-config-servers-3'
+        );
+        await expect(configServerButton).toBeVisible();
+        await configServerButton.click();
+        await expect(configServerButton).toHaveAttribute(
+          'aria-pressed',
+          'true'
+        );
         await moveForward(page);
       });
 
@@ -210,25 +224,13 @@ test.describe(
       });
 
       await test.step('Check db cluster k8s object options', async () => {
-        const response = await request.get(
-          `/v1/namespaces/${namespace}/database-clusters`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+        const addedCluster = await getDbClusterAPI(
+          clusterName,
+          EVEREST_CI_NAMESPACES.EVEREST_UI,
+          request,
+          token
         );
 
-        await checkError(response);
-
-        // TODO: replace with correct payload typings from GET DB Clusters
-        const { items: clusters } = await response.json();
-
-        const addedCluster = clusters.find(
-          (cluster) => cluster.metadata.name === clusterName
-        );
-
-        expect(addedCluster).not.toBeUndefined();
         expect(addedCluster?.spec.engine.type).toBe(db);
         expect(addedCluster?.spec.engine.replicas).toBe(size);
         expect(['600m', '0.6']).toContain(
@@ -239,10 +241,9 @@ test.describe(
         );
         expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
         expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
-
-        //if (db != 'psmdb') {
-        //  expect(addedCluster?.spec.proxy.replicas).toBe(size);
-        //}
+        if (db != 'psmdb') {
+          expect(addedCluster?.spec.proxy.replicas).toBe(size);
+        }
       });
     });
 
@@ -271,7 +272,7 @@ test.describe(
       ).not.toBeEmpty();
       await page.getByTestId('form-dialog-create').click();
 
-      await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 500000);
+      await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 300000);
     });
 
     test(`Delete data [${db} size ${size}]`, async () => {
@@ -306,7 +307,7 @@ test.describe(
       expect(t1Data.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
 
       const t2Data = await queryTestDB(clusterName, namespace, 't2');
-      expect(t2Data.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
+      expect(t2Data.trim()).toBe('[ { b: 1 }, { b: 2 }, { b: 3 } ]');
 
       await test.step('Validate sharding', async () => {
         const shardingStatus = await queryPSMDB(
