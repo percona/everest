@@ -62,6 +62,5 @@ export const advancedConfigurationModalDefaultValues = (
       : [{ sourceRange: '' }],
     [AdvancedConfigurationFields.affinityRules]:
       dbPayloadToAffinityRules(dbCluster),
-    // TODO: for now empty list, has to be loaded from dbCluster when edit from Components page is implemented
   };
 };

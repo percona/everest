@@ -356,7 +356,7 @@ export const resourcesFormSchema = (
 export const CUSTOM_NR_UNITS_INPUT_VALUE = 'custom-units-nr';
 const DEFAULT_TOPOLOGY_KEY = 'kubernetes.io/hostname';
 
-const generateDefaultAffinityRule = (
+export const generateDefaultAffinityRule = (
   component: AffinityComponent
 ): AffinityRule => ({
   component,

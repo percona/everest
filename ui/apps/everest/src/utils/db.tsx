@@ -94,7 +94,7 @@ export const transformSchedulesIntoManageableSchedules = async (
 
 export const affinityRulesToDbPayload = (
   affinityRules: AffinityRule[]
-): Affinity | undefined => {
+): Affinity => {
   const generatePodAffinityTerm = (
     topologyKey: string,
     operator: AffinityOperator,
@@ -243,7 +243,7 @@ export const affinityRulesToDbPayload = (
     }),
   };
 
-  return Object.keys(finalObject).length > 0 ? finalObject : undefined;
+  return finalObject;
 };
 
 export const dbPayloadToAffinityRules = (

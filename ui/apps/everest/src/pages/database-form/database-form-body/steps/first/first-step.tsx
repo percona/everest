@@ -40,6 +40,7 @@ import { Messages } from './first-step.messages.ts';
 import { filterAvailableDbVersionsForDbEngineEdition } from 'components/cluster-form/db-version/utils.ts';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import {
+  generateDefaultAffinityRule,
   NODES_DEFAULT_SIZES,
   PROXIES_DEFAULT_SIZES,
   ResourceSize,
@@ -47,7 +48,10 @@ import {
 import { DbVersion } from 'components/cluster-form/db-version';
 import { useDBEnginesForDbEngineTypes } from 'hooks/index.ts';
 import { useDatabasePageDefaultValues } from 'pages/database-form/useDatabaseFormDefaultValues.ts';
-import { AffinityRule } from 'shared-types/affinity.types.ts';
+import {
+  AffinityComponent,
+  AffinityRule,
+} from 'shared-types/affinity.types.ts';
 import { filterOutUnavailableAffinityRulesForMongo } from 'pages/database-form/database-form.utils.ts';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
@@ -228,22 +232,29 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
 
   const onShardingToggleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (!e.target.checked) {
+      const enabled = e.target.checked;
+      const rules: AffinityRule[] = getValues(DbWizardFormFields.affinityRules);
+      const { isDirty } = getFieldState(DbWizardFormFields.affinityRules);
+
+      if (!enabled) {
         resetField(DbWizardFormFields.shardNr, {
           keepError: false,
         });
         resetField(DbWizardFormFields.shardConfigServers, {
           keepError: false,
         });
+      } else if (!isDirty) {
+        rules.push(generateDefaultAffinityRule(AffinityComponent.Proxy));
+        rules.push(generateDefaultAffinityRule(AffinityComponent.ConfigServer));
       }
-      const rules: AffinityRule[] = getValues(DbWizardFormFields.affinityRules);
+
       const filteredRules = filterOutUnavailableAffinityRulesForMongo(
         rules,
-        e.target.checked
+        enabled
       );
       setValue(DbWizardFormFields.affinityRules, filteredRules);
     },
-    [getValues, resetField, setValue]
+    [getFieldState, getValues, resetField, setValue]
   );
 
   useEffect(() => {
