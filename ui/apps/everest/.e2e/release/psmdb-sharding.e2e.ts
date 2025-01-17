@@ -259,7 +259,8 @@ test.describe(
 
     // Validate Sharding for MongoDB
     test(`Validate Sharding for MongoDB [${db} size ${size}]`, async () => {
-      await validateMongoDBSharding(clusterName, namespace);
+      await validateMongoDBSharding(clusterName, namespace, 't1');
+      await validateMongoDBSharding(clusterName, namespace, 't2');
     });
 
     test(`Create demand backup [${db} size ${size}]`, async ({ page }) => {

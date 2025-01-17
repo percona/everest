@@ -315,6 +315,7 @@ export const prepareMongoDBTestDB = async (
     'test',
     'db.t1.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }]);'
   );
+  await queryPSMDB(cluster, namespace, 'test', 'db.t1.createIndex({ a: 1 });');
 
   await queryPSMDB(
     cluster,
@@ -322,6 +323,8 @@ export const prepareMongoDBTestDB = async (
     'test',
     'db.t2.insertMany([{ b: 1 }, { b: 2 }, { b: 3 }]);'
   );
+  // Create Index
+  await queryPSMDB(cluster, namespace, 'test', 'db.t2.createIndex({ b: 1 });');
 };
 
 export const configureMongoDBSharding = async (
@@ -345,14 +348,6 @@ export const configureMongoDBSharding = async (
     key: object,
     splitKey: object
   ) => {
-    // Create Index
-    await queryPSMDB(
-      cluster,
-      namespace,
-      'test',
-      `db.${collectionName}.createIndex(${JSON.stringify(key)});`
-    );
-
     // Create the collection
     await queryPSMDB(
       cluster,
@@ -396,113 +391,59 @@ export const configureMongoDBSharding = async (
 
 export const validateMongoDBSharding = async (
   cluster: string,
-  namespace: string
+  namespace: string,
+  collectionName: string
 ) => {
-  console.log('Validating MongoDB sharding...');
-  // Collection t1
-  // Fetch UUID for test.t1
-  const t1CollectionString = await queryPSMDB(
+  console.log(`Validating MongoDB sharding for collection: ${collectionName}`);
+
+  // Fetch the collection details
+  const collectionString = await queryPSMDB(
     cluster,
     namespace,
     'config',
-    'db.collections.find({ _id: \\"test.t1\\" });'
+    `db.collections.find({ _id: \\"test.${collectionName}\\" });`
+  );
+  console.log(`${collectionName} Collection String:`, collectionString);
+
+  // Parse the collection details
+  const collection = eval(
+    collectionString.replace(/ObjectId|ISODate|UUID|Timestamp/g, '')
   );
 
-  // Parse string to valid JavaScript object t1Collection
-  console.log('t1 Collection String:', t1CollectionString);
-  const t1Collection = eval(
-    t1CollectionString.replace(/ObjectId|ISODate|UUID|Timestamp/g, '')
-  );
+  const collectionUUID = collection[0]?.uuid;
+  console.log(`${collectionName} Collection UUID:`, collectionUUID);
 
-  // Extract uuid of test.t1 collection
-  const t1UUID = t1Collection[0]?.uuid;
-  console.log('t1 UUID:', t1UUID);
+  // Fetch the chunks for the collection
+  console.log(`Fetching chunks for collection: ${collectionName}...`);
 
-  console.log('Fetching chunks for collection t1...');
-
-  // Fetch chunks for test.t1 using UUID
-  const t1query = `db.chunks.aggregate([
-    { \\$match: { uuid: UUID(\\"${t1UUID}\\") } },
-    { \\$group: { _id: \\"\\$shard\\" } }
+  const query = `db.chunks.aggregate([
+    { \\$match: { uuid: UUID(\\"${collectionUUID}\\") } },
+    { \\$group: { _id: \\"\\$shard\\" } } 
   ]).toArray();`;
 
-  const t1result = await queryPSMDB(cluster, namespace, 'config', t1query);
-  console.log('t1 Chunks Result:', t1result);
+  const queryResult = await queryPSMDB(cluster, namespace, 'config', query);
+  console.log(`${collectionName} Chunks Result:`, queryResult);
 
-  // Preprocess the string to make it valid JSON
-  const t1sanitizedResult = t1result
+  // Preprocess and parse chunk results
+  const sanitizedResult = queryResult
     .replace(/_id/g, '"_id"')
     .replace(/'/g, '"');
+  const chunks = JSON.parse(sanitizedResult);
+  console.log(`${collectionName} Chunks:`, chunks);
 
-  // Parse the string to convert it into a JavaScript array
-  const t1chunks = JSON.parse(t1sanitizedResult);
-  console.log('t1 Chunks:', t1chunks);
-
-  // Extract the shard IDs (rs0 and rs1)
-  const t1shardIds = t1chunks.map((chunk: { _id: string }) => chunk._id);
-  console.log('t1 Shard IDs:', t1shardIds);
+  // Extract shard IDs (e.g., rs0 and rs1)
+  const shardIds = chunks.map((chunk: { _id: string }) => chunk._id);
+  console.log(`${collectionName} Shard IDs:`, shardIds);
 
   // Check if specific shard IDs exist
-  const t1hasRs0 = t1shardIds.includes('rs0');
-  const t1hasRs1 = t1shardIds.includes('rs1');
+  const hasRs0 = shardIds.includes('rs0');
+  const hasRs1 = shardIds.includes('rs1');
+  console.log(`Does ${collectionName} have shard rs0?:`, hasRs0);
+  console.log(`Does ${collectionName} have shard rs1?:`, hasRs1);
 
   // Assert that both shards are present
+  expect(hasRs0).toBe(true);
+  expect(hasRs1).toBe(true);
 
-  // Log results of shard existence checks
-  console.log('Does t1 have shard rs0?:', t1hasRs0);
-  console.log('Does t1 have shard rs1?:', t1hasRs1);
-
-  expect(t1hasRs0).toBe(true);
-  expect(t1hasRs1).toBe(true);
-
-  // Collection t2
-  // Fetch UUID for test.t2
-  const t2CollectionString = await queryPSMDB(
-    cluster,
-    namespace,
-    'config',
-    'db.collections.find({ _id: \\"test.t2\\" });'
-  );
-  console.log('t2 Collection String:', t2CollectionString);
-  // Parse string to valid JavaScript object t2Collection
-  const t2Collection = eval(
-    t2CollectionString.replace(/ObjectId|ISODate|UUID|Timestamp/g, '')
-  );
-
-  // Extract uuid of test.t2 collection
-  const t2UUID = t2Collection[0]?.uuid;
-  console.log('t2 UUID:', t2UUID);
-
-  console.log('Fetching chunks for collection t2...');
-
-  // Fetch chunks for test.2 using UUID
-  const t2query = `db.chunks.aggregate([
-    { \\$match: { uuid: UUID(\\"${t2UUID}\\") } },
-    { \\$group: { _id: \\"\\$shard\\" } }
-  ]).toArray();`;
-
-  const t2result = await queryPSMDB(cluster, namespace, 'config', t2query);
-  console.log('t2 Chunks Result:', t2result);
-
-  // Preprocess the string to make it valid JSON
-  const t2sanitizedResult = t2result
-    .replace(/_id/g, '"_id"')
-    .replace(/'/g, '"');
-
-  // Parse the string to convert it into a JavaScript array
-  const t2chunks = JSON.parse(t2sanitizedResult);
-
-  // Extract the shard IDs (rs0 and rs1)
-  const t2shardIds = t2chunks.map((chunk: { _id: string }) => chunk._id);
-
-  // Check if specific shard IDs exist
-  console.log('t2 Shard IDs:', t2shardIds);
-  const t2hasRs0 = t2shardIds.includes('rs0');
-  const t2hasRs1 = t2shardIds.includes('rs1');
-
-  // Assert that both shards are present
-  console.log('t2 Shard IDs:', t2shardIds);
-  expect(t2hasRs0).toBe(true);
-  expect(t2hasRs1).toBe(true);
-  console.log('MongoDB sharding validation complete.');
+  console.log(`Validation complete for collection: ${collectionName}`);
 };
