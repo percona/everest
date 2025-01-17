@@ -50,7 +50,7 @@ const EditableItem = ({
         {editButtonProps && (
           <IconButton
             size="small"
-            data-testid={`delete-editable-item-button-${dataTestId}`}
+            data-testid={`edit-editable-item-button-${dataTestId}`}
             color="primary"
             {...editButtonProps}
           >

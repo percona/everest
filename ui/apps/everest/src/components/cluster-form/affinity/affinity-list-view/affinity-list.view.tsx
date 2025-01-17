@@ -165,8 +165,8 @@ export const AffinityListView = ({
                             disabled: disableActions,
                             onClick: () => onDeleteClick(rule.uid),
                           }}
-                          dataTestId={'affinity-rule-editable-item'}
-                          endText={`${AffinityPriorityValue[rule.priority]} ${rule.priority === AffinityPriority.Preferred && !!rule.weight ? `- ${rule.weight}` : ''}`}
+                          dataTestId={'affinity-rule'}
+                          endText={`${AffinityPriorityValue[rule.priority]}${rule.priority === AffinityPriority.Preferred && !!rule.weight ? ` - ${rule.weight}` : ''}`}
                         />
                       )}
                     </Fragment>
