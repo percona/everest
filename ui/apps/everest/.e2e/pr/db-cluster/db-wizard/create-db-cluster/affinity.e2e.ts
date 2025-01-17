@@ -1,6 +1,8 @@
 import { expect, Page, test } from '@playwright/test';
 import { selectDbEngine } from '../db-wizard-utils';
-import { moveForward } from '@e2e/utils/db-wizard';
+import { moveForward, submitWizard } from '@e2e/utils/db-wizard';
+import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
+import { deleteDbClusterFn } from '@e2e/utils/db-cluster';
 
 type AffinityRuleFormArgs = {
   component?: 'DB Node' | 'Proxy' | 'Config Server';
@@ -95,17 +97,52 @@ test.describe('Affinity via wizard', () => {
     await moveForward(page);
     await page.getByText('Affinity', { exact: true }).waitFor();
 
-    const defaultRules = page.getByTestId('editable-item');
-    const nrRules = await defaultRules.count();
-    expect(nrRules).toBe(1);
-    const firstRule = await defaultRules.nth(0);
+    const configServerRules = page.getByTestId('config-server-rules');
+    const dbNodeRules = page.getByTestId('db-node-rules');
+    const proxyRules = page.getByTestId('proxy-rules');
+    await expect(configServerRules).toBeVisible();
+    await expect(dbNodeRules).toBeVisible();
+    await expect(proxyRules).toBeVisible();
+    expect(
+      await configServerRules
+        .getByTestId('config-server-rules-list')
+        .getByTestId('editable-item')
+        .count()
+    ).toBe(1);
+    expect(
+      await dbNodeRules
+        .getByTestId('db-node-rules-list')
+        .getByTestId('editable-item')
+        .count()
+    ).toBe(1);
+    expect(
+      await proxyRules
+        .getByTestId('proxy-rules-list')
+        .getByTestId('editable-item')
+        .count()
+    ).toBe(1);
 
-    expect(await firstRule.textContent()).toBe(
+    expect(
+      await page.getByTestId('config-server-rules-list').textContent()
+    ).toBe('podAntiAffinity | kubernetes.io/hostnamePreferred - 1');
+    expect(await page.getByTestId('db-node-rules-list').textContent()).toBe(
+      'podAntiAffinity | kubernetes.io/hostnamePreferred - 1'
+    );
+    expect(await page.getByTestId('proxy-rules-list').textContent()).toBe(
       'podAntiAffinity | kubernetes.io/hostnamePreferred - 1'
     );
 
-    await page.getByTestId('delete-editable-item-button-affinity-rule').click();
-    await page.getByTestId('confirm-dialog-delete').click();
+    do {
+      const deleteIcons = await page
+        .getByTestId('delete-editable-item-button-affinity-rule')
+        .all();
+      if (deleteIcons.length === 0) {
+        break;
+      }
+      await deleteIcons[0].click();
+      await page.getByText('Delete affinity rule').waitFor();
+      await page.getByTestId('confirm-dialog-delete').click();
+    } while (1);
 
     await addAffinityRule(page, {
       component: 'DB Node',
@@ -153,4 +190,52 @@ test.describe('Affinity via wizard', () => {
   });
 });
 
-test.describe('Affinity via components page', () => {});
+test.describe('Affinity via components page', () => {
+  const dbName = 'affinity-db-test';
+  test.beforeAll(async ({ browser }) => {
+    const page = await browser.newPage();
+    await page.goto('/databases');
+    await selectDbEngine(page, 'pxc');
+    await page.getByTestId('text-input-db-name').fill(dbName);
+    await moveForward(page);
+    await page.getByTestId('toggle-button-nodes-1').click();
+    await page.getByTestId('text-input-memory').fill('1');
+    await page.getByTestId('text-input-disk').fill('1');
+    await moveForward(page);
+    await moveForward(page);
+    await moveForward(page);
+    await submitWizard(page);
+  });
+  test.afterAll(async ({ request }) => {
+    await deleteDbClusterFn(request, dbName);
+  });
+  test('Interaction with rules', async ({ page }) => {
+    await page.goto('/databases');
+    await findDbAndClickRow(page, dbName);
+    await page.getByTestId('components').click();
+    await page.getByTestId('db-node-rules').waitFor();
+    await page.getByTestId('proxy-rules').waitFor();
+    await expect(page.getByTestId('editable-item')).toHaveCount(2);
+    await page
+      .getByTestId('delete-editable-item-button-affinity-rule')
+      .nth(0)
+      .click();
+    await page.getByTestId('confirm-dialog-delete').click();
+    // Only proxy rule should be left now
+    await expect(page.getByTestId('editable-item')).toHaveCount(1);
+    await expect(page.getByTestId('proxy-rules')).toBeVisible();
+    await editAffinityRule(page, 0, {
+      type: 'Pod affinity',
+      preference: 'required',
+      topologyKey: 'my-topology-key',
+      key: 'my-key',
+      operator: 'not in',
+      values: 'val1, val2',
+    });
+    await page
+      .getByText(
+        'podAffinity | my-topology-key | my-key | NotIn | val1,val2Required'
+      )
+      .waitFor();
+  });
+});

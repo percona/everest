@@ -18,6 +18,7 @@ import { AffinityItem } from './affinity-item';
 import { convertFormDataToAffinityRule } from '../affinity-form-dialog/affinity-form/affinity-form.utils';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import RoundedBox from 'components/rounded-box';
+import { kebabize } from '@percona/utils';
 
 export const AffinityListView = ({
   onRulesChange,
@@ -144,34 +145,36 @@ export const AffinityListView = ({
             return (
               <Fragment key={component}>
                 {hasRules && (
-                  <Typography
-                    variant="sectionHeading"
-                    sx={{ marginTop: '20px' }}
-                  >
-                    {AffinityComponentValue[component]}
-                  </Typography>
+                  <Stack data-testid={`${kebabize(component)}-rules`}>
+                    <Typography
+                      variant="sectionHeading"
+                      sx={{ marginTop: '20px' }}
+                    >
+                      {AffinityComponentValue[component]}
+                    </Typography>
+                    <Stack data-testid={`${kebabize(component)}-rules-list`}>
+                      {internalRules.map((rule) => (
+                        <Fragment key={rule.uid}>
+                          {rule.component === component && (
+                            <EditableItem
+                              children={<AffinityItem rule={rule} />}
+                              editButtonProps={{
+                                disabled: disableActions,
+                                onClick: () => handleEdit(rule.uid),
+                              }}
+                              deleteButtonProps={{
+                                disabled: disableActions,
+                                onClick: () => onDeleteClick(rule.uid),
+                              }}
+                              dataTestId={'affinity-rule'}
+                              endText={`${AffinityPriorityValue[rule.priority]}${rule.priority === AffinityPriority.Preferred && !!rule.weight ? ` - ${rule.weight}` : ''}`}
+                            />
+                          )}
+                        </Fragment>
+                      ))}
+                    </Stack>
+                  </Stack>
                 )}
-                <Stack>
-                  {internalRules.map((rule) => (
-                    <Fragment key={rule.uid}>
-                      {rule.component === component && (
-                        <EditableItem
-                          children={<AffinityItem rule={rule} />}
-                          editButtonProps={{
-                            disabled: disableActions,
-                            onClick: () => handleEdit(rule.uid),
-                          }}
-                          deleteButtonProps={{
-                            disabled: disableActions,
-                            onClick: () => onDeleteClick(rule.uid),
-                          }}
-                          dataTestId={'affinity-rule'}
-                          endText={`${AffinityPriorityValue[rule.priority]}${rule.priority === AffinityPriority.Preferred && !!rule.weight ? ` - ${rule.weight}` : ''}`}
-                        />
-                      )}
-                    </Fragment>
-                  ))}
-                </Stack>
               </Fragment>
             );
           }
