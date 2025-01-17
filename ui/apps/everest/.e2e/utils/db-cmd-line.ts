@@ -339,69 +339,58 @@ export const configureMongoDBSharding = async (
     'sh.enableSharding(\\"test\\");'
   );
 
-  // Shard t1
-  await queryPSMDB(cluster, namespace, 'test', 'db.t1.createIndex({ a: 1 });');
+  // Helper function to shard a collection
+  const shardCollection = async (
+    collectionName: string,
+    key: object,
+    splitKey: object
+  ) => {
+    // Create Index
+    await queryPSMDB(
+      cluster,
+      namespace,
+      'test',
+      `db.${collectionName}.createIndex(${JSON.stringify(key)});`
+    );
 
-  await queryPSMDB(
-    cluster,
-    namespace,
-    'admin',
-    'sh.shardCollection(\\"test.t1\\", { a: 1 });'
-  );
+    // Create the collection
+    await queryPSMDB(
+      cluster,
+      namespace,
+      'admin',
+      `sh.shardCollection(\\"test.${collectionName}\\", ${JSON.stringify(key)});`
+    );
 
-  // Manually split chunks for t1
+    // Manually split the collection
+    await queryPSMDB(
+      cluster,
+      namespace,
+      'admin',
+      `sh.splitAt(\\"test.${collectionName}\\", ${JSON.stringify(splitKey)});`
+    );
 
-  await queryPSMDB(
-    cluster,
-    namespace,
-    'admin',
-    'sh.splitAt(\\"test.t1\\", { a: 2 });'
-  );
+    // Move Chunks rs0
+    await queryPSMDB(
+      cluster,
+      namespace,
+      'admin',
+      `sh.moveChunk(\\"test.${collectionName}\\", { ${Object.keys(key)[0]} : MinKey}, \\"rs0\\");`
+    );
 
-  // Move chunks for t1
-  await queryPSMDB(
-    cluster,
-    namespace,
-    'admin',
-    'sh.moveChunk(\\"test.t1\\", { a: MinKey }, \\"rs0\\");'
-  );
-  await queryPSMDB(
-    cluster,
-    namespace,
-    'admin',
-    'sh.moveChunk(\\"test.t1\\", { a: 2 }, \\"rs1\\");'
-  );
+    // Move Chunks rs1
+    await queryPSMDB(
+      cluster,
+      namespace,
+      'admin',
+      `sh.moveChunk(\\"test.${collectionName}\\", { ${Object.keys(key)[0]}: MaxKey}, \\"rs1\\");`
+    );
+  };
+  // Shard t1 collection
+  await shardCollection('t1', { a: 1 }, { a: 2 });
 
-  // Shard t2
-  await queryPSMDB(cluster, namespace, 'test', 'db.t2.createIndex({ b: 1 });');
+  // Shard t2 collection
+  await shardCollection('t2', { b: 1 }, { b: 2 });
 
-  await queryPSMDB(
-    cluster,
-    namespace,
-    'admin',
-    'sh.shardCollection(\\"test.t2\\", { b: 1 });'
-  );
-  // Manually split chunks for t2
-  await queryPSMDB(
-    cluster,
-    namespace,
-    'admin',
-    'sh.splitAt(\\"test.t2\\", { b: 2 });'
-  );
-  // Move chunks for t2
-  await queryPSMDB(
-    cluster,
-    namespace,
-    'admin',
-    'sh.moveChunk(\\"test.t2\\", { b: MinKey }, \\"rs0\\");'
-  );
-
-  await queryPSMDB(
-    cluster,
-    namespace,
-    'admin',
-    'sh.moveChunk(\\"test.t2\\", { b: 2 }, \\"rs1\\");'
-  );
   console.log('MongoDB sharding configuration completed successfully.');
 };
 
