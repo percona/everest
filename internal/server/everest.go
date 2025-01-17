@@ -352,7 +352,8 @@ func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 			err = &echo.HTTPError{
 				Code: http.StatusNotFound,
 			}
-		case k8serrors.IsAlreadyExists(err):
+		case k8serrors.IsAlreadyExists(err),
+			k8serrors.IsConflict(err):
 			err = &echo.HTTPError{
 				Code: http.StatusConflict,
 			}
