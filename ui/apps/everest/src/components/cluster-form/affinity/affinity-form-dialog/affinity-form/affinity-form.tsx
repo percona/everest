@@ -16,7 +16,7 @@
 import { ArrowOutward } from '@mui/icons-material';
 import { Box, Button, Typography } from '@mui/material';
 import { useContext, useEffect } from 'react';
-import { AffinityPriority } from 'shared-types/affinity.types';
+import { AffinityPriority, AffinityType } from 'shared-types/affinity.types';
 import { Messages } from '../../../advanced-configuration/affinity/affinity-form.messages';
 import { AffinityFormDialogContext } from '../affinity-form-dialog-context/affinity-form-context';
 import { AffinityFormFields } from './affinity-form.types';
@@ -74,6 +74,7 @@ export const AffinityForm = () => {
         showWeight={priority === AffinityPriority.Preferred}
       />
       <RuleDetailsSection
+        showTopologyKey={type !== AffinityType.NodeAffinity}
         operator={operator}
         disableOperator={!key}
         disableValue={!key}

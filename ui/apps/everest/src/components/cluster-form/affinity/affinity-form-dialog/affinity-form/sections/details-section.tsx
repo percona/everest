@@ -11,19 +11,21 @@ type Props = {
   disableOperator: boolean;
   disableValue: boolean;
   operator: AffinityOperator;
+  showTopologyKey: boolean;
 };
 
 const RuleDetailsSection = ({
   operator,
   disableOperator,
   disableValue,
+  showTopologyKey,
 }: Props) => (
   <>
     <Typography variant="sectionHeading" sx={{ marginTop: '20px' }}>
       Rule details
     </Typography>
     <Box sx={{ display: 'flex', gap: '20px' }}>
-      <TopologyKeyInput />
+      {showTopologyKey && <TopologyKeyInput />}
       <KeyInput />
       <OperatorInput disabled={disableOperator} />
     </Box>

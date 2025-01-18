@@ -167,6 +167,9 @@ describe('AffinityFormDialog', () => {
       await waitFor(() =>
         expect(screen.getByTestId('text-input-key')).toBeInvalid()
       );
+      expect(
+        screen.getByTestId('text-input-topology-key')
+      ).not.toBeInTheDocument();
       expect(screen.getByTestId('form-dialog-add-rule')).toBeDisabled();
       expect(screen.getByTestId('text-input-key')).toHaveValue('');
 
