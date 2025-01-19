@@ -133,22 +133,14 @@ test.describe(
         );
       });
 
-      // Step to activate Sharding
       await test.step('Activate sharding', async () => {
         const shardingCheckbox = page
           .getByTestId('switch-input-sharding')
           .getByRole('checkbox');
-        const isChecked = await shardingCheckbox?.isChecked();
-        if (!isChecked) {
-          if (shardingCheckbox) {
-            isShardingEnabled = true;
-            await shardingCheckbox.click();
-          }
-        }
-        await expect(shardingCheckbox).toBeChecked();
+        await shardingCheckbox.click();
       });
 
-      await moveForward(page); // Move forward after activating sharding
+      await moveForward(page);
 
       await test.step('Populate resources', async () => {
         await page
@@ -157,19 +149,15 @@ test.describe(
           .click();
         await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
         await populateResources(page, 0.6, 1, 1, size);
-        //await moveForward(page);
       });
 
-      // Step to set number of shards
       await test.step('Set number of shards', async () => {
         const shardsInput = await page.getByTestId('text-input-shard-nr');
         await expect(shardsInput).toBeVisible();
         await shardsInput.fill('2');
         await expect(shardsInput).toHaveValue('2');
-        //await moveForward(page);
       });
 
-      // Step N Config Servers
       await test.step('Set number of config servers', async () => {
         const configServerButton = await page.getByTestId(
           'shard-config-servers-3'
@@ -244,20 +232,21 @@ test.describe(
         if (db != 'psmdb') {
           expect(addedCluster?.spec.proxy.replicas).toBe(size);
         }
+        expect(addedCluster?.spec.sharding.enabled).toBe(true);
+        expect(addedCluster?.spec.sharding.shards).toBe(2);
+        expect(addedCluster?.spec.sharding.configServer.replicas).toBe(3);
+        expect(addedCluster?.spec.proxy.replicas).toBe(3);
       });
     });
 
-    // Add data in MondoDB
     test(`Add data [${db} size ${size}]`, async () => {
       await prepareMongoDBTestDB(clusterName, namespace);
     });
 
-    // Add MongoDB-specific configuration
     test(`Setup MongoDB-specific sharding [${db} size ${size}]`, async () => {
       await configureMongoDBSharding(clusterName, namespace);
     });
 
-    // Validate Sharding for MongoDB
     test(`Validate Sharding for MongoDB [${db} size ${size}]`, async () => {
       await validateMongoDBSharding(clusterName, namespace, 't1');
       await validateMongoDBSharding(clusterName, namespace, 't2');
@@ -303,12 +292,15 @@ test.describe(
     });
 
     test(`Check data after restore [${db} size ${size}]`, async () => {
-      // Validate the data in the t1 and t2
-      const t1Data = await queryTestDB(clusterName, namespace, 't1');
-      expect(t1Data.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
+      await test.step('Validate the data in t1', async () => {
+        const t1Data = await queryTestDB(clusterName, namespace, 't1');
+        expect(t1Data.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
+      });
 
-      const t2Data = await queryTestDB(clusterName, namespace, 't2');
-      expect(t2Data.trim()).toBe('[ { b: 1 }, { b: 2 }, { b: 3 } ]');
+      await test.step('Validate the data in t2', async () => {
+        const t2Data = await queryTestDB(clusterName, namespace, 't2');
+        expect(t2Data.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
+      });
 
       await test.step('Validate sharding', async () => {
         const shardingStatus = await queryPSMDB(

@@ -15,7 +15,6 @@
 
 import { execSync } from 'child_process';
 import { expect } from '@playwright/test';
-import { isShardingEnabled } from '../release/psmdb-sharding.e2e';
 
 export const getDBHost = async (cluster: string, namespace: string) => {
   try {
@@ -112,9 +111,10 @@ export const queryPSMDB = async (
   const host = await getDBHost(cluster, namespace);
   const clientPod = await getDBClientPod('psmdb', 'db-client');
 
-  // Ensure sharding flag is properly handled
-  isShardingEnabled == true;
+  // Enable replicaSet option if sharding is enabled
+  const isShardingEnabled = true;
   const replicaSetOption = isShardingEnabled ? '' : '&replicaSet=rs0';
+
   try {
     const command = `kubectl exec --namespace db-client ${clientPod} -- mongosh "mongodb://backup:${password}@${host}/${db}?authSource=admin${replicaSetOption}" --eval "${query}"`;
     const output = execSync(command).toString();
@@ -274,7 +274,7 @@ export const dropTestDB = async (cluster: string, namespace: string) => {
 export const queryTestDB = async (
   cluster: string,
   namespace: string,
-  collection: string = 't1' // Default to collection `t1`
+  collection: string = 't1'
 ) => {
   const dbType = await getDBType(cluster, namespace);
   let result: string;
@@ -284,14 +284,15 @@ export const queryTestDB = async (
       result = await queryMySQL(cluster, namespace, 'SELECT * FROM test.t1;');
       break;
     }
+
     case 'psmdb': {
-      const sortField = collection === 't1' ? 'a' : 'b';
       result = await queryPSMDB(
         cluster,
         namespace,
         'test',
-        `db.${collection}.find({},{_id: 0}).sort({${sortField}: 1}).toArray();`
+        `db.${collection}.find({},{_id: 0}).sort({a: 1}).toArray();`
       );
+
       break;
     }
     case 'postgresql': {
@@ -302,38 +303,29 @@ export const queryTestDB = async (
   return result;
 };
 
+let isShardingEnabled = false;
 export const prepareMongoDBTestDB = async (
   cluster: string,
   namespace: string
 ) => {
   await dropTestDB(cluster, namespace);
 
-  // Insert test data into the collection t1 and t2
   await queryPSMDB(
     cluster,
     namespace,
     'test',
     'db.t1.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }]);'
   );
-  await queryPSMDB(cluster, namespace, 'test', 'db.t1.createIndex({ a: 1 });');
 
   await queryPSMDB(
     cluster,
     namespace,
     'test',
-    'db.t2.insertMany([{ b: 1 }, { b: 2 }, { b: 3 }]);'
+    'db.t2.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }]);'
   );
-  // Create Index
-  await queryPSMDB(cluster, namespace, 'test', 'db.t2.createIndex({ b: 1 });');
-};
 
-export const configureMongoDBSharding = async (
-  cluster: string,
-  namespace: string
-) => {
-  console.log('Starting MongoDB sharding configuration...');
-
-  // Enable sharding for the database
+  await queryPSMDB(cluster, namespace, 'test', 'db.t1.createIndex({ a: 1 });');
+  await queryPSMDB(cluster, namespace, 'test', 'db.t2.createIndex({ a: 1 });');
 
   await queryPSMDB(
     cluster,
@@ -341,14 +333,17 @@ export const configureMongoDBSharding = async (
     'admin',
     'sh.enableSharding(\\"test\\");'
   );
+};
 
-  // Helper function to shard a collection
+export const configureMongoDBSharding = async (
+  cluster: string,
+  namespace: string
+) => {
   const shardCollection = async (
     collectionName: string,
     key: object,
     splitKey: object
   ) => {
-    // Create the collection
     await queryPSMDB(
       cluster,
       namespace,
@@ -356,7 +351,6 @@ export const configureMongoDBSharding = async (
       `sh.shardCollection(\\"test.${collectionName}\\", ${JSON.stringify(key)});`
     );
 
-    // Manually split the collection
     await queryPSMDB(
       cluster,
       namespace,
@@ -364,7 +358,6 @@ export const configureMongoDBSharding = async (
       `sh.splitAt(\\"test.${collectionName}\\", ${JSON.stringify(splitKey)});`
     );
 
-    // Move Chunks rs0
     await queryPSMDB(
       cluster,
       namespace,
@@ -372,7 +365,6 @@ export const configureMongoDBSharding = async (
       `sh.moveChunk(\\"test.${collectionName}\\", { ${Object.keys(key)[0]} : MinKey}, \\"rs0\\");`
     );
 
-    // Move Chunks rs1
     await queryPSMDB(
       cluster,
       namespace,
@@ -380,11 +372,8 @@ export const configureMongoDBSharding = async (
       `sh.moveChunk(\\"test.${collectionName}\\", { ${Object.keys(key)[0]}: MaxKey}, \\"rs1\\");`
     );
   };
-  // Shard t1 collection
   await shardCollection('t1', { a: 1 }, { a: 2 });
-
-  // Shard t2 collection
-  await shardCollection('t2', { b: 1 }, { b: 2 });
+  await shardCollection('t2', { a: 1 }, { a: 2 });
 
   console.log('MongoDB sharding configuration completed successfully.');
 };
@@ -394,27 +383,18 @@ export const validateMongoDBSharding = async (
   namespace: string,
   collectionName: string
 ) => {
-  console.log(`Validating MongoDB sharding for collection: ${collectionName}`);
-
-  // Fetch the collection details
   const collectionString = await queryPSMDB(
     cluster,
     namespace,
     'config',
     `db.collections.find({ _id: \\"test.${collectionName}\\" });`
   );
-  console.log(`${collectionName} Collection String:`, collectionString);
 
-  // Parse the collection details
   const collection = eval(
     collectionString.replace(/ObjectId|ISODate|UUID|Timestamp/g, '')
   );
 
   const collectionUUID = collection[0]?.uuid;
-  console.log(`${collectionName} Collection UUID:`, collectionUUID);
-
-  // Fetch the chunks for the collection
-  console.log(`Fetching chunks for collection: ${collectionName}...`);
 
   const query = `db.chunks.aggregate([
     { \\$match: { uuid: UUID(\\"${collectionUUID}\\") } },
@@ -422,28 +402,17 @@ export const validateMongoDBSharding = async (
   ]).toArray();`;
 
   const queryResult = await queryPSMDB(cluster, namespace, 'config', query);
-  console.log(`${collectionName} Chunks Result:`, queryResult);
 
-  // Preprocess and parse chunk results
   const sanitizedResult = queryResult
     .replace(/_id/g, '"_id"')
     .replace(/'/g, '"');
   const chunks = JSON.parse(sanitizedResult);
-  console.log(`${collectionName} Chunks:`, chunks);
 
-  // Extract shard IDs (e.g., rs0 and rs1)
   const shardIds = chunks.map((chunk: { _id: string }) => chunk._id);
-  console.log(`${collectionName} Shard IDs:`, shardIds);
 
-  // Check if specific shard IDs exist
   const hasRs0 = shardIds.includes('rs0');
   const hasRs1 = shardIds.includes('rs1');
-  console.log(`Does ${collectionName} have shard rs0?:`, hasRs0);
-  console.log(`Does ${collectionName} have shard rs1?:`, hasRs1);
 
-  // Assert that both shards are present
   expect(hasRs0).toBe(true);
   expect(hasRs1).toBe(true);
-
-  console.log(`Validation complete for collection: ${collectionName}`);
 };
