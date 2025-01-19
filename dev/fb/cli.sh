@@ -5,6 +5,9 @@ SERVICE_IP=$(./vs.sh)
 
 kubectl port-forward svc/percona-version-service 8081:80 &
 
+# sleep for 2 seconds to make sure the port-forward is ready
+sleep 2
+
 os=$(uname -s | tr '[:upper:]' '[:lower:]')
 arch=$(uname -m | tr '[:upper:]' '[:lower:]')
 
