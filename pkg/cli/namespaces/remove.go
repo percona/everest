@@ -41,6 +41,9 @@ const (
 	pollTimeout  = 5 * time.Minute
 )
 
+// ErrNamespaceNotEmpty is returned when the namespace is not empty.
+var ErrNamespaceNotEmpty = errors.New("cannot remove namespace with running database clusters")
+
 // NamespaceRemoveConfig is the configuration for the namespace removal operation.
 type NamespaceRemoveConfig struct {
 	// KubeconfigPath is a path to a kubeconfig
@@ -105,9 +108,6 @@ func NewNamespaceRemove(c NamespaceRemoveConfig, l *zap.SugaredLogger) (*Namespa
 	n.kubeClient = k
 	return n, nil
 }
-
-// ErrNamespaceNotEmpty is returned when the namespace is not empty.
-var ErrNamespaceNotEmpty = errors.New("cannot remove namespace with running database clusters")
 
 // Run the namespace removal operation.
 func (r *NamespaceRemover) Run(ctx context.Context) error {
