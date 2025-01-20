@@ -2,6 +2,7 @@
 package namespaces
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -18,10 +19,11 @@ import (
 // NewUpdateCommand returns a new command to update an existing namespace.
 func NewUpdateCommand(l *zap.SugaredLogger) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "update",
-		Long:    "Update an existing Everest namespace",
-		Short:   "Update an existing Everest namespace",
-		Example: `everestctl update add [NAMESPACE] [FLAGS]`,
+		Use:     "update [flags] NAMESPACES",
+		Long:    "Add database operator to existing namespace managed by Everest",
+		Short:   "Add database operator to existing namespace managed by Everest",
+		Example: `everestctl namespaces update --operator.mongodb=true --skip-wizard ns-1,ns-2`,
+		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			initUpdateViperFlags(cmd)
 			c := &namespaces.NamespaceAddConfig{}
@@ -33,10 +35,6 @@ func NewUpdateCommand(l *zap.SugaredLogger) *cobra.Command {
 			bindInstallHelmOpts(c)
 			c.Update = true
 
-			if len(args) != 1 {
-				output.PrintError(fmt.Errorf("invalid number of arguments: expected 1, got %d", len(args)), l, true)
-				os.Exit(1)
-			}
 			c.Namespaces = args[0]
 
 			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
@@ -47,6 +45,12 @@ func NewUpdateCommand(l *zap.SugaredLogger) *cobra.Command {
 				cmd.Flags().Lookup("operator.xtradb-cluster").Changed)
 
 			if err := c.Populate(cmd.Context(), false, askOperators); err != nil {
+				if errors.Is(err, namespaces.ErrNamespaceNotManagedByEverest) {
+					err = fmt.Errorf("%w. HINT: use 'everestctl namespaces add --%s %s' first to make namespace managed by Everest",
+						err,
+						cli.FlagTakeNamespaceOwnership,
+						c.Namespaces)
+				}
 				output.PrintError(err, l, !enableLogging)
 				os.Exit(1)
 			}
