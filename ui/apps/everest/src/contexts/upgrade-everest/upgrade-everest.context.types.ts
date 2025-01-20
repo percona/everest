@@ -5,4 +5,5 @@ export interface UpgradeEverestContextProps {
   toggleOpenReloadDialog: () => void;
   setOpenReloadDialog: Dispatch<SetStateAction<boolean>>;
   currentVersion: null | string;
+  apiVersion?: string;
 }

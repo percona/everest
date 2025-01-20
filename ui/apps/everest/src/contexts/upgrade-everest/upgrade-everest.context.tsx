@@ -6,6 +6,7 @@ const UpgradeEverestContext = createContext<UpgradeEverestContextProps>({
   toggleOpenReloadDialog: () => {},
   setOpenReloadDialog: () => {},
   currentVersion: null,
+  apiVersion: '',
 });
 
 export default UpgradeEverestContext;

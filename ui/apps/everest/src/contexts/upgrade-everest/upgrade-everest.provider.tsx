@@ -36,6 +36,7 @@ const UpgradeEverestProvider = ({
         toggleOpenReloadDialog,
         setOpenReloadDialog: setOpenReloadEverestDialog,
         currentVersion: currentVersion,
+        apiVersion: apiVersion?.version,
       }}
     >
       {children}

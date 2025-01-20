@@ -31,7 +31,7 @@ export const Main = () => {
   );
   const { activeBreakpoint } = useContext(DrawerContext);
   const {
-    currentVersion: currentEverestVersion,
+    apiVersion,
     openReloadDialog,
     setOpenReloadDialog,
   } = useContext(UpgradeEverestContext);
@@ -96,7 +96,7 @@ export const Main = () => {
             <UpgradeEverestReloadDialog
               isOpen={openReloadDialog}
               closeModal={() => setOpenReloadDialog(false)}
-              version={currentEverestVersion || ''}
+              version={apiVersion || ''}
             />
           </Box>
         </Box>
