@@ -38,14 +38,14 @@ export const TimeSelection = ({
     { length: 12 - timezoneOffset },
     (_, i) => i + timezoneOffset
   );
-  const isFirstDayOfTheMonthAndPozitiveOffset =
+  const isFirstDayOfTheMonthAndPositiveOffset =
     selectedTime === TimeValue.months && onDay === 1 && timezoneOffset > 0;
 
   useEffect(() => {
     const { isDirty: isHourDirty } = getFieldState(TimeSelectionFields.hour);
     if (
       shouldRestrictSelectableHours &&
-      isFirstDayOfTheMonthAndPozitiveOffset &&
+      isFirstDayOfTheMonthAndPositiveOffset &&
       !isHourDirty &&
       !editMode
     ) {
@@ -123,7 +123,7 @@ export const TimeSelection = ({
             <TimeFields
               selectableHours={
                 shouldRestrictSelectableHours &&
-                isFirstDayOfTheMonthAndPozitiveOffset
+                isFirstDayOfTheMonthAndPositiveOffset
                   ? hoursForTimezoneOffset
                   : undefined
               }
