@@ -58,7 +58,7 @@ export const TimeSelection = ({
     timezoneOffset,
     setValue,
     getFieldState,
-    isFirstDayOfTheMonthAndPozitiveOffset,
+    isFirstDayOfTheMonthAndPositiveOffset,
     shouldRestrictSelectableHours,
     resetField,
     editMode,
