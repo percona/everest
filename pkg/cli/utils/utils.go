@@ -8,10 +8,10 @@ import (
 	"net/url"
 	"path"
 
+	goversion "github.com/hashicorp/go-version"
 	"go.uber.org/zap"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
-	goversion "github.com/hashicorp/go-version"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/version"
