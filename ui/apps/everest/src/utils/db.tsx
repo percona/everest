@@ -443,7 +443,10 @@ export const areAffinityRulesEqual = (
   );
 };
 
-export const getDefaultAffinityRules = (dbType: DbType, sharding: boolean) => {
+export const getDefaultAffinityRules = (
+  dbType: DbType,
+  sharding: boolean = false
+) => {
   const rules: AffinityRule[] = [
     generateDefaultAffinityRule(AffinityComponent.DbNode),
   ];
@@ -466,6 +469,7 @@ export const areAffinityRulesDefault = (
 ) => {
   const defaultRules = getDefaultAffinityRules(dbType, sharding);
 
+  // This also covers the case when there are no rules. Unless the default rules were empty, which would be correct.
   if (rules.length !== defaultRules.length) {
     return false;
   }
