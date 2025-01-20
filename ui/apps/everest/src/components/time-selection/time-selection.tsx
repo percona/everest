@@ -1,6 +1,6 @@
 import { Alert, Box, MenuItem } from '@mui/material';
 import { SelectInput } from '@percona/ui-lib';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { HoursField } from './fields/hours-field';
 import { MonthsField } from './fields/months-field';
@@ -20,14 +20,49 @@ export const TimeSelection = ({
   showInfoAlert,
   sx,
   sxTimeFields,
+  shouldRestrictSelectableHours = false,
+  editMode = false,
 }: TimeSelectionProps) => {
-  const { watch } = useFormContext();
+  const { watch, setValue, getFieldState, resetField } = useFormContext();
+
   const selectedTime: TimeValue = watch(TimeSelectionFields.selectedTime);
   const minute: number = watch(TimeSelectionFields.minute);
   const hour: number = watch(TimeSelectionFields.hour);
   const amPm: string = watch(TimeSelectionFields.amPm);
   const weekDay: string = watch(TimeSelectionFields.weekDay);
   const onDay: number = watch(TimeSelectionFields.onDay);
+
+  const timezoneOffset = -1 * (new Date().getTimezoneOffset() / 60);
+
+  const hoursForTimezoneOffset = Array.from(
+    { length: 12 - timezoneOffset },
+    (_, i) => i + timezoneOffset
+  );
+  const isFirstDayOfTheMonthAndPozitiveOffset =
+    selectedTime === TimeValue.months && onDay === 1 && timezoneOffset > 0;
+
+  useEffect(() => {
+    const { isDirty: isHourDirty } = getFieldState(TimeSelectionFields.hour);
+    if (
+      shouldRestrictSelectableHours &&
+      isFirstDayOfTheMonthAndPozitiveOffset &&
+      !isHourDirty &&
+      !editMode
+    ) {
+      setValue(TimeSelectionFields.hour, timezoneOffset);
+    }
+  }, [
+    selectedTime,
+    onDay,
+    hour,
+    timezoneOffset,
+    setValue,
+    getFieldState,
+    isFirstDayOfTheMonthAndPozitiveOffset,
+    shouldRestrictSelectableHours,
+    resetField,
+    editMode,
+  ]);
 
   const timeInfoText = useMemo(
     () =>
@@ -84,7 +119,16 @@ export const TimeSelection = ({
           {selectedTime === TimeValue.months && <MonthsField />}
           {(selectedTime === TimeValue.days ||
             selectedTime === TimeValue.weeks ||
-            selectedTime === TimeValue.months) && <TimeFields />}
+            selectedTime === TimeValue.months) && (
+            <TimeFields
+              selectableHours={
+                shouldRestrictSelectableHours &&
+                isFirstDayOfTheMonthAndPozitiveOffset
+                  ? hoursForTimezoneOffset
+                  : undefined
+              }
+            />
+          )}
         </Box>
       </Box>
       {errorInfoAlert}

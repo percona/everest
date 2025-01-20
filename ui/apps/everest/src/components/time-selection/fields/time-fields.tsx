@@ -6,7 +6,11 @@ import { Messages } from '../time-selection.messages';
 import { AmPM, TimeSelectionFields } from '../time-selection.types';
 import { addZeroToSingleDigit } from '../time-selection.utils';
 
-export const TimeFields = () => {
+export const TimeFields = ({
+  selectableHours = HOURS_AM_PM,
+}: {
+  selectableHours?: number[];
+}) => {
   const { control } = useFormContext();
 
   return (
@@ -28,7 +32,7 @@ export const TimeFields = () => {
           sx: { minWidth: '80px' },
         }}
       >
-        {HOURS_AM_PM.map((value) => (
+        {selectableHours.map((value) => (
           <MenuItem key={value} value={value}>
             {value}
           </MenuItem>
