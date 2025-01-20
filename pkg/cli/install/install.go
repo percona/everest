@@ -242,6 +242,21 @@ func (o *Install) setVersionInfo(ctx context.Context) error {
 	o.l.Debugf("Everest latest version available: %s", latest)
 	o.l.Debugf("Everest version information %#v", latestMeta)
 	o.installVersion = latest.String()
+
+	supVer, err := common.NewSupportedVersion(latestMeta)
+	if err != nil {
+		return err
+	}
+	if err := o.checkRequirements(supVer); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o *Install) checkRequirements(supVer *common.SupportedVersion) error {
+	if err := cliutils.VerifyCLIVersion(supVer); err != nil {
+		return err
+	}
 	return nil
 }
 

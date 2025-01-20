@@ -4,12 +4,14 @@ package utils
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"path"
 
 	"go.uber.org/zap"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
+	goversion "github.com/hashicorp/go-version"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/version"
@@ -60,4 +62,22 @@ func NewKubeclient(l *zap.SugaredLogger, kubeconfigPath string) (*kubernetes.Kub
 		return nil, err
 	}
 	return k, nil
+}
+
+// VerifyCLIVersion checks if the CLI version satisfies the constraints.
+func VerifyCLIVersion(supVer *common.SupportedVersion) error {
+	if version.Version == "" {
+		return nil
+	}
+	cli, err := goversion.NewVersion(version.Version)
+	if err != nil {
+		return fmt.Errorf("failed to parse CLI version: %w", err)
+	}
+	if !supVer.Cli.Check(cli.Core()) {
+		return fmt.Errorf(
+			"cli version %q does not satisfy the constraints %q",
+			cli, supVer.Cli.String(),
+		)
+	}
+	return nil
 }
