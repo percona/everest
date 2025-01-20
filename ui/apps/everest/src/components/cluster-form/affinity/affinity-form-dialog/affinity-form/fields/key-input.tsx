@@ -11,6 +11,13 @@ const KeyInput = () => (
         deps: [AffinityFormFields.operator, AffinityFormFields.values],
       },
     }}
+    textFieldProps={{
+      sx: {
+        flex: '0 0 35%',
+      },
+      helperText:
+        'A label key on pods used to determine the targets for applying affinity or anti-affinity rules',
+    }}
   />
 );
 export default KeyInput;
