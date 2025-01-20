@@ -30,11 +30,9 @@ export const Main = () => {
     true
   );
   const { activeBreakpoint } = useContext(DrawerContext);
-  const {
-    apiVersion,
-    openReloadDialog,
-    setOpenReloadDialog,
-  } = useContext(UpgradeEverestContext);
+  const { apiVersion, openReloadDialog, setOpenReloadDialog } = useContext(
+    UpgradeEverestContext
+  );
   const { isFetching, isError, refetch } = useKubernetesClusterInfo([
     'initial-k8-info',
   ]);
