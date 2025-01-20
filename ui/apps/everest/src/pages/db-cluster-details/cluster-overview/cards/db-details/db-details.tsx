@@ -39,6 +39,7 @@ export const DbDetails = ({
   monitoring,
   externalAccess,
   parameters,
+  affinityRules,
 }: DatabaseDetailsOverviewCardProps) => {
   const { canReadMonitoring } = useContext(DbClusterContext);
 
@@ -75,6 +76,7 @@ export const DbDetails = ({
         <AdvancedConfiguration
           externalAccess={externalAccess}
           parameters={parameters}
+          affinityRules={affinityRules}
         />
       </Stack>
     </OverviewCard>

@@ -18,14 +18,14 @@ import { dbEngineToDbType } from '@percona/utils';
 import { useParams } from 'react-router-dom';
 import { ProxyExposeType } from 'shared-types/dbCluster.types';
 import { DbDetails, ResourcesDetails } from './cards';
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 import { DbClusterContext } from '../dbCluster.context';
 import { BackupsDetails } from './cards/backups-details';
 import { useDbClusterCredentials } from 'hooks/api/db-cluster/useCreateDbCluster';
 import { useDbBackups } from 'hooks/api/backups/useBackups';
 import { DbEngineType } from 'shared-types/dbEngines.types';
 import { useRBACPermissions } from 'hooks/rbac';
-import { isProxy } from 'utils/db';
+import { dbPayloadToAffinityRules, isProxy } from 'utils/db';
 
 export const ClusterOverview = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -53,6 +53,11 @@ export const ClusterOverview = () => {
     useDbClusterCredentials(dbClusterName || '', namespace, {
       enabled: !!dbClusterName && canRead,
     });
+
+  const affinityRules = useMemo(
+    () => (dbCluster ? dbPayloadToAffinityRules(dbCluster) : []),
+    [dbCluster]
+  );
 
   if (!dbCluster) {
     return null;
@@ -97,6 +102,7 @@ export const ClusterOverview = () => {
         }
         monitoring={dbCluster?.spec.monitoring.monitoringConfigName}
         parameters={!!dbCluster?.spec.engine.config}
+        affinityRules={affinityRules}
       />
       <ResourcesDetails
         dbCluster={dbCluster}
