@@ -50,7 +50,7 @@ test.describe('no authorization header', () => {
   test('auth header fails with no content', async ({ request }) => {
     const version = await request.get('/v1/version');
 
-    expect(version.status()).toEqual(401);
+    expect(version.status()).toEqual(400);
   });
 
   test('auth cookie fails with invalid token', async ({ browser }) => {
