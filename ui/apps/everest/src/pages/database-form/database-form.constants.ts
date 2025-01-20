@@ -17,6 +17,7 @@ import { DbType } from '@percona/types';
 import { DbWizardFormFields } from 'consts.ts';
 import { DbWizardType } from './database-form-schema.ts';
 import {
+  getDefaultAffinityRules,
   getDefaultNumberOfconfigServersByNumberOfNodes,
   NODES_DEFAULT_SIZES,
   PROXIES_DEFAULT_SIZES,
@@ -65,4 +66,8 @@ export const DB_WIZARD_DEFAULTS: DbWizardType = {
     getDefaultNumberOfconfigServersByNumberOfNodes(
       parseInt(DEFAULT_NODES[DbType.Mongo], 10)
     ),
+  [DbWizardFormFields.affinityRules]: getDefaultAffinityRules(
+    DbType.Mongo,
+    false
+  ),
 };

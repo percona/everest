@@ -36,7 +36,10 @@ export const updateDbClusterFn = async (
 ) => {
   const response = await api.put(
     `namespaces/${namespace}/database-clusters/${dbClusterName}`,
-    data
+    data,
+    {
+      disableNotifications: (e) => e.status === 409,
+    }
   );
 
   return response.data;

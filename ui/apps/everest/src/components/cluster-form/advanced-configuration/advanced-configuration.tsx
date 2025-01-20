@@ -13,67 +13,104 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SwitchInput, TextArray, TextInput } from '@percona/ui-lib';
-import { Messages } from './messages';
-import { AdvancedConfigurationFields } from './advanced-configuration.types';
-import { useFormContext } from 'react-hook-form';
-import { DbType } from '@percona/types';
-import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
 import { Stack } from '@mui/material';
+import { DbType } from '@percona/types';
+import { SwitchInput, TextArray, TextInput } from '@percona/ui-lib';
+import { AffinityListView } from 'components/cluster-form/affinity/affinity-list-view/affinity-list.view';
+import { useFormContext } from 'react-hook-form';
+import { AdvancedConfigurationFields } from './advanced-configuration.types';
+import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
+import { Messages } from './messages';
+import { DbWizardForm } from 'consts';
+import { AffinityRule } from 'shared-types/affinity.types';
+import { useCallback } from 'react';
+import RoundedBox from 'components/rounded-box';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
+  showAffinity?: boolean;
 }
 
 export const AdvancedConfigurationForm = ({
   dbType,
+  showAffinity = false,
 }: AdvancedConfigurationFormProps) => {
-  const { watch } = useFormContext();
-  const [externalAccess, engineParametersEnabled] = watch([
+  const { watch, setValue } = useFormContext();
+
+  const [
+    externalAccess,
+    engineParametersEnabled,
+    formAffinityRules,
+    isShardingEnabled,
+  ] = watch([
     AdvancedConfigurationFields.externalAccess,
     AdvancedConfigurationFields.engineParametersEnabled,
+    AdvancedConfigurationFields.affinityRules,
+    DbWizardForm.sharding,
   ]);
+
+  const onRulesChange = useCallback(
+    (newRules: AffinityRule[]) => {
+      setValue(AdvancedConfigurationFields.affinityRules, newRules, {
+        shouldTouch: true,
+        shouldDirty: true,
+      });
+    },
+    [setValue]
+  );
 
   return (
     <>
-      <SwitchInput
-        label={Messages.enableExternalAccess.title}
-        labelCaption={Messages.enableExternalAccess.caption}
-        name={AdvancedConfigurationFields.externalAccess}
-      />
-      {externalAccess && (
-        <Stack sx={{ ml: 6 }}>
-          <TextArray
-            placeholder={Messages.sourceRangePlaceholder}
-            fieldName={AdvancedConfigurationFields.sourceRanges}
-            fieldKey="sourceRange"
-            label={Messages.sourceRange}
-          />
-        </Stack>
+      {showAffinity && (
+        <AffinityListView
+          initialRules={formAffinityRules}
+          onRulesChange={onRulesChange}
+          dbType={dbType}
+          isShardingEnabled={isShardingEnabled}
+        />
       )}
-      <SwitchInput
-        label={Messages.engineParameters.title}
-        labelCaption={Messages.engineParameters.caption}
-        name={AdvancedConfigurationFields.engineParametersEnabled}
-        formControlLabelProps={{
-          sx: {
-            mt: 1,
-          },
-        }}
-      />
-      {engineParametersEnabled && (
-        <TextInput
-          name={AdvancedConfigurationFields.engineParameters}
-          textFieldProps={{
-            placeholder: getParamsPlaceholderFromDbType(dbType),
-            multiline: true,
-            minRows: 3,
+      <RoundedBox>
+        <SwitchInput
+          label={Messages.enableExternalAccess.title}
+          labelCaption={Messages.enableExternalAccess.caption}
+          name={AdvancedConfigurationFields.externalAccess}
+        />
+        {externalAccess && (
+          <Stack sx={{ ml: 6 }}>
+            <TextArray
+              placeholder={Messages.sourceRangePlaceholder}
+              fieldName={AdvancedConfigurationFields.sourceRanges}
+              fieldKey="sourceRange"
+              label={Messages.sourceRange}
+            />
+          </Stack>
+        )}
+      </RoundedBox>
+      <RoundedBox>
+        <SwitchInput
+          label={Messages.engineParameters.title}
+          labelCaption={Messages.engineParameters.caption}
+          name={AdvancedConfigurationFields.engineParametersEnabled}
+          formControlLabelProps={{
             sx: {
-              ml: 6,
+              mt: 1,
             },
           }}
         />
-      )}
+        {engineParametersEnabled && (
+          <TextInput
+            name={AdvancedConfigurationFields.engineParameters}
+            textFieldProps={{
+              placeholder: getParamsPlaceholderFromDbType(dbType),
+              multiline: true,
+              minRows: 3,
+              sx: {
+                ml: 6,
+              },
+            }}
+          />
+        )}
+      </RoundedBox>
     </>
   );
 };

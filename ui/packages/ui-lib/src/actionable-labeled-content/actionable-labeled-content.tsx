@@ -16,6 +16,8 @@ export const ActionableLabeledContent = ({
   techPreview,
   content,
   actionButtonProps,
+  verticalStackSx,
+  horizontalStackSx,
   ...rest
 }: ActionableLabeledContentProps) => {
   const { dataTestId, buttonText, ...buttonProps } = actionButtonProps || {};
@@ -28,9 +30,11 @@ export const ActionableLabeledContent = ({
         '.MuiTextField-root': {
           mt: actionButtonProps ? 0 : 1.5,
         },
+        ...verticalStackSx,
       }}
       horizontalStackSx={{
         marginBottom: actionButtonProps ? 1 : 0.5,
+        ...horizontalStackSx,
       }}
       horizontalStackChildrenSlot={
         <>
