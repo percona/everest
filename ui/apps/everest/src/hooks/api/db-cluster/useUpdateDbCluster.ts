@@ -428,7 +428,7 @@ export const useUpdateDbClusterWithConflictRetry = (
     },
     onSuccess: (data, vars, ctx) => {
       watchStartTime.current = null;
-      queryClient.setQueryData([DB_CLUSTER_QUERY, dbClusterName], data);
+      queryClient.setQueryData([DB_CLUSTER_QUERY, dbClusterName], () => data);
       ownOnSuccess?.(data, vars, ctx);
     },
     ...restMutationOptions,
