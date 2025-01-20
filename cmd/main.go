@@ -37,7 +37,7 @@ const (
 )
 
 func main() {
-	logger := logger.MustInitLogger(true)
+	logger := logger.MustInitLogger(true, "everest")
 	defer logger.Sync() //nolint:errcheck
 	l := logger.Sugar()
 

@@ -13,66 +13,59 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package oidc ...
+// Package oidc provides OIDC settings CLI commands.
 package oidc
 
 import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 
+	"github.com/percona/everest/pkg/cli"
+	"github.com/percona/everest/pkg/logger"
 	"github.com/percona/everest/pkg/oidc"
 	"github.com/percona/everest/pkg/output"
 )
 
-// NewConfigureCommand returns the command to configure OIDC.
-func NewConfigureCommand(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "configure",
-		Long:  "Configure OIDC settings",
-		Short: "Configure OIDC settings",
-		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
-			initOIDCViperFlags(cmd)
-			c, err := parseOIDCConfig()
-			if err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
+var (
+	settingsOIDCConfigureCmd = &cobra.Command{
+		Use:     "configure [flags]",
+		Args:    cobra.NoArgs,
+		Long:    "Configure OIDC settings",
+		Short:   "Configure OIDC settings",
+		Example: `everestctl settings oidc configure --issuer-url https://example.com --client-id 123456`,
+		PreRun:  settingsOIDCConfigurePreRun,
+		Run:     settingsOIDCConfigureRun,
+	}
+	settingsOIDCConfigureCfg = &oidc.Config{}
+)
 
-			op, err := oidc.NewOIDC(*c, l)
-			if err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
+func init() {
+	// local command flags
+	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.IssuerURL, cli.FlagOIDCIssueURL, "", "OIDC issuer url")
+	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.ClientID, cli.FlagOIDCIssueClientID, "", "OIDC application client ID")
+}
 
-			if err := op.Run(cmd.Context()); err != nil {
-				output.PrintError(err, l, false)
-				os.Exit(1)
-			}
-		},
+func settingsOIDCConfigurePreRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	// Copy global flags to config
+	settingsOIDCConfigureCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
+	settingsOIDCConfigureCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
+}
+
+func settingsOIDCConfigureRun(cmd *cobra.Command, _ []string) {
+	op, err := oidc.NewOIDC(*settingsOIDCConfigureCfg, logger.GetLogger())
+	if err != nil {
+		logger.GetLogger().Error(err)
+		os.Exit(1)
 	}
 
-	initOIDCFlags(cmd)
-
-	return cmd
+	if err := op.Run(cmd.Context()); err != nil {
+		output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+		os.Exit(1)
+	}
 }
 
-func initOIDCFlags(cmd *cobra.Command) {
-	cmd.Flags().String("issuer-url", "", "OIDC issuer url")
-	cmd.Flags().String("client-id", "", "ID of the client OIDC app")
-}
-
-func initOIDCViperFlags(cmd *cobra.Command) {
-	viper.BindEnv("kubeconfig")                                     //nolint:errcheck,gosec
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
-	viper.BindPFlag("issuer-url", cmd.Flags().Lookup("issuer-url")) //nolint:errcheck,gosec
-	viper.BindPFlag("client-id", cmd.Flags().Lookup("client-id"))   //nolint:errcheck,gosec
-}
-
-func parseOIDCConfig() (*oidc.Config, error) {
-	c := &oidc.Config{}
-	err := viper.Unmarshal(c)
-	return c, err
+// GetSettingsOIDCConfigureCmd returns the command to configure OIDC settings.
+func GetSettingsOIDCConfigureCmd() *cobra.Command {
+	return settingsOIDCConfigureCmd
 }

@@ -18,18 +18,21 @@ package commands
 
 import (
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 
 	"github.com/percona/everest/commands/settings"
 )
 
-func newSettingsCommand(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "settings",
-		Long:  "Configure Everest settings",
-		Short: "Configure Everest settings",
-	}
-	cmd.AddCommand(settings.NewOIDCCmd(l))
-	cmd.AddCommand(settings.NewRBACCmd(l))
-	return cmd
+var settingsCmd = &cobra.Command{
+	Use:   "settings <command> [flags]",
+	Args:  cobra.ExactArgs(1),
+	Long:  "Configure Everest settings",
+	Short: "Configure Everest settings",
+	Run:   func(_ *cobra.Command, _ []string) {},
+}
+
+func init() {
+	rootCmd.AddCommand(settingsCmd)
+
+	settingsCmd.AddCommand(settings.GetSettingsOIDCCmd())
+	settingsCmd.AddCommand(settings.GetSettingsRBACCmd())
 }

@@ -1,61 +1,68 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // Package accounts holds commands for accounts command.
 package accounts
 
 import (
-	"context"
-	"errors"
 	"fmt"
-	"net/url"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 
-	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/kubernetes"
+	accountscli "github.com/percona/everest/pkg/accounts/cli"
+	"github.com/percona/everest/pkg/cli"
+	"github.com/percona/everest/pkg/logger"
 )
 
-// NewInitialAdminPasswdCommand returns a new initial-admin-passwd command.
-func NewInitialAdminPasswdCommand(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "initial-admin-password",
+var (
+	accountsInitAdminPasswdCmd = &cobra.Command{
+		Use:     "initial-admin-password [flags]",
+		Args:    cobra.NoArgs,
 		Example: "everestctl accounts initial-admin-password",
 		Long:    "Get the initial admin password for Everest",
 		Short:   "Get the initial admin password for Everest",
-		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
-			viper.BindEnv("kubeconfig")                                     //nolint:errcheck,gosec
-			viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
-			kubeconfigPath := viper.GetString("kubeconfig")
-
-			k, err := kubernetes.New(kubeconfigPath, l)
-			if err != nil {
-				var u *url.Error
-				l.Error("Could not connect to Kubernetes. " +
-					"Make sure Kubernetes is running and is accessible from this computer/server.")
-				if !errors.As(err, &u) {
-					l.Error(err)
-				}
-				os.Exit(1)
-			}
-
-			ctx := context.Background()
-			secure, err := k.Accounts().IsSecure(ctx, common.EverestAdminUser)
-			if err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
-			if secure {
-				l.Error("Cannot retrieve admin password after it has been updated.")
-				os.Exit(1)
-			}
-			admin, err := k.Accounts().Get(ctx, common.EverestAdminUser)
-			if err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
-			fmt.Fprint(os.Stdout, admin.PasswordHash+"\n")
-		},
+		PreRun:  accountsInitAdminPasswdPreRun,
+		Run:     accountsInitAdminPasswdRun,
 	}
-	return cmd
+	accountsInitAdminPasswdCfg = &accountscli.Config{}
+)
+
+func accountsInitAdminPasswdPreRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	// Copy global flags to config
+	accountsInitAdminPasswdCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
+	accountsInitAdminPasswdCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
+}
+
+func accountsInitAdminPasswdRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	cliA, err := accountscli.NewAccounts(*accountsInitAdminPasswdCfg, logger.GetLogger())
+	if err != nil {
+		logger.GetLogger().Error(err)
+		os.Exit(1)
+	}
+
+	passwordHash, err := cliA.GetInitAdminPassword(cmd.Context())
+	if err != nil {
+		logger.GetLogger().Error(err)
+		os.Exit(1)
+	}
+
+	_, _ = fmt.Fprint(os.Stdout, passwordHash+"\n")
+}
+
+// GetInitAdminPasswordCmd returns the command to get the initial admin password.
+func GetInitAdminPasswordCmd() *cobra.Command {
+	return accountsInitAdminPasswdCmd
 }

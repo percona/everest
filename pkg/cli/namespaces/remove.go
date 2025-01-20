@@ -1,3 +1,19 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package namespaces provides the functionality to manage namespaces.
 package namespaces
 
 import (
@@ -31,83 +47,40 @@ var ErrNamespaceNotEmpty = errors.New("cannot remove namespace with running data
 // NamespaceRemoveConfig is the configuration for the namespace removal operation.
 type NamespaceRemoveConfig struct {
 	// KubeconfigPath is a path to a kubeconfig
-	KubeconfigPath string `mapstructure:"kubeconfig"`
+	KubeconfigPath string
 	// Force delete a namespace by deleting databases in it.
-	Force bool `mapstructure:"force"`
+	Force bool
 	// If set, we will keep the namespace
-	KeepNamespace bool `mapstructure:"keep-namespace"`
+	KeepNamespace bool
 	// If set, we will print the pretty output.
 	Pretty bool
 
-	// Namespaces (DB Namespaces) passed by user to remove.
+	// Namespaces (DB Namespaces managed by Everest) to remove
 	Namespaces string
 	// NamespaceList is a list of namespaces to remove.
 	// This is populated internally after validating the Namespaces field.:
 	NamespaceList []string
 }
 
-// Populate the configuration with the required values.
-func (cfg *NamespaceRemoveConfig) Populate(ctx context.Context) error {
-	if err := cfg.populateNamespaces(); err != nil {
+// populate the configuration with the required values.
+func (cfg *NamespaceRemoveConfig) populate(ctx context.Context, kubeClient *kubernetes.Kubernetes) error {
+	nsList, err := ValidateNamespaces(cfg.Namespaces)
+	if err != nil {
 		return err
 	}
 
-	for _, ns := range cfg.NamespaceList {
-		if err := cfg.validateNamespaceOwnership(ctx, ns); err != nil {
-			return fmt.Errorf("invalid namespace (%s): %w", ns, err)
+	for _, ns := range nsList {
+		// Check that the namespace exists.
+		exists, managedByEverest, err := namespaceExists(ctx, ns, kubeClient)
+		if err != nil {
+			return errors.Join(err, errors.New("failed to check if namespace exists"))
 		}
-
-		if err := cfg.validateDatabasesAbsent(ctx, ns); err != nil {
-			return fmt.Errorf("invalid namespace (%s): %w", ns, err)
+		if !exists || !managedByEverest {
+			return errors.New(fmt.Sprintf("namespace '%s' does not exist or not managed by Everest", ns))
 		}
 	}
-	return nil
-}
 
-func (cfg *NamespaceRemoveConfig) populateNamespaces() error {
-	namespaces := cfg.Namespaces
-	list, err := ValidateNamespaces(namespaces)
-	if err != nil {
-		return err
-	}
-	cfg.NamespaceList = list
-	return nil
-}
-
-func (cfg *NamespaceRemoveConfig) validateNamespaceOwnership(ctx context.Context, namespace string) error {
-	k, err := cliutils.NewKubeclient(zap.NewNop().Sugar(), cfg.KubeconfigPath)
-	if err != nil {
-		return err
-	}
-
-	nsExists, ownedByEverest, err := namespaceExists(ctx, namespace, k)
-	if err != nil {
-		return err
-	}
-
-	if !nsExists {
-		return ErrNsDoesNotExist
-	}
-	if !ownedByEverest {
-		return ErrNamespaceNotManagedByEverest
-	}
-	return nil
-}
-
-func (cfg *NamespaceRemoveConfig) validateDatabasesAbsent(ctx context.Context, namespace string) error {
-	k, err := cliutils.NewKubeclient(zap.NewNop().Sugar(), cfg.KubeconfigPath)
-	if err != nil {
-		return err
-	}
-
-	dbsExist, err := k.DatabasesExist(ctx, namespace)
-	if err != nil {
-		return errors.Join(err, errors.New("failed to check if databases exist"))
-	}
-
-	if dbsExist && !cfg.Force {
-		return ErrNamespaceNotEmpty
-	}
+	cfg.NamespaceList = nsList
 	return nil
 }
 
@@ -142,6 +115,19 @@ func (r *NamespaceRemover) Run(ctx context.Context) error {
 	_, err := cliutils.CheckHelmInstallation(ctx, r.kubeClient)
 	if err != nil {
 		return err
+	}
+
+	if err := r.config.populate(ctx, r.kubeClient); err != nil {
+		return err
+	}
+
+	dbsExist, err := r.kubeClient.DatabasesExist(ctx, r.config.NamespaceList...)
+	if err != nil {
+		return errors.Join(err, errors.New("failed to check if databases exist"))
+	}
+
+	if dbsExist && !r.config.Force {
+		return ErrNamespaceNotEmpty
 	}
 
 	var removalSteps []steps.Step

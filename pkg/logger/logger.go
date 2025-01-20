@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -28,7 +27,7 @@ import (
 )
 
 // MustInitLogger initializes logger and panics in case of an error. // FIXME Test this.
-func MustInitLogger(json bool) *zap.Logger {
+func MustInitLogger(json bool, logName string) *zap.Logger {
 	var loggerCfg zap.Config
 	if config.Debug {
 		loggerCfg = zap.NewDevelopmentConfig()
@@ -47,45 +46,40 @@ func MustInitLogger(json bool) *zap.Logger {
 	}
 	loggerCfg.DisableStacktrace = true
 
+	return initGlobalLogger(loggerCfg, logName)
+}
+
+// MustInitVerboseLogger initializes a verbose logger and panics in case of an error.
+func MustInitVerboseLogger(json bool, logName string) *zap.Logger {
+	lCfg := zap.NewDevelopmentConfig()
+	if json {
+		lCfg.Encoding = "json"
+	}
+	return initGlobalLogger(lCfg, logName)
+}
+
+// InitLoggerInRootCmd inits the provided logger instance based on command's flags.
+// This is meant to be run by the root command in PersistentPreRun step.
+func InitLoggerInRootCmd(verbose, json bool, logName string) {
+	if verbose {
+		MustInitVerboseLogger(json, logName)
+	} else {
+		MustInitLogger(json, logName)
+	}
+}
+
+// GetLogger returns the global logger instance.
+func GetLogger() *zap.SugaredLogger {
+	return zap.L().Sugar()
+}
+
+func initGlobalLogger(loggerCfg zap.Config, logName string) *zap.Logger {
 	logger, err := loggerCfg.Build()
 	if err != nil {
 		panic(fmt.Sprintf("Cannot initialize logger: %s", err))
 	}
 
-	return logger
-}
+	zap.ReplaceGlobals(logger.Named(logName))
 
-// MustInitVerboseLogger initializes a verbose logger and panics in case of an error.
-func MustInitVerboseLogger(json bool) *zap.Logger {
-	lCfg := zap.NewDevelopmentConfig()
-	if json {
-		lCfg.Encoding = "json"
-	}
-
-	l, err := lCfg.Build()
-	if err != nil {
-		panic(fmt.Sprintf("Cannot initialize logger: %s", err))
-	}
-
-	return l
-}
-
-// InitLoggerInRootCmd inits the provided logger instance based on command's flags.
-// This is meant to be run by the root command in PersistentPreRun step.
-func InitLoggerInRootCmd(cmd *cobra.Command, l *zap.SugaredLogger) {
-	verbose, err := cmd.Flags().GetBool("verbose")
-	if err != nil {
-		l.Warn(`Could not parse "verbose" flag`)
-	}
-
-	json, err := cmd.Flags().GetBool("json")
-	if err != nil {
-		l.Warn(`Could not parse "json" flag`)
-	}
-
-	if verbose {
-		*l = *MustInitVerboseLogger(json).Sugar()
-	} else if json {
-		*l = *MustInitLogger(true).Sugar()
-	}
+	return zap.L()
 }

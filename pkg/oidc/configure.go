@@ -23,6 +23,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"go.uber.org/zap"
 
+	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 )
@@ -37,25 +38,32 @@ type OIDC struct {
 // Config stores configuration for the OIDC command.
 type Config struct {
 	// KubeconfigPath is a path to a kubeconfig
-	KubeconfigPath string `mapstructure:"kubeconfig"`
+	KubeconfigPath string
+	// Pretty print the output.
+	Pretty bool
 	// IssuerURL OIDC issuer url.
-	IssuerURL string `mapstructure:"issuer-url"`
+	IssuerURL string
 	// ClientID ID of the client OIDC app.
-	ClientID string `mapstructure:"client-id"`
+	ClientID string
 }
 
 // NewOIDC returns a new OIDC struct.
 func NewOIDC(c Config, l *zap.SugaredLogger) (*OIDC, error) {
-	kubeClient, err := kubernetes.New(c.KubeconfigPath, l)
+	cli := &OIDC{
+		config: c,
+		l:      l.With("component", "oidc"),
+	}
+
+	if c.Pretty {
+		cli.l = zap.NewNop().Sugar()
+	}
+
+	k, err := cliutils.NewKubeclient(cli.l, c.KubeconfigPath)
 	if err != nil {
 		return nil, err
 	}
+	cli.kubeClient = k
 
-	cli := &OIDC{
-		config:     c,
-		kubeClient: kubeClient,
-		l:          l,
-	}
 	return cli, nil
 }
 

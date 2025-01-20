@@ -17,35 +17,59 @@
 package commands
 
 import (
+	"github.com/go-logr/zapr"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
+	ctrlruntimelog "sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/percona/everest/pkg/cli"
 	"github.com/percona/everest/pkg/logger"
 )
 
-// NewRootCmd creates a new root command for the cli.
-func NewRootCmd(l *zap.SugaredLogger) *cobra.Command {
-	rootCmd := &cobra.Command{
-		Use:   "everestctl",
-		Long:  "CLI for managing Percona Everest",
-		Short: "CLI for managing Percona Everest",
-		PersistentPreRun: func(cmd *cobra.Command, args []string) { //nolint:revive
-			logger.InitLoggerInRootCmd(cmd, l)
-			l.Debug("Debug logging enabled")
-		},
+type (
+	globalFlags struct {
+		Verbose bool // Enable Verbose mode
+		JSON    bool // Set output type to JSON
+		// If set, we will print the Pretty output.
+		Pretty bool
+		// Path to a kubeconfig
+		KubeconfigPath string `default:"~/.kube/config" envconfig:"KUBECONFIG"`
 	}
+)
 
-	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose mode")
-	rootCmd.PersistentFlags().Bool("json", false, "Set output type to JSON")
-	rootCmd.PersistentFlags().StringP("kubeconfig", "k", "~/.kube/config", "Path to a kubeconfig")
+var (
+	rootCmd = &cobra.Command{
+		Use:              "everestctl <command> [flags]",
+		Long:             "CLI for managing Percona Everest",
+		Short:            "CLI for managing Percona Everest",
+		PersistentPreRun: rootPersistentPreRun,
+	}
+	// Contains global variables applied to all commands and subcommands.
+	rootCmdFlags = &globalFlags{}
+)
 
-	rootCmd.AddCommand(newInstallCmd(l))
-	rootCmd.AddCommand(newVersionCmd(l))
-	rootCmd.AddCommand(newUpgradeCmd(l))
-	rootCmd.AddCommand(newUninstallCmd(l))
-	rootCmd.AddCommand(newAccountsCmd(l))
-	rootCmd.AddCommand(newSettingsCommand(l))
-	rootCmd.AddCommand(newNamespacesCommand(l))
+func init() {
+	rootCmd.PersistentFlags().BoolVarP(&rootCmdFlags.Verbose, cli.FlagVerbose, "v", false, "Enable Verbose mode")
+	rootCmd.PersistentFlags().BoolVar(&rootCmdFlags.JSON, cli.FlagJSON, false, "Set output type to JSON")
 
-	return rootCmd
+	// Read KUBECONFIG ENV var first.
+	_ = envconfig.Process("", rootCmdFlags)
+	// if kubeconfig is passed explicitly via CLI - use it instead of ENV var.
+	rootCmd.PersistentFlags().StringVarP(&rootCmdFlags.KubeconfigPath, cli.FlagKubeconfig, "k", rootCmdFlags.KubeconfigPath, "Path to a kubeconfig. If not set, will use KUBECONFIG env var")
+}
+
+func rootPersistentPreRun(_ *cobra.Command, _ []string) { //nolint:revive
+	logger.InitLoggerInRootCmd(rootCmdFlags.Verbose, rootCmdFlags.JSON, "everestctl")
+
+	// This is required because controller-runtime requires a logger
+	// to be set within 30 seconds of the program initialization.
+	ctrlruntimelog.SetLogger(zapr.NewLogger(logger.GetLogger().Desugar()))
+
+	rootCmdFlags.Pretty = !(rootCmdFlags.Verbose || rootCmdFlags.JSON)
+	logger.GetLogger().Debug("Debug logging enabled")
+}
+
+// Execute executes the root command.
+func Execute() error {
+	return rootCmd.Execute()
 }

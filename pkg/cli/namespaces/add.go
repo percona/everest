@@ -1,3 +1,18 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // Package namespaces provides the functionality to manage namespaces.
 package namespaces
 
@@ -71,17 +86,19 @@ func NewNamespaceAdd(c NamespaceAddConfig, l *zap.SugaredLogger) (*NamespaceAdde
 // NamespaceAddConfig is the configuration for adding namespaces.
 type NamespaceAddConfig struct {
 	// Namespaces to install.
-	Namespaces string `mapstructure:"namespaces"`
+	Namespaces string
 	// SkipWizard is set if the wizard should be skipped.
-	SkipWizard bool `mapstructure:"skip-wizard"`
+	SkipWizard bool
 	// KubeconfigPath is the path to the kubeconfig file.
-	KubeconfigPath string `mapstructure:"kubeconfig"`
+	KubeconfigPath string
 	// DisableTelemetry is set if telemetry should be disabled.
-	DisableTelemetry bool `mapstructure:"disable-telemetry"`
+	DisableTelemetry bool
 	// TakeOwnership of an existing namespace.
-	TakeOwnership bool `mapstructure:"take-ownership"`
+	TakeOwnership bool
 	// SkipEnvDetection skips detecting the Kubernetes environment.
-	SkipEnvDetection bool `mapstructure:"skip-env-detection"`
+	SkipEnvDetection bool
+	// Ask user to provide DB operators to be installed into namespaces managed by Everest.
+	AskOperators bool
 
 	Operator OperatorConfig
 
@@ -103,11 +120,11 @@ type NamespaceAddConfig struct {
 // OperatorConfig identifies which operators shall be installed.
 type OperatorConfig struct {
 	// PG stores if PostgresSQL shall be installed.
-	PG bool `mapstructure:"postgresql"`
+	PG bool
 	// PSMDB stores if MongoDB shall be installed.
-	PSMDB bool `mapstructure:"mongodb"`
+	PSMDB bool
 	// PXC stores if XtraDB Cluster shall be installed.
-	PXC bool `mapstructure:"xtradb-cluster"`
+	PXC bool
 }
 
 // NamespaceAdder provides the functionality to add namespaces.
@@ -127,13 +144,17 @@ func (n *NamespaceAdder) Run(ctx context.Context) error {
 		return err
 	}
 
+	if err := n.cfg.Populate(ctx, false, n.cfg.AskOperators); err != nil {
+		return err
+	}
+
 	if !n.skipEnvDetection {
 		if err := n.setKubernetesEnv(ctx); err != nil {
 			return err
 		}
 	}
 
-	installSteps := []steps.Step{}
+	var installSteps []steps.Step
 	if version.IsDev(ver) && n.cfg.ChartDir == "" {
 		cleanup, err := helmutils.SetupEverestDevChart(n.l, &n.cfg.ChartDir)
 		if err != nil {

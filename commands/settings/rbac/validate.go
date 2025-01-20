@@ -13,77 +13,80 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package rbac ...
+// Package rbac provides RBAC settings CLI commands.
 package rbac
 
 import (
-	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/percona/everest/pkg/cli"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/logger"
 	"github.com/percona/everest/pkg/output"
 	"github.com/percona/everest/pkg/rbac"
 )
 
-// NewValidateCommand returns a new command for validating RBAC.
-func NewValidateCommand(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "validate",
-		Long:  "Validate RBAC settings",
-		Short: "Validate RBAC settings",
-		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
-			initValidateViperFlags(cmd)
-
-			kubeconfigPath := viper.GetString("kubeconfig")
-			policyFilepath := viper.GetString("policy-file")
-			if kubeconfigPath == "" && policyFilepath == "" {
-				l.Error("Either --kubeconfig or --policy-file must be set")
-				os.Exit(1)
-			}
-
-			var k *kubernetes.Kubernetes
-			if kubeconfigPath != "" && policyFilepath == "" {
-				client, err := kubernetes.New(kubeconfigPath, l)
-				if err != nil {
-					var u *url.Error
-					if errors.As(err, &u) || errors.Is(err, clientcmd.ErrEmptyConfig) {
-						l.Error("Could not connect to Kubernetes. " +
-							"Make sure Kubernetes is running and is accessible from this computer/server.")
-					}
-					os.Exit(1)
-				}
-				k = client
-			}
-
-			err := rbac.ValidatePolicy(cmd.Context(), k, policyFilepath)
-			if err != nil {
-				fmt.Fprint(os.Stdout, output.Failure("Invalid"))
-				msg := err.Error()
-				msg = strings.Join(strings.Split(msg, "\n"), " - ")
-				fmt.Fprintln(os.Stdout, msg)
-				os.Exit(1)
-			}
-			fmt.Fprintln(os.Stdout, output.Success("Valid"))
-		},
+var (
+	settingsRBACValidateCmd = &cobra.Command{
+		Use:     "validate [flags]",
+		Long:    "Validate RBAC settings",
+		Short:   "Validate RBAC settings",
+		Example: "everestctl settings rbac validate --policy-file <file_path>",
+		PreRun:  settingsRBACValidatePreRun,
+		Run:     settingsRBACValidateRun,
 	}
-	initValidateFlags(cmd)
-	return cmd
+	rbacValidatePolicyFilePath string
+	rbacValidateKubeconfigPath string
+	rbacValidatePretty         bool
+)
+
+func init() {
+	// local command flags
+	settingsRBACValidateCmd.Flags().StringVar(&rbacValidatePolicyFilePath, cli.FlagRBACPolicyFile, "", "Path to the policy file to use, otherwise use policy from Everest deployment.")
 }
 
-func initValidateFlags(cmd *cobra.Command) {
-	cmd.Flags().String("policy-file", "", "Path to the policy file to use")
+func settingsRBACValidatePreRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	// Copy global flags to config
+	rbacValidatePretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
+	rbacValidateKubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
 }
 
-func initValidateViperFlags(cmd *cobra.Command) {
-	viper.BindEnv("kubeconfig")                                       //nolint:errcheck,gosec
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))   //nolint:errcheck,gosec
-	viper.BindPFlag("policy-file", cmd.Flags().Lookup("policy-file")) //nolint:errcheck,gosec
+func settingsRBACValidateRun(cmd *cobra.Command, _ []string) {
+	var k *kubernetes.Kubernetes
+	if rbacValidatePolicyFilePath == "" {
+		// check over policy in Everest deployment (ConfigMap).
+		var l *zap.SugaredLogger
+		if rbacValidatePretty {
+			l = zap.NewNop().Sugar()
+		} else {
+			l = logger.GetLogger().With("component", "rbac")
+		}
+
+		client, err := kubernetes.New(rbacValidateKubeconfigPath, l)
+		if err != nil {
+			logger.GetLogger().Error(err)
+			os.Exit(1)
+		}
+		k = client
+	}
+
+	err := rbac.ValidatePolicy(cmd.Context(), k, rbacValidatePolicyFilePath)
+	if err != nil {
+		_, _ = fmt.Fprint(os.Stdout, output.Failure("Invalid"))
+		msg := err.Error()
+		msg = strings.Join(strings.Split(msg, "\n"), " - ")
+		_, _ = fmt.Fprintln(os.Stdout, msg)
+		os.Exit(1)
+	}
+	_, _ = fmt.Fprintln(os.Stdout, output.Success("Valid"))
+}
+
+// GetSettingsRBACValidateCmd returns the command to validate RBAC policies.
+func GetSettingsRBACValidateCmd() *cobra.Command {
+	return settingsRBACValidateCmd
 }
