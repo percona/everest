@@ -21,8 +21,9 @@ import { BasicInformationSection } from './basic-information/basic';
 import { ConnectionDetails } from './connection-details';
 import { MonitoringDetails } from './monitoring/monitoring';
 import { AdvancedConfiguration } from './advanced-configuration';
-import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
-import { useContext } from 'react';
+import { useMemo } from 'react';
+import { useMonitoringInstancesForNamespace } from 'hooks';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const DbDetails = ({
   loading,
@@ -40,7 +41,22 @@ export const DbDetails = ({
   externalAccess,
   parameters,
 }: DatabaseDetailsOverviewCardProps) => {
-  const { canReadMonitoring } = useContext(DbClusterContext);
+  const { data: monitoringInstances } =
+    useMonitoringInstancesForNamespace(namespace);
+
+  const monitoringInstancesToCheck = useMemo(
+    () =>
+      (monitoringInstances || []).map(
+        (monitoringInstance) =>
+          `${monitoringInstance.namespace}/${monitoringInstance.name}`
+      ),
+    [monitoringInstances]
+  );
+
+  const { canRead: canReadMonitoring } = useRBACPermissions(
+    'monitoring-instances',
+    monitoringInstancesToCheck.length > 0 ? monitoringInstancesToCheck : '*'
+  );
 
   return (
     <OverviewCard

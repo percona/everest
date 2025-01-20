@@ -28,13 +28,12 @@ export const MonitoringDetails = ({
   monitoring,
 }: MonitoringConfigurationOverviewCardProps) => {
   const [openEditModal, setOpenEditModal] = useState(false);
-  const { dbCluster, canUpdateDb, canUpdateMonitoring } =
-    useContext(DbClusterContext);
+  const { dbCluster, canUpdateDb } = useContext(DbClusterContext);
   const restoringOrDeleting = [
     DbClusterStatus.restoring,
     DbClusterStatus.deleting,
   ].includes(dbCluster?.status?.status!);
-  const editable = canUpdateDb && !restoringOrDeleting && canUpdateMonitoring;
+  const editable = canUpdateDb && !restoringOrDeleting;
 
   const { mutate: updateDbClusterMonitoring } = useUpdateDbClusterMonitoring();
 

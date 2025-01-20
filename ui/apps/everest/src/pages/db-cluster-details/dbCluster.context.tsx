@@ -13,8 +13,6 @@ export const DbClusterContext = createContext<DbClusterContextProps>({
   dbCluster: {} as DbCluster,
   isLoading: false,
   canReadBackups: false,
-  canReadMonitoring: false,
-  canUpdateMonitoring: false,
   canReadCredentials: false,
   canUpdateDb: false,
   clusterDeleted: false,
@@ -59,8 +57,6 @@ export const DbClusterContextProvider = ({
     'database-cluster-backups',
     `${namespace}/${dbClusterName}`
   );
-  const { canRead: canReadMonitoring, canUpdate: canUpdateMonitoring } =
-    useRBACPermissions('monitoring-instances', `${namespace}/*`);
   const { canRead: canReadCredentials } = useRBACPermissions(
     'database-cluster-credentials',
     `${namespace}/${dbClusterName}`
@@ -97,8 +93,6 @@ export const DbClusterContextProvider = ({
         dbCluster,
         isLoading,
         canReadBackups,
-        canReadMonitoring,
-        canUpdateMonitoring,
         canUpdateDb,
         canReadCredentials,
         clusterDeleted,
