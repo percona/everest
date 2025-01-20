@@ -7,14 +7,13 @@ fi
 
 curl https://raw.githubusercontent.com/Percona-Lab/percona-version-service/main/deploy.yaml  > vs_deploy.yaml
 
-# Determine the sed -i option based on the system
-if [[ "$(uname)" == "Darwin" ]]; then
-  sed_i_option="''"
-else
-  sed_i_option=""
-fi
 # use FB VS image in the VS configuration
-sed -i "$sed_i_option" "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_IMAGE/g" vs_deploy.yaml
+if [[ "$(uname)" == "Darwin" ]]; then
+  sed -i '' "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_IMAGE/g" vs_deploy.yaml
+else
+  sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_IMAGE/g" vs_deploy.yaml
+fi
+
 
 # deploy VS
 kubectl apply -f vs_deploy.yaml > /dev/null
