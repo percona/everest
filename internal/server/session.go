@@ -62,10 +62,6 @@ func (e *EverestServer) CreateSession(ctx echo.Context) error {
 		return err
 	}
 
-	ctx.SetCookie(&http.Cookie{
-		Name:  common.EverestTokenCookie,
-		Value: jwtToken,
-	})
 	e.attemptsStore.CleanupVisitor(ctx.RealIP())
 
 	return ctx.JSON(http.StatusOK, map[string]string{"token": jwtToken})

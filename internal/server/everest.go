@@ -248,7 +248,6 @@ func (e *EverestServer) jwtMiddleWare(ctx context.Context) (echo.MiddlewareFunc,
 	}
 
 	tokenLookup := "header:Authorization:Bearer "
-	tokenLookup = tokenLookup + ",cookie:" + common.EverestTokenCookie
 	return echojwt.WithConfig(echojwt.Config{
 		Skipper:     skipper,
 		TokenLookup: tokenLookup,
