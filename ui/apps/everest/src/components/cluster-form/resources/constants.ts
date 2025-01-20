@@ -382,3 +382,35 @@ export const getDefaultAffinityRules = (dbType: DbType, sharding: boolean) => {
   }
   return rules;
 };
+
+export const areAffinityRulesEqual = (
+  rule1: AffinityRule,
+  rule2: AffinityRule
+) => {
+  return (
+    rule1.component === rule2.component &&
+    rule1.type === rule2.type &&
+    rule1.priority === rule2.priority &&
+    rule1.weight === rule2.weight &&
+    rule1.topologyKey === rule2.topologyKey &&
+    rule1.key === rule2.key &&
+    rule1.operator === rule2.operator &&
+    rule1.values === rule2.values
+  );
+};
+
+export const areAffinityRulesDefault = (
+  rules: AffinityRule[],
+  dbType: DbType,
+  sharding = false
+) => {
+  const defaultRules = getDefaultAffinityRules(dbType, sharding);
+
+  if (rules.length !== defaultRules.length) {
+    return false;
+  }
+
+  return rules.every((rule) =>
+    defaultRules.find((defaultRule) => areAffinityRulesEqual(rule, defaultRule))
+  );
+};

@@ -19,18 +19,21 @@ import OverviewSection from '../../../overview-section';
 import { AdvancedConfigurationOverviewCardProps } from '../../card.types';
 import OverviewSectionRow from '../../../overview-section-row';
 import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
-import { useContext, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { AdvancedConfigurationEditModal } from './edit-advanced-configuration';
 import { useUpdateDbClusterAdvancedConfiguration } from 'hooks';
 import { AdvancedConfigurationFormType } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { areAffinityRulesDefault } from 'components/cluster-form';
+import { dbEngineToDbType } from '@percona/utils';
 
 export const AdvancedConfiguration = ({
   loading,
   externalAccess,
   parameters,
+  affinityRules,
 }: AdvancedConfigurationOverviewCardProps) => {
   const {
     canUpdateDb,
@@ -45,6 +48,15 @@ export const AdvancedConfiguration = ({
   const handleCloseModal = () => {
     setOpenEditModal(false);
   };
+  const usingDefaultAffinityRules = useMemo(
+    () =>
+      areAffinityRulesDefault(
+        affinityRules,
+        dbEngineToDbType(dbCluster!.spec.engine.type),
+        dbCluster?.spec.sharding?.enabled
+      ),
+    [affinityRules, dbCluster]
+  );
   const restoringOrDeleting = [
     DbClusterStatus.restoring,
     DbClusterStatus.deleting,
@@ -109,7 +121,7 @@ export const AdvancedConfiguration = ({
         label={Messages.fields.affinity}
         contentString={
           <>
-            Custom
+            {usingDefaultAffinityRules ? 'Default' : 'Custom'}
             <IconButton
               size="small"
               color="primary"
