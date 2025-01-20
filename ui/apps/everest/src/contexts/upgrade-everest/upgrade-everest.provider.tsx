@@ -14,7 +14,6 @@ const UpgradeEverestProvider = ({
   const [openReloadEverestDialog, setOpenReloadEverestDialog] = useState(false);
 
   useEffect(() => {
-    debugger;
     if (commitVersion.current === null && apiVersion?.fullCommit) {
       commitVersion.current = apiVersion?.fullCommit;
       setCurrentVersion(apiVersion?.version);
