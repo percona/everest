@@ -32,6 +32,7 @@ export const Messages = {
     status: 'Status',
     externalAccess: 'Ext.access',
     parameters: 'Parameters',
+    affinity: 'Affinity',
     enabled: 'Enabled',
     disabled: 'Disabled',
     shards: 'Nº of shards',

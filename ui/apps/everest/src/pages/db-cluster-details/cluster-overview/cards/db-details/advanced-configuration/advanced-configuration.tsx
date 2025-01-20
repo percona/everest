@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { ArrowOutward } from '@mui/icons-material';
 import { Messages } from '../../../cluster-overview.messages';
 import OverviewSection from '../../../overview-section';
 import { AdvancedConfigurationOverviewCardProps } from '../../card.types';
@@ -23,6 +24,8 @@ import { AdvancedConfigurationEditModal } from './edit-advanced-configuration';
 import { useUpdateDbClusterAdvancedConfiguration } from 'hooks';
 import { AdvancedConfigurationFormType } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
+import { IconButton } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 export const AdvancedConfiguration = ({
   loading,
@@ -38,6 +41,7 @@ export const AdvancedConfiguration = ({
   const [updating, setUpdating] = useState(false);
   const { mutate: updateDbClusterAdvancedConfiguration } =
     useUpdateDbClusterAdvancedConfiguration();
+  const navigate = useNavigate();
   const handleCloseModal = () => {
     setOpenEditModal(false);
   };
@@ -99,6 +103,29 @@ export const AdvancedConfiguration = ({
         label={Messages.fields.externalAccess}
         contentString={
           externalAccess ? Messages.fields.enabled : Messages.fields.disabled
+        }
+      />
+      <OverviewSectionRow
+        label={Messages.fields.affinity}
+        contentString={
+          <>
+            Custom
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() =>
+                navigate(
+                  `/databases/${dbCluster?.metadata.namespace}/${dbCluster?.metadata.name}/components`
+                )
+              }
+              sx={{
+                position: 'absolute',
+                bottom: '-4px',
+              }}
+            >
+              <ArrowOutward />
+            </IconButton>
+          </>
         }
       />
       <OverviewSectionRow
