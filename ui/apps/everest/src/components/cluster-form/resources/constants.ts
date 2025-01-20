@@ -4,13 +4,6 @@ import { Resources } from 'shared-types/dbCluster.types';
 import { DbWizardFormFields } from 'consts';
 import { cpuParser, memoryParser } from 'utils/k8ResourceParser';
 import { Messages } from './messages';
-import {
-  AffinityComponent,
-  AffinityPriority,
-  AffinityRule,
-  AffinityType,
-} from 'shared-types/affinity.types';
-import { generateShortUID } from 'utils/generateShortUID';
 
 const resourceToNumber = (minimum = 0) =>
   z.union([z.string().min(1), z.number()]).pipe(
@@ -354,63 +347,3 @@ export const resourcesFormSchema = (
 };
 
 export const CUSTOM_NR_UNITS_INPUT_VALUE = 'custom-units-nr';
-const DEFAULT_TOPOLOGY_KEY = 'kubernetes.io/hostname';
-
-export const generateDefaultAffinityRule = (
-  component: AffinityComponent
-): AffinityRule => ({
-  component,
-  type: AffinityType.PodAntiAffinity,
-  priority: AffinityPriority.Preferred,
-  weight: 1,
-  topologyKey: DEFAULT_TOPOLOGY_KEY,
-  uid: generateShortUID(),
-});
-
-export const getDefaultAffinityRules = (dbType: DbType, sharding: boolean) => {
-  const rules: AffinityRule[] = [
-    generateDefaultAffinityRule(AffinityComponent.DbNode),
-  ];
-
-  if (dbType === DbType.Mongo) {
-    if (sharding) {
-      rules.push(generateDefaultAffinityRule(AffinityComponent.Proxy));
-      rules.push(generateDefaultAffinityRule(AffinityComponent.ConfigServer));
-    }
-  } else {
-    rules.push(generateDefaultAffinityRule(AffinityComponent.Proxy));
-  }
-  return rules;
-};
-
-export const areAffinityRulesEqual = (
-  rule1: AffinityRule,
-  rule2: AffinityRule
-) => {
-  return (
-    rule1.component === rule2.component &&
-    rule1.type === rule2.type &&
-    rule1.priority === rule2.priority &&
-    rule1.weight === rule2.weight &&
-    rule1.topologyKey === rule2.topologyKey &&
-    rule1.key === rule2.key &&
-    rule1.operator === rule2.operator &&
-    rule1.values === rule2.values
-  );
-};
-
-export const areAffinityRulesDefault = (
-  rules: AffinityRule[],
-  dbType: DbType,
-  sharding = false
-) => {
-  const defaultRules = getDefaultAffinityRules(dbType, sharding);
-
-  if (rules.length !== defaultRules.length) {
-    return false;
-  }
-
-  return rules.every((rule) =>
-    defaultRules.find((defaultRule) => areAffinityRulesEqual(rule, defaultRule))
-  );
-};

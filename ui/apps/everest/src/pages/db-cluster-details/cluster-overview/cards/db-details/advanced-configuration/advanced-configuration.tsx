@@ -26,8 +26,8 @@ import { AdvancedConfigurationFormType } from 'components/cluster-form/advanced-
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { areAffinityRulesDefault } from 'components/cluster-form';
 import { dbEngineToDbType } from '@percona/utils';
+import { areAffinityRulesDefault } from 'utils/db';
 
 export const AdvancedConfiguration = ({
   loading,
