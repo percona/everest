@@ -5,7 +5,7 @@ import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
 import { deleteDbClusterFn } from '@e2e/utils/db-cluster';
 
 type AffinityRuleFormArgs = {
-  component?: 'DB Node' | 'Proxy' | 'Config Server';
+  component?: 'DB Node' | 'Proxy' | 'Router' | 'PG Bouncer' | 'Config Server';
   type?: 'Node affinity' | 'Pod affinity' | 'Pod anti-affinity';
   preference?: 'preferred' | 'required';
   weight?: string;
@@ -154,7 +154,7 @@ test.describe('Affinity via wizard', () => {
       values: 'val1, val2',
     });
     await addAffinityRule(page, {
-      component: 'Proxy',
+      component: 'Router',
       type: 'Pod affinity',
       preference: 'required',
       topologyKey: 'my-topology-key',
