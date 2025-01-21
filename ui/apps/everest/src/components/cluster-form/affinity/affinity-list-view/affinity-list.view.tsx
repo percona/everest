@@ -3,7 +3,6 @@ import { DbType } from '@percona/types';
 import { ActionableLabeledContent } from '@percona/ui-lib';
 import {
   AffinityComponent,
-  AffinityComponentValue,
   AffinityPriority,
   AffinityPriorityValue,
   AffinityRule,
@@ -19,6 +18,7 @@ import { convertFormDataToAffinityRule } from '../affinity-form-dialog/affinity-
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import RoundedBox from 'components/rounded-box';
 import { kebabize } from '@percona/utils';
+import { getAffinityComponentLabel } from 'utils/db';
 
 export const AffinityListView = ({
   onRulesChange,
@@ -150,7 +150,7 @@ export const AffinityListView = ({
                       variant="sectionHeading"
                       sx={{ marginTop: '20px' }}
                     >
-                      {AffinityComponentValue[component]}
+                      {getAffinityComponentLabel(dbType, component)}
                     </Typography>
                     <Stack data-testid={`${kebabize(component)}-rules-list`}>
                       {internalRules.map((rule) => (

@@ -41,12 +41,6 @@ export enum AffinityOperator {
   DoesNotExist = 'DoesNotExist',
 }
 
-export const AffinityComponentValue: Record<AffinityComponent, string> = {
-  [AffinityComponent.DbNode]: 'DB Node',
-  [AffinityComponent.Proxy]: 'Proxy',
-  [AffinityComponent.ConfigServer]: 'Config Server',
-};
-
 export const AffinityTypeValue: Record<AffinityType, string> = {
   [AffinityType.NodeAffinity]: 'Node affinity',
   [AffinityType.PodAffinity]: 'Pod affinity',

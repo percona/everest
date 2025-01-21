@@ -28,6 +28,7 @@ const RuleTypeSection = ({
     <Box sx={{ display: 'flex', gap: '20px' }}>
       <ComponentInput
         disabled={disableComponent}
+        dbType={dbType}
         components={availableComponentsType(dbType, isShardingEnabled)}
       />
       <TypeInput />
