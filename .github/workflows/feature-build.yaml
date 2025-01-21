@@ -27,6 +27,39 @@ on:
         required: false
         description: "How many days the artifacts will be stored in GitHub"
         default: 30
+  workflow_call:
+    inputs:
+      everest_branch:
+        required: false
+        type: string
+        default: main
+        description: "Everest branch with the feature to checkout"
+      everest_operator_branch:
+        required: false
+        type: string
+        default: main
+        description: "Everest operator branch with the feature to checkout"
+      everest_catalog_branch:
+        required: false
+        type: string
+        default: main
+        description: "Everest catalog branch with the feature to checkout"
+      vs_branch:
+        required: false
+        type: string
+        default: production
+        description: "Version Service branch with the feature to checkout"
+      helm_branch:
+        required: false
+        type: string
+        default: main
+        description: "Helm charts branch with the feature to checkout"
+      artifacts_retention_days:
+        required: false
+        type: number
+        description: "How many days the artifacts will be stored in GitHub"
+        default: 30
+
 
 permissions:
   contents: read
@@ -50,12 +83,12 @@ jobs:
 
     env:
       TOOLS_PATH: "/opt/tools/bin"
-      ARTIFACTS_RETENTION_DAYS: ${{ github.event.inputs.artifacts_retention_days }}
-      VS_BRANCH: ${{ github.event.inputs.vs_branch }}
-      HELM_BRANCH: ${{ github.event.inputs.helm_branch }}
-      EVEREST_BRANCH: ${{ github.event.inputs.everest_branch }}
-      EVEREST_OPERATOR_BRANCH: ${{ github.event.inputs.everest_operator_branch }}
-      EVEREST_CATALOG_BRANCH: ${{ github.event.inputs.everest_catalog_branch }}
+      ARTIFACTS_RETENTION_DAYS: ${{ inputs.artifacts_retention_days }}
+      VS_BRANCH: ${{ inputs.vs_branch }}
+      HELM_BRANCH: ${{ inputs.helm_branch }}
+      EVEREST_BRANCH: ${{ inputs.everest_branch }}
+      EVEREST_OPERATOR_BRANCH: ${{ inputs.everest_operator_branch }}
+      EVEREST_CATALOG_BRANCH: ${{ inputs.everest_catalog_branch }}
 
       VS_PORT: 8081
       ARCH: ""
