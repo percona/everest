@@ -101,6 +101,7 @@ jobs:
     steps:
       - name: Input validation
         run: |
+          echo "ARTIFACTS_RETENTION_DAYS=$ARTIFACTS_RETENTION_DAYS"
           if [[ ! "$ARTIFACTS_RETENTION_DAYS" =~ ^[0-9]+$ ]]; then
             echo "Wrong artifacts_retention_days format. Use an integer number. 0 means default GitHub repo settings."
             exit 1
