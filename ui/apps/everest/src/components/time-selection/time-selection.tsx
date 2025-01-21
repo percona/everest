@@ -14,6 +14,7 @@ import {
   timeValueHumanized,
 } from './time-selection.types';
 import { getTimeText } from './time-selection.utils';
+import { HOURS_AM_PM, MINUTES } from './time-selection.constants';
 
 export const TimeSelection = ({
   errorInfoAlert,
@@ -32,36 +33,63 @@ export const TimeSelection = ({
   const weekDay: string = watch(TimeSelectionFields.weekDay);
   const onDay: number = watch(TimeSelectionFields.onDay);
 
-  const timezoneOffset = -1 * (new Date().getTimezoneOffset() / 60);
+  const OFFSET = -1 * (new Date().getTimezoneOffset() / 60);
 
-  const hoursForTimezoneOffset = Array.from(
-    { length: 12 - timezoneOffset },
-    (_, i) => i + timezoneOffset
-  );
+  const TIMEZONE_OFFSET_HOURS = Math.floor(OFFSET);
+
+  const TIMEZONE_OFFSET_MINUTES = (OFFSET - TIMEZONE_OFFSET_HOURS) * 60;
+
   const isFirstDayOfTheMonthAndPositiveOffset =
-    selectedTime === TimeValue.months && onDay === 1 && timezoneOffset > 0;
+    selectedTime === TimeValue.months &&
+    onDay === 1 &&
+    TIMEZONE_OFFSET_HOURS > 0;
+
+  const changeSelectableTime =
+    shouldRestrictSelectableHours && isFirstDayOfTheMonthAndPositiveOffset;
+
+  const selectableHours = changeSelectableTime
+    ? Array.from(
+        { length: 12 - TIMEZONE_OFFSET_HOURS },
+        (_, i) => i + Math.floor(TIMEZONE_OFFSET_HOURS)
+      )
+    : HOURS_AM_PM;
+
+  const selectableMinutes =
+    TIMEZONE_OFFSET_MINUTES > 0 && changeSelectableTime
+      ? Array.from({ length: 30 }, (_, i) => i + TIMEZONE_OFFSET_MINUTES)
+      : MINUTES;
 
   useEffect(() => {
-    const { isDirty: isHourDirty } = getFieldState(TimeSelectionFields.hour);
+    const { isDirty: isHourFieldDirty } = getFieldState(
+      TimeSelectionFields.hour
+    );
+    const { isDirty: isMinuteFieldDirty } = getFieldState(
+      TimeSelectionFields.minute
+    );
+    if (changeSelectableTime && !isHourFieldDirty && !editMode) {
+      setValue(TimeSelectionFields.hour, Math.floor(TIMEZONE_OFFSET_HOURS));
+    }
     if (
-      shouldRestrictSelectableHours &&
-      isFirstDayOfTheMonthAndPositiveOffset &&
-      !isHourDirty &&
+      changeSelectableTime &&
+      TIMEZONE_OFFSET_MINUTES > 0 &&
+      !isMinuteFieldDirty &&
       !editMode
     ) {
-      setValue(TimeSelectionFields.hour, timezoneOffset);
+      setValue(TimeSelectionFields.minute, TIMEZONE_OFFSET_MINUTES);
     }
   }, [
     selectedTime,
     onDay,
     hour,
-    timezoneOffset,
     setValue,
     getFieldState,
     isFirstDayOfTheMonthAndPositiveOffset,
     shouldRestrictSelectableHours,
     resetField,
     editMode,
+    changeSelectableTime,
+    TIMEZONE_OFFSET_MINUTES,
+    TIMEZONE_OFFSET_HOURS,
   ]);
 
   const timeInfoText = useMemo(
@@ -121,12 +149,8 @@ export const TimeSelection = ({
             selectedTime === TimeValue.weeks ||
             selectedTime === TimeValue.months) && (
             <TimeFields
-              selectableHours={
-                shouldRestrictSelectableHours &&
-                isFirstDayOfTheMonthAndPositiveOffset
-                  ? hoursForTimezoneOffset
-                  : undefined
-              }
+              selectableHours={selectableHours}
+              selectableMinutes={selectableMinutes}
             />
           )}
         </Box>

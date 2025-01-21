@@ -8,8 +8,10 @@ import { addZeroToSingleDigit } from '../time-selection.utils';
 
 export const TimeFields = ({
   selectableHours = HOURS_AM_PM,
+  selectableMinutes = MINUTES,
 }: {
   selectableHours?: number[];
+  selectableMinutes?: number[];
 }) => {
   const { control } = useFormContext();
 
@@ -32,8 +34,12 @@ export const TimeFields = ({
           sx: { minWidth: '80px' },
         }}
       >
-        {selectableHours.map((value) => (
-          <MenuItem key={value} value={value}>
+        {HOURS_AM_PM.map((value) => (
+          <MenuItem
+            key={value}
+            value={value}
+            sx={{ display: selectableHours.includes(value) ? 'block' : 'none' }}
+          >
             {value}
           </MenuItem>
         ))}
@@ -46,7 +52,13 @@ export const TimeFields = ({
         }}
       >
         {MINUTES.map((value) => (
-          <MenuItem key={value} value={value}>
+          <MenuItem
+            key={value}
+            value={value}
+            sx={{
+              display: selectableMinutes.includes(value) ? 'block' : 'none',
+            }}
+          >
             {addZeroToSingleDigit(value)}
           </MenuItem>
         ))}
