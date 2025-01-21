@@ -99,6 +99,9 @@ jobs:
           echo "VERSION_TAG=v$V" >> $GITHUB_ENV
           echo "VS_TAG=everest-test$TIMESTAMP" >> $GITHUB_ENV
 
+      - name: Create temporary directory for storing artifacts
+        run: |
+          mkdir -p /tmp/${VERSION}
 
       - name: Set GO_VERSION environment variable
         run: |
@@ -211,15 +214,9 @@ jobs:
           CRD_VERSION=${{ env.VERSION_TAG }} make crds-gen
           make release-dev
 
-      - name: Helm - Create tar.gz archive
+      - name: Helm - copy chart
         run: |
-          tar -czvf helm.tar.gz percona-helm-charts/charts/everest
-
-      - name: Helm - Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: helm
-          path: helm.tar.gz
+          cp -r percona-helm-charts/charts/everest /tmp/${{ env.VERSION }}/helm-chart
 
       - name: Operator - check out again
         uses: actions/checkout@v4
@@ -353,45 +350,19 @@ jobs:
           RELEASE_VERSION=${VERSION_TAG} CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
           RELEASE_VERSION=${VERSION_TAG} make release-cli
 
-      - name: Upload CLI artefacts
-        uses: actions/upload-artifact@v4
-        id: cli-upload-step-1
-        with:
-          name: everestctl.exe
-          path: ./dist/everestctl.exe
-          retention-days: ${{ env.ARTIFACTS_RETENTION_DAYS }}
+      - name: Everest - copy CLI builds
+        run: |
+          cp dist/everestctl.exe /tmp/${VERSION}/everestctl.exe
+          cp dist/everestctl-darwin-amd64 /tmp/${VERSION}/everestctl-darwin-amd64
+          cp dist/everestctl-darwin-arm64 /tmp/${VERSION}/everestctl-darwin-arm64
+          cp dist/everestctl-linux-amd64 /tmp/${VERSION}/everestctl-linux-amd64
+          cp dist/everestctl-linux-arm64 /tmp/${VERSION}/everestctl-linux-arm64
 
-      - name: Upload CLI artefacts
-        uses: actions/upload-artifact@v4
-        id: cli-upload-step-2
-        with:
-          name: everestctl-darwin-amd64
-          path: ./dist/everestctl-darwin-amd64
-          retention-days: ${{ env.ARTIFACTS_RETENTION_DAYS }}
-
-      - name: Upload CLI artefacts
-        uses: actions/upload-artifact@v4
-        id: cli-upload-step-3
-        with:
-          name: everestctl-darwin-arm64
-          path: ./dist/everestctl-darwin-arm64
-          retention-days: ${{ env.ARTIFACTS_RETENTION_DAYS }}
-
-      - name: Upload CLI artefacts
-        uses: actions/upload-artifact@v4
-        id: cli-upload-step-4
-        with:
-          name: everestctl-linux-amd64
-          path: ./dist/everestctl-linux-amd64
-          retention-days: ${{ env.ARTIFACTS_RETENTION_DAYS }}
-
-      - name: Upload CLI artefacts
-        uses: actions/upload-artifact@v4
-        id: cli-upload-step-5
-        with:
-          name: everestctl-linux-arm64
-          path: ./dist/everestctl-linux-arm64
-          retention-days: ${{ env.ARTIFACTS_RETENTION_DAYS }}
+      - name: Everest - copy feature build helper scripts
+        run: |
+          cp dev/fb/cli.sh /tmp/${VERSION}/cli.sh
+          cp dev/fb/helm.sh /tmp/${VERSION}/helm.sh
+          cp dev/fb/vs.sh /tmp/${VERSION}/vs.sh
 
       - name: Everest - push Everest image
         uses: docker/build-push-action@v6
@@ -402,41 +373,37 @@ jobs:
 
       - name: Create vs_tag file
         run: |
-          echo "$VS_TAG" > vs_tag.txt
-          echo "$VERSION" > fb.txt
+          echo "$VS_TAG" > /tmp/${VERSION}/vs_tag.txt
+          echo "$VERSION" > /tmp/${VERSION}/version.txt
 
-      - name: Upload VS tag info artefact
+      - name: Version Service - create deployment manifest
+        run: |
+          curl https://raw.githubusercontent.com/Percona-Lab/percona-version-service/main/deploy.yaml  > /tmp/${VERSION}/vs_deploy.yaml
+          sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_TAG/g" /tmp/${VERSION}/vs_deploy.yaml
+
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
-        id: vs_file
         with:
-          name: vs_tag.txt
-          path: ./vs_tag.txt
-          retention-days: ${{ env.ARTIFACTS_RETENTION_DAYS }}
-
-
-      - name: Upload FB info artefact
-        uses: actions/upload-artifact@v4
-        id: fb_file
-        with:
-          name: fb.txt
-          path: ./fb.txt
+          name: ${{ env.VERSION }}
+          path: /tmp/${{ env.VERSION }}
           retention-days: ${{ env.ARTIFACTS_RETENTION_DAYS }}
 
       - name: Info
         run: |
           printf "To install FB using helm:\n\
-          1. Download the 'helm' artifact below.\n\
-          2. Navigate to \`/everest/dev/fb directory\`.\n\
-          3. Run the command:\n\`\`\`VS_IMAGE=$VS_TAG HELM_PATH=<path_to_your_helmchart> sh helm.sh\`\`\`\n\
-              \nexample:\n\`\`\`VS_IMAGE=$VS_TAG HELM_PATH=/Users/oxana/Downloads/percona-helm-charts sh helm.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+          1. Download and unzip the \`$VERSION\` artifact below.\n\
+          2. Run the command:\n\`\`\`./helm.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
           
           printf "____________________\n" >> "$GITHUB_STEP_SUMMARY"
           
           printf "To install FB using CLI:\n\
-          1. Download the 'helm' artifact below.\n\
-          2. Download a CLI build from artifacts below.\n\
-          3. Navigate to \`/everest/dev/fb\` directory.\n\
-          4. Run the command:\n\`\`\`VS_IMAGE=$VS_TAG VERSION=$VERSION EVEREST_CTL_PATH=<path_to_everestctl> HELM_PATH=<path_to_your_helmchart>  sh cli.sh\`\`\`\n\
-              \nexample:\n\`\`\`VS_IMAGE=$VS_TAG VERSION=$VERSION HELM_PATH=/Users/oxana/Downloads/percona-helm-charts EVEREST_CTL_PATH=/Users/oxana/Downloads/everestctl-darwin-arm64 sh cli.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+          1. Download and unzip the \`$VERSION\` artifact below.\n\
+          2. Run the command:\n\`\`\`./cli.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
 
+          printf "____________________\n" >> "$GITHUB_STEP_SUMMARY"
+          
+          printf "To clean up the environment after a FB:\n\
+          1. Delete VS: \`kubectl delete deployment percona-version-service && kubectl delete svc percona-version-service\`\n\
+          2. Uninstall Everest using the FB everestctl build: \`./<everestctl-OS-ARCH> uninstall --assume-yes --force\` \n" >> "$GITHUB_STEP_SUMMARY"
 
