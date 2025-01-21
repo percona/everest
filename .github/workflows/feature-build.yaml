@@ -109,22 +109,22 @@ jobs:
           
       - name: Set environment variables
         run: |
-          echo "ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" >> $GITHUB_ENV
-          echo "OS=$(uname | awk '{print tolower($0)}')" >> $GITHUB_ENV
-          echo "VS_URL=http://localhost:$VS_PORT" >> $GITHUB_ENV
+          echo "ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" | tee -a $GITHUB_ENV
+          echo "OS=$(uname | awk '{print tolower($0)}')" | tee -a $GITHUB_ENV
+          echo "VS_URL=http://localhost:$VS_PORT" | tee -a $GITHUB_ENV
           
           TIMESTAMP=$(date +'%Y%m%d%H%M%S')
           V="1.10000.0-rc$TIMESTAMP"
-          echo "VERSION=$V" >> $GITHUB_ENV
-          echo "VERSION_TAG=v$V" >> $GITHUB_ENV
-          echo "VS_TAG=everest-test$TIMESTAMP" >> $GITHUB_ENV
+          echo "VERSION=$V" | tee -a $GITHUB_ENV
+          echo "VERSION_TAG=v$V" | tee -a $GITHUB_ENV
+          echo "VS_TAG=everest-test$TIMESTAMP" | tee -a $GITHUB_ENV
 
           # Fall back to default branch if the specified branch does not exist
-          git ls-remote --heads --exit-code --quiet https://github.com/Percona-Lab/percona-version-service.git $VS_BRANCH > /dev/null || echo "VS_BRANCH=production" >> $GITHUB_ENV
-          git ls-remote --heads --exit-code --quiet https://github.com/percona/percona-helm-charts.git $HELM_BRANCH > /dev/null || echo "HELM_BRANCH=main" >> $GITHUB_ENV
-          git ls-remote --heads --exit-code --quiet https://github.com/percona/everest.git $EVEREST_BRANCH > /dev/null || echo "EVEREST_BRANCH=main" >> $GITHUB_ENV
-          git ls-remote --heads --exit-code --quiet https://github.com/percona/everest-operator.git $EVEREST_OPERATOR_BRANCH > /dev/null || echo "EVEREST_OPERATOR_BRANCH=main" >> $GITHUB_ENV
-          git ls-remote --heads --exit-code --quiet https://github.com/percona/everest-catalog.git $EVEREST_CATALOG_BRANCH > /dev/null || echo "EVEREST_CATALOG_BRANCH=main" >> $GITHUB_ENV
+          git ls-remote --heads --exit-code --quiet https://github.com/Percona-Lab/percona-version-service.git $VS_BRANCH > /dev/null || echo "VS_BRANCH=production" | tee -a $GITHUB_ENV
+          git ls-remote --heads --exit-code --quiet https://github.com/percona/percona-helm-charts.git $HELM_BRANCH > /dev/null || echo "HELM_BRANCH=main" | tee -a $GITHUB_ENV
+          git ls-remote --heads --exit-code --quiet https://github.com/percona/everest.git $EVEREST_BRANCH > /dev/null || echo "EVEREST_BRANCH=main" | tee -a $GITHUB_ENV
+          git ls-remote --heads --exit-code --quiet https://github.com/percona/everest-operator.git $EVEREST_OPERATOR_BRANCH > /dev/null || echo "EVEREST_OPERATOR_BRANCH=main" | tee -a $GITHUB_ENV
+          git ls-remote --heads --exit-code --quiet https://github.com/percona/everest-catalog.git $EVEREST_CATALOG_BRANCH > /dev/null || echo "EVEREST_CATALOG_BRANCH=main" | tee -a $GITHUB_ENV
 
       - name: Create temporary directory for storing artifacts
         run: |
