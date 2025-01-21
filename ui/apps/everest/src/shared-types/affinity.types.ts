@@ -24,9 +24,9 @@ export enum AffinityComponent {
 }
 
 export enum AffinityType {
-  NodeAffinity = 'nodeAffinity',
-  PodAffinity = 'podAffinity',
   PodAntiAffinity = 'podAntiAffinity',
+  PodAffinity = 'podAffinity',
+  NodeAffinity = 'nodeAffinity',
 }
 
 export enum AffinityPriority {
