@@ -9,8 +9,7 @@ const TopologyKeyInput = () => (
       sx: {
         flex: '0 0 35%',
       },
-      helperText:
-        'A label key on nodes that defines the grouping or topology scope (e.g., zone, hostname) where the rules are enforced',
+      helperText: 'A domain key that determines relative pod placement',
     }}
   />
 );

@@ -1,7 +1,17 @@
 import { TextInput } from '@percona/ui-lib';
 import { AffinityFormFields } from '../affinity-form.types';
+import { AffinityType } from 'shared-types/affinity.types';
 
-const KeyInput = () => (
+const getHelperTextForAffinityType = (affinityType: AffinityType) => {
+  switch (affinityType) {
+    case AffinityType.NodeAffinity:
+      return 'A label key assigned to nodes that defines scheduling rules';
+    default:
+      return 'A label key assigned to pods that defines scheduling rules';
+  }
+};
+
+const KeyInput = ({ affinityType }: { affinityType: AffinityType }) => (
   <TextInput
     name={AffinityFormFields.key}
     label="Key"
@@ -15,8 +25,7 @@ const KeyInput = () => (
       sx: {
         flex: '0 0 35%',
       },
-      helperText:
-        'A label key on pods used to determine the targets for applying affinity or anti-affinity rules',
+      helperText: getHelperTextForAffinityType(affinityType),
     }}
   />
 );

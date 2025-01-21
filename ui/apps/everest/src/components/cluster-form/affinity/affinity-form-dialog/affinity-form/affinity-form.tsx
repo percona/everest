@@ -78,6 +78,7 @@ export const AffinityForm = () => {
         operator={operator}
         disableOperator={!key}
         disableValue={!key}
+        affinityType={type}
       />
     </>
   );

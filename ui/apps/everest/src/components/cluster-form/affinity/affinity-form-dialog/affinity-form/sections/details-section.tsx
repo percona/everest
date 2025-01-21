@@ -5,13 +5,14 @@ import {
   TopologyKeyInput,
   ValueInput,
 } from '../fields';
-import { AffinityOperator } from 'shared-types/affinity.types';
+import { AffinityOperator, AffinityType } from 'shared-types/affinity.types';
 
 type Props = {
   disableOperator: boolean;
   disableValue: boolean;
   operator: AffinityOperator;
   showTopologyKey: boolean;
+  affinityType: AffinityType;
 };
 
 const RuleDetailsSection = ({
@@ -19,6 +20,7 @@ const RuleDetailsSection = ({
   disableOperator,
   disableValue,
   showTopologyKey,
+  affinityType,
 }: Props) => (
   <>
     <Typography variant="sectionHeading" sx={{ marginTop: '20px' }}>
@@ -26,7 +28,7 @@ const RuleDetailsSection = ({
     </Typography>
     <Box sx={{ display: 'flex', gap: '20px' }}>
       {showTopologyKey && <TopologyKeyInput />}
-      <KeyInput />
+      <KeyInput affinityType={affinityType} />
       <OperatorInput disabled={disableOperator} />
     </Box>
     {[AffinityOperator.In, AffinityOperator.NotIn].includes(operator) && (
