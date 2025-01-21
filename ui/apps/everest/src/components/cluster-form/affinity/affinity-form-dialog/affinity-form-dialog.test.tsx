@@ -117,7 +117,7 @@ describe('AffinityFormDialog', () => {
       );
       const options = screen.getAllByRole('option');
       expect(options).toHaveLength(3);
-      ['DB Node', 'Config Server', 'Proxy'].forEach((component) =>
+      ['DB Node', 'Config Server', 'Router'].forEach((component) =>
         expect(
           options.some((option) => option.textContent === component)
         ).toBeTruthy()
@@ -147,7 +147,7 @@ describe('AffinityFormDialog', () => {
       );
       const options = screen.getAllByRole('option');
       expect(options).toHaveLength(2);
-      ['DB Node', 'Proxy'].forEach((component) =>
+      ['DB Node', 'PG Bouncer'].forEach((component) =>
         expect(
           options.some((option) => option.textContent === component)
         ).toBeTruthy()

@@ -1,17 +1,17 @@
 import { SelectInput } from '@percona/ui-lib';
+import { DbType } from '@percona/types';
 import { MenuItem } from '@mui/material';
 import { AffinityFormFields } from '../affinity-form.types';
-import {
-  AffinityComponent,
-  AffinityComponentValue,
-} from 'shared-types/affinity.types';
+import { AffinityComponent } from 'shared-types/affinity.types';
+import { getAffinityComponentLabel } from 'utils/db';
 
 type Props = {
   disabled: boolean;
   components: AffinityComponent[];
+  dbType: DbType;
 };
 
-const ComponentInput = ({ disabled, components }: Props) => (
+const ComponentInput = ({ disabled, components, dbType }: Props) => (
   <SelectInput
     name={AffinityFormFields.component}
     label="Component"
@@ -24,7 +24,7 @@ const ComponentInput = ({ disabled, components }: Props) => (
   >
     {components.map((value) => (
       <MenuItem key={value} value={value} data-testid={value}>
-        {AffinityComponentValue[value]}
+        {getAffinityComponentLabel(dbType, value)}
       </MenuItem>
     ))}
   </SelectInput>

@@ -27,6 +27,7 @@ import {
 } from 'shared-types/affinity.types';
 import { generateShortUID } from './generateShortUID';
 import { DEFAULT_TOPOLOGY_KEY } from 'consts';
+import { capitalize } from '@mui/material';
 
 export const dbTypeToIcon = (dbType: DbType) => {
   switch (dbType) {
@@ -63,6 +64,20 @@ export const dbTypeToProxyType = (dbType: DbType): ProxyType => {
       return 'haproxy';
     default:
       return 'pgbouncer';
+  }
+};
+
+export const getProxyUnitNamesFromDbType = (
+  dbType: DbType
+): { singular: string; plural: string } => {
+  switch (dbType) {
+    case DbType.Postresql:
+      return { singular: 'PG Bouncer', plural: 'PG Bouncers' };
+    case DbType.Mongo:
+      return { singular: 'router', plural: 'routers' };
+    case DbType.Mysql:
+    default:
+      return { singular: 'proxy', plural: 'proxies' };
   }
 };
 
@@ -477,4 +492,19 @@ export const areAffinityRulesDefault = (
   return rules.every((rule) =>
     defaultRules.find((defaultRule) => areAffinityRulesEqual(rule, defaultRule))
   );
+};
+export const getAffinityComponentLabel = (
+  dbType: DbType,
+  component: AffinityComponent
+): string => {
+  switch (component) {
+    case AffinityComponent.Proxy:
+      return capitalize(getProxyUnitNamesFromDbType(dbType).singular);
+    case AffinityComponent.ConfigServer:
+      return 'Config Server';
+    case AffinityComponent.DbNode:
+      return 'DB Node';
+    default:
+      return '';
+  }
 };
