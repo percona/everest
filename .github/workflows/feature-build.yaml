@@ -11,6 +11,10 @@ on:
         required: false
         default: main
         description: "Everest operator branch with the feature to checkout"
+      everest_catalog_branch:
+        required: false
+        default: main
+        description: "Everest catalog branch with the feature to checkout"
       vs_branch:
         required: false
         default: production
@@ -19,18 +23,6 @@ on:
         required: false
         default: main
         description: "Helm charts branch with the feature to checkout"
-      upstream_operator:
-        type: choice
-        description: "The upstream operator to upgrade"
-        required: false
-        options:
-          - ""
-          - percona-xtradb-cluster-operator
-          - percona-server-mongodb-operator
-          - percona-postgresql-operator
-      upstream_operator_bundle_image:
-        required: false
-        description: "Full name of the upstream bundle image to test"
       artifacts_retention_days:
         required: false
         description: "How many days the artifacts will be stored in GitHub"
@@ -63,8 +55,7 @@ jobs:
       HELM_BRANCH: ${{ github.event.inputs.helm_branch }}
       EVEREST_BRANCH: ${{ github.event.inputs.everest_branch }}
       EVEREST_OPERATOR_BRANCH: ${{ github.event.inputs.everest_operator_branch }}
-      UPSTREAM_OPERATOR_IMAGE: ${{ github.event.inputs.upstream_operator_bundle_image }}
-      UPSTREAM_OPERATOR: ${{ github.event.inputs.upstream_operator }}
+      EVEREST_CATALOG_BRANCH: ${{ github.event.inputs.everest_catalog_branch }}
 
       VS_PORT: 8081
       ARCH: ""
@@ -82,11 +73,6 @@ jobs:
             exit 1
           fi
           
-          if [[ -z "$UPSTREAM_OPERATOR" && ! -z "$UPSTREAM_OPERATOR_IMAGE" ]] || [[ ! -z "$UPSTREAM_OPERATOR" && -z "$UPSTREAM_OPERATOR_IMAGE" ]]; then
-            echo "upstream_operator and upstream_operator_bundle_image should both be either empty or non-empty."
-            exit 1
-          fi
-
       - name: Set environment variables
         run: |
           echo "ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" >> $GITHUB_ENV
@@ -266,42 +252,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: percona/everest-catalog
+          ref: ${{ env.EVEREST_CATALOG_BRANCH }}
           path: everest-catalog
           token: ${{ secrets.ROBOT_TOKEN }}
-
-      - name: Catalog - update veneer file
-        run: |
-          cd everest-catalog/tools
-          go run . \
-            --veneer-file ../veneer/everest-operator.yaml \
-            --channel fast-v0  \
-            --new-version ${{ env.VERSION }} \
-
-          cd ..
-          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.48.0/${OS}-${ARCH}-opm
-          chmod +x /tmp/opm
-          /tmp/opm alpha render-template basic --skip-tls -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
-
-          # Check if catalog has the new version listed
-          if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
-            echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
-            exit 1
-          fi
-
-          # If the feature build contains upstream upgrades
-          if [ -n "$UPSTREAM_OPERATOR" ]; then
-            # Add a new record to the upstream veneer
-            yq e ".Stable.Bundles += {\"Image\": \"$UPSTREAM_OPERATOR_IMAGE\"}" veneer/${UPSTREAM_OPERATOR}.yaml > temp.yaml && mv temp.yaml veneer/${UPSTREAM_OPERATOR}.yaml
-
-            # Generate upstream catalog
-            /tmp/opm alpha render-template semver --skip-tls -o yaml < veneer/${UPSTREAM_OPERATOR}.yaml > catalog/${UPSTREAM_OPERATOR}/catalog.yaml
-
-            # Check if upstream catalog has the new image listed
-            if ! grep -q "$UPSTREAM_OPERATOR_IMAGE$" catalog/${UPSTREAM_OPERATOR}/catalog.yaml; then
-              echo "catalog/${UPSTREAM_OPERATOR}/catalog.yaml does not include the version $UPSTREAM_OPERATOR_IMAGE"
-              exit 1
-            fi
-          fi
 
       - name: Catalog - setup Docker meta for everest-catalog
         id: catalog_meta
