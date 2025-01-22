@@ -32,29 +32,39 @@ jobs:
                 for (const pull of pulls) {
                   const hasAutoUpdateLabel = pull.labels.some(label => label.name === "auto-update-base");
 
-                  if (hasAutoUpdateLabel) {
-                    try {
-                      const pr = await github.rest.pulls.get({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        pull_number: pull.number,
-                      });
+                  if (!hasAutoUpdateLabel) {
+                    continue;
+                  }
 
-                      switch (pr.data.mergeable_state) {
-                        case 'unknown':
-                          console.log(`[INFO] PR #${pull.number}: "${pull.title}" - GitHub is still computing the mergeability. Will retry later.`);
-                          retriesNeeded = true;
-                          break;
-                        case 'clean':
-                          console.log(`[INFO] PR #${pull.number}: "${pull.title}" - Base branch is up-to-date.`);
-                          break;
-                        case 'dirty':
-                          console.log(`[INFO] PR #${pull.number}: "${pull.title}" - Skipping update due to merge conflict.`);
-                          break;
-                        case 'blocked':
-                          console.log(`[INFO] PR #${pull.number}: "${pull.title}" - Skipping update due to blocked status.`);
-                          break;
-                        case 'behind':
+                  try {
+                    const { data: pr } = await github.rest.pulls.get({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      pull_number: pull.number,
+                    });
+
+                    switch (pr.mergeable) {
+                      case null:
+                        console.log(`[INFO] PR #${pull.number}: "${pull.title}" - GitHub is still computing the mergeability. Will retry later.`);
+                        retriesNeeded = true;
+                        break;
+                      case false:
+                        console.log(`[INFO] PR #${pull.number}: "${pull.title}" - Skipping update due to merge conflict.`);
+                        break;
+                      case true:
+                        console.log(`[INFO] Base branch: ${pr.base.ref} - Base branch SHA: ${pr.base.sha}`);
+                        try {
+                          const { data: baseBranch } = await github.rest.repos.getBranch({
+                            owner: context.repo.owner,
+                            repo: context.repo.repo,
+                            branch: pr.base.ref,
+                          });
+
+                          if (pr.base.sha === baseBranch.commit.sha) {
+                            console.log(`[INFO] PR #${pull.number}: "${pull.title}" - Base branch is already up-to-date.`);
+                            break;
+                          }
+
                           console.log(`[UPDATE] PR #${pull.number}: "${pull.title}" - Updating base branch...`);
                           try {
                             await github.rest.pulls.updateBranch({
@@ -67,14 +77,17 @@ jobs:
                             console.error(`[ERROR] PR #${pull.number}: Failed to update base branch - ${updateError.message}`);
                             errorEncountered = true;
                           }
+
                           break;
-                        default:
-                          console.log(`[INFO] PR #${pull.number}: "${pull.title}" - Mergeable state: ${pr.data.mergeable_state}. Cannot update base branch.`);
-                      }
-                    } catch (diffError) {
-                      console.error(`[ERROR] PR #${pull.number}: Failed to compare commits - ${diffError.message}`);
-                      errorEncountered = true;
+                        } catch (baseError) {
+                          console.error(`[ERROR] PR #${pull.number}: Failed to get base branch - ${baseError.message}`);
+                          errorEncountered = true;
+                          break;
+                        }
                     }
+                  } catch (prError) {
+                    console.error(`[ERROR] Failed to get PR #${pull.number} - ${prError.message}`);
+                    errorEncountered = true;
                   }
                 }
               } catch (error) {
