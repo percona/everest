@@ -13,50 +13,88 @@ jobs:
         with:
           github-token: ${{ secrets.ROBOT_TOKEN }}
           script: |
-            try {
-              const { data: pulls } = await github.rest.pulls.list({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                state: "open",
-              });
+            let retriesNeeded = true;
+            let attemptCount = 0;
+            const maxAttempts = 10;  // Set a limit for the maximum number of attempts
+            let errorEncountered = false; // Track if any errors occur
 
-              for (const pull of pulls) {
-                const hasAutoUpdateLabel = pull.labels.some(label => label.name === "auto-update-base");
-                
-                if (hasAutoUpdateLabel) {
-                  try {
-                    const pr = await github.rest.pulls.get({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      pull_number: pull.number,
-                    });
+            while (retriesNeeded && attemptCount < maxAttempts) {
+              retriesNeeded = false;  // Assume no retries needed, unless 'unknown' state is found.
+              attemptCount += 1;
 
-                    console.log(`[INFO] PR #${pull.number}: "${pull.title}" - Mergeable state: ${pr.data.mergeable_state}`);
-                    if (pr.data.mergeable_state === 'dirty') {
-                      console.log(`[INFO] PR #${pull.number}: "${pull.title}" - Skipping update due to merge conflict.`);
-                      continue;
-                    }
-                    if (pr.data.mergeable_state !== 'behind') {
-                      console.log(`[INFO] PR #${pull.number}: "${pull.title}" - Base branch is up-to-date.`);
-                      continue;
-                    }
+              try {
+                const { data: pulls } = await github.rest.pulls.list({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: "open",
+                });
 
-                    console.log(`[UPDATE] PR #${pull.number}: "${pull.title}" - Updating base branch...`);
+                for (const pull of pulls) {
+                  const hasAutoUpdateLabel = pull.labels.some(label => label.name === "auto-update-base");
+
+                  if (hasAutoUpdateLabel) {
                     try {
-                      await github.rest.pulls.updateBranch({
+                      const pr = await github.rest.pulls.get({
                         owner: context.repo.owner,
                         repo: context.repo.repo,
                         pull_number: pull.number,
                       });
-                      console.log(`[SUCCESS] PR #${pull.number}: "${pull.title}" - Base branch updated.`);
-                    } catch (updateError) {
-                      console.error(`[ERROR] PR #${pull.number}: Failed to update base branch - ${updateError.message}`);
+
+                      switch (pr.data.mergeable_state) {
+                        case 'unknown':
+                          console.log(`[INFO] PR #${pull.number}: "${pull.title}" - GitHub is still computing the mergeability. Will retry later.`);
+                          retriesNeeded = true;
+                          break;
+                        case 'clean':
+                          console.log(`[INFO] PR #${pull.number}: "${pull.title}" - Base branch is up-to-date.`);
+                          break;
+                        case 'dirty':
+                          console.log(`[INFO] PR #${pull.number}: "${pull.title}" - Skipping update due to merge conflict.`);
+                          break;
+                        case 'blocked':
+                          console.log(`[INFO] PR #${pull.number}: "${pull.title}" - Skipping update due to blocked status.`);
+                          break;
+                        case 'behind':
+                          console.log(`[UPDATE] PR #${pull.number}: "${pull.title}" - Updating base branch...`);
+                          try {
+                            await github.rest.pulls.updateBranch({
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              pull_number: pull.number,
+                            });
+                            console.log(`[SUCCESS] PR #${pull.number}: "${pull.title}" - Base branch updated.`);
+                          } catch (updateError) {
+                            console.error(`[ERROR] PR #${pull.number}: Failed to update base branch - ${updateError.message}`);
+                            errorEncountered = true;
+                          }
+                          break;
+                        default:
+                          console.log(`[INFO] PR #${pull.number}: "${pull.title}" - Mergeable state: ${pr.data.mergeable_state}. Cannot update base branch.`);
+                      }
+                    } catch (diffError) {
+                      console.error(`[ERROR] PR #${pull.number}: Failed to compare commits - ${diffError.message}`);
+                      errorEncountered = true;
                     }
-                  } catch (diffError) {
-                    console.error(`[ERROR] PR #${pull.number}: Failed to compare commits - ${diffError.message}`);
                   }
                 }
+              } catch (error) {
+                console.error(`[ERROR] Failed to list pull requests - ${error.message}`);
+                errorEncountered = true;
               }
-            } catch (error) {
-              console.error(`[ERROR] Failed to list pull requests - ${error.message}`);
+
+              if (retriesNeeded && attemptCount < maxAttempts) {
+                console.log(`[INFO] Retrying for PRs with 'unknown' mergeable state (Attempt ${attemptCount}/${maxAttempts})...`);
+                await new Promise(resolve => setTimeout(resolve, 5000));
+              }
+            }
+
+            if (attemptCount >= maxAttempts) {
+              console.error(`[ERROR] Maximum attempts (${maxAttempts}) reached. Some PRs may still have 'unknown' mergeable state.`);
+              errorEncountered = true;
+            }
+
+            if (errorEncountered) {
+              core.setFailed(`[ERROR] Some PRs failed to update base branch.`);
+            } else {
+              console.log(`[INFO] All PRs with 'auto-update-base' label have been processed.`);
             }
