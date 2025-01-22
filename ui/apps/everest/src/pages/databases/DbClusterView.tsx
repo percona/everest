@@ -16,7 +16,10 @@
 import { Box, Stack } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import StatusField from 'components/status-field';
-import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
+import {
+  useDBEnginesForNamespaces,
+  useNamespaces,
+} from 'hooks/api/namespaces/useNamespaces';
 import { type MRT_ColumnDef } from 'material-react-table';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -43,11 +46,11 @@ export const DbClusterView = () => {
     useNamespaces();
 
   const navigate = useNavigate();
+  const { results: dbEngines } = useDBEnginesForNamespaces();
 
   const { canCreate } = useNamespacePermissionsForResource('database-clusters');
-  const { canRead } = useNamespacePermissionsForResource('database-engines');
 
-  const canAddCluster = canCreate.length > 0 && canRead.length > 0;
+  const canAddCluster = canCreate.length > 0 && dbEngines.length > 0;
   const dbClustersResults = useDBClustersForNamespaces(
     namespaces.map((ns) => ({
       namespace: ns,
