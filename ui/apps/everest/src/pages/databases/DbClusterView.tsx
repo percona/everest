@@ -47,10 +47,13 @@ export const DbClusterView = () => {
 
   const navigate = useNavigate();
   const { results: dbEngines } = useDBEnginesForNamespaces();
+  const hasAvailableDbEngines = dbEngines.some(
+    (obj) => (obj?.data || []).length > 0
+  );
 
   const { canCreate } = useNamespacePermissionsForResource('database-clusters');
 
-  const canAddCluster = canCreate.length > 0 && dbEngines.length > 0;
+  const canAddCluster = canCreate.length > 0 && hasAvailableDbEngines;
   const dbClustersResults = useDBClustersForNamespaces(
     namespaces.map((ns) => ({
       namespace: ns,
