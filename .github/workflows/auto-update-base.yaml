@@ -30,6 +30,7 @@ jobs:
                       pull_number: pull.number,
                     });
 
+                    console.log(`[INFO] PR #${pull.number}: "${pull.title}" - Mergeable state: ${pr.data.mergeable_state}`);
                     if (pr.data.mergeable_state === 'dirty') {
                       console.log(`[INFO] PR #${pull.number}: "${pull.title}" - Skipping update due to merge conflict.`);
                       continue;
