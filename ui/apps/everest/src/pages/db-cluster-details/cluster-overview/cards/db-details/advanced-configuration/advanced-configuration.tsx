@@ -121,7 +121,9 @@ export const AdvancedConfiguration = ({
         label={Messages.fields.affinity}
         contentString={
           <>
-            {usingDefaultAffinityRules ? 'Default' : 'Custom'}
+            {usingDefaultAffinityRules
+              ? Messages.titles.default
+              : Messages.titles.custom}
             <IconButton
               size="small"
               color="primary"
