@@ -7,8 +7,10 @@ import { ContactSupportLink } from '../ContactSupportLink';
 
 export const EmptyStateDatabases = ({
   showCreationButton,
+  hasCreatePermission,
 }: {
   showCreationButton: boolean;
+  hasCreatePermission: boolean;
 }) => {
   return (
     <>
@@ -22,7 +24,7 @@ export const EmptyStateDatabases = ({
         <EmptyStateIcon w="60px" h="60px" />
         <Box sx={centeredContainerStyle}>
           <Typography>{Messages.noDbClusters}</Typography>
-          {showCreationButton ? (
+          {hasCreatePermission ? (
             <Typography> {Messages.createToStart} </Typography>
           ) : (
             <>
