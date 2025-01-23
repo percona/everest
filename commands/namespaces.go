@@ -18,19 +18,22 @@ package commands
 
 import (
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 
 	"github.com/percona/everest/commands/namespaces"
 )
 
-func newNamespacesCommand(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "namespaces",
-		Long:  "Managed Everest database namespaces",
-		Short: "Managed Everest database namespaces",
-	}
-	cmd.AddCommand(namespaces.NewAddCommand(l))
-	cmd.AddCommand(namespaces.NewRemoveCommand(l))
-	cmd.AddCommand(namespaces.NewUpdateCommand(l))
-	return cmd
+var namespacesCmd = &cobra.Command{
+	Use:   "namespaces <command> [flags]",
+	Args:  cobra.ExactArgs(1),
+	Long:  "Managed Everest database namespaces",
+	Short: "Managed Everest database namespaces",
+	Run:   func(_ *cobra.Command, _ []string) {},
+}
+
+func init() {
+	rootCmd.AddCommand(namespacesCmd)
+
+	namespacesCmd.AddCommand(namespaces.GetNamespacesAddCmd())
+	namespacesCmd.AddCommand(namespaces.GetNamespacesRemoveCmd())
+	namespacesCmd.AddCommand(namespaces.GetNamespacesUpdateCmd())
 }
