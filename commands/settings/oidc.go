@@ -13,25 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package settings ...
+// Package settings provides the Everest settings CLI commands.
 package settings
 
 import (
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 
 	"github.com/percona/everest/commands/settings/oidc"
 )
 
-// NewOIDCCmd returns an new OIDC sub-command.
-func NewOIDCCmd(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "oidc",
-		Long:  "Manage settings related to OIDC",
-		Short: "Manage settings related to OIDC",
-	}
+var settingsOIDCCmd = &cobra.Command{
+	Use:   "oidc <command> [flags]",
+	Args:  cobra.ExactArgs(1),
+	Long:  "Manage settings related to OIDC",
+	Short: "Manage settings related to OIDC",
+}
 
-	cmd.AddCommand(oidc.NewConfigureCommand(l))
+func init() {
+	settingsOIDCCmd.AddCommand(oidc.GetSettingsOIDCConfigureCmd())
+}
 
-	return cmd
+// GetSettingsOIDCCmd returns the command to manage OIDC settings.
+func GetSettingsOIDCCmd() *cobra.Command {
+	return settingsOIDCCmd
 }
