@@ -52,7 +52,6 @@ jobs:
                         console.log(`[INFO] PR #${pull.number}: "${pull.title}" - Skipping update due to merge conflict.`);
                         break;
                       case true:
-                        console.log(`[INFO] Base branch: ${pr.base.ref} - Base branch SHA: ${pr.base.sha}`);
                         try {
                           const { data: baseBranch } = await github.rest.repos.getBranch({
                             owner: context.repo.owner,
