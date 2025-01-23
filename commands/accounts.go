@@ -18,24 +18,25 @@ package commands
 
 import (
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 
 	"github.com/percona/everest/commands/accounts"
 )
 
-func newAccountsCmd(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "accounts",
-		Long:  "Manage Everest accounts",
-		Short: "Manage Everest accounts",
-	}
+var accountsCmd = &cobra.Command{
+	Use:   "accounts <command> [flags]",
+	Args:  cobra.ExactArgs(1),
+	Long:  "Manage Everest accounts",
+	Short: "Manage Everest accounts",
+	Run:   func(_ *cobra.Command, _ []string) {},
+}
 
-	cmd.AddCommand(accounts.NewCreateCmd(l))
-	cmd.AddCommand(accounts.NewListCmd(l))
-	cmd.AddCommand(accounts.NewDeleteCmd(l))
-	cmd.AddCommand(accounts.NewSetPwCommand(l))
-	cmd.AddCommand(accounts.NewResetJWTKeysCommand(l))
-	cmd.AddCommand(accounts.NewInitialAdminPasswdCommand(l))
+func init() {
+	rootCmd.AddCommand(accountsCmd)
 
-	return cmd
+	accountsCmd.AddCommand(accounts.GetCreateCmd())
+	accountsCmd.AddCommand(accounts.GetListCmd())
+	accountsCmd.AddCommand(accounts.GetDeleteCmd())
+	accountsCmd.AddCommand(accounts.GetSetPasswordCmd())
+	accountsCmd.AddCommand(accounts.GetResetJWTKeysCmd())
+	accountsCmd.AddCommand(accounts.GetInitAdminPasswordCmd())
 }
