@@ -44,26 +44,23 @@ import (
 const (
 	pollInterval = 5 * time.Second
 	pollTimeout  = 10 * time.Minute
-
-	// FlagSkipEnvDetection is the name of the skip env detection flag.
-	FlagSkipEnvDetection = "skip-env-detection"
 )
 
 type (
 	// Config defines configuration required for upgrade command.
 	Config struct {
 		// KubeconfigPath is a path to a kubeconfig
-		KubeconfigPath string `mapstructure:"kubeconfig"`
+		KubeconfigPath string
 		// InCluster is set if the upgrade process should use in-cluster configuration.
-		InCluster bool `mapstructure:"in-cluster"`
+		InCluster bool
 		// VersionMetadataURL stores hostname to retrieve version metadata information from.
-		VersionMetadataURL string `mapstructure:"version-metadata-url"`
+		VersionMetadataURL string
 		// DryRun is set if the upgrade process should only perform pre-upgrade checks and not perform the actual upgrade.
-		DryRun bool `mapstructure:"dry-run"`
+		DryRun bool
 		// If set, we will print the pretty output.
 		Pretty bool
 		// SkipEnvDetection skips detecting the Kubernetes environment.
-		SkipEnvDetection bool `mapstructure:"skip-env-detection"`
+		SkipEnvDetection bool
 
 		helm.CLIOptions
 	}
@@ -75,7 +72,6 @@ type (
 		config         *Config
 		kubeClient     kubernetes.KubernetesConnector
 		versionService versionservice.Interface
-		dryRun         bool
 
 		// these are set on calling Run
 		clusterType       kubernetes.ClusterType
@@ -122,7 +118,6 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 		return nil, errors.New("must provide kubeconfig path or run in-cluster")
 	}
 
-	cli.dryRun = cfg.DryRun
 	cli.kubeClient = kubeClient
 	cli.versionService = versionservice.New(cfg.VersionMetadataURL)
 	return cli, nil
@@ -143,13 +138,13 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	if err := u.setVersionInfo(ctx, everestVersion); err != nil {
 		if errors.Is(err, ErrNoUpdateAvailable) {
 			u.l.Info("You're running the latest version of Everest")
-			fmt.Fprintln(out, "\n", output.Rocket("You're running the latest version of Everest"))
+			_, _ = fmt.Fprintln(out, "\n", output.Rocket("You're running the latest version of Everest"))
 			return nil
 		}
 		return err
 	}
 
-	if u.dryRun {
+	if u.config.DryRun {
 		return nil
 	}
 
@@ -170,7 +165,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 	upgradeSteps := u.newUpgradeSteps()
 
 	// Run steps.
-	fmt.Fprintln(out, output.Info("Upgrading Everest to version %s", u.upgradeToVersion))
+	_, _ = fmt.Fprintln(out, output.Info("Upgrading Everest to version %s", u.upgradeToVersion))
 	if err := steps.RunStepsWithSpinner(ctx, upgradeSteps, out); err != nil {
 		return err
 	}
@@ -237,11 +232,11 @@ func (u *Upgrade) setupHelmInstaller(ctx context.Context) error {
 }
 
 func (u *Upgrade) printPostUpgradeMessage(ctx context.Context, out io.Writer) error {
-	fmt.Fprintln(out, "\n", output.Rocket("Everest has been upgraded to version %s", u.upgradeToVersion))
+	_, _ = fmt.Fprintln(out, "\n", output.Rocket("Everest has been upgraded to version %s", u.upgradeToVersion))
 	if isSecure, err := u.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser); err != nil {
 		return errors.Join(err, errors.New("could not check if the admin password is secure"))
 	} else if !isSecure {
-		fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage, "\n")
+		_, _ = fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage, "\n")
 	}
 	return nil
 }

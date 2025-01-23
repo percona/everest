@@ -1,3 +1,18 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // Package namespaces provides the namespaces CLI command.
 package namespaces
 
@@ -7,72 +22,59 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 
 	"github.com/percona/everest/pkg/cli"
 	"github.com/percona/everest/pkg/cli/namespaces"
+	"github.com/percona/everest/pkg/logger"
 	"github.com/percona/everest/pkg/output"
 )
 
 const forceUninstallHint = "HINT: use --force to remove the namespace and all its resources"
 
-// NewRemoveCommand returns a new command to remove an existing namespace.
-func NewRemoveCommand(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "remove [flags] NAMESPACES",
-		Long:    "Remove existing and managed by Everest namespaces",
-		Short:   "Remove existing and managed by Everest namespaces",
-		Example: `everestctl namespaces remove --keep-namespace --force ns-1,ns-2`,
+var (
+	namespacesRemoveCmd = &cobra.Command{
+		Use:     "remove <namespaces> [flags]",
 		Args:    cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			initRemoveViperFlags(cmd)
-			c := &namespaces.NamespaceRemoveConfig{}
-			err := viper.Unmarshal(c)
-			if err != nil {
-				l.Error(err)
-				return
-			}
-			c.Namespaces = args[0]
-
-			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
-			c.Pretty = !enableLogging
-
-			if err := c.Populate(cmd.Context()); err != nil {
-				if errors.Is(err, namespaces.ErrNamespaceNotEmpty) {
-					err = fmt.Errorf("%w. %s", err, forceUninstallHint)
-				}
-				output.PrintError(err, l, !enableLogging)
-				os.Exit(1)
-			}
-
-			op, err := namespaces.NewNamespaceRemove(*c, l)
-			if err != nil {
-				output.PrintError(err, l, !enableLogging)
-				return
-			}
-
-			if err := op.Run(cmd.Context()); err != nil {
-				output.PrintError(err, l, !enableLogging)
-				os.Exit(1)
-			}
-		},
+		Long:    "Remove an existing namespace",
+		Short:   "Remove an existing namespace",
+		Example: `everestctl namespaces remove ns-1,ns-2 --keep-namespace`,
+		PreRun:  namespacesRemovePreRun,
+		Run:     namespacesRemoveRun,
 	}
-	initRemoveFlags(cmd)
-	return cmd
+	namespacesRemoveCfg = &namespaces.NamespaceRemoveConfig{}
+)
+
+func init() {
+	// local command flags
+	namespacesRemoveCmd.Flags().BoolVar(&namespacesRemoveCfg.KeepNamespace, cli.FlagKeepNamespace, false, "If set, preserves the Kubernetes namespace but removes all resources managed by Everest")
+	namespacesRemoveCmd.Flags().BoolVar(&namespacesRemoveCfg.Force, cli.FlagNamespaceForce, false, "If set, forcefully deletes database clusters in the namespace (if any)")
 }
 
-func initRemoveFlags(cmd *cobra.Command) {
-	cmd.Flags().Bool("keep-namespace", false, "If set, preserves the Kubernetes namespace but removes all resources managed by Everest")
-	cmd.Flags().Bool("force", false, "If set, forcefully deletes database clusters in the namespace (if any)")
+func namespacesRemovePreRun(cmd *cobra.Command, args []string) { //nolint:revive
+	namespacesRemoveCfg.Namespaces = args[0]
+
+	// Copy global flags to config
+	namespacesRemoveCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
+	namespacesRemoveCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
 }
 
-func initRemoveViperFlags(cmd *cobra.Command) {
-	viper.BindPFlag("keep-namespace", cmd.Flags().Lookup("keep-namespace")) //nolint:errcheck,gosec
-	viper.BindPFlag("force", cmd.Flags().Lookup("force"))                   //nolint:errcheck,gosec
+func namespacesRemoveRun(cmd *cobra.Command, _ []string) {
+	op, err := namespaces.NewNamespaceRemove(*namespacesRemoveCfg, logger.GetLogger())
+	if err != nil {
+		logger.GetLogger().Error(err)
+		os.Exit(1)
+	}
 
-	viper.BindEnv(cli.FlagKubeconfig)                                           //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagKubeconfig, cmd.Flags().Lookup(cli.FlagKubeconfig)) //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagVerbose, cmd.Flags().Lookup(cli.FlagVerbose))       //nolint:errcheck,gosec
-	viper.BindPFlag("json", cmd.Flags().Lookup("json"))                         //nolint:errcheck,gosec
+	if err := op.Run(cmd.Context()); err != nil {
+		if errors.Is(err, namespaces.ErrNamespaceNotEmpty) {
+			err = fmt.Errorf("%w. %s", err, forceUninstallHint)
+		}
+		output.PrintError(err, logger.GetLogger(), namespacesRemoveCfg.Pretty)
+		os.Exit(1)
+	}
+}
+
+// GetNamespacesRemoveCmd returns the command to remove a namespaces.
+func GetNamespacesRemoveCmd() *cobra.Command {
+	return namespacesRemoveCmd
 }
