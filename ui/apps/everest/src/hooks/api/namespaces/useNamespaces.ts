@@ -25,10 +25,13 @@ import { useCallback, useMemo } from 'react';
 
 export const NAMESPACES_QUERY_KEY = 'namespace';
 
-export const useNamespaces = () =>
+export const useNamespaces = (
+  options?: PerconaQueryOptions<GetNamespacesPayload, unknown, string[]>
+) =>
   useQuery<GetNamespacesPayload, unknown, string[]>({
     queryKey: [NAMESPACES_QUERY_KEY],
     queryFn: getNamespacesFn,
+    ...options,
   });
 
 export const useDBEnginesForNamespaces = (
@@ -85,13 +88,10 @@ export const useDBEnginesForDbEngineTypes = (
   dbEnginesFoDbEngineTypesFetching: boolean,
   refetch: () => void,
 ] => {
-  const {
-    results: dbEnginesForNamespaces,
-    refetchAll,
-    fetchingNamespaces,
-  } = useDBEnginesForNamespaces(false, options);
+  const { results: dbEnginesForNamespaces, refetchAll } =
+    useDBEnginesForNamespaces(false, options);
   const dbEnginesFetching = dbEnginesForNamespaces.some(
-    (result) => result.isLoading || fetchingNamespaces
+    (result) => result.isLoading
   );
 
   const dbEngineTypes = useMemo(
