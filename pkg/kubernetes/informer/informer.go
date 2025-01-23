@@ -99,16 +99,6 @@ func (i *Informer) OnUpdate(cb func(oldObj, newObj interface{})) {
 	i.eventHandlers.UpdateFunc = cb
 }
 
-// OnAdd is triggered when an object is added.
-func (i *Informer) OnAdd(cb func(obj interface{})) {
-	i.eventHandlers.AddFunc = cb
-}
-
-// OnDelete is triggered when an object is deleted.
-func (i *Informer) OnDelete(cb func(obj interface{})) {
-	i.eventHandlers.DeleteFunc = cb
-}
-
 // Start the Informer.
 func (i *Informer) Start(ctx context.Context, obj client.Object) error {
 	// Get the Informer for the specified object.
