@@ -71,6 +71,11 @@ const (
 
 var SupportedActions = []string{ActionCreate, ActionRead, ActionUpdate, ActionDelete, ActionAll}
 
+type User struct {
+	Subject string
+	Groups  []string
+}
+
 // Setup a new informer that watches our RBAC ConfigMap.
 // This informer reloads the policy whenever the ConfigMap is updated.
 func refreshEnforcerInBackground(
@@ -181,31 +186,59 @@ func NewEnforcer(ctx context.Context, kubeClient kubernetes.KubernetesConnector,
 }
 
 // GetUser extracts the user from the JWT token in the context.
-func GetUser(ctx context.Context) (string, error) {
+func GetUser(ctx context.Context) (User, error) {
 	token, ok := ctx.Value(common.UserCtxKey).(*jwt.Token)
 	if !ok {
-		return "", errors.New("failed to get token from context")
+		return User{}, errors.New("failed to get token from context")
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims) // by default claims is of type `jwt.MapClaims`
 	if !ok {
-		return "", errors.New("failed to get claims from token")
+		return User{}, errors.New("failed to get claims from token")
 	}
 
 	subject, err := claims.GetSubject()
 	if err != nil {
-		return "", errors.Join(err, errors.New("failed to get subject from claims"))
+		return User{}, errors.Join(err, errors.New("failed to get subject from claims"))
 	}
 
 	issuer, err := claims.GetIssuer()
 	if err != nil {
-		return "", errors.Join(err, errors.New("failed to get issuer from claims"))
+		return User{}, errors.Join(err, errors.New("failed to get issuer from claims"))
 	}
 
 	if issuer == session.SessionManagerClaimsIssuer {
-		return strings.Split(subject, ":")[0], nil
+		subject = strings.Split(subject, ":")[0]
 	}
-	return subject, nil
+
+	groups := getScopeValues(claims, []string{"groups"})
+	return User{Subject: subject, Groups: groups}, nil
+}
+
+func getScopeValues(claims jwt.MapClaims, scopes []string) []string {
+	groups := []string{}
+	for i := range scopes {
+		scopeIf, ok := claims[scopes[i]]
+		if !ok {
+			continue
+		}
+
+		switch val := scopeIf.(type) {
+		case []interface{}:
+			for _, groupIf := range val {
+				group, ok := groupIf.(string)
+				if ok {
+					groups = append(groups, group)
+				}
+			}
+		case []string:
+			groups = append(groups, val...)
+		case string:
+			groups = append(groups, val)
+		}
+	}
+
+	return groups
 }
 
 func loadAdminPolicy(enf casbin.IEnforcer) error {
