@@ -88,13 +88,10 @@ export const useDBEnginesForDbEngineTypes = (
   dbEnginesFoDbEngineTypesFetching: boolean,
   refetch: () => void,
 ] => {
-  const {
-    results: dbEnginesForNamespaces,
-    refetchAll,
-    fetchingNamespaces,
-  } = useDBEnginesForNamespaces(false, options);
+  const { results: dbEnginesForNamespaces, refetchAll } =
+    useDBEnginesForNamespaces(false, options);
   const dbEnginesFetching = dbEnginesForNamespaces.some(
-    (result) => result.isLoading || fetchingNamespaces
+    (result) => result.isLoading
   );
 
   const dbEngineTypes = useMemo(
