@@ -74,7 +74,7 @@ func (v Info) String() string {
 	return strings.Join(out, "\n")
 }
 
-// JSONString returns the JSON representation of the version information.
+// JSONString returns the json representation of the version information.
 func (v Info) JSONString() string {
 	data, err := json.Marshal(v)
 	if err != nil {

@@ -16,25 +16,15 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
-	"github.com/go-logr/zapr"
-	ctrlruntimelog "sigs.k8s.io/controller-runtime/pkg/log"
-
 	"github.com/percona/everest/commands"
-	"github.com/percona/everest/pkg/logger"
 )
 
 func main() {
-	l := logger.MustInitLogger(false)
-
-	// This is required because controller-runtime requires a logger
-	// to be set within 30 seconds of the program initialization.
-	log := zapr.NewLogger(l)
-	ctrlruntimelog.SetLogger(log)
-
-	rootCmd := commands.NewRootCmd(l.Sugar())
-	if err := rootCmd.Execute(); err != nil {
+	if err := commands.Execute(); err != nil {
+		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
