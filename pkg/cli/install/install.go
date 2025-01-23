@@ -239,9 +239,6 @@ func (o *Install) setVersionInfo(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	o.l.Debugf("Everest latest version available: %s", latest)
-	o.l.Debugf("Everest version information %#v", latestMeta)
-	o.installVersion = latest.String()
 
 	supVer, err := common.NewSupportedVersion(latestMeta)
 	if err != nil {
@@ -250,6 +247,10 @@ func (o *Install) setVersionInfo(ctx context.Context) error {
 	if err := o.checkRequirements(supVer); err != nil {
 		return err
 	}
+
+	o.l.Debugf("Everest latest version available: %s", latest)
+	o.l.Debugf("Everest version information %#v", latestMeta)
+	o.installVersion = latest.String()
 	return nil
 }
 
