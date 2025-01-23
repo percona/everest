@@ -42,8 +42,11 @@ import { EmptyStateDatabases } from 'pages/common/empty-state/databases';
 import { EmptyStateNamespaces } from 'pages/common/empty-state/namespaces';
 
 export const DbClusterView = () => {
-  const { data: namespaces = [], isLoading: loadingNamespaces } =
-    useNamespaces();
+  const { data: namespaces = [], isLoading: loadingNamespaces } = useNamespaces(
+    {
+      refetchInterval: 10 * 1000,
+    }
+  );
 
   const navigate = useNavigate();
   const { results: dbEngines } = useDBEnginesForNamespaces();

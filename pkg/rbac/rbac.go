@@ -62,11 +62,14 @@ const (
 	ActionRead   = "read"
 	ActionUpdate = "update"
 	ActionDelete = "delete"
+	ActionAll    = "*"
 )
 
 const (
 	rbacEnabledValueTrue = "true"
 )
+
+var SupportedActions = []string{ActionCreate, ActionRead, ActionUpdate, ActionDelete, ActionAll}
 
 // Setup a new informer that watches our RBAC ConfigMap.
 // This informer reloads the policy whenever the ConfigMap is updated.
@@ -298,4 +301,9 @@ func IsEnabled(cm *corev1.ConfigMap) bool {
 // ObjectName returns the a string that represents the name of an object in RBAC format.
 func ObjectName(args ...string) string {
 	return strings.Join(args, "/")
+}
+
+// ValidateAction validates the action is supported.
+func ValidateAction(action string) bool {
+	return slices.Contains(SupportedActions, action)
 }

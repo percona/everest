@@ -13,21 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package rbac ...
+// Package rbac provides RBAC settings CLI commands.
 package rbac
 
 import (
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/percona/everest/pkg/cli"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/logger"
 	"github.com/percona/everest/pkg/rbac"
 )
 
@@ -52,68 +52,73 @@ NOTE: The asterisk character (*) holds a special meaning in the unix shell.
 To prevent misinterpretation, you need to add single quotes around it.
 `
 
-// NewCanCommand returns a new command for testing RBAC.
-func NewCanCommand(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "can SUBJECT ACTION RESOURCE SUBRESOURCE",
+var (
+	settingsRBACCanCmd = &cobra.Command{
+		Use:     "can <subject> <action> <resource> <subresource> [flags]",
+		Args:    cobra.ExactArgs(4),
 		Long:    `Test RBAC policy.` + "\n" + canCmdExamples,
 		Short:   "Test RBAC policy",
 		Example: "everestctl settings rbac can alice read database-clusters all",
-		Run: func(cmd *cobra.Command, args []string) {
-			initCanViperFlags(cmd)
-
-			kubeconfigPath := viper.GetString("kubeconfig")
-			policyFilepath := viper.GetString("policy-file")
-			if kubeconfigPath == "" && policyFilepath == "" {
-				l.Error("Either --kubeconfig or --policy-file must be set")
-				os.Exit(1)
-			}
-
-			var k *kubernetes.Kubernetes
-			if kubeconfigPath != "" && policyFilepath == "" {
-				client, err := kubernetes.New(kubeconfigPath, l)
-				if err != nil {
-					var u *url.Error
-					if errors.As(err, &u) || errors.Is(err, clientcmd.ErrEmptyConfig) {
-						l.Error("Could not connect to Kubernetes. " +
-							"Make sure Kubernetes is running and is accessible from this computer/server.")
-					}
-					os.Exit(1)
-				}
-				k = client
-			}
-
-			if len(args) != 4 { //nolint:mnd
-				l.Error("invalid number of arguments provided")
-				if err := cmd.Usage(); err != nil {
-					panic(err)
-				}
-				os.Exit(1)
-			}
-
-			can, err := rbac.Can(cmd.Context(), policyFilepath, k, args...)
-			if err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
-
-			if can {
-				fmt.Fprintln(os.Stdout, "Yes")
-				return
-			}
-			fmt.Fprintln(os.Stdout, "No")
-		},
+		PreRunE: settingsRBACCanPreRunE,
+		Run:     settingsRBACCanRun,
 	}
-	initCanFlags(cmd)
-	return cmd
+	rbacCanPolicyFilePath string
+	rbacCanKubeconfigPath string
+	rbacCanPretty         bool
+)
+
+func init() {
+	// local command flags
+	settingsRBACCanCmd.Flags().StringVar(&rbacCanPolicyFilePath, cli.FlagRBACPolicyFile, "", "Path to the policy file to use, otherwise use policy from Everest deployment.")
 }
 
-func initCanFlags(cmd *cobra.Command) {
-	cmd.Flags().String("policy-file", "", "Path to the policy file to use")
+func settingsRBACCanPreRunE(cmd *cobra.Command, args []string) error { //nolint:revive
+	// validate action
+	if !rbac.ValidateAction(args[1]) {
+		return errors.New(fmt.Sprintf("invalid action '%s'. Supported actions: %s",
+			args[1], strings.Join(rbac.SupportedActions, `,`),
+		))
+	}
+
+	// Copy global flags to config
+	rbacCanPretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
+	rbacCanKubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
+	return nil
 }
 
-func initCanViperFlags(cmd *cobra.Command) {
-	viper.BindEnv("kubeconfig")                                       //nolint:errcheck,gosec
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))   //nolint:errcheck,gosec
-	viper.BindPFlag("policy-file", cmd.Flags().Lookup("policy-file")) //nolint:errcheck,gosec
+func settingsRBACCanRun(cmd *cobra.Command, args []string) {
+	var k *kubernetes.Kubernetes
+	if rbacCanPolicyFilePath == "" {
+		// check over policy in Everest deployment (ConfigMap).
+		var l *zap.SugaredLogger
+		if rbacCanPretty {
+			l = zap.NewNop().Sugar()
+		} else {
+			l = logger.GetLogger().With("component", "rbac")
+		}
+
+		client, err := kubernetes.New(rbacCanKubeconfigPath, l)
+		if err != nil {
+			l.Error(err)
+			os.Exit(1)
+		}
+		k = client
+	}
+
+	can, err := rbac.Can(cmd.Context(), rbacCanPolicyFilePath, k, args...)
+	if err != nil {
+		logger.GetLogger().Error(err)
+		os.Exit(1)
+	}
+
+	if can {
+		_, _ = fmt.Fprintln(os.Stdout, "Yes")
+		return
+	}
+	_, _ = fmt.Fprintln(os.Stdout, "No")
+}
+
+// GetSettingsRBACCanCmd returns the command to test RBAC policy.
+func GetSettingsRBACCanCmd() *cobra.Command {
+	return settingsRBACCanCmd
 }
