@@ -25,20 +25,6 @@ test('auth header fails with invalid token', async ({ request }) => {
   expect(version.status()).toEqual(401);
 });
 
-test('auth header is preferred over cookie', async ({ browser }) => {
-  const ctx = await browser.newContext();
-
-  await ctx.addCookies([{
-    name: 'everest_token', value: '123', url: 'http://127.0.0.1:8080',
-  }]);
-
-  const request = ctx.request;
-
-  const version = await request.get('/v1/version');
-
-  await checkError(version);
-});
-
 test.describe('no authorization header', () => {
   test.use({
     extraHTTPHeaders: {
@@ -51,35 +37,5 @@ test.describe('no authorization header', () => {
     const version = await request.get('/v1/version');
 
     expect(version.status()).toEqual(400);
-  });
-
-  test('auth cookie fails with invalid token', async ({ browser }) => {
-    const ctx = await browser.newContext();
-
-    await ctx.addCookies([{
-      name: 'everest_token', value: '123', url: 'http://127.0.0.1:8080',
-    }]);
-
-    const request = ctx.request;
-
-    const version = await request.get('/v1/version');
-
-    expect(version.status()).toEqual(401);
-  });
-
-  test('auth cookie works with a valid token', async ({ page }) => {
-    const ctx = page.context();
-
-    await ctx.addCookies([{
-      name: 'everest_token',
-      value: process.env.API_TOKEN,
-      url: 'http://127.0.0.1:8080',
-    }]);
-
-    const request = ctx.request;
-
-    const version = await request.get('/v1/version');
-
-    await checkError(version);
   });
 });

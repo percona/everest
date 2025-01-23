@@ -21,7 +21,7 @@ type rbacHandler struct {
 	enforcer   casbin.IEnforcer
 	log        *zap.SugaredLogger
 	next       handlers.Handler
-	userGetter func(ctx context.Context) (string, error)
+	userGetter func(ctx context.Context) (rbac.User, error)
 }
 
 // New returns a new RBAC handler.
@@ -55,17 +55,23 @@ func (h *rbacHandler) enforce(
 	action,
 	object string,
 ) error {
-	subject, err := h.userGetter(ctx)
+	user, err := h.userGetter(ctx)
 	if err != nil {
 		return err
 	}
-	ok, err := h.enforcer.Enforce(subject, resource, action, object)
-	if err != nil {
-		return fmt.Errorf("enforce error: %w", err)
+
+	// User is allowed to perform the operation if the user's subject or any
+	// of its groups have the required permission.
+	for _, sub := range append([]string{user.Subject}, user.Groups...) {
+		ok, err := h.enforcer.Enforce(sub, resource, action, object)
+		if err != nil {
+			return fmt.Errorf("enforce error: %w", err)
+		}
+		if ok {
+			return nil
+		}
 	}
-	if !ok {
-		h.log.Warnf("Permission denied: [%s %s %s %s]", subject, resource, action, object)
-		return ErrInsufficientPermissions
-	}
-	return nil
+
+	h.log.Warnf("Permission denied: [%s %s %s %s]", user.Subject, resource, action, object)
+	return ErrInsufficientPermissions
 }
