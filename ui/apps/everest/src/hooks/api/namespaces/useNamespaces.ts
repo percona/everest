@@ -25,10 +25,13 @@ import { useCallback, useMemo } from 'react';
 
 export const NAMESPACES_QUERY_KEY = 'namespace';
 
-export const useNamespaces = () =>
+export const useNamespaces = (
+  options?: PerconaQueryOptions<GetNamespacesPayload, unknown, string[]>
+) =>
   useQuery<GetNamespacesPayload, unknown, string[]>({
     queryKey: [NAMESPACES_QUERY_KEY],
     queryFn: getNamespacesFn,
+    ...options,
   });
 
 export const useDBEnginesForNamespaces = (
