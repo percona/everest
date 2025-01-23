@@ -1,7 +1,8 @@
 module github.com/percona/everest/tools
 
-go 1.23
-toolchain go1.23.2
+go 1.23.0
+
+toolchain go1.23.4
 
 require (
 	github.com/daixiang0/gci v0.13.5
