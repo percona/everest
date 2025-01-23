@@ -17,78 +17,52 @@
 package commands
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 
+	"github.com/percona/everest/pkg/cli"
 	"github.com/percona/everest/pkg/cli/uninstall"
-	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/logger"
 	"github.com/percona/everest/pkg/output"
 )
 
-// newUninstallCmd returns a new uninstall command.
-func newUninstallCmd(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "uninstall",
-		Long:  "Uninstall Percona Everest",
-		Short: "Uninstall Percona Everest",
-		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
-			initUninstallViperFlags(cmd)
-			c, err := parseClusterConfig()
-			if err != nil {
-				os.Exit(1)
-			}
+var (
+	uninstallCmd = &cobra.Command{
+		Use:    "uninstall [flags]",
+		Args:   cobra.NoArgs,
+		Long:   "Uninstall Percona Everest",
+		Short:  "Uninstall Percona Everest",
+		PreRun: uninstallPreRun,
+		Run:    uninstallRun,
+	}
+	uninstallCfg = &uninstall.Config{}
+)
 
-			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
-			c.Pretty = !enableLogging
+func init() {
+	rootCmd.AddCommand(uninstallCmd)
 
-			op, err := uninstall.NewUninstall(*c, l)
-			if err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
+	// local command flags
+	uninstallCmd.Flags().BoolVarP(&uninstallCfg.AssumeYes, "assume-yes", "y", false, "Assume yes to all questions")
+	uninstallCmd.Flags().BoolVarP(&uninstallCfg.Force, "force", "f", false, "Force removal in case there are database clusters running")
+	uninstallCmd.Flags().BoolVar(&uninstallCfg.SkipEnvDetection, cli.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
+}
 
-			if err := op.Run(cmd.Context()); err != nil {
-				output.PrintError(err, l, !enableLogging)
-				os.Exit(1)
-			}
-		},
+func uninstallPreRun(_ *cobra.Command, _ []string) { //nolint:revive
+	// Copy global flags to config
+	uninstallCfg.Pretty = rootCmdFlags.Pretty
+	uninstallCfg.KubeconfigPath = rootCmdFlags.KubeconfigPath
+}
+
+func uninstallRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	op, err := uninstall.NewUninstall(*uninstallCfg, logger.GetLogger())
+	if err != nil {
+		logger.GetLogger().Error(err)
+		os.Exit(1)
 	}
 
-	initUninstallFlags(cmd)
-
-	return cmd
-}
-
-func initUninstallFlags(cmd *cobra.Command) {
-	cmd.Flags().BoolP("assume-yes", "y", false, "Assume yes to all questions")
-	cmd.Flags().BoolP("force", "f", false, "Force removal in case there are database clusters running")
-
-	cmd.Flags().Bool(uninstall.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
-	cmd.Flags().String(uninstall.FlagCatalogNamespace, kubernetes.OLMNamespace,
-		fmt.Sprintf("Namespace where Everest OLM catalog is installed. Implies --%s", uninstall.FlagSkipEnvDetection),
-	)
-	cmd.Flags().Bool(uninstall.FlagSkipOLM, false, fmt.Sprintf("Skip OLM uninstallation. Implies --%s", uninstall.FlagSkipEnvDetection))
-}
-
-func initUninstallViperFlags(cmd *cobra.Command) {
-	viper.BindEnv("kubeconfig")                                     //nolint:errcheck,gosec
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
-	viper.BindPFlag("assume-yes", cmd.Flags().Lookup("assume-yes")) //nolint:errcheck,gosec
-	viper.BindPFlag("force", cmd.Flags().Lookup("force"))           //nolint:errcheck,gosec
-	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose"))       //nolint:errcheck,gosec
-	viper.BindPFlag("json", cmd.Flags().Lookup("json"))             //nolint:errcheck,gosec
-
-	viper.BindPFlag(uninstall.FlagSkipEnvDetection, cmd.Flags().Lookup(uninstall.FlagSkipEnvDetection)) //nolint:errcheck,gosec
-	viper.BindPFlag(uninstall.FlagSkipOLM, cmd.Flags().Lookup(uninstall.FlagSkipOLM))                   //nolint:errcheck,gosec
-	viper.BindPFlag(uninstall.FlagCatalogNamespace, cmd.Flags().Lookup(uninstall.FlagCatalogNamespace)) //nolint:errcheck,gosec
-}
-
-func parseClusterConfig() (*uninstall.Config, error) {
-	c := &uninstall.Config{}
-	err := viper.Unmarshal(c)
-	return c, err
+	if err := op.Run(cmd.Context()); err != nil {
+		output.PrintError(err, logger.GetLogger(), uninstallCfg.Pretty)
+		os.Exit(1)
+	}
 }
