@@ -7,7 +7,14 @@ import {
   AffinityOperator,
 } from 'shared-types/affinity.types';
 import { DbCluster } from 'shared-types/dbCluster.types';
-import { affinityRulesToDbPayload, dbPayloadToAffinityRules } from './db';
+import {
+  affinityRulesToDbPayload,
+  dbPayloadToAffinityRules,
+  areAffinityRulesDefault,
+  getDefaultAffinityRules,
+} from './db';
+import { DbType } from '@percona/types';
+import { DEFAULT_TOPOLOGY_KEY } from 'consts';
 
 describe('affinityRulesToDbPayload', () => {
   const tests: [string, AffinityRule[], Affinity][] = [
@@ -396,6 +403,74 @@ describe('dbPayloadToAffinityRules', () => {
       // Since we generate a UID for each rule, we can't compare the whole object
       // Therefore, we just expect the function to return an object with at least the same keys as the expected result
       expect(dbPayloadToAffinityRules(input)).toMatchObject(expected);
+    });
+  });
+});
+
+describe('areAffinityRulesDefault', () => {
+  describe('MongoDB', () => {
+    test('Empty affinity rules for MongoDB', () => {
+      expect(areAffinityRulesDefault([], DbType.Mongo, false)).toBe(false);
+    });
+    test('Default affinity rules for MongoDB, no sharding', () => {
+      expect(
+        areAffinityRulesDefault(
+          getDefaultAffinityRules(DbType.Mongo, false),
+          DbType.Mongo,
+          false
+        )
+      ).toBe(true);
+    });
+    test('Default affinity rules for MongoDB, with sharding', () => {
+      expect(
+        areAffinityRulesDefault(
+          getDefaultAffinityRules(DbType.Mongo, true),
+          DbType.Mongo,
+          true
+        )
+      ).toBe(true);
+    });
+    test('Custom affinity rules for MongoDB', () => {
+      expect(
+        areAffinityRulesDefault(
+          [
+            ...getDefaultAffinityRules(DbType.Mongo, true),
+            {
+              component: AffinityComponent.ConfigServer,
+              type: AffinityType.PodAntiAffinity,
+              priority: AffinityPriority.Preferred,
+              topologyKey: DEFAULT_TOPOLOGY_KEY,
+              operator: AffinityOperator.NotIn,
+              key: 'my-key',
+              values: 'value1',
+              uid: '',
+            },
+          ],
+          DbType.Mongo,
+          false
+        )
+      ).toBe(false);
+    });
+  });
+  describe('MySQL', () => {
+    test('Empty affinity rules for MySQL', () => {
+      expect(areAffinityRulesDefault([], DbType.Mysql, false)).toBe(false);
+    });
+    test('Default affinity rules for Mysql, no sharding', () => {
+      expect(
+        areAffinityRulesDefault(
+          getDefaultAffinityRules(DbType.Mysql),
+          DbType.Mysql,
+          false
+        )
+      ).toBe(true);
+    });
+    test('Custom affinity rules for Mysql', () => {
+      const defaultRules = getDefaultAffinityRules(DbType.Mysql);
+      defaultRules[0].key = 'my-key';
+      expect(
+        areAffinityRulesDefault([...defaultRules], DbType.Mysql, false)
+      ).toBe(false);
     });
   });
 });
