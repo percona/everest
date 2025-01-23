@@ -302,7 +302,8 @@ jobs:
           go run . \
             --veneer-file ../veneer/everest-operator.yaml \
             --channel fast-v0  \
-            --new-version ${{ env.VERSION }} \
+            --new-version ${{ env.VERSION }} 
+          
           cd ..
           curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.48.0/${OS}-${ARCH}-opm
           chmod +x /tmp/opm
