@@ -377,25 +377,9 @@ func (u *Upgrade) verifyRequirements(ctx context.Context, meta *version.Metadata
 func (u *Upgrade) checkRequirements(ctx context.Context, supVer *common.SupportedVersion) error {
 	// TODO: olm, catalog to be implemented.
 
-	// cli version check.
-	if cliVersion.Version != "" {
-		u.l.Infof("Checking cli version requirements")
-		cli, err := goversion.NewVersion(cliVersion.Version)
-		if err != nil {
-			return errors.Join(err, fmt.Errorf("invalid cli version %s", cliVersion.Version))
-		}
-
-		if !supVer.Cli.Check(cli.Core()) {
-			return fmt.Errorf(
-				"cli version %q does not meet minimum requirements of %q",
-				cli, supVer.Cli.String(),
-			)
-		}
-		u.l.Debugf("cli version %q meets requirements %q", cli, supVer.Cli.String())
-	} else {
-		u.l.Debug("cli version is empty")
+	if err := cliutils.VerifyCLIVersion(supVer); err != nil {
+		return err
 	}
-
 	// Operator version check.
 	if err := u.checkOperatorRequirements(ctx, supVer); err != nil {
 		return err
