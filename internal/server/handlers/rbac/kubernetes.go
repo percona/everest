@@ -3,7 +3,6 @@ package rbac
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/AlekSi/pointer"
@@ -28,15 +27,39 @@ func (h *rbacHandler) GetUserPermissions(ctx context.Context) (*api.UserPermissi
 	if err != nil {
 		return nil, err
 	}
-	perms, err := h.enforcer.GetImplicitPermissionsForUser(user)
-	if err != nil {
-		return nil, fmt.Errorf("failed to GetImplicitPermissionsForUser: %w", err)
+
+	// Let's use a map to deduplicate the permissions after resolving all roles
+	permsMap := make(map[[4]string]struct{})
+
+	// Get permissions for the user and the groups it belongs to
+	for _, sub := range append([]string{user.Subject}, user.Groups...) {
+		perms, err := h.enforcer.GetImplicitPermissionsForUser(sub)
+		if err != nil {
+			return nil, fmt.Errorf("failed to GetImplicitPermissionsForUser: %w", err)
+		}
+
+		// GetImplicitPermissionsForUser returns all policies assigned to the
+		// user/group directly as well as the policies assigned to the roles
+		// the user/group has. We need to resolve all roles for the user.
+		for _, perm := range perms {
+			if len(perm) != 4 {
+				// This should never happen, but let's be safe
+				return nil, fmt.Errorf("invalid permission")
+			}
+
+			// We don't want to expose the groups or roles in the permissions
+			// so we replace them with the user
+			permsMap[[4]string{user.Subject, perm[1], perm[2], perm[3]}] = struct{}{}
+		}
 	}
 
-	if err := h.resolveRoles(user, perms); err != nil {
-		return nil, err
+	// Convert the map back to a slice
+	result := make([][]string, len(permsMap))
+	i := 0
+	for k := range permsMap {
+		result[i] = []string(k[:])
+		i++
 	}
-	result := pointer.To(perms)
 
 	nextRes, err := h.next.GetUserPermissions(ctx)
 	if err != nil {
@@ -49,25 +72,8 @@ func (h *rbacHandler) GetUserPermissions(ctx context.Context) (*api.UserPermissi
 	}
 
 	res := &api.UserPermissions{
-		Permissions: result,
+		Permissions: pointer.To(result),
 		Enabled:     enabled,
 	}
 	return res, nil
-}
-
-// For a given set of `permissions` for a `user`, this function
-// will resolve all roles for the user.
-func (h *rbacHandler) resolveRoles(user string, permissions [][]string) error {
-	userRoles, err := h.enforcer.GetRolesForUser(user)
-	if err != nil {
-		return errors.Join(err, errors.New("cannot get user roles"))
-	}
-	for _, role := range userRoles {
-		for i, perm := range permissions {
-			if perm[0] == role {
-				permissions[i][0] = user
-			}
-		}
-	}
-	return nil
 }

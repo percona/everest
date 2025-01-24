@@ -11,6 +11,10 @@ on:
         required: false
         default: main
         description: "Everest operator branch with the feature to checkout"
+      everest_catalog_branch:
+        required: false
+        default: main
+        description: "Everest catalog branch with the feature to checkout"
       vs_branch:
         required: false
         default: production
@@ -19,22 +23,43 @@ on:
         required: false
         default: main
         description: "Helm charts branch with the feature to checkout"
-      upstream_operator:
-        type: choice
-        description: "The upstream operator to upgrade"
-        required: false
-        options:
-          - ""
-          - percona-xtradb-cluster-operator
-          - percona-server-mongodb-operator
-          - percona-postgresql-operator
-      upstream_operator_bundle_image:
-        required: false
-        description: "Full name of the upstream bundle image to test"
       artifacts_retention_days:
         required: false
         description: "How many days the artifacts will be stored in GitHub"
         default: 30
+  workflow_call:
+    inputs:
+      everest_branch:
+        required: false
+        type: string
+        default: main
+        description: "Everest branch with the feature to checkout"
+      everest_operator_branch:
+        required: false
+        type: string
+        default: main
+        description: "Everest operator branch with the feature to checkout"
+      everest_catalog_branch:
+        required: false
+        type: string
+        default: main
+        description: "Everest catalog branch with the feature to checkout"
+      vs_branch:
+        required: false
+        type: string
+        default: production
+        description: "Version Service branch with the feature to checkout"
+      helm_branch:
+        required: false
+        type: string
+        default: main
+        description: "Helm charts branch with the feature to checkout"
+      artifacts_retention_days:
+        required: false
+        type: number
+        description: "How many days the artifacts will be stored in GitHub"
+        default: 30
+
 
 permissions:
   contents: read
@@ -58,13 +83,12 @@ jobs:
 
     env:
       TOOLS_PATH: "/opt/tools/bin"
-      ARTIFACTS_RETENTION_DAYS: ${{ github.event.inputs.artifacts_retention_days }}
-      VS_BRANCH: ${{ github.event.inputs.vs_branch }}
-      HELM_BRANCH: ${{ github.event.inputs.helm_branch }}
-      EVEREST_BRANCH: ${{ github.event.inputs.everest_branch }}
-      EVEREST_OPERATOR_BRANCH: ${{ github.event.inputs.everest_operator_branch }}
-      UPSTREAM_OPERATOR_IMAGE: ${{ github.event.inputs.upstream_operator_bundle_image }}
-      UPSTREAM_OPERATOR: ${{ github.event.inputs.upstream_operator }}
+      ARTIFACTS_RETENTION_DAYS: ${{ inputs.artifacts_retention_days }}
+      VS_BRANCH: ${{ inputs.vs_branch }}
+      HELM_BRANCH: ${{ inputs.helm_branch }}
+      EVEREST_BRANCH: ${{ inputs.everest_branch }}
+      EVEREST_OPERATOR_BRANCH: ${{ inputs.everest_operator_branch }}
+      EVEREST_CATALOG_BRANCH: ${{ inputs.everest_catalog_branch }}
 
       VS_PORT: 8081
       ARCH: ""
@@ -82,23 +106,28 @@ jobs:
             exit 1
           fi
           
-          if [[ -z "$UPSTREAM_OPERATOR" && ! -z "$UPSTREAM_OPERATOR_IMAGE" ]] || [[ ! -z "$UPSTREAM_OPERATOR" && -z "$UPSTREAM_OPERATOR_IMAGE" ]]; then
-            echo "upstream_operator and upstream_operator_bundle_image should both be either empty or non-empty."
-            exit 1
-          fi
-
       - name: Set environment variables
         run: |
-          echo "ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" >> $GITHUB_ENV
-          echo "OS=$(uname | awk '{print tolower($0)}')" >> $GITHUB_ENV
-          echo "VS_URL=http://localhost:$VS_PORT" >> $GITHUB_ENV
+          echo "ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" | tee -a $GITHUB_ENV
+          echo "OS=$(uname | awk '{print tolower($0)}')" | tee -a $GITHUB_ENV
+          echo "VS_URL=http://localhost:$VS_PORT" | tee -a $GITHUB_ENV
           
           TIMESTAMP=$(date +'%Y%m%d%H%M%S')
           V="1.10000.0-rc$TIMESTAMP"
-          echo "VERSION=$V" >> $GITHUB_ENV
-          echo "VERSION_TAG=v$V" >> $GITHUB_ENV
-          echo "VS_TAG=everest-test$TIMESTAMP" >> $GITHUB_ENV
+          echo "VERSION=$V" | tee -a $GITHUB_ENV
+          echo "VERSION_TAG=v$V" | tee -a $GITHUB_ENV
+          echo "VS_TAG=everest-test$TIMESTAMP" | tee -a $GITHUB_ENV
 
+          # Fall back to default branch if the specified branch does not exist
+          git ls-remote --heads --exit-code --quiet https://github.com/Percona-Lab/percona-version-service.git $VS_BRANCH > /dev/null || echo "VS_BRANCH=production" | tee -a $GITHUB_ENV
+          git ls-remote --heads --exit-code --quiet https://github.com/percona/percona-helm-charts.git $HELM_BRANCH > /dev/null || echo "HELM_BRANCH=main" | tee -a $GITHUB_ENV
+          git ls-remote --heads --exit-code --quiet https://github.com/percona/everest.git $EVEREST_BRANCH > /dev/null || echo "EVEREST_BRANCH=main" | tee -a $GITHUB_ENV
+          git ls-remote --heads --exit-code --quiet https://github.com/percona/everest-operator.git $EVEREST_OPERATOR_BRANCH > /dev/null || echo "EVEREST_OPERATOR_BRANCH=main" | tee -a $GITHUB_ENV
+          git ls-remote --heads --exit-code --quiet https://github.com/percona/everest-catalog.git $EVEREST_CATALOG_BRANCH > /dev/null || echo "EVEREST_CATALOG_BRANCH=main" | tee -a $GITHUB_ENV
+
+      - name: Create temporary directory for storing artifacts
+        run: |
+          mkdir -p /tmp/${VERSION}
 
       - name: Set GO_VERSION environment variable
         run: |
@@ -211,15 +240,9 @@ jobs:
           CRD_VERSION=${{ env.VERSION_TAG }} make crds-gen
           make release-dev
 
-      - name: Helm - Create tar.gz archive
+      - name: Helm - copy chart
         run: |
-          tar -czvf helm.tar.gz percona-helm-charts/charts/everest
-
-      - name: Helm - Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: helm
-          path: helm.tar.gz
+          cp -r percona-helm-charts/charts/everest /tmp/${{ env.VERSION }}/helm-chart
 
       - name: Operator - check out again
         uses: actions/checkout@v4
@@ -269,6 +292,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: percona/everest-catalog
+          ref: ${{ env.EVEREST_CATALOG_BRANCH }}
           path: everest-catalog
           token: ${{ secrets.ROBOT_TOKEN }}
 
@@ -278,32 +302,16 @@ jobs:
           go run . \
             --veneer-file ../veneer/everest-operator.yaml \
             --channel fast-v0  \
-            --new-version ${{ env.VERSION }} \
-
+            --new-version ${{ env.VERSION }} 
+          
           cd ..
           curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.48.0/${OS}-${ARCH}-opm
           chmod +x /tmp/opm
           /tmp/opm alpha render-template basic --skip-tls -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
-
           # Check if catalog has the new version listed
           if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
             echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
             exit 1
-          fi
-
-          # If the feature build contains upstream upgrades
-          if [ -n "$UPSTREAM_OPERATOR" ]; then
-            # Add a new record to the upstream veneer
-            yq e ".Stable.Bundles += {\"Image\": \"$UPSTREAM_OPERATOR_IMAGE\"}" veneer/${UPSTREAM_OPERATOR}.yaml > temp.yaml && mv temp.yaml veneer/${UPSTREAM_OPERATOR}.yaml
-
-            # Generate upstream catalog
-            /tmp/opm alpha render-template semver --skip-tls -o yaml < veneer/${UPSTREAM_OPERATOR}.yaml > catalog/${UPSTREAM_OPERATOR}/catalog.yaml
-
-            # Check if upstream catalog has the new image listed
-            if ! grep -q "$UPSTREAM_OPERATOR_IMAGE$" catalog/${UPSTREAM_OPERATOR}/catalog.yaml; then
-              echo "catalog/${UPSTREAM_OPERATOR}/catalog.yaml does not include the version $UPSTREAM_OPERATOR_IMAGE"
-              exit 1
-            fi
           fi
 
       - name: Catalog - setup Docker meta for everest-catalog
@@ -353,45 +361,19 @@ jobs:
           RELEASE_VERSION=${VERSION_TAG} CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
           RELEASE_VERSION=${VERSION_TAG} make release-cli
 
-      - name: Upload CLI artefacts
-        uses: actions/upload-artifact@v4
-        id: cli-upload-step-1
-        with:
-          name: everestctl.exe
-          path: ./dist/everestctl.exe
-          retention-days: ${{ env.ARTIFACTS_RETENTION_DAYS }}
+      - name: Everest - copy CLI builds
+        run: |
+          cp dist/everestctl.exe /tmp/${VERSION}/everestctl.exe
+          cp dist/everestctl-darwin-amd64 /tmp/${VERSION}/everestctl-darwin-amd64
+          cp dist/everestctl-darwin-arm64 /tmp/${VERSION}/everestctl-darwin-arm64
+          cp dist/everestctl-linux-amd64 /tmp/${VERSION}/everestctl-linux-amd64
+          cp dist/everestctl-linux-arm64 /tmp/${VERSION}/everestctl-linux-arm64
 
-      - name: Upload CLI artefacts
-        uses: actions/upload-artifact@v4
-        id: cli-upload-step-2
-        with:
-          name: everestctl-darwin-amd64
-          path: ./dist/everestctl-darwin-amd64
-          retention-days: ${{ env.ARTIFACTS_RETENTION_DAYS }}
-
-      - name: Upload CLI artefacts
-        uses: actions/upload-artifact@v4
-        id: cli-upload-step-3
-        with:
-          name: everestctl-darwin-arm64
-          path: ./dist/everestctl-darwin-arm64
-          retention-days: ${{ env.ARTIFACTS_RETENTION_DAYS }}
-
-      - name: Upload CLI artefacts
-        uses: actions/upload-artifact@v4
-        id: cli-upload-step-4
-        with:
-          name: everestctl-linux-amd64
-          path: ./dist/everestctl-linux-amd64
-          retention-days: ${{ env.ARTIFACTS_RETENTION_DAYS }}
-
-      - name: Upload CLI artefacts
-        uses: actions/upload-artifact@v4
-        id: cli-upload-step-5
-        with:
-          name: everestctl-linux-arm64
-          path: ./dist/everestctl-linux-arm64
-          retention-days: ${{ env.ARTIFACTS_RETENTION_DAYS }}
+      - name: Everest - copy feature build helper scripts
+        run: |
+          cp dev/fb/cli.sh /tmp/${VERSION}/cli.sh
+          cp dev/fb/helm.sh /tmp/${VERSION}/helm.sh
+          cp dev/fb/vs.sh /tmp/${VERSION}/vs.sh
 
       - name: Everest - push Everest image
         uses: docker/build-push-action@v6
@@ -402,41 +384,37 @@ jobs:
 
       - name: Create vs_tag file
         run: |
-          echo "$VS_TAG" > vs_tag.txt
-          echo "$VERSION" > fb.txt
+          echo "$VS_TAG" > /tmp/${VERSION}/vs_tag.txt
+          echo "$VERSION" > /tmp/${VERSION}/version.txt
 
-      - name: Upload VS tag info artefact
+      - name: Version Service - create deployment manifest
+        run: |
+          curl https://raw.githubusercontent.com/Percona-Lab/percona-version-service/main/deploy.yaml  > /tmp/${VERSION}/vs_deploy.yaml
+          sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_TAG/g" /tmp/${VERSION}/vs_deploy.yaml
+
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
-        id: vs_file
         with:
-          name: vs_tag.txt
-          path: ./vs_tag.txt
-          retention-days: ${{ env.ARTIFACTS_RETENTION_DAYS }}
-
-
-      - name: Upload FB info artefact
-        uses: actions/upload-artifact@v4
-        id: fb_file
-        with:
-          name: fb.txt
-          path: ./fb.txt
+          name: ${{ env.VERSION }}
+          path: /tmp/${{ env.VERSION }}
           retention-days: ${{ env.ARTIFACTS_RETENTION_DAYS }}
 
       - name: Info
         run: |
           printf "To install FB using helm:\n\
-          1. Download the 'helm' artifact below.\n\
-          2. Navigate to \`/everest/dev/fb directory\`.\n\
-          3. Run the command:\n\`\`\`VS_IMAGE=$VS_TAG HELM_PATH=<path_to_your_helmchart> sh helm.sh\`\`\`\n\
-              \nexample:\n\`\`\`VS_IMAGE=$VS_TAG HELM_PATH=/Users/oxana/Downloads/percona-helm-charts sh helm.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+          1. Download and unzip the \`$VERSION\` artifact below.\n\
+          2. Run the command:\n\`\`\`./helm.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
           
           printf "____________________\n" >> "$GITHUB_STEP_SUMMARY"
           
           printf "To install FB using CLI:\n\
-          1. Download the 'helm' artifact below.\n\
-          2. Download a CLI build from artifacts below.\n\
-          3. Navigate to \`/everest/dev/fb\` directory.\n\
-          4. Run the command:\n\`\`\`VS_IMAGE=$VS_TAG VERSION=$VERSION EVEREST_CTL_PATH=<path_to_everestctl> HELM_PATH=<path_to_your_helmchart>  sh cli.sh\`\`\`\n\
-              \nexample:\n\`\`\`VS_IMAGE=$VS_TAG VERSION=$VERSION HELM_PATH=/Users/oxana/Downloads/percona-helm-charts EVEREST_CTL_PATH=/Users/oxana/Downloads/everestctl-darwin-arm64 sh cli.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+          1. Download and unzip the \`$VERSION\` artifact below.\n\
+          2. Run the command:\n\`\`\`./cli.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
 
+          printf "____________________\n" >> "$GITHUB_STEP_SUMMARY"
+          
+          printf "To clean up the environment after a FB:\n\
+          1. Delete VS: \`kubectl delete deployment percona-version-service && kubectl delete svc percona-version-service\`\n\
+          2. Uninstall Everest using the FB everestctl build: \`./<everestctl-OS-ARCH> uninstall --assume-yes --force\` \n" >> "$GITHUB_STEP_SUMMARY"
 

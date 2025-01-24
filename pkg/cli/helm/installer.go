@@ -26,7 +26,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/spf13/viper"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -51,18 +50,6 @@ type CLIOptions struct {
 	ReuseValues          bool
 	ResetValues          bool
 	ResetThenReuseValues bool
-}
-
-// BindViperFlags parses the CLI flags from Viper and binds them to the CLI options.
-func (o *CLIOptions) BindViperFlags() {
-	o.Values.Values = viper.GetStringSlice(FlagHelmSet)
-	o.Values.ValueFiles = viper.GetStringSlice(FlagHelmValues)
-	o.ChartDir = viper.GetString(FlagChartDir)
-	o.RepoURL = viper.GetString(FlagRepository)
-	o.RepoURL = viper.GetString(FlagRepository)
-	o.ReuseValues = viper.GetBool(FlagHelmReuseValues)
-	o.ResetValues = viper.GetBool(FlagHelmResetValues)
-	o.ResetThenReuseValues = viper.GetBool(FlagHelmResetThenReuseValues)
 }
 
 // Everest Helm chart names.

@@ -68,7 +68,7 @@ func getProviderConfig(ctx context.Context, issuer string) (ProviderConfig, erro
 
 	var result ProviderConfig
 	if err := json.Unmarshal(body, &result); err != nil {
-		return ProviderConfig{}, fmt.Errorf("failed to unmarshal JSON response: %w", err)
+		return ProviderConfig{}, fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 	return result, nil
 }
