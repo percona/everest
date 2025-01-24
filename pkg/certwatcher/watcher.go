@@ -36,7 +36,9 @@ type certWatcher struct {
 func (w *certWatcher) GetCertificate(_ *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	w.mutex.RLock()
 	defer w.mutex.RUnlock()
-	return w.cert, nil
+
+	certCopy := *w.cert
+	return &certCopy, nil
 }
 
 // New returns a new cert watcher.
