@@ -578,7 +578,7 @@ const ResourcesForm = ({
         }}
       >
         <CustomAccordionSummary
-          unitPlural="Nodes"
+          unitPlural={sharding ? `Nodes per shard` : 'Nodes'}
           nr={parseInt(nodesAccordionSummaryNumber, 10)}
         />
         <Divider />
