@@ -72,7 +72,7 @@ const App = () => {
               oidcConfig={{
                 ...configs?.oidc,
                 redirectUri: `${window.location.protocol}//${window.location.host}/login-callback`,
-                scope: 'openid profile email',
+                scope: 'openid profile email groups',
                 responseType: 'code',
                 autoSignIn: false,
                 automaticSilentRenew: false,

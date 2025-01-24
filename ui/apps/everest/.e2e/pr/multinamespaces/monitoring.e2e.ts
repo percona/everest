@@ -19,20 +19,21 @@ import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import { deleteMonitoringInstance } from '@e2e/utils/monitoring-instance';
 import { setNamespace } from '@e2e/utils/namespaces';
 import { selectDbEngine } from '../db-cluster/db-wizard/db-wizard-utils';
+import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 
 const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
+let token: string;
 
 test.describe('Namespaces: Monitoring availability', () => {
   // const pxcStorageLocationName = 'storage-location-pxc';
   const pxcMonitoringEndpoint = 'pxc-monitoring';
-  const token = '';
 
-  // test.beforeAll(async ({ request }) => {
-  //   token = await getTokenFromLocalStorage();
-  //   await createBackupStorageFn(request, pxcStorageLocationName, [
-  //     EVEREST_CI_NAMESPACES.PXC_ONLY,
-  //   ]);
-  // });
+  test.beforeAll(async ({ request }) => {
+    token = await getTokenFromLocalStorage();
+    // await createBackupStorageFn(request, pxcStorageLocationName, [
+    //   EVEREST_CI_NAMESPACES.PXC_ONLY,
+    // ]);
+  });
 
   // test.afterAll(async ({ request }) => {
   //   await deleteStorageLocationFn(request, pxcStorageLocationName);
