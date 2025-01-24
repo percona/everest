@@ -18,6 +18,7 @@ package config
 
 import (
 	"crypto/aes"
+	"path/filepath"
 
 	"github.com/kelseyhightower/envconfig"
 )
@@ -74,6 +75,10 @@ func ParseConfig() (*EverestConfig, error) {
 	}
 	if c.TelemetryInterval == "" {
 		c.TelemetryInterval = TelemetryInterval
+	}
+
+	if c.TLSCertsPath != "" {
+		c.TLSCertsPath = filepath.Clean(c.TLSCertsPath)
 	}
 
 	return c, nil
