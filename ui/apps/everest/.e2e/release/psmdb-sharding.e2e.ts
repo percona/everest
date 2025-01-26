@@ -122,6 +122,7 @@ test.describe(
       await page.getByTestId('add-db-cluster-button').click();
       await page.getByTestId(`add-db-cluster-button-${db}`).click();
 
+      await page.waitForTimeout(6000);
       await test.step('Populate basic information', async () => {
         await populateBasicInformation(
           page,

@@ -94,7 +94,6 @@ export const populateBasicInformation = async (
   storageClass: string,
   mongoSharding: boolean = false
 ) => {
-  await page.waitForTimeout(1000);
   if (namespace) {
     await page.getByTestId('k8s-namespace-autocomplete').click();
     await page.getByRole('option', { name: namespace }).click();
