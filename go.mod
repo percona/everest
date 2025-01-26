@@ -1,6 +1,6 @@
 module github.com/percona/everest
 
-go 1.23.2
+go 1.23.4
 
 replace (
 	github.com/containerd/containerd v1.7.12 => github.com/containerd/containerd v1.7.13
@@ -37,7 +37,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.27.0
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20250113063626-b38e7d1b3932
+	github.com/percona/everest-operator v0.6.0-dev1.0.20250126142519-d50affd316d3
 	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250123171745-6f5e2d0b56a6
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.8.1
@@ -147,7 +147,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.17.10 // indirect
+	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
@@ -183,7 +183,7 @@ require (
 	github.com/percona/percona-backup-mongodb v1.8.1-0.20241002124601-957ac501f939 // indirect
 	github.com/percona/percona-postgresql-operator v0.0.0-20241007204305-35d61aa5aebd // indirect
 	github.com/percona/percona-server-mongodb-operator v1.18.0 // indirect
-	github.com/percona/percona-xtradb-cluster-operator v1.15.0 // indirect
+	github.com/percona/percona-xtradb-cluster-operator v1.16.1 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
