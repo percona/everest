@@ -142,7 +142,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -228,7 +228,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -395,7 +395,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -563,7 +563,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -727,7 +727,7 @@ func TestRBAC_BackupStorage(t *testing.T) {
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -768,10 +768,10 @@ func newConfigMapPolicy(policy string) *corev1.ConfigMap {
 	}
 }
 
-func testUserGetter(ctx context.Context) (string, error) {
-	user, ok := ctx.Value(common.UserCtxKey).(string)
+func testUserGetter(ctx context.Context) (rbac.User, error) {
+	user, ok := ctx.Value(common.UserCtxKey).(rbac.User)
 	if !ok {
-		return "", errors.New("user not found in context")
+		return rbac.User{}, errors.New("user not found in context")
 	}
 	return user, nil
 }
