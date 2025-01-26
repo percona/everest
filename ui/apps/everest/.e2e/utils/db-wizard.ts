@@ -85,6 +85,7 @@ export const goToLastAndSubmit = async (page: Page) => {
  * @param storageClass Storage class to use
  * @param clusterName Database cluster name
  */
+
 export const populateBasicInformation = async (
   page: Page,
   namespace: string,
@@ -93,6 +94,7 @@ export const populateBasicInformation = async (
   storageClass: string,
   mongoSharding: boolean = false
 ) => {
+  await page.waitForTimeout(1000);
   if (namespace) {
     await page.getByTestId('k8s-namespace-autocomplete').click();
     await page.getByRole('option', { name: namespace }).click();
@@ -129,11 +131,11 @@ export const populateResources = async (
   memory: number,
   disk: number,
   clusterSize: number,
-  numRouters?: number, // Default to 1 router
-  routerCpu?: number, // Default router CPU
-  routerMemory?: number, // Default router Memory
-  numShards?: number, // Optional: Number of shards
-  configServers?: number // Optional: Number of configuration servers
+  numRouters?: number,
+  routerCpu?: number,
+  routerMemory?: number,
+  numShards?: number,
+  configServers?: number
 ) => {
   await expect(page.getByTestId('step-header')).toBeVisible();
   await expect(page.getByTestId('step-description')).toBeVisible();
@@ -160,23 +162,21 @@ export const populateResources = async (
     expectedDiskText
   );
 
-  // Expand the Routers section and set router resources if specified
   if (
     numRouters !== undefined &&
     routerCpu !== undefined &&
-    routerMemory !== undefined
+    routerMemory !== undefined &&
+    configServers !== undefined &&
+    numShards !== undefined
   ) {
-    // Click to expand the Routers panel
     await page.getByTestId('proxies-accordion').click();
     await expect(page.getByText('Number of routers')).toBeVisible();
 
-    // Set the number of routers custom
     await page.getByTestId('toggle-button-routers-custom').click();
     await page
       .getByTestId('text-input-custom-nr-of-proxies')
       .fill(numRouters.toString());
 
-    // Set the resource size per router
     await page.getByTestId('router-resources-toggle-button-custom').click();
 
     await page.getByTestId('text-input-proxy-cpu').fill(routerCpu.toString());
@@ -184,7 +184,6 @@ export const populateResources = async (
       .getByTestId('text-input-proxy-memory')
       .fill(routerMemory.toString());
 
-    // Validate router resources: proxyCpu-resource-sum, proxyMemory-resource-sum
     const expectedRouterCpuText = ` = ${(routerCpu * numRouters).toFixed(2)} CPU`;
     const expectedRouterMemoryText = ` = ${(routerMemory * numRouters).toFixed(2)} GB`;
 
@@ -194,10 +193,7 @@ export const populateResources = async (
     await expect(page.getByTestId('proxyMemory-resource-sum')).toHaveText(
       expectedRouterMemoryText
     );
-  }
 
-  // Set the number of shards if specified
-  if (numShards !== undefined && configServers !== undefined) {
     const shardsInput = await page.getByTestId('text-input-shard-nr');
     await shardsInput.fill(numShards.toString());
 
