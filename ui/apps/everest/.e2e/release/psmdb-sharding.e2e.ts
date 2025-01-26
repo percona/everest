@@ -145,31 +145,35 @@ test.describe(
       await test.step('Populate resources', async () => {
         await page
           .getByRole('button')
-          .getByText(size + ' node')
+          .getByText(size + ' nodes')
           .click();
         await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
-        await populateResources(page, 0.6, 1, 1, size);
-      });
+        //await populateResources(page, 0.6, 1, 1, size);
+        await populateResources(page, 0.6, 1, 1, size, 2, 0.6, 1, 2, 3);
 
-      await test.step('Set number of shards', async () => {
-        const shardsInput = await page.getByTestId('text-input-shard-nr');
-        await expect(shardsInput).toBeVisible();
-        await shardsInput.fill('2');
-        await expect(shardsInput).toHaveValue('2');
-      });
-
-      await test.step('Set number of config servers', async () => {
-        const configServerButton = await page.getByTestId(
-          'shard-config-servers-3'
-        );
-        await expect(configServerButton).toBeVisible();
-        await configServerButton.click();
-        await expect(configServerButton).toHaveAttribute(
-          'aria-pressed',
-          'true'
-        );
+        // numRouters = 2, routerCpu = 0.6, routerMemory = 1, numShards = 2, numConfigServers = 3
         await moveForward(page);
       });
+
+      //await test.step('Set number of shards', async () => {
+      //  const shardsInput = await page.getByTestId('text-input-shard-nr');
+      //  await expect(shardsInput).toBeVisible();
+      //  await shardsInput.fill('2');
+      //  await expect(shardsInput).toHaveValue('2');
+      //});
+
+      //await test.step('Set number of config servers', async () => {
+      //  const configServerButton = await page.getByTestId(
+      //    'shard-config-servers-3'
+      //  );
+      //  await expect(configServerButton).toBeVisible();
+      //  await configServerButton.click();
+      //   await expect(configServerButton).toHaveAttribute(
+      //    'aria-pressed',
+      //    'true'
+      //   );
+      //   await moveForward(page);
+      // });
 
       await test.step('Populate backups', async () => {
         await moveForward(page);
@@ -232,6 +236,8 @@ test.describe(
         if (db != 'psmdb') {
           expect(addedCluster?.spec.proxy.replicas).toBe(size);
         }
+        console.log('Added Cluster:', JSON.stringify(addedCluster, null, 2));
+
         expect(addedCluster?.spec.sharding.enabled).toBe(true);
         expect(addedCluster?.spec.sharding.shards).toBe(2);
         expect(addedCluster?.spec.sharding.configServer.replicas).toBe(3);

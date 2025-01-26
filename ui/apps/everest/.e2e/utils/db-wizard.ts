@@ -128,7 +128,12 @@ export const populateResources = async (
   cpu: number,
   memory: number,
   disk: number,
-  clusterSize: number
+  clusterSize: number,
+  numRouters?: number, // Default to 1 router
+  routerCpu?: number, // Default router CPU
+  routerMemory?: number, // Default router Memory
+  numShards?: number, // Optional: Number of shards
+  configServers?: number // Optional: Number of configuration servers
 ) => {
   await expect(page.getByTestId('step-header')).toBeVisible();
   await expect(page.getByTestId('step-description')).toBeVisible();
@@ -154,6 +159,53 @@ export const populateResources = async (
   await expect(page.getByTestId('disk-resource-sum')).toHaveText(
     expectedDiskText
   );
+
+  // Expand the Routers section and set router resources if specified
+  if (
+    numRouters !== undefined &&
+    routerCpu !== undefined &&
+    routerMemory !== undefined
+  ) {
+    // Click to expand the Routers panel
+    await page.getByTestId('proxies-accordion').click();
+    await expect(page.getByText('Number of routers')).toBeVisible();
+
+    // Set the number of routers custom
+    await page.getByTestId('toggle-button-routers-custom').click();
+    await page
+      .getByTestId('text-input-custom-nr-of-proxies')
+      .fill(numRouters.toString());
+
+    // Set the resource size per router
+    await page.getByTestId('router-resources-toggle-button-custom').click();
+
+    await page.getByTestId('text-input-proxy-cpu').fill(routerCpu.toString());
+    await page
+      .getByTestId('text-input-proxy-memory')
+      .fill(routerMemory.toString());
+
+    // Validate router resources: proxyCpu-resource-sum, proxyMemory-resource-sum
+    const expectedRouterCpuText = ` = ${(routerCpu * numRouters).toFixed(2)} CPU`;
+    const expectedRouterMemoryText = ` = ${(routerMemory * numRouters).toFixed(2)} GB`;
+
+    await expect(page.getByTestId('proxyCpu-resource-sum')).toHaveText(
+      expectedRouterCpuText
+    );
+    await expect(page.getByTestId('proxyMemory-resource-sum')).toHaveText(
+      expectedRouterMemoryText
+    );
+  }
+
+  // Set the number of shards if specified
+  if (numShards !== undefined && configServers !== undefined) {
+    const shardsInput = await page.getByTestId('text-input-shard-nr');
+    await shardsInput.fill(numShards.toString());
+
+    const configServerButton = await page.getByTestId(
+      `shard-config-servers-${configServers}`
+    );
+    await expect(configServerButton).toHaveAttribute('aria-pressed', 'true');
+  }
 };
 
 /**
