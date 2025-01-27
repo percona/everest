@@ -5,6 +5,9 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// DefaultOIDCScope is the default scope for OIDC.
+var DefaultOIDCScope = "openid profile email"
+
 // EverestSettings represents the everest settings.
 type EverestSettings struct {
 	OIDCConfigRaw string `mapstructure:"oidc.config"`
@@ -14,6 +17,7 @@ type EverestSettings struct {
 type OIDCConfig struct {
 	IssuerURL string `yaml:"issuerUrl"`
 	ClientID  string `yaml:"clientId"`
+	Scope     string `yaml:"scope"`
 }
 
 // Raw converts the OIDCConfig struct to a raw YAML string.

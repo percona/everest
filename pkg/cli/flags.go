@@ -76,10 +76,12 @@ const (
 
 	// settings flags
 
-	// FlagOIDCIssueURL is the name of the issuer-url flag.
-	FlagOIDCIssueURL = "issuer-url"
-	// FlagOIDCIssueClientID is the name of the client-id flag.
-	FlagOIDCIssueClientID = "client-id"
+	// FlagOIDCIssuerURL is the name of the issuer-url flag.
+	FlagOIDCIssuerURL = "issuer-url"
+	// FlagOIDCClientID is the name of the client-id flag.
+	FlagOIDCClientID = "client-id"
+	// FlagOIDCScope is the name of the scope flag.
+	FlagOIDCScope = "scope"
 	// FlagRBACPolicyFile is the name of the policy-file flag.
 	FlagRBACPolicyFile = "policy-file"
 )
