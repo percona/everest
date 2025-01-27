@@ -67,7 +67,7 @@ const size = 3;
 test.describe.configure({ retries: 0 });
 
 test.describe(
-  'Demand backup psmdb',
+  'PSMDB sharding demand backup',
   {
     tag: '@release',
   },
