@@ -22,11 +22,10 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 	"time"
 
 	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
-	"github.com/fatih/color"
+	"github.com/charmbracelet/lipgloss"
 	goversion "github.com/hashicorp/go-version"
 	"go.uber.org/zap"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -46,102 +45,128 @@ import (
 )
 
 const (
-	pollInterval    = 5 * time.Second
-	pollTimeout     = 10 * time.Minute
-	backoffInterval = 5 * time.Second
-
-	// DefaultDBNamespaceName is the name of the default DB namespace during installation.
-	DefaultDBNamespaceName = "everest"
+	pollInterval = 5 * time.Second
+	pollTimeout  = 10 * time.Minute
 )
 
-// Install implements the main logic for commands.
-type Install struct {
-	l *zap.SugaredLogger
+// Installer implements the main logic for commands.
+type (
+	// InstallConfig holds the configuration for the `install` command.
+	InstallConfig struct {
+		// KubeconfigPath is the path to the kubeconfig file.
+		KubeconfigPath string
+		// VersionMetadataURL Version service URL to retrieve version metadata information from.
+		VersionMetadataURL string
+		// Version defines Everest version to be installed. If empty, the latest version is installed.
+		Version string
+		// DisableTelemetry disables telemetry.
+		DisableTelemetry bool
+		// ClusterType is the type of the Kubernetes environment.
+		// If it is not set, the environment will be detected.
+		ClusterType kubernetes.ClusterType
+		// SkipEnvDetection skips detecting the Kubernetes environment.
+		// If it is set, the environment will not be detected.
+		// Set ClusterType if the environment is known and set this flag to avoid detection duplication.
+		SkipEnvDetection bool
+		// Pretty if set print the output in pretty mode.
+		Pretty bool
+		// SkipDBNamespace is set if the installation should skip provisioning database.
+		SkipDBNamespace bool
+		// Options related to Helm.
+		HelmConfig helm.CLIOptions
+		// NamespaceAddConfig is the configuration for the namespace add operation.
+		NamespaceAddConfig namespaces.NamespaceAddConfig
+	}
 
-	config         Config
-	kubeClient     *kubernetes.Kubernetes
-	versionService versionservice.Interface
+	// Installer provides the functionality to install Everest.
+	Installer struct {
+		l              *zap.SugaredLogger
+		cfg            InstallConfig
+		kubeClient     *kubernetes.Kubernetes
+		versionService versionservice.Interface
+		// these are set only when Run is called.
+		installVersion string
+		helmInstaller  *helm.Installer
+	}
+)
 
-	// these are set only when Run is called.
-	clusterType    kubernetes.ClusterType
-	installVersion string
-	helmInstaller  *helm.Installer
+// ------ Install Config ------
+
+// NewInstallConfig returns a new InstallConfig.
+func NewInstallConfig() InstallConfig {
+	return InstallConfig{
+		ClusterType:        kubernetes.ClusterTypeUnknown,
+		Pretty:             true,
+		NamespaceAddConfig: namespaces.NewNamespaceAddConfig(),
+	}
 }
 
-// Config holds the configuration for the install command.
-type Config struct {
-	// KubeconfigPath is a path to a kubeconfig
-	KubeconfigPath string
-	// VersionMetadataURL stores hostname to retrieve version metadata information from.
-	VersionMetadataURL string
-	// Version defines the version to be installed. If empty, the latest version is installed.
-	Version string
-	// DisableTelemetry disables telemetry.
-	DisableTelemetry bool
-	// SkipEnvDetection skips detecting the Kubernetes environment.
-	SkipEnvDetection bool
-	// If set, we will print the pretty output.
-	Pretty bool
-	// SkipDBNamespace is set if the installation should skip provisioning database.
-	SkipDBNamespace bool
-	// Ask user to provide namespaces to be managed by Everest.
-	AskNamespaces bool
-	// Ask user to provide DB operators to be installed into namespaces managed by Everest.
-	AskOperators bool
+// detectKubernetesEnv detects the Kubernetes environment where Everest is installed.
+func (cfg *InstallConfig) detectKubernetesEnv(ctx context.Context, l *zap.SugaredLogger) error {
+	if cfg.SkipEnvDetection {
+		return nil
+	}
 
-	helm.CLIOptions
-	namespaces.NamespaceAddConfig
+	kubeClient, err := cliutils.NewKubeclient(l, cfg.KubeconfigPath)
+	if err != nil {
+		return fmt.Errorf("failed to create kubernetes client: %w", err)
+	}
+
+	t, err := kubeClient.GetClusterType(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to detect cluster type: %w", err)
+	}
+	cfg.ClusterType = t
+	cfg.NamespaceAddConfig.ClusterType = t
+
+	// Skip detecting Kubernetes environment in the future.
+	cfg.SkipEnvDetection = true
+	cfg.NamespaceAddConfig.SkipEnvDetection = true
+	l.Infof("Detected Kubernetes environment: %s", t)
+	return nil
 }
 
-// NewInstall returns a new Install struct.
-func NewInstall(c Config, l *zap.SugaredLogger) (*Install, error) {
-	cli := &Install{
+// ------ Installer ------
+
+// NewInstall returns a new Installer struct.
+func NewInstall(c InstallConfig, l *zap.SugaredLogger) (*Installer, error) {
+	cli := &Installer{
 		l: l.With("component", "install"),
 	}
 	if c.Pretty {
 		cli.l = zap.NewNop().Sugar()
 	}
 
-	c.NamespaceAddConfig.Pretty = false
-	c.NamespaceAddConfig.CLIOptions = c.CLIOptions
+	c.NamespaceAddConfig.Pretty = c.Pretty
+	c.NamespaceAddConfig.HelmConfig = c.HelmConfig
 	c.NamespaceAddConfig.KubeconfigPath = c.KubeconfigPath
 	c.NamespaceAddConfig.DisableTelemetry = c.DisableTelemetry
-	cli.config = c
+	c.NamespaceAddConfig.SkipEnvDetection = c.SkipEnvDetection
+	cli.cfg = c
 
-	k, err := cliutils.NewKubeclient(cli.l, c.KubeconfigPath)
+	var err error
+	cli.kubeClient, err = cliutils.NewKubeclient(cli.l, c.KubeconfigPath)
 	if err != nil {
 		return nil, err
 	}
-	cli.kubeClient = k
+
 	cli.versionService = versionservice.New(c.VersionMetadataURL)
 	return cli, nil
 }
 
 // Run the Everest installation process.
-func (o *Install) Run(ctx context.Context) error {
-	// Do not continue if Everest is already installed.
-	installedVersion, err := version.EverestVersionFromDeployment(ctx, o.kubeClient)
-	if client.IgnoreNotFound(err) != nil {
-		return errors.Join(err, errors.New("cannot check if Everest is already installed"))
-	} else if err == nil {
-		return fmt.Errorf("everest is already installed. Version: %s", installedVersion)
-	}
-
-	if err := o.setKubernetesEnv(ctx); err != nil {
+func (o *Installer) Run(ctx context.Context) error {
+	if err := o.cfg.detectKubernetesEnv(ctx, o.l); err != nil {
 		return fmt.Errorf("failed to detect Kubernetes environment: %w", err)
-	}
-
-	dbInstallStep, err := o.installDBNamespacesStep(ctx)
-	if err != nil {
-		return fmt.Errorf("could not create db install step: %w", err)
 	}
 
 	if err := o.setVersionInfo(ctx); err != nil {
 		return fmt.Errorf("failed to get Everest version info: %w", err)
 	}
 
-	if version.IsDev(o.installVersion) && o.config.ChartDir == "" {
-		cleanup, err := helmutils.SetupEverestDevChart(o.l, &o.config.ChartDir)
+	if version.IsDev(o.installVersion) && o.cfg.HelmConfig.ChartDir == "" {
+		// Note: n.cfg.HelmConfig.ChartDir will be rewritten inside SetupEverestDevChart
+		cleanup, err := helmutils.SetupEverestDevChart(o.l, &o.cfg.HelmConfig.ChartDir)
 		if err != nil {
 			return err
 		}
@@ -153,18 +178,23 @@ func (o *Install) Run(ctx context.Context) error {
 	}
 
 	installSteps := o.newInstallSteps()
-	if dbInstallStep != nil {
-		installSteps = append(installSteps, *dbInstallStep)
+	if !o.cfg.SkipDBNamespace {
+		// DB namespaces creation is required.
+		if dbInstallSteps, err := o.getDBNamespacesInstallSteps(ctx); err != nil {
+			return fmt.Errorf("could not create db install step: %w", err)
+		} else if dbInstallSteps != nil {
+			installSteps = append(installSteps, dbInstallSteps...)
+		}
 	}
 
 	var out io.Writer = os.Stdout
-	if !o.config.Pretty {
+	if !o.cfg.Pretty {
 		out = io.Discard
 	}
 
 	// Run steps.
-	fmt.Fprintln(out, output.Info("Installing Everest version %s", o.installVersion))
-	if err := steps.RunStepsWithSpinner(ctx, installSteps, out); err != nil {
+	_, _ = fmt.Fprintln(out, output.Info("Installing Everest version %s", o.installVersion))
+	if err := steps.RunStepsWithSpinner(ctx, installSteps, o.cfg.Pretty); err != nil {
 		return err
 	}
 	o.l.Infof("Everest '%s' has been successfully installed", o.installVersion)
@@ -172,56 +202,53 @@ func (o *Install) Run(ctx context.Context) error {
 	return nil
 }
 
-func (o *Install) installDBNamespacesStep(ctx context.Context) (*steps.Step, error) {
-	if err := o.config.Populate(ctx, o.config.AskNamespaces, o.config.AskOperators); err != nil {
-		// not specifying a namespace in this context is allowed.
-		if errors.Is(err, namespaces.ErrNSEmpty) {
-			return nil, nil //nolint:nilnil
-		}
-		return nil, errors.Join(err, errors.New("namespaces configuration error"))
-	}
-	o.config.NamespaceAddConfig.ClusterType = o.clusterType
-	if o.clusterType != "" || o.config.SkipEnvDetection {
-		o.config.NamespaceAddConfig.SkipEnvDetection = true
-	}
-	i, err := namespaces.NewNamespaceAdd(o.config.NamespaceAddConfig, zap.NewNop().Sugar())
+// getDBNamespacesInstallSteps returns the steps to install the database namespaces.
+// It returns nil if the namespaces are already installed.
+// Note: o.cfg.NamespaceAddConfig.NamespaceList and o.cfg.NamespaceAddConfig.Operators
+// must be set before calling this function.
+func (o *Installer) getDBNamespacesInstallSteps(ctx context.Context) ([]steps.Step, error) {
+	i, err := namespaces.NewNamespaceAdd(o.cfg.NamespaceAddConfig, o.l)
 	if err != nil {
 		return nil, err
 	}
-	return &steps.Step{
-		Desc: fmt.Sprintf("Provisioning database namespaces (%s)", strings.Join(o.config.NamespaceList, ", ")),
-		F: func(ctx context.Context) error {
-			return i.Run(ctx)
-		},
-	}, nil
+
+	return i.GetNamespaceInstallSteps(ctx, o.installVersion)
 }
 
 //nolint:gochecknoglobals
-var bold = color.New(color.Bold).SprintFunc()
+var (
+	titleStyle   = lipgloss.NewStyle().Bold(true)
+	commandStyle = lipgloss.NewStyle().Italic(true)
+)
 
-func (o *Install) printPostInstallMessage(out io.Writer) {
+func (o *Installer) printPostInstallMessage(out io.Writer) {
+	// func PrintPostInstallMessage(out io.Writer) {
 	message := "\n" + output.Rocket("Thank you for installing Everest (v%s)!\n", o.installVersion)
-	message += "Follow the steps below to get started:\n\n"
+	// message := "\n" + output.Rocket("Thank you for installing Everest (v%s)!\n", "1.4.0")
+	message += "Follow the steps below to get started:"
 
-	if len(o.config.NamespaceList) == 0 {
-		message += bold("PROVISION A NAMESPACE FOR YOUR DATABASE:\n\n")
+	if len(o.cfg.NamespaceAddConfig.NamespaceList) == 0 {
+		message += fmt.Sprintf("\n\n%s", output.Info(titleStyle.Render("PROVISION A NAMESPACE FOR YOUR DATABASE:")))
 		message += "Install a namespace for your databases using the following command:\n\n"
-		message += "\teverestctl namespaces add [NAMESPACE]"
-		message += "\n\n"
+		message += fmt.Sprintf("\t%s", commandStyle.Render("everestctl namespaces add [NAMESPACE]"))
 	}
 
-	message += bold("RETRIEVE THE INITIAL ADMIN PASSWORD:\n\n")
-	message += common.InitialPasswordWarningMessage + "\n\n"
+	message += fmt.Sprintf("\n\n%s", output.Info(titleStyle.Render("RETRIEVE THE INITIAL ADMIN PASSWORD:")))
+	// message += common.InitialPasswordWarningMessage + "\n\n"
+	message += "Run the following command to get the initial admin password:\n\n"
+	message += fmt.Sprintf("\t%s\n\n", commandStyle.Render("everestctl accounts initial-admin-password"))
+	message += output.Warn("NOTE: The initial password is stored in plain text. For security, change it immediately using the following command:\n")
+	message += fmt.Sprintf("\t%s", commandStyle.Render("everestctl accounts set-password --username admin"))
 
-	message += bold("ACCESS THE EVEREST UI:\n\n")
+	message += fmt.Sprintf("\n\n%s", output.Info(titleStyle.Render("ACCESS THE EVEREST UI:")))
 	message += "To access the web UI, set up port-forwarding and visit http://localhost:8080 in your browser:\n\n"
-	message += "\tkubectl port-forward -n everest-system svc/everest 8080:8080"
-	message += "\n"
+	message += fmt.Sprintf("\t%s\n", commandStyle.Render("kubectl port-forward -n everest-system svc/everest 8080:8080"))
 
-	fmt.Fprint(out, message)
+	_, _ = fmt.Fprint(out, message)
 }
 
-func (o *Install) setVersionInfo(ctx context.Context) error {
+// setVersionInfo fetches the latest Everest version information from Version service.
+func (o *Installer) setVersionInfo(ctx context.Context) error {
 	meta, err := o.versionService.GetEverestMetadata(ctx)
 	if err != nil {
 		return errors.Join(err, errors.New("could not fetch version metadata"))
@@ -245,32 +272,33 @@ func (o *Install) setVersionInfo(ctx context.Context) error {
 	return nil
 }
 
-func (o *Install) checkRequirements(supVer *common.SupportedVersion) error {
+func (o *Installer) checkRequirements(supVer *common.SupportedVersion) error {
 	if err := cliutils.VerifyCLIVersion(supVer); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (o *Install) setupHelmInstaller(ctx context.Context) error {
+// setupHelmInstaller initializes the Helm installer.
+func (o *Installer) setupHelmInstaller(ctx context.Context) error {
 	nsExists, err := o.namespaceExists(ctx, common.SystemNamespace)
 	if err != nil {
 		return err
 	}
 	overrides := helm.NewValues(helm.Values{
-		ClusterType:        o.clusterType,
-		VersionMetadataURL: o.config.VersionMetadataURL,
+		ClusterType:        o.cfg.ClusterType,
+		VersionMetadataURL: o.cfg.VersionMetadataURL,
 	})
-	values := Must(helmutils.MergeVals(o.config.Values, overrides))
+	values := Must(helmutils.MergeVals(o.cfg.HelmConfig.Values, overrides))
 	installer := &helm.Installer{
 		ReleaseName:            common.SystemNamespace,
 		ReleaseNamespace:       common.SystemNamespace,
 		Values:                 values,
 		CreateReleaseNamespace: !nsExists,
 	}
-	if err := installer.Init(o.config.KubeconfigPath, helm.ChartOptions{
-		Directory: o.config.ChartDir,
-		URL:       o.config.RepoURL,
+	if err := installer.Init(o.cfg.KubeconfigPath, helm.ChartOptions{
+		Directory: o.cfg.HelmConfig.ChartDir,
+		URL:       o.cfg.HelmConfig.RepoURL,
 		Name:      helm.EverestChartName,
 		Version:   o.installVersion,
 	}); err != nil {
@@ -280,21 +308,8 @@ func (o *Install) setupHelmInstaller(ctx context.Context) error {
 	return nil
 }
 
-func (o *Install) setKubernetesEnv(ctx context.Context) error {
-	if o.config.SkipEnvDetection {
-		return nil
-	}
-	t, err := o.kubeClient.GetClusterType(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to detect cluster type: %w", err)
-	}
-	o.clusterType = t
-	o.l.Infof("Detected Kubernetes environment: %s", t)
-	return nil
-}
-
-func (o *Install) newInstallSteps() []steps.Step {
-	steps := []steps.Step{
+func (o *Installer) newInstallSteps() []steps.Step {
+	return []steps.Step{
 		o.newStepInstallEverestHelmChart(),
 		o.newStepEnsureEverestAPI(),
 		o.newStepEnsureEverestOperator(),
@@ -302,10 +317,9 @@ func (o *Install) newInstallSteps() []steps.Step {
 		o.newStepEnsureCatalogSource(),
 		o.newStepEnsureEverestMonitoring(),
 	}
-	return steps
 }
 
-func (o *Install) latestVersion(meta *versionpb.MetadataResponse) (*goversion.Version, *versionpb.MetadataVersion, error) {
+func (o *Installer) latestVersion(meta *versionpb.MetadataResponse) (*goversion.Version, *versionpb.MetadataVersion, error) {
 	var (
 		latest     *goversion.Version
 		latestMeta *versionpb.MetadataVersion
@@ -314,10 +328,10 @@ func (o *Install) latestVersion(meta *versionpb.MetadataResponse) (*goversion.Ve
 		err           error
 	)
 
-	if o.config.Version != "" {
-		targetVersion, err = goversion.NewSemver(o.config.Version)
+	if o.cfg.Version != "" {
+		targetVersion, err = goversion.NewSemver(o.cfg.Version)
 		if err != nil {
-			return nil, nil, errors.Join(err, fmt.Errorf("could not parse target version %q", o.config.Version))
+			return nil, nil, errors.Join(err, fmt.Errorf("could not parse target version %q", o.cfg.Version))
 		}
 	}
 
@@ -348,7 +362,7 @@ func (o *Install) latestVersion(meta *versionpb.MetadataResponse) (*goversion.Ve
 	return latest, latestMeta, nil
 }
 
-func (o *Install) namespaceExists(ctx context.Context, namespace string) (bool, error) {
+func (o *Installer) namespaceExists(ctx context.Context, namespace string) (bool, error) {
 	_, err := o.kubeClient.GetNamespace(ctx, namespace)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
@@ -357,4 +371,21 @@ func (o *Install) namespaceExists(ctx context.Context, namespace string) (bool, 
 		return false, fmt.Errorf("cannot check if namesapce exists: %w", err)
 	}
 	return true, nil
+}
+
+// CheckEverestAlreadyinstalled checks if Everest is already installed.
+func CheckEverestAlreadyinstalled(ctx context.Context, l *zap.SugaredLogger, kubeConfig string) error {
+	kubeClient, err := cliutils.NewKubeclient(l, kubeConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create kubernetes client: %w", err)
+	}
+
+	installedVersion, err := version.EverestVersionFromDeployment(ctx, kubeClient)
+	if client.IgnoreNotFound(err) != nil {
+		return errors.Join(err, errors.New("cannot check if Everest is already installed"))
+	} else if err == nil {
+		return fmt.Errorf("everest is already installed. Version: %s", installedVersion)
+	}
+
+	return nil
 }

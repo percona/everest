@@ -39,7 +39,7 @@ func (h *k8sHandler) GetUpgradePlan(ctx context.Context, namespace string) (*api
 	if err != nil {
 		return nil, fmt.Errorf("failed to getUpgradePlan: %w", err)
 	}
-	// No upgrades available, so we will check if our clusters are ready for current version.
+	// Abort upgrades available, so we will check if our clusters are ready for current version.
 	if len(pointer.Get(result.Upgrades)) == 0 {
 		result.PendingActions = pointer.To([]api.UpgradeTask{})
 		engines, err := h.kubeClient.ListDatabaseEngines(ctx, namespace)

@@ -24,11 +24,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/AlecAivazis/survey/v2"
 	"go.uber.org/zap"
 
 	"github.com/percona/everest/pkg/cli/namespaces"
 	"github.com/percona/everest/pkg/cli/steps"
+	"github.com/percona/everest/pkg/cli/tui"
 	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
@@ -88,11 +88,14 @@ func (u *Uninstall) Run(ctx context.Context) error {
 		return err
 	}
 
-	if abort, err := u.runWizard(); err != nil {
-		return err
-	} else if abort {
-		u.l.Info("Exiting")
-		return nil
+	if !u.config.AssumeYes {
+		// user confirmation is required
+		if confirm, err := u.runWizard(ctx); err != nil {
+			return err
+		} else if !confirm {
+			u.l.Info("Exiting")
+			return nil
+		}
 	}
 
 	if err := u.setKubernetesEnv(ctx); err != nil {
@@ -103,13 +106,13 @@ func (u *Uninstall) Run(ctx context.Context) error {
 	if err != nil {
 		return errors.Join(err, errors.New("failed to check if databases exist"))
 	}
-	if dbsExist {
-		force, err := u.confirmForce()
-		if err != nil {
-			return err
-		}
 
-		if !force {
+	if dbsExist && !u.config.Force {
+		// there are still DB clusters managed by Everest.
+		// Need to ask user for DB clusters deletion confirmation.
+		if force, err := u.confirmForce(ctx); err != nil {
+			return err
+		} else if !force {
 			u.l.Info("Can't proceed without deleting database clusters")
 			return nil
 		}
@@ -121,18 +124,17 @@ func (u *Uninstall) Run(ctx context.Context) error {
 	}
 
 	uninstallSteps := u.newUninstallSteps(dbNamespaces)
+	if err := steps.RunStepsWithSpinner(ctx, uninstallSteps, u.config.Pretty); err != nil {
+		return err
+	}
 
 	var out io.Writer = os.Stdout
 	if !u.config.Pretty {
 		out = io.Discard
 	}
 
-	if err := steps.RunStepsWithSpinner(ctx, uninstallSteps, out); err != nil {
-		return err
-	}
-
 	u.l.Infof("Everest has been uninstalled successfully")
-	fmt.Fprintln(out, "Everest has been uninstalled successfully")
+	_, _ = fmt.Fprintln(out, "Everest has been uninstalled successfully")
 	return nil
 }
 
@@ -162,41 +164,34 @@ func (u *Uninstall) newUninstallSteps(dbNamespaces []string) []steps.Step {
 	return steps
 }
 
-// Run the uninstall wizard.
-// Returns true if uninstall is aborted.
-func (u *Uninstall) runWizard() (bool, error) {
-	if !u.config.AssumeYes {
-		msg := `You are about to uninstall Everest from the Kubernetes cluster.
+// Asks user for uninstall confirmation.
+// Returns true if uninstall is confirmed.
+func (u *Uninstall) runWizard(ctx context.Context) (bool, error) {
+	msg := `You are about to uninstall Everest from the Kubernetes cluster.
 This will uninstall Everest and all its components from the cluster.`
-		fmt.Printf("\n%s\n\n", msg) //nolint:forbidigo
-		confirm := &survey.Confirm{
-			Message: "Are you sure you want to uninstall Everest?",
-		}
-		prompt := false
-		if err := survey.AskOne(confirm, &prompt); err != nil {
-			return false, err
-		}
+	fmt.Printf("\n%s\n\n", msg) //nolint:forbidigo
 
-		if !prompt {
-			return true, nil
-		}
+	confirm := false
+	var err error
+	if confirm, err = tui.NewConfirm(ctx, "Are you sure you want to uninstall Everest?").Run(); err != nil {
+		return false, err
 	}
 
-	return false, nil
+	return confirm, nil
 }
 
-func (u *Uninstall) confirmForce() (bool, error) {
+// Asks user for uninstall Db clusters confirmation.
+// Returns true if uninstall is confirmed.
+func (u *Uninstall) confirmForce(ctx context.Context) (bool, error) {
 	if u.config.Force {
 		return true, nil
 	}
 
-	confirm := &survey.Confirm{
-		Message: "There are still database clusters managed by Everest. Do you want to delete them?",
-	}
-	prompt := false
-	if err := survey.AskOne(confirm, &prompt); err != nil {
+	confirm := false
+	var err error
+	if confirm, err = tui.NewConfirm(ctx, "There are still database clusters managed by Everest. Do you want to delete them?").Run(); err != nil {
 		return false, err
 	}
 
-	return prompt, nil
+	return confirm, nil
 }

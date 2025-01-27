@@ -166,7 +166,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 	// Run steps.
 	_, _ = fmt.Fprintln(out, output.Info("Upgrading Everest to version %s", u.upgradeToVersion))
-	if err := steps.RunStepsWithSpinner(ctx, upgradeSteps, out); err != nil {
+	if err := steps.RunStepsWithSpinner(ctx, upgradeSteps, u.config.Pretty); err != nil {
 		return err
 	}
 
@@ -234,7 +234,7 @@ func (u *Upgrade) setupHelmInstaller(ctx context.Context) error {
 func (u *Upgrade) printPostUpgradeMessage(ctx context.Context, out io.Writer) error {
 	_, _ = fmt.Fprintln(out, "\n", output.Rocket("Everest has been upgraded to version %s", u.upgradeToVersion))
 	if isSecure, err := u.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser); err != nil {
-		return errors.Join(err, errors.New("could not check if the admin password is secure"))
+		return fmt.Errorf("could not check if the admin password is secure: %w", err)
 	} else if !isSecure {
 		_, _ = fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage, "\n")
 	}
