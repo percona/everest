@@ -28,12 +28,10 @@ import (
 	versionpb "github.com/Percona-Lab/percona-version-service/versionpb"
 	"github.com/fatih/color"
 	goversion "github.com/hashicorp/go-version"
-	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/percona/everest/pkg/cli"
 	"github.com/percona/everest/pkg/cli/helm"
 	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
 	"github.com/percona/everest/pkg/cli/namespaces"
@@ -61,7 +59,6 @@ type Install struct {
 	l *zap.SugaredLogger
 
 	config         Config
-	cmd            *cobra.Command
 	kubeClient     *kubernetes.Kubernetes
 	versionService versionservice.Interface
 
@@ -74,29 +71,32 @@ type Install struct {
 // Config holds the configuration for the install command.
 type Config struct {
 	// KubeconfigPath is a path to a kubeconfig
-	KubeconfigPath string `mapstructure:"kubeconfig"`
+	KubeconfigPath string
 	// VersionMetadataURL stores hostname to retrieve version metadata information from.
-	VersionMetadataURL string `mapstructure:"version-metadata-url"`
+	VersionMetadataURL string
 	// Version defines the version to be installed. If empty, the latest version is installed.
-	Version string `mapstructure:"version"`
+	Version string
 	// DisableTelemetry disables telemetry.
-	DisableTelemetry bool `mapstructure:"disable-telemetry"`
+	DisableTelemetry bool
 	// SkipEnvDetection skips detecting the Kubernetes environment.
-	SkipEnvDetection bool `mapstructure:"skip-env-detection"`
+	SkipEnvDetection bool
 	// If set, we will print the pretty output.
 	Pretty bool
 	// SkipDBNamespace is set if the installation should skip provisioning database.
-	SkipDBNamespace bool `mapstructure:"skip-db-namespace"`
+	SkipDBNamespace bool
+	// Ask user to provide namespaces to be managed by Everest.
+	AskNamespaces bool
+	// Ask user to provide DB operators to be installed into namespaces managed by Everest.
+	AskOperators bool
 
 	helm.CLIOptions
-	namespaces.NamespaceAddConfig `mapstructure:",squash"`
+	namespaces.NamespaceAddConfig
 }
 
 // NewInstall returns a new Install struct.
-func NewInstall(c Config, l *zap.SugaredLogger, cmd *cobra.Command) (*Install, error) {
+func NewInstall(c Config, l *zap.SugaredLogger) (*Install, error) {
 	cli := &Install{
-		cmd: cmd,
-		l:   l.With("component", "install"),
+		l: l.With("component", "install"),
 	}
 	if c.Pretty {
 		cli.l = zap.NewNop().Sugar()
@@ -119,7 +119,7 @@ func NewInstall(c Config, l *zap.SugaredLogger, cmd *cobra.Command) (*Install, e
 
 // Run the Everest installation process.
 func (o *Install) Run(ctx context.Context) error {
-	// Do not continue if Everst is already installed.
+	// Do not continue if Everest is already installed.
 	installedVersion, err := version.EverestVersionFromDeployment(ctx, o.kubeClient)
 	if client.IgnoreNotFound(err) != nil {
 		return errors.Join(err, errors.New("cannot check if Everest is already installed"))
@@ -173,16 +173,7 @@ func (o *Install) Run(ctx context.Context) error {
 }
 
 func (o *Install) installDBNamespacesStep(ctx context.Context) (*steps.Step, error) {
-	askNamespaces := !(o.cmd.Flags().Lookup(cli.FlagNamespaces).Changed || o.config.SkipDBNamespace)
-	askOperators := !(o.cmd.Flags().Lookup(cli.FlagOperatorMongoDB).Changed ||
-		o.cmd.Flags().Lookup(cli.FlagOperatorPostgresql).Changed ||
-		o.cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster).Changed)
-
-	if askNamespaces {
-		o.config.Namespaces = DefaultDBNamespaceName
-	}
-
-	if err := o.config.Populate(ctx, askNamespaces, askOperators); err != nil {
+	if err := o.config.Populate(ctx, o.config.AskNamespaces, o.config.AskOperators); err != nil {
 		// not specifying a namespace in this context is allowed.
 		if errors.Is(err, namespaces.ErrNSEmpty) {
 			return nil, nil //nolint:nilnil
@@ -239,9 +230,25 @@ func (o *Install) setVersionInfo(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	supVer, err := common.NewSupportedVersion(latestMeta)
+	if err != nil {
+		return err
+	}
+	if err := o.checkRequirements(supVer); err != nil {
+		return err
+	}
+
 	o.l.Debugf("Everest latest version available: %s", latest)
 	o.l.Debugf("Everest version information %#v", latestMeta)
 	o.installVersion = latest.String()
+	return nil
+}
+
+func (o *Install) checkRequirements(supVer *common.SupportedVersion) error {
+	if err := cliutils.VerifyCLIVersion(supVer); err != nil {
+		return err
+	}
 	return nil
 }
 
