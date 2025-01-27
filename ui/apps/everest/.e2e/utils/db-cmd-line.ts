@@ -374,8 +374,6 @@ export const configureMongoDBSharding = async (
   };
   await shardCollection('t1', { a: 1 }, { a: 2 });
   await shardCollection('t2', { a: 1 }, { a: 2 });
-
-  console.log('MongoDB sharding configuration completed successfully.');
 };
 
 export const validateMongoDBSharding = async (
