@@ -31,7 +31,12 @@ func (c *OIDCConfig) Raw() (string, error) {
 
 // OIDCConfig returns the OIDCConfig struct from the raw string.
 func (e *EverestSettings) OIDCConfig() (OIDCConfig, error) {
-	var oidc OIDCConfig
+	oidc := OIDCConfig{
+		// Starting from v1.5.0, users can configure the OIDC scope. In order
+		// to keep backward compatibility, we set the default scope if it's not
+		// set.
+		Scope: DefaultOIDCScope,
+	}
 	err := yaml.Unmarshal([]byte(e.OIDCConfigRaw), &oidc)
 	if err != nil {
 		return OIDCConfig{}, err
