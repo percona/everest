@@ -176,7 +176,7 @@ test.describe('Schedules List', async () => {
       await page.getByTestId('scheduled-backups');
     await scheduledBackupsAccordion.click();
 
-    expect(page.getByText('Monthly on day 1 at 12:00 AM')).toBeTruthy();
+    expect(page.getByText('Monthly on day 1 at 1:00 AM')).toBeTruthy();
     expect(page.getByText('2 active schedules')).toBeTruthy();
   });
 
@@ -245,7 +245,7 @@ test.describe('Schedules List', async () => {
     await scheduledBackupsAccordion.click();
 
     const scheduleForEditBtn = await page
-      .getByTestId('schedule-0 1 * * *')
+      .getByTestId('schedule-0 1 1 * *')
       .getByTestId('edit-schedule-button');
 
     await scheduleForEditBtn.click();
