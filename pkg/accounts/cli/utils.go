@@ -27,7 +27,7 @@ import (
 
 const (
 	usernameCriteria = "Username may contain only letters, numbers, underscores, and must be at least 3 characters long"
-	passwordCriteria = "Password may contain only letters, numbers and specific special characters (@#$%^&+=!_), and must be at least 6 characters long"
+	passwordCriteria = "Password may contain only letters, numbers and specific special characters (@*#$%^&+=!_-), and must be at least 6 characters long"
 )
 
 var (
