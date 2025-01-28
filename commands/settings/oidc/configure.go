@@ -35,7 +35,7 @@ var (
 		Args:    cobra.NoArgs,
 		Long:    "Configure OIDC settings",
 		Short:   "Configure OIDC settings",
-		Example: `everestctl settings oidc configure --issuer-url https://example.com --client-id 123456 --scopes "openid,profile,email,groups"`,
+		Example: `everestctl settings oidc configure --issuer-url https://example.com --client-id 123456 --scopes openid,profile,email,groups`,
 		PreRun:  settingsOIDCConfigurePreRun,
 		Run:     settingsOIDCConfigureRun,
 	}
