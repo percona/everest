@@ -23,6 +23,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/term"
+
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -115,7 +117,14 @@ func NewSpinner(ctx context.Context, l *zap.SugaredLogger, steps []Step, opts ..
 		l:    l,
 	}
 
-	p := tea.NewProgram(m, tea.WithContext(ctx))
+	teaOpts := []tea.ProgramOption{tea.WithContext(ctx)}
+	if !term.IsTerminal(int(os.Stdin.Fd())) {
+		// If we're not running in a terminal, we can't read input.
+		// Input is used for reading user's keys for Help model (quit key).
+		teaOpts = append(teaOpts, tea.WithInput(nil))
+	}
+
+	p := tea.NewProgram(m, teaOpts...)
 	m.p = p
 	// Apply all options to the program.
 	// must be done after m.p=p because some options may need to access m.p
@@ -132,7 +141,6 @@ func NewSpinner(ctx context.Context, l *zap.SugaredLogger, steps []Step, opts ..
 func WithSpinnerPrettyPrint(prettyPrint bool) SpinnerOption {
 	return func(m *Spinner) {
 		if !prettyPrint {
-			tea.WithInput(nil)(m.p)
 			tea.WithoutRenderer()(m.p)
 		}
 	}
