@@ -8,6 +8,7 @@ import { TimeFields } from './fields/time-fields';
 import { WeeksField } from './fields/weeks-field';
 import { Messages } from './time-selection.messages';
 import {
+  AmPM,
   TimeSelectionFields,
   TimeSelectionProps,
   TimeValue,
@@ -42,6 +43,7 @@ export const TimeSelection = ({
   const isFirstDayOfTheMonthAndPositiveOffset =
     selectedTime === TimeValue.months &&
     onDay === 1 &&
+    amPm === AmPM.AM &&
     TIMEZONE_OFFSET_HOURS > 0;
 
   const changeSelectableTime =
@@ -80,6 +82,7 @@ export const TimeSelection = ({
   }, [
     selectedTime,
     onDay,
+    amPm,
     hour,
     setValue,
     getFieldState,
