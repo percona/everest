@@ -24,7 +24,6 @@ import DatabaseFormStepControllers from './DatabaseFormStepControllers';
 const DatabaseFormBody = ({
   activeStep,
   longestAchievedStep,
-  disableNext,
   isSubmitting,
   hasErrors,
   onCancel,
@@ -52,8 +51,7 @@ const DatabaseFormBody = ({
           })}
       </Box>
       <DatabaseFormStepControllers
-        disableBack={isFirstStep || hasErrors}
-        disableNext={disableNext}
+        disableBack={isFirstStep}
         disableSubmit={isSubmitting || hasErrors}
         disableCancel={isSubmitting}
         showSubmit={activeStep === steps.length - 1}

@@ -17,10 +17,7 @@ export const DatabasePreview = ({
   sx,
   ...stackProps
 }: DatabasePreviewProps) => {
-  const {
-    getValues,
-    formState: { errors },
-  } = useFormContext<DbWizardType>();
+  const { getValues } = useFormContext<DbWizardType>();
   const mode = useDatabasePageMode();
 
   // Under normal circumstances, useWatch should return the right values
@@ -42,7 +39,7 @@ export const DatabasePreview = ({
               hasBeenReached={longestAchievedStep >= idx || mode === 'edit'}
               hasError={stepsWithErrors.includes(idx)}
               active={activeStep === idx}
-              disabled={disabled || Object.values(errors).length != 0}
+              disabled={disabled}
               onEditClick={() => onSectionEdit(idx + 1)}
               sx={{
                 mt: idx === 0 ? 2 : 0,

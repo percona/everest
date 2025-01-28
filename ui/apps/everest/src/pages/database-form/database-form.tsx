@@ -29,7 +29,6 @@ import { useDatabasePageMode } from './useDatabasePageMode';
 import { useDbValidationSchema } from './useDbValidationSchema';
 import DatabaseFormCancelDialog from './database-form-cancel-dialog/index';
 import DatabaseFormBody from './database-form-body';
-import { DbWizardFormFields } from 'consts.ts';
 import DatabaseFormSideDrawer from './database-form-side-drawer';
 
 export const DatabasePage = () => {
@@ -62,7 +61,6 @@ export const DatabasePage = () => {
     reset,
     formState: { isDirty, errors },
     clearErrors,
-    trigger,
     handleSubmit,
     watch,
   } = methods;
@@ -104,24 +102,14 @@ export const DatabasePage = () => {
 
   const handleNext = async () => {
     if (activeStep < steps.length - 1) {
-      let isStepValid;
+      setActiveStep((prevActiveStep) => {
+        const newStep = prevActiveStep + 1;
 
-      if (errors[DbWizardFormFields.disk] && activeStep === 1) {
-        isStepValid = false;
-      } else {
-        isStepValid = await trigger();
-      }
-
-      if (isStepValid) {
-        setActiveStep((prevActiveStep) => {
-          const newStep = prevActiveStep + 1;
-
-          if (newStep > longestAchievedStep) {
-            setLongestAchievedStep(newStep);
-          }
-          return newStep;
-        });
-      }
+        if (newStep > longestAchievedStep) {
+          setLongestAchievedStep(newStep);
+        }
+        return newStep;
+      });
     }
   };
 
@@ -211,7 +199,6 @@ export const DatabasePage = () => {
           <DatabaseFormBody
             activeStep={activeStep}
             longestAchievedStep={longestAchievedStep}
-            disableNext={formHasErrors}
             isSubmitting={isCreating}
             hasErrors={formHasErrors}
             onSubmit={handleSubmit(onSubmit)}
