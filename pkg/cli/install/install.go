@@ -130,11 +130,15 @@ func (cfg *InstallConfig) detectKubernetesEnv(ctx context.Context, l *zap.Sugare
 
 // NewInstall returns a new Installer struct.
 func NewInstall(c InstallConfig, l *zap.SugaredLogger) (*Installer, error) {
-	cli := &Installer{
-		l: l.With("component", "install"),
-	}
+	var mLogger *zap.SugaredLogger
 	if c.Pretty {
-		cli.l = zap.NewNop().Sugar()
+		mLogger = zap.NewNop().Sugar()
+	} else {
+		mLogger = l
+	}
+
+	cli := &Installer{
+		l: mLogger.With("component", "install"),
 	}
 
 	c.NamespaceAddConfig.Pretty = c.Pretty
