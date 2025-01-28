@@ -31,6 +31,7 @@ import (
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 	middleware "github.com/oapi-codegen/echo-middleware"
+	"github.com/unrolled/secure"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -128,6 +129,29 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 			return c.Request().RequestURI == "/healthz"
 		},
 	}))
+	secureMiddleware := secure.New(secure.Options{
+		// FIXME: We need to figure out what to do with the font-src and style-src
+		ContentSecurityPolicy: "default-src 'self'; font-src 'self' data:; style-src 'self' 'unsafe-inline'; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests; block-all-mixed-content",
+		ContentTypeNosniff:    true,
+        FrameDeny:             true,
+		PermissionsPolicy:     "accelerometer=(), autoplay=(), camera=(), cross-origin-isolated=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(self), usb=(), web-share=(), xr-spatial-tracking=(), clipboard-read=(), clipboard-write=(), gamepad=(), hid=(), idle-detection=(), interest-cohort=(), serial=(), unload=()",
+		ReferrerPolicy:        "no-referrer",
+		STSIncludeSubdomains:  true,
+		STSSeconds:            31536000,
+		// FIXME: It doesn't make sense to force this, we need to figure this
+		// when we support TLS
+		ForceSTSHeader:        true,
+    })
+	// FIXME: This middleware must only apply to the above routes, but it's
+	// currently applied to all routes.
+	e.echo.Use(echo.WrapMiddleware(secureMiddleware.Handler))
+//	e.echo.Use(echomiddleware.SecureWithConfig(echomiddleware.SecureConfig{
+//		ContentTypeNosniff:    "nosniff",
+//		XFrameOptions:         "deny",
+//		HSTSMaxAge:            31536000,
+//		ContentSecurityPolicy: "default-src 'self'; font-src 'self' data:; style-src 'self' 'unsafe-inline'; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests; block-all-mixed-content",
+//		ReferrerPolicy:        "no-referrer",
+//	}))
 	e.echo.Pre(echomiddleware.RemoveTrailingSlash())
 
 	basePath, err := swagger.Servers.BasePath()
