@@ -76,6 +76,7 @@ jobs:
         shell: bash
         run: |
           ./bin/everestctl install -v \
+          --disable-telemetry \
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
           --skip-wizard \

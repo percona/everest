@@ -170,6 +170,7 @@ func (o *Installer) Run(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+		o.cfg.NamespaceAddConfig.HelmConfig = o.cfg.HelmConfig
 		defer cleanup()
 	}
 
@@ -192,11 +193,8 @@ func (o *Installer) Run(ctx context.Context) error {
 		out = io.Discard
 	}
 
-	o.l.Debugf("TEST: Before Fprintln: %v", out)
-
 	// Run steps.
 	_, _ = fmt.Fprintln(out, output.Info("Installing Everest version %s", o.installVersion))
-	o.l.Debugf("TEST: After Fprintln: %v", out)
 	if err := steps.RunStepsWithSpinner(ctx, o.l, installSteps, o.cfg.Pretty); err != nil {
 		return err
 	}
