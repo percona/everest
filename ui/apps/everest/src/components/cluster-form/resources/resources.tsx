@@ -384,9 +384,14 @@ const CustomAccordionSummary = ({
   const text = Number.isNaN(nr) || nr < 1 ? '' : ` (${nr})`;
 
   return (
-    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+    <AccordionSummary
+      sx={{
+        paddingLeft: 0,
+      }}
+      expandIcon={<ExpandMoreIcon />}
+    >
       <Typography
-        variant="h5"
+        variant="sectionHeading"
         textTransform="capitalize"
       >{`${unitPlural} ${text}`}</Typography>
     </AccordionSummary>

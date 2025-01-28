@@ -44,13 +44,14 @@ export const ResourcesPreviewSection = ({
   const parsedMemory = Number(memory) * intNumberOfNodes;
   const parsedProxyCPU = Number(proxyCpu) * intNumberOfProxies;
   const parsedProxyMemory = Number(proxyMemory) * intNumberOfProxies;
-
-  const nodesText = `${sharding && shardNr ? +shardNr * intNumberOfNodes : intNumberOfNodes} nodes`;
+  const nodesTotalNumber =
+    sharding && shardNr ? +shardNr * intNumberOfNodes : intNumberOfNodes;
+  const nodesText = `${nodesTotalNumber} ${nodesTotalNumber === 1 ? 'node' : 'nodes'}`;
   const nodesCPUText = `CPU - ${Number.isNaN(parsedCPU) ? '' : `${sharding && shardNr ? (+shardNr * parsedCPU).toFixed(2) : parsedCPU.toFixed(2)} CPU`}`;
   const nodesMemoryText = `Memory - ${Number.isNaN(parsedMemory) ? '' : `${sharding && shardNr ? (+shardNr * parsedMemory).toFixed(2) : parsedMemory.toFixed(2)} GB`}`;
   const nodesDiskText = `Disk - ${Number.isNaN(parsedDisk) ? '' : `${sharding && shardNr ? (+shardNr * parsedDisk).toFixed(2) : parsedDisk.toFixed(2)}`} ${diskUnit}`;
 
-  const proxyText = `${intNumberOfProxies} ${proxyUnitNames.plural}`;
+  const proxyText = `${intNumberOfProxies} ${intNumberOfProxies === 1 ? proxyUnitNames.singular : proxyUnitNames.plural}`;
   const proxyCPUText = `CPU - ${Number.isNaN(parsedProxyCPU) ? '' : `${parsedProxyCPU.toFixed(2)} CPU`}`;
   const proxyMemoryText = `Memory - ${Number.isNaN(parsedProxyMemory) ? '' : `${parsedProxyMemory.toFixed(2)} GB`}`;
 
