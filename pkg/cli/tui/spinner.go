@@ -23,13 +23,12 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/term"
-
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"go.uber.org/zap"
+	"golang.org/x/term"
 )
 
 const (
