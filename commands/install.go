@@ -149,7 +149,8 @@ func installRun(cmd *cobra.Command, _ []string) { //nolint:revive
 	}
 
 	if err := op.Run(cmd.Context()); err != nil {
-		output.PrintError(err, logger.GetLogger(), installCfg.Pretty)
+		// output.PrintError(err, logger.GetLogger(), installCfg.Pretty)
+		logger.GetLogger().Error(err)
 		os.Exit(1)
 	}
 }
