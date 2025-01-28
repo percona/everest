@@ -132,6 +132,7 @@ func NewSpinner(ctx context.Context, l *zap.SugaredLogger, steps []Step, opts ..
 func WithSpinnerPrettyPrint(prettyPrint bool) SpinnerOption {
 	return func(m *Spinner) {
 		if !prettyPrint {
+			tea.WithInput(nil)(m.p)
 			tea.WithoutRenderer()(m.p)
 		}
 	}
