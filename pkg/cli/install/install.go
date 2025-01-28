@@ -199,6 +199,7 @@ func (o *Installer) Run(ctx context.Context) error {
 		return err
 	}
 	o.l.Infof("Everest '%s' has been successfully installed", o.installVersion)
+	o.printPostInstallMessage(out)
 	return nil
 }
 

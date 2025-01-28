@@ -174,7 +174,7 @@ func NewRemoveNamespaceSteps(namespace string, keepNs bool, k *kubernetes.Kubern
 			},
 		},
 	}
-	nsStepDesc := fmt.Sprintf("Deleting namespace '%s'", namespace)
+	nsStepDesc := fmt.Sprintf("Deleting database namespace '%s'", namespace)
 	if keepNs {
 		nsStepDesc = fmt.Sprintf("Deleting resources from namespace '%s'", namespace)
 	}

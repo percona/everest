@@ -77,7 +77,7 @@ test.describe('Everest CLI install', async () => {
       );
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
-          '✅ Installing namespace \'everest\'',
+          '✅ Provisioning database namespace \'everest\'',
       ]);
     });
     await page.waitForTimeout(10_000);
@@ -89,7 +89,7 @@ test.describe('Everest CLI install', async () => {
         `add everest --operator.mongodb=false --operator.postgresql=false --operator.xtradb-cluster=true`,
       );
       await out.outErrContainsNormalizedMany([
-          '❌ invalid namespace (everest): namespace already exists. HINT: set \'--take-ownership\' flag to use existing namespaces',
+        '❌ \'everest\': namespace already exists and is managed by Everest',
       ]);
     });
     await page.waitForTimeout(10_000);
@@ -102,7 +102,7 @@ test.describe('Everest CLI install', async () => {
       );
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
-          '✅ Updating namespace \'everest\'',
+          '✅ Updating database namespace \'everest\'',
       ]);
     });
     await page.waitForTimeout(10_000);
@@ -122,7 +122,7 @@ test.describe('Everest CLI install', async () => {
           '✅ Deleting database clusters in namespace \'everest\'',
           '✅ Deleting backup storages in namespace \'everest\'',
           '✅ Deleting monitoring instances in namespace \'everest\'',
-          '✅ Deleting namespace \'everest\'',
+          '✅ Deleting database namespace \'everest\'',
       ]);
 
       out = await cli.exec(`kubectl get namespace everest`);
@@ -142,7 +142,7 @@ test.describe('Everest CLI install', async () => {
       );
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
-      '✅ Installing namespace \'existing-ns\'',
+      '✅ Provisioning database namespace \'existing-ns\'',
       ]);
     });
     await page.waitForTimeout(10_000);
