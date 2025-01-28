@@ -48,9 +48,9 @@ func TestUsernamePasswordSanitation(t *testing.T) {
 			{"invalid_empty", "", ErrInvalidNewPassword},
 			{"valid_lower_case", "verysecurepassword", nil},
 			{"valid_upper_case", "VERYSECUREPASSWORD", nil},
-			{"valid_lower_case_with_special_chars", "^v#r4$ec*u%ep@s+sw_o&!d=", nil},
-			{"valid_upper_case_with_special_chars", "^V#R4$EC*U%EP@S+SW_O&!D=", nil},
-			{"valid_mixed_case_with_special_chars", "^V#R4$Ec*U%Ep@S+sW_o&!d=", nil},
+			{"valid_lower_case_with_special_chars", "^v#r4$ec*u%ep@s+sw_o&!d=-", nil},
+			{"valid_upper_case_with_special_chars", "^V#R4$EC*U%EP@S+SW_O&!D=-", nil},
+			{"valid_mixed_case_with_special_chars", "^V#R4$Ec*U%Ep@S+sW_o&!d=-", nil},
 		}
 
 		for _, tc := range testCases {

@@ -40,9 +40,9 @@ var (
 	ErrInvalidUsername = errors.New(strings.ToLower(usernameCriteria))
 
 	// Regular expression to validate password.
-	// [a-zA-Z0-9@*#$%^&+=!_] - Allowed characters (letters, digits, underscore)
+	// [a-zA-Z0-9@*#$%^&+=!_-] - Allowed characters (letters, digits, special characters)
 	// {6,} - Length of the password (minimum 6 characters)
-	passwordValidateRegex = regexp.MustCompile("^[a-zA-Z0-9@*#$%^&+=!_]{6,}$")
+	passwordValidateRegex = regexp.MustCompile("^[a-zA-Z0-9@*#$%^&+=!_-]{6,}$")
 
 	// ErrInvalidNewPassword is returned when the new password doesn't match criteria.
 	ErrInvalidNewPassword = errors.New(strings.ToLower(passwordCriteria))
