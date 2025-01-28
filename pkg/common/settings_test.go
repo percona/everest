@@ -99,6 +99,16 @@ func TestOIDCConfig(t *testing.T) {
 			expected: OIDCConfig{
 				IssuerURL: "url",
 				ClientID:  "id",
+				Scope:     "openid profile email groups",
+			},
+			rawConfig: "issuerUrl: url\nclientId: id\nscope: openid profile email groups\n",
+		},
+		{
+			name: "default scope",
+			expected: OIDCConfig{
+				IssuerURL: "url",
+				ClientID:  "id",
+				Scope:     DefaultOIDCScope,
 			},
 			rawConfig: "issuerUrl: url\nclientId: id\n",
 		},
@@ -107,14 +117,16 @@ func TestOIDCConfig(t *testing.T) {
 			expected: OIDCConfig{
 				IssuerURL: "url",
 				ClientID:  "id",
+				Scope:     "openid profile email groups",
 			},
-			rawConfig: "issuerUrl: url\nclientId: id\nextraKey: value\n",
+			rawConfig: "issuerUrl: url\nclientId: id\nscope: openid profile email groups\nextraKey: value\n",
 		},
 		{
 			name: "missing key",
 			expected: OIDCConfig{
 				IssuerURL: "url",
 				ClientID:  "",
+				Scope:     DefaultOIDCScope,
 			},
 			rawConfig: "issuerUrl: url\n",
 		},
