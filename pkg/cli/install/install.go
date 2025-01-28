@@ -173,13 +173,9 @@ func (o *Installer) Run(ctx context.Context) error {
 		defer cleanup()
 	}
 
-	o.l.Debug("TEST: After SetupEverestDevChart")
-
 	if err := o.setupHelmInstaller(ctx); err != nil {
 		return err
 	}
-
-	o.l.Debug("TEST: After setupHelmInstaller")
 
 	installSteps := o.newInstallSteps()
 	if !o.cfg.SkipDBNamespace {
@@ -191,8 +187,6 @@ func (o *Installer) Run(ctx context.Context) error {
 		}
 	}
 
-	o.l.Debug("TEST: After getDBNamespacesInstallSteps")
-
 	var out io.Writer = os.Stdout
 	if !o.cfg.Pretty {
 		out = io.Discard
@@ -202,6 +196,7 @@ func (o *Installer) Run(ctx context.Context) error {
 
 	// Run steps.
 	_, _ = fmt.Fprintln(out, output.Info("Installing Everest version %s", o.installVersion))
+	o.l.Debugf("TEST: After Fprintln: %v", out)
 	if err := steps.RunStepsWithSpinner(ctx, o.l, installSteps, o.cfg.Pretty); err != nil {
 		return err
 	}

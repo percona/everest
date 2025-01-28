@@ -48,8 +48,10 @@ func RunStepsWithSpinner(
 		})
 	}
 
+	l.Debug("Running steps with spinner")
 	if err := tui.NewSpinner(ctx, l, spinnerSteps, tui.WithSpinnerPrettyPrint(prettyPrint)).
 		Run(); err != nil {
+		l.Errorf("Failed to run steps with spinner: %s", err)
 		return err
 	}
 
