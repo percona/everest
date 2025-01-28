@@ -2,21 +2,22 @@ import React from 'react';
 import { screen, render, fireEvent, waitFor } from '@testing-library/react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { DbType } from '@percona/types';
-import { DB_WIZARD_DEFAULTS } from '../database-form.constants';
 import { TestWrapper } from 'utils/test';
 import { DatabasePreview } from './database-preview';
 import { DbWizardType } from '../database-form-schema.ts';
+import { getDbWizardDefaultValues } from '../database-form.utils';
 
 const FormProviderWrapper = ({
   children,
+  dbType = DbType.Mongo,
   values = {},
 }: {
   children: React.ReactNode;
+  dbType?: DbType;
   values?: Partial<DbWizardType>;
 }) => {
   const methods = useForm<DbWizardType>({
-    // @ts-ignore
-    defaultValues: { ...DB_WIZARD_DEFAULTS, ...values },
+    defaultValues: { ...getDbWizardDefaultValues(dbType), ...values },
   });
 
   return (

@@ -267,8 +267,6 @@ export const resourcesFormSchema = (
             : numberOfProxies;
 
         if (+intNrNodes > 1 && +intNrProxies === 1) {
-          console.log('intNrNodes', intNrNodes);
-          console.log('intNrProxies', intNrProxies);
           if (numberOfProxies === CUSTOM_NR_UNITS_INPUT_VALUE) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
