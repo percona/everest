@@ -19,16 +19,16 @@ func TestToMap(t *testing.T) {
 		{
 			name: "correct",
 			input: EverestSettings{
-				OIDCConfigRaw: "issuerUrl: url\nclientId: id\n",
+				OIDCConfigRaw: "issuerUrl: url\nclientId: id\nscopes:\n- openid\n - profile\n - email\n - groups\n",
 			},
-			expected: map[string]string{"oidc.config": "issuerUrl: url\nclientId: id\n"},
+			expected: map[string]string{"oidc.config": "issuerUrl: url\nclientId: id\nscopes:\n- openid\n - profile\n - email\n - groups\n"},
 		},
 		{
 			name: "empty oidc",
 			input: EverestSettings{
-				OIDCConfigRaw: "issuerUrl: \"\"\nclientId: \"\"\n",
+				OIDCConfigRaw: "issuerUrl: \"\"\nclientId: \"\"\nscopes: []\n",
 			},
-			expected: map[string]string{"oidc.config": "issuerUrl: \"\"\nclientId: \"\"\n"},
+			expected: map[string]string{"oidc.config": "issuerUrl: \"\"\nclientId: \"\"\nscopes: []\n"},
 		},
 	}
 
@@ -54,16 +54,16 @@ func TestFromMap(t *testing.T) {
 		{
 			name: "correct",
 			expected: EverestSettings{
-				OIDCConfigRaw: "issuerUrl: url\nclientId: id\n",
+				OIDCConfigRaw: "issuerUrl: url\nclientId: id\nscopes:\n- openid\n- profile\n- email\n- groups\n",
 			},
-			input: map[string]string{"oidc.config": "issuerUrl: url\nclientId: id\n"},
+			input: map[string]string{"oidc.config": "issuerUrl: url\nclientId: id\nscopes:\n- openid\n- profile\n- email\n- groups\n"},
 		},
 		{
 			name: "extra key",
 			expected: EverestSettings{
-				OIDCConfigRaw: "issuerUrl: url\nclientId: id\nextraKey: value\n",
+				OIDCConfigRaw: "issuerUrl: url\nclientId: id\nscopes:\n- openid\n- profile\n- email\n- groups\nextraKey: value\n",
 			},
-			input: map[string]string{"oidc.config": "issuerUrl: url\nclientId: id\nextraKey: value\n"},
+			input: map[string]string{"oidc.config": "issuerUrl: url\nclientId: id\nscopes:\n- openid\n- profile\n- email\n- groups\nextraKey: value\n"},
 		},
 		{
 			name: "missing key",
@@ -99,34 +99,25 @@ func TestOIDCConfig(t *testing.T) {
 			expected: OIDCConfig{
 				IssuerURL: "url",
 				ClientID:  "id",
-				Scope:     "openid profile email groups",
+				Scopes:    []string{"openid", "profile", "email", "groups"},
 			},
-			rawConfig: "issuerUrl: url\nclientId: id\nscope: openid profile email groups\n",
-		},
-		{
-			name: "default scope",
-			expected: OIDCConfig{
-				IssuerURL: "url",
-				ClientID:  "id",
-				Scope:     DefaultOIDCScope,
-			},
-			rawConfig: "issuerUrl: url\nclientId: id\n",
+			rawConfig: "issuerUrl: url\nclientId: id\nscopes:\n- openid\n- profile\n- email\n- groups\n",
 		},
 		{
 			name: "extra key",
 			expected: OIDCConfig{
 				IssuerURL: "url",
 				ClientID:  "id",
-				Scope:     "openid profile email groups",
+				Scopes:    []string{"openid", "profile", "email", "groups"},
 			},
-			rawConfig: "issuerUrl: url\nclientId: id\nscope: openid profile email groups\nextraKey: value\n",
+			rawConfig: "issuerUrl: url\nclientId: id\nscopes:\n- openid\n- profile\n- email\n- groups\nextraKey: value\n",
 		},
 		{
 			name: "missing key",
 			expected: OIDCConfig{
 				IssuerURL: "url",
 				ClientID:  "",
-				Scope:     DefaultOIDCScope,
+				Scopes:    DefaultOIDCScopes,
 			},
 			rawConfig: "issuerUrl: url\n",
 		},

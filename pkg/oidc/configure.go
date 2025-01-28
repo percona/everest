@@ -47,8 +47,8 @@ type Config struct {
 	IssuerURL string
 	// ClientID ID of the client OIDC app.
 	ClientID string
-	// Scope requested scopes.
-	Scope string
+	// Scopes requested scopes.
+	Scopes string
 }
 
 // NewOIDC returns a new OIDC struct.
@@ -75,7 +75,7 @@ func NewOIDC(c Config, l *zap.SugaredLogger) (*OIDC, error) {
 func (u *OIDC) Run(ctx context.Context) error {
 	issuerURL := u.config.IssuerURL
 	clientID := u.config.ClientID
-	scope := u.config.Scope
+	scopes := strings.Split(u.config.Scopes, ",")
 
 	if issuerURL == "" {
 		if err := survey.AskOne(&survey.Input{
@@ -98,14 +98,10 @@ func (u *OIDC) Run(ctx context.Context) error {
 		return errors.New("clientID and/or issuerURL are not provided")
 	}
 
-	// Even though in other commands we use comma separated lists, we use a
-	// space separated list here because that's how the OIDC spec defines
-	// scopes. See Section 3.3 of OAuth 2.0
-	// [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.txt).
-	if !slices.ContainsFunc(strings.Fields(scope), func(s string) bool {
+	if !slices.ContainsFunc(scopes, func(s string) bool {
 		return s == "openid"
 	}) {
-		return errors.New("scope must contain 'openid'")
+		return errors.New("scopes must contain 'openid'")
 	}
 
 	// Check if we can connect to the provider.
@@ -121,7 +117,7 @@ func (u *OIDC) Run(ctx context.Context) error {
 	oidcCfg := common.OIDCConfig{
 		IssuerURL: issuerURL,
 		ClientID:  clientID,
-		Scope:     scope,
+		Scopes:    scopes,
 	}
 
 	oidcRaw, err := oidcCfg.Raw()

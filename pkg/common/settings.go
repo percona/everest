@@ -5,8 +5,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// DefaultOIDCScope is the default scope for OIDC.
-var DefaultOIDCScope = "openid profile email"
+// DefaultOIDCScopes is the default scopes for OIDC.
+var DefaultOIDCScopes = []string{"openid", "profile", "email"}
 
 // EverestSettings represents the everest settings.
 type EverestSettings struct {
@@ -15,9 +15,9 @@ type EverestSettings struct {
 
 // OIDCConfig represents the OIDC provider configuration.
 type OIDCConfig struct {
-	IssuerURL string `yaml:"issuerUrl"`
-	ClientID  string `yaml:"clientId"`
-	Scope     string `yaml:"scope"`
+	IssuerURL string   `yaml:"issuerUrl"`
+	ClientID  string   `yaml:"clientId"`
+	Scopes    []string `yaml:"scopes"`
 }
 
 // Raw converts the OIDCConfig struct to a raw YAML string.
@@ -32,10 +32,10 @@ func (c *OIDCConfig) Raw() (string, error) {
 // OIDCConfig returns the OIDCConfig struct from the raw string.
 func (e *EverestSettings) OIDCConfig() (OIDCConfig, error) {
 	oidc := OIDCConfig{
-		// Starting from v1.5.0, users can configure the OIDC scope. In order
-		// to keep backward compatibility, we set the default scope if it's not
-		// set.
-		Scope: DefaultOIDCScope,
+		// Starting from v1.5.0, users can configure the OIDC scopes. In order
+		// to keep backward compatibility, we set the default scopes if they're
+		// not set.
+		Scopes: DefaultOIDCScopes,
 	}
 	err := yaml.Unmarshal([]byte(e.OIDCConfigRaw), &oidc)
 	if err != nil {

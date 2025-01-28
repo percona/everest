@@ -82,7 +82,7 @@ func (h *k8sHandler) GetSettings(ctx context.Context) (*api.Settings, error) {
 		OidcConfig: api.OIDCConfig{
 			ClientId:  config.ClientID,
 			IssuerURL: config.IssuerURL,
-			Scope:     config.Scope,
+			Scopes:    config.Scopes,
 		},
 	}, nil
 }

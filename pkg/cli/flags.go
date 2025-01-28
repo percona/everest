@@ -80,8 +80,8 @@ const (
 	FlagOIDCIssuerURL = "issuer-url"
 	// FlagOIDCClientID is the name of the client-id flag.
 	FlagOIDCClientID = "client-id"
-	// FlagOIDCScope is the name of the scope flag.
-	FlagOIDCScope = "scope"
+	// FlagOIDCScopes is the name of the scope flag.
+	FlagOIDCScopes = "scopes"
 	// FlagRBACPolicyFile is the name of the policy-file flag.
 	FlagRBACPolicyFile = "policy-file"
 )

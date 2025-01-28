@@ -18,6 +18,7 @@ package oidc
 
 import (
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -34,7 +35,7 @@ var (
 		Args:    cobra.NoArgs,
 		Long:    "Configure OIDC settings",
 		Short:   "Configure OIDC settings",
-		Example: `everestctl settings oidc configure --issuer-url https://example.com --client-id 123456 --scope "openid profile email groups"`,
+		Example: `everestctl settings oidc configure --issuer-url https://example.com --client-id 123456 --scopes "openid,profile,email,groups"`,
 		PreRun:  settingsOIDCConfigurePreRun,
 		Run:     settingsOIDCConfigureRun,
 	}
@@ -45,7 +46,7 @@ func init() {
 	// local command flags
 	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.IssuerURL, cli.FlagOIDCIssuerURL, "", "OIDC issuer url")
 	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.ClientID, cli.FlagOIDCClientID, "", "OIDC application client ID")
-	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.Scope, cli.FlagOIDCScope, common.DefaultOIDCScope, "Space-separated list of requested scopes")
+	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.Scopes, cli.FlagOIDCScopes, strings.Join(common.DefaultOIDCScopes, ","), "Comma-separated list of scopes")
 }
 
 func settingsOIDCConfigurePreRun(cmd *cobra.Command, _ []string) { //nolint:revive

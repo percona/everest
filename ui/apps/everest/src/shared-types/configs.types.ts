@@ -2,7 +2,7 @@ export type EverestConfigPayload = {
   oidcConfig?: {
     issuerURL: string;
     clientId: string;
-    scope: string;
+    scopes: string[];
   };
 };
 

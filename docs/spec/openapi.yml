@@ -2136,13 +2136,15 @@ components:
         issuerURL:
           type: string
           description: OIDC provider url
-        scope:
-          type: string
-          description: OIDC requested scopes
+        scopes:
+          type: array
+          items:
+            type: string
+          description: OIDC scopes
       required:
         - clientId
         - issuerURL
-        - scope
+        - scopes
     DatabaseClusterList:
       description: DatabaseClusterList is an object that contains the list of the existing database clusters.
       properties:
