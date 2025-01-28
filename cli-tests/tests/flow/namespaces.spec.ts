@@ -48,12 +48,12 @@ test.describe('Everest CLI install', async () => {
 
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
-        '✓ Installing Everest Helm chart',
-        '✓ Ensuring Everest API deployment is ready',
-        '✓ Ensuring Everest operator deployment is ready',
-        '✓ Ensuring OLM components are ready',
-        '✓ Ensuring Everest CatalogSource is ready',
-        '✓ Ensuring monitoring stack is ready',
+        '✅  Installing Everest Helm chart',
+        '✅  Ensuring Everest API deployment is ready',
+        '✅  Ensuring Everest operator deployment is ready',
+        '✅  Ensuring OLM components are ready',
+        '✅  Ensuring Everest CatalogSource is ready',
+        '✅  Ensuring monitoring stack is ready',
         'Thank you for installing Everest',
       ]);
     });
@@ -65,7 +65,7 @@ test.describe('Everest CLI install', async () => {
         `install`,
       );
       await out.outErrContainsNormalizedMany([
-          '× everest is already installed',
+          '❌ everest is already installed',
       ]);
     });
     await page.waitForTimeout(10_000);
@@ -77,7 +77,7 @@ test.describe('Everest CLI install', async () => {
       );
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
-          '✓ Installing namespace \'everest\'',
+          '✅  Installing namespace \'everest\'',
       ]);
     });
     await page.waitForTimeout(10_000);
@@ -89,7 +89,7 @@ test.describe('Everest CLI install', async () => {
         `add everest --operator.mongodb=false --operator.postgresql=false --operator.xtradb-cluster=true`,
       );
       await out.outErrContainsNormalizedMany([
-          '× invalid namespace (everest): namespace already exists. HINT: set \'--take-ownership\' flag to use existing namespaces',
+          '❌ invalid namespace (everest): namespace already exists. HINT: set \'--take-ownership\' flag to use existing namespaces',
       ]);
     });
     await page.waitForTimeout(10_000);
@@ -102,7 +102,7 @@ test.describe('Everest CLI install', async () => {
       );
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
-          '✓ Updating namespace \'everest\'',
+          '✅  Updating namespace \'everest\'',
       ]);
     });
     await page.waitForTimeout(10_000);
@@ -119,10 +119,10 @@ test.describe('Everest CLI install', async () => {
       );
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
-          '✓ Deleting database clusters in namespace \'everest\'',
-          '✓ Deleting backup storages in namespace \'everest\'',
-          '✓ Deleting monitoring instances in namespace \'everest\'',
-          '✓ Deleting namespace \'everest\'',
+          '✅  Deleting database clusters in namespace \'everest\'',
+          '✅  Deleting backup storages in namespace \'everest\'',
+          '✅  Deleting monitoring instances in namespace \'everest\'',
+          '✅  Deleting namespace \'everest\'',
       ]);
 
       out = await cli.exec(`kubectl get namespace everest`);
@@ -142,7 +142,7 @@ test.describe('Everest CLI install', async () => {
       );
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
-      '✓ Installing namespace \'existing-ns\'',
+      '✅  Installing namespace \'existing-ns\'',
       ]);
     });
     await page.waitForTimeout(10_000);
@@ -154,10 +154,10 @@ test.describe('Everest CLI install', async () => {
       );
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
-          '✓ Deleting database clusters in namespace \'existing-ns\'',
-          '✓ Deleting backup storages in namespace \'existing-ns\'',
-          '✓ Deleting monitoring instances in namespace \'existing-ns\'',
-          '✓ Deleting resources from namespace \'existing-ns\'',
+          '✅  Deleting database clusters in namespace \'existing-ns\'',
+          '✅  Deleting backup storages in namespace \'existing-ns\'',
+          '✅  Deleting monitoring instances in namespace \'existing-ns\'',
+          '✅  Deleting resources from namespace \'existing-ns\'',
       ]);
 
       out = await cli.exec(`kubectl get namespace existing-ns`);
