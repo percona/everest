@@ -122,7 +122,6 @@ test.describe(
       await page.getByTestId('add-db-cluster-button').click();
       await page.getByTestId(`add-db-cluster-button-${db}`).click();
 
-      await page.waitForTimeout(6000);
       await test.step('Populate basic information', async () => {
         await populateBasicInformation(
           page,
@@ -135,10 +134,12 @@ test.describe(
       });
 
       await test.step('Activate sharding', async () => {
-        const shardingCheckbox = page
-          .getByTestId('switch-input-sharding')
-          .getByRole('checkbox');
+        const shardingCheckbox = page.getByTestId('switch-input-sharding');
         await shardingCheckbox.click();
+        await page.getByTestId('db-wizard-continue-button').isEnabled();
+        await expect(
+          page.getByTestId('db-wizard-continue-button')
+        ).not.toBeDisabled();
 
         await moveForward(page);
       });
