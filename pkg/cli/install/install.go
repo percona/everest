@@ -130,15 +130,11 @@ func (cfg *InstallConfig) detectKubernetesEnv(ctx context.Context, l *zap.Sugare
 
 // NewInstall returns a new Installer struct.
 func NewInstall(c InstallConfig, l *zap.SugaredLogger) (*Installer, error) {
-	var mLogger *zap.SugaredLogger
-	if c.Pretty {
-		mLogger = zap.NewNop().Sugar()
-	} else {
-		mLogger = l
-	}
-
 	cli := &Installer{
-		l: mLogger.With("component", "install"),
+		l: l.With("component", "install"),
+	}
+	if c.Pretty {
+		cli.l = zap.NewNop().Sugar()
 	}
 
 	c.NamespaceAddConfig.Pretty = c.Pretty
@@ -177,9 +173,13 @@ func (o *Installer) Run(ctx context.Context) error {
 		defer cleanup()
 	}
 
+	o.l.Debug("TEST: After SetupEverestDevChart")
+
 	if err := o.setupHelmInstaller(ctx); err != nil {
 		return err
 	}
+
+	o.l.Debug("TEST: After setupHelmInstaller")
 
 	installSteps := o.newInstallSteps()
 	if !o.cfg.SkipDBNamespace {
@@ -191,10 +191,14 @@ func (o *Installer) Run(ctx context.Context) error {
 		}
 	}
 
+	o.l.Debug("TEST: After getDBNamespacesInstallSteps")
+
 	var out io.Writer = os.Stdout
 	if !o.cfg.Pretty {
 		out = io.Discard
 	}
+
+	o.l.Debugf("TEST: Before Fprintln: %v", out)
 
 	// Run steps.
 	_, _ = fmt.Fprintln(out, output.Info("Installing Everest version %s", o.installVersion))
