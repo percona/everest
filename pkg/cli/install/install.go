@@ -194,11 +194,10 @@ func (o *Installer) Run(ctx context.Context) error {
 
 	// Run steps.
 	_, _ = fmt.Fprintln(out, output.Info("Installing Everest version %s", o.installVersion))
-	if err := steps.RunStepsWithSpinner(ctx, installSteps, o.cfg.Pretty); err != nil {
+	if err := steps.RunStepsWithSpinner(ctx, o.l, installSteps, o.cfg.Pretty); err != nil {
 		return err
 	}
 	o.l.Infof("Everest '%s' has been successfully installed", o.installVersion)
-	o.printPostInstallMessage(out)
 	return nil
 }
 
@@ -222,25 +221,26 @@ var (
 )
 
 func (o *Installer) printPostInstallMessage(out io.Writer) {
-	// func PrintPostInstallMessage(out io.Writer) {
 	message := "\n" + output.Rocket("Thank you for installing Everest (v%s)!\n", o.installVersion)
-	// message := "\n" + output.Rocket("Thank you for installing Everest (v%s)!\n", "1.4.0")
 	message += "Follow the steps below to get started:"
 
+	count := 1
 	if len(o.cfg.NamespaceAddConfig.NamespaceList) == 0 {
-		message += fmt.Sprintf("\n\n%s", output.Info(titleStyle.Render("PROVISION A NAMESPACE FOR YOUR DATABASE:")))
+		message += fmt.Sprintf("\n\n%s", output.Numeric(count, titleStyle.Render("PROVISION A NAMESPACE FOR YOUR DATABASE:")))
+		count++
 		message += "Install a namespace for your databases using the following command:\n\n"
 		message += fmt.Sprintf("\t%s", commandStyle.Render("everestctl namespaces add [NAMESPACE]"))
 	}
 
-	message += fmt.Sprintf("\n\n%s", output.Info(titleStyle.Render("RETRIEVE THE INITIAL ADMIN PASSWORD:")))
-	// message += common.InitialPasswordWarningMessage + "\n\n"
+	message += fmt.Sprintf("\n\n%s", output.Numeric(count, titleStyle.Render("RETRIEVE THE INITIAL ADMIN PASSWORD:")))
+	count++
 	message += "Run the following command to get the initial admin password:\n\n"
 	message += fmt.Sprintf("\t%s\n\n", commandStyle.Render("everestctl accounts initial-admin-password"))
 	message += output.Warn("NOTE: The initial password is stored in plain text. For security, change it immediately using the following command:\n")
 	message += fmt.Sprintf("\t%s", commandStyle.Render("everestctl accounts set-password --username admin"))
 
-	message += fmt.Sprintf("\n\n%s", output.Info(titleStyle.Render("ACCESS THE EVEREST UI:")))
+	message += fmt.Sprintf("\n\n%s", output.Numeric(count, titleStyle.Render("ACCESS THE EVEREST UI:")))
+	count++
 	message += "To access the web UI, set up port-forwarding and visit http://localhost:8080 in your browser:\n\n"
 	message += fmt.Sprintf("\t%s\n", commandStyle.Render("kubectl port-forward -n everest-system svc/everest 8080:8080"))
 

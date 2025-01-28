@@ -42,7 +42,8 @@ func TestRBAC_DatabaseClusterRestore(t *testing.T) {
 						},
 					},
 				},
-			}, nil)
+			}, nil,
+			)
 			return h
 		}
 
@@ -127,7 +128,8 @@ func TestRBAC_DatabaseClusterRestore(t *testing.T) {
 				Spec: everestv1alpha1.DatabaseClusterRestoreSpec{
 					DBClusterName: "cluster1",
 				},
-			}, nil)
+			}, nil,
+			)
 			return h
 		}
 
@@ -400,7 +402,8 @@ func TestRBAC_DatabaseClusterRestore(t *testing.T) {
 				Spec: everestv1alpha1.DatabaseClusterRestoreSpec{
 					DBClusterName: "cluster1",
 				},
-			}, nil)
+			}, nil,
+			)
 			h.On("DeleteDatabaseClusterRestore", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			return h
 		}

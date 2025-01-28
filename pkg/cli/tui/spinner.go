@@ -27,6 +27,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"go.uber.org/zap"
 )
 
 const (
@@ -37,10 +38,8 @@ var (
 	currentStepTitleStyle = helperTextStyle.Bold(false)
 	successStepTitleStyle = successStyle
 	failedStepTitleStyle  = failureStyle
-	// successMark           = successStyle.Render("✓")
-	// failureMark = failureStyle.Render("\u00D7") // x
-	successMark = successStyle.Render("✅")
-	failureMark = failureStyle.Render("❌") // x
+	successMark           = successStyle.Render("✅")
+	failureMark           = failureStyle.Render("❌") // x
 )
 
 type (
@@ -67,10 +66,11 @@ type (
 		help      help.Model
 		spinner   spinner.Model
 		p         *tea.Program
-		interrupt bool            // set in case user wants to quit (Esc or Ctrl+c)
-		done      bool            // all steps have been completed
-		stepError error           // error occurred during step execution
-		ctx       context.Context // upper lavel context
+		interrupt bool               // set in case user wants to quit (Esc or Ctrl+c)
+		done      bool               // all steps have been completed
+		stepError error              // error occurred during step execution
+		ctx       context.Context    // upper lavel context
+		l         *zap.SugaredLogger // logger
 	}
 
 	// SpinnerOption is used to set options when initializing Spinner.
@@ -98,7 +98,7 @@ func (k spinnerKeyMap) FullHelp() [][]key.Binding {
 }
 
 // NewSpinner creates a new spinner element.
-func NewSpinner(ctx context.Context, steps []Step, opts ...SpinnerOption) Spinner {
+func NewSpinner(ctx context.Context, l *zap.SugaredLogger, steps []Step, opts ...SpinnerOption) Spinner {
 	s := spinner.New(
 		spinner.WithSpinner(spinner.Points),
 		spinner.WithStyle(helperTextStyle),
@@ -112,6 +112,7 @@ func NewSpinner(ctx context.Context, steps []Step, opts ...SpinnerOption) Spinne
 
 		help: newHelpModel(),
 		ctx:  ctx,
+		l:    l,
 	}
 
 	p := tea.NewProgram(m, tea.WithContext(ctx))
@@ -153,7 +154,7 @@ func (m Spinner) Run() error {
 
 func (m Spinner) Init() tea.Cmd {
 	// Run spinner and first step
-	return tea.Batch(m.spinner.Tick, runStep(m.ctx, m.steps[m.index]))
+	return tea.Batch(m.spinner.Tick, runStep(m.ctx, m.l, m.steps[m.index]))
 }
 
 // Update updates the spinner element.
@@ -192,7 +193,7 @@ func (m Spinner) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.index++
 		return m, tea.Sequence(
 			tea.Printf("%s  %s", successMark, successStepTitleStyle.Render(stp.Desc)), // print success message above our program
-			runStep(m.ctx, m.steps[m.index]),                                          // run the next step
+			runStep(m.ctx, m.l, m.steps[m.index]),                                     // run the next step
 		)
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -233,9 +234,11 @@ type (
 )
 
 // Wrapper function to run step in a separate goroutine.
-func runStep(ctx context.Context, step Step) tea.Cmd {
+func runStep(ctx context.Context, l *zap.SugaredLogger, step Step) tea.Cmd {
 	return tea.Tick(spinnerInterval, func(t time.Time) tea.Msg {
+		l.Debug("Running step: ", step.Desc)
 		if err := step.F(ctx); err != nil {
+			l.Errorw("Error occurred during step execution", "step", step.Desc, "error", err)
 			return errorStepMsg(err)
 		}
 

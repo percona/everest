@@ -42,9 +42,6 @@ func PrintError(err error, l *zap.SugaredLogger, prettyPrint bool) {
 
 //nolint:gochecknoglobals
 var (
-	// okStatus = color.New(color.FgGreen).SprintFunc()("\u2713") // ✓
-	// failStatus = color.New(color.FgRed, color.Bold).SprintFunc()("\u00D7") // ×
-
 	// Style is applied to the successful result.
 	okStyle = lipgloss.NewStyle().
 		Foreground(
@@ -55,9 +52,21 @@ var (
 	// Style is applied to the failure result.
 	failureStyle = lipgloss.NewStyle().
 			Foreground(
-			lipgloss.AdaptiveColor{Light: "#F37C6F", Dark: "#F37C6F"},
+			lipgloss.AdaptiveColor{Light: "#B10810", Dark: "#F37C6F"},
 		)
 	failStatus = failureStyle.Render("❌")
+
+	digitsMap = map[int]string{
+		1: "1️⃣",
+		2: "2️⃣",
+		3: "3️⃣",
+		4: "4️⃣",
+		5: "5️⃣",
+		6: "6️⃣",
+		7: "7️⃣",
+		8: "8️⃣",
+		9: "9️⃣",
+	}
 )
 
 // Success prints a message with a success emoji.
@@ -87,4 +96,13 @@ func Rocket(msg string, args ...any) string {
 // Warn prints a message with a warning emoji.
 func Warn(msg string, args ...any) string {
 	return fmt.Sprintf("⚠️  %s\n", fmt.Sprintf(msg, args...))
+}
+
+// Numeric prints a message with a numeric emoji.
+func Numeric(num int, msg string, args ...any) string {
+	if val, ok := digitsMap[num]; ok {
+		return fmt.Sprintf("%s  %s\n", val, fmt.Sprintf(msg, args...))
+	}
+
+	return fmt.Sprintf("ℹ️  %s\n", fmt.Sprintf(msg, args...))
 }

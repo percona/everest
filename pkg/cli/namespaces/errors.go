@@ -35,7 +35,6 @@ var (
 
 	// ErrNamespaceAlreadyExists appears when the namespace already exists.
 	NewErrNamespaceAlreadyExists = func(namespace string) error {
-		// return errors.Join(fmt.Errorf("'%s'", namespace), ErrNamespaceAlreadyExists)
 		return fmt.Errorf("'%s': %w", namespace, ErrNamespaceAlreadyExists)
 	}
 

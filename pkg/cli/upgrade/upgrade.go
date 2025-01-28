@@ -166,7 +166,7 @@ func (u *Upgrade) Run(ctx context.Context) error {
 
 	// Run steps.
 	_, _ = fmt.Fprintln(out, output.Info("Upgrading Everest to version %s", u.upgradeToVersion))
-	if err := steps.RunStepsWithSpinner(ctx, upgradeSteps, u.config.Pretty); err != nil {
+	if err := steps.RunStepsWithSpinner(ctx, u.l, upgradeSteps, u.config.Pretty); err != nil {
 		return err
 	}
 

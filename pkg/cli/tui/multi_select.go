@@ -29,12 +29,6 @@ import (
 )
 
 var (
-	// Cursor symbol.
-	// cursorChar = lipgloss.NewStyle().
-	// 		Bold(true).
-	// 		Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "feffff"}).
-	// 		Render(">")
-
 	// ------
 	// Style applied to option label in case its checkbox is selected.
 	optionStyle = lipgloss.NewStyle().
@@ -44,13 +38,12 @@ var (
 	// Style applied to option label in case its checkbox is unselected.
 	hoverOptionStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.AdaptiveColor{Light: "#0B4A8C", Dark: "#62AEFF"}).
-				Background(lipgloss.AdaptiveColor{Light: "#127AE8", Dark: "#439EFF"})
+				Background(lipgloss.AdaptiveColor{Light: "#E2EFFC", Dark: "#2F435B"})
 
 	// Selected checkbox symbol.
-	// selectedCheckBox = fmt.Sprintf("{%s}", successStyle.Render("✓")) // [✓]
 	selectedCheckBox = "{X}"
+
 	// Unselected checkbox symbol.
-	// unselectedCheckbox = "[ ]"
 	unselectedCheckbox = "{ }"
 
 	// ----------
@@ -193,7 +186,7 @@ func (m MultiSelect) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m MultiSelect) View() string {
 	// The header
 	s := strings.Builder{}
-	s.WriteString(fmt.Sprintf("❓ %s\n", textStyle.Render(m.Message)))
+	s.WriteString(fmt.Sprintf("%s %s\n", failureStyle.Render("❓"), textStyle.Render(m.Message)))
 
 	// Iterate over our choices
 	for i, choice := range m.Choices {
@@ -209,23 +202,11 @@ func (m MultiSelect) View() string {
 	return s.String()
 }
 
-// func drawLine(cursor, checked bool, label string) string {
-// 	// Template contains: <cursor char> <option mark char> <option label>
-// 	// Example: > [✓] MySQL
-// 	// Example:  {X} MySQL
-// 	// const tmpl = "%s %s %s\n"
-// 	const tmpl = " %s %s\n"
-// 	return fmt.Sprintf(tmpl,
-// 		// ternary(cursor, cursorChar, " "),
-// 		ternary(checked, selectedCheckBox, unselectedCheckbox),
-// 		ternary(checked, hoverOptionStyle.Render(label), optionStyle.Render(label)),
-// 	)
-// }
-
 func drawLine(hover, checked bool, label string) string {
-	// Template contains: <cursor char> <option mark char> <option label>
-	// Example:  {X} MySQL
-	// const tmpl = "%s %s %s\n"
+	// Template contains: <option selected/unselected mark> <option label>
+	// Examples:
+	// {X} MySQL
+	// { } PostgreSQL
 	const tmpl = " %s %s"
 	mark := selectedCheckBox
 	if !checked {

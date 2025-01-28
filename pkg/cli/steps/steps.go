@@ -19,6 +19,8 @@ package steps
 import (
 	"context"
 
+	"go.uber.org/zap"
+
 	"github.com/percona/everest/pkg/cli/tui"
 )
 
@@ -34,6 +36,7 @@ type Step struct {
 // RunStepsWithSpinner runs a list of steps with a loading spinner animation.
 func RunStepsWithSpinner(
 	ctx context.Context,
+	l *zap.SugaredLogger,
 	steps []Step,
 	prettyPrint bool,
 ) error {
@@ -45,7 +48,8 @@ func RunStepsWithSpinner(
 		})
 	}
 
-	if err := tui.NewSpinner(ctx, spinnerSteps, tui.WithSpinnerPrettyPrint(prettyPrint)).Run(); err != nil {
+	if err := tui.NewSpinner(ctx, l, spinnerSteps, tui.WithSpinnerPrettyPrint(prettyPrint)).
+		Run(); err != nil {
 		return err
 	}
 

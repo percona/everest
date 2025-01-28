@@ -314,7 +314,7 @@ func (n *NamespaceAdder) Run(ctx context.Context) error {
 		return err
 	}
 
-	if err := steps.RunStepsWithSpinner(ctx, installSteps, n.cfg.Pretty); err != nil {
+	if err := steps.RunStepsWithSpinner(ctx, n.l, installSteps, n.cfg.Pretty); err != nil {
 		return err
 	}
 	return nil

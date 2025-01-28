@@ -124,7 +124,7 @@ func (u *Uninstall) Run(ctx context.Context) error {
 	}
 
 	uninstallSteps := u.newUninstallSteps(dbNamespaces)
-	if err := steps.RunStepsWithSpinner(ctx, uninstallSteps, u.config.Pretty); err != nil {
+	if err := steps.RunStepsWithSpinner(ctx, u.l, uninstallSteps, u.config.Pretty); err != nil {
 		return err
 	}
 

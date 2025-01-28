@@ -53,15 +53,10 @@ var (
 	// Style is applied to the failure result.
 	failureStyle = lipgloss.NewStyle().
 			Foreground(
-			lipgloss.AdaptiveColor{Light: "#F37C6F", Dark: "#F37C6F"},
+			lipgloss.AdaptiveColor{Light: "#B10810", Dark: "#F37C6F"},
 		)
 
 	// Style is applied to the helper text: supported key combinations, etc.
-	// helperTextStyle = lipgloss.NewStyle().
-	// 		Foreground(
-	// 		lipgloss.AdaptiveColor{Light: "#000000", Dark: "#46a4a9"},
-	// 	)
-
 	helperTextStyle = lipgloss.NewStyle().
 			Foreground(
 			lipgloss.AdaptiveColor{Light: "#1A7362", Dark: "#30D1B2"},

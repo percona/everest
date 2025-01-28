@@ -161,7 +161,7 @@ func (u *OIDC) Run(ctx context.Context) error {
 	},
 	)
 
-	if err := steps.RunStepsWithSpinner(ctx, stepList, u.config.Pretty); err != nil {
+	if err := steps.RunStepsWithSpinner(ctx, u.l, stepList, u.config.Pretty); err != nil {
 		return err
 	}
 	u.l.Info("OIDC has been configured successfully")

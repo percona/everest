@@ -53,9 +53,6 @@ type (
 		KeepNamespace bool
 		// Pretty if set print the output in pretty mode.
 		Pretty bool
-
-		// // Namespaces (DB Namespaces managed by Everest) to remove
-		// Namespaces string
 	}
 
 	// NamespaceRemover is the CLI operation to remove namespaces.
@@ -121,28 +118,6 @@ func (cfg *NamespaceRemoveConfig) validateNamespaceOwnership(
 	return nil
 }
 
-// populate the configuration with the required values.
-// func (cfg *NamespaceRemoveConfig) populate(ctx context.Context, kubeClient *kubernetes.Kubernetes) error {
-// 	nsList, err := validateNamespaceNames(cfg.Namespaces)
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	for _, ns := range nsList {
-// 		// Check that the namespace exists.
-// 		exists, managedByEverest, err := namespaceExists(ctx, ns, kubeClient)
-// 		if err != nil {
-// 			return errors.Join(err, errors.New("failed to check if namespace exists"))
-// 		}
-// 		if !exists || !managedByEverest {
-// 			return errors.New(fmt.Sprintf("namespace '%s' does not exist or not managed by Everest", ns))
-// 		}
-// 	}
-//
-// 	cfg.NamespaceList = nsList
-// 	return nil
-// }
-
 // NewNamespaceRemove returns a new CLI operation to remove namespaces.
 func NewNamespaceRemove(c NamespaceRemoveConfig, l *zap.SugaredLogger) (*NamespaceRemover, error) {
 	n := &NamespaceRemover{
@@ -169,25 +144,12 @@ func (r *NamespaceRemover) Run(ctx context.Context) error {
 		return err
 	}
 
-	// if err := r.config.populate(ctx, r.kubeClient); err != nil {
-	// 	return err
-	// }
-
-	// dbsExist, err := r.kubeClient.DatabasesExist(ctx, r.cfg.NamespaceList...)
-	// if err != nil {
-	// 	return errors.Join(err, errors.New("failed to check if databases exist"))
-	// }
-	//
-	// if dbsExist && !r.cfg.Force {
-	// 	return ErrNamespaceNotEmpty
-	// }
-
 	var removalSteps []steps.Step
 	for _, ns := range r.cfg.NamespaceList {
 		removalSteps = append(removalSteps, NewRemoveNamespaceSteps(ns, r.cfg.KeepNamespace, r.kubeClient)...)
 	}
 
-	return steps.RunStepsWithSpinner(ctx, removalSteps, r.cfg.Pretty)
+	return steps.RunStepsWithSpinner(ctx, r.l, removalSteps, r.cfg.Pretty)
 }
 
 // NewRemoveNamespaceSteps returns the steps to remove a namespace.
