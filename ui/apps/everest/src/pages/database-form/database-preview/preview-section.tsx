@@ -1,4 +1,5 @@
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { IconButton, Stack, Typography, useTheme } from '@mui/material';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
 import {
@@ -15,6 +16,7 @@ export const PreviewSection = ({
   hasBeenReached = false,
   active = false,
   disabled = false,
+  hasError = false,
   sx,
   ...stackProps
 }: PreviewSectionProps) => {
@@ -44,39 +46,52 @@ export const PreviewSection = ({
       }}
       {...stackProps}
     >
-      <Typography
-        variant={hasBeenReached ? 'sectionHeading' : 'caption'}
-        color={hasBeenReached ? 'text.primary' : 'text.disabled'}
-        sx={{
-          position: 'relative',
-          ml: -2,
-        }}
-      >
-        {`${order}. ${title}`}
-        {showEdit && (
-          <IconButton
-            // Absolute position to avoid the button's padding from interfering with the spacing
-            sx={{
-              position: 'absolute',
-              top: theme.spacing(-1),
-            }}
-            color="primary"
-            size="small"
-            disabled={disabled}
-            onClick={onEditClick}
-            data-testid={`button-edit-preview-${kebabize(
-              title.replace(/\s/g, '')
-            )}`}
-          >
-            <EditOutlinedIcon
+      <Stack direction="row">
+        <Typography
+          variant={hasBeenReached ? 'sectionHeading' : 'caption'}
+          color={hasBeenReached ? 'text.primary' : 'text.disabled'}
+          sx={{
+            position: 'relative',
+            ml: -2,
+          }}
+        >
+          {`${order}. ${title}`}
+          {showEdit && (
+            <IconButton
+              // Absolute position to avoid the button's padding from interfering with the spacing
               sx={{
-                verticalAlign: 'text-bottom',
+                position: 'absolute',
+                top: theme.spacing(-1),
               }}
-              data-testid={`edit-section-${order}`}
-            />
-          </IconButton>
+              color="primary"
+              size="small"
+              disabled={disabled}
+              onClick={onEditClick}
+              data-testid={`button-edit-preview-${kebabize(
+                title.replace(/\s/g, '')
+              )}`}
+            >
+              <EditOutlinedIcon
+                sx={{
+                  verticalAlign: 'text-bottom',
+                }}
+                data-testid={`edit-section-${order}`}
+              />
+            </IconButton>
+          )}
+        </Typography>
+        {hasError && (
+          <ErrorOutlineIcon
+            color="error"
+            fontSize="small"
+            sx={{
+              position: 'relative',
+              bottom: '2px',
+              ml: 'auto',
+            }}
+          />
         )}
-      </Typography>
+      </Stack>
       {hasBeenReached && children}
     </Stack>
   );

@@ -22,7 +22,7 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useCreateDbCluster } from 'hooks/api/db-cluster/useCreateDbCluster';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
 import { steps } from './database-form-body/steps';
-import { DbWizardType } from './database-form-schema';
+import { DbWizardType, getDBWizardSchema } from './database-form-schema';
 import ConfirmationScreen from './database-form-body/steps/confirmation-screen';
 import { useDatabasePageDefaultValues } from './useDatabaseFormDefaultValues';
 import { useDatabasePageMode } from './useDatabasePageMode';
@@ -36,6 +36,7 @@ export const DatabasePage = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [longestAchievedStep, setLongestAchievedStep] = useState(0);
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [stepsWithErrors, setStepsWithErrors] = useState<number[]>([]);
   const { mutate: addDbCluster, isPending: isCreating } = useCreateDbCluster();
   const location = useLocation();
   const navigate = useNavigate();
@@ -63,6 +64,7 @@ export const DatabasePage = () => {
     clearErrors,
     trigger,
     handleSubmit,
+    watch,
   } = methods;
 
   const blocker = useBlocker(
@@ -148,6 +150,38 @@ export const DatabasePage = () => {
   };
 
   useEffect(() => {
+    const { unsubscribe } = watch((values) => {
+      if (loadingClusterValues) {
+        return;
+      }
+
+      const newStepsWithErrors = steps.reduce((result, _, idx) => {
+        const schema = getDBWizardSchema(idx, defaultValues, mode);
+        const hasBeenReached = longestAchievedStep >= idx || mode === 'edit';
+        const { error } = schema.safeParse(values);
+
+        if (error && hasBeenReached) {
+          console.log('error@', idx, error);
+          return [...result, idx];
+        }
+
+        return result;
+      }, [] as number[]);
+      setStepsWithErrors(newStepsWithErrors);
+    });
+    return () => unsubscribe();
+  }, [
+    activeStep,
+    defaultValues,
+    loadingClusterValues,
+    longestAchievedStep,
+    mode,
+    watch,
+  ]);
+
+  console.log('stepsWithErrors', stepsWithErrors);
+
+  useEffect(() => {
     // We disable the inputs on first step to make sure user doesn't change anything before all data is loaded
     // When users change the inputs, it means all data was loaded and we should't change the defaults anymore at this point
     // Because this effect relies on defaultValues, which comes from a hook that has dependencies that might be triggered somewhere else
@@ -190,6 +224,7 @@ export const DatabasePage = () => {
             activeStep={activeStep}
             longestAchievedStep={longestAchievedStep}
             handleSectionEdit={handleSectionEdit}
+            stepsWithErrors={stepsWithErrors}
           />
         </FormProvider>
       </Stack>

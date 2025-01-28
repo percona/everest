@@ -13,6 +13,7 @@ export const DatabasePreview = ({
   longestAchievedStep,
   onSectionEdit = () => {},
   disabled,
+  stepsWithErrors,
   sx,
   ...stackProps
 }: DatabasePreviewProps) => {
@@ -39,6 +40,7 @@ export const DatabasePreview = ({
               order={idx + 1}
               title={Messages.preview[idx]}
               hasBeenReached={longestAchievedStep >= idx || mode === 'edit'}
+              hasError={stepsWithErrors.includes(idx)}
               active={activeStep === idx}
               disabled={disabled || Object.values(errors).length != 0}
               onEditClick={() => onSectionEdit(idx + 1)}

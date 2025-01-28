@@ -17,22 +17,14 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
 import { DbCluster } from 'shared-types/dbCluster.types';
-import { DB_WIZARD_DEFAULTS } from './database-form.constants';
 import { DbWizardMode } from './database-form.types';
-import { DbWizardFormFields } from 'consts.ts';
-import { DbClusterPayloadToFormValues } from './database-form.utils';
+
+import {
+  DbClusterPayloadToFormValues,
+  getDbWizardDefaultValues,
+} from './database-form.utils';
 import { DbWizardType } from './database-form-schema.ts';
 import { dbEngineToDbType } from '@percona/utils';
-import { DbType } from '@percona/types';
-import { generateShortUID } from 'utils/generateShortUID.ts';
-
-const getNewDbDefaults = (dbType: DbType) => {
-  return {
-    ...DB_WIZARD_DEFAULTS,
-    dbType: dbType,
-    [DbWizardFormFields.dbName]: `${dbType}-${generateShortUID()}`,
-  };
-};
 
 export const useDatabasePageDefaultValues = (
   mode: DbWizardMode
@@ -55,14 +47,18 @@ export const useDatabasePageDefaultValues = (
     enabled: shouldRetrieveDbClusterData,
   });
 
-  const [defaultValues, setDefaultValues] = useState<DbWizardType>(
-    // @ts-ignore
-    mode === 'new'
-      ? getNewDbDefaults(dbEngineToDbType(state?.selectedDbEngine))
-      : dbClusterRequestStatus === 'success'
+  const [defaultValues, setDefaultValues] = useState<DbWizardType>(() => {
+    const dbType = dbEngineToDbType(state?.selectedDbEngine);
+    const defaults = getDbWizardDefaultValues(dbType);
+
+    if (mode === 'new') {
+      return getDbWizardDefaultValues(dbType);
+    } else {
+      return dbClusterRequestStatus === 'success'
         ? DbClusterPayloadToFormValues(dbCluster, mode, namespace)
-        : { ...DB_WIZARD_DEFAULTS, [DbWizardFormFields.dbVersion]: '' }
-  );
+        : defaults;
+    }
+  });
 
   useEffect(() => {
     // dbClusterRequestStatus === 'success' when the request is enabled, which only happens if shouldRetrieveDbClusterData === true
