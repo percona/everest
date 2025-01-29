@@ -82,7 +82,8 @@ const openResourcesModal = async (page: Page) => {
             .getByRole('button')
             .getByText(size + ' node')
             .click();
-          await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
+          const numberOfNodes = size*(db !== 'psmdb' ? 1: 2);  
+          await expect(page.getByText(numberOfNodes +` node${numberOfNodes === 1? '': 's'} - CPU`)).toBeVisible();
         });
 
         await test.step('Move forward form with default values', async () => {
