@@ -144,8 +144,9 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 		},
 	}))
 	secureMiddleware := secure.New(secure.Options{
-		// FIXME: We need to figure out what to do with the font-src and style-src
-		ContentSecurityPolicy: "default-src 'self'; font-src 'self' data:; style-src 'self' 'nonce-EDNnf03nceIOfn39fn3e9h3sdfa'; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests; block-all-mixed-content",
+		// @emotion adds an extra inline style with the SHA256 hash of an empty string, so we allow it
+		//https://github.com/emotion-js/emotion/issues/2996
+		ContentSecurityPolicy: "default-src 'self'; font-src 'self' data:; style-src 'self' 'nonce-EDNnf03nceIOfn39fn3e9h3sdfa' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests; block-all-mixed-content",
 		ContentTypeNosniff:    true,
         FrameDeny:             true,
 		PermissionsPolicy:     "accelerometer=(), autoplay=(), camera=(), cross-origin-isolated=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(self), usb=(), web-share=(), xr-spatial-tracking=(), clipboard-read=(), clipboard-write=(), gamepad=(), hid=(), idle-detection=(), interest-cohort=(), serial=(), unload=()",
