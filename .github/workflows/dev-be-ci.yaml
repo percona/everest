@@ -254,6 +254,14 @@ jobs:
           addons: registry
           insecure-registry: 'localhost:5000'
 
+      # TODO: REMOVE LATER
+      # Temporal solution to fix the issue with the minikube not enough space
+      # Enable Tmate debug ssh session
+      - name: "Setup tmate session"
+        uses: "percona/gh-action-action-tmate@v3"
+        if: ${{ always() }}
+      # -----------------
+
       - name: Expose local registry
         run: |
           kubectl port-forward --namespace kube-system service/registry 5000:80 &
