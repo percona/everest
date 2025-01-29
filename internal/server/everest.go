@@ -133,7 +133,7 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	}
 	e.echo.Renderer = t
 	e.echo.GET("/*", func(c echo.Context) error {
-		return c.Render(http.StatusOK, "CSPNonce", "EDNnf03nceIOfn39fn3e9h3sdfa")
+		return c.Render(http.StatusOK, "index.html", map[string]interface{}{"CSPNonce": "EDNnf03nceIOfn39fn3e9h3sdfa"})
 	})
 	e.echo.GET("/static/*", echo.WrapHandler(staticFilesHandler))
 	e.echo.Use(echomiddleware.LoggerWithConfig(echomiddleware.LoggerConfig{
