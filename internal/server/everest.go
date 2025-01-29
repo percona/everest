@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
+	"io"
 	"io/fs"
 	"net/http"
 	"slices"
@@ -99,6 +101,14 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	return e, err
 }
 
+type Template struct {
+    templates *template.Template
+}
+
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
+
 // initHTTPServer configures http server for the current EverestServer instance.
 func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	swagger, err := api.GetSwagger()
@@ -118,9 +128,13 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	// 2. Add apiUrl configuration for FE app
 	//
 	// Once it'll be implemented we can serve FE app on /everest/ location
-	e.echo.FileFS("/*", "index.html", indexFS)
-	e.echo.GET("/favicon.ico", echo.WrapHandler(staticFilesHandler))
-	e.echo.GET("/assets-manifest.json", echo.WrapHandler(staticFilesHandler))
+	t := &Template{
+		templates: template.Must(template.ParseFS(indexFS, "index.html")),
+	}
+	e.echo.Renderer = t
+	e.echo.GET("/*", func(c echo.Context) error {
+		return c.Render(http.StatusOK, "CSPNonce", "EDNnf03nceIOfn39fn3e9h3sdfa")
+	})
 	e.echo.GET("/static/*", echo.WrapHandler(staticFilesHandler))
 	e.echo.Use(echomiddleware.LoggerWithConfig(echomiddleware.LoggerConfig{
 		Format:           echomiddleware.DefaultLoggerConfig.Format,
@@ -131,7 +145,7 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	}))
 	secureMiddleware := secure.New(secure.Options{
 		// FIXME: We need to figure out what to do with the font-src and style-src
-		ContentSecurityPolicy: "default-src 'self'; font-src 'self' data:; style-src 'self' 'unsafe-inline'; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests; block-all-mixed-content",
+		ContentSecurityPolicy: "default-src 'self'; font-src 'self' data:; style-src 'self' 'nonce-EDNnf03nceIOfn39fn3e9h3sdfa'; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests; block-all-mixed-content",
 		ContentTypeNosniff:    true,
         FrameDeny:             true,
 		PermissionsPolicy:     "accelerometer=(), autoplay=(), camera=(), cross-origin-isolated=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(self), usb=(), web-share=(), xr-spatial-tracking=(), clipboard-read=(), clipboard-write=(), gamepad=(), hid=(), idle-detection=(), interest-cohort=(), serial=(), unload=()",
