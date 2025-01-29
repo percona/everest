@@ -22,7 +22,7 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useCreateDbCluster } from 'hooks/api/db-cluster/useCreateDbCluster';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
 import { steps } from './database-form-body/steps';
-import { DbWizardType, getDBWizardSchema } from './database-form-schema';
+import { DbWizardType } from './database-form-schema';
 import ConfirmationScreen from './database-form-body/steps/confirmation-screen';
 import { useDatabasePageDefaultValues } from './useDatabaseFormDefaultValues';
 import { useDatabasePageMode } from './useDatabasePageMode';
@@ -52,17 +52,37 @@ export const DatabasePage = () => {
 
   const methods = useForm<DbWizardType>({
     mode: 'onChange',
-    resolver: zodResolver(validationSchema),
+    resolver: async (data, context, options) => {
+      const result = await zodResolver(validationSchema)(
+        data,
+        context,
+        options
+      );
+      if (Object.keys(result.errors).length > 0) {
+        console.log('RESOLVER', result.errors);
+        setStepsWithErrors((prev) => {
+          if (!prev.includes(activeStep)) {
+            return [...prev, activeStep];
+          }
+          return prev;
+        });
+      } else {
+        setStepsWithErrors((prev) =>
+          prev.filter((step) => step !== activeStep)
+        );
+      }
+      return result;
+    },
     // @ts-ignore
     defaultValues,
   });
 
   const {
     reset,
-    formState: { isDirty, errors },
+    formState: { isDirty },
     clearErrors,
     handleSubmit,
-    watch,
+    trigger,
   } = methods;
 
   const blocker = useBlocker(
@@ -71,8 +91,6 @@ export const DatabasePage = () => {
       !formSubmitted &&
       currentLocation.pathname !== nextLocation.pathname
   );
-
-  const formHasErrors = Object.values(errors).length > 0;
 
   const onSubmit: SubmitHandler<DbWizardType> = (data) => {
     if (mode === 'new' || mode === 'restoreFromBackup') {
@@ -138,34 +156,8 @@ export const DatabasePage = () => {
   };
 
   useEffect(() => {
-    const { unsubscribe } = watch((values) => {
-      if (loadingClusterValues) {
-        return;
-      }
-
-      const newStepsWithErrors = steps.reduce((result, _, idx) => {
-        const schema = getDBWizardSchema(idx, defaultValues, mode);
-        const hasBeenReached = longestAchievedStep >= idx || mode === 'edit';
-        const { error } = schema.safeParse(values);
-
-        if (error && hasBeenReached) {
-          console.log('error@', idx, error);
-          return [...result, idx];
-        }
-
-        return result;
-      }, [] as number[]);
-      setStepsWithErrors(newStepsWithErrors);
-    });
-    return () => unsubscribe();
-  }, [
-    activeStep,
-    defaultValues,
-    loadingClusterValues,
-    longestAchievedStep,
-    mode,
-    watch,
-  ]);
+    trigger();
+  }, [activeStep, trigger]);
 
   console.log('stepsWithErrors', stepsWithErrors);
 
@@ -200,7 +192,7 @@ export const DatabasePage = () => {
             activeStep={activeStep}
             longestAchievedStep={longestAchievedStep}
             isSubmitting={isCreating}
-            hasErrors={formHasErrors}
+            hasErrors={stepsWithErrors.length > 0}
             onSubmit={handleSubmit(onSubmit)}
             onCancel={() => navigate('/databases')}
             handleNextStep={handleNext}

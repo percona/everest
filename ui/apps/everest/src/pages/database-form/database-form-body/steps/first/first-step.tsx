@@ -46,8 +46,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const {
     defaultValues: { [DbWizardFormFields.dbVersion]: defaultDbVersion },
   } = useDatabasePageDefaultValues(mode);
-  const { watch, setValue, getFieldState, resetField, trigger } =
-    useFormContext();
+  const { watch, setValue, getFieldState, resetField } = useFormContext();
 
   const { data: clusterInfo, isFetching: clusterInfoFetching } =
     useKubernetesClusterInfo(['wizard-k8-info']);
@@ -108,7 +107,8 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     ) {
       setValue(
         DbWizardFormFields.storageClass,
-        clusterInfo?.storageClassNames[0]
+        clusterInfo?.storageClassNames[0],
+        { shouldValidate: true }
       );
     }
   }, [clusterInfo]);
@@ -133,8 +133,9 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       filteredNamespaces.length > 0 &&
       !isFetching
     ) {
-      setValue(DbWizardFormFields.k8sNamespace, filteredNamespaces[0]);
-      trigger(DbWizardFormFields.k8sNamespace);
+      setValue(DbWizardFormFields.k8sNamespace, filteredNamespaces[0], {
+        shouldValidate: true,
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, isFetching, filteredNamespaces.length]);
@@ -165,7 +166,8 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         DbWizardFormFields.dbVersion,
         recommendedVersion
           ? recommendedVersion.version
-          : dbEngineData.availableVersions.engine[0].version
+          : dbEngineData.availableVersions.engine[0].version,
+        { shouldValidate: true }
       );
     }
   }, [dbVersion, dbEngineData, getFieldState, mode, setValue]);
