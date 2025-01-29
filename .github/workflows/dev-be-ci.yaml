@@ -249,7 +249,7 @@ jobs:
       - name: Switch docker-daemon data directory to /mnt
         run: |
           sudo systemctl stop docker
-          sudo bash -c 'echo \'{ "exec-opts": ["native.cgroupdriver=cgroupfs"], "cgroup-parent": "/actions_job", "data-root": "/mnt/docker-data" }\' > /etc/docker/daemon.json'
+          echo '{ "exec-opts": ["native.cgroupdriver=cgroupfs"], "cgroup-parent": "/actions_job", "data-root": "/mnt/docker-data" }' | sudo tee /etc/docker/daemon.json
           sudo mkdir /mnt/docker-data
           sudo systemctl start docker
 
