@@ -262,14 +262,6 @@ jobs:
           addons: registry
           insecure-registry: 'localhost:5000'
 
-      # TODO: REMOVE LATER
-      # Temporal solution to fix the issue with the minikube not enough space
-      # Enable Tmate debug ssh session
-#      - name: "Setup tmate session"
-#        uses: "percona/gh-action-action-tmate@v3"
-#        if: ${{ always() }}
-      # -----------------
-
       - name: Expose local registry
         run: |
           kubectl port-forward --namespace kube-system service/registry 5000:80 &
@@ -277,6 +269,11 @@ jobs:
       - name: Build Everest API Server
         run: |
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build-debug
+
+      - name: Build Everest CLI
+        shell: bash
+        run: |
+          make build-cli
 
       - name: Build Everest docker container
         uses: docker/metadata-action@v5
@@ -335,7 +332,6 @@ jobs:
       - name: Provision Everest using CLI
         shell: bash
         run: |
-          make build-cli
           ./bin/everestctl install -v \
             --disable-telemetry \
             --version 0.0.0 \
@@ -363,10 +359,14 @@ jobs:
           kubectl patch configmap everest-rbac -n everest-system --patch "$(kubectl get configmap everest-rbac -n everest-system -o json | jq '.data["policy.csv"] += "\ng, everest_ci, role:admin"' | jq '{data: { "policy.csv": .data["policy.csv"] } }')"
           kubectl get configmap everest-rbac -n everest-system -ojsonpath='{.data.policy\.csv}'
 
-      - name: Run integration tests
+      - name: Init integration tests
+        working-directory: api-tests
         run: |
-          cd api-tests
           make init
+
+      - name: Run integration tests
+        working-directory: api-tests
+        run: |
           make test
 
       - name: Run debug commands on failure
@@ -376,9 +376,6 @@ jobs:
           kubectl -n everest-monitoring describe pods
           kubectl -n everest describe pods
           kubectl -n everest-system logs deploy/everest-server
-
-
-
 
   integration_tests_cli:
     name: CLI Integration Tests
