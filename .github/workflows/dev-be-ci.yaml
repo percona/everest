@@ -245,6 +245,14 @@ jobs:
             ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
             ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
 
+      # Switch docker data directory to /mnt to have more space for the local Kubernetes cluster
+      - name: Switch docker-daemon data directory to /mnt
+        run: |
+          sudo systemctl stop docker
+          sudo echo '{ "exec-opts": ["native.cgroupdriver=cgroupfs"], "cgroup-parent": "/actions_job", "data-root": "/mnt/docker-data" }' > /etc/docker/daemon.json
+          sudo mkdir /mnt/docker-data
+          sudo systemctl start docker
+
       - name: Start local Kubernetes cluster with the local registry
         uses: medyagh/setup-minikube@latest
         id: minikube
@@ -257,9 +265,9 @@ jobs:
       # TODO: REMOVE LATER
       # Temporal solution to fix the issue with the minikube not enough space
       # Enable Tmate debug ssh session
-      - name: "Setup tmate session"
-        uses: "percona/gh-action-action-tmate@v3"
-        if: ${{ always() }}
+#      - name: "Setup tmate session"
+#        uses: "percona/gh-action-action-tmate@v3"
+#        if: ${{ always() }}
       # -----------------
 
       - name: Expose local registry
