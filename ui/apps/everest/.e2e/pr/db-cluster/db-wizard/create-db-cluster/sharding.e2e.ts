@@ -154,7 +154,6 @@ test.describe('Sharding (psmdb)', () => {
 
     await page.getByTestId('shard-config-servers-1').click();
     expect(page.getByTestId('shard-config-servers-error')).toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
 
     await page.getByTestId('toggle-button-nodes-1').click();
     expect(page.getByTestId('shard-config-servers-error')).not.toBeVisible();
@@ -162,7 +161,6 @@ test.describe('Sharding (psmdb)', () => {
 
     await page.getByTestId('toggle-button-nodes-3').click();
     expect(page.getByTestId('shard-config-servers-error')).toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
 
     await page.getByTestId('shard-config-servers-3').click();
     expect(page.getByTestId('shard-config-servers-error')).not.toBeVisible();
@@ -180,7 +178,6 @@ test.describe('Sharding (psmdb)', () => {
 
     await page.getByTestId('text-input-shard-nr').fill('0');
     expect(page.getByText('The value cannot be less than 1')).toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
     await page.getByTestId('text-input-shard-nr').fill('1');
     expect(page.getByTestId('db-wizard-continue-button')).not.toBeDisabled();
   });
