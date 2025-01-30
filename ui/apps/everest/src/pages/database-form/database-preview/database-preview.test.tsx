@@ -32,7 +32,11 @@ describe('DatabasePreview', () => {
     render(
       <FormProviderWrapper>
         <TestWrapper>
-          <DatabasePreview activeStep={0} longestAchievedStep={0} />
+          <DatabasePreview
+            stepsWithErrors={[]}
+            activeStep={0}
+            longestAchievedStep={0}
+          />
         </TestWrapper>
       </FormProviderWrapper>
     );
@@ -52,7 +56,11 @@ describe('DatabasePreview', () => {
         }}
       >
         <TestWrapper>
-          <DatabasePreview activeStep={0} longestAchievedStep={0} />
+          <DatabasePreview
+            stepsWithErrors={[]}
+            activeStep={0}
+            longestAchievedStep={0}
+          />
         </TestWrapper>
       </FormProviderWrapper>
     );
@@ -75,7 +83,11 @@ describe('DatabasePreview', () => {
         }}
       >
         <TestWrapper>
-          <DatabasePreview activeStep={1} longestAchievedStep={1} />
+          <DatabasePreview
+            stepsWithErrors={[]}
+            activeStep={1}
+            longestAchievedStep={1}
+          />
         </TestWrapper>
       </FormProviderWrapper>
     );
@@ -114,7 +126,11 @@ describe('DatabasePreview', () => {
       >
         <TestWrapper>
           <FormConsumer />
-          <DatabasePreview activeStep={1} longestAchievedStep={1} />
+          <DatabasePreview
+            stepsWithErrors={[]}
+            activeStep={1}
+            longestAchievedStep={1}
+          />
         </TestWrapper>
       </FormProviderWrapper>
     );
