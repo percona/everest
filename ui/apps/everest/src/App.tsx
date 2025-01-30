@@ -61,7 +61,7 @@ const App = () => {
     '';
 
   const cache = createCache({
-    key: 'css',
+    key: 'percona-css',
     nonce,
     prepend: true,
   });
