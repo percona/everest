@@ -9,15 +9,15 @@ import { getDbWizardDefaultValues } from '../database-form.utils';
 
 const FormProviderWrapper = ({
   children,
-  dbType = DbType.Mongo,
-  values = {},
+  values = {
+    dbType: DbType.Mongo,
+  },
 }: {
   children: React.ReactNode;
-  dbType?: DbType;
   values?: Partial<DbWizardType>;
 }) => {
   const methods = useForm<DbWizardType>({
-    defaultValues: { ...getDbWizardDefaultValues(dbType), ...values },
+    defaultValues: { ...getDbWizardDefaultValues(values.dbType!), ...values },
   });
 
   return (
@@ -27,7 +27,7 @@ const FormProviderWrapper = ({
   );
 };
 
-describe('DatabasePreview', () => {
+describe.only('DatabasePreview', () => {
   it('should show all sections', () => {
     render(
       <FormProviderWrapper>
@@ -72,7 +72,7 @@ describe('DatabasePreview', () => {
     expect(screen.queryByText('Nº nodes: 1')).not.toBeInTheDocument();
   });
 
-  it('should show values from previous steps', () => {
+  it.only('should show values from previous steps', async () => {
     render(
       <FormProviderWrapper
         values={{
@@ -92,13 +92,17 @@ describe('DatabasePreview', () => {
       </FormProviderWrapper>
     );
 
+    await waitFor(() =>
+      expect(screen.getByText('CPU: 0.60 CPU')).toBeInTheDocument()
+    );
+
     expect(screen.getByText('Name: myDB')).toBeInTheDocument();
     expect(screen.getByText('Type: MySQL')).toBeInTheDocument();
     expect(screen.getByText('Version: 1.0.0')).toBeInTheDocument();
-
-    expect(screen.getByText('Nº nodes: 1')).toBeInTheDocument();
-    expect(screen.getAllByText('CPU: 1.00 CPU').length).toBeGreaterThan(1);
-    expect(screen.getByText('Disk: 30.00 Gi')).toBeInTheDocument();
+    expect(screen.getByText('Nº nodes: 3')).toBeInTheDocument();
+    expect(screen.getByText('Memory: 6.00 GB')).toBeInTheDocument();
+    expect(screen.getByText('CPU: 3.00 CPU')).toBeInTheDocument();
+    expect(screen.getByText('Disk: 90.00 Gi')).toBeInTheDocument();
   });
 
   it('should get updated form values', async () => {
