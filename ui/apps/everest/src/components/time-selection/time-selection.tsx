@@ -43,18 +43,27 @@ export const TimeSelection = ({
   const isFirstDayOfTheMonthAndPositiveOffset =
     selectedTime === TimeValue.months &&
     onDay === 1 &&
-    amPm === AmPM.AM &&
     TIMEZONE_OFFSET_HOURS > 0;
 
   const changeSelectableTime =
     shouldRestrictSelectableHours && isFirstDayOfTheMonthAndPositiveOffset;
 
+  const FIRST_HOUR_AVAILABLE =
+    TIMEZONE_OFFSET_HOURS < 12
+      ? TIMEZONE_OFFSET_HOURS
+      : TIMEZONE_OFFSET_HOURS - 12;
+
   const selectableHours = changeSelectableTime
     ? Array.from(
-        { length: 12 - TIMEZONE_OFFSET_HOURS },
-        (_, i) => i + Math.floor(TIMEZONE_OFFSET_HOURS)
+        { length: 12 - FIRST_HOUR_AVAILABLE },
+        (_, i) => i + FIRST_HOUR_AVAILABLE
       )
     : HOURS_AM_PM;
+
+  const selectableAmPm =
+    changeSelectableTime && TIMEZONE_OFFSET_HOURS > 12
+      ? [AmPM.PM]
+      : [AmPM.AM, AmPM.PM];
 
   const selectableMinutes =
     TIMEZONE_OFFSET_MINUTES > 0 && changeSelectableTime
@@ -68,8 +77,11 @@ export const TimeSelection = ({
     const { isDirty: isMinuteFieldDirty } = getFieldState(
       TimeSelectionFields.minute
     );
+    const { isDirty: isAmPmFieldDirty } = getFieldState(
+      TimeSelectionFields.amPm
+    );
     if (changeSelectableTime && !isHourFieldDirty && !editMode) {
-      setValue(TimeSelectionFields.hour, Math.floor(TIMEZONE_OFFSET_HOURS));
+      setValue(TimeSelectionFields.hour, Math.floor(FIRST_HOUR_AVAILABLE));
     }
     if (
       changeSelectableTime &&
@@ -78,6 +90,15 @@ export const TimeSelection = ({
       !editMode
     ) {
       setValue(TimeSelectionFields.minute, TIMEZONE_OFFSET_MINUTES);
+    }
+
+    if (
+      changeSelectableTime &&
+      TIMEZONE_OFFSET_HOURS > 12 &&
+      !isAmPmFieldDirty &&
+      !editMode
+    ) {
+      setValue(TimeSelectionFields.amPm, AmPM.PM);
     }
   }, [
     selectedTime,
@@ -93,6 +114,7 @@ export const TimeSelection = ({
     changeSelectableTime,
     TIMEZONE_OFFSET_MINUTES,
     TIMEZONE_OFFSET_HOURS,
+    FIRST_HOUR_AVAILABLE,
   ]);
 
   const timeInfoText = useMemo(
@@ -154,6 +176,11 @@ export const TimeSelection = ({
             <TimeFields
               selectableHours={selectableHours}
               selectableMinutes={selectableMinutes}
+              selectableAmPm={selectableAmPm}
+              shouldRestrictTime={
+                shouldRestrictSelectableHours &&
+                isFirstDayOfTheMonthAndPositiveOffset
+              }
             />
           )}
         </Box>
