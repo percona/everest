@@ -13,6 +13,7 @@ import (
 	goversion "github.com/hashicorp/go-version"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
 	"github.com/percona/everest/api"
 	versionservice "github.com/percona/everest/pkg/version_service"
 )
@@ -39,7 +40,7 @@ func (h *k8sHandler) GetUpgradePlan(ctx context.Context, namespace string) (*api
 	if err != nil {
 		return nil, fmt.Errorf("failed to getUpgradePlan: %w", err)
 	}
-	// Abort upgrades available, so we will check if our clusters are ready for current version.
+	// No upgrades available, so we will check if our clusters are ready for current version.
 	if len(pointer.Get(result.Upgrades)) == 0 {
 		result.PendingActions = pointer.To([]api.UpgradeTask{})
 		engines, err := h.kubeClient.ListDatabaseEngines(ctx, namespace)
