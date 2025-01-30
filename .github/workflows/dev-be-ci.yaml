@@ -360,13 +360,13 @@ jobs:
           kubectl get configmap everest-rbac -n everest-system -ojsonpath='{.data.policy\.csv}'
 
       - name: Init integration tests
-        working-directory: api-tests
         run: |
+          cd api-tests
           make init
 
       - name: Run integration tests
-        working-directory: api-tests
         run: |
+          cd api-tests
           make test
 
       - name: Run debug commands on failure
@@ -432,9 +432,9 @@ jobs:
         uses: helm/kind-action@v1.12.0
 
       - name: Run integration tests
-        working-directory: cli-tests
         id: cli-tests
         run: |
+          cd cli-tests
           make init
           make install-operators
           make test-cli

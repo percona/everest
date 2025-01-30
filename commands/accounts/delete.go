@@ -53,13 +53,13 @@ func accountsDeletePreRun(cmd *cobra.Command, _ []string) { //nolint:revive
 
 	// Check username
 	if accountsDeleteUsername != "" {
-		// Validate provided username for new account.
+		// Validate provided username to be deleted.
 		if err := accountscli.ValidateUsername(accountsDeleteUsername); err != nil {
 			output.PrintError(err, logger.GetLogger(), accountsDeleteCfg.Pretty)
 			os.Exit(1)
 		}
 	} else {
-		// Ask user in interactive mode to provide username for new account.
+		// Ask user in interactive mode to provide username to delete.
 		if username, err := accountscli.PopulateUsername(cmd.Context()); err != nil {
 			output.PrintError(err, logger.GetLogger(), accountsDeleteCfg.Pretty)
 			os.Exit(1)

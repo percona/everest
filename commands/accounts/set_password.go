@@ -56,13 +56,13 @@ func accountsSetPasswordPreRun(cmd *cobra.Command, _ []string) { //nolint:revive
 
 	// Check username
 	if accountsSetPasswordOpts.Username != "" {
-		// Validate provided username for new account.
+		// Validate provided username for whom password shall be changed.
 		if err := accountscli.ValidateUsername(accountsSetPasswordOpts.Username); err != nil {
 			output.PrintError(err, logger.GetLogger(), accountsSetPasswordCfg.Pretty)
 			os.Exit(1)
 		}
 	} else {
-		// Ask user in interactive mode to provide username for new account.
+		// Ask user in interactive mode to provide username for whom password shall be changed.
 		if username, err := accountscli.PopulateUsername(cmd.Context()); err != nil {
 			output.PrintError(err, logger.GetLogger(), accountsSetPasswordCfg.Pretty)
 			os.Exit(1)
@@ -73,13 +73,13 @@ func accountsSetPasswordPreRun(cmd *cobra.Command, _ []string) { //nolint:revive
 
 	// Check password
 	if accountsSetPasswordOpts.NewPassword != "" {
-		// Validate provided password for new account.
+		// Validate provided a new password.
 		if err := accountscli.ValidatePassword(accountsSetPasswordOpts.NewPassword); err != nil {
 			output.PrintError(err, logger.GetLogger(), accountsSetPasswordCfg.Pretty)
 			os.Exit(1)
 		}
 	} else {
-		// Ask user in interactive mode to provide password for new account.
+		// Ask user in interactive mode to provide a new password.
 		if password, err := accountscli.PopulateNewPassword(cmd.Context()); err != nil {
 			output.PrintError(err, logger.GetLogger(), accountsSetPasswordCfg.Pretty)
 			os.Exit(1)
