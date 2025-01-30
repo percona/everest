@@ -23,6 +23,7 @@ export const PreviewSection = ({
   const theme = useTheme();
   const showEdit = !active && hasBeenReached;
   const { isDesktop } = useActiveBreakpoint();
+  const kebabizedTitle = kebabize(title.replace(/\s/g, ''));
 
   return (
     <Stack
@@ -67,9 +68,7 @@ export const PreviewSection = ({
               size="small"
               disabled={disabled}
               onClick={onEditClick}
-              data-testid={`button-edit-preview-${kebabize(
-                title.replace(/\s/g, '')
-              )}`}
+              data-testid={`button-edit-preview-${kebabizedTitle}`}
             >
               <EditOutlinedIcon
                 sx={{
@@ -82,6 +81,7 @@ export const PreviewSection = ({
         </Typography>
         {hasError && (
           <ErrorOutlineIcon
+            data-testid={`preview-error-${kebabizedTitle}`}
             color="error"
             fontSize="small"
             sx={{

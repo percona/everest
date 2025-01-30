@@ -16,10 +16,14 @@ export const storageLocationAutocompleteEmptyValidationCheck = async (
 };
 
 export const moveForward = async (page: Page) => {
-  await expect(
-    page.getByTestId('db-wizard-continue-button')
-  ).not.toBeDisabled();
+  const currHeader = await page.getByTestId('step-header').textContent();
   await page.getByTestId('db-wizard-continue-button').click();
+
+  do {
+    page.waitForTimeout(200);
+  } while (
+    (await page.getByTestId('step-header').textContent()) === currHeader
+  );
 };
 
 export const moveBack = (page: Page) =>
