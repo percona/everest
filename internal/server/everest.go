@@ -102,7 +102,7 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 }
 
 type Template struct {
-    templates *template.Template
+	templates *template.Template
 }
 
 func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
@@ -121,6 +121,26 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	}
 	staticFilesHandler := http.FileServer(http.FS(fsys))
 	indexFS := echo.MustSubFS(public.Index, "dist")
+	connectSrc := "connect-src 'self' "
+	settings, err := e.kubeClient.GetEverestSettings(ctx)
+
+	if err = client.IgnoreNotFound(err); err == nil {
+		oidcConfig, err := settings.OIDCConfig()
+
+		if err == nil {
+			connectSrc +=
+				oidcConfig.IssuerURL + "/.well-known/openid-configuration " +
+					// TODO The following need to come from the discovery endpoint above, namely:
+					// authorization_endpoint, token_endpoint, userinfo_endpoint, revocation_endpoint, registration_endpoint, end_session_endpoint
+					oidcConfig.IssuerURL + "/authorize " +
+					oidcConfig.IssuerURL + "/v1/token " +
+					oidcConfig.IssuerURL + "/userinfo " +
+					oidcConfig.IssuerURL + "/revoke " +
+					oidcConfig.IssuerURL + "/registration " +
+					oidcConfig.IssuerURL + "/logout"
+		}
+	}
+
 	// FIXME: Ideally it should be redirected to /everest/ and FE app should be served using this endpoint.
 	//
 	// We tried to do this with Fabio and FE app requires the following changes to be implemented:
@@ -146,27 +166,27 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	secureMiddleware := secure.New(secure.Options{
 		// @emotion adds an extra inline style with the SHA256 hash of an empty string, so we allow it
 		//https://github.com/emotion-js/emotion/issues/2996
-		ContentSecurityPolicy: "default-src 'self'; font-src 'self' data:; style-src 'self' 'nonce-EDNnf03nceIOfn39fn3e9h3sdfa' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests; block-all-mixed-content",
+		ContentSecurityPolicy: "default-src 'self'; font-src 'self' data:; style-src 'self' 'nonce-EDNnf03nceIOfn39fn3e9h3sdfa' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests; block-all-mixed-content;" + connectSrc,
 		ContentTypeNosniff:    true,
-        FrameDeny:             true,
+		FrameDeny:             true,
 		PermissionsPolicy:     "accelerometer=(), autoplay=(), camera=(), cross-origin-isolated=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(self), usb=(), web-share=(), xr-spatial-tracking=(), clipboard-read=(), clipboard-write=(), gamepad=(), hid=(), idle-detection=(), interest-cohort=(), serial=(), unload=()",
 		ReferrerPolicy:        "no-referrer",
 		STSIncludeSubdomains:  true,
 		STSSeconds:            31536000,
 		// FIXME: It doesn't make sense to force this, we need to figure this
 		// when we support TLS
-		ForceSTSHeader:        true,
-    })
+		ForceSTSHeader: true,
+	})
 	// FIXME: This middleware must only apply to the above routes, but it's
 	// currently applied to all routes.
 	e.echo.Use(echo.WrapMiddleware(secureMiddleware.Handler))
-//	e.echo.Use(echomiddleware.SecureWithConfig(echomiddleware.SecureConfig{
-//		ContentTypeNosniff:    "nosniff",
-//		XFrameOptions:         "deny",
-//		HSTSMaxAge:            31536000,
-//		ContentSecurityPolicy: "default-src 'self'; font-src 'self' data:; style-src 'self' 'unsafe-inline'; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests; block-all-mixed-content",
-//		ReferrerPolicy:        "no-referrer",
-//	}))
+	//	e.echo.Use(echomiddleware.SecureWithConfig(echomiddleware.SecureConfig{
+	//		ContentTypeNosniff:    "nosniff",
+	//		XFrameOptions:         "deny",
+	//		HSTSMaxAge:            31536000,
+	//		ContentSecurityPolicy: "default-src 'self'; font-src 'self' data:; style-src 'self' 'unsafe-inline'; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests; block-all-mixed-content",
+	//		ReferrerPolicy:        "no-referrer",
+	//	}))
 	e.echo.Pre(echomiddleware.RemoveTrailingSlash())
 
 	basePath, err := swagger.Servers.BasePath()
