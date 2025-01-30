@@ -20,10 +20,11 @@ export const moveForward = async (page: Page) => {
   await page.getByTestId('db-wizard-continue-button').click();
 
   do {
+    if ((await page.getByTestId('step-header').textContent()) !== currHeader) {
+      break;
+    }
     page.waitForTimeout(200);
-  } while (
-    (await page.getByTestId('step-header').textContent()) === currHeader
-  );
+  } while (1);
 };
 
 export const moveBack = (page: Page) =>
