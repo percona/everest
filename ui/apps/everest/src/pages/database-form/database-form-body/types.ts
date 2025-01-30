@@ -12,7 +12,6 @@ export type DatabaseFormBodyProps = {
 
 export type DatabaseFormStepControllersProps = {
   disableBack?: boolean;
-  disableNext?: boolean;
   disableSubmit?: boolean;
   disableCancel?: boolean;
   showSubmit?: boolean;

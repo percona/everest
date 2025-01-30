@@ -59,7 +59,6 @@ export const DatabasePage = () => {
         options
       );
       if (Object.keys(result.errors).length > 0) {
-        console.log('RESOLVER', result.errors);
         setStepsWithErrors((prev) => {
           if (!prev.includes(activeStep)) {
             return [...prev, activeStep];
@@ -158,8 +157,6 @@ export const DatabasePage = () => {
   useEffect(() => {
     trigger();
   }, [activeStep, trigger]);
-
-  console.log('stepsWithErrors', stepsWithErrors);
 
   useEffect(() => {
     // We disable the inputs on first step to make sure user doesn't change anything before all data is loaded

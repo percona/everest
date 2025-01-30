@@ -20,7 +20,6 @@ import { DatabaseFormStepControllersProps } from './types';
 
 const DatabaseFormStepControllers = ({
   disableBack,
-  disableNext,
   disableSubmit,
   disableCancel,
   showSubmit,
@@ -66,7 +65,6 @@ const DatabaseFormStepControllers = ({
         onClick={onNextClick}
         variant="contained"
         data-testid="db-wizard-continue-button"
-        disabled={disableNext}
       >
         {Messages.continue}
       </Button>
