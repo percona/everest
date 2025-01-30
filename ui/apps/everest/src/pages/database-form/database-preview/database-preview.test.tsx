@@ -27,7 +27,7 @@ const FormProviderWrapper = ({
   );
 };
 
-describe.only('DatabasePreview', () => {
+describe('DatabasePreview', () => {
   it('should show all sections', () => {
     render(
       <FormProviderWrapper>
@@ -72,7 +72,7 @@ describe.only('DatabasePreview', () => {
     expect(screen.queryByText('Nº nodes: 1')).not.toBeInTheDocument();
   });
 
-  it.only('should show values from previous steps', async () => {
+  it('should show values from previous steps', async () => {
     render(
       <FormProviderWrapper
         values={{
