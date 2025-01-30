@@ -28,8 +28,7 @@ interface AdvancedConfigurationFormProps {
 export const AdvancedConfigurationForm = ({
   dbType,
 }: AdvancedConfigurationFormProps) => {
-  const { watch, formState } = useFormContext();
-  console.log('form state.errors', formState.errors);
+  const { watch } = useFormContext();
   const [externalAccess, engineParametersEnabled] = watch([
     AdvancedConfigurationFields.externalAccess,
     AdvancedConfigurationFields.engineParametersEnabled,
