@@ -39,7 +39,8 @@ const AppBarUserIcon = () => {
   const preferredUsername = decoded.preferred_username;
   const name = decoded.name;
   const email = decoded.email;
-  const sub = decoded.sub?.substring(0, decoded.sub.indexOf(':')) || '';
+  const sub =
+    decoded.sub?.substring(0, decoded.sub.indexOf(':')) || decoded.sub;
 
   const userToShow = preferredUsername || name || email || sub;
 
