@@ -1,4 +1,4 @@
-import { everestTagForUpgrade } from '@e2e/constants';
+import { everestTagForUpgrade, everestFeatureBuildForUpgrade } from '@e2e/constants';
 
 export const pxcDBCluster = {
   name: 'pxc-db-cluster',
@@ -37,7 +37,11 @@ export const postgresDBCluster = {
 export const expectedEverestUpgradeLog = (
   tag = everestTagForUpgrade.replace(/v/g, '')
 ) => {
-  return `ℹ️  Upgrading Everest to version ${tag}
+  const version = typeof everestFeatureBuildForUpgrade !== 'undefined' && everestFeatureBuildForUpgrade
+    ? everestFeatureBuildForUpgrade
+    : tag;
+
+  return `ℹ️  Upgrading Everest to version ${version}
 
 ✓ Upgrading Custom Resource Definitions
 ✓ Upgrading Helm chart
@@ -45,15 +49,14 @@ export const expectedEverestUpgradeLog = (
 ✓ Ensuring Everest operator deployment is ready
 ✓ Ensuring Everest CatalogSource is ready
 
- 🚀 Everest has been upgraded to version ${tag}
+ 🚀 Everest has been upgraded to version ${version}
 
 
-To view the password for the 'admin' user, run the following command:
+Run the following command to get the initial admin password:
 
-everestctl accounts initial-admin-password
+	everestctl accounts initial-admin-password
 
+NOTE: The initial password is stored in plain text. For security, change it immediately using the following command:
 
-IMPORTANT: This password is NOT stored in a hashed format. To secure it, update the password using the following command:
-
-everestctl accounts set-password --username admin`;
+	everestctl accounts set-password --username admin`;
 };
