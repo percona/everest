@@ -113,7 +113,7 @@ jobs:
           echo "VS_URL=http://localhost:$VS_PORT" | tee -a $GITHUB_ENV
           
           TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-          V="1.10000.0-rc$TIMESTAMP"
+          V="1.10000.1-rc$TIMESTAMP"
           echo "VERSION=$V" | tee -a $GITHUB_ENV
           echo "VERSION_TAG=v$V" | tee -a $GITHUB_ENV
           echo "VS_TAG=everest-test$TIMESTAMP" | tee -a $GITHUB_ENV
