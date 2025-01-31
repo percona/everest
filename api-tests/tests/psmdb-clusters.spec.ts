@@ -283,7 +283,7 @@ test('sharded psmdb cluster', async ({ request, page }) => {
         },
       },
       engine: {
-        version: '7.0.14-8',
+        version: '8.0.4-1',
         type: 'psmdb',
         replicas: 1,
         storage: {
