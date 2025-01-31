@@ -161,6 +161,12 @@ export const DatabasePage = () => {
     }
   }, [defaultValues, isDirty, reset, mode]);
 
+  useEffect(() => {
+    if (!location.state) {
+      navigate('/');
+    }
+  }, []);
+
   return formSubmitted ? (
     <ConfirmationScreen />
   ) : (
