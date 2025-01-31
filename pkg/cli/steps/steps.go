@@ -18,23 +18,16 @@ package steps
 
 import (
 	"context"
-	"fmt"
-	"io"
-	"time"
 
-	"github.com/briandowns/spinner"
+	"go.uber.org/zap"
 
-	"github.com/percona/everest/pkg/output"
-)
-
-const (
-	spinnerInterval = 150 * time.Millisecond
+	"github.com/percona/everest/pkg/cli/tui"
 )
 
 // Step provides a way to run a function with a
 // pretty loading spinner animation.
 type Step struct {
-	// Desc is a human readable description of the step.
+	// Desc is a human-readable description of the step.
 	Desc string
 	// F is the function that will be called to execute the step.
 	F func(ctx context.Context) error
@@ -43,25 +36,22 @@ type Step struct {
 // RunStepsWithSpinner runs a list of steps with a loading spinner animation.
 func RunStepsWithSpinner(
 	ctx context.Context,
+	l *zap.SugaredLogger,
 	steps []Step,
-	out io.Writer,
+	prettyPrint bool,
 ) error {
-	s := spinner.New(
-		spinner.CharSets[9],
-		spinnerInterval,
-		spinner.WithWriter(out),
-	)
+	spinnerSteps := make([]tui.Step, 0, len(steps))
 	for _, step := range steps {
-		s.Suffix = " " + step.Desc
-		s.Start()
-		if err := step.F(ctx); err != nil {
-			s.Stop()
-			fmt.Fprint(out, output.Failure(step.Desc)) //nolint:govet
-			fmt.Fprint(out, "\t", err, "\n")
-			return err
-		}
-		s.Stop()
-		fmt.Fprint(out, output.Success(step.Desc)) //nolint:govet
+		spinnerSteps = append(spinnerSteps, tui.Step{
+			Desc: step.Desc,
+			F:    step.F,
+		})
 	}
+
+	if err := tui.NewSpinner(ctx, l, spinnerSteps, tui.WithSpinnerPrettyPrint(prettyPrint)).
+		Run(); err != nil {
+		return err
+	}
+
 	return nil
 }

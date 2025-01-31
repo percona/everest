@@ -27,7 +27,7 @@ import (
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
-func (o *Install) newStepInstallEverestHelmChart() steps.Step {
+func (o *Installer) newStepInstallEverestHelmChart() steps.Step {
 	return steps.Step{
 		Desc: "Installing Everest Helm chart",
 		F: func(ctx context.Context) error {
@@ -36,7 +36,7 @@ func (o *Install) newStepInstallEverestHelmChart() steps.Step {
 	}
 }
 
-func (o *Install) newStepEnsureEverestOperator() steps.Step {
+func (o *Installer) newStepEnsureEverestOperator() steps.Step {
 	return steps.Step{
 		Desc: "Ensuring Everest operator deployment is ready",
 		F: func(ctx context.Context) error {
@@ -45,7 +45,7 @@ func (o *Install) newStepEnsureEverestOperator() steps.Step {
 	}
 }
 
-func (o *Install) newStepEnsureEverestAPI() steps.Step {
+func (o *Installer) newStepEnsureEverestAPI() steps.Step {
 	return steps.Step{
 		Desc: "Ensuring Everest API deployment is ready",
 		F: func(ctx context.Context) error {
@@ -54,7 +54,7 @@ func (o *Install) newStepEnsureEverestAPI() steps.Step {
 	}
 }
 
-func (o *Install) newStepEnsureEverestOLM() steps.Step {
+func (o *Installer) newStepEnsureEverestOLM() steps.Step {
 	return steps.Step{
 		Desc: "Ensuring OLM components are ready",
 		F: func(ctx context.Context) error {
@@ -72,14 +72,14 @@ func (o *Install) newStepEnsureEverestOLM() steps.Step {
 	}
 }
 
-func (o *Install) newStepEnsureEverestMonitoring() steps.Step {
+func (o *Installer) newStepEnsureEverestMonitoring() steps.Step {
 	return steps.Step{
 		Desc: "Ensuring monitoring stack is ready",
 		F: func(ctx context.Context) error {
 			if err := o.waitForDeployment(ctx, common.VictoriaMetricsOperatorDeploymentName, common.MonitoringNamespace); err != nil {
 				return err
 			}
-			if o.clusterType != kubernetes.ClusterTypeOpenShift {
+			if o.cfg.ClusterType != kubernetes.ClusterTypeOpenShift {
 				if err := o.waitForDeployment(ctx, common.KubeStateMetricsDeploymentName, common.MonitoringNamespace); err != nil {
 					return err
 				}
@@ -89,7 +89,7 @@ func (o *Install) newStepEnsureEverestMonitoring() steps.Step {
 	}
 }
 
-func (o *Install) newStepEnsureCatalogSource() steps.Step {
+func (o *Installer) newStepEnsureCatalogSource() steps.Step {
 	return steps.Step{
 		Desc: "Ensuring Everest CatalogSource is ready",
 		F: func(ctx context.Context) error {
@@ -112,7 +112,7 @@ func (o *Install) newStepEnsureCatalogSource() steps.Step {
 	}
 }
 
-func (o *Install) waitForDeployment(ctx context.Context, name, namespace string) error {
+func (o *Installer) waitForDeployment(ctx context.Context, name, namespace string) error {
 	o.l.Infof("Waiting for Deployment '%s' in namespace '%s'", name, namespace)
 	if err := o.kubeClient.WaitForRollout(ctx, name, namespace); err != nil {
 		return err
@@ -121,7 +121,7 @@ func (o *Install) waitForDeployment(ctx context.Context, name, namespace string)
 	return nil
 }
 
-func (o *Install) installEverestHelmChart(ctx context.Context) error {
+func (o *Installer) installEverestHelmChart(ctx context.Context) error {
 	o.l.Info("Installing Everest Helm chart")
 	if err := o.helmInstaller.Install(ctx); err != nil {
 		return fmt.Errorf("could not install Helm chart: %w", err)

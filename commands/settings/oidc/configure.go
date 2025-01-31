@@ -50,12 +50,42 @@ func settingsOIDCConfigurePreRun(cmd *cobra.Command, _ []string) { //nolint:revi
 	// Copy global flags to config
 	settingsOIDCConfigureCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
 	settingsOIDCConfigureCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
+
+	// Check if issuer URL is provided
+	if settingsOIDCConfigureCfg.IssuerURL == "" {
+		// Ask user to provide issuer URL in interactive mode
+		if err := settingsOIDCConfigureCfg.PopulateIssuerURL(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+			os.Exit(1)
+		}
+	} else {
+		// Validate issuer URL provided by user in flags
+		if err := oidc.ValidateURL(settingsOIDCConfigureCfg.IssuerURL); err != nil {
+			output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+			os.Exit(1)
+		}
+	}
+
+	// Check if Client ID is provided
+	if settingsOIDCConfigureCfg.ClientID == "" {
+		// Ask user to provide client ID in interactive mode
+		if err := settingsOIDCConfigureCfg.PopulateClientID(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+			os.Exit(1)
+		}
+	} else {
+		// Validate client ID provided by user in flags
+		if err := oidc.ValidateClientID(settingsOIDCConfigureCfg.ClientID); err != nil {
+			output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+			os.Exit(1)
+		}
+	}
 }
 
 func settingsOIDCConfigureRun(cmd *cobra.Command, _ []string) {
 	op, err := oidc.NewOIDC(*settingsOIDCConfigureCfg, logger.GetLogger())
 	if err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
 		os.Exit(1)
 	}
 
