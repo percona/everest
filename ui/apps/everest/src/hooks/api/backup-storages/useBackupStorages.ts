@@ -18,8 +18,6 @@ import {
   UseMutationOptions,
   useQueries,
   useQuery,
-  UseQueryOptions,
-  UseQueryResult,
 } from '@tanstack/react-query';
 import {
   createBackupStorageFn,
@@ -32,46 +30,31 @@ import {
   GetBackupStoragesPayload,
 } from 'shared-types/backupStorages.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
+import { useNamespaces } from '../namespaces';
 
 export const BACKUP_STORAGES_QUERY_KEY = 'backupStorages';
 
-export interface BackupStoragesForNamespaceResult {
-  namespace: string;
-  queryResult: UseQueryResult<BackupStorage[], unknown>;
-}
+export type BackupStoragesForNamespaceResult =
+  PerconaQueryOptions<GetBackupStoragesPayload>;
 
-export const useBackupStorages = (
-  queriesParams: Array<{
-    namespace: string;
-    options?: PerconaQueryOptions<
-      GetBackupStoragesPayload,
-      unknown,
-      BackupStorage[]
-    >;
-  }>
-) => {
-  const queries = queriesParams.map<
-    UseQueryOptions<GetBackupStoragesPayload, unknown, BackupStorage[]>
-  >(({ namespace, options }) => {
+export const useBackupStorages = () => {
+  const { data: namespaces = [] } = useNamespaces({
+    refetchInterval: 5 * 1000,
+  });
+  const queries = namespaces.map((namespace) => {
     return {
       queryKey: [BACKUP_STORAGES_QUERY_KEY, namespace],
       retry: false,
       queryFn: () => getBackupStoragesFn(namespace),
       refetchInterval: 5 * 1000,
-      ...options,
     };
   });
 
-  const queryResults = useQueries({ queries });
+  const queryResults = useQueries({
+    queries,
+  });
 
-  const results: BackupStoragesForNamespaceResult[] = queryResults.map(
-    (item, i) => ({
-      namespace: queriesParams[i].namespace,
-      queryResult: item,
-    })
-  );
-
-  return results;
+  return queryResults;
 };
 
 export const useBackupStoragesByNamespace = (
