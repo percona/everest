@@ -26,10 +26,12 @@ export const checkError = async (response) => {
 };
 
 export const getVersionServiceURL = async () => {
-  if (typeof everestFeatureBuildForUpgrade !== 'undefined' && everestFeatureBuildForUpgrade) {
-    return "http://localhost:8081";
-  }
-  else {
+  if (
+    typeof everestFeatureBuildForUpgrade !== 'undefined' &&
+    everestFeatureBuildForUpgrade
+  ) {
+    return 'http://localhost:8081';
+  } else {
     try {
       const command = `kubectl get deployment everest-server --namespace everest-system -o jsonpath="{.spec.template.spec.containers[0].env[?(@.name=='VERSION_SERVICE_URL')].value}"`;
       const output = execSync(command).toString();
@@ -39,5 +41,4 @@ export const getVersionServiceURL = async () => {
       throw error;
     }
   }
-
 };

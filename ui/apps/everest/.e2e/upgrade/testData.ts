@@ -1,4 +1,7 @@
-import { everestTagForUpgrade, everestFeatureBuildForUpgrade } from '@e2e/constants';
+import {
+  everestTagForUpgrade,
+  everestFeatureBuildForUpgrade,
+} from '@e2e/constants';
 
 export const pxcDBCluster = {
   name: 'pxc-db-cluster',
@@ -37,9 +40,11 @@ export const postgresDBCluster = {
 export const expectedEverestUpgradeLog = (
   tag = everestTagForUpgrade.replace(/v/g, '')
 ) => {
-  const version = typeof everestFeatureBuildForUpgrade !== 'undefined' && everestFeatureBuildForUpgrade
-    ? everestFeatureBuildForUpgrade
-    : tag;
+  const version =
+    typeof everestFeatureBuildForUpgrade !== 'undefined' &&
+    everestFeatureBuildForUpgrade
+      ? everestFeatureBuildForUpgrade
+      : tag;
 
   return `ℹ️  Upgrading Everest to version ${version}
 
