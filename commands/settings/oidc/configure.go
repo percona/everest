@@ -18,10 +18,12 @@ package oidc
 
 import (
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/percona/everest/pkg/cli"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/logger"
 	"github.com/percona/everest/pkg/oidc"
 	"github.com/percona/everest/pkg/output"
@@ -33,7 +35,7 @@ var (
 		Args:    cobra.NoArgs,
 		Long:    "Configure OIDC settings",
 		Short:   "Configure OIDC settings",
-		Example: `everestctl settings oidc configure --issuer-url https://example.com --client-id 123456`,
+		Example: `everestctl settings oidc configure --issuer-url https://example.com --client-id 123456 --scopes openid,profile,email,groups`,
 		PreRun:  settingsOIDCConfigurePreRun,
 		Run:     settingsOIDCConfigureRun,
 	}
@@ -42,8 +44,9 @@ var (
 
 func init() {
 	// local command flags
-	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.IssuerURL, cli.FlagOIDCIssueURL, "", "OIDC issuer url")
-	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.ClientID, cli.FlagOIDCIssueClientID, "", "OIDC application client ID")
+	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.IssuerURL, cli.FlagOIDCIssuerURL, "", "OIDC issuer url")
+	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.ClientID, cli.FlagOIDCClientID, "", "OIDC application client ID")
+	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.Scopes, cli.FlagOIDCScopes, strings.Join(common.DefaultOIDCScopes, ","), "Comma-separated list of scopes")
 }
 
 func settingsOIDCConfigurePreRun(cmd *cobra.Command, _ []string) { //nolint:revive
