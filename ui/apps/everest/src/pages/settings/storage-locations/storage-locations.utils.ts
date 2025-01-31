@@ -1,6 +1,9 @@
-import { StorageType } from 'shared-types/backupStorages.types';
+import { UseQueryResult } from '@tanstack/react-query';
+import {
+  GetBackupStoragesPayload,
+  StorageType,
+} from 'shared-types/backupStorages.types';
 import { Messages } from './storage-locations.messages';
-import { BackupStoragesForNamespaceResult } from 'hooks/api/backup-storages/useBackupStorages';
 import { BackupStorageTableElement } from './storage-locations.types';
 
 export const convertStoragesType = (value: StorageType) =>
@@ -11,14 +14,13 @@ export const convertStoragesType = (value: StorageType) =>
   })[value];
 
 export const convertBackupStoragesPayloadToTableFormat = (
-  data: BackupStoragesForNamespaceResult[]
+  data: UseQueryResult<GetBackupStoragesPayload, Error>[]
 ): BackupStorageTableElement[] => {
   const result: BackupStorageTableElement[] = [];
   data.forEach((item) => {
-    const tableDataForNamespace: BackupStorageTableElement[] = item?.queryResult
-      ?.isSuccess
-      ? item.queryResult?.data.map((storage) => ({
-          namespace: item.namespace,
+    const tableDataForNamespace: BackupStorageTableElement[] = item.isSuccess
+      ? item.data.map((storage) => ({
+          namespace: storage.namespace,
           name: storage.name,
           type: storage.type,
           bucketName: storage.bucketName,
