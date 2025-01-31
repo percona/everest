@@ -13,7 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useMutation } from '@tanstack/react-query';
+import {
+  MutateOptions,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { updateDbClusterFn } from 'api/dbClusterApi';
 import {
   DbCluster,
@@ -25,13 +29,20 @@ import { getProxySpec } from './utils';
 import { DbEngineType } from 'shared-types/dbEngines.types';
 import { dbEngineToDbType } from '@percona/utils';
 import cronConverter from 'utils/cron-converter';
+import { enqueueSnackbar } from 'notistack';
+import { AxiosError } from 'axios';
+import { useRef } from 'react';
+import { DB_CLUSTER_QUERY, useDbCluster } from './useDbCluster';
+
+const UPDATE_RETRY_TIMEOUT_MS = 5000;
+const UPDATE_RETRY_DELAY_MS = 200;
 
 export const updateDbCluster = (
   clusterName: string,
   namespace: string,
   dbCluster: DbCluster
-) =>
-  updateDbClusterFn(clusterName, namespace, {
+) => {
+  return updateDbClusterFn(clusterName, namespace, {
     ...dbCluster,
     spec: {
       ...dbCluster?.spec,
@@ -50,6 +61,7 @@ export const updateDbCluster = (
       }),
     },
   });
+};
 
 export const useUpdateDbClusterCrd = () =>
   useMutation({
@@ -221,7 +233,8 @@ export const useUpdateDbClusterResources = () =>
             !!sharding,
             ((dbCluster.spec.proxy as Proxy).expose.ipSourceRanges || []).map(
               (sourceRange) => ({ sourceRange })
-            )
+            ),
+            (dbCluster.spec.proxy as Proxy).affinity
           ),
           ...(dbCluster.spec.engine.type === DbEngineType.PSMDB &&
             sharding && {
@@ -296,3 +309,136 @@ export const useUpdateDbClusterPITR = () =>
         },
       }),
   });
+
+// TODO apply this to all update mutations. Right now it's only used in one place, components -> affinity rules
+export const useUpdateDbClusterWithConflictRetry = (
+  oldDbClusterData: DbCluster,
+  mutationOptions?: MutateOptions<
+    DbCluster,
+    AxiosError<unknown, unknown>,
+    {
+      clusterName: string;
+      namespace: string;
+      dbCluster: DbCluster;
+    },
+    unknown
+  >
+) => {
+  const {
+    onSuccess: ownOnSuccess = () => {},
+    onError: ownOnError = () => {},
+    ...restMutationOptions
+  } = mutationOptions || {};
+  const {
+    name: dbClusterName,
+    namespace,
+    generation: dbClusterGeneration,
+  } = oldDbClusterData.metadata;
+
+  const queryClient = useQueryClient();
+  const watchStartTime = useRef<number | null>(null);
+  const clusterDataToBeSent = useRef<DbCluster | null>(null);
+  const { refetch } = useDbCluster(dbClusterName, namespace, {
+    enabled: false,
+  });
+
+  const mutationMethods = useMutation<
+    DbCluster,
+    AxiosError,
+    {
+      clusterName: string;
+      namespace: string;
+      dbCluster: DbCluster;
+    },
+    unknown
+  >({
+    mutationFn: ({
+      clusterName,
+      namespace,
+      dbCluster,
+    }: {
+      clusterName: string;
+      namespace: string;
+      dbCluster: DbCluster;
+    }) => {
+      clusterDataToBeSent.current = dbCluster;
+      return updateDbCluster(clusterName, namespace, dbCluster);
+    },
+    onError: async (error, vars, ctx) => {
+      const { status } = error;
+
+      if (status === 409) {
+        if (watchStartTime.current === null) {
+          watchStartTime.current = Date.now();
+        }
+
+        const timeDiff = Date.now() - watchStartTime.current;
+
+        if (timeDiff > UPDATE_RETRY_TIMEOUT_MS) {
+          enqueueSnackbar(
+            'There is a conflict with the current object definition.',
+            {
+              variant: 'error',
+            }
+          );
+          ownOnError?.(error, vars, ctx);
+          watchStartTime.current = null;
+          return;
+        }
+
+        return new Promise<void>((resolve) =>
+          setTimeout(async () => {
+            const { data: freshDbCluster } = await refetch();
+
+            if (freshDbCluster) {
+              const { generation, resourceVersion } = freshDbCluster.metadata;
+
+              if (generation === dbClusterGeneration) {
+                resolve();
+                mutationMethods.mutate({
+                  clusterName: dbClusterName,
+                  namespace,
+                  dbCluster: {
+                    ...clusterDataToBeSent.current!,
+                    metadata: { ...freshDbCluster.metadata, resourceVersion },
+                  },
+                });
+              } else {
+                enqueueSnackbar(
+                  'The object definition has been changed somewhere else. Please re-apply your changes.',
+                  {
+                    variant: 'error',
+                  }
+                );
+                ownOnError?.(error, vars, ctx);
+                watchStartTime.current = null;
+                resolve();
+              }
+            } else {
+              watchStartTime.current = null;
+              ownOnError?.(error, vars, ctx);
+              resolve();
+            }
+          }, UPDATE_RETRY_DELAY_MS)
+        );
+      }
+
+      mutationOptions?.onError?.(error, vars, ctx);
+      return;
+    },
+    onSuccess: (data, vars, ctx) => {
+      watchStartTime.current = null;
+      queryClient.setQueryData<DbCluster>(
+        [DB_CLUSTER_QUERY, dbClusterName],
+        (oldData) => ({
+          ...oldData,
+          ...data,
+        })
+      );
+      ownOnSuccess?.(data, vars, ctx);
+    },
+    ...restMutationOptions,
+  });
+
+  return mutationMethods;
+};

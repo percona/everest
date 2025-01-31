@@ -41,8 +41,7 @@ import {
 import { dbEngineToDbType } from '@percona/utils';
 import { DB_CLUSTER_QUERY, useUpdateDbClusterResources } from 'hooks';
 import { DbType } from '@percona/types';
-import { isProxy } from 'utils/db';
-import { getProxyUnitNamesFromDbType } from 'components/cluster-form/resources/utils';
+import { isProxy, getProxyUnitNamesFromDbType } from 'utils/db';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 
 export const ResourcesDetails = ({

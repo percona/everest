@@ -37,12 +37,14 @@ export const AdvancedConfigurationEditModal = ({
     engineParametersEnabled,
     engineParameters,
     sourceRanges,
+    affinityRules,
   }) => {
     handleSubmitModal({
       externalAccess,
       engineParametersEnabled,
       engineParameters,
       sourceRanges,
+      affinityRules,
     });
   };
 
