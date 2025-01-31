@@ -44,42 +44,32 @@ export const ResourcesPreviewSection = ({
   const parsedMemory = Number(memory) * intNumberOfNodes;
   const parsedProxyCPU = Number(proxyCpu) * intNumberOfProxies;
   const parsedProxyMemory = Number(proxyMemory) * intNumberOfProxies;
+  const nodesTotalNumber =
+    sharding && shardNr ? +shardNr * intNumberOfNodes : intNumberOfNodes;
+  const nodesText = `${nodesTotalNumber} ${nodesTotalNumber === 1 ? 'node' : 'nodes'}`;
+  const nodesCPUText = `CPU - ${Number.isNaN(parsedCPU) ? '' : `${sharding && shardNr ? (+shardNr * parsedCPU).toFixed(2) : parsedCPU.toFixed(2)} CPU`}`;
+  const nodesMemoryText = `Memory - ${Number.isNaN(parsedMemory) ? '' : `${sharding && shardNr ? (+shardNr * parsedMemory).toFixed(2) : parsedMemory.toFixed(2)} GB`}`;
+  const nodesDiskText = `Disk - ${Number.isNaN(parsedDisk) ? '' : `${sharding && shardNr ? (+shardNr * parsedDisk).toFixed(2) : parsedDisk.toFixed(2)}`} ${diskUnit}`;
+
+  const proxyText = `${intNumberOfProxies} ${intNumberOfProxies === 1 ? proxyUnitNames.singular : proxyUnitNames.plural}`;
+  const proxyCPUText = `CPU - ${Number.isNaN(parsedProxyCPU) ? '' : `${parsedProxyCPU.toFixed(2)} CPU`}`;
+  const proxyMemoryText = `Memory - ${Number.isNaN(parsedProxyMemory) ? '' : `${parsedProxyMemory.toFixed(2)} GB`}`;
 
   return (
     <>
-      <PreviewContentText text={`Nº nodes: ${intNumberOfNodes}`} />
       {sharding && (
         <>
-          <PreviewContentText text={`Shards: ${shardNr}`} />
+          <PreviewContentText text={`${shardNr} shards`} />
           <PreviewContentText
-            text={`Configuration servers: ${shardConfigServers}`}
+            text={`${shardConfigServers} configuration servers`}
           />
         </>
       )}
       <PreviewContentText
-        text={`CPU: ${Number.isNaN(parsedCPU) ? '' : `${parsedCPU.toFixed(2)} CPU`}`}
+        text={`${nodesText} - ${nodesCPUText}; ${nodesMemoryText}; ${nodesDiskText}`}
       />
       <PreviewContentText
-        text={`Memory: ${
-          Number.isNaN(parsedMemory) ? '' : `${parsedMemory.toFixed(2)} GB`
-        }`}
-      />
-      <PreviewContentText
-        text={`Disk: ${Number.isNaN(parsedDisk) ? '' : `${parsedDisk.toFixed(2)} ${diskUnit}`}`}
-      />
-      <PreviewContentText
-        text={`Nº ${proxyUnitNames.plural}: ${intNumberOfProxies}`}
-        mt={2}
-      />
-      <PreviewContentText
-        text={`CPU: ${Number.isNaN(parsedProxyCPU) ? '' : `${parsedProxyCPU.toFixed(2)} CPU`}`}
-      />
-      <PreviewContentText
-        text={`Memory: ${
-          Number.isNaN(parsedProxyMemory)
-            ? ''
-            : `${parsedProxyMemory.toFixed(2)} GB`
-        }`}
+        text={`${proxyText} - ${proxyCPUText}; ${proxyMemoryText}`}
       />
     </>
   );
