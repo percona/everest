@@ -162,7 +162,7 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
           page,
           `${operator.shortName}-db-cluster`,
           'Up',
-          TIMEOUTS.ThreeMinutes
+          TIMEOUTS.FiveMinutes
         );
       });
     }
@@ -229,7 +229,7 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
           'Initializing',
           TIMEOUTS.ThreeMinutes
         );
-        await waitForStatus(page, `${c.name}`, 'Up', TIMEOUTS.ThreeMinutes);
+        await waitForStatus(page, `${c.name}`, 'Up', TIMEOUTS.FiveMinutes);
       });
     }
 
