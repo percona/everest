@@ -20,6 +20,9 @@ export const Messages = {
   at: 'at',
   am: 'AM',
   pm: 'PM',
+  notAvailable:
+    'Some time slots are not available due to operator limitations.',
+  help: 'Help',
   infoText: (value: string) =>
     `Everest will create a backup of your database every ${value}`,
   getTimeText: {

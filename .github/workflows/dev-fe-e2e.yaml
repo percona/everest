@@ -16,6 +16,13 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
+      - name: Switch docker-daemon data directory to /mnt
+        run: |
+          sudo systemctl stop docker
+          echo '{ "exec-opts": ["native.cgroupdriver=cgroupfs"], "cgroup-parent": "/actions_job", "data-root": "/mnt/docker-data" }' | sudo tee /etc/docker/daemon.json
+          sudo mkdir /mnt/docker-data
+          sudo systemctl start docker
+
       - uses: actions/checkout@v4
         with:
           lfs: true
