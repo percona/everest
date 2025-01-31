@@ -37,10 +37,10 @@ test('get/edit database engine versions', async ({ request }) => {
   const engineData: GetDatabaseEngineResponse = await engineResponse.json();
   const availableVersions = engineData.status.availableVersions;
 
-  expect(availableVersions.engine['7.0.14-8'].imageHash).toBe('ed932d4e7231dcb793bf609f781226a8393aa8958b103339f4a503a8f70ed17e');
+  expect(availableVersions.engine['8.0.4-1'].imageHash).toBe('873b201ce3d66d97b1225c26db392c5043a73cc19ee8db6f2dc1b8efd4783bcf');
   expect(availableVersions.backup['2.8.0'].status).toBe('recommended');
 
-  const allowedVersions = ['6.0.5-4', '6.0.4-3', '7.0.8-5', '7.0.12-7', '7.0.14-8'];
+  const allowedVersions = ['6.0.19-16', '7.0.8-5', '7.0.12-7', '7.0.14-8', '7.0.15-9', '8.0.4-1'];
 
   delete engineData.status;
   engineData.spec.allowedVersions = allowedVersions;
