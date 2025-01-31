@@ -130,7 +130,7 @@ test.describe('Sharding (psmdb)', () => {
     ).toBeVisible();
 
     await deleteDbCluster(page, dbName);
-    await waitForDelete(page, dbName, 240000);
+    // await waitForDelete(page, dbName, 240000);
   });
 
   test('Mongo with sharding should not pass multinode cluster creation if config servers = 1', async ({
