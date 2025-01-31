@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"helm.sh/helm/v3/pkg/releaseutil"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 )
@@ -47,21 +46,6 @@ func (t *RenderedTemplate) GetEverestCatalogNamespace() (string, error) {
 	}
 	cs := &unstructured.Unstructured{Object: m}
 	return cs.GetNamespace(), nil
-}
-
-// GetUninstallManifests returns the uninstall manifests in the RenderedTemplate.
-func (t *RenderedTemplate) GetUninstallManifests() (RenderedTemplate, error) {
-	combined := strings.Join(t.Strings(), "\n---\n")
-	split := releaseutil.SplitManifests(combined)
-	_, files, err := releaseutil.SortManifests(split, nil, releaseutil.UninstallOrder)
-	if err != nil {
-		return RenderedTemplate{}, fmt.Errorf("failed to sort manifests: %w", err)
-	}
-	result := []string{}
-	for _, file := range files {
-		result = append(result, file.Content)
-	}
-	return RenderedTemplate(result), nil
 }
 
 func (t *RenderedTemplate) filter(path string) (RenderedTemplate, error) {

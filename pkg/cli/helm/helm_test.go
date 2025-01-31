@@ -45,10 +45,6 @@ func TestHelm_RenderTemplates(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, allFiles, 7)
 
-	allFiles, err = rendered.GetUninstallManifests()
-	require.NoError(t, err)
-	assert.Len(t, allFiles, 7)
-
 	crds, err := rendered.GetCRDs()
 	require.NoError(t, err)
 	assert.Len(t, crds, 2)
