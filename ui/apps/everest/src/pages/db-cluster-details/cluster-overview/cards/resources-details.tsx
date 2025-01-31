@@ -72,9 +72,13 @@ export const ResourcesDetails = ({
     ? (dbCluster.spec.proxy.replicas || 0).toString()
     : '';
   const numberOfProxiesInt = parseInt(proxies, 10);
-  const numberOfNodesStr = NODES_DB_TYPE_MAP[dbType].includes(replicas)
+  const numberOfNodes = NODES_DB_TYPE_MAP[dbType].includes(replicas)
     ? replicas
     : CUSTOM_NR_UNITS_INPUT_VALUE;
+  const numberOfNodesStr =
+    sharding?.enabled && sharding?.shards
+      ? (+numberOfNodes * sharding?.shards).toString()
+      : numberOfNodes;
   const numberOfProxiesStr = NODES_DB_TYPE_MAP[dbType].includes(proxies)
     ? proxies
     : CUSTOM_NR_UNITS_INPUT_VALUE;
@@ -186,7 +190,7 @@ export const ResourcesDetails = ({
             </OverviewSection>
           )}
           <OverviewSection
-            title={`${replicas} node${+replicas > 1 ? 's' : ''}`}
+            title={`${numberOfNodesStr} node${+numberOfNodesStr > 1 ? 's' : ''}`}
             loading={loading}
           >
             <OverviewSectionRow
@@ -195,7 +199,9 @@ export const ResourcesDetails = ({
               contentString={getTotalResourcesDetailedString(
                 cpuParser(cpu.toString() || '0'),
                 parseInt(replicas, 10),
-                'CPU'
+                'CPU',
+                sharding?.shards,
+                sharding?.enabled
               )}
             />
             <OverviewSectionRow
@@ -203,7 +209,9 @@ export const ResourcesDetails = ({
               contentString={getTotalResourcesDetailedString(
                 parsedMemoryValues.value,
                 parseInt(replicas, 10),
-                parsedMemoryValues.originalUnit
+                parsedMemoryValues.originalUnit,
+                sharding?.shards,
+                sharding?.enabled
               )}
             />
             <OverviewSectionRow
@@ -211,7 +219,9 @@ export const ResourcesDetails = ({
               contentString={getTotalResourcesDetailedString(
                 parsedDiskValues.value,
                 parseInt(replicas, 10),
-                parsedDiskValues.originalUnit
+                parsedDiskValues.originalUnit,
+                sharding?.shards,
+                sharding?.enabled
               )}
             />
           </OverviewSection>

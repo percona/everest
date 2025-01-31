@@ -70,13 +70,18 @@ export const memoryParser = (
 export const getTotalResourcesDetailedString = (
   value: number,
   numberOfNodes: number,
-  unit: string
+  unit: string,
+  shardNr?: number,
+  sharding?: boolean
 ) => {
-  if (numberOfNodes === 1) {
+  if (numberOfNodes === 1 && !sharding) {
     return `${value} ${unit}`;
   }
 
-  const totalResources = value * numberOfNodes;
+  const totalResources =
+    sharding && shardNr
+      ? value * numberOfNodes * shardNr
+      : value * numberOfNodes;
 
-  return `${numberOfNodes} x ${value} ${unit} = ${totalResources.toFixed(2)} ${unit}`;
+  return `${totalResources.toFixed(2)} ${unit}`;
 };
