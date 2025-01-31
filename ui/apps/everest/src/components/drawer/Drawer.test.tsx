@@ -8,6 +8,10 @@ import { DrawerContextProvider } from 'contexts/drawer/drawer.context';
 const queryClient = new QueryClient();
 vi.mock('hooks/api/version/useVersion');
 
+vi.mock('jwt-decode', () => ({
+  jwtDecode: vi.fn(() => ({ sub: '12345', name: 'Test User' })),
+}));
+
 const BarAndDrawer = () => (
   <QueryClientProvider client={queryClient}>
     <DrawerContextProvider>

@@ -1,15 +1,25 @@
 import { useContext, useState } from 'react';
 import {
+  Divider,
   FormControlLabel,
   FormGroup,
   IconButton,
   Menu,
   MenuItem,
   Switch,
+  Typography,
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import { ColorModeContext } from '@percona/design';
 import { AuthContext } from 'contexts/auth';
+import { jwtDecode } from 'jwt-decode';
+
+interface UserToken {
+  preferred_username?: string;
+  name?: string;
+  email?: string;
+  sub: string;
+}
 
 const AppBarUserIcon = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -23,6 +33,16 @@ const AppBarUserIcon = () => {
   const handleClose = () => {
     setAnchorEl(null);
   };
+  const token = localStorage.getItem('everestToken');
+  const decoded = jwtDecode(token!) as UserToken;
+
+  const preferredUsername = decoded.preferred_username;
+  const name = decoded.name;
+  const email = decoded.email;
+  const sub =
+    decoded.sub?.substring(0, decoded.sub.indexOf(':')) || decoded.sub;
+
+  const userToShow = preferredUsername || name || email || sub;
 
   return (
     <>
@@ -44,6 +64,12 @@ const AppBarUserIcon = () => {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
+        <MenuItem sx={{ cursor: 'text', userSelect: 'text' }}>
+          <Typography variant="helperText" color="text.secondary">
+            {userToShow}
+          </Typography>
+        </MenuItem>
+        <Divider />
         <MenuItem>
           <FormGroup>
             <FormControlLabel
