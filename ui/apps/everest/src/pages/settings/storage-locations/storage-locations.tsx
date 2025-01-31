@@ -29,7 +29,6 @@ import {
   convertBackupStoragesPayloadToTableFormat,
   convertStoragesType,
 } from './storage-locations.utils';
-import { useNamespaces } from 'hooks/api/namespaces';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import TableActionsMenu from '../../../components/table-actions-menu';
 import { StorageLocationsActionButtons } from './storage-locations-menu-actions';
@@ -37,15 +36,10 @@ import { StorageLocationsActionButtons } from './storage-locations-menu-actions'
 export const StorageLocations = () => {
   const queryClient = useQueryClient();
   const { canCreate } = useNamespacePermissionsForResource('backup-storages');
-  const { data: namespaces = [] } = useNamespaces();
-  const backupStorages = useBackupStorages(
-    namespaces.map((namespace) => ({
-      namespace: namespace,
-    }))
-  );
+  const backupStorages = useBackupStorages();
 
   const backupStoragesLoading = backupStorages.some(
-    (result) => result.queryResult.isLoading
+    (result) => result.isLoading
   );
 
   const tableData = useMemo(
