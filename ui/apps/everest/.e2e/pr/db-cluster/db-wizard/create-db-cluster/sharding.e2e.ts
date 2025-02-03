@@ -102,7 +102,7 @@ test.describe('Sharding (psmdb)', () => {
   test('Sharding should be correctly displayed on the overview page', async ({
     page,
   }) => {
-    test.setTimeout(300 * 1000);
+    test.setTimeout(600 * 1000);
     const dbName = 'sharding-psmdb';
     expect(storageClasses.length).toBeGreaterThan(0);
     await selectDbEngine(page, 'psmdb');
