@@ -75,7 +75,7 @@ export const getTotalResourcesDetailedString = (
   sharding?: boolean
 ) => {
   if (numberOfNodes === 1 && !sharding) {
-    return `${value} ${unit}`;
+    return `${value.toFixed(2)} ${unit}`;
   }
 
   const totalResources =

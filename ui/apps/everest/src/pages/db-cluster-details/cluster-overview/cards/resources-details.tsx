@@ -270,7 +270,7 @@ export const ResourcesDetails = ({
               shardConfigServers: sharding?.configServer?.replicas,
               shardNr: sharding?.shards.toString(),
             }),
-            numberOfNodes: numberOfNodesStr,
+            numberOfNodes: numberOfNodes,
             numberOfProxies: numberOfProxiesStr,
             customNrOfNodes: replicas,
             customNrOfProxies: proxies,
