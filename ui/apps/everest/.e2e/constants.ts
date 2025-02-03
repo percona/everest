@@ -1,5 +1,9 @@
-const { EVEREST_BUCKETS_NAMESPACES_MAP, EVEREST_DIR, TAG_FOR_UPGRADE } =
-  process.env;
+const {
+  EVEREST_BUCKETS_NAMESPACES_MAP,
+  EVEREST_DIR,
+  TAG_FOR_UPGRADE,
+  FB_BUILD,
+} = process.env;
 
 type BucketsNamespaceMap = [string, string[]][];
 
@@ -17,6 +21,7 @@ export const getBucketNamespacesMap = (): BucketsNamespaceMap =>
 
 export const everestdir = EVEREST_DIR;
 export const everestTagForUpgrade = TAG_FOR_UPGRADE;
+export const everestFeatureBuildForUpgrade = FB_BUILD;
 
 const second = 1_000;
 const minute = 60 * second;
