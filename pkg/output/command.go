@@ -55,18 +55,6 @@ var (
 			lipgloss.AdaptiveColor{Light: "#B10810", Dark: "#F37C6F"},
 		)
 	failStatus = failureStyle.Render("❌")
-
-	digitsMap = map[int]string{
-		1: "1️⃣",
-		2: "2️⃣",
-		3: "3️⃣",
-		4: "4️⃣",
-		5: "5️⃣",
-		6: "6️⃣",
-		7: "7️⃣",
-		8: "8️⃣",
-		9: "9️⃣",
-	}
 )
 
 // Success prints a message with a success emoji.
@@ -100,9 +88,5 @@ func Warn(msg string, args ...any) string {
 
 // Numeric prints a message with a numeric emoji.
 func Numeric(num int, msg string, args ...any) string {
-	if val, ok := digitsMap[num]; ok {
-		return fmt.Sprintf("%s  %s\n", val, fmt.Sprintf(msg, args...))
-	}
-
-	return fmt.Sprintf("ℹ️  %s\n", fmt.Sprintf(msg, args...))
+	return fmt.Sprintf("%d %s  %s\n", num, "\u2B95", fmt.Sprintf(msg, args...))
 }
