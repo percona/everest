@@ -84,8 +84,8 @@ jobs:
         uses: medyagh/setup-minikube@latest
         id: minikube
         with:
-          cpus: 2
-          memory: 2000m
+          cpus: 4
+          memory: 4000m
           addons: registry
           insecure-registry: 'localhost:5000'
 
