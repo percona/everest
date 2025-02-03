@@ -23,7 +23,6 @@ export const TimeSelection = ({
   sx,
   sxTimeFields,
   shouldRestrictSelectableHours = false,
-  editMode = false,
 }: TimeSelectionProps) => {
   const { watch, setValue, getFieldState, resetField } = useFormContext();
 
@@ -53,12 +52,17 @@ export const TimeSelection = ({
       ? TIMEZONE_OFFSET_HOURS
       : TIMEZONE_OFFSET_HOURS - 12;
 
-  const selectableHours = changeSelectableTime
-    ? Array.from(
-        { length: 12 - FIRST_HOUR_AVAILABLE },
-        (_, i) => i + FIRST_HOUR_AVAILABLE
-      )
-    : HOURS_AM_PM;
+  const shouldRestrictAmPm =
+    (amPm === AmPM.AM && TIMEZONE_OFFSET_HOURS < 12) ||
+    (TIMEZONE_OFFSET_HOURS >= 12 && amPm === AmPM.PM);
+
+  const selectableHours =
+    changeSelectableTime && shouldRestrictAmPm
+      ? Array.from(
+          { length: 12 - FIRST_HOUR_AVAILABLE },
+          (_, i) => i + FIRST_HOUR_AVAILABLE
+        )
+      : HOURS_AM_PM;
 
   const selectableAmPm =
     changeSelectableTime && TIMEZONE_OFFSET_HOURS > 12
@@ -66,38 +70,23 @@ export const TimeSelection = ({
       : [AmPM.AM, AmPM.PM];
 
   const selectableMinutes =
-    TIMEZONE_OFFSET_MINUTES > 0 && changeSelectableTime
+    TIMEZONE_OFFSET_MINUTES > 0 && changeSelectableTime && shouldRestrictAmPm
       ? Array.from({ length: 30 }, (_, i) => i + TIMEZONE_OFFSET_MINUTES)
       : MINUTES;
 
   useEffect(() => {
-    const { isDirty: isHourFieldDirty } = getFieldState(
-      TimeSelectionFields.hour
-    );
-    const { isDirty: isMinuteFieldDirty } = getFieldState(
-      TimeSelectionFields.minute
-    );
-    const { isDirty: isAmPmFieldDirty } = getFieldState(
-      TimeSelectionFields.amPm
-    );
-    if (changeSelectableTime && !isHourFieldDirty && !editMode) {
+    if (changeSelectableTime && !selectableHours.includes(hour)) {
       setValue(TimeSelectionFields.hour, Math.floor(FIRST_HOUR_AVAILABLE));
     }
     if (
       changeSelectableTime &&
       TIMEZONE_OFFSET_MINUTES > 0 &&
-      !isMinuteFieldDirty &&
-      !editMode
+      !selectableMinutes.includes(minute)
     ) {
       setValue(TimeSelectionFields.minute, TIMEZONE_OFFSET_MINUTES);
     }
 
-    if (
-      changeSelectableTime &&
-      TIMEZONE_OFFSET_HOURS > 12 &&
-      !isAmPmFieldDirty &&
-      !editMode
-    ) {
+    if (changeSelectableTime && TIMEZONE_OFFSET_HOURS > 12) {
       setValue(TimeSelectionFields.amPm, AmPM.PM);
     }
   }, [
@@ -110,11 +99,13 @@ export const TimeSelection = ({
     isFirstDayOfTheMonthAndPositiveOffset,
     shouldRestrictSelectableHours,
     resetField,
-    editMode,
     changeSelectableTime,
     TIMEZONE_OFFSET_MINUTES,
     TIMEZONE_OFFSET_HOURS,
     FIRST_HOUR_AVAILABLE,
+    selectableHours,
+    selectableMinutes,
+    minute,
   ]);
 
   const timeInfoText = useMemo(

@@ -84,7 +84,6 @@ export const ScheduleFormWrapper = () => {
       autoFillLocation={mode === 'new'}
       disableNameEdit={mode === 'edit'}
       schedules={schedules}
-      editMode={mode === 'edit'}
     />
   );
 };

@@ -38,7 +38,6 @@ export const ScheduleForm = ({
   schedules,
   showTypeRadio,
   disableNameEdit = false,
-  editMode,
 }: ScheduleFormProps) => {
   const {
     formState: { errors },
@@ -116,7 +115,6 @@ export const ScheduleForm = ({
           showInfoAlert
           errorInfoAlert={errorInfoAlert}
           shouldRestrictSelectableHours={dbEngine === DbEngineType.PSMDB}
-          editMode={editMode}
         />
       </LabeledContent>
     </>
