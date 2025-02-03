@@ -21,7 +21,6 @@ import { getTokenFromLocalStorage } from './localStorage';
 import { getNamespacesFn } from './namespaces';
 import { DbType } from '@percona/types';
 import { checkError, getVersionServiceURL } from '@e2e/utils/generic';
-import { execSync } from 'child_process';
 
 export const createDbClusterFn = async (
   request: APIRequestContext,
