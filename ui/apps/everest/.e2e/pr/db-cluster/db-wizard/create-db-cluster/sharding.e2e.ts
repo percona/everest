@@ -132,7 +132,7 @@ test.describe('Sharding (psmdb)', () => {
     await deleteDbCluster(page, dbName);
     // TODO: Waiting for cluster deletion is disabled because of issue: https://perconadev.atlassian.net/browse/EVEREST-1849
     // Either wait for issue to be fixed and then re-enable or remove check permanently
-    // await waitForDelete(page, dbName, 240000);
+    await waitForDelete(page, dbName, 240000);
   });
 
   test('Mongo with sharding should not pass multinode cluster creation if config servers = 1', async ({
