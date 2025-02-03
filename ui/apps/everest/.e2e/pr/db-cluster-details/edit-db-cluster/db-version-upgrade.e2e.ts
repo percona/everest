@@ -6,7 +6,7 @@ import {
 } from '@e2e/utils/db-clusters-list';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
 import { moveForward, submitWizard } from '@e2e/utils/db-wizard';
-import { waitForDelete, waitForStatus } from '@e2e/utils/table';
+import { waitForStatus, waitForDelete } from '@e2e/utils/table';
 import { selectDbEngine } from '@e2e/pr/db-cluster/db-wizard/db-wizard-utils';
 
 let token: string;

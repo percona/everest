@@ -130,8 +130,8 @@ test.describe('Sharding (psmdb)', () => {
     ).toBeVisible();
 
     await deleteDbCluster(page, dbName);
-    // can be returned after solving of https://perconadev.atlassian.net/browse/EVEREST-1849
-    // await waitForDelete(page, dbName, 240000);
+    // TODO: Waiting for cluster deletion should be re-checked afer fix for: https://perconadev.atlassian.net/browse/EVEREST-1849
+    await waitForDelete(page, dbName, 600000);
   });
 
   test('Mongo with sharding should not pass multinode cluster creation if config servers = 1', async ({
