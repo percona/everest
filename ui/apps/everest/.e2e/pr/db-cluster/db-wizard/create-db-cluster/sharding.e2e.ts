@@ -130,6 +130,7 @@ test.describe('Sharding (psmdb)', () => {
     ).toBeVisible();
 
     await deleteDbCluster(page, dbName);
+    // can be returned after solving of https://perconadev.atlassian.net/browse/EVEREST-1849
     // await waitForDelete(page, dbName, 240000);
   });
 

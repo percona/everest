@@ -1,7 +1,11 @@
 import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
 import { PreviewContentText } from '../preview-section';
 import { SectionProps } from './section.types';
-import { getProxyUnitNamesFromDbType } from 'components/cluster-form/resources/utils';
+import {
+  getPreviewResourcesText,
+  getProxyUnitNamesFromDbType,
+} from 'components/cluster-form/resources/utils';
+import { DbType } from '@percona/types';
 
 export const ResourcesPreviewSection = ({
   dbType,
@@ -44,16 +48,47 @@ export const ResourcesPreviewSection = ({
   const parsedMemory = Number(memory) * intNumberOfNodes;
   const parsedProxyCPU = Number(proxyCpu) * intNumberOfProxies;
   const parsedProxyMemory = Number(proxyMemory) * intNumberOfProxies;
+  const parsedShardNr = shardNr ? Number.parseInt(shardNr) : undefined;
   const nodesTotalNumber =
     sharding && shardNr ? +shardNr * intNumberOfNodes : intNumberOfNodes;
+
   const nodesText = `${nodesTotalNumber} ${nodesTotalNumber === 1 ? 'node' : 'nodes'}`;
-  const nodesCPUText = `CPU - ${Number.isNaN(parsedCPU) ? '' : `${sharding && shardNr ? (+shardNr * parsedCPU).toFixed(2) : parsedCPU.toFixed(2)} CPU`}`;
-  const nodesMemoryText = `Memory - ${Number.isNaN(parsedMemory) ? '' : `${sharding && shardNr ? (+shardNr * parsedMemory).toFixed(2) : parsedMemory.toFixed(2)} GB`}`;
-  const nodesDiskText = `Disk - ${Number.isNaN(parsedDisk) ? '' : `${sharding && shardNr ? (+shardNr * parsedDisk).toFixed(2) : parsedDisk.toFixed(2)}`} ${diskUnit}`;
+
+  const nodesCPUText = getPreviewResourcesText(
+    'CPU',
+    parsedCPU,
+    sharding,
+    'CPU',
+    parsedShardNr
+  );
+  const nodesMemoryText = getPreviewResourcesText(
+    'Memory',
+    parsedMemory,
+    sharding,
+    'GB',
+    parsedShardNr
+  );
+  const nodesDiskText = getPreviewResourcesText(
+    'Disk',
+    parsedDisk,
+    sharding,
+    diskUnit,
+    parsedShardNr
+  );
 
   const proxyText = `${intNumberOfProxies} ${intNumberOfProxies === 1 ? proxyUnitNames.singular : proxyUnitNames.plural}`;
-  const proxyCPUText = `CPU - ${Number.isNaN(parsedProxyCPU) ? '' : `${parsedProxyCPU.toFixed(2)} CPU`}`;
-  const proxyMemoryText = `Memory - ${Number.isNaN(parsedProxyMemory) ? '' : `${parsedProxyMemory.toFixed(2)} GB`}`;
+  const proxyCPUText = getPreviewResourcesText(
+    'CPU',
+    parsedProxyCPU,
+    sharding,
+    'CPU'
+  );
+  const proxyMemoryText = getPreviewResourcesText(
+    'Memory',
+    parsedProxyMemory,
+    sharding,
+    'GB'
+  );
 
   return (
     <>
@@ -68,9 +103,11 @@ export const ResourcesPreviewSection = ({
       <PreviewContentText
         text={`${nodesText} - ${nodesCPUText}; ${nodesMemoryText}; ${nodesDiskText}`}
       />
-      <PreviewContentText
-        text={`${proxyText} - ${proxyCPUText}; ${proxyMemoryText}`}
-      />
+      {(dbType !== DbType.Mongo || sharding) && (
+        <PreviewContentText
+          text={`${proxyText} - ${proxyCPUText}; ${proxyMemoryText}`}
+        />
+      )}
     </>
   );
 };
