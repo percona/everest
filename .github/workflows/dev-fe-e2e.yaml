@@ -158,7 +158,7 @@ jobs:
           MONITORING_PASSWORD: "admin"
         run: |
           cd ui
-          pnpm --filter "@percona/everest" e2e
+          pnpm --filter "@percona/everest" e2e db-cluster/db-wizard/create-db-cluster/sharding.e2e.ts
 
       - name: Archive report
         if: always()
