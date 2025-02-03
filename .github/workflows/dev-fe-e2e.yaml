@@ -167,3 +167,8 @@ jobs:
           name: playwright-report
           path: ui/apps/everest/.e2e/playwright-report/
           overwrite: true
+
+      - name: "Setup tmate debug ssh session"
+        uses: "percona/gh-action-action-tmate@v3"
+        if: always()
+
