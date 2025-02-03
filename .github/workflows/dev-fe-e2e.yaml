@@ -14,12 +14,58 @@ on:
 
 jobs:
   e2e:
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: [ 1.23.x ]
+        may-fail: [ false ]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # Setup Go
+      - name: Set up Go release
+        uses: percona-platform/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Set GO_VERSION environment variable
+        shell: bash
+        run: |
+          go version
+          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Enable Go modules cache
+        uses: percona-platform/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
+
+      - name: Enable Go build cache
+        uses: percona-platform/cache@v3
+        with:
+          path: ~/.cache/go-build
+          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
+          restore-keys: |
+            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
+            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
+
+      # Switch docker data directory to /mnt to have more space for the local Kubernetes cluster
+      - name: Switch docker-daemon data directory to /mnt
+        run: |
+          sudo systemctl stop docker
+          echo '{ "exec-opts": ["native.cgroupdriver=cgroupfs"], "cgroup-parent": "/actions_job", "data-root": "/mnt/docker-data" }' | sudo tee /etc/docker/daemon.json
+          sudo mkdir /mnt/docker-data
+          sudo systemctl start docker
+
+      # Setup Node
       - uses: pnpm/action-setup@v4
         with:
           version: 9.4.0
@@ -34,19 +80,18 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v4
 
-      - name: Set up Go release
-        uses: percona-platform/setup-go@v4
+      - name: Start local Kubernetes cluster with the local registry
+        uses: medyagh/setup-minikube@latest
+        id: minikube
         with:
-          go-version: 1.23.x
+          cpus: 2
+          memory: 2000m
+          addons: registry
+          insecure-registry: 'localhost:5000'
 
-      - name: Set GO_VERSION environment variable
-        shell: bash
+      - name: Expose local registry
         run: |
-          go version
-          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
-
-      - name: Create KIND cluster
-        uses: helm/kind-action@v1.12.0
+          kubectl port-forward --namespace kube-system service/registry 5000:80 &
 
       - name: Set MinIO
         run: kubectl apply -f ./.github/minio.conf.yaml
@@ -67,10 +112,29 @@ jobs:
           url=$(kubectl get svc/monitoring-service -o json | jq -r '.spec.clusterIP')
           echo -n "MONITORING_URL=http://$url" >> $GITHUB_ENV
 
+      - name: Build Everest API Server
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build-debug
+
+      - name: Build Everest docker container
+        uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: localhost:5000/perconalab/everest
+          tags:
+            0.0.0
+
+      - name: Build and Push everest dev image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
       - name: Build CLI
         shell: bash
         run: |
-          make build-cli
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build-cli
 
       - name: Install Everest
         shell: bash
@@ -79,12 +143,14 @@ jobs:
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
           --skip-wizard \
-          --skip-db-namespace
+          --skip-db-namespace \
+          --helm.set server.image=localhost:5000/perconalab/everest \
+          --helm.set server.apiRequestsRateLimit=200 \
+          --helm.set versionMetadataURL=https://check-dev.percona.com
 
       - name: Add everest-ui namespace
         shell: bash
         run: |
-          make build-cli
           ./bin/everestctl namespaces add everest-ui -v \
           --operator.mongodb \
           --operator.postgresql \
@@ -128,7 +194,7 @@ jobs:
         run: |
           kubectl port-forward -n everest-system deployment/everest-server 8080:8080 &
 
-      - name: Run Everest
+      - name: Run Everest UI
         shell: bash
         run: |
           cd ui
@@ -159,6 +225,16 @@ jobs:
         run: |
           cd ui
           pnpm --filter "@percona/everest" e2e
+
+      - name: Run debug commands on failure
+        if: ${{ failure() }}
+        run: |
+          kubectl -n everest-system describe pods
+          kubectl -n everest-monitoring describe pods
+          kubectl -n everest-system logs deploy/everest-server
+          kubectl -n pxc-only describe pods
+          kubectl -n psmdb-only describe pods
+          kubectl -n pg-only describe pods
 
       - name: Archive report
         if: always()
