@@ -70,7 +70,10 @@ export const TimeSelection = ({
       : [AmPM.AM, AmPM.PM];
 
   const selectableMinutes =
-    TIMEZONE_OFFSET_MINUTES > 0 && changeSelectableTime && shouldRestrictAmPm
+    TIMEZONE_OFFSET_MINUTES > 0 &&
+    changeSelectableTime &&
+    shouldRestrictAmPm &&
+    hour === FIRST_HOUR_AVAILABLE
       ? Array.from({ length: 30 }, (_, i) => i + TIMEZONE_OFFSET_MINUTES)
       : MINUTES;
 
