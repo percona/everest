@@ -53,19 +53,19 @@ describe('DBVersion Available filter test', () => {
       ).toEqual(['14.1']);
     });
 
-    it('should allow major upgrades for PXC', () => {
+    it('should allow major upgrades for PSMDB', () => {
       expect(
         filterAvailableDbVersionsForDbEngineEdition(
           generateDbEngineWithVersions(
             ['5.0.0', '4.0.0', '4.3.9', '4.4.1'],
-            DbEngineType.PXC
+            DbEngineType.PSMDB
           ),
           '4.4.0'
         ).map(({ version }) => version)
       ).toEqual(['5.0.0', '4.4.1']);
     });
 
-    it('should rule out major upgrades/downgrades for PSMDB/PG', () => {
+    it('should rule out major upgrades/downgrades for PXC/PG', () => {
       expect(
         filterAvailableDbVersionsForDbEngineEdition(
           generateDbEngineWithVersions(
@@ -79,7 +79,7 @@ describe('DBVersion Available filter test', () => {
               '4.3.0',
               '5.4.1',
             ],
-            DbEngineType.PSMDB
+            DbEngineType.POSTGRESQL
           ),
           '2.3.0'
         ).map(({ version }) => version)
