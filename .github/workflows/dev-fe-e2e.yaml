@@ -158,7 +158,7 @@ jobs:
           MONITORING_PASSWORD: "admin"
         run: |
           cd ui
-          pnpm --filter "@percona/everest" e2e db-cluster/db-wizard/create-db-cluster/sharding.e2e.ts
+          pnpm --filter "@percona/everest" e2e
 
       - name: Archive report
         if: always()
@@ -167,8 +167,4 @@ jobs:
           name: playwright-report
           path: ui/apps/everest/.e2e/playwright-report/
           overwrite: true
-
-      - name: "Setup tmate debug ssh session"
-        uses: "percona/gh-action-action-tmate@v3"
-        if: always()
 
