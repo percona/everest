@@ -41,10 +41,13 @@ var (
 				Background(lipgloss.AdaptiveColor{Light: "#E2EFFC", Dark: "#2F435B"})
 
 	// Selected checkbox symbol.
-	selectedCheckBox = "{X}"
+	selectedCheckBox = "[X]"
 
 	// Unselected checkbox symbol.
-	unselectedCheckbox = "{ }"
+	unselectedCheckbox = "[ ]"
+
+	// cursor current position symbol.
+	cursorSymbol = ">"
 
 	// ----------
 	// Key bindings.
@@ -205,18 +208,17 @@ func (m MultiSelect) View() string {
 func drawLine(hover, checked bool, label string) string {
 	// Template contains: <option selected/unselected mark> <option label>
 	// Examples:
-	// {X} MySQL
-	// { } PostgreSQL
-	const tmpl = " %s %s"
+	// [X] MySQL
+	// [ ] PostgreSQL
+	const tmpl = " %s %s %s"
 	mark := selectedCheckBox
 	if !checked {
 		mark = unselectedCheckbox
 	}
 
-	s := fmt.Sprintf(tmpl, mark, label)
 	if hover {
-		return fmt.Sprintf("%s\n", hoverOptionStyle.Render(s))
+		return fmt.Sprintf("%s\n", hoverOptionStyle.Render(fmt.Sprintf(tmpl, cursorSymbol, mark, label)))
 	} else {
-		return fmt.Sprintf("%s\n", optionStyle.Render(s))
+		return fmt.Sprintf("%s\n", optionStyle.Render(fmt.Sprintf(tmpl, " ", mark, label)))
 	}
 }
