@@ -99,7 +99,7 @@ const ComponentNode = ({
 
 const ContainerNode = ({
   data: {
-    componentData: { status, ready },
+    componentData: { status, ready, name },
   },
 }: NodeProps<CustomNodeData<Container>>) => (
   <Paper elevation={0}>
@@ -126,7 +126,7 @@ const ContainerNode = ({
           {ready ? 'Ready' : 'Not Ready'}
         </Typography>
       </Stack>
-      <Typography variant="body1"> </Typography>
+      <Typography variant="body1">{name}</Typography>
     </Stack>
   </Paper>
 );
