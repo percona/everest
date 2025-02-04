@@ -12,7 +12,7 @@ const ContainerNode = ({
   },
 }: NodeProps<CustomNode<Container>>) => (
   <Paper elevation={0}>
-    <Handle type="target" position={Position.Top} />
+    <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
     <Stack
       sx={{
         border: '1px solid',

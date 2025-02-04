@@ -44,7 +44,7 @@ const ComponentNode = ({
         </Stack>
         <Chip label={type} sx={{ alignSelf: 'flex-start', mt: 1 }} />
       </Stack>
-      <Handle type="source" position={Position.Bottom} />
+      <Handle style={{ opacity: 0 }} type="source" position={Position.Bottom} />
     </Paper>
   );
 };
