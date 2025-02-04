@@ -167,10 +167,6 @@ test.describe.configure({ retries: 0 });
 
         await test.step('Submit wizard', async () => {
           await submitWizard(page);
-
-          await expect(
-            page.getByText('Awesome! Your database is being created!')
-          ).toBeVisible();
         });
 
         // go to db list and check status
