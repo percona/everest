@@ -48,21 +48,32 @@ export const TimeSelection = ({
     shouldRestrictSelectableHours && isFirstDayOfTheMonthAndPositiveOffset;
 
   const FIRST_HOUR_AVAILABLE =
-    TIMEZONE_OFFSET_HOURS < 12
+    TIMEZONE_OFFSET_HOURS <= 12
       ? TIMEZONE_OFFSET_HOURS
       : TIMEZONE_OFFSET_HOURS - 12;
 
   const shouldRestrictAmPm =
-    (amPm === AmPM.AM && TIMEZONE_OFFSET_HOURS < 12) ||
-    (TIMEZONE_OFFSET_HOURS >= 12 && amPm === AmPM.PM);
+    (amPm === AmPM.AM && TIMEZONE_OFFSET_HOURS <= 12) ||
+    (TIMEZONE_OFFSET_HOURS > 12 && amPm === AmPM.PM);
 
-  const selectableHours =
-    changeSelectableTime && shouldRestrictAmPm
-      ? Array.from(
-          { length: 12 - FIRST_HOUR_AVAILABLE },
-          (_, i) => i + FIRST_HOUR_AVAILABLE
-        )
-      : HOURS_AM_PM;
+  const selectableHours = useMemo(
+    () =>
+      TIMEZONE_OFFSET_HOURS === 12 && amPm === AmPM.AM
+        ? [12]
+        : changeSelectableTime && shouldRestrictAmPm
+          ? Array.from(
+              { length: 12 - FIRST_HOUR_AVAILABLE },
+              (_, i) => i + FIRST_HOUR_AVAILABLE
+            )
+          : HOURS_AM_PM,
+    [
+      FIRST_HOUR_AVAILABLE,
+      TIMEZONE_OFFSET_HOURS,
+      amPm,
+      changeSelectableTime,
+      shouldRestrictAmPm,
+    ]
+  );
 
   const selectableAmPm =
     changeSelectableTime && TIMEZONE_OFFSET_HOURS > 12
