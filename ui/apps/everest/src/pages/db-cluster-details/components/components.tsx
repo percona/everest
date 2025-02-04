@@ -48,7 +48,10 @@ const Components = () => {
           dbClusterName={dbClusterName}
         />
       ) : (
-        <Box height="500px">
+        <Box
+          height="500px"
+          sx={{ backgroundColor: 'surfaces.elevation0', borderRadius: 2 }}
+        >
           <ReactFlowProvider>
             <ComponentsDiagramView components={components} />
           </ReactFlowProvider>

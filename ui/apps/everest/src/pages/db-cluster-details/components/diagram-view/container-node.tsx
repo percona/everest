@@ -37,7 +37,9 @@ const ContainerNode = ({
           {ready ? 'Ready' : 'Not Ready'}
         </Typography>
       </Stack>
-      <Typography variant="body1">{name}</Typography>
+      <Typography variant="body1" mt={2}>
+        {name}
+      </Typography>
     </Stack>
   </Paper>
 );
