@@ -7,7 +7,8 @@ export type BaseStatus =
   | 'pending'
   | 'success'
   | 'deleting'
-  | 'unknown';
+  | 'unknown'
+  | 'creating';
 
 export type StatusFieldProps<T extends string | number | symbol> = {
   status: T;

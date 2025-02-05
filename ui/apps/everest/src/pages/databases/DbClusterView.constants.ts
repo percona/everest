@@ -14,4 +14,5 @@ export const DB_CLUSTER_STATUS_TO_BASE_STATUS: Record<
   [DbClusterStatus.unknown]: 'unknown',
   [DbClusterStatus.restoring]: 'pending',
   [DbClusterStatus.deleting]: 'deleting',
+  [DbClusterStatus.creating]: 'creating',
 };
