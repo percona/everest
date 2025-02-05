@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
-import { Tooltip } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { DBClusterComponent } from 'shared-types/components.types';
 import {
@@ -8,10 +7,9 @@ import {
   COMPONENT_STATUS_WEIGHT,
   componentStatusToBaseStatus,
 } from '../components.constants';
-import { format, formatDistanceToNowStrict, isValid } from 'date-fns';
-import { DATE_FORMAT } from 'consts';
 import ExpandedRow from '../expanded-row';
 import ComponentStatus from '../component-status';
+import ComponentAge from '../component-age';
 
 const ComponentsTableView = ({
   components,
@@ -55,21 +53,7 @@ const ComponentsTableView = ({
       {
         header: 'Age',
         accessorKey: 'started',
-        Cell: ({ cell }) => {
-          const date = new Date(cell.getValue<string>());
-
-          return isValid(date) ? (
-            <Tooltip
-              title={`Started at ${format(date, DATE_FORMAT)}`}
-              placement="right"
-              arrow
-            >
-              <div>{formatDistanceToNowStrict(date)}</div>
-            </Tooltip>
-          ) : (
-            ''
-          );
-        },
+        Cell: ({ cell }) => <ComponentAge date={cell.getValue<string>()} />,
       },
       {
         header: 'Restarts',

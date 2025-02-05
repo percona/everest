@@ -5,10 +5,11 @@ import { Paper, Stack, Typography } from '@mui/material';
 import { CONTAINER_NODE_HEIGHT, CONTAINER_NODE_WIDTH } from './constants';
 import { containerStatusToBaseStatus } from '../components.constants';
 import ComponentStatus from '../component-status';
+import DiagramComponentAge from './diagram-component-age';
 
 const ContainerNode = ({
   data: {
-    componentData: { status, ready, name },
+    componentData: { status, ready, name, started, restarts },
   },
 }: NodeProps<CustomNode<Container>>) => (
   <Paper elevation={0}>
@@ -35,6 +36,7 @@ const ContainerNode = ({
       <Typography variant="body1" mt={2}>
         {name}
       </Typography>
+      <DiagramComponentAge date={started} restarts={restarts} />
     </Stack>
   </Paper>
 );

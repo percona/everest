@@ -3,14 +3,14 @@ import { CustomNode } from './types';
 import { DBClusterComponent } from 'shared-types/components.types';
 import { Chip, Paper, Stack, Typography } from '@mui/material';
 import { COMPONENT_NODE_HEIGHT, COMPONENT_NODE_WIDTH } from './constants';
-import { formatDistanceToNowStrict } from 'date-fns';
 import ComponentStatus from '../component-status';
 import { componentStatusToBaseStatus } from '../components.constants';
+import DiagramComponentAge from './diagram-component-age';
 
 const ComponentNode = ({
   data: {
     selected,
-    componentData: { name, status, ready, type, restarts, started },
+    componentData: { name, status, ready, type, restarts, started = '' },
   },
 }: NodeProps<CustomNode<DBClusterComponent>>) => {
   return (
@@ -36,12 +36,13 @@ const ComponentNode = ({
         </Stack>
         <Stack mt={2}>
           <Typography variant="body1">{name}</Typography>
-          <Typography variant="body2" color="text.secondary">
-            {started
-              ? formatDistanceToNowStrict(new Date(started)) + ' | '
-              : ''}{' '}
-            {restarts} restarts
-          </Typography>
+          <DiagramComponentAge
+            date={started}
+            restarts={restarts}
+            typographyProps={{
+              variant: 'body2',
+            }}
+          />
         </Stack>
         <Chip label={type} sx={{ alignSelf: 'flex-start', mt: 1 }} />
       </Stack>
