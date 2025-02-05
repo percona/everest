@@ -9,10 +9,12 @@ import {
   CONTAINER_NODE_WIDTH,
 } from './constants';
 
-const dagreGraph = new dagre.graphlib.Graph();
-dagreGraph.setDefaultEdgeLabel(() => ({}));
-
-const getLayoutedElements = (nodes: CustomNode[], edges: CustomEdge[]) => {
+export const getLayoutedElements = (
+  nodes: CustomNode[],
+  edges: CustomEdge[]
+) => {
+  const dagreGraph = new dagre.graphlib.Graph();
+  dagreGraph.setDefaultEdgeLabel(() => ({}));
   dagreGraph.setGraph({ rankdir: 'TB' });
 
   nodes.forEach((node) => {
@@ -118,9 +120,7 @@ export const getNodesAndEdgesFromDbClusterComponents = (
     });
   });
 
-  const { nodes, edges } = getLayoutedElements(nodeComponents, edgeComponents);
-
-  return { nodeComponents: nodes, edgeComponents: edges };
+  return { nodeComponents, edgeComponents };
 };
 
 export const isComponentNode = (

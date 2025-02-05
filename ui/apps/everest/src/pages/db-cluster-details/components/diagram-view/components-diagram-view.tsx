@@ -12,6 +12,7 @@ import { CustomEdge, CustomNode } from './types';
 import ComponentNode from './component-node';
 import ContainerNode from './container-node';
 import {
+  getLayoutedElements,
   getNodesAndEdgesFromDbClusterComponents,
   isComponentNode,
   isContainerNode,
@@ -37,10 +38,13 @@ const selectNode = (nodes: CustomNode[], edges: CustomEdge[], id: string) => ({
 const filterOutInvisibleNodesAndEdges = (
   nodeComponents: CustomNode[],
   edgeComponents: CustomEdge[]
-) => ({
-  nodeComponents: nodeComponents.filter((node) => node.data.visible),
-  edgeComponents: edgeComponents.filter((edge) => edge.data?.visible),
-});
+) => {
+  const visibleNodes = nodeComponents.filter((node) => node.data.visible);
+  const visibleEdges = edgeComponents.filter((edge) => edge.data?.visible);
+  const { nodes, edges } = getLayoutedElements(visibleNodes, visibleEdges);
+
+  return { nodeComponents: nodes, edgeComponents: edges };
+};
 
 const ComponentsDiagramView = ({
   components,
