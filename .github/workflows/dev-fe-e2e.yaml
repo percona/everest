@@ -17,8 +17,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ 1.23.x ]
-        may-fail: [ false ]
+        go-version: [1.23.x]
+        may-fail: [false]
     runs-on: ubuntu-latest
     steps:
       # Setup Go
@@ -87,7 +87,7 @@ jobs:
           cpus: 4
           memory: 4000m
           addons: registry
-          insecure-registry: 'localhost:5000'
+          insecure-registry: "localhost:5000"
 
       - name: Expose local registry
         run: |
@@ -121,8 +121,7 @@ jobs:
         id: meta
         with:
           images: localhost:5000/perconalab/everest
-          tags:
-            0.0.0
+          tags: 0.0.0
 
       - name: Build and Push everest dev image
         uses: docker/build-push-action@v6
