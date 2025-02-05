@@ -17,6 +17,7 @@ import {
   isComponentNode,
   isContainerNode,
 } from './utils';
+import { styled } from '@mui/material';
 
 const selectNode = (nodes: CustomNode[], edges: CustomEdge[], id: string) => ({
   nodes: nodes.map((node) => ({
@@ -45,6 +46,10 @@ const filterOutInvisibleNodesAndEdges = (
 
   return { nodeComponents: nodes, edgeComponents: edges };
 };
+
+const ReactFlowStyled = styled(ReactFlow<CustomNode, CustomEdge>)`
+  --xy-attribution-background-color: transparent;
+`;
 
 const ComponentsDiagramView = ({
   components,
@@ -113,7 +118,7 @@ const ComponentsDiagramView = ({
 
   return (
     <>
-      <ReactFlow
+      <ReactFlowStyled
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
