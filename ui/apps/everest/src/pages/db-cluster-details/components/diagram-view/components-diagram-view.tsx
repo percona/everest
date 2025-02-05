@@ -12,40 +12,11 @@ import { CustomEdge, CustomNode } from './types';
 import ComponentNode from './component-node';
 import ContainerNode from './container-node';
 import {
-  getLayoutedElements,
+  filterOutInvisibleNodesAndEdges,
   getNodesAndEdgesFromDbClusterComponents,
-  isComponentNode,
-  isContainerNode,
+  selectNode,
 } from './utils';
 import { styled } from '@mui/material';
-
-const selectNode = (nodes: CustomNode[], edges: CustomEdge[], id: string) => ({
-  nodes: nodes.map((node) => ({
-    ...node,
-    data: {
-      ...node.data,
-      selected: node.id === id,
-      visible:
-        isComponentNode(node) ||
-        (isContainerNode(node) && node.data?.parentId === id),
-    },
-  })),
-  edges: edges.map((edge) => ({
-    ...edge,
-    data: { ...edge.data, visible: edge.source === id || edge.target === id },
-  })),
-});
-
-const filterOutInvisibleNodesAndEdges = (
-  nodeComponents: CustomNode[],
-  edgeComponents: CustomEdge[]
-) => {
-  const visibleNodes = nodeComponents.filter((node) => node.data.visible);
-  const visibleEdges = edgeComponents.filter((edge) => edge.data?.visible);
-  const { nodes, edges } = getLayoutedElements(visibleNodes, visibleEdges);
-
-  return { nodeComponents: nodes, edgeComponents: edges };
-};
 
 const ReactFlowStyled = styled(ReactFlow<CustomNode, CustomEdge>)`
   --xy-attribution-background-color: transparent;

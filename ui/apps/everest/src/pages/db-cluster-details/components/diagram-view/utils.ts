@@ -123,6 +123,38 @@ export const getNodesAndEdgesFromDbClusterComponents = (
   return { nodeComponents, edgeComponents };
 };
 
+export const selectNode = (
+  nodes: CustomNode[],
+  edges: CustomEdge[],
+  id: string
+) => ({
+  nodes: nodes.map((node) => ({
+    ...node,
+    data: {
+      ...node.data,
+      selected: node.id === id,
+      visible:
+        isComponentNode(node) ||
+        (isContainerNode(node) && node.data?.parentId === id),
+    },
+  })),
+  edges: edges.map((edge) => ({
+    ...edge,
+    data: { ...edge.data, visible: edge.source === id || edge.target === id },
+  })),
+});
+
+export const filterOutInvisibleNodesAndEdges = (
+  nodeComponents: CustomNode[],
+  edgeComponents: CustomEdge[]
+) => {
+  const visibleNodes = nodeComponents.filter((node) => node.data.visible);
+  const visibleEdges = edgeComponents.filter((edge) => edge.data?.visible);
+  const { nodes, edges } = getLayoutedElements(visibleNodes, visibleEdges);
+
+  return { nodeComponents: nodes, edgeComponents: edges };
+};
+
 export const isComponentNode = (
   node: CustomNode
 ): node is CustomNode<DBClusterComponent> => {
