@@ -19,6 +19,8 @@ package oidc
 import (
 	"context"
 	"errors"
+	"slices"
+	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"go.uber.org/zap"
@@ -45,6 +47,8 @@ type Config struct {
 	IssuerURL string
 	// ClientID ID of the client OIDC app.
 	ClientID string
+	// Scopes requested scopes.
+	Scopes string
 }
 
 // NewOIDC returns a new OIDC struct.
@@ -71,6 +75,7 @@ func NewOIDC(c Config, l *zap.SugaredLogger) (*OIDC, error) {
 func (u *OIDC) Run(ctx context.Context) error {
 	issuerURL := u.config.IssuerURL
 	clientID := u.config.ClientID
+	scopes := strings.Split(u.config.Scopes, ",")
 
 	if issuerURL == "" {
 		if err := survey.AskOne(&survey.Input{
@@ -93,6 +98,12 @@ func (u *OIDC) Run(ctx context.Context) error {
 		return errors.New("clientID and/or issuerURL are not provided")
 	}
 
+	if !slices.ContainsFunc(scopes, func(s string) bool {
+		return s == "openid"
+	}) {
+		return errors.New("scopes must contain 'openid'")
+	}
+
 	// Check if we can connect to the provider.
 	_, err := getProviderConfig(ctx, issuerURL)
 	if err != nil {
@@ -106,6 +117,7 @@ func (u *OIDC) Run(ctx context.Context) error {
 	oidcCfg := common.OIDCConfig{
 		IssuerURL: issuerURL,
 		ClientID:  clientID,
+		Scopes:    scopes,
 	}
 
 	oidcRaw, err := oidcCfg.Raw()
