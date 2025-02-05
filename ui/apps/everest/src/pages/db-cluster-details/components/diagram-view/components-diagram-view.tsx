@@ -75,6 +75,10 @@ const ComponentsDiagramView = ({
 
   const handleNodeClick = useCallback(
     (_: MouseEvent, node: CustomNode) => {
+      if (node.type === 'containerNode') {
+        return;
+      }
+
       selectedNode.current = node.id;
       const { nodes: updatedNodes, edges: updatedEdges } = selectNode(
         originalNodes.current,
