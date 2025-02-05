@@ -39,7 +39,10 @@ const ComponentNode = ({
         <Stack mt={2}>
           <Typography variant="body1">{name}</Typography>
           <Typography variant="body2" color="text.secondary">
-            {formatDistanceToNowStrict(new Date(started))} | {restarts} restarts
+            {started
+              ? formatDistanceToNowStrict(new Date(started)) + ' | '
+              : ''}{' '}
+            {restarts} restarts
           </Typography>
         </Stack>
         <Chip label={type} sx={{ alignSelf: 'flex-start', mt: 1 }} />
