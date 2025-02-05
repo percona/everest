@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
-import { capitalize, Tooltip } from '@mui/material';
+import { Tooltip } from '@mui/material';
 import { Table } from '@percona/ui-lib';
-import StatusField from 'components/status-field';
 import { DBClusterComponent } from 'shared-types/components.types';
 import {
   COMPONENT_STATUS,
@@ -12,6 +11,7 @@ import {
 import { format, formatDistanceToNowStrict, isValid } from 'date-fns';
 import { DATE_FORMAT } from 'consts';
 import ExpandedRow from '../expanded-row';
+import ComponentStatus from '../component-status';
 
 const ComponentsTableView = ({
   components,
@@ -28,12 +28,10 @@ const ComponentsTableView = ({
         header: 'Status',
         accessorKey: 'status',
         Cell: ({ cell, row }) => (
-          <StatusField
+          <ComponentStatus
             status={cell.getValue<COMPONENT_STATUS>()}
-            statusMap={componentStatusToBaseStatus(row?.original?.ready)}
-          >
-            {capitalize(cell?.row?.original?.status)}
-          </StatusField>
+            statusMap={componentStatusToBaseStatus(row.original.ready)}
+          />
         ),
         sortingFn: (rowA, rowB) => {
           return (

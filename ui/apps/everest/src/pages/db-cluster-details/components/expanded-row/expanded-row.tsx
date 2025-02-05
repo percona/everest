@@ -21,11 +21,11 @@ import {
   CONTAINER_STATUS,
   containerStatusToBaseStatus,
 } from '../components.constants';
-import StatusField from 'components/status-field';
 import { useMemo } from 'react';
 import { Container } from 'shared-types/components.types';
 import { Table } from '@percona/ui-lib';
 import { DATE_FORMAT } from 'consts';
+import ComponentStatus from '../component-status';
 
 const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
   const { containers, name } = row.original;
@@ -37,7 +37,9 @@ const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
         header: 'Status',
         accessorKey: 'status',
         Cell: ({ cell, row }) => (
-          <StatusField
+          <ComponentStatus
+            status={cell.getValue<CONTAINER_STATUS>()}
+            statusMap={containerStatusToBaseStatus(row.original.ready)}
             iconProps={{
               size: 'small',
             }}
@@ -46,13 +48,10 @@ const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
               gap: 2,
               alignItems: 'center',
             }}
-            status={cell.getValue<CONTAINER_STATUS>()}
-            statusMap={containerStatusToBaseStatus(row?.original?.ready)}
-          >
-            <Typography variant="body2">
-              {cell.getValue<CONTAINER_STATUS>()}
-            </Typography>
-          </StatusField>
+            typographyProps={{
+              variant: 'body2',
+            }}
+          />
         ),
       },
       {

@@ -3,8 +3,8 @@ import { CustomNode } from './types';
 import { Container } from 'shared-types/components.types';
 import { Paper, Stack, Typography } from '@mui/material';
 import { CONTAINER_NODE_HEIGHT, CONTAINER_NODE_WIDTH } from './constants';
-import StatusField from 'components/status-field';
 import { containerStatusToBaseStatus } from '../components.constants';
+import ComponentStatus from '../component-status';
 
 const ContainerNode = ({
   data: {
@@ -24,15 +24,10 @@ const ContainerNode = ({
       }}
     >
       <Stack direction={'row'} alignItems={'center'}>
-        <StatusField
-          iconProps={{
-            size: 'small',
-          }}
+        <ComponentStatus
           status={status}
           statusMap={containerStatusToBaseStatus(ready)}
-        >
-          <b>{status}</b>
-        </StatusField>
+        />
         <Typography ml={'auto'} variant="body1">
           {ready ? 'Ready' : 'Not Ready'}
         </Typography>
