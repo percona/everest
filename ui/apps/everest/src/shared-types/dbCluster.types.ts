@@ -14,6 +14,7 @@
 // limitations under the License.
 import { ProxyType } from '@percona/types';
 import { DbEngineType } from './dbEngines.types';
+import { Affinity } from './affinity.types';
 
 export enum ProxyExposeType {
   internal = 'internal',
@@ -73,6 +74,7 @@ interface Engine {
   type: DbEngineType;
   version?: string;
   config?: string;
+  affinity?: Affinity;
 }
 
 export interface ProxyExposeConfig {
@@ -85,6 +87,7 @@ export interface Proxy {
   expose: ProxyExposeConfig;
   resources?: Resources;
   type: ProxyType;
+  affinity?: Affinity;
 }
 
 export interface DataSource {
@@ -104,6 +107,7 @@ export interface Monitoring {
 export interface Sharding {
   configServer: {
     replicas: number;
+    affinity?: Affinity;
   };
   shards: number;
   enabled: boolean;
@@ -131,6 +135,8 @@ export interface StatusSpec {
 }
 
 export interface DbClusterMetadata {
+  generation?: number;
+  resourceVersion?: string;
   name: string;
   namespace: string;
   annotations?: {

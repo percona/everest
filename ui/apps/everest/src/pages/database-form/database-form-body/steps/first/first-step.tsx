@@ -40,6 +40,7 @@ import { Messages } from './first-step.messages.ts';
 import { filterAvailableDbVersionsForDbEngineEdition } from 'components/cluster-form/db-version/utils.ts';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import {
+  generateDefaultAffinityRule,
   NODES_DEFAULT_SIZES,
   PROXIES_DEFAULT_SIZES,
   ResourceSize,
@@ -47,6 +48,11 @@ import {
 import { DbVersion } from 'components/cluster-form/db-version';
 import { useDBEnginesForDbEngineTypes } from 'hooks/index.ts';
 import { useDatabasePageDefaultValues } from 'pages/database-form/useDatabaseFormDefaultValues.ts';
+import {
+  AffinityComponent,
+  AffinityRule,
+} from 'shared-types/affinity.types.ts';
+import { filterOutUnavailableAffinityRulesForMongo } from 'pages/database-form/database-form.utils.ts';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
@@ -54,7 +60,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const {
     defaultValues: { [DbWizardFormFields.dbVersion]: defaultDbVersion },
   } = useDatabasePageDefaultValues(mode);
-  const { watch, setValue, getFieldState, resetField, trigger } =
+  const { watch, setValue, getFieldState, resetField, trigger, getValues } =
     useFormContext();
 
   const { data: clusterInfo, isFetching: clusterInfoFetching } =
@@ -224,6 +230,33 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     });
   }, []);
 
+  const onShardingToggleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const enabled = e.target.checked;
+      const rules: AffinityRule[] = getValues(DbWizardFormFields.affinityRules);
+      const { isDirty } = getFieldState(DbWizardFormFields.affinityRules);
+
+      if (!enabled) {
+        resetField(DbWizardFormFields.shardNr, {
+          keepError: false,
+        });
+        resetField(DbWizardFormFields.shardConfigServers, {
+          keepError: false,
+        });
+      } else if (!isDirty) {
+        rules.push(generateDefaultAffinityRule(AffinityComponent.Proxy));
+        rules.push(generateDefaultAffinityRule(AffinityComponent.ConfigServer));
+      }
+
+      const filteredRules = filterOutUnavailableAffinityRulesForMongo(
+        rules,
+        enabled
+      );
+      setValue(DbWizardFormFields.affinityRules, filteredRules);
+    },
+    [getFieldState, getValues, resetField, setValue]
+  );
+
   useEffect(() => {
     setDefaultsForDbType(dbType);
   }, [dbType, setDefaultsForDbType]);
@@ -292,16 +325,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                   name={DbWizardFormFields.sharding}
                   switchFieldProps={{
                     disabled: disableSharding,
-                    onChange: (e) => {
-                      if (!e.target.checked) {
-                        resetField(DbWizardFormFields.shardNr, {
-                          keepError: false,
-                        });
-                        resetField(DbWizardFormFields.shardConfigServers, {
-                          keepError: false,
-                        });
-                      }
-                    },
+                    onChange: onShardingToggleChange,
                   }}
                 />
                 {notSupportedMongoOperatorVersionForSharding &&

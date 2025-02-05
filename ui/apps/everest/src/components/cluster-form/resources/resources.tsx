@@ -39,7 +39,7 @@ import {
 } from './constants';
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
-import { getProxyUnitNamesFromDbType } from './utils';
+import { getProxyUnitNamesFromDbType } from 'utils/db';
 
 import { ResourcesTogglesProps, ResourceInputProps } from './resources.types';
 import { Messages } from './messages';
