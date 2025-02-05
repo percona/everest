@@ -34,6 +34,7 @@ export const OverviewSection = ({
   dataTestId,
   editable,
   actionButtonProps,
+  showTooltip = false,
   disabledEditTooltipText = '',
 }: OverviewSectionProps) => (
   <Grid
@@ -53,7 +54,7 @@ export const OverviewSection = ({
           {title}
         </Typography>
         {actionButtonProps && (
-          <Tooltip title={!editable ? disabledEditTooltipText : ''}>
+          <Tooltip title={showTooltip ? disabledEditTooltipText : ''}>
             <Box>
               <Button
                 size="small"

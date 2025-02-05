@@ -212,6 +212,9 @@ export const BackupsDetails = ({
             'data-testid': 'edit-pitr-button',
           }}
           editable={editable && !pitrDisabled}
+          showTooltip={
+            editable && !backupsEnabled && dbType !== DbType.Postresql
+          }
           disabledEditTooltipText={Messages.titles.createScheduleToEnable}
         >
           {/*// TODO EVEREST-1066 the width of the columns on the layouts in different places is limited by a different number (but not by the content), a discussion with Design is required*/}
