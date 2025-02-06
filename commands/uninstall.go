@@ -57,7 +57,7 @@ func uninstallPreRun(_ *cobra.Command, _ []string) { //nolint:revive
 func uninstallRun(cmd *cobra.Command, _ []string) { //nolint:revive
 	op, err := uninstall.NewUninstall(*uninstallCfg, logger.GetLogger())
 	if err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), uninstallCfg.Pretty)
 		os.Exit(1)
 	}
 

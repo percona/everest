@@ -45,7 +45,8 @@ func TestRBAC_DatabaseClusterBackup(t *testing.T) {
 						},
 					},
 				},
-			}, nil)
+			}, nil,
+			)
 			return h
 		}
 
@@ -175,7 +176,8 @@ func TestRBAC_DatabaseClusterBackup(t *testing.T) {
 					DBClusterName:     "cluster1",
 					BackupStorageName: "bs1",
 				},
-			}, nil)
+			}, nil,
+			)
 			return h
 		}
 
@@ -316,17 +318,20 @@ func TestRBAC_DatabaseClusterBackup(t *testing.T) {
 	t.Run("DeleteDatabaseClusterBackup", func(t *testing.T) {
 		next := func() *handlers.MockHandler {
 			h := &handlers.MockHandler{}
-			h.On("GetDatabaseClusterBackup", mock.Anything, mock.Anything, mock.Anything).Return(&everestv1alpha1.DatabaseClusterBackup{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "backup1",
-					Namespace: "default",
-				},
-				Spec: everestv1alpha1.DatabaseClusterBackupSpec{
-					DBClusterName:     "cluster1",
-					BackupStorageName: "bs1",
-				},
-			}, nil)
-			h.On("DeleteDatabaseClusterBackup", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			h.On("GetDatabaseClusterBackup", mock.Anything, mock.Anything, mock.Anything).
+				Return(&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "backup1",
+						Namespace: "default",
+					},
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{
+						DBClusterName:     "cluster1",
+						BackupStorageName: "bs1",
+					},
+				}, nil,
+				)
+			h.On("DeleteDatabaseClusterBackup", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Return(nil)
 			return h
 		}
 

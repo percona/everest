@@ -98,8 +98,8 @@ func TestInstall_latestVersion(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			i := &Install{
-				config: Config{
+			i := &Installer{
+				cfg: InstallConfig{
 					Version: tc.providedVersion,
 				},
 			}

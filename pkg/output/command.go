@@ -17,60 +17,44 @@
 package output
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 
-	"github.com/AlecAivazis/survey/v2/terminal"
-	"github.com/fatih/color"
-	"github.com/spf13/cobra"
+	"github.com/charmbracelet/lipgloss"
 	"go.uber.org/zap"
 
 	"github.com/percona/everest/commands/common"
 )
-
-// PrintOutput prints output as a string or json.
-func PrintOutput(cmd *cobra.Command, l *zap.SugaredLogger, output interface{}) {
-	outputJSON, err := cmd.Flags().GetBool("json")
-	if err != nil {
-		l.Errorf("could not parse json global flag. Error: %s", err)
-	}
-
-	if !outputJSON {
-		fmt.Println(output) //nolint:forbidigo
-		return
-	}
-
-	out, err := json.Marshal(output)
-	if err != nil {
-		l.Error("Cannot unmarshal output to JSON")
-		os.Exit(1)
-	}
-
-	fmt.Println(string(out)) //nolint:forbidigo
-}
 
 // PrintError formats and prints an error to logger.
 func PrintError(err error, l *zap.SugaredLogger, prettyPrint bool) {
 	if errors.Is(err, common.ErrExitWithError) {
 		return
 	}
-	if errors.Is(err, terminal.InterruptErr) {
-		l.Info("The command execution is interrupted")
-		return
-	}
 
-	l.Error(err)
 	if prettyPrint {
-		fmt.Fprintln(os.Stderr, Failure("%s", err))
+		_, _ = fmt.Fprintln(os.Stderr, Failure("%s", err))
+	} else {
+		l.Error(err)
 	}
 }
 
 //nolint:gochecknoglobals
 var (
-	okStatus   = color.New(color.FgGreen).SprintFunc()("\u2713")           // ✓
-	failStatus = color.New(color.FgRed, color.Bold).SprintFunc()("\u00D7") // ×
+	// Style is applied to the successful result.
+	okStyle = lipgloss.NewStyle().
+		Foreground(
+			lipgloss.AdaptiveColor{Light: "#000000", Dark: "#5fd700"},
+		)
+	okStatus = okStyle.Render("✅")
+
+	// Style is applied to the failure result.
+	failureStyle = lipgloss.NewStyle().
+			Foreground(
+			lipgloss.AdaptiveColor{Light: "#B10810", Dark: "#F37C6F"},
+		)
+	failStatus = failureStyle.Render("❌")
 )
 
 // Success prints a message with a success emoji.
@@ -80,7 +64,11 @@ func Success(msg string, args ...any) string {
 
 // Failure prints a message with a fail emoji.
 func Failure(msg string, args ...any) string {
-	return fmt.Sprintf("%s %s\n", failStatus, fmt.Sprintf(msg, args...))
+	// return fmt.Sprintf("%s %s\n", failStatus, fmt.Sprintf(msg, args...))
+	return fmt.Sprintf("%s %s\n",
+		failStatus,
+		failureStyle.Render(fmt.Sprintf(msg, args...)),
+	)
 }
 
 // Info prints a message with an info emoji.
@@ -96,4 +84,9 @@ func Rocket(msg string, args ...any) string {
 // Warn prints a message with a warning emoji.
 func Warn(msg string, args ...any) string {
 	return fmt.Sprintf("⚠️  %s\n", fmt.Sprintf(msg, args...))
+}
+
+// Numeric prints a message with a numeric emoji.
+func Numeric(num int, msg string, args ...any) string {
+	return fmt.Sprintf("%d %s  %s\n", num, "\u2B95", fmt.Sprintf(msg, args...))
 }

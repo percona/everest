@@ -26,6 +26,7 @@ import (
 	accountscli "github.com/percona/everest/pkg/accounts/cli"
 	"github.com/percona/everest/pkg/cli"
 	"github.com/percona/everest/pkg/logger"
+	"github.com/percona/everest/pkg/output"
 )
 
 var (
@@ -53,17 +54,51 @@ func accountsCreatePreRun(cmd *cobra.Command, _ []string) { //nolint:revive
 	// Copy global flags to config
 	accountsCreateCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
 	accountsCreateCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
+
+	// Check username
+	if accountsCreateOpts.Username != "" {
+		// Validate provided username for new account.
+		if err := accountscli.ValidateUsername(accountsCreateOpts.Username); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsCreateCfg.Pretty)
+			os.Exit(1)
+		}
+	} else {
+		// Ask user in interactive mode to provide username for new account.
+		if username, err := accountscli.PopulateUsername(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsCreateCfg.Pretty)
+			os.Exit(1)
+		} else {
+			accountsCreateOpts.Username = username
+		}
+	}
+
+	// Check password
+	if accountsCreateOpts.Password != "" {
+		// Validate provided password for new account.
+		if err := accountscli.ValidatePassword(accountsCreateOpts.Password); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsCreateCfg.Pretty)
+			os.Exit(1)
+		}
+	} else {
+		// Ask user in interactive mode to provide password for new account.
+		if password, err := accountscli.PopulatePassword(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsCreateCfg.Pretty)
+			os.Exit(1)
+		} else {
+			accountsCreateOpts.Password = password
+		}
+	}
 }
 
 func accountsCreateRun(cmd *cobra.Command, _ []string) { //nolint:revive
 	cliA, err := accountscli.NewAccounts(*accountsCreateCfg, logger.GetLogger())
 	if err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), accountsCreateCfg.Pretty)
 		os.Exit(1)
 	}
 
 	if err := cliA.Create(cmd.Context(), *accountsCreateOpts); err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), accountsCreateCfg.Pretty)
 		os.Exit(1)
 	}
 }
