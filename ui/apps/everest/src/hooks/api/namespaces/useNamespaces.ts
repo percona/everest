@@ -55,6 +55,7 @@ export const useDBEnginesForNamespaces = (
 
       return dbEnginesQuerySelect(data, retrieveUpgradingEngines);
     },
+    refetchInterval: 5 * 1000,
     ...options,
   }));
 
