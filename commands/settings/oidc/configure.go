@@ -40,13 +40,14 @@ var (
 		Run:     settingsOIDCConfigureRun,
 	}
 	settingsOIDCConfigureCfg = &oidc.Config{}
+	scopes                   string
 )
 
 func init() {
 	// local command flags
 	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.IssuerURL, cli.FlagOIDCIssuerURL, "", "OIDC issuer url")
 	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.ClientID, cli.FlagOIDCClientID, "", "OIDC application client ID")
-	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.Scopes, cli.FlagOIDCScopes, strings.Join(common.DefaultOIDCScopes, ","), "Comma-separated list of scopes")
+	settingsOIDCConfigureCmd.Flags().StringVar(&scopes, cli.FlagOIDCScopes, strings.Join(common.DefaultOIDCScopes, ","), "Comma-separated list of scopes")
 }
 
 func settingsOIDCConfigurePreRun(cmd *cobra.Command, _ []string) { //nolint:revive
@@ -83,6 +84,14 @@ func settingsOIDCConfigurePreRun(cmd *cobra.Command, _ []string) { //nolint:revi
 			os.Exit(1)
 		}
 	}
+
+	// Validate scopes (default or provided by user in flags)
+	scopesList := strings.Split(scopes, ",")
+	if err := oidc.ValidateScopes(scopesList); err != nil {
+		output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+		os.Exit(1)
+	}
+	settingsOIDCConfigureCfg.Scopes = scopesList
 }
 
 func settingsOIDCConfigureRun(cmd *cobra.Command, _ []string) {
