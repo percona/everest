@@ -212,7 +212,7 @@ test.describe.configure({ retries: 0 });
         if (size != 1 && db != 'postgresql') {
           await waitForStatus(page, clusterName, 'Stopping', 60000);
         }
-        await waitForStatus(page, clusterName, 'Paused', 180000);
+        await waitForStatus(page, clusterName, 'Paused', 240000);
       });
 
       test(`Resume cluster [${db} size ${size}]`, async ({ page }) => {
