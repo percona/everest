@@ -134,7 +134,7 @@ test.describe('DB Cluster creation', () => {
     const dbName = await page.getByTestId('text-input-db-name').inputValue();
 
     await moveForward(page);
-    await expect(page.getByText('Nº nodes: 3')).toBeVisible();
+    await expect(page.getByText('3 nodes - CPU')).toBeVisible();
 
     await resourcesStepCheck(page);
 
