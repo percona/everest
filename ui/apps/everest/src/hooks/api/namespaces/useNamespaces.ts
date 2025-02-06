@@ -39,7 +39,9 @@ export const useDBEnginesForNamespaces = (
   options?: PerconaQueryOptions<DbEngine[], unknown, DbEngine[]>
 ) => {
   const { data: namespaces = [], isFetching: fetchingNamespaces } =
-    useNamespaces();
+    useNamespaces({
+      refetchInterval: 5 * 1000,
+    });
 
   const queries = namespaces.map<
     UseQueryOptions<DbEngine[], unknown, DbEngine[]>
