@@ -272,6 +272,17 @@ func TestValidateBackupSpec(t *testing.T) {
 			err:     nil,
 		},
 		{
+			name: "allow no schedules",
+			cluster: &everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Backup: everestv1alpha1.Backup{
+						Schedules: []everestv1alpha1.BackupSchedule{},
+					},
+				},
+			},
+			err: nil,
+		},
+		{
 			name: "errNoNameInSchedule",
 			cluster: &everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
