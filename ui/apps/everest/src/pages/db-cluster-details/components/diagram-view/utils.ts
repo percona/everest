@@ -74,7 +74,6 @@ export const getNodesAndEdgesFromDbClusterComponents = (
   components.forEach((clusterComponent, idx) => {
     const { containers, name } = clusterComponent;
     const nodeIsSelected = selectedNode ? selectedNode === name : idx === 0;
-    const singleChild = containers.length === 1;
     nodeComponents.push({
       id: name,
       type: 'componentNode',
@@ -94,11 +93,8 @@ export const getNodesAndEdgesFromDbClusterComponents = (
         type: 'containerNode',
         width: CONTAINER_NODE_WIDTH,
         height: CONTAINER_NODE_HEIGHT,
-        // When there's only one child, draw it right below the parent component, to avoid edge curves
         position: {
-          x: singleChild
-            ? COMPONENT_NODE_WIDTH / 2 - CONTAINER_NODE_WIDTH / 2
-            : 100 * idx,
+          x: 100 * idx,
           y: 100,
         },
         data: {
