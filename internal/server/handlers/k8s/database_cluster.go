@@ -188,7 +188,7 @@ func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, namespace, name
 	}
 
 	response := &api.DatabaseClusterPitr{}
-	if !databaseCluster.Spec.Backup.Enabled || !databaseCluster.Spec.Backup.PITR.Enabled {
+	if !databaseCluster.Spec.Backup.PITR.Enabled {
 		return response, nil
 	}
 
