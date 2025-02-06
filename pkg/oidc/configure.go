@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
 
 	"go.uber.org/zap"
 
@@ -50,6 +51,8 @@ type Config struct {
 	IssuerURL string
 	// ClientID ID of the client OIDC app.
 	ClientID string
+	// Scopes requested scopes.
+	Scopes []string
 }
 
 // PopulateIssuerURL function to fill the configuration with the required IssuerURL.
@@ -118,6 +121,15 @@ func (u *OIDC) Run(ctx context.Context) error {
 		return err
 	}
 
+	if err := steps.RunStepsWithSpinner(ctx, u.l, u.getOIDCProviderConfigureSteps(), u.config.Pretty); err != nil {
+		return err
+	}
+	u.l.Info("OIDC has been configured successfully")
+	return nil
+}
+
+// getOIDCProviderConfigureSteps returns the steps to configure the OIDC provider.
+func (u *OIDC) getOIDCProviderConfigureSteps() []steps.Step {
 	var stepList []steps.Step
 	stepList = append(stepList, steps.Step{
 		Desc: "Checking connection to the OIDC provider",
@@ -139,6 +151,7 @@ func (u *OIDC) Run(ctx context.Context) error {
 			oidcCfg := common.OIDCConfig{
 				IssuerURL: u.config.IssuerURL,
 				ClientID:  u.config.ClientID,
+				Scopes:    u.config.Scopes,
 			}
 
 			oidcRaw, err := oidcCfg.Raw()
@@ -161,11 +174,7 @@ func (u *OIDC) Run(ctx context.Context) error {
 	},
 	)
 
-	if err := steps.RunStepsWithSpinner(ctx, u.l, stepList, u.config.Pretty); err != nil {
-		return err
-	}
-	u.l.Info("OIDC has been configured successfully")
-	return nil
+	return stepList
 }
 
 // ValidateURL checks if the provided URL is valid.
@@ -196,5 +205,15 @@ func ValidateClientID(clientID string) error {
 		return errors.New("client ID is required")
 	}
 
+	return nil
+}
+
+// ValidateScopes checks if the provided scopes are valid.
+func ValidateScopes(scopes []string) error {
+	if !slices.ContainsFunc(scopes, func(s string) bool {
+		return s == "openid"
+	}) {
+		return errors.New("scopes must contain 'openid'")
+	}
 	return nil
 }
