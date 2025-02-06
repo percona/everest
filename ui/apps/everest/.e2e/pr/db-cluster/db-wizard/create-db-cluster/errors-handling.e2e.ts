@@ -18,9 +18,7 @@ import { goToStep, moveForward } from '@e2e/utils/db-wizard';
 import { selectDbEngine } from '../db-wizard-utils';
 
 test.describe('DB Cluster creation', () => {
-  test('Blocking the edit buttons when an error occurs in the form', async ({
-    page,
-  }) => {
+  test('Wizard form errors', async ({ page }) => {
     await page.goto('/databases');
     await selectDbEngine(page, 'pxc');
 
@@ -47,18 +45,56 @@ test.describe('DB Cluster creation', () => {
       page.getByTestId('button-edit-preview-backups')
     ).not.toBeDisabled();
 
+    // Introduce an error on resources step
     await page.getByTestId('text-input-memory').fill('');
+    await expect(page.getByTestId('preview-error-resources')).not.toBeVisible();
 
-    await expect(page.getByTestId('db-wizard-previous-button')).toBeDisabled();
-    await expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
     await expect(
       page.getByTestId('db-wizard-cancel-button')
     ).not.toBeDisabled();
+
+    // Backups step
+    await moveForward(page);
+    // Advanced Configurations step
+    await moveForward(page);
+
+    await page
+      .getByTestId('switch-input-external-access')
+      .getByRole('checkbox')
+      .check();
+    await page.getByTestId('add-text-input-button').click();
+    // Introduce an error on advanced configs step: two invalid IPs
+    await page
+      .getByTestId('text-input-source-ranges.0.source-range')
+      .fill('invalid-ip');
+    await page
+      .getByTestId('text-input-source-ranges.1.source-range')
+      .fill('another-invalid-ip');
     await expect(
-      page.getByTestId('button-edit-preview-basic-information')
-    ).toBeDisabled();
+      page.getByTestId('preview-error-advanced-configurations')
+    ).not.toBeVisible();
+
+    // Monitoring step
+    await moveForward(page);
+    await expect(page.getByTestId('db-wizard-submit-button')).toBeDisabled();
+    await expect(page.getByTestId('preview-error-resources')).toBeVisible();
     await expect(
-      page.getByTestId('button-edit-preview-backups')
-    ).toBeDisabled();
+      page.getByTestId('preview-error-advanced-configurations')
+    ).toBeVisible();
+    await goToStep(page, 'resources');
+    await page.getByTestId('text-input-memory').fill('1');
+    await goToStep(page, 'advanced-configurations');
+    await page.getByTestId('delete-text-input-1-button').click();
+    await page
+      .getByTestId('text-input-source-ranges.0.source-range')
+      .fill('192.168.1.1');
+    await goToStep(page, 'monitoring');
+    await expect(
+      page.getByTestId('db-wizard-submit-button')
+    ).not.toBeDisabled();
+    await expect(page.getByTestId('preview-error-resources')).not.toBeVisible();
+    await expect(
+      page.getByTestId('preview-error-advanced-configurations')
+    ).not.toBeVisible();
   });
 });
