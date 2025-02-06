@@ -1,11 +1,12 @@
-import { Handle, NodeProps, Position } from '@xyflow/react';
+import { NodeProps } from '@xyflow/react';
 import { CustomNode } from './types';
 import { DBClusterComponent } from 'shared-types/components.types';
-import { Chip, Paper, Stack, Typography } from '@mui/material';
+import { Chip, Stack, Typography } from '@mui/material';
 import { COMPONENT_NODE_HEIGHT, COMPONENT_NODE_WIDTH } from './constants';
 import ComponentStatus from '../component-status';
 import { componentStatusToBaseStatus } from '../components.constants';
 import DiagramComponentAge from './diagram-component-age';
+import DiagramNode from './diagram-node';
 
 const ComponentNode = ({
   data: {
@@ -14,40 +15,33 @@ const ComponentNode = ({
   },
 }: NodeProps<CustomNode<DBClusterComponent>>) => {
   return (
-    <Paper elevation={selected ? 4 : 0}>
-      <Stack
-        sx={{
-          border: '1px solid',
-          borderRadius: '4px',
-          borderColor: 'divider',
-          p: 2,
-          height: `${COMPONENT_NODE_HEIGHT}px`,
-          width: `${COMPONENT_NODE_WIDTH}px`,
-        }}
-      >
-        <Stack direction={'row'} alignItems={'center'}>
-          <ComponentStatus
-            status={status}
-            statusMap={componentStatusToBaseStatus(ready)}
-          />
-          <Typography ml={'auto'} variant="body1">
-            {ready} Ready
-          </Typography>
-        </Stack>
-        <Stack mt={2}>
-          <Typography variant="body1">{name}</Typography>
-          <DiagramComponentAge
-            date={started}
-            restarts={restarts}
-            typographyProps={{
-              variant: 'body2',
-            }}
-          />
-        </Stack>
-        <Chip label={type} sx={{ alignSelf: 'flex-start', mt: 1 }} />
+    <DiagramNode
+      height={COMPONENT_NODE_HEIGHT}
+      width={COMPONENT_NODE_WIDTH}
+      elevation={selected ? 4 : 0}
+      showBottomHandle
+    >
+      <Stack direction={'row'} alignItems={'center'}>
+        <ComponentStatus
+          status={status}
+          statusMap={componentStatusToBaseStatus(ready)}
+        />
+        <Typography ml={'auto'} variant="body1">
+          {ready} Ready
+        </Typography>
       </Stack>
-      <Handle style={{ opacity: 0 }} type="source" position={Position.Bottom} />
-    </Paper>
+      <Stack mt={2}>
+        <Typography variant="body1">{name}</Typography>
+        <DiagramComponentAge
+          date={started}
+          restarts={restarts}
+          typographyProps={{
+            variant: 'body2',
+          }}
+        />
+      </Stack>
+      <Chip label={type} sx={{ alignSelf: 'flex-start', mt: 1 }} />
+    </DiagramNode>
   );
 };
 
