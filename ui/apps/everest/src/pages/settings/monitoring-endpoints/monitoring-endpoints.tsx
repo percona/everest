@@ -33,7 +33,9 @@ export const MonitoringEndpoints = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedInstance, setSelectedInstance] =
     useState<MonitoringInstance>();
-  const { data: namespaces = [] } = useNamespaces();
+  const { data: namespaces = [] } = useNamespaces({
+    refetchInterval: 10 * 1000,
+  });
   const monitoringInstances = useMonitoringInstancesList(
     namespaces.map((ns) => ({
       namespace: ns,
