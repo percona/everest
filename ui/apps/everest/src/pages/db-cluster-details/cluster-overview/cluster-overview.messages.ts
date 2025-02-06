@@ -34,6 +34,7 @@ export const Messages = {
     parameters: 'Parameters',
     enabled: 'Enabled',
     disabled: 'Disabled',
+    noSchedules: '0 active schedules',
     shards: 'Nº of shards',
     configServers: 'Config servers',
     cpu: 'CPU',
