@@ -36,4 +36,5 @@ func init() {
 	namespacesCmd.AddCommand(namespaces.GetNamespacesAddCmd())
 	namespacesCmd.AddCommand(namespaces.GetNamespacesRemoveCmd())
 	namespacesCmd.AddCommand(namespaces.GetNamespacesUpdateCmd())
+	namespacesCmd.AddCommand(namespaces.GetNamespacesListCmd())
 }
