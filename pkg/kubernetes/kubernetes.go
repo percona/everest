@@ -21,7 +21,6 @@ import (
 	"errors"
 	"net/http"
 	"slices"
-	"sort"
 	"strings"
 	"time"
 
@@ -158,21 +157,6 @@ func (k *Kubernetes) Config() *rest.Config {
 	return k.client.Config()
 }
 
-// NewEmpty returns new Kubernetes object.
-func NewEmpty(l *zap.SugaredLogger) *Kubernetes {
-	return &Kubernetes{
-		client: &client.Client{},
-		l:      l.With("component", "kubernetes"),
-		httpClient: &http.Client{
-			Timeout: requestTimeout,
-			Transport: &http.Transport{
-				MaxIdleConns:    maxIdleConns,
-				IdleConnTimeout: idleConnTimeout,
-			},
-		},
-	}
-}
-
 // WithClient sets the client connector.
 func (k *Kubernetes) WithClient(c client.KubeClientConnector) *Kubernetes {
 	k.client = c
@@ -267,35 +251,6 @@ type InstallOperatorRequest struct {
 	StartingCSV            string
 	TargetNamespaces       []string
 	SubscriptionConfig     *olmv1alpha1.SubscriptionConfig
-}
-
-func mergeNamespacesEnvVar(str1, str2 string) string {
-	ns1 := strings.Split(str1, ",")
-	ns2 := strings.Split(str2, ",")
-	nsMap := make(map[string]struct{})
-
-	for _, ns := range ns1 {
-		if ns == "" {
-			continue
-		}
-		nsMap[ns] = struct{}{}
-	}
-
-	for _, ns := range ns2 {
-		if ns == "" {
-			continue
-		}
-		nsMap[ns] = struct{}{}
-	}
-
-	namespaces := []string{}
-	for ns := range nsMap {
-		namespaces = append(namespaces, ns)
-	}
-
-	sort.Strings(namespaces)
-
-	return strings.Join(namespaces, ",")
 }
 
 // GetServerVersion returns server version.

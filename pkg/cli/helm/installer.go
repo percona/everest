@@ -186,14 +186,6 @@ func (i *Installer) Install(ctx context.Context) error {
 	return i.Upgrade(ctx, UpgradeOptions{})
 }
 
-// GetRelease gets the installed Helm release.
-func (i *Installer) GetRelease() (*release.Release, error) {
-	if i.release == nil {
-		return nil, errors.New("chart not installed")
-	}
-	return i.release, nil
-}
-
 func (i *Installer) install(ctx context.Context) error {
 	install := action.NewInstall(i.cfg)
 	install.ReleaseName = i.ReleaseName
