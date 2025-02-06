@@ -34,8 +34,8 @@ var (
 	namespacesListCmd = &cobra.Command{
 		Use:     "list [flags]",
 		Args:    cobra.NoArgs,
-		Long:    "List an existing namespaces",
-		Short:   "List an existing namespaces",
+		Long:    "List namespaces managed by Everest.",
+		Short:   "List namespaces managed by Everest.",
 		Example: `everestctl namespaces list --all`,
 		PreRun:  namespacesListPreRun,
 		Run:     namespacesListRun,
