@@ -3,5 +3,6 @@ export const Messages = {
   createToStart: 'Create one to get started.',
   create: 'Create Database',
   contactSupport: 'Contact Percona Support',
-  noPermissions: 'You lack permission to create a database cluster.',
+  noPermissions:
+    'There are no database engines available or you lack permission to create a database cluster.',
 };
