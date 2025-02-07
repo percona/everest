@@ -29,7 +29,6 @@ import (
 	"github.com/casbin/casbin/v2/model"
 	"github.com/casbin/casbin/v2/persist"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -292,18 +291,6 @@ func buildPathResourceMap(basePath string) (map[string]string, []string, error) 
 		skipPaths = append(skipPaths, parsedPath)
 	}
 	return resourceMap, skipPaths, nil
-}
-
-// NewSkipper returns a new function that checks if a given request should be skipped
-// from RBAC checks.
-func NewSkipper(basePath string) (func(echo.Context) bool, error) {
-	_, skipPaths, err := buildPathResourceMap(basePath)
-	if err != nil {
-		return nil, err
-	}
-	return func(c echo.Context) bool {
-		return slices.Contains(skipPaths, c.Request().URL.Path)
-	}, nil
 }
 
 // Can checks if a user is allowed to perform an action on a resource.

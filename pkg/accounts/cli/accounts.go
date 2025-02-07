@@ -75,11 +75,6 @@ func NewAccounts(c Config, l *zap.SugaredLogger) (*Accounts, error) {
 	return cli, nil
 }
 
-// WithAccountManager sets the account manager for the Accounts.
-func (c *Accounts) WithAccountManager(m accounts.Interface) {
-	c.accountManager = m
-}
-
 func (c *Accounts) runCredentialsWizard(username, password *string) error {
 	if *username == "" {
 		pUsername := survey.Input{

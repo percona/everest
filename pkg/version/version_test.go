@@ -21,23 +21,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIsRC(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		version  string
-		expected bool
-	}{
-		{"v0.3.0", false},
-		{"v0.3.0-xx", false},
-		{"v0.3.0-rc1", true},
-		{"v1.3.0-rc2", true},
-	}
-	for _, tc := range testCases {
-		actual := IsRC(tc.version)
-		assert.Equal(t, tc.expected, actual)
-	}
-}
-
 func TestIsDev(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {

@@ -109,13 +109,3 @@ func StrToMilliCPU(cpu string) (uint64, error) {
 	}
 	return uint64(floatCPU * 1000), nil //nolint:mnd
 }
-
-// BytesToStr converts integer of bytes to string.
-func BytesToStr(i int64) string {
-	return strconv.FormatInt(i, 10)
-}
-
-// MilliCPUToStr converts integer of milli CPU to string.
-func MilliCPUToStr(i int32) string {
-	return strconv.FormatInt(int64(i), 10) + "m"
-}
