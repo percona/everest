@@ -1,6 +1,6 @@
 import { Alert, Box, MenuItem } from '@mui/material';
 import { SelectInput } from '@percona/ui-lib';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { HoursField } from './fields/hours-field';
 import { MonthsField } from './fields/months-field';
@@ -8,26 +8,119 @@ import { TimeFields } from './fields/time-fields';
 import { WeeksField } from './fields/weeks-field';
 import { Messages } from './time-selection.messages';
 import {
+  AmPM,
   TimeSelectionFields,
   TimeSelectionProps,
   TimeValue,
   timeValueHumanized,
 } from './time-selection.types';
 import { getTimeText } from './time-selection.utils';
+import { HOURS_AM_PM, MINUTES } from './time-selection.constants';
 
 export const TimeSelection = ({
   errorInfoAlert,
   showInfoAlert,
   sx,
   sxTimeFields,
+  shouldRestrictSelectableHours = false,
 }: TimeSelectionProps) => {
-  const { watch } = useFormContext();
+  const { watch, setValue, getFieldState, resetField } = useFormContext();
+
   const selectedTime: TimeValue = watch(TimeSelectionFields.selectedTime);
   const minute: number = watch(TimeSelectionFields.minute);
   const hour: number = watch(TimeSelectionFields.hour);
   const amPm: string = watch(TimeSelectionFields.amPm);
   const weekDay: string = watch(TimeSelectionFields.weekDay);
   const onDay: number = watch(TimeSelectionFields.onDay);
+
+  const OFFSET = -1 * (new Date().getTimezoneOffset() / 60);
+
+  const TIMEZONE_OFFSET_HOURS = Math.floor(OFFSET);
+
+  const TIMEZONE_OFFSET_MINUTES = (OFFSET - TIMEZONE_OFFSET_HOURS) * 60;
+
+  const isFirstDayOfTheMonthAndPositiveOffset =
+    selectedTime === TimeValue.months &&
+    onDay === 1 &&
+    TIMEZONE_OFFSET_HOURS > 0;
+
+  const changeSelectableTime =
+    shouldRestrictSelectableHours && isFirstDayOfTheMonthAndPositiveOffset;
+
+  const FIRST_HOUR_AVAILABLE =
+    TIMEZONE_OFFSET_HOURS <= 12
+      ? TIMEZONE_OFFSET_HOURS
+      : TIMEZONE_OFFSET_HOURS - 12;
+
+  const shouldRestrictAmPm =
+    (amPm === AmPM.AM && TIMEZONE_OFFSET_HOURS <= 12) ||
+    (TIMEZONE_OFFSET_HOURS > 12 && amPm === AmPM.PM);
+
+  const selectableHours = useMemo(
+    () =>
+      changeSelectableTime && shouldRestrictAmPm
+        ? TIMEZONE_OFFSET_HOURS === 12 && amPm === AmPM.AM
+          ? [12]
+          : Array.from(
+              { length: 12 - FIRST_HOUR_AVAILABLE },
+              (_, i) => i + FIRST_HOUR_AVAILABLE
+            )
+        : HOURS_AM_PM,
+    [
+      FIRST_HOUR_AVAILABLE,
+      TIMEZONE_OFFSET_HOURS,
+      amPm,
+      changeSelectableTime,
+      shouldRestrictAmPm,
+    ]
+  );
+
+  const selectableAmPm =
+    changeSelectableTime && TIMEZONE_OFFSET_HOURS > 12
+      ? [AmPM.PM]
+      : [AmPM.AM, AmPM.PM];
+
+  const selectableMinutes =
+    TIMEZONE_OFFSET_MINUTES > 0 &&
+    changeSelectableTime &&
+    shouldRestrictAmPm &&
+    hour === FIRST_HOUR_AVAILABLE
+      ? Array.from({ length: 30 }, (_, i) => i + TIMEZONE_OFFSET_MINUTES)
+      : MINUTES;
+
+  useEffect(() => {
+    if (changeSelectableTime && !selectableHours.includes(hour)) {
+      setValue(TimeSelectionFields.hour, Math.floor(FIRST_HOUR_AVAILABLE));
+    }
+    if (
+      changeSelectableTime &&
+      TIMEZONE_OFFSET_MINUTES > 0 &&
+      !selectableMinutes.includes(minute)
+    ) {
+      setValue(TimeSelectionFields.minute, TIMEZONE_OFFSET_MINUTES);
+    }
+
+    if (changeSelectableTime && TIMEZONE_OFFSET_HOURS > 12) {
+      setValue(TimeSelectionFields.amPm, AmPM.PM);
+    }
+  }, [
+    selectedTime,
+    onDay,
+    amPm,
+    hour,
+    setValue,
+    getFieldState,
+    isFirstDayOfTheMonthAndPositiveOffset,
+    shouldRestrictSelectableHours,
+    resetField,
+    changeSelectableTime,
+    TIMEZONE_OFFSET_MINUTES,
+    TIMEZONE_OFFSET_HOURS,
+    FIRST_HOUR_AVAILABLE,
+    selectableHours,
+    selectableMinutes,
+    minute,
+  ]);
 
   const timeInfoText = useMemo(
     () =>
@@ -84,7 +177,17 @@ export const TimeSelection = ({
           {selectedTime === TimeValue.months && <MonthsField />}
           {(selectedTime === TimeValue.days ||
             selectedTime === TimeValue.weeks ||
-            selectedTime === TimeValue.months) && <TimeFields />}
+            selectedTime === TimeValue.months) && (
+            <TimeFields
+              selectableHours={selectableHours}
+              selectableMinutes={selectableMinutes}
+              selectableAmPm={selectableAmPm}
+              shouldRestrictTime={
+                shouldRestrictSelectableHours &&
+                isFirstDayOfTheMonthAndPositiveOffset
+              }
+            />
+          )}
         </Box>
       </Box>
       {errorInfoAlert}

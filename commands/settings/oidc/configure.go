@@ -18,10 +18,12 @@ package oidc
 
 import (
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/percona/everest/pkg/cli"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/logger"
 	"github.com/percona/everest/pkg/oidc"
 	"github.com/percona/everest/pkg/output"
@@ -33,17 +35,19 @@ var (
 		Args:    cobra.NoArgs,
 		Long:    "Configure OIDC settings",
 		Short:   "Configure OIDC settings",
-		Example: `everestctl settings oidc configure --issuer-url https://example.com --client-id 123456`,
+		Example: `everestctl settings oidc configure --issuer-url https://example.com --client-id 123456 --scopes openid,profile,email,groups`,
 		PreRun:  settingsOIDCConfigurePreRun,
 		Run:     settingsOIDCConfigureRun,
 	}
 	settingsOIDCConfigureCfg = &oidc.Config{}
+	scopes                   string
 )
 
 func init() {
 	// local command flags
-	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.IssuerURL, cli.FlagOIDCIssueURL, "", "OIDC issuer url")
-	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.ClientID, cli.FlagOIDCIssueClientID, "", "OIDC application client ID")
+	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.IssuerURL, cli.FlagOIDCIssuerURL, "", "OIDC issuer url")
+	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.ClientID, cli.FlagOIDCClientID, "", "OIDC application client ID")
+	settingsOIDCConfigureCmd.Flags().StringVar(&scopes, cli.FlagOIDCScopes, strings.Join(common.DefaultOIDCScopes, ","), "Comma-separated list of scopes")
 }
 
 func settingsOIDCConfigurePreRun(cmd *cobra.Command, _ []string) { //nolint:revive
@@ -80,6 +84,14 @@ func settingsOIDCConfigurePreRun(cmd *cobra.Command, _ []string) { //nolint:revi
 			os.Exit(1)
 		}
 	}
+
+	// Validate scopes (default or provided by user in flags)
+	scopesList := strings.Split(scopes, ",")
+	if err := oidc.ValidateScopes(scopesList); err != nil {
+		output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+		os.Exit(1)
+	}
+	settingsOIDCConfigureCfg.Scopes = scopesList
 }
 
 func settingsOIDCConfigureRun(cmd *cobra.Command, _ []string) {

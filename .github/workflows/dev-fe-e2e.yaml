@@ -80,8 +80,18 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v4
 
-      - name: Create KIND cluster
-        uses: helm/kind-action@v1.12.0
+      - name: Start local Kubernetes cluster with the local registry
+        uses: medyagh/setup-minikube@latest
+        id: minikube
+        with:
+          cpus: 4
+          memory: 4000m
+          addons: registry
+          insecure-registry: "localhost:5000"
+
+      - name: Expose local registry
+        run: |
+          kubectl port-forward --namespace kube-system service/registry 5000:80 &
 
       - name: Set MinIO
         run: kubectl apply -f ./.github/minio.conf.yaml
@@ -102,10 +112,28 @@ jobs:
           url=$(kubectl get svc/monitoring-service -o json | jq -r '.spec.clusterIP')
           echo -n "MONITORING_URL=http://$url" >> $GITHUB_ENV
 
+      - name: Build Everest API Server
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build-debug
+
+      - name: Build Everest docker container
+        uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: localhost:5000/perconalab/everest
+          tags: 0.0.0
+
+      - name: Build and Push everest dev image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
       - name: Build CLI
         shell: bash
         run: |
-          make build-cli
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build-cli
 
       - name: Install Everest
         shell: bash
@@ -115,7 +143,10 @@ jobs:
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
           --skip-wizard \
-          --skip-db-namespace
+          --skip-db-namespace \
+          --helm.set server.image=localhost:5000/perconalab/everest \
+          --helm.set server.apiRequestsRateLimit=200 \
+          --helm.set versionMetadataURL=https://check-dev.percona.com
 
       - name: Add everest-ui namespace
         shell: bash
