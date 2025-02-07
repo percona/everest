@@ -19,6 +19,7 @@ const ComponentNode = ({
       height={COMPONENT_NODE_HEIGHT}
       width={COMPONENT_NODE_WIDTH}
       elevation={selected ? 4 : 0}
+      dataTestId={`component-node-${name}`}
       showBottomHandle
     >
       <Stack direction={'row'} alignItems={'center'}>
@@ -31,7 +32,9 @@ const ComponentNode = ({
         </Typography>
       </Stack>
       <Stack mt={2}>
-        <Typography variant="body1">{name}</Typography>
+        <Typography variant="body1" data-testid="component-node-name">
+          {name}
+        </Typography>
         <DiagramComponentAge
           date={started}
           restarts={restarts}
@@ -40,7 +43,11 @@ const ComponentNode = ({
           }}
         />
       </Stack>
-      <Chip label={type} sx={{ alignSelf: 'flex-start', mt: 1 }} />
+      <Chip
+        label={type}
+        sx={{ alignSelf: 'flex-start', mt: 1 }}
+        data-testid="component-node-type"
+      />
     </DiagramNode>
   );
 };

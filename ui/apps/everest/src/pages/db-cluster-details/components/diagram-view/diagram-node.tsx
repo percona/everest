@@ -8,6 +8,7 @@ const DiagramNode = ({
   elevation = 0,
   showTopHandle = false,
   showBottomHandle = false,
+  dataTestId,
 }: {
   height: number;
   width: number;
@@ -15,12 +16,13 @@ const DiagramNode = ({
   elevation?: number;
   showTopHandle?: boolean;
   showBottomHandle?: boolean;
+  dataTestId?: string;
 }) => (
   <>
     {showTopHandle && (
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
     )}
-    <Paper elevation={elevation}>
+    <Paper elevation={elevation} data-testid={dataTestId}>
       <Stack
         sx={{
           border: '1px solid',

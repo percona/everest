@@ -41,6 +41,11 @@ const ComponentsTableView = ({
       {
         header: 'Ready',
         accessorKey: 'ready',
+        Cell: ({ cell }) => (
+          <span data-testid="component-ready-status">
+            {cell.getValue<string>()}
+          </span>
+        ),
       },
       {
         header: 'Name',

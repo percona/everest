@@ -35,6 +35,7 @@ const Components = () => {
         sx={{ ml: 'auto' }}
         control={
           <Switch
+            data-testid="switch-input-table-view"
             value={tableView}
             onChange={(_, checked) => setTableView(checked)}
           />

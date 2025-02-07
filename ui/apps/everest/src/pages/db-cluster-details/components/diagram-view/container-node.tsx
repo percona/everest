@@ -16,6 +16,7 @@ const ContainerNode = ({
   <DiagramNode
     height={CONTAINER_NODE_HEIGHT}
     width={CONTAINER_NODE_WIDTH}
+    dataTestId={`container-node-${name}`}
     showTopHandle
   >
     <Stack direction={'row'} alignItems={'center'}>
@@ -27,7 +28,7 @@ const ContainerNode = ({
         {ready ? 'Ready' : 'Not Ready'}
       </Typography>
     </Stack>
-    <Typography variant="body1" mt={2}>
+    <Typography variant="body1" data-testid="container-node-name" mt={2}>
       {name}
     </Typography>
     <DiagramComponentAge date={started} restarts={restarts} />
