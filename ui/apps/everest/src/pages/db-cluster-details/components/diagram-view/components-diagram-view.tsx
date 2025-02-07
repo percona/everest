@@ -1,5 +1,6 @@
 import {
   ReactFlow,
+  Controls,
   useNodesState,
   useEdgesState,
   useReactFlow,
@@ -95,7 +96,10 @@ const ComponentsDiagramView = ({
         nodeTypes={nodeTypes}
         onNodeClick={handleNodeClick}
         onNodesChange={onNodesChange}
-      />
+        minZoom={0.1}
+      >
+        <Controls showZoom showFitView={false} showInteractive={false} />
+      </ReactFlowStyled>
     </>
   );
 };
