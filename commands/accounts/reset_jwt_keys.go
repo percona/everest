@@ -24,6 +24,7 @@ import (
 	accountscli "github.com/percona/everest/pkg/accounts/cli"
 	"github.com/percona/everest/pkg/cli"
 	"github.com/percona/everest/pkg/logger"
+	"github.com/percona/everest/pkg/output"
 )
 
 var (
@@ -48,12 +49,12 @@ func accountsResetJWTKeysPreRun(cmd *cobra.Command, _ []string) { //nolint:reviv
 func accountsResetJWTKeysRun(cmd *cobra.Command, _ []string) { //nolint:revive
 	cliA, err := accountscli.NewAccounts(*accountsResetJWTKeysCfg, logger.GetLogger())
 	if err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), accountsResetJWTKeysCfg.Pretty)
 		os.Exit(1)
 	}
 
 	if err := cliA.CreateRSAKeyPair(cmd.Context()); err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), accountsResetJWTKeysCfg.Pretty)
 		os.Exit(1)
 	}
 }
