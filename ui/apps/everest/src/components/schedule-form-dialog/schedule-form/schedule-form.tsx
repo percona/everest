@@ -111,7 +111,11 @@ export const ScheduleForm = ({
         isRequired
       />
       <LabeledContent label={Messages.repeats}>
-        <TimeSelection showInfoAlert errorInfoAlert={errorInfoAlert} />
+        <TimeSelection
+          showInfoAlert
+          errorInfoAlert={errorInfoAlert}
+          shouldRestrictSelectableHours={dbEngine === DbEngineType.PSMDB}
+        />
       </LabeledContent>
     </>
   );
