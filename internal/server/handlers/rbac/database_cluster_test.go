@@ -211,7 +211,8 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 						Spec: everestv1alpha1.DatabaseClusterBackupSpec{
 							DBClusterName: "source-cluster",
 						},
-					}, nil)
+					}, nil,
+				)
 				next.On("CreateDatabaseCluster", mock.Anything, mock.Anything).
 					Return(&everestv1alpha1.DatabaseCluster{}, nil)
 
@@ -321,7 +322,8 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 							Name:      "test-cluster",
 							Namespace: "default",
 						},
-					}, nil)
+					}, nil,
+					)
 				next.On("UpdateDatabaseCluster", mock.Anything, mock.Anything).
 					Return(&everestv1alpha1.DatabaseCluster{}, nil)
 
@@ -467,7 +469,8 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 								MonitoringConfigName: "test-monitoring-instance",
 							},
 						},
-					}, nil)
+					}, nil,
+					)
 
 				h := &rbacHandler{
 					next:       next,
@@ -604,7 +607,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 							return false
 						}
 					}
-					return true && len(res.Items) == 3
+					return len(res.Items) == 3
 				},
 			},
 			{
@@ -621,7 +624,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 							return false
 						}
 					}
-					return true && len(res.Items) == 3
+					return len(res.Items) == 3
 				},
 			},
 			{
