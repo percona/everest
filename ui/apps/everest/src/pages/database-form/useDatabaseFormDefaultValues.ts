@@ -44,8 +44,7 @@ export const useDatabasePageDefaultValues = (
 } => {
   const { state } = useLocation();
   const shouldRetrieveDbClusterData =
-    (mode === 'edit' || mode === 'restoreFromBackup') &&
-    !!state?.selectedDbCluster;
+    mode === 'restoreFromBackup' && !!state?.selectedDbCluster;
   const namespace = shouldRetrieveDbClusterData ? state?.namespace : null;
   const {
     data: dbCluster,

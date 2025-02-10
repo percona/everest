@@ -112,7 +112,7 @@ export const Monitoring = () => {
       }
     }
     if (
-      (mode === 'edit' || mode === 'restoreFromBackup') &&
+      mode === 'restoreFromBackup' &&
       availableMonitoringInstances?.length &&
       !selectedInstance
     ) {
