@@ -14,8 +14,9 @@
 // limitations under the License.
 
 import { ScheduleFormData } from './schedule-form-schema';
-import { Schedule } from 'shared-types/dbCluster.types';
+import { DbCluster, Schedule } from 'shared-types/dbCluster.types';
 import { getCronExpressionFromFormValues } from '../../time-selection/time-selection.utils';
+import cronConverter from 'utils/cron-converter';
 
 type UpdateScheduleArrayProps = {
   formData: ScheduleFormData;
@@ -92,4 +93,101 @@ export const removeScheduleFromArray = (
   schedules: Schedule[]
 ) => {
   return schedules.filter((item) => item.name !== name);
+};
+
+export const backupScheduleFormValuesToDbClusterPayload = (
+  dbPayload: ScheduleFormData,
+  dbCluster: DbCluster,
+  mode: 'edit' | 'new'
+): DbCluster => {
+  const {
+    selectedTime,
+    minute,
+    hour,
+    amPm,
+    onDay,
+    weekDay,
+    scheduleName,
+    retentionCopies,
+  } = dbPayload;
+  const originalSchedule = getCronExpressionFromFormValues({
+    selectedTime,
+    minute,
+    hour,
+    amPm,
+    onDay,
+    weekDay,
+  });
+
+  const backupSchedule = cronConverter(
+    originalSchedule,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+    'UTC'
+  );
+  let schedulesPayload: Schedule[] = [];
+  if (mode === 'new') {
+    schedulesPayload = [
+      ...(dbCluster.spec.backup?.schedules || []).map((schedule) => ({
+        ...schedule,
+        schedule: cronConverter(
+          schedule.schedule,
+          Intl.DateTimeFormat().resolvedOptions().timeZone,
+          'UTC'
+        ),
+      })),
+      {
+        enabled: true,
+        retentionCopies: parseInt(retentionCopies, 10),
+        name: scheduleName,
+        backupStorageName:
+          typeof dbPayload.storageLocation === 'string'
+            ? dbPayload.storageLocation
+            : dbPayload.storageLocation!.name,
+        schedule: backupSchedule,
+      },
+    ];
+  }
+
+  if (mode === 'edit') {
+    const newSchedulesArray = (dbCluster?.spec?.backup?.schedules || []).map(
+      (schedule) => ({
+        ...schedule,
+        schedule: cronConverter(
+          schedule.schedule,
+          Intl.DateTimeFormat().resolvedOptions().timeZone,
+          'UTC'
+        ),
+      })
+    );
+    const editedScheduleIndex = newSchedulesArray?.findIndex(
+      (item) => item.name === scheduleName
+    );
+    if (newSchedulesArray && editedScheduleIndex !== undefined) {
+      newSchedulesArray[editedScheduleIndex] = {
+        enabled: true,
+        name: scheduleName,
+        retentionCopies: parseInt(retentionCopies, 10),
+        backupStorageName:
+          typeof dbPayload.storageLocation === 'string'
+            ? dbPayload.storageLocation
+            : dbPayload.storageLocation!.name,
+        schedule: backupSchedule,
+      };
+      schedulesPayload = newSchedulesArray;
+    }
+  }
+
+  return {
+    apiVersion: 'everest.percona.com/v1alpha1',
+    kind: 'DatabaseCluster',
+    metadata: dbCluster.metadata,
+    spec: {
+      ...dbCluster?.spec,
+      backup: {
+        ...dbCluster.spec.backup,
+        enabled: schedulesPayload.length > 0,
+        schedules: schedulesPayload.length > 0 ? schedulesPayload : undefined,
+      },
+    },
+  };
 };
