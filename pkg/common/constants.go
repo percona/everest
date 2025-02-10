@@ -21,13 +21,24 @@ import everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 const (
 	// Everest ...
 	Everest = "everest"
+
+	// PXCProductName holds the name of the product.
+	PXCProductName = "MySQL"
 	// PXCOperatorName holds operator name in k8s.
 	PXCOperatorName = "percona-xtradb-cluster-operator"
+
+	// PSMDBProductName holds the name of the product.
+	PSMDBProductName = "MongoDB"
 	// PSMDBOperatorName holds operator name in k8s.
 	PSMDBOperatorName = "percona-server-mongodb-operator"
+
+	// PGProductName holds the name of the product.
+	PGProductName = "PostgreSQL"
 	// PGOperatorName holds operator name in k8s.
 	PGOperatorName = "percona-postgresql-operator"
 
+	// DefaultDBNamespaceName is the name of the default DB namespace during installation.
+	DefaultDBNamespaceName = "everest"
 	// SystemNamespace is the namespace where everest is installed.
 	SystemNamespace = "everest-system"
 	// MonitoringNamespace is the namespace where monitoring configs are created.

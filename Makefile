@@ -75,7 +75,7 @@ run-debug: build-debug    ## Run binary
 	bin/everest
 
 run-cli-install: build-cli
-	bin/everestctl install --skip-wizard --namespaces=everest
+	bin/everestctl install --disable-telemetry --skip-wizard --namespaces=everest
 
 cert:                   ## Install dev TLS certificates
 	mkcert -install
