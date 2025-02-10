@@ -26,6 +26,7 @@ import (
 	accountscli "github.com/percona/everest/pkg/accounts/cli"
 	"github.com/percona/everest/pkg/cli"
 	"github.com/percona/everest/pkg/logger"
+	"github.com/percona/everest/pkg/output"
 )
 
 var (
@@ -52,17 +53,51 @@ func accountsSetPasswordPreRun(cmd *cobra.Command, _ []string) { //nolint:revive
 	// Copy global flags to config
 	accountsSetPasswordCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
 	accountsSetPasswordCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
+
+	// Check username
+	if accountsSetPasswordOpts.Username != "" {
+		// Validate provided username for whom password shall be changed.
+		if err := accountscli.ValidateUsername(accountsSetPasswordOpts.Username); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsSetPasswordCfg.Pretty)
+			os.Exit(1)
+		}
+	} else {
+		// Ask user in interactive mode to provide username for whom password shall be changed.
+		if username, err := accountscli.PopulateUsername(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsSetPasswordCfg.Pretty)
+			os.Exit(1)
+		} else {
+			accountsSetPasswordOpts.Username = username
+		}
+	}
+
+	// Check password
+	if accountsSetPasswordOpts.NewPassword != "" {
+		// Validate provided a new password.
+		if err := accountscli.ValidatePassword(accountsSetPasswordOpts.NewPassword); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsSetPasswordCfg.Pretty)
+			os.Exit(1)
+		}
+	} else {
+		// Ask user in interactive mode to provide a new password.
+		if password, err := accountscli.PopulateNewPassword(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsSetPasswordCfg.Pretty)
+			os.Exit(1)
+		} else {
+			accountsSetPasswordOpts.NewPassword = password
+		}
+	}
 }
 
 func accountsSetPasswordRun(cmd *cobra.Command, _ []string) { //nolint:revive
 	cliA, err := accountscli.NewAccounts(*accountsSetPasswordCfg, logger.GetLogger())
 	if err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), accountsSetPasswordCfg.Pretty)
 		os.Exit(1)
 	}
 
 	if err := cliA.SetPassword(cmd.Context(), *accountsSetPasswordOpts); err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), accountsSetPasswordCfg.Pretty)
 		os.Exit(1)
 	}
 }

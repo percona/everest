@@ -51,24 +51,30 @@ func init() {
 }
 
 func namespacesRemovePreRun(cmd *cobra.Command, args []string) { //nolint:revive
-	namespacesRemoveCfg.Namespaces = args[0]
-
 	// Copy global flags to config
 	namespacesRemoveCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
 	namespacesRemoveCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
+
+	// Parse and validate provided namespaces
+	nsList := namespaces.ParseNamespaceNames(args[0])
+	if err := namespacesRemoveCfg.ValidateNamespaces(cmd.Context(), nsList); err != nil {
+		if errors.Is(err, namespaces.ErrNamespaceNotEmpty) {
+			err = fmt.Errorf("%w. %s", err, forceUninstallHint)
+		}
+		output.PrintError(err, logger.GetLogger(), namespacesRemoveCfg.Pretty)
+		os.Exit(1)
+	}
+	namespacesRemoveCfg.NamespaceList = nsList
 }
 
 func namespacesRemoveRun(cmd *cobra.Command, _ []string) {
 	op, err := namespaces.NewNamespaceRemove(*namespacesRemoveCfg, logger.GetLogger())
 	if err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), namespacesRemoveCfg.Pretty)
 		os.Exit(1)
 	}
 
 	if err := op.Run(cmd.Context()); err != nil {
-		if errors.Is(err, namespaces.ErrNamespaceNotEmpty) {
-			err = fmt.Errorf("%w. %s", err, forceUninstallHint)
-		}
 		output.PrintError(err, logger.GetLogger(), namespacesRemoveCfg.Pretty)
 		os.Exit(1)
 	}
