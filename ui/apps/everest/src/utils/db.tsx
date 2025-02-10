@@ -285,3 +285,24 @@ export const deleteScheduleFromDbCluster = (
     },
   };
 };
+
+export const setDbClusterPausedStatus = (
+  dbCluster: DbCluster,
+  paused: boolean
+) => ({
+  ...dbCluster,
+  spec: {
+    ...dbCluster.spec,
+    paused,
+  },
+});
+
+export const setDbClusterRestart = (dbCluster: DbCluster) => ({
+  ...dbCluster,
+  metadata: {
+    ...dbCluster.metadata,
+    annotations: {
+      'everest.percona.com/restart': 'true',
+    },
+  },
+});

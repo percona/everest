@@ -142,7 +142,7 @@ export const useUpdateDbClusterWithConflictRetry = (
         );
       }
 
-      mutationOptions?.onError?.(error, vars, ctx);
+      ownOnError?.(error, vars, ctx);
       return;
     },
     onSuccess: (data, vars, ctx) => {
