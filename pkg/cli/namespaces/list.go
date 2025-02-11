@@ -20,14 +20,12 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strings"
 
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/percona/everest/api"
 	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
@@ -108,7 +106,7 @@ func (nsL *NamespaceLister) Run(ctx context.Context) ([]NamespaceInfo, error) {
 	// This command expects a Helm based installation (< 1.4.0)
 	_, err = cliutils.CheckHelmInstallation(ctx, nsL.kubeClient)
 	if err != nil {
-		return []NamespaceInfo{}, err
+		return nil, err
 	}
 
 	var nsList *corev1.NamespaceList
@@ -123,7 +121,7 @@ func (nsL *NamespaceLister) Run(ctx context.Context) ([]NamespaceInfo, error) {
 		FieldSelector: fmt.Sprintf("status.phase=%s", corev1.NamespaceActive),
 		LabelSelector: labelSelector,
 	}); err != nil {
-		return []NamespaceInfo{}, err
+		return nil, err
 	}
 
 	// filter out namespaces that are listed in skipNamespaces and non-active namespaces.
@@ -134,48 +132,32 @@ func (nsL *NamespaceLister) Run(ctx context.Context) ([]NamespaceInfo, error) {
 	var toReturn []NamespaceInfo
 	for _, ns := range nsList.Items {
 		nsInfo := NamespaceInfo{Name: ns.Name}
-		if nsInfo.InstalledOperators, err = nsL.getNamespaceSubscriptions(ctx, &ns); err != nil {
-			return []NamespaceInfo{}, fmt.Errorf("cannot get namespace subscriptions: %w", err)
+		if nsInfo.InstalledOperators, err = nsL.getNamespaceOperators(ctx, &ns); err != nil {
+			return nil, fmt.Errorf("cannot get namespace subscriptions: %w", err)
 		}
 		toReturn = append(toReturn, nsInfo)
 	}
 	return toReturn, nil
 }
 
-// getNamespaceSubscriptions returns a list of installed operators in the namespace.
+// getNamespaceOperators returns a list of installed operators in the namespace.
 // It returns an empty list if the namespace is not managed by Everest.
-func (nsL NamespaceLister) getNamespaceSubscriptions(ctx context.Context, ns *v1.Namespace) ([]string, error) {
+func (nsL *NamespaceLister) getNamespaceOperators(ctx context.Context, ns *v1.Namespace) ([]string, error) {
 	var toReturn []string
 	if isManagedByEverest(ns) {
-		// no need to get subscriptions from namespaces not managed by Everest.
-		subscriptions, err := nsL.kubeClient.ListSubscriptions(ctx, ns.Name)
+		// no need to look for installed operators from namespaces not managed by Everest.
+		dbEngines, err := nsL.kubeClient.ListDatabaseEngines(ctx, ns.Name)
 		if err != nil {
-			return []string{}, fmt.Errorf("cannot list subscriptions: %w", err)
+			return []string{}, fmt.Errorf("cannot list installed DB Engines: %w", err)
 		}
 
-		for _, sub := range subscriptions.Items {
-			toReturn = append(toReturn, parseOperator(sub.Status.InstalledCSV))
+		for _, dbE := range dbEngines.Items {
+			// need to skip DB Engines that are not installed in this particular namespaces.
+			if dbE.Status.State != "installed" {
+				continue
+			}
+			toReturn = append(toReturn, fmt.Sprintf("%s(v%s)", dbE.Spec.Type, dbE.Status.OperatorVersion))
 		}
 	}
 	return toReturn, nil
-}
-
-// parseOperator parses the Percona operator name to a human-readable format.
-func parseOperator(operatorName string) string {
-	// Percona operator name format: percona-server-for-mongodb.v1.0.0
-	parts := strings.Split(operatorName, ".v")
-	if len(parts) != 2 {
-		return operatorName
-	}
-
-	switch parts[0] {
-	case common.PGOperatorName:
-		return fmt.Sprintf("%s(v%s)", api.Postgresql, parts[1])
-	case common.PSMDBOperatorName:
-		return fmt.Sprintf("%s(v%s)", api.Psmdb, parts[1])
-	case common.PXCOperatorName:
-		return fmt.Sprintf("%s(v%s)", api.Pxc, parts[1])
-	default:
-		return fmt.Sprintf("%s(%s)", parts[0], parts[1])
-	}
 }
