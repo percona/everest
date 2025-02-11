@@ -1,4 +1,4 @@
-import { Paper, Stack } from '@mui/material';
+import { Paper, PaperProps, Stack } from '@mui/material';
 import { Handle, Position } from '@xyflow/react';
 
 const DiagramNode = ({
@@ -9,6 +9,7 @@ const DiagramNode = ({
   showTopHandle = false,
   showBottomHandle = false,
   dataTestId,
+  paperProps,
 }: {
   height: number;
   width: number;
@@ -17,12 +18,13 @@ const DiagramNode = ({
   showTopHandle?: boolean;
   showBottomHandle?: boolean;
   dataTestId?: string;
+  paperProps?: PaperProps;
 }) => (
   <>
     {showTopHandle && (
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
     )}
-    <Paper elevation={elevation} data-testid={dataTestId}>
+    <Paper elevation={elevation} data-testid={dataTestId} {...paperProps}>
       <Stack
         sx={{
           border: '1px solid',

@@ -21,6 +21,11 @@ const ComponentNode = ({
       elevation={selected ? 4 : 0}
       dataTestId={`component-node-${name}`}
       showBottomHandle
+      paperProps={{
+        sx: {
+          cursor: 'pointer',
+        },
+      }}
     >
       <Stack direction={'row'} alignItems={'center'}>
         <ComponentStatus
