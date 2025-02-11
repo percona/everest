@@ -21,7 +21,6 @@ export enum ProxyExposeType {
 }
 
 export enum DbClusterStatus {
-  unknown = 'unknown',
   initializing = 'initializing',
   paused = 'paused',
   pausing = 'pausing',

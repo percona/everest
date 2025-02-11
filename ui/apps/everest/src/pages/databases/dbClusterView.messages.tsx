@@ -23,7 +23,6 @@ export const Messages = {
     pausing: 'Pausing',
     stopping: 'Stopping',
     paused: 'Paused',
-    unknown: 'Unknown',
     restoring: 'Restoring',
     deleting: 'Deleting',
     creating: 'Creating',
