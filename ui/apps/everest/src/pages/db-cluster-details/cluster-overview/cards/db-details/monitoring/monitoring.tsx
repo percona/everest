@@ -21,6 +21,7 @@ import { useContext, useState } from 'react';
 import { MonitoringEditModal } from './edit-monitoring';
 import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
 import { useUpdateDbClusterMonitoring } from 'hooks/api/db-cluster/useUpdateDbCluster';
+import { DbClusterStatus } from 'shared-types/dbCluster.types';
 
 export const MonitoringDetails = ({
   loading,
@@ -28,6 +29,12 @@ export const MonitoringDetails = ({
 }: MonitoringConfigurationOverviewCardProps) => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const { dbCluster, canUpdateDb } = useContext(DbClusterContext);
+  const restoringOrDeleting = [
+    DbClusterStatus.restoring,
+    DbClusterStatus.deleting,
+  ].includes(dbCluster?.status?.status!);
+  const editable = canUpdateDb && !restoringOrDeleting;
+
   const { mutate: updateDbClusterMonitoring } = useUpdateDbClusterMonitoring();
 
   const handleCloseModal = () => {
@@ -53,8 +60,9 @@ export const MonitoringDetails = ({
         onClick: () => {
           setOpenEditModal(true);
         },
+        'data-testid': 'edit-monitoring-db-btn',
       }}
-      editable={canUpdateDb}
+      editable={editable}
     >
       <OverviewSectionRow
         label={Messages.fields.status}

@@ -17,95 +17,94 @@
 package commands
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 
-	"github.com/percona/everest/pkg/install"
-	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/cli"
+	"github.com/percona/everest/pkg/cli/helm"
+	"github.com/percona/everest/pkg/cli/install"
+	"github.com/percona/everest/pkg/logger"
 	"github.com/percona/everest/pkg/output"
 )
 
-func newInstallCmd(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use: "install",
+var (
+	installCmd = &cobra.Command{
+		Use: "install [flags]",
 		// The command expects no arguments. So to prevent users from misspelling and confusion
 		// in cases with unexpected spaces like
 		//       ./everestctl install --namespaces=aaa, a
 		// it will return
 		//        Error: unknown command "a" for "everestctl install"
 		Args:    cobra.NoArgs,
-		Example: "everestctl install --namespaces dev,staging,prod --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard",
-		Long:    "Install Percona Everest",
-		Short:   "Install Percona Everest",
-		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
-			initInstallViperFlags(cmd)
-			c := &install.Config{}
-			err := viper.Unmarshal(c)
-			if err != nil {
-				os.Exit(1)
-			}
-
-			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
-			c.Pretty = !enableLogging
-
-			op, err := install.NewInstall(*c, l, cmd)
-			if err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
-
-			if err := op.Run(cmd.Context()); err != nil {
-				output.PrintError(err, l, !enableLogging)
-				os.Exit(1)
-			}
-		},
+		Example: "everestctl install --namespaces dev,staging,prod --operator.mongodb=true --operator.postgresql=false --operator.xtradb-cluster=false --skip-wizard",
+		Long:    "Install Percona Everest using Helm",
+		Short:   "Install Percona Everest using Helm",
+		PreRunE: installPreRunE,
+		Run:     installRun,
 	}
-	initInstallFlags(cmd)
+	installCfg = &install.Config{}
+)
 
-	return cmd
+func init() {
+	rootCmd.AddCommand(installCmd)
+
+	// local command flags
+	installCmd.Flags().StringVar(&installCfg.Namespaces, cli.FlagNamespaces, install.DefaultDBNamespaceName, "Comma-separated namespaces list Percona Everest can manage")
+	installCmd.Flags().BoolVar(&installCfg.SkipWizard, cli.FlagSkipWizard, false, "Skip installation wizard")
+	installCmd.Flags().StringVar(&installCfg.VersionMetadataURL, cli.FlagVersionMetadataURL, "https://check.percona.com", "URL to retrieve version metadata information from")
+	installCmd.Flags().StringVar(&installCfg.Version, cli.FlagVersion, "", "Everest version to install. By default the latest version is installed")
+	installCmd.Flags().BoolVar(&installCfg.DisableTelemetry, cli.FlagDisableTelemetry, false, "Disable telemetry")
+	_ = installCmd.Flags().MarkHidden(cli.FlagDisableTelemetry)
+	installCmd.Flags().BoolVar(&installCfg.SkipEnvDetection, cli.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
+	installCmd.Flags().BoolVar(&installCfg.SkipDBNamespace, cli.FlagInstallSkipDBNamespace, false, "Skip creating a database namespace with install")
+
+	// --namespaces and --skip-db-namespace flags are mutually exclusive
+	installCmd.MarkFlagsMutuallyExclusive(cli.FlagNamespaces, cli.FlagInstallSkipDBNamespace)
+
+	// --helm.* flags
+	installCmd.Flags().StringVar(&installCfg.ChartDir, helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
+	_ = installCmd.Flags().MarkHidden(helm.FlagChartDir)
+	installCmd.Flags().StringVar(&installCfg.RepoURL, helm.FlagRepository, helm.DefaultHelmRepoURL, "Helm chart repository to download the Everest charts from")
+	installCmd.Flags().StringSliceVar(&installCfg.Values.Values, helm.FlagHelmSet, []string{}, "Set helm values on the command line (can specify multiple values with commas: key1=val1,key2=val2)")
+	installCmd.Flags().StringSliceVarP(&installCfg.Values.ValueFiles, helm.FlagHelmValues, "f", []string{}, "Specify values in a YAML file or a URL (can specify multiple)")
+
+	// --operator.* flags
+	installCmd.Flags().BoolVar(&installCfg.Operator.PSMDB, cli.FlagOperatorMongoDB, true, "Install MongoDB operator")
+	installCmd.Flags().BoolVar(&installCfg.Operator.PG, cli.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
+	installCmd.Flags().BoolVar(&installCfg.Operator.PXC, cli.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
 }
 
-func initInstallFlags(cmd *cobra.Command) {
-	cmd.Flags().String(install.FlagNamespaces, install.DefaultEverestNamespace, "Comma-separated namespaces list Percona Everest can manage")
-	cmd.Flags().Bool(install.FlagSkipWizard, false, "Skip installation wizard")
-	cmd.Flags().String(install.FlagVersionMetadataURL, "https://check.percona.com", "URL to retrieve version metadata information from")
-	cmd.Flags().String(install.FlagVersion, "", "Everest version to install. By default the latest version is installed")
-	cmd.Flags().Bool(install.FlagDisableTelemetry, false, "Disable telemetry")
-	cmd.Flags().MarkHidden(install.FlagDisableTelemetry) //nolint:errcheck,gosec
+func installPreRunE(cmd *cobra.Command, _ []string) error { //nolint:revive
+	if installCfg.SkipDBNamespace {
+		installCfg.Namespaces = ""
+	}
 
-	cmd.Flags().Bool(install.FlagOperatorMongoDB, true, "Install MongoDB operator")
-	cmd.Flags().Bool(install.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
-	cmd.Flags().Bool(install.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
+	// Copy global flags to config
+	installCfg.Pretty = rootCmdFlags.Pretty
+	installCfg.KubeconfigPath = rootCmdFlags.KubeconfigPath
 
-	cmd.Flags().Bool(install.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
-	cmd.Flags().String(install.FlagCatalogNamespace, kubernetes.OLMNamespace,
-		fmt.Sprintf("Namespace where Everest OLM catalog is installed. Implies --%s", install.FlagSkipEnvDetection),
-	)
-	cmd.Flags().Bool(install.FlagSkipOLM, false, fmt.Sprintf("Skip OLM installation. Implies --%s", install.FlagSkipEnvDetection))
+	// If user doesn't pass --namespaces flag - need to ask explicitly.
+	installCfg.AskNamespaces = !(cmd.Flags().Lookup(cli.FlagNamespaces).Changed || installCfg.SkipDBNamespace)
+
+	// If user doesn't pass any --operator.* flags - need to ask explicitly.
+	installCfg.AskOperators = !(cmd.Flags().Lookup(cli.FlagOperatorMongoDB).Changed ||
+		cmd.Flags().Lookup(cli.FlagOperatorPostgresql).Changed ||
+		cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster).Changed ||
+		installCfg.SkipDBNamespace)
+
+	return nil
 }
 
-func initInstallViperFlags(cmd *cobra.Command) {
-	viper.BindPFlag(install.FlagSkipWizard, cmd.Flags().Lookup(install.FlagSkipWizard)) //nolint:errcheck,gosec
+func installRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	op, err := install.NewInstall(*installCfg, logger.GetLogger())
+	if err != nil {
+		logger.GetLogger().Error(err)
+		os.Exit(1)
+	}
 
-	viper.BindEnv("kubeconfig")                                                                         //nolint:errcheck,gosec
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))                                     //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagNamespaces, cmd.Flags().Lookup(install.FlagNamespaces))                 //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagVersionMetadataURL, cmd.Flags().Lookup(install.FlagVersionMetadataURL)) //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagVersion, cmd.Flags().Lookup(install.FlagVersion))                       //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagDisableTelemetry, cmd.Flags().Lookup(install.FlagDisableTelemetry))     //nolint:errcheck,gosec
-
-	viper.BindPFlag(install.FlagOperatorMongoDB, cmd.Flags().Lookup(install.FlagOperatorMongoDB))             //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagOperatorPostgresql, cmd.Flags().Lookup(install.FlagOperatorPostgresql))       //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagOperatorXtraDBCluster, cmd.Flags().Lookup(install.FlagOperatorXtraDBCluster)) //nolint:errcheck,gosec
-
-	viper.BindPFlag(install.FlagSkipEnvDetection, cmd.Flags().Lookup(install.FlagSkipEnvDetection)) //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagSkipOLM, cmd.Flags().Lookup(install.FlagSkipOLM))                   //nolint:errcheck,gosec
-	viper.BindPFlag(install.FlagCatalogNamespace, cmd.Flags().Lookup(install.FlagCatalogNamespace)) //nolint:errcheck,gosec
-
-	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose")) //nolint:errcheck,gosec
-	viper.BindPFlag("json", cmd.Flags().Lookup("json"))       //nolint:errcheck,gosec
+	if err := op.Run(cmd.Context()); err != nil {
+		output.PrintError(err, logger.GetLogger(), installCfg.Pretty)
+		os.Exit(1)
+	}
 }

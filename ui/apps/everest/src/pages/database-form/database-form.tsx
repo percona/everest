@@ -20,7 +20,6 @@ import { Stack, Step, StepLabel } from '@mui/material';
 import { Stepper } from '@percona/ui-lib';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useCreateDbCluster } from 'hooks/api/db-cluster/useCreateDbCluster';
-import { useUpdateDbCluster } from 'hooks/api/db-cluster/useUpdateDbCluster';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
 import { steps } from './database-form-body/steps';
 import { DbWizardType } from './database-form-schema';
@@ -38,16 +37,12 @@ export const DatabasePage = () => {
   const [longestAchievedStep, setLongestAchievedStep] = useState(0);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const { mutate: addDbCluster, isPending: isCreating } = useCreateDbCluster();
-  const { mutate: editDbCluster, isPending: isUpdating } = useUpdateDbCluster();
   const location = useLocation();
   const navigate = useNavigate();
   const { isDesktop } = useActiveBreakpoint();
   const mode = useDatabasePageMode();
-  const {
-    defaultValues,
-    dbClusterData,
-    isFetching: loadingClusterValues,
-  } = useDatabasePageDefaultValues(mode);
+  const { defaultValues, isFetching: loadingClusterValues } =
+    useDatabasePageDefaultValues(mode);
 
   const validationSchema = useDbValidationSchema(
     activeStep,
@@ -96,16 +91,6 @@ export const DatabasePage = () => {
             },
           }),
         },
-        {
-          onSuccess: () => {
-            setFormSubmitted(true);
-          },
-        }
-      );
-    }
-    if (mode === 'edit' && dbClusterData) {
-      editDbCluster(
-        { dbPayload: data, dbCluster: dbClusterData },
         {
           onSuccess: () => {
             setFormSubmitted(true);
@@ -176,6 +161,12 @@ export const DatabasePage = () => {
     }
   }, [defaultValues, isDirty, reset, mode]);
 
+  useEffect(() => {
+    if (!location.state) {
+      navigate('/');
+    }
+  }, []);
+
   return formSubmitted ? (
     <ConfirmationScreen />
   ) : (
@@ -193,7 +184,7 @@ export const DatabasePage = () => {
             activeStep={activeStep}
             longestAchievedStep={longestAchievedStep}
             disableNext={formHasErrors}
-            isSubmitting={isCreating || isUpdating}
+            isSubmitting={isCreating}
             hasErrors={formHasErrors}
             onSubmit={handleSubmit(onSubmit)}
             onCancel={() => navigate('/databases')}

@@ -46,10 +46,6 @@ const router = createBrowserRouter([
         element: <DatabasePage />,
       },
       {
-        path: 'databases/edit',
-        element: <DatabasePage />,
-      },
-      {
         path: 'databases/:namespace/:dbClusterName',
         element: (
           <DbClusterContextProvider>
@@ -58,11 +54,11 @@ const router = createBrowserRouter([
         ),
         children: [
           {
-            index: true,
             path: DBClusterDetailsTabs.backups,
             element: <Backups />,
           },
           {
+            index: true,
             path: DBClusterDetailsTabs.overview,
             element: <ClusterOverview />,
           },

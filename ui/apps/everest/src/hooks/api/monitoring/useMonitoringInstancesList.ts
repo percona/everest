@@ -18,6 +18,7 @@ import {
   UseQueryResult,
   useMutation,
   useQueries,
+  useQuery,
 } from '@tanstack/react-query';
 import {
   getMonitoringInstancesFn,
@@ -25,7 +26,6 @@ import {
   deleteMonitoringInstanceFn,
   updateMonitoringInstanceFn,
 } from 'api/monitoring';
-import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import {
   CreateMonitoringInstancePayload,
   MonitoringInstance,
@@ -56,21 +56,15 @@ export const useMonitoringInstancesList = (
     >;
   }>
 ) => {
-  const { canRead } = useNamespacePermissionsForResource(
-    'monitoring-instances'
-  );
   const queries = queryParams.map<
     UseQueryOptions<MonitoringInstanceList, unknown, MonitoringInstance[]>
   >(({ namespace, options }) => {
-    const allowed = canRead.includes(namespace);
     return {
       queryKey: [MONITORING_INSTANCES_QUERY_KEY, namespace],
       retry: false,
       queryFn: () => getMonitoringInstancesFn(namespace),
       refetchInterval: 5 * 1000,
-      select: allowed ? undefined : () => [],
       ...options,
-      enabled: (options?.enabled ?? true) && allowed,
     };
   });
   const queryResults = useQueries({ queries });
@@ -83,6 +77,15 @@ export const useMonitoringInstancesList = (
   );
 
   return results;
+};
+
+export const useMonitoringInstancesForNamespace = (namespace: string) => {
+  return useQuery({
+    queryKey: [MONITORING_INSTANCES_QUERY_KEY, namespace],
+    retry: false,
+    queryFn: () => getMonitoringInstancesFn(namespace),
+    refetchInterval: 5 * 1000,
+  });
 };
 
 export const useCreateMonitoringInstance = (

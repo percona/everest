@@ -27,8 +27,8 @@ import (
 	"go.uber.org/zap"
 	ctrlruntimelog "sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/percona/everest/api"
 	"github.com/percona/everest/cmd/config"
+	"github.com/percona/everest/internal/server"
 	"github.com/percona/everest/pkg/logger"
 )
 
@@ -37,7 +37,7 @@ const (
 )
 
 func main() {
-	logger := logger.MustInitLogger(true)
+	logger := logger.MustInitLogger(true, "everest")
 	defer logger.Sync() //nolint:errcheck
 	l := logger.Sugar()
 
@@ -58,7 +58,7 @@ func main() {
 
 	tCtx, tCancel := context.WithCancel(context.Background())
 
-	server, err := api.NewEverestServer(tCtx, c, l)
+	server, err := server.NewEverestServer(tCtx, c, l)
 	if err != nil {
 		l.Fatalf("Error creating Everest Server\n: %s", err)
 	}

@@ -18,8 +18,11 @@ package kubernetes
 
 import (
 	"context"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
@@ -34,13 +37,55 @@ func (k *Kubernetes) GetDatabaseCluster(ctx context.Context, namespace, name str
 	return k.client.GetDatabaseCluster(ctx, namespace, name)
 }
 
+// DeleteDatabaseCluster deletes database cluster.
+func (k *Kubernetes) DeleteDatabaseCluster(ctx context.Context, namespace, name string) error {
+	return k.client.DeleteDatabaseCluster(ctx, namespace, name)
+}
+
 // CreateDatabaseCluster creates database cluster.
-func (k *Kubernetes) CreateDatabaseCluster(cluster *everestv1alpha1.DatabaseCluster) error {
-	if cluster.ObjectMeta.Annotations == nil {
-		cluster.ObjectMeta.Annotations = make(map[string]string)
+func (k *Kubernetes) CreateDatabaseCluster(ctx context.Context, cluster *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
+	return k.client.CreateDatabaseCluster(ctx, cluster.GetNamespace(), cluster)
+}
+
+// UpdateDatabaseCluster updates database cluster.
+func (k *Kubernetes) UpdateDatabaseCluster(ctx context.Context, cluster *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
+	return k.client.UpdateDatabaseCluster(ctx, cluster.GetNamespace(), cluster)
+}
+
+// DeleteDatabaseClusters deletes all database clusters in provided namespace.
+// This function will wait until all clusters are deleted.
+func (k *Kubernetes) DeleteDatabaseClusters(ctx context.Context, namespace string) error {
+	timeout := pollTimeout
+	list, err := k.ListDatabaseClusters(ctx, namespace)
+	if err != nil {
+		k.l.Debugf("Could not list db clusters: %s", err)
 	}
-	cluster.ObjectMeta.Annotations[managedByKey] = "pmm"
-	return k.client.ApplyObject(cluster)
+	if list != nil && len(list.Items) > 0 {
+		// We increase the timeout if there's too many DB clusters.
+		const dbsCountTimeoutMultiply = 3
+		newTimeout := pollTimeout * time.Duration(len(list.Items)/dbsCountTimeoutMultiply)
+		if newTimeout > timeout {
+			timeout = newTimeout
+		}
+	}
+
+	k.l.Debugf("Setting DB cluster removal timeout to %s", timeout)
+
+	return wait.PollUntilContextTimeout(ctx, pollInterval, timeout, true, func(ctx context.Context) (bool, error) {
+		list, err := k.ListDatabaseClusters(ctx, namespace)
+		if err != nil {
+			return false, err
+		}
+		if len(list.Items) == 0 {
+			return true, nil
+		}
+		for _, cluster := range list.Items {
+			if err := k.DeleteDatabaseCluster(ctx, cluster.GetNamespace(), cluster.GetName()); ctrlclient.IgnoreNotFound(err) != nil {
+				return false, err
+			}
+		}
+		return false, nil
+	})
 }
 
 // PatchDatabaseCluster patches CR of managed Database cluster.
@@ -48,13 +93,40 @@ func (k *Kubernetes) PatchDatabaseCluster(cluster *everestv1alpha1.DatabaseClust
 	return k.client.ApplyObject(cluster)
 }
 
-// DeleteDatabaseCluster deletes database cluster.
-func (k *Kubernetes) DeleteDatabaseCluster(ctx context.Context, namespace, name string) error {
-	cluster, err := k.client.GetDatabaseCluster(ctx, namespace, name)
+// DatabasesExist checks if databases exist in provided at least one of the provided namespaces.
+// If namespaces are not provided, it checks in all namespaces.
+func (k *Kubernetes) DatabasesExist(ctx context.Context, namespaces ...string) (bool, error) {
+	all, err := k.getAllDatabases(ctx)
 	if err != nil {
-		return err
+		return false, err
 	}
-	cluster.TypeMeta.APIVersion = databaseClusterAPIVersion
-	cluster.TypeMeta.Kind = databaseClusterKind
-	return k.client.DeleteObject(cluster)
+	if len(namespaces) == 0 {
+		return len(all) > 0, nil
+	}
+
+	for _, ns := range namespaces {
+		if _, ok := all[ns]; ok {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (k *Kubernetes) getAllDatabases(ctx context.Context) (map[string]everestv1alpha1.DatabaseClusterList, error) {
+	res := make(map[string]everestv1alpha1.DatabaseClusterList)
+	namespaces, err := k.GetDBNamespaces(ctx)
+	if ctrlclient.IgnoreNotFound(err) != nil {
+		return nil, err
+	}
+	for _, ns := range namespaces {
+		clusters, err := k.ListDatabaseClusters(ctx, ns)
+		if err != nil {
+			return nil, err
+		}
+		if len(clusters.Items) == 0 {
+			continue
+		}
+		res[ns] = *clusters
+	}
+	return res, nil
 }

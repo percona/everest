@@ -43,6 +43,7 @@ import { DB_CLUSTER_QUERY, useUpdateDbClusterResources } from 'hooks';
 import { DbType } from '@percona/types';
 import { isProxy } from 'utils/db';
 import { getProxyUnitNamesFromDbType } from 'components/cluster-form/resources/utils';
+import { DbClusterStatus } from 'shared-types/dbCluster.types';
 
 export const ResourcesDetails = ({
   dbCluster,
@@ -77,6 +78,8 @@ export const ResourcesDetails = ({
   const numberOfProxiesStr = NODES_DB_TYPE_MAP[dbType].includes(proxies)
     ? proxies
     : CUSTOM_NR_UNITS_INPUT_VALUE;
+  const restoring = dbCluster?.status?.status === DbClusterStatus.restoring;
+  const deleting = dbCluster?.status?.status === DbClusterStatus.deleting;
 
   const onSubmit: SubmitHandler<
     z.infer<ReturnType<typeof resourcesFormSchema>>
@@ -139,24 +142,26 @@ export const ResourcesDetails = ({
         cardHeaderProps={{
           title: Messages.titles.resources,
           avatar: <DatabaseIcon />,
-          ...(canUpdateDb && {
+          ...{
             action: (
               <Button
                 size="small"
                 startIcon={<EditOutlinedIcon />}
                 onClick={() => setOpenEditModal(true)}
                 data-testid="edit-resources-button"
+                disabled={!canUpdateDb || restoring || deleting}
               >
                 Edit
               </Button>
             ),
-          }),
+          },
         }}
       >
         <Stack gap={3}>
           {dbType === DbType.Mongo && (
             <OverviewSection title={'Sharding'} loading={loading}>
               <OverviewSectionRow
+                dataTestId="sharding-status"
                 label={Messages.fields.status}
                 contentString={
                   sharding?.enabled
@@ -166,12 +171,14 @@ export const ResourcesDetails = ({
               />
               {sharding?.enabled && (
                 <OverviewSectionRow
+                  dataTestId="number-of-shards"
                   label={Messages.fields.shards}
                   contentString={sharding?.shards?.toString()}
                 />
               )}
               {sharding?.enabled && (
                 <OverviewSectionRow
+                  dataTestId="config-servers"
                   label={Messages.fields.configServers}
                   contentString={sharding?.configServer?.replicas?.toString()}
                 />
@@ -183,6 +190,7 @@ export const ResourcesDetails = ({
             loading={loading}
           >
             <OverviewSectionRow
+              dataTestId="node-cpu"
               label={Messages.fields.cpu}
               contentString={getTotalResourcesDetailedString(
                 cpuParser(cpu.toString() || '0'),
@@ -213,6 +221,7 @@ export const ResourcesDetails = ({
               loading={loading}
             >
               <OverviewSectionRow
+                dataTestId={`${getProxyUnitNamesFromDbType(dbEngineToDbType(dbCluster.spec.engine.type))[numberOfProxiesInt > 1 ? 'plural' : 'singular']}-cpu`}
                 label={Messages.fields.cpu}
                 contentString={getTotalResourcesDetailedString(
                   cpuParser(proxyCpu.toString() || '0'),
@@ -239,6 +248,7 @@ export const ResourcesDetails = ({
           handleCloseModal={() => setOpenEditModal(false)}
           onSubmit={onSubmit}
           defaultValues={{
+            dbType,
             cpu: cpuParser(cpu.toString() || '0'),
             disk: parsedDiskValues.value,
             diskUnit: parsedDiskValues.originalUnit,
@@ -247,7 +257,7 @@ export const ResourcesDetails = ({
             proxyMemory: memoryParser(proxyMemory.toString(), 'G').value,
             sharding: !!sharding?.enabled,
             ...(!!sharding?.enabled && {
-              shardConfigServers: sharding?.configServer?.replicas.toString(),
+              shardConfigServers: sharding?.configServer?.replicas,
               shardNr: sharding?.shards.toString(),
             }),
             numberOfNodes: numberOfNodesStr,

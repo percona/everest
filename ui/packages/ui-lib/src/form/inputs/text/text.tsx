@@ -31,6 +31,9 @@ const TextInput = ({
           }}
           inputProps={{
             'data-testid': `text-input-${kebabize(name)}`,
+            onWheel: (e) => {
+              (e.target as HTMLElement).blur();
+            },
             ...textFieldProps?.inputProps,
           }}
           helperText={error ? error.message : textFieldProps?.helperText}

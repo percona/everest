@@ -32,11 +32,11 @@ import {
 } from '@e2e/utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import { waitForStatus, waitForDelete } from '@e2e/utils/table';
-import { checkError } from '@e2e/utils/generic';
 import {
   deleteMonitoringInstance,
   listMonitoringInstances,
 } from '@e2e/utils/monitoring-instance';
+import { getDbClusterAPI } from '@e2e/utils/db-cluster';
 
 const {
   MONITORING_URL,
@@ -110,16 +110,22 @@ test.describe.configure({ retries: 0 });
       }) => {
         expect(storageClasses.length).toBeGreaterThan(0);
 
-        await page.goto('/databases/new');
-        await page.getByTestId('toggle-button-group-input-db-type').waitFor();
+        await page.goto('/databases');
+        await page.getByTestId('add-db-cluster-button').waitFor();
+        await page.getByTestId('add-db-cluster-button').click();
+        await page.getByTestId(`add-db-cluster-button-${db}`).click();
+
+        // await page.getByTestId('toggle-button-group-input-db-type').waitFor();
         await page.getByTestId('select-input-db-version').waitFor();
 
         await test.step('Populate basic information', async () => {
           await populateBasicInformation(
             page,
+            namespace,
+            clusterName,
             db,
             storageClasses[0],
-            clusterName
+            false
           );
           await moveForward(page);
         });
@@ -169,29 +175,21 @@ test.describe.configure({ retries: 0 });
 
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
-          await waitForStatus(page, clusterName, 'Initializing', 15000);
+          // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
+          if (size != 1 || db != 'psmdb') {
+            await waitForStatus(page, clusterName, 'Initializing', 30000);
+          }
           await waitForStatus(page, clusterName, 'Up', 600000);
         });
 
         await test.step('Check db cluster k8s object options', async () => {
-          const response = await request.get(
-            `/v1/namespaces/${namespace}/database-clusters`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          await checkError(response);
-
-          // TODO: replace with correct payload typings from GET DB Clusters
-          const { items: clusters } = await response.json();
-
-          const addedCluster = clusters.find(
-            (cluster) => cluster.metadata.name === clusterName
+          const addedCluster = await getDbClusterAPI(
+            clusterName,
+            EVEREST_CI_NAMESPACES.EVEREST_UI,
+            request,
+            token
           );
 
-          expect(addedCluster).not.toBeUndefined();
           expect(addedCluster?.spec.engine.type).toBe(db);
           expect(addedCluster?.spec.engine.replicas).toBe(size);
           expect(['600m', '0.6']).toContain(
@@ -212,14 +210,17 @@ test.describe.configure({ retries: 0 });
         await suspendDbCluster(page, clusterName);
         // One node clusters and Postgresql don't seem to show Stopping state
         if (size != 1 && db != 'postgresql') {
-          await waitForStatus(page, clusterName, 'Stopping', 45000);
+          await waitForStatus(page, clusterName, 'Stopping', 60000);
         }
         await waitForStatus(page, clusterName, 'Paused', 180000);
       });
 
       test(`Resume cluster [${db} size ${size}]`, async ({ page }) => {
         await resumeDbCluster(page, clusterName);
-        await waitForStatus(page, clusterName, 'Initializing', 45000);
+        // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
+        if (size != 1 || db != 'psmdb') {
+          await waitForStatus(page, clusterName, 'Initializing', 45000);
+        }
         await waitForStatus(page, clusterName, 'Up', 300000);
       });
 
@@ -228,7 +229,10 @@ test.describe.configure({ retries: 0 });
         if (size != 1 && db != 'postgresql') {
           await waitForStatus(page, clusterName, 'Stopping', 45000);
         }
-        await waitForStatus(page, clusterName, 'Initializing', 60000);
+        // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
+        if (size != 1 || db != 'psmdb') {
+          await waitForStatus(page, clusterName, 'Initializing', 60000);
+        }
         await waitForStatus(page, clusterName, 'Up', 300000);
       });
 

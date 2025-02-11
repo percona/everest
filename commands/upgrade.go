@@ -17,86 +17,66 @@
 package commands
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 
-	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/cli"
+	"github.com/percona/everest/pkg/cli/helm"
+	"github.com/percona/everest/pkg/cli/upgrade"
+	"github.com/percona/everest/pkg/logger"
 	"github.com/percona/everest/pkg/output"
-	"github.com/percona/everest/pkg/upgrade"
 )
 
-func newUpgradeCmd(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use: "upgrade",
-		// The command expects no arguments. So to prevent users from misspelling and confusion
-		// in cases with unexpected spaces like
-		//       ./everestctl upgrade --namespaces=aaa, a
-		// it will return
-		//        Error: unknown command "a" for "everestctl upgrade"
-		Args:  cobra.NoArgs,
-		Long:  "Upgrade Percona Everest",
-		Short: "Upgrade Percona Everest",
-		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
-			initUpgradeViperFlags(cmd)
-
-			c, err := parseUpgradeConfig()
-			if err != nil {
-				os.Exit(1)
-			}
-
-			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
-			c.Pretty = !enableLogging
-
-			op, err := upgrade.NewUpgrade(c, l)
-			if err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
-
-			if err := op.Run(cmd.Context()); err != nil {
-				output.PrintError(err, l, !enableLogging)
-				os.Exit(1)
-			}
-		},
+var (
+	upgradeCmd = &cobra.Command{
+		Use:    "upgrade [flags]",
+		Args:   cobra.NoArgs,
+		Long:   "Upgrade Percona Everest using Helm",
+		Short:  "Upgrade Percona Everest using Helm",
+		PreRun: upgradePreRun,
+		Run:    upgradeRun,
 	}
 
-	initUpgradeFlags(cmd)
+	upgradeCfg = &upgrade.Config{}
+)
 
-	return cmd
+func init() {
+	rootCmd.AddCommand(upgradeCmd)
+
+	// local command flags
+	upgradeCmd.Flags().StringVar(&upgradeCfg.VersionMetadataURL, cli.FlagVersionMetadataURL, "https://check.percona.com", "URL to retrieve version metadata information from")
+	upgradeCmd.Flags().BoolVar(&upgradeCfg.SkipEnvDetection, cli.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
+	upgradeCmd.Flags().BoolVar(&upgradeCfg.DryRun, cli.FlagUpgradeDryRun, false, "If set, only executes the pre-upgrade checks")
+	upgradeCmd.Flags().BoolVar(&upgradeCfg.InCluster, cli.FlagUpgradeInCluster, false, "If set, uses the in-cluster Kubernetes client configuration")
+	_ = upgradeCmd.Flags().MarkHidden(cli.FlagUpgradeInCluster)
+
+	// --helm.* flags
+	upgradeCmd.Flags().StringVar(&upgradeCfg.ChartDir, helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
+	_ = upgradeCmd.Flags().MarkHidden(helm.FlagChartDir)
+	upgradeCmd.Flags().StringVar(&upgradeCfg.RepoURL, helm.FlagRepository, helm.DefaultHelmRepoURL, "Helm chart repository to download the Everest charts from")
+	upgradeCmd.Flags().StringSliceVar(&upgradeCfg.Values.Values, helm.FlagHelmSet, []string{}, "Set helm values on the command line (can specify multiple values with commas: key1=val1,key2=val2)")
+	upgradeCmd.Flags().StringSliceVarP(&upgradeCfg.Values.ValueFiles, helm.FlagHelmValues, "f", []string{}, "Specify values in a YAML file or a URL (can specify multiple)")
+	upgradeCmd.Flags().BoolVar(&upgradeCfg.ResetThenReuseValues, helm.FlagHelmReuseValues, false, "Reuse the last release's values and merge in any overrides from the command line via --helm.set and -f")
+	upgradeCmd.Flags().BoolVar(&upgradeCfg.ResetValues, helm.FlagHelmResetValues, false, "Reset the values to the ones built into the chart")
+	upgradeCmd.Flags().BoolVar(&upgradeCfg.ResetThenReuseValues, helm.FlagHelmResetThenReuseValues, false, "Reset the values to the ones built into the chart, apply the last release's values and merge in any overrides from the command line via --set and -f.")
 }
 
-func initUpgradeFlags(cmd *cobra.Command) {
-	cmd.Flags().String("version-metadata-url", "https://check.percona.com", "URL to retrieve version metadata information from")
-	cmd.Flags().BoolP("logs", "l", false, "If set, logs are printed during the upgrade process")
-	cmd.Flags().Bool("dry-run", false, "If set, only executes the pre-upgrade checks")
-	cmd.Flags().Bool("in-cluster", false, "If set, uses the in-cluster Kubernetes client configuration")
-	cmd.Flags().Bool(upgrade.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
-	cmd.Flags().String(upgrade.FlagCatalogNamespace, kubernetes.OLMNamespace,
-		fmt.Sprintf("Namespace where Everest OLM catalog is installed. Implies --%s", upgrade.FlagSkipEnvDetection),
-	)
-	cmd.Flags().Bool(upgrade.FlagSkipOLM, false, fmt.Sprintf("Skip OLM upgrade. Implies --%s", upgrade.FlagSkipEnvDetection))
+func upgradePreRun(_ *cobra.Command, _ []string) { //nolint:revive
+	// Copy global flags to config
+	upgradeCfg.Pretty = rootCmdFlags.Pretty
+	upgradeCfg.KubeconfigPath = rootCmdFlags.KubeconfigPath
 }
 
-func initUpgradeViperFlags(cmd *cobra.Command) {
-	viper.BindEnv("kubeconfig")                                                         //nolint:errcheck,gosec
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))                     //nolint:errcheck,gosec
-	viper.BindPFlag("version-metadata-url", cmd.Flags().Lookup("version-metadata-url")) //nolint:errcheck,gosec
-	viper.BindPFlag("verbose", cmd.Flags().Lookup("verbose"))                           //nolint:errcheck,gosec
-	viper.BindPFlag("json", cmd.Flags().Lookup("json"))                                 //nolint:errcheck,gosec
-	viper.BindPFlag("dry-run", cmd.Flags().Lookup("dry-run"))                           //nolint:errcheck,gosec
-	viper.BindPFlag("in-cluster", cmd.Flags().Lookup("in-cluster"))                     //nolint:errcheck,gosec
+func upgradeRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	op, err := upgrade.NewUpgrade(upgradeCfg, logger.GetLogger())
+	if err != nil {
+		logger.GetLogger().Error(err)
+		os.Exit(1)
+	}
 
-	viper.BindPFlag(upgrade.FlagSkipEnvDetection, cmd.Flags().Lookup(upgrade.FlagSkipEnvDetection)) //nolint:errcheck,gosec
-	viper.BindPFlag(upgrade.FlagSkipOLM, cmd.Flags().Lookup(upgrade.FlagSkipOLM))                   //nolint:errcheck,gosec
-	viper.BindPFlag(upgrade.FlagCatalogNamespace, cmd.Flags().Lookup(upgrade.FlagCatalogNamespace)) //nolint:errcheck,gosec
-}
-
-func parseUpgradeConfig() (*upgrade.Config, error) {
-	c := &upgrade.Config{}
-	err := viper.Unmarshal(c)
-	return c, err
+	if err := op.Run(cmd.Context()); err != nil {
+		output.PrintError(err, logger.GetLogger(), upgradeCfg.Pretty)
+		os.Exit(1)
+	}
 }

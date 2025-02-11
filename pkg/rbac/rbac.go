@@ -19,8 +19,9 @@ package rbac
 import (
 	"context"
 	"errors"
+	"io"
 	"io/fs"
-	"net/http"
+	"os"
 	"slices"
 	"strings"
 
@@ -39,7 +40,7 @@ import (
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/kubernetes/informer"
 	configmapadapter "github.com/percona/everest/pkg/rbac/configmap-adapter"
-	"github.com/percona/everest/pkg/rbac/fileadapter"
+	readeradapter "github.com/percona/everest/pkg/rbac/io-reader-adapter"
 	"github.com/percona/everest/pkg/session"
 )
 
@@ -61,17 +62,25 @@ const (
 	ActionRead   = "read"
 	ActionUpdate = "update"
 	ActionDelete = "delete"
+	ActionAll    = "*"
 )
 
 const (
 	rbacEnabledValueTrue = "true"
 )
 
+var SupportedActions = []string{ActionCreate, ActionRead, ActionUpdate, ActionDelete, ActionAll}
+
+type User struct {
+	Subject string
+	Groups  []string
+}
+
 // Setup a new informer that watches our RBAC ConfigMap.
 // This informer reloads the policy whenever the ConfigMap is updated.
 func refreshEnforcerInBackground(
 	ctx context.Context,
-	kubeClient *kubernetes.Kubernetes,
+	kubeClient kubernetes.KubernetesConnector,
 	enforcer *casbin.Enforcer,
 	l *zap.SugaredLogger,
 ) error {
@@ -131,15 +140,34 @@ func newEnforcer(adapter persist.Adapter, enableLogs bool) (*casbin.Enforcer, er
 
 // NewEnforcerFromFilePath creates a new Casbin enforcer with the policy stored at the given filePath.
 func NewEnforcerFromFilePath(filePath string) (*casbin.Enforcer, error) {
-	adapter, err := fileadapter.New(filePath)
+	f, err := os.Open(filePath) //nolint:gosec
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close() //nolint:errcheck
+	return NewIOReaderEnforcer(f)
+}
+
+// NewIOReaderEnforcer creates a new Casbin enforcer with the policy stored in the given io.Reader.
+func NewIOReaderEnforcer(r io.Reader) (*casbin.Enforcer, error) {
+	adapter, err := readeradapter.New(r)
 	if err != nil {
 		return nil, err
 	}
 	return newEnforcer(adapter, false)
 }
 
+// NewEnforcerWithRefresh creates a new enforcer that refreshes the policy whenever the ConfigMap is updated.
+func NewEnforcerWithRefresh(ctx context.Context, kubeClient kubernetes.KubernetesConnector, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+	enf, err := NewEnforcer(ctx, kubeClient, l)
+	if err != nil {
+		return nil, err
+	}
+	return enf, refreshEnforcerInBackground(ctx, kubeClient, enf, l)
+}
+
 // NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
-func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+func NewEnforcer(ctx context.Context, kubeClient kubernetes.KubernetesConnector, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
 	cmReq := types.NamespacedName{
 		Namespace: common.SystemNamespace,
 		Name:      common.EverestRBACConfigMapName,
@@ -154,35 +182,63 @@ func NewEnforcer(ctx context.Context, kubeClient *kubernetes.Kubernetes, l *zap.
 		return nil, errors.Join(err, errors.New("failed to get RBAC ConfigMap"))
 	}
 	enforcer.EnableEnforce(IsEnabled(cm))
-	return enforcer, refreshEnforcerInBackground(ctx, kubeClient, enforcer, l)
+	return enforcer, nil
 }
 
 // GetUser extracts the user from the JWT token in the context.
-func GetUser(c echo.Context) (string, error) {
-	token, ok := c.Get("user").(*jwt.Token) // by default token is stored under `user` key
+func GetUser(ctx context.Context) (User, error) {
+	token, ok := ctx.Value(common.UserCtxKey).(*jwt.Token)
 	if !ok {
-		return "", errors.New("failed to get token from context")
+		return User{}, errors.New("failed to get token from context")
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims) // by default claims is of type `jwt.MapClaims`
 	if !ok {
-		return "", errors.New("failed to get claims from token")
+		return User{}, errors.New("failed to get claims from token")
 	}
 
 	subject, err := claims.GetSubject()
 	if err != nil {
-		return "", errors.Join(err, errors.New("failed to get subject from claims"))
+		return User{}, errors.Join(err, errors.New("failed to get subject from claims"))
 	}
 
 	issuer, err := claims.GetIssuer()
 	if err != nil {
-		return "", errors.Join(err, errors.New("failed to get issuer from claims"))
+		return User{}, errors.Join(err, errors.New("failed to get issuer from claims"))
 	}
 
 	if issuer == session.SessionManagerClaimsIssuer {
-		return strings.Split(subject, ":")[0], nil
+		subject = strings.Split(subject, ":")[0]
 	}
-	return subject, nil
+
+	groups := getScopeValues(claims, []string{"groups"})
+	return User{Subject: subject, Groups: groups}, nil
+}
+
+func getScopeValues(claims jwt.MapClaims, scopes []string) []string {
+	groups := []string{}
+	for i := range scopes {
+		scopeIf, ok := claims[scopes[i]]
+		if !ok {
+			continue
+		}
+
+		switch val := scopeIf.(type) {
+		case []interface{}:
+			for _, groupIf := range val {
+				group, ok := groupIf.(string)
+				if ok {
+					groups = append(groups, group)
+				}
+			}
+		case []string:
+			groups = append(groups, val...)
+		case string:
+			groups = append(groups, val)
+		}
+	}
+
+	return groups
 }
 
 func loadAdminPolicy(enf casbin.IEnforcer) error {
@@ -238,57 +294,6 @@ func buildPathResourceMap(basePath string) (map[string]string, []string, error) 
 	return resourceMap, skipPaths, nil
 }
 
-// NewEnforceHandler returns a function that checks if a user is allowed to access a resource.
-func NewEnforceHandler(l *zap.SugaredLogger, basePath string, enforcer *casbin.Enforcer) func(c echo.Context, user string) (bool, error) {
-	pathResourceMap, _, err := buildPathResourceMap(basePath)
-	if err != nil {
-		panic("failed to build path resource map: " + err.Error())
-	}
-	return func(c echo.Context, user string) (bool, error) {
-		actionMethodMap := map[string]string{
-			http.MethodGet:    ActionRead,
-			http.MethodPost:   ActionCreate,
-			http.MethodPut:    ActionUpdate,
-			http.MethodPatch:  ActionUpdate,
-			http.MethodDelete: ActionDelete,
-		}
-		var resource string
-		var object string
-		resource, ok := pathResourceMap[c.Path()]
-		if !ok {
-			return false, errors.New("invalid URL")
-		}
-		action, ok := actionMethodMap[c.Request().Method]
-		if !ok {
-			return false, errors.New("invalid method")
-		}
-		namespace := c.Param("namespace")
-		name := c.Param("name")
-		object = namespace + "/" + name
-		// Always allowing listing all namespaces.
-		// The result is filtered based on permission.
-		if resource == ResourceNamespaces {
-			return true, nil
-		}
-		// Listing the following objects is always allowed here,
-		// since we will filter the output of the list itself based on the permissions.
-		allowedObjectsForListing := []string{
-			ResourceDatabaseClusters,
-			ResourceDatabaseEngines,
-		}
-		if slices.Contains(allowedObjectsForListing, resource) && name == "" && action == ActionRead {
-			return true, nil
-		}
-		if ok, err := enforcer.Enforce(user, resource, action, object); err != nil {
-			return false, errors.Join(err, errors.New("failed to enforce policy"))
-		} else if !ok {
-			l.Warnf("Permission denied: [%s %s %s %s]", user, resource, action, object)
-			return false, nil
-		}
-		return enforcer.Enforce(user, resource, action, object)
-	}
-}
-
 // NewSkipper returns a new function that checks if a given request should be skipped
 // from RBAC checks.
 func NewSkipper(basePath string) (func(echo.Context) bool, error) {
@@ -329,4 +334,9 @@ func IsEnabled(cm *corev1.ConfigMap) bool {
 // ObjectName returns the a string that represents the name of an object in RBAC format.
 func ObjectName(args ...string) string {
 	return strings.Join(args, "/")
+}
+
+// ValidateAction validates the action is supported.
+func ValidateAction(action string) bool {
+	return slices.Contains(SupportedActions, action)
 }

@@ -14,10 +14,31 @@
 // limitations under the License.
 
 import { expect } from '@playwright/test';
+import { execSync } from 'child_process';
+import { everestFeatureBuildForUpgrade } from '@e2e/constants';
 
 export const checkError = async (response) => {
   if (!response.ok()) {
     console.log(`${response.url()}: `, await response.json());
   }
+  expect(response.status()).toBe(200);
   expect(response.ok()).toBeTruthy();
+};
+
+export const getVersionServiceURL = async () => {
+  if (
+    typeof everestFeatureBuildForUpgrade !== 'undefined' &&
+    everestFeatureBuildForUpgrade
+  ) {
+    return 'http://localhost:8081';
+  } else {
+    try {
+      const command = `kubectl get deployment everest-server --namespace everest-system -o jsonpath="{.spec.template.spec.containers[0].env[?(@.name=='VERSION_SERVICE_URL')].value}"`;
+      const output = execSync(command).toString();
+      return output;
+    } catch (error) {
+      console.error(`Error executing command: ${error}`);
+      throw error;
+    }
+  }
 };

@@ -18,25 +18,9 @@ package version
 
 import (
 	"encoding/json"
-	"fmt"
-	"regexp"
 	"strings"
 
-	goversion "github.com/hashicorp/go-version"
-
-	"github.com/percona/everest/cmd/config"
-)
-
-const (
-	devCatalogImage     = "docker.io/perconalab/everest-catalog:latest"
-	rcCatalogImage      = "docker.io/perconalab/everest-catalog:%s"
-	releaseCatalogImage = "docker.io/percona/everest-catalog:%s"
-	devManifestURL      = "https://raw.githubusercontent.com/percona/everest/main/deploy/quickstart-k8s.yaml"
-	releaseManifestURL  = "https://raw.githubusercontent.com/percona/everest/v%s/deploy/quickstart-k8s.yaml"
-	debugManifestURL    = "https://raw.githubusercontent.com/percona/everest/%s/deploy/quickstart-k8s.yaml"
-
-	everestOperatorChannelStable = "stable-v0"
-	everestOperatorChannelFast   = "fast-v0"
+	version "github.com/hashicorp/go-version"
 )
 
 var (
@@ -48,94 +32,53 @@ var (
 	FullCommit string //nolint:gochecknoglobals
 	// EverestChannelOverride overrides the default olm channel for Everest operator.
 	EverestChannelOverride string //nolint:gochecknoglobals
-
-	rcSuffix = regexp.MustCompile(`rc\d+$`)
 )
 
-// CatalogImage returns a catalog image name.
-func CatalogImage(v *goversion.Version) string {
-	if isDevVersion(Version) {
-		return devCatalogImage
-	}
-	if EverestChannelOverride != "" {
-		// Channels other than stable are only in dev catalog.
-		return devCatalogImage
-	}
-	if isRC(v) {
-		return fmt.Sprintf(rcCatalogImage, v)
-	}
-	return fmt.Sprintf(releaseCatalogImage, v)
-}
-
-// ManifestURL returns a manifest URL to install Everest.
-func ManifestURL(v *goversion.Version) string {
-	if config.Debug {
-		return fmt.Sprintf(debugManifestURL, FullCommit)
-	}
-	if isDevVersion(Version) {
-		return devManifestURL
-	}
-	return fmt.Sprintf(releaseManifestURL, v)
-}
-
-// CatalogChannel returns a channel for Everest catalog.
-func CatalogChannel() string {
-	if EverestChannelOverride != "" {
-		return EverestChannelOverride
-	}
-	v, err := goversion.NewVersion(Version)
-	if err == nil && isRC(v) {
-		return everestOperatorChannelFast
-	}
-	return everestOperatorChannelStable
-}
-
-func isDevVersion(ver string) bool {
-	if ver == "" {
-		return true
-	}
-
-	v, err := goversion.NewVersion(ver)
-	if err != nil {
-		panic(err)
-	}
-
-	if v.Prerelease() == "" {
+// IsRC checks if the version is a release candidate.
+func IsRC(v string) bool {
+	if v == "" {
 		return false
 	}
+	ver := version.Must(version.NewVersion(v))
+	return strings.Contains(ver.Prerelease(), "rc")
+}
 
-	if isRC(v) {
+// IsDev checks if the version is a development version.
+func IsDev(v string) bool {
+	if v == "" {
 		return false
 	}
-
-	if !strings.HasSuffix(v.Prerelease(), "-upgrade-test") {
-		return true
-	}
-
-	return false
+	ver := version.Must(version.NewVersion(v))
+	devLatestVer := version.Must(version.NewVersion("v0.0.0"))
+	return ver.Core().Equal(devLatestVer)
 }
 
-func isRC(v *goversion.Version) bool {
-	return rcSuffix.MatchString(v.Prerelease())
+// Info represents the version information.
+type Info struct {
+	ProjectName   string  `json:"projectName"`
+	Version       string  `json:"version"`
+	FullCommit    string  `json:"fullCommit"`
+	ServerVersion *string `json:"serverVersion,omitempty"`
 }
 
-// FullVersionInfo returns full version report.
-func FullVersionInfo() string {
+// String returns the string representation of the version information.
+func (v Info) String() string {
 	out := []string{
-		"ProjectName: " + ProjectName,
-		"Version: " + Version,
-		"FullCommit: " + FullCommit,
+		"ProjectName: " + v.ProjectName,
+		"Version: " + v.Version,
+		"FullCommit: " + v.FullCommit,
+	}
+	if v.ServerVersion != nil {
+		out = append(out, "ServerVersion: "+*v.ServerVersion)
 	}
 	return strings.Join(out, "\n")
 }
 
-// FullVersionJSON returns version info as JSON.
-func FullVersionJSON() (string, error) {
-	res := map[string]string{
-		"projectName": ProjectName,
-		"version":     Version,
-		"fullCommit":  FullCommit,
+// JSONString returns the json representation of the version information.
+func (v Info) JSONString() string {
+	data, err := json.Marshal(v)
+	if err != nil {
+		panic(err)
 	}
-	data, err := json.Marshal(res)
-	return string(data), err
+	return string(data)
 }

@@ -1,0 +1,420 @@
+---
+name: Feature build
+on:
+  workflow_dispatch:
+    inputs:
+      everest_branch:
+        required: false
+        default: main
+        description: "Everest branch with the feature to checkout"
+      everest_operator_branch:
+        required: false
+        default: main
+        description: "Everest operator branch with the feature to checkout"
+      everest_catalog_branch:
+        required: false
+        default: main
+        description: "Everest catalog branch with the feature to checkout"
+      vs_branch:
+        required: false
+        default: production
+        description: "Version Service branch with the feature to checkout"
+      helm_branch:
+        required: false
+        default: main
+        description: "Helm charts branch with the feature to checkout"
+      artifacts_retention_days:
+        required: false
+        description: "How many days the artifacts will be stored in GitHub"
+        default: 30
+  workflow_call:
+    inputs:
+      everest_branch:
+        required: false
+        type: string
+        default: main
+        description: "Everest branch with the feature to checkout"
+      everest_operator_branch:
+        required: false
+        type: string
+        default: main
+        description: "Everest operator branch with the feature to checkout"
+      everest_catalog_branch:
+        required: false
+        type: string
+        default: main
+        description: "Everest catalog branch with the feature to checkout"
+      vs_branch:
+        required: false
+        type: string
+        default: production
+        description: "Version Service branch with the feature to checkout"
+      helm_branch:
+        required: false
+        type: string
+        default: main
+        description: "Helm charts branch with the feature to checkout"
+      artifacts_retention_days:
+        required: false
+        type: number
+        description: "How many days the artifacts will be stored in GitHub"
+        default: 30
+
+
+permissions:
+  contents: read
+  packages: write
+  checks: write
+  pull-requests: write
+
+jobs:
+  build:
+    name: Build
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: [ 1.23.x ]
+        may-fail: [ false ]
+
+    continue-on-error: ${{ matrix.may-fail }}
+    runs-on: ubuntu-20.04
+
+    env:
+      TOOLS_PATH: "/opt/tools/bin"
+      ARTIFACTS_RETENTION_DAYS: ${{ inputs.artifacts_retention_days }}
+      VS_BRANCH: ${{ inputs.vs_branch }}
+      HELM_BRANCH: ${{ inputs.helm_branch }}
+      EVEREST_BRANCH: ${{ inputs.everest_branch }}
+      EVEREST_OPERATOR_BRANCH: ${{ inputs.everest_operator_branch }}
+      EVEREST_CATALOG_BRANCH: ${{ inputs.everest_catalog_branch }}
+
+      VS_PORT: 8081
+      ARCH: ""
+      OS: ""
+      VERSION: ""
+      VERSION_TAG: ""
+      VS_URL: ""
+      VS_TAG: ""
+
+    steps:
+      - name: Input validation
+        run: |
+          if [[ ! "$ARTIFACTS_RETENTION_DAYS" =~ ^[0-9]+$ ]]; then
+            echo "Wrong artifacts_retention_days format. Use an integer number. 0 means default GitHub repo settings."
+            exit 1
+          fi
+          
+      - name: Set environment variables
+        run: |
+          echo "ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" | tee -a $GITHUB_ENV
+          echo "OS=$(uname | awk '{print tolower($0)}')" | tee -a $GITHUB_ENV
+          echo "VS_URL=http://localhost:$VS_PORT" | tee -a $GITHUB_ENV
+          
+          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
+          V="1.10000.0-rc$TIMESTAMP"
+          echo "VERSION=$V" | tee -a $GITHUB_ENV
+          echo "VERSION_TAG=v$V" | tee -a $GITHUB_ENV
+          echo "VS_TAG=everest-test$TIMESTAMP" | tee -a $GITHUB_ENV
+
+          # Fall back to default branch if the specified branch does not exist
+          git ls-remote --heads --exit-code --quiet https://github.com/Percona-Lab/percona-version-service.git $VS_BRANCH > /dev/null || echo "VS_BRANCH=production" | tee -a $GITHUB_ENV
+          git ls-remote --heads --exit-code --quiet https://github.com/percona/percona-helm-charts.git $HELM_BRANCH > /dev/null || echo "HELM_BRANCH=main" | tee -a $GITHUB_ENV
+          git ls-remote --heads --exit-code --quiet https://github.com/percona/everest.git $EVEREST_BRANCH > /dev/null || echo "EVEREST_BRANCH=main" | tee -a $GITHUB_ENV
+          git ls-remote --heads --exit-code --quiet https://github.com/percona/everest-operator.git $EVEREST_OPERATOR_BRANCH > /dev/null || echo "EVEREST_OPERATOR_BRANCH=main" | tee -a $GITHUB_ENV
+          git ls-remote --heads --exit-code --quiet https://github.com/percona/everest-catalog.git $EVEREST_CATALOG_BRANCH > /dev/null || echo "EVEREST_CATALOG_BRANCH=main" | tee -a $GITHUB_ENV
+
+      - name: Create temporary directory for storing artifacts
+        run: |
+          mkdir -p /tmp/${VERSION}
+
+      - name: Set GO_VERSION environment variable
+        run: |
+          go version
+          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+
+      - name: Operator - check out
+        uses: actions/checkout@v4
+        with:
+          repository: percona/everest-operator
+          ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
+          path: everest-operator
+          token: ${{ secrets.ROBOT_TOKEN }}
+
+
+      - name: Set up Go release
+        uses: percona-platform/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+
+
+      - name: Operator - install operator-sdk
+        run: |
+          mkdir -p $TOOLS_PATH
+          echo $TOOLS_PATH >> $GITHUB_PATH
+
+          export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.38.0
+          curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
+
+          gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E
+
+          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt
+          curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt.asc
+          gpg -u "Operator SDK (release) <cncf-operator-sdk@cncf.io>" --verify checksums.txt.asc
+
+          grep operator-sdk_${OS}_${ARCH} checksums.txt | sha256sum -c -
+
+          chmod +x operator-sdk_${OS}_${ARCH}
+          mv operator-sdk_${OS}_${ARCH} $TOOLS_PATH/operator-sdk
+
+      - name: Operator - build and bundle
+        run: |
+          cd everest-operator
+          git checkout -b $VERSION_TAG
+          sed -i "s/^VERSION ?=.*/VERSION ?= $VERSION/g" Makefile
+
+          make init
+          make release
+
+          # configure userdata for commits
+          git config --global user.email "everest-ci@percona.com"
+          git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+
+          # commit and push the updated files
+          git commit -a -m "operator manifests"
+          # to build crds in helm, the remote ref with the version name should exist
+          git push origin $VERSION_TAG
+
+      - name: Operator - setup Docker meta for everest-operator
+        id: operator_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            perconalab/everest-operator
+          tags: |
+            type=raw,value=${{ env.VERSION }}
+
+      - name: Operator - setup Docker meta for everest-operator-bundle
+        id: bundle_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            perconalab/everest-operator-bundle
+          tags: |
+            type=raw,value=${{ env.VERSION }}
+
+      - name: Operator - push everest-operator image
+        uses: docker/build-push-action@v6
+        with:
+          context: everest-operator
+          push: true
+          tags: ${{ steps.operator_meta.outputs.tags }}
+
+      - name: Operator - push everest-operator-bundle image
+        uses: docker/build-push-action@v6
+        with:
+          context: everest-operator
+          push: true
+          tags: ${{ steps.bundle_meta.outputs.tags }}
+          file: everest-operator/bundle.Dockerfile
+
+      - name: Helm - checkout
+        uses: actions/checkout@v4
+        with:
+          repository: percona/percona-helm-charts
+          ref: ${{ env.HELM_BRANCH }}
+          path: percona-helm-charts
+          token: ${{ secrets.ROBOT_TOKEN }}
+
+      - name: Helm - build
+        run: |
+          cd percona-helm-charts/charts/everest
+          CRD_VERSION=${{ env.VERSION_TAG }} make crds-gen
+          make release-dev
+
+      - name: Helm - copy chart
+        run: |
+          cp -r percona-helm-charts/charts/everest /tmp/${{ env.VERSION }}/helm-chart
+
+      - name: Operator - check out again
+        uses: actions/checkout@v4
+        with:
+          repository: percona/everest-operator
+          ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
+          path: everest-operator
+          token: ${{ secrets.ROBOT_TOKEN }}
+
+      - name: Operator - delete the feature build branch
+        run: |
+          cd everest-operator
+          git push -d origin $VERSION_TAG
+
+      - name: VS - checkout
+        uses: actions/checkout@v4
+        with:
+          repository: Percona-Lab/percona-version-service
+          ref: ${{ env.VS_BRANCH }}
+          path: percona-version-service
+          token: ${{ secrets.ROBOT_TOKEN }}
+
+
+      - name: VS - update
+        run: |
+          cd percona-version-service
+          make init
+          
+          cd sources/metadata/everest 
+          # read the file for the last version of everest
+          file_content=$(cat $(ls -1 | sort | tail -n 1))
+          # create an entry for the new Everest version from this file by replacing the version
+          echo "$file_content" | sed "s/^version: .*/version: $VERSION/g" > "$VERSION.yaml"
+          
+          git status
+          cat "$VERSION.yaml"
+
+      - name: Build and Push VS dev image
+        uses: docker/build-push-action@v6
+        with:
+          context: percona-version-service
+          push: true
+          tags: perconalab/version-service:${{ env.VS_TAG }}
+
+
+      - name: Catalog - checkout
+        uses: actions/checkout@v4
+        with:
+          repository: percona/everest-catalog
+          ref: ${{ env.EVEREST_CATALOG_BRANCH }}
+          path: everest-catalog
+          token: ${{ secrets.ROBOT_TOKEN }}
+
+      - name: Catalog - update veneer file
+        run: |
+          cd everest-catalog/tools
+          go run . \
+            --veneer-file ../veneer/everest-operator.yaml \
+            --channel fast-v0  \
+            --new-version ${{ env.VERSION }} 
+          
+          cd ..
+          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.48.0/${OS}-${ARCH}-opm
+          chmod +x /tmp/opm
+          /tmp/opm alpha render-template basic --skip-tls -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
+          # Check if catalog has the new version listed
+          if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
+            echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
+            exit 1
+          fi
+
+      - name: Catalog - setup Docker meta for everest-catalog
+        id: catalog_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            perconalab/everest-catalog
+          tags: |
+            type=raw,value=${{ env.VERSION }}
+
+      - name: Catalog - push everest-catalog image
+        uses: docker/build-push-action@v6
+        with:
+          context: everest-catalog
+          push: true
+          tags: ${{ steps.catalog_meta.outputs.tags }}
+          file: everest-catalog/everest-catalog.Dockerfile
+
+
+      - name: Everest - check out
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.ROBOT_TOKEN }}
+          ref: ${{ env.EVEREST_BRANCH }}
+
+      - name: Everest UI - setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.4.0
+
+      - name: Everest UI - run with Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: "pnpm"
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Everest UI - build
+        run: |
+          cd ui
+          pnpm install
+          EVEREST_OUT_DIR=${GITHUB_WORKSPACE}/public/dist/ pnpm build
+
+      - name: Everest - build binary
+        run: |
+          RELEASE_VERSION=${VERSION_TAG} CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
+          RELEASE_VERSION=${VERSION_TAG} make release-cli
+
+      - name: Everest - copy CLI builds
+        run: |
+          cp dist/everestctl.exe /tmp/${VERSION}/everestctl.exe
+          cp dist/everestctl-darwin-amd64 /tmp/${VERSION}/everestctl-darwin-amd64
+          cp dist/everestctl-darwin-arm64 /tmp/${VERSION}/everestctl-darwin-arm64
+          cp dist/everestctl-linux-amd64 /tmp/${VERSION}/everestctl-linux-amd64
+          cp dist/everestctl-linux-arm64 /tmp/${VERSION}/everestctl-linux-arm64
+
+      - name: Everest - copy feature build helper scripts
+        run: |
+          cp dev/fb/cli.sh /tmp/${VERSION}/cli.sh
+          cp dev/fb/helm.sh /tmp/${VERSION}/helm.sh
+          cp dev/fb/vs.sh /tmp/${VERSION}/vs.sh
+
+      - name: Everest - push Everest image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags:  perconalab/everest:${{ env.VERSION }}
+
+      - name: Create vs_tag file
+        run: |
+          echo "$VS_TAG" > /tmp/${VERSION}/vs_tag.txt
+          echo "$VERSION" > /tmp/${VERSION}/version.txt
+
+      - name: Version Service - create deployment manifest
+        run: |
+          curl https://raw.githubusercontent.com/Percona-Lab/percona-version-service/main/deploy.yaml  > /tmp/${VERSION}/vs_deploy.yaml
+          sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_TAG/g" /tmp/${VERSION}/vs_deploy.yaml
+
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.VERSION }}
+          path: /tmp/${{ env.VERSION }}
+          retention-days: ${{ env.ARTIFACTS_RETENTION_DAYS }}
+
+      - name: Info
+        run: |
+          printf "To install FB using helm:\n\
+          1. Download and unzip the \`$VERSION\` artifact below.\n\
+          2. Run the command:\n\`\`\`./helm.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+          
+          printf "____________________\n" >> "$GITHUB_STEP_SUMMARY"
+          
+          printf "To install FB using CLI:\n\
+          1. Download and unzip the \`$VERSION\` artifact below.\n\
+          2. Run the command:\n\`\`\`./cli.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+
+          printf "____________________\n" >> "$GITHUB_STEP_SUMMARY"
+          
+          printf "To clean up the environment after a FB:\n\
+          1. Delete VS: \`kubectl delete deployment percona-version-service && kubectl delete svc percona-version-service\`\n\
+          2. Uninstall Everest using the FB everestctl build: \`./<everestctl-OS-ARCH> uninstall --assume-yes --force\` \n" >> "$GITHUB_STEP_SUMMARY"
+

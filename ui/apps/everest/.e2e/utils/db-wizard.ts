@@ -15,8 +15,12 @@ export const storageLocationAutocompleteEmptyValidationCheck = async (
   ).toBeVisible();
 };
 
-export const moveForward = (page: Page) =>
-  page.getByTestId('db-wizard-continue-button').click();
+export const moveForward = async (page: Page) => {
+  await expect(
+    page.getByTestId('db-wizard-continue-button')
+  ).not.toBeDisabled();
+  await page.getByTestId('db-wizard-continue-button').click();
+};
 
 export const moveBack = (page: Page) =>
   page.getByTestId('db-wizard-previous-button').click();
@@ -50,6 +54,25 @@ export const submitWizard = async (page: Page) => {
   await expect(page.getByTestId('db-wizard-goto-db-clusters')).toBeVisible();
 };
 
+export const cancelWizard = async (page: Page) => {
+  await page.getByTestId('db-wizard-cancel-button').click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByText('Yes, cancel').click();
+  await page.waitForURL('**/databases');
+};
+
+export const goToLastStepByStepAndSubmit = async (page: Page) => {
+  let createDbVisible = false;
+  while (!createDbVisible) {
+    await moveForward(page);
+    const a = await page.getByTestId('db-wizard-submit-button').isVisible();
+    if (a) {
+      createDbVisible = true;
+    }
+  }
+  await submitWizard(page);
+};
+
 export const goToLastAndSubmit = async (page: Page) => {
   await goToStep(page, 'monitoring');
   await submitWizard(page);
@@ -64,18 +87,30 @@ export const goToLastAndSubmit = async (page: Page) => {
  */
 export const populateBasicInformation = async (
   page: Page,
+  namespace: string,
+  clusterName: string,
   dbType: string,
   storageClass: string,
-  clusterName: string
+  mongoSharding: boolean = false
 ) => {
+  if (namespace) {
+    await page.getByTestId('k8s-namespace-autocomplete').click();
+    await page.getByRole('option', { name: namespace }).click();
+    await expect(page.getByTestId('text-input-k8s-namespace')).toHaveValue(
+      namespace
+    );
+  }
+
   await page.getByTestId('text-input-db-name').fill(clusterName);
 
-  if (dbType == 'psmdb') {
-    await page.getByTestId('mongodb-toggle-button').click();
-  } else if (dbType == 'pxc') {
-    await page.getByTestId('mysql-toggle-button').click();
-  } else if (dbType == 'postgresql') {
-    await page.getByTestId('postgresql-toggle-button').click();
+  if (dbType === 'psmdb') {
+    await expect(page.getByText('Sharded Cluster')).toBeVisible();
+    await expect(page.getByTestId('switch-input-sharding')).toBeVisible();
+
+    if (mongoSharding) {
+      await page.getByTestId('switch-input-sharding').click();
+      await expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
+    }
   }
 };
 

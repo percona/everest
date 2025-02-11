@@ -63,7 +63,7 @@ func PrintError(err error, l *zap.SugaredLogger, prettyPrint bool) {
 
 	l.Error(err)
 	if prettyPrint {
-		fmt.Print(Failure("%s", err)) //nolint:forbidigo
+		fmt.Fprintln(os.Stderr, Failure("%s", err))
 	}
 }
 
@@ -85,10 +85,15 @@ func Failure(msg string, args ...any) string {
 
 // Info prints a message with an info emoji.
 func Info(msg string, args ...any) string {
-	return fmt.Sprintf("ℹ️ %s\n", fmt.Sprintf(msg, args...))
+	return fmt.Sprintf("ℹ️  %s\n", fmt.Sprintf(msg, args...))
 }
 
 // Rocket prints a message with a rocket emoji.
 func Rocket(msg string, args ...any) string {
 	return fmt.Sprintf("🚀 %s\n", fmt.Sprintf(msg, args...))
+}
+
+// Warn prints a message with a warning emoji.
+func Warn(msg string, args ...any) string {
+	return fmt.Sprintf("⚠️  %s\n", fmt.Sprintf(msg, args...))
 }

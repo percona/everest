@@ -31,9 +31,9 @@ import (
 // KubeClientConnector ...
 type KubeClientConnector interface {
 	// CreateBackupStorage creates an backupStorage.
-	CreateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
+	CreateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) (*everestv1alpha1.BackupStorage, error)
 	// UpdateBackupStorage updates an backupStorage.
-	UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) error
+	UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) (*everestv1alpha1.BackupStorage, error)
 	// GetBackupStorage returns the backupStorage.
 	GetBackupStorage(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error)
 	// ListBackupStorages returns the backupStorage.
@@ -111,6 +111,8 @@ type KubeClientConnector interface {
 	GetPackageManifest(ctx context.Context, namespace, name string) (*packagev1.PackageManifest, error)
 	// ListCRDs returns a list of CRDs.
 	ListCRDs(ctx context.Context, labelSelector *metav1.LabelSelector) (*apiextv1.CustomResourceDefinitionList, error)
+	// DeleteCRD deletes a CRD by name.
+	DeleteCRD(ctx context.Context, name string) error
 	// ListCRs returns a list of CRs.
 	ListCRs(ctx context.Context, namespace string, gvr schema.GroupVersionResource, labelSelector *metav1.LabelSelector) (*unstructured.UnstructuredList, error)
 	// GetClusterServiceVersion retrieve a CSV by namespaced name.
@@ -121,6 +123,8 @@ type KubeClientConnector interface {
 	UpdateClusterServiceVersion(ctx context.Context, csv *v1alpha1.ClusterServiceVersion) (*v1alpha1.ClusterServiceVersion, error)
 	// DeleteClusterServiceVersion deletes a CSV by namespaced name.
 	DeleteClusterServiceVersion(ctx context.Context, key types.NamespacedName) error
+	// DeleteSubscription deletes a subscription by namespaced name.
+	DeleteSubscription(ctx context.Context, key types.NamespacedName) error
 	// DeleteFile accepts manifest file contents parses into []runtime.Object
 	// and deletes them from the cluster.
 	DeleteFile(fileBytes []byte) error
@@ -128,22 +132,36 @@ type KubeClientConnector interface {
 	GetService(ctx context.Context, namespace, name string) (*corev1.Service, error)
 	// GetClusterRoleBinding returns cluster role binding by given name.
 	GetClusterRoleBinding(ctx context.Context, name string) (*rbacv1.ClusterRoleBinding, error)
-	// GetCSV retrieves an OLM CSV by namespace and name.
-	GetCSV(ctx context.Context, namespace string, name string) (*v1alpha1.ClusterServiceVersion, error)
 	// ListDatabaseClusters returns list of managed database clusters.
 	ListDatabaseClusters(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterList, error)
 	// GetDatabaseCluster returns database clusters by provided name.
 	GetDatabaseCluster(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseCluster, error)
+	// CreateDatabaseCluster creates a new database cluster.
+	CreateDatabaseCluster(ctx context.Context, namespace string, cluster *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error)
+	// UpdateDatabaseCluster updates a database cluster.
+	UpdateDatabaseCluster(ctx context.Context, namespace string, cluster *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error)
+	// DeleteDatabaseCluster deletes a database cluster.
+	DeleteDatabaseCluster(ctx context.Context, namespace, name string) error
 	// ListDatabaseClusterBackups returns list of managed database cluster backups.
 	ListDatabaseClusterBackups(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error)
 	// GetDatabaseClusterBackup returns database cluster backups by provided name.
 	GetDatabaseClusterBackup(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error)
 	// UpdateDatabaseClusterBackup updates the provided database cluster backup.
 	UpdateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error)
+	// CreateDatabaseClusterBackup creates a new database cluster backup.
+	CreateDatabaseClusterBackup(ctx context.Context, namespace string, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error)
+	// DeleteDatabaseClusterBackup deletes a database cluster backup.
+	DeleteDatabaseClusterBackup(ctx context.Context, namespace, name string) error
 	// ListDatabaseClusterRestores returns list of managed database clusters.
 	ListDatabaseClusterRestores(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterRestoreList, error)
 	// GetDatabaseClusterRestore returns database clusters by provided name.
 	GetDatabaseClusterRestore(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterRestore, error)
+	// CreateDatabaseClusterRestore creates a new database cluster.
+	CreateDatabaseClusterRestore(ctx context.Context, namespace string, restore *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error)
+	// UpdateDatabaseClusterRestore updates a database cluster.
+	UpdateDatabaseClusterRestore(ctx context.Context, namespace string, restore *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error)
+	// DeleteDatabaseClusterRestore deletes a database cluster.
+	DeleteDatabaseClusterRestore(ctx context.Context, namespace, name string) error
 	// ListDatabaseEngines returns list of managed database clusters.
 	ListDatabaseEngines(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseEngineList, error)
 	// GetDatabaseEngine returns database clusters by provided name.
@@ -156,6 +174,8 @@ type KubeClientConnector interface {
 	ListDeployments(ctx context.Context, namespace string) (*appsv1.DeploymentList, error)
 	// UpdateDeployment updates a deployment and returns the updated object.
 	UpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.Deployment, error)
+	// DeleteDeployment deletes a deployment.
+	DeleteDeployment(ctx context.Context, name, namespace string) error
 	// GetInstallPlan retrieves an OLM install plan by namespace and name.
 	GetInstallPlan(ctx context.Context, namespace string, name string) (*v1alpha1.InstallPlan, error)
 	// ListInstallPlans lists install plans.
@@ -165,9 +185,9 @@ type KubeClientConnector interface {
 	// DeleteAllMonitoringResources deletes all resources related to monitoring from k8s cluster.
 	DeleteAllMonitoringResources(ctx context.Context, namespace string) error
 	// CreateMonitoringConfig creates an monitoringConfig.
-	CreateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) error
+	CreateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error)
 	// UpdateMonitoringConfig updates an monitoringConfig.
-	UpdateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) error
+	UpdateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error)
 	// GetMonitoringConfig returns the monitoringConfig.
 	GetMonitoringConfig(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error)
 	// ListMonitoringConfigs returns the monitoringConfig.

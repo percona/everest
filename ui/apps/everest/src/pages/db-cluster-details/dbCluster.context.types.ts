@@ -5,10 +5,9 @@ export interface DbClusterContextProps {
   dbCluster?: DbCluster;
   isLoading: boolean;
   canReadBackups: boolean;
-  canReadMonitoring: boolean;
-  canUpdateMonitoring: boolean;
   canUpdateDb: boolean;
   canReadCredentials: boolean;
   queryResult: QueryObserverResult<DbCluster, unknown>;
+  clusterDeleted: boolean;
   temporarilyIncreaseInterval: (interval: number, timeoutTime: number) => void;
 }

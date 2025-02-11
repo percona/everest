@@ -5,6 +5,10 @@ import { ReactNode } from 'react';
 export type OverviewSectionProps = {
   title: string | ReactNode;
   dataTestId?: string;
-  actionButtonProps?: ButtonProps;
+  actionButtonProps?: ButtonProps & {
+    'data-testid'?: string;
+  };
   editable?: boolean;
+  showTooltip?: boolean;
+  disabledEditTooltipText?: string;
 } & LoadableChildrenProps;

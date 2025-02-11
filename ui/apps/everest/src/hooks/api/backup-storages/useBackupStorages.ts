@@ -18,8 +18,6 @@ import {
   UseMutationOptions,
   useQueries,
   useQuery,
-  UseQueryOptions,
-  UseQueryResult,
 } from '@tanstack/react-query';
 import {
   createBackupStorageFn,
@@ -28,58 +26,35 @@ import {
   getBackupStoragesFn,
 } from 'api/backupStorage';
 import {
-  useNamespacePermissionsForResource,
-  useRBACPermissions,
-} from 'hooks/rbac';
-import {
   BackupStorage,
   GetBackupStoragesPayload,
 } from 'shared-types/backupStorages.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
+import { useNamespaces } from '../namespaces';
 
 export const BACKUP_STORAGES_QUERY_KEY = 'backupStorages';
 
-export interface BackupStoragesForNamespaceResult {
-  namespace: string;
-  queryResult: UseQueryResult<BackupStorage[], unknown>;
-}
+export type BackupStoragesForNamespaceResult =
+  PerconaQueryOptions<GetBackupStoragesPayload>;
 
-export const useBackupStorages = (
-  queriesParams: Array<{
-    namespace: string;
-    options?: PerconaQueryOptions<
-      GetBackupStoragesPayload,
-      unknown,
-      BackupStorage[]
-    >;
-  }>
-) => {
-  const { canRead } = useNamespacePermissionsForResource('backup-storages');
-  const queries = queriesParams.map<
-    UseQueryOptions<GetBackupStoragesPayload, unknown, BackupStorage[]>
-  >(({ namespace, options }) => {
-    const allowed = canRead.includes(namespace);
+export const useBackupStorages = () => {
+  const { data: namespaces = [] } = useNamespaces({
+    refetchInterval: 5 * 1000,
+  });
+  const queries = namespaces.map((namespace) => {
     return {
       queryKey: [BACKUP_STORAGES_QUERY_KEY, namespace],
       retry: false,
       queryFn: () => getBackupStoragesFn(namespace),
       refetchInterval: 5 * 1000,
-      select: allowed ? undefined : () => [],
-      ...options,
-      enabled: (options?.enabled ?? true) && allowed,
     };
   });
 
-  const queryResults = useQueries({ queries });
+  const queryResults = useQueries({
+    queries,
+  });
 
-  const results: BackupStoragesForNamespaceResult[] = queryResults.map(
-    (item, i) => ({
-      namespace: queriesParams[i].namespace,
-      queryResult: item,
-    })
-  );
-
-  return results;
+  return queryResults;
 };
 
 export const useBackupStoragesByNamespace = (
@@ -90,13 +65,10 @@ export const useBackupStoragesByNamespace = (
     BackupStorage[]
   >
 ) => {
-  const { canRead } = useRBACPermissions('backup-storages', `${namespace}/*`);
-
   return useQuery<GetBackupStoragesPayload, unknown, BackupStorage[]>({
     queryKey: [BACKUP_STORAGES_QUERY_KEY, namespace],
     queryFn: () => getBackupStoragesFn(namespace),
     ...options,
-    enabled: (options?.enabled ?? true) && canRead,
   });
 };
 

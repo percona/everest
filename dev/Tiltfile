@@ -4,9 +4,9 @@ config_yaml=read_yaml('config.yaml')
 # Vars
 everest_namespace = 'everest-system'
 everest_monitoring_namespace = 'everest-monitoring'
-pxc_operator_version = os.getenv('PXC_OPERATOR_VERSION', '1.15.0')
+pxc_operator_version = os.getenv('PXC_OPERATOR_VERSION', '1.16.1')
 print('Using PXC operator version: %s' % pxc_operator_version)
-psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.18.0')
+psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.19.0')
 print('Using PSMDB operator version: %s' % psmdb_operator_version)
 pg_operator_version = os.getenv('PG_OPERATOR_VERSION', '2.5.0')
 print('Using PG operator version: %s' % pg_operator_version)
@@ -250,6 +250,7 @@ everest_yaml = helm(
     namespace=everest_namespace,
     skip_crds=True,
     set=[
+        'dbNamespace.enabled=false',
         'upgrade.preflightChecks=false',
         'olm.install=false',
         'createMonitoringResources=false',
@@ -345,8 +346,8 @@ local_resource(
 # Build the Everest operator manager locally to take advantage of the go cache
 local_resource(
   'operator-build',
-  'make -C %s fmt; CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -C %s -o ./bin/manager ./main.go' % (operator_dir, operator_dir),
-  deps=['%s/api' % operator_dir, '%s/controllers' % operator_dir, '%s/main.go' % operator_dir],
+  'make -C %s fmt; CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -C %s -o ./bin/manager ./cmd/main.go' % (operator_dir, operator_dir),
+  deps=['%s/api' % operator_dir, '%s/internal' % operator_dir, '%s/cmd/main.go' % operator_dir],
   labels=["everest-operator"]
 )
 
@@ -381,8 +382,8 @@ k8s_resource(
     'everest-operator-leader-election-role:role:%s' % everest_namespace,
     'everest-operator-local:rolebinding:%s' % everest_namespace,
     'everest-operator-metrics-reader:clusterrole',
-    'everest-operator-proxy-role:clusterrole',
-    'everest-operator-proxy-rolebinding:clusterrolebinding',
+    'everest-operator-metrics-auth-role:clusterrole',
+    'everest-operator-metrics-auth-rolebinding:clusterrolebinding',
     'everest-operator-manager-role:clusterrole',
     'everest-operator-leader-election-rolebinding:rolebinding',
     'everest-operator-manager-rolebinding:clusterrolebinding'
@@ -404,7 +405,7 @@ k8s_resource(
 local_resource(
   'backend-build',
   'CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make -C %s build' % backend_dir,
-  deps=['%s/api' % backend_dir, '%s/cmd' % backend_dir, '%s/pkg' % backend_dir, '%s/public' % backend_dir],
+  deps=['%s/api' % backend_dir, '%s/cmd' % backend_dir, '%s/pkg' % backend_dir, '%s/public' % backend_dir, '%s/internal' % backend_dir],
   labels=["everest"]
 )
 

@@ -36,7 +36,6 @@ import {
   waitForDelete,
   findRowAndClickActions,
 } from '@e2e/utils/table';
-import { checkError } from '@e2e/utils/generic';
 import {
   deleteMonitoringInstance,
   listMonitoringInstances,
@@ -50,6 +49,7 @@ import {
   pgInsertDummyTestDB,
 } from '@e2e/utils/db-cmd-line';
 import { addFirstScheduleInDBWizard } from '@e2e/pr/db-cluster/db-wizard/db-wizard-utils';
+import { getDbClusterAPI, updateDbClusterAPI } from '@e2e/utils/db-cluster';
 
 const {
   MONITORING_URL,
@@ -66,7 +66,6 @@ type pitrTime = {
   hour: string;
   minute: string;
   second: string;
-  ampm: string;
 };
 
 let token: string;
@@ -77,7 +76,6 @@ let pitrRestoreTime: pitrTime = {
   hour: '',
   minute: '',
   second: '',
-  ampm: '',
 };
 
 function getCurrentPITRTime(): pitrTime {
@@ -90,20 +88,15 @@ function getCurrentPITRTime(): pitrTime {
   time.year = now.getFullYear().toString();
 
   // Get time parts
-  let hour: number = now.getHours();
+  time.hour = now.getHours().toString();
   time.minute = now.getMinutes().toString();
   time.second = now.getSeconds().toString();
-
-  // Determine AM or PM
-  time.ampm = hour >= 12 ? 'PM' : 'AM';
-  hour = hour % 12 || 12; // Convert 24-hour format to 12-hour format, making 0 => 12
-  time.hour = hour.toString();
 
   return time;
 }
 
 function getFormattedPITRTime(time: pitrTime): string {
-  const formattedDateTime: string = `${time.day.padStart(2, '0')}/${time.month.padStart(2, '0')}/${time.year} at ${time.hour.padStart(2, '0')}:${time.minute.padStart(2, '0')}:${time.second.padStart(2, '0')} ${time.ampm}`;
+  const formattedDateTime: string = `${time.day.padStart(2, '0')}/${time.month.padStart(2, '0')}/${time.year} at ${time.hour.padStart(2, '0')}:${time.minute.padStart(2, '0')}:${time.second.padStart(2, '0')}`;
 
   return formattedDateTime;
 }
@@ -169,16 +162,19 @@ test.describe.configure({ retries: 0 });
       }) => {
         expect(storageClasses.length).toBeGreaterThan(0);
 
-        await page.goto('/databases/new');
-        await page.getByTestId('toggle-button-group-input-db-type').waitFor();
-        await page.getByTestId('select-input-db-version').waitFor();
+        await page.goto('/databases');
+        await page.getByTestId('add-db-cluster-button').waitFor();
+        await page.getByTestId('add-db-cluster-button').click();
+        await page.getByTestId(`add-db-cluster-button-${db}`).click();
 
         await test.step('Populate basic information', async () => {
           await populateBasicInformation(
             page,
+            namespace,
+            clusterName,
             db,
             storageClasses[0],
-            clusterName
+            false
           );
           await moveForward(page);
         });
@@ -257,45 +253,32 @@ test.describe.configure({ retries: 0 });
           if (db !== 'psmdb') {
             return;
           }
-          let psmdbCluster = await request.get(
-            `/v1/namespaces/${namespace}/database-clusters/${clusterName}`
+
+          const psmdbCluster = await getDbClusterAPI(
+            clusterName,
+            EVEREST_CI_NAMESPACES.EVEREST_UI,
+            request,
+            token
           );
-
-          await checkError(psmdbCluster);
-          const psmdbPayload = await psmdbCluster.json();
-
-          psmdbPayload.spec.backup.pitr.uploadIntervalSec = 60;
-
-          const updatedPSMDBCluster = await request.put(
-            `/v1/namespaces/${namespace}/database-clusters/${clusterName}`,
-            {
-              data: psmdbPayload,
-            }
+          psmdbCluster.spec.backup.pitr.uploadIntervalSec = 60;
+          await updateDbClusterAPI(
+            clusterName,
+            EVEREST_CI_NAMESPACES.EVEREST_UI,
+            psmdbCluster,
+            request,
+            token
           );
-
-          await checkError(updatedPSMDBCluster);
         });
 
         await test.step('Check db cluster k8s object options', async () => {
-          const response = await request.get(
-            `/v1/namespaces/${namespace}/database-clusters`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          await checkError(response);
-
-          // TODO: replace with correct payload typings from GET DB Clusters
-          const { items: clusters } = await response.json();
-
-          const addedCluster = clusters.find(
-            (cluster) => cluster.metadata.name === clusterName
+          const addedCluster = await getDbClusterAPI(
+            clusterName,
+            EVEREST_CI_NAMESPACES.EVEREST_UI,
+            request,
+            token
           );
 
           expect(addedCluster?.spec.backup.pitr.enabled).toBe(true);
-          expect(addedCluster).not.toBeUndefined();
           expect(addedCluster?.spec.engine.type).toBe(db);
           expect(addedCluster?.spec.engine.replicas).toBe(size);
           expect(['600m', '0.6']).toContain(
@@ -372,9 +355,6 @@ test.describe.configure({ retries: 0 });
           .click({ timeout: 5000 });
         await page
           .getByLabel(pitrRestoreTime.second + ' seconds', { exact: true })
-          .click({ timeout: 5000 });
-        await page
-          .getByLabel(pitrRestoreTime.ampm, { exact: true })
           .click({ timeout: 5000 });
         await expect(
           page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')

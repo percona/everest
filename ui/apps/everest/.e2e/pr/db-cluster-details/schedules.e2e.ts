@@ -24,11 +24,17 @@ import {
 import { storageLocationAutocompleteEmptyValidationCheck } from '@e2e/utils/db-wizard';
 import { getBucketNamespacesMap } from '@e2e/constants';
 import { waitForInitializingState } from '@e2e/utils/table';
+const { EVEREST_BUCKETS_NAMESPACES_MAP } = process.env;
 
 // TODO uncomment when PATCH method is implemented
-test.describe.skip('Schedules List', async () => {
+test.describe('Schedules List', async () => {
   const scheduleName = 'test-name';
   const mySQLName = 'schedule-mysql';
+
+  // IST is UTC+5h30, with or without DST
+  test.use({
+    timezoneId: 'IST',
+  });
 
   test.beforeAll(async ({ request }) => {
     await createDbClusterFn(request, {
@@ -39,10 +45,10 @@ test.describe.skip('Schedules List', async () => {
         enabled: true,
         schedules: [
           {
-            backupStorageName: getBucketNamespacesMap()[0][0],
+            backupStorageName: JSON.parse(EVEREST_BUCKETS_NAMESPACES_MAP)[0][0],
             enabled: true,
             name: 'backup-1',
-            schedule: '0 * * * *',
+            schedule: '30 18 * * *',
           },
         ],
       },
@@ -58,7 +64,32 @@ test.describe.skip('Schedules List', async () => {
     await deleteDbClusterFn(request, mySQLName);
   });
 
-  test('Create schedule', async ({ page }) => {
+  test('Editing cluster resources does not affect on schedules time zone', async ({
+    page,
+  }) => {
+    await findDbAndClickRow(page, mySQLName);
+    expect(page.getByTestId('overview-section-text')).toHaveText(
+      'Daily at 12:00 AM'
+    );
+
+    //check resources editing
+    expect(page.getByTestId('edit-resources-button')).toBeVisible();
+    await page.getByTestId('edit-resources-button').click();
+    expect(page.getByTestId('edit-resources-form-dialog')).toBeVisible();
+    await page.getByTestId('form-dialog-save').click();
+    expect(page.getByTestId('overview-section-text')).toHaveText(
+      'Daily at 12:00 AM'
+    );
+
+    await page.getByTestId('backups').click();
+    await page.getByTestId('scheduled-backups').click();
+
+    expect(page.getByTestId('schedule-0 0 * * *-text')).toHaveText(
+      'Daily at 12:00 AM'
+    );
+  });
+
+  test.skip('Create schedule', async ({ page }) => {
     await findDbAndClickRow(page, mySQLName);
 
     const backupsTab = await page.getByTestId(DBClusterDetailsTabs.backups);
@@ -145,11 +176,11 @@ test.describe.skip('Schedules List', async () => {
       await page.getByTestId('scheduled-backups');
     await scheduledBackupsAccordion.click();
 
-    expect(page.getByText('Monthly on day 1 at 12:00 AM')).toBeTruthy();
+    expect(page.getByText('Monthly on day 1 at 1:00 AM')).toBeTruthy();
     expect(page.getByText('2 active schedules')).toBeTruthy();
   });
 
-  test('PostgreSQL db cannot have more than 3 active backup schedules', async ({
+  test.skip('PostgreSQL db cannot have more than 3 active backup schedules', async ({
     page,
     request,
   }) => {
@@ -214,7 +245,7 @@ test.describe.skip('Schedules List', async () => {
     await scheduledBackupsAccordion.click();
 
     const scheduleForEditBtn = await page
-      .getByTestId('schedule-0 0 1 * *')
+      .getByTestId('schedule-0 1 1 * *')
       .getByTestId('edit-schedule-button');
 
     await scheduleForEditBtn.click();
@@ -240,3 +271,18 @@ test.describe.skip('Schedules List', async () => {
     expect(page.getByText('Weekly on Fridays at 6:08 PM')).toBeTruthy();
   });
 });
+
+// TODO move to schedules part
+// MongoDB could create schedules only with the one of storages, so for not first schedules storage should be disabled
+// await expect(
+//   page.getByText(
+//     'The backup storage you select for your first backup schedule will be used for al'
+//   )
+// ).toBeVisible();
+// await page.getByTestId('create-schedule').click();
+// const scheduleStorageLocation = page.getByTestId(
+//   'text-input-storage-location'
+// );
+// await expect(scheduleStorageLocation).toBeDisabled();
+// await expect(scheduleStorageLocation).not.toBeEmpty();
+// await page.getByTestId('close-dialog-icon').click();

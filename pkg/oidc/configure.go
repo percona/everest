@@ -19,10 +19,13 @@ package oidc
 import (
 	"context"
 	"errors"
+	"slices"
+	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"go.uber.org/zap"
 
+	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 )
@@ -37,25 +40,34 @@ type OIDC struct {
 // Config stores configuration for the OIDC command.
 type Config struct {
 	// KubeconfigPath is a path to a kubeconfig
-	KubeconfigPath string `mapstructure:"kubeconfig"`
+	KubeconfigPath string
+	// Pretty print the output.
+	Pretty bool
 	// IssuerURL OIDC issuer url.
-	IssuerURL string `mapstructure:"issuer-url"`
+	IssuerURL string
 	// ClientID ID of the client OIDC app.
-	ClientID string `mapstructure:"client-id"`
+	ClientID string
+	// Scopes requested scopes.
+	Scopes string
 }
 
 // NewOIDC returns a new OIDC struct.
 func NewOIDC(c Config, l *zap.SugaredLogger) (*OIDC, error) {
-	kubeClient, err := kubernetes.New(c.KubeconfigPath, l)
+	cli := &OIDC{
+		config: c,
+		l:      l.With("component", "oidc"),
+	}
+
+	if c.Pretty {
+		cli.l = zap.NewNop().Sugar()
+	}
+
+	k, err := cliutils.NewKubeclient(cli.l, c.KubeconfigPath)
 	if err != nil {
 		return nil, err
 	}
+	cli.kubeClient = k
 
-	cli := &OIDC{
-		config:     c,
-		kubeClient: kubeClient,
-		l:          l,
-	}
 	return cli, nil
 }
 
@@ -63,6 +75,7 @@ func NewOIDC(c Config, l *zap.SugaredLogger) (*OIDC, error) {
 func (u *OIDC) Run(ctx context.Context) error {
 	issuerURL := u.config.IssuerURL
 	clientID := u.config.ClientID
+	scopes := strings.Split(u.config.Scopes, ",")
 
 	if issuerURL == "" {
 		if err := survey.AskOne(&survey.Input{
@@ -85,6 +98,12 @@ func (u *OIDC) Run(ctx context.Context) error {
 		return errors.New("clientID and/or issuerURL are not provided")
 	}
 
+	if !slices.ContainsFunc(scopes, func(s string) bool {
+		return s == "openid"
+	}) {
+		return errors.New("scopes must contain 'openid'")
+	}
+
 	// Check if we can connect to the provider.
 	_, err := getProviderConfig(ctx, issuerURL)
 	if err != nil {
@@ -98,6 +117,7 @@ func (u *OIDC) Run(ctx context.Context) error {
 	oidcCfg := common.OIDCConfig{
 		IssuerURL: issuerURL,
 		ClientID:  clientID,
+		Scopes:    scopes,
 	}
 
 	oidcRaw, err := oidcCfg.Raw()

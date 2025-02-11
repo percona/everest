@@ -106,7 +106,10 @@ const ScheduledBackupsList = () => {
             <Box sx={{ width: '40%' }}>
               <Stack>
                 <Typography variant="body1">{item.name}</Typography>
-                <Typography variant="body2">
+                <Typography
+                  data-testid={`schedule-${item?.schedule}-text`}
+                  variant="body2"
+                >
                   {getTimeSelectionPreviewMessage(
                     getFormValuesFromCronExpression(item.schedule)
                   )}

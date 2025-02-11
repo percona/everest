@@ -35,13 +35,13 @@ import {
   waitForDelete,
   findRowAndClickActions,
 } from '@e2e/utils/table';
-import { checkError } from '@e2e/utils/generic';
 import {
   deleteMonitoringInstance,
   listMonitoringInstances,
 } from '@e2e/utils/monitoring-instance';
 import { clickOnDemandBackup } from '@e2e/pr/db-cluster-details/utils';
 import { prepareTestDB, dropTestDB, queryTestDB } from '@e2e/utils/db-cmd-line';
+import { getDbClusterAPI } from '@e2e/utils/db-cluster';
 
 const {
   MONITORING_URL,
@@ -113,16 +113,19 @@ test.describe.configure({ retries: 0 });
       }) => {
         expect(storageClasses.length).toBeGreaterThan(0);
 
-        await page.goto('/databases/new');
-        await page.getByTestId('toggle-button-group-input-db-type').waitFor();
-        await page.getByTestId('select-input-db-version').waitFor();
+        await page.goto('/databases');
+        await page.getByTestId('add-db-cluster-button').waitFor();
+        await page.getByTestId('add-db-cluster-button').click();
+        await page.getByTestId(`add-db-cluster-button-${db}`).click();
 
         await test.step('Populate basic information', async () => {
           await populateBasicInformation(
             page,
+            namespace,
+            clusterName,
             db,
             storageClasses[0],
-            clusterName
+            false
           );
           await moveForward(page);
         });
@@ -178,25 +181,13 @@ test.describe.configure({ retries: 0 });
         });
 
         await test.step('Check db cluster k8s object options', async () => {
-          const response = await request.get(
-            `/v1/namespaces/${namespace}/database-clusters`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
+          const addedCluster = await getDbClusterAPI(
+            clusterName,
+            EVEREST_CI_NAMESPACES.EVEREST_UI,
+            request,
+            token
           );
 
-          await checkError(response);
-
-          // TODO: replace with correct payload typings from GET DB Clusters
-          const { items: clusters } = await response.json();
-
-          const addedCluster = clusters.find(
-            (cluster) => cluster.metadata.name === clusterName
-          );
-
-          expect(addedCluster).not.toBeUndefined();
           expect(addedCluster?.spec.engine.type).toBe(db);
           expect(addedCluster?.spec.engine.replicas).toBe(size);
           expect(['600m', '0.6']).toContain(
