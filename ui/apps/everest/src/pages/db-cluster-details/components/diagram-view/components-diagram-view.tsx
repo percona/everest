@@ -19,9 +19,13 @@ import {
 } from './utils';
 import { styled } from '@mui/material';
 
-const ReactFlowStyled = styled(ReactFlow<CustomNode, CustomEdge>)`
-  --xy-attribution-background-color: transparent;
-`;
+const ReactFlowStyled = styled(ReactFlow<CustomNode, CustomEdge>)(
+  ({ theme }) => ({
+    '--xy-attribution-background-color': 'transparent',
+    '--xy-controls-button-border-color': theme.palette.divider,
+    '--xy-controls-button-background-color': theme.palette.background.paper,
+  })
+);
 
 const ComponentsDiagramView = ({
   components,
