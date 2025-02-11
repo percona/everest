@@ -17,4 +17,5 @@ export type StatusFieldProps<T extends string | number | symbol> = {
   dataTestId?: string;
   iconProps?: StatusIconProps;
   stackProps?: StackProps;
+  defaultIcon?: React.ElementType;
 };
