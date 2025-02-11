@@ -110,7 +110,7 @@ export const backupScheduleFormValuesToDbClusterPayload = (
     scheduleName,
     retentionCopies,
   } = dbPayload;
-  const originalSchedule = getCronExpressionFromFormValues({
+  const schedule = getCronExpressionFromFormValues({
     selectedTime,
     minute,
     hour,
@@ -119,11 +119,6 @@ export const backupScheduleFormValuesToDbClusterPayload = (
     weekDay,
   });
 
-  const backupSchedule = cronConverter(
-    originalSchedule,
-    Intl.DateTimeFormat().resolvedOptions().timeZone,
-    'UTC'
-  );
   let schedulesPayload: Schedule[] = [];
   if (mode === 'new') {
     schedulesPayload = [
@@ -143,27 +138,18 @@ export const backupScheduleFormValuesToDbClusterPayload = (
           typeof dbPayload.storageLocation === 'string'
             ? dbPayload.storageLocation
             : dbPayload.storageLocation!.name,
-        schedule: backupSchedule,
+        schedule,
       },
     ];
   }
 
   if (mode === 'edit') {
-    const newSchedulesArray = (dbCluster?.spec?.backup?.schedules || []).map(
-      (schedule) => ({
-        ...schedule,
-        schedule: cronConverter(
-          schedule.schedule,
-          Intl.DateTimeFormat().resolvedOptions().timeZone,
-          'UTC'
-        ),
-      })
-    );
-    const editedScheduleIndex = newSchedulesArray?.findIndex(
+    const schedulesArray = dbCluster?.spec?.backup?.schedules || [];
+    const editedScheduleIndex = schedulesArray?.findIndex(
       (item) => item.name === scheduleName
     );
-    if (newSchedulesArray && editedScheduleIndex !== undefined) {
-      newSchedulesArray[editedScheduleIndex] = {
+    if (schedulesArray && editedScheduleIndex !== undefined) {
+      schedulesArray[editedScheduleIndex] = {
         enabled: true,
         name: scheduleName,
         retentionCopies: parseInt(retentionCopies, 10),
@@ -171,9 +157,9 @@ export const backupScheduleFormValuesToDbClusterPayload = (
           typeof dbPayload.storageLocation === 'string'
             ? dbPayload.storageLocation
             : dbPayload.storageLocation!.name,
-        schedule: backupSchedule,
+        schedule,
       };
-      schedulesPayload = newSchedulesArray;
+      schedulesPayload = schedulesArray;
     }
   }
 
