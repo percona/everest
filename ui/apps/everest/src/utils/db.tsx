@@ -12,7 +12,6 @@ import { can } from './rbac';
 import { getProxySpec } from 'hooks/api/db-cluster/utils';
 import { dbEngineToDbType } from '@percona/utils';
 import { MIN_NUMBER_OF_SHARDS } from 'components/cluster-form';
-import cronConverter from './cron-converter';
 
 export const dbTypeToIcon = (dbType: DbType) => {
   switch (dbType) {
@@ -254,14 +253,7 @@ export const deleteScheduleFromDbCluster = (
   const filteredSchedulesWithCronCorrection = schedules.reduce(
     (result: Schedule[], schedule) => {
       if (schedule?.name !== scheduleName) {
-        result.push({
-          ...schedule,
-          schedule: cronConverter(
-            schedule.schedule,
-            Intl.DateTimeFormat().resolvedOptions().timeZone,
-            'UTC'
-          ),
-        });
+        result.push(schedule);
       }
       return result;
     },

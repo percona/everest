@@ -16,7 +16,6 @@
 import { ScheduleFormData } from './schedule-form-schema';
 import { DbCluster, Schedule } from 'shared-types/dbCluster.types';
 import { getCronExpressionFromFormValues } from '../../time-selection/time-selection.utils';
-import cronConverter from 'utils/cron-converter';
 
 type UpdateScheduleArrayProps = {
   formData: ScheduleFormData;
@@ -124,11 +123,6 @@ export const backupScheduleFormValuesToDbClusterPayload = (
     schedulesPayload = [
       ...(dbCluster.spec.backup?.schedules || []).map((schedule) => ({
         ...schedule,
-        schedule: cronConverter(
-          schedule.schedule,
-          Intl.DateTimeFormat().resolvedOptions().timeZone,
-          'UTC'
-        ),
       })),
       {
         enabled: true,
