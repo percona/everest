@@ -24,6 +24,7 @@ import (
 	accountscli "github.com/percona/everest/pkg/accounts/cli"
 	"github.com/percona/everest/pkg/cli"
 	"github.com/percona/everest/pkg/logger"
+	"github.com/percona/everest/pkg/output"
 )
 
 var (
@@ -49,17 +50,34 @@ func accountsDeletePreRun(cmd *cobra.Command, _ []string) { //nolint:revive
 	// Copy global flags to config
 	accountsDeleteCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
 	accountsDeleteCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
+
+	// Check username
+	if accountsDeleteUsername != "" {
+		// Validate provided username to be deleted.
+		if err := accountscli.ValidateUsername(accountsDeleteUsername); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsDeleteCfg.Pretty)
+			os.Exit(1)
+		}
+	} else {
+		// Ask user in interactive mode to provide username to delete.
+		if username, err := accountscli.PopulateUsername(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsDeleteCfg.Pretty)
+			os.Exit(1)
+		} else {
+			accountsDeleteUsername = username
+		}
+	}
 }
 
 func accountsDeleteRun(cmd *cobra.Command, _ []string) { //nolint:revive
 	cliA, err := accountscli.NewAccounts(*accountsDeleteCfg, logger.GetLogger())
 	if err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), accountsDeleteCfg.Pretty)
 		os.Exit(1)
 	}
 
 	if err := cliA.Delete(cmd.Context(), accountsDeleteUsername); err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), accountsDeleteCfg.Pretty)
 		os.Exit(1)
 	}
 }

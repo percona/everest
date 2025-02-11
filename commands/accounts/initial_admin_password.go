@@ -25,6 +25,7 @@ import (
 	accountscli "github.com/percona/everest/pkg/accounts/cli"
 	"github.com/percona/everest/pkg/cli"
 	"github.com/percona/everest/pkg/logger"
+	"github.com/percona/everest/pkg/output"
 )
 
 var (
@@ -49,13 +50,13 @@ func accountsInitAdminPasswdPreRun(cmd *cobra.Command, _ []string) { //nolint:re
 func accountsInitAdminPasswdRun(cmd *cobra.Command, _ []string) { //nolint:revive
 	cliA, err := accountscli.NewAccounts(*accountsInitAdminPasswdCfg, logger.GetLogger())
 	if err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), accountsInitAdminPasswdCfg.Pretty)
 		os.Exit(1)
 	}
 
 	passwordHash, err := cliA.GetInitAdminPassword(cmd.Context())
 	if err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), accountsInitAdminPasswdCfg.Pretty)
 		os.Exit(1)
 	}
 

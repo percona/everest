@@ -71,7 +71,7 @@ func upgradePreRun(_ *cobra.Command, _ []string) { //nolint:revive
 func upgradeRun(cmd *cobra.Command, _ []string) { //nolint:revive
 	op, err := upgrade.NewUpgrade(upgradeCfg, logger.GetLogger())
 	if err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), upgradeCfg.Pretty)
 		os.Exit(1)
 	}
 
