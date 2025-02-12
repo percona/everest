@@ -124,7 +124,13 @@ export default defineConfig({
       },
       testDir: 'pr',
       testIgnore: ['pr/rbac/**/*'],
-      dependencies: ['setup', 'rbac', 'rbac-teardown'],
+      dependencies: [
+        'setup',
+        ...(process.env.IGNORE_RBAC_TESTS &&
+        process.env.IGNORE_RBAC_TESTS !== 'false'
+          ? []
+          : ['rbac', 'rbac-teardown']),
+      ],
     },
     {
       name: 'release',
