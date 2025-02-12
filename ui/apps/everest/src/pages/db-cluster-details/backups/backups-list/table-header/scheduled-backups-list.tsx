@@ -134,7 +134,6 @@ const ScheduledBackupsList = () => {
                 <>
                   <IconButton
                     color="primary"
-                    disabled={!dbCluster.spec.backup?.enabled}
                     onClick={() => handleEdit(item.name)}
                     data-testid="edit-schedule-button"
                   >
@@ -142,7 +141,6 @@ const ScheduledBackupsList = () => {
                   </IconButton>
                   <IconButton
                     color="primary"
-                    disabled={!dbCluster.spec.backup?.enabled}
                     onClick={() => handleDelete(item.name)}
                     data-testid="delete-schedule-button"
                   >
