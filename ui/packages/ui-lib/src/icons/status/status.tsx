@@ -458,7 +458,7 @@ export const SuccessIcon = (props: StatusIconProps) => (
   />
 );
 
-export const UknownIcon = (props: StatusIconProps) => (
+export const UnknownIcon = (props: StatusIconProps) => (
   <StatusIconProvider
     LightIconGeneral={UnknownIconLight}
     DarkIconGeneral={UnknownIconDark}

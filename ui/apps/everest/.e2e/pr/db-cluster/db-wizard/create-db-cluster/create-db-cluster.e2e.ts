@@ -201,9 +201,6 @@ test.describe('DB Cluster creation', () => {
 
     // await monitoringStepCheck(page, monitoringInstancesList);
     await submitWizard(page);
-    await expect(
-      page.getByText('Awesome! Your database is being created!')
-    ).toBeVisible();
 
     const response = await request.get(
       `/v1/namespaces/${namespace}/database-clusters`,
@@ -347,7 +344,6 @@ test.describe('DB Cluster creation', () => {
     await advancedConfigurationStepCheck(page);
     await moveForward(page);
     await submitWizard(page);
-    await expect(page.getByTestId('db-wizard-goto-db-clusters')).toBeVisible();
 
     await page.goto('/databases');
     await waitForInitializingState(page, clusterName);

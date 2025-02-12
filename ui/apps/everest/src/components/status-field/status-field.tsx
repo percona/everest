@@ -1,5 +1,5 @@
 import { Stack } from '@mui/material';
-import { UknownIcon } from '@percona/ui-lib';
+import { UnknownIcon } from '@percona/ui-lib';
 import { BaseStatus, StatusFieldProps } from './status-field.types';
 import { STATUS_TO_ICON } from './status-field.utils';
 
@@ -10,9 +10,10 @@ function StatusField<T extends string | number | symbol>({
   dataTestId,
   iconProps,
   stackProps,
+  defaultIcon = UnknownIcon,
 }: StatusFieldProps<T>) {
   const mappedStatus: BaseStatus = statusMap[status];
-  const MappedIcon = STATUS_TO_ICON[mappedStatus] || UknownIcon;
+  const MappedIcon = STATUS_TO_ICON[mappedStatus] || defaultIcon;
 
   return (
     <Stack

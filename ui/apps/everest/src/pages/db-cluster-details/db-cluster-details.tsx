@@ -68,11 +68,11 @@ const WithPermissionDetails = ({
           >
             <StatusField
               dataTestId={dbClusterName}
-              status={dbCluster?.status?.status || DbClusterStatus.unknown}
+              status={dbCluster?.status?.status || DbClusterStatus.creating}
               statusMap={DB_CLUSTER_STATUS_TO_BASE_STATUS}
             >
               {beautifyDbClusterStatus(
-                dbCluster?.status?.status || DbClusterStatus.unknown
+                dbCluster?.status?.status || DbClusterStatus.creating
               )}
             </StatusField>
             <DbActions isDetailView={true} dbCluster={dbCluster!} />

@@ -24,7 +24,7 @@ import {
   PausedIcon,
   PendingIcon,
   SuccessIcon,
-  UknownIcon,
+  UnknownIcon,
   WarningIcon,
 } from './status';
 import { Stack, Typography } from '@mui/material';
@@ -83,7 +83,7 @@ const icons = {
     WarningIcon,
     PendingIcon,
     SuccessIcon,
-    UknownIcon,
+    UnknownIcon,
     PausedIcon,
   ],
   other: [DatabaseIcon, NetworkNode],
