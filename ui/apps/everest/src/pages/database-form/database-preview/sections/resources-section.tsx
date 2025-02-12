@@ -1,7 +1,7 @@
 import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
 import { PreviewContentText } from '../preview-section';
 import { SectionProps } from './section.types';
-import { getProxyUnitNamesFromDbType } from 'components/cluster-form/resources/utils';
+import { getProxyUnitNamesFromDbType } from 'utils/db';
 
 export const ResourcesPreviewSection = ({
   dbType,
