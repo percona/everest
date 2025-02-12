@@ -12,7 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { enqueueSnackbar } from 'notistack';
 
 const BASE_URL = '/v1/';
@@ -29,13 +29,18 @@ export const addApiErrorInterceptor = () => {
   if (errorInterceptor === null) {
     errorInterceptor = api.interceptors.response.use(
       (response) => response,
-      (error) => {
+      (error: AxiosError<{ message: string }>) => {
         if (
           error.response &&
           error.response.status >= 400 &&
           error.response.status <= 500
         ) {
           let message = DEFAULT_ERROR_MESSAGE;
+          let notificationsDisabled = error.config?.disableNotifications;
+
+          if (typeof notificationsDisabled === 'function') {
+            notificationsDisabled = notificationsDisabled(error);
+          }
 
           if (error.response.status === 401) {
             localStorage.removeItem('everestToken');
@@ -43,7 +48,7 @@ export const addApiErrorInterceptor = () => {
             location.replace('/login');
           }
 
-          if (error.config?.disableNotifications !== true) {
+          if (!notificationsDisabled) {
             if (error.response.data && error.response.data.message) {
               if (
                 error.response.data.message.length > MAX_ERROR_MESSAGE_LENGTH
