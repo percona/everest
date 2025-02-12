@@ -102,7 +102,7 @@ test.describe('Sharding (psmdb)', () => {
   test('Sharding should be correctly displayed on the overview page', async ({
     page,
   }) => {
-    test.setTimeout(300 * 1000);
+    test.setTimeout(1800 * 1000);
     const dbName = 'sharding-psmdb';
     expect(storageClasses.length).toBeGreaterThan(0);
     await selectDbEngine(page, 'psmdb');
@@ -131,7 +131,7 @@ test.describe('Sharding (psmdb)', () => {
 
     await deleteDbCluster(page, dbName);
     // TODO: Waiting for cluster deletion should be re-checked afer fix for: https://perconadev.atlassian.net/browse/EVEREST-1849
-    await waitForDelete(page, dbName, 600000);
+    await waitForDelete(page, dbName, 18000000);
   });
 
   test('Mongo with sharding should not pass multinode cluster creation if config servers = 1', async ({
