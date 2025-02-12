@@ -196,7 +196,7 @@ export const BackupsDetails = ({
             ))
           ) : (
             <OverviewSectionText>
-              {Messages.fields.disabled}
+              {Messages.fields.noSchedules}
             </OverviewSectionText>
           )}
         </OverviewSection>
