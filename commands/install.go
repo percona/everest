@@ -17,6 +17,7 @@
 package commands
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -38,12 +39,14 @@ var (
 		//       ./everestctl install --namespaces=aaa, a
 		// it will return
 		//        Error: unknown command "a" for "everestctl install"
-		Args:    cobra.NoArgs,
-		Example: "everestctl install --namespaces dev,staging,prod --operator.mongodb=true --operator.postgresql=false --operator.xtradb-cluster=false --skip-wizard",
-		Long:    "Install Percona Everest using Helm",
-		Short:   "Install Percona Everest using Helm",
-		PreRun:  installPreRun,
-		Run:     installRun,
+		Args:  cobra.NoArgs,
+		Short: "Install Percona Everest using Helm",
+		Long:  "Install Percona Everest using Helm",
+		Example: fmt.Sprintf("everestctl install --%s dev,staging,prod --%s=true --%s=false --%s=false --%s",
+			cli.FlagNamespaces, cli.FlagOperatorMongoDB, cli.FlagOperatorPostgresql, cli.FlagOperatorMySQL, cli.FlagSkipWizard,
+		),
+		PreRun: installPreRun,
+		Run:    installRun,
 	}
 	installCfg      = install.NewInstallConfig()
 	namespacesToAdd string
@@ -76,6 +79,8 @@ func init() {
 	installCmd.Flags().BoolVar(&installCfg.NamespaceAddConfig.Operators.PSMDB, cli.FlagOperatorMongoDB, true, "Install MongoDB operator")
 	installCmd.Flags().BoolVar(&installCfg.NamespaceAddConfig.Operators.PG, cli.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
 	installCmd.Flags().BoolVar(&installCfg.NamespaceAddConfig.Operators.PXC, cli.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
+	_ = installCmd.Flags().MarkDeprecated(cli.FlagOperatorXtraDBCluster, fmt.Sprintf("please use --%s instead", cli.FlagOperatorMySQL))
+	installCmd.Flags().BoolVar(&installCfg.NamespaceAddConfig.Operators.PXC, cli.FlagOperatorMySQL, true, "Install MySQL operator")
 }
 
 func installPreRun(cmd *cobra.Command, _ []string) { //nolint:revive
@@ -129,6 +134,7 @@ func checkDBNamespaceParameters(cmd *cobra.Command) error {
 	askOperators := !(cmd.Flags().Lookup(cli.FlagOperatorMongoDB).Changed ||
 		cmd.Flags().Lookup(cli.FlagOperatorPostgresql).Changed ||
 		cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster).Changed ||
+		cmd.Flags().Lookup(cli.FlagOperatorMySQL).Changed ||
 		installCfg.NamespaceAddConfig.SkipWizard)
 
 	if askOperators {
