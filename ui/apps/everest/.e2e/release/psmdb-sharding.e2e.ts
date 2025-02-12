@@ -50,8 +50,6 @@ import {
 } from '@e2e/utils/db-cmd-line';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
 
-export let isShardingEnabled = false;
-
 const {
   MONITORING_URL,
   MONITORING_USER,

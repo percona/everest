@@ -82,6 +82,17 @@ export const getPGPassword = async (cluster: string, namespace: string) => {
   }
 };
 
+export const getPSMDBShardingStatus = async (cluster: string, namespace: string) => {
+  try {
+    const command = `kubectl get --namespace ${namespace} DatabaseClusters ${cluster} -ojsonpath='{.spec.sharding.enabled}'`;
+    const output = execSync(command).toString();
+    return output;
+  } catch (error) {
+    console.error(`Error executing command: ${error}`);
+    throw error;
+  }
+};
+
 export const queryMySQL = async (
   cluster: string,
   namespace: string,
@@ -112,7 +123,7 @@ export const queryPSMDB = async (
   const clientPod = await getDBClientPod('psmdb', 'db-client');
 
   // Enable replicaSet option if sharding is enabled
-  const isShardingEnabled = true;
+  const isShardingEnabled = await getPSMDBShardingStatus(cluster, namespace);
   const replicaSetOption = isShardingEnabled ? '' : '&replicaSet=rs0';
 
   try {
@@ -303,7 +314,6 @@ export const queryTestDB = async (
   return result;
 };
 
-let isShardingEnabled = false;
 export const prepareMongoDBTestDB = async (
   cluster: string,
   namespace: string
