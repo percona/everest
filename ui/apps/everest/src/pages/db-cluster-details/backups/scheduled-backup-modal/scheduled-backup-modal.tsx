@@ -13,18 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DB_CLUSTER_QUERY } from 'hooks/api/db-cluster/useDbCluster';
 import { useContext } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-
-import { useUpdateSchedules } from 'hooks/api/backups/useScheduledBackups';
 import { ScheduleModalContext } from '../backups.context.ts';
 import { ScheduleFormData } from 'components/schedule-form-dialog/schedule-form/schedule-form-schema';
 import { ScheduleFormDialogContext } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog.context';
 import { ScheduleFormDialog } from 'components/schedule-form-dialog';
+import { useUpdateDbClusterWithConflictRetry } from 'hooks';
+import { backupScheduleFormValuesToDbClusterPayload } from 'components/schedule-form-dialog/schedule-form/schedule-form.utils.ts';
 
 export const ScheduledBackupModal = () => {
-  const queryClient = useQueryClient();
   const {
     mode = 'new',
     setMode,
@@ -41,11 +38,10 @@ export const ScheduledBackupModal = () => {
     spec,
   } = dbCluster;
 
-  const { mutate: updateScheduledBackup, isPending } = useUpdateSchedules(
-    dbClusterName,
-    namespace,
-    mode
-  );
+  const { mutate: updateCluster, isPending: updatingCluster } =
+    useUpdateDbClusterWithConflictRetry(dbCluster, {
+      onSuccess: () => handleClose(),
+    });
 
   const schedules = (dbCluster && dbCluster?.spec?.backup?.schedules) || [];
 
@@ -56,14 +52,9 @@ export const ScheduledBackupModal = () => {
   };
 
   const handleSubmit = (data: ScheduleFormData) => {
-    updateScheduledBackup(data, {
-      onSuccess() {
-        queryClient.invalidateQueries({
-          queryKey: [DB_CLUSTER_QUERY, dbClusterName],
-        });
-        handleClose();
-      },
-    });
+    updateCluster(
+      backupScheduleFormValuesToDbClusterPayload(data, dbCluster, mode)
+    );
   };
 
   return (
@@ -72,7 +63,7 @@ export const ScheduledBackupModal = () => {
         mode,
         handleSubmit,
         handleClose,
-        isPending,
+        isPending: updatingCluster,
         setMode,
         selectedScheduleName,
         setSelectedScheduleName,
