@@ -131,6 +131,8 @@ export interface StatusSpec {
 }
 
 export interface DbClusterMetadata {
+  generation?: number;
+  resourceVersion?: string;
   name: string;
   namespace: string;
   annotations?: {
