@@ -21,10 +21,11 @@ import OverviewSectionRow from '../../../overview-section-row';
 import { useContext, useMemo, useState } from 'react';
 import { UpgradeDbVersionModal } from './upgrade-db-version-modal/upgrade-db-version-modal';
 import { useDbVersionsList } from 'components/cluster-form/db-version/useDbVersions';
-import { useUpdateDbClusterVersion } from 'hooks/api/db-cluster/useUpdateDbCluster';
+import { useUpdateDbClusterWithConflictRetry } from 'hooks/api/db-cluster/useUpdateDbCluster';
 import { DbClusterContext } from '../../../../dbCluster.context';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { useEffect } from 'react';
+import { changeDbClusterVersion } from 'utils/db';
 
 export const BasicInformationSection = ({
   loading,
@@ -39,25 +40,18 @@ export const BasicInformationSection = ({
   };
   const { dbCluster, canUpdateDb } = useContext(DbClusterContext);
 
-  const { mutate: updateDbClusterVersion } = useUpdateDbClusterVersion();
+  const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
+    dbCluster!,
+    {
+      onError: () => setUpgrading(false),
+    }
+  );
 
   const [upgrading, setUpgrading] = useState(false);
 
   const handleSubmit = async (dbVersion: string) => {
     setUpgrading(true);
-    updateDbClusterVersion(
-      {
-        clusterName: dbCluster!.metadata?.name,
-        namespace: dbCluster!.metadata?.namespace,
-        dbCluster: dbCluster!,
-        dbVersion,
-      },
-      {
-        onError: () => {
-          setUpgrading(false);
-        },
-      }
-    );
+    updateCluster(changeDbClusterVersion(dbCluster!, dbVersion));
   };
 
   useEffect(() => {
