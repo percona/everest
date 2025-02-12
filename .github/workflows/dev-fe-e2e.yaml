@@ -243,3 +243,4 @@ jobs:
           name: playwright-report
           path: ui/apps/everest/.e2e/playwright-report/
           overwrite: true
+
