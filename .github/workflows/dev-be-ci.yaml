@@ -245,6 +245,14 @@ jobs:
             ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
             ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
 
+      # Switch docker data directory to /mnt to have more space for the local Kubernetes cluster
+      - name: Switch docker-daemon data directory to /mnt
+        run: |
+          sudo systemctl stop docker
+          echo '{ "exec-opts": ["native.cgroupdriver=cgroupfs"], "cgroup-parent": "/actions_job", "data-root": "/mnt/docker-data" }' | sudo tee /etc/docker/daemon.json
+          sudo mkdir /mnt/docker-data
+          sudo systemctl start docker
+
       - name: Start local Kubernetes cluster with the local registry
         uses: medyagh/setup-minikube@latest
         id: minikube
@@ -261,6 +269,11 @@ jobs:
       - name: Build Everest API Server
         run: |
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build-debug
+
+      - name: Build Everest CLI
+        shell: bash
+        run: |
+          make build-cli
 
       - name: Build Everest docker container
         uses: docker/metadata-action@v5
@@ -319,8 +332,8 @@ jobs:
       - name: Provision Everest using CLI
         shell: bash
         run: |
-          make build-cli
           ./bin/everestctl install -v \
+            --disable-telemetry \
             --version 0.0.0 \
             --version-metadata-url https://check-dev.percona.com \
             --operator.mongodb \
@@ -346,10 +359,14 @@ jobs:
           kubectl patch configmap everest-rbac -n everest-system --patch "$(kubectl get configmap everest-rbac -n everest-system -o json | jq '.data["policy.csv"] += "\ng, everest_ci, role:admin"' | jq '{data: { "policy.csv": .data["policy.csv"] } }')"
           kubectl get configmap everest-rbac -n everest-system -ojsonpath='{.data.policy\.csv}'
 
-      - name: Run integration tests
+      - name: Init integration tests
         run: |
           cd api-tests
           make init
+
+      - name: Run integration tests
+        run: |
+          cd api-tests
           make test
 
       - name: Run debug commands on failure
@@ -359,9 +376,6 @@ jobs:
           kubectl -n everest-monitoring describe pods
           kubectl -n everest describe pods
           kubectl -n everest-system logs deploy/everest-server
-
-
-
 
   integration_tests_cli:
     name: CLI Integration Tests
@@ -415,12 +429,12 @@ jobs:
           make init
           make build-cli
       - name: Create KIND cluster
-        uses: helm/kind-action@v1.10.0
+        uses: helm/kind-action@v1.12.0
 
       - name: Run integration tests
-        working-directory: cli-tests
         id: cli-tests
         run: |
+          cd cli-tests
           make init
           make install-operators
           make test-cli

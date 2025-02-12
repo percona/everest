@@ -17,10 +17,17 @@
 package cli
 
 const (
+	// global flags
+
 	// FlagKubeconfig is the name of the kubeconfig flag.
 	FlagKubeconfig = "kubeconfig"
 	// FlagVerbose is the name of the verbose flag.
 	FlagVerbose = "verbose"
+	// FlagJSON is the name of the json flag.
+	FlagJSON = "json"
+
+	// `install` flags
+
 	// FlagOperatorPostgresql represents the pg operator flag.
 	FlagOperatorPostgresql = "operator.postgresql"
 	// FlagOperatorXtraDBCluster represents the pxc operator flag.
@@ -39,8 +46,42 @@ const (
 	FlagSkipEnvDetection = "skip-env-detection"
 	// FlagDisableTelemetry disables telemetry.
 	FlagDisableTelemetry = "disable-telemetry"
-	// FlagTakeNamespaceOwnership is the name of the take-ownership flag.
-	FlagTakeNamespaceOwnership = "take-ownership"
 	// FlagInstallSkipDBNamespace is the name of the skip-db-namespace flag.
 	FlagInstallSkipDBNamespace = "skip-db-namespace"
+
+	// `namespaces` flags
+
+	// FlagTakeNamespaceOwnership is the name of the take-ownership flag.
+	FlagTakeNamespaceOwnership = "take-ownership"
+	// FlagKeepNamespace is the name of the keep-namespace flag.
+	FlagKeepNamespace = "keep-namespace"
+	// FlagNamespaceForce is the name of the force flag.
+	FlagNamespaceForce = "force"
+
+	// `upgrade` flags
+
+	// FlagUpgradeDryRun is the name of the dry-run flag.
+	FlagUpgradeDryRun = "dry-run"
+	// FlagUpgradeInCluster is the name of the in-cluster flag.
+	FlagUpgradeInCluster = "in-cluster"
+
+	// `accounts` flags
+
+	// FlagAccountsUsername is the name of the username flag.
+	FlagAccountsUsername = "username"
+	// FlagAccountsCreatePassword is the name of the password flag.
+	FlagAccountsCreatePassword = "password"
+	// FlagAccountsNewPassword is the name of the new-password flag.
+	FlagAccountsNewPassword = "new-password"
+
+	// settings flags
+
+	// FlagOIDCIssuerURL is the name of the issuer-url flag.
+	FlagOIDCIssuerURL = "issuer-url"
+	// FlagOIDCClientID is the name of the client-id flag.
+	FlagOIDCClientID = "client-id"
+	// FlagOIDCScopes is the name of the scope flag.
+	FlagOIDCScopes = "scopes"
+	// FlagRBACPolicyFile is the name of the policy-file flag.
+	FlagRBACPolicyFile = "policy-file"
 )

@@ -16,7 +16,10 @@
 import { Box, Stack } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import StatusField from 'components/status-field';
-import { useNamespaces } from 'hooks/api/namespaces/useNamespaces';
+import {
+  useDBEnginesForNamespaces,
+  useNamespaces,
+} from 'hooks/api/namespaces/useNamespaces';
 import { type MRT_ColumnDef } from 'material-react-table';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -39,15 +42,21 @@ import { EmptyStateDatabases } from 'pages/common/empty-state/databases';
 import { EmptyStateNamespaces } from 'pages/common/empty-state/namespaces';
 
 export const DbClusterView = () => {
-  const { data: namespaces = [], isLoading: loadingNamespaces } =
-    useNamespaces();
+  const { data: namespaces = [], isLoading: loadingNamespaces } = useNamespaces(
+    {
+      refetchInterval: 10 * 1000,
+    }
+  );
 
   const navigate = useNavigate();
+  const { results: dbEngines } = useDBEnginesForNamespaces();
+  const hasAvailableDbEngines = dbEngines.some(
+    (obj) => (obj?.data || []).length > 0
+  );
 
   const { canCreate } = useNamespacePermissionsForResource('database-clusters');
-  const { canRead } = useNamespacePermissionsForResource('database-engines');
 
-  const canAddCluster = canCreate.length > 0 && canRead.length > 0;
+  const canAddCluster = canCreate.length > 0 && hasAvailableDbEngines;
   const dbClustersResults = useDBClustersForNamespaces(
     namespaces.map((ns) => ({
       namespace: ns,
@@ -152,7 +161,10 @@ export const DbClusterView = () => {
           tableName="dbClusterView"
           emptyState={
             namespaces.length > 0 ? (
-              <EmptyStateDatabases showCreationButton={canAddCluster} />
+              <EmptyStateDatabases
+                showCreationButton={canAddCluster}
+                hasCreatePermission={canAddCluster}
+              />
             ) : (
               <EmptyStateNamespaces />
             )

@@ -44,7 +44,8 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 						},
 					},
 				},
-			}, nil)
+			}, nil,
+			)
 			return &h
 		}
 
@@ -198,7 +199,7 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 				},
 			},
 		}
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -257,7 +258,7 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 			return &h
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -313,7 +314,7 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 			return &h
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -349,7 +350,8 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 					{Name: pointer.ToString(common.PGOperatorName)},
 					{Name: pointer.ToString(common.PSMDBOperatorName)},
 				},
-			}, nil)
+			}, nil,
+			)
 			return &h
 		}
 
@@ -448,7 +450,7 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -484,7 +486,8 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 					{Name: pointer.ToString(common.PGOperatorName)},
 					{Name: pointer.ToString(common.PSMDBOperatorName)},
 				},
-			}, nil)
+			}, nil,
+			)
 			h.On("ApproveUpgradePlan", mock.Anything, "default").Return(nil)
 			return &h
 		}
@@ -567,7 +570,7 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()

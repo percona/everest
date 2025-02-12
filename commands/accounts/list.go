@@ -17,66 +17,61 @@
 package accounts
 
 import (
-	"context"
-	"errors"
-	"net/url"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 
 	accountscli "github.com/percona/everest/pkg/accounts/cli"
-	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/cli"
+	"github.com/percona/everest/pkg/logger"
+	"github.com/percona/everest/pkg/output"
 )
 
-// NewListCmd returns a new list command.
-func NewListCmd(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "list",
-		Example: "everestctl accounts list",
+var (
+	accountsListCmd = &cobra.Command{
+		Use:     "list [flags]",
+		Args:    cobra.NoArgs,
+		Example: "everestctl accounts list --no-headers",
 		Long:    "List all Everest user accounts",
 		Short:   "List all Everest user accounts",
-		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
-			initListViperFlags(cmd)
-			o := &accountscli.ListOptions{}
-			err := viper.Unmarshal(o)
-			if err != nil {
-				os.Exit(1)
-			}
-			kubeconfigPath := viper.GetString("kubeconfig")
-
-			k, err := kubernetes.New(kubeconfigPath, l)
-			if err != nil {
-				var u *url.Error
-				if errors.As(err, &u) {
-					l.Error("Could not connect to Kubernetes. " +
-						"Make sure Kubernetes is running and is accessible from this computer/server.")
-				}
-				os.Exit(0)
-			}
-
-			cli := accountscli.New(l)
-			cli.WithAccountManager(k.Accounts())
-
-			if err := cli.List(context.Background(), o); err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
-		},
+		PreRun:  accountsListPreRun,
+		Run:     accountsListRun,
 	}
-	initListFlags(cmd)
-	return cmd
+	accountsListCfg  = &accountscli.Config{}
+	accountsListOpts = &accountscli.ListOptions{}
+)
+
+func init() {
+	// local command flags
+	accountsListCmd.Flags().BoolVar(&accountsListOpts.NoHeaders, "no-headers", false, "If set, hide table headers")
+	accountsListCmd.Flags().StringSliceVar(&accountsListOpts.Columns, "columns", nil,
+		fmt.Sprintf("Comma-separated list of column names to display. Supported columns: %s, %s, %s.",
+			accountscli.ColumnUser, accountscli.ColumnCapabilities, accountscli.ColumnEnabled,
+		),
+	)
 }
 
-func initListFlags(cmd *cobra.Command) {
-	cmd.Flags().Bool("no-headers", false, "If set, hide table headers")
-	cmd.Flags().StringSlice("columns", nil, "Comma-separated list of column names to display")
+func accountsListPreRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	// Copy global flags to config
+	accountsListCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
+	accountsListCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
 }
 
-func initListViperFlags(cmd *cobra.Command) {
-	viper.BindEnv("kubeconfig")                                     //nolint:errcheck,gosec
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
-	viper.BindPFlag("no-headers", cmd.Flags().Lookup("no-headers")) //nolint:errcheck,gosec
-	viper.BindPFlag("columns", cmd.Flags().Lookup("columns"))       //nolint:errcheck,gosec
+func accountsListRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	cliA, err := accountscli.NewAccounts(*accountsListCfg, logger.GetLogger())
+	if err != nil {
+		output.PrintError(err, logger.GetLogger(), accountsListCfg.Pretty)
+		os.Exit(1)
+	}
+
+	if err := cliA.List(cmd.Context(), *accountsListOpts); err != nil {
+		output.PrintError(err, logger.GetLogger(), accountsListCfg.Pretty)
+		os.Exit(1)
+	}
+}
+
+// GetListCmd returns the command to list all user accounts.
+func GetListCmd() *cobra.Command {
+	return accountsListCmd
 }

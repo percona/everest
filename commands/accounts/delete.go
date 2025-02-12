@@ -17,61 +17,72 @@
 package accounts
 
 import (
-	"context"
-	"errors"
-	"net/url"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 
 	accountscli "github.com/percona/everest/pkg/accounts/cli"
-	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/cli"
+	"github.com/percona/everest/pkg/logger"
+	"github.com/percona/everest/pkg/output"
 )
 
-// NewDeleteCmd returns a new delete command.
-func NewDeleteCmd(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "delete",
+var (
+	accountsDeleteCmd = &cobra.Command{
+		Use:     "delete [flags]",
+		Args:    cobra.NoArgs,
 		Example: "everestctl accounts delete --username user1",
 		Short:   "Delete an existing Everest user account",
 		Long:    "Delete an existing Everest user account",
-		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
-			initDeleteViperFlags(cmd)
-
-			kubeconfigPath := viper.GetString("kubeconfig")
-			username := viper.GetString("username")
-
-			k, err := kubernetes.New(kubeconfigPath, l)
-			if err != nil {
-				var u *url.Error
-				if errors.As(err, &u) {
-					l.Error("Could not connect to Kubernetes. " +
-						"Make sure Kubernetes is running and is accessible from this computer/server.")
-				}
-				os.Exit(0)
-			}
-
-			cli := accountscli.New(l)
-			cli.WithAccountManager(k.Accounts())
-
-			if err := cli.Delete(context.Background(), username); err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
-		},
+		PreRun:  accountsDeletePreRun,
+		Run:     accountsDeleteRun,
 	}
-	initDeleteFlags(cmd)
-	return cmd
+	accountsDeleteCfg      = &accountscli.Config{}
+	accountsDeleteUsername string
+)
+
+func init() {
+	// local command flags
+	accountsDeleteCmd.Flags().StringVarP(&accountsDeleteUsername, cli.FlagAccountsUsername, "u", "", "Username of the account")
 }
 
-func initDeleteFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("username", "u", "", "Username of the account")
+func accountsDeletePreRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	// Copy global flags to config
+	accountsDeleteCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
+	accountsDeleteCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
+
+	// Check username
+	if accountsDeleteUsername != "" {
+		// Validate provided username to be deleted.
+		if err := accountscli.ValidateUsername(accountsDeleteUsername); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsDeleteCfg.Pretty)
+			os.Exit(1)
+		}
+	} else {
+		// Ask user in interactive mode to provide username to delete.
+		if username, err := accountscli.PopulateUsername(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsDeleteCfg.Pretty)
+			os.Exit(1)
+		} else {
+			accountsDeleteUsername = username
+		}
+	}
 }
 
-func initDeleteViperFlags(cmd *cobra.Command) {
-	viper.BindPFlag("username", cmd.Flags().Lookup("username"))     //nolint:errcheck,gosec
-	viper.BindEnv("kubeconfig")                                     //nolint:errcheck,gosec
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
+func accountsDeleteRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	cliA, err := accountscli.NewAccounts(*accountsDeleteCfg, logger.GetLogger())
+	if err != nil {
+		output.PrintError(err, logger.GetLogger(), accountsDeleteCfg.Pretty)
+		os.Exit(1)
+	}
+
+	if err := cliA.Delete(cmd.Context(), accountsDeleteUsername); err != nil {
+		output.PrintError(err, logger.GetLogger(), accountsDeleteCfg.Pretty)
+		os.Exit(1)
+	}
+}
+
+// GetDeleteCmd returns the command to delete account.
+func GetDeleteCmd() *cobra.Command {
+	return accountsDeleteCmd
 }

@@ -19,64 +19,91 @@
 package accounts
 
 import (
-	"context"
-	"errors"
-	"net/url"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 
 	accountscli "github.com/percona/everest/pkg/accounts/cli"
-	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/cli"
+	"github.com/percona/everest/pkg/logger"
+	"github.com/percona/everest/pkg/output"
 )
 
-// NewCreateCmd returns a new create command.
-func NewCreateCmd(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "create",
+var (
+	accountsCreateCmd = &cobra.Command{
+		Use:     "create [flags]",
+		Args:    cobra.NoArgs,
 		Example: "everestctl accounts create --username user1 --password $USER_PASS",
 		Short:   "Create a new Everest user account",
 		Long:    "Create a new Everest user account",
-		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
-			initCreateViperFlags(cmd)
-
-			kubeconfigPath := viper.GetString("kubeconfig")
-			username := viper.GetString("username")
-			password := viper.GetString("password")
-
-			k, err := kubernetes.New(kubeconfigPath, l)
-			if err != nil {
-				var u *url.Error
-				if errors.As(err, &u) {
-					l.Error("Could not connect to Kubernetes. " +
-						"Make sure Kubernetes is running and is accessible from this computer/server.")
-				}
-				os.Exit(0)
-			}
-
-			cli := accountscli.New(l)
-			cli.WithAccountManager(k.Accounts())
-
-			if err := cli.Create(context.Background(), username, password); err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
-		},
+		PreRun:  accountsCreatePreRun,
+		Run:     accountsCreateRun,
 	}
-	initCreateFlags(cmd)
-	return cmd
+
+	accountsCreateCfg  = &accountscli.Config{}
+	accountsCreateOpts = &accountscli.CreateOptions{}
+)
+
+func init() {
+	// local command flags
+	accountsCreateCmd.Flags().StringVarP(&accountsCreateOpts.Username, cli.FlagAccountsUsername, "u", "", "Username of the account")
+	accountsCreateCmd.Flags().StringVarP(&accountsCreateOpts.Password, cli.FlagAccountsCreatePassword, "p", "", "Password of the account")
 }
 
-func initCreateFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("username", "u", "", "Username of the account")
-	cmd.Flags().StringP("password", "p", "", "Password of the account")
+func accountsCreatePreRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	// Copy global flags to config
+	accountsCreateCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
+	accountsCreateCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
+
+	// Check username
+	if accountsCreateOpts.Username != "" {
+		// Validate provided username for new account.
+		if err := accountscli.ValidateUsername(accountsCreateOpts.Username); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsCreateCfg.Pretty)
+			os.Exit(1)
+		}
+	} else {
+		// Ask user in interactive mode to provide username for new account.
+		if username, err := accountscli.PopulateUsername(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsCreateCfg.Pretty)
+			os.Exit(1)
+		} else {
+			accountsCreateOpts.Username = username
+		}
+	}
+
+	// Check password
+	if accountsCreateOpts.Password != "" {
+		// Validate provided password for new account.
+		if err := accountscli.ValidatePassword(accountsCreateOpts.Password); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsCreateCfg.Pretty)
+			os.Exit(1)
+		}
+	} else {
+		// Ask user in interactive mode to provide password for new account.
+		if password, err := accountscli.PopulatePassword(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsCreateCfg.Pretty)
+			os.Exit(1)
+		} else {
+			accountsCreateOpts.Password = password
+		}
+	}
 }
 
-func initCreateViperFlags(cmd *cobra.Command) {
-	viper.BindPFlag("username", cmd.Flags().Lookup("username"))     //nolint:errcheck,gosec
-	viper.BindPFlag("password", cmd.Flags().Lookup("password"))     //nolint:errcheck,gosec
-	viper.BindEnv("kubeconfig")                                     //nolint:errcheck,gosec
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
+func accountsCreateRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	cliA, err := accountscli.NewAccounts(*accountsCreateCfg, logger.GetLogger())
+	if err != nil {
+		output.PrintError(err, logger.GetLogger(), accountsCreateCfg.Pretty)
+		os.Exit(1)
+	}
+
+	if err := cliA.Create(cmd.Context(), *accountsCreateOpts); err != nil {
+		output.PrintError(err, logger.GetLogger(), accountsCreateCfg.Pretty)
+		os.Exit(1)
+	}
+}
+
+// GetCreateCmd returns the command to create a new user account.
+func GetCreateCmd() *cobra.Command {
+	return accountsCreateCmd
 }

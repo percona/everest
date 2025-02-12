@@ -1,67 +1,108 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // Package accounts holds commands for accounts command.
 //
 //nolint:dupl
 package accounts
 
 import (
-	"context"
-	"errors"
-	"net/url"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 
 	accountscli "github.com/percona/everest/pkg/accounts/cli"
-	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/cli"
+	"github.com/percona/everest/pkg/logger"
+	"github.com/percona/everest/pkg/output"
 )
 
-// NewSetPwCommand returns a new set-password command.
-func NewSetPwCommand(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "set-password",
+var (
+	accountsSetPasswordCmd = &cobra.Command{
+		Use:     "set-password [flags]",
+		Args:    cobra.NoArgs,
 		Example: "everestctl accounts set-password --username user1 --new-password $USER_PASS",
 		Long:    "Set a new password for an existing Everest user account",
 		Short:   "Set a new password for an existing Everest user account",
-		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
-			initSetPwViperFlags(cmd)
-
-			kubeconfigPath := viper.GetString("kubeconfig")
-			username := viper.GetString("username")
-			password := viper.GetString("new-password")
-
-			k, err := kubernetes.New(kubeconfigPath, l)
-			if err != nil {
-				var u *url.Error
-				if errors.As(err, &u) {
-					l.Error("Could not connect to Kubernetes. " +
-						"Make sure Kubernetes is running and is accessible from this computer/server.")
-				}
-				os.Exit(0)
-			}
-
-			cli := accountscli.New(l)
-			cli.WithAccountManager(k.Accounts())
-
-			if err := cli.SetPassword(context.Background(), username, password); err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
-		},
+		PreRun:  accountsSetPasswordPreRun,
+		Run:     accountsSetPasswordRun,
 	}
-	initSetPwFlags(cmd)
-	return cmd
+	accountsSetPasswordCfg  = &accountscli.Config{}
+	accountsSetPasswordOpts = &accountscli.SetPasswordOptions{}
+)
+
+func init() {
+	// local command flags
+	accountsSetPasswordCmd.Flags().StringVarP(&accountsSetPasswordOpts.Username, cli.FlagAccountsUsername, "u", "", "Username of the account")
+	accountsSetPasswordCmd.Flags().StringVarP(&accountsSetPasswordOpts.NewPassword, cli.FlagAccountsNewPassword, "p", "", "New password for the account")
 }
 
-func initSetPwFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("username", "u", "", "Username of the account")
-	cmd.Flags().StringP("new-password", "p", "", "New password for the account")
+func accountsSetPasswordPreRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	// Copy global flags to config
+	accountsSetPasswordCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
+	accountsSetPasswordCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
+
+	// Check username
+	if accountsSetPasswordOpts.Username != "" {
+		// Validate provided username for whom password shall be changed.
+		if err := accountscli.ValidateUsername(accountsSetPasswordOpts.Username); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsSetPasswordCfg.Pretty)
+			os.Exit(1)
+		}
+	} else {
+		// Ask user in interactive mode to provide username for whom password shall be changed.
+		if username, err := accountscli.PopulateUsername(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsSetPasswordCfg.Pretty)
+			os.Exit(1)
+		} else {
+			accountsSetPasswordOpts.Username = username
+		}
+	}
+
+	// Check password
+	if accountsSetPasswordOpts.NewPassword != "" {
+		// Validate provided a new password.
+		if err := accountscli.ValidatePassword(accountsSetPasswordOpts.NewPassword); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsSetPasswordCfg.Pretty)
+			os.Exit(1)
+		}
+	} else {
+		// Ask user in interactive mode to provide a new password.
+		if password, err := accountscli.PopulateNewPassword(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), accountsSetPasswordCfg.Pretty)
+			os.Exit(1)
+		} else {
+			accountsSetPasswordOpts.NewPassword = password
+		}
+	}
 }
 
-func initSetPwViperFlags(cmd *cobra.Command) {
-	viper.BindPFlag("username", cmd.Flags().Lookup("username"))         //nolint:errcheck,gosec
-	viper.BindPFlag("new-password", cmd.Flags().Lookup("new-password")) //nolint:errcheck,gosec
-	viper.BindEnv("kubeconfig")                                         //nolint:errcheck,gosec
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig"))     //nolint:errcheck,gosec
+func accountsSetPasswordRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	cliA, err := accountscli.NewAccounts(*accountsSetPasswordCfg, logger.GetLogger())
+	if err != nil {
+		output.PrintError(err, logger.GetLogger(), accountsSetPasswordCfg.Pretty)
+		os.Exit(1)
+	}
+
+	if err := cliA.SetPassword(cmd.Context(), *accountsSetPasswordOpts); err != nil {
+		output.PrintError(err, logger.GetLogger(), accountsSetPasswordCfg.Pretty)
+		os.Exit(1)
+	}
+}
+
+// GetSetPasswordCmd returns the command to set password for an account.
+func GetSetPasswordCmd() *cobra.Command {
+	return accountsSetPasswordCmd
 }

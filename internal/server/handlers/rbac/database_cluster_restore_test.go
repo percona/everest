@@ -42,7 +42,8 @@ func TestRBAC_DatabaseClusterRestore(t *testing.T) {
 						},
 					},
 				},
-			}, nil)
+			}, nil,
+			)
 			return h
 		}
 
@@ -91,7 +92,7 @@ func TestRBAC_DatabaseClusterRestore(t *testing.T) {
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -127,7 +128,8 @@ func TestRBAC_DatabaseClusterRestore(t *testing.T) {
 				Spec: everestv1alpha1.DatabaseClusterRestoreSpec{
 					DBClusterName: "cluster1",
 				},
-			}, nil)
+			}, nil,
+			)
 			return h
 		}
 
@@ -156,7 +158,7 @@ func TestRBAC_DatabaseClusterRestore(t *testing.T) {
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -248,7 +250,7 @@ func TestRBAC_DatabaseClusterRestore(t *testing.T) {
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -359,7 +361,7 @@ func TestRBAC_DatabaseClusterRestore(t *testing.T) {
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()
@@ -400,7 +402,8 @@ func TestRBAC_DatabaseClusterRestore(t *testing.T) {
 				Spec: everestv1alpha1.DatabaseClusterRestoreSpec{
 					DBClusterName: "cluster1",
 				},
-			}, nil)
+			}, nil,
+			)
 			h.On("DeleteDatabaseClusterRestore", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			return h
 		}
@@ -430,7 +433,7 @@ func TestRBAC_DatabaseClusterRestore(t *testing.T) {
 			},
 		}
 
-		ctx := context.WithValue(context.Background(), common.UserCtxKey, "bob")
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				t.Parallel()

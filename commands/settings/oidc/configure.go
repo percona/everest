@@ -13,66 +13,101 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package oidc ...
+// Package oidc provides OIDC settings CLI commands.
 package oidc
 
 import (
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 
+	"github.com/percona/everest/pkg/cli"
+	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/logger"
 	"github.com/percona/everest/pkg/oidc"
 	"github.com/percona/everest/pkg/output"
 )
 
-// NewConfigureCommand returns the command to configure OIDC.
-func NewConfigureCommand(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "configure",
-		Long:  "Configure OIDC settings",
-		Short: "Configure OIDC settings",
-		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
-			initOIDCViperFlags(cmd)
-			c, err := parseOIDCConfig()
-			if err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
+var (
+	settingsOIDCConfigureCmd = &cobra.Command{
+		Use:     "configure [flags]",
+		Args:    cobra.NoArgs,
+		Long:    "Configure OIDC settings",
+		Short:   "Configure OIDC settings",
+		Example: `everestctl settings oidc configure --issuer-url https://example.com --client-id 123456 --scopes openid,profile,email,groups`,
+		PreRun:  settingsOIDCConfigurePreRun,
+		Run:     settingsOIDCConfigureRun,
+	}
+	settingsOIDCConfigureCfg = &oidc.Config{}
+	scopes                   string
+)
 
-			op, err := oidc.NewOIDC(*c, l)
-			if err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
+func init() {
+	// local command flags
+	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.IssuerURL, cli.FlagOIDCIssuerURL, "", "OIDC issuer url")
+	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.ClientID, cli.FlagOIDCClientID, "", "OIDC application client ID")
+	settingsOIDCConfigureCmd.Flags().StringVar(&scopes, cli.FlagOIDCScopes, strings.Join(common.DefaultOIDCScopes, ","), "Comma-separated list of scopes")
+}
 
-			if err := op.Run(cmd.Context()); err != nil {
-				output.PrintError(err, l, false)
-				os.Exit(1)
-			}
-		},
+func settingsOIDCConfigurePreRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	// Copy global flags to config
+	settingsOIDCConfigureCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
+	settingsOIDCConfigureCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
+
+	// Check if issuer URL is provided
+	if settingsOIDCConfigureCfg.IssuerURL == "" {
+		// Ask user to provide issuer URL in interactive mode
+		if err := settingsOIDCConfigureCfg.PopulateIssuerURL(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+			os.Exit(1)
+		}
+	} else {
+		// Validate issuer URL provided by user in flags
+		if err := oidc.ValidateURL(settingsOIDCConfigureCfg.IssuerURL); err != nil {
+			output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+			os.Exit(1)
+		}
 	}
 
-	initOIDCFlags(cmd)
+	// Check if Client ID is provided
+	if settingsOIDCConfigureCfg.ClientID == "" {
+		// Ask user to provide client ID in interactive mode
+		if err := settingsOIDCConfigureCfg.PopulateClientID(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+			os.Exit(1)
+		}
+	} else {
+		// Validate client ID provided by user in flags
+		if err := oidc.ValidateClientID(settingsOIDCConfigureCfg.ClientID); err != nil {
+			output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+			os.Exit(1)
+		}
+	}
 
-	return cmd
+	// Validate scopes (default or provided by user in flags)
+	scopesList := strings.Split(scopes, ",")
+	if err := oidc.ValidateScopes(scopesList); err != nil {
+		output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+		os.Exit(1)
+	}
+	settingsOIDCConfigureCfg.Scopes = scopesList
 }
 
-func initOIDCFlags(cmd *cobra.Command) {
-	cmd.Flags().String("issuer-url", "", "OIDC issuer url")
-	cmd.Flags().String("client-id", "", "ID of the client OIDC app")
+func settingsOIDCConfigureRun(cmd *cobra.Command, _ []string) {
+	op, err := oidc.NewOIDC(*settingsOIDCConfigureCfg, logger.GetLogger())
+	if err != nil {
+		output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+		os.Exit(1)
+	}
+
+	if err := op.Run(cmd.Context()); err != nil {
+		output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+		os.Exit(1)
+	}
 }
 
-func initOIDCViperFlags(cmd *cobra.Command) {
-	viper.BindEnv("kubeconfig")                                     //nolint:errcheck,gosec
-	viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
-	viper.BindPFlag("issuer-url", cmd.Flags().Lookup("issuer-url")) //nolint:errcheck,gosec
-	viper.BindPFlag("client-id", cmd.Flags().Lookup("client-id"))   //nolint:errcheck,gosec
-}
-
-func parseOIDCConfig() (*oidc.Config, error) {
-	c := &oidc.Config{}
-	err := viper.Unmarshal(c)
-	return c, err
+// GetSettingsOIDCConfigureCmd returns the command to configure OIDC settings.
+func GetSettingsOIDCConfigureCmd() *cobra.Command {
+	return settingsOIDCConfigureCmd
 }

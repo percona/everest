@@ -28,12 +28,13 @@ const App = () => {
   useEffect(() => {
     const loadConfigs = async () => {
       try {
-        const { oidcConfig = { clientId: '', issuerURL: '' } } =
+        const { oidcConfig = { clientId: '', issuerURL: '', scopes: [] } } =
           await getEverestConfigs();
         setConfigs({
           oidc: {
             authority: oidcConfig.issuerURL,
             clientId: oidcConfig.clientId,
+            scope: oidcConfig.scopes.join(' '),
             redirectUri: `${window.location.protocol}//${window.location.host}/`,
           },
         });
@@ -72,7 +73,6 @@ const App = () => {
               oidcConfig={{
                 ...configs?.oidc,
                 redirectUri: `${window.location.protocol}//${window.location.host}/login-callback`,
-                scope: 'openid profile email',
                 responseType: 'code',
                 autoSignIn: false,
                 automaticSilentRenew: false,

@@ -26,7 +26,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/spf13/viper"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -40,69 +39,70 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-var settings = helmcli.New() //nolint:gochecknoglobals
-
-// CLIOptions contains common options for the CLI.
-type CLIOptions struct {
-	ChartDir             string
-	RepoURL              string
-	Values               values.Options
-	Devel                bool
-	ReuseValues          bool
-	ResetValues          bool
-	ResetThenReuseValues bool
-}
-
-// BindViperFlags parses the CLI flags from Viper and binds them to the CLI options.
-func (o *CLIOptions) BindViperFlags() {
-	o.Values.Values = viper.GetStringSlice(FlagHelmSet)
-	o.Values.ValueFiles = viper.GetStringSlice(FlagHelmValues)
-	o.ChartDir = viper.GetString(FlagChartDir)
-	o.RepoURL = viper.GetString(FlagRepository)
-	o.RepoURL = viper.GetString(FlagRepository)
-	o.ReuseValues = viper.GetBool(FlagHelmReuseValues)
-	o.ResetValues = viper.GetBool(FlagHelmResetValues)
-	o.ResetThenReuseValues = viper.GetBool(FlagHelmResetThenReuseValues)
-}
-
 // Everest Helm chart names.
 const (
-	EverestChartName            = "everest"
+	// DefaultHelmRepoURL is the default Helm repository URL to download the Everest charts.
+	DefaultHelmRepoURL = "https://percona.github.io/percona-helm-charts/"
+	// EverestChartName is the name of the Everest Helm chart that installs the Everest operator.
+	EverestChartName = "everest"
+	// EverestDBNamespaceChartName is the name of the Everest Helm chart that is installed
+	// into DB namespaces managed by Everest.
 	EverestDBNamespaceChartName = "everest-db-namespace"
 )
 
-// DefaultHelmRepoURL is the default Helm repository URL to download the Everest charts.
-const DefaultHelmRepoURL = "https://percona.github.io/percona-helm-charts/"
+var settings = helmcli.New() //nolint:gochecknoglobals
 
-// Installer installs a Helm chart.
-type Installer struct {
-	ReleaseName            string
-	ReleaseNamespace       string
-	Values                 map[string]interface{}
-	CreateReleaseNamespace bool
+// CLIOptions contains common options for the CLI.
+type (
+	CLIOptions struct {
+		// ChartDir path to the local directory with the Helm chart to be installed.
+		ChartDir string
+		// RepoURL URL of the Helm repository to download the chart from.
+		RepoURL string
+		// Values Helm values to be used during installation.
+		Values values.Options
+		// Devel indicates whether to use development versions of Helm charts, if available.
+		Devel bool
+		// ReuseValues indicates whether to reuse the last release's values during release upgrade.
+		ReuseValues bool
+		// ResetValues indicates whether to reset the last release's values during release upgrade.
+		ResetValues bool
+		// ResetThenReuseValues indicates whether to reset the last release's values then reuse them during release upgrade.
+		ResetThenReuseValues bool
+	}
 
-	// internal fields, set only after Init() is called.
-	chart *chart.Chart
-	cfg   *action.Configuration
+	// Installer installs a Helm chart.
+	Installer struct {
+		// ReleaseName is the name of the Helm release.
+		ReleaseName string
+		// ReleaseNamespace is the namespace where the Helm release will be installed.
+		ReleaseNamespace string
+		// Values are the Helm values to be used during installation.
+		Values map[string]interface{}
+		// CreateReleaseNamespace indicates whether to create the release namespace.
+		CreateReleaseNamespace bool
+		// internal fields, set only after Init() is called.
+		chart *chart.Chart
+		cfg   *action.Configuration
+		// This is set only after Install/Upgrade is called.
+		release *release.Release
+	}
 
-	// This is set only after Install/Upgrade is called.
-	release *release.Release
-}
-
-// ChartOptions provide the options for loading a Helm chart.
-type ChartOptions struct {
-	// Directory to load the Helm chart from.
-	// If set, ignores URL.
-	Directory string
-	// URL of the repository to pull the chart from.
-	URL string
-	// Version of the helm chart to install.
-	// If loading from a directory, needs to match the chart version.
-	Version string
-	// Name of the Helm chart to install.
-	// Required only if pulling from the specified URL.
-	Name string
-}
+	// ChartOptions provide the options for loading a Helm chart.
+	ChartOptions struct {
+		// Directory to load the Helm chart from.
+		// If set, ignores URL.
+		Directory string
+		// URL of the repository to pull the chart from.
+		URL string
+		// Version of the helm chart to install.
+		// If loading from a directory, needs to match the chart version.
+		Version string
+		// Name of the Helm chart to install.
+		// Required only if pulling from the specified URL.
+		Name string
+	}
+)
 
 // Init initializes the Installer with the specified options.
 func (i *Installer) Init(kubeconfigPath string, o ChartOptions) error {

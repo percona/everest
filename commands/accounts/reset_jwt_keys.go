@@ -1,50 +1,65 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // Package accounts holds commands for accounts command.
 package accounts
 
 import (
-	"context"
-	"errors"
-	"net/url"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 
-	"github.com/percona/everest/pkg/kubernetes"
+	accountscli "github.com/percona/everest/pkg/accounts/cli"
+	"github.com/percona/everest/pkg/cli"
+	"github.com/percona/everest/pkg/logger"
+	"github.com/percona/everest/pkg/output"
 )
 
-// NewResetJWTKeysCommand returns a new reset-jwt-keys command.
-func NewResetJWTKeysCommand(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "reset-jwt-keys",
+var (
+	accountsResetJWTKeysCmd = &cobra.Command{
+		Use:     "reset-jwt-keys [flags]",
+		Args:    cobra.NoArgs,
 		Example: "everestctl accounts reset-jwt-keys",
 		Long:    "Reset the JWT keys used for Everest user authentication",
 		Short:   "Reset the JWT keys used for Everest user authentication",
-		Run: func(cmd *cobra.Command, args []string) { //nolint:revive
-			viper.BindEnv("kubeconfig")                                     //nolint:errcheck,gosec
-			viper.BindPFlag("kubeconfig", cmd.Flags().Lookup("kubeconfig")) //nolint:errcheck,gosec
-			kubeconfigPath := viper.GetString("kubeconfig")
-
-			k, err := kubernetes.New(kubeconfigPath, l)
-			if err != nil {
-				var u *url.Error
-				if errors.As(err, &u) {
-					l.Error("Could not connect to Kubernetes. " +
-						"Make sure Kubernetes is running and is accessible from this computer/server.")
-				}
-				os.Exit(1)
-			}
-
-			ctx := context.Background()
-			l.Info("Creating/Updating JWT keys and restarting Everest..")
-			if err := k.CreateRSAKeyPair(ctx); err != nil {
-				l.Error(err)
-				os.Exit(1)
-			}
-
-			l.Info("JWT keys created/updated successfully!")
-		},
+		PreRun:  accountsResetJWTKeysPreRun,
+		Run:     accountsResetJWTKeysRun,
 	}
-	return cmd
+	accountsResetJWTKeysCfg = &accountscli.Config{}
+)
+
+func accountsResetJWTKeysPreRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	// Copy global flags to config
+	accountsResetJWTKeysCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
+	accountsResetJWTKeysCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
+}
+
+func accountsResetJWTKeysRun(cmd *cobra.Command, _ []string) { //nolint:revive
+	cliA, err := accountscli.NewAccounts(*accountsResetJWTKeysCfg, logger.GetLogger())
+	if err != nil {
+		output.PrintError(err, logger.GetLogger(), accountsResetJWTKeysCfg.Pretty)
+		os.Exit(1)
+	}
+
+	if err := cliA.CreateRSAKeyPair(cmd.Context()); err != nil {
+		output.PrintError(err, logger.GetLogger(), accountsResetJWTKeysCfg.Pretty)
+		os.Exit(1)
+	}
+}
+
+// GetResetJWTKeysCmd returns the command to reset the JWT keys used for Everest user authentication.
+func GetResetJWTKeysCmd() *cobra.Command {
+	return accountsResetJWTKeysCmd
 }

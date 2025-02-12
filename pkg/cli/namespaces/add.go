@@ -1,3 +1,18 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // Package namespaces provides the functionality to manage namespaces.
 package namespaces
 
@@ -5,21 +20,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
-	"regexp"
-	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
-	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
 	"helm.sh/helm/v3/pkg/cli/values"
-	v1 "k8s.io/api/core/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/percona/everest/pkg/cli/helm"
 	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
 	"github.com/percona/everest/pkg/cli/steps"
+	"github.com/percona/everest/pkg/cli/tui"
 	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
@@ -28,28 +37,241 @@ import (
 	"github.com/percona/everest/pkg/version"
 )
 
-//nolint:gochecknoglobals
-var (
-	// ErrNSEmpty appears when the provided list of the namespaces is considered empty.
-	ErrNSEmpty = errors.New("namespace list is empty. Specify at least one namespace")
-	// ErrNSReserved appears when some of the provided names are forbidden to use.
-	ErrNSReserved = func(ns string) error {
-		return fmt.Errorf("'%s' namespace is reserved for Everest internals. Please specify another namespace", ns)
+type (
+	// OperatorConfig identifies which operators shall be installed.
+	OperatorConfig struct {
+		PG    bool // is set if PostgresSQL shall be installed.
+		PSMDB bool // is set if MongoDB shall be installed.
+		PXC   bool // is set if XtraDB Cluster shall be installed.
 	}
-	// ErrNameNotRFC1035Compatible appears when some of the provided names are not RFC1035 compatible.
-	ErrNameNotRFC1035Compatible = func(fieldName string) error {
-		return fmt.Errorf(`'%s' is not RFC 1035 compatible. The name should contain only lowercase alphanumeric characters or '-', start with an alphabetic character, end with an alphanumeric character`,
-			fieldName,
-		)
-	}
-	// ErrNoOperatorsSelected appears when no operators are selected for installation.
-	ErrNoOperatorsSelected = errors.New("no operators selected for installation. Minimum one operator must be selected")
 
-	errCannotRemoveOperators = errors.New("cannot remove operators")
+	// NamespaceAddConfig is the configuration for adding namespaces.
+	NamespaceAddConfig struct {
+		// NamespaceList is a list of namespaces to be managed by Everest and install operators.
+		// The property shall be set in case the namespaces are parsed and validated using ValidateNamespaces func.
+		// Otherwise, use Populate function to asked user to provide the namespaces in interactive mode.
+		NamespaceList []string
+		// SkipWizard is set if the wizard should be skipped.
+		SkipWizard bool
+		// KubeconfigPath is the path to the kubeconfig file.
+		KubeconfigPath string
+		// DisableTelemetry is set if telemetry should be disabled.
+		DisableTelemetry bool
+		// TakeOwnership make an existing namespace managed by Everest.
+		TakeOwnership bool
+		// ClusterType is the type of the Kubernetes environment.
+		// If it is not set, the environment will be detected.
+		ClusterType kubernetes.ClusterType
+		// SkipEnvDetection skips detecting the Kubernetes environment.
+		// If it is set, the environment will not be detected.
+		// Set ClusterType if the environment is known and set this flag to avoid detection duplication.
+		SkipEnvDetection bool
+		// AskOperators is set in case it is needed to use interactive mode and
+		// ask user to provide DB operators to be installed into namespaces managed by Everest.
+		// AskOperators bool
+		// Operators configurations for the operators to be installed into namespaces managed by Everest.
+		Operators OperatorConfig
+		// Pretty if set print the output in pretty mode.
+		Pretty bool
+		// Update is set if the existing namespace needs to be updated.
+		// This flag is set internally only, so that the add functionality may
+		// be re-used for updating the namespace as well.
+		Update bool
+		// Helm related options
+		HelmConfig helm.CLIOptions
+	}
+
+	// NamespaceAdder provides the functionality to add namespaces.
+	NamespaceAdder struct {
+		l          *zap.SugaredLogger
+		cfg        NamespaceAddConfig
+		kubeClient *kubernetes.Kubernetes
+	}
 )
+
+// --- NamespaceAddConfig functions
+
+// NewNamespaceAddConfig returns a new NamespaceAddConfig.
+func NewNamespaceAddConfig() NamespaceAddConfig {
+	return NamespaceAddConfig{
+		ClusterType: kubernetes.ClusterTypeUnknown,
+		Pretty:      true,
+	}
+}
+
+// PopulateNamespaces function to fill the configuration with the required NamespaceList.
+// This function shall be called only in cases when there is no other way to obtain values for NamespaceList.
+// User will be asked to provide the namespaces in interactive mode (if it is enabled).
+// Provided by user namespaces will be parsed, validated and stored in the NamespaceList property.
+// Note: in case NamespaceList is not empty - it will be overwritten by user's input.
+func (cfg *NamespaceAddConfig) PopulateNamespaces(ctx context.Context) error {
+	if cfg.SkipWizard {
+		return errors.Join(fmt.Errorf("can't ask user for namespaces to install"), ErrInteractiveModeDisabled)
+	}
+
+	var err error
+	var ns string
+	// Ask user to provide namespaces in interactive mode.
+	if ns, err = tui.NewInput(ctx,
+		"Provide database namespaces to be managed by Everest",
+		tui.WithInputDefaultValue(common.DefaultDBNamespaceName),
+		tui.WithInputHint("Namespaces can be provided in comma-separated form: ns-1,ns-2"),
+	).Run(); err != nil {
+		return err
+	}
+
+	nsList := ParseNamespaceNames(ns)
+	if err = cfg.ValidateNamespaces(ctx, nsList); err != nil {
+		return err
+	}
+
+	cfg.NamespaceList = nsList
+	return nil
+}
+
+// PopulateOperators function to fill the configuration with the required Operators.
+// This function shall be called only in cases when there is no other way to obtain values for Operators.
+// User will be asked to provide the operators in interactive mode (if it is enabled).
+// Provided by user operators will be stored in the Operators property.
+// Note: Operators property will be overwritten by user's input.
+func (cfg *NamespaceAddConfig) PopulateOperators(ctx context.Context) error {
+	if cfg.SkipWizard {
+		return fmt.Errorf("can't ask user for operators to install: %w", ErrInteractiveModeDisabled)
+	}
+
+	// By default, all operators are selected.
+	defaultOpts := []tui.MultiSelectOption{
+		{common.PXCProductName, true},
+		{common.PSMDBProductName, true},
+		{common.PGProductName, true},
+	}
+
+	var selectedOpts []tui.MultiSelectOption
+	var err error
+	if selectedOpts, err = tui.NewMultiSelect(
+		ctx,
+		"Which operators do you want to install?",
+		defaultOpts,
+	).Run(); err != nil {
+		return err
+	}
+
+	// Copy user's choice to config.
+	for _, op := range selectedOpts {
+		switch op.Text {
+		case common.PXCProductName:
+			cfg.Operators.PXC = op.Selected
+		case common.PSMDBProductName:
+			cfg.Operators.PSMDB = op.Selected
+		case common.PGProductName:
+			cfg.Operators.PG = op.Selected
+		}
+	}
+
+	if !(cfg.Operators.PXC || cfg.Operators.PG || cfg.Operators.PSMDB) {
+		// need to select at least one operator to install
+		return ErrOperatorsNotSelected
+	}
+
+	return nil
+}
+
+// ValidateNamespaces validates the provided list of namespaces.
+// It validates:
+// - namespace names
+// - namespace ownership
+func (cfg *NamespaceAddConfig) ValidateNamespaces(ctx context.Context, nsList []string) error {
+	if err := validateNamespaceNames(nsList); err != nil {
+		return err
+	}
+
+	k, err := cliutils.NewKubeclient(zap.NewNop().Sugar(), cfg.KubeconfigPath)
+	if err != nil {
+		return err
+	}
+
+	for _, ns := range nsList {
+		if err := cfg.validateNamespaceOwnership(ctx, k, ns); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// validateNamespaceOwnership validates the namespace existence and ownership.
+func (cfg *NamespaceAddConfig) validateNamespaceOwnership(
+	ctx context.Context,
+	k kubernetes.KubernetesConnector,
+	namespace string,
+) error {
+	nsExists, ownedByEverest, err := namespaceExists(ctx, k, namespace)
+	if err != nil {
+		return err
+	}
+
+	if cfg.Update {
+		if !ownedByEverest {
+			return NewErrNamespaceNotManagedByEverest(namespace)
+		}
+
+		if !nsExists {
+			return NewErrNamespaceNotExist(namespace)
+		}
+
+		return nil
+	}
+
+	if nsExists && ownedByEverest {
+		return NewErrNamespaceAlreadyManagedByEverest(namespace)
+	}
+
+	if nsExists && !cfg.TakeOwnership {
+		return NewErrNamespaceAlreadyExists(namespace)
+	}
+
+	return nil
+}
+
+// detectKubernetesEnv detects the Kubernetes environment where Everest is installed.
+func (cfg *NamespaceAddConfig) detectKubernetesEnv(ctx context.Context, l *zap.SugaredLogger) error {
+	if cfg.SkipEnvDetection {
+		return nil
+	}
+
+	client, err := cliutils.NewKubeclient(l, cfg.KubeconfigPath)
+	if err != nil {
+		return fmt.Errorf("failed to create kubernetes client: %w", err)
+	}
+
+	t, err := client.GetClusterType(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to detect cluster type: %w", err)
+	}
+
+	cfg.ClusterType = t
+	// Skip detecting Kubernetes environment in the future.
+	cfg.SkipEnvDetection = true
+	l.Infof("Detected Kubernetes environment: %s", t)
+	return nil
+}
+
+// --- NewNamespaceAdd functions
 
 // NewNamespaceAdd returns a new CLI operation to add namespaces.
 func NewNamespaceAdd(c NamespaceAddConfig, l *zap.SugaredLogger) (*NamespaceAdder, error) {
+	{
+		// validate the provided configuration
+		if len(c.NamespaceList) == 0 {
+			// need to provide at least one namespace to install
+			return nil, ErrNamespaceListEmpty
+		}
+
+		if !(c.Operators.PXC || c.Operators.PG || c.Operators.PSMDB) {
+			// need to select at least one operator to install
+			return nil, ErrOperatorsNotSelected
+		}
+	}
+
 	n := &NamespaceAdder{
 		cfg: c,
 		l:   l.With("component", "namespace-adder"),
@@ -63,197 +285,93 @@ func NewNamespaceAdd(c NamespaceAddConfig, l *zap.SugaredLogger) (*NamespaceAdde
 		return nil, err
 	}
 	n.kubeClient = k
-	n.clusterType = c.ClusterType
-	n.skipEnvDetection = c.SkipEnvDetection
 	return n, nil
-}
-
-// NamespaceAddConfig is the configuration for adding namespaces.
-type NamespaceAddConfig struct {
-	// Namespaces to install.
-	Namespaces string `mapstructure:"namespaces"`
-	// SkipWizard is set if the wizard should be skipped.
-	SkipWizard bool `mapstructure:"skip-wizard"`
-	// KubeconfigPath is the path to the kubeconfig file.
-	KubeconfigPath string `mapstructure:"kubeconfig"`
-	// DisableTelemetry is set if telemetry should be disabled.
-	DisableTelemetry bool `mapstructure:"disable-telemetry"`
-	// TakeOwnership of an existing namespace.
-	TakeOwnership bool `mapstructure:"take-ownership"`
-	// SkipEnvDetection skips detecting the Kubernetes environment.
-	SkipEnvDetection bool `mapstructure:"skip-env-detection"`
-
-	Operator OperatorConfig
-
-	// Pretty print the output.
-	Pretty bool
-
-	// Update is set if the existing namespace needs to be updated.
-	// This flag is set internally only, so that the add functionality may
-	// be re-used for updating the namespace as well.
-	Update bool
-	// NamespaceList is a list of namespaces to install.
-	// This is populated internally after validating the Namespaces field.:
-	NamespaceList []string
-
-	ClusterType kubernetes.ClusterType
-	helm.CLIOptions
-}
-
-// OperatorConfig identifies which operators shall be installed.
-type OperatorConfig struct {
-	// PG stores if PostgresSQL shall be installed.
-	PG bool `mapstructure:"postgresql"`
-	// PSMDB stores if MongoDB shall be installed.
-	PSMDB bool `mapstructure:"mongodb"`
-	// PXC stores if XtraDB Cluster shall be installed.
-	PXC bool `mapstructure:"xtradb-cluster"`
-}
-
-// NamespaceAdder provides the functionality to add namespaces.
-type NamespaceAdder struct {
-	l                *zap.SugaredLogger
-	cfg              NamespaceAddConfig
-	kubeClient       *kubernetes.Kubernetes
-	clusterType      kubernetes.ClusterType
-	skipEnvDetection bool
 }
 
 // Run namespace add operation.
 func (n *NamespaceAdder) Run(ctx context.Context) error {
-	// This command expects a Helm based installation (< 1.4.0)
-	ver, err := cliutils.CheckHelmInstallation(ctx, n.kubeClient)
+	// This command expects a Helm based installation (>= 1.4.0)
+	dbNSChartVersion, err := cliutils.CheckHelmInstallation(ctx, n.kubeClient)
 	if err != nil {
 		return err
 	}
 
-	if !n.skipEnvDetection {
-		if err := n.setKubernetesEnv(ctx); err != nil {
-			return err
-		}
-	}
-
-	installSteps := []steps.Step{}
-	if version.IsDev(ver) && n.cfg.ChartDir == "" {
-		cleanup, err := helmutils.SetupEverestDevChart(n.l, &n.cfg.ChartDir)
+	if version.IsDev(dbNSChartVersion) && n.cfg.HelmConfig.ChartDir == "" {
+		// Note: new value will be set to n.cfg.ChartDir inside SetupEverestDevChart
+		cleanup, err := helmutils.SetupEverestDevChart(n.l, &n.cfg.HelmConfig.ChartDir)
 		if err != nil {
 			return err
 		}
 		defer cleanup()
 	}
 
-	// validate operators for each namespace.
-	for _, namespace := range n.cfg.NamespaceList {
-		err := n.validateNamespace(ctx, namespace)
-		if errors.Is(err, errCannotRemoveOperators) {
-			msg := "Removal of an installed operator is not supported. Proceeding without removal."
-			fmt.Fprint(os.Stdout, output.Warn(msg)) //nolint:govet
-			n.l.Warn(msg)
-			break
-		} else if err != nil {
-			return fmt.Errorf("namespace validation error: %w", err)
-		}
+	if err := n.cfg.detectKubernetesEnv(ctx, n.l); err != nil {
+		return fmt.Errorf("failed to detect Kubernetes environment: %w", err)
 	}
 
-	for _, namespace := range n.cfg.NamespaceList {
-		installSteps = append(installSteps,
-			n.newStepInstallNamespace(ver, namespace),
-		)
+	installSteps, err := n.GetNamespaceInstallSteps(ctx, dbNSChartVersion)
+	if err != nil {
+		return err
 	}
 
-	var out io.Writer = os.Stdout
-	if !n.cfg.Pretty {
-		out = io.Discard
-	}
-
-	if err := steps.RunStepsWithSpinner(ctx, installSteps, out); err != nil {
+	if err := steps.RunStepsWithSpinner(ctx, n.l, installSteps, n.cfg.Pretty); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (n *NamespaceAdder) setKubernetesEnv(ctx context.Context) error {
-	if n.skipEnvDetection {
-		return nil
+// GetNamespaceInstallSteps returns the steps to install namespaces.
+func (n *NamespaceAdder) GetNamespaceInstallSteps(ctx context.Context, dbNSChartVersion string) ([]steps.Step, error) {
+	if n.cfg.Update {
+		// validate operators updated list for each namespace.
+		for _, namespace := range n.cfg.NamespaceList {
+			err := n.validateNamespaceUpdate(ctx, namespace)
+			if errors.Is(err, ErrCannotRemoveOperators) {
+				msg := "Removal of an installed operator is not supported. Proceeding without removal."
+				_, _ = fmt.Fprint(os.Stdout, output.Warn(msg)) //nolint:govet
+				n.l.Warn(msg)
+				break
+			} else if err != nil {
+				return nil, fmt.Errorf("namespace validation error: %w", err)
+			}
+		}
 	}
-	t, err := n.kubeClient.GetClusterType(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to detect cluster type: %w", err)
+
+	var installSteps []steps.Step
+	for _, namespace := range n.cfg.NamespaceList {
+		installSteps = append(installSteps,
+			n.newStepInstallNamespace(dbNSChartVersion, namespace),
+		)
 	}
-	n.clusterType = t
-	n.l.Infof("Detected Kubernetes environment: %s", t)
-	return nil
+
+	return installSteps, nil
 }
 
 func (n *NamespaceAdder) getValues() values.Options {
-	v := []string{}
+	var v []string
 	v = append(v, "cleanupOnUninstall=false") // uninstall command will do the clean-up on its own.
-	v = append(v, fmt.Sprintf("pxc=%t", n.cfg.Operator.PXC))
-	v = append(v, fmt.Sprintf("postgresql=%t", n.cfg.Operator.PG))
-	v = append(v, fmt.Sprintf("psmdb=%t", n.cfg.Operator.PSMDB))
+	v = append(v, fmt.Sprintf("pxc=%t", n.cfg.Operators.PXC))
+	v = append(v, fmt.Sprintf("postgresql=%t", n.cfg.Operators.PG))
+	v = append(v, fmt.Sprintf("psmdb=%t", n.cfg.Operators.PSMDB))
 	v = append(v, fmt.Sprintf("telemetry=%t", !n.cfg.DisableTelemetry))
 
-	if n.clusterType == kubernetes.ClusterTypeOpenShift {
+	if n.cfg.ClusterType == kubernetes.ClusterTypeOpenShift {
 		v = append(v, "compatibility.openshift=true")
 	}
 	return values.Options{Values: v}
 }
 
 func (n *NamespaceAdder) newStepInstallNamespace(version, namespace string) steps.Step {
-	action := "Installing"
+	action := "Provisioning"
 	if n.cfg.Update {
 		action = "Updating"
 	}
 	return steps.Step{
-		Desc: fmt.Sprintf("%s namespace '%s'", action, namespace),
+		Desc: fmt.Sprintf("%s database namespace '%s'", action, namespace),
 		F: func(ctx context.Context) error {
 			return n.provisionDBNamespace(ctx, version, namespace)
 		},
 	}
-}
-
-var (
-	// ErrNsDoesNotExist appears when the namespace does not exist.
-	ErrNsDoesNotExist = errors.New("namespace does not exist")
-	// ErrNamespaceNotManagedByEverest appears when the namespace is not managed by Everest.
-	ErrNamespaceNotManagedByEverest = errors.New("namespace is not managed by Everest")
-	// ErrNamespaceAlreadyExists appears when the namespace already exists.
-	ErrNamespaceAlreadyExists = errors.New("namespace already exists")
-	// ErrNamespaceAlreadyOwned appears when the namespace is already owned by Everest.
-	ErrNamespaceAlreadyOwned = errors.New("namespace already exists and is managed by Everest")
-)
-
-func (cfg *NamespaceAddConfig) validateNamespaceOwnership(
-	ctx context.Context,
-	namespace string,
-) error {
-	k, err := cliutils.NewKubeclient(zap.NewNop().Sugar(), cfg.KubeconfigPath)
-	if err != nil {
-		return err
-	}
-
-	nsExists, ownedByEverest, err := namespaceExists(ctx, namespace, k)
-	if err != nil {
-		return err
-	}
-
-	if cfg.Update {
-		if !nsExists {
-			return ErrNsDoesNotExist
-		}
-		if !ownedByEverest {
-			return ErrNamespaceNotManagedByEverest
-		}
-		return nil
-	}
-	if nsExists && !cfg.TakeOwnership {
-		return ErrNamespaceAlreadyExists
-	}
-	if nsExists && ownedByEverest {
-		return ErrNamespaceAlreadyOwned
-	}
-
-	return nil
 }
 
 func (n *NamespaceAdder) provisionDBNamespace(
@@ -261,7 +379,7 @@ func (n *NamespaceAdder) provisionDBNamespace(
 	version string,
 	namespace string,
 ) error {
-	nsExists, _, err := namespaceExists(ctx, namespace, n.kubeClient)
+	nsExists, _, err := namespaceExists(ctx, n.kubeClient, namespace)
 	if err != nil {
 		return err
 	}
@@ -273,181 +391,15 @@ func (n *NamespaceAdder) provisionDBNamespace(
 		CreateReleaseNamespace: !nsExists,
 	}
 	if err := installer.Init(n.cfg.KubeconfigPath, helm.ChartOptions{
-		Directory: cliutils.DBNamespaceSubChartPath(n.cfg.ChartDir),
-		URL:       n.cfg.RepoURL,
+		Directory: cliutils.DBNamespaceSubChartPath(n.cfg.HelmConfig.ChartDir),
+		URL:       n.cfg.HelmConfig.RepoURL,
 		Name:      helm.EverestDBNamespaceChartName,
 		Version:   version,
 	}); err != nil {
 		return fmt.Errorf("could not initialize Helm installer: %w", err)
 	}
-	n.l.Infof("Installing DB namespace Helm chart in namespace ", namespace)
+	n.l.Info("Installing DB namespace Helm chart in namespace ", namespace)
 	return installer.Install(ctx)
-}
-
-// Returns: [exists, managedByEverest, error].
-func namespaceExists(
-	ctx context.Context,
-	namespace string,
-	k kubernetes.KubernetesConnector,
-) (bool, bool, error) {
-	ns, err := k.GetNamespace(ctx, namespace)
-	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return false, false, nil
-		}
-		return false, false, fmt.Errorf("cannot check if namesapce exists: %w", err)
-	}
-	return true, isManagedByEverest(ns), nil
-}
-
-func isManagedByEverest(ns *v1.Namespace) bool {
-	val, ok := ns.GetLabels()[common.KubernetesManagedByLabel]
-	return ok && val == common.Everest
-}
-
-// Populate the configuration with the required values.
-func (cfg *NamespaceAddConfig) Populate(ctx context.Context, askNamespaces, askOperators bool) error {
-	if err := cfg.populateNamespaces(askNamespaces); err != nil {
-		return err
-	}
-
-	for _, ns := range cfg.NamespaceList {
-		if err := cfg.validateNamespaceOwnership(ctx, ns); err != nil {
-			return fmt.Errorf("invalid namespace (%s): %w", ns, err)
-		}
-	}
-
-	if askOperators && len(cfg.NamespaceList) > 0 && !cfg.SkipWizard {
-		if err := cfg.populateOperators(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (cfg *NamespaceAddConfig) populateNamespaces(wizard bool) error {
-	namespaces := cfg.Namespaces
-	// no namespaces provided, ask the user
-	if wizard && !cfg.SkipWizard {
-		pNamespace := &survey.Input{
-			Message: "Namespaces managed by Everest [comma separated]",
-			Default: cfg.Namespaces,
-		}
-		if err := survey.AskOne(pNamespace, &namespaces); err != nil {
-			return err
-		}
-	}
-
-	list, err := ValidateNamespaces(namespaces)
-	if err != nil {
-		return err
-	}
-	cfg.NamespaceList = list
-	return nil
-}
-
-func (cfg *NamespaceAddConfig) populateOperators() error {
-	operatorOpts := []struct {
-		label    string
-		boolFlag *bool
-	}{
-		{"MySQL", &cfg.Operator.PXC},
-		{"MongoDB", &cfg.Operator.PSMDB},
-		{"PostgreSQL", &cfg.Operator.PG},
-	}
-	operatorLabels := make([]string, 0, len(operatorOpts))
-	for _, v := range operatorOpts {
-		operatorLabels = append(operatorLabels, v.label)
-	}
-	operatorDefaults := make([]string, 0, len(operatorOpts))
-	for _, v := range operatorOpts {
-		if *v.boolFlag {
-			operatorDefaults = append(operatorDefaults, v.label)
-		}
-	}
-
-	pOps := &survey.MultiSelect{
-		Message: "Which operators do you want to install?",
-		Default: operatorDefaults,
-		Options: operatorLabels,
-	}
-	opIndexes := []int{}
-	if err := survey.AskOne(
-		pOps,
-		&opIndexes,
-	); err != nil {
-		return err
-	}
-
-	if len(opIndexes) == 0 && len(cfg.NamespaceList) > 0 {
-		return ErrNoOperatorsSelected
-	}
-
-	// We reset all flags to false so we select only
-	// the ones which the user selected in the multiselect.
-	for _, op := range operatorOpts {
-		*op.boolFlag = false
-	}
-
-	for _, i := range opIndexes {
-		*operatorOpts[i].boolFlag = true
-	}
-
-	return nil
-}
-
-// ValidateNamespaces validates a comma-separated namespaces string.
-func ValidateNamespaces(str string) ([]string, error) {
-	nsList := strings.Split(str, ",")
-	m := make(map[string]struct{})
-	for _, ns := range nsList {
-		ns = strings.TrimSpace(ns)
-		if ns == "" {
-			continue
-		}
-
-		if ns == common.SystemNamespace || ns == common.MonitoringNamespace || ns == kubernetes.OLMNamespace {
-			return nil, ErrNSReserved(ns)
-		}
-
-		if err := validateRFC1035(ns); err != nil {
-			return nil, err
-		}
-
-		m[ns] = struct{}{}
-	}
-
-	list := make([]string, 0, len(m))
-	for k := range m {
-		list = append(list, k)
-	}
-	if len(list) == 0 {
-		return nil, ErrNSEmpty
-	}
-
-	return list, nil
-}
-
-// validates names to be RFC-1035 compatible  https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
-func validateRFC1035(s string) error {
-	rfc1035Regex := "^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$"
-	re := regexp.MustCompile(rfc1035Regex)
-	if !re.MatchString(s) {
-		return ErrNameNotRFC1035Compatible(s)
-	}
-
-	return nil
-}
-
-func (n *NamespaceAdder) validateNamespace(
-	ctx context.Context,
-	namespace string,
-) error {
-	if n.cfg.Update {
-		return n.validateNamespaceUpdate(ctx, namespace)
-	}
-	return nil
 }
 
 func (n *NamespaceAdder) validateNamespaceUpdate(ctx context.Context, namespace string) error {
@@ -456,34 +408,9 @@ func (n *NamespaceAdder) validateNamespaceUpdate(ctx context.Context, namespace 
 		return fmt.Errorf("cannot list subscriptions: %w", err)
 	}
 	if !ensureNoOperatorsRemoved(subscriptions.Items,
-		n.cfg.Operator.PG, n.cfg.Operator.PXC, n.cfg.Operator.PSMDB,
+		n.cfg.Operators.PG, n.cfg.Operators.PXC, n.cfg.Operators.PSMDB,
 	) {
-		return errCannotRemoveOperators
+		return ErrCannotRemoveOperators
 	}
 	return nil
-}
-
-func ensureNoOperatorsRemoved(
-	subscriptions []olmv1alpha1.Subscription,
-	installPG, installPXC, installPSMDB bool,
-) bool {
-	for _, subscription := range subscriptions {
-		switch subscription.GetName() {
-		case common.PGOperatorName:
-			if !installPG {
-				return false
-			}
-		case common.PSMDBOperatorName:
-			if !installPSMDB {
-				return false
-			}
-		case common.PXCOperatorName:
-			if !installPXC {
-				return false
-			}
-		default:
-			continue
-		}
-	}
-	return true
 }

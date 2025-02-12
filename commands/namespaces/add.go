@@ -1,3 +1,18 @@
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // Package namespaces provides the namespaces CLI command.
 package namespaces
 
@@ -7,12 +22,11 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 
 	"github.com/percona/everest/pkg/cli"
 	"github.com/percona/everest/pkg/cli/helm"
 	"github.com/percona/everest/pkg/cli/namespaces"
+	"github.com/percona/everest/pkg/logger"
 	"github.com/percona/everest/pkg/output"
 )
 
@@ -20,102 +34,90 @@ import (
 var (
 	takeOwnershipHintMessage = fmt.Sprintf("HINT: set '--%s' flag to use existing namespaces", cli.FlagTakeNamespaceOwnership)
 	updateHintMessage        = "HINT: use 'everestctl namespaces update' to update the namespace"
+	namespacesAddCmd         = &cobra.Command{
+		Use:     "add <namespaces> [flags]",
+		Args:    cobra.ExactArgs(1),
+		Long:    "Add a new namespace and make managed by Everest",
+		Short:   "Add a new namespace and make managed by Everest",
+		Example: `everestctl namespaces add ns-1,ns-2 --skip-wizard --operator.xtradb-cluster=true --operator.postgresql=false --operator.mongodb=false`,
+		PreRun:  namespacesAddPreRun,
+		Run:     namespacesAddRun,
+	}
+	namespacesAddCfg = namespaces.NewNamespaceAddConfig()
 )
 
-// NewAddCommand returns a new command to add a new namespace.
-func NewAddCommand(l *zap.SugaredLogger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "add [flags] NAMESPACES",
-		Long:    "Add a new namespace",
-		Short:   "Add a new namespace",
-		Example: `everestctl namespaces add --operator.mongodb=true --operator.postgresql=false --operator.xtradb-cluster=false --skip-wizard ns-1,ns-2`,
-		Args:    cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			initAddViperFlags(cmd)
-			c := &namespaces.NamespaceAddConfig{}
-			err := viper.Unmarshal(c)
-			if err != nil {
-				l.Error(err)
-				return
-			}
-			bindInstallHelmOpts(c)
+func init() {
+	// local command flags
+	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.DisableTelemetry, cli.FlagDisableTelemetry, false, "Disable telemetry")
+	_ = namespacesAddCmd.Flags().MarkHidden(cli.FlagDisableTelemetry) //nolint:errcheck,gosec
+	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.SkipWizard, cli.FlagSkipWizard, false, "Skip installation wizard")
+	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.TakeOwnership, cli.FlagTakeNamespaceOwnership, false, "If the specified namespace already exists, take ownership of it")
+	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.SkipEnvDetection, cli.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
 
-			c.Namespaces = args[0]
-			enableLogging := viper.GetBool("verbose") || viper.GetBool("json")
-			c.Pretty = !enableLogging
+	// --helm.* flags
+	namespacesAddCmd.Flags().StringVar(&namespacesAddCfg.HelmConfig.ChartDir, helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
+	_ = namespacesAddCmd.Flags().MarkHidden(helm.FlagChartDir) //nolint:errcheck,gosec
+	namespacesAddCmd.Flags().StringVar(&namespacesAddCfg.HelmConfig.RepoURL, helm.FlagRepository, helm.DefaultHelmRepoURL, "Helm chart repository to download the Everest charts from")
+	namespacesAddCmd.Flags().StringSliceVar(&namespacesAddCfg.HelmConfig.Values.Values, helm.FlagHelmSet, []string{}, "Set helm values on the command line (can specify multiple values with commas: key1=val1,key2=val2)")
+	namespacesAddCmd.Flags().StringSliceVarP(&namespacesAddCfg.HelmConfig.Values.ValueFiles, helm.FlagHelmValues, "f", []string{}, "Specify values in a YAML file or a URL (can specify multiple)")
 
-			askOperators := !(cmd.Flags().Lookup("operator.mongodb").Changed ||
-				cmd.Flags().Lookup("operator.postgresql").Changed ||
-				cmd.Flags().Lookup("operator.xtradb-cluster").Changed)
+	// --operator.* flags
+	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.Operators.PSMDB, cli.FlagOperatorMongoDB, true, "Install MongoDB operator")
+	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.Operators.PG, cli.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
+	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.Operators.PXC, cli.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
+}
 
-			if err := c.Populate(cmd.Context(), false, askOperators); err != nil {
-				if errors.Is(err, namespaces.ErrNamespaceAlreadyExists) {
-					err = fmt.Errorf("%w. %s", err, takeOwnershipHintMessage)
-				}
-				if errors.Is(err, namespaces.ErrNamespaceAlreadyOwned) {
-					err = fmt.Errorf("%w. %s", err, updateHintMessage)
-				}
-				output.PrintError(err, l, !enableLogging)
-				os.Exit(1)
-			}
+func namespacesAddPreRun(cmd *cobra.Command, args []string) { //nolint:revive
+	// Copy global flags to config
+	namespacesAddCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
+	namespacesAddCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
 
-			op, err := namespaces.NewNamespaceAdd(*c, l)
-			if err != nil {
-				output.PrintError(err, l, !enableLogging)
-				return
+	{
+		// Parse and validate provided namespaces
+		nsList := namespaces.ParseNamespaceNames(args[0])
+		if err := namespacesAddCfg.ValidateNamespaces(cmd.Context(), nsList); err != nil {
+			if errors.Is(err, namespaces.ErrNamespaceAlreadyExists) {
+				err = fmt.Errorf("%w. %s", err, takeOwnershipHintMessage)
 			}
-			if err := op.Run(cmd.Context()); err != nil {
-				output.PrintError(err, l, !enableLogging)
-				os.Exit(1)
+			if errors.Is(err, namespaces.ErrNamespaceAlreadyManagedByEverest) {
+				err = fmt.Errorf("%w. %s", err, updateHintMessage)
 			}
-		},
+			output.PrintError(err, logger.GetLogger(), namespacesAddCfg.Pretty)
+			os.Exit(1)
+		}
+
+		namespacesAddCfg.NamespaceList = nsList
 	}
-	initAddFlags(cmd)
-	return cmd
+
+	// If user doesn't pass any --operator.* flags - need to ask explicitly.
+	askOperators := !(cmd.Flags().Lookup(cli.FlagOperatorMongoDB).Changed ||
+		cmd.Flags().Lookup(cli.FlagOperatorPostgresql).Changed ||
+		cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster).Changed ||
+		namespacesAddCfg.SkipWizard)
+
+	if askOperators {
+		// need to ask user to provide operators to be installed in interactive mode.
+		if err := namespacesAddCfg.PopulateOperators(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), namespacesAddCfg.Pretty)
+			os.Exit(1)
+		}
+	}
 }
 
-func initAddFlags(cmd *cobra.Command) {
-	cmd.Flags().Bool(cli.FlagDisableTelemetry, false, "Disable telemetry")
-	cmd.Flags().MarkHidden(cli.FlagDisableTelemetry) //nolint:errcheck,gosec
-	cmd.Flags().Bool(cli.FlagSkipWizard, false, "Skip installation wizard")
-	cmd.Flags().Bool(cli.FlagTakeNamespaceOwnership, false, "If the specified namespace already exists, take ownership of it")
-	cmd.Flags().Bool(cli.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
+func namespacesAddRun(cmd *cobra.Command, _ []string) {
+	op, err := namespaces.NewNamespaceAdd(namespacesAddCfg, logger.GetLogger())
+	if err != nil {
+		output.PrintError(err, logger.GetLogger(), namespacesAddCfg.Pretty)
+		os.Exit(1)
+	}
 
-	cmd.Flags().String(helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
-	cmd.Flags().MarkHidden(helm.FlagChartDir) //nolint:errcheck,gosec
-	cmd.Flags().String(helm.FlagRepository, helm.DefaultHelmRepoURL, "Helm chart repository to download the Everest charts from")
-	cmd.Flags().StringSlice(helm.FlagHelmSet, []string{}, "Set helm values on the command line (can specify multiple values with commas: key1=val1,key2=val2)")
-	cmd.Flags().StringSliceP(helm.FlagHelmValues, "f", []string{}, "Specify values in a YAML file or a URL (can specify multiple)")
-
-	cmd.Flags().Bool(cli.FlagOperatorMongoDB, true, "Install MongoDB operator")
-	cmd.Flags().Bool(cli.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
-	cmd.Flags().Bool(cli.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
+	if err := op.Run(cmd.Context()); err != nil {
+		output.PrintError(err, logger.GetLogger(), namespacesAddCfg.Pretty)
+		os.Exit(1)
+	}
 }
 
-func initAddViperFlags(cmd *cobra.Command) {
-	viper.BindPFlag(cli.FlagSkipWizard, cmd.Flags().Lookup(cli.FlagSkipWizard))                         //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagDisableTelemetry, cmd.Flags().Lookup(cli.FlagDisableTelemetry))             //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagTakeNamespaceOwnership, cmd.Flags().Lookup(cli.FlagTakeNamespaceOwnership)) //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagSkipEnvDetection, cmd.Flags().Lookup(cli.FlagSkipEnvDetection))             //nolint:errcheck,gosec
-
-	viper.BindPFlag(helm.FlagChartDir, cmd.Flags().Lookup(helm.FlagChartDir))     //nolint:errcheck,gosec
-	viper.BindPFlag(helm.FlagRepository, cmd.Flags().Lookup(helm.FlagRepository)) //nolint:errcheck,gosec
-	viper.BindPFlag(helm.FlagHelmSet, cmd.Flags().Lookup(helm.FlagHelmSet))       //nolint:errcheck,gosec
-	viper.BindPFlag(helm.FlagHelmValues, cmd.Flags().Lookup(helm.FlagHelmValues)) //nolint:errcheck,gosec
-
-	viper.BindPFlag(cli.FlagOperatorMongoDB, cmd.Flags().Lookup("operator.mongodb"))              //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagOperatorPostgresql, cmd.Flags().Lookup("operator.postgresql"))        //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagOperatorXtraDBCluster, cmd.Flags().Lookup("operator.xtradb-cluster")) //nolint:errcheck,gosec
-
-	viper.BindEnv(cli.FlagKubeconfig)                                           //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagKubeconfig, cmd.Flags().Lookup(cli.FlagKubeconfig)) //nolint:errcheck,gosec
-	viper.BindPFlag(cli.FlagVerbose, cmd.Flags().Lookup(cli.FlagVerbose))       //nolint:errcheck,gosec
-	viper.BindPFlag("json", cmd.Flags().Lookup("json"))                         //nolint:errcheck,gosec
-}
-
-func bindInstallHelmOpts(cfg *namespaces.NamespaceAddConfig) {
-	cfg.CLIOptions.Values.Values = viper.GetStringSlice(helm.FlagHelmSet)
-	cfg.CLIOptions.Values.ValueFiles = viper.GetStringSlice(helm.FlagHelmValues)
-	cfg.CLIOptions.ChartDir = viper.GetString(helm.FlagChartDir)
-	cfg.CLIOptions.RepoURL = viper.GetString(helm.FlagRepository)
+// GetNamespacesAddCmd returns the command to add namespaces.
+func GetNamespacesAddCmd() *cobra.Command {
+	return namespacesAddCmd
 }
