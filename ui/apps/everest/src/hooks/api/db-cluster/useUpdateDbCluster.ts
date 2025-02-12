@@ -13,25 +13,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useMutation } from '@tanstack/react-query';
-import { updateDbClusterFn } from 'api/dbClusterApi';
+import { AxiosError } from 'axios';
+import { useRef } from 'react';
 import {
-  DbCluster,
-  ProxyExposeType,
-  Proxy,
-} from 'shared-types/dbCluster.types';
-import { MIN_NUMBER_OF_SHARDS } from 'components/cluster-form';
-import { getProxySpec } from './utils';
-import { DbEngineType } from 'shared-types/dbEngines.types';
-import { dbEngineToDbType } from '@percona/utils';
+  MutateOptions,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
+import { enqueueSnackbar } from 'notistack';
+import { updateDbClusterFn } from 'api/dbClusterApi';
+import { DbCluster } from 'shared-types/dbCluster.types';
+import { DB_CLUSTER_QUERY, useDbCluster } from './useDbCluster';
 import cronConverter from 'utils/cron-converter';
 
-export const updateDbCluster = (
-  clusterName: string,
-  namespace: string,
-  dbCluster: DbCluster
-) =>
-  updateDbClusterFn(clusterName, namespace, {
+const UPDATE_RETRY_TIMEOUT_MS = 5000;
+const UPDATE_RETRY_DELAY_MS = 200;
+
+export const updateDbCluster = (dbCluster: DbCluster) =>
+  updateDbClusterFn(dbCluster.metadata.name, dbCluster.metadata.namespace, {
     ...dbCluster,
     spec: {
       ...dbCluster?.spec,
@@ -51,248 +50,114 @@ export const updateDbCluster = (
     },
   });
 
-export const useUpdateDbClusterCrd = () =>
-  useMutation({
-    mutationFn: ({
-      clusterName,
-      namespace,
-      dbCluster,
-      newCrdVersion,
-    }: {
-      clusterName: string;
-      namespace: string;
-      dbCluster: DbCluster;
-      newCrdVersion: string;
-    }) =>
-      updateDbCluster(clusterName, namespace, {
-        ...dbCluster,
-        spec: {
-          ...dbCluster.spec,
-          engine: {
-            ...dbCluster.spec.engine,
-            crVersion: newCrdVersion,
-          },
-        },
-      }),
-  });
-export const useUpdateDbClusterAdvancedConfiguration = () =>
-  useMutation({
-    mutationFn: ({
-      clusterName,
-      namespace,
-      dbCluster,
-      externalAccess,
-      sourceRanges,
-      engineParametersEnabled,
-      engineParameters,
-    }: {
-      clusterName: string;
-      namespace: string;
-      dbCluster: DbCluster;
-      externalAccess: boolean;
-      sourceRanges: Array<{ sourceRange?: string }>;
-      engineParametersEnabled: boolean;
-      engineParameters: string | undefined;
-    }) =>
-      updateDbCluster(clusterName, namespace, {
-        ...dbCluster,
-        spec: {
-          ...dbCluster.spec,
-          engine: {
-            ...dbCluster.spec.engine,
-            config: engineParametersEnabled ? engineParameters : '',
-          },
-          proxy: {
-            ...dbCluster.spec.proxy,
-            expose: {
-              type: externalAccess
-                ? ProxyExposeType.external
-                : ProxyExposeType.internal,
-              ...(!!externalAccess &&
-                sourceRanges && {
-                  ipSourceRanges: sourceRanges.flatMap((source) =>
-                    source.sourceRange ? [source.sourceRange] : []
-                  ),
-                }),
-            },
-          } as Proxy,
-        },
-      }),
+export const useUpdateDbClusterWithConflictRetry = (
+  oldDbClusterData: DbCluster,
+  mutationOptions?: MutateOptions<
+    DbCluster,
+    AxiosError<unknown, unknown>,
+    DbCluster,
+    unknown
+  >
+) => {
+  const {
+    onSuccess: ownOnSuccess = () => {},
+    onError: ownOnError = () => {},
+    ...restMutationOptions
+  } = mutationOptions || {};
+  const {
+    name: dbClusterName,
+    namespace,
+    generation: dbClusterGeneration,
+  } = oldDbClusterData.metadata;
+
+  const queryClient = useQueryClient();
+  const watchStartTime = useRef<number | null>(null);
+  const clusterDataToBeSent = useRef<DbCluster | null>(null);
+  const { refetch } = useDbCluster(dbClusterName, namespace, {
+    enabled: false,
   });
 
-export const useUpdateDbClusterVersion = () =>
-  useMutation({
-    mutationFn: ({
-      clusterName,
-      namespace,
-      dbCluster,
-      dbVersion,
-    }: {
-      clusterName: string;
-      namespace: string;
-      dbCluster: DbCluster;
-      dbVersion: string;
-    }) =>
-      updateDbCluster(clusterName, namespace, {
-        ...dbCluster,
-        spec: {
-          ...dbCluster.spec,
-          engine: {
-            ...dbCluster.spec.engine,
-            version: dbVersion,
-          },
-        },
-      }),
-  });
+  const mutationMethods = useMutation<
+    DbCluster,
+    AxiosError,
+    DbCluster,
+    unknown
+  >({
+    mutationFn: (dbCluster: DbCluster) => {
+      clusterDataToBeSent.current = dbCluster;
+      return updateDbCluster(dbCluster);
+    },
+    onError: async (error, vars, ctx) => {
+      const { status } = error;
 
-export const useUpdateDbClusterMonitoring = () =>
-  useMutation({
-    mutationFn: ({
-      clusterName,
-      namespace,
-      dbCluster,
-      monitoringName,
-    }: {
-      clusterName: string;
-      namespace: string;
-      dbCluster: DbCluster;
-      monitoringName?: string;
-    }) =>
-      updateDbCluster(clusterName, namespace, {
-        ...dbCluster,
-        spec: {
-          ...dbCluster.spec,
-          monitoring: monitoringName
-            ? {
-                monitoringConfigName: monitoringName,
+      if (status === 409) {
+        if (watchStartTime.current === null) {
+          watchStartTime.current = Date.now();
+        }
+
+        const timeDiff = Date.now() - watchStartTime.current;
+
+        if (timeDiff > UPDATE_RETRY_TIMEOUT_MS) {
+          enqueueSnackbar(
+            'There is a conflict with the current object definition.',
+            {
+              variant: 'error',
+            }
+          );
+          ownOnError?.(error, vars, ctx);
+          watchStartTime.current = null;
+          return;
+        }
+
+        return new Promise<void>((resolve) =>
+          setTimeout(async () => {
+            const { data: freshDbCluster } = await refetch();
+
+            if (freshDbCluster) {
+              const { generation, resourceVersion } = freshDbCluster.metadata;
+
+              if (generation === dbClusterGeneration) {
+                resolve();
+                mutationMethods.mutate({
+                  ...clusterDataToBeSent.current!,
+                  metadata: { ...freshDbCluster.metadata, resourceVersion },
+                });
+              } else {
+                enqueueSnackbar(
+                  'The object definition has been changed somewhere else. Please re-apply your changes.',
+                  {
+                    variant: 'error',
+                  }
+                );
+                ownOnError?.(error, vars, ctx);
+                watchStartTime.current = null;
+                resolve();
               }
-            : {},
-        },
-      }),
+            } else {
+              watchStartTime.current = null;
+              ownOnError?.(error, vars, ctx);
+              resolve();
+            }
+          }, UPDATE_RETRY_DELAY_MS)
+        );
+      }
+
+      ownOnError?.(error, vars, ctx);
+      return;
+    },
+    onSuccess: (data, vars, ctx) => {
+      watchStartTime.current = null;
+      queryClient.setQueryData<DbCluster>(
+        [DB_CLUSTER_QUERY, dbClusterName],
+        (oldData) => ({
+          ...oldData,
+          ...data,
+        })
+      );
+      ownOnSuccess?.(data, vars, ctx);
+    },
+    ...restMutationOptions,
   });
 
-export const useUpdateDbClusterResources = () =>
-  useMutation({
-    mutationFn: ({
-      dbCluster,
-      newResources,
-      sharding,
-      shardConfigServers,
-      shardNr,
-    }: {
-      dbCluster: DbCluster;
-      newResources: {
-        cpu: number;
-        memory: number;
-        disk: number;
-        diskUnit: string;
-        numberOfNodes: number;
-        proxyCpu: number;
-        proxyMemory: number;
-        numberOfProxies: number;
-      };
-      sharding?: boolean;
-      shardConfigServers?: number;
-      shardNr?: string;
-    }) =>
-      updateDbCluster(dbCluster.metadata.name, dbCluster.metadata.namespace, {
-        ...dbCluster,
-        spec: {
-          ...dbCluster.spec,
-          engine: {
-            ...dbCluster.spec.engine,
-            replicas: newResources.numberOfNodes,
-            resources: {
-              cpu: `${newResources.cpu}`,
-              memory: `${newResources.memory}G`,
-            },
-            storage: {
-              ...dbCluster.spec.engine.storage,
-              size: `${newResources.disk}${newResources.diskUnit}`,
-            },
-          },
-          proxy: getProxySpec(
-            dbEngineToDbType(dbCluster.spec.engine.type),
-            newResources.numberOfProxies.toString(),
-            '',
-            (dbCluster.spec.proxy as Proxy).expose.type === 'external',
-            newResources.proxyCpu,
-            newResources.proxyMemory,
-            !!sharding,
-            ((dbCluster.spec.proxy as Proxy).expose.ipSourceRanges || []).map(
-              (sourceRange) => ({ sourceRange })
-            )
-          ),
-          ...(dbCluster.spec.engine.type === DbEngineType.PSMDB &&
-            sharding && {
-              sharding: {
-                enabled: sharding,
-                shards: +(shardNr ?? MIN_NUMBER_OF_SHARDS),
-                configServer: {
-                  replicas: shardConfigServers ?? 3,
-                },
-              },
-            }),
-        },
-      }),
-  });
-
-export const useUpdateDbClusterEngine = () =>
-  useMutation({
-    mutationFn: ({
-      clusterName,
-      namespace,
-      dbCluster,
-      newEngineVersion,
-    }: {
-      clusterName: string;
-      namespace: string;
-      dbCluster: DbCluster;
-      newEngineVersion: string;
-    }) =>
-      updateDbCluster(clusterName, namespace, {
-        ...dbCluster,
-        spec: {
-          ...dbCluster.spec,
-          engine: {
-            ...dbCluster.spec.engine,
-            version: newEngineVersion,
-          },
-        },
-      }),
-  });
-
-export const useUpdateDbClusterPITR = () =>
-  useMutation({
-    mutationFn: ({
-      clusterName,
-      namespace,
-      dbCluster,
-      enabled,
-      backupStorageName,
-    }: {
-      clusterName: string;
-      namespace: string;
-      dbCluster: DbCluster;
-      enabled: boolean;
-      backupStorageName: string | { name: string };
-    }) =>
-      updateDbCluster(clusterName, namespace, {
-        ...dbCluster,
-        spec: {
-          ...dbCluster.spec,
-          backup: {
-            ...dbCluster.spec.backup!,
-            pitr: enabled
-              ? {
-                  backupStorageName:
-                    typeof backupStorageName === 'string'
-                      ? backupStorageName
-                      : backupStorageName!.name,
-                  enabled: true,
-                }
-              : { enabled: false, backupStorageName: '' },
-          },
-        },
-      }),
-  });
+  return mutationMethods;
+};
