@@ -14,55 +14,9 @@
 // limitations under the License.
 
 import { DbType } from '@percona/types';
-import { DbWizardFormFields } from 'consts.ts';
-import { DbWizardType } from './database-form-schema.ts';
-import {
-  getDefaultNumberOfconfigServersByNumberOfNodes,
-  NODES_DEFAULT_SIZES,
-  PROXIES_DEFAULT_SIZES,
-  ResourceSize,
-} from 'components/cluster-form/resources/constants.ts';
 
 export const DEFAULT_NODES: Record<DbType, string> = {
   [DbType.Mongo]: '3',
   [DbType.Mysql]: '3',
   [DbType.Postresql]: '2',
-};
-
-export const DB_WIZARD_DEFAULTS: DbWizardType = {
-  // TODO should be changed to true after  https://jira.percona.com/browse/EVEREST-509
-  [DbWizardFormFields.schedules]: [],
-  [DbWizardFormFields.pitrEnabled]: false,
-  [DbWizardFormFields.pitrStorageLocation]: null,
-  // @ts-ignore
-  [DbWizardFormFields.storageLocation]: null,
-  [DbWizardFormFields.dbType]: '' as DbType,
-  [DbWizardFormFields.dbName]: '',
-  [DbWizardFormFields.dbVersion]: '',
-  [DbWizardFormFields.storageClass]: '',
-  [DbWizardFormFields.k8sNamespace]: null,
-  [DbWizardFormFields.externalAccess]: false,
-  [DbWizardFormFields.sourceRanges]: [{ sourceRange: '' }],
-  [DbWizardFormFields.engineParametersEnabled]: false,
-  [DbWizardFormFields.engineParameters]: '',
-  [DbWizardFormFields.monitoring]: false,
-  [DbWizardFormFields.monitoringInstance]: '',
-  [DbWizardFormFields.numberOfNodes]: '1',
-  [DbWizardFormFields.numberOfProxies]: '1',
-  [DbWizardFormFields.resourceSizePerNode]: ResourceSize.small,
-  [DbWizardFormFields.resourceSizePerProxy]: ResourceSize.small,
-  [DbWizardFormFields.customNrOfNodes]: '1',
-  [DbWizardFormFields.customNrOfProxies]: '1',
-  [DbWizardFormFields.cpu]: NODES_DEFAULT_SIZES.mongodb.small.cpu,
-  [DbWizardFormFields.proxyCpu]: PROXIES_DEFAULT_SIZES.mongodb.small.cpu,
-  [DbWizardFormFields.disk]: NODES_DEFAULT_SIZES.mongodb.small.disk,
-  [DbWizardFormFields.diskUnit]: 'Gi',
-  [DbWizardFormFields.memory]: NODES_DEFAULT_SIZES.mongodb.small.memory,
-  [DbWizardFormFields.proxyMemory]: PROXIES_DEFAULT_SIZES.mongodb.small.memory,
-  [DbWizardFormFields.sharding]: false,
-  [DbWizardFormFields.shardNr]: '2',
-  [DbWizardFormFields.shardConfigServers]:
-    getDefaultNumberOfconfigServersByNumberOfNodes(
-      parseInt(DEFAULT_NODES[DbType.Mongo], 10)
-    ),
 };
