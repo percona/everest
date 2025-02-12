@@ -123,7 +123,7 @@ export const queryPSMDB = async (
   const clientPod = await getDBClientPod('psmdb', 'db-client');
 
   // Enable replicaSet option if sharding is enabled
-  const isShardingEnabled = await getPSMDBShardingStatus(cluster, namespace);
+  const isShardingEnabled = (await getPSMDBShardingStatus(cluster, namespace)) === 'true';
   const replicaSetOption = isShardingEnabled ? '' : '&replicaSet=rs0';
 
   try {
