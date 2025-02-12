@@ -59,6 +59,8 @@ const (
 	FlagKeepNamespace = "keep-namespace"
 	// FlagNamespaceForce is the name of the force flag.
 	FlagNamespaceForce = "force"
+	// FlagNamespaceAll is the name of the all flag.
+	FlagNamespaceAll = "all"
 
 	// `upgrade` flags
 
