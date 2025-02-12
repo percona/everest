@@ -1,6 +1,5 @@
-export interface HiddenInputProps {
-  placeholder?: string;
-  name: string;
-  label: string;
+import { TextInputProps } from '@percona/ui-lib';
+
+export type HiddenInputProps = {
   isRequired?: boolean;
-}
+} & TextInputProps;

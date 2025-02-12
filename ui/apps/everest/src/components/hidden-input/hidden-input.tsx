@@ -6,12 +6,13 @@ import { HiddenInputProps } from './hidden-input.types';
 import { IconButton } from '@mui/material';
 
 export const HiddenInput = ({
-  placeholder = '',
-  name,
-  label,
   isRequired = true,
+  ...textInputProps
 }: HiddenInputProps) => {
   const [showKey, setShowKey] = useState(false);
+  const { textFieldProps = { sx: {} }, ...restTextInputProps } = textInputProps;
+  const { sx, InputProps, ...restTextFieldProps } = textFieldProps;
+
   return (
     <TextInput
       data-testid={`hidden-input-${name}`}
@@ -21,9 +22,9 @@ export const HiddenInput = ({
           'input::-ms-reveal': {
             display: 'none',
           },
+          ...sx,
         },
         type: showKey ? 'text' : 'password',
-        placeholder: placeholder,
         InputProps: {
           endAdornment: (
             <IconButton onClick={() => setShowKey(!showKey)}>
@@ -34,11 +35,12 @@ export const HiddenInput = ({
               )}
             </IconButton>
           ),
+          ...InputProps,
         },
+        ...restTextFieldProps,
       }}
-      name={name}
-      label={label}
       isRequired={isRequired}
+      {...restTextInputProps}
     />
   );
 };

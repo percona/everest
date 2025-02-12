@@ -25,7 +25,11 @@ describe('Hidden Input', () => {
   beforeEach(() => {
     render(
       <FormProviderWrapper>
-        <HiddenInput placeholder="placeholder" name="test" label="test" />
+        <HiddenInput
+          textFieldProps={{ placeholder: 'placeholder' }}
+          name="test"
+          label="test"
+        />
       </FormProviderWrapper>
     );
   });
