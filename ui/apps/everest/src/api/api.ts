@@ -37,6 +37,12 @@ export const addApiErrorInterceptor = () => {
           error.response.status <= 500
         ) {
           let message = error.response.data.message ?? DEFAULT_ERROR_MESSAGE;
+          let notificationsDisabled = error.config?.disableNotifications;
+
+          if (typeof notificationsDisabled === 'function') {
+            notificationsDisabled = notificationsDisabled(error);
+          }
+
           if (error.response.status === 401) {
             localStorage.removeItem('everestToken');
             sessionStorage.clear();
@@ -51,7 +57,7 @@ export const addApiErrorInterceptor = () => {
             return;
           }
 
-          if (error.config?.disableNotifications !== true) {
+          if (!notificationsDisabled) {
             message = message.trim();
             if (message.length > MAX_ERROR_MESSAGE_LENGTH) {
               message = `${message.substring(0, MAX_ERROR_MESSAGE_LENGTH)}...`;
