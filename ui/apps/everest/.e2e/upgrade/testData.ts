@@ -37,7 +37,7 @@ export const postgresDBCluster = {
   externalAccess: false,
 };
 
-export const expectedEverestUpgradeLog = (
+export const expectedEverestUpgradeFirstLine = (
   tag = everestTagForUpgrade.replace(/v/g, '')
 ) => {
   const version =
@@ -46,22 +46,37 @@ export const expectedEverestUpgradeLog = (
       ? everestFeatureBuildForUpgrade
       : tag;
 
-  return `ℹ️  Upgrading Everest to version ${version}
+  return `ℹ️  Upgrading Everest to version ${version}`;
+};
 
-✓ Upgrading Custom Resource Definitions
-✓ Upgrading Helm chart
-✓ Ensuring Everest API deployment is ready
-✓ Ensuring Everest operator deployment is ready
-✓ Ensuring Everest CatalogSource is ready
+export const expectedEverestUpgradeCRDLine = () => {
+  return `✅  Upgrading Custom Resource Definitions`;
+};
 
- 🚀 Everest has been upgraded to version ${version}
+export const expectedEverestUpgradeHelmLine = () => {
+  return `✅  Upgrading Helm chart`;
+};
 
+export const expectedEverestUpgradeAPILine = () => {
+  return `✅  Ensuring Everest API deployment is ready`;
+};
 
-Run the following command to get the initial admin password:
+export const expectedEverestUpgradeOperatorLine = () => {
+  return `✅  Ensuring Everest operator deployment is ready`;
+};
 
-	everestctl accounts initial-admin-password
+export const expectedEverestUpgradeCatalogLine = () => {
+  return `✅  Ensuring Everest CatalogSource is ready`;
+};
 
-NOTE: The initial password is stored in plain text. For security, change it immediately using the following command:
+export const expectedEverestUpgradeLastLine = (
+  tag = everestTagForUpgrade.replace(/v/g, '')
+) => {
+  const version =
+    typeof everestFeatureBuildForUpgrade !== 'undefined' &&
+    everestFeatureBuildForUpgrade
+      ? everestFeatureBuildForUpgrade
+      : tag;
 
-	everestctl accounts set-password --username admin`;
+  return ` 🚀 Everest has been upgraded to version ${version}`;
 };

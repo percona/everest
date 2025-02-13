@@ -77,12 +77,12 @@ test.describe(
     );
     test.describe.configure({ timeout: 720000 });
 
-    const clusterName = `${db}-${size}-dembkp`;
+    const clusterName = `${db}-${size}-shard`;
 
     let storageClasses = [];
     const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
     const monitoringName = `${db}-${size}-pmm`;
-    const baseBackupName = `dembkp-${db}-${size}`;
+    const baseBackupName = `shard-${db}-${size}`;
 
     test.beforeAll(async ({ request }) => {
       token = await getTokenFromLocalStorage();
@@ -315,7 +315,7 @@ test.describe(
     test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
       await deleteDbCluster(page, clusterName);
       await waitForStatus(page, clusterName, 'Deleting', 15000);
-      await waitForDelete(page, clusterName, 600000);
+      await waitForDelete(page, clusterName, 240000);
     });
   }
 );
