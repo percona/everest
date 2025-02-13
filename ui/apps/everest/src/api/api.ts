@@ -43,15 +43,10 @@ export const addApiErrorInterceptor = () => {
             notificationsDisabled = notificationsDisabled(error);
           }
 
-          if (error.response.status === 401) {
-            localStorage.removeItem('everestToken');
-            sessionStorage.clear();
-            location.replace('/login');
-          }
-
           if (
-            error.response.status === 400 &&
-            message.includes(MISSING_MALFORMED_JWT_MESSAGE)
+            error.response.status === 401 ||
+            (error.response.status === 400 &&
+              message.includes(MISSING_MALFORMED_JWT_MESSAGE))
           ) {
             location.href = '/logout';
             return;
