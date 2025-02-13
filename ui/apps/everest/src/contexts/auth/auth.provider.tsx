@@ -104,6 +104,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
 
     setAuthStatus('loggedOut');
     localStorage.removeItem('everestToken');
+    sessionStorage.clear();
     setRedirect(null);
     removeApiErrorInterceptor();
     removeApiAuthInterceptor();
