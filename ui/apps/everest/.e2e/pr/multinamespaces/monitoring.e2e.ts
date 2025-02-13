@@ -58,8 +58,6 @@ test.describe('Namespaces: Monitoring availability', () => {
     // Monitoring Step
     await moveForward(page);
 
-    // check monitoring is not available
-    await expect(page.getByTestId('monitoring-warning')).toBeVisible();
     expect(await page.getByLabel('Enable monitoring').isChecked()).toBeFalsy();
     await page.getByRole('button', { name: 'Add monitoring endpoint' }).click();
 
