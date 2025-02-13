@@ -57,8 +57,9 @@ test.describe('Namespaces: Monitoring availability', () => {
     await moveForward(page);
     // Monitoring Step
     await moveForward(page);
-
-    expect(await page.getByLabel('Enable monitoring').isChecked()).toBeFalsy();
+    const monitoringLabel = await page.getByLabel('Enable monitoring');
+    expect(await monitoringLabel.isChecked()).toBeFalsy();
+    await monitoringLabel.getByRole('checkbox').check();
 
     await page.getByTestId('text-input-monitoring-instance').click();
     const namespaces = page.getByRole('option');
