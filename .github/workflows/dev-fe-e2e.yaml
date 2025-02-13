@@ -87,7 +87,7 @@ jobs:
           cpus: 4
           memory: 4000m
           addons: registry
-          insecure-registry: 'localhost:5000'
+          insecure-registry: "localhost:5000"
 
       - name: Expose local registry
         run: |
@@ -121,8 +121,7 @@ jobs:
         id: meta
         with:
           images: localhost:5000/perconalab/everest
-          tags:
-            0.0.0
+          tags: 0.0.0
 
       - name: Build and Push everest dev image
         uses: docker/build-push-action@v6
@@ -140,6 +139,7 @@ jobs:
         shell: bash
         run: |
           ./bin/everestctl install -v \
+          --disable-telemetry \
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
           --skip-wizard \
@@ -243,3 +243,4 @@ jobs:
           name: playwright-report
           path: ui/apps/everest/.e2e/playwright-report/
           overwrite: true
+

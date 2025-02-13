@@ -28,6 +28,7 @@ import (
 	"github.com/percona/everest/pkg/cli"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/logger"
+	"github.com/percona/everest/pkg/output"
 	"github.com/percona/everest/pkg/rbac"
 )
 
@@ -99,7 +100,7 @@ func settingsRBACCanRun(cmd *cobra.Command, args []string) {
 
 		client, err := kubernetes.New(rbacCanKubeconfigPath, l)
 		if err != nil {
-			l.Error(err)
+			output.PrintError(err, logger.GetLogger(), rbacCanPretty)
 			os.Exit(1)
 		}
 		k = client
@@ -107,7 +108,7 @@ func settingsRBACCanRun(cmd *cobra.Command, args []string) {
 
 	can, err := rbac.Can(cmd.Context(), rbacCanPolicyFilePath, k, args...)
 	if err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), rbacCanPretty)
 		os.Exit(1)
 	}
 
