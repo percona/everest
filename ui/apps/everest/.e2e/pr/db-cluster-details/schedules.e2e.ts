@@ -41,6 +41,10 @@ test.describe('Schedules List', async () => {
       dbName: mySQLName,
       dbType: 'mysql',
       numberOfNodes: '1',
+      disk: '1',
+      memory: '1',
+      proxyCpu: '0.2',
+      proxyMemory: '0.2',
       backup: {
         enabled: true,
         schedules: [
@@ -48,7 +52,7 @@ test.describe('Schedules List', async () => {
             backupStorageName: JSON.parse(EVEREST_BUCKETS_NAMESPACES_MAP)[0][0],
             enabled: true,
             name: 'backup-1',
-            schedule: '30 18 * * *',
+            schedule: '0 0 1 * *',
           },
         ],
       },
@@ -68,24 +72,24 @@ test.describe('Schedules List', async () => {
     page,
   }) => {
     await findDbAndClickRow(page, mySQLName);
-    expect(page.getByTestId('overview-section-text')).toHaveText(
-      'Daily at 12:00 AM'
+    await expect(page.getByTestId('overview-section-text')).toHaveText(
+      'Monthly on day 1 at 5:30 AM'
     );
 
     //check resources editing
-    expect(page.getByTestId('edit-resources-button')).toBeVisible();
+    await expect(page.getByTestId('edit-resources-button')).toBeVisible();
     await page.getByTestId('edit-resources-button').click();
-    expect(page.getByTestId('edit-resources-form-dialog')).toBeVisible();
+    await expect(page.getByTestId('edit-resources-form-dialog')).toBeVisible();
     await page.getByTestId('form-dialog-save').click();
-    expect(page.getByTestId('overview-section-text')).toHaveText(
-      'Daily at 12:00 AM'
+    await expect(page.getByTestId('overview-section-text')).toHaveText(
+      'Monthly on day 1 at 5:30 AM'
     );
 
     await page.getByTestId('backups').click();
     await page.getByTestId('scheduled-backups').click();
 
-    expect(page.getByTestId('schedule-0 0 * * *-text')).toHaveText(
-      'Daily at 12:00 AM'
+    await expect(page.getByTestId('schedule-30 5 1 * *-text')).toHaveText(
+      'Monthly on day 1 at 5:30 AM'
     );
   });
 
@@ -105,7 +109,7 @@ test.describe('Schedules List', async () => {
     const scheduleNameField = await page.getByTestId(
       'text-input-schedule-name'
     );
-    expect(scheduleNameField).not.toBeEmpty();
+    await expect(scheduleNameField).not.toBeEmpty();
     await scheduleNameField.fill(scheduleName);
 
     const storageLocationField = page.getByTestId(
@@ -250,11 +254,13 @@ test.describe('Schedules List', async () => {
 
     await scheduleForEditBtn.click();
 
-    expect(page.getByTestId('text-input-schedule-name')).not.toBeEmpty();
-    expect(page.getByTestId('text-input-schedule-name')).toHaveValue(
+    await expect(page.getByTestId('text-input-schedule-name')).not.toBeEmpty();
+    await expect(page.getByTestId('text-input-schedule-name')).toHaveValue(
       `${scheduleName}-one`
     );
-    expect(page.getByTestId('text-input-storage-location')).not.toBeEmpty();
+    await expect(
+      page.getByTestId('text-input-storage-location')
+    ).not.toBeEmpty();
 
     await page.getByTestId('select-selected-time-button').click();
     await page.getByTestId('week-option').click();

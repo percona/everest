@@ -17,8 +17,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [1.23.x]
-        may-fail: [false]
+        go-version: [ 1.23.x ]
+        may-fail: [ false ]
     runs-on: ubuntu-latest
     steps:
       # Setup Go
@@ -139,6 +139,7 @@ jobs:
         shell: bash
         run: |
           ./bin/everestctl install -v \
+          --disable-telemetry \
           --version 0.0.0 \
           --version-metadata-url https://check-dev.percona.com \
           --skip-wizard \
@@ -242,3 +243,4 @@ jobs:
           name: playwright-report
           path: ui/apps/everest/.e2e/playwright-report/
           overwrite: true
+

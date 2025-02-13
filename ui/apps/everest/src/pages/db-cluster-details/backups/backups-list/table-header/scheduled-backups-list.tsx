@@ -1,31 +1,33 @@
 import { useContext, useEffect, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { Box, IconButton, Paper, Stack, Typography } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
-import { useDeleteSchedule } from 'hooks/api/backups/useScheduledBackups';
 import { ManageableSchedules } from 'shared-types/dbCluster.types';
-import { DB_CLUSTER_QUERY } from 'hooks/api/db-cluster/useDbCluster';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import { ScheduleModalContext } from '../../backups.context';
 import { getTimeSelectionPreviewMessage } from 'pages/database-form/database-preview/database.preview.messages';
 import { getFormValuesFromCronExpression } from 'components/time-selection/time-selection.utils';
 import { Messages } from './backups-list-table-header.messages';
 import { useRBACPermissions } from 'hooks/rbac';
-import { transformSchedulesIntoManageableSchedules } from 'utils/db';
+import {
+  deleteScheduleFromDbCluster,
+  transformSchedulesIntoManageableSchedules,
+} from 'utils/db';
+import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 
 const ScheduledBackupsList = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<string>('');
-  const queryClient = useQueryClient();
   const {
     dbCluster,
     setMode: setScheduleModalMode,
     setSelectedScheduleName: setSelectedScheduleToModalContext,
     setOpenScheduleModal,
   } = useContext(ScheduleModalContext);
-  const { mutate: deleteSchedule, isPending: deletingSchedule } =
-    useDeleteSchedule(dbCluster.metadata.name, dbCluster.metadata.namespace);
+  const { mutate: updateCluster, isPending: updatingCluster } =
+    useUpdateDbClusterWithConflictRetry(dbCluster, {
+      onSuccess: () => handleCloseDeleteDialog(),
+    });
   const [schedules, setSchedules] = useState<ManageableSchedules[]>([]);
 
   const handleDelete = (scheduleName: string) => {
@@ -38,14 +40,7 @@ const ScheduledBackupsList = () => {
   };
 
   const handleConfirmDelete = (scheduleName: string) => {
-    deleteSchedule(scheduleName, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: [DB_CLUSTER_QUERY, dbCluster.metadata.name],
-        });
-        handleCloseDeleteDialog();
-      },
-    });
+    updateCluster(deleteScheduleFromDbCluster(scheduleName, dbCluster));
   };
 
   const handleEdit = (scheduleName: string) => {
@@ -159,7 +154,7 @@ const ScheduledBackupsList = () => {
           closeModal={handleCloseDeleteDialog}
           headerMessage={Messages.deleteModal.header}
           handleConfirm={handleConfirmDelete}
-          disabledButtons={deletingSchedule}
+          disabledButtons={updatingCluster}
         >
           {Messages.deleteModal.content(selectedSchedule)}
         </ConfirmDialog>
