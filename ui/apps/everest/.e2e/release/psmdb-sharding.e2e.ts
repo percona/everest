@@ -77,12 +77,12 @@ test.describe(
     );
     test.describe.configure({ timeout: 720000 });
 
-    const clusterName = `${db}-${size}-dembkp`;
+    const clusterName = `${db}-${size}-shard`;
 
     let storageClasses = [];
     const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
     const monitoringName = `${db}-${size}-pmm`;
-    const baseBackupName = `dembkp-${db}-${size}`;
+    const baseBackupName = `shard-${db}-${size}`;
 
     test.beforeAll(async ({ request }) => {
       token = await getTokenFromLocalStorage();
