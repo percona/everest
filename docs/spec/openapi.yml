@@ -2478,6 +2478,8 @@ components:
                       description: UploadIntervalSec number of seconds between the
                         binlogs uploads
                       type: integer
+                  required:
+                  - enabled
                   type: object
                 schedules:
                   description: Schedules is a list of backup schedules
@@ -2510,8 +2512,6 @@ components:
                     - schedule
                     type: object
                   type: array
-              required:
-              - enabled
               type: object
             dataSource:
               description: DataSource defines a data source for bootstraping a new
