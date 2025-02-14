@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import UpgradeEverestContext from './upgrade-everest.context';
 import { useVersion } from 'hooks';
+import { AuthContext } from 'contexts/auth';
 
 const UpgradeEverestProvider = ({
   children,
@@ -8,7 +9,11 @@ const UpgradeEverestProvider = ({
   children: React.ReactNode;
 }) => {
   const commitVersion = useRef<null | string>(null);
-  const { data: apiVersion } = useVersion();
+  const { authStatus } = useContext(AuthContext);
+  const { data: apiVersion } = useVersion({
+    enabled: authStatus === 'loggedIn',
+  });
+  58;
   const [currentVersion, setCurrentVersion] = useState('');
 
   const [openReloadEverestDialog, setOpenReloadEverestDialog] = useState(false);
@@ -24,7 +29,7 @@ const UpgradeEverestProvider = ({
     ) {
       setOpenReloadEverestDialog(true);
     }
-  }, [apiVersion?.fullCommit]);
+  }, [apiVersion?.fullCommit, apiVersion?.version]);
 
   const toggleOpenReloadDialog = () =>
     setOpenReloadEverestDialog((val) => !val);
