@@ -45,8 +45,8 @@ export const filterAvailableDbVersionsForDbEngineEdition = (
 
   // Rule out skipping major versions
   versions = versions.filter(({ version }) => {
-	  const semverVersion = coerce(version);
-	  return semverVersion ? semverVersion.major - currentMajor <= 1 : true;
+    const semverVersion = coerce(version);
+    return semverVersion ? semverVersion.major - currentMajor <= 1 : true;
   });
 
   return versions;

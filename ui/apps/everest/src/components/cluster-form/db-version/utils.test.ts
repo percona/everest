@@ -87,7 +87,7 @@ describe('DBVersion Available filter test', () => {
             ['16.4', '16.3', '15.8', '15.7'],
             DbEngineType.POSTGRESQL
           ),
-		  '15.7'
+          '15.7'
         ).map(({ version }) => version)
       ).toEqual(['15.8', '15.7']);
     });
