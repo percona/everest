@@ -82,6 +82,20 @@ export const getPGPassword = async (cluster: string, namespace: string) => {
   }
 };
 
+export const getPSMDBShardingStatus = async (
+  cluster: string,
+  namespace: string
+) => {
+  try {
+    const command = `kubectl get --namespace ${namespace} DatabaseClusters ${cluster} -ojsonpath='{.spec.sharding.enabled}'`;
+    const output = execSync(command).toString();
+    return output;
+  } catch (error) {
+    console.error(`Error executing command: ${error}`);
+    throw error;
+  }
+};
+
 export const queryMySQL = async (
   cluster: string,
   namespace: string,
@@ -111,8 +125,13 @@ export const queryPSMDB = async (
   const host = await getDBHost(cluster, namespace);
   const clientPod = await getDBClientPod('psmdb', 'db-client');
 
+  // Enable replicaSet option if sharding is enabled
+  const isShardingEnabled =
+    (await getPSMDBShardingStatus(cluster, namespace)) === 'true';
+  const replicaSetOption = isShardingEnabled ? '' : '&replicaSet=rs0';
+
   try {
-    const command = `kubectl exec --namespace db-client ${clientPod} -- mongosh "mongodb://backup:${password}@${host}/${db}?authSource=admin&replicaSet=rs0" --eval "${query}"`;
+    const command = `kubectl exec --namespace db-client ${clientPod} -- mongosh "mongodb://backup:${password}@${host}/${db}?authSource=admin${replicaSetOption}" --eval "${query}"`;
     const output = execSync(command).toString();
     return output;
   } catch (error) {
@@ -267,7 +286,11 @@ export const dropTestDB = async (cluster: string, namespace: string) => {
   }
 };
 
-export const queryTestDB = async (cluster: string, namespace: string) => {
+export const queryTestDB = async (
+  cluster: string,
+  namespace: string,
+  collection: string = 't1'
+) => {
   const dbType = await getDBType(cluster, namespace);
   let result: string;
 
@@ -276,13 +299,15 @@ export const queryTestDB = async (cluster: string, namespace: string) => {
       result = await queryMySQL(cluster, namespace, 'SELECT * FROM test.t1;');
       break;
     }
+
     case 'psmdb': {
       result = await queryPSMDB(
         cluster,
         namespace,
         'test',
-        'db.t1.find({},{_id: 0}).sort({a: 1});'
+        `db.${collection}.find({},{_id: 0}).sort({a: 1}).toArray();`
       );
+
       break;
     }
     case 'postgresql': {
@@ -291,4 +316,115 @@ export const queryTestDB = async (cluster: string, namespace: string) => {
     }
   }
   return result;
+};
+
+export const prepareMongoDBTestDB = async (
+  cluster: string,
+  namespace: string
+) => {
+  await dropTestDB(cluster, namespace);
+
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'test',
+    'db.t1.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }]);'
+  );
+
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'test',
+    'db.t2.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }]);'
+  );
+
+  await queryPSMDB(cluster, namespace, 'test', 'db.t1.createIndex({ a: 1 });');
+  await queryPSMDB(cluster, namespace, 'test', 'db.t2.createIndex({ a: 1 });');
+
+  await queryPSMDB(
+    cluster,
+    namespace,
+    'admin',
+    'sh.enableSharding(\\"test\\");'
+  );
+};
+
+export const configureMongoDBSharding = async (
+  cluster: string,
+  namespace: string
+) => {
+  const shardCollection = async (
+    collectionName: string,
+    key: object,
+    splitKey: object
+  ) => {
+    await queryPSMDB(
+      cluster,
+      namespace,
+      'admin',
+      `sh.shardCollection(\\"test.${collectionName}\\", ${JSON.stringify(key)});`
+    );
+
+    await queryPSMDB(
+      cluster,
+      namespace,
+      'admin',
+      `sh.splitAt(\\"test.${collectionName}\\", ${JSON.stringify(splitKey)});`
+    );
+
+    await queryPSMDB(
+      cluster,
+      namespace,
+      'admin',
+      `sh.moveChunk(\\"test.${collectionName}\\", { ${Object.keys(key)[0]} : MinKey}, \\"rs0\\");`
+    );
+
+    await queryPSMDB(
+      cluster,
+      namespace,
+      'admin',
+      `sh.moveChunk(\\"test.${collectionName}\\", { ${Object.keys(key)[0]}: MaxKey}, \\"rs1\\");`
+    );
+  };
+  await shardCollection('t1', { a: 1 }, { a: 2 });
+  await shardCollection('t2', { a: 1 }, { a: 2 });
+};
+
+export const validateMongoDBSharding = async (
+  cluster: string,
+  namespace: string,
+  collectionName: string
+) => {
+  const collectionString = await queryPSMDB(
+    cluster,
+    namespace,
+    'config',
+    `db.collections.find({ _id: \\"test.${collectionName}\\" });`
+  );
+
+  const collection = eval(
+    collectionString.replace(/ObjectId|ISODate|UUID|Timestamp/g, '')
+  );
+
+  const collectionUUID = collection[0]?.uuid;
+
+  const query = `db.chunks.aggregate([
+    { \\$match: { uuid: UUID(\\"${collectionUUID}\\") } },
+    { \\$group: { _id: \\"\\$shard\\" } } 
+  ]).toArray();`;
+
+  const queryResult = await queryPSMDB(cluster, namespace, 'config', query);
+
+  const sanitizedResult = queryResult
+    .replace(/_id/g, '"_id"')
+    .replace(/'/g, '"');
+  const chunks = JSON.parse(sanitizedResult);
+
+  const shardIds = chunks.map((chunk: { _id: string }) => chunk._id);
+
+  const hasRs0 = shardIds.includes('rs0');
+  const hasRs1 = shardIds.includes('rs1');
+
+  expect(hasRs0).toBe(true);
+  expect(hasRs1).toBe(true);
 };
