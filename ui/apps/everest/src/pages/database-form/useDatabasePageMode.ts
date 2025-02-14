@@ -3,11 +3,8 @@ import { DbWizardMode } from './database-form.types';
 
 export const useDatabasePageMode = (): DbWizardMode => {
   const { state } = useLocation();
-  if (state?.selectedDbCluster) {
-    if (state?.backupName) {
-      return 'restoreFromBackup';
-    }
-    return 'edit';
+  if (state?.selectedDbCluster && state?.backupName) {
+    return 'restoreFromBackup';
   }
   return 'new';
 };

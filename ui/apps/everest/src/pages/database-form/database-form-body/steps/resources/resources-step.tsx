@@ -20,9 +20,8 @@ export const ResourcesStep = () => {
       />
       <ResourcesForm
         dbType={dbType}
-        pairProxiesWithNodes={mode !== 'edit'}
-        disableDiskInput={mode === 'edit'}
-        allowDiskInputUpdate={mode !== 'edit'}
+        pairProxiesWithNodes
+        allowDiskInputUpdate
         showSharding={dbType === DbType.Mongo}
         hideProxies={dbType === DbType.Mongo && !shardingEnabled}
         disableShardingInput={mode === 'restoreFromBackup'}
