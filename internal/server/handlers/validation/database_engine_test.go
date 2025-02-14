@@ -119,6 +119,13 @@ func TestValidateDBEngineUpgrade(t *testing.T) {
 			err:        nil,
 		},
 		{
+			name:       "skipping major upgrade PSMDB",
+			engineType: everestv1alpha1.DatabaseEnginePSMDB,
+			oldVersion: "8.0.22",
+			newVersion: "10.0.0",
+			err:        errDBEngineMajorUpgradeNotSeq,
+		},
+		{
 			name:       "downgrade",
 			engineType: everestv1alpha1.DatabaseEnginePXC,
 			oldVersion: "8.0.22",

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	goversion "github.com/hashicorp/go-version"
@@ -580,6 +581,15 @@ func validateDBEngineVersionUpgrade(engineType everestv1alpha1.EngineType, newVe
 	// - PG: Major upgrades are in technical preview. https://docs.percona.com/percona-operator-for-postgresql/2.0/update.html#major-version-upgrade
 	if engineType != everestv1alpha1.DatabaseEnginePSMDB && semver.Major(oldVersion) != semver.Major(newVersion) {
 		return errDBEngineMajorVersionUpgrade
+	}
+
+	// It's fine to ignore the errors here because we have already validated the version.
+	newMajorInt, _ := strconv.Atoi(semver.Major(newVersion)[1:])
+	oldMajorInt, _ := strconv.Atoi(semver.Major(oldVersion)[1:])
+	// We will not allow major upgrades if the versions are not sequential.
+	if newMajorInt-oldMajorInt > 1 {
+		fmt.Println("errDBEngineMajorUpgradeNotSeq")
+		return errDBEngineMajorUpgradeNotSeq
 	}
 	return nil
 }
