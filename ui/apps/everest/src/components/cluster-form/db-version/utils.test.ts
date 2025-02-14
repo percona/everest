@@ -71,16 +71,16 @@ describe('DBVersion Available filter test', () => {
       ).toEqual(['14.1']);
     });
 
-    it('should allow major upgrades for PSMDB', () => {
+    it('should allow major upgrade to the next version for PSMDB', () => {
       expect(
         filterAvailableDbVersionsForDbEngineEdition(
           generateDbEngineWithVersions(
-            ['5.0.0', '4.0.0', '4.3.9', '4.4.1'],
+            ['8.0.4-1', '7.0.15-9', '7.0.14-8', '6.0.19-16', '6.0.18-15'],
             DbEngineType.PSMDB
           ),
-          '4.4.0'
+          '6.0.18-15'
         ).map(({ version }) => version)
-      ).toEqual(['5.0.0', '4.4.1']);
+      ).toEqual(['7.0.15-9', '7.0.14-8', '6.0.19-16', '6.0.18-15']);
     });
 
     it('should rule out major upgrades/downgrades for PXC/PG', () => {
