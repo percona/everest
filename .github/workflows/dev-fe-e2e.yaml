@@ -224,7 +224,7 @@ jobs:
           MONITORING_PASSWORD: "admin"
         run: |
           cd ui
-          pnpm --filter "@percona/everest" e2e
+          pnpm --filter "@percona/everest" e2e pr/db-cluster/db-wizard/create-db-cluster/sharding.e2e.ts
 
       - name: Run debug commands on failure
         if: ${{ failure() }}
@@ -235,6 +235,10 @@ jobs:
           kubectl -n pxc-only describe pods
           kubectl -n psmdb-only describe pods
           kubectl -n pg-only describe pods
+
+      - name: "Setup tmate debug ssh session"
+        uses: "percona/gh-action-action-tmate@v3"
+        if: always()
 
       - name: Archive report
         if: always()

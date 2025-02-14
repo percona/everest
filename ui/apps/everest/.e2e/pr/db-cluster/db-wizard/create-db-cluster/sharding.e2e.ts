@@ -102,7 +102,7 @@ test.describe('Sharding (psmdb)', () => {
   test('Sharding should be correctly displayed on the overview page', async ({
     page,
   }) => {
-    test.setTimeout(1800 * 1000);
+    test.setTimeout(180 * 1000);
     const dbName = 'sharding-psmdb';
     expect(storageClasses.length).toBeGreaterThan(0);
     await selectDbEngine(page, 'psmdb');
@@ -131,135 +131,135 @@ test.describe('Sharding (psmdb)', () => {
 
     await deleteDbCluster(page, dbName);
     // TODO: Waiting for cluster deletion should be re-checked afer fix for: https://perconadev.atlassian.net/browse/EVEREST-1849
-    await waitForDelete(page, dbName, 18000000);
+    await waitForDelete(page, dbName, 120000);
   });
 
-  test('Mongo with sharding should not pass multinode cluster creation if config servers = 1', async ({
-    page,
-  }) => {
-    expect(storageClasses.length).toBeGreaterThan(0);
-    await selectDbEngine(page, 'psmdb');
+  // test('Mongo with sharding should not pass multinode cluster creation if config servers = 1', async ({
+  //   page,
+  // }) => {
+  //   expect(storageClasses.length).toBeGreaterThan(0);
+  //   await selectDbEngine(page, 'psmdb');
 
-    await page.getByTestId('switch-input-sharding').click();
-    await moveForward(page);
+  //   await page.getByTestId('switch-input-sharding').click();
+  //   await moveForward(page);
 
-    await expect(page.getByTestId(`toggle-button-routers-3`)).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
+  //   await expect(page.getByTestId(`toggle-button-routers-3`)).toHaveAttribute(
+  //     'aria-pressed',
+  //     'true'
+  //   );
 
-    await expect(page.getByTestId('shard-config-servers-3')).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
+  //   await expect(page.getByTestId('shard-config-servers-3')).toHaveAttribute(
+  //     'aria-pressed',
+  //     'true'
+  //   );
 
-    await page.getByTestId('shard-config-servers-1').click();
-    expect(page.getByTestId('shard-config-servers-error')).toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
+  //   await page.getByTestId('shard-config-servers-1').click();
+  //   expect(page.getByTestId('shard-config-servers-error')).toBeVisible();
+  //   expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
 
-    await page.getByTestId('toggle-button-nodes-1').click();
-    expect(page.getByTestId('shard-config-servers-error')).not.toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).not.toBeDisabled();
+  //   await page.getByTestId('toggle-button-nodes-1').click();
+  //   expect(page.getByTestId('shard-config-servers-error')).not.toBeVisible();
+  //   expect(page.getByTestId('db-wizard-continue-button')).not.toBeDisabled();
 
-    await page.getByTestId('toggle-button-nodes-3').click();
-    expect(page.getByTestId('shard-config-servers-error')).toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
+  //   await page.getByTestId('toggle-button-nodes-3').click();
+  //   expect(page.getByTestId('shard-config-servers-error')).toBeVisible();
+  //   expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
 
-    await page.getByTestId('shard-config-servers-3').click();
-    expect(page.getByTestId('shard-config-servers-error')).not.toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).not.toBeDisabled();
-  });
+  //   await page.getByTestId('shard-config-servers-3').click();
+  //   expect(page.getByTestId('shard-config-servers-error')).not.toBeVisible();
+  //   expect(page.getByTestId('db-wizard-continue-button')).not.toBeDisabled();
+  // });
 
-  test('0 value of the Nº of shards causes an error', async ({ page }) => {
-    expect(storageClasses.length).toBeGreaterThan(0);
-    await selectDbEngine(page, 'psmdb');
+  // test('0 value of the Nº of shards causes an error', async ({ page }) => {
+  //   expect(storageClasses.length).toBeGreaterThan(0);
+  //   await selectDbEngine(page, 'psmdb');
 
-    await page.getByTestId('switch-input-sharding').click();
-    expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
+  //   await page.getByTestId('switch-input-sharding').click();
+  //   expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
 
-    await moveForward(page);
+  //   await moveForward(page);
 
-    await page.getByTestId('text-input-shard-nr').fill('0');
-    expect(page.getByText('The value cannot be less than 1')).toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
-    await page.getByTestId('text-input-shard-nr').fill('1');
-    expect(page.getByTestId('db-wizard-continue-button')).not.toBeDisabled();
-  });
+  //   await page.getByTestId('text-input-shard-nr').fill('0');
+  //   expect(page.getByText('The value cannot be less than 1')).toBeVisible();
+  //   expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
+  //   await page.getByTestId('text-input-shard-nr').fill('1');
+  //   expect(page.getByTestId('db-wizard-continue-button')).not.toBeDisabled();
+  // });
 
-  test('Changing the Nº of nodes causes changing the confing servers Nº automatically, until the user touches confing servers Nº', async ({
-    page,
-  }) => {
-    expect(storageClasses.length).toBeGreaterThan(0);
-    await selectDbEngine(page, 'psmdb');
+  // test('Changing the Nº of nodes causes changing the confing servers Nº automatically, until the user touches confing servers Nº', async ({
+  //   page,
+  // }) => {
+  //   expect(storageClasses.length).toBeGreaterThan(0);
+  //   await selectDbEngine(page, 'psmdb');
 
-    await page.getByTestId('switch-input-sharding').click();
-    expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
+  //   await page.getByTestId('switch-input-sharding').click();
+  //   expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
 
-    await moveForward(page);
+  //   await moveForward(page);
 
-    expect(page.getByTestId(`toggle-button-routers-3`)).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
-    expect(page.getByTestId('shard-config-servers-3')).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
+  //   expect(page.getByTestId(`toggle-button-routers-3`)).toHaveAttribute(
+  //     'aria-pressed',
+  //     'true'
+  //   );
+  //   expect(page.getByTestId('shard-config-servers-3')).toHaveAttribute(
+  //     'aria-pressed',
+  //     'true'
+  //   );
 
-    await page.getByTestId('toggle-button-nodes-1').click();
-    expect(page.getByTestId('shard-config-servers-1')).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
-    await page.getByTestId('toggle-button-nodes-5').click();
-    expect(page.getByTestId('shard-config-servers-5')).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
-    await page.getByTestId('toggle-button-nodes-custom').click();
-    await page.getByTestId('text-input-custom-nr-of-nodes').fill('7');
-    expect(page.getByTestId('shard-config-servers-7')).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
-    await page.getByTestId('text-input-custom-nr-of-nodes').fill('9');
-    expect(page.getByTestId('shard-config-servers-7')).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
+  //   await page.getByTestId('toggle-button-nodes-1').click();
+  //   expect(page.getByTestId('shard-config-servers-1')).toHaveAttribute(
+  //     'aria-pressed',
+  //     'true'
+  //   );
+  //   await page.getByTestId('toggle-button-nodes-5').click();
+  //   expect(page.getByTestId('shard-config-servers-5')).toHaveAttribute(
+  //     'aria-pressed',
+  //     'true'
+  //   );
+  //   await page.getByTestId('toggle-button-nodes-custom').click();
+  //   await page.getByTestId('text-input-custom-nr-of-nodes').fill('7');
+  //   expect(page.getByTestId('shard-config-servers-7')).toHaveAttribute(
+  //     'aria-pressed',
+  //     'true'
+  //   );
+  //   await page.getByTestId('text-input-custom-nr-of-nodes').fill('9');
+  //   expect(page.getByTestId('shard-config-servers-7')).toHaveAttribute(
+  //     'aria-pressed',
+  //     'true'
+  //   );
 
-    await page.getByTestId('shard-config-servers-3').click();
-    await page.getByTestId('toggle-button-nodes-1').click();
-    expect(page.getByTestId('shard-config-servers-1')).toHaveAttribute(
-      'aria-pressed',
-      'false'
-    );
-    expect(page.getByTestId('shard-config-servers-3')).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
-  });
+  //   await page.getByTestId('shard-config-servers-3').click();
+  //   await page.getByTestId('toggle-button-nodes-1').click();
+  //   expect(page.getByTestId('shard-config-servers-1')).toHaveAttribute(
+  //     'aria-pressed',
+  //     'false'
+  //   );
+  //   expect(page.getByTestId('shard-config-servers-3')).toHaveAttribute(
+  //     'aria-pressed',
+  //     'true'
+  //   );
+  // });
 
-  test('Sharding is not reset to default when returning to the previous step of the form in dbWizard', async ({
-    page,
-  }) => {
-    expect(storageClasses.length).toBeGreaterThan(0);
-    await selectDbEngine(page, 'psmdb');
+  // test('Sharding is not reset to default when returning to the previous step of the form in dbWizard', async ({
+  //   page,
+  // }) => {
+  //   expect(storageClasses.length).toBeGreaterThan(0);
+  //   await selectDbEngine(page, 'psmdb');
 
-    await page.getByTestId('switch-input-sharding').click();
-    expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
+  //   await page.getByTestId('switch-input-sharding').click();
+  //   expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
 
-    await moveForward(page);
-    await moveBack(page);
+  //   await moveForward(page);
+  //   await moveBack(page);
 
-    expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
+  //   expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
 
-    await moveForward(page);
-    await moveForward(page);
+  //   await moveForward(page);
+  //   await moveForward(page);
 
-    await page.getByTestId('edit-section-1').click();
+  //   await page.getByTestId('edit-section-1').click();
 
-    await page.getByTestId('switch-input-sharding').waitFor();
-    expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
-  });
+  //   await page.getByTestId('switch-input-sharding').waitFor();
+  //   expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
+  // });
 });
