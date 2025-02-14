@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { EverestConfig } from 'shared-types/configs.types';
 import { getEverestConfigs } from 'api/everestConfigs';
 import LoadingPageSkeleton from 'components/loading-page-skeleton/LoadingPageSkeleton';
+import UpgradeEverestProvider from 'contexts/upgrade-everest/upgrade-everest.provider';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -80,7 +81,9 @@ const App = () => {
               }}
             >
               <DrawerContextProvider>
-                <RouterProvider router={router} />
+                <UpgradeEverestProvider>
+                  <RouterProvider router={router} />
+                </UpgradeEverestProvider>
               </DrawerContextProvider>
               <ReactQueryDevtools initialIsOpen={false} />
             </AuthProvider>
