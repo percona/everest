@@ -2512,8 +2512,6 @@ components:
                     - schedule
                     type: object
                   type: array
-              required:
-              - enabled
               type: object
             dataSource:
               description: DataSource defines a data source for bootstraping a new

@@ -165,7 +165,6 @@ export const backupScheduleFormValuesToDbClusterPayload = (
       ...dbCluster?.spec,
       backup: {
         ...dbCluster.spec.backup,
-        enabled: schedulesPayload.length > 0,
         schedules: schedulesPayload.length > 0 ? schedulesPayload : undefined,
       },
     },
