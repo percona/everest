@@ -76,7 +76,7 @@ export const DbClusterPayloadToFormValues = (
     ),
     [DbWizardFormFields.dbName]:
       mode === 'restoreFromBackup'
-        ? `restored-${dbCluster?.metadata?.name}-${generateShortUID()}`.slice(
+        ? `${dbCluster?.metadata?.name}-${generateShortUID()}`.slice(
             0,
             MAX_DB_CLUSTER_NAME_LENGTH
           )
