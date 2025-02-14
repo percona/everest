@@ -83,15 +83,19 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
         }}
       />
       <HiddenInput
-        placeholder={Messages.createEditModal.placeholders.accessKey}
+        textFieldProps={{
+          placeholder: Messages.createEditModal.placeholders.accessKey,
+        }}
         name={StorageLocationsFields.accessKey}
         label={Messages.accessKey}
         isRequired
       />
       <HiddenInput
+        textFieldProps={{
+          placeholder: Messages.createEditModal.placeholders.secretKey,
+        }}
         name={StorageLocationsFields.secretKey}
         label={Messages.secretKey}
-        placeholder={Messages.createEditModal.placeholders.secretKey}
         isRequired
       />
       <TlsCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />
