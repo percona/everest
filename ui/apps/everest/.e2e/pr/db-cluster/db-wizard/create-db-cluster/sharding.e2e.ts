@@ -16,7 +16,10 @@ import {
 import { waitForDelete } from '@e2e/utils/table';
 import { execSync } from 'child_process';
 
-export const patchPSMDBFinalizers = async (cluster: string, namespace: string) => {
+export const patchPSMDBFinalizers = async (
+  cluster: string,
+  namespace: string
+) => {
   try {
     const command = `kubectl patch --namespace ${namespace} psmdb ${cluster} --type='merge' -p '{"metadata":{"finalizers":["percona.com/delete-psmdb-pvc"]}}'`;
     const output = execSync(command).toString();
@@ -143,7 +146,7 @@ test.describe('Sharding (psmdb)', () => {
 
     await deleteDbCluster(page, dbName);
     // TODO: This function should be removed after fix for: https://perconadev.atlassian.net/browse/K8SPSMDB-1208
-    await patchPSMDBFinalizers('sharding-psmdb','everest-ui');
+    await patchPSMDBFinalizers('sharding-psmdb', 'everest-ui');
     await waitForDelete(page, dbName, 60000);
   });
 
