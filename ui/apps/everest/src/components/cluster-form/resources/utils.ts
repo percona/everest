@@ -13,3 +13,15 @@ export const getProxyUnitNamesFromDbType = (
       return { singular: 'proxy', plural: 'proxies' };
   }
 };
+
+export const getPreviewResourcesText = (
+  type: 'CPU' | 'Memory' | 'Disk',
+  parsedResource: number,
+  sharding: boolean,
+  measurementUnit: string,
+  parsedShardNr?: number
+) => {
+  return Number.isNaN(parsedResource)
+    ? ''
+    : `${type} - ${sharding && parsedShardNr ? (parsedShardNr * parsedResource).toFixed(2) : parsedResource.toFixed(2)} ${measurementUnit}`;
+};

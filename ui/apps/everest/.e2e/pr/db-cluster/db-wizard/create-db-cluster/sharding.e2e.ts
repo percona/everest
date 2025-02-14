@@ -85,9 +85,9 @@ test.describe('Sharding (psmdb)', () => {
     await moveForward(page);
 
     const resourcesSectionSummury = page.getByTestId('section-resources');
-    expect(resourcesSectionSummury.getByText('Shards: 2')).toBeVisible();
+    expect(resourcesSectionSummury.getByText('2 shards')).toBeVisible();
     expect(
-      resourcesSectionSummury.getByText('Configuration servers: 3')
+      resourcesSectionSummury.getByText('3 configuration servers')
     ).toBeVisible();
 
     const shardNr = page.getByTestId('text-input-shard-nr');
@@ -108,7 +108,7 @@ test.describe('Sharding (psmdb)', () => {
 
     expect(shardNr).not.toBeVisible();
     expect(configServersNr).not.toBeVisible();
-    expect(resourcesSectionSummury.getByText('Shards: 2')).not.toBeVisible();
+    expect(resourcesSectionSummury.getByText('2 shards')).not.toBeVisible();
     expect(
       resourcesSectionSummury.getByText('Configuration servers: 3')
     ).not.toBeVisible();

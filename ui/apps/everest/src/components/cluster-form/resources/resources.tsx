@@ -384,9 +384,14 @@ const CustomAccordionSummary = ({
   const text = Number.isNaN(nr) || nr < 1 ? '' : ` (${nr})`;
 
   return (
-    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+    <AccordionSummary
+      sx={{
+        paddingLeft: 0,
+      }}
+      expandIcon={<ExpandMoreIcon />}
+    >
       <Typography
-        variant="h5"
+        variant="sectionHeading"
         textTransform="capitalize"
       >{`${unitPlural} ${text}`}</Typography>
     </AccordionSummary>
@@ -578,7 +583,7 @@ const ResourcesForm = ({
         }}
       >
         <CustomAccordionSummary
-          unitPlural="Nodes"
+          unitPlural={sharding ? `Nodes per shard` : 'Nodes'}
           nr={parseInt(nodesAccordionSummaryNumber, 10)}
         />
         <Divider />
