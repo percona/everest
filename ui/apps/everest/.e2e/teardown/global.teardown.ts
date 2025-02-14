@@ -16,6 +16,7 @@
 import { test as setup, expect } from '@playwright/test';
 import { getTokenFromLocalStorage } from '../utils/localStorage';
 import { getBucketNamespacesMap } from '../constants';
+import { deleteMonitoringInstance } from '@e2e/utils/monitoring-instance';
 
 setup.describe.serial('Teardown', () => {
   setup('Delete backup storage', async ({ request }) => {
@@ -47,6 +48,23 @@ setup.describe.serial('Teardown', () => {
     // });
 
     await Promise.all(promises);
+  });
+
+  setup('Delete monitoring instances', async ({ request }) => {
+    const token = await getTokenFromLocalStorage();
+    const bucketNamespacesMap = getBucketNamespacesMap();
+    const allNamespaces = Array.from(
+      new Set(bucketNamespacesMap.map(([, namespaces]) => namespaces).flat())
+    );
+
+    for (const [idx, namespace] of allNamespaces.entries()) {
+      await deleteMonitoringInstance(
+        request,
+        namespace,
+        `e2e-endpoint-${idx}`,
+        token
+      );
+    }
   });
 
   // setup('Delete monitoring instances', async ({ request }) => {

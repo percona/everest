@@ -23,6 +23,9 @@ const {
   EVEREST_LOCATION_SECRET_KEY,
   EVEREST_LOCATION_REGION,
   EVEREST_LOCATION_URL,
+  MONITORING_URL,
+  MONITORING_USER,
+  MONITORING_PASSWORD,
 } = process.env;
 
 const doBackupCall = async (fn: () => Promise<APIResponse>, retries = 3) => {
@@ -36,6 +39,10 @@ const doBackupCall = async (fn: () => Promise<APIResponse>, retries = 3) => {
     const ok = response.ok();
 
     if (ok) {
+      return Promise.resolve();
+    }
+
+    if (response.status() === 409) {
       return Promise.resolve();
     }
 
@@ -114,6 +121,40 @@ setup('Backup storages', async ({ request }) => {
   //   );
   // });
 
+  await Promise.all(promises);
+});
+
+setup('Monitoring endpoints', async ({ request }) => {
+  const token = await getTokenFromLocalStorage();
+  const bucketNamespacesMap = getBucketNamespacesMap();
+  const allNamespaces = Array.from(
+    new Set(bucketNamespacesMap.map(([, namespaces]) => namespaces).flat())
+  );
+  const promises: Promise<any>[] = [];
+
+  // For the sake of simplicity, we will create a monitoring endpoint for all namespaces in the buckets we defined
+  for (const [idx, namespace] of allNamespaces.entries()) {
+    promises.push(
+      doBackupCall(() =>
+        request.post(`/v1/namespaces/${namespace}/monitoring-instances`, {
+          data: {
+            name: `e2e-endpoint-${idx}`,
+            type: 'pmm',
+            url: MONITORING_URL,
+            allowedNamespaces: [],
+            verifyTLS: false,
+            pmm: {
+              user: MONITORING_USER,
+              password: MONITORING_PASSWORD,
+            },
+          },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+      )
+    );
+  }
   await Promise.all(promises);
 });
 
