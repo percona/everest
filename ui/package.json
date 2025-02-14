@@ -27,7 +27,8 @@
       "casbin.js>babel-loader": "9.2.1",
       "babel-loader>webpack": "5.94.0",
       "webpack": "5.94.0",
-      "cross-spawn": "6.0.6"
+      "cross-spawn": "6.0.6",
+      "esbuild": "^0.25.0"
     }
   }
 }
