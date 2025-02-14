@@ -1,12 +1,17 @@
 import { MongoIcon, MySqlIcon, PostgreSqlIcon } from '@percona/ui-lib';
-import { DbType, ProxyType } from '@percona/types';
+import { DbEngineType, DbType, ProxyType } from '@percona/types';
 import {
+  DbCluster,
   ManageableSchedules,
   Proxy,
   ProxyExposeConfig,
+  ProxyExposeType,
   Schedule,
 } from 'shared-types/dbCluster.types';
 import { can } from './rbac';
+import { getProxySpec } from 'hooks/api/db-cluster/utils';
+import { dbEngineToDbType } from '@percona/utils';
+import { MIN_NUMBER_OF_SHARDS } from 'components/cluster-form';
 
 export const dbTypeToIcon = (dbType: DbType) => {
   switch (dbType) {
@@ -72,3 +77,224 @@ export const transformSchedulesIntoManageableSchedules = async (
 
   return transformedSchedules;
 };
+
+export const changeDbClusterCrd = (
+  dbCluster: DbCluster,
+  newCrdVersion: string
+): DbCluster => ({
+  ...dbCluster,
+  spec: {
+    ...dbCluster.spec,
+    engine: {
+      ...dbCluster.spec.engine,
+      crVersion: newCrdVersion,
+    },
+  },
+});
+
+export const changeDbClusterAdvancedConfig = (
+  dbCluster: DbCluster,
+  engineParametersEnabled = false,
+  externalAccess = false,
+  engineParameters = '',
+  sourceRanges?: Array<{ sourceRange?: string }>
+) => ({
+  ...dbCluster,
+  spec: {
+    ...dbCluster.spec,
+    engine: {
+      ...dbCluster.spec.engine,
+      config: engineParametersEnabled ? engineParameters : '',
+    },
+    proxy: {
+      ...dbCluster.spec.proxy,
+      expose: {
+        type: externalAccess
+          ? ProxyExposeType.external
+          : ProxyExposeType.internal,
+        ...(!!externalAccess &&
+          sourceRanges && {
+            ipSourceRanges: sourceRanges.flatMap((source) =>
+              source.sourceRange ? [source.sourceRange] : []
+            ),
+          }),
+      },
+    } as Proxy,
+  },
+});
+
+export const changeDbClusterVersion = (
+  dbCluster: DbCluster,
+  dbVersion: string
+) => ({
+  ...dbCluster,
+  spec: {
+    ...dbCluster.spec,
+    engine: {
+      ...dbCluster.spec.engine,
+      version: dbVersion,
+    },
+  },
+});
+
+export const changeDbClusterMonitoring = (
+  dbCluster: DbCluster,
+  monitoringName?: string
+) => ({
+  ...dbCluster,
+  spec: {
+    ...dbCluster.spec,
+    monitoring: monitoringName
+      ? {
+          monitoringConfigName: monitoringName,
+        }
+      : {},
+  },
+});
+
+export const changeDbClusterResources = (
+  dbCluster: DbCluster,
+  newResources: {
+    cpu: number;
+    memory: number;
+    disk: number;
+    diskUnit: string;
+    numberOfNodes: number;
+    proxyCpu: number;
+    proxyMemory: number;
+    numberOfProxies: number;
+  },
+  sharding = false,
+  shardNr = '',
+  shardConfigServers?: number
+) => ({
+  ...dbCluster,
+  spec: {
+    ...dbCluster.spec,
+    engine: {
+      ...dbCluster.spec.engine,
+      replicas: newResources.numberOfNodes,
+      resources: {
+        cpu: `${newResources.cpu}`,
+        memory: `${newResources.memory}G`,
+      },
+      storage: {
+        ...dbCluster.spec.engine.storage,
+        size: `${newResources.disk}${newResources.diskUnit}`,
+      },
+    },
+    proxy: getProxySpec(
+      dbEngineToDbType(dbCluster.spec.engine.type),
+      newResources.numberOfProxies.toString(),
+      '',
+      (dbCluster.spec.proxy as Proxy).expose.type === 'external',
+      newResources.proxyCpu,
+      newResources.proxyMemory,
+      !!sharding,
+      ((dbCluster.spec.proxy as Proxy).expose.ipSourceRanges || []).map(
+        (sourceRange) => ({ sourceRange })
+      )
+    ),
+    ...(dbCluster.spec.engine.type === DbEngineType.PSMDB &&
+      sharding && {
+        sharding: {
+          enabled: sharding,
+          shards: +(shardNr ?? MIN_NUMBER_OF_SHARDS),
+          configServer: {
+            replicas: shardConfigServers ?? 3,
+          },
+        },
+      }),
+  },
+});
+
+export const changeDbClusterEngine = (
+  dbCluster: DbCluster,
+  newEngineVersion: string
+) => ({
+  ...dbCluster,
+  spec: {
+    ...dbCluster.spec,
+    engine: {
+      ...dbCluster.spec.engine,
+      version: newEngineVersion,
+    },
+  },
+});
+
+export const changeDbClusterPITR = (
+  dbCluster: DbCluster,
+  enabled: boolean,
+  backupStorageName: string | { name: string }
+) => ({
+  ...dbCluster,
+  spec: {
+    ...dbCluster.spec,
+    backup: {
+      ...dbCluster.spec.backup!,
+      pitr: enabled
+        ? {
+            backupStorageName:
+              typeof backupStorageName === 'string'
+                ? backupStorageName
+                : backupStorageName!.name,
+            enabled: true,
+          }
+        : { enabled: false, backupStorageName: '' },
+    },
+  },
+});
+
+export const deleteScheduleFromDbCluster = (
+  scheduleName: string,
+  dbCluster: DbCluster
+): DbCluster => {
+  const schedules = dbCluster?.spec?.backup?.schedules || [];
+  const filteredSchedulesWithCronCorrection = schedules.reduce(
+    (result: Schedule[], schedule) => {
+      if (schedule?.name !== scheduleName) {
+        result.push(schedule);
+      }
+      return result;
+    },
+    []
+  );
+
+  return {
+    apiVersion: 'everest.percona.com/v1alpha1',
+    kind: 'DatabaseCluster',
+    metadata: dbCluster.metadata,
+    spec: {
+      ...dbCluster?.spec,
+      backup: {
+        ...dbCluster.spec.backup,
+        enabled: filteredSchedulesWithCronCorrection.length > 0,
+        schedules:
+          filteredSchedulesWithCronCorrection.length > 0
+            ? filteredSchedulesWithCronCorrection
+            : undefined,
+      },
+    },
+  };
+};
+
+export const setDbClusterPausedStatus = (
+  dbCluster: DbCluster,
+  paused: boolean
+) => ({
+  ...dbCluster,
+  spec: {
+    ...dbCluster.spec,
+    paused,
+  },
+});
+
+export const setDbClusterRestart = (dbCluster: DbCluster) => ({
+  ...dbCluster,
+  metadata: {
+    ...dbCluster.metadata,
+    annotations: {
+      'everest.percona.com/restart': 'true',
+    },
+  },
+});
