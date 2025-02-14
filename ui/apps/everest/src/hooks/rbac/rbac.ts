@@ -69,7 +69,8 @@ export const useNamespacePermissionsForResource = (
     delete: [],
   });
 
-  const { data: namespaces, isFetching } = useNamespaces();
+  const queryResult = useNamespaces();
+  const { data: namespaces } = queryResult;
 
   const checkPermissions = useCallback(async () => {
     const newPermissions: Record<RBACAction, string[]> = {
@@ -111,7 +112,7 @@ export const useNamespacePermissionsForResource = (
     canUpdate: permissions.update,
     canCreate: permissions.create,
     canDelete: permissions.delete,
-    isFetching,
+    ...queryResult,
   };
 };
 

@@ -22,15 +22,18 @@ import { SelectInput, SelectInputProps } from '@percona/ui-lib';
 interface DbVersionProps {
   selectInputProps?: Omit<SelectInputProps, 'name'>;
   availableVersions: DbEngineTool[] | undefined;
+  loading?: boolean;
 }
 export const DbVersion = ({
   availableVersions,
   selectInputProps,
+  loading,
 }: DbVersionProps) => {
   return (
     <SelectInput
       name={DBVersionFields.dbVersion}
       label={Messages.dbVersion}
+      loading={loading}
       {...selectInputProps}
     >
       {availableVersions &&

@@ -1,4 +1,10 @@
-import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import {
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+} from '@mui/material';
 import { kebabize } from '@percona/utils';
 import { Controller, useFormContext } from 'react-hook-form';
 import { SelectInputProps } from './select.types';
@@ -11,6 +17,7 @@ const SelectInput = ({
   controllerProps,
   selectFieldProps,
   formControlProps,
+  loading,
   children,
 }: SelectInputProps) => {
   const { control: contextControl } = useFormContext();
@@ -37,6 +44,17 @@ const SelectInput = ({
               'data-testid': `select-input-${kebabize(name)}`,
               ...selectFieldProps?.inputProps,
             }}
+            IconComponent={
+              loading
+                ? () => (
+                    <CircularProgress
+                      color="inherit"
+                      size={20}
+                      sx={{ mr: 1 }}
+                    />
+                  )
+                : undefined
+            }
             {...selectFieldProps}
           >
             {children}
