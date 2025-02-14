@@ -336,9 +336,9 @@ jobs:
             --disable-telemetry \
             --version 0.0.0 \
             --version-metadata-url https://check-dev.percona.com \
-            --operator.mongodb \
-            --operator.postgresql \
-            --operator.xtradb-cluster \
+            --operator.mongodb=true \
+            --operator.postgresql=true \
+            --operator.mysql=true \
             --skip-wizard \
             --namespaces everest \
             --helm.set server.image=localhost:5000/perconalab/everest \

@@ -32,6 +32,8 @@ const (
 	FlagOperatorPostgresql = "operator.postgresql"
 	// FlagOperatorXtraDBCluster represents the pxc operator flag.
 	FlagOperatorXtraDBCluster = "operator.xtradb-cluster"
+	// FlagOperatorMySQL represents the MySQL operator flag.
+	FlagOperatorMySQL = "operator.mysql"
 	// FlagOperatorMongoDB represents the psmdb operator flag.
 	FlagOperatorMongoDB = "operator.mongodb"
 	// FlagNamespaces represents the namespaces flag.

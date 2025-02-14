@@ -143,7 +143,7 @@ Starting from version **1.4.0**, `everestctl` uses the Helm chart to install Per
    Run the following command to set namespaces and database operators during installation:
 
    ```bash
-   everestctl install --namespaces <namespace-name1>,<namespace-name2> --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true --skip-wizard
+   everestctl install --namespaces <namespace-name1>,<namespace-name2> --operator.mongodb=true --operator.postgresql=true --operator.mysql=true --skip-wizard
    ```
 
 4. **Access Admin Credentials:**

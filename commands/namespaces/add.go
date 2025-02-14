@@ -35,13 +35,15 @@ var (
 	takeOwnershipHintMessage = fmt.Sprintf("HINT: set '--%s' flag to use existing namespaces", cli.FlagTakeNamespaceOwnership)
 	updateHintMessage        = "HINT: use 'everestctl namespaces update' to update the namespace"
 	namespacesAddCmd         = &cobra.Command{
-		Use:     "add <namespaces> [flags]",
-		Args:    cobra.ExactArgs(1),
-		Long:    "Add a new namespace and make managed by Everest",
-		Short:   "Add a new namespace and make managed by Everest",
-		Example: `everestctl namespaces add ns-1,ns-2 --skip-wizard --operator.xtradb-cluster=true --operator.postgresql=false --operator.mongodb=false`,
-		PreRun:  namespacesAddPreRun,
-		Run:     namespacesAddRun,
+		Use:   "add <namespaces> [flags]",
+		Args:  cobra.ExactArgs(1),
+		Long:  "Add a new namespace and make managed by Everest",
+		Short: "Add a new namespace and make managed by Everest",
+		Example: fmt.Sprintf("everestctl namespaces add ns-1,ns-2 --%s --%s=true --%s=false --%s=false",
+			cli.FlagSkipWizard, cli.FlagOperatorMySQL, cli.FlagOperatorPostgresql, cli.FlagOperatorMongoDB,
+		),
+		PreRun: namespacesAddPreRun,
+		Run:    namespacesAddRun,
 	}
 	namespacesAddCfg = namespaces.NewNamespaceAddConfig()
 )
@@ -65,6 +67,8 @@ func init() {
 	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.Operators.PSMDB, cli.FlagOperatorMongoDB, true, "Install MongoDB operator")
 	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.Operators.PG, cli.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
 	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.Operators.PXC, cli.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
+	_ = namespacesAddCmd.Flags().MarkDeprecated(cli.FlagOperatorXtraDBCluster, fmt.Sprintf("please use --%s instead", cli.FlagOperatorMySQL))
+	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.Operators.PXC, cli.FlagOperatorMySQL, true, "Install MySQL operator")
 }
 
 func namespacesAddPreRun(cmd *cobra.Command, args []string) { //nolint:revive
@@ -93,6 +97,7 @@ func namespacesAddPreRun(cmd *cobra.Command, args []string) { //nolint:revive
 	askOperators := !(cmd.Flags().Lookup(cli.FlagOperatorMongoDB).Changed ||
 		cmd.Flags().Lookup(cli.FlagOperatorPostgresql).Changed ||
 		cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster).Changed ||
+		cmd.Flags().Lookup(cli.FlagOperatorMySQL).Changed ||
 		namespacesAddCfg.SkipWizard)
 
 	if askOperators {
