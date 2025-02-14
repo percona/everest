@@ -59,18 +59,6 @@ describe('DBVersion Available filter test', () => {
       ).toEqual(['16.4']);
     });
 
-    it('should coerce PG versions to semver', () => {
-      expect(
-        filterAvailableDbVersionsForDbEngineEdition(
-          generateDbEngineWithVersions(
-            ['13.0', '14.0', '14.1', '15.0'],
-            DbEngineType.POSTGRESQL
-          ),
-          '14.1'
-        ).map(({ version }) => version)
-      ).toEqual(['14.1']);
-    });
-
     it('should allow major upgrade to the next version for PSMDB', () => {
       expect(
         filterAvailableDbVersionsForDbEngineEdition(
@@ -83,25 +71,25 @@ describe('DBVersion Available filter test', () => {
       ).toEqual(['7.0.15-9', '7.0.14-8', '6.0.19-16', '6.0.18-15']);
     });
 
-    it('should rule out major upgrades/downgrades for PXC/PG', () => {
+    it('should rule out major upgrades for PXC/PG', () => {
       expect(
         filterAvailableDbVersionsForDbEngineEdition(
           generateDbEngineWithVersions(
-            [
-              '1.0.0',
-              '1.2.0',
-              '2.3.3',
-              '2.5.0',
-              '2.9.0',
-              '3.1.0',
-              '4.3.0',
-              '5.4.1',
-            ],
+            ['9.0.0', '8.4.2-2.1', '8.0.39-30.1', '8.0.36-28.1', '8.0.35-27.1'],
+            DbEngineType.PXC
+          ),
+          '8.0.36-28.1'
+        ).map(({ version }) => version)
+      ).toEqual(['8.4.2-2.1', '8.0.39-30.1', '8.0.36-28.1']);
+      expect(
+        filterAvailableDbVersionsForDbEngineEdition(
+          generateDbEngineWithVersions(
+            ['16.4', '16.3', '15.8', '15.7'],
             DbEngineType.POSTGRESQL
           ),
-          '2.3.0'
+		  '15.7'
         ).map(({ version }) => version)
-      ).toEqual(['2.3.3', '2.5.0', '2.9.0']);
+      ).toEqual(['15.8', '15.7']);
     });
   });
 });

@@ -35,8 +35,8 @@ export const filterAvailableDbVersionsForDbEngineEdition = (
     return semverVersion ? gte(semverVersion, currentSemverVersion) : true;
   });
 
-  // If the engine is PG, major version upgrades are also ruled out
-  if ([DbEngineType.POSTGRESQL].includes(dbType)) {
+  // If the engine is PXC or PG, major version upgrades are also ruled out
+  if ([DbEngineType.PXC, DbEngineType.POSTGRESQL].includes(dbType)) {
     versions = versions.filter(({ version }) => {
       const semverVersion = coerce(version);
       return semverVersion ? semverVersion.major === currentMajor : true;
