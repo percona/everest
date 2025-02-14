@@ -19,6 +19,7 @@ import Restores from 'pages/db-cluster-details/restores';
 import Components from './pages/db-cluster-details/components';
 import LoginCallback from 'components/login-callback/LoginCallback';
 import { DbClusterContextProvider } from 'pages/db-cluster-details/dbCluster.context';
+import Logout from 'pages/logout';
 
 const router = createBrowserRouter([
   {
@@ -28,6 +29,10 @@ const router = createBrowserRouter([
   {
     path: '/login-callback',
     element: <LoginCallback />,
+  },
+  {
+    path: '/logout',
+    element: <Logout />,
   },
   {
     path: '/',
