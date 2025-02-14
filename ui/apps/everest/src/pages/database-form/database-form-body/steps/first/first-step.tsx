@@ -161,10 +161,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     ) {
       return;
     }
-    if (
-      ((mode === 'edit' || mode === 'restoreFromBackup') && !dbVersion) ||
-      mode === 'new'
-    ) {
+    if ((mode === 'restoreFromBackup' && !dbVersion) || mode === 'new') {
       const recommendedVersion = dbEngineData.availableVersions.engine.find(
         (version) => version.status === DbEngineToolStatus.RECOMMENDED
       );
@@ -233,11 +230,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           label={Messages.labels.k8sNamespace}
           loading={isFetching}
           options={filteredNamespaces}
-          disabled={
-            mode === 'edit' ||
-            mode === 'restoreFromBackup' ||
-            loadingDefaultsForEdition
-          }
+          disabled={mode === 'restoreFromBackup' || loadingDefaultsForEdition}
           onChange={onNamespaceChange}
           autoCompleteProps={{
             disableClearable: true,
@@ -250,7 +243,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           label={Messages.labels.dbName}
           textFieldProps={{
             placeholder: Messages.placeholders.dbName,
-            disabled: mode === 'edit' || loadingDefaultsForEdition,
+            disabled: loadingDefaultsForEdition,
           }}
         />
         <DbVersion
@@ -266,7 +259,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           options={clusterInfo?.storageClassNames || []}
           autoCompleteProps={{
             disableClearable: true,
-            disabled: mode === 'edit' || loadingDefaultsForEdition,
+            disabled: loadingDefaultsForEdition,
           }}
         />
         {dbType === DbType.Mongo && (
@@ -294,19 +287,9 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                     },
                   }}
                 />
-                {notSupportedMongoOperatorVersionForSharding &&
-                  mode !== 'edit' && (
-                    <Tooltip
-                      title={Messages.disableShardingTooltip}
-                      arrow
-                      placement="right"
-                    >
-                      <InfoOutlinedIcon color="primary" />
-                    </Tooltip>
-                  )}
-                {mode === 'edit' && (
+                {notSupportedMongoOperatorVersionForSharding && (
                   <Tooltip
-                    title={Messages.disableShardingInEditMode}
+                    title={Messages.disableShardingTooltip}
                     arrow
                     placement="right"
                   >
