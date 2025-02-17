@@ -2,6 +2,7 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import UpgradeEverestContext from './upgrade-everest.context';
 import { useVersion } from 'hooks';
 import { AuthContext } from 'contexts/auth';
+import { useAuth } from 'oidc-react';
 
 const UpgradeEverestProvider = ({
   children,
@@ -9,9 +10,10 @@ const UpgradeEverestProvider = ({
   children: React.ReactNode;
 }) => {
   const commitVersion = useRef<null | string>(null);
-  const { authStatus } = useContext(AuthContext);
+  const { authStatus, isSsoEnabled } = useContext(AuthContext);
+  const { isLoading } = useAuth();
   const { data: apiVersion } = useVersion({
-    enabled: authStatus === 'loggedIn',
+    enabled: authStatus === 'loggedIn' || (isSsoEnabled && isLoading),
   });
   58;
   const [currentVersion, setCurrentVersion] = useState('');
