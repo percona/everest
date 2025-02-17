@@ -95,9 +95,6 @@ export const ResourcesPreviewSection = ({
       {sharding && (
         <>
           <PreviewContentText text={`${shardNr} shards`} />
-          <PreviewContentText
-            text={`${shardConfigServers} configuration servers`}
-          />
         </>
       )}
       <PreviewContentText
@@ -107,6 +104,13 @@ export const ResourcesPreviewSection = ({
         <PreviewContentText
           text={`${proxyText} - ${proxyCPUText}; ${proxyMemoryText}`}
         />
+      )}
+      {sharding && (
+        <>
+          <PreviewContentText
+            text={`${shardConfigServers} configuration servers`}
+          />
+        </>
       )}
     </>
   );
