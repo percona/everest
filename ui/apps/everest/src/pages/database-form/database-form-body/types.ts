@@ -16,7 +16,6 @@ export type DatabaseFormStepControllersProps = {
   disableSubmit: boolean;
   disableCancel: boolean;
   showSubmit: boolean;
-  editMode: boolean;
   onPreviousClick: () => void;
   onNextClick: () => void;
   onCancel: () => void;
