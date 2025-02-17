@@ -43,7 +43,7 @@ var (
 		PreRun:  namespacesAddPreRun,
 		Run:     namespacesAddRun,
 	}
-	namespacesAddCfg = &namespaces.NamespaceAddConfig{}
+	namespacesAddCfg = namespaces.NewNamespaceAddConfig()
 )
 
 func init() {
@@ -55,45 +55,63 @@ func init() {
 	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.SkipEnvDetection, cli.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
 
 	// --helm.* flags
-	namespacesAddCmd.Flags().StringVar(&namespacesAddCfg.CLIOptions.ChartDir, helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
+	namespacesAddCmd.Flags().StringVar(&namespacesAddCfg.HelmConfig.ChartDir, helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
 	_ = namespacesAddCmd.Flags().MarkHidden(helm.FlagChartDir) //nolint:errcheck,gosec
-	namespacesAddCmd.Flags().StringVar(&namespacesAddCfg.CLIOptions.RepoURL, helm.FlagRepository, helm.DefaultHelmRepoURL, "Helm chart repository to download the Everest charts from")
-	namespacesAddCmd.Flags().StringSliceVar(&namespacesAddCfg.CLIOptions.Values.Values, helm.FlagHelmSet, []string{}, "Set helm values on the command line (can specify multiple values with commas: key1=val1,key2=val2)")
-	namespacesAddCmd.Flags().StringSliceVarP(&namespacesAddCfg.CLIOptions.Values.ValueFiles, helm.FlagHelmValues, "f", []string{}, "Specify values in a YAML file or a URL (can specify multiple)")
+	namespacesAddCmd.Flags().StringVar(&namespacesAddCfg.HelmConfig.RepoURL, helm.FlagRepository, helm.DefaultHelmRepoURL, "Helm chart repository to download the Everest charts from")
+	namespacesAddCmd.Flags().StringSliceVar(&namespacesAddCfg.HelmConfig.Values.Values, helm.FlagHelmSet, []string{}, "Set helm values on the command line (can specify multiple values with commas: key1=val1,key2=val2)")
+	namespacesAddCmd.Flags().StringSliceVarP(&namespacesAddCfg.HelmConfig.Values.ValueFiles, helm.FlagHelmValues, "f", []string{}, "Specify values in a YAML file or a URL (can specify multiple)")
 
 	// --operator.* flags
-	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.Operator.PSMDB, cli.FlagOperatorMongoDB, true, "Install MongoDB operator")
-	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.Operator.PG, cli.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
-	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.Operator.PXC, cli.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
+	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.Operators.PSMDB, cli.FlagOperatorMongoDB, true, "Install MongoDB operator")
+	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.Operators.PG, cli.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
+	namespacesAddCmd.Flags().BoolVar(&namespacesAddCfg.Operators.PXC, cli.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
 }
 
 func namespacesAddPreRun(cmd *cobra.Command, args []string) { //nolint:revive
-	namespacesAddCfg.Namespaces = args[0]
-
 	// Copy global flags to config
 	namespacesAddCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
 	namespacesAddCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
 
+	{
+		// Parse and validate provided namespaces
+		nsList := namespaces.ParseNamespaceNames(args[0])
+		if err := namespacesAddCfg.ValidateNamespaces(cmd.Context(), nsList); err != nil {
+			if errors.Is(err, namespaces.ErrNamespaceAlreadyExists) {
+				err = fmt.Errorf("%w. %s", err, takeOwnershipHintMessage)
+			}
+			if errors.Is(err, namespaces.ErrNamespaceAlreadyManagedByEverest) {
+				err = fmt.Errorf("%w. %s", err, updateHintMessage)
+			}
+			output.PrintError(err, logger.GetLogger(), namespacesAddCfg.Pretty)
+			os.Exit(1)
+		}
+
+		namespacesAddCfg.NamespaceList = nsList
+	}
+
 	// If user doesn't pass any --operator.* flags - need to ask explicitly.
-	namespacesAddCfg.AskOperators = !(cmd.Flags().Lookup(cli.FlagOperatorMongoDB).Changed ||
+	askOperators := !(cmd.Flags().Lookup(cli.FlagOperatorMongoDB).Changed ||
 		cmd.Flags().Lookup(cli.FlagOperatorPostgresql).Changed ||
-		cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster).Changed)
+		cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster).Changed ||
+		namespacesAddCfg.SkipWizard)
+
+	if askOperators {
+		// need to ask user to provide operators to be installed in interactive mode.
+		if err := namespacesAddCfg.PopulateOperators(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), namespacesAddCfg.Pretty)
+			os.Exit(1)
+		}
+	}
 }
 
 func namespacesAddRun(cmd *cobra.Command, _ []string) {
-	op, err := namespaces.NewNamespaceAdd(*namespacesAddCfg, logger.GetLogger())
+	op, err := namespaces.NewNamespaceAdd(namespacesAddCfg, logger.GetLogger())
 	if err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), namespacesAddCfg.Pretty)
 		os.Exit(1)
 	}
 
 	if err := op.Run(cmd.Context()); err != nil {
-		if errors.Is(err, namespaces.ErrNamespaceAlreadyExists) {
-			err = fmt.Errorf("%w. %s", err, takeOwnershipHintMessage)
-		}
-		if errors.Is(err, namespaces.ErrNamespaceAlreadyOwned) {
-			err = fmt.Errorf("%w. %s", err, updateHintMessage)
-		}
 		output.PrintError(err, logger.GetLogger(), namespacesAddCfg.Pretty)
 		os.Exit(1)
 	}

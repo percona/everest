@@ -1,4 +1,7 @@
-import { everestTagForUpgrade } from '@e2e/constants';
+import {
+  everestTagForUpgrade,
+  everestFeatureBuildForUpgrade,
+} from '@e2e/constants';
 
 export const pxcDBCluster = {
   name: 'pxc-db-cluster',
@@ -34,26 +37,46 @@ export const postgresDBCluster = {
   externalAccess: false,
 };
 
-export const expectedEverestUpgradeLog = (
+export const expectedEverestUpgradeFirstLine = (
   tag = everestTagForUpgrade.replace(/v/g, '')
 ) => {
-  return `ℹ️  Upgrading Everest to version ${tag}
+  const version =
+    typeof everestFeatureBuildForUpgrade !== 'undefined' &&
+    everestFeatureBuildForUpgrade
+      ? everestFeatureBuildForUpgrade
+      : tag;
 
-✓ Upgrading Custom Resource Definitions
-✓ Upgrading Helm chart
-✓ Ensuring Everest API deployment is ready
-✓ Ensuring Everest operator deployment is ready
-✓ Ensuring Everest CatalogSource is ready
+  return `ℹ️  Upgrading Everest to version ${version}`;
+};
 
- 🚀 Everest has been upgraded to version ${tag}
+export const expectedEverestUpgradeCRDLine = () => {
+  return `✅  Upgrading Custom Resource Definitions`;
+};
 
+export const expectedEverestUpgradeHelmLine = () => {
+  return `✅  Upgrading Helm chart`;
+};
 
-To view the password for the 'admin' user, run the following command:
+export const expectedEverestUpgradeAPILine = () => {
+  return `✅  Ensuring Everest API deployment is ready`;
+};
 
-everestctl accounts initial-admin-password
+export const expectedEverestUpgradeOperatorLine = () => {
+  return `✅  Ensuring Everest operator deployment is ready`;
+};
 
+export const expectedEverestUpgradeCatalogLine = () => {
+  return `✅  Ensuring Everest CatalogSource is ready`;
+};
 
-IMPORTANT: This password is NOT stored in a hashed format. To secure it, update the password using the following command:
+export const expectedEverestUpgradeLastLine = (
+  tag = everestTagForUpgrade.replace(/v/g, '')
+) => {
+  const version =
+    typeof everestFeatureBuildForUpgrade !== 'undefined' &&
+    everestFeatureBuildForUpgrade
+      ? everestFeatureBuildForUpgrade
+      : tag;
 
-everestctl accounts set-password --username admin`;
+  return ` 🚀 Everest has been upgraded to version ${version}`;
 };

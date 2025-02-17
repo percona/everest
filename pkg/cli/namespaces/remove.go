@@ -20,8 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"os"
 	"time"
 
 	"go.uber.org/zap"
@@ -41,67 +39,96 @@ const (
 	pollTimeout  = 5 * time.Minute
 )
 
-// ErrNamespaceNotEmpty is returned when the namespace is not empty.
-var ErrNamespaceNotEmpty = errors.New("cannot remove namespace with running database clusters")
-
 // NamespaceRemoveConfig is the configuration for the namespace removal operation.
-type NamespaceRemoveConfig struct {
-	// KubeconfigPath is a path to a kubeconfig
-	KubeconfigPath string
-	// Force delete a namespace by deleting databases in it.
-	Force bool
-	// If set, we will keep the namespace
-	KeepNamespace bool
-	// If set, we will print the pretty output.
-	Pretty bool
+type (
+	NamespaceRemoveConfig struct {
+		// NamespaceList is a list of namespaces to be removed.
+		// The property shall be set explicitly after the provided namespaces are parsed and validated using ValidateNamespaces func.
+		NamespaceList []string
+		// KubeconfigPath is a path to a kubeconfig
+		KubeconfigPath string
+		// Force delete a namespace by deleting databases in it.
+		Force bool
+		// If set, keep the namespace but remove all resources from it.
+		KeepNamespace bool
+		// Pretty if set print the output in pretty mode.
+		Pretty bool
+	}
 
-	// Namespaces (DB Namespaces managed by Everest) to remove
-	Namespaces string
-	// NamespaceList is a list of namespaces to remove.
-	// This is populated internally after validating the Namespaces field.:
-	NamespaceList []string
-}
+	// NamespaceRemover is the CLI operation to remove namespaces.
+	NamespaceRemover struct {
+		cfg        NamespaceRemoveConfig
+		kubeClient *kubernetes.Kubernetes
+		l          *zap.SugaredLogger
+	}
+)
 
-// populate the configuration with the required values.
-func (cfg *NamespaceRemoveConfig) populate(ctx context.Context, kubeClient *kubernetes.Kubernetes) error {
-	nsList, err := ValidateNamespaces(cfg.Namespaces)
+// ValidateNamespaces validates the provided list of namespaces.
+// It validates:
+// - namespace names
+// - namespace ownership
+func (cfg *NamespaceRemoveConfig) ValidateNamespaces(ctx context.Context, nsList []string) error {
+	if err := validateNamespaceNames(nsList); err != nil {
+		return err
+	}
+
+	k, err := cliutils.NewKubeclient(zap.NewNop().Sugar(), cfg.KubeconfigPath)
 	if err != nil {
 		return err
 	}
 
 	for _, ns := range nsList {
-		// Check that the namespace exists.
-		exists, managedByEverest, err := namespaceExists(ctx, ns, kubeClient)
-		if err != nil {
-			return errors.Join(err, errors.New("failed to check if namespace exists"))
-		}
-		if !exists || !managedByEverest {
-			return errors.New(fmt.Sprintf("namespace '%s' does not exist or not managed by Everest", ns))
+		if err := cfg.validateNamespaceOwnership(ctx, k, ns); err != nil {
+			return err
 		}
 	}
 
-	cfg.NamespaceList = nsList
+	// Check that there are no DB clusters left in namespaces.
+	dbsExist, err := k.DatabasesExist(ctx, nsList...)
+	if err != nil {
+		return errors.Join(err, errors.New("failed to check if databases exist"))
+	}
+
+	if dbsExist && !cfg.Force {
+		return ErrNamespaceNotEmpty
+	}
+
 	return nil
 }
 
-// NamespaceRemover is the CLI operation to remove namespaces.
-type NamespaceRemover struct {
-	config     NamespaceRemoveConfig
-	kubeClient *kubernetes.Kubernetes
-	l          *zap.SugaredLogger
+// validateNamespaceOwnership validates the namespace existence and ownership.
+func (cfg *NamespaceRemoveConfig) validateNamespaceOwnership(
+	ctx context.Context,
+	k kubernetes.KubernetesConnector,
+	namespace string,
+) error {
+	// Check that the namespace exists.
+	exists, managedByEverest, err := namespaceExists(ctx, k, namespace)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return NewErrNamespaceNotExist(namespace)
+	}
+
+	if !managedByEverest {
+		return NewErrNamespaceNotManagedByEverest(namespace)
+	}
+
+	return nil
 }
 
 // NewNamespaceRemove returns a new CLI operation to remove namespaces.
 func NewNamespaceRemove(c NamespaceRemoveConfig, l *zap.SugaredLogger) (*NamespaceRemover, error) {
 	n := &NamespaceRemover{
-		config: c,
-		l:      l.With("component", "namespace-remover"),
+		cfg: c,
+		l:   l.With("component", "namespace-remover"),
 	}
 	if c.Pretty {
 		n.l = zap.NewNop().Sugar()
 	}
 
-	k, err := cliutils.NewKubeclient(n.l, n.config.KubeconfigPath)
+	k, err := cliutils.NewKubeclient(n.l, n.cfg.KubeconfigPath)
 	if err != nil {
 		return nil, err
 	}
@@ -117,30 +144,12 @@ func (r *NamespaceRemover) Run(ctx context.Context) error {
 		return err
 	}
 
-	if err := r.config.populate(ctx, r.kubeClient); err != nil {
-		return err
-	}
-
-	dbsExist, err := r.kubeClient.DatabasesExist(ctx, r.config.NamespaceList...)
-	if err != nil {
-		return errors.Join(err, errors.New("failed to check if databases exist"))
-	}
-
-	if dbsExist && !r.config.Force {
-		return ErrNamespaceNotEmpty
-	}
-
 	var removalSteps []steps.Step
-	for _, ns := range r.config.NamespaceList {
-		removalSteps = append(removalSteps, NewRemoveNamespaceSteps(ns, r.config.KeepNamespace, r.kubeClient)...)
+	for _, ns := range r.cfg.NamespaceList {
+		removalSteps = append(removalSteps, NewRemoveNamespaceSteps(ns, r.cfg.KeepNamespace, r.kubeClient)...)
 	}
 
-	var out io.Writer = os.Stdout
-	if !r.config.Pretty {
-		out = io.Discard
-	}
-
-	return steps.RunStepsWithSpinner(ctx, removalSteps, out)
+	return steps.RunStepsWithSpinner(ctx, r.l, removalSteps, r.cfg.Pretty)
 }
 
 // NewRemoveNamespaceSteps returns the steps to remove a namespace.
@@ -165,7 +174,7 @@ func NewRemoveNamespaceSteps(namespace string, keepNs bool, k *kubernetes.Kubern
 			},
 		},
 	}
-	nsStepDesc := fmt.Sprintf("Deleting namespace '%s'", namespace)
+	nsStepDesc := fmt.Sprintf("Deleting database namespace '%s'", namespace)
 	if keepNs {
 		nsStepDesc = fmt.Sprintf("Deleting resources from namespace '%s'", namespace)
 	}

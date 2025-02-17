@@ -17,7 +17,6 @@ import { useState } from 'react';
 import { DatabaseIcon, OverviewCard } from '@percona/ui-lib';
 import { Button, Stack } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import { useQueryClient } from '@tanstack/react-query';
 import { SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import {
@@ -39,9 +38,9 @@ import {
   memoryParser,
 } from 'utils/k8ResourceParser';
 import { dbEngineToDbType } from '@percona/utils';
-import { DB_CLUSTER_QUERY, useUpdateDbClusterResources } from 'hooks';
+import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 import { DbType } from '@percona/types';
-import { isProxy } from 'utils/db';
+import { changeDbClusterResources, isProxy } from 'utils/db';
 import { getProxyUnitNamesFromDbType } from 'components/cluster-form/resources/utils';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 
@@ -52,8 +51,12 @@ export const ResourcesDetails = ({
   canUpdateDb,
 }: ResourcesDetailsOverviewProps) => {
   const [openEditModal, setOpenEditModal] = useState(false);
-  const { mutate: updateDbClusterResources } = useUpdateDbClusterResources();
-  const queryClient = useQueryClient();
+  const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
+    dbCluster,
+    {
+      onSuccess: () => setOpenEditModal(false),
+    }
+  );
   const cpu = dbCluster.spec.engine.resources?.cpu || 0;
   const proxyCpu = isProxy(dbCluster.spec.proxy)
     ? dbCluster.spec.proxy.resources?.cpu || 0
@@ -97,10 +100,10 @@ export const ResourcesDetails = ({
     shardConfigServers,
     shardNr,
   }) => {
-    updateDbClusterResources(
-      {
+    updateCluster(
+      changeDbClusterResources(
         dbCluster,
-        newResources: {
+        {
           cpu,
           disk,
           diskUnit,
@@ -120,18 +123,10 @@ export const ResourcesDetails = ({
             10
           ),
         },
-        sharding: sharding?.enabled,
-        shardConfigServers,
+        sharding?.enabled,
         shardNr,
-      },
-      {
-        onSuccess: () => {
-          setOpenEditModal(false);
-          queryClient.invalidateQueries({
-            queryKey: [DB_CLUSTER_QUERY, dbCluster.metadata.name],
-          });
-        },
-      }
+        shardConfigServers
+      )
     );
   };
 

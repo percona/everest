@@ -18,10 +18,12 @@ package oidc
 
 import (
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/percona/everest/pkg/cli"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/logger"
 	"github.com/percona/everest/pkg/oidc"
 	"github.com/percona/everest/pkg/output"
@@ -33,29 +35,69 @@ var (
 		Args:    cobra.NoArgs,
 		Long:    "Configure OIDC settings",
 		Short:   "Configure OIDC settings",
-		Example: `everestctl settings oidc configure --issuer-url https://example.com --client-id 123456`,
+		Example: `everestctl settings oidc configure --issuer-url https://example.com --client-id 123456 --scopes openid,profile,email,groups`,
 		PreRun:  settingsOIDCConfigurePreRun,
 		Run:     settingsOIDCConfigureRun,
 	}
 	settingsOIDCConfigureCfg = &oidc.Config{}
+	scopes                   string
 )
 
 func init() {
 	// local command flags
-	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.IssuerURL, cli.FlagOIDCIssueURL, "", "OIDC issuer url")
-	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.ClientID, cli.FlagOIDCIssueClientID, "", "OIDC application client ID")
+	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.IssuerURL, cli.FlagOIDCIssuerURL, "", "OIDC issuer url")
+	settingsOIDCConfigureCmd.Flags().StringVar(&settingsOIDCConfigureCfg.ClientID, cli.FlagOIDCClientID, "", "OIDC application client ID")
+	settingsOIDCConfigureCmd.Flags().StringVar(&scopes, cli.FlagOIDCScopes, strings.Join(common.DefaultOIDCScopes, ","), "Comma-separated list of scopes")
 }
 
 func settingsOIDCConfigurePreRun(cmd *cobra.Command, _ []string) { //nolint:revive
 	// Copy global flags to config
 	settingsOIDCConfigureCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
 	settingsOIDCConfigureCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
+
+	// Check if issuer URL is provided
+	if settingsOIDCConfigureCfg.IssuerURL == "" {
+		// Ask user to provide issuer URL in interactive mode
+		if err := settingsOIDCConfigureCfg.PopulateIssuerURL(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+			os.Exit(1)
+		}
+	} else {
+		// Validate issuer URL provided by user in flags
+		if err := oidc.ValidateURL(settingsOIDCConfigureCfg.IssuerURL); err != nil {
+			output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+			os.Exit(1)
+		}
+	}
+
+	// Check if Client ID is provided
+	if settingsOIDCConfigureCfg.ClientID == "" {
+		// Ask user to provide client ID in interactive mode
+		if err := settingsOIDCConfigureCfg.PopulateClientID(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+			os.Exit(1)
+		}
+	} else {
+		// Validate client ID provided by user in flags
+		if err := oidc.ValidateClientID(settingsOIDCConfigureCfg.ClientID); err != nil {
+			output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+			os.Exit(1)
+		}
+	}
+
+	// Validate scopes (default or provided by user in flags)
+	scopesList := strings.Split(scopes, ",")
+	if err := oidc.ValidateScopes(scopesList); err != nil {
+		output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
+		os.Exit(1)
+	}
+	settingsOIDCConfigureCfg.Scopes = scopesList
 }
 
 func settingsOIDCConfigureRun(cmd *cobra.Command, _ []string) {
 	op, err := oidc.NewOIDC(*settingsOIDCConfigureCfg, logger.GetLogger())
 	if err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), settingsOIDCConfigureCfg.Pretty)
 		os.Exit(1)
 	}
 

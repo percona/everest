@@ -41,7 +41,7 @@ const DatabaseFormBody = ({
     <form style={{ flexGrow: 1 }} onSubmit={onSubmit}>
       <Box>
         {(mode === 'new' ||
-          ((mode === 'edit' || mode === 'restoreFromBackup') &&
+          (mode === 'restoreFromBackup' &&
             dbClusterRequestStatus === 'success')) &&
           React.createElement(steps[activeStep], {
             loadingDefaultsForEdition,
@@ -55,7 +55,6 @@ const DatabaseFormBody = ({
         disableSubmit={isSubmitting || hasErrors}
         disableCancel={isSubmitting}
         showSubmit={activeStep === steps.length - 1}
-        editMode={mode === 'edit'}
         onPreviousClick={handlePreviousStep}
         onNextClick={handleNextStep}
         onCancel={onCancel}

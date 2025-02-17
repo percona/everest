@@ -6,7 +6,6 @@ import { previewSections } from './sections/constants';
 import { Messages } from './database.preview.messages';
 import { PreviewSection } from './preview-section';
 import { DbWizardType } from '../database-form-schema.ts';
-import { useDatabasePageMode } from '../useDatabasePageMode.ts';
 
 export const DatabasePreview = ({
   activeStep,
@@ -18,7 +17,6 @@ export const DatabasePreview = ({
   ...stackProps
 }: DatabasePreviewProps) => {
   const { getValues } = useFormContext<DbWizardType>();
-  const mode = useDatabasePageMode();
 
   // Under normal circumstances, useWatch should return the right values
   // But the initial setValue are not taking effect
@@ -36,7 +34,7 @@ export const DatabasePreview = ({
             <PreviewSection
               order={idx + 1}
               title={Messages.preview[idx]}
-              hasBeenReached={longestAchievedStep >= idx || mode === 'edit'}
+              hasBeenReached={longestAchievedStep >= idx}
               hasError={stepsWithErrors.includes(idx) && activeStep !== idx}
               active={activeStep === idx}
               disabled={disabled}

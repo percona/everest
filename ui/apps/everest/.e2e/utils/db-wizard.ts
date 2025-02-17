@@ -90,6 +90,7 @@ export const goToLastAndSubmit = async (page: Page) => {
  * @param storageClass Storage class to use
  * @param clusterName Database cluster name
  */
+
 export const populateBasicInformation = async (
   page: Page,
   namespace: string,
@@ -133,7 +134,12 @@ export const populateResources = async (
   cpu: number,
   memory: number,
   disk: number,
-  clusterSize: number
+  clusterSize: number,
+  numRouters?: number,
+  routerCpu?: number,
+  routerMemory?: number,
+  numShards?: number,
+  configServers?: number
 ) => {
   await expect(page.getByTestId('step-header')).toBeVisible();
   await expect(page.getByTestId('step-description')).toBeVisible();
@@ -159,6 +165,47 @@ export const populateResources = async (
   await expect(page.getByTestId('disk-resource-sum')).toHaveText(
     expectedDiskText
   );
+
+  if (
+    numRouters !== undefined &&
+    routerCpu !== undefined &&
+    routerMemory !== undefined &&
+    configServers !== undefined &&
+    numShards !== undefined
+  ) {
+    await page.getByTestId('proxies-accordion').click();
+    await expect(page.getByText('Number of routers')).toBeVisible();
+
+    await page.getByTestId('toggle-button-routers-custom').click();
+    await page
+      .getByTestId('text-input-custom-nr-of-proxies')
+      .fill(numRouters.toString());
+
+    await page.getByTestId('router-resources-toggle-button-custom').click();
+
+    await page.getByTestId('text-input-proxy-cpu').fill(routerCpu.toString());
+    await page
+      .getByTestId('text-input-proxy-memory')
+      .fill(routerMemory.toString());
+
+    const expectedRouterCpuText = ` = ${(routerCpu * numRouters).toFixed(2)} CPU`;
+    const expectedRouterMemoryText = ` = ${(routerMemory * numRouters).toFixed(2)} GB`;
+
+    await expect(page.getByTestId('proxyCpu-resource-sum')).toHaveText(
+      expectedRouterCpuText
+    );
+    await expect(page.getByTestId('proxyMemory-resource-sum')).toHaveText(
+      expectedRouterMemoryText
+    );
+
+    const shardsInput = await page.getByTestId('text-input-shard-nr');
+    await shardsInput.fill(numShards.toString());
+
+    const configServerButton = await page.getByTestId(
+      `shard-config-servers-${configServers}`
+    );
+    await expect(configServerButton).toHaveAttribute('aria-pressed', 'true');
+  }
 };
 
 /**

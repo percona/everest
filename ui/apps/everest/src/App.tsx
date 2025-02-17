@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { EverestConfig } from 'shared-types/configs.types';
 import { getEverestConfigs } from 'api/everestConfigs';
 import LoadingPageSkeleton from 'components/loading-page-skeleton/LoadingPageSkeleton';
+import UpgradeEverestProvider from 'contexts/upgrade-everest/upgrade-everest.provider';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,12 +29,13 @@ const App = () => {
   useEffect(() => {
     const loadConfigs = async () => {
       try {
-        const { oidcConfig = { clientId: '', issuerURL: '' } } =
+        const { oidcConfig = { clientId: '', issuerURL: '', scopes: [] } } =
           await getEverestConfigs();
         setConfigs({
           oidc: {
             authority: oidcConfig.issuerURL,
             clientId: oidcConfig.clientId,
+            scope: oidcConfig.scopes.join(' '),
             redirectUri: `${window.location.protocol}//${window.location.host}/`,
           },
         });
@@ -72,7 +74,6 @@ const App = () => {
               oidcConfig={{
                 ...configs?.oidc,
                 redirectUri: `${window.location.protocol}//${window.location.host}/login-callback`,
-                scope: 'openid profile email groups',
                 responseType: 'code',
                 autoSignIn: false,
                 automaticSilentRenew: false,
@@ -80,7 +81,9 @@ const App = () => {
               }}
             >
               <DrawerContextProvider>
-                <RouterProvider router={router} />
+                <UpgradeEverestProvider>
+                  <RouterProvider router={router} />
+                </UpgradeEverestProvider>
               </DrawerContextProvider>
               <ReactQueryDevtools initialIsOpen={false} />
             </AuthProvider>
