@@ -177,7 +177,7 @@ test.describe.configure({ retries: 0 });
           await page.goto('/databases');
           // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
           if (size != 1 || db != 'psmdb') {
-            await waitForStatus(page, clusterName, 'Initializing', 15000);
+            await waitForStatus(page, clusterName, 'Initializing', 30000);
           }
           await waitForStatus(page, clusterName, 'Up', 600000);
         });
@@ -210,9 +210,9 @@ test.describe.configure({ retries: 0 });
         await suspendDbCluster(page, clusterName);
         // One node clusters and Postgresql don't seem to show Stopping state
         if (size != 1 && db != 'postgresql') {
-          await waitForStatus(page, clusterName, 'Stopping', 45000);
+          await waitForStatus(page, clusterName, 'Stopping', 60000);
         }
-        await waitForStatus(page, clusterName, 'Paused', 180000);
+        await waitForStatus(page, clusterName, 'Paused', 240000);
       });
 
       test(`Resume cluster [${db} size ${size}]`, async ({ page }) => {

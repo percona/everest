@@ -20,8 +20,9 @@ import OverviewSectionRow from '../../../overview-section-row';
 import { useContext, useState } from 'react';
 import { MonitoringEditModal } from './edit-monitoring';
 import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
-import { useUpdateDbClusterMonitoring } from 'hooks/api/db-cluster/useUpdateDbCluster';
+import { useUpdateDbClusterWithConflictRetry } from 'hooks/api/db-cluster/useUpdateDbCluster';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
+import { changeDbClusterMonitoring } from 'utils/db';
 
 export const MonitoringDetails = ({
   loading,
@@ -35,20 +36,24 @@ export const MonitoringDetails = ({
   ].includes(dbCluster?.status?.status!);
   const editable = canUpdateDb && !restoringOrDeleting;
 
-  const { mutate: updateDbClusterMonitoring } = useUpdateDbClusterMonitoring();
+  const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
+    dbCluster!,
+    {
+      onSuccess: () => handleCloseModal(),
+    }
+  );
 
   const handleCloseModal = () => {
     setOpenEditModal(false);
   };
 
   const handleSubmit = (monitoringName: string, enabled: boolean) => {
-    updateDbClusterMonitoring({
-      clusterName: dbCluster!.metadata?.name,
-      namespace: dbCluster!.metadata?.namespace,
-      dbCluster: dbCluster!,
-      monitoringName: enabled ? monitoringName : undefined,
-    });
-    handleCloseModal();
+    updateCluster(
+      changeDbClusterMonitoring(
+        dbCluster!,
+        enabled ? monitoringName : undefined
+      )
+    );
   };
 
   return (

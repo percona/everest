@@ -24,7 +24,6 @@ const DatabaseFormStepControllers = ({
   disableSubmit,
   disableCancel,
   showSubmit,
-  editMode,
   onPreviousClick,
   onNextClick,
   onCancel,
@@ -59,7 +58,7 @@ const DatabaseFormStepControllers = ({
         disabled={disableSubmit}
         data-testid="db-wizard-submit-button"
       >
-        {editMode ? Messages.editDatabase : Messages.createDatabase}
+        {Messages.createDatabase}
       </Button>
     ) : (
       <Button
