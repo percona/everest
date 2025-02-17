@@ -40,7 +40,6 @@ import { Messages } from './first-step.messages.ts';
 import { filterAvailableDbVersionsForDbEngineEdition } from 'components/cluster-form/db-version/utils.ts';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import {
-  generateDefaultAffinityRule,
   NODES_DEFAULT_SIZES,
   PROXIES_DEFAULT_SIZES,
   ResourceSize,
@@ -53,6 +52,7 @@ import {
   AffinityRule,
 } from 'shared-types/affinity.types.ts';
 import { filterOutUnavailableAffinityRulesForMongo } from 'pages/database-form/database-form.utils.ts';
+import { generateDefaultAffinityRule } from 'utils/db.tsx';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();

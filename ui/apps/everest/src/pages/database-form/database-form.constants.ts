@@ -17,12 +17,12 @@ import { DbType } from '@percona/types';
 import { DbWizardFormFields } from 'consts.ts';
 import { DbWizardType } from './database-form-schema.ts';
 import {
-  getDefaultAffinityRules,
   getDefaultNumberOfconfigServersByNumberOfNodes,
   NODES_DEFAULT_SIZES,
   PROXIES_DEFAULT_SIZES,
   ResourceSize,
 } from 'components/cluster-form/resources/constants.ts';
+import { getDefaultAffinityRules } from 'utils/db.tsx';
 
 export const DEFAULT_NODES: Record<DbType, string> = {
   [DbType.Mongo]: '3',

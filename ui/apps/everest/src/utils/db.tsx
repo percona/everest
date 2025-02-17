@@ -26,6 +26,7 @@ import {
   RequiredPodSchedulingTerm,
 } from 'shared-types/affinity.types';
 import { generateShortUID } from './generateShortUID';
+import { DEFAULT_TOPOLOGY_KEY } from 'consts';
 import { capitalize } from '@mui/material';
 
 export const dbTypeToIcon = (dbType: DbType) => {
@@ -430,6 +431,68 @@ export const changeDbClusterAffinityRules = (
   } as DbCluster;
 };
 
+export const generateDefaultAffinityRule = (
+  component: AffinityComponent
+): AffinityRule => ({
+  component,
+  type: AffinityType.PodAntiAffinity,
+  priority: AffinityPriority.Preferred,
+  weight: 1,
+  topologyKey: DEFAULT_TOPOLOGY_KEY,
+  uid: generateShortUID(),
+});
+
+export const areAffinityRulesEqual = (
+  rule1: AffinityRule,
+  rule2: AffinityRule
+) => {
+  return (
+    rule1.component === rule2.component &&
+    rule1.type === rule2.type &&
+    rule1.priority === rule2.priority &&
+    rule1.weight === rule2.weight &&
+    rule1.topologyKey === rule2.topologyKey &&
+    rule1.key === rule2.key &&
+    rule1.operator === rule2.operator &&
+    rule1.values === rule2.values
+  );
+};
+
+export const getDefaultAffinityRules = (
+  dbType: DbType,
+  sharding: boolean = false
+) => {
+  const rules: AffinityRule[] = [
+    generateDefaultAffinityRule(AffinityComponent.DbNode),
+  ];
+
+  if (dbType === DbType.Mongo) {
+    if (sharding) {
+      rules.push(generateDefaultAffinityRule(AffinityComponent.Proxy));
+      rules.push(generateDefaultAffinityRule(AffinityComponent.ConfigServer));
+    }
+  } else {
+    rules.push(generateDefaultAffinityRule(AffinityComponent.Proxy));
+  }
+  return rules;
+};
+
+export const areAffinityRulesDefault = (
+  rules: AffinityRule[],
+  dbType: DbType,
+  sharding = false
+) => {
+  const defaultRules = getDefaultAffinityRules(dbType, sharding);
+
+  // This also covers the case when there are no rules. Unless the default rules were empty, which would be correct.
+  if (rules.length !== defaultRules.length) {
+    return false;
+  }
+
+  return rules.every((rule) =>
+    defaultRules.find((defaultRule) => areAffinityRulesEqual(rule, defaultRule))
+  );
+};
 export const getAffinityComponentLabel = (
   dbType: DbType,
   component: AffinityComponent

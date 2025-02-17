@@ -25,7 +25,7 @@ import { DbWizardType } from './database-form-schema.ts';
 import { dbEngineToDbType } from '@percona/utils';
 import { DbType } from '@percona/types';
 import { generateShortUID } from 'utils/generateShortUID.ts';
-import { getDefaultAffinityRules } from 'components/cluster-form';
+import { getDefaultAffinityRules } from 'utils/db';
 
 const getNewDbDefaults = (dbType: DbType) => {
   return {
