@@ -120,7 +120,7 @@ const ResourceInput = ({
             sx={{ whiteSpace: 'nowrap' }}
             color={theme.palette.text.secondary}
           >{`x ${numberOfUnits} ${+numberOfUnits > 1 ? unitPlural : unit}`}</Typography>
-          {value && numberOfUnits && (
+          {!!value && numberOfUnits && (
             <Typography
               variant="body1"
               sx={{ whiteSpace: 'nowrap' }}
