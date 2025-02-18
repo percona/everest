@@ -287,7 +287,6 @@ def patch_everest_debug(in_yaml):
       o['spec']['template']['spec']['securityContext']= {'runAsNonRoot': False}
       for c in o['spec']['template']['spec']['containers']:
         if c.get('name') == 'everest':
-          c['imagePullPolicy']='Always'
           c['ports'] = [{'containerPort': 8080}, {'containerPort': 40000}]
           # In debugger mode the process may be in paused state, need to avoid pod restart
           c['readinessProbe'] = None
@@ -307,7 +306,6 @@ def patch_everest_operator_debug(in_yaml):
       o['spec']['template']['spec']['securityContext']= {'runAsNonRoot': False}
       for c in o['spec']['template']['spec']['containers']:
         if c.get('name') == 'manager':
-          c['imagePullPolicy']='Always'
           c['ports'] = [{'containerPort': 40001}]
           # Need to disable security context for debugger
           c['securityContext'] = None
