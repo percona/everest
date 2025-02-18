@@ -11,6 +11,53 @@ import {
 } from 'shared-types/dbEngines.types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+const mocks = vi.hoisted(() => {
+  return {
+    getDbEnginesFn: vi.fn(() =>
+      Promise.resolve({
+        items: [
+          {
+            spec: { type: DbEngineType.PXC },
+            status: {
+              status: DbEngineStatus.INSTALLED,
+              availableVersions: {
+                engine: {
+                  '8.0': {
+                    version: '8.0',
+                    description: '8.0',
+                    status: DbEngineToolStatus.AVAILABLE,
+                  },
+                  '8.0.31-23.2': {
+                    version: '8.0.31-23.2',
+                    description: '8.0.31-23.2',
+                    status: DbEngineToolStatus.RECOMMENDED,
+                  },
+                  '9.0.0': {
+                    version: '9.0.0',
+                    description: '8.0.31-23.2',
+                    status: DbEngineToolStatus.AVAILABLE,
+                  },
+                  '8.1': {
+                    version: '8.1',
+                    description: '8.1',
+                    status: DbEngineToolStatus.RECOMMENDED,
+                  },
+                  '8.4': {
+                    version: '8.4',
+                    description: '8.4',
+                    status: DbEngineToolStatus.AVAILABLE,
+                  },
+                },
+              },
+            },
+            metadata: { name: 'pxc-1' },
+          },
+        ],
+      })
+    ),
+  };
+});
+
 vi.mock('./utils', () => ({
   generateShortUID: vi.fn(() => '123'),
 }));
@@ -29,48 +76,7 @@ vi.mock('api/namespaces', () => ({
 }));
 
 vi.mock('api/dbEngineApi', () => ({
-  getDbEnginesFn: vi.fn(() =>
-    Promise.resolve({
-      items: [
-        {
-          spec: { type: DbEngineType.PXC },
-          status: {
-            status: DbEngineStatus.INSTALLED,
-            availableVersions: {
-              engine: {
-                '8.0': {
-                  version: '8.0',
-                  description: '8.0',
-                  status: DbEngineToolStatus.AVAILABLE,
-                },
-                '8.0.31-23.2': {
-                  version: '8.0.31-23.2',
-                  description: '8.0.31-23.2',
-                  status: DbEngineToolStatus.RECOMMENDED,
-                },
-                '9.0.0': {
-                  version: '9.0.0',
-                  description: '8.0.31-23.2',
-                  status: DbEngineToolStatus.AVAILABLE,
-                },
-                '8.1': {
-                  version: '8.1',
-                  description: '8.1',
-                  status: DbEngineToolStatus.RECOMMENDED,
-                },
-                '8.4': {
-                  version: '8.4',
-                  description: '8.4',
-                  status: DbEngineToolStatus.AVAILABLE,
-                },
-              },
-            },
-          },
-          metadata: { name: 'pxc-1' },
-        },
-      ],
-    })
-  ),
+  getDbEnginesFn: mocks.getDbEnginesFn,
 }));
 
 interface FormProviderWrapperProps {
@@ -142,5 +148,59 @@ describe('First Step', async () => {
     ]);
   });
 
-  // TODO it should be disabled if monitoring instances list length <=0 or undefined
+  it('should show highest version if recommended version is not available', async () => {
+    mocks.getDbEnginesFn.mockResolvedValue({
+      items: [
+        {
+          spec: { type: DbEngineType.PXC },
+          status: {
+            status: DbEngineStatus.INSTALLED,
+            availableVersions: {
+              engine: {
+                '8.0': {
+                  version: '8.0',
+                  description: '8.0',
+                  status: DbEngineToolStatus.AVAILABLE,
+                },
+                '8.0.31-23.2': {
+                  version: '8.0.31-23.2',
+                  description: '8.0.31-23.2',
+                  status: DbEngineToolStatus.AVAILABLE,
+                },
+                '9.0.0': {
+                  version: '9.0.0',
+                  description: '8.0.31-23.2',
+                  status: DbEngineToolStatus.AVAILABLE,
+                },
+                '8.1': {
+                  version: '8.1',
+                  description: '8.1',
+                  status: DbEngineToolStatus.AVAILABLE,
+                },
+                '8.4': {
+                  version: '8.4',
+                  description: '8.4',
+                  status: DbEngineToolStatus.AVAILABLE,
+                },
+              },
+            },
+          },
+          metadata: { name: 'pxc-1' },
+        },
+      ],
+    });
+
+    render(
+      <TestWrapper>
+        <FormProviderWrapper handleSubmit={vi.fn()}>
+          <FirstStep loadingDefaultsForEdition={false} alreadyVisited={false} />
+        </FormProviderWrapper>
+      </TestWrapper>
+    );
+
+    // no version is recommended, therefore 9.0.0 should be the selected option after loading
+    await waitFor(() =>
+      expect(screen.getByTestId('select-input-db-version')).toHaveValue('9.0.0')
+    );
+  });
 });
