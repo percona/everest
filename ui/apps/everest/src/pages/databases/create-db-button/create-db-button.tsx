@@ -19,7 +19,7 @@ import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import { Messages } from '../dbClusterView.messages';
 import { useDBEnginesForDbEngineTypes } from 'hooks';
 import { dbEngineToDbType } from '@percona/utils';
-import { humanizeDbType } from '@percona/ui-lib';
+import { humanizeDbType } from 'pages/database-form/database-form.utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 

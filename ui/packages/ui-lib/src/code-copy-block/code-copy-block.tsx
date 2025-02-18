@@ -15,12 +15,9 @@
 
 import { Alert } from '@mui/material';
 import { CodeCopyBlockProps } from './code-copy-block.types';
-import { CopyToClipboardButton } from '@percona/ui-lib';
+import CopyToClipboardButton from '../buttons/copy-to-clipboard-button';
 
-export const CodeCopyBlock = ({
-  message,
-  showCopyButtonText,
-}: CodeCopyBlockProps) => {
+const CodeCopyBlock = ({ message, showCopyButtonText }: CodeCopyBlockProps) => {
   return (
     <Alert
       severity="info"
@@ -46,3 +43,5 @@ export const CodeCopyBlock = ({
     </Alert>
   );
 };
+
+export default CodeCopyBlock;

@@ -5,6 +5,7 @@ import { DbType } from '@percona/types';
 import { TestWrapper } from 'utils/test';
 import { FirstStep } from './first-step';
 import { DbWizardFormFields } from 'consts';
+import { humanizeDbType } from 'pages/database-form/database-form.utils';
 
 vi.mock('./utils', () => ({
   generateShortUID: vi.fn(() => '123'),
@@ -64,4 +65,12 @@ describe('First Step', () => {
   });
 
   // TODO it should be disabled if monitoring instances list length <=0 or undefined
+});
+
+describe('utils', () => {
+  test('humanizeDbType', () => {
+    expect(humanizeDbType(DbType.Mongo)).toBe('MongoDB');
+    expect(humanizeDbType(DbType.Mysql)).toBe('MySQL');
+    expect(humanizeDbType(DbType.Postresql)).toBe('PostgreSQL');
+  });
 });

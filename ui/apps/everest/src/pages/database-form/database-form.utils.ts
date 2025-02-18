@@ -155,3 +155,11 @@ export const DbClusterPayloadToFormValues = (
       dbCluster?.spec?.monitoring?.monitoringConfigName || '',
   };
 };
+
+const humanizedDbMap: Record<DbType, string> = {
+  [DbType.Postresql]: 'PostgreSQL',
+  [DbType.Mongo]: 'MongoDB',
+  [DbType.Mysql]: 'MySQL',
+};
+
+export const humanizeDbType = (type: DbType): string => humanizedDbMap[type];
