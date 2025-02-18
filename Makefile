@@ -42,7 +42,7 @@ release-cli:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -v $(LD_FLAGS_CLI) -o ./dist/everestctl.exe ./cmd/cli
 
 build-debug:                ## Build binaries
-	go build -tags debug -v $(LD_FLAGS_API) -o bin/everest ./cmd
+	CGO_ENABLED=0 go build -tags debug -v $(LD_FLAGS_API) -gcflags=all="-N -l" -o bin/everest ./cmd
 
 gen:                    ## Generate code
 	go generate ./...
