@@ -37,7 +37,7 @@ const ComponentNode = ({
         </Typography>
       </Stack>
       <Stack mt={2}>
-        <Typography variant="body1" data-testid="component-node-name">
+        <Typography variant="body1" data-testid="component-name">
           {name}
         </Typography>
         <DiagramComponentAge
@@ -51,7 +51,7 @@ const ComponentNode = ({
       <Chip
         label={type}
         sx={{ alignSelf: 'flex-start', mt: 1 }}
-        data-testid="component-node-type"
+        data-testid="component-type"
       />
     </DiagramNode>
   );

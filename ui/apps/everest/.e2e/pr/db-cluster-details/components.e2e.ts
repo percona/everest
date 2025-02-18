@@ -87,16 +87,16 @@ test.describe('Cluster components', async () => {
 
       await expect(correspondingNode).toBeVisible();
       expect(
-        await correspondingNode.getByTestId('component-node-name').innerText()
+        await correspondingNode.getByTestId('component-name').innerText()
       ).toBe(name);
       expect(
-        await correspondingNode.getByTestId('component-node-type').innerText()
+        await correspondingNode.getByTestId('component-type').innerText()
       ).toBe(type);
       await correspondingNode.click();
 
       if (containers.length) {
         const correspondingContainers = await page
-          .getByTestId('container-node')
+          .getByTestId(/container-node-.+/)
           .all();
         expect(correspondingContainers.length).toBe(containers.length);
 
@@ -109,7 +109,7 @@ test.describe('Cluster components', async () => {
           await expect(correspondingContainer).toBeVisible();
           expect(
             await correspondingContainer
-              .getByTestId('container-node-name')
+              .getByTestId('container-name')
               .innerText()
           ).toBe(name);
         }
