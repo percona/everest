@@ -55,11 +55,11 @@ test.describe('Cluster components', async () => {
     await expect(page.getByLabel('Collapse all')).toBeVisible();
     const allComponents = await page
       .locator(
-        '.MuiTableRow-root:not(.MuiTableRow-head):not(.Mui-TableBodyCell-DetailPanel)'
+        `table[data-testid="${CLUSTER_NAME}-components"] > tbody > tr.MuiTableRow-root:not(.MuiTableRow-head):not(.Mui-TableBodyCell-DetailPanel)`
       )
       .all();
     const allContainers = await page
-      .locator('.Mui-TableBodyCell-DetailPanel')
+      .locator('tr.Mui-TableBodyCell-DetailPanel')
       .all();
 
     for (const component of allComponents) {
@@ -73,8 +73,13 @@ test.describe('Cluster components', async () => {
       const innerText = await container.innerText();
 
       if (innerText !== 'No containers') {
-        const name = await container.locator('td').nth(2).innerText();
-        componentsList[index].containers.push({ name });
+        const innerTable = container.locator('table');
+        const innerTableRows = await innerTable.locator('tr').all();
+
+        for (const innerTableRow of innerTableRows) {
+          const name = await innerTableRow.locator('td').nth(2).innerText();
+          componentsList[index].containers.push({ name });
+        }
       }
     }
 
@@ -93,6 +98,8 @@ test.describe('Cluster components', async () => {
         await correspondingNode.getByTestId('component-type').innerText()
       ).toBe(type);
       await correspondingNode.click();
+      // Wait for the diagram to be updated
+      await page.waitForTimeout(300);
 
       if (containers.length) {
         const correspondingContainers = await page

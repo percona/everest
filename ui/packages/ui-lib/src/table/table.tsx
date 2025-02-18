@@ -235,6 +235,10 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
         },
         ...displayColumnDefOptions,
       }}
+      muiTableProps={{
+        // @ts-expect-error
+        'data-testid': tableName,
+      }}
       muiTableHeadProps={{
         sx: {
           '& tr': {
