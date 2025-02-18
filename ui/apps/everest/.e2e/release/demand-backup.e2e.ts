@@ -90,20 +90,23 @@ test.describe.configure({ retries: 0 });
       });
 
       test.afterAll(async ({ request }) => {
-        // we try to delete all monitoring instances because cluster creation expects that none exist
-        // (monitoring instance is added in the form where the warning that none exist is visible)
-        const monitoringInstances = await listMonitoringInstances(
-          request,
-          namespace,
-          token
-        );
-        for (const instance of monitoringInstances) {
-          await deleteMonitoringInstance(
+        // Playwright decided to execute only afterAll hook even if the group is skipped so we need a condition here
+        if ((SELECT_DB ? SELECT_DB === db : true) && (SELECT_SIZE ? SELECT_SIZE === size.toString() : true)) {
+          // we try to delete all monitoring instances because cluster creation expects that none exist
+          // (monitoring instance is added in the form where the warning that none exist is visible)
+          const monitoringInstances = await listMonitoringInstances(
             request,
             namespace,
-            instance.name,
             token
           );
+          for (const instance of monitoringInstances) {
+            await deleteMonitoringInstance(
+              request,
+              namespace,
+              instance.name,
+              token
+            );
+          }
         }
       });
 
