@@ -63,7 +63,22 @@ export PSMDB_OPERATOR_VERSION=1.15.0
 export PG_OPERATOR_VERSION=2.3.1
 ```
 
-3. Run tilt
+3. (Optional) If you want to debug Everest Server and/or Everest operator remotely, you can set the following environment variables 
+```sh
+export EVEREST_DEBUG=true
+export EVEREST_OPERATOR_DEBUG=true
+```
+In such a case you can setup your IDE to connect to port on your `localhost` and use debugging tools in your IDE.
+
+Debugging port for Everest Server: `40000`.
+
+Debugging port for Everest Operator: `40001`.
+
+Refer to instructions in your IDE on how to setup remote debugging. 
+
+For GoLand, you can refer to [this](https://www.jetbrains.com/help/go/attach-to-running-go-processes-with-debugger.html#step-2-create-the-go-remote-run-debug-configuration) link.
+
+4. Run tilt
 ```sh
 tilt up
 ```
