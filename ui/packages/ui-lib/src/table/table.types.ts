@@ -12,6 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+import { AlertProps } from '@mui/material';
 import { type MaterialReactTableProps } from 'material-react-table';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -22,4 +23,5 @@ export interface TableProps<T extends Record<string, any>>
   hideExpandAllIcon?: boolean;
   tableName: string;
   emptyState?: React.ReactNode;
+  noDataAlertProps?: AlertProps;
 }
