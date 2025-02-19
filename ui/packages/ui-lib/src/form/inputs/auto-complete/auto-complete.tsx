@@ -59,9 +59,6 @@ function AutoCompleteInput<T>({
                   </>
                 ),
               }}
-              InputLabelProps={{
-                shrink: true,
-              }}
               size="small"
               required={isRequired}
               {...restTextFieldProps}
