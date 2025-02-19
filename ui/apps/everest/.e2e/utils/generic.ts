@@ -17,6 +17,11 @@ import { expect } from '@playwright/test';
 import { execSync } from 'child_process';
 import { everestFeatureBuildForUpgrade } from '@e2e/constants';
 
+const {
+  SELECT_DB,
+  SELECT_SIZE,
+} = process.env;
+
 export const checkError = async (response) => {
   if (!response.ok()) {
     console.log(`${response.url()}: `, await response.json());
@@ -41,4 +46,8 @@ export const getVersionServiceURL = async () => {
       throw error;
     }
   }
+};
+
+export const shouldExecuteDBCombination = (db: string, size: number) => {
+  return (SELECT_DB ? SELECT_DB === db : true) && (SELECT_SIZE ? SELECT_SIZE === size.toString() : true);
 };

@@ -49,13 +49,12 @@ import {
   queryTestDB,
 } from '@e2e/utils/db-cmd-line';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
+import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 
 const {
   MONITORING_URL,
   MONITORING_USER,
   MONITORING_PASSWORD,
-  SELECT_DB,
-  SELECT_SIZE,
 } = process.env;
 let token: string;
 
@@ -70,11 +69,6 @@ test.describe(
     tag: '@release',
   },
   () => {
-    test.skip(
-      () =>
-        (SELECT_DB !== db && !!SELECT_DB) ||
-        (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
-    );
     test.describe.configure({ timeout: 720000 });
 
     const clusterName = `${db}-${size}-shard`;
@@ -96,7 +90,7 @@ test.describe(
 
     test.afterAll(async ({ request }) => {
       // Playwright decided to execute only afterAll hook even if the group is skipped so we need a condition here
-      if ((SELECT_DB ? SELECT_DB === db : true) && (SELECT_SIZE ? SELECT_SIZE === size.toString() : true)) {
+      if (shouldExecuteDBCombination(db, size)) {
         // we try to delete all monitoring instances because cluster creation expects that none exist
         // (monitoring instance is added in the form where the warning that none exist is visible)
         const monitoringInstances = await listMonitoringInstances(
