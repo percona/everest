@@ -3,26 +3,35 @@ import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrow
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
-import { Alert, Box } from '@mui/material';
+import { Alert, AlertProps, Box } from '@mui/material';
 import { MaterialReactTable, MRT_VisibilityState } from 'material-react-table';
 import { useEffect } from 'react';
 import { ICONS_OPACITY } from './table.constants';
 import { TableProps } from './table.types';
 import usePersistentColumnVisibility from './usePersistentColumnVisibility';
 
-const noDataAlertWithMessage = (message?: string) => (
-  <Alert
-    severity="info"
-    sx={{
-      width: '100%',
-      height: '50px',
-      marginTop: 1,
-      marginBottom: 1,
-    }}
-  >
-    {message}
-  </Alert>
-);
+const NoDataAlertMessage = ({
+  message,
+  ...rest
+}: { message: string } & AlertProps) => {
+  const { sx, ...alertProps } = rest;
+  return (
+    <Alert
+      severity="info"
+      sx={{
+        width: '100%',
+        alignItems: 'center',
+        marginTop: 1,
+        marginBottom: 1,
+        height: '60px',
+        ...sx,
+      }}
+      {...alertProps}
+    >
+      {message}
+    </Alert>
+  );
+};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function Table<T extends Record<string, any>>(props: TableProps<T>) {
@@ -32,7 +41,8 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
     muiTablePaperProps,
     muiTopToolbarProps,
     displayColumnDefOptions,
-    noDataMessage,
+    noDataMessage = 'No data',
+    noDataAlertProps,
     emptyFilterResultsMessage = 'No data found',
     hideExpandAllIcon,
     tableName,
@@ -108,11 +118,14 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
         <>
           {/* This means there was data before filtering, so we show the message of empty filtering result */}
           {getPreFilteredRowModel().rows.length > 0 ? (
-            noDataAlertWithMessage(emptyFilterResultsMessage)
+            <NoDataAlertMessage
+              message={emptyFilterResultsMessage}
+              {...noDataAlertProps}
+            />
           ) : emptyState ? (
             <Box>{emptyState}</Box>
           ) : (
-            noDataAlertWithMessage(noDataMessage)
+            <NoDataAlertMessage message={noDataMessage} {...noDataAlertProps} />
           )}
         </>
       )}
