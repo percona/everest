@@ -48,11 +48,7 @@ import { prepareTestDB, dropTestDB, queryTestDB } from '@e2e/utils/db-cmd-line';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
 import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 
-const {
-  MONITORING_URL,
-  MONITORING_USER,
-  MONITORING_PASSWORD,
-} = process.env;
+const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 let token: string;
 
 test.describe.configure({ retries: 0 });

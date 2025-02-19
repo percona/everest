@@ -52,11 +52,7 @@ import { addFirstScheduleInDBWizard } from '@e2e/pr/db-cluster/db-wizard/db-wiza
 import { getDbClusterAPI, updateDbClusterAPI } from '@e2e/utils/db-cluster';
 import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 
-const {
-  MONITORING_URL,
-  MONITORING_USER,
-  MONITORING_PASSWORD,
-} = process.env;
+const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 
 type pitrTime = {
   day: string;
