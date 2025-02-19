@@ -59,6 +59,18 @@ if not os.path.exists(everest_chart_dir):
   fail('Chart dir does not exist: %s' % everest_chart_dir)
 print('Using chart dir: %s' % everest_chart_dir)
 
+# Check for Everest debug
+everest_debug = bool(os.getenv('EVEREST_DEBUG'))
+if not everest_debug:
+    everest_debug = False
+print('Using Everest debug: %s' % everest_debug)
+
+# Check for Everest Operator debug
+everest_operator_debug = bool(os.getenv('EVEREST_OPERATOR_DEBUG'))
+if not everest_operator_debug:
+    everest_operator_debug = False
+print('Using Everest Operator debug: %s' % everest_operator_debug)
+
 watch_settings(
     ignore=[
         '%s/**/*.tgz' % everest_chart_dir,
@@ -256,11 +268,55 @@ everest_yaml = helm(
         'createMonitoringResources=false',
         'monitoring.crds.enabled=true',
         'monitoring.crds.plain=false',
+        'monitoring.namespaceOverride=%s' % everest_monitoring_namespace,
         'server.initialAdminPassword=admin',
     ],
 )
 # we don't need the catalog source
 everest_catalog_source_yaml, everest_yaml = filter_yaml(everest_yaml, kind='CatalogSource', name='everest-catalog')
+
+# Patch Everest Server deployment for running with debugger
+def patch_everest_debug(in_yaml):
+  if not everest_debug:
+    return in_yaml
+
+  print('Patching Everest Server deployment for running with debugger')
+  objects = decode_yaml_stream(in_yaml)
+  for o in objects:
+    if o.get('kind') == 'Deployment' and o.get('metadata').get('name') == 'everest-server':
+      o['spec']['template']['spec']['securityContext']= {'runAsNonRoot': False}
+      for c in o['spec']['template']['spec']['containers']:
+        if c.get('name') == 'everest':
+          c['ports'] = [{'containerPort': 8080}, {'containerPort': 40000}]
+          # In debugger mode the process may be in paused state, need to avoid pod restart
+          c['readinessProbe'] = None
+          c['livenessProbe'] = None
+          c['resources'] = None
+  return encode_yaml_stream(objects)
+
+# Patch Everest Operator deployment for running with debugger
+def patch_everest_operator_debug(in_yaml):
+  if not everest_operator_debug:
+    return in_yaml
+
+  print('Patching Everest operator deployment for running with debugger')
+  objects = decode_yaml_stream(in_yaml)
+  for o in objects:
+    if o.get('kind') == 'Deployment' and o.get('metadata').get('name') == 'everest-operator':
+      o['spec']['template']['spec']['securityContext']= {'runAsNonRoot': False}
+      for c in o['spec']['template']['spec']['containers']:
+        if c.get('name') == 'manager':
+          c['ports'] = [{'containerPort': 40001}]
+          # Need to disable security context for debugger
+          c['securityContext'] = None
+          # In debugger mode the process may be in paused state, need to avoid pod restart
+          c['readinessProbe'] = None
+          c['livenessProbe'] = None
+          c['resources'] = None
+  return encode_yaml_stream(objects)
+
+everest_yaml=patch_everest_debug(everest_yaml)
+everest_yaml=patch_everest_operator_debug(everest_yaml)
 k8s_yaml(everest_yaml)
 
 #################################
@@ -334,20 +390,40 @@ k8s_resource(
 ####### Everest operator #######
 ################################
 
-# Generate the Everest operator manifests
-local_resource(
-  'operator-gen-manifests',
-  'make -C %s fmt manifests generate' % operator_dir,
-  deps=['%s/api' % operator_dir],
-  ignore=['%s/api/*/zz_generated.deepcopy.go' % operator_dir],
-  labels=["everest-operator"]
-)
+everest_operator_build_target='build'
+everest_operator_target='dev'
+everest_operator_entrypoint=["./manager"]
+everest_operator_port_forwards=[]
+if everest_operator_debug:
+    everest_operator_build_target='build-debug'
+    everest_operator_target='debug'
+    everest_operator_entrypoint=[
+        "/dlv",
+        "--listen=:40001",
+        "--headless=true",
+        "--api-version=2",
+        "--continue=true",
+        "--accept-multiclient=true",
+        "exec",
+        "/home/everest/manager",
+        "--",
+    ]
+    everest_operator_port_forwards=[
+        port_forward(40001, 40001, 'Everest Operator debugger'),
+    ]
 
 # Build the Everest operator manager locally to take advantage of the go cache
 local_resource(
   'operator-build',
-  'make -C %s fmt; CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -C %s -o ./bin/manager ./cmd/main.go' % (operator_dir, operator_dir),
-  deps=['%s/api' % operator_dir, '%s/internal' % operator_dir, '%s/cmd/main.go' % operator_dir],
+  'GOOS=linux make -C %s %s' % (operator_dir, everest_operator_build_target),
+  deps=[
+    'go.mod',
+    'go.sum',
+    '%s/api' % operator_dir,
+    '%s/internal' % operator_dir,
+    '%s/cmd' % operator_dir,
+  ],
+  ignore=['%s/api/*/zz_generated.deepcopy.go' % operator_dir],
   labels=["everest-operator"]
 )
 
@@ -356,10 +432,11 @@ load('ext://restart_process', 'docker_build_with_restart')
 docker_build_with_restart('perconalab/everest-operator',
   context='%s' % operator_dir,
   dockerfile='./everest-operator.Dockerfile',
-  entrypoint='/home/tilt/manager --system-namespace=%s --monitoring-namespace=%s' % (everest_namespace, everest_monitoring_namespace),
+  target=everest_operator_target,
+  entrypoint=everest_operator_entrypoint,
   only=['%s/bin/manager' % operator_dir],
   live_update=[
-    sync('%s/bin/manager' % operator_dir, '/home/tilt/manager'),
+    sync('%s/bin/manager' % operator_dir, '/home/everest/manager'),
   ]
 )
 
@@ -393,6 +470,7 @@ k8s_resource(
       'everest-namespace',
       'everest-crds',
     ],
+    port_forwards=everest_operator_port_forwards,
     new_name='everest-operator-deploy',
     labels=["everest-operator"]
 )
@@ -401,31 +479,73 @@ k8s_resource(
 ############ Everest ############
 #################################
 
-# Build backend
-local_resource(
-  'backend-build',
-  'CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make -C %s build' % backend_dir,
-  deps=['%s/api' % backend_dir, '%s/cmd' % backend_dir, '%s/pkg' % backend_dir, '%s/public' % backend_dir, '%s/internal' % backend_dir],
-  labels=["everest"]
-)
-
 # Build frontend
 local_resource(
   'frontend-build',
   'make -C %s build EVEREST_OUT_DIR=%s/public/dist' % (frontend_dir, backend_dir),
   deps=['%s/apps' % frontend_dir],
-  ignore=['%s/apps/*/dist' % frontend_dir, '%s/apps/*/.turbo' % frontend_dir],
+  ignore=[
+    '%s/apps/*/dist' % frontend_dir,
+    '%s/apps/*/.turbo' % frontend_dir,
+  ],
   labels=["everest"]
 )
 
 # Live update the Everest container without generating a new pod
+everest_build_target='build'
+everest_target='dev'
+everest_entrypoint=["./everest-api"]
+everest_port_forwards=[
+    port_forward(8080, 8080, 'Everest Server API'),
+]
+if everest_debug:
+    everest_build_target='build-debug'
+    everest_target='debug'
+    everest_entrypoint=[
+        "/dlv",
+        "--listen=:40000",
+        "--headless=true",
+        "--api-version=2",
+        "--continue=true",
+        "--accept-multiclient=true",
+        "exec",
+        "/home/everest/everest-api",
+        "--",
+    ]
+    everest_port_forwards=[
+        port_forward(40000, 40000, 'Everest Server debugger'),
+        port_forward(8080, 8080, 'Everest Server API'),
+    ]
+
+# Build backend
+local_resource(
+    'backend-build',
+    'GOOS=linux make -C %s %s' % (backend_dir, everest_build_target),
+    deps=[
+        'go.mod',
+        'go.sum',
+        '%s/api' % backend_dir,
+        '%s/cmd' % backend_dir,
+        '%s/pkg' % backend_dir,
+        '%s/public' % backend_dir,
+        '%s/internal' % backend_dir,
+        ],
+    ignore=[
+        frontend_dir,
+        '%s/cmd/cli' % backend_dir,
+        '%s/pkg/cli' % backend_dir,
+        ],
+    labels=["everest"]
+)
+
 docker_build_with_restart('perconalab/everest',
   context='%s' % backend_dir,
   dockerfile='./everest.Dockerfile',
-  entrypoint='/home/tilt/everest-api',
+  target=everest_target,
+  entrypoint=everest_entrypoint,
   only=['%s/bin/everest' % backend_dir],
   live_update=[
-    sync('%s/bin/everest' % backend_dir, '/home/tilt/everest-api'),
+    sync('%s/bin/everest' % backend_dir, '/home/everest/everest-api'),
   ]
 )
 
@@ -445,7 +565,7 @@ k8s_resource(
     resource_deps = [
       'everest-namespace',
     ],
-    port_forwards=8080,
+    port_forwards=everest_port_forwards,
     new_name='everest-server-deploy',
     labels=["everest"]
 )

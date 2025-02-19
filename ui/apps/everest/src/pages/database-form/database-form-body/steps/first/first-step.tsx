@@ -209,16 +209,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       DbWizardFormFields.shardConfigServers,
       DB_WIZARD_DEFAULTS.shardConfigServers
     );
-
-    resetField(DbWizardFormFields.numberOfProxies, {
-      keepTouched: false,
-    });
-    resetField(DbWizardFormFields.shardNr, {
-      keepError: false,
-    });
-    resetField(DbWizardFormFields.shardConfigServers, {
-      keepError: false,
-    });
   }, []);
 
   useEffect(() => {
