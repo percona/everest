@@ -83,9 +83,11 @@ describe('DatabasePreview', () => {
     expect(screen.getByText('Type: MySQL')).toBeInTheDocument();
     expect(screen.getByText('Version: 1.0.0')).toBeInTheDocument();
 
-    expect(screen.getByText('Nº nodes: 1')).toBeInTheDocument();
-    expect(screen.getAllByText('CPU: 1.00 CPU').length).toBeGreaterThan(1);
-    expect(screen.getByText('Disk: 30.00 Gi')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        '1 node - CPU - 1.00 CPU; Memory - 4.00 GB; Disk - 30.00 Gi'
+      )
+    ).toBeInTheDocument();
   });
 
   it('should get updated form values', async () => {
