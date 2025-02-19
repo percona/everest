@@ -50,14 +50,9 @@ import {
 } from '@e2e/utils/db-cmd-line';
 import { addFirstScheduleInDBWizard } from '@e2e/pr/db-cluster/db-wizard/db-wizard-utils';
 import { getDbClusterAPI, updateDbClusterAPI } from '@e2e/utils/db-cluster';
+import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 
-const {
-  MONITORING_URL,
-  MONITORING_USER,
-  MONITORING_PASSWORD,
-  SELECT_DB,
-  SELECT_SIZE,
-} = process.env;
+const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 
 type pitrTime = {
   day: string;
@@ -114,11 +109,7 @@ test.describe.configure({ retries: 0 });
       tag: '@release',
     },
     () => {
-      test.skip(
-        () =>
-          (SELECT_DB !== db && !!SELECT_DB) ||
-          (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
-      );
+      test.skip(!shouldExecuteDBCombination(db, size));
       test.describe.configure({ timeout: 720000 });
 
       const clusterName = `${db}-${size}-pitr`;
@@ -139,20 +130,23 @@ test.describe.configure({ retries: 0 });
       });
 
       test.afterAll(async ({ request }) => {
-        // we try to delete all monitoring instances because cluster creation expects that none exist
-        // (monitoring instance is added in the form where the warning that none exist is visible)
-        const monitoringInstances = await listMonitoringInstances(
-          request,
-          namespace,
-          token
-        );
-        for (const instance of monitoringInstances) {
-          await deleteMonitoringInstance(
+        // Playwright decided to execute only afterAll hook even if the group is skipped so we need a condition here
+        if (shouldExecuteDBCombination(db, size)) {
+          // we try to delete all monitoring instances because cluster creation expects that none exist
+          // (monitoring instance is added in the form where the warning that none exist is visible)
+          const monitoringInstances = await listMonitoringInstances(
             request,
             namespace,
-            instance.name,
             token
           );
+          for (const instance of monitoringInstances) {
+            await deleteMonitoringInstance(
+              request,
+              namespace,
+              instance.name,
+              token
+            );
+          }
         }
       });
 
@@ -184,7 +178,7 @@ test.describe.configure({ retries: 0 });
             .getByRole('button')
             .getByText(size + ' node')
             .click();
-          await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
+          await expect(page.getByText('Nodes (' + size + ')')).toBeVisible();
           await populateResources(page, 0.6, 1, 1, size);
           await moveForward(page);
         });
