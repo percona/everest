@@ -92,17 +92,15 @@ describe('DatabasePreview', () => {
       </FormProviderWrapper>
     );
 
-    await waitFor(() =>
-      expect(screen.getByText('CPU: 0.60 CPU')).toBeInTheDocument()
-    );
-
     expect(screen.getByText('Name: myDB')).toBeInTheDocument();
     expect(screen.getByText('Type: MySQL')).toBeInTheDocument();
     expect(screen.getByText('Version: 1.0.0')).toBeInTheDocument();
-    expect(screen.getByText('Nº nodes: 3')).toBeInTheDocument();
-    expect(screen.getByText('Memory: 6.00 GB')).toBeInTheDocument();
-    expect(screen.getByText('CPU: 3.00 CPU')).toBeInTheDocument();
-    expect(screen.getByText('Disk: 90.00 Gi')).toBeInTheDocument();
+
+    expect(
+      screen.getByText(
+        '3 nodes - CPU - 3.00 CPU; Memory - 6.00 GB; Disk - 90.00 Gi'
+      )
+    ).toBeInTheDocument();
   });
 
   it('should get updated form values', async () => {

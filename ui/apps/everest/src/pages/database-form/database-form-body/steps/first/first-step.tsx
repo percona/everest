@@ -48,7 +48,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   } = useDatabasePageDefaultValues(mode);
   const { watch, setValue, getFieldState, resetField } = useFormContext();
 
-  const { data: clusterInfo, isFetching: clusterInfoFetching } =
+  const { data: clusterInfo, isLoading: clusterInfoLoading } =
     useKubernetesClusterInfo(['wizard-k8-info']);
 
   const dbType: DbType = watch(DbWizardFormFields.dbType);
@@ -113,7 +113,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     }
   }, [clusterInfo]);
 
-  const { canCreate, isFetching } =
+  const { canCreate, isLoading } =
     useNamespacePermissionsForResource('database-clusters');
 
   const filteredNamespaces = canCreate.filter((namespace) =>
@@ -131,14 +131,14 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       !k8sNamespaceTouched &&
       mode === 'new' &&
       filteredNamespaces.length > 0 &&
-      !isFetching
+      !isLoading
     ) {
       setValue(DbWizardFormFields.k8sNamespace, filteredNamespaces[0], {
         shouldValidate: true,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, isFetching, filteredNamespaces.length]);
+  }, [mode, isLoading, filteredNamespaces.length]);
 
   // setting the dvVersion default value
   useEffect(() => {
@@ -192,7 +192,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           }}
           name={DbWizardFormFields.k8sNamespace}
           label={Messages.labels.k8sNamespace}
-          loading={isFetching}
+          loading={isLoading}
           options={filteredNamespaces}
           disabled={mode === 'restoreFromBackup' || loadingDefaultsForEdition}
           onChange={onNamespaceChange}
@@ -215,11 +215,12 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             selectFieldProps: { disabled: mode === 'restoreFromBackup' },
           }}
           availableVersions={dbEngineData?.availableVersions.engine}
+          loading={dbEnginesFoDbEngineTypesFetching || isLoading}
         />
         <AutoCompleteInput
           name={DbWizardFormFields.storageClass}
           label={Messages.labels.storageClass}
-          loading={clusterInfoFetching}
+          loading={clusterInfoLoading}
           options={clusterInfo?.storageClassNames || []}
           autoCompleteProps={{
             disableClearable: true,
