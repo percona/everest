@@ -27,4 +27,5 @@ export type SelectInputProps = {
   formControlProps?: FormControlProps;
   children?: React.ReactNode | React.ReactNode[];
   isRequired?: boolean;
+  loading?: boolean;
 };
