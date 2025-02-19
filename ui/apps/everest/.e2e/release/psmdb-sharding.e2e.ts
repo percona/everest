@@ -145,7 +145,7 @@ test.describe(
           .getByText(size + ' nodes')
           .click();
 
-        await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
+        await expect(page.getByText('Nodes (' + size + ')')).toBeVisible();
         await populateResources(page, 0.6, 1, 1, size, 2, 0.6, 1, 2, 3);
         await moveForward(page);
       });

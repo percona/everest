@@ -141,7 +141,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
             .getByText(size + ' node')
             .click();
 
-          await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
+          await expect(page.getByText('Nodes (' + size + ')')).toBeVisible();
           await populateResources(page, 0.6, 1, 1, size);
           await moveForward(page);
         });
