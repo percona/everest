@@ -1,10 +1,9 @@
 import { Box, Button, Divider, Stack, Typography } from '@mui/material';
-import { EmptyStateIcon } from '@percona/ui-lib';
+import { CodeCopyBlock, EmptyStateIcon } from '@percona/ui-lib';
 import { Messages } from './messages';
 import { ArrowOutward } from '@mui/icons-material';
 import { centeredContainerStyle } from '../utils';
 import { ContactSupportLink } from '../ContactSupportLink';
-import { CodeCopyBlock } from 'components/code-copy-block/code-copy-block';
 
 const CommandInstructions = ({
   message,
