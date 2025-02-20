@@ -520,7 +520,7 @@ if everest_debug:
 # Build backend
 local_resource(
     'backend-build',
-    'GOOS=linux make -C %s %s' % (backend_dir, everest_build_target),
+    'CGO_ENABLED=0 GOOS=linux make -C %s %s' % (backend_dir, everest_build_target),
     deps=[
         'go.mod',
         'go.sum',
