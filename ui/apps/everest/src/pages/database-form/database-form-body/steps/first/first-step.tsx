@@ -57,7 +57,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const { watch, setValue, getFieldState, resetField, trigger } =
     useFormContext();
 
-  const { data: clusterInfo, isFetching: clusterInfoFetching } =
+  const { data: clusterInfo, isLoading: clusterInfoLoading } =
     useKubernetesClusterInfo(['wizard-k8-info']);
 
   const dbType: DbType = watch(DbWizardFormFields.dbType);
@@ -121,7 +121,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     }
   }, [clusterInfo]);
 
-  const { canCreate, isFetching } =
+  const { canCreate, isLoading } =
     useNamespacePermissionsForResource('database-clusters');
 
   const filteredNamespaces = canCreate.filter((namespace) =>
@@ -139,13 +139,13 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       !k8sNamespaceTouched &&
       mode === 'new' &&
       filteredNamespaces.length > 0 &&
-      !isFetching
+      !isLoading
     ) {
       setValue(DbWizardFormFields.k8sNamespace, filteredNamespaces[0]);
       trigger(DbWizardFormFields.k8sNamespace);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, isFetching, filteredNamespaces.length]);
+  }, [mode, isLoading, filteredNamespaces.length]);
 
   // setting the dvVersion default value
   useEffect(() => {
@@ -161,10 +161,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     ) {
       return;
     }
-    if (
-      ((mode === 'edit' || mode === 'restoreFromBackup') && !dbVersion) ||
-      mode === 'new'
-    ) {
+    if ((mode === 'restoreFromBackup' && !dbVersion) || mode === 'new') {
       const recommendedVersion = dbEngineData.availableVersions.engine.find(
         (version) => version.status === DbEngineToolStatus.RECOMMENDED
       );
@@ -212,16 +209,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       DbWizardFormFields.shardConfigServers,
       DB_WIZARD_DEFAULTS.shardConfigServers
     );
-
-    resetField(DbWizardFormFields.numberOfProxies, {
-      keepTouched: false,
-    });
-    resetField(DbWizardFormFields.shardNr, {
-      keepError: false,
-    });
-    resetField(DbWizardFormFields.shardConfigServers, {
-      keepError: false,
-    });
   }, []);
 
   useEffect(() => {
@@ -241,13 +228,9 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           }}
           name={DbWizardFormFields.k8sNamespace}
           label={Messages.labels.k8sNamespace}
-          loading={isFetching}
+          loading={isLoading}
           options={filteredNamespaces}
-          disabled={
-            mode === 'edit' ||
-            mode === 'restoreFromBackup' ||
-            loadingDefaultsForEdition
-          }
+          disabled={mode === 'restoreFromBackup' || loadingDefaultsForEdition}
           onChange={onNamespaceChange}
           autoCompleteProps={{
             disableClearable: true,
@@ -260,7 +243,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           label={Messages.labels.dbName}
           textFieldProps={{
             placeholder: Messages.placeholders.dbName,
-            disabled: mode === 'edit' || loadingDefaultsForEdition,
+            disabled: loadingDefaultsForEdition,
           }}
         />
         <DbVersion
@@ -268,15 +251,16 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             selectFieldProps: { disabled: mode === 'restoreFromBackup' },
           }}
           availableVersions={dbEngineData?.availableVersions.engine}
+          loading={dbEnginesFoDbEngineTypesFetching || isLoading}
         />
         <AutoCompleteInput
           name={DbWizardFormFields.storageClass}
           label={Messages.labels.storageClass}
-          loading={clusterInfoFetching}
+          loading={clusterInfoLoading}
           options={clusterInfo?.storageClassNames || []}
           autoCompleteProps={{
             disableClearable: true,
-            disabled: mode === 'edit' || loadingDefaultsForEdition,
+            disabled: loadingDefaultsForEdition,
           }}
         />
         {dbType === DbType.Mongo && (
@@ -304,19 +288,9 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                     },
                   }}
                 />
-                {notSupportedMongoOperatorVersionForSharding &&
-                  mode !== 'edit' && (
-                    <Tooltip
-                      title={Messages.disableShardingTooltip}
-                      arrow
-                      placement="right"
-                    >
-                      <InfoOutlinedIcon color="primary" />
-                    </Tooltip>
-                  )}
-                {mode === 'edit' && (
+                {notSupportedMongoOperatorVersionForSharding && (
                   <Tooltip
-                    title={Messages.disableShardingInEditMode}
+                    title={Messages.disableShardingTooltip}
                     arrow
                     placement="right"
                   >

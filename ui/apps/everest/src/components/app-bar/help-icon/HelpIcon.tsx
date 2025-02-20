@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import {
   Divider,
   IconButton,
@@ -8,11 +8,11 @@ import {
   Typography,
 } from '@mui/material';
 import HelpIcon from '@mui/icons-material/Help';
-import { useVersion } from 'hooks/api/version/useVersion';
+import { UpgradeEverestContext } from 'contexts/upgrade-everest';
 
 const AppBarHelpIcon = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const { data: versionData } = useVersion();
+  const { currentVersion } = useContext(UpgradeEverestContext);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -44,7 +44,7 @@ const AppBarHelpIcon = () => {
       >
         <MenuItem sx={{ cursor: 'text', userSelect: 'text' }}>
           <Typography variant="helperText" color="text.secondary">
-            {`Everest ${versionData?.version}`}
+            {`Everest ${currentVersion}`}
           </Typography>
         </MenuItem>
         <Divider />

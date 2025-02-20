@@ -14,6 +14,21 @@ import {
   findDbAndClickRow,
 } from '@e2e/utils/db-clusters-list';
 import { waitForDelete } from '@e2e/utils/table';
+import { execSync } from 'child_process';
+
+export const patchPSMDBFinalizers = async (
+  cluster: string,
+  namespace: string
+) => {
+  try {
+    const command = `kubectl patch --namespace ${namespace} psmdb ${cluster} --type='merge' -p '{"metadata":{"finalizers":["percona.com/delete-psmdb-pvc"]}}'`;
+    const output = execSync(command).toString();
+    return true;
+  } catch (error) {
+    console.error(`Error executing command: ${error}`);
+    throw error;
+  }
+};
 
 test.describe('Sharding (psmdb)', () => {
   let engineVersions = {
@@ -70,9 +85,9 @@ test.describe('Sharding (psmdb)', () => {
     await moveForward(page);
 
     const resourcesSectionSummury = page.getByTestId('section-resources');
-    expect(resourcesSectionSummury.getByText('Shards: 2')).toBeVisible();
+    expect(resourcesSectionSummury.getByText('2 shards')).toBeVisible();
     expect(
-      resourcesSectionSummury.getByText('Configuration servers: 3')
+      resourcesSectionSummury.getByText('3 configuration servers')
     ).toBeVisible();
 
     const shardNr = page.getByTestId('text-input-shard-nr');
@@ -93,7 +108,7 @@ test.describe('Sharding (psmdb)', () => {
 
     expect(shardNr).not.toBeVisible();
     expect(configServersNr).not.toBeVisible();
-    expect(resourcesSectionSummury.getByText('Shards: 2')).not.toBeVisible();
+    expect(resourcesSectionSummury.getByText('2 shards')).not.toBeVisible();
     expect(
       resourcesSectionSummury.getByText('Configuration servers: 3')
     ).not.toBeVisible();
@@ -102,7 +117,7 @@ test.describe('Sharding (psmdb)', () => {
   test('Sharding should be correctly displayed on the overview page', async ({
     page,
   }) => {
-    test.setTimeout(1800 * 1000);
+    test.setTimeout(120 * 1000);
     const dbName = 'sharding-psmdb';
     expect(storageClasses.length).toBeGreaterThan(0);
     await selectDbEngine(page, 'psmdb');
@@ -130,8 +145,9 @@ test.describe('Sharding (psmdb)', () => {
     ).toBeVisible();
 
     await deleteDbCluster(page, dbName);
-    // TODO: Waiting for cluster deletion should be re-checked afer fix for: https://perconadev.atlassian.net/browse/EVEREST-1849
-    await waitForDelete(page, dbName, 18000000);
+    // TODO: This function should be removed after fix for: https://perconadev.atlassian.net/browse/K8SPSMDB-1208
+    await patchPSMDBFinalizers('sharding-psmdb', 'everest-ui');
+    await waitForDelete(page, dbName, 60000);
   });
 
   test('Mongo with sharding should not pass multinode cluster creation if config servers = 1', async ({

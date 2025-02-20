@@ -49,14 +49,9 @@ import {
   queryTestDB,
 } from '@e2e/utils/db-cmd-line';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
+import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 
-const {
-  MONITORING_URL,
-  MONITORING_USER,
-  MONITORING_PASSWORD,
-  SELECT_DB,
-  SELECT_SIZE,
-} = process.env;
+const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 let token: string;
 
 const db = 'psmdb';
@@ -70,19 +65,14 @@ test.describe(
     tag: '@release',
   },
   () => {
-    test.skip(
-      () =>
-        (SELECT_DB !== db && !!SELECT_DB) ||
-        (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
-    );
     test.describe.configure({ timeout: 720000 });
 
-    const clusterName = `${db}-${size}-dembkp`;
+    const clusterName = `${db}-${size}-shard`;
 
     let storageClasses = [];
     const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
     const monitoringName = `${db}-${size}-pmm`;
-    const baseBackupName = `dembkp-${db}-${size}`;
+    const baseBackupName = `shard-${db}-${size}`;
 
     test.beforeAll(async ({ request }) => {
       token = await getTokenFromLocalStorage();
@@ -95,20 +85,23 @@ test.describe(
     });
 
     test.afterAll(async ({ request }) => {
-      // we try to delete all monitoring instances because cluster creation expects that none exist
-      // (monitoring instance is added in the form where the warning that none exist is visible)
-      const monitoringInstances = await listMonitoringInstances(
-        request,
-        namespace,
-        token
-      );
-      for (const instance of monitoringInstances) {
-        await deleteMonitoringInstance(
+      // Playwright decided to execute only afterAll hook even if the group is skipped so we need a condition here
+      if (shouldExecuteDBCombination(db, size)) {
+        // we try to delete all monitoring instances because cluster creation expects that none exist
+        // (monitoring instance is added in the form where the warning that none exist is visible)
+        const monitoringInstances = await listMonitoringInstances(
           request,
           namespace,
-          instance.name,
           token
         );
+        for (const instance of monitoringInstances) {
+          await deleteMonitoringInstance(
+            request,
+            namespace,
+            instance.name,
+            token
+          );
+        }
       }
     });
 
@@ -148,7 +141,7 @@ test.describe(
           .getByText(size + ' nodes')
           .click();
 
-        await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
+        await expect(page.getByText('Nodes (' + size + ')')).toBeVisible();
         await populateResources(page, 0.6, 1, 1, size, 2, 0.6, 1, 2, 3);
         await moveForward(page);
       });
@@ -315,7 +308,7 @@ test.describe(
     test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
       await deleteDbCluster(page, clusterName);
       await waitForStatus(page, clusterName, 'Deleting', 15000);
-      await waitForDelete(page, clusterName, 600000);
+      await waitForDelete(page, clusterName, 240000);
     });
   }
 );
