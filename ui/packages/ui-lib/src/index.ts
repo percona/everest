@@ -12,9 +12,6 @@ export { default as ToggleRegularButton } from './buttons/toggle-regular-button'
 
 export * from './icons';
 
-export * from './db-toggle-card';
-export { default as DbToggleCard } from './db-toggle-card';
-
 export * from './stepper';
 export { default as Stepper } from './stepper';
 
@@ -74,3 +71,6 @@ export { default as NotistackMuiSnackbar } from './notistack-mui-snackbar';
 
 export * from './actionable-labeled-content';
 export { default as ActionableLabeledContent } from './actionable-labeled-content';
+
+export * from './code-copy-block';
+export { default as CodeCopyBlock } from './code-copy-block';
