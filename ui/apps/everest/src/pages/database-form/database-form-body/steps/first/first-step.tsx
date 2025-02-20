@@ -176,7 +176,12 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       defaults.monitoringInstance
     );
     setValue(DbWizardFormFields.monitoring, defaults.monitoring);
+    setValue(
+      DbWizardFormFields.monitoringInstance,
+      defaults.monitoringInstance
+    );
     setValue(DbWizardFormFields.schedules, []);
+    setValue(DbWizardFormFields.pitrEnabled, false);
   };
 
   return (

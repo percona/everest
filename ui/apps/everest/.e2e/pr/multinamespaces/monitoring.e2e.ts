@@ -57,34 +57,16 @@ test.describe('Namespaces: Monitoring availability', () => {
     await moveForward(page);
     // Monitoring Step
     await moveForward(page);
+    const monitoringCheckbox = await page
+      .getByTestId('switch-input-monitoring-label')
+      .getByRole('checkbox');
+    expect(await monitoringCheckbox.isChecked()).toBeFalsy();
+    await monitoringCheckbox.check();
 
-    // check monitoring is not available
-    await expect(page.getByTestId('monitoring-warning')).toBeVisible();
-    expect(await page.getByLabel('Enable monitoring').isChecked()).toBeFalsy();
-    await page.getByRole('button', { name: 'Add monitoring endpoint' }).click();
-
-    // filling in monitoring modal form
-    await page.getByTestId('text-input-name').fill(pxcMonitoringEndpoint);
-    const namespaces = page.getByTestId('text-input-namespace');
-    await namespaces.click();
-    await page
-      .getByRole('option', { name: EVEREST_CI_NAMESPACES.PXC_ONLY })
-      .click();
-    await page.getByTestId('text-input-url').fill(MONITORING_URL);
-    await page.getByTestId('text-input-user').fill(MONITORING_USER);
-    await page.getByTestId('text-input-password').fill(MONITORING_PASSWORD);
-
-    await expect(page.getByTestId('form-dialog-add')).toBeEnabled();
-    await page.getByTestId('form-dialog-add').click();
-
-    await expect(page.getByTestId('monitoring-warning')).not.toBeVisible();
-    await expect(page.getByTestId('switch-input-monitoring')).toBeEnabled();
-
-    await deleteMonitoringInstance(
-      request,
-      EVEREST_CI_NAMESPACES.PXC_ONLY,
-      pxcMonitoringEndpoint,
-      token
-    );
+    await page.getByTestId('text-input-monitoring-instance').click();
+    const namespaces = page.getByRole('option');
+    // This might eventually fail if someday we change the namespaces env variable logic
+    // But now, we know we add one endpoint per namespace
+    expect(await namespaces.count()).toBe(1);
   });
 });

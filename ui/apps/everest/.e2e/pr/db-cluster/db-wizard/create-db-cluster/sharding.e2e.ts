@@ -218,48 +218,48 @@ test.describe('Sharding (psmdb)', () => {
     await selectDbEngine(page, 'psmdb');
 
     await page.getByTestId('switch-input-sharding').click();
-    expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
+    await expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
 
     await moveForward(page);
 
-    expect(page.getByTestId(`toggle-button-routers-3`)).toHaveAttribute(
+    await expect(page.getByTestId(`toggle-button-routers-3`)).toHaveAttribute(
       'aria-pressed',
       'true'
     );
-    expect(page.getByTestId('shard-config-servers-3')).toHaveAttribute(
+    await expect(page.getByTestId('shard-config-servers-3')).toHaveAttribute(
       'aria-pressed',
       'true'
     );
 
     await page.getByTestId('toggle-button-nodes-1').click();
-    expect(page.getByTestId('shard-config-servers-1')).toHaveAttribute(
+    await expect(page.getByTestId('shard-config-servers-1')).toHaveAttribute(
       'aria-pressed',
       'true'
     );
     await page.getByTestId('toggle-button-nodes-5').click();
-    expect(page.getByTestId('shard-config-servers-5')).toHaveAttribute(
+    await expect(page.getByTestId('shard-config-servers-5')).toHaveAttribute(
       'aria-pressed',
       'true'
     );
     await page.getByTestId('toggle-button-nodes-custom').click();
     await page.getByTestId('text-input-custom-nr-of-nodes').fill('7');
-    expect(page.getByTestId('shard-config-servers-7')).toHaveAttribute(
+    await expect(page.getByTestId('shard-config-servers-7')).toHaveAttribute(
       'aria-pressed',
       'true'
     );
     await page.getByTestId('text-input-custom-nr-of-nodes').fill('9');
-    expect(page.getByTestId('shard-config-servers-7')).toHaveAttribute(
+    await expect(page.getByTestId('shard-config-servers-7')).toHaveAttribute(
       'aria-pressed',
       'true'
     );
 
     await page.getByTestId('shard-config-servers-3').click();
     await page.getByTestId('toggle-button-nodes-1').click();
-    expect(page.getByTestId('shard-config-servers-1')).toHaveAttribute(
+    await expect(page.getByTestId('shard-config-servers-1')).toHaveAttribute(
       'aria-pressed',
       'false'
     );
-    expect(page.getByTestId('shard-config-servers-3')).toHaveAttribute(
+    await expect(page.getByTestId('shard-config-servers-3')).toHaveAttribute(
       'aria-pressed',
       'true'
     );
@@ -272,12 +272,12 @@ test.describe('Sharding (psmdb)', () => {
     await selectDbEngine(page, 'psmdb');
 
     await page.getByTestId('switch-input-sharding').click();
-    expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
+    await expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
 
     await moveForward(page);
     await moveBack(page);
 
-    expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
+    await expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
 
     await moveForward(page);
     await moveForward(page);
@@ -285,6 +285,6 @@ test.describe('Sharding (psmdb)', () => {
     await page.getByTestId('edit-section-1').click();
 
     await page.getByTestId('switch-input-sharding').waitFor();
-    expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
+    await expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
   });
 });
