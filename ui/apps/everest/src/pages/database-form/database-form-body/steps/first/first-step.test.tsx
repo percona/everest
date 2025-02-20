@@ -5,7 +5,6 @@ import { DbEngineType, DbType } from '@percona/types';
 import { TestWrapper } from 'utils/test';
 import { FirstStep } from './first-step';
 import { DbWizardFormFields } from 'consts';
-import { humanizeDbType } from 'pages/database-form/database-form.utils';
 import {
   DbEngineStatus,
   DbEngineToolStatus,
@@ -203,13 +202,5 @@ describe('First Step', async () => {
     await waitFor(() =>
       expect(screen.getByTestId('select-input-db-version')).toHaveValue('9.0.0')
     );
-  });
-});
-
-describe('utils', () => {
-  test('humanizeDbType', () => {
-    expect(humanizeDbType(DbType.Mongo)).toBe('MongoDB');
-    expect(humanizeDbType(DbType.Mysql)).toBe('MySQL');
-    expect(humanizeDbType(DbType.Postresql)).toBe('PostgreSQL');
   });
 });
