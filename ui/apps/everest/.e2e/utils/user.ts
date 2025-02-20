@@ -1,5 +1,6 @@
 import { STORAGE_STATE_FILE, TIMEOUTS } from '@e2e/constants';
 import { Page, expect } from '@playwright/test';
+const { CI_USER, CI_PASSWORD } = process.env;
 
 export const switchUser = async (
   page: Page,
@@ -18,5 +19,25 @@ export const switchUser = async (
   await expect(page.getByTestId('user-appbar-button')).toBeVisible({
     timeout: TIMEOUTS.ThirtySeconds,
   });
+  await page.context().storageState({ path: STORAGE_STATE_FILE });
+};
+
+export const login = async (page: Page) => {
+  await page.goto('/login');
+  await page.getByTestId('text-input-username').fill(CI_USER);
+  await page.getByTestId('text-input-password').fill(CI_PASSWORD);
+  await page.getByTestId('login-button').click();
+  await expect(page.getByTestId('user-appbar-button')).toBeVisible({
+    timeout: TIMEOUTS.ThirtySeconds,
+  });
+
+  const origins = (await page.context().storageState()).origins;
+  expect(origins.length).toBeGreaterThan(0);
+  expect(
+    origins.find(
+      (origin) =>
+        !!origin.localStorage.find((storage) => storage.name === 'everestToken')
+    )
+  ).not.toBeUndefined();
   await page.context().storageState({ path: STORAGE_STATE_FILE });
 };
