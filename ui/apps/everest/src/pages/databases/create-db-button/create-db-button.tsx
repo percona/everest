@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { useEffect, useState } from 'react';
-import { Box, Button, Menu, MenuItem } from '@mui/material';
+import { Box, Button, Menu, MenuItem, Skeleton } from '@mui/material';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import { Messages } from '../dbClusterView.messages';
 import { useDBEnginesForDbEngineTypes } from 'hooks';
@@ -67,6 +67,10 @@ export const CreateDbButton = () => {
   }, [availableDbTypesFetching]);
 
   const buttonStyle = { display: 'flex', minHeight: '34px', width: '165px' };
+  const skeletonStyle = {
+    ...buttonStyle,
+    borderRadius: '128px',
+  };
 
   return availableEngines.length > 0 ? (
     <Box>
@@ -85,9 +89,7 @@ export const CreateDbButton = () => {
           {Messages.createDatabase}
         </Button>
       ) : (
-        <Button disabled size="small" variant="contained" sx={buttonStyle}>
-          {Messages.loading}
-        </Button>
+        <Skeleton variant="rounded" sx={skeletonStyle} />
       )}
       {availableEngines.length > 1 && (
         <Menu
