@@ -8,6 +8,7 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { Navigate } from 'react-router-dom';
 import { LoginFormType, loginSchema } from './Login.constants';
 import { Messages } from './Login.messages';
+import { HiddenInput } from 'components/hidden-input';
 
 const LoginLinkButton = ({
   icon,
@@ -118,6 +119,7 @@ const Login = () => {
               <FormProvider {...methods}>
                 <form onSubmit={methods.handleSubmit(handleLogin)}>
                   <TextInput
+                    isRequired
                     textFieldProps={{
                       type: 'text',
                       autoFocus: true,
@@ -128,20 +130,23 @@ const Login = () => {
                     }}
                     name="username"
                   />
-                  <TextInput
+                  <HiddenInput
+                    name="password"
                     textFieldProps={{
-                      type: 'password',
                       label: Messages.password,
                       fullWidth: true,
                       sx: { mb: 2 },
                       disabled: authStatus === 'loggingIn',
                     }}
-                    name="password"
                   />
                   <Button
                     onClick={methods.handleSubmit(handleLogin)}
                     type="submit"
-                    disabled={authStatus === 'loggingIn'}
+                    disabled={
+                      authStatus === 'loggingIn' ||
+                      methods.formState.isSubmitting ||
+                      !methods.formState.isValid
+                    }
                     data-testid="login-button"
                     variant="contained"
                     fullWidth
