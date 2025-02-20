@@ -58,12 +58,22 @@ export const addFirstScheduleInDBWizard = async (page: Page) => {
     page.getByTestId('editable-item').getByText('Monthly on day 10 at 1:05 AM')
   ).toBeVisible();
 
+  const namespace = (
+    await page
+      .getByTestId('section-basic-information')
+      .getByText('Namespace: ', { exact: false })
+      .innerText()
+  ).split('Namespace: ')[1];
+  const matchingBucketNamespace = bucketNamespacesMap.find((b) =>
+    b[1].includes(namespace)
+  )[0];
+
   if (await checkDbTypeisVisibleInPreview(page, DbType.Mongo)) {
     expect(
-      await page.getByText(bucketNamespacesMap[0][0]).allInnerTexts()
+      await page.getByText(matchingBucketNamespace).allInnerTexts()
     ).toHaveLength(2);
   } else {
-    await expect(page.getByText(bucketNamespacesMap[0][0])).toBeVisible();
+    await expect(page.getByText(matchingBucketNamespace)).toBeVisible();
   }
 };
 
@@ -153,10 +163,7 @@ export const fillScheduleModalForm = async (
     await storageLocationField.click();
 
     const storageOptions = page.getByRole('option');
-    const testStorage = storageOptions.filter({
-      hasText: bucketNamespacesMap[0][0],
-    });
-    await testStorage.click();
+    await storageOptions.first().click();
   }
 
   const retentionCopiesField = page.getByTestId('text-input-retention-copies');
