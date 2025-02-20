@@ -31,7 +31,9 @@ test.describe.serial('Monitoring List', () => {
     const namespaces = page.getByTestId('text-input-namespace');
     await namespaces.click();
     await expect(
-      page.getByText(EVEREST_CI_NAMESPACES.EVEREST_UI)
+      page
+        .getByRole('option')
+        .filter({ hasText: EVEREST_CI_NAMESPACES.EVEREST_UI })
     ).toBeVisible();
     await page.getByRole('option').last().click();
     await page.getByTestId('text-input-url').fill(MONITORING_URL);
