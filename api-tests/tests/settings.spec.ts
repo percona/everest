@@ -12,10 +12,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { expect, test } from '@fixtures'
-import {checkError} from "@tests/tests/helpers";
+import { test } from '@fixtures'
+import {checkError} from '@tests/tests/helpers';
 
 test('get settings endpoint', async ({ request, cli }) => {
   const settings = await request.get('/v1/settings')
+
   await checkError(settings)
 })
