@@ -19,8 +19,8 @@ export async function waitForDBEngines(cli: CliHelper) {
 
   await out.assertSuccess();
 
-  const res = JSON.parse(out.stdout);
-  const installed = res.items.filter((i) => i.status.status === 'installed');
+  const res = JSON.parse(out.stdout),
+   installed = res.items.filter((i) => i.status.status === 'installed');
 
   for (const engine of ['pxc', 'psmdb', 'postgresql']) {
     if (!res?.items || res?.items.findIndex((i) => i.spec.type === engine) === -1) {
