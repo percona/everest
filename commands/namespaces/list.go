@@ -105,7 +105,7 @@ func printNamespacesTable(nsList []namespaces.NamespaceInfo) error {
 			case columnName:
 				row = append(row, ns.Name)
 			case columnManagedByEverest:
-				row = append(row, len(ns.InstalledOperators) != 0)
+				row = append(row, len(ns.InstalledOperators) > 0)
 			case columnOperators:
 				row = append(row, strings.Join(ns.InstalledOperators, ", "))
 			}

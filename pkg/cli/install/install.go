@@ -228,20 +228,20 @@ func (o *Installer) printPostInstallMessage(out io.Writer) {
 
 	count := 1
 	if len(o.cfg.NamespaceAddConfig.NamespaceList) == 0 {
-		message += fmt.Sprintf("\n\n%s", output.Numeric(count, titleStyle.Render("PROVISION A NAMESPACE FOR YOUR DATABASE:")))
+		message += fmt.Sprintf("\n\n%s", output.Numeric(count, "%s", titleStyle.Render("PROVISION A NAMESPACE FOR YOUR DATABASE:")))
 		count++
 		message += "Install a namespace for your databases using the following command:\n\n"
 		message += fmt.Sprintf("\t%s", commandStyle.Render("everestctl namespaces add [NAMESPACE]"))
 	}
 
-	message += fmt.Sprintf("\n\n%s", output.Numeric(count, titleStyle.Render("RETRIEVE THE INITIAL ADMIN PASSWORD:")))
+	message += fmt.Sprintf("\n\n%s", output.Numeric(count, "%s", titleStyle.Render("RETRIEVE THE INITIAL ADMIN PASSWORD:")))
 	count++
 	message += "Run the following command to get the initial admin password:\n\n"
 	message += fmt.Sprintf("\t%s\n\n", commandStyle.Render("everestctl accounts initial-admin-password"))
 	message += output.Warn("NOTE: The initial password is stored in plain text. For security, change it immediately using the following command:\n")
 	message += fmt.Sprintf("\t%s", commandStyle.Render("everestctl accounts set-password --username admin"))
 
-	message += fmt.Sprintf("\n\n%s", output.Numeric(count, titleStyle.Render("ACCESS THE EVEREST UI:")))
+	message += fmt.Sprintf("\n\n%s", output.Numeric(count, "%s", titleStyle.Render("ACCESS THE EVEREST UI:")))
 	count++
 	message += "To access the web UI, set up port-forwarding and visit http://localhost:8080 in your browser:\n\n"
 	message += fmt.Sprintf("\t%s\n", commandStyle.Render("kubectl port-forward -n everest-system svc/everest 8080:8080"))
