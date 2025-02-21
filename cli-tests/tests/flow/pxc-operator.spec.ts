@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { test } from '@fixtures';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { faker } from '@faker-js/faker';
 
 test.describe('Everest CLI install', async () => {
@@ -44,8 +43,8 @@ test.describe('Everest CLI install', async () => {
           'percona-postgresql-operator',
         ]);
       });
-    };
-    const clusterName = `test-${faker.number.int()}`;
+    },
+     clusterName = `test-${faker.number.int()}`;
 
     await test.step('run everest install command (pretty))', async () => {
       const out = await cli.everestExecSkipWizard(
