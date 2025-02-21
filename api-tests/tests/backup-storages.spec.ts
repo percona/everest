@@ -26,17 +26,17 @@ test('add/list/get/delete s3 backup storage success', async ({request}) => {
         accessKey: 'sdfs',
         secretKey: 'sdfsdfsd',
         allowedNamespaces: [testsNs]
-    }
+    },
 
-    const response = await request.post(`/v1/namespaces/${testsNs}/backup-storages`, {
+     response = await request.post(`/v1/namespaces/${testsNs}/backup-storages`, {
         data: payload,
     })
 
     // create
     await checkError(response)
-    const created = await response.json()
+    const created = await response.json(),
 
-    const name = created.name
+     name = created.name
 
     expect(created.name).toBe(payload.name)
     expect(created.url).toBe(payload.url)
@@ -66,8 +66,8 @@ test('add/list/get/delete s3 backup storage success', async ({request}) => {
         accessKey: 'otherAccessKey',
         secretKey: 'otherSecret',
         allowedNamespaces: [testsNs]
-    }
-    const updated = await request.patch(`/v1/namespaces/${testsNs}/backup-storages/${name}`, {
+    },
+     updated = await request.patch(`/v1/namespaces/${testsNs}/backup-storages/${name}`, {
         data: updatePayload,
     })
 
@@ -101,17 +101,17 @@ test('add/list/get/delete azure backup storage success', async ({request}) => {
         accessKey: 'sdfs',
         secretKey: 'sdfsdfsd',
         allowedNamespaces: [testsNs]
-    }
+    },
 
-    const response = await request.post(`/v1/namespaces/${testsNs}/backup-storages`, {
+     response = await request.post(`/v1/namespaces/${testsNs}/backup-storages`, {
         data: payload,
     })
 
     // create
     await checkError(response)
-    const created = await response.json()
+    const created = await response.json(),
 
-    const name = created.name
+     name = created.name
 
     expect(created.name).toBe(payload.name)
     expect(created.bucketName).toBe(payload.bucketName)
@@ -136,8 +136,8 @@ test('add/list/get/delete azure backup storage success', async ({request}) => {
     const updatePayload = {
         description: 'some description',
         bucketName: 'percona-test-backup-storage1',
-    }
-    const updated = await request.patch(`/v1/namespaces/${testsNs}/backup-storages/${name}`, {
+    },
+     updated = await request.patch(`/v1/namespaces/${testsNs}/backup-storages/${name}`, {
         data: updatePayload,
     })
 
@@ -166,7 +166,7 @@ test('create backup storage failures', async ({request}) => {
     const testCases = [
         {
             payload: {},
-            errorText: 'property \"name\" is missing',
+            errorText: 'property "name" is missing',
         },
         {
             payload: {
@@ -176,7 +176,7 @@ test('create backup storage failures', async ({request}) => {
                 region: 'us-east-2',
                 accessKey: 'ssdssd',
             },
-            errorText: 'property \"secretKey\" is missing',
+            errorText: 'property "secretKey" is missing',
         },
         {
             payload: {
@@ -247,17 +247,17 @@ test('update backup storage failures', async ({request}) => {
         accessKey: 'sdfsdfs',
         secretKey: 'lkdfslsldfka',
         allowedNamespaces: [testsNs]
-    }
-    const response = await request.post(`/v1/namespaces/${testsNs}/backup-storages`, {
+    },
+     response = await request.post(`/v1/namespaces/${testsNs}/backup-storages`, {
         data: createPayload,
     })
 
     await checkError(response)
-    const created = await response.json()
+    const created = await response.json(),
 
-    const name = created.name
+     name = created.name,
 
-    const testCases = [
+     testCases = [
         {
             payload: {
                 url: '-asldf;asdfk;sadf',
@@ -268,7 +268,7 @@ test('update backup storage failures', async ({request}) => {
             payload: {
                 bucket: '-asldf;asdfk;sadf',
             },
-            errorText: 'request body has an error: doesn\'t match schema #/components/schemas/UpdateBackupStorageParams: property \"bucket\" is unsupported',
+            errorText: 'request body has an error: doesn\'t match schema #/components/schemas/UpdateBackupStorageParams: property "bucket" is unsupported',
         },
     ]
 
@@ -287,9 +287,9 @@ test('update backup storage failures', async ({request}) => {
 })
 
 test('update: backup storage not found', async ({request}) => {
-    const name = 'some-storage'
+    const name = 'some-storage',
 
-    const response = await request.patch(`/v1/namespaces/${testsNs}/backup-storages/${name}`, {
+     response = await request.patch(`/v1/namespaces/${testsNs}/backup-storages/${name}`, {
         data: {
             bucketName: 's3',
         },
@@ -299,16 +299,16 @@ test('update: backup storage not found', async ({request}) => {
 })
 
 test('delete: backup storage not found', async ({request}) => {
-    const name = 'backup-storage'
+    const name = 'backup-storage',
 
-    const response = await request.delete(`/v1/namespaces/${testsNs}/backup-storages/${name}`)
+     response = await request.delete(`/v1/namespaces/${testsNs}/backup-storages/${name}`)
 
     expect(response.status()).toBe(404)
 })
 
 test('get: backup storage not found', async ({request}) => {
-    const name = 'backup-storage'
-    const response = await request.get(`/v1/namespaces/${testsNs}/backup-storages/${name}`)
+    const name = 'backup-storage',
+     response = await request.get(`/v1/namespaces/${testsNs}/backup-storages/${name}`)
 
     expect(response.status()).toBe(404)
 })
