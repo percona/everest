@@ -75,7 +75,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ 1.23.x ]
+        go-version: [ 1.24.x ]
         may-fail: [ false ]
 
     continue-on-error: ${{ matrix.may-fail }}
