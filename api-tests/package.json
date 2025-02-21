@@ -17,7 +17,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^22.10.10",
-    "eslint": "^8.57.1",
+    "eslint": "^9.20.1",
     "openapi-typescript": "^7.6.1"
   },
   "dependencies": {
