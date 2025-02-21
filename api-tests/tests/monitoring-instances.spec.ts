@@ -184,13 +184,13 @@ test('patch monitoring instance secret key changes', async ({ request , page}) =
 
   await checkError(response)
 
-   patchData = {
+  const patchData = {
     url: 'http://monitoring2',
     pmm: {
       apiKey: 'asd',
     },
-  },
-   updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
+  }
+  const updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
 
   await checkError(updated)
   const getJson = await updated.json()
