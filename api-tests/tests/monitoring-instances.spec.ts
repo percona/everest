@@ -12,14 +12,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import http from 'http'
 import { expect, test } from '@fixtures'
 import { APIRequestContext } from '@playwright/test'
-import {checkError, testPrefix, testsNs} from "@tests/tests/helpers";
+import {checkError, testPrefix, testsNs} from '@tests/tests/helpers';
 
 test('create monitoring instance with api key', async ({ request }) => {
-  const prefix = testPrefix()
-  const data = {
+  const prefix = testPrefix(),
+   data = {
     type: 'pmm',
     name: `${prefix}-key`,
     url: 'http://monitoring',
@@ -27,9 +26,9 @@ test('create monitoring instance with api key', async ({ request }) => {
     pmm: {
       apiKey: '123',
     },
-  }
+  },
 
-  const response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
+   response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
 
   await checkError(response)
   const created = await response.json()
@@ -41,8 +40,8 @@ test('create monitoring instance with api key', async ({ request }) => {
 })
 
 test('create monitoring instance with user/password', async ({ request }) => {
-  const prefix = testPrefix()
-  const data = {
+  const prefix = testPrefix(),
+   data = {
     type: 'pmm',
     name: `${prefix}-pass`,
     url: 'http://127.0.0.1:8888',
@@ -51,9 +50,9 @@ test('create monitoring instance with user/password', async ({ request }) => {
       user: 'admin',
       password: 'admin',
     },
-  }
+  },
 
-  const response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
+   response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
 
   await checkError(response)
   const created = await response.json()
@@ -70,9 +69,9 @@ test('create monitoring instance missing pmm', async ({ request }) => {
     name: 'monitoring-fail',
     url: 'http://monitoring-instance',
     allowedNamespaces: [testsNs],
-  }
+  },
 
-  const response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
+   response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
 
   expect(response.status()).toBe(400)
 })
@@ -84,15 +83,16 @@ test('create monitoring instance missing pmm credentials', async ({ request }) =
     url: 'http://monitoring-instance',
     allowedNamespaces: [testsNs],
     pmm: {},
-  }
+  },
 
-  const response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
+   response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
 
   expect(response.status()).toBe(400)
 })
 
 test('list monitoring instances', async ({ request }) => {
   const prefix = testPrefix()
+
   await createInstances(request, genNames(prefix))
 
   const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances`)
@@ -105,11 +105,11 @@ test('list monitoring instances', async ({ request }) => {
 })
 
 test('get monitoring instance', async ({ request }) => {
-  const prefix = testPrefix()
-  const names = await createInstances(request, genNames(prefix))
-  const name = names[1]
+  const prefix = testPrefix(),
+   names = await createInstances(request, genNames(prefix)),
+   name = names[1],
 
-  const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
+   response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
 
   await checkError(response)
   const i = await response.json()
@@ -119,8 +119,9 @@ test('get monitoring instance', async ({ request }) => {
 })
 
 test('delete monitoring instance', async ({ request, page }) => {
-  const prefix = testPrefix()
-  const names = genNames(prefix)
+  const prefix = testPrefix(),
+   names = genNames(prefix)
+
   await createInstances(request, names)
   const name = names[1]
 
@@ -146,19 +147,21 @@ test('delete monitoring instance', async ({ request, page }) => {
 })
 
 test('patch monitoring instance', async ({ request , page}) => {
-  const prefix = testPrefix()
-  const names = genNames(prefix)
+  const prefix = testPrefix(),
+   names = genNames(prefix)
+
   await createInstances(request, names)
   const name = names[1]
+
   await page.waitForTimeout(500)
 
   const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
 
   await checkError(response)
-  const created = await response.json()
+  const created = await response.json(),
 
-  const patchData = { url: 'http://monitoring' }
-  const updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
+   patchData = { url: 'http://monitoring' },
+   updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
 
   await checkError(updated)
   const getJson = await updated.json()
@@ -169,16 +172,17 @@ test('patch monitoring instance', async ({ request , page}) => {
 })
 
 test('patch monitoring instance secret key changes', async ({ request , page}) => {
-  const prefix = testPrefix()
-  const names = genNames(prefix)
+  const prefix = testPrefix(),
+   names = genNames(prefix)
+
   await createInstances(request, names)
   const name = names[1]
+
   await page.waitForTimeout(500)
 
   const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
 
   await checkError(response)
-  const created = await response.json()
 
   const patchData = {
     url: 'http://monitoring2',
@@ -196,13 +200,14 @@ test('patch monitoring instance secret key changes', async ({ request , page}) =
 })
 
 test('patch monitoring instance type updates properly', async ({ request , page}) => {
-  const prefix = testPrefix()
-  const names = genNames(prefix)
+  const prefix = testPrefix(),
+   names = genNames(prefix)
+
   await createInstances(request, names)
   await page.waitForTimeout(500)
-  const name = names[1]
+  const name = names[1],
 
-  const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
+   response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
 
   await checkError(response)
 
@@ -211,29 +216,30 @@ test('patch monitoring instance type updates properly', async ({ request , page}
     pmm: {
       apiKey: 'asd',
     },
-  }
-  const updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
+  },
+   updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
 
   await checkError(updated)
-  const getJson = await updated.json()
+
   await deleteInstances(request, prefix)
 })
 
 test('patch monitoring instance type fails on missing key', async ({ request, page }) => {
-  const prefix = testPrefix()
-  const names = genNames(prefix)
+  const prefix = testPrefix(),
+   names = genNames(prefix)
+
   await createInstances(request, names)
   await page.waitForTimeout(500)
-  const name = names[1]
+  const name = names[1],
 
-  const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
+   response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
 
   await checkError(response)
 
   const patchData = {
     type: 'pmm',
-  }
-  const updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
+  },
+   updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
 
   expect(updated.status()).toBe(400)
 
@@ -245,6 +251,7 @@ test('patch monitoring instance type fails on missing key', async ({ request, pa
 
 test('create monitoring instance failures', async ({ request }) => {
   const response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data: {} })
+
   expect(response.status()).toBe(400)
 })
 
@@ -257,15 +264,15 @@ test('update monitoring instances failures', async ({ request }) => {
     pmm: {
       apiKey: '123',
     },
-  }
-  const response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
+  },
+   response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
 
   await checkError(response)
-  const created = await response.json()
+  const created = await response.json(),
 
-  const name = created.name
+   name = created.name,
 
-  const testCases = [
+   testCases = [
     {
       payload: { url: 'not-url' },
       errorText: '\'url\' is an invalid URL',
@@ -285,22 +292,22 @@ test('update monitoring instances failures', async ({ request }) => {
 })
 
 test('update: monitoring instance not found', async ({ request }) => {
-  const name = 'non-existent'
-  const response = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: { url: 'http://monitoring' } })
+  const name = 'non-existent',
+   response = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: { url: 'http://monitoring' } })
 
   expect(response.status()).toBe(404)
 })
 
 test('delete: monitoring instance not found', async ({ request }) => {
-  const name = 'non-existent'
-  const response = await request.delete(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
+  const name = 'non-existent',
+   response = await request.delete(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
 
   expect(response.status()).toBe(404)
 })
 
 test('get: monitoring instance not found', async ({ request }) => {
-  const name = 'non-existent'
-  const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
+  const name = 'non-existent',
+   response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
 
   expect(response.status()).toBe(404)
 })
@@ -314,9 +321,10 @@ async function createInstances(request: APIRequestContext, names: string[]): Pro
     pmm: {
       apiKey: '123',
     },
-  }
+  },
 
-  const res = []
+   res = []
+
   for (let i = 0; i < names.length; i++) {
     data.name = names[i]
     res.push(data.name)
@@ -329,8 +337,8 @@ async function createInstances(request: APIRequestContext, names: string[]): Pro
 }
 
 async function deleteInstances(request: APIRequestContext, prefix: string): Promise<string[]> {
-  const result = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances`)
-  const list = await result.json()
+  const result = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances`),
+   list = await result.json()
 
   for (const i of list) {
     if (!i.name.startsWith(prefix)) {
@@ -343,8 +351,10 @@ async function deleteInstances(request: APIRequestContext, prefix: string): Prom
 
 function genNames(prefix: string, count = 3): string[] {
   const res = []
+
   for (let i = 1; i <= count; i++) {
     res.push(`${prefix}-${i}`)
   }
+
   return res
 }

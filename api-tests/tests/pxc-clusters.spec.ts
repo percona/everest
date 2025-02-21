@@ -13,14 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { test, expect } from '@fixtures'
-import {checkError, testsNs, deleteDBCluster} from "@tests/tests/helpers";
+import {checkError, testsNs, deleteDBCluster} from '@tests/tests/helpers';
 
 let recommendedVersion
+
 test.setTimeout(120 * 1000)
 
 test.beforeAll(async ({ request }) => {
-  const engineResponse = await request.get(`/v1/namespaces/${testsNs}/database-engines/percona-xtradb-cluster-operator`)
-  const availableVersions = (await engineResponse.json()).status.availableVersions.engine
+  const engineResponse = await request.get(`/v1/namespaces/${testsNs}/database-engines/percona-xtradb-cluster-operator`),
+   availableVersions = (await engineResponse.json()).status.availableVersions.engine
 
   for (const k in availableVersions) {
     if (k.startsWith('5')) {
@@ -36,8 +37,8 @@ test.beforeAll(async ({ request }) => {
 })
 
 test('create/edit/delete pxc single node cluster', async ({ request, page }) => {
-  const clusterName = 'test-pxc-cluster'
-  const pxcPayload = {
+  const clusterName = 'test-pxc-cluster',
+   pxcPayload = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
     metadata: {
@@ -100,14 +101,16 @@ test('create/edit/delete pxc single node cluster', async ({ request, page }) => 
 
   // check that the /pitr endpoint returns OK and an empty object since pitr is not enabled
   const pitrResponse = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}/pitr`)
+
   await checkError(pitrResponse)
   const pitrInfo = (await pitrResponse.json())
+
   expect(pitrInfo.latestBackupName).toBe(undefined)
   expect(pitrInfo.earliestDate).toBe(undefined)
   expect(pitrInfo.latestDate).toBe(undefined)
 
   // Update PXC cluster
-  expect(pxcPayload.metadata["resourceVersion"]).toBeDefined()
+  expect(pxcPayload.metadata['resourceVersion']).toBeDefined()
 
   const updatedPXCCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: pxcPayload,
@@ -115,7 +118,7 @@ test('create/edit/delete pxc single node cluster', async ({ request, page }) => 
 
   await checkError(updatedPXCCluster)
 
-  let pxcCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+  const pxcCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
 
   await checkError(pxcCluster)
 
@@ -125,8 +128,8 @@ test('create/edit/delete pxc single node cluster', async ({ request, page }) => 
 })
 
 test('expose pxc cluster after creation', async ({ request, page }) => {
-  const clusterName = 'exposed-pxc-cluster'
-  const pxcPayload = {
+  const clusterName = 'exposed-pxc-cluster',
+   pxcPayload = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
     metadata: {
@@ -184,7 +187,7 @@ test('expose pxc cluster after creation', async ({ request, page }) => {
   pxcPayload.spec.proxy.expose.type = 'external'
 
   // Update PXC cluster
-  expect(pxcPayload.metadata["resourceVersion"]).toBeDefined()
+  expect(pxcPayload.metadata['resourceVersion']).toBeDefined()
 
   const updatedPXCCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: pxcPayload,
@@ -192,7 +195,7 @@ test('expose pxc cluster after creation', async ({ request, page }) => {
 
   await checkError(updatedPXCCluster)
 
-  let pxcCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+  const pxcCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
 
   await checkError(pxcCluster)
 
@@ -202,8 +205,8 @@ test('expose pxc cluster after creation', async ({ request, page }) => {
 })
 
 test('expose pxc cluster on EKS to the public internet and scale up', async ({ request, page }) => {
-  const clusterName = 'eks-pxc-cluster'
-  const pxcPayload = {
+  const clusterName = 'eks-pxc-cluster',
+   pxcPayload = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
     metadata: {
@@ -261,7 +264,7 @@ test('expose pxc cluster on EKS to the public internet and scale up', async ({ r
   pxcPayload.spec.engine.replicas = 5
 
   // Update PXC cluster
-  expect(pxcPayload.metadata["resourceVersion"]).toBeDefined()
+  expect(pxcPayload.metadata['resourceVersion']).toBeDefined()
 
   const updatedPXCCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: pxcPayload,
