@@ -19,7 +19,7 @@
     "@types/node": "^22.10.10",
     "@typescript-eslint/parser": "^7.18.0",
     "dotenv": "^16.4.7",
-    "eslint": "^8.57.1",
+    "eslint": "^9.20.1",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^18.0.0",
     "eslint-plugin-playwright": "^2.2.0",
