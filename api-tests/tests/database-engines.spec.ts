@@ -34,8 +34,8 @@ test('get/edit database engine versions', async ({ request }) => {
 
   await checkError(engineResponse);
 
-  const engineData: GetDatabaseEngineResponse = await engineResponse.json();
-  const availableVersions = engineData.status.availableVersions;
+  const engineData: GetDatabaseEngineResponse = await engineResponse.json(),
+   availableVersions = engineData.status.availableVersions;
 
   expect(availableVersions.engine['8.0.4-1'].imageHash).toBe('873b201ce3d66d97b1225c26db392c5043a73cc19ee8db6f2dc1b8efd4783bcf');
   expect(availableVersions.backup['2.8.0'].status).toBe('recommended');

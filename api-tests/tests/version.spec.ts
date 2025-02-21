@@ -13,16 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { expect, test } from '@fixtures'
-import {checkError} from "@tests/tests/helpers";
+import {checkError} from '@tests/tests/helpers';
 
 test('version endpoint', async ({ request, cli }) => {
   const version = await request.get('/v1/version')
 
   await checkError(version)
 
-  const versionJSON = await version.json()
+  const versionJSON = await version.json(),
 
-  const gitVersion = await cli.exec('git rev-parse --short HEAD')
+   gitVersion = await cli.exec('git rev-parse --short HEAD')
 
   await gitVersion.assertSuccess()
 
