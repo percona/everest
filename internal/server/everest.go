@@ -67,6 +67,11 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		return nil, errors.Join(err, errors.New("failed creating Kubernetes client"))
 	}
 
+	// start cache to be able to use FieldSelector in List operations.
+	if err := kubeClient.StartCache(ctx); err != nil {
+		return nil, errors.Join(err, errors.New("failed creating Kubernetes cache"))
+	}
+
 	echoServer := echo.New()
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)

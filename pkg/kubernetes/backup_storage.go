@@ -20,6 +20,7 @@ import (
 	"context"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sFields "k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -82,34 +83,49 @@ func (k *Kubernetes) IsBackupStorageUsed(ctx context.Context, namespace, name st
 	}
 
 	// Check if it is in use by clusters?
-	clusters, err := k.client.ListDatabaseClusters(ctx, namespace, metav1.ListOptions{})
-	if err != nil {
+	listOpts := &ctrlclient.ListOptions{
+		FieldSelector: k8sFields.OneTermEqualSelector(".spec.backup.schedules.backupStorageName", name),
+		Namespace:     namespace,
+	}
+	clusters := &everestv1alpha1.DatabaseClusterList{}
+	if err = k.k8sClient.List(ctx, clusters, listOpts); err != nil {
 		return false, err
 	}
-	for _, cluster := range clusters.Items {
-		for _, sched := range cluster.Spec.Backup.Schedules {
-			if sched.Enabled && sched.BackupStorageName == name {
-				return true, nil
-			}
-		}
+
+	if len(clusters.Items) > 0 {
+		return true, nil
 	}
 
 	// Check if it is in use by backups?
-	backups, err := k.client.ListDatabaseClusterBackups(ctx, namespace, metav1.ListOptions{})
+	backupOpts := &ctrlclient.ListOptions{
+		FieldSelector: k8sFields.OneTermEqualSelector(".spec.backupStorageName", name),
+		Namespace:     namespace,
+	}
+	backups := &everestv1alpha1.DatabaseClusterBackupList{}
+	err = k.k8sClient.List(ctx, backups, backupOpts)
 	if err != nil {
 		return false, err
 	}
-	for _, backup := range backups.Items {
-		if backup.Spec.BackupStorageName == name {
-			return true, nil
-		}
+
+	if len(backups.Items) > 0 {
+		return true, nil
 	}
 
 	// Check if it is in use by restores?
-	restores, err := k.client.ListDatabaseClusterRestores(ctx, namespace, metav1.ListOptions{})
+	restoreOpts := &ctrlclient.ListOptions{
+		FieldSelector: k8sFields.OneTermEqualSelector(".spec.dataSource.backupSource.backupStorageName", name),
+		Namespace:     namespace,
+	}
+	restores := &everestv1alpha1.DatabaseClusterRestoreList{}
+	err = k.k8sClient.List(ctx, restores, restoreOpts)
 	if err != nil {
 		return false, err
 	}
+
+	if len(restores.Items) > 0 {
+		return true, nil
+	}
+
 	for _, restore := range restores.Items {
 		src := restore.Spec.DataSource.BackupSource
 		if src != nil && src.BackupStorageName == name {

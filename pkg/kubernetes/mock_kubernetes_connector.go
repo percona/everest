@@ -1393,6 +1393,24 @@ func (_m *MockKubernetesConnector) SetSecret(secret *v1.Secret) error {
 	return r0
 }
 
+// StartCache provides a mock function with given fields: ctx
+func (_m *MockKubernetesConnector) StartCache(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for StartCache")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdateBackupStorage provides a mock function with given fields: ctx, storage
 func (_m *MockKubernetesConnector) UpdateBackupStorage(ctx context.Context, storage *v1alpha1.BackupStorage) (*v1alpha1.BackupStorage, error) {
 	ret := _m.Called(ctx, storage)
@@ -1610,7 +1628,7 @@ func (_m *MockKubernetesConnector) WaitForRollout(ctx context.Context, name stri
 }
 
 // WithClient provides a mock function with given fields: c
-func (_m *MockKubernetesConnector) WithClient(c client.KubeClientConnector) *Kubernetes {
+func (_m *MockKubernetesConnector) WithClient(c *client.Client) *Kubernetes {
 	ret := _m.Called(c)
 
 	if len(ret) == 0 {
@@ -1618,7 +1636,7 @@ func (_m *MockKubernetesConnector) WithClient(c client.KubeClientConnector) *Kub
 	}
 
 	var r0 *Kubernetes
-	if rf, ok := ret.Get(0).(func(client.KubeClientConnector) *Kubernetes); ok {
+	if rf, ok := ret.Get(0).(func(*client.Client) *Kubernetes); ok {
 		r0 = rf(c)
 	} else {
 		if ret.Get(0) != nil {
