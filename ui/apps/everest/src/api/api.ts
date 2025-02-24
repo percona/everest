@@ -17,6 +17,7 @@ import { enqueueSnackbar } from 'notistack';
 
 const BASE_URL = '/v1/';
 const DEFAULT_ERROR_MESSAGE = 'Something went wrong';
+const MISSING_MALFORMED_JWT_MESSAGE = 'missing or malformed jwt';
 const MAX_ERROR_MESSAGE_LENGTH = 120;
 let errorInterceptor: number | null = null;
 let authInterceptor: number | null = null;
@@ -29,36 +30,32 @@ export const addApiErrorInterceptor = () => {
   if (errorInterceptor === null) {
     errorInterceptor = api.interceptors.response.use(
       (response) => response,
-      (error: AxiosError<{ message: string }>) => {
+      (error: AxiosError<{ message?: string }>) => {
         if (
           error.response &&
           error.response.status >= 400 &&
           error.response.status <= 500
         ) {
-          let message = DEFAULT_ERROR_MESSAGE;
+          let message = error.response.data?.message ?? DEFAULT_ERROR_MESSAGE;
           let notificationsDisabled = error.config?.disableNotifications;
 
           if (typeof notificationsDisabled === 'function') {
             notificationsDisabled = notificationsDisabled(error);
           }
 
-          if (error.response.status === 401) {
-            localStorage.removeItem('everestToken');
-            sessionStorage.clear();
-            location.replace('/login');
+          if (
+            error.response.status === 401 ||
+            (error.response.status === 400 &&
+              message.includes(MISSING_MALFORMED_JWT_MESSAGE))
+          ) {
+            location.href = '/logout';
+            return;
           }
 
           if (!notificationsDisabled) {
-            if (error.response.data && error.response.data.message) {
-              if (
-                error.response.data.message.length > MAX_ERROR_MESSAGE_LENGTH
-              ) {
-                message = `${error.response.data.message
-                  .trim()
-                  .substring(0, MAX_ERROR_MESSAGE_LENGTH)}...`;
-              } else {
-                message = error.response.data.message.trim();
-              }
+            message = message.trim();
+            if (message.length > MAX_ERROR_MESSAGE_LENGTH) {
+              message = `${message.substring(0, MAX_ERROR_MESSAGE_LENGTH)}...`;
             }
 
             enqueueSnackbar(message, {

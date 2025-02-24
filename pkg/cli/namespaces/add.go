@@ -328,7 +328,7 @@ func (n *NamespaceAdder) GetNamespaceInstallSteps(ctx context.Context, dbNSChart
 			err := n.validateNamespaceUpdate(ctx, namespace)
 			if errors.Is(err, ErrCannotRemoveOperators) {
 				msg := "Removal of an installed operator is not supported. Proceeding without removal."
-				_, _ = fmt.Fprint(os.Stdout, output.Warn(msg)) //nolint:govet
+				_, _ = fmt.Fprint(os.Stdout, output.Warn("%s", msg))
 				n.l.Warn(msg)
 				break
 			} else if err != nil {

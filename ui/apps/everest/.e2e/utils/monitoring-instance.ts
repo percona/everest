@@ -22,26 +22,30 @@ export const testMonitoringName2 = 'ui-test-monitoring-1';
 export const createMonitoringInstance = async (
   request: APIRequestContext,
   name: string,
-  namespaces: string[],
+  namespace: string,
   token: string
 ) => {
   const data = {
-    type: 'pmm',
     name,
-    allowedNamespaces: namespaces,
+    type: 'pmm',
     url: MONITORING_URL,
+    allowedNamespaces: [],
+    verifyTLS: false,
     pmm: {
       user: MONITORING_USER,
       password: MONITORING_PASSWORD,
     },
   };
 
-  const response = await request.post('/v1/monitoring-instances', {
-    data,
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await request.post(
+    `/v1/namespaces/${namespace}/monitoring-instances`,
+    {
+      data,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   expect(response.ok()).toBeTruthy();
 };
