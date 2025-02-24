@@ -1,5 +1,15 @@
-# Config
+# Some utilities
+def str2bool(v):
+    return v.lower() in ("yes", "true", "t", "1")
+
+# Load Config
 config_yaml=read_yaml('config.yaml')
+
+# Load local Envfile with env vars
+local_env_file='%s/.env' % config.main_dir
+print ('Loading local .env file=%s' % local_env_file)
+load('ext://dotenv', 'dotenv')
+dotenv(fn=local_env_file)
 
 # Vars
 everest_namespace = 'everest-system'
@@ -17,31 +27,21 @@ print('Using PG operator version: %s' % pg_operator_version)
 #allow_k8s_contexts("gke_percona-everest_europe-west1-c_everest-dev")
 #default_registry("us-central1-docker.pkg.dev/percona-everest/quickstart-docker-repo")
 
-
 # Check for required env vars
-backend_dir = os.getenv('EVEREST_BACKEND_DIR')
-if not backend_dir:
-  backend_dir = '..'
-backend_dir = os.path.abspath(backend_dir)
+backend_dir = os.path.abspath(os.getenv('EVEREST_BACKEND_DIR', '%s/../' % config.main_dir))
 if not os.path.exists(backend_dir):
   fail('Backend dir does not exist: %s' % backend_dir)
 print('Using backend dir: %s' % backend_dir)
 
-frontend_dir = os.getenv('EVEREST_FRONTEND_DIR')
-if not frontend_dir:
-  frontend_dir = '../ui'
-frontend_dir = os.path.abspath(frontend_dir)
+frontend_dir = os.path.abspath(os.getenv('EVEREST_FRONTEND_DIR', '%s/../ui/' % config.main_dir))
 if not os.path.exists(frontend_dir):
   fail('Frontend dir does not exist: %s' % frontend_dir)
 print('Using frontend dir: %s' % frontend_dir)
 
-cli_dir = os.getenv('EVEREST_CLI_DIR')
-if not cli_dir:
-  cli_dir = '..'
-cli_dir = os.path.abspath(cli_dir)
+cli_dir = os.path.abspath(os.getenv('EVEREST_CLI_DIR', '%s/..' % config.main_dir))
 if not os.path.exists(cli_dir):
-  fail('cli dir does not exist: %s' % cli_dir)
-print('Using cli dir: %s' % cli_dir)
+  fail('CLI dir does not exist: %s' % cli_dir)
+print('Using CLI dir: %s' % cli_dir)
 
 operator_dir = os.getenv('EVEREST_OPERATOR_DIR')
 if not operator_dir:
@@ -60,15 +60,11 @@ if not os.path.exists(everest_chart_dir):
 print('Using chart dir: %s' % everest_chart_dir)
 
 # Check for Everest debug
-everest_debug = bool(os.getenv('EVEREST_DEBUG'))
-if not everest_debug:
-    everest_debug = False
+everest_debug = str2bool(os.getenv('EVEREST_DEBUG', 'False'))
 print('Using Everest debug: %s' % everest_debug)
 
 # Check for Everest Operator debug
-everest_operator_debug = bool(os.getenv('EVEREST_OPERATOR_DEBUG'))
-if not everest_operator_debug:
-    everest_operator_debug = False
+everest_operator_debug = str2bool(os.getenv('EVEREST_OPERATOR_DEBUG', 'False'))
 print('Using Everest Operator debug: %s' % everest_operator_debug)
 
 watch_settings(
