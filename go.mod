@@ -47,7 +47,7 @@ require (
 	golang.org/x/mod v0.23.0
 	golang.org/x/term v0.29.0
 	golang.org/x/time v0.10.0
-	google.golang.org/protobuf v1.36.2
+	google.golang.org/protobuf v1.36.5
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.17.1
