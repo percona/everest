@@ -31,6 +31,7 @@ import DatabaseFormCancelDialog from './database-form-cancel-dialog/index';
 import DatabaseFormBody from './database-form-body';
 import { DbWizardFormFields } from 'consts.ts';
 import DatabaseFormSideDrawer from './database-form-side-drawer';
+import { useDBClustersForNamespaces, useNamespaces } from 'hooks';
 
 export const DatabasePage = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -43,11 +44,20 @@ export const DatabasePage = () => {
   const mode = useDatabasePageMode();
   const { defaultValues, isFetching: loadingClusterValues } =
     useDatabasePageDefaultValues(mode);
+  const { data: namespaces = [] } = useNamespaces({
+    refetchInterval: 10 * 1000,
+  });
+  const dbClustersResults = useDBClustersForNamespaces(
+    namespaces.map((ns) => ({
+      namespace: ns,
+    }))
+  );
 
   const validationSchema = useDbValidationSchema(
     activeStep,
     defaultValues,
-    mode
+    mode,
+    dbClustersResults
   );
 
   const methods = useForm<DbWizardType>({

@@ -9,8 +9,9 @@ import { resourcesFormSchema } from 'components/cluster-form';
 import { dbVersionSchemaObject } from 'components/cluster-form/db-version/db-version-schema';
 import { advancedConfigurationsSchema } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema.ts';
 import { DbWizardMode } from './database-form.types.ts';
+import { DbClusterForNamespaceResult } from 'hooks/index.ts';
 
-const basicInfoSchema = () =>
+const basicInfoSchema = (dbClusters: DbClusterForNamespaceResult[]) =>
   z
     .object({
       [DbWizardFormFields.dbType]: z.nativeEnum(DbType),
@@ -32,7 +33,22 @@ const basicInfoSchema = () =>
         }),
       [DbWizardFormFields.sharding]: z.boolean(),
     })
-    .passthrough();
+    .passthrough()
+    .superRefine(({ dbName, k8sNamespace }, ctx) => {
+      const dbClustersNamesList = Object.values(dbClusters)
+        .filter((res) => res.namespace === k8sNamespace)
+        .map((item) => item.queryResult.data)
+        .flat()
+        .map((db) => db?.metadata?.name);
+
+      if (dbClustersNamesList.find((item) => item === dbName)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [DbWizardFormFields.dbName],
+          message: Messages.errors.dbName.duplicate,
+        });
+      }
+    });
 
 // .passthrough tells Zod to not drop unrecognized keys
 // this is needed because we parse step by step
@@ -97,10 +113,11 @@ const stepFiveSchema = () =>
 export const getDBWizardSchema = (
   activeStep: number,
   defaultValues: DbWizardType,
-  mode: DbWizardMode
+  mode: DbWizardMode,
+  dbClusters: DbClusterForNamespaceResult[]
 ) => {
   const schema = [
-    basicInfoSchema(),
+    basicInfoSchema(dbClusters),
     stepTwoSchema(defaultValues, mode),
     backupsStepSchema(),
     advancedConfigurationsSchema(),
