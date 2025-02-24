@@ -141,12 +141,20 @@ test.describe(
           .getByText(size + ' nodes')
           .click();
 
-        await expect(page.getByText('Nodes Per Shard (' + size + ')')).toBeVisible();
+        await expect(
+          page.getByText('Nodes Per Shard (' + size + ')')
+        ).toBeVisible();
         await expect(page.getByText('Routers (3)')).toBeVisible();
         await expect(page.getByText('2 shards')).toBeVisible();
-        await expect(page.getByText('6 nodes - CPU - 6.00 CPU; Memory - 24.00 GB; Disk - 150.00 Gi')).toBeVisible();
+        await expect(
+          page.getByText(
+            '6 nodes - CPU - 6.00 CPU; Memory - 24.00 GB; Disk - 150.00 Gi'
+          )
+        ).toBeVisible();
         await expect(page.getByText('3 configuration servers')).toBeVisible();
-        await expect(page.getByText('3 routers - CPU - 3.00 CPU; Memory - 6.00 GB')).toBeVisible();
+        await expect(
+          page.getByText('3 routers - CPU - 3.00 CPU; Memory - 6.00 GB')
+        ).toBeVisible();
         await populateResources(page, 0.6, 1, 1, size, 2, 0.6, 1, 2, 3);
         await moveForward(page);
       });

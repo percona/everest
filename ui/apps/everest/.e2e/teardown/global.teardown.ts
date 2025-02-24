@@ -16,7 +16,10 @@
 import { test as setup, expect } from '@playwright/test';
 import { getTokenFromLocalStorage } from '../utils/localStorage';
 import { getBucketNamespacesMap } from '../constants';
-import { deleteMonitoringInstance, listMonitoringInstances } from '@e2e/utils/monitoring-instance';
+import {
+  deleteMonitoringInstance,
+  listMonitoringInstances,
+} from '@e2e/utils/monitoring-instance';
 
 setup.describe.serial('Teardown', () => {
   setup('Delete backup storage', async ({ request }) => {
@@ -58,19 +61,19 @@ setup.describe.serial('Teardown', () => {
     );
 
     for (const [idx, namespace] of allNamespaces.entries()) {
-        const monitoringInstances = await listMonitoringInstances(
+      const monitoringInstances = await listMonitoringInstances(
+        request,
+        namespace,
+        token
+      );
+      for (const instance of monitoringInstances) {
+        await deleteMonitoringInstance(
           request,
           namespace,
+          instance.name,
           token
         );
-        for (const instance of monitoringInstances) {
-          await deleteMonitoringInstance(
-            request,
-            namespace,
-            instance.name,
-            token
-          );
-        }
+      }
     }
   });
 
