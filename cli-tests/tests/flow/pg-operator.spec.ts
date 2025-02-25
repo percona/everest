@@ -12,8 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { test, expect } from '@fixtures';
-// eslint-disable-next-line import/no-extraneous-dependencies
+import { test } from '@fixtures';
 
 test.describe('Everest CLI install', async () => {
   test.beforeEach(async ({ cli }) => {
