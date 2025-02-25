@@ -41,7 +41,7 @@ const basicInfoSchema = () =>
 const stepTwoSchema = (
   defaultValues: Record<string, unknown>,
   mode: DbWizardMode
-) => resourcesFormSchema(defaultValues, mode === 'new');
+) => resourcesFormSchema(defaultValues, mode === 'new', true);
 
 const backupsStepSchema = () =>
   z
