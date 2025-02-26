@@ -186,6 +186,7 @@ const ClusterStatusTable = ({
   return (
     <>
       <Table
+        getRowId={(row) => row.name}
         tableName={`${namespace}-upgrade-pending-actions`}
         noDataMessage="No pending actions"
         columns={columns}
