@@ -158,6 +158,7 @@ export const DbClusterView = () => {
     <Stack direction="column" alignItems="center">
       <Box sx={{ width: '100%' }}>
         <Table
+          getRowId={(row) => row.databaseName}
           tableName="dbClusterView"
           emptyState={
             namespaces.length > 0 ? (
