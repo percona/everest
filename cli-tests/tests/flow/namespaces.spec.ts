@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { test, expect } from '@fixtures';
-// eslint-disable-next-line import/no-extraneous-dependencies
 
 test.describe('Everest CLI install', async () => {
   test.beforeEach(async ({ cli }) => {
@@ -27,13 +26,15 @@ test.describe('Everest CLI install', async () => {
     const verifyOperators = async (namespace: string, operators: string[]) => {
       await test.step('verify installed operators', async () => {
         const out = await cli.exec(`kubectl get pods --namespace=${namespace}`);
+
         await out.outContainsNormalizedMany(operators);
       });
-    };
+    },
 
-    const verifyEverestSystem = async () => {
+     verifyEverestSystem = async () => {
       await test.step('verify Everest', async () => {
         const out = await cli.exec(`kubectl get deploy --namespace=everest-system`);
+
         await out.outContainsNormalizedMany([
             'everest-operator',
             'everest-server'
@@ -64,17 +65,19 @@ test.describe('Everest CLI install', async () => {
       const out = await cli.everestExecSkipWizard(
         `install`,
       );
+
       await out.outErrContainsNormalizedMany([
           '❌ everest is already installed',
       ]);
     });
     await page.waitForTimeout(10_000);
     await verifyEverestSystem();
-    
+
     await test.step('create database namespace', async () => {
       const out = await cli.everestExecNamespacesSkipWizard(
         `add everest --operator.mongodb=false --operator.postgresql=false --operator.xtradb-cluster=true`,
       );
+
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
           '✅ Provisioning database namespace \'everest\'',
@@ -88,6 +91,7 @@ test.describe('Everest CLI install', async () => {
       const out = await cli.everestExecNamespacesSkipWizard(
         `add everest --operator.mongodb=false --operator.postgresql=false --operator.xtradb-cluster=true`,
       );
+
       await out.outErrContainsNormalizedMany([
         '❌ \'everest\': namespace already exists and is managed by Everest',
       ]);
@@ -100,6 +104,7 @@ test.describe('Everest CLI install', async () => {
       const out = await cli.everestExecNamespacesSkipWizard(
         `update everest --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true`,
       );
+
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
           '✅ Updating database namespace \'everest\'',
@@ -117,6 +122,7 @@ test.describe('Everest CLI install', async () => {
       let out = await cli.everestExecNamespaces(
         `remove everest`,
       );
+
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
           '✅ Deleting database clusters in namespace \'everest\'',
@@ -135,6 +141,7 @@ test.describe('Everest CLI install', async () => {
 
     await test.step('create database namespace with --take-ownership', async () => {
       let out = await cli.exec(`kubectl create namespace existing-ns`);
+
       await out.assertSuccess();
 
       out = await cli.everestExecNamespacesSkipWizard(
@@ -152,6 +159,7 @@ test.describe('Everest CLI install', async () => {
       let out = await cli.everestExecNamespaces(
         `remove existing-ns --keep-namespace`,
       );
+
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
           '✅ Deleting database clusters in namespace \'existing-ns\'',
@@ -172,4 +180,3 @@ test.describe('Everest CLI install', async () => {
 
   });
 });
-

@@ -13,26 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { expect, test as setup } from '@playwright/test';
-import { STORAGE_STATE_FILE, TIMEOUTS } from '@e2e/constants';
-const { CI_USER, CI_PASSWORD } = process.env;
+import { test as setup } from '@playwright/test';
+import { login } from '@e2e/utils/user';
 
 setup('Login', async ({ page }) => {
-  await page.goto('/login');
-  await page.getByTestId('text-input-username').fill(CI_USER);
-  await page.getByTestId('text-input-password').fill(CI_PASSWORD);
-  await page.getByTestId('login-button').click();
-  await expect(page.getByTestId('user-appbar-button')).toBeVisible({
-    timeout: TIMEOUTS.ThirtySeconds,
+  await login(page);
+  await page.evaluate(() => {
+    // This is a dummy token
+    localStorage.setItem(
+      'everestToken',
+      'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJldmVyZXN0IiwiaWF0IjoxNzM5NDU2NjU1LCJleHAiOjE3NzA5OTI2NTUsImF1ZCI6Ind3dy5leGFtcGxlLmNvbSIsInN1YiI6Impyb2NrZXRAZXhhbXBsZS5jb20iLCJHaXZlbk5hbWUiOiJKb2hubnkiLCJTdXJuYW1lIjoiUm9ja2V0IiwiRW1haWwiOiJqcm9ja2V0QGV4YW1wbGUuY29tIiwiUm9sZSI6WyJNYW5hZ2VyIiwiUHJvamVjdCBBZG1pbmlzdHJhdG9yIl19.NKJwQE1KY9srM9bZPZxL3zd_563ugnELMPFal9lFf78'
+    );
   });
-
-  const origins = (await page.context().storageState()).origins;
-  expect(origins.length).toBeGreaterThan(0);
-  expect(
-    origins.find(
-      (origin) =>
-        !!origin.localStorage.find((storage) => storage.name === 'everestToken')
-    )
-  ).not.toBeUndefined();
-  await page.context().storageState({ path: STORAGE_STATE_FILE });
+  // Wait for the user to be logged out and end up in login page again
+  await page.waitForURL(/login/);
+  await login(page);
 });

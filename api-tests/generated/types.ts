@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/session": {
+    '/session': {
         parameters: {
             query?: never;
             header?: never;
@@ -19,14 +19,14 @@ export interface paths {
          *     The provided user must have the `login` capability.
          *
          */
-        post: operations["createSession"];
+        post: operations['createSession'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/permissions": {
+    '/permissions': {
         parameters: {
             query?: never;
             header?: never;
@@ -86,7 +86,7 @@ export interface paths {
          *     ```
          *
          */
-        get: operations["getUserPermissions"];
+        get: operations['getUserPermissions'];
         put?: never;
         post?: never;
         delete?: never;
@@ -95,7 +95,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/namespaces": {
+    '/namespaces': {
         parameters: {
             query?: never;
             header?: never;
@@ -107,7 +107,7 @@ export interface paths {
          * @description This API returns a list of namespaces managed by Everest.
          *
          */
-        get: operations["listNamespaces"];
+        get: operations['listNamespaces'];
         put?: never;
         post?: never;
         delete?: never;
@@ -116,7 +116,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/version": {
+    '/version': {
         parameters: {
             query?: never;
             header?: never;
@@ -128,7 +128,7 @@ export interface paths {
          * @description This API returns the version of the Everest API server.
          *
          */
-        get: operations["versionInfo"];
+        get: operations['versionInfo'];
         put?: never;
         post?: never;
         delete?: never;
@@ -137,7 +137,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/settings": {
+    '/settings': {
         parameters: {
             query?: never;
             header?: never;
@@ -148,7 +148,7 @@ export interface paths {
          * Settings
          * @description This API returns the settings of the Everest installation.
          */
-        get: operations["getSettings"];
+        get: operations['getSettings'];
         put?: never;
         post?: never;
         delete?: never;
@@ -157,7 +157,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/resources": {
+    '/resources': {
         parameters: {
             query?: never;
             header?: never;
@@ -169,7 +169,7 @@ export interface paths {
          * @description This API gets the capacity and available resources of the Kubernetes cluster.
          *
          */
-        get: operations["getKubernetesClusterResources"];
+        get: operations['getKubernetesClusterResources'];
         put?: never;
         post?: never;
         delete?: never;
@@ -178,7 +178,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/cluster-info": {
+    '/cluster-info': {
         parameters: {
             query?: never;
             header?: never;
@@ -190,7 +190,7 @@ export interface paths {
          * @description This API gets the cluster type and the storage classes available in the cluster.
          *
          */
-        get: operations["getKubernetesClusterInfo"];
+        get: operations['getKubernetesClusterInfo'];
         put?: never;
         post?: never;
         delete?: never;
@@ -199,7 +199,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/database-clusters": {
+    '/namespaces/{namespace}/database-clusters': {
         parameters: {
             query?: never;
             header?: never;
@@ -211,21 +211,21 @@ export interface paths {
          * @description This API lists all database clusters in the specified namespace.
          *
          */
-        get: operations["listDatabaseClusters"];
+        get: operations['listDatabaseClusters'];
         put?: never;
         /**
          * Create database cluster
          * @description This API creates a new database cluster in the specified namespace.
          *
          */
-        post: operations["createDatabaseCluster"];
+        post: operations['createDatabaseCluster'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/database-clusters/{name}": {
+    '/namespaces/{namespace}/database-clusters/{name}': {
         parameters: {
             query?: never;
             header?: never;
@@ -237,26 +237,26 @@ export interface paths {
          * @description This API gets the database cluster specified by the `name` and `namespace`.
          *
          */
-        get: operations["getDatabaseCluster"];
+        get: operations['getDatabaseCluster'];
         /**
          * Update database cluster
          * @description This API updates a database cluster specified by the `name` and `namespace`.
          *
          */
-        put: operations["updateDatabaseCluster"];
+        put: operations['updateDatabaseCluster'];
         post?: never;
         /**
          * Delete database cluster
          * @description This API deletes the database cluster specified by the `name` and `namespace`.
          *
          */
-        delete: operations["deleteDatabaseCluster"];
+        delete: operations['deleteDatabaseCluster'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/database-clusters/{cluster-name}/backups": {
+    '/namespaces/{namespace}/database-clusters/{cluster-name}/backups': {
         parameters: {
             query?: never;
             header?: never;
@@ -268,7 +268,7 @@ export interface paths {
          * @description This API lists all database cluster backups in the specified `namespace`.
          *
          */
-        get: operations["listDatabaseClusterBackups"];
+        get: operations['listDatabaseClusterBackups'];
         put?: never;
         post?: never;
         delete?: never;
@@ -277,7 +277,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/database-clusters/{cluster-name}/restores": {
+    '/namespaces/{namespace}/database-clusters/{cluster-name}/restores': {
         parameters: {
             query?: never;
             header?: never;
@@ -289,7 +289,7 @@ export interface paths {
          * @description This API lists all database cluster restores for a database cluster specified by the `name` and `namespace`.
          *
          */
-        get: operations["listDatabaseClusterRestores"];
+        get: operations['listDatabaseClusterRestores'];
         put?: never;
         post?: never;
         delete?: never;
@@ -298,7 +298,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/database-clusters/{name}/credentials": {
+    '/namespaces/{namespace}/database-clusters/{name}/credentials': {
         parameters: {
             query?: never;
             header?: never;
@@ -310,7 +310,7 @@ export interface paths {
          * @description This API gets the credentials for the database cluster specified by the `name` and `namespace`.
          *
          */
-        get: operations["getDatabaseClusterCredentials"];
+        get: operations['getDatabaseClusterCredentials'];
         put?: never;
         post?: never;
         delete?: never;
@@ -319,7 +319,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/database-clusters/{name}/pitr": {
+    '/namespaces/{namespace}/database-clusters/{name}/pitr': {
         parameters: {
             query?: never;
             header?: never;
@@ -331,7 +331,7 @@ export interface paths {
          * @description This API gets the Point-in-Time recovery info for the database cluster specified by the `name` and `namespace`.
          *
          */
-        get: operations["getDatabaseClusterPitr"];
+        get: operations['getDatabaseClusterPitr'];
         put?: never;
         post?: never;
         delete?: never;
@@ -340,7 +340,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/database-clusters/{name}/components": {
+    '/namespaces/{namespace}/database-clusters/{name}/components': {
         parameters: {
             query?: never;
             header?: never;
@@ -352,7 +352,7 @@ export interface paths {
          * @description This API gets the various components of the database cluster specified by the `name` and `namespace`.
          *
          */
-        get: operations["getDatabaseClusterComponents"];
+        get: operations['getDatabaseClusterComponents'];
         put?: never;
         post?: never;
         delete?: never;
@@ -361,7 +361,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/database-engines": {
+    '/namespaces/{namespace}/database-engines': {
         parameters: {
             query?: never;
             header?: never;
@@ -373,7 +373,7 @@ export interface paths {
          * @description This API lists all database engines in the specified `namespace`.
          *
          */
-        get: operations["listDatabaseEngines"];
+        get: operations['listDatabaseEngines'];
         put?: never;
         post?: never;
         delete?: never;
@@ -382,7 +382,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/database-engines/{name}": {
+    '/namespaces/{namespace}/database-engines/{name}': {
         parameters: {
             query?: never;
             header?: never;
@@ -394,13 +394,13 @@ export interface paths {
          * @description This API gets the database engine specified by the `name` and `namespace`.
          *
          */
-        get: operations["getDatabaseEngine"];
+        get: operations['getDatabaseEngine'];
         /**
          * Update database engine
          * @description This API updates the database engine specified by the `name` and `namespace`.
          *
          */
-        put: operations["updateDatabaseEngine"];
+        put: operations['updateDatabaseEngine'];
         post?: never;
         delete?: never;
         options?: never;
@@ -408,7 +408,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/database-engines/upgrade-plan": {
+    '/namespaces/{namespace}/database-engines/upgrade-plan': {
         parameters: {
             query?: never;
             header?: never;
@@ -426,7 +426,7 @@ export interface paths {
          *     The older upgrade APIs are deprecated and will be removed in v1.2.0
          *
          */
-        get: operations["getUpgradePlan"];
+        get: operations['getUpgradePlan'];
         put?: never;
         post?: never;
         delete?: never;
@@ -435,7 +435,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/database-engines/upgrade-plan/approval": {
+    '/namespaces/{namespace}/database-engines/upgrade-plan/approval': {
         parameters: {
             query?: never;
             header?: never;
@@ -452,14 +452,14 @@ export interface paths {
          *     The older upgrade APIs are deprecated and will be removed in v1.2.0
          *
          */
-        post: operations["approveUpgradePlan"];
+        post: operations['approveUpgradePlan'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/database-cluster-restores": {
+    '/namespaces/{namespace}/database-cluster-restores': {
         parameters: {
             query?: never;
             header?: never;
@@ -473,14 +473,14 @@ export interface paths {
          * @description This API creates a new database cluster restore in the specified `namespace`.
          *
          */
-        post: operations["createDatabaseClusterRestore"];
+        post: operations['createDatabaseClusterRestore'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/database-cluster-restores/{name}": {
+    '/namespaces/{namespace}/database-cluster-restores/{name}': {
         parameters: {
             query?: never;
             header?: never;
@@ -492,26 +492,26 @@ export interface paths {
          * @description This API gets the database cluster restore specified by the `name` and `namespace`.
          *
          */
-        get: operations["getDatabaseClusterRestore"];
+        get: operations['getDatabaseClusterRestore'];
         /**
          * Update database cluster restore
          * @description This API updates the database cluster restore specified by the `name` and `namespace`.
          *
          */
-        put: operations["updateDatabaseClusterRestore"];
+        put: operations['updateDatabaseClusterRestore'];
         post?: never;
         /**
          * Delete database cluster restore
          * @description This API deletes the database cluster restore specified by the `name` and `namespace`.
          *
          */
-        delete: operations["deleteDatabaseClusterRestore"];
+        delete: operations['deleteDatabaseClusterRestore'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/database-cluster-backups": {
+    '/namespaces/{namespace}/database-cluster-backups': {
         parameters: {
             query?: never;
             header?: never;
@@ -525,14 +525,14 @@ export interface paths {
          * @description This API creates a new database cluster backup in the specified `namespace`.
          *
          */
-        post: operations["createDatabaseClusterBackup"];
+        post: operations['createDatabaseClusterBackup'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/database-cluster-backups/{name}": {
+    '/namespaces/{namespace}/database-cluster-backups/{name}': {
         parameters: {
             query?: never;
             header?: never;
@@ -544,7 +544,7 @@ export interface paths {
          * @description This API gets the database cluster backup specified by the `name` and `namespace`.
          *
          */
-        get: operations["getDatabaseClusterBackup"];
+        get: operations['getDatabaseClusterBackup'];
         put?: never;
         post?: never;
         /**
@@ -552,13 +552,13 @@ export interface paths {
          * @description This API deletes the database cluster backup specified by the `name` and `namespace`.
          *
          */
-        delete: operations["deleteDatabaseClusterBackup"];
+        delete: operations['deleteDatabaseClusterBackup'];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/backup-storages": {
+    '/namespaces/{namespace}/backup-storages': {
         parameters: {
             query?: never;
             header?: never;
@@ -569,7 +569,7 @@ export interface paths {
          * List backup storages
          * @description This API lists all backup storages.
          */
-        get: operations["listBackupStorages"];
+        get: operations['listBackupStorages'];
         put?: never;
         /**
          * Create backup storage
@@ -608,14 +608,14 @@ export interface paths {
          *       ```
          *
          */
-        post: operations["createBackupStorage"];
+        post: operations['createBackupStorage'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/backup-storages/{name}": {
+    '/namespaces/{namespace}/backup-storages/{name}': {
         parameters: {
             query?: never;
             header?: never;
@@ -626,14 +626,14 @@ export interface paths {
          * Get backup storage
          * @description This API gets the backup storage speciciied by the `name` in the given `namespace`.
          */
-        get: operations["getBackupStorage"];
+        get: operations['getBackupStorage'];
         put?: never;
         post?: never;
         /**
          * Delete backup storage
          * @description This API deletes the backup storage specified by the `name`.
          */
-        delete: operations["deleteBackupStorage"];
+        delete: operations['deleteBackupStorage'];
         options?: never;
         head?: never;
         /**
@@ -641,10 +641,10 @@ export interface paths {
          * @description This API updates the backup storage specified by the `name`. Only the specified fields will be updated.
          *
          */
-        patch: operations["updateBackupStorage"];
+        patch: operations['updateBackupStorage'];
         trace?: never;
     };
-    "/namespaces/{namespace}/monitoring-instances": {
+    '/namespaces/{namespace}/monitoring-instances': {
         parameters: {
             query?: never;
             header?: never;
@@ -655,7 +655,7 @@ export interface paths {
          * List monitoring instances
          * @description This API lists all monitoring instances in a given namespace.
          */
-        get: operations["listMonitoringInstances"];
+        get: operations['listMonitoringInstances'];
         put?: never;
         /**
          * Create monitoring instance
@@ -666,14 +666,14 @@ export interface paths {
          *     Such as, if `type: pmm`, then `pmm` key needs to be provided with a configuration.
          *
          */
-        post: operations["createMonitoringInstance"];
+        post: operations['createMonitoringInstance'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/namespaces/{namespace}/monitoring-instances/{name}": {
+    '/namespaces/{namespace}/monitoring-instances/{name}': {
         parameters: {
             query?: never;
             header?: never;
@@ -684,24 +684,24 @@ export interface paths {
          * Get monitoring instance
          * @description This API gets the monitoring instance specified by the `name`.
          */
-        get: operations["getMonitoringInstance"];
+        get: operations['getMonitoringInstance'];
         put?: never;
         post?: never;
         /**
          * Delete monitoring instnace
          * @description This API deletes the monitoring instance specified by the `name`.
          */
-        delete: operations["deleteMonitoringInstance"];
+        delete: operations['deleteMonitoringInstance'];
         options?: never;
         head?: never;
         /**
          * Update monitoring instance
          * @description This API updates the monitoring instance specified by the `name`.
          */
-        patch: operations["updateMonitoringInstance"];
+        patch: operations['updateMonitoringInstance'];
         trace?: never;
     };
-    "/monitoring-instances": {
+    '/monitoring-instances': {
         parameters: {
             query?: never;
             header?: never;
@@ -715,7 +715,7 @@ export interface paths {
          *     Please use `GET /namespaces/{namespace}/monitoring-instances` instead to list monitoring instances.
          *
          */
-        get: operations["listMonitoringInstances_v0"];
+        get: operations['listMonitoringInstances_v0'];
         put?: never;
         /**
          * Create monitoring instance (Deprecated)
@@ -723,14 +723,14 @@ export interface paths {
          *     Please use `POST /namespaces/{namespace}/monitoring-instances` instead to create a new monitoring instance.
          *
          */
-        post: operations["createMonitoringInstance_v0"];
+        post: operations['createMonitoringInstance_v0'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/monitoring-instances/{name}": {
+    '/monitoring-instances/{name}': {
         parameters: {
             query?: never;
             header?: never;
@@ -744,7 +744,7 @@ export interface paths {
          *     Please use `GET /namespaces/{namespace}/monitoring-instances/{name}` instead to get a monitoring instance.
          *
          */
-        get: operations["getMonitoringInstance_v0"];
+        get: operations['getMonitoringInstance_v0'];
         put?: never;
         post?: never;
         /**
@@ -754,7 +754,7 @@ export interface paths {
          *     Please use `DELETE /namespaces/{namespace}/monitoring-instances/{name}` instead to delete a monitoring instance.
          *
          */
-        delete: operations["deleteMonitoringInstance_v0"];
+        delete: operations['deleteMonitoringInstance_v0'];
         options?: never;
         head?: never;
         /**
@@ -764,10 +764,10 @@ export interface paths {
          *     Please use `PATCH /namespaces/{namespace}/monitoring-instances/{name}` instead to update a monitoring instance.
          *
          */
-        patch: operations["updateMonitoringInstance_v0"];
+        patch: operations['updateMonitoringInstance_v0'];
         trace?: never;
     };
-    "/backup-storages": {
+    '/backup-storages': {
         parameters: {
             query?: never;
             header?: never;
@@ -781,7 +781,7 @@ export interface paths {
          *     Please use `GET /namespaces/{namespace}/backup-storages` instead to list backup storages.
          *
          */
-        get: operations["listBackupStorages_v0"];
+        get: operations['listBackupStorages_v0'];
         put?: never;
         /**
          * Create backup storage (Deprecated)
@@ -790,14 +790,14 @@ export interface paths {
          *     Please use `POST /namespaces/{namespace}/backup-storages` instead to create a new backup storage.
          *
          */
-        post: operations["createBackupStorage_v0"];
+        post: operations['createBackupStorage_v0'];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/backup-storages/{name}": {
+    '/backup-storages/{name}': {
         parameters: {
             query?: never;
             header?: never;
@@ -811,7 +811,7 @@ export interface paths {
          *     Please use `GET /namespaces/{namespace}/backup-storages/{name}` instead to get a backup storage.
          *
          */
-        get: operations["getBackupStorage_v0"];
+        get: operations['getBackupStorage_v0'];
         put?: never;
         post?: never;
         /**
@@ -821,7 +821,7 @@ export interface paths {
          *     Please use `DELETE /namespaces/{namespace}/backup-storages/{name}` instead to delete a backup storage.
          *
          */
-        delete: operations["deleteBackupStorage_v0"];
+        delete: operations['deleteBackupStorage_v0'];
         options?: never;
         head?: never;
         /**
@@ -831,7 +831,7 @@ export interface paths {
          *     Please use `PATCH /namespaces/{namespace}/backup-storages/{name}` instead to update a backup storage.
          *
          */
-        patch: operations["updateBackupStorage_v0"];
+        patch: operations['updateBackupStorage_v0'];
         trace?: never;
     };
 }
@@ -860,7 +860,7 @@ export interface components {
             name: string;
             description?: string;
             /** @enum {string} */
-            type: "s3" | "azure";
+            type: 's3' | 'azure';
             /** @description The cloud storage bucket/container name */
             bucketName: string;
             accessKey: string;
@@ -903,13 +903,13 @@ export interface components {
              * @description Pending task for the database cluster
              * @enum {string}
              */
-            pendingTask?: "restart";
+            pendingTask?: 'restart';
         };
         /** @description Operator version check results */
         OperatorVersion: {
             /** @description The current operator version */
             currentVersion?: string;
-            databases?: components["schemas"]["OperatorVersionCheckForDatabase"][];
+            databases?: components['schemas']['OperatorVersionCheckForDatabase'][];
         };
         /**
          * @deprecated
@@ -923,7 +923,7 @@ export interface components {
              * @description Pending task for the database cluster
              * @enum {string}
              */
-            pendingTask?: "ready" | "notReady" | "restart" | "upgradeEngine";
+            pendingTask?: 'ready' | 'notReady' | 'restart' | 'upgradeEngine';
         };
         UpgradeTask: {
             /** @description Name of the database cluster */
@@ -933,7 +933,7 @@ export interface components {
              * @description Pending task for the database cluster
              * @enum {string}
              */
-            pendingTask?: "ready" | "notReady" | "restart" | "upgradeEngine";
+            pendingTask?: 'ready' | 'notReady' | 'restart' | 'upgradeEngine';
         };
         Upgrade: {
             /** @description Name of the operator */
@@ -946,8 +946,8 @@ export interface components {
         };
         /** @description Operators upgrade plan */
         UpgradePlan: {
-            upgrades?: components["schemas"]["Upgrade"][];
-            pendingActions?: components["schemas"]["UpgradeTask"][];
+            upgrades?: components['schemas']['Upgrade'][];
+            pendingActions?: components['schemas']['UpgradeTask'][];
         };
         /**
          * @deprecated
@@ -956,12 +956,12 @@ export interface components {
         OperatorUpgradePreflight: {
             /** @description The current operator version */
             currentVersion?: string;
-            databases?: components["schemas"]["OperatorUpgradePreflightForDatabase"][];
+            databases?: components['schemas']['OperatorUpgradePreflightForDatabase'][];
         };
         /** @description Backup storage information */
         BackupStorage: {
             /** @enum {string} */
-            type: "s3" | "azure";
+            type: 's3' | 'azure';
             namespace?: string;
             name: string;
             description?: string;
@@ -978,11 +978,11 @@ export interface components {
              */
             allowedNamespaces?: string[];
         };
-        BackupStoragesList: components["schemas"]["BackupStorage"][];
+        BackupStoragesList: components['schemas']['BackupStorage'][];
         /** @description Monitoring instance information */
         MonitoringInstanceBase: {
             /** @enum {string} */
-            type?: "pmm";
+            type?: 'pmm';
             url?: string;
             /**
              * @deprecated
@@ -993,7 +993,7 @@ export interface components {
             verifyTLS?: boolean;
         };
         /** @description Monitoring instance information */
-        MonitoringInstanceBaseWithName: components["schemas"]["MonitoringInstanceBase"] & {
+        MonitoringInstanceBaseWithName: components['schemas']['MonitoringInstanceBase'] & {
             /**
              * @description A user defined string name of the storage in the DNS name format https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names
              * @example pmm-instance
@@ -1012,12 +1012,12 @@ export interface components {
             };
         };
         /** @description Monitoring instance create information */
-        MonitoringInstanceCreateParams: components["schemas"]["MonitoringInstanceBaseWithName"] & components["schemas"]["MonitoringInstancePMM"];
+        MonitoringInstanceCreateParams: components['schemas']['MonitoringInstanceBaseWithName'] & components['schemas']['MonitoringInstancePMM'];
         /** @description Monitoring instance update information */
-        MonitoringInstanceUpdateParams: components["schemas"]["MonitoringInstanceBase"] & components["schemas"]["MonitoringInstancePMM"];
+        MonitoringInstanceUpdateParams: components['schemas']['MonitoringInstanceBase'] & components['schemas']['MonitoringInstancePMM'];
         /** @description Monitoring instance information */
-        MonitoringInstance: components["schemas"]["MonitoringInstanceBaseWithName"];
-        MonitoringInstancesList: components["schemas"]["MonitoringInstance"][];
+        MonitoringInstance: components['schemas']['MonitoringInstanceBaseWithName'];
+        MonitoringInstancesList: components['schemas']['MonitoringInstance'][];
         /** @description kubernetes object */
         DatabaseClusterCredential: {
             /** @example root */
@@ -1033,7 +1033,7 @@ export interface components {
             started?: string;
             restarts?: number;
             ready?: string;
-            containers?: components["schemas"]["DatabaseClusterComponentContainer"][];
+            containers?: components['schemas']['DatabaseClusterComponentContainer'][];
         }[];
         DatabaseClusterComponentContainer: {
             name?: string;
@@ -1088,7 +1088,7 @@ export interface components {
         };
         /** @description Everest global settings */
         Settings: {
-            oidcConfig: components["schemas"]["OIDCConfig"];
+            oidcConfig: components['schemas']['OIDCConfig'];
         };
         /** @description Everest OIDC provider configuration */
         OIDCConfig: {
@@ -1103,7 +1103,7 @@ export interface components {
             apiVersion?: string;
             /** @description Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
             kind?: string;
-            items?: components["schemas"]["DatabaseCluster"][];
+            items?: components['schemas']['DatabaseCluster'][];
             metadata?: Record<string, never>;
         };
         /** @description DatabaseEngineList is an object that contains the list of the existing database engines. */
@@ -1112,7 +1112,7 @@ export interface components {
             apiVersion?: string;
             /** @description Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
             kind?: string;
-            items?: components["schemas"]["DatabaseEngine"][];
+            items?: components['schemas']['DatabaseEngine'][];
             metadata?: Record<string, never>;
         };
         /** @description This no-op object is used to trigger the operator upgrade in a namespace.
@@ -1135,7 +1135,7 @@ export interface components {
             apiVersion?: string;
             /** @description Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
             kind?: string;
-            items?: components["schemas"]["DatabaseClusterRestore"][];
+            items?: components['schemas']['DatabaseClusterRestore'][];
             metadata?: Record<string, never>;
         };
         /** @description DatabaseClusterBackupList is an object that contains the list of the existing database cluster backups. */
@@ -1144,11 +1144,11 @@ export interface components {
             apiVersion?: string;
             /** @description Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
             kind?: string;
-            items?: components["schemas"]["DatabaseClusterBackup"][];
+            items?: components['schemas']['DatabaseClusterBackup'][];
             metadata?: Record<string, never>;
         };
         /** @description sizeLimit is the total amount of local storage required for this EmptyDir volume. The size limit is also applicable for memory medium. The maximum usage on memory medium EmptyDir would be the minimum value between the SizeLimit specified here and the sum of memory limits of all containers in a pod. The default is nil which means that the limit is undefined. More info: http://kubernetes.io/docs/user-guide/volumes#emptydir */
-        SizeLimit: components["schemas"]["Integer"] | components["schemas"]["String"];
+        SizeLimit: components['schemas']['Integer'] | components['schemas']['String'];
         Integer: number;
         String: string;
         /** @description DatabaseEngine is the Schema for the databaseengines API. */
@@ -1308,7 +1308,7 @@ export interface components {
                          * @default date
                          * @enum {string}
                          */
-                        type: "date" | "latest";
+                        type: 'date' | 'latest';
                     };
                 };
                 /** @description Engine is the database engine specification */
@@ -1346,7 +1346,7 @@ export interface components {
                      * @description Type is the engine type
                      * @enum {string}
                      */
-                    type: "pxc" | "postgresql" | "psmdb";
+                    type: 'pxc' | 'postgresql' | 'psmdb';
                     /** @description UserSecretsName is the name of the secret containing the user secrets */
                     userSecretsName?: string;
                     /** @description Version is the engine version */
@@ -1406,7 +1406,7 @@ export interface components {
                          * @default internal
                          * @enum {string}
                          */
-                        type: "internal" | "external";
+                        type: 'internal' | 'external';
                     };
                     /**
                      * Format: int32
@@ -1425,7 +1425,7 @@ export interface components {
                      * @description Type is the proxy type
                      * @enum {string}
                      */
-                    type?: "mongos" | "haproxy" | "proxysql" | "pgbouncer";
+                    type?: 'mongos' | 'haproxy' | 'proxysql' | 'pgbouncer';
                 };
                 /** @description Sharding is the sharding configuration. PSMDB-only */
                 sharding?: {
@@ -1549,7 +1549,7 @@ export interface components {
                          * @default date
                          * @enum {string}
                          */
-                        type: "date" | "latest";
+                        type: 'date' | 'latest';
                     };
                 };
                 /** @description DBClusterName defines the cluster name to restore. */
@@ -1565,7 +1565,7 @@ export interface components {
             };
         };
         /** @description Status is a return value for calls that don't return other objects. */
-        "io.k8s.apimachinery.pkg.apis.meta.v1.Status_v2": {
+        'io.k8s.apimachinery.pkg.apis.meta.v1.Status_v2': {
             /** @description APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
             apiVersion?: string;
             /**
@@ -1574,20 +1574,20 @@ export interface components {
              */
             code?: number;
             /** @description Extended data associated with the reason.  Each reason may define its own extended details. This field is optional and the data returned is not guaranteed to conform to any schema except that defined by the reason type. */
-            details?: components["schemas"]["io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails_v2"];
+            details?: components['schemas']['io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails_v2'];
             /** @description Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
             kind?: string;
             /** @description A human-readable description of the status of this operation. */
             message?: string;
             /** @description Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-            metadata?: components["schemas"]["io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"];
+            metadata?: components['schemas']['io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta'];
             /** @description A machine-readable description of why this operation is in the "Failure" status. If this value is empty there is no information available. A Reason clarifies an HTTP status code but does not override it. */
             reason?: string;
             /** @description Status of the operation. One of: "Success" or "Failure". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status */
             status?: string;
         };
         /** @description ListMeta describes metadata that synthetic resources must have, including lists and various status objects. A resource may have only one of {ObjectMeta, ListMeta}. */
-        "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta": {
+        'io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta': {
             /** @description continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
             continue?: string;
             /**
@@ -1603,9 +1603,9 @@ export interface components {
             selfLink?: string;
         };
         /** @description StatusDetails is a set of additional properties that MAY be set by the server to provide additional information about a response. The Reason field of a Status object defines what attributes will be set. Clients must ignore fields that do not match the defined type of each attribute, and should assume that any attribute may be empty, invalid, or under defined. */
-        "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails_v2": {
+        'io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails_v2': {
             /** @description The Causes array includes more details associated with the StatusReason failure. Not all StatusReasons may provide detailed causes. */
-            causes?: components["schemas"]["io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause"][];
+            causes?: components['schemas']['io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause'][];
             /** @description The group attribute of the resource associated with the status StatusReason. */
             group?: string;
             /** @description The kind attribute of the resource associated with the status StatusReason. On some operations may differ from the requested resource Kind. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
@@ -1621,7 +1621,7 @@ export interface components {
             uid?: string;
         };
         /** @description StatusCause provides more information about an api.Status failure, including cases when multiple errors are encountered. */
-        "io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause": {
+        'io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause': {
             /** @description The field of the resource that has caused this error, as named by its JSON serialization. May include dot and postfix notation for nested attributes. Arrays are zero-indexed.  Fields may appear more than once in an array of causes due to fields having multiple errors. Optional.
              *
              *     Examples:
@@ -1652,7 +1652,7 @@ export interface operations {
         /** @description The user credentials */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UserCredentials"];
+                'application/json': components['schemas']['UserCredentials'];
             };
         };
         responses: {
@@ -1662,7 +1662,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
+                    'application/json': {
                         token?: string;
                     };
                 };
@@ -1673,7 +1673,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -1682,7 +1682,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -1702,7 +1702,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserPermissions"];
+                    'application/json': components['schemas']['UserPermissions'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -1711,7 +1711,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -1720,7 +1720,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -1740,7 +1740,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NamespaceList"];
+                    'application/json': components['schemas']['NamespaceList'];
                 };
             };
         };
@@ -1760,7 +1760,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Version"];
+                    'application/json': components['schemas']['Version'];
                 };
             };
         };
@@ -1780,7 +1780,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Settings"];
+                    'application/json': components['schemas']['Settings'];
                 };
             };
         };
@@ -1800,7 +1800,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["KubernetesClusterResources"];
+                    'application/json': components['schemas']['KubernetesClusterResources'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -1809,7 +1809,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -1818,7 +1818,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -1838,7 +1838,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["KubernetesClusterInfo"];
+                    'application/json': components['schemas']['KubernetesClusterInfo'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -1847,7 +1847,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -1856,7 +1856,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -1879,7 +1879,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseClusterList"];
+                    'application/json': components['schemas']['DatabaseClusterList'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -1888,7 +1888,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -1897,7 +1897,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -1915,7 +1915,7 @@ export interface operations {
         /** @description The database cluster object to be created */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DatabaseCluster"];
+                'application/json': components['schemas']['DatabaseCluster'];
             };
         };
         responses: {
@@ -1925,7 +1925,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseCluster"];
+                    'application/json': components['schemas']['DatabaseCluster'];
                 };
             };
             /** @description Created successfully */
@@ -1934,7 +1934,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseCluster"];
+                    'application/json': components['schemas']['DatabaseCluster'];
                 };
             };
             /** @description Accepted */
@@ -1943,7 +1943,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseCluster"];
+                    'application/json': components['schemas']['DatabaseCluster'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -1952,7 +1952,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -1961,7 +1961,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -1986,7 +1986,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseCluster"];
+                    'application/json': components['schemas']['DatabaseCluster'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -1995,7 +1995,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2004,7 +2004,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2024,7 +2024,7 @@ export interface operations {
         /** @description The database cluster object to be updated */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DatabaseCluster"];
+                'application/json': components['schemas']['DatabaseCluster'];
             };
         };
         responses: {
@@ -2034,7 +2034,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseCluster"];
+                    'application/json': components['schemas']['DatabaseCluster'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2043,7 +2043,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2052,7 +2052,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2080,7 +2080,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["io.k8s.apimachinery.pkg.apis.meta.v1.Status_v2"];
+                    'application/json': components['schemas']['io.k8s.apimachinery.pkg.apis.meta.v1.Status_v2'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2089,7 +2089,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2098,7 +2098,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2111,7 +2111,7 @@ export interface operations {
                 /** @description Name of the namespace */
                 namespace: string;
                 /** @description Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object. */
-                "cluster-name": string;
+                'cluster-name': string;
             };
             cookie?: never;
         };
@@ -2123,7 +2123,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseClusterBackupList"];
+                    'application/json': components['schemas']['DatabaseClusterBackupList'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2132,7 +2132,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2141,7 +2141,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2154,7 +2154,7 @@ export interface operations {
                 /** @description Name of the namespace */
                 namespace: string;
                 /** @description Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object. */
-                "cluster-name": string;
+                'cluster-name': string;
             };
             cookie?: never;
         };
@@ -2166,7 +2166,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseClusterRestoreList"];
+                    'application/json': components['schemas']['DatabaseClusterRestoreList'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2175,7 +2175,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2184,7 +2184,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2209,7 +2209,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseClusterCredential"];
+                    'application/json': components['schemas']['DatabaseClusterCredential'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2218,7 +2218,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2227,7 +2227,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2252,7 +2252,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseClusterPitr"];
+                    'application/json': components['schemas']['DatabaseClusterPitr'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2261,7 +2261,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2270,7 +2270,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2295,7 +2295,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseClusterComponents"];
+                    'application/json': components['schemas']['DatabaseClusterComponents'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2304,7 +2304,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2313,7 +2313,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2336,7 +2336,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseEngineList"];
+                    'application/json': components['schemas']['DatabaseEngineList'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2345,7 +2345,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2354,7 +2354,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2379,7 +2379,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseEngine"];
+                    'application/json': components['schemas']['DatabaseEngine'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2388,7 +2388,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2397,7 +2397,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2417,7 +2417,7 @@ export interface operations {
         /** @description The database cluster object to be updated */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DatabaseEngine"];
+                'application/json': components['schemas']['DatabaseEngine'];
             };
         };
         responses: {
@@ -2427,7 +2427,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseEngine"];
+                    'application/json': components['schemas']['DatabaseEngine'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2436,7 +2436,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2445,7 +2445,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2468,7 +2468,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UpgradePlan"];
+                    'application/json': components['schemas']['UpgradePlan'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2477,7 +2477,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2486,7 +2486,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2504,7 +2504,7 @@ export interface operations {
         /** @description Request for upgrading the database engine operators */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpgradePlanApproval"];
+                'application/json': components['schemas']['UpgradePlanApproval'];
             };
         };
         responses: {
@@ -2521,7 +2521,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2530,7 +2530,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2548,7 +2548,7 @@ export interface operations {
         /** @description The database cluster restore object to be created */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DatabaseClusterRestore"];
+                'application/json': components['schemas']['DatabaseClusterRestore'];
             };
         };
         responses: {
@@ -2558,7 +2558,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseClusterRestore"];
+                    'application/json': components['schemas']['DatabaseClusterRestore'];
                 };
             };
             /** @description Created success */
@@ -2567,7 +2567,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseClusterRestore"];
+                    'application/json': components['schemas']['DatabaseClusterRestore'];
                 };
             };
             /** @description Accepted */
@@ -2576,7 +2576,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseClusterRestore"];
+                    'application/json': components['schemas']['DatabaseClusterRestore'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2585,7 +2585,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2594,7 +2594,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2619,7 +2619,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseClusterRestore"];
+                    'application/json': components['schemas']['DatabaseClusterRestore'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2628,7 +2628,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2637,7 +2637,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2657,7 +2657,7 @@ export interface operations {
         /** @description The database cluster restore object to be updated */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DatabaseClusterRestore"];
+                'application/json': components['schemas']['DatabaseClusterRestore'];
             };
         };
         responses: {
@@ -2667,7 +2667,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseClusterRestore"];
+                    'application/json': components['schemas']['DatabaseClusterRestore'];
                 };
             };
             /** @description Created successful */
@@ -2676,7 +2676,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseClusterRestore"];
+                    'application/json': components['schemas']['DatabaseClusterRestore'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2685,7 +2685,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2694,7 +2694,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2719,7 +2719,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["io.k8s.apimachinery.pkg.apis.meta.v1.Status_v2"];
+                    'application/json': components['schemas']['io.k8s.apimachinery.pkg.apis.meta.v1.Status_v2'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2728,7 +2728,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2737,7 +2737,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2755,7 +2755,7 @@ export interface operations {
         /** @description The database cluster backup object to be created */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DatabaseClusterBackup"];
+                'application/json': components['schemas']['DatabaseClusterBackup'];
             };
         };
         responses: {
@@ -2765,7 +2765,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseClusterBackup"];
+                    'application/json': components['schemas']['DatabaseClusterBackup'];
                 };
             };
             /** @description Created success */
@@ -2774,7 +2774,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseClusterBackup"];
+                    'application/json': components['schemas']['DatabaseClusterBackup'];
                 };
             };
             /** @description Accepted */
@@ -2783,7 +2783,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseClusterBackup"];
+                    'application/json': components['schemas']['DatabaseClusterBackup'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2792,7 +2792,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2801,7 +2801,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2826,7 +2826,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DatabaseClusterBackup"];
+                    'application/json': components['schemas']['DatabaseClusterBackup'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2835,7 +2835,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2844,7 +2844,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2872,7 +2872,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["io.k8s.apimachinery.pkg.apis.meta.v1.Status_v2"];
+                    'application/json': components['schemas']['io.k8s.apimachinery.pkg.apis.meta.v1.Status_v2'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2881,7 +2881,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2890,7 +2890,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2913,7 +2913,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BackupStoragesList"];
+                    'application/json': components['schemas']['BackupStoragesList'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2922,7 +2922,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2931,7 +2931,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -2949,7 +2949,7 @@ export interface operations {
         /** @description The backup storage object to be created */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateBackupStorageParams"];
+                'application/json': components['schemas']['CreateBackupStorageParams'];
             };
         };
         responses: {
@@ -2959,7 +2959,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BackupStorage"];
+                    'application/json': components['schemas']['BackupStorage'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -2968,7 +2968,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -2977,7 +2977,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -3002,7 +3002,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BackupStorage"];
+                    'application/json': components['schemas']['BackupStorage'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -3011,7 +3011,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -3020,7 +3020,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -3052,7 +3052,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -3061,7 +3061,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -3081,7 +3081,7 @@ export interface operations {
         /** @description The backup storage params. Only the specified fields will be updated. */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateBackupStorageParams"];
+                'application/json': components['schemas']['UpdateBackupStorageParams'];
             };
         };
         responses: {
@@ -3091,7 +3091,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BackupStorage"];
+                    'application/json': components['schemas']['BackupStorage'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -3100,7 +3100,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -3109,7 +3109,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -3132,7 +3132,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MonitoringInstancesList"];
+                    'application/json': components['schemas']['MonitoringInstancesList'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -3141,7 +3141,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -3150,7 +3150,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -3168,7 +3168,7 @@ export interface operations {
         /** @description The Monitoring instance object to be created */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["MonitoringInstanceCreateParams"];
+                'application/json': components['schemas']['MonitoringInstanceCreateParams'];
             };
         };
         responses: {
@@ -3178,7 +3178,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MonitoringInstance"];
+                    'application/json': components['schemas']['MonitoringInstance'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -3187,7 +3187,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -3196,7 +3196,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -3221,7 +3221,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MonitoringInstance"];
+                    'application/json': components['schemas']['MonitoringInstance'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -3230,7 +3230,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Monitoring instance not found */
@@ -3239,7 +3239,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -3248,7 +3248,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -3280,7 +3280,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Monitoring instance not found */
@@ -3289,7 +3289,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -3298,7 +3298,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -3318,7 +3318,7 @@ export interface operations {
         /** @description The monitoring instance object to be updated. */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["MonitoringInstanceUpdateParams"];
+                'application/json': components['schemas']['MonitoringInstanceUpdateParams'];
             };
         };
         responses: {
@@ -3328,7 +3328,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MonitoringInstance"];
+                    'application/json': components['schemas']['MonitoringInstance'];
                 };
             };
             /** @description Unsuccessful operation */
@@ -3337,7 +3337,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Monitoring instance not found */
@@ -3346,7 +3346,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
             /** @description Internal server error */
@@ -3355,7 +3355,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    'application/json': components['schemas']['Error'];
                 };
             };
         };
@@ -3380,7 +3380,7 @@ export interface operations {
         /** @description The Monitoring instance object to be created */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["MonitoringInstanceCreateParams"];
+                'application/json': components['schemas']['MonitoringInstanceCreateParams'];
             };
         };
         responses: never;
@@ -3424,7 +3424,7 @@ export interface operations {
         /** @description The monitoring instance object to be updated. */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["MonitoringInstanceUpdateParams"];
+                'application/json': components['schemas']['MonitoringInstanceUpdateParams'];
             };
         };
         responses: never;
@@ -3449,7 +3449,7 @@ export interface operations {
         /** @description The backup storage object to be created */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateBackupStorageParams"];
+                'application/json': components['schemas']['CreateBackupStorageParams'];
             };
         };
         responses: never;
@@ -3493,7 +3493,7 @@ export interface operations {
         /** @description The backup storage params. Only the specified fields will be updated. */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateBackupStorageParams"];
+                'application/json': components['schemas']['UpdateBackupStorageParams'];
             };
         };
         responses: never;
