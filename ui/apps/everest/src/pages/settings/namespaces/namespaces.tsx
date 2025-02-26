@@ -80,6 +80,7 @@ export const Namespaces = () => {
   return (
     <>
       <Table
+        getRowId={(row) => row.name}
         tableName="namespaces"
         noDataMessage={Messages.noDataMessage}
         emptyState={<EmptyStateNamespaces />}
