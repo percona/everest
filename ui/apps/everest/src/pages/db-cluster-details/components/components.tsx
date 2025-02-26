@@ -98,6 +98,7 @@ const Components = () => {
 
   return (
     <Table
+      getRowId={(row) => row.name}
       initialState={{
         sorting: [
           {

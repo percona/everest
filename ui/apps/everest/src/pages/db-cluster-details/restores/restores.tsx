@@ -109,6 +109,7 @@ const Restores = () => {
         <Alert severity="error">{DbDetailsMessages.pitrError}</Alert>
       )}
       <Table
+        getRowId={(row) => row.name}
         state={{ isLoading: loadingRestores }}
         tableName={`${dbClusterName}-restore`}
         columns={columns}
