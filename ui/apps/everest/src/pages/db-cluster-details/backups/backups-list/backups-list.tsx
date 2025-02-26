@@ -205,6 +205,7 @@ export const BackupsList = () => {
         </Typography>
       )}
       <Table
+        getRowId={(row) => row.name}
         tableName="backupList"
         noDataMessage={Messages.noData}
         data={backups}
