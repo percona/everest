@@ -31,6 +31,7 @@ export const useNamespaces = (
   useQuery<GetNamespacesPayload, unknown, string[]>({
     queryKey: [NAMESPACES_QUERY_KEY],
     queryFn: getNamespacesFn,
+    select: (namespaces) => namespaces.sort((a, b) => a.localeCompare(b)),
     ...options,
   });
 
