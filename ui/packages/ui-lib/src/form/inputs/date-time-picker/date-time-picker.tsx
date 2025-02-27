@@ -20,11 +20,13 @@ const DateTimePickerInput = <T extends PickerValidDate>({
         <DateTimePicker
           {...field}
           inputRef={field.ref}
-          data-testid={`date-time-picker-${kebabize(name)}`}
           slotProps={{
             textField: {
               error: !!error,
               helperText: error ? error.message : '',
+              inputProps: {
+                'data-testid': `date-time-picker-${kebabize(name)}`,
+              },
             },
           }}
           {...dateTimePickerProps}

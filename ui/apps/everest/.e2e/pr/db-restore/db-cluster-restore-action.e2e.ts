@@ -74,4 +74,62 @@ test.describe('DB Cluster Restore', () => {
         .getByText(Messages.selectBackup)
     ).toBeVisible();
   });
+
+  test('keep selected time in the modal', async ({
+    page,
+    request,
+  }, testInfo) => {
+    testInfo.setTimeout(30000);
+    await page.route(
+      '/v1/namespaces/**/database-clusters/**/pitr',
+      async (route) => {
+        await route.fulfill({
+          json: {
+            earliestDate: '2025-02-27T12:45:00Z',
+            latestDate: '2025-02-27T15:30:00.00Z',
+            gaps: false,
+            latestBackupName: 'cron-mongodb-0b8-20250227124400-t7zjb',
+          },
+        });
+      }
+    );
+    await page.route(
+      '/v1/namespaces/**/database-clusters/**/backups',
+      async (route) => {
+        await route.fulfill({
+          json: {
+            items: [
+              {
+                metadata: {
+                  name: 'cron-mongodb',
+                },
+                spec: {
+                  backupStorageName: 'minio',
+                  dbClusterName: 'mongodb-0b8',
+                },
+                status: {
+                  completed: '2025-02-27T15:30:00.00Z',
+                  created: '2025-02-27T12:45:00Z',
+                  gaps: false,
+                  latestRestorableTime: '2025-02-27T11:44:22Z',
+                  state: 'Succeeded',
+                },
+              },
+            ],
+          },
+        });
+      }
+    );
+
+    await findDbAndClickRow(page, dbClusterName);
+    await page.getByTestId('actions-button').click();
+    await page.getByTestId(`${dbClusterName}-restore`).click();
+    await page.getByTestId('radio-option-fromPITR').click();
+    const input = await page.getByTestId('date-time-picker-pitr-backup');
+    expect(await input.inputValue()).toBe('27/02/2025 at 15:30:00');
+    await input.fill('27/02/2025 at 15:25:00');
+    // Wait for some time to make sure the input value hasn't changed
+    await page.waitForTimeout(12000);
+    expect(await input.inputValue()).toBe('27/02/2025 at 15:25:00');
+  });
 });
