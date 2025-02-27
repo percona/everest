@@ -55,14 +55,14 @@ const ModalContent = ({
   backups: Backup[];
   backupStorageName?: string;
 }) => {
-  const { watch, resetField, setValue } = useFormContext();
+  const { watch, resetField, setValue, getValues } = useFormContext();
   const backupType: BackuptypeValues = watch(RestoreDbFields.backupType);
 
   useEffect(() => {
-    if (pitrData) {
+    if (pitrData && !getValues(RestoreDbFields.pitrBackup)) {
       setValue(RestoreDbFields.pitrBackup, pitrData.latestDate);
     }
-  }, [pitrData, setValue]);
+  }, [getValues, pitrData, setValue]);
 
   return (
     <LoadableChildren loading={isLoading}>
@@ -93,6 +93,7 @@ const ModalContent = ({
               onClick: () => {
                 resetField(RestoreDbFields.pitrBackup, {
                   keepError: false,
+                  defaultValue: getValues(RestoreDbFields.pitrBackup),
                 });
               },
             },
@@ -264,8 +265,9 @@ const RestoreDbModal = <T extends FieldValues>({
           pitrBackupName = pitrData.latestBackupName;
         }
 
-        if (pitrBackup && pitrBackup instanceof Date) {
-          pointInTimeDate = pitrBackup.toISOString().split('.')[0] + 'Z';
+        if (pitrBackup) {
+          const pitrDateObj = new Date(pitrBackup);
+          pointInTimeDate = pitrDateObj.toISOString().split('.')[0] + 'Z';
         }
         if (isNewClusterMode) {
           closeModal();

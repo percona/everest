@@ -59,7 +59,7 @@ export const schema = (gaps: boolean, minDate?: Date, maxDate?: Date) =>
 export const defaultValues = {
   [RestoreDbFields.backupType]: BackuptypeValues.fromBackup,
   [RestoreDbFields.backupName]: '',
-  [RestoreDbFields.pitrBackup]: new Date(),
+  [RestoreDbFields.pitrBackup]: '',
 };
 
 export type RestoreDbFormData = z.infer<ReturnType<typeof schema>>;
