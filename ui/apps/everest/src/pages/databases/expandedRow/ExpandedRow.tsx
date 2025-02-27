@@ -25,11 +25,12 @@ import { LabelValue } from './LabelValue';
 import { useRBACPermissions } from 'hooks/rbac';
 import {
   cpuParser,
-  getTotalResourcesDetailedString,
+  getResourcesDetailedString,
   memoryParser,
 } from 'utils/k8ResourceParser';
 import { getProxyUnitNamesFromDbType } from 'components/cluster-form/resources/utils';
 import { dbEngineToDbType } from '@percona/utils';
+import { DbEngineType } from '@percona/types';
 
 export const ExpandedRow = ({
   row,
@@ -52,33 +53,28 @@ export const ExpandedRow = ({
     port,
     raw,
   } = row.original;
-
+  const sharding = raw.spec.sharding;
   const parsedDiskValues = memoryParser(storage.toString());
-  const parsedMemoryValues = memoryParser(memory.toString());
-  const parsedProxyMemoryValues = memoryParser(proxyMemory.toString());
-  const cpuResourcesStr = getTotalResourcesDetailedString(
+  const parsedMemoryValues = memoryParser(memory.toString(), 'G');
+  const parsedProxyMemoryValues = memoryParser(proxyMemory.toString(), 'G');
+  const cpuResourcesStr = getResourcesDetailedString(
     cpuParser(cpu.toString() || '0'),
-    nodes,
-    'CPU'
+    ''
   );
-  const cpuProxyResourcesStr = getTotalResourcesDetailedString(
+  const cpuProxyResourcesStr = getResourcesDetailedString(
     cpuParser(proxyCpu.toString() || '0'),
-    proxies,
-    'CPU'
+    ''
   );
-  const memoryResourcesStr = getTotalResourcesDetailedString(
+  const memoryResourcesStr = getResourcesDetailedString(
     parsedMemoryValues.value,
-    nodes,
-    parsedMemoryValues.originalUnit
+    'GB'
   );
-  const memoryProxyResourcesStr = getTotalResourcesDetailedString(
+  const memoryProxyResourcesStr = getResourcesDetailedString(
     parsedProxyMemoryValues.value,
-    proxies,
-    parsedProxyMemoryValues.originalUnit
+    'GB'
   );
-  const storageResourcesStr = getTotalResourcesDetailedString(
+  const storageResourcesStr = getResourcesDetailedString(
     parsedDiskValues.value,
-    nodes,
     parsedDiskValues.originalUnit
   );
   const isExpanded = row.getIsExpanded();
@@ -159,7 +155,35 @@ export const ExpandedRow = ({
         >
           {Messages.expandedRow.dbClusterParams}
         </Typography>
-        <LabelValue label={Messages.expandedRow.nodes} value={nodes} />
+        <Box>
+          {dbType === DbEngineType.PSMDB && (
+            <Box>
+              <Typography sx={{ fontWeight: 'bold', paddingBottom: 1 }}>
+                {Messages.expandedRow.sharding}
+              </Typography>
+              <LabelValue
+                label={Messages.expandedRow.shardingStatus}
+                value={
+                  sharding?.enabled
+                    ? Messages.expandedRow.enabled
+                    : Messages.expandedRow.disabled
+                }
+              />
+              <LabelValue
+                label={Messages.expandedRow.nrOfShards}
+                value={sharding?.shards}
+              />
+              <LabelValue
+                label={Messages.expandedRow.configServers}
+                value={sharding?.configServer.replicas}
+              />
+            </Box>
+          )}
+        </Box>
+        <Divider sx={{ margin: '10px 0' }} />
+        <Typography sx={{ fontWeight: 'bold', paddingBottom: 1 }}>
+          {`${nodes} node${+nodes > 1 ? 's' : ''} ${dbType === DbEngineType.PSMDB ? 'per shard' : ''}`}
+        </Typography>
         <LabelValue label={Messages.expandedRow.cpu} value={cpuResourcesStr} />
         <LabelValue
           label={Messages.expandedRow.memory}
@@ -172,10 +196,9 @@ export const ExpandedRow = ({
         <Divider sx={{ margin: '10px 0' }} />
         {proxies > 0 && (
           <>
-            <LabelValue
-              label={`Nº ${getProxyUnitNamesFromDbType(dbEngineToDbType(dbType)).plural}`}
-              value={proxies}
-            />
+            <Typography sx={{ fontWeight: 'bold', paddingBottom: 1 }}>
+              {`${proxies} ${getProxyUnitNamesFromDbType(dbEngineToDbType(dbType))[proxies > 1 ? 'plural' : 'singular']} ${dbType === DbEngineType.PSMDB ? 'per shard' : ''}`}
+            </Typography>
             <LabelValue
               label={Messages.expandedRow.cpu}
               value={cpuProxyResourcesStr}
