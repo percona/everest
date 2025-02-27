@@ -127,7 +127,9 @@ const ModalContent = ({
             .filter((value) => value.state === BackupStatus.OK)
             .sort((a, b) => {
               if (a.created && b.created) {
-                return b.created.valueOf() - a.created.valueOf();
+                return (
+                  new Date(b.created).valueOf() - new Date(a.created).valueOf()
+                );
               }
               return -1;
             })

@@ -119,8 +119,8 @@ export const BackupsList = () => {
         enableColumnFilter: false,
         sortingFn: 'datetime',
         Cell: ({ cell }) =>
-          cell.getValue<Date>()
-            ? format(cell.getValue<Date>(), DATE_FORMAT)
+          cell.getValue<string>()
+            ? format(cell.getValue<string>(), DATE_FORMAT)
             : '',
       },
       {
@@ -129,8 +129,8 @@ export const BackupsList = () => {
         enableColumnFilter: false,
         sortingFn: 'datetime',
         Cell: ({ cell }) =>
-          cell.getValue<Date>()
-            ? format(cell.getValue<Date>(), DATE_FORMAT)
+          cell.getValue<string>()
+            ? format(cell.getValue<string>(), DATE_FORMAT)
             : '',
       },
     ],
