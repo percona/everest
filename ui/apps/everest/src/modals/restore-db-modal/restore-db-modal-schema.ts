@@ -17,7 +17,7 @@ export const schema = (gaps: boolean, minDate?: Date, maxDate?: Date) =>
     .object({
       [RestoreDbFields.backupType]: z.nativeEnum(BackuptypeValues),
       [RestoreDbFields.backupName]: z.string().optional(),
-      [RestoreDbFields.pitrBackup]: z.date().optional(),
+      [RestoreDbFields.pitrBackup]: z.string().optional(),
     })
     .superRefine(({ backupType, backupName, pitrBackup }, ctx) => {
       if (backupType === BackuptypeValues.fromBackup) {
