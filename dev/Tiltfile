@@ -21,11 +21,11 @@ if os.path.exists(local_env_file):
 
 # Variables
 pxc_operator_version = os.getenv('PXC_OPERATOR_VERSION', '1.16.1')
-print('Using PXC operator version: %s' % pxc_operator_version)
-psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.19.0')
-print('Using PSMDB operator version: %s' % psmdb_operator_version)
+print('Using PXC operator version: {0}'.format(pxc_operator_version))
+psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.19.1')
+print('Using PSMDB operator version: {0}'.format(psmdb_operator_version))
 pg_operator_version = os.getenv('PG_OPERATOR_VERSION', '2.5.0')
-print('Using PG operator version: %s' % pg_operator_version)
+print('Using PG operator version: {0}'.format(pg_operator_version))
 
 # External resources set up
 # uncomment the settings below and insert your k8s context & registry names
@@ -34,44 +34,39 @@ print('Using PG operator version: %s' % pg_operator_version)
 #default_registry("us-central1-docker.pkg.dev/percona-everest/quickstart-docker-repo")
 
 # Check for required env vars
-backend_dir = os.path.abspath(os.getenv('EVEREST_BACKEND_DIR', '%s/../' % config.main_dir))
+backend_dir = os.path.abspath('{0}/../'.format(config.main_dir))
 if not os.path.exists(backend_dir):
-  fail('Backend dir does not exist: %s' % backend_dir)
-print('Using backend dir: %s' % backend_dir)
+  fail('Backend dir does not exist: {0}'.format(backend_dir))
+print('Using backend dir: {0}'.format(backend_dir))
 
-frontend_dir = os.path.abspath(os.getenv('EVEREST_FRONTEND_DIR', '%s/../ui/' % config.main_dir))
+frontend_dir = os.path.abspath('{0}/../ui/'.format(config.main_dir))
 if not os.path.exists(frontend_dir):
-  fail('Frontend dir does not exist: %s' % frontend_dir)
-print('Using frontend dir: %s' % frontend_dir)
-
-cli_dir = os.path.abspath(os.getenv('EVEREST_CLI_DIR', '%s/..' % config.main_dir))
-if not os.path.exists(cli_dir):
-  fail('CLI dir does not exist: %s' % cli_dir)
-print('Using CLI dir: %s' % cli_dir)
+  fail('Frontend dir does not exist: {0}'.format(frontend_dir))
+print('Using frontend dir: {0}'.format(frontend_dir))
 
 operator_dir = os.getenv('EVEREST_OPERATOR_DIR')
 if not operator_dir:
   fail('EVEREST_OPERATOR_DIR must be set')
 operator_dir = os.path.abspath(operator_dir)
 if not os.path.exists(operator_dir):
-  fail('Operator dir does not exist: %s' % operator_dir)
-print('Using operator dir: %s' % operator_dir)
+  fail('Operator dir does not exist: {0}'.format(operator_dir))
+print('Using operator dir: {0}'.format(operator_dir))
 
 everest_chart_dir = os.getenv('EVEREST_CHART_DIR')
 if not everest_chart_dir:
   fail('EVEREST_CHART_DIR must be set')
 everest_chart_dir = os.path.abspath(everest_chart_dir)
 if not os.path.exists(everest_chart_dir):
-  fail('Chart dir does not exist: %s' % everest_chart_dir)
-print('Using chart dir: %s' % everest_chart_dir)
+  fail('Chart dir does not exist: {0}'.format(everest_chart_dir))
+print('Using chart dir: {0}'.format(everest_chart_dir))
 
 # Check for Everest debug
 everest_debug = str2bool(os.getenv('EVEREST_DEBUG', 'False'))
-print('Using Everest debug: %s' % everest_debug)
+print('Using Everest debug: {0}'.format(everest_debug))
 
 # Check for Everest Operator debug
 everest_operator_debug = str2bool(os.getenv('EVEREST_OPERATOR_DEBUG', 'False'))
-print('Using Everest Operator debug: %s' % everest_operator_debug)
+print('Using Everest Operator debug: {0}'.format(everest_operator_debug))
 
 # Check whether we need to create backup storage
 need_backup_storage=False
