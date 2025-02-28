@@ -579,26 +579,24 @@ k8s_resource(
 #################################
 ############ Backup Storages ##########
 #################################
-def getBackupStorageRequestBody(storage_name):
-    return encode_json(
-        {
-            'name': storage_name,
-            'type': "s3",
-            'bucketName': '{0}-bucket'.format(storage_name),
-            'description': storage_name,
-            'url': "https://minio.minio.svc.cluster.local",
-            'region': "us-east-1",
-            'accessKey': "minioadmin",
-            'secretKey': "minioadmin",
-            'verifyTLS':  True,
-            'forcePathStyle': False,
-        }
-    )
+def getBackupStorageNames():
+    to_return = []
+    for ns in config_yaml['namespaces']:
+        to_return.extend([storage_name for storage_name in ns.get('backupStorages', [])])
+    return to_return
 
 if need_backup_storage:
     # Deploy minIO as backup storage
     print('Deploying minIO as backup storage')
-    k8s_yaml('%s/.github/minio.conf.yaml' % backend_dir)
+    minio_path = os.path.abspath('{0}/.github/minio.conf.yaml'.format(backend_dir))
+    minio_objs=read_yaml_stream(minio_path)
+    bsListStr=','.join(getBackupStorageNames())
+    for minio_obj in minio_objs:
+        if minio_obj['kind'] == 'Deployment' and minio_obj['metadata']['name'] == 'minio':
+            # Redefine the env variable with the list of bucket names
+            minio_obj['spec']['template']['spec']['initContainers'][0]['env'][0]['value']=bsListStr
+            break
+    k8s_yaml(encode_yaml_stream(minio_objs))
     k8s_resource(
         workload='minio',
         objects=[
@@ -607,22 +605,42 @@ if need_backup_storage:
             'minio-cert:Secret:minio'
         ],
         new_name='minIO-deploy',
+        port_forwards=[
+            port_forward(9090, 9090, 'MinIO Console'),
+        ],
         labels=["backup-storage"]
     )
 
-    admin_credentials = {'username': 'admin', 'password': UI_ADMIN_PASSWORD}
-    api_token_cmd='API_TOKEN=$(curl -f -v -L -s -H "Content-Type: application/json" -d \'{0}\' localhost:8080/v1/session | jq -r .token)'.format(encode_json(admin_credentials))
-    backup_storage_cmd_tmpl='curl -f -v -L -H "Content-Type: application/json" -H "Authorization: Bearer $API_TOKEN" -d \'{0}\' localhost:8080/v1/namespaces/{1}/backup-storages'
+    # Create BackupStorage CRs
+    bs_crd_path = os.path.abspath('{0}/resources/backupstorage.yaml'.format(config.main_dir))
     for namespace in config_yaml['namespaces']:
         ns_name = namespace['name']
         for storage_name in namespace.get('backupStorages', []):
-            request_body=getBackupStorageRequestBody(storage_name)
-            local_resource(
-                'bs:{0}:{1}'.format(ns_name, storage_name),
-                '{0} && {1}'.format(api_token_cmd, backup_storage_cmd_tmpl.format(request_body, ns_name)),
-                resource_deps = [
-                    'minIO-deploy',
-                    'everest-server-deploy',
+            bs_objs=read_yaml_stream(bs_crd_path)
+            for obj in bs_objs:
+                if obj['kind'] == 'Secret':
+                    obj.update({
+                        'metadata': {
+                            'namespace': ns_name,
+                            'name': storage_name
+                        }
+                    })
+                elif obj['kind'] == 'BackupStorage':
+                    obj['metadata'].update({
+                            'namespace': ns_name,
+                            'name': storage_name
+                    })
+                    obj['spec'].update({
+                            'bucket': '{0}'.format(storage_name),
+                            'description': storage_name,
+                            'credentialsSecretName': storage_name,
+                    })
+            k8s_yaml(encode_yaml_stream(bs_objs))
+            k8s_resource(
+                objects=[
+                    '{0}:Secret:{1}'.format(storage_name, ns_name),
+                    '{0}:BackupStorage:{1}'.format(storage_name, ns_name),
                 ],
+                new_name='bs-{0}-{1}'.format(ns_name, storage_name),
                 labels=["backup-storage"]
             )
