@@ -644,6 +644,7 @@ const ResourcesForm = ({
           onChange={handleAccordionChange('proxies')}
           sx={{
             px: 2,
+            mt: 1,
           }}
         >
           <CustomAccordionSummary
