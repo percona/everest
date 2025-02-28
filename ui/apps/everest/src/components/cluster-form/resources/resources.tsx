@@ -17,6 +17,7 @@ import {
   useTheme,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import {
   TextInput,
   ToggleButtonGroupInput,
@@ -406,16 +407,21 @@ const CustomAccordionSummary = ({
     <AccordionSummary
       sx={{
         paddingLeft: 0,
-        ...(hasError && {
-          color: 'error.main',
-        }),
       }}
       expandIcon={<ExpandMoreIcon />}
     >
-      <Typography
-        variant="sectionHeading"
-        textTransform="capitalize"
-      >{`${unitPlural} ${text}`}</Typography>
+      <Box display="flex" alignItems="center">
+        {hasError && (
+          <ErrorOutlineIcon
+            color="error"
+            sx={{ mr: 1, position: 'relative', bottom: 1 }}
+          />
+        )}
+        <Typography
+          variant="sectionHeading"
+          textTransform="capitalize"
+        >{`${unitPlural} ${text}`}</Typography>
+      </Box>
     </AccordionSummary>
   );
 };
