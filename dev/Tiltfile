@@ -415,7 +415,7 @@ if everest_operator_debug:
 # Build the Everest operator manager locally to take advantage of the go cache
 local_resource(
   'operator-build',
-  'GOOS=linux make -C %s %s' % (operator_dir, everest_operator_build_target),
+  'CGO_ENABLED=0 GOOS=linux make -C %s %s' % (operator_dir, everest_operator_build_target),
   deps=[
     'go.mod',
     'go.sum',
@@ -520,7 +520,7 @@ if everest_debug:
 # Build backend
 local_resource(
     'backend-build',
-    'GOOS=linux make -C %s %s' % (backend_dir, everest_build_target),
+    'CGO_ENABLED=0 GOOS=linux make -C %s %s' % (backend_dir, everest_build_target),
     deps=[
         'go.mod',
         'go.sum',
