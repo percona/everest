@@ -50,20 +50,33 @@ gcloud auth configure-docker <REGISTRY_REGION>-docker.pkg.dev
 
 
 ### 2. Run tilt
-1. Set the following environment variables:
+1. Set environment variables:
+
+Copy file dev/.env.example to dev/.env and set the following environment variables:
 ```sh
-export EVEREST_OPERATOR_DIR=</path/to/everest-operator>
-export EVEREST_CHART_DIR=</path/to/percona-helm-charts>/charts/everest
+EVEREST_OPERATOR_DIR=<path to github.com/percona/everest-operator repository directory>
+EVEREST_CHART_DIR=<path to github.com/percona/percona-helm-charts>/charts/everest
 ```
 
-2. (Optional) If you want to test a specific version of a given DB operator you can set the following environment variables
+or set environment variables manually in the terminal:
+
 ```sh
-export PXC_OPERATOR_VERSION=1.13.0
-export PSMDB_OPERATOR_VERSION=1.15.0
-export PG_OPERATOR_VERSION=2.3.1
+export EVEREST_OPERATOR_DIR=<path to github.com/percona/everest-operator repository directory>
+export EVEREST_CHART_DIR=<path to github.com/percona/percona-helm-charts>/charts/everest
 ```
 
-3. (Optional) If you want to debug Everest Server and/or Everest operator remotely, you can set the following environment variables 
+2. Set namespaces for the Everest components:
+
+Copy file dev/config.yaml.example to dev/config.yaml and set the needed DB namespaces that will be created automatically.
+
+3. (Optional) If you want to test a specific version of a given DB operator you can set the following environment variables in .env file or in the terminal:
+```sh
+export PXC_OPERATOR_VERSION=1.16.1
+export PSMDB_OPERATOR_VERSION=1.19.1
+export PG_OPERATOR_VERSION=2.5.0
+```
+
+4. (Optional) If you want to debug Everest Server and/or Everest operator remotely, you can set the following environment variables in .env file or in the terminal: 
 ```sh
 export EVEREST_DEBUG=true
 export EVEREST_OPERATOR_DEBUG=true
@@ -78,7 +91,7 @@ Refer to instructions in your IDE on how to setup remote debugging.
 
 For GoLand, you can refer to [this](https://www.jetbrains.com/help/go/attach-to-running-go-processes-with-debugger.html#step-2-create-the-go-remote-run-debug-configuration) link.
 
-4. Run tilt
+5. Run tilt
 ```sh
 tilt up
 ```
