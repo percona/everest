@@ -8,10 +8,9 @@ import { Messages as ScheduleFormMessages } from 'components/schedule-form-dialo
 import { resourcesFormSchema } from 'components/cluster-form';
 import { dbVersionSchemaObject } from 'components/cluster-form/db-version/db-version-schema';
 import { advancedConfigurationsSchema } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema.ts';
-import { DbWizardMode } from './database-form.types.ts';
-import { DbClusterForNamespaceResult } from 'hooks/index.ts';
+import { DbClusterName, DbWizardMode } from './database-form.types.ts';
 
-const basicInfoSchema = (dbClusters: DbClusterForNamespaceResult[]) =>
+const basicInfoSchema = (dbClusters: DbClusterName[]) =>
   z
     .object({
       [DbWizardFormFields.dbType]: z.nativeEnum(DbType),
@@ -35,13 +34,11 @@ const basicInfoSchema = (dbClusters: DbClusterForNamespaceResult[]) =>
     })
     .passthrough()
     .superRefine(({ dbName, k8sNamespace }, ctx) => {
-      const dbClustersNamesList = Object.values(dbClusters)
-        .filter((res) => res.namespace === k8sNamespace)
-        .map((item) => item.queryResult.data)
-        .flat()
-        .map((db) => db?.metadata?.name);
+      const dbClustersNamesList = dbClusters.filter(
+        (res) => res.namespace === k8sNamespace
+      );
 
-      if (dbClustersNamesList.find((item) => item === dbName)) {
+      if (dbClustersNamesList.find((item) => item.name === dbName)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: [DbWizardFormFields.dbName],
@@ -114,7 +111,7 @@ export const getDBWizardSchema = (
   activeStep: number,
   defaultValues: DbWizardType,
   mode: DbWizardMode,
-  dbClusters: DbClusterForNamespaceResult[]
+  dbClusters: DbClusterName[]
 ) => {
   const schema = [
     basicInfoSchema(dbClusters),

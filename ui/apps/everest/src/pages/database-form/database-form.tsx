@@ -52,12 +52,19 @@ export const DatabasePage = () => {
       namespace: ns,
     }))
   );
+  const dbClustersNamesList = Object.values(dbClustersResults)
+    .map((item) => item.queryResult.data)
+    .flat()
+    .map((db) => ({
+      name: db?.metadata?.name!,
+      namespace: db?.metadata.namespace!,
+    }));
 
   const validationSchema = useDbValidationSchema(
     activeStep,
     defaultValues,
     mode,
-    dbClustersResults
+    dbClustersNamesList
   );
 
   const methods = useForm<DbWizardType>({

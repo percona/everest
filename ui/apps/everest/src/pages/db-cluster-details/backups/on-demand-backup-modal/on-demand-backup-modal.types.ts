@@ -1,6 +1,5 @@
 import z from 'zod';
 import { generateShortUID } from 'utils/generateShortUID';
-import { Backup } from 'shared-types/backups.types';
 
 export enum BackupFields {
   name = 'name',
@@ -12,13 +11,12 @@ export const defaultValuesFc = () => ({
   [BackupFields.storageLocation]: null,
 });
 
-export const schema = (backups: Backup[]) =>
+export const schema = (backupsNamesList: string[]) =>
   z.object({
     [BackupFields.name]: z
       .string()
-      .nonempty()
+      .min(1)
       .superRefine((input, ctx) => {
-        const backupsNamesList = backups.map((item) => item?.name);
         if (backupsNamesList.find((item) => item === input)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,

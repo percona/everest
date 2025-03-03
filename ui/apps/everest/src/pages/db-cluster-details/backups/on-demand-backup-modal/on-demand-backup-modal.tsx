@@ -26,6 +26,7 @@ export const OnDemandBackupModal = () => {
   const { dbClusterName, namespace = '' } = useParams();
 
   const { data: backups = [] } = useDbBackups(dbClusterName!, namespace);
+  const backupNames = backups.map((item) => item.name);
   const { mutate: createBackupOnDemand, isPending: creatingBackup } =
     useCreateBackupOnDemand(dbClusterName!, namespace);
 
@@ -62,7 +63,7 @@ export const OnDemandBackupModal = () => {
       onSubmit={handleSubmit}
       submitting={creatingBackup}
       submitMessage={Messages.onDemandBackupModal.submitMessage}
-      schema={schema(backups)}
+      schema={schema(backupNames)}
       values={values}
       size="XL"
     >
