@@ -2,6 +2,7 @@ import { FormDialog } from 'components/form-dialog';
 import {
   BACKUPS_QUERY_KEY,
   useCreateBackupOnDemand,
+  useDbBackups,
 } from 'hooks/api/backups/useBackups';
 import { useContext, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -23,6 +24,8 @@ import { Typography } from '@mui/material';
 export const OnDemandBackupModal = () => {
   const queryClient = useQueryClient();
   const { dbClusterName, namespace = '' } = useParams();
+
+  const { data: backups = [] } = useDbBackups(dbClusterName!, namespace);
   const { mutate: createBackupOnDemand, isPending: creatingBackup } =
     useCreateBackupOnDemand(dbClusterName!, namespace);
 
@@ -59,7 +62,7 @@ export const OnDemandBackupModal = () => {
       onSubmit={handleSubmit}
       submitting={creatingBackup}
       submitMessage={Messages.onDemandBackupModal.submitMessage}
-      schema={schema}
+      schema={schema(backups)}
       values={values}
       size="XL"
     >
