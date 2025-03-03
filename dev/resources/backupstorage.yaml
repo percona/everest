@@ -1,0 +1,15 @@
+apiVersion: v1
+data:
+  AWS_ACCESS_KEY_ID: bWluaW9hZG1pbg==
+  AWS_SECRET_ACCESS_KEY: bWluaW9hZG1pbg==
+kind: Secret
+type: Opaque
+---
+apiVersion: everest.percona.com/v1alpha1
+kind: BackupStorage
+spec:
+  endpointURL: https://minio.minio.svc.cluster.local
+  forcePathStyle: false
+  region: us-east-1
+  type: s3
+  verifyTLS: false
