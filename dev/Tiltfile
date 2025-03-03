@@ -626,9 +626,11 @@ if need_backup_storage:
                         }
                     })
                 elif obj['kind'] == 'BackupStorage':
-                    obj['metadata'].update({
+                    obj.update({
+                        'metadata': {
                             'namespace': ns_name,
                             'name': storage_name
+                        }
                     })
                     obj['spec'].update({
                             'bucket': '{0}'.format(storage_name),
