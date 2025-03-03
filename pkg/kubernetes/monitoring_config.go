@@ -19,7 +19,6 @@ package kubernetes
 import (
 	"context"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -82,19 +81,15 @@ func (k *Kubernetes) IsMonitoringConfigUsed(ctx context.Context, namespace, name
 		return false, err
 	}
 
-	options := metav1.ListOptions{
-		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
-			MatchLabels: map[string]string{
-				monitoringConfigNameLabel: name,
-			},
-		}),
-	}
+	options := &ctrlclient.ListOptions{Namespace: namespace}
+	ctrlclient.MatchingLabels{monitoringConfigNameLabel: name}.ApplyToList(options)
 
-	list, err := k.client.ListDatabaseClusters(ctx, namespace, options)
+	clusters := &everestv1alpha1.DatabaseClusterList{}
+	err = k.k8sClient.List(ctx, clusters, options)
 	if err != nil {
 		return false, err
 	}
-	if len(list.Items) > 0 {
+	if len(clusters.Items) > 0 {
 		return true, nil
 	}
 
