@@ -136,6 +136,7 @@ const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
       }}
     >
       <Table
+        getRowId={(row) => row.name}
         state={{ isLoading: false }}
         tableName={`${name}-containers`}
         columns={columns}

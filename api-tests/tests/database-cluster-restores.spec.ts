@@ -14,23 +14,22 @@
 // limitations under the License.
 import { expect, test } from '@playwright/test'
 import * as th from './helpers'
-import {checkError, testsNs, waitClusterDeletion} from "./helpers";
-
+import {checkError, testsNs, waitClusterDeletion} from './helpers';
 
 test('create/update/delete database cluster restore', async ({ request, page }) => {
-  const bsName = th.suffixedName('storage')
-  const clName = th.suffixedName('cluster')
-  const clName2 = th.suffixedName('cluster2')
-  const backupName = th.suffixedName('backup')
+  const bsName = th.suffixedName('storage'),
+   clName = th.suffixedName('cluster'),
+   clName2 = th.suffixedName('cluster2'),
+   backupName = th.suffixedName('backup')
 
   await th.createBackupStorage(request, bsName, testsNs)
   await th.createDBCluster(request, clName)
   await th.createDBCluster(request, clName2)
   await th.createBackup(request, clName, backupName, bsName)
 
-  const restoreName = th.suffixedName('restore')
+  const restoreName = th.suffixedName('restore'),
 
-  const payloadRestore = {
+   payloadRestore = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseClusterRestore',
     metadata: {
@@ -86,20 +85,20 @@ test('create/update/delete database cluster restore', async ({ request, page }) 
 })
 
 test('list restores', async ({ request, page }) => {
-  const bsName = th.suffixedName('storage')
-  const clName1 = th.suffixedName('cluster1')
-  const clName2 = th.suffixedName('cluster2')
-  const backupName = th.suffixedName('backup')
+  const bsName = th.suffixedName('storage'),
+   clName1 = th.suffixedName('cluster1'),
+   clName2 = th.suffixedName('cluster2'),
+   backupName = th.suffixedName('backup')
 
   await th.createBackupStorage(request, bsName, testsNs)
   await th.createDBCluster(request, clName1)
   await th.createDBCluster(request, clName2)
   await th.createBackup(request, clName1, backupName, bsName)
 
-  const restoreName1 = th.suffixedName('restore1')
-  const restoreName2 = th.suffixedName('restore2')
+  const restoreName1 = th.suffixedName('restore1'),
+   restoreName2 = th.suffixedName('restore2'),
 
-  const payloads = [
+   payloads = [
     {
       apiVersion: 'everest.percona.com/v1alpha1',
       kind: 'DatabaseClusterRestore',
@@ -139,8 +138,8 @@ test('list restores', async ({ request, page }) => {
   await page.waitForTimeout(6000)
 
   // check if the restores are available when being requested via database-clusters/{cluster-name}/restores path
-  let response = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clName1}/restores`)
-  let result = await response.json()
+  let response = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clName1}/restores`),
+   result = await response.json()
 
   expect(result.items).toHaveLength(1)
 
@@ -165,17 +164,17 @@ test('list restores', async ({ request, page }) => {
 })
 
 test('create restore: validation errors', async ({ request, page }) => {
-  const bsName = th.suffixedName('storage')
-  const backupName = th.suffixedName('backup')
-  const clName = th.suffixedName('cl')
+  const bsName = th.suffixedName('storage'),
+   backupName = th.suffixedName('backup'),
+   clName = th.suffixedName('cl')
 
   await th.createBackupStorage(request, bsName, testsNs)
   await th.createDBCluster(request, clName)
   await th.createBackup(request, clName, backupName, bsName)
 
   // dbcluster not found
-  const restoreName = th.suffixedName('restore')
-  const payloadRestore = {
+  const restoreName = th.suffixedName('restore'),
+   payloadRestore = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseClusterRestore',
     metadata: {

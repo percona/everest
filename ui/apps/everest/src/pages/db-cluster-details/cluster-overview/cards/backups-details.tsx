@@ -158,6 +158,7 @@ export const BackupsDetails = ({
           loading={loading}
         >
           <Table
+            getRowId={(row) => row.name}
             muiTopToolbarProps={{ sx: { display: 'none' } }}
             muiTableHeadCellProps={{ sx: { display: 'none' } }}
             initialState={{
