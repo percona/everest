@@ -430,10 +430,7 @@ test.describe('DB Cluster creation', () => {
     await expect(page.getByText('PITR disabled')).toBeVisible();
   });
 
-  test.only('Duplicate name should throw an error', async ({
-    page,
-    request,
-  }) => {
+  test('Duplicate name should throw an error', async ({ page, request }) => {
     await createDbClusterFn(
       request,
       {
