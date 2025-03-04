@@ -152,18 +152,18 @@ jobs:
         shell: bash
         run: |
           ./bin/everestctl namespaces add everest-ui -v \
-          --operator.mongodb \
-          --operator.postgresql \
-          --operator.xtradb-cluster \
+          --operator.mongodb=true \
+          --operator.postgresql=true \
+          --operator.mysql=true \
           --skip-wizard
 
       - name: Adding psmdb namespace
         shell: bash
         run: |
           ./bin/everestctl namespaces add psmdb-only -v \
-          --operator.mongodb \
+          --operator.mongodb=true \
           --operator.postgresql=false \
-          --operator.xtradb-cluster=false \
+          --operator.mysql=false \
           --skip-wizard
 
       - name: Adding pxc namespace
@@ -172,7 +172,7 @@ jobs:
           ./bin/everestctl namespaces add pxc-only -v \
           --operator.mongodb=false \
           --operator.postgresql=false \
-          --operator.xtradb-cluster \
+          --operator.mysql=true \
           --skip-wizard
 
       - name: Adding pg namespace
@@ -180,8 +180,8 @@ jobs:
         run: |
           ./bin/everestctl namespaces add pg-only -v \
           --operator.mongodb=false \
-          --operator.postgresql \
-          --operator.xtradb-cluster=false \
+          --operator.postgresql=true \
+          --operator.mysql=false \
           --skip-wizard
 
       - name: Get Everest admin password
