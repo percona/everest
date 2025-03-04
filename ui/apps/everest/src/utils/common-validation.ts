@@ -16,11 +16,17 @@ export const doesNotEndWithDash = /[^-]$/;
 // TODO split message for exceed number message and alphanumeric symbols
 // TODO check messages with Catalina
 
-export const rfc_123_schema = (fieldName: string) =>
+export const rfc_123_schema = ({
+  fieldName,
+  maxLength = 63,
+}: {
+  fieldName: string;
+  maxLength?: number;
+}) =>
   z
     .string()
     .min(1)
-    .max(63)
+    .max(maxLength)
     .regex(
       doesNotContainerAnythingButAlphanumericAndDash,
       `The ${fieldName} should only contain lowercase letters, numbers and hyphens.`

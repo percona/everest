@@ -23,7 +23,10 @@ export interface CreateEditEndpointModalProps {
 export const getEndpointSchema = (isEditMode: boolean) =>
   z
     .object({
-      [EndpointFormFields.name]: rfc_123_schema('endpoint name'),
+      [EndpointFormFields.name]: rfc_123_schema({
+        fieldName: 'endpoint name',
+        maxLength: 22,
+      }),
       [EndpointFormFields.namespace]: z.string().nonempty(),
       [EndpointFormFields.verifyTLS]: z.boolean(),
       [EndpointFormFields.url]: z.string().min(1).url(),
