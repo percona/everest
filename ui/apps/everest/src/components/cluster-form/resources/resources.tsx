@@ -43,6 +43,7 @@ import { getProxyUnitNamesFromDbType } from './utils';
 
 import { ResourcesTogglesProps, ResourceInputProps } from './resources.types';
 import { Messages } from './messages';
+import { DbWizardType } from 'pages/database-form/database-form-schema';
 
 const humanizeResourceSizeMap = (type: ResourceSize): string =>
   humanizedResourceSizeMap[type];
@@ -448,22 +449,23 @@ const ResourcesForm = ({
   const [expanded, setExpanded] = useState<'nodes' | 'proxies' | false>(
     'nodes'
   );
-  const { watch, getFieldState, setValue, trigger, clearErrors } =
-    useFormContext();
+  const {
+    watch,
+    getFieldState,
+    setValue,
+    trigger,
+    clearErrors,
+    formState: { errors },
+  } = useFormContext<DbWizardType>();
 
   const numberOfNodes: string = watch(DbWizardFormFields.numberOfNodes);
 
   const sharding: boolean = watch(DbWizardFormFields.sharding);
-  const shardConfigServers: number = watch(
-    DbWizardFormFields.shardConfigServers
-  );
-  const { error: shardConfigServersError } = getFieldState(
-    DbWizardFormFields.shardConfigServers
-  );
+  const shardConfigServers = watch(DbWizardFormFields.shardConfigServers);
 
   const numberOfProxies: string = watch(DbWizardFormFields.numberOfProxies);
-  const customNrOfNodes: string = watch(DbWizardFormFields.customNrOfNodes);
-  const customNrOfProxies: string = watch(DbWizardFormFields.customNrOfProxies);
+  const customNrOfNodes = watch(DbWizardFormFields.customNrOfNodes);
+  const customNrOfProxies = watch(DbWizardFormFields.customNrOfProxies);
   const proxyUnitNames = getProxyUnitNamesFromDbType(dbType);
   const nodesAccordionSummaryNumber =
     numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
@@ -531,7 +533,9 @@ const ResourcesForm = ({
         clearErrors(DbWizardFormFields.shardConfigServers);
         setValue(
           DbWizardFormFields.shardConfigServers,
-          getDefaultNumberOfconfigServersByNumberOfNodes(+customNrOfNodes)
+          getDefaultNumberOfconfigServersByNumberOfNodes(
+            +(customNrOfNodes || '')
+          )
         );
       }
     }
@@ -584,7 +588,7 @@ const ResourcesForm = ({
       >
         <CustomAccordionSummary
           unitPlural={sharding ? `Nodes per shard` : 'Nodes'}
-          nr={parseInt(nodesAccordionSummaryNumber, 10)}
+          nr={parseInt(nodesAccordionSummaryNumber || '', 10)}
         />
         <Divider />
         <ResourcesToggles
@@ -614,7 +618,7 @@ const ResourcesForm = ({
         >
           <CustomAccordionSummary
             unitPlural={proxyUnitNames.plural}
-            nr={parseInt(proxiesAccordionSummaryNumber, 10)}
+            nr={parseInt(proxiesAccordionSummaryNumber || '', 10)}
           />
           <Divider />
           <ResourcesToggles
@@ -654,8 +658,9 @@ const ResourcesForm = ({
               toggleButtonGroupProps={{
                 size: 'small',
                 onChange: (_, value) => {
-                  setValue(DbWizardFormFields.shardConfigServers, value);
-                  trigger(DbWizardFormFields.shardConfigServers);
+                  setValue(DbWizardFormFields.shardConfigServers, value, {
+                    shouldValidate: true,
+                  });
                 },
               }}
             >
@@ -679,12 +684,12 @@ const ResourcesForm = ({
                 </ToggleRegularButton>
               ))}
             </ToggleButtonGroupInputRegular>
-            {shardConfigServersError && (
+            {errors.shardConfigServers && (
               <FormHelperText
                 data-testid="shard-config-servers-error"
                 error={true}
               >
-                {shardConfigServersError?.message}
+                {errors.shardConfigServers.message}
               </FormHelperText>
             )}
           </Stack>
