@@ -215,8 +215,7 @@ func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, namespace, name
 	backupTime := latestBackup.Status.CompletedAt.UTC()
 	var latest *time.Time
 	// if there is the LatestRestorableTime set in the CR, use it
-	// except of psmdb which has a bug https://perconadev.atlassian.net/browse/K8SPSMDB-1186
-	if latestBackup.Status.LatestRestorableTime != nil && databaseCluster.Spec.Engine.Type != everestv1alpha1.DatabaseEnginePSMDB {
+	if latestBackup.Status.LatestRestorableTime != nil {
 		latest = &latestBackup.Status.LatestRestorableTime.Time
 	} else {
 		// otherwise use heuristics based on the UploadInterval
@@ -361,9 +360,10 @@ func getDefaultUploadInterval(engine everestv1alpha1.Engine, uploadInterval *int
 			return valueOrDefault(uploadInterval, pxcDefaultUploadInterval)
 		}
 	case everestv1alpha1.DatabaseEnginePSMDB:
-		// latest restorable time appeared in PSMDB 1.16.0, however it's not reliable https://perconadev.atlassian.net/browse/K8SPSMDB-1186
-		// so we still use heuristics
-		return valueOrDefault(uploadInterval, psmdbDefaultUploadInterval)
+		// latest restorable time appeared in PSMDB 1.16.0
+		if common.CheckConstraint(version, "<1.16.0") {
+			return valueOrDefault(uploadInterval, psmdbDefaultUploadInterval)
+		}
 	case everestv1alpha1.DatabaseEnginePostgresql:
 		// latest restorable time appeared in PG 2.4.0, however it's not reliable https://perconadev.atlassian.net/browse/K8SPG-681
 		// so we still use heuristics
