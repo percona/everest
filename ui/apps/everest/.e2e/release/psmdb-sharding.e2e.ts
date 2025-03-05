@@ -27,7 +27,6 @@ import {
   populateBasicInformation,
   populateResources,
   populateAdvancedConfig,
-  populateMonitoringModalForm,
 } from '@e2e/utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import {
@@ -35,10 +34,6 @@ import {
   waitForDelete,
   findRowAndClickActions,
 } from '@e2e/utils/table';
-import {
-  deleteMonitoringInstance,
-  listMonitoringInstances,
-} from '@e2e/utils/monitoring-instance';
 import { clickOnDemandBackup } from '@e2e/pr/db-cluster-details/utils';
 import {
   queryPSMDB,
@@ -49,9 +44,7 @@ import {
   queryTestDB,
 } from '@e2e/utils/db-cmd-line';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
-import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 
-const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 let token: string;
 
 const db = 'psmdb';
@@ -71,7 +64,7 @@ test.describe(
 
     let storageClasses = [];
     const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
-    const monitoringName = `${db}-${size}-pmm`;
+    const monitoringName = 'e2e-endpoint-0';
     const baseBackupName = `shard-${db}-${size}`;
 
     test.beforeAll(async ({ request }) => {
@@ -82,27 +75,6 @@ test.describe(
         request
       );
       storageClasses = storageClassNames;
-    });
-
-    test.afterAll(async ({ request }) => {
-      // Playwright decided to execute only afterAll hook even if the group is skipped so we need a condition here
-      if (shouldExecuteDBCombination(db, size)) {
-        // we try to delete all monitoring instances because cluster creation expects that none exist
-        // (monitoring instance is added in the form where the warning that none exist is visible)
-        const monitoringInstances = await listMonitoringInstances(
-          request,
-          namespace,
-          token
-        );
-        for (const instance of monitoringInstances) {
-          await deleteMonitoringInstance(
-            request,
-            namespace,
-            instance.name,
-            token
-          );
-        }
-      }
     });
 
     test(`Cluster creation [${db} size ${size}]`, async ({ page, request }) => {
@@ -169,16 +141,10 @@ test.describe(
       });
 
       await test.step('Populate monitoring', async () => {
-        await populateMonitoringModalForm(
-          page,
-          monitoringName,
-          namespace,
-          MONITORING_URL,
-          MONITORING_USER,
-          MONITORING_PASSWORD,
-          false
-        );
         await page.getByTestId('switch-input-monitoring').click();
+        await page
+          .getByTestId('text-input-monitoring-instance')
+          .fill(monitoringName);
         await expect(
           page.getByTestId('text-input-monitoring-instance')
         ).toHaveValue(monitoringName);
