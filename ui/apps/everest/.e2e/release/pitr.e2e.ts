@@ -187,7 +187,9 @@ test.describe.configure({ retries: 0 });
 
         await test.step('Populate monitoring', async () => {
           await page.getByTestId('switch-input-monitoring').click();
-          await page.getByTestId('text-input-monitoring-instance').fill(monitoringName);
+          await page
+            .getByTestId('text-input-monitoring-instance')
+            .fill(monitoringName);
           await expect(
             page.getByTestId('text-input-monitoring-instance')
           ).toHaveValue(monitoringName);
