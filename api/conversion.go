@@ -1,6 +1,11 @@
 package api
 
-import "github.com/percona/everest-operator/api/v1alpha1"
+import (
+	v1 "k8s.io/api/storage/v1"
+
+	"github.com/AlekSi/pointer"
+	"github.com/percona/everest-operator/api/v1alpha1"
+)
 
 func (out *BackupStorage) FromCR(in *v1alpha1.BackupStorage) {
 	out.Type = BackupStorageType(in.Spec.Type)
@@ -21,4 +26,13 @@ func (out *MonitoringInstance) FromCR(in *v1alpha1.MonitoringConfig) {
 	out.AllowedNamespaces = &in.Spec.AllowedNamespaces
 	out.VerifyTLS = in.Spec.VerifyTLS
 	out.Type = MonitoringInstanceBaseWithNameType(in.Spec.Type)
+}
+
+func (out *StorageClass) FromCR(in *v1.StorageClass) {
+	meta := make(map[string]interface{})
+	meta["name"] = in.GetName()
+	meta["annotations"] = in.GetAnnotations()
+	meta["labels"] = in.GetLabels()
+	out.Metadata = &meta
+	out.AllowVolumeExpansion = pointer.To(pointer.Get(in.AllowVolumeExpansion))
 }
