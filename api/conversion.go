@@ -1,9 +1,9 @@
 package api
 
 import (
+	"github.com/AlekSi/pointer"
 	v1 "k8s.io/api/storage/v1"
 
-	"github.com/AlekSi/pointer"
 	"github.com/percona/everest-operator/api/v1alpha1"
 )
 
