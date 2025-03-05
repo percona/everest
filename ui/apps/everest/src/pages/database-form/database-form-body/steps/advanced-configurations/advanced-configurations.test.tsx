@@ -25,7 +25,7 @@ describe('FourthStep', () => {
     render(
       <TestWrapper>
         <FormProviderWrapper>
-          <AdvancedConfigurations />
+          <AdvancedConfigurations loadingDefaultsForEdition={false} alreadyVisited={false}/>
         </FormProviderWrapper>
       </TestWrapper>
     );
@@ -45,7 +45,7 @@ describe('FourthStep', () => {
     render(
       <TestWrapper>
         <FormProviderWrapper>
-          <AdvancedConfigurations />
+          <AdvancedConfigurations loadingDefaultsForEdition={false} alreadyVisited={false}/>
         </FormProviderWrapper>
       </TestWrapper>
     );

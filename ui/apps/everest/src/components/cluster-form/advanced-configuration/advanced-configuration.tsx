@@ -13,29 +13,75 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SwitchInput, TextArray, TextInput } from '@percona/ui-lib';
+import { AutoCompleteInput, SwitchInput, TextArray, TextInput } from '@percona/ui-lib';
 import { Messages } from './messages';
 import { AdvancedConfigurationFields } from './advanced-configuration.types';
 import { useFormContext } from 'react-hook-form';
 import { DbType } from '@percona/types';
 import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
 import { Stack } from '@mui/material';
+import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
+import { useEffect } from 'react';
+import { DbWizardFormFields } from 'consts';
+import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode';
+import AdvancedCard from 'components/advanced-card';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
+  loadingDefaultsForEdition?: boolean;
 }
 
 export const AdvancedConfigurationForm = ({
   dbType,
+  loadingDefaultsForEdition,
 }: AdvancedConfigurationFormProps) => {
-  const { watch } = useFormContext();
+  const { watch, setValue, getFieldState } =
+  useFormContext();
+  const mode = useDatabasePageMode();
   const [externalAccess, engineParametersEnabled] = watch([
     AdvancedConfigurationFields.externalAccess,
     AdvancedConfigurationFields.engineParametersEnabled,
+    AdvancedConfigurationFields.storageClass,
   ]);
+  const { data: clusterInfo, isLoading: clusterInfoLoading } =
+    useKubernetesClusterInfo(['wizard-k8-info']);
 
+      // setting the storage class default value
+      useEffect(() => {
+        const { isTouched: storageClassTouched } = getFieldState(
+          DbWizardFormFields.storageClass
+        );
+    
+        if (
+          !storageClassTouched &&
+          mode === 'new' &&
+          clusterInfo?.storageClassNames &&
+          clusterInfo.storageClassNames.length > 0
+        ) {
+          setValue(
+            DbWizardFormFields.storageClass,
+            clusterInfo?.storageClassNames[0]
+          );
+        }
+      }, [clusterInfo]);
   return (
     <>
+    <AdvancedCard title={Messages.cards.storage.title} 
+        description={Messages.cards.storage.description} 
+        gapFromText={96} 
+        controlComponent={
+          <AutoCompleteInput
+            name={AdvancedConfigurationFields.storageClass}
+            label={Messages.labels.storageClass}
+            loading={clusterInfoLoading}
+            options={clusterInfo?.storageClassNames || []}
+            autoCompleteProps={{
+              disableClearable: true,
+              disabled: loadingDefaultsForEdition,
+            }}
+          />
+        }
+      />
       <SwitchInput
         label={Messages.enableExternalAccess.title}
         labelCaption={Messages.enableExternalAccess.caption}

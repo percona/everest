@@ -30,6 +30,15 @@ export const Messages = {
     caption:
       'Set your database engine configuration to adjust your database system to your workload and performance needs. For configuration format and specific parameters, check your database type documentation.',
   },
+  labels: {
+    storageClass: 'Storage class',
+  },
+  cards: {
+    storage: {
+      title: 'Storage',
+      description: 'Defines the type and performance of storage for your database. Select based on workload needs, such as high IOPS for fast access or cost-effective options for less frequent use.'
+    }
+  },
   errors: {
     sourceRange: {
       invalid: INVALID_SOURCE_RANGE_ERROR,
