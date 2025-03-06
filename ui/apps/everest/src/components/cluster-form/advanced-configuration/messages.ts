@@ -44,6 +44,9 @@ export const Messages = {
     sourceRange: {
       invalid: INVALID_SOURCE_RANGE_ERROR,
     },
+    storageClass: {
+      invalid: 'Invalid storage class',
+    },
     engineParameters: {
       invalid: 'Invalid',
     },
