@@ -29,7 +29,10 @@ describe('FourthStep', () => {
       <TestWrapper>
         <FormProviderWrapper>
           <QueryClientProvider client={queryClient}>
-            <AdvancedConfigurations loadingDefaultsForEdition={false} alreadyVisited={false}/>
+            <AdvancedConfigurations
+              loadingDefaultsForEdition={false}
+              alreadyVisited={false}
+            />
           </QueryClientProvider>
         </FormProviderWrapper>
       </TestWrapper>
@@ -51,7 +54,10 @@ describe('FourthStep', () => {
       <TestWrapper>
         <FormProviderWrapper>
           <QueryClientProvider client={queryClient}>
-            <AdvancedConfigurations loadingDefaultsForEdition={false} alreadyVisited={false}/>
+            <AdvancedConfigurations
+              loadingDefaultsForEdition={false}
+              alreadyVisited={false}
+            />
           </QueryClientProvider>
         </FormProviderWrapper>
       </TestWrapper>
