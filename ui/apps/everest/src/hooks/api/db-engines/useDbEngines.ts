@@ -124,7 +124,7 @@ export const useDbEngines = (
     queryKey: ['dbEngines', namespace],
     queryFn: () => getDbEnginesFn(namespace),
     select: (data) => dbEnginesQuerySelect(data, retrieveUpgradingEngines),
-    retry: 2,
+    retry: 3,
     ...options,
     enabled: !!namespace && (options?.enabled ?? true),
   });
