@@ -22,7 +22,9 @@ import AdvancedConfigurationForm from 'components/cluster-form/advanced-configur
 import { FormGroup } from '@mui/material';
 import { StepProps } from 'pages/database-form/database-form.types.ts';
 
-export const AdvancedConfigurations = ({ loadingDefaultsForEdition }: StepProps) => {
+export const AdvancedConfigurations = ({
+  loadingDefaultsForEdition,
+}: StepProps) => {
   const { watch } = useFormContext();
   const dbType = watch(DbWizardFormFields.dbType);
 
@@ -30,7 +32,10 @@ export const AdvancedConfigurations = ({ loadingDefaultsForEdition }: StepProps)
     <>
       <StepHeader pageTitle={Messages.advanced} />
       <FormGroup sx={{ mt: 3 }}>
-        <AdvancedConfigurationForm dbType={dbType} loadingDefaultsForEdition={loadingDefaultsForEdition}/>
+        <AdvancedConfigurationForm
+          dbType={dbType}
+          loadingDefaultsForEdition={loadingDefaultsForEdition}
+        />
       </FormGroup>
     </>
   );

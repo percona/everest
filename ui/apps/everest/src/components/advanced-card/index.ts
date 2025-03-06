@@ -1,1 +1,1 @@
-export { default } from './advanced-card'
+export { default } from './advanced-card';

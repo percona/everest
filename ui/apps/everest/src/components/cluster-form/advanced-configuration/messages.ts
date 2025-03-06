@@ -36,8 +36,9 @@ export const Messages = {
   cards: {
     storage: {
       title: 'Storage',
-      description: 'Defines the type and performance of storage for your database. Select based on workload needs, such as high IOPS for fast access or cost-effective options for less frequent use.'
-    }
+      description:
+        'Defines the type and performance of storage for your database. Select based on workload needs, such as high IOPS for fast access or cost-effective options for less frequent use.',
+    },
   },
   errors: {
     sourceRange: {

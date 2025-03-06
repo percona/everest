@@ -13,7 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AutoCompleteInput, SwitchInput, TextArray, TextInput } from '@percona/ui-lib';
+import {
+  AutoCompleteInput,
+  SwitchInput,
+  TextArray,
+  TextInput,
+} from '@percona/ui-lib';
 import { Messages } from './messages';
 import { AdvancedConfigurationFields } from './advanced-configuration.types';
 import { useFormContext } from 'react-hook-form';
@@ -35,8 +40,7 @@ export const AdvancedConfigurationForm = ({
   dbType,
   loadingDefaultsForEdition,
 }: AdvancedConfigurationFormProps) => {
-  const { watch, setValue, getFieldState } =
-  useFormContext();
+  const { watch, setValue, getFieldState } = useFormContext();
   const mode = useDatabasePageMode();
   const [externalAccess, engineParametersEnabled] = watch([
     AdvancedConfigurationFields.externalAccess,
@@ -46,29 +50,30 @@ export const AdvancedConfigurationForm = ({
   const { data: clusterInfo, isLoading: clusterInfoLoading } =
     useKubernetesClusterInfo(['wizard-k8-info']);
 
-      // setting the storage class default value
-      useEffect(() => {
-        const { isTouched: storageClassTouched } = getFieldState(
-          DbWizardFormFields.storageClass
-        );
-    
-        if (
-          !storageClassTouched &&
-          mode === 'new' &&
-          clusterInfo?.storageClassNames &&
-          clusterInfo.storageClassNames.length > 0
-        ) {
-          setValue(
-            DbWizardFormFields.storageClass,
-            clusterInfo?.storageClassNames[0]
-          );
-        }
-      }, [clusterInfo]);
+  // setting the storage class default value
+  useEffect(() => {
+    const { isTouched: storageClassTouched } = getFieldState(
+      DbWizardFormFields.storageClass
+    );
+
+    if (
+      !storageClassTouched &&
+      mode === 'new' &&
+      clusterInfo?.storageClassNames &&
+      clusterInfo.storageClassNames.length > 0
+    ) {
+      setValue(
+        DbWizardFormFields.storageClass,
+        clusterInfo?.storageClassNames[0]
+      );
+    }
+  }, [clusterInfo]);
   return (
     <>
-    <AdvancedCard title={Messages.cards.storage.title} 
-        description={Messages.cards.storage.description} 
-        gapFromText={96} 
+      <AdvancedCard
+        title={Messages.cards.storage.title}
+        description={Messages.cards.storage.description}
+        gapFromText={96}
         controlComponent={
           <AutoCompleteInput
             name={AdvancedConfigurationFields.storageClass}
