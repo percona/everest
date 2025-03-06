@@ -37,7 +37,8 @@ export const addApiErrorInterceptor = () => {
           error.response.status <= 500
         ) {
           let message = error.response.data?.message ?? DEFAULT_ERROR_MESSAGE;
-          let notificationsDisabled = error.config?.disableNotifications;
+          let notificationsDisabled =
+            error.config?.disableNotifications ?? error.status === 429;
 
           if (typeof notificationsDisabled === 'function') {
             notificationsDisabled = notificationsDisabled(error);
