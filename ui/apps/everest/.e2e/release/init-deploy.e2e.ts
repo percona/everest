@@ -174,17 +174,31 @@ test.describe.configure({ retries: 0 });
 
         switch (db) {
           case 'pxc': {
-            result = await queryMySQL(clusterName, namespace, `SHOW variables LIKE "max_connections";`);
+            result = await queryMySQL(
+              clusterName,
+              namespace,
+              `SHOW variables LIKE "max_connections";`
+            );
             expect(result.trim()).toBe('max_connections	250');
             break;
           }
           case 'psmdb': {
-            result = await queryPSMDB(clusterName, namespace, 'admin', `db.serverCmdLineOpts().parsed.systemLog;`);
+            result = await queryPSMDB(
+              clusterName,
+              namespace,
+              'admin',
+              `db.serverCmdLineOpts().parsed.systemLog;`
+            );
             expect(result.trim()).toBe('{ quiet: true, verbosity: 1 }');
             break;
           }
           case 'postgresql': {
-            result = await queryPG(clusterName, namespace, 'postgres', `SHOW shared_buffers;`);
+            result = await queryPG(
+              clusterName,
+              namespace,
+              'postgres',
+              `SHOW shared_buffers;`
+            );
             expect(result.trim()).toBe('192MB');
             break;
           }
