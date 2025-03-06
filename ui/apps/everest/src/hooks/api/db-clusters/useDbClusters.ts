@@ -80,7 +80,6 @@ export const useDBClustersForNamespaces = (
   >(({ namespace, options }) => {
     return {
       queryKey: [DB_CLUSTERS_QUERY_KEY, namespace],
-      retry: false,
       queryFn: () => getDbClustersFn(namespace),
       refetchInterval: 5 * 1000,
       select: dbClustersQuerySelect,
