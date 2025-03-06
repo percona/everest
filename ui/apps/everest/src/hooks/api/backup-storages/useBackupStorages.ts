@@ -44,7 +44,6 @@ export const useBackupStorages = () => {
   const queries = namespaces.map((namespace) => {
     return {
       queryKey: [BACKUP_STORAGES_QUERY_KEY, namespace],
-      retry: false,
       queryFn: () => getBackupStoragesFn(namespace),
       refetchInterval: 5 * 1000,
     };
