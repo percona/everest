@@ -3,6 +3,9 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { TestWrapper } from 'utils/test';
 import { AdvancedConfigurations } from './advanced-configurations';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
 
 const FormProviderWrapper = ({ children }: { children: React.ReactNode }) => {
   const methods = useForm({
@@ -25,10 +28,9 @@ describe('FourthStep', () => {
     render(
       <TestWrapper>
         <FormProviderWrapper>
-          <AdvancedConfigurations
-            loadingDefaultsForEdition={false}
-            alreadyVisited={false}
-          />
+          <QueryClientProvider client={queryClient}>
+            <AdvancedConfigurations loadingDefaultsForEdition={false} alreadyVisited={false}/>
+          </QueryClientProvider>
         </FormProviderWrapper>
       </TestWrapper>
     );
@@ -48,10 +50,9 @@ describe('FourthStep', () => {
     render(
       <TestWrapper>
         <FormProviderWrapper>
-          <AdvancedConfigurations
-            loadingDefaultsForEdition={false}
-            alreadyVisited={false}
-          />
+          <QueryClientProvider client={queryClient}>
+            <AdvancedConfigurations loadingDefaultsForEdition={false} alreadyVisited={false}/>
+          </QueryClientProvider>
         </FormProviderWrapper>
       </TestWrapper>
     );
