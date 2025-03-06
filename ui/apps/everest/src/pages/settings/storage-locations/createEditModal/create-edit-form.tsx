@@ -59,6 +59,7 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
       <TextInput
         name={StorageLocationsFields.bucketName}
         label={Messages.bucketName}
+        labelToCheck={Messages.bucketName}
         isRequired
         textFieldProps={{
           placeholder: Messages.createEditModal.placeholders.type,
