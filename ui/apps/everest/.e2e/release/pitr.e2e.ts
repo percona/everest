@@ -40,8 +40,7 @@ import {
   prepareTestDB,
   dropTestDB,
   queryTestDB,
-  insertMoreTestDB,
-  pgInsertDummyTestDB,
+  insertTestDB,
 } from '@e2e/utils/db-cmd-line';
 import { addFirstScheduleInDBWizard } from '@e2e/pr/db-cluster/db-wizard/db-wizard-utils';
 import { getDbClusterAPI, updateDbClusterAPI } from '@e2e/utils/db-cluster';
@@ -273,22 +272,18 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Add more data [${db} size ${size}]`, async () => {
-        await insertMoreTestDB(clusterName, namespace);
+        await insertTestDB(clusterName, namespace, ['4','5','6'], ['1','2','3','4','5','6']);
         pitrRestoreTime = getCurrentPITRTime();
+        await insertTestDB(clusterName, namespace, ['7','8','9'], ['1','2','3','4','5','6','7','8','9']);
+      });
 
-        // for PG we need one more transaction to be able to restore to the previous one
-        if (db == 'postgresql') {
-          pgInsertDummyTestDB(clusterName, namespace);
-        }
+      test(`Delete data [${db} size ${size}]`, async () => {
+        await dropTestDB(clusterName, namespace);
       });
 
       test(`Wait 1 min for binlogs to be uploaded [${db} size ${size}]`, async () => {
         const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
         await delay(65000);
-      });
-
-      test(`Delete data [${db} size ${size}]`, async () => {
-        await dropTestDB(clusterName, namespace);
       });
 
       test(`Restore cluster [${db} size ${size}]`, async ({ page }) => {
@@ -338,7 +333,7 @@ test.describe.configure({ retries: 0 });
             break;
           case 'psmdb':
             expect(result.trim()).toBe(
-              '[ { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 }, { a: 5 }, { a: 6 } ]'
+              '[{"a":1},{"a":2},{"a":3},{"a":4},{"a":5},{"a":6}]'
             );
             break;
           case 'postgresql':
