@@ -26,6 +26,7 @@ const TextArray = ({
   fieldKey,
   label,
   placeholder,
+  handleBlur,
 }: TextArrayProps) => {
   const {
     control,
@@ -70,7 +71,17 @@ const TextArray = ({
                   mb: 1,
                 },
               },
+
               InputProps: {
+                onBlur: handleBlur
+                  ? (e) => {
+                      handleBlur(
+                        e.target.value,
+                        `${fieldName}.${index}.${fieldKey}`,
+                        !!error(index)
+                      );
+                    }
+                  : undefined,
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton

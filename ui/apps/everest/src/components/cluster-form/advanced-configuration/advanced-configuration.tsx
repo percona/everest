@@ -28,11 +28,17 @@ interface AdvancedConfigurationFormProps {
 export const AdvancedConfigurationForm = ({
   dbType,
 }: AdvancedConfigurationFormProps) => {
-  const { watch } = useFormContext();
+  const { watch, setValue } = useFormContext();
   const [externalAccess, engineParametersEnabled] = watch([
     AdvancedConfigurationFields.externalAccess,
     AdvancedConfigurationFields.engineParametersEnabled,
   ]);
+
+  const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
+    if (!hasError && !value.includes('/') && value !== '') {
+      setValue(fieldName, `${value}/32`);
+    }
+  };
 
   return (
     <>
@@ -48,6 +54,7 @@ export const AdvancedConfigurationForm = ({
             fieldName={AdvancedConfigurationFields.sourceRanges}
             fieldKey="sourceRange"
             label={Messages.sourceRange}
+            handleBlur={handleBlur}
           />
         </Stack>
       )}
