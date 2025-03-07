@@ -15,7 +15,7 @@ const AdvancedCard: React.FC<AdvancedCardProps> = ({
   gapFromText = 48,
 }) => {
   return (
-    <Card variant="outlined" sx={{ marginBottom: 2, padding: 2 }}>
+    <Card variant="outlined" sx={{ marginBottom: 2}}>
       <CardContent>
         <Box display="flex" alignItems="center" gap={gapFromText}>
           <Typography variant="h6" sx={{ flexShrink: 0 }}>
