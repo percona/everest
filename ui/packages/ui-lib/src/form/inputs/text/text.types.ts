@@ -25,5 +25,5 @@ export type TextInputProps = {
   labelProps?: LabeledContentProps;
   textFieldProps?: TextFieldProps;
   isRequired?: boolean;
-  labelToCheck?: string;
+  onValueChange?: (event: React.ChangeEvent<HTMLInputElement>) => string;
 };

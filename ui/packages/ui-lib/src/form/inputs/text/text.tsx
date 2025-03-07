@@ -10,7 +10,7 @@ const TextInput = ({
   controllerProps,
   textFieldProps,
   isRequired,
-  labelToCheck,
+  onValueChange,
 }: TextInputProps) => {
   const { control: contextControl } = useFormContext();
   return (
@@ -19,12 +19,7 @@ const TextInput = ({
       control={control ?? contextControl}
       render={({ field: { onChange, ...field }, fieldState: { error } }) => {
         const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-          let newValue = event.target.value;
-          // Trim only if label matches labelToCheck
-          if (labelToCheck && label === labelToCheck) {
-            newValue = newValue.trim();
-          }
-          onChange(newValue); 
+          onChange((onValueChange && onValueChange(event)) ?? event.target.value); 
         };
        return <TextField
           label={label}

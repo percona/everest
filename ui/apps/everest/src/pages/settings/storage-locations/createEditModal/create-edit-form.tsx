@@ -59,8 +59,11 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
       <TextInput
         name={StorageLocationsFields.bucketName}
         label={Messages.bucketName}
-        labelToCheck={Messages.bucketName}
         isRequired
+        onValueChange={(event)=>{
+          const trimedValue = event.target.value.trim();
+          return trimedValue;
+        }}
         textFieldProps={{
           placeholder: Messages.createEditModal.placeholders.type,
           disabled: isEditMode,
