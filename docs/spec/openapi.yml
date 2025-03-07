@@ -2095,9 +2095,16 @@ components:
           type: string
         storageClassNames:
           type: array
+          deprecated: true
+          description: |
+            List of storage class names that are available in the cluster.
           items:
             type: string
           example: ["gp2", "gp3"]
+        storageClasses:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorageClass'
       required:
         - clusterType
         - storageClassNames
@@ -2958,6 +2965,27 @@ components:
               type: string
           type: object
       type: object
+
+    # -------------------------
+    # StorageClass is imported from the k8s API,
+    # but some fields are omitted that are not relevant to Everest.
+    #
+    # Run the below command to get the definition:
+    #   kubectl get --raw /openapi/v2 | jq '.definitions["io.k8s.api.storage.v1.StorageClass"]' | yq eval -P
+    # -------------------------
+    StorageClass:
+      description: |-
+        StorageClass describes the parameters for a class of storage for which PersistentVolumes can be dynamically provisioned.
+
+        StorageClasses are non-namespaced; the name of the storage class according to etcd is in ObjectMeta.Name.
+      type: object
+      properties:
+        allowVolumeExpansion:
+          description: allowVolumeExpansion shows whether the storage class allow volume expand.
+          type: boolean
+        metadata:
+          description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
+          type: object
 
     # -------------------------
     # io.k8s.apimachinery.pkg.apis.meta.v1.Status_v2 spec is imported from k8s API,
