@@ -118,8 +118,6 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	//
 	// Once it'll be implemented we can serve FE app on /everest/ location
 	e.echo.FileFS("/*", "index.html", indexFS)
-	e.echo.GET("/favicon.ico", echo.WrapHandler(staticFilesHandler))
-	e.echo.GET("/assets-manifest.json", echo.WrapHandler(staticFilesHandler))
 	e.echo.GET("/static/*", echo.WrapHandler(staticFilesHandler))
 	e.echo.Use(echomiddleware.LoggerWithConfig(echomiddleware.LoggerConfig{
 		Format:           echomiddleware.DefaultLoggerConfig.Format,
