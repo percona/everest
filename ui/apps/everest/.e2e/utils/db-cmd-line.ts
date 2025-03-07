@@ -203,13 +203,22 @@ export const prepareTestDB = async (cluster: string, namespace: string) => {
   }
 };
 
-export const insertTestDB = async (cluster: string, namespace: string, data: string[], expected: string[]) => {
+export const insertTestDB = async (
+  cluster: string,
+  namespace: string,
+  data: string[],
+  expected: string[]
+) => {
   const dbType = await getDBType(cluster, namespace);
 
   switch (dbType) {
     case 'pxc': {
       const values = data.map((d) => `(${d})`).join(',');
-      await queryMySQL(cluster, namespace, `INSERT INTO test.t1 VALUES ${values};`);
+      await queryMySQL(
+        cluster,
+        namespace,
+        `INSERT INTO test.t1 VALUES ${values};`
+      );
       const result = await queryTestDB(cluster, namespace);
       const expected_result = expected.join('\n');
       expect(result.trim()).toBe(expected_result);
@@ -217,7 +226,12 @@ export const insertTestDB = async (cluster: string, namespace: string, data: str
     }
     case 'psmdb': {
       const jsonData = data.map((d) => `{ a: ${d} }`).join(', ');
-      await queryPSMDB(cluster, namespace, 'test', `db.t1.insertMany([${jsonData}]);`);
+      await queryPSMDB(
+        cluster,
+        namespace,
+        'test',
+        `db.t1.insertMany([${jsonData}]);`
+      );
       const result = await queryTestDB(cluster, namespace);
       const expected_result = expected.map((d) => `{"a":${d}}`).join(',');
       expect(result.trim()).toBe('[' + expected_result + ']');
@@ -225,7 +239,12 @@ export const insertTestDB = async (cluster: string, namespace: string, data: str
     }
     case 'postgresql': {
       const values = data.map((d) => `(${d})`).join(',');
-      await queryPG(cluster, namespace, 'test', `INSERT INTO t1 VALUES ${values};`);
+      await queryPG(
+        cluster,
+        namespace,
+        'test',
+        `INSERT INTO t1 VALUES ${values};`
+      );
       const result = await queryTestDB(cluster, namespace);
       const expected_result = expected.join('\n ');
       expect(result.trim()).toBe(expected_result);

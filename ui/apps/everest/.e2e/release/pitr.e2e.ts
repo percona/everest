@@ -272,9 +272,19 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Add more data [${db} size ${size}]`, async () => {
-        await insertTestDB(clusterName, namespace, ['4','5','6'], ['1','2','3','4','5','6']);
+        await insertTestDB(
+          clusterName,
+          namespace,
+          ['4', '5', '6'],
+          ['1', '2', '3', '4', '5', '6']
+        );
         pitrRestoreTime = getCurrentPITRTime();
-        await insertTestDB(clusterName, namespace, ['7','8','9'], ['1','2','3','4','5','6','7','8','9']);
+        await insertTestDB(
+          clusterName,
+          namespace,
+          ['7', '8', '9'],
+          ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+        );
       });
 
       test(`Wait 1 min for binlogs to be uploaded [${db} size ${size}]`, async () => {
@@ -352,7 +362,9 @@ test.describe.configure({ retries: 0 });
         await waitForDelete(page, baseBackupName + `-1`, 15000);
       });
 
-      test(`Create second demand backup [${db} size ${size}]`, async ({ page }) => {
+      test(`Create second demand backup [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await gotoDbClusterBackups(page, clusterName);
         await clickOnDemandBackup(page);
         await page.getByTestId('text-input-name').fill(baseBackupName + '-2');
@@ -366,10 +378,20 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Add more data for second PITR restore [${db} size ${size}]`, async () => {
-        await insertTestDB(clusterName, namespace, ['7','8'], ['1','2','3','4','5','6','7','8']);
+        await insertTestDB(
+          clusterName,
+          namespace,
+          ['7', '8'],
+          ['1', '2', '3', '4', '5', '6', '7', '8']
+        );
         // for PG we need one more transaction to be able to restore to the previous one
         if (db == 'postgresql') {
-          await insertTestDB(clusterName, namespace, ['9'], ['1','2','3','4','5','6','7','8','9']);
+          await insertTestDB(
+            clusterName,
+            namespace,
+            ['9'],
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+          );
         }
       });
 
@@ -382,7 +404,9 @@ test.describe.configure({ retries: 0 });
         await dropTestDB(clusterName, namespace);
       });
 
-      test(`Restore latest PITR cluster [${db} size ${size}]`, async ({ page }) => {
+      test(`Restore latest PITR cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await page.goto('databases');
         await findDbAndClickActions(page, clusterName, 'Restore from a backup');
         await page
@@ -438,7 +462,11 @@ test.describe.configure({ retries: 0 });
           // PG doesn't list first backup after second restore
           if (db !== 'postgresql' && i !== 1) {
             await gotoDbClusterBackups(page, clusterName);
-            await findRowAndClickActions(page, baseBackupName + `-${i}`, 'Delete');
+            await findRowAndClickActions(
+              page,
+              baseBackupName + `-${i}`,
+              'Delete'
+            );
             await expect(page.getByLabel('Delete backup')).toBeVisible();
             await page.getByTestId('form-dialog-delete').click();
             await waitForDelete(page, baseBackupName + `-${i}`, 30000);
