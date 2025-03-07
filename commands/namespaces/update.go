@@ -33,13 +33,15 @@ import (
 
 var (
 	namespacesUpdateCmd = &cobra.Command{
-		Use:     "update <namespaces> [flags] ",
-		Args:    cobra.ExactArgs(1),
-		Long:    "Add database operator to existing namespace managed by Everest",
-		Short:   "Add database operator to existing namespace managed by Everest",
-		Example: `everestctl namespaces update ns-1,ns-2 --skip-wizard --operator.xtradb-cluster=true --operator.postgresql=false --operator.mongodb=false`,
-		PreRun:  namespacesUpdatePreRun,
-		Run:     namespacesUpdateRun,
+		Use:   "update <namespaces> [flags] ",
+		Args:  cobra.ExactArgs(1),
+		Long:  "Add database operator to existing namespace managed by Everest",
+		Short: "Add database operator to existing namespace managed by Everest",
+		Example: fmt.Sprintf("everestctl namespaces update ns-1,ns-2 --%s --%s=true --%s=false --%s=false",
+			cli.FlagSkipWizard, cli.FlagOperatorMySQL, cli.FlagOperatorPostgresql, cli.FlagOperatorMongoDB,
+		),
+		PreRun: namespacesUpdatePreRun,
+		Run:    namespacesUpdateRun,
 	}
 	namespacesUpdateCfg = namespaces.NewNamespaceAddConfig()
 )
@@ -64,6 +66,8 @@ func init() {
 	namespacesUpdateCmd.Flags().BoolVar(&namespacesUpdateCfg.Operators.PSMDB, cli.FlagOperatorMongoDB, true, "Install MongoDB operator")
 	namespacesUpdateCmd.Flags().BoolVar(&namespacesUpdateCfg.Operators.PG, cli.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
 	namespacesUpdateCmd.Flags().BoolVar(&namespacesUpdateCfg.Operators.PXC, cli.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
+	_ = namespacesUpdateCmd.Flags().MarkDeprecated(cli.FlagOperatorXtraDBCluster, fmt.Sprintf("please use --%s instead", cli.FlagOperatorMySQL))
+	namespacesUpdateCmd.Flags().BoolVar(&namespacesUpdateCfg.Operators.PXC, cli.FlagOperatorMySQL, true, "Install MySQL operator")
 }
 
 func namespacesUpdatePreRun(cmd *cobra.Command, args []string) { //nolint:revive
@@ -85,7 +89,8 @@ func namespacesUpdatePreRun(cmd *cobra.Command, args []string) { //nolint:revive
 	// If user doesn't pass any --operator.* flags - need to ask explicitly.
 	askOperators := !(cmd.Flags().Lookup(cli.FlagOperatorMongoDB).Changed ||
 		cmd.Flags().Lookup(cli.FlagOperatorPostgresql).Changed ||
-		cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster).Changed)
+		cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster).Changed ||
+		cmd.Flags().Lookup(cli.FlagOperatorMySQL).Changed)
 
 	if askOperators {
 		// need to ask user to provide operators to be installed in interactive mode.
