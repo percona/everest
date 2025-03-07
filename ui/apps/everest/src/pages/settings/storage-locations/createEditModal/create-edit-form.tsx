@@ -60,7 +60,7 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
         name={StorageLocationsFields.bucketName}
         label={Messages.bucketName}
         isRequired
-        onValueChange={(event)=>{
+        onValueChange={(event) => {
           const trimedValue = event.target.value.trim();
           return trimedValue;
         }}
