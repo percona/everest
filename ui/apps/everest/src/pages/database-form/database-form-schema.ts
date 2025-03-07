@@ -19,17 +19,6 @@ const basicInfoSchema = () =>
         .nonempty(),
       [DbWizardFormFields.k8sNamespace]: z.string().nullable(),
       ...dbVersionSchemaObject,
-      [DbWizardFormFields.storageClass]: z
-        .string()
-        .nullable()
-        .superRefine((input, ctx) => {
-          if (!input) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: Messages.errors.storageClass.invalid,
-            });
-          }
-        }),
       [DbWizardFormFields.sharding]: z.boolean(),
     })
     .passthrough();

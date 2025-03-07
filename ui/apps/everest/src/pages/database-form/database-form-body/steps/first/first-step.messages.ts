@@ -21,7 +21,6 @@ export const Messages = {
     k8sNamespace: 'Namespace',
     dbEnvironment: 'Database environment',
     dbVersion: 'Database version',
-    storageClass: 'Storage class',
     shardedCluster: 'Sharded Cluster',
   },
   placeholders: {

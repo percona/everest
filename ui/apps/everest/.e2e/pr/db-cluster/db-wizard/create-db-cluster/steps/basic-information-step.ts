@@ -19,7 +19,6 @@ export const basicInformationStepCheck = async (
   page: Page,
   engineVersions,
   recommendedEngineVersions,
-  storageClasses,
   clusterName
 ) => {
   expect(
@@ -43,19 +42,9 @@ export const basicInformationStepCheck = async (
 
   await page.getByRole('option').filter({ hasText: '6.0.9-7' }).click();
   await page.getByTestId('text-input-db-name').fill(clusterName);
-  await page.getByTestId('text-input-storage-class').click();
   expect(
     await page.getByTestId('switch-input-sharding').getByRole('checkbox')
   ).not.toBeDisabled();
-
-  const storageClassOptions = page.getByRole('option');
-
-  storageClasses.forEach(
-    async (className) =>
-      await expect(
-        storageClassOptions.filter({ hasText: new RegExp(`^${className}$`) })
-      ).toBeVisible()
-  );
 
   await page.getByRole('option').first().click();
 };

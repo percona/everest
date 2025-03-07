@@ -130,9 +130,6 @@ export const DbClusterPayloadToFormValues = (
       ).toString(),
       'G'
     ).value,
-    [DbWizardFormFields.storageClass]:
-      dbCluster?.spec?.engine?.storage?.class || null,
-
     //backups
 
     [DbWizardFormFields.backupsEnabled]: (backup?.schedules || []).length > 0,

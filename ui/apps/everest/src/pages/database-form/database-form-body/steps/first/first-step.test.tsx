@@ -66,7 +66,6 @@ vi.mock('api/kubernetesClusterApi', () => ({
   getKubernetesClusterInfoFn: vi.fn(() =>
     Promise.resolve({
       clusterType: 'generic',
-      storageClassNames: ['local-path'],
     })
   ),
 }));

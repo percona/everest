@@ -48,6 +48,8 @@ export const advancedConfigurationModalDefaultValues = (
     : dbCluster?.spec?.proxy.ipSourceRanges;
 
   return {
+    [AdvancedConfigurationFields.storageClass]:
+      dbCluster?.spec?.engine?.storage?.class || null,
     [AdvancedConfigurationFields.externalAccess]: isProxy(
       dbCluster?.spec?.proxy
     )

@@ -5,8 +5,10 @@ export const AdvancedConfigurationsPreviewSection = ({
   externalAccess,
   engineParametersEnabled,
   engineParameters,
+  storageClass,
 }: AdvancedConfigurationType) => (
   <>
+    <PreviewContentText text={`Storage class: ${storageClass ?? ''}`} />
     <PreviewContentText
       text={`External access ${externalAccess ? 'enabled' : 'disabled'}`}
     />
