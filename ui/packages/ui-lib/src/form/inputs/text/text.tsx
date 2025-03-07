@@ -10,43 +10,47 @@ const TextInput = ({
   controllerProps,
   textFieldProps,
   isRequired,
-  onValueChange,
 }: TextInputProps) => {
   const { control: contextControl } = useFormContext();
   return (
     <Controller
       name={name}
       control={control ?? contextControl}
-      render={({ field: { onChange, ...field }, fieldState: { error } }) => {
-        const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-          onChange(
-            (onValueChange && onValueChange(event)) ?? event.target.value
-          );
-        };
-        return (
-          <TextField
-            label={label}
-            {...field}
-            size={textFieldProps?.size || 'small'}
-            sx={{ mt: 3 }}
-            {...textFieldProps}
-            onChange={handleChange}
-            variant="outlined"
-            required={isRequired}
-            error={!!error}
-            InputLabelProps={{
-              shrink: true,
-            }}
-            inputProps={{
-              'data-testid': `text-input-${kebabize(name)}`,
-              onWheel: (e) => {
-                (e.target as HTMLElement).blur();
-              },
-              ...textFieldProps?.inputProps,
-            }}
-            helperText={error ? error.message : textFieldProps?.helperText}
-          />
-        );
+      render={({ field, fieldState: { error } }) => {
+       return <TextField
+          label={label}
+          {...field}
+          size={textFieldProps?.size || 'small'}
+          sx={{ mt: 3 }}
+          {...textFieldProps}
+          variant="outlined"
+          required={isRequired}
+          error={!!error}
+          InputLabelProps={{
+            shrink: true,
+          }}
+          inputProps={{
+            'data-testid': `text-input-${kebabize(name)}`,
+            onWheel: (e) => {
+              (e.target as HTMLElement).blur();
+            },
+            onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+              if (textFieldProps?.onChange) {
+                const modifiedEvent = {
+                  ...event,
+                  target: {
+                    ...event.target,
+                    value: textFieldProps.onChange(event),
+                  },
+                };
+                field.onChange(modifiedEvent);
+              } else {
+                field.onChange(event);
+              }
+            },
+          }}
+          helperText={error ? error.message : textFieldProps?.helperText}
+        />
       }}
       {...controllerProps}
     />
