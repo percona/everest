@@ -17,7 +17,7 @@ const TextInput = ({
       name={name}
       control={control ?? contextControl}
       render={({ field, fieldState: { error } }) => (
-       <TextField
+        <TextField
           label={label}
           {...field}
           size={textFieldProps?.size || 'small'}
@@ -51,7 +51,7 @@ const TextInput = ({
           }}
           helperText={error ? error.message : textFieldProps?.helperText}
         />
-  )}
+      )}
       {...controllerProps}
     />
   );
