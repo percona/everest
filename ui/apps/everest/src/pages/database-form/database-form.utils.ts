@@ -174,7 +174,8 @@ export const DbClusterPayloadToFormValues = (
       dbCluster?.spec?.engine?.storage?.class || null,
 
     //backups
-    [DbWizardFormFields.backupsEnabled]: !!backup?.enabled,
+
+    [DbWizardFormFields.backupsEnabled]: (backup?.schedules || []).length > 0,
     [DbWizardFormFields.pitrEnabled]:
       dbCluster?.spec?.engine?.type === DbEngineType.POSTGRESQL
         ? (backup?.schedules || []).length > 0
