@@ -12,13 +12,11 @@ export const DatabasePreview = ({
   longestAchievedStep,
   onSectionEdit = () => {},
   disabled,
+  stepsWithErrors,
   sx,
   ...stackProps
 }: DatabasePreviewProps) => {
-  const {
-    getValues,
-    formState: { errors },
-  } = useFormContext<DbWizardType>();
+  const { getValues } = useFormContext<DbWizardType>();
 
   // Under normal circumstances, useWatch should return the right values
   // But the initial setValue are not taking effect
@@ -37,8 +35,9 @@ export const DatabasePreview = ({
               order={idx + 1}
               title={Messages.preview[idx]}
               hasBeenReached={longestAchievedStep >= idx}
+              hasError={stepsWithErrors.includes(idx) && activeStep !== idx}
               active={activeStep === idx}
-              disabled={disabled || Object.values(errors).length != 0}
+              disabled={disabled}
               onEditClick={() => onSectionEdit(idx + 1)}
               sx={{
                 mt: idx === 0 ? 2 : 0,
