@@ -252,14 +252,6 @@ func validateProxyType(engineType everestv1alpha1.EngineType, proxyType everestv
 }
 
 func validateBackupSpec(cluster *everestv1alpha1.DatabaseCluster) error {
-	if !cluster.Spec.Backup.Enabled {
-		return nil
-	}
-
-	if len(cluster.Spec.Backup.Schedules) == 0 {
-		return errNoSchedules
-	}
-
 	if err := validatePitrSpec(cluster); err != nil {
 		return err
 	}
@@ -309,9 +301,6 @@ func (h *validateHandler) validateBackupStoragesFor(
 	namespace string,
 	databaseCluster *everestv1alpha1.DatabaseCluster,
 ) error {
-	if !databaseCluster.Spec.Backup.Enabled {
-		return nil
-	}
 	storages := make(map[string]bool)
 	for _, schedule := range databaseCluster.Spec.Backup.Schedules {
 		storages[schedule.BackupStorageName] = true

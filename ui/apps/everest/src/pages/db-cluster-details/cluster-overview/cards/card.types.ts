@@ -64,7 +64,6 @@ export type ResourcesDetailsOverviewProps = {
 
 export type BackupsDetailsOverviewCardProps = {
   schedules: NonNullable<DbCluster['spec']['backup']>['schedules'];
-  backup: DbCluster['spec']['backup'];
   pitrEnabled: NonNullable<
     NonNullable<DbCluster['spec']['backup']>['pitr']
   >['enabled'];
