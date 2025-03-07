@@ -42,7 +42,6 @@ export const basicInformationStepCheck = async (
 
   await page.getByRole('option').filter({ hasText: '6.0.9-7' }).click();
   await page.getByTestId('text-input-db-name').fill(clusterName);
-  await page.getByTestId('text-input-storage-class').click();
   expect(
     await page.getByTestId('switch-input-sharding').getByRole('checkbox')
   ).not.toBeDisabled();

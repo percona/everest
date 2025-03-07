@@ -265,7 +265,6 @@ test.describe('DB Cluster creation', () => {
   test.skip('Cancel wizard', async ({ page }) => {
     await page.getByTestId('mongodb-toggle-button').click();
     await page.getByTestId('text-input-db-name').fill('new-cluster');
-    await page.getByTestId('text-input-storage-class').click();
     await page.getByRole('option').first().click();
     await moveForward(page);
 
