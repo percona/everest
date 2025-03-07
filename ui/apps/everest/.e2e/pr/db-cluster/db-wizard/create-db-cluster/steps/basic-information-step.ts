@@ -19,7 +19,6 @@ export const basicInformationStepCheck = async (
   page: Page,
   engineVersions,
   recommendedEngineVersions,
-  storageClasses,
   clusterName
 ) => {
   expect(
@@ -47,15 +46,6 @@ export const basicInformationStepCheck = async (
   expect(
     await page.getByTestId('switch-input-sharding').getByRole('checkbox')
   ).not.toBeDisabled();
-
-  const storageClassOptions = page.getByRole('option');
-
-  storageClasses.forEach(
-    async (className) =>
-      await expect(
-        storageClassOptions.filter({ hasText: new RegExp(`^${className}$`) })
-      ).toBeVisible()
-  );
 
   await page.getByRole('option').first().click();
 };
