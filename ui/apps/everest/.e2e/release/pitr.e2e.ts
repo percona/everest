@@ -40,8 +40,7 @@ import {
   prepareTestDB,
   dropTestDB,
   queryTestDB,
-  insertMoreTestDB,
-  pgInsertDummyTestDB,
+  insertTestDB,
 } from '@e2e/utils/db-cmd-line';
 import { addFirstScheduleInDBWizard } from '@e2e/pr/db-cluster/db-wizard/db-wizard-utils';
 import { getDbClusterAPI, updateDbClusterAPI } from '@e2e/utils/db-cluster';
@@ -273,13 +272,19 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Add more data [${db} size ${size}]`, async () => {
-        await insertMoreTestDB(clusterName, namespace);
+        await insertTestDB(
+          clusterName,
+          namespace,
+          ['4', '5', '6'],
+          ['1', '2', '3', '4', '5', '6']
+        );
         pitrRestoreTime = getCurrentPITRTime();
-
-        // for PG we need one more transaction to be able to restore to the previous one
-        if (db == 'postgresql') {
-          pgInsertDummyTestDB(clusterName, namespace);
-        }
+        await insertTestDB(
+          clusterName,
+          namespace,
+          ['7', '8', '9'],
+          ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+        );
       });
 
       test(`Wait 1 min for binlogs to be uploaded [${db} size ${size}]`, async () => {
@@ -338,7 +343,7 @@ test.describe.configure({ retries: 0 });
             break;
           case 'psmdb':
             expect(result.trim()).toBe(
-              '[ { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 }, { a: 5 }, { a: 6 } ]'
+              '[{"a":1},{"a":2},{"a":3},{"a":4},{"a":5},{"a":6}]'
             );
             break;
           case 'postgresql':
@@ -347,20 +352,126 @@ test.describe.configure({ retries: 0 });
         }
       });
 
-      test(`Delete restore [${db} size ${size}]`, async ({ page }) => {
+      test(`Delete first restore [${db} size ${size}]`, async ({ page }) => {
+        // we delete first restore since they have random names and we don't
+        // want it to mess later with the test
         await gotoDbClusterRestores(page, clusterName);
-        await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
+        await findRowAndClickActions(page, baseBackupName + `-1`, 'Delete');
         await expect(page.getByLabel('Delete restore')).toBeVisible();
         await page.getByTestId('confirm-dialog-delete').click();
-        await waitForDelete(page, baseBackupName + '-1', 15000);
+        await waitForDelete(page, baseBackupName + `-1`, 15000);
       });
 
-      test(`Delete backup [${db} size ${size}]`, async ({ page }) => {
+      test(`Create second demand backup [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await gotoDbClusterBackups(page, clusterName);
-        await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
-        await expect(page.getByLabel('Delete backup')).toBeVisible();
-        await page.getByTestId('form-dialog-delete').click();
-        await waitForDelete(page, baseBackupName + '-1', 30000);
+        await clickOnDemandBackup(page);
+        await page.getByTestId('text-input-name').fill(baseBackupName + '-2');
+        await expect(page.getByTestId('text-input-name')).not.toBeEmpty();
+        await expect(
+          page.getByTestId('text-input-storage-location')
+        ).not.toBeEmpty();
+        await page.getByTestId('form-dialog-create').click();
+
+        await waitForStatus(page, baseBackupName + '-2', 'Succeeded', 240000);
+      });
+
+      test(`Add more data for second PITR restore [${db} size ${size}]`, async () => {
+        await insertTestDB(
+          clusterName,
+          namespace,
+          ['7', '8'],
+          ['1', '2', '3', '4', '5', '6', '7', '8']
+        );
+        // for PG we need one more transaction to be able to restore to the previous one
+        if (db == 'postgresql') {
+          await insertTestDB(
+            clusterName,
+            namespace,
+            ['9'],
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+          );
+        }
+      });
+
+      test(`Wait 1 min for binlogs to be uploaded for second restore [${db} size ${size}]`, async () => {
+        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+        await delay(65000);
+      });
+
+      test(`Delete data before second restore [${db} size ${size}]`, async () => {
+        await dropTestDB(clusterName, namespace);
+      });
+
+      test(`Restore latest PITR cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
+        await page.goto('databases');
+        await findDbAndClickActions(page, clusterName, 'Restore from a backup');
+        await page
+          .getByTestId('radio-option-fromPITR')
+          .click({ timeout: 5000 });
+        await expect(page.getByTestId('radio-option-fromPITR')).toBeChecked({
+          timeout: 5000,
+        });
+        await expect(
+          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
+        ).toBeVisible({ timeout: 5000 });
+        await expect(
+          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
+        ).not.toBeEmpty({ timeout: 5000 });
+
+        await page.getByTestId('form-dialog-restore').click({ timeout: 5000 });
+
+        await page.goto('/databases');
+        await waitForStatus(page, clusterName, 'Restoring', 30000);
+        await waitForStatus(page, clusterName, 'Up', 600000);
+
+        await gotoDbClusterRestores(page, clusterName);
+        await waitForStatus(page, 'restore-', 'Succeeded', 120000);
+      });
+
+      test(`Check data after second restore [${db} size ${size}]`, async () => {
+        const result = await queryTestDB(clusterName, namespace);
+        switch (db) {
+          case 'pxc':
+            expect(result.trim()).toBe('1\n2\n3\n4\n5\n6\n7\n8');
+            break;
+          case 'psmdb':
+            expect(result.trim()).toBe(
+              '[{"a":1},{"a":2},{"a":3},{"a":4},{"a":5},{"a":6},{"a":7},{"a":8}]'
+            );
+            break;
+          case 'postgresql':
+            expect(result.trim()).toBe('1\n 2\n 3\n 4\n 5\n 6\n 7\n 8');
+            break;
+        }
+      });
+
+      test(`Delete second restore [${db} size ${size}]`, async ({ page }) => {
+        await gotoDbClusterRestores(page, clusterName);
+        await findRowAndClickActions(page, baseBackupName + `-2`, 'Delete');
+        await expect(page.getByLabel('Delete restore')).toBeVisible();
+        await page.getByTestId('confirm-dialog-delete').click();
+        await waitForDelete(page, baseBackupName + `-2`, 15000);
+      });
+
+      test(`Delete all backups [${db} size ${size}]`, async ({ page }) => {
+        for (let i = 1; i <= 2; i++) {
+          // PG doesn't list first backup after second restore
+          if (db !== 'postgresql' && i !== 1) {
+            await gotoDbClusterBackups(page, clusterName);
+            await findRowAndClickActions(
+              page,
+              baseBackupName + `-${i}`,
+              'Delete'
+            );
+            await expect(page.getByLabel('Delete backup')).toBeVisible();
+            await page.getByTestId('form-dialog-delete').click();
+            await waitForDelete(page, baseBackupName + `-${i}`, 30000);
+          }
+        }
       });
 
       test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {

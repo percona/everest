@@ -248,12 +248,12 @@ test.describe(
     test(`Check data after restore [${db} size ${size}]`, async () => {
       await test.step('Validate the data in t1', async () => {
         const t1Data = await queryTestDB(clusterName, namespace, 't1');
-        expect(t1Data.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
+        expect(t1Data.trim()).toBe('[{"a":1},{"a":2},{"a":3}]');
       });
 
       await test.step('Validate the data in t2', async () => {
         const t2Data = await queryTestDB(clusterName, namespace, 't2');
-        expect(t2Data.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
+        expect(t2Data.trim()).toBe('[{"a":1},{"a":2},{"a":3}]');
       });
 
       await test.step('Validate sharding', async () => {
