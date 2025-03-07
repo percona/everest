@@ -58,6 +58,30 @@ type EverestServer struct {
 	sessionMgr    *session.Manager
 	attemptsStore *RateLimiterMemoryStore
 	handler       handlers.Handler
+	oidcProvider  *oidc.ProviderConfig
+}
+
+func getOIDCProviderConfig(ctx context.Context, kubeClient *kubernetes.Kubernetes) (*oidc.ProviderConfig, error) {
+	settings, err := kubeClient.GetEverestSettings(ctx)
+	if client.IgnoreNotFound(err) != nil {
+		return nil, errors.Join(err, errors.New("failed to get Everest settings"))
+	}
+
+	if settings.OIDCConfigRaw == "" {
+		return nil, nil //nolint:nilnil
+	}
+
+	oidcConfig, err := settings.OIDCConfig()
+	if err != nil {
+		return nil, errors.Join(err, errors.New("cannot parse OIDC raw config"))
+	}
+
+	oidcProvider, err := oidc.NewProviderConfig(ctx, oidcConfig.IssuerURL)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to create OIDC provider config"))
+	}
+
+	return &oidcProvider, nil
 }
 
 // NewEverestServer creates and configures everest API.
@@ -78,6 +102,11 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
 	}
 
+	oidcProvider, err := getOIDCProviderConfig(ctx, kubeClient)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to get OIDC provider config"))
+	}
+
 	e := &EverestServer{
 		config:        c,
 		l:             l,
@@ -85,6 +114,7 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		kubeClient:    kubeClient,
 		sessionMgr:    sessMgr,
 		attemptsStore: store,
+		oidcProvider:  oidcProvider,
 	}
 	e.echo.HTTPErrorHandler = e.errorHandlerChain()
 
@@ -191,25 +221,14 @@ func newHandlerChain(hs ...handlers.Handler) handlers.Handler { //nolint:ireturn
 	return hs[0]
 }
 
-func (e *EverestServer) oidcKeyFn(ctx context.Context) (jwt.Keyfunc, error) {
-	settings, err := e.kubeClient.GetEverestSettings(ctx)
-	if err = client.IgnoreNotFound(err); err != nil {
-		return nil, err
-	}
-	if settings.OIDCConfigRaw == "" {
-		return nil, nil //nolint:nilnil
-	}
-	oidcConfig, err := settings.OIDCConfig()
-	if err != nil {
-		return nil, errors.Join(err, errors.New("cannot parse OIDC raw config"))
-	}
-	return oidc.NewKeyFunc(ctx, oidcConfig.IssuerURL)
-}
-
 func (e *EverestServer) newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) {
-	oidcKeyFn, err := e.oidcKeyFn(ctx)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("failed to get OIDC key function"))
+	var oidcKeyFn jwt.Keyfunc
+	if e.oidcProvider != nil {
+		fn, err := e.oidcProvider.NewKeyFunc(ctx)
+		if err != nil {
+			return nil, errors.Join(err, errors.New("failed to get OIDC key function"))
+		}
+		oidcKeyFn = fn
 	}
 
 	return func(token *jwt.Token) (interface{}, error) {

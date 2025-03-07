@@ -135,7 +135,7 @@ func (u *OIDC) getOIDCProviderConfigureSteps() []steps.Step {
 		Desc: "Checking connection to the OIDC provider",
 		F: func(ctx context.Context) error {
 			// Check if we can connect to the provider.
-			if _, err := getProviderConfig(ctx, u.config.IssuerURL); err != nil {
+			if _, err := NewProviderConfig(ctx, u.config.IssuerURL); err != nil {
 				if errors.Is(err, ErrUnexpectedSatusCode) {
 					return fmt.Errorf("failed to connect with OIDC provider due to incorrect response: %s", err)
 				}
