@@ -10,8 +10,11 @@ import (
 	"golang.org/x/mod/semver"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/common"
 )
@@ -46,7 +49,7 @@ func (h *validateHandler) UpdateDatabaseCluster(ctx context.Context, db *everest
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 
-	current, err := h.kubeClient.GetDatabaseCluster(ctx, db.GetNamespace(), db.GetName())
+	current, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: db.GetNamespace(), Name: db.GetName()})
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetDatabaseCluster: %w", err)
 	}
@@ -89,7 +92,7 @@ func (h *validateHandler) validateDatabaseClusterCR(
 	if !ok {
 		return errors.New("unsupported database engine")
 	}
-	engine, err := h.kubeClient.GetDatabaseEngine(ctx, namespace, engineName)
+	engine, err := h.kubeConnector.GetDatabaseEngine(ctx, types.NamespacedName{Namespace: namespace, Name: engineName})
 	if err != nil {
 		return err
 	}
@@ -119,7 +122,7 @@ func (h *validateHandler) validateDatabaseClusterCR(
 		if err = h.validatePGSchedulesRestrictions(ctx, databaseCluster); err != nil {
 			return err
 		}
-		if err = validatePGReposForAPIDB(ctx, databaseCluster, h.kubeClient.ListDatabaseClusterBackups); err != nil {
+		if err = validatePGReposForAPIDB(ctx, databaseCluster, h.kubeConnector.ListDatabaseClusterBackups); err != nil {
 			return err
 		}
 	}
@@ -338,7 +341,12 @@ func (h *validateHandler) validateBackupStoragesFor(
 		if databaseCluster.Spec.Backup.PITR.BackupStorageName == nil || *databaseCluster.Spec.Backup.PITR.BackupStorageName == "" {
 			return errPitrNoBackupStorageName
 		}
-		storage, err := h.kubeClient.GetBackupStorage(ctx, namespace, *databaseCluster.Spec.Backup.PITR.BackupStorageName)
+		storage, err := h.kubeConnector.GetBackupStorage(ctx,
+			types.NamespacedName{
+				Namespace: namespace,
+				Name:      *databaseCluster.Spec.Backup.PITR.BackupStorageName,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -389,7 +397,7 @@ func validateDataSource(dataSource *everestv1alpha1.DataSource) error {
 func (h *validateHandler) validatePGSchedulesRestrictions(ctx context.Context, newDbc *everestv1alpha1.DatabaseCluster) error {
 	dbcName := newDbc.GetName()
 	dbcNamespace := newDbc.GetNamespace()
-	existingDbc, err := h.kubeClient.GetDatabaseCluster(ctx, dbcNamespace, dbcName)
+	existingDbc, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: dbcNamespace, Name: dbcName})
 	if err != nil {
 		// if there was no such cluster before (creating cluster) - check only the duplicates for storages
 		if k8serrors.IsNotFound(err) {
@@ -438,7 +446,7 @@ func checkSchedulesChanges(oldDbc, newDbc *everestv1alpha1.DatabaseCluster) erro
 func validatePGReposForAPIDB(
 	ctx context.Context,
 	dbc *everestv1alpha1.DatabaseCluster,
-	getBackupsFunc func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error),
+	getBackupsFunc func(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.DatabaseClusterBackupList, error),
 ) error {
 	bs := make(map[string]bool)
 	for _, shed := range dbc.Spec.Backup.Schedules {
@@ -448,9 +456,7 @@ func validatePGReposForAPIDB(
 	dbcName := dbc.GetName()
 	dbcNamespace := dbc.GetNamespace()
 
-	backups, err := getBackupsFunc(ctx, dbcNamespace, metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("clusterName=%s", dbcName),
-	})
+	backups, err := getBackupsFunc(ctx, ctrlclient.InNamespace(dbcNamespace), ctrlclient.MatchingLabels{"clusterName": dbcName})
 	if err != nil {
 		return err
 	}

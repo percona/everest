@@ -593,7 +593,7 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 			k.WithClient(mockConnector)
 
 			h := validateHandler{
-				kubeClient: k,
+				kubeConnector: k,
 			}
 
 			err := h.validateBackupStoragesFor(

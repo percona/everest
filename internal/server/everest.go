@@ -54,7 +54,7 @@ type EverestServer struct {
 	config        *config.EverestConfig
 	l             *zap.SugaredLogger
 	echo          *echo.Echo
-	kubeClient    *kubernetes.Kubernetes
+	kubeConnector kubernetes.KubernetesConnector
 	sessionMgr    *session.Manager
 	attemptsStore *RateLimiterMemoryStore
 	handler       handlers.Handler
@@ -62,7 +62,7 @@ type EverestServer struct {
 
 // NewEverestServer creates and configures everest API.
 func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.SugaredLogger) (*EverestServer, error) {
-	kubeClient, err := kubernetes.NewInCluster(l)
+	kubeConnector, err := kubernetes.NewInCluster(l)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed creating Kubernetes client"))
 	}
@@ -72,7 +72,7 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
 	echoServer.Use(middleware)
 	sessMgr, err := session.New(
-		session.WithAccountManager(kubeClient.Accounts()),
+		session.WithAccountManager(kubeConnector.Accounts()),
 	)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
@@ -82,13 +82,13 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		config:        c,
 		l:             l,
 		echo:          echoServer,
-		kubeClient:    kubeClient,
+		kubeConnector: kubeConnector,
 		sessionMgr:    sessMgr,
 		attemptsStore: store,
 	}
 	e.echo.HTTPErrorHandler = e.errorHandlerChain()
 
-	if err := e.setupHandlers(ctx, l, kubeClient, c.VersionServiceURL); err != nil {
+	if err := e.setupHandlers(ctx, l, kubeConnector, c.VersionServiceURL); err != nil {
 		return nil, err
 	}
 
@@ -162,12 +162,13 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 func (e *EverestServer) setupHandlers(
 	ctx context.Context,
 	log *zap.SugaredLogger,
-	kubeClient *kubernetes.Kubernetes,
+	// kubeConnector *kubernetes.Kubernetes,
+	kubeConnector kubernetes.KubernetesConnector,
 	vsURL string,
 ) error {
-	k8sH := k8shandler.New(log, kubeClient, vsURL)
-	valH := valhandler.New(log, kubeClient)
-	rbacH, err := rbachandler.New(ctx, log, kubeClient)
+	k8sH := k8shandler.New(log, kubeConnector, vsURL)
+	valH := valhandler.New(log, kubeConnector)
+	rbacH, err := rbachandler.New(ctx, log, kubeConnector)
 	if err != nil {
 		return errors.Join(err, errors.New("could not create rbac handler"))
 	}
@@ -194,7 +195,7 @@ func newHandlerChain(hs ...handlers.Handler) handlers.Handler { //nolint:ireturn
 }
 
 func (e *EverestServer) oidcKeyFn(ctx context.Context) (jwt.Keyfunc, error) {
-	settings, err := e.kubeClient.GetEverestSettings(ctx)
+	settings, err := e.kubeConnector.GetEverestSettings(ctx)
 	if err = client.IgnoreNotFound(err); err != nil {
 		return nil, err
 	}

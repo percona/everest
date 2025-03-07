@@ -31,70 +31,115 @@ const (
 )
 
 // ListMonitoringConfigs returns list of managed monitoring configs.
-func (k *Kubernetes) ListMonitoringConfigs(ctx context.Context, namespace string) (*everestv1alpha1.MonitoringConfigList, error) {
-	return k.client.ListMonitoringConfigs(ctx, namespace)
+// This method returns a list of full objects (meta and spec).
+func (k *Kubernetes) ListMonitoringConfigs(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.MonitoringConfigList, error) {
+	result := &everestv1alpha1.MonitoringConfigList{}
+	if err := k.k8sClient.List(ctx, result, opts...); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// listMonitoringConfigsMeta returns list of managed monitoring configs.
+// This method returns a list of simplified objects (meta only).
+func (k *Kubernetes) listMonitoringConfigsMeta(ctx context.Context, opts ...ctrlclient.ListOption) (*metav1.PartialObjectMetadataList, error) {
+	result := &metav1.PartialObjectMetadataList{}
+	result.SetGroupVersionKind(everestv1alpha1.GroupVersion.WithKind("MonitoringConfigList"))
+	if err := k.k8sClient.List(ctx, result, opts...); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // GetMonitoringConfig returns monitoring configs by provided name.
-func (k *Kubernetes) GetMonitoringConfig(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error) {
-	return k.client.GetMonitoringConfig(ctx, namespace, name)
+func (k *Kubernetes) GetMonitoringConfig(ctx context.Context, key ctrlclient.ObjectKey) (*everestv1alpha1.MonitoringConfig, error) {
+	result := &everestv1alpha1.MonitoringConfig{}
+	if err := k.k8sClient.Get(ctx, key, result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // CreateMonitoringConfig returns monitoring configs by provided name.
-func (k *Kubernetes) CreateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error) {
-	return k.client.CreateMonitoringConfig(ctx, storage)
+func (k *Kubernetes) CreateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error) {
+	if err := k.k8sClient.Create(ctx, config); err != nil {
+		return nil, err
+	}
+	return config, nil
 }
 
 // UpdateMonitoringConfig returns monitoring configs by provided name.
-func (k *Kubernetes) UpdateMonitoringConfig(ctx context.Context, storage *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error) {
-	return k.client.UpdateMonitoringConfig(ctx, storage)
+func (k *Kubernetes) UpdateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error) {
+	if err := k.k8sClient.Update(ctx, config); err != nil {
+		return nil, err
+	}
+	return config, nil
 }
 
 // DeleteMonitoringConfig returns monitoring configs by provided name.
-func (k *Kubernetes) DeleteMonitoringConfig(ctx context.Context, namespace, name string) error {
-	return k.client.DeleteMonitoringConfig(ctx, namespace, name)
+func (k *Kubernetes) DeleteMonitoringConfig(ctx context.Context, obj *everestv1alpha1.MonitoringConfig) error {
+	return k.k8sClient.Delete(ctx, obj)
 }
 
 // DeleteMonitoringConfigs deletes all monitoring configs in provided namespace.
 // This function will wait until all configs are deleted.
-func (k *Kubernetes) DeleteMonitoringConfigs(ctx context.Context, namespace string) error {
+func (k *Kubernetes) DeleteMonitoringConfigs(ctx context.Context, opts ...ctrlclient.ListOption) error {
+	// No need to fetch full objects, we only need the fact there are objects that match the criteria(opts).
+	delList, err := k.listMonitoringConfigsMeta(ctx, opts...)
+	if err != nil {
+		k.l.Errorf("Could not list monitoring configs: %s", err)
+		return err
+	}
+
+	if delList == nil || len(delList.Items) == 0 {
+		// Nothing to delete.
+		return nil
+	}
+
+	// need to convert ListOptions to DeleteAllOfOptions
+	delOpts := &ctrlclient.DeleteAllOfOptions{}
+	for _, opt := range opts {
+		opt.ApplyToList(&delOpts.ListOptions)
+	}
+
+	k.l.Debugf("Setting monitoring configs removal timeout to %s", pollTimeout)
 	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
-		list, err := k.ListMonitoringConfigs(ctx, namespace)
-		if err != nil {
-			return false, err
-		}
-		if len(list.Items) == 0 {
-			return true, nil
-		}
-		for _, storage := range list.Items {
-			if err := k.DeleteMonitoringConfig(ctx, storage.GetNamespace(), storage.GetName()); ctrlclient.IgnoreNotFound(err) != nil {
+		// Skip fetching the list of objects to delete again, we already have it (see code above).
+		if delList == nil {
+			var err error
+			if delList, err = k.listMonitoringConfigsMeta(ctx, opts...); err != nil {
+				k.l.Errorf("Could not list monitoring configs in polling: %s", err)
 				return false, err
 			}
+
+			if delList == nil || len(delList.Items) == 0 {
+				// Nothing to delete.
+				return true, nil
+			}
+		}
+
+		// Reset the list to nil to fetch it again on the next iteration.
+		delList = nil
+
+		if err := k.k8sClient.DeleteAllOf(ctx, &everestv1alpha1.MonitoringConfig{}, delOpts); err != nil {
+			return false, err
 		}
 		return false, nil
 	})
 }
 
 // IsMonitoringConfigUsed checks if a monitoring config is used by any database cluster in the provided namespace.
-func (k *Kubernetes) IsMonitoringConfigUsed(ctx context.Context, namespace, name string) (bool, error) {
-	_, err := k.client.GetMonitoringConfig(ctx, namespace, name)
+func (k *Kubernetes) IsMonitoringConfigUsed(ctx context.Context, key ctrlclient.ObjectKey) (bool, error) {
+	_, err := k.GetMonitoringConfig(ctx, key)
 	if err != nil {
 		return false, err
 	}
 
-	options := metav1.ListOptions{
-		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
-			MatchLabels: map[string]string{
-				monitoringConfigNameLabel: name,
-			},
-		}),
-	}
-
-	list, err := k.client.ListDatabaseClusters(ctx, namespace, options)
+	list, err := k.listDatabaseClustersMeta(ctx, ctrlclient.InNamespace(key.Namespace), ctrlclient.MatchingLabels{monitoringConfigNameLabel: key.Name})
 	if err != nil {
 		return false, err
 	}
-	if len(list.Items) > 0 {
+	if list != nil && len(list.Items) > 0 {
 		return true, nil
 	}
 
@@ -103,21 +148,21 @@ func (k *Kubernetes) IsMonitoringConfigUsed(ctx context.Context, namespace, name
 
 // GetMonitoringConfigsBySecretName returns a list of monitoring configs which use
 // the provided secret name.
-func (k *Kubernetes) GetMonitoringConfigsBySecretName(
-	ctx context.Context, namespace, secretName string,
-) ([]*everestv1alpha1.MonitoringConfig, error) {
-	mcs, err := k.client.ListMonitoringConfigs(ctx, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	res := make([]*everestv1alpha1.MonitoringConfig, 0, 1)
-	for _, mc := range mcs.Items {
-		if mc.Spec.CredentialsSecretName == secretName {
-			//nolint:exportloopref
-			res = append(res, &mc)
-		}
-	}
-
-	return res, nil
-}
+// func (k *Kubernetes) GetMonitoringConfigsBySecretName(
+// 	ctx context.Context, namespace, secretName string,
+// ) ([]*everestv1alpha1.MonitoringConfig, error) {
+// 	mcs, err := k.client.ListMonitoringConfigs(ctx, namespace)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	res := make([]*everestv1alpha1.MonitoringConfig, 0, 1)
+// 	for _, mc := range mcs.Items {
+// 		if mc.Spec.CredentialsSecretName == secretName {
+// 			//nolint:exportloopref
+// 			res = append(res, &mc)
+// 		}
+// 	}
+//
+// 	return res, nil
+// }
