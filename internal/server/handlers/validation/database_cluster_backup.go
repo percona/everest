@@ -6,9 +6,11 @@ import (
 	"fmt"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
 	"github.com/percona/everest/api"
 )
 
@@ -42,7 +44,7 @@ func (h *validateHandler) validateDatabaseClusterBackup(ctx context.Context, bac
 		return errors.New(".spec.dbClusterName cannot be empty")
 	}
 	namespace := backup.GetNamespace()
-	db, err := h.kubeClient.GetDatabaseCluster(ctx, namespace, backup.Spec.DBClusterName)
+	db, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: namespace, Name: backup.Spec.DBClusterName})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return fmt.Errorf("database cluster %s does not exist", backup.Spec.DBClusterName)
@@ -72,8 +74,8 @@ func (h *validateHandler) validatePGReposForBackup(
 	}
 
 	// put the backup that being validated to the list of all backups to calculate if the limitations are respected
-	getBackupsFunc := func(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-		list, err := h.kubeClient.ListDatabaseClusterBackups(ctx, namespace, options)
+	getBackupsFunc := func(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.DatabaseClusterBackupList, error) {
+		list, err := h.kubeConnector.ListDatabaseClusterBackups(ctx, opts...)
 		if err != nil {
 			return nil, err
 		}

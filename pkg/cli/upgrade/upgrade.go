@@ -27,6 +27,7 @@ import (
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
 	goversion "github.com/hashicorp/go-version"
 	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/cli/helm"
@@ -70,7 +71,7 @@ type (
 		l *zap.SugaredLogger
 
 		config         *Config
-		kubeClient     kubernetes.KubernetesConnector
+		kubeConnector  kubernetes.KubernetesConnector
 		versionService versionservice.Interface
 
 		// these are set on calling Run
@@ -108,7 +109,7 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 		kubeClient = k
 	}
 	if cfg.KubeconfigPath != "" {
-		k, err := cliutils.NewKubeclient(cli.l, cfg.KubeconfigPath)
+		k, err := cliutils.NewKubeConnector(cli.l, cfg.KubeconfigPath)
 		if err != nil {
 			return nil, err
 		}
@@ -118,14 +119,14 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 		return nil, errors.New("must provide kubeconfig path or run in-cluster")
 	}
 
-	cli.kubeClient = kubeClient
+	cli.kubeConnector = kubeClient
 	cli.versionService = versionservice.New(cfg.VersionMetadataURL)
 	return cli, nil
 }
 
 // Run runs the operators installation process.
 func (u *Upgrade) Run(ctx context.Context) error {
-	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeClient)
+	everestVersion, err := cliVersion.EverestVersionFromDeployment(ctx, u.kubeConnector)
 	if err != nil {
 		return errors.Join(err, errors.New("could not retrieve Everest version"))
 	}
@@ -187,7 +188,7 @@ func (u *Upgrade) setKubernetesEnv(ctx context.Context) error {
 	if u.config.SkipEnvDetection {
 		return nil
 	}
-	t, err := u.kubeClient.GetClusterType(ctx)
+	t, err := u.kubeConnector.GetClusterType(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to detect cluster type: %w", err)
 	}
@@ -233,7 +234,7 @@ func (u *Upgrade) setupHelmInstaller(ctx context.Context) error {
 
 func (u *Upgrade) printPostUpgradeMessage(ctx context.Context, out io.Writer) error {
 	_, _ = fmt.Fprintln(out, "\n", output.Rocket("Everest has been upgraded to version %s", u.upgradeToVersion))
-	if isSecure, err := u.kubeClient.Accounts().IsSecure(ctx, common.EverestAdminUser); err != nil {
+	if isSecure, err := u.kubeConnector.Accounts().IsSecure(ctx, common.EverestAdminUser); err != nil {
 		return fmt.Errorf("could not check if the admin password is secure: %w", err)
 	} else if !isSecure {
 		_, _ = fmt.Fprint(os.Stdout, "\n", common.InitialPasswordWarningMessage, "\n")
@@ -389,7 +390,7 @@ func (u *Upgrade) checkRequirements(ctx context.Context, supVer *common.Supporte
 }
 
 func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *common.SupportedVersion) error {
-	nss, err := u.kubeClient.GetDBNamespaces(ctx)
+	nss, err := u.kubeConnector.GetDBNamespaces(ctx)
 	if err != nil {
 		return err
 	}
@@ -399,11 +400,11 @@ func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *common.
 		{common.PGOperatorName, supVer.PGOperator},
 		{common.PSMDBOperatorName, supVer.PSMBDOperator},
 	}
-	for _, ns := range nss {
+	for _, ns := range nss.Items {
 		u.l.Infof("Checking operator requirements in namespace %s", ns)
 
 		for _, c := range cfg {
-			v, err := u.kubeClient.OperatorInstalledVersion(ctx, ns, c.operatorName)
+			v, err := u.kubeConnector.OperatorInstalledVersion(ctx, types.NamespacedName{Namespace: ns.GetName(), Name: c.operatorName})
 			if err != nil && !errors.Is(err, kubernetes.ErrOperatorNotInstalled) {
 				return err
 			}
@@ -427,7 +428,7 @@ func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *common.
 }
 
 func (u *Upgrade) applyConfigMapValues(ctx context.Context) error {
-	cm, err := u.kubeClient.GetConfigMap(ctx, common.SystemNamespace, common.EverestRBACConfigMapName)
+	cm, err := u.kubeConnector.GetConfigMap(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestRBACConfigMapName})
 	if client.IgnoreNotFound(err) != nil {
 		return err
 	}
@@ -440,7 +441,7 @@ func (u *Upgrade) applyConfigMapValues(ctx context.Context) error {
 		}
 	}
 
-	cm, err = u.kubeClient.GetConfigMap(ctx, common.SystemNamespace, common.EverestSettingsConfigMapName)
+	cm, err = u.kubeConnector.GetConfigMap(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestSettingsConfigMapName})
 	if client.IgnoreNotFound(err) != nil {
 		return err
 	}
@@ -455,7 +456,7 @@ func (u *Upgrade) applyConfigMapValues(ctx context.Context) error {
 // We don't handle the accounts secret here because we cannot configure it via the Helm values.
 // The Helm chart handles the secret differently.
 func (u *Upgrade) applySecretValues(ctx context.Context) error {
-	secret, err := u.kubeClient.GetSecret(ctx, common.SystemNamespace, common.EverestJWTSecretName)
+	secret, err := u.kubeConnector.GetSecret(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestJWTSecretName})
 	if client.IgnoreNotFound(err) != nil {
 		return err
 	}

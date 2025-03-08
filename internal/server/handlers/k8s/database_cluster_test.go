@@ -6,13 +6,16 @@ import (
 	"time"
 
 	"github.com/AlekSi/pointer"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes/scheme"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
 	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/kubernetes/client"
+	// "github.com/percona/everest/pkg/kubernetes/client"
+	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestLatestRestorableDate(t *testing.T) {
@@ -275,15 +278,18 @@ func TestConnectionURL(t *testing.T) {
 		},
 	}
 
+	s := scheme.Scheme
+	s.AddKnownTypes(everestv1alpha1.GroupVersion, &everestv1alpha1.DatabaseCluster{})
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			k := &kubernetes.Kubernetes{}
-			mockConnector := &client.MockKubeClientConnector{}
-			mockConnector.On("GetPods", mock.Anything, mock.Anything, mock.Anything).
-				Return(&tc.podList, nil)
-			k.WithClient(mockConnector)
-			h := &k8sHandler{kubeClient: k}
+			c := fakeclient.NewClientBuilder().WithObjects(&tc.db)
+			for i := range tc.podList.Items {
+				c.WithObjects(&tc.podList.Items[i])
+			}
+			mockClient := c.Build()
+			k := kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient)
+			h := &k8sHandler{kubeConnector: k}
 			url := h.connectionURL(context.Background(), &tc.db, tc.user, tc.password)
 			require.Equal(t, tc.expected, *url)
 		})

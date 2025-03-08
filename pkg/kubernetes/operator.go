@@ -21,32 +21,42 @@ import (
 	"fmt"
 
 	goversion "github.com/hashicorp/go-version"
+	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // ErrOperatorNotInstalled is returned when an operator is not installed.
 var ErrOperatorNotInstalled = fmt.Errorf("operatorNotInstalled")
 
-// OperatorInstalledVersion returns the installed version of operator by name.
-func (k *Kubernetes) OperatorInstalledVersion(ctx context.Context, namespace, name string) (*goversion.Version, error) {
-	sub, err := k.client.OLM().OperatorsV1alpha1().Subscriptions(namespace).Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
+// OperatorInstalledVersion returns the installed version of operator by name and namespace.
+func (k *Kubernetes) OperatorInstalledVersion(ctx context.Context, key ctrlclient.ObjectKey) (*goversion.Version, error) {
+	sub := &olmv1alpha1.Subscription{}
+	if err := k.k8sClient.Get(ctx, key, sub); err != nil {
 		if k8serrors.IsNotFound(err) {
 			return nil, errors.Join(ErrOperatorNotInstalled, errors.New("could not retrieve subscription"))
 		}
 		return nil, errors.Join(err, errors.New("could not retrieve subscription"))
 	}
 
-	csvName := sub.Status.InstalledCSV
-	if csvName == "" {
+	if sub.Status.InstalledCSV == "" {
 		return nil, ErrOperatorNotInstalled
 	}
 
-	csv, err := k.client.OLM().OperatorsV1alpha1().ClusterServiceVersions(namespace).Get(ctx, csvName, metav1.GetOptions{})
+	csv, err := k.GetClusterServiceVersion(ctx, types.NamespacedName{Name: sub.Status.InstalledCSV})
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not retrieve cluster service version"))
 	}
 
 	return goversion.NewVersion(csv.Spec.Version.FinalizeVersion())
+}
+
+// ListInstalledOperators returns the list of  installed operator by name and namespace.
+func (k *Kubernetes) ListInstalledOperators(ctx context.Context, opts ...ctrlclient.ListOption) (*olmv1alpha1.SubscriptionList, error) {
+	result := &olmv1alpha1.SubscriptionList{}
+	if err := k.k8sClient.List(ctx, result, opts...); err != nil {
+		return nil, err
+	}
+	return result, nil
 }

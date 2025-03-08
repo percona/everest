@@ -21,23 +21,37 @@ import (
 	"time"
 
 	backoff "github.com/cenkalti/backoff/v4"
+	"k8s.io/apimachinery/pkg/types"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
 // ListDatabaseEngines returns list of managed database clusters.
-func (k *Kubernetes) ListDatabaseEngines(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseEngineList, error) {
-	return k.client.ListDatabaseEngines(ctx, namespace)
+// This method returns a list of full objects (meta and spec).
+func (k *Kubernetes) ListDatabaseEngines(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.DatabaseEngineList, error) {
+	result := &everestv1alpha1.DatabaseEngineList{}
+	if err := k.k8sClient.List(ctx, result, opts...); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // GetDatabaseEngine returns database clusters by provided name.
-func (k *Kubernetes) GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error) {
-	return k.client.GetDatabaseEngine(ctx, namespace, name)
+func (k *Kubernetes) GetDatabaseEngine(ctx context.Context, key ctrlclient.ObjectKey) (*everestv1alpha1.DatabaseEngine, error) {
+	result := &everestv1alpha1.DatabaseEngine{}
+	if err := k.k8sClient.Get(ctx, key, result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // UpdateDatabaseEngine updates the provided database engine.
 func (k *Kubernetes) UpdateDatabaseEngine(ctx context.Context, engine *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
-	return k.client.UpdateDatabaseEngine(ctx, engine.GetNamespace(), engine)
+	if err := k.k8sClient.Update(ctx, engine); err != nil {
+		return nil, err
+	}
+	return engine, nil
 }
 
 // SetDatabaseEngineLock sets the lock on the database engine.
@@ -49,7 +63,7 @@ func (k *Kubernetes) SetDatabaseEngineLock(ctx context.Context, namespace, name 
 	b = backoff.WithMaxRetries(b, backoffMaxRetries)
 	b = backoff.WithContext(b, ctx)
 	return backoff.Retry(func() error {
-		engine, err := k.client.GetDatabaseEngine(ctx, namespace, name)
+		engine, err := k.GetDatabaseEngine(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 		if err != nil {
 			return err
 		}
@@ -62,7 +76,7 @@ func (k *Kubernetes) SetDatabaseEngineLock(ctx context.Context, namespace, name 
 			delete(annotations, everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation)
 		}
 		engine.SetAnnotations(annotations)
-		_, err = k.client.UpdateDatabaseEngine(ctx, namespace, engine)
+		_, err = k.UpdateDatabaseEngine(ctx, engine)
 		return err
 	},
 		b,

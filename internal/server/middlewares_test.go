@@ -147,7 +147,7 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 			kubeClient := &kubernetes.Kubernetes{}
 			kubeClient = kubeClient.WithClient(mockConnector)
 
-			e := EverestServer{kubeClient: kubeClient}
+			e := EverestServer{kubeConnector: kubeClient}
 
 			if tc.mockFn != nil {
 				tc.mockFn(mockConnector)

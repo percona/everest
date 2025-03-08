@@ -9,7 +9,7 @@ import (
 
 // k8sHandler is usually the last handler in the chain, so it does not have a next handler.
 type k8sHandler struct {
-	kubeClient        *kubernetes.Kubernetes
+	kubeConnector     kubernetes.KubernetesConnector
 	log               *zap.SugaredLogger
 	versionServiceURL string
 }
@@ -17,10 +17,10 @@ type k8sHandler struct {
 // New returns a new RBAC handler.
 //
 //nolint:ireturn
-func New(log *zap.SugaredLogger, kubeClient *kubernetes.Kubernetes, vsURL string) handlers.Handler {
+func New(log *zap.SugaredLogger, kubeConnector kubernetes.KubernetesConnector, vsURL string) handlers.Handler {
 	l := log.With("handler", "k8s")
 	return &k8sHandler{
-		kubeClient:        kubeClient,
+		kubeConnector:     kubeConnector,
 		log:               l,
 		versionServiceURL: vsURL,
 	}

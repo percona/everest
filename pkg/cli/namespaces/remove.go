@@ -23,9 +23,12 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/cli/helm"
 	"github.com/percona/everest/pkg/cli/steps"
@@ -57,9 +60,9 @@ type (
 
 	// NamespaceRemover is the CLI operation to remove namespaces.
 	NamespaceRemover struct {
-		cfg        NamespaceRemoveConfig
-		kubeClient *kubernetes.Kubernetes
-		l          *zap.SugaredLogger
+		cfg           NamespaceRemoveConfig
+		kubeConnector kubernetes.KubernetesConnector
+		l             *zap.SugaredLogger
 	}
 )
 
@@ -72,7 +75,7 @@ func (cfg *NamespaceRemoveConfig) ValidateNamespaces(ctx context.Context, nsList
 		return err
 	}
 
-	k, err := cliutils.NewKubeclient(zap.NewNop().Sugar(), cfg.KubeconfigPath)
+	k, err := cliutils.NewKubeConnector(zap.NewNop().Sugar(), cfg.KubeconfigPath)
 	if err != nil {
 		return err
 	}
@@ -81,17 +84,26 @@ func (cfg *NamespaceRemoveConfig) ValidateNamespaces(ctx context.Context, nsList
 		if err := cfg.validateNamespaceOwnership(ctx, k, ns); err != nil {
 			return err
 		}
+		// if --force flag is passed - it doesn't matter if there are DB clusters in the namespace.
+		if !cfg.Force {
+			// Check that there are no DB clusters left in namespaces.
+			if dbsExist, err := k.DatabasesExist(ctx, ctrlclient.InNamespace(ns)); err != nil {
+				return errors.Join(err, fmt.Errorf("failed to check if databases exist in namespace='%s'", ns))
+			} else if dbsExist {
+				return ErrNamespaceNotEmpty
+			}
+		}
 	}
 
-	// Check that there are no DB clusters left in namespaces.
-	dbsExist, err := k.DatabasesExist(ctx, nsList...)
-	if err != nil {
-		return errors.Join(err, errors.New("failed to check if databases exist"))
-	}
+	// // Check that there are no DB clusters left in namespaces.
+	// dbsExist, err := k.DatabasesExist(ctx, nsList...)
+	// if err != nil {
+	// 	return errors.Join(err, errors.New("failed to check if databases exist"))
+	// }
 
-	if dbsExist && !cfg.Force {
-		return ErrNamespaceNotEmpty
-	}
+	// if dbsExist && !cfg.Force {
+	// 	return ErrNamespaceNotEmpty
+	// }
 
 	return nil
 }
@@ -128,49 +140,49 @@ func NewNamespaceRemove(c NamespaceRemoveConfig, l *zap.SugaredLogger) (*Namespa
 		n.l = zap.NewNop().Sugar()
 	}
 
-	k, err := cliutils.NewKubeclient(n.l, n.cfg.KubeconfigPath)
+	k, err := cliutils.NewKubeConnector(n.l, n.cfg.KubeconfigPath)
 	if err != nil {
 		return nil, err
 	}
-	n.kubeClient = k
+	n.kubeConnector = k
 	return n, nil
 }
 
 // Run the namespace removal operation.
 func (r *NamespaceRemover) Run(ctx context.Context) error {
 	// This command expects a Helm based installation (< 1.4.0)
-	_, err := cliutils.CheckHelmInstallation(ctx, r.kubeClient)
+	_, err := cliutils.CheckHelmInstallation(ctx, r.kubeConnector)
 	if err != nil {
 		return err
 	}
 
 	var removalSteps []steps.Step
 	for _, ns := range r.cfg.NamespaceList {
-		removalSteps = append(removalSteps, NewRemoveNamespaceSteps(ns, r.cfg.KeepNamespace, r.kubeClient)...)
+		removalSteps = append(removalSteps, NewRemoveNamespaceSteps(ns, r.cfg.KeepNamespace, r.kubeConnector)...)
 	}
 
 	return steps.RunStepsWithSpinner(ctx, r.l, removalSteps, r.cfg.Pretty)
 }
 
 // NewRemoveNamespaceSteps returns the steps to remove a namespace.
-func NewRemoveNamespaceSteps(namespace string, keepNs bool, k *kubernetes.Kubernetes) []steps.Step {
+func NewRemoveNamespaceSteps(namespace string, keepNs bool, k kubernetes.KubernetesConnector) []steps.Step {
 	removeSteps := []steps.Step{
 		{
 			Desc: fmt.Sprintf("Deleting database clusters in namespace '%s'", namespace),
 			F: func(ctx context.Context) error {
-				return k.DeleteDatabaseClusters(ctx, namespace)
+				return k.DeleteDatabaseClusters(ctx, ctrlclient.InNamespace(namespace))
 			},
 		},
 		{
 			Desc: fmt.Sprintf("Deleting backup storages in namespace '%s'", namespace),
 			F: func(ctx context.Context) error {
-				return k.DeleteBackupStorages(ctx, namespace)
+				return k.DeleteBackupStorages(ctx, ctrlclient.InNamespace(namespace))
 			},
 		},
 		{
 			Desc: fmt.Sprintf("Deleting monitoring instances in namespace '%s'", namespace),
 			F: func(ctx context.Context) error {
-				return k.DeleteMonitoringConfigs(ctx, namespace)
+				return k.DeleteMonitoringConfigs(ctx, ctrlclient.InNamespace(namespace))
 			},
 		},
 	}
@@ -192,7 +204,10 @@ func NewRemoveNamespaceSteps(namespace string, keepNs bool, k *kubernetes.Kubern
 				// keep the namespace, but remove the Everest label
 				return removeEverestLabelFromNamespace(ctx, k, namespace)
 			}
-			if err := k.DeleteNamespace(ctx, namespace); err != nil {
+			delObj := &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{Name: namespace},
+			}
+			if err := k.DeleteNamespace(ctx, delObj); err != nil {
 				return err
 			}
 			return ensureNamespaceGone(ctx, namespace, k)
@@ -201,9 +216,9 @@ func NewRemoveNamespaceSteps(namespace string, keepNs bool, k *kubernetes.Kubern
 	return removeSteps
 }
 
-func removeEverestLabelFromNamespace(ctx context.Context, k *kubernetes.Kubernetes, namespace string) error {
+func removeEverestLabelFromNamespace(ctx context.Context, k kubernetes.KubernetesConnector, namespace string) error {
 	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
-		ns, err := k.GetNamespace(ctx, namespace)
+		ns, err := k.GetNamespace(ctx, types.NamespacedName{Name: namespace})
 		if err != nil {
 			return true, err
 		}
@@ -213,7 +228,7 @@ func removeEverestLabelFromNamespace(ctx context.Context, k *kubernetes.Kubernet
 		labels := ns.GetLabels()
 		delete(labels, common.KubernetesManagedByLabel)
 		ns.SetLabels(labels)
-		_, err = k.UpdateNamespace(ctx, ns, v1.UpdateOptions{})
+		_, err = k.UpdateNamespace(ctx, ns)
 		if err != nil && k8serrors.IsConflict(err) {
 			return false, nil
 		}
@@ -221,9 +236,9 @@ func removeEverestLabelFromNamespace(ctx context.Context, k *kubernetes.Kubernet
 	})
 }
 
-func ensureNamespaceGone(ctx context.Context, namespace string, k *kubernetes.Kubernetes) error {
+func ensureNamespaceGone(ctx context.Context, namespace string, k kubernetes.KubernetesConnector) error {
 	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
-		_, err := k.GetNamespace(ctx, namespace)
+		_, err := k.GetNamespace(ctx, types.NamespacedName{Name: namespace})
 		if err != nil && k8serrors.IsNotFound(err) {
 			return true, nil
 		} else if err != nil {

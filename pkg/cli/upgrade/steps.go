@@ -5,13 +5,17 @@ import (
 	"fmt"
 
 	"github.com/AlekSi/pointer"
+	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"helm.sh/helm/v3/pkg/cli/values"
+	appsv1 "k8s.io/api/apps/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
 	"github.com/percona/everest/pkg/cli/helm"
 	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
 	"github.com/percona/everest/pkg/cli/steps"
@@ -70,7 +74,7 @@ func (u *Upgrade) newStepEnsureCatalogSource() steps.Step {
 				return fmt.Errorf("could not get Everest CatalogSource namespace: %w", err)
 			}
 			return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
-				cs, err := u.kubeClient.GetCatalogSource(ctx, common.PerconaEverestCatalogName, catalogNs)
+				cs, err := u.kubeConnector.GetCatalogSource(ctx, types.NamespacedName{Namespace: catalogNs, Name: common.PerconaEverestCatalogName})
 				if err != nil {
 					return false, fmt.Errorf("cannot get CatalogSource: %w", err)
 				}
@@ -82,7 +86,7 @@ func (u *Upgrade) newStepEnsureCatalogSource() steps.Step {
 
 func (u *Upgrade) waitForDeployment(ctx context.Context, name, namespace string) error {
 	u.l.Infof("Waiting for Deployment '%s' in namespace '%s'", name, namespace)
-	if err := u.kubeClient.WaitForRollout(ctx, name, namespace); err != nil {
+	if err := u.kubeConnector.WaitForRollout(ctx, types.NamespacedName{Namespace: namespace, Name: name}); err != nil {
 		return err
 	}
 	u.l.Infof("Deployment '%s' in namespace '%s' is ready", name, namespace)
@@ -98,7 +102,7 @@ func (u *Upgrade) upgradeCustomResourceDefinitions(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("could not get CRDs: %w", err)
 	}
-	return u.kubeClient.ApplyManifestFile(helmutils.YAMLStringsToBytes(crds), common.SystemNamespace)
+	return u.kubeConnector.ApplyManifestFile(helmutils.YAMLStringsToBytes(crds), common.SystemNamespace)
 }
 
 func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
@@ -122,13 +126,13 @@ func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
 }
 
 func (u *Upgrade) upgradeEverestDBNamespaceHelmCharts(ctx context.Context) error {
-	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx)
+	dbNamespaces, err := u.kubeConnector.GetDBNamespaces(ctx)
 	if err != nil {
 		return fmt.Errorf("could not get database namespaces: %w", err)
 	}
-	for _, ns := range dbNamespaces {
-		if err := u.upgradeEverestDBNamespaceHelmChart(ctx, ns); err != nil {
-			return fmt.Errorf("could not upgrade DB namespace '%s' Helm chart: %w", ns, err)
+	for _, ns := range dbNamespaces.Items {
+		if err := u.upgradeEverestDBNamespaceHelmChart(ctx, ns.GetName()); err != nil {
+			return fmt.Errorf("could not upgrade DB namespace '%s' Helm chart: %w", ns.GetName(), err)
 		}
 	}
 	return nil
@@ -162,13 +166,13 @@ func (u *Upgrade) migrateLegacyInstallationToHelm(ctx context.Context) error {
 	if err := u.helmInstaller.Install(ctx); err != nil {
 		return fmt.Errorf("failed to install Helm chart: %w", err)
 	}
-	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx)
+	dbNamespaces, err := u.kubeConnector.GetDBNamespaces(ctx)
 	if err != nil {
 		return fmt.Errorf("could not get database namespaces: %w", err)
 	}
-	for _, ns := range dbNamespaces {
-		if err := u.helmAdoptDBNamespaces(ctx, ns, u.upgradeToVersion); err != nil {
-			return fmt.Errorf("could not migrate DB namespace '%s' installation to Helm: %w", ns, err)
+	for _, ns := range dbNamespaces.Items {
+		if err := u.helmAdoptDBNamespaces(ctx, ns.GetName(), u.upgradeToVersion); err != nil {
+			return fmt.Errorf("could not migrate DB namespace '%s' installation to Helm: %w", ns.GetName(), err)
 		}
 	}
 	return nil
@@ -177,7 +181,7 @@ func (u *Upgrade) migrateLegacyInstallationToHelm(ctx context.Context) error {
 // Creates an installation of the `everest-db-namespace` Helm chart for the given DB namesapce
 // and adopts its resources.
 func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version string) error {
-	dbEngines, err := u.kubeClient.ListDatabaseEngines(ctx, namespace)
+	dbEngines, err := u.kubeConnector.ListDatabaseEngines(ctx, client.InNamespace(namespace))
 	if err != nil {
 		return fmt.Errorf("cannot list database engines in namespace %s: %w", namespace, err)
 	}
@@ -229,10 +233,13 @@ func helmValuesForDBEngines(list *everestv1alpha1.DatabaseEngineList) values.Opt
 func (u *Upgrade) cleanupLegacyResources(ctx context.Context) error {
 	// Delete OLM PackageServer CSV.
 	if err := wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
-		if err := u.kubeClient.DeleteClusterServiceVersion(ctx, types.NamespacedName{
-			Namespace: kubernetes.OLMNamespace,
-			Name:      "packageserver",
-		}); err != nil {
+		delObj := &olmv1alpha1.ClusterServiceVersion{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: kubernetes.OLMNamespace,
+				Name:      "packageserver",
+			},
+		}
+		if err := u.kubeConnector.DeleteClusterServiceVersion(ctx, delObj); err != nil {
 			if k8serrors.IsNotFound(err) {
 				return true, nil
 			}
@@ -244,20 +251,44 @@ func (u *Upgrade) cleanupLegacyResources(ctx context.Context) error {
 	}
 
 	// Delete resources related to Everest Operator Subscription.
-	if err := deleteOLMOperator(ctx, u.kubeClient, common.EverestOperatorName, common.SystemNamespace); err != nil {
-		return fmt.Errorf("could not delete Everest operator: %w", err)
+	if err := deleteOLMOperator(ctx, u.kubeConnector, common.EverestOperatorName, common.SystemNamespace); err != nil {
+		return fmt.Errorf("could not delete operator='%s' in namespace='%s': %w",
+			common.EverestOperatorName,
+			common.SystemNamespace,
+			err)
 	}
 	// Delete resources related to victoria metrics operator Subscription.
-	if err := deleteOLMOperator(ctx, u.kubeClient, "victoriametrics-operator", common.MonitoringNamespace); err != nil {
-		return fmt.Errorf("could not delete victoria metrics operator: %w", err)
+	if err := deleteOLMOperator(ctx, u.kubeConnector, common.VictoriaMetricsOperatorName, common.MonitoringNamespace); err != nil {
+		return fmt.Errorf("could not delete operator='%s' in namespace='%s': %w",
+			common.VictoriaMetricsOperatorName,
+			common.MonitoringNamespace,
+			err)
 	}
-	if err := u.kubeClient.DeleteDeployment(ctx, "percona-everest", common.SystemNamespace); client.IgnoreNotFound(err) != nil {
-		return fmt.Errorf("could not delete percona-everest deployment: %w", err)
+	delDep := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: common.SystemNamespace,
+			Name:      common.PerconaEverestDeploymentName,
+		},
+	}
+	if err := u.kubeConnector.DeleteDeployment(ctx, delDep); client.IgnoreNotFound(err) != nil {
+		return fmt.Errorf("could not delete deployment='%s' in namespace='%s': %w",
+			common.PerconaEverestDeploymentName,
+			common.SystemNamespace,
+			err)
 	}
 	// Delete Everest Catalog.
 	// This is not a legacy resource, but we need to delete it so that Helm creates a new one that is owned by the release.
-	if err := u.kubeClient.DeleteCatalogSource(ctx, common.PerconaEverestCatalogName, kubernetes.OLMNamespace); client.IgnoreNotFound(err) != nil {
-		return fmt.Errorf("could not delete Everest CatalogSource: %w", err)
+	delObj := &olmv1alpha1.CatalogSource{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: kubernetes.OLMNamespace,
+			Name:      common.PerconaEverestCatalogName,
+		},
+	}
+	if err := u.kubeConnector.DeleteCatalogSource(ctx, delObj); client.IgnoreNotFound(err) != nil {
+		return fmt.Errorf("could not delete CatalogSource='%s' in namespace='%s': %w",
+			common.PerconaEverestCatalogName,
+			kubernetes.OLMNamespace,
+			err)
 	}
 	return nil
 }
@@ -266,8 +297,7 @@ func (u *Upgrade) cleanupLegacyResources(ctx context.Context) error {
 func deleteOLMOperator(ctx context.Context, k kubernetes.KubernetesConnector, subscription, namespace string) error {
 	currentCSV := ""
 	if err := wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
-		key := types.NamespacedName{Name: subscription, Namespace: namespace}
-		sub, err := k.GetSubscription(ctx, key.Name, key.Namespace)
+		sub, err := k.GetSubscription(ctx, types.NamespacedName{Name: subscription, Namespace: namespace})
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
 				return true, nil
@@ -275,16 +305,25 @@ func deleteOLMOperator(ctx context.Context, k kubernetes.KubernetesConnector, su
 			return false, err
 		}
 		currentCSV = sub.Status.InstalledCSV
-		return false, k.DeleteSubscription(ctx, key)
+		delObj := &olmv1alpha1.Subscription{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: namespace,
+				Name:      subscription,
+			},
+		}
+		return false, k.DeleteSubscription(ctx, delObj)
 	}); err != nil {
 		return err
 	}
 	if currentCSV != "" {
 		if err := wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
-			if err := k.DeleteClusterServiceVersion(ctx, types.NamespacedName{
-				Namespace: namespace,
-				Name:      currentCSV,
-			}); err != nil {
+			delObj := &olmv1alpha1.ClusterServiceVersion{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: namespace,
+					Name:      currentCSV,
+				},
+			}
+			if err := k.DeleteClusterServiceVersion(ctx, delObj); err != nil {
 				if k8serrors.IsNotFound(err) {
 					return true, nil
 				}

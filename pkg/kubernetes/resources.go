@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/convertors"
 )
@@ -48,12 +49,12 @@ func (k *Kubernetes) GetAllClusterResources(
 func (k *Kubernetes) getResourcesFromNodes(ctx context.Context, clusterType ClusterType) (uint64, uint64, uint64, uint64, error) {
 	var cpuMillis, memoryBytes, diskSizeBytes uint64
 
-	nodes, err := k.GetWorkerNodes(ctx)
-	if err != nil {
+	nodes, err := k.ListWorkerNodes(ctx)
+	if err != nil || nodes == nil {
 		return 0, 0, 0, 0, errors.Join(err, errors.New("could not get a list of nodes"))
 	}
 	var volumeCountEKS uint64
-	for _, node := range nodes {
+	for _, node := range nodes.Items {
 		cpu, memory, err := getResources(node.Status.Allocatable)
 		if err != nil {
 			return 0, 0, 0, 0, errors.Join(err, errors.New("could not get allocatable resources of the node"))
@@ -93,7 +94,7 @@ func (k *Kubernetes) getEKSVolumeCount(node corev1.Node) (uint64, error) {
 		return 0, nil
 	}
 
-	// Get nodes's type.
+	// Get node's type.
 	nodeType, ok := node.Labels["beta.kubernetes.io/instance-type"]
 	if !ok {
 		return 0, errors.New("dealing with AWS EKS cluster but the node does not have label 'beta.kubernetes.io/instance-type'")
@@ -165,7 +166,7 @@ func (k *Kubernetes) GetConsumedCPUAndMemory(ctx context.Context, namespace stri
 	cpuMillis uint64, memoryBytes uint64, err error,
 ) {
 	// Get CPU and Memory Requests of Pods' containers.
-	pods, err := k.GetPods(ctx, namespace, nil)
+	pods, err := k.ListPods(ctx, ctrlclient.InNamespace(namespace))
 	if err != nil {
 		return 0, 0, errors.Join(err, errors.New("failed to get consumed resources"))
 	}
