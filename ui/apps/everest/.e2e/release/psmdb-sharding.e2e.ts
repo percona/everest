@@ -27,7 +27,6 @@ import {
   populateBasicInformation,
   populateResources,
   populateAdvancedConfig,
-  populateMonitoringModalForm,
 } from '@e2e/utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import {
@@ -35,10 +34,6 @@ import {
   waitForDelete,
   findRowAndClickActions,
 } from '@e2e/utils/table';
-import {
-  deleteMonitoringInstance,
-  listMonitoringInstances,
-} from '@e2e/utils/monitoring-instance';
 import { clickOnDemandBackup } from '@e2e/pr/db-cluster-details/utils';
 import {
   queryPSMDB,
@@ -50,13 +45,6 @@ import {
 } from '@e2e/utils/db-cmd-line';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
 
-const {
-  MONITORING_URL,
-  MONITORING_USER,
-  MONITORING_PASSWORD,
-  SELECT_DB,
-  SELECT_SIZE,
-} = process.env;
 let token: string;
 
 const db = 'psmdb';
@@ -70,19 +58,14 @@ test.describe(
     tag: '@release',
   },
   () => {
-    test.skip(
-      () =>
-        (SELECT_DB !== db && !!SELECT_DB) ||
-        (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
-    );
     test.describe.configure({ timeout: 720000 });
 
-    const clusterName = `${db}-${size}-dembkp`;
+    const clusterName = `${db}-${size}-shard`;
 
     let storageClasses = [];
     const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
-    const monitoringName = `${db}-${size}-pmm`;
-    const baseBackupName = `dembkp-${db}-${size}`;
+    const monitoringName = 'e2e-endpoint-0';
+    const baseBackupName = `shard-${db}-${size}`;
 
     test.beforeAll(async ({ request }) => {
       token = await getTokenFromLocalStorage();
@@ -92,24 +75,6 @@ test.describe(
         request
       );
       storageClasses = storageClassNames;
-    });
-
-    test.afterAll(async ({ request }) => {
-      // we try to delete all monitoring instances because cluster creation expects that none exist
-      // (monitoring instance is added in the form where the warning that none exist is visible)
-      const monitoringInstances = await listMonitoringInstances(
-        request,
-        namespace,
-        token
-      );
-      for (const instance of monitoringInstances) {
-        await deleteMonitoringInstance(
-          request,
-          namespace,
-          instance.name,
-          token
-        );
-      }
     });
 
     test(`Cluster creation [${db} size ${size}]`, async ({ page, request }) => {
@@ -148,7 +113,20 @@ test.describe(
           .getByText(size + ' nodes')
           .click();
 
-        await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
+        await expect(
+          page.getByText('Nodes Per Shard (' + size + ')')
+        ).toBeVisible();
+        await expect(page.getByText('Routers (3)')).toBeVisible();
+        await expect(page.getByText('2 shards')).toBeVisible();
+        await expect(
+          page.getByText(
+            '6 nodes - CPU - 6.00 CPU; Memory - 24.00 GB; Disk - 150.00 Gi'
+          )
+        ).toBeVisible();
+        await expect(page.getByText('3 configuration servers')).toBeVisible();
+        await expect(
+          page.getByText('3 routers - CPU - 3.00 CPU; Memory - 6.00 GB')
+        ).toBeVisible();
         await populateResources(page, 0.6, 1, 1, size, 2, 0.6, 1, 2, 3);
         await moveForward(page);
       });
@@ -163,16 +141,10 @@ test.describe(
       });
 
       await test.step('Populate monitoring', async () => {
-        await populateMonitoringModalForm(
-          page,
-          monitoringName,
-          namespace,
-          MONITORING_URL,
-          MONITORING_USER,
-          MONITORING_PASSWORD,
-          false
-        );
         await page.getByTestId('switch-input-monitoring').click();
+        await page
+          .getByTestId('text-input-monitoring-instance')
+          .fill(monitoringName);
         await expect(
           page.getByTestId('text-input-monitoring-instance')
         ).toHaveValue(monitoringName);
@@ -315,7 +287,7 @@ test.describe(
     test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
       await deleteDbCluster(page, clusterName);
       await waitForStatus(page, clusterName, 'Deleting', 15000);
-      await waitForDelete(page, clusterName, 600000);
+      await waitForDelete(page, clusterName, 240000);
     });
   }
 );

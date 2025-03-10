@@ -28,7 +28,6 @@ import {
   populateBasicInformation,
   populateResources,
   populateAdvancedConfig,
-  populateMonitoringModalForm,
 } from '@e2e/utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import {
@@ -36,10 +35,6 @@ import {
   waitForDelete,
   findRowAndClickActions,
 } from '@e2e/utils/table';
-import {
-  deleteMonitoringInstance,
-  listMonitoringInstances,
-} from '@e2e/utils/monitoring-instance';
 import { clickOnDemandBackup } from '@e2e/pr/db-cluster-details/utils';
 import {
   prepareTestDB,
@@ -50,14 +45,7 @@ import {
 } from '@e2e/utils/db-cmd-line';
 import { addFirstScheduleInDBWizard } from '@e2e/pr/db-cluster/db-wizard/db-wizard-utils';
 import { getDbClusterAPI, updateDbClusterAPI } from '@e2e/utils/db-cluster';
-
-const {
-  MONITORING_URL,
-  MONITORING_USER,
-  MONITORING_PASSWORD,
-  SELECT_DB,
-  SELECT_SIZE,
-} = process.env;
+import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 
 type pitrTime = {
   day: string;
@@ -114,18 +102,14 @@ test.describe.configure({ retries: 0 });
       tag: '@release',
     },
     () => {
-      test.skip(
-        () =>
-          (SELECT_DB !== db && !!SELECT_DB) ||
-          (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
-      );
+      test.skip(!shouldExecuteDBCombination(db, size));
       test.describe.configure({ timeout: 720000 });
 
       const clusterName = `${db}-${size}-pitr`;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
-      const monitoringName = `${db}-${size}-pmm`;
+      const monitoringName = 'e2e-endpoint-0';
       const baseBackupName = `dembkp-${db}-${size}`;
 
       test.beforeAll(async ({ request }) => {
@@ -136,24 +120,6 @@ test.describe.configure({ retries: 0 });
           request
         );
         storageClasses = storageClassNames;
-      });
-
-      test.afterAll(async ({ request }) => {
-        // we try to delete all monitoring instances because cluster creation expects that none exist
-        // (monitoring instance is added in the form where the warning that none exist is visible)
-        const monitoringInstances = await listMonitoringInstances(
-          request,
-          namespace,
-          token
-        );
-        for (const instance of monitoringInstances) {
-          await deleteMonitoringInstance(
-            request,
-            namespace,
-            instance.name,
-            token
-          );
-        }
       });
 
       test(`Cluster creation [${db} size ${size}]`, async ({
@@ -184,7 +150,7 @@ test.describe.configure({ retries: 0 });
             .getByRole('button')
             .getByText(size + ' node')
             .click();
-          await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
+          await expect(page.getByText('Nodes (' + size + ')')).toBeVisible();
           await populateResources(page, 0.6, 1, 1, size);
           await moveForward(page);
         });
@@ -220,16 +186,10 @@ test.describe.configure({ retries: 0 });
         });
 
         await test.step('Populate monitoring', async () => {
-          await populateMonitoringModalForm(
-            page,
-            monitoringName,
-            namespace,
-            MONITORING_URL,
-            MONITORING_USER,
-            MONITORING_PASSWORD,
-            false
-          );
           await page.getByTestId('switch-input-monitoring').click();
+          await page
+            .getByTestId('text-input-monitoring-instance')
+            .fill(monitoringName);
           await expect(
             page.getByTestId('text-input-monitoring-instance')
           ).toHaveValue(monitoringName);

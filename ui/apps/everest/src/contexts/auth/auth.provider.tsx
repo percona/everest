@@ -104,6 +104,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
 
     setAuthStatus('loggedOut');
     localStorage.removeItem('everestToken');
+    sessionStorage.clear();
     setRedirect(null);
     removeApiErrorInterceptor();
     removeApiAuthInterceptor();
@@ -167,32 +168,36 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     }
 
     const authRoutine = async (token: string) => {
-      const decoded = jwtDecode(token);
-      const iss = decoded.iss;
-      const exp = decoded.exp;
-      if (iss === EVEREST_JWT_ISSUER) {
-        const isTokenValid = await checkAuth(token);
-        const username =
-          decoded.sub?.substring(0, decoded.sub.indexOf(':')) || '';
-        if (isTokenValid) {
-          setLoggedInStatus(username);
+      try {
+        const decoded = jwtDecode(token);
+        const iss = decoded.iss;
+        const exp = decoded.exp;
+        if (iss === EVEREST_JWT_ISSUER) {
+          const isTokenValid = await checkAuth(token);
+          const username =
+            decoded.sub?.substring(0, decoded.sub.indexOf(':')) || '';
+          if (isTokenValid) {
+            setLoggedInStatus(username);
+          } else {
+            setLogoutStatus();
+          }
         } else {
-          setLogoutStatus();
-        }
-      } else {
-        if (isAfter(new Date(), new Date((exp || 0) * 1000))) {
-          silentlyRenewToken();
-          return;
-        }
+          if (isAfter(new Date(), new Date((exp || 0) * 1000))) {
+            silentlyRenewToken();
+            return;
+          }
 
-        const user = await userManager.getUser();
+          const user = await userManager.getUser();
 
-        if (!user) {
-          setLogoutStatus();
-        } else {
-          setLoggedInStatus(decoded.sub || '');
-          return;
+          if (!user) {
+            setLogoutStatus();
+          } else {
+            setLoggedInStatus(decoded.sub || '');
+            return;
+          }
         }
+      } catch (error) {
+        logout();
       }
     };
     const savedToken = localStorage.getItem('everestToken');

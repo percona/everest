@@ -134,7 +134,7 @@ test.describe('DB Cluster creation', () => {
     const dbName = await page.getByTestId('text-input-db-name').inputValue();
 
     await moveForward(page);
-    await expect(page.getByText('Nº nodes: 3')).toBeVisible();
+    await expect(page.getByText('3 nodes - CPU')).toBeVisible();
 
     await resourcesStepCheck(page);
 
@@ -386,5 +386,43 @@ test.describe('DB Cluster creation', () => {
     await expect(page.getByTestId('same-schedule-warning')).not.toBeVisible();
     await fillScheduleModalForm(page, undefined, undefined, false, '1');
     await expect(page.getByTestId('same-schedule-warning')).toBeVisible();
+  });
+
+  test('Reset schedules, PITR and monitoring when changing namespace', async ({
+    page,
+  }) => {
+    expect(storageClasses.length).toBeGreaterThan(0);
+    await selectDbEngine(page, 'psmdb');
+    await expect(page.getByText(storageClasses[0])).toBeVisible();
+    await moveForward(page);
+    await moveForward(page);
+    await addFirstScheduleInDBWizard(page);
+    await page
+      .getByTestId('switch-input-pitr-enabled-label')
+      .getByRole('checkbox')
+      .check();
+    await moveForward(page);
+    await moveForward(page);
+    await page
+      .getByTestId('switch-input-monitoring-label')
+      .getByRole('checkbox')
+      .check();
+
+    const monitoringPreviewContent = page
+      .getByTestId('section-monitoring')
+      .getByTestId('preview-content');
+
+    expect(await monitoringPreviewContent.textContent()).toBe('Enabled');
+    await expect(page.getByText('PITR Enabled')).toBeVisible();
+    await expect(page.getByText('Backups disabled')).not.toBeVisible();
+
+    await goToStep(page, 'basic-information');
+    await page.getByTestId('text-input-k8s-namespace').click();
+
+    const namespacesOptions = page.getByRole('option');
+    await namespacesOptions.nth(1).click();
+    expect(await monitoringPreviewContent.textContent()).toBe('Disabled');
+    await expect(page.getByText('Backups disabled')).toBeVisible();
+    await expect(page.getByText('PITR disabled')).toBeVisible();
   });
 });

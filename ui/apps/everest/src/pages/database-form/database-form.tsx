@@ -155,7 +155,7 @@ export const DatabasePage = () => {
       return;
     }
 
-    if (mode === 'edit' || mode === 'restoreFromBackup') {
+    if (mode === 'restoreFromBackup') {
       reset(defaultValues);
     }
   }, [defaultValues, isDirty, reset, mode]);

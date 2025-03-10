@@ -237,7 +237,7 @@ export const populateAdvancedConfig = async (
           inputParameters = 'systemLog:\n verbosity: 1';
           break;
         case 'postgresql':
-          inputParameters = 'log_connections = yes\nshared_buffers = 128MB';
+          inputParameters = 'log_connections = yes\nshared_buffers = 192MB';
           break;
         case 'pxc':
         default:

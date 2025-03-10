@@ -76,7 +76,7 @@ export const DbClusterPayloadToFormValues = (
     ),
     [DbWizardFormFields.dbName]:
       mode === 'restoreFromBackup'
-        ? `restored-${dbCluster?.metadata?.name}-${generateShortUID()}`.slice(
+        ? `${dbCluster?.metadata?.name}-${generateShortUID()}`.slice(
             0,
             MAX_DB_CLUSTER_NAME_LENGTH
           )
@@ -134,13 +134,14 @@ export const DbClusterPayloadToFormValues = (
       dbCluster?.spec?.engine?.storage?.class || null,
 
     //backups
-    [DbWizardFormFields.backupsEnabled]: !!backup?.enabled,
+
+    [DbWizardFormFields.backupsEnabled]: (backup?.schedules || []).length > 0,
     [DbWizardFormFields.pitrEnabled]:
       dbCluster?.spec?.engine?.type === DbEngineType.POSTGRESQL
         ? (backup?.schedules || []).length > 0
         : backup?.pitr?.enabled || false,
     [DbWizardFormFields.pitrStorageLocation]:
-      (backup?.pitr?.enabled && mode === 'new') || mode === 'edit'
+      backup?.pitr?.enabled && mode === 'new'
         ? backup?.pitr?.backupStorageName || null
         : DB_WIZARD_DEFAULTS[DbWizardFormFields.pitrStorageLocation],
     [DbWizardFormFields.schedules]: backup?.schedules || [],

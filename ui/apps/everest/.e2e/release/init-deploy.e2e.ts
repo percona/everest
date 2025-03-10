@@ -28,23 +28,13 @@ import {
   populateBasicInformation,
   populateResources,
   populateAdvancedConfig,
-  populateMonitoringModalForm,
 } from '@e2e/utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import { waitForStatus, waitForDelete } from '@e2e/utils/table';
-import {
-  deleteMonitoringInstance,
-  listMonitoringInstances,
-} from '@e2e/utils/monitoring-instance';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
+import { shouldExecuteDBCombination } from '@e2e/utils/generic';
+import { queryPG, queryPSMDB, queryMySQL } from '@e2e/utils/db-cmd-line';
 
-const {
-  MONITORING_URL,
-  MONITORING_USER,
-  MONITORING_PASSWORD,
-  SELECT_DB,
-  SELECT_SIZE,
-} = process.env;
 let token: string;
 
 test.describe.configure({ retries: 0 });
@@ -63,18 +53,14 @@ test.describe.configure({ retries: 0 });
       tag: '@release',
     },
     () => {
-      test.skip(
-        () =>
-          (SELECT_DB !== db && !!SELECT_DB) ||
-          (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
-      );
+      test.skip(!shouldExecuteDBCombination(db, size));
       test.describe.configure({ timeout: 720000 });
 
       const clusterName = `${db}-${size}-deploy`;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
-      const monitoringName = `${db}-${size}-pmm`;
+      const monitoringName = 'e2e-endpoint-0';
 
       test.beforeAll(async ({ request }) => {
         token = await getTokenFromLocalStorage();
@@ -84,24 +70,6 @@ test.describe.configure({ retries: 0 });
           request
         );
         storageClasses = storageClassNames;
-      });
-
-      test.afterAll(async ({ request }) => {
-        // we try to delete all monitoring instances because cluster creation expects that none exist
-        // (monitoring instance is added in the form where the warning that none exist is visible)
-        const monitoringInstances = await listMonitoringInstances(
-          request,
-          namespace,
-          token
-        );
-        for (const instance of monitoringInstances) {
-          await deleteMonitoringInstance(
-            request,
-            namespace,
-            instance.name,
-            token
-          );
-        }
       });
 
       test(`Cluster creation [${db} size ${size}]`, async ({
@@ -135,7 +103,8 @@ test.describe.configure({ retries: 0 });
             .getByRole('button')
             .getByText(size + ' node')
             .click();
-          await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
+
+          await expect(page.getByText('Nodes (' + size + ')')).toBeVisible();
           await populateResources(page, 0.6, 1, 1, size);
           await moveForward(page);
         });
@@ -150,16 +119,10 @@ test.describe.configure({ retries: 0 });
         });
 
         await test.step('Populate monitoring', async () => {
-          await populateMonitoringModalForm(
-            page,
-            monitoringName,
-            namespace,
-            MONITORING_URL,
-            MONITORING_USER,
-            MONITORING_PASSWORD,
-            false
-          );
           await page.getByTestId('switch-input-monitoring').click();
+          await page
+            .getByTestId('text-input-monitoring-instance')
+            .fill(monitoringName);
           await expect(
             page.getByTestId('text-input-monitoring-instance')
           ).toHaveValue(monitoringName);
@@ -200,6 +163,42 @@ test.describe.configure({ retries: 0 });
             expect(addedCluster?.spec.proxy.replicas).toBe(size);
           }
         });
+      });
+
+      test(`Check DB custom option [${db} size ${size}]`, async () => {
+        let result: string;
+
+        switch (db) {
+          case 'pxc': {
+            result = await queryMySQL(
+              clusterName,
+              namespace,
+              `SHOW variables LIKE "max_connections";`
+            );
+            expect(result.trim()).toBe('max_connections	250');
+            break;
+          }
+          case 'psmdb': {
+            result = await queryPSMDB(
+              clusterName,
+              namespace,
+              'admin',
+              `db.serverCmdLineOpts().parsed.systemLog;`
+            );
+            expect(result.trim()).toBe('{ quiet: true, verbosity: 1 }');
+            break;
+          }
+          case 'postgresql': {
+            result = await queryPG(
+              clusterName,
+              namespace,
+              'postgres',
+              `SHOW shared_buffers;`
+            );
+            expect(result.trim()).toBe('192MB');
+            break;
+          }
+        }
       });
 
       test(`Suspend cluster [${db} size ${size}]`, async ({ page }) => {

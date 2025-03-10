@@ -15,7 +15,6 @@
 
 export const Messages = {
   createDatabase: 'Create database',
-  loading: 'Loading...',
   statusProvider: {
     up: 'Up',
     down: 'Down',

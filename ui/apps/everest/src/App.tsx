@@ -4,6 +4,7 @@ import { ThemeContextProvider, everestThemeOptions } from '@percona/design';
 import { NotistackMuiSnackbar } from '@percona/ui-lib';
 import { SnackbarProvider } from 'notistack';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { RouterProvider } from 'react-router-dom';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AuthProvider } from 'contexts/auth';
@@ -13,11 +14,14 @@ import { useEffect, useState } from 'react';
 import { EverestConfig } from 'shared-types/configs.types';
 import { getEverestConfigs } from 'api/everestConfigs';
 import LoadingPageSkeleton from 'components/loading-page-skeleton/LoadingPageSkeleton';
+import UpgradeEverestProvider from 'contexts/upgrade-everest/upgrade-everest.provider';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
+      retry: (failureCount, error) =>
+        (error as AxiosError).status === 429 ? failureCount < 4 : false,
     },
   },
 });
@@ -80,7 +84,9 @@ const App = () => {
               }}
             >
               <DrawerContextProvider>
-                <RouterProvider router={router} />
+                <UpgradeEverestProvider>
+                  <RouterProvider router={router} />
+                </UpgradeEverestProvider>
               </DrawerContextProvider>
               <ReactQueryDevtools initialIsOpen={false} />
             </AuthProvider>

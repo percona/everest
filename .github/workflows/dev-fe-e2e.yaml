@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ 1.23.x ]
+        go-version: [ 1.24.x ]
         may-fail: [ false ]
     runs-on: ubuntu-latest
     steps:
@@ -85,7 +85,7 @@ jobs:
         id: minikube
         with:
           cpus: 4
-          memory: 4000m
+          memory: 12g
           addons: registry
           insecure-registry: "localhost:5000"
 

@@ -31,6 +31,7 @@ export const useNamespaces = (
   useQuery<GetNamespacesPayload, unknown, string[]>({
     queryKey: [NAMESPACES_QUERY_KEY],
     queryFn: getNamespacesFn,
+    select: (namespaces) => namespaces.sort((a, b) => a.localeCompare(b)),
     ...options,
   });
 
@@ -47,7 +48,6 @@ export const useDBEnginesForNamespaces = (
     UseQueryOptions<DbEngine[], unknown, DbEngine[]>
   >((namespace) => ({
     queryKey: ['dbEngines-multi', namespace],
-    retry: false,
     // We don't use "select" here so that our cache saves data already formatted
     // Otherwise, every render from components cause "select" to be called, which means new values on every render
     queryFn: async () => {

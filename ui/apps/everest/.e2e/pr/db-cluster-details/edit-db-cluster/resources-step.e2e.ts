@@ -82,7 +82,12 @@ const openResourcesModal = async (page: Page) => {
             .getByRole('button')
             .getByText(size + ' node')
             .click();
-          await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
+          const numberOfNodes = size * (db !== 'psmdb' ? 1 : 2);
+          await expect(
+            page.getByText(
+              numberOfNodes + ` node${numberOfNodes === 1 ? '' : 's'} - CPU`
+            )
+          ).toBeVisible();
         });
 
         await test.step('Move forward form with default values', async () => {
@@ -201,10 +206,11 @@ const openResourcesModal = async (page: Page) => {
         await page.getByTestId('form-dialog-save').click();
 
         //check result
+        const numberOfNodes = size * (db !== 'psmdb' ? 1 : 2);
         await expect(
           page
             .getByTestId('node-cpu-overview-section-row')
-            .filter({ hasText: '2 CPU' })
+            .filter({ hasText: `${2 * numberOfNodes}.00 CPU` })
         ).toBeVisible();
 
         await expect(
@@ -213,14 +219,13 @@ const openResourcesModal = async (page: Page) => {
               `${db != 'psmdb' ? 'proxies' : 'routers'}-cpu-overview-section-row`
             )
             .filter({
-              hasText: `${db != 'psmdb' ? '2 x 0.4 CPU = 0.80' : '2 x 2 CPU = 4.00'} CPU`,
+              hasText: `${db != 'psmdb' ? '0.80' : '4.00'} CPU`,
             })
         ).toBeVisible();
       });
 
       test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
         await deleteDbCluster(page, clusterName);
-        await waitForStatus(page, clusterName, 'Deleting', 15000);
         await waitForDelete(page, clusterName, 160000);
       });
     });

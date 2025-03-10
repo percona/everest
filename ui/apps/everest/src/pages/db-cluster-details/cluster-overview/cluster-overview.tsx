@@ -106,7 +106,6 @@ export const ClusterOverview = () => {
       />
       {canReadBackups && (
         <BackupsDetails
-          backup={dbCluster?.spec.backup!}
           dbClusterName={dbCluster?.metadata.name}
           namespace={dbCluster?.metadata.namespace}
           schedules={dbCluster?.spec.backup?.schedules}
