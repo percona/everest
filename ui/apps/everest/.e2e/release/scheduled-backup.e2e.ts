@@ -306,7 +306,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
             expect(result.trim()).toBe('1\n2\n3');
             break;
           case 'psmdb':
-            expect(result.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
+            expect(result.trim()).toBe('[{"a":1},{"a":2},{"a":3}]');
             break;
           case 'postgresql':
             expect(result.trim()).toBe('1\n 2\n 3');
