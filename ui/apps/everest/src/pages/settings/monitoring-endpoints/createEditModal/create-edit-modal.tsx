@@ -78,7 +78,7 @@ export const CreateEditEndpointModal = ({
             isRequired
             textFieldProps={{
               placeholder: Messages.fieldPlaceholders.endpoint,
-              onBlur: (event) => event.target.value.replace(/\/+$/, ""),
+              onBlur: (event) => event.target.value.replace(/\/+$/, ''),
             }}
           />
           <TextInput
