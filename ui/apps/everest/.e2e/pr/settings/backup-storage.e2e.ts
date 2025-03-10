@@ -37,9 +37,7 @@ test.describe.serial('Backup storage', () => {
     await page.getByTestId('text-input-namespace').click();
     await page.getByRole('option', { name: 'everest-ui' }).click();
     await expect(page.getByTestId('select-input-type')).toHaveValue('s3');
-    await page
-      .getByTestId('text-input-bucket-name')
-      .fill('bucket-6');
+    await page.getByTestId('text-input-bucket-name').fill('bucket-6');
     await page.getByTestId('text-input-region').fill(EVEREST_LOCATION_REGION);
     await page.getByTestId('text-input-url').fill(EVEREST_LOCATION_URL);
     await page
@@ -57,11 +55,15 @@ test.describe.serial('Backup storage', () => {
 
   test('Edit backup storage', async ({ page }) => {
     await findRowAndClickActions(page, 'test-storage-name', 'Edit');
-    await page.getByTestId('text-input-description').fill('new-test-description');
+    await page
+      .getByTestId('text-input-description')
+      .fill('new-test-description');
     await page.getByTestId('form-dialog-edit').click();
     await page.reload();
     await findRowAndClickActions(page, 'test-storage-name', 'Edit');
-    await expect(page.getByTestId('text-input-description')).toHaveValue('new-test-description');
+    await expect(page.getByTestId('text-input-description')).toHaveValue(
+      'new-test-description'
+    );
     await page.getByTestId('form-dialog-cancel').click();
   });
 
