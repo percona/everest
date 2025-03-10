@@ -71,7 +71,6 @@ More about PNPM filtering: https://pnpm.io/filtering
 - Make sure to have the following setup on `<repo-root>/dev/config.yaml`:
 
   ```
-  # Copy this file to config.yaml in dev/ directory and set the values as needed.
   namespaces:
     - name: pxc-only
       backupStorages:
