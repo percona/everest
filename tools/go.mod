@@ -9,7 +9,7 @@ require (
 	github.com/quasilyte/go-consistent v0.6.1
 	github.com/reviewdog/reviewdog v0.20.3
 	github.com/vburenin/ifacemaker v1.2.1
-	github.com/vektra/mockery/v2 v2.53.0
+	github.com/vektra/mockery/v2 v2.53.1
 	golang.org/x/tools v0.31.0
 	helm.sh/helm/v3 v3.17.1
 	mvdan.cc/gofumpt v0.7.0
