@@ -268,7 +268,6 @@ export const deleteScheduleFromDbCluster = (
       ...dbCluster?.spec,
       backup: {
         ...dbCluster.spec.backup,
-        enabled: filteredSchedulesWithCronCorrection.length > 0,
         schedules:
           filteredSchedulesWithCronCorrection.length > 0
             ? filteredSchedulesWithCronCorrection
