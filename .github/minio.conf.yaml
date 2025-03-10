@@ -52,7 +52,7 @@ spec:
           image: busybox
           env:
             - name: BUCKET_DIRS
-              value: "bucket-1,bucket-2,bucket-3,bucket-4,bucket-5"
+              value: "bucket-1,bucket-2,bucket-3,bucket-4,bucket-5,bucket-6"
           command:
             - /bin/sh
             - -c
