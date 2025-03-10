@@ -184,7 +184,7 @@ export const prepareTestDB = async (cluster: string, namespace: string) => {
         'db.t1.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }]);'
       );
       const result = await queryTestDB(cluster, namespace);
-      expect(result.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
+      expect(result.trim()).toBe('[{"a":1},{"a":2},{"a":3}]');
       break;
     }
     case 'postgresql': {
@@ -203,57 +203,56 @@ export const prepareTestDB = async (cluster: string, namespace: string) => {
   }
 };
 
-export const insertMoreTestDB = async (cluster: string, namespace: string) => {
+export const insertTestDB = async (
+  cluster: string,
+  namespace: string,
+  data: string[],
+  expected: string[]
+) => {
   const dbType = await getDBType(cluster, namespace);
 
   switch (dbType) {
     case 'pxc': {
+      const values = data.map((d) => `(${d})`).join(',');
       await queryMySQL(
         cluster,
         namespace,
-        'INSERT INTO test.t1 VALUES (4),(5),(6);'
+        `INSERT INTO test.t1 VALUES ${values};`
       );
       const result = await queryTestDB(cluster, namespace);
-      expect(result.trim()).toBe('1\n2\n3\n4\n5\n6');
+      const expected_result = expected.join('\n');
+      expect(result.trim()).toBe(expected_result);
       break;
     }
     case 'psmdb': {
+      const jsonData = data.map((d) => `{ a: ${d} }`).join(', ');
       await queryPSMDB(
         cluster,
         namespace,
         'test',
-        'db.t1.insertMany([{ a: 4 }, { a: 5 }, { a: 6 }]);'
+        `db.t1.insertMany([${jsonData}]);`
       );
       const result = await queryTestDB(cluster, namespace);
-      expect(result.trim()).toBe(
-        '[ { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 }, { a: 5 }, { a: 6 } ]'
-      );
+      const expected_result = expected.map((d) => `{"a":${d}}`).join(',');
+      expect(result.trim()).toBe('[' + expected_result + ']');
       break;
     }
     case 'postgresql': {
+      const values = data.map((d) => `(${d})`).join(',');
       await queryPG(
         cluster,
         namespace,
         'test',
-        'INSERT INTO t1 VALUES (4),(5),(6);'
+        `INSERT INTO t1 VALUES ${values};`
       );
       const result = await queryTestDB(cluster, namespace);
-      expect(result.trim()).toBe('1\n 2\n 3\n 4\n 5\n 6');
+      const expected_result = expected.join('\n ');
+      expect(result.trim()).toBe(expected_result);
       break;
     }
+    default:
+      throw new Error(`Unsupported database type: ${dbType}`);
   }
-};
-
-export const pgInsertDummyTestDB = async (
-  cluster: string,
-  namespace: string
-) => {
-  await queryPG(
-    cluster,
-    namespace,
-    'test',
-    'INSERT INTO t1 VALUES (7),(8),(9);'
-  );
 };
 
 export const dropTestDB = async (cluster: string, namespace: string) => {
@@ -305,7 +304,7 @@ export const queryTestDB = async (
         cluster,
         namespace,
         'test',
-        `db.${collection}.find({},{_id: 0}).sort({a: 1}).toArray();`
+        `JSON.stringify(db.${collection}.find({},{_id: 0}).sort({a: 1}).toArray());`
       );
 
       break;
