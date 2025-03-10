@@ -50,7 +50,6 @@ export interface PITR {
 }
 
 export interface Backup {
-  enabled: boolean;
   pitr?: PITR;
   schedules?: Array<Schedule>;
 }
