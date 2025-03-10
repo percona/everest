@@ -14,16 +14,18 @@
 // limitations under the License.
 
 import { expect, test } from '@playwright/test';
-import { findRowAndClickActions } from '@e2e/utils/table';
+import { findRowAndClickActions, waitForDelete } from '@e2e/utils/table';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 
 test.describe.serial('Monitoring List', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/settings/monitoring-endpoints');
+    await page.getByTestId('add-monitoring-endpoint').waitFor();
+  });
   const monitoringEndpointName = 'monitoring-test';
 
   test('Create Monitoring Endpoint', async ({ page }) => {
-    await page.goto('/settings/monitoring-endpoints');
-    await page.getByTestId('add-monitoring-endpoint').waitFor();
     await page.getByTestId('add-monitoring-endpoint').click();
 
     // filling out the form
@@ -50,9 +52,6 @@ test.describe.serial('Monitoring List', () => {
   });
 
   test('Edit Monitoring Endpoint', async ({ page }) => {
-    await page.goto('/settings/monitoring-endpoints');
-    await page.getByTestId('add-monitoring-endpoint').waitFor();
-
     await page
       .locator('.MuiTableRow-root')
       .filter({ hasText: monitoringEndpointName })
@@ -94,9 +93,11 @@ test.describe.serial('Monitoring List', () => {
     await expect(page.getByTestId('form-dialog-edit')).toBeEnabled();
 
     await page.getByTestId('form-dialog-edit').click();
+  });
 
-    // deleting the monitoring endpoint
+  test('Delete Monitoring Endpoint', async ({ page }) => {
     await findRowAndClickActions(page, monitoringEndpointName, 'Delete');
     await page.getByTestId('confirm-dialog-delete').click();
+    await waitForDelete(page, monitoringEndpointName, 10000);
   });
 });
