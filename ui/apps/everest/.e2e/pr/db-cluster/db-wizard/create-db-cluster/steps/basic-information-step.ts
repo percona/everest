@@ -28,12 +28,11 @@ export const basicInformationStepCheck = async (
 
   const dbVersionOptions = page.getByRole('option');
 
-  engineVersions.psmdb.forEach(
-    async (version) =>
-      await expect(
-        dbVersionOptions.filter({ hasText: new RegExp(`^${version}$`) })
-      ).toBeVisible()
-  );
+  for (const version of engineVersions.psmdb) {
+    await expect(
+      dbVersionOptions.filter({ hasText: new RegExp(`^${version}$`) })
+    ).toBeVisible();
+  }
 
   const defaultOption = await page.getByRole('option', { selected: true });
   expect(await defaultOption.textContent()).toBe(
@@ -45,6 +44,4 @@ export const basicInformationStepCheck = async (
   expect(
     await page.getByTestId('switch-input-sharding').getByRole('checkbox')
   ).not.toBeDisabled();
-
-  await page.getByRole('option').first().click();
 };
