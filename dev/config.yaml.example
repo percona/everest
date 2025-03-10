@@ -1,0 +1,23 @@
+# Copy this file to config.yaml in dev/ directory and set the values as needed.
+namespaces:
+  # List of DB namespaces that will be created automatically
+  - name: my-special-place
+    # List of BackupStorages that will be created automatically in this namespace
+    backupStorages:
+      - bs-msp-1
+      - bs-msp-2
+    # List of DB operators that will be deployed into DB namespace
+    operators:
+      - pxc
+      - psmdb
+      - pg
+  - name: the-dark-side
+    # List of BackupStorages that will be created automatically in this namespace
+    backupStorages:
+      - bs-tds-1
+      - bs-tds-2
+    # List of DB operators that will be deployed into DB namespace
+    operators:
+      - pxc
+      - psmdb
+      - pg

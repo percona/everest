@@ -46,7 +46,6 @@ export const BackupsDetails = ({
   schedules,
   pitrEnabled,
   pitrStorageName,
-  backup,
   loading,
   showStorage = true,
 }: BackupsDetailsOverviewCardProps) => {
@@ -159,6 +158,7 @@ export const BackupsDetails = ({
           loading={loading}
         >
           <Table
+            getRowId={(row) => row.name}
             muiTopToolbarProps={{ sx: { display: 'none' } }}
             muiTableHeadCellProps={{ sx: { display: 'none' } }}
             initialState={{
@@ -184,9 +184,7 @@ export const BackupsDetails = ({
           title={Messages.titles.schedules}
           loading={loading}
         >
-          {Array.isArray(schedules) &&
-          schedules?.length > 0 &&
-          backup?.enabled ? (
+          {Array.isArray(schedules) && schedules?.length > 0 ? (
             schedules?.map((item) => (
               <OverviewSectionText key={`${item.name}-${item.schedule}`}>
                 {getTimeSelectionPreviewMessage(
