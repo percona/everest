@@ -42,11 +42,16 @@ type ProviderConfig struct {
 	Algorithms    []string `json:"id_token_signing_alg_values_supported"`
 }
 
+const (
+	// WellKnownPath is the path to the well-known OIDC configuration.
+	WellKnownPath = "/.well-known/openid-configuration"
+)
+
 // ErrUnexpectedSatusCode is returned when HTTP 200 is not returned.
 var ErrUnexpectedSatusCode = fmt.Errorf("unexpected status code")
 
 func NewProviderConfig(ctx context.Context, issuer string) (ProviderConfig, error) {
-	wellKnown := strings.TrimSuffix(issuer, "/") + "/.well-known/openid-configuration"
+	wellKnown := strings.TrimSuffix(issuer, "/") + WellKnownPath
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, wellKnown, nil)
 	if err != nil {
 		return ProviderConfig{}, err

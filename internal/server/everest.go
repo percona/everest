@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
+	"io"
 	"io/fs"
 	"net/http"
 	"slices"
@@ -31,6 +33,7 @@ import (
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 	middleware "github.com/oapi-codegen/echo-middleware"
+	"github.com/unrolled/secure"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -128,27 +131,39 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	return e, err
 }
 
+type Template struct {
+	templates *template.Template
+}
+
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
+
 // initHTTPServer configures http server for the current EverestServer instance.
 func (e *EverestServer) initHTTPServer(ctx context.Context) error {
-	swagger, err := api.GetSwagger()
-	if err != nil {
-		return err
+	// Serve the index.html file.
+	indexFS := echo.MustSubFS(public.Index, "dist")
+	e.echo.Renderer = &Template{
+		templates: template.Must(template.ParseFS(indexFS, "index.html")),
 	}
+	e.echo.GET("/*", func(c echo.Context) error {
+		// Embed the CSP nonce into the template. This nonce was auto-generated
+		// for this request and stored in the context by the secure middleware.
+		// See the securityHeaders middleware for more information.
+		return c.Render(http.StatusOK, "index.html",
+			map[string]interface{}{"CSPNonce": secure.CSPNonce(c.Request().Context())},
+		)
+	}, securityHeaders(e.oidcProvider))
+
+	// Serve static files.
 	fsys, err := fs.Sub(public.Static, "dist")
 	if err != nil {
 		return errors.Join(err, errors.New("error reading filesystem"))
 	}
 	staticFilesHandler := http.FileServer(http.FS(fsys))
-	indexFS := echo.MustSubFS(public.Index, "dist")
-	// FIXME: Ideally it should be redirected to /everest/ and FE app should be served using this endpoint.
-	//
-	// We tried to do this with Fabio and FE app requires the following changes to be implemented:
-	// 1. Add basePath configuration for react router
-	// 2. Add apiUrl configuration for FE app
-	//
-	// Once it'll be implemented we can serve FE app on /everest/ location
-	e.echo.FileFS("/*", "index.html", indexFS)
-	e.echo.GET("/static/*", echo.WrapHandler(staticFilesHandler))
+	e.echo.GET("/static/*", echo.WrapHandler(staticFilesHandler), securityHeaders(e.oidcProvider))
+
+	// Middlewares
 	e.echo.Use(echomiddleware.LoggerWithConfig(echomiddleware.LoggerConfig{
 		Format:           echomiddleware.DefaultLoggerConfig.Format,
 		CustomTimeFormat: echomiddleware.DefaultLoggerConfig.CustomTimeFormat,
@@ -158,6 +173,11 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	}))
 	e.echo.Pre(echomiddleware.RemoveTrailingSlash())
 
+	// Setup the API handlers.
+	swagger, err := api.GetSwagger()
+	if err != nil {
+		return err
+	}
 	basePath, err := swagger.Servers.BasePath()
 	if err != nil {
 		return errors.Join(err, errors.New("could not get base path"))
@@ -174,6 +194,7 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 			AuthenticationFunc: openapi3filter.NoopAuthenticationFunc,
 		},
 	}))
+
 	// Setup and use JWT middleware.
 	jwtMW, err := e.jwtMiddleWare(ctx)
 	if err != nil {
