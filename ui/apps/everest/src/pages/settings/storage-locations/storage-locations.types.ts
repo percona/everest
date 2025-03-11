@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { BackupStorage, StorageType } from 'shared-types/backupStorages.types';
+import { rfc_123_schema } from 'utils/common-validation';
 
 export enum StorageLocationsFields {
   name = 'name',
@@ -50,7 +51,10 @@ export const storageLocationEditValues = (
 });
 
 export const storageLocationsSchema = z.object({
-  [StorageLocationsFields.name]: z.string().nonempty(),
+  [StorageLocationsFields.name]: rfc_123_schema({
+    fieldName: 'storage name',
+    maxLength: 22,
+  }),
   [StorageLocationsFields.type]: z.nativeEnum(StorageType),
   [StorageLocationsFields.bucketName]: z.string().nonempty(),
   [StorageLocationsFields.description]: z.string().optional(),
