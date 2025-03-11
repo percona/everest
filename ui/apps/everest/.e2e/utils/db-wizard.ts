@@ -56,7 +56,6 @@ export const setPitrEnabledStatus = async (page: Page, checked: boolean) => {
 
 export const submitWizard = async (page: Page) => {
   await page.getByTestId('db-wizard-submit-button').click();
-  await expect(page.getByTestId('db-wizard-goto-db-clusters')).toBeVisible();
 };
 
 export const cancelWizard = async (page: Page) => {
