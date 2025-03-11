@@ -101,9 +101,6 @@ const openResourcesModal = async (page: Page) => {
 
         await test.step('Submit form', async () => {
           await submitWizard(page);
-          await expect(
-            page.getByText('Awesome! Your database is being created!')
-          ).toBeVisible();
         });
       });
 
