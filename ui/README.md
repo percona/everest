@@ -65,3 +65,70 @@ pnpm --filter <workspace> <command>
 ```
 
 More about PNPM filtering: https://pnpm.io/filtering
+
+## Run CI E2E tests locally
+
+- Make sure to have the following setup on `<repo-root>/dev/config.yaml`:
+
+  ```
+  namespaces:
+    - name: pxc-only
+      backupStorages:
+        - bucket-3
+      operators:
+        - pxc
+
+    - name: psmdb-only
+      backupStorages:
+        - bucket-2
+      operators:
+        - psmdb
+
+    - name: pg-only
+      backupStorages:
+        - bucket-4
+      operators:
+        - pg
+
+    - name: everest-ui
+      backupStorages:
+        - bucket-1
+        - bucket-5
+      operators:
+        - pxc
+        - psmdb
+        - pg
+
+  ```
+
+- On `apps/everest/.e2e/.env`, set:
+
+  ```
+  EVEREST_BUCKETS_NAMESPACES_MAP='[["bucket-1","everest-ui"],["bucket-2","psmdb-only"],["bucket-3","pxc-only"],["bucket-4","pg-only"],["bucket-5","everest-ui"]]'
+  ```
+
+- To set a MinIO storage on your k8s cluster: `kubectl apply -f <repo-root>/.github/minio.conf.yaml` and set:
+
+  - `EVEREST_LOCATION_ACCESS_KEY=minioadmin`
+  - `EVEREST_LOCATION_SECRET_KEY=minioadmin`
+  - `EVEREST_LOCATION_REGION=us-east-1`
+  - `EVEREST_LOCATION_URL=https://minio.minio.svc.cluster.local`
+
+- To setup a monitoring instance (PMM) on your k8s cluster:
+
+  ```
+  helm install pmm --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm
+
+  url=$(kubectl get svc/monitoring-service -o json | jq -r '.spec.clusterIP')
+
+  echo -n "MONITORING_URL=http://$url"
+  ```
+
+  - Use the IP from the output and set:
+    - `MONITORING_URL=<OUTPUT_IP>`
+    - `MONITORING_USER=admin`
+    - `MONITORING_PASSWORD=admin`
+
+- Finally, run the tests using one of:
+  - `pnpm --filter "@percona/everest" e2e`, to run all tests, including RBAC
+  - ` pnpm --filter "@percona/everest" e2e:ignore-rbac`, to skip RBAC tests
