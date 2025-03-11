@@ -57,6 +57,7 @@ export const ResourcesDetails = ({
       onSuccess: () => setOpenEditModal(false),
     }
   );
+  const storageClass = dbCluster.spec.engine.storage.class;
   const cpu = dbCluster.spec.engine.resources?.cpu || 0;
   const proxyCpu = isProxy(dbCluster.spec.proxy)
     ? dbCluster.spec.proxy.resources?.cpu || 0
@@ -249,6 +250,7 @@ export const ResourcesDetails = ({
       {openEditModal && (
         <ResourcesEditModal
           dbType={dbType}
+          storageClass={storageClass || ''}
           shardingEnabled={!!sharding?.enabled}
           handleCloseModal={() => setOpenEditModal(false)}
           onSubmit={onSubmit}
