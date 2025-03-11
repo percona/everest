@@ -23,7 +23,6 @@ import { useCreateDbCluster } from 'hooks/api/db-cluster/useCreateDbCluster';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
 import { steps } from './database-form-body/steps';
 import { DbWizardType } from './database-form-schema';
-import ConfirmationScreen from './database-form-body/steps/confirmation-screen';
 import { useDatabasePageDefaultValues } from './useDatabaseFormDefaultValues';
 import { useDatabasePageMode } from './useDatabasePageMode';
 import { useDbValidationSchema } from './useDbValidationSchema';
@@ -184,9 +183,11 @@ export const DatabasePage = () => {
     }
   }, []);
 
-  return formSubmitted ? (
-    <ConfirmationScreen />
-  ) : (
+  if (formSubmitted) {
+    navigate('/databases');
+  }
+
+  return (
     <>
       <Stepper noConnector activeStep={activeStep} sx={{ marginBottom: 4 }}>
         {steps.map((_, idx) => (
