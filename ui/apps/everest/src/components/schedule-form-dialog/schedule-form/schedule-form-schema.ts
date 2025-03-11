@@ -60,9 +60,9 @@ export const schema = (schedules: Schedule[], mode: 'edit' | 'new') => {
   const schedulesNamesList = schedules.map((item) => item?.name);
   return z
     .object({
-      [ScheduleFormFields.scheduleName]: rfc_123_schema(
-        `${Messages.scheduleName.label.toLowerCase()} name`
-      )
+      [ScheduleFormFields.scheduleName]: rfc_123_schema({
+        fieldName: `${Messages.scheduleName.label.toLowerCase()} name`,
+      })
         .nonempty()
         .max(MAX_SCHEDULE_NAME_LENGTH, Messages.scheduleName.tooLong)
         .superRefine((input, ctx) => {
