@@ -37,7 +37,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.27.0
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20250210102602-127a3cde5e36
+	github.com/percona/everest-operator v0.6.0-dev1.0.20250311105525-f41867ec50fc
 	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250303201303-d0a9b3ab002d
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.9.1
@@ -229,7 +229,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.31.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
-	golang.org/x/net v0.34.0 // indirect
+	golang.org/x/net v0.35.0 // indirect
 	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
