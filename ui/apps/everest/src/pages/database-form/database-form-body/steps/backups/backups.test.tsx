@@ -95,7 +95,7 @@ describe('BackupsStep', () => {
       .fill(0)
       .map((_, idx) => [idx, idx])
   )(
-    'should enforce storage creation when %s schedules and %s storages are in use',
+    'should enforce storage creation when %s schedules and %s storages are in use for PG',
     async (_nrSchedules, _nrStorages) => {
       storagesMocks.useBackupStoragesByNamespace.mockReturnValueOnce({
         data: Array(_nrStorages)
