@@ -42,11 +42,16 @@ type ProviderConfig struct {
 	Algorithms    []string `json:"id_token_signing_alg_values_supported"`
 }
 
+const (
+	// WellKnownPath is the path to the well-known OIDC configuration.
+	WellKnownPath = "/.well-known/openid-configuration"
+)
+
 // ErrUnexpectedSatusCode is returned when HTTP 200 is not returned.
 var ErrUnexpectedSatusCode = fmt.Errorf("unexpected status code")
 
-func getProviderConfig(ctx context.Context, issuer string) (ProviderConfig, error) {
-	wellKnown := strings.TrimSuffix(issuer, "/") + "/.well-known/openid-configuration"
+func NewProviderConfig(ctx context.Context, issuer string) (ProviderConfig, error) {
+	wellKnown := strings.TrimSuffix(issuer, "/") + WellKnownPath
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, wellKnown, nil)
 	if err != nil {
 		return ProviderConfig{}, err
@@ -75,27 +80,18 @@ func getProviderConfig(ctx context.Context, issuer string) (ProviderConfig, erro
 
 // NewKeyFunc returns a new function for getting the public JWK keys
 // from the OIDC provider at the given issuer URL.
-func NewKeyFunc(ctx context.Context, issuer string) (jwt.Keyfunc, error) {
-	if issuer == "" {
-		return nil, errors.New("issuer URL not provided")
-	}
-
-	cfg, err := getProviderConfig(ctx, issuer)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("failed to get OIDC config"))
-	}
-
-	if cfg.JWKSURL == "" {
+func (c *ProviderConfig) NewKeyFunc(ctx context.Context) (jwt.Keyfunc, error) {
+	if c.JWKSURL == "" {
 		return nil, errors.New("did not find jwks_uri in oidc config")
 	}
 
 	keyCache := jwk.NewCache(ctx)
-	if err := keyCache.Register(cfg.JWKSURL); err != nil {
+	if err := keyCache.Register(c.JWKSURL); err != nil {
 		return nil, errors.Join(err, errors.New("failed to register jwk cache"))
 	}
 
 	return func(token *jwt.Token) (interface{}, error) {
-		keySet, err := keyCache.Get(ctx, cfg.JWKSURL)
+		keySet, err := keyCache.Get(ctx, c.JWKSURL)
 		if err != nil {
 			return nil, err
 		}
