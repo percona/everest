@@ -233,7 +233,7 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Edit cluster/scale up [${db} size ${size}]`, async ({ page }) => {
-        const newSize=size+2;
+        const newSize = size + 2;
         let customProxyTestId = 'toggle-button-proxies-custom';
 
         await test.step('Change options', async () => {
@@ -242,7 +242,9 @@ test.describe.configure({ retries: 0 });
           await page.getByTestId('edit-resources-button').click();
           if (db !== 'pxc') {
             await page.getByTestId('toggle-button-nodes-custom').click();
-            await page.getByTestId('text-input-custom-nr-of-nodes').fill(newSize.toString());
+            await page
+              .getByTestId('text-input-custom-nr-of-nodes')
+              .fill(newSize.toString());
           } else {
             await page.getByTestId(`toggle-button-nodes-${newSize}`).click();
           }
@@ -260,15 +262,26 @@ test.describe.configure({ retries: 0 });
 
         await test.step('Check new values', async () => {
           if (db === 'pxc') {
-            await expect(page.getByTestId('overview-section').filter({ hasText: '2 proxies' })).toBeVisible({ timeout: 10000 });
-          }
-          else if (db === 'postgresql') {
-            await expect(page.getByTestId('overview-section').filter({ hasText: '2 PG Bouncers' })).toBeVisible({ timeout: 10000 });
+            await expect(
+              page
+                .getByTestId('overview-section')
+                .filter({ hasText: '2 proxies' })
+            ).toBeVisible({ timeout: 10000 });
+          } else if (db === 'postgresql') {
+            await expect(
+              page
+                .getByTestId('overview-section')
+                .filter({ hasText: '2 PG Bouncers' })
+            ).toBeVisible({ timeout: 10000 });
           }
 
           // TODO: Re-enable for PG after fix for: https://perconadev.atlassian.net/browse/EVEREST-1920
           if (db !== 'postgresql') {
-            await expect(page.getByTestId('overview-section').filter({ hasText: `${newSize} nodes` })).toBeVisible({ timeout: 10000 });
+            await expect(
+              page
+                .getByTestId('overview-section')
+                .filter({ hasText: `${newSize} nodes` })
+            ).toBeVisible({ timeout: 10000 });
           }
         });
 
