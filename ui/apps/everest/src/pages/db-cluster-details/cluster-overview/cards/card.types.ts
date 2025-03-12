@@ -43,6 +43,7 @@ export type ConnectionDetailsOverviewCardProps = {
 export type AdvancedConfigurationOverviewCardProps = {
   externalAccess: boolean;
   parameters: boolean;
+  storageClass: string;
 } & OverviewCardProps;
 
 export type MonitoringConfigurationOverviewCardProps = {
