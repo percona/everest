@@ -790,6 +790,16 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
           '.MuiBadge-overlapCircular': {
             backgroundColor: 'transparent',
           },
+          '.Mui-TableHeadCell-Content-Actions': {
+            '.MuiButtonBase-root': {
+              '&.MuiIconButton-root:focus-visible:focus': {
+                backgroundColor: 'rgba(18, 119, 227, 0.3)',
+              },
+              '&.MuiIconButton-root:not(:focus-visible):focus': {
+                backgroundColor: 'transparent',
+              },
+            },
+          },
         }),
       },
     },
