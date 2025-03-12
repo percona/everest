@@ -1,5 +1,7 @@
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
+import createCache from '@emotion/cache';
+import { CacheProvider } from '@emotion/react';
 import { ThemeContextProvider, everestThemeOptions } from '@percona/design';
 import { NotistackMuiSnackbar } from '@percona/ui-lib';
 import { SnackbarProvider } from 'notistack';
@@ -54,46 +56,58 @@ const App = () => {
     return <LoadingPageSkeleton />;
   }
 
+  const nonce =
+    document.querySelector("meta[name='csp-nonce']")?.getAttribute('content') ||
+    '';
+
+  const cache = createCache({
+    key: 'percona-css',
+    nonce,
+    prepend: true,
+  });
+
   return (
-    <ThemeContextProvider
-      themeOptions={everestThemeOptions}
-      saveColorModeOnLocalStorage
-    >
-      <LocalizationProvider dateAdapter={AdapterDateFns}>
-        <SnackbarProvider
-          maxSnack={3}
-          preventDuplicate
-          // NOTE: using custom components disables notistack's custom actions, as per docs: https://notistack.com/features/basic#actions
-          // If we need actions, we can add them to our custom component via useSnackbar(): https://notistack.com/features/customization#custom-component
-          Components={{
-            success: NotistackMuiSnackbar,
-            error: NotistackMuiSnackbar,
-            info: NotistackMuiSnackbar,
-            warning: NotistackMuiSnackbar,
-          }}
-        >
-          <QueryClientProvider client={queryClient}>
-            <AuthProvider
-              oidcConfig={{
-                ...configs?.oidc,
-                redirectUri: `${window.location.protocol}//${window.location.host}/login-callback`,
-                responseType: 'code',
-                autoSignIn: false,
-                automaticSilentRenew: false,
-                loadUserInfo: false,
-              }}
-            >
-              <DrawerContextProvider>
-                <UpgradeEverestProvider>
-                  <RouterProvider router={router} />
-                </UpgradeEverestProvider>
-              </DrawerContextProvider>
-              <ReactQueryDevtools initialIsOpen={false} />
-            </AuthProvider>
-          </QueryClientProvider>
-        </SnackbarProvider>
-      </LocalizationProvider>
-    </ThemeContextProvider>
+    <CacheProvider value={cache}>
+      <ThemeContextProvider
+        themeOptions={everestThemeOptions}
+        saveColorModeOnLocalStorage
+      >
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <SnackbarProvider
+            maxSnack={3}
+            preventDuplicate
+            // NOTE: using custom components disables notistack's custom actions, as per docs: https://notistack.com/features/basic#actions
+            // If we need actions, we can add them to our custom component via useSnackbar(): https://notistack.com/features/customization#custom-component
+            Components={{
+              success: NotistackMuiSnackbar,
+              error: NotistackMuiSnackbar,
+              info: NotistackMuiSnackbar,
+              warning: NotistackMuiSnackbar,
+            }}
+          >
+            <QueryClientProvider client={queryClient}>
+              <AuthProvider
+                oidcConfig={{
+                  ...configs?.oidc,
+                  redirectUri: `${window.location.protocol}//${window.location.host}/login-callback`,
+                  responseType: 'code',
+                  autoSignIn: false,
+                  automaticSilentRenew: false,
+                  loadUserInfo: false,
+                }}
+              >
+                <DrawerContextProvider>
+                  <UpgradeEverestProvider>
+                    <RouterProvider router={router} />
+                  </UpgradeEverestProvider>
+                </DrawerContextProvider>
+                <ReactQueryDevtools initialIsOpen={false} />
+              </AuthProvider>
+            </QueryClientProvider>
+          </SnackbarProvider>
+        </LocalizationProvider>
+      </ThemeContextProvider>
+    </CacheProvider>
   );
 };
 
