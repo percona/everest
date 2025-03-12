@@ -3,4 +3,5 @@ export type TextArrayProps = {
   fieldKey: string;
   label?: string;
   placeholder?: string;
+  handleBlur?: (value: string, fieldName: string, hasError: boolean) => void;
 };
