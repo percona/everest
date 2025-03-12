@@ -68,10 +68,12 @@ type KubernetesConnector interface {
 	ApproveInstallPlan(ctx context.Context, namespace, installPlanName string) (bool, error)
 	// Kubeconfig returns the path to the kubeconfig.
 	Kubeconfig() string
+	// StartCache starts the cache in background.
+	StartCache(ctx context.Context) error
 	// Config returns *rest.Config.
 	Config() *rest.Config
 	// WithClient sets the client connector.
-	WithClient(c client.KubeClientConnector) *Kubernetes
+	WithClient(c *client.Client) *Kubernetes
 	// Namespace returns the current namespace.
 	Namespace() string
 	// ClusterName returns the name of the k8s cluster.

@@ -21,6 +21,7 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -29,27 +30,39 @@ import (
 
 // ListDatabaseClusters returns list of managed database clusters.
 func (k *Kubernetes) ListDatabaseClusters(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
-	return k.client.ListDatabaseClusters(ctx, namespace, metav1.ListOptions{})
+	result := &everestv1alpha1.DatabaseClusterList{}
+	err := k.k8sClient.List(ctx, result, &ctrlclient.ListOptions{Namespace: namespace})
+	return result, err
 }
 
 // GetDatabaseCluster returns database clusters by provided name.
 func (k *Kubernetes) GetDatabaseCluster(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
-	return k.client.GetDatabaseCluster(ctx, namespace, name)
+	result := &everestv1alpha1.DatabaseCluster{}
+	err := k.k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, result)
+	return result, err
 }
 
 // DeleteDatabaseCluster deletes database cluster.
 func (k *Kubernetes) DeleteDatabaseCluster(ctx context.Context, namespace, name string) error {
-	return k.client.DeleteDatabaseCluster(ctx, namespace, name)
+	obj := &everestv1alpha1.DatabaseCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+	return k.k8sClient.Delete(ctx, obj)
 }
 
 // CreateDatabaseCluster creates database cluster.
 func (k *Kubernetes) CreateDatabaseCluster(ctx context.Context, cluster *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
-	return k.client.CreateDatabaseCluster(ctx, cluster.GetNamespace(), cluster)
+	err := k.k8sClient.Create(ctx, cluster)
+	return cluster, err
 }
 
 // UpdateDatabaseCluster updates database cluster.
 func (k *Kubernetes) UpdateDatabaseCluster(ctx context.Context, cluster *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
-	return k.client.UpdateDatabaseCluster(ctx, cluster.GetNamespace(), cluster)
+	err := k.k8sClient.Update(ctx, cluster)
+	return cluster, err
 }
 
 // DeleteDatabaseClusters deletes all database clusters in provided namespace.
@@ -79,18 +92,16 @@ func (k *Kubernetes) DeleteDatabaseClusters(ctx context.Context, namespace strin
 		if len(list.Items) == 0 {
 			return true, nil
 		}
-		for _, cluster := range list.Items {
-			if err := k.DeleteDatabaseCluster(ctx, cluster.GetNamespace(), cluster.GetName()); ctrlclient.IgnoreNotFound(err) != nil {
-				return false, err
-			}
+		delOpts := ctrlclient.DeleteAllOfOptions{
+			ListOptions: ctrlclient.ListOptions{
+				Namespace: namespace,
+			},
+		}
+		if err := k.k8sClient.DeleteAllOf(ctx, &everestv1alpha1.DatabaseCluster{}, &delOpts); err != nil {
+			return false, err
 		}
 		return false, nil
 	})
-}
-
-// PatchDatabaseCluster patches CR of managed Database cluster.
-func (k *Kubernetes) PatchDatabaseCluster(cluster *everestv1alpha1.DatabaseCluster) error {
-	return k.client.ApplyObject(cluster)
 }
 
 // DatabasesExist checks if databases exist in provided at least one of the provided namespaces.

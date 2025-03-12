@@ -132,16 +132,6 @@ type KubeClientConnector interface {
 	GetService(ctx context.Context, namespace, name string) (*corev1.Service, error)
 	// GetClusterRoleBinding returns cluster role binding by given name.
 	GetClusterRoleBinding(ctx context.Context, name string) (*rbacv1.ClusterRoleBinding, error)
-	// ListDatabaseClusters returns list of managed database clusters.
-	ListDatabaseClusters(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterList, error)
-	// GetDatabaseCluster returns database clusters by provided name.
-	GetDatabaseCluster(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseCluster, error)
-	// CreateDatabaseCluster creates a new database cluster.
-	CreateDatabaseCluster(ctx context.Context, namespace string, cluster *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error)
-	// UpdateDatabaseCluster updates a database cluster.
-	UpdateDatabaseCluster(ctx context.Context, namespace string, cluster *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error)
-	// DeleteDatabaseCluster deletes a database cluster.
-	DeleteDatabaseCluster(ctx context.Context, namespace, name string) error
 	// ListDatabaseClusterBackups returns list of managed database cluster backups.
 	ListDatabaseClusterBackups(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error)
 	// GetDatabaseClusterBackup returns database cluster backups by provided name.
