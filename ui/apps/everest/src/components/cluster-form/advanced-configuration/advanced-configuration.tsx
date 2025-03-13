@@ -40,7 +40,7 @@ export const AdvancedConfigurationForm = ({
   dbType,
   loadingDefaultsForEdition,
 }: AdvancedConfigurationFormProps) => {
-  const { watch, setValue, getFieldState } = useFormContext();
+  const { watch, setValue, getFieldState, getValues, setError, clearErrors } = useFormContext();
   const mode = useDatabasePageMode();
   const [externalAccess, engineParametersEnabled] = watch([
     AdvancedConfigurationFields.externalAccess,
@@ -68,9 +68,29 @@ export const AdvancedConfigurationForm = ({
       );
     }
   }, [clusterInfo]);
+
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
     if (!hasError && !value.includes('/') && value !== '') {
       setValue(fieldName, `${value}/32`);
+    }
+
+    // Check for duplicate entries
+    const existingEntries:Array<{sourceRange?: string | undefined}> = getValues(AdvancedConfigurationFields.sourceRanges) || [];
+      const isDuplicate = existingEntries.filter(item=>item.sourceRange === value);
+      // Get unique entries to check if all are unique to clear the error
+      const uniqueEntries = Array.from(
+        new Map(
+          existingEntries
+            .map(entry => [entry.sourceRange, entry]) 
+        ).values()
+      );
+    if (isDuplicate.length > 1) {
+      setError(fieldName,{message:Messages.errors.sourceRange.duplicate});
+    } else {
+      clearErrors(fieldName);
+    }
+    if(uniqueEntries.length === existingEntries.length){
+     clearErrors();
     }
   };
 
