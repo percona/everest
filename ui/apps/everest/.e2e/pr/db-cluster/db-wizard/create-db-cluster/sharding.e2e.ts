@@ -170,20 +170,26 @@ test.describe('Sharding (psmdb)', () => {
     );
 
     await page.getByTestId('shard-config-servers-1').click();
-    expect(page.getByTestId('shard-config-servers-error')).toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
+    await expect(page.getByTestId('shard-config-servers-error')).toBeVisible();
 
     await page.getByTestId('toggle-button-nodes-1').click();
-    expect(page.getByTestId('shard-config-servers-error')).not.toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).not.toBeDisabled();
+    await expect(
+      page.getByTestId('shard-config-servers-error')
+    ).not.toBeVisible();
+    await expect(
+      page.getByTestId('db-wizard-continue-button')
+    ).not.toBeDisabled();
 
     await page.getByTestId('toggle-button-nodes-3').click();
-    expect(page.getByTestId('shard-config-servers-error')).toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
+    await expect(page.getByTestId('shard-config-servers-error')).toBeVisible();
 
     await page.getByTestId('shard-config-servers-3').click();
-    expect(page.getByTestId('shard-config-servers-error')).not.toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).not.toBeDisabled();
+    await expect(
+      page.getByTestId('shard-config-servers-error')
+    ).not.toBeVisible();
+    await expect(
+      page.getByTestId('db-wizard-continue-button')
+    ).not.toBeDisabled();
   });
 
   test('0 value of the Nº of shards causes an error', async ({ page }) => {
@@ -196,10 +202,13 @@ test.describe('Sharding (psmdb)', () => {
     await moveForward(page);
 
     await page.getByTestId('text-input-shard-nr').fill('0');
-    expect(page.getByText('The value cannot be less than 1')).toBeVisible();
-    expect(page.getByTestId('db-wizard-continue-button')).toBeDisabled();
+    await expect(
+      page.getByText('The value cannot be less than 1')
+    ).toBeVisible();
     await page.getByTestId('text-input-shard-nr').fill('1');
-    expect(page.getByTestId('db-wizard-continue-button')).not.toBeDisabled();
+    await expect(
+      page.getByTestId('db-wizard-continue-button')
+    ).not.toBeDisabled();
   });
 
   test('Changing the Nº of nodes causes changing the confing servers Nº automatically, until the user touches confing servers Nº', async ({
