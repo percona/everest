@@ -316,9 +316,9 @@ func psmdbHosts(
 
 	// for non-sharded internal clusters use a list of comma-separated host:port pairs from each node
 	pods, err := getPods(ctx,
-		ctrlclient.InNamespace(db.Namespace),
+		ctrlclient.InNamespace(db.GetNamespace()),
 		ctrlclient.MatchingLabels{
-			"app.kubernetes.io/instance":  db.Name,
+			"app.kubernetes.io/instance":  db.GetName(),
 			"app.kubernetes.io/component": "mongod",
 		},
 	)

@@ -93,6 +93,10 @@ const (
 	// defaultChunkSize  = 500
 )
 
+var (
+	once sync.Once
+)
+
 // Kubernetes is a client for Kubernetes.
 type Kubernetes struct {
 	k8sClient  ctrlclient.Client
@@ -162,7 +166,13 @@ func NewInCluster(l *zap.SugaredLogger) (KubernetesConnector, error) {
 	}, nil
 }
 
-func createScheme() *runtime.Scheme {
+// CreateScheme creates a new runtime.Scheme.
+// It registers all necessary types:
+// - standard client-go types
+// - Everest CRDs
+// - OLM CRDs
+// - API extensions
+func CreateScheme() *runtime.Scheme {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(everestv1alpha1.AddToScheme(scheme))
@@ -173,13 +183,13 @@ func createScheme() *runtime.Scheme {
 
 func getKubernetesClientOptions() ctrlclient.Options {
 	return ctrlclient.Options{
-		Scheme: createScheme(),
+		Scheme: CreateScheme(),
 		Cache:  nil, // disable cache
 	}
 }
 
 func (k *Kubernetes) getDiscoveryClient() discovery.DiscoveryInterface {
-	if k.discoveryClient == nil {
+	once.Do(func() {
 		httpClient, err := rest.HTTPClientFor(k.restConfig)
 		if err != nil {
 			panic(err)
@@ -189,7 +199,7 @@ func (k *Kubernetes) getDiscoveryClient() discovery.DiscoveryInterface {
 		if err != nil {
 			panic(err)
 		}
-	}
+	})
 	return k.discoveryClient
 }
 
