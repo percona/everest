@@ -68,6 +68,12 @@ export const AdvancedConfigurationForm = ({
       );
     }
   }, [clusterInfo]);
+  const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
+    if (!hasError && !value.includes('/') && value !== '') {
+      setValue(fieldName, `${value}/32`);
+    }
+  };
+
   return (
     <>
       <AdvancedCard
@@ -99,6 +105,7 @@ export const AdvancedConfigurationForm = ({
             fieldName={AdvancedConfigurationFields.sourceRanges}
             fieldKey="sourceRange"
             label={Messages.sourceRange}
+            handleBlur={handleBlur}
           />
         </Stack>
       )}
